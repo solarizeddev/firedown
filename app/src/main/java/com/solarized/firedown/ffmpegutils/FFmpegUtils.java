@@ -140,22 +140,20 @@ public class FFmpegUtils {
         return length1.compareTo(length2);
     };
 
-    public static String getFileDuration(long duration) {
-        if (duration <= 0) return "00:00:00.00";
+    /**
+     * Formats a duration expressed in microseconds.
+     *
+     * Both call paths feed microseconds: FFprobe metadata is natively µs, and
+     * the JS extraction path (background.js → JsonHelper → GeckoInspectTask)
+     * converts ms to µs before storing. Earlier code used a heuristic to
+     * disambiguate ms from µs, but the threshold misclassified short videos
+     * (e.g. a 10-second clip stored as 10 000 000 µs failed the strict
+     * `> 10_000_000` check and was formatted as 02:46:40).
+     */
+    public static String getFileDuration(long us) {
+        if (us <= 0) return "00:00:00.00";
 
-        // Normalize to milliseconds:
-        // FFprobe sends microseconds (> 1,000,000 for any video over 1 second)
-        // JS sends milliseconds (lengthSeconds * 1000)
-        // Heuristic: if value > 1,000,000 per second of a ~1s video, it's likely µs
-        long ms;
-        if (duration > 10_000_000) {
-            // Microseconds — a 10-second video in ms would be 10,000 which is below threshold
-            ms = duration / 1000;
-        } else {
-            // Already milliseconds
-            ms = duration;
-        }
-
+        long ms = us / 1000;
         long hours = TimeUnit.MILLISECONDS.toHours(ms);
         long minutes = TimeUnit.MILLISECONDS.toMinutes(ms) - TimeUnit.HOURS.toMinutes(hours);
         long seconds = TimeUnit.MILLISECONDS.toSeconds(ms) - TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(ms));
