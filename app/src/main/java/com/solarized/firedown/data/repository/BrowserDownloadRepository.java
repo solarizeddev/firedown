@@ -63,13 +63,13 @@ public class BrowserDownloadRepository {
             if (!oldCanonical.isEmpty() && oldCanonical.equals(newCanonical)) return true;
 
             // Last-segment-stem fallback: same host + same filename without extension.
-            // Catches CDNs that don't match canonicalKey's pattern set.
+            // Catches CDNs that don't match canonicalKey's pattern set, but only
+            // when the stem looks like a hash-derived identifier — generic names
+            // like "hqdefault" or "thumbnail" repeat across distinct assets where
+            // the unique id lives in a parent path segment.
             String oldStem = lastSegmentStem(oldUrl);
             String newStem = lastSegmentStem(newUrl);
-            if (oldStem != null && oldStem.equals(newStem) && oldStem.length() >= 8) {
-                // Only trust the stem match if it's long enough to be unambiguous.
-                // "1.jpg" / "1.jpg" on different hosts is not enough; a long
-                // hash-derived filename almost certainly identifies the same asset.
+            if (oldStem != null && oldStem.equals(newStem) && isLikelyHashStem(oldStem)) {
                 return sameHost(oldUrl, newUrl);
             }
         }
@@ -159,6 +159,21 @@ public class BrowserDownloadRepository {
         } catch (Exception e) {
             return false;
         }
+    }
+
+    private static boolean isLikelyHashStem(String s) {
+        // Treat a stem as hash-like only if it's long, alphanumeric, and mixes
+        // digits with letters. Reject dictionary-style names ("hqdefault",
+        // "maxresdefault", "thumbnail") that recur across unrelated assets.
+        if (s == null || s.length() < 16) return false;
+        boolean hasDigit = false, hasLetter = false;
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            if (c >= '0' && c <= '9') hasDigit = true;
+            else if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')) hasLetter = true;
+            else if (c != '-' && c != '_') return false;
+        }
+        return hasDigit && hasLetter;
     }
 
     private static String lastSegmentStem(String url) {
