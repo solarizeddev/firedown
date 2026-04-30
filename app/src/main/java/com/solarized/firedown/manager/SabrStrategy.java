@@ -35,16 +35,6 @@ public class SabrStrategy implements DownloadStrategy {
     private static final int DOWNLOAD_WEIGHT = 95;
     private static final int MUX_WEIGHT = 5;
 
-    /**
-     * Duration unit disambiguation threshold.
-     *
-     * {@link DownloadRequest#getDurationTime()} returns milliseconds from most
-     * callers but microseconds from FFmpeg metadata. 100,000,000 ms is ~27.8 h,
-     * while 100,000,000 µs is ~100 s — so values above this threshold are
-     * overwhelmingly microseconds and need scaling down.
-     */
-    private static final long MICROS_THRESHOLD_MS = 100_000_000L;
-
     private SabrDownloader sabrDownloader;
     private DownloadCallback callback;
     private DownloadContext context;
@@ -133,12 +123,10 @@ public class SabrStrategy implements DownloadStrategy {
         sabrDownloader.setVideoFormat(videoFmt);
         sabrDownloader.setAudioFormat(audioFmt);
 
-        long durationMs = request.getDurationTime();
-        if (durationMs > MICROS_THRESHOLD_MS) {
-            // Value is in microseconds — convert to ms.
-            durationMs = durationMs / 1000;
-        }
-        sabrDownloader.setDurationMs(durationMs);
+        // DownloadRequest carries durationTime in microseconds (sourced from
+        // FFprobe metadata or the JS path's ms→µs conversion). SabrDownloader
+        // expects milliseconds, so convert once here.
+        sabrDownloader.setDurationMs(request.getDurationTime() / 1000);
         sabrDownloader.setTargetResolution(request.getSabrTargetHeight());
 
         String audioTrackId = request.getSabrAudioTrackId();

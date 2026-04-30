@@ -312,11 +312,15 @@ public class BrowserDownloadEntity implements Parcelable, Comparable<BrowserDown
         return null;
     }
 
-    public void setFileDuration(long duration){
-        Log.d(TAG, "setFileDuration: " + duration);
-        setDurationTime(duration);
-        if(duration > 0) {
-            fileDuration = FFmpegUtils.getFileDuration(duration);
+    public void setFileDuration(long durationUs){
+        Log.d(TAG, "setFileDuration: " + durationUs);
+        // All callers feed microseconds — FFprobe natively, and the JS path
+        // (background.js → JsonHelper → GeckoInspectTask) after the ms→µs
+        // conversion. The formatter takes microseconds too; consumers that
+        // need milliseconds should divide getDurationTime() by 1000.
+        setDurationTime(durationUs);
+        if (durationUs > 0) {
+            fileDuration = FFmpegUtils.getFileDuration(durationUs);
         }
     }
 
