@@ -126,7 +126,8 @@ public class SabrStrategy implements DownloadStrategy {
         // DownloadRequest carries durationTime in microseconds (sourced from
         // FFprobe metadata or the JS path's ms→µs conversion). SabrDownloader
         // expects milliseconds, so convert once here.
-        sabrDownloader.setDurationMs(request.getDurationTime() / 1000);
+        long durationMs = request.getDurationTime() / 1000;
+        sabrDownloader.setDurationMs(durationMs);
         sabrDownloader.setTargetResolution(request.getSabrTargetHeight());
 
         String audioTrackId = request.getSabrAudioTrackId();
