@@ -24,7 +24,7 @@
 
 - **[GitHub Releases](https://github.com/solarizeddev/firedown/releases)** — signed APKs with changelogs
 - **[Direct download](https://firedown.app/download)** from the website
-- **[Zapstore](https://zapstore.dev)** Coming soon
+- **[Zapstore](https://zapstore.dev/apps/com.solarized.firedown)** from Zapstore
 - **[Obtainium](https://github.com/ImranR98/Obtainium)** Coming soon
 
 Not on the Play Store. Not currently submitted to F-Droid.
