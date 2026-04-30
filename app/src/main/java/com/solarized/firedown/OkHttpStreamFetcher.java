@@ -24,7 +24,10 @@ public class OkHttpStreamFetcher implements DataFetcher<InputStream>, okhttp3.Ca
   private final GlideUrl url;
   private InputStream stream;
   private ResponseBody responseBody;
-  private DataCallback<? super InputStream> callback;
+  // callback is set on the loader thread, invoked on the OkHttp dispatcher
+  // thread, and nulled in cleanup() — volatile + a local snapshot in the
+  // OkHttp callbacks avoids NPE if cleanup races with onResponse/onFailure.
+  private volatile DataCallback<? super InputStream> callback;
   // call may be accessed on the main thread while the object is in use on other threads. All other
   // accesses to variables may occur on different threads, but only one at a time.
   private volatile Call call;
@@ -57,18 +60,25 @@ public class OkHttpStreamFetcher implements DataFetcher<InputStream>, okhttp3.Ca
       Log.d(TAG, "OkHttp failed to obtain result", e);
     }
 
-    callback.onLoadFailed(e);
+    DataCallback<? super InputStream> cb = callback;
+    if (cb != null) cb.onLoadFailed(e);
   }
 
   @Override
   public void onResponse(@NonNull Call call, @NonNull Response response) {
     responseBody = response.body();
+    DataCallback<? super InputStream> cb = callback;
+    if (cb == null) {
+      // cleanup() raced ahead; release the body and bail.
+      if (responseBody != null) responseBody.close();
+      return;
+    }
     if (response.isSuccessful()) {
       long contentLength = Preconditions.checkNotNull(responseBody).contentLength();
       stream = ContentLengthInputStream.obtain(responseBody.byteStream(), contentLength);
-      callback.onDataReady(stream);
+      cb.onDataReady(stream);
     } else {
-      callback.onLoadFailed(new HttpException(response.message(), response.code()));
+      cb.onLoadFailed(new HttpException(response.message(), response.code()));
     }
   }
 

@@ -27,8 +27,6 @@ public class ContentUriUtils {
 
     private static final String CONTENT_SCHEME = "content";
 
-    private static Uri contentUri = null;
-
 
     public static @Nullable String getOriginalFilePathFromUri(final Context context, final Uri uri) throws IllegalArgumentException {
         return "file://" + getPath(context, uri);
@@ -106,6 +104,7 @@ public class ContentUriUtils {
                 if (id.startsWith("raw:")) {
                     return id.replaceFirst("raw:", "");
                 }
+                Uri contentUri = null;
                 try {
                     contentUri = ContentUris.withAppendedId(
                             Uri.parse("content://downloads/public_downloads"), Long.parseLong(id));

@@ -23,6 +23,7 @@ import org.apache.commons.lang3.StringUtils;
 import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicLong;
 
 import javax.inject.Inject;
 
@@ -42,7 +43,13 @@ public class AutoCompleteViewModel extends ViewModel {
     private final ExecutorService mAutoCompleteExecutor;
     private Future<?> mAutoCompleteFuture;
     private Future<?> mSearchFuture;
-    private String mCurrentSearchTerm;
+    private volatile String mCurrentSearchTerm;
+
+    // Generation counters: each new submission bumps the counter; tasks check
+    // their captured generation before posting so a slow cancelled task can't
+    // overwrite the result of a newer submission.
+    private final AtomicLong mAutoCompleteGen = new AtomicLong();
+    private final AtomicLong mSearchGen = new AtomicLong();
 
     @Inject
     public AutoCompleteViewModel(
@@ -70,6 +77,7 @@ public class AutoCompleteViewModel extends ViewModel {
      */
     public void autoComplete(final String stringToFind) {
         cancelFuture(mAutoCompleteFuture);
+        final long gen = mAutoCompleteGen.incrementAndGet();
 
         if (TextUtils.isEmpty(stringToFind)) {
             mAutoCompleteData.postValue(null);
@@ -82,6 +90,8 @@ public class AutoCompleteViewModel extends ViewModel {
             try {
                 WebHistoryEntity result = mWebHistoryDataRepository.searchHistory(
                         normalizedURL, stringToFind + "%");
+
+                if (gen != mAutoCompleteGen.get()) return;
 
                 if (result == null) {
                     mAutoCompleteData.postValue(null);
@@ -99,7 +109,7 @@ public class AutoCompleteViewModel extends ViewModel {
                     mAutoCompleteData.postValue(null);
                 }
             } catch (Exception e) {
-                if (!Thread.currentThread().isInterrupted()) {
+                if (!Thread.currentThread().isInterrupted() && gen == mAutoCompleteGen.get()) {
                     Log.e(TAG, "autoComplete failed:", e);
                     mAutoCompleteData.postValue(null);
                 }
@@ -124,11 +134,14 @@ public class AutoCompleteViewModel extends ViewModel {
 
         cancelFuture(mSearchFuture);
         mCurrentSearchTerm = searchTerm;
+        final long gen = mSearchGen.incrementAndGet();
 
         mSearchFuture = mAutoCompleteExecutor.submit(() -> {
             try {
                 List<AutoCompleteEntity> result = mAutoCompleteSearch.searchSync(searchTerm);
-                mSearchData.postValue(result);
+                if (gen == mSearchGen.get()) {
+                    mSearchData.postValue(result);
+                }
             } catch (Exception e) {
                 if (!Thread.currentThread().isInterrupted()) {
                     Log.e(TAG, "Search suggestions failed:", e);
@@ -149,6 +162,7 @@ public class AutoCompleteViewModel extends ViewModel {
 
     public void resetEngines() {
         mCurrentSearchTerm = null;
+        mSearchGen.incrementAndGet();
         mSearchData.postValue(null);
     }
 

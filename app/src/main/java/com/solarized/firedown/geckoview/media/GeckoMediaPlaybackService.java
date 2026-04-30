@@ -131,7 +131,7 @@ public class GeckoMediaPlaybackService extends Service {
 
     private int     mCurrentPlaybackState = PlaybackStateCompat.STATE_NONE;
     private boolean mIsForegroundService  = false;
-    private static boolean sIsRunning = false;
+    private static volatile boolean sIsRunning = false;
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────────────────────────
 
