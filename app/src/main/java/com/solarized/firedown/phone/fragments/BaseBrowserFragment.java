@@ -13,6 +13,7 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.solarized.firedown.AppLock;
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.autocomplete.AutoCompleteViewModel;
 import com.solarized.firedown.data.models.GeckoStateViewModel;
@@ -80,6 +81,8 @@ public class BaseBrowserFragment extends BaseFocusFragment implements AutoComple
     protected GeckoPromptManager mGeckoPromptManager;
     @Inject
     protected GeckoMediaController mGeckoMediaController;
+    @Inject
+    protected AppLock mAppLock;
 
     protected GeckoStateViewModel mGeckoStateViewModel;
 

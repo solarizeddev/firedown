@@ -163,15 +163,18 @@ public class ApplicationLifeCycleHandler implements Application.ActivityLifecycl
 
 
     private void updateWindowSecureMode(Activity activity) {
-        if(activity instanceof VaultActivity){
+        if (activity instanceof VaultActivity) {
             activity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
-        }else{
-            boolean secure = mAppLock.isEnabled();
-            if (secure) {
-                activity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
-            } else {
-                activity.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_SECURE);
-            }
+            return;
+        }
+
+        boolean secure = mAppLock.isEnabled();
+        if (secure) {
+            activity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
+        } else if (!(activity instanceof BrowserActivity)) {
+            // BrowserFragment toggles FLAG_SECURE based on incognito theme;
+            // don't clear it here or we'd race with that signal.
+            activity.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_SECURE);
         }
     }
 

@@ -1642,6 +1642,17 @@ public class BrowserFragment extends BaseBrowserFragment implements OnItemClickL
         window.getDecorView().setBackgroundColor(
                 IncognitoColors.getSurface(mActivity, incognito));
 
+        // Block recents thumbnail / screen capture for incognito browsing.
+        // When leaving incognito we only clear the flag if AppLock isn't also
+        // holding it; ApplicationLifeCycleHandler#updateWindowSecureMode
+        // delegates the BrowserActivity FLAG_SECURE to this fragment so the
+        // two don't fight.
+        if (incognito) {
+            window.addFlags(WindowManager.LayoutParams.FLAG_SECURE);
+        } else if (!mAppLock.isEnabled()) {
+            window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE);
+        }
+
         WindowInsetsControllerCompat insetsController =
                 WindowCompat.getInsetsController(window, window.getDecorView());
         insetsController.setAppearanceLightStatusBars(lightBars);
