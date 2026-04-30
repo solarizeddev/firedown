@@ -1622,6 +1622,20 @@ public class BrowserFragment extends BaseBrowserFragment implements OnItemClickL
 
 
     private void applyBrowserIncognitoTheme(boolean incognito) {
+        // Sync FLAG_SECURE every call, before the early-exit cache guard
+        // below. The cached mIsIncognitoThemed resets to false on fragment
+        // recreation while the Activity's Window may still hold FLAG_SECURE
+        // from the previous fragment incarnation; without this, switching
+        // back to a regular tab would leave the flag stuck on.
+        if (mActivity != null) {
+            Window w = mActivity.getWindow();
+            if (incognito) {
+                w.addFlags(WindowManager.LayoutParams.FLAG_SECURE);
+            } else if (!mAppLock.isEnabled()) {
+                w.clearFlags(WindowManager.LayoutParams.FLAG_SECURE);
+            }
+        }
+
         if (incognito == mIsIncognitoThemed)
             return;
         mIsIncognitoThemed = incognito;
@@ -1641,17 +1655,6 @@ public class BrowserFragment extends BaseBrowserFragment implements OnItemClickL
         Window window = mActivity.getWindow();
         window.getDecorView().setBackgroundColor(
                 IncognitoColors.getSurface(mActivity, incognito));
-
-        // Block recents thumbnail / screen capture for incognito browsing.
-        // When leaving incognito we only clear the flag if AppLock isn't also
-        // holding it; ApplicationLifeCycleHandler#updateWindowSecureMode
-        // delegates the BrowserActivity FLAG_SECURE to this fragment so the
-        // two don't fight.
-        if (incognito) {
-            window.addFlags(WindowManager.LayoutParams.FLAG_SECURE);
-        } else if (!mAppLock.isEnabled()) {
-            window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE);
-        }
 
         WindowInsetsControllerCompat insetsController =
                 WindowCompat.getInsetsController(window, window.getDecorView());
