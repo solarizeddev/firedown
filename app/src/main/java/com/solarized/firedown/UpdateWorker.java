@@ -3,6 +3,9 @@ package com.solarized.firedown;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.Signature;
+import android.content.pm.SigningInfo;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -13,6 +16,7 @@ import androidx.work.WorkerParameters;
 
 import com.solarized.firedown.data.di.Qualifiers;
 import com.solarized.firedown.utils.BrowserHeaders;
+import com.solarized.firedown.utils.BuildUtils;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.json.JSONObject;
@@ -73,7 +77,7 @@ public class UpdateWorker extends Worker {
 
             try (Response response = okHttpClient.newCall(statusRequest).execute()) {
 
-                if (!response.isSuccessful())
+                if (!response.isSuccessful() || response.body() == null)
                     return Result.retry();
 
                 JSONObject json = new JSONObject(response.body().string());
@@ -104,7 +108,7 @@ public class UpdateWorker extends Worker {
                 mSharedPreferences.getString(Preferences.UNIQUE_ID, "")).build();
 
         try (Response response = okHttpClient.newCall(downloadRequest).execute()) {
-            if (!response.isSuccessful()) return Result.retry();
+            if (!response.isSuccessful() || response.body() == null) return Result.retry();
 
             // Write to disk using Okio
             try (BufferedSink sink = Okio.buffer(Okio.sink(updateFile))) {
@@ -112,14 +116,80 @@ public class UpdateWorker extends Worker {
             }
 
             // Verify SHA256
-            String localSha = DigestUtils.sha256Hex(new FileInputStream(updateFile));
+            String localSha;
+            try (FileInputStream fis = new FileInputStream(updateFile)) {
+                localSha = DigestUtils.sha256Hex(fis);
+            }
             if (!localSha.equalsIgnoreCase(remoteSha)) {
+                updateFile.delete();
+                return Result.retry();
+            }
+
+            // Verify the downloaded APK is signed by the same key as the installed app.
+            // SHA256 alone trusts the manifest; signature check anchors trust to the device.
+            if (!verifyApkSignature(updateFile)) {
                 updateFile.delete();
                 return Result.retry();
             }
 
             UpdateNotification.showInstallPrompt(mContext, name);
             return Result.success();
+        }
+    }
+
+    private boolean verifyApkSignature(File apk) {
+        try {
+            PackageManager pm = mContext.getPackageManager();
+            String installedPackage = mContext.getPackageName();
+            Signature[] downloaded;
+            Signature[] installed;
+
+            if (BuildUtils.hasAndroidP()) {
+                PackageInfo dl = pm.getPackageArchiveInfo(apk.getAbsolutePath(),
+                        PackageManager.GET_SIGNING_CERTIFICATES);
+                PackageInfo cur = pm.getPackageInfo(installedPackage,
+                        PackageManager.GET_SIGNING_CERTIFICATES);
+                if (dl == null || dl.signingInfo == null || cur.signingInfo == null) return false;
+
+                SigningInfo dlInfo = dl.signingInfo;
+                SigningInfo curInfo = cur.signingInfo;
+                downloaded = dlInfo.hasMultipleSigners()
+                        ? dlInfo.getApkContentsSigners()
+                        : dlInfo.getSigningCertificateHistory();
+                installed = curInfo.hasMultipleSigners()
+                        ? curInfo.getApkContentsSigners()
+                        : curInfo.getSigningCertificateHistory();
+            } else {
+                @SuppressWarnings("deprecation")
+                PackageInfo dl = pm.getPackageArchiveInfo(apk.getAbsolutePath(),
+                        PackageManager.GET_SIGNATURES);
+                @SuppressWarnings("deprecation")
+                PackageInfo cur = pm.getPackageInfo(installedPackage,
+                        PackageManager.GET_SIGNATURES);
+                if (dl == null) return false;
+                downloaded = dl.signatures;
+                installed = cur.signatures;
+            }
+
+            if (downloaded == null || installed == null
+                    || downloaded.length == 0 || installed.length == 0) {
+                return false;
+            }
+
+            for (Signature d : downloaded) {
+                boolean matched = false;
+                for (Signature i : installed) {
+                    if (d.equals(i)) {
+                        matched = true;
+                        break;
+                    }
+                }
+                if (!matched) return false;
+            }
+            return true;
+        } catch (Exception e) {
+            Log.e("UpdateWorker", "Signature verification failed", e);
+            return false;
         }
     }
 

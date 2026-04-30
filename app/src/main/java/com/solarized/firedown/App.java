@@ -144,14 +144,23 @@ public class App extends Application implements Configuration.Provider{
 
         ActivityManager activityManager = ((ActivityManager) mAppContext.getSystemService(ACTIVITY_SERVICE));
 
-        if(activityManager != null){
-
-            ActivityManager.RunningAppProcessInfo processInfo = activityManager.getRunningAppProcesses().get(0);
-
-            isMainProcess = processInfo.pid == pid && processInfo.processName.equals(mAppContext.getPackageName());
+        if (activityManager != null) {
+            // getRunningAppProcesses() can return null on restricted/background contexts;
+            // match by pid rather than assuming index 0 is the current process.
+            java.util.List<ActivityManager.RunningAppProcessInfo> processes =
+                    activityManager.getRunningAppProcesses();
+            if (processes != null) {
+                String packageName = mAppContext.getPackageName();
+                for (ActivityManager.RunningAppProcessInfo info : processes) {
+                    if (info.pid == pid) {
+                        isMainProcess = packageName.equals(info.processName);
+                        break;
+                    }
+                }
+            }
         }
 
-        return isMainProcess;
+        return isMainProcess != null && isMainProcess;
     }
 
     public static void clearAndExit(){
