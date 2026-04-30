@@ -925,7 +925,7 @@ public class GeckoComponents {
             if(geckoState == null)
                 return;
 
-            mGeckoMediaController.onMediaStateChanged(mediaSession, geckoState);
+            mGeckoMediaController.onMediaPlay(mediaSession, geckoState);
 
             if(isCurrentGeckoState(geckoState)){
                 mGeckoObserverRegistry.notifyObservers(GeckoObserverInvoker.MEDIA_PLAY, geckoState, mediaSession);
@@ -941,7 +941,7 @@ public class GeckoComponents {
             if(geckoState == null)
                 return;
 
-            mGeckoMediaController.onMediaStateChanged(mediaSession, geckoState);
+            mGeckoMediaController.onMediaPauseOrStop(mediaSession, geckoState);
 
             if(isCurrentGeckoState(geckoState))
                 mGeckoObserverRegistry.notifyObservers(GeckoObserverInvoker.MEDIA_STOP, geckoState, mediaSession);
@@ -990,7 +990,7 @@ public class GeckoComponents {
             if(geckoState == null)
                 return;
 
-            mGeckoMediaController.onMediaStateChanged(mediaSession, geckoState);
+            mGeckoMediaController.onMediaPauseOrStop(mediaSession, geckoState);
 
             if(isCurrentGeckoState(geckoState))
                 mGeckoObserverRegistry.notifyObservers(GeckoObserverInvoker.MEDIA_PAUSE, geckoState, mediaSession);
