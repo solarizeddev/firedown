@@ -267,12 +267,13 @@ public class BaseFocusFragment extends Fragment {
         if(!GeckoMediaPlaybackService.isRunning())
             return;
 
-        Intent intent = new Intent(mActivity, GeckoMediaPlaybackService.class);
-        intent.setAction(IntentActions.MEDIA_STOP);
+        // Delegate to the controller. It removes this session from the
+        // playing set, hands off to a still-playing fallback if needed,
+        // and only fires MEDIA_STOP when nothing is left to play. Sending
+        // MEDIA_STOP unconditionally here used to tear down the foreground
+        // service whenever any tab closed — stopping unrelated playback in
+        // another tab.
         geckoMediaController.stopMediaForSession(geckoState.getEntityId());
-
-        mActivity.startService(intent);
-
     }
 
     protected void closeSearchView(){
