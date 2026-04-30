@@ -17,7 +17,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:paddingTop="12dp"
-        app:layoutManager=".ui.NoScrollGridLayoutManager"
+        app:layoutManager="com.solarized.firedown.ui.NoScrollGridLayoutManager"
         app:spanCount="@integer/shortcuts_span" />
 
 </com.google.android.material.card.MaterialCardView>
