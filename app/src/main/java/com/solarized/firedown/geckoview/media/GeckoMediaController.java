@@ -34,7 +34,8 @@ import dagger.hilt.android.qualifiers.ApplicationContext;
  *   <li><b>Tab-close awareness.</b> {@link #onTabClosed(int)} must be called when a tab is
  *       removed. This ensures the service is stopped even when GeckoView never fires
  *       {@code onDeactivated} (crash, force-close, background tab removal).
- *   <li><b>{@link #onMediaStateChanged} does not promote sessions to current.</b>
+ *   <li><b>{@link #onMediaPlay} owns promotion to current; {@link #onActivated}
+ *       only seeds mCurrentSessionId when nothing is playing.</b>
  *   <li><b>{@link #onMetaData} guards against stealing current from an active session.</b>
  *   <li><b>{@link #clearMedia()} sends MEDIA_STOP to the service.</b>
  *   <li><b>{@link #stopMediaForSession(int)} replaces the old stopMediaId.</b>
@@ -53,6 +54,11 @@ public class GeckoMediaController {
     // is guaranteed across threads.
     private final Map<Integer, GeckoMetaData>     mMetaMap    = new ConcurrentHashMap<>();
     private final Map<Integer, GeckoMediaSession>  mSessionMap = new ConcurrentHashMap<>();
+    // Tracks sessions that have fired onPlay without a paired onPause/onStop.
+    // mCurrentSessionId follows actual playback rather than mere registration,
+    // so opening a background tab with autoplay can't hijack the notification
+    // away from a tab that is actually playing.
+    private final Set<Integer> mPlayingSessionIds = ConcurrentHashMap.newKeySet();
 
     private final Context mContext;
     private volatile MediaSession.PositionState mPositionState;
@@ -99,6 +105,7 @@ public class GeckoMediaController {
         Log.d(TAG, "clearMedia — stopping service");
         mMetaMap.clear();
         mSessionMap.clear();
+        mPlayingSessionIds.clear();
         mCurrentSessionId = 0;
         mPositionState = null;
         stopService();
@@ -117,13 +124,19 @@ public class GeckoMediaController {
 
         boolean wasCurrent = (mCurrentSessionId == sessionId);
         boolean hadSession = mSessionMap.containsKey(sessionId);
+        mPlayingSessionIds.remove(sessionId);
 
         if (wasCurrent) {
             //Don't set mCurrentSessionId = 0 before stop();
             stop();
-            stopService();
-            mCurrentSessionId = 0;
+            // Hand off to whatever else is still playing rather than tearing
+            // down the service. Only stop the service when nothing's left.
+            int fallback = pickPlayingFallback();
+            mCurrentSessionId = fallback;
             mPositionState = null;
+            if (fallback == 0) {
+                stopService();
+            }
         }
 
         //Don't remove sessionId before stop;
@@ -144,14 +157,18 @@ public class GeckoMediaController {
 
         boolean wasCurrent = (mCurrentSessionId == sessionId);
         boolean hadSession = mSessionMap.containsKey(sessionId);
+        mPlayingSessionIds.remove(sessionId);
 
         mMetaMap.remove(sessionId);
         mSessionMap.remove(sessionId);
 
         if (wasCurrent) {
-            mCurrentSessionId = 0;
+            int fallback = pickPlayingFallback();
+            mCurrentSessionId = fallback;
             mPositionState = null;
-            stopService();
+            if (fallback == 0) {
+                stopService();
+            }
         }
 
         if (hadSession) {
@@ -160,18 +177,6 @@ public class GeckoMediaController {
     }
 
     // ── GeckoView MediaSession callbacks ──────────────────────────────────────────────────────────
-
-    /**
-     * Does NOT set mCurrentSessionId. State changes (including STOP) arrive for any session.
-     */
-    public void onMediaStateChanged(MediaSession mediaSession, GeckoState geckoState) {
-        int sessionId = geckoState.getEntityId();
-        boolean isNew = !mSessionMap.containsKey(sessionId);
-        ensureSessionExists(mediaSession, sessionId);
-        if (isNew) {
-            notifyMediaSessionsChanged();
-        }
-    }
 
     public void onPositionChange(MediaSession mediaSession, GeckoState geckoState,
                                  MediaSession.PositionState state) {
@@ -203,11 +208,55 @@ public class GeckoMediaController {
 
         boolean isNew = !mSessionMap.containsKey(sessionId);
         ensureSessionExists(mediaSession, sessionId);
-        mCurrentSessionId = sessionId;
+        // Don't hijack the spotlight from a tab that's actually playing.
+        // mCurrentSessionId follows real playback state via onMediaPlay; activation
+        // only seeds the field on first registration.
+        if (mCurrentSessionId == 0) {
+            mCurrentSessionId = sessionId;
+        }
 
         if (isNew) {
             notifyMediaSessionsChanged();
         }
+    }
+
+    /**
+     * Called when the session transitions to PLAYING. The actively playing
+     * session takes ownership of the foreground notification.
+     */
+    public void onMediaPlay(MediaSession mediaSession, GeckoState geckoState) {
+        int sessionId = geckoState.getEntityId();
+        boolean isNew = !mSessionMap.containsKey(sessionId);
+        ensureSessionExists(mediaSession, sessionId);
+        mPlayingSessionIds.add(sessionId);
+        mCurrentSessionId = sessionId;
+        if (isNew) {
+            notifyMediaSessionsChanged();
+        }
+    }
+
+    /**
+     * Called when the session transitions to PAUSED or STOPPED. If the paused
+     * session was holding the spotlight, hand off to whatever is still
+     * playing; otherwise leave mCurrentSessionId so notification controls
+     * still target the user's last-played session for a quick resume.
+     */
+    public void onMediaPauseOrStop(MediaSession mediaSession, GeckoState geckoState) {
+        int sessionId = geckoState.getEntityId();
+        boolean isNew = !mSessionMap.containsKey(sessionId);
+        ensureSessionExists(mediaSession, sessionId);
+        mPlayingSessionIds.remove(sessionId);
+        if (mCurrentSessionId == sessionId && !mPlayingSessionIds.isEmpty()) {
+            mCurrentSessionId = mPlayingSessionIds.iterator().next();
+        }
+        if (isNew) {
+            notifyMediaSessionsChanged();
+        }
+    }
+
+    private int pickPlayingFallback() {
+        if (mPlayingSessionIds.isEmpty()) return 0;
+        return mPlayingSessionIds.iterator().next();
     }
 
     public void onDeactivated(GeckoState geckoState) {
@@ -216,6 +265,7 @@ public class GeckoMediaController {
 
         boolean hadSession = mSessionMap.containsKey(sessionId);
 
+        mPlayingSessionIds.remove(sessionId);
         mMetaMap.remove(sessionId);
         mSessionMap.remove(sessionId);
 
