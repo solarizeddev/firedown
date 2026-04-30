@@ -4,6 +4,13 @@
 
 → [firedown.app](https://firedown.app)
 
+
+<p align="center">
+  <img src="branding/screenshots/landing.png" width="30%" />
+  <img src="branding/screenshots/browsing.png" width="30%" />
+  <img src="branding/screenshots/capturing.png" width="30%" />
+</p>
+
 ## What it does
 
 - Downloads video, audio, and images from YouTube, Twitch, Instagram, X, Facebook, Vimeo, and most websites
