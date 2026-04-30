@@ -1,0 +1,28 @@
+<resources>
+    <plurals name="complete_delete_files_text">
+        <item quantity="other">Ištrinta failų: %1$d</item>
+        <item quantity="one">Ištrinta failų: %1$d</item>
+        <item quantity="few">Ištrinta failų: %1$d</item>
+        <item quantity="many">Ištrinta failų: %1$d</item>
+    </plurals>
+    <plurals name="complete_move_files_text">
+        <item quantity="other">Perkelta failų: %1$d</item>
+        <item quantity="one">Perkelta failų: %1$d</item>
+        <item quantity="few">Perkelta failų: %1$d</item>
+        <item quantity="many">Perkelta failų: %1$d</item>
+    </plurals>
+    <plurals name="move_file_fail">
+        <item quantity="other">Nepavyko perkelti failų. %1$s</item>
+        <item quantity="one">Nepavyko perkelti failų. %1$s</item>
+        <item quantity="few">Nepavyko perkelti failų. %1$s</item>
+        <item quantity="many">Nepavyko perkelti failų. %1$s</item>
+    </plurals>
+<plurals name="hours_ago">
+        <item quantity="one">%1$d val.</item>
+        <item quantity="few">%1$d val.</item>
+        <item quantity="many">%1$d val.</item>
+        <item quantity="other">%1$d val.</item>
+    </plurals>
+
+    
+    </resources>

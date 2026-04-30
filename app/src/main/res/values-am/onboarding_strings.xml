@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?><resources>
+      
+  <!-- Text for context menu item to open the link in a new tab. -->
+      
+  <string name="onboarding_button">የFire-Button</string>
+      
+  <string name="onboarding_title">የሆነ ነገር ከድር ጣቢያ ማውረድ በሚፈልጉበት ጊዜ፣ ከታች በቀኝ በኩል የFiredownን Fire-Button መታ ያድርጉ።</string>
+      
+  <string name="onboarding_message">Firedown የሚወርዱ ነገሮችን ለማግኘት ድር ጣቢያውን ያስሳል፣ እና እርስዎ ከእነሱ እንዲመርጡ ለመምረጥ በሚመች ዝርዝር ውስጥ ያቀርብልዎታል።</string>
+  
+</resources>

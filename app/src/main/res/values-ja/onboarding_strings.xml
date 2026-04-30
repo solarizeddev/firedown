@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?><resources>
+      
+  <!-- Text for context menu item to open the link in a new tab. -->
+      
+  <string name="onboarding_button">Fire ボタン</string>
+      
+  <string name="onboarding_title">Web サイトから何かをダウンロードしたいときは、右下にある Firedown の Fire ボタンをタップします。</string>
+      
+  <string name="onboarding_message">Firedown は Web サイトをスキャンしてダウンロードするアイテムを探し、選択できる便利なリストを提供します。</string>
+  
+</resources>

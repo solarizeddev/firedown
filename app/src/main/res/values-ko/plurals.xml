@@ -1,0 +1,19 @@
+<resources>
+    <plurals name="complete_delete_files_text">
+        <item quantity="other">파일 %1$d개 삭제됨</item>
+        <item quantity="one">파일 %1$d개 삭제됨</item>
+    </plurals>
+    <plurals name="complete_move_files_text">
+        <item quantity="other">파일 %1$d개 이동됨</item>
+        <item quantity="one">파일 %1$d개 이동됨</item>
+    </plurals>
+    <plurals name="move_file_fail">
+        <item quantity="other">파일을 이동할 수 없습니다. %1$s</item>
+        <item quantity="one">파일을 이동할 수 없습니다. %1$s</item>
+    </plurals>
+<plurals name="hours_ago">
+        <item quantity="other">%1$d시간</item>
+    </plurals>
+
+    
+    </resources>

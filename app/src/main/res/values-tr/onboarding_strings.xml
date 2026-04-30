@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?><resources>
+      
+  <!-- Text for context menu item to open the link in a new tab. -->
+      
+  <string name="onboarding_button">Ateş Düğmesi</string>
+      
+  <string name="onboarding_title">Bir web sitesinden bir şey indirmek istediğinizde, sağ alttaki Firedown\'un Ateşleme Düğmesine dokunun:</string>
+      
+  <string name="onboarding_message">Firedown, indirilecek öğeler için web sitesini tarayacak ve bunları aralarından seçim yapabileceğiniz kullanışlı bir liste halinde sunacaktır.</string>
+  
+</resources>

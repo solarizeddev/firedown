@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/popup_header"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_gravity="center"
+    android:gravity="center"
+    android:orientation="horizontal">
+
+
+    <com.solarized.firedown.ui.browser.BackwardBrowserButton
+        android:id="@+id/popup_go_backward"
+        style="@style/Widget.Material3.Button.IconButton"
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:layout_height="wrap_content"
+        android:textColor="@color/popup_header_selector"
+        app:icon="@drawable/ic_arrow_back_24"
+        app:cornerRadius="16dp"
+        app:iconPadding="8dp"
+        android:text="@string/browser_menu_back"
+        app:iconGravity="textTop"
+        app:iconTint="@color/popup_header_selector" />
+
+
+
+    <com.solarized.firedown.ui.browser.ForwardBrowserButton
+        android:id="@+id/popup_go_forward"
+        style="@style/Widget.Material3.Button.IconButton"
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:layout_height="wrap_content"
+        android:textColor="@color/popup_header_selector"
+        app:icon="@drawable/ic_arrow_forward_24"
+        app:cornerRadius="16dp"
+        app:iconPadding="8dp"
+        android:text="@string/browser_menu_forward"
+        app:iconGravity="textTop"
+        app:iconTint="@color/popup_header_selector" />
+
+
+
+    <com.solarized.firedown.ui.browser.ShareBrowserButton
+        android:id="@+id/popup_share"
+        style="@style/Widget.Material3.Button.IconButton"
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:layout_height="wrap_content"
+        android:textColor="@color/popup_header_selector"
+        app:icon="@drawable/ic_share_24"
+        app:cornerRadius="16dp"
+        android:textAlignment="center"
+        app:iconPadding="8dp"
+        android:text="@string/browser_menu_share"
+        app:iconGravity="textTop"
+        app:iconTint="@color/popup_header_selector" />
+
+
+
+    <com.solarized.firedown.ui.browser.ReloadBrowserButton
+        android:id="@+id/popup_reload"
+        style="@style/Widget.Material3.Button.IconButton"
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:layout_height="wrap_content"
+        android:textColor="@color/popup_header_selector"
+        app:cornerRadius="16dp"
+        app:iconPadding="8dp"
+        app:icon="@drawable/ic_refresh_24"
+        android:text="@string/browser_menu_refresh"
+        android:textAlignment="center"
+        app:iconGravity="textTop"
+        app:iconTint="@color/popup_header_selector" />
+
+
+</LinearLayout>

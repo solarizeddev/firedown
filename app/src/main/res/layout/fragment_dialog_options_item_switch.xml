@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/item_options_switch"
+    android:background="?attr/selectableItemBackground"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:clickable="true"
+    android:focusable="true"
+    android:orientation="horizontal"
+    android:paddingTop="4dp"
+    android:paddingBottom="4dp"
+    android:paddingStart="16dp"
+    android:paddingEnd="16dp">
+
+    <TextView
+        android:id="@+id/item_options"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:drawablePadding="16dp"
+        android:gravity="center_vertical"
+        android:text="@string/browser_desktop"
+        android:textAllCaps="false"
+        android:background="@null"
+        android:textColor="?attr/colorOnSurfaceVariant"
+        app:drawableTint="?attr/colorOnSurfaceVariant"
+        android:textSize="16sp"
+        android:clickable="false"
+        android:focusable="false"
+        app:drawableStartCompat="@drawable/ic_computer_24" />
+
+
+    <com.solarized.firedown.ui.browser.DesktopBrowserButton
+        android:id="@+id/item_options_switch_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginStart="48dp"
+        android:duplicateParentState="true"
+        android:textAllCaps="false"
+        android:textColor="?attr/colorOnSurfaceVariant"
+        android:textSize="16sp" />
+
+
+</LinearLayout>

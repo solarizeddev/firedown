@@ -1,0 +1,385 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Native donate screen — value-for-value version.
+
+    Three collapsed cards (Lightning, Bitcoin on-chain, Card). Tapping a
+    card's header expands its content; only one card open at a time is
+    enforced in code, not layout. The Card row has no expandable body —
+    it just hands off to Ko-fi in the browser.
+-->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:scrollbars="none">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingHorizontal="16dp"
+        android:paddingTop="20dp"
+        android:paddingBottom="32dp">
+
+        <!-- ──────────────────────────────────────────────────────────
+             Header — V4V framing
+             ────────────────────────────────────────────────────────── -->
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/donate_subtitle"
+            android:textSize="14sp"
+            android:lineSpacingMultiplier="1.4"
+            android:textColor="?android:attr/textColorSecondary"
+            android:layout_marginBottom="20dp" />
+
+        <!-- ──────────────────────────────────────────────────────────
+             Lightning card (collapsible)
+             ────────────────────────────────────────────────────────── -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/donate_card_lightning"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            app:cardCornerRadius="20dp"
+            app:cardElevation="0dp"
+            app:strokeWidth="1dp"
+            app:strokeColor="?attr/colorOutlineVariant">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:animateLayoutChanges="true">
+
+                <!-- Tappable header — always visible -->
+                <LinearLayout
+                    android:id="@+id/donate_lightning_header"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:padding="20dp"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true">
+
+                    <ImageView
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:background="@drawable/bg_circle_primary"
+                        android:src="@drawable/ic_lightning_24"
+                        android:contentDescription="@null"
+                        android:padding="9dp"
+                        app:tint="?attr/colorOnPrimaryContainer" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="12dp"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/donate_lightning_title"
+                            android:textSize="15sp"
+                            android:textStyle="bold"
+                            android:textColor="?android:attr/textColorPrimary" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/donate_lightning_meta"
+                            android:textSize="12sp"
+                            android:fontFamily="monospace"
+                            android:textColor="?android:attr/textColorTertiary" />
+                    </LinearLayout>
+
+                    <ImageView
+                        android:id="@+id/donate_lightning_chevron"
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@drawable/ic_chevron_down_24"
+                        android:contentDescription="@null"
+                        app:tint="?android:attr/textColorTertiary" />
+                </LinearLayout>
+
+                <!-- Expandable body -->
+                <LinearLayout
+                    android:id="@+id/donate_lightning_body"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone"
+                    android:paddingHorizontal="20dp"
+                    android:paddingBottom="20dp"
+                    tools:visibility="visible">
+
+                    <com.google.android.material.button.MaterialButtonToggleGroup
+                        android:id="@+id/donate_amount_group"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="12dp"
+                        app:singleSelection="true"
+                        app:selectionRequired="false">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/donate_amt_1k"
+                            style="?attr/materialButtonOutlinedStyle"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/donate_amt_1k" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/donate_amt_5k"
+                            style="?attr/materialButtonOutlinedStyle"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/donate_amt_5k" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/donate_amt_21k"
+                            style="?attr/materialButtonOutlinedStyle"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/donate_amt_21k" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/donate_amt_100k"
+                            style="?attr/materialButtonOutlinedStyle"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/donate_amt_100k" />
+                    </com.google.android.material.button.MaterialButtonToggleGroup>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="12dp"
+                        android:hint="@string/donate_custom_amount_hint"
+                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/donate_custom_sats"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="number"
+                            android:fontFamily="monospace" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/donate_pay_btn"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/donate_pay_default"
+                        app:icon="@drawable/ic_lightning_24"
+                        app:iconGravity="textStart"
+                        app:cornerRadius="12dp" />
+
+                    <TextView
+                        android:id="@+id/donate_status"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:minHeight="18dp"
+                        android:textSize="12sp"
+                        android:fontFamily="monospace"
+                        android:textColor="?android:attr/textColorSecondary"
+                        android:text="" />
+
+                    <LinearLayout
+                        android:id="@+id/donate_invoice_fallback"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:visibility="gone"
+                        android:layout_marginTop="14dp"
+                        android:padding="14dp"
+                        android:background="@drawable/bg_invoice_fallback"
+                        tools:visibility="visible">
+
+                        <ImageView
+                            android:id="@+id/donate_invoice_qr"
+                            android:layout_width="220dp"
+                            android:layout_height="220dp"
+                            android:layout_gravity="center"
+                            android:contentDescription="@string/donate_invoice_qr_desc"
+                            android:layout_marginBottom="12dp" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal">
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/donate_open_wallet_btn"
+                                style="?attr/materialButtonOutlinedStyle"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:layout_marginEnd="6dp"
+                                android:text="@string/donate_open_in_wallet"
+                                app:icon="@drawable/ic_lightning_24"
+                                app:iconSize="14dp" />
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/donate_copy_invoice_btn"
+                                style="?attr/materialButtonOutlinedStyle"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:layout_marginStart="6dp"
+                                android:text="@string/donate_copy_invoice"
+                                app:icon="@drawable/ic_copy_24"
+                                app:iconSize="14dp" />
+                        </LinearLayout>
+                    </LinearLayout>
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- ──────────────────────────────────────────────────────────
+             Bitcoin on-chain card (collapsible)
+             ────────────────────────────────────────────────────────── -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/donate_card_bitcoin"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            app:cardCornerRadius="20dp"
+            app:cardElevation="0dp"
+            app:strokeWidth="1dp"
+            app:strokeColor="?attr/colorOutlineVariant">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:animateLayoutChanges="true">
+
+                <LinearLayout
+                    android:id="@+id/donate_bitcoin_header"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:padding="20dp"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true">
+
+                    <ImageView
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:background="@drawable/bg_circle_bitcoin"
+                        android:src="@drawable/currency_bitcoin_24"
+                        android:contentDescription="@null"
+                        app:tint="?attr/colorOnSecondaryContainer"
+                        android:padding="9dp" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="12dp"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/donate_bitcoin_title"
+                            android:textSize="15sp"
+                            android:textStyle="bold"
+                            android:textColor="?android:attr/textColorPrimary" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/donate_bitcoin_meta"
+                            android:textSize="12sp"
+                            android:fontFamily="monospace"
+                            android:textColor="?android:attr/textColorTertiary" />
+                    </LinearLayout>
+
+                    <ImageView
+                        android:id="@+id/donate_bitcoin_chevron"
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@drawable/ic_chevron_down_24"
+                        android:contentDescription="@null"
+                        app:tint="?android:attr/textColorTertiary" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/donate_bitcoin_body"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone"
+                    android:paddingHorizontal="20dp"
+                    android:paddingBottom="20dp"
+                    tools:visibility="visible">
+
+                    <ImageView
+                        android:id="@+id/btc_qr"
+                        android:layout_width="180dp"
+                        android:layout_height="180dp"
+                        android:layout_gravity="center_horizontal"
+                        android:layout_marginBottom="16dp"
+                        android:contentDescription="@string/donate_btc_qr_desc" />
+
+                    <TextView
+                        android:id="@+id/btc_address"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:padding="10dp"
+                        android:background="@drawable/bg_address_box"
+                        android:textIsSelectable="true"
+                        android:textSize="11sp"
+                        android:fontFamily="monospace"
+                        android:textColor="?android:attr/textColorPrimary"
+                        android:layout_marginBottom="12dp"
+                        tools:text="bc1q000000000000000000000000000000000000000" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btc_open_wallet"
+                            style="?attr/materialButtonOutlinedStyle"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginEnd="6dp"
+                            android:text="@string/donate_btc_open_wallet"
+                            app:icon="@drawable/ic_wallet_24"
+                            app:iconSize="14dp" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btc_copy_btn"
+                            style="?attr/materialButtonOutlinedStyle"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginStart="6dp"
+                            android:text="@string/donate_btc_copy"
+                            app:icon="@drawable/ic_copy_24"
+                            app:iconSize="14dp" />
+                    </LinearLayout>
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+    </LinearLayout>
+</ScrollView>

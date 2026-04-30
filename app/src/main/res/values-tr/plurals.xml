@@ -1,0 +1,20 @@
+<resources>
+    <plurals name="complete_delete_files_text">
+        <item quantity="other">%1$d dosya silindi</item>
+        <item quantity="one">%1$d dosya silindi</item>
+    </plurals>
+    <plurals name="complete_move_files_text">
+        <item quantity="other">%1$d dosya taşındı</item>
+        <item quantity="one">%1$d dosya taşındı</item>
+    </plurals>
+    <plurals name="move_file_fail">
+        <item quantity="other">Dosyalar taşınamadı. %1$s</item>
+        <item quantity="one">Dosya taşınamadı. %1$s</item>
+    </plurals>
+<plurals name="hours_ago">
+        <item quantity="one">%1$ds</item>
+        <item quantity="other">%1$ds</item>
+    </plurals>
+
+    
+    </resources>

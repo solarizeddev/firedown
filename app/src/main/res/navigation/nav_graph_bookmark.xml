@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph_bookmark"
+    app:startDestination="@id/web_bookmark">
+    <fragment
+        android:id="@+id/web_bookmark"
+        android:name="com.solarized.firedown.phone.fragments.WebBookmarkFragment">
+        <action
+            android:id="@+id/action_web_bookmark_edit"
+            app:destination="@id/web_bookmark_edit"
+            app:popUpTo="@id/web_bookmark"
+            app:popUpToInclusive="true" />
+    </fragment>
+    <fragment
+        android:id="@+id/web_bookmark_edit"
+        android:name="com.solarized.firedown.phone.fragments.WebBookmarkEditFragment" />
+    <dialog
+        android:id="@+id/dialog_web_options"
+        android:name="com.solarized.firedown.phone.dialogs.WebOptionSheetDialogFragment" />
+    <dialog
+        android:id="@+id/dialog_delete_bookmarks"
+        android:name="com.solarized.firedown.phone.dialogs.DeleteBookmarkDialogFragment" />
+</navigation>

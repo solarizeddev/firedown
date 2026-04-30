@@ -1,0 +1,149 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 9,
+    "identityHash": "4ce6f87be694be9adfea64a04cb44697",
+    "entities": [
+      {
+        "tableName": "download",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`uid` INTEGER NOT NULL, `file_parent_id` INTEGER NOT NULL, `file_headers` TEXT, `file_type` INTEGER NOT NULL, `file_url` TEXT, `file_name` TEXT, `file_img` TEXT, `file_desc` TEXT, `file_path` TEXT, `file_mime_type` TEXT, `file_origin_url` TEXT, `file_progress` INTEGER NOT NULL, `file_date` INTEGER NOT NULL, `file_size` INTEGER NOT NULL, `file_live` INTEGER NOT NULL, `file_error_message` INTEGER NOT NULL, `file_status` INTEGER NOT NULL, `file_encrypted` INTEGER NOT NULL, `file_thumbnail_duration` INTEGER NOT NULL, `file_duration` INTEGER NOT NULL, `file_duration_formatted` TEXT, `file_safe` INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(`uid`))",
+        "fields": [
+          {
+            "fieldPath": "uid",
+            "columnName": "uid",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fileParentId",
+            "columnName": "file_parent_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fileHeaders",
+            "columnName": "file_headers",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "fileType",
+            "columnName": "file_type",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fileUrl",
+            "columnName": "file_url",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "fileName",
+            "columnName": "file_name",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "fileImg",
+            "columnName": "file_img",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "fileDescription",
+            "columnName": "file_desc",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "filePath",
+            "columnName": "file_path",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "fileMimeType",
+            "columnName": "file_mime_type",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "fileOriginUrl",
+            "columnName": "file_origin_url",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "fileProgress",
+            "columnName": "file_progress",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fileDate",
+            "columnName": "file_date",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fileSize",
+            "columnName": "file_size",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fileLive",
+            "columnName": "file_live",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fileErrorType",
+            "columnName": "file_error_message",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fileStatus",
+            "columnName": "file_status",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fileEncrypted",
+            "columnName": "file_encrypted",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fileThumbnailDuration",
+            "columnName": "file_thumbnail_duration",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fileDuration",
+            "columnName": "file_duration",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fileDurationFormatted",
+            "columnName": "file_duration_formatted",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "fileSafe",
+            "columnName": "file_safe",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "uid"
+          ]
+        }
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '4ce6f87be694be9adfea64a04cb44697')"
+    ]
+  }
+}

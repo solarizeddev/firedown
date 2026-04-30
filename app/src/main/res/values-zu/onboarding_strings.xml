@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?><resources>
+      
+  <!-- Text for context menu item to open the link in a new tab. -->
+      
+  <string name="onboarding_button">Inkinobho Yomlilo</string>
+      
+  <string name="onboarding_title">Noma nini lapho ufuna ukulanda okuthile kuwebhusayithi, cindezela Inkinobho Yomlilo ye-Firedown ngezansi kwesokudla:</string>
+      
+  <string name="onboarding_message">I-Firedown izoskena iwebhusayithi ukuze ithole izinto ezizolandwa, futhi ikunikeze ngohlu oluwusizo ongakhetha kulo.</string>
+  
+</resources>

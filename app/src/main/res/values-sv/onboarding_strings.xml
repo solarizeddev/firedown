@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?><resources>
+      
+  <!-- Text for context menu item to open the link in a new tab. -->
+      
+  <string name="onboarding_button">Fire-knappen</string>
+      
+  <string name="onboarding_title">När du vill ladda ner något från en webbplats, tryck på Firedowns Fire-knappen längst ner:</string>
+      
+  <string name="onboarding_message">Firedown kommer att skanna webbplatsen efter objekt som ska laddas ner och erbjuda dem i en praktisk lista som du kan välja från.</string>
+  
+</resources>

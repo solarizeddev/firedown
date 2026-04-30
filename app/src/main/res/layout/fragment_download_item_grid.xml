@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/item"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintDimensionRatio="16:10"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:cardBackgroundColor="?attr/colorSurfaceContainerHigh"
+        app:cardCornerRadius="8dp"
+        app:strokeWidth="2dp">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <!-- Top scrim (FINISHED only) -->
+            <View
+                android:id="@+id/top_scrim"
+                android:layout_width="match_parent"
+                android:layout_height="32dp"
+                android:background="@drawable/top_scrim"
+                android:elevation="12dp"
+                android:visibility="gone"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <!-- Thumbnail -->
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/image"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:adjustViewBounds="true"
+                android:background="@drawable/mask_image_rounded"
+                android:contentDescription="@null"
+                android:duplicateParentState="true"
+                android:outlineProvider="background"
+                android:scaleType="centerCrop" />
+
+            <!-- Progress overlay on thumbnail (PROGRESS only) -->
+            <com.solarized.firedown.ui.ProgressOverlayView
+                android:id="@+id/image_progress"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:visibility="gone"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <!-- Mime badge row -->
+            <LinearLayout
+                android:id="@+id/row_mime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="@dimen/list_item_margin"
+                android:orientation="horizontal"
+                app:layout_constraintBottom_toBottomOf="@id/image"
+                app:layout_constraintEnd_toEndOf="@id/image">
+
+                <TextView
+                    android:id="@+id/mime_text"
+                    style="@style/MimePrimary"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingLeft="4dp"
+                    android:paddingRight="4dp"
+                    tools:text="mp3" />
+
+                <TextView
+                    android:id="@+id/mime_duration"
+                    style="@style/MimeTertiary"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:paddingLeft="4dp"
+                    android:paddingRight="4dp"
+                    android:visibility="gone"
+                    tools:text="00:10" />
+
+            </LinearLayout>
+
+            <!-- Bottom status: error text -->
+            <TextView
+                android:id="@+id/error_text"
+                style="@style/TextAppearance.Material3.BodySmall"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_margin="@dimen/list_item_margin"
+                android:gravity="center_vertical"
+                android:singleLine="true"
+                android:textColor="?attr/colorPrimaryContainer"
+                android:visibility="gone"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/row_mime"
+                app:layout_constraintStart_toStartOf="parent"
+                tools:text="@string/error_check_internet_connection" />
+
+            <!-- Bottom status: queued text -->
+            <TextView
+                android:id="@+id/queued_text"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_margin="@dimen/list_item_margin"
+                android:gravity="center_vertical"
+                android:text="@string/download_queued"
+                android:textSize="12sp"
+                android:visibility="gone"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/row_mime"
+                app:layout_constraintStart_toStartOf="parent"
+                tools:text="Queued" />
+
+            <!-- Action button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/item_download_action"
+                style="@style/Theme.FireDown.More.Button"
+                app:icon="@drawable/ic_baseline_more_vert_24"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="@id/image" />
+
+            <!-- Selection indicator -->
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/item_download_selected"
+                style="@style/Theme.FireDown.Selected.Button"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:srcCompat="@drawable/ic_baseline_check_circle_24" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </com.google.android.material.card.MaterialCardView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

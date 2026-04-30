@@ -1,0 +1,24 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+
+    <com.solarized.firedown.settings.ui.RadioButtonPreference
+        android:defaultValue="true"
+        android:key="com.solarized.firedown.preferences.browser.tracking.default"
+        android:title="@string/settings_enhanced_tracking_protection_standard_default_1"
+        android:summary="@string/settings_enhanced_tracking_protection_standard_description_5"
+        app:enabled="true"
+        app:icon="@drawable/ic_shield_24" />
+
+
+    <com.solarized.firedown.settings.ui.RadioButtonPreference
+        android:defaultValue="false"
+        android:key="com.solarized.firedown.preferences.browser.tracking.strict"
+        android:title="@string/settings_enhanced_tracking_protection_strict"
+        android:summary="@string/settings_enhanced_tracking_protection_strict_description_4"
+        app:enabled="true"
+        app:icon="@drawable/local_police_24" />
+
+
+
+</PreferenceScreen>

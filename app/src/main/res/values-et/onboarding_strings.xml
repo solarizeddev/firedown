@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?><resources>
+      
+  <!-- Text for context menu item to open the link in a new tab. -->
+      
+  <string name="onboarding_button">Tulekahju nupp</string>
+      
+  <string name="onboarding_title">Kui soovite veebisaidilt midagi alla laadida, puudutage paremas alanurgas Firedowni tulenuppu:</string>
+      
+  <string name="onboarding_message">Firedown otsib veebisaidilt allalaaditavaid üksusi ja pakub neid mugavas loendis, mille hulgast saate valida.</string>
+  
+</resources>

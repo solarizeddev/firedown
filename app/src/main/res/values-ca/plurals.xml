@@ -1,0 +1,18 @@
+<resources>
+    <plurals name="complete_delete_files_text">
+        <item quantity="other">"S'han suprimit %1$d fitxers"</item>
+        <item quantity="one">"S'ha suprimit %1$d fitxer"</item>
+    </plurals>
+    <plurals name="complete_move_files_text">
+        <item quantity="other">"S'han mogut %1$d fitxers"</item>
+        <item quantity="one">"S'ha mogut %1$d fitxer"</item>
+    </plurals>
+    <plurals name="move_file_fail">
+        <item quantity="other">"No s'han pogut moure els fitxers. %1$s."</item>
+        <item quantity="one">"No s'ha pogut moure el fitxer. %1$s."</item>
+    </plurals>
+<plurals name="hours_ago">
+        <item quantity="one">%1$dh</item>
+        <item quantity="other">%1$dh</item>
+    </plurals>
+</resources>

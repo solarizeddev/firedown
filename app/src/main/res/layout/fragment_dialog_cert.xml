@@ -1,0 +1,397 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:clipToPadding="false"
+    android:paddingBottom="24dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- Drag handle -->
+        <View
+            android:id="@+id/divider"
+            android:background="@drawable/dialog_rounded_divider"
+            android:layout_width="60dp"
+            android:layout_height="4dp"
+            android:layout_marginTop="6dp"
+            android:layout_gravity="top|center_horizontal" />
+
+        <!-- ============================================================ -->
+        <!-- Header: Security Status Banner                               -->
+        <!-- ============================================================ -->
+        <LinearLayout
+            android:id="@+id/cert_header"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="20dp"
+            android:paddingVertical="16dp">
+
+            <ImageView
+                android:id="@+id/cert_status_icon"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:importantForAccessibility="no"
+                tools:src="@drawable/ic_lock_24" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="14dp"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/cert_status_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="17sp"
+                    android:textStyle="bold"
+                    android:textColor="?android:attr/textColorPrimary"
+                    tools:text="Connection is Secure" />
+
+                <TextView
+                    android:id="@+id/cert_status_subtitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:textSize="13sp"
+                    android:textColor="?android:attr/textColorSecondary"
+                    tools:text="*.google.com · Extended Validation" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <com.google.android.material.divider.MaterialDivider
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="20dp" />
+
+        <!-- ============================================================ -->
+        <!-- Section: Subject                                             -->
+        <!-- ============================================================ -->
+        <LinearLayout
+            android:id="@+id/section_subject"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingHorizontal="20dp"
+            android:paddingTop="16dp"
+            android:paddingBottom="8dp">
+
+            <TextView
+                style="@style/CertSectionHeader"
+                android:text="@string/cert_section_subject" />
+
+            <include
+                android:id="@+id/row_subject_cn"
+                layout="@layout/fragment_dialog_cert_row"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <include
+                android:id="@+id/row_subject_org"
+                layout="@layout/fragment_dialog_cert_row"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <include
+                android:id="@+id/row_subject_ou"
+                layout="@layout/fragment_dialog_cert_row"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <include
+                android:id="@+id/row_subject_country"
+                layout="@layout/fragment_dialog_cert_row"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+
+        <!-- ============================================================ -->
+        <!-- Section: Issuer                                              -->
+        <!-- ============================================================ -->
+        <LinearLayout
+            android:id="@+id/section_issuer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingHorizontal="20dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp">
+
+            <TextView
+                style="@style/CertSectionHeader"
+                android:text="@string/cert_section_issuer" />
+
+            <include
+                android:id="@+id/row_issuer_cn"
+                layout="@layout/fragment_dialog_cert_row"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <include
+                android:id="@+id/row_issuer_org"
+                layout="@layout/fragment_dialog_cert_row"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <include
+                android:id="@+id/row_issuer_country"
+                layout="@layout/fragment_dialog_cert_row"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+
+        <!-- ============================================================ -->
+        <!-- Section: Validity                                            -->
+        <!-- ============================================================ -->
+        <LinearLayout
+            android:id="@+id/section_validity"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingHorizontal="20dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp">
+
+            <TextView
+                style="@style/CertSectionHeader"
+                android:text="@string/cert_section_validity" />
+
+            <include
+                android:id="@+id/row_valid_from"
+                layout="@layout/fragment_dialog_cert_row"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <include
+                android:id="@+id/row_valid_to"
+                layout="@layout/fragment_dialog_cert_row"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <include
+                android:id="@+id/row_days_remaining"
+                layout="@layout/fragment_dialog_cert_row"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+
+        <!-- ============================================================ -->
+        <!-- Section: Technical Details (collapsible)                     -->
+        <!-- ============================================================ -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingHorizontal="20dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp">
+
+            <LinearLayout
+                android:id="@+id/section_technical_header"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingVertical="4dp"
+                android:background="?android:attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true">
+
+                <TextView
+                    style="@style/CertSectionHeader"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:text="@string/cert_section_technical" />
+
+                <ImageView
+                    android:id="@+id/section_technical_arrow"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/expand_more_24"
+                    android:importantForAccessibility="no"
+                    app:tint="?android:attr/textColorSecondary" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/section_technical_content"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <include
+                    android:id="@+id/row_version"
+                    layout="@layout/fragment_dialog_cert_row"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+                <include
+                    android:id="@+id/row_serial"
+                    layout="@layout/fragment_dialog_cert_row"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+                <include
+                    android:id="@+id/row_sig_alg"
+                    layout="@layout/fragment_dialog_cert_row"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+                <include
+                    android:id="@+id/row_pub_key"
+                    layout="@layout/fragment_dialog_cert_row"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+                <include
+                    android:id="@+id/row_mixed_content"
+                    layout="@layout/fragment_dialog_cert_row"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- ============================================================ -->
+        <!-- Section: Fingerprints (collapsible)                          -->
+        <!-- ============================================================ -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingHorizontal="20dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp">
+
+            <LinearLayout
+                android:id="@+id/section_fingerprints_header"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingVertical="4dp"
+                android:background="?android:attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true">
+
+                <TextView
+                    style="@style/CertSectionHeader"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:text="@string/cert_section_fingerprints" />
+
+                <ImageView
+                    android:id="@+id/section_fingerprints_arrow"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/expand_more_24"
+                    android:importantForAccessibility="no"
+                    app:tint="?android:attr/textColorSecondary" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/section_fingerprints_content"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <include
+                    android:id="@+id/row_sha256"
+                    layout="@layout/fragment_dialog_cert_row"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+                <include
+                    android:id="@+id/row_sha1"
+                    layout="@layout/fragment_dialog_cert_row"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- ============================================================ -->
+        <!-- Section: SANs (collapsible)                                  -->
+        <!-- ============================================================ -->
+        <LinearLayout
+            android:id="@+id/section_sans_wrapper"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingHorizontal="20dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp">
+
+            <LinearLayout
+                android:id="@+id/section_sans_header"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingVertical="4dp"
+                android:background="?android:attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true">
+
+                <TextView
+                    android:id="@+id/section_sans_title"
+                    style="@style/CertSectionHeader"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    tools:text="Subject Alt Names (126)" />
+
+                <ImageView
+                    android:id="@+id/section_sans_arrow"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/expand_more_24"
+                    android:importantForAccessibility="no"
+                    app:tint="?android:attr/textColorSecondary" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/cert_sans_list"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                android:fontFamily="monospace"
+                android:textSize="12sp"
+                android:textColor="?android:attr/textColorSecondary"
+                android:lineSpacingExtra="3dp"
+                android:paddingTop="4dp"
+                android:textIsSelectable="true"
+                tools:visibility="visible"
+                tools:text="*.google.com\n*.youtube.com\n..." />
+        </LinearLayout>
+
+        <com.google.android.material.divider.MaterialDivider
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="20dp"
+            android:layout_marginTop="4dp" />
+
+        <!-- ============================================================ -->
+        <!-- Action: Copy PEM                                             -->
+        <!-- ============================================================ -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_copy_pem"
+            style="@style/Widget.Material3.Button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="8dp"
+            android:text="@string/cert_copy_pem"
+            app:icon="@drawable/ic_content_copy" />
+
+    </LinearLayout>
+
+</androidx.core.widget.NestedScrollView>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:orientation="vertical" android:layout_width="fill_parent" android:layout_height="wrap_content"
+    xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto">
+    <TextView android:textAppearance="?textAppearanceTitleMedium"  android:id="@+id/name_header" android:layout_width="fill_parent" android:layout_height="wrap_content" android:layout_marginTop="16.0dip" android:text="@string/top_sites_rename_dialog_title" android:textAllCaps="true" android:layout_marginStart="26.0dip" android:layout_marginEnd="24.0dip" />
+    <EditText android:id="@+id/top_site_title" android:layout_width="fill_parent" android:layout_height="wrap_content" android:hint="@string/shortcut_name_hint" android:singleLine="true" android:inputType="textCapSentences" android:textAlignment="viewStart" android:layout_marginStart="24.0dip" android:layout_marginEnd="24.0dip"  android:autofillHints="false" />
+    <TextView android:textAppearance="?textAppearanceTitleMedium" android:id="@+id/url_header" android:layout_width="fill_parent" android:layout_height="wrap_content" android:layout_marginTop="16.0dip" android:text="@string/top_sites_edit_dialog_url_title" android:textAllCaps="true" android:layout_marginStart="26.0dip" android:layout_marginEnd="24.0dip" />
+    <com.google.android.material.textfield.TextInputLayout android:id="@+id/top_site_url_layout" android:layout_width="fill_parent" android:layout_height="wrap_content" android:layout_marginStart="24.0dip" android:layout_marginEnd="24.0dip" app:hintEnabled="false">
+        <com.google.android.material.textfield.TextInputEditText android:id="@+id/top_site_url" android:layout_width="fill_parent" android:layout_height="wrap_content" android:hint="@string/shortcut_url_hint" android:singleLine="true" android:inputType="textUri"  android:autofillHints="false" />
+    </com.google.android.material.textfield.TextInputLayout>
+</LinearLayout>

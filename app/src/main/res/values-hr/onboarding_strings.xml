@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?><resources>
+      
+  <!-- Text for context menu item to open the link in a new tab. -->
+      
+  <string name="onboarding_button">The Fire-Button</string>
+      
+  <string name="onboarding_title">Kad god želite preuzeti nešto s web stranice, dodirnite Firedownov Fire Button u donjem desnom kutu:</string>
+      
+  <string name="onboarding_message">Firedown će skenirati web mjesto u potrazi za stavkama za preuzimanje i ponuditi ih na praktičnom popisu s kojeg možete birati.</string>
+  
+</resources>

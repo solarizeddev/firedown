@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="complete_delete_files_text">
+        <item quantity="other">Ջնջվեց %1$d ֆայլ</item>
+        <item quantity="one">Ջնջվեց %1$d ֆայլ</item>
+    </plurals>
+    <plurals name="complete_move_files_text">
+        <item quantity="other">Տեղափոխվեց %1$d ֆայլ</item>
+        <item quantity="one">Տեղափոխվեց %1$d ֆայլ</item>
+    </plurals>
+    <plurals name="move_file_fail">
+        <item quantity="other">Չհաջողվեց տեղափոխել ֆայլերը։ %1$s</item>
+        <item quantity="one">Չհաջողվեց տեղափոխել ֆայլը։ %1$s</item>
+    </plurals>
+</resources>

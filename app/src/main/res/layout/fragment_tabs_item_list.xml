@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/tab_item"
+    style="@style/Widget.Material3.CardView.Elevated"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="6dp"
+    android:layout_marginEnd="6dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:nextFocusRight="@id/tab_close"
+    app:cardCornerRadius="8dp"
+    app:strokeColor="@color/transparent"
+    app:strokeWidth="3.5dp">
+
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/list_download_image_height"
+        android:layout_margin="@dimen/list_margin">
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/tab_thumbnail"
+            android:layout_width="@dimen/list_download_image_width"
+            android:layout_height="match_parent"
+            android:layout_gravity="center"
+            android:adjustViewBounds="true"
+            android:background="@drawable/mask_image_rounded"
+            android:contentDescription="@null"
+            android:duplicateParentState="true"
+            android:scaleType="centerCrop"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <LinearLayout
+            android:id="@+id/tab_text_holder"
+            android:layout_width="0dp"
+            android:layout_height="24dp"
+            app:layout_constraintEnd_toStartOf="@id/tab_close"
+            app:layout_constraintStart_toEndOf="@+id/tab_thumbnail"
+            app:layout_constraintTop_toTopOf="@id/tab_thumbnail">
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/tab_icon"
+                android:layout_gravity="center_vertical"
+                android:layout_width="@dimen/tab_icon_width"
+                android:layout_height="@dimen/tab_icon_height"
+                android:layout_marginStart="@dimen/list_margin"
+                android:background="@drawable/mask_icon_rounded"
+                android:scaleType="fitXY" />
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/tab_media_indicator"
+                android:layout_gravity="center_vertical"
+                android:layout_width="@dimen/tab_icon_width"
+                android:layout_height="@dimen/tab_icon_height"
+                android:layout_marginStart="4dp"
+                android:visibility="gone"
+                app:srcCompat="@drawable/play_circle_24"
+                app:tint="@color/white" />
+
+            <TextView
+                android:id="@+id/tab_title"
+                android:layout_width="0dp"
+                android:layout_height="24dp"
+                android:layout_marginStart="6dp"
+                android:layout_marginEnd="6dp"
+                android:layout_weight="1"
+                android:ellipsize="marquee"
+                android:gravity="top"
+                android:singleLine="true"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="16sp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/tab_media_indicator"
+                app:layout_constraintTop_toTopOf="@id/tab_thumbnail"
+                tools:text="Mozilla" />
+
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tab_url"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/list_margin"
+            android:layout_marginTop="6dp"
+            android:layout_marginEnd="@dimen/list_margin"
+            android:layout_weight="1"
+            android:ellipsize="marquee"
+            android:singleLine="true"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:textSize="12sp"
+            app:layout_constraintStart_toEndOf="@id/tab_thumbnail"
+            app:layout_constraintTop_toBottomOf="@id/tab_text_holder"
+            app:layout_constraintEnd_toStartOf="@id/tab_close"/>
+
+        <androidx.appcompat.widget.AppCompatImageButton
+            android:id="@+id/tab_close"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:focusable="true"
+            android:nextFocusLeft="@id/tab_item"
+            android:padding="6dp"
+            android:tint="?attr/colorOnSurfaceVariant"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@drawable/ic_baseline_close_24" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</com.google.android.material.card.MaterialCardView>

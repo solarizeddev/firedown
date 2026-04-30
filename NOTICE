@@ -1,0 +1,46 @@
+Firedown
+Copyright (c) 2026 solarizeddev
+
+Firedown's own source code is licensed under the Mozilla Public License 2.0.
+See LICENSE for full terms.
+
+================================================================================
+Third-party components
+================================================================================
+
+This software bundles or links the following third-party components. Each
+component remains under its own license. The combined binary distribution
+(the APK) is governed by the most restrictive license among bundled
+components, which is currently GPL-3.0 (from uBlock Origin).
+
+--------------------------------------------------------------------------------
+GeckoView
+  Copyright (c) Mozilla Foundation
+  License: Mozilla Public License 2.0
+  https://mozilla.github.io/geckoview/
+
+--------------------------------------------------------------------------------
+uBlock Origin
+  Copyright (c) Raymond Hill
+  License: GNU General Public License v3.0
+  https://github.com/gorhill/uBlock
+
+--------------------------------------------------------------------------------
+FFmpeg
+  Copyright (c) FFmpeg developers
+  License: GNU Lesser General Public License v2.1 or later
+  https://ffmpeg.org/
+
+  Firedown links a build of FFmpeg with project-specific patches. The
+  patches and build configuration are maintained in a separate repository:
+
+    https://github.com/solarizeddev/firedown-ffmpeg
+
+  Per LGPL-2.1, users have the right to replace the bundled FFmpeg library
+  with a modified version. Build instructions for producing a compatible
+  libavformat from source are documented in that repository.
+
+--------------------------------------------------------------------------------
+
+For a complete list of build-time dependencies and their licenses, see the
+build manifest (app/build.gradle and the generated dependency report).

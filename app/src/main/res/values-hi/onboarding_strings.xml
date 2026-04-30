@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?><resources>
+      
+  <!-- Text for context menu item to open the link in a new tab. -->
+      
+  <string name="onboarding_button">फ़ायर-बटन</string>
+      
+  <string name="onboarding_title">जब भी आप किसी वेबसाइट से कुछ डाउनलोड करना चाहें, तो नीचे दाईं ओर Firedown के फ़ायर-बटन पर टैप करें:</string>
+      
+  <string name="onboarding_message">Firedown डाउनलोड किए जाने वाले आइटमों के लिए वेबसाइट को स्कैन करेगा, और उन्हें आपके चुनने के लिए एक आसान सूची में पेश करेगा.</string>
+  
+</resources>

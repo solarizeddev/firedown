@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?><resources>
+      
+  <!-- Text for context menu item to open the link in a new tab. -->
+      
+  <string name="onboarding_button">Kitufe cha Fire</string>
+      
+  <string name="onboarding_title">Wakati wowote unapotaka kupakua kitu kutoka kwa tovuti, gusa Kitufe cha Fire cha Firedown hapo chini:</string>
+      
+  <string name="onboarding_message">Firedown itachanganua tovuti ili kupata vipengee vya kupakuliwa, na kuvitoa katika orodha inayofaa kwako kuchagua.</string>
+  
+</resources>

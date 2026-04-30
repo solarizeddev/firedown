@@ -1,0 +1,19 @@
+<resources>
+    <plurals name="complete_delete_files_text">
+        <item quantity="other">%1$d ဖိုင် ဖျက်ပြီးပြီ</item>
+        <item quantity="one">%1$d ဖိုင် ဖျက်ပြီးပြီ</item>
+    </plurals>
+    <plurals name="complete_move_files_text">
+        <item quantity="other">%1$d ဖိုင် ရွှေ့ပြီးပြီ</item>
+        <item quantity="one">%1$d ဖိုင် ရွှေ့ပြီးပြီ</item>
+    </plurals>
+    <plurals name="move_file_fail">
+        <item quantity="other">ဖိုင်များ ရွှေ့၍မရပါ။ %1$s</item>
+        <item quantity="one">ဖိုင် ရွှေ့၍မရပါ။ %1$s</item>
+    </plurals>
+<plurals name="hours_ago">
+        <item quantity="other">%1$d နာရီ</item>
+    </plurals>
+
+    
+    </resources>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <integer name="browser_grid_number">4</integer>
+    <integer name="image_grid_number">4</integer>
+    <integer name="shortcuts_span">8</integer>
+</resources>

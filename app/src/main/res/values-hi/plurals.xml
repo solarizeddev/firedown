@@ -1,0 +1,20 @@
+<resources>
+    <plurals name="complete_delete_files_text">
+        <item quantity="other">%1$d फ़ाइलें मिटाई गईं</item>
+        <item quantity="one">%1$d फ़ाइल मिटाई गई</item>
+    </plurals>
+    <plurals name="complete_move_files_text">
+        <item quantity="other">%1$d फ़ाइलें ले जाई गईं</item>
+        <item quantity="one">%1$d फ़ाइल ले जाई गई</item>
+    </plurals>
+    <plurals name="move_file_fail">
+        <item quantity="other">फ़ाइलें नहीं ले जाई जा सकीं. %1$s</item>
+        <item quantity="one">फ़ाइल नहीं ले जाई जा सकी. %1$s</item>
+    </plurals>
+<plurals name="hours_ago">
+        <item quantity="one">%1$dघंटे</item>
+        <item quantity="other">%1$dघंटे</item>
+    </plurals>
+
+    
+    </resources>

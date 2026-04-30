@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Coral gradient circle behind the lightning bolt icon.
+    Pulls from your theme's colorPrimary / colorPrimaryContainer for a
+    subtle two-tone gradient that matches the donate.html styling.
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <solid android:color="?attr/colorPrimaryContainer" />
+</shape>

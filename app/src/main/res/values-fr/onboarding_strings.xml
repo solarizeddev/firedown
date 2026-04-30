@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?><resources>
+      
+  <!-- Text for context menu item to open the link in a new tab. -->
+      
+  <string name="onboarding_button">Le bouton de feu</string>
+      
+  <string name="onboarding_title">Chaque fois que vous souhaitez télécharger quelque chose à partir d\'un site Internet, appuyez sur le bouton Feu de Firedown en bas à droite :</string>
+      
+  <string name="onboarding_message">Firedown analysera le site Internet à la recherche d\'éléments à télécharger et les proposera dans une liste pratique parmi laquelle vous pourrez choisir.</string>
+  
+</resources>

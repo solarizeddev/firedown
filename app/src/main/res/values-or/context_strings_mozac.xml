@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Text for context menu item to open the link in a new tab. -->
+    <string name="contextmenu_open_link_in_new_tab">ନୂଆ ଟ୍ୟାବରେ ଲିଙ୍କ ଖୋଲନ୍ତୁ</string>
+    <!-- Text for context menu item to open the link in a private tab. -->
+    <!-- Text for context menu item to open the image in a new tab. -->
+    <string name="contextmenu_open_image_in_new_tab">ନୂଆ ଟ୍ୟାବରେ ଛବି ଖୋଲନ୍ତୁ</string>
+    <!-- Text for context menu item to save / download the link. -->
+    <string name="contextmenu_download_link">ଲିଙ୍କ ଡାଉନଲୋଡ କରନ୍ତୁ</string>
+    <!-- Text for context menu item to share the link with an other app. -->
+    <string name="contextmenu_share_link">ଲିଙ୍କ ବିତରଣ କରନ୍ତୁ</string>
+    <!-- Text for context menu item to share the image with an other app. -->
+    <string name="contextmenu_share_image">ପ୍ରତିଛବିକୁ ସହଭାଗ କରନ୍ତୁ</string>
+    <!-- Text for context menu item to copy the link to the clipboard. -->
+    <string name="contextmenu_copy_link">ଲିଙ୍କ ନକଲ କରନ୍ତୁ</string>
+    <!-- Text for context menu item to copy the URL pointing to the image to the clipboard. -->
+    <string name="contextmenu_copy_image_location">ପ୍ରତିଛବି ଅବସ୍ଥିତି ନକଲ କରନ୍ତୁ</string>
+    <!-- Text for context menu item to save / download the image. -->
+    <string name="contextmenu_save_image">ପ୍ରତିଛବି ସଂରକ୍ଷଣ କରନ୍ତୁ</string>
+    <!-- Text for context menu item to save / download the file. -->
+    <!-- Text for confirmation "snackbar" shown after opening a link in a new tab.  -->
+    <string name="contextmenu_snackbar_new_tab_opened">ନୂଆ ଟ୍ୟାବ ଖୋଲିଛି</string>
+    <!-- Text for confirmation "snackbar" shown after opening a link in a new private tab.  -->
+    <!-- Text for confirmation "snackbar" shown after copying a link or image URL to the clipboard. -->
+    <string name="contextmenu_snackbar_link_copied">କ୍ଲିପବୋର୍ଡରେ ନକଲ କରାହୋଇଛି</string>
+    <!-- Action shown in a "snacbkar" after opening a new/private tab. Clicking this action will switch to the newly opened tab. -->
+    <string name="contextmenu_snackbar_action_switch">ପରିବର୍ତ୍ତନ କରନ୍ତୁ</string>
+    <!-- Text for context menu item to share the email with another app. -->
+    <!-- Text for context menu item to copy the email address to the clipboard. -->
+    <!-- Text for context menu item to add to a contact. -->
+    <!-- Action shown in a text selection context menu. This will prompt a search using the selected text.-->
+    <!-- Action shown in a text selection context menu. This will prompt a share of the selected text. -->
+    <!-- Action shown in a text selection context menu. This will prompt a new email from the selected text. -->
+    <!-- Action shown in a text selection context menu. This will prompt a new call from the selected text. -->
+</resources>

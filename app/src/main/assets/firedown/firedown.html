@@ -1,0 +1,271 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src *; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval'"/>
+  <title></title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* Portrait: locked to viewport, no scroll */
+    @media (orientation: portrait) {
+      html, body { width: 100%; height: 100%; overflow: hidden; }
+      body { height: 100%; overflow: hidden; }
+    }
+
+    /* Landscape: allow scroll */
+    @media (orientation: landscape) {
+      html, body { width: 100%; min-height: 100%; overflow-x: hidden; }
+      body { min-height: 100%; overflow-y: auto; }
+    }
+
+    body {
+      font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      background: linear-gradient(170deg, #f07068 0%, #ec5c78 100%);
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── page content ── */
+    .page {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 28px 24px 0;
+      animation: fadeUp 0.45s ease both;
+    }
+
+    /* Portrait: page fills remaining space above cloud */
+    @media (orientation: portrait) {
+      .page { flex: 1; overflow: hidden; }
+    }
+
+    .title {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      text-align: center;
+      color: #fff;
+      margin-bottom: 10px;
+    }
+
+    .description {
+      font-size: 13.5px;
+      font-weight: 400;
+      line-height: 1.55;
+      text-align: center;
+      color: rgba(255,255,255,0.9);
+      margin-bottom: 0;
+      max-width: 290px;
+    }
+
+    /* ── card list illustration ── */
+    .card-list {
+      width: 100%;
+      max-width: 260px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      animation: floatY 4s ease-in-out infinite;
+      filter: drop-shadow(0 20px 40px rgba(0,0,0,0.20));
+    }
+
+    @keyframes floatY {
+      0%, 100% { transform: translateY(0px); }
+      50%       { transform: translateY(-9px); }
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 10px 10px 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .card--ghost {
+      opacity: 0.4;
+    }
+
+    .card-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 7px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .card-icon--coral { background: linear-gradient(135deg, #ffeaea, #ffd6d4); border: 1px solid rgba(240,101,96,0.2); }
+
+    /* abstract placeholder lines */
+    .card-lines { width: 100%; display: flex; flex-direction: column; gap: 5px; }
+    .card-line {
+      height: 5px;
+      border-radius: 3px;
+      background: rgba(30,28,46,0.10);
+    }
+    .card-line--short { width: 55%; }
+
+    /* ── equal spacers around grid ── */
+    .spacer {
+      flex: 1;
+      min-height: 12px;
+      max-height: 40px;
+    }
+
+    /* ── message ── */
+    .message {
+      font-size: 13.5px;
+      font-weight: 400;
+      line-height: 1.55;
+      text-align: center;
+      color: rgba(255,255,255,0.9);
+      margin-top: 0;
+      max-width: 290px;
+    }
+
+    /* ── cloud bottom ── */
+    /* Portrait: cloud is position:absolute so it never pushes content up */
+    .bottom {
+      width: 100%;
+      flex-shrink: 0;
+      pointer-events: none;
+    }
+
+    @media (orientation: portrait) {
+      .bottom {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+      }
+      /* add bottom padding to page so text never goes behind cloud */
+      .page { padding-bottom: 0; }
+    }
+
+    @media (orientation: landscape) {
+      .bottom { margin-top: 16px; }
+    }
+
+    .cloud-img {
+      display: block;
+      width: 200px;
+      margin: 0 auto;
+    }
+
+    /* ── TV mode ── */
+    body.tv-mode .bottom  { display: none; }
+    body.tv-mode .page    { justify-content: center; padding-top: 40px; padding-bottom: 0; }
+    body.tv-mode .title   { font-size: 28px; }
+    body.tv-mode .description,
+    body.tv-mode .message { font-size: 18px; max-width: 400px; }
+    body.tv-mode .card-list { max-width: 400px; }
+  </style>
+</head>
+<body>
+
+  <div class="page">
+    <h1 class="title" id="titleText"></h1>
+    <p class="description" id="titleSubText"></p>
+
+    <div class="spacer"></div>
+    <!-- Download list cards -->
+    <div class="card-list">
+
+      <div class="card">
+        <div class="card-icon card-icon--coral">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d44e86" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        </div>
+        <div class="card-lines">
+          <div class="card-line"></div>
+          <div class="card-line card-line--short"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-icon card-icon--coral">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d44e86" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        </div>
+        <div class="card-lines">
+          <div class="card-line"></div>
+          <div class="card-line card-line--short"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-icon card-icon--coral">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d44e86" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+        </div>
+        <div class="card-lines">
+          <div class="card-line"></div>
+          <div class="card-line card-line--short"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-icon card-icon--coral">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d44e86" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12h4v4"/><path d="M16 8h-4"/></svg>
+        </div>
+        <div class="card-lines">
+          <div class="card-line"></div>
+          <div class="card-line card-line--short"></div>
+        </div>
+      </div>
+      <div class="card card--ghost">
+        <div class="card-icon card-icon--coral">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d44e86" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        </div>
+        <div class="card-lines">
+          <div class="card-line"></div>
+          <div class="card-line card-line--short"></div>
+        </div>
+      </div>
+      <div class="card card--ghost">
+        <div class="card-icon card-icon--coral">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d44e86" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        </div>
+        <div class="card-lines">
+          <div class="card-line"></div>
+          <div class="card-line card-line--short"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="spacer"></div>
+    <p class="message" id="messageSubText"></p>
+  </div>
+
+  <!-- cloud -->
+  <div class="bottom" id="bottomArea">
+    <img class="cloud-img" src="assets/bg_smoke_center.png" alt="">
+  </div>
+
+</body>
+<script>
+function injectValues(q) {
+  document.title = q.title || 'Firedown';
+  document.getElementById('titleText').textContent      = q.button      || '';
+  document.getElementById('titleSubText').textContent   = q.description || '';
+  document.getElementById('messageSubText').textContent = q.message     || '';
+  if (q.tv === 'true') document.body.classList.add('tv-mode');
+}
+var idx = document.documentURI.indexOf('?');
+injectValues(idx !== -1
+  ? Object.fromEntries(new URLSearchParams(document.documentURI.substr(idx + 1)).entries())
+  : {});
+</script>
+</html>

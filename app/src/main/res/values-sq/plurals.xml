@@ -1,0 +1,20 @@
+<resources>
+    <plurals name="complete_delete_files_text">
+        <item quantity="other">%1$d skedarë u fshinë</item>
+        <item quantity="one">%1$d skedar u fshi</item>
+    </plurals>
+    <plurals name="complete_move_files_text">
+        <item quantity="other">%1$d skedarë u zhvendosën</item>
+        <item quantity="one">%1$d skedar u zhvendos</item>
+    </plurals>
+    <plurals name="move_file_fail">
+        <item quantity="other">Skedarët nuk mund të zhvendoseshin. %1$s</item>
+        <item quantity="one">Skedari nuk mund të zhvendosej. %1$s</item>
+    </plurals>
+<plurals name="hours_ago">
+        <item quantity="one">%1$dh</item>
+        <item quantity="other">%1$dh</item>
+    </plurals>
+
+    
+    </resources>

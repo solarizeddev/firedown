@@ -1,0 +1,20 @@
+<resources>
+    <plurals name="complete_delete_files_text">
+        <item quantity="other">%1$d fitxategi ezabatu dira</item>
+        <item quantity="one">%1$d fitxategi ezabatu da</item>
+    </plurals>
+    <plurals name="complete_move_files_text">
+        <item quantity="other">%1$d fitxategi mugitu dira</item>
+        <item quantity="one">%1$d fitxategi mugitu da</item>
+    </plurals>
+    <plurals name="move_file_fail">
+        <item quantity="other">Ezin izan dira mugitu fitxategiak. %1$s</item>
+        <item quantity="one">Ezin izan da mugitu fitxategia. %1$s</item>
+    </plurals>
+<plurals name="hours_ago">
+        <item quantity="one">%1$dh</item>
+        <item quantity="other">%1$do</item>
+    </plurals>
+
+    
+    </resources>

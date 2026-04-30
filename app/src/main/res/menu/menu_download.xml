@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/action_search"
+        android:icon="@drawable/ic_search_24"
+        app:iconTint="?attr/colorOnSurface"
+        app:showAsAction="ifRoom|collapseActionView"
+        app:actionViewClass="androidx.appcompat.widget.SearchView"
+        android:title="@string/search"/>
+    <item
+        android:id="@+id/action_view"
+        android:icon="@drawable/ic_view_list_24"
+        app:iconTint="?attr/colorOnSurface"
+        app:showAsAction="ifRoom"
+        android:title="@string/popup_toggle"/>
+
+    <item
+        android:id="@+id/action_sort"
+        android:icon="@drawable/ic_sort_24"
+        app:iconTint="?attr/colorOnSurface"
+        app:showAsAction="ifRoom"
+        android:title="@string/sort"/>
+
+    <item
+        android:id="@+id/action_safe"
+        android:icon="@drawable/ic_lock_24"
+        app:iconTint="?attr/colorOnSurface"
+        app:showAsAction="ifRoom"
+        android:title="@string/navigation_vault"/>
+
+</menu>

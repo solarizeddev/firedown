@@ -1,0 +1,20 @@
+<resources>
+    <plurals name="complete_delete_files_text">
+        <item quantity="other">Imefuta faili %1$d</item>
+        <item quantity="one">Imefuta faili %1$d</item>
+    </plurals>
+    <plurals name="complete_move_files_text">
+        <item quantity="other">Imehamisha faili %1$d</item>
+        <item quantity="one">Imehamisha faili %1$d</item>
+    </plurals>
+    <plurals name="move_file_fail">
+        <item quantity="other">Imeshindwa kuhamisha faili. %1$s</item>
+        <item quantity="one">Imeshindwa kuhamisha faili. %1$s</item>
+    </plurals>
+<plurals name="hours_ago">
+        <item quantity="one">masaa %1$d</item>
+        <item quantity="other">masaa %1$d</item>
+    </plurals>
+
+    
+    </resources>

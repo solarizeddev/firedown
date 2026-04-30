@@ -1,0 +1,24 @@
+<resources>
+    <plurals name="complete_delete_files_text">
+        <item quantity="one">S-a șters %1$d fișier</item>
+        <item quantity="few">S-au șters %1$d fișiere</item>
+        <item quantity="other">S-au șters %1$d de fișiere</item>
+    </plurals>
+    <plurals name="complete_move_files_text">
+        <item quantity="one">S-a mutat %1$d fișier</item>
+        <item quantity="few">S-au mutat %1$d fișiere</item>
+        <item quantity="other">S-au mutat %1$d de fișiere</item>
+    </plurals>
+    <plurals name="move_file_fail">
+        <item quantity="one">Nu s-a putut muta fișierul. %1$s</item>
+        <item quantity="few">Nu s-au putut muta fișierele. %1$s</item>
+        <item quantity="other">Nu s-au putut muta fișierele. %1$s</item>
+    </plurals>
+<plurals name="hours_ago">
+        <item quantity="one">%1$do</item>
+        <item quantity="few">%1$do</item>
+        <item quantity="other">%1$do</item>
+    </plurals>
+
+    
+    </resources>

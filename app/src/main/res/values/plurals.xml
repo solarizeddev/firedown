@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="complete_delete_files_text">
+        <item quantity="other">%1$d files deleted</item>
+        <item quantity="zero">%1$d files deleted</item>
+        <item quantity="one">%1$d file deleted</item>
+    </plurals>
+    <plurals name="complete_move_files_text">
+        <item quantity="other">%1$d files moved</item>
+        <item quantity="zero">%1$d files moved</item>
+        <item quantity="one">%1$d file moved</item>
+    </plurals>
+    <plurals name="move_file_fail">
+        <item quantity="other">"Couldn't move files. %1$s"</item>
+        <item quantity="zero">"Couldn't move files. %1$s"</item>
+        <item quantity="one">"Couldn't move file. %1$s"</item>
+    </plurals>
+    <plurals name="hours_ago">
+        <item quantity="one">%dh</item>
+        <item quantity="other">%dh</item>
+    </plurals>
+    <plurals name="archive_banner_title">
+        <item quantity="one">%d tab archived</item>
+        <item quantity="other">%d tabs archived</item>
+    </plurals>
+    <plurals name="incognito_notification_title">
+        <item quantity="one">%d private tab open</item>
+        <item quantity="other">%d private tabs open</item>
+    </plurals>
+</resources>

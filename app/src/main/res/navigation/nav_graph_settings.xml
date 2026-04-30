@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph_settings"
+    app:startDestination="@id/settings">
+    <fragment
+        android:id="@+id/settings"
+        android:name="com.solarized.firedown.settings.SettingsFragment">
+        <action
+            android:id="@+id/action_settings_to_about"
+            app:destination="@id/settings_about"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
+        <action
+            android:id="@+id/action_settings_to_theme"
+            app:destination="@id/settings_theme"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
+        <action
+            android:id="@+id/action_settings_to_license"
+            app:destination="@id/settings_license"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
+        <action
+            android:id="@+id/action_settings_to_tracking"
+            app:destination="@id/settings_tracking"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
+        <action
+            android:id="@+id/action_settings_to_doh"
+            app:destination="@id/settings_doh"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
+        <action
+            android:id="@+id/action_settings_to_lock"
+            app:destination="@id/settings_lock"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
+        <action
+            android:id="@+id/action_settings_to_search"
+            app:destination="@id/settings_search"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
+        <action
+            android:id="@+id/action_settings_to_quit"
+            app:destination="@id/settings_quit"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
+        <action
+            android:id="@+id/action_settings_to_tabs"
+            app:destination="@id/settings_tabs"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
+        <action
+            android:id="@+id/action_settings_to_donate"
+            app:destination="@id/settings_donate"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
+    </fragment>
+    <fragment
+        android:id="@+id/settings_donate"
+        android:name="com.solarized.firedown.settings.DonateFragment" />
+    <fragment
+        android:id="@+id/settings_tabs"
+        android:name="com.solarized.firedown.settings.TabsFragment" />
+    <fragment
+        android:id="@+id/settings_about"
+        android:name="com.solarized.firedown.settings.AboutFragment" />
+    <fragment
+        android:id="@+id/settings_theme"
+        android:name="com.solarized.firedown.settings.ThemeFragment" />
+    <fragment
+        android:id="@+id/settings_doh"
+        android:name="com.solarized.firedown.settings.DohFragment" />
+    <fragment
+        android:id="@+id/settings_search"
+        android:name="com.solarized.firedown.settings.SearchFragment" />
+    <fragment
+        android:id="@+id/settings_lock"
+        android:name="com.solarized.firedown.settings.LockFragment" />
+    <fragment
+        android:id="@+id/settings_tracking"
+        android:name="com.solarized.firedown.settings.TrackingFragment" />
+    <fragment
+        android:id="@+id/settings_license"
+        android:name="com.solarized.firedown.settings.LicenseFragment" />
+    <dialog
+        android:id="@+id/dialog_delete_browsing"
+        android:name="com.solarized.firedown.phone.dialogs.DeleteBrowsingDialogFragment" />
+    <dialog
+        android:id="@+id/dialog_downloads_free"
+        android:name="com.solarized.firedown.phone.dialogs.DownloadsDialogFragment" />
+    <dialog
+        android:id="@+id/dialog_downloads_path"
+        android:name="com.solarized.firedown.phone.dialogs.DownloadsDialogFragment" />
+    <dialog
+        android:id="@+id/dialog_delete_password"
+        android:name="com.solarized.firedown.phone.dialogs.DeleteLoginDialogFragment" />
+    <fragment
+        android:id="@+id/settings_quit"
+        android:name="com.solarized.firedown.settings.QuitFragment" />
+</navigation>

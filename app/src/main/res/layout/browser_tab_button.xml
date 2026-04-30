@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.appcompat.widget.AppCompatButton xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/button"
+    android:layout_width="22dp"
+    android:layout_height="20dp"
+    android:layout_gravity="center"
+    android:gravity="center"
+    android:clickable="false"
+    android:focusable="false"
+    android:scaleType="centerInside"
+    android:duplicateParentState="true"
+    android:background="@drawable/tabs_button_outlined"
+    android:textColor="?attr/colorOnSurface"
+    android:textSize="11sp" />
+

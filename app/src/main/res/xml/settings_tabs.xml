@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <SwitchPreferenceCompat
+        app:key="com.solarized.firedown.preferences.tabs.archive"
+        app:title="@string/settings_tabs_archive_title"
+        app:summary="@string/settings_tabs_archive_summary"
+        app:defaultValue="true"
+        app:icon="@drawable/ic_tabs_close_24" />
+
+    <PreferenceCategory
+        app:key="pref_tabs_archive_interval_category"
+        app:title="@string/settings_tabs_archive_interval_title"
+        app:dependency="com.solarized.firedown.preferences.tabs.archive">
+
+        <com.solarized.firedown.settings.ui.RadioButtonPreference
+            app:key="pref_tabs_archive_interval_never"
+            app:title="@string/close_tabs_manually"
+            app:summary="@string/close_tabs_manually_summary"
+            app:persistent="false" />
+
+        <com.solarized.firedown.settings.ui.RadioButtonPreference
+            app:key="pref_tabs_archive_interval_one_day"
+            app:title="@string/close_tabs_after_one_day"
+            app:summary="@string/close_tabs_after_one_day_summary"
+            app:persistent="false" />
+
+        <com.solarized.firedown.settings.ui.RadioButtonPreference
+            app:key="pref_tabs_archive_interval_one_week"
+            app:title="@string/close_tabs_after_one_week"
+            app:summary="@string/close_tabs_after_one_week_summary"
+            app:persistent="false" />
+
+        <com.solarized.firedown.settings.ui.RadioButtonPreference
+            app:key="pref_tabs_archive_interval_one_month"
+            app:title="@string/close_tabs_after_one_month"
+            app:summary="@string/close_tabs_after_one_month_summary"
+            app:persistent="false" />
+
+    </PreferenceCategory>
+
+</PreferenceScreen>

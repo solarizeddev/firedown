@@ -1,0 +1,20 @@
+<resources>
+    <plurals name="complete_delete_files_text">
+        <item quantity="other">%1$d tiedostoa poistettiin</item>
+        <item quantity="one">%1$d tiedosto poistettiin</item>
+    </plurals>
+    <plurals name="complete_move_files_text">
+        <item quantity="other">%1$d tiedostoa siirrettiin</item>
+        <item quantity="one">%1$d tiedosto siirrettiin</item>
+    </plurals>
+    <plurals name="move_file_fail">
+        <item quantity="other">Tiedostoja ei voitu siirtää. %1$s</item>
+        <item quantity="one">Tiedostoa ei voitu siirtää. %1$s</item>
+    </plurals>
+<plurals name="hours_ago">
+        <item quantity="one">%1$dh</item>
+        <item quantity="other">%1$d t</item>
+    </plurals>
+
+    
+    </resources>

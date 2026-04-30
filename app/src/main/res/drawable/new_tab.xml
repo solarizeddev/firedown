@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:drawable="@color/md_theme_surface"
+        android:gravity="fill"/>
+    <item
+        android:drawable="@drawable/ic_firedown_new_tab" />
+
+</layer-list>

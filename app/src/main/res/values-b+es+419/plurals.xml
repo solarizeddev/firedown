@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="complete_delete_files_text">
+        <item quantity="other">Se borraron %1$d archivos</item>
+        <item quantity="one">Se borró %1$d archivo</item>
+    </plurals>
+    <plurals name="complete_move_files_text">
+        <item quantity="other">Se movieron %1$d archivos</item>
+        <item quantity="one">Se movió %1$d archivo</item>
+    </plurals>
+    <plurals name="move_file_fail">
+        <item quantity="other">No se pudieron mover los archivos. %1$s</item>
+        <item quantity="one">No se pudo mover el archivo. %1$s</item>
+    </plurals>
+</resources>

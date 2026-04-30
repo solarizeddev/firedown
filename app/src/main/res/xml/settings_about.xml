@@ -1,0 +1,19 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <Preference
+        android:key="com.solarized.firedown.preferences.about.version"
+        android:title="@string/settings_version"
+        android:icon="@drawable/ic_baseline_settings_24">
+
+    </Preference>
+
+    <Preference
+        android:key="com.solarized.firedown.preferences.about.gecko"
+        android:title="@string/settings_gecko_version"
+        android:icon="@drawable/ic_memory_24">
+
+    </Preference>
+
+
+
+</PreferenceScreen>

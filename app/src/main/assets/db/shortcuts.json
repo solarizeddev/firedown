@@ -1,0 +1,42 @@
+[
+  {
+    "url" : "https://x.com/",
+    "title": "X",
+    "icon" : "https://upload.wikimedia.org/wikipedia/commons/9/95/Twitter_new_X_logo.png"
+  },
+  {
+    "url" : "https://m.youtube.com/",
+    "title": "Youtube",
+    "icon" : "https://www.youtube.com/s/desktop/daa21ba0/img/logos/favicon_144x144.png"
+  },
+  {
+    "url" : "https://m.facebook.com/",
+    "title": "Facebook",
+    "icon" : "https://www.facebook.com/images/fb_icon_325x325.png"
+  },
+  {
+    "url" : "https://www.instagram.com/",
+    "title": "Instagram",
+    "icon" : "https://static.cdninstagram.com/rsrc.php/v4/yI/r/VsNE-OHk_8a.png"
+  },
+  {
+    "url" : "https://rumble.com/",
+    "title": "Rumble",
+    "icon" : "https://rumble.com/i/favicon-v4.png"
+  },
+  {
+    "url" : "https://kick.com",
+    "title": "Kick",
+    "icon" : "https://static.wikia.nocookie.net/logopedia/images/1/11/Kick_%28Icon%29.svg/revision/latest/scale-to-width-down/250?cb=20230622003955"
+  },
+  {
+    "url" : "https://www.dailymotion.com",
+    "title": "Dailymotion",
+    "icon" : "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTBsl2vRCUgLGB7xJ2WKUxdQgbd37x9phNIMLf9rwFkBg&s"
+  },
+  {
+    "url" : "https://m.twitch.tv",
+    "title": "Twitch",
+    "icon" : "https://cdn.icon-icons.com/icons2/2992/PNG/512/twitch_logo_icon_187308.png"
+  }
+]

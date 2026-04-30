@@ -1,0 +1,25 @@
+<resources>
+    <plurals name="complete_delete_files_text">
+        <item quantity="one">נמחקו %1$d קבצים</item>
+        <item quantity="two">נמחקו %1$d קבצים</item>
+        <item quantity="other">נמחקו %1$d קבצים</item>
+    </plurals>
+    <plurals name="complete_move_files_text">
+        <item quantity="one">הועברו %1$d קבצים</item>
+        <item quantity="two">הועברו %1$d קבצים</item>
+        <item quantity="other">הועברו %1$d קבצים</item>
+    </plurals>
+    <plurals name="move_file_fail">
+        <item quantity="one">לא ניתן היה להעביר את הקבצים. %1$s</item>
+        <item quantity="two">לא ניתן היה להעביר את הקבצים. %1$s</item>
+        <item quantity="other">לא ניתן היה להעביר את הקבצים. %1$s</item>
+    </plurals>
+<plurals name="hours_ago">
+        <item quantity="one">שע\' %1$d</item>
+        <item quantity="two">%1$d שע\'</item>
+        <item quantity="many">%1$d שע\'</item>
+        <item quantity="other">%1$d שע\'</item>
+    </plurals>
+
+    
+    </resources>

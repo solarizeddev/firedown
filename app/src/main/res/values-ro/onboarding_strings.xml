@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?><resources>
+      
+  <!-- Text for context menu item to open the link in a new tab. -->
+      
+  <string name="onboarding_button">Butonul Trage</string>
+      
+  <string name="onboarding_title">Ori de câte ori doriți să descărcați ceva de pe un site web, atingeți butonul Firedown din dreapta jos:</string>
+      
+  <string name="onboarding_message">Firedown va scana site-ul web pentru articole de descărcat și le va oferi într-o listă la îndemână din care să le alegeți.</string>
+  
+</resources>

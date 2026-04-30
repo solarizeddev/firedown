@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?><resources>
+      
+  <!-- Text for context menu item to open the link in a new tab. -->
+      
+  <string name="onboarding_button">Ognjeni gumb</string>
+      
+  <string name="onboarding_title">Kadarkoli želite nekaj prenesti s spletnega mesta, tapnite gumb Firedown v spodnjem desnem kotu:</string>
+      
+  <string name="onboarding_message">Firedown bo skeniral spletno mesto za predmete, ki jih je treba prenesti, in jih ponudil na priročnem seznamu, med katerim lahko izbirate.</string>
+  
+</resources>

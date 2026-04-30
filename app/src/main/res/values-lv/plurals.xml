@@ -1,0 +1,24 @@
+<resources>
+    <plurals name="complete_delete_files_text">
+        <item quantity="other">%1$d faili dzēsti</item>
+        <item quantity="zero">%1$d faili dzēsti</item>
+        <item quantity="one">%1$d fails dzēsts</item>
+    </plurals>
+    <plurals name="complete_move_files_text">
+        <item quantity="other">%1$d faili pārvietoti</item>
+        <item quantity="zero">%1$d faili pārvietoti</item>
+        <item quantity="one">%1$d fails pārvietots</item>
+    </plurals>
+    <plurals name="move_file_fail">
+        <item quantity="other">Nevarēja pārvietot failus. %1$s</item>
+        <item quantity="zero">Nevarēja pārvietot failus. %1$s</item>
+        <item quantity="one">Nevarēja pārvietot failu. %1$s</item>
+    </plurals>
+<plurals name="hours_ago">
+        <item quantity="zero">%1$dh</item>
+        <item quantity="one">%1$dh</item>
+        <item quantity="other">%1$dh</item>
+    </plurals>
+
+    
+    </resources>

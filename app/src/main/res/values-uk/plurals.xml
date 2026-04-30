@@ -1,0 +1,28 @@
+<resources>
+    <plurals name="complete_delete_files_text">
+        <item quantity="other">Видалено %1$d файлу</item>
+        <item quantity="one">Видалено %1$d файл</item>
+        <item quantity="few">Видалено %1$d файли</item>
+        <item quantity="many">Видалено %1$d файлів</item>
+    </plurals>
+    <plurals name="complete_move_files_text">
+        <item quantity="other">Переміщено %1$d файлу</item>
+        <item quantity="one">Переміщено %1$d файл</item>
+        <item quantity="few">Переміщено %1$d файли</item>
+        <item quantity="many">Переміщено %1$d файлів</item>
+    </plurals>
+    <plurals name="move_file_fail">
+        <item quantity="other">Не вдалося перемістити файли. %1$s</item>
+        <item quantity="one">Не вдалося перемістити файли. %1$s</item>
+        <item quantity="few">Не вдалося перемістити файли. %1$s</item>
+        <item quantity="many">Не вдалося перемістити файли. %1$s</item>
+    </plurals>
+<plurals name="hours_ago">
+        <item quantity="one">%1$d год</item>
+        <item quantity="few">%1$d год</item>
+        <item quantity="many">%1$d год</item>
+        <item quantity="other">%1$d год</item>
+    </plurals>
+
+    
+    </resources>

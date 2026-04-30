@@ -1,0 +1,30 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportHeight="16"
+    android:viewportWidth="16">
+
+    <!-- Tab outline (same as ic_tabs) -->
+    <path
+        android:strokeColor="@android:color/white"
+        android:strokeWidth="1.3"
+        android:fillColor="#00000000"
+        android:pathData="M14,11L14,5a2,2 0,0 0,-2 -2L4,3a2,2 0,0 0,-2 2v6L1,11a1,1 0,0 0,0 2h14a1,1 0,0 0,0 -2z" />
+
+    <!-- X mark: diagonal from top-left to bottom-right -->
+    <path
+        android:strokeColor="@android:color/white"
+        android:strokeWidth="1.3"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000"
+        android:pathData="M6,6 L10,10" />
+
+    <!-- X mark: diagonal from top-right to bottom-left -->
+    <path
+        android:strokeColor="@android:color/white"
+        android:strokeWidth="1.3"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000"
+        android:pathData="M10,6 L6,10" />
+
+</vector>

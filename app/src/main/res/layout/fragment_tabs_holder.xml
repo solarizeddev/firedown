@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/coordinator_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!--
+        AppBar background is a STATIC resting surface colour (set in
+        applyIncognitoTheme / onCreateView). The "lifted" look on scroll is
+        produced by fading in the sibling @id/appbar_lift_scrim view which
+        sits behind the toolbar and segmented toggle.
+
+        We DO NOT use AppBarLayout's built-in liftOnScroll — its internal
+        shouldLift / canScrollVertically path races our updates across the
+        ViewPager2 boundary. Driving alpha on a plain sibling View has no
+        state machine to race.
+
+        Elevation is set to 0dp so AppBar never casts a shadow based on its
+        own lifted-state tracking. Any shadow, if desired, would be added by
+        the scrim itself.
+
+        The toolbar and toggle group are transparent so the scrim shows
+        through them uniformly when it fades in.
+    -->
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appbar_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:stateListAnimator="@null"
+        app:elevation="0dp"
+        app:liftOnScroll="false">
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <View
+                android:id="@+id/appbar_lift_scrim"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:alpha="0" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <com.google.android.material.appbar.MaterialToolbar
+                    android:id="@+id/toolbar"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@android:color/transparent"
+                    android:theme="@style/ThemeOverlay.FireDown.Toolbar"
+                    app:navigationIcon="?attr/homeAsUpIndicator"
+                    app:navigationIconTint="?attr/colorOnSurface"
+                    app:popupTheme="@style/Theme.FireDown.Popup"
+                    app:title="@string/navigation_tabs" />
+
+                <!-- Material3 Segmented Button -->
+                <com.google.android.material.button.MaterialButtonToggleGroup
+                    android:id="@+id/tab_mode_toggle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@android:color/transparent"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginEnd="8dp"
+                    android:layout_marginBottom="8dp"
+                    app:singleSelection="true"
+                    app:selectionRequired="true"
+                    app:checkedButton="@id/btn_regular_tabs">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_regular_tabs"
+                        style="@style/Theme.FireDown.SegmentedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/tabs_regular"
+                        app:icon="@drawable/ic_tabs_24"
+                        app:iconGravity="textStart"
+                        app:iconSize="18dp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_incognito_tabs"
+                        style="@style/Theme.FireDown.SegmentedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/tabs_incognito"
+                        app:icon="@drawable/ic_tabs_private_24"
+                        app:iconGravity="textStart"
+                        app:iconSize="18dp" />
+
+                </com.google.android.material.button.MaterialButtonToggleGroup>
+
+            </LinearLayout>
+
+        </FrameLayout>
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/tabs_view_pager"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior" />
+
+    <View
+        android:id="@+id/navigation_scrim"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_gravity="bottom"
+        android:background="?android:attr/colorBackground" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fab_new_tab"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="0dp"
+        android:contentDescription="@string/popup_tabs_new"
+        app:layout_anchor="@id/navigation_scrim"
+        app:layout_anchorGravity="center|top"
+        app:fabCustomSize="48dp"
+        app:maxImageSize="20dp"
+        app:srcCompat="@drawable/add_24" />
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

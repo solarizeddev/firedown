@@ -1,0 +1,20 @@
+<resources>
+    <plurals name="complete_delete_files_text">
+        <item quantity="other">%1$d filer har raderats</item>
+        <item quantity="one">%1$d fil har raderats</item>
+    </plurals>
+    <plurals name="complete_move_files_text">
+        <item quantity="other">%1$d filer har flyttats</item>
+        <item quantity="one">%1$d fil har flyttats</item>
+    </plurals>
+    <plurals name="move_file_fail">
+        <item quantity="other">Det gick inte att flytta filerna. %1$s</item>
+        <item quantity="one">Det gick inte att flytta filen. %1$s.</item>
+    </plurals>
+<plurals name="hours_ago">
+        <item quantity="one">%1$dh</item>
+        <item quantity="other">%1$dh</item>
+    </plurals>
+
+    
+    </resources>

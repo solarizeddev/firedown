@@ -1,0 +1,24 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <SwitchPreferenceCompat
+        android:defaultValue="false"
+        android:key="com.solarized.firedown.preferences.lock"
+        android:title="@string/settings_lock_switch_title"
+        android:summary="@string/settings_lock_switch_summary"
+        android:icon="@drawable/ic_lock_24">
+
+    </SwitchPreferenceCompat>
+
+    <ListPreference
+        android:enabled="false"
+        android:defaultValue="0"
+        android:entries="@array/settings_lock"
+        android:entryValues="@array/settings_lock_values"
+        android:key="com.solarized.firedown.preferences.lock.time"
+        android:title="@string/settings_lock_automatic_title"
+        app:icon="@drawable/schedule_24" />
+
+
+
+</PreferenceScreen>

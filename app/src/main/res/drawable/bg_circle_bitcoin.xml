@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Orange gradient circle behind the bitcoin icon.
+    Bitcoin orange (#F7931A) → lighter orange. Standalone hex values
+    because there's no equivalent material theme attribute and we want
+    to keep the bitcoin brand color regardless of light/dark mode.
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <solid android:color="?attr/colorSecondaryContainer" />
+</shape>

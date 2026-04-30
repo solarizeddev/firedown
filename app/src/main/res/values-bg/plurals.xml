@@ -1,0 +1,20 @@
+<resources>
+    <plurals name="complete_delete_files_text">
+        <item quantity="other">Изтрити бяха %1$d файла</item>
+        <item quantity="one">Изтрит бе %1$d файл</item>
+    </plurals>
+    <plurals name="complete_move_files_text">
+        <item quantity="other">Преместени бяха %1$d файла</item>
+        <item quantity="one">Преместен бе %1$d файл</item>
+    </plurals>
+    <plurals name="move_file_fail">
+        <item quantity="other">Файловете не бяха преместени. %1$s</item>
+        <item quantity="one">Файлът не бе преместен. %1$s</item>
+    </plurals>
+<plurals name="hours_ago">
+        <item quantity="one">%1$d ч</item>
+        <item quantity="other">%1$d ч</item>
+    </plurals>
+
+    
+    </resources>

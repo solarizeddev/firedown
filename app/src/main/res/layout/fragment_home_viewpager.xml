@@ -1,0 +1,23 @@
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/recycler_view_holder"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="@dimen/list_spacing"
+    android:layout_marginEnd="@dimen/list_spacing"
+    style="@style/Widget.Material3.CardView.Filled"
+    app:cardBackgroundColor="@color/md_theme_surfaceContainerLow_highContrast"
+    android:gravity="center">
+
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recycler_view"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:paddingTop="12dp"
+        app:layoutManager=".ui.NoScrollGridLayoutManager"
+        app:spanCount="@integer/shortcuts_span" />
+
+</com.google.android.material.card.MaterialCardView>

@@ -1,0 +1,20 @@
+<resources>
+    <plurals name="complete_delete_files_text">
+        <item quantity="other">%1$d ஃபைல்கள் நீக்கப்பட்டன</item>
+        <item quantity="one">%1$d ஃபைல் நீக்கப்பட்டது</item>
+    </plurals>
+    <plurals name="complete_move_files_text">
+        <item quantity="other">%1$d ஃபைல்கள் நகர்த்தப்பட்டன</item>
+        <item quantity="one">%1$d ஃபைல் நகர்த்தப்பட்டது</item>
+    </plurals>
+    <plurals name="move_file_fail">
+        <item quantity="other">ஃபைல்களை நகர்த்த முடியவில்லை. %1$s</item>
+        <item quantity="one">ஃபைலை நகர்த்த முடியவில்லை. %1$s</item>
+    </plurals>
+<plurals name="hours_ago">
+        <item quantity="one">%1$dமணி</item>
+        <item quantity="other">%1$dமணி</item>
+    </plurals>
+
+    
+    </resources>

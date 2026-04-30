@@ -1,0 +1,29 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <SwitchPreferenceCompat
+        android:key="com.solarized.firedown.preferences.browser.doh.switch"
+        android:title="@string/settings_doh_title"
+        android:summary="@string/settings_doh_summary"
+        android:icon="@drawable/ic_settings_24">
+
+    </SwitchPreferenceCompat>
+
+    <ListPreference
+        android:defaultValue="0"
+        android:entries="@array/settings_doh"
+        android:entryValues="@array/settings_doh_values"
+        android:key="com.solarized.firedown.preferences.browser.doh"
+        android:title="@string/settings_doh_server_title"
+        app:enabled="false"
+        app:icon="@drawable/dns_24" />
+
+    <com.solarized.firedown.settings.ui.DohEditPreference
+        android:key="com.solarized.firedown.preferences.browser.doh.custom"
+        android:title="@string/settings_doh_server_custom"
+        android:layout="@layout/preference_doh"
+        app:enabled="false"/>
+
+
+
+</PreferenceScreen>

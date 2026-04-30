@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?><resources>
+      
+  <!-- Text for context menu item to open the link in a new tab. -->
+      
+  <string name="onboarding_button">시작 버튼</string>
+      
+  <string name="onboarding_title">웹사이트에서 무언가를 다운로드하고 싶을 때마다 오른쪽 하단에 있는 Firedown의 시작 버튼을 탭하세요.</string>
+      
+  <string name="onboarding_message">Firedown은 웹사이트에서 다운로드할 항목을 검색하고 선택할 수 있는 편리한 목록을 제공합니다.</string>
+  
+</resources>

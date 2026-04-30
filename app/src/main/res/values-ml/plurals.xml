@@ -1,0 +1,20 @@
+<resources>
+    <plurals name="complete_delete_files_text">
+        <item quantity="other">%1$d ഫയലുകൾ ഇല്ലാതാക്കി</item>
+        <item quantity="one">%1$d ഫയൽ ഇല്ലാതാക്കി</item>
+    </plurals>
+    <plurals name="complete_move_files_text">
+        <item quantity="other">%1$d ഫയലുകൾ നീക്കി</item>
+        <item quantity="one">%1$d ഫയൽ നീക്കി</item>
+    </plurals>
+    <plurals name="move_file_fail">
+        <item quantity="other">ഫയലുകൾ നീക്കാനായില്ല. %1$s</item>
+        <item quantity="one">ഫയൽ നീക്കാനായില്ല. %1$s</item>
+    </plurals>
+<plurals name="hours_ago">
+        <item quantity="one">%1$dh</item>
+        <item quantity="other">%1$dh</item>
+    </plurals>
+
+    
+    </resources>

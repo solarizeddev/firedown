@@ -1,0 +1,28 @@
+<resources>
+    <plurals name="complete_delete_files_text">
+        <item quantity="other">Bylo smazáno %1$d souborů</item>
+        <item quantity="one">Byl smazán %1$d soubor</item>
+        <item quantity="few">Byly smazány %1$d soubory</item>
+        <item quantity="many">Bylo smazáno %1$d souboru</item>
+    </plurals>
+    <plurals name="complete_move_files_text">
+        <item quantity="other">%1$d souborů bylo přesunuto</item>
+        <item quantity="one">%1$d soubor byl přesunut</item>
+        <item quantity="few">%1$d soubory byly přesunuty</item>
+        <item quantity="many">%1$d souboru bylo přesunuto</item>
+    </plurals>
+    <plurals name="move_file_fail">
+        <item quantity="other">Soubory nelze přesunout. %1$s</item>
+        <item quantity="one">Soubor nelze přesunout. %1$s</item>
+        <item quantity="few">Soubory nelze přesunout. %1$s</item>
+        <item quantity="many">Soubory nelze přesunout. %1$s</item>
+    </plurals>
+<plurals name="hours_ago">
+        <item quantity="one">%1$dh</item>
+        <item quantity="few">%1$dh</item>
+        <item quantity="many">%1$dh</item>
+        <item quantity="other">%1$dh</item>
+    </plurals>
+
+    
+    </resources>

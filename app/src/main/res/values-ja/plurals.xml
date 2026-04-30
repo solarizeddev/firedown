@@ -1,0 +1,19 @@
+<resources>
+    <plurals name="complete_delete_files_text">
+        <item quantity="one">%1$d 個のファイルを削除しました</item>
+        <item quantity="other">%1$d 個のファイルを削除しました</item>
+    </plurals>
+    <plurals name="complete_move_files_text">
+        <item quantity="one">%1$d 個のファイルを移動しました</item>
+        <item quantity="other">%1$d 個のファイルを移動しました</item>
+    </plurals>
+    <plurals name="move_file_fail">
+        <item quantity="one">ファイルを移動できませんでした。%1$s</item>
+        <item quantity="other">ファイルを移動できませんでした。%1$s</item>
+    </plurals>
+<plurals name="hours_ago">
+        <item quantity="other">%1$d時間</item>
+    </plurals>
+
+    
+    </resources>

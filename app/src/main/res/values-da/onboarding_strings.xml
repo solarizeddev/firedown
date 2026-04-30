@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?><resources>
+      
+  <!-- Text for context menu item to open the link in a new tab. -->
+      
+  <string name="onboarding_button">Ild-knappen</string>
+      
+  <string name="onboarding_title">Når du ønsker at downloade noget fra et websted, skal du trykke på Firedowns Ild-knap nederst til højre:</string>
+      
+  <string name="onboarding_message">Firedown vil scanne webstedet for elementer, der skal downloades, og tilbyde dem på en praktisk liste, som du kan vælge fra.</string>
+  
+</resources>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?><resources>
+      
+  <!-- Text for context menu item to open the link in a new tab. -->
+      
+  <string name="onboarding_button">Tlačítko Fire</string>
+      
+  <string name="onboarding_title">Kdykoli si chcete něco stáhnout z webové stránky, klepněte na Firedown\'s Fire-Button vpravo dole:</string>
+      
+  <string name="onboarding_message">Firedown vyhledá na webu položky ke stažení a nabídne vám je v praktickém seznamu, ze kterého si můžete vybrat.</string>
+  
+</resources>

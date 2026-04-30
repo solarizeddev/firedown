@@ -1,0 +1,18 @@
+<resources>
+    <plurals name="complete_delete_files_text">
+        <item quantity="other">%1$d archivos eliminados</item>
+        <item quantity="one">%1$d archivo eliminado</item>
+    </plurals>
+    <plurals name="complete_move_files_text">
+        <item quantity="other">%1$d archivos movidos</item>
+        <item quantity="one">%1$d archivo movido</item>
+    </plurals>
+    <plurals name="move_file_fail">
+        <item quantity="other">No se han podido mover los archivos. %1$s</item>
+        <item quantity="one">No se ha podido mover el archivo. %1$s</item>
+    </plurals>
+<plurals name="hours_ago">
+        <item quantity="one">%1$dh</item>
+        <item quantity="other">%1$dh</item>
+    </plurals>
+    </resources>

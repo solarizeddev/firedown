@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="complete_delete_files_text">
+        <item quantity="other">ລຶບ %1$d ໄຟລ໌ແລ້ວ</item>
+        <item quantity="one">ລຶບ %1$d ໄຟລ໌ແລ້ວ</item>
+    </plurals>
+    <plurals name="complete_move_files_text">
+        <item quantity="other">ຍ້າຍ %1$d ໄຟລ໌ແລ້ວ</item>
+        <item quantity="one">ຍ້າຍ %1$d ໄຟລ໌ແລ້ວ</item>
+    </plurals>
+    <plurals name="move_file_fail">
+        <item quantity="other">ບໍ່ສາມາດຍ້າຍໄຟລ໌ໄດ້. %1$s</item>
+        <item quantity="one">ບໍ່ສາມາດຍ້າຍໄຟລ໌ໄດ້. %1$s</item>
+    </plurals>
+</resources>

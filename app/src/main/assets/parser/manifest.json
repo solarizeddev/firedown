@@ -1,0 +1,38 @@
+{
+  "manifest_version": 2,
+  "version": "1.6",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "parser@solarized.dev"
+    }
+  },
+  "name": "Video parser",
+  "description": "Parses video URLs from Vimeo, Twitter/X, Instagram, Kick, and Twitch",
+  "background": {
+    "scripts": [
+      "background.js"
+    ]
+  },
+  "permissions": [
+    "nativeMessaging",
+    "nativeMessagingFromContent",
+    "geckoViewAddons",
+    "tabs",
+    "cookies",
+    "storage",
+    "webRequest",
+    "webRequestBlocking",
+    "*://*.instagram.com/*",
+    "*://*.x.com/*",
+    "*://*.twitter.com/*",
+    "*://*.vimeo.com/*",
+    "*://*.kick.com/*",
+    "*://*.twitch.tv/*",
+    "*://*.ttvnw.net/*",
+    "*://gql.twitch.tv/*",
+    "*://clips.twitch.tv/*",
+    "*://*.dailymotion.com/*",
+    "*://geo.dailymotion.com/*",
+    "*://*.dmcdn.net/*"
+  ]
+}

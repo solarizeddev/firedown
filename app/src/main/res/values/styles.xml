@@ -1,0 +1,405 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.FireDown.BottomSheetDialogTheme" parent="Theme.Material3.DayNight.BottomSheetDialog">
+        <item name="colorPrimary">@color/md_theme_primary</item>
+        <item name="colorOnPrimary">@color/md_theme_onPrimary</item>
+        <item name="colorPrimaryContainer">@color/md_theme_primaryContainer</item>
+        <item name="colorOnPrimaryContainer">@color/md_theme_onPrimaryContainer</item>
+        <item name="colorSecondary">@color/md_theme_secondary</item>
+        <item name="colorOnSecondary">@color/md_theme_onSecondary</item>
+        <item name="colorSecondaryContainer">@color/md_theme_secondaryContainer</item>
+        <item name="colorOnSecondaryContainer">@color/md_theme_onSecondaryContainer</item>
+        <item name="colorTertiary">@color/md_theme_tertiary</item>
+        <item name="colorOnTertiary">@color/md_theme_onTertiary</item>
+        <item name="colorTertiaryContainer">@color/md_theme_tertiaryContainer</item>
+        <item name="colorOnTertiaryContainer">@color/md_theme_onTertiaryContainer</item>
+        <item name="colorError">@color/md_theme_error</item>
+        <item name="colorOnError">@color/md_theme_onError</item>
+        <item name="colorErrorContainer">@color/md_theme_errorContainer</item>
+        <item name="colorOnErrorContainer">@color/md_theme_onErrorContainer</item>
+        <item name="android:colorBackground">@color/md_theme_background</item>
+        <item name="colorOnBackground">@color/md_theme_onBackground</item>
+        <item name="colorSurface">@color/md_theme_surface</item>
+        <item name="colorOnSurface">@color/md_theme_onSurface</item>
+        <item name="colorSurfaceVariant">@color/md_theme_surfaceVariant</item>
+        <item name="colorOnSurfaceVariant">@color/md_theme_onSurfaceVariant</item>
+        <item name="colorOutline">@color/md_theme_outline</item>
+        <item name="colorOutlineVariant">@color/md_theme_outlineVariant</item>
+        <item name="colorSurfaceInverse">@color/md_theme_inverseSurface</item>
+        <item name="colorOnSurfaceInverse">@color/md_theme_inverseOnSurface</item>
+        <item name="colorPrimaryInverse">@color/md_theme_inversePrimary</item>
+        <item name="colorPrimaryFixed">@color/md_theme_primaryFixed</item>
+        <item name="colorOnPrimaryFixed">@color/md_theme_onPrimaryFixed</item>
+        <item name="colorPrimaryFixedDim">@color/md_theme_primaryFixedDim</item>
+        <item name="colorOnPrimaryFixedVariant">@color/md_theme_onPrimaryFixedVariant</item>
+        <item name="colorSecondaryFixed">@color/md_theme_secondaryFixed</item>
+        <item name="colorOnSecondaryFixed">@color/md_theme_onSecondaryFixed</item>
+        <item name="colorSecondaryFixedDim">@color/md_theme_secondaryFixedDim</item>
+        <item name="colorOnSecondaryFixedVariant">@color/md_theme_onSecondaryFixedVariant</item>
+        <item name="colorTertiaryFixed">@color/md_theme_tertiaryFixed</item>
+        <item name="colorOnTertiaryFixed">@color/md_theme_onTertiaryFixed</item>
+        <item name="colorTertiaryFixedDim">@color/md_theme_tertiaryFixedDim</item>
+        <item name="colorOnTertiaryFixedVariant">@color/md_theme_onTertiaryFixedVariant</item>
+        <item name="colorSurfaceDim">@color/md_theme_surfaceDim</item>
+        <item name="colorSurfaceBright">@color/md_theme_surfaceBright</item>
+        <item name="colorSurfaceContainerLowest">@color/md_theme_surfaceContainerLowest</item>
+        <item name="colorSurfaceContainerLow">@color/md_theme_surfaceContainerLow</item>
+        <item name="colorSurfaceContainer">@color/md_theme_surfaceContainer</item>
+        <item name="colorSurfaceContainerHigh">@color/md_theme_surfaceContainerHigh</item>
+        <item name="colorSurfaceContainerHighest">@color/md_theme_surfaceContainerHighest</item>
+        <item name="enableEdgeToEdge">true</item>
+        <item name="android:navigationBarColor">@color/md_theme_surfaceContainerHigh</item>
+        <item name="bottomSheetStyle">@style/Theme.FireDown.BottomSheetDialogStyle</item>
+        <item name="actionOverflowButtonStyle">@style/Theme.FireDown.Toolbar.ActionMode.Overflow</item>
+    </style>
+
+
+    <style name="Theme.FireDown.VaultDialogTheme" parent="ThemeOverlay.Material3.MaterialAlertDialog">
+        <item name="colorPrimary">@color/incognito_primary</item>
+        <item name="colorOnPrimary">@color/incognito_on_primary</item>
+        <item name="colorPrimaryContainer">@color/incognito_primary_container</item>
+        <item name="colorOnPrimaryContainer">@color/incognito_on_primary_container</item>
+        <item name="colorSecondary">@color/incognito_secondary</item>
+        <item name="colorOnSecondary">@color/incognito_on_secondary</item>
+        <item name="colorSecondaryContainer">@color/incognito_secondary_container</item>
+        <item name="colorOnSecondaryContainer">@color/incognito_on_secondary_container</item>
+        <item name="colorTertiary">@color/incognito_tertiary</item>
+        <item name="colorOnTertiary">@color/incognito_on_tertiary</item>
+        <item name="colorTertiaryContainer">@color/incognito_tertiary_container</item>
+        <item name="colorOnTertiaryContainer">@color/incognito_on_tertiary_container</item>
+        <item name="colorError">@color/incognito_error</item>
+        <item name="colorOnError">@color/incognito_on_error</item>
+        <item name="colorErrorContainer">@color/incognito_error_container</item>
+        <item name="colorOnErrorContainer">@color/incognito_on_error_container</item>
+        <item name="android:colorBackground">@color/incognito_background</item>
+        <item name="colorOnBackground">@color/incognito_on_surface</item>
+        <item name="colorSurface">@color/incognito_surface</item>
+        <item name="colorOnSurface">@color/incognito_on_surface</item>
+        <item name="colorSurfaceVariant">@color/incognito_surface_variant</item>
+        <item name="colorOnSurfaceVariant">@color/incognito_on_surface_variant</item>
+        <item name="colorOutline">@color/incognito_outline</item>
+        <item name="colorOutlineVariant">@color/incognito_outline_variant</item>
+        <item name="colorSurfaceInverse">@color/incognito_surface_inverse</item>
+        <item name="colorOnSurfaceInverse">@color/incognito_on_surface_inverse</item>
+        <item name="colorPrimaryInverse">@color/incognito_primary_inverse</item>
+        <item name="colorSurfaceDim">@color/incognito_surface_dim</item>
+        <item name="colorSurfaceBright">@color/incognito_surface_bright</item>
+        <item name="colorSurfaceContainerLowest">@color/incognito_surface_container_lowest</item>
+        <item name="colorSurfaceContainerLow">@color/incognito_surface_container_low</item>
+        <item name="colorSurfaceContainer">@color/incognito_surface_container</item>
+        <item name="colorSurfaceContainerHigh">@color/incognito_surface_container_high</item>
+        <item name="colorSurfaceContainerHighest">@color/incognito_surface_container_highest</item>
+        <item name="enableEdgeToEdge">true</item>
+        <item name="android:navigationBarColor">@color/incognito_surface_container_high</item>
+        <item name="bottomSheetStyle">@style/Theme.FireDown.BottomSheetDialogStyle</item>
+        <item name="actionOverflowButtonStyle">@style/Theme.FireDown.Toolbar.ActionMode.Overflow</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+    </style>
+
+
+    <style name="Theme.FireDown.BottomSheetVaultDialogTheme" parent="Theme.Material3.DayNight.BottomSheetDialog">
+        <item name="colorPrimary">@color/incognito_primary</item>
+        <item name="colorOnPrimary">@color/incognito_on_primary</item>
+        <item name="colorPrimaryContainer">@color/incognito_primary_container</item>
+        <item name="colorOnPrimaryContainer">@color/incognito_on_primary_container</item>
+        <item name="colorSecondary">@color/incognito_secondary</item>
+        <item name="colorOnSecondary">@color/incognito_on_secondary</item>
+        <item name="colorSecondaryContainer">@color/incognito_secondary_container</item>
+        <item name="colorOnSecondaryContainer">@color/incognito_on_secondary_container</item>
+        <item name="colorTertiary">@color/incognito_tertiary</item>
+        <item name="colorOnTertiary">@color/incognito_on_tertiary</item>
+        <item name="colorTertiaryContainer">@color/incognito_tertiary_container</item>
+        <item name="colorOnTertiaryContainer">@color/incognito_on_tertiary_container</item>
+        <item name="colorError">@color/incognito_error</item>
+        <item name="colorOnError">@color/incognito_on_error</item>
+        <item name="colorErrorContainer">@color/incognito_error_container</item>
+        <item name="colorOnErrorContainer">@color/incognito_on_error_container</item>
+        <item name="android:colorBackground">@color/incognito_background</item>
+        <item name="colorOnBackground">@color/incognito_on_surface</item>
+        <item name="colorSurface">@color/incognito_surface</item>
+        <item name="colorOnSurface">@color/incognito_on_surface</item>
+        <item name="colorSurfaceVariant">@color/incognito_surface_variant</item>
+        <item name="colorOnSurfaceVariant">@color/incognito_on_surface_variant</item>
+        <item name="colorOutline">@color/incognito_outline</item>
+        <item name="colorOutlineVariant">@color/incognito_outline_variant</item>
+        <item name="colorSurfaceInverse">@color/incognito_surface_inverse</item>
+        <item name="colorOnSurfaceInverse">@color/incognito_on_surface_inverse</item>
+        <item name="colorPrimaryInverse">@color/incognito_primary_inverse</item>
+        <item name="colorSurfaceDim">@color/incognito_surface_dim</item>
+        <item name="colorSurfaceBright">@color/incognito_surface_bright</item>
+        <item name="colorSurfaceContainerLowest">@color/incognito_surface_container_lowest</item>
+        <item name="colorSurfaceContainerLow">@color/incognito_surface_container_low</item>
+        <item name="colorSurfaceContainer">@color/incognito_surface_container</item>
+        <item name="colorSurfaceContainerHigh">@color/incognito_surface_container_high</item>
+        <item name="colorSurfaceContainerHighest">@color/incognito_surface_container_highest</item>
+        <item name="enableEdgeToEdge">true</item>
+        <item name="android:navigationBarColor">@color/incognito_surface_container_high</item>
+        <item name="bottomSheetStyle">@style/Theme.FireDown.BottomSheetDialogStyle</item>
+        <item name="actionOverflowButtonStyle">@style/Theme.FireDown.Toolbar.ActionMode.Overflow</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+    </style>
+
+
+    <style name="ThemeOverlay.FireDown.Toolbar" parent="">
+        <item name="actionOverflowButtonStyle">@style/Theme.FireDown.Toolbar.ActionMode.Overflow</item>
+        <item name="titleTextColor">?attr/colorOnSurface</item>
+    </style>
+
+    <style name="ThemeOverlay.FireDown.Toolbar.Vault" parent="ThemeOverlay.FireDown.Toolbar">
+        <item name="colorOnSurface">@color/incognito_on_surface</item>
+        <item name="colorOnSurfaceVariant">@color/incognito_on_surface_variant</item>
+        <item name="android:textColorPrimary">@color/incognito_on_surface</item>
+        <item name="android:textColorSecondary">@color/incognito_on_surface_variant</item>
+        <item name="android:editTextColor">@color/incognito_on_surface</item>
+        <item name="android:textColorHint">@color/incognito_on_surface_variant</item>
+    </style>
+
+    <style name="Firedown.Widget.App.Chip.Filter" parent="Widget.Material3.Chip.Filter">
+        <item name="materialThemeOverlay">@style/ThemeOverlay.App.Chip</item>
+    </style>
+
+    <style name="ThemeOverlay.App.Chip" parent="">
+        <item name="elevationOverlayEnabled">false</item>
+        <item name="colorSurface">@color/transparent</item>
+    </style>
+
+    <style name="Theme.FireDown.BottomSheetDialogStyle" parent="Widget.Design.BottomSheet.Modal">
+        <item name="android:background">@drawable/dialog_rounded_top</item>
+    </style>
+
+    <style name="MimePrimary">
+        <item name="android:background">@drawable/rounded_primary</item>
+        <item name="android:textColor">?attr/colorOnPrimaryContainer</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="singleLine">true</item>
+    </style>
+
+    <style name="MimeTertiary">
+        <item name="android:background">@drawable/rounded_secondary</item>
+        <item name="android:textColor">?attr/colorOnSecondaryContainer</item>
+        <item name="android:textSize">12sp</item>
+    </style>
+
+    <style name="BottomSheet_DialogAnimation">
+        <item name="android:windowEnterAnimation">@anim/slide_out_from_bottom</item>
+        <item name="android:windowExitAnimation">@anim/slide_back_to_bottom</item>
+    </style>
+
+    <style name="SwitchPreferenceStyle" parent="PreferenceThemeOverlay">
+        <item name="switchPreferenceCompatStyle">@style/PreferenceMaterialSwitch</item>
+    </style>
+
+    <style name="PreferenceMaterialSwitch" parent="@style/Preference.SwitchPreferenceCompat.Material">
+        <item name="widgetLayout">@layout/preference_switch</item>
+    </style>
+
+    <style name="RoundedThumbnail" parent="">
+        <item name="cornerSize">6dp</item>
+    </style>
+
+    <style name="CertSectionHeader">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:letterSpacing">0.08</item>
+        <item name="android:textColor">?attr/colorOnSurface</item>
+        <item name="android:paddingBottom">6dp</item>
+    </style>
+
+    <style name="ShapeAppearanceOverlay.MaterialCardView.Top" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSizeTopRight">12dp</item>
+        <item name="cornerSizeTopLeft">12dp</item>
+        <item name="cornerSizeBottomRight">2dp</item>
+        <item name="cornerSizeBottomLeft">2dp</item>
+    </style>
+
+    <style name="ShapeAppearanceOverlay.MaterialCardView.Flat" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSizeTopRight">2dp</item>
+        <item name="cornerSizeTopLeft">2dp</item>
+        <item name="cornerSizeBottomRight">2dp</item>
+        <item name="cornerSizeBottomLeft">2dp</item>
+    </style>
+
+    <style name="Widget.Material3.Button.IconOnly">
+        <item name="iconPadding">0dp</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="android:paddingLeft">12dp</item>
+        <item name="android:paddingRight">12dp</item>
+        <item name="android:minWidth">12dp</item>
+        <item name="android:minHeight">12dp</item>
+        <item name="iconGravity">textStart</item>
+    </style>
+
+    <style name="ShapeAppearanceOverlay.Button.Circle" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">50%</item>
+    </style>
+
+    <style name="Widget.App.Button" parent="Widget.Material3.Button.TextButton.Dialog">
+        <item name="android:textColor">@color/md_theme_primary</item>
+    </style>
+
+
+    <style name="Theme.FireDown.Download.Chip" parent="Widget.Material3.Chip.Filter">
+        <item name="chipSurfaceColor">@color/transparent</item>
+        <item name="chipBackgroundColor">@color/chip_download</item>
+    </style>
+
+    <style name="Firedown.AlertDialogTheme" parent="Theme.AppCompat.Dialog.Alert">
+        <item name="colorAccent">@color/md_theme_primary</item>
+        <item name="colorPrimary">@color/md_theme_primary</item>
+        <item name="colorOnPrimary">@color/md_theme_onPrimary</item>
+        <item name="colorPrimaryContainer">@color/md_theme_primaryContainer</item>
+        <item name="colorOnPrimaryContainer">@color/md_theme_onPrimaryContainer</item>
+        <item name="colorSecondary">@color/md_theme_secondary</item>
+        <item name="colorOnSecondary">@color/md_theme_onSecondary</item>
+        <item name="colorSecondaryContainer">@color/md_theme_secondaryContainer</item>
+        <item name="colorOnSecondaryContainer">@color/md_theme_onSecondaryContainer</item>
+        <item name="colorTertiary">@color/md_theme_tertiary</item>
+        <item name="colorOnTertiary">@color/md_theme_onTertiary</item>
+        <item name="colorTertiaryContainer">@color/md_theme_tertiaryContainer</item>
+        <item name="colorOnTertiaryContainer">@color/md_theme_onTertiaryContainer</item>
+        <item name="colorError">@color/md_theme_error</item>
+        <item name="colorOnError">@color/md_theme_onError</item>
+        <item name="colorErrorContainer">@color/md_theme_errorContainer</item>
+        <item name="colorOnErrorContainer">@color/md_theme_onErrorContainer</item>
+        <item name="android:colorBackground">@color/md_theme_background</item>
+        <item name="colorOnBackground">@color/md_theme_onBackground</item>
+        <item name="colorSurface">@color/md_theme_surface</item>
+        <item name="colorOnSurface">@color/md_theme_onSurface</item>
+        <item name="colorSurfaceVariant">@color/md_theme_surfaceVariant</item>
+        <item name="colorOnSurfaceVariant">@color/md_theme_onSurfaceVariant</item>
+        <item name="colorOutline">@color/md_theme_outline</item>
+        <item name="colorOutlineVariant">@color/md_theme_outlineVariant</item>
+        <item name="colorSurfaceInverse">@color/md_theme_inverseSurface</item>
+        <item name="colorOnSurfaceInverse">@color/md_theme_inverseOnSurface</item>
+        <item name="colorPrimaryInverse">@color/md_theme_inversePrimary</item>
+        <item name="colorPrimaryFixed">@color/md_theme_primaryFixed</item>
+        <item name="colorOnPrimaryFixed">@color/md_theme_onPrimaryFixed</item>
+        <item name="colorPrimaryFixedDim">@color/md_theme_primaryFixedDim</item>
+        <item name="colorOnPrimaryFixedVariant">@color/md_theme_onPrimaryFixedVariant</item>
+        <item name="colorSecondaryFixed">@color/md_theme_secondaryFixed</item>
+        <item name="colorOnSecondaryFixed">@color/md_theme_onSecondaryFixed</item>
+        <item name="colorSecondaryFixedDim">@color/md_theme_secondaryFixedDim</item>
+        <item name="colorOnSecondaryFixedVariant">@color/md_theme_onSecondaryFixedVariant</item>
+        <item name="colorTertiaryFixed">@color/md_theme_tertiaryFixed</item>
+        <item name="colorOnTertiaryFixed">@color/md_theme_onTertiaryFixed</item>
+        <item name="colorTertiaryFixedDim">@color/md_theme_tertiaryFixedDim</item>
+        <item name="colorOnTertiaryFixedVariant">@color/md_theme_onTertiaryFixedVariant</item>
+        <item name="colorSurfaceDim">@color/md_theme_surfaceDim</item>
+        <item name="colorSurfaceBright">@color/md_theme_surfaceBright</item>
+        <item name="colorSurfaceContainerLowest">@color/md_theme_surfaceContainerLowest</item>
+        <item name="colorSurfaceContainerLow">@color/md_theme_surfaceContainerLow</item>
+        <item name="colorSurfaceContainer">@color/md_theme_surfaceContainer</item>
+        <item name="colorSurfaceContainerHigh">@color/md_theme_surfaceContainerHigh</item>
+        <item name="colorSurfaceContainerHighest">@color/md_theme_surfaceContainerHighest</item>
+        <item name="colorControlHighlight">@color/md_theme_onPrimary</item>
+        <item name="android:textColor">@color/md_theme_onSurface</item>
+        <item name="android:textColorPrimary">@color/md_theme_onSurface</item>
+        <item name="android:textColorSecondary">@color/md_theme_onSurfaceVariant</item>
+        <item name="android:textAppearanceListItem">@color/md_theme_onSurface</item>
+        <item name="textColorAlertDialogListItem">@color/md_theme_onSurface</item>
+        <item name="android:textColorAlertDialogListItem">@color/md_theme_onSurface</item>
+        <item name="buttonBarNegativeButtonStyle">@style/Widget.App.Button</item>
+        <item name="buttonBarPositiveButtonStyle">@style/Widget.App.Button</item>
+<!--        <item name="android:textColorHighlight">@color/mime_background</item>-->
+        <item name="android:windowBackground">@drawable/dialog_background</item>
+        <item name="android:windowMinWidthMinor">75%</item>
+    </style>
+
+    <style name="Firedown.MaterialAlertDialogTheme" parent="ThemeOverlay.Material3.MaterialAlertDialog">
+        <item name="android:windowMinWidthMajor">65%</item>
+        <item name="android:windowMinWidthMinor">85%</item>
+        <item name="windowMinWidthMajor">65%</item>
+        <item name="windowMinWidthMinor">85%</item>
+    </style>
+
+    <style name="Firedown.MaterialBottomDialogStyle" parent="ThemeOverlay.Material3.MaterialAlertDialog">
+        <item name="android:windowAnimationStyle">@style/BottomSheet_DialogAnimation</item>
+        <item name="android:windowMinWidthMajor">100%</item>
+        <item name="android:windowMinWidthMinor">100%</item>
+        <item name="android:windowBackground">@color/transparent</item>
+    </style>
+
+
+    <style name="Theme.FireDown.Play.Toolbar" parent="ThemeOverlay.AppCompat.ActionBar">
+        <!-- Customize color of navigation drawer icon and back arrow -->
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorControlNormal">@color/white</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="android:textColorSecondary">@color/white</item>
+        <item name="android:textColorPrimary">@color/white</item>
+        <item name="android:colorControlNormal">@color/white</item>
+        <item name="windowActionBarOverlay">true</item>
+        <item name="android:windowActionBarOverlay">true</item>
+    </style>
+
+
+    <style name="Theme.FireDown.Popup" parent="Widget.Material3.PopupMenu">
+        <!-- Customize color of navigation drawer icon and back arrow -->
+<!--        <item name="android:colorBackground">?attr/colorSurfaceContainerHigh</item>-->
+        <item name="overlapAnchor">true</item>
+    </style>
+
+    <style name="Theme.FireDown.Popup.Vault" parent="Theme.FireDown.Popup">
+        <item name="android:textColor">@color/incognito_on_surface</item>
+        <item name="android:textColorPrimary">@color/incognito_on_surface</item>
+        <item name="android:textColorSecondary">@color/incognito_on_surface_variant</item>
+        <item name="android:colorBackground">@color/incognito_surface_container_high</item>
+        <item name="colorSurface">@color/incognito_surface_container_high</item>
+    </style>
+
+    <style name="Theme.FireDown.Popup.Overflow" parent="Widget.AppCompat.PopupMenu.Overflow">
+        <!-- Customize color of navigation drawer icon and back arrow -->
+        <item name="android:popupBackground">@drawable/dialog_background</item>
+        <item name="overlapAnchor">true</item>
+        <item name="android:dropDownVerticalOffset">14dp</item>
+        <item name="android:dropDownHorizontalOffset">-12dp</item>
+    </style>
+
+    <style name="Theme.FireDown.Fab.Square" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">12dp</item>
+    </style>
+
+
+    <style name="Theme.FireDown.Toolbar.ActionMode.Overflow" parent="Widget.AppCompat.ActionButton.Overflow">
+        <item name="android:src">@drawable/ic_baseline_more_vert_24</item> <!-- whatever color -->
+        <item name="srcCompat">@drawable/ic_baseline_more_vert_24</item> <!-- whatever color -->
+    </style>
+
+    <style name="Theme.FireDown.More.Button" parent="Widget.Material3.Button.IconOnly">
+        <item name="android:layout_width">24dp</item>
+        <item name="android:layout_height">24dp</item>
+        <item name="android:layout_gravity">center</item>
+        <item name="backgroundTint">@color/transparent</item>
+        <item name="android:padding">0dp</item>
+        <item name="android:insetLeft">0dp</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetRight">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="cornerRadius">30dp</item>
+        <item name="iconGravity">textStart</item>
+        <item name="iconTint">@color/white</item>
+        <item name="android:layout_marginTop">@dimen/list_item_margin</item>
+        <item name="android:layout_marginEnd">@dimen/list_item_margin</item>
+    </style>
+
+
+    <style name="Theme.FireDown.Selected.Button" parent="">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_gravity">center</item>
+        <item name="android:layout_marginStart">@dimen/list_spacing</item>
+        <item name="android:visibility">gone</item>
+        <item name="android:padding">6dp</item>
+    </style>
+</resources>

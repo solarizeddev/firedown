@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?><resources>
+      
+  <!-- Text for context menu item to open the link in a new tab. -->
+      
+  <string name="onboarding_button">כפתור האש</string>
+      
+  <string name="onboarding_title">בכל פעם שאתה רוצה להוריד משהו מאתר אינטרנט, הקש על לחצן האש של Firedown בפינה השמאלית התחתונה:</string>
+      
+  <string name="onboarding_message">Firedown יסרוק את האתר לאיתור פריטים להורדה, ותציע אותם ברשימה שימושית לבחירתך.</string>
+  
+</resources>

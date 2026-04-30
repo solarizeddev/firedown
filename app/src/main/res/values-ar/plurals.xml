@@ -1,0 +1,36 @@
+<resources>
+    <plurals name="complete_delete_files_text">
+        <item quantity="other">تم حذف %1$d ملف.</item>
+        <item quantity="zero">تم حذف %1$d ملف.</item>
+        <item quantity="one">تم حذف ملف واحد (%1$d).</item>
+        <item quantity="two">تم حذف ملفَين (%1$d).</item>
+        <item quantity="few">تم حذف %1$d ملفات.</item>
+        <item quantity="many">تم حذف %1$d ملفًا.</item>
+    </plurals>
+    <plurals name="complete_move_files_text">
+        <item quantity="other">تم نقل %1$d ملف.</item>
+        <item quantity="zero">تم نقل %1$d ملف.</item>
+        <item quantity="one">تم نقل ملف واحد (%1$d).</item>
+        <item quantity="two">تم نقل ملفَين (%1$d).</item>
+        <item quantity="few">تم نقل %1$d ملفات.</item>
+        <item quantity="many">تم نقل %1$d ملفًا.</item>
+    </plurals>
+    <plurals name="move_file_fail">
+        <item quantity="other">تعذّر نقل الملفات. %1$s</item>
+        <item quantity="zero">تعذّر نقل الملفات. %1$s</item>
+        <item quantity="one">تعذّر نقل ملف واحد. %1$s.</item>
+        <item quantity="two">تعذّر نقل ملفَين. %1$s</item>
+        <item quantity="few">تعذّر نقل الملفات. %1$s</item>
+        <item quantity="many">تعذّر نقل الملفات. %1$s</item>
+    </plurals>
+<plurals name="hours_ago">
+        <item quantity="zero">%1$d ساعة</item>
+        <item quantity="one">%1$d ساعة</item>
+        <item quantity="two">%1$d ساعتين</item>
+        <item quantity="few">%1$d ساعات</item>
+        <item quantity="many">%1$d ساعة</item>
+        <item quantity="other">%1$d ساعة</item>
+    </plurals>
+
+    
+    </resources>

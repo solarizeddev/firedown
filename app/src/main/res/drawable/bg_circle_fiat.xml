@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Gradient circle behind the credit-card icon for the fiat row.
+    Uses Ko-fi's brand reds since the row hands off to Ko-fi. Different
+    enough from the Lightning coral that the two cards don't look like
+    duplicates.
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <solid android:color="?attr/colorTertiaryContainer" />
+</shape>

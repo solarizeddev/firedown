@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?><resources>
+      
+  <!-- Text for context menu item to open the link in a new tab. -->
+      
+  <string name="onboarding_button">Fire-Button</string>
+      
+  <string name="onboarding_title">هر زمان که می‌خواهید چیزی را از یک وب‌سایت دانلود کنید، روی دکمه Firedown\'s Fire-Button در پایین ضربه بزنید:</string>
+      
+  <string name="onboarding_message">Firedown وب‌سایت را برای مواردی که باید دانلود شوند اسکن می‌کند و آنها را در یک لیست مفید برای انتخاب شما ارائه می‌دهد.</string>
+  
+</resources>

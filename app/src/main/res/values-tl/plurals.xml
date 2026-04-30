@@ -1,0 +1,20 @@
+<resources>
+    <plurals name="complete_delete_files_text">
+        <item quantity="other">Na-delete ang %1$d na file</item>
+        <item quantity="one">Na-delete ang %1$d file</item>
+    </plurals>
+    <plurals name="complete_move_files_text">
+        <item quantity="other">Inilipat ang %1$d na file</item>
+        <item quantity="one">Inilipat ang %1$d file</item>
+    </plurals>
+    <plurals name="move_file_fail">
+        <item quantity="other">Hindi mailipat ang mga file. %1$s</item>
+        <item quantity="one">Hindi mailipat ang mga file. %1$s</item>
+    </plurals>
+<plurals name="hours_ago">
+        <item quantity="one">%1$do</item>
+        <item quantity="other">%1$do</item>
+    </plurals>
+
+    
+    </resources>

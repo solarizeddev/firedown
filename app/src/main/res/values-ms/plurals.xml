@@ -1,0 +1,19 @@
+<resources>
+    <plurals name="complete_delete_files_text">
+        <item quantity="other">%1$d fail dipadamkan</item>
+        <item quantity="one">%1$d fail dipadamkan</item>
+    </plurals>
+    <plurals name="complete_move_files_text">
+        <item quantity="other">%1$d fail dialihkan</item>
+        <item quantity="one">%1$d fail dialihkan</item>
+    </plurals>
+    <plurals name="move_file_fail">
+        <item quantity="other">Tidak dapat mengalihkan fail. %1$s</item>
+        <item quantity="one">Tidak dapat mengalihkan fail. %1$s</item>
+    </plurals>
+<plurals name="hours_ago">
+        <item quantity="other">%1$d j</item>
+    </plurals>
+
+    
+    </resources>

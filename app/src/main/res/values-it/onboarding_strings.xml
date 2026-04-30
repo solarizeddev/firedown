@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?><resources>
+      
+  <!-- Text for context menu item to open the link in a new tab. -->
+      
+  <string name="onboarding_button">Il pulsante Fire</string>
+      
+  <string name="onboarding_title">Ogni volta che desideri scaricare qualcosa da un sito Web, tocca il pulsante Fire di Firedown in basso:</string>
+      
+  <string name="onboarding_message">Firedown eseguirà la scansione del sito Web alla ricerca di elementi da scaricare e li offrirà in un pratico elenco tra cui scegliere.</string>
+  
+</resources>

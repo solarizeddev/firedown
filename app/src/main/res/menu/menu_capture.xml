@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+
+    <item
+        android:id="@+id/action_clear"
+        android:icon="@drawable/ic_clear_all_24"
+        app:iconTint="?attr/colorOnSurface"
+        app:showAsAction="never"
+        android:title="@string/popup_clear_downloads"/>
+
+    <item
+        android:id="@+id/action_view"
+        android:icon="@drawable/ic_view_list_24"
+        app:iconTint="?attr/colorOnSurface"
+        app:showAsAction="ifRoom"
+        android:title="@string/popup_toggle"/>
+
+    <item
+        android:id="@+id/action_downloads"
+        android:icon="@drawable/download_24"
+        app:iconTint="?attr/colorOnSurface"
+        app:showAsAction="never"
+        android:title="@string/popup_downloads"/>
+
+    <item
+        android:id="@+id/action_settings"
+        android:icon="@drawable/ic_settings_24"
+        app:iconTint="?attr/colorOnSurface"
+        app:showAsAction="never"
+        android:title="@string/popup_settings"/>
+
+
+</menu>

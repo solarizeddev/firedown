@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/item"
+        style="@style/Widget.Material3.CardView.Elevated"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:cardBackgroundColor="?attr/colorSurfaceContainerLow"
+        app:layout_constraintDimensionRatio="16:10"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:cardCornerRadius="8dp"
+        app:strokeColor="@color/transparent"
+        app:strokeWidth="2dp">
+
+        <!-- Thumbnail -->
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/image"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="center"
+            android:adjustViewBounds="true"
+            android:contentDescription="@null"
+            android:duplicateParentState="true"
+            android:scaleType="centerCrop" />
+
+        <!-- Top scrim for variant button readability -->
+        <View
+            android:id="@+id/dim_view"
+            android:layout_width="match_parent"
+            android:layout_height="32dp"
+            android:background="@drawable/top_scrim"
+            android:elevation="12dp" />
+
+        <!-- Tag row: mime + quality + duration (static TextViews, no RecyclerView) -->
+        <LinearLayout
+            android:id="@+id/tag_row"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|end"
+            android:layout_margin="6dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/mime_text"
+                style="@style/MimePrimary"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingLeft="4dp"
+                android:paddingRight="4dp"
+                tools:text="mp4" />
+
+            <TextView
+                android:id="@+id/tag_quality"
+                style="@style/MimeTertiary"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:paddingLeft="4dp"
+                android:paddingRight="4dp"
+                android:visibility="gone"
+                tools:text="1080p" />
+
+            <TextView
+                android:id="@+id/tag_duration"
+                style="@style/MimeTertiary"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:paddingLeft="4dp"
+                android:paddingRight="4dp"
+                android:visibility="gone"
+                tools:text="03:45" />
+
+        </LinearLayout>
+
+        <!-- Variant / more button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/item_download_more"
+            style="@style/Theme.FireDown.More.Button"
+            android:layout_gravity="top|end"
+            app:icon="@drawable/ic_baseline_more_vert_24" />
+
+        <!-- Selection indicator -->
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/item_download_more_checked"
+            app:tint="?attr/colorPrimaryContainer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|end"
+            android:padding="@dimen/button_icons_padding"
+            android:visibility="gone"
+            app:srcCompat="@drawable/ic_baseline_check_circle_24" />
+
+    </com.google.android.material.card.MaterialCardView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

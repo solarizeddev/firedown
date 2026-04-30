@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?><resources>
+      
+  <!-- Text for context menu item to open the link in a new tab. -->
+      
+  <string name="onboarding_button">ปุ่มไฟ</string>
+      
+  <string name="onboarding_title">เมื่อใดก็ตามที่คุณต้องการดาวน์โหลดบางสิ่งจากเว็บไซต์ ให้แตะปุ่ม Firedown ของ Firedown ที่มุมขวาล่าง:</string>
+      
+  <string name="onboarding_message">Firedown จะสแกนเว็บไซต์เพื่อหารายการที่จะดาวน์โหลด และนำเสนอรายการเหล่านั้นในรายการที่สะดวกเพื่อให้คุณเลือก</string>
+  
+</resources>

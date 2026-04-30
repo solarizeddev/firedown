@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?><resources>
+      
+  <!-- Text for context menu item to open the link in a new tab. -->
+      
+  <string name="onboarding_button">A Tűz-gomb</string>
+      
+  <string name="onboarding_title">Amikor le szeretne tölteni valamit egy webhelyről, koppintson a Firedown Fire-Button elemére a jobb alsó sarokban:</string>
+      
+  <string name="onboarding_message">A Firedown átvizsgálja a webhelyet, hogy keressen letölthető elemeket, és felkínálja őket egy praktikus listában, amelyből választhat.</string>
+  
+</resources>

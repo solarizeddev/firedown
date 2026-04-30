@@ -1,0 +1,20 @@
+<resources>
+    <plurals name="complete_delete_files_text">
+        <item quantity="one">%1$d bestand verwijderd</item>
+        <item quantity="other">%1$d bestanden verwijderd</item>
+    </plurals>
+    <plurals name="complete_move_files_text">
+        <item quantity="one">%1$d bestand verplaatst</item>
+        <item quantity="other">%1$d bestanden verplaatst</item>
+    </plurals>
+    <plurals name="move_file_fail">
+        <item quantity="one">Kan bestand niet verplaatsen. %1$s</item>
+        <item quantity="other">Kan bestanden niet verplaatsen. %1$s</item>
+    </plurals>
+<plurals name="hours_ago">
+        <item quantity="one">%1$d u</item>
+        <item quantity="other">%1$d u</item>
+    </plurals>
+
+    
+    </resources>

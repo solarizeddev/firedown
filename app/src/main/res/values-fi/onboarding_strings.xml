@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?><resources>
+      
+  <!-- Text for context menu item to open the link in a new tab. -->
+      
+  <string name="onboarding_button">Fire-painike</string>
+      
+  <string name="onboarding_title">Aina kun haluat ladata jotain verkkosivustolta, napauta Firedownin alareunassa olevaa Fire-painiketta:</string>
+      
+  <string name="onboarding_message">Firedown etsii verkkosivustolta ladattavia kohteita ja tarjoaa ne kätevässä luettelossa, josta voit valita.</string>
+  
+</resources>

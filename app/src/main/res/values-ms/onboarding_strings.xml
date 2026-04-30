@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?><resources>
+      
+  <!-- Text for context menu item to open the link in a new tab. -->
+      
+  <string name="onboarding_button">Butang Api</string>
+      
+  <string name="onboarding_title">Setiap kali anda ingin memuat turun sesuatu daripada tapak web, ketik Butang Api Firedown di bahagian bawah sebelah kanan:</string>
+      
+  <string name="onboarding_message">Firedown akan mengimbas tapak web untuk item yang akan dimuat turun dan menawarkannya dalam senarai yang berguna untuk anda pilih.</string>
+  
+</resources>

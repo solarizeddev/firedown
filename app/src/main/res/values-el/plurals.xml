@@ -1,0 +1,20 @@
+<resources>
+    <plurals name="complete_delete_files_text">
+        <item quantity="other">Διαγράφηκαν %1$d αρχεία</item>
+        <item quantity="one">Διαγράφηκε %1$d αρχείο</item>
+    </plurals>
+    <plurals name="complete_move_files_text">
+        <item quantity="other">Μετακινήθηκαν %1$d αρχεία.</item>
+        <item quantity="one">Μετακινήθηκε %1$d αρχείο.</item>
+    </plurals>
+    <plurals name="move_file_fail">
+        <item quantity="other">Δεν ήταν δυνατή η μετακίνηση των αρχείων. %1$s</item>
+        <item quantity="one">Δεν ήταν δυνατή η μετακίνηση του αρχείου. %1$s</item>
+    </plurals>
+<plurals name="hours_ago">
+        <item quantity="one">%1$dώ</item>
+        <item quantity="other">%1$dώ</item>
+    </plurals>
+
+    
+    </resources>

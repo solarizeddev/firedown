@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?><resources>
+      
+  <!-- Text for context menu item to open the link in a new tab. -->
+      
+  <string name="onboarding_button">Nút Fire</string>
+      
+  <string name="onboarding_title">Bất cứ khi nào bạn muốn tải xuống nội dung nào đó từ một trang web, hãy nhấn vào Nút Fire của Firedown ở dưới cùng bên phải:</string>
+      
+  <string name="onboarding_message">Firedown sẽ quét trang web để tìm các mục cần tải xuống và cung cấp chúng trong một danh sách hữu ích để bạn chọn.</string>
+  
+</resources>

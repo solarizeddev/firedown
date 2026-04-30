@@ -1,0 +1,58 @@
+[
+  {
+    "name": "StartPage",
+    "url": "https://startpage.com",
+    "suggestion": "https://www.startpage.com/osuggestions?q=%s",
+    "method": "GET",
+    "search": "https://www.startpage.com/do/dsearch?q=%s&cat=web"
+  },
+  {
+    "name": "DuckDuckGo",
+    "url": "https://duckduckgo.com",
+    "suggestion": "https://duckduckgo.com/ac/?q=%s&amp;type=list",
+    "method": "GET",
+    "search": "https://duckduckgo.com/?q=%s&ia=web"
+  },
+  {
+    "name": "Brave",
+    "url": "https://brave.com",
+    "suggestion": "https://search.brave.com/api/suggest?q=%s",
+    "method": "GET",
+    "search": "https://search.brave.com/search?q=%s&source=web"
+  },
+  {
+    "name": "Google",
+    "url": "https://www.google.com",
+    "suggestion": "https://www.google.com/complete/search?client=firefox&q=%s",
+    "method": "GET",
+    "search": "https://www.google.com/search?client=firefox&q=%s"
+  },
+  {
+    "name": "Baidu",
+    "url": "https://baidu.com",
+    "suggestion": "https://suggestion.baidu.com/su?wd=%s&amp;action=opensearch&amp;ie=utf-8&amp;from=Firefox",
+    "method": "GET",
+    "search": "https://www.baidu.com/s?ie=utf-8&f=8&rsv_bp=1&rsv_idx=1&ch=&tn=baidu&bar=&wd=%s"
+  },
+  {
+    "name": "Yahoo",
+    "url": "https://www.yahoo.com",
+    "suggestion": "https://sugg.search.yahoo.net/sg/?output=jsonp&nresults=10&command=%s",
+    "method": "GET",
+    "search": "https://search.yahoo.com/search?p=%s"
+  },
+  {
+    "name": "Bing",
+    "url": "https://www.bing.com",
+    "suggestion": "https://api.bing.com/osjson.aspx?query=%s",
+    "method": "GET",
+    "search": "https://www.bing.com/search?q=%s&pc=MOZB&form=MOZMBA"
+  },
+  {
+    "name": "Yandex",
+    "url": "https://www.yandex.com",
+    "suggestion": "https://suggest.yandex.ru/suggest-ya.cgi?v=4&part=%s",
+    "method": "GET",
+    "search": "https://yandex.com/search/?text=%s&lr=10435&search_source=yacom_desktop_common"
+  }
+]

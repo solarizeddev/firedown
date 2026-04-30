@@ -1,0 +1,36 @@
+<resources>
+    <string name="settings_delete_browsing">બ્રાઉઝિંગ માહિતી કાઢી નાખો</string>
+    <string name="settings_quit_title">છોડો ત્યારે બ્રાઉઝિંગ ડેટા કાઢી નાખો</string>
+    <string name="settings_quit_fragment_summary">જ્યારે તમે મુખ્ય મેનૂમાંથી \"Quit\" પસંદ કરો છો ત્યારે બ્રાઉઝિંગ ડેટા આપમેળે કાઢી નાખે છે</string>
+    <string name="delete_browsing_data_quit_on">ચાલુ</string>
+    <string name="delete_browsing_data_quit_off">બંધ</string>
+    <string name="settings_delete_browsing_data_tabs_title_2">ટૅબ્સ ખોલો</string>
+    <string name="settings_delete_browsing_data_browsing_history_title">ઇતિહાસ</string>
+    <string name="settings_delete_browsing_data_cookies_subtitle">તમે મોટાભાગની સાઇટ્સથી લૉગ આઉટ થશો</string>
+    <string name="settings_delete_browsing_data_cached_files">કેશ્ડ છબીઓ અને ફાઇલો</string>
+    <string name="settings_delete_browsing_data_cached_files_subtitle">સંગ્રહ સ્થાનને મુક્ત કરે છે</string>
+    <string name="settings_theme">થીમ</string>
+    <string name="settings_light_theme">લાઇટ</string>
+    <string name="settings_dark_theme">ડાર્ક</string>
+    <string name="settings_follow_device_theme">ઉપકરણ થીમ અનુસરો</string>
+    <string name="browser_menu_back">પાછા જાવ</string>
+    <string name="browser_menu_forward">આગળ વઘારો</string>
+    <string name="browser_menu_refresh">રિફ્રેશ કરો</string>
+    <string name="browser_menu_share">વહેંચો</string>
+    <string name="delete_browsing_data_on_quit_action">બંધ કરો</string>
+    <string name="library_bookmarks">બુકમાર્ક્સ</string>
+    <string name="library_history">ઇતિહાસ</string>
+    <string name="browser_menu_desktop_site">ડેસ્કટોપ સાઇટ</string>
+    <string name="browser_menu_find_in_page">પૃષ્ઠમાં શોધો</string>
+    <string name="browser_menu_settings">સેટિંગ્સ</string>
+    <string name="browser_menu_stop">અટકાવો</string>
+    <string name="prompt_update_confirmation">અપડેટ કરો</string>
+    <string name="remove_top_site">દૂર કરો</string>
+    <string name="snackbar_deleted_undo">પૂર્વવત્ કરો</string>
+    <string name="snackbar_tab_closed">ટેબ બંધ કર્યું</string>
+    <string name="switch_to_tab_description">ટૅબ બદલો</string>
+    <string name="close_tab">ટૅબ બંધ કરો</string>
+    <string name="close_tab_title">ટૅબ બંધ કરો %s</string>
+    <string name="open_new_private_tab_2">નવી ખાનગી ટેબ</string>
+    <string name="open_new_tab_2">નવી ટૅબ</string>
+</resources>

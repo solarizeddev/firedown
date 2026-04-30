@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/coordinator_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/incognito_surface"
+    android:descendantFocusability="beforeDescendants"
+    android:focusableInTouchMode="true">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appbar_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/incognito_surface"
+        app:liftOnScroll="false">
+
+        <com.solarized.firedown.geckoview.GeckoToolbar
+            android:id="@+id/toolbar_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top"
+            app:enableHome="true" />
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <!-- Scrollable content area -->
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            android:paddingStart="24dp"
+            android:paddingEnd="24dp">
+
+            <!-- Spacer to push content toward center -->
+            <Space
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+
+            <!-- Mascot illustration -->
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/incognito_illustration"
+                android:layout_width="180dp"
+                android:layout_height="180dp"
+                android:layout_gravity="center_horizontal"
+                android:src="@drawable/ill_privacy_purple"
+                android:contentDescription="@string/tabs_incognito" />
+
+            <!-- Title -->
+            <TextView
+                android:id="@+id/incognito_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="@string/incognito_home_title"
+                android:textAppearance="?attr/textAppearanceHeadlineSmall"
+                android:textColor="@color/incognito_on_surface" />
+
+            <!-- Description -->
+            <TextView
+                android:id="@+id/incognito_description"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="@string/incognito_home_description"
+                android:textAppearance="?attr/textAppearanceBodyMedium"
+                android:textColor="@color/incognito_on_surface"
+                android:lineSpacingMultiplier="1.3" />
+
+            <!-- Two-column bullet list -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:orientation="horizontal">
+
+                <!-- Left column -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/incognito_bullet_visited"
+                        android:textAppearance="?attr/textAppearanceBodyMedium"
+                        android:textColor="@color/incognito_on_surface"
+                        android:drawablePadding="8dp"
+                        app:drawableStartCompat="@drawable/ic_bullet_point"
+                        app:drawableTint="@color/incognito_on_surface" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="@string/incognito_bullet_cookies"
+                        android:textAppearance="?attr/textAppearanceBodyMedium"
+                        android:textColor="@color/incognito_on_surface"
+                        android:drawablePadding="8dp"
+                        app:drawableStartCompat="@drawable/ic_bullet_point"
+                        app:drawableTint="@color/incognito_on_surface" />
+
+                </LinearLayout>
+
+                <!-- Right column -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/incognito_bullet_searches"
+                        android:textAppearance="?attr/textAppearanceBodyMedium"
+                        android:textColor="@color/incognito_on_surface"
+                        android:drawablePadding="8dp"
+                        app:drawableStartCompat="@drawable/ic_bullet_point"
+                        app:drawableTint="@color/incognito_on_surface" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="@string/incognito_bullet_temp_files"
+                        android:textAppearance="?attr/textAppearanceBodyMedium"
+                        android:textColor="@color/incognito_on_surface"
+                        android:drawablePadding="8dp"
+                        app:drawableStartCompat="@drawable/ic_bullet_point"
+                        app:drawableTint="@color/incognito_on_surface" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- Warning text -->
+            <TextView
+                android:id="@+id/incognito_warning"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/incognito_home_warning"
+                android:textAppearance="?attr/textAppearanceBodyMedium"
+                android:textColor="@color/incognito_on_surface"
+                android:lineSpacingMultiplier="1.3" />
+
+            <!-- Spacer to push content toward center -->
+            <Space
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="2" />
+
+        </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+    <!-- Autocomplete overlay (same as HomeFragment) -->
+    <com.solarized.firedown.autocomplete.AutoCompleteView
+        android:id="@+id/auto_complete_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clickable="true"
+        android:elevation="@dimen/autocomplete_elevation"
+        android:focusable="true"
+        app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior" />
+
+    <!-- New tab flash overlay (same as HomeFragment) -->
+    <FrameLayout
+        android:id="@+id/bottom_new_tab"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="bottom"
+        android:layout_marginTop="@dimen/app_bar_size"
+        android:layout_marginBottom="@dimen/app_bar_size"
+        android:background="@color/incognito"
+        android:visibility="gone" />
+
+    <!-- Bottom navigation bar -->
+    <com.solarized.firedown.geckoview.toolbar.BottomNavigationBar
+        android:id="@+id/bottom_app_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        app:enableCradle="false" />
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

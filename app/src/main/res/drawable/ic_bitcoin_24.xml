@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Bitcoin B logo. White on top of bg_circle_bitcoin's orange gradient.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M14.24,10.56 C14.69,9.84 14.97,8.96 14.93,8 C14.85,6.4 13.55,5.13 11.96,4.93 L11.96,3 L10.96,3 L10.96,4.91 L9.96,4.91 L9.96,3 L8.96,3 L8.96,4.91 L6.46,4.91 L6.46,5.91 L7.96,5.91 L7.96,15.96 L6.46,15.96 L6.46,16.96 L8.96,16.96 L8.96,18.93 L9.96,18.93 L9.96,16.96 L10.96,16.96 L10.96,18.93 L11.96,18.93 L11.96,16.93 C13.96,16.74 15.46,15.06 15.46,13 C15.46,11.86 14.97,10.86 14.24,10.56 Z M9.96,5.91 L11.46,5.91 C12.66,5.91 13.66,6.74 13.66,7.94 C13.66,9.14 12.66,9.94 11.46,9.94 L9.96,9.94 L9.96,5.91 Z M11.96,15.91 L9.96,15.91 L9.96,11 L11.96,11 C13.16,11 14.16,11.78 14.16,13.13 C14.16,14.48 13.16,15.91 11.96,15.91 Z" />
+</vector>

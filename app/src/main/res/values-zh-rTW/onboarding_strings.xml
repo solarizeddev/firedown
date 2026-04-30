@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?><resources>
+      
+  <!-- Text for context menu item to open the link in a new tab. -->
+      
+  <string name="onboarding_button">Fire-Button</string>
+      
+  <string name="onboarding_title">每當您想從網站下載某些內容時，請點擊 Firedown 右下角的 Fire-Button：</string>
+      
+  <string name="onboarding_message">Firedown 將掃描網站以尋找要下載的項目，並以方便的清單提供它們供您選擇。</string>
+  
+</resources>

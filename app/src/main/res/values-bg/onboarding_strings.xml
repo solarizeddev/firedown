@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?><resources>
+      
+  <!-- Text for context menu item to open the link in a new tab. -->
+      
+  <string name="onboarding_button">Бутонът Fire</string>
+      
+  <string name="onboarding_title">Когато искате да изтеглите нещо от даден уебсайт, докоснете бутона Fire в долния десен ъгъл на Firedown:</string>
+      
+  <string name="onboarding_message">Firedown ще сканира какво може да се изтегли от уебсайта и ще предложи удобен списък, от който да избирате.</string>
+  
+</resources>

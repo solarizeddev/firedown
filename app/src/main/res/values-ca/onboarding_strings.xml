@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?><resources>
+      
+  <!-- Text for context menu item to open the link in a new tab. -->
+      
+  <string name="onboarding_button">El botó de Firedown</string>
+      
+  <string name="onboarding_title">Sempre que vulgueu descarregar alguna cosa d\'un lloc web, toqueu el botó de Firedown a la part inferior dreta:</string>
+      
+  <string name="onboarding_message">Firedown escanejarà el lloc web per trobar elements per descarregar i els oferirà en una llista pràctica perquè puguis escollir.</string>
+  
+</resources>

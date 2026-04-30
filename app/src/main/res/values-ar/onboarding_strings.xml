@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?><resources>
+      
+  <!-- Text for context menu item to open the link in a new tab. -->
+      
+  <string name="onboarding_button">زر Fire</string>
+      
+  <string name="onboarding_title">عندما تريد تنزيل شيء ما من موقع ويب، انقر فوق زر Firedown\'s Fire-Button في أسفل اليمين:</string>
+      
+  <string name="onboarding_message">سيقوم Firedown بفحص موقع الويب بحثًا عن العناصر التي سيتم تنزيلها، ويقدمها في قائمة سهلة الاستخدام لتختار من بينها.</string>
+  
+</resources>

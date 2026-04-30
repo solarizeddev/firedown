@@ -1,0 +1,20 @@
+<resources>
+    <plurals name="complete_delete_files_text">
+        <item quantity="other">%1$d ఫైల్స్ తొలగించబడ్డాయి</item>
+        <item quantity="one">%1$d ఫైల్ తొలగించబడింది</item>
+    </plurals>
+    <plurals name="complete_move_files_text">
+        <item quantity="other">%1$d ఫైల్స్ తరలించబడ్డాయి</item>
+        <item quantity="one">%1$d ఫైల్ తరలించబడింది</item>
+    </plurals>
+    <plurals name="move_file_fail">
+        <item quantity="other">ఫైల్స్‌ను తరలించడం సాధ్యం కాలేదు. %1$s</item>
+        <item quantity="one">ఫైల్‌ను తరలించడం సాధ్యం కాలేదు. %1$s</item>
+    </plurals>
+<plurals name="hours_ago">
+        <item quantity="one">%1$dగం</item>
+        <item quantity="other">%1$dగం</item>
+    </plurals>
+
+    
+    </resources>

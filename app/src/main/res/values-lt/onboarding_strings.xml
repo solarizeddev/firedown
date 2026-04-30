@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?><resources>
+      
+  <!-- Text for context menu item to open the link in a new tab. -->
+      
+  <string name="onboarding_button">Ugnies mygtukas</string>
+      
+  <string name="onboarding_title">Kai norite ką nors atsisiųsti iš svetainės, apatiniame dešiniajame kampe palieskite „Firedown“ Ugnies mygtuką:</string>
+      
+  <string name="onboarding_message">„Firedown“ nuskaitys svetainę ir pasiūlys surastus atsisiunčiamus elementus sąraše, iš kurio juos galėsite patogiai pasirinkti.</string>
+  
+</resources>

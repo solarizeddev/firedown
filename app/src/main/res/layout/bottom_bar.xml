@@ -1,0 +1,77 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:minHeight="@dimen/app_bar_size"
+    android:orientation="horizontal">
+
+
+    <androidx.appcompat.widget.AppCompatImageButton
+        android:id="@+id/new_tab_button"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:padding="6dp"
+        android:scaleType="centerInside"
+        android:tint="?attr/colorOnSurface"
+        android:src="@drawable/add_24" />
+
+    <com.solarized.firedown.ui.browser.TabsBrowserButton
+        android:id="@+id/tab_button"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:clickable="true"
+        android:focusable="true"
+        android:tint="?attr/colorOnSurface"
+        android:padding="8dp" />
+
+    <FrameLayout
+        android:id="@+id/cradle"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1">
+
+        <androidx.legacy.widget.Space
+            android:id="@+id/spacer"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <androidx.appcompat.widget.AppCompatImageButton
+            android:id="@+id/search_button"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="6dp"
+            android:scaleType="centerInside"
+            android:tint="?attr/colorOnSurface"
+            android:src="@drawable/ic_search_24" />
+
+    </FrameLayout>
+
+
+    <androidx.appcompat.widget.AppCompatImageButton
+        android:id="@+id/downloads_button"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:padding="6dp"
+        android:scaleType="centerInside"
+        android:tint="?attr/colorOnSurface"
+        android:src="@drawable/download_24" />
+
+    <androidx.appcompat.widget.AppCompatImageButton
+        android:id="@+id/more_button"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:padding="6dp"
+        android:scaleType="centerInside"
+        android:tint="?attr/colorOnSurface"
+        android:src="@drawable/ic_baseline_more_vert_24" />
+
+
+</LinearLayout>

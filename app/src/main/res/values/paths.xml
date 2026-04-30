@@ -1,0 +1,4 @@
+<resources>
+    <string name="error_image_res" translatable="false">ill_matchbox</string>
+    <string name="error_image_footer_res" translatable="false">ill_matchstick</string>
+</resources>

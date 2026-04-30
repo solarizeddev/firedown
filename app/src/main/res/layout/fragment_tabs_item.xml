@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/tab_item"
+        style="@style/Widget.Material3.CardView.Elevated"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_margin="4dp"
+        android:clickable="true"
+        android:focusable="true"
+        app:layout_constraintDimensionRatio="3:4"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:cardCornerRadius="8dp"
+        app:strokeWidth="0dp">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <!-- Header bar: icon + media indicator + title + close -->
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/tab_icon"
+                android:layout_width="@dimen/tab_icon_width"
+                android:layout_height="@dimen/tab_icon_height"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/mask_icon_rounded"
+                android:scaleType="fitXY"
+                app:layout_constraintBottom_toTopOf="@id/header_guideline"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/tab_media_indicator"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:layout_marginStart="4dp"
+                android:layout_marginEnd="2dp"
+                android:visibility="gone"
+                app:srcCompat="@drawable/play_circle_24"
+                app:tint="@color/white"
+                app:layout_constraintBottom_toTopOf="@id/header_guideline"
+                app:layout_constraintStart_toEndOf="@id/tab_icon"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/tab_title"
+                style="@style/TextAppearance.Material3.LabelMedium"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_marginStart="6dp"
+                android:layout_marginEnd="6dp"
+                android:ellipsize="none"
+                android:fadingEdgeLength="20dp"
+                android:gravity="center_vertical"
+                android:requiresFadingEdge="horizontal"
+                android:singleLine="true"
+                android:textColor="?attr/colorOnSurface"
+                app:layout_constraintBottom_toTopOf="@id/header_guideline"
+                app:layout_constraintEnd_toStartOf="@id/tab_close"
+                app:layout_constraintStart_toEndOf="@id/tab_media_indicator"
+                app:layout_constraintTop_toTopOf="parent"
+                tools:text="Mozilla" />
+
+            <!-- Hidden data holder -->
+            <TextView
+                android:id="@+id/tab_url"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:visibility="gone"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <androidx.appcompat.widget.AppCompatImageButton
+                android:id="@+id/tab_close"
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:layout_marginEnd="@dimen/button_icons_padding"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:focusable="false"
+                android:tint="?attr/colorOnSurfaceVariant"
+                app:srcCompat="@drawable/ic_baseline_close_24"
+                app:layout_constraintBottom_toTopOf="@id/header_guideline"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <!-- Guideline separating header from thumbnail area -->
+            <androidx.constraintlayout.widget.Guideline
+                android:id="@+id/header_guideline"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                app:layout_constraintGuide_begin="36dp" />
+
+            <!-- Thumbnail with margin and rounded corners -->
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/tab_thumbnail"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_margin="4dp"
+                android:scaleType="centerCrop"
+                app:shapeAppearanceOverlay="@style/RoundedThumbnail"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/header_guideline" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </com.google.android.material.card.MaterialCardView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

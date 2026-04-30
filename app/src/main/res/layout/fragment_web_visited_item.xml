@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/item_web_visited_holder"
+    android:layout_width="72dp"
+    android:layout_height="104dp"
+    android:orientation="vertical">
+
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/item_web_visited"
+        style="@style/Widget.Material3.CardView.Filled"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:layout_gravity="center"
+        app:cardCornerRadius="8dp">
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/file_icon"
+                android:layout_width="@dimen/list_web_image_height"
+                android:layout_height="@dimen/list_web_image_height"
+                android:layout_gravity="center"
+                android:contentDescription="@null"
+                android:scaleType="fitCenter" />
+
+    </com.google.android.material.card.MaterialCardView>
+
+    <TextView
+        android:id="@+id/file_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/list_spacing"
+        android:ellipsize="marquee"
+        android:singleLine="true"
+        android:gravity="center"
+        android:textColor="?attr/colorOnSurface"
+        android:layout_gravity="bottom|center"
+        tools:text="www.google.es"
+        style="@style/TextAppearance.Material3.LabelMedium" />
+
+</LinearLayout>

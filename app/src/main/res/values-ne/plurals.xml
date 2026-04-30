@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="complete_delete_files_text">
+        <item quantity="other">%1$d filer er slettet</item>
+        <item quantity="one">%1$d fil er slettet</item>
+    </plurals>
+    <plurals name="complete_move_files_text">
+        <item quantity="other">%1$d filer er flyttet</item>
+        <item quantity="one">%1$d fil er flyttet</item>
+    </plurals>
+    <plurals name="move_file_fail">
+        <item quantity="other">Kunne ikke flytte filene. %1$s</item>
+        <item quantity="one">Kunne ikke flytte filen. %1$s</item>
+    </plurals>
+    <plurals name="hours_ago">
+        <item quantity="one">%1$dt</item>
+        <item quantity="other">%1$dt</item>
+    </plurals>
+</resources>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?><resources>
+      
+  <!-- Text for context menu item to open the link in a new tab. -->
+      
+  <string name="onboarding_button">Кнопка «Fire»</string>
+      
+  <string name="onboarding_title">Всякий раз, когда вы хотите загрузить что-то с веб-сайта, нажмите кнопку «Fire» в Firedown в правом нижнем углу:</string>
+      
+  <string name="onboarding_message">Firedown просканирует веб-сайт на наличие элементов для загрузки и предложит их в виде удобного списка, из которого вы сможете выбрать.</string>
+  
+</resources>

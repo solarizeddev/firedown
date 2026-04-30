@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?><resources>
+      
+  <!-- Text for context menu item to open the link in a new tab. -->
+      
+  <string name="onboarding_button">Przycisk ognia</string>
+      
+  <string name="onboarding_title">Ilekroć chcesz pobrać coś ze strony internetowej, dotknij przycisku Firedown Firedown w dolnym rogu:</string>
+      
+  <string name="onboarding_message">Firedown przeskanuje witrynę w poszukiwaniu elementów do pobrania i zaoferuje je na wygodnej liście do wyboru.</string>
+  
+</resources>

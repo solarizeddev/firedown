@@ -1,0 +1,30 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <com.solarized.firedown.settings.ui.RadioButtonPreference
+        android:defaultValue="false"
+        android:key="com.solarized.firedown.preferences.theme.default"
+        android:title="@string/settings_follow_device_theme"
+        app:enabled="true"
+        app:icon="@drawable/ic_settings_24" />
+
+
+    <com.solarized.firedown.settings.ui.RadioButtonPreference
+        android:defaultValue="true"
+        android:key="com.solarized.firedown.preferences.theme.dark"
+        android:title="@string/settings_dark_theme"
+        app:enabled="true"
+        app:icon="@drawable/dark_mode_24" />
+
+
+    <com.solarized.firedown.settings.ui.RadioButtonPreference
+        android:defaultValue="false"
+        android:key="com.solarized.firedown.preferences.theme.light"
+        android:title="@string/settings_light_theme"
+        app:enabled="true"
+        app:icon="@drawable/light_mode_24" />
+
+
+
+
+</PreferenceScreen>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="complete_delete_files_text">
+        <item quantity="other">%1$d ta fayl oʻchirildi</item>
+        <item quantity="one">%1$d ta fayl oʻchirildi</item>
+    </plurals>
+    <plurals name="complete_move_files_text">
+        <item quantity="other">%1$d ta fayl koʻchirildi</item>
+        <item quantity="one">%1$d ta fayl koʻchirildi</item>
+    </plurals>
+    <plurals name="move_file_fail">
+        <item quantity="other">Fayllar koʻchirilmadi. %1$s</item>
+        <item quantity="one">Fayl koʻchirilmadi. %1$s</item>
+    </plurals>
+</resources>

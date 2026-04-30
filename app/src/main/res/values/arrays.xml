@@ -1,0 +1,435 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+
+    <string-array name="delete_history">
+        <item>Last 15 minutes</item>
+        <item>Last hour</item>
+        <item>Last 24 hours</item>
+        <item>Last 7 days</item>
+        <item>Last 30 days</item>
+        <item>All time</item>
+    </string-array>
+
+
+    <integer-array name="popup_browser_ids">
+        <item>@id/popup_bookmark_add</item>
+        <item>@id/popup_bookmarks</item>
+        <item>@id/popup_pin_add</item>
+        <item>@id/popup_find</item>
+        <item>@id/popup_desktop</item>
+        <item>@id/popup_history</item>
+        <item>@id/popup_vault</item>
+        <item>@id/popup_settings</item>
+    </integer-array>
+
+    <integer-array name="popup_browser_text">
+        <item>@string/browser_menu_bookmark_this_page_2</item>
+        <item>@string/library_bookmarks</item>
+        <item>@string/browser_menu_add_to_shortcuts</item>
+        <item>@string/browser_menu_find_in_page</item>
+        <item>@string/browser_menu_desktop_site</item>
+        <item>@string/library_history</item>
+        <item>@string/navigation_vault</item>
+        <item>@string/browser_settings</item>
+    </integer-array>
+
+    <integer-array name="popup_browser_icon">
+        <item>@drawable/ic_bookmark_border_24</item>
+        <item>@drawable/ic_bookmarks_24</item>
+        <item>@drawable/ic_keep_24</item>
+        <item>@drawable/ic_search_24</item>
+        <item>@drawable/ic_computer_24</item>
+        <item>@drawable/ic_history_24</item>
+        <item>@drawable/ic_lock_24</item>
+        <item>@drawable/ic_settings_24</item>
+    </integer-array>
+
+
+    <integer-array name="popup_home_text">
+        <item>@string/navigation_vault</item>
+        <item>@string/library_bookmarks</item>
+        <item>@string/library_history</item>
+        <item>@string/browser_menu_settings</item>
+    </integer-array>
+
+    <integer-array name="popup_home_quit_text">
+        <item>@string/navigation_vault</item>
+        <item>@string/library_bookmarks</item>
+        <item>@string/library_history</item>
+        <item>@string/browser_menu_settings</item>
+        <item>@string/delete_browsing_data_on_quit_action</item>
+    </integer-array>
+
+
+    <integer-array name="popup_home_icon">
+        <item>@drawable/ic_lock_24</item>
+        <item>@drawable/ic_bookmarks_24</item>
+        <item>@drawable/ic_history_24</item>
+        <item>@drawable/ic_settings_24</item>
+    </integer-array>
+
+    <integer-array name="popup_home_quit_icon">
+        <item>@drawable/ic_lock_24</item>
+        <item>@drawable/ic_bookmarks_24</item>
+        <item>@drawable/ic_history_24</item>
+        <item>@drawable/ic_baseline_settings_24</item>
+        <item>@drawable/ic_logout_24</item>
+    </integer-array>
+
+
+    <string-array name="settings_doh">
+        <item>@string/settings_doh_server_mozilla</item>
+        <item>@string/settings_doh_server_cloudflare</item>
+        <item>@string/settings_doh_server_google</item>
+        <item>@string/settings_doh_server_quad9</item>
+        <item>@string/settings_doh_server_adguard</item>
+        <item>@string/settings_doh_server_custom</item>
+    </string-array>
+
+
+    <string-array name="settings_doh_servers">
+        <item>https://mozilla.cloudflare-dns.com/dns-query</item>
+        <item>https://cloudflare-dns.com/dns-query</item>
+        <item>https://dns.google/dns-query</item>
+        <item>https://dns.quad9.net/dns-query</item>
+        <item>https://dns-unfiltered.adguard.com/dns-query</item>
+        <item></item>
+    </string-array>
+
+    <string-array name="settings_doh_values">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+    </string-array>
+
+
+    <string-array name="settings_lock">
+        <item>@string/settings_lock_immediately</item>
+        <item>@string/settings_lock_5_min</item>
+        <item>@string/settings_lock_15_min</item>
+        <item>@string/settings_lock_1_hour</item>
+        <item>@string/settings_lock_1_day</item>
+    </string-array>
+
+
+    <string-array name="settings_lock_values">
+        <item>0</item>
+        <item>300000</item>
+        <item>900000</item>
+        <item>3600000</item>
+        <item>86400000</item>
+    </string-array>
+
+
+    <string-array name="settings_cookie">
+        <item>@string/settings_cookies_accept_visited</item>
+        <item>@string/settings_cookies_accept_first_party</item>
+        <item>@string/settings_cookies_accept_non_tracking</item>
+        <item>@string/settings_cookies_isolate</item>
+        <item>@string/settings_cookies_accept_none</item>
+    </string-array>
+
+
+    <string-array name="settings_cookie_values">
+        <item>3</item>
+        <item>1</item>
+        <item>4</item>
+        <item>5</item>
+        <item>2</item>
+    </string-array>
+
+    <string-array name="settings_host">
+        <item>www.startpage.com</item>
+        <item>www.dudckduckgo.com</item>
+        <item>search.brave.com</item>
+        <item>www.google.com</item>
+        <item>www.bing.com</item>
+        <item>www.baidu.com</item>
+        <item>www.yahoo.com</item>
+        <item>www.yandex.com</item>
+    </string-array>
+
+
+    <string-array name="settings_search">
+        <item>StartPage</item>
+        <item>DuckDuckGo</item>
+        <item>Brave</item>
+        <item>Google</item>
+        <item>Bing</item>
+        <item>Baidu</item>
+        <item>Yahoo</item>
+        <item>Yandex</item>
+    </string-array>
+
+
+    <string-array name="settings_search_icon">
+        <item>@drawable/ic_startpage_icon</item>
+        <item>@drawable/ic_duckduckgo_icon</item>
+        <item>@drawable/ic_brave_icon</item>
+        <item>@drawable/ic_google_icon</item>
+        <item>@drawable/ic_bing_icon</item>
+        <item>@drawable/ic_baidu_icon</item>
+        <item>@drawable/ic_yahoo_icon</item>
+        <item>@drawable/ic_yandex_icon</item>
+    </string-array>
+
+
+    <string-array name="settings_search_preference">
+        <item>com.solarized.firedown.preferences.search.engine.startpage</item>
+        <item>com.solarized.firedown.preferences.search.engine.duck</item>
+        <item>com.solarized.firedown.preferences.search.engine.brave</item>
+        <item>com.solarized.firedown.preferences.search.engine.google</item>
+        <item>com.solarized.firedown.preferences.search.engine.bing</item>
+        <item>com.solarized.firedown.preferences.search.engine.baidu</item>
+        <item>com.solarized.firedown.preferences.search.engine.yahoo</item>
+        <item>com.solarized.firedown.preferences.search.engine.yandex</item>
+    </string-array>
+
+
+    <string-array name="settings_license">
+        <item><![CDATA[<h3>Mozilla GeckoView</h3><p>Copyright https://www.mozilla.org/en-US/MPL/2.0/</p><a href="https://mozilla.github.io/geckoview/">Mozilla Public License 2.0</a><br>]]></item>
+        <item><![CDATA[<h3>Mozilla Android Components</h3><p>Copyright https://github.com/mozilla-mobile/firefox-android/tree/main/android-components</p><a href="https://github.com/mozilla-mobile/firefox-android/tree/main/android-components">Mozilla Public License 2.0</a><br>]]></item>
+        <item><![CDATA[<h3>FFmpeg</h3><p>Copyright © 2000–2013 by FFmpeg Developers</p><a href="http://www.ffmpeg.org/legal.html">LGPL 2.1</a><br>]]></item>
+        <item><![CDATA[<h3>Libdav1d</h3><p>Copyright © 2018–2019 by VideoLAN Developers</p><a href="https://code.videolan.org/videolan/dav1d">Other</a><br>]]></item>
+        <item><![CDATA[<h3>Apache Commons</h3><p>Copyright © 2021 The Apache Software Foundation</p><a href="https://www.apache.org/">Apache License 2.0</a><br>]]></item>
+        <item><![CDATA[<h3>Okhttp</h3><p>Copyright 2019 Square, Inc.</p><a href="https://github.com/square/okhttp/blob/master/LICENSE.txt">Apache License 2.0</a><br>]]></item>
+        <item><![CDATA[<h3>Glide</h3><p>Copyright Bumptech.</p><a href="https://github.com/bumptech/glide/blob/master/LICENSE">BSD, part MIT and Apache 2.0</a><br>]]></item>
+        <item><![CDATA[<h3>Ublock</h3><p>Copyright Ublock Authors.</p><a href="https://github.com/gorhill/uBlock/blob/master/LICENSE">GNU General Public License v3.0</a><br>]]></item>
+        <item><![CDATA[<h3>AndroidSVG</h3><p>Copyright Android SVG Authors.</p><a href="https://bigbadaboom.github.io/androidsvg/">Apache License 2.0</a><br>]]></item>
+
+    </string-array>
+
+
+    <integer-array name="context_link">
+        <item>@string/contextmenu_open_link_in_new_tab</item>
+        <item>@string/contextmenu_download_link</item>
+        <item>@string/contextmenu_share_link</item>
+        <item>@string/contextmenu_copy_link</item>
+    </integer-array>
+
+
+    <integer-array name="context_image">
+        <item>@string/contextmenu_open_link_in_new_tab</item>
+        <item>@string/contextmenu_download_link</item>
+        <item>@string/contextmenu_share_link</item>
+        <item>@string/contextmenu_copy_link</item>
+        <item>@string/contextmenu_open_image_in_new_tab</item>
+        <item>@string/contextmenu_save_image</item>
+        <item>@string/contextmenu_share_image</item>
+        <item>@string/contextmenu_copy_image_location</item>
+        <item>@string/contextmenu_copy_image</item>
+    </integer-array>
+
+
+    <integer-array name="download_options_type">
+        <item>@string/open_with</item>
+        <item>@string/open_origin</item>
+        <item>@string/extract_audio</item>
+        <item>@string/share</item>
+        <item>@string/popular_list_thumbnail</item>
+        <item>@string/rename</item>
+        <item>@string/lock_cipher</item>
+        <item>@string/details</item>
+        <item>@string/delete</item>
+    </integer-array>
+
+
+    <integer-array name="download_options_icon">
+        <item>@drawable/ic_web_24</item>
+        <item>@drawable/ic_travel_explore_24</item>
+        <item>@drawable/ic_headphones_24</item>
+        <item>@drawable/ic_share_24</item>
+        <item>@drawable/ic_baseline_image_24</item>
+        <item>@drawable/ic_edit_24</item>
+        <item>@drawable/ic_lock_24</item>
+        <item>@drawable/ic_info_24</item>
+        <item>@drawable/ic_baseline_delete_24</item>
+    </integer-array>
+
+
+    <integer-array name="download_options_no_thumb_type">
+        <item>@string/open_with</item>
+        <item>@string/open_origin</item>
+        <item>@string/share</item>
+        <item>@string/rename</item>
+        <item>@string/lock_cipher</item>
+        <item>@string/details</item>
+        <item>@string/delete</item>
+    </integer-array>
+
+
+    <integer-array name="download_options_no_thumb_icon">
+        <item>@drawable/ic_web_24</item>
+        <item>@drawable/ic_travel_explore_24</item>
+        <item>@drawable/ic_share_24</item>
+        <item>@drawable/ic_edit_24</item>
+        <item>@drawable/ic_lock_24</item>
+        <item>@drawable/ic_info_24</item>
+        <item>@drawable/ic_baseline_delete_24</item>
+    </integer-array>
+
+    <integer-array name="download_options_encrypted_type">
+        <item>@string/rename</item>
+        <item>@string/lock_decipher</item>
+        <item>@string/details</item>
+        <item>@string/delete</item>
+    </integer-array>
+
+    <integer-array name="download_options_encrypted_icon">
+        <item>@drawable/ic_edit_24</item>
+        <item>@drawable/ic_lock_open_right_24</item>
+        <item>@drawable/ic_info_24</item>
+        <item>@drawable/ic_baseline_delete_24</item>
+    </integer-array>
+
+
+    <integer-array name="download_options_error_type">
+        <item>@string/open_origin</item>
+        <item>@string/restart_origin</item>
+        <item>@string/delete</item>
+    </integer-array>
+
+
+    <integer-array name="download_options_error_icon">
+        <item>@drawable/ic_travel_explore_24</item>
+        <item>@drawable/ic_refresh_24</item>
+        <item>@drawable/ic_baseline_delete_24</item>
+    </integer-array>
+
+
+    <integer-array name="download_options_pause_type">
+        <item>@string/open_origin</item>
+        <item>@string/finish_origin</item>
+        <item>@string/delete</item>
+    </integer-array>
+
+
+    <integer-array name="download_options_pause_icon">
+        <item>@drawable/ic_travel_explore_24</item>
+        <item>@drawable/ic_download_done_24</item>
+        <item>@drawable/ic_baseline_delete_24</item>
+    </integer-array>
+
+
+    <integer-array name="download_details_items_ids">
+        <item>@id/info_details_name</item>
+        <item>@id/info_details_description</item>
+        <item>@id/info_details_size</item>
+        <item>@id/info_details_modified</item>
+        <item>@id/info_details_origin</item>
+        <item>@id/info_details_url</item>
+        <item>@id/info_details_path</item>
+    </integer-array>
+
+    <string-array name="download_details_items">
+        <item>@string/details_name</item>
+        <item>@string/details_description</item>
+        <item>@string/details_size</item>
+        <item>@string/details_modified</item>
+        <item>@string/details_origin</item>
+        <item>@string/details_url</item>
+        <item>@string/details_path</item>
+    </string-array>
+
+    <integer-array name="download_details_media_items_ids">
+        <item>@id/info_details_name</item>
+        <item>@id/info_details_description</item>
+        <item>@id/info_details_size</item>
+        <item>@id/info_details_duration</item>
+        <item>@id/info_details_modified</item>
+        <item>@id/info_details_origin</item>
+        <item>@id/info_details_url</item>
+        <item>@id/info_details_path</item>
+    </integer-array>
+
+    <string-array name="download_details_media_items">
+        <item>@string/details_name</item>
+        <item>@string/details_description</item>
+        <item>@string/details_size</item>
+        <item>@string/details_duration</item>
+        <item>@string/details_modified</item>
+        <item>@string/details_origin</item>
+        <item>@string/details_url</item>
+        <item>@string/details_path</item>
+    </string-array>
+
+
+    <integer-array name="web_options_edit_items">
+        <item>@string/open_origin</item>
+        <item>@string/edit</item>
+        <item>@string/share</item>
+        <item>@string/delete</item>
+    </integer-array>
+
+
+    <integer-array name="web_options_edit_items_icon">
+        <item>@drawable/ic_web_24</item>
+        <item>@drawable/ic_edit_24</item>
+        <item>@drawable/ic_share_24</item>
+        <item>@drawable/ic_baseline_delete_24</item>
+    </integer-array>
+
+    <integer-array name="web_options_items">
+        <item>@string/open_origin</item>
+        <item>@string/share</item>
+        <item>@string/delete</item>
+    </integer-array>
+
+
+    <integer-array name="web_options_items_icon">
+        <item>@drawable/ic_web_24</item>
+        <item>@drawable/ic_share_24</item>
+        <item>@drawable/ic_baseline_delete_24</item>
+    </integer-array>
+
+
+    <integer-array name="new_tab_options_items">
+        <item>@string/open_new_tab_2</item>
+        <item>@string/open_new_private_tab_2</item>
+    </integer-array>
+
+
+    <integer-array name="new_tab_items_icon">
+        <item>@drawable/ic_web_24</item>
+        <item>@drawable/ic_incognito_24</item>
+    </integer-array>
+
+    <integer-array name="new_tab_items_id">
+        <item>@id/new_tab</item>
+        <item>@id/new_incognito_tab</item>
+    </integer-array>
+
+    <integer-array name="shortcut_options_items">
+        <item>@string/open</item>
+        <item>@string/edit</item>
+        <item>@string/remove_top_site</item>
+    </integer-array>
+
+
+    <integer-array name="shortcut_options_items_icon">
+        <item>@drawable/ic_web_24</item>
+        <item>@drawable/ic_edit_24</item>
+        <item>@drawable/ic_baseline_delete_24</item>
+    </integer-array>
+
+
+    <string-array name="pref_tabs_archive_interval_entries">
+        <item>@string/close_tabs_manually</item>
+        <item>@string/close_tabs_after_one_day</item>
+        <item>@string/close_tabs_after_one_week</item>
+        <item>@string/close_tabs_after_one_month</item>
+    </string-array>
+
+    <string-array name="pref_tabs_archive_interval_values">
+        <item>-1</item>
+        <item>86400000</item>
+        <item>604800000</item>
+        <item>2592000000</item>
+    </string-array>
+
+
+</resources>

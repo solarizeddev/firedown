@@ -1,0 +1,28 @@
+<resources>
+    <plurals name="complete_delete_files_text">
+        <item quantity="other">Bolo odstránených %1$d súborov</item>
+        <item quantity="one">Bol odstránený %1$d súbor</item>
+        <item quantity="few">Boli odstránené %1$d súbory</item>
+        <item quantity="many">%1$d files deleted</item>
+    </plurals>
+    <plurals name="complete_move_files_text">
+        <item quantity="other">Bolo presunutých %1$d súborov</item>
+        <item quantity="one">Bol presunutý %1$d súbor</item>
+        <item quantity="few">Boli presunuté %1$d súbory</item>
+        <item quantity="many">%1$d files moved</item>
+    </plurals>
+    <plurals name="move_file_fail">
+        <item quantity="other">Súbory sa nepodarilo presunúť. %1$s</item>
+        <item quantity="one">Súbor sa nepodarilo presunúť. %1$s</item>
+        <item quantity="few">Súbory sa nepodarilo presunúť. %1$s</item>
+        <item quantity="many">Súbory sa nepodarilo presunúť. %1$s</item>
+    </plurals>
+<plurals name="hours_ago">
+        <item quantity="one">%1$d h</item>
+        <item quantity="few">%1$d h</item>
+        <item quantity="many">%1$d h</item>
+        <item quantity="other">%1$d h</item>
+    </plurals>
+
+    
+    </resources>

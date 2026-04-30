@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:descendantFocusability="beforeDescendants"
+    android:focusableInTouchMode="true">
+
+
+    <com.solarized.firedown.geckoview.GeckoSwipeRefreshLayout
+        android:id="@+id/swipe"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <com.solarized.firedown.geckoview.NestedGeckoView
+            android:id="@+id/geckoview"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+    </com.solarized.firedown.geckoview.GeckoSwipeRefreshLayout>
+
+
+    <com.solarized.firedown.geckoview.GeckoToolbar
+        android:id="@+id/toolbar_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top" />
+
+
+    <com.solarized.firedown.autocomplete.AutoCompleteView
+        android:id="@+id/auto_complete_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_anchor="@id/toolbar_layout"
+        android:clickable="true"
+        android:focusable="true"
+        android:elevation="@dimen/autocomplete_elevation"
+        android:visibility="gone"/>
+
+    <View
+        android:id="@+id/anchor_view"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/transparent"
+        android:layout_gravity="bottom"
+        app:layout_behavior=".geckoview.toolbar.AnchorBehavior"/>
+
+
+
+    <com.solarized.firedown.geckoview.toolbar.BottomNavigationBar
+        android:id="@+id/bottom_app_bar"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/app_bar_size"
+        android:minHeight="@dimen/app_bar_size"
+        android:layout_gravity="bottom"
+        android:background="?android:attr/colorBackground"
+        app:enableCradle="true"
+        app:layout_behavior=".geckoview.toolbar.BottomNavigationBehavior"/>
+
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/download_button"
+        style="@style/Widget.Material3.FloatingActionButton.Primary"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:contentDescription="@string/download"
+        android:elevation="0dp"
+        app:elevation="0dp"
+        app:layout_behavior=".geckoview.toolbar.BottomNavigationFABBehavior"
+        app:layout_anchorGravity="bottom|center"
+        app:layout_anchor="@id/bottom_app_bar"
+        app:borderWidth="0dp"
+        app:fabSize="normal"
+        app:maxImageSize="@dimen/phone_icon_height"
+        app:srcCompat="@drawable/ic_firedown" />
+
+
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

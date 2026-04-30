@@ -1,0 +1,19 @@
+<resources>
+    <plurals name="complete_delete_files_text">
+        <item quantity="other">已删除 %1$d 个文件</item>
+        <item quantity="one">已删除 %1$d 个文件</item>
+    </plurals>
+    <plurals name="complete_move_files_text">
+        <item quantity="other">已移动 %1$d 个文件</item>
+        <item quantity="one">已移动 %1$d 个文件</item>
+    </plurals>
+    <plurals name="move_file_fail">
+        <item quantity="other">无法移动文件。%1$s</item>
+        <item quantity="one">无法移动文件。%1$s</item>
+    </plurals>
+<plurals name="hours_ago">
+        <item quantity="other">%1$d 小时</item>
+    </plurals>
+
+    
+    </resources>

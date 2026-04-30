@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- cert_info_row.xml — single label:value row used inside the cert sheet -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:paddingVertical="5dp"
+    android:gravity="top">
+
+    <TextView
+        android:id="@+id/cert_row_label"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="0.35"
+        android:textSize="13sp"
+        android:textColor="?android:attr/textColorSecondary"
+        tools:text="Common Name" />
+
+    <TextView
+        android:id="@+id/cert_row_value"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="0.65"
+        android:textSize="13sp"
+        android:textColor="?android:attr/textColorPrimary"
+        android:textIsSelectable="true"
+        android:fontFamily="monospace"
+        tools:text="*.google.com" />
+
+</LinearLayout>

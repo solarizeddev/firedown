@@ -1,0 +1,44 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <SwitchPreferenceCompat
+        android:key="com.solarized.firedown.preferences.browser.quit.pref"
+        android:title="@string/settings_quit_title"
+        android:summary="@string/settings_quit_fragment_summary"
+        android:icon="@drawable/ic_logout_24">
+    </SwitchPreferenceCompat>
+
+
+
+    <CheckBoxPreference
+        android:key="com.solarized.firedown.preferences.browser.quit.pref.tabs"
+        android:title="@string/settings_delete_browsing_data_tabs_title_2"
+        android:enabled="false"
+        android:defaultValue="false">
+    </CheckBoxPreference>
+
+    <CheckBoxPreference
+        android:key="com.solarized.firedown.preferences.browser.quit.pref.history"
+        android:title="@string/settings_delete_browsing_data_browsing_history_title"
+        android:enabled="false"
+        android:defaultValue="false">
+    </CheckBoxPreference>
+
+    <CheckBoxPreference
+        android:key="com.solarized.firedown.preferences.browser.quit.pref.cookies"
+        android:title="@string/settings_delete_browsing_data_cookies_and_site_data"
+        android:summary="@string/settings_delete_browsing_data_cookies_subtitle"
+        android:enabled="false"
+        android:defaultValue="false">
+    </CheckBoxPreference>
+
+    <CheckBoxPreference
+        android:key="com.solarized.firedown.preferences.browser.quit.pref.cache"
+        android:title="@string/settings_delete_browsing_data_cached_files"
+        android:summary="@string/settings_delete_browsing_data_cached_files_subtitle"
+        android:enabled="false"
+        android:defaultValue="false">
+    </CheckBoxPreference>
+
+
+</PreferenceScreen>

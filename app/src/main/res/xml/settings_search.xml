@@ -1,0 +1,57 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <com.solarized.firedown.settings.ui.RadioButtonPreference
+        android:key="com.solarized.firedown.preferences.search.engine.duck"
+        android:title="DuckDuckGo"
+        android:icon="@drawable/ic_duckduckgo_icon">
+    </com.solarized.firedown.settings.ui.RadioButtonPreference>
+
+
+    <com.solarized.firedown.settings.ui.RadioButtonPreference
+        android:key="com.solarized.firedown.preferences.search.engine.brave"
+        android:title="Brave"
+        android:icon="@drawable/ic_brave_icon">
+    </com.solarized.firedown.settings.ui.RadioButtonPreference>
+
+
+    <com.solarized.firedown.settings.ui.RadioButtonPreference
+        android:key="com.solarized.firedown.preferences.search.engine.google"
+        android:title="Google"
+        android:icon="@drawable/ic_google_icon">
+    </com.solarized.firedown.settings.ui.RadioButtonPreference>
+
+
+    <com.solarized.firedown.settings.ui.RadioButtonPreference
+        android:key="com.solarized.firedown.preferences.search.engine.startpage"
+        android:title="StartPage"
+        android:icon="@drawable/ic_startpage_icon">
+    </com.solarized.firedown.settings.ui.RadioButtonPreference>
+
+
+    <com.solarized.firedown.settings.ui.RadioButtonPreference
+        android:key="com.solarized.firedown.preferences.search.engine.bing"
+        android:title="Bing"
+        android:icon="@drawable/ic_bing_icon">
+    </com.solarized.firedown.settings.ui.RadioButtonPreference>
+
+
+    <com.solarized.firedown.settings.ui.RadioButtonPreference
+        android:key="com.solarized.firedown.preferences.search.engine.baidu"
+        android:title="Baidu"
+        android:icon="@drawable/ic_baidu_icon">
+    </com.solarized.firedown.settings.ui.RadioButtonPreference>
+
+    <com.solarized.firedown.settings.ui.RadioButtonPreference
+        android:key="com.solarized.firedown.preferences.search.engine.yahoo"
+        android:title="Yahoo"
+        android:icon="@drawable/ic_yahoo_icon">
+    </com.solarized.firedown.settings.ui.RadioButtonPreference>
+
+    <com.solarized.firedown.settings.ui.RadioButtonPreference
+        android:key="com.solarized.firedown.preferences.search.engine.yandex"
+        android:title="Yandex"
+        android:icon="@drawable/ic_yandex_icon">
+    </com.solarized.firedown.settings.ui.RadioButtonPreference>
+
+</PreferenceScreen>

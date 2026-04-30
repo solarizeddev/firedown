@@ -1,0 +1,20 @@
+<resources>
+    <plurals name="complete_delete_files_text">
+        <item quantity="other">%1$d fájl törölve</item>
+        <item quantity="one">%1$d fájl törölve</item>
+    </plurals>
+    <plurals name="complete_move_files_text">
+        <item quantity="other">%1$d fájl áthelyezve</item>
+        <item quantity="one">%1$d fájl áthelyezve</item>
+    </plurals>
+    <plurals name="move_file_fail">
+        <item quantity="other">Nem sikerült áthelyezni a fájlokat. %1$s</item>
+        <item quantity="one">Nem sikerült áthelyezni a fájlt. %1$s</item>
+    </plurals>
+<plurals name="hours_ago">
+        <item quantity="one">%1$dó</item>
+        <item quantity="other">%1$dó</item>
+    </plurals>
+
+    
+    </resources>

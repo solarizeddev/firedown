@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph_lock"
+    app:startDestination="@id/lock">
+    <fragment
+        android:id="@+id/lock"
+        android:name="com.solarized.firedown.phone.fragments.LockFragment"
+        android:label="fragment_lock"
+        tools:layout="@layout/fragment_lock">
+        <action
+            android:id="@+id/action_lock_to_vault"
+            app:destination="@id/vault"
+            app:popUpTo="@id/lock"
+            app:popUpToInclusive="true" />
+    </fragment>
+    <fragment
+        android:id="@+id/vault"
+        android:name="com.solarized.firedown.phone.fragments.VaultFragment"
+        android:label="fragment_vault"
+        tools:layout="@layout/fragment_vault">
+        <action
+            android:id="@+id/action_vault_to_lock"
+            app:destination="@id/lock"
+            app:popUpTo="@id/vault"
+            app:popUpToInclusive="true" />
+    </fragment>
+    <dialog
+        android:id="@+id/dialog_sort"
+        android:name="com.solarized.firedown.phone.dialogs.DownloadsSortDialogFragment"
+        android:label="fragment_download_bottom_sort"
+        tools:layout="@layout/fragment_dialog_download_sort" />
+    <dialog
+        android:id="@+id/dialog_download_options"
+        android:name="com.solarized.firedown.phone.dialogs.DownloadsOptionDialogFragment"
+        android:label="fragment_download_bottom_options"
+        tools:layout="@layout/fragment_dialog_options"/>
+    <dialog
+        android:id="@+id/dialog_rename"
+        android:name="com.solarized.firedown.phone.dialogs.RenameFileDialog"
+        tools:layout="@layout/fragment_dialog_reame_file" />
+    <dialog
+        android:id="@+id/dialog_file_info"
+        android:name="com.solarized.firedown.phone.dialogs.InfoBottomSheetDialogFragment"
+        tools:layout="@layout/fragment_dialog_download_info" />
+    <dialog
+        android:id="@+id/dialog_enroll"
+        android:name="com.solarized.firedown.phone.dialogs.EnrollDialogFragment" />
+    <dialog
+        android:id="@+id/dialog_delete_files"
+        android:name="com.solarized.firedown.phone.dialogs.DeleteDownloadsDialogFragment" />
+    <dialog
+        android:id="@+id/dialog_cancel_operation"
+        android:name="com.solarized.firedown.phone.dialogs.CancelOperationDialogFragment" />
+</navigation>

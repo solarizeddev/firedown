@@ -1,0 +1,25 @@
+<resources>
+    <plurals name="complete_delete_files_text">
+        <item quantity="other">Izbrisano je %1$d fajlova</item>
+        <item quantity="one">Izbrisan je %1$d fajl</item>
+        <item quantity="few">Izbrisana su %1$d fajla</item>
+    </plurals>
+    <plurals name="complete_move_files_text">
+        <item quantity="other">Premješteno je %1$d fajlova</item>
+        <item quantity="one">Premješten je %1$d fajl</item>
+        <item quantity="few">Premještena su %1$d fajla</item>
+    </plurals>
+    <plurals name="move_file_fail">
+        <item quantity="other">Premještanje fajlova nije uspjelo. %1$s</item>
+        <item quantity="one">Premještanje fajlova nije uspjelo. %1$s</item>
+        <item quantity="few">Premještanje fajlova nije uspjelo. %1$s</item>
+    </plurals>
+<plurals name="hours_ago">
+        <item quantity="one">%1$dh</item>
+        <item quantity="few">%1$dh</item>
+        <item quantity="many">%1$dh</item>
+        <item quantity="other">%1$dh</item>
+    </plurals>
+
+    
+    </resources>

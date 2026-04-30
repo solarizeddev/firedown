@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<View xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/item_web_history_holder"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/list_web_empty_height"
+    android:layout_marginStart="@dimen/list_spacing"
+    android:layout_marginTop="4dp"
+    android:layout_marginEnd="@dimen/list_spacing"
+    android:layout_marginBottom="4dp" />
+

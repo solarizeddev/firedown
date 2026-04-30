@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="complete_delete_files_text">
+        <item quantity="other">Amafayela angu-%1$d asuliwe</item>
+        <item quantity="one">Amafayela angu-%1$d asuliwe</item>
+    </plurals>
+    <plurals name="complete_move_files_text">
+        <item quantity="other">Amafayela angu-%1$d ahanjisiwe</item>
+        <item quantity="one">Amafayela angu-%1$d ahanjisiwe</item>
+    </plurals>
+    <plurals name="move_file_fail">
+        <item quantity="other">Ayikwazanga ukuhambisa amafayela. %1$s</item>
+        <item quantity="one">Ayikwazanga ukuhambisa amafayela. %1$s</item>
+    </plurals>
+</resources>

@@ -1,0 +1,13 @@
+<com.google.android.material.textview.MaterialTextView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/item_options"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:text="@string/share"
+    android:textAllCaps="false"
+    android:padding="16dp"
+    android:background="?attr/selectableItemBackground"
+    android:textColor="@color/md_theme_primary"
+    app:drawableTint="@color/md_theme_primary"
+    android:drawablePadding="16dp"
+    android:textSize="16sp" />

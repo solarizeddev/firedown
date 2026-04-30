@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?><resources>
+      
+  <!-- Text for context menu item to open the link in a new tab. -->
+      
+  <string name="onboarding_button">Το κουμπί της φωτιάς</string>
+      
+  <string name="onboarding_title">Κάθε φορά που θέλετε να κατεβάσετε κάτι από έναν ιστότοπο, πατήστε το κουμπί Firedown\'s Fire στο κάτω μέρος:</string>
+      
+  <string name="onboarding_message">Το Firedown θα σαρώσει τον ιστότοπο για στοιχεία προς λήψη και θα τα προσφέρει σε μια εύχρηστη λίστα για να διαλέξετε.</string>
+  
+</resources>

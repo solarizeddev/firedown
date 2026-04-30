@@ -1,0 +1,29 @@
+<resources>
+    <declare-styleable name="FullscreenAttrs">
+        <attr name="fullscreenBackgroundColor" format="color" />
+        <attr name="fullscreenTextColor" format="color" />
+    </declare-styleable>
+    <declare-styleable name="LoginPanelTextInputLayout">
+        <attr name="InputLayoutErrorTextColor" format="reference"/>
+        <attr name="InputLayoutErrorIconColor" format="reference"/>
+        <attr name="PromptLoginEditTextCursorColor" format="reference"/>
+    </declare-styleable>
+    <declare-styleable name="StateClickableImageButton">
+        <attr name="stateClickable" format="boolean" />
+    </declare-styleable>
+    <declare-styleable name="TabsBrowserButton">
+        <attr name="tabBackgroundDrawable" format="integer" />
+        <attr name="tabTextColor" format="color" />
+    </declare-styleable>
+    <declare-styleable name="BottomNavigationBar">
+        <attr name="enableCradle" format="boolean" />
+    </declare-styleable>
+    <declare-styleable name="GeckoToolbar">
+        <attr name="enableHome" format="boolean" />
+    </declare-styleable>
+    <declare-styleable name="ExpandableButton">
+        <attr name="expandableText" format="string" />
+        <attr name="expandableChildView" format="reference" />
+        <attr name="expandableIcon" format="reference" />
+    </declare-styleable>
+</resources>

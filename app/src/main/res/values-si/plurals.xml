@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="complete_delete_files_text">
+        <item quantity="other">ගොනු %1$dක් මකන ලදි</item>
+        <item quantity="one">ගොනු %1$dක් මකන ලදි</item>
+    </plurals>
+    <plurals name="complete_move_files_text">
+        <item quantity="other">ගොනු %1$dක් ගෙන යන ලදි</item>
+        <item quantity="one">ගොනු %1$dක් ගෙන යන ලදි</item>
+    </plurals>
+    <plurals name="move_file_fail">
+        <item quantity="other">ගොනු ගෙන යාමට නොහැකි විය. %1$s</item>
+        <item quantity="one">ගොනු ගෙන යාමට නොහැකි විය. %1$s</item>
+    </plurals>
+</resources>

@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <color name="ic_launcher_background">@color/md_theme_background</color>
+    <color name="brand_orange">#f0716c</color>
+    <color name="incognito">#FF391D5B</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="transparent">#00FFFFFF</color>
+    <color name="orange">#ff716c</color>
+    <color name="orange_light">#d1ff716c</color>
+    <color name="md_theme_primary">#f0716c</color>
+    <color name="md_theme_onPrimary">#FFFFFF</color>
+    <color name="md_theme_primaryContainer">#FF857F</color>
+    <color name="md_theme_onPrimaryContainer">#460005</color>
+    <color name="md_theme_secondary">#f0716c</color>
+    <color name="md_theme_onSecondary">#FFFFFF</color>
+    <color name="md_theme_secondaryContainer">#FFBF9B</color>
+    <color name="md_theme_onSecondaryContainer">#5D2E0D</color>
+    <color name="md_theme_tertiary">#f0716c</color>
+    <color name="md_theme_onTertiary">#FFFFFF</color>
+    <color name="md_theme_tertiaryContainer">#C8417B</color>
+    <color name="md_theme_onTertiaryContainer">#FFFFFF</color>
+    <color name="md_theme_error">#BA1A1A</color>
+    <color name="md_theme_onError">#FFFFFF</color>
+    <color name="md_theme_errorContainer">#FFDAD6</color>
+    <color name="md_theme_onErrorContainer">#410002</color>
+    <color name="md_theme_background">#FBF9FB</color>
+    <color name="md_theme_onBackground">#251918</color>
+    <color name="md_theme_surface">#FBF9FB</color>
+    <color name="md_theme_onSurface">#1B1B1E</color>
+    <color name="md_theme_surfaceVariant">#E1E2E9</color>
+    <color name="md_theme_onSurfaceVariant">#44474C</color>
+    <color name="md_theme_outline">#75777D</color>
+    <color name="md_theme_outlineVariant">#C5C6CD</color>
+    <color name="md_theme_inverseSurface">#303033</color>
+    <color name="md_theme_inverseOnSurface">#F2F0F3</color>
+    <color name="md_theme_inversePrimary">#FFB3AE</color>
+    <color name="md_theme_primaryFixed">#FFDAD7</color>
+    <color name="md_theme_onPrimaryFixed">#410004</color>
+    <color name="md_theme_primaryFixedDim">#FFB3AE</color>
+    <color name="md_theme_onPrimaryFixedVariant">#8A1A1E</color>
+    <color name="md_theme_secondaryFixed">#FFDBC9</color>
+    <color name="md_theme_onSecondaryFixed">#321200</color>
+    <color name="md_theme_secondaryFixedDim">#FFB68C</color>
+    <color name="md_theme_onSecondaryFixedVariant">#6C3A18</color>
+    <color name="md_theme_tertiaryFixed">#FFD9E3</color>
+    <color name="md_theme_onTertiaryFixed">#3E001E</color>
+    <color name="md_theme_tertiaryFixedDim">#FFB0C9</color>
+    <color name="md_theme_onTertiaryFixedVariant">#8B094C</color>
+    <color name="md_theme_surfaceDim">#DBD9DC</color>
+    <color name="md_theme_surfaceBright">#FBF9FB</color>
+    <color name="md_theme_surfaceContainerLowest">#FFFFFF</color>
+    <color name="md_theme_surfaceContainerLow">#F5F3F6</color>
+    <color name="md_theme_surfaceContainer">#EFEDF0</color>
+    <color name="md_theme_surfaceContainerHigh">#E9E7EA</color>
+    <color name="md_theme_surfaceContainerHighest">#E4E2E5</color>
+    <color name="md_theme_surfaceContainerLow_highContrast">#F5F3F6</color>
+    <!-- Incognito -->
+    <!-- Primary -->
+    <color name="incognito_primary">#FFf0716c</color>
+    <color name="incognito_on_primary">#FF68000C</color>
+    <color name="incognito_primary_container">#FFF66A66</color>
+    <color name="incognito_on_primary_container">#FF0F0000</color>
+    <color name="incognito_primary_inverse">#FFAB3333</color>
+    <!-- Secondary -->
+    <color name="incognito_secondary">#FFF0716C</color>
+    <color name="incognito_on_secondary">#FF502404</color>
+    <color name="incognito_secondary_container">#FFFAB186</color>
+    <color name="incognito_on_secondary_container">#FF532606</color>
+    <!-- Tertiary -->
+    <color name="incognito_tertiary">#FFFFB0C9</color>
+    <color name="incognito_on_tertiary">#FF640034</color>
+    <color name="incognito_tertiary_container">#FFC8417B</color>
+    <color name="incognito_on_tertiary_container">#FFFFFFFF</color>
+    <!-- Error -->
+    <color name="incognito_error">#FFFFB4AB</color>
+    <color name="incognito_on_error">#FF690005</color>
+    <color name="incognito_error_container">#FF93000A</color>
+    <color name="incognito_on_error_container">#FFFFDAD6</color>
+    <!-- Surface -->
+    <color name="incognito_surface">#FF391D5B</color>
+    <color name="incognito_on_surface">#FFE4E2E5</color>
+    <color name="incognito_surface_variant">#FF44474C</color>
+    <color name="incognito_on_surface_variant">#FFC5C6CD</color>
+    <color name="incognito_surface_inverse">#FFE4E2E5</color>
+    <color name="incognito_on_surface_inverse">#FF303033</color>
+    <color name="incognito_surface_dim">#FF131315</color>
+    <color name="incognito_surface_bright">#FF4d287d</color>
+    <color name="incognito_surface_container">#FF402167</color>
+    <color name="incognito_surface_container_low">#FF6D3D94</color>
+    <color name="incognito_surface_container_high">#FF4a2779</color>
+    <color name="incognito_surface_container_highest">#FF3f2167</color>
+    <color name="incognito_surface_container_lowest">#FF0D0E10</color>
+
+    <!-- Background -->
+    <color name="incognito_background">#FF391D5B</color>
+
+    <!-- Outline -->
+    <color name="incognito_outline">#FF8F9097</color>
+    <color name="incognito_outline_variant">#FF696d75</color>
+
+</resources>

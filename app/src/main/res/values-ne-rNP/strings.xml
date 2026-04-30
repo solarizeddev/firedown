@@ -1,0 +1,24 @@
+<resources>
+    <string name="browser_menu_back">पछाडी</string>
+    <string name="browser_menu_forward">अगाडी</string>
+    <string name="browser_menu_refresh">ताजा गर्नुहोस्</string>
+    <string name="browser_menu_share">सेयर</string>
+    <string name="library_bookmarks">बुकमार्कहरु</string>
+    <string name="library_history">इतिहास</string>
+    <string name="browser_menu_settings">सेटिङ्गहरु</string>
+    <string name="browser_menu_stop">रोक्नुहोस्</string>
+    <string name="prompt_update_confirmation">अद्यावधिक</string>
+    <string name="switch_to_tab_description">ट्याबमा स्विच गर्नुहोस्</string>
+    <string name="close_tab">ट्याब बन्द गर्नुहोस्</string>
+    <string name="close_tabs_after_one_day">एक दिन पछि</string>
+    <string name="close_tabs_after_one_day_summary">एक दिन पछाडी बन्द गर्नुहोस्</string>
+    <string name="close_tabs_after_one_month">एक महिना पछि</string>
+    <string name="close_tabs_after_one_month_summary">एक महिना पछाडी बन्द गर्नुहोस्</string>
+    <string name="close_tabs_after_one_week">एक हप्ता पछि</string>
+    <string name="close_tabs_after_one_week_summary">एक हप्ता पछाडी बन्द गर्नुहोस्</string>
+    <string name="close_tabs_manually">कहिले पनि होइन</string>
+    <string name="close_tabs_manually_summary">म्यानुअल रूपमा नै बन्द गर्नुहोस्</string>
+    <string name="tab_tray_inactive_auto_close_button_content_description">बन्द गर्नुहोस्</string>
+    <string name="open_new_private_tab_2">नयाँ निजी ट्याब</string>
+    <string name="open_new_tab_2">नयाँ ट्याब</string>
+</resources>

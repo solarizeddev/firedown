@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?><resources>
+      
+  <!-- Text for context menu item to open the link in a new tab. -->
+      
+  <string name="onboarding_button">Die Feuer-Taste</string>
+      
+  <string name="onboarding_title">Wenn Sie etwas von einer Website herunterladen möchten, tippen Sie unten rechts auf die Feuer-Taste von Firedown:</string>
+      
+  <string name="onboarding_message">Firedown durchsucht die Website nach herunterzuladenden Elementen und bietet diese in einer praktischen Liste an, aus der Sie auswählen können.</string>
+  
+</resources>

@@ -1,0 +1,233 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+
+    <PreferenceCategory
+        android:title="@string/settings_general"
+        app:iconSpaceReserved="false">
+
+<!--        <Preference-->
+<!--            android:key="com.solarized.firedown.preferences.new.tabs"-->
+<!--            android:title="@string/settings_new_tab"-->
+<!--            android:summary="@string/settings_new_tab_bookmarks"-->
+<!--            app:icon="@drawable/ic_tabs_new_24">-->
+<!--        </Preference>-->
+
+
+        <Preference
+            android:key="com.solarized.firedown.preferences.theme"
+            android:title="@string/settings_theme"
+            app:icon="@drawable/palette_24">
+        </Preference>
+
+        <Preference
+            android:key="com.solarized.firedown.preferences.search.engine"
+            android:title="@string/settings_search_engine"
+            app:icon="@drawable/ic_search_24">
+        </Preference>
+
+        <Preference
+            android:key="com.solarized.firedown.preferences.browser.tabs"
+            android:title="@string/close_tab"
+            android:summary="@string/close_tabs_manually"
+            app:icon="@drawable/ic_tabs_v2_24">
+        </Preference>
+
+        <Preference
+            android:key="com.solarized.firedown.preferences.browser.password"
+            android:title="@string/settings_autofill_service_title"
+            android:summary="@string/settings_autofill_service_summary"
+            app:icon="@drawable/ic_key_24">
+        </Preference>
+
+        <Preference
+            android:key="com.solarized.firedown.preferences.lock.main"
+            android:summary="@string/settings_lock_summary"
+            android:title="@string/settings_lock_title"
+            app:icon="@drawable/ic_lock_24" />
+
+        <Preference
+            android:key="com.solarized.firedown.preferences.browser.quit"
+            android:summary="@string/delete_browsing_data_quit_off"
+            android:title="@string/settings_quit_title"
+            app:icon="@drawable/ic_logout_24" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="@string/settings_downloads"
+        app:iconSpaceReserved="false">
+
+        <SwitchPreferenceCompat
+            android:defaultValue="false"
+            android:key="com.solarized.firedown.preferences.downloads.save.ask"
+            android:title="@string/settings_save_file_title"
+            android:summary="@string/settings_save_file_summary"
+            app:icon="@drawable/ic_edit_24"/>
+
+
+        <SwitchPreferenceCompat
+            android:defaultValue="false"
+            android:key="com.solarized.firedown.preferences.downloads.gallery"
+            android:title="@string/settings_media_gallery_title"
+            android:summary="@string/settings_media_gallery_summary"
+            app:icon="@drawable/ic_gallery_thumbnail_24"/>
+
+        <Preference
+            android:key="com.solarized.firedown.preferences.downloads.location"
+            android:title="@string/settings_downloads_path"
+            app:icon="@drawable/ic_baseline_download_24"/>
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="@string/settings_privacy"
+        app:iconSpaceReserved="false">
+
+
+        <Preference
+            android:key="com.solarized.firedown.preferences.browser.doh.pref"
+            android:title="@string/settings_doh_title"
+            android:summary="@string/settings_doh_summary"
+            app:icon="@drawable/dns_24" />
+
+
+        <Preference
+            android:key="com.solarized.firedown.preferences.browser.tracking"
+            android:summary="@string/settings_enhanced_tracking_protection_custom_description_2"
+            android:title="@string/settings_enhanced_tracking_protection"
+            app:icon="@drawable/footprint_24" />
+
+
+        <SwitchPreferenceCompat
+            android:defaultValue="false"
+            android:key="com.solarized.firedown.preferences.browser.enable.resist.fingerprinting"
+            android:summary="@string/spoof_timezone_summary"
+            android:title="@string/fingerprint_protection"
+            app:icon="@drawable/fingerprint_24" />
+
+        <SwitchPreferenceCompat
+            android:defaultValue="false"
+            android:key="com.solarized.firedown.preferences.ublock.block.cookie.notices"
+            android:summary="@string/settings_block_cookie_notices_summary"
+            android:title="@string/settings_block_cookie_notices_title"
+            app:icon="@drawable/ad_off_24" />
+
+
+        <SwitchPreferenceCompat
+            android:defaultValue="false"
+            android:key="com.solarized.firedown.preferences.browser.block.location"
+            android:summary="@string/settings_block_location_summary"
+            android:title="@string/settings_block_location_title"
+            app:icon="@drawable/location_off_24" />
+
+
+    </PreferenceCategory>
+
+
+    <PreferenceCategory
+        android:title="@string/if_preferences_security"
+        app:iconSpaceReserved="false">
+
+
+        <SwitchPreferenceCompat
+            android:defaultValue="false"
+            android:key="com.solarized.firedown.preferences.browser.block.javascript"
+            android:summary="@string/settings_block_javascript_summary"
+            android:title="@string/settings_block_javascript_title"
+            app:icon="@drawable/javascript_24" />
+
+
+        <SwitchPreferenceCompat
+            android:defaultValue="false"
+            android:key="com.solarized.firedown.preferences.browser.enable.jit"
+            android:summary="@string/preference_jit_enabled_summary"
+            android:title="@string/preference_jit_enabled"
+            app:icon="@drawable/developer_board_24"
+            app:singleLineTitle="false"/>
+
+
+        <SwitchPreferenceCompat
+            android:defaultValue="false"
+            android:key="com.solarized.firedown.preferences.browser.disable.webgl"
+            android:title="@string/preference_webgl_disabled"
+            app:icon="@drawable/deployed_code_24" />
+
+
+        <SwitchPreferenceCompat
+            android:defaultValue="false"
+            android:key="com.solarized.firedown.preferences.browser.enable.webrtc"
+            android:title="@string/preference_webrtc_enabled"
+            app:icon="@drawable/ic_p2p_24" />
+
+
+    </PreferenceCategory>
+
+
+    <PreferenceCategory
+        android:title="@string/settings_cookies"
+        app:iconSpaceReserved="false">
+
+
+        <ListPreference
+            android:defaultValue="4"
+            android:entries="@array/settings_cookie"
+            android:entryValues="@array/settings_cookie_values"
+            android:key="com.solarized.firedown.preferences.browser.cookies"
+            android:title="@string/settings_cookies"
+            app:icon="@drawable/cookie_24" />
+
+
+        <Preference
+            android:key="com.solarized.firedown.preferences.browser.clear"
+            android:summary="@string/settings_clear_browsing_summary"
+            android:title="@string/settings_delete_browsing"
+            app:icon="@drawable/travel_explore_24">
+
+        </Preference>
+
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="@string/settings_donate"
+        app:iconSpaceReserved="false">
+
+    <Preference
+        android:key="com.solarized.firedown.preferences.donate"
+        android:title="@string/donate_title"
+        android:summary="@string/settings_donate_summary"
+        app:icon="@drawable/ic_favorite_24"/>
+
+    </PreferenceCategory>
+
+
+    <PreferenceCategory
+        android:title="@string/app_name"
+        app:iconSpaceReserved="false">
+
+
+        <Preference
+            android:key="com.solarized.firedown.preferences.license"
+            android:title="@string/settings_license"
+            app:icon="@drawable/license_24">
+
+        </Preference>
+
+        <Preference
+            android:key="com.solarized.firedown.preferences.support"
+            android:title="@string/settings_help"
+            app:icon="@drawable/ic_help_24">
+
+        </Preference>
+
+        <Preference
+            android:key="com.solarized.firedown.preferences.about"
+            android:title="@string/settings_about"
+            app:icon="@drawable/info_24">
+        </Preference>
+
+    </PreferenceCategory>
+
+
+</PreferenceScreen>

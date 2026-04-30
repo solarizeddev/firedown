@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<data-extraction-rules>
+    <!-- Let's disable backup of encrypted files. This file is used on API 31+. -->
+</data-extraction-rules>

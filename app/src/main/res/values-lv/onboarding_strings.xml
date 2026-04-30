@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?><resources>
+      
+  <!-- Text for context menu item to open the link in a new tab. -->
+      
+  <string name="onboarding_button">Fire-Button</string>
+      
+  <string name="onboarding_title">Ikreiz, kad vēlaties kaut ko lejupielādēt no tīmekļa vietnes, apakšā pieskarieties Firedown Fire-Button:</string>
+      
+  <string name="onboarding_message">Firedown meklēs tīmekļa vietni, lai atrastu lejupielādējamos vienumus, un tie būs izkātoti ērtā sarakstā no kura izvēlēties.</string>
+  
+</resources>

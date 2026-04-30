@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/item_holder"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:animateLayoutChanges="true"
+    android:orientation="horizontal">
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/item_download_selected"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:layout_marginStart="@dimen/list_spacing"
+        android:visibility="gone"
+        app:srcCompat="@drawable/ic_baseline_check_circle_24" />
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/item"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/list_spacing"
+        android:layout_marginTop="4dp"
+        android:layout_marginEnd="@dimen/list_spacing"
+        android:layout_marginBottom="4dp"
+        android:layout_weight="1"
+        app:cardCornerRadius="8dp"
+        app:strokeWidth="2dp">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/list_download_image_height"
+            android:layout_margin="@dimen/list_margin">
+
+            <!-- Thumbnail -->
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/image"
+                android:layout_width="@dimen/list_download_image_width"
+                android:layout_height="match_parent"
+                android:layout_gravity="center"
+                android:adjustViewBounds="true"
+                android:background="@drawable/mask_image_rounded"
+                android:contentDescription="@null"
+                android:duplicateParentState="true"
+                android:outlineProvider="background"
+                android:scaleType="centerCrop"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <!-- Progress overlay on thumbnail (PROGRESS only) -->
+            <com.solarized.firedown.ui.ProgressOverlayView
+                android:id="@+id/image_progress"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:visibility="gone"
+                app:layout_constraintBottom_toBottomOf="@id/image"
+                app:layout_constraintEnd_toEndOf="@id/image"
+                app:layout_constraintStart_toStartOf="@id/image"
+                app:layout_constraintTop_toTopOf="@id/image" />
+
+            <!-- Top row: mime badge + file name -->
+            <LinearLayout
+                android:id="@+id/row_top"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                app:layout_constraintBottom_toTopOf="@id/file_url"
+                app:layout_constraintEnd_toStartOf="@id/item_download_action"
+                app:layout_constraintStart_toEndOf="@id/image">
+
+                <TextView
+                    android:id="@+id/mime_text"
+                    style="@style/MimePrimary"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/list_margin"
+                    android:paddingLeft="4dp"
+                    android:paddingRight="4dp"
+                    tools:text="mp3" />
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/file_name"
+                    style="@style/TextAppearance.Material3.TitleSmall"
+                    android:textColor="?attr/colorOnSurface"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:ellipsize="marquee"
+                    android:singleLine="true" />
+
+            </LinearLayout>
+
+            <!-- Middle row: domain -->
+            <ImageView
+                android:id="@+id/file_url_icon"
+                android:layout_width="@dimen/list_item_domain"
+                android:layout_height="@dimen/list_item_domain"
+                android:layout_marginStart="8dp"
+                android:contentDescription="@null"
+                app:tint="?attr/colorOnSurfaceVariant"
+                android:src="@drawable/ic_baseline_language_24"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/image"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/file_url"
+                style="@style/TextAppearance.Material3.LabelSmall"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:layout_marginEnd="12dp"
+                android:ellipsize="marquee"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp"
+                android:singleLine="true"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/item_download_action"
+                app:layout_constraintStart_toEndOf="@+id/file_url_icon"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <!-- Bottom row: status area (only one visible at a time) -->
+
+            <!-- PROGRESS: percent + bar -->
+            <TextView
+                android:id="@+id/progress_text"
+                style="@style/TextAppearance.Material3.BodySmall"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/list_margin"
+                android:layout_marginBottom="2dp"
+                android:gravity="center_vertical"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:visibility="gone"
+                app:layout_constraintStart_toEndOf="@id/image"
+                app:layout_constraintTop_toBottomOf="@id/file_url"
+                tools:text="80%" />
+
+            <ProgressBar
+                android:id="@+id/progress_bar"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="0dp"
+                android:layout_height="16dp"
+                android:layout_marginStart="@dimen/list_margin"
+                android:layout_marginEnd="@dimen/list_margin"
+                android:indeterminate="true"
+                android:max="100"
+                android:progress="0"
+                android:progressTint="@color/orange"
+                android:progressBackgroundTint="@color/orange_light"
+                android:visibility="gone"
+                app:layout_constraintEnd_toStartOf="@id/item_download_action"
+                app:layout_constraintStart_toEndOf="@id/progress_text"
+                app:layout_constraintTop_toBottomOf="@id/file_url" />
+
+            <!-- FINISHED: size + date -->
+            <TextView
+                android:id="@+id/item_download_finished"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                style="@style/TextAppearance.Material3.BodySmall"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/list_margin"
+                android:visibility="gone"
+                app:layout_constraintStart_toEndOf="@id/image"
+                app:layout_constraintTop_toBottomOf="@id/file_url" />
+
+            <!-- ERROR: error message -->
+            <TextView
+                android:id="@+id/error_text"
+                style="@style/TextAppearance.Material3.BodySmall"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/list_margin"
+                android:singleLine="true"
+                android:textColor="?attr/colorPrimary"
+                android:visibility="gone"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toEndOf="@id/image"
+                tools:text="@string/error_check_internet_connection" />
+
+            <!-- QUEUED: status text -->
+            <TextView
+                android:id="@+id/queued_text"
+                style="@style/TextAppearance.Material3.BodySmall"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/list_margin"
+                android:layout_marginBottom="2dp"
+                android:gravity="center_vertical"
+                android:text="@string/download_queued"
+                android:visibility="gone"
+                app:layout_constraintStart_toEndOf="@id/image"
+                app:layout_constraintTop_toBottomOf="@id/file_url" />
+
+            <!-- Action button (more / remove) -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/item_download_action"
+                style="@style/Theme.FireDown.More.Button"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:icon="@drawable/ic_baseline_more_vert_24" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </com.google.android.material.card.MaterialCardView>
+
+</LinearLayout>

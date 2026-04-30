@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="complete_delete_files_text">
+        <item quantity="other">Выдалена %1$d файла</item>
+        <item quantity="one">Выдалены %1$d файл</item>
+        <item quantity="few">Выдалена %1$d файлы</item>
+        <item quantity="many">Выдалена %1$d файлаў</item>
+    </plurals>
+    <plurals name="complete_move_files_text">
+        <item quantity="other">Перамешчана %1$d файла</item>
+        <item quantity="one">Перамешчаны %1$d файл</item>
+        <item quantity="few">Перамешчана %1$d файлы</item>
+        <item quantity="many">Перамешчана %1$d файлаў</item>
+    </plurals>
+    <plurals name="move_file_fail">
+        <item quantity="other">Не ўдалося перамясціць файлы. %1$s</item>
+        <item quantity="one">Не ўдалося перамясціць файлы. %1$s</item>
+        <item quantity="few">Не ўдалося перамясціць файлы. %1$s</item>
+        <item quantity="many">Не ўдалося перамясціць файлы. %1$s</item>
+    </plurals>
+</resources>

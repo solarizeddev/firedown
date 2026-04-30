@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="complete_delete_files_text">
+        <item quantity="other">%1$d skrám eytt</item>
+        <item quantity="one">%1$d skrá eytt</item>
+    </plurals>
+    <plurals name="complete_move_files_text">
+        <item quantity="other">%1$d skrár færðar</item>
+        <item quantity="one">%1$d skrá færð</item>
+    </plurals>
+    <plurals name="move_file_fail">
+        <item quantity="other">Ekki tókst að færa skrár. %1$s</item>
+        <item quantity="one">Ekki tókst að færa skrár. %1$s</item>
+    </plurals>
+</resources>

@@ -1,0 +1,20 @@
+<resources>
+    <plurals name="complete_delete_files_text">
+        <item quantity="other">%1$dটি ফাইল মুছে ফেলা হয়েছে</item>
+        <item quantity="one">%1$dটি ফাইল মুছে ফেলা হয়েছে</item>
+    </plurals>
+    <plurals name="complete_move_files_text">
+        <item quantity="other">%1$dটি ফাইল সরানো হয়েছে</item>
+        <item quantity="one">%1$dটি ফাইল সরানো হয়েছে</item>
+    </plurals>
+    <plurals name="move_file_fail">
+        <item quantity="other">ফাইলগুলি সরানো যায়নি। %1$s</item>
+        <item quantity="one">ফাইলগুলি সরানো যায়নি। %1$s</item>
+    </plurals>
+<plurals name="hours_ago">
+        <item quantity="one">%1$d ঘ.</item>
+        <item quantity="other">%1$d ঘ.</item>
+    </plurals>
+
+    
+    </resources>

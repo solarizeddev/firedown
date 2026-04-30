@@ -1,0 +1,19 @@
+<resources>
+    <plurals name="complete_delete_files_text">
+        <item quantity="other">Đã xóa %1$d tệp</item>
+        <item quantity="one">Đã xóa %1$d tệp</item>
+    </plurals>
+    <plurals name="complete_move_files_text">
+        <item quantity="other">Đã chuyển %1$d tệp</item>
+        <item quantity="one">Đã chuyển %1$d tệp</item>
+    </plurals>
+    <plurals name="move_file_fail">
+        <item quantity="other">Không thể chuyển các tệp. %1$s</item>
+        <item quantity="one">Không thể chuyển tệp. %1$s</item>
+    </plurals>
+<plurals name="hours_ago">
+        <item quantity="other">%1$dg</item>
+    </plurals>
+
+    
+    </resources>

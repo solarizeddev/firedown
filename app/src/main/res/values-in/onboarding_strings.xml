@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?><resources>
+      
+  <!-- Text for context menu item to open the link in a new tab. -->
+      
+  <string name="onboarding_button">Tombol Api</string>
+      
+  <string name="onboarding_title">Setiap kali Anda ingin mengunduh sesuatu dari situs web, ketuk Tombol Api Firedown di kanan bawah:</string>
+      
+  <string name="onboarding_message">Firedown akan memindai situs web untuk mencari item yang akan diunduh, dan menawarkannya dalam daftar praktis untuk Anda pilih.</string>
+  
+</resources>
