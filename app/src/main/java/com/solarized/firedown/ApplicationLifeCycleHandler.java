@@ -127,10 +127,18 @@ public class ApplicationLifeCycleHandler implements Application.ActivityLifecycl
 
     @Override
     public void onActivityDestroyed(@NonNull Activity activity) {
-        if (activity instanceof BrowserActivity && activity.isFinishing()) {
-            stopMediaPlaybackService();
-            mIncognitoStateRepository.deleteAll();
-            mIncognitoNotification.dismiss();
+        if (activity instanceof BrowserActivity) {
+            // Belt-and-suspenders: if the activity is destroyed without a paired
+            // onPause (e.g. process death, configuration crash), make sure the
+            // singleton observers are detached so they don't keep firing.
+            mGeckoStateRepository.getTabsLiveData().removeObserver(mGeckoStateObserver);
+            mIncognitoStateRepository.getTabsLiveCount().removeObserver(mIncognitoCountObserver);
+
+            if (activity.isFinishing()) {
+                stopMediaPlaybackService();
+                mIncognitoStateRepository.deleteAll();
+                mIncognitoNotification.dismiss();
+            }
         }
     }
 
