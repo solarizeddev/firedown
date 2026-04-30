@@ -271,7 +271,7 @@ public class GeckoRuntimeHelper {
                     int removedTabId = json.getInt("id");
                     mBrowserDownloadRepository.trimTabs(removedTabId);
                 }
-                case "onHeadersReceived", "onResponseStarted" -> {
+                case "onHeadersReceived", "onResponseStarted", "contentScript" -> {
                     handleExtractionMessage(json);
                 }
             }
