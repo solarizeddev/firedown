@@ -30,10 +30,11 @@ public class GeckoUblockHelper {
     // Firewall activation is a global user preference — not per-mode.
     private final MutableLiveData<Boolean> mFirewallActiveLive = new MutableLiveData<>();
 
-    // Internal state variables
-    private boolean mJavascriptDisabled;
-    private boolean mFontsDisabled;
-    private boolean mMediaDisabled;
+    // Internal state variables — written from extension callbacks (potentially
+    // background) and read from UI getters; volatile guarantees visibility.
+    private volatile boolean mJavascriptDisabled;
+    private volatile boolean mFontsDisabled;
+    private volatile boolean mMediaDisabled;
 
     @Inject
     public GeckoUblockHelper() {

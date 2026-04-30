@@ -65,7 +65,7 @@ public class RunnableManager extends Service {
 	private static final String TAG = RunnableManager.class.getName();
 
 
-	private static boolean isRunning = false;
+	private static volatile boolean isRunning = false;
 
 	public static final int MSG_ERROR = -1;
 	public static final int MSG_STARTED = 1;

@@ -10,6 +10,7 @@ import android.util.Log;
 import androidx.core.content.IntentSanitizer;
 import androidx.preference.PreferenceManager;
 
+import com.solarized.firedown.utils.BuildUtils;
 import com.solarized.firedown.utils.Utils;
 
 import java.io.File;
@@ -86,7 +87,10 @@ public class UpdateInstallReceiver extends BroadcastReceiver {
 
         switch (status) {
             case PackageInstaller.STATUS_PENDING_USER_ACTION:
-                Intent confirmationIntent = intent.getParcelableExtra(Intent.EXTRA_INTENT);
+                // Use the typed overload on T+ to avoid Parcelable type-confusion.
+                Intent confirmationIntent = BuildUtils.hasAndroidTiramisu()
+                        ? intent.getParcelableExtra(Intent.EXTRA_INTENT, Intent.class)
+                        : intent.getParcelableExtra(Intent.EXTRA_INTENT);
                 if (confirmationIntent != null) {
                     confirmationIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     try {

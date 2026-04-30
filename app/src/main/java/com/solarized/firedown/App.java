@@ -47,7 +47,7 @@ public class App extends Application implements Configuration.Provider{
 
     private static Context mAppContext;
 
-    private static Boolean isMainProcess;
+    private static volatile Boolean isMainProcess;
 
     @Inject
     WebHistoryDataRepository mWebHistoryDataRepository;
@@ -139,6 +139,7 @@ public class App extends Application implements Configuration.Provider{
 
     public static boolean isMainProcess() {
         if (isMainProcess != null) return isMainProcess;
+        if (mAppContext == null) return false;
 
         int pid = android.os.Process.myPid();
 

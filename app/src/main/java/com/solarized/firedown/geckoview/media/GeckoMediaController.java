@@ -15,10 +15,10 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -46,12 +46,17 @@ public class GeckoMediaController {
 
     private static final String TAG = "GeckoMediaController";
 
-    private final Map<Integer, GeckoMetaData>     mMetaMap    = new HashMap<>();
-    private final Map<Integer, GeckoMediaSession>  mSessionMap = new HashMap<>();
+    // GeckoView session callbacks fire on the UI thread in practice, but
+    // service / lifecycle callers (ApplicationLifeCycleHandler#onActivityDestroyed,
+    // GeckoMediaPlaybackService) can reach this from other threads. Use concurrent
+    // collections + volatile scalars so iterations don't throw CME and visibility
+    // is guaranteed across threads.
+    private final Map<Integer, GeckoMetaData>     mMetaMap    = new ConcurrentHashMap<>();
+    private final Map<Integer, GeckoMediaSession>  mSessionMap = new ConcurrentHashMap<>();
 
     private final Context mContext;
-    private MediaSession.PositionState mPositionState;
-    private int mCurrentSessionId;
+    private volatile MediaSession.PositionState mPositionState;
+    private volatile int mCurrentSessionId;
 
     private final MutableLiveData<Set<Integer>> mActiveSessionIds = new MutableLiveData<>(Collections.emptySet());
 
@@ -288,9 +293,10 @@ public class GeckoMediaController {
     // ── Internals ─────────────────────────────────────────────────────────────────────────────────
 
     private void ensureSessionExists(MediaSession session, int id) {
-        if (!mSessionMap.containsKey(id)) {
-            mSessionMap.put(id, new GeckoMediaSession(session, id));
-        }
+        // putIfAbsent avoids the check-then-put race; the caller has already
+        // computed isNew via containsKey before calling, so a concurrent winner
+        // here just means we drop the loser's GeckoMediaSession instance.
+        mSessionMap.putIfAbsent(id, new GeckoMediaSession(session, id));
     }
 
     private void executeOnCurrent(MediaAction action) {
