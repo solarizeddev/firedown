@@ -906,6 +906,9 @@ public class FileUriHelper {
         if (TextUtils.isEmpty(fileName))
             return fileName;
 
+        // Strip path separators (incl. backslash, not covered by RESERVED_CHARS) so a
+        // sanitized name cannot reintroduce directory components downstream.
+        fileName = fileName.replace('\\', '_').replace('/', '_');
         fileName = fileName.replaceAll(RESERVED_CHARS, "");
         fileName = fileName.replaceAll(NON_BMP, "");
         fileName = fileName.replaceAll(REPLACE_ALL, "");
@@ -916,6 +919,9 @@ public class FileUriHelper {
         fileName = fileName.replaceAll("\\s{2,}", " ");
         fileName = fileName.trim();
         fileName = fileName.replaceAll("^[.\\s]+|[.\\s]+$", "");
+        // Collapse interior dot runs so traversal-flavored remnants (e.g. "foo..bar")
+        // cannot survive sanitization as a single component.
+        fileName = fileName.replaceAll("\\.{2,}", ".");
 
         String name = FilenameUtils.getBaseName(fileName);
         String extension = FilenameUtils.getExtension(fileName);
