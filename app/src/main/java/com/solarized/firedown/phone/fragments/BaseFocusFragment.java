@@ -13,6 +13,7 @@ import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
+import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 
 import androidx.activity.result.ActivityResult;
@@ -350,6 +351,8 @@ public class BaseFocusFragment extends Fragment {
         Window window = mActivity.getWindow();
         window.getDecorView().setBackgroundColor(
                 IncognitoColors.getSurface(mActivity, false));
+
+        window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE);
 
         WindowInsetsControllerCompat insetsController =
                 WindowCompat.getInsetsController(window, window.getDecorView());

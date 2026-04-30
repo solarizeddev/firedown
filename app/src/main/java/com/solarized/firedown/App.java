@@ -148,7 +148,7 @@ public class App extends Application implements Configuration.Provider{
         if (activityManager != null) {
             // getRunningAppProcesses() can return null on restricted/background contexts;
             // match by pid rather than assuming index 0 is the current process.
-            java.util.List<ActivityManager.RunningAppProcessInfo> processes =
+            List<ActivityManager.RunningAppProcessInfo> processes =
                     activityManager.getRunningAppProcesses();
             if (processes != null) {
                 String packageName = mAppContext.getPackageName();

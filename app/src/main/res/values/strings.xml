@@ -147,7 +147,7 @@
     <string name="incognito_bullet_cookies">Cookies</string>
     <string name="incognito_bullet_searches">Searches</string>
     <string name="incognito_bullet_temp_files">Temporary files</string>
-    <string name="incognito_home_warning">Private Browsing </string>
+    <string name="incognito_home_warning">Private Browsing <b>does not make you anonymous</b> on the Internet. Your Internet service provider can still know what page you visit.</string>
     <string name="incognito_notification_channel">Private Browsing</string>
     <string name="incognito_notification_channel_desc">Notification for open private tabs</string>
     <string name="incognito_notification_close_action">Close all</string>
