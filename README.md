@@ -6,9 +6,9 @@
 
 
 <p align="center">
-  <img src="branding/screenshots/landing.png" width="30%" />
-  <img src="branding/screenshots/browsing.png" width="30%" />
-  <img src="branding/screenshots/capturing.png" width="30%" />
+  <img src="https://raw.githubusercontent.com/solarizeddev/firedown/main/branding/screenshots/landing.png" width="30%" />
+  <img src="https://raw.githubusercontent.com/solarizeddev/firedown/main/branding/screenshots/browsing.png" width="30%" />
+  <img src="https://raw.githubusercontent.com/solarizeddev/firedown/main/branding/screenshots/capturing.png" width="30%" />
 </p>
 
 ## What it does
