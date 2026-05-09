@@ -800,7 +800,95 @@ public class GeckoRuntimeHelper {
             for (Map.Entry<String, Boolean> entry : map.entrySet()) {
                 Log.d(TAG, "setDRM: applied " + entry.getKey() + " accepted=" + entry.getValue());
             }
+            // After our writes land, dump the EME / Widevine plugin state
+            // so we can tell apart "pref accepted but Widevine binary not
+            // downloaded" from "pref refused by runtime".
+            logWidevinePluginState();
         }, throwable -> Log.w(TAG, "setDRM failed", throwable));
+    }
+
+
+    /**
+     * Best-effort dump of the prefs that determine whether Widevine is
+     * actually usable. Distinct from setDRM's success log: that one only
+     * tells us Gecko accepted our writes, not whether the plugin binary
+     * has been downloaded onto the device or whether some other pref
+     * overrides ours.
+     *
+     * Uses reflection because {@code GeckoPreferenceController.getGeckoPref}
+     * may or may not exist in a given GeckoView ABI — we don't want a
+     * compile break if the API surface differs across versions, and a
+     * silent "API not available" log line is fine: at that point the user
+     * can fall back to {@code about:config} (we ship with
+     * {@code aboutConfigEnabled(true)}).
+     *
+     * The prefs we look up:
+     *   media.eme.enabled                                    JS API gate
+     *   media.gmp-widevinecdm.enabled                        plugin allowed
+     *   media.gmp-widevinecdm.visible                        plugin visible to GMP manager
+     *   media.gmp-widevinecdm.version                        installed plugin version (empty = NOT installed)
+     *   media.gmp-widevinecdm.lastUpdate                     last fetch timestamp
+     *   media.gmp-widevinecdm.autoupdate                     allow auto-update
+     *   media.gmp-manager.updateEnabled                      whether GMP manager runs at all
+     *   media.gmp-manager.lastCheck                          when manager last polled
+     *   privacy.resistFingerprinting                         RFP can also affect EME
+     */
+    private void logWidevinePluginState() {
+        String[] prefs = {
+                "media.eme.enabled",
+                "media.gmp-widevinecdm.enabled",
+                "media.gmp-widevinecdm.visible",
+                "media.gmp-widevinecdm.version",
+                "media.gmp-widevinecdm.lastUpdate",
+                "media.gmp-widevinecdm.autoupdate",
+                "media.gmp-manager.updateEnabled",
+                "media.gmp-manager.lastCheck",
+                "privacy.resistFingerprinting"
+        };
+
+        java.lang.reflect.Method getter = findPrefGetter();
+        if (getter == null) {
+            Log.w(TAG, "logWidevinePluginState: no getGeckoPref-style method found on "
+                    + "GeckoPreferenceController; check about:config manually for: "
+                    + java.util.Arrays.toString(prefs));
+            return;
+        }
+        for (String pref : prefs) {
+            try {
+                Object result = getter.invoke(null, pref);
+                if (result instanceof GeckoResult<?>) {
+                    final String name = pref;
+                    ((GeckoResult<?>) result).accept(
+                            value -> Log.d(TAG, "Widevine pref " + name + " = " + value),
+                            t -> Log.w(TAG, "Widevine pref " + name + " read failed: " + t));
+                } else {
+                    Log.d(TAG, "Widevine pref " + pref + " = " + result);
+                }
+            } catch (Throwable t) {
+                Log.w(TAG, "Widevine pref " + pref + " read threw: " + t);
+            }
+        }
+    }
+
+    /**
+     * Locates a static "read one Gecko pref" method by reflection so we
+     * don't take a hard compile dependency on a method whose signature
+     * varies between GeckoView versions. Tries the conventional names in
+     * order; returns null if none are present.
+     */
+    private static java.lang.reflect.Method findPrefGetter() {
+        String[] candidates = { "getGeckoPref", "getGeckoPrefs", "queryGeckoPref" };
+        for (String name : candidates) {
+            try {
+                java.lang.reflect.Method m =
+                        GeckoPreferenceController.class.getMethod(name, String.class);
+                Log.d(TAG, "findPrefGetter: using " + name);
+                return m;
+            } catch (NoSuchMethodException ignored) {
+                // try next
+            }
+        }
+        return null;
     }
 
 
