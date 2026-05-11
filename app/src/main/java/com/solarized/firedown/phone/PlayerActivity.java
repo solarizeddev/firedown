@@ -102,7 +102,7 @@ public class PlayerActivity extends AppCompatActivity {
             getWindow().getAttributes().layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
         }
 
-        loadFromIntent();
+        loadFromIntent(false);
     }
 
     /**
@@ -117,10 +117,24 @@ public class PlayerActivity extends AppCompatActivity {
     protected void onNewIntent(@NonNull Intent intent) {
         super.onNewIntent(intent);
         setIntent(intent);
-        loadFromIntent();
+        loadFromIntent(true);
     }
 
-    private void loadFromIntent() {
+    /**
+     * @param skipTransition true when the load originates from
+     *                       {@link #onNewIntent} (singleTask reuse). The
+     *                       Android framework does not re-run a shared-
+     *                       element scene transition for a reused
+     *                       activity even though the caller passed
+     *                       {@code makeSceneTransitionAnimation} options
+     *                       — so {@code MediaViewerFragment}'s
+     *                       postpone-then-unhide-on-onTransitionEnd
+     *                       dance would never complete and we'd end up
+     *                       with audio playing under a static thumbnail.
+     *                       The flag tells the fragment to use the
+     *                       no-transition layout path from the start.
+     */
+    private void loadFromIntent(boolean skipTransition) {
         mDownloadEntity = getDownloadEntity();
 
         String fileMimeType = mDownloadEntity.getFileMimeType();
@@ -139,6 +153,7 @@ public class PlayerActivity extends AppCompatActivity {
         Bundle bundle = new Bundle();
 
         bundle.putParcelable(Keys.ITEM_ID, mDownloadEntity);
+        bundle.putBoolean(MediaViewerFragment.ARG_SKIP_TRANSITION, skipTransition);
 
         if(FileUriHelper.isVideo(fileMimeType) || FileUriHelper.isAudio(fileMimeType)){
 

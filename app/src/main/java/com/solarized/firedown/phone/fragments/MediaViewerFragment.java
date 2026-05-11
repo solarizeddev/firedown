@@ -60,6 +60,17 @@ public class MediaViewerFragment extends Fragment {
 
     private static final String TAG = MediaViewerFragment.class.getSimpleName();
 
+    /**
+     * Argument key set by {@link PlayerActivity} on the onNewIntent
+     * (singleTask reuse) path. Android does not re-run shared-element
+     * activity transitions for a reused activity instance, so the
+     * fragment cannot rely on the window's enter-transition firing
+     * onTransitionEnd to reveal the player surface. When this flag is
+     * true the fragment uses the no-transition layout path that the
+     * encrypted / safe-folder code already exercises.
+     */
+    public static final String ARG_SKIP_TRANSITION = "skip_transition";
+
     private DownloadEntity mDownloadEntity;
 
     private PlayerActivity mActivity;
@@ -118,7 +129,19 @@ public class MediaViewerFragment extends Fragment {
         if(mDownloadEntity == null)
             mDownloadEntity = new DownloadEntity();
 
-        mAvoidTransition = mDownloadEntity.isFileEncrypted() || mDownloadEntity.isFileSafe();
+        // Skip the activity-transition dance entirely on three paths:
+        //  - encrypted file (no thumbnail decryption mid-flight)
+        //  - safe-folder file (same reason)
+        //  - singleTask reuse via onNewIntent — Android does not re-run
+        //    activity scene transitions for a reused instance even
+        //    though the caller passed makeSceneTransitionAnimation
+        //    options. Without this branch onTransitionEnd would never
+        //    fire on the reused activity and player_view would stay GONE
+        //    forever, leaving the user with audio playing under a
+        //    static thumbnail.
+        mAvoidTransition = mDownloadEntity.isFileEncrypted()
+                || mDownloadEntity.isFileSafe()
+                || bundle.getBoolean(ARG_SKIP_TRANSITION, false);
 
         if (!mAvoidTransition) {
             addTransitionListener();
