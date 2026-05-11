@@ -1,6 +1,7 @@
 package com.solarized.firedown.phone.fragments;
 
 import android.content.Context;
+import android.content.res.Configuration;
 
 import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
@@ -91,9 +92,6 @@ public class MediaViewerFragment extends Fragment {
      * navigation bar. See {@link #setChromeVisible(boolean)}.
      */
     private View mRootView;
-
-    /** Cached value of android.R.dimen.navigation_bar_height. */
-    private int mNavBarHeightPx = -1;
 
 
 
@@ -264,27 +262,52 @@ public class MediaViewerFragment extends Fragment {
     }
 
     /**
-     * Read the device's navigation bar height from the system resource
-     * rather than relying on WindowInsets. With
-     * android:windowTranslucentNavigation=true on the Play theme,
-     * WindowInsets.systemBars().bottom is reported as 0 on some
-     * devices (notably Samsung One UI with 3-button nav), which is
-     * what made the per-view inset listener approach fail. The
-     * android:dimen/navigation_bar_height resource is the same value
-     * the OS uses internally to reserve the nav-bar strip and is
-     * stable across translucent / non-translucent windows.
+     * Resolve the bottom inset to reserve so the PlayerView controller
+     * isn't clipped by the system navigation. Two-tier strategy:
      *
-     * Returns 0 if the resource isn't present (devices on full
-     * gesture nav without a fixed strip).
+     * 1. WindowInsets.Type.navigationBars().bottom — the modern,
+     *    orientation-aware source of truth. Returns 0 in landscape on
+     *    devices that route the nav bar to a side edge (correct — we
+     *    don't want bottom padding there). Returns the gesture-pill
+     *    height on devices using full gesture nav (~24dp — correct,
+     *    keeps controls clear of the gesture area). Returns the
+     *    3-button nav height when the bar is at the bottom.
+     *
+     * 2. android.R.dimen.navigation_bar_height resource — used ONLY
+     *    when (1) returned 0 *and* the device is in portrait. This is
+     *    the legacy-translucent fallback: Theme.FireDown.Play sets
+     *    android:windowTranslucentNavigation=true, which makes the
+     *    framework tell us "the app is handling the nav bar" and
+     *    report navigationBars().bottom = 0 — even though the bar is
+     *    still drawn as an opaque strip over the content (observed on
+     *    Samsung One UI with 3-button nav). The resource always
+     *    returns the OS-reserved strip height.
+     *
+     * The check is restricted to portrait so we don't apply a bogus
+     * bottom inset in landscape when the nav bar is on a side edge —
+     * WindowInsets correctly returns 0 for bottom there and we trust
+     * it.
+     *
+     * Not cached — re-read on each chrome toggle so configuration
+     * changes (rotation, fold/unfold) pick up the right value.
      */
     private int getNavigationBarHeight() {
-        if (mNavBarHeightPx >= 0) return mNavBarHeightPx;
+        if (mActivity == null) return 0;
+        WindowInsetsCompat insets = ViewCompat.getRootWindowInsets(
+                mActivity.getWindow().getDecorView());
+        if (insets != null) {
+            int bottom = insets.getInsets(
+                    WindowInsetsCompat.Type.navigationBars()).bottom;
+            if (bottom > 0) return bottom;
+        }
+        boolean portrait = getResources().getConfiguration().orientation
+                == Configuration.ORIENTATION_PORTRAIT;
+        if (!portrait) return 0;
         int resourceId = getResources()
                 .getIdentifier("navigation_bar_height", "dimen", "android");
-        mNavBarHeightPx = (resourceId > 0)
+        return (resourceId > 0)
                 ? getResources().getDimensionPixelSize(resourceId)
                 : 0;
-        return mNavBarHeightPx;
     }
 
     @OptIn(markerClass = UnstableApi.class)
