@@ -390,8 +390,25 @@ public class MediaViewerFragment extends Fragment {
         final Runnable attachPlayer = () -> {
             if (!attached.compareAndSet(false, true)) return;
             if (mPlayerView == null || mExoPlayer == null) return;
+            // #109's trace showed photo.visibility=INVISIBLE here even
+            // though we're inside onTransitionEnd — the framework
+            // restores the destination's visibility on a posted task,
+            // after the listener loop completes. So between attachPlayer
+            // and the actual visibility restore (~27 ms window), the
+            // surface attaches and may paint the first frame onto an
+            // INVISIBLE photo_view — exactly the flash window. Force
+            // VISIBLE here so photo_view is guaranteed to be drawing
+            // its (already Glide-loaded) thumbnail when the surface
+            // gets its first frame. onRenderedFirstFrame still sets
+            // GONE afterwards for the clean swap.
+            int photoVisBefore = (mPhotoView != null) ? mPhotoView.getVisibility() : -1;
+            if (mPhotoView != null && mPhotoView.getVisibility() != View.GONE) {
+                mPhotoView.setVisibility(View.VISIBLE);
+            }
             Log.d(TAG, "[flash-trace] attachPlayer fires"
-                    + " photo.visibility=" + visName(mPhotoView.getVisibility()));
+                    + " photo.visibility(pre)=" + visName(photoVisBefore)
+                    + " photo.visibility(forced)="
+                    + (mPhotoView != null ? visName(mPhotoView.getVisibility()) : "null"));
             mPlayerView.setPlayer(mExoPlayer);
             mExoPlayer.setPlayWhenReady(true);
         };
