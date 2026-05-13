@@ -53,12 +53,25 @@ public class TabsGridLayoutManager extends GridLayoutManager {
      */
     private static final int STABILITY_GIVE_UP_PASSES = 3;
 
+    /**
+     * Hard ceiling on the total number of {@code onLayoutCompleted}
+     * passes we'll wait for any convergence condition to be met
+     * (exact hit, anchor visible, or stability). At ~60 fps this is
+     * roughly 500 ms wall-clock — well past any sane layout-settling
+     * window. Pure belt-and-suspenders against a pathological
+     * scenario where {@code firstVisible} jitters every frame without
+     * ever matching {@code scrollTarget} or {@code visibleAnchor},
+     * which would defeat the stability counter.
+     */
+    private static final int TOTAL_GIVE_UP_PASSES = 30;
+
     private int mScrollTarget = RecyclerView.NO_POSITION;
     private int mVisibleAnchor = RecyclerView.NO_POSITION;
     @Nullable private Runnable mOnReached;
 
     private int mLastFirstVisible = RecyclerView.NO_POSITION;
     private int mStableCount = 0;
+    private int mTotalLayoutCount = 0;
 
     public TabsGridLayoutManager(Context context, int spanCount) {
         super(context, spanCount);
@@ -94,6 +107,7 @@ public class TabsGridLayoutManager extends GridLayoutManager {
         mOnReached = onReached;
         mLastFirstVisible = RecyclerView.NO_POSITION;
         mStableCount = 0;
+        mTotalLayoutCount = 0;
         if (scrollTarget != RecyclerView.NO_POSITION) {
             scrollToPositionWithOffset(scrollTarget, 0);
         }
@@ -106,6 +120,7 @@ public class TabsGridLayoutManager extends GridLayoutManager {
         mOnReached = null;
         mLastFirstVisible = RecyclerView.NO_POSITION;
         mStableCount = 0;
+        mTotalLayoutCount = 0;
     }
 
     @Override
@@ -133,11 +148,9 @@ public class TabsGridLayoutManager extends GridLayoutManager {
             return;
         }
 
-        // Defensive: if firstVisible hasn't moved across several
+        // Defensive #1: if firstVisible hasn't moved across several
         // consecutive layouts, the LM has clamped and won't reach the
-        // target. Give up and fire the callback anyway — keeps the
-        // holder's postpone from being held forever and the page from
-        // staying invisible.
+        // target. Give up and fire the callback anyway.
         if (firstVis == mLastFirstVisible) {
             mStableCount++;
             if (mStableCount >= STABILITY_GIVE_UP_PASSES) {
@@ -147,6 +160,17 @@ public class TabsGridLayoutManager extends GridLayoutManager {
         } else {
             mStableCount = 0;
             mLastFirstVisible = firstVis;
+        }
+
+        // Defensive #2: hard ceiling on total passes. Catches a
+        // pathological scenario where firstVisible jitters every frame
+        // (so the stability counter never accumulates) without ever
+        // satisfying exactHit or anchorVisible. The page renders
+        // wherever the LM ended up — better than hanging the holder
+        // indefinitely.
+        if (++mTotalLayoutCount >= TOTAL_GIVE_UP_PASSES) {
+            fireReached();
+            return;
         }
 
         // Some intermediate layout pass (postpone release, view attach,
@@ -162,6 +186,7 @@ public class TabsGridLayoutManager extends GridLayoutManager {
         mOnReached = null;
         mLastFirstVisible = RecyclerView.NO_POSITION;
         mStableCount = 0;
+        mTotalLayoutCount = 0;
         if (cb != null) cb.run();
     }
 }
