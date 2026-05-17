@@ -42,6 +42,7 @@ import com.solarized.firedown.R;
 import com.solarized.firedown.autocomplete.AutoCompleteView;
 import com.solarized.firedown.data.entity.CertificateInfoEntity;
 import com.solarized.firedown.data.entity.ContextElementEntity;
+import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.data.entity.AutoCompleteEntity;
 import com.solarized.firedown.data.entity.GeckoStateEntity;
 import com.solarized.firedown.data.models.BrowserDialogViewModel;
@@ -70,7 +71,7 @@ import com.solarized.firedown.phone.DownloadsActivity;
 import com.solarized.firedown.phone.HistoryActivity;
 import com.solarized.firedown.phone.SettingsActivity;
 import com.solarized.firedown.phone.VaultActivity;
-import com.solarized.firedown.ui.DownloadsQuickAccessPopup;
+import com.solarized.firedown.phone.dialogs.DownloadsQuickAccessSheet;
 import com.solarized.firedown.ui.IncognitoColors;
 import com.solarized.firedown.ui.adapters.SearchAutocompleteAdapter;
 import com.solarized.firedown.geckoview.GeckoToolbar;
@@ -102,7 +103,8 @@ import java.util.Locale;
 import javax.annotation.Nullable;
 
 
-public class BrowserFragment extends BaseBrowserFragment implements OnItemClickListener {
+public class BrowserFragment extends BaseBrowserFragment
+        implements OnItemClickListener, DownloadsQuickAccessSheet.Host {
 
     private static final String TAG = BrowserFragment.class.getSimpleName();
 
@@ -976,20 +978,24 @@ public class BrowserFragment extends BaseBrowserFragment implements OnItemClickL
         } else if (id == R.id.downloads_button && !mIsIncognitoThemed) {
             // Skip in incognito-themed mode: the bottom-bar Downloads
             // glyph is swapped for a vault lock and the quick-access
-            // popup would leak public download filenames into a
+            // sheet would leak public download filenames into a
             // surface that's currently representing private browsing.
-            boolean shown = DownloadsQuickAccessPopup.show(
-                    mActivity,
-                    getViewLifecycleOwner(),
-                    mRecentDownloadsViewModel.getRecent(),
-                    v,
-                    entity -> openItem(entity, null));
-            if (!shown) {
+            java.util.List<DownloadEntity> cached =
+                    mRecentDownloadsViewModel.getRecent().getValue();
+            if (cached == null || cached.isEmpty()) {
                 mStartForResult.launch(new Intent(mActivity, DownloadsActivity.class));
+            } else {
+                new DownloadsQuickAccessSheet().show(getChildFragmentManager(),
+                        DownloadsQuickAccessSheet.TAG);
             }
             return true;
         }
         return false;
+    }
+
+    @Override
+    public void onQuickAccessFileTap(@NonNull DownloadEntity entity) {
+        openItem(entity, null);
     }
 
     @Override

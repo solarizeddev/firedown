@@ -29,6 +29,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
+import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.data.entity.GeckoStateEntity;
 import com.solarized.firedown.data.entity.AutoCompleteEntity;
 import com.solarized.firedown.autocomplete.AutoCompleteViewModel;
@@ -52,7 +53,7 @@ import com.solarized.firedown.phone.SettingsActivity;
 import com.solarized.firedown.phone.VaultActivity;
 import com.solarized.firedown.autocomplete.AutoCompleteEditText;
 import com.solarized.firedown.autocomplete.AutoCompleteView;
-import com.solarized.firedown.ui.DownloadsQuickAccessPopup;
+import com.solarized.firedown.phone.dialogs.DownloadsQuickAccessSheet;
 import com.solarized.firedown.ui.HomeViewpager;
 import com.solarized.firedown.ui.OnBoardingCard;
 import com.solarized.firedown.ui.adapters.ShortCutsAdapter;
@@ -73,7 +74,8 @@ import dagger.hilt.android.AndroidEntryPoint;
 public class HomeFragment extends BaseBrowserFragment implements BottomNavigationBar.OnBottomBarListener,
         AutoCompleteEditText.OnCommitListener, AutoCompleteEditText.OnFilterListener, AutoCompleteEditText.OnFocusChangedListener,
         AutoCompleteEditText.OnTextChangedListener, AutoCompleteEditText.OnSearchStateChangeListener,
-        GeckoToolbar.OnToolbarListener , OnBoardingCard.OnBoardingCardListener, OnItemClickListener {
+        GeckoToolbar.OnToolbarListener , OnBoardingCard.OnBoardingCardListener, OnItemClickListener,
+        DownloadsQuickAccessSheet.Host {
 
 
     private static final String TAG = HomeFragment.class.getName();
@@ -393,21 +395,28 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
             NavigationUtils.navigateSafe(mNavController, R.id.dialog_new_tabs, R.id.home);
             return true;
         } else if (id == R.id.downloads_button) {
-            boolean shown = DownloadsQuickAccessPopup.show(
-                    mActivity,
-                    getViewLifecycleOwner(),
-                    mRecentDownloadsViewModel.getRecent(),
-                    v,
-                    entity -> openItem(entity, null));
-            if (!shown) {
-                // Nothing recent to show — fall back to the regular
-                // tap behaviour so the long-press still feels like
-                // it did something.
+            // If we already know there's nothing recent (LiveData has
+            // been warmed by the observer below), skip the sheet and
+            // jump straight to DownloadsActivity so the long-press
+            // still feels responsive on a fresh install. Otherwise
+            // open the bottom sheet; the sheet self-dismisses if the
+            // list goes empty after it's already on screen.
+            java.util.List<DownloadEntity> cached =
+                    mRecentDownloadsViewModel.getRecent().getValue();
+            if (cached == null || cached.isEmpty()) {
                 mStartForResult.launch(new Intent(mActivity, DownloadsActivity.class));
+            } else {
+                new DownloadsQuickAccessSheet().show(getChildFragmentManager(),
+                        DownloadsQuickAccessSheet.TAG);
             }
             return true;
         }
         return false;
+    }
+
+    @Override
+    public void onQuickAccessFileTap(@NonNull DownloadEntity entity) {
+        openItem(entity, null);
     }
 
 
