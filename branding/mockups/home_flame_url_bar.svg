@@ -1,0 +1,121 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="1400" viewBox="0 0 900 1400" font-family="Roboto, system-ui, sans-serif">
+  <defs>
+    <linearGradient id="flameMag" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#e83a87"/>
+      <stop offset="50%" stop-color="#ff716c"/>
+      <stop offset="100%" stop-color="#ffa386"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Title -->
+  <text x="450" y="44" font-size="22" fill="#1c1b1f" font-weight="600" text-anchor="middle">Distinctive home: flame glyph in the URL bar</text>
+  <text x="450" y="68" font-size="13" fill="#49454f" text-anchor="middle">tap = recent downloads sheet (same surface as long-press on bottom Downloads icon)</text>
+
+  <!-- Before / After detail callouts (URL bar leading area zoomed) -->
+  <g transform="translate(60, 100)">
+    <text x="0" y="0" font-size="13" font-weight="700" fill="#79747e" letter-spacing="0.5">BEFORE</text>
+    <rect x="0" y="14" width="360" height="64" rx="32" fill="#eaddff"/>
+    <circle cx="40" cy="46" r="14" stroke="#49454f" stroke-width="2" fill="none"/>
+    <line x1="50" y1="56" x2="60" y2="66" stroke="#49454f" stroke-width="2.5" stroke-linecap="round"/>
+    <text x="80" y="54" font-size="18" fill="#79747e">Search or enter address</text>
+  </g>
+
+  <g transform="translate(480, 100)">
+    <text x="0" y="0" font-size="13" font-weight="700" fill="#65558f" letter-spacing="0.5">AFTER</text>
+    <rect x="0" y="14" width="360" height="64" rx="32" fill="#eaddff"/>
+    <!-- Flame glyph (small) -->
+    <g transform="translate(40, 46) scale(0.85)">
+      <path d="M 0 -18 C -10 -10 -14 -2 -10 8 C -14 6 -12 14 -8 16 C -6 12 -4 14 -4 18 C 2 13 6 9 8 4 C 10 14 6 18 12 18 C 16 12 18 0 6 -8 C 4 -4 2 -2 0 -6 C 2 -14 0 -18 0 -18 Z"
+            fill="url(#flameMag)"/>
+    </g>
+    <text x="80" y="54" font-size="18" fill="#79747e">Search or enter address</text>
+  </g>
+
+  <!-- Phone preview (just the URL bar + home area) -->
+  <rect x="80" y="220" width="740" height="1100" rx="48" fill="#1c1b1f"/>
+  <rect x="100" y="260" width="700" height="1020" rx="24" fill="#fdf8fd"/>
+
+  <!-- Status bar -->
+  <text x="130" y="300" font-size="20" fill="#1c1b1f">9:41</text>
+  <circle cx="740" cy="293" r="6" fill="#1c1b1f"/>
+  <rect x="755" y="286" width="22" height="14" rx="3" stroke="#1c1b1f" stroke-width="1.5" fill="none"/>
+
+  <!-- URL bar with flame -->
+  <rect x="120" y="330" width="660" height="64" rx="32" fill="#eaddff"/>
+  <g transform="translate(160, 362) scale(0.85)">
+    <path d="M 0 -18 C -10 -10 -14 -2 -10 8 C -14 6 -12 14 -8 16 C -6 12 -4 14 -4 18 C 2 13 6 9 8 4 C 10 14 6 18 12 18 C 16 12 18 0 6 -8 C 4 -4 2 -2 0 -6 C 2 -14 0 -18 0 -18 Z"
+          fill="url(#flameMag)"/>
+  </g>
+  <text x="200" y="370" font-size="20" fill="#79747e">Search or enter address</text>
+  <circle cx="740" cy="362" r="4" fill="#49454f"/>
+  <circle cx="740" cy="346" r="4" fill="#49454f"/>
+  <circle cx="740" cy="378" r="4" fill="#49454f"/>
+
+  <!-- Shortcuts grid card (populated example) -->
+  <rect x="120" y="440" width="660" height="280" rx="20" fill="#f3edf6"/>
+
+  <!-- Row 1 -->
+  <g transform="translate(180, 510)">
+    <circle r="32" fill="#5b8dee"/>
+    <text y="8" font-size="22" font-weight="700" fill="#fff" text-anchor="middle">Y</text>
+    <text y="62" font-size="13" fill="#1c1b1f" text-anchor="middle">YouTube</text>
+  </g>
+  <g transform="translate(310, 510)">
+    <circle r="32" fill="#ff6b6b"/>
+    <text y="8" font-size="22" font-weight="700" fill="#fff" text-anchor="middle">R</text>
+    <text y="62" font-size="13" fill="#1c1b1f" text-anchor="middle">Reddit</text>
+  </g>
+  <g transform="translate(440, 510)">
+    <circle r="32" fill="#1ed760"/>
+    <text y="8" font-size="22" font-weight="700" fill="#fff" text-anchor="middle">S</text>
+    <text y="62" font-size="13" fill="#1c1b1f" text-anchor="middle">Spotify</text>
+  </g>
+  <g transform="translate(570, 510)">
+    <circle r="32" fill="#7e57c2"/>
+    <text y="8" font-size="22" font-weight="700" fill="#fff" text-anchor="middle">V</text>
+    <text y="62" font-size="13" fill="#1c1b1f" text-anchor="middle">Vimeo</text>
+  </g>
+  <g transform="translate(700, 510)">
+    <circle r="32" fill="#fdf8fd" stroke="#cac4d0" stroke-width="2"/>
+    <text y="10" font-size="32" fill="#79747e" text-anchor="middle">+</text>
+    <text y="62" font-size="13" fill="#1c1b1f" text-anchor="middle">Add</text>
+  </g>
+
+  <!-- Tap interaction hint -->
+  <g transform="translate(120, 760)">
+    <!-- Dashed arrow from flame down to "Recent downloads sheet" -->
+    <path d="M 50 -390 Q 50 -200 50 -10" stroke="#65558f" stroke-width="1.5" stroke-dasharray="5 5" fill="none"/>
+    <polygon points="50,0 45,-10 55,-10" fill="#65558f"/>
+    <rect x="80" y="-20" width="500" height="100" rx="16" fill="#fdf8fd" stroke="#65558f" stroke-width="1.5"/>
+    <text x="100" y="10" font-size="14" font-weight="700" fill="#65558f">Tap the flame</text>
+    <text x="100" y="34" font-size="13" fill="#49454f">→ opens the Recent Downloads bottom sheet</text>
+    <text x="100" y="54" font-size="13" fill="#49454f">  (same one as long-press on bottom Downloads icon)</text>
+    <text x="100" y="70" font-size="11" fill="#79747e">Long-press the flame (optional): focuses the URL bar</text>
+  </g>
+
+  <!-- Bottom nav -->
+  <rect x="100" y="1196" width="700" height="84" fill="#fdf8fd"/>
+  <line x1="100" y1="1196" x2="800" y2="1196" stroke="#cac4d0" stroke-width="1"/>
+
+  <g transform="translate(195, 1238)">
+    <rect x="-18" y="-22" width="36" height="36" rx="18" fill="#eaddff"/>
+    <text font-size="22" text-anchor="middle" y="4">⌂</text>
+  </g>
+  <text x="195" y="1268" font-size="11" font-weight="600" fill="#65558f" text-anchor="middle">Home</text>
+
+  <text x="335" y="1242" font-size="22" text-anchor="middle">⤓</text>
+  <text x="335" y="1268" font-size="11" fill="#49454f" text-anchor="middle">Downloads</text>
+
+  <text x="470" y="1242" font-size="22" text-anchor="middle">▢</text>
+  <text x="470" y="1268" font-size="11" fill="#49454f" text-anchor="middle">Tabs</text>
+
+  <text x="605" y="1242" font-size="22" text-anchor="middle">★</text>
+  <text x="605" y="1268" font-size="11" fill="#49454f" text-anchor="middle">Bookmarks</text>
+
+  <text x="705" y="1242" font-size="22" text-anchor="middle">⋯</text>
+  <text x="705" y="1268" font-size="11" fill="#49454f" text-anchor="middle">More</text>
+
+  <!-- Footer rationale -->
+  <text x="60" y="1370" font-size="13" fill="#49454f">One icon swap, no new chrome. Returning users see Firedown identity on every page load (the flame is there always),</text>
+  <text x="60" y="1390" font-size="13" fill="#49454f">and they get one-tap access to recent downloads — the app's killer feature — without leaving home.</text>
+</svg>
