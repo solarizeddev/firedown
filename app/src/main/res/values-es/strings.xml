@@ -492,7 +492,7 @@
     <string name="play">Reproducir</string>
     <string name="pip_play">Reproducir</string>
     <string name="pip_pause">Pausa</string>
-    <string name="home_empty_shortcuts_tagline">Busca arriba para empezar, o fija los sitios que visitas a menudo</string>
+    <string name="home_empty_shortcuts_tagline">Fija los sitios que visitas a menudo</string>
     <string name="home_empty_shortcuts_add">Añadir un acceso directo</string>
     <string name="home_shortcuts_add_tile">Añadir</string>
     <string name="top_sites_add_dialog_title">Añadir acceso directo</string>

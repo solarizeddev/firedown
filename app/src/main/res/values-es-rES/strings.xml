@@ -63,7 +63,7 @@
     <string name="top_sites_max_limit_confirmation_button">Vale, entendido</string>
     <string name="top_sites_rename_dialog_title">Nombre</string>
     <string name="bookmark_name">Nombre</string>
-    <string name="home_empty_shortcuts_tagline">Busca arriba para empezar, o fija los sitios que visitas a menudo</string>
+    <string name="home_empty_shortcuts_tagline">Fija los sitios que visitas a menudo</string>
     <string name="home_empty_shortcuts_add">Añadir un acceso directo</string>
     <string name="home_shortcuts_add_tile">Añadir</string>
     <string name="top_sites_add_dialog_title">Añadir acceso directo</string>

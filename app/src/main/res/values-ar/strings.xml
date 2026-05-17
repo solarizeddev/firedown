@@ -316,7 +316,7 @@
     <string name="play">تشغيل</string>
     <string name="pip_play">تشغيل</string>
     <string name="pip_pause">إيقاف مؤقت</string>
-    <string name="home_empty_shortcuts_tagline">ابحث أعلاه للبدء، أو أثبّت المواقع التي تزورها بشكل متكرر</string>
+    <string name="home_empty_shortcuts_tagline">ثبّت المواقع التي تزورها بشكل متكرر</string>
     <string name="home_empty_shortcuts_add">أضف اختصاراً</string>
     <string name="home_shortcuts_add_tile">إضافة</string>
     <string name="top_sites_add_dialog_title">أضف اختصاراً</string>

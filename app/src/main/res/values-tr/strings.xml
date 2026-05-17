@@ -353,7 +353,7 @@
         <item quantity="other">%d gizli indirme devam ediyor</item>
     </plurals>
     <string name="incognito_downloads_in_progress_subtitle">Güvenli klasörde görüntülemek için dokunun</string>
-    <string name="home_empty_shortcuts_tagline">Başlamak için yukarıda arama yapın veya sık ziyaret ettiğiniz siteleri sabitleyin</string>
+    <string name="home_empty_shortcuts_tagline">Sık ziyaret ettiğiniz siteleri sabitleyin</string>
     <string name="home_empty_shortcuts_add">Kısayolu ekle</string>
     <string name="home_shortcuts_add_tile">Ekle</string>
     <string name="top_sites_add_dialog_title">Kısayolu ekle</string>

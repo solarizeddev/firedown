@@ -196,7 +196,7 @@
     <string name="incognito_bullet_cookies">Cookies</string>
     <string name="incognito_bullet_searches">Searches</string>
     <string name="incognito_bullet_temp_files">Temporary files</string>
-    <string name="home_empty_shortcuts_tagline">Search above to start, or pin sites you visit often</string>
+    <string name="home_empty_shortcuts_tagline">Pin sites you visit often</string>
     <string name="home_empty_shortcuts_add">Add a shortcut</string>
     <string name="home_shortcuts_add_tile">Add</string>
     <string name="incognito_bullet_visited">Visited pages</string>

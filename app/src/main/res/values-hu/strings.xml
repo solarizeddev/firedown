@@ -287,7 +287,7 @@
     <string name="play">Lejátszás</string>
     <string name="pip_play">Lejátszás</string>
     <string name="pip_pause">Szünet</string>
-    <string name="home_empty_shortcuts_tagline">Kereséssel kezdj fent, vagy rögzítsd a gyakran meglátogatott webhelyeket</string>
+    <string name="home_empty_shortcuts_tagline">Rögzítsd a gyakran meglátogatott webhelyeket</string>
     <string name="home_empty_shortcuts_add">Indító hozzáadása</string>
     <string name="home_shortcuts_add_tile">Hozzáadás</string>
     <string name="top_sites_add_dialog_title">Indító hozzáadása</string>

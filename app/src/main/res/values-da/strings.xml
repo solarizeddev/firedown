@@ -300,7 +300,7 @@
     <string name="play">Afspil</string>
     <string name="pip_play">Afspil</string>
     <string name="pip_pause">Pause</string>
-    <string name="home_empty_shortcuts_tagline">Søg ovenfor for at komme i gang, eller fastgør websites, du besøger ofte</string>
+    <string name="home_empty_shortcuts_tagline">Fastgør websites, du besøger ofte</string>
     <string name="home_empty_shortcuts_add">Tilføj genvej</string>
     <string name="home_shortcuts_add_tile">Tilføj</string>
     <string name="top_sites_add_dialog_title">Tilføj genvej</string>

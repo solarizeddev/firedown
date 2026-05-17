@@ -335,7 +335,7 @@
         <item quantity="other">%d download in incognito in corso</item>
     </plurals>
     <string name="incognito_downloads_in_progress_subtitle">Tocca per visualizzare nella Cartella di sicurezza</string>
-    <string name="home_empty_shortcuts_tagline">Cerca in alto per iniziare, oppure fissa i siti che visiti spesso</string>
+    <string name="home_empty_shortcuts_tagline">Fissa i siti che visiti spesso</string>
     <string name="home_empty_shortcuts_add">Aggiungi scorciatoia</string>
     <string name="home_shortcuts_add_tile">Aggiungi</string>
     <string name="top_sites_add_dialog_title">Aggiungi scorciatoia</string>

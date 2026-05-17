@@ -287,7 +287,7 @@
     <string name="play">Αναπαραγωγή</string>
     <string name="pip_play">Αναπαραγωγή</string>
     <string name="pip_pause">Παύση</string>
-    <string name="home_empty_shortcuts_tagline">Αναζήτησε παραπάνω για να ξεκινήσεις, ή καρφίτσωσε τους ιστότοπους που επισκέπτεσαι συχνά</string>
+    <string name="home_empty_shortcuts_tagline">Καρφίτσωσε τους ιστότοπους που επισκέπτεσαι συχνά</string>
     <string name="home_empty_shortcuts_add">Προσθήκη συντόμευσης</string>
     <string name="home_shortcuts_add_tile">Προσθήκη</string>
     <string name="top_sites_add_dialog_title">Προσθήκη συντόμευσης</string>

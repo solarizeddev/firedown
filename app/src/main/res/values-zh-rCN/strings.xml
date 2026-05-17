@@ -491,7 +491,7 @@
     <string name="play">播放</string>
     <string name="pip_play">播放</string>
     <string name="pip_pause">暂停</string>
-    <string name="home_empty_shortcuts_tagline">在上方搜索以开始，或固定经常访问的网站</string>
+    <string name="home_empty_shortcuts_tagline">固定经常访问的网站</string>
     <string name="home_empty_shortcuts_add">添加快捷方式</string>
     <string name="home_shortcuts_add_tile">添加</string>
     <string name="top_sites_add_dialog_title">添加快捷方式</string>

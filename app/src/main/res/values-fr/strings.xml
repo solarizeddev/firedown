@@ -492,7 +492,7 @@
     <string name="play">Lecture</string>
     <string name="pip_play">Lecture</string>
     <string name="pip_pause">Pause</string>
-    <string name="home_empty_shortcuts_tagline">Effectue une recherche ci-dessus pour commencer, ou épingle les sites que tu visites souvent</string>
+    <string name="home_empty_shortcuts_tagline">Épingle les sites que tu visites souvent</string>
     <string name="home_empty_shortcuts_add">Ajouter un raccourci</string>
     <string name="home_shortcuts_add_tile">Ajouter</string>
     <string name="top_sites_add_dialog_title">Ajouter un raccourci</string>

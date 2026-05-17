@@ -333,7 +333,7 @@
         <item quantity="other">%d개의 시크릿 다운로드 진행 중</item>
     </plurals>
     <string name="incognito_downloads_in_progress_subtitle">보안 폴더에서 보려면 탭하세요</string>
-    <string name="home_empty_shortcuts_tagline">위에서 검색하여 시작하거나 자주 방문하는 사이트를 고정하기</string>
+    <string name="home_empty_shortcuts_tagline">자주 방문하는 사이트를 고정하세요</string>
     <string name="home_empty_shortcuts_add">바로 가기 추가</string>
     <string name="home_shortcuts_add_tile">추가</string>
     <string name="top_sites_add_dialog_title">바로 가기 추가</string>

@@ -293,7 +293,7 @@
     <string name="play">Відтворити</string>
     <string name="pip_play">Відтворити</string>
     <string name="pip_pause">Пауза</string>
-    <string name="home_empty_shortcuts_tagline">Виконайте пошук вище, щоб розпочати, або закріпіть часто відвідувані сайти</string>
+    <string name="home_empty_shortcuts_tagline">Закріпіть часто відвідувані сайти</string>
     <string name="home_empty_shortcuts_add">Додати ярлик</string>
     <string name="home_shortcuts_add_tile">Додати</string>
     <string name="top_sites_add_dialog_title">Додати ярлик</string>
