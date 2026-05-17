@@ -1,0 +1,170 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1620" height="1320" viewBox="0 0 1620 1320" font-family="Roboto, system-ui, sans-serif">
+  <!-- ============================================================
+       Home redesign mockup: empty-by-default shortcuts
+       Left  = fresh install (no auto-populated top sites)
+       Right = same surface after the user has pinned a few sites
+  ============================================================ -->
+
+  <defs>
+    <linearGradient id="flame" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#f0716c"/>
+      <stop offset="100%" stop-color="#9a2a26"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Page title -->
+  <text x="810" y="44" font-size="22" fill="#1c1b1f" font-weight="600" text-anchor="middle">Home — empty by default</text>
+  <text x="810" y="68" font-size="14" fill="#49454f" text-anchor="middle">no auto-populated top sites · users build their own grid</text>
+
+  <!-- ========== Phone 1: fresh install ========== -->
+  <g transform="translate(40, 90)">
+    <text x="370" y="20" font-size="14" fill="#65558f" font-weight="600" text-anchor="middle">FRESH INSTALL</text>
+
+    <!-- Phone bezel -->
+    <rect x="0" y="40" width="740" height="1180" rx="48" fill="#1c1b1f"/>
+    <rect x="20" y="80" width="700" height="1100" rx="24" fill="#fdf8fd"/>
+
+    <!-- Status bar -->
+    <text x="50" y="120" font-size="20" fill="#1c1b1f">9:41</text>
+    <circle cx="660" cy="113" r="6" fill="#1c1b1f"/>
+    <rect x="675" y="106" width="22" height="14" rx="3" stroke="#1c1b1f" stroke-width="1.5" fill="none"/>
+
+    <!-- URL bar (raised visually) -->
+    <rect x="40" y="150" width="660" height="64" rx="32" fill="#eaddff"/>
+    <circle cx="80" cy="182" r="14" stroke="#49454f" stroke-width="2" fill="none"/>
+    <line x1="90" y1="192" x2="100" y2="202" stroke="#49454f" stroke-width="2.5" stroke-linecap="round"/>
+    <text x="120" y="190" font-size="20" fill="#79747e">Search or enter address</text>
+    <circle cx="660" cy="182" r="4" fill="#49454f"/>
+    <circle cx="660" cy="166" r="4" fill="#49454f"/>
+    <circle cx="660" cy="198" r="4" fill="#49454f"/>
+
+    <!-- Brand glyph centered, becomes the hero of the empty state -->
+    <g transform="translate(370, 540)">
+      <path d="M 0 -80 C -40 -40 -60 0 -40 40 C -60 30 -50 60 -30 70 C -20 50 -10 65 -10 80 C 10 60 30 50 40 30 C 50 60 30 80 50 80 C 70 50 70 0 30 -40 C 20 -20 10 -10 0 -30 C 10 -60 0 -80 0 -80 Z"
+            fill="url(#flame)" opacity="0.85"/>
+    </g>
+    <text x="370" y="680" font-size="22" font-weight="600" fill="#1c1b1f" text-anchor="middle">Firedown</text>
+    <text x="370" y="710" font-size="14" fill="#49454f" text-anchor="middle">Your space — start by searching above</text>
+
+    <!-- "+ Add shortcut" affordance (single chip-style row) -->
+    <rect x="240" y="780" width="260" height="44" rx="22" fill="none" stroke="#cac4d0" stroke-width="1.5" stroke-dasharray="6 4"/>
+    <text x="370" y="808" font-size="14" fill="#79747e" text-anchor="middle">+ Add a shortcut</text>
+
+    <!-- Bottom nav (existing) -->
+    <rect x="20" y="1096" width="700" height="84" fill="#fdf8fd"/>
+    <line x1="20" y1="1096" x2="720" y2="1096" stroke="#cac4d0" stroke-width="1"/>
+
+    <g transform="translate(115, 1138)">
+      <rect x="-18" y="-22" width="36" height="36" rx="18" fill="#eaddff"/>
+      <text font-size="22" text-anchor="middle" y="4">⌂</text>
+    </g>
+    <text x="115" y="1168" font-size="11" font-weight="600" fill="#65558f" text-anchor="middle">Home</text>
+
+    <text x="255" y="1142" font-size="22" text-anchor="middle">⤓</text>
+    <text x="255" y="1168" font-size="11" fill="#49454f" text-anchor="middle">Downloads</text>
+
+    <text x="390" y="1142" font-size="22" text-anchor="middle">▢</text>
+    <text x="390" y="1168" font-size="11" fill="#49454f" text-anchor="middle">Tabs</text>
+
+    <text x="525" y="1142" font-size="22" text-anchor="middle">★</text>
+    <text x="525" y="1168" font-size="11" fill="#49454f" text-anchor="middle">Bookmarks</text>
+
+    <text x="625" y="1142" font-size="22" text-anchor="middle">⋯</text>
+    <text x="625" y="1168" font-size="11" fill="#49454f" text-anchor="middle">More</text>
+  </g>
+
+  <!-- Divider -->
+  <line x1="810" y1="120" x2="810" y2="1280" stroke="#cac4d0" stroke-width="1" stroke-dasharray="6 6"/>
+
+  <!-- ========== Phone 2: after user pins a few sites ========== -->
+  <g transform="translate(840, 90)">
+    <text x="370" y="20" font-size="14" fill="#65558f" font-weight="600" text-anchor="middle">AFTER PINNING SITES</text>
+
+    <rect x="0" y="40" width="740" height="1180" rx="48" fill="#1c1b1f"/>
+    <rect x="20" y="80" width="700" height="1100" rx="24" fill="#fdf8fd"/>
+
+    <text x="50" y="120" font-size="20" fill="#1c1b1f">9:41</text>
+    <circle cx="660" cy="113" r="6" fill="#1c1b1f"/>
+    <rect x="675" y="106" width="22" height="14" rx="3" stroke="#1c1b1f" stroke-width="1.5" fill="none"/>
+
+    <!-- URL bar -->
+    <rect x="40" y="150" width="660" height="64" rx="32" fill="#eaddff"/>
+    <circle cx="80" cy="182" r="14" stroke="#49454f" stroke-width="2" fill="none"/>
+    <line x1="90" y1="192" x2="100" y2="202" stroke="#49454f" stroke-width="2.5" stroke-linecap="round"/>
+    <text x="120" y="190" font-size="20" fill="#79747e">Search or enter address</text>
+    <circle cx="660" cy="182" r="4" fill="#49454f"/>
+    <circle cx="660" cy="166" r="4" fill="#49454f"/>
+    <circle cx="660" cy="198" r="4" fill="#49454f"/>
+
+    <!-- Smaller brand mark (still present but de-emphasised when content exists) -->
+    <g transform="translate(370, 290)">
+      <path d="M 0 -28 C -14 -14 -21 0 -14 14 C -21 10 -17 21 -10 25 C -7 17 -3 23 -3 28 C 3 21 10 17 14 10 C 17 21 10 28 17 28 C 24 17 24 0 10 -14 C 7 -7 3 -3 0 -10 C 3 -21 0 -28 0 -28 Z"
+            fill="url(#flame)" opacity="0.85"/>
+    </g>
+
+    <!-- Shortcuts grid (user-curated) -->
+    <g transform="translate(0, 380)">
+      <text x="50" y="0" font-size="13" font-weight="600" fill="#79747e" letter-spacing="0.5">YOUR SHORTCUTS</text>
+
+      <!-- Row 1 -->
+      <g transform="translate(120, 60)">
+        <circle r="32" fill="#5b8dee"/>
+        <text y="8" font-size="22" font-weight="700" fill="#fff" text-anchor="middle">Y</text>
+        <text y="62" font-size="13" fill="#1c1b1f" text-anchor="middle">YouTube</text>
+      </g>
+      <g transform="translate(255, 60)">
+        <circle r="32" fill="#ff6b6b"/>
+        <text y="8" font-size="22" font-weight="700" fill="#fff" text-anchor="middle">R</text>
+        <text y="62" font-size="13" fill="#1c1b1f" text-anchor="middle">Reddit</text>
+      </g>
+      <g transform="translate(390, 60)">
+        <circle r="32" fill="#1da1f2"/>
+        <text y="8" font-size="22" font-weight="700" fill="#fff" text-anchor="middle">T</text>
+        <text y="62" font-size="13" fill="#1c1b1f" text-anchor="middle">Twitter</text>
+      </g>
+      <g transform="translate(525, 60)">
+        <circle r="32" fill="#1ed760"/>
+        <text y="8" font-size="22" font-weight="700" fill="#fff" text-anchor="middle">S</text>
+        <text y="62" font-size="13" fill="#1c1b1f" text-anchor="middle">Spotify</text>
+      </g>
+      <g transform="translate(630, 60)">
+        <circle r="32" fill="#fff" stroke="#cac4d0" stroke-width="2" stroke-dasharray="4 3"/>
+        <text y="10" font-size="32" fill="#79747e" text-anchor="middle">+</text>
+      </g>
+
+      <!-- Row 2 (partial) -->
+      <g transform="translate(120, 170)">
+        <circle r="32" fill="#7e57c2"/>
+        <text y="8" font-size="22" font-weight="700" fill="#fff" text-anchor="middle">V</text>
+        <text y="62" font-size="13" fill="#1c1b1f" text-anchor="middle">Vimeo</text>
+      </g>
+    </g>
+
+    <!-- Bottom nav -->
+    <rect x="20" y="1096" width="700" height="84" fill="#fdf8fd"/>
+    <line x1="20" y1="1096" x2="720" y2="1096" stroke="#cac4d0" stroke-width="1"/>
+
+    <g transform="translate(115, 1138)">
+      <rect x="-18" y="-22" width="36" height="36" rx="18" fill="#eaddff"/>
+      <text font-size="22" text-anchor="middle" y="4">⌂</text>
+    </g>
+    <text x="115" y="1168" font-size="11" font-weight="600" fill="#65558f" text-anchor="middle">Home</text>
+
+    <text x="255" y="1142" font-size="22" text-anchor="middle">⤓</text>
+    <text x="255" y="1168" font-size="11" fill="#49454f" text-anchor="middle">Downloads</text>
+
+    <text x="390" y="1142" font-size="22" text-anchor="middle">▢</text>
+    <text x="390" y="1168" font-size="11" fill="#49454f" text-anchor="middle">Tabs</text>
+
+    <text x="525" y="1142" font-size="22" text-anchor="middle">★</text>
+    <text x="525" y="1168" font-size="11" fill="#49454f" text-anchor="middle">Bookmarks</text>
+
+    <text x="625" y="1142" font-size="22" text-anchor="middle">⋯</text>
+    <text x="625" y="1168" font-size="11" fill="#49454f" text-anchor="middle">More</text>
+  </g>
+
+  <!-- Footer notes -->
+  <g transform="translate(40, 1290)">
+    <text font-size="13" fill="#49454f">Key idea: the home is calm and personal, not a stock new-tab page. No auto-populated suggestions; the grid only exists once the user has pinned something.</text>
+  </g>
+</svg>
