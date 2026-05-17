@@ -12,8 +12,6 @@
     android:id="@+id/recent_downloads_card"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginStart="@dimen/list_spacing"
-    android:layout_marginEnd="@dimen/list_spacing"
     android:visibility="gone"
     style="@style/Widget.Material3.CardView.Filled"
     app:cardBackgroundColor="@color/md_theme_surfaceContainerLow_highContrast"
@@ -36,13 +34,14 @@
 
             <TextView
                 android:id="@+id/recent_downloads_title"
-                style="@style/TextAppearance.Material3.LabelLarge"
+                style="@style/TextAppearance.Material3.LabelMedium"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:letterSpacing="0.08"
                 android:text="@string/home_recently_downloaded"
-                android:textColor="?attr/colorPrimary"
-                android:textAllCaps="true" />
+                android:textAllCaps="true"
+                android:textColor="?attr/colorPrimary" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/recent_downloads_view_all"
