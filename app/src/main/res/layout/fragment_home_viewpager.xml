@@ -62,11 +62,18 @@
             android:paddingTop="28dp"
             android:paddingBottom="20dp">
 
+            <!--
+                Pushpin (not the Firedown flame) — the brand mark
+                already lives in the bottom-bar cradle, so this
+                slot uses a glyph that describes what the card is
+                FOR ('pin sites'), echoing the tagline below.
+            -->
             <androidx.appcompat.widget.AppCompatImageView
-                android:layout_width="72dp"
-                android:layout_height="72dp"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
                 android:contentDescription="@null"
-                android:src="@drawable/firedown_logo_color" />
+                android:src="@drawable/ic_push_pin_24"
+                app:tint="?attr/colorOnSurfaceVariant" />
 
             <TextView
                 android:layout_width="wrap_content"
