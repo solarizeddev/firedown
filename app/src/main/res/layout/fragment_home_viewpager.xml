@@ -63,16 +63,17 @@
             android:paddingBottom="20dp">
 
             <!--
-                Pushpin (not the Firedown flame) — the brand mark
-                already lives in the bottom-bar cradle, so this
-                slot uses a glyph that describes what the card is
-                FOR ('pin sites'), echoing the tagline below.
+                Ghosted brand mark — same Firedown flame that lives
+                in the bottom-bar cradle, but rendered small and in
+                colorOnSurfaceVariant so it reads as a quiet identity
+                echo rather than competing with the full-colour cradle
+                flame for the user's attention.
             -->
             <androidx.appcompat.widget.AppCompatImageView
-                android:layout_width="48dp"
-                android:layout_height="48dp"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
                 android:contentDescription="@null"
-                android:src="@drawable/ic_push_pin_24"
+                android:src="@drawable/ic_firedown"
                 app:tint="?attr/colorOnSurfaceVariant" />
 
             <TextView
