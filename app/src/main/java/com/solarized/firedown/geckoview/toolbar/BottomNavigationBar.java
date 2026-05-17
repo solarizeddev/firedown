@@ -98,15 +98,16 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
         View downloadButton = v.findViewById(R.id.downloads_button);
         View searchIcon = v.findViewById(R.id.search_button);
         View spacer = v.findViewById(R.id.spacer);
-        // Cradle slot is always a spacer now — on browser it makes
-        // room for the anchored FAB, on home it stays an empty
-        // visual gap so the four remaining icons keep their
-        // x-positions consistent across both surfaces. The old
-        // 'flame in cradle on home' opened the same recent-downloads
-        // sheet the home card already shows, which was a meaningless
-        // duplicate once that card landed.
-        spacer.setVisibility(View.VISIBLE);
-        searchIcon.setVisibility(View.GONE);
+        // Cradle slot:
+        // - Browser: spacer visible, FAB anchored on top (the cradle icon).
+        // - Home: searchIcon visible as the 'new private tab' shortcut
+        //   (action wired in HomeFragment#onBottomBarButtonClick). The
+        //   action is brand-aligned and not redundant with anything
+        //   else on the bar — regular new-tab lives on the leading
+        //   slot, downloads on the trailing slot.
+        spacer.setVisibility(enableCradle ? View.VISIBLE : View.GONE);
+        searchIcon.setVisibility(enableCradle ? View.GONE : View.VISIBLE);
+        searchIcon.setOnClickListener(this);
         newTabButton.setOnLongClickListener(this);
         // The downloads button no longer long-presses to recent-
         // downloads; the home recent-downloads card and the browser

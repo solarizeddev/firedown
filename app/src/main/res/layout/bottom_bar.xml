@@ -39,25 +39,24 @@
             android:layout_height="match_parent" />
 
         <!--
-            The cradle slot in home mode (enableCradle="false" on the
-            parent BottomNavigationBar) holds the Firedown flame —
-            mirrors the centred FAB position in BrowserFragment so
-            the brand sits in the same place across both surfaces.
-            Tap opens the recent-downloads quick-access sheet (handled
-            in HomeFragment#onBottomBarButtonClick). ID kept as
-            'search_button' to avoid a cascading rename across the
-            whole BottomNavigationBar plumbing.
+            Cradle slot on home (enableCradle=false on the parent) =
+            quick 'new private tab' action — symmetric with the
+            regular new-tab icon on the leading slot and brand-aligned
+            without duplicating any other affordance. On browser
+            (enableCradle=true) the button hides and the FAB anchored
+            here takes over. ID kept as 'search_button' to avoid a
+            cascading rename across the BottomNavigationBar plumbing.
         -->
         <androidx.appcompat.widget.AppCompatImageButton
             android:id="@+id/search_button"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/download"
+            android:contentDescription="@string/open_new_private_tab_2"
             android:padding="6dp"
             android:scaleType="centerInside"
-            android:tint="@color/md_theme_primary"
-            android:src="@drawable/ic_firedown" />
+            android:tint="?attr/colorOnSurface"
+            android:src="@drawable/new_incognito_tab" />
 
     </FrameLayout>
 

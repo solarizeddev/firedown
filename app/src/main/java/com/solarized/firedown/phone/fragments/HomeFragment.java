@@ -161,6 +161,23 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mBottomNavigationBar = v.findViewById(R.id.bottom_app_bar);
         mBottomNavigationBar.setListener(this);
 
+        // The bottom app bar overlays the bottom of the scroll content
+        // in this CoordinatorLayout — pad the NestedScrollView's bottom
+        // by app_bar_size PLUS the system bars inset so the last card
+        // (shortcuts) can scroll fully into view on 3-button-nav
+        // devices instead of being clipped behind the bar.
+        View homeScroll = v.findViewById(R.id.home_scroll);
+        int appBarSize = getResources().getDimensionPixelSize(R.dimen.app_bar_size);
+        ViewCompat.setOnApplyWindowInsetsListener(homeScroll, (view, windowInsets) -> {
+            int bottomInset = windowInsets.getInsets(
+                    WindowInsetsCompat.Type.systemBars()
+                            | WindowInsetsCompat.Type.displayCutout()
+            ).bottom;
+            view.setPadding(view.getPaddingLeft(), view.getPaddingTop(),
+                    view.getPaddingRight(), appBarSize + bottomInset);
+            return windowInsets;
+        });
+
         mGeckoToolbar = v.findViewById(R.id.toolbar_layout);
         mGeckoToolbar.setListener(this);
 
@@ -418,6 +435,17 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         } else if(id == R.id.new_tab_button){
             flashNewTab(mNewTabView);
             addNewTab();
+        } else if(id == R.id.search_button){
+            // Centre cradle slot on home is the 'new private tab'
+            // shortcut. Same handoff as the browser-options menu's
+            // R.id.new_incognito_tab path: build an incognito-typed
+            // GeckoState and navigate to the incognito home so the
+            // user lands directly on the private surface.
+            GeckoStateEntity entity = new GeckoStateEntity(true);
+            entity.setIncognito(true);
+            GeckoState geckoState = new GeckoState(entity);
+            mIncognitoStateViewModel.setGeckoState(geckoState, true);
+            NavigationUtils.navigateSafe(mNavController, R.id.action_home_to_home_incognito);
         }
     }
 
