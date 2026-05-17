@@ -231,6 +231,14 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mShortCutsViewModel.getShortCuts().observe(getViewLifecycleOwner(), mObservableShortCuts ->
                 mShortCutsAdapter.submitList(mObservableShortCuts));
 
+        // Keep the recent-downloads LiveData hot so the long-press
+        // quick-access popup has a value to read synchronously on
+        // first invocation. Room's LiveData stays cold until it has
+        // an active observer, so without this the popup's
+        // getValue() returns null on first long-press and we fall
+        // back to DownloadsActivity instead of showing the popup.
+        mRecentDownloadsViewModel.getRecent().observe(getViewLifecycleOwner(), list -> { /* warm only */ });
+
         // NOTE: HomeFragment intentionally does NOT observe
         // BrowserURIViewModel.getEvents().  IntentHandler owns all tab
         // activation and navigation.  HomeFragment only uses

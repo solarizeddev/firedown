@@ -397,6 +397,12 @@ public class BrowserFragment extends BaseBrowserFragment implements OnItemClickL
             if (mIsIncognitoThemed) mBottomNavigationBar.onBadgeCount(count);
         });
 
+        // Keep the recent-downloads LiveData hot so the long-press
+        // quick-access popup has a value to read synchronously on
+        // first invocation (Room's LiveData stays cold until it has
+        // an active observer).
+        mRecentDownloadsViewModel.getRecent().observe(getViewLifecycleOwner(), list -> { /* warm only */ });
+
         mGeckoStateViewModel.getTabsCount().observe(getViewLifecycleOwner(), count -> {
             if (!mIsIncognitoThemed) mBottomNavigationBar.onTabsCount(count);
         });
