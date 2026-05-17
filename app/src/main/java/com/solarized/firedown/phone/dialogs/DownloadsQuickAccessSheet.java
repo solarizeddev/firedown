@@ -80,6 +80,7 @@ public class DownloadsQuickAccessSheet extends BaseBottomSheetDialogFragment {
         super.onViewCreated(view, savedInstanceState);
 
         RecyclerView recycler = view.findViewById(R.id.quick_access_recycler);
+        View emptyState = view.findViewById(R.id.quick_access_empty);
         DownloadsQuickAccessAdapter adapter = new DownloadsQuickAccessAdapter(entity -> {
             if (mHost != null) mHost.onQuickAccessFileTap(entity);
             dismiss();
@@ -92,13 +93,15 @@ public class DownloadsQuickAccessSheet extends BaseBottomSheetDialogFragment {
         });
 
         mViewModel.getRecent().observe(getViewLifecycleOwner(), list -> {
-            if (list == null || list.isEmpty()) {
-                // Everything was deleted while we were open; close
-                // ourselves rather than show an empty rectangle.
-                dismiss();
-                return;
-            }
-            adapter.submitList(list);
+            boolean empty = list == null || list.isEmpty();
+            // Flip between the list and the empty-state copy in place
+            // — the sheet stays open in the empty case so the user
+            // sees a clear 'nothing here yet' message instead of
+            // bouncing into DownloadsActivity (which would make the
+            // flame tap indistinguishable from the bar Downloads tap).
+            recycler.setVisibility(empty ? View.GONE : View.VISIBLE);
+            emptyState.setVisibility(empty ? View.VISIBLE : View.GONE);
+            adapter.submitList(empty ? java.util.Collections.emptyList() : list);
         });
     }
 }

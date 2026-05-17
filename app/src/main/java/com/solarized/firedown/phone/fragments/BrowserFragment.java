@@ -380,14 +380,12 @@ public class BrowserFragment extends BaseBrowserFragment
         // themed and we don't want to leak public download names.
         mDownloadButton.setOnLongClickListener(v1 -> {
             if (mIsIncognitoThemed) return false;
-            java.util.List<DownloadEntity> cached =
-                    mRecentDownloadsViewModel.getRecent().getValue();
-            if (cached == null || cached.isEmpty()) {
-                mStartForResult.launch(new Intent(mActivity, DownloadsActivity.class));
-            } else {
-                new DownloadsQuickAccessSheet().show(getChildFragmentManager(),
-                        DownloadsQuickAccessSheet.TAG);
-            }
+            // Always open the sheet — empty state is rendered inside.
+            // Lets the long-press stay distinguishable from a tap on
+            // the bar Downloads icon (which goes straight to
+            // DownloadsActivity).
+            new DownloadsQuickAccessSheet().show(getChildFragmentManager(),
+                    DownloadsQuickAccessSheet.TAG);
             return true;
         });
         return v;

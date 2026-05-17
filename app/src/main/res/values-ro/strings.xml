@@ -284,4 +284,5 @@
     <string name="home_empty_shortcuts_add">Adaugă comandă rapidă</string>
     <string name="home_shortcuts_add_tile">Adaugă</string>
     <string name="top_sites_add_dialog_title">Adaugă comandă rapidă</string>
+    <string name="downloads_quick_access_empty">Descărcările recente vor apărea aici</string>
 </resources>

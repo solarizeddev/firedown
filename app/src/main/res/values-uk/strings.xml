@@ -297,4 +297,5 @@
     <string name="home_empty_shortcuts_add">Додати ярлик</string>
     <string name="home_shortcuts_add_tile">Додати</string>
     <string name="top_sites_add_dialog_title">Додати ярлик</string>
+    <string name="downloads_quick_access_empty">Тут з’являться нещодавні завантаження</string>
 </resources>

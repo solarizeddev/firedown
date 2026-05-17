@@ -1,13 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Bottom-sheet content for the Downloads quick-access surface,
-  triggered by long-pressing the bottom-bar Downloads button.
-  Renders up to four most recent finished regular downloads using
-  the same item layout as the DownloadFragment list mode, plus a
-  'View all' footer that opens DownloadsActivity.
+  Bottom-sheet content for the Downloads quick-access surface.
+  Two visible states share this container: a populated list of the
+  most recent finished regular downloads (uses fragment_download_item)
+  + a 'View all downloads' footer, and an empty state with a small
+  download glyph + tagline shown when the user has nothing pinned
+  yet. The sheet flips between them in DownloadsQuickAccessSheet
+  based on the live list.
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
@@ -33,6 +36,41 @@
         android:clipToPadding="false"
         android:overScrollMode="never"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
+
+    <!--
+        Empty state: rendered when the LiveData has no entries. Holds
+        the same vertical slot the list would have used so the sheet
+        height feels consistent across states.
+    -->
+    <LinearLayout
+        android:id="@+id/quick_access_empty"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:paddingHorizontal="24dp"
+        android:paddingTop="24dp"
+        android:paddingBottom="20dp"
+        android:visibility="gone"
+        tools:visibility="visible">
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:contentDescription="@null"
+            android:src="@drawable/download_24"
+            app:tint="?attr/colorOnSurfaceVariant" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:gravity="center"
+            android:text="@string/downloads_quick_access_empty"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:textAppearance="?attr/textAppearanceBodyMedium" />
+
+    </LinearLayout>
 
     <com.google.android.material.divider.MaterialDivider
         android:layout_width="match_parent"

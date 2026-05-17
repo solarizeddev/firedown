@@ -320,4 +320,5 @@
     <string name="home_empty_shortcuts_add">أضف اختصاراً</string>
     <string name="home_shortcuts_add_tile">إضافة</string>
     <string name="top_sites_add_dialog_title">أضف اختصاراً</string>
+    <string name="downloads_quick_access_empty">ستظهر التنزيلات الأخيرة هنا</string>
 </resources>

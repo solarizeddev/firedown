@@ -291,4 +291,5 @@
     <string name="home_empty_shortcuts_add">Προσθήκη συντόμευσης</string>
     <string name="home_shortcuts_add_tile">Προσθήκη</string>
     <string name="top_sites_add_dialog_title">Προσθήκη συντόμευσης</string>
+    <string name="downloads_quick_access_empty">Οι πρόσφατες λήψεις θα εμφανιστούν εδώ</string>
 </resources>

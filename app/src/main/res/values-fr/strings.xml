@@ -496,4 +496,5 @@
     <string name="home_empty_shortcuts_add">Ajouter un raccourci</string>
     <string name="home_shortcuts_add_tile">Ajouter</string>
     <string name="top_sites_add_dialog_title">Ajouter un raccourci</string>
+    <string name="downloads_quick_access_empty">Tes téléchargements récents apparaîtront ici</string>
 </resources>

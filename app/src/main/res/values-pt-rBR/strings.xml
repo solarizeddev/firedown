@@ -103,4 +103,5 @@
     <string name="home_empty_shortcuts_add">Adicionar um atalho</string>
     <string name="home_shortcuts_add_tile">Adicionar</string>
     <string name="top_sites_add_dialog_title">Adicionar atalho</string>
+    <string name="downloads_quick_access_empty">Os downloads recentes aparecerão aqui</string>
 </resources>

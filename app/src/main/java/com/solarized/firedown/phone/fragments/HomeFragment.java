@@ -397,7 +397,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
             // home). Tap opens the recent-downloads sheet, falling
             // back to DownloadsActivity if there's nothing to show
             // yet so the gesture always lands somewhere useful.
-            openRecentDownloadsOrFallback();
+            openRecentDownloads();
         }
     }
 
@@ -411,20 +411,15 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     }
 
     /**
-     * Opens the recent-downloads bottom sheet — used by the home
-     * URL-bar's leading flame button. Falls back to DownloadsActivity
-     * when the LiveData has no cached entries so the tap still feels
-     * responsive on a fresh install.
+     * Opens the recent-downloads bottom sheet from the home centre
+     * flame. Always shows the sheet — even when the LiveData is
+     * empty the sheet renders an explanatory empty state, so the
+     * flame tap stays distinguishable from the bar Downloads tap
+     * (which goes straight to DownloadsActivity).
      */
-    private void openRecentDownloadsOrFallback() {
-        java.util.List<DownloadEntity> cached =
-                mRecentDownloadsViewModel.getRecent().getValue();
-        if (cached == null || cached.isEmpty()) {
-            mStartForResult.launch(new Intent(mActivity, DownloadsActivity.class));
-        } else {
-            new DownloadsQuickAccessSheet().show(getChildFragmentManager(),
-                    DownloadsQuickAccessSheet.TAG);
-        }
+    private void openRecentDownloads() {
+        new DownloadsQuickAccessSheet().show(getChildFragmentManager(),
+                DownloadsQuickAccessSheet.TAG);
     }
 
     @Override

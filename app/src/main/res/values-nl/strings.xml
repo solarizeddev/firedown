@@ -358,4 +358,5 @@
     <string name="home_empty_shortcuts_add">Snelkoppeling toevoegen</string>
     <string name="home_shortcuts_add_tile">Toevoegen</string>
     <string name="top_sites_add_dialog_title">Snelkoppeling toevoegen</string>
+    <string name="downloads_quick_access_empty">Recente downloads verschijnen hier</string>
 </resources>

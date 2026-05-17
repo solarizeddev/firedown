@@ -353,4 +353,5 @@
     <string name="home_empty_shortcuts_add">Dodaj skrót</string>
     <string name="home_shortcuts_add_tile">Dodaj</string>
     <string name="top_sites_add_dialog_title">Dodaj skrót</string>
+    <string name="downloads_quick_access_empty">Niedawne pobrania pojawią się tutaj</string>
 </resources>
