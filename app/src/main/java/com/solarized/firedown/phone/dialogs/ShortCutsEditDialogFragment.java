@@ -36,6 +36,8 @@ import com.solarized.firedown.utils.WebUtils;
 public class ShortCutsEditDialogFragment extends BaseDialogFragment {
 
     private static final String URL_REGEX = "^(https?)://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]$";
+    private static final String SCHEME_PREFIX = "(?i)^https?://.*";
+    private static final String DEFAULT_SCHEME = "https://";
 
     private ShortCutsViewModel mShortCutsViewModel;
 
@@ -128,24 +130,43 @@ public class ShortCutsEditDialogFragment extends BaseDialogFragment {
     }
 
     /**
-     * Validates the URL and updates the UI error state.
+     * Validates the URL and updates the UI error state. Accepts both
+     * scheme-less inputs (e.g. {@code youtube.com}) and explicit
+     * schemes ({@code https://…}, {@code http://…}); a missing
+     * scheme is treated as if {@code https://} were prepended for
+     * the purpose of validation, and {@link #normalizeUrl(String)}
+     * does the same prepend at save time so the stored URL is always
+     * scheme-qualified.
      */
     private boolean validateUrl(@Nullable CharSequence input, TextInputLayout layout) {
         // Convert null to empty string for consistent regex checking
-        String text = (input == null) ? "" : input.toString();
+        String text = (input == null) ? "" : input.toString().trim();
 
         if (text.isEmpty()) {
             layout.setError(null);
             return false;
         }
 
-        if (text.matches(URL_REGEX)) {
+        String candidate = text.matches(SCHEME_PREFIX) ? text : DEFAULT_SCHEME + text;
+
+        if (candidate.matches(URL_REGEX)) {
             layout.setError(null);
             return true;
         } else {
             layout.setError(getString(R.string.settings_doh_server_error_format));
             return false;
         }
+    }
+
+    /**
+     * Returns {@code raw} prefixed with {@code https://} if it doesn't
+     * already start with a scheme. Mirrors what Chrome and Firefox do
+     * in their bookmark / shortcut dialogs — typing a bare domain is
+     * the common case and forcing the user to type the scheme is
+     * needless friction. Explicit {@code http://} is preserved.
+     */
+    private static String normalizeUrl(@NonNull String raw) {
+        return raw.matches(SCHEME_PREFIX) ? raw : DEFAULT_SCHEME + raw;
     }
 
 
@@ -156,6 +177,8 @@ public class ShortCutsEditDialogFragment extends BaseDialogFragment {
 
         if (updatedUrl.isEmpty() || updatedName.isEmpty())
             return;
+
+        updatedUrl = normalizeUrl(updatedUrl);
 
         if (mAddMode) {
             ShortCutsEntity entity = new ShortCutsEntity();
