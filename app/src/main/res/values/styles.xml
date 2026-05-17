@@ -51,14 +51,13 @@
         <item name="android:navigationBarColor">@color/md_theme_surfaceContainerHigh</item>
         <item name="bottomSheetStyle">@style/Theme.FireDown.BottomSheetDialogStyle</item>
         <!--
-            M3 tints elevated surfaces with colorSurfaceTint (defaults to
-            colorPrimary). Inside a bottom sheet that means every
-            MaterialCardView at elevation > 0 picks up an orange wash on
-            top of its background. Override the tint to transparent so
-            cards inside any FireDown bottom sheet render with their
-            declared cardBackgroundColor only.
+            M3 tints elevated surfaces with colorPrimary (#f0716c here)
+            via the elevation-overlay machinery, so every MaterialCardView
+            at elevation > 0 inside a sheet picks up an orange wash on
+            top of its declared background. Disable the overlay so cards
+            render with their cardBackgroundColor only.
         -->
-        <item name="colorSurfaceTint">@android:color/transparent</item>
+        <item name="elevationOverlayEnabled">false</item>
         <item name="actionOverflowButtonStyle">@style/Theme.FireDown.Toolbar.ActionMode.Overflow</item>
     </style>
 
@@ -164,7 +163,7 @@
         <item name="android:editTextColor">@color/incognito_on_surface</item>
         <item name="android:textColorHint">@color/incognito_on_surface_variant</item>
         <!-- See Theme.FireDown.BottomSheetDialogTheme for rationale. -->
-        <item name="colorSurfaceTint">@android:color/transparent</item>
+        <item name="elevationOverlayEnabled">false</item>
     </style>
 
     <style name="Firedown.Widget.App.Chip.Filter" parent="Widget.Material3.Chip.Filter">
