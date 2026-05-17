@@ -38,13 +38,17 @@
 
     <!-- Empty state: brand glyph + tagline + Add CTA, inside a card
          matching the populated state so the slot stays visually
-         anchored regardless of which state is showing. -->
+         anchored regardless of which state is showing. minHeight
+         roughly matches the populated card's typical 2-row footprint
+         so flipping from empty → 1 pinned shortcut doesn't make the
+         home jump. -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/empty_state"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginStart="@dimen/list_spacing"
         android:layout_marginEnd="@dimen/list_spacing"
+        android:minHeight="240dp"
         style="@style/Widget.Material3.CardView.Filled"
         app:cardBackgroundColor="@color/md_theme_surfaceContainerLow_highContrast"
         tools:visibility="visible">

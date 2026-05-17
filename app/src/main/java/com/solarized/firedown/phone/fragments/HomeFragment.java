@@ -241,26 +241,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
             mShortCutsAdapter.submitList(mObservableShortCuts);
         });
 
-        mHomeViewPager.setOnEmptyStateAddClick(v -> {
-            if (mShortCutsViewModel.isFull()) {
-                // Shouldn't normally happen from the empty state (the
-                // CTA is only visible when the list is empty), but the
-                // grid could be repopulated from elsewhere between
-                // observer events — defensive guard so the cap dialog
-                // path still applies.
-                Bundle args = new Bundle();
-                args.putBoolean(Keys.OPEN_INCOGNITO, false);
-                NavigationUtils.navigateSafe(mNavController, R.id.dialog_shortcuts_max, R.id.home, args);
-            } else {
-                // Hand a blank entity to the edit dialog — the dialog
-                // detects id == 0 as 'add mode' and routes Save to
-                // ShortCutsViewModel.add(entity) instead of update().
-                Bundle args = new Bundle();
-                args.putParcelable(Keys.ITEM_ID,
-                        new com.solarized.firedown.data.entity.ShortCutsEntity());
-                NavigationUtils.navigateSafe(mNavController, R.id.dialog_shortcuts_edit, R.id.home, args);
-            }
-        });
+        mHomeViewPager.setOnEmptyStateAddClick(v -> openAddShortcut());
 
         // Keep the recent-downloads LiveData hot so the long-press
         // quick-access popup has a value to read synchronously on
@@ -564,6 +545,26 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
 
     }
 
+    /**
+     * Shared add-shortcut flow used by both the empty-state CTA and
+     * the trailing '+' tile in the populated grid. Routes through the
+     * limit guard first (same dialog as the in-browser 'Add to
+     * shortcuts' menu path) before opening the edit dialog in add
+     * mode — id == 0 on the bundled entity flips the dialog's title
+     * and save path.
+     */
+    private void openAddShortcut() {
+        if (mShortCutsViewModel.isFull()) {
+            Bundle args = new Bundle();
+            args.putBoolean(Keys.OPEN_INCOGNITO, false);
+            NavigationUtils.navigateSafe(mNavController, R.id.dialog_shortcuts_max, R.id.home, args);
+        } else {
+            Bundle args = new Bundle();
+            args.putParcelable(Keys.ITEM_ID, new ShortCutsEntity());
+            NavigationUtils.navigateSafe(mNavController, R.id.dialog_shortcuts_edit, R.id.home, args);
+        }
+    }
+
     @Override
     public void onItemClick(int position, int resId) {
         if (position == RecyclerView.NO_POSITION)
@@ -582,6 +583,11 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
             ShortCutsEntity shortcutsEntity = mShortCutsAdapter.getCurrentList().get(position);
             String url = WebUtils.getSchemeDomainName(shortcutsEntity.getUrl());
             openUri(url);
+        } else if (resId == R.id.item_web_visited_add) {
+            // Trailing '+' tile in the populated grid — same flow as
+            // the empty-state Add CTA: route through the limit guard,
+            // then open the edit dialog in add mode.
+            openAddShortcut();
         }
     }
 

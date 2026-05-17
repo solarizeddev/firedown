@@ -27,6 +27,9 @@ public class ShortCutsAdapter extends ListAdapter<ShortCutsEntity, ShortCutsAdap
 
     private static final String TAG = ShortCutsAdapter.class.getSimpleName();
 
+    private static final int VIEW_TYPE_SHORTCUT = 0;
+    private static final int VIEW_TYPE_ADD = 1;
+
     private final OnItemClickListener mOnItemClickListener;
 
     private final RequestOptions mRequestOptions;
@@ -45,20 +48,44 @@ public class ShortCutsAdapter extends ListAdapter<ShortCutsEntity, ShortCutsAdap
     @Override
     public void onViewRecycled(@NonNull WebVisitedViewHolder holder) {
         super.onViewRecycled(holder);
-        GlideHelper.clearSafe(holder.file_icon);
+        if (holder.file_icon != null) {
+            GlideHelper.clearSafe(holder.file_icon);
+        }
+    }
+
+    /**
+     * Appends one synthetic 'Add' tile after the real shortcuts so the
+     * user can pin a new site from the populated home state without
+     * having to navigate to a page first. The empty state has its own
+     * Add button; the trailing tile only matters once at least one
+     * shortcut already exists.
+     */
+    @Override
+    public int getItemCount() {
+        return super.getItemCount() + 1;
+    }
+
+    @Override
+    public int getItemViewType(int position) {
+        return position == super.getItemCount() ? VIEW_TYPE_ADD : VIEW_TYPE_SHORTCUT;
     }
 
     @NonNull
     @Override
     public WebVisitedViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int viewType) {
-
-        View view = LayoutInflater.from(viewGroup.getContext())
-                .inflate(R.layout.fragment_web_visited_item, viewGroup, false);
-        return new WebVisitedViewHolder(view, mOnItemClickListener);
+        int layoutRes = (viewType == VIEW_TYPE_ADD)
+                ? R.layout.fragment_web_visited_item_add
+                : R.layout.fragment_web_visited_item;
+        View view = LayoutInflater.from(viewGroup.getContext()).inflate(layoutRes, viewGroup, false);
+        return new WebVisitedViewHolder(view, mOnItemClickListener, viewType);
     }
 
     @Override
     public void onBindViewHolder(@NonNull WebVisitedViewHolder holder, int position) {
+        if (holder.viewType == VIEW_TYPE_ADD) {
+            // Static — nothing to bind. Click is wired in the ViewHolder.
+            return;
+        }
         ShortCutsEntity shortcutsEntity = getItem(position);
 
         holder.file_name.setText(shortcutsEntity.getDomain());
@@ -70,20 +97,28 @@ public class ShortCutsAdapter extends ListAdapter<ShortCutsEntity, ShortCutsAdap
 
 
     public static class WebVisitedViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener, View.OnLongClickListener {
+        final int viewType;
         OnItemClickListener mOnItemClickListener;
         MaterialCardView item;
         TextView file_name;
         AppCompatImageView file_icon;
 
-        public WebVisitedViewHolder(View view, OnItemClickListener onItemClickListener) {
+        public WebVisitedViewHolder(View view, OnItemClickListener onItemClickListener, int viewType) {
             super(view);
+            this.viewType = viewType;
             mOnItemClickListener = onItemClickListener;
-            item = view.findViewById(R.id.item_web_visited);
-            file_icon = view.findViewById(R.id.file_icon);
-            file_name = view.findViewById(R.id.file_name);
-            item.setOnClickListener(this);
-            item.setOnClickListener(this);
-            item.setOnLongClickListener(this);
+
+            if (viewType == VIEW_TYPE_ADD) {
+                item = view.findViewById(R.id.item_web_visited_add);
+                item.setOnClickListener(this);
+                // No long-press on the Add tile — there's nothing to remove or edit.
+            } else {
+                item = view.findViewById(R.id.item_web_visited);
+                file_icon = view.findViewById(R.id.file_icon);
+                file_name = view.findViewById(R.id.file_name);
+                item.setOnClickListener(this);
+                item.setOnLongClickListener(this);
+            }
         }
 
         @Override
