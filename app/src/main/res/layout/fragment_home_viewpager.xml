@@ -5,7 +5,8 @@
   fresh installs and any time the user has zero pinned shortcuts; the
   shortcuts card with the RecyclerView is shown once at least one
   shortcut exists. HomeFragment toggles visibility in response to
-  ShortCutsViewModel.getShortCuts().
+  ShortCutsViewModel.getShortCuts(). Both states use the same filled
+  card surface so the slot feels visually anchored in both states.
 -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -35,44 +36,55 @@
 
     </com.google.android.material.card.MaterialCardView>
 
-    <!-- Empty state: brand glyph + tagline + Add CTA -->
-    <LinearLayout
+    <!-- Empty state: brand glyph + tagline + Add CTA, inside a card
+         matching the populated state so the slot stays visually
+         anchored regardless of which state is showing. -->
+    <com.google.android.material.card.MaterialCardView
         android:id="@+id/empty_state"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center_horizontal"
-        android:orientation="vertical"
-        android:paddingHorizontal="24dp"
-        android:paddingTop="24dp"
-        android:paddingBottom="16dp"
+        android:layout_marginStart="@dimen/list_spacing"
+        android:layout_marginEnd="@dimen/list_spacing"
+        style="@style/Widget.Material3.CardView.Filled"
+        app:cardBackgroundColor="@color/md_theme_surfaceContainerLow_highContrast"
         tools:visibility="visible">
 
-        <androidx.appcompat.widget.AppCompatImageView
-            android:layout_width="56dp"
-            android:layout_height="56dp"
-            android:contentDescription="@null"
-            android:src="@drawable/ic_firedown"
-            app:tint="?attr/colorPrimary" />
-
-        <TextView
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:gravity="center"
-            android:text="@string/home_empty_shortcuts_tagline"
-            android:textColor="?attr/colorOnSurfaceVariant"
-            android:textAppearance="?attr/textAppearanceBodyMedium" />
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            android:paddingHorizontal="24dp"
+            android:paddingTop="28dp"
+            android:paddingBottom="20dp">
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/empty_state_add_button"
-            style="@style/Widget.Material3.Button.TonalButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="@string/home_empty_shortcuts_add"
-            app:icon="@drawable/add_24"
-            app:iconGravity="textStart" />
+            <androidx.appcompat.widget.AppCompatImageView
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:contentDescription="@null"
+                android:src="@drawable/firedown_logo_color" />
 
-    </LinearLayout>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:gravity="center"
+                android:text="@string/home_empty_shortcuts_tagline"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:textAppearance="?attr/textAppearanceBodyMedium" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/empty_state_add_button"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="@string/home_empty_shortcuts_add"
+                app:icon="@drawable/add_24"
+                app:iconGravity="textStart" />
+
+        </LinearLayout>
+
+    </com.google.android.material.card.MaterialCardView>
 
 </FrameLayout>
