@@ -100,8 +100,12 @@ public class ShortCutsDataRepository {
     }
 
     public void add(ShortCutsEntity shortcutsEntity) {
-        mDatabase.shortCutsDao().insert(shortcutsEntity);
-        mDiskExecutor.execute(() -> mSyncEntities.add(shortcutsEntity.getId()));
+        // Mirror the GeckoState-flavoured add(): in-memory id set
+        // updates synchronously so isFull() reflects the new entry
+        // immediately, the actual Room insert hops to the disk
+        // executor to keep us off the main thread.
+        mSyncEntities.add(shortcutsEntity.getId());
+        mDiskExecutor.execute(() -> mDatabase.shortCutsDao().insert(shortcutsEntity));
     }
 
     public void update(ShortCutsEntity entity) {
