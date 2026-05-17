@@ -102,6 +102,7 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
         searchIcon.setVisibility(enableCradle ? View.GONE : View.VISIBLE);
         searchIcon.setOnClickListener(this);
         newTabButton.setOnLongClickListener(this);
+        downloadButton.setOnLongClickListener(this);
 
         mTabsCountButton = v.findViewById(R.id.tab_button);
         mBadge = BadgeDrawable.create(context);

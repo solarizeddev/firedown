@@ -126,6 +126,8 @@
     <string name="donate_subtitle">Firedown is free. If it saved you time or annoyance, send back what it was worth — in any of these ways.</string>
     <string name="donate_title">Value for Value</string>
     <string name="download">Download</string>
+    <string name="downloads_quick_access_title">Recently downloaded</string>
+    <string name="downloads_quick_access_view_all">View all</string>
     <string name="download_adaptative">Adaptive</string>
     <string name="download_file">A file is ready to be downloaded:</string>
     <string name="download_finished">Download finished</string>

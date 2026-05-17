@@ -37,6 +37,7 @@ import com.solarized.firedown.data.models.BrowserDialogViewModel;
 import com.solarized.firedown.data.models.BrowserURIViewModel;
 import com.solarized.firedown.data.models.GeckoStateViewModel;
 import com.solarized.firedown.data.models.IncognitoStateViewModel;
+import com.solarized.firedown.data.models.RecentDownloadsViewModel;
 import com.solarized.firedown.data.models.TaskViewModel;
 import com.solarized.firedown.data.models.ShortCutsViewModel;
 import com.solarized.firedown.geckoview.GeckoResources;
@@ -51,6 +52,7 @@ import com.solarized.firedown.phone.SettingsActivity;
 import com.solarized.firedown.phone.VaultActivity;
 import com.solarized.firedown.autocomplete.AutoCompleteEditText;
 import com.solarized.firedown.autocomplete.AutoCompleteView;
+import com.solarized.firedown.ui.DownloadsQuickAccessPopup;
 import com.solarized.firedown.ui.HomeViewpager;
 import com.solarized.firedown.ui.OnBoardingCard;
 import com.solarized.firedown.ui.adapters.ShortCutsAdapter;
@@ -81,6 +83,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     private GeckoStateViewModel mGeckoStateViewModel;
     private IncognitoStateViewModel mIncognitoStateViewModel;
     private TaskViewModel mTaskViewModel;
+    private RecentDownloadsViewModel mRecentDownloadsViewModel;
     private AutoCompleteEditText mAutoCompleteEditText;
     private AutoCompleteView mAutoCompleteView;
     private ShortCutsAdapter mShortCutsAdapter;
@@ -112,6 +115,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mAutoCompleteViewModel = new ViewModelProvider(this).get(AutoCompleteViewModel.class);
         mShortCutsViewModel = new ViewModelProvider(this).get(ShortCutsViewModel.class);
         mTaskViewModel = new ViewModelProvider(this).get(TaskViewModel.class);
+        mRecentDownloadsViewModel = new ViewModelProvider(this).get(RecentDownloadsViewModel.class);
         mGeckoStateViewModel = new ViewModelProvider(mActivity).get(GeckoStateViewModel.class);
         mIncognitoStateViewModel = new ViewModelProvider(mActivity).get(IncognitoStateViewModel.class);
         mBrowserURIViewModel = new ViewModelProvider(mActivity).get(BrowserURIViewModel.class);
@@ -379,6 +383,20 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     public boolean onBottomBarButtonLongClick(View v, int id){
         if (id == R.id.new_tab_button) {
             NavigationUtils.navigateSafe(mNavController, R.id.dialog_new_tabs, R.id.home);
+            return true;
+        } else if (id == R.id.downloads_button) {
+            boolean shown = DownloadsQuickAccessPopup.show(
+                    mActivity,
+                    getViewLifecycleOwner(),
+                    mRecentDownloadsViewModel.getRecent(),
+                    v,
+                    entity -> openItem(entity, null));
+            if (!shown) {
+                // Nothing recent to show — fall back to the regular
+                // tap behaviour so the long-press still feels like
+                // it did something.
+                mStartForResult.launch(new Intent(mActivity, DownloadsActivity.class));
+            }
             return true;
         }
         return false;

@@ -81,6 +81,10 @@ public class DownloadDataRepository {
         return mDatabase.downloadDao().getDownloadsLimit(limit);
     }
 
+    public LiveData<List<DownloadEntity>> getRecentFinishedDownloads(int limit) {
+        return mDatabase.downloadDao().getRecentFinishedDownloads(limit);
+    }
+
     public List<DownloadEntity> getAllRawList() {
         return mDatabase.downloadDao().getAllRawList();
     }

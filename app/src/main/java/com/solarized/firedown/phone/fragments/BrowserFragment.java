@@ -49,6 +49,7 @@ import com.solarized.firedown.data.models.BrowserDownloadViewModel;
 import com.solarized.firedown.data.models.BrowserURIViewModel;
 import com.solarized.firedown.data.models.GeckoStateViewModel;
 import com.solarized.firedown.data.models.IncognitoStateViewModel;
+import com.solarized.firedown.data.models.RecentDownloadsViewModel;
 import com.solarized.firedown.data.models.ShortCutsViewModel;
 import com.solarized.firedown.data.models.TaskViewModel;
 import com.solarized.firedown.data.models.WebBookmarkViewModel;
@@ -69,6 +70,7 @@ import com.solarized.firedown.phone.DownloadsActivity;
 import com.solarized.firedown.phone.HistoryActivity;
 import com.solarized.firedown.phone.SettingsActivity;
 import com.solarized.firedown.phone.VaultActivity;
+import com.solarized.firedown.ui.DownloadsQuickAccessPopup;
 import com.solarized.firedown.ui.IncognitoColors;
 import com.solarized.firedown.ui.adapters.SearchAutocompleteAdapter;
 import com.solarized.firedown.geckoview.GeckoToolbar;
@@ -158,6 +160,7 @@ public class BrowserFragment extends BaseBrowserFragment implements OnItemClickL
     private WebBookmarkViewModel mWebBookmarkViewModel;
     private BrowserURIViewModel mBrowserURIViewModel;
     private TaskViewModel mTaskViewModel;
+    private RecentDownloadsViewModel mRecentDownloadsViewModel;
 
     // ── Layout sizing ─────────────────────────────────────────────────────────────────────────────
 
@@ -196,6 +199,7 @@ public class BrowserFragment extends BaseBrowserFragment implements OnItemClickL
 
         mIncognitoStateViewModel = new ViewModelProvider(mActivity).get(IncognitoStateViewModel.class);
         mTaskViewModel          = new ViewModelProvider(this).get(TaskViewModel.class);
+        mRecentDownloadsViewModel = new ViewModelProvider(this).get(RecentDownloadsViewModel.class);
         mShortCutsViewModel     = new ViewModelProvider(this).get(ShortCutsViewModel.class);
         mWebBookmarkViewModel   = new ViewModelProvider(this).get(WebBookmarkViewModel.class);
         mGeckoStateViewModel    = new ViewModelProvider(mActivity).get(GeckoStateViewModel.class);
@@ -962,6 +966,21 @@ public class BrowserFragment extends BaseBrowserFragment implements OnItemClickL
     public boolean onBottomBarButtonLongClick(View v, int id){
         if (id == R.id.new_tab_button) {
             NavigationUtils.navigateSafe(mNavController, R.id.dialog_new_tabs, R.id.browser);
+            return true;
+        } else if (id == R.id.downloads_button && !mIsIncognitoThemed) {
+            // Skip in incognito-themed mode: the bottom-bar Downloads
+            // glyph is swapped for a vault lock and the quick-access
+            // popup would leak public download filenames into a
+            // surface that's currently representing private browsing.
+            boolean shown = DownloadsQuickAccessPopup.show(
+                    mActivity,
+                    getViewLifecycleOwner(),
+                    mRecentDownloadsViewModel.getRecent(),
+                    v,
+                    entity -> openItem(entity, null));
+            if (!shown) {
+                mStartForResult.launch(new Intent(mActivity, DownloadsActivity.class));
+            }
             return true;
         }
         return false;
