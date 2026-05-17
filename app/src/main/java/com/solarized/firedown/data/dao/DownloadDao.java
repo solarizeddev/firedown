@@ -60,9 +60,6 @@ public interface DownloadDao {
     @Query("SELECT * FROM download WHERE file_safe = 0 ORDER BY file_date DESC LIMIT :limit")
     LiveData<List<DownloadEntity>> getDownloadsLimit(int limit);
 
-    @Query("SELECT * FROM download WHERE file_safe = 0 AND file_status = 1 ORDER BY file_date DESC LIMIT :limit")
-    LiveData<List<DownloadEntity>> getRecentFinishedDownloads(int limit);
-
     @Transaction
     @Query("SELECT * FROM download ORDER BY file_date DESC")
     List<DownloadEntity> getAllRaw();

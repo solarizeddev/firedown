@@ -42,6 +42,7 @@ import com.solarized.firedown.R;
 import com.solarized.firedown.autocomplete.AutoCompleteView;
 import com.solarized.firedown.data.entity.CertificateInfoEntity;
 import com.solarized.firedown.data.entity.ContextElementEntity;
+import com.solarized.firedown.data.Download;
 import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.data.entity.AutoCompleteEntity;
 import com.solarized.firedown.data.entity.GeckoStateEntity;
@@ -995,7 +996,11 @@ public class BrowserFragment extends BaseBrowserFragment
 
     @Override
     public void onQuickAccessFileTap(@NonNull DownloadEntity entity) {
-        openItem(entity, null);
+        if (entity.getFileStatus() == Download.ERROR) {
+            openSourceUrl(entity);
+        } else {
+            openItem(entity, null);
+        }
     }
 
     @Override

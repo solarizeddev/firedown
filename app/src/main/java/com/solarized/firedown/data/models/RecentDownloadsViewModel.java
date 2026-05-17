@@ -30,7 +30,11 @@ public class RecentDownloadsViewModel extends ViewModel {
 
     @Inject
     public RecentDownloadsViewModel(DownloadDataRepository repository) {
-        mRecent = repository.getRecentFinishedDownloads(LIMIT);
+        // Includes all statuses (FINISHED, PROGRESS, QUEUED, ERROR) so
+        // the popup mirrors the main DownloadFragment list — long-pressing
+        // the bar is a quick way to see in-flight downloads too, not
+        // just a 'recently completed' list.
+        mRecent = repository.getDownloadsLimit(LIMIT);
     }
 
     public LiveData<List<DownloadEntity>> getRecent() {

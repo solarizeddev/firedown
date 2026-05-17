@@ -29,6 +29,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
+import com.solarized.firedown.data.Download;
 import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.data.entity.GeckoStateEntity;
 import com.solarized.firedown.data.entity.AutoCompleteEntity;
@@ -416,7 +417,14 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
 
     @Override
     public void onQuickAccessFileTap(@NonNull DownloadEntity entity) {
-        openItem(entity, null);
+        // Match DownloadFragment's row tap: errored downloads jump to
+        // the source URL, everything else hits openItem (which is a
+        // no-op for not-yet-completed files but at least consistent).
+        if (entity.getFileStatus() == Download.ERROR) {
+            openSourceUrl(entity);
+        } else {
+            openItem(entity, null);
+        }
     }
 
 

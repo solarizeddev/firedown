@@ -4,11 +4,13 @@ import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatImageView;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
@@ -17,20 +19,29 @@ import com.bumptech.glide.request.RequestOptions;
 import com.google.android.material.card.MaterialCardView;
 import com.solarized.firedown.GlideHelper;
 import com.solarized.firedown.R;
+import com.solarized.firedown.data.Download;
 import com.solarized.firedown.data.entity.DownloadEntity;
+import com.solarized.firedown.ui.ProgressOverlayView;
 import com.solarized.firedown.utils.DateUtils;
 import com.solarized.firedown.utils.FileUriHelper;
+import com.solarized.firedown.utils.MessageHelper;
 import com.solarized.firedown.utils.Utils;
 import com.solarized.firedown.utils.WebUtils;
+
+import java.util.Locale;
 
 /**
  * Backs the vertical list inside the Downloads quick-access bottom
  * sheet. Inflates {@link R.layout#fragment_download_item} so each
  * row looks identical to a list-mode row in the main DownloadFragment
  * — same thumbnail card, same mime badge + filename + domain layout,
- * same '&lt;size&gt; - &lt;date&gt;' meta line. Everything that only
- * applies to in-flight / errored / queued / selectable rows is
- * hidden, since this surface only ever shows FINISHED items.
+ * same status-specific bottom row (progress bar, finished
+ * '&lt;size&gt; - &lt;date&gt;', error message, or 'queued' label).
+ *
+ * <p>Mirrors {@code DownloadItemAdapter}'s binding for the four
+ * status types so PROGRESS / QUEUED / ERROR / FINISHED items all
+ * render in their right state. Selection / action-menu paths are
+ * skipped — this sheet is read-only.</p>
  */
 public class DownloadsQuickAccessAdapter
         extends ListAdapter<DownloadEntity, DownloadsQuickAccessAdapter.RowViewHolder> {
@@ -51,6 +62,8 @@ public class DownloadsQuickAccessAdapter
                     return a.getFileDate() == b.getFileDate()
                             && a.getFileStatus() == b.getFileStatus()
                             && a.getFileSize() == b.getFileSize()
+                            && a.getFileProgress() == b.getFileProgress()
+                            && a.getFileErrorType() == b.getFileErrorType()
                             && safeEq(a.getFileName(), b.getFileName())
                             && safeEq(a.getFilePath(), b.getFilePath());
                 }
@@ -85,10 +98,15 @@ public class DownloadsQuickAccessAdapter
 
         private final MaterialCardView item;
         private final AppCompatImageView image;
+        private final ProgressOverlayView imageProgress;
         private final TextView mimeText;
         private final TextView fileName;
         private final TextView fileUrl;
         private final TextView finishedText;
+        private final TextView progressText;
+        private final ProgressBar progressBar;
+        private final TextView queuedText;
+        private final TextView errorText;
         @Nullable private final OnRowClickListener listener;
         @Nullable private DownloadEntity boundEntity;
 
@@ -96,25 +114,34 @@ public class DownloadsQuickAccessAdapter
             super(itemView);
             this.item = itemView.findViewById(R.id.item);
             this.image = itemView.findViewById(R.id.image);
+            this.imageProgress = itemView.findViewById(R.id.image_progress);
             this.mimeText = itemView.findViewById(R.id.mime_text);
             this.fileName = itemView.findViewById(R.id.file_name);
             this.fileUrl = itemView.findViewById(R.id.file_url);
             this.finishedText = itemView.findViewById(R.id.item_download_finished);
+            this.progressText = itemView.findViewById(R.id.progress_text);
+            this.progressBar = itemView.findViewById(R.id.progress_bar);
+            this.queuedText = itemView.findViewById(R.id.queued_text);
+            this.errorText = itemView.findViewById(R.id.error_text);
             this.listener = listener;
 
             this.image.setClipToOutline(true);
             this.item.setOnClickListener(this);
 
-            // Hide every part of the list-mode item layout that only
-            // makes sense for non-finished / selectable rows — we
-            // never bind those states here.
-            hideIfPresent(itemView, R.id.item_download_selected);
-            hideIfPresent(itemView, R.id.item_download_action);
-            hideIfPresent(itemView, R.id.progress_text);
-            hideIfPresent(itemView, R.id.progress_bar);
-            hideIfPresent(itemView, R.id.queued_text);
-            hideIfPresent(itemView, R.id.error_text);
-            hideIfPresent(itemView, R.id.image_progress);
+            // The list-mode card paints a 2dp stroke; DownloadItemAdapter
+            // sets it to transparent in normal state (only the selection
+            // path uses a non-transparent colour) and we don't have a
+            // selection mode here, so always transparent. Without this
+            // the stroke renders in the theme accent (orange) and the
+            // row looks 'highlighted'.
+            this.item.setStrokeColor(
+                    ContextCompat.getColor(itemView.getContext(), R.color.transparent));
+
+            // Selection check and action menu never apply on this surface.
+            View selected = itemView.findViewById(R.id.item_download_selected);
+            if (selected != null) selected.setVisibility(View.GONE);
+            View action = itemView.findViewById(R.id.item_download_action);
+            if (action != null) action.setVisibility(View.GONE);
         }
 
         void bind(@NonNull DownloadEntity entity, @NonNull RequestOptions options) {
@@ -131,11 +158,52 @@ public class DownloadsQuickAccessAdapter
             fileName.setText(entity.getFileName());
             fileUrl.setText(domain);
 
-            finishedText.setVisibility(View.VISIBLE);
+            // Reset all status views; each branch enables only its own.
+            setVisible(progressText, false);
+            setVisible(progressBar, false);
+            setVisible(finishedText, false);
+            setVisible(errorText, false);
+            setVisible(queuedText, false);
+            setVisible(imageProgress, false);
+
+            switch (entity.getFileStatus()) {
+                case Download.PROGRESS -> bindProgress(entity);
+                case Download.FINISHED -> bindFinished(entity, options);
+                case Download.ERROR -> bindError(entity);
+                case Download.QUEUED -> bindQueued(entity);
+                default -> bindFinished(entity, options);
+            }
+        }
+
+        private void bindProgress(@NonNull DownloadEntity entity) {
+            boolean retrieving = entity.getFileIsLive();
+            setVisible(progressText, true);
+            setVisible(progressBar, true);
+            progressText.setText(retrieving
+                    ? Utils.readableFileSize(entity.getFileSize())
+                    : String.format(Locale.US, "%d%%", entity.getFileProgress()));
+            progressBar.setIndeterminate(retrieving);
+            if (!retrieving) progressBar.setProgress(entity.getFileProgress());
+            GlideHelper.loadFallback(entity, image);
+        }
+
+        private void bindFinished(@NonNull DownloadEntity entity, @NonNull RequestOptions options) {
+            setVisible(finishedText, true);
             finishedText.setText(Utils.getFileSize(entity.getFileSize())
                     + " - " + DateUtils.getFileDate(entity.getFileDate()));
-
             GlideHelper.load(entity, options, image);
+        }
+
+        private void bindError(@NonNull DownloadEntity entity) {
+            setVisible(errorText, true);
+            int errorId = MessageHelper.getResourceIdFromCode(entity.getFileErrorType());
+            errorText.setText(errorId);
+            GlideHelper.loadFallback(entity, image);
+        }
+
+        private void bindQueued(@NonNull DownloadEntity entity) {
+            setVisible(queuedText, true);
+            GlideHelper.loadFallback(entity, image);
         }
 
         @Override
@@ -145,9 +213,8 @@ public class DownloadsQuickAccessAdapter
             }
         }
 
-        private static void hideIfPresent(@NonNull View root, int id) {
-            View v = root.findViewById(id);
-            if (v != null) v.setVisibility(View.GONE);
+        private static void setVisible(@Nullable View view, boolean visible) {
+            if (view != null) view.setVisibility(visible ? View.VISIBLE : View.GONE);
         }
     }
 }
