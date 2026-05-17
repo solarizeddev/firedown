@@ -54,15 +54,19 @@
         tools:visibility="visible">
 
         <!--
-            match_parent + gravity="center" so the tagline + tonal
-            Add button sit in the visual centre of the card's
-            minHeight=240dp slot, rather than hugging the top.
-            Card's own minHeight provides the vertical room.
+            Centred via FrameLayout-style layout_gravity rather than
+            match_parent + gravity — the card is wrap_content with a
+            minHeight, and a match_parent child inside doesn't
+            reliably bind to that minHeight after the visibility
+            flip from the shortcuts card. wrap_content +
+            layout_gravity="center" sits the tagline + button in
+            the card's vertical centre regardless.
         -->
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:gravity="center"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center_horizontal"
             android:orientation="vertical"
             android:paddingHorizontal="24dp"
             android:paddingVertical="20dp">
