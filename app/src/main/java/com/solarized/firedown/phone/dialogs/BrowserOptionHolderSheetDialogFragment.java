@@ -113,6 +113,12 @@ public class BrowserOptionHolderSheetDialogFragment extends BaseBottomSheetDialo
         super.onStart();
         if (mView != null) {
             BottomSheetBehavior<View> mBottomBehavior = BottomSheetBehavior.from((View) mView.getParent());
+            // Belt-and-braces: the base class already calls
+            // applyBottomSheetMaxHeight() which checks isMaxHeightCapped()
+            // and lifts the cap on this sheet — but re-asserting NO_MAX_SIZE
+            // here guarantees the height isn't capped regardless of
+            // ordering issues with the behaviour's internal state.
+            mBottomBehavior.setMaxHeight(-1);
             mBottomBehavior.addBottomSheetCallback(mBottomSheetCallback);
             mBottomBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
             mView.setBackgroundResource(R.drawable.dialog_rectangle);
