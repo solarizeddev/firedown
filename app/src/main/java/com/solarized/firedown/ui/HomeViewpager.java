@@ -52,6 +52,14 @@ public class HomeViewpager extends FrameLayout {
         mEmptyState = findViewById(R.id.empty_state);
         mEmptyStateAddButton = findViewById(R.id.empty_state_add_button);
 
+        // Shortcuts is a fixed, tiny grid — the default item-add /
+        // change animations have nothing useful to do here and just
+        // render as a brief slide-in on every nav back to home (Home
+        // is re-attached, the LiveData re-emits, DiffUtil sees the
+        // adapter as empty → animates every tile in). Kill the
+        // animator outright.
+        mRecyclerView.setItemAnimator(null);
+
         applyWindowInsets();
     }
 

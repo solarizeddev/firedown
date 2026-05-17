@@ -17,6 +17,7 @@ import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
 import com.bumptech.glide.request.RequestOptions;
 import com.google.android.material.card.MaterialCardView;
 import com.solarized.firedown.GlideHelper;
+import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
 import com.solarized.firedown.data.entity.ShortCutsEntity;
 import com.solarized.firedown.ui.OnItemClickListener;
@@ -56,18 +57,27 @@ public class ShortCutsAdapter extends ListAdapter<ShortCutsEntity, ShortCutsAdap
     /**
      * Appends one synthetic 'Add' tile after the real shortcuts so the
      * user can pin a new site from the populated home state without
-     * having to navigate to a page first. The empty state has its own
-     * Add button; the trailing tile only matters once at least one
-     * shortcut already exists.
+     * having to navigate to a page first. Hidden at the cap — a tile
+     * that only opens a "delete one first" dialog is hostile chrome,
+     * the affordance just disappears until the user makes room. The
+     * browser-menu 'Add to shortcuts' path still surfaces the cap
+     * dialog (the user is on a page they want to pin, so the
+     * explanation is useful there).
      */
+    private boolean hasAddTile() {
+        return super.getItemCount() < Preferences.SHORTCUTS_LIST_LIMIT;
+    }
+
     @Override
     public int getItemCount() {
-        return super.getItemCount() + 1;
+        return super.getItemCount() + (hasAddTile() ? 1 : 0);
     }
 
     @Override
     public int getItemViewType(int position) {
-        return position == super.getItemCount() ? VIEW_TYPE_ADD : VIEW_TYPE_SHORTCUT;
+        return (hasAddTile() && position == super.getItemCount())
+                ? VIEW_TYPE_ADD
+                : VIEW_TYPE_SHORTCUT;
     }
 
     @NonNull

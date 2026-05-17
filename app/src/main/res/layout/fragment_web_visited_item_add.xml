@@ -15,7 +15,7 @@
 
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/item_web_visited_add"
-        style="@style/Widget.Material3.CardView.Outlined"
+        style="@style/Widget.Material3.CardView.Filled"
         android:layout_width="60dp"
         android:layout_height="60dp"
         android:layout_gravity="center"
