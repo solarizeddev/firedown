@@ -217,7 +217,9 @@ public class SettingsFragment extends BasePreferenceFragment
             int themeId = mSharedPreferences.getInt(
                     Preferences.SETTINGS_THEME, AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
 
-            if (themeId == AppCompatDelegate.MODE_NIGHT_YES) {
+            if (themeId == Preferences.THEME_OLED) {
+                themePreference.setSummary(R.string.settings_oled_theme);
+            } else if (themeId == AppCompatDelegate.MODE_NIGHT_YES) {
                 themePreference.setSummary(R.string.settings_dark_theme);
             } else if (themeId == AppCompatDelegate.MODE_NIGHT_NO) {
                 themePreference.setSummary(R.string.settings_light_theme);
