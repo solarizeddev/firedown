@@ -404,24 +404,25 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         if (id == R.id.new_tab_button) {
             NavigationUtils.navigateSafe(mNavController, R.id.dialog_new_tabs, R.id.home);
             return true;
-        } else if (id == R.id.downloads_button) {
-            // If we already know there's nothing recent (LiveData has
-            // been warmed by the observer below), skip the sheet and
-            // jump straight to DownloadsActivity so the long-press
-            // still feels responsive on a fresh install. Otherwise
-            // open the bottom sheet; the sheet self-dismisses if the
-            // list goes empty after it's already on screen.
-            java.util.List<DownloadEntity> cached =
-                    mRecentDownloadsViewModel.getRecent().getValue();
-            if (cached == null || cached.isEmpty()) {
-                mStartForResult.launch(new Intent(mActivity, DownloadsActivity.class));
-            } else {
-                new DownloadsQuickAccessSheet().show(getChildFragmentManager(),
-                        DownloadsQuickAccessSheet.TAG);
-            }
-            return true;
         }
         return false;
+    }
+
+    /**
+     * Opens the recent-downloads bottom sheet — used by the home
+     * URL-bar's leading flame button. Falls back to DownloadsActivity
+     * when the LiveData has no cached entries so the tap still feels
+     * responsive on a fresh install.
+     */
+    private void openRecentDownloadsOrFallback() {
+        java.util.List<DownloadEntity> cached =
+                mRecentDownloadsViewModel.getRecent().getValue();
+        if (cached == null || cached.isEmpty()) {
+            mStartForResult.launch(new Intent(mActivity, DownloadsActivity.class));
+        } else {
+            new DownloadsQuickAccessSheet().show(getChildFragmentManager(),
+                    DownloadsQuickAccessSheet.TAG);
+        }
     }
 
     @Override
@@ -535,9 +536,23 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
             mAutoCompleteViewModel.resetEngines();
             mAutoCompleteView.showEmpty();
             mGeckoToolbar.clearText();
-        }else if (id == R.id.security_button) {
-            NavigationUtils.navigateSafe(mNavController, R.id.dialog_search_engine, R.id.home);
+        } else if (id == R.id.security_button) {
+            // On the home surface the leading button is the Firedown
+            // flame — tap opens the recent-downloads sheet, falling
+            // back to DownloadsActivity if the user has nothing to
+            // show. Long-press keeps the previous tap action (the
+            // search-engine picker) discoverable.
+            openRecentDownloadsOrFallback();
         }
+    }
+
+    @Override
+    public boolean onToolbarButtonLongClick(View v, int id) {
+        if (id == R.id.security_button) {
+            NavigationUtils.navigateSafe(mNavController, R.id.dialog_search_engine, R.id.home);
+            return true;
+        }
+        return false;
     }
 
     @Override

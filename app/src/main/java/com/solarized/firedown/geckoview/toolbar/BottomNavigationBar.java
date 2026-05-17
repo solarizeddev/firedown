@@ -102,7 +102,10 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
         searchIcon.setVisibility(enableCradle ? View.GONE : View.VISIBLE);
         searchIcon.setOnClickListener(this);
         newTabButton.setOnLongClickListener(this);
-        downloadButton.setOnLongClickListener(this);
+        // The downloads button no longer long-presses to recent-
+        // downloads; the home URL-bar flame and the browser FAB
+        // long-press both surface that sheet now. Single tap on the
+        // bar button continues to open DownloadsActivity.
 
         mTabsCountButton = v.findViewById(R.id.tab_button);
         mBadge = BadgeDrawable.create(context);

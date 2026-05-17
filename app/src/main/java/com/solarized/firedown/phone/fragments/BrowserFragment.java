@@ -372,6 +372,24 @@ public class BrowserFragment extends BaseBrowserFragment
             bundle.putBoolean(Keys.IS_INCOGNITO, mIsIncognitoThemed);
             NavigationUtils.navigateSafe(mNavController, R.id.dialog_browser_options, R.id.browser, bundle);
         });
+        // The FAB is the Firedown flame; long-press surfaces the
+        // recent-downloads sheet the same way the home leading
+        // address-bar button does on tap. Single-tap stays as the
+        // existing capture-media-on-this-page action. Incognito
+        // browsing skips this — the FAB itself is hidden / vault
+        // themed and we don't want to leak public download names.
+        mDownloadButton.setOnLongClickListener(v1 -> {
+            if (mIsIncognitoThemed) return false;
+            java.util.List<DownloadEntity> cached =
+                    mRecentDownloadsViewModel.getRecent().getValue();
+            if (cached == null || cached.isEmpty()) {
+                mStartForResult.launch(new Intent(mActivity, DownloadsActivity.class));
+            } else {
+                new DownloadsQuickAccessSheet().show(getChildFragmentManager(),
+                        DownloadsQuickAccessSheet.TAG);
+            }
+            return true;
+        });
         return v;
     }
 
@@ -975,20 +993,6 @@ public class BrowserFragment extends BaseBrowserFragment
     public boolean onBottomBarButtonLongClick(View v, int id){
         if (id == R.id.new_tab_button) {
             NavigationUtils.navigateSafe(mNavController, R.id.dialog_new_tabs, R.id.browser);
-            return true;
-        } else if (id == R.id.downloads_button && !mIsIncognitoThemed) {
-            // Skip in incognito-themed mode: the bottom-bar Downloads
-            // glyph is swapped for a vault lock and the quick-access
-            // sheet would leak public download filenames into a
-            // surface that's currently representing private browsing.
-            java.util.List<DownloadEntity> cached =
-                    mRecentDownloadsViewModel.getRecent().getValue();
-            if (cached == null || cached.isEmpty()) {
-                mStartForResult.launch(new Intent(mActivity, DownloadsActivity.class));
-            } else {
-                new DownloadsQuickAccessSheet().show(getChildFragmentManager(),
-                        DownloadsQuickAccessSheet.TAG);
-            }
             return true;
         }
         return false;
