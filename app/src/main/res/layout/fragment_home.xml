@@ -41,6 +41,16 @@
             android:layout_marginTop="4dp" />
 
 
+        <include
+            android:id="@+id/recent_downloads_card"
+            layout="@layout/card_home_recent_downloads"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/list_spacing"
+            android:layout_marginEnd="@dimen/list_spacing"
+            android:layout_marginTop="12dp" />
+
+
         <com.solarized.firedown.ui.HomeViewpager
             android:id="@+id/view_pager_holder"
             android:layout_width="match_parent"

@@ -91,6 +91,8 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     private AutoCompleteView mAutoCompleteView;
     private ShortCutsAdapter mShortCutsAdapter;
     private View mNewTabView;
+    private View mRecentDownloadsCard;
+    private com.solarized.firedown.ui.adapters.DownloadsQuickAccessAdapter mRecentDownloadsAdapter;
     private OnBoardingCard mOnBoardingCard;
     private GeckoToolbar mGeckoToolbar;
     private HomeViewpager mHomeViewPager;
@@ -193,6 +195,26 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mShortCutsAdapter = new ShortCutsAdapter(mActivity, new ShortCutsDiffCallback(), this);
         mHomeViewPager.getRecyclerView().setAdapter(mShortCutsAdapter);
 
+        // Recent-downloads card — same adapter as the quick-access
+        // bottom sheet so both surfaces render rows identically; tap
+        // routes through the existing openItem flow (handled here in
+        // the Host interface impl below).
+        mRecentDownloadsCard = v.findViewById(R.id.recent_downloads_card);
+        androidx.recyclerview.widget.RecyclerView recentRecycler =
+                v.findViewById(R.id.recent_downloads_recycler);
+        recentRecycler.setItemAnimator(null);
+        mRecentDownloadsAdapter =
+                new com.solarized.firedown.ui.adapters.DownloadsQuickAccessAdapter(entity -> {
+                    if (entity.getFileStatus() == Download.ERROR) {
+                        openSourceUrl(entity);
+                    } else {
+                        openItem(entity, null);
+                    }
+                });
+        recentRecycler.setAdapter(mRecentDownloadsAdapter);
+        v.findViewById(R.id.recent_downloads_view_all).setOnClickListener(view ->
+                mStartForResult.launch(new Intent(mActivity, DownloadsActivity.class)));
+
         return v;
     }
 
@@ -249,7 +271,16 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         // an active observer, so without this the popup's
         // getValue() returns null on first long-press and we fall
         // back to DownloadsActivity instead of showing the popup.
-        mRecentDownloadsViewModel.getRecent().observe(getViewLifecycleOwner(), list -> { /* warm only */ });
+        // Drives the home recent-downloads card AND keeps the LiveData
+        // hot for the bottom-bar cradle flame's quick-access sheet —
+        // the sheet reads getValue() synchronously on open, so an
+        // observer needs to exist somewhere or Room's LiveData stays
+        // cold until first observer attach.
+        mRecentDownloadsViewModel.getRecent().observe(getViewLifecycleOwner(), list -> {
+            boolean empty = list == null || list.isEmpty();
+            mRecentDownloadsCard.setVisibility(empty ? View.GONE : View.VISIBLE);
+            mRecentDownloadsAdapter.submitList(list);
+        });
 
         // NOTE: HomeFragment intentionally does NOT observe
         // BrowserURIViewModel.getEvents().  IntentHandler owns all tab
