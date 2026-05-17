@@ -37,6 +37,7 @@ import com.solarized.firedown.data.models.BrowserDialogViewModel;
 import com.solarized.firedown.data.models.BrowserURIViewModel;
 import com.solarized.firedown.data.models.GeckoStateViewModel;
 import com.solarized.firedown.data.models.IncognitoStateViewModel;
+import com.solarized.firedown.data.models.RecentDownloadsViewModel;
 import com.solarized.firedown.data.models.TaskViewModel;
 import com.solarized.firedown.data.models.ShortCutsViewModel;
 import com.solarized.firedown.geckoview.GeckoResources;
@@ -53,6 +54,7 @@ import com.solarized.firedown.autocomplete.AutoCompleteEditText;
 import com.solarized.firedown.autocomplete.AutoCompleteView;
 import com.solarized.firedown.ui.HomeViewpager;
 import com.solarized.firedown.ui.OnBoardingCard;
+import com.solarized.firedown.ui.adapters.HomeRecentDownloadsAdapter;
 import com.solarized.firedown.ui.adapters.ShortCutsAdapter;
 import com.solarized.firedown.ui.diffs.ShortCutsDiffCallback;
 import com.solarized.firedown.geckoview.toolbar.BottomNavigationBar;
@@ -81,9 +83,12 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     private GeckoStateViewModel mGeckoStateViewModel;
     private IncognitoStateViewModel mIncognitoStateViewModel;
     private TaskViewModel mTaskViewModel;
+    private RecentDownloadsViewModel mRecentDownloadsViewModel;
     private AutoCompleteEditText mAutoCompleteEditText;
     private AutoCompleteView mAutoCompleteView;
     private ShortCutsAdapter mShortCutsAdapter;
+    private HomeRecentDownloadsAdapter mRecentDownloadsAdapter;
+    private View mRecentDownloadsCard;
     private View mNewTabView;
     private OnBoardingCard mOnBoardingCard;
     private GeckoToolbar mGeckoToolbar;
@@ -112,6 +117,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mAutoCompleteViewModel = new ViewModelProvider(this).get(AutoCompleteViewModel.class);
         mShortCutsViewModel = new ViewModelProvider(this).get(ShortCutsViewModel.class);
         mTaskViewModel = new ViewModelProvider(this).get(TaskViewModel.class);
+        mRecentDownloadsViewModel = new ViewModelProvider(this).get(RecentDownloadsViewModel.class);
         mGeckoStateViewModel = new ViewModelProvider(mActivity).get(GeckoStateViewModel.class);
         mIncognitoStateViewModel = new ViewModelProvider(mActivity).get(IncognitoStateViewModel.class);
         mBrowserURIViewModel = new ViewModelProvider(mActivity).get(BrowserURIViewModel.class);
@@ -186,6 +192,14 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mShortCutsAdapter = new ShortCutsAdapter(mActivity, new ShortCutsDiffCallback(), this);
         mHomeViewPager.getRecyclerView().setAdapter(mShortCutsAdapter);
 
+        mRecentDownloadsCard = v.findViewById(R.id.recent_downloads_card);
+        RecyclerView recentRecycler = v.findViewById(R.id.recent_downloads_recycler);
+        mRecentDownloadsAdapter = new HomeRecentDownloadsAdapter((entity, holder) ->
+                openItem(entity, holder));
+        recentRecycler.setAdapter(mRecentDownloadsAdapter);
+        v.findViewById(R.id.recent_downloads_view_all).setOnClickListener(view ->
+                mStartForResult.launch(new Intent(mActivity, DownloadsActivity.class)));
+
         return v;
     }
 
@@ -226,6 +240,15 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
 
         mShortCutsViewModel.getShortCuts().observe(getViewLifecycleOwner(), mObservableShortCuts ->
                 mShortCutsAdapter.submitList(mObservableShortCuts));
+
+        // "Recently downloaded" strip — hidden when the user has no
+        // finished regular downloads yet, so a fresh install degrades
+        // to onboarding + shortcuts and nothing else.
+        mRecentDownloadsViewModel.getRecent().observe(getViewLifecycleOwner(), list -> {
+            boolean empty = list == null || list.isEmpty();
+            mRecentDownloadsCard.setVisibility(empty ? View.GONE : View.VISIBLE);
+            mRecentDownloadsAdapter.submitList(list);
+        });
 
         // NOTE: HomeFragment intentionally does NOT observe
         // BrowserURIViewModel.getEvents().  IntentHandler owns all tab

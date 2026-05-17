@@ -194,6 +194,8 @@
     <string name="incognito_bullet_searches">Searches</string>
     <string name="incognito_bullet_temp_files">Temporary files</string>
     <string name="incognito_bullet_visited">Visited pages</string>
+    <string name="home_recently_downloaded">Recently downloaded</string>
+    <string name="home_view_all">View all</string>
     <string name="incognito_home_description">When you browse in a Private Window, Firedown </string>
     <string name="incognito_home_title">Private Browsing</string>
     <string name="incognito_home_warning">Private Browsing </string>
