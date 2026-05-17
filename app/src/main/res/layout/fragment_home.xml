@@ -24,41 +24,48 @@
     </com.google.android.material.appbar.AppBarLayout>
 
 
-    <LinearLayout
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:animateLayoutChanges="true"
-        android:orientation="vertical"
-        app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior"
-        tools:visibility="visible">
+        android:fillViewport="true"
+        app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior">
 
-
-        <com.solarized.firedown.ui.OnBoardingCard
-            android:id="@+id/onboarding"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="top"
-            android:layout_marginTop="4dp" />
+            android:animateLayoutChanges="true"
+            android:orientation="vertical"
+            tools:visibility="visible">
 
 
-        <include
-            android:id="@+id/recent_downloads_card"
-            layout="@layout/card_home_recent_downloads"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="@dimen/list_spacing"
-            android:layout_marginEnd="@dimen/list_spacing"
-            android:layout_marginTop="12dp" />
+            <com.solarized.firedown.ui.OnBoardingCard
+                android:id="@+id/onboarding"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="top"
+                android:layout_marginTop="4dp" />
 
 
-        <com.solarized.firedown.ui.HomeViewpager
-            android:id="@+id/view_pager_holder"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp" />
+            <include
+                android:id="@+id/recent_downloads_card"
+                layout="@layout/card_home_recent_downloads"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/list_spacing"
+                android:layout_marginEnd="@dimen/list_spacing"
+                android:layout_marginTop="12dp" />
 
 
-    </LinearLayout>
+            <com.solarized.firedown.ui.HomeViewpager
+                android:id="@+id/view_pager_holder"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp" />
+
+
+        </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
 
 
     <com.solarized.firedown.autocomplete.AutoCompleteView

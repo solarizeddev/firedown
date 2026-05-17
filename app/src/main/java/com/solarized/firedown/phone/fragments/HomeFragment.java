@@ -12,7 +12,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
-import android.view.inputmethod.InputMethodManager;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
@@ -54,7 +53,6 @@ import com.solarized.firedown.phone.SettingsActivity;
 import com.solarized.firedown.phone.VaultActivity;
 import com.solarized.firedown.autocomplete.AutoCompleteEditText;
 import com.solarized.firedown.autocomplete.AutoCompleteView;
-import com.solarized.firedown.phone.dialogs.DownloadsQuickAccessSheet;
 import com.solarized.firedown.ui.HomeViewpager;
 import com.solarized.firedown.ui.OnBoardingCard;
 import com.solarized.firedown.ui.adapters.ShortCutsAdapter;
@@ -75,8 +73,7 @@ import dagger.hilt.android.AndroidEntryPoint;
 public class HomeFragment extends BaseBrowserFragment implements BottomNavigationBar.OnBottomBarListener,
         AutoCompleteEditText.OnCommitListener, AutoCompleteEditText.OnFilterListener, AutoCompleteEditText.OnFocusChangedListener,
         AutoCompleteEditText.OnTextChangedListener, AutoCompleteEditText.OnSearchStateChangeListener,
-        GeckoToolbar.OnToolbarListener , OnBoardingCard.OnBoardingCardListener, OnItemClickListener,
-        DownloadsQuickAccessSheet.Host {
+        GeckoToolbar.OnToolbarListener , OnBoardingCard.OnBoardingCardListener, OnItemClickListener {
 
 
     private static final String TAG = HomeFragment.class.getName();
@@ -421,14 +418,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         } else if(id == R.id.new_tab_button){
             flashNewTab(mNewTabView);
             addNewTab();
-        } else if(id == R.id.search_button){
-            // The bottom-bar cradle slot on the home surface holds the
-            // Firedown flame (mirrors the BrowserFragment FAB layout
-            // and surfaces the brand on every navigation back to
-            // home). Tap opens the recent-downloads sheet, falling
-            // back to DownloadsActivity if there's nothing to show
-            // yet so the gesture always lands somewhere useful.
-            openRecentDownloads();
         }
     }
 
@@ -441,29 +430,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         return false;
     }
 
-    /**
-     * Opens the recent-downloads bottom sheet from the home centre
-     * flame. Always shows the sheet — even when the LiveData is
-     * empty the sheet renders an explanatory empty state, so the
-     * flame tap stays distinguishable from the bar Downloads tap
-     * (which goes straight to DownloadsActivity).
-     */
-    private void openRecentDownloads() {
-        new DownloadsQuickAccessSheet().show(getChildFragmentManager(),
-                DownloadsQuickAccessSheet.TAG);
-    }
-
-    @Override
-    public void onQuickAccessFileTap(@NonNull DownloadEntity entity) {
-        // Match DownloadFragment's row tap: errored downloads jump to
-        // the source URL, everything else hits openItem (which is a
-        // no-op for not-yet-completed files but at least consistent).
-        if (entity.getFileStatus() == Download.ERROR) {
-            openSourceUrl(entity);
-        } else {
-            openItem(entity, null);
-        }
-    }
 
 
     @Override

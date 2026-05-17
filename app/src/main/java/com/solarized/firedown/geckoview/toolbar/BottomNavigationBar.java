@@ -98,14 +98,20 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
         View downloadButton = v.findViewById(R.id.downloads_button);
         View searchIcon = v.findViewById(R.id.search_button);
         View spacer = v.findViewById(R.id.spacer);
-        spacer.setVisibility(enableCradle ? View.VISIBLE : View.GONE);
-        searchIcon.setVisibility(enableCradle ? View.GONE : View.VISIBLE);
-        searchIcon.setOnClickListener(this);
+        // Cradle slot is always a spacer now — on browser it makes
+        // room for the anchored FAB, on home it stays an empty
+        // visual gap so the four remaining icons keep their
+        // x-positions consistent across both surfaces. The old
+        // 'flame in cradle on home' opened the same recent-downloads
+        // sheet the home card already shows, which was a meaningless
+        // duplicate once that card landed.
+        spacer.setVisibility(View.VISIBLE);
+        searchIcon.setVisibility(View.GONE);
         newTabButton.setOnLongClickListener(this);
         // The downloads button no longer long-presses to recent-
-        // downloads; the home URL-bar flame and the browser FAB
-        // long-press both surface that sheet now. Single tap on the
-        // bar button continues to open DownloadsActivity.
+        // downloads; the home recent-downloads card and the browser
+        // FAB long-press both surface that sheet now. Single tap on
+        // the bar Downloads button continues to open DownloadsActivity.
 
         mTabsCountButton = v.findViewById(R.id.tab_button);
         mBadge = BadgeDrawable.create(context);

@@ -136,14 +136,31 @@ public class BaseBottomSheetDialogFragment extends BottomSheetDialogFragment {
      *
      * <p>Same sentinel as the width path: 0 means "no cap" (used in
      * landscape, where the viewport is already height-constrained and
-     * any further cap would feel cramped).</p>
+     * any further cap would feel cramped). Individual sheets can opt
+     * out of the cap entirely by overriding {@link #isMaxHeightCapped()}
+     * — used by browser-options which is anchored to the bottom of the
+     * toolbar and intentionally fills the viewport.</p>
      */
     private void applyBottomSheetMaxHeight() {
         if (mView == null || mView.getParent() == null) return;
         BottomSheetBehavior<View> behavior = BottomSheetBehavior.from((View) mView.getParent());
-        int maxHeightPx = getResources().getDimensionPixelSize(R.dimen.bottom_sheet_max_height);
+        int maxHeightPx = isMaxHeightCapped()
+                ? getResources().getDimensionPixelSize(R.dimen.bottom_sheet_max_height)
+                : 0;
         behavior.setMaxHeight(maxHeightPx > 0 ? maxHeightPx : -1);
         ((View) mView.getParent()).requestLayout();
+    }
+
+    /**
+     * Override and return {@code false} to skip the portrait
+     * {@code bottom_sheet_max_height} cap — i.e. let the sheet
+     * expand to its natural fill-the-viewport size. Default is
+     * {@code true} (apply the cap) which is right for almost every
+     * sheet in the app; only sheets that are *expected* to occupy
+     * the whole non-toolbar area should override.
+     */
+    protected boolean isMaxHeightCapped() {
+        return true;
     }
 
     @Override

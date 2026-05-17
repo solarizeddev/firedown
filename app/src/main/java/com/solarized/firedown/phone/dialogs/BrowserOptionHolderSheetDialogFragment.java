@@ -119,6 +119,18 @@ public class BrowserOptionHolderSheetDialogFragment extends BaseBottomSheetDialo
         }
     }
 
+    /**
+     * Browser-options is anchored to the bottom of the address-bar
+     * toolbar and intentionally fills the rest of the viewport so
+     * the chips, filter, and media grid all have room — applying
+     * the portrait {@code bottom_sheet_max_height} cap clipped it
+     * to 640dp and left a large gap above the chrome.
+     */
+    @Override
+    protected boolean isMaxHeightCapped() {
+        return false;
+    }
+
 
     @Override
     public void onDestroyView() {
