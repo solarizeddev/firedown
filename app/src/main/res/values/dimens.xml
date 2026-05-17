@@ -54,6 +54,15 @@
          and values-sw600dp to keep the sheet anchored to the bottom-centre on
          landscape phones / tablets instead of stretching across a wide screen. -->
     <dimen name="bottom_sheet_max_width">0dp</dimen>
+    <!-- Portrait: cap the bottom sheet so long-content sheets (e.g. file-info
+         with a multi-paragraph description) don't grow to fill the whole
+         viewport — at that size the drag handle scrolls off-screen and the
+         sheet stops reading as a sheet. The internal RecyclerView scrolls
+         past this cap. values-land overrides to 0 (no cap), since landscape
+         is already height-constrained and capping further would be cramped.
+         BaseBottomSheetDialogFragment treats 0 as "no cap" via the same
+         sentinel as bottom_sheet_max_width. -->
+    <dimen name="bottom_sheet_max_height">640dp</dimen>
     <dimen name="onboarding_item_height">60dp</dimen>
     <dimen name="snack_bar_anchor_margin">2dp</dimen>
     <dimen name="phone_icon_height">28dp</dimen>

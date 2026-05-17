@@ -81,6 +81,7 @@ public class BaseBottomSheetDialogFragment extends BottomSheetDialogFragment {
     public void onStart() {
         super.onStart();
         applyBottomSheetWidth();
+        applyBottomSheetMaxHeight();
         if (mView == null) return;
         BottomSheetBehavior<View> behavior = BottomSheetBehavior.from((View) mView.getParent());
 
@@ -104,6 +105,7 @@ public class BaseBottomSheetDialogFragment extends BottomSheetDialogFragment {
         // until they dismiss and reopen. Re-resolve the dimen against the new
         // configuration's resources and re-apply.
         applyBottomSheetWidth();
+        applyBottomSheetMaxHeight();
     }
 
 
@@ -122,6 +124,25 @@ public class BaseBottomSheetDialogFragment extends BottomSheetDialogFragment {
         // setMaxWidth doesn't trigger a relayout itself in current Material
         // versions; nudge the parent to remeasure so the new cap takes
         // effect immediately rather than on the next layout pass.
+        ((View) mView.getParent()).requestLayout();
+    }
+
+    /**
+     * Mirror of {@link #applyBottomSheetWidth()} for height. Stops sheets
+     * with very long content (e.g. file-info descriptions, blocked-trackers
+     * lists) from growing to fill the entire viewport, which would push the
+     * drag handle off-screen and make the sheet stop reading as a sheet —
+     * past the cap, the sheet's own scrollable content scrolls.
+     *
+     * <p>Same sentinel as the width path: 0 means "no cap" (used in
+     * landscape, where the viewport is already height-constrained and
+     * any further cap would feel cramped).</p>
+     */
+    private void applyBottomSheetMaxHeight() {
+        if (mView == null || mView.getParent() == null) return;
+        BottomSheetBehavior<View> behavior = BottomSheetBehavior.from((View) mView.getParent());
+        int maxHeightPx = getResources().getDimensionPixelSize(R.dimen.bottom_sheet_max_height);
+        behavior.setMaxHeight(maxHeightPx > 0 ? maxHeightPx : -1);
         ((View) mView.getParent()).requestLayout();
     }
 

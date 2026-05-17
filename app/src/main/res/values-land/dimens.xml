@@ -5,4 +5,7 @@
          stretching across the whole screen. Tablets (sw600dp) override
          this with a wider value. -->
     <dimen name="bottom_sheet_max_width">480dp</dimen>
+    <!-- Landscape height is already small enough that capping further
+         leaves a tiny sheet; portrait sets a real cap, here we opt out. -->
+    <dimen name="bottom_sheet_max_height">0dp</dimen>
 </resources>
