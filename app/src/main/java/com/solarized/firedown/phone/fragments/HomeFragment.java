@@ -391,11 +391,12 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
             flashNewTab(mNewTabView);
             addNewTab();
         } else if(id == R.id.search_button){
-            mAutoCompleteViewModel.resetEngines();
-            mAutoCompleteView.showEmpty();
-            mAutoCompleteEditText.requestFocus();
-            InputMethodManager imm = (InputMethodManager) mActivity.getSystemService(Context.INPUT_METHOD_SERVICE);
-            imm.showSoftInput(mAutoCompleteEditText, InputMethodManager.SHOW_FORCED);
+            // Previously focused the URL bar + raised the keyboard,
+            // which is redundant with just tapping the URL bar.
+            // Now hosts the search-engine picker that used to live on
+            // the home URL bar's leading icon (that slot became the
+            // Firedown flame for the recent-downloads quick access).
+            NavigationUtils.navigateSafe(mNavController, R.id.dialog_search_engine, R.id.home);
         }
     }
 
@@ -538,21 +539,12 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
             mGeckoToolbar.clearText();
         } else if (id == R.id.security_button) {
             // On the home surface the leading button is the Firedown
-            // flame — tap opens the recent-downloads sheet, falling
-            // back to DownloadsActivity if the user has nothing to
-            // show. Long-press keeps the previous tap action (the
-            // search-engine picker) discoverable.
+            // flame — opens the recent-downloads sheet (falling back
+            // to DownloadsActivity if there's nothing to show yet).
+            // The search-engine picker that used to live here moved
+            // to the bottom bar's search button.
             openRecentDownloadsOrFallback();
         }
-    }
-
-    @Override
-    public boolean onToolbarButtonLongClick(View v, int id) {
-        if (id == R.id.security_button) {
-            NavigationUtils.navigateSafe(mNavController, R.id.dialog_search_engine, R.id.home);
-            return true;
-        }
-        return false;
     }
 
     @Override

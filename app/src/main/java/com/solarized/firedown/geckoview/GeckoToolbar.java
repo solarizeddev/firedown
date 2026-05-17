@@ -84,12 +84,6 @@ public class GeckoToolbar extends FrameLayout implements View.OnClickListener, V
     public interface OnToolbarListener {
         void onToolbarButtonClick(View v, int id);
         void onToolbarKey(int keyCode, KeyEvent event);
-        /** Defaults to ignored — implement to handle long-press on a
-         *  toolbar button (currently only the leading address-bar
-         *  button on the home surface routes through here, where tap
-         *  now opens the recent-downloads sheet and long-press takes
-         *  over the previous tap action). */
-        default boolean onToolbarButtonLongClick(View v, int id) { return false; }
     }
 
 
@@ -112,16 +106,6 @@ public class GeckoToolbar extends FrameLayout implements View.OnClickListener, V
     public void onClick(View v) {
         if (mOnToolbarListener != null) mOnToolbarListener.onToolbarButtonClick(v, v.getId());
     }
-
-    /**
-     * Attached to the leading address-bar button (only used in home
-     * mode currently). Routes the long-press through the listener so
-     * HomeFragment can keep the search-engine-picker action alive
-     * after the tap action was repurposed to open recent downloads.
-     */
-    private final OnLongClickListener mAddressBarButtonLongClick = v ->
-            mOnToolbarListener != null
-                    && mOnToolbarListener.onToolbarButtonLongClick(v, v.getId());
 
     @Override
     public boolean onKey(View v, int keyCode, KeyEvent event) {
@@ -188,10 +172,9 @@ public class GeckoToolbar extends FrameLayout implements View.OnClickListener, V
             // Leading address-bar button on the home surface doubles as
             // the Firedown brand mark + a recent-downloads quick-access
             // tap target. The previous tap action (search-engine picker)
-            // is routed through long-press now, owned by HomeFragment.
+            // moved to the bottom-bar search button.
             mAddressBarButton.setIconTintResource(R.color.md_theme_primary);
             mAddressBarButton.setIconResource(R.drawable.ic_firedown);
-            mAddressBarButton.setOnLongClickListener(mAddressBarButtonLongClick);
             mGeckoProgressBar.setVisibility(View.GONE);
             mReloadButton.setVisibility(View.GONE);
         }

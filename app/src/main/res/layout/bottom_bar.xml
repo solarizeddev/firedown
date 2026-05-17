@@ -43,10 +43,11 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/settings_search_engine"
             android:padding="6dp"
             android:scaleType="centerInside"
             android:tint="?attr/colorOnSurface"
-            android:src="@drawable/ic_search_24" />
+            android:src="@drawable/manage_search_24" />
 
     </FrameLayout>
 
