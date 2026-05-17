@@ -169,12 +169,8 @@ public class GeckoToolbar extends FrameLayout implements View.OnClickListener, V
         startAnimation(false);
 
         if (mHomeEnabled) {
-            // Leading address-bar button on the home surface doubles as
-            // the Firedown brand mark + a recent-downloads quick-access
-            // tap target. The previous tap action (search-engine picker)
-            // moved to the bottom-bar search button.
-            mAddressBarButton.setIconTintResource(R.color.md_theme_primary);
-            mAddressBarButton.setIconResource(R.drawable.ic_firedown);
+            mAddressBarButton.setIconTintResource(R.color.md_theme_onSurface);
+            mAddressBarButton.setIconResource(R.drawable.manage_search_24);
             mGeckoProgressBar.setVisibility(View.GONE);
             mReloadButton.setVisibility(View.GONE);
         }

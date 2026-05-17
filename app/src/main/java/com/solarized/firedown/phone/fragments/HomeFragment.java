@@ -391,12 +391,13 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
             flashNewTab(mNewTabView);
             addNewTab();
         } else if(id == R.id.search_button){
-            // Previously focused the URL bar + raised the keyboard,
-            // which is redundant with just tapping the URL bar.
-            // Now hosts the search-engine picker that used to live on
-            // the home URL bar's leading icon (that slot became the
-            // Firedown flame for the recent-downloads quick access).
-            NavigationUtils.navigateSafe(mNavController, R.id.dialog_search_engine, R.id.home);
+            // The bottom-bar cradle slot on the home surface holds the
+            // Firedown flame (mirrors the BrowserFragment FAB layout
+            // and surfaces the brand on every navigation back to
+            // home). Tap opens the recent-downloads sheet, falling
+            // back to DownloadsActivity if there's nothing to show
+            // yet so the gesture always lands somewhere useful.
+            openRecentDownloadsOrFallback();
         }
     }
 
@@ -538,12 +539,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
             mAutoCompleteView.showEmpty();
             mGeckoToolbar.clearText();
         } else if (id == R.id.security_button) {
-            // On the home surface the leading button is the Firedown
-            // flame — opens the recent-downloads sheet (falling back
-            // to DownloadsActivity if there's nothing to show yet).
-            // The search-engine picker that used to live here moved
-            // to the bottom bar's search button.
-            openRecentDownloadsOrFallback();
+            NavigationUtils.navigateSafe(mNavController, R.id.dialog_search_engine, R.id.home);
         }
     }
 
