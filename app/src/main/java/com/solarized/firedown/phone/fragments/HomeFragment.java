@@ -231,8 +231,36 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
 
         });
 
-        mShortCutsViewModel.getShortCuts().observe(getViewLifecycleOwner(), mObservableShortCuts ->
-                mShortCutsAdapter.submitList(mObservableShortCuts));
+        mShortCutsViewModel.getShortCuts().observe(getViewLifecycleOwner(), mObservableShortCuts -> {
+            boolean empty = mObservableShortCuts == null || mObservableShortCuts.isEmpty();
+            // Fresh installs no longer ship with seeded shortcuts, so a brand-
+            // new user lands on the empty state until they pin something
+            // themselves (either via this CTA or the in-browser
+            // 'Add to shortcuts' menu).
+            mHomeViewPager.showEmptyState(empty);
+            mShortCutsAdapter.submitList(mObservableShortCuts);
+        });
+
+        mHomeViewPager.setOnEmptyStateAddClick(v -> {
+            if (mShortCutsViewModel.isFull()) {
+                // Shouldn't normally happen from the empty state (the
+                // CTA is only visible when the list is empty), but the
+                // grid could be repopulated from elsewhere between
+                // observer events — defensive guard so the cap dialog
+                // path still applies.
+                Bundle args = new Bundle();
+                args.putBoolean(Keys.OPEN_INCOGNITO, false);
+                NavigationUtils.navigateSafe(mNavController, R.id.dialog_shortcuts_max, R.id.home, args);
+            } else {
+                // Hand a blank entity to the edit dialog — the dialog
+                // detects id == 0 as 'add mode' and routes Save to
+                // ShortCutsViewModel.add(entity) instead of update().
+                Bundle args = new Bundle();
+                args.putParcelable(Keys.ITEM_ID,
+                        new com.solarized.firedown.data.entity.ShortCutsEntity());
+                NavigationUtils.navigateSafe(mNavController, R.id.dialog_shortcuts_edit, R.id.home, args);
+            }
+        });
 
         // Keep the recent-downloads LiveData hot so the long-press
         // quick-access popup has a value to read synchronously on

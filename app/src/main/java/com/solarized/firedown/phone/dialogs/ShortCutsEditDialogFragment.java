@@ -3,6 +3,7 @@ package com.solarized.firedown.phone.dialogs;
 import android.app.Dialog;
 import android.os.Bundle;
 import android.text.Editable;
+import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -24,30 +25,38 @@ import com.solarized.firedown.data.models.ShortCutsViewModel;
 import com.solarized.firedown.utils.NavigationUtils;
 import com.solarized.firedown.utils.WebUtils;
 
+/**
+ * Dual-purpose: edits an existing pinned shortcut (entity passed in
+ * via bundle) and, when the bundled entity has {@code id == 0} or no
+ * entity is passed at all, creates a brand-new shortcut from a blank
+ * name + URL form. The 'add' path is reached from the home empty
+ * state's 'Add a shortcut' CTA; the 'edit' path from the long-press
+ * options sheet on an existing tile.
+ */
 public class ShortCutsEditDialogFragment extends BaseDialogFragment {
 
     private static final String URL_REGEX = "^(https?)://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]$";
 
     private ShortCutsViewModel mShortCutsViewModel;
 
-    private ShortCutsEntity mShortCutsEntity;
+    @Nullable private ShortCutsEntity mShortCutsEntity;
+    private boolean mAddMode;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        Bundle bundle = getArguments();
-
-        if(bundle == null){
-            throw new IllegalStateException("Bundle can not be Null " + getClass().getSimpleName());
-        }
-
         mShortCutsViewModel = new ViewModelProvider(this).get(ShortCutsViewModel.class);
 
-        mShortCutsEntity = bundle.getParcelable(Keys.ITEM_ID);
+        Bundle bundle = getArguments();
+        if (bundle != null) {
+            mShortCutsEntity = bundle.getParcelable(Keys.ITEM_ID);
+        }
 
-        assert mShortCutsEntity != null;
-
+        // Add mode = no entity in the bundle, or one with an unset id
+        // (default constructor leaves it at 0). Edit mode = real
+        // persisted entity with a non-zero id.
+        mAddMode = mShortCutsEntity == null || mShortCutsEntity.getId() == 0;
     }
 
     @NonNull
@@ -56,10 +65,10 @@ public class ShortCutsEditDialogFragment extends BaseDialogFragment {
 
         int themeResId = mIsIncognito
                 ? R.style.Theme_FireDown_VaultDialogTheme
-                : getTheme(); // or just use the default
+                : getTheme();
 
-        String name = mShortCutsEntity.getTitle();
-        String url = mShortCutsEntity.getUrl();
+        String name = mAddMode ? "" : (mShortCutsEntity != null ? mShortCutsEntity.getTitle() : "");
+        String url  = mAddMode ? "" : (mShortCutsEntity != null ? mShortCutsEntity.getUrl()   : "");
 
         View view = LayoutInflater.from(mActivity).inflate(R.layout.fragment_dialog_shortcuts_edit, null);
 
@@ -70,8 +79,12 @@ public class ShortCutsEditDialogFragment extends BaseDialogFragment {
         nameInput.setText(name);
         urlInput.setText(url);
 
+        int titleRes = mAddMode
+                ? R.string.top_sites_add_dialog_title
+                : R.string.top_sites_edit_dialog_title;
+
         AlertDialog alertDialog = new MaterialAlertDialogBuilder(requireContext(), themeResId)
-                .setTitle(R.string.top_sites_edit_dialog_title)
+                .setTitle(titleRes)
                 .setView(view)
                 .setPositiveButton(R.string.top_sites_edit_dialog_save, (d, which) -> {
                     saveData(nameInput.getText(), urlInput.getText());
@@ -83,27 +96,36 @@ public class ShortCutsEditDialogFragment extends BaseDialogFragment {
             Button saveButton = alertDialog.getButton(AlertDialog.BUTTON_POSITIVE);
 
             // Initial check in case the starting URL is invalid
-            saveButton.setEnabled(validateUrl(urlInput.getText(), urlLayout));
+            saveButton.setEnabled(isFormValid(nameInput.getText(), urlInput.getText(), urlLayout));
 
-            urlInput.addTextChangedListener(new TextWatcher() {
+            TextWatcher watcher = new TextWatcher() {
                 @Override
                 public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
 
                 @Override
                 public void onTextChanged(CharSequence s, int start, int before, int count) {
-                    boolean isValid = validateUrl(urlInput.getText(), urlLayout);
-                    saveButton.setEnabled(isValid);
+                    saveButton.setEnabled(isFormValid(nameInput.getText(), urlInput.getText(), urlLayout));
                 }
 
                 @Override
                 public void afterTextChanged(Editable s) {}
-            });
+            };
+
+            urlInput.addTextChangedListener(watcher);
+            nameInput.addTextChangedListener(watcher);
         });
 
 
         return alertDialog;
     }
 
+
+    private boolean isFormValid(@Nullable CharSequence nameInput,
+                                @Nullable CharSequence urlInput,
+                                TextInputLayout urlLayout) {
+        boolean nameOk = nameInput != null && !TextUtils.isEmpty(nameInput.toString().trim());
+        return nameOk && validateUrl(urlInput, urlLayout);
+    }
 
     /**
      * Validates the URL and updates the UI error state.
@@ -135,17 +157,24 @@ public class ShortCutsEditDialogFragment extends BaseDialogFragment {
         if (updatedUrl.isEmpty() || updatedName.isEmpty())
             return;
 
-        ShortCutsEntity updatedShortcut = new ShortCutsEntity(mShortCutsEntity);
+        if (mAddMode) {
+            ShortCutsEntity entity = new ShortCutsEntity();
+            entity.setFileUrl(updatedUrl);
+            entity.setFileTitle(updatedName);
+            entity.setFileDomain(WebUtils.getDomainName(updatedUrl));
+            entity.setFileDate(System.currentTimeMillis());
+            entity.setId(updatedUrl.hashCode());
+            mShortCutsViewModel.add(entity);
+        } else {
+            ShortCutsEntity updatedShortcut = new ShortCutsEntity(mShortCutsEntity);
+            updatedShortcut.setFileUrl(updatedUrl);
+            updatedShortcut.setFileTitle(updatedName);
+            updatedShortcut.setFileDomain(WebUtils.getDomainName(updatedUrl));
+            updatedShortcut.setFileIconResolution(0);
+            updatedShortcut.setFileIcon(null);
+            mShortCutsViewModel.update(updatedShortcut);
+        }
 
-        updatedShortcut.setFileUrl(updatedUrl);
-        updatedShortcut.setFileTitle(updatedName);
-        updatedShortcut.setFileDomain(WebUtils.getDomainName(updatedUrl));
-        updatedShortcut.setFileIconResolution(0);
-        updatedShortcut.setFileIcon(null);
-        updatedShortcut.setFileIconResolution(0);
-
-
-        mShortCutsViewModel.update(updatedShortcut);
         NavigationUtils.popBackStackSafe(mNavController, R.id.dialog_shortcuts_edit);
     }
 

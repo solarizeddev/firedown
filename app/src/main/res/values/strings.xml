@@ -196,6 +196,8 @@
     <string name="incognito_bullet_cookies">Cookies</string>
     <string name="incognito_bullet_searches">Searches</string>
     <string name="incognito_bullet_temp_files">Temporary files</string>
+    <string name="home_empty_shortcuts_tagline">Search above to start, or pin sites you visit often</string>
+    <string name="home_empty_shortcuts_add">Add a shortcut</string>
     <string name="incognito_bullet_visited">Visited pages</string>
     <string name="incognito_home_description">When you browse in a Private Window, Firedown </string>
     <string name="incognito_home_title">Private Browsing</string>
@@ -474,6 +476,7 @@
     <string name="task_gif_failed">Could not create GIF</string>
     <string name="task_gif_finished">GIF created</string>
     <string name="task_stop">Stop</string>
+    <string name="top_sites_add_dialog_title">Add shortcut</string>
     <string name="top_sites_edit_dialog_save">Save</string>
     <string name="top_sites_edit_dialog_title">Edit shortcut</string>
     <string name="top_sites_edit_dialog_url_title">URL</string>

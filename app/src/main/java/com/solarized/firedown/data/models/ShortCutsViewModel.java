@@ -43,6 +43,16 @@ public class ShortCutsViewModel extends ViewModel {
         mRepository.add(geckoState);
     }
 
+    /**
+     * Manual add from the home empty-state CTA, where the user types
+     * a name + URL rather than pinning the currently-loaded page.
+     * Limit enforcement is the caller's responsibility — check
+     * {@link #isFull()} first.
+     */
+    public void add(ShortCutsEntity entity) {
+        mRepository.add(entity);
+    }
+
     public boolean contains(GeckoState geckoState) {
         return mRepository.contains(geckoState);
     }

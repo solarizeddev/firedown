@@ -1,23 +1,78 @@
-<com.google.android.material.card.MaterialCardView
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Home shortcuts surface. Two states share this container — the empty
+  state (Firedown glyph + tagline + 'Add a shortcut' CTA) is shown on
+  fresh installs and any time the user has zero pinned shortcuts; the
+  shortcuts card with the RecyclerView is shown once at least one
+  shortcut exists. HomeFragment toggles visibility in response to
+  ShortCutsViewModel.getShortCuts().
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/recycler_view_holder"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:layout_marginStart="@dimen/list_spacing"
-    android:layout_marginEnd="@dimen/list_spacing"
-    style="@style/Widget.Material3.CardView.Filled"
-    app:cardBackgroundColor="@color/md_theme_surfaceContainerLow_highContrast"
-    android:gravity="center">
+    android:layout_height="wrap_content">
 
-
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recycler_view"
-        android:layout_width="wrap_content"
+    <!-- Populated state: existing grid card -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/recycler_view_holder"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:paddingTop="12dp"
-        app:layoutManager="com.solarized.firedown.ui.NoScrollGridLayoutManager"
-        app:spanCount="@integer/shortcuts_span" />
+        android:layout_marginStart="@dimen/list_spacing"
+        android:layout_marginEnd="@dimen/list_spacing"
+        android:gravity="center"
+        style="@style/Widget.Material3.CardView.Filled"
+        app:cardBackgroundColor="@color/md_theme_surfaceContainerLow_highContrast">
 
-</com.google.android.material.card.MaterialCardView>
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recycler_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:paddingTop="12dp"
+            app:layoutManager="com.solarized.firedown.ui.NoScrollGridLayoutManager"
+            app:spanCount="@integer/shortcuts_span" />
+
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- Empty state: brand glyph + tagline + Add CTA -->
+    <LinearLayout
+        android:id="@+id/empty_state"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:paddingHorizontal="24dp"
+        android:paddingTop="24dp"
+        android:paddingBottom="16dp"
+        tools:visibility="visible">
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:contentDescription="@null"
+            android:src="@drawable/ic_firedown"
+            app:tint="?attr/colorPrimary" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:gravity="center"
+            android:text="@string/home_empty_shortcuts_tagline"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:textAppearance="?attr/textAppearanceBodyMedium" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/empty_state_add_button"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="@string/home_empty_shortcuts_add"
+            app:icon="@drawable/add_24"
+            app:iconGravity="textStart" />
+
+    </LinearLayout>
+
+</FrameLayout>
