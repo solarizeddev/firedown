@@ -17,6 +17,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.request.RequestOptions;
 import com.google.android.material.card.MaterialCardView;
+import com.google.android.material.color.MaterialColors;
 import com.solarized.firedown.GlideHelper;
 import com.solarized.firedown.R;
 import com.solarized.firedown.data.Download;
@@ -176,6 +177,16 @@ public class DownloadsQuickAccessAdapter
             // row looks 'highlighted'.
             this.item.setStrokeColor(
                     ContextCompat.getColor(itemView.getContext(), R.color.transparent));
+
+            // Sheet-specific: fragment_download_item.xml leaves
+            // cardBackgroundColor unset (it inherits colorSurface in
+            // DownloadFragment, which is fine on that surface). Inside
+            // the bottom sheet the same default reads as a flat plate
+            // with no contrast against the sheet body, so lift the
+            // card onto colorSurfaceContainerHighest so the row
+            // visibly groups its content.
+            this.item.setCardBackgroundColor(MaterialColors.getColor(
+                    this.item, com.google.android.material.R.attr.colorSurfaceContainerHighest));
 
             // Selection check and action menu never apply on this surface.
             View selected = itemView.findViewById(R.id.item_download_selected);
