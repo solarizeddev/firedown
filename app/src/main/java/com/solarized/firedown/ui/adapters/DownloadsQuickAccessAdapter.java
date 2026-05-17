@@ -50,6 +50,13 @@ public class DownloadsQuickAccessAdapter
         void onRowClick(DownloadEntity entity);
     }
 
+    /** Sent through DiffUtil's payload channel when the only change
+     *  is the progress bar tick of a still-PROGRESS row. Lets the
+     *  binder update just the progress text + bar instead of
+     *  rebinding the whole row (which would tear down + reload the
+     *  thumbnail through Glide and visibly flicker). */
+    private static final Object PAYLOAD_PROGRESS = new Object();
+
     private static final DiffUtil.ItemCallback<DownloadEntity> DIFF =
             new DiffUtil.ItemCallback<>() {
                 @Override
@@ -63,9 +70,29 @@ public class DownloadsQuickAccessAdapter
                             && a.getFileStatus() == b.getFileStatus()
                             && a.getFileSize() == b.getFileSize()
                             && a.getFileProgress() == b.getFileProgress()
+                            && a.getFileIsLive() == b.getFileIsLive()
                             && a.getFileErrorType() == b.getFileErrorType()
                             && safeEq(a.getFileName(), b.getFileName())
                             && safeEq(a.getFilePath(), b.getFilePath());
+                }
+
+                @Nullable
+                @Override
+                public Object getChangePayload(@NonNull DownloadEntity a, @NonNull DownloadEntity b) {
+                    // Tick-only updates: status is still PROGRESS, every
+                    // identifying / display field is unchanged, only the
+                    // progress counter (and possibly the live flag) moved.
+                    if (a.getFileStatus() == b.getFileStatus()
+                            && a.getFileStatus() == Download.PROGRESS
+                            && a.getFileSize() == b.getFileSize()
+                            && a.getFileErrorType() == b.getFileErrorType()
+                            && safeEq(a.getFileName(), b.getFileName())
+                            && safeEq(a.getFilePath(), b.getFilePath())
+                            && (a.getFileProgress() != b.getFileProgress()
+                                    || a.getFileIsLive() != b.getFileIsLive())) {
+                        return PAYLOAD_PROGRESS;
+                    }
+                    return null;
                 }
 
                 private boolean safeEq(@Nullable String a, @Nullable String b) {
@@ -92,6 +119,19 @@ public class DownloadsQuickAccessAdapter
     @Override
     public void onBindViewHolder(@NonNull RowViewHolder holder, int position) {
         holder.bind(getItem(position), mRequestOptions);
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull RowViewHolder holder, int position,
+                                 @NonNull java.util.List<Object> payloads) {
+        if (!payloads.isEmpty() && payloads.contains(PAYLOAD_PROGRESS)) {
+            // Tick-only update: do NOT call full bind() — that would
+            // re-issue the Glide load on the thumbnail and the row
+            // visibly flickers on each progress emission.
+            holder.updateProgressOnly(getItem(position));
+            return;
+        }
+        super.onBindViewHolder(holder, position, payloads);
     }
 
     static class RowViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
@@ -189,9 +229,25 @@ public class DownloadsQuickAccessAdapter
 
         private void bindFinished(@NonNull DownloadEntity entity, @NonNull RequestOptions options) {
             setVisible(finishedText, true);
-            finishedText.setText(Utils.getFileSize(entity.getFileSize())
-                    + " - " + DateUtils.getFileDate(entity.getFileDate()));
+            finishedText.setText(itemView.getContext().getString(
+                    R.string.download_finished_meta,
+                    Utils.getFileSize(entity.getFileSize()),
+                    DateUtils.getFileDate(entity.getFileDate())));
             GlideHelper.load(entity, options, image);
+        }
+
+        /** Tick-only update path called from the payload binder.
+         *  Touches only the progress bar + label — leaves the image,
+         *  filename, mime badge, domain row alone so Glide doesn't
+         *  reload the thumbnail on every progress emission. */
+        void updateProgressOnly(@NonNull DownloadEntity entity) {
+            if (entity.getFileStatus() != Download.PROGRESS) return;
+            boolean retrieving = entity.getFileIsLive();
+            progressText.setText(retrieving
+                    ? Utils.readableFileSize(entity.getFileSize())
+                    : String.format(Locale.US, "%d%%", entity.getFileProgress()));
+            progressBar.setIndeterminate(retrieving);
+            if (!retrieving) progressBar.setProgress(entity.getFileProgress());
         }
 
         private void bindError(@NonNull DownloadEntity entity) {

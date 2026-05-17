@@ -443,7 +443,10 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
                 && holder.cachedFinishedKeyDate == date) {
             return holder.cachedFinishedLabel;
         }
-        String label = Utils.getFileSize(size) + " - " + DateUtils.getFileDate(date);
+        String label = holder.itemView.getContext().getString(
+                R.string.download_finished_meta,
+                Utils.getFileSize(size),
+                DateUtils.getFileDate(date));
         holder.cachedFinishedKeyId = id;
         holder.cachedFinishedKeySize = size;
         holder.cachedFinishedKeyDate = date;
