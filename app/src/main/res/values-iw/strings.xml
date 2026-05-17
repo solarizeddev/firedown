@@ -300,4 +300,8 @@
     <string name="play">השמעה</string>
     <string name="pip_play">השמעה</string>
     <string name="pip_pause">השהיה</string>
+    <string name="home_empty_shortcuts_tagline">חפש למעלה כדי להתחיל, או הצמד אתרים שבהם אתה מבקר לעתים קרובות</string>
+    <string name="home_empty_shortcuts_add">הוסף קיצור דרך</string>
+    <string name="home_shortcuts_add_tile">הוסף</string>
+    <string name="top_sites_add_dialog_title">הוסף קיצור דרך</string>
 </resources>

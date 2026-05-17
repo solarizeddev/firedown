@@ -99,4 +99,8 @@
         <item quantity="other">%d downloads anônimos em andamento</item>
     </plurals>
     <string name="incognito_downloads_in_progress_subtitle">Toque para ver na Pasta trancada</string>
+    <string name="home_empty_shortcuts_tagline">Pesquise acima para começar, ou fixe os sites que você visita frequentemente</string>
+    <string name="home_empty_shortcuts_add">Adicionar um atalho</string>
+    <string name="home_shortcuts_add_tile">Adicionar</string>
+    <string name="top_sites_add_dialog_title">Adicionar atalho</string>
 </resources>

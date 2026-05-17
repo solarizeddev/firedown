@@ -492,4 +492,8 @@
     <string name="play">Wiedergabe</string>
     <string name="pip_play">Wiedergabe</string>
     <string name="pip_pause">Pause</string>
+    <string name="home_empty_shortcuts_tagline">Suche oben, um zu beginnen, oder hefte Websites an, die du häufig besuchst</string>
+    <string name="home_empty_shortcuts_add">Verknüpfung hinzufügen</string>
+    <string name="home_shortcuts_add_tile">Hinzufügen</string>
+    <string name="top_sites_add_dialog_title">Verknüpfung hinzufügen</string>
 </resources>

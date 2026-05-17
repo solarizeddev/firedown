@@ -304,4 +304,8 @@
     <string name="play">Toista</string>
     <string name="pip_play">Toista</string>
     <string name="pip_pause">Tauko</string>
+    <string name="home_empty_shortcuts_tagline">Etsi yllä aloittaaksesi tai kiinnitä usein vierailemasi sivustot</string>
+    <string name="home_empty_shortcuts_add">Lisää oikotie</string>
+    <string name="home_shortcuts_add_tile">Lisää</string>
+    <string name="top_sites_add_dialog_title">Lisää oikotie</string>
 </resources>

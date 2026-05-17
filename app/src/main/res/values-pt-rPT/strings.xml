@@ -229,4 +229,8 @@
     <string name="vault_encrypting">Criptografando arquivo, aguarde…</string>
     <string name="vault_unsupported">Não é possível abrir este ficheiro. Para abrir, retira-o da Pasta segura e tenta novamente.</string>
     <string name="bookmark_name">Nome</string>
+    <string name="home_empty_shortcuts_tagline">Pesquisa acima para começar, ou fixa os sites que visitas frequentemente</string>
+    <string name="home_empty_shortcuts_add">Adicionar um atalho</string>
+    <string name="home_shortcuts_add_tile">Adicionar</string>
+    <string name="top_sites_add_dialog_title">Adicionar atalho</string>
 </resources>

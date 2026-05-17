@@ -349,4 +349,8 @@
     <string name="play">Odtwórz</string>
     <string name="pip_play">Odtwórz</string>
     <string name="pip_pause">Wstrzymaj</string>
+    <string name="home_empty_shortcuts_tagline">Wyszukaj powyżej, aby zacząć, lub przypnij często odwiedzane strony</string>
+    <string name="home_empty_shortcuts_add">Dodaj skrót</string>
+    <string name="home_shortcuts_add_tile">Dodaj</string>
+    <string name="top_sites_add_dialog_title">Dodaj skrót</string>
 </resources>

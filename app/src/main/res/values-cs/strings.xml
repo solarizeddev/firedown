@@ -306,4 +306,8 @@
     <string name="play">Přehrát</string>
     <string name="pip_play">Přehrát</string>
     <string name="pip_pause">Pozastavit</string>
+    <string name="home_empty_shortcuts_tagline">Chcete-li začít, vyhledejte výše, nebo připněte často navštěvované stránky</string>
+    <string name="home_empty_shortcuts_add">Přidat zkratku</string>
+    <string name="home_shortcuts_add_tile">Přidat</string>
+    <string name="top_sites_add_dialog_title">Přidat zkratku</string>
 </resources>

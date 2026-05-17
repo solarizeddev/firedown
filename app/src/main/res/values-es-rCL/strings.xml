@@ -65,4 +65,8 @@
     <string name="top_sites_max_limit_confirmation_button">Ok, ¡ya caché!</string>
     <string name="top_sites_rename_dialog_title">Nombre</string>
     <string name="bookmark_name">Nombre</string>
+    <string name="home_empty_shortcuts_tagline">Busca arriba para empezar, o fija los sitios que visitas a menudo</string>
+    <string name="home_empty_shortcuts_add">Añadir un atajo</string>
+    <string name="home_shortcuts_add_tile">Añadir</string>
+    <string name="top_sites_add_dialog_title">Añadir atajo</string>
 </resources>

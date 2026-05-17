@@ -354,4 +354,8 @@
         <item quantity="other">%d incognito-downloads bezig</item>
     </plurals>
     <string name="incognito_downloads_in_progress_subtitle">Tik om te bekijken in Beveiligde map</string>
+    <string name="home_empty_shortcuts_tagline">Zoek hierboven om te beginnen, of zet websites vast die je vaak bezoekt</string>
+    <string name="home_empty_shortcuts_add">Snelkoppeling toevoegen</string>
+    <string name="home_shortcuts_add_tile">Toevoegen</string>
+    <string name="top_sites_add_dialog_title">Snelkoppeling toevoegen</string>
 </resources>
