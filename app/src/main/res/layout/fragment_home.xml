@@ -24,6 +24,17 @@
     </com.google.android.material.appbar.AppBarLayout>
 
 
+    <!--
+        ConstraintLayout (not LinearLayout + layout_weight) inside the
+        NestedScrollView: layout_weight inside a fillViewport NSV is
+        flaky — the second-pass remeasure that fillViewport triggers
+        doesn't always honour the weight distribution and the empty
+        state ends up taller than viewport, producing a phantom scroll
+        when both onboarding and the centred logo are showing.
+        match_constraint height + a bottom-constraint to the parent
+        is the robust alternative: the empty state expands to fill
+        the gap deterministically and overscroll never engages.
+    -->
     <androidx.core.widget.NestedScrollView
         android:id="@+id/home_scroll"
         android:layout_width="match_parent"
@@ -33,38 +44,45 @@
         android:overScrollMode="never"
         app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior">
 
-        <LinearLayout
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:minHeight="0dp">
 
 
             <com.solarized.firedown.ui.OnBoardingCard
                 android:id="@+id/onboarding"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_gravity="top"
-                android:layout_marginTop="4dp" />
+                android:layout_marginTop="4dp"
+                app:layout_constraintTop_toTopOf="parent" />
 
 
-            <include layout="@layout/card_home_recent_downloads" />
+            <include
+                android:id="@+id/recent_downloads_card"
+                layout="@layout/card_home_recent_downloads"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:layout_constraintTop_toBottomOf="@id/onboarding" />
 
 
             <!--
-                Empty / brand-only fallback shown when the recent-downloads
-                card is hidden (toggle off or list empty). layout_weight=1
-                fills whatever vertical space is left so the glyph stays
-                centred whether or not onboarding is visible.
+                Empty / brand-only fallback shown when the
+                recent-downloads card is hidden (toggle off or list
+                empty). match_constraint height between the card and
+                the parent's bottom keeps the glyph centred in
+                whatever vertical space is left after onboarding.
             -->
             <LinearLayout
                 android:id="@+id/home_all_disabled"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
-                android:layout_weight="1"
                 android:gravity="center"
                 android:orientation="vertical"
                 android:paddingHorizontal="24dp"
-                android:visibility="gone">
+                android:visibility="gone"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/recent_downloads_card">
 
                 <androidx.appcompat.widget.AppCompatImageView
                     android:layout_width="72dp"
@@ -75,7 +93,7 @@
             </LinearLayout>
 
 
-        </LinearLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
     </androidx.core.widget.NestedScrollView>
 
