@@ -169,6 +169,52 @@
       margin: 0 auto;
     }
 
+    /* ── supported sites strip ──
+       'Try Firedown on' label + brand-name chips. Chips are plain
+       <a> elements with a pill background and no underline; tap
+       loads the URL in the same tab (GeckoView handles navigation).
+       Brand text is universal; the label is injected from R.string
+       via the URL params, same path the title / button / message
+       above use. */
+    .sites {
+      width: 100%;
+      max-width: 320px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 14px;
+      animation: fadeUp 0.6s ease both;
+    }
+    .sites-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.75);
+      margin-bottom: 10px;
+    }
+    .sites-row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+    }
+    .site-chip {
+      display: inline-block;
+      padding: 7px 14px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.18);
+      color: #fff;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+      -webkit-tap-highlight-color: rgba(255,255,255,0.25);
+      transition: background 0.15s ease;
+    }
+    .site-chip:active {
+      background: rgba(255,255,255,0.32);
+    }
+
     /* ── TV mode ── */
     body.tv-mode .bottom  { display: none; }
     body.tv-mode .page    { justify-content: center; padding-top: 40px; padding-bottom: 0; }
@@ -176,6 +222,9 @@
     body.tv-mode .description,
     body.tv-mode .message { font-size: 18px; max-width: 400px; }
     body.tv-mode .card-list { max-width: 400px; }
+    body.tv-mode .sites { max-width: 480px; }
+    body.tv-mode .sites-label { font-size: 14px; }
+    body.tv-mode .site-chip { font-size: 16px; padding: 10px 18px; }
   </style>
 </head>
 <body>
@@ -247,6 +296,17 @@
 
     <div class="spacer"></div>
     <p class="message" id="messageSubText"></p>
+
+    <div class="sites" id="sitesSection" style="display:none">
+      <p class="sites-label" id="sitesLabelText"></p>
+      <div class="sites-row">
+        <a class="site-chip" href="https://m.youtube.com">YouTube</a>
+        <a class="site-chip" href="https://www.reddit.com">Reddit</a>
+        <a class="site-chip" href="https://www.instagram.com">Instagram</a>
+        <a class="site-chip" href="https://www.tiktok.com">TikTok</a>
+        <a class="site-chip" href="https://x.com">X</a>
+      </div>
+    </div>
   </div>
 
   <!-- cloud -->
@@ -261,6 +321,13 @@ function injectValues(q) {
   document.getElementById('titleText').textContent      = q.button      || '';
   document.getElementById('titleSubText').textContent   = q.description || '';
   document.getElementById('messageSubText').textContent = q.message     || '';
+  // Supported-sites strip — only render if the host passed a label
+  // (i.e. localised). Avoids a label-less chip row if a future
+  // caller forgets the param.
+  if (q.sitesLabel) {
+    document.getElementById('sitesLabelText').textContent = q.sitesLabel;
+    document.getElementById('sitesSection').style.display = 'flex';
+  }
   if (q.tv === 'true') document.body.classList.add('tv-mode');
 }
 var idx = document.documentURI.indexOf('?');

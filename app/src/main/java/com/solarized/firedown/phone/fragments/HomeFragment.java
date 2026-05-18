@@ -776,14 +776,4 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         }
     }
 
-    @Override
-    public void OnBoardingSiteClicked(@NonNull String url) {
-        // Route through openUri so the URL gets the same parseUri
-        // normalisation as a paste-hero or autocomplete entry;
-        // GeckoView then handles navigation + any download prompts
-        // the site triggers.
-        openUri(url);
-    }
-
-
 }

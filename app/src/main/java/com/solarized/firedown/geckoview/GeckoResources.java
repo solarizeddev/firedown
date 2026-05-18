@@ -17,12 +17,18 @@ public class GeckoResources {
         String button = context.getString(R.string.onboarding_button);
         String description = context.getString(R.string.onboarding_title);
         String message = context.getString(R.string.onboarding_message);
+        // Supported-sites strip label rendered inside firedown.html.
+        // Brand chip text is universal (YouTube / Reddit / X / …) so
+        // only the heading needs translation; the chip URLs are
+        // hard-coded in the HTML itself.
+        String sitesLabel = context.getString(R.string.home_onboarding_sites_label);
 
         return  RESOURCE_ONBOARDING +"?" +
                 "&title=" + Utils.urlEncode(title) +
                 "&button=" + Utils.urlEncode(button) +
                 "&description=" + Utils.urlEncode(description) +
                 "&message=" + Utils.urlEncode(message) +
+                "&sitesLabel=" + Utils.urlEncode(sitesLabel) +
                 "&tv=" + Utils.urlEncode(String.valueOf(false));
     }
 
