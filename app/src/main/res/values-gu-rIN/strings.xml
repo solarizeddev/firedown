@@ -30,4 +30,6 @@
     <string name="snackbar_deleted_undo">પૂર્વવત્ કરો</string>
     <string name="snackbar_tab_closed">ટેબ બંધ કર્યું</string>
     <string name="switch_to_tab_description">ટૅબ બદલો</string>
+    <string name="downloads_quick_access_title">તાજેતરના ડાઉનલોડ્સ</string>
+    <string name="downloads_quick_access_view_all_short">બધા જુઓ</string>
 </resources>

@@ -235,4 +235,6 @@
     <string name="vault_decrypting">Faylın şifrəsi açılır, gözləyin...</string>
     <string name="vault_encrypting">Fayl şifrələnir, gözləyin…</string>
     <string name="vault_unsupported">Bu faylı açmaq mümkün deyil. Açmaq üçün onu Təhlükəsiz Qovluqdan çıxarın və yenidən cəhd edin.</string>
+    <string name="downloads_quick_access_title">Son endirilənlər</string>
+    <string name="downloads_quick_access_view_all_short">Hamısına bax</string>
 </resources>

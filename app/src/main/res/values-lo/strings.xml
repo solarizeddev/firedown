@@ -251,4 +251,6 @@
     <string name="vault_encrypting">ກຳລັງເຂົ້າລະຫັດໄຟລ໌, ກະລຸນາລໍຖ້າ…</string>
     <string name="vault_unsupported">ບໍ່ສາມາດເປີດໄຟລ໌ນີ້ໄດ້. ເພື່ອເປີດ, ຍ້າຍມັນອອກຈາກໂຟນເດີປອດໄພ ແລະລອງໃໝ່ອີກ.</string>
     <string name="bookmark_name">ຊື່</string>
+    <string name="downloads_quick_access_title">ການດາວໂຫຼດຫຼ້າສຸດ</string>
+    <string name="downloads_quick_access_view_all_short">ເບິ່ງທັງໝົດ</string>
 </resources>

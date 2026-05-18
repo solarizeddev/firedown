@@ -19,4 +19,6 @@
     <string name="open_new_private_tab_2">नयाँ निजी ट्याब</string>
     <string name="open_new_tab_2">नयाँ ट्याब</string>
 <string name="switch_to_tab_description">ट्याबमा स्विच गर्नुहोस्</string>
+    <string name="downloads_quick_access_title">हालैका डाउनलोडहरू</string>
+    <string name="downloads_quick_access_view_all_short">सबै हेर्नुहोस्</string>
 </resources>

@@ -206,4 +206,6 @@
     <string name="vault_decrypting">ફાઇલને ડિક્રિપ્ટ કરી રહ્યું છે, કૃપા કરીને રાહ જુઓ...</string>
     <string name="vault_encrypting">ફાઇલ એન્ક્રિપ્ટ કરી રહ્યું છે, કૃપા કરીને રાહ જુઓ…</string>
     <string name="vault_unsupported">આ ફાઇલ ખોલી શકાતી નથી. ખોલવા માટે, તેને સેફ ફોલ્ડરની બહાર ખસેડો અને ફરી પ્રયાસ કરો.</string>
+    <string name="downloads_quick_access_title">તાજેતરના ડાઉનલોડ્સ</string>
+    <string name="downloads_quick_access_view_all_short">બધા જુઓ</string>
 </resources>

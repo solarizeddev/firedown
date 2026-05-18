@@ -274,4 +274,6 @@
     <string name="play">Reprodueix</string>
     <string name="pip_play">Reprodueix</string>
     <string name="pip_pause">Pausa</string>
+    <string name="downloads_quick_access_title">Baixades recents</string>
+    <string name="downloads_quick_access_view_all_short">Mostra-ho tot</string>
 </resources>

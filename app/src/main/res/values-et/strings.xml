@@ -266,4 +266,6 @@
     <string name="vault_encrypting">Faili krüptimine, palun oodake…</string>
     <string name="vault_unsupported">Seda faili ei saa avada. Avamiseks teisaldage see turvalisest kaustast välja ja proovige uuesti.</string>
     <string name="bookmark_name">Nimi</string>
+    <string name="downloads_quick_access_title">Hiljutised allalaadimised</string>
+    <string name="downloads_quick_access_view_all_short">Näita kõiki</string>
 </resources>

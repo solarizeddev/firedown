@@ -256,4 +256,6 @@
     <string name="vault_encrypting">Dulkóðar skrá, vinsamlegast bíddu…</string>
     <string name="vault_unsupported">Ekki er hægt að opna þessa skrá. Til að opna skaltu færa það úr öruggri möppu og reyna aftur.</string>
     <string name="bookmark_name">Heiti</string>
+    <string name="downloads_quick_access_title">Nýleg niðurhal</string>
+    <string name="downloads_quick_access_view_all_short">Sjá allt</string>
 </resources>

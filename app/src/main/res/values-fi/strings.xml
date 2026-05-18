@@ -291,4 +291,6 @@
     <string name="play">Toista</string>
     <string name="pip_play">Toista</string>
     <string name="pip_pause">Tauko</string>
+    <string name="downloads_quick_access_title">Viimeisimmät lataukset</string>
+    <string name="downloads_quick_access_view_all_short">Näytä kaikki</string>
 </resources>

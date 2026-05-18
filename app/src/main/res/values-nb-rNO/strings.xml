@@ -52,4 +52,6 @@
     <string name="snackbar_tab_closed">Fane lukket</string>
     <string name="switch_to_tab_description">Bytt til fane</string>
     <string name="bookmark_name">Navn</string>
+    <string name="downloads_quick_access_title">Nylige nedlastinger</string>
+    <string name="downloads_quick_access_view_all_short">Se alle</string>
 </resources>

@@ -245,4 +245,6 @@
     <string name="vault_decrypting">ফাইল ডিক্রিপ্ট করা হচ্ছে, অনুগ্রহ করে অপেক্ষা করুন…</string>
     <string name="vault_encrypting">ফাইল এনক্রিপ্ট করা হচ্ছে, অনুগ্রহ করে অপেক্ষা করুন…</string>
     <string name="vault_unsupported">এই ফাইলটি খুলতে পারছি না। খুলতে, এটিকে নিরাপদ ফোল্ডার থেকে সরান এবং আবার চেষ্টা করুন।</string>
+    <string name="downloads_quick_access_title">সাম্প্রতিক ডাউনলোড</string>
+    <string name="downloads_quick_access_view_all_short">সব দেখুন</string>
 </resources>

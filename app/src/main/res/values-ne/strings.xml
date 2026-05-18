@@ -203,4 +203,6 @@
     <string name="vault_decrypting">फाइल डिक्रिप्ट गर्दै, कृपया प्रतीक्षा गर्नुहोस्…</string>
     <string name="vault_encrypting">फाइल इन्क्रिप्ट गर्दै, कृपया प्रतीक्षा गर्नुहोस्…</string>
     <string name="vault_unsupported">यो फाइल खोल्न सकिँदैन। खोल्न, यसलाई सुरक्षित फोल्डरबाट बाहिर सार्नुहोस् र पुन: प्रयास गर्नुहोस्।</string>
+    <string name="downloads_quick_access_title">हालैका डाउनलोडहरू</string>
+    <string name="downloads_quick_access_view_all_short">सबै हेर्नुहोस्</string>
 </resources>

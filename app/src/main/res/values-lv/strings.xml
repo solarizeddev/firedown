@@ -218,4 +218,6 @@
     <string name="vault_decrypting">Notiek faila atšifrēšana, uzgaidiet…</string>
     <string name="vault_encrypting">Notiek faila šifrēšana, uzgaidiet…</string>
     <string name="vault_unsupported">Nevar atvērt šo failu. Lai atvērtu, izņemiet to no drošās mapes un mēģiniet vēlreiz.</string>
+    <string name="downloads_quick_access_title">Nesenās lejupielādes</string>
+    <string name="downloads_quick_access_view_all_short">Skatīt visu</string>
 </resources>

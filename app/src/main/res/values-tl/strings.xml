@@ -253,4 +253,6 @@
     <string name="vault_encrypting">Ini-encrypt ang file, mangyaring maghintay…</string>
     <string name="vault_unsupported">Hindi mabuksan ang file na ito. Upang buksan, alisin ito sa Safe Folder at subukang muli.</string>
     <string name="bookmark_name">Pangalan</string>
+    <string name="downloads_quick_access_title">Mga kamakailang pag-download</string>
+    <string name="downloads_quick_access_view_all_short">Tingnan lahat</string>
 </resources>

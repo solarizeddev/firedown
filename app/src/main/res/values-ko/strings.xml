@@ -320,4 +320,6 @@
         <item quantity="other">%d개의 시크릿 다운로드 진행 중</item>
     </plurals>
     <string name="incognito_downloads_in_progress_subtitle">보안 폴더에서 보려면 탭하세요</string>
+    <string name="downloads_quick_access_title">최근 다운로드</string>
+    <string name="downloads_quick_access_view_all_short">모두 보기</string>
 </resources>

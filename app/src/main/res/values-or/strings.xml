@@ -215,4 +215,6 @@
     <string name="vault_decrypting">ଫାଇଲ୍ ଡିକ୍ରିପ୍ଟ କରିବା, ଦୟାକରି ଅପେକ୍ଷା କରନ୍ତୁ…</string>
     <string name="vault_encrypting">ଫାଇଲ୍ ଏନକ୍ରିପ୍ଟ କରିବା, ଦୟାକରି ଅପେକ୍ଷା କରନ୍ତୁ…</string>
     <string name="vault_unsupported">ଏହି ଫାଇଲ୍ ଖୋଲିପାରିବ ନାହିଁ | ଖୋଲିବାକୁ, ଏହାକୁ ସୁରକ୍ଷିତ ଫୋଲ୍ଡରରୁ ବାହାର କରି ପୁନର୍ବାର ଚେଷ୍ଟା କରନ୍ତୁ |</string>
+    <string name="downloads_quick_access_title">ସମ୍ପ୍ରତି ଡାଉନଲୋଡ୍</string>
+    <string name="downloads_quick_access_view_all_short">ସବୁ ଦେଖନ୍ତୁ</string>
 </resources>

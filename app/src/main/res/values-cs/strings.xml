@@ -293,4 +293,6 @@
     <string name="play">Přehrát</string>
     <string name="pip_play">Přehrát</string>
     <string name="pip_pause">Pozastavit</string>
+    <string name="downloads_quick_access_title">Nedávná stahování</string>
+    <string name="downloads_quick_access_view_all_short">Zobrazit vše</string>
 </resources>

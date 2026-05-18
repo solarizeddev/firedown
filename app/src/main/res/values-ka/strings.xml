@@ -259,4 +259,6 @@
     <string name="vault_encrypting">Მიმდინარეობს ფაილის დაშიფვრა, გთხოვთ დაელოდოთ…</string>
     <string name="vault_unsupported">Ამ ფაილის გახსნა შეუძლებელია. გასახსნელად გადაიტანეთ ის უსაფრთხო საქაღალდიდან და სცადეთ ხელახლა.</string>
     <string name="bookmark_name">სახელი</string>
+    <string name="downloads_quick_access_title">ბოლო ჩამოტვირთვები</string>
+    <string name="downloads_quick_access_view_all_short">ყველას ნახვა</string>
 </resources>

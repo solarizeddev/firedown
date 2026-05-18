@@ -240,4 +240,6 @@
     <string name="vault_decrypting">கோப்பை மறைகுறியாக்குகிறது, காத்திருக்கவும்…</string>
     <string name="vault_encrypting">கோப்பை என்க்ரிப்ட் செய்கிறது, காத்திருக்கவும்…</string>
     <string name="vault_unsupported">இந்தக் கோப்பைத் திறக்க முடியவில்லை. திறக்க, பாதுகாப்பான கோப்புறையிலிருந்து அதை நகர்த்தி மீண்டும் முயற்சிக்கவும்.</string>
+    <string name="downloads_quick_access_title">சமீபத்திய பதிவிறக்கங்கள்</string>
+    <string name="downloads_quick_access_view_all_short">அனைத்தும்</string>
 </resources>

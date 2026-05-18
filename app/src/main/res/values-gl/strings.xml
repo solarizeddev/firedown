@@ -259,4 +259,6 @@
     <string name="vault_encrypting">Cifrando o ficheiro, agarda…</string>
     <string name="vault_unsupported">Non se pode abrir este ficheiro. Para abrilo, saia do cartafol seguro e téntao de novo.</string>
     <string name="bookmark_name">Nome</string>
+    <string name="downloads_quick_access_title">Descargas recentes</string>
+    <string name="downloads_quick_access_view_all_short">Ver todo</string>
 </resources>

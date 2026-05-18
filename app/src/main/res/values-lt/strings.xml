@@ -258,4 +258,6 @@
     <string name="vault_decrypting">Iššifruojamas failas, palaukite…</string>
     <string name="vault_encrypting">Šifruojamas failas, prašom palaukti…</string>
     <string name="vault_unsupported">Nepavyko atidaryti šio failo. Norėdami atidaryti, iškelkite jį iš saugaus aplanko ir bandykite dar kartą.</string>
+    <string name="downloads_quick_access_title">Naujausi atsisiuntimai</string>
+    <string name="downloads_quick_access_view_all_short">Rodyti viską</string>
 </resources>

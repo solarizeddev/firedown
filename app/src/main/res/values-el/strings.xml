@@ -274,4 +274,6 @@
     <string name="play">Αναπαραγωγή</string>
     <string name="pip_play">Αναπαραγωγή</string>
     <string name="pip_pause">Παύση</string>
+    <string name="downloads_quick_access_title">Πρόσφατες λήψεις</string>
+    <string name="downloads_quick_access_view_all_short">Προβολή όλων</string>
 </resources>

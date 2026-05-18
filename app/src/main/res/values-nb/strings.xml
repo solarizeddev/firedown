@@ -231,4 +231,6 @@
     <string name="vault_decrypting">Dekrypterer fil, vennligst vent…</string>
     <string name="vault_encrypting">Krypterer fil, vennligst vent…</string>
     <string name="vault_unsupported">Kan ikke åpne denne filen. For å åpne, flytt den ut av sikker mappe og prøv igjen.</string>
+    <string name="downloads_quick_access_title">Nylige nedlastinger</string>
+    <string name="downloads_quick_access_view_all_short">Se alle</string>
 </resources>

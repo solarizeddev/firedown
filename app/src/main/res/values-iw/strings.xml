@@ -287,4 +287,6 @@
     <string name="play">השמעה</string>
     <string name="pip_play">השמעה</string>
     <string name="pip_pause">השהיה</string>
+    <string name="downloads_quick_access_title">הורדות אחרונות</string>
+    <string name="downloads_quick_access_view_all_short">הצג הכול</string>
 </resources>

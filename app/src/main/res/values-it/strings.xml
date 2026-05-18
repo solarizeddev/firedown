@@ -322,4 +322,6 @@
         <item quantity="other">%d download in incognito in corso</item>
     </plurals>
     <string name="incognito_downloads_in_progress_subtitle">Tocca per visualizzare nella Cartella di sicurezza</string>
+    <string name="downloads_quick_access_title">Download recenti</string>
+    <string name="downloads_quick_access_view_all_short">Vedi tutto</string>
 </resources>

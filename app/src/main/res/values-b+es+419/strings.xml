@@ -215,4 +215,6 @@
     <string name="vault_decrypting">Descifrando archivo, espere…</string>
     <string name="vault_encrypting">Cifrando archivo, espere…</string>
     <string name="vault_unsupported">No se puede abrir este archivo. Para abrirlo, sácalo de la Carpeta segura y vuelve a intentarlo.</string>
- </resources>
+     <string name="downloads_quick_access_title">Descargas recientes</string>
+    <string name="downloads_quick_access_view_all_short">Ver todo</string>
+</resources>
