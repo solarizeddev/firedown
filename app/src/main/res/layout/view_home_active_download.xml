@@ -1,23 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Active-download strip on the home page. Renders above the
-  recent-downloads card (which switches to FINISHED/ERROR-only while
-  this is visible) so the user has a clear separation between
-  'what's happening now' and 'what you've already got'.
+  Active-download strip on the home page. Carries the Firedown
+  flame icon (alpha-pulsing) + 'DOWNLOADING' header on top, with
+  up to N (currently 3) compact rows below — one per in-flight
+  regular download. Each row shows filename + percent + its own
+  progress bar.
 
   Tinted with colorPrimaryContainer to read as 'live' — distinct
-  from the surface-container colour the static recent-downloads
-  card uses. Tap routes to DownloadsActivity for the full list of
-  active items.
-
-  Layout shape: leading icon vertically centred against the whole
-  card; right column stacks the 'DOWNLOADING' section header, the
-  filename / +N / percent row, and the progress bar — all aligned
-  to the same start column for a clean list-item rhythm.
+  from the surface-container colour the static Downloads / Safe
+  Folder cards use. Whole card is tappable; tap → DownloadsActivity.
 -->
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/active_download_strip"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -31,110 +25,55 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
+        android:orientation="vertical"
         android:paddingHorizontal="16dp"
         android:paddingVertical="14dp">
 
         <!--
-            Firedown flame instead of the canonical download glyph —
-            the static Downloads card below already owns that icon,
-            and using the brand mark here paired with an alpha pulse
-            (HomeFragment-driven) communicates 'live, this is happening
-            now' in a way a duplicated download arrow couldn't.
+            Header: pulsing Firedown flame + 'DOWNLOADING…' label.
+            The flame's alpha animator is wired in HomeFragment and
+            communicates 'live'; the static Downloads card below
+            uses the canonical download arrow, so no icon
+            duplication between the two surfaces.
         -->
-        <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/active_download_icon"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:contentDescription="@null"
-            android:src="@drawable/ic_firedown"
-            app:tint="?attr/colorOnPrimaryContainer" />
-
         <LinearLayout
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="14dp"
-            android:layout_weight="1"
-            android:orientation="vertical">
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
-            <!--
-                Section header — reuses R.string.downloading
-                ('Downloading…') with textAllCaps for the standard
-                M3 section-header treatment.
-            -->
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/active_download_icon"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:contentDescription="@null"
+                android:src="@drawable/ic_firedown"
+                app:tint="?attr/colorOnPrimaryContainer" />
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
                 android:letterSpacing="0.08"
                 android:text="@string/downloading"
                 android:textAllCaps="true"
                 android:textAppearance="?attr/textAppearanceLabelSmall"
                 android:textColor="?attr/colorOnPrimaryContainer" />
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:id="@+id/active_download_title"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:ellipsize="end"
-                    android:maxLines="1"
-                    android:textAppearance="?attr/textAppearanceTitleSmall"
-                    android:textColor="?attr/colorOnPrimaryContainer"
-                    tools:text="my_video_file_name.mp4" />
-
-                <!--
-                    '+N' indicator for additional in-flight downloads
-                    beyond the headline. Universal across locales.
-                -->
-                <TextView
-                    android:id="@+id/active_download_count"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="6dp"
-                    android:textAppearance="?attr/textAppearanceLabelSmall"
-                    android:textColor="?attr/colorOnPrimaryContainer"
-                    android:textStyle="bold"
-                    android:visibility="gone"
-                    tools:text="+2"
-                    tools:visibility="visible" />
-
-                <TextView
-                    android:id="@+id/active_download_percent"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:textAppearance="?attr/textAppearanceBodyMedium"
-                    android:textColor="?attr/colorOnPrimaryContainer"
-                    tools:text="45%" />
-
-            </LinearLayout>
-
-            <!--
-                Material 3 LinearProgressIndicator. trackColor is set
-                programmatically in HomeFragment to colorOnPrimaryContainer
-                at ~24% alpha — XML can't combine a theme attr with alpha
-                cleanly, and the M3 default of colorSecondary rendered as
-                yellow on this surface which fought the orange.
-            -->
-            <com.google.android.material.progressindicator.LinearProgressIndicator
-                android:id="@+id/active_download_bar"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                app:indicatorColor="?attr/colorOnPrimaryContainer"
-                app:indicatorTrackGapSize="0dp"
-                app:trackCornerRadius="2dp"
-                app:trackStopIndicatorSize="0dp" />
-
         </LinearLayout>
+
+        <!--
+            Rows container — HomeFragment inflates one
+            view_home_active_download_row per active item (cap = 3)
+            and removeAllViews + re-inflates on every observer tick.
+            Vertical stack; each row carries its own top padding so
+            spacing scales naturally with N.
+        -->
+        <LinearLayout
+            android:id="@+id/active_download_rows"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
 
     </LinearLayout>
 

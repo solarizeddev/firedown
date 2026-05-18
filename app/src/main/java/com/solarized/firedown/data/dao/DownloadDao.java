@@ -132,9 +132,8 @@ public interface DownloadDao {
     LiveData<Long> getRegularFinishedSizeLive();
 
     /** Live list of in-flight regular downloads (PROGRESS=0, QUEUED=2,
-     *  non-vault). Drives the home active-download strip. Bounded so
-     *  the +N count is meaningful even with many concurrent
-     *  downloads. */
-    @Query("SELECT * FROM download WHERE file_safe = 0 AND file_status IN (0, 2) ORDER BY file_date DESC LIMIT 10")
+     *  non-vault). Drives the home active-download strip. Capped at
+     *  the number of rows the strip ever renders. */
+    @Query("SELECT * FROM download WHERE file_safe = 0 AND file_status IN (0, 2) ORDER BY file_date DESC LIMIT 3")
     LiveData<List<DownloadEntity>> getActiveRegularLive();
 }
