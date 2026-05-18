@@ -99,6 +99,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     private TextView mActiveStripPercent;
     private TextView mActiveStripCount;
     private ProgressBar mActiveStripBar;
+    private com.google.android.material.button.MaterialButton mHomeVaultButton;
     private DownloadsQuickAccessAdapter mRecentDownloadsAdapter;
     private SharedPreferences.OnSharedPreferenceChangeListener mHomePrefsListener;
     @Nullable private java.util.List<DownloadEntity> mLastRecentList;
@@ -193,6 +194,10 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
 
         v.findViewById(R.id.home_paste_button).setOnClickListener(view -> onPasteAndDownload());
 
+        mHomeVaultButton = v.findViewById(R.id.home_vault_button);
+        mHomeVaultButton.setOnClickListener(view ->
+                mStartForResult.launch(new Intent(mActivity, VaultActivity.class)));
+
 
         mBottomNavigationBar.setListener(this);
 
@@ -272,6 +277,18 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mRecentDownloadsViewModel.getRecent().observe(getViewLifecycleOwner(), list -> {
             mLastRecentList = list;
             applyHomeCustomisation();
+        });
+
+        // Vault count drives the empty-hero vault button's count badge.
+        // Button itself is always visible while the empty hero is
+        // showing — discoverability for users who haven't yet used
+        // vault — but the badge only appears when count > 0.
+        mRecentDownloadsViewModel.getVaultCount().observe(getViewLifecycleOwner(), count -> {
+            if (mHomeVaultButton == null) return;
+            int n = count == null ? 0 : count;
+            mHomeVaultButton.setText(n > 0
+                    ? getString(R.string.home_vault_button_count, n)
+                    : getString(R.string.home_vault_button));
         });
 
         mHomePrefsListener = (sharedPreferences, key) -> {
@@ -430,6 +447,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mActiveStripPercent = null;
         mActiveStripCount = null;
         mActiveStripBar = null;
+        mHomeVaultButton = null;
         mRecentDownloadsAdapter = null;
     }
 

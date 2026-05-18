@@ -81,6 +81,13 @@ public class DownloadDataRepository {
         return mDatabase.downloadDao().getDownloadsLimit(limit);
     }
 
+    /** Live count of vault-saved downloads. Drives the home empty-hero
+     *  vault tile's visibility (any count > 0 → tile reads as occupied)
+     *  and its badge label. */
+    public LiveData<Integer> getSafeCount() {
+        return mDatabase.downloadDao().getSafeCountLive();
+    }
+
     public List<DownloadEntity> getAllRawList() {
         return mDatabase.downloadDao().getAllRawList();
     }

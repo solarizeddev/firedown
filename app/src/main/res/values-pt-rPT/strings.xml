@@ -223,4 +223,6 @@
     <string name="home_paste_hero_empty">Copie uma ligação primeiro e toque aqui</string>
     <string name="home_paste_hero_not_url">Isto não parece uma ligação</string>
     <string name="home_onboarding_sites_label">Experimente o Firedown em</string>
+    <string name="home_vault_button">Cofre</string>
+    <string name="home_vault_button_count">Cofre · %d</string>
 </resources>

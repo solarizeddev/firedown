@@ -247,4 +247,6 @@
     <string name="home_paste_hero_empty">முதலில் இணைப்பை நகலெடுத்து இங்கே தட்டவும்</string>
     <string name="home_paste_hero_not_url">இது இணைப்பாகத் தெரியவில்லை</string>
     <string name="home_onboarding_sites_label">Firedown ஐ முயற்சிக்கவும்</string>
+    <string name="home_vault_button">பெட்டகம்</string>
+    <string name="home_vault_button_count">பெட்டகம் · %d</string>
 </resources>

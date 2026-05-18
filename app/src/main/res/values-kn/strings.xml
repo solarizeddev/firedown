@@ -244,4 +244,6 @@
     <string name="home_paste_hero_empty">ಮೊದಲು ಲಿಂಕ್ ನಕಲಿಸಿ, ನಂತರ ಇಲ್ಲಿ ಟ್ಯಾಪ್ ಮಾಡಿ</string>
     <string name="home_paste_hero_not_url">ಇದು ಲಿಂಕ್‌ನಂತೆ ಕಾಣುತ್ತಿಲ್ಲ</string>
     <string name="home_onboarding_sites_label">Firedown ಬಳಸಿ ನೋಡಿ</string>
+    <string name="home_vault_button">ತಿಜೋರಿ</string>
+    <string name="home_vault_button_count">ತಿಜೋರಿ · %d</string>
 </resources>

@@ -266,4 +266,6 @@
     <string name="home_paste_hero_empty">Salin tautan dulu, lalu ketuk di sini</string>
     <string name="home_paste_hero_not_url">Itu sepertinya bukan tautan</string>
     <string name="home_onboarding_sites_label">Coba Firedown di</string>
+    <string name="home_vault_button">Brankas</string>
+    <string name="home_vault_button_count">Brankas · %d</string>
 </resources>

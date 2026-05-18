@@ -329,4 +329,6 @@
     <string name="home_paste_hero_empty">Copia prima un link, poi tocca qui</string>
     <string name="home_paste_hero_not_url">Non sembra un link</string>
     <string name="home_onboarding_sites_label">Prova Firedown su</string>
+    <string name="home_vault_button">Cassaforte</string>
+    <string name="home_vault_button_count">Cassaforte · %d</string>
 </resources>

@@ -260,4 +260,6 @@
     <string name="home_paste_hero_empty">Kopyahin muna ang link, pagkatapos i-tap dito</string>
     <string name="home_paste_hero_not_url">Mukhang hindi ito link</string>
     <string name="home_onboarding_sites_label">Subukan ang Firedown sa</string>
+    <string name="home_vault_button">Vault</string>
+    <string name="home_vault_button_count">Vault · %d</string>
 </resources>

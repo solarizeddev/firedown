@@ -284,4 +284,6 @@
     <string name="home_paste_hero_empty">Първо копирайте връзка, после докоснете тук</string>
     <string name="home_paste_hero_not_url">Това не прилича на връзка</string>
     <string name="home_onboarding_sites_label">Опитайте Firedown с</string>
+    <string name="home_vault_button">Сейф</string>
+    <string name="home_vault_button_count">Сейф · %d</string>
 </resources>

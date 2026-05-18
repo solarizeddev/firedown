@@ -110,4 +110,14 @@ public interface DownloadDao {
 
     @Query("SELECT COUNT(*) FROM download")
     Integer getRowCount();
+
+    /**
+     * Live count of vault-stored downloads (file_safe = 1). Surfaced
+     * on the home empty hero so the vault entry can carry an item
+     * count badge that updates as the user saves / deletes private
+     * files. LiveData (not a one-shot Integer) so the badge stays in
+     * sync without manual refresh hooks.
+     */
+    @Query("SELECT COUNT(*) FROM download WHERE file_safe = 1")
+    LiveData<Integer> getSafeCountLive();
 }

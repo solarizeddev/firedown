@@ -294,4 +294,6 @@
     <string name="home_paste_hero_empty">Kopier et link først, og tryk derefter her</string>
     <string name="home_paste_hero_not_url">Det ligner ikke et link</string>
     <string name="home_onboarding_sites_label">Prøv Firedown på</string>
+    <string name="home_vault_button">Boks</string>
+    <string name="home_vault_button_count">Boks · %d</string>
 </resources>

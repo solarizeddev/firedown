@@ -115,6 +115,29 @@
                     app:icon="@drawable/content_paste_24"
                     app:iconGravity="textStart" />
 
+                <!--
+                    Subtle vault entry — text button below the prominent
+                    paste CTA. Always visible when the empty hero is
+                    showing, so 'incognito-curious' new users have a
+                    discoverable path into the private-downloads vault
+                    that's otherwise buried in the More menu. Label
+                    appends the saved-item count when > 0 (set in
+                    HomeFragment from RecentDownloadsViewModel's vault
+                    count LiveData) so returning vault users see at a
+                    glance whether they have anything saved.
+                -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/home_vault_button"
+                    style="@style/Widget.Material3.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="@string/home_vault_button"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    app:icon="@drawable/ic_lock_24"
+                    app:iconGravity="textStart"
+                    app:iconTint="?attr/colorOnSurfaceVariant" />
+
             </LinearLayout>
 
 

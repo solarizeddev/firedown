@@ -274,4 +274,6 @@
     <string name="home_paste_hero_empty">Copiază mai întâi un link, apoi atinge aici</string>
     <string name="home_paste_hero_not_url">Acesta nu pare un link</string>
     <string name="home_onboarding_sites_label">Încearcă Firedown pe</string>
+    <string name="home_vault_button">Seif</string>
+    <string name="home_vault_button_count">Seif · %d</string>
 </resources>

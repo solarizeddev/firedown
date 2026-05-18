@@ -222,4 +222,6 @@
     <string name="home_paste_hero_empty">Qala ngokukopisha isixhumanisi, bese uthepha lapha</string>
     <string name="home_paste_hero_not_url">Lokhu akubukeki njengesixhumanisi</string>
     <string name="home_onboarding_sites_label">Zama i-Firedown ku</string>
+    <string name="home_vault_button">Isikhwama</string>
+    <string name="home_vault_button_count">Isikhwama · %d</string>
 </resources>

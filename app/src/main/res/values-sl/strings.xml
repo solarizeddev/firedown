@@ -278,4 +278,6 @@
     <string name="home_paste_hero_empty">Najprej kopirajte povezavo, nato se dotaknite tukaj</string>
     <string name="home_paste_hero_not_url">To ni videti kot povezava</string>
     <string name="home_onboarding_sites_label">Preizkusite Firedown na</string>
+    <string name="home_vault_button">Trezor</string>
+    <string name="home_vault_button_count">Trezor · %d</string>
 </resources>

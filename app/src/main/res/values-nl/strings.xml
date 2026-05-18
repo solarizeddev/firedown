@@ -348,4 +348,6 @@
     <string name="home_paste_hero_empty">Kopieer eerst een link en tik daarna hier</string>
     <string name="home_paste_hero_not_url">Dat lijkt geen link</string>
     <string name="home_onboarding_sites_label">Probeer Firedown op</string>
+    <string name="home_vault_button">Kluis</string>
+    <string name="home_vault_button_count">Kluis · %d</string>
 </resources>

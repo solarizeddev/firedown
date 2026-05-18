@@ -272,4 +272,6 @@
     <string name="home_paste_hero_empty">መጀመሪያ አገናኝ ይቅዱ፣ ከዚያ እዚህ ይንኩ</string>
     <string name="home_paste_hero_not_url">ይህ እንደ አገናኝ አይመስልም</string>
     <string name="home_onboarding_sites_label">Firedownን ይሞክሩ በ</string>
+    <string name="home_vault_button">ካዝና</string>
+    <string name="home_vault_button_count">ካዝና · %d</string>
 </resources>

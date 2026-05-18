@@ -266,4 +266,6 @@
     <string name="home_paste_hero_empty">Copia unha ligazón primeiro e toca aquí</string>
     <string name="home_paste_hero_not_url">Iso non parece unha ligazón</string>
     <string name="home_onboarding_sites_label">Proba Firedown en</string>
+    <string name="home_vault_button">Caixa forte</string>
+    <string name="home_vault_button_count">Caixa forte · %d</string>
 </resources>

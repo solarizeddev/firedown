@@ -287,4 +287,6 @@
     <string name="home_paste_hero_empty">Спочатку скопіюйте посилання, потім торкніться тут</string>
     <string name="home_paste_hero_not_url">Це не схоже на посилання</string>
     <string name="home_onboarding_sites_label">Спробуйте Firedown на</string>
+    <string name="home_vault_button">Сховище</string>
+    <string name="home_vault_button_count">Сховище · %d</string>
 </resources>

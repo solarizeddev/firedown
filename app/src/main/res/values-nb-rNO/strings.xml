@@ -59,4 +59,6 @@
     <string name="home_paste_hero_empty">Kopier en kobling først, og trykk så her</string>
     <string name="home_paste_hero_not_url">Dette ser ikke ut som en kobling</string>
     <string name="home_onboarding_sites_label">Prøv Firedown på</string>
+    <string name="home_vault_button">Hvelv</string>
+    <string name="home_vault_button_count">Hvelv · %d</string>
 </resources>

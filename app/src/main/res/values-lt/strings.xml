@@ -265,4 +265,6 @@
     <string name="home_paste_hero_empty">Pirmiausia nukopijuokite nuorodą, tada bakstelėkite čia</string>
     <string name="home_paste_hero_not_url">Tai nepanašu į nuorodą</string>
     <string name="home_onboarding_sites_label">Išbandykite Firedown</string>
+    <string name="home_vault_button">Saugykla</string>
+    <string name="home_vault_button_count">Saugykla · %d</string>
 </resources>

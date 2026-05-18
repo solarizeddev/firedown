@@ -30,6 +30,7 @@ public class RecentDownloadsViewModel extends ViewModel {
     public static final int LIMIT = 3;
 
     private final LiveData<List<DownloadEntity>> mRecent;
+    private final LiveData<Integer> mVaultCount;
 
     @Inject
     public RecentDownloadsViewModel(DownloadDataRepository repository) {
@@ -38,9 +39,16 @@ public class RecentDownloadsViewModel extends ViewModel {
         // the bar is a quick way to see in-flight downloads too, not
         // just a 'recently completed' list.
         mRecent = repository.getDownloadsLimit(LIMIT);
+        // Lightweight count of file_safe=1 rows; drives the home
+        // empty-hero vault tile's count badge.
+        mVaultCount = repository.getSafeCount();
     }
 
     public LiveData<List<DownloadEntity>> getRecent() {
         return mRecent;
+    }
+
+    public LiveData<Integer> getVaultCount() {
+        return mVaultCount;
     }
 }

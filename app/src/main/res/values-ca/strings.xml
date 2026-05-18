@@ -281,4 +281,6 @@
     <string name="home_paste_hero_empty">Copia primer un enllaç i toca aquí</string>
     <string name="home_paste_hero_not_url">Això no sembla un enllaç</string>
     <string name="home_onboarding_sites_label">Prova Firedown a</string>
+    <string name="home_vault_button">Caixa forta</string>
+    <string name="home_vault_button_count">Caixa forta · %d</string>
 </resources>

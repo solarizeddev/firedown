@@ -347,4 +347,6 @@
     <string name="home_paste_hero_empty">Önce bir bağlantı kopyalayın, sonra buraya dokunun</string>
     <string name="home_paste_hero_not_url">Bu bir bağlantıya benzemiyor</string>
     <string name="home_onboarding_sites_label">Firedown\'u şurada deneyin</string>
+    <string name="home_vault_button">Kasa</string>
+    <string name="home_vault_button_count">Kasa · %d</string>
 </resources>

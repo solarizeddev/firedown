@@ -142,6 +142,11 @@
          onboarding card. Frames the brand chips as 'we test against
          these'. Tap a chip → visits the site. -->
     <string name="home_onboarding_sites_label">Try Firedown on</string>
+    <!-- Subtle text-button entry below the paste CTA on the empty
+         home hero. Opens VaultActivity. The _count variant appends
+         the saved-item count when there's anything in the vault. -->
+    <string name="home_vault_button">Vault</string>
+    <string name="home_vault_button_count">Vault · %d</string>
     <string name="settings_home_title">Home page</string>
     <string name="settings_home_summary">Customise what shows on the home page</string>
     <string name="settings_home_show_recent_downloads_title">Show recent downloads</string>

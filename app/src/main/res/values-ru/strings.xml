@@ -346,4 +346,6 @@
     <string name="home_paste_hero_empty">Сначала скопируйте ссылку, затем нажмите здесь</string>
     <string name="home_paste_hero_not_url">Это не похоже на ссылку</string>
     <string name="home_onboarding_sites_label">Попробуйте Firedown на</string>
+    <string name="home_vault_button">Сейф</string>
+    <string name="home_vault_button_count">Сейф · %d</string>
 </resources>
