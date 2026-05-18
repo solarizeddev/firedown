@@ -15,7 +15,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
-import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -93,7 +92,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     private GeckoToolbar mGeckoToolbar;
     private BottomNavigationBar mBottomNavigationBar;
     private MaterialCardView mRecentDownloadsCard;
-    private LinearLayout mHomeAllDisabled;
     private View mHomeScroll;
     private MaterialCardView mActiveStrip;
     private TextView mActiveStripTitle;
@@ -156,7 +154,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mOnBoardingCard.setCallback(this);
 
         mRecentDownloadsCard = v.findViewById(R.id.recent_downloads_card);
-        mHomeAllDisabled = v.findViewById(R.id.home_all_disabled);
 
         mActiveStrip = v.findViewById(R.id.active_download_strip);
         mActiveStripTitle = v.findViewById(R.id.active_download_title);
@@ -455,7 +452,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mBottomNavigationBar = null;
         mOnBoardingCard = null;
         mRecentDownloadsCard = null;
-        mHomeAllDisabled = null;
         mActiveStrip = null;
         mActiveStripTitle = null;
         mActiveStripPercent = null;
@@ -467,24 +463,19 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     }
 
     /**
-     * Resolves the current home composition from the user's
-     * {@link Preferences#SETTINGS_HOME_SHOW_RECENT_DOWNLOADS} toggle
-     * and the latest download stats.
+     * Resolves the current home composition. Paste and Safe Folder
+     * cards are always visible (always-on entry points). Active strip
+     * and Downloads card are data- / preference-gated:
      *
      * <ul>
-     *   <li>Active strip — visible while any non-vault PROGRESS / QUEUED
-     *       download exists; binds the most recent as the headline.</li>
-     *   <li>Downloads card — visible whenever the toggle is on. Subtitle
-     *       ('N files saved · X.Y GB') shows when count > 0; otherwise
-     *       title-only so the entry stays discoverable for users who
-     *       haven't saved anything yet.</li>
-     *   <li>Empty hero (paste + Safe Folder) — visible whenever the
-     *       Downloads card is hidden so the paste CTA stays on screen.</li>
+     *   <li>Active strip — any non-vault PROGRESS / QUEUED download.</li>
+     *   <li>Downloads card — {@link Preferences#SETTINGS_HOME_SHOW_RECENT_DOWNLOADS}
+     *       toggle. Subtitle ('N files saved · X.Y GB') shows when
+     *       count > 0; otherwise title-only.</li>
      * </ul>
      */
     private void applyHomeCustomisation() {
-        if (mRecentDownloadsCard == null || mHomeAllDisabled == null
-                || mActiveStrip == null) return;
+        if (mRecentDownloadsCard == null || mActiveStrip == null) return;
 
         boolean showRecent = mSharedPreferences.getBoolean(
                 Preferences.SETTINGS_HOME_SHOW_RECENT_DOWNLOADS,
@@ -496,7 +487,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
 
         mActiveStrip.setVisibility(stripVisible ? View.VISIBLE : View.GONE);
         mRecentDownloadsCard.setVisibility(cardVisible ? View.VISIBLE : View.GONE);
-        mHomeAllDisabled.setVisibility(cardVisible ? View.GONE : View.VISIBLE);
 
         if (stripVisible) bindActiveStrip(mLastActiveList);
         if (cardVisible) bindDownloadsSubtitle();
