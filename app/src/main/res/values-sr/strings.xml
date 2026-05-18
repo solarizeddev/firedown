@@ -268,7 +268,6 @@
     <string name="bookmark_name">Назив</string>
     <string name="downloads_quick_access_title">Недавна преузимања</string>
     <string name="downloads_quick_access_view_all_short">Прикажи све</string>
-    <string name="home_paste_hero_tagline">Имате везу? Налепите је да преузмете било шта.</string>
     <string name="home_paste_hero_button">Налепи везу за преузимање</string>
     <string name="home_paste_hero_empty">Прво копирајте везу, затим додирните овде</string>
     <string name="home_paste_hero_not_url">Ово не изгледа као веза</string>

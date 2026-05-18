@@ -236,7 +236,6 @@
     <string name="pip_pause">Paus</string>
     <string name="downloads_quick_access_title">Senaste nedladdningar</string>
     <string name="downloads_quick_access_view_all_short">Visa alla</string>
-    <string name="home_paste_hero_tagline">Har du en länk? Klistra in den för att ladda ner vad som helst.</string>
     <string name="home_paste_hero_button">Klistra in länk för att ladda ner</string>
     <string name="home_paste_hero_empty">Kopiera en länk först, tryck sedan här</string>
     <string name="home_paste_hero_not_url">Det ser inte ut som en länk</string>

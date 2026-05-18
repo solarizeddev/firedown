@@ -271,7 +271,6 @@
     <string name="bookmark_name">Ime</string>
     <string name="downloads_quick_access_title">Nedavna preuzimanja</string>
     <string name="downloads_quick_access_view_all_short">Pogledaj sve</string>
-    <string name="home_paste_hero_tagline">Imate poveznicu? Zalijepite je za preuzimanje bilo čega.</string>
     <string name="home_paste_hero_button">Zalijepi poveznicu za preuzimanje</string>
     <string name="home_paste_hero_empty">Prvo kopirajte poveznicu, zatim dodirnite ovdje</string>
     <string name="home_paste_hero_not_url">Ovo ne izgleda kao poveznica</string>

@@ -480,7 +480,6 @@
     <string name="pip_pause">一時停止</string>
     <string name="downloads_quick_access_title">最近のダウンロード</string>
     <string name="downloads_quick_access_view_all_short">すべて表示</string>
-    <string name="home_paste_hero_tagline">リンクをお持ちですか? 貼り付けて何でもダウンロード。</string>
     <string name="home_paste_hero_button">リンクを貼り付けてダウンロード</string>
     <string name="home_paste_hero_empty">まずリンクをコピーしてからタップしてください</string>
     <string name="home_paste_hero_not_url">リンクではないようです</string>

@@ -273,7 +273,6 @@
     <string name="bookmark_name">ชื่อ</string>
     <string name="downloads_quick_access_title">ดาวน์โหลดล่าสุด</string>
     <string name="downloads_quick_access_view_all_short">ดูทั้งหมด</string>
-    <string name="home_paste_hero_tagline">มีลิงก์? วางเพื่อดาวน์โหลดอะไรก็ได้</string>
     <string name="home_paste_hero_button">วางลิงก์เพื่อดาวน์โหลด</string>
     <string name="home_paste_hero_empty">คัดลอกลิงก์ก่อน แล้วแตะที่นี่</string>
     <string name="home_paste_hero_not_url">นี่ดูไม่เหมือนลิงก์</string>

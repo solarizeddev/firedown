@@ -87,32 +87,60 @@
                     android:src="@drawable/firedown_logo_color" />
 
                 <!--
-                    Empty-home hero. Firedown is a downloader first, so
-                    the calmest possible empty state is still a
-                    paste-to-download CTA — the killer flow is 'user
-                    has a link in their clipboard, wants the file in
-                    one tap'. Tagline frames the action so the button
-                    text doesn't have to carry all the context.
+                    Empty-home hero — paste-to-download CTA. Same card
+                    shape and layout as the Safe Folder card below, in
+                    secondaryContainer so the two read as a paired
+                    'pick one' set rather than competing surfaces.
+                    Tap → HomeFragment.onPasteAndDownload (reads clip,
+                    validates as URL via Patterns.WEB_URL, openUri or
+                    snackbar). Tagline text used to sit above a tonal
+                    button — folded into the card title now so the
+                    empty hero is just three things: logo, paste card,
+                    safe-folder card.
                 -->
-                <TextView
-                    android:id="@+id/home_paste_tagline"
-                    android:layout_width="wrap_content"
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/home_paste_card"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="20dp"
-                    android:gravity="center"
-                    android:text="@string/home_paste_hero_tagline"
-                    android:textAppearance="?attr/textAppearanceBodyMedium"
-                    android:textColor="?attr/colorOnSurfaceVariant" />
+                    android:layout_marginStart="@dimen/list_spacing"
+                    android:layout_marginEnd="@dimen/list_spacing"
+                    android:layout_marginTop="24dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    app:cardBackgroundColor="?attr/colorSecondaryContainer"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="0dp"
+                    app:strokeWidth="0dp">
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/home_paste_button"
-                    style="@style/Widget.Material3.Button.TonalButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:text="@string/home_paste_hero_button"
-                    app:icon="@drawable/content_paste_24"
-                    app:iconGravity="textStart" />
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingHorizontal="16dp"
+                        android:paddingVertical="14dp">
+
+                        <androidx.appcompat.widget.AppCompatImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:contentDescription="@null"
+                            android:src="@drawable/content_paste_24"
+                            app:tint="?attr/colorOnSecondaryContainer" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="14dp"
+                            android:layout_weight="1"
+                            android:ellipsize="end"
+                            android:maxLines="2"
+                            android:text="@string/home_paste_hero_button"
+                            android:textAppearance="?attr/textAppearanceTitleSmall"
+                            android:textColor="?attr/colorOnSecondaryContainer" />
+
+                    </LinearLayout>
+
+                </com.google.android.material.card.MaterialCardView>
 
                 <!--
                     Subtle vault entry — a small tonal card below the

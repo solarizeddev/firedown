@@ -193,7 +193,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         v.findViewById(R.id.recent_downloads_view_all).setOnClickListener(
                 view -> mStartForResult.launch(new Intent(mActivity, DownloadsActivity.class)));
 
-        v.findViewById(R.id.home_paste_button).setOnClickListener(view -> onPasteAndDownload());
+        v.findViewById(R.id.home_paste_card).setOnClickListener(view -> onPasteAndDownload());
 
         View vaultCard = v.findViewById(R.id.home_vault_card);
         mHomeVaultTitle = v.findViewById(R.id.home_vault_title);
