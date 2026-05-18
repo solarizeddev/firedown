@@ -11,8 +11,8 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/pinned_favicon_tile"
-    android:layout_width="48dp"
-    android:layout_height="48dp"
+    android:layout_width="64dp"
+    android:layout_height="64dp"
     android:layout_marginHorizontal="6dp"
     android:clickable="true"
     android:focusable="true"
@@ -23,8 +23,8 @@
 
     <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/pinned_favicon_image"
-        android:layout_width="24dp"
-        android:layout_height="24dp"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
         android:layout_gravity="center"
         android:contentDescription="@null"
         android:scaleType="fitCenter" />
