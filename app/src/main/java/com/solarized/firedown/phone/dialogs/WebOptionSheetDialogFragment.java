@@ -37,6 +37,7 @@ public class WebOptionSheetDialogFragment extends BaseBottomSheetDialogFragment 
     private int mId;
 
     private boolean mEdit;
+    private boolean mPinned;
 
     @Override
     public void onCreate(Bundle savedInstanceState){
@@ -52,6 +53,8 @@ public class WebOptionSheetDialogFragment extends BaseBottomSheetDialogFragment 
         mCurrentUrl = bundle.getString(Keys.SHARE_URL, null);
 
         mEdit = bundle.getBoolean(Keys.EDIT, false);
+
+        mPinned = bundle.getBoolean(Keys.PINNED, false);
 
         mWebBookmarkViewModel = new ViewModelProvider(this).get(WebBookmarkViewModel.class);
 
@@ -91,7 +94,14 @@ public class WebOptionSheetDialogFragment extends BaseBottomSheetDialogFragment 
         try {
             for (int i = 0; i < labels.length; i++) {
                 int iconResId = imgs.getResourceId(i, R.drawable.ic_draft_24);
-                optionItemList.add(new OptionItem(labels[i], iconResId));
+                String label = labels[i];
+                // Pin-toggle entry: swap the label to 'Unpin from top'
+                // when the bookmark is already pinned, so the user sees
+                // the action they're about to take, not the state name.
+                if (iconResId == R.drawable.ic_push_pin_24 && mPinned) {
+                    label = getString(R.string.web_options_unpin);
+                }
+                optionItemList.add(new OptionItem(label, iconResId));
             }
         } finally {
             imgs.recycle();
@@ -124,6 +134,13 @@ public class WebOptionSheetDialogFragment extends BaseBottomSheetDialogFragment 
         } else if(id == R.drawable.ic_edit_24){
             Bundle bundle = getArguments();
             NavigationUtils.navigateSafe(mNavController, R.id.web_bookmark_edit, bundle);
+        } else if(id == R.drawable.ic_push_pin_24){
+            // Toggle pin state for this bookmark. The DAO query orders
+            // by is_pinned DESC, so the row will visibly jump to the
+            // top (or out of the top section) on the next paged
+            // refresh.
+            mWebBookmarkViewModel.setPinned(mId, !mPinned);
+            NavigationUtils.popBackStackSafe(mNavController, R.id.dialog_web_options);
         }
     }
 

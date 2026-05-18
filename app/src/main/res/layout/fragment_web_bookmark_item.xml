@@ -47,6 +47,26 @@
                 app:layout_constraintBottom_toBottomOf="parent"/>
 
 
+            <!--
+                Pin badge — visible only on pinned bookmarks
+                (WebBookmarkAdapter toggles visibility). Sits between
+                the favicon and the title so it reads as a status
+                marker, not a tappable affordance. Tinted with
+                colorPrimary so it pops without screaming.
+            -->
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/file_pin_badge"
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:layout_marginStart="12dp"
+                android:contentDescription="@null"
+                android:src="@drawable/ic_push_pin_filled_16"
+                android:visibility="gone"
+                app:tint="?attr/colorPrimary"
+                app:layout_constraintStart_toEndOf="@id/file_icon"
+                app:layout_constraintTop_toTopOf="@id/file_name"
+                app:layout_constraintBottom_toBottomOf="@id/file_name"/>
+
             <TextView
                 android:id="@+id/file_name"
                 android:layout_width="0dp"
@@ -58,7 +78,7 @@
                 android:singleLine="true"
                 style="@style/TextAppearance.Material3.TitleMedium"
                 app:layout_constraintEnd_toStartOf="@id/file_more"
-                app:layout_constraintStart_toEndOf="@id/file_icon"
+                app:layout_constraintStart_toEndOf="@id/file_pin_badge"
                 app:layout_constraintTop_toTopOf="parent"/>
 
             <TextView

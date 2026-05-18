@@ -103,6 +103,8 @@ public class WebBookmarkViewModel extends ViewModel {
     public void add(GeckoState gecko) { mRepository.add(gecko); }
     public void deleteAll() { mRepository.deleteAll(); }
     public boolean contains(GeckoState gecko) { return mRepository.contains(gecko); }
+    /** See {@link WebBookmarkDataRepository#setPinned}. */
+    public void setPinned(int id, boolean pinned) { mRepository.setPinned(id, pinned); }
 
     public void getId(int id, DataCallback<WebBookmarkEntity> callback) {
         mRepository.getId(id, callback);

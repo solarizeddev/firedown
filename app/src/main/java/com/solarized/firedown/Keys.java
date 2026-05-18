@@ -9,6 +9,10 @@ public class Keys {
     public static final String MEDIA_RATE = "com.solarized.firedown.MEDIA_RATE";
     public static final String SHARE_URL = "com.solarized.firedown.SHARE_URL";
     public static final String EDIT = "com.solarized.firedown.EDIT";
+    /** Boolean — pre-resolved isPinned state for a bookmark, passed
+     *  to WebOptionSheetDialogFragment so the pin-toggle entry's
+     *  label can render synchronously without a DB round-trip. */
+    public static final String PINNED = "com.solarized.firedown.PINNED";
     public static final String TITLE = "com.solarized.firedown.TITLE";
     public static final String IS_INCOGNITO = "com.solarized.firedown.IS_INCOGNTO";
     public static final String OPEN_INCOGNITO = "com.solarized.firedown.OPEN_INCOGNTO";

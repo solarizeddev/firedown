@@ -16,6 +16,7 @@ public class WebBookmarkDiffCallback extends DiffUtil.ItemCallback<WebBookmarkEn
     @Override
     public boolean areContentsTheSame(@NonNull WebBookmarkEntity oldItem, @NonNull WebBookmarkEntity newItem) {
         return oldItem.getDate() == newItem.getDate()
+                && oldItem.isPinned() == newItem.isPinned()
                 && Objects.equals(oldItem.getTitle(), newItem.getTitle())
                 && Objects.equals(oldItem.getIcon(), newItem.getIcon())
                 && Objects.equals(oldItem.getUrl(), newItem.getUrl());

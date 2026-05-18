@@ -25,14 +25,20 @@ public interface WebBookmarkDao {
     WebBookmarkEntity getId(int id);
 
 
-    @Query("SELECT * FROM webbookmark ORDER BY file_date DESC")
+    // Pinned bookmarks render at the top of the list (replaces the
+    // standalone shortcuts concept); secondary sort by date so
+    // ordering is stable inside each tier.
+    @Query("SELECT * FROM webbookmark ORDER BY is_pinned DESC, file_date DESC")
     PagingSource<Integer, WebBookmarkEntity> getBookmarks();
 
-    @Query("SELECT * FROM webbookmark ORDER BY file_date DESC LIMIT :limit")
+    @Query("SELECT * FROM webbookmark ORDER BY is_pinned DESC, file_date DESC LIMIT :limit")
     LiveData<List<WebBookmarkEntity>> getBookmark(int limit);
 
-    @Query("SELECT * FROM webbookmark WHERE file_url LIKE :search or file_title LIKE :search ORDER BY file_date DESC")
+    @Query("SELECT * FROM webbookmark WHERE file_url LIKE :search or file_title LIKE :search ORDER BY is_pinned DESC, file_date DESC")
     PagingSource<Integer, WebBookmarkEntity> search(String search);
+
+    @Query("UPDATE webbookmark SET is_pinned = :pinned WHERE uid = :id")
+    Integer setPinned(int id, boolean pinned);
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     Long insert(WebBookmarkEntity web);

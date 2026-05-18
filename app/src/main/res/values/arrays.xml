@@ -360,9 +360,18 @@
     </string-array>
 
 
+    <!--
+        web_options_edit_items: option set shown when the long-press /
+        more-button is invoked on a bookmark row. The 'Pin to top'
+        entry's label is swapped at bind time in
+        WebOptionSheetDialogFragment between web_options_pin and
+        web_options_unpin based on the bookmark's current isPinned
+        state; the icon stays ic_push_pin_24 either way.
+    -->
     <integer-array name="web_options_edit_items">
         <item>@string/open_origin</item>
         <item>@string/edit</item>
+        <item>@string/web_options_pin</item>
         <item>@string/share</item>
         <item>@string/delete</item>
     </integer-array>
@@ -371,6 +380,7 @@
     <integer-array name="web_options_edit_items_icon">
         <item>@drawable/ic_web_24</item>
         <item>@drawable/ic_edit_24</item>
+        <item>@drawable/ic_push_pin_24</item>
         <item>@drawable/ic_share_24</item>
         <item>@drawable/ic_baseline_delete_24</item>
     </integer-array>

@@ -106,6 +106,13 @@ public class WebBookmarkDataRepository {
         mDiskExecutor.execute(mWebBookmarkDao::deleteAll);
     }
 
+    /** Toggle the is_pinned flag for a bookmark. Pinned bookmarks
+     *  render at the top of the list with a pin badge — replaces the
+     *  retired standalone shortcuts surface. */
+    public void setPinned(int id, boolean pinned) {
+        mDiskExecutor.execute(() -> mWebBookmarkDao.setPinned(id, pinned));
+    }
+
     public void getId(int id, DataCallback<WebBookmarkEntity> callback){
         mDiskExecutor.execute(() -> {
             try {
