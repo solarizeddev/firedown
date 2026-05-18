@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/item_web_history_holder"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -48,24 +49,25 @@
 
 
             <!--
-                Pin badge — visible only on pinned bookmarks
-                (WebBookmarkAdapter toggles visibility). Sits between
-                the favicon and the title so it reads as a status
-                marker, not a tappable affordance. Tinted with
-                colorPrimary so it pops without screaming.
+                Pin badge — small overlay on the favicon's bottom-right
+                corner, visible only when WebBookmarkAdapter sets
+                isPinned. Stays out of the title's column entirely so
+                pinned vs unpinned rows have identical text geometry;
+                the favicon carries the status marker the way a
+                notification dot rides on an app icon.
             -->
             <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/file_pin_badge"
-                android:layout_width="16dp"
-                android:layout_height="16dp"
-                android:layout_marginStart="12dp"
+                android:layout_width="14dp"
+                android:layout_height="14dp"
                 android:contentDescription="@null"
                 android:src="@drawable/ic_push_pin_filled_16"
                 android:visibility="gone"
                 app:tint="?attr/colorPrimary"
-                app:layout_constraintStart_toEndOf="@id/file_icon"
-                app:layout_constraintTop_toTopOf="@id/file_name"
-                app:layout_constraintBottom_toBottomOf="@id/file_name"/>
+                app:layout_constraintEnd_toEndOf="@id/file_icon"
+                app:layout_constraintBottom_toBottomOf="@id/file_icon"
+                tools:visibility="visible"
+                tools:ignore="ContentDescription" />
 
             <TextView
                 android:id="@+id/file_name"
@@ -78,7 +80,7 @@
                 android:singleLine="true"
                 style="@style/TextAppearance.Material3.TitleMedium"
                 app:layout_constraintEnd_toStartOf="@id/file_more"
-                app:layout_constraintStart_toEndOf="@id/file_pin_badge"
+                app:layout_constraintStart_toEndOf="@id/file_icon"
                 app:layout_constraintTop_toTopOf="parent"/>
 
             <TextView
