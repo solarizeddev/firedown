@@ -17,8 +17,4 @@
     </plurals>
 
     
-        <plurals name="home_active_downloads_more">
-        <item quantity="one">és még %d</item>
-        <item quantity="other">és még %d</item>
-    </plurals>
 </resources>

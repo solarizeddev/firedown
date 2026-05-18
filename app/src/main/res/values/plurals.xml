@@ -39,11 +39,4 @@
         <item quantity="one">%d private tab open</item>
         <item quantity="other">%d private tabs open</item>
     </plurals>
-    <!-- Subtitle under the active-download strip when more than one
-         download is in flight. Headline shows the most-recent active
-         item; this counts the rest. -->
-    <plurals name="home_active_downloads_more">
-        <item quantity="one">and %d more</item>
-        <item quantity="other">and %d more</item>
-    </plurals>
 </resources>

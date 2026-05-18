@@ -18,8 +18,4 @@
         <item quantity="few">Не ўдалося перамясціць файлы. %1$s</item>
         <item quantity="many">Не ўдалося перамясціць файлы. %1$s</item>
     </plurals>
-    <plurals name="home_active_downloads_more">
-        <item quantity="one">і яшчэ %d</item>
-        <item quantity="other">і яшчэ %d</item>
-    </plurals>
 </resources>

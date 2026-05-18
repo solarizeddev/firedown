@@ -1,7 +1,3 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <plurals name="home_active_downloads_more">
-        <item quantity="one">र अरू %d</item>
-        <item quantity="other">र अरू %d</item>
-    </plurals>
 </resources>

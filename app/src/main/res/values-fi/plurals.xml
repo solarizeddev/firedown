@@ -17,8 +17,4 @@
     </plurals>
 
     
-        <plurals name="home_active_downloads_more">
-        <item quantity="one">ja %d muuta</item>
-        <item quantity="other">ja %d muuta</item>
-    </plurals>
 </resources>

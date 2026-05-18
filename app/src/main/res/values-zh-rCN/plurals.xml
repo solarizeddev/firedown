@@ -19,8 +19,4 @@
         <plurals name="archive_banner_title">
         <item quantity="other">%d 个最近关闭的标签页</item>
     </plurals>
-    <plurals name="home_active_downloads_more">
-        <item quantity="one">还有 %d 个</item>
-        <item quantity="other">还有 %d 个</item>
-    </plurals>
 </resources>

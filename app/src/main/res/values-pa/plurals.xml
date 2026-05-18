@@ -17,8 +17,4 @@
     </plurals>
 
     
-        <plurals name="home_active_downloads_more">
-        <item quantity="one">ਅਤੇ %d ਹੋਰ</item>
-        <item quantity="other">ਅਤੇ %d ਹੋਰ</item>
-    </plurals>
 </resources>

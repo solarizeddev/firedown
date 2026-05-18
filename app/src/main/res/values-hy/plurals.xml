@@ -12,8 +12,4 @@
         <item quantity="other">Չհաջողվեց տեղափոխել ֆայլերը։ %1$s</item>
         <item quantity="one">Չհաջողվեց տեղափոխել ֆայլը։ %1$s</item>
     </plurals>
-    <plurals name="home_active_downloads_more">
-        <item quantity="one">և ևս %d</item>
-        <item quantity="other">և ևս %d</item>
-    </plurals>
 </resources>

@@ -16,8 +16,4 @@
     </plurals>
 
     
-        <plurals name="home_active_downloads_more">
-        <item quantity="one">還有 %d 個</item>
-        <item quantity="other">還有 %d 個</item>
-    </plurals>
 </resources>

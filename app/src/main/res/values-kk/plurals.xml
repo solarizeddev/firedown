@@ -17,8 +17,4 @@
     </plurals>
 
     
-        <plurals name="home_active_downloads_more">
-        <item quantity="one">және тағы %d</item>
-        <item quantity="other">және тағы %d</item>
-    </plurals>
 </resources>

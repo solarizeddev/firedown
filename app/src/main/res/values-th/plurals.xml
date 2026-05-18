@@ -16,8 +16,4 @@
     </plurals>
 
     
-        <plurals name="home_active_downloads_more">
-        <item quantity="one">และอีก %d รายการ</item>
-        <item quantity="other">และอีก %d รายการ</item>
-    </plurals>
 </resources>

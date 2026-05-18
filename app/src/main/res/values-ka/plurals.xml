@@ -17,8 +17,4 @@
     </plurals>
 
     
-        <plurals name="home_active_downloads_more">
-        <item quantity="one">და კიდევ %d</item>
-        <item quantity="other">და კიდევ %d</item>
-    </plurals>
 </resources>

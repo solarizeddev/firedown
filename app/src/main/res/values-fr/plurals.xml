@@ -32,8 +32,4 @@
         <item quantity="one">%d onglet archivé ce mois-ci</item>
         <item quantity="other">%d onglets archivés ce mois-ci</item>
     </plurals>
-    <plurals name="home_active_downloads_more">
-        <item quantity="one">et %d de plus</item>
-        <item quantity="other">et %d de plus</item>
-    </plurals>
 </resources>

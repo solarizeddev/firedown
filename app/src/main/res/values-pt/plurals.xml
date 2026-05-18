@@ -17,8 +17,4 @@
     </plurals>
 
     
-        <plurals name="home_active_downloads_more">
-        <item quantity="one">e mais %d</item>
-        <item quantity="other">e mais %d</item>
-    </plurals>
 </resources>

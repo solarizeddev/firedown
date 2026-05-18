@@ -20,8 +20,4 @@
     </plurals>
 
     
-        <plurals name="home_active_downloads_more">
-        <item quantity="one">и још %d</item>
-        <item quantity="other">и још %d</item>
-    </plurals>
 </resources>

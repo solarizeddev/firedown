@@ -16,8 +16,4 @@
     </plurals>
 
     
-        <plurals name="home_active_downloads_more">
-        <item quantity="one">dan %d lainnya</item>
-        <item quantity="other">dan %d lainnya</item>
-    </plurals>
 </resources>

@@ -17,8 +17,4 @@
     </plurals>
 
     
-        <plurals name="home_active_downloads_more">
-        <item quantity="one">കൂടാതെ %d എണ്ണം കൂടി</item>
-        <item quantity="other">കൂടാതെ %d എണ്ണം കൂടി</item>
-    </plurals>
 </resources>

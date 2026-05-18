@@ -15,8 +15,4 @@
         <item quantity="one">%1$dh</item>
         <item quantity="other">%1$dh</item>
     </plurals>
-    <plurals name="home_active_downloads_more">
-        <item quantity="one">i %d més</item>
-        <item quantity="other">i %d més</item>
-    </plurals>
 </resources>

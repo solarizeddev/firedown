@@ -19,8 +19,4 @@
         <plurals name="archive_banner_title">
         <item quantity="other">%d 個最近關閉的分頁</item>
     </plurals>
-    <plurals name="home_active_downloads_more">
-        <item quantity="one">還有 %d 個</item>
-        <item quantity="other">還有 %d 個</item>
-    </plurals>
 </resources>

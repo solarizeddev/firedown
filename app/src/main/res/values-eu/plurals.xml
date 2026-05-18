@@ -17,8 +17,4 @@
     </plurals>
 
     
-        <plurals name="home_active_downloads_more">
-        <item quantity="one">eta beste %d</item>
-        <item quantity="other">eta beste %d</item>
-    </plurals>
 </resources>

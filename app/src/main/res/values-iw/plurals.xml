@@ -22,8 +22,4 @@
     </plurals>
 
     
-        <plurals name="home_active_downloads_more">
-        <item quantity="one">ועוד %d</item>
-        <item quantity="other">ועוד %d</item>
-    </plurals>
 </resources>

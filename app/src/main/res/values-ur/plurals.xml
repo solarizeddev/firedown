@@ -17,8 +17,4 @@
     </plurals>
 
     
-        <plurals name="home_active_downloads_more">
-        <item quantity="one">اور %d مزید</item>
-        <item quantity="other">اور %d مزید</item>
-    </plurals>
 </resources>

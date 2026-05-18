@@ -17,8 +17,4 @@
     </plurals>
 
     
-        <plurals name="home_active_downloads_more">
-        <item quantity="one">och %d till</item>
-        <item quantity="other">och %d till</item>
-    </plurals>
 </resources>

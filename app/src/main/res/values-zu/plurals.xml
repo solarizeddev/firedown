@@ -12,8 +12,4 @@
         <item quantity="other">Ayikwazanga ukuhambisa amafayela. %1$s</item>
         <item quantity="one">Ayikwazanga ukuhambisa amafayela. %1$s</item>
     </plurals>
-    <plurals name="home_active_downloads_more">
-        <item quantity="one">kanye no-%d okwengeziwe</item>
-        <item quantity="other">kanye no-%d okwengeziwe</item>
-    </plurals>
 </resources>

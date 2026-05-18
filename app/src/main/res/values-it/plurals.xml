@@ -33,8 +33,4 @@
         <item quantity="one">%d scheda archiviata questo mese</item>
         <item quantity="other">%d schede archiviate questo mese</item>
     </plurals>
-    <plurals name="home_active_downloads_more">
-        <item quantity="one">e altro %d</item>
-        <item quantity="other">e altri %d</item>
-    </plurals>
 </resources>

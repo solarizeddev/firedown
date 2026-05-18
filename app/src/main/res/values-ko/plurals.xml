@@ -28,8 +28,4 @@
     <plurals name="archive_banner_title_month">
         <item quantity="other">이번 달에 보관된 탭 %d개</item>
     </plurals>
-    <plurals name="home_active_downloads_more">
-        <item quantity="one">외 %d개</item>
-        <item quantity="other">외 %d개</item>
-    </plurals>
 </resources>

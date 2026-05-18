@@ -16,8 +16,4 @@
     </plurals>
 
     
-        <plurals name="home_active_downloads_more">
-        <item quantity="one">và %d nữa</item>
-        <item quantity="other">và %d nữa</item>
-    </plurals>
 </resources>

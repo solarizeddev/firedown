@@ -17,8 +17,4 @@
     </plurals>
 
     
-        <plurals name="home_active_downloads_more">
-        <item quantity="one">və %d daha</item>
-        <item quantity="other">və %d daha</item>
-    </plurals>
 </resources>

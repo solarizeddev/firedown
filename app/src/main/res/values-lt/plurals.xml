@@ -25,8 +25,4 @@
     </plurals>
 
     
-        <plurals name="home_active_downloads_more">
-        <item quantity="one">ir dar %d</item>
-        <item quantity="other">ir dar %d</item>
-    </plurals>
 </resources>

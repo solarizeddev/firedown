@@ -49,8 +49,4 @@
         <item quantity="many">%d kart zarchiwizowanych w tym miesiącu</item>
         <item quantity="other">%d kart zarchiwizowanych w tym miesiącu</item>
     </plurals>
-    <plurals name="home_active_downloads_more">
-        <item quantity="one">i jeszcze %d</item>
-        <item quantity="other">i jeszcze %d</item>
-    </plurals>
 </resources>

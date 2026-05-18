@@ -21,8 +21,4 @@
     </plurals>
 
     
-        <plurals name="home_active_downloads_more">
-        <item quantity="one">și încă %d</item>
-        <item quantity="other">și încă %d</item>
-    </plurals>
 </resources>

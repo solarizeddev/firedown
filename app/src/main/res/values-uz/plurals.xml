@@ -12,8 +12,4 @@
         <item quantity="other">Fayllar koʻchirilmadi. %1$s</item>
         <item quantity="one">Fayl koʻchirilmadi. %1$s</item>
     </plurals>
-    <plurals name="home_active_downloads_more">
-        <item quantity="one">va yana %d ta</item>
-        <item quantity="other">va yana %d ta</item>
-    </plurals>
 </resources>

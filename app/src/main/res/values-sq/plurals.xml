@@ -17,8 +17,4 @@
     </plurals>
 
     
-        <plurals name="home_active_downloads_more">
-        <item quantity="one">dhe %d të tjera</item>
-        <item quantity="other">dhe %d të tjera</item>
-    </plurals>
 </resources>

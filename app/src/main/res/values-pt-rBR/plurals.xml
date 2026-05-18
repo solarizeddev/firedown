@@ -28,8 +28,4 @@
         <item quantity="one">%d aba arquivada este mês</item>
         <item quantity="other">%d abas arquivadas este mês</item>
     </plurals>
-    <plurals name="home_active_downloads_more">
-        <item quantity="one">e mais %d</item>
-        <item quantity="other">e mais %d</item>
-    </plurals>
 </resources>

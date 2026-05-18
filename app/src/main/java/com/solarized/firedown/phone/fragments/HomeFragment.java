@@ -97,7 +97,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     private MaterialCardView mActiveStrip;
     private TextView mActiveStripTitle;
     private TextView mActiveStripPercent;
-    private TextView mActiveStripSubtitle;
+    private TextView mActiveStripCount;
     private ProgressBar mActiveStripBar;
     private DownloadsQuickAccessAdapter mRecentDownloadsAdapter;
     private SharedPreferences.OnSharedPreferenceChangeListener mHomePrefsListener;
@@ -156,7 +156,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mActiveStrip = v.findViewById(R.id.active_download_strip);
         mActiveStripTitle = v.findViewById(R.id.active_download_title);
         mActiveStripPercent = v.findViewById(R.id.active_download_percent);
-        mActiveStripSubtitle = v.findViewById(R.id.active_download_subtitle);
+        mActiveStripCount = v.findViewById(R.id.active_download_count);
         mActiveStripBar = v.findViewById(R.id.active_download_bar);
         mActiveStrip.setOnClickListener(view ->
                 mStartForResult.launch(new Intent(mActivity, DownloadsActivity.class)));
@@ -418,7 +418,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mActiveStrip = null;
         mActiveStripTitle = null;
         mActiveStripPercent = null;
-        mActiveStripSubtitle = null;
+        mActiveStripCount = null;
         mActiveStripBar = null;
         mRecentDownloadsAdapter = null;
     }
@@ -505,11 +505,10 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
 
         int extra = active.size() - 1;
         if (extra > 0) {
-            mActiveStripSubtitle.setVisibility(View.VISIBLE);
-            mActiveStripSubtitle.setText(getResources().getQuantityString(
-                    R.plurals.home_active_downloads_more, extra, extra));
+            mActiveStripCount.setVisibility(View.VISIBLE);
+            mActiveStripCount.setText(String.format(java.util.Locale.US, "+%d", extra));
         } else {
-            mActiveStripSubtitle.setVisibility(View.GONE);
+            mActiveStripCount.setVisibility(View.GONE);
         }
     }
 

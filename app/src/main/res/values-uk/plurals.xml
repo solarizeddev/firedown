@@ -25,8 +25,4 @@
     </plurals>
 
     
-        <plurals name="home_active_downloads_more">
-        <item quantity="one">і ще %d</item>
-        <item quantity="other">і ще %d</item>
-    </plurals>
 </resources>

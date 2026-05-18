@@ -21,8 +21,4 @@
     </plurals>
 
     
-        <plurals name="home_active_downloads_more">
-        <item quantity="one">un vēl %d</item>
-        <item quantity="other">un vēl %d</item>
-    </plurals>
 </resources>

@@ -22,8 +22,4 @@
     </plurals>
 
     
-        <plurals name="home_active_downloads_more">
-        <item quantity="one">i još %d</item>
-        <item quantity="other">i još %d</item>
-    </plurals>
 </resources>

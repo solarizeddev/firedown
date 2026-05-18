@@ -17,8 +17,4 @@
     </plurals>
 
     
-        <plurals name="home_active_downloads_more">
-        <item quantity="one">અને %d વધુ</item>
-        <item quantity="other">અને %d વધુ</item>
-    </plurals>
 </resources>
