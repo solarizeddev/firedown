@@ -85,12 +85,23 @@
 
         </LinearLayout>
 
-        <ProgressBar
+        <!--
+            Material 3 LinearProgressIndicator (not plain ProgressBar) so
+            we can pin indicator + track colors explicitly. The default
+            colorPrimary tint blends into the colorPrimaryContainer card
+            background — both are oranges in Firedown's palette — so the
+            bar was invisible. colorOnPrimaryContainer (used by the
+            text in this card) reads cleanly against the surface;
+            trackColor defaults to indicatorColor at low alpha which
+            gives a subtle empty-state band.
+        -->
+        <com.google.android.material.progressindicator.LinearProgressIndicator
             android:id="@+id/active_download_bar"
-            style="@style/Widget.Material3.LinearProgressIndicator"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp" />
+            android:layout_marginTop="8dp"
+            app:indicatorColor="?attr/colorOnPrimaryContainer"
+            app:trackCornerRadius="2dp" />
 
     </LinearLayout>
 
