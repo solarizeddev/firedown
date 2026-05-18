@@ -185,6 +185,7 @@ public class DownloadFragment extends BaseDownloadFragment implements
                     setupSearchView(menu);
                     MenuItem actionView = menu.findItem(R.id.action_view);
                     if (actionView != null) actionView.setIcon(mEnableGrid ? R.drawable.ic_view_list_24 : R.drawable.ic_grid_view_24);
+                    maybeAutoExpandSearch();
                 }
             }
             @Override
@@ -334,5 +335,22 @@ public class DownloadFragment extends BaseDownloadFragment implements
         }
         int checkedId = checkedIds.get(0);
         mDownloadsViewModel.setFilterChip(checkedId);
+    }
+
+    /**
+     * One-shot: if the host activity was launched with the
+     * {@link Keys#OPEN_SEARCH} flag (set by the home Downloads
+     * card's trailing search button), expand the SearchView
+     * immediately so the keyboard pops and the user can start
+     * typing without an extra tap. Flag is cleared from the
+     * intent so a config-change-driven menu recreate doesn't
+     * re-expand and steal focus from whatever the user was doing.
+     */
+    private void maybeAutoExpandSearch() {
+        if (mActivity == null || mSearchItem == null) return;
+        android.content.Intent intent = mActivity.getIntent();
+        if (intent == null || !intent.getBooleanExtra(Keys.OPEN_SEARCH, false)) return;
+        intent.removeExtra(Keys.OPEN_SEARCH);
+        mSearchItem.expandActionView();
     }
 }

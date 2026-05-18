@@ -103,6 +103,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     private TextView mHomeVaultTitle;
     private TextView mHomeVaultSubtitle;
     private TextView mRecentDownloadsSubtitle;
+    private View mRecentDownloadsSearch;
     private SharedPreferences.OnSharedPreferenceChangeListener mHomePrefsListener;
     @Nullable private java.util.List<DownloadEntity> mLastActiveList;
     @Nullable private Integer mLastFinishedCount;
@@ -182,8 +183,19 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
 
 
         mRecentDownloadsSubtitle = v.findViewById(R.id.recent_downloads_subtitle);
+        mRecentDownloadsSearch = v.findViewById(R.id.recent_downloads_search);
         mRecentDownloadsCard.setOnClickListener(view ->
                 mStartForResult.launch(new Intent(mActivity, DownloadsActivity.class)));
+        // Trailing search → DownloadsActivity with the search field
+        // pre-expanded. Uses the same launcher so any post-result
+        // intent (open URL after download finished, etc.) gets
+        // routed back to the host activity the same way as a normal
+        // card tap.
+        mRecentDownloadsSearch.setOnClickListener(view -> {
+            Intent intent = new Intent(mActivity, DownloadsActivity.class);
+            intent.putExtra(Keys.OPEN_SEARCH, true);
+            mStartForResult.launch(intent);
+        });
 
         v.findViewById(R.id.home_paste_card).setOnClickListener(view -> onPasteAndDownload());
 
@@ -465,6 +477,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mHomeVaultTitle = null;
         mHomeVaultSubtitle = null;
         mRecentDownloadsSubtitle = null;
+        mRecentDownloadsSearch = null;
     }
 
     /**
@@ -527,14 +540,17 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         }
     }
 
-    /** Binds the 'N files saved · X.Y GB' subtitle on the Downloads
-     *  card. Hidden when no finished files exist so a curious user
-     *  with nothing downloaded yet sees the bare entry label. */
+    /** Binds the 'N files saved · X.Y GB' subtitle and the trailing
+     *  search button on the Downloads card. Both hidden when no
+     *  finished files exist — a vault-curious user with nothing
+     *  downloaded yet sees just the bare entry label, and there's
+     *  nothing to search either. */
     private void bindDownloadsSubtitle() {
         if (mRecentDownloadsSubtitle == null) return;
         int n = mLastFinishedCount == null ? 0 : mLastFinishedCount;
         if (n <= 0) {
             mRecentDownloadsSubtitle.setVisibility(View.GONE);
+            if (mRecentDownloadsSearch != null) mRecentDownloadsSearch.setVisibility(View.GONE);
             return;
         }
         String files = getResources().getQuantityString(
@@ -545,6 +561,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
                 : files;
         mRecentDownloadsSubtitle.setVisibility(View.VISIBLE);
         mRecentDownloadsSubtitle.setText(text);
+        if (mRecentDownloadsSearch != null) mRecentDownloadsSearch.setVisibility(View.VISIBLE);
     }
 
     /**

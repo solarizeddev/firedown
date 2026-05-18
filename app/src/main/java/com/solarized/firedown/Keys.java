@@ -8,6 +8,15 @@ public class Keys {
     public static final String MEDIA_DURATION = "com.solarized.firedown.MEDIA_DURATION";
     public static final String MEDIA_RATE = "com.solarized.firedown.MEDIA_RATE";
     public static final String SHARE_URL = "com.solarized.firedown.SHARE_URL";
+    /**
+     * One-shot boolean extra on the intent that launches
+     * DownloadsActivity (or VaultActivity) telling the hosted
+     * DownloadFragment to expand its search field immediately on
+     * menu creation. Used by the home Downloads card's trailing
+     * search button so 'find a download' is one tap from home
+     * instead of tap-into-list + tap-search-icon.
+     */
+    public static final String OPEN_SEARCH = "com.solarized.firedown.OPEN_SEARCH";
     public static final String EDIT = "com.solarized.firedown.EDIT";
     /** Boolean — pre-resolved isPinned state for a bookmark, passed
      *  to WebOptionSheetDialogFragment so the pin-toggle entry's
