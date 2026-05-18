@@ -100,6 +100,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             app:indicatorColor="?attr/colorOnPrimaryContainer"
+            app:indicatorTrackGapSize="0dp"
             app:trackCornerRadius="2dp"
             app:trackStopIndicatorSize="0dp" />
 
