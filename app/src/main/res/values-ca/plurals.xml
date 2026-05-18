@@ -23,4 +23,8 @@
         <item quantity="one">%d fitxer desat</item>
         <item quantity="other">%d fitxers desats</item>
     </plurals>
+    <plurals name="home_pinned_bookmarks_count">
+        <item quantity="one">%d fixat</item>
+        <item quantity="other">%d fixats</item>
+    </plurals>
 </resources>

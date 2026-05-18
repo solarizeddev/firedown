@@ -25,4 +25,8 @@
         <item quantity="one">%d gemt fil</item>
         <item quantity="other">%d gemte filer</item>
     </plurals>
+    <plurals name="home_pinned_bookmarks_count">
+        <item quantity="one">%d fastgjort</item>
+        <item quantity="other">%d fastgjorte</item>
+    </plurals>
 </resources>

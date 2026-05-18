@@ -41,4 +41,8 @@
         <item quantity="one">%d bestand opgeslagen</item>
         <item quantity="other">%d bestanden opgeslagen</item>
     </plurals>
+    <plurals name="home_pinned_bookmarks_count">
+        <item quantity="one">%d vastgepind</item>
+        <item quantity="other">%d vastgepind</item>
+    </plurals>
 </resources>

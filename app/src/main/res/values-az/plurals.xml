@@ -25,4 +25,8 @@
         <item quantity="one">%d fayl saxlandı</item>
         <item quantity="other">%d fayl saxlandı</item>
     </plurals>
+    <plurals name="home_pinned_bookmarks_count">
+        <item quantity="one">%d sabitlənib</item>
+        <item quantity="other">%d sabitlənib</item>
+    </plurals>
 </resources>

@@ -8,4 +8,8 @@
         <item quantity="one">%d archivo guardado</item>
         <item quantity="other">%d archivos guardados</item>
     </plurals>
+    <plurals name="home_pinned_bookmarks_count">
+        <item quantity="one">%d fijado</item>
+        <item quantity="other">%d fijados</item>
+    </plurals>
 </resources>

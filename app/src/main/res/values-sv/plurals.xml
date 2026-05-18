@@ -25,4 +25,8 @@
         <item quantity="one">%d sparad fil</item>
         <item quantity="other">%d sparade filer</item>
     </plurals>
+    <plurals name="home_pinned_bookmarks_count">
+        <item quantity="one">%d fäst</item>
+        <item quantity="other">%d fästa</item>
+    </plurals>
 </resources>

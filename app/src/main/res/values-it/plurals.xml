@@ -41,4 +41,8 @@
         <item quantity="one">%d file salvato</item>
         <item quantity="other">%d file salvati</item>
     </plurals>
+    <plurals name="home_pinned_bookmarks_count">
+        <item quantity="one">%d fissato</item>
+        <item quantity="other">%d fissati</item>
+    </plurals>
 </resources>

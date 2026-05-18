@@ -25,4 +25,8 @@
         <item quantity="one">%d αρχείο αποθηκευμένο</item>
         <item quantity="other">%d αρχεία αποθηκευμένα</item>
     </plurals>
+    <plurals name="home_pinned_bookmarks_count">
+        <item quantity="one">%d καρφιτσωμένο</item>
+        <item quantity="other">%d καρφιτσωμένα</item>
+    </plurals>
 </resources>

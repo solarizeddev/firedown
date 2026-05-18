@@ -75,8 +75,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         AutoCompleteEditText.OnCommitListener, AutoCompleteEditText.OnFilterListener, AutoCompleteEditText.OnFocusChangedListener,
         AutoCompleteEditText.OnTextChangedListener, AutoCompleteEditText.OnSearchStateChangeListener,
         GeckoToolbar.OnToolbarListener , OnBoardingCard.OnBoardingCardListener, OnItemClickListener,
-        DownloadsQuickAccessSheet.Host,
-        com.solarized.firedown.phone.dialogs.BookmarksQuickAccessSheet.Host {
+        DownloadsQuickAccessSheet.Host {
 
 
     private static final String TAG = HomeFragment.class.getName();
@@ -104,6 +103,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     @Nullable private android.animation.ObjectAnimator mActiveStripPulse;
     private TextView mHomeVaultTitle;
     private TextView mHomeVaultSubtitle;
+    private TextView mHomePinnedSubtitle;
     private TextView mRecentDownloadsSubtitle;
     private SharedPreferences.OnSharedPreferenceChangeListener mHomePrefsListener;
     @Nullable private java.util.List<DownloadEntity> mLastActiveList;
@@ -195,6 +195,11 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mHomeVaultSubtitle = v.findViewById(R.id.home_vault_subtitle);
         vaultCard.setOnClickListener(view ->
                 mStartForResult.launch(new Intent(mActivity, VaultActivity.class)));
+
+        View pinnedCard = v.findViewById(R.id.home_pinned_card);
+        mHomePinnedSubtitle = v.findViewById(R.id.home_pinned_subtitle);
+        pinnedCard.setOnClickListener(view ->
+                mStartForResult.launch(new Intent(mActivity, BookmarkActivity.class)));
 
 
         mBottomNavigationBar.setListener(this);
@@ -291,10 +296,21 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         // can read getValue() synchronously without a cold-start
         // race on first invocation.
         mRecentDownloadsViewModel.getRecent().observe(getViewLifecycleOwner(), list -> { /* warm */ });
-        // Same pattern for pinned bookmarks — keep the LiveData hot so
-        // the cradle long-press handler can read getValue() and decide
-        // sheet-vs-activity without a cold-start race.
-        mWebBookmarkViewModel.getPinned().observe(getViewLifecycleOwner(), list -> { /* warm */ });
+        // Drives the home Pinned bookmarks card subtitle. Card itself
+        // is always visible (discoverability for users who haven't
+        // pinned anything yet); the subtitle 'N pinned' only appears
+        // when count > 0, same as the Safe Folder card.
+        mWebBookmarkViewModel.getPinned().observe(getViewLifecycleOwner(), list -> {
+            if (mHomePinnedSubtitle == null) return;
+            int n = list == null ? 0 : list.size();
+            if (n > 0) {
+                mHomePinnedSubtitle.setVisibility(View.VISIBLE);
+                mHomePinnedSubtitle.setText(getResources().getQuantityString(
+                        R.plurals.home_pinned_bookmarks_count, n, n));
+            } else {
+                mHomePinnedSubtitle.setVisibility(View.GONE);
+            }
+        });
 
         // Vault count drives the empty-hero vault button's count badge.
         // Button itself is always visible while the empty hero is
@@ -471,6 +487,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mActiveStripIcon = null;
         mHomeVaultTitle = null;
         mHomeVaultSubtitle = null;
+        mHomePinnedSubtitle = null;
         mRecentDownloadsSubtitle = null;
     }
 
@@ -637,22 +654,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
                         DownloadsQuickAccessSheet.TAG);
             }
             return true;
-        } else if (id == R.id.search_button) {
-            // Cradle Bookmarks long-press — peek at pinned bookmarks
-            // without leaving home. Same sheet-vs-activity fallback
-            // as the Downloads long-press: empty pinned list → jump
-            // straight to BookmarkActivity so the gesture still does
-            // something for users who haven't pinned anything.
-            java.util.List<com.solarized.firedown.data.entity.WebBookmarkEntity> cached =
-                    mWebBookmarkViewModel.getPinned().getValue();
-            if (cached == null || cached.isEmpty()) {
-                mStartForResult.launch(new Intent(mActivity, BookmarkActivity.class));
-            } else {
-                new com.solarized.firedown.phone.dialogs.BookmarksQuickAccessSheet()
-                        .show(getChildFragmentManager(),
-                                com.solarized.firedown.phone.dialogs.BookmarksQuickAccessSheet.TAG);
-            }
-            return true;
         }
         return false;
     }
@@ -668,17 +669,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         } else {
             openItem(entity, null);
         }
-    }
-
-    /** {@link com.solarized.firedown.phone.dialogs.BookmarksQuickAccessSheet.Host}
-     *  — fired when the user taps a pinned-bookmark row in the
-     *  cradle long-press sheet. Routes through openUri so the URL
-     *  gets the same parseUri normalisation as a paste-hero or
-     *  autocomplete entry. */
-    @Override
-    public void onBookmarkQuickAccessTap(
-            @NonNull com.solarized.firedown.data.entity.WebBookmarkEntity entity) {
-        openUri(entity.getUrl());
     }
 
 

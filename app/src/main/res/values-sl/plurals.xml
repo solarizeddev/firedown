@@ -33,4 +33,8 @@
         <item quantity="one">%d shranjena datoteka</item>
         <item quantity="other">%d shranjenih datotek</item>
     </plurals>
+    <plurals name="home_pinned_bookmarks_count">
+        <item quantity="one">%d pripet</item>
+        <item quantity="other">%d pripetih</item>
+    </plurals>
 </resources>

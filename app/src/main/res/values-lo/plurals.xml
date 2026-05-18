@@ -20,4 +20,8 @@
         <item quantity="one">%d ໄຟລ໌ ບັນທຶກແລ້ວ</item>
         <item quantity="other">%d ໄຟລ໌ ບັນທຶກແລ້ວ</item>
     </plurals>
+    <plurals name="home_pinned_bookmarks_count">
+        <item quantity="one">%d ປັກໝຸດແລ້ວ</item>
+        <item quantity="other">%d ປັກໝຸດແລ້ວ</item>
+    </plurals>
 </resources>

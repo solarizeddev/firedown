@@ -25,4 +25,8 @@
         <item quantity="one">%d ფაილი შენახულია</item>
         <item quantity="other">%d ფაილი შენახულია</item>
     </plurals>
+    <plurals name="home_pinned_bookmarks_count">
+        <item quantity="one">%d მიმაგრებული</item>
+        <item quantity="other">%d მიმაგრებული</item>
+    </plurals>
 </resources>

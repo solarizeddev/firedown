@@ -20,4 +20,8 @@
         <item quantity="one">%d ֆայլ պահված է</item>
         <item quantity="other">%d ֆայլ պահված է</item>
     </plurals>
+    <plurals name="home_pinned_bookmarks_count">
+        <item quantity="one">%d ամրացված</item>
+        <item quantity="other">%d ամրացված</item>
+    </plurals>
 </resources>

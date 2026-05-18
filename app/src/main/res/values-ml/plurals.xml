@@ -25,4 +25,8 @@
         <item quantity="one">%d ഫയൽ സംരക്ഷിച്ചു</item>
         <item quantity="other">%d ഫയലുകൾ സംരക്ഷിച്ചു</item>
     </plurals>
+    <plurals name="home_pinned_bookmarks_count">
+        <item quantity="one">%d പിൻ ചെയ്തു</item>
+        <item quantity="other">%d പിൻ ചെയ്തു</item>
+    </plurals>
 </resources>

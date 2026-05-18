@@ -33,4 +33,8 @@
         <item quantity="one">%d uložený súbor</item>
         <item quantity="other">%d uložených súborov</item>
     </plurals>
+    <plurals name="home_pinned_bookmarks_count">
+        <item quantity="one">%d pripnutá</item>
+        <item quantity="other">%d pripnutých</item>
+    </plurals>
 </resources>

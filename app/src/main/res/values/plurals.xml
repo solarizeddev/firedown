@@ -51,4 +51,10 @@
         <item quantity="one">%d file saved</item>
         <item quantity="other">%d files saved</item>
     </plurals>
+    <!-- Subtitle on the home Pinned bookmarks card. Renders only
+         when count > 0. -->
+    <plurals name="home_pinned_bookmarks_count">
+        <item quantity="one">%d pinned</item>
+        <item quantity="other">%d pinned</item>
+    </plurals>
 </resources>

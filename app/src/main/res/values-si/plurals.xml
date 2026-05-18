@@ -20,4 +20,8 @@
         <item quantity="one">%d ගොනුව සුරකින ලදී</item>
         <item quantity="other">%d ගොනු සුරකින ලදී</item>
     </plurals>
+    <plurals name="home_pinned_bookmarks_count">
+        <item quantity="one">%d ඇමිණූ</item>
+        <item quantity="other">%d ඇමිණූ</item>
+    </plurals>
 </resources>

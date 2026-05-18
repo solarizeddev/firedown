@@ -25,4 +25,8 @@
         <item quantity="one">%d file ang nai-save</item>
         <item quantity="other">%d files ang nai-save</item>
     </plurals>
+    <plurals name="home_pinned_bookmarks_count">
+        <item quantity="one">%d naka-pin</item>
+        <item quantity="other">%d naka-pin</item>
+    </plurals>
 </resources>

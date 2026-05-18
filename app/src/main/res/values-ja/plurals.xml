@@ -36,4 +36,8 @@
         <item quantity="one">%d 個のファイル保存済み</item>
         <item quantity="other">%d 個のファイル保存済み</item>
     </plurals>
+    <plurals name="home_pinned_bookmarks_count">
+        <item quantity="one">%d 件ピン留め</item>
+        <item quantity="other">%d 件ピン留め</item>
+    </plurals>
 </resources>

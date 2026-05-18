@@ -25,4 +25,8 @@
         <item quantity="one">%d fájl mentve</item>
         <item quantity="other">%d fájl mentve</item>
     </plurals>
+    <plurals name="home_pinned_bookmarks_count">
+        <item quantity="one">%d rögzítve</item>
+        <item quantity="other">%d rögzítve</item>
+    </plurals>
 </resources>

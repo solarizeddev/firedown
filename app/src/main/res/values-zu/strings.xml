@@ -221,6 +221,5 @@
     <string name="home_paste_hero_not_url">Lokhu akubukeki njengesixhumanisi</string>
     <string name="home_onboarding_sites_label">Zama i-Firedown ku</string>
     <string name="home_vault_button">Ifolda ephephile</string>
-    <string name="bookmarks_quick_access_title">Amabhukmaki athungelelwe</string>
-    <string name="bookmarks_quick_access_view_all">Buka wonke amabhukmaki</string>
+    <string name="home_pinned_bookmarks">Amabhukmaki athungelelwe</string>
 </resources>

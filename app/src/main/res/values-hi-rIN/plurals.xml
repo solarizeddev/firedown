@@ -8,4 +8,8 @@
         <item quantity="one">%d फ़ाइल सहेजी गई</item>
         <item quantity="other">%d फ़ाइलें सहेजी गईं</item>
     </plurals>
+    <plurals name="home_pinned_bookmarks_count">
+        <item quantity="one">%d पिन किया</item>
+        <item quantity="other">%d पिन किए</item>
+    </plurals>
 </resources>

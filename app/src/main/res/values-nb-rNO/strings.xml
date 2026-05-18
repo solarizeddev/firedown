@@ -57,6 +57,5 @@
     <string name="home_paste_hero_empty">Kopier en kobling først, og trykk så her</string>
     <string name="home_paste_hero_not_url">Dette ser ikke ut som en kobling</string>
     <string name="home_onboarding_sites_label">Prøv Firedown på</string>
-    <string name="bookmarks_quick_access_title">Festede bokmerker</string>
-    <string name="bookmarks_quick_access_view_all">Se alle bokmerker</string>
+    <string name="home_pinned_bookmarks">Festede bokmerker</string>
 </resources>

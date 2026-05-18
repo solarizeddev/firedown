@@ -101,13 +101,6 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
         spacer.setVisibility(enableCradle ? View.VISIBLE : View.GONE);
         searchIcon.setVisibility(enableCradle ? View.GONE : View.VISIBLE);
         searchIcon.setOnClickListener(this);
-        // Cradle Bookmarks long-press → HomeFragment opens the
-        // pinned-bookmarks quick-access sheet. Adding the listener
-        // unconditionally is fine — in incognito the search icon
-        // is the cradle slot but long-pressing it on the incognito
-        // home is just a no-op (HomeIncognitoFragment doesn't
-        // handle R.id.search_button in onBottomBarButtonLongClick).
-        searchIcon.setOnLongClickListener(this);
         newTabButton.setOnLongClickListener(this);
         downloadButton.setOnLongClickListener(this);
 

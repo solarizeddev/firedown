@@ -25,4 +25,8 @@
         <item quantity="one">%d salvestatud fail</item>
         <item quantity="other">%d salvestatud faili</item>
     </plurals>
+    <plurals name="home_pinned_bookmarks_count">
+        <item quantity="one">%d kinnitatud</item>
+        <item quantity="other">%d kinnitatud</item>
+    </plurals>
 </resources>

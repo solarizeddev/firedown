@@ -20,4 +20,8 @@
         <item quantity="one">%d fichier enregistré</item>
         <item quantity="other">%d fichiers enregistrés</item>
     </plurals>
+    <plurals name="home_pinned_bookmarks_count">
+        <item quantity="one">%d épinglé</item>
+        <item quantity="other">%d épinglés</item>
+    </plurals>
 </resources>

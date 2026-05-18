@@ -24,4 +24,8 @@
         <item quantity="one">Đã lưu %d tệp</item>
         <item quantity="other">Đã lưu %d tệp</item>
     </plurals>
+    <plurals name="home_pinned_bookmarks_count">
+        <item quantity="one">%d đã ghim</item>
+        <item quantity="other">%d đã ghim</item>
+    </plurals>
 </resources>

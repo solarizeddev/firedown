@@ -24,4 +24,8 @@
         <item quantity="one">%d ไฟล์ที่บันทึก</item>
         <item quantity="other">%d ไฟล์ที่บันทึก</item>
     </plurals>
+    <plurals name="home_pinned_bookmarks_count">
+        <item quantity="one">%d ปักหมุด</item>
+        <item quantity="other">%d ปักหมุด</item>
+    </plurals>
 </resources>

@@ -280,6 +280,5 @@
     <string name="home_paste_hero_not_url">Això no sembla un enllaç</string>
     <string name="home_onboarding_sites_label">Prova Firedown a</string>
     <string name="home_vault_button">Carpeta segura</string>
-    <string name="bookmarks_quick_access_title">Adreces d\'interès fixades</string>
-    <string name="bookmarks_quick_access_view_all">Mostra totes les adreces d\'interès</string>
+    <string name="home_pinned_bookmarks">Adreces d\'interès fixades</string>
 </resources>

@@ -20,4 +20,8 @@
         <item quantity="one">%d skrá vistuð</item>
         <item quantity="other">%d skrár vistaðar</item>
     </plurals>
+    <plurals name="home_pinned_bookmarks_count">
+        <item quantity="one">%d fast</item>
+        <item quantity="other">%d föst</item>
+    </plurals>
 </resources>

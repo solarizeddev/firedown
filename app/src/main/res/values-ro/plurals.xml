@@ -29,4 +29,8 @@
         <item quantity="one">%d fișier salvat</item>
         <item quantity="other">%d fișiere salvate</item>
     </plurals>
+    <plurals name="home_pinned_bookmarks_count">
+        <item quantity="one">%d fixat</item>
+        <item quantity="other">%d fixate</item>
+    </plurals>
 </resources>

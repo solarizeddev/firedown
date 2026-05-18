@@ -41,4 +41,8 @@
         <item quantity="one">%d Datei gespeichert</item>
         <item quantity="other">%d Dateien gespeichert</item>
     </plurals>
+    <plurals name="home_pinned_bookmarks_count">
+        <item quantity="one">%d angepinnt</item>
+        <item quantity="other">%d angepinnt</item>
+    </plurals>
 </resources>

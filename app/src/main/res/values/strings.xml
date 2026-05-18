@@ -131,11 +131,9 @@
          short so it fits next to the section title on narrow phones
          even in longer Romance / Slavic locales. -->
     <string name="downloads_quick_access_empty">Recent downloads will appear here</string>
-    <!-- BookmarksQuickAccessSheet (cradle long-press) — title and
-         'open the full list' button. The pinned-bookmarks rows
-         themselves render the bookmark titles, no strings needed. -->
-    <string name="bookmarks_quick_access_title">Pinned bookmarks</string>
-    <string name="bookmarks_quick_access_view_all">View all bookmarks</string>
+    <!-- Title of the home Pinned bookmarks entry card. Subtitle
+         is the home_pinned_bookmarks_count plural. -->
+    <string name="home_pinned_bookmarks">Pinned bookmarks</string>
     <!-- Subtitle on the home Downloads card. Combines the file-count
          plural with a readable byte size — '150 files saved · 2.4 GB'.
          %1$s is the plural (home_downloads_file_count), %2$s is the

@@ -25,4 +25,8 @@
         <item quantity="one">%d fil lagret</item>
         <item quantity="other">%d filer lagret</item>
     </plurals>
+    <plurals name="home_pinned_bookmarks_count">
+        <item quantity="one">%d festet</item>
+        <item quantity="other">%d festet</item>
+    </plurals>
 </resources>
