@@ -16,8 +16,6 @@
     android:id="@+id/active_download_strip"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginHorizontal="12dp"
-    android:layout_marginTop="8dp"
     android:clickable="true"
     android:focusable="true"
     android:visibility="gone"

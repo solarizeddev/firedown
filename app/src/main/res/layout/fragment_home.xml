@@ -53,7 +53,10 @@
                 android:id="@+id/active_download_strip"
                 layout="@layout/view_home_active_download"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/list_spacing"
+                android:layout_marginEnd="@dimen/list_spacing"
+                android:layout_marginTop="12dp" />
 
 
             <include
