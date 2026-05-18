@@ -326,5 +326,4 @@
     <string name="home_paste_hero_not_url">링크가 아닌 것 같습니다</string>
     <string name="home_onboarding_sites_label">Firedown 사용해보기</string>
     <string name="home_vault_button">보안 폴더</string>
-    <string name="home_pinned_strip_title">고정됨</string>
 </resources>

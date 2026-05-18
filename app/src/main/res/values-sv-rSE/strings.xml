@@ -57,5 +57,4 @@
     <string name="home_paste_hero_empty">Kopiera en länk först, tryck sedan här</string>
     <string name="home_paste_hero_not_url">Det ser inte ut som en länk</string>
     <string name="home_onboarding_sites_label">Prova Firedown på</string>
-    <string name="home_pinned_strip_title">Fästa</string>
 </resources>

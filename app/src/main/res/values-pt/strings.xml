@@ -289,5 +289,4 @@
     <string name="home_paste_hero_not_url">Isto não parece uma ligação</string>
     <string name="home_onboarding_sites_label">Experimente o Firedown em</string>
     <string name="home_vault_button">Pasta segura</string>
-    <string name="home_pinned_strip_title">Fixados</string>
 </resources>

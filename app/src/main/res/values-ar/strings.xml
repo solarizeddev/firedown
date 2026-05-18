@@ -309,5 +309,4 @@
     <string name="home_paste_hero_not_url">هذا لا يبدو رابطًا</string>
     <string name="home_onboarding_sites_label">جرّب Firedown على</string>
     <string name="home_vault_button">مجلد آمن</string>
-    <string name="home_pinned_strip_title">مثبت</string>
 </resources>

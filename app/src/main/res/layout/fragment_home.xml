@@ -143,42 +143,16 @@
                 app:strokeWidth="0dp"
                 tools:visibility="visible">
 
-                <LinearLayout
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/home_pinned_strip_recycler"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:paddingBottom="12dp">
-
-                    <!--
-                        Section header — small ALL-CAPS label to give
-                        the strip a name. Aligned with the favicon
-                        column (paddingStart matches the recycler's
-                        first-tile horizontal padding + tile margin).
-                    -->
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
-                        android:letterSpacing="0.08"
-                        android:paddingStart="18dp"
-                        android:text="@string/home_pinned_strip_title"
-                        android:textAllCaps="true"
-                        android:textAppearance="?attr/textAppearanceLabelSmall"
-                        android:textColor="?attr/colorOnSurfaceVariant"
-                        tools:ignore="RtlSymmetry" />
-
-                    <androidx.recyclerview.widget.RecyclerView
-                        android:id="@+id/home_pinned_strip_recycler"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:clipToPadding="false"
-                        android:orientation="horizontal"
-                        android:overScrollMode="never"
-                        android:paddingHorizontal="12dp"
-                        android:paddingTop="8dp"
-                        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
-
-                </LinearLayout>
+                    android:clipToPadding="false"
+                    android:orientation="horizontal"
+                    android:overScrollMode="never"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="14dp"
+                    app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
 
             </com.google.android.material.card.MaterialCardView>
 

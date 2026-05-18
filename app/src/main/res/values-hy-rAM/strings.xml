@@ -57,5 +57,4 @@
     <string name="home_paste_hero_empty">Նախ պատճենեք հղումը, ապա հպեք այստեղ</string>
     <string name="home_paste_hero_not_url">Սա հղման նման չէ</string>
     <string name="home_onboarding_sites_label">Փորձեք Firedown-ը</string>
-    <string name="home_pinned_strip_title">Ամրացված</string>
 </resources>

@@ -221,5 +221,4 @@
     <string name="home_paste_hero_not_url">Cela ne ressemble pas à un lien</string>
     <string name="home_onboarding_sites_label">Essayez Firedown sur</string>
     <string name="home_vault_button">Dossier sécurisé</string>
-    <string name="home_pinned_strip_title">Épinglés</string>
 </resources>
