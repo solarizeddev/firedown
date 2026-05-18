@@ -259,4 +259,6 @@
     <string name="home_paste_hero_not_url">Mukhang hindi ito link</string>
     <string name="home_onboarding_sites_label">Subukan ang Firedown sa</string>
     <string name="home_vault_button">Ligtas na folder</string>
+    <string name="bookmarks_quick_access_title">Mga naka-pin na bookmark</string>
+    <string name="bookmarks_quick_access_view_all">Tingnan lahat ng bookmark</string>
 </resources>

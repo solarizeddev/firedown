@@ -224,4 +224,6 @@
     <string name="home_paste_hero_not_url">Ini tidak kelihatan seperti pautan</string>
     <string name="home_onboarding_sites_label">Cuba Firedown di</string>
     <string name="home_vault_button">Folder selamat</string>
+    <string name="bookmarks_quick_access_title">Tanda buku yang disematkan</string>
+    <string name="bookmarks_quick_access_view_all">Lihat semua tanda buku</string>
 </resources>

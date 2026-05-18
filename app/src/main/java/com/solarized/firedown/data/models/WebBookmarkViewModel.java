@@ -97,6 +97,13 @@ public class WebBookmarkViewModel extends ViewModel {
         return mData;
     }
 
+    /** Pinned-only feed for the home cradle long-press quick-access
+     *  sheet. Fixed cap matches the sheet's bottom-sheet peek
+     *  height. */
+    public LiveData<java.util.List<WebBookmarkEntity>> getPinned(int limit) {
+        return mRepository.getPinned(limit);
+    }
+
     public void delete(WebBookmarkEntity web) { mRepository.delete(web); }
     public void delete(int id) { mRepository.delete(id); }
     public void add(WebBookmarkEntity web) { mRepository.add(web); }

@@ -75,7 +75,8 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         AutoCompleteEditText.OnCommitListener, AutoCompleteEditText.OnFilterListener, AutoCompleteEditText.OnFocusChangedListener,
         AutoCompleteEditText.OnTextChangedListener, AutoCompleteEditText.OnSearchStateChangeListener,
         GeckoToolbar.OnToolbarListener , OnBoardingCard.OnBoardingCardListener, OnItemClickListener,
-        DownloadsQuickAccessSheet.Host {
+        DownloadsQuickAccessSheet.Host,
+        com.solarized.firedown.phone.dialogs.BookmarksQuickAccessSheet.Host {
 
 
     private static final String TAG = HomeFragment.class.getName();
@@ -85,6 +86,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     private IncognitoStateViewModel mIncognitoStateViewModel;
     private TaskViewModel mTaskViewModel;
     private RecentDownloadsViewModel mRecentDownloadsViewModel;
+    private com.solarized.firedown.data.models.WebBookmarkViewModel mWebBookmarkViewModel;
     private AutoCompleteEditText mAutoCompleteEditText;
     private AutoCompleteView mAutoCompleteView;
     private View mNewTabView;
@@ -116,6 +118,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mAutoCompleteViewModel = new ViewModelProvider(this).get(AutoCompleteViewModel.class);
         mTaskViewModel = new ViewModelProvider(this).get(TaskViewModel.class);
         mRecentDownloadsViewModel = new ViewModelProvider(this).get(RecentDownloadsViewModel.class);
+        mWebBookmarkViewModel = new ViewModelProvider(this).get(com.solarized.firedown.data.models.WebBookmarkViewModel.class);
         mGeckoStateViewModel = new ViewModelProvider(mActivity).get(GeckoStateViewModel.class);
         mIncognitoStateViewModel = new ViewModelProvider(mActivity).get(IncognitoStateViewModel.class);
         mBrowserURIViewModel = new ViewModelProvider(mActivity).get(BrowserURIViewModel.class);
@@ -288,6 +291,12 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         // can read getValue() synchronously without a cold-start
         // race on first invocation.
         mRecentDownloadsViewModel.getRecent().observe(getViewLifecycleOwner(), list -> { /* warm */ });
+        // Same pattern for pinned bookmarks — keep the LiveData hot so
+        // the cradle long-press handler can read getValue() and decide
+        // sheet-vs-activity without a cold-start race.
+        mWebBookmarkViewModel.getPinned(
+                com.solarized.firedown.phone.dialogs.BookmarksQuickAccessSheet.LIMIT
+        ).observe(getViewLifecycleOwner(), list -> { /* warm */ });
 
         // Vault count drives the empty-hero vault button's count badge.
         // Button itself is always visible while the empty hero is
@@ -630,6 +639,24 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
                         DownloadsQuickAccessSheet.TAG);
             }
             return true;
+        } else if (id == R.id.search_button) {
+            // Cradle Bookmarks long-press — peek at pinned bookmarks
+            // without leaving home. Same sheet-vs-activity fallback
+            // as the Downloads long-press: empty pinned list → jump
+            // straight to BookmarkActivity so the gesture still does
+            // something for users who haven't pinned anything.
+            java.util.List<com.solarized.firedown.data.entity.WebBookmarkEntity> cached =
+                    mWebBookmarkViewModel.getPinned(
+                            com.solarized.firedown.phone.dialogs.BookmarksQuickAccessSheet.LIMIT
+                    ).getValue();
+            if (cached == null || cached.isEmpty()) {
+                mStartForResult.launch(new Intent(mActivity, BookmarkActivity.class));
+            } else {
+                new com.solarized.firedown.phone.dialogs.BookmarksQuickAccessSheet()
+                        .show(getChildFragmentManager(),
+                                com.solarized.firedown.phone.dialogs.BookmarksQuickAccessSheet.TAG);
+            }
+            return true;
         }
         return false;
     }
@@ -645,6 +672,17 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         } else {
             openItem(entity, null);
         }
+    }
+
+    /** {@link com.solarized.firedown.phone.dialogs.BookmarksQuickAccessSheet.Host}
+     *  — fired when the user taps a pinned-bookmark row in the
+     *  cradle long-press sheet. Routes through openUri so the URL
+     *  gets the same parseUri normalisation as a paste-hero or
+     *  autocomplete entry. */
+    @Override
+    public void onBookmarkQuickAccessTap(
+            @NonNull com.solarized.firedown.data.entity.WebBookmarkEntity entity) {
+        openUri(entity.getUrl());
     }
 
 

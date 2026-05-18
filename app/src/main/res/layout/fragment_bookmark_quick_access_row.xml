@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Single row inside BookmarksQuickAccessSheet. Lean — favicon +
+  title + url + pin badge, no selection / no more-menu. Mirrors the
+  DownloadsQuickAccessAdapter row shape so the two quick-access
+  sheets feel like a pair.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/item_bookmark_row"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="?attr/selectableItemBackground"
+    android:clickable="true"
+    android:focusable="true"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingHorizontal="16dp"
+    android:paddingVertical="12dp">
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/bookmark_icon"
+        android:layout_width="@dimen/list_web_image_height"
+        android:layout_height="@dimen/list_web_image_height"
+        android:contentDescription="@null"
+        android:scaleType="fitCenter" />
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/bookmark_pin_badge"
+        android:layout_width="14dp"
+        android:layout_height="14dp"
+        android:layout_marginStart="10dp"
+        android:contentDescription="@null"
+        android:src="@drawable/ic_push_pin_filled_16"
+        app:tint="?attr/colorPrimary" />
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/bookmark_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textAppearance="?attr/textAppearanceTitleSmall"
+            android:textColor="?attr/colorOnSurface"
+            tools:text="Reddit" />
+
+        <TextView
+            android:id="@+id/bookmark_url"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textAppearance="?attr/textAppearanceBodySmall"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            tools:text="reddit.com" />
+
+    </LinearLayout>
+
+</LinearLayout>
