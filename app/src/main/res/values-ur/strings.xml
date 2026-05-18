@@ -252,9 +252,6 @@
     <string name="vault_encrypting">فائل کو خفیہ کر رہا ہے، براہ کرم انتظار کریں…</string>
     <string name="vault_unsupported">اس فائل کو نہیں کھولا جا سکتا۔ کھولنے کے لیے، اسے محفوظ فولڈر سے باہر لے جائیں اور دوبارہ کوشش کریں۔</string>
     <string name="downloads_quick_access_title">حالیہ ڈاؤن لوڈز</string>
-    <string name="home_paste_hero_button">ڈاؤن لوڈ کے لیے لنک پیسٹ کریں</string>
-    <string name="home_paste_hero_empty">پہلے لنک کاپی کریں، پھر یہاں ٹیپ کریں</string>
-    <string name="home_paste_hero_not_url">یہ لنک نہیں لگتا</string>
     <string name="home_onboarding_sites_label">Firedown آزمائیں</string>
     <string name="home_vault_button">محفوظ فولڈر</string>
 </resources>

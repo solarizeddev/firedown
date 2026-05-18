@@ -275,9 +275,6 @@
     <string name="pip_play">Αναπαραγωγή</string>
     <string name="pip_pause">Παύση</string>
     <string name="downloads_quick_access_title">Πρόσφατες λήψεις</string>
-    <string name="home_paste_hero_button">Επικόλληση συνδέσμου για λήψη</string>
-    <string name="home_paste_hero_empty">Αντιγράψτε πρώτα έναν σύνδεσμο, μετά αγγίξτε εδώ</string>
-    <string name="home_paste_hero_not_url">Αυτό δεν μοιάζει με σύνδεσμο</string>
     <string name="home_onboarding_sites_label">Δοκιμάστε το Firedown σε</string>
     <string name="home_vault_button">Ασφαλής φάκελος</string>
 </resources>

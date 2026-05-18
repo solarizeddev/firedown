@@ -340,9 +340,6 @@
     <string name="pip_play">Воспроизвести</string>
     <string name="pip_pause">Пауза</string>
     <string name="downloads_quick_access_title">Недавние загрузки</string>
-    <string name="home_paste_hero_button">Вставить ссылку для скачивания</string>
-    <string name="home_paste_hero_empty">Сначала скопируйте ссылку, затем нажмите здесь</string>
-    <string name="home_paste_hero_not_url">Это не похоже на ссылку</string>
     <string name="home_onboarding_sites_label">Попробуйте Firedown на</string>
     <string name="home_vault_button">Безопасная папка</string>
 </resources>

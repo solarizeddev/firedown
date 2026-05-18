@@ -284,9 +284,6 @@
     </plurals>
     <string name="incognito_downloads_in_progress_subtitle">Toque para ver na Pasta segura</string>
     <string name="downloads_quick_access_title">Transferências recentes</string>
-    <string name="home_paste_hero_button">Colar ligação para transferir</string>
-    <string name="home_paste_hero_empty">Copie uma ligação primeiro e toque aqui</string>
-    <string name="home_paste_hero_not_url">Isto não parece uma ligação</string>
     <string name="home_onboarding_sites_label">Experimente o Firedown em</string>
     <string name="home_vault_button">Pasta segura</string>
 </resources>

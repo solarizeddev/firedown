@@ -246,9 +246,6 @@
     <string name="vault_encrypting">Fayl shifrlanmoqda, kuting…</string>
     <string name="vault_unsupported">Bu faylni ochib boʻlmadi. Ochish uchun uni xavfsiz jilddan olib tashlang va qaytadan urinib ko‘ring.</string>
     <string name="downloads_quick_access_title">Soʻnggi yuklamalar</string>
-    <string name="home_paste_hero_button">Yuklab olish uchun havola joylashtirish</string>
-    <string name="home_paste_hero_empty">Avval havolani nusxalang, keyin shu yerga bosing</string>
-    <string name="home_paste_hero_not_url">Bu havolaga oʻxshamaydi</string>
     <string name="home_onboarding_sites_label">Firedown-ni sinab koʻring</string>
     <string name="home_vault_button">Xavfsiz jild</string>
 </resources>

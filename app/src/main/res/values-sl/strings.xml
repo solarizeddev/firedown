@@ -272,9 +272,6 @@
     <string name="vault_unsupported">Te datoteke ni mogoče odpreti. Če ga želite odpreti, ga premaknite iz varne mape in poskusite znova.</string>
     <string name="bookmark_name">Ime</string>
     <string name="downloads_quick_access_title">Nedavni prenosi</string>
-    <string name="home_paste_hero_button">Prilepi povezavo za prenos</string>
-    <string name="home_paste_hero_empty">Najprej kopirajte povezavo, nato se dotaknite tukaj</string>
-    <string name="home_paste_hero_not_url">To ni videti kot povezava</string>
     <string name="home_onboarding_sites_label">Preizkusite Firedown na</string>
     <string name="home_vault_button">Varna mapa</string>
 </resources>

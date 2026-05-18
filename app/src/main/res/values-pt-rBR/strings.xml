@@ -87,9 +87,6 @@
     </plurals>
     <string name="incognito_downloads_in_progress_subtitle">Toque para ver na Pasta trancada</string>
     <string name="downloads_quick_access_title">Downloads recentes</string>
-    <string name="home_paste_hero_button">Colar link para baixar</string>
-    <string name="home_paste_hero_empty">Copie um link primeiro e toque aqui</string>
-    <string name="home_paste_hero_not_url">Isso não parece um link</string>
     <string name="home_onboarding_sites_label">Experimente o Firedown em</string>
     <string name="home_vault_button">Pasta trancada</string>
 </resources>

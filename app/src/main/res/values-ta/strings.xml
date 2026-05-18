@@ -241,9 +241,6 @@
     <string name="vault_encrypting">கோப்பை என்க்ரிப்ட் செய்கிறது, காத்திருக்கவும்…</string>
     <string name="vault_unsupported">இந்தக் கோப்பைத் திறக்க முடியவில்லை. திறக்க, பாதுகாப்பான கோப்புறையிலிருந்து அதை நகர்த்தி மீண்டும் முயற்சிக்கவும்.</string>
     <string name="downloads_quick_access_title">சமீபத்திய பதிவிறக்கங்கள்</string>
-    <string name="home_paste_hero_button">பதிவிறக்க இணைப்பை ஒட்டவும்</string>
-    <string name="home_paste_hero_empty">முதலில் இணைப்பை நகலெடுத்து இங்கே தட்டவும்</string>
-    <string name="home_paste_hero_not_url">இது இணைப்பாகத் தெரியவில்லை</string>
     <string name="home_onboarding_sites_label">Firedown ஐ முயற்சிக்கவும்</string>
     <string name="home_vault_button">பாதுகாப்பான ஃபோல்டர்</string>
 </resources>

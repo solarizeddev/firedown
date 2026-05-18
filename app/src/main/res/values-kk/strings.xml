@@ -260,9 +260,6 @@
     <string name="vault_unsupported">Бұл файлды ашу мүмкін емес. Ашу үшін оны қауіпсіз қалтадан шығарып, әрекетті қайталаңыз.</string>
     <string name="bookmark_name">Аты</string>
     <string name="downloads_quick_access_title">Соңғы жүктеулер</string>
-    <string name="home_paste_hero_button">Жүктеу үшін сілтеме қою</string>
-    <string name="home_paste_hero_empty">Алдымен сілтемені көшіріп, осы жерді түртіңіз</string>
-    <string name="home_paste_hero_not_url">Бұл сілтемеге ұқсамайды</string>
     <string name="home_onboarding_sites_label">Firedown-ды қолданып көріңіз</string>
     <string name="home_vault_button">Қауіпсіз қалта</string>
 </resources>

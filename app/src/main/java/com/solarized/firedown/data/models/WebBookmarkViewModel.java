@@ -46,10 +46,13 @@ public class WebBookmarkViewModel extends ViewModel {
 
     private final LiveData<PagingData<WebBookmarkEntity>> mData;
 
-    /** Cap on rows in the home pinned-favicons strip. Horizontal
-     *  scroll means we could go higher, but 20 is plenty for a
-     *  glance surface and bounds Glide's preload pressure. */
-    public static final int PINNED_STRIP_LIMIT = 20;
+    /** Cap on rows in the home pinned-favicons strip. Ten fits two
+     *  phone widths of horizontal scroll (40dp tiles + 12dp gaps ≈
+     *  520dp) and forces the user to curate — the strip is a
+     *  glance surface, not a comprehensive list. Pins beyond this
+     *  still exist in BookmarkActivity at top-of-list ordering;
+     *  they just don't show on home. */
+    public static final int PINNED_STRIP_LIMIT = 10;
 
     /** Single cached LiveData for the home pinned-favicons strip —
      *  Room's generated DAO returns a fresh LiveData on each call,

@@ -294,9 +294,6 @@
     <string name="pip_play">Přehrát</string>
     <string name="pip_pause">Pozastavit</string>
     <string name="downloads_quick_access_title">Nedávná stahování</string>
-    <string name="home_paste_hero_button">Vložit odkaz ke stažení</string>
-    <string name="home_paste_hero_empty">Nejprve zkopírujte odkaz, pak klepněte sem</string>
-    <string name="home_paste_hero_not_url">Toto nevypadá jako odkaz</string>
     <string name="home_onboarding_sites_label">Vyzkoušejte Firedown na</string>
     <string name="home_vault_button">Bezpečná složka</string>
 </resources>

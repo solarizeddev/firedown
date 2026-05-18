@@ -260,9 +260,6 @@
     <string name="vault_unsupported">Tidak dapat membuka file ini. Untuk membukanya, keluarkan dari Folder Aman dan coba lagi.</string>
     <string name="bookmark_name">Nama</string>
     <string name="downloads_quick_access_title">Unduhan terkini</string>
-    <string name="home_paste_hero_button">Tempel tautan untuk mengunduh</string>
-    <string name="home_paste_hero_empty">Salin tautan dulu, lalu ketuk di sini</string>
-    <string name="home_paste_hero_not_url">Itu sepertinya bukan tautan</string>
     <string name="home_onboarding_sites_label">Coba Firedown di</string>
     <string name="home_vault_button">Folder Aman</string>
 </resources>

@@ -35,8 +35,5 @@
     <string name="snackbar_deleted_undo">موڑو</string>
     <string name="switch_to_tab_description">ٹیب تے جاؤ</string>
     <string name="downloads_quick_access_title">ہالیہ ڈاؤن لوڈز</string>
-    <string name="home_paste_hero_button">ڈاؤن لوڈ لئی لنک پیسٹ کرو</string>
-    <string name="home_paste_hero_empty">پہلاں لنک کاپی کرو، فیر ایتھے ٹیپ کرو</string>
-    <string name="home_paste_hero_not_url">ایہہ لنک ورگا نئیں لگدا</string>
     <string name="home_onboarding_sites_label">Firedown اجماؤ</string>
 </resources>

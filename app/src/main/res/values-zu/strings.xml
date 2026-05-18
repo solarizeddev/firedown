@@ -216,9 +216,6 @@
     <string name="vault_encrypting">Ibethela ifayela, sicela ulinde…</string>
     <string name="vault_unsupported">Ayikwazi ukuvula leli fayela. Ukuze uyivule, ikhiphe Kufolda Evikelekile bese uzama futhi.</string>
     <string name="downloads_quick_access_title">Okwakamuva okulayishiwe</string>
-    <string name="home_paste_hero_button">Namathisela isixhumanisi ukulayisha</string>
-    <string name="home_paste_hero_empty">Qala ngokukopisha isixhumanisi, bese uthepha lapha</string>
-    <string name="home_paste_hero_not_url">Lokhu akubukeki njengesixhumanisi</string>
     <string name="home_onboarding_sites_label">Zama i-Firedown ku</string>
     <string name="home_vault_button">Ifolda ephephile</string>
 </resources>

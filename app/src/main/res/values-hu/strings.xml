@@ -275,9 +275,6 @@
     <string name="pip_play">Lejátszás</string>
     <string name="pip_pause">Szünet</string>
     <string name="downloads_quick_access_title">Legutóbbi letöltések</string>
-    <string name="home_paste_hero_button">Link beillesztése letöltéshez</string>
-    <string name="home_paste_hero_empty">Először másolj egy linket, majd koppints ide</string>
-    <string name="home_paste_hero_not_url">Ez nem tűnik linknek</string>
     <string name="home_onboarding_sites_label">Firedown kipróbálása</string>
     <string name="home_vault_button">Biztonságos mappa</string>
 </resources>

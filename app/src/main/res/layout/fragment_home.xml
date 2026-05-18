@@ -60,67 +60,6 @@
 
 
             <!--
-                Paste-to-download CTA card. Sits between the orange/
-                primaryContainer family (onboarding + active strip)
-                and the neutral surface-container family (Downloads +
-                Safe Folder) so the home reads as a clean colour
-                gradient top-to-bottom. secondaryContainer marks it
-                as the primary action of the home (vs the neutral
-                Safe Folder card below). Tap → onPasteAndDownload
-                (reads clip, validates as URL via Patterns.WEB_URL,
-                openUri or snackbar). Always visible — even when the
-                user has downloads showing, the paste flow is the
-                killer entry-point a downloader-first browser earns
-                its keep with.
-            -->
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/home_paste_card"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="@dimen/list_spacing"
-                android:layout_marginEnd="@dimen/list_spacing"
-                android:layout_marginTop="12dp"
-                android:clickable="true"
-                android:focusable="true"
-                android:visibility="gone"
-                app:cardBackgroundColor="?attr/colorSecondaryContainer"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="0dp"
-                app:strokeWidth="0dp"
-                tools:visibility="visible">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:paddingHorizontal="16dp"
-                    android:paddingVertical="14dp">
-
-                    <androidx.appcompat.widget.AppCompatImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:contentDescription="@null"
-                        android:src="@drawable/content_paste_24"
-                        app:tint="?attr/colorOnSecondaryContainer" />
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="14dp"
-                        android:layout_weight="1"
-                        android:ellipsize="end"
-                        android:maxLines="2"
-                        android:text="@string/home_paste_hero_button"
-                        android:textAppearance="?attr/textAppearanceTitleSmall"
-                        android:textColor="?attr/colorOnSecondaryContainer" />
-
-                </LinearLayout>
-
-            </com.google.android.material.card.MaterialCardView>
-
-
-            <!--
                 Pinned bookmarks strip — minimalist favicon row. Visible
                 only when ≥1 bookmark is pinned (no empty 'pin something
                 here' state; the card itself is the discovery). Sits

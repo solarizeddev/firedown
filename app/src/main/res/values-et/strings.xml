@@ -267,9 +267,6 @@
     <string name="vault_unsupported">Seda faili ei saa avada. Avamiseks teisaldage see turvalisest kaustast välja ja proovige uuesti.</string>
     <string name="bookmark_name">Nimi</string>
     <string name="downloads_quick_access_title">Hiljutised allalaadimised</string>
-    <string name="home_paste_hero_button">Kleebi link allalaadimiseks</string>
-    <string name="home_paste_hero_empty">Kopeerige kõigepealt link, seejärel puudutage siin</string>
-    <string name="home_paste_hero_not_url">See ei näe lingina välja</string>
     <string name="home_onboarding_sites_label">Proovi Firedowni saidil</string>
     <string name="home_vault_button">Turvaline kaust</string>
 </resources>

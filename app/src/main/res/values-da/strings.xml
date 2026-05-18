@@ -288,9 +288,6 @@
     <string name="pip_play">Afspil</string>
     <string name="pip_pause">Pause</string>
     <string name="downloads_quick_access_title">Seneste downloads</string>
-    <string name="home_paste_hero_button">Indsæt link for at downloade</string>
-    <string name="home_paste_hero_empty">Kopier et link først, og tryk derefter her</string>
-    <string name="home_paste_hero_not_url">Det ligner ikke et link</string>
     <string name="home_onboarding_sites_label">Prøv Firedown på</string>
     <string name="home_vault_button">Sikker mappe</string>
 </resources>

@@ -261,9 +261,6 @@
     <string name="vault_unsupported">Ezin da fitxategi hau ireki. Irekitzeko, atera karpeta segurutik eta saiatu berriro.</string>
     <string name="bookmark_name">Izena</string>
     <string name="downloads_quick_access_title">Azken deskargak</string>
-    <string name="home_paste_hero_button">Itsatsi esteka deskargatzeko</string>
-    <string name="home_paste_hero_empty">Kopiatu esteka bat lehenik, gero ukitu hemen</string>
-    <string name="home_paste_hero_not_url">Hori ez dirudi esteka bat</string>
     <string name="home_onboarding_sites_label">Probatu Firedown hemen</string>
     <string name="home_vault_button">Karpeta segurua</string>
 </resources>

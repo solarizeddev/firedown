@@ -266,9 +266,6 @@
     <string name="vault_unsupported">ይህን ፋይል መክፈት አልተቻለም። ለመክፈት ደህንነቱ ከተጠበቀ አቃፊ አውጥተው ይውሰዱ እና እንደገና ይሞክሩ።</string>
     <string name="bookmark_name">ስም</string>
     <string name="downloads_quick_access_title">የቅርብ ጊዜ ውርዶች</string>
-    <string name="home_paste_hero_button">አገናኝ ይለጥፉ ለማውረድ</string>
-    <string name="home_paste_hero_empty">መጀመሪያ አገናኝ ይቅዱ፣ ከዚያ እዚህ ይንኩ</string>
-    <string name="home_paste_hero_not_url">ይህ እንደ አገናኝ አይመስልም</string>
     <string name="home_onboarding_sites_label">Firedownን ይሞክሩ በ</string>
     <string name="home_vault_button">ደህንነቱ የተጠበቀ አቃፊ</string>
 </resources>

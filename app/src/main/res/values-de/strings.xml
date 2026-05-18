@@ -480,9 +480,6 @@
     <string name="pip_play">Wiedergabe</string>
     <string name="pip_pause">Pause</string>
     <string name="downloads_quick_access_title">Letzte Downloads</string>
-    <string name="home_paste_hero_button">Link einfügen zum Herunterladen</string>
-    <string name="home_paste_hero_empty">Zuerst einen Link kopieren, dann hier tippen</string>
-    <string name="home_paste_hero_not_url">Das sieht nicht nach einem Link aus</string>
     <string name="home_onboarding_sites_label">Firedown ausprobieren auf</string>
     <string name="home_vault_button">Sicherer Ordner</string>
 </resources>

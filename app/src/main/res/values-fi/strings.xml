@@ -292,9 +292,6 @@
     <string name="pip_play">Toista</string>
     <string name="pip_pause">Tauko</string>
     <string name="downloads_quick_access_title">Viimeisimmät lataukset</string>
-    <string name="home_paste_hero_button">Liitä linkki ladataksesi</string>
-    <string name="home_paste_hero_empty">Kopioi ensin linkki, napauta sitten tässä</string>
-    <string name="home_paste_hero_not_url">Tämä ei näytä linkiltä</string>
     <string name="home_onboarding_sites_label">Kokeile Firedownia sivustolla</string>
     <string name="home_vault_button">Turvakansio</string>
 </resources>

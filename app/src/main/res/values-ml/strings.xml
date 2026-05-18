@@ -255,9 +255,6 @@
     <string name="vault_unsupported">ഈ ഫയൽ തുറക്കാൻ കഴിയില്ല. തുറക്കാൻ, അത് സുരക്ഷിത ഫോൾഡറിൽ നിന്ന് നീക്കി വീണ്ടും ശ്രമിക്കുക.</string>
     <string name="bookmark_name">പേരു്</string>
     <string name="downloads_quick_access_title">സമീപകാല ഡൗൺലോഡുകൾ</string>
-    <string name="home_paste_hero_button">ഡൗൺലോഡ് ചെയ്യാൻ ലിങ്ക് ഒട്ടിക്കുക</string>
-    <string name="home_paste_hero_empty">ആദ്യം ലിങ്ക് പകർത്തുക, എന്നിട്ട് ഇവിടെ ടാപ്പുചെയ്യുക</string>
-    <string name="home_paste_hero_not_url">ഇത് ലിങ്കായി തോന്നുന്നില്ല</string>
     <string name="home_onboarding_sites_label">Firedown പരീക്ഷിക്കൂ</string>
     <string name="home_vault_button">സുരക്ഷിത ഫോൾഡർ</string>
 </resources>

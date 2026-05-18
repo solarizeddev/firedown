@@ -479,9 +479,6 @@
     <string name="pip_play">再生</string>
     <string name="pip_pause">一時停止</string>
     <string name="downloads_quick_access_title">最近のダウンロード</string>
-    <string name="home_paste_hero_button">リンクを貼り付けてダウンロード</string>
-    <string name="home_paste_hero_empty">まずリンクをコピーしてからタップしてください</string>
-    <string name="home_paste_hero_not_url">リンクではないようです</string>
     <string name="home_onboarding_sites_label">Firedown を試す</string>
     <string name="home_vault_button">セーフフォルダ</string>
 </resources>

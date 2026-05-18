@@ -136,12 +136,6 @@
          %1$s is the plural (home_downloads_file_count), %2$s is the
          size string (Utils.readableFileSize). -->
     <string name="home_downloads_subtitle_with_size">%1$s · %2$s</string>
-    <!-- Empty-home paste-to-download CTA. _button is the card title;
-         _empty / _not_url are the snackbar hints fired when the
-         clipboard is empty or doesn't contain a URL. -->
-    <string name="home_paste_hero_button">Paste link to download</string>
-    <string name="home_paste_hero_empty">Copy a link first, then tap here</string>
-    <string name="home_paste_hero_not_url">That doesn\'t look like a link</string>
     <!-- Header label for the supported-sites chip strip inside the
          onboarding card. Frames the brand chips as 'we test against
          these'. Tap a chip → visits the site. -->

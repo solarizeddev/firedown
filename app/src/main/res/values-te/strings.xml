@@ -253,9 +253,6 @@
     <string name="vault_unsupported">ఈ ఫైల్‌ను తెరవడం సాధ్యపడదు. తెరవడానికి, సురక్షిత ఫోల్డర్ నుండి దాన్ని తరలించి, మళ్లీ ప్రయత్నించండి.</string>
     <string name="bookmark_name">పేరు</string>
     <string name="downloads_quick_access_title">ఇటీవలి డౌన్‌లోడ్‌లు</string>
-    <string name="home_paste_hero_button">డౌన్‌లోడ్ చేయడానికి లింక్ అతికించండి</string>
-    <string name="home_paste_hero_empty">ముందుగా లింక్‌ను కాపీ చేసి ఇక్కడ నొక్కండి</string>
-    <string name="home_paste_hero_not_url">ఇది లింక్‌లా కనిపించడం లేదు</string>
     <string name="home_onboarding_sites_label">Firedown ప్రయత్నించండి</string>
     <string name="home_vault_button">సురక్షిత ఫోల్డర్</string>
 </resources>

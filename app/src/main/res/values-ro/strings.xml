@@ -268,9 +268,6 @@
     <string name="vault_unsupported">Nu se poate deschide acest fișier. Pentru a deschide, mutați-l din Folder sigur și încercați din nou.</string>
     <string name="bookmark_name">Nume</string>
     <string name="downloads_quick_access_title">Descărcări recente</string>
-    <string name="home_paste_hero_button">Lipește link pentru descărcare</string>
-    <string name="home_paste_hero_empty">Copiază mai întâi un link, apoi atinge aici</string>
-    <string name="home_paste_hero_not_url">Acesta nu pare un link</string>
     <string name="home_onboarding_sites_label">Încearcă Firedown pe</string>
     <string name="home_vault_button">Dosar sigur</string>
 </resources>

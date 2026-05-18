@@ -275,9 +275,6 @@
     <string name="pip_play">Reprodueix</string>
     <string name="pip_pause">Pausa</string>
     <string name="downloads_quick_access_title">Baixades recents</string>
-    <string name="home_paste_hero_button">Enganxa l\'enllaç per baixar</string>
-    <string name="home_paste_hero_empty">Copia primer un enllaç i toca aquí</string>
-    <string name="home_paste_hero_not_url">Això no sembla un enllaç</string>
     <string name="home_onboarding_sites_label">Prova Firedown a</string>
     <string name="home_vault_button">Carpeta segura</string>
 </resources>
