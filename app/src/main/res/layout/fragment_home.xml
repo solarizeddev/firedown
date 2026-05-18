@@ -62,7 +62,8 @@
                 android:id="@+id/view_pager_holder"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp" />
+                android:layout_marginTop="12dp"
+                android:layout_marginBottom="12dp"/>
 
 
         </LinearLayout>
@@ -95,6 +96,13 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
         app:enableCradle="false" />
+
+    <View
+        android:id="@+id/navigation_scrim"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_gravity="bottom"
+        android:background="?android:attr/colorBackground" />
 
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
