@@ -54,6 +54,8 @@ public class App extends Application implements Configuration.Provider{
     @Inject
     WebHistoryDataRepository mWebHistoryDataRepository;
     @Inject
+    com.solarized.firedown.data.LegacyShortcutsMigrator mLegacyShortcutsMigrator;
+    @Inject
     ApplicationLifeCycleHandler lifeCycleHandler;
     @Inject
     HiltWorkerFactory workerFactory;
@@ -105,6 +107,12 @@ public class App extends Application implements Configuration.Provider{
         createUpdateNotificationChannel(mAppContext);
         updateScheduler.schedulePeriodicUpdateCheck();
         updateScheduler.setupOneTimeCheck();
+
+        // One-time migration: lift legacy 'shortcuts' rows into the
+        // bookmarks table as pinned entries, then drop the legacy
+        // shortcuts DB. Idempotent — guarded by a SharedPreferences
+        // flag and a presence check for the legacy DB file.
+        mLegacyShortcutsMigrator.runIfNeeded();
     }
 
 
