@@ -12,7 +12,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.LinearLayout;
 
 import androidx.activity.OnBackPressedCallback;
@@ -444,11 +443,12 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
             flashNewTab(mNewTabView);
             addNewTab();
         } else if(id == R.id.search_button){
-            mAutoCompleteViewModel.resetEngines();
-            mAutoCompleteView.showEmpty();
-            mAutoCompleteEditText.requestFocus();
-            InputMethodManager imm = (InputMethodManager) mActivity.getSystemService(Context.INPUT_METHOD_SERVICE);
-            imm.showSoftInput(mAutoCompleteEditText, InputMethodManager.SHOW_FORCED);
+            // Cradle slot on normal home is Bookmarks — the URL bar at
+            // the top already covers the search path, so the centre
+            // tap-target gives pinned bookmarks (which absorbed the
+            // old shortcuts surface) a one-tap entry.
+            Intent bookmarksIntent = new Intent(mActivity, BookmarkActivity.class);
+            mStartForResult.launch(bookmarksIntent);
         }
     }
 
