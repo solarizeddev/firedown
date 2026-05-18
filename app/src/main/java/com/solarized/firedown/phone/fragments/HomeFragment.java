@@ -158,6 +158,16 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mActiveStripPercent = v.findViewById(R.id.active_download_percent);
         mActiveStripCount = v.findViewById(R.id.active_download_count);
         mActiveStripBar = v.findViewById(R.id.active_download_bar);
+        // Track colour: theme attr + alpha can't be combined in XML, and
+        // the M3 default (colorSecondary, yellow in Firedown's palette)
+        // fought the orange card surface. Apply colorOnPrimaryContainer
+        // at ~24% alpha so the empty band reads as a subtle ghost of
+        // the indicator instead of a competing colour.
+        if (mActiveStripBar instanceof com.google.android.material.progressindicator.LinearProgressIndicator lpi) {
+            int onContainer = com.google.android.material.color.MaterialColors.getColor(
+                    lpi, com.google.android.material.R.attr.colorOnPrimaryContainer);
+            lpi.setTrackColor(androidx.core.graphics.ColorUtils.setAlphaComponent(onContainer, 0x3D));
+        }
         mActiveStrip.setOnClickListener(view ->
                 mStartForResult.launch(new Intent(mActivity, DownloadsActivity.class)));
 

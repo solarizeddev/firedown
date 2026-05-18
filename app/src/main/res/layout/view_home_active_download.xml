@@ -86,14 +86,13 @@
         </LinearLayout>
 
         <!--
-            Material 3 LinearProgressIndicator (not plain ProgressBar) so
-            we can pin indicator + track colors explicitly. The default
-            colorPrimary tint blends into the colorPrimaryContainer card
-            background — both are oranges in Firedown's palette — so the
-            bar was invisible. colorOnPrimaryContainer (used by the
-            text in this card) reads cleanly against the surface;
-            trackColor defaults to indicatorColor at low alpha which
-            gives a subtle empty-state band.
+            Material 3 LinearProgressIndicator. indicatorColor pinned to
+            colorOnPrimaryContainer so the filled portion reads against
+            the orange card surface. trackColor (the empty-state band)
+            is set programmatically in HomeFragment to colorOnPrimaryContainer
+            at ~24% alpha — XML can't combine a theme attr with alpha
+            cleanly, and the M3 default of colorSecondary rendered as
+            yellow on this surface which fought the orange.
         -->
         <com.google.android.material.progressindicator.LinearProgressIndicator
             android:id="@+id/active_download_bar"
