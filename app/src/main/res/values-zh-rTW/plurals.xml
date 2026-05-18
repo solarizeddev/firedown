@@ -27,8 +27,4 @@
         <item quantity="one">已儲存 %d 個檔案</item>
         <item quantity="other">已儲存 %d 個檔案</item>
     </plurals>
-    <plurals name="home_pinned_bookmarks_count">
-        <item quantity="one">已置頂 %d 個</item>
-        <item quantity="other">已置頂 %d 個</item>
-    </plurals>
 </resources>

@@ -33,8 +33,4 @@
         <item quantity="one">%d išsaugotas failas</item>
         <item quantity="other">%d išsaugotų failų</item>
     </plurals>
-    <plurals name="home_pinned_bookmarks_count">
-        <item quantity="one">%d prisegta</item>
-        <item quantity="other">%d prisegtų</item>
-    </plurals>
 </resources>

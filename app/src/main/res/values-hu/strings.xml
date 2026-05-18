@@ -280,5 +280,4 @@
     <string name="home_paste_hero_not_url">Ez nem tűnik linknek</string>
     <string name="home_onboarding_sites_label">Firedown kipróbálása</string>
     <string name="home_vault_button">Biztonságos mappa</string>
-    <string name="home_pinned_bookmarks">Rögzített könyvjelzők</string>
 </resources>

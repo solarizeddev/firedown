@@ -25,8 +25,4 @@
         <item quantity="one">%d ಫೈಲ್ ಉಳಿಸಲಾಗಿದೆ</item>
         <item quantity="other">%d ಫೈಲ್‌ಗಳು ಉಳಿಸಲಾಗಿದೆ</item>
     </plurals>
-    <plurals name="home_pinned_bookmarks_count">
-        <item quantity="one">%d ಪಿನ್ ಮಾಡಲಾಗಿದೆ</item>
-        <item quantity="other">%d ಪಿನ್ ಮಾಡಲಾಗಿದೆ</item>
-    </plurals>
 </resources>

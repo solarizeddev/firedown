@@ -8,8 +8,4 @@
         <item quantity="one">%d فائل محفوظ</item>
         <item quantity="other">%d فائلز محفوظ</item>
     </plurals>
-    <plurals name="home_pinned_bookmarks_count">
-        <item quantity="one">%d پن کیتے</item>
-        <item quantity="other">%d پن کیتے</item>
-    </plurals>
 </resources>

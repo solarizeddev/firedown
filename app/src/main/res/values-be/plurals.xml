@@ -26,8 +26,4 @@
         <item quantity="one">%d файл захаваны</item>
         <item quantity="other">%d файлаў захавана</item>
     </plurals>
-    <plurals name="home_pinned_bookmarks_count">
-        <item quantity="one">%d замацаваны</item>
-        <item quantity="other">%d замацаваных</item>
-    </plurals>
 </resources>

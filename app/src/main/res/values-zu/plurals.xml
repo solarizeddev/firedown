@@ -20,8 +20,4 @@
         <item quantity="one">%d ifayela ilondoloziwe</item>
         <item quantity="other">%d amafayela alondoloziwe</item>
     </plurals>
-    <plurals name="home_pinned_bookmarks_count">
-        <item quantity="one">%d ehlanganisiwe</item>
-        <item quantity="other">%d ahlanganisiwe</item>
-    </plurals>
 </resources>

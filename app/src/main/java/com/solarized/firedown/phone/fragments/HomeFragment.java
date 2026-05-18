@@ -85,7 +85,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     private IncognitoStateViewModel mIncognitoStateViewModel;
     private TaskViewModel mTaskViewModel;
     private RecentDownloadsViewModel mRecentDownloadsViewModel;
-    private com.solarized.firedown.data.models.WebBookmarkViewModel mWebBookmarkViewModel;
     private AutoCompleteEditText mAutoCompleteEditText;
     private AutoCompleteView mAutoCompleteView;
     private View mNewTabView;
@@ -103,7 +102,8 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     @Nullable private android.animation.ObjectAnimator mActiveStripPulse;
     private TextView mHomeVaultTitle;
     private TextView mHomeVaultSubtitle;
-    private TextView mHomePinnedSubtitle;
+    private View mHomePasteCard;
+    @Nullable private android.content.ClipboardManager.OnPrimaryClipChangedListener mClipListener;
     private TextView mRecentDownloadsSubtitle;
     private SharedPreferences.OnSharedPreferenceChangeListener mHomePrefsListener;
     @Nullable private java.util.List<DownloadEntity> mLastActiveList;
@@ -118,7 +118,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mAutoCompleteViewModel = new ViewModelProvider(this).get(AutoCompleteViewModel.class);
         mTaskViewModel = new ViewModelProvider(this).get(TaskViewModel.class);
         mRecentDownloadsViewModel = new ViewModelProvider(this).get(RecentDownloadsViewModel.class);
-        mWebBookmarkViewModel = new ViewModelProvider(this).get(com.solarized.firedown.data.models.WebBookmarkViewModel.class);
         mGeckoStateViewModel = new ViewModelProvider(mActivity).get(GeckoStateViewModel.class);
         mIncognitoStateViewModel = new ViewModelProvider(mActivity).get(IncognitoStateViewModel.class);
         mBrowserURIViewModel = new ViewModelProvider(mActivity).get(BrowserURIViewModel.class);
@@ -188,18 +187,14 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mRecentDownloadsCard.setOnClickListener(view ->
                 mStartForResult.launch(new Intent(mActivity, DownloadsActivity.class)));
 
-        v.findViewById(R.id.home_paste_card).setOnClickListener(view -> onPasteAndDownload());
+        mHomePasteCard = v.findViewById(R.id.home_paste_card);
+        mHomePasteCard.setOnClickListener(view -> onPasteAndDownload());
 
         View vaultCard = v.findViewById(R.id.home_vault_card);
         mHomeVaultTitle = v.findViewById(R.id.home_vault_title);
         mHomeVaultSubtitle = v.findViewById(R.id.home_vault_subtitle);
         vaultCard.setOnClickListener(view ->
                 mStartForResult.launch(new Intent(mActivity, VaultActivity.class)));
-
-        View pinnedCard = v.findViewById(R.id.home_pinned_card);
-        mHomePinnedSubtitle = v.findViewById(R.id.home_pinned_subtitle);
-        pinnedCard.setOnClickListener(view ->
-                mStartForResult.launch(new Intent(mActivity, BookmarkActivity.class)));
 
 
         mBottomNavigationBar.setListener(this);
@@ -296,21 +291,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         // can read getValue() synchronously without a cold-start
         // race on first invocation.
         mRecentDownloadsViewModel.getRecent().observe(getViewLifecycleOwner(), list -> { /* warm */ });
-        // Drives the home Pinned bookmarks card subtitle. Card itself
-        // is always visible (discoverability for users who haven't
-        // pinned anything yet); the subtitle 'N pinned' only appears
-        // when count > 0, same as the Safe Folder card.
-        mWebBookmarkViewModel.getPinned().observe(getViewLifecycleOwner(), list -> {
-            if (mHomePinnedSubtitle == null) return;
-            int n = list == null ? 0 : list.size();
-            if (n > 0) {
-                mHomePinnedSubtitle.setVisibility(View.VISIBLE);
-                mHomePinnedSubtitle.setText(getResources().getQuantityString(
-                        R.plurals.home_pinned_bookmarks_count, n, n));
-            } else {
-                mHomePinnedSubtitle.setVisibility(View.GONE);
-            }
-        });
 
         // Vault count drives the empty-hero vault button's count badge.
         // Button itself is always visible while the empty hero is
@@ -440,9 +420,17 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
             }  else if (Lifecycle.Event.ON_PAUSE.equals(event) || Lifecycle.Event.ON_STOP.equals(event)) {
                 Log.d(TAG, "onPause");
                 mStop = true;
+                unregisterClipListener();
             } else if (Lifecycle.Event.ON_RESUME.equals(event)) {
                 Log.d(TAG, "onResume");
                 mStop = false;
+                // Re-check clipboard description on every resume (paste
+                // card visibility) + start listening for live changes
+                // while we're foregrounded. The listener only fires for
+                // foreground apps on modern Android, hence the
+                // resume/pause bracket rather than onCreate/onDestroy.
+                registerClipListener();
+                refreshPasteCardVisibility();
                 // Badge count is updated reactively via TaskRepository.getRegularCount()
                 // which is already observed in onViewCreated — no need to poll the service.
             }
@@ -487,7 +475,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mActiveStripIcon = null;
         mHomeVaultTitle = null;
         mHomeVaultSubtitle = null;
-        mHomePinnedSubtitle = null;
+        mHomePasteCard = null;
         mRecentDownloadsSubtitle = null;
     }
 
@@ -748,7 +736,61 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
             showPasteHint(R.string.home_paste_hero_not_url);
             return;
         }
+        // Paste consumed: clear the system clipboard so a future
+        // home open doesn't keep advertising the same URL as a
+        // paste candidate. Use setPrimaryClip(empty) rather than
+        // clearPrimaryClip() because the latter is API 28+ and
+        // minSdk = 26. Privacy bonus: the URL doesn't linger in
+        // the system clip after the user has acted on it.
+        if (cm != null) {
+            cm.setPrimaryClip(ClipData.newPlainText("", ""));
+        }
         openUri(text);
+    }
+
+    /** Foreground-only OnPrimaryClipChangedListener registration — set
+     *  up in ON_RESUME, torn down in ON_PAUSE. Android only fires
+     *  these listeners while the app is in the foreground anyway,
+     *  and bracketing them tightly avoids leaking the listener
+     *  across configuration changes. */
+    private void registerClipListener() {
+        if (mActivity == null || mClipListener != null) return;
+        ClipboardManager cm = (ClipboardManager) mActivity.getSystemService(Context.CLIPBOARD_SERVICE);
+        if (cm == null) return;
+        mClipListener = this::refreshPasteCardVisibility;
+        cm.addPrimaryClipChangedListener(mClipListener);
+    }
+
+    private void unregisterClipListener() {
+        if (mActivity == null || mClipListener == null) return;
+        ClipboardManager cm = (ClipboardManager) mActivity.getSystemService(Context.CLIPBOARD_SERVICE);
+        if (cm != null) cm.removePrimaryClipChangedListener(mClipListener);
+        mClipListener = null;
+    }
+
+    /**
+     * Reads the clipboard's *description* (mime types only — never
+     * touches the actual content) to decide whether to show the
+     * paste card. Description access doesn't trigger Android 13's
+     * 'App pasted from your clipboard' toast that getPrimaryClip()
+     * would on every check, so we can call this freely on resume
+     * and from the OnPrimaryClipChangedListener without nagging the
+     * user. Card shows iff a text-typed clip exists; URL validation
+     * is deferred to tap-time.
+     */
+    private void refreshPasteCardVisibility() {
+        if (mHomePasteCard == null || mActivity == null) return;
+        ClipboardManager cm = (ClipboardManager) mActivity.getSystemService(Context.CLIPBOARD_SERVICE);
+        boolean hasText = false;
+        if (cm != null && cm.hasPrimaryClip()) {
+            android.content.ClipDescription desc = cm.getPrimaryClipDescription();
+            if (desc != null) {
+                hasText = desc.hasMimeType(android.content.ClipDescription.MIMETYPE_TEXT_PLAIN)
+                        || desc.hasMimeType(android.content.ClipDescription.MIMETYPE_TEXT_HTML)
+                        || desc.hasMimeType("text/uri-list");
+            }
+        }
+        mHomePasteCard.setVisibility(hasText ? View.VISIBLE : View.GONE);
     }
 
     private void showPasteHint(int stringRes) {

@@ -29,8 +29,4 @@
         <item quantity="one">%d saglabāts fails</item>
         <item quantity="other">%d saglabāti faili</item>
     </plurals>
-    <plurals name="home_pinned_bookmarks_count">
-        <item quantity="one">%d piesprausta</item>
-        <item quantity="other">%d piespraustas</item>
-    </plurals>
 </resources>

@@ -20,8 +20,4 @@
         <item quantity="one">%d ፋይል ተቀምጧል</item>
         <item quantity="other">%d ፋይሎች ተቀምጠዋል</item>
     </plurals>
-    <plurals name="home_pinned_bookmarks_count">
-        <item quantity="one">%d ተሰክቷል</item>
-        <item quantity="other">%d ተሰክተዋል</item>
-    </plurals>
 </resources>

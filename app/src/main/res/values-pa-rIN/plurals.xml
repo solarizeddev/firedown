@@ -20,8 +20,4 @@
         <item quantity="one">%d ਫਾਈਲ ਸੇਵ ਹੋਈ</item>
         <item quantity="other">%d ਫਾਈਲਾਂ ਸੇਵ ਹੋਈਆਂ</item>
     </plurals>
-    <plurals name="home_pinned_bookmarks_count">
-        <item quantity="one">%d ਪਿੰਨ ਕੀਤੇ</item>
-        <item quantity="other">%d ਪਿੰਨ ਕੀਤੇ</item>
-    </plurals>
 </resources>

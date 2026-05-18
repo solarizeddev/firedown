@@ -484,5 +484,4 @@
     <string name="home_paste_hero_not_url">リンクではないようです</string>
     <string name="home_onboarding_sites_label">Firedown を試す</string>
     <string name="home_vault_button">セーフフォルダ</string>
-    <string name="home_pinned_bookmarks">ピン留めしたブックマーク</string>
 </resources>

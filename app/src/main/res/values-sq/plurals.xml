@@ -25,8 +25,4 @@
         <item quantity="one">%d skedar i ruajtur</item>
         <item quantity="other">%d skedarë të ruajtur</item>
     </plurals>
-    <plurals name="home_pinned_bookmarks_count">
-        <item quantity="one">%d i fiksuar</item>
-        <item quantity="other">%d të fiksuar</item>
-    </plurals>
 </resources>

@@ -20,8 +20,4 @@
         <item quantity="one">%d ta fayl saqlangan</item>
         <item quantity="other">%d ta fayl saqlangan</item>
     </plurals>
-    <plurals name="home_pinned_bookmarks_count">
-        <item quantity="one">%d ta mahkamlangan</item>
-        <item quantity="other">%d ta mahkamlangan</item>
-    </plurals>
 </resources>

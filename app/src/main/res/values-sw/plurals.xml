@@ -25,8 +25,4 @@
         <item quantity="one">Faili %d limehifadhiwa</item>
         <item quantity="other">Mafaili %d yamehifadhiwa</item>
     </plurals>
-    <plurals name="home_pinned_bookmarks_count">
-        <item quantity="one">%d imebandikwa</item>
-        <item quantity="other">%d zimebandikwa</item>
-    </plurals>
 </resources>

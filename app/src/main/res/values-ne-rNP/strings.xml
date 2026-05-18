@@ -24,5 +24,4 @@
     <string name="home_paste_hero_empty">पहिले लिङ्क प्रतिलिपि गर्नुहोस्, त्यसपछि यहाँ ट्याप गर्नुहोस्</string>
     <string name="home_paste_hero_not_url">यो लिङ्क जस्तो देखिँदैन</string>
     <string name="home_onboarding_sites_label">Firedown प्रयास गर्नुहोस्</string>
-    <string name="home_pinned_bookmarks">पिन गरिएका बुकमार्कहरू</string>
 </resources>

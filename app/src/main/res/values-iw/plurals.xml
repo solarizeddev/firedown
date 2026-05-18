@@ -30,8 +30,4 @@
         <item quantity="one">נשמר קובץ %d</item>
         <item quantity="other">נשמרו %d קבצים</item>
     </plurals>
-    <plurals name="home_pinned_bookmarks_count">
-        <item quantity="one">%d מוצמד</item>
-        <item quantity="other">%d מוצמדים</item>
-    </plurals>
 </resources>

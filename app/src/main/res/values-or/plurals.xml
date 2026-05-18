@@ -20,8 +20,4 @@
         <item quantity="one">%d ଫାଇଲ୍ ସଞ୍ଚୟ କରାଯାଇଛି</item>
         <item quantity="other">%d ଫାଇଲ୍ ସଞ୍ଚୟ କରାଯାଇଛି</item>
     </plurals>
-    <plurals name="home_pinned_bookmarks_count">
-        <item quantity="one">%d ପିନ୍ କରାଯାଇଛି</item>
-        <item quantity="other">%d ପିନ୍ କରାଯାଇଛି</item>
-    </plurals>
 </resources>

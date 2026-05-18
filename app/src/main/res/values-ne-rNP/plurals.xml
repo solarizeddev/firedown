@@ -8,8 +8,4 @@
         <item quantity="one">%d फाइल सुरक्षित</item>
         <item quantity="other">%d फाइलहरू सुरक्षित</item>
     </plurals>
-    <plurals name="home_pinned_bookmarks_count">
-        <item quantity="one">%d पिन गरिएको</item>
-        <item quantity="other">%d पिन गरिएका</item>
-    </plurals>
 </resources>

@@ -30,8 +30,4 @@
         <item quantity="one">%d datoteka sačuvana</item>
         <item quantity="other">%d datoteka sačuvano</item>
     </plurals>
-    <plurals name="home_pinned_bookmarks_count">
-        <item quantity="one">%d zakačena</item>
-        <item quantity="other">%d zakačenih</item>
-    </plurals>
 </resources>

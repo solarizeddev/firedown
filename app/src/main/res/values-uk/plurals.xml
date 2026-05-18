@@ -33,8 +33,4 @@
         <item quantity="one">%d файл збережено</item>
         <item quantity="other">%d файлів збережено</item>
     </plurals>
-    <plurals name="home_pinned_bookmarks_count">
-        <item quantity="one">%d закріплена</item>
-        <item quantity="other">%d закріплено</item>
-    </plurals>
 </resources>

@@ -34,12 +34,6 @@ public interface WebBookmarkDao {
     @Query("SELECT * FROM webbookmark ORDER BY is_pinned DESC, file_date DESC LIMIT :limit")
     LiveData<List<WebBookmarkEntity>> getBookmark(int limit);
 
-    /** Pinned-only feed for the home long-press quick-access sheet
-     *  on the cradle Bookmarks button. is_pinned = 1 only; ORDER BY
-     *  file_date so the most recently pinned sits on top. */
-    @Query("SELECT * FROM webbookmark WHERE is_pinned = 1 ORDER BY file_date DESC LIMIT :limit")
-    LiveData<List<WebBookmarkEntity>> getPinnedLive(int limit);
-
     @Query("SELECT * FROM webbookmark WHERE file_url LIKE :search or file_title LIKE :search ORDER BY is_pinned DESC, file_date DESC")
     PagingSource<Integer, WebBookmarkEntity> search(String search);
 

@@ -280,5 +280,4 @@
     <string name="home_paste_hero_not_url">Nội dung này không giống một liên kết</string>
     <string name="home_onboarding_sites_label">Thử Firedown trên</string>
     <string name="home_vault_button">Thư mục an toàn</string>
-    <string name="home_pinned_bookmarks">Dấu trang đã ghim</string>
 </resources>

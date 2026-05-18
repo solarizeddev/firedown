@@ -273,5 +273,4 @@
     <string name="home_paste_hero_not_url">Acesta nu pare un link</string>
     <string name="home_onboarding_sites_label">Încearcă Firedown pe</string>
     <string name="home_vault_button">Dosar sigur</string>
-    <string name="home_pinned_bookmarks">Marcaje fixate</string>
 </resources>

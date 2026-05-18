@@ -25,8 +25,4 @@
         <item quantity="one">%d فایل ذخیره شد</item>
         <item quantity="other">%d فایل ذخیره شد</item>
     </plurals>
-    <plurals name="home_pinned_bookmarks_count">
-        <item quantity="one">%d پین شده</item>
-        <item quantity="other">%d پین شده</item>
-    </plurals>
 </resources>

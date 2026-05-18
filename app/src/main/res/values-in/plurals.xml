@@ -24,8 +24,4 @@
         <item quantity="one">%d file disimpan</item>
         <item quantity="other">%d file disimpan</item>
     </plurals>
-    <plurals name="home_pinned_bookmarks_count">
-        <item quantity="one">%d disematkan</item>
-        <item quantity="other">%d disematkan</item>
-    </plurals>
 </resources>

@@ -41,8 +41,4 @@
         <item quantity="one">تم حفظ %d ملف</item>
         <item quantity="other">تم حفظ %d ملفات</item>
     </plurals>
-    <plurals name="home_pinned_bookmarks_count">
-        <item quantity="one">%d مثبت</item>
-        <item quantity="other">%d مثبتة</item>
-    </plurals>
 </resources>

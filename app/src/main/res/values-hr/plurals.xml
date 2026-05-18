@@ -30,8 +30,4 @@
         <item quantity="one">%d spremljena datoteka</item>
         <item quantity="other">%d spremljenih datoteka</item>
     </plurals>
-    <plurals name="home_pinned_bookmarks_count">
-        <item quantity="one">%d prikvačena</item>
-        <item quantity="other">%d prikvačenih</item>
-    </plurals>
 </resources>

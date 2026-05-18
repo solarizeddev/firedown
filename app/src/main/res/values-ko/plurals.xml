@@ -36,8 +36,4 @@
         <item quantity="one">파일 %d개 저장됨</item>
         <item quantity="other">파일 %d개 저장됨</item>
     </plurals>
-    <plurals name="home_pinned_bookmarks_count">
-        <item quantity="one">%d개 고정됨</item>
-        <item quantity="other">%d개 고정됨</item>
-    </plurals>
 </resources>

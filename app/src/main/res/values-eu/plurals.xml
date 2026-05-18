@@ -25,8 +25,4 @@
         <item quantity="one">%d fitxategi gordeta</item>
         <item quantity="other">%d fitxategi gordeta</item>
     </plurals>
-    <plurals name="home_pinned_bookmarks_count">
-        <item quantity="one">%d ainguratuta</item>
-        <item quantity="other">%d ainguratuta</item>
-    </plurals>
 </resources>

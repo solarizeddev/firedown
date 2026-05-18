@@ -24,8 +24,4 @@
         <item quantity="one">ဖိုင် %d ခု သိမ်းဆည်းပြီး</item>
         <item quantity="other">ဖိုင် %d ခု သိမ်းဆည်းပြီး</item>
     </plurals>
-    <plurals name="home_pinned_bookmarks_count">
-        <item quantity="one">%d ပင်ထိုးထား</item>
-        <item quantity="other">%d ပင်ထိုးထား</item>
-    </plurals>
 </resources>

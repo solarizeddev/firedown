@@ -25,8 +25,4 @@
         <item quantity="one">%d запазен файл</item>
         <item quantity="other">%d запазени файла</item>
     </plurals>
-    <plurals name="home_pinned_bookmarks_count">
-        <item quantity="one">%d закачена</item>
-        <item quantity="other">%d закачени</item>
-    </plurals>
 </resources>

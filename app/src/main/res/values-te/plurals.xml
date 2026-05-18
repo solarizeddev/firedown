@@ -25,8 +25,4 @@
         <item quantity="one">%d ఫైల్ సేవ్ చేయబడింది</item>
         <item quantity="other">%d ఫైళ్లు సేవ్ చేయబడ్డాయి</item>
     </plurals>
-    <plurals name="home_pinned_bookmarks_count">
-        <item quantity="one">%d పిన్ చేసినవి</item>
-        <item quantity="other">%d పిన్ చేసినవి</item>
-    </plurals>
 </resources>

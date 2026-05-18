@@ -484,5 +484,4 @@
     <string name="home_paste_hero_not_url">这看起来不像链接</string>
     <string name="home_onboarding_sites_label">在以下网站试用 Firedown</string>
     <string name="home_vault_button">安全文件夹</string>
-    <string name="home_pinned_bookmarks">置顶书签</string>
 </resources>
