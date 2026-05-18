@@ -12,4 +12,8 @@
         <item quantity="other">ଫାଇଲଗୁଡ଼ିକ ମୁଭ୍ କରାଯାଇପାରିଲା ନାହିଁ। %1$s</item>
         <item quantity="one">ଫାଇଲ୍ ମୁଭ୍ କରାଯାଇପାରିଲା ନାହିଁ। %1$s</item>
     </plurals>
+    <plurals name="home_vault_item_count">
+        <item quantity="one">%d ଆଇଟମ୍ ସଞ୍ଚୟ କରାଯାଇଛି</item>
+        <item quantity="other">%d ଆଇଟମ୍ ସଞ୍ଚୟ କରାଯାଇଛି</item>
+    </plurals>
 </resources>

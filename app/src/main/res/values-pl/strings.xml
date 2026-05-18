@@ -344,5 +344,4 @@
     <string name="home_paste_hero_not_url">To nie wygląda na link</string>
     <string name="home_onboarding_sites_label">Wypróbuj Firedown na</string>
     <string name="home_vault_button">Bezpieczny folder</string>
-    <string name="home_vault_button_count">Bezpieczny folder · %d</string>
 </resources>

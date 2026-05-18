@@ -245,5 +245,4 @@
     <string name="home_paste_hero_not_url">ಇದು ಲಿಂಕ್‌ನಂತೆ ಕಾಣುತ್ತಿಲ್ಲ</string>
     <string name="home_onboarding_sites_label">Firedown ಬಳಸಿ ನೋಡಿ</string>
     <string name="home_vault_button">ಸುರಕ್ಷಿತ ಫೋಲ್ಡರ್</string>
-    <string name="home_vault_button_count">ಸುರಕ್ಷಿತ ಫೋಲ್ಡರ್ · %d</string>
 </resources>

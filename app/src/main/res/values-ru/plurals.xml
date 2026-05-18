@@ -49,4 +49,8 @@
         <item quantity="many">%d вкладок архивировано в этом месяце</item>
         <item quantity="other">%d вкладок архивировано в этом месяце</item>
     </plurals>
+    <plurals name="home_vault_item_count">
+        <item quantity="one">сохранён %d элемент</item>
+        <item quantity="other">сохранено %d элементов</item>
+    </plurals>
 </resources>

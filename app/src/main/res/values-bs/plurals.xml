@@ -22,4 +22,8 @@
     </plurals>
 
     
+    <plurals name="home_vault_item_count">
+        <item quantity="one">%d stavka sačuvana</item>
+        <item quantity="other">%d stavki sačuvano</item>
+    </plurals>
 </resources>

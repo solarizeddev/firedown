@@ -39,4 +39,10 @@
         <item quantity="one">%d private tab open</item>
         <item quantity="other">%d private tabs open</item>
     </plurals>
+    <!-- Subtitle on the home Safe Folder card. Renders only when
+         the saved-item count is > 0. -->
+    <plurals name="home_vault_item_count">
+        <item quantity="one">%d item saved</item>
+        <item quantity="other">%d items saved</item>
+    </plurals>
 </resources>

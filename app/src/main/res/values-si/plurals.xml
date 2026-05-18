@@ -12,4 +12,8 @@
         <item quantity="other">ගොනු ගෙන යාමට නොහැකි විය. %1$s</item>
         <item quantity="one">ගොනු ගෙන යාමට නොහැකි විය. %1$s</item>
     </plurals>
+    <plurals name="home_vault_item_count">
+        <item quantity="one">%d අයිතමයක් සුරකින ලදී</item>
+        <item quantity="other">%d අයිතම සුරකින ලදී</item>
+    </plurals>
 </resources>

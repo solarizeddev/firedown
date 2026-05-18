@@ -33,4 +33,8 @@
         <item quantity="one">%d tabblad deze maand gearchiveerd</item>
         <item quantity="other">%d tabbladen deze maand gearchiveerd</item>
     </plurals>
+    <plurals name="home_vault_item_count">
+        <item quantity="one">%d item opgeslagen</item>
+        <item quantity="other">%d items opgeslagen</item>
+    </plurals>
 </resources>

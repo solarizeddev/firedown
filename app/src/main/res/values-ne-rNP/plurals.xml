@@ -1,3 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <plurals name="home_vault_item_count">
+        <item quantity="one">%d वस्तु सुरक्षित</item>
+        <item quantity="other">%d वस्तुहरू सुरक्षित</item>
+    </plurals>
 </resources>

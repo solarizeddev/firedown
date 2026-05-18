@@ -211,5 +211,4 @@
     <string name="home_paste_hero_not_url">यो लिङ्क जस्तो देखिँदैन</string>
     <string name="home_onboarding_sites_label">Firedown प्रयास गर्नुहोस्</string>
     <string name="home_vault_button">सुरक्षित फोल्डर</string>
-    <string name="home_vault_button_count">सुरक्षित फोल्डर · %d</string>
 </resources>

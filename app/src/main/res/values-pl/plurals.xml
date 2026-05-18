@@ -49,4 +49,8 @@
         <item quantity="many">%d kart zarchiwizowanych w tym miesiącu</item>
         <item quantity="other">%d kart zarchiwizowanych w tym miesiącu</item>
     </plurals>
+    <plurals name="home_vault_item_count">
+        <item quantity="one">%d zapisany element</item>
+        <item quantity="other">%d zapisanych elementów</item>
+    </plurals>
 </resources>

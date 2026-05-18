@@ -21,4 +21,8 @@
         <item quantity="one">%d yakın zamanda kapatılan sekme</item>
         <item quantity="other">%d yakın zamanda kapatılan sekme</item>
     </plurals>
+    <plurals name="home_vault_item_count">
+        <item quantity="one">%d öğe kaydedildi</item>
+        <item quantity="other">%d öğe kaydedildi</item>
+    </plurals>
 </resources>

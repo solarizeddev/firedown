@@ -17,4 +17,8 @@
     </plurals>
 
     
+    <plurals name="home_vault_item_count">
+        <item quantity="one">%d مورد ذخیره شد</item>
+        <item quantity="other">%d مورد ذخیره شد</item>
+    </plurals>
 </resources>

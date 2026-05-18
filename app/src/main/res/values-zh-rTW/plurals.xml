@@ -19,4 +19,8 @@
         <plurals name="archive_banner_title">
         <item quantity="other">%d 個最近關閉的分頁</item>
     </plurals>
+    <plurals name="home_vault_item_count">
+        <item quantity="one">已儲存 %d 項</item>
+        <item quantity="other">已儲存 %d 項</item>
+    </plurals>
 </resources>

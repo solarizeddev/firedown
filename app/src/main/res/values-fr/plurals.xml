@@ -32,4 +32,8 @@
         <item quantity="one">%d onglet archivé ce mois-ci</item>
         <item quantity="other">%d onglets archivés ce mois-ci</item>
     </plurals>
+    <plurals name="home_vault_item_count">
+        <item quantity="one">%d élément enregistré</item>
+        <item quantity="other">%d éléments enregistrés</item>
+    </plurals>
 </resources>

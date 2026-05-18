@@ -21,4 +21,8 @@
     </plurals>
 
     
+    <plurals name="home_vault_item_count">
+        <item quantity="one">%d saglabāts vienums</item>
+        <item quantity="other">%d saglabāti vienumi</item>
+    </plurals>
 </resources>

@@ -12,4 +12,8 @@
         <item quantity="other">Fayllar koʻchirilmadi. %1$s</item>
         <item quantity="one">Fayl koʻchirilmadi. %1$s</item>
     </plurals>
+    <plurals name="home_vault_item_count">
+        <item quantity="one">%d ta element saqlangan</item>
+        <item quantity="other">%d ta element saqlangan</item>
+    </plurals>
 </resources>

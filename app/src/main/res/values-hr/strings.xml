@@ -277,5 +277,4 @@
     <string name="home_paste_hero_not_url">Ovo ne izgleda kao poveznica</string>
     <string name="home_onboarding_sites_label">Isprobajte Firedown na</string>
     <string name="home_vault_button">Sigurna mapa</string>
-    <string name="home_vault_button_count">Sigurna mapa · %d</string>
 </resources>

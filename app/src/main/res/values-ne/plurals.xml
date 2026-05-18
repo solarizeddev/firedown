@@ -16,4 +16,8 @@
         <item quantity="one">%1$dt</item>
         <item quantity="other">%1$dt</item>
     </plurals>
+    <plurals name="home_vault_item_count">
+        <item quantity="one">%d वस्तु सुरक्षित</item>
+        <item quantity="other">%d वस्तुहरू सुरक्षित</item>
+    </plurals>
 </resources>

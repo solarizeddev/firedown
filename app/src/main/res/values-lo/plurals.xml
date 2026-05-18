@@ -12,4 +12,8 @@
         <item quantity="other">ບໍ່ສາມາດຍ້າຍໄຟລ໌ໄດ້. %1$s</item>
         <item quantity="one">ບໍ່ສາມາດຍ້າຍໄຟລ໌ໄດ້. %1$s</item>
     </plurals>
+    <plurals name="home_vault_item_count">
+        <item quantity="one">%d ລາຍການ ບັນທຶກແລ້ວ</item>
+        <item quantity="other">%d ລາຍການ ບັນທຶກແລ້ວ</item>
+    </plurals>
 </resources>

@@ -17,4 +17,8 @@
     </plurals>
 
     
+    <plurals name="home_vault_item_count">
+        <item quantity="one">%d item guardado</item>
+        <item quantity="other">%d itens guardados</item>
+    </plurals>
 </resources>

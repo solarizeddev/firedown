@@ -17,4 +17,8 @@
     </plurals>
 
     
+    <plurals name="home_vault_item_count">
+        <item quantity="one">%d элемент сақталды</item>
+        <item quantity="other">%d элемент сақталды</item>
+    </plurals>
 </resources>

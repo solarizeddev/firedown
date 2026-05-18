@@ -19,4 +19,8 @@
         <plurals name="archive_banner_title">
         <item quantity="other">%d 个最近关闭的标签页</item>
     </plurals>
+    <plurals name="home_vault_item_count">
+        <item quantity="one">已保存 %d 项</item>
+        <item quantity="other">已保存 %d 项</item>
+    </plurals>
 </resources>

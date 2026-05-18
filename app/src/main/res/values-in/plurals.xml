@@ -16,4 +16,8 @@
     </plurals>
 
     
+    <plurals name="home_vault_item_count">
+        <item quantity="one">%d item disimpan</item>
+        <item quantity="other">%d item disimpan</item>
+    </plurals>
 </resources>

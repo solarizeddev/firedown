@@ -12,4 +12,8 @@
         <item quantity="other">Չհաջողվեց տեղափոխել ֆայլերը։ %1$s</item>
         <item quantity="one">Չհաջողվեց տեղափոխել ֆայլը։ %1$s</item>
     </plurals>
+    <plurals name="home_vault_item_count">
+        <item quantity="one">%d տարր պահված է</item>
+        <item quantity="other">%d տարր պահված է</item>
+    </plurals>
 </resources>

@@ -21,4 +21,8 @@
     </plurals>
 
     
+    <plurals name="home_vault_item_count">
+        <item quantity="one">%d element salvat</item>
+        <item quantity="other">%d elemente salvate</item>
+    </plurals>
 </resources>

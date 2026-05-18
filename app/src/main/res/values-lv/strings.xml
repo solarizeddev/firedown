@@ -226,5 +226,4 @@
     <string name="home_paste_hero_not_url">Šī neizskatās pēc saites</string>
     <string name="home_onboarding_sites_label">Izmēģiniet Firedown</string>
     <string name="home_vault_button">Drošā mape</string>
-    <string name="home_vault_button_count">Drošā mape · %d</string>
 </resources>

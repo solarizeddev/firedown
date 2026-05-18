@@ -16,4 +16,8 @@
     </plurals>
 
     
+    <plurals name="home_vault_item_count">
+        <item quantity="one">Đã lưu %d mục</item>
+        <item quantity="other">Đã lưu %d mục</item>
+    </plurals>
 </resources>

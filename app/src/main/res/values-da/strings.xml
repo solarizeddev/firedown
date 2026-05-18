@@ -295,5 +295,4 @@
     <string name="home_paste_hero_not_url">Det ligner ikke et link</string>
     <string name="home_onboarding_sites_label">Prøv Firedown på</string>
     <string name="home_vault_button">Sikker mappe</string>
-    <string name="home_vault_button_count">Sikker mappe · %d</string>
 </resources>

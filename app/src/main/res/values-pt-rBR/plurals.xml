@@ -28,4 +28,8 @@
         <item quantity="one">%d aba arquivada este mês</item>
         <item quantity="other">%d abas arquivadas este mês</item>
     </plurals>
+    <plurals name="home_vault_item_count">
+        <item quantity="one">%d item salvo</item>
+        <item quantity="other">%d itens salvos</item>
+    </plurals>
 </resources>

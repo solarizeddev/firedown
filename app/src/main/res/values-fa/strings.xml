@@ -275,5 +275,4 @@
     <string name="home_paste_hero_not_url">این به لینک شباهت ندارد</string>
     <string name="home_onboarding_sites_label">Firedown را امتحان کنید در</string>
     <string name="home_vault_button">پوشه ایمن</string>
-    <string name="home_vault_button_count">پوشه ایمن · %d</string>
 </resources>

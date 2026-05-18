@@ -17,4 +17,8 @@
     </plurals>
 
     
+    <plurals name="home_vault_item_count">
+        <item quantity="one">%d tallennettu kohde</item>
+        <item quantity="other">%d tallennettua kohdetta</item>
+    </plurals>
 </resources>

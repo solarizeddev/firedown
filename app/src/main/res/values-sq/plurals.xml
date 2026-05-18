@@ -17,4 +17,8 @@
     </plurals>
 
     
+    <plurals name="home_vault_item_count">
+        <item quantity="one">%d artikull i ruajtur</item>
+        <item quantity="other">%d artikuj të ruajtur</item>
+    </plurals>
 </resources>

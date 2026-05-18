@@ -100,6 +100,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     private TextView mActiveStripCount;
     private ProgressBar mActiveStripBar;
     private TextView mHomeVaultTitle;
+    private TextView mHomeVaultSubtitle;
     private DownloadsQuickAccessAdapter mRecentDownloadsAdapter;
     private SharedPreferences.OnSharedPreferenceChangeListener mHomePrefsListener;
     @Nullable private java.util.List<DownloadEntity> mLastRecentList;
@@ -196,6 +197,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
 
         View vaultCard = v.findViewById(R.id.home_vault_card);
         mHomeVaultTitle = v.findViewById(R.id.home_vault_title);
+        mHomeVaultSubtitle = v.findViewById(R.id.home_vault_subtitle);
         vaultCard.setOnClickListener(view ->
                 mStartForResult.launch(new Intent(mActivity, VaultActivity.class)));
 
@@ -285,11 +287,15 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         // showing — discoverability for users who haven't yet used
         // vault — but the badge only appears when count > 0.
         mRecentDownloadsViewModel.getVaultCount().observe(getViewLifecycleOwner(), count -> {
-            if (mHomeVaultTitle == null) return;
+            if (mHomeVaultSubtitle == null) return;
             int n = count == null ? 0 : count;
-            mHomeVaultTitle.setText(n > 0
-                    ? getString(R.string.home_vault_button_count, n)
-                    : getString(R.string.home_vault_button));
+            if (n > 0) {
+                mHomeVaultSubtitle.setVisibility(View.VISIBLE);
+                mHomeVaultSubtitle.setText(getResources().getQuantityString(
+                        R.plurals.home_vault_item_count, n, n));
+            } else {
+                mHomeVaultSubtitle.setVisibility(View.GONE);
+            }
         });
 
         mHomePrefsListener = (sharedPreferences, key) -> {
@@ -449,6 +455,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mActiveStripCount = null;
         mActiveStripBar = null;
         mHomeVaultTitle = null;
+        mHomeVaultSubtitle = null;
         mRecentDownloadsAdapter = null;
     }
 

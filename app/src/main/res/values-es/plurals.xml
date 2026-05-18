@@ -31,4 +31,8 @@
         <item quantity="one">%d pestaña archivada este mes</item>
         <item quantity="other">%d pestañas archivadas este mes</item>
     </plurals>
+    <plurals name="home_vault_item_count">
+        <item quantity="one">%d archivo guardado</item>
+        <item quantity="other">%d archivos guardados</item>
+    </plurals>
 </resources>

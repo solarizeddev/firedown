@@ -243,5 +243,4 @@
     <string name="home_paste_hero_not_url">यह कोई लिंक नहीं लगता</string>
     <string name="home_onboarding_sites_label">Firedown आज़माएं</string>
     <string name="home_vault_button">सुरक्षित फ़ोल्डर</string>
-    <string name="home_vault_button_count">सुरक्षित फ़ोल्डर · %d</string>
 </resources>

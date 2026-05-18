@@ -226,5 +226,4 @@
     <string name="home_paste_hero_not_url">Ini tidak kelihatan seperti pautan</string>
     <string name="home_onboarding_sites_label">Cuba Firedown di</string>
     <string name="home_vault_button">Folder selamat</string>
-    <string name="home_vault_button_count">Folder selamat · %d</string>
 </resources>

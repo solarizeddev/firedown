@@ -1,3 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <plurals name="home_vault_item_count">
+        <item quantity="one">%d տարր պահված է</item>
+        <item quantity="other">%d տարր պահված է</item>
+    </plurals>
 </resources>

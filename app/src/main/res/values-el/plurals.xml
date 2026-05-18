@@ -17,4 +17,8 @@
     </plurals>
 
     
+    <plurals name="home_vault_item_count">
+        <item quantity="one">%d στοιχείο αποθηκευμένο</item>
+        <item quantity="other">%d στοιχεία αποθηκευμένα</item>
+    </plurals>
 </resources>

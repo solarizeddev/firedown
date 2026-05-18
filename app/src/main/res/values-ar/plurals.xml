@@ -33,4 +33,8 @@
     </plurals>
 
     
+    <plurals name="home_vault_item_count">
+        <item quantity="one">تم حفظ %d عنصر</item>
+        <item quantity="other">تم حفظ %d عناصر</item>
+    </plurals>
 </resources>

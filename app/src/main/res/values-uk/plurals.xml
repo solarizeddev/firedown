@@ -25,4 +25,8 @@
     </plurals>
 
     
+    <plurals name="home_vault_item_count">
+        <item quantity="one">%d елемент збережено</item>
+        <item quantity="other">%d елементів збережено</item>
+    </plurals>
 </resources>

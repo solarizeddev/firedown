@@ -17,4 +17,8 @@
     </plurals>
 
     
+    <plurals name="home_vault_item_count">
+        <item quantity="one">%d అంశం సేవ్ చేయబడింది</item>
+        <item quantity="other">%d అంశాలు సేవ్ చేయబడ్డాయి</item>
+    </plurals>
 </resources>

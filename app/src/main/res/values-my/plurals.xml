@@ -16,4 +16,8 @@
     </plurals>
 
     
+    <plurals name="home_vault_item_count">
+        <item quantity="one">ပစ္စည်း %d ခု သိမ်းဆည်းပြီး</item>
+        <item quantity="other">ပစ္စည်း %d ခု သိမ်းဆည်းပြီး</item>
+    </plurals>
 </resources>

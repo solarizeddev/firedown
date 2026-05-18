@@ -12,4 +12,8 @@
         <item quantity="other">Ayikwazanga ukuhambisa amafayela. %1$s</item>
         <item quantity="one">Ayikwazanga ukuhambisa amafayela. %1$s</item>
     </plurals>
+    <plurals name="home_vault_item_count">
+        <item quantity="one">%d into ilondoloziwe</item>
+        <item quantity="other">%d izinto zilondoloziwe</item>
+    </plurals>
 </resources>

@@ -16,4 +16,8 @@
     </plurals>
 
     
+    <plurals name="home_vault_item_count">
+        <item quantity="one">%d รายการที่บันทึก</item>
+        <item quantity="other">%d รายการที่บันทึก</item>
+    </plurals>
 </resources>

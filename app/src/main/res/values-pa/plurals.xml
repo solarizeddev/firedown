@@ -17,4 +17,8 @@
     </plurals>
 
     
+    <plurals name="home_vault_item_count">
+        <item quantity="one">%d ਆਈਟਮ ਸੇਵ ਹੋਈ</item>
+        <item quantity="other">%d ਆਈਟਮਾਂ ਸੇਵ ਹੋਈਆਂ</item>
+    </plurals>
 </resources>

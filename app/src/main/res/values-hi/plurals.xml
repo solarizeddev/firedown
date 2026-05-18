@@ -17,4 +17,8 @@
     </plurals>
 
     
+    <plurals name="home_vault_item_count">
+        <item quantity="one">%d आइटम सहेजा गया</item>
+        <item quantity="other">%d आइटम सहेजे गए</item>
+    </plurals>
 </resources>

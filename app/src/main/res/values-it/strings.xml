@@ -330,5 +330,4 @@
     <string name="home_paste_hero_not_url">Non sembra un link</string>
     <string name="home_onboarding_sites_label">Prova Firedown su</string>
     <string name="home_vault_button">Cartella di sicurezza</string>
-    <string name="home_vault_button_count">Cartella di sicurezza · %d</string>
 </resources>

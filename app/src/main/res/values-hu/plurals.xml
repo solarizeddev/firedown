@@ -17,4 +17,8 @@
     </plurals>
 
     
+    <plurals name="home_vault_item_count">
+        <item quantity="one">%d elem mentve</item>
+        <item quantity="other">%d elem mentve</item>
+    </plurals>
 </resources>
