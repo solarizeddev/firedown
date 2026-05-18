@@ -306,6 +306,4 @@
     <string name="downloads_quick_access_title">التنزيلات الأخيرة</string>
     <string name="home_onboarding_sites_label">جرّب Firedown على</string>
     <string name="home_vault_button">مجلد آمن</string>
-    <string name="browser_menu_pin_to_home">تثبيت في الشاشة الرئيسية</string>
-    <string name="browser_pinned_to_home">تم التثبيت في الشاشة الرئيسية</string>
 </resources>

@@ -21,6 +21,4 @@
 <string name="switch_to_tab_description">ट्याबमा स्विच गर्नुहोस्</string>
     <string name="downloads_quick_access_title">हालैका डाउनलोडहरू</string>
     <string name="home_onboarding_sites_label">Firedown प्रयास गर्नुहोस्</string>
-    <string name="browser_menu_pin_to_home">गृहमा पिन गर्नुहोस्</string>
-    <string name="browser_pinned_to_home">गृहमा पिन गरियो</string>
 </resources>

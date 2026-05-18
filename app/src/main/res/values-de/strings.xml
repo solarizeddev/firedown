@@ -482,6 +482,4 @@
     <string name="downloads_quick_access_title">Letzte Downloads</string>
     <string name="home_onboarding_sites_label">Firedown ausprobieren auf</string>
     <string name="home_vault_button">Sicherer Ordner</string>
-    <string name="browser_menu_pin_to_home">An Startseite anpinnen</string>
-    <string name="browser_pinned_to_home">An Startseite angepinnt</string>
 </resources>

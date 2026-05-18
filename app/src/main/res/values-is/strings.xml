@@ -259,6 +259,4 @@
     <string name="downloads_quick_access_title">Nýleg niðurhal</string>
     <string name="home_onboarding_sites_label">Prófaðu Firedown á</string>
     <string name="home_vault_button">Örugg mappa</string>
-    <string name="browser_menu_pin_to_home">Festa á forsíðu</string>
-    <string name="browser_pinned_to_home">Fest á forsíðu</string>
 </resources>

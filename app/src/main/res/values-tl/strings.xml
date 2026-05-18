@@ -256,6 +256,4 @@
     <string name="downloads_quick_access_title">Mga kamakailang pag-download</string>
     <string name="home_onboarding_sites_label">Subukan ang Firedown sa</string>
     <string name="home_vault_button">Ligtas na folder</string>
-    <string name="browser_menu_pin_to_home">I-pin sa home</string>
-    <string name="browser_pinned_to_home">Naka-pin sa home</string>
 </resources>

@@ -323,6 +323,4 @@
     <string name="downloads_quick_access_title">최근 다운로드</string>
     <string name="home_onboarding_sites_label">Firedown 사용해보기</string>
     <string name="home_vault_button">보안 폴더</string>
-    <string name="browser_menu_pin_to_home">홈에 고정</string>
-    <string name="browser_pinned_to_home">홈에 고정됨</string>
 </resources>

@@ -274,6 +274,4 @@
     <string name="downloads_quick_access_title">Nedávne sťahovania</string>
     <string name="home_onboarding_sites_label">Vyskúšajte Firedown na</string>
     <string name="home_vault_button">Bezpečný priečinok</string>
-    <string name="browser_menu_pin_to_home">Pripnúť na úvod</string>
-    <string name="browser_pinned_to_home">Pripnuté na úvod</string>
 </resources>

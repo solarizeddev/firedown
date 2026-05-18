@@ -56,11 +56,6 @@ public class WebBookmarkDataRepository {
         return mWebBookmarkDao.getBookmark(limit);
     }
 
-    /** Pinned-only feed for the home pinned favicons strip. */
-    public LiveData<List<WebBookmarkEntity>> getPinned(int limit) {
-        return mWebBookmarkDao.getPinnedLive(limit);
-    }
-
     public PagingSource<Integer, WebBookmarkEntity> get() {
         return mWebBookmarkDao.getBookmarks();
     }
@@ -109,13 +104,6 @@ public class WebBookmarkDataRepository {
     public void deleteAll() {
         mSyncEntities.clear();
         mDiskExecutor.execute(mWebBookmarkDao::deleteAll);
-    }
-
-    /** Toggle the is_pinned flag for a bookmark. Pinned bookmarks
-     *  render at the top of the list with a pin badge — replaces the
-     *  retired standalone shortcuts surface. */
-    public void setPinned(int id, boolean pinned) {
-        mDiskExecutor.execute(() -> mWebBookmarkDao.setPinned(id, pinned));
     }
 
     public void getId(int id, DataCallback<WebBookmarkEntity> callback){

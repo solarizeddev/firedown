@@ -8,5 +8,4 @@ public interface WebBookmark {
     String getPreview();
     String getIcon();
     long getDate();
-    boolean isPinned();
 }

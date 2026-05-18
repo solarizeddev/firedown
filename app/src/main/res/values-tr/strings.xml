@@ -343,6 +343,4 @@
     <string name="downloads_quick_access_title">Son indirilenler</string>
     <string name="home_onboarding_sites_label">Firedown\'u şurada deneyin</string>
     <string name="home_vault_button">Güvenli klasör</string>
-    <string name="browser_menu_pin_to_home">Ana ekrana sabitle</string>
-    <string name="browser_pinned_to_home">Ana ekrana sabitlendi</string>
 </resources>

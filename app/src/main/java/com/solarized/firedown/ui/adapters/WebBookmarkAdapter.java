@@ -109,7 +109,6 @@ public class WebBookmarkAdapter extends PagingDataAdapter<WebBookmarkEntity, Rec
         webHistoryViewHolder.item.setStrokeColor(mActionMode && contains ? mColorSelected : mColorNormal);
         webHistoryViewHolder.file_more.setVisibility(mActionMode ? View.INVISIBLE : View.VISIBLE);
         webHistoryViewHolder.spacer.setVisibility(mActionMode ? View.INVISIBLE : View.VISIBLE);
-        webHistoryViewHolder.pinBadge.setVisibility(webBookmarkEntity.isPinned() ? View.VISIBLE : View.GONE);
         GlideHelper.load(icon, url, webHistoryViewHolder.file_icon, mRequestOptions);
 
     }
@@ -182,7 +181,6 @@ public class WebBookmarkAdapter extends PagingDataAdapter<WebBookmarkEntity, Rec
         AppCompatImageView file_icon;
         AppCompatImageButton file_more;
         AppCompatImageView selected;
-        AppCompatImageView pinBadge;
 
         View spacer;
 
@@ -195,7 +193,6 @@ public class WebBookmarkAdapter extends PagingDataAdapter<WebBookmarkEntity, Rec
             file_url = view.findViewById(R.id.file_url);
             file_icon = view.findViewById(R.id.file_icon);
             file_more = view.findViewById(R.id.file_more);
-            pinBadge = view.findViewById(R.id.file_pin_badge);
             spacer = view.findViewById(R.id.spacer);
             file_more.setOnClickListener(this);
             selected.setOnClickListener(this);

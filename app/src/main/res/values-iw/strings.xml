@@ -290,6 +290,4 @@
     <string name="downloads_quick_access_title">הורדות אחרונות</string>
     <string name="home_onboarding_sites_label">נסה את Firedown ב</string>
     <string name="home_vault_button">תיקייה בטוחה</string>
-    <string name="browser_menu_pin_to_home">הצמד למסך הבית</string>
-    <string name="browser_pinned_to_home">הוצמד למסך הבית</string>
 </resources>

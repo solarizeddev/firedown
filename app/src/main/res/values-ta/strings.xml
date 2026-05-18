@@ -243,6 +243,4 @@
     <string name="downloads_quick_access_title">சமீபத்திய பதிவிறக்கங்கள்</string>
     <string name="home_onboarding_sites_label">Firedown ஐ முயற்சிக்கவும்</string>
     <string name="home_vault_button">பாதுகாப்பான ஃபோல்டர்</string>
-    <string name="browser_menu_pin_to_home">முகப்பில் பின் செய்க</string>
-    <string name="browser_pinned_to_home">முகப்பில் பின் செய்யப்பட்டது</string>
 </resources>

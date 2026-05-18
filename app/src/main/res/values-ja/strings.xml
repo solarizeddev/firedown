@@ -481,6 +481,4 @@
     <string name="downloads_quick_access_title">最近のダウンロード</string>
     <string name="home_onboarding_sites_label">Firedown を試す</string>
     <string name="home_vault_button">セーフフォルダ</string>
-    <string name="browser_menu_pin_to_home">ホームにピン留め</string>
-    <string name="browser_pinned_to_home">ホームにピン留めしました</string>
 </resources>

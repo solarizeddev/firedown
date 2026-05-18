@@ -270,6 +270,4 @@
     <string name="downloads_quick_access_title">دانلودهای اخیر</string>
     <string name="home_onboarding_sites_label">Firedown را امتحان کنید در</string>
     <string name="home_vault_button">پوشه ایمن</string>
-    <string name="browser_menu_pin_to_home">سنجاق به صفحه اصلی</string>
-    <string name="browser_pinned_to_home">به صفحه اصلی سنجاق شد</string>
 </resources>

@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/item_web_history_holder"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -47,40 +46,6 @@
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"/>
 
-
-            <!--
-                Pin badge — small overlay on the favicon's bottom-right
-                corner, visible only when WebBookmarkAdapter sets
-                isPinned. Stays out of the title's column entirely so
-                pinned vs unpinned rows have identical text geometry;
-                the favicon carries the status marker the way a
-                notification dot rides on an app icon.
-            -->
-            <!--
-                Pin badge — small status marker just before the
-                trailing more-menu button. WebBookmarkAdapter toggles
-                visibility; when GONE, ConstraintLayout collapses it
-                to a 0-size anchor and file_name's end snaps directly
-                to file_more, so unpinned rows render at full title
-                width. Pinned rows show the badge between title and
-                more, signalling status without taking a column at
-                the start of the row.
-            -->
-            <androidx.appcompat.widget.AppCompatImageView
-                android:id="@+id/file_pin_badge"
-                android:layout_width="16dp"
-                android:layout_height="16dp"
-                android:layout_marginEnd="8dp"
-                android:contentDescription="@null"
-                android:src="@drawable/ic_push_pin_filled_16"
-                android:visibility="gone"
-                app:tint="?attr/colorOnSurfaceVariant"
-                app:layout_constraintEnd_toStartOf="@id/file_more"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent"
-                tools:visibility="visible"
-                tools:ignore="ContentDescription" />
-
             <TextView
                 android:id="@+id/file_name"
                 android:layout_width="0dp"
@@ -91,7 +56,7 @@
                 android:ellipsize="marquee"
                 android:singleLine="true"
                 style="@style/TextAppearance.Material3.TitleMedium"
-                app:layout_constraintEnd_toStartOf="@id/file_pin_badge"
+                app:layout_constraintEnd_toStartOf="@id/file_more"
                 app:layout_constraintStart_toEndOf="@id/file_icon"
                 app:layout_constraintTop_toTopOf="parent"/>
 
@@ -108,7 +73,7 @@
                 android:singleLine="true"
                 style="@style/TextAppearance.Material3.BodySmall"
                 app:layout_constraintStart_toEndOf="@id/file_icon"
-                app:layout_constraintEnd_toStartOf="@id/file_pin_badge"
+                app:layout_constraintEnd_toStartOf="@id/file_more"
                 app:layout_constraintTop_toBottomOf="@id/file_name"/>
 
             <androidx.appcompat.widget.AppCompatImageButton

@@ -342,6 +342,4 @@
     <string name="downloads_quick_access_title">Недавние загрузки</string>
     <string name="home_onboarding_sites_label">Попробуйте Firedown на</string>
     <string name="home_vault_button">Безопасная папка</string>
-    <string name="browser_menu_pin_to_home">Закрепить на главной</string>
-    <string name="browser_pinned_to_home">Закреплено на главной</string>
 </resources>

@@ -49,7 +49,7 @@ public class DatabaseModule {
     @Singleton
     public WebBookmarkDatabase provideWebBookmarkDatabase(@ApplicationContext Context context) {
         return Room.databaseBuilder(context, WebBookmarkDatabase.class, WebBookmarkDatabase.DATABASE_NAME)
-                .addMigrations(WebBookmarkDatabase.MIGRATION_1_2, WebBookmarkDatabase.MIGRATION_2_3)
+                .addMigrations(WebBookmarkDatabase.MIGRATION_1_2)
                 .setJournalMode(RoomDatabase.JournalMode.AUTOMATIC)
                 .fallbackToDestructiveMigration(false)
                 .build();

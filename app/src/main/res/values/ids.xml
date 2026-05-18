@@ -28,7 +28,6 @@
     <item name="popup_toggle" type="id" />
     <item name="popup_bookmark_add" type="id" />
     <item name="popup_bookmark_edit" type="id" />
-    <item name="popup_pin_to_home" type="id" />
     <item name="popup_bookmark_added" type="id" />
     <item name="popup_bookmark_deleted" type="id" />
     <item name="popup_select" type="id" />

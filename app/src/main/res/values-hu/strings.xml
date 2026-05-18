@@ -277,6 +277,4 @@
     <string name="downloads_quick_access_title">Legutóbbi letöltések</string>
     <string name="home_onboarding_sites_label">Firedown kipróbálása</string>
     <string name="home_vault_button">Biztonságos mappa</string>
-    <string name="browser_menu_pin_to_home">Rögzítés a kezdőképernyőre</string>
-    <string name="browser_pinned_to_home">Rögzítve a kezdőképernyőre</string>
 </resources>

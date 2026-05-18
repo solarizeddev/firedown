@@ -272,6 +272,4 @@
     <string name="downloads_quick_access_title">Nedavna preuzimanja</string>
     <string name="home_onboarding_sites_label">Isprobajte Firedown na</string>
     <string name="home_vault_button">Sigurna mapa</string>
-    <string name="browser_menu_pin_to_home">Prikvači na početnu</string>
-    <string name="browser_pinned_to_home">Prikvačeno na početnu</string>
 </resources>

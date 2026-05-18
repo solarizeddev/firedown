@@ -41,6 +41,4 @@
     <string name="switch_to_tab_description">टैब पर जाएँ</string>
     <string name="downloads_quick_access_title">हाल के डाउनलोड</string>
     <string name="home_onboarding_sites_label">Firedown आज़माएं</string>
-    <string name="browser_menu_pin_to_home">होम पर पिन करें</string>
-    <string name="browser_pinned_to_home">होम पर पिन किया गया</string>
 </resources>

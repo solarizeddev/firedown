@@ -59,43 +59,6 @@
                 android:layout_marginTop="12dp" />
 
 
-            <!--
-                Pinned bookmarks strip — minimalist favicon row. Visible
-                only when ≥1 bookmark is pinned (no empty 'pin something
-                here' state; the card itself is the discovery). Sits
-                above the Downloads card so the user's chosen sites
-                rank higher than the static-info summary cards. Tap a
-                tile → openUri; long-press → the bookmark options
-                sheet (open / edit / share / unpin / delete).
-            -->
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/home_pinned_strip_card"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="@dimen/list_spacing"
-                android:layout_marginEnd="@dimen/list_spacing"
-                android:layout_marginTop="12dp"
-                android:visibility="gone"
-                app:cardBackgroundColor="?attr/colorSurfaceContainerHigh"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="0dp"
-                app:strokeWidth="0dp"
-                tools:visibility="visible">
-
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/home_pinned_strip_recycler"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:clipToPadding="false"
-                    android:orientation="horizontal"
-                    android:overScrollMode="never"
-                    android:paddingHorizontal="12dp"
-                    android:paddingVertical="14dp"
-                    app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
-
-            </com.google.android.material.card.MaterialCardView>
-
-
             <include
                 android:id="@+id/recent_downloads_card"
                 layout="@layout/card_home_recent_downloads"

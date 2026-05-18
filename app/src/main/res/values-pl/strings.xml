@@ -339,6 +339,4 @@
     <string name="downloads_quick_access_title">Ostatnie pobrania</string>
     <string name="home_onboarding_sites_label">Wypróbuj Firedown na</string>
     <string name="home_vault_button">Bezpieczny folder</string>
-    <string name="browser_menu_pin_to_home">Przypnij do strony głównej</string>
-    <string name="browser_pinned_to_home">Przypięto do strony głównej</string>
 </resources>

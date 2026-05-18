@@ -20,9 +20,11 @@ import dagger.hilt.android.qualifiers.ApplicationContext;
 
 /**
  * One-time migration that lifts every row out of the legacy
- * {@code shortcuts-db} into the bookmarks DB with
- * {@link WebBookmarkEntity#isPinned} = true, then deletes the
- * shortcuts DB on disk.
+ * {@code shortcuts-db} into the bookmarks DB as regular bookmarks,
+ * then deletes the shortcuts DB on disk. User data is preserved;
+ * the 'shortcut' tier itself doesn't survive — Firedown's home no
+ * longer has a shortcuts surface, and bookmarks don't carry a
+ * pinned/favorite tier any more.
  *
  * <p>The standalone 'shortcuts' concept and its Room database have
  * been retired (see commit). Existing users get their shortcuts
@@ -108,7 +110,6 @@ public class LegacyShortcutsMigrator {
                     entity.setFileDate(colDate >= 0 ? c.getLong(colDate)
                             : System.currentTimeMillis());
                     entity.setFilePreview(null);
-                    entity.setPinned(true);
 
                     // REPLACE conflict strategy on the DAO: if a
                     // bookmark already exists for this URL (same

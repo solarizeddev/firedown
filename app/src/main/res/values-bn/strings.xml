@@ -248,6 +248,4 @@
     <string name="downloads_quick_access_title">সাম্প্রতিক ডাউনলোড</string>
     <string name="home_onboarding_sites_label">Firedown ব্যবহার করুন</string>
     <string name="home_vault_button">নিরাপদ ফোল্ডার</string>
-    <string name="browser_menu_pin_to_home">হোমে পিন করুন</string>
-    <string name="browser_pinned_to_home">হোমে পিন করা হয়েছে</string>
 </resources>

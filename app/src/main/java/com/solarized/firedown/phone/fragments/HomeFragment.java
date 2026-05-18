@@ -69,8 +69,7 @@ import dagger.hilt.android.AndroidEntryPoint;
 public class HomeFragment extends BaseBrowserFragment implements BottomNavigationBar.OnBottomBarListener,
         AutoCompleteEditText.OnCommitListener, AutoCompleteEditText.OnFilterListener, AutoCompleteEditText.OnFocusChangedListener,
         AutoCompleteEditText.OnTextChangedListener, AutoCompleteEditText.OnSearchStateChangeListener,
-        GeckoToolbar.OnToolbarListener , OnBoardingCard.OnBoardingCardListener, OnItemClickListener,
-        com.solarized.firedown.phone.dialogs.WebOptionSheetDialogFragment.Host {
+        GeckoToolbar.OnToolbarListener , OnBoardingCard.OnBoardingCardListener, OnItemClickListener {
 
 
     private static final String TAG = HomeFragment.class.getName();
@@ -97,9 +96,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     @Nullable private android.animation.ObjectAnimator mActiveStripPulse;
     private TextView mHomeVaultTitle;
     private TextView mHomeVaultSubtitle;
-    private View mPinnedStripCard;
-    private com.solarized.firedown.ui.adapters.PinnedFaviconsAdapter mPinnedAdapter;
-    private com.solarized.firedown.data.models.WebBookmarkViewModel mWebBookmarkViewModel;
     private TextView mRecentDownloadsSubtitle;
     private SharedPreferences.OnSharedPreferenceChangeListener mHomePrefsListener;
     @Nullable private java.util.List<DownloadEntity> mLastActiveList;
@@ -114,7 +110,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mAutoCompleteViewModel = new ViewModelProvider(this).get(AutoCompleteViewModel.class);
         mTaskViewModel = new ViewModelProvider(this).get(TaskViewModel.class);
         mRecentDownloadsViewModel = new ViewModelProvider(this).get(RecentDownloadsViewModel.class);
-        mWebBookmarkViewModel = new ViewModelProvider(this).get(com.solarized.firedown.data.models.WebBookmarkViewModel.class);
         mGeckoStateViewModel = new ViewModelProvider(mActivity).get(GeckoStateViewModel.class);
         mIncognitoStateViewModel = new ViewModelProvider(mActivity).get(IncognitoStateViewModel.class);
         mBrowserURIViewModel = new ViewModelProvider(mActivity).get(BrowserURIViewModel.class);
@@ -183,27 +178,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mRecentDownloadsSubtitle = v.findViewById(R.id.recent_downloads_subtitle);
         mRecentDownloadsCard.setOnClickListener(view ->
                 mStartForResult.launch(new Intent(mActivity, DownloadsActivity.class)));
-
-        mPinnedStripCard = v.findViewById(R.id.home_pinned_strip_card);
-        androidx.recyclerview.widget.RecyclerView pinnedRecycler =
-                v.findViewById(R.id.home_pinned_strip_recycler);
-        pinnedRecycler.setLayoutManager(new androidx.recyclerview.widget.LinearLayoutManager(
-                getContext(),
-                androidx.recyclerview.widget.LinearLayoutManager.HORIZONTAL,
-                false));
-        mPinnedAdapter = new com.solarized.firedown.ui.adapters.PinnedFaviconsAdapter(
-                new com.solarized.firedown.ui.adapters.PinnedFaviconsAdapter.OnFaviconClickListener() {
-                    @Override
-                    public void onFaviconClick(@NonNull com.solarized.firedown.data.entity.WebBookmarkEntity entity) {
-                        openUri(entity.getUrl());
-                    }
-
-                    @Override
-                    public void onFaviconLongClick(@NonNull com.solarized.firedown.data.entity.WebBookmarkEntity entity) {
-                        showPinnedOptionsSheet(entity);
-                    }
-                });
-        pinnedRecycler.setAdapter(mPinnedAdapter);
 
         View vaultCard = v.findViewById(R.id.home_vault_card);
         mHomeVaultTitle = v.findViewById(R.id.home_vault_title);
@@ -301,17 +275,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mRecentDownloadsViewModel.getFinishedSize().observe(getViewLifecycleOwner(), size -> {
             mLastFinishedSize = size == null ? 0L : size;
             applyHomeCustomisation();
-        });
-
-        // Pinned bookmarks → home favicons strip. Card visible iff
-        // ≥1 pinned bookmark; otherwise hidden (no empty 'pin
-        // something' state — the card itself appearing when a user
-        // first pins is the discovery).
-        mWebBookmarkViewModel.getPinned().observe(getViewLifecycleOwner(), list -> {
-            if (mPinnedStripCard == null || mPinnedAdapter == null) return;
-            boolean hasPinned = list != null && !list.isEmpty();
-            mPinnedStripCard.setVisibility(hasPinned ? View.VISIBLE : View.GONE);
-            mPinnedAdapter.submitList(hasPinned ? list : java.util.Collections.emptyList());
         });
 
         // Vault count drives the empty-hero vault button's count badge.
@@ -489,8 +452,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mActiveStripIcon = null;
         mHomeVaultTitle = null;
         mHomeVaultSubtitle = null;
-        mPinnedStripCard = null;
-        mPinnedAdapter = null;
         mRecentDownloadsSubtitle = null;
     }
 
@@ -581,48 +542,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
      * (retrieving size) or QUEUED, determinate once a real percentage
      * is available.
      */
-    /** Long-press on a pinned favicon tile → WebOptionSheetDialogFragment
-     *  (open / edit / share / unpin / delete). The dialog reads the
-     *  Host interface this fragment implements to route Open and Edit
-     *  back here instead of through the BookmarkActivity-specific
-     *  setResult/finish + navController.navigate paths the dialog
-     *  defaults to. */
-    private void showPinnedOptionsSheet(
-            @NonNull com.solarized.firedown.data.entity.WebBookmarkEntity entity) {
-        Bundle bundle = new Bundle();
-        bundle.putInt(Keys.ITEM_ID, entity.getId());
-        bundle.putString(Keys.SHARE_URL, entity.getUrl());
-        bundle.putString(Keys.TITLE, entity.getTitle());
-        bundle.putBoolean(Keys.EDIT, true);
-        bundle.putBoolean(Keys.PINNED, entity.isPinned());
-
-        com.solarized.firedown.phone.dialogs.WebOptionSheetDialogFragment sheet =
-                new com.solarized.firedown.phone.dialogs.WebOptionSheetDialogFragment();
-        sheet.setArguments(bundle);
-        sheet.show(getChildFragmentManager(),
-                com.solarized.firedown.phone.dialogs.WebOptionSheetDialogFragment.class.getSimpleName());
-    }
-
-    /** {@link com.solarized.firedown.phone.dialogs.WebOptionSheetDialogFragment.Host}
-     *  — bookmark Open from the pinned-favicons options sheet
-     *  routes through openUri (same parseUri normalisation as the
-     *  paste hero / autocomplete). */
-    @Override
-    public void onWebOptionOpen(@NonNull String url) {
-        openUri(url);
-    }
-
-    /** Edit fragment lives in nav_graph_bookmark; launch
-     *  BookmarkActivity with the BOOKMARK_EDIT intent so its
-     *  onCreate routes there. */
-    @Override
-    public void onWebOptionEdit(int id) {
-        Intent intent = new Intent(mActivity, BookmarkActivity.class);
-        intent.setAction(IntentActions.BOOKMARK_EDIT);
-        intent.putExtra(Keys.ITEM_ID, id);
-        mStartForResult.launch(intent);
-    }
-
     private void bindActiveStrip(@NonNull java.util.List<DownloadEntity> active) {
         DownloadEntity head = active.get(0);
         mActiveStripTitle.setText(head.getFileName());

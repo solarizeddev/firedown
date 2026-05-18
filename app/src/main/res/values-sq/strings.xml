@@ -261,6 +261,4 @@
     <string name="downloads_quick_access_title">Shkarkimet e fundit</string>
     <string name="home_onboarding_sites_label">Provo Firedown në</string>
     <string name="home_vault_button">Dosja e sigurt</string>
-    <string name="browser_menu_pin_to_home">Fikso në kreu</string>
-    <string name="browser_pinned_to_home">Fiksuar në kreu</string>
 </resources>

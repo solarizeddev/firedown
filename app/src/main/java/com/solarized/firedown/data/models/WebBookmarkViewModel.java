@@ -46,24 +46,9 @@ public class WebBookmarkViewModel extends ViewModel {
 
     private final LiveData<PagingData<WebBookmarkEntity>> mData;
 
-    /** Cap on rows in the home pinned-favicons strip. Ten fits two
-     *  phone widths of horizontal scroll (40dp tiles + 12dp gaps ≈
-     *  520dp) and forces the user to curate — the strip is a
-     *  glance surface, not a comprehensive list. Pins beyond this
-     *  still exist in BookmarkActivity at top-of-list ordering;
-     *  they just don't show on home. */
-    public static final int PINNED_STRIP_LIMIT = 10;
-
-    /** Single cached LiveData for the home pinned-favicons strip —
-     *  Room's generated DAO returns a fresh LiveData on each call,
-     *  so caching is required if any other call site (now or later)
-     *  wants the same instance. */
-    private final LiveData<java.util.List<WebBookmarkEntity>> mPinned;
-
     @Inject
     public WebBookmarkViewModel(WebBookmarkDataRepository repository) {
         this.mRepository = repository;
-        this.mPinned = repository.getPinned(PINNED_STRIP_LIMIT);
         CoroutineScope viewModelScope = ViewModelKt.getViewModelScope(this);
         PagingConfig pagingConfig = new PagingConfig(Preferences.LIST_LIMIT);
 
@@ -112,21 +97,12 @@ public class WebBookmarkViewModel extends ViewModel {
         return mData;
     }
 
-    /** Pinned bookmarks for the home favicons strip. Same LiveData
-     *  instance on every call so observers and getValue() readers
-     *  agree on state. */
-    public LiveData<java.util.List<WebBookmarkEntity>> getPinned() {
-        return mPinned;
-    }
-
     public void delete(WebBookmarkEntity web) { mRepository.delete(web); }
     public void delete(int id) { mRepository.delete(id); }
     public void add(WebBookmarkEntity web) { mRepository.add(web); }
     public void add(GeckoState gecko) { mRepository.add(gecko); }
     public void deleteAll() { mRepository.deleteAll(); }
     public boolean contains(GeckoState gecko) { return mRepository.contains(gecko); }
-    /** See {@link WebBookmarkDataRepository#setPinned}. */
-    public void setPinned(int id, boolean pinned) { mRepository.setPinned(id, pinned); }
 
     public void getId(int id, DataCallback<WebBookmarkEntity> callback) {
         mRepository.getId(id, callback);

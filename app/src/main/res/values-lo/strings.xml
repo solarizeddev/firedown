@@ -254,6 +254,4 @@
     <string name="downloads_quick_access_title">ການດາວໂຫຼດຫຼ້າສຸດ</string>
     <string name="home_onboarding_sites_label">ລອງ Firedown ໃນ</string>
     <string name="home_vault_button">ໂຟນເດີປອດໄພ</string>
-    <string name="browser_menu_pin_to_home">ປັກໝຸດໃສ່ໜ້າຫຼັກ</string>
-    <string name="browser_pinned_to_home">ປັກໝຸດໃສ່ໜ້າຫຼັກແລ້ວ</string>
 </resources>

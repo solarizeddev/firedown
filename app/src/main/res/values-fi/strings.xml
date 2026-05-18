@@ -294,6 +294,4 @@
     <string name="downloads_quick_access_title">Viimeisimmät lataukset</string>
     <string name="home_onboarding_sites_label">Kokeile Firedownia sivustolla</string>
     <string name="home_vault_button">Turvakansio</string>
-    <string name="browser_menu_pin_to_home">Kiinnitä etusivulle</string>
-    <string name="browser_pinned_to_home">Kiinnitetty etusivulle</string>
 </resources>

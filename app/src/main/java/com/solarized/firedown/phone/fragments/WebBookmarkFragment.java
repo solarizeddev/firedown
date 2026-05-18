@@ -215,7 +215,6 @@ public class WebBookmarkFragment extends BaseFocusFragment implements OnItemClic
                     bundle.putString(Keys.SHARE_URL, webBookmarkEntity.getUrl());
                     bundle.putString(Keys.TITLE, webBookmarkEntity.getTitle());
                     bundle.putBoolean(Keys.EDIT, true);
-                    bundle.putBoolean(Keys.PINNED, webBookmarkEntity.isPinned());
                     NavigationUtils.navigateSafe(mNavController,R.id.dialog_web_options, R.id.web_bookmark, bundle);
                 }
             }else if(resId == R.id.item_web_bookmark){

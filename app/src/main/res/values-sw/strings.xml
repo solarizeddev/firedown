@@ -221,6 +221,4 @@
     <string name="downloads_quick_access_title">Vipakuzi vya hivi karibuni</string>
     <string name="home_onboarding_sites_label">Jaribu Firedown kwenye</string>
     <string name="home_vault_button">Folda salama</string>
-    <string name="browser_menu_pin_to_home">Bandika kwenye nyumbani</string>
-    <string name="browser_pinned_to_home">Imebandikwa kwenye nyumbani</string>
 </resources>
