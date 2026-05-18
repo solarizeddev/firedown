@@ -340,4 +340,10 @@
     <string name="home_shortcuts_add_tile">Aggiungi</string>
     <string name="top_sites_add_dialog_title">Aggiungi scorciatoia</string>
     <string name="downloads_quick_access_empty">I download recenti appariranno qui</string>
+    <string name="settings_home_title">Home</string>
+    <string name="settings_home_show_recent_downloads_title">Mostra download recenti</string>
+    <string name="settings_home_show_recent_downloads_summary">Mostra una scheda con i tuoi ultimi download nella pagina iniziale</string>
+    <string name="settings_home_show_shortcuts_title">Mostra scorciatoie</string>
+    <string name="settings_home_show_shortcuts_summary">Mostra la griglia dei siti fissati nella pagina iniziale</string>
+    <string name="home_all_disabled_tagline">Personalizza la pagina iniziale nelle Impostazioni</string>
 </resources>

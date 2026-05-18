@@ -359,4 +359,10 @@
     <string name="home_shortcuts_add_tile">Toevoegen</string>
     <string name="top_sites_add_dialog_title">Snelkoppeling toevoegen</string>
     <string name="downloads_quick_access_empty">Recente downloads verschijnen hier</string>
+    <string name="settings_home_title">Startpagina</string>
+    <string name="settings_home_show_recent_downloads_title">Recente downloads tonen</string>
+    <string name="settings_home_show_recent_downloads_summary">Toont een kaart met je laatste downloads op de startpagina</string>
+    <string name="settings_home_show_shortcuts_title">Snelkoppelingen tonen</string>
+    <string name="settings_home_show_shortcuts_summary">Toont het raster van vastgezette sites op de startpagina</string>
+    <string name="home_all_disabled_tagline">Pas de startpagina aan in Instellingen</string>
 </resources>

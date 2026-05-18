@@ -78,6 +78,18 @@ public class Preferences {
      */
     public static final int THEME_OLED = -100;
 
+    /** Home customisation: whether the 'Recent downloads' card on the
+     *  home surface is shown when there are downloads to display. */
+    public static final String SETTINGS_HOME_SHOW_RECENT_DOWNLOADS =
+            "com.solarized.firedown.preferences.home.show.recent.downloads";
+    public static final boolean DEFAULT_HOME_SHOW_RECENT_DOWNLOADS = true;
+
+    /** Home customisation: whether the shortcuts grid (and its
+     *  empty-state Add CTA) is shown on the home surface. */
+    public static final String SETTINGS_HOME_SHOW_SHORTCUTS =
+            "com.solarized.firedown.preferences.home.show.shortcuts";
+    public static final boolean DEFAULT_HOME_SHOW_SHORTCUTS = true;
+
     public static final String SETTINGS_ENABLE_JIT = "com.solarized.firedown.preferences.browser.enable.jit";
 
     public static final boolean DEFAULT_ENABLE_JIT = false;

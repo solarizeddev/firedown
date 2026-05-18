@@ -292,4 +292,10 @@
     <string name="home_shortcuts_add_tile">Προσθήκη</string>
     <string name="top_sites_add_dialog_title">Προσθήκη συντόμευσης</string>
     <string name="downloads_quick_access_empty">Οι πρόσφατες λήψεις θα εμφανιστούν εδώ</string>
+    <string name="settings_home_title">Αρχική</string>
+    <string name="settings_home_show_recent_downloads_title">Εμφάνιση πρόσφατων λήψεων</string>
+    <string name="settings_home_show_recent_downloads_summary">Εμφανίζει μια κάρτα με τις πιο πρόσφατες λήψεις στην αρχική σελίδα</string>
+    <string name="settings_home_show_shortcuts_title">Εμφάνιση συντομεύσεων</string>
+    <string name="settings_home_show_shortcuts_summary">Εμφανίζει το πλέγμα των καρφιτσωμένων ιστότοπων στην αρχική σελίδα</string>
+    <string name="home_all_disabled_tagline">Προσαρμόστε την αρχική σελίδα στις Ρυθμίσεις</string>
 </resources>

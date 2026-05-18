@@ -497,4 +497,10 @@
     <string name="home_shortcuts_add_tile">Hinzufügen</string>
     <string name="top_sites_add_dialog_title">Verknüpfung hinzufügen</string>
     <string name="downloads_quick_access_empty">Aktuelle Downloads erscheinen hier</string>
+    <string name="settings_home_title">Startseite</string>
+    <string name="settings_home_show_recent_downloads_title">Letzte Downloads anzeigen</string>
+    <string name="settings_home_show_recent_downloads_summary">Zeigt eine Karte mit deinen letzten Downloads auf der Startseite an</string>
+    <string name="settings_home_show_shortcuts_title">Verknüpfungen anzeigen</string>
+    <string name="settings_home_show_shortcuts_summary">Zeigt das Raster der angehefteten Websites auf der Startseite an</string>
+    <string name="home_all_disabled_tagline">Passe die Startseite in den Einstellungen an</string>
 </resources>

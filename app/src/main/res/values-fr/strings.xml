@@ -497,4 +497,10 @@
     <string name="home_shortcuts_add_tile">Ajouter</string>
     <string name="top_sites_add_dialog_title">Ajouter un raccourci</string>
     <string name="downloads_quick_access_empty">Tes téléchargements récents apparaîtront ici</string>
+    <string name="settings_home_title">Accueil</string>
+    <string name="settings_home_show_recent_downloads_title">Afficher les téléchargements récents</string>
+    <string name="settings_home_show_recent_downloads_summary">Affiche une carte avec tes derniers téléchargements sur la page d’accueil</string>
+    <string name="settings_home_show_shortcuts_title">Afficher les raccourcis</string>
+    <string name="settings_home_show_shortcuts_summary">Affiche la grille des sites épinglés sur la page d’accueil</string>
+    <string name="home_all_disabled_tagline">Personnalise la page d’accueil dans les Paramètres</string>
 </resources>

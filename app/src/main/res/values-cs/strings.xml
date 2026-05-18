@@ -311,4 +311,10 @@
     <string name="home_shortcuts_add_tile">Přidat</string>
     <string name="top_sites_add_dialog_title">Přidat zkratku</string>
     <string name="downloads_quick_access_empty">Nedávná stahování se zobrazí zde</string>
+    <string name="settings_home_title">Domů</string>
+    <string name="settings_home_show_recent_downloads_title">Zobrazit nedávná stahování</string>
+    <string name="settings_home_show_recent_downloads_summary">Zobrazí kartu s posledními staženými soubory na domovské stránce</string>
+    <string name="settings_home_show_shortcuts_title">Zobrazit zkratky</string>
+    <string name="settings_home_show_shortcuts_summary">Zobrazí mřížku připnutých stránek na domovské stránce</string>
+    <string name="home_all_disabled_tagline">Přizpůsobte si domovskou stránku v Nastavení</string>
 </resources>

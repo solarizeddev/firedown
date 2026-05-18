@@ -70,4 +70,10 @@
     <string name="home_shortcuts_add_tile">Añadir</string>
     <string name="top_sites_add_dialog_title">Añadir acceso directo</string>
     <string name="downloads_quick_access_empty">Aquí aparecerán las descargas recientes</string>
+    <string name="settings_home_title">Inicio</string>
+    <string name="settings_home_show_recent_downloads_title">Mostrar descargas recientes</string>
+    <string name="settings_home_show_recent_downloads_summary">Muestra una tarjeta con tus últimas descargas en la página de inicio</string>
+    <string name="settings_home_show_shortcuts_title">Mostrar accesos directos</string>
+    <string name="settings_home_show_shortcuts_summary">Muestra la cuadrícula de sitios fijados en la página de inicio</string>
+    <string name="home_all_disabled_tagline">Personaliza la página de inicio en Ajustes</string>
 </resources>

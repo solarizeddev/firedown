@@ -305,4 +305,10 @@
     <string name="home_shortcuts_add_tile">Tilføj</string>
     <string name="top_sites_add_dialog_title">Tilføj genvej</string>
     <string name="downloads_quick_access_empty">Seneste downloads vises her</string>
+    <string name="settings_home_title">Hjem</string>
+    <string name="settings_home_show_recent_downloads_title">Vis seneste downloads</string>
+    <string name="settings_home_show_recent_downloads_summary">Vis et kort med dine seneste downloads på hjemmesiden</string>
+    <string name="settings_home_show_shortcuts_title">Vis genveje</string>
+    <string name="settings_home_show_shortcuts_summary">Vis gitteret med fastgjorte websites på hjemmesiden</string>
+    <string name="home_all_disabled_tagline">Tilpas hjemmesiden i Indstillinger</string>
 </resources>

@@ -90,7 +90,10 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     private ShortCutsAdapter mShortCutsAdapter;
     private View mNewTabView;
     private View mRecentDownloadsCard;
+    private View mHomeAllDisabled;
     private com.solarized.firedown.ui.adapters.DownloadsQuickAccessAdapter mRecentDownloadsAdapter;
+    private android.content.SharedPreferences.OnSharedPreferenceChangeListener mHomePrefsListener;
+    @Nullable private java.util.List<DownloadEntity> mLastRecentList;
     private OnBoardingCard mOnBoardingCard;
     private GeckoToolbar mGeckoToolbar;
     private HomeViewpager mHomeViewPager;
@@ -221,6 +224,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         // routes through the existing openItem flow (handled here in
         // the Host interface impl below).
         mRecentDownloadsCard = v.findViewById(R.id.recent_downloads_card);
+        mHomeAllDisabled = v.findViewById(R.id.home_all_disabled);
         androidx.recyclerview.widget.RecyclerView recentRecycler =
                 v.findViewById(R.id.recent_downloads_recycler);
         recentRecycler.setItemAnimator(null);
@@ -298,10 +302,22 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         // observer needs to exist somewhere or Room's LiveData stays
         // cold until first observer attach.
         mRecentDownloadsViewModel.getRecent().observe(getViewLifecycleOwner(), list -> {
-            boolean empty = list == null || list.isEmpty();
-            mRecentDownloadsCard.setVisibility(empty ? View.GONE : View.VISIBLE);
+            mLastRecentList = list;
             mRecentDownloadsAdapter.submitList(list);
+            applyHomeCustomisation();
         });
+
+        // Re-run customisation when the user flips a toggle in
+        // Settings (Home category). Lifecycle binding via the
+        // listener registered in onResume / removed in onPause.
+        mHomePrefsListener = (prefs, key) -> {
+            if (Preferences.SETTINGS_HOME_SHOW_RECENT_DOWNLOADS.equals(key)
+                    || Preferences.SETTINGS_HOME_SHOW_SHORTCUTS.equals(key)) {
+                applyHomeCustomisation();
+            }
+        };
+        mSharedPreferences.registerOnSharedPreferenceChangeListener(mHomePrefsListener);
+        applyHomeCustomisation();
 
         // NOTE: HomeFragment intentionally does NOT observe
         // BrowserURIViewModel.getEvents().  IntentHandler owns all tab
@@ -420,12 +436,44 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+        if (mHomePrefsListener != null && mSharedPreferences != null) {
+            mSharedPreferences.unregisterOnSharedPreferenceChangeListener(mHomePrefsListener);
+            mHomePrefsListener = null;
+        }
         mHomeViewPager = null;
         mAutoCompleteView = null;
         mGeckoToolbar = null;
         mNewTabView = null;
         mBottomNavigationBar = null;
         mOnBoardingCard = null;
+        mRecentDownloadsCard = null;
+        mHomeAllDisabled = null;
+    }
+
+    /**
+     * Resolves the two home-customisation toggles (Settings > Home)
+     * into card visibilities. When both toggles are OFF the layout
+     * collapses to the centred firedown-logo empty state. Called on
+     * every relevant pref change and after each LiveData emission of
+     * recent downloads (so the card hides immediately when its
+     * underlying list goes empty even if the pref is on).
+     */
+    private void applyHomeCustomisation() {
+        if (mRecentDownloadsCard == null || mHomeViewPager == null
+                || mHomeAllDisabled == null || mSharedPreferences == null) {
+            return;
+        }
+        boolean showRecent = mSharedPreferences.getBoolean(
+                Preferences.SETTINGS_HOME_SHOW_RECENT_DOWNLOADS,
+                Preferences.DEFAULT_HOME_SHOW_RECENT_DOWNLOADS);
+        boolean showShortcuts = mSharedPreferences.getBoolean(
+                Preferences.SETTINGS_HOME_SHOW_SHORTCUTS,
+                Preferences.DEFAULT_HOME_SHOW_SHORTCUTS);
+
+        boolean recentHasData = mLastRecentList != null && !mLastRecentList.isEmpty();
+        mRecentDownloadsCard.setVisibility(showRecent && recentHasData ? View.VISIBLE : View.GONE);
+        mHomeViewPager.setVisibility(showShortcuts ? View.VISIBLE : View.GONE);
+        mHomeAllDisabled.setVisibility(!showRecent && !showShortcuts ? View.VISIBLE : View.GONE);
     }
 
     @Override

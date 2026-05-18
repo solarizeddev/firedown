@@ -357,4 +357,10 @@
     <string name="home_shortcuts_add_tile">Добавить</string>
     <string name="top_sites_add_dialog_title">Добавить ярлык</string>
     <string name="downloads_quick_access_empty">Здесь появятся недавние загрузки</string>
+    <string name="settings_home_title">Главная</string>
+    <string name="settings_home_show_recent_downloads_title">Показывать недавние загрузки</string>
+    <string name="settings_home_show_recent_downloads_summary">Показывает карточку с последними загрузками на главной странице</string>
+    <string name="settings_home_show_shortcuts_title">Показывать ярлыки</string>
+    <string name="settings_home_show_shortcuts_summary">Показывает сетку закреплённых сайтов на главной странице</string>
+    <string name="home_all_disabled_tagline">Настройте главную страницу в Настройках</string>
 </resources>

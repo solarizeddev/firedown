@@ -285,4 +285,10 @@
     <string name="home_shortcuts_add_tile">Adaugă</string>
     <string name="top_sites_add_dialog_title">Adaugă comandă rapidă</string>
     <string name="downloads_quick_access_empty">Descărcările recente vor apărea aici</string>
+    <string name="settings_home_title">Acasă</string>
+    <string name="settings_home_show_recent_downloads_title">Afișează descărcările recente</string>
+    <string name="settings_home_show_recent_downloads_summary">Afișează un card cu cele mai recente descărcări pe pagina principală</string>
+    <string name="settings_home_show_shortcuts_title">Afișează comenzile rapide</string>
+    <string name="settings_home_show_shortcuts_summary">Afișează grila site-urilor fixate pe pagina principală</string>
+    <string name="home_all_disabled_tagline">Personalizează pagina principală în Setări</string>
 </resources>

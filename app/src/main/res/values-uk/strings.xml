@@ -298,4 +298,10 @@
     <string name="home_shortcuts_add_tile">Додати</string>
     <string name="top_sites_add_dialog_title">Додати ярлик</string>
     <string name="downloads_quick_access_empty">Тут з’являться нещодавні завантаження</string>
+    <string name="settings_home_title">Головна</string>
+    <string name="settings_home_show_recent_downloads_title">Показувати нещодавні завантаження</string>
+    <string name="settings_home_show_recent_downloads_summary">Показує картку з останніми завантаженнями на головній сторінці</string>
+    <string name="settings_home_show_shortcuts_title">Показувати ярлики</string>
+    <string name="settings_home_show_shortcuts_summary">Показує сітку закріплених сайтів на головній сторінці</string>
+    <string name="home_all_disabled_tagline">Налаштуйте головну сторінку в Налаштуваннях</string>
 </resources>

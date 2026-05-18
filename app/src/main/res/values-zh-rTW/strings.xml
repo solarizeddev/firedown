@@ -299,4 +299,10 @@
     <string name="home_shortcuts_add_tile">新增</string>
     <string name="top_sites_add_dialog_title">新增捷徑</string>
     <string name="downloads_quick_access_empty">最近的下載將顯示在這裡</string>
+    <string name="settings_home_title">首頁</string>
+    <string name="settings_home_show_recent_downloads_title">顯示最近下載</string>
+    <string name="settings_home_show_recent_downloads_summary">在首頁上顯示包含最新下載的卡片</string>
+    <string name="settings_home_show_shortcuts_title">顯示捷徑</string>
+    <string name="settings_home_show_shortcuts_summary">在首頁上顯示已釘選的網站格線</string>
+    <string name="home_all_disabled_tagline">在設定中自訂首頁</string>
 </resources>

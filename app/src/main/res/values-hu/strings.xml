@@ -292,4 +292,10 @@
     <string name="home_shortcuts_add_tile">Hozzáadás</string>
     <string name="top_sites_add_dialog_title">Indító hozzáadása</string>
     <string name="downloads_quick_access_empty">A legutóbbi letöltések itt jelennek meg</string>
+    <string name="settings_home_title">Kezdőlap</string>
+    <string name="settings_home_show_recent_downloads_title">Legutóbbi letöltések megjelenítése</string>
+    <string name="settings_home_show_recent_downloads_summary">Egy kártyát jelenít meg a legutóbbi letöltésekkel a kezdőlapon</string>
+    <string name="settings_home_show_shortcuts_title">Indítók megjelenítése</string>
+    <string name="settings_home_show_shortcuts_summary">Megjeleníti a rögzített webhelyek rácsát a kezdőlapon</string>
+    <string name="home_all_disabled_tagline">Szabd személyre a kezdőlapot a Beállításokban</string>
 </resources>

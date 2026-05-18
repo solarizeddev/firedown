@@ -496,4 +496,10 @@
     <string name="home_shortcuts_add_tile">添加</string>
     <string name="top_sites_add_dialog_title">添加快捷方式</string>
     <string name="downloads_quick_access_empty">最近的下载将显示在这里</string>
+    <string name="settings_home_title">主页</string>
+    <string name="settings_home_show_recent_downloads_title">显示最近下载</string>
+    <string name="settings_home_show_recent_downloads_summary">在主页上显示包含最新下载的卡片</string>
+    <string name="settings_home_show_shortcuts_title">显示快捷方式</string>
+    <string name="settings_home_show_shortcuts_summary">在主页上显示已固定的网站网格</string>
+    <string name="home_all_disabled_tagline">在设置中自定义主页</string>
 </resources>

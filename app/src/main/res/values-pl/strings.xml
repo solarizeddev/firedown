@@ -354,4 +354,10 @@
     <string name="home_shortcuts_add_tile">Dodaj</string>
     <string name="top_sites_add_dialog_title">Dodaj skrót</string>
     <string name="downloads_quick_access_empty">Niedawne pobrania pojawią się tutaj</string>
+    <string name="settings_home_title">Strona główna</string>
+    <string name="settings_home_show_recent_downloads_title">Pokaż ostatnie pobrania</string>
+    <string name="settings_home_show_recent_downloads_summary">Wyświetla kartę z ostatnimi pobraniami na stronie głównej</string>
+    <string name="settings_home_show_shortcuts_title">Pokaż skróty</string>
+    <string name="settings_home_show_shortcuts_summary">Wyświetla siatkę przypiętych stron na stronie głównej</string>
+    <string name="home_all_disabled_tagline">Dostosuj stronę główną w Ustawieniach</string>
 </resources>

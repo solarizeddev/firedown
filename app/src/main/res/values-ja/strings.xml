@@ -496,4 +496,10 @@
     <string name="home_shortcuts_add_tile">追加</string>
     <string name="top_sites_add_dialog_title">ショートカットを追加</string>
     <string name="downloads_quick_access_empty">最近のダウンロードがここに表示されます</string>
+    <string name="settings_home_title">ホーム</string>
+    <string name="settings_home_show_recent_downloads_title">最近のダウンロードを表示</string>
+    <string name="settings_home_show_recent_downloads_summary">ホーム画面に最近のダウンロードのカードを表示します</string>
+    <string name="settings_home_show_shortcuts_title">ショートカットを表示</string>
+    <string name="settings_home_show_shortcuts_summary">ホーム画面にピン留めしたサイトのグリッドを表示します</string>
+    <string name="home_all_disabled_tagline">設定でホーム画面をカスタマイズ</string>
 </resources>
