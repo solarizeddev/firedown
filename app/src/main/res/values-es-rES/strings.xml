@@ -55,4 +55,5 @@
     <string name="home_paste_hero_empty">Copia un enlace primero y luego toca aquí</string>
     <string name="home_paste_hero_not_url">Eso no parece un enlace</string>
     <string name="home_onboarding_sites_label">Prueba Firedown en</string>
+    <string name="home_pinned_strip_title">Fijados</string>
 </resources>

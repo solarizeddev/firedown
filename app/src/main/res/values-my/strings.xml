@@ -251,4 +251,5 @@
     <string name="home_paste_hero_not_url">ဤအရာသည် လင့်ခ်နှင့်တူပုံမရပါ</string>
     <string name="home_onboarding_sites_label">Firedown ကို စမ်းကြည့်ပါ</string>
     <string name="home_vault_button">"'လုံခြုံရေး' ဖိုင်တွဲ"</string>
+    <string name="home_pinned_strip_title">ပင်ထိုးထား</string>
 </resources>

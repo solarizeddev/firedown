@@ -120,23 +120,14 @@
             </com.google.android.material.card.MaterialCardView>
 
 
-            <include
-                android:id="@+id/recent_downloads_card"
-                layout="@layout/card_home_recent_downloads"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="@dimen/list_spacing"
-                android:layout_marginEnd="@dimen/list_spacing"
-                android:layout_marginTop="12dp" />
-
-
             <!--
                 Pinned bookmarks strip — minimalist favicon row. Visible
                 only when ≥1 bookmark is pinned (no empty 'pin something
-                here' state; the card itself is the discovery). Same
-                shape as the Downloads / Safe Folder cards; inner
-                content is a horizontal RecyclerView of 32dp favicons.
-                Tap a favicon → openUri(bookmark.url) in HomeFragment.
+                here' state; the card itself is the discovery). Sits
+                above the Downloads card so the user's chosen sites
+                rank higher than the static-info summary cards. Tap a
+                tile → openUri; long-press → the bookmark options
+                sheet (open / edit / share / unpin / delete).
             -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/home_pinned_strip_card"
@@ -152,18 +143,54 @@
                 app:strokeWidth="0dp"
                 tools:visibility="visible">
 
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/home_pinned_strip_recycler"
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:clipToPadding="false"
-                    android:orientation="horizontal"
-                    android:overScrollMode="never"
-                    android:paddingHorizontal="12dp"
-                    android:paddingVertical="14dp"
-                    app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
+                    android:orientation="vertical"
+                    android:paddingBottom="12dp">
+
+                    <!--
+                        Section header — small ALL-CAPS label to give
+                        the strip a name. Aligned with the favicon
+                        column (paddingStart matches the recycler's
+                        first-tile horizontal padding + tile margin).
+                    -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:letterSpacing="0.08"
+                        android:paddingStart="18dp"
+                        android:text="@string/home_pinned_strip_title"
+                        android:textAllCaps="true"
+                        android:textAppearance="?attr/textAppearanceLabelSmall"
+                        android:textColor="?attr/colorOnSurfaceVariant"
+                        tools:ignore="RtlSymmetry" />
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/home_pinned_strip_recycler"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:clipToPadding="false"
+                        android:orientation="horizontal"
+                        android:overScrollMode="never"
+                        android:paddingHorizontal="12dp"
+                        android:paddingTop="8dp"
+                        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
+
+                </LinearLayout>
 
             </com.google.android.material.card.MaterialCardView>
+
+
+            <include
+                android:id="@+id/recent_downloads_card"
+                layout="@layout/card_home_recent_downloads"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/list_spacing"
+                android:layout_marginEnd="@dimen/list_spacing"
+                android:layout_marginTop="12dp" />
 
 
             <!--

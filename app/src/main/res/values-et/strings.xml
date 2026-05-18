@@ -272,4 +272,5 @@
     <string name="home_paste_hero_not_url">See ei näe lingina välja</string>
     <string name="home_onboarding_sites_label">Proovi Firedowni saidil</string>
     <string name="home_vault_button">Turvaline kaust</string>
+    <string name="home_pinned_strip_title">Kinnitatud</string>
 </resources>

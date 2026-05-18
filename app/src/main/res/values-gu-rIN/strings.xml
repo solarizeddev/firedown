@@ -35,4 +35,5 @@
     <string name="home_paste_hero_empty">પહેલા લિંક કૉપિ કરો, પછી અહીં ટૅપ કરો</string>
     <string name="home_paste_hero_not_url">આ લિંક હોય તેવું લાગતું નથી</string>
     <string name="home_onboarding_sites_label">Firedown અજમાવો</string>
+    <string name="home_pinned_strip_title">પિન કરેલા</string>
 </resources>

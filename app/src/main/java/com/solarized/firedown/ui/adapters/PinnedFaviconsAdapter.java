@@ -31,6 +31,9 @@ public class PinnedFaviconsAdapter
 
     public interface OnFaviconClickListener {
         void onFaviconClick(@NonNull WebBookmarkEntity entity);
+        /** Long-press routes to the bookmark options sheet
+         *  (open / edit / share / unpin / delete). */
+        default void onFaviconLongClick(@NonNull WebBookmarkEntity entity) {}
     }
 
     private static final DiffUtil.ItemCallback<WebBookmarkEntity> DIFF =
@@ -86,6 +89,13 @@ public class PinnedFaviconsAdapter
             this.listener = listener;
             itemView.setOnClickListener(v -> {
                 if (listener != null && bound != null) listener.onFaviconClick(bound);
+            });
+            itemView.setOnLongClickListener(v -> {
+                if (listener != null && bound != null) {
+                    listener.onFaviconLongClick(bound);
+                    return true;
+                }
+                return false;
             });
         }
 

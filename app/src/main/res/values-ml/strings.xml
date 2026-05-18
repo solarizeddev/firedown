@@ -260,4 +260,5 @@
     <string name="home_paste_hero_not_url">ഇത് ലിങ്കായി തോന്നുന്നില്ല</string>
     <string name="home_onboarding_sites_label">Firedown പരീക്ഷിക്കൂ</string>
     <string name="home_vault_button">സുരക്ഷിത ഫോൾഡർ</string>
+    <string name="home_pinned_strip_title">പിൻ ചെയ്തവ</string>
 </resources>

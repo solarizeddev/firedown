@@ -73,7 +73,8 @@ import dagger.hilt.android.AndroidEntryPoint;
 public class HomeFragment extends BaseBrowserFragment implements BottomNavigationBar.OnBottomBarListener,
         AutoCompleteEditText.OnCommitListener, AutoCompleteEditText.OnFilterListener, AutoCompleteEditText.OnFocusChangedListener,
         AutoCompleteEditText.OnTextChangedListener, AutoCompleteEditText.OnSearchStateChangeListener,
-        GeckoToolbar.OnToolbarListener , OnBoardingCard.OnBoardingCardListener, OnItemClickListener {
+        GeckoToolbar.OnToolbarListener , OnBoardingCard.OnBoardingCardListener, OnItemClickListener,
+        com.solarized.firedown.phone.dialogs.WebOptionSheetDialogFragment.Host {
 
 
     private static final String TAG = HomeFragment.class.getName();
@@ -199,8 +200,18 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
                 getContext(),
                 androidx.recyclerview.widget.LinearLayoutManager.HORIZONTAL,
                 false));
-        mPinnedAdapter = new com.solarized.firedown.ui.adapters.PinnedFaviconsAdapter(entity ->
-                openUri(entity.getUrl()));
+        mPinnedAdapter = new com.solarized.firedown.ui.adapters.PinnedFaviconsAdapter(
+                new com.solarized.firedown.ui.adapters.PinnedFaviconsAdapter.OnFaviconClickListener() {
+                    @Override
+                    public void onFaviconClick(@NonNull com.solarized.firedown.data.entity.WebBookmarkEntity entity) {
+                        openUri(entity.getUrl());
+                    }
+
+                    @Override
+                    public void onFaviconLongClick(@NonNull com.solarized.firedown.data.entity.WebBookmarkEntity entity) {
+                        showPinnedOptionsSheet(entity);
+                    }
+                });
         pinnedRecycler.setAdapter(mPinnedAdapter);
 
         View vaultCard = v.findViewById(R.id.home_vault_card);
@@ -588,6 +599,48 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
      * (retrieving size) or QUEUED, determinate once a real percentage
      * is available.
      */
+    /** Long-press on a pinned favicon tile → WebOptionSheetDialogFragment
+     *  (open / edit / share / unpin / delete). The dialog reads the
+     *  Host interface this fragment implements to route Open and Edit
+     *  back here instead of through the BookmarkActivity-specific
+     *  setResult/finish + navController.navigate paths the dialog
+     *  defaults to. */
+    private void showPinnedOptionsSheet(
+            @NonNull com.solarized.firedown.data.entity.WebBookmarkEntity entity) {
+        Bundle bundle = new Bundle();
+        bundle.putInt(Keys.ITEM_ID, entity.getId());
+        bundle.putString(Keys.SHARE_URL, entity.getUrl());
+        bundle.putString(Keys.TITLE, entity.getTitle());
+        bundle.putBoolean(Keys.EDIT, true);
+        bundle.putBoolean(Keys.PINNED, entity.isPinned());
+
+        com.solarized.firedown.phone.dialogs.WebOptionSheetDialogFragment sheet =
+                new com.solarized.firedown.phone.dialogs.WebOptionSheetDialogFragment();
+        sheet.setArguments(bundle);
+        sheet.show(getChildFragmentManager(),
+                com.solarized.firedown.phone.dialogs.WebOptionSheetDialogFragment.class.getSimpleName());
+    }
+
+    /** {@link com.solarized.firedown.phone.dialogs.WebOptionSheetDialogFragment.Host}
+     *  — bookmark Open from the pinned-favicons options sheet
+     *  routes through openUri (same parseUri normalisation as the
+     *  paste hero / autocomplete). */
+    @Override
+    public void onWebOptionOpen(@NonNull String url) {
+        openUri(url);
+    }
+
+    /** Edit fragment lives in nav_graph_bookmark; launch
+     *  BookmarkActivity with the BOOKMARK_EDIT intent so its
+     *  onCreate routes there. */
+    @Override
+    public void onWebOptionEdit(int id) {
+        Intent intent = new Intent(mActivity, BookmarkActivity.class);
+        intent.setAction(IntentActions.BOOKMARK_EDIT);
+        intent.putExtra(Keys.ITEM_ID, id);
+        mStartForResult.launch(intent);
+    }
+
     private void bindActiveStrip(@NonNull java.util.List<DownloadEntity> active) {
         DownloadEntity head = active.get(0);
         mActiveStripTitle.setText(head.getFileName());
