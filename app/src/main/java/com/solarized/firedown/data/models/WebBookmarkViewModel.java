@@ -46,9 +46,23 @@ public class WebBookmarkViewModel extends ViewModel {
 
     private final LiveData<PagingData<WebBookmarkEntity>> mData;
 
+    /** Sheet cap for the home cradle long-press quick-access sheet.
+     *  Three would feel sparse; five gives breathing room without
+     *  pushing the bottom-sheet peek height past 60% of viewport on
+     *  short phones. */
+    public static final int PINNED_LIMIT = 5;
+
+    /** Single cached LiveData for the home pinned-bookmarks sheet —
+     *  Room's generated DAO returns a NEW LiveData instance on each
+     *  call, so without caching the warm observer and the
+     *  getValue()-from-long-press were watching different objects
+     *  and getValue() always returned null. */
+    private final LiveData<java.util.List<WebBookmarkEntity>> mPinned;
+
     @Inject
     public WebBookmarkViewModel(WebBookmarkDataRepository repository) {
         this.mRepository = repository;
+        this.mPinned = repository.getPinned(PINNED_LIMIT);
         CoroutineScope viewModelScope = ViewModelKt.getViewModelScope(this);
         PagingConfig pagingConfig = new PagingConfig(Preferences.LIST_LIMIT);
 
@@ -98,10 +112,11 @@ public class WebBookmarkViewModel extends ViewModel {
     }
 
     /** Pinned-only feed for the home cradle long-press quick-access
-     *  sheet. Fixed cap matches the sheet's bottom-sheet peek
-     *  height. */
-    public LiveData<java.util.List<WebBookmarkEntity>> getPinned(int limit) {
-        return mRepository.getPinned(limit);
+     *  sheet. Capped at {@link #PINNED_LIMIT}. Same instance on every
+     *  call so the warm observer + long-press getValue() see the
+     *  same data. */
+    public LiveData<java.util.List<WebBookmarkEntity>> getPinned() {
+        return mPinned;
     }
 
     public void delete(WebBookmarkEntity web) { mRepository.delete(web); }

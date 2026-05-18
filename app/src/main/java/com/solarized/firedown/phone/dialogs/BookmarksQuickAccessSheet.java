@@ -37,12 +37,6 @@ public class BookmarksQuickAccessSheet extends BaseBottomSheetDialogFragment {
 
     public static final String TAG = "BookmarksQuickAccessSheet";
 
-    /** Sheet renders up to this many rows. Caller (HomeFragment's
-     *  long-press handler) reads getValue() with the same cap to
-     *  decide whether to open the sheet or fall through to
-     *  BookmarkActivity. */
-    public static final int LIMIT = 5;
-
     public interface Host {
         /** Invoked when the user taps a pinned-bookmark row. The
          *  sheet has already dismissed itself by the time this
@@ -92,7 +86,7 @@ public class BookmarksQuickAccessSheet extends BaseBottomSheetDialogFragment {
             dismiss();
         });
 
-        mViewModel.getPinned(LIMIT).observe(getViewLifecycleOwner(), list -> {
+        mViewModel.getPinned().observe(getViewLifecycleOwner(), list -> {
             // Empty mid-sheet (user unpinned everything from another
             // surface) → dismiss. Unlike Downloads, an empty pinned
             // list is the *normal* state for a user who has never

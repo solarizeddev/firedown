@@ -294,9 +294,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         // Same pattern for pinned bookmarks — keep the LiveData hot so
         // the cradle long-press handler can read getValue() and decide
         // sheet-vs-activity without a cold-start race.
-        mWebBookmarkViewModel.getPinned(
-                com.solarized.firedown.phone.dialogs.BookmarksQuickAccessSheet.LIMIT
-        ).observe(getViewLifecycleOwner(), list -> { /* warm */ });
+        mWebBookmarkViewModel.getPinned().observe(getViewLifecycleOwner(), list -> { /* warm */ });
 
         // Vault count drives the empty-hero vault button's count badge.
         // Button itself is always visible while the empty hero is
@@ -646,9 +644,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
             // straight to BookmarkActivity so the gesture still does
             // something for users who haven't pinned anything.
             java.util.List<com.solarized.firedown.data.entity.WebBookmarkEntity> cached =
-                    mWebBookmarkViewModel.getPinned(
-                            com.solarized.firedown.phone.dialogs.BookmarksQuickAccessSheet.LIMIT
-                    ).getValue();
+                    mWebBookmarkViewModel.getPinned().getValue();
             if (cached == null || cached.isEmpty()) {
                 mStartForResult.launch(new Intent(mActivity, BookmarkActivity.class));
             } else {
