@@ -470,28 +470,11 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         boolean showShortcuts = mSharedPreferences.getBoolean(
                 Preferences.SETTINGS_HOME_SHOW_SHORTCUTS,
                 Preferences.DEFAULT_HOME_SHOW_SHORTCUTS);
-        boolean bothOff = !showRecent && !showShortcuts;
 
         boolean recentHasData = mLastRecentList != null && !mLastRecentList.isEmpty();
         mRecentDownloadsCard.setVisibility(showRecent && recentHasData ? View.VISIBLE : View.GONE);
         mHomeViewPager.setVisibility(showShortcuts ? View.VISIBLE : View.GONE);
-        mHomeAllDisabled.setVisibility(bothOff ? View.VISIBLE : View.GONE);
-
-        // 'Both off' = the user has explicitly asked for a blank
-        // home. Hide the onboarding card too so the empty-state
-        // logo fills the viewport exactly with no other siblings to
-        // push content past the visible scroll area. When toggling
-        // back, restore onboarding visibility from its own pref so a
-        // dismissed onboarding doesn't reappear.
-        if (mOnBoardingCard != null) {
-            if (bothOff) {
-                mOnBoardingCard.setVisibility(View.GONE);
-            } else {
-                boolean onboardingVisible = mSharedPreferences.getBoolean(
-                        Preferences.ONBOARDING_INFO, true);
-                mOnBoardingCard.setVisibility(onboardingVisible ? View.VISIBLE : View.GONE);
-            }
-        }
+        mHomeAllDisabled.setVisibility(!showRecent && !showShortcuts ? View.VISIBLE : View.GONE);
     }
 
     @Override
