@@ -72,29 +72,6 @@
 
         </LinearLayout>
 
-        <!--
-            Trailing search button → launches DownloadsActivity with
-            Keys.OPEN_SEARCH pre-armed so the destination's existing
-            SearchView expands on menu creation. Only visible when at
-            least one file is saved (no point searching nothing); the
-            rest of the card stays tappable to open Downloads
-            unfiltered. selectableItemBackgroundBorderless gives the
-            button its own ripple without leaking touches into the
-            card's click handler.
-        -->
-        <androidx.appcompat.widget.AppCompatImageButton
-            android:id="@+id/recent_downloads_search"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_marginStart="8dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/search"
-            android:scaleType="centerInside"
-            android:src="@drawable/ic_search_24"
-            android:visibility="gone"
-            app:tint="?attr/colorOnSurface"
-            tools:visibility="visible" />
-
     </LinearLayout>
 
 </com.google.android.material.card.MaterialCardView>
