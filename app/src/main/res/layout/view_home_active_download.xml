@@ -98,10 +98,12 @@
             android:id="@+id/active_download_bar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginStart="3dp"
+            android:layout_marginEnd="3dp"
             android:layout_marginTop="8dp"
             app:indicatorColor="?attr/colorOnPrimaryContainer"
             app:indicatorTrackGapSize="0dp"
-            app:trackCornerRadius="2dp"
+            app:trackCornerRadius="0dp"
             app:trackStopIndicatorSize="0dp" />
 
     </LinearLayout>
