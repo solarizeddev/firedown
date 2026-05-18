@@ -22,9 +22,11 @@ import dagger.hilt.android.lifecycle.HiltViewModel;
 @HiltViewModel
 public class RecentDownloadsViewModel extends ViewModel {
 
-    /** Sized for the popup: four 96dp tiles fit on a phone screen
-     *  without horizontal scroll. */
-    public static final int LIMIT = 4;
+    /** Preview count: three rows on the home card is enough to be
+     *  useful without dominating the page; the user taps 'View all'
+     *  for the full list. Same constant feeds the quick-access
+     *  bottom sheet — three rows also reads cleaner there than four. */
+    public static final int LIMIT = 3;
 
     private final LiveData<List<DownloadEntity>> mRecent;
 
