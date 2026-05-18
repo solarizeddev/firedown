@@ -313,18 +313,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
             }
         });
 
-        ViewCompat.setOnApplyWindowInsetsListener(mHomeScroll, (v, windowInsets) -> {
-            Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout());
-            // Apply the insets as padding to the view. Here, set all the dimensions
-            // as appropriate to your layout. You can also update the view's margin if
-            // more appropriate.
-            v.setPadding(insets.left, 0, insets.right, insets.bottom + mBottomNavigationBar.getHeight());
-
-            // Return CONSUMED if you don't want the window insets to keep passing down
-            // to descendant views.
-            return WindowInsetsCompat.CONSUMED;
-        });
-
         ViewCompat.setOnApplyWindowInsetsListener(mGeckoToolbar, (v, windowInsets) -> {
             Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout());
             // Apply the insets as padding to the view. Here, set all the dimensions
