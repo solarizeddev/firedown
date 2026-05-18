@@ -30,6 +30,23 @@
         android:paddingHorizontal="16dp"
         android:paddingVertical="12dp">
 
+        <!--
+            Section header — labels the strip so users see at a glance
+            what this card is (vs the static Downloads / Safe Folder
+            cards below). Reuses the existing R.string.downloading
+            string ('Downloading…') with textAllCaps for the standard
+            M3 section-header treatment.
+        -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="6dp"
+            android:letterSpacing="0.08"
+            android:text="@string/downloading"
+            android:textAllCaps="true"
+            android:textAppearance="?attr/textAppearanceLabelSmall"
+            android:textColor="?attr/colorOnPrimaryContainer" />
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

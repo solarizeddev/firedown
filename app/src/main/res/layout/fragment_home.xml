@@ -59,20 +59,14 @@
                 android:layout_marginTop="12dp" />
 
 
-            <include
-                android:id="@+id/recent_downloads_card"
-                layout="@layout/card_home_recent_downloads"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="@dimen/list_spacing"
-                android:layout_marginEnd="@dimen/list_spacing"
-                android:layout_marginTop="12dp" />
-
-
             <!--
-                Paste-to-download CTA card. Secondary-container colour
-                marks it as the primary action of the home (vs the
-                neutral Safe Folder card below). Tap → onPasteAndDownload
+                Paste-to-download CTA card. Sits between the orange/
+                primaryContainer family (onboarding + active strip)
+                and the neutral surface-container family (Downloads +
+                Safe Folder) so the home reads as a clean colour
+                gradient top-to-bottom. secondaryContainer marks it
+                as the primary action of the home (vs the neutral
+                Safe Folder card below). Tap → onPasteAndDownload
                 (reads clip, validates as URL via Patterns.WEB_URL,
                 openUri or snackbar). Always visible — even when the
                 user has downloads showing, the paste flow is the
@@ -122,6 +116,16 @@
                 </LinearLayout>
 
             </com.google.android.material.card.MaterialCardView>
+
+
+            <include
+                android:id="@+id/recent_downloads_card"
+                layout="@layout/card_home_recent_downloads"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/list_spacing"
+                android:layout_marginEnd="@dimen/list_spacing"
+                android:layout_marginTop="12dp" />
 
 
             <!--
