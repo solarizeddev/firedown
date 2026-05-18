@@ -29,4 +29,8 @@
         <item quantity="one">%d елемент збережено</item>
         <item quantity="other">%d елементів збережено</item>
     </plurals>
+    <plurals name="home_downloads_file_count">
+        <item quantity="one">%d файл збережено</item>
+        <item quantity="other">%d файлів збережено</item>
+    </plurals>
 </resources>

@@ -21,4 +21,8 @@
         <item quantity="one">%d ഇനം സംരക്ഷിച്ചു</item>
         <item quantity="other">%d ഇനങ്ങൾ സംരക്ഷിച്ചു</item>
     </plurals>
+    <plurals name="home_downloads_file_count">
+        <item quantity="one">%d ഫയൽ സംരക്ഷിച്ചു</item>
+        <item quantity="other">%d ഫയലുകൾ സംരക്ഷിച്ചു</item>
+    </plurals>
 </resources>

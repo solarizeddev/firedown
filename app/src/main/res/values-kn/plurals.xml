@@ -21,4 +21,8 @@
         <item quantity="one">%d ಐಟಂ ಉಳಿಸಲಾಗಿದೆ</item>
         <item quantity="other">%d ಐಟಂಗಳು ಉಳಿಸಲಾಗಿದೆ</item>
     </plurals>
+    <plurals name="home_downloads_file_count">
+        <item quantity="one">%d ಫೈಲ್ ಉಳಿಸಲಾಗಿದೆ</item>
+        <item quantity="other">%d ಫೈಲ್‌ಗಳು ಉಳಿಸಲಾಗಿದೆ</item>
+    </plurals>
 </resources>

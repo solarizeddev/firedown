@@ -29,4 +29,8 @@
         <item quantity="one">%d shranjeni element</item>
         <item quantity="other">%d shranjenih elementov</item>
     </plurals>
+    <plurals name="home_downloads_file_count">
+        <item quantity="one">%d shranjena datoteka</item>
+        <item quantity="other">%d shranjenih datotek</item>
+    </plurals>
 </resources>

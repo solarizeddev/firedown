@@ -20,4 +20,8 @@
         <item quantity="one">%d item disimpan</item>
         <item quantity="other">%d item disimpan</item>
     </plurals>
+    <plurals name="home_downloads_file_count">
+        <item quantity="one">%d fail disimpan</item>
+        <item quantity="other">%d fail disimpan</item>
+    </plurals>
 </resources>

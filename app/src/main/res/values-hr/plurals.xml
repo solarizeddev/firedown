@@ -26,4 +26,8 @@
         <item quantity="one">%d spremljena stavka</item>
         <item quantity="other">%d spremljenih stavki</item>
     </plurals>
+    <plurals name="home_downloads_file_count">
+        <item quantity="one">%d spremljena datoteka</item>
+        <item quantity="other">%d spremljenih datoteka</item>
+    </plurals>
 </resources>

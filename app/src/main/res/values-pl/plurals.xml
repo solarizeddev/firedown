@@ -53,4 +53,8 @@
         <item quantity="one">%d zapisany element</item>
         <item quantity="other">%d zapisanych elementów</item>
     </plurals>
+    <plurals name="home_downloads_file_count">
+        <item quantity="one">%d zapisany plik</item>
+        <item quantity="other">%d zapisanych plików</item>
+    </plurals>
 </resources>

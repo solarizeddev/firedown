@@ -268,7 +268,6 @@
     <string name="vault_unsupported">نمی توان این فایل را باز کرد. برای باز کردن، آن را از پوشه ایمن خارج کرده و دوباره امتحان کنید.</string>
     <string name="bookmark_name">نام</string>
     <string name="downloads_quick_access_title">دانلودهای اخیر</string>
-    <string name="downloads_quick_access_view_all_short">نمایش همه</string>
     <string name="home_paste_hero_button">چسباندن لینک برای دانلود</string>
     <string name="home_paste_hero_empty">ابتدا یک لینک کپی کنید، سپس اینجا را لمس کنید</string>
     <string name="home_paste_hero_not_url">این به لینک شباهت ندارد</string>

@@ -21,4 +21,8 @@
         <item quantity="one">%d element saxlandı</item>
         <item quantity="other">%d element saxlandı</item>
     </plurals>
+    <plurals name="home_downloads_file_count">
+        <item quantity="one">%d fayl saxlandı</item>
+        <item quantity="other">%d fayl saxlandı</item>
+    </plurals>
 </resources>

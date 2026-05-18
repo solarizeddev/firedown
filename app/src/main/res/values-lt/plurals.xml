@@ -29,4 +29,8 @@
         <item quantity="one">%d išsaugotas elementas</item>
         <item quantity="other">%d išsaugotų elementų</item>
     </plurals>
+    <plurals name="home_downloads_file_count">
+        <item quantity="one">%d išsaugotas failas</item>
+        <item quantity="other">%d išsaugotų failų</item>
+    </plurals>
 </resources>

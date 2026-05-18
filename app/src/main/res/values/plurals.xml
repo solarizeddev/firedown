@@ -45,4 +45,10 @@
         <item quantity="one">%d item saved</item>
         <item quantity="other">%d items saved</item>
     </plurals>
+    <!-- Subtitle on the home Downloads card. Combined with the size
+         string via home_downloads_subtitle_with_size when bytes > 0. -->
+    <plurals name="home_downloads_file_count">
+        <item quantity="one">%d file saved</item>
+        <item quantity="other">%d files saved</item>
+    </plurals>
 </resources>

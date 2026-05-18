@@ -25,4 +25,8 @@
         <item quantity="one">%d öğe kaydedildi</item>
         <item quantity="other">%d öğe kaydedildi</item>
     </plurals>
+    <plurals name="home_downloads_file_count">
+        <item quantity="one">%d dosya kaydedildi</item>
+        <item quantity="other">%d dosya kaydedildi</item>
+    </plurals>
 </resources>

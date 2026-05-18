@@ -21,4 +21,8 @@
         <item quantity="one">%d elem mentve</item>
         <item quantity="other">%d elem mentve</item>
     </plurals>
+    <plurals name="home_downloads_file_count">
+        <item quantity="one">%d fájl mentve</item>
+        <item quantity="other">%d fájl mentve</item>
+    </plurals>
 </resources>

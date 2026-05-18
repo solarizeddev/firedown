@@ -13,39 +13,64 @@ import javax.inject.Inject;
 import dagger.hilt.android.lifecycle.HiltViewModel;
 
 /**
- * Exposes the most recent finished regular (non-vault) downloads for
- * the bottom-bar Downloads long-press quick-access popup. Kept
- * separate from {@link DownloadsViewModel} (which is paging-/sort-/
- * chip-stateful for DownloadFragment) so this surface stays a tiny
- * fixed-size LiveData with no extra wiring.
+ * Small home-page metadata view-model. Exposes:
+ *
+ * <ul>
+ *   <li>{@link #getActive()} — live list of in-flight regular
+ *       downloads (PROGRESS / QUEUED, non-vault). Drives the
+ *       active-download strip; also read synchronously by the
+ *       bottom-bar long-press handler to decide whether to open
+ *       the quick-access sheet or jump straight to DownloadsActivity.</li>
+ *   <li>{@link #getFinishedCount()} + {@link #getFinishedSize()} —
+ *       count and total bytes of finished regular downloads. Drives
+ *       the home Downloads card subtitle ('N files saved · X.Y GB').</li>
+ *   <li>{@link #getVaultCount()} — count of vault-saved downloads.
+ *       Drives the home Safe Folder card subtitle.</li>
+ * </ul>
+ *
+ * Kept separate from {@link DownloadsViewModel} (which is paging-,
+ * sort- and chip-stateful for DownloadFragment) so this surface
+ * stays small fixed-size LiveData with no extra wiring.
  */
 @HiltViewModel
 public class RecentDownloadsViewModel extends ViewModel {
 
-    /** Three rows is the sweet spot for both surfaces: the home-card
-     *  embed (where four rows pushed the brand glyph off the bottom on
-     *  short phones) and the long-press quick-access sheet (where the
-     *  fourth row was already off-screen at the bottom-sheet peek
-     *  height on most devices). */
+    /** Cap for the {@link #getRecent()} list — surfaces on the
+     *  DownloadsQuickAccessSheet (long-press of the Downloads button).
+     *  Three rows fit the bottom-sheet peek height on most devices. */
     public static final int LIMIT = 3;
 
     private final LiveData<List<DownloadEntity>> mRecent;
+    private final LiveData<List<DownloadEntity>> mActive;
+    private final LiveData<Integer> mFinishedCount;
+    private final LiveData<Long> mFinishedSize;
     private final LiveData<Integer> mVaultCount;
 
     @Inject
     public RecentDownloadsViewModel(DownloadDataRepository repository) {
-        // Includes all statuses (FINISHED, PROGRESS, QUEUED, ERROR) so
-        // the popup mirrors the main DownloadFragment list — long-pressing
-        // the bar is a quick way to see in-flight downloads too, not
-        // just a 'recently completed' list.
         mRecent = repository.getDownloadsLimit(LIMIT);
-        // Lightweight count of file_safe=1 rows; drives the home
-        // empty-hero vault tile's count badge.
+        mActive = repository.getActiveRegular();
+        mFinishedCount = repository.getRegularFinishedCount();
+        mFinishedSize = repository.getRegularFinishedSize();
         mVaultCount = repository.getSafeCount();
     }
 
+    /** Most recent N downloads regardless of status. Backs the
+     *  long-press DownloadsQuickAccessSheet. */
     public LiveData<List<DownloadEntity>> getRecent() {
         return mRecent;
+    }
+
+    public LiveData<List<DownloadEntity>> getActive() {
+        return mActive;
+    }
+
+    public LiveData<Integer> getFinishedCount() {
+        return mFinishedCount;
+    }
+
+    public LiveData<Long> getFinishedSize() {
+        return mFinishedSize;
     }
 
     public LiveData<Integer> getVaultCount() {

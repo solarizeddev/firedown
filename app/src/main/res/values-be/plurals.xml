@@ -22,4 +22,8 @@
         <item quantity="one">%d элемент захаваны</item>
         <item quantity="other">%d элементаў захавана</item>
     </plurals>
+    <plurals name="home_downloads_file_count">
+        <item quantity="one">%d файл захаваны</item>
+        <item quantity="other">%d файлаў захавана</item>
+    </plurals>
 </resources>

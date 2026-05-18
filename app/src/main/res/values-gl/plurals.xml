@@ -21,4 +21,8 @@
         <item quantity="one">%d elemento gardado</item>
         <item quantity="other">%d elementos gardados</item>
     </plurals>
+    <plurals name="home_downloads_file_count">
+        <item quantity="one">%d ficheiro gardado</item>
+        <item quantity="other">%d ficheiros gardados</item>
+    </plurals>
 </resources>

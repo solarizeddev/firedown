@@ -207,7 +207,6 @@
     <string name="vault_encrypting">ફાઇલ એન્ક્રિપ્ટ કરી રહ્યું છે, કૃપા કરીને રાહ જુઓ…</string>
     <string name="vault_unsupported">આ ફાઇલ ખોલી શકાતી નથી. ખોલવા માટે, તેને સેફ ફોલ્ડરની બહાર ખસેડો અને ફરી પ્રયાસ કરો.</string>
     <string name="downloads_quick_access_title">તાજેતરના ડાઉનલોડ્સ</string>
-    <string name="downloads_quick_access_view_all_short">બધા જુઓ</string>
     <string name="home_paste_hero_button">ડાઉનલોડ કરવા લિંક પેસ્ટ કરો</string>
     <string name="home_paste_hero_empty">પહેલા લિંક કૉપિ કરો, પછી અહીં ટૅપ કરો</string>
     <string name="home_paste_hero_not_url">આ લિંક હોય તેવું લાગતું નથી</string>

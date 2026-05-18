@@ -20,4 +20,8 @@
         <item quantity="one">%d वस्तु सुरक्षित</item>
         <item quantity="other">%d वस्तुहरू सुरक्षित</item>
     </plurals>
+    <plurals name="home_downloads_file_count">
+        <item quantity="one">%d फाइल सुरक्षित</item>
+        <item quantity="other">%d फाइलहरू सुरक्षित</item>
+    </plurals>
 </resources>

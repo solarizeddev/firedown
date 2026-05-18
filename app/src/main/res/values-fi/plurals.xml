@@ -21,4 +21,8 @@
         <item quantity="one">%d tallennettu kohde</item>
         <item quantity="other">%d tallennettua kohdetta</item>
     </plurals>
+    <plurals name="home_downloads_file_count">
+        <item quantity="one">%d tallennettu tiedosto</item>
+        <item quantity="other">%d tallennettua tiedostoa</item>
+    </plurals>
 </resources>

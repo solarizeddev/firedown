@@ -21,4 +21,8 @@
         <item quantity="one">%d elementu gordeta</item>
         <item quantity="other">%d elementu gordeta</item>
     </plurals>
+    <plurals name="home_downloads_file_count">
+        <item quantity="one">%d fitxategi gordeta</item>
+        <item quantity="other">%d fitxategi gordeta</item>
+    </plurals>
 </resources>

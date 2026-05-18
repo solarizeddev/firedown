@@ -21,4 +21,8 @@
         <item quantity="one">%d sparat objekt</item>
         <item quantity="other">%d sparade objekt</item>
     </plurals>
+    <plurals name="home_downloads_file_count">
+        <item quantity="one">%d sparad fil</item>
+        <item quantity="other">%d sparade filer</item>
+    </plurals>
 </resources>

@@ -16,4 +16,8 @@
         <item quantity="one">%d ଆଇଟମ୍ ସଞ୍ଚୟ କରାଯାଇଛି</item>
         <item quantity="other">%d ଆଇଟମ୍ ସଞ୍ଚୟ କରାଯାଇଛି</item>
     </plurals>
+    <plurals name="home_downloads_file_count">
+        <item quantity="one">%d ଫାଇଲ୍ ସଞ୍ଚୟ କରାଯାଇଛି</item>
+        <item quantity="other">%d ଫାଇଲ୍ ସଞ୍ଚୟ କରାଯାଇଛି</item>
+    </plurals>
 </resources>

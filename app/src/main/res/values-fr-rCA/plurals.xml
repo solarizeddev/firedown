@@ -16,4 +16,8 @@
         <item quantity="one">%d élément enregistré</item>
         <item quantity="other">%d éléments enregistrés</item>
     </plurals>
+    <plurals name="home_downloads_file_count">
+        <item quantity="one">%d fichier enregistré</item>
+        <item quantity="other">%d fichiers enregistrés</item>
+    </plurals>
 </resources>

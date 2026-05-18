@@ -21,4 +21,8 @@
         <item quantity="one">%d элемент сақталды</item>
         <item quantity="other">%d элемент сақталды</item>
     </plurals>
+    <plurals name="home_downloads_file_count">
+        <item quantity="one">%d файл сақталды</item>
+        <item quantity="other">%d файл сақталды</item>
+    </plurals>
 </resources>

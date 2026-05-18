@@ -21,4 +21,8 @@
         <item quantity="one">%d запазен елемент</item>
         <item quantity="other">%d запазени елемента</item>
     </plurals>
+    <plurals name="home_downloads_file_count">
+        <item quantity="one">%d запазен файл</item>
+        <item quantity="other">%d запазени файла</item>
+    </plurals>
 </resources>

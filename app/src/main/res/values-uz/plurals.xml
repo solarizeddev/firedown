@@ -16,4 +16,8 @@
         <item quantity="one">%d ta element saqlangan</item>
         <item quantity="other">%d ta element saqlangan</item>
     </plurals>
+    <plurals name="home_downloads_file_count">
+        <item quantity="one">%d ta fayl saqlangan</item>
+        <item quantity="other">%d ta fayl saqlangan</item>
+    </plurals>
 </resources>

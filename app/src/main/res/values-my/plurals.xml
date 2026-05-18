@@ -20,4 +20,8 @@
         <item quantity="one">ပစ္စည်း %d ခု သိမ်းဆည်းပြီး</item>
         <item quantity="other">ပစ္စည်း %d ခု သိမ်းဆည်းပြီး</item>
     </plurals>
+    <plurals name="home_downloads_file_count">
+        <item quantity="one">ဖိုင် %d ခု သိမ်းဆည်းပြီး</item>
+        <item quantity="other">ဖိုင် %d ခု သိမ်းဆည်းပြီး</item>
+    </plurals>
 </resources>

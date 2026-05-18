@@ -21,4 +21,8 @@
         <item quantity="one">%d salvestatud üksus</item>
         <item quantity="other">%d salvestatud üksust</item>
     </plurals>
+    <plurals name="home_downloads_file_count">
+        <item quantity="one">%d salvestatud fail</item>
+        <item quantity="other">%d salvestatud faili</item>
+    </plurals>
 </resources>

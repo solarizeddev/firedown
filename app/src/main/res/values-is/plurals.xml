@@ -16,4 +16,8 @@
         <item quantity="one">%d atriði vistað</item>
         <item quantity="other">%d atriði vistuð</item>
     </plurals>
+    <plurals name="home_downloads_file_count">
+        <item quantity="one">%d skrá vistuð</item>
+        <item quantity="other">%d skrár vistaðar</item>
+    </plurals>
 </resources>

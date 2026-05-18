@@ -16,4 +16,8 @@
         <item quantity="one">%d ንጥል ተቀምጧል</item>
         <item quantity="other">%d ንጥሎች ተቀምጠዋል</item>
     </plurals>
+    <plurals name="home_downloads_file_count">
+        <item quantity="one">%d ፋይል ተቀምጧል</item>
+        <item quantity="other">%d ፋይሎች ተቀምጠዋል</item>
+    </plurals>
 </resources>

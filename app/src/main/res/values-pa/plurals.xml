@@ -21,4 +21,8 @@
         <item quantity="one">%d ਆਈਟਮ ਸੇਵ ਹੋਈ</item>
         <item quantity="other">%d ਆਈਟਮਾਂ ਸੇਵ ਹੋਈਆਂ</item>
     </plurals>
+    <plurals name="home_downloads_file_count">
+        <item quantity="one">%d ਫਾਈਲ ਸੇਵ ਹੋਈ</item>
+        <item quantity="other">%d ਫਾਈਲਾਂ ਸੇਵ ਹੋਈਆਂ</item>
+    </plurals>
 </resources>

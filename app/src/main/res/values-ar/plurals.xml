@@ -37,4 +37,8 @@
         <item quantity="one">تم حفظ %d عنصر</item>
         <item quantity="other">تم حفظ %d عناصر</item>
     </plurals>
+    <plurals name="home_downloads_file_count">
+        <item quantity="one">تم حفظ %d ملف</item>
+        <item quantity="other">تم حفظ %d ملفات</item>
+    </plurals>
 </resources>

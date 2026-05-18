@@ -21,4 +21,8 @@
         <item quantity="one">%d artikull i ruajtur</item>
         <item quantity="other">%d artikuj të ruajtur</item>
     </plurals>
+    <plurals name="home_downloads_file_count">
+        <item quantity="one">%d skedar i ruajtur</item>
+        <item quantity="other">%d skedarë të ruajtur</item>
+    </plurals>
 </resources>

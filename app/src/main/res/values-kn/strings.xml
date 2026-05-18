@@ -238,7 +238,6 @@
     <string name="vault_encrypting">ಫೈಲ್ ಎನ್‌ಕ್ರಿಪ್ಟ್ ಮಾಡಲಾಗುತ್ತಿದೆ, ದಯವಿಟ್ಟು ನಿರೀಕ್ಷಿಸಿ…</string>
     <string name="vault_unsupported">ಈ ಫೈಲ್ ಅನ್ನು ತೆರೆಯಲು ಸಾಧ್ಯವಿಲ್ಲ. ತೆರೆಯಲು, ಅದನ್ನು ಸುರಕ್ಷಿತ ಫೋಲ್ಡರ್‌ನಿಂದ ಹೊರಗೆ ಸರಿಸಿ ಮತ್ತು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.</string>
     <string name="downloads_quick_access_title">ಇತ್ತೀಚಿನ ಡೌನ್‌ಲೋಡ್‌ಗಳು</string>
-    <string name="downloads_quick_access_view_all_short">ಎಲ್ಲವನ್ನೂ ನೋಡಿ</string>
     <string name="home_paste_hero_button">ಡೌನ್‌ಲೋಡ್‌ಗೆ ಲಿಂಕ್ ಪೇಸ್ಟ್ ಮಾಡಿ</string>
     <string name="home_paste_hero_empty">ಮೊದಲು ಲಿಂಕ್ ನಕಲಿಸಿ, ನಂತರ ಇಲ್ಲಿ ಟ್ಯಾಪ್ ಮಾಡಿ</string>
     <string name="home_paste_hero_not_url">ಇದು ಲಿಂಕ್‌ನಂತೆ ಕಾಣುತ್ತಿಲ್ಲ</string>

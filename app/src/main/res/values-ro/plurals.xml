@@ -25,4 +25,8 @@
         <item quantity="one">%d element salvat</item>
         <item quantity="other">%d elemente salvate</item>
     </plurals>
+    <plurals name="home_downloads_file_count">
+        <item quantity="one">%d fișier salvat</item>
+        <item quantity="other">%d fișiere salvate</item>
+    </plurals>
 </resources>

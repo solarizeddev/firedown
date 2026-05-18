@@ -21,4 +21,8 @@
         <item quantity="one">Kipengee %d kimehifadhiwa</item>
         <item quantity="other">Vipengee %d vimehifadhiwa</item>
     </plurals>
+    <plurals name="home_downloads_file_count">
+        <item quantity="one">Faili %d limehifadhiwa</item>
+        <item quantity="other">Mafaili %d yamehifadhiwa</item>
+    </plurals>
 </resources>

@@ -24,4 +24,8 @@
         <item quantity="one">%d сачувана ставка</item>
         <item quantity="other">%d сачуваних ставки</item>
     </plurals>
+    <plurals name="home_downloads_file_count">
+        <item quantity="one">%d сачувана датотека</item>
+        <item quantity="other">%d сачуваних датотека</item>
+    </plurals>
 </resources>

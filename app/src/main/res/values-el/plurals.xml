@@ -21,4 +21,8 @@
         <item quantity="one">%d στοιχείο αποθηκευμένο</item>
         <item quantity="other">%d στοιχεία αποθηκευμένα</item>
     </plurals>
+    <plurals name="home_downloads_file_count">
+        <item quantity="one">%d αρχείο αποθηκευμένο</item>
+        <item quantity="other">%d αρχεία αποθηκευμένα</item>
+    </plurals>
 </resources>

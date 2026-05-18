@@ -21,4 +21,8 @@
         <item quantity="one">%d مورد ذخیره شد</item>
         <item quantity="other">%d مورد ذخیره شد</item>
     </plurals>
+    <plurals name="home_downloads_file_count">
+        <item quantity="one">%d فایل ذخیره شد</item>
+        <item quantity="other">%d فایل ذخیره شد</item>
+    </plurals>
 </resources>

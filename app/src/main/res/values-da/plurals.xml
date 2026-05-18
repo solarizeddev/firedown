@@ -21,4 +21,8 @@
         <item quantity="one">%d gemt element</item>
         <item quantity="other">%d gemte elementer</item>
     </plurals>
+    <plurals name="home_downloads_file_count">
+        <item quantity="one">%d gemt fil</item>
+        <item quantity="other">%d gemte filer</item>
+    </plurals>
 </resources>

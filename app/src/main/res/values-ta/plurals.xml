@@ -21,4 +21,8 @@
         <item quantity="one">%d உருப்படி சேமிக்கப்பட்டது</item>
         <item quantity="other">%d உருப்படிகள் சேமிக்கப்பட்டன</item>
     </plurals>
+    <plurals name="home_downloads_file_count">
+        <item quantity="one">%d கோப்பு சேமிக்கப்பட்டது</item>
+        <item quantity="other">%d கோப்புகள் சேமிக்கப்பட்டன</item>
+    </plurals>
 </resources>

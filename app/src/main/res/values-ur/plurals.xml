@@ -21,4 +21,8 @@
         <item quantity="one">%d آئٹم محفوظ</item>
         <item quantity="other">%d آئٹمز محفوظ</item>
     </plurals>
+    <plurals name="home_downloads_file_count">
+        <item quantity="one">%d فائل محفوظ</item>
+        <item quantity="other">%d فائلز محفوظ</item>
+    </plurals>
 </resources>

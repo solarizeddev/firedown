@@ -254,7 +254,6 @@
     <string name="vault_unsupported">Hindi mabuksan ang file na ito. Upang buksan, alisin ito sa Safe Folder at subukang muli.</string>
     <string name="bookmark_name">Pangalan</string>
     <string name="downloads_quick_access_title">Mga kamakailang pag-download</string>
-    <string name="downloads_quick_access_view_all_short">Tingnan lahat</string>
     <string name="home_paste_hero_button">I-paste ang link para mag-download</string>
     <string name="home_paste_hero_empty">Kopyahin muna ang link, pagkatapos i-tap dito</string>
     <string name="home_paste_hero_not_url">Mukhang hindi ito link</string>

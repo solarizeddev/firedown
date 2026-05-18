@@ -21,4 +21,8 @@
         <item quantity="one">%d ელემენტი შენახულია</item>
         <item quantity="other">%d ელემენტი შენახულია</item>
     </plurals>
+    <plurals name="home_downloads_file_count">
+        <item quantity="one">%d ფაილი შენახულია</item>
+        <item quantity="other">%d ფაილი შენახულია</item>
+    </plurals>
 </resources>

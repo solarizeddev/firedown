@@ -20,4 +20,8 @@
         <item quantity="one">Đã lưu %d mục</item>
         <item quantity="other">Đã lưu %d mục</item>
     </plurals>
+    <plurals name="home_downloads_file_count">
+        <item quantity="one">Đã lưu %d tệp</item>
+        <item quantity="other">Đã lưu %d tệp</item>
+    </plurals>
 </resources>

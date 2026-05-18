@@ -21,4 +21,8 @@
         <item quantity="one">%d element lagret</item>
         <item quantity="other">%d elementer lagret</item>
     </plurals>
+    <plurals name="home_downloads_file_count">
+        <item quantity="one">%d fil lagret</item>
+        <item quantity="other">%d filer lagret</item>
+    </plurals>
 </resources>

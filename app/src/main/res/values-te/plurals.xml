@@ -21,4 +21,8 @@
         <item quantity="one">%d అంశం సేవ్ చేయబడింది</item>
         <item quantity="other">%d అంశాలు సేవ్ చేయబడ్డాయి</item>
     </plurals>
+    <plurals name="home_downloads_file_count">
+        <item quantity="one">%d ఫైల్ సేవ్ చేయబడింది</item>
+        <item quantity="other">%d ఫైళ్లు సేవ్ చేయబడ్డాయి</item>
+    </plurals>
 </resources>

@@ -260,7 +260,6 @@
     <string name="vault_unsupported">Ne mogu otvoriti ovaj fajl. Da ga otvorite, premjestite ga iz sigurnog foldera i pokušajte ponovo.</string>
     <string name="bookmark_name">Naziv</string>
     <string name="downloads_quick_access_title">Nedavna preuzimanja</string>
-    <string name="downloads_quick_access_view_all_short">Prikaži sve</string>
     <string name="home_paste_hero_button">Zalijepi link za preuzimanje</string>
     <string name="home_paste_hero_empty">Prvo kopirajte link, zatim dodirnite ovdje</string>
     <string name="home_paste_hero_not_url">Ovo ne izgleda kao link</string>

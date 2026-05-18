@@ -32,7 +32,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.snackbar.Snackbar;
-import com.solarized.firedown.ui.adapters.DownloadsQuickAccessAdapter;
+import com.solarized.firedown.phone.dialogs.DownloadsQuickAccessSheet;
 
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.Preferences;
@@ -75,7 +75,8 @@ import dagger.hilt.android.AndroidEntryPoint;
 public class HomeFragment extends BaseBrowserFragment implements BottomNavigationBar.OnBottomBarListener,
         AutoCompleteEditText.OnCommitListener, AutoCompleteEditText.OnFilterListener, AutoCompleteEditText.OnFocusChangedListener,
         AutoCompleteEditText.OnTextChangedListener, AutoCompleteEditText.OnSearchStateChangeListener,
-        GeckoToolbar.OnToolbarListener , OnBoardingCard.OnBoardingCardListener, OnItemClickListener {
+        GeckoToolbar.OnToolbarListener , OnBoardingCard.OnBoardingCardListener, OnItemClickListener,
+        DownloadsQuickAccessSheet.Host {
 
 
     private static final String TAG = HomeFragment.class.getName();
@@ -101,9 +102,11 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     private ProgressBar mActiveStripBar;
     private TextView mHomeVaultTitle;
     private TextView mHomeVaultSubtitle;
-    private DownloadsQuickAccessAdapter mRecentDownloadsAdapter;
+    private TextView mRecentDownloadsSubtitle;
     private SharedPreferences.OnSharedPreferenceChangeListener mHomePrefsListener;
-    @Nullable private java.util.List<DownloadEntity> mLastRecentList;
+    @Nullable private java.util.List<DownloadEntity> mLastActiveList;
+    @Nullable private Integer mLastFinishedCount;
+    private long mLastFinishedSize = 0L;
 
 
     @Override
@@ -178,20 +181,9 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mBottomNavigationBar = v.findViewById(R.id.bottom_app_bar);
 
 
-        RecyclerView recentRecycler = v.findViewById(R.id.recent_downloads_recycler);
-        // Tap a row → errored rows open the source URL, everything
-        // else hits openItem. Same behaviour BrowserFragment's
-        // long-press DownloadsQuickAccessSheet uses on its rows so
-        // every entry-point into a recent download lands the same way.
-        mRecentDownloadsAdapter = new DownloadsQuickAccessAdapter(this::onQuickAccessFileTap);
-        recentRecycler.setAdapter(mRecentDownloadsAdapter);
-        // Tick-only payloads update just the progress label/bar; we
-        // don't want a fade on top of that or the row visibly blinks
-        // on each emission while a download is in-flight.
-        recentRecycler.setItemAnimator(null);
-
-        v.findViewById(R.id.recent_downloads_view_all).setOnClickListener(
-                view -> mStartForResult.launch(new Intent(mActivity, DownloadsActivity.class)));
+        mRecentDownloadsSubtitle = v.findViewById(R.id.recent_downloads_subtitle);
+        mRecentDownloadsCard.setOnClickListener(view ->
+                mStartForResult.launch(new Intent(mActivity, DownloadsActivity.class)));
 
         v.findViewById(R.id.home_paste_card).setOnClickListener(view -> onPasteAndDownload());
 
@@ -270,17 +262,32 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
 
         });
 
-        // Drives both the home-page recent-downloads card *and* keeps
-        // the LiveData hot so the long-press quick-access popup has a
-        // value to read synchronously on first invocation. Room's
-        // LiveData stays cold until it has an active observer, so
-        // without an observer here the popup's getValue() returns
-        // null on first long-press and we fall back to
-        // DownloadsActivity instead of showing the popup.
-        mRecentDownloadsViewModel.getRecent().observe(getViewLifecycleOwner(), list -> {
-            mLastRecentList = list;
+        // Three streams power the home Downloads surfaces:
+        //  * getActive — drives the active-download strip (visible
+        //    only when in-flight non-vault items exist).
+        //  * getFinishedCount / getFinishedSize — drive the
+        //    Downloads card subtitle ('N files saved · X.Y GB').
+        //    Card itself is visible whenever the toggle is on, even
+        //    with zero saved files, so the entry is discoverable.
+        //  * keeps getRecent hot via the long-press handler — see
+        //    onBottomBarButtonLongClick — by reading getValue() at
+        //    tap time; the sheet itself owns its own observer.
+        mRecentDownloadsViewModel.getActive().observe(getViewLifecycleOwner(), list -> {
+            mLastActiveList = list;
             applyHomeCustomisation();
         });
+        mRecentDownloadsViewModel.getFinishedCount().observe(getViewLifecycleOwner(), count -> {
+            mLastFinishedCount = count;
+            applyHomeCustomisation();
+        });
+        mRecentDownloadsViewModel.getFinishedSize().observe(getViewLifecycleOwner(), size -> {
+            mLastFinishedSize = size == null ? 0L : size;
+            applyHomeCustomisation();
+        });
+        // Keep the recent list LiveData warm so the long-press sheet
+        // can read getValue() synchronously without a cold-start
+        // race on first invocation.
+        mRecentDownloadsViewModel.getRecent().observe(getViewLifecycleOwner(), list -> { /* warm */ });
 
         // Vault count drives the empty-hero vault button's count badge.
         // Button itself is always visible while the empty hero is
@@ -456,22 +463,23 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mActiveStripBar = null;
         mHomeVaultTitle = null;
         mHomeVaultSubtitle = null;
-        mRecentDownloadsAdapter = null;
+        mRecentDownloadsSubtitle = null;
     }
 
     /**
      * Resolves the current home composition from the user's
      * {@link Preferences#SETTINGS_HOME_SHOW_RECENT_DOWNLOADS} toggle
-     * and the latest recent-downloads list. Splits the list into
-     * active (PROGRESS / QUEUED) vs finished (FINISHED / ERROR):
+     * and the latest download stats.
      *
      * <ul>
-     *   <li>Strip — shows when any active item exists; binds the most
-     *       recent one as the headline.</li>
-     *   <li>Card — shows only finished items; hidden when the
-     *       resulting list is empty (so a screen with 3 in-flight
-     *       downloads doesn't render an empty card).</li>
-     *   <li>Empty hero — shown when neither strip nor card is up.</li>
+     *   <li>Active strip — visible while any non-vault PROGRESS / QUEUED
+     *       download exists; binds the most recent as the headline.</li>
+     *   <li>Downloads card — visible whenever the toggle is on. Subtitle
+     *       ('N files saved · X.Y GB') shows when count > 0; otherwise
+     *       title-only so the entry stays discoverable for users who
+     *       haven't saved anything yet.</li>
+     *   <li>Empty hero (paste + Safe Folder) — visible whenever the
+     *       Downloads card is hidden so the paste CTA stays on screen.</li>
      * </ul>
      */
     private void applyHomeCustomisation() {
@@ -482,32 +490,36 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
                 Preferences.SETTINGS_HOME_SHOW_RECENT_DOWNLOADS,
                 Preferences.DEFAULT_HOME_SHOW_RECENT_DOWNLOADS);
 
-        java.util.List<DownloadEntity> active = new java.util.ArrayList<>();
-        java.util.List<DownloadEntity> finished = new java.util.ArrayList<>();
-        if (mLastRecentList != null) {
-            for (DownloadEntity e : mLastRecentList) {
-                int s = e.getFileStatus();
-                if (s == Download.PROGRESS || s == Download.QUEUED) {
-                    active.add(e);
-                } else {
-                    finished.add(e);
-                }
-            }
-        }
-
-        boolean stripVisible = showRecent && !active.isEmpty();
-        boolean cardVisible  = showRecent && !finished.isEmpty();
+        boolean hasActive = mLastActiveList != null && !mLastActiveList.isEmpty();
+        boolean stripVisible = showRecent && hasActive;
+        boolean cardVisible  = showRecent;
 
         mActiveStrip.setVisibility(stripVisible ? View.VISIBLE : View.GONE);
         mRecentDownloadsCard.setVisibility(cardVisible ? View.VISIBLE : View.GONE);
-        // Show the paste-link empty hero whenever there's no static
-        // history card — strip-only state still benefits from the CTA
-        // ("active download running, but you can still paste a new
-        // link"). Hide only when the card is doing the talking.
         mHomeAllDisabled.setVisibility(cardVisible ? View.GONE : View.VISIBLE);
 
-        if (stripVisible) bindActiveStrip(active);
-        if (mRecentDownloadsAdapter != null) mRecentDownloadsAdapter.submitList(finished);
+        if (stripVisible) bindActiveStrip(mLastActiveList);
+        if (cardVisible) bindDownloadsSubtitle();
+    }
+
+    /** Binds the 'N files saved · X.Y GB' subtitle on the Downloads
+     *  card. Hidden when no finished files exist so a curious user
+     *  with nothing downloaded yet sees the bare entry label. */
+    private void bindDownloadsSubtitle() {
+        if (mRecentDownloadsSubtitle == null) return;
+        int n = mLastFinishedCount == null ? 0 : mLastFinishedCount;
+        if (n <= 0) {
+            mRecentDownloadsSubtitle.setVisibility(View.GONE);
+            return;
+        }
+        String files = getResources().getQuantityString(
+                R.plurals.home_downloads_file_count, n, n);
+        String text = mLastFinishedSize > 0
+                ? getString(R.string.home_downloads_subtitle_with_size,
+                        files, com.solarized.firedown.utils.Utils.readableFileSize(mLastFinishedSize))
+                : files;
+        mRecentDownloadsSubtitle.setVisibility(View.VISIBLE);
+        mRecentDownloadsSubtitle.setText(text);
     }
 
     /**
@@ -578,24 +590,31 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
             NavigationUtils.navigateSafe(mNavController, R.id.dialog_new_tabs, R.id.home);
             return true;
         } else if (id == R.id.downloads_button) {
-            // The home page already renders the recent-downloads card
-            // in-place; popping a sheet over it would show the same
-            // three rows twice. Jump straight to DownloadsActivity —
-            // BrowserFragment keeps the sheet because there's no
-            // home card to read from on a content page.
-            mStartForResult.launch(new Intent(mActivity, DownloadsActivity.class));
+            // Home now shows only a minimal Downloads summary card
+            // (count + bytes), so the long-press sheet is the path
+            // to the actual recent rows. Skip the sheet only when
+            // there's nothing to show — fall back to DownloadsActivity
+            // so the long-press still feels responsive on a fresh
+            // install.
+            java.util.List<DownloadEntity> cached =
+                    mRecentDownloadsViewModel.getRecent().getValue();
+            if (cached == null || cached.isEmpty()) {
+                mStartForResult.launch(new Intent(mActivity, DownloadsActivity.class));
+            } else {
+                new DownloadsQuickAccessSheet().show(getChildFragmentManager(),
+                        DownloadsQuickAccessSheet.TAG);
+            }
             return true;
         }
         return false;
     }
 
-    /** Row tap on the home recent-downloads card. Matches DownloadFragment's
-     *  tap behaviour so the home glance surface and the main list stay
-     *  consistent. */
-    private void onQuickAccessFileTap(@NonNull DownloadEntity entity) {
-        // Errored downloads jump to the source URL, everything else
-        // hits openItem (which is a no-op for not-yet-completed files
-        // but at least consistent).
+    /** {@link DownloadsQuickAccessSheet.Host} — fired when the user
+     *  taps a row in the long-press quick-access sheet. Errored
+     *  downloads jump to the source URL, everything else hits
+     *  openItem (matches DownloadFragment's row tap). */
+    @Override
+    public void onQuickAccessFileTap(@NonNull DownloadEntity entity) {
         if (entity.getFileStatus() == Download.ERROR) {
             openSourceUrl(entity);
         } else {

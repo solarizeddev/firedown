@@ -16,4 +16,8 @@
         <item quantity="one">%d into ilondoloziwe</item>
         <item quantity="other">%d izinto zilondoloziwe</item>
     </plurals>
+    <plurals name="home_downloads_file_count">
+        <item quantity="one">%d ifayela ilondoloziwe</item>
+        <item quantity="other">%d amafayela alondoloziwe</item>
+    </plurals>
 </resources>

@@ -21,4 +21,8 @@
         <item quantity="one">%d आइटम सहेजा गया</item>
         <item quantity="other">%d आइटम सहेजे गए</item>
     </plurals>
+    <plurals name="home_downloads_file_count">
+        <item quantity="one">%d फ़ाइल सहेजी गई</item>
+        <item quantity="other">%d फ़ाइलें सहेजी गईं</item>
+    </plurals>
 </resources>

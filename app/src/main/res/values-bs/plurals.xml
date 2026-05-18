@@ -26,4 +26,8 @@
         <item quantity="one">%d stavka sačuvana</item>
         <item quantity="other">%d stavki sačuvano</item>
     </plurals>
+    <plurals name="home_downloads_file_count">
+        <item quantity="one">%d datoteka sačuvana</item>
+        <item quantity="other">%d datoteka sačuvano</item>
+    </plurals>
 </resources>

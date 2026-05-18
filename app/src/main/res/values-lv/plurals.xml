@@ -25,4 +25,8 @@
         <item quantity="one">%d saglabāts vienums</item>
         <item quantity="other">%d saglabāti vienumi</item>
     </plurals>
+    <plurals name="home_downloads_file_count">
+        <item quantity="one">%d saglabāts fails</item>
+        <item quantity="other">%d saglabāti faili</item>
+    </plurals>
 </resources>

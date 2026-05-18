@@ -16,4 +16,8 @@
         <item quantity="one">%d අයිතමයක් සුරකින ලදී</item>
         <item quantity="other">%d අයිතම සුරකින ලදී</item>
     </plurals>
+    <plurals name="home_downloads_file_count">
+        <item quantity="one">%d ගොනුව සුරකින ලදී</item>
+        <item quantity="other">%d ගොනු සුරකින ලදී</item>
+    </plurals>
 </resources>

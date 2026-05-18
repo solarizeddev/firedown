@@ -53,4 +53,8 @@
         <item quantity="one">сохранён %d элемент</item>
         <item quantity="other">сохранено %d элементов</item>
     </plurals>
+    <plurals name="home_downloads_file_count">
+        <item quantity="one">сохранён %d файл</item>
+        <item quantity="other">сохранено %d файлов</item>
+    </plurals>
 </resources>

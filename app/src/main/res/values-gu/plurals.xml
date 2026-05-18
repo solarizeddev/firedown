@@ -21,4 +21,8 @@
         <item quantity="one">%d આઇટમ સાચવેલ</item>
         <item quantity="other">%d આઇટમ સાચવેલ</item>
     </plurals>
+    <plurals name="home_downloads_file_count">
+        <item quantity="one">%d ફાઇલ સાચવેલી</item>
+        <item quantity="other">%d ફાઇલ સાચવેલી</item>
+    </plurals>
 </resources>

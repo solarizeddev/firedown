@@ -88,6 +88,24 @@ public class DownloadDataRepository {
         return mDatabase.downloadDao().getSafeCountLive();
     }
 
+    /** Live count of finished regular downloads — drives the home
+     *  Downloads card subtitle. */
+    public LiveData<Integer> getRegularFinishedCount() {
+        return mDatabase.downloadDao().getRegularFinishedCountLive();
+    }
+
+    /** Live total bytes for finished regular downloads — drives the
+     *  home Downloads card subtitle's size suffix. */
+    public LiveData<Long> getRegularFinishedSize() {
+        return mDatabase.downloadDao().getRegularFinishedSizeLive();
+    }
+
+    /** Live list of in-flight regular downloads. Drives the home
+     *  active-download strip. */
+    public LiveData<List<DownloadEntity>> getActiveRegular() {
+        return mDatabase.downloadDao().getActiveRegularLive();
+    }
+
     public List<DownloadEntity> getAllRawList() {
         return mDatabase.downloadDao().getAllRawList();
     }

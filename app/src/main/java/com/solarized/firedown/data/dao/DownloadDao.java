@@ -120,4 +120,21 @@ public interface DownloadDao {
      */
     @Query("SELECT COUNT(*) FROM download WHERE file_safe = 1")
     LiveData<Integer> getSafeCountLive();
+
+    /** Live count of finished regular (non-vault) downloads. Drives
+     *  the home 'Downloads' card subtitle (N files saved). */
+    @Query("SELECT COUNT(*) FROM download WHERE file_safe = 0 AND file_status = 1")
+    LiveData<Integer> getRegularFinishedCountLive();
+
+    /** Live sum of bytes for finished regular (non-vault) downloads.
+     *  Drives the home 'Downloads' card subtitle's size suffix. */
+    @Query("SELECT IFNULL(SUM(file_size), 0) FROM download WHERE file_safe = 0 AND file_status = 1")
+    LiveData<Long> getRegularFinishedSizeLive();
+
+    /** Live list of in-flight regular downloads (PROGRESS=0, QUEUED=2,
+     *  non-vault). Drives the home active-download strip. Bounded so
+     *  the +N count is meaningful even with many concurrent
+     *  downloads. */
+    @Query("SELECT * FROM download WHERE file_safe = 0 AND file_status IN (0, 2) ORDER BY file_date DESC LIMIT 10")
+    LiveData<List<DownloadEntity>> getActiveRegularLive();
 }

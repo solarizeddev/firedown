@@ -1,76 +1,76 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Recent-downloads card embedded directly in the home page. Mirrors
-  the visual language of DownloadsQuickAccessSheet (same row layout,
-  same adapter) so long-pressing the Downloads button and tapping
-  the home card land on the same thing — just without the bottom
-  sheet wrapper. Lives between the onboarding card and the centred
-  brand glyph, and is hidden via the SETTINGS_HOME_SHOW_RECENT_DOWNLOADS
-  toggle or when there are no recent downloads.
+  Minimalist Downloads entry card on the home page. Same shape as
+  the Safe Folder card — icon + title + 'N files saved · X.Y GB'
+  subtitle — so the home reads as a small set of equal-weight
+  destinations rather than competing surfaces. Tap routes to
+  DownloadsActivity; long-pressing the bottom-bar Downloads button
+  is the path to a quick-list preview (DownloadsQuickAccessSheet).
 -->
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/recent_downloads_card"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginHorizontal="12dp"
-    android:layout_marginTop="8dp"
+    android:clickable="true"
+    android:focusable="true"
     android:visibility="gone"
-    app:cardBackgroundColor="?attr/colorSurfaceContainerHighest"
+    app:cardBackgroundColor="?attr/colorSurfaceContainerHigh"
+    app:cardCornerRadius="12dp"
     app:cardElevation="0dp"
     app:strokeWidth="0dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:paddingBottom="8dp">
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="14dp">
 
-        <!--
-            Section header: title on the start, 'View all' action on
-            the end. Title takes layout_weight=1 with maxLines+ellipsize
-            so any long localised string (German / Russian) truncates
-            cleanly instead of pushing the trailing button off-screen.
-            Button is wrap_content and aligned to the title's baseline
-            for the standard M3 section-header look.
-        -->
+        <androidx.appcompat.widget.AppCompatImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:contentDescription="@null"
+            android:src="@drawable/download_24"
+            app:tint="?attr/colorOnSurface" />
+
         <LinearLayout
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:paddingStart="16dp"
-            android:paddingEnd="4dp"
-            android:paddingTop="4dp">
+            android:layout_marginStart="14dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
 
             <TextView
-                android:id="@+id/recent_downloads_title"
-                style="@style/TextAppearance.Material3.TitleMedium"
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:ellipsize="end"
                 android:maxLines="1"
-                android:text="@string/downloads_quick_access_title"
+                android:text="@string/navigation_downloads"
+                android:textAppearance="?attr/textAppearanceTitleSmall"
                 android:textColor="?attr/colorOnSurface" />
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/recent_downloads_view_all"
-                style="@style/Widget.Material3.Button.TextButton"
-                android:layout_width="wrap_content"
+            <!--
+                'N files saved · X.Y GB' subtitle. Plural quantity drives
+                the file label; size suffix is appended in HomeFragment
+                from Utils.readableFileSize (kB / MB / GB). Hidden when
+                count = 0 (matches Safe Folder behaviour).
+            -->
+            <TextView
+                android:id="@+id/recent_downloads_subtitle"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:minWidth="0dp"
-                android:text="@string/downloads_quick_access_view_all_short" />
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textAppearance="?attr/textAppearanceBodySmall"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:visibility="gone"
+                tools:text="150 files saved · 2.4 GB"
+                tools:visibility="visible" />
 
         </LinearLayout>
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recent_downloads_recycler"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:clipToPadding="false"
-            android:overScrollMode="never"
-            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
 
     </LinearLayout>
 

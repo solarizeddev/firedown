@@ -16,4 +16,8 @@
         <item quantity="one">%d archivo guardado</item>
         <item quantity="other">%d archivos guardados</item>
     </plurals>
+    <plurals name="home_downloads_file_count">
+        <item quantity="one">%d archivo guardado</item>
+        <item quantity="other">%d archivos guardados</item>
+    </plurals>
 </resources>

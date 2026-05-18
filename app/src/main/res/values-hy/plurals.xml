@@ -16,4 +16,8 @@
         <item quantity="one">%d տարր պահված է</item>
         <item quantity="other">%d տարր պահված է</item>
     </plurals>
+    <plurals name="home_downloads_file_count">
+        <item quantity="one">%d ֆայլ պահված է</item>
+        <item quantity="other">%d ֆայլ պահված է</item>
+    </plurals>
 </resources>

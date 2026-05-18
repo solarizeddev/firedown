@@ -16,4 +16,8 @@
         <item quantity="one">%d ລາຍການ ບັນທຶກແລ້ວ</item>
         <item quantity="other">%d ລາຍການ ບັນທຶກແລ້ວ</item>
     </plurals>
+    <plurals name="home_downloads_file_count">
+        <item quantity="one">%d ໄຟລ໌ ບັນທຶກແລ້ວ</item>
+        <item quantity="other">%d ໄຟລ໌ ບັນທຶກແລ້ວ</item>
+    </plurals>
 </resources>

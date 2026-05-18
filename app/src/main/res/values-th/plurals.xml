@@ -20,4 +20,8 @@
         <item quantity="one">%d รายการที่บันทึก</item>
         <item quantity="other">%d รายการที่บันทึก</item>
     </plurals>
+    <plurals name="home_downloads_file_count">
+        <item quantity="one">%d ไฟล์ที่บันทึก</item>
+        <item quantity="other">%d ไฟล์ที่บันทึก</item>
+    </plurals>
 </resources>

@@ -21,4 +21,8 @@
         <item quantity="one">%d আইটেম সংরক্ষিত</item>
         <item quantity="other">%d আইটেম সংরক্ষিত</item>
     </plurals>
+    <plurals name="home_downloads_file_count">
+        <item quantity="one">%d ফাইল সংরক্ষিত</item>
+        <item quantity="other">%d ফাইল সংরক্ষিত</item>
+    </plurals>
 </resources>

@@ -37,4 +37,8 @@
         <item quantity="one">%d Element gespeichert</item>
         <item quantity="other">%d Elemente gespeichert</item>
     </plurals>
+    <plurals name="home_downloads_file_count">
+        <item quantity="one">%d Datei gespeichert</item>
+        <item quantity="other">%d Dateien gespeichert</item>
+    </plurals>
 </resources>
