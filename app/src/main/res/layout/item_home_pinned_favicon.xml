@@ -1,18 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Single favicon tile inside the home pinned-bookmarks strip.
-  Square ImageView with its own click background — favicons are
-  the whole content of the row, no title/url. Spacing between
-  tiles comes from the RecyclerView item-decoration / layout
-  margins on the item, not from internal padding here.
+  Single tile inside the home pinned-bookmarks strip. Wraps the
+  raw favicon in a circular tonal background so heterogeneous
+  source favicons (square logos, transparent PNGs, brand glyphs,
+  pixel-art icons) read as a uniform row. The favicon itself
+  renders centred at ~50% of the tile size so it floats inside
+  the circle rather than touching the edge.
 -->
-<androidx.appcompat.widget.AppCompatImageView
+<com.google.android.material.card.MaterialCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="32dp"
-    android:layout_height="32dp"
-    android:layout_marginHorizontal="8dp"
-    android:background="?attr/selectableItemBackgroundBorderless"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/pinned_favicon_tile"
+    android:layout_width="40dp"
+    android:layout_height="40dp"
+    android:layout_marginHorizontal="6dp"
     android:clickable="true"
-    android:contentDescription="@null"
     android:focusable="true"
-    android:scaleType="fitCenter" />
+    app:cardBackgroundColor="?attr/colorSurfaceContainerHighest"
+    app:cardCornerRadius="20dp"
+    app:cardElevation="0dp"
+    app:strokeWidth="0dp">
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/pinned_favicon_image"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_gravity="center"
+        android:contentDescription="@null"
+        android:scaleType="fitCenter" />
+
+</com.google.android.material.card.MaterialCardView>

@@ -82,7 +82,7 @@ public class PinnedFaviconsAdapter
 
         FaviconViewHolder(@NonNull View itemView, @Nullable OnFaviconClickListener listener) {
             super(itemView);
-            this.favicon = (AppCompatImageView) itemView;
+            this.favicon = itemView.findViewById(R.id.pinned_favicon_image);
             this.listener = listener;
             itemView.setOnClickListener(v -> {
                 if (listener != null && bound != null) listener.onFaviconClick(bound);
