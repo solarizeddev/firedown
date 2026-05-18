@@ -1,0 +1,12 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <SwitchPreferenceCompat
+        android:defaultValue="true"
+        android:key="com.solarized.firedown.preferences.home.show.recent.downloads"
+        android:summary="@string/settings_home_show_recent_downloads_summary"
+        android:title="@string/settings_home_show_recent_downloads_title"
+        app:icon="@drawable/ic_baseline_download_24"
+        app:singleLineTitle="false" />
+
+</PreferenceScreen>

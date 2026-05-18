@@ -127,6 +127,11 @@
     <string name="download_finished_meta">%1$s - %2$s</string>
     <string name="downloads_quick_access_title">Recent downloads</string>
     <string name="downloads_quick_access_view_all">View all downloads</string>
+    <string name="downloads_quick_access_empty">Recent downloads will appear here</string>
+    <string name="settings_home_title">Home page</string>
+    <string name="settings_home_summary">Customise what shows on the home page</string>
+    <string name="settings_home_show_recent_downloads_title">Show recent downloads</string>
+    <string name="settings_home_show_recent_downloads_summary">Display your most recent downloads on the home page. Turn off for a clean empty home.</string>
     <string name="download_adaptative">Adaptive</string>
     <string name="download_file">A file is ready to be downloaded:</string>
     <string name="download_finished">Download finished</string>

@@ -24,49 +24,60 @@
     </com.google.android.material.appbar.AppBarLayout>
 
 
-    <LinearLayout
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/home_scroll"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical"
+        android:clipToPadding="false"
+        android:fillViewport="true"
+        android:overScrollMode="never"
         app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior">
 
-
-        <com.solarized.firedown.ui.OnBoardingCard
-            android:id="@+id/onboarding"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="top"
-            android:layout_marginTop="4dp" />
-
-
-        <!--
-            Brand-only home for a downloader-first browser. With
-            shortcuts retired (they migrated into pinned bookmarks),
-            the home page is just the URL bar and a centred Firedown
-            mark — downloads are still one tap away via the bottom
-            bar, bookmarks (with pinned items at the top) via the
-            More menu. layout_weight=1 fills whatever vertical space
-            is left after the onboarding card so the glyph stays
-            centred whether or not onboarding is visible.
-        -->
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:orientation="vertical"
-            android:paddingHorizontal="24dp">
+            android:layout_height="match_parent"
+            android:orientation="vertical">
 
-            <androidx.appcompat.widget.AppCompatImageView
-                android:layout_width="72dp"
-                android:layout_height="72dp"
-                android:contentDescription="@null"
-                android:src="@drawable/firedown_logo_color" />
+
+            <com.solarized.firedown.ui.OnBoardingCard
+                android:id="@+id/onboarding"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="top"
+                android:layout_marginTop="4dp" />
+
+
+            <include layout="@layout/card_home_recent_downloads" />
+
+
+            <!--
+                Empty / brand-only fallback shown when the recent-downloads
+                card is hidden (toggle off or list empty). layout_weight=1
+                fills whatever vertical space is left so the glyph stays
+                centred whether or not onboarding is visible.
+            -->
+            <LinearLayout
+                android:id="@+id/home_all_disabled"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:paddingHorizontal="24dp"
+                android:visibility="gone">
+
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:layout_width="72dp"
+                    android:layout_height="72dp"
+                    android:contentDescription="@null"
+                    android:src="@drawable/firedown_logo_color" />
+
+            </LinearLayout>
+
 
         </LinearLayout>
 
-
-    </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
 
 
     <com.solarized.firedown.autocomplete.AutoCompleteView
@@ -94,6 +105,21 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
         app:enableCradle="false" />
+
+    <!--
+        AMOLED / OLED fix. Without this view the gesture-nav strip
+        at the bottom of the screen is left transparent and reveals
+        whatever sits underneath, which on AMOLED reads as a flash of
+        non-black under the otherwise pure-black chrome. Mirrors the
+        scrim used by every other top-level fragment; BaseFocusFragment
+        sizes its height to the system-bar inset.
+    -->
+    <View
+        android:id="@+id/navigation_scrim"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_gravity="bottom"
+        android:background="?android:attr/colorBackground" />
 
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

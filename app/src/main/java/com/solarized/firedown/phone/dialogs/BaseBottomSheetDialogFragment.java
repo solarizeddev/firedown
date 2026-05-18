@@ -136,14 +136,32 @@ public class BaseBottomSheetDialogFragment extends BottomSheetDialogFragment {
      *
      * <p>Same sentinel as the width path: 0 means "no cap" (used in
      * landscape, where the viewport is already height-constrained and
-     * any further cap would feel cramped).</p>
+     * any further cap would feel cramped). Subclasses can opt out
+     * entirely via {@link #isMaxHeightCapped()} — the browser-options
+     * sheet sizes itself to fill up to the toolbar and the dimen cap
+     * was leaving a 640dp-tall stub plus a large gap above the chrome.</p>
      */
     private void applyBottomSheetMaxHeight() {
         if (mView == null || mView.getParent() == null) return;
         BottomSheetBehavior<View> behavior = BottomSheetBehavior.from((View) mView.getParent());
+        if (!isMaxHeightCapped()) {
+            behavior.setMaxHeight(-1);
+            ((View) mView.getParent()).requestLayout();
+            return;
+        }
         int maxHeightPx = getResources().getDimensionPixelSize(R.dimen.bottom_sheet_max_height);
         behavior.setMaxHeight(maxHeightPx > 0 ? maxHeightPx : -1);
         ((View) mView.getParent()).requestLayout();
+    }
+
+    /**
+     * Hook for subclasses that fill the viewport on purpose (e.g. the
+     * browser-options holder, which sizes its inner FrameLayout to
+     * {@code visibleRect.height() - actionBarSize}). Defaults true to
+     * preserve the existing 640dp cap for every short-content sheet.
+     */
+    protected boolean isMaxHeightCapped() {
+        return true;
     }
 
     @Override

@@ -2,6 +2,7 @@ package com.solarized.firedown.phone.fragments;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.text.Editable;
@@ -13,6 +14,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.LinearLayout;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
@@ -25,6 +27,9 @@ import androidx.lifecycle.LifecycleEventObserver;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.android.material.card.MaterialCardView;
+import com.solarized.firedown.ui.adapters.DownloadsQuickAccessAdapter;
 
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.Preferences;
@@ -87,6 +92,11 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     private OnBoardingCard mOnBoardingCard;
     private GeckoToolbar mGeckoToolbar;
     private BottomNavigationBar mBottomNavigationBar;
+    private MaterialCardView mRecentDownloadsCard;
+    private LinearLayout mHomeAllDisabled;
+    private DownloadsQuickAccessAdapter mRecentDownloadsAdapter;
+    private SharedPreferences.OnSharedPreferenceChangeListener mHomePrefsListener;
+    @Nullable private java.util.List<DownloadEntity> mLastRecentList;
 
 
     @Override
@@ -134,6 +144,43 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mAutoCompleteView = v.findViewById(R.id.auto_complete_view);
         mOnBoardingCard = v.findViewById(R.id.onboarding);
         mOnBoardingCard.setCallback(this);
+
+        mRecentDownloadsCard = v.findViewById(R.id.recent_downloads_card);
+        mHomeAllDisabled = v.findViewById(R.id.home_all_disabled);
+
+        // Pad the scroll view's bottom by the bottom bar's height so
+        // the bottom row of the recent-downloads card doesn't slide
+        // under the bar. BottomNavigationBar consumes its own
+        // window-inset listener, so a setOnApplyWindowInsetsListener
+        // here never fires; mirroring the bar's measured height via a
+        // layout-change listener is the reliable path.
+        final View homeScroll = v.findViewById(R.id.home_scroll);
+        final View bottomBar = v.findViewById(R.id.bottom_app_bar);
+        bottomBar.addOnLayoutChangeListener((view, l, t, r, b, ol, ot, or, ob) -> {
+            int barHeight = view.getHeight();
+            if (homeScroll.getPaddingBottom() != barHeight) {
+                homeScroll.setPadding(
+                        homeScroll.getPaddingLeft(),
+                        homeScroll.getPaddingTop(),
+                        homeScroll.getPaddingRight(),
+                        barHeight);
+            }
+        });
+
+        RecyclerView recentRecycler = v.findViewById(R.id.recent_downloads_recycler);
+        // Tap a row → same flow as the long-press sheet (errored rows
+        // open the source URL, everything else hits openItem). Reuses
+        // onQuickAccessFileTap so the home card and the sheet stay
+        // visually + behaviourally lock-step.
+        mRecentDownloadsAdapter = new DownloadsQuickAccessAdapter(this::onQuickAccessFileTap);
+        recentRecycler.setAdapter(mRecentDownloadsAdapter);
+        // Tick-only payloads update just the progress label/bar; we
+        // don't want a fade on top of that or the row visibly blinks
+        // on each emission while a download is in-flight.
+        recentRecycler.setItemAnimator(null);
+
+        v.findViewById(R.id.recent_downloads_view_all).setOnClickListener(
+                view -> mStartForResult.launch(new Intent(mActivity, DownloadsActivity.class)));
 
         mBottomNavigationBar = v.findViewById(R.id.bottom_app_bar);
         mBottomNavigationBar.setListener(this);
@@ -204,13 +251,29 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
 
         });
 
-        // Keep the recent-downloads LiveData hot so the long-press
-        // quick-access popup has a value to read synchronously on
-        // first invocation. Room's LiveData stays cold until it has
-        // an active observer, so without this the popup's
-        // getValue() returns null on first long-press and we fall
-        // back to DownloadsActivity instead of showing the popup.
-        mRecentDownloadsViewModel.getRecent().observe(getViewLifecycleOwner(), list -> { /* warm only */ });
+        // Drives both the home-page recent-downloads card *and* keeps
+        // the LiveData hot so the long-press quick-access popup has a
+        // value to read synchronously on first invocation. Room's
+        // LiveData stays cold until it has an active observer, so
+        // without an observer here the popup's getValue() returns
+        // null on first long-press and we fall back to
+        // DownloadsActivity instead of showing the popup.
+        mRecentDownloadsViewModel.getRecent().observe(getViewLifecycleOwner(), list -> {
+            mLastRecentList = list;
+            if (mRecentDownloadsAdapter != null) {
+                mRecentDownloadsAdapter.submitList(list);
+            }
+            applyHomeCustomisation();
+        });
+
+        mHomePrefsListener = (sharedPreferences, key) -> {
+            if (Preferences.SETTINGS_HOME_SHOW_RECENT_DOWNLOADS.equals(key)) {
+                applyHomeCustomisation();
+            }
+        };
+        mSharedPreferences.registerOnSharedPreferenceChangeListener(mHomePrefsListener);
+
+        applyHomeCustomisation();
 
         // NOTE: HomeFragment intentionally does NOT observe
         // BrowserURIViewModel.getEvents().  IntentHandler owns all tab
@@ -329,11 +392,44 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+        if (mHomePrefsListener != null) {
+            mSharedPreferences.unregisterOnSharedPreferenceChangeListener(mHomePrefsListener);
+            mHomePrefsListener = null;
+        }
         mAutoCompleteView = null;
         mGeckoToolbar = null;
         mNewTabView = null;
         mBottomNavigationBar = null;
         mOnBoardingCard = null;
+        mRecentDownloadsCard = null;
+        mHomeAllDisabled = null;
+        mRecentDownloadsAdapter = null;
+    }
+
+    /**
+     * Resolves the current home-page composition from the user's
+     * {@link Preferences#SETTINGS_HOME_SHOW_RECENT_DOWNLOADS} toggle
+     * and the latest recent-downloads list. Card shows only when the
+     * toggle is on AND the list is non-empty; the brand-only empty
+     * state takes its slot otherwise.
+     */
+    private void applyHomeCustomisation() {
+        if (mRecentDownloadsCard == null || mHomeAllDisabled == null) return;
+
+        boolean showRecent = mSharedPreferences.getBoolean(
+                Preferences.SETTINGS_HOME_SHOW_RECENT_DOWNLOADS,
+                Preferences.DEFAULT_HOME_SHOW_RECENT_DOWNLOADS);
+
+        boolean hasRecent = mLastRecentList != null && !mLastRecentList.isEmpty();
+        boolean cardVisible = showRecent && hasRecent;
+
+        mRecentDownloadsCard.setVisibility(cardVisible ? View.VISIBLE : View.GONE);
+        // Empty-state fallback also covers the in-flight case where
+        // the recent-downloads LiveData hasn't emitted yet (list is
+        // null). Showing the glyph then is the right thing to do —
+        // it matches the steady state of "no toggles produced a card",
+        // and the card slides in over it once the list arrives.
+        mHomeAllDisabled.setVisibility(cardVisible ? View.GONE : View.VISIBLE);
     }
 
     @Override

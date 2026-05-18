@@ -80,6 +80,7 @@ public class DownloadsQuickAccessSheet extends BaseBottomSheetDialogFragment {
         super.onViewCreated(view, savedInstanceState);
 
         RecyclerView recycler = view.findViewById(R.id.quick_access_recycler);
+        View emptyView = view.findViewById(R.id.quick_access_empty);
         DownloadsQuickAccessAdapter adapter = new DownloadsQuickAccessAdapter(entity -> {
             if (mHost != null) mHost.onQuickAccessFileTap(entity);
             dismiss();
@@ -92,13 +93,15 @@ public class DownloadsQuickAccessSheet extends BaseBottomSheetDialogFragment {
         });
 
         mViewModel.getRecent().observe(getViewLifecycleOwner(), list -> {
-            if (list == null || list.isEmpty()) {
-                // Everything was deleted while we were open; close
-                // ourselves rather than show an empty rectangle.
-                dismiss();
-                return;
-            }
-            adapter.submitList(list);
+            boolean empty = list == null || list.isEmpty();
+            // Switch to the empty placeholder rather than dismissing —
+            // the user explicitly long-pressed the Downloads button so
+            // dropping their sheet feels unresponsive. The placeholder
+            // keeps the 'View all' button reachable so they can still
+            // jump to the full downloads list if they want.
+            recycler.setVisibility(empty ? View.GONE : View.VISIBLE);
+            emptyView.setVisibility(empty ? View.VISIBLE : View.GONE);
+            adapter.submitList(empty ? java.util.Collections.emptyList() : list);
         });
     }
 }
