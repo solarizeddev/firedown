@@ -262,4 +262,5 @@
     <string name="home_paste_hero_button">Líma hlekk til að hlaða niður</string>
     <string name="home_paste_hero_empty">Afritaðu hlekk fyrst, og pikkaðu svo hér</string>
     <string name="home_paste_hero_not_url">Þetta lítur ekki út fyrir að vera hlekkur</string>
+    <string name="home_onboarding_sites_label">Prófaðu Firedown á</string>
 </resources>

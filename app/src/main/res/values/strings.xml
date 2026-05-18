@@ -138,6 +138,10 @@
     <string name="home_paste_hero_button">Paste link to download</string>
     <string name="home_paste_hero_empty">Copy a link first, then tap here</string>
     <string name="home_paste_hero_not_url">That doesn\'t look like a link</string>
+    <!-- Header label for the supported-sites chip strip inside the
+         onboarding card. Frames the brand chips as 'we test against
+         these'. Tap a chip → visits the site. -->
+    <string name="home_onboarding_sites_label">Try Firedown on</string>
     <string name="settings_home_title">Home page</string>
     <string name="settings_home_summary">Customise what shows on the home page</string>
     <string name="settings_home_show_recent_downloads_title">Show recent downloads</string>

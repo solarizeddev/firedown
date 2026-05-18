@@ -484,4 +484,5 @@
     <string name="home_paste_hero_button">粘贴链接下载</string>
     <string name="home_paste_hero_empty">请先复制链接,再点击此处</string>
     <string name="home_paste_hero_not_url">这看起来不像链接</string>
+    <string name="home_onboarding_sites_label">在以下网站试用 Firedown</string>
 </resources>

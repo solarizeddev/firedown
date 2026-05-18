@@ -309,4 +309,5 @@
     <string name="home_paste_hero_button">ألصق الرابط للتنزيل</string>
     <string name="home_paste_hero_empty">انسخ رابطًا أولًا، ثم انقر هنا</string>
     <string name="home_paste_hero_not_url">هذا لا يبدو رابطًا</string>
+    <string name="home_onboarding_sites_label">جرّب Firedown على</string>
 </resources>

@@ -266,4 +266,5 @@
     <string name="home_paste_hero_button">Itsatsi esteka deskargatzeko</string>
     <string name="home_paste_hero_empty">Kopiatu esteka bat lehenik, gero ukitu hemen</string>
     <string name="home_paste_hero_not_url">Hori ez dirudi esteka bat</string>
+    <string name="home_onboarding_sites_label">Probatu Firedown hemen</string>
 </resources>

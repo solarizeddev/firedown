@@ -326,4 +326,5 @@
     <string name="home_paste_hero_button">링크 붙여넣어 다운로드</string>
     <string name="home_paste_hero_empty">먼저 링크를 복사한 다음 여기를 탭하세요</string>
     <string name="home_paste_hero_not_url">링크가 아닌 것 같습니다</string>
+    <string name="home_onboarding_sites_label">Firedown 사용해보기</string>
 </resources>

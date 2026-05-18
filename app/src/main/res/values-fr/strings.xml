@@ -485,4 +485,5 @@
     <string name="home_paste_hero_button">Coller un lien à télécharger</string>
     <string name="home_paste_hero_empty">Copiez d\'abord un lien, puis appuyez ici</string>
     <string name="home_paste_hero_not_url">Cela ne ressemble pas à un lien</string>
+    <string name="home_onboarding_sites_label">Essayez Firedown sur</string>
 </resources>

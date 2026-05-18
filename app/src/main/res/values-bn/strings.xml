@@ -251,4 +251,5 @@
     <string name="home_paste_hero_button">ডাউনলোড করতে লিঙ্ক পেস্ট করুন</string>
     <string name="home_paste_hero_empty">প্রথমে একটি লিঙ্ক কপি করুন, তারপর এখানে ট্যাপ করুন</string>
     <string name="home_paste_hero_not_url">এটি একটি লিঙ্ক বলে মনে হচ্ছে না</string>
+    <string name="home_onboarding_sites_label">Firedown ব্যবহার করুন</string>
 </resources>

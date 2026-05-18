@@ -249,4 +249,5 @@
     <string name="home_paste_hero_button">ਡਾਊਨਲੋਡ ਕਰਨ ਲਈ ਲਿੰਕ ਪੇਸਟ ਕਰੋ</string>
     <string name="home_paste_hero_empty">ਪਹਿਲਾਂ ਲਿੰਕ ਕਾਪੀ ਕਰੋ, ਫਿਰ ਇੱਥੇ ਟੈਪ ਕਰੋ</string>
     <string name="home_paste_hero_not_url">ਇਹ ਲਿੰਕ ਵਰਗਾ ਨਹੀਂ ਲੱਗਦਾ</string>
+    <string name="home_onboarding_sites_label">Firedown ਅਜ਼ਮਾਓ</string>
 </resources>

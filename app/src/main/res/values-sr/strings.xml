@@ -272,4 +272,5 @@
     <string name="home_paste_hero_button">Налепи везу за преузимање</string>
     <string name="home_paste_hero_empty">Прво копирајте везу, затим додирните овде</string>
     <string name="home_paste_hero_not_url">Ово не изгледа као веза</string>
+    <string name="home_onboarding_sites_label">Испробајте Firedown на</string>
 </resources>

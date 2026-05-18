@@ -41,9 +41,27 @@ public class OnBoardingCard extends FrameLayout implements View.OnClickListener 
 
     public interface OnBoardingCardListener{
         void OnBoardingCardClicked(int id);
+        /**
+         * Fired when the user taps one of the 'Try Firedown on'
+         * supported-site chips. URL is read from the chip's
+         * android:tag — host fragment is expected to navigate the
+         * browser there (typically via the same openUri() flow as
+         * the empty-home paste hero). Default no-op so existing
+         * implementations don't have to opt in.
+         */
+        default void OnBoardingSiteClicked(@NonNull String url) {}
     }
 
     private OnBoardingCardListener mCallback;
+
+    /** Chip ids carrying android:tag URLs for the supported-sites strip. */
+    private static final int[] SITE_CHIP_IDS = {
+            R.id.onboarding_site_youtube,
+            R.id.onboarding_site_reddit,
+            R.id.onboarding_site_instagram,
+            R.id.onboarding_site_tiktok,
+            R.id.onboarding_site_x,
+    };
 
     private void init(Context context){
 
@@ -67,6 +85,11 @@ public class OnBoardingCard extends FrameLayout implements View.OnClickListener 
 
         onboardingTitle.setText(HtmlCompat.fromHtml(context.getString(R.string.info_welcome), HtmlCompat.FROM_HTML_MODE_COMPACT));
 
+        for (int chipId : SITE_CHIP_IDS) {
+            View chip = v.findViewById(chipId);
+            if (chip != null) chip.setOnClickListener(this);
+        }
+
         setVisibility(onboardingVisible ? View.VISIBLE : View.GONE);
 
     }
@@ -78,9 +101,22 @@ public class OnBoardingCard extends FrameLayout implements View.OnClickListener 
 
     @Override
     public void onClick(View v) {
+        if (mCallback == null) return;
         int id = v.getId();
-        if(mCallback != null){
-            mCallback.OnBoardingCardClicked(id);
+        // Site chips carry their URL in android:tag — route through the
+        // dedicated site-click callback so the host fragment can
+        // navigate cleanly. Everything else (card body tap, dismiss X)
+        // still uses the legacy id-based callback.
+        Object tag = v.getTag();
+        boolean isSiteChip = tag instanceof String;
+        if (isSiteChip) {
+            for (int chipId : SITE_CHIP_IDS) {
+                if (chipId == id) {
+                    mCallback.OnBoardingSiteClicked((String) tag);
+                    return;
+                }
+            }
         }
+        mCallback.OnBoardingCardClicked(id);
     }
 }

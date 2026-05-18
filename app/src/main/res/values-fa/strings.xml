@@ -273,4 +273,5 @@
     <string name="home_paste_hero_button">چسباندن لینک برای دانلود</string>
     <string name="home_paste_hero_empty">ابتدا یک لینک کپی کنید، سپس اینجا را لمس کنید</string>
     <string name="home_paste_hero_not_url">این به لینک شباهت ندارد</string>
+    <string name="home_onboarding_sites_label">Firedown را امتحان کنید در</string>
 </resources>

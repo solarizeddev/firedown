@@ -224,4 +224,5 @@
     <string name="home_paste_hero_button">Bandika kiungo kupakua</string>
     <string name="home_paste_hero_empty">Nakili kiungo kwanza, kisha gusa hapa</string>
     <string name="home_paste_hero_not_url">Hii haionekani kama kiungo</string>
+    <string name="home_onboarding_sites_label">Jaribu Firedown kwenye</string>
 </resources>

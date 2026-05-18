@@ -256,4 +256,5 @@
     <string name="home_paste_hero_button">බාගත කිරීමට සබැඳිය අලවන්න</string>
     <string name="home_paste_hero_empty">පළමුව සබැඳියක් පිටපත් කර, මෙහි තට්ටු කරන්න</string>
     <string name="home_paste_hero_not_url">මෙය සබැඳියක් ලෙස නොපෙනේ</string>
+    <string name="home_onboarding_sites_label">Firedown උත්සාහ කරන්න</string>
 </resources>

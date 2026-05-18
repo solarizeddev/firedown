@@ -11,54 +11,143 @@
     app:cardCornerRadius="8dp">
 
 
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/item_onboarding_frame"
-        android:padding="@dimen/list_spacing"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
 
-        <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/onboarding_icon"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:padding="8dp"
-            app:tint="?attr/colorOnPrimaryContainer"
-            app:srcCompat="@drawable/ic_baseline_download_24"
-            android:scaleType="fitCenter"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"/>
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/item_onboarding_frame"
+            android:padding="@dimen/list_spacing"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
 
-        <androidx.appcompat.widget.AppCompatImageButton
-            android:id="@+id/onboarding_remove"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:padding="@dimen/button_icons_padding"
-            app:tint="?attr/colorOnPrimaryContainer"
-            android:src="@drawable/ic_clear_24"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"/>
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/onboarding_icon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="8dp"
+                app:tint="?attr/colorOnPrimaryContainer"
+                app:srcCompat="@drawable/ic_baseline_download_24"
+                android:scaleType="fitCenter"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"/>
 
+            <androidx.appcompat.widget.AppCompatImageButton
+                android:id="@+id/onboarding_remove"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:padding="@dimen/button_icons_padding"
+                app:tint="?attr/colorOnPrimaryContainer"
+                android:src="@drawable/ic_clear_24"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"/>
+
+            <TextView
+                android:id="@+id/onboarding_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:minHeight="@dimen/onboarding_item_height"
+                android:ellipsize="marquee"
+                android:gravity="center_vertical"
+                android:padding="8dp"
+                android:singleLine="false"
+                android:textColor="?attr/colorOnPrimaryContainer"
+                android:textSize="14sp"
+                android:text="@string/info_welcome"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/onboarding_remove"
+                app:layout_constraintStart_toEndOf="@id/onboarding_icon"
+                app:layout_constraintTop_toTopOf="parent" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+        <!--
+            Honest marketing of Firedown's FFmpeg + Gecko extraction:
+            sites we test against routinely. Tap to land on the site
+            with the URL bar already armed — no separate copy step
+            from the user. Brand names only (no logos) to dodge
+            trademark concerns. Tied to the same ONBOARDING_INFO
+            preference as the welcome message above, so dismissing
+            the card hides both.
+        -->
         <TextView
-            android:id="@+id/onboarding_title"
-            android:layout_width="0dp"
+            android:id="@+id/onboarding_sites_label"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:minHeight="@dimen/onboarding_item_height"
-            android:ellipsize="marquee"
-            android:gravity="center_vertical"
-            android:padding="8dp"
-            android:singleLine="false"
-            android:textColor="?attr/colorOnPrimaryContainer"
-            android:textSize="14sp"
-            android:text="@string/info_welcome"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/onboarding_remove"
-            app:layout_constraintStart_toEndOf="@id/onboarding_icon"
-            app:layout_constraintTop_toTopOf="parent" />
+            android:layout_marginStart="@dimen/list_spacing"
+            android:layout_marginBottom="4dp"
+            android:text="@string/home_onboarding_sites_label"
+            android:textAppearance="?attr/textAppearanceLabelSmall"
+            android:textColor="?attr/colorOnPrimaryContainer" />
 
+        <HorizontalScrollView
+            android:id="@+id/onboarding_sites_scroll"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/list_spacing"
+            android:overScrollMode="never"
+            android:paddingHorizontal="@dimen/list_spacing"
+            android:scrollbars="none">
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/onboarding_site_youtube"
+                    style="@style/Widget.Material3.Chip.Assist"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="6dp"
+                    android:tag="https://m.youtube.com"
+                    android:text="YouTube" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/onboarding_site_reddit"
+                    style="@style/Widget.Material3.Chip.Assist"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="6dp"
+                    android:tag="https://www.reddit.com"
+                    android:text="Reddit" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/onboarding_site_instagram"
+                    style="@style/Widget.Material3.Chip.Assist"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="6dp"
+                    android:tag="https://www.instagram.com"
+                    android:text="Instagram" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/onboarding_site_tiktok"
+                    style="@style/Widget.Material3.Chip.Assist"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="6dp"
+                    android:tag="https://www.tiktok.com"
+                    android:text="TikTok" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/onboarding_site_x"
+                    style="@style/Widget.Material3.Chip.Assist"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:tag="https://x.com"
+                    android:text="X" />
+
+            </LinearLayout>
+
+        </HorizontalScrollView>
+
+    </LinearLayout>
 
 </com.google.android.material.card.MaterialCardView>
+

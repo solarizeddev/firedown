@@ -221,4 +221,5 @@
     <string name="home_paste_hero_button">ଡାଉନଲୋଡ୍ ପାଇଁ ଲିଙ୍କ ପେଷ୍ଟ କରନ୍ତୁ</string>
     <string name="home_paste_hero_empty">ପ୍ରଥମେ ଲିଙ୍କ କପି କରନ୍ତୁ, ତା\'ପରେ ଏଠାରେ ଟ୍ୟାପ କରନ୍ତୁ</string>
     <string name="home_paste_hero_not_url">ଏହା ଲିଙ୍କ ଭଳି ଦେଖାଯାଉନାହିଁ</string>
+    <string name="home_onboarding_sites_label">Firedown ଚେଷ୍ଟା କରନ୍ତୁ</string>
 </resources>

@@ -58,4 +58,5 @@
     <string name="home_paste_hero_button">Lim inn kobling for å laste ned</string>
     <string name="home_paste_hero_empty">Kopier en kobling først, og trykk så her</string>
     <string name="home_paste_hero_not_url">Dette ser ikke ut som en kobling</string>
+    <string name="home_onboarding_sites_label">Prøv Firedown på</string>
 </resources>
