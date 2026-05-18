@@ -36,11 +36,19 @@
         android:paddingHorizontal="16dp"
         android:paddingVertical="14dp">
 
+        <!--
+            Firedown flame instead of the canonical download glyph —
+            the static Downloads card below already owns that icon,
+            and using the brand mark here paired with an alpha pulse
+            (HomeFragment-driven) communicates 'live, this is happening
+            now' in a way a duplicated download arrow couldn't.
+        -->
         <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/active_download_icon"
             android:layout_width="24dp"
             android:layout_height="24dp"
             android:contentDescription="@null"
-            android:src="@drawable/download_24"
+            android:src="@drawable/ic_firedown"
             app:tint="?attr/colorOnPrimaryContainer" />
 
         <LinearLayout

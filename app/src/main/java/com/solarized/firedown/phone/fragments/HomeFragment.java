@@ -98,6 +98,8 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     private TextView mActiveStripPercent;
     private TextView mActiveStripCount;
     private ProgressBar mActiveStripBar;
+    private View mActiveStripIcon;
+    @Nullable private android.animation.ObjectAnimator mActiveStripPulse;
     private TextView mHomeVaultTitle;
     private TextView mHomeVaultSubtitle;
     private TextView mRecentDownloadsSubtitle;
@@ -160,6 +162,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mActiveStripPercent = v.findViewById(R.id.active_download_percent);
         mActiveStripCount = v.findViewById(R.id.active_download_count);
         mActiveStripBar = v.findViewById(R.id.active_download_bar);
+        mActiveStripIcon = v.findViewById(R.id.active_download_icon);
         // Track colour: theme attr + alpha can't be combined in XML, and
         // the M3 default (colorSecondary, yellow in Firedown's palette)
         // fought the orange card surface. Apply colorOnPrimaryContainer
@@ -457,6 +460,8 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mActiveStripPercent = null;
         mActiveStripCount = null;
         mActiveStripBar = null;
+        stopActiveStripPulse();
+        mActiveStripIcon = null;
         mHomeVaultTitle = null;
         mHomeVaultSubtitle = null;
         mRecentDownloadsSubtitle = null;
@@ -488,8 +493,38 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mActiveStrip.setVisibility(stripVisible ? View.VISIBLE : View.GONE);
         mRecentDownloadsCard.setVisibility(cardVisible ? View.VISIBLE : View.GONE);
 
-        if (stripVisible) bindActiveStrip(mLastActiveList);
+        if (stripVisible) {
+            bindActiveStrip(mLastActiveList);
+            startActiveStripPulse();
+        } else {
+            stopActiveStripPulse();
+        }
         if (cardVisible) bindDownloadsSubtitle();
+    }
+
+    /** Subtle alpha pulse on the active-strip's Firedown flame icon
+     *  to communicate 'live, this is happening now'. Lazily
+     *  instantiated; cancelled when the strip is hidden or the
+     *  view is destroyed. */
+    private void startActiveStripPulse() {
+        if (mActiveStripIcon == null) return;
+        if (mActiveStripPulse != null && mActiveStripPulse.isStarted()) return;
+        mActiveStripPulse = android.animation.ObjectAnimator.ofFloat(
+                mActiveStripIcon, "alpha", 1.0f, 0.45f);
+        mActiveStripPulse.setDuration(1100L);
+        mActiveStripPulse.setRepeatCount(android.animation.ValueAnimator.INFINITE);
+        mActiveStripPulse.setRepeatMode(android.animation.ValueAnimator.REVERSE);
+        mActiveStripPulse.start();
+    }
+
+    private void stopActiveStripPulse() {
+        if (mActiveStripPulse != null) {
+            mActiveStripPulse.cancel();
+            mActiveStripPulse = null;
+        }
+        if (mActiveStripIcon != null) {
+            mActiveStripIcon.setAlpha(1.0f);
+        }
     }
 
     /** Binds the 'N files saved · X.Y GB' subtitle on the Downloads
