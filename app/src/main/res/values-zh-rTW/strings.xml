@@ -283,4 +283,8 @@
     <string name="incognito_downloads_in_progress_subtitle">點按以在安全資料夾中檢視</string>
     <string name="downloads_quick_access_title">最近下載</string>
     <string name="downloads_quick_access_view_all_short">查看全部</string>
+    <string name="home_paste_hero_tagline">有連結嗎?貼上即可下載任何內容。</string>
+    <string name="home_paste_hero_button">貼上連結下載</string>
+    <string name="home_paste_hero_empty">請先複製連結,再點選此處</string>
+    <string name="home_paste_hero_not_url">這看起來不像連結</string>
 </resources>

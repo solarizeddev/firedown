@@ -247,4 +247,8 @@
     <string name="vault_unsupported">ဤဖိုင်ကို ဖွင့်၍မရပါ။ ဖွင့်ရန်၊ ၎င်းကို Safe Folder မှရွှေ့ပြီး ထပ်စမ်းကြည့်ပါ။</string>
     <string name="downloads_quick_access_title">မကြာသေးမီက ဒေါင်းလုဒ်များ</string>
     <string name="downloads_quick_access_view_all_short">အားလုံးကြည့်ရန်</string>
+    <string name="home_paste_hero_tagline">လင့်ခ်ရှိပါသလား? မည်သည့်အရာမဆို ဒေါင်းလုဒ်ဆွဲရန် ကူးထည့်ပါ။</string>
+    <string name="home_paste_hero_button">ဒေါင်းလုဒ်ဆွဲရန် လင့်ခ်ကူးထည့်ပါ</string>
+    <string name="home_paste_hero_empty">ပထမ လင့်ခ်ကို ကူးယူပါ၊ ထို့နောက် ဤနေရာတွင် တို့ပါ</string>
+    <string name="home_paste_hero_not_url">ဤအရာသည် လင့်ခ်နှင့်တူပုံမရပါ</string>
 </resources>

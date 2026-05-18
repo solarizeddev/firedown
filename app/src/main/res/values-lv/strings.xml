@@ -220,4 +220,8 @@
     <string name="vault_unsupported">Nevar atvērt šo failu. Lai atvērtu, izņemiet to no drošās mapes un mēģiniet vēlreiz.</string>
     <string name="downloads_quick_access_title">Nesenās lejupielādes</string>
     <string name="downloads_quick_access_view_all_short">Skatīt visu</string>
+    <string name="home_paste_hero_tagline">Vai ir saite? Ielīmējiet to, lai lejupielādētu jebko.</string>
+    <string name="home_paste_hero_button">Ielīmēt saiti lejupielādei</string>
+    <string name="home_paste_hero_empty">Vispirms nokopējiet saiti, pēc tam pieskarieties šeit</string>
+    <string name="home_paste_hero_not_url">Šī neizskatās pēc saites</string>
 </resources>

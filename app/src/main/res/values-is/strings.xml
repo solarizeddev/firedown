@@ -258,4 +258,8 @@
     <string name="bookmark_name">Heiti</string>
     <string name="downloads_quick_access_title">Nýleg niðurhal</string>
     <string name="downloads_quick_access_view_all_short">Sjá allt</string>
+    <string name="home_paste_hero_tagline">Áttu hlekk? Límdu hann til að hlaða niður hverju sem er.</string>
+    <string name="home_paste_hero_button">Líma hlekk til að hlaða niður</string>
+    <string name="home_paste_hero_empty">Afritaðu hlekk fyrst, og pikkaðu svo hér</string>
+    <string name="home_paste_hero_not_url">Þetta lítur ekki út fyrir að vera hlekkur</string>
 </resources>

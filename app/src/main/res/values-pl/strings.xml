@@ -338,4 +338,8 @@
     <string name="pip_pause">Wstrzymaj</string>
     <string name="downloads_quick_access_title">Ostatnie pobrania</string>
     <string name="downloads_quick_access_view_all_short">Zobacz wszystkie</string>
+    <string name="home_paste_hero_tagline">Masz link? Wklej go, aby pobrać cokolwiek.</string>
+    <string name="home_paste_hero_button">Wklej link do pobrania</string>
+    <string name="home_paste_hero_empty">Najpierw skopiuj link, potem dotknij tutaj</string>
+    <string name="home_paste_hero_not_url">To nie wygląda na link</string>
 </resources>

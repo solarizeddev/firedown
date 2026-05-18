@@ -77,6 +77,34 @@
                     android:contentDescription="@null"
                     android:src="@drawable/firedown_logo_color" />
 
+                <!--
+                    Empty-home hero. Firedown is a downloader first, so
+                    the calmest possible empty state is still a
+                    paste-to-download CTA — the killer flow is 'user
+                    has a link in their clipboard, wants the file in
+                    one tap'. Tagline frames the action so the button
+                    text doesn't have to carry all the context.
+                -->
+                <TextView
+                    android:id="@+id/home_paste_tagline"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    android:gravity="center"
+                    android:text="@string/home_paste_hero_tagline"
+                    android:textAppearance="?attr/textAppearanceBodyMedium"
+                    android:textColor="?attr/colorOnSurfaceVariant" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/home_paste_button"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="@string/home_paste_hero_button"
+                    app:icon="@drawable/content_paste_24"
+                    app:iconGravity="textStart" />
+
             </LinearLayout>
 
 

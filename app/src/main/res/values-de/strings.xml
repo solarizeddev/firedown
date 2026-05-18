@@ -481,4 +481,8 @@
     <string name="pip_pause">Pause</string>
     <string name="downloads_quick_access_title">Letzte Downloads</string>
     <string name="downloads_quick_access_view_all_short">Alle anzeigen</string>
+    <string name="home_paste_hero_tagline">Sie haben einen Link? Fügen Sie ihn ein, um alles herunterzuladen.</string>
+    <string name="home_paste_hero_button">Link einfügen zum Herunterladen</string>
+    <string name="home_paste_hero_empty">Zuerst einen Link kopieren, dann hier tippen</string>
+    <string name="home_paste_hero_not_url">Das sieht nicht nach einem Link aus</string>
 </resources>

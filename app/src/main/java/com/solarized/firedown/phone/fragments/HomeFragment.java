@@ -1,5 +1,8 @@
 package com.solarized.firedown.phone.fragments;
 
+import android.content.ClipData;
+import android.content.ClipDescription;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -7,6 +10,7 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.util.Log;
+import android.util.Patterns;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -26,6 +30,7 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.card.MaterialCardView;
+import com.google.android.material.snackbar.Snackbar;
 import com.solarized.firedown.ui.adapters.DownloadsQuickAccessAdapter;
 
 import com.solarized.firedown.Keys;
@@ -161,6 +166,8 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
 
         v.findViewById(R.id.recent_downloads_view_all).setOnClickListener(
                 view -> mStartForResult.launch(new Intent(mActivity, DownloadsActivity.class)));
+
+        v.findViewById(R.id.home_paste_button).setOnClickListener(view -> onPasteAndDownload());
 
 
         mBottomNavigationBar.setListener(this);
@@ -523,6 +530,42 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mGeckoToolbar.updateSearchView(hasFocus);
     }
 
+
+    /**
+     * Empty-home paste-and-download flow. Reads the primary clip,
+     * validates it looks like a URL via {@link Patterns#WEB_URL}, and
+     * navigates the active GeckoSession there — the standard download
+     * action menu kicks in once the page (or direct media URL) loads.
+     * If the clipboard is empty or doesn't look like a link we surface
+     * a Snackbar rather than silently routing a search query to the
+     * browser, since the CTA is explicitly about downloading.
+     */
+    private void onPasteAndDownload() {
+        ClipboardManager cm = (ClipboardManager) mActivity.getSystemService(Context.CLIPBOARD_SERVICE);
+        ClipData clip = cm == null ? null : cm.getPrimaryClip();
+        ClipDescription desc = clip == null ? null : clip.getDescription();
+        boolean hasText = clip != null && clip.getItemCount() > 0 && desc != null
+                && (desc.getMimeType(0).equals(ClipDescription.MIMETYPE_TEXT_PLAIN)
+                    || desc.getMimeType(0).equals(ClipDescription.MIMETYPE_TEXT_HTML));
+        CharSequence raw = hasText ? clip.getItemAt(0).coerceToText(mActivity) : null;
+        String text = raw == null ? "" : raw.toString().trim();
+
+        if (text.isEmpty()) {
+            showPasteHint(R.string.home_paste_hero_empty);
+            return;
+        }
+        if (!Patterns.WEB_URL.matcher(text).matches()) {
+            showPasteHint(R.string.home_paste_hero_not_url);
+            return;
+        }
+        openUri(text);
+    }
+
+    private void showPasteHint(int stringRes) {
+        Snackbar.make(mBottomNavigationBar.getRootView(), stringRes, Snackbar.LENGTH_SHORT)
+                .setAnchorView(mBottomNavigationBar)
+                .show();
+    }
 
     private void openUri(String text){
         // Format here, not downstream. BrowserFragment.setGeckoViewSession

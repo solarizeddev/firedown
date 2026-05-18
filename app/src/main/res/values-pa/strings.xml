@@ -213,4 +213,8 @@
     <string name="vault_unsupported">ਇਸ ਫ਼ਾਈਲ ਨੂੰ ਖੋਲ੍ਹਿਆ ਨਹੀਂ ਜਾ ਸਕਦਾ। ਖੋਲ੍ਹਣ ਲਈ, ਇਸਨੂੰ ਸੁਰੱਖਿਅਤ ਫੋਲਡਰ ਤੋਂ ਬਾਹਰ ਲੈ ਜਾਓ ਅਤੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।</string>
     <string name="downloads_quick_access_title">ਹਾਲੀਆ ਡਾਊਨਲੋਡ</string>
     <string name="downloads_quick_access_view_all_short">ਸਾਰੇ ਦੇਖੋ</string>
+    <string name="home_paste_hero_tagline">ਕੀ ਲਿੰਕ ਹੈ? ਕੁਝ ਵੀ ਡਾਊਨਲੋਡ ਕਰਨ ਲਈ ਪੇਸਟ ਕਰੋ।</string>
+    <string name="home_paste_hero_button">ਡਾਊਨਲੋਡ ਕਰਨ ਲਈ ਲਿੰਕ ਪੇਸਟ ਕਰੋ</string>
+    <string name="home_paste_hero_empty">ਪਹਿਲਾਂ ਲਿੰਕ ਕਾਪੀ ਕਰੋ, ਫਿਰ ਇੱਥੇ ਟੈਪ ਕਰੋ</string>
+    <string name="home_paste_hero_not_url">ਇਹ ਲਿੰਕ ਵਰਗਾ ਨਹੀਂ ਲੱਗਦਾ</string>
 </resources>

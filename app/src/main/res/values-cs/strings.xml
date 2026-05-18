@@ -295,4 +295,8 @@
     <string name="pip_pause">Pozastavit</string>
     <string name="downloads_quick_access_title">Nedávná stahování</string>
     <string name="downloads_quick_access_view_all_short">Zobrazit vše</string>
+    <string name="home_paste_hero_tagline">Máte odkaz? Vložte ho a stáhněte cokoli.</string>
+    <string name="home_paste_hero_button">Vložit odkaz ke stažení</string>
+    <string name="home_paste_hero_empty">Nejprve zkopírujte odkaz, pak klepněte sem</string>
+    <string name="home_paste_hero_not_url">Toto nevypadá jako odkaz</string>
 </resources>
