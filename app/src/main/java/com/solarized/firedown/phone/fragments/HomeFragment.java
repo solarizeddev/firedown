@@ -179,11 +179,20 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
                 (bar, l, t, r, b, ol, ot, or_, ob) -> {
                     int barHeight = bar.getHeight();
                     if (mHomeScroll != null && mHomeScroll.getPaddingBottom() != barHeight) {
+                        Log.d(TAG, "bar layout change: barHeight=" + barHeight
+                                + " (was paddingB=" + mHomeScroll.getPaddingBottom() + ")");
                         mHomeScroll.setPadding(
                                 mHomeScroll.getPaddingLeft(),
                                 mHomeScroll.getPaddingTop(),
                                 mHomeScroll.getPaddingRight(),
                                 barHeight);
+                        logScrollDiagnostics("post-barPadding");
+                    }
+                });
+        mHomeScroll.addOnLayoutChangeListener(
+                (sv, l, t, r, b, ol, ot, or_, ob) -> {
+                    if (b - t != ob - ot) {
+                        logScrollDiagnostics("nsv-layout");
                     }
                 });
 
@@ -475,6 +484,64 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mRecentDownloadsCard.setVisibility(showRecent && recentHasData ? View.VISIBLE : View.GONE);
         mHomeViewPager.setVisibility(showShortcuts ? View.VISIBLE : View.GONE);
         mHomeAllDisabled.setVisibility(!showRecent && !showShortcuts ? View.VISIBLE : View.GONE);
+        logScrollDiagnostics("applyHomeCustomisation");
+    }
+
+    /**
+     * Diagnostic dump for the home NestedScrollView + its content
+     * tree so we can see why the empty home keeps scrolling. Logs
+     * NSV bounds, padding, can-scroll-vertical state, and every
+     * direct child's visibility / height / margins. Posted to the
+     * NSV to land after the next layout pass.
+     */
+    private void logScrollDiagnostics(String tag) {
+        if (mHomeScroll == null) return;
+        mHomeScroll.post(() -> {
+            if (mHomeScroll == null) return;
+            int nsvH = mHomeScroll.getHeight();
+            int nsvPT = mHomeScroll.getPaddingTop();
+            int nsvPB = mHomeScroll.getPaddingBottom();
+            int visible = nsvH - nsvPT - nsvPB;
+            boolean canUp = mHomeScroll.canScrollVertically(-1);
+            boolean canDown = mHomeScroll.canScrollVertically(1);
+
+            View child = ((android.view.ViewGroup) mHomeScroll).getChildAt(0);
+            int childH = child != null ? child.getHeight() : -1;
+
+            Log.d(TAG, "[" + tag + "] NSV h=" + nsvH + " padT=" + nsvPT
+                    + " padB=" + nsvPB + " visible=" + visible
+                    + " childH=" + childH + " canScrollUp=" + canUp
+                    + " canScrollDown=" + canDown);
+
+            if (child instanceof android.view.ViewGroup) {
+                android.view.ViewGroup ll = (android.view.ViewGroup) child;
+                int sum = 0;
+                for (int i = 0; i < ll.getChildCount(); i++) {
+                    View c = ll.getChildAt(i);
+                    String vis = c.getVisibility() == View.VISIBLE ? "V"
+                            : c.getVisibility() == View.GONE ? "G" : "I";
+                    int margins = 0;
+                    if (c.getLayoutParams() instanceof android.view.ViewGroup.MarginLayoutParams) {
+                        android.view.ViewGroup.MarginLayoutParams mlp =
+                                (android.view.ViewGroup.MarginLayoutParams) c.getLayoutParams();
+                        margins = mlp.topMargin + mlp.bottomMargin;
+                    }
+                    int effective = c.getVisibility() == View.GONE ? 0 : (c.getHeight() + margins);
+                    sum += effective;
+                    String idName;
+                    try {
+                        idName = c.getId() == View.NO_ID ? "<no-id>"
+                                : getResources().getResourceEntryName(c.getId());
+                    } catch (android.content.res.Resources.NotFoundException e) {
+                        idName = "<unknown:" + c.getId() + ">";
+                    }
+                    Log.d(TAG, "  child[" + i + "] id=" + idName
+                            + " vis=" + vis + " h=" + c.getHeight()
+                            + " margins=" + margins + " eff=" + effective);
+                }
+                Log.d(TAG, "  sumOfChildren=" + sum + " (vs visible=" + visible + ")");
+            }
+        });
     }
 
     @Override
