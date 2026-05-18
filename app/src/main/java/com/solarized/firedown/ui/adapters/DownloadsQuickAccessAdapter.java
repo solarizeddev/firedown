@@ -73,8 +73,20 @@ public class DownloadsQuickAccessAdapter
                             && a.getFileProgress() == b.getFileProgress()
                             && a.getFileIsLive() == b.getFileIsLive()
                             && a.getFileErrorType() == b.getFileErrorType()
+                            && a.getDuration() == b.getDuration()
+                            // thumbnailDuration is the regenerate-thumbnail
+                            // signal: GlideHelper keys its video / audio
+                            // cache signature on it, so a row whose
+                            // thumbnail was regenerated MUST rebind here
+                            // or the home card keeps showing the stale
+                            // bitmap while DownloadFragment (which has
+                            // this check in its own DiffCallback) shows
+                            // the fresh one.
+                            && a.getThumbnailDuration() == b.getThumbnailDuration()
                             && safeEq(a.getFileName(), b.getFileName())
-                            && safeEq(a.getFilePath(), b.getFilePath());
+                            && safeEq(a.getFilePath(), b.getFilePath())
+                            && safeEq(a.getFileMimeType(), b.getFileMimeType())
+                            && safeEq(a.getFileImg(), b.getFileImg());
                 }
 
                 @Nullable
