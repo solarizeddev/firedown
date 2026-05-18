@@ -31,4 +31,8 @@
         <item quantity="one">%d pestaña archivada este mes</item>
         <item quantity="other">%d pestañas archivadas este mes</item>
     </plurals>
+    <plurals name="home_active_downloads_more">
+        <item quantity="one">y %d más</item>
+        <item quantity="other">y %d más</item>
+    </plurals>
 </resources>

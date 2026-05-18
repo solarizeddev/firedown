@@ -16,6 +16,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
@@ -92,6 +94,11 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     private MaterialCardView mRecentDownloadsCard;
     private LinearLayout mHomeAllDisabled;
     private View mHomeScroll;
+    private MaterialCardView mActiveStrip;
+    private TextView mActiveStripTitle;
+    private TextView mActiveStripPercent;
+    private TextView mActiveStripSubtitle;
+    private ProgressBar mActiveStripBar;
     private DownloadsQuickAccessAdapter mRecentDownloadsAdapter;
     private SharedPreferences.OnSharedPreferenceChangeListener mHomePrefsListener;
     @Nullable private java.util.List<DownloadEntity> mLastRecentList;
@@ -145,6 +152,14 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
 
         mRecentDownloadsCard = v.findViewById(R.id.recent_downloads_card);
         mHomeAllDisabled = v.findViewById(R.id.home_all_disabled);
+
+        mActiveStrip = v.findViewById(R.id.active_download_strip);
+        mActiveStripTitle = v.findViewById(R.id.active_download_title);
+        mActiveStripPercent = v.findViewById(R.id.active_download_percent);
+        mActiveStripSubtitle = v.findViewById(R.id.active_download_subtitle);
+        mActiveStripBar = v.findViewById(R.id.active_download_bar);
+        mActiveStrip.setOnClickListener(view ->
+                mStartForResult.launch(new Intent(mActivity, DownloadsActivity.class)));
 
 
         mHomeScroll = v.findViewById(R.id.home_scroll);
@@ -246,9 +261,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         // DownloadsActivity instead of showing the popup.
         mRecentDownloadsViewModel.getRecent().observe(getViewLifecycleOwner(), list -> {
             mLastRecentList = list;
-            if (mRecentDownloadsAdapter != null) {
-                mRecentDownloadsAdapter.submitList(list);
-            }
             applyHomeCustomisation();
         });
 
@@ -403,33 +415,102 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mOnBoardingCard = null;
         mRecentDownloadsCard = null;
         mHomeAllDisabled = null;
+        mActiveStrip = null;
+        mActiveStripTitle = null;
+        mActiveStripPercent = null;
+        mActiveStripSubtitle = null;
+        mActiveStripBar = null;
         mRecentDownloadsAdapter = null;
     }
 
     /**
-     * Resolves the current home-page composition from the user's
+     * Resolves the current home composition from the user's
      * {@link Preferences#SETTINGS_HOME_SHOW_RECENT_DOWNLOADS} toggle
-     * and the latest recent-downloads list. Card shows only when the
-     * toggle is on AND the list is non-empty; the brand-only empty
-     * state takes its slot otherwise.
+     * and the latest recent-downloads list. Splits the list into
+     * active (PROGRESS / QUEUED) vs finished (FINISHED / ERROR):
+     *
+     * <ul>
+     *   <li>Strip — shows when any active item exists; binds the most
+     *       recent one as the headline.</li>
+     *   <li>Card — shows only finished items; hidden when the
+     *       resulting list is empty (so a screen with 3 in-flight
+     *       downloads doesn't render an empty card).</li>
+     *   <li>Empty hero — shown when neither strip nor card is up.</li>
+     * </ul>
      */
     private void applyHomeCustomisation() {
-        if (mRecentDownloadsCard == null || mHomeAllDisabled == null) return;
+        if (mRecentDownloadsCard == null || mHomeAllDisabled == null
+                || mActiveStrip == null) return;
 
         boolean showRecent = mSharedPreferences.getBoolean(
                 Preferences.SETTINGS_HOME_SHOW_RECENT_DOWNLOADS,
                 Preferences.DEFAULT_HOME_SHOW_RECENT_DOWNLOADS);
 
-        boolean hasRecent = mLastRecentList != null && !mLastRecentList.isEmpty();
-        boolean cardVisible = showRecent && hasRecent;
+        java.util.List<DownloadEntity> active = new java.util.ArrayList<>();
+        java.util.List<DownloadEntity> finished = new java.util.ArrayList<>();
+        if (mLastRecentList != null) {
+            for (DownloadEntity e : mLastRecentList) {
+                int s = e.getFileStatus();
+                if (s == Download.PROGRESS || s == Download.QUEUED) {
+                    active.add(e);
+                } else {
+                    finished.add(e);
+                }
+            }
+        }
 
+        boolean stripVisible = showRecent && !active.isEmpty();
+        boolean cardVisible  = showRecent && !finished.isEmpty();
+
+        mActiveStrip.setVisibility(stripVisible ? View.VISIBLE : View.GONE);
         mRecentDownloadsCard.setVisibility(cardVisible ? View.VISIBLE : View.GONE);
-        // Empty-state fallback also covers the in-flight case where
-        // the recent-downloads LiveData hasn't emitted yet (list is
-        // null). Showing the glyph then is the right thing to do —
-        // it matches the steady state of "no toggles produced a card",
-        // and the card slides in over it once the list arrives.
+        // Show the paste-link empty hero whenever there's no static
+        // history card — strip-only state still benefits from the CTA
+        // ("active download running, but you can still paste a new
+        // link"). Hide only when the card is doing the talking.
         mHomeAllDisabled.setVisibility(cardVisible ? View.GONE : View.VISIBLE);
+
+        if (stripVisible) bindActiveStrip(active);
+        if (mRecentDownloadsAdapter != null) mRecentDownloadsAdapter.submitList(finished);
+    }
+
+    /**
+     * Binds the headline active download (first item in the active
+     * sublist) plus a count subtitle if there's more than one.
+     * Progress bar is indeterminate while the file is 'live'
+     * (retrieving size) or QUEUED, determinate once a real percentage
+     * is available.
+     */
+    private void bindActiveStrip(@NonNull java.util.List<DownloadEntity> active) {
+        DownloadEntity head = active.get(0);
+        mActiveStripTitle.setText(head.getFileName());
+
+        boolean live = head.getFileIsLive();
+        boolean queued = head.getFileStatus() == Download.QUEUED;
+        boolean indeterminate = live || queued;
+        mActiveStripBar.setIndeterminate(indeterminate);
+        if (queued) {
+            mActiveStripPercent.setText(R.string.download_queued);
+        } else if (live) {
+            // Same UX as the per-row adapter while file size is still
+            // being discovered: show the bytes-received counter rather
+            // than an empty percentage.
+            mActiveStripPercent.setText(com.solarized.firedown.utils.Utils.readableFileSize(
+                    head.getFileSize()));
+        } else {
+            int pct = head.getFileProgress();
+            mActiveStripBar.setProgress(pct);
+            mActiveStripPercent.setText(String.format(java.util.Locale.US, "%d%%", pct));
+        }
+
+        int extra = active.size() - 1;
+        if (extra > 0) {
+            mActiveStripSubtitle.setVisibility(View.VISIBLE);
+            mActiveStripSubtitle.setText(getResources().getQuantityString(
+                    R.plurals.home_active_downloads_more, extra, extra));
+        } else {
+            mActiveStripSubtitle.setVisibility(View.GONE);
+        }
     }
 
     @Override

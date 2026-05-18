@@ -17,4 +17,8 @@
     </plurals>
 
     
-    </resources>
+        <plurals name="home_active_downloads_more">
+        <item quantity="one">ja veel %d</item>
+        <item quantity="other">ja veel %d</item>
+    </plurals>
+</resources>

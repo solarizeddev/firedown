@@ -16,4 +16,8 @@
         <item quantity="one">%1$dt</item>
         <item quantity="other">%1$dt</item>
     </plurals>
+    <plurals name="home_active_downloads_more">
+        <item quantity="one">र अरू %d</item>
+        <item quantity="other">र अरू %d</item>
+    </plurals>
 </resources>

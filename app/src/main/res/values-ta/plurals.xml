@@ -17,4 +17,8 @@
     </plurals>
 
     
-    </resources>
+        <plurals name="home_active_downloads_more">
+        <item quantity="one">மற்றும் %d மேலும்</item>
+        <item quantity="other">மற்றும் %d மேலும்</item>
+    </plurals>
+</resources>

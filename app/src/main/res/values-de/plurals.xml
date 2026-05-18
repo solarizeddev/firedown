@@ -33,4 +33,8 @@
         <item quantity="one">%d Tab diesen Monat archiviert</item>
         <item quantity="other">%d Tabs diesen Monat archiviert</item>
     </plurals>
+    <plurals name="home_active_downloads_more">
+        <item quantity="one">und %d weitere</item>
+        <item quantity="other">und %d weitere</item>
+    </plurals>
 </resources>

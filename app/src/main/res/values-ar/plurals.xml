@@ -33,4 +33,8 @@
     </plurals>
 
     
-    </resources>
+        <plurals name="home_active_downloads_more">
+        <item quantity="one">و%d آخر</item>
+        <item quantity="other">و%d أخرى</item>
+    </plurals>
+</resources>

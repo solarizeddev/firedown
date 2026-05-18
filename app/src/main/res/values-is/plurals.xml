@@ -12,4 +12,8 @@
         <item quantity="other">Ekki tókst að færa skrár. %1$s</item>
         <item quantity="one">Ekki tókst að færa skrár. %1$s</item>
     </plurals>
+    <plurals name="home_active_downloads_more">
+        <item quantity="one">og %d til viðbótar</item>
+        <item quantity="other">og %d til viðbótar</item>
+    </plurals>
 </resources>

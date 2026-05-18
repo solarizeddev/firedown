@@ -12,4 +12,8 @@
         <item quantity="other">ගොනු ගෙන යාමට නොහැකි විය. %1$s</item>
         <item quantity="one">ගොනු ගෙන යාමට නොහැකි විය. %1$s</item>
     </plurals>
+    <plurals name="home_active_downloads_more">
+        <item quantity="one">සහ තවත් %d</item>
+        <item quantity="other">සහ තවත් %d</item>
+    </plurals>
 </resources>

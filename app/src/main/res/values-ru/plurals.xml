@@ -49,4 +49,8 @@
         <item quantity="many">%d вкладок архивировано в этом месяце</item>
         <item quantity="other">%d вкладок архивировано в этом месяце</item>
     </plurals>
+    <plurals name="home_active_downloads_more">
+        <item quantity="one">и ещё %d</item>
+        <item quantity="other">и ещё %d</item>
+    </plurals>
 </resources>

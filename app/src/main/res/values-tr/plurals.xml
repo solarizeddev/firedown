@@ -21,4 +21,8 @@
         <item quantity="one">%d yakın zamanda kapatılan sekme</item>
         <item quantity="other">%d yakın zamanda kapatılan sekme</item>
     </plurals>
+    <plurals name="home_active_downloads_more">
+        <item quantity="one">ve %d tane daha</item>
+        <item quantity="other">ve %d tane daha</item>
+    </plurals>
 </resources>

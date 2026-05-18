@@ -28,4 +28,8 @@
     <plurals name="archive_banner_title_month">
         <item quantity="other">今月アーカイブされたタブ %d 件</item>
     </plurals>
+    <plurals name="home_active_downloads_more">
+        <item quantity="one">他 %d 件</item>
+        <item quantity="other">他 %d 件</item>
+    </plurals>
 </resources>

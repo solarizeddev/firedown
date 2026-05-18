@@ -12,4 +12,8 @@
         <item quantity="other">ፋይሎችን መውሰድ አልተቻለም። %1$s</item>
         <item quantity="one">ፋይሎችን መውሰድ አልተቻለም። %1$s</item>
     </plurals>
+    <plurals name="home_active_downloads_more">
+        <item quantity="one">እና %d ተጨማሪ</item>
+        <item quantity="other">እና %d ተጨማሪ</item>
+    </plurals>
 </resources>

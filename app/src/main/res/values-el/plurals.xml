@@ -17,4 +17,8 @@
     </plurals>
 
     
-    </resources>
+        <plurals name="home_active_downloads_more">
+        <item quantity="one">και %d ακόμη</item>
+        <item quantity="other">και %d ακόμη</item>
+    </plurals>
+</resources>

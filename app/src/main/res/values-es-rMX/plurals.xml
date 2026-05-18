@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="home_active_downloads_more">
+        <item quantity="one">y %d más</item>
+        <item quantity="other">y %d más</item>
+    </plurals>
+</resources>

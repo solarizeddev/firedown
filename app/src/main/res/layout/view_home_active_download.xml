@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Active-download strip on the home page. Renders above the
+  recent-downloads card (which switches to FINISHED/ERROR-only while
+  this is visible) so the user has a clear separation between
+  'what's happening now' and 'what you've already got'.
+
+  Tinted with colorPrimaryContainer to read as 'live' — distinct
+  from the surface-container colour the static recent-downloads
+  card uses. Tap routes to DownloadsActivity for the full list of
+  active items.
+-->
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/active_download_strip"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="12dp"
+    android:layout_marginTop="8dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:visibility="gone"
+    app:cardBackgroundColor="?attr/colorPrimaryContainer"
+    app:cardElevation="0dp"
+    app:strokeWidth="0dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="12dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:contentDescription="@null"
+                android:src="@drawable/download_24"
+                app:tint="?attr/colorOnPrimaryContainer" />
+
+            <TextView
+                android:id="@+id/active_download_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textAppearance="?attr/textAppearanceTitleSmall"
+                android:textColor="?attr/colorOnPrimaryContainer"
+                tools:text="my_video_file_name.mp4" />
+
+            <TextView
+                android:id="@+id/active_download_percent"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:textAppearance="?attr/textAppearanceBodyMedium"
+                android:textColor="?attr/colorOnPrimaryContainer"
+                tools:text="45%" />
+
+        </LinearLayout>
+
+        <ProgressBar
+            android:id="@+id/active_download_bar"
+            style="@style/Widget.Material3.LinearProgressIndicator"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" />
+
+        <TextView
+            android:id="@+id/active_download_subtitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textAppearance="?attr/textAppearanceBodySmall"
+            android:textColor="?attr/colorOnPrimaryContainer"
+            android:visibility="gone"
+            tools:text="and 2 more"
+            tools:visibility="visible" />
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>
