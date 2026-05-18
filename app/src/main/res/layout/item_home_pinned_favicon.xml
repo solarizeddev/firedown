@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Single favicon tile inside the home pinned-bookmarks strip.
+  Square ImageView with its own click background — favicons are
+  the whole content of the row, no title/url. Spacing between
+  tiles comes from the RecyclerView item-decoration / layout
+  margins on the item, not from internal padding here.
+-->
+<androidx.appcompat.widget.AppCompatImageView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="32dp"
+    android:layout_height="32dp"
+    android:layout_marginHorizontal="8dp"
+    android:background="?attr/selectableItemBackgroundBorderless"
+    android:clickable="true"
+    android:contentDescription="@null"
+    android:focusable="true"
+    android:scaleType="fitCenter" />

@@ -56,6 +56,11 @@ public class WebBookmarkDataRepository {
         return mWebBookmarkDao.getBookmark(limit);
     }
 
+    /** Pinned-only feed for the home pinned favicons strip. */
+    public LiveData<List<WebBookmarkEntity>> getPinned(int limit) {
+        return mWebBookmarkDao.getPinnedLive(limit);
+    }
+
     public PagingSource<Integer, WebBookmarkEntity> get() {
         return mWebBookmarkDao.getBookmarks();
     }

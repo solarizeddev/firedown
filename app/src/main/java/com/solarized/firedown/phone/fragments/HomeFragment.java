@@ -101,6 +101,9 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     private TextView mHomeVaultTitle;
     private TextView mHomeVaultSubtitle;
     private View mHomePasteCard;
+    private View mPinnedStripCard;
+    private com.solarized.firedown.ui.adapters.PinnedFaviconsAdapter mPinnedAdapter;
+    private com.solarized.firedown.data.models.WebBookmarkViewModel mWebBookmarkViewModel;
     @Nullable private android.content.ClipboardManager.OnPrimaryClipChangedListener mClipListener;
     private TextView mRecentDownloadsSubtitle;
     private SharedPreferences.OnSharedPreferenceChangeListener mHomePrefsListener;
@@ -116,6 +119,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mAutoCompleteViewModel = new ViewModelProvider(this).get(AutoCompleteViewModel.class);
         mTaskViewModel = new ViewModelProvider(this).get(TaskViewModel.class);
         mRecentDownloadsViewModel = new ViewModelProvider(this).get(RecentDownloadsViewModel.class);
+        mWebBookmarkViewModel = new ViewModelProvider(this).get(com.solarized.firedown.data.models.WebBookmarkViewModel.class);
         mGeckoStateViewModel = new ViewModelProvider(mActivity).get(GeckoStateViewModel.class);
         mIncognitoStateViewModel = new ViewModelProvider(mActivity).get(IncognitoStateViewModel.class);
         mBrowserURIViewModel = new ViewModelProvider(mActivity).get(BrowserURIViewModel.class);
@@ -187,6 +191,17 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
 
         mHomePasteCard = v.findViewById(R.id.home_paste_card);
         mHomePasteCard.setOnClickListener(view -> onPasteAndDownload());
+
+        mPinnedStripCard = v.findViewById(R.id.home_pinned_strip_card);
+        androidx.recyclerview.widget.RecyclerView pinnedRecycler =
+                v.findViewById(R.id.home_pinned_strip_recycler);
+        pinnedRecycler.setLayoutManager(new androidx.recyclerview.widget.LinearLayoutManager(
+                getContext(),
+                androidx.recyclerview.widget.LinearLayoutManager.HORIZONTAL,
+                false));
+        mPinnedAdapter = new com.solarized.firedown.ui.adapters.PinnedFaviconsAdapter(entity ->
+                openUri(entity.getUrl()));
+        pinnedRecycler.setAdapter(mPinnedAdapter);
 
         View vaultCard = v.findViewById(R.id.home_vault_card);
         mHomeVaultTitle = v.findViewById(R.id.home_vault_title);
@@ -284,6 +299,17 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mRecentDownloadsViewModel.getFinishedSize().observe(getViewLifecycleOwner(), size -> {
             mLastFinishedSize = size == null ? 0L : size;
             applyHomeCustomisation();
+        });
+
+        // Pinned bookmarks → home favicons strip. Card visible iff
+        // ≥1 pinned bookmark; otherwise hidden (no empty 'pin
+        // something' state — the card itself appearing when a user
+        // first pins is the discovery).
+        mWebBookmarkViewModel.getPinned().observe(getViewLifecycleOwner(), list -> {
+            if (mPinnedStripCard == null || mPinnedAdapter == null) return;
+            boolean hasPinned = list != null && !list.isEmpty();
+            mPinnedStripCard.setVisibility(hasPinned ? View.VISIBLE : View.GONE);
+            mPinnedAdapter.submitList(hasPinned ? list : java.util.Collections.emptyList());
         });
 
         // Vault count drives the empty-hero vault button's count badge.
@@ -470,6 +496,8 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mHomeVaultTitle = null;
         mHomeVaultSubtitle = null;
         mHomePasteCard = null;
+        mPinnedStripCard = null;
+        mPinnedAdapter = null;
         mRecentDownloadsSubtitle = null;
     }
 

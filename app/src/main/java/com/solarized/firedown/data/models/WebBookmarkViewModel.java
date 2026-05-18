@@ -46,9 +46,21 @@ public class WebBookmarkViewModel extends ViewModel {
 
     private final LiveData<PagingData<WebBookmarkEntity>> mData;
 
+    /** Cap on rows in the home pinned-favicons strip. Horizontal
+     *  scroll means we could go higher, but 20 is plenty for a
+     *  glance surface and bounds Glide's preload pressure. */
+    public static final int PINNED_STRIP_LIMIT = 20;
+
+    /** Single cached LiveData for the home pinned-favicons strip —
+     *  Room's generated DAO returns a fresh LiveData on each call,
+     *  so caching is required if any other call site (now or later)
+     *  wants the same instance. */
+    private final LiveData<java.util.List<WebBookmarkEntity>> mPinned;
+
     @Inject
     public WebBookmarkViewModel(WebBookmarkDataRepository repository) {
         this.mRepository = repository;
+        this.mPinned = repository.getPinned(PINNED_STRIP_LIMIT);
         CoroutineScope viewModelScope = ViewModelKt.getViewModelScope(this);
         PagingConfig pagingConfig = new PagingConfig(Preferences.LIST_LIMIT);
 
@@ -95,6 +107,13 @@ public class WebBookmarkViewModel extends ViewModel {
 
     public LiveData<PagingData<WebBookmarkEntity>> getWebBookmark() {
         return mData;
+    }
+
+    /** Pinned bookmarks for the home favicons strip. Same LiveData
+     *  instance on every call so observers and getValue() readers
+     *  agree on state. */
+    public LiveData<java.util.List<WebBookmarkEntity>> getPinned() {
+        return mPinned;
     }
 
     public void delete(WebBookmarkEntity web) { mRepository.delete(web); }
