@@ -17,13 +17,19 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
+        <!--
+            Sparkles ('new / discover / get started') instead of the
+            canonical download arrow — the Downloads card right below
+            this one already owns the download glyph, and the onboarding
+            card is about 'welcome here', not 'this is downloads'.
+        -->
         <androidx.appcompat.widget.AppCompatImageView
             android:id="@+id/onboarding_icon"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:padding="8dp"
             app:tint="?attr/colorOnPrimaryContainer"
-            app:srcCompat="@drawable/ic_baseline_download_24"
+            app:srcCompat="@drawable/auto_awesome_24"
             android:scaleType="fitCenter"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
