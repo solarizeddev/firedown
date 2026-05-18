@@ -363,5 +363,4 @@
     <string name="settings_home_show_recent_downloads_summary">Ana sayfada son indirmelerin bulunduğu bir kart gösterir</string>
     <string name="settings_home_show_shortcuts_title">Kısayolları göster</string>
     <string name="settings_home_show_shortcuts_summary">Ana sayfada sabitlenmiş sitelerin ızgarasını gösterir</string>
-    <string name="home_all_disabled_tagline">Ana sayfayı Ayarlar’dan özelleştirin</string>
 </resources>

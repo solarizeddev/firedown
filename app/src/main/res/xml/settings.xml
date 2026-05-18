@@ -3,29 +3,6 @@
 
 
     <PreferenceCategory
-        android:title="@string/settings_home_title"
-        app:iconSpaceReserved="false">
-
-        <SwitchPreferenceCompat
-            android:defaultValue="true"
-            app:singleLineTitle="false"
-            android:key="com.solarized.firedown.preferences.home.show.recent.downloads"
-            android:title="@string/settings_home_show_recent_downloads_title"
-            android:summary="@string/settings_home_show_recent_downloads_summary"
-            app:icon="@drawable/download_24" />
-
-        <SwitchPreferenceCompat
-            android:defaultValue="true"
-            app:singleLineTitle="false"
-            android:key="com.solarized.firedown.preferences.home.show.shortcuts"
-            android:title="@string/settings_home_show_shortcuts_title"
-            android:summary="@string/settings_home_show_shortcuts_summary"
-            app:icon="@drawable/ic_bookmarks_24" />
-
-    </PreferenceCategory>
-
-
-    <PreferenceCategory
         android:title="@string/settings_general"
         app:iconSpaceReserved="false">
 
@@ -35,6 +12,13 @@
 <!--            android:summary="@string/settings_new_tab_bookmarks"-->
 <!--            app:icon="@drawable/ic_tabs_new_24">-->
 <!--        </Preference>-->
+
+
+        <Preference
+            android:key="com.solarized.firedown.preferences.home"
+            android:title="@string/settings_home_title"
+            app:icon="@drawable/ic_home_filled_24">
+        </Preference>
 
 
         <Preference

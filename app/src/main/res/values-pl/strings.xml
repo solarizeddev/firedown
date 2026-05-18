@@ -359,5 +359,4 @@
     <string name="settings_home_show_recent_downloads_summary">Wyświetla kartę z ostatnimi pobraniami na stronie głównej</string>
     <string name="settings_home_show_shortcuts_title">Pokaż skróty</string>
     <string name="settings_home_show_shortcuts_summary">Wyświetla siatkę przypiętych stron na stronie głównej</string>
-    <string name="home_all_disabled_tagline">Dostosuj stronę główną w Ustawieniach</string>
 </resources>

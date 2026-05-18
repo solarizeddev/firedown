@@ -314,5 +314,4 @@
     <string name="settings_home_show_recent_downloads_summary">Näyttää kortin viimeisimmistä latauksista etusivulla</string>
     <string name="settings_home_show_shortcuts_title">Näytä oikotiet</string>
     <string name="settings_home_show_shortcuts_summary">Näyttää kiinnitettyjen sivustojen ruudukon etusivulla</string>
-    <string name="home_all_disabled_tagline">Mukauta etusivua Asetuksissa</string>
 </resources>

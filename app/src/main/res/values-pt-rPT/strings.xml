@@ -239,5 +239,4 @@
     <string name="settings_home_show_recent_downloads_summary">Mostra um cartão com as tuas transferências mais recentes na página inicial</string>
     <string name="settings_home_show_shortcuts_title">Mostrar atalhos</string>
     <string name="settings_home_show_shortcuts_summary">Mostra a grelha de sites fixados na página inicial</string>
-    <string name="home_all_disabled_tagline">Personaliza a página inicial nas Definições</string>
 </resources>

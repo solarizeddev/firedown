@@ -78,6 +78,10 @@ public class Preferences {
      */
     public static final int THEME_OLED = -100;
 
+    /** Click-through preference key for the General > Home entry that
+     *  navigates into the home-customisation sub-screen. */
+    public static final String SETTINGS_HOME = "com.solarized.firedown.preferences.home";
+
     /** Home customisation: whether the 'Recent downloads' card on the
      *  home surface is shown when there are downloads to display. */
     public static final String SETTINGS_HOME_SHOW_RECENT_DOWNLOADS =

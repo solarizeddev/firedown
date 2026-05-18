@@ -393,7 +393,6 @@
     <string name="settings_home_show_recent_downloads_summary">Display a card with your latest downloads on the home page</string>
     <string name="settings_home_show_shortcuts_title">Show shortcuts</string>
     <string name="settings_home_show_shortcuts_summary">Display the pinned-sites grid on the home page</string>
-    <string name="home_all_disabled_tagline">Customise the home page in Settings</string>
     <string name="settings_jit_enabled">Enable JavaScript Just-in-time Compilation (JIT)</string>
     <string name="settings_jit_enabled_summary">When disabled, performance may be reduced for complex webpages - Changing this setting will restart your browser</string>
     <string name="settings_license">Licenses</string>

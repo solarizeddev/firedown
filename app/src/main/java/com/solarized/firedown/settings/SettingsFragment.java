@@ -414,6 +414,8 @@ public class SettingsFragment extends BasePreferenceFragment
                     NavigationUtils.navigateSafe(mNavController, R.id.dialog_delete_browsing);
             case Preferences.SETTINGS_ABOUT ->
                     NavigationUtils.navigateSafe(mNavController, R.id.action_settings_to_about);
+            case Preferences.SETTINGS_HOME ->
+                    NavigationUtils.navigateSafe(mNavController, R.id.action_settings_to_home);
             case Preferences.SETTINGS_THEME ->
                     NavigationUtils.navigateSafe(mNavController, R.id.action_settings_to_theme);
             case Preferences.SETTINGS_LICENSE ->

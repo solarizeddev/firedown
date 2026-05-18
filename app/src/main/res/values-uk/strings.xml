@@ -303,5 +303,4 @@
     <string name="settings_home_show_recent_downloads_summary">Показує картку з останніми завантаженнями на головній сторінці</string>
     <string name="settings_home_show_shortcuts_title">Показувати ярлики</string>
     <string name="settings_home_show_shortcuts_summary">Показує сітку закріплених сайтів на головній сторінці</string>
-    <string name="home_all_disabled_tagline">Налаштуйте головну сторінку в Налаштуваннях</string>
 </resources>

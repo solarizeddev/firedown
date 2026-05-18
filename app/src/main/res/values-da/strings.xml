@@ -310,5 +310,4 @@
     <string name="settings_home_show_recent_downloads_summary">Vis et kort med dine seneste downloads på hjemmesiden</string>
     <string name="settings_home_show_shortcuts_title">Vis genveje</string>
     <string name="settings_home_show_shortcuts_summary">Vis gitteret med fastgjorte websites på hjemmesiden</string>
-    <string name="home_all_disabled_tagline">Tilpas hjemmesiden i Indstillinger</string>
 </resources>

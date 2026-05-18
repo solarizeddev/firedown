@@ -310,5 +310,4 @@
     <string name="settings_home_show_recent_downloads_summary">מציג כרטיס עם ההורדות האחרונות בדף הבית</string>
     <string name="settings_home_show_shortcuts_title">הצג קיצורי דרך</string>
     <string name="settings_home_show_shortcuts_summary">מציג את רשת האתרים המוצמדים בדף הבית</string>
-    <string name="home_all_disabled_tagline">התאם אישית את דף הבית בהגדרות</string>
 </resources>

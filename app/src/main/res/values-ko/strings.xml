@@ -343,5 +343,4 @@
     <string name="settings_home_show_recent_downloads_summary">홈 화면에 최근 다운로드 카드를 표시합니다</string>
     <string name="settings_home_show_shortcuts_title">바로 가기 표시</string>
     <string name="settings_home_show_shortcuts_summary">홈 화면에 고정된 사이트 그리드를 표시합니다</string>
-    <string name="home_all_disabled_tagline">설정에서 홈 화면을 사용자 지정하세요</string>
 </resources>

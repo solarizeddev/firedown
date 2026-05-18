@@ -109,5 +109,4 @@
     <string name="settings_home_show_recent_downloads_summary">Exibe um cartão com seus downloads mais recentes na página inicial</string>
     <string name="settings_home_show_shortcuts_title">Mostrar atalhos</string>
     <string name="settings_home_show_shortcuts_summary">Exibe a grade de sites fixados na página inicial</string>
-    <string name="home_all_disabled_tagline">Personalize a página inicial em Configurações</string>
 </resources>

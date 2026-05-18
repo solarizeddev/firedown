@@ -501,5 +501,4 @@
     <string name="settings_home_show_recent_downloads_summary">在主页上显示包含最新下载的卡片</string>
     <string name="settings_home_show_shortcuts_title">显示快捷方式</string>
     <string name="settings_home_show_shortcuts_summary">在主页上显示已固定的网站网格</string>
-    <string name="home_all_disabled_tagline">在设置中自定义主页</string>
 </resources>

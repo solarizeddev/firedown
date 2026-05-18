@@ -290,5 +290,4 @@
     <string name="settings_home_show_recent_downloads_summary">Afișează un card cu cele mai recente descărcări pe pagina principală</string>
     <string name="settings_home_show_shortcuts_title">Afișează comenzile rapide</string>
     <string name="settings_home_show_shortcuts_summary">Afișează grila site-urilor fixate pe pagina principală</string>
-    <string name="home_all_disabled_tagline">Personalizează pagina principală în Setări</string>
 </resources>

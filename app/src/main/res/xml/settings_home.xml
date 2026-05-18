@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Home-customisation sub-screen. Reached from Settings > General > Home.
+  Two toggles control whether the recent-downloads card and the
+  shortcuts grid render on the home surface. Both default ON.
+  HomeFragment listens for OnSharedPreferenceChange and re-runs its
+  applyHomeCustomisation() helper when either flips.
+-->
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <SwitchPreferenceCompat
+        android:defaultValue="true"
+        app:singleLineTitle="false"
+        android:key="com.solarized.firedown.preferences.home.show.recent.downloads"
+        android:title="@string/settings_home_show_recent_downloads_title"
+        android:summary="@string/settings_home_show_recent_downloads_summary"
+        app:icon="@drawable/download_24" />
+
+    <SwitchPreferenceCompat
+        android:defaultValue="true"
+        app:singleLineTitle="false"
+        android:key="com.solarized.firedown.preferences.home.show.shortcuts"
+        android:title="@string/settings_home_show_shortcuts_title"
+        android:summary="@string/settings_home_show_shortcuts_summary"
+        app:icon="@drawable/ic_bookmarks_24" />
+
+</PreferenceScreen>

@@ -14,6 +14,13 @@
             app:popEnterAnim="@anim/slide_in_left"
             app:popExitAnim="@anim/slide_out_right" />
         <action
+            android:id="@+id/action_settings_to_home"
+            app:destination="@id/settings_home"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
+        <action
             android:id="@+id/action_settings_to_theme"
             app:destination="@id/settings_theme"
             app:enterAnim="@anim/slide_in_right"
@@ -86,6 +93,9 @@
     <fragment
         android:id="@+id/settings_about"
         android:name="com.solarized.firedown.settings.AboutFragment" />
+    <fragment
+        android:id="@+id/settings_home"
+        android:name="com.solarized.firedown.settings.HomeSettingsFragment" />
     <fragment
         android:id="@+id/settings_theme"
         android:name="com.solarized.firedown.settings.ThemeFragment" />
