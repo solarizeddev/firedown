@@ -181,33 +181,6 @@ public class BaseFocusFragment extends Fragment {
             });
         }
 
-//        if(mScrollUpView != null){
-//            ViewCompat.setOnApplyWindowInsetsListener(mScrollUpView, (v, windowInsets) -> {
-//                Insets systemBars = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
-//
-//                // 1. Get the layout params
-//                CoordinatorLayout.LayoutParams lp = (CoordinatorLayout.LayoutParams) v.getLayoutParams();
-//
-//                // 2. Calculate the base offset.
-//                // This should be your standard margin (e.g., 16dp) + the height of the navigation bar
-//                int baseMargin = getResources().getDimensionPixelSize(R.dimen.fab_margin);
-//
-//                // 3. Apply the bottom inset.
-//                // We add the system navigation bar height to your desired margin.
-//                lp.bottomMargin = baseMargin + systemBars.bottom;
-//
-//                // 4. Handle side insets (important for gesture nav or landscape mode)
-//                lp.rightMargin = baseMargin + systemBars.right;
-//                lp.leftMargin = baseMargin + systemBars.left;
-//
-//                v.setLayoutParams(lp);
-//
-//                // IMPORTANT: Return the insets unconsumed so the 'navigation_scrim'
-//                // and 'bottom_progress_view' can also react to them.
-//                return windowInsets;
-//            });
-//        }
-
 
     }
 

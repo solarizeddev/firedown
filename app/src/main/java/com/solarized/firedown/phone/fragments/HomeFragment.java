@@ -3,7 +3,6 @@ package com.solarized.firedown.phone.fragments;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.res.Configuration;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextUtils;
@@ -25,7 +24,6 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleEventObserver;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.card.MaterialCardView;
@@ -65,10 +63,8 @@ import com.solarized.firedown.ui.adapters.SearchAutocompleteAdapter;
 import com.solarized.firedown.ui.diffs.SearchDiffCallback;
 import com.solarized.firedown.IntentActions;
 import com.solarized.firedown.utils.NavigationUtils;
-import com.solarized.firedown.utils.WebUtils;
 
 import dagger.hilt.android.AndroidEntryPoint;
-
 
 
 @AndroidEntryPoint
@@ -94,6 +90,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     private BottomNavigationBar mBottomNavigationBar;
     private MaterialCardView mRecentDownloadsCard;
     private LinearLayout mHomeAllDisabled;
+    private View mHomeScroll;
     private DownloadsQuickAccessAdapter mRecentDownloadsAdapter;
     private SharedPreferences.OnSharedPreferenceChangeListener mHomePrefsListener;
     @Nullable private java.util.List<DownloadEntity> mLastRecentList;
@@ -148,24 +145,10 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mRecentDownloadsCard = v.findViewById(R.id.recent_downloads_card);
         mHomeAllDisabled = v.findViewById(R.id.home_all_disabled);
 
-        // Pad the scroll view's bottom by the bottom bar's height so
-        // the bottom row of the recent-downloads card doesn't slide
-        // under the bar. BottomNavigationBar consumes its own
-        // window-inset listener, so a setOnApplyWindowInsetsListener
-        // here never fires; mirroring the bar's measured height via a
-        // layout-change listener is the reliable path.
-        final View homeScroll = v.findViewById(R.id.home_scroll);
-        final View bottomBar = v.findViewById(R.id.bottom_app_bar);
-        bottomBar.addOnLayoutChangeListener((view, l, t, r, b, ol, ot, or, ob) -> {
-            int barHeight = view.getHeight();
-            if (homeScroll.getPaddingBottom() != barHeight) {
-                homeScroll.setPadding(
-                        homeScroll.getPaddingLeft(),
-                        homeScroll.getPaddingTop(),
-                        homeScroll.getPaddingRight(),
-                        barHeight);
-            }
-        });
+
+        mHomeScroll = v.findViewById(R.id.home_scroll);
+        mBottomNavigationBar = v.findViewById(R.id.bottom_app_bar);
+
 
         RecyclerView recentRecycler = v.findViewById(R.id.recent_downloads_recycler);
         // Tap a row → same flow as the long-press sheet (errored rows
@@ -182,7 +165,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         v.findViewById(R.id.recent_downloads_view_all).setOnClickListener(
                 view -> mStartForResult.launch(new Intent(mActivity, DownloadsActivity.class)));
 
-        mBottomNavigationBar = v.findViewById(R.id.bottom_app_bar);
+
         mBottomNavigationBar.setListener(this);
 
         mGeckoToolbar = v.findViewById(R.id.toolbar_layout);
@@ -330,6 +313,18 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
             }
         });
 
+        ViewCompat.setOnApplyWindowInsetsListener(mHomeScroll, (v, windowInsets) -> {
+            Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout());
+            // Apply the insets as padding to the view. Here, set all the dimensions
+            // as appropriate to your layout. You can also update the view's margin if
+            // more appropriate.
+            v.setPadding(insets.left, 0, insets.right, insets.bottom + mBottomNavigationBar.getHeight());
+
+            // Return CONSUMED if you don't want the window insets to keep passing down
+            // to descendant views.
+            return WindowInsetsCompat.CONSUMED;
+        });
+
         ViewCompat.setOnApplyWindowInsetsListener(mGeckoToolbar, (v, windowInsets) -> {
             Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout());
             // Apply the insets as padding to the view. Here, set all the dimensions
@@ -396,6 +391,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
             mSharedPreferences.unregisterOnSharedPreferenceChangeListener(mHomePrefsListener);
             mHomePrefsListener = null;
         }
+        mHomeScroll = null;
         mAutoCompleteView = null;
         mGeckoToolbar = null;
         mNewTabView = null;
