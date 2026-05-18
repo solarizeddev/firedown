@@ -35,11 +35,14 @@
             what this card is (vs the static Downloads / Safe Folder
             cards below). Reuses the existing R.string.downloading
             string ('Downloading…') with textAllCaps for the standard
-            M3 section-header treatment.
+            M3 section-header treatment. layout_marginStart = icon
+            width (20dp) + icon-to-title gap (14dp) so the header
+            sits flush with the filename column below it.
         -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginStart="34dp"
             android:layout_marginBottom="6dp"
             android:letterSpacing="0.08"
             android:text="@string/downloading"
