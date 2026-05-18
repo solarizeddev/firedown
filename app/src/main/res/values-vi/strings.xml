@@ -9,7 +9,6 @@
     <string name="browser_enter_url">Tìm kiếm hoặc Nhập URL</string>
     <string name="browser_error_image_title">Ngọn lửa đã tắt</string>
     <string name="browser_find_in_page">Tìm trong trang</string>
-    <string name="browser_menu_add_to_shortcuts">Thêm vào lối tắt</string>
     <string name="browser_menu_back">Quay lại</string>
     <string name="browser_menu_bookmark_this_page_2">Đánh dấu trang</string>
     <string name="browser_menu_desktop_site">Trang web cho máy tính</string>
@@ -17,7 +16,6 @@
     <string name="browser_menu_find_in_page">Tìm trong trang</string>
     <string name="browser_menu_forward">Tiến</string>
     <string name="browser_menu_refresh">Làm mới</string>
-    <string name="browser_menu_remove_from_shortcuts">Xóa khỏi lối tắt</string>
     <string name="browser_menu_settings">Cài đặt</string>
     <string name="browser_menu_share">Chia sẻ</string>
     <string name="browser_menu_stop">Dừng</string>
@@ -170,7 +168,6 @@
     <string name="quick_settings_sheet_insecure_connection_2">Kết nối không an toàn</string>
     <string name="quick_settings_sheet_secure_connection_2">Kết nối an toàn</string>
     <string name="quit_application">Đang thoát ứng dụng để áp dụng các thay đổi…</string>
-    <string name="remove_top_site">Xóa</string>
     <string name="rename">Đổi tên</string>
     <string name="rename_file">Đổi tên tập tin</string>
     <string name="request_geolocation">Chia sẻ vị trí thiết bị của bạn với &lt;b&gt;%s&lt;/b&gt;?</string>
@@ -253,11 +250,6 @@
     <string name="share">Chia sẻ</string>
     <string name="share_image">Chia sẻ HÌNH ẢNH</string>
     <string name="share_url">Chia sẻ URL</string>
-    <string name="shortcut_max_limit_content">Để thêm một lối tắt mới, hãy xóa một lối tắt. Nhấn và giữ trang web và chọn xóa.</string>
-    <string name="shortcut_max_limit_title">Đã đạt đến giới hạn lối tắt</string>
-    <string name="shortcut_name_hint">Tên lối tắt</string>
-    <string name="shortcut_url_hint">URL lối tắt</string>
-    <string name="snackbar_added_to_shortcuts">Đã thêm vào lối tắt!</string>
     <string name="snackbar_deleted_undo">HOÀN TÁC</string>
     <string name="snackbar_tab_closed">Đã đóng thẻ</string>
     <string name="sort">Sắp xếp theo</string>
@@ -275,11 +267,6 @@
     <string name="switch_to_tab_description">Chuyển sang thẻ</string>
 <string name="task_decryption_finished">Giải mã hoàn tất</string>
     <string name="task_encryption_finished">Mã hóa hoàn tất</string>
-    <string name="top_sites_edit_dialog_save">Lưu</string>
-    <string name="top_sites_edit_dialog_title">Chỉnh sửa lối tắt</string>
-    <string name="top_sites_edit_dialog_url_title">URL</string>
-    <string name="top_sites_max_limit_confirmation_button">OK, đã hiểu</string>
-    <string name="top_sites_rename_dialog_title">Tên</string>
     <string name="vault_decrypting">Đang giải mã tập tin, vui lòng đợi…</string>
     <string name="vault_encrypting">Đang mã hóa tập tin, vui lòng đợi…</string>
     <string name="vault_unsupported">Không thể mở tập tin này. Để mở, hãy di chuyển tập tin ra khỏi Thư mục An toàn và thử lại.</string>

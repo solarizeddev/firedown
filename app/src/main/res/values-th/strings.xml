@@ -9,7 +9,6 @@
     <string name="browser_enter_url">ค้นหาหรือพิมพ์ URL</string>
     <string name="browser_error_image_title">ไฟหายไปแล้ว</string>
     <string name="browser_find_in_page">ค้นหาในหน้า</string>
-    <string name="browser_menu_add_to_shortcuts">เพิ่มทางลัด</string>
     <string name="browser_menu_back">ย้อนกลับ</string>
     <string name="browser_menu_bookmark_this_page_2">เพิ่มที่คั่นหน้าสำหรับหน้า</string>
     <string name="browser_menu_desktop_site">ไซต์เดสก์ท็อป</string>
@@ -17,7 +16,6 @@
     <string name="browser_menu_find_in_page">ค้นหาในหน้า</string>
     <string name="browser_menu_forward">เดินหน้า</string>
     <string name="browser_menu_refresh">เรียกใหม่</string>
-    <string name="browser_menu_remove_from_shortcuts">ลบออกจากทางลัด</string>
     <string name="browser_menu_settings">การตั้งค่า</string>
     <string name="browser_menu_share">แบ่งปัน</string>
     <string name="browser_menu_stop">หยุด</string>
@@ -170,7 +168,6 @@
     <string name="quick_settings_sheet_insecure_connection_2">การเชื่อมต่อไม่ปลอดภัย</string>
     <string name="quick_settings_sheet_secure_connection_2">การเชื่อมต่อปลอดภัย</string>
     <string name="quit_application">กำลังปิดแอปพลิเคชันเพื่อนำการเปลี่ยนแปลงไปใช้…</string>
-    <string name="remove_top_site">เอาออก</string>
     <string name="rename">เปลี่ยนชื่อ</string>
     <string name="rename_file">เปลี่ยนชื่อไฟล์</string>
     <string name="request_geolocation">แบ่งปันตำแหน่งอุปกรณ์ของคุณด้วย&lt;b&gt;%s&lt;/b&gt; ?</string>
@@ -253,11 +250,6 @@
     <string name="share">แบ่งปัน</string>
     <string name="share_image">แบ่งปันภาพ</string>
     <string name="share_url">แบ่งปัน URL</string>
-    <string name="shortcut_max_limit_content">การเพิ่มทางลัดต้องลบอันเก่าออก แตะค้างที่ไซต์และเลือกลบ</string>
-    <string name="shortcut_max_limit_title">ถึงขีดจำกัดของทางลัดแล้ว</string>
-    <string name="shortcut_name_hint">ชื่อทางลัด</string>
-    <string name="shortcut_url_hint">URL ทางลัด</string>
-    <string name="snackbar_added_to_shortcuts">เพิ่มทางลัดแล้ว!</string>
     <string name="snackbar_deleted_undo">เลิกทำ</string>
     <string name="snackbar_tab_closed">ปิดแท็บแล้ว</string>
     <string name="sort">จัดเรียงตาม</string>
@@ -275,11 +267,6 @@
     <string name="switch_to_tab_description">สลับไปยังแท็บ</string>
 <string name="task_decryption_finished">การถอดรหัสเสร็จสิ้น</string>
     <string name="task_encryption_finished">การเข้ารหัสเสร็จสิ้น</string>
-    <string name="top_sites_edit_dialog_save">บันทึก</string>
-    <string name="top_sites_edit_dialog_title">แก้ไขทางลัด</string>
-    <string name="top_sites_edit_dialog_url_title">URL</string>
-    <string name="top_sites_max_limit_confirmation_button">ตกลง เข้าใจแล้ว</string>
-    <string name="top_sites_rename_dialog_title">ชื่อ</string>
     <string name="vault_decrypting">กำลังถอดรหัสไฟล์ โปรดรอสักครู่…</string>
     <string name="vault_encrypting">กำลังเข้ารหัสไฟล์ โปรดรอสักครู่…</string>
     <string name="vault_unsupported">ไม่สามารถเปิดไฟล์นี้ได้ หากต้องการเปิด ให้ย้ายออกจากโฟลเดอร์ที่ปลอดภัยแล้วลองอีกครั้ง</string>

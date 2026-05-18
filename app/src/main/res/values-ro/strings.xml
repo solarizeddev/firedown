@@ -9,7 +9,6 @@
     <string name="browser_enter_url">Căutați sau introduceți adresa URL.</string>
     <string name="browser_error_image_title">Focul a dispărut</string>
     <string name="browser_find_in_page">Caută în pagină</string>
-    <string name="browser_menu_add_to_shortcuts">Adaugă la comenzi rapide</string>
     <string name="browser_menu_back">Înapoi</string>
     <string name="browser_menu_bookmark_this_page_2">Adaugă la marcaje pagina</string>
     <string name="browser_menu_desktop_site">Versiune site de desktop</string>
@@ -17,7 +16,6 @@
     <string name="browser_menu_find_in_page">Caută în pagină</string>
     <string name="browser_menu_forward">Înainte</string>
     <string name="browser_menu_refresh">Reîmprospătare</string>
-    <string name="browser_menu_remove_from_shortcuts">Elimină din comenzile rapide</string>
     <string name="browser_menu_settings">Setări</string>
     <string name="browser_menu_share">Partajează</string>
     <string name="browser_menu_stop">Oprire</string>
@@ -169,7 +167,6 @@
     <string name="quick_settings_sheet_insecure_connection_2">Conexiunea nu este securizată</string>
     <string name="quick_settings_sheet_secure_connection_2">Conexiunea este securizată</string>
     <string name="quit_application">Se închide aplicația pentru a aplica modificări…</string>
-    <string name="remove_top_site">Șterge</string>
     <string name="rename">Redenumiți</string>
     <string name="rename_file">Redenumiți fișierul</string>
     <string name="request_geolocation">Partajați locația dispozitivului dvs. cu &lt;b&gt;%s&lt;/b&gt;?</string>
@@ -249,11 +246,6 @@
     <string name="share">Acțiune</string>
     <string name="share_image">Distribuie IMAGINE</string>
     <string name="share_url">Distribuiți adresa URL</string>
-    <string name="shortcut_max_limit_content">Pentru a adăuga o comandă rapidă nouă, elimină una. Atinge și menține apăsat site-ul și selectează Eliminare.</string>
-    <string name="shortcut_max_limit_title">Limita de comenzi rapide a fost atinsă</string>
-    <string name="shortcut_name_hint">Denumire comandă rapidă</string>
-    <string name="shortcut_url_hint">URL-ul comenzii rapide</string>
-    <string name="snackbar_added_to_shortcuts">Adăugat la scurtături!</string>
     <string name="snackbar_deleted_undo">ANULEAZĂ</string>
     <string name="snackbar_tab_closed">Filă închisă</string>
     <string name="sort">Sortați după</string>
@@ -271,11 +263,6 @@
     <string name="switch_to_tab_description">Treci la o altă filă</string>
 <string name="task_decryption_finished">Decriptarea s-a terminat</string>
     <string name="task_encryption_finished">Criptarea s-a terminat</string>
-    <string name="top_sites_edit_dialog_save">Salvează</string>
-    <string name="top_sites_edit_dialog_title">Editează comanda rapidă</string>
-    <string name="top_sites_edit_dialog_url_title">URL-ul</string>
-    <string name="top_sites_max_limit_confirmation_button">OK, am înțeles</string>
-    <string name="top_sites_rename_dialog_title">Nume</string>
     <string name="vault_decrypting">Se decriptează fișierul, așteptați…</string>
     <string name="vault_encrypting">Se criptează fișierul, așteptați…</string>
     <string name="vault_unsupported">Nu se poate deschide acest fișier. Pentru a deschide, mutați-l din Folder sigur și încercați din nou.</string>

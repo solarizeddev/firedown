@@ -152,7 +152,6 @@
     <string name="popup_tabs_close">அனைத்து தாவல்களையும் மூடு</string>
     <string name="popup_tabs_new">புதிய தாவலில்</string>
     <string name="popup_toggle">காட்சியை மாற்று</string>
-<string name="remove_top_site">நீக்கு</string>
     <string name="rename">மறுபெயரிடவும்</string>
     <string name="rename_file">கோப்பை மறுபெயரிடவும்</string>
     <string name="restart_origin">மறுதொடக்கம்</string>
@@ -238,7 +237,6 @@
     <string name="switch_to_tab_description">கீற்றிற்குத் தாவுக</string>
     <string name="task_decryption_finished">மறைகுறியாக்கம் முடிந்தது</string>
     <string name="task_encryption_finished">குறியாக்கம் முடிந்தது</string>
-    <string name="top_sites_max_limit_confirmation_button">சரி, புரிந்தது</string>
     <string name="vault_decrypting">கோப்பை மறைகுறியாக்குகிறது, காத்திருக்கவும்…</string>
     <string name="vault_encrypting">கோப்பை என்க்ரிப்ட் செய்கிறது, காத்திருக்கவும்…</string>
     <string name="vault_unsupported">இந்தக் கோப்பைத் திறக்க முடியவில்லை. திறக்க, பாதுகாப்பான கோப்புறையிலிருந்து அதை நகர்த்தி மீண்டும் முயற்சிக்கவும்.</string>

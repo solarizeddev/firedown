@@ -11,9 +11,6 @@ import com.solarized.firedown.data.DownloadDatabase;
 import com.solarized.firedown.data.TabStateArchivedDatabase;
 import com.solarized.firedown.data.TrackingPermissionDatabase;
 import com.solarized.firedown.data.dao.DownloadDao;
-import com.solarized.firedown.data.dao.ShortCutDao;
-import com.solarized.firedown.data.ShortCutDatabase;
-import com.solarized.firedown.data.ShortCutDatabaseCallback;
 import com.solarized.firedown.data.dao.TabStateArchivedDao;
 import com.solarized.firedown.data.dao.TrackingPermissionDao;
 import com.solarized.firedown.data.dao.WebBookmarkDao;
@@ -45,18 +42,6 @@ public class DatabaseModule {
     public WebHistoryDatabase provideDatabase(@ApplicationContext Context context) {
         return Room.databaseBuilder(context, WebHistoryDatabase.class, WebHistoryDatabase.DATABASE_NAME)
                 .addMigrations(WebHistoryDatabase.MIGRATION_1_2, WebHistoryDatabase.MIGRATION_2_3)
-                .build();
-    }
-
-    @Provides
-    @Singleton
-    public ShortCutDatabase provideShortcutDatabase(
-            @ApplicationContext Context context,
-            ShortCutDatabaseCallback callback) { // Callback is injected here
-        return Room.databaseBuilder(context, ShortCutDatabase.class, ShortCutDatabase.DATABASE_NAME)
-                .setJournalMode(RoomDatabase.JournalMode.AUTOMATIC)
-                .addCallback(callback)
-                .fallbackToDestructiveMigration(false)
                 .build();
     }
 
@@ -166,11 +151,6 @@ public class DatabaseModule {
     @Provides
     public WebBookmarkDao provideWebBookmarkDao(WebBookmarkDatabase db) {
         return db.webBookmarkDao();
-    }
-
-    @Provides
-    public ShortCutDao provideShortCutDao(ShortCutDatabase db) {
-        return db.shortCutsDao();
     }
 
     @Provides

@@ -42,7 +42,6 @@ public class PopupBrowserSheetDialogFragment extends BaseBottomSheetDialogFragme
 
     private BrowserDialogViewModel mBrowserDialogViewModel;
     private boolean mHasBookmark;
-    private boolean mHasShortCut;
     private ReloadBrowserButton mReloadBrowserButton;
     private CustomAdapter mCustomAdapter;
     private GeckoState mGeckoState;
@@ -150,15 +149,6 @@ public class PopupBrowserSheetDialogFragment extends BaseBottomSheetDialogFragme
             }
         }
 
-        if(mHasShortCut){
-            int index = mLocalIdsSet.indexOf(R.id.popup_pin_add);
-            if(index >= 0){
-                mLocalDrawables.set(index, R.drawable.ic_keep_off_24);
-                mLocalIdsSet.set(index, R.id.popup_pin_edit);
-                mLocalStrings.set(index, getString(R.string.browser_menu_remove_from_shortcuts));
-            }
-        }
-
         mCustomAdapter = new CustomAdapter(mLocalStrings, mLocalDrawables, mLocalIdsSet, this, isDesktop);
 
         recyclerView.setAdapter(mCustomAdapter);
@@ -191,7 +181,6 @@ public class PopupBrowserSheetDialogFragment extends BaseBottomSheetDialogFragme
             throw new IllegalArgumentException("Bundle can not be null");
 
         mHasBookmark = bundle.getBoolean(Keys.ITEM_BOOKMARK, false);
-        mHasShortCut = bundle.getBoolean(Keys.ITEM_SHORTCUT, false);
         mBrowserDialogViewModel = new ViewModelProvider(mActivity).get(BrowserDialogViewModel.class);
 
         GeckoStateViewModel geckoStateViewModel =  new ViewModelProvider(mActivity).get(GeckoStateViewModel.class);

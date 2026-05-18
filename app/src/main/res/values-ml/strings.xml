@@ -8,7 +8,6 @@
     <string name="browser_enter_url">തിരയുക അല്ലെങ്കിൽ URL ടൈപ്പ് ചെയ്യുക</string>
     <string name="browser_error_image_title">അഗ്നി പോയി</string>
     <string name="browser_find_in_page">പേജിൽ കണ്ടെത്തുക</string>
-    <string name="browser_menu_add_to_shortcuts">കുറുക്കുവഴികളിലേക്കു് ചേർക്കുക</string>
     <string name="browser_menu_back">പുറകോട്ട്</string>
     <string name="browser_menu_bookmark_this_page_2">താളിനെ കുറിച്ചിടുക</string>
     <string name="browser_menu_desktop_site">ഉപരിഫലക സൈറ്റു്</string>
@@ -16,7 +15,6 @@
     <string name="browser_menu_find_in_page">താളിൽ കണ്ടെത്തുക</string>
     <string name="browser_menu_forward">മുന്നോട്ട്</string>
     <string name="browser_menu_refresh">പുതുക്കുക</string>
-    <string name="browser_menu_remove_from_shortcuts">കുറുക്കുവഴികളിൽ നിന്നു് മാറ്റുക</string>
     <string name="browser_menu_settings">ക്രമീകരണങ്ങള്‍</string>
     <string name="browser_menu_share">പങ്കിടുക</string>
     <string name="browser_menu_stop">നിർത്തുക</string>
@@ -166,7 +164,6 @@
     <string name="quick_settings_sheet_insecure_connection_2">അസുരക്ഷിതമായ സമ്പർക്കം</string>
     <string name="quick_settings_sheet_secure_connection_2">സുരക്ഷിതമായ സമ്പർക്കം</string>
     <string name="quit_application">മാറ്റങ്ങൾ പ്രാവർത്തികമാക്കാൻ പ്രയോഗത്തിൽ നിന്നും പുറത്തുകടക്കുന്നു…</string>
-    <string name="remove_top_site">നീക്കം ചെയ്യുക</string>
     <string name="rename">പേരുമാറ്റുക</string>
     <string name="rename_file">ഫയലിൻ്റെ പേരുമാറ്റുക</string>
     <string name="restart_origin">പുനരാരംഭിക്കുക</string>
@@ -236,11 +233,6 @@
     <string name="share">പങ്കിടുക</string>
     <string name="share_image">ചിത്രം പങ്കിടുക</string>
     <string name="share_url">URL പങ്കിടുക</string>
-    <string name="shortcut_max_limit_content">ഒരു പുതിയ കുറുക്കുവഴി ചേർക്കാൻ മറ്റു് ഒരെണ്ണം മാറ്റുക. സൈറ്റിനു് അമർത്തിപ്പിടിക്കുക, പിന്നെ മാറ്റുക എന്നു് സാധ്യത തിരഞ്ഞെടുക്കൂ.</string>
-    <string name="shortcut_max_limit_title">കുറുക്കുവഴി പരിധി എത്തി</string>
-    <string name="shortcut_name_hint">കുറുക്കുവഴിയുടെ പേരു്</string>
-    <string name="shortcut_url_hint">കുറുക്കുവഴി യൂ.ആർ.എൽ</string>
-    <string name="snackbar_added_to_shortcuts">കുറുക്കുവഴികളിലേക്കു് ചേർത്തു!</string>
     <string name="snackbar_deleted_undo">തിരിച്ചാക്കുക</string>
     <string name="snackbar_tab_closed">ടാബ് അടച്ചു</string>
     <string name="sort">ഇപ്രകാരം അടുക്കുക</string>
@@ -258,11 +250,6 @@
     <string name="switch_to_tab_description">ടാബിലേക്ക് മാറുക</string>
 <string name="task_decryption_finished">ഡീക്രിപ്ഷൻ പൂർത്തിയായി</string>
     <string name="task_encryption_finished">എൻക്രിപ്ഷൻ പൂർത്തിയായി</string>
-    <string name="top_sites_edit_dialog_save">കരുതിവയ്ക്കുക</string>
-    <string name="top_sites_edit_dialog_title">കുറുക്കുവഴി തിരുത്തുക</string>
-    <string name="top_sites_edit_dialog_url_title">യു.ആര.എല്‍</string>
-    <string name="top_sites_max_limit_confirmation_button">ശരി, മനസ്സിലായി</string>
-    <string name="top_sites_rename_dialog_title">പേരു്</string>
     <string name="vault_decrypting">ഫയൽ ഡീക്രിപ്റ്റ് ചെയ്യുന്നു, കാത്തിരിക്കൂ…</string>
     <string name="vault_encrypting">ഫയൽ എൻക്രിപ്റ്റ് ചെയ്യുന്നു, കാത്തിരിക്കൂ…</string>
     <string name="vault_unsupported">ഈ ഫയൽ തുറക്കാൻ കഴിയില്ല. തുറക്കാൻ, അത് സുരക്ഷിത ഫോൾഡറിൽ നിന്ന് നീക്കി വീണ്ടും ശ്രമിക്കുക.</string>

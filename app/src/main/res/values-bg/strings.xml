@@ -9,7 +9,6 @@
     <string name="browser_enter_url">Търсете или въведете URL.</string>
     <string name="browser_error_image_title">Огънят изчезна</string>
     <string name="browser_find_in_page">Търсене в страницата</string>
-    <string name="browser_menu_add_to_shortcuts">Добавяне към преки пътища</string>
     <string name="browser_menu_back">Назад</string>
     <string name="browser_menu_bookmark_this_page_2">Отмятане на страницата</string>
     <string name="browser_menu_desktop_site">Настолна версия</string>
@@ -17,7 +16,6 @@
     <string name="browser_menu_find_in_page">Търсене в страницата</string>
     <string name="browser_menu_forward">Напред</string>
     <string name="browser_menu_refresh">Обновяване</string>
-    <string name="browser_menu_remove_from_shortcuts">Премахване от преките пътища</string>
     <string name="browser_menu_settings">Настройки</string>
     <string name="browser_menu_share">Споделяне</string>
     <string name="browser_menu_stop">Спиране</string>
@@ -175,7 +173,6 @@
     <string name="quick_settings_sheet_insecure_connection_2">Връзката не е защитена</string>
     <string name="quick_settings_sheet_secure_connection_2">Връзката е защитена</string>
     <string name="quit_application">Приложението се затваря за прилагане на промени…</string>
-    <string name="remove_top_site">Премахване</string>
     <string name="rename">Промяна на името</string>
     <string name="rename_file">Промяна на името на файла</string>
     <string name="request_geolocation">Да се сподели ли местоположението на устройството ви с &lt;b&gt;%s&lt;/b&gt;?</string>
@@ -258,11 +255,6 @@
     <string name="share">Споделяне</string>
     <string name="share_image">Споделяне на ИЗОБРАЖЕНИЕ</string>
     <string name="share_url">Споделяне на URL</string>
-    <string name="shortcut_max_limit_content">За да добавите нов пряк път, премахнете вече същестствуващ. Докоснете и задръжте страницата и изберете премахване.</string>
-    <string name="shortcut_max_limit_title">Пределът за преки пътища е достигнат</string>
-    <string name="shortcut_name_hint">Име на пряк път</string>
-    <string name="shortcut_url_hint">Адрес за пряк път</string>
-    <string name="snackbar_added_to_shortcuts">Добавено към преки пътища!</string>
     <string name="snackbar_deleted_undo">ОТМЕНЯНЕ</string>
     <string name="snackbar_tab_closed">Разделът е затворен</string>
     <string name="sort">Сортиране по</string>
@@ -281,11 +273,6 @@
     <string name="switch_to_tab_description">Превключване към раздел</string>
 <string name="task_decryption_finished">Декриптирането приключи</string>
     <string name="task_encryption_finished">Криптирането приключи</string>
-    <string name="top_sites_edit_dialog_save">Запазване</string>
-    <string name="top_sites_edit_dialog_title">Редактиране на пряк път</string>
-    <string name="top_sites_edit_dialog_url_title">URL</string>
-    <string name="top_sites_max_limit_confirmation_button">Добре, разбрах</string>
-    <string name="top_sites_rename_dialog_title">Наименование</string>
     <string name="vault_decrypting">Файлът се декриптира, моля изчакайте…</string>
     <string name="vault_encrypting">Файлът се криптира, моля изчакайте…</string>
     <string name="vault_unsupported">Файлът не може да се отвори. За да го отворите, го преместете от Защитената папка и опитайте отново.</string>

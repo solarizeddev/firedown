@@ -26,9 +26,6 @@
     <item name="popup_sort" type="id" />
     <item name="popup_clear" type="id" />
     <item name="popup_toggle" type="id" />
-    <item name="popup_pin_add" type="id" />
-    <item name="popup_pin_edit" type="id" />
-    <item name="popup_pin_delete" type="id" />
     <item name="popup_bookmark_add" type="id" />
     <item name="popup_bookmark_edit" type="id" />
     <item name="popup_bookmark_added" type="id" />

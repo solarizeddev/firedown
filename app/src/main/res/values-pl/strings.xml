@@ -12,7 +12,6 @@
     <string name="browser_enter_url">Wyszukaj lub wpisz adres URL</string>
     <string name="browser_error_image_title">Ogień zniknął</string>
     <string name="browser_find_in_page">Znajdź na stronie</string>
-    <string name="browser_menu_add_to_shortcuts">Dodaj do skrótów</string>
     <string name="browser_menu_back">Wstecz</string>
     <string name="browser_menu_bookmark_this_page_2">Dodaj zakładkę do strony</string>
     <string name="browser_menu_desktop_site">Wersja na komputery</string>
@@ -20,7 +19,6 @@
     <string name="browser_menu_find_in_page">Znajdź na stronie</string>
     <string name="browser_menu_forward">Do przodu</string>
     <string name="browser_menu_refresh">Odśwież</string>
-    <string name="browser_menu_remove_from_shortcuts">Usuń ze skrótów</string>
     <string name="browser_menu_settings">Ustawienia</string>
     <string name="browser_menu_share">Udostępnij</string>
     <string name="browser_menu_stop">Zatrzymaj</string>
@@ -208,7 +206,6 @@
     <string name="blocked_trackers_detail_empty">Na tej stronie nie zablokowano jeszcze żadnych trackerów.</string>
     <string name="blocked_trackers_host_count_multiplier">×%1$d</string>
     <string name="quit_application">Wyłączanie aplikacji, aby zastosować zmiany…</string>
-    <string name="remove_top_site">Usuń</string>
     <string name="rename">Przemianować</string>
     <string name="rename_file">Zmień nazwę pliku</string>
     <string name="request_geolocation">Udostępnić lokalizację swojego urządzenia&lt;b&gt;%s&lt;/b&gt; ?</string>
@@ -305,11 +302,6 @@
     <string name="share">Udział</string>
     <string name="share_image">Udostępnij obraz</string>
     <string name="share_url">Udostępnij adres URL</string>
-    <string name="shortcut_max_limit_content">Aby dodać nowy skrót, usuń istniejący. Dotknij i przytrzymaj któryś i wybierz „Usuń”.</string>
-    <string name="shortcut_max_limit_title">Osiągnięto limit skrótów</string>
-    <string name="shortcut_name_hint">Nazwa skrótu</string>
-    <string name="shortcut_url_hint">Adres skrótu</string>
-    <string name="snackbar_added_to_shortcuts">Dodano do skrótów</string>
     <string name="snackbar_deleted_undo">Cofnij</string>
     <string name="snackbar_tab_closed">Zamknięto kartę</string>
     <string name="sort">Sortuj według</string>
@@ -328,11 +320,6 @@
 <string name="task_decryption_finished">Odszyfrowywanie zakończone</string>
     <string name="task_encryption_finished">Szyfrowanie zakończone</string>
     <string name="task_gif_finished">GIF utworzony</string>
-    <string name="top_sites_edit_dialog_save">Zachowaj</string>
-    <string name="top_sites_edit_dialog_title">Edycja skrótu</string>
-    <string name="top_sites_edit_dialog_url_title">Adres</string>
-    <string name="top_sites_max_limit_confirmation_button">OK</string>
-    <string name="top_sites_rename_dialog_title">Nazwa</string>
     <string name="vault_decrypting">Odszyfrowywanie pliku, proszę czekać…</string>
     <string name="vault_encrypting">Szyfrowanie pliku, proszę czekać…</string>
     <string name="vault_unsupported">Nie można otworzyć tego pliku. Aby otworzyć, przenieś go z bezpiecznego folderu i spróbuj ponownie.</string>

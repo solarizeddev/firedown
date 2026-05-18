@@ -9,7 +9,6 @@
     <string name="browser_enter_url">Keressen vagy írja be az URL-t.</string>
     <string name="browser_error_image_title">A Tűz eltűnt</string>
     <string name="browser_find_in_page">Keresés az oldalon</string>
-    <string name="browser_menu_add_to_shortcuts">Hozzáadás az indítóikonokhoz</string>
     <string name="browser_menu_back">Vissza</string>
     <string name="browser_menu_bookmark_this_page_2">Lap könyvjelzőzése</string>
     <string name="browser_menu_desktop_site">Asztali oldal</string>
@@ -17,7 +16,6 @@
     <string name="browser_menu_find_in_page">Keresés az oldalon</string>
     <string name="browser_menu_forward">Előre</string>
     <string name="browser_menu_refresh">Frissítés</string>
-    <string name="browser_menu_remove_from_shortcuts">Eltávolítás az indítóikonok közül</string>
     <string name="browser_menu_settings">Beállítások</string>
     <string name="browser_menu_share">Megosztás</string>
     <string name="browser_menu_stop">Leállítás</string>
@@ -170,7 +168,6 @@
     <string name="quick_settings_sheet_insecure_connection_2">A kapcsolat nem biztonságos</string>
     <string name="quick_settings_sheet_secure_connection_2">A kapcsolat biztonságos</string>
     <string name="quit_application">Kilépés az alkalmazásból a módosítások alkalmazásához…</string>
-    <string name="remove_top_site">Eltávolítás</string>
     <string name="rename">Átnevezés</string>
     <string name="rename_file">Fájl átnevezése</string>
     <string name="request_geolocation">Megosztja eszköze helyét a következővel: &lt;b&gt;%s&lt;/b&gt;?</string>
@@ -253,11 +250,6 @@
     <string name="share">Megosztás</string>
     <string name="share_image">IMAGE megosztása</string>
     <string name="share_url">URL megosztása</string>
-    <string name="shortcut_max_limit_content">Új indítóikon hozzáadásához távolítson el egyet. Érintse meg és tartsa az ujját az oldalon, és válassza az eltávolítást.</string>
-    <string name="shortcut_max_limit_title">Az indítóikonok korlátja elérve</string>
-    <string name="shortcut_name_hint">Indítóikon neve</string>
-    <string name="shortcut_url_hint">Indító webcíme</string>
-    <string name="snackbar_added_to_shortcuts">Hozzáadva az indítóikonokhoz.</string>
     <string name="snackbar_deleted_undo">VISSZAVONÁS</string>
     <string name="snackbar_tab_closed">Lap bezárva</string>
     <string name="sort">Rendezés</string>
@@ -275,11 +267,6 @@
     <string name="switch_to_tab_description">Váltás erre a lapra</string>
 <string name="task_decryption_finished">A visszafejtés befejeződött</string>
     <string name="task_encryption_finished">A titkosítás befejeződött</string>
-    <string name="top_sites_edit_dialog_save">Mentés</string>
-    <string name="top_sites_edit_dialog_title">Indító szerkesztése</string>
-    <string name="top_sites_edit_dialog_url_title">Webcím</string>
-    <string name="top_sites_max_limit_confirmation_button">Rendben, értem</string>
-    <string name="top_sites_rename_dialog_title">Név</string>
     <string name="vault_decrypting">Fájl visszafejtése, kérjük, várjon…</string>
     <string name="vault_encrypting">Fájl titkosítása, kérjük, várjon…</string>
     <string name="vault_unsupported">Ez a fájl nem nyitható meg. A megnyitáshoz helyezze ki a Biztonságos mappából, és próbálja újra.</string>

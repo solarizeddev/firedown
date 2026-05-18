@@ -8,7 +8,6 @@
     <string name="browser_enter_url">Მოძებნეთ ან ჩაწერეთ URL</string>
     <string name="browser_error_image_title">Ცეცხლი წავიდა</string>
     <string name="browser_find_in_page">პოვნა გვერდზე</string>
-    <string name="browser_menu_add_to_shortcuts">მალსახმობებში დამატება</string>
     <string name="browser_menu_back">წინა</string>
     <string name="browser_menu_bookmark_this_page_2">გვერდის ჩანიშვნა</string>
     <string name="browser_menu_desktop_site">სრული საიტი</string>
@@ -16,7 +15,6 @@
     <string name="browser_menu_find_in_page">პოვნა გვერდზე</string>
     <string name="browser_menu_forward">მომდევნო</string>
     <string name="browser_menu_refresh">განახლება</string>
-    <string name="browser_menu_remove_from_shortcuts">მოცილება მალსახმობებიდან</string>
     <string name="browser_menu_settings">პარამეტრები</string>
     <string name="browser_menu_share">გაზიარება</string>
     <string name="browser_menu_stop">შეჩერება</string>
@@ -169,7 +167,6 @@
     <string name="quick_settings_sheet_insecure_connection_2">კავშირი დაუცველია</string>
     <string name="quick_settings_sheet_secure_connection_2">კავშირი დაცულია</string>
     <string name="quit_application">პროგრამა იხურება ცვლილებების ასახვისთვის…</string>
-    <string name="remove_top_site">მოცილება</string>
     <string name="rename">Გადარქმევა</string>
     <string name="rename_file">Ფაილის გადარქმევა</string>
     <string name="restart_origin">Რესტარტი</string>
@@ -241,11 +238,6 @@
     <string name="share">Გააზიარეთ</string>
     <string name="share_image">Გააზიარეთ IMAGE</string>
     <string name="share_url">URL-ის გაზიარება</string>
-    <string name="shortcut_max_limit_content">ახალი მალსახმობის დასამატებლად, წაშალეთ წინა. მასზე დიდხანს შეხებით და მოცილებით.</string>
-    <string name="shortcut_max_limit_title">მალსახმობების ზღვარი მიღწეულია</string>
-    <string name="shortcut_name_hint">მალსახმობის სახელი</string>
-    <string name="shortcut_url_hint">მალსახმობის ბმული</string>
-    <string name="snackbar_added_to_shortcuts">მალსახმობებში დამატება!</string>
     <string name="snackbar_deleted_undo">დაბრუნება</string>
     <string name="snackbar_tab_closed">ჩანართი დაიხურა</string>
     <string name="sort">დალაგება კრიტერიუმით</string>
@@ -263,11 +255,6 @@
     <string name="switch_to_tab_description">ჩანართზე გადასვლა</string>
 <string name="task_decryption_finished">Გაშიფვრა დასრულდა</string>
     <string name="task_encryption_finished">Დაშიფვრა დასრულდა</string>
-    <string name="top_sites_edit_dialog_save">შენახვა</string>
-    <string name="top_sites_edit_dialog_title">მალსახმობის ჩასწორება</string>
-    <string name="top_sites_edit_dialog_url_title">URL-ბმული</string>
-    <string name="top_sites_max_limit_confirmation_button">კარგი, გასაგებია</string>
-    <string name="top_sites_rename_dialog_title">სახელი</string>
     <string name="vault_decrypting">Მიმდინარეობს ფაილის გაშიფვრა, გთხოვთ დაელოდოთ…</string>
     <string name="vault_encrypting">Მიმდინარეობს ფაილის დაშიფვრა, გთხოვთ დაელოდოთ…</string>
     <string name="vault_unsupported">Ამ ფაილის გახსნა შეუძლებელია. გასახსნელად გადაიტანეთ ის უსაფრთხო საქაღალდიდან და სცადეთ ხელახლა.</string>

@@ -158,7 +158,6 @@
     <string name="popup_toggle">منظر کو ٹوگل کریں۔</string>
 <string name="quick_settings_sheet_insecure_connection_2">کنکشن محفوظ نہیں ہے</string>
     <string name="quick_settings_sheet_secure_connection_2">کنکشن محفوظ ہے۔</string>
-    <string name="remove_top_site">ہٹائیں</string>
     <string name="rename">نام تبدیل کریں۔</string>
     <string name="rename_file">فائل کا نام تبدیل کریں۔</string>
     <string name="request_geolocation">&lt;b&gt; %s &lt;/b&gt; کے ساتھ اپنے آلے کے مقام کا اشتراک کریں؟</string>
@@ -249,8 +248,6 @@
     <string name="switch_to_tab_description">ٹیب پر جائیں</string>
 <string name="task_decryption_finished">ڈکرپشن ختم</string>
     <string name="task_encryption_finished">خفیہ کاری مکمل ہو گئی۔</string>
-    <string name="top_sites_max_limit_confirmation_button">ٹھیک ہے سمجھ گیا</string>
-    <string name="top_sites_rename_dialog_title">نام</string>
     <string name="vault_decrypting">فائل کو ڈکرپٹ کیا جا رہا ہے، براہ کرم انتظار کریں…</string>
     <string name="vault_encrypting">فائل کو خفیہ کر رہا ہے، براہ کرم انتظار کریں…</string>
     <string name="vault_unsupported">اس فائل کو نہیں کھولا جا سکتا۔ کھولنے کے لیے، اسے محفوظ فولڈر سے باہر لے جائیں اور دوبارہ کوشش کریں۔</string>

@@ -157,7 +157,6 @@
     <string name="popup_tabs_close">တက်ဘ်များအားလုံးကို ပိတ်ပါ။</string>
     <string name="popup_tabs_new">တက်ဘ်အသစ်</string>
     <string name="popup_toggle">မြင်ကွင်းကို ပြောင်းပါ။</string>
-<string name="remove_top_site">ဖယ်ရှားပါ</string>
     <string name="rename">အမည်ပြောင်းပါ။</string>
     <string name="rename_file">ဖိုင်အမည်ပြောင်းပါ။</string>
     <string name="restart_origin">ပြန်စတင်သည်</string>
@@ -243,8 +242,6 @@
     <string name="switch_to_tab_description">မျက်နှာစာ ပြောင်းကြည့်ပါ</string>
 <string name="task_decryption_finished">ကုဒ်ဝှက်ခြင်း ပြီးပါပြီ။</string>
     <string name="task_encryption_finished">ကုဒ်ဝှက်ခြင်း ပြီးပါပြီ။</string>
-    <string name="top_sites_max_limit_confirmation_button">အိုကေ၊ ရပြီ</string>
-    <string name="top_sites_rename_dialog_title">အမည်</string>
     <string name="vault_decrypting">ဖိုင်ကို ကုဒ်ဝှက်နေသည်၊ ခဏစောင့်ပါ…</string>
     <string name="vault_encrypting">ဖိုင်ကို ကုဒ်ဝှက်နေသည်၊ ခဏစောင့်ပါ…</string>
     <string name="vault_unsupported">ဤဖိုင်ကို ဖွင့်၍မရပါ။ ဖွင့်ရန်၊ ၎င်းကို Safe Folder မှရွှေ့ပြီး ထပ်စမ်းကြည့်ပါ။</string>

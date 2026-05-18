@@ -15,7 +15,6 @@
     <integer-array name="popup_browser_ids">
         <item>@id/popup_bookmark_add</item>
         <item>@id/popup_bookmarks</item>
-        <item>@id/popup_pin_add</item>
         <item>@id/popup_find</item>
         <item>@id/popup_desktop</item>
         <item>@id/popup_history</item>
@@ -26,7 +25,6 @@
     <integer-array name="popup_browser_text">
         <item>@string/browser_menu_bookmark_this_page_2</item>
         <item>@string/library_bookmarks</item>
-        <item>@string/browser_menu_add_to_shortcuts</item>
         <item>@string/browser_menu_find_in_page</item>
         <item>@string/browser_menu_desktop_site</item>
         <item>@string/library_history</item>
@@ -37,7 +35,6 @@
     <integer-array name="popup_browser_icon">
         <item>@drawable/ic_bookmark_border_24</item>
         <item>@drawable/ic_bookmarks_24</item>
-        <item>@drawable/ic_keep_24</item>
         <item>@drawable/ic_search_24</item>
         <item>@drawable/ic_computer_24</item>
         <item>@drawable/ic_history_24</item>
@@ -414,20 +411,6 @@
         <item>@id/new_tab</item>
         <item>@id/new_incognito_tab</item>
     </integer-array>
-
-    <integer-array name="shortcut_options_items">
-        <item>@string/open</item>
-        <item>@string/edit</item>
-        <item>@string/remove_top_site</item>
-    </integer-array>
-
-
-    <integer-array name="shortcut_options_items_icon">
-        <item>@drawable/ic_web_24</item>
-        <item>@drawable/ic_edit_24</item>
-        <item>@drawable/ic_baseline_delete_24</item>
-    </integer-array>
-
 
     <string-array name="pref_tabs_archive_interval_entries">
         <item>@string/close_tabs_manually</item>

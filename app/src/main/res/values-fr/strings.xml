@@ -12,7 +12,6 @@
     <string name="browser_enter_url">Recherchez ou saisissez une URL.</string>
     <string name="browser_error_image_title">Le feu est parti</string>
     <string name="browser_find_in_page">Rechercher dans la page</string>
-    <string name="browser_menu_add_to_shortcuts">Ajouter aux raccourcis</string>
     <string name="browser_menu_back">Page précédente</string>
     <string name="browser_menu_bookmark_this_page_2">Marquer cette page</string>
     <string name="browser_menu_desktop_site">Version ordinateur</string>
@@ -20,7 +19,6 @@
     <string name="browser_menu_find_in_page">Rechercher dans la page</string>
     <string name="browser_menu_forward">Page suivante</string>
     <string name="browser_menu_refresh">Actualiser</string>
-    <string name="browser_menu_remove_from_shortcuts">Supprimer des raccourcis</string>
     <string name="browser_menu_settings">Paramètres</string>
     <string name="browser_menu_share">Partager</string>
     <string name="browser_menu_stop">Arrêter</string>
@@ -285,7 +283,6 @@
     <string name="blocked_trackers_detail_empty">Aucun traqueur n\'a encore été bloqué sur cette page.</string>
     <string name="blocked_trackers_host_count_multiplier">×%1$d</string>
     <string name="quit_application">Fermeture de l’application pour appliquer les modifications…</string>
-    <string name="remove_top_site">Supprimer</string>
     <string name="rename">Renommer</string>
     <string name="rename_file">Renommer le fichier</string>
     <string name="request_geolocation">Partager la position de votre appareil avec &lt;b&gt;%s&lt;/b&gt; ?</string>
@@ -432,11 +429,6 @@
     <string name="share">Partager</string>
     <string name="share_image">Partager l\'image</string>
     <string name="share_url">Partager l\'URL</string>
-    <string name="shortcut_max_limit_content">Pour ajouter un nouveau raccourci, supprimez-en un autre. Faites un appui long sur le site et sélectionnez supprimer.</string>
-    <string name="shortcut_max_limit_title">Nombre maximal de raccourcis atteint</string>
-    <string name="shortcut_name_hint">Nom du raccourci</string>
-    <string name="shortcut_url_hint">Adresse du raccourci</string>
-    <string name="snackbar_added_to_shortcuts">Ajouté aux raccourcis !</string>
     <string name="snackbar_deleted_undo">ANNULER</string>
     <string name="snackbar_tab_closed">Onglet fermé</string>
     <string name="sort">Trier par</string>
@@ -470,11 +462,6 @@
     <string name="task_gif_failed">Impossible de créer le GIF</string>
     <string name="task_gif_finished">GIF créé</string>
     <string name="task_stop">Arrêter</string>
-    <string name="top_sites_edit_dialog_save">Enregistrer</string>
-    <string name="top_sites_edit_dialog_title">Modifier le raccourci</string>
-    <string name="top_sites_edit_dialog_url_title">Adresse</string>
-    <string name="top_sites_max_limit_confirmation_button">J’ai compris</string>
-    <string name="top_sites_rename_dialog_title">Nom</string>
     <string name="update_auto_update_success_body">Vous avez été automatiquement mis à jour vers la version %1$s.</string>
     <string name="update_auto_update_success_default_body">Vous avez été automatiquement mis à jour vers la dernière version.</string>
     <string name="update_auto_update_success_title">Firedown a été mis à jour avec succès</string>

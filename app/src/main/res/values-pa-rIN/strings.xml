@@ -6,7 +6,6 @@
     <string name="browser_enter_url">URL ਖੋਜੋ ਜਾਂ ਟਾਈਪ ਕਰੋ</string>
     <string name="browser_error_image_title">ਅੱਗ ਚਲੀ ਗਈ ਹੈ</string>
     <string name="browser_find_in_page">ਸਫ਼ੇ ‘ਚ ਲੱਭੋ</string>
-    <string name="browser_menu_add_to_shortcuts">ਸ਼ਾਰਟਕੱਟਾਂ ਵਿੱਚ ਜੋੜੋ</string>
     <string name="browser_menu_back">ਪਿੱਛੇ</string>
     <string name="browser_menu_bookmark_this_page_2">ਬੁੱਕਮਾਰਕ ਸਫ਼ਾ</string>
     <string name="browser_menu_desktop_site">ਡੈਸਕਟਾਪ ਸਾਈਟ</string>
@@ -14,7 +13,6 @@
     <string name="browser_menu_find_in_page">ਸਫ਼ੇ ‘ਚ ਲੱਭੋ</string>
     <string name="browser_menu_forward">ਅੱਗੇ</string>
     <string name="browser_menu_refresh">ਤਾਜ਼ਾ ਕਰੋ</string>
-    <string name="browser_menu_remove_from_shortcuts">ਸ਼ਾਰਟਕੱਟ ਵਿੱਚੋਂ ਹਟਾਓ</string>
     <string name="browser_menu_settings">ਸੈਟਿੰਗਾਂ</string>
     <string name="browser_menu_share">ਸਾਂਝਾ ਕਰੋ</string>
     <string name="browser_menu_stop">ਰੋਕੋ</string>
@@ -160,7 +158,6 @@
     <string name="quick_settings_sheet_insecure_connection_2">ਕਨੈਕਸ਼ਨ ਸੁਰੱਖਿਅਤ ਨਹੀਂ ਹੈ</string>
     <string name="quick_settings_sheet_secure_connection_2">ਕਨੈਕਸ਼ਨ ਸੁਰੱਖਿਅਤ ਹੈ</string>
     <string name="quit_application">ਤਬਦੀਲੀਆਂ ਲਾਗੂ ਕਰਨ ਲਈ ਐਪਲੀਕੇਸ਼ਨ ਨੂੰ ਬੰਦ ਕੀਤਾ ਜਾ ਰਿਹਾ ਹੈ…</string>
-    <string name="remove_top_site">ਹਟਾਓ</string>
     <string name="rename">ਨਾਮ ਬਦਲੋ</string>
     <string name="rename_file">ਫਾਈਲ ਦਾ ਨਾਮ ਬਦਲੋ</string>
     <string name="restart_origin">ਰੀਸਟਾਰਟ ਕਰੋ</string>
@@ -225,11 +222,6 @@
     <string name="share">ਸ਼ੇਅਰ ਕਰੋ</string>
     <string name="share_image">IMAGE ਸਾਂਝਾ ਕਰੋ</string>
     <string name="share_url">URL ਸਾਂਝਾ ਕਰੋ</string>
-    <string name="shortcut_max_limit_content">ਨਵਾਂ ਸ਼ਾਰਟਕੱਟ ਜੋੜਨ ਲਈ ਪਹਿਲਾਂ ਇੱਕ ਨੂੰ ਹਟਾਓ। ਸਾਈਟ ਨੂੰ ਛੂਹ ਕੇ ਰੱਖੋ ਤੇ ਹਟਾਓ ਨੂੰ ਚੁਣੋ।</string>
-    <string name="shortcut_max_limit_title">ਸ਼ਾਰਟਕੱਟ ਦੀ ਲਿਮਟ ਅੱਪੜੀ</string>
-    <string name="shortcut_name_hint">ਸ਼ਾਰਟਕੱਟ ਨਾਂ</string>
-    <string name="shortcut_url_hint">ਸ਼ਾਰਟਕੱਟ URL</string>
-    <string name="snackbar_added_to_shortcuts">ਸ਼ਾਰਟਕੱਟਾਂ ਵਿੱਚ ਜੋੜਿਆ!</string>
     <string name="snackbar_deleted_undo">UNDO</string>
     <string name="snackbar_tab_closed">ਟੈਬ ਬੰਦ ਕੀਤੀ</string>
     <string name="sort">ਲੜੀਬੱਧ</string>
@@ -247,11 +239,6 @@
     <string name="switch_to_tab_description">ਟੈਬ ਉੱਤੇ ਜਾਓ</string>
 <string name="task_decryption_finished">ਡੀਕ੍ਰਿਪਸ਼ਨ ਪੂਰਾ ਹੋਇਆ</string>
     <string name="task_encryption_finished">ਏਨਕ੍ਰਿਪਸ਼ਨ ਪੂਰਾ ਹੋਇਆ</string>
-    <string name="top_sites_edit_dialog_save">ਸੰਭਾਲੋ</string>
-    <string name="top_sites_edit_dialog_title">ਸ਼ਾਰਟਕੱਟ ਨੂੰ ਸੋਧੋ</string>
-    <string name="top_sites_edit_dialog_url_title">URL</string>
-    <string name="top_sites_max_limit_confirmation_button">ਠੀਕ ਹੈ, ਸਮਝ ਗਏ</string>
-    <string name="top_sites_rename_dialog_title">ਨਾਂ</string>
     <string name="vault_decrypting">ਫ਼ਾਈਲ ਨੂੰ ਡੀਕ੍ਰਿਪਟ ਕੀਤਾ ਜਾ ਰਿਹਾ ਹੈ, ਕਿਰਪਾ ਕਰਕੇ ਉਡੀਕ ਕਰੋ…</string>
     <string name="vault_encrypting">ਫ਼ਾਈਲ ਨੂੰ ਐਨਕ੍ਰਿਪਟ ਕੀਤਾ ਜਾ ਰਿਹਾ ਹੈ, ਕਿਰਪਾ ਕਰਕੇ ਉਡੀਕ ਕਰੋ…</string>
     <string name="vault_unsupported">ਇਸ ਫ਼ਾਈਲ ਨੂੰ ਖੋਲ੍ਹਿਆ ਨਹੀਂ ਜਾ ਸਕਦਾ। ਖੋਲ੍ਹਣ ਲਈ, ਇਸਨੂੰ ਸੁਰੱਖਿਅਤ ਫੋਲਡਰ ਤੋਂ ਬਾਹਰ ਲੈ ਜਾਓ ਅਤੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।</string>

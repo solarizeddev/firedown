@@ -1,5 +1,4 @@
 <resources>
-    <string name="browser_menu_add_to_shortcuts">Հավելել դյուրանցումներին</string>
     <string name="browser_menu_back">Վերադառնալ</string>
     <string name="browser_menu_bookmark_this_page_2">Էջանշել էջը</string>
     <string name="browser_menu_desktop_site">Ամբողջական կայք</string>
@@ -7,7 +6,6 @@
     <string name="browser_menu_find_in_page">Գտնել էջում</string>
     <string name="browser_menu_forward">Առաջ</string>
     <string name="browser_menu_refresh">Թարմացնել</string>
-    <string name="browser_menu_remove_from_shortcuts">Հեռացնել դյուրանցումներից</string>
     <string name="browser_menu_settings">Կարգավորումներ</string>
     <string name="browser_menu_share">Տարածել</string>
     <string name="browser_menu_stop">Կանգնեցնել</string>
@@ -36,7 +34,6 @@
     <string name="quick_settings_sheet_insecure_connection_2">Կապակցումն անվտանգ չէ</string>
     <string name="quick_settings_sheet_secure_connection_2">Կապակցումն անվտանգ է</string>
     <string name="quit_application">Փոփոխությունները գործադրելու համար դուրս է գալիս հավելվածից…</string>
-    <string name="remove_top_site">Ջնջել</string>
     <string name="settings_dark_theme">Մուգ</string>
     <string name="settings_delete_browsing">Ջնջել դիտարկման տվյալները</string>
     <string name="settings_delete_browsing_data_browsing_history_title">Դիտարկման պատմություն</string>
@@ -51,18 +48,8 @@
     <string name="settings_quit_title">Ջնջել դիտարկման տվյալները փակելիս</string>
     <string name="settings_search_engine_select">Այս անգամվա որոնումը՝</string>
     <string name="settings_theme">Ոճ</string>
-    <string name="shortcut_max_limit_content">Նոր դյուրանցում ավելացնելու համար հեռացրեք մեկը: Հպեք և պահեք կայքը ու ընտրեք հեռացնել:</string>
-    <string name="shortcut_max_limit_title">Դյուրանցումների սահմանաչափը լրացել է</string>
-    <string name="shortcut_name_hint">Դյուրանցման անունը</string>
-    <string name="shortcut_url_hint">Դյուրանցման URL</string>
-    <string name="snackbar_added_to_shortcuts">Ավելացվե՛ց դյուրանցումներում</string>
     <string name="snackbar_deleted_undo">ՀԵՏԱՐԿԵԼ</string>
     <string name="snackbar_tab_closed">Ներդիրը փակվեց</string>
     <string name="switch_to_tab_description">Անցնել ներդիրին</string>
-<string name="top_sites_edit_dialog_save">Պահել</string>
-    <string name="top_sites_edit_dialog_title">Խմբագրել դյուրանցումը</string>
-    <string name="top_sites_edit_dialog_url_title">URL</string>
-    <string name="top_sites_max_limit_confirmation_button">Հասկանալի է</string>
-    <string name="top_sites_rename_dialog_title">Անուն</string>
     <string name="bookmark_name">Անուն</string>
 </resources>

@@ -9,7 +9,6 @@
     <string name="browser_enter_url">חפש או הקלד כתובת אתר.</string>
     <string name="browser_error_image_title">האש נעלמה</string>
     <string name="browser_find_in_page">חיפוש בדף</string>
-    <string name="browser_menu_add_to_shortcuts">הוספה לקיצורי הדרך</string>
     <string name="browser_menu_back">חזרה</string>
     <string name="browser_menu_bookmark_this_page_2">הוספת העמוד לסימניות</string>
     <string name="browser_menu_desktop_site">אתר למחשבים</string>
@@ -17,7 +16,6 @@
     <string name="browser_menu_find_in_page">חיפוש בדף</string>
     <string name="browser_menu_forward">קדימה</string>
     <string name="browser_menu_refresh">רענון</string>
-    <string name="browser_menu_remove_from_shortcuts">הסרה מקיצורי הדרך</string>
     <string name="browser_menu_settings">הגדרות</string>
     <string name="browser_menu_share">שיתוף</string>
     <string name="browser_menu_stop">עצירה</string>
@@ -182,7 +180,6 @@
     <string name="quick_settings_sheet_insecure_connection_2">החיבור אינו מאובטח</string>
     <string name="quick_settings_sheet_secure_connection_2">החיבור מאובטח</string>
     <string name="quit_application">היישום ייסגר לצורך להחלת השינויים…</string>
-    <string name="remove_top_site">הסרה</string>
     <string name="rename">שנה שם</string>
     <string name="rename_file">שנה את שם הקובץ</string>
     <string name="request_geolocation">האם לשתף את מיקום המכשיר שלך עם &lt;b&gt;%s&lt;/b&gt;?</string>
@@ -265,11 +262,6 @@
     <string name="share">לַשתף</string>
     <string name="share_image">שתף תמונה</string>
     <string name="share_url">שתף כתובת אתר</string>
-    <string name="shortcut_max_limit_content">כדי להוסיף קיצור דרך חדש, יש להסיר אחד אחר. יש ללחוץ לחיצה ארוכה על האתר ולבחור ב״הסרה״.</string>
-    <string name="shortcut_max_limit_title">מכסת קיצורי הדרך הושגה</string>
-    <string name="shortcut_name_hint">שם קיצור הדרך</string>
-    <string name="shortcut_url_hint">כתובת קיצור הדרך</string>
-    <string name="snackbar_added_to_shortcuts">נוסף לקיצורי הדרך!</string>
     <string name="snackbar_deleted_undo">ביטול</string>
     <string name="snackbar_tab_closed">הלשונית נסגרה</string>
     <string name="sort">מיון לפי</string>
@@ -288,11 +280,6 @@
 <string name="task_decryption_finished">הפענוח הסתיים</string>
     <string name="task_encryption_finished">ההצפנה הסתיימה</string>
     <string name="task_gif_finished">GIF נוצר</string>
-    <string name="top_sites_edit_dialog_save">שמירה</string>
-    <string name="top_sites_edit_dialog_title">עריכת קיצור דרך</string>
-    <string name="top_sites_edit_dialog_url_title">כתובת</string>
-    <string name="top_sites_max_limit_confirmation_button">בסדר, הבנתי</string>
-    <string name="top_sites_rename_dialog_title">שם</string>
     <string name="vault_decrypting">מפענח קובץ, אנא המתן…</string>
     <string name="vault_encrypting">מצפין קובץ, אנא המתן…</string>
     <string name="vault_unsupported">לא ניתן לפתוח את הקובץ הזה. כדי לפתוח, העבר אותו מהתיקייה הבטוחה ונסה שוב.</string>

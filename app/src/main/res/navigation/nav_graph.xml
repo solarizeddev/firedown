@@ -148,20 +148,5 @@
     <dialog
         android:id="@+id/dialog_delete_clipboard"
         android:name="com.solarized.firedown.phone.dialogs.ClipboardDialogFragment" />
-    <dialog
-        android:id="@+id/dialog_shortcuts_options"
-        android:name="com.solarized.firedown.phone.dialogs.ShortCutsOptionSheetDialogFragment" >
-        <action
-            android:id="@+id/action_shortcut_to_edit"
-            app:popUpTo="@+id/dialog_shortcuts_options"
-            app:popUpToInclusive="true"
-            app:destination="@id/dialog_shortcuts_edit" />
-    </dialog>
-    <dialog
-        android:id="@+id/dialog_shortcuts_edit"
-        android:name="com.solarized.firedown.phone.dialogs.ShortCutsEditDialogFragment" />
-    <dialog
-        android:id="@+id/dialog_shortcuts_max"
-        android:name="com.solarized.firedown.phone.dialogs.ShortCutMaxDialogFragment" />
 
 </navigation>

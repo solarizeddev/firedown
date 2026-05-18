@@ -159,7 +159,6 @@
     <string name="popup_toggle">Perjungti rodinį</string>
 <string name="quick_settings_sheet_insecure_connection_2">Ryšys nėra saugus</string>
     <string name="quick_settings_sheet_secure_connection_2">Ryšys yra saugus</string>
-    <string name="remove_top_site">Pašalinti</string>
     <string name="rename">Pervardyti</string>
     <string name="rename_file">Pervardyti failą</string>
     <string name="request_geolocation">Bendrinti įrenginio vietą su &lt;b&gt;%s&lt;/b&gt;?</string>
@@ -256,8 +255,6 @@
     <string name="switch_to_tab_description">Pereiti į kortelę</string>
 <string name="task_decryption_finished">Iššifravimas baigtas</string>
     <string name="task_encryption_finished">Šifravimas baigtas</string>
-    <string name="top_sites_max_limit_confirmation_button">Gerai, supratau</string>
-    <string name="top_sites_rename_dialog_title">Pavadinimas</string>
     <string name="vault_decrypting">Iššifruojamas failas, palaukite…</string>
     <string name="vault_encrypting">Šifruojamas failas, prašom palaukti…</string>
     <string name="vault_unsupported">Nepavyko atidaryti šio failo. Norėdami atidaryti, iškelkite jį iš saugaus aplanko ir bandykite dar kartą.</string>

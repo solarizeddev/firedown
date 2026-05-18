@@ -9,7 +9,6 @@
     <string name="browser_enter_url">Pretražite ili upišite URL.</string>
     <string name="browser_error_image_title">Vatra je nestala</string>
     <string name="browser_find_in_page">Pronađi na stranici</string>
-    <string name="browser_menu_add_to_shortcuts">Dodaj u prečace</string>
     <string name="browser_menu_back">Natrag</string>
     <string name="browser_menu_bookmark_this_page_2">Zabilježi stranicu</string>
     <string name="browser_menu_desktop_site">Klasični prikaz</string>
@@ -17,7 +16,6 @@
     <string name="browser_menu_find_in_page">Pronađi na stranici</string>
     <string name="browser_menu_forward">Naprijed</string>
     <string name="browser_menu_refresh">Osvježi</string>
-    <string name="browser_menu_remove_from_shortcuts">Ukloni iz prečaca</string>
     <string name="browser_menu_settings">Postavke</string>
     <string name="browser_menu_share">Dijeli</string>
     <string name="browser_menu_stop">Zaustavi</string>
@@ -168,7 +166,6 @@
 <string name="quick_settings_sheet_insecure_connection_2">Veza nije sigurna</string>
     <string name="quick_settings_sheet_secure_connection_2">Veza je sigurna</string>
     <string name="quit_application">Zatvaranje aplikacije radi primjene promjena…</string>
-    <string name="remove_top_site">Ukloni</string>
     <string name="rename">Preimenuj</string>
     <string name="rename_file">Preimenuj datoteku</string>
     <string name="request_geolocation">Podijeliti lokaciju svog uređaja s &lt;b&gt;%s&lt;/b&gt;?</string>
@@ -251,11 +248,6 @@
     <string name="share">Udio</string>
     <string name="share_image">Podijeli SLIKU</string>
     <string name="share_url">Podijeli URL</string>
-    <string name="shortcut_max_limit_content">Za dodavanje novog prečaca prvo treba ukloniti jedan. Dotakni i drži jednu od njih i odaberi uklanjanje.</string>
-    <string name="shortcut_max_limit_title">Dosegnuto je ograničenje prečaca</string>
-    <string name="shortcut_name_hint">Ime prečaca</string>
-    <string name="shortcut_url_hint">URL prečaca</string>
-    <string name="snackbar_added_to_shortcuts">Dodano u prečace!</string>
     <string name="snackbar_deleted_undo">PONIŠTI</string>
     <string name="snackbar_tab_closed">Kartica je zatvorena</string>
     <string name="sort">Poredaj po</string>
@@ -273,11 +265,6 @@
     <string name="switch_to_tab_description">Prijeđi na karticu</string>
 <string name="task_decryption_finished">Dešifriranje je završeno</string>
     <string name="task_encryption_finished">Šifriranje je završeno</string>
-    <string name="top_sites_edit_dialog_save">Spremi</string>
-    <string name="top_sites_edit_dialog_title">Uredi prečac</string>
-    <string name="top_sites_edit_dialog_url_title">URL</string>
-    <string name="top_sites_max_limit_confirmation_button">U redu, shvaćam</string>
-    <string name="top_sites_rename_dialog_title">Naziv</string>
     <string name="vault_decrypting">Dešifriranje datoteke, pričekajte...</string>
     <string name="vault_encrypting">Šifriranje datoteke, pričekajte…</string>
     <string name="vault_unsupported">Ne mogu otvoriti ovu datoteku. Za otvaranje premjestite ga iz sigurne mape i pokušajte ponovno.</string>

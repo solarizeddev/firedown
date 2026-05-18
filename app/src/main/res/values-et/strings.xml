@@ -9,13 +9,11 @@
     <string name="browser_enter_url">Otsige või sisestage URL.</string>
     <string name="browser_error_image_title">Tuli on kadunud</string>
     <string name="browser_find_in_page">Otsi lehelt</string>
-    <string name="browser_menu_add_to_shortcuts">Lisa otseteedesse</string>
     <string name="browser_menu_back">Tagasi</string>
     <string name="browser_menu_desktop_site">Töölaua versioon</string>
     <string name="browser_menu_find_in_page">Otsi lehelt</string>
     <string name="browser_menu_forward">Edasi</string>
     <string name="browser_menu_refresh">Värskenda</string>
-    <string name="browser_menu_remove_from_shortcuts">Eemalda otseteede hulgast</string>
     <string name="browser_menu_settings">Sätted</string>
     <string name="browser_menu_share">Jaga</string>
     <string name="browser_menu_stop">Peata</string>
@@ -166,7 +164,6 @@
     <string name="settings_webrtc_enabled">Kasuta WebRTC-d</string>
 <string name="quick_settings_sheet_insecure_connection_2">Ühendus pole turvaline</string>
     <string name="quick_settings_sheet_secure_connection_2">Turvaline ühendus</string>
-    <string name="remove_top_site">Eemalda</string>
     <string name="rename">Nimeta ümber</string>
     <string name="rename_file">Nimeta fail ümber</string>
     <string name="request_geolocation">Kas jagada oma seadme asukohta kasutajaga &lt;b&gt;%s&lt;/b&gt;?</string>
@@ -247,10 +244,6 @@
     <string name="share">Jaga</string>
     <string name="share_image">Jaga IMAGE</string>
     <string name="share_url">Jaga URL-i</string>
-    <string name="shortcut_max_limit_content">Uue otsetee lisamiseks tuleb üks olemasolev eemaldada. Puuduta ja hoia saidil pikemalt, seejärel vali eemaldamine.</string>
-    <string name="shortcut_max_limit_title">Otseteede limiit on täis</string>
-    <string name="shortcut_name_hint">Otsetee nimi</string>
-    <string name="snackbar_added_to_shortcuts">Lisatud otseteedesse!</string>
     <string name="snackbar_deleted_undo">VÕTA TAGASI</string>
     <string name="snackbar_tab_closed">Kaart suleti</string>
     <string name="sort">Sortimisalus:</string>
@@ -269,9 +262,6 @@
     <string name="switch_to_tab_description">Lülitu kaardile</string>
 <string name="task_decryption_finished">Dekrüpteerimine lõpetatud</string>
     <string name="task_encryption_finished">Krüpteerimine on lõpetatud</string>
-    <string name="top_sites_edit_dialog_save">Salvesta</string>
-    <string name="top_sites_max_limit_confirmation_button">Olgu, sain aru</string>
-    <string name="top_sites_rename_dialog_title">Nimi</string>
     <string name="vault_decrypting">Faili dekrüpteerimine, palun oodake…</string>
     <string name="vault_encrypting">Faili krüptimine, palun oodake…</string>
     <string name="vault_unsupported">Seda faili ei saa avada. Avamiseks teisaldage see turvalisest kaustast välja ja proovige uuesti.</string>

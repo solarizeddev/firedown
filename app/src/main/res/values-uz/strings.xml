@@ -8,13 +8,11 @@
     <string name="browser_enter_url">Qidiring yoki URL manzilini kiriting</string>
     <string name="browser_error_image_title">Olov yo\'qoldi</string>
     <string name="browser_find_in_page">Sahifadan topish</string>
-    <string name="browser_menu_add_to_shortcuts">Yorliqlarga qoʻshish</string>
     <string name="browser_menu_back">Orqaga</string>
     <string name="browser_menu_desktop_site">Saytning kompyuter versiyasi</string>
     <string name="browser_menu_find_in_page">Sahifadan topish</string>
     <string name="browser_menu_forward">Oldinga</string>
     <string name="browser_menu_refresh">Yangilash</string>
-    <string name="browser_menu_remove_from_shortcuts">Yorliqlardan olib tashlash</string>
     <string name="browser_menu_settings">Sozlamalar</string>
     <string name="browser_menu_share">Ulashish</string>
     <string name="browser_menu_stop">Toʻxtatish</string>
@@ -159,7 +157,6 @@
     <string name="popup_toggle">Ko‘rishni o‘chirish</string>
 <string name="quick_settings_sheet_insecure_connection_2">Ulanish xavfsiz emas</string>
     <string name="quick_settings_sheet_secure_connection_2">Ulanish xavfsiz</string>
-    <string name="remove_top_site">Olib tashlash</string>
     <string name="rename">Nomini o\'zgartirish</string>
     <string name="rename_file">Fayl nomini o\'zgartirish</string>
     <string name="restart_origin">Qayta ishga tushirish</string>
@@ -228,10 +225,6 @@
     <string name="share">Ulashish</string>
     <string name="share_image">TASVIRni ulashish</string>
     <string name="share_url">URL almashish</string>
-    <string name="shortcut_max_limit_content">Yangi yorliq qoʻshish uchun eskilaridan birini olib tashlang. Saytni bosib turing va oʻchirishni tanlang.</string>
-    <string name="shortcut_max_limit_title">Yorliqlar chekloviga yetdi</string>
-    <string name="shortcut_name_hint">Yorliq nomi</string>
-    <string name="snackbar_added_to_shortcuts">Yorliqlarga qoʻshildi!</string>
     <string name="snackbar_deleted_undo">BEKOR QILISH</string>
     <string name="snackbar_tab_closed">Varaq yopildi</string>
     <string name="sort">Saralash</string>
@@ -249,8 +242,6 @@
     <string name="switch_to_tab_description">Varaqqa oʻtish</string>
 <string name="task_decryption_finished">Shifrni ochish tugallandi</string>
     <string name="task_encryption_finished">Shifrlash tugallandi</string>
-    <string name="top_sites_max_limit_confirmation_button">OK, tushundim</string>
-    <string name="top_sites_rename_dialog_title">Nomi</string>
     <string name="vault_decrypting">Fayl shifrlanmoqda, kuting…</string>
     <string name="vault_encrypting">Fayl shifrlanmoqda, kuting…</string>
     <string name="vault_unsupported">Bu faylni ochib boʻlmadi. Ochish uchun uni xavfsiz jilddan olib tashlang va qaytadan urinib ko‘ring.</string>

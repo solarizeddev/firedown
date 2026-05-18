@@ -1,5 +1,4 @@
 <resources>
-    <string name="browser_menu_add_to_shortcuts">Legg til i snarveier</string>
     <string name="browser_menu_back">Tilbake</string>
     <string name="browser_menu_bookmark_this_page_2">Bokmerk side</string>
     <string name="browser_menu_desktop_site">Datamaskinversjon</string>
@@ -7,7 +6,6 @@
     <string name="browser_menu_find_in_page">Finn på siden</string>
     <string name="browser_menu_forward">Frem</string>
     <string name="browser_menu_refresh">Oppdater</string>
-    <string name="browser_menu_remove_from_shortcuts">Fjern fra snarveier</string>
     <string name="browser_menu_settings">Innstillinger</string>
     <string name="browser_menu_share">Del</string>
     <string name="browser_menu_stop">Stopp</string>
@@ -36,7 +34,6 @@
     <string name="quick_settings_sheet_insecure_connection_2">Tilkoblingen er ikke sikker</string>
     <string name="quick_settings_sheet_secure_connection_2">Tilkoblingen er sikker</string>
     <string name="quit_application">Avslutter applikasjonen for å legge til endringer…</string>
-    <string name="remove_top_site">Fjern</string>
     <string name="settings_dark_theme">Mørkt</string>
     <string name="settings_delete_browsing">Slett nettleserdata</string>
     <string name="settings_delete_browsing_data_browsing_history_title">Nettleserhistorikk</string>
@@ -51,18 +48,8 @@
     <string name="settings_quit_title">Slett nettleserdata når du avslutter</string>
     <string name="settings_search_engine_select">Søk denne gangen i:</string>
     <string name="settings_theme">Tema</string>
-    <string name="shortcut_max_limit_content">For å legge til en ny snarvei, må du fjerne et annet. Trykk og hold på nettstedet, og velg fjern.</string>
-    <string name="shortcut_max_limit_title">Grensen for antall snarveier nådd</string>
-    <string name="shortcut_name_hint">Navn på snarvei</string>
-    <string name="shortcut_url_hint">URL for snarvei</string>
-    <string name="snackbar_added_to_shortcuts">Lagt til i snarveier!</string>
     <string name="snackbar_deleted_undo">ANGRE</string>
     <string name="snackbar_tab_closed">Fane lukket</string>
     <string name="switch_to_tab_description">Bytt til fane</string>
-<string name="top_sites_edit_dialog_save">Lagre</string>
-    <string name="top_sites_edit_dialog_title">Rediger snarvei</string>
-    <string name="top_sites_edit_dialog_url_title">URL</string>
-    <string name="top_sites_max_limit_confirmation_button">OK, jeg skjønner</string>
-    <string name="top_sites_rename_dialog_title">Navn</string>
     <string name="bookmark_name">Navn</string>
 </resources>

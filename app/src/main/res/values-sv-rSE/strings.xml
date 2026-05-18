@@ -1,5 +1,4 @@
 <resources>
-    <string name="browser_menu_add_to_shortcuts">Lägg till i genvägar</string>
     <string name="browser_menu_back">Tillbaka</string>
     <string name="browser_menu_bookmark_this_page_2">Bokmärk sida</string>
     <string name="browser_menu_desktop_site">Webbplats för datorer</string>
@@ -7,7 +6,6 @@
     <string name="browser_menu_find_in_page">Hitta på sidan</string>
     <string name="browser_menu_forward">Framåt</string>
     <string name="browser_menu_refresh">Uppdatera</string>
-    <string name="browser_menu_remove_from_shortcuts">Ta bort från genvägar</string>
     <string name="browser_menu_settings">Inställningar</string>
     <string name="browser_menu_share">Dela</string>
     <string name="browser_menu_stop">Stopp</string>
@@ -36,7 +34,6 @@
     <string name="quick_settings_sheet_insecure_connection_2">Anslutningen är inte säker</string>
     <string name="quick_settings_sheet_secure_connection_2">Anslutningen är säker</string>
     <string name="quit_application">Avslutar programmet för att tillämpa ändringar…</string>
-    <string name="remove_top_site">Ta bort</string>
     <string name="settings_dark_theme">Mörkt</string>
     <string name="settings_delete_browsing">Ta bort surfdata</string>
     <string name="settings_delete_browsing_data_browsing_history_title">Webbläsarhistorik</string>
@@ -51,18 +48,8 @@
     <string name="settings_quit_title">Ta bort surfdata vid avslut</string>
     <string name="settings_search_engine_select">Denna gång, sök med:</string>
     <string name="settings_theme">Tema</string>
-    <string name="shortcut_max_limit_content">För att lägga till en ny genväg, ta bort en. Tryck och håll nere sidan och välj ta bort.</string>
-    <string name="shortcut_max_limit_title">Övre gräns för genvägar nådd</string>
-    <string name="shortcut_name_hint">Genvägsnamn</string>
-    <string name="shortcut_url_hint">Genvägs-URL</string>
-    <string name="snackbar_added_to_shortcuts">Tillagd till genvägar!</string>
     <string name="snackbar_deleted_undo">ÅNGRA</string>
     <string name="snackbar_tab_closed">Flik stängd</string>
     <string name="switch_to_tab_description">Växla till flik</string>
-<string name="top_sites_edit_dialog_save">Spara</string>
-    <string name="top_sites_edit_dialog_title">Redigera genväg</string>
-    <string name="top_sites_edit_dialog_url_title">URL</string>
-    <string name="top_sites_max_limit_confirmation_button">Ok, jag förstår</string>
-    <string name="top_sites_rename_dialog_title">Namn</string>
     <string name="bookmark_name">Namn</string>
 </resources>

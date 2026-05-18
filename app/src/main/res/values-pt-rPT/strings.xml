@@ -6,7 +6,6 @@
     <string name="browser_enter_url">Pesquise ou digite URL.</string>
     <string name="browser_error_image_title">O fogo se foi</string>
     <string name="browser_find_in_page">Encontrar na página</string>
-    <string name="browser_menu_add_to_shortcuts">Adicionar aos atalhos</string>
     <string name="browser_menu_back">Anterior</string>
     <string name="browser_menu_bookmark_this_page_2">Adicionar página aos marcadores</string>
     <string name="browser_menu_desktop_site">Site para PC</string>
@@ -14,7 +13,6 @@
     <string name="browser_menu_find_in_page">Encontrar na página</string>
     <string name="browser_menu_forward">Avançar</string>
     <string name="browser_menu_refresh">Atualizar</string>
-    <string name="browser_menu_remove_from_shortcuts">Remover dos atalhos</string>
     <string name="browser_menu_settings">Definições</string>
     <string name="browser_menu_share">Partilhar</string>
     <string name="browser_menu_stop">Parar</string>
@@ -148,7 +146,6 @@
     <string name="quick_settings_sheet_insecure_connection_2">A ligação não é segura</string>
     <string name="quick_settings_sheet_secure_connection_2">A ligação é segura</string>
     <string name="quit_application">A encerrar a aplicação para aplicar as alterações…</string>
-    <string name="remove_top_site">Remover</string>
     <string name="rename">Renomear</string>
     <string name="rename_file">Renomear arquivo</string>
     <string name="restart_origin">Reiniciar</string>
@@ -200,11 +197,6 @@
     <string name="share">Compartilhar</string>
     <string name="share_image">Compartilhar IMAGEM</string>
     <string name="share_url">URL de compartilhamento</string>
-    <string name="shortcut_max_limit_content">Para poder adicionar um novo atalho, remova um. Toque e aguarde sobre o site e selecione remover.</string>
-    <string name="shortcut_max_limit_title">Limite de atalhos alcançado</string>
-    <string name="shortcut_name_hint">Nome do atalho</string>
-    <string name="shortcut_url_hint">URL do atalho</string>
-    <string name="snackbar_added_to_shortcuts">Adicionado aos atalhos!</string>
     <string name="snackbar_deleted_undo">ANULAR</string>
     <string name="snackbar_tab_closed">Separador fechado</string>
     <string name="sort">Ordenar por</string>
@@ -220,11 +212,6 @@
     <string name="sort_by_type_video">Vídeo</string>
     <string name="sort_by_type_zip">Fecho eclair</string>
     <string name="switch_to_tab_description">Mudar para o separador</string>
-<string name="top_sites_edit_dialog_save">Guardar</string>
-    <string name="top_sites_edit_dialog_title">Editar atalho</string>
-    <string name="top_sites_edit_dialog_url_title">URL</string>
-    <string name="top_sites_max_limit_confirmation_button">OK, percebi</string>
-    <string name="top_sites_rename_dialog_title">Nome</string>
     <string name="vault_decrypting">Descriptografando arquivo, aguarde…</string>
     <string name="vault_encrypting">Criptografando arquivo, aguarde…</string>
     <string name="vault_unsupported">Não é possível abrir este ficheiro. Para abrir, retira-o da Pasta segura e tenta novamente.</string>

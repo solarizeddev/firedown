@@ -9,7 +9,6 @@
     <string name="browser_enter_url">Vyhledejte nebo zadejte adresu URL.</string>
     <string name="browser_error_image_title">Oheň je pryč</string>
     <string name="browser_find_in_page">Najít na stránce</string>
-    <string name="browser_menu_add_to_shortcuts">Přidat do zkratek</string>
     <string name="browser_menu_back">Zpět</string>
     <string name="browser_menu_bookmark_this_page_2">Přidat stránku do záložek</string>
     <string name="browser_menu_desktop_site">Verze pro počítač</string>
@@ -17,7 +16,6 @@
     <string name="browser_menu_find_in_page">Najít na stránce</string>
     <string name="browser_menu_forward">Vpřed</string>
     <string name="browser_menu_refresh">Obnovit</string>
-    <string name="browser_menu_remove_from_shortcuts">Odebrat ze zkratek</string>
     <string name="browser_menu_settings">Nastavení</string>
     <string name="browser_menu_share">Sdílet</string>
     <string name="browser_menu_stop">Zastaví načítání stránky</string>
@@ -187,7 +185,6 @@
     <string name="quick_settings_sheet_insecure_connection_2">Spojení není zabezpečené</string>
     <string name="quick_settings_sheet_secure_connection_2">Zabezpečené spojení</string>
     <string name="quit_application">Ukončování aplikace pro použití změn…</string>
-    <string name="remove_top_site">Odebrat</string>
     <string name="rename">Přejmenovat</string>
     <string name="rename_file">Přejmenuj soubor</string>
     <string name="request_geolocation">Sdílet polohu svého zařízení s uživatelem &lt;b&gt;%s&lt;/b&gt;?</string>
@@ -270,11 +267,6 @@
     <string name="share">Podíl</string>
     <string name="share_image">Sdílet IMAGE</string>
     <string name="share_url">Sdílet URL</string>
-    <string name="shortcut_max_limit_content">Pro přidání další zkratky nejdříve nějakou odeberte. Stačí na ní podržet prst.</string>
-    <string name="shortcut_max_limit_title">Dosažen maximální počet zkratek</string>
-    <string name="shortcut_name_hint">Název zkratky</string>
-    <string name="shortcut_url_hint">Adresa zkratky</string>
-    <string name="snackbar_added_to_shortcuts">Přidáno do zkratek</string>
     <string name="snackbar_deleted_undo">ZPĚT</string>
     <string name="snackbar_tab_closed">Panel byl zavřen</string>
     <string name="sort">Řadit podle</string>
@@ -294,11 +286,6 @@
 <string name="task_decryption_finished">Dešifrování dokončeno</string>
     <string name="task_encryption_finished">Šifrování dokončeno</string>
     <string name="task_gif_finished">GIF vytvořen</string>
-    <string name="top_sites_edit_dialog_save">Uložit</string>
-    <string name="top_sites_edit_dialog_title">Upravit zkratku</string>
-    <string name="top_sites_edit_dialog_url_title">URL</string>
-    <string name="top_sites_max_limit_confirmation_button">OK, rozumím</string>
-    <string name="top_sites_rename_dialog_title">Název</string>
     <string name="vault_decrypting">Dešifrování souboru, čekejte prosím…</string>
     <string name="vault_encrypting">Šifrování souboru, čekejte prosím…</string>
     <string name="vault_unsupported">Tento soubor nelze otevřít. Chcete-li jej otevřít, přesuňte jej z bezpečné složky a zkuste to znovu.</string>

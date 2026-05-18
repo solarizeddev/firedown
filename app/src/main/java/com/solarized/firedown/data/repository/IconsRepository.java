@@ -3,10 +3,8 @@ package com.solarized.firedown.data.repository;
 
 import androidx.annotation.NonNull;
 
-import com.solarized.firedown.data.ShortCutDatabase;
 import com.solarized.firedown.data.WebHistoryDatabase;
 import com.solarized.firedown.data.di.Qualifiers;
-import com.solarized.firedown.utils.WebUtils;
 
 import java.io.IOException;
 import java.util.concurrent.Executor;
@@ -25,19 +23,16 @@ public class IconsRepository {
 
     private static final String TAG = IconsRepository.class.getSimpleName();
     private final WebHistoryDatabase mHistoryDb;
-    private final ShortCutDatabase mShortCutDb;
     private final OkHttpClient mOkHttpClient;
     private final Executor mDiskExecutor;
 
     @Inject
     public IconsRepository(
             WebHistoryDatabase historyDb,
-            ShortCutDatabase shortCutDb,
             OkHttpClient okHttpClient,
             @Qualifiers.DiskIO Executor diskExecutor
     ) {
         this.mHistoryDb = historyDb;
-        this.mShortCutDb = shortCutDb;
         this.mOkHttpClient = okHttpClient;
         this.mDiskExecutor = diskExecutor;
     }
@@ -96,18 +91,6 @@ public class IconsRepository {
             int historyRes = mHistoryDb.webHistoryDao().getResolution(url);
             if (resolution >= historyRes || historyRes <= 0) {
                 mHistoryDb.webHistoryDao().updateIconData(url, iconUrl, resolution);
-            }
-
-            // Update Shortcuts
-            int shortCutRes = mShortCutDb.shortCutsDao().getResolution(url);
-//            Log.d(TAG, "syncToDatabases shortcut: " + shortCutRes + " url: " + url + " resolution: " +resolution + " icon: " + iconUrl);
-//            List<ShortCutsEntity> shortCutsEntityList = mShortCutDb.shortCutsDao().getAllRaw();
-//            for(ShortCutsEntity entity : shortCutsEntityList){
-//                Log.d(TAG, "syncToDatabases raw shortcut: " + entity.getFileIconResolution() + " url: " + entity.getUrl() + " domain: " + entity.getDomain() + " icon: " + entity.getIcon());
-//            }
-            if (resolution >= shortCutRes || shortCutRes <= 0) {
-                String domain = WebUtils.getDomainName(url);
-                mShortCutDb.shortCutsDao().updateIconData(domain, iconUrl, resolution);
             }
         });
     }

@@ -9,7 +9,6 @@
     <string name="browser_enter_url">Pretražite ili unesite URL</string>
     <string name="browser_error_image_title">Vatra je nestala</string>
     <string name="browser_find_in_page">Pronađi na stranici</string>
-    <string name="browser_menu_add_to_shortcuts">Dodaj u prečice</string>
     <string name="browser_menu_back">Nazad</string>
     <string name="browser_menu_bookmark_this_page_2">Zabilježi stranicu</string>
     <string name="browser_menu_desktop_site">Desktop stranica</string>
@@ -17,7 +16,6 @@
     <string name="browser_menu_find_in_page">Pronađi na stranici</string>
     <string name="browser_menu_forward">Naprijed</string>
     <string name="browser_menu_refresh">Osvježi</string>
-    <string name="browser_menu_remove_from_shortcuts">Ukloni iz prečica</string>
     <string name="browser_menu_settings">Postavke</string>
     <string name="browser_menu_share">Podijeli</string>
     <string name="browser_menu_stop">Zaustavi</string>
@@ -169,7 +167,6 @@
     <string name="quick_settings_sheet_insecure_connection_2">Veza nije sigurna</string>
     <string name="quick_settings_sheet_secure_connection_2">Veza je sigurna</string>
     <string name="quit_application">Napuštanje aplikacije radi primjene promjena…</string>
-    <string name="remove_top_site">Ukloni</string>
     <string name="rename">Preimenuj</string>
     <string name="rename_file">Preimenuj fajl</string>
     <string name="restart_origin">Ponovo pokreni</string>
@@ -241,11 +238,6 @@
     <string name="share">Dijeli</string>
     <string name="share_image">Dijeli SLIKU</string>
     <string name="share_url">Dijeli URL</string>
-    <string name="shortcut_max_limit_content">Da dodate novu prečicu, uklonite jednu. Dodirnite i držite stranicu i odaberite ukloni.</string>
-    <string name="shortcut_max_limit_title">Dostignuto je ograničenje prečice</string>
-    <string name="shortcut_name_hint">Naziv prečice</string>
-    <string name="shortcut_url_hint">URL prečica</string>
-    <string name="snackbar_added_to_shortcuts">Dodato u prečice!</string>
     <string name="snackbar_deleted_undo">VRATI</string>
     <string name="snackbar_tab_closed">Tab zatvoren</string>
     <string name="sort">Poredajte po</string>
@@ -263,11 +255,6 @@
     <string name="switch_to_tab_description">Prebaci se na tab</string>
 <string name="task_decryption_finished">Dešifrovanje je završeno</string>
     <string name="task_encryption_finished">Šifriranje je završeno</string>
-    <string name="top_sites_edit_dialog_save">Sačuvaj</string>
-    <string name="top_sites_edit_dialog_title">Uredi prečicu</string>
-    <string name="top_sites_edit_dialog_url_title">URL</string>
-    <string name="top_sites_max_limit_confirmation_button">OK, razumijem</string>
-    <string name="top_sites_rename_dialog_title">Naziv</string>
     <string name="vault_decrypting">Dešifriranje fajla, sačekajte…</string>
     <string name="vault_encrypting">Šifriranje fajla, sačekajte…</string>
     <string name="vault_unsupported">Ne mogu otvoriti ovaj fajl. Da ga otvorite, premjestite ga iz sigurnog foldera i pokušajte ponovo.</string>

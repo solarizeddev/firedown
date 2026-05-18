@@ -1,5 +1,4 @@
 <resources>
-    <string name="browser_menu_add_to_shortcuts">Añadir a accesos directos</string>
     <string name="browser_menu_back">Atrás</string>
     <string name="browser_menu_bookmark_this_page_2">Marcar página</string>
     <string name="browser_menu_desktop_site">Sitio de escritorio</string>
@@ -7,7 +6,6 @@
     <string name="browser_menu_find_in_page">Buscar en la página</string>
     <string name="browser_menu_forward">Siguiente</string>
     <string name="browser_menu_refresh">Actualizar</string>
-    <string name="browser_menu_remove_from_shortcuts">Eliminar de los accesos directos</string>
     <string name="browser_menu_settings">Ajustes</string>
     <string name="browser_menu_share">Compartir</string>
     <string name="browser_menu_stop">Detener</string>
@@ -34,7 +32,6 @@
 <string name="quick_settings_sheet_insecure_connection_2">Conexión no segura</string>
     <string name="quick_settings_sheet_secure_connection_2">Conexión segura</string>
     <string name="quit_application">Saliendo de la aplicación para aplicar los cambios…</string>
-    <string name="remove_top_site">Eliminar</string>
     <string name="settings_dark_theme">Oscuro</string>
     <string name="settings_delete_browsing">Eliminar datos de navegación</string>
     <string name="settings_delete_browsing_data_browsing_history_title">Historial de navegación</string>
@@ -49,18 +46,8 @@
     <string name="settings_quit_title">Eliminar datos de navegación al salir</string>
     <string name="settings_search_engine_select">Esta vez buscar en:</string>
     <string name="settings_theme">Tema</string>
-    <string name="shortcut_max_limit_content">Para añadir un nuevo acceso directo, elimina uno. Toca y mantén presionado el sitio y selecciona eliminar.</string>
-    <string name="shortcut_max_limit_title">Límite de accesos directos alcanzado</string>
-    <string name="shortcut_name_hint">Nombre de acceso directo</string>
-    <string name="shortcut_url_hint">URL de acceso directo</string>
-    <string name="snackbar_added_to_shortcuts">¡Añadido a los accesos directos!</string>
     <string name="snackbar_deleted_undo">DESHACER</string>
     <string name="snackbar_tab_closed">Pestaña cerrada</string>
     <string name="switch_to_tab_description">Cambiar a la pestaña</string>
-<string name="top_sites_edit_dialog_save">Guardar</string>
-    <string name="top_sites_edit_dialog_title">Editar acceso directo</string>
-    <string name="top_sites_edit_dialog_url_title">URL</string>
-    <string name="top_sites_max_limit_confirmation_button">Vale, entendido</string>
-    <string name="top_sites_rename_dialog_title">Nombre</string>
     <string name="bookmark_name">Nombre</string>
 </resources>

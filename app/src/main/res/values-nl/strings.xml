@@ -12,7 +12,6 @@
     <string name="browser_enter_url">Zoek of typ URL</string>
     <string name="browser_error_image_title">Het vuur is verdwenen</string>
     <string name="browser_find_in_page">Zoeken op pagina</string>
-    <string name="browser_menu_add_to_shortcuts">Aan snelkoppelingen toevoegen</string>
     <string name="browser_menu_back">Terug</string>
     <string name="browser_menu_bookmark_this_page_2">Bladwijzer voor pagina maken</string>
     <string name="browser_menu_desktop_site">Desktopwebsite</string>
@@ -20,7 +19,6 @@
     <string name="browser_menu_find_in_page">Zoeken op pagina</string>
     <string name="browser_menu_forward">Vooruit</string>
     <string name="browser_menu_refresh">Vernieuwen</string>
-    <string name="browser_menu_remove_from_shortcuts">Uit snelkoppelingen verwijderen</string>
     <string name="browser_menu_settings">Instellingen</string>
     <string name="browser_menu_share">Delen</string>
     <string name="browser_menu_stop">Stoppen</string>
@@ -207,7 +205,6 @@
     <string name="blocked_trackers_detail_empty">Op deze pagina zijn nog geen trackers geblokkeerd.</string>
     <string name="blocked_trackers_host_count_multiplier">×%1$d</string>
     <string name="quit_application">De toepassing wordt afgesloten om wijzigingen toe te passen…</string>
-    <string name="remove_top_site">Verwijderen</string>
     <string name="rename">Hernoemen</string>
     <string name="rename_file">Bestand hernoemen</string>
     <string name="request_geolocation">De locatie van uw apparaat delen met &lt;b&gt;%s&lt;/b&gt;?</string>
@@ -304,11 +301,6 @@
     <string name="share">Delen</string>
     <string name="share_image">Afbeelding delen</string>
     <string name="share_url">Deel URL</string>
-    <string name="shortcut_max_limit_content">Verwijder een snelkoppeling om er een toe te voegen. Houd de website ingedrukt en selecteer Verwijderen.</string>
-    <string name="shortcut_max_limit_title">Snelkoppelingslimiet bereikt</string>
-    <string name="shortcut_name_hint">Naam snelkoppeling</string>
-    <string name="shortcut_url_hint">Snelkoppelings-URL</string>
-    <string name="snackbar_added_to_shortcuts">Toegevoegd aan snelkoppelingen!</string>
     <string name="snackbar_deleted_undo">ONGEDAAN MAKEN</string>
     <string name="snackbar_tab_closed">Tabblad gesloten</string>
     <string name="sort">Sorteren op</string>
@@ -328,11 +320,6 @@
 <string name="task_decryption_finished">Decodering voltooid</string>
     <string name="task_encryption_finished">Encryptie voltooid</string>
     <string name="task_gif_finished">GIF gemaakt</string>
-    <string name="top_sites_edit_dialog_save">Opslaan</string>
-    <string name="top_sites_edit_dialog_title">Snelkoppeling bewerken</string>
-    <string name="top_sites_edit_dialog_url_title">URL</string>
-    <string name="top_sites_max_limit_confirmation_button">OK, begrepen</string>
-    <string name="top_sites_rename_dialog_title">Naam</string>
     <string name="vault_decrypting">Het bestand wordt gedecodeerd. Even geduld a.u.b....</string>
     <string name="vault_encrypting">Bestand versleutelen, even geduld a.u.b....</string>
     <string name="vault_unsupported">Kan dit bestand niet openen. Om het te openen, verplaatst u het uit de Beveiligde map en probeert u het opnieuw.</string>

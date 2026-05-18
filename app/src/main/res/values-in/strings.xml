@@ -8,7 +8,6 @@
     <string name="browser_enter_url">Cari atau Ketik URL</string>
     <string name="browser_error_image_title">Apinya Sudah Hilang</string>
     <string name="browser_find_in_page">Temukan di laman</string>
-    <string name="browser_menu_add_to_shortcuts">Tambahkan ke pintasan</string>
     <string name="browser_menu_back">Kembali</string>
     <string name="browser_menu_bookmark_this_page_2">Markahi laman</string>
     <string name="browser_menu_desktop_site">Situs desktop</string>
@@ -16,7 +15,6 @@
     <string name="browser_menu_find_in_page">Temukan di laman</string>
     <string name="browser_menu_forward">Maju</string>
     <string name="browser_menu_refresh">Segarkan</string>
-    <string name="browser_menu_remove_from_shortcuts">Hapus dari pintasan</string>
     <string name="browser_menu_settings">Setelan</string>
     <string name="browser_menu_share">Bagikan</string>
     <string name="browser_menu_stop">Hentikan</string>
@@ -169,7 +167,6 @@
     <string name="quick_settings_sheet_insecure_connection_2">Sambungan tidak aman</string>
     <string name="quick_settings_sheet_secure_connection_2">Sambungan aman</string>
     <string name="quit_application">Keluar dari aplikasi untuk menerapkan perubahan…</string>
-    <string name="remove_top_site">Hapus</string>
     <string name="rename">Ganti nama</string>
     <string name="rename_file">Ganti nama berkas</string>
     <string name="restart_origin">Mengulang kembali</string>
@@ -241,11 +238,6 @@
     <string name="share">Membagikan</string>
     <string name="share_image">Bagikan GAMBAR</string>
     <string name="share_url">Bagikan URL</string>
-    <string name="shortcut_max_limit_content">Untuk menambah pintasan baru, hapus salah satunya. Sentuh dan tahan situs dan pilih hapus.</string>
-    <string name="shortcut_max_limit_title">Batas pintasan tercapai</string>
-    <string name="shortcut_name_hint">Nama pintasan</string>
-    <string name="shortcut_url_hint">URL Pintasan</string>
-    <string name="snackbar_added_to_shortcuts">Ditambahkan ke pintasan!</string>
     <string name="snackbar_deleted_undo">URUNGKAN</string>
     <string name="snackbar_tab_closed">Tab ditutup</string>
     <string name="sort">Urutkan menurut</string>
@@ -263,11 +255,6 @@
     <string name="switch_to_tab_description">Pindah ke tab</string>
 <string name="task_decryption_finished">Dekripsi selesai</string>
     <string name="task_encryption_finished">Enkripsi selesai</string>
-    <string name="top_sites_edit_dialog_save">Simpan</string>
-    <string name="top_sites_edit_dialog_title">Edit pintasan</string>
-    <string name="top_sites_edit_dialog_url_title">URL</string>
-    <string name="top_sites_max_limit_confirmation_button">Oke, Paham!</string>
-    <string name="top_sites_rename_dialog_title">Nama</string>
     <string name="vault_decrypting">Mendekripsi file, harap tunggu…</string>
     <string name="vault_encrypting">Mengenkripsi file, harap tunggu…</string>
     <string name="vault_unsupported">Tidak dapat membuka file ini. Untuk membukanya, keluarkan dari Folder Aman dan coba lagi.</string>

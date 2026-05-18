@@ -8,14 +8,12 @@
     <string name="browser_enter_url">Maghanap o Mag-type ng URL</string>
     <string name="browser_error_image_title">Nawala na ang Apoy</string>
     <string name="browser_find_in_page">Hanapin sa pahina</string>
-    <string name="browser_menu_add_to_shortcuts">Idagdag sa mga shortcut</string>
     <string name="browser_menu_back">Bumalik</string>
     <string name="browser_menu_desktop_site">Desktop site</string>
     <string name="browser_menu_edit_bookmark">Baguhin ang bookmark</string>
     <string name="browser_menu_find_in_page">Hanapin sa pahina</string>
     <string name="browser_menu_forward">Sumulong</string>
     <string name="browser_menu_refresh">i-Refresh</string>
-    <string name="browser_menu_remove_from_shortcuts">Tanggalin sa mga shortcut</string>
     <string name="browser_menu_settings">Mga Setting</string>
     <string name="browser_menu_share">Ibahagi</string>
     <string name="browser_menu_stop">Tumigil</string>
@@ -166,7 +164,6 @@
 <string name="quick_settings_sheet_insecure_connection_2">Ang koneksyon ay hindi ligtas</string>
     <string name="quick_settings_sheet_secure_connection_2">Ligtas na koneksyon</string>
     <string name="quit_application">Nagsasara na ang application para mailapat ang mga pagbabago…</string>
-    <string name="remove_top_site">Alisin</string>
     <string name="rename">Palitan ang pangalan</string>
     <string name="rename_file">Palitan ANG pangalan ng file</string>
     <string name="restart_origin">I-restart</string>
@@ -235,11 +232,6 @@
     <string name="share">Ibahagi</string>
     <string name="share_image">Ibahagi ang IMAGE</string>
     <string name="share_url">Ibahagi ang URL</string>
-    <string name="shortcut_max_limit_content">Para magdagdag ng bagong shortcut, magtanggal ng isa. I-tap nang matagal ang site at tanggalin.</string>
-    <string name="shortcut_max_limit_title">Naabot na ang hangganan na bilang ng mga shortcut</string>
-    <string name="shortcut_name_hint">Pangalan ng shortcut</string>
-    <string name="shortcut_url_hint">URL ng shortcut</string>
-    <string name="snackbar_added_to_shortcuts">Naidagdag na sa mga shortcut!</string>
     <string name="snackbar_deleted_undo">i-UNDO</string>
     <string name="snackbar_tab_closed">Naisara na ang tab</string>
     <string name="sort">Pagbukud-bukurin ayon sa</string>
@@ -257,11 +249,6 @@
     <string name="switch_to_tab_description">Lumipat ng tab</string>
 <string name="task_decryption_finished">Tapos na ang pag-decryption</string>
     <string name="task_encryption_finished">Tapos na ang pag-encrypt</string>
-    <string name="top_sites_edit_dialog_save">I-save</string>
-    <string name="top_sites_edit_dialog_title">Baguhin ang shortcut</string>
-    <string name="top_sites_edit_dialog_url_title">URL</string>
-    <string name="top_sites_max_limit_confirmation_button">OK, Nakuha ko</string>
-    <string name="top_sites_rename_dialog_title">Pangalan</string>
     <string name="vault_decrypting">Nagde-decryption ng file, mangyaring maghintay…</string>
     <string name="vault_encrypting">Ini-encrypt ang file, mangyaring maghintay…</string>
     <string name="vault_unsupported">Hindi mabuksan ang file na ito. Upang buksan, alisin ito sa Safe Folder at subukang muli.</string>

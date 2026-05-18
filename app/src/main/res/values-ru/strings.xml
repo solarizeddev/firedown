@@ -12,7 +12,6 @@
     <string name="browser_enter_url">Найдите или введите URL-адрес.</string>
     <string name="browser_error_image_title">Огонь ушел</string>
     <string name="browser_find_in_page">Найти на странице</string>
-    <string name="browser_menu_add_to_shortcuts">Добавить в ярлыки</string>
     <string name="browser_menu_back">Назад</string>
     <string name="browser_menu_bookmark_this_page_2">Добавить в закладки</string>
     <string name="browser_menu_desktop_site">Вид для ПК</string>
@@ -20,7 +19,6 @@
     <string name="browser_menu_find_in_page">Найти на странице</string>
     <string name="browser_menu_forward">Вперёд</string>
     <string name="browser_menu_refresh">Обновить</string>
-    <string name="browser_menu_remove_from_shortcuts">Удалить из ярлыков</string>
     <string name="browser_menu_settings">Настройки</string>
     <string name="browser_menu_share">Поделиться</string>
     <string name="browser_menu_stop">Остановить</string>
@@ -209,7 +207,6 @@
     <string name="blocked_trackers_detail_empty">На этой странице ещё не заблокировано ни одного трекера.</string>
     <string name="blocked_trackers_host_count_multiplier">×%1$d</string>
     <string name="quit_application">Выход из приложения для применения изменений…</string>
-    <string name="remove_top_site">Удалить</string>
     <string name="rename">Переименовать</string>
     <string name="rename_file">Переименуйте файл</string>
     <string name="request_geolocation">Поделиться местоположением вашего устройства с &lt;b&gt;%s&lt;/b&gt;?</string>
@@ -306,11 +303,6 @@
     <string name="share">Поделиться</string>
     <string name="share_image">Поделиться ИЗОБРАЖЕНИЕМ</string>
     <string name="share_url">Поделиться URL-адресом</string>
-    <string name="shortcut_max_limit_content">Чтобы добавить ярлык, удалите другой ярлык. Нажмите и удерживайте значок сайта, а затем нажмите «Удалить».</string>
-    <string name="shortcut_max_limit_title">Достигнут предел ярлыков</string>
-    <string name="shortcut_name_hint">Название ярлыка</string>
-    <string name="shortcut_url_hint">URL ярлыка</string>
-    <string name="snackbar_added_to_shortcuts">Добавлено в ярлыки!</string>
     <string name="snackbar_deleted_undo">ОТМЕНИТЬ</string>
     <string name="snackbar_tab_closed">Вкладка закрыта</string>
     <string name="sort">Сортировать</string>
@@ -330,11 +322,6 @@
 <string name="task_decryption_finished">Расшифровка завершена.</string>
     <string name="task_encryption_finished">Шифрование завершено</string>
     <string name="task_gif_finished">GIF создан</string>
-    <string name="top_sites_edit_dialog_save">Сохранить</string>
-    <string name="top_sites_edit_dialog_title">Изменить ярлык</string>
-    <string name="top_sites_edit_dialog_url_title">URL</string>
-    <string name="top_sites_max_limit_confirmation_button">Понятно</string>
-    <string name="top_sites_rename_dialog_title">Имя</string>
     <string name="vault_decrypting">Расшифровка файла, пожалуйста, подождите…</string>
     <string name="vault_encrypting">Шифрование файла, пожалуйста, подождите…</string>
     <string name="vault_unsupported">Не могу открыть этот файл. Чтобы открыть, переместите его из безопасной папки и повторите попытку.</string>

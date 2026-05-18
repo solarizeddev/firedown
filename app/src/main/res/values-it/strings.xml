@@ -12,7 +12,6 @@
     <string name="browser_enter_url">Cerca o digita l\'URL</string>
     <string name="browser_error_image_title">Il fuoco se n\'è andato</string>
     <string name="browser_find_in_page">Trova nella pagina</string>
-    <string name="browser_menu_add_to_shortcuts">Aggiungi alle scorciatoie</string>
     <string name="browser_menu_back">Indietro</string>
     <string name="browser_menu_bookmark_this_page_2">Aggiungi pagina ai segnalibri</string>
     <string name="browser_menu_desktop_site">Sito desktop</string>
@@ -20,7 +19,6 @@
     <string name="browser_menu_find_in_page">Trova nella pagina</string>
     <string name="browser_menu_forward">Avanti</string>
     <string name="browser_menu_refresh">Aggiorna</string>
-    <string name="browser_menu_remove_from_shortcuts">Rimuovi dalle scorciatoie</string>
     <string name="browser_menu_settings">Impostazioni</string>
     <string name="browser_menu_share">Condividi</string>
     <string name="browser_menu_stop">Interrompi</string>
@@ -195,7 +193,6 @@
     <string name="blocked_trackers_cryptominers">Cryptominer</string>
     <string name="blocked_trackers_tracking_content">Contenuto di tracciamento</string>
     <string name="quit_application">Chiusura in corso per applicare le modifiche…</string>
-    <string name="remove_top_site">Rimuovi</string>
     <string name="rename">Rinomina</string>
     <string name="rename_file">Rinomina il file</string>
     <string name="request_geolocation">Condividere la posizione del dispositivo con &lt;b&gt;%s&lt;/b&gt;?</string>
@@ -292,11 +289,6 @@
     <string name="share">CondividI</string>
     <string name="share_image">Condividi IMMAGINE</string>
     <string name="share_url">Condividi l\'URL</string>
-    <string name="shortcut_max_limit_content">Per aggiungere una nuova scorciatoia è necessario rimuoverne una esistente. Toccare il sito da eliminare tenendo premuto e selezionare rimuovi.</string>
-    <string name="shortcut_max_limit_title">Raggiunto limite per le scorciatoie</string>
-    <string name="shortcut_name_hint">Nome scorciatoia</string>
-    <string name="shortcut_url_hint">URL scorciatoia</string>
-    <string name="snackbar_added_to_shortcuts">Aggiunto alle scorciatoie.</string>
     <string name="snackbar_deleted_undo">ANNULLA</string>
     <string name="snackbar_tab_closed">Scheda chiusa</string>
     <string name="sort">Ordina per</string>
@@ -315,11 +307,6 @@
 <string name="task_decryption_finished">Decifratura completata</string>
     <string name="task_encryption_finished">Crittografia completata</string>
     <string name="task_gif_finished">GIF creata</string>
-    <string name="top_sites_edit_dialog_save">Salva</string>
-    <string name="top_sites_edit_dialog_title">Modifica scorciatoia</string>
-    <string name="top_sites_edit_dialog_url_title">URL</string>
-    <string name="top_sites_max_limit_confirmation_button">OK</string>
-    <string name="top_sites_rename_dialog_title">Nome</string>
     <string name="vault_decrypting">Decifratura file, attendere…</string>
     <string name="vault_encrypting">Crittografia file, attendere…</string>
     <string name="vault_unsupported">Impossibile aprire questo file. Per aprirlo, spostalo fuori dalla Cartella di sicurezza e riprova.</string>

@@ -34,14 +34,12 @@ import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.data.entity.GeckoStateEntity;
 import com.solarized.firedown.data.entity.AutoCompleteEntity;
 import com.solarized.firedown.autocomplete.AutoCompleteViewModel;
-import com.solarized.firedown.data.entity.ShortCutsEntity;
 import com.solarized.firedown.data.models.BrowserDialogViewModel;
 import com.solarized.firedown.data.models.BrowserURIViewModel;
 import com.solarized.firedown.data.models.GeckoStateViewModel;
 import com.solarized.firedown.data.models.IncognitoStateViewModel;
 import com.solarized.firedown.data.models.RecentDownloadsViewModel;
 import com.solarized.firedown.data.models.TaskViewModel;
-import com.solarized.firedown.data.models.ShortCutsViewModel;
 import com.solarized.firedown.geckoview.GeckoResources;
 import com.solarized.firedown.geckoview.GeckoState;
 import com.solarized.firedown.geckoview.GeckoToolbar;
@@ -55,10 +53,7 @@ import com.solarized.firedown.phone.VaultActivity;
 import com.solarized.firedown.autocomplete.AutoCompleteEditText;
 import com.solarized.firedown.autocomplete.AutoCompleteView;
 import com.solarized.firedown.phone.dialogs.DownloadsQuickAccessSheet;
-import com.solarized.firedown.ui.HomeViewpager;
 import com.solarized.firedown.ui.OnBoardingCard;
-import com.solarized.firedown.ui.adapters.ShortCutsAdapter;
-import com.solarized.firedown.ui.diffs.ShortCutsDiffCallback;
 import com.solarized.firedown.geckoview.toolbar.BottomNavigationBar;
 import com.solarized.firedown.ui.OnItemClickListener;
 import com.solarized.firedown.ui.adapters.SearchAutocompleteAdapter;
@@ -82,41 +77,23 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     private static final String TAG = HomeFragment.class.getName();
     private BrowserURIViewModel mBrowserURIViewModel;
     private BrowserDialogViewModel mBrowserDialogViewModel;
-    private ShortCutsViewModel mShortCutsViewModel;
     private GeckoStateViewModel mGeckoStateViewModel;
     private IncognitoStateViewModel mIncognitoStateViewModel;
     private TaskViewModel mTaskViewModel;
     private RecentDownloadsViewModel mRecentDownloadsViewModel;
     private AutoCompleteEditText mAutoCompleteEditText;
     private AutoCompleteView mAutoCompleteView;
-    private ShortCutsAdapter mShortCutsAdapter;
     private View mNewTabView;
     private OnBoardingCard mOnBoardingCard;
     private GeckoToolbar mGeckoToolbar;
-    private HomeViewpager mHomeViewPager;
     private BottomNavigationBar mBottomNavigationBar;
 
-
-    @Override
-    public void onConfigurationChanged(@NonNull Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
-
-        RecyclerView recyclerView = mHomeViewPager.getRecyclerView();
-
-        GridLayoutManager gridLayoutManager = (GridLayoutManager) recyclerView.getLayoutManager();
-
-        if(gridLayoutManager != null){
-            gridLayoutManager.setSpanCount(getResources().getInteger(R.integer.shortcuts_span));
-        }
-
-    }
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         mAutoCompleteViewModel = new ViewModelProvider(this).get(AutoCompleteViewModel.class);
-        mShortCutsViewModel = new ViewModelProvider(this).get(ShortCutsViewModel.class);
         mTaskViewModel = new ViewModelProvider(this).get(TaskViewModel.class);
         mRecentDownloadsViewModel = new ViewModelProvider(this).get(RecentDownloadsViewModel.class);
         mGeckoStateViewModel = new ViewModelProvider(mActivity).get(GeckoStateViewModel.class);
@@ -153,7 +130,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
 
         View v = inflater.inflate(R.layout.fragment_home, container, false);
 
-        mHomeViewPager = v.findViewById(R.id.view_pager_holder);
         mNewTabView = v.findViewById(R.id.bottom_new_tab);
         mAutoCompleteView = v.findViewById(R.id.auto_complete_view);
         mOnBoardingCard = v.findViewById(R.id.onboarding);
@@ -189,9 +165,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
 
             }
         });
-
-        mShortCutsAdapter = new ShortCutsAdapter(mActivity, new ShortCutsDiffCallback(), this);
-        mHomeViewPager.getRecyclerView().setAdapter(mShortCutsAdapter);
 
         return v;
     }
@@ -230,9 +203,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
             mSearchAutocompleteAdapter.submitList(mObservableWebSearch);
 
         });
-
-        mShortCutsViewModel.getShortCuts().observe(getViewLifecycleOwner(), mObservableShortCuts ->
-                mShortCutsAdapter.submitList(mObservableShortCuts));
 
         // Keep the recent-downloads LiveData hot so the long-press
         // quick-access popup has a value to read synchronously on
@@ -359,7 +329,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        mHomeViewPager = null;
         mAutoCompleteView = null;
         mGeckoToolbar = null;
         mNewTabView = null;
@@ -550,10 +519,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
                 String text = mSearchRepository.parseUri(searchEntity.getSubText());
                 openUri(text);
             }
-        }else if(resId == R.id.item_web_visited || resId == R.id.item_web_visited_holder){
-            ShortCutsEntity shortcutsEntity = mShortCutsAdapter.getCurrentList().get(position);
-            String url = WebUtils.getSchemeDomainName(shortcutsEntity.getUrl());
-            openUri(url);
         }
     }
 
@@ -568,11 +533,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
             geckoState.setEntityUri(uri);
             openUri(uri);
             mAutoCompleteViewModel.clearClipboard();
-        }else if(resId == R.id.item_web_visited || resId == R.id.item_web_visited_holder){
-            ShortCutsEntity shortcutsEntity =  mShortCutsAdapter.getCurrentList().get(position);
-            Bundle bundle = new Bundle();
-            bundle.putParcelable(Keys.ITEM_ID, shortcutsEntity);
-            NavigationUtils.navigateSafe(mNavController, R.id.dialog_shortcuts_options, bundle);
         }
     }
 

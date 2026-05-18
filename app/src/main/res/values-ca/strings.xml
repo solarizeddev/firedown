@@ -9,7 +9,6 @@
     <string name="browser_enter_url">Cerqueu o escriviu l\'URL.</string>
     <string name="browser_error_image_title">El foc està apagat</string>
     <string name="browser_find_in_page">Cerca a la pàgina</string>
-    <string name="browser_menu_add_to_shortcuts">Afegeix a les dreceres</string>
     <string name="browser_menu_back">Enrere</string>
     <string name="browser_menu_bookmark_this_page_2">Afegeix la pàgina a les adreces d’interès</string>
     <string name="browser_menu_desktop_site">Lloc d’escriptori</string>
@@ -17,7 +16,6 @@
     <string name="browser_menu_find_in_page">Cerca a la pàgina</string>
     <string name="browser_menu_forward">Endavant</string>
     <string name="browser_menu_refresh">Actualitza</string>
-    <string name="browser_menu_remove_from_shortcuts">Elimina de les dreceres</string>
     <string name="browser_menu_settings">Paràmetres</string>
     <string name="browser_menu_share">Comparteix</string>
     <string name="browser_menu_stop">Atura</string>
@@ -170,7 +168,6 @@
     <string name="quick_settings_sheet_insecure_connection_2">La connexió no és segura</string>
     <string name="quick_settings_sheet_secure_connection_2">La connexió és segura</string>
     <string name="quit_application">S’està tancant l’aplicació per aplicar els canvis…</string>
-    <string name="remove_top_site">Elimina</string>
     <string name="rename">Canvia el nom</string>
     <string name="rename_file">Canvia el nom del fitxer</string>
     <string name="request_geolocation">Vols compartir la ubicació del teu dispositiu amb &lt;b&gt;%s&lt;/b&gt;?</string>
@@ -253,11 +250,6 @@
     <string name="share">Compartir</string>
     <string name="share_image">Comparteix IMATGE</string>
     <string name="share_url">Comparteix l\'URL</string>
-    <string name="shortcut_max_limit_content">Per a afegir una nova drecera, primer cal que n’elimineu alguna altra. Manteniu premut el lloc i seleccioneu eliminar-lo.</string>
-    <string name="shortcut_max_limit_title">S’ha arribat al límit de dreceres</string>
-    <string name="shortcut_name_hint">Nom de la drecera</string>
-    <string name="shortcut_url_hint">URL de la drecera</string>
-    <string name="snackbar_added_to_shortcuts">S’ha afegit a les dreceres</string>
     <string name="snackbar_deleted_undo">DESFÉS</string>
     <string name="snackbar_tab_closed">S’ha tancat la pestanya</string>
     <string name="sort">Ordena per</string>
@@ -275,11 +267,6 @@
     <string name="switch_to_tab_description">Canvia a la pestanya</string>
 <string name="task_decryption_finished">S\'ha acabat el desxifratge</string>
     <string name="task_encryption_finished">S\'ha acabat el xifratge</string>
-    <string name="top_sites_edit_dialog_save">Desa</string>
-    <string name="top_sites_edit_dialog_title">Edita la drecera</string>
-    <string name="top_sites_edit_dialog_url_title">URL</string>
-    <string name="top_sites_max_limit_confirmation_button">Entesos</string>
-    <string name="top_sites_rename_dialog_title">Nom</string>
     <string name="vault_decrypting">S\'està desxifrant el fitxer, espereu...</string>
     <string name="vault_encrypting">S\'està encriptant el fitxer, espereu…</string>
     <string name="vault_unsupported">No es pot obrir aquest fitxer. Per obrir-lo, traieu-lo de la carpeta segura i torneu-ho a provar.</string>

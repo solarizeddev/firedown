@@ -9,7 +9,6 @@
     <string name="browser_enter_url">Søg eller indtast URL.</string>
     <string name="browser_error_image_title">Ilden er væk</string>
     <string name="browser_find_in_page">Find på siden</string>
-    <string name="browser_menu_add_to_shortcuts">Føj til genveje</string>
     <string name="browser_menu_back">Tilbage</string>
     <string name="browser_menu_bookmark_this_page_2">Bogmærk side</string>
     <string name="browser_menu_desktop_site">Desktop-version</string>
@@ -17,7 +16,6 @@
     <string name="browser_menu_find_in_page">Find på siden</string>
     <string name="browser_menu_forward">Fremad</string>
     <string name="browser_menu_refresh">Opdater</string>
-    <string name="browser_menu_remove_from_shortcuts">Fjern fra genveje</string>
     <string name="browser_menu_settings">Indstillinger</string>
     <string name="browser_menu_share">Del</string>
     <string name="browser_menu_stop">Stop</string>
@@ -182,7 +180,6 @@
     <string name="quick_settings_sheet_insecure_connection_2">Forbindelsen er ikke sikker</string>
     <string name="quick_settings_sheet_secure_connection_2">Forbindelsen er sikker</string>
     <string name="quit_application">Afslutter appen for at anvende ændringerne…</string>
-    <string name="remove_top_site">Fjern</string>
     <string name="rename">Omdøb</string>
     <string name="rename_file">Omdøb fil</string>
     <string name="request_geolocation">Ønsker du at dele din enheds placering med &lt;b&gt;%s&lt;/b&gt;?</string>
@@ -265,11 +262,6 @@
     <string name="share">Del</string>
     <string name="share_image">Del BILLEDE</string>
     <string name="share_url">Del URL</string>
-    <string name="shortcut_max_limit_content">Fjern en genvej for at erstatte den med en ny. Tryk og hold på websiden, og vælg så Fjern.</string>
-    <string name="shortcut_max_limit_title">Grænsen for genveje er nået</string>
-    <string name="shortcut_name_hint">Genvejsnavn</string>
-    <string name="shortcut_url_hint">Genvejs-URL</string>
-    <string name="snackbar_added_to_shortcuts">Føjet til genveje!</string>
     <string name="snackbar_deleted_undo">FORTRYD</string>
     <string name="snackbar_tab_closed">Faneblad lukket</string>
     <string name="sort">Sortér efter</string>
@@ -288,11 +280,6 @@
 <string name="task_decryption_finished">Dekryptering er afsluttet</string>
     <string name="task_encryption_finished">Kryptering er afsluttet</string>
     <string name="task_gif_finished">GIF oprettet</string>
-    <string name="top_sites_edit_dialog_save">Gem</string>
-    <string name="top_sites_edit_dialog_title">Rediger genvej</string>
-    <string name="top_sites_edit_dialog_url_title">URL</string>
-    <string name="top_sites_max_limit_confirmation_button">Ok, forstået</string>
-    <string name="top_sites_rename_dialog_title">Navn</string>
     <string name="vault_decrypting">Dekrypterer fil, vent venligst…</string>
     <string name="vault_encrypting">Krypterer fil, vent venligst…</string>
     <string name="vault_unsupported">Kan ikke åbne denne fil. For at åbne skal du flytte den ud af sikker mappe og prøve igen.</string>

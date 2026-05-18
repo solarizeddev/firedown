@@ -8,7 +8,6 @@
     <string name="browser_enter_url">Busca ou escribe o URL</string>
     <string name="browser_error_image_title">O lume desapareceu</string>
     <string name="browser_find_in_page">Atopar na páxina</string>
-    <string name="browser_menu_add_to_shortcuts">Engadir aos atallos</string>
     <string name="browser_menu_back">Atrás</string>
     <string name="browser_menu_bookmark_this_page_2">Engadir aos favoritos</string>
     <string name="browser_menu_desktop_site">Sitio de escritorio</string>
@@ -16,7 +15,6 @@
     <string name="browser_menu_find_in_page">Atopar na páxina</string>
     <string name="browser_menu_forward">Adiante</string>
     <string name="browser_menu_refresh">Actualizar</string>
-    <string name="browser_menu_remove_from_shortcuts">Retirar dos atallos</string>
     <string name="browser_menu_settings">Configuración</string>
     <string name="browser_menu_share">Compartir</string>
     <string name="browser_menu_stop">Parar</string>
@@ -169,7 +167,6 @@
     <string name="quick_settings_sheet_insecure_connection_2">A conexión non é segura</string>
     <string name="quick_settings_sheet_secure_connection_2">A conexión é segura</string>
     <string name="quit_application">Saíndo da aplicación para aplicar os cambios…</string>
-    <string name="remove_top_site">Retirar</string>
     <string name="rename">Cambiar o nome</string>
     <string name="rename_file">Cambiar o nome do ficheiro</string>
     <string name="restart_origin">Reiniciar</string>
@@ -241,11 +238,6 @@
     <string name="share">Compartir</string>
     <string name="share_image">Compartir IMAXE</string>
     <string name="share_url">Compartir URL</string>
-    <string name="shortcut_max_limit_content">Para engadir un novo atallo, elimine un. Manteña premido o sitio e selecciona eliminar.</string>
-    <string name="shortcut_max_limit_title">Acadouse o límite de atallos</string>
-    <string name="shortcut_name_hint">Nome do atallo</string>
-    <string name="shortcut_url_hint">URL do atallo</string>
-    <string name="snackbar_added_to_shortcuts">Engadido aos atallos!</string>
     <string name="snackbar_deleted_undo">DESFACER</string>
     <string name="snackbar_tab_closed">Lapela pechada</string>
     <string name="sort">Ordenar por</string>
@@ -263,11 +255,6 @@
     <string name="switch_to_tab_description">Cambiar á lapela</string>
 <string name="task_decryption_finished">Rematou o descifrado</string>
     <string name="task_encryption_finished">Rematou o cifrado</string>
-    <string name="top_sites_edit_dialog_save">Gardar</string>
-    <string name="top_sites_edit_dialog_title">Editar atallo</string>
-    <string name="top_sites_edit_dialog_url_title">URL</string>
-    <string name="top_sites_max_limit_confirmation_button">De acordo, entendín</string>
-    <string name="top_sites_rename_dialog_title">Nome</string>
     <string name="vault_decrypting">Descifrando o ficheiro, agarda…</string>
     <string name="vault_encrypting">Cifrando o ficheiro, agarda…</string>
     <string name="vault_unsupported">Non se pode abrir este ficheiro. Para abrilo, saia do cartafol seguro e téntao de novo.</string>

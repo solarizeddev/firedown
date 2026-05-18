@@ -12,7 +12,6 @@
     <string name="browser_enter_url">Buscar o escribir URL</string>
     <string name="browser_error_image_title">El fuego se ha ido</string>
     <string name="browser_find_in_page">Buscar en la página</string>
-    <string name="browser_menu_add_to_shortcuts">Añadir a accesos directos</string>
     <string name="browser_menu_back">Atrás</string>
     <string name="browser_menu_bookmark_this_page_2">Marcar página</string>
     <string name="browser_menu_desktop_site">Sitio de escritorio</string>
@@ -20,7 +19,6 @@
     <string name="browser_menu_find_in_page">Buscar en la página</string>
     <string name="browser_menu_forward">Siguiente</string>
     <string name="browser_menu_refresh">Actualizar</string>
-    <string name="browser_menu_remove_from_shortcuts">Eliminar de los accesos directos</string>
     <string name="browser_menu_settings">Ajustes</string>
     <string name="browser_menu_share">Compartir</string>
     <string name="browser_menu_stop">Detener</string>
@@ -285,7 +283,6 @@
     <string name="blocked_trackers_detail_empty">Aún no se han bloqueado rastreadores en esta página.</string>
     <string name="blocked_trackers_host_count_multiplier">×%1$d</string>
     <string name="quit_application">Saliendo de la aplicación para aplicar los cambios…</string>
-    <string name="remove_top_site">Eliminar</string>
     <string name="rename">Renombrar</string>
     <string name="rename_file">Renombrar archivo</string>
     <string name="request_geolocation">¿Quieres compartir la ubicación de tu dispositivo con &lt;b&gt;%s&lt;/b&gt;?</string>
@@ -432,11 +429,6 @@
     <string name="share">Compartir</string>
     <string name="share_image">Compartir imagen</string>
     <string name="share_url">Compartir URL</string>
-    <string name="shortcut_max_limit_content">Para añadir un nuevo acceso directo, elimina uno. Toca y mantén presionado el sitio y selecciona eliminar.</string>
-    <string name="shortcut_max_limit_title">Límite de accesos directos alcanzado</string>
-    <string name="shortcut_name_hint">Nombre de acceso directo</string>
-    <string name="shortcut_url_hint">URL de acceso directo</string>
-    <string name="snackbar_added_to_shortcuts">¡Añadido a los accesos directos!</string>
     <string name="snackbar_deleted_undo">DESHACER</string>
     <string name="snackbar_tab_closed">Pestaña cerrada</string>
     <string name="sort">Ordenar por</string>
@@ -470,11 +462,6 @@
     <string name="task_gif_failed">No se pudo crear el GIF</string>
     <string name="task_gif_finished">GIF creado</string>
     <string name="task_stop">Detener</string>
-    <string name="top_sites_edit_dialog_save">Guardar</string>
-    <string name="top_sites_edit_dialog_title">Editar acceso directo</string>
-    <string name="top_sites_edit_dialog_url_title">URL</string>
-    <string name="top_sites_max_limit_confirmation_button">Vale, entendido</string>
-    <string name="top_sites_rename_dialog_title">Nombre</string>
     <string name="update_auto_update_success_body">Se actualizó automáticamente a la versión %1$s.</string>
     <string name="update_auto_update_success_default_body">Se actualizó automáticamente a la última versión.</string>
     <string name="update_auto_update_success_title">Firedown actualizado correctamente</string>

@@ -25,7 +25,6 @@
     <string name="open_new_tab_2">नया टैब</string>
 <string name="quick_settings_sheet_insecure_connection_2">संपर्क सुरक्षित नहीं है</string>
     <string name="quick_settings_sheet_secure_connection_2">संपर्क सुरक्षित है</string>
-    <string name="remove_top_site">हटाएं</string>
     <string name="settings_dark_theme">अंधेरा</string>
     <string name="settings_delete_browsing">ब्राउज़िंग डेटा मिटाएं</string>
     <string name="settings_delete_browsing_data_cached_files">चित्र और फाइलें सहेजा गया</string>
@@ -40,6 +39,4 @@
     <string name="snackbar_deleted_undo">UNDO</string>
     <string name="snackbar_tab_closed">टैब बंद हो गया</string>
     <string name="switch_to_tab_description">टैब पर जाएँ</string>
-<string name="top_sites_max_limit_confirmation_button">ठीक है, समझ गए</string>
-    <string name="top_sites_rename_dialog_title">नाम</string>
 </resources>

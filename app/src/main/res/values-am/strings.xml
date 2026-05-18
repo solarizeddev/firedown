@@ -9,7 +9,6 @@
     <string name="browser_enter_url">URL ይፈልጉ ወይም ይተይቡ</string>
     <string name="browser_error_image_title">Fire ጠፍቷል</string>
     <string name="browser_find_in_page">በገጽ ውስጥ ያግኙ</string>
-    <string name="browser_menu_add_to_shortcuts">ወደ አቋራጭ ጨምር</string>
     <string name="browser_menu_back">ተመለስ</string>
     <string name="browser_menu_bookmark_this_page_2">የዕልባት ገጽ</string>
     <string name="browser_menu_desktop_site">የዴስክቶፕ ድረ-ገፅ</string>
@@ -17,7 +16,6 @@
     <string name="browser_menu_find_in_page">በገጽ ውስጥ ያግኙ</string>
     <string name="browser_menu_forward">አስተላልፍ</string>
     <string name="browser_menu_refresh">አድስ</string>
-    <string name="browser_menu_remove_from_shortcuts">ከአቋራጭ ላይ አስወድግ</string>
     <string name="browser_menu_settings">ቅንብሮች</string>
     <string name="browser_menu_share">አጋራ</string>
     <string name="browser_menu_stop">አቁም</string>
@@ -166,7 +164,6 @@
 <string name="quick_settings_sheet_insecure_connection_2">ግንኙነት ደህንነቱ የተጠበቀ አይደለም</string>
     <string name="quick_settings_sheet_secure_connection_2">ግንኙነት ደህንነቱ የተጠበቀ ነው</string>
     <string name="quit_application">ለውጦችን ለመተግበር መተግበሪያውን በማቆም ላይ…</string>
-    <string name="remove_top_site">አስወግድ</string>
     <string name="rename">እንደገና ይሰይሙ</string>
     <string name="rename_file">ፋይል እንደገና ይሰይሙ</string>
     <string name="request_geolocation">የመሣሪያዎ አካባቢ ለ&lt;b&gt;%s&lt;/b&gt; ይጋራ?</string>
@@ -248,11 +245,6 @@
     <string name="share">አጋራ</string>
     <string name="share_image">ምስል አጋራ</string>
     <string name="share_url">URL አጋራ</string>
-    <string name="shortcut_max_limit_content">አዲስ አቋራጭ ለመጨመር አንዱን ያስወግዱ። ድረ-ገፁን ነክተው ይያዙ እና አስወግድ የሚለውን ይምረጡ።</string>
-    <string name="shortcut_max_limit_title">የአቋራጭ ገደብ ላይ ደርሷል</string>
-    <string name="shortcut_name_hint">የአቋራጭ ስም</string>
-    <string name="shortcut_url_hint">የአቋራጭ URL</string>
-    <string name="snackbar_added_to_shortcuts">ወደ አቋራጮች ታክሏል!</string>
     <string name="snackbar_deleted_undo">ቀልብስ</string>
     <string name="snackbar_tab_closed">ትር ተዘግቷል</string>
     <string name="sort">ደርድር በ</string>
@@ -269,11 +261,6 @@
     <string name="sort_by_type_zip">ዚፕ</string>
     <string name="switch_to_tab_description">ወደ ትር ቀይር</string>
 <string name="task_encryption_finished">ምስጠራ አልቋል</string>
-    <string name="top_sites_edit_dialog_save">አስቀምጥ</string>
-    <string name="top_sites_edit_dialog_title">አቋራጭ አርትዕ</string>
-    <string name="top_sites_edit_dialog_url_title">URL</string>
-    <string name="top_sites_max_limit_confirmation_button">እሺ፣ ገባኝ</string>
-    <string name="top_sites_rename_dialog_title">ስም</string>
     <string name="vault_decrypting">የፋይል ምስጠራን በመፍታት ላይ፣ እባክዎ ይጠብቁ…</string>
     <string name="vault_encrypting">ፋይል በማመስጠር ላይ፣ እባክዎ ይጠብቁ…</string>
     <string name="vault_unsupported">ይህን ፋይል መክፈት አልተቻለም። ለመክፈት ደህንነቱ ከተጠበቀ አቃፊ አውጥተው ይውሰዱ እና እንደገና ይሞክሩ።</string>

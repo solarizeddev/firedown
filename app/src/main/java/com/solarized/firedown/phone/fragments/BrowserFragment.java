@@ -52,7 +52,6 @@ import com.solarized.firedown.data.models.BrowserURIViewModel;
 import com.solarized.firedown.data.models.GeckoStateViewModel;
 import com.solarized.firedown.data.models.IncognitoStateViewModel;
 import com.solarized.firedown.data.models.RecentDownloadsViewModel;
-import com.solarized.firedown.data.models.ShortCutsViewModel;
 import com.solarized.firedown.data.models.TaskViewModel;
 import com.solarized.firedown.data.models.WebBookmarkViewModel;
 import com.solarized.firedown.geckoview.GeckoComponents;
@@ -159,7 +158,6 @@ public class BrowserFragment extends BaseBrowserFragment
     private IncognitoStateViewModel mIncognitoStateViewModel;
     private BrowserDownloadViewModel mBrowserDownloadViewModel;
     private BrowserDialogViewModel mBrowserDialogViewModel;
-    private ShortCutsViewModel mShortCutsViewModel;
     private WebBookmarkViewModel mWebBookmarkViewModel;
     private BrowserURIViewModel mBrowserURIViewModel;
     private TaskViewModel mTaskViewModel;
@@ -203,7 +201,6 @@ public class BrowserFragment extends BaseBrowserFragment
         mIncognitoStateViewModel = new ViewModelProvider(mActivity).get(IncognitoStateViewModel.class);
         mTaskViewModel          = new ViewModelProvider(this).get(TaskViewModel.class);
         mRecentDownloadsViewModel = new ViewModelProvider(this).get(RecentDownloadsViewModel.class);
-        mShortCutsViewModel     = new ViewModelProvider(this).get(ShortCutsViewModel.class);
         mWebBookmarkViewModel   = new ViewModelProvider(this).get(WebBookmarkViewModel.class);
         mGeckoStateViewModel    = new ViewModelProvider(mActivity).get(GeckoStateViewModel.class);
         mBrowserDialogViewModel = new ViewModelProvider(mActivity).get(BrowserDialogViewModel.class);
@@ -544,22 +541,6 @@ public class BrowserFragment extends BaseBrowserFragment
             } else if (id == R.id.popup_reload) {
                 GeckoState gs = peekCurrentGeckoState();
                 if (gs != null) gs.reload();
-            } else if (id == R.id.popup_pin_add) {
-                if (mShortCutsViewModel.isFull()) {
-                    Bundle args = new Bundle();
-                    args.putBoolean(Keys.OPEN_INCOGNITO, mIsIncognitoThemed);
-                    NavigationUtils.navigateSafe(mNavController, R.id.dialog_shortcuts_max, R.id.browser , args);
-                } else {
-                    GeckoState mGeckoState = peekCurrentGeckoState();
-                    if (mGeckoState == null) return;
-                    mShortCutsViewModel.add(mGeckoState);
-                    Snackbar snackbar = makeSnackbar(getSnackAnchorView(), R.string.snackbar_added_to_shortcuts, mIsIncognitoThemed);
-                    snackbar.setAnchorView(R.id.anchor_view);
-                    snackbar.show();
-                }
-            } else if (id == R.id.popup_pin_edit) {
-                GeckoState gs = peekCurrentGeckoState();
-                if (gs != null) mShortCutsViewModel.delete(gs);
             } else if (id == R.id.popup_stop) {
                 GeckoState gs = peekCurrentGeckoState();
                 if (gs != null) {
@@ -1023,7 +1004,6 @@ public class BrowserFragment extends BaseBrowserFragment
             Bundle bundle = new Bundle();
             GeckoState geckoState = peekCurrentGeckoState();
             bundle.putBoolean(Keys.ITEM_BOOKMARK, mWebBookmarkViewModel.contains(geckoState));
-            bundle.putBoolean(Keys.ITEM_SHORTCUT, mShortCutsViewModel.contains(geckoState));
             bundle.putBoolean(Keys.IS_INCOGNITO, mIsIncognitoThemed);
             NavigationUtils.navigateSafe(mNavController, R.id.dialog_browser_popup, R.id.browser, bundle);
         }

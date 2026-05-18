@@ -149,7 +149,6 @@
     <string name="popup_tabs_close">Bütün tabları bağlayın</string>
     <string name="popup_tabs_new">Yeni tab</string>
     <string name="popup_toggle">Görünüşü dəyişdirin</string>
-<string name="remove_top_site">Sil</string>
     <string name="rename">Adını dəyişdirin</string>
     <string name="rename_file">Faylın adını dəyişdirin</string>
     <string name="request_geolocation">Cihazınızın məkanı &lt;b&gt; %s &lt;/b&gt; ilə paylaşılsın?</string>

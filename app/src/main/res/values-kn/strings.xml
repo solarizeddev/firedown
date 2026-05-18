@@ -148,7 +148,6 @@
     <string name="popup_tabs_close">ಎಲ್ಲಾ ಟ್ಯಾಬ್‌ಗಳನ್ನು ಮುಚ್ಚಿ</string>
     <string name="popup_tabs_new">ಹೊಸ ಟ್ಯಾಬ್</string>
     <string name="popup_toggle">ವೀಕ್ಷಣೆಯನ್ನು ಟಾಗಲ್ ಮಾಡಿ</string>
-<string name="remove_top_site">ತೆಗೆದು ಹಾಕು</string>
     <string name="rename">ಮರುಹೆಸರಿಸು</string>
     <string name="rename_file">ಫೈಲ್ ಅನ್ನು ಮರುಹೆಸರಿಸಿ</string>
     <string name="restart_origin">ಪುನರಾರಂಭದ</string>
@@ -235,8 +234,6 @@
     <string name="switch_to_tab_description">ಟ್ಯಾಬ್‌ಗೆ ಬದಲಾಯಿಸು</string>
     <string name="task_decryption_finished">ಡೀಕ್ರಿಪ್ಶನ್ ಮುಗಿದಿದೆ</string>
     <string name="task_encryption_finished">ಎನ್‌ಕ್ರಿಪ್ಶನ್ ಮುಗಿದಿದೆ</string>
-    <string name="top_sites_max_limit_confirmation_button">ಸರಿ, ಗೊತ್ತಾಯಿತು</string>
-    <string name="top_sites_rename_dialog_title">ಹೆಸರು</string>
     <string name="vault_decrypting">ಫೈಲ್ ಅನ್ನು ಡೀಕ್ರಿಪ್ಟ್ ಮಾಡಲಾಗುತ್ತಿದೆ, ದಯವಿಟ್ಟು ನಿರೀಕ್ಷಿಸಿ…</string>
     <string name="vault_encrypting">ಫೈಲ್ ಎನ್‌ಕ್ರಿಪ್ಟ್ ಮಾಡಲಾಗುತ್ತಿದೆ, ದಯವಿಟ್ಟು ನಿರೀಕ್ಷಿಸಿ…</string>
     <string name="vault_unsupported">ಈ ಫೈಲ್ ಅನ್ನು ತೆರೆಯಲು ಸಾಧ್ಯವಿಲ್ಲ. ತೆರೆಯಲು, ಅದನ್ನು ಸುರಕ್ಷಿತ ಫೋಲ್ಡರ್‌ನಿಂದ ಹೊರಗೆ ಸರಿಸಿ ಮತ್ತು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.</string>

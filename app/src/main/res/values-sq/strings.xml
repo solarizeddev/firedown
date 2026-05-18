@@ -9,7 +9,6 @@
     <string name="browser_enter_url">Kërkoni ose shkruani URL-në</string>
     <string name="browser_error_image_title">Zjarri është zhdukur</string>
     <string name="browser_find_in_page">Gjej në faqe</string>
-    <string name="browser_menu_add_to_shortcuts">Shtoje te shkurtore</string>
     <string name="browser_menu_back">Mbrapsht</string>
     <string name="browser_menu_bookmark_this_page_2">Faqeruaje faqen</string>
     <string name="browser_menu_desktop_site">Sajt për desktop</string>
@@ -17,7 +16,6 @@
     <string name="browser_menu_find_in_page">Gjej në faqe</string>
     <string name="browser_menu_forward">Përpara</string>
     <string name="browser_menu_refresh">Rifreskoje</string>
-    <string name="browser_menu_remove_from_shortcuts">Hiqe prej shkurtoresh</string>
     <string name="browser_menu_settings">Rregullime</string>
     <string name="browser_menu_share">Ndajeni me të tjerët</string>
     <string name="browser_menu_stop">Ndale</string>
@@ -168,7 +166,6 @@
 <string name="quick_settings_sheet_insecure_connection_2">Lidhja s’është e siguruar</string>
     <string name="quick_settings_sheet_secure_connection_2">Lidhja është e siguruar</string>
     <string name="quit_application">Po mbyllet aplikacioni, që të aplikohen ndryshimet…</string>
-    <string name="remove_top_site">Hiqe</string>
     <string name="rename">Riemërto</string>
     <string name="rename_file">Riemërto skedarin</string>
     <string name="restart_origin">Rifillo, fillo përsëri</string>
@@ -240,11 +237,6 @@
     <string name="share">Shpërndaje</string>
     <string name="share_image">Ndani IMAGE</string>
     <string name="share_url">Ndani URL-në</string>
-    <string name="shortcut_max_limit_content">Që të shtoni një shkurtore të re, hiqni një të tillë. Prekeni dhe mbajeni të shtypur sajtin dhe përzgjidhni Hiqe.</string>
-    <string name="shortcut_max_limit_title">U mbërrit në kufi shkurtoresh</string>
-    <string name="shortcut_name_hint">Emër shkurtoreje</string>
-    <string name="shortcut_url_hint">URL shkurtoreje</string>
-    <string name="snackbar_added_to_shortcuts">U shtua te shkurtoret!</string>
     <string name="snackbar_deleted_undo">ZHBËJE</string>
     <string name="snackbar_tab_closed">Skeda u mbyll</string>
     <string name="sort">Rendit sipas</string>
@@ -262,11 +254,6 @@
     <string name="switch_to_tab_description">Kalo te skeda</string>
 <string name="task_decryption_finished">Deshifrimi përfundoi</string>
     <string name="task_encryption_finished">Kriptimi përfundoi</string>
-    <string name="top_sites_edit_dialog_save">Ruaje</string>
-    <string name="top_sites_edit_dialog_title">Përpunoni shkurtore</string>
-    <string name="top_sites_edit_dialog_url_title">URL</string>
-    <string name="top_sites_max_limit_confirmation_button">OK, e mora vesh</string>
-    <string name="top_sites_rename_dialog_title">Emër</string>
     <string name="vault_decrypting">Skedari po deshifrohet, ju lutemi prisni…</string>
     <string name="vault_encrypting">Skedari po kriptohet, ju lutemi prisni…</string>
     <string name="vault_unsupported">Ky skedar nuk mund të hapet. Për ta hapur, zhvendoseni atë nga \"Dosja e sigurt\" dhe provoni përsëri.</string>

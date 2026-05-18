@@ -9,7 +9,6 @@
     <string name="browser_enter_url">Αναζήτηση ή Πληκτρολογήστε URL</string>
     <string name="browser_error_image_title">Η Φωτιά έχει φύγει</string>
     <string name="browser_find_in_page">Εύρεση στη σελίδα</string>
-    <string name="browser_menu_add_to_shortcuts">Προσθήκη συντόμευσης</string>
     <string name="browser_menu_back">Πίσω</string>
     <string name="browser_menu_bookmark_this_page_2">Προσθήκη σελιδοδείκτη</string>
     <string name="browser_menu_desktop_site">Έκδοση υπολογιστή</string>
@@ -17,7 +16,6 @@
     <string name="browser_menu_find_in_page">Εύρεση στη σελίδα</string>
     <string name="browser_menu_forward">Εμπρός</string>
     <string name="browser_menu_refresh">Ανανέωση</string>
-    <string name="browser_menu_remove_from_shortcuts">Αφαίρεση συντόμευσης</string>
     <string name="browser_menu_settings">Ρυθμίσεις</string>
     <string name="browser_menu_share">Κοινή χρήση</string>
     <string name="browser_menu_stop">Διακοπή</string>
@@ -170,7 +168,6 @@
     <string name="quick_settings_sheet_insecure_connection_2">Η σύνδεση δεν είναι ασφαλής</string>
     <string name="quick_settings_sheet_secure_connection_2">Η σύνδεση είναι ασφαλής</string>
     <string name="quit_application">Τερματισμός εφαρμογής για εφαρμογή των αλλαγών…</string>
-    <string name="remove_top_site">Αφαίρεση</string>
     <string name="rename">Μετονομάζω</string>
     <string name="rename_file">Μετονόμασε το αρχείο</string>
     <string name="request_geolocation">Κοινή χρήση της τοποθεσίας της συσκευής σας με τον χρήστη &lt;b&gt;%s&lt;/b&gt;;</string>
@@ -253,11 +250,6 @@
     <string name="share">Κοινοποίηση</string>
     <string name="share_image">Κοινή χρήση ΕΙΚΟΝΑΣ</string>
     <string name="share_url">Κοινή χρήση διεύθυνσης URL</string>
-    <string name="shortcut_max_limit_content">Για να προσθέσετε μια νέα συντόμευση, αφαιρέστε μια υπάρχουσα. Πατήστε παρατεταμένα τον ιστότοπο και επιλέξτε «Αφαίρεση».</string>
-    <string name="shortcut_max_limit_title">Έχετε φτάσει το όριο συντομεύσεων</string>
-    <string name="shortcut_name_hint">Όνομα συντόμευσης</string>
-    <string name="shortcut_url_hint">URL συντόμευσης</string>
-    <string name="snackbar_added_to_shortcuts">Προστέθηκε στις συντομεύσεις!</string>
     <string name="snackbar_deleted_undo">ΑΝΑΙΡΕΣΗ</string>
     <string name="snackbar_tab_closed">Η καρτέλα έκλεισε</string>
     <string name="sort">Ταξινόμηση κατά</string>
@@ -275,11 +267,6 @@
     <string name="switch_to_tab_description">Εναλλαγή σε καρτέλα</string>
 <string name="task_decryption_finished">Η αποκρυπτογράφηση ολοκληρώθηκε</string>
     <string name="task_encryption_finished">Η κρυπτογράφηση ολοκληρώθηκε</string>
-    <string name="top_sites_edit_dialog_save">Αποθήκευση</string>
-    <string name="top_sites_edit_dialog_title">Επεξεργασία συντόμευσης</string>
-    <string name="top_sites_edit_dialog_url_title">URL</string>
-    <string name="top_sites_max_limit_confirmation_button">OK, το κατάλαβα</string>
-    <string name="top_sites_rename_dialog_title">Όνομα</string>
     <string name="vault_decrypting">Αποκρυπτογράφηση αρχείου, περιμένετε…</string>
     <string name="vault_encrypting">Κρυπτογράφηση αρχείου, περιμένετε…</string>
     <string name="vault_unsupported">Δεν είναι δυνατό το άνοιγμα αυτού του αρχείου. Για να το ανοίξετε, μετακινήστε τον από τον Ασφαλή φάκελο και δοκιμάστε ξανά.</string>

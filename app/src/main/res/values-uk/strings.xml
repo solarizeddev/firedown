@@ -9,7 +9,6 @@
     <string name="browser_enter_url">Знайдіть або введіть URL-адресу.</string>
     <string name="browser_error_image_title">Вогонь зник</string>
     <string name="browser_find_in_page">Знайти на сторінці</string>
-    <string name="browser_menu_add_to_shortcuts">Додати до ярликів</string>
     <string name="browser_menu_back">Назад</string>
     <string name="browser_menu_bookmark_this_page_2">Додати до закладок</string>
     <string name="browser_menu_desktop_site">Версія для комп’ютера</string>
@@ -17,7 +16,6 @@
     <string name="browser_menu_find_in_page">Знайти на сторінці</string>
     <string name="browser_menu_forward">Вперед</string>
     <string name="browser_menu_refresh">Оновити</string>
-    <string name="browser_menu_remove_from_shortcuts">Вилучити з ярликів</string>
     <string name="browser_menu_settings">Налаштування</string>
     <string name="browser_menu_share">Поділитися</string>
     <string name="browser_menu_stop">Зупинити</string>
@@ -175,7 +173,6 @@
     <string name="quick_settings_sheet_insecure_connection_2">З’єднання не захищене</string>
     <string name="quick_settings_sheet_secure_connection_2">З’єднання захищене</string>
     <string name="quit_application">Закриття програми для застосування змін…</string>
-    <string name="remove_top_site">Вилучити</string>
     <string name="rename">Перейменувати</string>
     <string name="rename_file">Перейменувати файл</string>
     <string name="request_geolocation">Поділитися геоданими свого пристрою з &lt;b&gt;%s&lt;/b&gt;?</string>
@@ -258,11 +255,6 @@
     <string name="share">Поділітись</string>
     <string name="share_image">Поділіться ЗОБРАЖЕННЯМ</string>
     <string name="share_url">Поділитися URL</string>
-    <string name="shortcut_max_limit_content">Щоб додати новий ярлик, вилучіть один. Торкніться й утримуйте сайт, потім виберіть вилучити.</string>
-    <string name="shortcut_max_limit_title">Досягнуто обмеження кількості ярликів</string>
-    <string name="shortcut_name_hint">Назва ярлика</string>
-    <string name="shortcut_url_hint">URL-адреса ярлика</string>
-    <string name="snackbar_added_to_shortcuts">Додано до ярликів!</string>
     <string name="snackbar_deleted_undo">ВІДНОВИТИ</string>
     <string name="snackbar_tab_closed">Вкладку закрито</string>
     <string name="sort">Параметри сортування</string>
@@ -281,11 +273,6 @@
     <string name="switch_to_tab_description">Перейти на вкладку</string>
 <string name="task_decryption_finished">Розшифровку завершено</string>
     <string name="task_encryption_finished">Шифрування завершено</string>
-    <string name="top_sites_edit_dialog_save">Зберегти</string>
-    <string name="top_sites_edit_dialog_title">Редагувати ярлик</string>
-    <string name="top_sites_edit_dialog_url_title">URL</string>
-    <string name="top_sites_max_limit_confirmation_button">Гаразд, зрозуміло</string>
-    <string name="top_sites_rename_dialog_title">Назва</string>
     <string name="vault_decrypting">Дешифрування файлу, зачекайте…</string>
     <string name="vault_encrypting">Шифрування файлу, зачекайте…</string>
     <string name="vault_unsupported">Не вдається відкрити цей файл. Щоб відкрити, перемістіть його із захищеної папки та повторіть спробу.</string>

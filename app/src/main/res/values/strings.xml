@@ -10,7 +10,6 @@
     <string name="browser_enter_url">Search or Type URL</string>
     <string name="browser_error_image_title">The Fire is Gone</string>
     <string name="browser_find_in_page">Find in page</string>
-    <string name="browser_menu_add_to_shortcuts">Add to shortcuts</string>
     <string name="browser_menu_back">Back</string>
     <string name="browser_menu_bookmark_this_page_2">Bookmark page</string>
     <string name="browser_menu_desktop_site">Desktop site</string>
@@ -18,7 +17,6 @@
     <string name="browser_menu_find_in_page">Find in page</string>
     <string name="browser_menu_forward">Forward</string>
     <string name="browser_menu_refresh">Refresh</string>
-    <string name="browser_menu_remove_from_shortcuts">Remove from shortcuts</string>
     <string name="browser_menu_settings">Settings</string>
     <string name="browser_menu_share">Share</string>
     <string name="browser_menu_stop">Stop</string>
@@ -286,7 +284,6 @@
     <string name="blocked_trackers_detail_empty">No trackers blocked yet on this page.</string>
     <string name="blocked_trackers_host_count_multiplier">×%1$d</string>
     <string name="quit_application">Quitting the application to apply changes…</string>
-    <string name="remove_top_site">Remove</string>
     <string name="rename">Rename</string>
     <string name="rename_file">Rename file</string>
     <string name="request_geolocation">Share your device location with &lt;b&gt;&lt;font color=#ffffff&gt;%s&lt;/font&gt;&lt;/b&gt;?</string>
@@ -438,11 +435,6 @@
     <string name="web_options_unpin">Unpin from top</string>
     <string name="share_image">Share IMAGE</string>
     <string name="share_url">Share URL</string>
-    <string name="shortcut_max_limit_content">To add a new shortcut, remove one. Touch and hold the site and select remove.</string>
-    <string name="shortcut_max_limit_title">Shortcut limit reached</string>
-    <string name="shortcut_name_hint">Shortcut name</string>
-    <string name="shortcut_url_hint">Shortcut URL</string>
-    <string name="snackbar_added_to_shortcuts">Added to shortcuts!</string>
     <string name="snackbar_deleted_undo">UNDO</string>
     <string name="snackbar_tab_closed">Tab closed</string>
     <string name="sort">Sort by</string>
@@ -476,11 +468,6 @@
     <string name="task_gif_failed">Could not create GIF</string>
     <string name="task_gif_finished">GIF created</string>
     <string name="task_stop">Stop</string>
-    <string name="top_sites_edit_dialog_save">Save</string>
-    <string name="top_sites_edit_dialog_title">Edit shortcut</string>
-    <string name="top_sites_edit_dialog_url_title">URL</string>
-    <string name="top_sites_max_limit_confirmation_button">OK, Got It</string>
-    <string name="top_sites_rename_dialog_title">Name</string>
     <string name="update_auto_update_success_body">You were automatically updated to version %1$s.</string>
     <string name="update_auto_update_success_default_body">You were automatically updated to latest version.</string>
     <string name="update_auto_update_success_title">Firedown successfully updated</string>

@@ -290,7 +290,6 @@ public class Preferences {
 
     public static final int LIST_LIMIT = 25;
 
-    public static final int SHORTCUTS_LIST_LIMIT = 8;
 
 
     public static boolean getJavascriptEnabled(SharedPreferences sharedPreferences){

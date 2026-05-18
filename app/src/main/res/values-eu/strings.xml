@@ -9,7 +9,6 @@
     <string name="browser_enter_url">Bilatu edo Idatzi URLa</string>
     <string name="browser_error_image_title">Sua joan da</string>
     <string name="browser_find_in_page">Bilatu orrian</string>
-    <string name="browser_menu_add_to_shortcuts">Gehitu lasterbideetara</string>
     <string name="browser_menu_back">Atzera</string>
     <string name="browser_menu_bookmark_this_page_2">Egin orriaren laster-marka</string>
     <string name="browser_menu_desktop_site">Mahaigainerako gunea</string>
@@ -17,7 +16,6 @@
     <string name="browser_menu_find_in_page">Bilatu orrian</string>
     <string name="browser_menu_forward">Aurrera</string>
     <string name="browser_menu_refresh">Berritu</string>
-    <string name="browser_menu_remove_from_shortcuts">Kendu lasterbideetatik</string>
     <string name="browser_menu_settings">Ezarpenak</string>
     <string name="browser_menu_share">Partekatu</string>
     <string name="browser_menu_stop">Gelditu</string>
@@ -170,7 +168,6 @@
     <string name="quick_settings_sheet_insecure_connection_2">Konexioa ez da segurua</string>
     <string name="quick_settings_sheet_secure_connection_2">Konexioa segurua da</string>
     <string name="quit_application">Aplikaziotik irteten aldaketak aplikatzeko…</string>
-    <string name="remove_top_site">Kendu</string>
     <string name="rename">Aldatu izena</string>
     <string name="rename_file">Fitxategiaren izena aldatu</string>
     <string name="restart_origin">Berriro hasi</string>
@@ -242,11 +239,6 @@
     <string name="share">Partekatu</string>
     <string name="share_image">Partekatu IRUDIA</string>
     <string name="share_url">Partekatu URLa</string>
-    <string name="shortcut_max_limit_content">Lasterbide berria gehitzeko, kendu aurretik dagoen bat. Sakatu eta mantendu gunea eta hautatu kentzeko aukera.</string>
-    <string name="shortcut_max_limit_title">Lasterbideen mugara iritsi da</string>
-    <string name="shortcut_name_hint">Lasterbidearen izena</string>
-    <string name="shortcut_url_hint">Lasterbidearen URLa</string>
-    <string name="snackbar_added_to_shortcuts">Lasterbideetara gehituta!</string>
     <string name="snackbar_deleted_undo">DESEGIN</string>
     <string name="snackbar_tab_closed">Fitxa itxita</string>
     <string name="sort">Ordenatzeko irizpidea</string>
@@ -264,11 +256,6 @@
     <string name="switch_to_tab_description">Aldatu fitxara</string>
 <string name="task_decryption_finished">Deszifratzea amaitu da</string>
     <string name="task_encryption_finished">Enkriptatzea amaitu da</string>
-    <string name="top_sites_edit_dialog_save">Gorde</string>
-    <string name="top_sites_edit_dialog_title">Editatu lasterbidea</string>
-    <string name="top_sites_edit_dialog_url_title">URLa</string>
-    <string name="top_sites_max_limit_confirmation_button">Ados, ulertuta</string>
-    <string name="top_sites_rename_dialog_title">Izena</string>
     <string name="vault_decrypting">Fitxategia deszifratzen, itxaron mesedez…</string>
     <string name="vault_encrypting">Fitxategia enkriptatzen, itxaron mesedez…</string>
     <string name="vault_unsupported">Ezin da fitxategi hau ireki. Irekitzeko, atera karpeta segurutik eta saiatu berriro.</string>

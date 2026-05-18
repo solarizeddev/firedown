@@ -12,7 +12,6 @@
     <string name="browser_enter_url">搜尋或輸入 URL。</string>
     <string name="browser_error_image_title">火已經滅了</string>
     <string name="browser_find_in_page">在頁面中搜尋</string>
-    <string name="browser_menu_add_to_shortcuts">新增為捷徑</string>
     <string name="browser_menu_back">上一頁</string>
     <string name="browser_menu_bookmark_this_page_2">將頁面加入書籤</string>
     <string name="browser_menu_desktop_site">桌面版網站</string>
@@ -20,7 +19,6 @@
     <string name="browser_menu_find_in_page">在頁面中搜尋</string>
     <string name="browser_menu_forward">下一頁</string>
     <string name="browser_menu_refresh">重新整理</string>
-    <string name="browser_menu_remove_from_shortcuts">已從捷徑刪除</string>
     <string name="browser_menu_settings">設定</string>
     <string name="browser_menu_share">分享</string>
     <string name="browser_menu_stop">停止</string>
@@ -173,7 +171,6 @@
     <string name="quick_settings_sheet_insecure_connection_2">連線不安全</string>
     <string name="quick_settings_sheet_secure_connection_2">安全連線</string>
     <string name="quit_application">即將結束應用程式讓變更生效…</string>
-    <string name="remove_top_site">移除</string>
     <string name="rename">重命名</string>
     <string name="rename_file">重命名文件</string>
     <string name="request_geolocation">與&lt;b&gt;%s&lt;/b&gt;分享您的裝置位置嗎？</string>
@@ -256,11 +253,6 @@
     <string name="share">分享</string>
     <string name="share_image">分享影像</string>
     <string name="share_url">分享網址</string>
-    <string name="shortcut_max_limit_content">請先移除現有的捷徑才能再新增。請按住網站，然後選擇移除。</string>
-    <string name="shortcut_max_limit_title">已達捷徑數量限制</string>
-    <string name="shortcut_name_hint">捷徑名稱</string>
-    <string name="shortcut_url_hint">網址捷徑</string>
-    <string name="snackbar_added_to_shortcuts">已新增至捷徑！</string>
     <string name="snackbar_deleted_undo">還原</string>
     <string name="snackbar_tab_closed">已關閉分頁</string>
     <string name="sort">排序依據</string>
@@ -278,11 +270,6 @@
     <string name="switch_to_tab_description">切換至該分頁</string>
 <string name="task_decryption_finished">解密完成</string>
     <string name="task_encryption_finished">加密完成</string>
-    <string name="top_sites_edit_dialog_save">儲存</string>
-    <string name="top_sites_edit_dialog_title">編輯捷徑</string>
-    <string name="top_sites_edit_dialog_url_title">網址</string>
-    <string name="top_sites_max_limit_confirmation_button">好，知道了！</string>
-    <string name="top_sites_rename_dialog_title">名稱</string>
     <string name="vault_decrypting">正在解密文件，請稍候…</string>
     <string name="vault_encrypting">正在加密文件，請稍候…</string>
     <string name="vault_unsupported">無法開啟該文件。如要打開，請將其移出安全性資料夾，然後重試。</string>

@@ -8,14 +8,12 @@
     <string name="browser_enter_url">සොයන්න හෝ URL ටයිප් කරන්න</string>
     <string name="browser_error_image_title">ගින්න නිවී ඇත</string>
     <string name="browser_find_in_page">පිටුවේ සොයන්න</string>
-    <string name="browser_menu_add_to_shortcuts">කෙටිමං වෙත දමන්න</string>
     <string name="browser_menu_back">ආපසු</string>
     <string name="browser_menu_desktop_site">වැඩතල අඩවිය</string>
     <string name="browser_menu_edit_bookmark">පොත්යොමුව සංස්කරණය</string>
     <string name="browser_menu_find_in_page">පිටුවේ සොයන්න</string>
     <string name="browser_menu_forward">ඉදිරියට</string>
     <string name="browser_menu_refresh">නැවුම් කරන්න</string>
-    <string name="browser_menu_remove_from_shortcuts">කෙටිමං වෙතින් ඉවත් කරන්න</string>
     <string name="browser_menu_settings">සැකසුම්</string>
     <string name="browser_menu_share">බෙදාගන්න</string>
     <string name="browser_menu_stop">නවතන්න</string>
@@ -161,7 +159,6 @@
 <string name="quick_settings_sheet_insecure_connection_2">සම්බන්‍ධතාව අනාරක්‍ෂිතයි</string>
     <string name="quick_settings_sheet_secure_connection_2">සම්බන්‍ධතාව ආරක්‍ෂිතයි</string>
     <string name="quit_application">වෙනස්කම් යෙදීමට යෙදුමෙන් ඉවත් වෙමින්…</string>
-    <string name="remove_top_site">ඉවත් කරන්න</string>
     <string name="rename">නැවත නම් කරන්න</string>
     <string name="rename_file">ගොනුව නැවත නම් කරන්න</string>
     <string name="restart_origin">යළි අරඹන්න</string>
@@ -232,11 +229,6 @@
     <string name="share">බෙදාගන්න</string>
     <string name="share_image">IMAGE බෙදාගන්න</string>
     <string name="share_url">URL බෙදාගන්න</string>
-    <string name="shortcut_max_limit_content">නව කෙටිමඟක් යෙදීමට, එකක් ඉවත් කරන්න. අඩවිය ඔබාගෙන ඉවත් කරන්න තෝරන්න.</string>
-    <string name="shortcut_max_limit_title">කෙටිමං සීමාවට ළඟා විය</string>
-    <string name="shortcut_name_hint">කෙටිමඟ නාමය</string>
-    <string name="shortcut_url_hint">කෙටිමඟ ඒ.ස.නි.</string>
-    <string name="snackbar_added_to_shortcuts">කෙටිමං වෙත එක් කෙරිණි!</string>
     <string name="snackbar_deleted_undo">පෙරසේ</string>
     <string name="snackbar_tab_closed">පටිත්ත වැසිණි</string>
     <string name="sort">සුබෙදන්නේ</string>
@@ -254,11 +246,6 @@
     <string name="switch_to_tab_description">පටිත්තට මාරුවන්න</string>
 <string name="task_decryption_finished">විකේතනය අවසන්</string>
     <string name="task_encryption_finished">සංකේතනය අවසන්</string>
-    <string name="top_sites_edit_dialog_save">සුරකින්න</string>
-    <string name="top_sites_edit_dialog_title">කෙටිමඟ සංස්කරණය</string>
-    <string name="top_sites_edit_dialog_url_title">ඒ.ස.නි.</string>
-    <string name="top_sites_max_limit_confirmation_button">හරි, තේරුණා</string>
-    <string name="top_sites_rename_dialog_title">නම</string>
     <string name="vault_decrypting">ගොනුව විකේතනය කරමින්, කරුණාකර රැඳී සිටින්න…</string>
     <string name="vault_encrypting">ගොනුව සංකේතනය කරමින්, කරුණාකර රැඳී සිටින්න…</string>
     <string name="vault_unsupported">මෙම ගොනුව විවෘත කළ නොහැක. විවෘත කිරීමට, එය ආරක්ෂිත ෆෝල්ඩරයෙන් පිටතට ගෙන ගොස් නැවත උත්සාහ කරන්න.</string>

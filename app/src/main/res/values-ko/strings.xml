@@ -12,7 +12,6 @@
     <string name="browser_enter_url">검색하거나 URL을 입력하세요.</string>
     <string name="browser_error_image_title">불이 사라졌습니다</string>
     <string name="browser_find_in_page">페이지에서 찾기</string>
-    <string name="browser_menu_add_to_shortcuts">바로 가기에 추가</string>
     <string name="browser_menu_back">뒤로</string>
     <string name="browser_menu_bookmark_this_page_2">페이지 북마크</string>
     <string name="browser_menu_desktop_site">데스크톱 사이트</string>
@@ -20,7 +19,6 @@
     <string name="browser_menu_find_in_page">페이지에서 찾기</string>
     <string name="browser_menu_forward">앞으로</string>
     <string name="browser_menu_refresh">새로 고침</string>
-    <string name="browser_menu_remove_from_shortcuts">바로 가기에서 삭제</string>
     <string name="browser_menu_settings">설정</string>
     <string name="browser_menu_share">공유</string>
     <string name="browser_menu_stop">중지</string>
@@ -194,7 +192,6 @@
     <string name="blocked_trackers_cryptominers">암호화폐 채굴기</string>
     <string name="blocked_trackers_tracking_content">추적 콘텐츠</string>
     <string name="quit_application">변경 사항을 적용하기 위해 애플리케이션을 종료하는 중…</string>
-    <string name="remove_top_site">삭제</string>
     <string name="rename">이름 바꾸기</string>
     <string name="rename_file">파일 이름 바꾸기</string>
     <string name="request_geolocation">장치 위치를 공유하시겠습니까&lt;b&gt;%s&lt;/b&gt;?</string>
@@ -291,11 +288,6 @@
     <string name="share">공유</string>
     <string name="share_image">이미지 공유</string>
     <string name="share_url">URL 공유</string>
-    <string name="shortcut_max_limit_content">새 바로 가기를 추가하려면 하나를 삭제하세요. 사이트를 길게 터치하고 삭제를 선택하세요.</string>
-    <string name="shortcut_max_limit_title">바로 가기 한도에 도달됨</string>
-    <string name="shortcut_name_hint">바로 가기 이름</string>
-    <string name="shortcut_url_hint">바로 가기 URL</string>
-    <string name="snackbar_added_to_shortcuts">바로 가기에 추가됨!</string>
     <string name="snackbar_deleted_undo">실행 취소</string>
     <string name="snackbar_tab_closed">탭 닫힘</string>
     <string name="sort">정렬 기준</string>
@@ -314,11 +306,6 @@
 <string name="task_decryption_finished">복호화 완료</string>
     <string name="task_encryption_finished">암호화 완료</string>
     <string name="task_gif_finished">GIF 생성됨</string>
-    <string name="top_sites_edit_dialog_save">저장</string>
-    <string name="top_sites_edit_dialog_title">바로 가기 편집</string>
-    <string name="top_sites_edit_dialog_url_title">URL</string>
-    <string name="top_sites_max_limit_confirmation_button">확인</string>
-    <string name="top_sites_rename_dialog_title">이름</string>
     <string name="vault_decrypting">파일을 해독하는 중입니다. 잠시 기다려 주십시오…</string>
     <string name="vault_encrypting">파일을 암호화하는 중입니다. 잠시 기다려 주세요…</string>
     <string name="vault_unsupported">이 파일을 열 수 없습니다. 열려면 보안 폴더 밖으로 이동한 후 다시 시도하세요.</string>

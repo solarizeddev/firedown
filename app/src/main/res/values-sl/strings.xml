@@ -9,7 +9,6 @@
     <string name="browser_enter_url">Iščite ali vnesite URL.</string>
     <string name="browser_error_image_title">Ogenj je izginil</string>
     <string name="browser_find_in_page">Najdi na strani</string>
-    <string name="browser_menu_add_to_shortcuts">Dodaj med bližnjice</string>
     <string name="browser_menu_back">Nazaj</string>
     <string name="browser_menu_bookmark_this_page_2">Dodaj stran med zaznamke</string>
     <string name="browser_menu_desktop_site">Stran za namizja</string>
@@ -17,7 +16,6 @@
     <string name="browser_menu_find_in_page">Najdi na strani</string>
     <string name="browser_menu_forward">Naprej</string>
     <string name="browser_menu_refresh">Osveži</string>
-    <string name="browser_menu_remove_from_shortcuts">Odstrani iz bližnjic</string>
     <string name="browser_menu_settings">Nastavitve</string>
     <string name="browser_menu_share">Deli</string>
     <string name="browser_menu_stop">Ustavi</string>
@@ -170,7 +168,6 @@
     <string name="quick_settings_sheet_insecure_connection_2">Povezava ni varna</string>
     <string name="quick_settings_sheet_secure_connection_2">Povezava je varna</string>
     <string name="quit_application">Zapiranje aplikacije za uveljavitev sprememb …</string>
-    <string name="remove_top_site">Odstrani</string>
     <string name="rename">Preimenuj</string>
     <string name="rename_file">Preimenuj datoteko</string>
     <string name="request_geolocation">Želite deliti lokacijo svoje naprave z aplikacijo &lt;b&gt;%s&lt;/b&gt;?</string>
@@ -253,11 +250,6 @@
     <string name="share">Deliti</string>
     <string name="share_image">Delite SLIKO</string>
     <string name="share_url">Delite URL</string>
-    <string name="shortcut_max_limit_content">Če želite dodati novo bližnjico, eno odstranite. Podržite prst na njej in izberite \"Odstrani\".</string>
-    <string name="shortcut_max_limit_title">Doseženo je največje število bližnjic</string>
-    <string name="shortcut_name_hint">Ime bližnjice</string>
-    <string name="shortcut_url_hint">Spletni naslov bližnjice</string>
-    <string name="snackbar_added_to_shortcuts">Dodano med bližnjice!</string>
     <string name="snackbar_deleted_undo">RAZVELJAVI</string>
     <string name="snackbar_tab_closed">Zavihek zaprt</string>
     <string name="sort">Razvrščanje glede na</string>
@@ -275,11 +267,6 @@
     <string name="switch_to_tab_description">Preklopi na zavihek</string>
 <string name="task_decryption_finished">Dešifriranje končano</string>
     <string name="task_encryption_finished">Šifriranje je končano</string>
-    <string name="top_sites_edit_dialog_save">Shrani</string>
-    <string name="top_sites_edit_dialog_title">Uredi bližnjico</string>
-    <string name="top_sites_edit_dialog_url_title">URL</string>
-    <string name="top_sites_max_limit_confirmation_button">V redu, razumem</string>
-    <string name="top_sites_rename_dialog_title">Ime</string>
     <string name="vault_decrypting">Dešifriranje datoteke, počakajte …</string>
     <string name="vault_encrypting">Šifriranje datoteke, počakajte …</string>
     <string name="vault_unsupported">Te datoteke ni mogoče odpreti. Če ga želite odpreti, ga premaknite iz varne mape in poskusite znova.</string>

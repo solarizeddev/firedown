@@ -9,14 +9,12 @@
     <string name="browser_enter_url">Претражите или унесите URL.</string>
     <string name="browser_error_image_title">Ватра је нестала</string>
     <string name="browser_find_in_page">Нађи на страници</string>
-    <string name="browser_menu_add_to_shortcuts">Додај у пречице</string>
     <string name="browser_menu_back">Назад</string>
     <string name="browser_menu_desktop_site">За рачунаре</string>
     <string name="browser_menu_edit_bookmark">Уреди обележивач</string>
     <string name="browser_menu_find_in_page">Нађи на страници</string>
     <string name="browser_menu_forward">Напред</string>
     <string name="browser_menu_refresh">Освежи</string>
-    <string name="browser_menu_remove_from_shortcuts">Уклони из пречица</string>
     <string name="browser_menu_settings">Подешавања</string>
     <string name="browser_menu_share">Подели</string>
     <string name="browser_menu_stop">Заустави</string>
@@ -165,7 +163,6 @@
 <string name="quick_settings_sheet_insecure_connection_2">Веза није безбедна</string>
     <string name="quick_settings_sheet_secure_connection_2">Веза је безбедна</string>
     <string name="quit_application">Затварање апликације ради примене промена…</string>
-    <string name="remove_top_site">Уклони</string>
     <string name="rename">Преименуј</string>
     <string name="rename_file">Преименуј датотеку</string>
     <string name="request_geolocation">Желите да делите локацију уређаја са &lt;b&gt;%s&lt;/b&gt;?</string>
@@ -248,11 +245,6 @@
     <string name="share">Објави</string>
     <string name="share_image">Подели СЛИКУ</string>
     <string name="share_url">Подели URL</string>
-    <string name="shortcut_max_limit_content">Да бисте додали нову пречицу, уклоните једну постојећу. Додирните и држите прст над страницом па изаберите опцију за уклањање.</string>
-    <string name="shortcut_max_limit_title">Ограничење пречица достигнуто</string>
-    <string name="shortcut_name_hint">Назив пречице</string>
-    <string name="shortcut_url_hint">Пречица адресе</string>
-    <string name="snackbar_added_to_shortcuts">Додато у пречице!</string>
     <string name="snackbar_deleted_undo">ОПОЗОВИ</string>
     <string name="snackbar_tab_closed">Језичак затворен</string>
     <string name="sort">Сортирај према</string>
@@ -270,11 +262,6 @@
     <string name="switch_to_tab_description">Пређи на језичак</string>
 <string name="task_decryption_finished">Дешифровање је завршено</string>
     <string name="task_encryption_finished">Шифровање је завршено</string>
-    <string name="top_sites_edit_dialog_save">Сачувај</string>
-    <string name="top_sites_edit_dialog_title">Уреди пречицу</string>
-    <string name="top_sites_edit_dialog_url_title">Адреса</string>
-    <string name="top_sites_max_limit_confirmation_button">Важи, разумем</string>
-    <string name="top_sites_rename_dialog_title">Назив</string>
     <string name="vault_decrypting">Дешифровање датотеке, сачекајте…</string>
     <string name="vault_encrypting">Шифровање датотеке, сачекајте…</string>
     <string name="vault_unsupported">Не могу да отворим ову датотеку. Да бисте отворили, преместите је из безбедне фасцикле и покушајте поново.</string>

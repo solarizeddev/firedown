@@ -9,7 +9,6 @@
     <string name="browser_enter_url">Vyhľadajte alebo zadajte adresu URL.</string>
     <string name="browser_error_image_title">Oheň je preč</string>
     <string name="browser_find_in_page">Hľadať na stránke</string>
-    <string name="browser_menu_add_to_shortcuts">Pridať medzi skratky</string>
     <string name="browser_menu_back">Naspäť</string>
     <string name="browser_menu_bookmark_this_page_2">Pridať stránku medzi záložky</string>
     <string name="browser_menu_desktop_site">Verzia pre počítače</string>
@@ -17,7 +16,6 @@
     <string name="browser_menu_find_in_page">Hľadať na stránke</string>
     <string name="browser_menu_forward">Dopredu</string>
     <string name="browser_menu_refresh">Obnoviť</string>
-    <string name="browser_menu_remove_from_shortcuts">Odstrániť zo skratiek</string>
     <string name="browser_menu_settings">Nastavenia</string>
     <string name="browser_menu_share">Zdieľať</string>
     <string name="browser_menu_stop">Zastaviť</string>
@@ -170,7 +168,6 @@
     <string name="quick_settings_sheet_insecure_connection_2">Pripojenie nie je zabezpečené</string>
     <string name="quick_settings_sheet_secure_connection_2">Pripojenie je zabezpečené</string>
     <string name="quit_application">Ukončuje sa aplikácia a aplikujú sa zmeny…</string>
-    <string name="remove_top_site">Odstrániť</string>
     <string name="rename">Premenovať</string>
     <string name="rename_file">Premenovať súbor</string>
     <string name="request_geolocation">Chcete zdieľať polohu svojho zariadenia s používateľom &lt;b&gt;%s&lt;/b&gt;?</string>
@@ -253,11 +250,6 @@
     <string name="share">zdieľam</string>
     <string name="share_image">Zdieľať IMAGE</string>
     <string name="share_url">Zdieľať URL</string>
-    <string name="shortcut_max_limit_content">Ak chcete pridať novú skratku, musíte jednu odstrániť. Podržte na nej prst a vyberte možnosť Odstrániť.</string>
-    <string name="shortcut_max_limit_title">Bol dosiahnutý limit počtu skratiek</string>
-    <string name="shortcut_name_hint">Názov skratky</string>
-    <string name="shortcut_url_hint">Adresa skratky</string>
-    <string name="snackbar_added_to_shortcuts">Pridané medzi skratky!</string>
     <string name="snackbar_deleted_undo">SPÄŤ</string>
     <string name="snackbar_tab_closed">Karta bola zavretá</string>
     <string name="sort">Zoradiť podľa</string>
@@ -275,11 +267,6 @@
     <string name="switch_to_tab_description">Prejsť na kartu</string>
 <string name="task_decryption_finished">Dešifrovanie dokončené</string>
     <string name="task_encryption_finished">Šifrovanie dokončené</string>
-    <string name="top_sites_edit_dialog_save">Uložiť</string>
-    <string name="top_sites_edit_dialog_title">Upraviť skratku</string>
-    <string name="top_sites_edit_dialog_url_title">Adresa URL</string>
-    <string name="top_sites_max_limit_confirmation_button">Ok, rozumiem</string>
-    <string name="top_sites_rename_dialog_title">Názov</string>
     <string name="vault_decrypting">Dešifruje sa súbor, čakajte…</string>
     <string name="vault_encrypting">Šifruje sa súbor, čakajte…</string>
     <string name="vault_unsupported">Tento súbor sa nedá otvoriť. Ak ho chcete otvoriť, presuňte ho z bezpečného priečinka a skúste to znova.</string>

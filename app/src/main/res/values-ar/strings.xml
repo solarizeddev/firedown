@@ -9,14 +9,12 @@
     <string name="browser_enter_url">ابحث أو اكتب عنوان URL.</string>
     <string name="browser_error_image_title">ذهب النار</string>
     <string name="browser_find_in_page">ابحث في الصفحة</string>
-    <string name="browser_menu_add_to_shortcuts">أضِف إلى الاختصارات</string>
     <string name="browser_menu_back">السابق</string>
     <string name="browser_menu_desktop_site">نسخة سطح مكتب</string>
     <string name="browser_menu_edit_bookmark">حرّر العلامة</string>
     <string name="browser_menu_find_in_page">ابحث في الصفحة</string>
     <string name="browser_menu_forward">التالي</string>
     <string name="browser_menu_refresh">أعِد التحميل</string>
-    <string name="browser_menu_remove_from_shortcuts">أزِل من الاختصارات</string>
     <string name="browser_menu_settings">الإعدادات</string>
     <string name="browser_menu_share">شارِك</string>
     <string name="browser_menu_stop">أوقف</string>
@@ -186,7 +184,6 @@
     <string name="blocked_trackers_cryptominers">أدوات تعدين العملات المشفرة</string>
     <string name="blocked_trackers_tracking_content">محتوى التتبع</string>
     <string name="quit_application">يُغلَق التطبيق الآن لتطبيق التغييرات…</string>
-    <string name="remove_top_site">أزِل</string>
     <string name="rename">إعادة تسمية</string>
     <string name="rename_file">إعادة تسمية الملف</string>
     <string name="request_geolocation">شارك موقع جهازك مع&lt;b&gt;%s&lt;/b&gt; ؟</string>
@@ -282,11 +279,6 @@
     <string name="share">يشارك</string>
     <string name="share_image">مشاركة الصورة</string>
     <string name="share_url">مشاركة عنوان URL</string>
-    <string name="shortcut_max_limit_content">لإضافة اختصار جديد، أزِل واحدًا. اضغط مطولًا على الموقع واختر أزِل.</string>
-    <string name="shortcut_max_limit_title">وصلت إلى أقصى حدّ للاختصارات</string>
-    <string name="shortcut_name_hint">اسم الاختصار</string>
-    <string name="shortcut_url_hint">اختصار عنوان URL</string>
-    <string name="snackbar_added_to_shortcuts">أُضيف إلى الاختصارات!</string>
     <string name="snackbar_deleted_undo">تراجَع</string>
     <string name="snackbar_tab_closed">أُغلق اللسان</string>
     <string name="sort">الترتيب حسب</string>
@@ -304,11 +296,6 @@
     <string name="switch_to_tab_description">انتقل إلى اللسان</string>
 <string name="task_encryption_finished">تم الانتهاء من التشفير</string>
     <string name="task_gif_finished">تم إنشاء GIF</string>
-    <string name="top_sites_edit_dialog_save">احفظ</string>
-    <string name="top_sites_edit_dialog_title">حرّر الاختصار</string>
-    <string name="top_sites_edit_dialog_url_title">المسار</string>
-    <string name="top_sites_max_limit_confirmation_button">حسنًا، فهمت</string>
-    <string name="top_sites_rename_dialog_title">الاسم</string>
     <string name="vault_decrypting">جارٍ فك تشفير الملف، يرجى الانتظار…</string>
     <string name="vault_encrypting">يتم الآن تشفير الملف، الرجاء الانتظار…</string>
     <string name="vault_unsupported">لا يمكن فتح هذا الملف. لفتحه، انقله خارج المجلد الآمن وحاول مرة أخرى.</string>

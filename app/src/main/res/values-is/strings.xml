@@ -8,7 +8,6 @@
     <string name="browser_enter_url">Leitaðu eða sláðu inn vefslóð</string>
     <string name="browser_error_image_title">Eldurinn er farinn</string>
     <string name="browser_find_in_page">Finna á síðu</string>
-    <string name="browser_menu_add_to_shortcuts">Bæta við flýtileiðir</string>
     <string name="browser_menu_back">Til baka</string>
     <string name="browser_menu_bookmark_this_page_2">Bókamerkja síðu</string>
     <string name="browser_menu_desktop_site">Vefsvæði fyrir borðtölvur</string>
@@ -16,7 +15,6 @@
     <string name="browser_menu_find_in_page">Finna á síðu</string>
     <string name="browser_menu_forward">Áfram</string>
     <string name="browser_menu_refresh">Endurglæða</string>
-    <string name="browser_menu_remove_from_shortcuts">Fjarlægja úr flýtileiðum</string>
     <string name="browser_menu_settings">Stillingar</string>
     <string name="browser_menu_share">Deila</string>
     <string name="browser_menu_stop">Stöðva</string>
@@ -167,7 +165,6 @@
     <string name="quick_settings_sheet_insecure_connection_2">Tenging er ekki örugg</string>
     <string name="quick_settings_sheet_secure_connection_2">Tenging er örugg</string>
     <string name="quit_application">Hætti í forritinu til að virkja breytingar…</string>
-    <string name="remove_top_site">Fjarlægja</string>
     <string name="rename">Endurnefna</string>
     <string name="rename_file">Endurnefna skrá</string>
     <string name="restart_origin">Endurræsa</string>
@@ -238,11 +235,6 @@
     <string name="share">Deila</string>
     <string name="share_image">Deildu MYND</string>
     <string name="share_url">Deildu vefslóð</string>
-    <string name="shortcut_max_limit_content">Fjarlægðu eina til að bæta við nýrri flýtileið. Ýttu og haltu niðri á síðuna og veldu að fjarlægja.</string>
-    <string name="shortcut_max_limit_title">Hámarki flýtileiða náð</string>
-    <string name="shortcut_name_hint">Heiti flýtileiðar</string>
-    <string name="shortcut_url_hint">Vefslóð flýtileiðar</string>
-    <string name="snackbar_added_to_shortcuts">Bætt við flýtileiðir!</string>
     <string name="snackbar_deleted_undo">AFTURKALLA</string>
     <string name="snackbar_tab_closed">Flipa lokað</string>
     <string name="sort">Raða eftir</string>
@@ -260,11 +252,6 @@
     <string name="switch_to_tab_description">Fara í flipa</string>
 <string name="task_decryption_finished">Afkóðun lokið</string>
     <string name="task_encryption_finished">Dulkóðun lokið</string>
-    <string name="top_sites_edit_dialog_save">Vista</string>
-    <string name="top_sites_edit_dialog_title">Breyta flýtileið</string>
-    <string name="top_sites_edit_dialog_url_title">Vefslóð</string>
-    <string name="top_sites_max_limit_confirmation_button">Í lagi, ég skil</string>
-    <string name="top_sites_rename_dialog_title">Heiti</string>
     <string name="vault_decrypting">Afkóðar skrá, vinsamlegast bíddu…</string>
     <string name="vault_encrypting">Dulkóðar skrá, vinsamlegast bíddu…</string>
     <string name="vault_unsupported">Ekki er hægt að opna þessa skrá. Til að opna skaltu færa það úr öruggri möppu og reyna aftur.</string>

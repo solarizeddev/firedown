@@ -9,7 +9,6 @@
     <string name="browser_enter_url">Hae tai kirjoita URL-osoite.</string>
     <string name="browser_error_image_title">Tuli on poissa</string>
     <string name="browser_find_in_page">Etsi sivulta</string>
-    <string name="browser_menu_add_to_shortcuts">Lisää pikavalintoihin</string>
     <string name="browser_menu_back">Taaksepäin</string>
     <string name="browser_menu_bookmark_this_page_2">Lisää sivu kirjanmerkkeihin</string>
     <string name="browser_menu_desktop_site">Työpöytäsivusto</string>
@@ -17,7 +16,6 @@
     <string name="browser_menu_find_in_page">Etsi sivulta</string>
     <string name="browser_menu_forward">Eteenpäin</string>
     <string name="browser_menu_refresh">Päivitä</string>
-    <string name="browser_menu_remove_from_shortcuts">Poista pikavalinnoista</string>
     <string name="browser_menu_settings">Asetukset</string>
     <string name="browser_menu_share">Jaa</string>
     <string name="browser_menu_stop">Pysäytä</string>
@@ -186,7 +184,6 @@
     <string name="quick_settings_sheet_insecure_connection_2">Yhteys ei ole suojattu</string>
     <string name="quick_settings_sheet_secure_connection_2">Yhteys on suojattu</string>
     <string name="quit_application">Lopetetaan sovellus, jotta muutokset tulevat voimaan…</string>
-    <string name="remove_top_site">Poista</string>
     <string name="rename">Nimeä uudelleen</string>
     <string name="rename_file">Nimeä tiedosto uudelleen</string>
     <string name="request_geolocation">Jaa laitteesi sijainti henkilön &lt;b&gt;%s&lt;/b&gt; kanssa?</string>
@@ -269,11 +266,6 @@
     <string name="share">Jaa</string>
     <string name="share_image">Jaa KUVA</string>
     <string name="share_url">Jaa URL-osoite</string>
-    <string name="shortcut_max_limit_content">Lisätäksesi uuden pikavalinnan, poista yksi olemassa oleva. Kosketa sivustoa ja pidä pohjassa, sitten valitse poista.</string>
-    <string name="shortcut_max_limit_title">Pikavalintojen raja tuli vastaan</string>
-    <string name="shortcut_name_hint">Pikavalinnan nimi</string>
-    <string name="shortcut_url_hint">Oikotien URL-osoite</string>
-    <string name="snackbar_added_to_shortcuts">Lisätty pikavalintoihin!</string>
     <string name="snackbar_deleted_undo">KUMOA</string>
     <string name="snackbar_tab_closed">Välilehti suljettu</string>
     <string name="sort">Lajitteluperuste</string>
@@ -292,11 +284,6 @@
 <string name="task_decryption_finished">Salauksen purku on valmis</string>
     <string name="task_encryption_finished">Salaus valmis</string>
     <string name="task_gif_finished">GIF luotu</string>
-    <string name="top_sites_edit_dialog_save">Tallenna</string>
-    <string name="top_sites_edit_dialog_title">Muokkaa oikotietä</string>
-    <string name="top_sites_edit_dialog_url_title">URL-osoite</string>
-    <string name="top_sites_max_limit_confirmation_button">Selvä</string>
-    <string name="top_sites_rename_dialog_title">Nimi</string>
     <string name="vault_decrypting">Puretaan tiedostoa, odota…</string>
     <string name="vault_encrypting">Salataan tiedostoa, odota…</string>
     <string name="vault_unsupported">Tätä tiedostoa ei voi avata. Avaa se siirtämällä se pois Turvakansiosta ja yritä uudelleen.</string>

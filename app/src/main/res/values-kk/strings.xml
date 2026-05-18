@@ -8,7 +8,6 @@
     <string name="browser_enter_url">Іздеу немесе URL мекенжайын теріңіз</string>
     <string name="browser_error_image_title">От сөнді</string>
     <string name="browser_find_in_page">Беттен табу</string>
-    <string name="browser_menu_add_to_shortcuts">Жарлықтарға қосу</string>
     <string name="browser_menu_back">Артқа</string>
     <string name="browser_menu_bookmark_this_page_2">Бетті бетбелгілерге қосу</string>
     <string name="browser_menu_desktop_site">Жұмыс үстелі сайты</string>
@@ -16,7 +15,6 @@
     <string name="browser_menu_find_in_page">Беттен табу</string>
     <string name="browser_menu_forward">Алға</string>
     <string name="browser_menu_refresh">Жаңарту</string>
-    <string name="browser_menu_remove_from_shortcuts">Жарлықтардан өшіру</string>
     <string name="browser_menu_settings">Баптаулар</string>
     <string name="browser_menu_share">Бөлісу</string>
     <string name="browser_menu_stop">Тоқтату</string>
@@ -169,7 +167,6 @@
     <string name="quick_settings_sheet_insecure_connection_2">Байланыс қауіпсіз емес</string>
     <string name="quick_settings_sheet_secure_connection_2">Байланыс қауіпсіз</string>
     <string name="quit_application">Өзгерістерді іске асыру үшін қолданбадан шығу…</string>
-    <string name="remove_top_site">Өшіру</string>
     <string name="rename">Атын өзгерту</string>
     <string name="rename_file">Файл атын өзгерту</string>
     <string name="restart_origin">Қайтадан қосу</string>
@@ -241,11 +238,6 @@
     <string name="share">Бөлісу</string>
     <string name="share_image">IMAGE бөлісіңіз</string>
     <string name="share_url">URL мекенжайын бөлісу</string>
-    <string name="shortcut_max_limit_content">Жаңа жарлықты қосу үшін, біреуін өшіріңіз. Сайтқа басып, басулы ұстаңыз және өшіру таңдаңыз.</string>
-    <string name="shortcut_max_limit_title">Жарлықтар саны шегіне жетті</string>
-    <string name="shortcut_name_hint">Жарлық атауы</string>
-    <string name="shortcut_url_hint">Жарлық URL сілтемесі</string>
-    <string name="snackbar_added_to_shortcuts">Жарлықтарға қосылды!</string>
     <string name="snackbar_deleted_undo">БОЛДЫРМАУ</string>
     <string name="snackbar_tab_closed">Бет жабылды</string>
     <string name="sort">Сұрыптау реті</string>
@@ -263,11 +255,6 @@
     <string name="switch_to_tab_description">Бетке ауысу</string>
 <string name="task_decryption_finished">Шифрды шешу аяқталды</string>
     <string name="task_encryption_finished">Шифрлау аяқталды</string>
-    <string name="top_sites_edit_dialog_save">Сақтау</string>
-    <string name="top_sites_edit_dialog_title">Жарлықты түзету</string>
-    <string name="top_sites_edit_dialog_url_title">URL</string>
-    <string name="top_sites_max_limit_confirmation_button">Жақсы, түсіндім</string>
-    <string name="top_sites_rename_dialog_title">Аты</string>
     <string name="vault_decrypting">Файл шифры шешілуде, күте тұрыңыз…</string>
     <string name="vault_encrypting">Файл шифрлануда, күтіңіз…</string>
     <string name="vault_unsupported">Бұл файлды ашу мүмкін емес. Ашу үшін оны қауіпсіз қалтадан шығарып, әрекетті қайталаңыз.</string>

@@ -3,7 +3,6 @@
     <string name="settings_oled_theme_summary">Superfícies pretas puras — economiza bateria em telas OLED</string>
     <string name="archive_banner_subtitle">Toque para visualizar ou reabrir</string>
     <string name="browser_find_in_page">Procurar na página</string>
-    <string name="browser_menu_add_to_shortcuts">Adicionar aos atalhos</string>
     <string name="browser_menu_back">Voltar</string>
     <string name="browser_menu_bookmark_this_page_2">Adicionar aos favoritos</string>
     <string name="browser_menu_desktop_site">Site de computador</string>
@@ -11,7 +10,6 @@
     <string name="browser_menu_find_in_page">Procurar na página</string>
     <string name="browser_menu_forward">Avançar</string>
     <string name="browser_menu_refresh">Atualizar</string>
-    <string name="browser_menu_remove_from_shortcuts">Remover dos atalhos</string>
     <string name="browser_menu_settings">Configurações</string>
     <string name="browser_menu_share">Compartilhar</string>
     <string name="browser_menu_stop">Parar</string>
@@ -50,7 +48,6 @@
     <string name="quick_settings_sheet_insecure_connection_2">Conexão não segura</string>
     <string name="quick_settings_sheet_secure_connection_2">Conexão segura</string>
     <string name="quit_application">Fechando o aplicativo para aplicar as alterações…</string>
-    <string name="remove_top_site">Remover</string>
     <string name="settings_dark_theme">Escuro</string>
     <string name="settings_delete_browsing">Limpar dados de navegação</string>
     <string name="settings_delete_browsing_data_browsing_history_title">Histórico de navegação</string>
@@ -72,21 +69,11 @@
     <string name="settings_quit_title">Limpar dados de navegação ao sair</string>
     <string name="settings_search_engine_select">Desta vez, pesquisar em:</string>
     <string name="settings_theme">Tema</string>
-    <string name="shortcut_max_limit_content">Para adicionar um novo atalho, remova outro. Mantenha o dedo sobre o site e selecione remover.</string>
-    <string name="shortcut_max_limit_title">Limite de atalhos atingido</string>
-    <string name="shortcut_name_hint">Nome do atalho</string>
-    <string name="shortcut_url_hint">URL do atalho</string>
-    <string name="snackbar_added_to_shortcuts">Adicionado aos atalhos!</string>
     <string name="snackbar_deleted_undo">DESFAZER</string>
     <string name="snackbar_tab_closed">Aba fechada</string>
     <string name="sort">Ordenar por</string>
     <string name="spoof_timezone_summary">Ao ativar, a proteção contra fingerprinting fica melhor</string>
     <string name="switch_to_tab_description">Mudar para a aba</string>
-<string name="top_sites_edit_dialog_save">Salvar</string>
-    <string name="top_sites_edit_dialog_title">Editar atalho</string>
-    <string name="top_sites_edit_dialog_url_title">URL</string>
-    <string name="top_sites_max_limit_confirmation_button">OK, entendi</string>
-    <string name="top_sites_rename_dialog_title">Nome</string>
     <string name="bookmark_name">Nome</string>    <string name="pip_enter">Picture in picture</string>    <string name="media_seek_back_10s_desc">Voltar 10 segundos</string>
     <string name="media_seek_forward_10s_desc">Avançar 10 segundos</string>
 

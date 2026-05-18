@@ -12,7 +12,6 @@
     <string name="browser_enter_url">URL\'yi arayın veya yazın.</string>
     <string name="browser_error_image_title">Ateş Gitti</string>
     <string name="browser_find_in_page">Sayfada bul</string>
-    <string name="browser_menu_add_to_shortcuts">Kısayollara ekle</string>
     <string name="browser_menu_back">Geri</string>
     <string name="browser_menu_bookmark_this_page_2">Yer imlerine ekle</string>
     <string name="browser_menu_desktop_site">Masaüstü sitesi</string>
@@ -20,7 +19,6 @@
     <string name="browser_menu_find_in_page">Sayfada bul</string>
     <string name="browser_menu_forward">İleri</string>
     <string name="browser_menu_refresh">Tazele</string>
-    <string name="browser_menu_remove_from_shortcuts">Kısayollardan kaldır</string>
     <string name="browser_menu_settings">Ayarlar</string>
     <string name="browser_menu_share">Paylaş</string>
     <string name="browser_menu_stop">Durdur</string>
@@ -207,7 +205,6 @@
     <string name="blocked_trackers_detail_empty">Bu sayfada henüz engellenmiş bir takipçi yok.</string>
     <string name="blocked_trackers_host_count_multiplier">×%1$d</string>
     <string name="quit_application">Değişiklikleri uygulamak için uygulamadan çıkılıyor…</string>
-    <string name="remove_top_site">Kaldır</string>
     <string name="rename">Yeniden isimlendirmek</string>
     <string name="rename_file">Dosyayı yeniden adlandır</string>
     <string name="request_geolocation">Cihazınızın konumu &lt;b&gt;%s&lt;/b&gt; ile paylaşılsın mı?</string>
@@ -304,11 +301,6 @@
     <string name="share">Paylaşmak</string>
     <string name="share_image">Fotoğraf paylaşmak</string>
     <string name="share_url">URL\'yi paylaş</string>
-    <string name="shortcut_max_limit_content">Yeni bir kısayol eklemek için kısayollardan birini kaldırın. Siteye dokunup basılı tutun ve kaldır’ı seçin.</string>
-    <string name="shortcut_max_limit_title">Kısayol sınırına ulaştınız</string>
-    <string name="shortcut_name_hint">Kısayol adı</string>
-    <string name="shortcut_url_hint">Kısayol adresi</string>
-    <string name="snackbar_added_to_shortcuts">Kısayollara eklendi</string>
     <string name="snackbar_deleted_undo">GERİ AL</string>
     <string name="snackbar_tab_closed">Sekme kapatıldı</string>
     <string name="sort">Sıralama ölçütü</string>
@@ -328,11 +320,6 @@
 <string name="task_decryption_finished">Şifre çözme tamamlandı</string>
     <string name="task_encryption_finished">Şifreleme tamamlandı</string>
     <string name="task_gif_finished">GIF oluşturuldu</string>
-    <string name="top_sites_edit_dialog_save">Kaydet</string>
-    <string name="top_sites_edit_dialog_title">Kısayolu düzenle</string>
-    <string name="top_sites_edit_dialog_url_title">Adres</string>
-    <string name="top_sites_max_limit_confirmation_button">Tamam</string>
-    <string name="top_sites_rename_dialog_title">Adı</string>
     <string name="vault_decrypting">Dosyanın şifresi çözülüyor, lütfen bekleyin…</string>
     <string name="vault_encrypting">Dosya şifreleniyor, lütfen bekleyin…</string>
     <string name="vault_unsupported">Bu dosya açılamıyor. Açmak için onu Güvenli Klasörün dışına taşıyın ve tekrar deneyin.</string>

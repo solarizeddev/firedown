@@ -8,7 +8,6 @@
     <string name="browser_enter_url">ຊອກຫາ ຫຼືພິມ URL</string>
     <string name="browser_error_image_title">ໄຟຫມົດແລ້ວ</string>
     <string name="browser_find_in_page">ຄົ້ນຫາໃນຫນ້ານີ້</string>
-    <string name="browser_menu_add_to_shortcuts">ເພີ່ມທາງລັດ</string>
     <string name="browser_menu_back">ກັບຄືນ</string>
     <string name="browser_menu_bookmark_this_page_2">ໜ້າບຸກມາກ</string>
     <string name="browser_menu_desktop_site">ໂຫມດເດັກສທັອບ</string>
@@ -16,7 +15,6 @@
     <string name="browser_menu_find_in_page">ຄົ້ນຫາໃນຫນ້ານີ້</string>
     <string name="browser_menu_forward">ໄປໜ້າ</string>
     <string name="browser_menu_refresh">ຣີເຟຣຊ</string>
-    <string name="browser_menu_remove_from_shortcuts">ລຶບອອກຈາກທາງລັດ</string>
     <string name="browser_menu_settings">ການຕັ້ງຄ່າ</string>
     <string name="browser_menu_share">ແບ່ງປັນ</string>
     <string name="browser_menu_stop">ຢຸດ</string>
@@ -164,7 +162,6 @@
 <string name="quick_settings_sheet_insecure_connection_2">ການເຊື່ອມຕໍ່ບໍ່ປອດໄພ</string>
     <string name="quick_settings_sheet_secure_connection_2">ການເຊື່ອມຕໍ່ແມ່ນປອດໄພ</string>
     <string name="quit_application">ກຳລັງອອກຈາກແອັບພລິເຄຊັນເພື່ອນຳໃຊ້ການປ່ຽນແປງ…</string>
-    <string name="remove_top_site">ລຶບ</string>
     <string name="rename">ປ່ຽນຊື່</string>
     <string name="rename_file">ປ່ຽນຊື່ໄຟລ໌</string>
     <string name="restart_origin">ເລີ່ມ​ຕົ້ນ​ໃຫມ່</string>
@@ -233,10 +230,6 @@
     <string name="share">ແບ່ງປັນ</string>
     <string name="share_image">ແບ່ງປັນ IMAGE</string>
     <string name="share_url">ແບ່ງປັນ URL</string>
-    <string name="shortcut_max_limit_content">ເພື່ອເພີ່ມທາງລັດໃໝ່, ເອົາອັນໃດອັນໜຶ່ງອອກ. ແຕະໃສ່ເວັບໄຊທ໌ຄ້າງໄວ້ ແລະເລືອກເອົາອອກ.</string>
-    <string name="shortcut_max_limit_title">ຮອດຂີດຈຳກັດທາງລັດແລ້ວ</string>
-    <string name="shortcut_name_hint">ຊື່ທາງລັດ</string>
-    <string name="snackbar_added_to_shortcuts">ເພີ່ມໃສ່ທາງລັດແລ້ວ!</string>
     <string name="snackbar_deleted_undo">ເອົາກັບຄືນ</string>
     <string name="snackbar_tab_closed">ປິດແທັບແລ້ວ</string>
     <string name="sort">ຈັດຮຽງຕາມ</string>
@@ -254,11 +247,6 @@
     <string name="switch_to_tab_description">ປ່ຽນໄປຫາແທັບ</string>
 <string name="task_decryption_finished">ການຖອດລະຫັດສຳເລັດແລ້ວ</string>
     <string name="task_encryption_finished">ການເຂົ້າລະຫັດສຳເລັດແລ້ວ</string>
-    <string name="top_sites_edit_dialog_save">ບັນທຶກ</string>
-    <string name="top_sites_edit_dialog_title">ແກ້ໄຂທາງລັດ</string>
-    <string name="top_sites_edit_dialog_url_title">URL</string>
-    <string name="top_sites_max_limit_confirmation_button">ໂອເຄ, ເຂົ້າໃຈແລ້ວ</string>
-    <string name="top_sites_rename_dialog_title">ຊື່</string>
     <string name="vault_decrypting">ກຳລັງຖອດລະຫັດໄຟລ໌, ກະລຸນາລໍຖ້າ…</string>
     <string name="vault_encrypting">ກຳລັງເຂົ້າລະຫັດໄຟລ໌, ກະລຸນາລໍຖ້າ…</string>
     <string name="vault_unsupported">ບໍ່ສາມາດເປີດໄຟລ໌ນີ້ໄດ້. ເພື່ອເປີດ, ຍ້າຍມັນອອກຈາກໂຟນເດີປອດໄພ ແລະລອງໃໝ່ອີກ.</string>

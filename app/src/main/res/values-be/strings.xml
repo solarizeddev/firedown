@@ -8,7 +8,6 @@
     <string name="browser_enter_url">Шукайце або ўвядзіце URL</string>
     <string name="browser_error_image_title">Агонь знік</string>
     <string name="browser_find_in_page">Знайсці на старонцы</string>
-    <string name="browser_menu_add_to_shortcuts">Дадаць у цэтлікі</string>
     <string name="browser_menu_back">Назад</string>
     <string name="browser_menu_bookmark_this_page_2">Зрабіць закладку</string>
     <string name="browser_menu_desktop_site">Версія для ПК</string>
@@ -16,7 +15,6 @@
     <string name="browser_menu_find_in_page">Знайсці на старонцы</string>
     <string name="browser_menu_forward">Наперад</string>
     <string name="browser_menu_refresh">Абнавіць</string>
-    <string name="browser_menu_remove_from_shortcuts">Выдаліць з цэтлікаў</string>
     <string name="browser_menu_settings">Налады</string>
     <string name="browser_menu_share">Падзяліцца</string>
     <string name="browser_menu_stop">Спыніць</string>
@@ -162,7 +160,6 @@
 <string name="quick_settings_sheet_insecure_connection_2">Злучэнне не абаронена</string>
     <string name="quick_settings_sheet_secure_connection_2">Злучэнне абаронена</string>
     <string name="quit_application">Выхад з праграмы, каб прымяніць змены…</string>
-    <string name="remove_top_site">Выдаліць</string>
     <string name="rename">Перайменаваць</string>
     <string name="rename_file">Перайменаваць файл</string>
     <string name="request_geolocation">Падзяліцца месцазнаходжаннем прылады з &lt;b&gt; %s &lt;/b&gt;?</string>
@@ -239,10 +236,6 @@
     <string name="share">Падзяліцца</string>
     <string name="share_image">Падзяліцеся IMAGE</string>
     <string name="share_url">Абагуліць URL</string>
-    <string name="shortcut_max_limit_content">Каб дадаць новы цэтлік, выдаліце якісь іншы. Націсніце на сайт і ўтрымлівайце, пасля абярыце \"Выдаліць\".</string>
-    <string name="shortcut_max_limit_title">Дасягнуты ліміт цэтлікаў</string>
-    <string name="shortcut_name_hint">Назва цэтліка</string>
-    <string name="snackbar_added_to_shortcuts">Дададзены ў цэтлікі!</string>
     <string name="snackbar_deleted_undo">АДМЯНІЦЬ</string>
     <string name="snackbar_tab_closed">Картка закрыта</string>
     <string name="sort">Сартаваць па</string>
@@ -260,9 +253,6 @@
     <string name="switch_to_tab_description">Перайсці ў картку</string>
 <string name="task_decryption_finished">Расшыфроўка завершана</string>
     <string name="task_encryption_finished">Шыфраванне завершана</string>
-    <string name="top_sites_edit_dialog_save">Захаваць</string>
-    <string name="top_sites_max_limit_confirmation_button">OK, зразумела</string>
-    <string name="top_sites_rename_dialog_title">Назва</string>
     <string name="vault_decrypting">Расшыфроўка файла, пачакайце…</string>
     <string name="vault_encrypting">Шыфраванне файла, пачакайце…</string>
     <string name="vault_unsupported">Немагчыма адкрыць гэты файл. Каб адкрыць, перамясціце яго з бяспечнай папкі і паўтарыце спробу.</string>

@@ -27,10 +27,8 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:animateLayoutChanges="true"
         android:orientation="vertical"
-        app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior"
-        tools:visibility="visible">
+        app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior">
 
 
         <com.solarized.firedown.ui.OnBoardingCard
@@ -41,11 +39,31 @@
             android:layout_marginTop="4dp" />
 
 
-        <com.solarized.firedown.ui.HomeViewpager
-            android:id="@+id/view_pager_holder"
+        <!--
+            Brand-only home for a downloader-first browser. With
+            shortcuts retired (they migrated into pinned bookmarks),
+            the home page is just the URL bar and a centred Firedown
+            mark — downloads are still one tap away via the bottom
+            bar, bookmarks (with pinned items at the top) via the
+            More menu. layout_weight=1 fills whatever vertical space
+            is left after the onboarding card so the glyph stays
+            centred whether or not onboarding is visible.
+        -->
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp" />
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:paddingHorizontal="24dp">
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:contentDescription="@null"
+                android:src="@drawable/firedown_logo_color" />
+
+        </LinearLayout>
 
 
     </LinearLayout>
@@ -79,4 +97,3 @@
 
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
-

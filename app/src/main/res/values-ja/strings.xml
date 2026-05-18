@@ -12,7 +12,6 @@
     <string name="browser_enter_url">URL を検索または入力</string>
     <string name="browser_error_image_title">火は消えた</string>
     <string name="browser_find_in_page">ページ内検索</string>
-    <string name="browser_menu_add_to_shortcuts">ショートカットに追加</string>
     <string name="browser_menu_back">戻る</string>
     <string name="browser_menu_bookmark_this_page_2">ページをブックマークに追加</string>
     <string name="browser_menu_desktop_site">PC 版サイト</string>
@@ -20,7 +19,6 @@
     <string name="browser_menu_find_in_page">ページ内検索</string>
     <string name="browser_menu_forward">進む</string>
     <string name="browser_menu_refresh">更新</string>
-    <string name="browser_menu_remove_from_shortcuts">ショートカットから削除</string>
     <string name="browser_menu_settings">設定</string>
     <string name="browser_menu_share">共有</string>
     <string name="browser_menu_stop">中止</string>
@@ -283,7 +281,6 @@
     <string name="blocked_trackers_detail_empty">このページではまだトラッカーがブロックされていません。</string>
     <string name="blocked_trackers_host_count_multiplier">×%1$d</string>
     <string name="quit_application">変更を適用するためアプリケーションを終了します...</string>
-    <string name="remove_top_site">削除</string>
     <string name="rename">名前の変更</string>
     <string name="rename_file">ファイルの名前を変更</string>
     <string name="request_geolocation">デバイスの位置情報を共有する&lt;b&gt;%s&lt;/b&gt;?</string>
@@ -430,11 +427,6 @@
     <string name="share">共有</string>
     <string name="share_image">画像を共有</string>
     <string name="share_url">URL を共有</string>
-    <string name="shortcut_max_limit_content">新しいショートカットを追加するには、いずれかを削除してください。サイトを長押しして削除を選択します。</string>
-    <string name="shortcut_max_limit_title">ショートカット数の上限に達しました</string>
-    <string name="shortcut_name_hint">ショートカット名</string>
-    <string name="shortcut_url_hint">ショートカット URL</string>
-    <string name="snackbar_added_to_shortcuts">ショートカットに追加しました</string>
     <string name="snackbar_deleted_undo">元に戻す</string>
     <string name="snackbar_tab_closed">タブを閉じました</string>
     <string name="sort">並べ替え</string>
@@ -468,11 +460,6 @@
     <string name="task_gif_failed">GIFを作成できませんでした</string>
     <string name="task_gif_finished">GIFを作成しました</string>
     <string name="task_stop">停止</string>
-    <string name="top_sites_edit_dialog_save">保存</string>
-    <string name="top_sites_edit_dialog_title">ショートカットを編集</string>
-    <string name="top_sites_edit_dialog_url_title">URL</string>
-    <string name="top_sites_max_limit_confirmation_button">OK</string>
-    <string name="top_sites_rename_dialog_title">タイトル</string>
     <string name="update_auto_update_success_body">バージョン%1$sに自動更新されました。</string>
     <string name="update_auto_update_success_default_body">最新バージョンに自動更新されました。</string>
     <string name="update_auto_update_success_title">Firedownを更新しました</string>

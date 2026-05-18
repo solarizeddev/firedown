@@ -9,7 +9,6 @@
     <string name="browser_enter_url">جستجو کرده یا URL را تایپ کنید</string>
     <string name="browser_error_image_title">آتش رفته است</string>
     <string name="browser_find_in_page">پیدا کردن در صفحه</string>
-    <string name="browser_menu_add_to_shortcuts">افزودن به میان‌برها</string>
     <string name="browser_menu_back">عقب</string>
     <string name="browser_menu_bookmark_this_page_2">نشانک‌گذاری صفحه</string>
     <string name="browser_menu_desktop_site">وبگاه رومیزی</string>
@@ -17,7 +16,6 @@
     <string name="browser_menu_find_in_page">پیدا کردن در صفحه</string>
     <string name="browser_menu_forward">جلو</string>
     <string name="browser_menu_refresh">بازخوانی</string>
-    <string name="browser_menu_remove_from_shortcuts">برداشتن از میان‌برها</string>
     <string name="browser_menu_settings">تنظیمات</string>
     <string name="browser_menu_share">اشتراک‌گذاری</string>
     <string name="browser_menu_stop">توقف</string>
@@ -168,7 +166,6 @@
 <string name="quick_settings_sheet_insecure_connection_2">اتصال امن نیست</string>
     <string name="quick_settings_sheet_secure_connection_2">اتصال امن است</string>
     <string name="quit_application">خروج از برنامه برای اعمال تغییرات…</string>
-    <string name="remove_top_site">حذف</string>
     <string name="rename">تغییر نام دهید</string>
     <string name="rename_file">تغییر نام فایل</string>
     <string name="request_geolocation">آیا مکان دستگاهتان را با &lt;b&gt;%s&lt;/b&gt; به اشتراک می‌گذارید؟</string>
@@ -249,11 +246,6 @@
     <string name="share">اشتراک گذاری</string>
     <string name="share_image">IMAGE را به اشتراک بگذارید</string>
     <string name="share_url">URL را به اشتراک بگذارید</string>
-    <string name="shortcut_max_limit_content">برای افزودن میان‌بری جدید، یکی را حذف کنید. پایگاه را لمس کرده، نگه دارید و برداشتن را انتخاب کنید.</string>
-    <string name="shortcut_max_limit_title">به حد مجاز میان‌بر رسیده‌اید</string>
-    <string name="shortcut_name_hint">نام میان‌بر</string>
-    <string name="shortcut_url_hint">نشانی اینترنتی میانبر</string>
-    <string name="snackbar_added_to_shortcuts">به میان‌برها اضافه شد!</string>
     <string name="snackbar_deleted_undo">برگردان</string>
     <string name="snackbar_tab_closed">زبانه بسته شده</string>
     <string name="sort">به‌ترتیب</string>
@@ -271,11 +263,6 @@
     <string name="switch_to_tab_description">پرش به زبانه</string>
 <string name="task_decryption_finished">رمزگشایی به پایان رسید</string>
     <string name="task_encryption_finished">رمزگذاری به پایان رسید</string>
-    <string name="top_sites_edit_dialog_save">ذخیره</string>
-    <string name="top_sites_edit_dialog_title">ویرایش میانبر</string>
-    <string name="top_sites_edit_dialog_url_title">نشانی اینترنتی</string>
-    <string name="top_sites_max_limit_confirmation_button">باشه،‌ متوجه شدم</string>
-    <string name="top_sites_rename_dialog_title">نام</string>
     <string name="vault_decrypting">در حال رمزگشایی فایل، لطفا صبر کنید…</string>
     <string name="vault_encrypting">در حال رمزگذاری فایل، لطفا صبر کنید…</string>
     <string name="vault_unsupported">نمی توان این فایل را باز کرد. برای باز کردن، آن را از پوشه ایمن خارج کرده و دوباره امتحان کنید.</string>
