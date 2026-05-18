@@ -40,23 +40,25 @@
 
         <!--
             Cradle slot on home (enableCradle=false on the parent) =
-            quick 'new private tab' action — symmetric with the
-            regular new-tab icon on the leading slot and brand-aligned
-            without duplicating any other affordance. On browser
-            (enableCradle=true) the button hides and the FAB anchored
-            here takes over. ID kept as 'search_button' to avoid a
+            Bookmarks. Currently buried inside the More-menu popup; an
+            always-visible slot makes the four 'content collections'
+            of the app (open tabs, bookmarks, downloads, plus add-new
+            via the leading new-tab) all reachable from the bottom bar
+            without a menu hop. ID kept as 'search_button' to avoid a
             cascading rename across the BottomNavigationBar plumbing.
+            Hidden on browser (enableCradle=true), where the FAB
+            anchored to this cradle takes over.
         -->
         <androidx.appcompat.widget.AppCompatImageButton
             android:id="@+id/search_button"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/open_new_private_tab_2"
+            android:contentDescription="@string/library_bookmarks"
             android:padding="6dp"
             android:scaleType="centerInside"
             android:tint="?attr/colorOnSurface"
-            android:src="@drawable/new_incognito_tab" />
+            android:src="@drawable/ic_bookmarks_24" />
 
     </FrameLayout>
 
