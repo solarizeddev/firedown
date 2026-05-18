@@ -1,7 +1,6 @@
 package com.solarized.firedown.phone.fragments;
 
 import android.content.ClipData;
-import android.content.ClipDescription;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
@@ -543,12 +542,19 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     private void onPasteAndDownload() {
         ClipboardManager cm = (ClipboardManager) mActivity.getSystemService(Context.CLIPBOARD_SERVICE);
         ClipData clip = cm == null ? null : cm.getPrimaryClip();
-        ClipDescription desc = clip == null ? null : clip.getDescription();
-        boolean hasText = clip != null && clip.getItemCount() > 0 && desc != null
-                && (desc.getMimeType(0).equals(ClipDescription.MIMETYPE_TEXT_PLAIN)
-                    || desc.getMimeType(0).equals(ClipDescription.MIMETYPE_TEXT_HTML));
-        CharSequence raw = hasText ? clip.getItemAt(0).coerceToText(mActivity) : null;
-        String text = raw == null ? "" : raw.toString().trim();
+        // Skip the MIME-type filter and rely on coerceToText. Browsers
+        // and some apps put copied URLs in clip items labelled
+        // text/uri-list rather than text/plain, and a strict
+        // MIMETYPE_TEXT_PLAIN check rejected those (reproduced: copy
+        // a YouTube URL in Brave → paste here was a no-op).
+        // coerceToText already handles every supported representation
+        // (plain text, HTML stripped to text, URI loaded as text);
+        // empty result still routes to the 'copy a link first' hint.
+        String text = "";
+        if (clip != null && clip.getItemCount() > 0) {
+            CharSequence raw = clip.getItemAt(0).coerceToText(mActivity);
+            if (raw != null) text = raw.toString().trim();
+        }
 
         if (text.isEmpty()) {
             showPasteHint(R.string.home_paste_hero_empty);
