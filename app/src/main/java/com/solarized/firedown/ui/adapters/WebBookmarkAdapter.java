@@ -60,7 +60,7 @@ public class WebBookmarkAdapter extends PagingDataAdapter<WebBookmarkEntity, Rec
         RoundedCorners mRoundedCorners = new RoundedCorners(mRoundedPixels);
         mColorNormal = ContextCompat.getColor(context, R.color.transparent);
         mColorSelected = ContextCompat.getColor(context, R.color.md_theme_primaryContainer);
-        mChecked = ContextCompat.getDrawable(context, R.drawable.ic_baseline_check_circle_24);
+        mChecked =  Utils.tintDrawable(context, R.drawable.ic_baseline_check_circle_24, R.color.md_theme_primaryContainer);
         mUnChecked = Utils.tintDrawable(context, R.drawable.radio_button_unchecked_24, R.color.md_theme_primaryContainer);
         mRequestOptions = RequestOptions.bitmapTransform(mRoundedCorners);
     }
