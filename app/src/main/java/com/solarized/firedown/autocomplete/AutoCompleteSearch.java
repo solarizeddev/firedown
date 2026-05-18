@@ -105,6 +105,13 @@ public class AutoCompleteSearch {
         return result;
     }
 
+    /** Cap on tab matches surfaced as switch-to-tab autocomplete
+     *  entries. A search engine + history are also in the suggestion
+     *  list; flooding it with every tab whose title contains the
+     *  query (e.g. typing 'n' against 20 open tabs) drowns the
+     *  other suggestions and makes the list scroll for no reason. */
+    private static final int MAX_TAB_MATCHES = 3;
+
     private void addOpenTabs(List<AutoCompleteEntity> result, String input, boolean incognito) {
         if (TextUtils.isEmpty(input)) return;
         String lowerInput = input.toLowerCase();
@@ -115,7 +122,9 @@ public class AutoCompleteSearch {
 
         if (tabs == null) return;
 
+        int added = 0;
         for (GeckoStateEntity tab : tabs) {
+            if (added >= MAX_TAB_MATCHES) break;
             String uri = tab.getUri();
             String title = tab.getTitle();
             // The home/start page tab is an internal about: URL — exposing it
@@ -137,6 +146,7 @@ public class AutoCompleteSearch {
                 entity.setIcon(tab.getIcon());
                 entity.setUid(tab.getId());
                 result.add(entity);
+                added++;
             }
         }
     }

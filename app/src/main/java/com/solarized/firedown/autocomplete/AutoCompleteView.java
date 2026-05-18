@@ -4,7 +4,6 @@ import static android.content.Context.CLIPBOARD_SERVICE;
 
 import android.app.Activity;
 import android.content.ClipData;
-import android.content.ClipDescription;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.res.ColorStateList;
@@ -188,24 +187,33 @@ public class AutoCompleteView extends FrameLayout {
     }
 
     public void showClipboard(){
-
-        ClipboardManager clipboardManager =  (ClipboardManager) mContext.getSystemService(CLIPBOARD_SERVICE);
-
-        if (clipboardManager.getPrimaryClip() != null &&
-                clipboardManager.getPrimaryClip().getItemCount() > 0 &&
-                clipboardManager.getPrimaryClip().getDescription() != null &&
-                (clipboardManager.getPrimaryClip().getDescription().getMimeType(0).equals(ClipDescription.MIMETYPE_TEXT_HTML) ||
-                clipboardManager.getPrimaryClip().getDescription().getMimeType(0).equals(ClipDescription.MIMETYPE_TEXT_PLAIN))) {
-            ClipData data = clipboardManager.getPrimaryClip();
-            ClipDescription clipDescription = data.getDescription();
-            Log.d(TAG, "showClipboard desc: " + clipDescription.getMimeType(0));
-            CharSequence clipText = data.getItemAt(0).coerceToText(mContext);
-            mClipboardTextView.setText(clipText);
-            if (mClipboardView.getVisibility() == View.GONE) {
-                mClipboardView.setVisibility(View.VISIBLE);
-            }
-        } else {
+        ClipboardManager clipboardManager = (ClipboardManager) mContext.getSystemService(CLIPBOARD_SERVICE);
+        // Cache the clip locally — the previous five-time
+        // getPrimaryClip() call chain triggered Android 13's 'App
+        // pasted from your clipboard' toast on every visibility
+        // check. One call now.
+        ClipData clip = clipboardManager == null ? null : clipboardManager.getPrimaryClip();
+        if (clip == null || clip.getItemCount() == 0) {
             mClipboardView.setVisibility(View.GONE);
+            return;
+        }
+        // Skip the MIME-type filter and trust coerceToText. Browsers
+        // (Brave etc.) put URL clips under text/uri-list, which the
+        // old MIMETYPE_TEXT_PLAIN || MIMETYPE_TEXT_HTML check
+        // silently rejected — the user saw no clipboard chip even
+        // though they'd just copied a URL. coerceToText handles
+        // every supported representation and returns empty for
+        // unsupported ones, so an empty result is the right
+        // hide-the-chip signal.
+        CharSequence raw = clip.getItemAt(0).coerceToText(mContext);
+        String text = raw == null ? "" : raw.toString();
+        if (text.isEmpty()) {
+            mClipboardView.setVisibility(View.GONE);
+            return;
+        }
+        mClipboardTextView.setText(text);
+        if (mClipboardView.getVisibility() == View.GONE) {
+            mClipboardView.setVisibility(View.VISIBLE);
         }
     }
 
