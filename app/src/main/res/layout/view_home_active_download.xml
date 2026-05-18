@@ -100,7 +100,8 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             app:indicatorColor="?attr/colorOnPrimaryContainer"
-            app:trackCornerRadius="2dp" />
+            app:trackCornerRadius="2dp"
+            app:trackStopIndicatorSize="0dp" />
 
     </LinearLayout>
 
