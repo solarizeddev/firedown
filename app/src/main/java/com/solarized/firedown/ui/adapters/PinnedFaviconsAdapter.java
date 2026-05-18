@@ -3,6 +3,7 @@ package com.solarized.firedown.ui.adapters;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -15,6 +16,7 @@ import com.bumptech.glide.request.RequestOptions;
 import com.solarized.firedown.GlideHelper;
 import com.solarized.firedown.R;
 import com.solarized.firedown.data.entity.WebBookmarkEntity;
+import com.solarized.firedown.utils.WebUtils;
 
 /**
  * Favicon-only adapter for the home pinned-bookmarks strip. Each
@@ -45,10 +47,13 @@ public class PinnedFaviconsAdapter
 
                 @Override
                 public boolean areContentsTheSame(@NonNull WebBookmarkEntity a, @NonNull WebBookmarkEntity b) {
-                    // Only re-bind when the icon / url change — title /
-                    // pin status don't affect a favicon-only row.
+                    // Re-bind when the icon, the url (drives the
+                    // domain-name title), or the bookmark title
+                    // (used as a fallback when domain extraction
+                    // fails) change.
                     return safeEq(a.getIcon(), b.getIcon())
-                            && safeEq(a.getUrl(), b.getUrl());
+                            && safeEq(a.getUrl(), b.getUrl())
+                            && safeEq(a.getTitle(), b.getTitle());
                 }
 
                 private boolean safeEq(@Nullable String a, @Nullable String b) {
@@ -80,12 +85,14 @@ public class PinnedFaviconsAdapter
     static class FaviconViewHolder extends RecyclerView.ViewHolder {
 
         private final AppCompatImageView favicon;
+        private final TextView title;
         @Nullable private final OnFaviconClickListener listener;
         @Nullable private WebBookmarkEntity bound;
 
         FaviconViewHolder(@NonNull View itemView, @Nullable OnFaviconClickListener listener) {
             super(itemView);
             this.favicon = itemView.findViewById(R.id.pinned_favicon_image);
+            this.title = itemView.findViewById(R.id.pinned_favicon_title);
             this.listener = listener;
             itemView.setOnClickListener(v -> {
                 if (listener != null && bound != null) listener.onFaviconClick(bound);
@@ -102,6 +109,14 @@ public class PinnedFaviconsAdapter
         void bind(@NonNull WebBookmarkEntity entity, @NonNull RequestOptions options) {
             bound = entity;
             GlideHelper.load(entity.getIcon(), entity.getUrl(), favicon, options);
+            // Prefer the bookmark's domain name (e.g. 'youtube.com')
+            // over the bookmark's title — titles are often the full
+            // page heading ('YouTube — Watch Music Videos…') which
+            // ellipsizes to garbage at 72dp. Domain is universally
+            // short and identifying. Fall back to title when the
+            // domain extraction returns empty.
+            String domain = WebUtils.getDomainName(entity.getUrl());
+            title.setText(domain == null || domain.isEmpty() ? entity.getTitle() : domain);
         }
     }
 }
