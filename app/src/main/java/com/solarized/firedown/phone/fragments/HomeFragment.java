@@ -707,14 +707,21 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
             showPasteHint(R.string.home_paste_hero_not_url);
             return;
         }
-        // Paste consumed: clear the system clipboard so a future
-        // home open doesn't keep advertising the same URL as a
-        // paste candidate. Use setPrimaryClip(empty) rather than
-        // clearPrimaryClip() because the latter is API 28+ and
-        // minSdk = 26. Privacy bonus: the URL doesn't linger in
-        // the system clip after the user has acted on it.
+        // Paste consumed: drop the URL from the system clipboard so
+        // the card hides on the next home open and the URL doesn't
+        // linger in the system clip. clearPrimaryClip() is the only
+        // call that actually empties the clipboard (hasPrimaryClip()
+        // → false); setPrimaryClip(empty) leaves a text/plain clip
+        // with empty content and the card stays visible. Bracketed
+        // for API 28+ (Android 9); the API 26/27 fallback only
+        // empties the contents — paste card cosmetic limitation on
+        // Android 8 / 8.1, no functional harm.
         if (cm != null) {
-            cm.setPrimaryClip(ClipData.newPlainText("", ""));
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+                cm.clearPrimaryClip();
+            } else {
+                cm.setPrimaryClip(ClipData.newPlainText("", ""));
+            }
         }
         openUri(text);
     }
