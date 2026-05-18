@@ -9,6 +9,11 @@
   from the surface-container colour the static recent-downloads
   card uses. Tap routes to DownloadsActivity for the full list of
   active items.
+
+  Layout shape: leading icon vertically centred against the whole
+  card; right column stacks the 'DOWNLOADING' section header, the
+  filename / +N / percent row, and the progress bar — all aligned
+  to the same start column for a clean list-item rhythm.
 -->
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -26,105 +31,102 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
         android:paddingHorizontal="16dp"
-        android:paddingVertical="12dp">
+        android:paddingVertical="14dp">
 
-        <!--
-            Section header — labels the strip so users see at a glance
-            what this card is (vs the static Downloads / Safe Folder
-            cards below). Reuses the existing R.string.downloading
-            string ('Downloading…') with textAllCaps for the standard
-            M3 section-header treatment. layout_marginStart = icon
-            width (20dp) + icon-to-title gap (14dp) so the header
-            sits flush with the filename column below it.
-        -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="34dp"
-            android:layout_marginBottom="6dp"
-            android:letterSpacing="0.08"
-            android:text="@string/downloading"
-            android:textAllCaps="true"
-            android:textAppearance="?attr/textAppearanceLabelSmall"
-            android:textColor="?attr/colorOnPrimaryContainer" />
+        <androidx.appcompat.widget.AppCompatImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:contentDescription="@null"
+            android:src="@drawable/download_24"
+            app:tint="?attr/colorOnPrimaryContainer" />
 
         <LinearLayout
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
-
-            <androidx.appcompat.widget.AppCompatImageView
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:contentDescription="@null"
-                android:src="@drawable/download_24"
-                app:tint="?attr/colorOnPrimaryContainer" />
-
-            <TextView
-                android:id="@+id/active_download_title"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
-                android:layout_weight="1"
-                android:ellipsize="end"
-                android:maxLines="1"
-                android:textAppearance="?attr/textAppearanceTitleSmall"
-                android:textColor="?attr/colorOnPrimaryContainer"
-                tools:text="my_video_file_name.mp4" />
+            android:layout_marginStart="14dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
 
             <!--
-                '+N' indicator for additional in-flight downloads
-                beyond the headline. Universal across locales (just a
-                number with a + prefix), so no translation surface
-                needed. Sits between the title and percent so a long
-                filename ellipsizes first, the count stays readable.
+                Section header — reuses R.string.downloading
+                ('Downloading…') with textAllCaps for the standard
+                M3 section-header treatment.
             -->
             <TextView
-                android:id="@+id/active_download_count"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="6dp"
+                android:letterSpacing="0.08"
+                android:text="@string/downloading"
+                android:textAllCaps="true"
                 android:textAppearance="?attr/textAppearanceLabelSmall"
-                android:textColor="?attr/colorOnPrimaryContainer"
-                android:textStyle="bold"
-                android:visibility="gone"
-                tools:text="+2"
-                tools:visibility="visible" />
+                android:textColor="?attr/colorOnPrimaryContainer" />
 
-            <TextView
-                android:id="@+id/active_download_percent"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:textAppearance="?attr/textAppearanceBodyMedium"
-                android:textColor="?attr/colorOnPrimaryContainer"
-                tools:text="45%" />
+                android:layout_marginTop="2dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/active_download_title"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:textAppearance="?attr/textAppearanceTitleSmall"
+                    android:textColor="?attr/colorOnPrimaryContainer"
+                    tools:text="my_video_file_name.mp4" />
+
+                <!--
+                    '+N' indicator for additional in-flight downloads
+                    beyond the headline. Universal across locales.
+                -->
+                <TextView
+                    android:id="@+id/active_download_count"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:textAppearance="?attr/textAppearanceLabelSmall"
+                    android:textColor="?attr/colorOnPrimaryContainer"
+                    android:textStyle="bold"
+                    android:visibility="gone"
+                    tools:text="+2"
+                    tools:visibility="visible" />
+
+                <TextView
+                    android:id="@+id/active_download_percent"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:textAppearance="?attr/textAppearanceBodyMedium"
+                    android:textColor="?attr/colorOnPrimaryContainer"
+                    tools:text="45%" />
+
+            </LinearLayout>
+
+            <!--
+                Material 3 LinearProgressIndicator. trackColor is set
+                programmatically in HomeFragment to colorOnPrimaryContainer
+                at ~24% alpha — XML can't combine a theme attr with alpha
+                cleanly, and the M3 default of colorSecondary rendered as
+                yellow on this surface which fought the orange.
+            -->
+            <com.google.android.material.progressindicator.LinearProgressIndicator
+                android:id="@+id/active_download_bar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                app:indicatorColor="?attr/colorOnPrimaryContainer"
+                app:indicatorTrackGapSize="0dp"
+                app:trackCornerRadius="2dp"
+                app:trackStopIndicatorSize="0dp" />
 
         </LinearLayout>
-
-        <!--
-            Material 3 LinearProgressIndicator. indicatorColor pinned to
-            colorOnPrimaryContainer so the filled portion reads against
-            the orange card surface. trackColor (the empty-state band)
-            is set programmatically in HomeFragment to colorOnPrimaryContainer
-            at ~24% alpha — XML can't combine a theme attr with alpha
-            cleanly, and the M3 default of colorSecondary rendered as
-            yellow on this surface which fought the orange.
-        -->
-        <com.google.android.material.progressindicator.LinearProgressIndicator
-            android:id="@+id/active_download_bar"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="3dp"
-            android:layout_marginEnd="3dp"
-            android:layout_marginTop="8dp"
-            app:indicatorColor="?attr/colorOnPrimaryContainer"
-            app:indicatorTrackGapSize="0dp"
-            app:trackCornerRadius="0dp"
-            app:trackStopIndicatorSize="0dp" />
 
     </LinearLayout>
 
