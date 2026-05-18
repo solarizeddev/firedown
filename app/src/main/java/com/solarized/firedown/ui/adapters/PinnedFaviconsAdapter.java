@@ -109,14 +109,34 @@ public class PinnedFaviconsAdapter
         void bind(@NonNull WebBookmarkEntity entity, @NonNull RequestOptions options) {
             bound = entity;
             GlideHelper.load(entity.getIcon(), entity.getUrl(), favicon, options);
-            // Prefer the bookmark's domain name (e.g. 'youtube.com')
-            // over the bookmark's title — titles are often the full
-            // page heading ('YouTube — Watch Music Videos…') which
-            // ellipsizes to garbage at 72dp. Domain is universally
-            // short and identifying. Fall back to title when the
-            // domain extraction returns empty.
-            String domain = WebUtils.getDomainName(entity.getUrl());
-            title.setText(domain == null || domain.isEmpty() ? entity.getTitle() : domain);
+            title.setText(brandFromUrl(entity.getUrl(), entity.getTitle()));
+        }
+
+        /**
+         * Extract the 'brand' segment of a URL — the short, recognisable
+         * part that NTP shortcut labels use. 'm.youtube.com' → 'youtube',
+         * 'startpage.com' → 'startpage', 'giphy.com' → 'giphy'. Strips
+         * www / m / mobile subdomain prefixes and the trailing TLD.
+         * Two-part ccTLDs like '.co.uk' yield slightly-imperfect labels
+         * ('youtube.co' instead of 'youtube') — acceptable cosmetic
+         * compromise vs shipping a Public Suffix List.
+         *
+         * <p>Falls back to the bookmark title (then the raw url) when
+         * extraction returns empty so the tile always has a label
+         * rather than rendering a blank line under the favicon.</p>
+         */
+        private static String brandFromUrl(@Nullable String url, @Nullable String title) {
+            if (url != null && !url.isEmpty()) {
+                String host = WebUtils.getDomainName(url); // already strips www.
+                if (host != null && !host.isEmpty()) {
+                    host = host.replaceFirst("^(m|mobile)\\.", "");
+                    int lastDot = host.lastIndexOf('.');
+                    String brand = lastDot > 0 ? host.substring(0, lastDot) : host;
+                    if (!brand.isEmpty()) return brand;
+                }
+            }
+            if (title != null && !title.isEmpty()) return title;
+            return url == null ? "" : url;
         }
     }
 }
