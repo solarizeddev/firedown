@@ -31,7 +31,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.snackbar.Snackbar;
-import com.solarized.firedown.phone.dialogs.DownloadsQuickAccessSheet;
 
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.Preferences;
@@ -74,8 +73,7 @@ import dagger.hilt.android.AndroidEntryPoint;
 public class HomeFragment extends BaseBrowserFragment implements BottomNavigationBar.OnBottomBarListener,
         AutoCompleteEditText.OnCommitListener, AutoCompleteEditText.OnFilterListener, AutoCompleteEditText.OnFocusChangedListener,
         AutoCompleteEditText.OnTextChangedListener, AutoCompleteEditText.OnSearchStateChangeListener,
-        GeckoToolbar.OnToolbarListener , OnBoardingCard.OnBoardingCardListener, OnItemClickListener,
-        DownloadsQuickAccessSheet.Host {
+        GeckoToolbar.OnToolbarListener , OnBoardingCard.OnBoardingCardListener, OnItemClickListener {
 
 
     private static final String TAG = HomeFragment.class.getName();
@@ -287,10 +285,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
             mLastFinishedSize = size == null ? 0L : size;
             applyHomeCustomisation();
         });
-        // Keep the recent list LiveData warm so the long-press sheet
-        // can read getValue() synchronously without a cold-start
-        // race on first invocation.
-        mRecentDownloadsViewModel.getRecent().observe(getViewLifecycleOwner(), list -> { /* warm */ });
 
         // Vault count drives the empty-hero vault button's count badge.
         // Button itself is always visible while the empty hero is
@@ -626,39 +620,16 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         if (id == R.id.new_tab_button) {
             NavigationUtils.navigateSafe(mNavController, R.id.dialog_new_tabs, R.id.home);
             return true;
-        } else if (id == R.id.downloads_button) {
-            // Home now shows only a minimal Downloads summary card
-            // (count + bytes), so the long-press sheet is the path
-            // to the actual recent rows. Skip the sheet only when
-            // there's nothing to show — fall back to DownloadsActivity
-            // so the long-press still feels responsive on a fresh
-            // install.
-            java.util.List<DownloadEntity> cached =
-                    mRecentDownloadsViewModel.getRecent().getValue();
-            if (cached == null || cached.isEmpty()) {
-                mStartForResult.launch(new Intent(mActivity, DownloadsActivity.class));
-            } else {
-                new DownloadsQuickAccessSheet().show(getChildFragmentManager(),
-                        DownloadsQuickAccessSheet.TAG);
-            }
-            return true;
         }
+        // Home intentionally has no other long-press affordances —
+        // every bottom-bar slot already has a visible-on-home
+        // entry (Downloads card, Safe Folder card, cradle Bookmarks
+        // button). Hidden long-press gestures were the right call
+        // when the slot had no on-screen surface (BrowserFragment
+        // keeps the Downloads long-press sheet for that reason),
+        // not here.
         return false;
     }
-
-    /** {@link DownloadsQuickAccessSheet.Host} — fired when the user
-     *  taps a row in the long-press quick-access sheet. Errored
-     *  downloads jump to the source URL, everything else hits
-     *  openItem (matches DownloadFragment's row tap). */
-    @Override
-    public void onQuickAccessFileTap(@NonNull DownloadEntity entity) {
-        if (entity.getFileStatus() == Download.ERROR) {
-            openSourceUrl(entity);
-        } else {
-            openItem(entity, null);
-        }
-    }
-
 
     @Override
     public void onCommit() {
