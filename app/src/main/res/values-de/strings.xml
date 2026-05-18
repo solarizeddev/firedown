@@ -486,6 +486,6 @@
     <string name="home_paste_hero_empty">Zuerst einen Link kopieren, dann hier tippen</string>
     <string name="home_paste_hero_not_url">Das sieht nicht nach einem Link aus</string>
     <string name="home_onboarding_sites_label">Firedown ausprobieren auf</string>
-    <string name="home_vault_button">Tresor</string>
-    <string name="home_vault_button_count">Tresor · %d</string>
+    <string name="home_vault_button">Sicherer Ordner</string>
+    <string name="home_vault_button_count">Sicherer Ordner · %d</string>
 </resources>

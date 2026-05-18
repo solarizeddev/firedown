@@ -265,6 +265,6 @@
     <string name="home_paste_hero_empty">Kopjoni një lidhje së pari, pastaj prekni këtu</string>
     <string name="home_paste_hero_not_url">Kjo nuk duket si një lidhje</string>
     <string name="home_onboarding_sites_label">Provo Firedown në</string>
-    <string name="home_vault_button">Kasaforta</string>
-    <string name="home_vault_button_count">Kasaforta · %d</string>
+    <string name="home_vault_button">Dosja e sigurt</string>
+    <string name="home_vault_button_count">Dosja e sigurt · %d</string>
 </resources>

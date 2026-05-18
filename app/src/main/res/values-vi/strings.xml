@@ -281,6 +281,6 @@
     <string name="home_paste_hero_empty">Hãy sao chép liên kết trước, rồi nhấn vào đây</string>
     <string name="home_paste_hero_not_url">Nội dung này không giống một liên kết</string>
     <string name="home_onboarding_sites_label">Thử Firedown trên</string>
-    <string name="home_vault_button">Két</string>
-    <string name="home_vault_button_count">Két · %d</string>
+    <string name="home_vault_button">Thư mục an toàn</string>
+    <string name="home_vault_button_count">Thư mục an toàn · %d</string>
 </resources>

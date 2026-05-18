@@ -266,6 +266,6 @@
     <string name="home_paste_hero_empty">Алдымен сілтемені көшіріп, осы жерді түртіңіз</string>
     <string name="home_paste_hero_not_url">Бұл сілтемеге ұқсамайды</string>
     <string name="home_onboarding_sites_label">Firedown-ды қолданып көріңіз</string>
-    <string name="home_vault_button">Сейф</string>
-    <string name="home_vault_button_count">Сейф · %d</string>
+    <string name="home_vault_button">Қауіпсіз қалта</string>
+    <string name="home_vault_button_count">Қауіпсіз қалта · %d</string>
 </resources>

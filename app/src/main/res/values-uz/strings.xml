@@ -252,6 +252,6 @@
     <string name="home_paste_hero_empty">Avval havolani nusxalang, keyin shu yerga bosing</string>
     <string name="home_paste_hero_not_url">Bu havolaga oʻxshamaydi</string>
     <string name="home_onboarding_sites_label">Firedown-ni sinab koʻring</string>
-    <string name="home_vault_button">Seyf</string>
-    <string name="home_vault_button_count">Seyf · %d</string>
+    <string name="home_vault_button">Xavfsiz jild</string>
+    <string name="home_vault_button_count">Xavfsiz jild · %d</string>
 </resources>

@@ -288,6 +288,6 @@
     <string name="home_paste_hero_empty">請先複製連結,再點選此處</string>
     <string name="home_paste_hero_not_url">這看起來不像連結</string>
     <string name="home_onboarding_sites_label">在以下網站試用 Firedown</string>
-    <string name="home_vault_button">保險庫</string>
-    <string name="home_vault_button_count">保險庫 · %d</string>
+    <string name="home_vault_button">安全資料夾</string>
+    <string name="home_vault_button_count">安全資料夾 · %d</string>
 </resources>

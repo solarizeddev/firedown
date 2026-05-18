@@ -263,6 +263,6 @@
     <string name="home_paste_hero_empty">Afritaðu hlekk fyrst, og pikkaðu svo hér</string>
     <string name="home_paste_hero_not_url">Þetta lítur ekki út fyrir að vera hlekkur</string>
     <string name="home_onboarding_sites_label">Prófaðu Firedown á</string>
-    <string name="home_vault_button">Hvelfing</string>
-    <string name="home_vault_button_count">Hvelfing · %d</string>
+    <string name="home_vault_button">Örugg mappa</string>
+    <string name="home_vault_button_count">Örugg mappa · %d</string>
 </resources>

@@ -258,6 +258,6 @@
     <string name="home_paste_hero_empty">پہلے لنک کاپی کریں، پھر یہاں ٹیپ کریں</string>
     <string name="home_paste_hero_not_url">یہ لنک نہیں لگتا</string>
     <string name="home_onboarding_sites_label">Firedown آزمائیں</string>
-    <string name="home_vault_button">والٹ</string>
-    <string name="home_vault_button_count">والٹ · %d</string>
+    <string name="home_vault_button">محفوظ فولڈر</string>
+    <string name="home_vault_button_count">محفوظ فولڈر · %d</string>
 </resources>

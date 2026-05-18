@@ -281,6 +281,6 @@
     <string name="home_paste_hero_empty">Először másolj egy linket, majd koppints ide</string>
     <string name="home_paste_hero_not_url">Ez nem tűnik linknek</string>
     <string name="home_onboarding_sites_label">Firedown kipróbálása</string>
-    <string name="home_vault_button">Széf</string>
-    <string name="home_vault_button_count">Széf · %d</string>
+    <string name="home_vault_button">Biztonságos mappa</string>
+    <string name="home_vault_button_count">Biztonságos mappa · %d</string>
 </resources>

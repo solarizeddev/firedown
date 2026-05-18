@@ -278,6 +278,6 @@
     <string name="home_paste_hero_empty">คัดลอกลิงก์ก่อน แล้วแตะที่นี่</string>
     <string name="home_paste_hero_not_url">นี่ดูไม่เหมือนลิงก์</string>
     <string name="home_onboarding_sites_label">ลอง Firedown บน</string>
-    <string name="home_vault_button">ห้องนิรภัย</string>
-    <string name="home_vault_button_count">ห้องนิรภัย · %d</string>
+    <string name="home_vault_button">โฟลเดอร์ที่ปลอดภัย</string>
+    <string name="home_vault_button_count">โฟลเดอร์ที่ปลอดภัย · %d</string>
 </resources>

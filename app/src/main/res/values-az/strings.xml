@@ -242,6 +242,6 @@
     <string name="home_paste_hero_empty">Əvvəl bağlantı kopyalayın, sonra buraya toxunun</string>
     <string name="home_paste_hero_not_url">Bu bağlantıya bənzəmir</string>
     <string name="home_onboarding_sites_label">Firedown-u sınayın</string>
-    <string name="home_vault_button">Seyf</string>
-    <string name="home_vault_button_count">Seyf · %d</string>
+    <string name="home_vault_button">Təhlükəsiz Qovluq</string>
+    <string name="home_vault_button_count">Təhlükəsiz Qovluq · %d</string>
 </resources>

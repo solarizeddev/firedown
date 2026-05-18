@@ -46,6 +46,4 @@
     <string name="home_paste_hero_empty">पहले लिंक कॉपी करें, फिर यहां टैप करें</string>
     <string name="home_paste_hero_not_url">यह कोई लिंक नहीं लगता</string>
     <string name="home_onboarding_sites_label">Firedown आज़माएं</string>
-    <string name="home_vault_button">वॉल्ट</string>
-    <string name="home_vault_button_count">वॉल्ट · %d</string>
 </resources>

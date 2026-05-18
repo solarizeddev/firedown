@@ -99,7 +99,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     private TextView mActiveStripPercent;
     private TextView mActiveStripCount;
     private ProgressBar mActiveStripBar;
-    private com.google.android.material.button.MaterialButton mHomeVaultButton;
+    private TextView mHomeVaultTitle;
     private DownloadsQuickAccessAdapter mRecentDownloadsAdapter;
     private SharedPreferences.OnSharedPreferenceChangeListener mHomePrefsListener;
     @Nullable private java.util.List<DownloadEntity> mLastRecentList;
@@ -194,8 +194,9 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
 
         v.findViewById(R.id.home_paste_button).setOnClickListener(view -> onPasteAndDownload());
 
-        mHomeVaultButton = v.findViewById(R.id.home_vault_button);
-        mHomeVaultButton.setOnClickListener(view ->
+        View vaultCard = v.findViewById(R.id.home_vault_card);
+        mHomeVaultTitle = v.findViewById(R.id.home_vault_title);
+        vaultCard.setOnClickListener(view ->
                 mStartForResult.launch(new Intent(mActivity, VaultActivity.class)));
 
 
@@ -284,9 +285,9 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         // showing — discoverability for users who haven't yet used
         // vault — but the badge only appears when count > 0.
         mRecentDownloadsViewModel.getVaultCount().observe(getViewLifecycleOwner(), count -> {
-            if (mHomeVaultButton == null) return;
+            if (mHomeVaultTitle == null) return;
             int n = count == null ? 0 : count;
-            mHomeVaultButton.setText(n > 0
+            mHomeVaultTitle.setText(n > 0
                     ? getString(R.string.home_vault_button_count, n)
                     : getString(R.string.home_vault_button));
         });
@@ -447,7 +448,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mActiveStripPercent = null;
         mActiveStripCount = null;
         mActiveStripBar = null;
-        mHomeVaultButton = null;
+        mHomeVaultTitle = null;
         mRecentDownloadsAdapter = null;
     }
 

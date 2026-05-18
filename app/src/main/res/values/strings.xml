@@ -142,11 +142,6 @@
          onboarding card. Frames the brand chips as 'we test against
          these'. Tap a chip → visits the site. -->
     <string name="home_onboarding_sites_label">Try Firedown on</string>
-    <!-- Subtle text-button entry below the paste CTA on the empty
-         home hero. Opens VaultActivity. The _count variant appends
-         the saved-item count when there's anything in the vault. -->
-    <string name="home_vault_button">Vault</string>
-    <string name="home_vault_button_count">Vault · %d</string>
     <string name="settings_home_title">Home page</string>
     <string name="settings_home_summary">Customise what shows on the home page</string>
     <string name="settings_home_show_recent_downloads_title">Show recent downloads</string>
@@ -511,4 +506,14 @@
     <string name="media_seek_back_10s_desc">Skip back 10 seconds</string>
     <string name="media_seek_forward_10s_desc">Skip forward 10 seconds</string>
 <string name="play">Play</string>
+    <!-- Subtle entry card below the paste CTA on the empty home hero.
+         Opens VaultActivity. The _count variant appends the saved-item
+         count when there's anything in the vault. Term matches
+         navigation_vault so the home entry and the destination read
+         the same way; per-locale translations are derived from each
+         locale's navigation_vault entry (script-driven) so 'Safe
+         Folder' becomes 'Carpeta segura' in es, 'Sicherer Ordner' in
+         de, etc. — no per-string translation churn. -->
+    <string name="home_vault_button">Safe Folder</string>
+    <string name="home_vault_button_count">Safe Folder · %d</string>
 </resources>

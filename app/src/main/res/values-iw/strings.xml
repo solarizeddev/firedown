@@ -294,6 +294,6 @@
     <string name="home_paste_hero_empty">העתק קישור תחילה ולאחר מכן הקש כאן</string>
     <string name="home_paste_hero_not_url">זה לא נראה כמו קישור</string>
     <string name="home_onboarding_sites_label">נסה את Firedown ב</string>
-    <string name="home_vault_button">כספת</string>
-    <string name="home_vault_button_count">כספת · %d</string>
+    <string name="home_vault_button">תיקייה בטוחה</string>
+    <string name="home_vault_button_count">תיקייה בטוחה · %d</string>
 </resources>

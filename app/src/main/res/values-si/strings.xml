@@ -257,6 +257,6 @@
     <string name="home_paste_hero_empty">පළමුව සබැඳියක් පිටපත් කර, මෙහි තට්ටු කරන්න</string>
     <string name="home_paste_hero_not_url">මෙය සබැඳියක් ලෙස නොපෙනේ</string>
     <string name="home_onboarding_sites_label">Firedown උත්සාහ කරන්න</string>
-    <string name="home_vault_button">තැන්පතුව</string>
-    <string name="home_vault_button_count">තැන්පතුව · %d</string>
+    <string name="home_vault_button">ආරක්ෂිත ෆෝල්ඩරය</string>
+    <string name="home_vault_button_count">ආරක්ෂිත ෆෝල්ඩරය · %d</string>
 </resources>

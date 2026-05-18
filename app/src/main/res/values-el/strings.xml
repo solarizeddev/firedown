@@ -281,6 +281,6 @@
     <string name="home_paste_hero_empty">Αντιγράψτε πρώτα έναν σύνδεσμο, μετά αγγίξτε εδώ</string>
     <string name="home_paste_hero_not_url">Αυτό δεν μοιάζει με σύνδεσμο</string>
     <string name="home_onboarding_sites_label">Δοκιμάστε το Firedown σε</string>
-    <string name="home_vault_button">Θησαυροφυλάκιο</string>
-    <string name="home_vault_button_count">Θησαυροφυλάκιο · %d</string>
+    <string name="home_vault_button">Ασφαλής φάκελος</string>
+    <string name="home_vault_button_count">Ασφαλής φάκελος · %d</string>
 </resources>

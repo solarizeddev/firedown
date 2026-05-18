@@ -266,6 +266,6 @@
     <string name="home_paste_hero_empty">ჯერ დააკოპირეთ ბმული, შემდეგ შეეხეთ აქ</string>
     <string name="home_paste_hero_not_url">ეს არ ჰგავს ბმულს</string>
     <string name="home_onboarding_sites_label">სცადეთ Firedown-ი</string>
-    <string name="home_vault_button">საცავი</string>
-    <string name="home_vault_button_count">საცავი · %d</string>
+    <string name="home_vault_button">დაცული საქაღალდე</string>
+    <string name="home_vault_button_count">დაცული საქაღალდე · %d</string>
 </resources>
