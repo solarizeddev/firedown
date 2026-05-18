@@ -10,10 +10,14 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    /* Portrait: locked to viewport, no scroll */
+    /* Portrait: vertical scroll allowed so the supported-sites strip
+       below the message stays reachable. Cloud at the bottom is
+       position:fixed (frames the fire button in the app chrome
+       below), so content needs room to scroll behind / above it
+       — page padding-bottom handles that further down. */
     @media (orientation: portrait) {
-      html, body { width: 100%; height: 100%; overflow: hidden; }
-      body { height: 100%; overflow: hidden; }
+      html { width: 100%; height: 100%; overflow-x: hidden; }
+      body { width: 100%; min-height: 100%; overflow-x: hidden; overflow-y: auto; }
     }
 
     /* Landscape: allow scroll */
@@ -155,8 +159,12 @@
         left: 0;
         right: 0;
       }
-      /* add bottom padding to page so text never goes behind cloud */
-      .page { padding-bottom: 0; }
+      /* Reserve room at the bottom of the page equal to the cloud
+         image height (~200px wide × auto, ~110-140px visible). The
+         supported-sites strip lives in the normal flow at the end
+         of .page; without this padding the chips render straight
+         under the fixed cloud and aren't tappable. */
+      .page { padding-bottom: 140px; }
     }
 
     @media (orientation: landscape) {
