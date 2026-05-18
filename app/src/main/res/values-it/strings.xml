@@ -325,4 +325,6 @@
     <string name="downloads_quick_access_title">Download recenti</string>
     <string name="home_onboarding_sites_label">Prova Firedown su</string>
     <string name="home_vault_button">Cartella di sicurezza</string>
+    <string name="browser_menu_pin_to_home">Fissa nella home</string>
+    <string name="browser_pinned_to_home">Fissato nella home</string>
 </resources>

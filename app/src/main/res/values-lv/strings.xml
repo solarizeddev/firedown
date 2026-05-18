@@ -221,4 +221,6 @@
     <string name="downloads_quick_access_title">Nesenās lejupielādes</string>
     <string name="home_onboarding_sites_label">Izmēģiniet Firedown</string>
     <string name="home_vault_button">Drošā mape</string>
+    <string name="browser_menu_pin_to_home">Piespraust sākumam</string>
+    <string name="browser_pinned_to_home">Piesprausts sākumam</string>
 </resources>

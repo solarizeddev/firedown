@@ -254,4 +254,6 @@
     <string name="downloads_quick_access_title">حالیہ ڈاؤن لوڈز</string>
     <string name="home_onboarding_sites_label">Firedown آزمائیں</string>
     <string name="home_vault_button">محفوظ فولڈر</string>
+    <string name="browser_menu_pin_to_home">ہوم پر پن کریں</string>
+    <string name="browser_pinned_to_home">ہوم پر پن کر دیا گیا</string>
 </resources>

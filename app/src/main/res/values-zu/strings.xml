@@ -218,4 +218,6 @@
     <string name="downloads_quick_access_title">Okwakamuva okulayishiwe</string>
     <string name="home_onboarding_sites_label">Zama i-Firedown ku</string>
     <string name="home_vault_button">Ifolda ephephile</string>
+    <string name="browser_menu_pin_to_home">Hlanganisa ekhaya</string>
+    <string name="browser_pinned_to_home">Kuhlanganiswe ekhaya</string>
 </resources>

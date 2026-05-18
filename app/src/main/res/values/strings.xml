@@ -12,6 +12,14 @@
     <string name="browser_find_in_page">Find in page</string>
     <string name="browser_menu_back">Back</string>
     <string name="browser_menu_bookmark_this_page_2">Bookmark page</string>
+    <!-- Browser More menu entry: bookmark the current page AND mark
+         it pinned in one tap. Pinned bookmarks surface on the home
+         page's favicons strip. Pairs with the existing
+         browser_menu_bookmark_this_page_2 'Bookmark page' which
+         saves the page without pinning. -->
+    <string name="browser_menu_pin_to_home">Pin to home</string>
+    <!-- Snackbar feedback after the Pin-to-home menu action. -->
+    <string name="browser_pinned_to_home">Pinned to home</string>
     <string name="browser_menu_desktop_site">Desktop site</string>
     <string name="browser_menu_edit_bookmark">Edit bookmark</string>
     <string name="browser_menu_find_in_page">Find in page</string>

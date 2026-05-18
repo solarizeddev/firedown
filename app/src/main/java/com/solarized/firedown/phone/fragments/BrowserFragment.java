@@ -530,6 +530,27 @@ public class BrowserFragment extends BaseBrowserFragment
                 Snackbar snackbar = makeSnackbar(getSnackAnchorView(), R.string.browser_bookmark_added, mIsIncognitoThemed);
                 snackbar.setAnchorView(R.id.anchor_view);
                 snackbar.show();
+            } else if (id == R.id.popup_pin_to_home) {
+                // Bookmark-and-pin in one step. uid = url.hashCode()
+                // matches the standard add() id, so REPLACE-strategy
+                // collapses the row if the page was already bookmarked
+                // — the existing bookmark just gets promoted to
+                // pinned (rather than producing a duplicate row).
+                GeckoState pinState = peekCurrentGeckoState();
+                if (pinState == null) return;
+                com.solarized.firedown.data.entity.WebBookmarkEntity entity =
+                        new com.solarized.firedown.data.entity.WebBookmarkEntity();
+                entity.setFileDate(System.currentTimeMillis());
+                entity.setFileTitle(com.solarized.firedown.utils.Utils.capitalize(pinState.getEntityTitle()));
+                entity.setFileUrl(pinState.getEntityUri());
+                entity.setId(pinState.getEntityUri().hashCode());
+                entity.setFileIcon(pinState.getEntityIcon());
+                entity.setPinned(true);
+                mWebBookmarkViewModel.add(entity);
+                Snackbar pinSnackbar = makeSnackbar(getSnackAnchorView(),
+                        R.string.browser_pinned_to_home, mIsIncognitoThemed);
+                pinSnackbar.setAnchorView(R.id.anchor_view);
+                pinSnackbar.show();
             } else if (id == R.id.popup_bookmark_edit) {
                 GeckoState mGeckoState = peekCurrentGeckoState();
                 if (mGeckoState == null) return;

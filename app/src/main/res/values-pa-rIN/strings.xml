@@ -246,4 +246,6 @@
     <string name="downloads_quick_access_title">ਹਾਲੀਆ ਡਾਊਨਲੋਡ</string>
     <string name="home_onboarding_sites_label">Firedown ਅਜ਼ਮਾਓ</string>
     <string name="home_vault_button">ਸੁਰੱਖਿਅਤ ਫੋਲਡਰ</string>
+    <string name="browser_menu_pin_to_home">ਹੋਮ ਉੱਤੇ ਪਿੰਨ ਕਰੋ</string>
+    <string name="browser_pinned_to_home">ਹੋਮ ਉੱਤੇ ਪਿੰਨ ਕੀਤਾ</string>
 </resources>

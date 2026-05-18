@@ -32,4 +32,6 @@
     <string name="switch_to_tab_description">ટૅબ બદલો</string>
     <string name="downloads_quick_access_title">તાજેતરના ડાઉનલોડ્સ</string>
     <string name="home_onboarding_sites_label">Firedown અજમાવો</string>
+    <string name="browser_menu_pin_to_home">હોમમાં પિન કરો</string>
+    <string name="browser_pinned_to_home">હોમમાં પિન કરેલ</string>
 </resources>

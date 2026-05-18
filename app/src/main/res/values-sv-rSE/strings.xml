@@ -54,4 +54,6 @@
     <string name="bookmark_name">Namn</string>
     <string name="downloads_quick_access_title">Senaste nedladdningar</string>
     <string name="home_onboarding_sites_label">Prova Firedown på</string>
+    <string name="browser_menu_pin_to_home">Fäst på startsidan</string>
+    <string name="browser_pinned_to_home">Fäst på startsidan</string>
 </resources>

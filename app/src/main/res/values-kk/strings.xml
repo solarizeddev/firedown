@@ -262,4 +262,6 @@
     <string name="downloads_quick_access_title">Соңғы жүктеулер</string>
     <string name="home_onboarding_sites_label">Firedown-ды қолданып көріңіз</string>
     <string name="home_vault_button">Қауіпсіз қалта</string>
+    <string name="browser_menu_pin_to_home">Басты бетке бекіту</string>
+    <string name="browser_pinned_to_home">Басты бетке бекітілді</string>
 </resources>

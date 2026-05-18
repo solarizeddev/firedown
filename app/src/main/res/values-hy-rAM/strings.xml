@@ -54,4 +54,6 @@
     <string name="bookmark_name">Անուն</string>
     <string name="downloads_quick_access_title">Վերջին ներբեռնումներ</string>
     <string name="home_onboarding_sites_label">Փորձեք Firedown-ը</string>
+    <string name="browser_menu_pin_to_home">Ամրացնել գլխավորում</string>
+    <string name="browser_pinned_to_home">Ամրացված է գլխավորում</string>
 </resources>

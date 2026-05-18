@@ -286,4 +286,6 @@
     <string name="downloads_quick_access_title">Transferências recentes</string>
     <string name="home_onboarding_sites_label">Experimente o Firedown em</string>
     <string name="home_vault_button">Pasta segura</string>
+    <string name="browser_menu_pin_to_home">Fixar no início</string>
+    <string name="browser_pinned_to_home">Fixado no início</string>
 </resources>

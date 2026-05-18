@@ -253,4 +253,6 @@
     <string name="downloads_quick_access_title">මෑත බාගත කිරීම්</string>
     <string name="home_onboarding_sites_label">Firedown උත්සාහ කරන්න</string>
     <string name="home_vault_button">ආරක්ෂිත ෆෝල්ඩරය</string>
+    <string name="browser_menu_pin_to_home">මුල් පිටුවට අමුණන්න</string>
+    <string name="browser_pinned_to_home">මුල් පිටුවට අමුණා ඇත</string>
 </resources>

@@ -344,4 +344,6 @@
     <string name="downloads_quick_access_title">Recente downloads</string>
     <string name="home_onboarding_sites_label">Probeer Firedown op</string>
     <string name="home_vault_button">Beveiligde map</string>
+    <string name="browser_menu_pin_to_home">Vastpinnen op startpagina</string>
+    <string name="browser_pinned_to_home">Vastgepind op startpagina</string>
 </resources>

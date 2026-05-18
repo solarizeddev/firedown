@@ -248,4 +248,6 @@
     <string name="downloads_quick_access_title">မကြာသေးမီက ဒေါင်းလုဒ်များ</string>
     <string name="home_onboarding_sites_label">Firedown ကို စမ်းကြည့်ပါ</string>
     <string name="home_vault_button">"'လုံခြုံရေး' ဖိုင်တွဲ"</string>
+    <string name="browser_menu_pin_to_home">ပင်မစာမျက်နှာတွင် ပင်ထိုးပါ</string>
+    <string name="browser_pinned_to_home">ပင်မစာမျက်နှာတွင် ပင်ထိုးပြီး</string>
 </resources>

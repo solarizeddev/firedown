@@ -257,4 +257,6 @@
     <string name="downloads_quick_access_title">സമീപകാല ഡൗൺലോഡുകൾ</string>
     <string name="home_onboarding_sites_label">Firedown പരീക്ഷിക്കൂ</string>
     <string name="home_vault_button">സുരക്ഷിത ഫോൾഡർ</string>
+    <string name="browser_menu_pin_to_home">ഹോമിലേക്ക് പിൻ ചെയ്യുക</string>
+    <string name="browser_pinned_to_home">ഹോമിലേക്ക് പിൻ ചെയ്തു</string>
 </resources>

@@ -14,6 +14,7 @@
 
     <integer-array name="popup_browser_ids">
         <item>@id/popup_bookmark_add</item>
+        <item>@id/popup_pin_to_home</item>
         <item>@id/popup_bookmarks</item>
         <item>@id/popup_find</item>
         <item>@id/popup_desktop</item>
@@ -24,6 +25,7 @@
 
     <integer-array name="popup_browser_text">
         <item>@string/browser_menu_bookmark_this_page_2</item>
+        <item>@string/browser_menu_pin_to_home</item>
         <item>@string/library_bookmarks</item>
         <item>@string/browser_menu_find_in_page</item>
         <item>@string/browser_menu_desktop_site</item>
@@ -34,6 +36,7 @@
 
     <integer-array name="popup_browser_icon">
         <item>@drawable/ic_bookmark_border_24</item>
+        <item>@drawable/ic_push_pin_24</item>
         <item>@drawable/ic_bookmarks_24</item>
         <item>@drawable/ic_search_24</item>
         <item>@drawable/ic_computer_24</item>

@@ -218,4 +218,6 @@
     <string name="downloads_quick_access_title">ସମ୍ପ୍ରତି ଡାଉନଲୋଡ୍</string>
     <string name="home_onboarding_sites_label">Firedown ଚେଷ୍ଟା କରନ୍ତୁ</string>
     <string name="home_vault_button">ସୁରକ୍ଷିତ ଫୋଲ୍ଡର୍</string>
+    <string name="browser_menu_pin_to_home">ହୋମରେ ପିନ୍ କରନ୍ତୁ</string>
+    <string name="browser_pinned_to_home">ହୋମରେ ପିନ୍ କରାଗଲା</string>
 </resources>

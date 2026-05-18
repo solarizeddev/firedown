@@ -218,4 +218,6 @@
     <string name="downloads_quick_access_title">Téléchargements récents</string>
     <string name="home_onboarding_sites_label">Essayez Firedown sur</string>
     <string name="home_vault_button">Dossier sécurisé</string>
+    <string name="browser_menu_pin_to_home">Épingler à l\'accueil</string>
+    <string name="browser_pinned_to_home">Épinglé à l\'accueil</string>
 </resources>

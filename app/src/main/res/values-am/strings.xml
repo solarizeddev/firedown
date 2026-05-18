@@ -268,4 +268,6 @@
     <string name="downloads_quick_access_title">የቅርብ ጊዜ ውርዶች</string>
     <string name="home_onboarding_sites_label">Firedownን ይሞክሩ በ</string>
     <string name="home_vault_button">ደህንነቱ የተጠበቀ አቃፊ</string>
+    <string name="browser_menu_pin_to_home">ወደ መነሻ ይሰካ</string>
+    <string name="browser_pinned_to_home">ወደ መነሻ ተሰክቷል</string>
 </resources>
