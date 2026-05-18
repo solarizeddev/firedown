@@ -75,4 +75,5 @@
     <string name="settings_home_show_recent_downloads_summary">Muestra una tarjeta con tus últimas descargas en la página de inicio</string>
     <string name="settings_home_show_shortcuts_title">Mostrar atajos</string>
     <string name="settings_home_show_shortcuts_summary">Muestra la cuadrícula de sitios fijados en la página de inicio</string>
+    <string name="settings_home_summary">Elige qué se muestra en la página de inicio</string>
 </resources>

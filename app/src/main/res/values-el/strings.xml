@@ -297,4 +297,5 @@
     <string name="settings_home_show_recent_downloads_summary">Εμφανίζει μια κάρτα με τις πιο πρόσφατες λήψεις στην αρχική σελίδα</string>
     <string name="settings_home_show_shortcuts_title">Εμφάνιση συντομεύσεων</string>
     <string name="settings_home_show_shortcuts_summary">Εμφανίζει το πλέγμα των καρφιτσωμένων ιστότοπων στην αρχική σελίδα</string>
+    <string name="settings_home_summary">Επίλεξε τι εμφανίζεται στην αρχική σελίδα</string>
 </resources>

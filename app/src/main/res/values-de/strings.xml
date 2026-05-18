@@ -502,4 +502,5 @@
     <string name="settings_home_show_recent_downloads_summary">Zeigt eine Karte mit deinen letzten Downloads auf der Startseite an</string>
     <string name="settings_home_show_shortcuts_title">Verknüpfungen anzeigen</string>
     <string name="settings_home_show_shortcuts_summary">Zeigt das Raster der angehefteten Websites auf der Startseite an</string>
+    <string name="settings_home_summary">Lege fest, was auf der Startseite angezeigt wird</string>
 </resources>

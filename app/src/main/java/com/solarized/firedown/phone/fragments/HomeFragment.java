@@ -89,6 +89,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     private AutoCompleteView mAutoCompleteView;
     private ShortCutsAdapter mShortCutsAdapter;
     private View mNewTabView;
+    private View mHomeScroll;
     private View mRecentDownloadsCard;
     private View mHomeAllDisabled;
     private com.solarized.firedown.ui.adapters.DownloadsQuickAccessAdapter mRecentDownloadsAdapter;
@@ -173,15 +174,15 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         // dispatch may not reach the NestedScrollView, leaving the
         // last card clipped behind the bar on 3-button-nav devices.
         // Mirror whatever the bar measures to.
-        View homeScroll = v.findViewById(R.id.home_scroll);
+        mHomeScroll = v.findViewById(R.id.home_scroll);
         mBottomNavigationBar.addOnLayoutChangeListener(
                 (bar, l, t, r, b, ol, ot, or_, ob) -> {
                     int barHeight = bar.getHeight();
-                    if (homeScroll.getPaddingBottom() != barHeight) {
-                        homeScroll.setPadding(
-                                homeScroll.getPaddingLeft(),
-                                homeScroll.getPaddingTop(),
-                                homeScroll.getPaddingRight(),
+                    if (mHomeScroll != null && mHomeScroll.getPaddingBottom() != barHeight) {
+                        mHomeScroll.setPadding(
+                                mHomeScroll.getPaddingLeft(),
+                                mHomeScroll.getPaddingTop(),
+                                mHomeScroll.getPaddingRight(),
                                 barHeight);
                     }
                 });

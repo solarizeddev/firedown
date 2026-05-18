@@ -17,6 +17,7 @@
         <Preference
             android:key="com.solarized.firedown.preferences.home"
             android:title="@string/settings_home_title"
+            android:summary="@string/settings_home_summary"
             app:icon="@drawable/ic_home_filled_24">
         </Preference>
 

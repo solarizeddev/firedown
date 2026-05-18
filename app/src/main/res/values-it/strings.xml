@@ -345,4 +345,5 @@
     <string name="settings_home_show_recent_downloads_summary">Mostra una scheda con i tuoi ultimi download nella pagina iniziale</string>
     <string name="settings_home_show_shortcuts_title">Mostra scorciatoie</string>
     <string name="settings_home_show_shortcuts_summary">Mostra la griglia dei siti fissati nella pagina iniziale</string>
+    <string name="settings_home_summary">Scegli cosa mostrare nella pagina iniziale</string>
 </resources>

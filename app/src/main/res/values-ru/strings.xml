@@ -362,4 +362,5 @@
     <string name="settings_home_show_recent_downloads_summary">Показывает карточку с последними загрузками на главной странице</string>
     <string name="settings_home_show_shortcuts_title">Показывать ярлыки</string>
     <string name="settings_home_show_shortcuts_summary">Показывает сетку закреплённых сайтов на главной странице</string>
+    <string name="settings_home_summary">Выберите, что показывать на главной странице</string>
 </resources>

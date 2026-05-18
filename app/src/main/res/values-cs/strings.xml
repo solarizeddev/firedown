@@ -316,4 +316,5 @@
     <string name="settings_home_show_recent_downloads_summary">Zobrazí kartu s posledními staženými soubory na domovské stránce</string>
     <string name="settings_home_show_shortcuts_title">Zobrazit zkratky</string>
     <string name="settings_home_show_shortcuts_summary">Zobrazí mřížku připnutých stránek na domovské stránce</string>
+    <string name="settings_home_summary">Vyberte, co se zobrazí na domovské stránce</string>
 </resources>

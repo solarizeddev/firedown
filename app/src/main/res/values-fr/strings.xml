@@ -502,4 +502,5 @@
     <string name="settings_home_show_recent_downloads_summary">Affiche une carte avec tes derniers téléchargements sur la page d’accueil</string>
     <string name="settings_home_show_shortcuts_title">Afficher les raccourcis</string>
     <string name="settings_home_show_shortcuts_summary">Affiche la grille des sites épinglés sur la page d’accueil</string>
+    <string name="settings_home_summary">Choisis ce qui s’affiche sur la page d’accueil</string>
 </resources>

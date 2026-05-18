@@ -297,4 +297,5 @@
     <string name="settings_home_show_recent_downloads_summary">Egy kártyát jelenít meg a legutóbbi letöltésekkel a kezdőlapon</string>
     <string name="settings_home_show_shortcuts_title">Indítók megjelenítése</string>
     <string name="settings_home_show_shortcuts_summary">Megjeleníti a rögzített webhelyek rácsát a kezdőlapon</string>
+    <string name="settings_home_summary">Válaszd ki, mi jelenjen meg a kezdőlapon</string>
 </resources>

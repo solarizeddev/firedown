@@ -304,4 +304,5 @@
     <string name="settings_home_show_recent_downloads_summary">在首頁上顯示包含最新下載的卡片</string>
     <string name="settings_home_show_shortcuts_title">顯示捷徑</string>
     <string name="settings_home_show_shortcuts_summary">在首頁上顯示已釘選的網站格線</string>
+    <string name="settings_home_summary">選擇首頁顯示的內容</string>
 </resources>

@@ -389,6 +389,7 @@
     <string name="settings_general">General</string>
     <string name="settings_help">Help</string>
     <string name="settings_home_title">Home</string>
+    <string name="settings_home_summary">Choose what shows on the home page</string>
     <string name="settings_home_show_recent_downloads_title">Show recent downloads</string>
     <string name="settings_home_show_recent_downloads_summary">Display a card with your latest downloads on the home page</string>
     <string name="settings_home_show_shortcuts_title">Show shortcuts</string>

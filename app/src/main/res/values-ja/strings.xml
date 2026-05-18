@@ -501,4 +501,5 @@
     <string name="settings_home_show_recent_downloads_summary">ホーム画面に最近のダウンロードのカードを表示します</string>
     <string name="settings_home_show_shortcuts_title">ショートカットを表示</string>
     <string name="settings_home_show_shortcuts_summary">ホーム画面にピン留めしたサイトのグリッドを表示します</string>
+    <string name="settings_home_summary">ホーム画面に表示する項目を選択</string>
 </resources>

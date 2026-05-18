@@ -79,7 +79,6 @@
                 android:layout_height="0dp"
                 android:layout_weight="1"
                 android:gravity="center"
-                android:minHeight="320dp"
                 android:orientation="vertical"
                 android:paddingHorizontal="24dp"
                 android:visibility="gone"

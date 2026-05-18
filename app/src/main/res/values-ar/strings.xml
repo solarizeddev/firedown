@@ -326,4 +326,5 @@
     <string name="settings_home_show_recent_downloads_summary">يعرض بطاقة بآخر تنزيلاتك في الصفحة الرئيسية</string>
     <string name="settings_home_show_shortcuts_title">إظهار الاختصارات</string>
     <string name="settings_home_show_shortcuts_summary">يعرض شبكة المواقع المثبتة في الصفحة الرئيسية</string>
+    <string name="settings_home_summary">اختر ما يظهر في الصفحة الرئيسية</string>
 </resources>
