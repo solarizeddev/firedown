@@ -54,7 +54,6 @@ import com.solarized.firedown.phone.SettingsActivity;
 import com.solarized.firedown.phone.VaultActivity;
 import com.solarized.firedown.autocomplete.AutoCompleteEditText;
 import com.solarized.firedown.autocomplete.AutoCompleteView;
-import com.solarized.firedown.phone.dialogs.DownloadsQuickAccessSheet;
 import com.solarized.firedown.ui.OnBoardingCard;
 import com.solarized.firedown.geckoview.toolbar.BottomNavigationBar;
 import com.solarized.firedown.ui.OnItemClickListener;
@@ -70,8 +69,7 @@ import dagger.hilt.android.AndroidEntryPoint;
 public class HomeFragment extends BaseBrowserFragment implements BottomNavigationBar.OnBottomBarListener,
         AutoCompleteEditText.OnCommitListener, AutoCompleteEditText.OnFilterListener, AutoCompleteEditText.OnFocusChangedListener,
         AutoCompleteEditText.OnTextChangedListener, AutoCompleteEditText.OnSearchStateChangeListener,
-        GeckoToolbar.OnToolbarListener , OnBoardingCard.OnBoardingCardListener, OnItemClickListener,
-        DownloadsQuickAccessSheet.Host {
+        GeckoToolbar.OnToolbarListener , OnBoardingCard.OnBoardingCardListener, OnItemClickListener {
 
 
     private static final String TAG = HomeFragment.class.getName();
@@ -150,10 +148,10 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
 
 
         RecyclerView recentRecycler = v.findViewById(R.id.recent_downloads_recycler);
-        // Tap a row → same flow as the long-press sheet (errored rows
-        // open the source URL, everything else hits openItem). Reuses
-        // onQuickAccessFileTap so the home card and the sheet stay
-        // visually + behaviourally lock-step.
+        // Tap a row → errored rows open the source URL, everything
+        // else hits openItem. Same behaviour BrowserFragment's
+        // long-press DownloadsQuickAccessSheet uses on its rows so
+        // every entry-point into a recent download lands the same way.
         mRecentDownloadsAdapter = new DownloadsQuickAccessAdapter(this::onQuickAccessFileTap);
         recentRecycler.setAdapter(mRecentDownloadsAdapter);
         // Tick-only payloads update just the progress label/bar; we
@@ -458,30 +456,24 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
             NavigationUtils.navigateSafe(mNavController, R.id.dialog_new_tabs, R.id.home);
             return true;
         } else if (id == R.id.downloads_button) {
-            // If we already know there's nothing recent (LiveData has
-            // been warmed by the observer below), skip the sheet and
-            // jump straight to DownloadsActivity so the long-press
-            // still feels responsive on a fresh install. Otherwise
-            // open the bottom sheet; the sheet self-dismisses if the
-            // list goes empty after it's already on screen.
-            java.util.List<DownloadEntity> cached =
-                    mRecentDownloadsViewModel.getRecent().getValue();
-            if (cached == null || cached.isEmpty()) {
-                mStartForResult.launch(new Intent(mActivity, DownloadsActivity.class));
-            } else {
-                new DownloadsQuickAccessSheet().show(getChildFragmentManager(),
-                        DownloadsQuickAccessSheet.TAG);
-            }
+            // The home page already renders the recent-downloads card
+            // in-place; popping a sheet over it would show the same
+            // three rows twice. Jump straight to DownloadsActivity —
+            // BrowserFragment keeps the sheet because there's no
+            // home card to read from on a content page.
+            mStartForResult.launch(new Intent(mActivity, DownloadsActivity.class));
             return true;
         }
         return false;
     }
 
-    @Override
-    public void onQuickAccessFileTap(@NonNull DownloadEntity entity) {
-        // Match DownloadFragment's row tap: errored downloads jump to
-        // the source URL, everything else hits openItem (which is a
-        // no-op for not-yet-completed files but at least consistent).
+    /** Row tap on the home recent-downloads card. Matches DownloadFragment's
+     *  tap behaviour so the home glance surface and the main list stay
+     *  consistent. */
+    private void onQuickAccessFileTap(@NonNull DownloadEntity entity) {
+        // Errored downloads jump to the source URL, everything else
+        // hits openItem (which is a no-op for not-yet-completed files
+        // but at least consistent).
         if (entity.getFileStatus() == Download.ERROR) {
             openSourceUrl(entity);
         } else {
