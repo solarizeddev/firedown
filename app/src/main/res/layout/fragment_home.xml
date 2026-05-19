@@ -21,20 +21,6 @@
             android:layout_gravity="top"
             app:enableHome="true" />
 
-        <!--
-            Hairline below the toolbar. The toolbar is taller than the
-            visible pill (12dp of breathing room above the pill for
-            the status-bar inset) so the eye picks the pill bottom as
-            the toolbar's end and the 12dp gap to the first card reads
-            as 'much bigger' than the 12dp between cards. The divider
-            anchors the eye to the toolbar's actual bottom — gaps
-            then read uniformly.
-        -->
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="?attr/colorOutlineVariant" />
-
     </com.google.android.material.appbar.AppBarLayout>
 
 
@@ -48,10 +34,21 @@
         android:overScrollMode="never"
         app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior">
 
+        <!--
+            Stack spacing model: a single 4dp paddingTop on the column
+            provides the gap from the toolbar to whichever card lands
+            first. Each card carries its own marginBottom for the gap
+            below it — so when a card is GONE neither its top nor its
+            bottom margin contributes, and the next visible card sits
+            4dp under the toolbar regardless of which one it is.
+            Using marginTop instead would 'inherit' a 12dp top gap
+            onto the new first card and push it down too far.
+        -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
+            android:paddingTop="4dp"
             tools:visibility="visible">
 
 
@@ -60,7 +57,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="top"
-                android:layout_marginTop="4dp" />
+                android:layout_marginBottom="12dp" />
 
 
             <include
@@ -70,7 +67,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="@dimen/list_spacing"
                 android:layout_marginEnd="@dimen/list_spacing"
-                android:layout_marginTop="12dp" />
+                android:layout_marginBottom="12dp" />
 
 
             <include
@@ -80,7 +77,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="@dimen/list_spacing"
                 android:layout_marginEnd="@dimen/list_spacing"
-                android:layout_marginTop="12dp" />
+                android:layout_marginBottom="12dp" />
 
 
             <include
@@ -90,7 +87,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="@dimen/list_spacing"
                 android:layout_marginEnd="@dimen/list_spacing"
-                android:layout_marginTop="12dp" />
+                android:layout_marginBottom="12dp" />
 
 
             <!--
@@ -108,7 +105,6 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="@dimen/list_spacing"
                 android:layout_marginEnd="@dimen/list_spacing"
-                android:layout_marginTop="12dp"
                 android:layout_marginBottom="12dp"
                 android:clickable="true"
                 android:focusable="true"
