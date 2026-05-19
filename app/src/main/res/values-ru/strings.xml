@@ -347,4 +347,6 @@
     <string name="settings_webrtc_enabled_summary">Включает видео- и голосовые вызовы в реальном времени. Отключение уменьшает площадь зондирования сети.</string>
     <string name="incognito_home_description">В приватном окне Firedown не сохраняет:</string>
     <string name="incognito_home_warning">Приватный просмотр не скрывает вашу активность от сети, работодателя или посещаемых сайтов.</string>
+    <string name="downloads_quick_access_view_all">Показать все загрузки</string>
+    <string name="downloads_quick_access_empty">Здесь появятся недавние загрузки</string>
 </resources>

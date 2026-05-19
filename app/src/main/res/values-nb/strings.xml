@@ -239,4 +239,6 @@
     <string name="settings_webrtc_enabled_summary">Tillater video- og taleanrop i sanntid. Å slå av reduserer nettverkssonderingsflaten.</string>
     <string name="incognito_home_description">Når du surfer i et privat vindu, lagrer ikke Firedown:</string>
     <string name="incognito_home_warning">Privat surfing skjuler ikke aktiviteten din fra nettverket ditt, arbeidsgiveren din eller nettstedene du besøker.</string>
+    <string name="downloads_quick_access_view_all">Vis alle nedlastinger</string>
+    <string name="downloads_quick_access_empty">Nylige nedlastinger vises her</string>
 </resources>

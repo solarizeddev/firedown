@@ -330,4 +330,6 @@
     <string name="settings_webrtc_enabled_summary">Consente videochiamate e chiamate vocali in tempo reale. Disattivarlo riduce la superficie di sondaggio di rete.</string>
     <string name="incognito_home_description">Quando navighi in una finestra privata, Firedown non salva:</string>
     <string name="incognito_home_warning">La navigazione privata non nasconde la tua attività alla rete, al datore di lavoro o ai siti che visiti.</string>
+    <string name="downloads_quick_access_view_all">Vedi tutti i download</string>
+    <string name="downloads_quick_access_empty">I download recenti appariranno qui</string>
 </resources>

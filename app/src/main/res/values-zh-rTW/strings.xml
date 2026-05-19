@@ -289,4 +289,6 @@
     <string name="settings_webrtc_enabled_summary">啟用即時視訊和語音通話。停用可減少網路探測攻擊面。</string>
     <string name="incognito_home_description">在私密視窗瀏覽時，Firedown 不會保留：</string>
     <string name="incognito_home_warning">私密瀏覽不會向你的網路、雇主或造訪的網站隱藏你的活動。</string>
+    <string name="downloads_quick_access_view_all">查看全部下載</string>
+    <string name="downloads_quick_access_empty">最近的下載將顯示於此</string>
 </resources>

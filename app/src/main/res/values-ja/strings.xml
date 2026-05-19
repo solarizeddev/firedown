@@ -483,4 +483,6 @@
     <string name="home_vault_button">セーフフォルダ</string>
     <string name="home_media_playing">再生中</string>
     <string name="home_media_paused">一時停止中</string>
+    <string name="downloads_quick_access_view_all">すべてのダウンロードを表示</string>
+    <string name="downloads_quick_access_empty">最近のダウンロードがここに表示されます</string>
 </resources>

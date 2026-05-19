@@ -242,4 +242,6 @@
     <string name="settings_webrtc_enabled_summary">Tillåter video- och röstsamtal i realtid. Inaktivering minskar nätverkssonderingsytan.</string>
     <string name="incognito_home_description">När du surfar i ett privat fönster sparar Firedown inte:</string>
     <string name="incognito_home_warning">Privat surfning döljer inte din aktivitet för ditt nätverk, din arbetsgivare eller webbplatserna du besöker.</string>
+    <string name="downloads_quick_access_view_all">Visa alla nedladdningar</string>
+    <string name="downloads_quick_access_empty">Senaste nedladdningar visas här</string>
 </resources>

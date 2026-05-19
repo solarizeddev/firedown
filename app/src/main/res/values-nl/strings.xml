@@ -349,4 +349,6 @@
     <string name="settings_webrtc_enabled_summary">Maakt realtime video- en spraakoproepen mogelijk. Uitschakelen verkleint het netwerk-onderzoeksoppervlak.</string>
     <string name="incognito_home_description">Wanneer je in een privévenster surft, bewaart Firedown geen:</string>
     <string name="incognito_home_warning">Privénavigatie verbergt je activiteit niet voor je netwerk, je werkgever of de sites die je bezoekt.</string>
+    <string name="downloads_quick_access_view_all">Alle downloads weergeven</string>
+    <string name="downloads_quick_access_empty">Recente downloads verschijnen hier</string>
 </resources>

@@ -277,4 +277,6 @@
     <string name="settings_webrtc_enabled_summary">Omogućuje video- i glasovne pozive u stvarnom vremenu. Onemogućivanje smanjuje površinu mrežnog sondiranja.</string>
     <string name="incognito_home_description">U privatnom prozoru Firedown ne sprema:</string>
     <string name="incognito_home_warning">Privatno pregledavanje ne skriva tvoju aktivnost od mreže, poslodavca ili stranica koje posjećuješ.</string>
+    <string name="downloads_quick_access_view_all">Prikaži sva preuzimanja</string>
+    <string name="downloads_quick_access_empty">Nedavna preuzimanja prikazat će se ovdje</string>
 </resources>

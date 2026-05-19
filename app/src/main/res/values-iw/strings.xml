@@ -295,4 +295,6 @@
     <string name="settings_webrtc_enabled_summary">מאפשר שיחות וידאו וקול בזמן אמת. השבתה מקטינה את שטח הבדיקה של הרשת.</string>
     <string name="incognito_home_description">כשגולשים בחלון פרטי, Firedown לא שומר:</string>
     <string name="incognito_home_warning">גלישה פרטית לא מסתירה את הפעילות שלך מהרשת שלך, מהמעסיק שלך או מהאתרים שאתה מבקר בהם.</string>
+    <string name="downloads_quick_access_view_all">הצג את כל ההורדות</string>
+    <string name="downloads_quick_access_empty">הורדות אחרונות יופיעו כאן</string>
 </resources>

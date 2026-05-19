@@ -282,4 +282,6 @@
     <string name="settings_webrtc_enabled_summary">Permet videotrucades i trucades de veu en temps real. Desactivar-ho redueix la superfície de sondeig de xarxa.</string>
     <string name="incognito_home_description">Quan navegues en una finestra privada, el Firedown no desa:</string>
     <string name="incognito_home_warning">La navegació privada no amaga la teva activitat a la teva xarxa, al teu empleador o als llocs que visites.</string>
+    <string name="downloads_quick_access_view_all">Mostra totes les baixades</string>
+    <string name="downloads_quick_access_empty">Les baixades recents apareixeran aquí</string>
 </resources>

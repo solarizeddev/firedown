@@ -328,4 +328,6 @@
     <string name="settings_webrtc_enabled_summary">실시간 영상 및 음성 통화를 허용합니다. 비활성화하면 네트워크 탐지 공격면이 줄어듭니다.</string>
     <string name="incognito_home_description">비공개 창에서는 Firedown이 다음 항목을 저장하지 않습니다:</string>
     <string name="incognito_home_warning">비공개 탐색은 네트워크, 고용주 또는 방문한 사이트로부터 활동을 숨겨주지는 않습니다.</string>
+    <string name="downloads_quick_access_view_all">모든 다운로드 보기</string>
+    <string name="downloads_quick_access_empty">최근 다운로드가 여기에 표시됩니다</string>
 </resources>

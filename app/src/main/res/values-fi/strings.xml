@@ -299,4 +299,6 @@
     <string name="settings_webrtc_enabled_summary">Sallii reaaliaikaiset video- ja äänipuhelut. Käytöstä poistaminen pienentää verkkokartoituksen hyökkäyspintaa.</string>
     <string name="incognito_home_description">Yksityisessä ikkunassa Firedown ei tallenna:</string>
     <string name="incognito_home_warning">Yksityinen selaus ei piilota toimintaasi verkoltasi, työnantajaltasi tai vierailemiltasi sivustoilta.</string>
+    <string name="downloads_quick_access_view_all">Näytä kaikki lataukset</string>
+    <string name="downloads_quick_access_empty">Viimeisimmät lataukset näkyvät täällä</string>
 </resources>

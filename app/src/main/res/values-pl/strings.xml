@@ -344,4 +344,6 @@
     <string name="settings_webrtc_enabled_summary">Umożliwia połączenia wideo i głosowe w czasie rzeczywistym. Wyłączenie zmniejsza powierzchnię sondowania sieci.</string>
     <string name="incognito_home_description">W oknie prywatnym Firedown nie zapisuje:</string>
     <string name="incognito_home_warning">Tryb prywatny nie ukrywa twojej aktywności przed siecią, pracodawcą ani odwiedzanymi stronami.</string>
+    <string name="downloads_quick_access_view_all">Zobacz wszystkie pobrania</string>
+    <string name="downloads_quick_access_empty">Ostatnie pobrania pojawią się tutaj</string>
 </resources>
