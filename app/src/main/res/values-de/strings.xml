@@ -194,9 +194,9 @@
     <string name="incognito_bullet_searches">Suchanfragen</string>
     <string name="incognito_bullet_temp_files">Temporäre Dateien</string>
     <string name="incognito_bullet_visited">Besuchte Seiten</string>
-    <string name="incognito_home_description">Wenn du in einem privaten Fenster surfst, wird Firedown </string>
+    <string name="incognito_home_description">Wenn du in einem privaten Fenster surfst, speichert Firedown nicht:</string>
     <string name="incognito_home_title">Privater Modus</string>
-    <string name="incognito_home_warning">Privates Surfen </string>
+    <string name="incognito_home_warning">Privates Surfen verbirgt deine Aktivität nicht vor deinem Netzwerk, deinem Arbeitgeber oder den besuchten Webseiten.</string>
     <string name="incognito_notification_channel">Privater Modus</string>
     <string name="incognito_notification_channel_desc">Benachrichtigung für offene private Tabs</string>
     <string name="incognito_notification_close_action">Alle schließen</string>

@@ -280,4 +280,6 @@
     <string name="home_media_playing">Đang phát</string>
     <string name="home_media_paused">Đã tạm dừng</string>
     <string name="settings_webrtc_enabled_summary">Cho phép gọi video và thoại theo thời gian thực. Tắt sẽ giảm bề mặt thăm dò mạng.</string>
+    <string name="incognito_home_description">Khi duyệt trong cửa sổ riêng tư, Firedown không lưu:</string>
+    <string name="incognito_home_warning">Duyệt web riêng tư không che giấu hoạt động của bạn khỏi mạng, chủ lao động hoặc các trang bạn truy cập.</string>
 </resources>

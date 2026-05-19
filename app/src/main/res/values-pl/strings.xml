@@ -342,4 +342,6 @@
     <string name="home_media_playing">Odtwarzanie</string>
     <string name="home_media_paused">Wstrzymano</string>
     <string name="settings_webrtc_enabled_summary">Umożliwia połączenia wideo i głosowe w czasie rzeczywistym. Wyłączenie zmniejsza powierzchnię sondowania sieci.</string>
+    <string name="incognito_home_description">W oknie prywatnym Firedown nie zapisuje:</string>
+    <string name="incognito_home_warning">Tryb prywatny nie ukrywa twojej aktywności przed siecią, pracodawcą ani odwiedzanymi stronami.</string>
 </resources>

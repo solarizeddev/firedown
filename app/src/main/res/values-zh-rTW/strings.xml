@@ -287,4 +287,6 @@
     <string name="home_media_playing">播放中</string>
     <string name="home_media_paused">已暫停</string>
     <string name="settings_webrtc_enabled_summary">啟用即時視訊和語音通話。停用可減少網路探測攻擊面。</string>
+    <string name="incognito_home_description">在私密視窗瀏覽時，Firedown 不會保留：</string>
+    <string name="incognito_home_warning">私密瀏覽不會向你的網路、雇主或造訪的網站隱藏你的活動。</string>
 </resources>

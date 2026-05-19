@@ -194,9 +194,9 @@
     <string name="incognito_bullet_searches">Recherches</string>
     <string name="incognito_bullet_temp_files">Fichiers temporaires</string>
     <string name="incognito_bullet_visited">Pages visitées</string>
-    <string name="incognito_home_description">Quand vous naviguez en fenêtre privée, Firedown </string>
+    <string name="incognito_home_description">Quand vous naviguez en fenêtre privée, Firedown ne conserve pas :</string>
     <string name="incognito_home_title">Navigation privée</string>
-    <string name="incognito_home_warning">La navigation privée </string>
+    <string name="incognito_home_warning">La navigation privée ne masque pas votre activité vis-à-vis de votre réseau, de votre employeur ou des sites que vous visitez.</string>
     <string name="incognito_notification_channel">Navigation privée</string>
     <string name="incognito_notification_channel_desc">Notification pour les onglets privés ouverts</string>
     <string name="incognito_notification_close_action">Tout fermer</string>

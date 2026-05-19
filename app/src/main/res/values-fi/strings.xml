@@ -297,4 +297,6 @@
     <string name="home_media_playing">Toistetaan</string>
     <string name="home_media_paused">Tauolla</string>
     <string name="settings_webrtc_enabled_summary">Sallii reaaliaikaiset video- ja äänipuhelut. Käytöstä poistaminen pienentää verkkokartoituksen hyökkäyspintaa.</string>
+    <string name="incognito_home_description">Yksityisessä ikkunassa Firedown ei tallenna:</string>
+    <string name="incognito_home_warning">Yksityinen selaus ei piilota toimintaasi verkoltasi, työnantajaltasi tai vierailemiltasi sivustoilta.</string>
 </resources>

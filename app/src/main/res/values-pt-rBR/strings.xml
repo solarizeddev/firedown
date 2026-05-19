@@ -92,4 +92,6 @@
     <string name="home_media_playing">Reproduzindo</string>
     <string name="home_media_paused">Pausado</string>
     <string name="settings_webrtc_enabled_summary">Permite chamadas de vídeo e voz em tempo real. Desativar reduz a superfície de sondagem de rede.</string>
+    <string name="incognito_home_description">Quando você navega em uma janela privada, o Firedown não guarda:</string>
+    <string name="incognito_home_warning">A navegação privada não esconde sua atividade da sua rede, do seu empregador ou dos sites que você visita.</string>
 </resources>

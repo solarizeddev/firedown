@@ -347,4 +347,6 @@
     <string name="home_media_playing">Wordt afgespeeld</string>
     <string name="home_media_paused">Gepauzeerd</string>
     <string name="settings_webrtc_enabled_summary">Maakt realtime video- en spraakoproepen mogelijk. Uitschakelen verkleint het netwerk-onderzoeksoppervlak.</string>
+    <string name="incognito_home_description">Wanneer je in een privévenster surft, bewaart Firedown geen:</string>
+    <string name="incognito_home_warning">Privénavigatie verbergt je activiteit niet voor je netwerk, je werkgever of de sites die je bezoekt.</string>
 </resources>

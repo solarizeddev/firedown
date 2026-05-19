@@ -273,4 +273,6 @@
     <string name="home_media_playing">Se redă</string>
     <string name="home_media_paused">În pauză</string>
     <string name="settings_webrtc_enabled_summary">Permite apeluri video și vocale în timp real. Dezactivarea reduce suprafața de sondare a rețelei.</string>
+    <string name="incognito_home_description">Când navighezi într-o fereastră privată, Firedown nu salvează:</string>
+    <string name="incognito_home_warning">Navigarea privată nu îți ascunde activitatea față de rețea, angajator sau site-urile pe care le vizitezi.</string>
 </resources>

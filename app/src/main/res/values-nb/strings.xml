@@ -237,4 +237,6 @@
     <string name="home_media_playing">Spiller av</string>
     <string name="home_media_paused">Satt på pause</string>
     <string name="settings_webrtc_enabled_summary">Tillater video- og taleanrop i sanntid. Å slå av reduserer nettverkssonderingsflaten.</string>
+    <string name="incognito_home_description">Når du surfer i et privat vindu, lagrer ikke Firedown:</string>
+    <string name="incognito_home_warning">Privat surfing skjuler ikke aktiviteten din fra nettverket ditt, arbeidsgiveren din eller nettstedene du besøker.</string>
 </resources>

@@ -277,4 +277,6 @@
     <string name="home_media_playing">Prehráva sa</string>
     <string name="home_media_paused">Pozastavené</string>
     <string name="settings_webrtc_enabled_summary">Umožňuje videohovory a hlasové hovory v reálnom čase. Vypnutie zmenšuje plochu sieťového sondovania.</string>
+    <string name="incognito_home_description">Pri prehliadaní v anonymnom okne Firedown neukladá:</string>
+    <string name="incognito_home_warning">Anonymné prehliadanie neskrýva vašu aktivitu pred sieťou, zamestnávateľom ani navštívenými stránkami.</string>
 </resources>

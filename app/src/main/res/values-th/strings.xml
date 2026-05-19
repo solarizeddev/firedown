@@ -277,4 +277,6 @@
     <string name="home_media_playing">กำลังเล่น</string>
     <string name="home_media_paused">หยุดชั่วคราว</string>
     <string name="settings_webrtc_enabled_summary">อนุญาตการโทรวิดีโอและเสียงแบบเรียลไทม์ การปิดใช้งานจะลดพื้นผิวการสำรวจเครือข่าย</string>
+    <string name="incognito_home_description">เมื่อท่องเว็บในหน้าต่างส่วนตัว Firedown จะไม่เก็บ:</string>
+    <string name="incognito_home_warning">การท่องเว็บแบบส่วนตัวไม่ได้ซ่อนกิจกรรมของคุณจากเครือข่าย นายจ้าง หรือเว็บไซต์ที่คุณเข้าชม</string>
 </resources>

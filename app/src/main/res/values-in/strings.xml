@@ -265,4 +265,6 @@
     <string name="home_media_playing">Memutar</string>
     <string name="home_media_paused">Dijeda</string>
     <string name="settings_webrtc_enabled_summary">Mengizinkan panggilan video dan suara realtime. Menonaktifkan mengurangi permukaan penyelidikan jaringan.</string>
+    <string name="incognito_home_description">Saat menjelajah di jendela pribadi, Firedown tidak menyimpan:</string>
+    <string name="incognito_home_warning">Penjelajahan pribadi tidak menyembunyikan aktivitas Anda dari jaringan, atasan, atau situs yang Anda kunjungi.</string>
 </resources>

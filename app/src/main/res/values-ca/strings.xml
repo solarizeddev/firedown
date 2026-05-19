@@ -280,4 +280,6 @@
     <string name="home_media_playing">S\'està reproduint</string>
     <string name="home_media_paused">En pausa</string>
     <string name="settings_webrtc_enabled_summary">Permet videotrucades i trucades de veu en temps real. Desactivar-ho redueix la superfície de sondeig de xarxa.</string>
+    <string name="incognito_home_description">Quan navegues en una finestra privada, el Firedown no desa:</string>
+    <string name="incognito_home_warning">La navegació privada no amaga la teva activitat a la teva xarxa, al teu empleador o als llocs que visites.</string>
 </resources>

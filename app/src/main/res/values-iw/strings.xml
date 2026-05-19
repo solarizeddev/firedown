@@ -293,4 +293,6 @@
     <string name="home_media_playing">מתנגן</string>
     <string name="home_media_paused">מושהה</string>
     <string name="settings_webrtc_enabled_summary">מאפשר שיחות וידאו וקול בזמן אמת. השבתה מקטינה את שטח הבדיקה של הרשת.</string>
+    <string name="incognito_home_description">כשגולשים בחלון פרטי, Firedown לא שומר:</string>
+    <string name="incognito_home_warning">גלישה פרטית לא מסתירה את הפעילות שלך מהרשת שלך, מהמעסיק שלך או מהאתרים שאתה מבקר בהם.</string>
 </resources>

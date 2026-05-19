@@ -280,4 +280,6 @@
     <string name="home_media_playing">Lejátszás</string>
     <string name="home_media_paused">Szüneteltetve</string>
     <string name="settings_webrtc_enabled_summary">Engedélyezi a valós idejű video- és hanghívásokat. Kikapcsolása csökkenti a hálózati szondázási felületet.</string>
+    <string name="incognito_home_description">Privát ablakban böngészve a Firedown nem tárolja a következőket:</string>
+    <string name="incognito_home_warning">A privát böngészés nem rejti el a tevékenységedet a hálózatod, a munkáltatód vagy a meglátogatott oldalak elől.</string>
 </resources>

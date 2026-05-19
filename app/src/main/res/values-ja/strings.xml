@@ -194,9 +194,9 @@
     <string name="incognito_bullet_searches">検索履歴</string>
     <string name="incognito_bullet_temp_files">一時ファイル</string>
     <string name="incognito_bullet_visited">閲覧したページ</string>
-    <string name="incognito_home_description">プライベートウィンドウで閲覧する場合、Firedownは </string>
+    <string name="incognito_home_description">プライベートウィンドウで閲覧する場合、Firedown は次の情報を保存しません:</string>
     <string name="incognito_home_title">プライベートブラウジング</string>
-    <string name="incognito_home_warning">プライベートブラウジングはインターネット上で</string>
+    <string name="incognito_home_warning">プライベートブラウジングでは、ネットワーク管理者、雇用主、または訪問先サイトからの追跡は防げません。</string>
     <string name="incognito_notification_channel">プライベートブラウジング</string>
     <string name="incognito_notification_channel_desc">開いているプライベートタブの通知</string>
     <string name="incognito_notification_close_action">すべて閉じる</string>

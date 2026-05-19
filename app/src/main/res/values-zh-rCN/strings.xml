@@ -194,9 +194,9 @@
     <string name="incognito_bullet_searches">搜索记录</string>
     <string name="incognito_bullet_temp_files">临时文件</string>
     <string name="incognito_bullet_visited">访问过的页面</string>
-    <string name="incognito_home_description">在隐私窗口浏览时，Firedown </string>
+    <string name="incognito_home_description">在隐私窗口浏览时，Firedown 不会保存：</string>
     <string name="incognito_home_title">隐私浏览</string>
-    <string name="incognito_home_warning">隐私浏览</string>
+    <string name="incognito_home_warning">隐私浏览不会向你的网络、雇主或访问的网站隐藏你的活动。</string>
     <string name="incognito_notification_channel">隐私浏览</string>
     <string name="incognito_notification_channel_desc">已打开隐私标签页的通知</string>
     <string name="incognito_notification_close_action">全部关闭</string>

@@ -345,4 +345,6 @@
     <string name="home_media_playing">Воспроизведение</string>
     <string name="home_media_paused">На паузе</string>
     <string name="settings_webrtc_enabled_summary">Включает видео- и голосовые вызовы в реальном времени. Отключение уменьшает площадь зондирования сети.</string>
+    <string name="incognito_home_description">В приватном окне Firedown не сохраняет:</string>
+    <string name="incognito_home_warning">Приватный просмотр не скрывает вашу активность от сети, работодателя или посещаемых сайтов.</string>
 </resources>

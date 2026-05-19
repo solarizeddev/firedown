@@ -346,4 +346,6 @@
     <string name="home_media_playing">Oynatılıyor</string>
     <string name="home_media_paused">Duraklatıldı</string>
     <string name="settings_webrtc_enabled_summary">Gerçek zamanlı görüntülü ve sesli aramaları etkinleştirir. Devre dışı bırakmak ağ tarama yüzeyini azaltır.</string>
+    <string name="incognito_home_description">Gizli pencerede gezinirken Firedown şunları saklamaz:</string>
+    <string name="incognito_home_warning">Gizli gezinti, etkinliğinizi ağınızdan, işvereninizden veya ziyaret ettiğiniz sitelerden gizlemez.</string>
 </resources>

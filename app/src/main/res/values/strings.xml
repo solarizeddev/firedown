@@ -214,9 +214,9 @@
     <string name="incognito_bullet_searches">Searches</string>
     <string name="incognito_bullet_temp_files">Temporary files</string>
     <string name="incognito_bullet_visited">Visited pages</string>
-    <string name="incognito_home_description">When you browse in a Private Window, Firedown </string>
+    <string name="incognito_home_description">When you browse in a Private Window, Firedown won't keep:</string>
     <string name="incognito_home_title">Private Browsing</string>
-    <string name="incognito_home_warning">Private Browsing </string>
+    <string name="incognito_home_warning">Private Browsing doesn't hide your activity from your network, employer, or the sites you visit.</string>
     <string name="incognito_notification_channel">Private Browsing</string>
     <string name="incognito_notification_channel_desc">Notification for open private tabs</string>
     <string name="incognito_notification_close_action">Close all</string>

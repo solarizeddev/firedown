@@ -280,4 +280,6 @@
     <string name="home_media_playing">Αναπαραγωγή</string>
     <string name="home_media_paused">Σε παύση</string>
     <string name="settings_webrtc_enabled_summary">Επιτρέπει βιντεοκλήσεις και φωνητικές κλήσεις σε πραγματικό χρόνο. Η απενεργοποίηση μειώνει την επιφάνεια σάρωσης δικτύου.</string>
+    <string name="incognito_home_description">Όταν περιηγείστε σε ιδιωτικό παράθυρο, το Firedown δεν αποθηκεύει:</string>
+    <string name="incognito_home_warning">Η ιδιωτική περιήγηση δεν κρύβει τη δραστηριότητά σας από το δίκτυό σας, τον εργοδότη σας ή τις ιστοσελίδες που επισκέπτεστε.</string>
 </resources>
