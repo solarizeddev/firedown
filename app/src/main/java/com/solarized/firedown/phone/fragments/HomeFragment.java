@@ -689,8 +689,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         } else if(id == R.id.search_button){
             // Cradle slot on normal home is Bookmarks — the URL bar at
             // the top already covers the search path, so the centre
-            // tap-target gives pinned bookmarks (which absorbed the
-            // old shortcuts surface) a one-tap entry.
+            // tap-target gives the bookmarks list a one-tap entry.
             Intent bookmarksIntent = new Intent(mActivity, BookmarkActivity.class);
             mStartForResult.launch(bookmarksIntent);
         }

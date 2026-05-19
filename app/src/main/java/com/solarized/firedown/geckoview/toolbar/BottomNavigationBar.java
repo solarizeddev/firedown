@@ -145,12 +145,12 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
             ImageViewCompat.setImageTintList((AppCompatImageButton) newTabBtn, iconTint);
         }
 
-        // The cradle slot is a Bookmarks shortcut in normal mode and a
-        // Search shortcut in incognito — bookmarks are deliberately
-        // unreachable from incognito chrome (no leaking pinned-site
-        // taste into private browsing), so the slot reverts to the
-        // safer URL-focus action there. The id stays 'search_button'
-        // since it's the slot id, not the action.
+        // The cradle slot is Bookmarks in normal mode and URL-focus in
+        // incognito — bookmarks are deliberately unreachable from the
+        // incognito chrome (no leaking saved-site history into private
+        // browsing), so the slot reverts to the safer URL-focus action
+        // there. The id stays 'search_button' since it's the slot id,
+        // not the action.
         AppCompatImageButton searchBtn = findViewById(R.id.search_button);
         if (searchBtn != null) {
             searchBtn.setImageResource(incognito ? R.drawable.ic_search_24 : R.drawable.ic_bookmarks_24);
