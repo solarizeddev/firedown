@@ -2522,16 +2522,21 @@ async function ensurePoTokenTab() {
         const pingTarget = poTokenTabId;
         try {
             await browser.tabs.sendMessage(pingTarget, { type: 'ping' });
-            // Re-check: the tab may have died during the ping. If it did,
-            // poTokenTabId got cleared by onRemoved while we awaited.
+            // Re-check: poTokenTabId may have been nulled by onRemoved while
+            // the ping was in flight. If so, the tab is gone — don't claim
+            // success and don't fall through to create-a-new-tab here either,
+            // because someone else may have already started one (their
+            // poTokenInitPromise would be set). Returning null sends the
+            // caller back through the top of this function where the
+            // coalescing check picks up that in-flight init.
             if (poTokenTabId !== pingTarget) {
-                console.warn(`[PoToken] tab ${pingTarget} died during ping (poTokenTabId is now ${poTokenTabId})`);
-            } else {
-                console.log(`[PoToken] tab ping ok (${pingTarget}) elapsed=${Date.now() - ensureStart}ms`);
-                return pingTarget;
+                console.warn(`[PoToken] tab ${pingTarget} died during ping (poTokenTabId is now ${poTokenTabId}) — caller should retry`);
+                return null;
             }
+            console.log(`[PoToken] tab ping ok (${pingTarget}) elapsed=${Date.now() - ensureStart}ms`);
+            return pingTarget;
         } catch (e) {
-            // Content script is dead — clean up and create a fresh tab
+            // Content script is dead — clean up and create a fresh tab below
             console.warn(`[PoToken] tab ${pingTarget} ping FAILED (${e.message}) — removing`);
             removePoTokenTab(pingTarget);
         }
@@ -2763,20 +2768,15 @@ async function generatePoToken(visitorData, videoId) {
  */
 async function mintPoTokenViaTab(visitorData, videoId) {
     const mintStart = Date.now();
-    let tabId = await ensurePoTokenTab();
-    if (!tabId) {
-        // Safety net for the canary-race the pre-warm at INIT is designed
-        // to prevent. If the tab gets killed mid-init by an unrelated tab
-        // event (canary navigation, GeckoView webProgress fault, etc.),
-        // wait briefly for the noise to settle and try once more. By the
-        // second attempt the canary navigation has typically finished and
-        // tab creation succeeds cleanly.
-        console.warn('[PoToken] ensurePoTokenTab returned null — waiting 1.5s and retrying once');
-        await new Promise(r => setTimeout(r, 1500));
-        tabId = await ensurePoTokenTab();
-        if (!tabId) throw new Error('No robots.txt tab available (after retry)');
-        console.log('[PoToken] retry succeeded, continuing mint');
-    }
+    const tabId = await ensurePoTokenTab();
+    if (!tabId) throw new Error('No robots.txt tab available');
+    // Note: any retry on ensurePoTokenTab failure is handled by the outer
+    // retry loop in generatePoToken. We used to retry here with a 1.5s
+    // setTimeout, but that delay was vulnerable to the same scheduler-
+    // death issue the outer loop has to dodge — if the macrotask
+    // scheduler died during the wait, the entire mint hung. Keeping the
+    // retry strictly in generatePoToken's loop means failures bubble up
+    // promptly and the outer loop's microtask-yield retry handles them.
 
     const requestId = `pot-${Date.now()}-${(Math.random() * 1e6 | 0).toString(36)}`;
     console.log(`[PoToken] mint request id=${requestId} tab=${tabId} videoId=${videoId || '(none)'}`);
