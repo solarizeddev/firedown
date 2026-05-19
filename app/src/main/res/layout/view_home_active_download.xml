@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Active-download strip on the home page. Carries the Firedown
-  flame icon (alpha-pulsing) + 'DOWNLOADING' header on top, with
-  up to N (currently 3) compact rows below — one per in-flight
-  regular download. Each row shows filename + percent + its own
-  progress bar.
+  Active-download strip on the home page. Two-column layout: the
+  pulsing Firedown flame on the left, vertically centred against
+  the whole card; the content column on the right stacks the
+  'DOWNLOADING' header and one row per in-flight regular download
+  (capped at 3 by the DAO query).
 
   Tinted with colorPrimaryContainer to read as 'live' — distinct
   from the surface-container colour the static Downloads / Safe
@@ -25,55 +25,58 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
+        android:orientation="horizontal"
         android:paddingHorizontal="16dp"
         android:paddingVertical="14dp">
 
         <!--
-            Header: pulsing Firedown flame + 'DOWNLOADING…' label.
-            The flame's alpha animator is wired in HomeFragment and
-            communicates 'live'; the static Downloads card below
-            uses the canonical download arrow, so no icon
-            duplication between the two surfaces.
+            Firedown flame instead of the canonical download arrow —
+            the static Downloads card below already owns that glyph,
+            and the alpha-pulse animator (wired in HomeFragment)
+            communicates 'live, happening now' in a way a duplicated
+            download icon couldn't. layout_gravity=center_vertical
+            anchors the icon to the centre of whatever the content
+            column's height resolves to (header + 1–3 rows).
         -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/active_download_icon"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_gravity="center_vertical"
+            android:contentDescription="@null"
+            android:src="@drawable/ic_firedown"
+            app:tint="?attr/colorOnPrimaryContainer" />
 
-            <androidx.appcompat.widget.AppCompatImageView
-                android:id="@+id/active_download_icon"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:contentDescription="@null"
-                android:src="@drawable/ic_firedown"
-                app:tint="?attr/colorOnPrimaryContainer" />
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="14dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
                 android:letterSpacing="0.08"
                 android:text="@string/downloading"
                 android:textAllCaps="true"
                 android:textAppearance="?attr/textAppearanceLabelSmall"
                 android:textColor="?attr/colorOnPrimaryContainer" />
 
-        </LinearLayout>
+            <!--
+                Rows container — HomeFragment inflates one
+                view_home_active_download_row per active item
+                (cap = 3) and removeAllViews + re-inflates on every
+                observer tick. Each row carries its own top padding
+                so spacing scales naturally with N.
+            -->
+            <LinearLayout
+                android:id="@+id/active_download_rows"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
 
-        <!--
-            Rows container — HomeFragment inflates one
-            view_home_active_download_row per active item (cap = 3)
-            and removeAllViews + re-inflates on every observer tick.
-            Vertical stack; each row carries its own top padding so
-            spacing scales naturally with N.
-        -->
-        <LinearLayout
-            android:id="@+id/active_download_rows"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical" />
+        </LinearLayout>
 
     </LinearLayout>
 
