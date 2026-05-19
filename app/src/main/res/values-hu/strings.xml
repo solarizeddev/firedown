@@ -277,4 +277,6 @@
     <string name="downloads_quick_access_title">Legutóbbi letöltések</string>
     <string name="home_onboarding_sites_label">Firedown kipróbálása</string>
     <string name="home_vault_button">Biztonságos mappa</string>
+    <string name="home_media_playing">Lejátszás</string>
+    <string name="home_media_paused">Szüneteltetve</string>
 </resources>

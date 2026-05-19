@@ -54,4 +54,6 @@
     <string name="bookmark_name">Nombre</string>
     <string name="downloads_quick_access_title">Descargas recientes</string>
     <string name="home_onboarding_sites_label">Prueba Firedown en</string>
+    <string name="home_media_playing">Reproduciendo</string>
+    <string name="home_media_paused">En pausa</string>
 </resources>

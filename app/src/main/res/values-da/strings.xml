@@ -290,4 +290,6 @@
     <string name="downloads_quick_access_title">Seneste downloads</string>
     <string name="home_onboarding_sites_label">Prøv Firedown på</string>
     <string name="home_vault_button">Sikker mappe</string>
+    <string name="home_media_playing">Afspiller</string>
+    <string name="home_media_paused">Sat på pause</string>
 </resources>

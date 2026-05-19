@@ -255,4 +255,6 @@
     <string name="downloads_quick_access_title">ఇటీవలి డౌన్‌లోడ్‌లు</string>
     <string name="home_onboarding_sites_label">Firedown ప్రయత్నించండి</string>
     <string name="home_vault_button">సురక్షిత ఫోల్డర్</string>
+    <string name="home_media_playing">ప్లే అవుతోంది</string>
+    <string name="home_media_paused">పాజ్ చేయబడింది</string>
 </resources>

@@ -259,4 +259,6 @@
     <string name="downloads_quick_access_title">Nýleg niðurhal</string>
     <string name="home_onboarding_sites_label">Prófaðu Firedown á</string>
     <string name="home_vault_button">Örugg mappa</string>
+    <string name="home_media_playing">Spilar</string>
+    <string name="home_media_paused">Í bið</string>
 </resources>

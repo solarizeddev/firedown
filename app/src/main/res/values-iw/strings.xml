@@ -290,4 +290,6 @@
     <string name="downloads_quick_access_title">הורדות אחרונות</string>
     <string name="home_onboarding_sites_label">נסה את Firedown ב</string>
     <string name="home_vault_button">תיקייה בטוחה</string>
+    <string name="home_media_playing">מתנגן</string>
+    <string name="home_media_paused">מושהה</string>
 </resources>

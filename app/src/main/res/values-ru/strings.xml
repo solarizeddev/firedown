@@ -342,4 +342,6 @@
     <string name="downloads_quick_access_title">Недавние загрузки</string>
     <string name="home_onboarding_sites_label">Попробуйте Firedown на</string>
     <string name="home_vault_button">Безопасная папка</string>
+    <string name="home_media_playing">Воспроизведение</string>
+    <string name="home_media_paused">На паузе</string>
 </resources>

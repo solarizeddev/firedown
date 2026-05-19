@@ -269,4 +269,6 @@
     <string name="downloads_quick_access_title">Недавна преузимања</string>
     <string name="home_onboarding_sites_label">Испробајте Firedown на</string>
     <string name="home_vault_button">Безбедан фолдер</string>
+    <string name="home_media_playing">Репродукција</string>
+    <string name="home_media_paused">Паузирано</string>
 </resources>

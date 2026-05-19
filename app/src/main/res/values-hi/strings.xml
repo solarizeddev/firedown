@@ -238,4 +238,6 @@
     <string name="downloads_quick_access_title">हाल के डाउनलोड</string>
     <string name="home_onboarding_sites_label">Firedown आज़माएं</string>
     <string name="home_vault_button">सुरक्षित फ़ोल्डर</string>
+    <string name="home_media_playing">चल रहा है</string>
+    <string name="home_media_paused">रोका गया</string>
 </resources>

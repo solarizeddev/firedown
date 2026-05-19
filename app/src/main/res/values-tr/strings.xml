@@ -343,4 +343,6 @@
     <string name="downloads_quick_access_title">Son indirilenler</string>
     <string name="home_onboarding_sites_label">Firedown\'u şurada deneyin</string>
     <string name="home_vault_button">Güvenli klasör</string>
+    <string name="home_media_playing">Oynatılıyor</string>
+    <string name="home_media_paused">Duraklatıldı</string>
 </resources>

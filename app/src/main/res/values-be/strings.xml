@@ -260,4 +260,6 @@
     <string name="downloads_quick_access_title">Нядаўнія загрузкі</string>
     <string name="home_onboarding_sites_label">Паспрабуйце Firedown на</string>
     <string name="home_vault_button">Бяспечная тэчка</string>
+    <string name="home_media_playing">Прайграецца</string>
+    <string name="home_media_paused">Паўза</string>
 </resources>

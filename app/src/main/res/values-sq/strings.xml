@@ -261,4 +261,6 @@
     <string name="downloads_quick_access_title">Shkarkimet e fundit</string>
     <string name="home_onboarding_sites_label">Provo Firedown në</string>
     <string name="home_vault_button">Dosja e sigurt</string>
+    <string name="home_media_playing">Po luan</string>
+    <string name="home_media_paused">Në pauzë</string>
 </resources>

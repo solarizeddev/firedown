@@ -280,4 +280,6 @@
     <string name="downloads_quick_access_title">Скорошни изтегляния</string>
     <string name="home_onboarding_sites_label">Опитайте Firedown с</string>
     <string name="home_vault_button">Защитена папка</string>
+    <string name="home_media_playing">Възпроизвежда се</string>
+    <string name="home_media_paused">На пауза</string>
 </resources>

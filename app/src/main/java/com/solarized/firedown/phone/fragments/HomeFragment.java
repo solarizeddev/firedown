@@ -93,6 +93,11 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     private TextView mHomeVaultTitle;
     private TextView mHomeVaultSubtitle;
     private TextView mRecentDownloadsSubtitle;
+    private View mHomeMediaStrip;
+    private androidx.appcompat.widget.AppCompatImageView mHomeMediaIcon;
+    private TextView mHomeMediaLabel;
+    private TextView mHomeMediaTitle;
+    private TextView mHomeMediaSubtitle;
     private SharedPreferences.OnSharedPreferenceChangeListener mHomePrefsListener;
     @Nullable private java.util.List<DownloadEntity> mLastActiveList;
     @Nullable private Integer mLastFinishedCount;
@@ -152,6 +157,19 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mActiveStripRows = v.findViewById(R.id.active_download_rows);
         mActiveStrip.setOnClickListener(view ->
                 mStartForResult.launch(new Intent(mActivity, DownloadsActivity.class)));
+
+        mHomeMediaStrip = v.findViewById(R.id.home_media_strip);
+        mHomeMediaIcon = v.findViewById(R.id.home_media_icon);
+        mHomeMediaLabel = v.findViewById(R.id.home_media_label);
+        mHomeMediaTitle = v.findViewById(R.id.home_media_title);
+        mHomeMediaSubtitle = v.findViewById(R.id.home_media_subtitle);
+        // Tap → switch to the playing tab. Same flow IntentHandler.handleMainMedia
+        // uses for the foreground media notification: look up the session,
+        // promote it, fire OPEN_SESSION, navigate to browser.
+        mHomeMediaStrip.setOnClickListener(view -> {
+            int sessionId = mGeckoMediaController.getCurrentSessionId();
+            if (sessionId != 0) openSessionId(sessionId);
+        });
 
 
         mHomeScroll = v.findViewById(R.id.home_scroll);
@@ -275,6 +293,17 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
                 mHomeVaultSubtitle.setVisibility(View.GONE);
             }
         });
+
+        // Background-media strip — visible iff GeckoMediaController has a
+        // current session (something is playing or recently paused).
+        // currentSessionId == 0 means no media surface; hide the strip.
+        // isPlaying drives the PLAYING / PAUSED label so the user can
+        // tell at a glance whether tapping the card resumes or just
+        // switches.
+        mGeckoMediaController.getCurrentSessionIdLiveData().observe(getViewLifecycleOwner(),
+                sessionId -> bindMediaStrip());
+        mGeckoMediaController.getIsPlayingLiveData().observe(getViewLifecycleOwner(),
+                playing -> bindMediaStrip());
 
         mHomePrefsListener = (sharedPreferences, key) -> {
             if (Preferences.SETTINGS_HOME_SHOW_RECENT_DOWNLOADS.equals(key)) {
@@ -433,6 +462,11 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mHomeVaultTitle = null;
         mHomeVaultSubtitle = null;
         mRecentDownloadsSubtitle = null;
+        mHomeMediaStrip = null;
+        mHomeMediaIcon = null;
+        mHomeMediaLabel = null;
+        mHomeMediaTitle = null;
+        mHomeMediaSubtitle = null;
     }
 
     /**
@@ -565,6 +599,75 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
             int pct = item.getFileProgress();
             bar.setProgress(pct);
             percent.setText(String.format(java.util.Locale.US, "%d%%", pct));
+        }
+    }
+
+    /**
+     * Binds the home media strip from the {@link GeckoMediaController}'s
+     * current session. Re-runs on every emission from either
+     * currentSessionId or isPlaying — both observers route here so the
+     * label flips reactively between PLAYING and PAUSED as the user
+     * pauses / resumes from the notification.
+     *
+     * <p>Strip visibility: shown iff there's a current session AND we
+     * have metadata for it. Hidden otherwise (no media on screen → no
+     * card on home).</p>
+     *
+     * <p>Image source priority: GeckoMetaData.bitmap (album art) →
+     * iconBitmap (favicon bitmap) → Glide load of favicon URL. Title
+     * priority: metadata title → metadata album → metadata URL
+     * (domain). Subtitle is artist when present, otherwise the domain
+     * — never both, to avoid 'YouTube · youtube.com' duplication.</p>
+     */
+    private void bindMediaStrip() {
+        if (mHomeMediaStrip == null) return;
+        int sessionId = mGeckoMediaController.getCurrentSessionId();
+        if (sessionId == 0) {
+            mHomeMediaStrip.setVisibility(View.GONE);
+            return;
+        }
+        com.solarized.firedown.geckoview.media.GeckoMetaData meta =
+                mGeckoMediaController.getGeckoMetaData();
+        if (meta == null) {
+            mHomeMediaStrip.setVisibility(View.GONE);
+            return;
+        }
+        mHomeMediaStrip.setVisibility(View.VISIBLE);
+
+        Boolean playingValue = mGeckoMediaController.getIsPlayingLiveData().getValue();
+        boolean playing = playingValue != null && playingValue;
+        mHomeMediaLabel.setText(playing ? R.string.home_media_playing : R.string.home_media_paused);
+
+        String title = meta.getTitle();
+        if (title == null || title.isEmpty()) title = meta.getAlbum();
+        if (title == null || title.isEmpty()) title = meta.getUrl();
+        mHomeMediaTitle.setText(title);
+
+        String subtitle = meta.getArtist();
+        if (subtitle == null || subtitle.isEmpty()) {
+            // Skip the URL if it's identical to the title (already shown).
+            String urlPart = meta.getUrl();
+            subtitle = (urlPart != null && !urlPart.equals(title)) ? urlPart : null;
+        }
+        if (subtitle != null && !subtitle.isEmpty()) {
+            mHomeMediaSubtitle.setVisibility(View.VISIBLE);
+            mHomeMediaSubtitle.setText(subtitle);
+        } else {
+            mHomeMediaSubtitle.setVisibility(View.GONE);
+        }
+
+        // Image: prefer the bitmap (album art) Gecko already resolved
+        // for the notification; fall back to the favicon URL via Glide
+        // when the page hasn't supplied artwork.
+        android.graphics.Bitmap art = meta.getBitmap();
+        if (art == null) art = meta.getIconBitmap();
+        if (art != null) {
+            mHomeMediaIcon.setImageBitmap(art);
+        } else if (meta.getIcon() != null && !meta.getIcon().isEmpty()) {
+            com.solarized.firedown.GlideHelper.load(meta.getIcon(), meta.getUrl(),
+                    mHomeMediaIcon, new com.bumptech.glide.request.RequestOptions());
+        } else {
+            mHomeMediaIcon.setImageDrawable(null);
         }
     }
 

@@ -325,4 +325,6 @@
     <string name="downloads_quick_access_title">Download recenti</string>
     <string name="home_onboarding_sites_label">Prova Firedown su</string>
     <string name="home_vault_button">Cartella di sicurezza</string>
+    <string name="home_media_playing">In riproduzione</string>
+    <string name="home_media_paused">In pausa</string>
 </resources>

@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Background-media strip on the home page. Renders when a tab is
+  playing (or paused) audio / video. Wired in HomeFragment by
+  observing GeckoMediaController's currentSessionId / isPlaying
+  LiveDatas. Tap → switches to the playing tab via the same
+  session-id flow IntentHandler.handleMainMedia() uses for the
+  media notification.
+
+  secondaryContainer tint distinguishes 'media playing' from the
+  primaryContainer 'downloading' strip above — different live
+  state, different colour. Whole card is clickable; ripple
+  sweeps the entire surface.
+-->
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/home_media_strip"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:clickable="true"
+    android:focusable="true"
+    android:visibility="gone"
+    app:cardBackgroundColor="?attr/colorSecondaryContainer"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="0dp"
+    app:strokeWidth="0dp"
+    tools:visibility="visible">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="14dp">
+
+        <!--
+            Favicon / album art tile. Rounded square matches the
+            Pinned-bookmarks favicon tile shape that we used earlier
+            in this branch — visual consistency for 'a site shown on
+            home'. Background tonal tile unifies favicon shapes the
+            same way the bookmark list does.
+        -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            app:cardBackgroundColor="?attr/colorSurfaceContainerHighest"
+            app:cardCornerRadius="10dp"
+            app:cardElevation="0dp"
+            app:strokeWidth="0dp">
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/home_media_icon"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:layout_gravity="center"
+                android:contentDescription="@null"
+                android:scaleType="fitCenter" />
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="14dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <!--
+                Section header — small uppercase label so the card
+                self-identifies even before the title binds.
+            -->
+            <TextView
+                android:id="@+id/home_media_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:letterSpacing="0.08"
+                android:text="@string/home_media_playing"
+                android:textAllCaps="true"
+                android:textAppearance="?attr/textAppearanceLabelSmall"
+                android:textColor="?attr/colorOnSecondaryContainer"
+                tools:text="PLAYING" />
+
+            <TextView
+                android:id="@+id/home_media_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textAppearance="?attr/textAppearanceTitleSmall"
+                android:textColor="?attr/colorOnSecondaryContainer"
+                tools:text="Bossa Lofi Radio · Chill Vibes" />
+
+            <TextView
+                android:id="@+id/home_media_subtitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textAppearance="?attr/textAppearanceBodySmall"
+                android:textColor="?attr/colorOnSecondaryContainer"
+                android:visibility="gone"
+                tools:text="youtube.com"
+                tools:visibility="visible" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

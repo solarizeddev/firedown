@@ -270,4 +270,6 @@
     <string name="downloads_quick_access_title">دانلودهای اخیر</string>
     <string name="home_onboarding_sites_label">Firedown را امتحان کنید در</string>
     <string name="home_vault_button">پوشه ایمن</string>
+    <string name="home_media_playing">در حال پخش</string>
+    <string name="home_media_paused">متوقف شد</string>
 </resources>

@@ -262,4 +262,6 @@
     <string name="downloads_quick_access_title">Unduhan terkini</string>
     <string name="home_onboarding_sites_label">Coba Firedown di</string>
     <string name="home_vault_button">Folder Aman</string>
+    <string name="home_media_playing">Memutar</string>
+    <string name="home_media_paused">Dijeda</string>
 </resources>

@@ -269,4 +269,6 @@
     <string name="downloads_quick_access_title">Hiljutised allalaadimised</string>
     <string name="home_onboarding_sites_label">Proovi Firedowni saidil</string>
     <string name="home_vault_button">Turvaline kaust</string>
+    <string name="home_media_playing">Esitamine</string>
+    <string name="home_media_paused">Peatatud</string>
 </resources>

@@ -261,4 +261,6 @@
     <string name="downloads_quick_access_title">Naujausi atsisiuntimai</string>
     <string name="home_onboarding_sites_label">Išbandykite Firedown</string>
     <string name="home_vault_button">Saugus aplankas</string>
+    <string name="home_media_playing">Grojama</string>
+    <string name="home_media_paused">Pristabdyta</string>
 </resources>

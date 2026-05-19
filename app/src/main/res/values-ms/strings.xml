@@ -221,4 +221,6 @@
     <string name="downloads_quick_access_title">Muat turun terkini</string>
     <string name="home_onboarding_sites_label">Cuba Firedown di</string>
     <string name="home_vault_button">Folder selamat</string>
+    <string name="home_media_playing">Memainkan</string>
+    <string name="home_media_paused">Dijeda</string>
 </resources>

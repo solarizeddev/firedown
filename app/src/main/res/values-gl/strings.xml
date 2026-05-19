@@ -262,4 +262,6 @@
     <string name="downloads_quick_access_title">Descargas recentes</string>
     <string name="home_onboarding_sites_label">Proba Firedown en</string>
     <string name="home_vault_button">Cartafol seguro</string>
+    <string name="home_media_playing">Reproducindo</string>
+    <string name="home_media_paused">En pausa</string>
 </resources>

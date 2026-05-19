@@ -207,4 +207,6 @@
     <string name="downloads_quick_access_title">Վերջին ներբեռնումներ</string>
     <string name="home_onboarding_sites_label">Փորձեք Firedown-ը</string>
     <string name="home_vault_button">Ապահով պանակ</string>
+    <string name="home_media_playing">Նվագարկվում է</string>
+    <string name="home_media_paused">Դադարեցված է</string>
 </resources>

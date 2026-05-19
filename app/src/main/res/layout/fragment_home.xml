@@ -60,6 +60,16 @@
 
 
             <include
+                android:id="@+id/home_media_strip"
+                layout="@layout/view_home_media_strip"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/list_spacing"
+                android:layout_marginEnd="@dimen/list_spacing"
+                android:layout_marginTop="12dp" />
+
+
+            <include
                 android:id="@+id/recent_downloads_card"
                 layout="@layout/card_home_recent_downloads"
                 android:layout_width="match_parent"

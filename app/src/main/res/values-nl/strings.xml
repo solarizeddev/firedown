@@ -344,4 +344,6 @@
     <string name="downloads_quick_access_title">Recente downloads</string>
     <string name="home_onboarding_sites_label">Probeer Firedown op</string>
     <string name="home_vault_button">Beveiligde map</string>
+    <string name="home_media_playing">Wordt afgespeeld</string>
+    <string name="home_media_paused">Gepauzeerd</string>
 </resources>

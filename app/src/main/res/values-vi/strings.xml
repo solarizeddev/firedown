@@ -277,4 +277,6 @@
     <string name="downloads_quick_access_title">Tải xuống gần đây</string>
     <string name="home_onboarding_sites_label">Thử Firedown trên</string>
     <string name="home_vault_button">Thư mục an toàn</string>
+    <string name="home_media_playing">Đang phát</string>
+    <string name="home_media_paused">Đã tạm dừng</string>
 </resources>

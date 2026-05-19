@@ -283,4 +283,6 @@
     <string name="downloads_quick_access_title">Останні завантаження</string>
     <string name="home_onboarding_sites_label">Спробуйте Firedown на</string>
     <string name="home_vault_button">Захищена папка</string>
+    <string name="home_media_playing">Відтворення</string>
+    <string name="home_media_paused">Призупинено</string>
 </resources>

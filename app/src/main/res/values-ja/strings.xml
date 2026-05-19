@@ -481,4 +481,6 @@
     <string name="downloads_quick_access_title">最近のダウンロード</string>
     <string name="home_onboarding_sites_label">Firedown を試す</string>
     <string name="home_vault_button">セーフフォルダ</string>
+    <string name="home_media_playing">再生中</string>
+    <string name="home_media_paused">一時停止中</string>
 </resources>

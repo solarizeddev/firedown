@@ -262,4 +262,6 @@
     <string name="downloads_quick_access_title">ბოლო ჩამოტვირთვები</string>
     <string name="home_onboarding_sites_label">სცადეთ Firedown-ი</string>
     <string name="home_vault_button">დაცული საქაღალდე</string>
+    <string name="home_media_playing">უკრავს</string>
+    <string name="home_media_paused">შეჩერებულია</string>
 </resources>

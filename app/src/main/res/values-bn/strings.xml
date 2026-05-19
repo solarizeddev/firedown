@@ -248,4 +248,6 @@
     <string name="downloads_quick_access_title">সাম্প্রতিক ডাউনলোড</string>
     <string name="home_onboarding_sites_label">Firedown ব্যবহার করুন</string>
     <string name="home_vault_button">নিরাপদ ফোল্ডার</string>
+    <string name="home_media_playing">চলছে</string>
+    <string name="home_media_paused">বিরতি</string>
 </resources>

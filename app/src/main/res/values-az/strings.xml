@@ -238,4 +238,6 @@
     <string name="downloads_quick_access_title">Son endirilənlər</string>
     <string name="home_onboarding_sites_label">Firedown-u sınayın</string>
     <string name="home_vault_button">Təhlükəsiz Qovluq</string>
+    <string name="home_media_playing">Oxudulur</string>
+    <string name="home_media_paused">Dayandırıldı</string>
 </resources>

@@ -234,4 +234,6 @@
     <string name="downloads_quick_access_title">Nylige nedlastinger</string>
     <string name="home_onboarding_sites_label">Prøv Firedown på</string>
     <string name="home_vault_button">Sikker mappe</string>
+    <string name="home_media_playing">Spiller av</string>
+    <string name="home_media_paused">Satt på pause</string>
 </resources>

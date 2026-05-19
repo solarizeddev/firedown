@@ -254,4 +254,6 @@
     <string name="downloads_quick_access_title">ການດາວໂຫຼດຫຼ້າສຸດ</string>
     <string name="home_onboarding_sites_label">ລອງ Firedown ໃນ</string>
     <string name="home_vault_button">ໂຟນເດີປອດໄພ</string>
+    <string name="home_media_playing">ກຳລັງຫຼິ້ນ</string>
+    <string name="home_media_paused">ຢຸດຊົ່ວຄາວ</string>
 </resources>

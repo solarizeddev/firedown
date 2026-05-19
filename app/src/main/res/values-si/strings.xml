@@ -253,4 +253,6 @@
     <string name="downloads_quick_access_title">මෑත බාගත කිරීම්</string>
     <string name="home_onboarding_sites_label">Firedown උත්සාහ කරන්න</string>
     <string name="home_vault_button">ආරක්ෂිත ෆෝල්ඩරය</string>
+    <string name="home_media_playing">වාදනය වෙමින්</string>
+    <string name="home_media_paused">විරාම කර ඇත</string>
 </resources>

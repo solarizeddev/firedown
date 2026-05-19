@@ -131,6 +131,12 @@
          short so it fits next to the section title on narrow phones
          even in longer Romance / Slavic locales. -->
     <string name="downloads_quick_access_empty">Recent downloads will appear here</string>
+    <!-- Section header on the home media strip — shown while a tab
+         is actively producing audio / video. Pairs with
+         home_media_paused for the paused-but-spotlit state so the
+         user can resume from the card. -->
+    <string name="home_media_playing">Playing</string>
+    <string name="home_media_paused">Paused</string>
     <!-- Subtitle on the home Downloads card. Combines the file-count
          plural with a readable byte size — '150 files saved · 2.4 GB'.
          %1$s is the plural (home_downloads_file_count), %2$s is the

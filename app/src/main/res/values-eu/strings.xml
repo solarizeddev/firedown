@@ -263,4 +263,6 @@
     <string name="downloads_quick_access_title">Azken deskargak</string>
     <string name="home_onboarding_sites_label">Probatu Firedown hemen</string>
     <string name="home_vault_button">Karpeta segurua</string>
+    <string name="home_media_playing">Erreproduzitzen</string>
+    <string name="home_media_paused">Pausatuta</string>
 </resources>

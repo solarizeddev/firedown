@@ -277,4 +277,6 @@
     <string name="downloads_quick_access_title">Baixades recents</string>
     <string name="home_onboarding_sites_label">Prova Firedown a</string>
     <string name="home_vault_button">Carpeta segura</string>
+    <string name="home_media_playing">S\'està reproduint</string>
+    <string name="home_media_paused">En pausa</string>
 </resources>

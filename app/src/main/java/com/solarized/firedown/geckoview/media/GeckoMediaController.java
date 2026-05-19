@@ -66,6 +66,15 @@ public class GeckoMediaController {
 
     private final MutableLiveData<Set<Integer>> mActiveSessionIds = new MutableLiveData<>(Collections.emptySet());
 
+    // Observables for the *single* current session id + its play state.
+    // The home media strip observes these to decide what to render (and
+    // whether to render at all). Distinct from mActiveSessionIds (the
+    // set used by the tabs grid's audio indicator) because the strip
+    // cares about exactly one session — the one whose metadata feeds
+    // the foreground notification.
+    private final MutableLiveData<Integer> mCurrentSessionIdLive = new MutableLiveData<>(0);
+    private final MutableLiveData<Boolean> mIsPlayingLive = new MutableLiveData<>(false);
+
     @Inject
     public GeckoMediaController(@ApplicationContext Context context) {
         this.mContext = context;
@@ -90,8 +99,37 @@ public class GeckoMediaController {
         return value != null ? value : Collections.emptySet();
     }
 
+    /**
+     * Current playing/paused session id. 0 means no media surface is
+     * up — observers should hide their card / strip.
+     */
+    public LiveData<Integer> getCurrentSessionIdLiveData() {
+        return mCurrentSessionIdLive;
+    }
+
+    /**
+     * True iff the current session is actively playing (vs paused /
+     * stopped but still 'spotlit' so the notification controls work
+     * for a quick resume).
+     */
+    public LiveData<Boolean> getIsPlayingLiveData() {
+        return mIsPlayingLive;
+    }
+
     private void notifyMediaSessionsChanged() {
         mActiveSessionIds.postValue(Collections.unmodifiableSet(new HashSet<>(mSessionMap.keySet())));
+    }
+
+    /**
+     * Re-publish the single-session observables. Called from every
+     * mutation point that touches mCurrentSessionId or
+     * mPlayingSessionIds so a Fragment observer sees state changes
+     * the moment they happen.
+     */
+    private void notifyCurrentSessionChanged() {
+        int current = mCurrentSessionId;
+        mCurrentSessionIdLive.postValue(current);
+        mIsPlayingLive.postValue(current != 0 && mPlayingSessionIds.contains(current));
     }
 
 
@@ -110,6 +148,7 @@ public class GeckoMediaController {
         mPositionState = null;
         stopService();
         notifyMediaSessionsChanged();
+        notifyCurrentSessionChanged();
     }
 
     /**
@@ -146,6 +185,7 @@ public class GeckoMediaController {
         if (hadSession) {
             notifyMediaSessionsChanged();
         }
+        notifyCurrentSessionChanged();
     }
 
     /**
@@ -174,6 +214,7 @@ public class GeckoMediaController {
         if (hadSession) {
             notifyMediaSessionsChanged();
         }
+        notifyCurrentSessionChanged();
     }
 
     // ── GeckoView MediaSession callbacks ──────────────────────────────────────────────────────────
@@ -218,6 +259,7 @@ public class GeckoMediaController {
         if (isNew) {
             notifyMediaSessionsChanged();
         }
+        notifyCurrentSessionChanged();
     }
 
     /**
@@ -233,6 +275,7 @@ public class GeckoMediaController {
         if (isNew) {
             notifyMediaSessionsChanged();
         }
+        notifyCurrentSessionChanged();
     }
 
     /**
@@ -252,6 +295,7 @@ public class GeckoMediaController {
         if (isNew) {
             notifyMediaSessionsChanged();
         }
+        notifyCurrentSessionChanged();
     }
 
     private int pickPlayingFallback() {
@@ -279,6 +323,7 @@ public class GeckoMediaController {
         if (hadSession) {
             notifyMediaSessionsChanged();
         }
+        notifyCurrentSessionChanged();
     }
 
     /**
@@ -301,6 +346,7 @@ public class GeckoMediaController {
         if (mCurrentSessionId == 0 || mCurrentSessionId == sessionId) {
             mCurrentSessionId = sessionId;
         }
+        notifyCurrentSessionChanged();
     }
 
     // ── Playback control ──────────────────────────────────────────────────────────────────────────

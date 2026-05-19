@@ -21,4 +21,6 @@
 <string name="switch_to_tab_description">ट्याबमा स्विच गर्नुहोस्</string>
     <string name="downloads_quick_access_title">हालैका डाउनलोडहरू</string>
     <string name="home_onboarding_sites_label">Firedown प्रयास गर्नुहोस्</string>
+    <string name="home_media_playing">बजाइरहेको छ</string>
+    <string name="home_media_paused">रोकिएको</string>
 </resources>

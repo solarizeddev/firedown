@@ -284,4 +284,6 @@
     <string name="downloads_quick_access_title">最近下載</string>
     <string name="home_onboarding_sites_label">在以下網站試用 Firedown</string>
     <string name="home_vault_button">安全資料夾</string>
+    <string name="home_media_playing">播放中</string>
+    <string name="home_media_paused">已暫停</string>
 </resources>

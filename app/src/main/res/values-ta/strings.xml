@@ -243,4 +243,6 @@
     <string name="downloads_quick_access_title">சமீபத்திய பதிவிறக்கங்கள்</string>
     <string name="home_onboarding_sites_label">Firedown ஐ முயற்சிக்கவும்</string>
     <string name="home_vault_button">பாதுகாப்பான ஃபோல்டர்</string>
+    <string name="home_media_playing">இயக்கப்படுகிறது</string>
+    <string name="home_media_paused">இடைநிறுத்தப்பட்டது</string>
 </resources>

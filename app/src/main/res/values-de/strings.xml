@@ -482,4 +482,6 @@
     <string name="downloads_quick_access_title">Letzte Downloads</string>
     <string name="home_onboarding_sites_label">Firedown ausprobieren auf</string>
     <string name="home_vault_button">Sicherer Ordner</string>
+    <string name="home_media_playing">Wiedergabe</string>
+    <string name="home_media_paused">Pausiert</string>
 </resources>

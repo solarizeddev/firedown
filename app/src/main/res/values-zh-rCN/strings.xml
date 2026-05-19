@@ -481,4 +481,6 @@
     <string name="downloads_quick_access_title">最近下载</string>
     <string name="home_onboarding_sites_label">在以下网站试用 Firedown</string>
     <string name="home_vault_button">安全文件夹</string>
+    <string name="home_media_playing">正在播放</string>
+    <string name="home_media_paused">已暂停</string>
 </resources>
