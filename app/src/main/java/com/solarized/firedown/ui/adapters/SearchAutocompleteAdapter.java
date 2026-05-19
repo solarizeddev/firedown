@@ -190,7 +190,13 @@ public class SearchAutocompleteAdapter extends ListAdapter<AutoCompleteEntity, R
 
     private void applyIncognitoColors(RecyclerView.ViewHolder holder) {
         Context context = holder.itemView.getContext();
-        int cardBg = IncognitoColors.getSurfaceContainerHigh(context, true);
+        // Match the XML layouts (?attr/colorSurfaceContainerHighest) and the
+        // toolbar's focused state (GeckoToolbar's animColorTo) — those both
+        // resolve to the 'highest' tone in the regular theme, so incognito
+        // should land on the incognito-highest tone too. Was 'high' here,
+        // which made the autocomplete card sit one step darker than the
+        // focused pill above it in incognito.
+        int cardBg = IncognitoColors.getSurfaceContainerHighest(context, true);
         int onSurface = IncognitoColors.getOnSurface(context, true);
         int onSurfaceVariant = IncognitoColors.getOnSurfaceVariant(context, true);
         ColorStateList variantTint = ColorStateList.valueOf(onSurfaceVariant);
