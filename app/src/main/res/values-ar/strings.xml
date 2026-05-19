@@ -308,4 +308,5 @@
     <string name="home_vault_button">مجلد آمن</string>
     <string name="home_media_playing">قيد التشغيل</string>
     <string name="home_media_paused">متوقف مؤقتًا</string>
+    <string name="settings_webrtc_enabled_summary">يتيح مكالمات الفيديو والصوت في الوقت الفعلي. التعطيل يقلل مساحة استكشاف الشبكة.</string>
 </resources>

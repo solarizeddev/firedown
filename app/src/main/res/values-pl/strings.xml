@@ -341,4 +341,5 @@
     <string name="home_vault_button">Bezpieczny folder</string>
     <string name="home_media_playing">Odtwarzanie</string>
     <string name="home_media_paused">Wstrzymano</string>
+    <string name="settings_webrtc_enabled_summary">Umożliwia połączenia wideo i głosowe w czasie rzeczywistym. Wyłączenie zmniejsza powierzchnię sondowania sieci.</string>
 </resources>

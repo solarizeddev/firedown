@@ -288,4 +288,5 @@
     <string name="home_vault_button">Pasta segura</string>
     <string name="home_media_playing">A reproduzir</string>
     <string name="home_media_paused">Em pausa</string>
+    <string name="settings_webrtc_enabled_summary">Permite chamadas de vídeo e voz em tempo real. Desativar reduz a superfície de sondagem de rede.</string>
 </resources>

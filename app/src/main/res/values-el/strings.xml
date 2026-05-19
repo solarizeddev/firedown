@@ -279,4 +279,5 @@
     <string name="home_vault_button">Ασφαλής φάκελος</string>
     <string name="home_media_playing">Αναπαραγωγή</string>
     <string name="home_media_paused">Σε παύση</string>
+    <string name="settings_webrtc_enabled_summary">Επιτρέπει βιντεοκλήσεις και φωνητικές κλήσεις σε πραγματικό χρόνο. Η απενεργοποίηση μειώνει την επιφάνεια σάρωσης δικτύου.</string>
 </resources>

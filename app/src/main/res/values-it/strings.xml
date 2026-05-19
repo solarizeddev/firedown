@@ -327,4 +327,5 @@
     <string name="home_vault_button">Cartella di sicurezza</string>
     <string name="home_media_playing">In riproduzione</string>
     <string name="home_media_paused">In pausa</string>
+    <string name="settings_webrtc_enabled_summary">Consente videochiamate e chiamate vocali in tempo reale. Disattivarlo riduce la superficie di sondaggio di rete.</string>
 </resources>

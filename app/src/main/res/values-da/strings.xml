@@ -292,4 +292,5 @@
     <string name="home_vault_button">Sikker mappe</string>
     <string name="home_media_playing">Afspiller</string>
     <string name="home_media_paused">Sat på pause</string>
+    <string name="settings_webrtc_enabled_summary">Tillader video- og taleopkald i realtid. Deaktivering reducerer netværkssonderingsfladen.</string>
 </resources>

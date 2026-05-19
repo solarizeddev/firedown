@@ -417,7 +417,7 @@
     <string name="settings_drm_enabled">DRM-Wiedergabe aktivieren</string>
     <string name="settings_drm_enabled_summary">Erlaubt Widevine auf Seiten, die DRM benötigen (Netflix, Spotify, …). Firedown kann DRM-geschützte Inhalte trotzdem nicht herunterladen.</string>
     <string name="settings_webrtc_enabled">WebRTC aktivieren</string>
-    <string name="settings_webrtc_enabled_summary">Ermöglicht Echtzeit-Video- und Sprachanrufe. Kann deine echte IP über STUN preisgeben, selbst hinter einem VPN.</string>
+    <string name="settings_webrtc_enabled_summary">Ermöglicht Echtzeit-Video- und Sprachanrufe. Deaktivieren verringert die Netzwerk-Probing-Angriffsfläche.</string>
     <string name="settings_webassembly_enabled">WebAssembly aktivieren</string>
     <string name="settings_webassembly_enabled_summary">Erlaubt Webseiten das Ausführen kompilierter WASM-Module. Deaktivieren verringert die Angriffsfläche, kann aber moderne Web-Apps beeinträchtigen</string>
     <string name="settings_https_only_title">Nur-HTTPS-Modus</string>

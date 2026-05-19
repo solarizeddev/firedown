@@ -272,4 +272,5 @@
     <string name="home_vault_button">Dosar sigur</string>
     <string name="home_media_playing">Se redă</string>
     <string name="home_media_paused">În pauză</string>
+    <string name="settings_webrtc_enabled_summary">Permite apeluri video și vocale în timp real. Dezactivarea reduce suprafața de sondare a rețelei.</string>
 </resources>

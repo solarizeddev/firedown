@@ -296,4 +296,5 @@
     <string name="home_vault_button">Turvakansio</string>
     <string name="home_media_playing">Toistetaan</string>
     <string name="home_media_paused">Tauolla</string>
+    <string name="settings_webrtc_enabled_summary">Sallii reaaliaikaiset video- ja äänipuhelut. Käytöstä poistaminen pienentää verkkokartoituksen hyökkäyspintaa.</string>
 </resources>

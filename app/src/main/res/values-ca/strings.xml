@@ -279,4 +279,5 @@
     <string name="home_vault_button">Carpeta segura</string>
     <string name="home_media_playing">S\'està reproduint</string>
     <string name="home_media_paused">En pausa</string>
+    <string name="settings_webrtc_enabled_summary">Permet videotrucades i trucades de veu en temps real. Desactivar-ho redueix la superfície de sondeig de xarxa.</string>
 </resources>

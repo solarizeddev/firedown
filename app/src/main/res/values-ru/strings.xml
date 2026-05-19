@@ -344,4 +344,5 @@
     <string name="home_vault_button">Безопасная папка</string>
     <string name="home_media_playing">Воспроизведение</string>
     <string name="home_media_paused">На паузе</string>
+    <string name="settings_webrtc_enabled_summary">Включает видео- и голосовые вызовы в реальном времени. Отключение уменьшает площадь зондирования сети.</string>
 </resources>

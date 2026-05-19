@@ -56,4 +56,5 @@
     <string name="home_onboarding_sites_label">Prova Firedown på</string>
     <string name="home_media_playing">Spelar upp</string>
     <string name="home_media_paused">Pausad</string>
+    <string name="settings_webrtc_enabled_summary">Tillåter video- och röstsamtal i realtid. Inaktivering minskar nätverkssonderingsytan.</string>
 </resources>

@@ -285,4 +285,5 @@
     <string name="home_vault_button">Захищена папка</string>
     <string name="home_media_playing">Відтворення</string>
     <string name="home_media_paused">Призупинено</string>
+    <string name="settings_webrtc_enabled_summary">Дозволяє відео- та голосові виклики в реальному часі. Вимкнення зменшує поверхню сканування мережі.</string>
 </resources>

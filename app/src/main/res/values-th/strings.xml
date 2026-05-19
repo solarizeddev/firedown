@@ -276,4 +276,5 @@
     <string name="home_vault_button">โฟลเดอร์ที่ปลอดภัย</string>
     <string name="home_media_playing">กำลังเล่น</string>
     <string name="home_media_paused">หยุดชั่วคราว</string>
+    <string name="settings_webrtc_enabled_summary">อนุญาตการโทรวิดีโอและเสียงแบบเรียลไทม์ การปิดใช้งานจะลดพื้นผิวการสำรวจเครือข่าย</string>
 </resources>

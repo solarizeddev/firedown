@@ -264,4 +264,5 @@
     <string name="home_vault_button">Folder Aman</string>
     <string name="home_media_playing">Memutar</string>
     <string name="home_media_paused">Dijeda</string>
+    <string name="settings_webrtc_enabled_summary">Mengizinkan panggilan video dan suara realtime. Menonaktifkan mengurangi permukaan penyelidikan jaringan.</string>
 </resources>

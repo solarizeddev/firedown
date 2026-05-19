@@ -298,4 +298,5 @@
     <string name="home_vault_button">Bezpečná složka</string>
     <string name="home_media_playing">Přehrává se</string>
     <string name="home_media_paused">Pozastaveno</string>
+    <string name="settings_webrtc_enabled_summary">Umožňuje videohovory a hlasové hovory v reálném čase. Vypnutí zmenšuje plochu pro síťové sondování.</string>
 </resources>

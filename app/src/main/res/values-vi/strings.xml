@@ -279,4 +279,5 @@
     <string name="home_vault_button">Thư mục an toàn</string>
     <string name="home_media_playing">Đang phát</string>
     <string name="home_media_paused">Đã tạm dừng</string>
+    <string name="settings_webrtc_enabled_summary">Cho phép gọi video và thoại theo thời gian thực. Tắt sẽ giảm bề mặt thăm dò mạng.</string>
 </resources>

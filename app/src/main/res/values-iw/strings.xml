@@ -292,4 +292,5 @@
     <string name="home_vault_button">תיקייה בטוחה</string>
     <string name="home_media_playing">מתנגן</string>
     <string name="home_media_paused">מושהה</string>
+    <string name="settings_webrtc_enabled_summary">מאפשר שיחות וידאו וקול בזמן אמת. השבתה מקטינה את שטח הבדיקה של הרשת.</string>
 </resources>

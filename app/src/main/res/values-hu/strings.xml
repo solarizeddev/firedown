@@ -279,4 +279,5 @@
     <string name="home_vault_button">Biztonságos mappa</string>
     <string name="home_media_playing">Lejátszás</string>
     <string name="home_media_paused">Szüneteltetve</string>
+    <string name="settings_webrtc_enabled_summary">Engedélyezi a valós idejű video- és hanghívásokat. Kikapcsolása csökkenti a hálózati szondázási felületet.</string>
 </resources>

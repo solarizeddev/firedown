@@ -345,4 +345,5 @@
     <string name="home_vault_button">Güvenli klasör</string>
     <string name="home_media_playing">Oynatılıyor</string>
     <string name="home_media_paused">Duraklatıldı</string>
+    <string name="settings_webrtc_enabled_summary">Gerçek zamanlı görüntülü ve sesli aramaları etkinleştirir. Devre dışı bırakmak ağ tarama yüzeyini azaltır.</string>
 </resources>

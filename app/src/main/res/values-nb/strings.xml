@@ -236,4 +236,5 @@
     <string name="home_vault_button">Sikker mappe</string>
     <string name="home_media_playing">Spiller av</string>
     <string name="home_media_paused">Satt på pause</string>
+    <string name="settings_webrtc_enabled_summary">Tillater video- og taleanrop i sanntid. Å slå av reduserer nettverkssonderingsflaten.</string>
 </resources>
