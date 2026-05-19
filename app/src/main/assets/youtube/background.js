@@ -2674,34 +2674,41 @@ async function generatePoToken(visitorData, videoId) {
     // Tier 2: try to mint via BotGuard tab, with retries.
     //
     // Repro from the field (PR #179 logs): the BotGuard tab survives long
-    // enough to signal ready and start the mint, but a 'yt-dlp-wins'
-    // canary navigation generates 'webProgress is undefined' errors in
-    // GeckoView's WebExtension tab-state plumbing and that cascade
-    // destroys our healthy tab mid-mint, ~400-500ms after the request
-    // was sent. The mint rejects with 'PO token tab died during mint'.
+    // enough to signal ready and start the mint, but a GeckoView session-
+    // store fault destroys our healthy tab mid-mint, ~400-2500ms after
+    // the request was sent. The mint rejects with 'PO token tab died
+    // during mint'.
     //
-    // The canary fires once per video-load, so a single retry after a
-    // brief settle wait usually succeeds — the second attempt's tab
-    // doesn't race anything destructive. We try up to 3 times total
-    // with 2s between attempts: that's enough for any transient
-    // GeckoView state to settle, and 3 attempts caps worst-case at ~10s
-    // before we fall through to the placeholder so SABR can at least
-    // start (with the existing 60s-then-cut behaviour as the fallback).
+    // Critical constraint discovered the hard way: setTimeout becomes
+    // UNRELIABLE in this WebExtension after a GeckoView session-store
+    // fault (eventDispatcher = undefined breaks the macrotask scheduler).
+    // The exact 'WindowEventDispatcher win is null' error fires within
+    // ~150ms of the tab death and kills any in-flight setTimeout. An
+    // earlier version of this retry used `await new Promise(r =>
+    // setTimeout(r, 2000))` between attempts — the timeout never fired,
+    // generatePoToken hung forever, processVideo hung waiting on it,
+    // and the entire pipeline wedged with no token sent to native AT
+    // ALL (worse than the placeholder behaviour because SABR doesn't
+    // even start). See the same comment at line ~1556 about the
+    // setTimeout(300ms) buffer that was removed for the same reason.
+    //
+    // Solution: retry immediately, no setTimeout delay. The cost is
+    // we might still race the same destructive event on the new tab,
+    // but at least the retry RUNS and if it also fails we can fall
+    // through to tier 3 promptly. Microtask yield (Promise.resolve())
+    // lets onRemoved finish updating poTokenTabId before we re-enter
+    // ensurePoTokenTab.
     const tier2Start = Date.now();
     const MAX_ATTEMPTS = 3;
-    const RETRY_DELAY_MS = 2000;
     let lastError = null;
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
         try {
             const token = await mintPoTokenViaTab(visitorData, videoId);
             // Cache the successfully minted token. Keep the tab alive — destroying
             // it after each mint races with GeckoView's session-store update,
-            // leaving a stale tab reference whose `win` is null. That fault
-            // propagates through GeckoView's eventDispatcher, which the
-            // WebExtension's macrotask scheduler depends on — meaning setTimeout
-            // silently stops firing in background.js. The minter inside
-            // content.js caches the BotGuard VM for ~5h so subsequent mints
-            // on the same tab are instant.
+            // leaving a stale tab reference whose `win` is null. The minter
+            // inside content.js caches the BotGuard VM for ~5h so subsequent
+            // mints on the same tab are instant.
             poTokenCache = { token, visitorData, timestamp: Date.now() };
             console.log(`[PoToken] tier=2 mint ok len=${token.length} attempt=${attempt}/${MAX_ATTEMPTS} elapsed=${Date.now() - tier2Start}ms`);
             return token;
@@ -2710,7 +2717,7 @@ async function generatePoToken(visitorData, videoId) {
             //   - 'No robots.txt tab available' → ensurePoTokenTab() couldn't get a tab
             //   - 'PO token timeout (20s)' → tab alive but content script never replied
             //   - 'PO token tab died during mint' → tab was killed AFTER mint started
-            //     (the canary-cascade case this retry loop is built for)
+            //     (the GeckoView session-store cascade this retry loop is built for)
             //   - 'mint-step=…' → bubble-up from the in-page gen() helper, names the
             //     exact phase that failed (att-get / vm-fetch / vm-eval / bg-create /
             //     bg-snapshot / generate-it / minter-create / mint)
@@ -2718,14 +2725,14 @@ async function generatePoToken(visitorData, videoId) {
             lastError = e;
             console.warn(`[PoToken] tier=2 attempt=${attempt}/${MAX_ATTEMPTS} FAILED elapsed=${Date.now() - tier2Start}ms err=${e.message}`);
             if (attempt < MAX_ATTEMPTS) {
-                // Tear down the (likely already-dead) tab so the retry starts
-                // from a clean slate via ensurePoTokenTab.
                 if (poTokenTabId) {
                     console.log(`[PoToken] removing tab ${poTokenTabId} before retry`);
                     removePoTokenTab(poTokenTabId);
                 }
-                console.log(`[PoToken] waiting ${RETRY_DELAY_MS}ms before retry`);
-                await new Promise(r => setTimeout(r, RETRY_DELAY_MS));
+                // Microtask yield so onRemoved can finish nulling poTokenTabId
+                // before ensurePoTokenTab() runs again. NO setTimeout — see
+                // long comment above about macrotask scheduler death.
+                await Promise.resolve();
             }
         }
     }
