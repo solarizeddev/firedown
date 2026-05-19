@@ -2517,14 +2517,23 @@ async function ensurePoTokenTab() {
     // 'connection refused' that we just guarded against above via the
     // init-in-flight check).
     if (poTokenTabId) {
+        // Capture the tab id locally so the success log isn't misleading when
+        // a concurrent onRemoved nulls poTokenTabId during the ping round-trip.
+        const pingTarget = poTokenTabId;
         try {
-            await browser.tabs.sendMessage(poTokenTabId, { type: 'ping' });
-            console.log(`[PoToken] tab ping ok (${poTokenTabId}) elapsed=${Date.now() - ensureStart}ms`);
-            return poTokenTabId;
+            await browser.tabs.sendMessage(pingTarget, { type: 'ping' });
+            // Re-check: the tab may have died during the ping. If it did,
+            // poTokenTabId got cleared by onRemoved while we awaited.
+            if (poTokenTabId !== pingTarget) {
+                console.warn(`[PoToken] tab ${pingTarget} died during ping (poTokenTabId is now ${poTokenTabId})`);
+            } else {
+                console.log(`[PoToken] tab ping ok (${pingTarget}) elapsed=${Date.now() - ensureStart}ms`);
+                return pingTarget;
+            }
         } catch (e) {
             // Content script is dead — clean up and create a fresh tab
-            console.warn(`[PoToken] tab ${poTokenTabId} ping FAILED (${e.message}) — removing`);
-            removePoTokenTab(poTokenTabId);
+            console.warn(`[PoToken] tab ${pingTarget} ping FAILED (${e.message}) — removing`);
+            removePoTokenTab(pingTarget);
         }
     }
 
@@ -2662,43 +2671,65 @@ async function generatePoToken(visitorData, videoId) {
 
     console.log(`[PoToken] tier=2 attempting mint via BotGuard tab (videoId=${videoId || '(none)'} visitorDataLen=${(visitorData || '').length})`);
 
-    // Tier 2: try to mint via BotGuard tab
+    // Tier 2: try to mint via BotGuard tab, with retries.
+    //
+    // Repro from the field (PR #179 logs): the BotGuard tab survives long
+    // enough to signal ready and start the mint, but a 'yt-dlp-wins'
+    // canary navigation generates 'webProgress is undefined' errors in
+    // GeckoView's WebExtension tab-state plumbing and that cascade
+    // destroys our healthy tab mid-mint, ~400-500ms after the request
+    // was sent. The mint rejects with 'PO token tab died during mint'.
+    //
+    // The canary fires once per video-load, so a single retry after a
+    // brief settle wait usually succeeds — the second attempt's tab
+    // doesn't race anything destructive. We try up to 3 times total
+    // with 2s between attempts: that's enough for any transient
+    // GeckoView state to settle, and 3 attempts caps worst-case at ~10s
+    // before we fall through to the placeholder so SABR can at least
+    // start (with the existing 60s-then-cut behaviour as the fallback).
     const tier2Start = Date.now();
-    try {
-        const token = await mintPoTokenViaTab(visitorData, videoId);
-        // Cache the successfully minted token
-        poTokenCache = { token, visitorData, timestamp: Date.now() };
-        console.log(`[PoToken] tier=2 mint ok len=${token.length} elapsed=${Date.now() - tier2Start}ms`);
-        // Keep the tab alive. Destroying it after each mint races with
-        // GeckoView's session-store update, leaving a stale tab reference
-        // whose `win` is null. That fault propagates through GeckoView's
-        // eventDispatcher, which the WebExtension's macrotask scheduler
-        // depends on — meaning setTimeout silently stops firing in
-        // background.js. Symptoms: second click after a download silently
-        // hangs because await new Promise(setTimeout 800) never resolves.
-        //
-        // The tab is hidden (active: false), uses no CPU when idle, and
-        // costs ~10MB. Across the session that's a lot less expensive than
-        // the bugs caused by destroy/recreate cycles. The minter inside
-        // content.js already caches the BotGuard VM for ~5 hours, so
-        // subsequent mints on the same tab are instant anyway.
-        //
-        // The tab is only torn down if (a) GeckoView kills it on its own
-        // (handled via onRemoved → poTokenTabId = null), (b) ensurePoTokenTab
-        // pings it and finds the content script unresponsive, or (c) the
-        // extension is reloaded. In all three cases ensurePoTokenTab will
-        // create a fresh one on the next call.
-        return token;
-    } catch (e) {
-        // Distinguish failure modes for the diagnostic log:
-        //   - 'No robots.txt tab available' → ensurePoTokenTab() couldn't get a tab
-        //   - 'PO token timeout (20s)' → tab alive but content script never replied
-        //   - 'mint-step=…' → bubble-up from the in-page gen() helper, names the
-        //     exact phase that failed (att-get / vm-fetch / vm-eval / bg-create /
-        //     bg-snapshot / generate-it / minter-create / mint)
-        //   - 'PO token tab unavailable' → recreated tab also failed
-        console.warn(`[PoToken] tier=2 FAILED elapsed=${Date.now() - tier2Start}ms err=${e.message}`);
+    const MAX_ATTEMPTS = 3;
+    const RETRY_DELAY_MS = 2000;
+    let lastError = null;
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+        try {
+            const token = await mintPoTokenViaTab(visitorData, videoId);
+            // Cache the successfully minted token. Keep the tab alive — destroying
+            // it after each mint races with GeckoView's session-store update,
+            // leaving a stale tab reference whose `win` is null. That fault
+            // propagates through GeckoView's eventDispatcher, which the
+            // WebExtension's macrotask scheduler depends on — meaning setTimeout
+            // silently stops firing in background.js. The minter inside
+            // content.js caches the BotGuard VM for ~5h so subsequent mints
+            // on the same tab are instant.
+            poTokenCache = { token, visitorData, timestamp: Date.now() };
+            console.log(`[PoToken] tier=2 mint ok len=${token.length} attempt=${attempt}/${MAX_ATTEMPTS} elapsed=${Date.now() - tier2Start}ms`);
+            return token;
+        } catch (e) {
+            // Distinguish failure modes for the diagnostic log:
+            //   - 'No robots.txt tab available' → ensurePoTokenTab() couldn't get a tab
+            //   - 'PO token timeout (20s)' → tab alive but content script never replied
+            //   - 'PO token tab died during mint' → tab was killed AFTER mint started
+            //     (the canary-cascade case this retry loop is built for)
+            //   - 'mint-step=…' → bubble-up from the in-page gen() helper, names the
+            //     exact phase that failed (att-get / vm-fetch / vm-eval / bg-create /
+            //     bg-snapshot / generate-it / minter-create / mint)
+            //   - 'PO token tab unavailable' → recreated tab also failed
+            lastError = e;
+            console.warn(`[PoToken] tier=2 attempt=${attempt}/${MAX_ATTEMPTS} FAILED elapsed=${Date.now() - tier2Start}ms err=${e.message}`);
+            if (attempt < MAX_ATTEMPTS) {
+                // Tear down the (likely already-dead) tab so the retry starts
+                // from a clean slate via ensurePoTokenTab.
+                if (poTokenTabId) {
+                    console.log(`[PoToken] removing tab ${poTokenTabId} before retry`);
+                    removePoTokenTab(poTokenTabId);
+                }
+                console.log(`[PoToken] waiting ${RETRY_DELAY_MS}ms before retry`);
+                await new Promise(r => setTimeout(r, RETRY_DELAY_MS));
+            }
+        }
     }
+    console.warn(`[PoToken] tier=2 EXHAUSTED after ${MAX_ATTEMPTS} attempts elapsed=${Date.now() - tier2Start}ms last err=${lastError && lastError.message}`);
 
     // Tier 3: cold-start placeholder token (no tab needed, instant)
     // YouTube SABR ACCEPTS this for the first request (status=2 'attestation
