@@ -338,16 +338,14 @@ public class GeckoStateDataRepository {
 
         // Use injected AppExecutors and Repository
         mDiskExecutor.execute(() -> {
-            // Defense in depth: this repo is for regular tabs only, but
-            // if an incognito entity ever slips in through a routing
-            // bug, do NOT persist it to the archive. Incognito URLs
-            // must never touch disk.
-            if (!geckoState.getGeckoStateEntity().isIncognito()) {
-                mArchivedRepository.addSync(geckoState.getGeckoStateEntity());
-            } else {
-                Log.w(TAG, "closeGeckoState: refusing to archive incognito entity id="
-                        + geckoState.getEntityId());
-            }
+            // User-closed tabs are NOT archived — closing was an explicit
+            // user decision, so we respect it and drop the entity. Only
+            // auto-closed tabs (archiveInactiveTabsLocked, fired by the
+            // inactivity-threshold job) feed the archive; that's
+            // 'recover something the browser took away on your behalf'
+            // rather than 'undo your own action'. Incognito has never
+            // archived either, so this matches that behaviour for
+            // regular tabs.
             File thumbsDir = new File(StoragePaths.getThumbsPath(mContext));
             File[] existing = thumbsDir.listFiles(f ->
                     f.getName().startsWith(geckoState.getEntityId() + "_") && f.getName().endsWith(".png")
