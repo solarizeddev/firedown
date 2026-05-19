@@ -2688,8 +2688,20 @@ async function generatePoToken(visitorData, videoId) {
  */
 async function mintPoTokenViaTab(visitorData, videoId) {
     const mintStart = Date.now();
-    const tabId = await ensurePoTokenTab();
-    if (!tabId) throw new Error('No robots.txt tab available');
+    let tabId = await ensurePoTokenTab();
+    if (!tabId) {
+        // Safety net for the canary-race the pre-warm at INIT is designed
+        // to prevent. If the tab gets killed mid-init by an unrelated tab
+        // event (canary navigation, GeckoView webProgress fault, etc.),
+        // wait briefly for the noise to settle and try once more. By the
+        // second attempt the canary navigation has typically finished and
+        // tab creation succeeds cleanly.
+        console.warn('[PoToken] ensurePoTokenTab returned null — waiting 1.5s and retrying once');
+        await new Promise(r => setTimeout(r, 1500));
+        tabId = await ensurePoTokenTab();
+        if (!tabId) throw new Error('No robots.txt tab available (after retry)');
+        console.log('[PoToken] retry succeeded, continuing mint');
+    }
 
     const requestId = `pot-${Date.now()}-${(Math.random() * 1e6 | 0).toString(36)}`;
     console.log(`[PoToken] mint request id=${requestId} tab=${tabId} videoId=${videoId || '(none)'}`);
@@ -2754,3 +2766,40 @@ loadSolver().then(s => console.log(`[Init] Solver ready (v${s.SOLVER_VERSION})`)
         console.log(`[Init] Cached ${urlToTabCache.size} URLs from ${tabs.length} existing tabs`);
     } catch (e) {}
 })();
+
+// Pre-warm the BotGuard robots.txt tab so the PO-token mint isn't racing
+// with whatever the native side does on cold start. Repro from the field
+// (see PR #179 diagnostic logs):
+//
+//   t=0.0s   [Init] extension loaded
+//   t=1.3s   user clicks Download → SABR extraction starts
+//   t=1.4s   tier=2 attempts to create robots.txt tab (10021)
+//   t=1.5s   native canary navigates a separate tab to
+//            m.youtube.com/watch?v=yt-dlp-wins
+//   t=1.6s   GeckoView fires 4× 'webProgress is undefined' errors as the
+//            canary tab transitions through states with no attached
+//            webProgress yet
+//   t=1.7s   tab 10021 onRemoved fires (cascade from the error path) —
+//            content script never got a chance to signal ready
+//   t=1.7s   tier=2 FAILED → tier=3 cold-start placeholder → YouTube
+//            cuts the download at status=3 after ~60s
+//
+// Creating the tab 3s after extension load — well before the user could
+// click anything — sidesteps the race entirely. Once created, the tab
+// stays alive for the session (the 'Keep the tab alive' design in
+// mintPoTokenViaTab) and subsequent mints reuse it with the BotGuard VM
+// cached inside content.js. 3s is enough for GeckoView to settle and
+// the native init dance to finish; it's also short enough that we're
+// ready before any but the most impatient cold-launch download.
+setTimeout(() => {
+    console.log('[Init] pre-warming BotGuard robots.txt tab');
+    ensurePoTokenTab().then(id => {
+        if (id) {
+            console.log(`[Init] PO-token tab pre-warmed (tabId=${id})`);
+        } else {
+            console.warn('[Init] PO-token tab pre-warm FAILED — first download will retry on demand');
+        }
+    }).catch(e => {
+        console.warn(`[Init] PO-token tab pre-warm threw: ${e.message}`);
+    });
+}, 3000);
