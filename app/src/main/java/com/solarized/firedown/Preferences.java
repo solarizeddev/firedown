@@ -55,24 +55,6 @@ public class Preferences {
 
     public static final String SETTINGS_AUTOFILL = "com.solarized.firedown.preferences.browser.password";
 
-    /**
-     * Click-through entry that opens {@code HomeSettingsFragment}. Owns
-     * the per-user toggles for what shows on the home page (currently
-     * just the recent-downloads card).
-     */
-    public static final String SETTINGS_HOME = "com.solarized.firedown.preferences.home";
-
-    /**
-     * When true the home page renders the recent-downloads card under
-     * the URL bar / onboarding. When false the home page falls back to
-     * the brand-only empty state (centred Firedown glyph). Default ON —
-     * recent downloads is the only home surface that earns its slot on
-     * a downloader-first browser.
-     */
-    public static final String SETTINGS_HOME_SHOW_RECENT_DOWNLOADS = "com.solarized.firedown.preferences.home.show.recent.downloads";
-
-    public static final boolean DEFAULT_HOME_SHOW_RECENT_DOWNLOADS = true;
-
     public static final String SETTINGS_BLOCK_LOCATION = "com.solarized.firedown.preferences.browser.block.location";
 
     public static final boolean DEFAULT_BLOCK_LOCATION = true;

@@ -146,10 +146,6 @@
          onboarding card. Frames the brand chips as 'we test against
          these'. Tap a chip → visits the site. -->
     <string name="home_onboarding_sites_label">Try Firedown on</string>
-    <string name="settings_home_title">Home page</string>
-    <string name="settings_home_summary">Customise what shows on the home page</string>
-    <string name="settings_home_show_recent_downloads_title">Show recent downloads</string>
-    <string name="settings_home_show_recent_downloads_summary">Display your most recent downloads on the home page. Turn off for a clean empty home.</string>
     <string name="download_adaptative">Adaptive</string>
     <string name="download_file">A file is ready to be downloaded:</string>
     <string name="download_finished">Download finished</string>

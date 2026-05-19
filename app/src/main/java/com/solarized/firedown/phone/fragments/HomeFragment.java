@@ -100,7 +100,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     private TextView mHomeMediaTitle;
     private TextView mHomeMediaSubtitle;
     private androidx.appcompat.widget.AppCompatImageButton mHomeMediaToggle;
-    private SharedPreferences.OnSharedPreferenceChangeListener mHomePrefsListener;
     @Nullable private java.util.List<DownloadEntity> mLastActiveList;
     @Nullable private Integer mLastFinishedCount;
     private long mLastFinishedSize = 0L;
@@ -281,15 +280,15 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         //    tap time; the sheet itself owns its own observer.
         mRecentDownloadsViewModel.getActive().observe(getViewLifecycleOwner(), list -> {
             mLastActiveList = list;
-            applyHomeCustomisation();
+            applyActiveStripVisibility();
         });
         mRecentDownloadsViewModel.getFinishedCount().observe(getViewLifecycleOwner(), count -> {
             mLastFinishedCount = count;
-            applyHomeCustomisation();
+            bindDownloadsSubtitle();
         });
         mRecentDownloadsViewModel.getFinishedSize().observe(getViewLifecycleOwner(), size -> {
             mLastFinishedSize = size == null ? 0L : size;
-            applyHomeCustomisation();
+            bindDownloadsSubtitle();
         });
 
         // Vault count drives the empty-hero vault button's count badge.
@@ -319,14 +318,8 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mGeckoMediaController.getIsPlayingLiveData().observe(getViewLifecycleOwner(),
                 playing -> bindMediaStrip());
 
-        mHomePrefsListener = (sharedPreferences, key) -> {
-            if (Preferences.SETTINGS_HOME_SHOW_RECENT_DOWNLOADS.equals(key)) {
-                applyHomeCustomisation();
-            }
-        };
-        mSharedPreferences.registerOnSharedPreferenceChangeListener(mHomePrefsListener);
-
-        applyHomeCustomisation();
+        mRecentDownloadsCard.setVisibility(View.VISIBLE);
+        applyActiveStripVisibility();
 
         // NOTE: HomeFragment intentionally does NOT observe
         // BrowserURIViewModel.getEvents().  IntentHandler owns all tab
@@ -458,10 +451,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        if (mHomePrefsListener != null) {
-            mSharedPreferences.unregisterOnSharedPreferenceChangeListener(mHomePrefsListener);
-            mHomePrefsListener = null;
-        }
         mHomeScroll = null;
         mAutoCompleteView = null;
         mGeckoToolbar = null;
@@ -484,37 +473,21 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     }
 
     /**
-     * Resolves the current home composition. Paste and Safe Folder
-     * cards are always visible (always-on entry points). Active strip
-     * and Downloads card are data- / preference-gated:
-     *
-     * <ul>
-     *   <li>Active strip — any non-vault PROGRESS / QUEUED download.</li>
-     *   <li>Downloads card — {@link Preferences#SETTINGS_HOME_SHOW_RECENT_DOWNLOADS}
-     *       toggle. Subtitle ('N files saved · X.Y GB') shows when
-     *       count > 0; otherwise title-only.</li>
-     * </ul>
+     * Active-strip visibility tracks whether any non-vault download is
+     * in PROGRESS / QUEUED. When at least one is live, bind the rows
+     * and start the flame pulse; otherwise hide the card and stop the
+     * animator so it doesn't burn cycles off-screen.
      */
-    private void applyHomeCustomisation() {
-        if (mRecentDownloadsCard == null || mActiveStrip == null) return;
-
-        boolean cardVisible = mSharedPreferences.getBoolean(
-                Preferences.SETTINGS_HOME_SHOW_RECENT_DOWNLOADS,
-                Preferences.DEFAULT_HOME_SHOW_RECENT_DOWNLOADS);
-
+    private void applyActiveStripVisibility() {
+        if (mActiveStrip == null) return;
         boolean hasActive = mLastActiveList != null && !mLastActiveList.isEmpty();
-        boolean stripVisible = cardVisible && hasActive;
-
-        mActiveStrip.setVisibility(stripVisible ? View.VISIBLE : View.GONE);
-        mRecentDownloadsCard.setVisibility(cardVisible ? View.VISIBLE : View.GONE);
-
-        if (stripVisible) {
+        mActiveStrip.setVisibility(hasActive ? View.VISIBLE : View.GONE);
+        if (hasActive) {
             bindActiveStrip(mLastActiveList);
             startActiveStripPulse();
         } else {
             stopActiveStripPulse();
         }
-        if (cardVisible) bindDownloadsSubtitle();
     }
 
     /** Subtle alpha pulse on the active-strip's Firedown flame icon
