@@ -99,6 +99,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     private TextView mHomeMediaLabel;
     private TextView mHomeMediaTitle;
     private TextView mHomeMediaSubtitle;
+    private androidx.appcompat.widget.AppCompatImageButton mHomeMediaToggle;
     private SharedPreferences.OnSharedPreferenceChangeListener mHomePrefsListener;
     @Nullable private java.util.List<DownloadEntity> mLastActiveList;
     @Nullable private Integer mLastFinishedCount;
@@ -164,12 +165,25 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mHomeMediaLabel = v.findViewById(R.id.home_media_label);
         mHomeMediaTitle = v.findViewById(R.id.home_media_title);
         mHomeMediaSubtitle = v.findViewById(R.id.home_media_subtitle);
+        mHomeMediaToggle = v.findViewById(R.id.home_media_toggle);
         // Tap → switch to the playing tab. Same flow IntentHandler.handleMainMedia
         // uses for the foreground media notification: look up the session,
         // promote it, fire OPEN_SESSION, navigate to browser.
         mHomeMediaStrip.setOnClickListener(view -> {
             int sessionId = mGeckoMediaController.getCurrentSessionId();
             if (sessionId != 0) openSessionId(sessionId);
+        });
+        // Trailing toggle button: play / pause the current session in
+        // place without navigating away. Borderless ripple on the
+        // button + tap on the rest of the card → openSessionId; tap
+        // here → toggle playback only.
+        mHomeMediaToggle.setOnClickListener(view -> {
+            Boolean playing = mGeckoMediaController.getIsPlayingLiveData().getValue();
+            if (playing != null && playing) {
+                mGeckoMediaController.pause();
+            } else {
+                mGeckoMediaController.play();
+            }
         });
 
 
@@ -466,6 +480,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mHomeMediaLabel = null;
         mHomeMediaTitle = null;
         mHomeMediaSubtitle = null;
+        mHomeMediaToggle = null;
     }
 
     /**
@@ -634,6 +649,18 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         Boolean playingValue = mGeckoMediaController.getIsPlayingLiveData().getValue();
         boolean playing = playingValue != null && playingValue;
         mHomeMediaLabel.setText(playing ? R.string.home_media_playing : R.string.home_media_paused);
+        // Toggle button mirrors the playing state — pause icon when
+        // playing (tap → pause), play icon when paused (tap → resume).
+        // contentDescription announces the *current* state for a
+        // screen reader (the action to take is the inverse).
+        if (mHomeMediaToggle != null) {
+            mHomeMediaToggle.setImageResource(playing
+                    ? R.drawable.ic_pause_24
+                    : R.drawable.ic_play_arrow_24);
+            mHomeMediaToggle.setContentDescription(getString(playing
+                    ? R.string.home_media_playing
+                    : R.string.home_media_paused));
+        }
 
         String title = meta.getTitle();
         if (title == null || title.isEmpty()) title = meta.getAlbum();

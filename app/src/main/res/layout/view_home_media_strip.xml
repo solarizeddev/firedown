@@ -107,6 +107,25 @@
 
         </LinearLayout>
 
+        <!--
+            Trailing play/pause toggle. selectableItemBackgroundBorderless
+            so the ripple stays inside the button instead of leaking
+            into the card's tap handler — the card itself routes to
+            'switch to playing tab', this button toggles playback in
+            place. The icon flips between play_arrow / pause from
+            HomeFragment based on the isPlaying LiveData.
+        -->
+        <androidx.appcompat.widget.AppCompatImageButton
+            android:id="@+id/home_media_toggle"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:layout_marginStart="8dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/home_media_playing"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_pause_24"
+            app:tint="?attr/colorOnSecondaryContainer" />
+
     </LinearLayout>
 
 </com.google.android.material.card.MaterialCardView>
