@@ -111,11 +111,28 @@ public class SabrStrategy implements DownloadStrategy {
         sabrDownloader.setStreamingUrl(request.getSabrUrl());
         sabrDownloader.setUstreamerConfig(request.getSabrConfig());
 
-        // PO token from BotGuard — enables full download without attestation wall
+        // PO token from BotGuard — enables full download without attestation wall.
+        // Real BotGuard-minted tokens are typically 150-200+ chars; tokens under
+        // ~50 chars are almost certainly the cold-start *placeholder* the JS
+        // extension falls back to when its BotGuard tab fails to mint. YouTube
+        // accepts placeholders for ~60s of streaming (status=2 'attestation
+        // pending') then escalates to status=3 'attestation required' and
+        // stops the download. If you see this warning in the log, the real
+        // diagnostic lives in the [PoToken] log lines from background.js —
+        // look for tier=2 FAILED to find the in-page failure step.
         String poToken = request.getSabrPoToken();
         if (!TextUtils.isEmpty(poToken)) {
             sabrDownloader.setPoToken(poToken);
-            Log.d(TAG, "PO token applied: " + poToken.length() + " chars");
+            int len = poToken.length();
+            if (len < 50) {
+                Log.w(TAG, "PO token applied: " + len + " chars — looks like a COLD-START PLACEHOLDER. "
+                        + "Real BotGuard tokens are 150+ chars. Download will be cut by YouTube "
+                        + "after ~60s (status=3 attestation required). Check [PoToken] logs for tier=2 failure.");
+            } else {
+                Log.d(TAG, "PO token applied: " + len + " chars (BotGuard-minted)");
+            }
+        } else {
+            Log.w(TAG, "No PO token — download will trip attestation wall on first request");
         }
 
         // Dynamic MWEB client version from HTML — CDN validates cver= matches

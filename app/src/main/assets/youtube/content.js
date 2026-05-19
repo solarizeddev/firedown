@@ -60,44 +60,68 @@ if (location.pathname === '/robots.txt') {
 
         async function gen(vid, vd) {
             const BG = window.BG;
-            if (!BG) throw new Error('BG not loaded');
+            if (!BG) throw new Error('mint-step=bg-missing BG not loaded on page');
             const id = vid || vd;
-            if (cm && (Date.now()-cmt) < 18000000) return await cm.mintAsWebsafeString(id);
+            if (!id) throw new Error('mint-step=identifier-missing vid+vd both empty');
+            if (cm && (Date.now()-cmt) < 18000000) {
+                const cached = await cm.mintAsWebsafeString(id);
+                console.log('[BG-robots] mint cached len=' + (cached ? cached.length : 0));
+                return cached;
+            }
 
             const cv = '2.20260401.01.00';
             const ctx = {client:{clientName:'WEB',clientVersion:cv,hl:'en',gl:'US',visitorData:vd||''}};
+            const t0 = Date.now();
+            let step = 'att-get';
 
-            const cr = await fetch('https://www.youtube.com/youtubei/v1/att/get?prettyPrint=false&alt=json',{
-                method:'POST',headers:{'Accept':'*/*','Content-Type':'application/json','X-Goog-Visitor-Id':vd||'','X-Youtube-Client-Version':cv,'X-Youtube-Client-Name':'1'},
-                body:JSON.stringify({engagementType:'ENGAGEMENT_TYPE_UNBOUND',context:ctx})
-            });
-            if (!cr.ok) throw new Error('att/get '+cr.status);
-            const cd = await cr.json();
-            if (!cd.bgChallenge) throw new Error('no bgChallenge');
+            try {
+                const cr = await fetch('https://www.youtube.com/youtubei/v1/att/get?prettyPrint=false&alt=json',{
+                    method:'POST',headers:{'Accept':'*/*','Content-Type':'application/json','X-Goog-Visitor-Id':vd||'','X-Youtube-Client-Version':cv,'X-Youtube-Client-Name':'1'},
+                    body:JSON.stringify({engagementType:'ENGAGEMENT_TYPE_UNBOUND',context:ctx})
+                });
+                if (!cr.ok) throw new Error('att/get HTTP ' + cr.status);
+                const cd = await cr.json();
+                if (!cd.bgChallenge) throw new Error('att/get response missing bgChallenge (keys=' + Object.keys(cd).join(',') + ')');
 
-            let iu = cd.bgChallenge.interpreterUrl.privateDoNotAccessOrElseTrustedResourceUrlWrappedValue;
-            if (iu.startsWith('//')) iu='https:'+iu;
+                step = 'vm-fetch';
+                let iu = cd.bgChallenge.interpreterUrl.privateDoNotAccessOrElseTrustedResourceUrlWrappedValue;
+                if (iu.startsWith('//')) iu='https:'+iu;
+                const js = await window.__fdFetchText(iu);
+                if (!js) throw new Error('VM JS fetch returned empty (url=' + iu + ')');
 
-            // Use content script's fetch to bypass CORS (page fetch blocked by google.com CORS)
-            const js = await window.__fdFetchText(iu);
-            if (!js) throw new Error('empty VM');
-            new Function(js)();
+                step = 'vm-eval';
+                new Function(js)();
 
-            const bg = await BG.BotGuardClient.create({program:cd.bgChallenge.program,globalName:cd.bgChallenge.globalName,globalObj:window});
-            const wps = [];
-            const bgr = await bg.snapshot({webPoSignalOutput:wps},10000);
-            if (!bgr) throw new Error('empty snapshot');
+                step = 'bg-create';
+                const bg = await BG.BotGuardClient.create({program:cd.bgChallenge.program,globalName:cd.bgChallenge.globalName,globalObj:window});
 
-            const ir = await fetch('https://www.youtube.com/api/jnn/v1/GenerateIT',{
-                method:'POST',headers:{'Content-Type':'application/json+protobuf','x-goog-api-key':AK,'x-user-agent':'grpc-web-javascript/0.1'},
-                body:JSON.stringify([RK,bgr])
-            });
-            const ij = await ir.json();
-            if (typeof ij[0]!=='string') throw new Error('no IT');
+                step = 'bg-snapshot';
+                const wps = [];
+                const bgr = await bg.snapshot({webPoSignalOutput:wps},10000);
+                if (!bgr) throw new Error('botguard snapshot returned empty');
 
-            const m = await BG.WebPoMinter.create({integrityToken:ij[0]},wps);
-            cm=m; cmt=Date.now();
-            return await m.mintAsWebsafeString(id);
+                step = 'generate-it';
+                const ir = await fetch('https://www.youtube.com/api/jnn/v1/GenerateIT',{
+                    method:'POST',headers:{'Content-Type':'application/json+protobuf','x-goog-api-key':AK,'x-user-agent':'grpc-web-javascript/0.1'},
+                    body:JSON.stringify([RK,bgr])
+                });
+                if (!ir.ok) throw new Error('GenerateIT HTTP ' + ir.status);
+                const ij = await ir.json();
+                if (typeof ij[0]!=='string') throw new Error('GenerateIT response missing integrity token (type=' + (typeof ij[0]) + ')');
+
+                step = 'minter-create';
+                const m = await BG.WebPoMinter.create({integrityToken:ij[0]},wps);
+                cm=m; cmt=Date.now();
+
+                step = 'mint';
+                const tok = await m.mintAsWebsafeString(id);
+                console.log('[BG-robots] mint ok len=' + (tok ? tok.length : 0) + ' total=' + (Date.now()-t0) + 'ms');
+                return tok;
+            } catch (e) {
+                const msg = 'mint-step=' + step + ' name=' + (e && e.name) + ' code=' + (e && e.code) + ' msg=' + (e && e.message) + ' elapsed=' + (Date.now()-t0) + 'ms';
+                console.error('[BG-robots] ' + msg);
+                throw new Error(msg);
+            }
         }
 
         window.__fdGenPoToken = async function(vid,vd,rid) {

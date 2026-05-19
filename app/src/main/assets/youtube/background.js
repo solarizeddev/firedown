@@ -2488,22 +2488,27 @@ function removePoTokenTab(tabId) {
 }
 
 async function ensurePoTokenTab() {
+    const ensureStart = Date.now();
     // Fast path: tab already alive — verify content script is still responsive.
     // tabs.get succeeds even when GeckoView has torn down the window (tab exists
     // but page context is dead), so we probe with a ping message instead.
     if (poTokenTabId) {
         try {
             await browser.tabs.sendMessage(poTokenTabId, { type: 'ping' });
+            console.log(`[PoToken] tab ping ok (${poTokenTabId}) elapsed=${Date.now() - ensureStart}ms`);
             return poTokenTabId;
         } catch (e) {
             // Content script is dead — clean up and create a fresh tab
-            console.log(`[PoToken] Tab ${poTokenTabId} unresponsive, removing`);
+            console.warn(`[PoToken] tab ${poTokenTabId} ping FAILED (${e.message}) — removing`);
             removePoTokenTab(poTokenTabId);
         }
     }
 
     // Clean up any orphaned robots.txt tabs (dead windows from previous runs)
     const existing = await browser.tabs.query({ url: '*://*.youtube.com/robots.txt' });
+    if (existing.length) {
+        console.log(`[PoToken] removing ${existing.length} orphan robots.txt tab(s)`);
+    }
     for (const t of existing) {
         try { await browser.tabs.remove(t.id); } catch (e) {}
     }
@@ -2515,7 +2520,7 @@ async function ensurePoTokenTab() {
         const tab = await browser.tabs.create({ url: 'https://www.youtube.com/robots.txt', active: false });
         createdTabId = tab.id;
         poTokenTabId = createdTabId;
-        console.log(`[PoToken] Created robots.txt tab: ${createdTabId}`);
+        console.log(`[PoToken] created robots.txt tab: ${createdTabId}`);
 
         // Wait for content script ready signal or timeout
         const ready = await new Promise((resolve) => {
@@ -2534,7 +2539,7 @@ async function ensurePoTokenTab() {
         if (!ready) {
             // Content script never signaled — tab was likely killed by GeckoView.
             // Clean up to avoid leaking a dead GeckoSession.
-            console.warn('[PoToken] Tab init timed out (content script never ready), removing tab');
+            console.warn(`[PoToken] tab ${createdTabId} init TIMED OUT (${PO_TOKEN_TAB_INIT_TIMEOUT}ms), content script never signalled ready — removing`);
             removePoTokenTab(createdTabId);
             return null;
         }
@@ -2543,14 +2548,14 @@ async function ensurePoTokenTab() {
         // (it could have been removed between signal and here)
         if (poTokenTabId !== createdTabId) {
             // onRemoved fired during init — tab is gone
-            console.warn('[PoToken] Tab removed during init');
+            console.warn(`[PoToken] tab ${createdTabId} REMOVED during init (poTokenTabId is now ${poTokenTabId})`);
             return null;
         }
 
-        console.log(`[PoToken] Tab ${createdTabId} ready`);
+        console.log(`[PoToken] tab ${createdTabId} ready (elapsed=${Date.now() - ensureStart}ms)`);
         return createdTabId;
     } catch (e) {
-        console.warn(`[PoToken] tabs.create failed: ${e.message}`);
+        console.warn(`[PoToken] tabs.create FAILED: name=${e.name} msg=${e.message}`);
         removePoTokenTab(createdTabId);
         return null;
     }
@@ -2571,17 +2576,23 @@ browser.runtime.onMessage.addListener((msg) => {
 
         // If no matching requestId, resolve any pending request (backward compat)
         const entry = pending || pendingPoTokenRequests.values().next().value;
-        if (!entry) return;
+        if (!entry) {
+            console.warn(`[PoToken] poTokenResult arrived but no pending request (rid=${rid})`);
+            return;
+        }
 
         const key = pending ? rid : pendingPoTokenRequests.keys().next().value;
         clearTimeout(entry.timer);
         pendingPoTokenRequests.delete(key);
 
         if (msg.data.error) {
+            console.warn(`[PoToken] result id=${key} ERROR from page: ${msg.data.error}`);
             entry.reject(new Error(msg.data.error));
         } else if (msg.data.token) {
+            console.log(`[PoToken] result id=${key} ok len=${msg.data.token.length}`);
             entry.resolve(msg.data.token);
         } else {
+            console.warn(`[PoToken] result id=${key} EMPTY (neither token nor error)`);
             entry.reject(new Error('Empty PO token result'));
         }
     }
@@ -2608,16 +2619,19 @@ async function generatePoToken(visitorData, videoId) {
     if (poTokenCache &&
         poTokenCache.visitorData === visitorData &&
         (Date.now() - poTokenCache.timestamp) < PO_TOKEN_CACHE_TTL) {
-        console.log(`[PoToken] Cache hit (age ${Math.round((Date.now() - poTokenCache.timestamp) / 1000)}s)`);
+        console.log(`[PoToken] tier=1 cache hit (age=${Math.round((Date.now() - poTokenCache.timestamp) / 1000)}s len=${poTokenCache.token.length})`);
         return poTokenCache.token;
     }
 
+    console.log(`[PoToken] tier=2 attempting mint via BotGuard tab (videoId=${videoId || '(none)'} visitorDataLen=${(visitorData || '').length})`);
+
     // Tier 2: try to mint via BotGuard tab
+    const tier2Start = Date.now();
     try {
         const token = await mintPoTokenViaTab(visitorData, videoId);
         // Cache the successfully minted token
         poTokenCache = { token, visitorData, timestamp: Date.now() };
-        console.log(`[PoToken] Minted and cached (${token.length} chars)`);
+        console.log(`[PoToken] tier=2 mint ok len=${token.length} elapsed=${Date.now() - tier2Start}ms`);
         // Keep the tab alive. Destroying it after each mint races with
         // GeckoView's session-store update, leaving a stale tab reference
         // whose `win` is null. That fault propagates through GeckoView's
@@ -2639,16 +2653,28 @@ async function generatePoToken(visitorData, videoId) {
         // create a fresh one on the next call.
         return token;
     } catch (e) {
-        console.warn(`[PoToken] Tab mint failed: ${e.message}`);
+        // Distinguish failure modes for the diagnostic log:
+        //   - 'No robots.txt tab available' → ensurePoTokenTab() couldn't get a tab
+        //   - 'PO token timeout (20s)' → tab alive but content script never replied
+        //   - 'mint-step=…' → bubble-up from the in-page gen() helper, names the
+        //     exact phase that failed (att-get / vm-fetch / vm-eval / bg-create /
+        //     bg-snapshot / generate-it / minter-create / mint)
+        //   - 'PO token tab unavailable' → recreated tab also failed
+        console.warn(`[PoToken] tier=2 FAILED elapsed=${Date.now() - tier2Start}ms err=${e.message}`);
     }
 
     // Tier 3: cold-start placeholder token (no tab needed, instant)
+    // YouTube SABR ACCEPTS this for the first request (status=2 'attestation
+    // pending') but will escalate to status=3 'attestation required' after
+    // ~60s, hard-stopping the download. A cold-start token is *not* a
+    // real PO token — it's a fallback to keep some flows alive. If the log
+    // shows tier=3 used, tier 2 needs investigating.
     const identifier = videoId || visitorData;
     const coldToken = generateColdStartPoToken(identifier);
     if (coldToken) {
         // Cache it too — better than nothing, and avoids repeated tab failures
         poTokenCache = { token: coldToken, visitorData, timestamp: Date.now() };
-        console.log(`[PoToken] Using cold-start token (${coldToken.length} chars)`);
+        console.warn(`[PoToken] tier=3 cold-start placeholder len=${coldToken.length} — YouTube will reject for full downloads`);
         return coldToken;
     }
 
@@ -2661,14 +2687,17 @@ async function generatePoToken(visitorData, videoId) {
  * Tab cleanup is handled by the caller — this function only mints.
  */
 async function mintPoTokenViaTab(visitorData, videoId) {
+    const mintStart = Date.now();
     const tabId = await ensurePoTokenTab();
     if (!tabId) throw new Error('No robots.txt tab available');
 
     const requestId = `pot-${Date.now()}-${(Math.random() * 1e6 | 0).toString(36)}`;
+    console.log(`[PoToken] mint request id=${requestId} tab=${tabId} videoId=${videoId || '(none)'}`);
 
     const token = await new Promise((resolve, reject) => {
         const timer = setTimeout(() => {
             pendingPoTokenRequests.delete(requestId);
+            console.warn(`[PoToken] mint TIMEOUT id=${requestId} after 20000ms — content script never replied`);
             reject(new Error('PO token timeout (20s)'));
         }, 20000);
 
@@ -2679,7 +2708,7 @@ async function mintPoTokenViaTab(visitorData, videoId) {
             data: { videoId, visitorData: visitorData || '', requestId }
         }).catch(async (e) => {
             // Tab might have died — try recreating once
-            console.warn(`[PoToken] Send failed, recreating tab: ${e.message}`);
+            console.warn(`[PoToken] sendMessage FAILED to tab ${tabId}: ${e.message} — recreating tab and retrying once`);
             removePoTokenTab(tabId);
             try {
                 const newTabId = await ensurePoTokenTab();
@@ -2690,13 +2719,16 @@ async function mintPoTokenViaTab(visitorData, videoId) {
                     });
                     return;
                 }
-            } catch (e2) { /* fall through */ }
+            } catch (e2) {
+                console.warn(`[PoToken] retry sendMessage also FAILED: ${e2.message}`);
+            }
             clearTimeout(timer);
             pendingPoTokenRequests.delete(requestId);
             reject(new Error('PO token tab unavailable'));
         });
     });
 
+    console.log(`[PoToken] mint reply id=${requestId} elapsed=${Date.now() - mintStart}ms`);
     return token;
 }
 
