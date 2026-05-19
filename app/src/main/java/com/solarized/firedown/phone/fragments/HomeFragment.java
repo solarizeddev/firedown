@@ -1,6 +1,5 @@
 package com.solarized.firedown.phone.fragments;
 
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -27,6 +26,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.card.MaterialCardView;
 
+import com.google.android.material.color.MaterialColors;
+import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
@@ -60,6 +61,7 @@ import com.solarized.firedown.ui.adapters.SearchAutocompleteAdapter;
 import com.solarized.firedown.ui.diffs.SearchDiffCallback;
 import com.solarized.firedown.IntentActions;
 import com.solarized.firedown.utils.NavigationUtils;
+import com.solarized.firedown.utils.Utils;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
@@ -90,7 +92,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     private android.view.ViewGroup mActiveStripRows;
     private View mActiveStripIcon;
     @Nullable private android.animation.ObjectAnimator mActiveStripPulse;
-    private TextView mHomeVaultTitle;
     private TextView mHomeVaultSubtitle;
     private TextView mRecentDownloadsSubtitle;
     private View mHomeMediaStrip;
@@ -181,7 +182,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
                 mStartForResult.launch(new Intent(mActivity, DownloadsActivity.class)));
 
         View vaultCard = v.findViewById(R.id.home_vault_card);
-        mHomeVaultTitle = v.findViewById(R.id.home_vault_title);
         mHomeVaultSubtitle = v.findViewById(R.id.home_vault_subtitle);
         vaultCard.setOnClickListener(view ->
                 mStartForResult.launch(new Intent(mActivity, VaultActivity.class)));
@@ -459,7 +459,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mActiveStripRows = null;
         stopActiveStripPulse();
         mActiveStripIcon = null;
-        mHomeVaultTitle = null;
         mHomeVaultSubtitle = null;
         mRecentDownloadsSubtitle = null;
         mHomeMediaStrip = null;
@@ -484,13 +483,12 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     private void applyHomeCustomisation() {
         if (mRecentDownloadsCard == null || mActiveStrip == null) return;
 
-        boolean showRecent = mSharedPreferences.getBoolean(
+        boolean cardVisible = mSharedPreferences.getBoolean(
                 Preferences.SETTINGS_HOME_SHOW_RECENT_DOWNLOADS,
                 Preferences.DEFAULT_HOME_SHOW_RECENT_DOWNLOADS);
 
         boolean hasActive = mLastActiveList != null && !mLastActiveList.isEmpty();
-        boolean stripVisible = showRecent && hasActive;
-        boolean cardVisible  = showRecent;
+        boolean stripVisible = cardVisible && hasActive;
 
         mActiveStrip.setVisibility(stripVisible ? View.VISIBLE : View.GONE);
         mRecentDownloadsCard.setVisibility(cardVisible ? View.VISIBLE : View.GONE);
@@ -543,7 +541,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
                 R.plurals.home_downloads_file_count, n, n);
         String text = mLastFinishedSize > 0
                 ? getString(R.string.home_downloads_subtitle_with_size,
-                        files, com.solarized.firedown.utils.Utils.readableFileSize(mLastFinishedSize))
+                        files, Utils.readableFileSize(mLastFinishedSize))
                 : files;
         mRecentDownloadsSubtitle.setVisibility(View.VISIBLE);
         mRecentDownloadsSubtitle.setText(text);
@@ -563,8 +561,8 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     private void bindActiveStrip(@NonNull java.util.List<DownloadEntity> active) {
         if (mActiveStripRows == null) return;
         mActiveStripRows.removeAllViews();
-        android.view.LayoutInflater inflater = android.view.LayoutInflater.from(mActiveStripRows.getContext());
-        int onContainer = com.google.android.material.color.MaterialColors.getColor(
+        LayoutInflater inflater = LayoutInflater.from(mActiveStripRows.getContext());
+        int onContainer = MaterialColors.getColor(
                 mActiveStripRows, com.google.android.material.R.attr.colorOnPrimaryContainer);
         int trackAlpha = androidx.core.graphics.ColorUtils.setAlphaComponent(onContainer, 0x3D);
         for (DownloadEntity item : active) {
@@ -577,8 +575,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     private void bindActiveStripRow(@NonNull View row, @NonNull DownloadEntity item, int trackAlpha) {
         TextView title = row.findViewById(R.id.active_download_title);
         TextView percent = row.findViewById(R.id.active_download_percent);
-        com.google.android.material.progressindicator.LinearProgressIndicator bar =
-                row.findViewById(R.id.active_download_bar);
+        LinearProgressIndicator bar = row.findViewById(R.id.active_download_bar);
         // Track colour: theme attr + alpha can't be combined in XML,
         // and the M3 default (colorSecondary, yellow in Firedown's
         // palette) fights the orange surface. Pin the track to
@@ -594,7 +591,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         if (queued) {
             percent.setText(R.string.download_queued);
         } else if (live) {
-            percent.setText(com.solarized.firedown.utils.Utils.readableFileSize(item.getFileSize()));
+            percent.setText(Utils.readableFileSize(item.getFileSize()));
         } else {
             int pct = item.getFileProgress();
             bar.setProgress(pct);
@@ -792,14 +789,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         GeckoState geckoState = new GeckoState(new GeckoStateEntity(true));
         Log.d(TAG, "addNewTab: created home tab id=" + geckoState.getEntityId());
         mGeckoStateViewModel.setGeckoState(geckoState, true);
-    }
-
-    private void addIncognitoTab() {
-        GeckoState geckoState = new GeckoState(new GeckoStateEntity(true));
-        geckoState.setEntityIncognito(true);
-        Log.d(TAG, "addIncognitoTab: created home tab id=" + geckoState.getEntityId());
-
-        //mGeckoStateViewModel.setGeckoState(geckoState, true);
     }
 
 
