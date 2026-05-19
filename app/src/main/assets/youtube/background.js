@@ -2429,6 +2429,15 @@ const pendingPoTokenRequests = new Map(); // requestId → { resolve, reject, ti
 // Set by ensurePoTokenTab, resolved by onMessage listener.
 let poTokenReadyResolve = null;
 
+// Coalesces concurrent ensurePoTokenTab() calls. When a tab init is in
+// flight, any other caller (e.g. the pre-warm racing the user's first
+// download) awaits this promise instead of starting a competing init
+// that would ping a still-loading tab, get 'Could not establish
+// connection' from the not-yet-injected content script, mistake the
+// half-built tab for dead, and remove it — destroying the original
+// init in progress.
+let poTokenInitPromise = null;
+
 // ---- PO Token Cache ----
 // A successfully minted PO token is reused across videos for the same visitor
 // session. The BotGuard minter in content.js caches for 5 hours; the minted
@@ -2488,10 +2497,25 @@ function removePoTokenTab(tabId) {
 }
 
 async function ensurePoTokenTab() {
+    // If another caller is already initialising a tab, share their promise
+    // instead of starting a competing init. Crucial: without this the
+    // pre-warm fires ~3s after [Init] and the user's first-download mint
+    // fires within ~1s of [Init], so both end up calling ensurePoTokenTab
+    // concurrently. The second call would see poTokenTabId already set
+    // (by the first), try to ping a tab whose content script hasn't yet
+    // loaded, get 'Could not establish connection', remove the tab, then
+    // create its own — destroying the first caller's in-flight init.
+    if (poTokenInitPromise) {
+        console.log('[PoToken] init already in flight — coalescing');
+        return await poTokenInitPromise;
+    }
+
     const ensureStart = Date.now();
-    // Fast path: tab already alive — verify content script is still responsive.
-    // tabs.get succeeds even when GeckoView has torn down the window (tab exists
-    // but page context is dead), so we probe with a ping message instead.
+    // Fast path: tab already alive AND past init — verify content script
+    // is still responsive. The ping is only safe to send to a tab whose
+    // content script has signalled ready (otherwise we get the false
+    // 'connection refused' that we just guarded against above via the
+    // init-in-flight check).
     if (poTokenTabId) {
         try {
             await browser.tabs.sendMessage(poTokenTabId, { type: 'ping' });
@@ -2504,6 +2528,19 @@ async function ensurePoTokenTab() {
         }
     }
 
+    // Start a fresh init under the coalescing lock. Any caller that arrives
+    // while this promise is pending will await it above instead of racing.
+    poTokenInitPromise = (async () => {
+        try {
+            return await createPoTokenTabLocked(ensureStart);
+        } finally {
+            poTokenInitPromise = null;
+        }
+    })();
+    return await poTokenInitPromise;
+}
+
+async function createPoTokenTabLocked(ensureStart) {
     // Clean up any orphaned robots.txt tabs (dead windows from previous runs)
     const existing = await browser.tabs.query({ url: '*://*.youtube.com/robots.txt' });
     if (existing.length) {
