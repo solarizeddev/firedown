@@ -417,7 +417,7 @@
     <string name="settings_drm_enabled">Activer la lecture DRM</string>
     <string name="settings_drm_enabled_summary">Autorise Widevine sur les sites nécessitant le DRM (Netflix, Spotify, …). Firedown ne peut toujours pas télécharger les contenus protégés par DRM.</string>
     <string name="settings_webrtc_enabled">Activer WebRTC</string>
-    <string name="settings_webrtc_enabled_summary">Nécessaire pour les appels P2P, peut révéler votre IP réelle</string>
+    <string name="settings_webrtc_enabled_summary">Permet les appels vidéo et audio en temps réel. Peut révéler votre IP réelle via STUN, même derrière un VPN.</string>
     <string name="settings_webassembly_enabled">Activer WebAssembly</string>
     <string name="settings_webassembly_enabled_summary">Permet aux sites d\'exécuter des modules WASM compilés. La désactivation réduit la surface d\'attaque mais peut casser certaines applications web modernes</string>
     <string name="settings_https_only_title">Mode HTTPS uniquement</string>

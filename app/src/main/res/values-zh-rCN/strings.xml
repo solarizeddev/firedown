@@ -415,7 +415,7 @@
     <string name="settings_drm_enabled">启用 DRM 播放</string>
     <string name="settings_drm_enabled_summary">允许在需要 DRM 的网站（Netflix、Spotify 等）上使用 Widevine 播放。Firedown 仍然无法下载受 DRM 保护的内容。</string>
     <string name="settings_webrtc_enabled">启用 WebRTC</string>
-    <string name="settings_webrtc_enabled_summary">P2P通话所需，可能泄露你的真实IP</string>
+    <string name="settings_webrtc_enabled_summary">启用实时视频和语音通话。即使在 VPN 后，也可能通过 STUN 暴露你的真实 IP。</string>
     <string name="settings_webassembly_enabled">启用 WebAssembly</string>
     <string name="settings_webassembly_enabled_summary">允许站点运行已编译的 WASM 模块。禁用可减少攻击面，但可能导致部分现代网页应用无法正常工作</string>
     <string name="settings_https_only_title">仅 HTTPS 模式</string>
