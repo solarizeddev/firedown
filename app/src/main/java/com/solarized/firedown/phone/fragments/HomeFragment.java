@@ -41,7 +41,6 @@ import com.solarized.firedown.data.models.BrowserURIViewModel;
 import com.solarized.firedown.data.models.GeckoStateViewModel;
 import com.solarized.firedown.data.models.IncognitoStateViewModel;
 import com.solarized.firedown.data.models.RecentDownloadsViewModel;
-import com.solarized.firedown.data.models.TaskViewModel;
 import com.solarized.firedown.geckoview.GeckoResources;
 import com.solarized.firedown.geckoview.GeckoState;
 import com.solarized.firedown.geckoview.GeckoToolbar;
@@ -78,7 +77,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     private BrowserDialogViewModel mBrowserDialogViewModel;
     private GeckoStateViewModel mGeckoStateViewModel;
     private IncognitoStateViewModel mIncognitoStateViewModel;
-    private TaskViewModel mTaskViewModel;
     private RecentDownloadsViewModel mRecentDownloadsViewModel;
     private AutoCompleteEditText mAutoCompleteEditText;
     private AutoCompleteView mAutoCompleteView;
@@ -110,7 +108,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         super.onCreate(savedInstanceState);
 
         mAutoCompleteViewModel = new ViewModelProvider(this).get(AutoCompleteViewModel.class);
-        mTaskViewModel = new ViewModelProvider(this).get(TaskViewModel.class);
         mRecentDownloadsViewModel = new ViewModelProvider(this).get(RecentDownloadsViewModel.class);
         mGeckoStateViewModel = new ViewModelProvider(mActivity).get(GeckoStateViewModel.class);
         mIncognitoStateViewModel = new ViewModelProvider(mActivity).get(IncognitoStateViewModel.class);
@@ -239,11 +236,12 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
 
         Log.d(TAG, "onViewCreated");
 
-        // Regular home shows only the regular (non-vault) download
-        // count — incognito-tab downloads stay off this badge so the
-        // public chrome doesn't advertise private activity.
-        mTaskViewModel.getRegularCount().observe(getViewLifecycleOwner(),
-                count -> mBottomNavigationBar.onBadgeCount(count));
+        // No download-count badge on the bottom bar in normal home —
+        // the active strip card above already shows what's downloading
+        // (with filenames + progress + a 3-row cap), so the red dot
+        // would signal a strict subset of what the card surfaces.
+        // BrowserFragment keeps the badge since the strip isn't
+        // visible there.
 
         mGeckoStateViewModel.getTabsCount().observe(getViewLifecycleOwner(), mObservableEntities
                 -> mBottomNavigationBar.onTabsCount(mObservableEntities));
@@ -427,8 +425,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
             } else if (Lifecycle.Event.ON_RESUME.equals(event)) {
                 Log.d(TAG, "onResume");
                 mStop = false;
-                // Badge count is updated reactively via TaskRepository.getRegularCount()
-                // which is already observed in onViewCreated — no need to poll the service.
             }
         });
 
