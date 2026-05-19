@@ -36,14 +36,14 @@
             communicates 'live, happening now' in a way a duplicated
             download icon couldn't. layout_gravity=center_vertical
             anchors the icon to the centre of whatever the content
-            column's height resolves to (header + 1–3 rows).
+            column's height resolves to (header + 1–3 rows) — stays
+            balanced regardless of row count.
         -->
         <androidx.appcompat.widget.AppCompatImageView
             android:id="@+id/active_download_icon"
             android:layout_width="24dp"
             android:layout_height="24dp"
             android:layout_gravity="center_vertical"
-            android:layout_marginBottom="16dp"
             android:contentDescription="@null"
             android:src="@drawable/ic_firedown"
             app:tint="?attr/colorOnPrimaryContainer" />

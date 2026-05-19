@@ -4,8 +4,7 @@
     android:id="@+id/address_bar_holder"
     android:layout_width="match_parent"
     android:background="?android:attr/colorBackground"
-    android:layout_height="56dp"
-    android:layout_marginBottom="2dp">
+    android:layout_height="56dp">
 
     <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/address_bar_background"
