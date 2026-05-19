@@ -598,11 +598,13 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
      * have metadata for it. Hidden otherwise (no media on screen → no
      * card on home).</p>
      *
-     * <p>Image source priority: GeckoMetaData.bitmap (album art) →
-     * iconBitmap (favicon bitmap) → Glide load of favicon URL. Title
-     * priority: metadata title → metadata album → metadata URL
-     * (domain). Subtitle is artist when present, otherwise the domain
-     * — never both, to avoid 'YouTube · youtube.com' duplication.</p>
+     * <p>Image source priority: iconBitmap (favicon bitmap) → Glide
+     * load of favicon URL — the card represents the playing tab, so
+     * the tab favicon is the right identity (album art goes on the
+     * media notification, not here). Title priority: metadata title
+     * → metadata album → metadata URL (domain). Subtitle is artist
+     * when present, otherwise the domain — never both, to avoid
+     * 'YouTube · youtube.com' duplication.</p>
      */
     private void bindMediaStrip() {
         if (mHomeMediaStrip == null) return;
@@ -653,13 +655,15 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
             mHomeMediaSubtitle.setVisibility(View.GONE);
         }
 
-        // Image: prefer the bitmap (album art) Gecko already resolved
-        // for the notification; fall back to the favicon URL via Glide
-        // when the page hasn't supplied artwork.
-        android.graphics.Bitmap art = meta.getBitmap();
-        if (art == null) art = meta.getIconBitmap();
-        if (art != null) {
-            mHomeMediaIcon.setImageBitmap(art);
+        // Use the tab's favicon, not the page's MediaSession artwork —
+        // the card reads as 'tab playing in the background' and the
+        // tab's identity is its favicon. Album art looks great on the
+        // notification but here it competes with the playing tab's
+        // identity (and pages without artwork would fall through to
+        // the favicon anyway, so we'd ship two visual styles).
+        android.graphics.Bitmap favicon = meta.getIconBitmap();
+        if (favicon != null) {
+            mHomeMediaIcon.setImageBitmap(favicon);
         } else if (meta.getIcon() != null && !meta.getIcon().isEmpty()) {
             com.solarized.firedown.GlideHelper.load(meta.getIcon(), meta.getUrl(),
                     mHomeMediaIcon, new com.bumptech.glide.request.RequestOptions());
