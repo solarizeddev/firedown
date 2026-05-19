@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <dimen name="address_bar_height">44dp</dimen>
+    <dimen name="address_bar_height">48dp</dimen>
     <dimen name="address_bar_inset">16dp</dimen>
     <dimen name="address_bar_layout">56dp</dimen>
     <dimen name="address_bar_margin">8dp</dimen>
     <dimen name="address_bar_padding">16dp</dimen>
-    <dimen name="address_bar_radius">22dp</dimen>
-    <dimen name="address_bar_radius_focused">22dp</dimen>
+    <dimen name="address_bar_radius">24dp</dimen>
+    <dimen name="address_bar_radius_focused">24dp</dimen>
     <dimen name="app_bar_size">64dp</dimen>
     <dimen name="app_bar_icon_size">24dp</dimen>
     <dimen name="app_bar_fab_elevation">12dp</dimen>
