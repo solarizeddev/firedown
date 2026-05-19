@@ -155,8 +155,25 @@ public class GeckoMediaPlaybackService extends Service {
 
         Log.d(TAG, "onStartCommand action: " + action);
 
-        if (meta == null && !action.equals(IntentActions.MEDIA_STOP)) {
-            shutdown();
+        // No meta + STOP → finish tearing down cleanly. No meta on
+        // anything else is treated as 'too early, try again later' —
+        // returning without acting is safe because the next callback
+        // in the chain (onMetaData / onPositionChange) will start us
+        // again with a populated map. Calling shutdown() here was
+        // racing the very first onPlay after a fresh tab activation:
+        // onActivated populated mMetaMap but an earlier onDeactivated
+        // between page loads could have wiped it, so onPlay's
+        // service-start arrived with a null meta and the service
+        // killed itself — no notification until the user paused and
+        // played again. The controller now lazy-seeds the entry in
+        // onMediaPlay, but keeping this side defensive avoids the
+        // 'one missing intent destroys the service' failure mode.
+        if (meta == null) {
+            if (action.equals(IntentActions.MEDIA_STOP)) {
+                shutdown();
+            } else {
+                Log.w(TAG, "onStartCommand: meta=null for " + action + " — deferring");
+            }
             return START_NOT_STICKY;
         }
 

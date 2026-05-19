@@ -238,14 +238,7 @@ public class GeckoMediaController {
 
         Log.d(TAG, "onActivated sessionId: " + sessionId);
 
-        if (!mMetaMap.containsKey(sessionId)) {
-            GeckoMetaData meta = new GeckoMetaData();
-            meta.setUrl(WebUtils.getDomainName(geckoState.getEntityUri()));
-            meta.setTitle(geckoState.getEntityTitle());
-            meta.setSessionId(sessionId);
-            meta.setIcon(geckoState.getEntityIcon());
-            mMetaMap.put(sessionId, meta);
-        }
+        ensureMetaExists(sessionId, geckoState);
 
         boolean isNew = !mSessionMap.containsKey(sessionId);
         ensureSessionExists(mediaSession, sessionId);
@@ -270,6 +263,7 @@ public class GeckoMediaController {
         int sessionId = geckoState.getEntityId();
         boolean isNew = !mSessionMap.containsKey(sessionId);
         ensureSessionExists(mediaSession, sessionId);
+        ensureMetaExists(sessionId, geckoState);
         mPlayingSessionIds.add(sessionId);
         mCurrentSessionId = sessionId;
         if (isNew) {
@@ -393,6 +387,27 @@ public class GeckoMediaController {
         // computed isNew via containsKey before calling, so a concurrent winner
         // here just means we drop the loser's GeckoMediaSession instance.
         mSessionMap.putIfAbsent(id, new GeckoMediaSession(session, id));
+    }
+
+    /**
+     * Lazy-creates a {@link GeckoMetaData} entry seeded from the
+     * GeckoState (URL, title, favicon) when nothing has been mapped
+     * for this session yet. Critical for {@link #onMediaPlay} — when
+     * onPlay fires before onActivated (or onActivated's earlier entry
+     * was wiped by an onDeactivated between page transitions), the
+     * playback service reads {@link #getGeckoMetaData()} and would
+     * see null, then shut itself down, never showing the
+     * notification. Seeding here guarantees a meta entry exists by
+     * the time the service's onStartCommand reads from the map.
+     */
+    private void ensureMetaExists(int sessionId, GeckoState geckoState) {
+        if (mMetaMap.containsKey(sessionId)) return;
+        GeckoMetaData meta = new GeckoMetaData();
+        meta.setUrl(WebUtils.getDomainName(geckoState.getEntityUri()));
+        meta.setTitle(geckoState.getEntityTitle());
+        meta.setSessionId(sessionId);
+        meta.setIcon(geckoState.getEntityIcon());
+        mMetaMap.put(sessionId, meta);
     }
 
     private void executeOnCurrent(MediaAction action) {
