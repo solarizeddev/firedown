@@ -88,7 +88,7 @@
     <color name="incognito_surface_container">#FF402167</color>
     <color name="incognito_surface_container_low">#FF6D3D94</color>
     <color name="incognito_surface_container_high">#FF4a2779</color>
-    <color name="incognito_surface_container_highest">#FF3f2167</color>
+    <color name="incognito_surface_container_highest">#FF553090</color>
     <color name="incognito_surface_container_lowest">#FF0D0E10</color>
 
     <!-- Background -->
