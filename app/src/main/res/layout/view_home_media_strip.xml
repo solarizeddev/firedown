@@ -36,29 +36,19 @@
         android:paddingVertical="14dp">
 
         <!--
-            Favicon / album art tile. Rounded square matches the
-            Pinned-bookmarks favicon tile shape that we used earlier
-            in this branch — visual consistency for 'a site shown on
-            home'. Background tonal tile unifies favicon shapes the
-            same way the bookmark list does.
+            Favicon / album art. 24dp matches the leading icon size on
+            every other home card (active download flame, recent
+            downloads arrow, vault lock) so the text column starts at
+            the same x across cards. Dropped the surrounding tonal
+            tile — at 24dp it added more visual noise than it removed,
+            and favicons render cleanly on secondaryContainer.
         -->
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            app:cardBackgroundColor="?attr/colorSurfaceContainerHighest"
-            app:cardCornerRadius="10dp"
-            app:cardElevation="0dp"
-            app:strokeWidth="0dp">
-
-            <androidx.appcompat.widget.AppCompatImageView
-                android:id="@+id/home_media_icon"
-                android:layout_width="22dp"
-                android:layout_height="22dp"
-                android:layout_gravity="center"
-                android:contentDescription="@null"
-                android:scaleType="fitCenter" />
-
-        </com.google.android.material.card.MaterialCardView>
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/home_media_icon"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:contentDescription="@null"
+            android:scaleType="fitCenter" />
 
         <LinearLayout
             android:layout_width="0dp"

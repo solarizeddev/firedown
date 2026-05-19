@@ -21,6 +21,20 @@
             android:layout_gravity="top"
             app:enableHome="true" />
 
+        <!--
+            Hairline below the toolbar. The toolbar is taller than the
+            visible pill (12dp of breathing room above the pill for
+            the status-bar inset) so the eye picks the pill bottom as
+            the toolbar's end and the 12dp gap to the first card reads
+            as 'much bigger' than the 12dp between cards. The divider
+            anchors the eye to the toolbar's actual bottom — gaps
+            then read uniformly.
+        -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="?attr/colorOutlineVariant" />
+
     </com.google.android.material.appbar.AppBarLayout>
 
 
