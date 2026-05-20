@@ -57,7 +57,12 @@
                     app:popupTheme="@style/Theme.FireDown.Popup"
                     app:title="@string/navigation_tabs" />
 
-                <!-- Material3 Segmented Button -->
+                <!-- Material3 Segmented Button. cornerRadius=100dp on
+                     the child buttons gives the group its pill ends;
+                     innerCornerRadius=0dp on the group flattens the
+                     shared divider so the two buttons don't pinch
+                     inward into a bowtie. Needs Material library
+                     1.10+ (we're on 1.14). -->
                 <com.google.android.material.button.MaterialButtonToggleGroup
                     android:id="@+id/tab_mode_toggle"
                     android:layout_width="match_parent"
@@ -68,7 +73,8 @@
                     android:layout_marginBottom="8dp"
                     app:singleSelection="true"
                     app:selectionRequired="true"
-                    app:checkedButton="@id/btn_regular_tabs">
+                    app:checkedButton="@id/btn_regular_tabs"
+                    app:innerCornerRadius="0dp">
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btn_regular_tabs"
