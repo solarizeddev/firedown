@@ -153,7 +153,7 @@
              the value just guarantees a full pill regardless of
              Material's default button height. Matches the chips on
              Downloads / BrowserOptions for visual consistency. -->
-        <item name="cornerRadius">100dp</item>
+        <item name="cornerRadius">16dp</item>
     </style>
 
 

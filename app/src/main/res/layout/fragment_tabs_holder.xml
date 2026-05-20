@@ -73,8 +73,7 @@
                     android:layout_marginBottom="8dp"
                     app:singleSelection="true"
                     app:selectionRequired="true"
-                    app:checkedButton="@id/btn_regular_tabs"
-                    app:innerCornerRadius="0dp">
+                    app:checkedButton="@id/btn_regular_tabs">
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btn_regular_tabs"
