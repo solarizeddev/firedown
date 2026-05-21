@@ -5,20 +5,21 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.FragmentManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.button.MaterialButton;
 import com.solarized.firedown.R;
 import com.solarized.firedown.geckoview.GeckoRuntimeHelper;
 import com.solarized.firedown.geckoview.GeckoUblockHelper;
 import com.solarized.firedown.geckoview.GeckoUblockHelper.Category;
-import com.solarized.firedown.geckoview.GeckoUblockHelper.HostCount;
 import com.solarized.firedown.phone.SettingsActivity;
+import com.solarized.firedown.ui.adapters.TopTrackersAdapter;
 import com.solarized.firedown.utils.Utils;
 
 import java.text.NumberFormat;
@@ -95,9 +96,16 @@ public class TrackersInfoSheet extends BaseBottomSheetDialogFragment {
         TextView framesView  = view.findViewById(R.id.trackers_info_breakdown_frames);
         TextView otherView   = view.findViewById(R.id.trackers_info_breakdown_other);
         View topTrackersHdr  = view.findViewById(R.id.trackers_info_top_trackers_header);
-        View topTrackersScroll = view.findViewById(R.id.trackers_info_top_trackers_scroll);
-        LinearLayout topTrackersList = view.findViewById(R.id.trackers_info_top_trackers);
+        RecyclerView topTrackersList = view.findViewById(R.id.trackers_info_top_trackers);
         MaterialButton topTrackersToggle = view.findViewById(R.id.trackers_info_top_trackers_toggle);
+
+        TopTrackersAdapter topTrackersAdapter = new TopTrackersAdapter();
+        topTrackersList.setLayoutManager(new LinearLayoutManager(view.getContext()));
+        topTrackersList.setAdapter(topTrackersAdapter);
+        // Top-N list is small and re-sorted on each push, so disable
+        // change animations to avoid the brief alpha-cross when counts
+        // tick up — keeps the rows visually steady while the user reads.
+        topTrackersList.setItemAnimator(null);
         MaterialButton action = view.findViewById(R.id.trackers_info_action);
 
         mGeckoUblockHelper.getCumulativeBlockedLive().observe(getViewLifecycleOwner(), blocked -> {
@@ -150,31 +158,18 @@ public class TrackersInfoSheet extends BaseBottomSheetDialogFragment {
         });
 
         // Top-trackers list. firedown.js sends a pre-sorted top-N
-        // payload; we just inflate one item_top_tracker row per entry
-        // into the container. Section + Clear button stay hidden until
-        // the map has at least TOP_TRACKERS_MIN_REVEAL entries so a
-        // fresh install (or the moment after a Clear) doesn't render
-        // an empty section header floating with no rows beneath it.
-        LayoutInflater inflater = LayoutInflater.from(view.getContext());
+        // payload; the adapter handles binding + diffing. Section +
+        // Clear button stay hidden until the map has at least
+        // TOP_TRACKERS_MIN_REVEAL entries so a fresh install (or the
+        // moment after a Clear) doesn't render an empty section
+        // header floating with no rows beneath it.
         mGeckoUblockHelper.getTopTrackersLive().observe(getViewLifecycleOwner(), trackers -> {
             int size = trackers == null ? 0 : trackers.size();
             boolean showSection = size >= TOP_TRACKERS_MIN_REVEAL;
             topTrackersHdr.setVisibility(showSection ? View.VISIBLE : View.GONE);
-            // Toggle visibility on the outer scroll surface so the wrapping
-            // MaxHeightNestedScrollView collapses with the list — the inner
-            // LinearLayout's size is then irrelevant for the layout pass.
-            topTrackersScroll.setVisibility(showSection ? View.VISIBLE : View.GONE);
+            topTrackersList.setVisibility(showSection ? View.VISIBLE : View.GONE);
             topTrackersToggle.setVisibility(showSection ? View.VISIBLE : View.GONE);
-
-            topTrackersList.removeAllViews();
-            if (size == 0) return;
-            NumberFormat fmt = NumberFormat.getInstance(Locale.getDefault());
-            for (HostCount hc : trackers) {
-                View row = inflater.inflate(R.layout.item_top_tracker, topTrackersList, false);
-                ((TextView) row.findViewById(R.id.top_tracker_count)).setText(fmt.format(hc.count));
-                ((TextView) row.findViewById(R.id.top_tracker_host)).setText(hc.host);
-                topTrackersList.addView(row);
-            }
+            topTrackersAdapter.submitList(trackers);
         });
 
         topTrackersToggle.setOnClickListener(v -> mGeckoRuntimeHelper.clearTopTrackers());

@@ -30,10 +30,11 @@
         <!-- width / height — e.g. 0.75 for 3:4 (taller than wide). -->
         <attr name="aspectRatio" format="float" />
     </declare-styleable>
-    <declare-styleable name="MaxHeightNestedScrollView">
-        <!-- Hard ceiling on the scroll view's measured height. When the
-             inner content exceeds this, the scroll view caps itself at
-             this value and the content scrolls internally. -->
+    <!-- Shared maxHeight attribute. Applied by any view in
+         com.solarized.firedown.ui that needs to cap its measured
+         height while keeping wrap_content semantics below the cap
+         (currently MaxHeightRecyclerView). -->
+    <declare-styleable name="MaxHeightView">
         <attr name="maxHeight" format="dimension" />
     </declare-styleable>
 

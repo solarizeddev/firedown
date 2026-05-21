@@ -22,10 +22,10 @@
 
   Sheet itself is not a scroll surface — content is laid out at
   intrinsic height under the drag handle. Only the 'Top trackers'
-  list scrolls internally (via MaxHeightNestedScrollView) when its
-  row count exceeds the cap. This keeps the bottom-sheet drag
-  gesture unambiguous and avoids gesture conflicts at the sheet
-  edges that an outer ScrollView would introduce.
+  list scrolls internally (via MaxHeightRecyclerView + LinearLayout
+  manager) when its row count exceeds the cap. This keeps the
+  bottom-sheet drag gesture unambiguous and avoids gesture conflicts
+  at the sheet edges that an outer ScrollView would introduce.
 -->
 <!--
   Outer LinearLayout is the inset sink: BaseBottomSheetDialogFragment's
@@ -308,32 +308,30 @@
             android:visibility="gone"
             tools:visibility="visible" />
 
-        <!-- Internal scroll surface for the top-trackers list. wrap_content
-             height up to app:maxHeight=180dp (≈ 5 visible rows at the
-             item_top_tracker row height); when fewer rows are bound the
-             surface sizes to fit so there's no wasted empty space, and
-             when more rows are bound the content scrolls in place
-             without the sheet itself becoming a scroll surface. The
-             180dp ceiling (down from 240dp) keeps total sheet content
-             under the expanded-state max height on typical phones so
-             the 'Manage protection' CTA at the bottom isn't clipped. -->
-        <com.solarized.firedown.ui.MaxHeightNestedScrollView
-            android:id="@+id/trackers_info_top_trackers_scroll"
+        <!-- Internal scroll surface for the top-trackers list.
+             wrap_content height up to app:maxHeight=180dp (≈ 5
+             visible rows at the item_top_tracker row height); when
+             fewer rows are bound the recycler sizes to fit so there's
+             no wasted empty space, and when more rows are bound the
+             content scrolls in place. The 180dp ceiling keeps total
+             sheet content under the expanded-state max height on
+             typical phones so the 'Manage protection' CTA at the
+             bottom isn't clipped.
+
+             Adapter (TopTrackersAdapter) + LinearLayoutManager wired
+             from TrackersInfoSheet — DiffUtil drives partial-update
+             animations when the host list reorders or counts tick up
+             between pushes. -->
+        <com.solarized.firedown.ui.MaxHeightRecyclerView
+            android:id="@+id/trackers_info_top_trackers"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:fillViewport="false"
-            android:scrollbars="none"
+            android:overScrollMode="never"
             android:visibility="gone"
             app:maxHeight="180dp"
-            tools:visibility="visible">
-
-            <LinearLayout
-                android:id="@+id/trackers_info_top_trackers"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical" />
-
-        </com.solarized.firedown.ui.MaxHeightNestedScrollView>
+            tools:itemCount="6"
+            tools:listitem="@layout/item_top_tracker"
+            tools:visibility="visible" />
 
         <!-- Clear action. Wipes the stored per-host map in one tap.
              Recording continues — disabling the feature entirely is a
