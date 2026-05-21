@@ -1001,29 +1001,45 @@ int jni_extract_bitmap (JNIEnv * env, jobject thiz, jlong stream_pos){
         av_opt_set(codec_ctx, "threads", "auto", 0);
 
         /*
-         * Decoder selection: avcodec_find_decoder() returns the first
-         * decoder registered for this codec id, which in this build is
-         * av1_mediacodec for AV1 streams (the FFmpeg fork prioritises
-         * hardware decoders for playback). MediaCodec's get_format()
-         * fails on devices without AV1 hardware ('Your platform doesn't
-         * support hardware accelerated AV1 decoding' → 'Failed to get
-         * pixel format' → null bitmap), which manifests in Glide as a
-         * missing thumbnail for downloaded YouTube AV1 streams.
+         * Decoder selection for the thumbnail path.
          *
-         * For thumbnail extraction we only need one frame, so the
-         * latency/quality tradeoff that justifies HW playback doesn't
-         * apply. Prefer libdav1d (software) when the codec is AV1 and
-         * libdav1d is available in the build; fall back to the default
-         * lookup otherwise so non-AV1 codecs are unaffected.
+         * Background: the bundled FFmpeg fork registers av1_mediacodec
+         * ahead of the software AV1 decoders so playback gets hardware
+         * acceleration by default. avcodec_find_decoder() inherits that
+         * ordering, which means thumbnailing AV1 ends up either:
+         *   - calling MediaCodec on a device with no AV1 hardware
+         *     ('Your platform doesn't support hardware accelerated AV1
+         *     decoding' → 'Failed to get pixel format' → null bitmap), or
+         *   - selecting FFmpeg's native 'av1' decoder, which is a
+         *     HWAccel-only stub (no software backend) and returns
+         *     AVERROR(ENOSYS) (-38) on the first decode call.
+         *
+         * Neither is acceptable for thumbnail extraction (one frame, HW
+         * init overhead dominates anyway). Explicitly look up the two
+         * software AV1 decoders by name in preference order:
+         *   1. libdav1d   — VideoLAN's dav1d, fast, default in stock FFmpeg
+         *   2. libaom-av1 — Google's libaom reference decoder
+         * If neither is built into this FFmpeg, give up loudly rather
+         * than falling through to a hardware decoder we know will fail —
+         * the user gets a missing-thumbnail with a meaningful logcat
+         * line instead of a confusing ENOSYS/MediaCodec error.
+         *
+         * Non-AV1 codecs go through the unmodified default lookup so
+         * H.264 / HEVC / VP9 thumbnailing keeps using whatever the
+         * fork prefers.
          */
         const AVCodec *codec = NULL;
         if (codec_ctx->codec_id == AV_CODEC_ID_AV1) {
             codec = avcodec_find_decoder_by_name("libdav1d");
             if (codec == NULL) {
-                codec = avcodec_find_decoder_by_name("av1");
+                codec = avcodec_find_decoder_by_name("libaom-av1");
             }
-        }
-        if (codec == NULL) {
+            if (codec == NULL) {
+                LOGE(2, "jni_extract_bitmap no software AV1 decoder in build (need libdav1d or libaom-av1)");
+                ret = -ERROR_FAILED_TO_DECODE_FRAME;
+                goto end;
+            }
+        } else {
             codec = avcodec_find_decoder(codec_ctx->codec_id);
         }
 
@@ -1036,7 +1052,8 @@ int jni_extract_bitmap (JNIEnv * env, jobject thiz, jlong stream_pos){
             goto end;
         }
 
-        LOGI(1, "jni_extract_bitmap avcodec_get_name(codec->id) %s:", avcodec_get_name(codec->id));
+        LOGI(1, "jni_extract_bitmap codec id=%s name=%s",
+             avcodec_get_name(codec->id), codec->name);
 
         if (avcodec_open2(codec_ctx, codec, &opts) < 0) {
             LOGE(2, "jni_extract_bitmap failed to open codec_ctx\n");
