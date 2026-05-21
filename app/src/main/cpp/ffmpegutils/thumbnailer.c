@@ -1000,7 +1000,32 @@ int jni_extract_bitmap (JNIEnv * env, jobject thiz, jlong stream_pos){
         av_opt_set_int(codec_ctx, "refcounted_frames", 0, 0);
         av_opt_set(codec_ctx, "threads", "auto", 0);
 
-        const AVCodec *codec = avcodec_find_decoder(codec_ctx->codec_id);
+        /*
+         * Decoder selection: avcodec_find_decoder() returns the first
+         * decoder registered for this codec id, which in this build is
+         * av1_mediacodec for AV1 streams (the FFmpeg fork prioritises
+         * hardware decoders for playback). MediaCodec's get_format()
+         * fails on devices without AV1 hardware ('Your platform doesn't
+         * support hardware accelerated AV1 decoding' → 'Failed to get
+         * pixel format' → null bitmap), which manifests in Glide as a
+         * missing thumbnail for downloaded YouTube AV1 streams.
+         *
+         * For thumbnail extraction we only need one frame, so the
+         * latency/quality tradeoff that justifies HW playback doesn't
+         * apply. Prefer libdav1d (software) when the codec is AV1 and
+         * libdav1d is available in the build; fall back to the default
+         * lookup otherwise so non-AV1 codecs are unaffected.
+         */
+        const AVCodec *codec = NULL;
+        if (codec_ctx->codec_id == AV_CODEC_ID_AV1) {
+            codec = avcodec_find_decoder_by_name("libdav1d");
+            if (codec == NULL) {
+                codec = avcodec_find_decoder_by_name("av1");
+            }
+        }
+        if (codec == NULL) {
+            codec = avcodec_find_decoder(codec_ctx->codec_id);
+        }
 
         if (codec == NULL) {
             LOGE(2, "jni_extract_bitmap failed to find decoder\n");
