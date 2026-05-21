@@ -482,6 +482,51 @@
         <item name="android:padding">6dp</item>
     </style>
 
+    <!-- TrackersInfoSheet top-row stat cards. Three equal tonal
+         cards sharing a colorSurfaceContainer fill (no outline, no
+         elevation) to match the home cards. Body LinearLayout
+         centres the value+label pair vertically; value is title-
+         large in colorPrimary so the three cards read as a single
+         visual unit; label is label-small in onSurfaceVariant so
+         it sits back from the number. Tabular numeric features on
+         the value text so digit columns align when stats refresh. -->
+    <style name="TrackersInfoStatCard" parent="Widget.Material3.CardView.Filled">
+        <item name="cardBackgroundColor">?attr/colorSurfaceContainer</item>
+        <item name="cardCornerRadius">12dp</item>
+        <item name="cardElevation">0dp</item>
+        <item name="strokeWidth">0dp</item>
+    </style>
+
+    <style name="TrackersInfoStatBody" parent="">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:gravity">center</item>
+        <item name="android:orientation">vertical</item>
+        <item name="android:paddingHorizontal">8dp</item>
+        <item name="android:paddingVertical">16dp</item>
+    </style>
+
+    <style name="TrackersInfoStatValue" parent="">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:fontFeatureSettings">"tnum"</item>
+        <item name="android:gravity">center</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:textAppearance">?attr/textAppearanceTitleLarge</item>
+        <item name="android:textColor">?attr/colorPrimary</item>
+    </style>
+
+    <style name="TrackersInfoStatLabel" parent="">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">4dp</item>
+        <item name="android:gravity">center</item>
+        <item name="android:maxLines">2</item>
+        <item name="android:textAppearance">?attr/textAppearanceLabelSmall</item>
+        <item name="android:textColor">?attr/colorOnSurfaceVariant</item>
+    </style>
+
     <!-- TrackersInfoSheet breakdown rows. Three styles so the four
          rows in the layout stay short and consistent; tweaking one
          updates all four. Row = horizontal LinearLayout with vertical

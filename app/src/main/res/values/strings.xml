@@ -581,6 +581,16 @@
     <string name="trackers_info_saved">~%1$s of bandwidth saved</string>
     <string name="trackers_info_today">%1$s blocked today</string>
     <string name="trackers_info_categories">Trackers · Ads · Fingerprinting · Cookie banners</string>
+    <!-- Top-row stat-card labels. Short single-noun phrases — the
+         number above carries the story, the label just titles it. -->
+    <string name="trackers_info_stat_blocked">Blocked</string>
+    <string name="trackers_info_stat_saved">Data saved</string>
+    <string name="trackers_info_stat_today">Today</string>
+    <!-- Section headers — small uppercase labels that group the
+         stat cards and the per-type breakdown into two distinct
+         sections of the sheet. -->
+    <string name="trackers_info_section_overview">Privacy report</string>
+    <string name="trackers_info_section_breakdown">Blocked by type</string>
     <!-- Per-category breakdown rows under the hero number. Counts are
          pushed from firedown.js' itype-bucketed map. Label text is a
          short noun phrase that describes the resource class; the count

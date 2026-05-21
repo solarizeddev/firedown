@@ -4,13 +4,21 @@
   ads blocked' card. Three jobs:
 
     - Make the privacy work the app does visible. The card itself
-      is a small subtitle line; this sheet shows the number big
-      and explains what it represents.
-    - Tell the user *what* is being blocked — trackers, ads,
-      cookie notices, etc. — so the metric is meaningful instead
-      of a vanity counter.
+      is a small subtitle line; this sheet shows the totals in
+      three equal stat cards (Blocked / Saved / Today) so each
+      metric stands on its own instead of fighting for hierarchy.
+    - Tell the user *what* is being blocked — broken out by
+      request type (Ads / pixels / frames / other) under a
+      'Blocked by type' header.
     - Give a single clear CTA to the surface where the user can
       adjust protection (Settings → Enhanced Tracking Protection).
+
+  Layout is intentionally data-forward: no illustration, no glyph,
+  no hero-number-with-trailing-paragraph. The three stat cards
+  carry first-look attention; the breakdown beneath gives texture.
+  Mirrors Brave's Privacy Report gestalt but uses Firedown's tonal
+  colorSurfaceContainer cards (no outlines) to match the home
+  cards' visual language.
 
   Outer LinearLayout owns the sticky drag handle; the ScrollView
   below holds the rest so content can grow past the sheet height
@@ -34,102 +42,156 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center_horizontal"
         android:orientation="vertical"
         android:paddingHorizontal="20dp"
         android:paddingTop="8dp"
         android:paddingBottom="20dp">
 
-
-        <!--
-            Brand flame on a colorPrimaryContainer chip in place of
-            the former 120dp privacy illustration. A bare 40dp shield
-            read flat and generic; the tonal chip + flame combo
-            anchors 'Firedown is protecting you' through identity
-            rather than literal iconography, and re-uses the same
-            64dp container / 32dp glyph rhythm used on the home
-            cards' leading slots so the visual language is consistent.
-            The protection semantic is carried by the sheet's title
-            and copy below, so the icon's job is character, not
-            redundant shield-imagery.
-        -->
-        <FrameLayout
-            android:layout_width="64dp"
-            android:layout_height="64dp"
-            android:layout_marginBottom="16dp"
-            android:background="@drawable/bg_circle_primary">
-
-            <androidx.appcompat.widget.AppCompatImageView
-                android:layout_width="32dp"
-                android:layout_height="32dp"
-                android:layout_gravity="center"
-                android:contentDescription="@null"
-                android:src="@drawable/ic_firedown"
-                app:tint="?attr/colorOnPrimaryContainer" />
-
-        </FrameLayout>
-
-        <!-- Big number: '12,345' or 'Protection active' placeholder
-             when zero. Adapter swaps the binding at runtime. -->
+        <!-- Section header. Small uppercase label that frames the
+             stat cards as 'Privacy Report' content. Letter-spacing
+             matches the same-style headers used on the home cards. -->
         <TextView
-            android:id="@+id/trackers_info_count"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center"
-            android:textAppearance="?attr/textAppearanceDisplaySmall"
-            android:textColor="?attr/colorPrimary"
-            tools:text="12,345" />
+            android:layout_marginBottom="12dp"
+            android:letterSpacing="0.08"
+            android:text="@string/trackers_info_section_overview"
+            android:textAllCaps="true"
+            android:textAppearance="?attr/textAppearanceLabelSmall"
+            android:textColor="?attr/colorOnSurfaceVariant" />
 
+        <!-- Zero-state message. When the cumulative count is 0
+             (fresh install, no browsing yet) the three stat cards
+             would render as '0 / 0 / 0' which reads as 'protection
+             is broken' rather than 'we haven't done anything yet'.
+             The TrackersInfoSheet swaps this visible and hides the
+             cards + breakdown below until uBlock pushes a non-zero
+             cumulative. -->
         <TextView
-            android:layout_width="wrap_content"
+            android:id="@+id/trackers_info_idle"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="20dp"
             android:gravity="center"
-            android:text="@string/trackers_info_count_label"
+            android:text="@string/home_trackers_subtitle_idle"
             android:textAppearance="?attr/textAppearanceTitleMedium"
-            android:textColor="?attr/colorOnSurface" />
+            android:textColor="?attr/colorOnSurface"
+            android:visibility="gone"
+            tools:visibility="gone" />
 
-        <!-- Estimated bytes saved — only visible when count > 0,
-             otherwise zero * 50KB is meaningless. -->
-        <TextView
-            android:id="@+id/trackers_info_saved"
-            android:layout_width="wrap_content"
+        <!-- Three equal stat cards: cumulative blocked / estimated
+             bytes saved / blocked today. weight=1 on each so they
+             share width 1:1:1; 8dp Spaces between rather than
+             card margins so the gutter doesn't accumulate at the
+             screen edges. Cards use colorSurfaceContainer fill
+             (no outline, no elevation) to match the home cards'
+             tonal style. Numbers tint colorPrimary so the three
+             read as a single visual unit; labels onSurfaceVariant
+             so they sit back. -->
+        <LinearLayout
+            android:id="@+id/trackers_info_stats_row"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:gravity="center"
-            android:textAppearance="?attr/textAppearanceBodyMedium"
+            android:orientation="horizontal"
+            android:visibility="gone"
+            tools:visibility="visible">
+
+            <com.google.android.material.card.MaterialCardView
+                style="@style/TrackersInfoStatCard"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1">
+
+                <LinearLayout style="@style/TrackersInfoStatBody">
+
+                    <TextView
+                        android:id="@+id/trackers_info_count"
+                        style="@style/TrackersInfoStatValue"
+                        tools:text="12,345" />
+
+                    <TextView
+                        style="@style/TrackersInfoStatLabel"
+                        android:text="@string/trackers_info_stat_blocked" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <Space
+                android:layout_width="8dp"
+                android:layout_height="match_parent" />
+
+            <com.google.android.material.card.MaterialCardView
+                style="@style/TrackersInfoStatCard"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1">
+
+                <LinearLayout style="@style/TrackersInfoStatBody">
+
+                    <TextView
+                        android:id="@+id/trackers_info_saved"
+                        style="@style/TrackersInfoStatValue"
+                        tools:text="580 MB" />
+
+                    <TextView
+                        style="@style/TrackersInfoStatLabel"
+                        android:text="@string/trackers_info_stat_saved" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <Space
+                android:layout_width="8dp"
+                android:layout_height="match_parent" />
+
+            <com.google.android.material.card.MaterialCardView
+                style="@style/TrackersInfoStatCard"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1">
+
+                <LinearLayout style="@style/TrackersInfoStatBody">
+
+                    <TextView
+                        android:id="@+id/trackers_info_today"
+                        style="@style/TrackersInfoStatValue"
+                        tools:text="1,234" />
+
+                    <TextView
+                        style="@style/TrackersInfoStatLabel"
+                        android:text="@string/trackers_info_stat_today" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+        </LinearLayout>
+
+        <!-- 'Blocked by type' section header — same small-uppercase
+             treatment as the overview header above so the two
+             sections read as parallel. Sits at colorOnSurfaceVariant
+             so the breakdown row labels below (also onSurfaceVariant)
+             read as a continuation, not a hierarchy break. -->
+        <TextView
+            android:id="@+id/trackers_info_breakdown_header"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:layout_marginBottom="4dp"
+            android:letterSpacing="0.08"
+            android:text="@string/trackers_info_section_breakdown"
+            android:textAllCaps="true"
+            android:textAppearance="?attr/textAppearanceLabelSmall"
             android:textColor="?attr/colorOnSurfaceVariant"
             android:visibility="gone"
-            tools:text="~580 MB of bandwidth saved"
             tools:visibility="visible" />
 
-        <!-- Today vs all-time framing — derived from the cumulative
-             counter with a midnight baseline (no per-event storage,
-             see GeckoUblockHelper). Hidden when today's count is
-             zero so the sheet doesn't render a redundant '0 today'
-             on first launch or a quiet day. -->
-        <TextView
-            android:id="@+id/trackers_info_today"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:gravity="center"
-            android:textAppearance="?attr/textAppearanceBodyMedium"
-            android:textColor="?attr/colorOnSurfaceVariant"
-            android:visibility="gone"
-            tools:text="1,234 today"
-            tools:visibility="visible" />
-
-        <!-- Per-category breakdown. Four rows (Scripts / Pixels /
+        <!-- Per-category breakdown. Four rows (Ads / Pixels /
              Frames / Other) that show what kinds of requests the
-             hero number above is composed of. Counts come from
+             stat cards above are composed of. Counts come from
              GeckoUblockHelper.getCategoryBlockedLive(); firedown.js
              buckets by fctxt.itype because uBlock's static engine
              doesn't preserve filter-list origin at runtime.
 
              Whole block hidden until the cumulative count is non-zero
-             — same trigger as the bytes-saved line above — so a
-             fresh install doesn't render four zeroes.
+             — same trigger as the stats row above — so a fresh
+             install doesn't render four zeroes.
 
              Each row is a label-and-count pair; the label hugs the
              start, the count hugs the end with a tabular numeric
@@ -138,7 +200,6 @@
             android:id="@+id/trackers_info_breakdown"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
             android:orientation="vertical"
             android:visibility="gone"
             tools:visibility="visible">
@@ -224,21 +285,6 @@
             </LinearLayout>
 
         </LinearLayout>
-
-        <!-- Categories caption — what 'blocked' actually covers, as
-             a short comma-list rather than a paragraph. 8dp gap so
-             it reads as a natural continuation of the stat block
-             above, not a floating element. Translation length is
-             bounded by 4 short nouns so it stays on one or two
-             lines in every locale. -->
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:gravity="center"
-            android:text="@string/trackers_info_categories"
-            android:textAppearance="?attr/textAppearanceBodySmall"
-            android:textColor="?attr/colorOnSurfaceVariant" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/trackers_info_action"

@@ -76,6 +76,9 @@ public class TrackersInfoSheet extends BaseBottomSheetDialogFragment {
         TextView countView = view.findViewById(R.id.trackers_info_count);
         TextView savedView = view.findViewById(R.id.trackers_info_saved);
         TextView todayView = view.findViewById(R.id.trackers_info_today);
+        View idleView      = view.findViewById(R.id.trackers_info_idle);
+        View statsRow      = view.findViewById(R.id.trackers_info_stats_row);
+        View breakdownHdr  = view.findViewById(R.id.trackers_info_breakdown_header);
         View breakdownView = view.findViewById(R.id.trackers_info_breakdown);
         TextView scriptsView = view.findViewById(R.id.trackers_info_breakdown_scripts);
         TextView pixelsView  = view.findViewById(R.id.trackers_info_breakdown_pixels);
@@ -86,23 +89,27 @@ public class TrackersInfoSheet extends BaseBottomSheetDialogFragment {
         mGeckoUblockHelper.getCumulativeBlockedLive().observe(getViewLifecycleOwner(), blocked -> {
             long n = blocked == null ? 0L : blocked;
             if (n <= 0) {
-                // Zero-state: avoid '0' as a hero number — it reads
-                // as 'protection is broken' rather than 'fresh
-                // install with no browsing yet'. Show the same
-                // 'Protection active' label the home card falls
-                // back to, hide the bytes-saved line and the
-                // breakdown rows so the sheet doesn't render four
-                // zeroes that would imply nothing is being blocked.
-                countView.setText(R.string.home_trackers_subtitle_idle);
-                savedView.setVisibility(View.GONE);
+                // Zero-state: three '0 / 0 / 0' stat cards would read
+                // as 'protection is broken' rather than 'fresh install,
+                // no browsing yet'. Hide the cards and the breakdown,
+                // surface the 'Protection active' idle line instead.
+                idleView.setVisibility(View.VISIBLE);
+                statsRow.setVisibility(View.GONE);
+                breakdownHdr.setVisibility(View.GONE);
                 breakdownView.setVisibility(View.GONE);
                 return;
             }
-            countView.setText(NumberFormat.getInstance(Locale.getDefault()).format(n));
-            savedView.setVisibility(View.VISIBLE);
-            savedView.setText(getString(R.string.trackers_info_saved,
-                    Utils.readableFileSize(n * AVG_BYTES_PER_BLOCKED_REQUEST)));
+            idleView.setVisibility(View.GONE);
+            statsRow.setVisibility(View.VISIBLE);
+            breakdownHdr.setVisibility(View.VISIBLE);
             breakdownView.setVisibility(View.VISIBLE);
+            NumberFormat fmt = NumberFormat.getInstance(Locale.getDefault());
+            countView.setText(fmt.format(n));
+            // Bytes-saved card shows the figure alone (e.g. '580 MB');
+            // the surrounding sentence in trackers_info_saved is no
+            // longer needed because the 'Data saved' label is the
+            // card's caption.
+            savedView.setText(Utils.readableFileSize(n * AVG_BYTES_PER_BLOCKED_REQUEST));
         });
 
         // Per-category breakdown — firedown.js buckets blocked requests
@@ -118,17 +125,14 @@ public class TrackersInfoSheet extends BaseBottomSheetDialogFragment {
             otherView  .setText(fmt.format(getOrZero(buckets, Category.OTHER)));
         });
 
-        // 'Today' line — hidden at zero so it doesn't render a redundant
-        // '0 today' on first launch or a quiet day.
+        // Today stat-card value — formatted number only, with the
+        // 'Today' caption baked into the card label. Quiet day (n=0)
+        // still renders '0' here because zeroing one card while the
+        // other two carry data is fine; the all-zero case is handled
+        // by the cumulative observer above.
         mGeckoUblockHelper.getTodayBlockedLive().observe(getViewLifecycleOwner(), today -> {
             long n = today == null ? 0L : today;
-            if (n <= 0) {
-                todayView.setVisibility(View.GONE);
-                return;
-            }
-            todayView.setVisibility(View.VISIBLE);
-            todayView.setText(getString(R.string.trackers_info_today,
-                    NumberFormat.getInstance(Locale.getDefault()).format(n)));
+            todayView.setText(NumberFormat.getInstance(Locale.getDefault()).format(n));
         });
 
         action.setOnClickListener(v -> {
