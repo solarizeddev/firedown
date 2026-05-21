@@ -584,8 +584,13 @@
     <!-- Per-category breakdown rows under the hero number. Counts are
          pushed from firedown.js' itype-bucketed map. Label text is a
          short noun phrase that describes the resource class; the count
-         appears in a second TextView to its right. -->
-    <string name="trackers_info_breakdown_scripts">Scripts</string>
+         appears in a second TextView to its right. The 'scripts' bucket
+         counts SCRIPT and INLINE_SCRIPT itype blocks — in practice these
+         are almost entirely ad-tech, tracker libraries and analytics
+         payloads, so it's labelled 'Ads' for the user-facing mental
+         model. The string key keeps the 'scripts' suffix because the
+         data wire format and Java enum still call it scripts. -->
+    <string name="trackers_info_breakdown_scripts">Ads</string>
     <string name="trackers_info_breakdown_pixels">Pixels and beacons</string>
     <string name="trackers_info_breakdown_frames">Embedded frames</string>
     <string name="trackers_info_breakdown_other">Other requests</string>
