@@ -33,26 +33,23 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:paddingHorizontal="20dp"
+    android:paddingHorizontal="24dp"
     android:paddingBottom="20dp">
 
     <include layout="@layout/dialog_drag_handle" />
 
-        <!-- Sheet title. Centered TitleLarge, no uppercase — this is
-             the framing for the entire sheet, distinct from the small
-             uppercase sub-section labels below ('Blocked by type',
-             'Top trackers'). The hierarchy is one title + two muted
-             sub-section dividers, so each header has a clear role
-             instead of three identically-styled labels stacking. -->
-        <TextView
+        <!-- No sheet title. The drag handle frames the surface, the
+             stat cards below are self-labelled, and the source card on
+             Home ('Trackers and ads blocked') already establishes
+             context. Skipping the title also avoids the visual /
+             linguistic loudness an extra heading would carry. -->
+
+        <!-- Breathing room between the drag handle and the first row
+             of content. 12dp puts the stat cards far enough below the
+             handle that the two don't read as a single block. -->
+        <Space
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:layout_marginBottom="20dp"
-            android:gravity="center"
-            android:text="@string/trackers_info_title"
-            android:textAppearance="?attr/textAppearanceTitleLarge"
-            android:textColor="?attr/colorOnSurface" />
+            android:layout_height="12dp" />
 
         <!-- Zero-state message. When the cumulative count is 0
              (fresh install, no browsing yet) the three stat cards
