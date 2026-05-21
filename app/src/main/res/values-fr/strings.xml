@@ -523,6 +523,15 @@
     <string name="trackers_info_count_label">traqueurs et pubs bloqués</string>
     <string name="trackers_info_saved">~%1$s de bande passante économisée</string>
     <string name="trackers_info_categories">Traqueurs · Pubs · Empreinte · Cookies</string>
+    <string name="trackers_info_breakdown_frames">Cadres intégrés</string>
+    <string name="trackers_info_breakdown_other">Autres requêtes</string>
+    <string name="trackers_info_breakdown_pixels">Pixels et balises de pistage</string>
+    <string name="trackers_info_breakdown_scripts">Publicités</string>
+    <string name="trackers_info_section_breakdown">Bloqué par type</string>
+    <string name="trackers_info_section_top_trackers">Traqueurs les plus fréquents</string>
+    <string name="trackers_info_stat_blocked">Bloqués</string>
+    <string name="trackers_info_stat_saved">Données économisées</string>
+    <string name="trackers_info_top_trackers_clear">Effacer</string>
     <string name="trackers_info_action">Gérer la protection</string>
     <string name="trackers_info_today">%1$s bloqués aujourd\'hui</string>
     <string name="home_card_style_tonal">Tonal</string>

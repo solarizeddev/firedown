@@ -303,4 +303,13 @@
     <string name="crash_sheet_copied">Đã sao chép báo cáo sự cố vào bộ nhớ tạm</string>
     <string name="crash_sheet_open_failed">Không thể mở trình duyệt. Báo cáo đã ở trong bộ nhớ tạm — dán vào một issue mới trên GitHub.</string>
 
+    <string name="trackers_info_breakdown_frames">Khung nhúng</string>
+    <string name="trackers_info_breakdown_other">Yêu cầu khác</string>
+    <string name="trackers_info_breakdown_pixels">Pixel và đèn hiệu theo dõi</string>
+    <string name="trackers_info_breakdown_scripts">Quảng cáo</string>
+    <string name="trackers_info_section_breakdown">Chặn theo loại</string>
+    <string name="trackers_info_section_top_trackers">Trình theo dõi hàng đầu</string>
+    <string name="trackers_info_stat_blocked">Đã chặn</string>
+    <string name="trackers_info_stat_saved">Dữ liệu đã lưu</string>
+    <string name="trackers_info_top_trackers_clear">Xóa</string>
 </resources>

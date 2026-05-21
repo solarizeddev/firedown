@@ -292,6 +292,15 @@
     <string name="trackers_info_count_label">бақылаушы мен жарнама бұғатталды</string>
     <string name="trackers_info_saved">~%1$s трафик үнемделді</string>
     <string name="trackers_info_categories">Бақылаушылар · Жарнамалар · Іздер · Cookie</string>
+    <string name="trackers_info_breakdown_frames">Енгізілген фреймдер</string>
+    <string name="trackers_info_breakdown_other">Басқа сұраулар</string>
+    <string name="trackers_info_breakdown_pixels">Бақылау пиксельдері мен маяктар</string>
+    <string name="trackers_info_breakdown_scripts">Жарнамалар</string>
+    <string name="trackers_info_section_breakdown">Түрі бойынша бұғатталған</string>
+    <string name="trackers_info_section_top_trackers">Үздік трекерлер</string>
+    <string name="trackers_info_stat_blocked">Бұғатталған</string>
+    <string name="trackers_info_stat_saved">Сақталған деректер</string>
+    <string name="trackers_info_top_trackers_clear">Тазалау</string>
     <string name="trackers_info_action">Қорғанысты басқару</string>
     <string name="trackers_info_today">%1$s бүгін бұғатталды</string>
     <string name="home_card_style_tonal">Тонды</string>

@@ -295,6 +295,15 @@
     <string name="trackers_info_count_label">pelacak dan iklan diblokir</string>
     <string name="trackers_info_saved">~%1$s bandwidth dihemat</string>
     <string name="trackers_info_categories">Pelacak · Iklan · Sidik jari · Cookie</string>
+    <string name="trackers_info_breakdown_frames">Bingkai tersemat</string>
+    <string name="trackers_info_breakdown_other">Permintaan lainnya</string>
+    <string name="trackers_info_breakdown_pixels">Piksel dan beacon pelacakan</string>
+    <string name="trackers_info_breakdown_scripts">Iklan</string>
+    <string name="trackers_info_section_breakdown">Diblokir berdasarkan jenis</string>
+    <string name="trackers_info_section_top_trackers">Pelacak teratas</string>
+    <string name="trackers_info_stat_blocked">Diblokir</string>
+    <string name="trackers_info_stat_saved">Data dihemat</string>
+    <string name="trackers_info_top_trackers_clear">Hapus</string>
     <string name="trackers_info_action">Kelola perlindungan</string>
     <string name="trackers_info_today">%1$s diblokir hari ini</string>
     <string name="home_card_style_tonal">Tonal</string>

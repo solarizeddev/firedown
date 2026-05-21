@@ -289,6 +289,15 @@
     <string name="trackers_info_count_label">rakningu og auglýsingar blokkað</string>
     <string name="trackers_info_saved">~%1$s af bandbreidd sparað</string>
     <string name="trackers_info_categories">Rakning · Auglýsingar · Fingrafar · Vafrakökur</string>
+    <string name="trackers_info_breakdown_frames">Innfelldir rammar</string>
+    <string name="trackers_info_breakdown_other">Aðrar beiðnir</string>
+    <string name="trackers_info_breakdown_pixels">Rakningapixlar og vitar</string>
+    <string name="trackers_info_breakdown_scripts">Auglýsingar</string>
+    <string name="trackers_info_section_breakdown">Útilokað eftir gerð</string>
+    <string name="trackers_info_section_top_trackers">Helstu rekjarar</string>
+    <string name="trackers_info_stat_blocked">Útilokað</string>
+    <string name="trackers_info_stat_saved">Gögn sparast</string>
+    <string name="trackers_info_top_trackers_clear">Hreinsa</string>
     <string name="trackers_info_action">Stjórna vörn</string>
     <string name="trackers_info_today">%1$s blokkað í dag</string>
     <string name="home_card_style_tonal">Tónal</string>

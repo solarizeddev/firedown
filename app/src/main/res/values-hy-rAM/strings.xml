@@ -85,6 +85,15 @@
     <string name="trackers_info_count_label">հետևորդ և գովազդ արգելափակվել է</string>
     <string name="trackers_info_saved">~%1$s թողունակություն խնայվել է</string>
     <string name="trackers_info_categories">Հետևորդներ · Գովազդներ · Մատնահետք · Cookie</string>
+    <string name="trackers_info_breakdown_frames">Ներդրված շրջանակներ</string>
+    <string name="trackers_info_breakdown_other">Այլ հարցումներ</string>
+    <string name="trackers_info_breakdown_pixels">Հետևման փիքսելներ և մայակներ</string>
+    <string name="trackers_info_breakdown_scripts">Գովազդներ</string>
+    <string name="trackers_info_section_breakdown">Արգելափակված ըստ տիպի</string>
+    <string name="trackers_info_section_top_trackers">Հիմնական հետևորդներ</string>
+    <string name="trackers_info_stat_blocked">Արգելափակված</string>
+    <string name="trackers_info_stat_saved">Խնայված տվյալներ</string>
+    <string name="trackers_info_top_trackers_clear">Մաքրել</string>
     <string name="trackers_info_action">Կառավարել պաշտպանությունը</string>
     <string name="trackers_info_today">%1$s այսօր արգելափակվել է</string>
     <string name="home_card_style_tonal">Տոնային</string>

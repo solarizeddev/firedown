@@ -307,6 +307,15 @@
     <string name="trackers_info_count_label">ตัวติดตามและโฆษณาถูกบล็อก</string>
     <string name="trackers_info_saved">ประหยัดแบนด์วิดท์ ~%1$s</string>
     <string name="trackers_info_categories">ตัวติดตาม · โฆษณา · ลายนิ้วมือดิจิทัล · คุกกี้</string>
+    <string name="trackers_info_breakdown_frames">เฟรมที่ฝัง</string>
+    <string name="trackers_info_breakdown_other">คำขออื่นๆ</string>
+    <string name="trackers_info_breakdown_pixels">พิกเซลและบีคอนติดตาม</string>
+    <string name="trackers_info_breakdown_scripts">โฆษณา</string>
+    <string name="trackers_info_section_breakdown">บล็อกตามประเภท</string>
+    <string name="trackers_info_section_top_trackers">ตัวติดตามยอดนิยม</string>
+    <string name="trackers_info_stat_blocked">ถูกบล็อก</string>
+    <string name="trackers_info_stat_saved">ข้อมูลที่ประหยัด</string>
+    <string name="trackers_info_top_trackers_clear">ล้าง</string>
     <string name="trackers_info_action">จัดการการป้องกัน</string>
     <string name="trackers_info_today">บล็อก %1$s รายการวันนี้</string>
     <string name="home_card_style_tonal">โทนสี</string>

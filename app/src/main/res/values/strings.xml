@@ -586,7 +586,6 @@
          number above carries the story, the label just titles it. -->
     <string name="trackers_info_stat_blocked">Blocked</string>
     <string name="trackers_info_stat_saved">Data saved</string>
-    <string name="trackers_info_stat_today">Today</string>
     <!-- Section headers — small uppercase labels that group the
          stat cards and the per-type breakdown into two distinct
          sections of the sheet. -->

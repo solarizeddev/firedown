@@ -386,6 +386,15 @@
     <string name="trackers_info_count_label">трекеров и рекламы заблокировано</string>
     <string name="trackers_info_saved">~%1$s трафика сэкономлено</string>
     <string name="trackers_info_categories">Трекеры · Реклама · Отпечатки · Cookie-баннеры</string>
+    <string name="trackers_info_breakdown_frames">Встроенные фреймы</string>
+    <string name="trackers_info_breakdown_other">Прочие запросы</string>
+    <string name="trackers_info_breakdown_pixels">Пиксели и маяки слежения</string>
+    <string name="trackers_info_breakdown_scripts">Реклама</string>
+    <string name="trackers_info_section_breakdown">Заблокировано по типу</string>
+    <string name="trackers_info_section_top_trackers">Главные трекеры</string>
+    <string name="trackers_info_stat_blocked">Заблокировано</string>
+    <string name="trackers_info_stat_saved">Сэкономлено</string>
+    <string name="trackers_info_top_trackers_clear">Очистить</string>
     <string name="trackers_info_action">Настройка защиты</string>
     <string name="trackers_info_today">%1$s заблокировано сегодня</string>
     <string name="home_card_style_tonal">Тональный</string>

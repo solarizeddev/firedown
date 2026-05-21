@@ -278,6 +278,15 @@
     <string name="trackers_info_count_label">kuzatuvchilar va reklamalar bloklandi</string>
     <string name="trackers_info_saved">~%1$s tarmoq trafigi tejaldi</string>
     <string name="trackers_info_categories">Kuzatuvchilar · Reklamalar · Izlar · Cookie</string>
+    <string name="trackers_info_breakdown_frames">Oʻrnatilgan freymlar</string>
+    <string name="trackers_info_breakdown_other">Boshqa soʻrovlar</string>
+    <string name="trackers_info_breakdown_pixels">Kuzatuv pikselari va mayoqlari</string>
+    <string name="trackers_info_breakdown_scripts">Reklamalar</string>
+    <string name="trackers_info_section_breakdown">Turi boʻyicha bloklangan</string>
+    <string name="trackers_info_section_top_trackers">Asosiy kuzatuvchilar</string>
+    <string name="trackers_info_stat_blocked">Bloklangan</string>
+    <string name="trackers_info_stat_saved">Tejalgan maʼlumotlar</string>
+    <string name="trackers_info_top_trackers_clear">Tozalash</string>
     <string name="trackers_info_action">Himoyani boshqarish</string>
     <string name="trackers_info_today">%1$s bugun bloklandi</string>
     <string name="home_card_style_tonal">Tonli</string>

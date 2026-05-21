@@ -522,6 +522,15 @@
     <string name="trackers_info_count_label">件のトラッカーと広告をブロック</string>
     <string name="trackers_info_saved">約 %1$s の帯域幅を節約</string>
     <string name="trackers_info_categories">トラッカー · 広告 · フィンガープリント · Cookie バナー</string>
+    <string name="trackers_info_breakdown_frames">埋め込みフレーム</string>
+    <string name="trackers_info_breakdown_other">その他のリクエスト</string>
+    <string name="trackers_info_breakdown_pixels">トラッキングピクセルとビーコン</string>
+    <string name="trackers_info_breakdown_scripts">広告</string>
+    <string name="trackers_info_section_breakdown">種類別ブロック</string>
+    <string name="trackers_info_section_top_trackers">主なトラッカー</string>
+    <string name="trackers_info_stat_blocked">ブロック</string>
+    <string name="trackers_info_stat_saved">節約データ</string>
+    <string name="trackers_info_top_trackers_clear">クリア</string>
     <string name="trackers_info_action">保護機能を管理</string>
     <string name="trackers_info_today">%1$s 件を本日ブロック</string>
     <string name="home_card_style_tonal">トーナル</string>

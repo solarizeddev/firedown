@@ -328,6 +328,15 @@
     <string name="trackers_info_count_label">個追蹤器與廣告已封鎖</string>
     <string name="trackers_info_saved">約節省 %1$s 流量</string>
     <string name="trackers_info_categories">追蹤器 · 廣告 · 指紋辨識 · Cookie 橫幅</string>
+    <string name="trackers_info_breakdown_frames">嵌入框架</string>
+    <string name="trackers_info_breakdown_other">其他要求</string>
+    <string name="trackers_info_breakdown_pixels">追蹤像素與信標</string>
+    <string name="trackers_info_breakdown_scripts">廣告</string>
+    <string name="trackers_info_section_breakdown">依類型封鎖</string>
+    <string name="trackers_info_section_top_trackers">主要追蹤器</string>
+    <string name="trackers_info_stat_blocked">已封鎖</string>
+    <string name="trackers_info_stat_saved">節省資料</string>
+    <string name="trackers_info_top_trackers_clear">清除</string>
     <string name="trackers_info_action">管理防護</string>
     <string name="trackers_info_today">今日已封鎖 %1$s</string>
     <string name="home_card_style_tonal">色調</string>

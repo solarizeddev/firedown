@@ -286,6 +286,15 @@
     <string name="trackers_info_count_label">tracker at ad ang na-block</string>
     <string name="trackers_info_saved">~%1$s ng bandwidth naitipid</string>
     <string name="trackers_info_categories">Tracker · Ad · Fingerprinting · Cookies</string>
+    <string name="trackers_info_breakdown_frames">Mga naka-embed na frame</string>
+    <string name="trackers_info_breakdown_other">Iba pang kahilingan</string>
+    <string name="trackers_info_breakdown_pixels">Mga pixel at beacon ng pagsubaybay</string>
+    <string name="trackers_info_breakdown_scripts">Mga ad</string>
+    <string name="trackers_info_section_breakdown">Naharang ayon sa uri</string>
+    <string name="trackers_info_section_top_trackers">Pangunahing tagasubaybay</string>
+    <string name="trackers_info_stat_blocked">Naharang</string>
+    <string name="trackers_info_stat_saved">Naipong data</string>
+    <string name="trackers_info_top_trackers_clear">Linisin</string>
     <string name="trackers_info_action">Pamahalaan ang proteksyon</string>
     <string name="trackers_info_today">%1$s na-block ngayon</string>
     <string name="home_card_style_tonal">Tonal</string>

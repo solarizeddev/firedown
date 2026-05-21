@@ -310,6 +310,15 @@
     <string name="trackers_info_count_label">тракери и реклами блокирани</string>
     <string name="trackers_info_saved">~%1$s трафик спестен</string>
     <string name="trackers_info_categories">Тракери · Реклами · Отпечатъци · Бисквитки</string>
+    <string name="trackers_info_breakdown_frames">Вградени рамки</string>
+    <string name="trackers_info_breakdown_other">Други заявки</string>
+    <string name="trackers_info_breakdown_pixels">Проследяващи пиксели и маяци</string>
+    <string name="trackers_info_breakdown_scripts">Реклами</string>
+    <string name="trackers_info_section_breakdown">Блокирано по тип</string>
+    <string name="trackers_info_section_top_trackers">Топ проследяващи</string>
+    <string name="trackers_info_stat_blocked">Блокирани</string>
+    <string name="trackers_info_stat_saved">Спестени данни</string>
+    <string name="trackers_info_top_trackers_clear">Изчистване</string>
     <string name="trackers_info_action">Управление на защитата</string>
     <string name="trackers_info_today">%1$s блокирани днес</string>
     <string name="home_card_style_tonal">Тонален</string>

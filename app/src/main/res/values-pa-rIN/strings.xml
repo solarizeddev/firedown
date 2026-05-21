@@ -277,6 +277,15 @@
     <string name="trackers_info_count_label">ٹریکرز تے اشتہار بلاک</string>
     <string name="trackers_info_saved">~%1$s بینڈوڈتھ بچ گئی</string>
     <string name="trackers_info_categories">ٹریکرز · اشتہار · فنگرپرنٹ · کوکیز</string>
+    <string name="trackers_info_breakdown_frames">ਸ਼ਾਮਲ ਫਰੇਮ</string>
+    <string name="trackers_info_breakdown_other">ਹੋਰ ਬੇਨਤੀਆਂ</string>
+    <string name="trackers_info_breakdown_pixels">ਟਰੈਕਿੰਗ ਪਿਕਸਲ ਅਤੇ ਬੀਕਨ</string>
+    <string name="trackers_info_breakdown_scripts">ਇਸ਼ਤਿਹਾਰ</string>
+    <string name="trackers_info_section_breakdown">ਕਿਸਮ ਅਨੁਸਾਰ ਬਲੌਕ ਕੀਤਾ</string>
+    <string name="trackers_info_section_top_trackers">ਮੁੱਖ ਟਰੈਕਰ</string>
+    <string name="trackers_info_stat_blocked">ਬਲੌਕ ਕੀਤਾ</string>
+    <string name="trackers_info_stat_saved">ਡੇਟਾ ਬਚਾਇਆ</string>
+    <string name="trackers_info_top_trackers_clear">ਸਾਫ਼ ਕਰੋ</string>
     <string name="trackers_info_action">تحفظ دا انتظام</string>
     <string name="trackers_info_today">%1$s اج بلاک</string>
     <string name="home_card_style_tonal">ٹونل</string>

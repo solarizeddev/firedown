@@ -292,6 +292,15 @@
     <string name="trackers_info_count_label">ტრეკერი და რეკლამა დაბლოკილია</string>
     <string name="trackers_info_saved">~%1$s გამტარუნარიანობა დაზოგა</string>
     <string name="trackers_info_categories">ტრეკერები · რეკლამები · თითის ანაბეჭდი · ქუქი ფაილები</string>
+    <string name="trackers_info_breakdown_frames">ჩაშენებული ფრეიმები</string>
+    <string name="trackers_info_breakdown_other">სხვა მოთხოვნები</string>
+    <string name="trackers_info_breakdown_pixels">თვალთვალის პიქსელები და მაიაკები</string>
+    <string name="trackers_info_breakdown_scripts">რეკლამები</string>
+    <string name="trackers_info_section_breakdown">ტიპის მიხედვით დაბლოკილი</string>
+    <string name="trackers_info_section_top_trackers">მთავარი თვალთვალები</string>
+    <string name="trackers_info_stat_blocked">დაბლოკილი</string>
+    <string name="trackers_info_stat_saved">შენახული მონაცემები</string>
+    <string name="trackers_info_top_trackers_clear">გასუფთავება</string>
     <string name="trackers_info_action">დაცვის მართვა</string>
     <string name="trackers_info_today">%1$s დღეს დაბლოკილია</string>
     <string name="home_card_style_tonal">ტონალური</string>

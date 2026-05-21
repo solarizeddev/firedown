@@ -522,6 +522,15 @@
     <string name="trackers_info_count_label">个跟踪器和广告已拦截</string>
     <string name="trackers_info_saved">约节省 %1$s 流量</string>
     <string name="trackers_info_categories">跟踪器 · 广告 · 指纹识别 · Cookie 横幅</string>
+    <string name="trackers_info_breakdown_frames">嵌入式框架</string>
+    <string name="trackers_info_breakdown_other">其他请求</string>
+    <string name="trackers_info_breakdown_pixels">跟踪像素和信标</string>
+    <string name="trackers_info_breakdown_scripts">广告</string>
+    <string name="trackers_info_section_breakdown">按类型拦截</string>
+    <string name="trackers_info_section_top_trackers">主要跟踪器</string>
+    <string name="trackers_info_stat_blocked">已拦截</string>
+    <string name="trackers_info_stat_saved">节省数据</string>
+    <string name="trackers_info_top_trackers_clear">清除</string>
     <string name="trackers_info_action">管理保护</string>
     <string name="trackers_info_today">今日已拦截 %1$s</string>
     <string name="home_card_style_tonal">色调</string>

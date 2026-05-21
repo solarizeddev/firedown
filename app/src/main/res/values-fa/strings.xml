@@ -300,6 +300,15 @@
     <string name="trackers_info_count_label">ردیاب و تبلیغ مسدود شد</string>
     <string name="trackers_info_saved">~%1$s پهنای باند صرفه‌جویی شد</string>
     <string name="trackers_info_categories">ردیاب‌ها · تبلیغات · اثر انگشت · کوکی‌ها</string>
+    <string name="trackers_info_breakdown_frames">فریم‌های جاسازی‌شده</string>
+    <string name="trackers_info_breakdown_other">سایر درخواست‌ها</string>
+    <string name="trackers_info_breakdown_pixels">پیکسل‌ها و چراغ‌های ردیابی</string>
+    <string name="trackers_info_breakdown_scripts">تبلیغات</string>
+    <string name="trackers_info_section_breakdown">مسدود شده بر اساس نوع</string>
+    <string name="trackers_info_section_top_trackers">برترین ردیاب‌ها</string>
+    <string name="trackers_info_stat_blocked">مسدود شده</string>
+    <string name="trackers_info_stat_saved">داده ذخیره‌شده</string>
+    <string name="trackers_info_top_trackers_clear">پاک کردن</string>
     <string name="trackers_info_action">مدیریت محافظت</string>
     <string name="trackers_info_today">%1$s امروز مسدود شد</string>
     <string name="home_card_style_tonal">هم‌رنگ</string>

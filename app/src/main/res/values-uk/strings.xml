@@ -327,6 +327,15 @@
     <string name="trackers_info_count_label">трекерів та реклами заблоковано</string>
     <string name="trackers_info_saved">~%1$s трафіку заощаджено</string>
     <string name="trackers_info_categories">Трекери · Реклама · Відбитки · Cookie</string>
+    <string name="trackers_info_breakdown_frames">Вбудовані фрейми</string>
+    <string name="trackers_info_breakdown_other">Інші запити</string>
+    <string name="trackers_info_breakdown_pixels">Стеження за пікселями та маяки</string>
+    <string name="trackers_info_breakdown_scripts">Реклама</string>
+    <string name="trackers_info_section_breakdown">Заблоковано за типом</string>
+    <string name="trackers_info_section_top_trackers">Найчастіші стежники</string>
+    <string name="trackers_info_stat_blocked">Заблоковано</string>
+    <string name="trackers_info_stat_saved">Заощаджено</string>
+    <string name="trackers_info_top_trackers_clear">Очистити</string>
     <string name="trackers_info_action">Налаштувати захист</string>
     <string name="trackers_info_today">%1$s заблоковано сьогодні</string>
     <string name="home_card_style_tonal">Тональний</string>

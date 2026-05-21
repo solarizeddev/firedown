@@ -293,6 +293,15 @@
     <string name="trackers_info_count_label">jarraitzaileak eta iragarkiak blokeatuta</string>
     <string name="trackers_info_saved">~%1$s banda-zabalera aurreztua</string>
     <string name="trackers_info_categories">Jarraitzaileak · Iragarkiak · Hatz-marka · Cookieak</string>
+    <string name="trackers_info_breakdown_frames">Kapsulatutako markoak</string>
+    <string name="trackers_info_breakdown_other">Beste eskaerak</string>
+    <string name="trackers_info_breakdown_pixels">Jarraipen-pixelak eta balizak</string>
+    <string name="trackers_info_breakdown_scripts">Iragarkiak</string>
+    <string name="trackers_info_section_breakdown">Motaren arabera blokeatua</string>
+    <string name="trackers_info_section_top_trackers">Jarraitzaile nagusiak</string>
+    <string name="trackers_info_stat_blocked">Blokeatuta</string>
+    <string name="trackers_info_stat_saved">Aurreztutako datuak</string>
+    <string name="trackers_info_top_trackers_clear">Garbitu</string>
     <string name="trackers_info_action">Kudeatu babesa</string>
     <string name="trackers_info_today">%1$s blokeatuta gaur</string>
     <string name="home_card_style_tonal">Tonala</string>

@@ -291,6 +291,15 @@
     <string name="trackers_info_count_label">gjurmues dhe reklama të bllokuara</string>
     <string name="trackers_info_saved">~%1$s gjerësi bande e kursyer</string>
     <string name="trackers_info_categories">Gjurmues · Reklama · Gjurmë · Cookies</string>
+    <string name="trackers_info_breakdown_frames">Korniza të integruara</string>
+    <string name="trackers_info_breakdown_other">Kërkesa të tjera</string>
+    <string name="trackers_info_breakdown_pixels">Piksele dhe sinjale gjurmimi</string>
+    <string name="trackers_info_breakdown_scripts">Reklama</string>
+    <string name="trackers_info_section_breakdown">Të bllokuara sipas llojit</string>
+    <string name="trackers_info_section_top_trackers">Gjurmuesit kryesorë</string>
+    <string name="trackers_info_stat_blocked">Bllokuar</string>
+    <string name="trackers_info_stat_saved">Të dhëna të kursyera</string>
+    <string name="trackers_info_top_trackers_clear">Pastro</string>
     <string name="trackers_info_action">Menaxho mbrojtjen</string>
     <string name="trackers_info_today">%1$s të bllokuara sot</string>
     <string name="home_card_style_tonal">Tonal</string>

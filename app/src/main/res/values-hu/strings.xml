@@ -310,6 +310,15 @@
     <string name="trackers_info_count_label">nyomkövető és hirdetés blokkolva</string>
     <string name="trackers_info_saved">~%1$s sávszélesség megtakarítva</string>
     <string name="trackers_info_categories">Nyomkövetők · Hirdetések · Ujjlenyomat · Sütik</string>
+    <string name="trackers_info_breakdown_frames">Beágyazott keretek</string>
+    <string name="trackers_info_breakdown_other">Egyéb kérések</string>
+    <string name="trackers_info_breakdown_pixels">Nyomkövető pixelek és beaconök</string>
+    <string name="trackers_info_breakdown_scripts">Hirdetések</string>
+    <string name="trackers_info_section_breakdown">Típus szerint blokkolva</string>
+    <string name="trackers_info_section_top_trackers">Leggyakoribb nyomkövetők</string>
+    <string name="trackers_info_stat_blocked">Blokkolva</string>
+    <string name="trackers_info_stat_saved">Megtakarított adat</string>
+    <string name="trackers_info_top_trackers_clear">Törlés</string>
     <string name="trackers_info_action">Védelem kezelése</string>
     <string name="trackers_info_today">%1$s blokkolva ma</string>
     <string name="home_card_style_tonal">Tónusos</string>

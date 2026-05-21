@@ -298,6 +298,15 @@
     <string name="trackers_info_count_label">ተከታታዮችና ማስታወቂያዎች ተዘግተዋል</string>
     <string name="trackers_info_saved">~%1$s የጥቅም ስፋት ተቆጥቧል</string>
     <string name="trackers_info_categories">ተከታታዮች · ማስታወቂያዎች · የጣት አሻራ · ኩኪዎች</string>
+    <string name="trackers_info_breakdown_frames">የተካተቱ ክፈፎች</string>
+    <string name="trackers_info_breakdown_other">ሌሎች ጥያቄዎች</string>
+    <string name="trackers_info_breakdown_pixels">የመከታተያ ፒክሰሎች እና ቤከኖች</string>
+    <string name="trackers_info_breakdown_scripts">ማስታወቂያዎች</string>
+    <string name="trackers_info_section_breakdown">በዓይነት የተከለከለ</string>
+    <string name="trackers_info_section_top_trackers">ምርጥ መከታተያዎች</string>
+    <string name="trackers_info_stat_blocked">የተከለከለ</string>
+    <string name="trackers_info_stat_saved">የተቀመጠ ዳታ</string>
+    <string name="trackers_info_top_trackers_clear">አጽዳ</string>
     <string name="trackers_info_action">ጥበቃ አስተዳድር</string>
     <string name="trackers_info_today">%1$s ዛሬ ተዘግተዋል</string>
     <string name="home_card_style_tonal">ቀለም</string>

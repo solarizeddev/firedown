@@ -323,6 +323,15 @@
     <string name="trackers_info_count_label">עוקבים ופרסומות נחסמו</string>
     <string name="trackers_info_saved">~%1$s רוחב פס נחסך</string>
     <string name="trackers_info_categories">עוקבים · פרסומות · טביעת אצבע · עוגיות</string>
+    <string name="trackers_info_breakdown_frames">מסגרות מוטמעות</string>
+    <string name="trackers_info_breakdown_other">בקשות אחרות</string>
+    <string name="trackers_info_breakdown_pixels">פיקסלי מעקב ומשואות</string>
+    <string name="trackers_info_breakdown_scripts">פרסומות</string>
+    <string name="trackers_info_section_breakdown">נחסם לפי סוג</string>
+    <string name="trackers_info_section_top_trackers">גששים מובילים</string>
+    <string name="trackers_info_stat_blocked">נחסם</string>
+    <string name="trackers_info_stat_saved">נתונים שנחסכו</string>
+    <string name="trackers_info_top_trackers_clear">נקה</string>
     <string name="trackers_info_action">ניהול ההגנה</string>
     <string name="trackers_info_today">%1$s נחסמו היום</string>
     <string name="home_card_style_tonal">טונאלי</string>

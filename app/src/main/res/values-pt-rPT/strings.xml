@@ -264,6 +264,15 @@
     <string name="trackers_info_count_label">rastreadores e anúncios bloqueados</string>
     <string name="trackers_info_saved">~%1$s de largura de banda economizados</string>
     <string name="trackers_info_categories">Rastreadores · Anúncios · Impressão digital · Cookies</string>
+    <string name="trackers_info_breakdown_frames">Frames incorporados</string>
+    <string name="trackers_info_breakdown_other">Outros pedidos</string>
+    <string name="trackers_info_breakdown_pixels">Pixéis e beacons de rastreio</string>
+    <string name="trackers_info_breakdown_scripts">Anúncios</string>
+    <string name="trackers_info_section_breakdown">Bloqueado por tipo</string>
+    <string name="trackers_info_section_top_trackers">Principais rastreadores</string>
+    <string name="trackers_info_stat_blocked">Bloqueados</string>
+    <string name="trackers_info_stat_saved">Dados poupados</string>
+    <string name="trackers_info_top_trackers_clear">Limpar</string>
     <string name="trackers_info_action">Gerenciar proteção</string>
     <string name="trackers_info_today">%1$s bloqueados hoje</string>
     <string name="home_card_style_tonal">Tonal</string>

@@ -321,6 +321,15 @@
     <string name="trackers_info_count_label">rastrejadors i anuncis bloquejats</string>
     <string name="trackers_info_saved">~%1$s d\'ample de banda estalviats</string>
     <string name="trackers_info_categories">Rastrejadors · Anuncis · Empremta · Galetes</string>
+    <string name="trackers_info_breakdown_frames">Marcs incrustats</string>
+    <string name="trackers_info_breakdown_other">Altres sol·licituds</string>
+    <string name="trackers_info_breakdown_pixels">Píxels de seguiment i balises</string>
+    <string name="trackers_info_breakdown_scripts">Anuncis</string>
+    <string name="trackers_info_section_breakdown">Blocat per tipus</string>
+    <string name="trackers_info_section_top_trackers">Rastrejadors principals</string>
+    <string name="trackers_info_stat_blocked">Blocat</string>
+    <string name="trackers_info_stat_saved">Dades estalviades</string>
+    <string name="trackers_info_top_trackers_clear">Esborra</string>
     <string name="trackers_info_action">Gestiona la protecció</string>
     <string name="trackers_info_today">%1$s bloquejats avui</string>
     <string name="home_card_style_tonal">Tonal</string>

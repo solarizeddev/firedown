@@ -299,6 +299,15 @@
     <string name="trackers_info_count_label">пратилаца и огласа блокирано</string>
     <string name="trackers_info_saved">~%1$s протока сачувано</string>
     <string name="trackers_info_categories">Пратиоци · Огласи · Отисци · Колачићи</string>
+    <string name="trackers_info_breakdown_frames">Уграђени оквири</string>
+    <string name="trackers_info_breakdown_other">Остали захтеви</string>
+    <string name="trackers_info_breakdown_pixels">Пиксели за праћење и фарови</string>
+    <string name="trackers_info_breakdown_scripts">Огласи</string>
+    <string name="trackers_info_section_breakdown">Блокирано по врсти</string>
+    <string name="trackers_info_section_top_trackers">Главни трагачи</string>
+    <string name="trackers_info_stat_blocked">Блокирано</string>
+    <string name="trackers_info_stat_saved">Уштеђени подаци</string>
+    <string name="trackers_info_top_trackers_clear">Обриши</string>
     <string name="trackers_info_action">Управљање заштитом</string>
     <string name="trackers_info_today">%1$s блокирано данас</string>
     <string name="home_card_style_tonal">Тонски</string>

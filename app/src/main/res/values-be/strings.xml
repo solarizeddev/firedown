@@ -290,6 +290,15 @@
     <string name="trackers_info_count_label">трэкераў і рэкламы заблакіравана</string>
     <string name="trackers_info_saved">~%1$s трафіку зэканомлена</string>
     <string name="trackers_info_categories">Трэкеры · Рэклама · Адбіткі · Cookie</string>
+    <string name="trackers_info_breakdown_frames">Убудаваныя фрэймы</string>
+    <string name="trackers_info_breakdown_other">Іншыя запыты</string>
+    <string name="trackers_info_breakdown_pixels">Адсочваючыя пікселі і маякі</string>
+    <string name="trackers_info_breakdown_scripts">Рэклама</string>
+    <string name="trackers_info_section_breakdown">Заблакіравана па тыпе</string>
+    <string name="trackers_info_section_top_trackers">Найбольш частыя трэкеры</string>
+    <string name="trackers_info_stat_blocked">Заблакіравана</string>
+    <string name="trackers_info_stat_saved">Зэканомлена</string>
+    <string name="trackers_info_top_trackers_clear">Ачысціць</string>
     <string name="trackers_info_action">Кіраваць абаронай</string>
     <string name="trackers_info_today">%1$s заблакіравана сёння</string>
     <string name="home_card_style_tonal">Танальны</string>

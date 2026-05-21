@@ -304,6 +304,15 @@
     <string name="trackers_info_count_label">sledilniki in oglasi blokirani</string>
     <string name="trackers_info_saved">~%1$s pasovne širine prihranjene</string>
     <string name="trackers_info_categories">Sledilniki · Oglasi · Prstni odtisi · Piškotki</string>
+    <string name="trackers_info_breakdown_frames">Vdelani okvirji</string>
+    <string name="trackers_info_breakdown_other">Druge zahteve</string>
+    <string name="trackers_info_breakdown_pixels">Sledilni piksli in svetilniki</string>
+    <string name="trackers_info_breakdown_scripts">Oglasi</string>
+    <string name="trackers_info_section_breakdown">Blokirano po vrsti</string>
+    <string name="trackers_info_section_top_trackers">Glavni sledilniki</string>
+    <string name="trackers_info_stat_blocked">Blokirano</string>
+    <string name="trackers_info_stat_saved">Prihranjeni podatki</string>
+    <string name="trackers_info_top_trackers_clear">Počisti</string>
     <string name="trackers_info_action">Upravljanje zaščite</string>
     <string name="trackers_info_today">%1$s blokiranih danes</string>
     <string name="home_card_style_tonal">Tonski</string>

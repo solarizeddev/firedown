@@ -367,6 +367,15 @@
     <string name="trackers_info_count_label">개의 추적기 및 광고 차단됨</string>
     <string name="trackers_info_saved">약 %1$s 의 대역폭 절약</string>
     <string name="trackers_info_categories">추적기 · 광고 · 핑거프린팅 · 쿠키 배너</string>
+    <string name="trackers_info_breakdown_frames">임베디드 프레임</string>
+    <string name="trackers_info_breakdown_other">기타 요청</string>
+    <string name="trackers_info_breakdown_pixels">추적 픽셀 및 비콘</string>
+    <string name="trackers_info_breakdown_scripts">광고</string>
+    <string name="trackers_info_section_breakdown">유형별 차단</string>
+    <string name="trackers_info_section_top_trackers">주요 추적기</string>
+    <string name="trackers_info_stat_blocked">차단됨</string>
+    <string name="trackers_info_stat_saved">절약된 데이터</string>
+    <string name="trackers_info_top_trackers_clear">지우기</string>
     <string name="trackers_info_action">보호 관리</string>
     <string name="trackers_info_today">%1$s 개 오늘 차단됨</string>
     <string name="home_card_style_tonal">토널</string>

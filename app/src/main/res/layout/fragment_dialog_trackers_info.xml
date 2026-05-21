@@ -160,7 +160,7 @@
 
                     <TextView
                         style="@style/TrackersInfoStatLabel"
-                        android:text="@string/trackers_info_stat_today" />
+                        android:text="@string/interval_today" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
         </LinearLayout>

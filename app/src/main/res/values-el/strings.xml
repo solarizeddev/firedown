@@ -310,6 +310,15 @@
     <string name="trackers_info_count_label">παρακολουθητές και διαφημίσεις αποκλείστηκαν</string>
     <string name="trackers_info_saved">~%1$s εύρους ζώνης εξοικονομήθηκε</string>
     <string name="trackers_info_categories">Παρακολούθηση · Διαφημίσεις · Δακτυλικό αποτύπωμα · Cookies</string>
+    <string name="trackers_info_breakdown_frames">Ενσωματωμένα πλαίσια</string>
+    <string name="trackers_info_breakdown_other">Άλλα αιτήματα</string>
+    <string name="trackers_info_breakdown_pixels">Pixel παρακολούθησης και beacons</string>
+    <string name="trackers_info_breakdown_scripts">Διαφημίσεις</string>
+    <string name="trackers_info_section_breakdown">Αποκλεισμός κατά τύπο</string>
+    <string name="trackers_info_section_top_trackers">Κορυφαίοι ιχνηλάτες</string>
+    <string name="trackers_info_stat_blocked">Αποκλεισμένα</string>
+    <string name="trackers_info_stat_saved">Δεδομένα που εξοικονομήθηκαν</string>
+    <string name="trackers_info_top_trackers_clear">Εκκαθάριση</string>
     <string name="trackers_info_action">Διαχείριση προστασίας</string>
     <string name="trackers_info_today">%1$s αποκλείστηκαν σήμερα</string>
     <string name="home_card_style_tonal">Τονικό</string>

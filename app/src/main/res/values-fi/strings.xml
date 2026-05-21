@@ -327,6 +327,15 @@
     <string name="trackers_info_count_label">seurantaohjelmaa ja mainosta estetty</string>
     <string name="trackers_info_saved">~%1$s kaistaa säästetty</string>
     <string name="trackers_info_categories">Seuranta · Mainokset · Sormenjälki · Evästeet</string>
+    <string name="trackers_info_breakdown_frames">Upotetut kehykset</string>
+    <string name="trackers_info_breakdown_other">Muut pyynnöt</string>
+    <string name="trackers_info_breakdown_pixels">Seurantapikselit ja majakat</string>
+    <string name="trackers_info_breakdown_scripts">Mainokset</string>
+    <string name="trackers_info_section_breakdown">Estetty tyypin mukaan</string>
+    <string name="trackers_info_section_top_trackers">Yleisimmät seurantatekniikat</string>
+    <string name="trackers_info_stat_blocked">Estetty</string>
+    <string name="trackers_info_stat_saved">Säästetty tietoa</string>
+    <string name="trackers_info_top_trackers_clear">Tyhjennä</string>
     <string name="trackers_info_action">Hallitse suojausta</string>
     <string name="trackers_info_today">%1$s estetty tänään</string>
     <string name="home_card_style_tonal">Sävyttynyt</string>

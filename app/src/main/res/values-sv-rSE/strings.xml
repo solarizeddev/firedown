@@ -88,6 +88,15 @@
     <string name="trackers_info_count_label">spårare och annonser blockerade</string>
     <string name="trackers_info_saved">~%1$s bandbredd sparad</string>
     <string name="trackers_info_categories">Spårare · Annonser · Fingeravtryck · Cookies</string>
+    <string name="trackers_info_breakdown_frames">Inbäddade ramar</string>
+    <string name="trackers_info_breakdown_other">Andra förfrågningar</string>
+    <string name="trackers_info_breakdown_pixels">Spårningspixlar och fyrar</string>
+    <string name="trackers_info_breakdown_scripts">Annonser</string>
+    <string name="trackers_info_section_breakdown">Blockerat efter typ</string>
+    <string name="trackers_info_section_top_trackers">Vanligaste spårarna</string>
+    <string name="trackers_info_stat_blocked">Blockerade</string>
+    <string name="trackers_info_stat_saved">Sparad data</string>
+    <string name="trackers_info_top_trackers_clear">Rensa</string>
     <string name="trackers_info_action">Hantera skydd</string>
     <string name="trackers_info_today">%1$s blockerade idag</string>
     <string name="home_card_style_tonal">Tonal</string>

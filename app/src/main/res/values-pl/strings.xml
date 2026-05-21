@@ -383,6 +383,15 @@
     <string name="trackers_info_count_label">trackerów i reklam zablokowanych</string>
     <string name="trackers_info_saved">~%1$s zaoszczędzonego transferu</string>
     <string name="trackers_info_categories">Trackery · Reklamy · Odciski · Ciasteczka</string>
+    <string name="trackers_info_breakdown_frames">Osadzone ramki</string>
+    <string name="trackers_info_breakdown_other">Inne żądania</string>
+    <string name="trackers_info_breakdown_pixels">Piksele śledzące i sygnalizatory</string>
+    <string name="trackers_info_breakdown_scripts">Reklamy</string>
+    <string name="trackers_info_section_breakdown">Zablokowane według typu</string>
+    <string name="trackers_info_section_top_trackers">Najczęstsze trackery</string>
+    <string name="trackers_info_stat_blocked">Zablokowane</string>
+    <string name="trackers_info_stat_saved">Zaoszczędzone dane</string>
+    <string name="trackers_info_top_trackers_clear">Wyczyść</string>
     <string name="trackers_info_action">Zarządzaj ochroną</string>
     <string name="trackers_info_today">%1$s zablokowanych dzisiaj</string>
     <string name="home_card_style_tonal">Tonalny</string>

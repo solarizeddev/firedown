@@ -340,6 +340,15 @@
     <string name="trackers_info_count_label">sledovačů a reklam zablokováno</string>
     <string name="trackers_info_saved">~%1$s šířky pásma ušetřeno</string>
     <string name="trackers_info_categories">Sledovače · Reklamy · Otisky · Cookies</string>
+    <string name="trackers_info_breakdown_frames">Vložené rámce</string>
+    <string name="trackers_info_breakdown_other">Ostatní požadavky</string>
+    <string name="trackers_info_breakdown_pixels">Sledovací pixely a majáčky</string>
+    <string name="trackers_info_breakdown_scripts">Reklamy</string>
+    <string name="trackers_info_section_breakdown">Blokováno podle typu</string>
+    <string name="trackers_info_section_top_trackers">Hlavní sledovače</string>
+    <string name="trackers_info_stat_blocked">Blokováno</string>
+    <string name="trackers_info_stat_saved">Uložená data</string>
+    <string name="trackers_info_top_trackers_clear">Vymazat</string>
     <string name="trackers_info_action">Spravovat ochranu</string>
     <string name="trackers_info_today">%1$s zablokováno dnes</string>
     <string name="home_card_style_tonal">Tónový</string>

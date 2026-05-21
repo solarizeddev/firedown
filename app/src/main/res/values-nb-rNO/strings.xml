@@ -88,6 +88,15 @@
     <string name="trackers_info_count_label">sporere og annonser blokkert</string>
     <string name="trackers_info_saved">~%1$s båndbredde spart</string>
     <string name="trackers_info_categories">Sporere · Annonser · Fingeravtrykk · Informasjonskapsler</string>
+    <string name="trackers_info_breakdown_frames">Innebygde rammer</string>
+    <string name="trackers_info_breakdown_other">Andre forespørsler</string>
+    <string name="trackers_info_breakdown_pixels">Sporingspiksler og fyrtårn</string>
+    <string name="trackers_info_breakdown_scripts">Annonser</string>
+    <string name="trackers_info_section_breakdown">Blokkert etter type</string>
+    <string name="trackers_info_section_top_trackers">Vanligste sporere</string>
+    <string name="trackers_info_stat_blocked">Blokkert</string>
+    <string name="trackers_info_stat_saved">Spart data</string>
+    <string name="trackers_info_top_trackers_clear">Tøm</string>
     <string name="trackers_info_action">Administrer beskyttelse</string>
     <string name="trackers_info_today">%1$s blokkert i dag</string>
     <string name="home_card_style_tonal">Tonal</string>

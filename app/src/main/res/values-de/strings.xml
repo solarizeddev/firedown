@@ -523,6 +523,15 @@
     <string name="trackers_info_count_label">Tracker und Werbung blockiert</string>
     <string name="trackers_info_saved">~%1$s Bandbreite gespart</string>
     <string name="trackers_info_categories">Tracker · Werbung · Fingerprinting · Cookie-Banner</string>
+    <string name="trackers_info_breakdown_frames">Eingebettete Frames</string>
+    <string name="trackers_info_breakdown_other">Andere Anfragen</string>
+    <string name="trackers_info_breakdown_pixels">Tracking-Pixel und Beacons</string>
+    <string name="trackers_info_breakdown_scripts">Werbung</string>
+    <string name="trackers_info_section_breakdown">Blockiert nach Typ</string>
+    <string name="trackers_info_section_top_trackers">Häufigste Tracker</string>
+    <string name="trackers_info_stat_blocked">Blockiert</string>
+    <string name="trackers_info_stat_saved">Daten gespart</string>
+    <string name="trackers_info_top_trackers_clear">Löschen</string>
     <string name="trackers_info_action">Schutz verwalten</string>
     <string name="trackers_info_today">%1$s heute blockiert</string>
     <string name="home_card_style_tonal">Tonal</string>

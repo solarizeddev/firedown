@@ -388,6 +388,15 @@
     <string name="trackers_info_count_label">trackers en advertenties geblokkeerd</string>
     <string name="trackers_info_saved">~%1$s aan bandbreedte bespaard</string>
     <string name="trackers_info_categories">Trackers · Advertenties · Fingerprinting · Cookies</string>
+    <string name="trackers_info_breakdown_frames">Ingesloten frames</string>
+    <string name="trackers_info_breakdown_other">Overige verzoeken</string>
+    <string name="trackers_info_breakdown_pixels">Trackingpixels en bakens</string>
+    <string name="trackers_info_breakdown_scripts">Advertenties</string>
+    <string name="trackers_info_section_breakdown">Geblokkeerd per type</string>
+    <string name="trackers_info_section_top_trackers">Voornaamste trackers</string>
+    <string name="trackers_info_stat_blocked">Geblokkeerd</string>
+    <string name="trackers_info_stat_saved">Bespaarde data</string>
+    <string name="trackers_info_top_trackers_clear">Wissen</string>
     <string name="trackers_info_action">Bescherming beheren</string>
     <string name="trackers_info_today">%1$s vandaag geblokkeerd</string>
     <string name="home_card_style_tonal">Tonaal</string>

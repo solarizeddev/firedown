@@ -283,6 +283,15 @@
     <string name="trackers_info_count_label">ට්‍රැකර් සහ දැන්වීම් අවහිර කළා</string>
     <string name="trackers_info_saved">~%1$s කලාප පළල ඉතිරි කළා</string>
     <string name="trackers_info_categories">ට්‍රැකර් · දැන්වීම් · ඇඟිලි සලකුණු · කුකීස්</string>
+    <string name="trackers_info_breakdown_frames">කාවැද්දූ රාමු</string>
+    <string name="trackers_info_breakdown_other">වෙනත් ඉල්ලීම්</string>
+    <string name="trackers_info_breakdown_pixels">ලුහුබැඳීමේ පික්සල් සහ බීකන්</string>
+    <string name="trackers_info_breakdown_scripts">වෙළඳ දැන්වීම්</string>
+    <string name="trackers_info_section_breakdown">වර්ගය අනුව අවහිර කළ</string>
+    <string name="trackers_info_section_top_trackers">ප්‍රධාන ලුහුබැඳීම්කරුවන්</string>
+    <string name="trackers_info_stat_blocked">අවහිර කළ</string>
+    <string name="trackers_info_stat_saved">සුරැකි දත්ත</string>
+    <string name="trackers_info_top_trackers_clear">හිස් කරන්න</string>
     <string name="trackers_info_action">ආරක්ෂාව කළමනාකරණය</string>
     <string name="trackers_info_today">%1$s අද අවහිර</string>
     <string name="home_card_style_tonal">තේමා</string>
