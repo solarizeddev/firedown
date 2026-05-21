@@ -14,16 +14,23 @@
     android:orientation="horizontal"
     android:paddingVertical="6dp">
 
+    <!-- Count + host share the same typography as the CertDialog
+         label/value rows: 13sp monospace at textColorPrimary. Monospace
+         makes hostname segments line up vertically across rows and
+         keeps the count column intrinsically tabular without
+         needing fontFeatureSettings tricks. Host is textIsSelectable
+         so users can long-press a row to copy a tracker domain
+         (e.g. to add to an external blocklist). -->
     <TextView
         android:id="@+id/top_tracker_count"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:fontFeatureSettings="&quot;tnum&quot;"
+        android:fontFamily="monospace"
         android:gravity="end"
         android:minWidth="48dp"
         android:paddingEnd="12dp"
-        android:textAppearance="?attr/textAppearanceBodyMedium"
-        android:textColor="?attr/colorOnSurface"
+        android:textColor="?android:attr/textColorPrimary"
+        android:textSize="13sp"
         tools:ignore="RtlSymmetry"
         tools:text="32" />
 
@@ -33,9 +40,11 @@
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:ellipsize="end"
+        android:fontFamily="monospace"
         android:maxLines="1"
-        android:textAppearance="?attr/textAppearanceBodyMedium"
-        android:textColor="?attr/colorOnSurfaceVariant"
+        android:textColor="?android:attr/textColorPrimary"
+        android:textIsSelectable="true"
+        android:textSize="13sp"
         tools:text="doubleclick.net" />
 
 </LinearLayout>
