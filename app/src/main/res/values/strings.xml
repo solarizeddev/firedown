@@ -591,7 +591,7 @@
          model. The string key keeps the 'scripts' suffix because the
          data wire format and Java enum still call it scripts. -->
     <string name="trackers_info_breakdown_scripts">Ads</string>
-    <string name="trackers_info_breakdown_pixels">Pixels and beacons</string>
+    <string name="trackers_info_breakdown_pixels">Tracking pixels and beacons</string>
     <string name="trackers_info_breakdown_frames">Embedded frames</string>
     <string name="trackers_info_breakdown_other">Other requests</string>
     <string name="trackers_info_action">Manage protection</string>
