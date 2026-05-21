@@ -30,14 +30,11 @@ import { PageStore } from './pagestore.js';
         } else if (Object.hasOwn(response, "update")) {
             updateState();
         } else if (response.clearTopTrackers === true) {
-            // Java side asked us to nuke the per-host map and disable
-            // future recording. One-tap user action from the sheet's
-            // 'Disable & clear' button.
+            // Java side asked us to wipe the per-host map. One-tap
+            // user action from the sheet's 'Clear' button. Recording
+            // continues — disabling the feature entirely is a future
+            // Settings-level control, not an in-sheet one.
             clearTrackerBlocks();
-        } else if (response.enableTopTrackers === true) {
-            // Java side asked us to re-enable recording. Map is already
-            // empty (clear flipped it false); we start fresh from zero.
-            enableTrackerRecording();
         }
     });
 
@@ -346,9 +343,9 @@ import { PageStore } from './pagestore.js';
      *     .onRemoved listeners that read tab.incognito.
      *   - Data lives in vAPI.storage.local. Never crosses the native port
      *     except as an aggregated top-N list (no full map to Java side).
-     *   - User can disable + clear in one tap from inside the sheet; that
-     *     flips trackerRecordingEnabled = false, wipes trackerBlocks, and
-     *     persists immediately. Re-enable restarts from an empty map.
+     *   - User can wipe the map in one tap from inside the sheet's 'Clear'
+     *     button. Recording itself continues — toggling the feature off
+     *     entirely is a future Settings-level control, not an in-sheet one.
      *
      * Eviction: TRACKER_MAP_CAP = 500. On overflow, drop the entry with the
      * smallest count. Approximates LFU without bookkeeping cost.
@@ -356,11 +353,9 @@ import { PageStore } from './pagestore.js';
     const TRACKER_MAP_CAP = 500;
     const TOP_TRACKERS_PUSH = 10;
     const TRACKER_STORAGE_KEY = 'firedownTrackerBlocks';
-    const TRACKER_ENABLED_STORAGE_KEY = 'firedownTrackerRecordingEnabled';
 
     const trackerBlocks = new Map();
     const incognitoTabIds = new Set();
-    let trackerRecordingEnabled = true;
     let trackerDirty = false;
 
     // Seed and maintain incognitoTabIds. The journal hook gates on
@@ -389,7 +384,6 @@ import { PageStore } from './pagestore.js';
     seedIncognitoTabs();
 
     function recordTrackerBlock(hostname) {
-        if (trackerRecordingEnabled === false) { return; }
         if (!hostname || hostname === '') { return; }
         trackerBlocks.set(hostname, (trackerBlocks.get(hostname) || 0) + 1);
         trackerDirty = true;
@@ -415,7 +409,6 @@ import { PageStore } from './pagestore.js';
         try {
             browser.runtime.sendNativeMessage("ublock", {
                 topTrackers: topTrackersList(),
-                trackerRecordingEnabled: trackerRecordingEnabled,
             });
         } catch (_) { /* port not ready */ }
     }
@@ -426,41 +419,25 @@ import { PageStore } from './pagestore.js';
         try {
             const obj = {};
             for (const [h, c] of trackerBlocks) { obj[h] = c; }
-            await vAPI.storage.set({
-                [TRACKER_STORAGE_KEY]: obj,
-                [TRACKER_ENABLED_STORAGE_KEY]: trackerRecordingEnabled,
-            });
+            await vAPI.storage.set({ [TRACKER_STORAGE_KEY]: obj });
         } catch (_) { /* best-effort */ }
     }
 
     function clearTrackerBlocks() {
         trackerBlocks.clear();
-        trackerRecordingEnabled = false;
         trackerDirty = true;
         saveTrackerState();
         pushTopTrackers();
     }
 
-    function enableTrackerRecording() {
-        if (trackerRecordingEnabled === true) { return; }
-        trackerRecordingEnabled = true;
-        trackerDirty = true;
-        saveTrackerState();
-        pushTopTrackers();
-    }
-
-    // Restore persisted state. The toggle flag defaults to true if it's
-    // never been written (matches the on-by-default contract).
-    vAPI.storage.get([TRACKER_STORAGE_KEY, TRACKER_ENABLED_STORAGE_KEY]).then(bin => {
+    // Restore persisted state.
+    vAPI.storage.get(TRACKER_STORAGE_KEY).then(bin => {
         if (bin instanceof Object) {
             const map = bin[TRACKER_STORAGE_KEY];
             if (map instanceof Object) {
                 for (const [h, c] of Object.entries(map)) {
                     if (typeof c === 'number' && c > 0) { trackerBlocks.set(h, c); }
                 }
-            }
-            if (bin[TRACKER_ENABLED_STORAGE_KEY] === false) {
-                trackerRecordingEnabled = false;
             }
         }
         pushTopTrackers();

@@ -336,12 +336,13 @@
 
         </com.solarized.firedown.ui.MaxHeightNestedScrollView>
 
-        <!-- Disable & clear toggle. Single button that doubles as the
-             enable affordance when recording is off — label flips
-             based on getTrackerRecordingEnabledLive(). Visible only
-             after the user has at least one tracker logged so the
-             control doesn't appear before there's anything to clear,
-             OR when recording is off so the 'Enable' path is reachable. -->
+        <!-- Clear action. Wipes the stored per-host map in one tap.
+             Recording continues — disabling the feature entirely is a
+             future Settings-level control, not an in-sheet one. Visible
+             only when the section above has rows to clear (size ≥
+             TOP_TRACKERS_MIN_REVEAL); a freshly-cleared section
+             collapses the button along with it until new entries
+             accumulate. -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/trackers_info_top_trackers_toggle"
             style="@style/Widget.Material3.Button.TextButton"
@@ -350,8 +351,8 @@
             android:layout_gravity="end"
             android:layout_marginTop="4dp"
             android:minWidth="0dp"
+            android:text="@string/trackers_info_top_trackers_clear"
             android:visibility="gone"
-            tools:text="Disable &amp; clear"
             tools:visibility="visible" />
 
         <com.google.android.material.button.MaterialButton

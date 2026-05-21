@@ -22,7 +22,6 @@ import com.solarized.firedown.phone.SettingsActivity;
 import com.solarized.firedown.utils.Utils;
 
 import java.text.NumberFormat;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -152,21 +151,19 @@ public class TrackersInfoSheet extends BaseBottomSheetDialogFragment {
 
         // Top-trackers list. firedown.js sends a pre-sorted top-N
         // payload; we just inflate one item_top_tracker row per entry
-        // into the container. Section header + list stay hidden until
-        // we have TOP_TRACKERS_MIN_REVEAL entries OR the user has
-        // explicitly disabled recording (so they can still reach the
-        // 'Enable' button to turn it back on).
+        // into the container. Section + Clear button stay hidden until
+        // the map has at least TOP_TRACKERS_MIN_REVEAL entries so a
+        // fresh install (or the moment after a Clear) doesn't render
+        // an empty section header floating with no rows beneath it.
         LayoutInflater inflater = LayoutInflater.from(view.getContext());
         mGeckoUblockHelper.getTopTrackersLive().observe(getViewLifecycleOwner(), trackers -> {
             int size = trackers == null ? 0 : trackers.size();
-            boolean recording = Boolean.TRUE.equals(
-                    mGeckoUblockHelper.getTrackerRecordingEnabledLive().getValue());
-            boolean showSection = size >= TOP_TRACKERS_MIN_REVEAL || recording == false;
+            boolean showSection = size >= TOP_TRACKERS_MIN_REVEAL;
             topTrackersHdr.setVisibility(showSection ? View.VISIBLE : View.GONE);
             // Toggle visibility on the outer scroll surface so the wrapping
             // MaxHeightNestedScrollView collapses with the list — the inner
             // LinearLayout's size is then irrelevant for the layout pass.
-            topTrackersScroll.setVisibility(size > 0 ? View.VISIBLE : View.GONE);
+            topTrackersScroll.setVisibility(showSection ? View.VISIBLE : View.GONE);
             topTrackersToggle.setVisibility(showSection ? View.VISIBLE : View.GONE);
 
             topTrackersList.removeAllViews();
@@ -180,30 +177,7 @@ public class TrackersInfoSheet extends BaseBottomSheetDialogFragment {
             }
         });
 
-        mGeckoUblockHelper.getTrackerRecordingEnabledLive().observe(getViewLifecycleOwner(), enabled -> {
-            boolean on = Boolean.TRUE.equals(enabled);
-            topTrackersToggle.setText(on
-                    ? R.string.trackers_info_top_trackers_disable
-                    : R.string.trackers_info_top_trackers_enable);
-            // Re-evaluate reveal state — if recording just went off the
-            // section needs to remain reachable to surface the Enable
-            // button even when the list is empty.
-            List<HostCount> current = mGeckoUblockHelper.getTopTrackersLive().getValue();
-            int size = current == null ? 0 : current.size();
-            boolean showSection = size >= TOP_TRACKERS_MIN_REVEAL || on == false;
-            topTrackersHdr.setVisibility(showSection ? View.VISIBLE : View.GONE);
-            topTrackersToggle.setVisibility(showSection ? View.VISIBLE : View.GONE);
-        });
-
-        topTrackersToggle.setOnClickListener(v -> {
-            boolean on = Boolean.TRUE.equals(
-                    mGeckoUblockHelper.getTrackerRecordingEnabledLive().getValue());
-            if (on) {
-                mGeckoRuntimeHelper.clearTopTrackers();
-            } else {
-                mGeckoRuntimeHelper.enableTopTrackers();
-            }
-        });
+        topTrackersToggle.setOnClickListener(v -> mGeckoRuntimeHelper.clearTopTrackers());
 
         action.setOnClickListener(v -> {
             startActivity(new Intent(requireContext(), SettingsActivity.class));

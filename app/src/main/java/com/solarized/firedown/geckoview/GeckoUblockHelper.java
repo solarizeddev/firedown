@@ -87,13 +87,6 @@ public class GeckoUblockHelper {
     private final MutableLiveData<List<HostCount>> mTopTrackersLive =
             new MutableLiveData<>(Collections.emptyList());
 
-    /** Whether the JS side is currently recording the per-host map. Drives
-     *  the sheet button's 'Disable & clear' ↔ 'Enable' label flip. Source
-     *  of truth is in firedown.js; the helper just relays the latest value
-     *  the extension pushes alongside the top-trackers list. */
-    private final MutableLiveData<Boolean> mTrackerRecordingEnabledLive =
-            new MutableLiveData<>(true);
-
     // Firewall activation is a global user preference — not per-mode.
     private final MutableLiveData<Boolean> mFirewallActiveLive = new MutableLiveData<>();
 
@@ -217,10 +210,6 @@ public class GeckoUblockHelper {
         return mTopTrackersLive;
     }
 
-    public LiveData<Boolean> getTrackerRecordingEnabledLive() {
-        return mTrackerRecordingEnabledLive;
-    }
-
     /**
      * Called from {@code handleUblockMessage} when firedown.js relays a
      * top-trackers payload. Format: a JSON array of {host, count} pairs
@@ -238,10 +227,6 @@ public class GeckoUblockHelper {
             next.add(new HostCount(host, count));
         }
         mTopTrackersLive.postValue(next);
-    }
-
-    public void onTrackerRecordingEnabled(boolean enabled) {
-        mTrackerRecordingEnabledLive.postValue(enabled);
     }
 
     public void onCategoryBlocked(long scripts, long pixels, long frames, long other) {
@@ -314,6 +299,5 @@ public class GeckoUblockHelper {
         mCookieNoticesBlockedLive.postValue(false);
         mCategoryBlockedLive.postValue(emptyCategoryMap());
         mTopTrackersLive.postValue(Collections.emptyList());
-        mTrackerRecordingEnabledLive.postValue(true);
     }
 }
