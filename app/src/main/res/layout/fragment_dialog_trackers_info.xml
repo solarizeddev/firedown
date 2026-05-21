@@ -101,6 +101,111 @@
             tools:text="1,234 today"
             tools:visibility="visible" />
 
+        <!-- Per-category breakdown. Four rows (Scripts / Pixels /
+             Frames / Other) that show what kinds of requests the
+             hero number above is composed of. Counts come from
+             GeckoUblockHelper.getCategoryBlockedLive(); firedown.js
+             buckets by fctxt.itype because uBlock's static engine
+             doesn't preserve filter-list origin at runtime.
+
+             Whole block hidden until the cumulative count is non-zero
+             — same trigger as the bytes-saved line above — so a
+             fresh install doesn't render four zeroes.
+
+             Each row is a label-and-count pair; the label hugs the
+             start, the count hugs the end with a tabular numeric
+             style so the digit columns line up across rows. -->
+        <LinearLayout
+            android:id="@+id/trackers_info_breakdown"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:orientation="vertical"
+            android:visibility="gone"
+            tools:visibility="visible">
+
+            <LinearLayout
+                style="@style/TrackersInfoBreakdownRow"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    style="@style/TrackersInfoBreakdownLabel"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/trackers_info_breakdown_scripts" />
+
+                <TextView
+                    android:id="@+id/trackers_info_breakdown_scripts"
+                    style="@style/TrackersInfoBreakdownCount"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    tools:text="8,421" />
+            </LinearLayout>
+
+            <LinearLayout
+                style="@style/TrackersInfoBreakdownRow"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    style="@style/TrackersInfoBreakdownLabel"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/trackers_info_breakdown_pixels" />
+
+                <TextView
+                    android:id="@+id/trackers_info_breakdown_pixels"
+                    style="@style/TrackersInfoBreakdownCount"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    tools:text="2,103" />
+            </LinearLayout>
+
+            <LinearLayout
+                style="@style/TrackersInfoBreakdownRow"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    style="@style/TrackersInfoBreakdownLabel"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/trackers_info_breakdown_frames" />
+
+                <TextView
+                    android:id="@+id/trackers_info_breakdown_frames"
+                    style="@style/TrackersInfoBreakdownCount"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    tools:text="389" />
+            </LinearLayout>
+
+            <LinearLayout
+                style="@style/TrackersInfoBreakdownRow"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    style="@style/TrackersInfoBreakdownLabel"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/trackers_info_breakdown_other" />
+
+                <TextView
+                    android:id="@+id/trackers_info_breakdown_other"
+                    style="@style/TrackersInfoBreakdownCount"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    tools:text="1,432" />
+            </LinearLayout>
+
+        </LinearLayout>
+
         <!-- Categories caption — what 'blocked' actually covers, as
              a short comma-list rather than a paragraph. 8dp gap so
              it reads as a natural continuation of the stat block

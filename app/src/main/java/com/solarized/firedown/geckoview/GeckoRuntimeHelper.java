@@ -453,6 +453,21 @@ public class GeckoRuntimeHelper {
                 mGeckoUblockHelper.onCumulativeBlocked(json.optLong("cumulativeBlocked", 0));
             }
 
+            // Per-category blocked breakdown — drives the bucketed rows
+            // under the hero number in TrackersInfoSheet. firedown.js
+            // bucketises by fctxt.itype (uBlock can't honestly bucket
+            // by source list; see the comment in firedown.js).
+            if (json.has("categoryBlocked")) {
+                JSONObject buckets = json.optJSONObject("categoryBlocked");
+                if (buckets != null) {
+                    mGeckoUblockHelper.onCategoryBlocked(
+                            buckets.optLong("scripts", 0),
+                            buckets.optLong("pixels", 0),
+                            buckets.optLong("frames", 0),
+                            buckets.optLong("other", 0));
+                }
+            }
+
             // uBlock sends a firewall state change
             if (json.has("firewall")) {
                 JSONObject firewall = json.optJSONObject("firewall");

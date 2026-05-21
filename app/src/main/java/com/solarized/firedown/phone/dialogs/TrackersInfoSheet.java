@@ -14,11 +14,13 @@ import androidx.fragment.app.FragmentManager;
 import com.google.android.material.button.MaterialButton;
 import com.solarized.firedown.R;
 import com.solarized.firedown.geckoview.GeckoUblockHelper;
+import com.solarized.firedown.geckoview.GeckoUblockHelper.Category;
 import com.solarized.firedown.phone.SettingsActivity;
 import com.solarized.firedown.utils.Utils;
 
 import java.text.NumberFormat;
 import java.util.Locale;
+import java.util.Map;
 
 import javax.inject.Inject;
 
@@ -74,6 +76,11 @@ public class TrackersInfoSheet extends BaseBottomSheetDialogFragment {
         TextView countView = view.findViewById(R.id.trackers_info_count);
         TextView savedView = view.findViewById(R.id.trackers_info_saved);
         TextView todayView = view.findViewById(R.id.trackers_info_today);
+        View breakdownView = view.findViewById(R.id.trackers_info_breakdown);
+        TextView scriptsView = view.findViewById(R.id.trackers_info_breakdown_scripts);
+        TextView pixelsView  = view.findViewById(R.id.trackers_info_breakdown_pixels);
+        TextView framesView  = view.findViewById(R.id.trackers_info_breakdown_frames);
+        TextView otherView   = view.findViewById(R.id.trackers_info_breakdown_other);
         MaterialButton action = view.findViewById(R.id.trackers_info_action);
 
         mGeckoUblockHelper.getCumulativeBlockedLive().observe(getViewLifecycleOwner(), blocked -> {
@@ -83,15 +90,32 @@ public class TrackersInfoSheet extends BaseBottomSheetDialogFragment {
                 // as 'protection is broken' rather than 'fresh
                 // install with no browsing yet'. Show the same
                 // 'Protection active' label the home card falls
-                // back to, hide the bytes-saved line.
+                // back to, hide the bytes-saved line and the
+                // breakdown rows so the sheet doesn't render four
+                // zeroes that would imply nothing is being blocked.
                 countView.setText(R.string.home_trackers_subtitle_idle);
                 savedView.setVisibility(View.GONE);
+                breakdownView.setVisibility(View.GONE);
                 return;
             }
             countView.setText(NumberFormat.getInstance(Locale.getDefault()).format(n));
             savedView.setVisibility(View.VISIBLE);
             savedView.setText(getString(R.string.trackers_info_saved,
                     Utils.readableFileSize(n * AVG_BYTES_PER_BLOCKED_REQUEST)));
+            breakdownView.setVisibility(View.VISIBLE);
+        });
+
+        // Per-category breakdown — firedown.js buckets blocked requests
+        // by fctxt.itype (script / pixel / frame / other) and pushes the
+        // four-key map. Live-observed so the rows tick up while the
+        // sheet is open if the user navigates an ad-heavy site behind it.
+        mGeckoUblockHelper.getCategoryBlockedLive().observe(getViewLifecycleOwner(), buckets -> {
+            if (buckets == null) return;
+            NumberFormat fmt = NumberFormat.getInstance(Locale.getDefault());
+            scriptsView.setText(fmt.format(getOrZero(buckets, Category.SCRIPTS)));
+            pixelsView .setText(fmt.format(getOrZero(buckets, Category.PIXELS)));
+            framesView .setText(fmt.format(getOrZero(buckets, Category.FRAMES)));
+            otherView  .setText(fmt.format(getOrZero(buckets, Category.OTHER)));
         });
 
         // 'Today' line — hidden at zero so it doesn't render a redundant
@@ -111,5 +135,10 @@ public class TrackersInfoSheet extends BaseBottomSheetDialogFragment {
             startActivity(new Intent(requireContext(), SettingsActivity.class));
             dismissAllowingStateLoss();
         });
+    }
+
+    private static long getOrZero(@NonNull Map<Category, Long> buckets, @NonNull Category key) {
+        Long v = buckets.get(key);
+        return v == null ? 0L : v;
     }
 }

@@ -481,4 +481,29 @@
         <item name="android:visibility">gone</item>
         <item name="android:padding">6dp</item>
     </style>
+
+    <!-- TrackersInfoSheet breakdown rows. Three styles so the four
+         rows in the layout stay short and consistent; tweaking one
+         updates all four. Row = horizontal LinearLayout with vertical
+         centering and a small vertical pad so successive rows breathe.
+         Label = body-medium tinted onSurfaceVariant to read as
+         secondary metadata vs the hero number above. Count = body-
+         medium on-surface with tabular numeric features so the digit
+         columns align across rows even with different glyph widths. -->
+    <style name="TrackersInfoBreakdownRow" parent="">
+        <item name="android:orientation">horizontal</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:paddingVertical">6dp</item>
+    </style>
+
+    <style name="TrackersInfoBreakdownLabel" parent="">
+        <item name="android:textAppearance">?attr/textAppearanceBodyMedium</item>
+        <item name="android:textColor">?attr/colorOnSurfaceVariant</item>
+    </style>
+
+    <style name="TrackersInfoBreakdownCount" parent="">
+        <item name="android:textAppearance">?attr/textAppearanceBodyMedium</item>
+        <item name="android:textColor">?attr/colorOnSurface</item>
+        <item name="android:fontFeatureSettings">"tnum"</item>
+    </style>
 </resources>
