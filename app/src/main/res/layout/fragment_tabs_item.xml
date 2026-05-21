@@ -88,13 +88,23 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
+            <!--
+                Touch area grown to 32dp (~5× the previous 14dp²) so
+                the close button is comfortably tappable on small
+                thumbnails. The visible glyph stays at the original
+                14dp size via 9dp padding; the borderless ripple
+                fills the full 32dp bounds so users get matching
+                visual feedback. Fits within the 36dp header band
+                set by header_guideline.
+            -->
             <androidx.appcompat.widget.AppCompatImageButton
                 android:id="@+id/tab_close"
-                android:layout_width="14dp"
-                android:layout_height="14dp"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
                 android:layout_marginEnd="@dimen/button_icons_padding"
                 android:background="?android:attr/selectableItemBackgroundBorderless"
                 android:focusable="false"
+                android:padding="9dp"
                 android:tint="?attr/colorOnSurfaceVariant"
                 app:srcCompat="@drawable/ic_baseline_close_24"
                 app:layout_constraintBottom_toTopOf="@id/header_guideline"
