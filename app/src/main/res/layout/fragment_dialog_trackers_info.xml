@@ -42,22 +42,32 @@
 
 
         <!--
-            Small shield glyph framing the hero number instead of the
-            former 120dp privacy illustration. The illustration
-            pushed the actual data below the fold on shorter screens
-            and competed with the count for first-look attention;
-            an iconographic anchor at colorPrimary tint preserves the
-            'this is your protection' read without spending vertical
-            space on decoration. 40dp ≈ the leading-icon size other
-            sheets in the app use, keeping visual rhythm consistent.
+            Brand flame on a colorPrimaryContainer chip in place of
+            the former 120dp privacy illustration. A bare 40dp shield
+            read flat and generic; the tonal chip + flame combo
+            anchors 'Firedown is protecting you' through identity
+            rather than literal iconography, and re-uses the same
+            64dp container / 32dp glyph rhythm used on the home
+            cards' leading slots so the visual language is consistent.
+            The protection semantic is carried by the sheet's title
+            and copy below, so the icon's job is character, not
+            redundant shield-imagery.
         -->
-        <ImageView
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_marginBottom="12dp"
-            android:contentDescription="@null"
-            android:src="@drawable/ic_shield_privacy_tip_24"
-            app:tint="?attr/colorPrimary" />
+        <FrameLayout
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:layout_marginBottom="16dp"
+            android:background="@drawable/bg_circle_primary">
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_gravity="center"
+                android:contentDescription="@null"
+                android:src="@drawable/ic_firedown"
+                app:tint="?attr/colorOnPrimaryContainer" />
+
+        </FrameLayout>
 
         <!-- Big number: '12,345' or 'Protection active' placeholder
              when zero. Adapter swaps the binding at runtime. -->
