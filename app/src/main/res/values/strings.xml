@@ -591,6 +591,15 @@
          sections of the sheet. -->
     <string name="trackers_info_section_overview">Privacy report</string>
     <string name="trackers_info_section_breakdown">Blocked by type</string>
+    <!-- Top-trackers section: list of the third-party hosts that have
+         been blocked most often. Recording is on by default and gated
+         per-tab on incognito (incognito blocks never enter the map).
+         The toggle button doubles as 'Disable & clear' (when on) and
+         'Enable' (when off) so users can hide / wipe the list from
+         inside the sheet without going into Settings. -->
+    <string name="trackers_info_section_top_trackers">Top trackers</string>
+    <string name="trackers_info_top_trackers_disable">Disable &amp; clear</string>
+    <string name="trackers_info_top_trackers_enable">Enable</string>
     <!-- Per-category breakdown rows under the hero number. Counts are
          pushed from firedown.js' itype-bucketed map. Label text is a
          short noun phrase that describes the resource class; the count

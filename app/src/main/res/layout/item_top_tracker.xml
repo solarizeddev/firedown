@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Single row of the 'Top trackers' list inside TrackersInfoSheet.
+  Count hugs the start (tabular numerics so digit columns align
+  down the list), hostname fills the rest with ellipsize=end. No
+  background, no ripple — the rows are not tappable in v1 to
+  match Brave's pattern.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingVertical="6dp">
+
+    <TextView
+        android:id="@+id/top_tracker_count"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFeatureSettings="&quot;tnum&quot;"
+        android:gravity="end"
+        android:minWidth="48dp"
+        android:paddingEnd="12dp"
+        android:textAppearance="?attr/textAppearanceBodyMedium"
+        android:textColor="?attr/colorOnSurface"
+        tools:ignore="RtlSymmetry"
+        tools:text="32" />
+
+    <TextView
+        android:id="@+id/top_tracker_host"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textAppearance="?attr/textAppearanceBodyMedium"
+        android:textColor="?attr/colorOnSurfaceVariant"
+        tools:text="doubleclick.net" />
+
+</LinearLayout>

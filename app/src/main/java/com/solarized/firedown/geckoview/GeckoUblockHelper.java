@@ -12,7 +12,13 @@ import androidx.preference.PreferenceManager;
 
 import dagger.hilt.android.qualifiers.ApplicationContext;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.inject.Inject;
@@ -62,6 +68,31 @@ public class GeckoUblockHelper {
 
     private final MutableLiveData<Map<Category, Long>> mCategoryBlockedLive =
             new MutableLiveData<>(emptyCategoryMap());
+
+    /** Top blocked third-party hostnames since install (or since the user
+     *  last hit 'Disable & clear' from the sheet). uBlock's firedown.js
+     *  maintains a per-host counter map, evicts at 500 entries, gates on
+     *  per-tab incognito state, and pushes the sorted top 10 over the
+     *  native port. The TrackersInfoSheet renders these as a list under
+     *  the per-type breakdown. */
+    public static final class HostCount {
+        public final String host;
+        public final long count;
+        public HostCount(String host, long count) {
+            this.host = host;
+            this.count = count;
+        }
+    }
+
+    private final MutableLiveData<List<HostCount>> mTopTrackersLive =
+            new MutableLiveData<>(Collections.emptyList());
+
+    /** Whether the JS side is currently recording the per-host map. Drives
+     *  the sheet button's 'Disable & clear' ↔ 'Enable' label flip. Source
+     *  of truth is in firedown.js; the helper just relays the latest value
+     *  the extension pushes alongside the top-trackers list. */
+    private final MutableLiveData<Boolean> mTrackerRecordingEnabledLive =
+            new MutableLiveData<>(true);
 
     // Firewall activation is a global user preference — not per-mode.
     private final MutableLiveData<Boolean> mFirewallActiveLive = new MutableLiveData<>();
@@ -182,6 +213,37 @@ public class GeckoUblockHelper {
      * values are clamped to the last good value to keep the sheet from
      * rendering nonsense if storage gets corrupted.
      */
+    public LiveData<List<HostCount>> getTopTrackersLive() {
+        return mTopTrackersLive;
+    }
+
+    public LiveData<Boolean> getTrackerRecordingEnabledLive() {
+        return mTrackerRecordingEnabledLive;
+    }
+
+    /**
+     * Called from {@code handleUblockMessage} when firedown.js relays a
+     * top-trackers payload. Format: a JSON array of {host, count} pairs
+     * already sorted descending. Entries with empty hostnames or
+     * non-positive counts are dropped defensively.
+     */
+    public void onTopTrackers(@NonNull JSONArray array) {
+        List<HostCount> next = new ArrayList<>(array.length());
+        for (int i = 0; i < array.length(); i++) {
+            JSONObject row = array.optJSONObject(i);
+            if (row == null) continue;
+            String host = row.optString("host", "");
+            long count = row.optLong("count", 0);
+            if (host.isEmpty() || count <= 0) continue;
+            next.add(new HostCount(host, count));
+        }
+        mTopTrackersLive.postValue(next);
+    }
+
+    public void onTrackerRecordingEnabled(boolean enabled) {
+        mTrackerRecordingEnabledLive.postValue(enabled);
+    }
+
     public void onCategoryBlocked(long scripts, long pixels, long frames, long other) {
         Map<Category, Long> next = emptyCategoryMap();
         next.put(Category.SCRIPTS, Math.max(0L, scripts));
@@ -251,5 +313,7 @@ public class GeckoUblockHelper {
         mFirewallActiveLive.postValue(false);
         mCookieNoticesBlockedLive.postValue(false);
         mCategoryBlockedLive.postValue(emptyCategoryMap());
+        mTopTrackersLive.postValue(Collections.emptyList());
+        mTrackerRecordingEnabledLive.postValue(true);
     }
 }

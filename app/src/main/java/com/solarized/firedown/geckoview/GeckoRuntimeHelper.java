@@ -468,6 +468,23 @@ public class GeckoRuntimeHelper {
                 }
             }
 
+            // Top-N blocked third-party hostnames + the recording-enabled
+            // toggle. firedown.js sends both keys in the same payload on
+            // its push triggers; the toggle reflects the JS-side state of
+            // trackerRecordingEnabled so the sheet button label can flip
+            // between 'Disable & clear' and 'Enable' without an extra
+            // round-trip. The host list excludes incognito tabs.
+            if (json.has("topTrackers")) {
+                JSONArray list = json.optJSONArray("topTrackers");
+                if (list != null) {
+                    mGeckoUblockHelper.onTopTrackers(list);
+                }
+            }
+            if (json.has("trackerRecordingEnabled")) {
+                mGeckoUblockHelper.onTrackerRecordingEnabled(
+                        json.optBoolean("trackerRecordingEnabled", true));
+            }
+
             // uBlock sends a firewall state change
             if (json.has("firewall")) {
                 JSONObject firewall = json.optJSONObject("firewall");
@@ -757,6 +774,38 @@ public class GeckoRuntimeHelper {
         WebExtension.Port port = mPorts.get(portName);
         if (port != null) {
             port.postMessage(message);
+        }
+    }
+
+    /**
+     * Pushes the 'Disable & clear' user action down to firedown.js. The JS
+     * side wipes the per-host map, flips trackerRecordingEnabled to false,
+     * persists, and pushes the empty list back so the sheet refreshes. No
+     * confirmation flow on either side — the action is a soft delete (the
+     * map rebuilds in seconds of browsing once re-enabled).
+     */
+    public void clearTopTrackers() {
+        try {
+            JSONObject msg = new JSONObject();
+            msg.put("clearTopTrackers", true);
+            sendPortMessage("ublock", msg);
+        } catch (JSONException e) {
+            Log.e(TAG, "clearTopTrackers error", e);
+        }
+    }
+
+    /**
+     * Flip recording back on after the user disabled it. firedown.js
+     * starts from an empty map (the disable path already cleared it) and
+     * begins accumulating from zero on the next journalProcess tick.
+     */
+    public void enableTopTrackers() {
+        try {
+            JSONObject msg = new JSONObject();
+            msg.put("enableTopTrackers", true);
+            sendPortMessage("ublock", msg);
+        } catch (JSONException e) {
+            Log.e(TAG, "enableTopTrackers error", e);
         }
     }
 

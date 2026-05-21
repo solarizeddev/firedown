@@ -286,6 +286,52 @@
 
         </LinearLayout>
 
+        <!-- Top trackers section. Hidden until the JS-side map has at
+             least three entries (firedown.js gates via the records
+             observer in TrackersInfoSheet) so a fresh install or a
+             user who just disabled+cleared doesn't see an empty
+             section header floating. Rows are inflated into the
+             container from item_top_tracker.xml at bind time. -->
+        <TextView
+            android:id="@+id/trackers_info_top_trackers_header"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:layout_marginBottom="4dp"
+            android:letterSpacing="0.08"
+            android:text="@string/trackers_info_section_top_trackers"
+            android:textAllCaps="true"
+            android:textAppearance="?attr/textAppearanceLabelSmall"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:visibility="gone"
+            tools:visibility="visible" />
+
+        <LinearLayout
+            android:id="@+id/trackers_info_top_trackers"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone"
+            tools:visibility="visible" />
+
+        <!-- Disable & clear toggle. Single button that doubles as the
+             enable affordance when recording is off — label flips
+             based on getTrackerRecordingEnabledLive(). Visible only
+             after the user has at least one tracker logged so the
+             control doesn't appear before there's anything to clear,
+             OR when recording is off so the 'Enable' path is reachable. -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/trackers_info_top_trackers_toggle"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end"
+            android:layout_marginTop="4dp"
+            android:minWidth="0dp"
+            android:visibility="gone"
+            tools:text="Disable &amp; clear"
+            tools:visibility="visible" />
+
         <com.google.android.material.button.MaterialButton
             android:id="@+id/trackers_info_action"
             style="@style/Widget.Material3.Button"
