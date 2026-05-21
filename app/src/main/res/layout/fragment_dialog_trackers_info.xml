@@ -41,14 +41,23 @@
         android:paddingBottom="20dp">
 
 
+        <!--
+            Small shield glyph framing the hero number instead of the
+            former 120dp privacy illustration. The illustration
+            pushed the actual data below the fold on shorter screens
+            and competed with the count for first-look attention;
+            an iconographic anchor at colorPrimary tint preserves the
+            'this is your protection' read without spending vertical
+            space on decoration. 40dp ≈ the leading-icon size other
+            sheets in the app use, keeping visual rhythm consistent.
+        -->
         <ImageView
-            android:layout_width="wrap_content"
-            android:layout_height="120dp"
-            android:layout_marginBottom="4dp"
-            android:adjustViewBounds="true"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginBottom="12dp"
             android:contentDescription="@null"
-            android:scaleType="fitCenter"
-            android:src="@drawable/ill_privacy_red" />
+            android:src="@drawable/ic_shield_privacy_tip_24"
+            app:tint="?attr/colorPrimary" />
 
         <!-- Big number: '12,345' or 'Protection active' placeholder
              when zero. Adapter swaps the binding at runtime. -->
