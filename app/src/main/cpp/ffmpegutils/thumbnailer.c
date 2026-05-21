@@ -1090,6 +1090,9 @@ int jni_extract_bitmap (JNIEnv * env, jobject thiz, jlong stream_pos){
 
         }
 
+        int retried_from_start = 0;
+
+        decode_loop:
         while (1) {
 
             ret = av_read_frame(thumbnail->format_ctx, packet);
@@ -1097,6 +1100,21 @@ int jni_extract_bitmap (JNIEnv * env, jobject thiz, jlong stream_pos){
             /* [FIX BUG 8] Check av_read_frame return BEFORE accessing packet fields */
             if (ret < 0) {
                 LOGI(1, "jni_extract_bitmap av_read_frame returned %d", ret);
+                /* Truncated downloads (e.g. a YouTube file stopped at 10%)
+                 * can have a moov atom that advertises full duration, so the
+                 * seek above lands past the available data and av_read_frame
+                 * returns EOF before we ever see a packet. Retry once from
+                 * the first keyframe before giving up. */
+                if (!retried_from_start && stream_pos > 0) {
+                    retried_from_start = 1;
+                    LOGI(1, "jni_extract_bitmap retrying decode from start (read EOF)");
+                    err = av_seek_frame(thumbnail->format_ctx, video_stream_index, 0, AVSEEK_FLAG_BACKWARD);
+                    if (err >= 0) {
+                        avcodec_flush_buffers(codec_ctx);
+                    }
+                    av_frame_unref(frame);
+                    goto decode_loop;
+                }
                 break;
             }
 
@@ -1106,8 +1124,22 @@ int jni_extract_bitmap (JNIEnv * env, jobject thiz, jlong stream_pos){
 
                 if((ret = utils_decode_frame(codec_ctx, frame, &got_frame, packet)) < 0 ){
                     LOGE(1, "jni_extract_bitmap decode_frame ret: %d", ret);
-                    ret = -ERROR_FAILED_TO_DECODE_FRAME;
                     av_packet_unref(packet);
+                    /* Same rationale as the EOF branch above: a mid-file
+                     * seek into truncated/corrupt data tends to return
+                     * AVERROR_INVALIDDATA on the first decoded packet.
+                     * Retry once from the first keyframe before giving up. */
+                    if (!retried_from_start && stream_pos > 0) {
+                        retried_from_start = 1;
+                        LOGI(1, "jni_extract_bitmap retrying decode from start (decode err)");
+                        err = av_seek_frame(thumbnail->format_ctx, video_stream_index, 0, AVSEEK_FLAG_BACKWARD);
+                        if (err >= 0) {
+                            avcodec_flush_buffers(codec_ctx);
+                        }
+                        av_frame_unref(frame);
+                        goto decode_loop;
+                    }
+                    ret = -ERROR_FAILED_TO_DECODE_FRAME;
                     goto end;
                 }
 
