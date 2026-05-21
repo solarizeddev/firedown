@@ -20,45 +20,39 @@
   colorSurfaceContainer cards (no outlines) to match the home
   cards' visual language.
 
-  Outer LinearLayout owns the sticky drag handle; the ScrollView
-  below holds the rest so content can grow past the sheet height
-  on small screens / landscape without clipping the handle.
+  Sheet itself is not a scroll surface — content is laid out at
+  intrinsic height under the drag handle. Only the 'Top trackers'
+  list scrolls internally (via MaxHeightNestedScrollView) when its
+  row count exceeds the cap. This keeps the bottom-sheet drag
+  gesture unambiguous and avoids gesture conflicts at the sheet
+  edges that an outer ScrollView would introduce.
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingHorizontal="20dp"
+    android:paddingBottom="20dp">
 
     <include layout="@layout/dialog_drag_handle" />
 
-    <ScrollView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:fillViewport="true"
-        android:scrollbars="none">
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:paddingHorizontal="20dp"
-        android:paddingTop="8dp"
-        android:paddingBottom="20dp">
-
-        <!-- Section header. Small uppercase label that frames the
-             stat cards as 'Privacy Report' content. Letter-spacing
-             matches the same-style headers used on the home cards. -->
+        <!-- Sheet title. Centered TitleLarge, no uppercase — this is
+             the framing for the entire sheet, distinct from the small
+             uppercase sub-section labels below ('Blocked by type',
+             'Top trackers'). The hierarchy is one title + two muted
+             sub-section dividers, so each header has a clear role
+             instead of three identically-styled labels stacking. -->
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
-            android:letterSpacing="0.08"
-            android:text="@string/trackers_info_section_overview"
-            android:textAllCaps="true"
-            android:textAppearance="?attr/textAppearanceLabelSmall"
-            android:textColor="?attr/colorOnSurfaceVariant" />
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="20dp"
+            android:gravity="center"
+            android:text="@string/trackers_info_title"
+            android:textAppearance="?attr/textAppearanceTitleLarge"
+            android:textColor="?attr/colorOnSurface" />
 
         <!-- Zero-state message. When the cumulative count is 0
              (fresh install, no browsing yet) the three stat cards
@@ -306,13 +300,29 @@
             android:visibility="gone"
             tools:visibility="visible" />
 
-        <LinearLayout
-            android:id="@+id/trackers_info_top_trackers"
+        <!-- Internal scroll surface for the top-trackers list. wrap_content
+             height up to app:maxHeight=240dp (≈ 7 visible rows at the
+             item_top_tracker row height); when fewer rows are bound the
+             surface sizes to fit so there's no wasted empty space, and
+             when more rows are bound the content scrolls in place
+             without the sheet itself becoming a scroll surface. -->
+        <com.solarized.firedown.ui.MaxHeightNestedScrollView
+            android:id="@+id/trackers_info_top_trackers_scroll"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
+            android:fillViewport="false"
+            android:scrollbars="none"
             android:visibility="gone"
-            tools:visibility="visible" />
+            app:maxHeight="240dp"
+            tools:visibility="visible">
+
+            <LinearLayout
+                android:id="@+id/trackers_info_top_trackers"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+
+        </com.solarized.firedown.ui.MaxHeightNestedScrollView>
 
         <!-- Disable & clear toggle. Single button that doubles as the
              enable affordance when recording is off — label flips
@@ -339,9 +349,5 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
             android:text="@string/trackers_info_action" />
-
-    </LinearLayout>
-
-    </ScrollView>
 
 </LinearLayout>

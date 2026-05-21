@@ -30,6 +30,12 @@
         <!-- width / height — e.g. 0.75 for 3:4 (taller than wide). -->
         <attr name="aspectRatio" format="float" />
     </declare-styleable>
+    <declare-styleable name="MaxHeightNestedScrollView">
+        <!-- Hard ceiling on the scroll view's measured height. When the
+             inner content exceeds this, the scroll view caps itself at
+             this value and the content scrolls internally. -->
+        <attr name="maxHeight" format="dimension" />
+    </declare-styleable>
 
     <!-- Set true on themes that already use the incognito palette
          (e.g. Theme.FireDown.Vault) so BaseActivity skips the AMOLED

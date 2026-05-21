@@ -96,6 +96,7 @@ public class TrackersInfoSheet extends BaseBottomSheetDialogFragment {
         TextView framesView  = view.findViewById(R.id.trackers_info_breakdown_frames);
         TextView otherView   = view.findViewById(R.id.trackers_info_breakdown_other);
         View topTrackersHdr  = view.findViewById(R.id.trackers_info_top_trackers_header);
+        View topTrackersScroll = view.findViewById(R.id.trackers_info_top_trackers_scroll);
         LinearLayout topTrackersList = view.findViewById(R.id.trackers_info_top_trackers);
         MaterialButton topTrackersToggle = view.findViewById(R.id.trackers_info_top_trackers_toggle);
         MaterialButton action = view.findViewById(R.id.trackers_info_action);
@@ -162,7 +163,10 @@ public class TrackersInfoSheet extends BaseBottomSheetDialogFragment {
                     mGeckoUblockHelper.getTrackerRecordingEnabledLive().getValue());
             boolean showSection = size >= TOP_TRACKERS_MIN_REVEAL || recording == false;
             topTrackersHdr.setVisibility(showSection ? View.VISIBLE : View.GONE);
-            topTrackersList.setVisibility(size > 0 ? View.VISIBLE : View.GONE);
+            // Toggle visibility on the outer scroll surface so the wrapping
+            // MaxHeightNestedScrollView collapses with the list — the inner
+            // LinearLayout's size is then irrelevant for the layout pass.
+            topTrackersScroll.setVisibility(size > 0 ? View.VISIBLE : View.GONE);
             topTrackersToggle.setVisibility(showSection ? View.VISIBLE : View.GONE);
 
             topTrackersList.removeAllViews();
