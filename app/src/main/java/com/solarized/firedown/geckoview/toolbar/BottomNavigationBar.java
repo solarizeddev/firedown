@@ -100,7 +100,7 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
         newTabButton.setOnLongClickListener(this);
         downloadButton.setOnLongClickListener(this);
 
-        mTabsCountButton = v.findViewById(R.id.tab_button);
+        mTabsCountButton = findViewById(R.id.tab_button);
         mBadge = BadgeDrawable.create(context);
         mBadge.setVisible(false);
         mBadge.setBackgroundColor(ContextCompat.getColor(context, R.color.md_theme_primaryContainer));
