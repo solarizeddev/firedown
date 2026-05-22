@@ -87,9 +87,14 @@ public final class BottomNavigationFABBehavior extends CoordinatorLayout.Behavio
             snapTo(child, -restOffset);
             return true;
         }
-        if (!hidden && runningAnim == null) {
-            // Smoothly track the bar between snap thresholds.
-            child.setTranslationY(barTrans - restOffset);
+        if (runningAnim == null) {
+            // Track the bar. The tracking offset depends on state: visible
+            // keeps the FAB restOffset above the bar's top edge; hidden glues
+            // the FAB to the bar (offset 0) so when the bar slides back up from
+            // off-screen, the FAB rides along smoothly. The snap-in animation
+            // covers the final restOffset lift once the bar is fully expanded.
+            final float offset = hidden ? 0f : restOffset;
+            child.setTranslationY(barTrans - offset);
             return true;
         }
         return false;
