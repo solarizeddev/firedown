@@ -16,7 +16,11 @@
         <attr name="tabTextColor" format="color" />
     </declare-styleable>
     <declare-styleable name="BottomNavigationBar">
-        <attr name="enableCradle" format="boolean" />
+        <!-- When true, the middle slot is laid out INVISIBLE — preserves the
+             5-cell weight balance while leaving room for an externally-anchored
+             FAB to sit over it. Used by the browser layout; home shows the
+             bookmarks/search action in the slot instead. -->
+        <attr name="hideMiddleSlot" format="boolean" />
     </declare-styleable>
     <declare-styleable name="GeckoToolbar">
         <attr name="enableHome" format="boolean" />

@@ -2,6 +2,7 @@ package com.solarized.firedown.geckoview.toolbar;
 
 
 import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.util.AttributeSet;
@@ -13,149 +14,104 @@ import androidx.coordinatorlayout.widget.CoordinatorLayout;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
-
 import com.solarized.firedown.R;
 
 
+/**
+ * Couples the floating action button to the {@link BottomNavigationBar} so the
+ * FAB tracks the bar's vertical translation (smoothly follows the bar as the
+ * user scrolls the page) and snaps fully off-screen once the bar is essentially
+ * collapsed. Snap-out is needed because the FAB sits {@code restOffset} above
+ * the bar's top edge — pure tracking would leave that strip of FAB visible
+ * when the bar is fully hidden.
+ *
+ * <p>Thresholds are expressed as a collapse fraction
+ * ({@code bar.translationY / bar.height}) with hysteresis so the FAB doesn't
+ * stutter when a drag wobbles across the boundary.
+ */
 public final class BottomNavigationFABBehavior extends CoordinatorLayout.Behavior<FloatingActionButton> {
 
-    private enum State { COLLAPSED, ANIMATING_COLLAPSE, EXPANDED, ANIMATING_EXPAND}
+    /** Snap the FAB out once the bar is this fraction collapsed. */
+    private static final float HIDE_AT = 0.95f;
+    /** Snap the FAB back in once the bar is this fraction expanded (≤). */
+    private static final float SHOW_AT = 0.05f;
+    private static final int   ANIM_DURATION_MS = 150;
 
-    private static final String TAG = BottomNavigationFABBehavior.class.getName();
+    /** Distance the FAB sits above the bar's top edge when fully expanded. */
+    private final int restOffset;
 
-    private static final int DURATION = 150;
-
-    private static final float BASE_LIMIT = -0.0f;
-
-    private static final float UPPER_LIMIT = 1.0f;
-
-    private static final float DOWN_LIMIT = 0.95f;
-
-    private final int mOffsetOriginal;
-
-    private final int mActionBarSize;
-
-    private final float mSlideDownThreshold;
-
-    private State mState;
-
-    private Animator mCurrentAnimator;
-
-    private int mOffset;
+    @Nullable private Animator runningAnim;
+    private boolean hidden = false;
 
     public BottomNavigationFABBehavior(@Nullable Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
-        assert context != null;
-        mActionBarSize = context.getResources().getDimensionPixelSize(R.dimen.app_bar_size);
-        mSlideDownThreshold = mActionBarSize * DOWN_LIMIT;
-        mOffsetOriginal = context.getResources().getDimensionPixelOffset(R.dimen.app_bar_fab_margin);
-        mOffset = mOffsetOriginal;
-        mState = State.EXPANDED;
+        restOffset = context != null
+                ? context.getResources().getDimensionPixelOffset(R.dimen.app_bar_fab_margin)
+                : 0;
     }
 
     @Override
-    public boolean layoutDependsOn(@Nullable CoordinatorLayout parent, @NonNull FloatingActionButton child, @NonNull View dependency) {
+    public boolean layoutDependsOn(@Nullable CoordinatorLayout parent,
+                                   @NonNull FloatingActionButton child,
+                                   @NonNull View dependency) {
         return dependency instanceof BottomNavigationBar;
     }
 
+    @Override
+    public void onDependentViewRemoved(@NonNull CoordinatorLayout parent,
+                                       @NonNull FloatingActionButton child,
+                                       @NonNull View dependency) {
+        cancelAnim();
+        child.setTranslationY(0f);
+        hidden = false;
+    }
 
     @Override
-    public void onDependentViewRemoved(@NonNull CoordinatorLayout parent, @NonNull FloatingActionButton child, @NonNull View dependency) {
-        child.setTranslationY(0.0f);
+    public boolean onDependentViewChanged(@NonNull CoordinatorLayout parent,
+                                          @NonNull FloatingActionButton child,
+                                          @NonNull View dependency) {
+        final int barHeight = dependency.getHeight();
+        if (barHeight <= 0) return false;
+
+        final float barTrans = dependency.getTranslationY();
+        final float collapse = barTrans / barHeight;
+
+        if (!hidden && collapse >= HIDE_AT) {
+            hidden = true;
+            // FAB bottom edge at the bar's bottom edge → fully off-screen.
+            snapTo(child, barHeight);
+            return true;
+        }
+        if (hidden && collapse <= SHOW_AT) {
+            hidden = false;
+            snapTo(child, -restOffset);
+            return true;
+        }
+        if (!hidden && runningAnim == null) {
+            // Smoothly track the bar between snap thresholds.
+            child.setTranslationY(barTrans - restOffset);
+            return true;
+        }
+        return false;
     }
 
-    @Override
-    public boolean onDependentViewChanged(@NonNull CoordinatorLayout parent, @NonNull FloatingActionButton child, @NonNull View dependency) {
-        return updateButton(child, dependency);
-    }
-
-
-    private boolean updateButton(FloatingActionButton child, View dependency) {
-        if (dependency instanceof BottomNavigationBar) {
-            float oldTranslation = child.getTranslationY();
-            float newTranslation = dependency.getTranslationY() - mOffset;
-            if (shouldSlideDown(dependency)) {
-                slideDown(child);
-            } else if (shouldSlideUp(dependency)) {
-                slideUp(child);
+    private void snapTo(@NonNull FloatingActionButton child, float target) {
+        cancelAnim();
+        final ObjectAnimator anim = ObjectAnimator.ofFloat(child, View.TRANSLATION_Y, target);
+        anim.setDuration(ANIM_DURATION_MS);
+        anim.addListener(new AnimatorListenerAdapter() {
+            @Override public void onAnimationEnd(@NonNull Animator a) {
+                if (runningAnim == a) runningAnim = null;
             }
-            if (mState != State.ANIMATING_COLLAPSE && mState != State.ANIMATING_EXPAND) {
-                child.setTranslationY(newTranslation);
-            }
-            return oldTranslation != newTranslation;
-        } else {
-            return false;
-        }
+        });
+        runningAnim = anim;
+        anim.start();
     }
 
-    private boolean shouldSlideDown(View dependency){
-        float translationY = dependency.getTranslationY();
-        return translationY <= mActionBarSize && translationY > mSlideDownThreshold && mState == State.EXPANDED;
+    private void cancelAnim() {
+        if (runningAnim != null) {
+            runningAnim.cancel();
+            runningAnim = null;
+        }
     }
-
-    private boolean shouldSlideUp(View dependency){
-        float translationY = dependency.getTranslationY();
-        return translationY >= BASE_LIMIT && translationY < UPPER_LIMIT && mState == State.COLLAPSED;
-    }
-
-    private void slideUp(FloatingActionButton child){
-
-
-        if(mCurrentAnimator != null) {
-            mCurrentAnimator.cancel();
-            child.clearAnimation();
-        }
-
-        mCurrentAnimator = ObjectAnimator.ofFloat(child, "translationY", -mOffsetOriginal);
-        mCurrentAnimator.addListener(mAnimatorListener);
-        mCurrentAnimator.setDuration(DURATION);//set duration
-        mCurrentAnimator.start();//start animation
-        mState = State.ANIMATING_EXPAND;
-    }
-
-    private void slideDown(FloatingActionButton child) {
-
-
-        if(mCurrentAnimator != null) {
-            mCurrentAnimator.cancel();
-            child.clearAnimation();
-        }
-
-        mCurrentAnimator = ObjectAnimator.ofFloat(child, "translationY", mActionBarSize);
-        mCurrentAnimator.addListener(mAnimatorListener);
-        mCurrentAnimator.setDuration(DURATION);//set duration
-        mCurrentAnimator.start();//start animation
-        mState = State.ANIMATING_COLLAPSE;
-
-
-    }
-
-    private final Animator.AnimatorListener mAnimatorListener = new Animator.AnimatorListener() {
-        @Override
-        public void onAnimationStart(@NonNull Animator animator) {
-        }
-
-        @Override
-        public void onAnimationEnd(@NonNull Animator animator) {
-            mCurrentAnimator = null;
-            if(mState == State.ANIMATING_EXPAND) {
-                mState = State.EXPANDED;
-                mOffset = mOffsetOriginal;
-            }
-            else if(mState == State.ANIMATING_COLLAPSE) {
-                mState = State.COLLAPSED;
-                mOffset = 0;
-            }
-        }
-
-        @Override
-        public void onAnimationCancel(@NonNull Animator animator) {
-
-        }
-
-        @Override
-        public void onAnimationRepeat(@NonNull Animator animator) {
-
-        }
-    };
 }

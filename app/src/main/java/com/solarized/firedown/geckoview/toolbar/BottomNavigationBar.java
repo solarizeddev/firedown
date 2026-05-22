@@ -78,29 +78,25 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
     private void init(Context context, AttributeSet attrs, int defStyleAttr) {
 
         TypedArray array = context.obtainStyledAttributes(attrs, R.styleable.BottomNavigationBar, defStyleAttr, 0);
-
-        boolean enableCradle = array.getBoolean(R.styleable.BottomNavigationBar_enableCradle, false);
-
+        // Browser sets this true so an externally-anchored FAB can sit over the
+        // middle slot without colliding with the bookmarks/search action. Home
+        // leaves it false to show the action in the slot.
+        boolean hideMiddleSlot = array.getBoolean(R.styleable.BottomNavigationBar_hideMiddleSlot, false);
         array.recycle();
 
-        LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-
-        View v = inflater.inflate(R.layout.bottom_bar, this, true);
-
-        ViewGroup viewGroup = (ViewGroup) ((ViewGroup)v).getChildAt(0);
-
-        for (int i = 0; i < viewGroup.getChildCount(); i++) {
-            final View child = viewGroup.getChildAt(i);
-            child.setOnClickListener(this);
+        LayoutInflater.from(context).inflate(R.layout.bottom_bar, this, true);
+        // Inflate-with-attach returns `this`; the LinearLayout is its sole child.
+        ViewGroup bar = (ViewGroup) getChildAt(0);
+        for (int i = 0; i < bar.getChildCount(); i++) {
+            bar.getChildAt(i).setOnClickListener(this);
         }
 
-        View newTabButton = v.findViewById(R.id.new_tab_button);
-        View downloadButton = v.findViewById(R.id.downloads_button);
-        View searchIcon = v.findViewById(R.id.search_button);
-        View spacer = v.findViewById(R.id.spacer);
-        spacer.setVisibility(enableCradle ? View.VISIBLE : View.GONE);
-        searchIcon.setVisibility(enableCradle ? View.GONE : View.VISIBLE);
-        searchIcon.setOnClickListener(this);
+        View newTabButton = findViewById(R.id.new_tab_button);
+        View downloadButton = findViewById(R.id.downloads_button);
+        View searchIcon = findViewById(R.id.search_button);
+        // INVISIBLE (not GONE) so the LinearLayout still weighs the slot —
+        // keeps the four visible cells evenly distributed across the bar.
+        searchIcon.setVisibility(hideMiddleSlot ? View.INVISIBLE : View.VISIBLE);
         newTabButton.setOnLongClickListener(this);
         downloadButton.setOnLongClickListener(this);
 

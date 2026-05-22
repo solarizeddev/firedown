@@ -27,30 +27,17 @@
         android:tint="?attr/colorOnSurface"
         android:padding="8dp" />
 
-    <FrameLayout
-        android:id="@+id/cradle"
+    <androidx.appcompat.widget.AppCompatImageButton
+        android:id="@+id/search_button"
         android:layout_width="0dp"
         android:layout_height="match_parent"
-        android:layout_weight="1">
-
-        <androidx.legacy.widget.Space
-            android:id="@+id/spacer"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" />
-
-        <androidx.appcompat.widget.AppCompatImageButton
-            android:id="@+id/search_button"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/library_bookmarks"
-            android:padding="6dp"
-            android:scaleType="centerInside"
-            android:tint="?attr/colorOnSurface"
-            android:src="@drawable/ic_bookmarks_24" />
-
-    </FrameLayout>
-
+        android:layout_weight="1"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/library_bookmarks"
+        android:padding="6dp"
+        android:scaleType="centerInside"
+        android:tint="?attr/colorOnSurface"
+        android:src="@drawable/ic_bookmarks_24" />
 
     <androidx.appcompat.widget.AppCompatImageButton
         android:id="@+id/downloads_button"
