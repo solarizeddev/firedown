@@ -447,6 +447,31 @@ public class FileUriHelper {
         return false;
     }
 
+    /**
+     * Returns false for audio mime types that cannot carry embedded cover art —
+     * raw ADTS (audio/aac) and MIDI. Callers can use this to short-circuit
+     * FFmpeg's attached-picture extraction, which would always fail for these
+     * formats and waste a network fetch or decode just to render the same
+     * mime-type icon we can produce instantly.
+     *
+     * <p>Returns true for everything else, including playlist mimes
+     * (audio/mpegurl, audio/m3u, audio/x-m3u) — those can resolve to either
+     * audio or video streams and FFmpeg may extract a frame from the
+     * underlying media. Also true for null/unknown mimes (preserve current
+     * behavior, let FFmpeg try).
+     *
+     * <p>Coverage of the formats kept on the FFmpeg path: MP3 (ID3v2 APIC),
+     * MP4/M4A (covr atom), FLAC (PICTURE block), Ogg/Opus
+     * (METADATA_BLOCK_PICTURE), WMA (WM/Picture).
+     */
+    public static boolean canHaveEmbeddedArt(String mimeType) {
+        if (mimeType == null) return true;
+        if (mimeType.equalsIgnoreCase(MIMETYPE_AUDIO_AAC)) return false;
+        if (mimeType.equalsIgnoreCase("audio/midi")) return false;
+        if (mimeType.equalsIgnoreCase("audio/x-midi")) return false;
+        return true;
+    }
+
     public static boolean isHtml(String mimetype) {
         for (String mime : MIMETYPES_HTML) {
             if (mimetype.equalsIgnoreCase(mime)) {

@@ -237,6 +237,16 @@ public class GlideHelper {
             // since FFmpeg exposes attached pictures as video streams.
             // Files with no embedded art fail decode and the
             // fallbackListener renders the generic mime icon.
+            //
+            // Short-circuit raw audio formats with no possible embedded
+            // art (raw ADTS, MIDI) — avoids paying for a guaranteed-
+            // failing FFmpeg decode just to land on the same mime icon.
+            if (FileUriHelper.isAudio(mimeType)
+                    && !FileUriHelper.canHaveEmbeddedArt(mimeType)) {
+                clearSafe(image);
+                image.setImageDrawable(generateThumbnail(mimeType, image));
+                return;
+            }
             Glide.with(image).load(entity)
                     .signature(new ObjectKey(interval + entity.getFileUrl().hashCode()))
                     .listener(fallbackListener(mimeType, image))
@@ -298,7 +308,13 @@ public class GlideHelper {
         if (FileUriHelper.isVideo(mimeType) || FileUriHelper.isAudio(mimeType)) {
             // Mirror the load() audio+video branch — FFmpeg extracts
             // the embedded cover art stream for audio files that have
-            // one, falls back to the generic icon otherwise.
+            // one, falls back to the generic icon otherwise. Raw audio
+            // with no possible art bypasses Glide entirely in load(),
+            // so nothing to preload either.
+            if (FileUriHelper.isAudio(mimeType)
+                    && !FileUriHelper.canHaveEmbeddedArt(mimeType)) {
+                return null;
+            }
             return glide.load(entity)
                     .signature(new ObjectKey(interval + entity.getFileUrl().hashCode()))
                     .apply(options);
@@ -354,7 +370,19 @@ public class GlideHelper {
             // fail decode and the fallbackListener renders the
             // mime-tinted audio icon.
             String thumbnail = entity.getFileThumbnail();
-            String source = TextUtils.isEmpty(thumbnail) ? entity.getFileUrl() : thumbnail;
+            boolean hasThumbnail = !TextUtils.isEmpty(thumbnail);
+            // Short-circuit audio with no possible embedded art (raw
+            // ADTS, MIDI) when the parser didn't hand us a separate
+            // cover URL — saves the network fetch FFmpeg would do
+            // before deciding there's nothing to extract.
+            if (!hasThumbnail
+                    && FileUriHelper.isAudio(mimeType)
+                    && !FileUriHelper.canHaveEmbeddedArt(mimeType)) {
+                clearSafe(image);
+                image.setImageDrawable(generateThumbnail(mimeType, image));
+                return;
+            }
+            String source = hasThumbnail ? thumbnail : entity.getFileUrl();
             Glide.with(image).load(Uri.parse(source))
                     .override(THUMB_WIDTH, THUMB_HEIGHT)
                     .signature(signature)
@@ -399,9 +427,17 @@ public class GlideHelper {
         if (FileUriHelper.isVideo(mimeType) || FileUriHelper.isImage(mimeType)
                 || FileUriHelper.isAudio(mimeType)) {
             // Mirror the load() branch — audio URLs route through
-            // FFmpegUriDecoder for embedded-art extraction.
+            // FFmpegUriDecoder for embedded-art extraction. Raw audio
+            // with no possible art and no parser-supplied cover URL
+            // skips Glide in load(), so nothing to preload either.
             String thumbnail = entity.getFileThumbnail();
-            String source = TextUtils.isEmpty(thumbnail) ? entity.getFileUrl() : thumbnail;
+            boolean hasThumbnail = !TextUtils.isEmpty(thumbnail);
+            if (!hasThumbnail
+                    && FileUriHelper.isAudio(mimeType)
+                    && !FileUriHelper.canHaveEmbeddedArt(mimeType)) {
+                return null;
+            }
+            String source = hasThumbnail ? thumbnail : entity.getFileUrl();
             return glide.load(Uri.parse(source))
                     .override(THUMB_WIDTH, THUMB_HEIGHT)
                     .signature(signature)
