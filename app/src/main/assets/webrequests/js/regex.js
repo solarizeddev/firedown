@@ -54,6 +54,9 @@ const DEFAULT_PATTERNS = [
   // SoundCloud
   '\\.soundcloud\\.cloud\\/.*\\/init\\.mp4',
 
+  // StreamTheWorld (HLS radio segments)
+  'live\\.streamtheworld\\.com.*\\.aac',
+
 
     // Akamai
   '\\.akamaized\\.net\\/.*\\/(init|cmaf-|chunk-|segment[-_]?)[^/]*\\.(mp4|m4s)',
