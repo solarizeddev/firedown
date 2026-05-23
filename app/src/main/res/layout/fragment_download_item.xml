@@ -168,16 +168,18 @@
                         android:textColor="?attr/colorOnSurfaceVariant"
                         tools:text="80%" />
 
-                    <ProgressBar
+                    <com.google.android.material.progressindicator.LinearProgressIndicator
                         android:id="@+id/progress_bar"
-                        style="?android:attr/progressBarStyleHorizontal"
                         android:layout_width="0dp"
-                        android:layout_height="4dp"
+                        android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:layout_weight="1"
                         android:indeterminate="true"
                         android:max="100"
-                        android:progress="0" />
+                        android:progress="0"
+                        app:indicatorTrackGapSize="0dp"
+                        app:trackCornerRadius="2dp"
+                        app:trackStopIndicatorSize="0dp" />
 
                 </LinearLayout>
 

@@ -9,7 +9,6 @@ import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -22,6 +21,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.request.RequestOptions;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.color.MaterialColors;
 import com.solarized.firedown.GlideHelper;
@@ -444,13 +444,13 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
             setVisible(holder.progressRow, true);
             // Bar tints: indicator in brand coral (the 'live' signal)
             // and track in the same coral at ~20 % alpha so it reads
-            // as a subtle channel beneath, not a saturated wash.
+            // as a subtle channel beneath, not a saturated wash. M3
+            // LinearProgressIndicator takes raw int colors; the
+            // indicator color applies to both determinate and
+            // indeterminate states.
             if (holder.progressBar != null) {
-                ColorStateList barFg = ColorStateList.valueOf(mDefaultPrimary);
-                ColorStateList barBg = ColorStateList.valueOf(mDefaultPrimaryAlpha);
-                holder.progressBar.setProgressTintList(barFg);
-                holder.progressBar.setProgressBackgroundTintList(barBg);
-                holder.progressBar.setIndeterminateTintList(barFg);
+                holder.progressBar.setIndicatorColor(mDefaultPrimary);
+                holder.progressBar.setTrackColor(mDefaultPrimaryAlpha);
             }
             if(holder.progressText != null){
                 holder.progressText.setText(retrieving
@@ -572,7 +572,7 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         final @Nullable ProgressOverlayView imageProgress;
         final @Nullable View progressRow;
         final @Nullable TextView progressText;
-        final @Nullable ProgressBar progressBar;
+        final @Nullable LinearProgressIndicator progressBar;
         final @Nullable TextView finishedText;
         final @Nullable TextView errorText;
         final @Nullable TextView queuedText;
