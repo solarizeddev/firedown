@@ -107,9 +107,11 @@ public class DonateFragment extends BasePreferenceFragment {
         super.onCreate(savedInstanceState);
         mInvoiceFetcher = new LightningInvoiceFetcher(okHttpClient);
         mBtcProvider    = new BitcoinAddressProvider(mActivity, okHttpClient);
-        // Kick off the first-launch fetch in the background. If this is
-        // a repeat visit, this is a no-op.
-        mBtcProvider.fetchIfNeeded();
+        // Fetch on every screen open. Cheap on the client; the server
+        // rate-limits its own mempool checks so this doesn't translate
+        // to upstream load. Lets every visit pick up whatever rotation
+        // the server has already performed.
+        mBtcProvider.refresh();
     }
 
 
@@ -310,18 +312,20 @@ public class DonateFragment extends BasePreferenceFragment {
 
     private void setupBitcoinSection(@NonNull MaterialButton copyBtn,
                                      @NonNull MaterialButton walletBtn) {
-        mDisplayedBtcAddress = mBtcProvider.getCachedAddress();
+        renderBtcAddress(mBtcProvider.getCachedAddress());
 
-        mBtcAddressText.setText(mDisplayedBtcAddress);
-
-        Bitmap qr = generateQr("bitcoin:" + mDisplayedBtcAddress, 480);
-        if (qr != null) mBtcQrImage.setImageBitmap(qr);
+        // Listen for fetches landing after setup — without this, a
+        // first-launch user keeps seeing the FALLBACK_ADDRESS the
+        // entire visit and only sees the real address next time the
+        // fragment is recreated. The window matters because a user
+        // who copies + donates on their first visit would otherwise
+        // send to the shared fallback address.
+        mBtcProvider.setListener(this::renderBtcAddress);
 
         copyBtn.setOnClickListener(v -> {
             copyToClipboard("bitcoin_address", mDisplayedBtcAddress);
             Snackbar.make(requireView(), R.string.donate_btc_copied,
                     Snackbar.LENGTH_SHORT).show();
-            mBtcProvider.onAddressUsed();
         });
 
         walletBtn.setOnClickListener(v -> {
@@ -330,12 +334,26 @@ public class DonateFragment extends BasePreferenceFragment {
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             try {
                 startActivity(intent);
-                mBtcProvider.onAddressUsed();
             } catch (ActivityNotFoundException e) {
                 Snackbar.make(requireView(), R.string.donate_no_bitcoin_wallet,
                         Snackbar.LENGTH_LONG).show();
             }
         });
+    }
+
+    /**
+     * Bind a Bitcoin address to the visible text + QR. Idempotent —
+     * skipped when the new value matches what's already displayed, so
+     * the common case (server hasn't rotated, refresh returns same
+     * address) doesn't trigger a wasted QR regen.
+     */
+    private void renderBtcAddress(@NonNull String address) {
+        if (mBtcAddressText == null) return; // view destroyed
+        if (address.equals(mDisplayedBtcAddress)) return;
+        mDisplayedBtcAddress = address;
+        mBtcAddressText.setText(address);
+        Bitmap qr = generateQr("bitcoin:" + address, 480);
+        if (qr != null && mBtcQrImage != null) mBtcQrImage.setImageBitmap(qr);
     }
 
 
@@ -410,5 +428,8 @@ public class DonateFragment extends BasePreferenceFragment {
     public void onDestroyView() {
         super.onDestroyView();
         if (mInvoiceFetcher != null) mInvoiceFetcher.cancel();
+        // Provider outlives the fragment view; clear the listener so a
+        // late-landing fetch doesn't fire into a torn-down view.
+        if (mBtcProvider != null) mBtcProvider.setListener(null);
     }
 }

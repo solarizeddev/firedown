@@ -2,10 +2,13 @@ package com.solarized.firedown.donate;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 
 import androidx.annotation.MainThread;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.json.JSONObject;
 
@@ -21,29 +24,39 @@ import okhttp3.ResponseBody;
 /**
  * Manages the on-chain Bitcoin address shown on the donate screen.
  *
- * <p>Lifecycle:</p>
+ * <p>The server is gap-free / mempool-gated: it serves the same address
+ * to every caller until mempool.space sees a tx funding it, then
+ * advances by one. So fetching is essentially "pick up whatever the
+ * server says is current right now" — clients call {@link #refresh()}
+ * on every screen open and any rotation the server has already
+ * performed becomes visible to the user without requiring them to
+ * tap Copy first.</p>
+ *
+ * <h3>Lifecycle</h3>
  * <ol>
- *   <li>App opens donate screen → {@link #getCachedAddress()} returns
- *       immediately. Either the previously-cached address, or the
- *       hardcoded {@link #FALLBACK_ADDRESS} on first launch before any
- *       network call has succeeded.</li>
- *   <li>If no real address has ever been fetched, a background fetch
- *       starts via {@link #fetchIfNeeded()}.</li>
- *   <li>User taps Copy or Open in Wallet → the screen calls
- *       {@link #onAddressUsed()}, which kicks off a background fetch
- *       for the next address. The new address lands silently in
- *       SharedPreferences and is shown the *next* time the screen
- *       opens — not the current visit. This keeps the UI stable and
- *       guarantees the user copies the address they actually saw.</li>
+ *   <li>{@link #getCachedAddress()} returns immediately — either the
+ *       previously-cached address, or the hardcoded
+ *       {@link #FALLBACK_ADDRESS} on first launch before any network
+ *       call has succeeded.</li>
+ *   <li>{@link #refresh()} kicks a background fetch (coalesced by the
+ *       in-flight guard). The new address lands silently in
+ *       SharedPreferences and, if a listener is registered, fires on
+ *       the main thread so the UI can update mid-screen. Without the
+ *       listener, the first-launch user would see the fallback the
+ *       entire visit and the real address only on their next visit —
+ *       which means every "first donation per install" would otherwise
+ *       go to the shared fallback address. The listener closes that
+ *       window.</li>
  * </ol>
  *
  * <p>Network failures are silent. A 404, timeout, or DNS error just
  * leaves the cached address in place — donations still work, the user
- * just doesn't get rotation that visit.</p>
+ * just doesn't get a fresh address that visit.</p>
  *
- * <p>The fallback address is the address derived at index 0 of the same
- * zpub the server uses — a known-good baseline that's always valid
- * even if the API is unreachable. Replace the constant before shipping.</p>
+ * <p>The fallback address is the address derived at index 0 of the
+ * same zpub the server uses — a known-good baseline that's always
+ * valid even if the API is unreachable. Replace the constant before
+ * shipping.</p>
  */
 public class BitcoinAddressProvider {
 
@@ -69,6 +82,28 @@ public class BitcoinAddressProvider {
     private final SharedPreferences mPrefs;
     private final OkHttpClient   mClient;
     private final AtomicBoolean  mFetchInFlight = new AtomicBoolean(false);
+    private final Handler        mMainHandler   = new Handler(Looper.getMainLooper());
+
+    /** Main-thread-only. Mutated by {@link #setListener} from the UI thread
+     *  and read by a main-thread {@link Handler#post} after a successful
+     *  fetch, so no synchronization is needed. */
+    @Nullable private AddressListener mListener;
+
+    /**
+     * Optional observer for fetched addresses. Fires on the main thread
+     * after a successful fetch lands in SharedPreferences. Used by the
+     * donate screen to refresh the displayed address + QR mid-visit
+     * instead of waiting for the next fragment recreation.
+     */
+    public interface AddressListener {
+        /**
+         * Called on the main thread when a fresh address has been
+         * fetched and cached. May fire with the same value as the
+         * previous fetch if the server hasn't rotated yet — consumers
+         * should compare before redrawing.
+         */
+        void onAddressFetched(@NonNull String address);
+    }
 
     public BitcoinAddressProvider(@NonNull Context context, OkHttpClient client) {
         Context mAppContext = context.getApplicationContext();
@@ -96,22 +131,26 @@ public class BitcoinAddressProvider {
     }
 
     /**
-     * Trigger a background fetch only if we've never successfully fetched
-     * before. Idempotent and safe to call on every screen open.
+     * Register a callback fired on the main thread when a fetch lands.
+     * Pass {@code null} to clear. The provider holds a strong reference,
+     * so a fragment / activity that registers MUST clear in
+     * {@code onDestroyView} (or equivalent) to avoid leaking.
      */
     @MainThread
-    public void fetchIfNeeded() {
-        if (!hasRealAddress()) fetchNext();
+    public void setListener(@Nullable AddressListener listener) {
+        mListener = listener;
     }
 
     /**
-     * Called when the user actually used the address (tapped Copy or
-     * Open in Wallet). Kicks off a background fetch for the *next*
-     * address. The new address replaces the cached value silently —
-     * the current visit keeps showing what the user saw.
+     * Kick a background fetch. Safe to call on every donate-screen
+     * open — coalesced internally by {@link #mFetchInFlight}. Pairs
+     * with the mempool-gated server: each visit picks up whatever
+     * rotation the server has already performed, so the user doesn't
+     * need a "double-use" (copy → reopen → copy) to see a new
+     * address after a previous donation has been mined.
      */
     @MainThread
-    public void onAddressUsed() {
+    public void refresh() {
         fetchNext();
     }
 
@@ -155,6 +194,16 @@ public class BitcoinAddressProvider {
                             .putBoolean(KEY_HAS_REAL, true)
                             .apply();
                     Log.d(TAG, "Cached new BTC address (index " + index + ")");
+                    // Notify any UI observer on the main thread. Read
+                    // mListener at dispatch time so a listener cleared
+                    // between fetch-completion and post-dispatch (e.g.
+                    // fragment destroyed mid-flight) is a no-op rather
+                    // than a NPE or a leak.
+                    final String fetchedAddress = address;
+                    mMainHandler.post(() -> {
+                        AddressListener l = mListener;
+                        if (l != null) l.onAddressFetched(fetchedAddress);
+                    });
                 } catch (Exception e) {
                     Log.e(TAG, "BTC address parse failed", e);
                 } finally {
