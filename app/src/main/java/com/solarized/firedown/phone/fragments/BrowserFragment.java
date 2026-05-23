@@ -212,6 +212,7 @@ public class BrowserFragment extends BaseBrowserFragment
                     mActivity.getOnBackPressedDispatcher().onBackPressed();
                     return;
                 }
+                final boolean incognito = geckoState.getGeckoStateEntity().isIncognito();
                 Log.d(TAG, "handleBackPressed uri: " + geckoState.getEntityUri()
                         + " canBack: " + geckoState.canGoBackward());
 
@@ -230,29 +231,20 @@ public class BrowserFragment extends BaseBrowserFragment
                 }
                 if (geckoState.hasPreviousSession()) {
                     int previousSessionId = geckoState.getEntityParentId();
-                    boolean entityIncognito = geckoState.getGeckoStateEntity().isIncognito();
-                    GeckoState previousGeckoState = entityIncognito
+                    GeckoState previousGeckoState = incognito
                             ? mIncognitoStateViewModel.getGeckoState(previousSessionId)
                             : mGeckoStateViewModel.getGeckoState(previousSessionId);
-                    if (entityIncognito) {
-                        mIncognitoStateViewModel.closeGeckoState(geckoState);
-                    } else {
-                        mGeckoStateViewModel.closeGeckoState(geckoState);
-                    }
+                    closeSession(geckoState, incognito);
                     if (previousGeckoState != null) {
                         openSession(previousGeckoState);
                     } else {
-                        popToCorrectHome(entityIncognito);
+                        popToCorrectHome(incognito);
                         setEnabled(false);
                     }
                     return;
                 }
                 if (geckoState.isExternal()) {
-                    if (geckoState.getGeckoStateEntity().isIncognito()) {
-                        mIncognitoStateViewModel.closeGeckoState(geckoState);
-                    } else {
-                        mGeckoStateViewModel.closeGeckoState(geckoState);
-                    }
+                    closeSession(geckoState, incognito);
                     setEnabled(false);
                     mActivity.finish();
                     return;
@@ -260,11 +252,19 @@ public class BrowserFragment extends BaseBrowserFragment
 
                 Log.d(TAG, "onBackPressed back to home");
                 mGeckoMediaController.stopMediaForSession(geckoState.getEntityId());
-                popToCorrectHome(geckoState.getGeckoStateEntity().isIncognito());
+                popToCorrectHome(incognito);
                 setEnabled(false);
             }
         };
         mActivity.getOnBackPressedDispatcher().addCallback(this, callback);
+    }
+
+    private void closeSession(@NonNull GeckoState state, boolean incognito) {
+        if (incognito) {
+            mIncognitoStateViewModel.closeGeckoState(state);
+        } else {
+            mGeckoStateViewModel.closeGeckoState(state);
+        }
     }
 
     /**
