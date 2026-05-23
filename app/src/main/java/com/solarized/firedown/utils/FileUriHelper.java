@@ -466,7 +466,11 @@ public class FileUriHelper {
      */
     public static boolean canHaveEmbeddedArt(String mimeType) {
         if (mimeType == null) return true;
+        // Raw ADTS — no container, no metadata atoms. Includes the older
+        // x-aac alias and aacp (HE-AAC over ADTS, common in HLS music).
         if (mimeType.equalsIgnoreCase(MIMETYPE_AUDIO_AAC)) return false;
+        if (mimeType.equalsIgnoreCase("audio/x-aac")) return false;
+        if (mimeType.equalsIgnoreCase("audio/aacp")) return false;
         if (mimeType.equalsIgnoreCase("audio/midi")) return false;
         if (mimeType.equalsIgnoreCase("audio/x-midi")) return false;
         return true;
