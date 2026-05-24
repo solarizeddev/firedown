@@ -1,5 +1,6 @@
 package com.solarized.firedown.phone.dialogs;
 
+import android.app.Dialog;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -64,26 +65,34 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
         mGeckoStateViewModel = new ViewModelProvider(mActivity).get(GeckoStateViewModel.class);
         mIncognitoStateViewModel = new ViewModelProvider(mActivity).get(IncognitoStateViewModel.class);
 
-        Bundle bundle = getArguments();
-
-        if (bundle == null)
-            throw new IllegalArgumentException("Bundle null");
-
+        // Args carry only mIsIncognito (read by BaseBottomSheetDialogFragment).
+        // A null bundle means no incognito flag — treat as regular mode rather
+        // than crashing.
         mGeckoState = mIsIncognito
                 ? mIncognitoStateViewModel.peekCurrentGeckoState()
                 : mGeckoStateViewModel.peekCurrentGeckoState();
 
-        if (mGeckoState == null) {
-            dismiss();
-            return;
+        if (mGeckoState != null) {
+            mCertificateInfoEntity = mGeckoState.getCertificateState();
         }
+    }
 
-        mCertificateInfoEntity = mGeckoState.getCertificateState();
+    @NonNull
+    @Override
+    public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
+        if (mGeckoState == null) {
+            Dialog dialog = new Dialog(requireContext());
+            dialog.setOnShowListener(d -> dismissAllowingStateLoss());
+            return dialog;
+        }
+        return super.onCreateDialog(savedInstanceState);
     }
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+
+        if (mGeckoState == null) return null;
 
         LayoutInflater themedInflater = container != null
                 ? LayoutInflater.from(container.getContext())

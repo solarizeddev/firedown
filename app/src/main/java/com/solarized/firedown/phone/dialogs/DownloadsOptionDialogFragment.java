@@ -1,6 +1,7 @@
 package com.solarized.firedown.phone.dialogs;
 
 import android.annotation.SuppressLint;
+import android.app.Dialog;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.os.Bundle;
@@ -9,6 +10,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.ArrayRes;
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.navigation.NavBackStackEntry;
 import androidx.recyclerview.widget.RecyclerView;
@@ -20,6 +22,7 @@ import com.solarized.firedown.data.entity.OptionEntity;
 import com.solarized.firedown.IntentActions;
 import com.solarized.firedown.ui.adapters.OptionsAdapter;
 import com.solarized.firedown.utils.FileUriHelper;
+import com.solarized.firedown.utils.FragmentArgs;
 import com.solarized.firedown.Keys;
 
 import java.util.ArrayList;
@@ -37,17 +40,21 @@ public class DownloadsOptionDialogFragment extends BaseBottomSheetDialogFragment
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        mDownloadEntity = FragmentArgs.parcelable(this, Keys.ITEM_ID, DownloadEntity.class);
         Bundle bundle = getArguments();
+        mPosition = bundle != null ? bundle.getInt(Keys.ITEM_POSITION) : 0;
+        // Null on restore is handled by onCreateDialog / onCreateView.
+    }
 
-        if (bundle == null) {
-            throw new IllegalArgumentException("DownloadEntity can not be null");
+    @NonNull
+    @Override
+    public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
+        if (mDownloadEntity == null) {
+            Dialog dialog = new Dialog(requireContext());
+            dialog.setOnShowListener(d -> dismissAllowingStateLoss());
+            return dialog;
         }
-
-        mDownloadEntity = bundle.getParcelable(Keys.ITEM_ID);
-
-        mPosition = bundle.getInt(Keys.ITEM_POSITION);
-
-
+        return super.onCreateDialog(savedInstanceState);
     }
 
     @SuppressLint("InvalidSetHasFixedSize")
@@ -56,6 +63,8 @@ public class DownloadsOptionDialogFragment extends BaseBottomSheetDialogFragment
     public View onCreateView(LayoutInflater inflater,
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
+
+        if (mDownloadEntity == null) return null;
 
         // get the views and attach the listener
 

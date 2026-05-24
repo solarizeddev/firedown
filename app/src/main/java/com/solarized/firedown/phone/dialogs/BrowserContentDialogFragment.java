@@ -21,6 +21,7 @@ import com.solarized.firedown.data.entity.ContextElementEntity;
 import com.solarized.firedown.data.models.BrowserDialogViewModel;
 import com.solarized.firedown.ui.HorizontalDividerItemDecoration;
 import com.solarized.firedown.ui.adapters.OptionsAdapter;
+import com.solarized.firedown.utils.FragmentArgs;
 import com.solarized.firedown.utils.NavigationUtils;
 
 import org.mozilla.geckoview.GeckoSession;
@@ -43,9 +44,7 @@ public class BrowserContentDialogFragment extends BaseDialogFragment
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mContextElementEntity = getArguments() != null
-                ? getArguments().getParcelable(Keys.ITEM_ID)
-                : null;
+        mContextElementEntity = FragmentArgs.parcelable(this, Keys.ITEM_ID, ContextElementEntity.class);
         mBrowserDialogViewModel = new ViewModelProvider(mActivity)
                 .get(BrowserDialogViewModel.class);
     }

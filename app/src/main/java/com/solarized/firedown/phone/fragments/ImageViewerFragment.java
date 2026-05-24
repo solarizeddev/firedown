@@ -80,14 +80,14 @@ public class ImageViewerFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        Bundle bundle = getArguments();
-
-        if (bundle == null)
-            throw new IllegalArgumentException();
-
-        mDownloadEntity = bundle.getParcelable(Keys.ITEM_ID);
-
-
+        mDownloadEntity = com.solarized.firedown.utils.FragmentArgs.parcelable(
+                this, Keys.ITEM_ID, com.solarized.firedown.data.entity.DownloadEntity.class);
+        // Args lost on process-death restore: PlayerActivity is just a
+        // shell for this viewer, so finishing the activity is the right
+        // recovery — the user lands back where they launched from.
+        if (mDownloadEntity == null && mActivity != null) {
+            mActivity.finish();
+        }
     }
 
     @Override
@@ -158,6 +158,8 @@ public class ImageViewerFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        if (mDownloadEntity == null) return; // activity is finishing — nothing to bind
 
         String filePath = mDownloadEntity.getFilePath();
 

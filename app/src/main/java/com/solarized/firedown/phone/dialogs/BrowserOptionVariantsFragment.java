@@ -2,6 +2,8 @@ package com.solarized.firedown.phone.dialogs;
 
 
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -51,9 +53,12 @@ public class BrowserOptionVariantsFragment extends BaseFocusFragment implements 
                              @Nullable Bundle savedInstanceState) {
 
         if (mEntity == null) {
-            // Args lost on restore — the holder sheet listens for the
-            // cancel event and pops us off its child stack.
-            dispatchCancel();
+            // Args lost on restore. Defer dispatchCancel() onto the next
+            // main-thread tick so we don't re-enter the parent's child
+            // FragmentManager while it's still executing the transaction
+            // that produced this onCreateView. The holder sheet observes
+            // the cancel event and pops us off its child stack.
+            new Handler(Looper.getMainLooper()).post(this::dispatchCancel);
             return null;
         }
 

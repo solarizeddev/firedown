@@ -23,6 +23,7 @@ import com.google.android.material.snackbar.Snackbar;
 import com.solarized.firedown.R;
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.data.entity.CertificateInfoEntity;
+import com.solarized.firedown.utils.FragmentArgs;
 
 public class CertDialogFragment extends BaseBottomSheetDialogFragment {
 
@@ -36,22 +37,27 @@ public class CertDialogFragment extends BaseBottomSheetDialogFragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        Bundle args = getArguments();
-        if (args == null)
-            throw new IllegalStateException("Arguments required for " + TAG);
-
-        mCertificateInfoEntity = args.getParcelable(Keys.ITEM_ID);
-        if (mCertificateInfoEntity == null)
-            throw new IllegalStateException("CertificateInfo not found in arguments");
+        mCertificateInfoEntity = FragmentArgs.parcelable(this, Keys.ITEM_ID, CertificateInfoEntity.class);
+        // Null on restore is handled by onCreateDialog / onCreateView.
     }
 
-
+    @NonNull
+    @Override
+    public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
+        if (mCertificateInfoEntity == null) {
+            Dialog dialog = new Dialog(requireContext());
+            dialog.setOnShowListener(d -> dismissAllowingStateLoss());
+            return dialog;
+        }
+        return super.onCreateDialog(savedInstanceState);
+    }
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
+        if (mCertificateInfoEntity == null) return null;
         mView = inflater.inflate(R.layout.fragment_dialog_cert, container, false);
         return mView;
     }

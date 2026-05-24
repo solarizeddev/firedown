@@ -12,6 +12,7 @@ import androidx.annotation.Nullable;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.solarized.firedown.R;
 import com.solarized.firedown.Keys;
+import com.solarized.firedown.utils.FragmentArgs;
 import com.solarized.firedown.utils.NavigationUtils;
 
 
@@ -25,11 +26,8 @@ public class BrowserAppDialogFragment extends BaseDialogFragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Bundle bundle = getArguments();
-        mIntent = bundle != null ? getArguments().getParcelable(Keys.ITEM_ID) : null;
-        if(mIntent == null){
-            throw new IllegalArgumentException("BrowserAppDialogFragment Null Intent");
-        }
+        mIntent = FragmentArgs.parcelable(this, Keys.ITEM_ID, Intent.class);
+        // Null on restore is handled by onCreateDialog — dismiss instead of crash.
     }
 
 
@@ -42,6 +40,12 @@ public class BrowserAppDialogFragment extends BaseDialogFragment {
     @NonNull
     @Override
     public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
+
+        if (mIntent == null) {
+            Dialog dialog = new Dialog(requireContext());
+            dialog.setOnShowListener(d -> dismissAllowingStateLoss());
+            return dialog;
+        }
 
         int themeResId = mIsIncognito
                 ? R.style.Theme_FireDown_VaultDialogTheme

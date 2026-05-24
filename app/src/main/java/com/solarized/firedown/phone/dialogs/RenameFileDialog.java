@@ -24,6 +24,7 @@ import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.data.models.DownloadsViewModel;
 import com.solarized.firedown.ui.FocusEditText;
 import com.solarized.firedown.utils.FileUriHelper;
+import com.solarized.firedown.utils.FragmentArgs;
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.StoragePaths;
 
@@ -64,12 +65,14 @@ public class RenameFileDialog extends BaseDialogFragment implements TextWatcher 
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        Bundle bundle = getArguments();
+        DownloadEntity downloadEntity = FragmentArgs.parcelable(this, Keys.ITEM_ID, DownloadEntity.class);
 
-        DownloadEntity downloadEntity = bundle != null ? bundle.getParcelable(Keys.ITEM_ID) : null;
+        mDownloadsViewModel = new ViewModelProvider(this).get(DownloadsViewModel.class);
 
-        if(downloadEntity == null)
-            dismiss();
+        if (downloadEntity == null) {
+            // Args lost on restore — onCreateDialog dismisses on first show.
+            return;
+        }
 
         mDownloadEntity = new DownloadEntity(downloadEntity);
 
@@ -80,8 +83,6 @@ public class RenameFileDialog extends BaseDialogFragment implements TextWatcher 
         mFileList = parent != null && parent.exists() && parent.isDirectory() ? parent.listFiles() : null;
 
         mFilename = mDownloadEntity.getFileName();
-
-        mDownloadsViewModel = new ViewModelProvider(this).get(DownloadsViewModel.class);
     }
 
 
@@ -89,6 +90,12 @@ public class RenameFileDialog extends BaseDialogFragment implements TextWatcher 
     @NonNull
     @Override
     public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
+
+        if (mDownloadEntity == null) {
+            Dialog dialog = new Dialog(requireContext());
+            dialog.setOnShowListener(d -> dismissAllowingStateLoss());
+            return dialog;
+        }
 
         int themeResId = mIsIncognito
                 ? R.style.Theme_FireDown_VaultDialogTheme

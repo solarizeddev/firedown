@@ -122,19 +122,19 @@ public class GifMakerFragment extends BaseFocusFragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        Bundle bundle = getArguments();
-        if (bundle == null) {
-            throw new IllegalArgumentException("GifMakerFragment requires a DownloadEntity");
-        }
-        mDownloadEntity = bundle.getParcelable(Keys.ITEM_ID);
-        if (mDownloadEntity == null) {
-            throw new IllegalArgumentException("GifMakerFragment requires a DownloadEntity");
+        mDownloadEntity = com.solarized.firedown.utils.FragmentArgs.parcelable(
+                this, Keys.ITEM_ID, DownloadEntity.class);
+        // Null on restore: nothing to edit, pop back to caller. onCreateView
+        // returns null for the same reason.
+        if (mDownloadEntity == null && mNavController != null) {
+            mNavController.popBackStack();
         }
     }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
+        if (mDownloadEntity == null) return null;
         View view = inflater.inflate(R.layout.fragment_gif_maker, container, false);
 
         mToolbar = view.findViewById(R.id.toolbar);

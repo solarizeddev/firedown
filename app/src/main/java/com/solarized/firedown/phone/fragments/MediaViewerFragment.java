@@ -122,15 +122,16 @@ public class MediaViewerFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        Bundle bundle = getArguments();
+        mDownloadEntity = com.solarized.firedown.utils.FragmentArgs.parcelable(
+                this, Keys.ITEM_ID, DownloadEntity.class);
 
-        if (bundle == null)
-            throw new IllegalArgumentException();
-
-        mDownloadEntity = bundle.getParcelable(Keys.ITEM_ID);
-
-        if(mDownloadEntity == null)
+        if (mDownloadEntity == null) {
+            // Args lost on process-death restore: PlayerActivity is just
+            // a shell for this viewer, finish() to return the user to
+            // wherever they launched from.
             mDownloadEntity = new DownloadEntity();
+            if (mActivity != null) mActivity.finish();
+        }
 
         mAvoidTransition = mDownloadEntity.isFileEncrypted() || mDownloadEntity.isFileSafe();
 

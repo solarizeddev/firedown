@@ -136,6 +136,13 @@ public class PlayerActivity extends AppCompatActivity {
     private void loadFromIntent() {
         mDownloadEntity = getDownloadEntity();
 
+        if (mDownloadEntity == null) {
+            // Args lost on process-death restore — finish instead of
+            // crashing; user lands back where they launched from.
+            finish();
+            return;
+        }
+
         String fileMimeType = mDownloadEntity.getFileMimeType();
 
         String fileName = mDownloadEntity.getFileName();
@@ -215,11 +222,14 @@ public class PlayerActivity extends AppCompatActivity {
         return super.onPrepareOptionsMenu(menu);
     }
 
-    @NonNull
+    @Nullable
     private DownloadEntity getDownloadEntity() {
         Intent intent = getIntent();
 
         Bundle bundle = intent.getExtras();
+        if (bundle != null) {
+            bundle.setClassLoader(DownloadEntity.class.getClassLoader());
+        }
 
         DownloadEntity downloadEntity = bundle != null ? bundle.getParcelable(Keys.ITEM_ID) : null;
 
@@ -237,12 +247,8 @@ public class PlayerActivity extends AppCompatActivity {
 
                 downloadEntity.setFileMimeType(intent.getType());
 
-                intent.getExtras();
-
-            }else{
-                throw new RuntimeException("DownloadEntity can not be null");
             }
-
+            // null return signals loadFromIntent() to finish().
         }
         return downloadEntity;
     }

@@ -32,19 +32,22 @@ public class ClipboardDialogFragment extends BaseDialogFragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        Bundle bundle = getArguments();
-
-        if(bundle == null)
-            throw new IllegalArgumentException("Bunlde can not be Null");
-
         mBrowserDialogViewModel = new ViewModelProvider(mActivity).get(BrowserDialogViewModel.class);
 
-        mText = bundle.getString(Keys.TITLE, "");
+        Bundle bundle = getArguments();
+        mText = bundle != null ? bundle.getString(Keys.TITLE, "") : null;
+        // mText null is handled by onCreateDialog — dismiss instead of crash.
     }
 
     @NonNull
     @Override
     public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
+
+        if (mText == null) {
+            Dialog dialog = new Dialog(requireContext());
+            dialog.setOnShowListener(d -> dismissAllowingStateLoss());
+            return dialog;
+        }
 
         int themeResId = mIsIncognito
                 ? R.style.Theme_FireDown_VaultDialogTheme

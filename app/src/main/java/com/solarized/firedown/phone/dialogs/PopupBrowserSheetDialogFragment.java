@@ -176,11 +176,7 @@ public class PopupBrowserSheetDialogFragment extends BaseBottomSheetDialogFragme
         super.onCreate(savedInstanceState);
 
         Bundle bundle = getArguments();
-
-        if(bundle == null)
-            throw new IllegalArgumentException("Bundle can not be null");
-
-        mHasBookmark = bundle.getBoolean(Keys.ITEM_BOOKMARK, false);
+        mHasBookmark = bundle != null && bundle.getBoolean(Keys.ITEM_BOOKMARK, false);
         mBrowserDialogViewModel = new ViewModelProvider(mActivity).get(BrowserDialogViewModel.class);
 
         GeckoStateViewModel geckoStateViewModel =  new ViewModelProvider(mActivity).get(GeckoStateViewModel.class);

@@ -14,6 +14,7 @@ import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.data.models.TaskViewModel;
 import com.solarized.firedown.IntentActions;
 import com.solarized.firedown.Keys;
+import com.solarized.firedown.utils.FragmentArgs;
 
 import java.util.ArrayList;
 
@@ -32,17 +33,19 @@ public class DeleteDownloadsDialogFragment extends BaseDialogFragment {
         mTaskViewModel = new ViewModelProvider(mActivity).get(TaskViewModel.class);
 
         Bundle bundle = getArguments();
-
         if (bundle == null) {
-            throw new IllegalArgumentException("DownloadEntities can not be null");
+            mDownloadEntities = new ArrayList<>();
+            return;
         }
 
         if (bundle.containsKey(Keys.ITEM_ID)) {
-            DownloadEntity downloadEntity = bundle.getParcelable(Keys.ITEM_ID);
+            DownloadEntity downloadEntity = FragmentArgs.parcelable(this, Keys.ITEM_ID, DownloadEntity.class);
             mDownloadEntities = new ArrayList<>();
-            mDownloadEntities.add(downloadEntity);
+            if (downloadEntity != null) mDownloadEntities.add(downloadEntity);
         } else if (bundle.containsKey(Keys.ITEM_LIST_ID)) {
+            bundle.setClassLoader(DownloadEntity.class.getClassLoader());
             mDownloadEntities = bundle.getParcelableArrayList(Keys.ITEM_LIST_ID);
+            if (mDownloadEntities == null) mDownloadEntities = new ArrayList<>();
         } else {
             mDownloadEntities = new ArrayList<>();
         }
@@ -51,6 +54,14 @@ public class DeleteDownloadsDialogFragment extends BaseDialogFragment {
     @NonNull
     @Override
     public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
+
+        if (mDownloadEntities.isEmpty()) {
+            // Args lost on restore — nothing to delete; dismiss instead
+            // of showing a confirmation for an empty list.
+            Dialog dialog = new Dialog(requireContext());
+            dialog.setOnShowListener(d -> dismissAllowingStateLoss());
+            return dialog;
+        }
 
         int themeResId = mIsIncognito
                 ? R.style.Theme_FireDown_VaultDialogTheme
