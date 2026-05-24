@@ -399,6 +399,13 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
             int status = getStatus(viewType);
             boolean isGrid = isGridType(viewType);
 
+            // Selection state factors into row visibility (an item in a
+            // collapsed group stays visible while selected during action
+            // mode), so re-evaluate height alongside the selection chrome.
+            // Without this, selectAll would silently select rows inside
+            // collapsed groups that the user can't see.
+            applyRowVisibility(holder.itemView, isRowVisible(entity));
+
             holder.item.setEnabled(mEnabled);
             holder.item.setStrokeColor(mActionMode && contains ? mColorSelected : mColorNormal);
             holder.selected.setVisibility(mActionMode ? View.VISIBLE : View.GONE);
@@ -444,15 +451,7 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         }
         if (item instanceof DownloadEntity entity
                 && viewHolder instanceof DownloadViewHolder holder) {
-            // Mirror the full-bind grouping check — flat-list (search) mode
-            // never hides rows.
-            boolean grouped = peek(0) instanceof DownloadSeparatorEntity;
-            if (!grouped) {
-                applyRowVisibility(holder.itemView, true);
-                return;
-            }
-            int cat = mOrganizer.getCategory(entity);
-            applyRowVisibility(holder.itemView, !mCollapsedCategories.contains(cat));
+            applyRowVisibility(holder.itemView, isRowVisible(entity));
         }
     }
 
@@ -525,20 +524,11 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         // row. They stay in the adapter (and in the PagingData) so
         // expanding doesn't re-trigger a fetch; they just take no
         // vertical space and skip the heavier bind work below.
-        //
-        // Search mode produces a flat list (the VM skips separator
-        // insertion when a query is active), so the first item won't
-        // be a separator. In that case, show everything at full size —
-        // the expand-set is meaningless without grouping.
-        boolean grouped = peek(0) instanceof DownloadSeparatorEntity;
-        if (grouped) {
-            int entityCategory = mOrganizer.getCategory(entity);
-            boolean groupCollapsed = mCollapsedCategories.contains(entityCategory);
-            applyRowVisibility(holder.itemView, !groupCollapsed);
-            if (groupCollapsed) return;
-        } else {
-            applyRowVisibility(holder.itemView, true);
-        }
+        // isRowVisible centralises the search-mode / collapse /
+        // action-mode-selected interaction.
+        boolean rowVisible = isRowVisible(entity);
+        applyRowVisibility(holder.itemView, rowVisible);
+        if (!rowVisible) return;
 
         int viewType = getItemViewType(position);
         int status = getStatus(viewType);
@@ -847,6 +837,32 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
             subtitle = view.findViewById(R.id.item_header_subtitle);
             chevron  = view.findViewById(R.id.item_header_chevron);
         }
+    }
+
+    /**
+     * Single source of truth for whether a download row should render at
+     * full size or as a zero-height placeholder.
+     *
+     * <ul>
+     *   <li>Flat-list (search) mode skips grouping entirely — the
+     *       collapse set is meaningless without separators.</li>
+     *   <li>Otherwise, a row is hidden iff its group sits in the
+     *       collapsed set,</li>
+     *   <li>…with one override: a selected row inside action mode stays
+     *       visible regardless of its group's collapse state, so the
+     *       user can always see what's in their selection. Without
+     *       this, "select all" (or pre-collapse selections) would
+     *       silently include rows the user can't see — surprise deletes.
+     *       The header chevron stays at the user's explicit toggle
+     *       state; only the selected rows pin through.</li>
+     * </ul>
+     */
+    private boolean isRowVisible(@NonNull DownloadEntity entity) {
+        boolean grouped = peek(0) instanceof DownloadSeparatorEntity;
+        if (!grouped) return true;
+        int cat = mOrganizer.getCategory(entity);
+        if (!mCollapsedCategories.contains(cat)) return true;
+        return mActionMode && mSelected.contains(entity.getId());
     }
 
     /**
