@@ -171,7 +171,20 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
      * resolves mime text, kicks Glide loads, and rebuilds status views,
      * none of which change when the user enters action mode.
      */
-    private static final Object PAYLOAD_SELECTION = new Object();
+    private static final Object PAYLOAD_SELECTION  = new Object();
+
+    /** Section-header collapse toggled — items in the affected group flip
+     *  between full-size and 0dp, headers rotate their chevron. No Glide
+     *  load, no view rebuild. Without this targeted path, tapping any
+     *  header would re-fire thumbnail decodes for every visible row,
+     *  including audio files whose embedded-art decode is guaranteed to
+     *  fail (FFmpegThumbnailer returns null bitmap), causing a visible
+     *  blink on every collapse toggle. */
+    private static final Object PAYLOAD_COLLAPSE   = new Object();
+
+    /** Per-group aggregates changed — only header subtitles need to
+     *  re-render. Items ignore this payload entirely. */
+    private static final Object PAYLOAD_AGGREGATES = new Object();
 
     public void setActionMode(boolean value) {
         mActionMode = value;
@@ -280,22 +293,22 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
     public void setCollapsedCategories(@NonNull Set<Integer> collapsed) {
         if (mCollapsedCategories.equals(collapsed)) return;
         mCollapsedCategories = collapsed;
-        // Repaint every bound row — items toggle between full-size and 0dp
-        // based on whether their category sits in the new set, and headers
-        // need their chevron rotated. notifyItemRangeChanged plays nicer
-        // with PagingDataAdapter than notifyDataSetChanged (preserves
-        // paging state, no diff churn).
-        notifyItemRangeChanged(0, getItemCount());
+        // Targeted payload so the bind path can update chevron rotation
+        // and item visibility without re-running the full bind (which
+        // would re-fire Glide loads — fine for cached results, but audio
+        // files whose embedded-art decode is guaranteed to fail get no
+        // cache entry and re-decode on every retry, producing a visible
+        // blink on each header tap).
+        notifyItemRangeChanged(0, getItemCount(), PAYLOAD_COLLAPSE);
     }
 
     public void setAggregates(@NonNull Map<Integer, GroupAggregate> aggregates) {
         if (mAggregates == aggregates || mAggregates.equals(aggregates)) return;
         mAggregates = aggregates;
-        // Only headers consume aggregates, but we don't have a per-header
-        // position index — let the range-change cover them. Item rows
-        // re-bind cheaply (the visibility/height check is a single set
-        // lookup) so the cost is bounded.
-        notifyItemRangeChanged(0, getItemCount());
+        // Only headers consume aggregates; the payload lets items short
+        // out without rebinding (same blink-avoidance reasoning as
+        // PAYLOAD_COLLAPSE).
+        notifyItemRangeChanged(0, getItemCount(), PAYLOAD_AGGREGATES);
     }
 
     public void setOnHeaderClickListener(@Nullable OnHeaderClickListener listener) {
@@ -411,8 +424,61 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
                             : R.drawable.ic_baseline_more_vert_24);
             return;
         }
+
+        // Collapse-only payload: flip row visibility (items) or rotate the
+        // chevron (headers). No Glide load, no view rebuild — this is the
+        // path that prevents the "audio file blink on every header tap"
+        // when FFmpegThumbnailer has no embedded art to extract.
+        if (!payloads.isEmpty()
+                && Collections.frequency(payloads, PAYLOAD_COLLAPSE) == payloads.size()) {
+            applyCollapsePayload(viewHolder, position);
+            return;
+        }
+
+        // Aggregates-only payload: header subtitle text. Items ignore.
+        if (!payloads.isEmpty()
+                && Collections.frequency(payloads, PAYLOAD_AGGREGATES) == payloads.size()) {
+            applyAggregatesPayload(viewHolder, position);
+            return;
+        }
+
         // Anything else (or no payload, or mixed payloads) → full rebind.
         super.onBindViewHolder(viewHolder, position, payloads);
+    }
+
+    private void applyCollapsePayload(@NonNull RecyclerView.ViewHolder viewHolder, int position) {
+        Object item = peek(position);
+        if (item instanceof DownloadSeparatorEntity sep
+                && viewHolder instanceof HeaderViewHolder header) {
+            boolean expanded = !mCollapsedCategories.contains(sep.getCategory());
+            header.chevron.setRotation(expanded ? 180f : 0f);
+            return;
+        }
+        if (item instanceof DownloadEntity entity
+                && viewHolder instanceof DownloadViewHolder holder) {
+            // Mirror the full-bind grouping check — flat-list (search) mode
+            // never hides rows.
+            boolean grouped = peek(0) instanceof DownloadSeparatorEntity;
+            if (!grouped) {
+                applyRowVisibility(holder.itemView, true);
+                return;
+            }
+            int cat = mOrganizer.getCategory(entity);
+            applyRowVisibility(holder.itemView, !mCollapsedCategories.contains(cat));
+        }
+    }
+
+    private void applyAggregatesPayload(@NonNull RecyclerView.ViewHolder viewHolder, int position) {
+        if (!(viewHolder instanceof HeaderViewHolder header)) return;
+        Object item = peek(position);
+        if (!(item instanceof DownloadSeparatorEntity sep)) return;
+        GroupAggregate agg = mAggregates.get(sep.getCategory());
+        if (agg != null) {
+            header.subtitle.setVisibility(View.VISIBLE);
+            header.subtitle.setText(formatGroupSubtitle(header.itemView.getContext(), agg));
+        } else {
+            header.subtitle.setVisibility(View.GONE);
+        }
     }
 
     @Override
