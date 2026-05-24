@@ -443,22 +443,16 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         }
 
         // ── Row surface ─────────────────────────────────────────────
-        // Same default for active and finished rows. The list-mode
-        // active signal is now a 4dp accent stripe on the card's
-        // start edge (see activeStripe below); grid mode continues to
-        // carry the signal via the ProgressOverlayView on the
-        // thumbnail. During action mode, selected rows take the
-        // tonal wash so the selection set reads from across the
-        // screen — see the field comment on mSelectedListBg for the why.
+        // Same default for active and finished rows. The active signal
+        // lives in the thicker tinted LinearProgressIndicator (list) or
+        // the ProgressOverlayView on the thumbnail (grid). During
+        // action mode, selected rows take the tonal wash so the
+        // selection set reads from across the screen — see the field
+        // comment on mSelectedListBg for the why.
         boolean washSelected = mActionMode && contains;
         holder.item.setCardBackgroundColor(washSelected
                 ? (isGrid ? mSelectedGridBg : mSelectedListBg)
                 : (isGrid ? mDefaultGridBg  : mDefaultListBg));
-
-        boolean isActive = status == Download.PROGRESS || status == Download.QUEUED;
-        if (holder.activeStripe != null) {
-            holder.activeStripe.setVisibility(isActive ? View.VISIBLE : View.GONE);
-        }
 
         if (holder.fileName != null) holder.fileName.setText(entity.getFileName());
         if (holder.fileUrl != null) holder.fileUrl.setText(domain);
@@ -628,11 +622,6 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
 
         final OnItemClickListener listener;
         final MaterialCardView item;
-        /** Accent stripe on the start edge that signals active rows
-         *  (PROGRESS / QUEUED). Null in grid layout where the
-         *  ProgressOverlayView on the thumbnail already carries the
-         *  active signal. */
-        final @Nullable View activeStripe;
         final AppCompatImageView selected;
         final AppCompatImageView image;
         final TextView mimeText;
@@ -668,7 +657,6 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
             listener = onItemClickListener;
 
             item = view.findViewById(R.id.item);
-            activeStripe = view.findViewById(R.id.active_stripe);
             selected = view.findViewById(R.id.item_download_selected);
             image = view.findViewById(R.id.image);
             mimeText = view.findViewById(R.id.mime_text);

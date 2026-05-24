@@ -45,21 +45,6 @@
         app:cardCornerRadius="8dp"
         app:strokeWidth="2dp">
 
-        <!--
-          Active-state indicator: a 4dp accent stripe on the start edge
-          of the card. MaterialCardView clips its children to its
-          rounded outline, so the stripe inherits the card's corner
-          radius without needing its own shape drawable. Visibility is
-          toggled by the adapter for PROGRESS / QUEUED rows.
-        -->
-        <View
-            android:id="@+id/active_stripe"
-            android:layout_width="4dp"
-            android:layout_height="match_parent"
-            android:layout_gravity="start"
-            android:background="?attr/colorPrimary"
-            android:visibility="gone" />
-
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -193,8 +178,9 @@
                         android:max="100"
                         android:progress="0"
                         app:indicatorTrackGapSize="0dp"
-                        app:trackCornerRadius="2dp"
-                        app:trackStopIndicatorSize="0dp" />
+                        app:trackCornerRadius="3dp"
+                        app:trackStopIndicatorSize="0dp"
+                        app:trackThickness="5dp" />
 
                 </LinearLayout>
 
