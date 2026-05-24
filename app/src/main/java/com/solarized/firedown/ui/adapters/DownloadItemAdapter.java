@@ -86,10 +86,10 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
     private int mSortType = Sorting.SORT_DATE;
     private DownloadSortOrganizer mOrganizer = new DownloadSortOrganizer(mSortType);
 
-    /** Section-header expand state. A category is collapsed unless it
+    /** Section-header collapse state. A category is collapsed iff it
      *  appears in this set — default empty so a fresh sort starts with
-     *  everything collapsed (per spec). */
-    @NonNull private Set<Integer> mExpandedCategories = Collections.emptySet();
+     *  everything expanded. */
+    @NonNull private Set<Integer> mCollapsedCategories = Collections.emptySet();
 
     /** Per-category aggregates used to fill the header subtitle
      *  ("N files · X MB"). Empty until the ViewModel's aggregator emits. */
@@ -277,9 +277,9 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         notifyItemRangeChanged(0, getItemCount());
     }
 
-    public void setExpandedCategories(@NonNull Set<Integer> expanded) {
-        if (mExpandedCategories.equals(expanded)) return;
-        mExpandedCategories = expanded;
+    public void setCollapsedCategories(@NonNull Set<Integer> collapsed) {
+        if (mCollapsedCategories.equals(collapsed)) return;
+        mCollapsedCategories = collapsed;
         // Repaint every bound row — items toggle between full-size and 0dp
         // based on whether their category sits in the new set, and headers
         // need their chevron rotated. notifyItemRangeChanged plays nicer
@@ -438,7 +438,7 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
                 header.subtitle.setVisibility(View.GONE);
             }
 
-            boolean expanded = mExpandedCategories.contains(category);
+            boolean expanded = !mCollapsedCategories.contains(category);
             header.chevron.setRotation(expanded ? 180f : 0f);
             return;
         }
@@ -458,7 +458,7 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         boolean grouped = peek(0) instanceof DownloadSeparatorEntity;
         if (grouped) {
             int entityCategory = mOrganizer.getCategory(entity);
-            boolean groupCollapsed = !mExpandedCategories.contains(entityCategory);
+            boolean groupCollapsed = mCollapsedCategories.contains(entityCategory);
             applyRowVisibility(holder.itemView, !groupCollapsed);
             if (groupCollapsed) return;
         } else {

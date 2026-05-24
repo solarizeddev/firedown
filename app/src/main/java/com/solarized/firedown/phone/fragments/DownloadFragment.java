@@ -244,12 +244,13 @@ public class DownloadFragment extends BaseDownloadFragment implements
         mDownloadsViewModel.getDownloadAggregates().observe(getViewLifecycleOwner(),
                 aggregates -> { if (aggregates != null) mAdapter.setAggregates(aggregates); });
 
-        // Push expand state and route header taps back through the VM
+        // Push collapse state and route header taps back through the VM
         // so the set survives rotation (it's owned by the VM, not the
-        // adapter).
-        mDownloadsViewModel.getExpandedCategories().observe(getViewLifecycleOwner(),
-                expanded -> { if (expanded != null) mAdapter.setExpandedCategories(expanded); });
-        mAdapter.setOnHeaderClickListener(mDownloadsViewModel::toggleExpanded);
+        // adapter). Empty set = nothing collapsed = every group expanded,
+        // which is the default a user sees on first attach.
+        mDownloadsViewModel.getCollapsedCategories().observe(getViewLifecycleOwner(),
+                collapsed -> { if (collapsed != null) mAdapter.setCollapsedCategories(collapsed); });
+        mAdapter.setOnHeaderClickListener(mDownloadsViewModel::toggleCollapsed);
 
         // Scroll the list back to the top whenever a new (distinct) query is dispatched.
         // distinctUntilChanged on the VM side suppresses the spurious initial emission

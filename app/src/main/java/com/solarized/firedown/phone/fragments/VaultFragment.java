@@ -180,9 +180,9 @@ public class VaultFragment extends BaseDownloadFragment implements OnItemClickLi
         mDownloadsViewModel.getSafeAggregates().observe(getViewLifecycleOwner(),
                 aggregates -> { if (aggregates != null) mAdapter.setAggregates(aggregates); });
 
-        mDownloadsViewModel.getExpandedCategories().observe(getViewLifecycleOwner(),
-                expanded -> { if (expanded != null) mAdapter.setExpandedCategories(expanded); });
-        mAdapter.setOnHeaderClickListener(mDownloadsViewModel::toggleExpanded);
+        mDownloadsViewModel.getCollapsedCategories().observe(getViewLifecycleOwner(),
+                collapsed -> { if (collapsed != null) mAdapter.setCollapsedCategories(collapsed); });
+        mAdapter.setOnHeaderClickListener(mDownloadsViewModel::toggleCollapsed);
     }
 
     @Override

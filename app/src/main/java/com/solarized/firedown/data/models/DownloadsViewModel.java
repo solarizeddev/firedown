@@ -72,11 +72,14 @@ public class DownloadsViewModel extends ViewModel {
     private final LiveData<Map<Integer, GroupAggregate>> mDownloadAggregates;
     private final LiveData<Map<Integer, GroupAggregate>> mSafeAggregates;
 
-    /** Section-header expand state. Empty = every category collapsed by default
-     *  (per the spec). Survives rotation via the ViewModel; reset on sort change
-     *  because category IDs are sort-specific and stale entries wouldn't map to
-     *  anything in the new sort. */
-    private final MutableLiveData<Set<Integer>> mExpandedCategories = new MutableLiveData<>(Collections.emptySet());
+    /** Section-header collapse state. Tracks the categories the user has
+     *  explicitly collapsed — empty = nothing collapsed = every group
+     *  expanded, which is the default on a fresh sort. Lives in the
+     *  ViewModel so it survives rotation; reset on sort change because
+     *  category IDs are sort-specific (date buckets, size buckets,
+     *  domain hashes) and stale entries wouldn't address anything under
+     *  the new sort. */
+    private final MutableLiveData<Set<Integer>> mCollapsedCategories = new MutableLiveData<>(Collections.emptySet());
 
     @Inject
     public DownloadsViewModel(DownloadDataRepository repository, Sorting sorting) {
@@ -235,13 +238,13 @@ public class DownloadsViewModel extends ViewModel {
 
     public void setSortType(int sortType) {
         DownloadsState current = mStateTrigger.getValue();
-        // Reset expand state on real sort changes: category IDs are
+        // Reset collapse state on real sort changes: category IDs are
         // sort-specific (date buckets vs size buckets vs domain hashes),
         // so old entries wouldn't address anything meaningful under the
         // new sort. Skip the reset on no-op so we don't churn observers
         // when the user re-selects the active sort.
         if (current == null || current.sortType != sortType) {
-            mExpandedCategories.setValue(Collections.emptySet());
+            mCollapsedCategories.setValue(Collections.emptySet());
         }
         updateState(currentState -> new DownloadsState(currentState.query, sortType, currentState.chipId));
     }
@@ -284,18 +287,18 @@ public class DownloadsViewModel extends ViewModel {
         return mSafeAggregates;
     }
 
-    public LiveData<Set<Integer>> getExpandedCategories() {
-        return mExpandedCategories;
+    public LiveData<Set<Integer>> getCollapsedCategories() {
+        return mCollapsedCategories;
     }
 
-    /** Toggle expand/collapse for a single category. Backed by a copy-on-write
-     *  Set so observers receive a distinct instance each time and can rely on
-     *  reference inequality for cheap "did anything change" checks. */
-    public void toggleExpanded(int category) {
-        Set<Integer> current = mExpandedCategories.getValue();
+    /** Toggle collapse for a single category. Backed by a copy-on-write
+     *  Set so observers receive a distinct instance each time and can rely
+     *  on reference inequality for cheap "did anything change" checks. */
+    public void toggleCollapsed(int category) {
+        Set<Integer> current = mCollapsedCategories.getValue();
         HashSet<Integer> next = current != null ? new HashSet<>(current) : new HashSet<>();
         if (!next.add(category)) next.remove(category);
-        mExpandedCategories.setValue(Collections.unmodifiableSet(next));
+        mCollapsedCategories.setValue(Collections.unmodifiableSet(next));
     }
 
     public void addDownload(DownloadEntity download) {
