@@ -718,13 +718,21 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         }
     }
 
-    /** "{n} files · {size}". Pluralization is light — Java's
+    /** "{n} files · {size}", or just "{n} files" when the total is
+     *  unknown. fileSize comes from Content-Length at request creation
+     *  time; HLS / live streams and any source without a length
+     *  header land as 0, which would otherwise render the active
+     *  "Downloading" section header as "2 files · 0 B" — accurate to
+     *  the data but useless to read. Same gate handles the rare
+     *  finished-but-size-unset edge case for free.
+     *  <p>Pluralization is light — Java's
      *  {@code Resources.getQuantityString} is fine here but the
      *  English "1 file / N files" split is the only locale rule
      *  that matters for this header today. */
     private static String formatGroupSubtitle(@NonNull Context ctx, @NonNull GroupAggregate agg) {
         String files = ctx.getResources().getQuantityString(
                 R.plurals.downloads_group_files, agg.count, agg.count);
+        if (agg.totalSize <= 0) return files;
         return files + " · " + Utils.readableFileSize(agg.totalSize);
     }
 
