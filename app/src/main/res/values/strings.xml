@@ -164,6 +164,9 @@
     <string name="download_saving_audio">Extracting Audio, please wait…</string>
     <string name="download_saving_gif">Creating GIF, please wait…</string>
     <string name="downloading">Downloading…</string>
+    <!-- Section header on the downloads list pinned at the top whenever
+         there's at least one in-flight (PROGRESS/QUEUED) download. -->
+    <string name="downloads_active_header">Downloading</string>
     <string name="edit">Edit</string>
     <string name="empty_learn_more">Learn more</string>
     <string name="empty_list">Your downloads will appear here.</string>

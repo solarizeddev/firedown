@@ -1,6 +1,8 @@
 package com.solarized.firedown.utils;
 
+import com.solarized.firedown.R;
 import com.solarized.firedown.Sorting;
+import com.solarized.firedown.data.Download;
 import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.data.entity.DownloadSeparatorEntity;
 
@@ -29,6 +31,15 @@ public class DownloadSortOrganizer {
     private static final int SIZE_CAT_1MB = 103;
     private static final int SIZE_CAT_SMALL = 104;
 
+    /** Sentinel category for the "Downloading" pseudo-section that pins
+     *  active (PROGRESS / QUEUED) items to the top of the list under
+     *  every sort. Picked to never collide with a date bucket, size
+     *  bucket, char code, or domain hash — those all live in regions
+     *  well above {@code Integer.MIN_VALUE + 1}. Public because the
+     *  DAO's hoisting order ensures these items always appear first,
+     *  and the adapter / aggregator key by it. */
+    public static final int ACTIVE_CATEGORY = Integer.MIN_VALUE + 1;
+
     private final int mSortType;
     private final DateOrganizer mDateOrganizer;
 
@@ -40,8 +51,17 @@ public class DownloadSortOrganizer {
     /**
      * Returns a unique category int for the given entity under the current sort mode.
      * Two entities in the same category should NOT have a separator between them.
+     *
+     * <p>Active downloads (PROGRESS / QUEUED) short-circuit to
+     * {@link #ACTIVE_CATEGORY} regardless of sort, so the DAO-hoisted
+     * active block renders under a single "Downloading" header instead
+     * of being broken up by the user's sort field.
      */
     public int getCategory(DownloadEntity entity) {
+        int status = entity.getFileStatus();
+        if (status == Download.PROGRESS || status == Download.QUEUED) {
+            return ACTIVE_CATEGORY;
+        }
         return switch (mSortType) {
             case Sorting.SORT_SIZE -> getSizeCategory(entity.getFileSize());
             case Sorting.SORT_ALPHABET -> getAlphabetCategory(entity.getFileName());
@@ -57,6 +77,11 @@ public class DownloadSortOrganizer {
     public DownloadSeparatorEntity createSeparator(int category) {
         DownloadSeparatorEntity separator = new DownloadSeparatorEntity();
         separator.setCategory(category);
+
+        if (category == ACTIVE_CATEGORY) {
+            separator.setTitleResId(R.string.downloads_active_header);
+            return separator;
+        }
 
         switch (mSortType) {
             case Sorting.SORT_SIZE -> {

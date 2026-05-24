@@ -16,31 +16,43 @@ import java.util.List;
 public interface DownloadDao {
 
     // --- Paging Source Queries (Standard) ---
+    //
+    // (file_status IN (0, 2)) returns 1 for active (PROGRESS/QUEUED)
+    // rows, 0 otherwise; sorting that DESC hoists every active download
+    // to the top of the list regardless of the secondary sort field, so
+    // a user opening the downloads screen on any sort sees their
+    // in-flight downloads without scrolling. The secondary clause then
+    // orders both blocks (active + finished) by the user's chosen field.
 
-    @Query("SELECT * FROM download WHERE file_safe = 0 ORDER BY file_date DESC")
+    @Query("SELECT * FROM download WHERE file_safe = 0 ORDER BY (file_status IN (0, 2)) DESC, file_date DESC")
     PagingSource<Integer, DownloadEntity> getDownloads();
 
-    @Query("SELECT * FROM download WHERE file_safe = 0 ORDER BY file_size DESC")
+    @Query("SELECT * FROM download WHERE file_safe = 0 ORDER BY (file_status IN (0, 2)) DESC, file_size DESC")
     PagingSource<Integer, DownloadEntity> getDownloadsSize();
 
-    @Query("SELECT * FROM download WHERE file_safe = 0 ORDER BY file_name ASC")
+    @Query("SELECT * FROM download WHERE file_safe = 0 ORDER BY (file_status IN (0, 2)) DESC, file_name ASC")
     PagingSource<Integer, DownloadEntity> getDownloadsName();
 
-    @Query("SELECT * FROM download WHERE file_safe = 0 ORDER BY file_origin_url ASC, file_date DESC")
+    @Query("SELECT * FROM download WHERE file_safe = 0 ORDER BY (file_status IN (0, 2)) DESC, file_origin_url ASC, file_date DESC")
     PagingSource<Integer, DownloadEntity> getDownloadsDomain();
 
     // --- Paging Source Queries (Safe/Encrypted) ---
+    //
+    // Vault items are typically finished+moved so the hoist is a no-op
+    // in practice — kept here for symmetry so any future code path that
+    // lands an in-flight vault download still gets the pin-to-top
+    // behavior without a second migration.
 
-    @Query("SELECT * FROM download WHERE file_safe = 1 ORDER BY file_date DESC")
+    @Query("SELECT * FROM download WHERE file_safe = 1 ORDER BY (file_status IN (0, 2)) DESC, file_date DESC")
     PagingSource<Integer, DownloadEntity> getSafe();
 
-    @Query("SELECT * FROM download WHERE file_safe = 1 ORDER BY file_size DESC")
+    @Query("SELECT * FROM download WHERE file_safe = 1 ORDER BY (file_status IN (0, 2)) DESC, file_size DESC")
     PagingSource<Integer, DownloadEntity> getSafeSize();
 
-    @Query("SELECT * FROM download WHERE file_safe = 1 ORDER BY file_name ASC")
+    @Query("SELECT * FROM download WHERE file_safe = 1 ORDER BY (file_status IN (0, 2)) DESC, file_name ASC")
     PagingSource<Integer, DownloadEntity> getSafeName();
 
-    @Query("SELECT * FROM download WHERE file_safe = 1 ORDER BY file_origin_url ASC, file_date DESC")
+    @Query("SELECT * FROM download WHERE file_safe = 1 ORDER BY (file_status IN (0, 2)) DESC, file_origin_url ASC, file_date DESC")
     PagingSource<Integer, DownloadEntity> getSafeDomain();
 
     /**
