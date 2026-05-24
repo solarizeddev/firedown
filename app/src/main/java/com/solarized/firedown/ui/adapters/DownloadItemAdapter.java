@@ -450,8 +450,7 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         Object item = peek(position);
         if (item instanceof DownloadSeparatorEntity sep
                 && viewHolder instanceof HeaderViewHolder header) {
-            boolean expanded = !mCollapsedCategories.contains(sep.getCategory());
-            header.chevron.setRotation(expanded ? 180f : 0f);
+            applyHeaderCollapseAffordance(header, sep.getCategory());
             return;
         }
         if (item instanceof DownloadEntity entity
@@ -479,6 +478,28 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         } else {
             header.subtitle.setVisibility(View.GONE);
         }
+        // Group count may have shifted (sort change, downloads added /
+        // removed) — refresh the chevron + tappability so a single-group
+        // list doesn't expose a footgun toggle.
+        applyHeaderCollapseAffordance(header, sep.getCategory());
+    }
+
+    /**
+     * A header only earns its chevron and tap target when there's more
+     * than one group to switch between. With a single group on screen
+     * the only thing a tap can do is hide every download the user is
+     * trying to look at — so we drop the chevron, kill the click and
+     * the selectable-background foreground, and the row reads as a
+     * plain section label.
+     */
+    private void applyHeaderCollapseAffordance(@NonNull HeaderViewHolder header, int category) {
+        boolean canCollapse = mAggregates.size() > 1;
+        header.chevron.setVisibility(canCollapse ? View.VISIBLE : View.GONE);
+        header.itemView.setClickable(canCollapse);
+        header.itemView.setFocusable(canCollapse);
+
+        boolean expanded = !mCollapsedCategories.contains(category);
+        header.chevron.setRotation(expanded ? 180f : 0f);
     }
 
     @Override
@@ -504,8 +525,7 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
                 header.subtitle.setVisibility(View.GONE);
             }
 
-            boolean expanded = !mCollapsedCategories.contains(category);
-            header.chevron.setRotation(expanded ? 180f : 0f);
+            applyHeaderCollapseAffordance(header, category);
             return;
         }
 
