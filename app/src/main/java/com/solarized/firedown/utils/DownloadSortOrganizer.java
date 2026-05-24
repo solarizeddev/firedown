@@ -128,7 +128,8 @@ public class DownloadSortOrganizer {
     }
 
     private String getDomainLabelForCategory(int category) {
-        String label = mDomainLabels.get(category);
-        return (label != null) ? label : "Unknown";
+        String raw = mDomainLabels.get(category);
+        if (raw == null || raw.isEmpty()) return "Unknown";
+        return DomainDisplayNames.displayName(raw);
     }
 }

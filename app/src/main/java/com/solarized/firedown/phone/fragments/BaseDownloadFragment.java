@@ -189,7 +189,17 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment implements 
                 SavedStateHandle handle = entry.getSavedStateHandle();
                 if (handle.contains(IntentActions.DOWNLOAD_SORT)) {
                     OptionEntity option = handle.get(IntentActions.DOWNLOAD_SORT);
-                    if(option != null) mDownloadsViewModel.setSortType(option.getId());
+                    if (option != null) {
+                        // Push the new sort to both VM (drives the paging
+                        // source / separator categorization) and adapter
+                        // (drives the per-item collapse-group lookup).
+                        // Keeping them in lockstep avoids a frame where
+                        // the items in the new categories render as
+                        // visible because the adapter still thinks the
+                        // old sort applies.
+                        mDownloadsViewModel.setSortType(option.getId());
+                        if (mAdapter != null) mAdapter.setSortType(option.getId());
+                    }
                     handle.remove(IntentActions.DOWNLOAD_SORT);
                 } else if (handle.contains(IntentActions.DOWNLOAD_ITEM)) {
                     OptionEntity option = handle.get(IntentActions.DOWNLOAD_ITEM);

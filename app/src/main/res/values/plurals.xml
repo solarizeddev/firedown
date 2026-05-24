@@ -51,4 +51,10 @@
         <item quantity="one">%d file saved</item>
         <item quantity="other">%d files saved</item>
     </plurals>
+    <!-- Subtitle on a collapsible section header in the downloads list,
+         e.g. "14 files". Combined with the total size via " · ". -->
+    <plurals name="downloads_group_files">
+        <item quantity="one">%d file</item>
+        <item quantity="other">%d files</item>
+    </plurals>
 </resources>

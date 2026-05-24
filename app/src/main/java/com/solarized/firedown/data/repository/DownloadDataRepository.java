@@ -75,6 +75,14 @@ public class DownloadDataRepository {
         return mDatabase.downloadDao().search(sorting, safe, query);
     }
 
+    public androidx.lifecycle.LiveData<java.util.List<DownloadEntity>> getAllRegularLive() {
+        return mDatabase.downloadDao().getAllRegularLive();
+    }
+
+    public androidx.lifecycle.LiveData<java.util.List<DownloadEntity>> getAllSafeLive() {
+        return mDatabase.downloadDao().getAllSafeLive();
+    }
+
     // --- Standard Queries ---
 
     /** Live count of vault-saved downloads. Drives the home empty-hero

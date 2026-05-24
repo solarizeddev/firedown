@@ -26,13 +26,16 @@ import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.color.MaterialColors;
 import com.solarized.firedown.GlideHelper;
 import com.solarized.firedown.R;
+import com.solarized.firedown.Sorting;
 import com.solarized.firedown.data.Download;
 import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.data.entity.DownloadSeparatorEntity;
 import com.solarized.firedown.ui.OnItemClickListener;
 import com.solarized.firedown.ui.ProgressOverlayView;
 import com.solarized.firedown.utils.DateUtils;
+import com.solarized.firedown.utils.DownloadSortOrganizer;
 import com.solarized.firedown.utils.FileUriHelper;
+import com.solarized.firedown.utils.GroupAggregate;
 import com.solarized.firedown.utils.MessageHelper;
 import com.solarized.firedown.utils.Utils;
 import com.solarized.firedown.utils.WebUtils;
@@ -42,6 +45,8 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
 public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.ViewHolder> {
 
@@ -73,6 +78,30 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
     private boolean mActionMode;
     private boolean mEnabled;
     private boolean mEnableGrid;
+
+    /** Current sort mode, mirrored from the ViewModel so the adapter can map
+     *  any DownloadEntity to its section category for the collapse check
+     *  and the chevron rotation. Same category function as the separator
+     *  insertion path uses, so headers and items always agree. */
+    private int mSortType = Sorting.SORT_DATE;
+    private DownloadSortOrganizer mOrganizer = new DownloadSortOrganizer(mSortType);
+
+    /** Section-header expand state. A category is collapsed unless it
+     *  appears in this set — default empty so a fresh sort starts with
+     *  everything collapsed (per spec). */
+    @NonNull private Set<Integer> mExpandedCategories = Collections.emptySet();
+
+    /** Per-category aggregates used to fill the header subtitle
+     *  ("N files · X MB"). Empty until the ViewModel's aggregator emits. */
+    @NonNull private Map<Integer, GroupAggregate> mAggregates = Collections.emptyMap();
+
+    @Nullable private OnHeaderClickListener mOnHeaderClickListener;
+
+    /** Header click contract — the fragment translates these to a
+     *  ViewModel toggle so the expand set lives in one place. */
+    public interface OnHeaderClickListener {
+        void onHeaderClick(int category);
+    }
 
 
 
@@ -234,6 +263,45 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         return item instanceof DownloadEntity entity ? entity : null;
     }
 
+    // ── Section header / collapse API ──────────────────────────────────
+
+    /** Mirror the ViewModel's sort mode so item bind can resolve each
+     *  entity's category for the collapse check. No-op when the mode
+     *  hasn't actually changed — the organizer is stateless beyond the
+     *  domain label cache, but rebuilding on every chip toggle would
+     *  drop that cache mid-scroll for nothing. */
+    public void setSortType(int sortType) {
+        if (mSortType == sortType) return;
+        mSortType = sortType;
+        mOrganizer = new DownloadSortOrganizer(sortType);
+        notifyItemRangeChanged(0, getItemCount());
+    }
+
+    public void setExpandedCategories(@NonNull Set<Integer> expanded) {
+        if (mExpandedCategories.equals(expanded)) return;
+        mExpandedCategories = expanded;
+        // Repaint every bound row — items toggle between full-size and 0dp
+        // based on whether their category sits in the new set, and headers
+        // need their chevron rotated. notifyItemRangeChanged plays nicer
+        // with PagingDataAdapter than notifyDataSetChanged (preserves
+        // paging state, no diff churn).
+        notifyItemRangeChanged(0, getItemCount());
+    }
+
+    public void setAggregates(@NonNull Map<Integer, GroupAggregate> aggregates) {
+        if (mAggregates == aggregates || mAggregates.equals(aggregates)) return;
+        mAggregates = aggregates;
+        // Only headers consume aggregates, but we don't have a per-header
+        // position index — let the range-change cover them. Item rows
+        // re-bind cheaply (the visibility/height check is a single set
+        // lookup) so the cost is bounded.
+        notifyItemRangeChanged(0, getItemCount());
+    }
+
+    public void setOnHeaderClickListener(@Nullable OnHeaderClickListener listener) {
+        mOnHeaderClickListener = listener;
+    }
+
     // ── View types ──────────────────────────────────────────────────────
 
     @Override
@@ -279,7 +347,19 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
 
         if (viewType == Download.HEADER) {
-            return new HeaderViewHolder(inflater.inflate(R.layout.fragment_item_header, parent, false));
+            HeaderViewHolder header = new HeaderViewHolder(
+                    inflater.inflate(R.layout.fragment_item_header, parent, false));
+            header.itemView.setOnClickListener(v -> {
+                // boundCategory is set during onBindViewHolder; a stale
+                // sentinel means the holder hasn't been bound yet —
+                // ignore rather than fire onHeaderClick(0) which would
+                // collapse the "0" category by accident.
+                if (mOnHeaderClickListener != null
+                        && header.boundCategory != HeaderViewHolder.UNBOUND) {
+                    mOnHeaderClickListener.onHeaderClick(header.boundCategory);
+                }
+            });
+            return header;
         }
 
         if (viewType == Download.EMPTY) {
@@ -341,16 +421,49 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         if (item == null) return;
 
         if (viewHolder instanceof HeaderViewHolder header && item instanceof DownloadSeparatorEntity sep) {
+            int category = sep.getCategory();
+            header.boundCategory = category;
+
             if (sep.getTitleResId() != 0) {
                 header.text.setText(header.itemView.getContext().getString(sep.getTitleResId()));
             } else {
                 header.text.setText(sep.getTitleText());
             }
+
+            GroupAggregate agg = mAggregates.get(category);
+            if (agg != null) {
+                header.subtitle.setVisibility(View.VISIBLE);
+                header.subtitle.setText(formatGroupSubtitle(header.itemView.getContext(), agg));
+            } else {
+                header.subtitle.setVisibility(View.GONE);
+            }
+
+            boolean expanded = mExpandedCategories.contains(category);
+            header.chevron.setRotation(expanded ? 180f : 0f);
             return;
         }
 
         if (!(viewHolder instanceof DownloadViewHolder holder) || !(item instanceof DownloadEntity entity))
             return;
+
+        // Collapse: items in a collapsed group render as a zero-height
+        // row. They stay in the adapter (and in the PagingData) so
+        // expanding doesn't re-trigger a fetch; they just take no
+        // vertical space and skip the heavier bind work below.
+        //
+        // Search mode produces a flat list (the VM skips separator
+        // insertion when a query is active), so the first item won't
+        // be a separator. In that case, show everything at full size —
+        // the expand-set is meaningless without grouping.
+        boolean grouped = peek(0) instanceof DownloadSeparatorEntity;
+        if (grouped) {
+            int entityCategory = mOrganizer.getCategory(entity);
+            boolean groupCollapsed = !mExpandedCategories.contains(entityCategory);
+            applyRowVisibility(holder.itemView, !groupCollapsed);
+            if (groupCollapsed) return;
+        } else {
+            applyRowVisibility(holder.itemView, true);
+        }
 
         int viewType = getItemViewType(position);
         int status = getStatus(viewType);
@@ -647,11 +760,51 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
     }
 
     static class HeaderViewHolder extends RecyclerView.ViewHolder {
+        /** Distinguishes "never bound" from a legitimate category whose hash
+         *  happens to be 0 — without it, a click on a fresh holder before the
+         *  first bind would target category 0 (probably no group) and
+         *  silently flip its state. */
+        static final int UNBOUND = Integer.MIN_VALUE;
+
         final TextView text;
+        final TextView subtitle;
+        final View     chevron;
+        int boundCategory = UNBOUND;
+
         HeaderViewHolder(View view) {
             super(view);
-            text = view.findViewById(R.id.item_header);
+            text     = view.findViewById(R.id.item_header);
+            subtitle = view.findViewById(R.id.item_header_subtitle);
+            chevron  = view.findViewById(R.id.item_header_chevron);
         }
+    }
+
+    /**
+     * Collapses or restores a download row by toggling its layoutParams
+     * height. Visibility GONE alone wouldn't work — RecyclerView still
+     * measures GONE children to their natural size, so the list would
+     * keep gaps where collapsed items used to be. Setting height to 0
+     * is what actually removes the row from the layout pass.
+     */
+    private static void applyRowVisibility(@NonNull View row, boolean visible) {
+        ViewGroup.LayoutParams lp = row.getLayoutParams();
+        if (lp == null) return;
+        int target = visible ? ViewGroup.LayoutParams.WRAP_CONTENT : 0;
+        if (lp.height != target) {
+            lp.height = target;
+            row.setLayoutParams(lp);
+        }
+        row.setVisibility(visible ? View.VISIBLE : View.GONE);
+    }
+
+    /** "{n} files · {size}". Pluralization is light — Java's
+     *  {@code Resources.getQuantityString} is fine here but the
+     *  English "1 file / N files" split is the only locale rule
+     *  that matters for this header today. */
+    private static String formatGroupSubtitle(@NonNull Context ctx, @NonNull GroupAggregate agg) {
+        String files = ctx.getResources().getQuantityString(
+                R.plurals.downloads_group_files, agg.count, agg.count);
+        return files + " · " + Utils.readableFileSize(agg.totalSize);
     }
 
     static class EmptyViewHolder extends RecyclerView.ViewHolder {

@@ -1,14 +1,87 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  Section header row for the downloads list. Material 3 filled-card
+  surface (colorSurfaceContainer) gives the header enough visual
+  weight to read as a group boundary even when its body is collapsed.
 
-<TextView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/item_header"
+  Layout:
+    [ title (titleMedium)         ]   ┌─────────┐
+    [ subtitle: N files · X.X MB  ]   │ chevron │ (rotates 180° when expanded)
+                                      └─────────┘
+
+  Tap target is the whole card (clickable + selectableItemBackground
+  overlay via foreground). Chevron rotation is driven by the adapter
+  via View.setRotation in the bind path so the same XML covers both
+  collapsed and expanded states without a state list drawable.
+-->
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/item_header_card"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="12dp"
-    android:gravity="center_vertical"
-    android:textColor="?attr/colorOnSurface"
-    android:textSize="14sp"
-    android:textStyle="bold" />
+    android:layout_marginStart="@dimen/list_spacing"
+    android:layout_marginEnd="@dimen/list_spacing"
+    android:layout_marginTop="6dp"
+    android:layout_marginBottom="2dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground"
+    app:cardBackgroundColor="?attr/colorSurfaceContainer"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="0dp"
+    app:strokeWidth="0dp">
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:minHeight="56dp"
+        android:orientation="horizontal"
+        android:paddingStart="16dp"
+        android:paddingTop="10dp"
+        android:paddingEnd="12dp"
+        android:paddingBottom="10dp">
 
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
 
+            <TextView
+                android:id="@+id/item_header"
+                style="@style/TextAppearance.Material3.TitleMedium"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:singleLine="true"
+                android:textColor="?attr/colorOnSurface"
+                tools:text="YouTube" />
+
+            <TextView
+                android:id="@+id/item_header_subtitle"
+                style="@style/TextAppearance.Material3.BodySmall"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:ellipsize="end"
+                android:singleLine="true"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                tools:text="14 files · 1.2 GB" />
+
+        </LinearLayout>
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/item_header_chevron"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginStart="12dp"
+            android:contentDescription="@null"
+            android:src="@drawable/ic_chevron_down_24"
+            app:tint="?attr/colorOnSurfaceVariant" />
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>
