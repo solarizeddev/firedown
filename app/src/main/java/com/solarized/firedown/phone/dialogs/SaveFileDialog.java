@@ -82,11 +82,12 @@ public class SaveFileDialog extends BaseDialogFragment {
      */
     private static String displayFilenameFor(BrowserDownloadEntity entity) {
         String name = entity.getFileName();
-        if (TextUtils.isEmpty(name)) return name;
+        String ext = outputExtension(entity.getMimeType());
+        if (TextUtils.isEmpty(name)) return "download." + ext;
         if (!TextUtils.isEmpty(FilenameUtils.getExtension(name))) return name;
         String base = name.replaceAll("[.\\s]+$", "");
-        if (base.isEmpty()) return name;
-        return base + "." + outputExtension(entity.getMimeType());
+        if (base.isEmpty()) return "download." + ext;
+        return base + "." + ext;
     }
 
     private static String outputExtension(String mime) {
