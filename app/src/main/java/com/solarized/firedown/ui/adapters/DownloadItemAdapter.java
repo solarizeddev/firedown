@@ -26,14 +26,12 @@ import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.color.MaterialColors;
 import com.solarized.firedown.GlideHelper;
 import com.solarized.firedown.R;
-import com.solarized.firedown.Sorting;
 import com.solarized.firedown.data.Download;
 import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.data.entity.DownloadSeparatorEntity;
 import com.solarized.firedown.ui.OnItemClickListener;
 import com.solarized.firedown.ui.ProgressOverlayView;
 import com.solarized.firedown.utils.DateUtils;
-import com.solarized.firedown.utils.DownloadSortOrganizer;
 import com.solarized.firedown.utils.FileUriHelper;
 import com.solarized.firedown.utils.GroupAggregate;
 import com.solarized.firedown.utils.MessageHelper;
@@ -46,7 +44,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 
 public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.ViewHolder> {
 
@@ -76,29 +73,10 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
     private boolean mEnabled;
     private boolean mEnableGrid;
 
-    /** Current sort mode, mirrored from the ViewModel so the adapter can map
-     *  any DownloadEntity to its section category for the collapse check
-     *  and the chevron rotation. Same category function as the separator
-     *  insertion path uses, so headers and items always agree. */
-    private int mSortType = Sorting.SORT_DATE;
-    private DownloadSortOrganizer mOrganizer = new DownloadSortOrganizer(mSortType);
-
-    /** Section-header collapse state. A category is collapsed iff it
-     *  appears in this set — default empty so a fresh sort starts with
-     *  everything expanded. */
-    @NonNull private Set<Integer> mCollapsedCategories = Collections.emptySet();
-
     /** Per-category aggregates used to fill the header subtitle
      *  ("N files · X MB"). Empty until the ViewModel's aggregator emits. */
     @NonNull private Map<Integer, GroupAggregate> mAggregates = Collections.emptyMap();
 
-    @Nullable private OnHeaderClickListener mOnHeaderClickListener;
-
-    /** Header click contract — the fragment translates these to a
-     *  ViewModel toggle so the expand set lives in one place. */
-    public interface OnHeaderClickListener {
-        void onHeaderClick(int category);
-    }
 
 
 
@@ -161,15 +139,6 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
      * none of which change when the user enters action mode.
      */
     private static final Object PAYLOAD_SELECTION  = new Object();
-
-    /** Section-header collapse toggled — items in the affected group flip
-     *  between full-size and 0dp, headers rotate their chevron. No Glide
-     *  load, no view rebuild. Without this targeted path, tapping any
-     *  header would re-fire thumbnail decodes for every visible row,
-     *  including audio files whose embedded-art decode is guaranteed to
-     *  fail (FFmpegThumbnailer returns null bitmap), causing a visible
-     *  blink on every collapse toggle. */
-    private static final Object PAYLOAD_COLLAPSE   = new Object();
 
     /** Per-group aggregates changed — only header subtitles need to
      *  re-render. Items ignore this payload entirely. */
@@ -265,43 +234,18 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         return item instanceof DownloadEntity entity ? entity : null;
     }
 
-    // ── Section header / collapse API ──────────────────────────────────
-
-    /** Mirror the ViewModel's sort mode so item bind can resolve each
-     *  entity's category for the collapse check. No-op when the mode
-     *  hasn't actually changed — the organizer is stateless beyond the
-     *  domain label cache, but rebuilding on every chip toggle would
-     *  drop that cache mid-scroll for nothing. */
-    public void setSortType(int sortType) {
-        if (mSortType == sortType) return;
-        mSortType = sortType;
-        mOrganizer = new DownloadSortOrganizer(sortType);
-        notifyItemRangeChanged(0, getItemCount());
-    }
-
-    public void setCollapsedCategories(@NonNull Set<Integer> collapsed) {
-        if (mCollapsedCategories.equals(collapsed)) return;
-        mCollapsedCategories = collapsed;
-        // Targeted payload so the bind path can update chevron rotation
-        // and item visibility without re-running the full bind (which
-        // would re-fire Glide loads — fine for cached results, but audio
-        // files whose embedded-art decode is guaranteed to fail get no
-        // cache entry and re-decode on every retry, producing a visible
-        // blink on each header tap).
-        notifyItemRangeChanged(0, getItemCount(), PAYLOAD_COLLAPSE);
-    }
+    // ── Section header aggregates ──────────────────────────────────────
 
     public void setAggregates(@NonNull Map<Integer, GroupAggregate> aggregates) {
         if (mAggregates == aggregates || mAggregates.equals(aggregates)) return;
         mAggregates = aggregates;
         // Only headers consume aggregates; the payload lets items short
-        // out without rebinding (same blink-avoidance reasoning as
-        // PAYLOAD_COLLAPSE).
+        // out without rebinding — important because a full rebind would
+        // re-fire Glide loads, and audio files whose embedded-art decode
+        // is guaranteed to fail (FFmpegThumbnailer returns null bitmap)
+        // get no cache entry and re-decode on every retry, producing a
+        // visible blink on each aggregate emit.
         notifyItemRangeChanged(0, getItemCount(), PAYLOAD_AGGREGATES);
-    }
-
-    public void setOnHeaderClickListener(@Nullable OnHeaderClickListener listener) {
-        mOnHeaderClickListener = listener;
     }
 
     // ── View types ──────────────────────────────────────────────────────
@@ -349,19 +293,8 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
 
         if (viewType == Download.HEADER) {
-            HeaderViewHolder header = new HeaderViewHolder(
+            return new HeaderViewHolder(
                     inflater.inflate(R.layout.fragment_item_header, parent, false));
-            header.itemView.setOnClickListener(v -> {
-                // boundCategory is set during onBindViewHolder; a stale
-                // sentinel means the holder hasn't been bound yet —
-                // ignore rather than fire onHeaderClick(0) which would
-                // collapse the "0" category by accident.
-                if (mOnHeaderClickListener != null
-                        && header.boundCategory != HeaderViewHolder.UNBOUND) {
-                    mOnHeaderClickListener.onHeaderClick(header.boundCategory);
-                }
-            });
-            return header;
         }
 
         if (viewType == Download.EMPTY) {
@@ -399,13 +332,6 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
             int status = getStatus(viewType);
             boolean isGrid = isGridType(viewType);
 
-            // Selection state factors into row visibility (an item in a
-            // collapsed group stays visible while selected during action
-            // mode), so re-evaluate height alongside the selection chrome.
-            // Without this, selectAll would silently select rows inside
-            // collapsed groups that the user can't see.
-            applyRowVisibility(holder.itemView, isRowVisible(entity));
-
             holder.item.setEnabled(mEnabled);
             holder.item.setStrokeColor(mActionMode && contains ? mColorSelected : mColorNormal);
             holder.selected.setVisibility(mActionMode ? View.VISIBLE : View.GONE);
@@ -421,16 +347,6 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
             return;
         }
 
-        // Collapse-only payload: flip row visibility (items) or rotate the
-        // chevron (headers). No Glide load, no view rebuild — this is the
-        // path that prevents the "audio file blink on every header tap"
-        // when FFmpegThumbnailer has no embedded art to extract.
-        if (!payloads.isEmpty()
-                && Collections.frequency(payloads, PAYLOAD_COLLAPSE) == payloads.size()) {
-            applyCollapsePayload(viewHolder, position);
-            return;
-        }
-
         // Aggregates-only payload: header subtitle text. Items ignore.
         if (!payloads.isEmpty()
                 && Collections.frequency(payloads, PAYLOAD_AGGREGATES) == payloads.size()) {
@@ -440,19 +356,6 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
 
         // Anything else (or no payload, or mixed payloads) → full rebind.
         super.onBindViewHolder(viewHolder, position, payloads);
-    }
-
-    private void applyCollapsePayload(@NonNull RecyclerView.ViewHolder viewHolder, int position) {
-        Object item = peek(position);
-        if (item instanceof DownloadSeparatorEntity sep
-                && viewHolder instanceof HeaderViewHolder header) {
-            applyHeaderCollapseAffordance(header, sep.getCategory());
-            return;
-        }
-        if (item instanceof DownloadEntity entity
-                && viewHolder instanceof DownloadViewHolder holder) {
-            applyRowVisibility(holder.itemView, isRowVisible(entity));
-        }
     }
 
     private void applyAggregatesPayload(@NonNull RecyclerView.ViewHolder viewHolder, int position) {
@@ -466,28 +369,6 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         } else {
             header.subtitle.setVisibility(View.GONE);
         }
-        // Group count may have shifted (sort change, downloads added /
-        // removed) — refresh the chevron + tappability so a single-group
-        // list doesn't expose a footgun toggle.
-        applyHeaderCollapseAffordance(header, sep.getCategory());
-    }
-
-    /**
-     * A header only earns its chevron and tap target when there's more
-     * than one group to switch between. With a single group on screen
-     * the only thing a tap can do is hide every download the user is
-     * trying to look at — so we drop the chevron, kill the click and
-     * the selectable-background foreground, and the row reads as a
-     * plain section label.
-     */
-    private void applyHeaderCollapseAffordance(@NonNull HeaderViewHolder header, int category) {
-        boolean canCollapse = mAggregates.size() > 1;
-        header.chevron.setVisibility(canCollapse ? View.VISIBLE : View.GONE);
-        header.itemView.setClickable(canCollapse);
-        header.itemView.setFocusable(canCollapse);
-
-        boolean expanded = !mCollapsedCategories.contains(category);
-        header.chevron.setRotation(expanded ? 180f : 0f);
     }
 
     @Override
@@ -497,7 +378,6 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
 
         if (viewHolder instanceof HeaderViewHolder header && item instanceof DownloadSeparatorEntity sep) {
             int category = sep.getCategory();
-            header.boundCategory = category;
 
             if (sep.getTitleResId() != 0) {
                 header.text.setText(header.itemView.getContext().getString(sep.getTitleResId()));
@@ -512,23 +392,11 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
             } else {
                 header.subtitle.setVisibility(View.GONE);
             }
-
-            applyHeaderCollapseAffordance(header, category);
             return;
         }
 
         if (!(viewHolder instanceof DownloadViewHolder holder) || !(item instanceof DownloadEntity entity))
             return;
-
-        // Collapse: items in a collapsed group render as a zero-height
-        // row. They stay in the adapter (and in the PagingData) so
-        // expanding doesn't re-trigger a fetch; they just take no
-        // vertical space and skip the heavier bind work below.
-        // isRowVisible centralises the search-mode / collapse /
-        // action-mode-selected interaction.
-        boolean rowVisible = isRowVisible(entity);
-        applyRowVisibility(holder.itemView, rowVisible);
-        if (!rowVisible) return;
 
         int viewType = getItemViewType(position);
         int status = getStatus(viewType);
@@ -820,67 +688,14 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
     }
 
     static class HeaderViewHolder extends RecyclerView.ViewHolder {
-        /** Distinguishes "never bound" from a legitimate category whose hash
-         *  happens to be 0 — without it, a click on a fresh holder before the
-         *  first bind would target category 0 (probably no group) and
-         *  silently flip its state. */
-        static final int UNBOUND = Integer.MIN_VALUE;
-
         final TextView text;
         final TextView subtitle;
-        final View     chevron;
-        int boundCategory = UNBOUND;
 
         HeaderViewHolder(View view) {
             super(view);
             text     = view.findViewById(R.id.item_header);
             subtitle = view.findViewById(R.id.item_header_subtitle);
-            chevron  = view.findViewById(R.id.item_header_chevron);
         }
-    }
-
-    /**
-     * Single source of truth for whether a download row should render at
-     * full size or as a zero-height placeholder.
-     *
-     * <ul>
-     *   <li>Flat-list (search) mode skips grouping entirely — the
-     *       collapse set is meaningless without separators.</li>
-     *   <li>Otherwise, a row is hidden iff its group sits in the
-     *       collapsed set,</li>
-     *   <li>…with one override: a selected row inside action mode stays
-     *       visible regardless of its group's collapse state, so the
-     *       user can always see what's in their selection. Without
-     *       this, "select all" (or pre-collapse selections) would
-     *       silently include rows the user can't see — surprise deletes.
-     *       The header chevron stays at the user's explicit toggle
-     *       state; only the selected rows pin through.</li>
-     * </ul>
-     */
-    private boolean isRowVisible(@NonNull DownloadEntity entity) {
-        boolean grouped = peek(0) instanceof DownloadSeparatorEntity;
-        if (!grouped) return true;
-        int cat = mOrganizer.getCategory(entity);
-        if (!mCollapsedCategories.contains(cat)) return true;
-        return mActionMode && mSelected.contains(entity.getId());
-    }
-
-    /**
-     * Collapses or restores a download row by toggling its layoutParams
-     * height. Visibility GONE alone wouldn't work — RecyclerView still
-     * measures GONE children to their natural size, so the list would
-     * keep gaps where collapsed items used to be. Setting height to 0
-     * is what actually removes the row from the layout pass.
-     */
-    private static void applyRowVisibility(@NonNull View row, boolean visible) {
-        ViewGroup.LayoutParams lp = row.getLayoutParams();
-        if (lp == null) return;
-        int target = visible ? ViewGroup.LayoutParams.WRAP_CONTENT : 0;
-        if (lp.height != target) {
-            lp.height = target;
-            row.setLayoutParams(lp);
-        }
-        row.setVisibility(visible ? View.VISIBLE : View.GONE);
     }
 
     /** "{n} files · {size}". Pluralization is light — Java's

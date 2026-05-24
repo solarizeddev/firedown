@@ -232,25 +232,11 @@ public class DownloadFragment extends BaseDownloadFragment implements
         mDownloadsViewModel.getDownloads().observe(getViewLifecycleOwner(), data ->
                 mAdapter.submitData(getLifecycle(), data));
 
-        // Mirror the persisted sort onto the adapter on first attach —
-        // the BaseDownloadFragment hook only catches subsequent picks
-        // from the sort dialog. Without this the adapter starts on
-        // SORT_DATE regardless of what the user last selected.
-        mAdapter.setSortType(mDownloadsViewModel.getCurrentSorting());
-
         // Push per-group aggregates (count + total size) so the adapter
         // can fill section-header subtitles. Re-fires whenever the
         // download table changes or the sort mode changes.
         mDownloadsViewModel.getDownloadAggregates().observe(getViewLifecycleOwner(),
                 aggregates -> { if (aggregates != null) mAdapter.setAggregates(aggregates); });
-
-        // Push collapse state and route header taps back through the VM
-        // so the set survives rotation (it's owned by the VM, not the
-        // adapter). Empty set = nothing collapsed = every group expanded,
-        // which is the default a user sees on first attach.
-        mDownloadsViewModel.getCollapsedCategories().observe(getViewLifecycleOwner(),
-                collapsed -> { if (collapsed != null) mAdapter.setCollapsedCategories(collapsed); });
-        mAdapter.setOnHeaderClickListener(mDownloadsViewModel::toggleCollapsed);
 
         // Scroll the list back to the top whenever a new (distinct) query is dispatched.
         // distinctUntilChanged on the VM side suppresses the spurious initial emission

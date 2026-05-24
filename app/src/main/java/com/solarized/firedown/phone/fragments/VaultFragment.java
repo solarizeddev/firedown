@@ -169,20 +169,11 @@ public class VaultFragment extends BaseDownloadFragment implements OnItemClickLi
         mDownloadsViewModel.getSafe().observe(getViewLifecycleOwner(), data ->
                 mAdapter.submitData(getLifecycle(), data));
 
-        // Mirror the persisted sort onto the adapter on first attach —
-        // BaseDownloadFragment handles subsequent dialog picks but not
-        // the initial value.
-        mAdapter.setSortType(mDownloadsViewModel.getCurrentSorting());
-
         // Per-group aggregates for header subtitles. Vault uses the
         // separate getSafeAggregates() stream so the count/size reflects
         // only vault-stored items, never the regular downloads list.
         mDownloadsViewModel.getSafeAggregates().observe(getViewLifecycleOwner(),
                 aggregates -> { if (aggregates != null) mAdapter.setAggregates(aggregates); });
-
-        mDownloadsViewModel.getCollapsedCategories().observe(getViewLifecycleOwner(),
-                collapsed -> { if (collapsed != null) mAdapter.setCollapsedCategories(collapsed); });
-        mAdapter.setOnHeaderClickListener(mDownloadsViewModel::toggleCollapsed);
     }
 
     @Override
