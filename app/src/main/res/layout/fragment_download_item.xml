@@ -178,8 +178,9 @@
                         android:max="100"
                         android:progress="0"
                         app:indicatorTrackGapSize="0dp"
-                        app:trackCornerRadius="2dp"
-                        app:trackStopIndicatorSize="0dp" />
+                        app:trackCornerRadius="3dp"
+                        app:trackStopIndicatorSize="0dp"
+                        app:trackThickness="5dp" />
 
                 </LinearLayout>
 

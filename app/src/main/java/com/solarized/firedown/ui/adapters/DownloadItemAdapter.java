@@ -58,17 +58,14 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
     private final Drawable mChecked;
     private final Drawable mUnChecked;
     private final RequestOptions mRequestOptions;
-    /** Soft 'wash' surface for in-flight rows. Pale coral on light,
-     *  deep warm on dark. Hardcoded rather than pulled from the
-     *  HomeCardStyle pick — the home active strip is loud
-     *  (primaryContainer) because nothing else competes with it
-     *  there; here we sit next to procedurally-generated coral mime
-     *  icons that disappear into a full brand surface, so the wash
-     *  has to stay tonally distinct from those icons. */
-    private final int mActiveCardBg;
-    /** Defaults for non-active rows. List items want plain surface
-     *  (transparent against the page); grid items keep the
-     *  surfaceContainerHigh placeholder the layout originally set. */
+    /** Backgrounds for download rows. Active and finished now share
+     *  the same surface — the live signal moved to a thicker, tinted
+     *  LinearProgressIndicator under the filename. Stacked active
+     *  rows used to read as one heavy warm block under the
+     *  "Downloading" section; the per-row bar is per-row by definition
+     *  and stacks cleanly. List items want plain surface (transparent
+     *  against the page); grid items keep the surfaceContainerHigh
+     *  placeholder the layout originally set. */
     private final int mDefaultListBg;
     private final int mDefaultGridBg;
     /** Brand accent for the list-mode mime label, also used as the
@@ -122,14 +119,6 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
                 MaterialColors.getColor(context,
                         com.google.android.material.R.attr.colorPrimaryContainer, Color.TRANSPARENT));
         mRequestOptions = new RequestOptions();
-
-        boolean night = (context.getResources().getConfiguration().uiMode
-                & android.content.res.Configuration.UI_MODE_NIGHT_MASK)
-                == android.content.res.Configuration.UI_MODE_NIGHT_YES;
-        // Wash colours match the Home cards 'Blush' palette so the
-        // downloads-list active row reads as a soft live signal
-        // rather than the loud primaryContainer brand wall.
-        mActiveCardBg = night ? 0xFF3A1F1C : 0xFFFFE6E0;
 
         mDefaultListBg = MaterialColors.getColor(context,
                 com.google.android.material.R.attr.colorSurface, Color.TRANSPARENT);
@@ -578,19 +567,14 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
             holder.mimeText.setText(isGrid ? mimeLabel : mimeLabel + " · ");
         }
 
-        // ── Active-state surface ────────────────────────────────────
-        // In-flight items (PROGRESS / QUEUED) take the wash surface
-        // so the 'live' signal is visible without the heavy brand
-        // wall fighting the procedurally-coloured mime placeholders.
-        // Completed / error rows reset to the per-view-type default —
-        // list goes back to plain surface (flat against the page),
-        // grid keeps the surfaceContainerHigh placeholder so an
-        // unloaded thumbnail still has a backdrop. Text colours stay
-        // at theme defaults; the wash is tonally close enough to the
-        // page surface that onSurface / onSurfaceVariant read fine.
-        boolean isActive = status == Download.PROGRESS || status == Download.QUEUED;
-        holder.item.setCardBackgroundColor(
-                isActive ? mActiveCardBg : (isGrid ? mDefaultGridBg : mDefaultListBg));
+        // ── Row surface ─────────────────────────────────────────────
+        // Same background for active and finished rows. The active
+        // signal lives in the thicker tinted LinearProgressIndicator
+        // (list mode) or the existing ProgressOverlayView on the
+        // thumbnail (grid mode), both of which are per-row and stack
+        // cleanly under the "Downloading" section without forming
+        // a warm-tinted block.
+        holder.item.setCardBackgroundColor(isGrid ? mDefaultGridBg : mDefaultListBg);
 
         if (holder.fileName != null) holder.fileName.setText(entity.getFileName());
         if (holder.fileUrl != null) holder.fileUrl.setText(domain);
