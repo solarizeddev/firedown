@@ -35,6 +35,7 @@ import com.solarized.firedown.utils.DateUtils;
 import com.solarized.firedown.utils.FileUriHelper;
 import com.solarized.firedown.utils.GroupAggregate;
 import com.solarized.firedown.utils.MessageHelper;
+import com.solarized.firedown.utils.SelectionStyling;
 import com.solarized.firedown.utils.Utils;
 import com.solarized.firedown.utils.WebUtils;
 
@@ -65,6 +66,14 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
      *  placeholder the layout originally set. */
     private final int mDefaultListBg;
     private final int mDefaultGridBg;
+    /** Selected-state tonal wash for each surface — primaryContainer
+     *  layered at 20% over the respective default. Stroke alone
+     *  wasn't loud enough to confirm "did I really pick these?" at
+     *  scroll speed; the wash makes the selected set readable from
+     *  across the screen without going as loud as a full
+     *  primaryContainer fill. */
+    private final int mSelectedListBg;
+    private final int mSelectedGridBg;
     /** Brand accent for the list-mode mime label, also used as the
      *  progress bar indicator colour. */
     private final int mDefaultPrimary;
@@ -102,6 +111,10 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
                 com.google.android.material.R.attr.colorSurface, Color.TRANSPARENT);
         mDefaultGridBg = MaterialColors.getColor(context,
                 com.google.android.material.R.attr.colorSurfaceContainerHigh, Color.TRANSPARENT);
+        mSelectedListBg = SelectionStyling.selectedCardWashOver(context,
+                com.google.android.material.R.attr.colorSurface);
+        mSelectedGridBg = SelectionStyling.selectedCardWashOver(context,
+                com.google.android.material.R.attr.colorSurfaceContainerHigh);
         mDefaultPrimary = MaterialColors.getColor(context,
                 android.R.attr.colorPrimary, Color.BLACK);
         mDefaultPrimaryAlpha = androidx.core.graphics.ColorUtils
@@ -332,8 +345,12 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
             int status = getStatus(viewType);
             boolean isGrid = isGridType(viewType);
 
+            boolean washSelected = mActionMode && contains;
             holder.item.setEnabled(mEnabled);
-            holder.item.setStrokeColor(mActionMode && contains ? mColorSelected : mColorNormal);
+            holder.item.setCardBackgroundColor(washSelected
+                    ? (isGrid ? mSelectedGridBg : mSelectedListBg)
+                    : (isGrid ? mDefaultGridBg  : mDefaultListBg));
+            holder.item.setStrokeColor(washSelected ? mColorSelected : mColorNormal);
             holder.selected.setVisibility(mActionMode ? View.VISIBLE : View.GONE);
             holder.selected.setImageDrawable(mActionMode ? (contains ? mChecked : mUnChecked) : null);
             holder.actionButton.setVisibility(mActionMode ? View.INVISIBLE : View.VISIBLE);
@@ -426,13 +443,16 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         }
 
         // ── Row surface ─────────────────────────────────────────────
-        // Same background for active and finished rows. The active
-        // signal lives in the thicker tinted LinearProgressIndicator
-        // (list mode) or the existing ProgressOverlayView on the
-        // thumbnail (grid mode), both of which are per-row and stack
-        // cleanly under the "Downloading" section without forming
-        // a warm-tinted block.
-        holder.item.setCardBackgroundColor(isGrid ? mDefaultGridBg : mDefaultListBg);
+        // Same default for active and finished rows. The active signal
+        // lives in the thicker tinted LinearProgressIndicator (list) or
+        // the ProgressOverlayView on the thumbnail (grid). During
+        // action mode, selected rows take the tonal wash so the
+        // selection set reads from across the screen — see the field
+        // comment on mSelectedListBg for the why.
+        boolean washSelected = mActionMode && contains;
+        holder.item.setCardBackgroundColor(washSelected
+                ? (isGrid ? mSelectedGridBg : mSelectedListBg)
+                : (isGrid ? mDefaultGridBg  : mDefaultListBg));
 
         if (holder.fileName != null) holder.fileName.setText(entity.getFileName());
         if (holder.fileUrl != null) holder.fileUrl.setText(domain);

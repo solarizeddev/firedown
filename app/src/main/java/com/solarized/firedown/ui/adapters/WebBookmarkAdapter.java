@@ -18,9 +18,11 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
 import com.bumptech.glide.request.RequestOptions;
 import com.google.android.material.card.MaterialCardView;
+import com.google.android.material.color.MaterialColors;
 import com.solarized.firedown.GlideHelper;
 import com.solarized.firedown.R;
 import com.solarized.firedown.data.entity.WebBookmarkEntity;
+import com.solarized.firedown.utils.SelectionStyling;
 import com.solarized.firedown.ui.OnItemClickListener;
 import com.solarized.firedown.utils.Utils;
 import com.solarized.firedown.utils.WebUtils;
@@ -43,6 +45,11 @@ public class WebBookmarkAdapter extends PagingDataAdapter<WebBookmarkEntity, Rec
     private final int mColorNormal;
 
     private final int mColorSelected;
+    /** Default card surface for unselected rows — matches MaterialCardView's
+     *  implicit cardBackgroundColor (colorSurface) so the swap reverts cleanly. */
+    private final int mDefaultCardBg;
+    /** primaryContainer @ 20% over surface — see SelectionStyling. */
+    private final int mSelectedCardBg;
 
     private final Drawable mChecked;
 
@@ -60,6 +67,10 @@ public class WebBookmarkAdapter extends PagingDataAdapter<WebBookmarkEntity, Rec
         RoundedCorners mRoundedCorners = new RoundedCorners(mRoundedPixels);
         mColorNormal = ContextCompat.getColor(context, R.color.transparent);
         mColorSelected = ContextCompat.getColor(context, R.color.md_theme_primaryContainer);
+        mDefaultCardBg = MaterialColors.getColor(context,
+                com.google.android.material.R.attr.colorSurface, 0);
+        mSelectedCardBg = SelectionStyling.selectedCardWashOver(context,
+                com.google.android.material.R.attr.colorSurface);
         mChecked =  Utils.tintDrawable(context, R.drawable.ic_baseline_check_circle_24, R.color.md_theme_primaryContainer);
         mUnChecked = Utils.tintDrawable(context, R.drawable.radio_button_unchecked_24, R.color.md_theme_primaryContainer);
         mRequestOptions = RequestOptions.bitmapTransform(mRoundedCorners);
@@ -104,9 +115,11 @@ public class WebBookmarkAdapter extends PagingDataAdapter<WebBookmarkEntity, Rec
         WebBookmarkViewHolder webHistoryViewHolder = (WebBookmarkViewHolder) viewHolder;
         webHistoryViewHolder.file_name.setText(webBookmarkEntity.getTitle());
         webHistoryViewHolder.file_url.setText(WebUtils.getDomainName(webBookmarkEntity.getUrl()));
+        boolean washSelected = mActionMode && contains;
         webHistoryViewHolder.selected.setVisibility(mActionMode ? View.VISIBLE : View.GONE);
         webHistoryViewHolder.selected.setImageDrawable(mActionMode ? (contains ? mChecked : mUnChecked) : null);
-        webHistoryViewHolder.item.setStrokeColor(mActionMode && contains ? mColorSelected : mColorNormal);
+        webHistoryViewHolder.item.setStrokeColor(washSelected ? mColorSelected : mColorNormal);
+        webHistoryViewHolder.item.setCardBackgroundColor(washSelected ? mSelectedCardBg : mDefaultCardBg);
         webHistoryViewHolder.file_more.setVisibility(mActionMode ? View.INVISIBLE : View.VISIBLE);
         webHistoryViewHolder.spacer.setVisibility(mActionMode ? View.INVISIBLE : View.VISIBLE);
         GlideHelper.load(icon, url, webHistoryViewHolder.file_icon, mRequestOptions);
