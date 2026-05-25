@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    Gradient circle behind the credit-card icon for the fiat row.
-    Uses Ko-fi's brand reds since the row hands off to Ko-fi. Different
-    enough from the Lightning coral that the two cards don't look like
-    duplicates.
+    Circle behind the coffee-cup icon for the fiat row. Sits on the
+    theme's tertiary container so it reads as the third rail (after
+    Lightning's primary and Bitcoin's secondary), keeping the three
+    cards visually distinct without hard-coding brand colors.
 -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="oval">

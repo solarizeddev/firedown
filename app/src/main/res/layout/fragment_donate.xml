@@ -2,10 +2,10 @@
 <!--
     Native donate screen — value-for-value version.
 
-    Three collapsed cards (Lightning, Bitcoin on-chain, Card). Tapping a
-    card's header expands its content; only one card open at a time is
-    enforced in code, not layout. The Card row has no expandable body —
-    it just hands off to Ko-fi in the browser.
+    Three collapsed cards (Lightning, Bitcoin on-chain, Card). Tapping
+    a card's header expands its content; only one card open at a time
+    is enforced in code, not layout. The Card row has no expandable
+    body — it just hands off to Buy Me a Coffee in the browser.
 -->
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -378,6 +378,72 @@
                             app:iconSize="14dp" />
                     </LinearLayout>
                 </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- ──────────────────────────────────────────────────────────
+             Fiat card (no expand — direct handoff to Buy Me a Coffee)
+             ────────────────────────────────────────────────────────── -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/donate_card_fiat"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            app:cardCornerRadius="20dp"
+            app:cardElevation="0dp"
+            app:strokeWidth="1dp"
+            app:strokeColor="?attr/colorOutlineVariant">
+
+            <LinearLayout
+                android:id="@+id/donate_fiat_header"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:padding="20dp"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true">
+
+                <ImageView
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="@drawable/bg_circle_fiat"
+                    android:src="@drawable/ic_coffee_24"
+                    android:contentDescription="@null"
+                    app:tint="?attr/colorOnTertiaryContainer"
+                    android:padding="9dp" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="12dp"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/donate_fiat_title"
+                        android:textSize="15sp"
+                        android:textStyle="bold"
+                        android:textColor="?android:attr/textColorPrimary" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/donate_fiat_meta"
+                        android:textSize="12sp"
+                        android:fontFamily="monospace"
+                        android:textColor="?android:attr/textColorTertiary" />
+                </LinearLayout>
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/ic_chevron_right_24"
+                    android:contentDescription="@null"
+                    app:tint="?android:attr/textColorTertiary" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
