@@ -1168,6 +1168,15 @@ public class BrowserFragment extends BaseBrowserFragment
                 mGeckoToolbar.setProgress(0);
             } else {
                 if (geckoState != null) {
+                    // Symmetric to the setActive(false) above: the toolbar
+                    // deactivates the session on focus-gain (so the surface
+                    // can be backgrounded behind the autocomplete sheet).
+                    // Without re-activating on focus-loss, dismissing the
+                    // sheet via back leaves the session inactive and the
+                    // GeckoView keeps rendering a blank surface. The
+                    // viewmodel.setGeckoState() call below only flips the
+                    // repo flag; it does NOT call session.setActive().
+                    geckoState.setActive(true);
                     if (geckoState.getGeckoStateEntity().isIncognito()) {
                         mIncognitoStateViewModel.setGeckoState(geckoState, true);
                     } else {
