@@ -36,7 +36,6 @@ import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 import com.solarized.firedown.R;
 import com.solarized.firedown.donate.BitcoinAddressProvider;
 import com.solarized.firedown.donate.LightningInvoiceFetcher;
-import com.solarized.firedown.phone.BrowserActivity;
 
 import java.text.NumberFormat;
 import java.util.HashMap;
@@ -182,32 +181,25 @@ public class DonateFragment extends BasePreferenceFragment {
 
     /**
      * Fiat card has no expandable body — tapping the header opens
-     * Buy Me a Coffee in Firedown's own browser. We target
-     * {@link BrowserActivity} explicitly with an {@link Intent#ACTION_VIEW}
-     * carrying the URL; BaseActivity's IntentHandler routes ACTION_VIEW
-     * through handleExternalUri, which is the same path used when an
-     * external app sends a URL to Firedown — so the page lands in a
-     * regular tab with full session, history, and parser support
-     * instead of being kicked out to another browser app.
+     * Buy Me a Coffee in Firedown's own browser via the existing
+     * Settings → BrowserActivity result handshake. We set an
+     * {@link Intent#ACTION_VIEW} result on the hosting activity and
+     * finish; the launcher that started SettingsActivity catches the
+     * result through its mStartForResult registration and feeds it
+     * back through {@code BaseActivity.handleIntent}, which opens
+     * the URL in a normal Firedown tab.
      *
-     * launchMode=singleTask on BrowserActivity means we don't spawn
-     * a second instance; the existing activity gets onNewIntent and
-     * the tab opens in the user's current task. Back button returns
-     * here to the Settings → Donate screen.
+     * Mirrors {@code BaseFocusFragment.setSessionResult} — done
+     * inline here because DonateFragment extends
+     * BasePreferenceFragment, not BaseFocusFragment.
      */
     private void setupFiatSection() {
         if (mFiatHeader == null) return;
         mFiatHeader.setOnClickListener(v -> {
-            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(FIAT_URL))
-                    .setClass(requireContext(), BrowserActivity.class)
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            try {
-                startActivity(intent);
-            } catch (ActivityNotFoundException e) {
-                Log.w(TAG, "Failed to launch BrowserActivity for " + FIAT_URL, e);
-                Snackbar.make(requireView(), R.string.donate_fiat_no_browser,
-                        Snackbar.LENGTH_LONG).show();
-            }
+            Intent resultIntent = new Intent(Intent.ACTION_VIEW)
+                    .setData(Uri.parse(FIAT_URL));
+            requireActivity().setResult(android.app.Activity.RESULT_OK, resultIntent);
+            requireActivity().finish();
         });
     }
 
