@@ -835,11 +835,16 @@ async function buildTikTokHeaders() {
 }
 
 // One native message per itemList[] entry, with synthesized headers
-// so the variant URL replays (HTTP 200) on the native side.
+// so the variant URL replays (HTTP 200) on the native side. Body is
+// read via filterResponseData (taps the page's own response, signature
+// intact) — refetching the same URL ourselves trips msToken / X-Bogus
+// replay protection and TikTok serves stripped JSON. Endpoints served
+// by the ServiceWorker (/related/item_list/) error out of the filter;
+// the catch below swallows that case silently.
 function listenerTikTokJson(details) {
-    if (!details.url.includes("list")) return;
+    if (!details.url.includes("list")) return {};
 
-    fetch(details.url, { credentials: "include" }).then(r => r.text()).then(async text => {
+    collectFilteredResponse(details).then(async text => {
         const json = tryParseJson(text);
         const items = json?.itemList;
         if (!Array.isArray(items) || items.length === 0) return;
@@ -893,8 +898,13 @@ function listenerTikTokJson(details) {
             });
         }
     }).catch(e => {
-        log("TIKTOK", `fetch error`, e.message);
+        // ServiceWorker-served endpoints (/related/item_list/) error
+        // here — expected, the page reads from SW cache and there's
+        // no network response to tap. Log at debug level only.
+        log("TIKTOK", `filter skip`, e.message);
     });
+
+    return {};
 }
 
 browser.webRequest.onBeforeRequest.addListener(
@@ -905,7 +915,8 @@ browser.webRequest.onBeforeRequest.addListener(
             "*://m.tiktok.com/api/*"
         ],
         types: ["xmlhttprequest"]
-    }
+    },
+    ["blocking"]
 );
 
 // ============================================================================
