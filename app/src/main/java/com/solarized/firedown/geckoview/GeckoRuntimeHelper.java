@@ -313,6 +313,23 @@ public class GeckoRuntimeHelper {
         public GeckoResult<Object> onMessage(@NonNull String nativeApp, @NonNull Object message, @NonNull WebExtension.MessageSender sender) {
             if (!(message instanceof JSONObject jsonObject))
                 return null;
+            // Control-channel: extensions query BuildConfig.DEBUG at
+            // startup to gate their log() helpers. Per-extension JS
+            // log() is otherwise hard-wired to a compile-time constant
+            // that has to be flipped manually; routing through here
+            // means release builds drop their console output without
+            // a manual edit, and the per-call argument evaluation
+            // (template literals, JSON.stringify) is short-circuited
+            // — that's the dominant cost, not the JSAPI hop.
+            if ("get-debug-flag".equals(jsonObject.optString("kind", null))) {
+                try {
+                    JSONObject reply = new JSONObject();
+                    reply.put("debug", BuildConfig.DEBUG);
+                    return GeckoResult.fromValue(reply);
+                } catch (JSONException e) {
+                    return null;
+                }
+            }
             Log.d(TAG, "onMessage: " + jsonObject);
             try {
                 switch (nativeApp) {

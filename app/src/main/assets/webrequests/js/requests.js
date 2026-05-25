@@ -9,8 +9,13 @@ const HEADER_CACHE_MAX = 2048;
 const HEADER_CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 const CONTENT_SCRIPT_DEDUPE_MAX = 5000;
 
-// Set DEBUG to false to silence diagnostic logs in production
-const DEBUG = true;
+// Pulled from BuildConfig.DEBUG via native message on startup —
+// release builds get DEBUG=false automatically and short-circuit
+// argument evaluation in dlog() across all 100+ call sites.
+let DEBUG = false;
+browser.runtime.sendNativeMessage("browser", { kind: "get-debug-flag" })
+    .then(r => { DEBUG = !!(r && r.debug); })
+    .catch(() => {});
 
 const pendingRequests = new Map();
 const originTabCache = new Map();

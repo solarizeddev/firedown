@@ -1,5 +1,13 @@
 const QUEUE_MAX_LENGTH = 256;
-const DEBUG = true;
+// Flipped from a compile-time constant to a runtime fetch: the Java
+// side returns BuildConfig.DEBUG. Defaults to false so release builds
+// don't log even if the native query is slow / fails. A handful of
+// boot-time log() calls land before the response arrives — that's the
+// price of avoiding a synchronous bridge.
+let DEBUG = false;
+browser.runtime.sendNativeMessage("parser", { kind: "get-debug-flag" })
+    .then(r => { DEBUG = !!(r && r.debug); })
+    .catch(() => {});
 const COOKIE_CACHE_KEY = "instagram_cookie_cache";
 const COOKIE_CACHE_TTL = 5 * 60 * 1000;
 
