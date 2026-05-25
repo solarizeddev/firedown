@@ -1,6 +1,6 @@
 {
   "manifest_version": 2,
-  "version": "2.6",
+  "version": "2.7",
   "browser_specific_settings": {
     "gecko": {
       "id": "parser@solarized.dev"
@@ -25,6 +25,9 @@
       "run_at": "document_start",
       "all_frames": false
     }
+  ],
+  "web_accessible_resources": [
+    "tiktok-inject.js"
   ],
   "permissions": [
     "nativeMessaging",
