@@ -929,11 +929,19 @@ function listenerTikTokJson(details) {
                             height: b.PlayAddr?.Height || meta.height
                         });
                         cached++;
+                        log("TIKTOK", `mp4`, {
+                            id: item.id,
+                            w: b.PlayAddr?.Width,
+                            h: b.PlayAddr?.Height,
+                            url: u
+                        });
                     }
                 }
             }
             tiktokCachePut(v.downloadAddr, meta);
             tiktokCachePut(v.playAddr, meta);
+            if (v.downloadAddr) log("TIKTOK", `mp4 (downloadAddr)`, { id: item.id, url: v.downloadAddr });
+            if (v.playAddr)     log("TIKTOK", `mp4 (playAddr)`,     { id: item.id, url: v.playAddr });
 
             log("TIKTOK", `cache item`, {
                 id: item.id,
