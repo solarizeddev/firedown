@@ -814,12 +814,15 @@ browser.webNavigation.onHistoryStateUpdated.addListener(
 // this cookie as the auth source, so without it TikTok 403s).
 async function buildTikTokHeaders() {
     let cookieHeader = "";
+    let cookieCount = 0;
     try {
         const cookies = await browser.cookies.getAll({ domain: "tiktok.com" });
+        cookieCount = cookies.length;
         cookieHeader = cookies.map(c => `${c.name}=${c.value}`).join("; ");
     } catch (e) {
         log("TIKTOK", `cookies.getAll failed`, e.message);
     }
+    log("TIKTOK", `built headers`, { cookies: cookieCount, cookieLen: cookieHeader.length, ua: navigator.userAgent.slice(0, 60) });
     return [
         { name: "User-Agent",     value: navigator.userAgent },
         { name: "Accept",         value: "*/*" },
@@ -846,9 +849,27 @@ async function buildTikTokHeaders() {
 //   3. ServiceWorker-served endpoints (/related/item_list/) can't be
 //      tapped via filterResponseData at all.
 async function handleTikTokItemList(msg, sender) {
+    log("TIKTOK", `onMessage`, {
+        url: (msg.url || "").slice(0, 120),
+        bodyLen: msg.body ? msg.body.length : 0,
+        tabId: sender.tab?.id ?? -1,
+        tabUrl: (sender.tab?.url || "").slice(0, 80)
+    });
+
     const json = tryParseJson(msg.body);
+    if (!json) {
+        log("TIKTOK", `JSON parse failed`, { head: (msg.body || "").slice(0, 200) });
+        return;
+    }
     const items = json?.itemList;
-    if (!Array.isArray(items) || items.length === 0) return;
+    if (!Array.isArray(items)) {
+        log("TIKTOK", `no itemList[] in body`, { topKeys: Object.keys(json).slice(0, 12) });
+        return;
+    }
+    if (items.length === 0) {
+        log("TIKTOK", `empty itemList[]`);
+        return;
+    }
 
     const pathname = (() => {
         try { return new URL(msg.url, sender.tab?.url || "https://www.tiktok.com/").pathname; }
@@ -860,9 +881,12 @@ async function handleTikTokItemList(msg, sender) {
     const tabId = sender.tab?.id ?? -1;
     const pageUrl = sender.tab?.url || "https://www.tiktok.com/";
 
+    let sentCount = 0;
+    let skippedNoVariants = 0;
+    let skippedNoVideo = 0;
     for (const item of items) {
         const v = item?.video;
-        if (!v) continue;
+        if (!v) { skippedNoVideo++; continue; }
 
         const author = item.author?.uniqueId || item.author?.nickname;
         const caption = (item.desc || "").split("\n")[0].slice(0, 140);
@@ -891,7 +915,15 @@ async function handleTikTokItemList(msg, sender) {
                 videoCodec: "h264"
             });
         }
-        if (variants.length === 0) continue;
+        if (variants.length === 0) { skippedNoVariants++; continue; }
+
+        log("TIKTOK", `item -> sendVariants`, {
+            id: item.id,
+            author,
+            variants: variants.length,
+            topUrl: variants[0].url.slice(0, 80),
+            name: caption.slice(0, 60)
+        });
 
         // Synthetic details object: sendVariants only reads tabId,
         // requestId, documentUrl, originUrl, and url.
@@ -912,7 +944,9 @@ async function handleTikTokItemList(msg, sender) {
             duration: typeof v.duration === "number" ? v.duration * 1000 : 0,
             requestHeaders: headers
         });
+        sentCount++;
     }
+    log("TIKTOK", `batch done`, { sent: sentCount, skippedNoVideo, skippedNoVariants, total: items.length });
 }
 
 browser.runtime.onMessage.addListener((msg, sender) => {
