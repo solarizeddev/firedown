@@ -1,3 +1,10 @@
+## [1.1.73] - 2026-05-25
+
+- Added TikTok video and metadata capture
+- Added Picture-in-Picture support for audio
+- Block sites pushing the Play Store install prompt
+- Minor bugfixes
+
 ## [1.1.72] - 2026-05-20
 
 - Added Home cards style picker (Settings → Theme → Home cards)
