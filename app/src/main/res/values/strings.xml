@@ -109,8 +109,8 @@
     <string name="donate_bitcoin_meta">~10 min confirm · network fee</string>
     <string name="donate_bitcoin_title">Bitcoin on-chain</string>
     <string name="donate_fiat_title">Card or PayPal</string>
-    <string name="donate_fiat_meta">Buy Me a Coffee · opens in browser</string>
-    <string name="donate_fiat_no_browser">No browser available to open the donation page.</string>
+    <string name="donate_fiat_meta">Buy Me a Coffee · opens in a new tab</string>
+    <string name="donate_fiat_no_browser">Could not open the donation page.</string>
     <string name="donate_btc_copied">Address copied</string>
     <string name="donate_btc_copy">Copy address</string>
     <string name="donate_btc_open_wallet">Open in wallet</string>
