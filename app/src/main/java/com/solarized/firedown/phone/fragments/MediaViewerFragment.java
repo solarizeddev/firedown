@@ -455,13 +455,22 @@ public class MediaViewerFragment extends Fragment {
     }
 
     /**
-     * True when the fragment is rendering a video file (as opposed to
-     * audio with cover art). PiP entry is gated on this — entering PiP
-     * for a pure audio file would just show a static thumbnail.
+     * True when the fragment is rendering a video file.
      */
     public boolean isVideoMime() {
         return mDownloadEntity != null
                 && FileUriHelper.isVideo(mDownloadEntity.getFileMimeType());
+    }
+
+    /**
+     * True when the fragment is rendering an audio file. Audio PiP is
+     * supported — the PlayerView's defaultArtwork (mime-generated
+     * thumbnail) sits behind the static mPhotoView overlay and stays
+     * visible because onRenderedFirstFrame never fires for audio.
+     */
+    public boolean isAudioMime() {
+        return mDownloadEntity != null
+                && FileUriHelper.isAudio(mDownloadEntity.getFileMimeType());
     }
 
     public boolean isPlaying() {

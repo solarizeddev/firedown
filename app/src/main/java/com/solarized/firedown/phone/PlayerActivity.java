@@ -204,8 +204,9 @@ public class PlayerActivity extends AppCompatActivity {
     /**
      * PiP toolbar item is visible only when:
      *   • the device supports PiP (system feature), AND
-     *   • the current fragment is the video viewer (image viewer
-     *     has nothing to PiP).
+     *   • the current fragment is playing audio or video (image viewer
+     *     has nothing to PiP). For audio the PiP window shows the
+     *     mime-generated thumbnail via PlayerView's defaultArtwork.
      * Visibility refreshes via invalidateOptionsMenu() on entity
      * replace and on the video-ready event from MediaViewerFragment.
      */
@@ -216,8 +217,9 @@ public class PlayerActivity extends AppCompatActivity {
             boolean pipSupported = getPackageManager()
                     .hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE);
             MediaViewerFragment fragment = getMediaFragment();
-            boolean isVideo = fragment != null && fragment.isVideoMime();
-            pipItem.setVisible(pipSupported && isVideo);
+            boolean isPlayable = fragment != null
+                    && (fragment.isVideoMime() || fragment.isAudioMime());
+            pipItem.setVisible(pipSupported && isPlayable);
         }
         return super.onPrepareOptionsMenu(menu);
     }
@@ -264,7 +266,9 @@ public class PlayerActivity extends AppCompatActivity {
     protected void onUserLeaveHint() {
         super.onUserLeaveHint();
         MediaViewerFragment fragment = getMediaFragment();
-        if (fragment != null && fragment.isVideoMime() && fragment.isPlaying()) {
+        if (fragment != null
+                && (fragment.isVideoMime() || fragment.isAudioMime())
+                && fragment.isPlaying()) {
             enterPipMode();
         }
     }
