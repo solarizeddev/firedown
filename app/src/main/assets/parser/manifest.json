@@ -1,13 +1,13 @@
 {
   "manifest_version": 2,
-  "version": "1.7",
+  "version": "1.8",
   "browser_specific_settings": {
     "gecko": {
       "id": "parser@solarized.dev"
     }
   },
   "name": "Video parser",
-  "description": "Parses media URLs from Vimeo, Twitter/X, Instagram, Kick, Twitch, Dailymotion, and Apple Podcasts",
+  "description": "Parses media URLs from Vimeo, Twitter/X, Instagram, Kick, Twitch, Dailymotion, Apple Podcasts, and TikTok",
   "background": {
     "scripts": [
       "background.js"
@@ -38,6 +38,8 @@
     "*://podcasts.apple.com/*",
     "*://amp-api.podcasts.apple.com/*",
     "*://amp-api-edge.podcasts.apple.com/*",
-    "*://itunes.apple.com/*"
+    "*://itunes.apple.com/*",
+    "*://www.tiktok.com/*",
+    "*://m.tiktok.com/*"
   ]
 }

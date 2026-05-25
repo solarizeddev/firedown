@@ -797,6 +797,137 @@ browser.webNavigation.onHistoryStateUpdated.addListener(
 );
 
 // ============================================================================
+// TikTok
+// ============================================================================
+
+/**
+ * TikTok exposes its video metadata through a family of JSON endpoints
+ * under www.tiktok.com/api/ whose paths all match {@code *list*}:
+ *
+ *   /api/recommend/item_list/         — For You feed (5–10 items per page)
+ *   /api/preload/item_list/           — videos pre-fetched ahead of scroll
+ *   /api/prefetch/explore/item_list/  — Explore feed
+ *   /api/post/item_list/              — a user profile's videos
+ *   /api/repost/item_list/            — a user's reposts
+ *   /api/user/collection_list/        — saved/collected videos
+ *   /api/user/playlist/               — user-curated playlists
+ *
+ * Every one of these responses carries an {@code itemList[]} array where
+ * each entry has the same shape:
+ *
+ *   item.id                    — TikTok video id, used for dedup
+ *   item.desc                  — caption (multi-line)
+ *   item.author.uniqueId       — @handle of the uploader
+ *   item.video.playAddr        — primary CDN URL (h264, signed, ~6h TTL)
+ *   item.video.downloadAddr    — watermark-free download URL
+ *   item.video.cover           — poster image
+ *   item.video.duration        — seconds
+ *   item.video.bitrateInfo[]   — 4–6 quality variants (h264 + h265),
+ *                                each with PlayAddr.UrlList[]
+ *   item.music.playUrl         — audio-only track (separate file)
+ *
+ * The signed CDN URLs are bound to the user's session cookies
+ * ({@code ttwid}, {@code tt_chain_token}), which GeckoView already
+ * carries — so the native download path can replay them as-is.
+ *
+ * A few non-media endpoints (e.g. {@code /api/comment/list/}) also
+ * match the URL pattern but return no {@code itemList}; we filter
+ * defensively below and they fall through silently.
+ *
+ * Note we don't generate any TikTok requests ourselves — the
+ * {@code X-Bogus} / {@code X-Gnarly} / {@code msToken} anti-bot
+ * signatures TikTok demands on requests are only the page's
+ * problem. We just observe the responses to the requests the page
+ * already made.
+ */
+
+const processedTikTokIds = new Set();
+
+function listenerTikTok(details) {
+    collectFilteredResponse(details).then(text => {
+        const json = tryParseJson(text);
+        const items = json?.itemList;
+        if (!Array.isArray(items) || items.length === 0) {
+            return; // not a media-bearing response; non-list payloads fall through
+        }
+
+        const originUrl = details.documentUrl || details.originUrl || details.url;
+
+        log("TIKTOK", `${items.length} item(s) from ${new URL(details.url).pathname}`);
+
+        for (const item of items) {
+            const v = item?.video;
+            if (!v) continue;
+
+            const itemId = item.id;
+            const dedupKey = "tiktok:" + itemId;
+            if (processedTikTokIds.has(dedupKey)) continue;
+            processedTikTokIds.add(dedupKey);
+            setTimeout(() => processedTikTokIds.delete(dedupKey), 30000);
+
+            // Prefer downloadAddr (watermark-free) when present, fall back
+            // to playAddr. bitrateInfo[0].PlayAddr.UrlList[0] is what the
+            // web player actually streams from when it picks the default
+            // gear, so it's a reliable last resort.
+            const url = v.downloadAddr
+                || v.playAddr
+                || v.bitrateInfo?.[0]?.PlayAddr?.UrlList?.[0];
+            if (!url) {
+                log("TIKTOK", `item ${itemId} has no playable URL, skipping`);
+                continue;
+            }
+
+            const author = item.author?.uniqueId
+                || item.author?.nickname;
+            const caption = (item.desc || "").split("\n")[0].slice(0, 140);
+            // Single-video canonical URL — surfaces in the captured-media
+            // sheet's "origin" link so the user can reopen the source page.
+            const canonical = author && itemId
+                ? `https://www.tiktok.com/@${author}/video/${itemId}`
+                : originUrl;
+
+            const message = {
+                url,
+                type: "media",
+                origin: canonical,
+                tabId: details.tabId,
+                request: details.requestId,
+                name: caption || (author ? `TikTok by @${author}` : "TikTok video"),
+                description: author ? "@" + author : undefined,
+                img: v.cover || v.originCover,
+                duration: typeof v.duration === "number" ? v.duration * 1000 : undefined
+            };
+            for (const k of Object.keys(message)) {
+                if (message[k] === undefined) delete message[k];
+            }
+
+            log("TIKTOK", `Found item`, {
+                id: itemId,
+                author,
+                url: url.slice(0, 100)
+            });
+            sendNative(message);
+        }
+    }).catch(e => {
+        log("TIKTOK", `filter error`, e.message);
+    });
+
+    return {};
+}
+
+browser.webRequest.onBeforeRequest.addListener(
+    listenerTikTok,
+    {
+        urls: [
+            "*://www.tiktok.com/api/*list*",
+            "*://m.tiktok.com/api/*list*"
+        ],
+        types: ["xmlhttprequest"]
+    },
+    ["blocking"]
+);
+
+// ============================================================================
 // Twitter / X
 // ============================================================================
 
