@@ -100,29 +100,60 @@
                 return;
             }
             const scope = data && data.__DEFAULT_SCOPE__;
-            // The scope key varies by page variant — desktop ships
-            // "webapp.video-detail" while the reflow / mobile variant
-            // ships "webapp.reflow.video.detail". Match any key whose
-            // name contains "video-detail" or "video.detail" and
-            // accept the first one that has an itemStruct with .video.
+            // Both the desktop ("webapp.video-detail") and reflow /
+            // mobile ("webapp.reflow.video.detail") variants put a
+            // video object under one of these scopes, but at different
+            // paths within (itemInfo.itemStruct vs nested deeper).
+            // Walk each matching scope structurally for the first
+            // object that looks like a video item — has id + video
+            // with playAddr/downloadAddr/bitrateInfo.
+            function looksLikeVideoItem(o) {
+                return o && typeof o === 'object'
+                    && typeof o.id === 'string'
+                    && o.video && typeof o.video === 'object'
+                    && (o.video.playAddr || o.video.downloadAddr
+                        || o.video.bitrateInfo);
+            }
+            function findVideoItem(obj, depth) {
+                if (!obj || typeof obj !== 'object' || depth > 8) return null;
+                if (looksLikeVideoItem(obj)) return obj;
+                if (Array.isArray(obj)) {
+                    for (const v of obj) {
+                        const f = findVideoItem(v, depth + 1);
+                        if (f) return f;
+                    }
+                } else {
+                    for (const k of Object.keys(obj)) {
+                        const f = findVideoItem(obj[k], depth + 1);
+                        if (f) return f;
+                    }
+                }
+                return null;
+            }
             let item = null;
             let itemKey = null;
             if (scope) {
                 for (const k of Object.keys(scope)) {
                     if (!/video[-.]detail/i.test(k)) continue;
-                    const candidate = scope[k]
-                        && scope[k].itemInfo
-                        && scope[k].itemInfo.itemStruct;
-                    if (candidate && candidate.video) {
-                        item = candidate;
+                    const found = findVideoItem(scope[k], 0);
+                    if (found) {
+                        item = found;
                         itemKey = k;
                         break;
                     }
                 }
             }
             if (!item) {
-                console.info('[TT] video-detail(' + label + '): no itemStruct (scope keys='
-                    + (scope ? Object.keys(scope).slice(0, 12).join(',') : 'no-scope') + ')');
+                const matched = scope
+                    ? Object.keys(scope).filter(k => /video[-.]detail/i.test(k))
+                    : [];
+                const dump = matched
+                    .map(k => k + ':{' + (scope[k]
+                        ? Object.keys(scope[k]).slice(0, 8).join(',')
+                        : 'null') + '}')
+                    .join(' | ');
+                console.info('[TT] video-detail(' + label + '): no itemStruct (matched='
+                    + (dump || 'none') + ')');
                 return;
             }
             videoDetailCaptured = true;
