@@ -66,4 +66,65 @@
         });
     });
     log('[TT-CONTENT] message bridge listening');
+
+    // SSR pass. On first load TikTok server-renders the profile feed
+    // into a single <script id="__UNIVERSAL_DATA_FOR_REHYDRATION__">
+    // JSON blob and the React app hydrates from it — no XHR fires (or
+    // /api/post/item_list/ fires with an empty body because the
+    // ServiceWorker / cache already satisfied the page). Without
+    // reading the SSR blob we capture nothing until the user
+    // refreshes and TikTok finally hits the API for real.
+    //
+    // Deep-walk the JSON looking for any object that carries an
+    // itemList[] of video items. Each match is forwarded through the
+    // same background channel as the XHR/fetch hook, so the existing
+    // dedup-by-origin in sendVariants prevents double-publishing if a
+    // later real XHR returns the same ids.
+    function scanSSRForItemList() {
+        try {
+            const tag = document.getElementById('__UNIVERSAL_DATA_FOR_REHYDRATION__');
+            if (!tag || !tag.textContent) return;
+            const data = JSON.parse(tag.textContent);
+            const found = [];
+            const seen = new WeakSet();
+            const walk = (obj, depth) => {
+                if (!obj || typeof obj !== 'object' || depth > 12) return;
+                if (seen.has(obj)) return;
+                seen.add(obj);
+                if (Array.isArray(obj.itemList) && obj.itemList.length > 0
+                        && obj.itemList[0] && obj.itemList[0].video) {
+                    found.push(obj.itemList);
+                    // Don't recurse into a matched branch — the inner
+                    // video objects don't carry nested itemLists worth
+                    // walking.
+                    return;
+                }
+                if (Array.isArray(obj)) {
+                    for (const v of obj) walk(v, depth + 1);
+                } else {
+                    for (const k of Object.keys(obj)) walk(obj[k], depth + 1);
+                }
+            };
+            walk(data, 0);
+            if (found.length === 0) {
+                log('[TT-CONTENT] SSR scan: no itemList[] in __UNIVERSAL_DATA_FOR_REHYDRATION__');
+                return;
+            }
+            for (const itemList of found) {
+                log('[TT-CONTENT] SSR itemList items=' + itemList.length);
+                browser.runtime.sendMessage({
+                    kind: 'tiktok-itemlist',
+                    url: location.href,
+                    body: JSON.stringify({ itemList })
+                }).catch(() => {});
+            }
+        } catch (e) {
+            log('[TT-CONTENT] SSR scan error:', e && e.message);
+        }
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', scanSSRForItemList, { once: true });
+    } else {
+        scanSSRForItemList();
+    }
 })();
