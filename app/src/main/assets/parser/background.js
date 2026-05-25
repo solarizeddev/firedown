@@ -797,6 +797,132 @@ browser.webNavigation.onHistoryStateUpdated.addListener(
 );
 
 // ============================================================================
+// TikTok
+// ============================================================================
+
+/**
+ * TikTok's web app is split-source from a capture point of view:
+ *
+ *  • The page fires /api/recommend/item_list/ (and a handful of sibling
+ *    list endpoints) whose JSON response carries every video's caption,
+ *    author, thumbnail, duration AND every CDN URL the player might pick
+ *    from bitrateInfo[]. But the URLs are bound to the JSON-fetch
+ *    context — sending them straight to the native downloader returns
+ *    403 even with cookies forwarded.
+ *  • The page then fetches one of those URLs via the <video> element.
+ *    THAT request is the one that returns HTTP 200 and is replayable
+ *    from the native downloader. The generic webrequests content-script
+ *    already captures it — but its message has no name/description,
+ *    because TikTok's SPA exposes no per-video og:title.
+ *
+ * The fix is to bridge the two on the native side: this handler taps
+ * the JSON, stashes {caption, author, cover, duration} keyed on EVERY
+ * variant URL the page might pick, and ships it as a
+ * {@code tiktok-meta-cache} envelope. The native side
+ * (GeckoRuntimeHelper.handleTikTokMetaCache → TikTokMetadataCache)
+ * stores it. When webrequests later forwards the actual video fetch,
+ * JsonHelper.parse looks up the cache and stamps the cached metadata
+ * onto the entity before it reaches GeckoInspectTask.
+ *
+ * We intentionally do NOT send media entities ourselves — that's
+ * webrequests' job, and its URL is the one that actually downloads
+ * without 403.
+ */
+
+const processedTikTokIds = new Set();
+
+function listenerTikTokJson(details) {
+    if (details.method !== "GET") return {};
+
+    collectFilteredResponse(details).then(text => {
+        const json = tryParseJson(text);
+        const items = json?.itemList;
+        if (!Array.isArray(items) || items.length === 0) return;
+
+        const pageOrigin = details.documentUrl || details.originUrl || details.url;
+        log("TIKTOK", `${items.length} item(s) from ${new URL(details.url).pathname}`);
+
+        for (const item of items) {
+            const v = item?.video;
+            if (!v) continue;
+
+            const itemId = item.id;
+            if (processedTikTokIds.has(itemId)) continue;
+            processedTikTokIds.add(itemId);
+            setTimeout(() => processedTikTokIds.delete(itemId), 30 * 60 * 1000);
+
+            // Every URL the player might pick. Cache them all so any
+            // match in webrequests resolves to the same metadata.
+            const urls = [];
+            const seen = new Set();
+            function add(u) {
+                if (!u) return;
+                const key = u.split("?")[0];
+                if (seen.has(key)) return;
+                seen.add(key);
+                urls.push(u);
+            }
+            if (Array.isArray(v.bitrateInfo)) {
+                for (const b of v.bitrateInfo) {
+                    const list = b?.PlayAddr?.UrlList;
+                    if (Array.isArray(list)) for (const u of list) add(u);
+                }
+            }
+            add(v.downloadAddr);
+            add(v.playAddr);
+            if (urls.length === 0) continue;
+
+            const author = item.author?.uniqueId || item.author?.nickname;
+            const caption = (item.desc || "").split("\n")[0].slice(0, 140);
+            const canonical = author && itemId
+                ? `https://www.tiktok.com/@${author}/video/${itemId}`
+                : pageOrigin;
+
+            log("TIKTOK", `cache item`, {
+                id: itemId,
+                author,
+                urls: urls.length,
+                name: caption || (author ? `@${author}` : "TikTok")
+            });
+
+            sendNative({
+                type: "tiktok-meta-cache",
+                urls,
+                name: caption || (author ? `TikTok by @${author}` : "TikTok video"),
+                description: author ? "@" + author : undefined,
+                img: v.cover || v.originCover,
+                origin: canonical,
+                duration: typeof v.duration === "number" ? v.duration * 1000 : 0
+            });
+        }
+    }).catch(e => {
+        log("TIKTOK", `filter error`, e.message);
+    });
+
+    return {};
+}
+
+browser.webRequest.onBeforeRequest.addListener(
+    listenerTikTokJson,
+    {
+        urls: [
+            "*://www.tiktok.com/api/recommend/item_list/*",
+            "*://www.tiktok.com/api/preload/item_list/*",
+            "*://www.tiktok.com/api/prefetch/explore/item_list/*",
+            "*://www.tiktok.com/api/post/item_list/*",
+            "*://www.tiktok.com/api/repost/item_list/*",
+            "*://www.tiktok.com/api/user/collection_list/*",
+            "*://www.tiktok.com/api/user/playlist/*",
+            "*://m.tiktok.com/api/recommend/item_list/*",
+            "*://m.tiktok.com/api/preload/item_list/*",
+            "*://m.tiktok.com/api/post/item_list/*"
+        ],
+        types: ["xmlhttprequest"]
+    },
+    ["blocking"]
+);
+
+// ============================================================================
 // Twitter / X
 // ============================================================================
 

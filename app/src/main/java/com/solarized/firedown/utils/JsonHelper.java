@@ -6,6 +6,7 @@ import android.util.Log;
 import com.solarized.firedown.data.entity.GeckoInspectEntity;
 import com.solarized.firedown.ffmpegutils.FFmpegEntity;
 import com.solarized.firedown.ffmpegutils.FFmpegStreamInfo;
+import com.solarized.firedown.manager.TikTokMetadataCache;
 
 
 import org.json.JSONArray;
@@ -33,6 +34,31 @@ public class JsonHelper {
             entity.setOrigin(parseOrigin(json));
             entity.setRequestHeaders(parseHeaders(json));
             entity.setIncognito(json.optBoolean("incognito", false));
+
+            // TikTok metadata bridge: when this message is the
+            // webrequests capture of a TikTok video fetch (URL only,
+            // empty name/description because TikTok's SPA exposes no
+            // per-video og:title), pull the caption / author / cover /
+            // duration from the cache populated by the parser's earlier
+            // /api/*list*/ tap. See TikTokMetadataCache for the full
+            // split-source rationale.
+            String url = entity.getUrl();
+            if (url != null && TikTokMetadataCache.isTikTokVideoUrl(url)) {
+                TikTokMetadataCache.Entry meta = TikTokMetadataCache.get(url);
+                if (meta != null) {
+                    if (isBlank(entity.getName()) && meta.name != null)
+                        entity.setName(meta.name);
+                    if (isBlank(entity.getDescription()) && meta.description != null)
+                        entity.setDescription(meta.description);
+                    if (isBlank(entity.getImg()) && meta.img != null)
+                        entity.setImg(meta.img);
+                    if (isBlank(entity.getOrigin()) && meta.origin != null)
+                        entity.setOrigin(meta.origin);
+                    if (entity.getDuration() <= 0 && meta.durationMs > 0)
+                        entity.setDuration(meta.durationMs);
+                    Log.d(TAG, "TikTok meta hit for " + url.substring(0, Math.min(120, url.length())));
+                }
+            }
 
             // Parse variants with SABR data if available
             JSONObject sabr = json.optJSONObject("sabr");
@@ -75,6 +101,10 @@ public class JsonHelper {
             Log.e(TAG, "parse", e);
             return null;
         }
+    }
+
+    private static boolean isBlank(String s) {
+        return s == null || s.isEmpty();
     }
 
     private static String parseUrl(JSONObject json) throws JSONException {
