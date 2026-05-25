@@ -834,106 +834,93 @@ async function buildTikTokHeaders() {
     ];
 }
 
-// One native message per itemList[] entry, with synthesized headers
-// so the variant URL replays (HTTP 200) on the native side. Body is
-// read via filterResponseData (taps the page's own response, signature
-// intact) — refetching the same URL ourselves trips msToken / X-Bogus
-// replay protection and TikTok serves stripped JSON. Endpoints served
-// by the ServiceWorker (/related/item_list/) error out of the filter;
-// the catch below swallows that case silently.
-function listenerTikTokJson(details) {
-    collectFilteredResponse(details).then(async text => {
-        const json = tryParseJson(text);
-        const items = json?.itemList;
-        if (!Array.isArray(items) || items.length === 0) return;
+// Receives JSON bodies posted by the content-script bridge. The body
+// is the exact response the page itself received via fetch/XHR —
+// captured by a page-world hook (tiktok-inject.js) that observes
+// passively without touching the network stack. This avoids three
+// failure modes encountered with webRequest-based approaches:
+//   1. filterResponseData perturbs the page (TikTok shows a
+//      "something went wrong" overlay).
+//   2. Refetching the URL ourselves trips TikTok's single-use
+//      msToken / X-Bogus signature and returns a stripped response.
+//   3. ServiceWorker-served endpoints (/related/item_list/) can't be
+//      tapped via filterResponseData at all.
+async function handleTikTokItemList(msg, sender) {
+    const json = tryParseJson(msg.body);
+    const items = json?.itemList;
+    if (!Array.isArray(items) || items.length === 0) return;
 
-        log("TIKTOK", `${items.length} item(s) from ${new URL(details.url).pathname}`);
+    const pathname = (() => {
+        try { return new URL(msg.url, sender.tab?.url || "https://www.tiktok.com/").pathname; }
+        catch (_) { return msg.url; }
+    })();
+    log("TIKTOK", `${items.length} item(s) from ${pathname}`);
 
-        const headers = await buildTikTokHeaders();
-        const pageOrigin = details.documentUrl || details.originUrl || details.url;
+    const headers = await buildTikTokHeaders();
+    const tabId = sender.tab?.id ?? -1;
+    const pageUrl = sender.tab?.url || "https://www.tiktok.com/";
 
-        for (const item of items) {
-            const v = item?.video;
-            if (!v) continue;
+    for (const item of items) {
+        const v = item?.video;
+        if (!v) continue;
 
-            const author = item.author?.uniqueId || item.author?.nickname;
-            const caption = (item.desc || "").split("\n")[0].slice(0, 140);
-            const canonical = author && item.id
-                ? `https://www.tiktok.com/@${author}/video/${item.id}`
-                : pageOrigin;
+        const author = item.author?.uniqueId || item.author?.nickname;
+        const caption = (item.desc || "").split("\n")[0].slice(0, 140);
+        const canonical = author && item.id
+            ? `https://www.tiktok.com/@${author}/video/${item.id}`
+            : pageUrl;
 
-            const variants = [];
-            if (Array.isArray(v.bitrateInfo)) {
-                for (const b of v.bitrateInfo) {
-                    const list = b?.PlayAddr?.UrlList;
-                    if (!Array.isArray(list) || list.length === 0) continue;
-                    variants.push({
-                        url: list[0],
-                        width: b.PlayAddr?.Width || v.width || 0,
-                        height: b.PlayAddr?.Height || v.height || 0,
-                        videoCodec: "h264"
-                    });
-                }
-            }
-            if (variants.length === 0 && (v.playAddr || v.downloadAddr)) {
+        const variants = [];
+        if (Array.isArray(v.bitrateInfo)) {
+            for (const b of v.bitrateInfo) {
+                const list = b?.PlayAddr?.UrlList;
+                if (!Array.isArray(list) || list.length === 0) continue;
                 variants.push({
-                    url: v.playAddr || v.downloadAddr,
-                    width: v.width || 0,
-                    height: v.height || 0,
+                    url: list[0],
+                    width: b.PlayAddr?.Width || v.width || 0,
+                    height: b.PlayAddr?.Height || v.height || 0,
                     videoCodec: "h264"
                 });
             }
-            if (variants.length === 0) continue;
-
-            sendVariants(details, {
-                variants,
-                origin: canonical,
-                description: author ? "@" + author : undefined,
-                img: v.cover || v.originCover,
-                name: caption || (author ? `TikTok by @${author}` : "TikTok video"),
-                duration: typeof v.duration === "number" ? v.duration * 1000 : 0,
-                requestHeaders: headers
+        }
+        if (variants.length === 0 && (v.playAddr || v.downloadAddr)) {
+            variants.push({
+                url: v.playAddr || v.downloadAddr,
+                width: v.width || 0,
+                height: v.height || 0,
+                videoCodec: "h264"
             });
         }
-    }).catch(e => {
-        // ServiceWorker-served endpoints (/related/item_list/) error
-        // here — expected, the page reads from SW cache and there's
-        // no network response to tap. Log at debug level only.
-        log("TIKTOK", `filter skip`, e.message);
-    });
+        if (variants.length === 0) continue;
 
-    return {};
+        // Synthetic details object: sendVariants only reads tabId,
+        // requestId, documentUrl, originUrl, and url.
+        const details = {
+            tabId,
+            documentUrl: pageUrl,
+            originUrl: pageUrl,
+            url: msg.url,
+            requestId: `tiktok-${item.id || Date.now()}`
+        };
+
+        sendVariants(details, {
+            variants,
+            origin: canonical,
+            description: author ? "@" + author : undefined,
+            img: v.cover || v.originCover,
+            name: caption || (author ? `TikTok by @${author}` : "TikTok video"),
+            duration: typeof v.duration === "number" ? v.duration * 1000 : 0,
+            requestHeaders: headers
+        });
+    }
 }
 
-browser.webRequest.onBeforeRequest.addListener(
-    listenerTikTokJson,
-    {
-        // Whitelist only endpoints we KNOW carry itemList[]. Every other
-        // /api/ call (login, eligibility, telemetry, /user/list/ which
-        // has userList[] instead, …) is left alone — touching them with
-        // filterResponseData triggers TikTok's "something went wrong"
-        // overlay even with perfect byte pass-through.
-        urls: [
-            "*://www.tiktok.com/api/recommend/item_list/*",
-            "*://www.tiktok.com/api/related/item_list/*",
-            "*://www.tiktok.com/api/post/item_list/*",
-            "*://www.tiktok.com/api/repost/item_list/*",
-            "*://www.tiktok.com/api/preload/item_list/*",
-            "*://www.tiktok.com/api/story/item_list/*",
-            "*://www.tiktok.com/api/favorite/item_list/*",
-            "*://www.tiktok.com/api/collection/item_list/*",
-            "*://www.tiktok.com/api/playlist/item_list/*",
-            "*://m.tiktok.com/api/recommend/item_list/*",
-            "*://m.tiktok.com/api/related/item_list/*",
-            "*://m.tiktok.com/api/post/item_list/*",
-            "*://m.tiktok.com/api/repost/item_list/*",
-            "*://m.tiktok.com/api/preload/item_list/*",
-            "*://m.tiktok.com/api/story/item_list/*"
-        ],
-        types: ["xmlhttprequest"]
-    },
-    ["blocking"]
-);
+browser.runtime.onMessage.addListener((msg, sender) => {
+    if (!msg || msg.kind !== "tiktok-itemlist") return;
+    handleTikTokItemList(msg, sender).catch(e => {
+        log("TIKTOK", `handler error`, e.message);
+    });
+});
 
 // ============================================================================
 // Twitter / X

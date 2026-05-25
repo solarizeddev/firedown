@@ -1,6 +1,6 @@
 {
   "manifest_version": 2,
-  "version": "2.4",
+  "version": "2.5",
   "browser_specific_settings": {
     "gecko": {
       "id": "parser@solarized.dev"
@@ -13,6 +13,19 @@
       "background.js"
     ]
   },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://www.tiktok.com/*",
+        "*://m.tiktok.com/*"
+      ],
+      "js": [
+        "tiktok-content.js"
+      ],
+      "run_at": "document_start",
+      "all_frames": false
+    }
+  ],
   "permissions": [
     "nativeMessaging",
     "nativeMessagingFromContent",
