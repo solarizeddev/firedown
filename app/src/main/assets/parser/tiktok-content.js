@@ -74,29 +74,58 @@
     // Read that one object and forward it through the same bridge
     // wrapped as a one-item itemList, so the background parser picks
     // it up with no special-casing.
-    function captureVideoDetailSSR() {
+    //
+    // Retry across multiple checkpoints because React may strip the
+    // rehydration <script> tag during hydration (timing varies by
+    // device); whichever checkpoint sees the tag first wins, the rest
+    // are no-ops via videoDetailCaptured.
+    let videoDetailCaptured = false;
+    function captureVideoDetailSSR(label) {
+        if (videoDetailCaptured) return;
         try {
-            if (!/^\/@[^/]+\/video\/\d+/.test(location.pathname)) return;
+            if (!/^\/@[^/]+\/video\/\d+/.test(location.pathname)) {
+                console.info('[TT] video-detail(' + label + '): path no-match ' + location.pathname);
+                return;
+            }
             const tag = document.getElementById('__UNIVERSAL_DATA_FOR_REHYDRATION__');
-            if (!tag || !tag.textContent) return;
-            const data = JSON.parse(tag.textContent);
+            if (!tag || !tag.textContent) {
+                console.info('[TT] video-detail(' + label + '): SSR tag missing');
+                return;
+            }
+            let data;
+            try { data = JSON.parse(tag.textContent); }
+            catch (e) {
+                console.info('[TT] video-detail(' + label + '): JSON parse failed: '
+                    + (e && e.message));
+                return;
+            }
             const scope = data && data.__DEFAULT_SCOPE__;
             const detail = scope && scope['webapp.video-detail'];
             const item = detail && detail.itemInfo && detail.itemInfo.itemStruct;
-            if (!item || !item.video) return;
-            console.info('[TT] video-detail SSR captured id=' + item.id);
+            if (!item || !item.video) {
+                console.info('[TT] video-detail(' + label + '): no itemStruct (scope keys='
+                    + (scope ? Object.keys(scope).slice(0, 10).join(',') : 'no-scope') + ')');
+                return;
+            }
+            videoDetailCaptured = true;
+            console.info('[TT] video-detail SSR captured (' + label + ') id=' + item.id);
             browser.runtime.sendMessage({
                 kind: 'tiktok-itemlist',
                 url: location.href,
                 body: JSON.stringify({ itemList: [item] })
             }).then(() => {}, () => {});
-        } catch (_) {}
+        } catch (e) {
+            console.info('[TT] video-detail(' + label + ') threw: ' + (e && e.message));
+        }
     }
+    captureVideoDetailSSR('document_start');
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', captureVideoDetailSSR, { once: true });
-    } else {
-        captureVideoDetailSSR();
+        document.addEventListener('DOMContentLoaded',
+            () => captureVideoDetailSSR('DOMContentLoaded'), { once: true });
     }
+    window.addEventListener('load', () => captureVideoDetailSSR('load'), { once: true });
+    setTimeout(() => captureVideoDetailSSR('timer-500'), 500);
+    setTimeout(() => captureVideoDetailSSR('timer-2000'), 2000);
 
     // Take-A-Break dismiss-in-place. The overlay suppresses /api/*
     // calls until it goes away. Reloading flagged the session and
