@@ -277,6 +277,16 @@ public class GeckoStateDataRepository {
                     }
                 }
                 changed = true;
+            } else if (active) {
+                // Same-tab reactivate: caller is asserting "this tab is
+                // current and active", so make sure the GeckoSession side
+                // matches even when we skip the iterate sweep. Without
+                // this, an out-of-band setActive(false) (URL-bar focus,
+                // surface reattach, …) on the current tab would never be
+                // undone and the GeckoView would render a blank surface.
+                // setActive is idempotent so this is safe when the
+                // session is already active.
+                geckoState.setActive(true);
             }
         }
         if (changed) notifyTabs();

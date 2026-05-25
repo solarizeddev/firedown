@@ -193,6 +193,11 @@ public class IncognitoStateRepository {
                     state.setActive(state.getEntityId() == mCurrentId);
                 }
                 changed = true;
+            } else if (active) {
+                // Same-tab reactivate: keep the GeckoSession side in sync
+                // even when the iterate sweep is skipped. See sibling fix
+                // in GeckoStateDataRepository for the full rationale.
+                geckoState.setActive(true);
             }
         }
         if (changed) notifyTabs();

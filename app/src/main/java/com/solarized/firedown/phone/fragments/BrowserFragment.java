@@ -849,6 +849,11 @@ public class BrowserFragment extends BaseBrowserFragment
         } else {
             applyBrowserIncognitoTheme(
                     current.getGeckoStateEntity().isIncognito());
+            // The view↔session binding is intact, but the session itself
+            // may have been deactivated out-of-band (URL-bar focus,
+            // backgrounding, …). Re-assert active so the surface resumes
+            // rendering. setActive is idempotent when already active.
+            current.setActive(true);
         }
     }
 
