@@ -40,6 +40,7 @@
     "*://amp-api-edge.podcasts.apple.com/*",
     "*://itunes.apple.com/*",
     "*://www.tiktok.com/*",
-    "*://m.tiktok.com/*"
+    "*://m.tiktok.com/*",
+    "*://*.tiktok.com/*"
   ]
 }

@@ -115,7 +115,7 @@ async function sendNative(message) {
  * Unified variant sender for Twitter, Instagram, and future parsers.
  * Handles dedup, sorting, and message construction.
  */
-async function sendVariants(details, { variants, origin, description, img, name, duration }) {
+async function sendVariants(details, { variants, origin, description, img, name, duration, requestHeaders }) {
     if (!Array.isArray(variants) || variants.length === 0) return;
 
     // Sort by height descending — best quality first
@@ -155,6 +155,14 @@ async function sendVariants(details, { variants, origin, description, img, name,
     if (img) message.img = img;
     if (name) message.name = name;
     if (duration > 0) message.duration = duration;
+    // Forward Cookie / Referer / UA so the native OkHttp download can
+    // authenticate against CDNs (TikTok in particular returns 403 on
+    // the signed playAddr without the session cookie). JsonHelper
+    // .parseHeaders reads this array and pushes it into
+    // BrowserDownloadEntity.fileHeaders → DownloadContext headers.
+    if (Array.isArray(requestHeaders) && requestHeaders.length > 0) {
+        message.requestHeaders = requestHeaders;
+    }
 
     sendNative(message);
 }
@@ -843,8 +851,38 @@ browser.webNavigation.onHistoryStateUpdated.addListener(
 
 const processedTikTokIds = new Set();
 
+// TikTok's signed CDN URLs return 403 to the native OkHttp downloader
+// without the same Cookie / Referer / User-Agent the browser sent. The
+// signature in the URL is bound to the session cookie (tk=tt_chain_token
+// is the cookie *name*, not its value), so we have to forward the
+// browser's tiktok.com cookies. Built once per response, used for every
+// variant in the batch.
+async function buildTikTokHeaders() {
+    const headers = [
+        { name: "Referer", value: "https://www.tiktok.com/" },
+        { name: "User-Agent", value: navigator.userAgent },
+        { name: "Accept", value: "*/*" },
+        { name: "Accept-Language", value: navigator.language || "en-US" }
+    ];
+    try {
+        const cookies = await browser.cookies.getAll({ domain: ".tiktok.com" });
+        if (cookies.length > 0) {
+            const cookieHeader = cookies
+                .map(c => `${c.name}=${c.value}`)
+                .join("; ");
+            headers.push({ name: "Cookie", value: cookieHeader });
+            log("TIKTOK", `forwarding ${cookies.length} cookie(s) to download`);
+        } else {
+            log("TIKTOK", `no cookies for .tiktok.com — download will likely 403`);
+        }
+    } catch (e) {
+        log("TIKTOK", `cookie lookup failed`, e.message);
+    }
+    return headers;
+}
+
 function listenerTikTok(details) {
-    collectFilteredResponse(details).then(text => {
+    collectFilteredResponse(details).then(async text => {
         const json = tryParseJson(text);
         const items = json?.itemList;
         if (!Array.isArray(items) || items.length === 0) {
@@ -852,6 +890,7 @@ function listenerTikTok(details) {
         }
 
         const originUrl = details.documentUrl || details.originUrl || details.url;
+        const requestHeaders = await buildTikTokHeaders();
 
         log("TIKTOK", `${items.length} item(s) from ${new URL(details.url).pathname}`);
 
@@ -930,7 +969,8 @@ function listenerTikTok(details) {
                 description: author ? "@" + author : undefined,
                 img: v.cover || v.originCover,
                 name: caption || (author ? `TikTok by @${author}` : "TikTok video"),
-                duration: typeof v.duration === "number" ? v.duration * 1000 : 0
+                duration: typeof v.duration === "number" ? v.duration * 1000 : 0,
+                requestHeaders
             });
         }
     }).catch(e => {
