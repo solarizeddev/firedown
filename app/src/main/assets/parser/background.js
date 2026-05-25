@@ -869,6 +869,15 @@ function tiktokCacheGet(url) {
 }
 
 function listenerTikTokJson(details) {
+    // Diagnostic: prove the listener fires at all, before any
+    // filterResponseData / response-body work that could mask the
+    // call with a silent error.
+    log("TIKTOK", `fire`, { url: details.url.slice(0, 140), method: details.method });
+
+    // Defensive narrowing now that the URL filter is broad — the
+    // handler skips non-list endpoints with no body work.
+    if (!details.url.includes("list")) return {};
+
     // No method gate: TikTok issues these as GET on anonymous
     // sessions and POST on logged-in ones, both with the same JSON
     // response shape. filterResponseData reads the response body
@@ -983,8 +992,8 @@ browser.webRequest.onBeforeRequest.addListener(
         // match-pattern quirk with paths that end in `/` followed by
         // a query string).
         urls: [
-            "*://www.tiktok.com/api/*list*",
-            "*://m.tiktok.com/api/*list*"
+            "*://www.tiktok.com/api/*",
+            "*://m.tiktok.com/api/*"
         ],
         types: ["xmlhttprequest"]
     },
