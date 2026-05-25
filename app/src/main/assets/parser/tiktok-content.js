@@ -100,15 +100,34 @@
                 return;
             }
             const scope = data && data.__DEFAULT_SCOPE__;
-            const detail = scope && scope['webapp.video-detail'];
-            const item = detail && detail.itemInfo && detail.itemInfo.itemStruct;
-            if (!item || !item.video) {
+            // The scope key varies by page variant — desktop ships
+            // "webapp.video-detail" while the reflow / mobile variant
+            // ships "webapp.reflow.video.detail". Match any key whose
+            // name contains "video-detail" or "video.detail" and
+            // accept the first one that has an itemStruct with .video.
+            let item = null;
+            let itemKey = null;
+            if (scope) {
+                for (const k of Object.keys(scope)) {
+                    if (!/video[-.]detail/i.test(k)) continue;
+                    const candidate = scope[k]
+                        && scope[k].itemInfo
+                        && scope[k].itemInfo.itemStruct;
+                    if (candidate && candidate.video) {
+                        item = candidate;
+                        itemKey = k;
+                        break;
+                    }
+                }
+            }
+            if (!item) {
                 console.info('[TT] video-detail(' + label + '): no itemStruct (scope keys='
-                    + (scope ? Object.keys(scope).slice(0, 10).join(',') : 'no-scope') + ')');
+                    + (scope ? Object.keys(scope).slice(0, 12).join(',') : 'no-scope') + ')');
                 return;
             }
             videoDetailCaptured = true;
-            console.info('[TT] video-detail SSR captured (' + label + ') id=' + item.id);
+            console.info('[TT] video-detail SSR captured (' + label + ') id='
+                + item.id + ' via ' + itemKey);
             browser.runtime.sendMessage({
                 kind: 'tiktok-itemlist',
                 url: location.href,
