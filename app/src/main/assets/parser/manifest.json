@@ -1,13 +1,13 @@
 {
   "manifest_version": 2,
-  "version": "1.6",
+  "version": "1.7",
   "browser_specific_settings": {
     "gecko": {
       "id": "parser@solarized.dev"
     }
   },
   "name": "Video parser",
-  "description": "Parses video URLs from Vimeo, Twitter/X, Instagram, Kick, and Twitch",
+  "description": "Parses media URLs from Vimeo, Twitter/X, Instagram, Kick, Twitch, Dailymotion, and Apple Podcasts",
   "background": {
     "scripts": [
       "background.js"
@@ -33,6 +33,8 @@
     "*://clips.twitch.tv/*",
     "*://*.dailymotion.com/*",
     "*://geo.dailymotion.com/*",
-    "*://*.dmcdn.net/*"
+    "*://*.dmcdn.net/*",
+    "*://podcasts.apple.com/*",
+    "*://itunes.apple.com/*"
   ]
 }

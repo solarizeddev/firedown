@@ -439,6 +439,121 @@ browser.webRequest.onBeforeRequest.addListener(
 );
 
 // ============================================================================
+// Apple Podcasts
+// ============================================================================
+//
+// Episode pages look like:
+//   https://podcasts.apple.com/{country}/podcast/{slug}/id{podcastId}?i={episodeId}
+// Show pages drop the `?i=` segment. We only care about episode pages —
+// the show page has no audio to download.
+//
+// Strategy: instead of scraping the HTML (which uses Apple's internal
+// serialized-server-data JSON that has changed shape historically), call
+// the public iTunes Lookup API with the episode ID. One JSON response
+// gives us everything we need:
+//   - trackName            → episode title
+//   - collectionName       → podcast series name
+//   - artistName           → host / publisher
+//   - description          → episode description (HTML stripped)
+//   - episodeUrl           → direct audio file URL (mp3 / m4a)
+//   - trackTimeMillis      → duration
+//   - artworkUrl600 / 100  → cover art
+//
+// No cookies, no auth, no rate-limit issues at our request volume.
+
+function parseApplePodcastsUrl(url) {
+    // /id123 captures the show id (we don't currently send anything for show
+    // pages but the regex is symmetric for future expansion); ?i=456 captures
+    // the episode id.
+    const m = url.match(/podcasts\.apple\.com\/[^/]+\/podcast\/[^/?#]+\/id(\d+)(?:[?&]i=(\d+))?/);
+    if (!m) return null;
+    return { podcastId: m[1], episodeId: m[2] || null };
+}
+
+function stripHtml(s) {
+    if (typeof s !== "string") return "";
+    return s.replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
+}
+
+const processedAppleUrls = new Set();
+
+async function listenerApplePodcasts(details) {
+    const ids = parseApplePodcastsUrl(details.url);
+    if (!ids || !ids.episodeId) return {};   // show pages have no audio to download
+
+    const urlKey = details.url.split('?')[0] + '?i=' + ids.episodeId;
+    if (processedAppleUrls.has(urlKey)) return {};
+    processedAppleUrls.add(urlKey);
+    setTimeout(() => processedAppleUrls.delete(urlKey), 5000);
+
+    await ensureTabId(details);
+
+    try {
+        const lookupUrl = `https://itunes.apple.com/lookup?id=${ids.episodeId}&entity=podcastEpisode`;
+        markOwnRequest(lookupUrl);
+        const response = await fetch(lookupUrl, { credentials: "omit" });
+        const data = await response.json();
+
+        if (!data?.results?.length) {
+            log("APPLE_PODCAST", `No results for episode ${ids.episodeId}`);
+            return {};
+        }
+
+        // First result may be the podcast (kind=podcast) followed by the
+        // episode (kind=podcast-episode) depending on the API's mood;
+        // explicitly pick the episode entry.
+        const episode = data.results.find(r => r.kind === "podcast-episode")
+                    || data.results.find(r => r.wrapperType === "podcastEpisode")
+                    || data.results[0];
+
+        if (!episode?.episodeUrl) {
+            log("APPLE_PODCAST", `No episodeUrl in lookup result`, { trackId: episode?.trackId });
+            return {};
+        }
+
+        const tabId = await resolveTabId(details);
+
+        const message = {
+            url: episode.episodeUrl,
+            type: "media",
+            origin: details.url,
+            tabId,
+            request: details.requestId,
+            name: episode.trackName,
+            description: episode.collectionName || stripHtml(episode.description) || undefined,
+            img: episode.artworkUrl600 || episode.artworkUrl160 || episode.artworkUrl100,
+            duration: typeof episode.trackTimeMillis === "number" ? episode.trackTimeMillis : undefined
+        };
+
+        // Drop undefined fields so the native side sees clean payloads.
+        for (const k of Object.keys(message)) {
+            if (message[k] === undefined) delete message[k];
+        }
+
+        log("APPLE_PODCAST", `Found episode`, {
+            name: message.name,
+            series: episode.collectionName,
+            url: message.url?.slice(0, 100),
+            tabId
+        });
+        sendNative(message);
+    } catch (e) {
+        log("APPLE_PODCAST", `Error`, e.message);
+    }
+
+    return {};
+}
+
+browser.webRequest.onBeforeRequest.addListener(
+    listenerApplePodcasts,
+    {
+        urls: ["*://podcasts.apple.com/*/podcast/*"],
+        types: ["main_frame"]
+    },
+    []
+);
+
+// ============================================================================
 // Twitter / X
 // ============================================================================
 
