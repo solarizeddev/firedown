@@ -36,6 +36,8 @@
     "*://geo.dailymotion.com/*",
     "*://*.dmcdn.net/*",
     "*://podcasts.apple.com/*",
+    "*://amp-api.podcasts.apple.com/*",
+    "*://amp-api-edge.podcasts.apple.com/*",
     "*://itunes.apple.com/*"
   ]
 }

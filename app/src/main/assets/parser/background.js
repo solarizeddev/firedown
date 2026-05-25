@@ -478,20 +478,14 @@ function stripHtml(s) {
 const processedAppleUrls = new Set();
 
 /**
- * Shared handler — accepts either a webRequest details object (which has
- * `requestId`) or a webNavigation details object (which doesn't). Apple
- * Podcasts is a React SPA: clicking an episode from a show page updates
- * the URL via `history.pushState` instead of triggering a main_frame
- * navigation, so a webRequest-only listener never sees the transition.
- * We listen on both events; the dedup set keeps a single URL from being
- * processed twice when both fire in rapid succession (initial deep-link
- * load fires main_frame, subsequent in-page clicks fire pushState).
+ * Core lookup-and-dispatch path. Takes an Apple episode id plus a source
+ * label and origin URL. Called from three triggers (see below) — they
+ * differ in how they obtain the episode id but agree on what to do with
+ * it. Dedups on the id so the same episode isn't looked up twice when
+ * multiple triggers fire within 5 seconds.
  */
-async function processApplePodcastUrl(details) {
-    const ids = parseApplePodcastsUrl(details.url);
-    if (!ids || !ids.episodeId) return;   // show pages have no audio to download
-
-    const urlKey = details.url.split('?')[0] + '?i=' + ids.episodeId;
+async function processApplePodcastEpisode(episodeId, details, originUrl, source) {
+    const urlKey = "apple-episode:" + episodeId;
     if (processedAppleUrls.has(urlKey)) return;
     processedAppleUrls.add(urlKey);
     setTimeout(() => processedAppleUrls.delete(urlKey), 5000);
@@ -501,13 +495,13 @@ async function processApplePodcastUrl(details) {
     }
 
     try {
-        const lookupUrl = `https://itunes.apple.com/lookup?id=${ids.episodeId}&entity=podcastEpisode`;
+        const lookupUrl = `https://itunes.apple.com/lookup?id=${episodeId}&entity=podcastEpisode`;
         markOwnRequest(lookupUrl);
         const response = await fetch(lookupUrl, { credentials: "omit" });
         const data = await response.json();
 
         if (!data?.results?.length) {
-            log("APPLE_PODCAST", `No results for episode ${ids.episodeId}`);
+            log("APPLE_PODCAST", `No results for episode ${episodeId}`);
             return;
         }
 
@@ -533,7 +527,7 @@ async function processApplePodcastUrl(details) {
         const message = {
             url: episode.episodeUrl,
             type: "media",
-            origin: details.url,
+            origin: originUrl,
             tabId,
             name: episode.trackName,
             description: episode.collectionName || stripHtml(episode.description) || undefined,
@@ -551,7 +545,7 @@ async function processApplePodcastUrl(details) {
             name: message.name,
             series: episode.collectionName,
             url: message.url?.slice(0, 100),
-            source: details.requestId !== undefined ? "webRequest" : "webNavigation",
+            source,
             tabId
         });
         sendNative(message);
@@ -560,12 +554,51 @@ async function processApplePodcastUrl(details) {
     }
 }
 
-async function listenerApplePodcasts(details) {
-    await processApplePodcastUrl(details);
+/**
+ * Trigger 1 & 2 — page URL has the episode id in ?i=... Used by
+ * webRequest main_frame (initial load / refresh / deep-link) and by
+ * webNavigation onHistoryStateUpdated (SPA pushState).
+ */
+async function processApplePodcastUrl(details, source) {
+    const ids = parseApplePodcastsUrl(details.url);
+    if (!ids || !ids.episodeId) return;   // show pages have no audio to download
+    await processApplePodcastEpisode(ids.episodeId, details, details.url, source);
+}
+
+/**
+ * Trigger 3 — amp-api XHR. Apple Podcasts web is a React SPA that DOES
+ * NOT update the URL when the user picks an episode from a show page —
+ * the player just fires an XHR to amp-api for episode metadata and
+ * starts streaming. The page URL stays on the show route, so triggers 1
+ * & 2 never fire. The amp-api URL itself carries the episode id, which
+ * is all we need.
+ *
+ * Pattern: amp-api(-edge)?.podcasts.apple.com/v1/catalog/{country}/podcast-episodes/{episodeId}
+ */
+function parseAppleAmpApiEpisodeId(url) {
+    const m = url.match(/amp-api(?:-edge)?\.podcasts\.apple\.com\/v1\/catalog\/[^/]+\/podcast-episodes\/(\d+)/);
+    return m ? m[1] : null;
+}
+
+async function listenerAppleAmpApi(details) {
+    const episodeId = parseAppleAmpApiEpisodeId(details.url);
+    if (!episodeId) return {};
+
+    // Origin should be the page the user is looking at, not the amp-api
+    // XHR URL — that way the download options sheet credits the podcast
+    // page as the source. documentUrl is the document that issued the
+    // XHR; originUrl is the initiator (set on cross-origin requests).
+    const originUrl = details.documentUrl || details.originUrl || details.url;
+    await processApplePodcastEpisode(episodeId, details, originUrl, "amp-api");
     return {};
 }
 
-// Initial page load / deep-link / refresh.
+async function listenerApplePodcasts(details) {
+    await processApplePodcastUrl(details, "webRequest");
+    return {};
+}
+
+// Trigger 1 — initial page load / deep-link / refresh into an episode URL.
 browser.webRequest.onBeforeRequest.addListener(
     listenerApplePodcasts,
     {
@@ -575,19 +608,32 @@ browser.webRequest.onBeforeRequest.addListener(
     []
 );
 
-// SPA in-page navigation — clicking an episode on a show page updates the
-// URL via pushState without a main_frame request. onHistoryStateUpdated
-// covers that path. The shared dedup set prevents double-processing when
-// the same URL is also caught by the webRequest listener (rare but possible
-// when the user arrives on an episode via a refresh).
+// Trigger 2 — SPA pushState. Some Apple Podcasts navigations DO update
+// the URL (e.g. tapping a show inside the home feed), so keep this path
+// even though the show-page → episode-click case doesn't trigger it.
 browser.webNavigation.onHistoryStateUpdated.addListener(
     (details) => {
         if (details.frameId !== 0) return;   // ignore iframe nav
-        processApplePodcastUrl(details);
+        processApplePodcastUrl(details, "webNavigation");
     },
     {
         url: [{ hostEquals: "podcasts.apple.com", pathContains: "/podcast/" }]
     }
+);
+
+// Trigger 3 — amp-api XHR fired when the player resolves an episode for
+// playback. The only path that fires when the user clicks an episode on
+// a show page without leaving the URL.
+browser.webRequest.onBeforeRequest.addListener(
+    listenerAppleAmpApi,
+    {
+        urls: [
+            "*://amp-api.podcasts.apple.com/v1/catalog/*/podcast-episodes/*",
+            "*://amp-api-edge.podcasts.apple.com/v1/catalog/*/podcast-episodes/*"
+        ],
+        types: ["xmlhttprequest"]
+    },
+    []
 );
 
 // ============================================================================
