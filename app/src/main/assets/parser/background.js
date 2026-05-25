@@ -865,14 +865,44 @@ function listenerTikTok(details) {
             processedTikTokIds.add(dedupKey);
             setTimeout(() => processedTikTokIds.delete(dedupKey), 30000);
 
-            // Prefer downloadAddr (watermark-free) when present, fall back
-            // to playAddr. bitrateInfo[0].PlayAddr.UrlList[0] is what the
-            // web player actually streams from when it picks the default
-            // gear, so it's a reliable last resort.
-            const url = v.downloadAddr
-                || v.playAddr
-                || v.bitrateInfo?.[0]?.PlayAddr?.UrlList?.[0];
-            if (!url) {
+            // Build variants from bitrateInfo (4–6 entries per item:
+            // h264 + h265 at multiple bitrates). Sending these via
+            // sendVariants → type:"variants" routes the entity through
+            // VariantProcessor on the native side, which has a catch-
+            // all fallback that still publishes the entity even when
+            // FFmpeg can't probe the URL.
+            //
+            // FFmpeg-probing TikTok's signed CDN URLs fails (no
+            // cookies / wrong UA → 403) so the single-URL type:"media"
+            // path returned false from processTask and the entity
+            // never reached the captured-media sheet — visible only
+            // as "handleExtractionMessage execute" with nothing after.
+            const variants = [];
+            if (Array.isArray(v.bitrateInfo)) {
+                for (const b of v.bitrateInfo) {
+                    const url = b?.PlayAddr?.UrlList?.[0];
+                    if (!url) continue;
+                    variants.push({
+                        url,
+                        width: b.PlayAddr.Width || v.width || 0,
+                        height: b.PlayAddr.Height || v.height || 0,
+                        videoCodec: (b.CodecType || "").startsWith("h265") ? "hevc" : "h264"
+                    });
+                }
+            }
+            // Fallbacks when bitrateInfo is missing (rare — empty
+            // playlists, removed videos, etc).
+            if (variants.length === 0) {
+                const url = v.downloadAddr || v.playAddr;
+                if (url) {
+                    variants.push({
+                        url,
+                        width: v.width || 0,
+                        height: v.height || 0
+                    });
+                }
+            }
+            if (variants.length === 0) {
                 log("TIKTOK", `item ${itemId} has no playable URL, skipping`);
                 continue;
             }
@@ -880,36 +910,28 @@ function listenerTikTok(details) {
             const author = item.author?.uniqueId
                 || item.author?.nickname;
             const caption = (item.desc || "").split("\n")[0].slice(0, 140);
-            // Single-video canonical URL — surfaces in the captured-media
-            // sheet's "origin" link so the user can reopen the source page.
+            // Single-video canonical URL — surfaces in the captured-
+            // media sheet's "origin" link so the user can reopen the
+            // source page.
             const canonical = author && itemId
                 ? `https://www.tiktok.com/@${author}/video/${itemId}`
                 : originUrl;
 
-            const message = {
-                url,
-                type: "media",
-                origin: canonical,
-                tabId: details.tabId,
-                request: details.requestId,
-                name: caption || (author ? `TikTok by @${author}` : "TikTok video"),
-                description: author ? "@" + author : undefined,
-                img: v.cover || v.originCover,
-                duration: typeof v.duration === "number" ? v.duration * 1000 : undefined
-            };
-            for (const k of Object.keys(message)) {
-                if (message[k] === undefined) delete message[k];
-            }
-
             log("TIKTOK", `Found item`, {
                 id: itemId,
-                name: message.name,
-                description: message.description,
-                duration: message.duration,
-                img: message.img?.slice(0, 80),
-                url: url.slice(0, 100)
+                variants: variants.length,
+                top_url: variants[0].url.slice(0, 100),
+                author
             });
-            sendNative(message);
+
+            sendVariants(details, {
+                variants,
+                origin: canonical,
+                description: author ? "@" + author : undefined,
+                img: v.cover || v.originCover,
+                name: caption || (author ? `TikTok by @${author}` : "TikTok video"),
+                duration: typeof v.duration === "number" ? v.duration * 1000 : 0
+            });
         }
     }).catch(e => {
         log("TIKTOK", `filter error`, e.message);
