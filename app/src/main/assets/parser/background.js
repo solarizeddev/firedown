@@ -115,7 +115,7 @@ async function sendNative(message) {
  * Unified variant sender for Twitter, Instagram, and future parsers.
  * Handles dedup, sorting, and message construction.
  */
-async function sendVariants(details, { variants, origin, description, img, name, duration }) {
+async function sendVariants(details, { variants, origin, description, img, name, duration, requestHeaders }) {
     if (!Array.isArray(variants) || variants.length === 0) return;
 
     // Sort by height descending — best quality first
@@ -155,6 +155,9 @@ async function sendVariants(details, { variants, origin, description, img, name,
     if (img) message.img = img;
     if (name) message.name = name;
     if (duration > 0) message.duration = duration;
+    if (Array.isArray(requestHeaders) && requestHeaders.length > 0) {
+        message.requestHeaders = requestHeaders;
+    }
 
     sendNative(message);
 }
@@ -803,39 +806,91 @@ browser.webNavigation.onHistoryStateUpdated.addListener(
 // TikTok
 // ============================================================================
 
-// Plain test mode: refetch every list endpoint and log every mp4 URL
-// the response carries. No cache, no dedup, no native handoff —
-// purely for copy-pasting URLs into a browser to verify they play.
+// Build the header set that lets v*-webapp-prime.tiktok.com /video/
+// URLs replay successfully from the native downloader. Mirrors what
+// Firefox itself sends on the page-driven media fetch (captured via
+// the webrequests path): Origin/Referer/Sec-Fetch-* and — crucially
+// — Cookie, which carries tt_chain_token (the URL's `tk=` param names
+// this cookie as the auth source, so without it TikTok 403s).
+async function buildTikTokHeaders() {
+    let cookieHeader = "";
+    try {
+        const cookies = await browser.cookies.getAll({ domain: "tiktok.com" });
+        cookieHeader = cookies.map(c => `${c.name}=${c.value}`).join("; ");
+    } catch (e) {
+        log("TIKTOK", `cookies.getAll failed`, e.message);
+    }
+    return [
+        { name: "User-Agent",     value: navigator.userAgent },
+        { name: "Accept",         value: "*/*" },
+        { name: "Accept-Language", value: "en-US,en;q=0.9" },
+        { name: "Origin",         value: "https://www.tiktok.com" },
+        { name: "Referer",        value: "https://www.tiktok.com/" },
+        { name: "Sec-Fetch-Dest", value: "empty" },
+        { name: "Sec-Fetch-Mode", value: "cors" },
+        { name: "Sec-Fetch-Site", value: "same-site" },
+        { name: "Connection",     value: "keep-alive" },
+        { name: "Cookie",         value: cookieHeader }
+    ];
+}
+
+// One native message per itemList[] entry, with synthesized headers
+// so the variant URL replays (HTTP 200) on the native side.
 function listenerTikTokJson(details) {
     if (!details.url.includes("list")) return;
 
-    fetch(details.url, { credentials: 'include' }).then(r => r.text()).then(text => {
+    fetch(details.url, { credentials: "include" }).then(r => r.text()).then(async text => {
         const json = tryParseJson(text);
         const items = json?.itemList;
         if (!Array.isArray(items) || items.length === 0) return;
 
         log("TIKTOK", `${items.length} item(s) from ${new URL(details.url).pathname}`);
 
+        const headers = await buildTikTokHeaders();
+        const pageOrigin = details.documentUrl || details.originUrl || details.url;
+
         for (const item of items) {
             const v = item?.video;
             if (!v) continue;
 
+            const author = item.author?.uniqueId || item.author?.nickname;
+            const caption = (item.desc || "").split("\n")[0].slice(0, 140);
+            const canonical = author && item.id
+                ? `https://www.tiktok.com/@${author}/video/${item.id}`
+                : pageOrigin;
+
+            const variants = [];
             if (Array.isArray(v.bitrateInfo)) {
                 for (const b of v.bitrateInfo) {
                     const list = b?.PlayAddr?.UrlList;
-                    if (!Array.isArray(list)) continue;
-                    for (const u of list) {
-                        log("TIKTOK", `mp4`, {
-                            id: item.id,
-                            w: b.PlayAddr?.Width,
-                            h: b.PlayAddr?.Height,
-                            url: u
-                        });
-                    }
+                    if (!Array.isArray(list) || list.length === 0) continue;
+                    variants.push({
+                        url: list[0],
+                        width: b.PlayAddr?.Width || v.width || 0,
+                        height: b.PlayAddr?.Height || v.height || 0,
+                        videoCodec: "h264"
+                    });
                 }
             }
-            if (v.downloadAddr) log("TIKTOK", `mp4 (downloadAddr)`, { id: item.id, url: v.downloadAddr });
-            if (v.playAddr)     log("TIKTOK", `mp4 (playAddr)`,     { id: item.id, url: v.playAddr });
+            if (variants.length === 0 && (v.playAddr || v.downloadAddr)) {
+                variants.push({
+                    url: v.playAddr || v.downloadAddr,
+                    width: v.width || 0,
+                    height: v.height || 0,
+                    videoCodec: "h264"
+                });
+            }
+            if (variants.length === 0) continue;
+
+            sendVariants(details, {
+                variants,
+                origin: canonical,
+                description: author ? "@" + author : undefined,
+                img: v.cover || v.originCover,
+                name: caption || (author ? `TikTok by @${author}` : "TikTok video"),
+                duration: typeof v.duration === "number" ? v.duration * 1000 : 0,
+                requestHeaders: headers
+            });
         }
     }).catch(e => {
         log("TIKTOK", `fetch error`, e.message);
