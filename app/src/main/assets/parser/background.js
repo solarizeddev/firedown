@@ -842,8 +842,6 @@ async function buildTikTokHeaders() {
 // by the ServiceWorker (/related/item_list/) error out of the filter;
 // the catch below swallows that case silently.
 function listenerTikTokJson(details) {
-    if (!details.url.includes("list")) return {};
-
     collectFilteredResponse(details).then(async text => {
         const json = tryParseJson(text);
         const items = json?.itemList;
@@ -910,9 +908,27 @@ function listenerTikTokJson(details) {
 browser.webRequest.onBeforeRequest.addListener(
     listenerTikTokJson,
     {
+        // Whitelist only endpoints we KNOW carry itemList[]. Every other
+        // /api/ call (login, eligibility, telemetry, /user/list/ which
+        // has userList[] instead, …) is left alone — touching them with
+        // filterResponseData triggers TikTok's "something went wrong"
+        // overlay even with perfect byte pass-through.
         urls: [
-            "*://www.tiktok.com/api/*",
-            "*://m.tiktok.com/api/*"
+            "*://www.tiktok.com/api/recommend/item_list/*",
+            "*://www.tiktok.com/api/related/item_list/*",
+            "*://www.tiktok.com/api/post/item_list/*",
+            "*://www.tiktok.com/api/repost/item_list/*",
+            "*://www.tiktok.com/api/preload/item_list/*",
+            "*://www.tiktok.com/api/story/item_list/*",
+            "*://www.tiktok.com/api/favorite/item_list/*",
+            "*://www.tiktok.com/api/collection/item_list/*",
+            "*://www.tiktok.com/api/playlist/item_list/*",
+            "*://m.tiktok.com/api/recommend/item_list/*",
+            "*://m.tiktok.com/api/related/item_list/*",
+            "*://m.tiktok.com/api/post/item_list/*",
+            "*://m.tiktok.com/api/repost/item_list/*",
+            "*://m.tiktok.com/api/preload/item_list/*",
+            "*://m.tiktok.com/api/story/item_list/*"
         ],
         types: ["xmlhttprequest"]
     },
