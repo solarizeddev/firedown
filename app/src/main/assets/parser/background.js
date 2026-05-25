@@ -636,47 +636,109 @@ function listenerApplePodcastShow(details) {
         });
 
         const originUrl = details.documentUrl || details.originUrl || details.url;
-
-        for (const episode of episodes) {
-            const ep = episode?.attributes;
-            if (!ep?.assetUrl) continue;
-
-            const episodeId = episode.id;
-            const dedupKey = "apple-episode:" + episodeId;
-            if (processedAppleUrls.has(dedupKey)) continue;
-            processedAppleUrls.add(dedupKey);
-            setTimeout(() => processedAppleUrls.delete(dedupKey), 30000);
-
-            const message = {
-                url: ep.assetUrl,
-                type: "media",
-                origin: ep.url || originUrl,        // canonical episode page URL when present
-                tabId: details.tabId,
-                request: details.requestId,
-                name: ep.name,
-                description: showName || ep.artistName,
-                img: buildAppleArtworkUrl(ep.artwork?.url),
-                duration: typeof ep.durationInMilliseconds === "number"
-                    ? ep.durationInMilliseconds
-                    : undefined
-            };
-            for (const k of Object.keys(message)) {
-                if (message[k] === undefined) delete message[k];
-            }
-
-            log("APPLE_PODCAST", `Found episode`, {
-                name: message.name,
-                series: showName,
-                url: message.url?.slice(0, 100),
-                source: "amp-api/show"
-            });
-            sendNative(message);
-        }
+        dispatchAppleEpisodes(episodes, showName, originUrl, details, "amp-api/show");
     }).catch(e => {
         log("APPLE_PODCAST", `show filter error`, e.message);
     });
 
     return {};
+}
+
+/**
+ * Second trigger — batch episode lookup. When the user presses Play on
+ * a show page, the web player fires
+ *
+ *   GET amp-api.podcasts.apple.com/v1/catalog/{country}/podcast-episodes
+ *       ?ids={id1},{id2},...&include=channel,podcast&fields=...,assetUrl,...
+ *
+ * to fetch the playback queue (clicked episode plus a handful pre-loaded
+ * for continuous play). Same JSON:API shape as the show response, just
+ * with multiple entries in data[] and the parent podcast inlined via
+ * relationships.podcast.data[0].attributes. We filter the response and
+ * surface each entry.
+ *
+ * Note the path is `/podcast-episodes` (no trailing /{id}) — Apple
+ * batches by ids in the query string rather than path. My earlier
+ * /podcast-episodes/{id} match pattern was a phantom and never fired.
+ */
+function listenerApplePodcastEpisodesBatch(details) {
+    collectFilteredResponse(details).then(text => {
+        const json = tryParseJson(text);
+        if (!Array.isArray(json?.data)) {
+            log("APPLE_PODCAST", `episodes-batch response has no data array`, {
+                url: details.url.slice(0, 120)
+            });
+            return;
+        }
+
+        log("APPLE_PODCAST", `episodes-batch returned ${json.data.length} episode(s)`);
+
+        const originUrl = details.documentUrl || details.originUrl || details.url;
+        // Show name is on the first episode's relationships.podcast.data[0]
+        // (it's the same parent podcast for every entry in a single batch).
+        const podcastRel = json.data[0]?.relationships?.podcast?.data?.[0];
+        const showName = podcastRel?.attributes?.name;
+
+        dispatchAppleEpisodes(json.data, showName, originUrl, details, "amp-api/episodes-batch");
+    }).catch(e => {
+        log("APPLE_PODCAST", `episodes-batch filter error`, e.message);
+    });
+
+    return {};
+}
+
+/**
+ * Shared episode dispatcher. Takes a JSON:API episodes array, the parent
+ * show name (used as the description field), the URL the user is browsing
+ * (used as origin), and the original webRequest details (for tabId +
+ * requestId). Builds one media message per episode and sends each through
+ * sendNative. Dedups on episodeId across both triggers so the user doesn't
+ * see the same episode twice when both the show response and the batch
+ * fire for it.
+ */
+function dispatchAppleEpisodes(episodes, showName, originUrl, details, source) {
+    for (const episode of episodes) {
+        const ep = episode?.attributes;
+        if (!ep?.assetUrl) continue;
+
+        const episodeId = episode.id;
+        const dedupKey = "apple-episode:" + episodeId;
+        if (processedAppleUrls.has(dedupKey)) continue;
+        processedAppleUrls.add(dedupKey);
+        setTimeout(() => processedAppleUrls.delete(dedupKey), 30000);
+
+        // Each batch entry may also have its own relationships.podcast.data
+        // (the batch listener relies on this). Prefer the per-entry name
+        // when the caller didn't pass one in.
+        const episodeShowName = showName
+            || episode.relationships?.podcast?.data?.[0]?.attributes?.name
+            || ep.artistName;
+
+        const message = {
+            url: ep.assetUrl,
+            type: "media",
+            origin: ep.url || originUrl,
+            tabId: details.tabId,
+            request: details.requestId,
+            name: ep.name,
+            description: episodeShowName,
+            img: buildAppleArtworkUrl(ep.artwork?.url),
+            duration: typeof ep.durationInMilliseconds === "number"
+                ? ep.durationInMilliseconds
+                : undefined
+        };
+        for (const k of Object.keys(message)) {
+            if (message[k] === undefined) delete message[k];
+        }
+
+        log("APPLE_PODCAST", `Found episode`, {
+            name: message.name,
+            series: episodeShowName,
+            url: message.url?.slice(0, 100),
+            source
+        });
+        sendNative(message);
+    }
 }
 
 /**
@@ -697,6 +759,18 @@ browser.webRequest.onBeforeRequest.addListener(
         urls: [
             "*://amp-api.podcasts.apple.com/v1/catalog/*/podcasts/*",
             "*://amp-api-edge.podcasts.apple.com/v1/catalog/*/podcasts/*"
+        ],
+        types: ["xmlhttprequest"]
+    },
+    ["blocking"]
+);
+
+browser.webRequest.onBeforeRequest.addListener(
+    listenerApplePodcastEpisodesBatch,
+    {
+        urls: [
+            "*://amp-api.podcasts.apple.com/v1/catalog/*/podcast-episodes*",
+            "*://amp-api-edge.podcasts.apple.com/v1/catalog/*/podcast-episodes*"
         ],
         types: ["xmlhttprequest"]
     },
