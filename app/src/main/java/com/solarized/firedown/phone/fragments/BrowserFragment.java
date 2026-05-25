@@ -265,6 +265,14 @@ public class BrowserFragment extends BaseBrowserFragment
         } else {
             mGeckoStateViewModel.closeGeckoState(state);
         }
+        // The repo's closeGeckoState only drops the entity from the list —
+        // it doesn't release the underlying GeckoSession (the TabsFragment
+        // swipe-close path defers that via the undo-snackbar dismissal).
+        // The back-press flows that land here have no undo, so we close
+        // the session immediately to free its content process — without
+        // this, every back-pressed popup tab or external-intent tab leaks
+        // a Gecko content process until app death.
+        state.closeGeckoSession();
     }
 
     /**
@@ -481,10 +489,23 @@ public class BrowserFragment extends BaseBrowserFragment
                 }
                 case IntentActions.OPEN_URI -> {
                     GeckoState geckoState = setActiveSession(geckoStateEntity, true);
+                    GeckoSession existing = geckoState.getGeckoSession();
+                    boolean wasAlreadyOpen = existing != null && existing.isOpen();
                     Log.d(TAG, "BrowserURIViewModel → openSession+openUri for id=" + geckoState.getEntityId()
-                            + " uri=" + geckoState.getEntityUri());
+                            + " uri=" + geckoState.getEntityUri()
+                            + " wasAlreadyOpen=" + wasAlreadyOpen);
                     openSession(geckoState);
-                    openUri(geckoState);
+                    // When the session wasn't open yet, setGeckoViewSession's
+                    // !isOpen branch already drove the load (either via
+                    // restoreState's auto-navigation or openUri). Calling
+                    // openUri again here queues a second loadUri that races
+                    // the first and stalls — same shape as the TabsFragment
+                    // stuck-progress bug. Only fire openUri when the session
+                    // was already attached and setGeckoViewSession had no
+                    // load to dispatch.
+                    if (wasAlreadyOpen) {
+                        openUri(geckoState);
+                    }
                 }
                 default ->
                         Log.w(TAG, "BrowserURIViewModel unhandled action: " + action);
@@ -1807,20 +1828,15 @@ public class BrowserFragment extends BaseBrowserFragment
 
             // setActiveSession routes to the correct repo based on entity.isIncognito().
             GeckoState newGeckoState = setActiveSession(geckoState.getGeckoStateEntity(), true);
-            // Ensure the new GeckoSession is open before handing off to
-            // openSession (which expects the session attachment machinery
-            // to work against an open session).
-            GeckoSession geckoSession = newGeckoState.getOrCreateGeckoSession();
-            if (!geckoSession.isOpen()) {
-                geckoSession.open(geckoRuntime);
-            }
 
             // Reuse the same attachment path as every other tab-switch —
-            // this calls setGeckoViewSession (correct-repo setGeckoState),
-            // applyBrowserIncognitoTheme, and toolbar/tracking sync, all of
-            // which were previously bypassed by recreateSession.
+            // setGeckoViewSession's !isOpen branch opens the new session
+            // and drives the load (restoreState if there's saved history,
+            // openUri otherwise). Previously this method also called
+            // session.open() then openUri() explicitly, which queued a
+            // second loadUri that raced restoreState's auto-navigation
+            // and stalled the page reload after a UA toggle.
             openSession(newGeckoState);
-            openUri(newGeckoState);
         } finally {
             mRecreatingSession = false;
         }

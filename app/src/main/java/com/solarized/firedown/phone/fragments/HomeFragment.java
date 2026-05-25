@@ -926,6 +926,12 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
                 + " wasHome=" + geckoStateEntity.isHome());
         geckoStateEntity.setHome(false);
         geckoStateEntity.setUri(url);
+        // If this entity was previously a visited tab (now navigated back to
+        // home in-process), it may still carry the serialized SessionState of
+        // its last URL. Without clearing, BrowserFragment.setGeckoViewSession
+        // would take the hasRestoredState branch and let restoreState
+        // navigate to the OLD URL instead of the URL the user just typed.
+        geckoStateEntity.setSessionState("");
         mBrowserURIViewModel.onEventSelected(geckoStateEntity, IntentActions.OPEN_URI);
         Log.d(TAG, "openUri: event fired, navigating to browser");
         NavigationUtils.navigateSafe(mNavController, R.id.browser);
