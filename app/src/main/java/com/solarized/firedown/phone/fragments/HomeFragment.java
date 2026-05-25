@@ -376,8 +376,17 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         // isPlaying drives the PLAYING / PAUSED label so the user can
         // tell at a glance whether tapping the card resumes or just
         // switches.
+        // Also refresh the active-download strip on session changes:
+        // its visibility now depends on whether the current media
+        // session is incognito (see applyActiveStripVisibility). The
+        // downloads LiveData doesn't fire on session changes, so
+        // without this the incognito gate would only take effect on
+        // the next download mutation.
         mGeckoMediaController.getCurrentSessionIdLiveData().observe(getViewLifecycleOwner(),
-                sessionId -> bindMediaStrip());
+                sessionId -> {
+                    bindMediaStrip();
+                    applyActiveStripVisibility();
+                });
         mGeckoMediaController.getIsPlayingLiveData().observe(getViewLifecycleOwner(),
                 playing -> bindMediaStrip());
 
@@ -543,16 +552,38 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     }
 
     /**
+     * The media controller is a Singleton shared across both regular
+     * and incognito repositories — its mCurrentSessionId can name a
+     * session that lives in the incognito list. The regular home must
+     * never surface incognito activity, so resolve the owning
+     * repository here. Lookup in incognito first; absent = it's
+     * regular (or already torn down, in which case "not incognito" is
+     * the safe answer because the strip would hide on the
+     * sessionId == 0 check anyway).
+     */
+    private boolean isCurrentMediaIncognito() {
+        int sessionId = mGeckoMediaController.getCurrentSessionId();
+        if (sessionId == 0) return false;
+        return mIncognitoStateViewModel.getGeckoState(sessionId) != null;
+    }
+
+    /**
      * Active-strip visibility tracks whether any non-vault download is
      * in PROGRESS / QUEUED. When at least one is live, bind the rows
      * and start the flame pulse; otherwise hide the card and stop the
      * animator so it doesn't burn cycles off-screen.
+     *
+     * If the current media session is incognito, hide the whole strip
+     * — exposing any active activity on the regular home while an
+     * incognito tab is in use would leak that the user is browsing
+     * privately.
      */
     private void applyActiveStripVisibility() {
         if (mActiveStrip == null) return;
         boolean hasActive = mLastActiveList != null && !mLastActiveList.isEmpty();
-        mActiveStrip.setVisibility(hasActive ? View.VISIBLE : View.GONE);
-        if (hasActive) {
+        boolean visible = hasActive && !isCurrentMediaIncognito();
+        mActiveStrip.setVisibility(visible ? View.VISIBLE : View.GONE);
+        if (visible) {
             bindActiveStrip(mLastActiveList);
             startActiveStripPulse();
         } else {
@@ -769,13 +800,26 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
      */
     private void bindMediaStrip() {
         if (mHomeMediaStrip == null) return;
+        // Snapshot once: getGeckoMetaData() re-reads mCurrentSessionId
+        // internally, so independent reads here can disagree if the
+        // controller mutates between them (tab close, deactivate,
+        // session switch) — the strip would then flicker GONE on a
+        // metadata-lookup miss even though we just received a valid
+        // id from the observer.
         int sessionId = mGeckoMediaController.getCurrentSessionId();
         if (sessionId == 0) {
             mHomeMediaStrip.setVisibility(View.GONE);
             return;
         }
+        // Incognito sessions live in IncognitoStateRepository; the
+        // regular home must never surface them. Hide the strip and
+        // bail so no incognito metadata leaks into the regular UI.
+        if (mIncognitoStateViewModel.getGeckoState(sessionId) != null) {
+            mHomeMediaStrip.setVisibility(View.GONE);
+            return;
+        }
         com.solarized.firedown.geckoview.media.GeckoMetaData meta =
-                mGeckoMediaController.getGeckoMetaData();
+                mGeckoMediaController.getGeckoMetaData(sessionId);
         if (meta == null) {
             mHomeMediaStrip.setVisibility(View.GONE);
             return;

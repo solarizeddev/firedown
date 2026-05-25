@@ -375,6 +375,15 @@ public class GeckoMediaController {
     // ── Accessors ─────────────────────────────────────────────────────────────────────────────────
 
     public GeckoMetaData getGeckoMetaData() { return mMetaMap.get(mCurrentSessionId); }
+
+    /**
+     * Same as {@link #getGeckoMetaData()} but for a caller-supplied
+     * session id, so the caller can snapshot the id once and then
+     * read metadata for that exact session — protecting against TOCTOU
+     * where mCurrentSessionId changes between the two reads (tab
+     * close, deactivate, switch).
+     */
+    public GeckoMetaData getGeckoMetaData(int sessionId) { return mMetaMap.get(sessionId); }
     public MediaSession.PositionState getPositionState() { return mPositionState; }
     public int getCurrentSessionId() { return mCurrentSessionId; }
     public boolean isCurrentSession(int id) { return mCurrentSessionId == id; }
