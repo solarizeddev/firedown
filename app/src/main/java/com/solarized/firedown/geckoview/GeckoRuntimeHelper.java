@@ -322,13 +322,11 @@ public class GeckoRuntimeHelper {
             // (template literals, JSON.stringify) is short-circuited
             // — that's the dominant cost, not the JSAPI hop.
             if ("get-debug-flag".equals(jsonObject.optString("kind", null))) {
-                try {
-                    JSONObject reply = new JSONObject();
-                    reply.put("debug", BuildConfig.DEBUG);
-                    return GeckoResult.fromValue(reply);
-                } catch (JSONException e) {
-                    return null;
-                }
+                // Return a plain Boolean — Gecko's EventDispatcher
+                // bundle layer rejects JSONObject return values from
+                // MessageDelegate.onMessage with "Invalid event data
+                // for callback". Primitives serialize cleanly.
+                return GeckoResult.fromValue(BuildConfig.DEBUG);
             }
             Log.d(TAG, "onMessage: " + jsonObject);
             try {

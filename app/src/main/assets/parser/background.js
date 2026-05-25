@@ -6,7 +6,7 @@ const QUEUE_MAX_LENGTH = 256;
 // price of avoiding a synchronous bridge.
 let DEBUG = false;
 browser.runtime.sendNativeMessage("parser", { kind: "get-debug-flag" })
-    .then(r => { DEBUG = !!(r && r.debug); })
+    .then(r => { DEBUG = r === true; })
     .catch(() => {});
 const COOKIE_CACHE_KEY = "instagram_cookie_cache";
 const COOKIE_CACHE_TTL = 5 * 60 * 1000;

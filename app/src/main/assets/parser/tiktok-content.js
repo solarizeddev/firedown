@@ -29,7 +29,7 @@
     const log = (...args) => { if (DEBUG) console.log(...args); };
     browser.runtime.sendNativeMessage("parser", { kind: "get-debug-flag" })
         .then(r => {
-            DEBUG = !!(r && r.debug);
+            DEBUG = r === true;
             // Page-world inject can't read browser.* — forward the
             // flag via window.postMessage so its own DEBUG flips on
             // the same channel we already use for body emission.

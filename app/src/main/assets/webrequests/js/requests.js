@@ -14,7 +14,7 @@ const CONTENT_SCRIPT_DEDUPE_MAX = 5000;
 // argument evaluation in dlog() across all 100+ call sites.
 let DEBUG = false;
 browser.runtime.sendNativeMessage("browser", { kind: "get-debug-flag" })
-    .then(r => { DEBUG = !!(r && r.debug); })
+    .then(r => { DEBUG = r === true; })
     .catch(() => {});
 
 const pendingRequests = new Map();
