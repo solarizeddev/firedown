@@ -65,6 +65,7 @@ import com.solarized.firedown.geckoview.media.GeckoMetaData;
 import com.solarized.firedown.geckoview.toolbar.BottomNavigationBar;
 import com.solarized.firedown.manager.DownloadRequest;
 import com.solarized.firedown.phone.DownloadsActivity;
+import com.solarized.firedown.phone.dialogs.BlockRedirectDialogFragment;
 import com.solarized.firedown.phone.SettingsActivity;
 import com.solarized.firedown.phone.VaultActivity;
 import com.solarized.firedown.ui.IncognitoColors;
@@ -784,6 +785,25 @@ public class BrowserFragment extends BaseBrowserFragment
         mAutoCompleteView.updateTheme(mActivity, false);
         mSearchAutocompleteAdapter.setIncognito(false);
 
+        // BlockRedirectDialogFragment reports "Open Play Store" via
+        // FragmentResult — load the URI through the currently visible
+        // session so the user-initiated retry actually navigates. Goes
+        // through peekCurrentGeckoState so the regular vs. incognito
+        // routing matches the rest of BrowserFragment. The retry
+        // bypasses the NavigationDelegate filter because loadUri sets
+        // isDirectNavigation=true, and the filter's gate is
+        // !isDirectNavigation.
+        getParentFragmentManager().setFragmentResultListener(
+                BlockRedirectDialogFragment.RESULT_KEY,
+                getViewLifecycleOwner(),
+                (requestKey, result) -> {
+                    String uri = result.getString(BlockRedirectDialogFragment.RESULT_OPEN_URI);
+                    if (TextUtils.isEmpty(uri)) return;
+                    GeckoState state = peekCurrentGeckoState();
+                    if (state == null) return;
+                    state.getOrCreateGeckoSession().loadUri(uri);
+                });
+
         Log.d(TAG, "onViewCreated finished");
     }
 
@@ -1372,6 +1392,42 @@ public class BrowserFragment extends BaseBrowserFragment
         } catch (ActivityNotFoundException e) {
             Log.e(TAG, "No Activity found: " + browsableIntent, e);
         }
+    }
+
+    /**
+     * Site is trying to push the user to a Play Store listing. The
+     * NavigationDelegate has already denied the navigation by the
+     * time we get here — our job is to either:
+     *   • show a one-shot Snackbar (when the auto-block preference
+     *     is ON), so the silent block doesn't look like a broken
+     *     link, or
+     *   • pop BlockRedirectDialogFragment which surfaces three
+     *     choices (Cancel / Open Play Store / Always block).
+     */
+    @Override
+    public void onPlayStoreRedirect(GeckoState geckoState, String uri, String packageId) {
+        Log.d(TAG, "onPlayStoreRedirect: uri=" + uri + " pkg=" + packageId);
+        boolean autoBlock = mSharedPreferences.getBoolean(
+                Preferences.SETTINGS_BLOCK_PLAYSTORE_REDIRECTS,
+                Preferences.DEFAULT_BLOCK_PLAYSTORE_REDIRECTS);
+        if (autoBlock) {
+            View anchor = getSnackAnchorView();
+            if (anchor != null) {
+                Snackbar snackbar = makeSnackbar(
+                        anchor,
+                        getString(R.string.block_redirect_snackbar),
+                        mIsIncognitoThemed);
+                snackbar.setAnchorView(R.id.anchor_view);
+                snackbar.show();
+            }
+            return;
+        }
+        Bundle bundle = new Bundle();
+        bundle.putString(Keys.ITEM_ID, uri);
+        bundle.putString(Keys.PACKAGE_ID, packageId);
+        bundle.putBoolean(Keys.IS_INCOGNITO, mIsIncognitoThemed);
+        NavigationUtils.navigateSafe(mNavController,
+                R.id.dialog_block_redirect, R.id.browser, bundle);
     }
 
     @Override

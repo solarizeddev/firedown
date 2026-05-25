@@ -33,6 +33,20 @@ public interface GeckoObserver {
 
     void onLoadRequest(GeckoState geckoState, String uri);
 
+    /**
+     * Fired when {@link NavigationDelegate#onLoadRequest} catches a
+     * navigation towards a Play Store listing (play.google.com or
+     * market://). The delegate has already denied the navigation by
+     * the time this fires — the observer's job is purely to surface
+     * the block to the user (Snackbar) or, in ask-mode, pop the
+     * BlockRedirectDialogFragment.
+     *
+     * @param uri        the URL the site tried to redirect to
+     * @param packageId  parsed id query param (Play Store package name)
+     *                   or null when the URL had no id
+     */
+    void onPlayStoreRedirect(GeckoState geckoState, String uri, String packageId);
+
     void onScrollChange(int scrollY);
 
     void onContext(GeckoState geckoState, GeckoSession.ContentDelegate.ContextElement element);

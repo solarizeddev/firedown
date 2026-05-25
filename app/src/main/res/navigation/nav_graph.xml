@@ -166,6 +166,9 @@
         android:id="@+id/dialog_browser_open_in_app"
         android:name="com.solarized.firedown.phone.dialogs.BrowserAppDialogFragment" />
     <dialog
+        android:id="@+id/dialog_block_redirect"
+        android:name="com.solarized.firedown.phone.dialogs.BlockRedirectDialogFragment" />
+    <dialog
         android:id="@+id/dialog_browser_options"
         android:name="com.solarized.firedown.phone.dialogs.BrowserOptionHolderSheetDialogFragment" />
     <dialog

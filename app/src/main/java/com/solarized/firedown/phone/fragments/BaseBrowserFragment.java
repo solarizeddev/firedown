@@ -192,6 +192,11 @@ public class BaseBrowserFragment extends BaseFocusFragment implements AutoComple
     }
 
     @Override
+    public void onPlayStoreRedirect(GeckoState geckoState, String uri, String packageId) {
+
+    }
+
+    @Override
     public void onScrollChange(int scrollY) {
 
     }

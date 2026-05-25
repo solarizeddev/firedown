@@ -119,6 +119,15 @@
 
 
         <SwitchPreferenceCompat
+            android:defaultValue="false"
+            app:singleLineTitle="false"
+            android:key="com.solarized.firedown.preferences.browser.block.playstore.redirects"
+            android:summary="@string/settings_block_playstore_redirects_summary"
+            android:title="@string/settings_block_playstore_redirects_title"
+            app:icon="@drawable/ad_off_24" />
+
+
+        <SwitchPreferenceCompat
             android:defaultValue="true"
             app:singleLineTitle="false"
             android:key="com.solarized.firedown.preferences.browser.block.location"

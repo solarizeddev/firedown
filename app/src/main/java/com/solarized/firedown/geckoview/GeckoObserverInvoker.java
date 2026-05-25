@@ -31,6 +31,8 @@ public interface GeckoObserverInvoker {
 
     GeckoObserverInvoker LOAD_REQUEST = (geckoObserver, objects)-> geckoObserver.onLoadRequest((GeckoState) objects[0], (String) objects[1]);
 
+    GeckoObserverInvoker PLAYSTORE_REDIRECT = (geckoObserver, objects) -> geckoObserver.onPlayStoreRedirect((GeckoState) objects[0], (String) objects[1], (String) objects[2]);
+
     GeckoObserverInvoker DOWNLOAD = (geckoObserver, objects) -> geckoObserver.onDownload((WebResponse) objects[0]);
 
     GeckoObserverInvoker THUMBNAIL = (geckoObserver, objects) -> geckoObserver.onThumbnail((GeckoState) objects[0]);

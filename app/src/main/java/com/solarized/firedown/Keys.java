@@ -15,6 +15,7 @@ public class Keys {
     public static final String ITEM_BOOKMARK = "com.solarized.firedown.ITEM_BOOKMARK";
     public static final String ITEM_URL = "com.solarized.firedown.ITEM_URL";
     public static final String ITEM_ID = "com.solarized.firedown.ITEM_ID";
+    public static final String PACKAGE_ID = "com.solarized.firedown.PACKAGE_ID";
     public static final String ITEM_IS_HOME = "com.solarized.firedown.ITEM_IS_HOME";
     public static final String ITEM_POSITION = "com.solarized.firedown.ITEM_POSITION";
     public static final String ITEM_CONTAINS = "com.solarized.firedown.ITEM_CONTAINS";

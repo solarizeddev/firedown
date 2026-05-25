@@ -59,6 +59,19 @@ public class Preferences {
 
     public static final boolean DEFAULT_BLOCK_LOCATION = true;
 
+    /**
+     * Auto-block sites' "open in Play Store" redirects without prompting.
+     * When false (default) the user is asked per-redirect via
+     * BlockRedirectDialogFragment with an "Always block" action that
+     * flips this preference on. When true, NavigationDelegate denies
+     * any play.google.com / market:// redirect silently (with a
+     * Snackbar so the block isn't invisible).
+     */
+    public static final String SETTINGS_BLOCK_PLAYSTORE_REDIRECTS =
+            "com.solarized.firedown.preferences.browser.block.playstore.redirects";
+
+    public static final boolean DEFAULT_BLOCK_PLAYSTORE_REDIRECTS = false;
+
     public static final String SETTINGS_THEME = "com.solarized.firedown.preferences.theme";
 
     public static final String SETTINGS_THEME_DEFAULT = "com.solarized.firedown.preferences.theme.default";

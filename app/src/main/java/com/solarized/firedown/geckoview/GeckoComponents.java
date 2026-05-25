@@ -1398,7 +1398,25 @@ public class GeckoComponents {
 
             if(TextUtils.isEmpty(request.uri)){
                 return GeckoResult.deny();
-            }else if(URLUtil.isValidUrl(request.uri)){
+            }
+
+            // Intercept "install our app" nag redirects to Play Store
+            // BEFORE the http(s) allow branch. Gated on
+            // !isDirectNavigation so the user can still type / bookmark
+            // a Play Store URL directly. Both http(s) play.google.com
+            // and market:// flow through here — market:// would
+            // otherwise fall to the external-app dialog below, which
+            // has the wrong framing ("open another app?") for the
+            // anti-nag use case.
+            if (UrlStringUtils.isPlayStoreUrl(request.uri) && !request.isDirectNavigation) {
+                String packageId = UrlStringUtils.extractPlayStorePackage(request.uri);
+                mGeckoObserverRegistry.notifyObservers(
+                        GeckoObserverInvoker.PLAYSTORE_REDIRECT,
+                        geckoState, request.uri, packageId);
+                return GeckoResult.deny();
+            }
+
+            if(URLUtil.isValidUrl(request.uri)){
                 return GeckoResult.allow();
             }else if(UrlStringUtils.isURLDataLike(request.uri) || UrlStringUtils.isURLResouceLike(request.uri)
                     || UrlStringUtils.isViewSource(request.uri) || UrlStringUtils.isMozExtensionLike(request.uri)

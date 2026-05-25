@@ -225,6 +225,45 @@ public class UrlStringUtils {
     }
 
     /**
+     * True when the URL is a Play Store listing — either the http(s)
+     * play.google.com page or the market:// intent scheme. Used by
+     * NavigationDelegate to short-circuit "install our app" nag
+     * redirects that prevent media-parser flows from completing.
+     */
+    public static boolean isPlayStoreUrl(String url) {
+        if (TextUtils.isEmpty(url)) return false;
+        String lower = url.toLowerCase(java.util.Locale.ROOT);
+        if (lower.startsWith("market://")) return true;
+        // Match scheme + host + path prefix without committing to a
+        // regex (cheaper, and the surface area is tiny).
+        return (lower.startsWith("http://play.google.com/store/apps/details")
+                || lower.startsWith("https://play.google.com/store/apps/details"));
+    }
+
+    /**
+     * Extract the {@code id=} query param from a Play Store URL so the
+     * confirmation dialog can show the user which app the site wants
+     * to push. Returns null when the URL has no id parameter (rare —
+     * Play Store deep links almost always carry one).
+     */
+    public static String extractPlayStorePackage(String url) {
+        if (TextUtils.isEmpty(url)) return null;
+        int q = url.indexOf('?');
+        if (q < 0 || q == url.length() - 1) return null;
+        String query = url.substring(q + 1);
+        for (String pair : query.split("&")) {
+            int eq = pair.indexOf('=');
+            if (eq <= 0) continue;
+            if ("id".equals(pair.substring(0, eq))) {
+                String value = pair.substring(eq + 1);
+                int hash = value.indexOf('#');
+                return hash >= 0 ? value.substring(0, hash) : value;
+            }
+        }
+        return null;
+    }
+
+    /**
      * Determine whether a string is a valid search query URL.
      */
     public static boolean isValidSearchQueryUrl(String url) {
