@@ -785,23 +785,34 @@ public class BrowserFragment extends BaseBrowserFragment
         mAutoCompleteView.updateTheme(mActivity, false);
         mSearchAutocompleteAdapter.setIncognito(false);
 
-        // BlockRedirectDialogFragment reports "Open Play Store" via
-        // FragmentResult — load the URI through the currently visible
-        // session so the user-initiated retry actually navigates. Goes
-        // through peekCurrentGeckoState so the regular vs. incognito
-        // routing matches the rest of BrowserFragment. The retry
-        // bypasses the NavigationDelegate filter because loadUri sets
-        // isDirectNavigation=true, and the filter's gate is
-        // !isDirectNavigation.
+        // BlockRedirectDialogFragment reports the user's choice via
+        // FragmentResult. Two actions:
+        //   • ACTION_OPEN — load the URI through the currently
+        //     visible session so the user-initiated retry actually
+        //     navigates. Goes through peekCurrentGeckoState so
+        //     regular vs. incognito routing matches the rest of
+        //     BrowserFragment. The retry bypasses the
+        //     NavigationDelegate filter because loadUri sets
+        //     isDirectNavigation=true.
+        //   • ACTION_BLOCK — surface a Snackbar so the block isn't
+        //     invisible, and include an "Always block" action that
+        //     flips the silent-block preference. Keeps the dialog
+        //     itself a clean two-button question while still giving
+        //     the user a one-tap escalation path.
         getParentFragmentManager().setFragmentResultListener(
                 BlockRedirectDialogFragment.RESULT_KEY,
                 getViewLifecycleOwner(),
                 (requestKey, result) -> {
-                    String uri = result.getString(BlockRedirectDialogFragment.RESULT_OPEN_URI);
-                    if (TextUtils.isEmpty(uri)) return;
-                    GeckoState state = peekCurrentGeckoState();
-                    if (state == null) return;
-                    state.getOrCreateGeckoSession().loadUri(uri);
+                    String action = result.getString(BlockRedirectDialogFragment.RESULT_ACTION);
+                    if (BlockRedirectDialogFragment.ACTION_OPEN.equals(action)) {
+                        String uri = result.getString(BlockRedirectDialogFragment.RESULT_OPEN_URI);
+                        if (TextUtils.isEmpty(uri)) return;
+                        GeckoState state = peekCurrentGeckoState();
+                        if (state == null) return;
+                        state.getOrCreateGeckoSession().loadUri(uri);
+                    } else if (BlockRedirectDialogFragment.ACTION_BLOCK.equals(action)) {
+                        showPlayStoreBlockedSnackbar(true);
+                    }
                 });
 
         Log.d(TAG, "onViewCreated finished");
@@ -1422,15 +1433,9 @@ public class BrowserFragment extends BaseBrowserFragment
                 Preferences.SETTINGS_BLOCK_PLAYSTORE_REDIRECTS,
                 Preferences.DEFAULT_BLOCK_PLAYSTORE_REDIRECTS);
         if (autoBlock) {
-            View anchor = getSnackAnchorView();
-            if (anchor != null) {
-                Snackbar snackbar = makeSnackbar(
-                        anchor,
-                        getString(R.string.block_redirect_snackbar),
-                        mIsIncognitoThemed);
-                snackbar.setAnchorView(R.id.anchor_view);
-                snackbar.show();
-            }
+            // Pref is already on — no point offering "Always block"
+            // as a snackbar action.
+            showPlayStoreBlockedSnackbar(false);
             return;
         }
         Bundle bundle = new Bundle();
@@ -1439,6 +1444,32 @@ public class BrowserFragment extends BaseBrowserFragment
         bundle.putBoolean(Keys.IS_INCOGNITO, mIsIncognitoThemed);
         NavigationUtils.navigateSafe(mNavController,
                 R.id.dialog_block_redirect, R.id.browser, bundle);
+    }
+
+    /**
+     * Snackbar shown after a Play Store redirect is blocked, so the
+     * silent denial isn't invisible to the user. When the pref is
+     * still off (i.e. the user just hit Cancel in the dialog),
+     * includes an "Always block" action that flips the pref to the
+     * silent-block mode. When the pref is already on, the action is
+     * suppressed since it would be a no-op.
+     */
+    private void showPlayStoreBlockedSnackbar(boolean offerAlwaysBlock) {
+        View anchor = getSnackAnchorView();
+        if (anchor == null) return;
+        Snackbar snackbar = makeSnackbar(
+                anchor,
+                getString(R.string.block_redirect_snackbar),
+                mIsIncognitoThemed);
+        snackbar.setAnchorView(R.id.anchor_view);
+        if (offerAlwaysBlock) {
+            snackbar.setAction(R.string.block_redirect_snackbar_action, v -> {
+                mSharedPreferences.edit()
+                        .putBoolean(Preferences.SETTINGS_BLOCK_PLAYSTORE_REDIRECTS, true)
+                        .apply();
+            });
+        }
+        snackbar.show();
     }
 
     @Override

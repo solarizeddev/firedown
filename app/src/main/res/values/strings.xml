@@ -350,8 +350,8 @@
     <string name="block_redirect_subtitle">This site is trying to redirect you to Google Play.</string>
     <string name="block_redirect_subtitle_package">This site is trying to send you to Google Play to install %1$s.</string>
     <string name="block_redirect_open">Open</string>
-    <string name="block_redirect_checkbox">Always block Play Store redirects</string>
     <string name="block_redirect_snackbar">Play Store redirect blocked</string>
+    <string name="block_redirect_snackbar_action">Always block</string>
     <string name="settings_clear_browsing">Clear Browsing Data</string>
     <string name="settings_clear_browsing_dialog">Are you sure that you want to clear all the cookies and data for the site &lt;b&gt;%s&lt;/b&gt;? </string>
     <string name="settings_clear_browsing_error">Failed to clear data for %s</string>
