@@ -803,132 +803,28 @@ browser.webNavigation.onHistoryStateUpdated.addListener(
 // TikTok
 // ============================================================================
 
-/**
- * TikTok's web app is split-source from a capture point of view:
- *
- *  • The page fires /api/recommend/item_list/ (and a handful of sibling
- *    list endpoints) whose JSON response carries every video's caption,
- *    author, thumbnail, duration AND every CDN URL the player might pick
- *    from bitrateInfo[]. But these URLs are bound to the JSON-fetch
- *    context — sending one straight to the native downloader returns
- *    403 even with cookies forwarded.
- *  • The page then fetches one of those URLs via the <video> element.
- *    THAT request is the one that returns HTTP 200 and is replayable
- *    from the native downloader.
- *
- * Bridge entirely in this extension:
- *
- *   listenerTikTokJson  - taps /api/<x>list<x>/ endpoints, parses every
- *                          item, stashes {caption, author, cover,
- *                          duration, canonical} in tiktokMetaCache keyed
- *                          on EVERY variant URL the player might pick.
- *                          No native message sent.
- *   listenerTikTokPlay  - fires on the actual webapp-prime.tiktok.com
- *                          /video/ fetch. Looks the URL up in the cache,
- *                          and if found, sendVariants the (now blessed)
- *                          URL with full metadata. Fires on
- *                          onBeforeRequest so it lands ahead of the
- *                          generic webrequests capture path and wins
- *                          the addValue dedup race on the native side.
- *
- * If the cache has no hit (rare — happens when the user lands on a
- * direct /@user/video/{id} URL without a JSON load) we simply don't
- * fire; the generic webrequests path still picks the URL up, just
- * without metadata.
- */
-
-// URL (query stripped) -> { name, description, img, origin, duration, cachedAt }
-const tiktokMetaCache = new Map();
-const TIKTOK_CACHE_TTL_MS = 30 * 60 * 1000;
-
-const sentTikTokUrls = new Set();
-const SENT_TIKTOK_URL_TTL_MS = 60 * 1000;
-
-function tiktokStripQuery(url) {
-    const q = url.indexOf("?");
-    return q < 0 ? url : url.substring(0, q);
-}
-
-function tiktokCachePut(url, meta) {
-    if (!url) return;
-    tiktokMetaCache.set(tiktokStripQuery(url), { ...meta, cachedAt: Date.now() });
-    // Cheap LRU-ish: cap the cache so a long browsing session can't
-    // grow it unbounded.
-    if (tiktokMetaCache.size > 600) {
-        const oldest = tiktokMetaCache.keys().next().value;
-        if (oldest) tiktokMetaCache.delete(oldest);
-    }
-}
-
-function tiktokCacheGet(url) {
-    if (!url) return null;
-    const e = tiktokMetaCache.get(tiktokStripQuery(url));
-    if (!e) return null;
-    if (Date.now() - e.cachedAt > TIKTOK_CACHE_TTL_MS) {
-        tiktokMetaCache.delete(tiktokStripQuery(url));
-        return null;
-    }
-    return e;
-}
-
+// Plain test mode: refetch every list endpoint and log every mp4 URL
+// the response carries. No cache, no dedup, no native handoff —
+// purely for copy-pasting URLs into a browser to verify they play.
 function listenerTikTokJson(details) {
-    // Diagnostic: prove the listener fires at all, before any
-    // filterResponseData / response-body work that could mask the
-    // call with a silent error.
-    log("TIKTOK", `fire`, { url: details.url.slice(0, 140), method: details.method });
+    if (!details.url.includes("list")) return;
 
-    // Defensive narrowing now that the URL filter is broad — the
-    // handler skips non-list endpoints with no body work.
-    if (!details.url.includes("list")) return {};
-
-    // No method gate: TikTok issues these as GET on anonymous
-    // sessions and POST on logged-in ones, both with the same JSON
-    // response shape. filterResponseData reads the response body
-    // either way.
-
-    collectFilteredResponse(details).then(text => {
+    fetch(details.url, { credentials: 'include' }).then(r => r.text()).then(text => {
         const json = tryParseJson(text);
         const items = json?.itemList;
         if (!Array.isArray(items) || items.length === 0) return;
 
-        const pageOrigin = details.documentUrl || details.originUrl || details.url;
         log("TIKTOK", `${items.length} item(s) from ${new URL(details.url).pathname}`);
 
         for (const item of items) {
             const v = item?.video;
             if (!v) continue;
 
-            const author = item.author?.uniqueId || item.author?.nickname;
-            const caption = (item.desc || "").split("\n")[0].slice(0, 140);
-            const canonical = author && item.id
-                ? `https://www.tiktok.com/@${author}/video/${item.id}`
-                : pageOrigin;
-
-            const meta = {
-                name: caption || (author ? `TikTok by @${author}` : "TikTok video"),
-                description: author ? "@" + author : undefined,
-                img: v.cover || v.originCover,
-                origin: canonical,
-                duration: typeof v.duration === "number" ? v.duration * 1000 : 0,
-                // Width/height pinned per variant via tiktokCacheGet,
-                // but the typical case is one default variant and the
-                // top-level numbers cover it.
-                width: v.width || 0,
-                height: v.height || 0
-            };
-
-            let cached = 0;
             if (Array.isArray(v.bitrateInfo)) {
                 for (const b of v.bitrateInfo) {
                     const list = b?.PlayAddr?.UrlList;
                     if (!Array.isArray(list)) continue;
                     for (const u of list) {
-                        tiktokCachePut(u, {
-                            ...meta,
-                            width: b.PlayAddr?.Width || meta.width,
-                            height: b.PlayAddr?.Height || meta.height
-                        });
-                        cached++;
                         log("TIKTOK", `mp4`, {
                             id: item.id,
                             w: b.PlayAddr?.Width,
@@ -938,91 +834,22 @@ function listenerTikTokJson(details) {
                     }
                 }
             }
-            tiktokCachePut(v.downloadAddr, meta);
-            tiktokCachePut(v.playAddr, meta);
             if (v.downloadAddr) log("TIKTOK", `mp4 (downloadAddr)`, { id: item.id, url: v.downloadAddr });
             if (v.playAddr)     log("TIKTOK", `mp4 (playAddr)`,     { id: item.id, url: v.playAddr });
-
-            log("TIKTOK", `cache item`, {
-                id: item.id,
-                author,
-                urls: cached,
-                name: meta.name
-            });
         }
     }).catch(e => {
-        log("TIKTOK", `filter error`, e.message);
-    });
-
-    return {};
-}
-
-/**
- * Fires when the page kicks off the actual video fetch. We look the
- * URL up in the cache the JSON listener populated, and if we have
- * metadata for it, send the variants message with the URL the page
- * is using (which is the one that will replay successfully).
- */
-function listenerTikTokPlay(details) {
-    const meta = tiktokCacheGet(details.url);
-    if (!meta) return;
-
-    const dedupKey = tiktokStripQuery(details.url);
-    if (sentTikTokUrls.has(dedupKey)) return;
-    sentTikTokUrls.add(dedupKey);
-    setTimeout(() => sentTikTokUrls.delete(dedupKey), SENT_TIKTOK_URL_TTL_MS);
-
-    log("TIKTOK", `play hit`, {
-        url: details.url.slice(0, 100),
-        name: meta.name
-    });
-
-    sendVariants(details, {
-        variants: [{
-            url: details.url,
-            width: meta.width,
-            height: meta.height,
-            videoCodec: "h264"
-        }],
-        origin: meta.origin,
-        description: meta.description,
-        img: meta.img,
-        name: meta.name,
-        duration: meta.duration
+        log("TIKTOK", `fetch error`, e.message);
     });
 }
 
 browser.webRequest.onBeforeRequest.addListener(
     listenerTikTokJson,
     {
-        // Broad match — every TikTok feed/profile/playlist endpoint
-        // ends in some flavor of `_list`. The handler defensively
-        // ignores responses with no itemList[], so /api/comment/list/
-        // and friends fall through silently. Narrower per-endpoint
-        // patterns were missing matches in practice (likely a Firefox
-        // match-pattern quirk with paths that end in `/` followed by
-        // a query string).
         urls: [
             "*://www.tiktok.com/api/*",
             "*://m.tiktok.com/api/*"
         ],
         types: ["xmlhttprequest"]
-    },
-    ["blocking"]
-);
-
-browser.webRequest.onBeforeRequest.addListener(
-    listenerTikTokPlay,
-    {
-        // Primary video host for the mp4 fetches the <video> element
-        // actually issues. Narrow on path + subdomain prefix so the
-        // listener isn't woken for every avatar / thumbnail on the
-        // same CDN families. Cache lookup is the real gate either
-        // way, so over-matching would be safe but wasteful.
-        urls: [
-            "*://*-webapp-prime.tiktok.com/video/*"
-        ],
-        types: ["media", "xmlhttprequest"]
     }
 );
 
