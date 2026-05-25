@@ -815,12 +815,12 @@ browser.webNavigation.onHistoryStateUpdated.addListener(
  *
  * Bridge entirely in this extension:
  *
- *   listenerTikTokJson  — taps /api/*list*/, parses every item, stashes
- *                          {caption, author, cover, duration, canonical}
- *                          in tiktokMetaCache keyed on EVERY variant URL
- *                          the player might pick. No native message
- *                          sent.
- *   listenerTikTokPlay  — fires on the actual *-webapp-prime.tiktok.com
+ *   listenerTikTokJson  - taps /api/<x>list<x>/ endpoints, parses every
+ *                          item, stashes {caption, author, cover,
+ *                          duration, canonical} in tiktokMetaCache keyed
+ *                          on EVERY variant URL the player might pick.
+ *                          No native message sent.
+ *   listenerTikTokPlay  - fires on the actual webapp-prime.tiktok.com
  *                          /video/ fetch. Looks the URL up in the cache,
  *                          and if found, sendVariants the (now blessed)
  *                          URL with full metadata. Fires on
