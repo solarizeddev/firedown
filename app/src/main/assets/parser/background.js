@@ -857,16 +857,22 @@ async function buildTikTokHeaders() {
 //   3. ServiceWorker-served endpoints (/related/item_list/) can't be
 //      tapped via filterResponseData at all.
 async function handleTikTokItemList(msg, sender) {
+    // Empty body slips through if a future inject revision stops
+    // filtering them out; treat it as the no-op preflight it is
+    // without logging "parse failed" (misleading: there's nothing to
+    // parse, not a malformed JSON).
+    if (!msg.body) return;
+
     log("TIKTOK", `onMessage`, {
         url: (msg.url || "").slice(0, 120),
-        bodyLen: msg.body ? msg.body.length : 0,
+        bodyLen: msg.body.length,
         tabId: sender.tab?.id ?? -1,
         tabUrl: (sender.tab?.url || "").slice(0, 80)
     });
 
     const json = tryParseJson(msg.body);
     if (!json) {
-        log("TIKTOK", `JSON parse failed`, { head: (msg.body || "").slice(0, 200) });
+        log("TIKTOK", `JSON parse failed`, { head: msg.body.slice(0, 200) });
         return;
     }
     const items = json?.itemList;

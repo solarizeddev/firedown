@@ -30,7 +30,13 @@
     log('[TT-INJECT] page hook installing, fetch=' + (typeof window.fetch) + ' XHR=' + (typeof XMLHttpRequest));
 
     function emit(url, body) {
-        log('[TT-INJECT] emit url=' + (url || '').slice(0, 120) + ' bodyLen=' + (body ? body.length : 0));
+        // TikTok routinely fires empty preflight/cache-warm responses
+        // on the same /api/*/item_list/ endpoints. They have no
+        // itemList[] to parse, so don't pay the postMessage +
+        // runtime.sendMessage + JSON.parse round-trip just to drop
+        // them on the background side.
+        if (!body) return;
+        log('[TT-INJECT] emit url=' + (url || '').slice(0, 120) + ' bodyLen=' + body.length);
         try {
             window.postMessage({ __firedown_tt__: 1, url, body }, '*');
         } catch (e) {
