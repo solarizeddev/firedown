@@ -806,30 +806,67 @@ browser.webNavigation.onHistoryStateUpdated.addListener(
  *  • The page fires /api/recommend/item_list/ (and a handful of sibling
  *    list endpoints) whose JSON response carries every video's caption,
  *    author, thumbnail, duration AND every CDN URL the player might pick
- *    from bitrateInfo[]. But the URLs are bound to the JSON-fetch
- *    context — sending them straight to the native downloader returns
+ *    from bitrateInfo[]. But these URLs are bound to the JSON-fetch
+ *    context — sending one straight to the native downloader returns
  *    403 even with cookies forwarded.
  *  • The page then fetches one of those URLs via the <video> element.
  *    THAT request is the one that returns HTTP 200 and is replayable
- *    from the native downloader. The generic webrequests content-script
- *    already captures it — but its message has no name/description,
- *    because TikTok's SPA exposes no per-video og:title.
+ *    from the native downloader.
  *
- * The fix is to bridge the two on the native side: this handler taps
- * the JSON, stashes {caption, author, cover, duration} keyed on EVERY
- * variant URL the page might pick, and ships it as a
- * {@code tiktok-meta-cache} envelope. The native side
- * (GeckoRuntimeHelper.handleTikTokMetaCache → TikTokMetadataCache)
- * stores it. When webrequests later forwards the actual video fetch,
- * JsonHelper.parse looks up the cache and stamps the cached metadata
- * onto the entity before it reaches GeckoInspectTask.
+ * Bridge entirely in this extension:
  *
- * We intentionally do NOT send media entities ourselves — that's
- * webrequests' job, and its URL is the one that actually downloads
- * without 403.
+ *   listenerTikTokJson  — taps /api/*list*/, parses every item, stashes
+ *                          {caption, author, cover, duration, canonical}
+ *                          in tiktokMetaCache keyed on EVERY variant URL
+ *                          the player might pick. No native message
+ *                          sent.
+ *   listenerTikTokPlay  — fires on the actual *-webapp-prime.tiktok.com
+ *                          /video/ fetch. Looks the URL up in the cache,
+ *                          and if found, sendVariants the (now blessed)
+ *                          URL with full metadata. Fires on
+ *                          onBeforeRequest so it lands ahead of the
+ *                          generic webrequests capture path and wins
+ *                          the addValue dedup race on the native side.
+ *
+ * If the cache has no hit (rare — happens when the user lands on a
+ * direct /@user/video/{id} URL without a JSON load) we simply don't
+ * fire; the generic webrequests path still picks the URL up, just
+ * without metadata.
  */
 
-const processedTikTokIds = new Set();
+// URL (query stripped) -> { name, description, img, origin, duration, cachedAt }
+const tiktokMetaCache = new Map();
+const TIKTOK_CACHE_TTL_MS = 30 * 60 * 1000;
+
+const sentTikTokUrls = new Set();
+const SENT_TIKTOK_URL_TTL_MS = 60 * 1000;
+
+function tiktokStripQuery(url) {
+    const q = url.indexOf("?");
+    return q < 0 ? url : url.substring(0, q);
+}
+
+function tiktokCachePut(url, meta) {
+    if (!url) return;
+    tiktokMetaCache.set(tiktokStripQuery(url), { ...meta, cachedAt: Date.now() });
+    // Cheap LRU-ish: cap the cache so a long browsing session can't
+    // grow it unbounded.
+    if (tiktokMetaCache.size > 600) {
+        const oldest = tiktokMetaCache.keys().next().value;
+        if (oldest) tiktokMetaCache.delete(oldest);
+    }
+}
+
+function tiktokCacheGet(url) {
+    if (!url) return null;
+    const e = tiktokMetaCache.get(tiktokStripQuery(url));
+    if (!e) return null;
+    if (Date.now() - e.cachedAt > TIKTOK_CACHE_TTL_MS) {
+        tiktokMetaCache.delete(tiktokStripQuery(url));
+        return null;
+    }
+    return e;
+}
 
 function listenerTikTokJson(details) {
     if (details.method !== "GET") return {};
@@ -846,53 +883,48 @@ function listenerTikTokJson(details) {
             const v = item?.video;
             if (!v) continue;
 
-            const itemId = item.id;
-            if (processedTikTokIds.has(itemId)) continue;
-            processedTikTokIds.add(itemId);
-            setTimeout(() => processedTikTokIds.delete(itemId), 30 * 60 * 1000);
-
-            // Every URL the player might pick. Cache them all so any
-            // match in webrequests resolves to the same metadata.
-            const urls = [];
-            const seen = new Set();
-            function add(u) {
-                if (!u) return;
-                const key = u.split("?")[0];
-                if (seen.has(key)) return;
-                seen.add(key);
-                urls.push(u);
-            }
-            if (Array.isArray(v.bitrateInfo)) {
-                for (const b of v.bitrateInfo) {
-                    const list = b?.PlayAddr?.UrlList;
-                    if (Array.isArray(list)) for (const u of list) add(u);
-                }
-            }
-            add(v.downloadAddr);
-            add(v.playAddr);
-            if (urls.length === 0) continue;
-
             const author = item.author?.uniqueId || item.author?.nickname;
             const caption = (item.desc || "").split("\n")[0].slice(0, 140);
-            const canonical = author && itemId
-                ? `https://www.tiktok.com/@${author}/video/${itemId}`
+            const canonical = author && item.id
+                ? `https://www.tiktok.com/@${author}/video/${item.id}`
                 : pageOrigin;
 
-            log("TIKTOK", `cache item`, {
-                id: itemId,
-                author,
-                urls: urls.length,
-                name: caption || (author ? `@${author}` : "TikTok")
-            });
-
-            sendNative({
-                type: "tiktok-meta-cache",
-                urls,
+            const meta = {
                 name: caption || (author ? `TikTok by @${author}` : "TikTok video"),
                 description: author ? "@" + author : undefined,
                 img: v.cover || v.originCover,
                 origin: canonical,
-                duration: typeof v.duration === "number" ? v.duration * 1000 : 0
+                duration: typeof v.duration === "number" ? v.duration * 1000 : 0,
+                // Width/height pinned per variant via tiktokCacheGet,
+                // but the typical case is one default variant and the
+                // top-level numbers cover it.
+                width: v.width || 0,
+                height: v.height || 0
+            };
+
+            let cached = 0;
+            if (Array.isArray(v.bitrateInfo)) {
+                for (const b of v.bitrateInfo) {
+                    const list = b?.PlayAddr?.UrlList;
+                    if (!Array.isArray(list)) continue;
+                    for (const u of list) {
+                        tiktokCachePut(u, {
+                            ...meta,
+                            width: b.PlayAddr?.Width || meta.width,
+                            height: b.PlayAddr?.Height || meta.height
+                        });
+                        cached++;
+                    }
+                }
+            }
+            tiktokCachePut(v.downloadAddr, meta);
+            tiktokCachePut(v.playAddr, meta);
+
+            log("TIKTOK", `cache item`, {
+                id: item.id,
+                author,
+                urls: cached,
+                name: meta.name
             });
         }
     }).catch(e => {
@@ -900,6 +932,41 @@ function listenerTikTokJson(details) {
     });
 
     return {};
+}
+
+/**
+ * Fires when the page kicks off the actual video fetch. We look the
+ * URL up in the cache the JSON listener populated, and if we have
+ * metadata for it, send the variants message with the URL the page
+ * is using (which is the one that will replay successfully).
+ */
+function listenerTikTokPlay(details) {
+    const meta = tiktokCacheGet(details.url);
+    if (!meta) return;
+
+    const dedupKey = tiktokStripQuery(details.url);
+    if (sentTikTokUrls.has(dedupKey)) return;
+    sentTikTokUrls.add(dedupKey);
+    setTimeout(() => sentTikTokUrls.delete(dedupKey), SENT_TIKTOK_URL_TTL_MS);
+
+    log("TIKTOK", `play hit`, {
+        url: details.url.slice(0, 100),
+        name: meta.name
+    });
+
+    sendVariants(details, {
+        variants: [{
+            url: details.url,
+            width: meta.width,
+            height: meta.height,
+            videoCodec: "h264"
+        }],
+        origin: meta.origin,
+        description: meta.description,
+        img: meta.img,
+        name: meta.name,
+        duration: meta.duration
+    });
 }
 
 browser.webRequest.onBeforeRequest.addListener(
@@ -920,6 +987,21 @@ browser.webRequest.onBeforeRequest.addListener(
         types: ["xmlhttprequest"]
     },
     ["blocking"]
+);
+
+browser.webRequest.onBeforeRequest.addListener(
+    listenerTikTokPlay,
+    {
+        // Primary video host for the mp4 fetches the <video> element
+        // actually issues. Narrow on path + subdomain prefix so the
+        // listener isn't woken for every avatar / thumbnail on the
+        // same CDN families. Cache lookup is the real gate either
+        // way, so over-matching would be safe but wasteful.
+        urls: [
+            "*://*-webapp-prime.tiktok.com/video/*"
+        ],
+        types: ["media", "xmlhttprequest"]
+    }
 );
 
 // ============================================================================

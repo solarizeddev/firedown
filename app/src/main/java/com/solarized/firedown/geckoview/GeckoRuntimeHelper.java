@@ -20,7 +20,6 @@ import com.solarized.firedown.data.repository.GeckoStateDataRepository;
 import com.solarized.firedown.data.repository.IncognitoStateRepository;
 import com.solarized.firedown.data.repository.IconsRepository;
 import com.solarized.firedown.data.repository.WasmAllowlistRepository;
-import com.solarized.firedown.manager.TikTokMetadataCache;
 import com.solarized.firedown.manager.UrlParser;
 import com.solarized.firedown.manager.UrlType;
 import com.solarized.firedown.utils.JsonHelper;
@@ -519,17 +518,6 @@ public class GeckoRuntimeHelper {
 //                });
 //            }
 
-            // Out-of-band channel: the parser ships TikTok metadata before
-            // any download entity exists. We cache by URL and bail — the
-            // entity will be created later when webrequests captures the
-            // actual video fetch, at which point JsonHelper.parse stamps
-            // the cached fields onto it. See TikTokMetadataCache for the
-            // full split-source rationale.
-            if ("tiktok-meta-cache".equals(json.optString("type"))) {
-                handleTikTokMetaCache(json);
-                return;
-            }
-
             Log.d(TAG, "handleExtractionMessage: " + json);
 
             // 1. Parse the JSON to our Entity
@@ -560,38 +548,6 @@ public class GeckoRuntimeHelper {
 
                 Log.d(TAG, "handleExtractionMessage execute: " + json);
             }
-        }
-
-        /**
-         * Stash a single {@code tiktok-meta-cache} envelope from the
-         * parser into the process-wide {@link TikTokMetadataCache}. The
-         * envelope contains the metadata for ONE TikTok video (caption,
-         * author handle, thumbnail, duration, canonical page URL) plus
-         * every variant URL the page might pick to play it. We register
-         * every variant under the same metadata so that whichever URL
-         * the web player ends up fetching, the webrequests capture can
-         * look it up by stripped URL.
-         */
-        private void handleTikTokMetaCache(JSONObject json) {
-            JSONArray urls = json.optJSONArray("urls");
-            if (urls == null || urls.length() == 0) return;
-
-            TikTokMetadataCache.Entry entry = new TikTokMetadataCache.Entry(
-                    json.optString("name", null),
-                    json.optString("description", null),
-                    json.optString("img", null),
-                    json.optString("origin", null),
-                    json.optLong("duration", 0L));
-
-            int cached = 0;
-            for (int i = 0; i < urls.length(); i++) {
-                String url = urls.optString(i, null);
-                if (url == null || url.isEmpty()) continue;
-                TikTokMetadataCache.put(url, entry);
-                cached++;
-            }
-            Log.d(TAG, "tiktok-meta-cache: stashed " + cached + " variant URL(s)"
-                    + " for " + entry.name);
         }
 
         @Override
