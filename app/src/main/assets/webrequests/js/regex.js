@@ -24,16 +24,13 @@ const DEFAULT_PATTERNS = [
   // TikTok
   'tiktok\\.com\\/aweme\\/v1\\/report',
   'tiktokw.*\\/web\\/report',
-  // TikTok video CDN — the parser webextension already captures these
-  // via the /api/*list*/ JSON responses with full author + caption
-  // metadata. If the generic content-script also forwards them, the
-  // raw-URL message wins the addValue race (page fetches the playAddr
-  // for autoplay before filterResponseData finishes parsing the JSON
-  // that contained it) and the entry shows a URL-derived name instead
-  // of the caption.
-  'v\\d+-webapp-prime\\.tiktok\\.com\\/video\\/',
-  'webapp-[a-z]+\\.tiktok\\.com\\/[a-f0-9]+\\/',
-  'tiktokcdn(-[a-z]+)?\\.com\\/',
+  // TikTok video MP4 fetches — the parser webextension already
+  // surfaces these from the /api/*list*/ JSON responses with full
+  // metadata; skip the generic forward so it doesn't show up twice.
+  // Matched by mime_type=video_mp4 in the query string, which TikTok
+  // sets only on actual video files (avatars, thumbnails, music
+  // tracks all have other discriminators).
+  'v\\d+-webapp-prime\\.tiktok\\.com\\/video\\/.*mime_type=video_mp4',
 
   // Twitch
   '(ttvnw\\.net|hls\\.live-video).*\\.(m3u8|ts)',
