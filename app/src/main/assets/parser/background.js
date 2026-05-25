@@ -869,7 +869,10 @@ function tiktokCacheGet(url) {
 }
 
 function listenerTikTokJson(details) {
-    if (details.method !== "GET") return {};
+    // No method gate: TikTok issues these as GET on anonymous
+    // sessions and POST on logged-in ones, both with the same JSON
+    // response shape. filterResponseData reads the response body
+    // either way.
 
     collectFilteredResponse(details).then(text => {
         const json = tryParseJson(text);
