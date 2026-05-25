@@ -903,7 +903,10 @@ function listenerTikTok(details) {
 
             log("TIKTOK", `Found item`, {
                 id: itemId,
-                author,
+                name: message.name,
+                description: message.description,
+                duration: message.duration,
+                img: message.img?.slice(0, 80),
                 url: url.slice(0, 100)
             });
             sendNative(message);
