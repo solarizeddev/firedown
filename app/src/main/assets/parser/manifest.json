@@ -22,6 +22,7 @@
     "storage",
     "webRequest",
     "webRequestBlocking",
+    "webNavigation",
     "*://*.instagram.com/*",
     "*://*.x.com/*",
     "*://*.twitter.com/*",

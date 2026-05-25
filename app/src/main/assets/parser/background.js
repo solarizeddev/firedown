@@ -477,16 +477,28 @@ function stripHtml(s) {
 
 const processedAppleUrls = new Set();
 
-async function listenerApplePodcasts(details) {
+/**
+ * Shared handler — accepts either a webRequest details object (which has
+ * `requestId`) or a webNavigation details object (which doesn't). Apple
+ * Podcasts is a React SPA: clicking an episode from a show page updates
+ * the URL via `history.pushState` instead of triggering a main_frame
+ * navigation, so a webRequest-only listener never sees the transition.
+ * We listen on both events; the dedup set keeps a single URL from being
+ * processed twice when both fire in rapid succession (initial deep-link
+ * load fires main_frame, subsequent in-page clicks fire pushState).
+ */
+async function processApplePodcastUrl(details) {
     const ids = parseApplePodcastsUrl(details.url);
-    if (!ids || !ids.episodeId) return {};   // show pages have no audio to download
+    if (!ids || !ids.episodeId) return;   // show pages have no audio to download
 
     const urlKey = details.url.split('?')[0] + '?i=' + ids.episodeId;
-    if (processedAppleUrls.has(urlKey)) return {};
+    if (processedAppleUrls.has(urlKey)) return;
     processedAppleUrls.add(urlKey);
     setTimeout(() => processedAppleUrls.delete(urlKey), 5000);
 
-    await ensureTabId(details);
+    if (details.requestId !== undefined) {
+        await ensureTabId(details);
+    }
 
     try {
         const lookupUrl = `https://itunes.apple.com/lookup?id=${ids.episodeId}&entity=podcastEpisode`;
@@ -496,7 +508,7 @@ async function listenerApplePodcasts(details) {
 
         if (!data?.results?.length) {
             log("APPLE_PODCAST", `No results for episode ${ids.episodeId}`);
-            return {};
+            return;
         }
 
         // First result may be the podcast (kind=podcast) followed by the
@@ -508,22 +520,27 @@ async function listenerApplePodcasts(details) {
 
         if (!episode?.episodeUrl) {
             log("APPLE_PODCAST", `No episodeUrl in lookup result`, { trackId: episode?.trackId });
-            return {};
+            return;
         }
 
-        const tabId = await resolveTabId(details);
+        // webNavigation already gives us tabId directly; webRequest needs
+        // resolveTabId for cases where the listener fires before the tab
+        // url cache has caught up.
+        const tabId = details.requestId !== undefined
+            ? await resolveTabId(details)
+            : details.tabId;
 
         const message = {
             url: episode.episodeUrl,
             type: "media",
             origin: details.url,
             tabId,
-            request: details.requestId,
             name: episode.trackName,
             description: episode.collectionName || stripHtml(episode.description) || undefined,
             img: episode.artworkUrl600 || episode.artworkUrl160 || episode.artworkUrl100,
             duration: typeof episode.trackTimeMillis === "number" ? episode.trackTimeMillis : undefined
         };
+        if (details.requestId !== undefined) message.request = details.requestId;
 
         // Drop undefined fields so the native side sees clean payloads.
         for (const k of Object.keys(message)) {
@@ -534,16 +551,21 @@ async function listenerApplePodcasts(details) {
             name: message.name,
             series: episode.collectionName,
             url: message.url?.slice(0, 100),
+            source: details.requestId !== undefined ? "webRequest" : "webNavigation",
             tabId
         });
         sendNative(message);
     } catch (e) {
         log("APPLE_PODCAST", `Error`, e.message);
     }
+}
 
+async function listenerApplePodcasts(details) {
+    await processApplePodcastUrl(details);
     return {};
 }
 
+// Initial page load / deep-link / refresh.
 browser.webRequest.onBeforeRequest.addListener(
     listenerApplePodcasts,
     {
@@ -551,6 +573,21 @@ browser.webRequest.onBeforeRequest.addListener(
         types: ["main_frame"]
     },
     []
+);
+
+// SPA in-page navigation — clicking an episode on a show page updates the
+// URL via pushState without a main_frame request. onHistoryStateUpdated
+// covers that path. The shared dedup set prevents double-processing when
+// the same URL is also caught by the webRequest listener (rare but possible
+// when the user arrives on an episode via a refresh).
+browser.webNavigation.onHistoryStateUpdated.addListener(
+    (details) => {
+        if (details.frameId !== 0) return;   // ignore iframe nav
+        processApplePodcastUrl(details);
+    },
+    {
+        url: [{ hostEquals: "podcasts.apple.com", pathContains: "/podcast/" }]
+    }
 );
 
 // ============================================================================
