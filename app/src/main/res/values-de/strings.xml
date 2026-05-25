@@ -319,6 +319,15 @@
     <string name="settings_block_javascript_title">JavaScript blockieren</string>
     <string name="settings_block_location_summary">Verhindert, dass Webseiten nach deinem Standort fragen</string>
     <string name="settings_block_location_title">Standortabfragen blockieren</string>
+    <string name="settings_block_playstore_redirects_summary">Blockiert stillschweigend Websites, die dich zur Installation ihrer App im Play Store drängen wollen</string>
+    <string name="settings_block_playstore_redirects_title">Play-Store-Weiterleitungen blockieren</string>
+    <string name="block_redirect_title">Google Play öffnen?</string>
+    <string name="block_redirect_subtitle">Diese Seite versucht, dich zu Google Play weiterzuleiten.</string>
+    <string name="block_redirect_subtitle_package">Diese Seite will dich zu Google Play schicken, um %1$s zu installieren.</string>
+    <string name="block_redirect_btn_always">Immer blockieren</string>
+    <string name="block_redirect_btn_once">Diesmal blockieren</string>
+    <string name="block_redirect_btn_open">Play Store öffnen</string>
+    <string name="block_redirect_snackbar">Weiterleitung zum Play Store blockiert</string>
     <string name="settings_clear_browsing">Browserdaten löschen</string>
     <string name="settings_clear_browsing_dialog">Sind Sie sicher, dass Sie alle Cookies und Daten für die Website &lt;b&gt;%s&lt;/b&gt; löschen möchten? </string>
     <string name="settings_clear_browsing_error">Daten für %s konnten nicht gelöscht werden</string>

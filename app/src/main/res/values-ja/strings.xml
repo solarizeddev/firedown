@@ -317,6 +317,15 @@
     <string name="settings_block_javascript_title">JavaScript をブロック</string>
     <string name="settings_block_location_summary">Webサイトが位置情報を要求するのを防ぎます</string>
     <string name="settings_block_location_title">位置情報リクエストをブロック</string>
+    <string name="settings_block_playstore_redirects_summary">Google Play へのアプリインストールを促すサイトを通知なくブロックします</string>
+    <string name="settings_block_playstore_redirects_title">Play ストアへのリダイレクトをブロック</string>
+    <string name="block_redirect_title">Google Play を開きますか?</string>
+    <string name="block_redirect_subtitle">このサイトは Google Play へリダイレクトしようとしています。</string>
+    <string name="block_redirect_subtitle_package">このサイトは Google Play で %1$s をインストールさせようとしています。</string>
+    <string name="block_redirect_btn_always">常にブロック</string>
+    <string name="block_redirect_btn_once">今回だけブロック</string>
+    <string name="block_redirect_btn_open">Play ストアを開く</string>
+    <string name="block_redirect_snackbar">Play ストアへのリダイレクトをブロックしました</string>
     <string name="settings_clear_browsing">閲覧履歴データを消去</string>
     <string name="settings_clear_browsing_dialog">サイト &lt;b&gt;%s&lt;/b&gt; の Cookie とデータをすべて削除してもよろしいですか?</string>
     <string name="settings_clear_browsing_error">%sのデータを消去できませんでした</string>

@@ -317,6 +317,15 @@
     <string name="settings_block_javascript_title">拦阻 JavaScript</string>
     <string name="settings_block_location_summary">阻止网站请求你的位置</string>
     <string name="settings_block_location_title">拦截位置请求</string>
+    <string name="settings_block_playstore_redirects_summary">静默拦截试图将你推送到 Google Play 安装其应用的网站</string>
+    <string name="settings_block_playstore_redirects_title">拦截 Play 商店跳转</string>
+    <string name="block_redirect_title">打开 Google Play？</string>
+    <string name="block_redirect_subtitle">此网站正尝试将你跳转到 Google Play。</string>
+    <string name="block_redirect_subtitle_package">此网站想把你送到 Google Play 安装 %1$s。</string>
+    <string name="block_redirect_btn_always">始终拦截</string>
+    <string name="block_redirect_btn_once">仅本次拦截</string>
+    <string name="block_redirect_btn_open">打开 Play 商店</string>
+    <string name="block_redirect_snackbar">已拦截 Play 商店跳转</string>
     <string name="settings_clear_browsing">清除浏览数据</string>
     <string name="settings_clear_browsing_dialog">您确定要清除网站 &lt;b&gt;%s&lt;/b&gt; 的所有 Cookie 和数据吗？</string>
     <string name="settings_clear_browsing_error">未能清除 %s 的数据</string>

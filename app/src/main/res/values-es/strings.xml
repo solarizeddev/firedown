@@ -319,6 +319,15 @@
     <string name="settings_block_javascript_title">Bloquear JavaScript</string>
     <string name="settings_block_location_summary">Impide que los sitios web pidan tu ubicación</string>
     <string name="settings_block_location_title">Bloquear solicitudes de ubicación</string>
+    <string name="settings_block_playstore_redirects_summary">Bloquea silenciosamente los sitios que intentan empujarte a instalar su aplicación desde Google Play</string>
+    <string name="settings_block_playstore_redirects_title">Bloquear redirecciones a Play Store</string>
+    <string name="block_redirect_title">¿Abrir Google Play?</string>
+    <string name="block_redirect_subtitle">Este sitio intenta redirigirte a Google Play.</string>
+    <string name="block_redirect_subtitle_package">Este sitio quiere enviarte a Google Play para instalar %1$s.</string>
+    <string name="block_redirect_btn_always">Bloquear siempre</string>
+    <string name="block_redirect_btn_once">Bloquear esta vez</string>
+    <string name="block_redirect_btn_open">Abrir Play Store</string>
+    <string name="block_redirect_snackbar">Redirección a Play Store bloqueada</string>
     <string name="settings_clear_browsing">Eliminar datos de navegación</string>
     <string name="settings_clear_browsing_dialog">¿Estás seguro de que quieres borrar todas las cookies y los datos del sitio &lt;b&gt;%s&lt;/b&gt;? </string>
     <string name="settings_clear_browsing_error">No se pudieron borrar los datos de %s</string>
