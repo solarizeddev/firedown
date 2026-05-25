@@ -193,7 +193,10 @@ function collectFilteredResponse(details) {
         };
 
         filter.onerror = () => {
-            filter.close();
+            // Already in errored state — close() itself throws
+            // NS_ERROR_FAILURE on Gecko, which surfaces as a noisy
+            // console error even though the rejection is handled.
+            try { filter.close(); } catch (_) {}
             reject(new Error(`Filter error: ${filter.error}`));
         };
     });
