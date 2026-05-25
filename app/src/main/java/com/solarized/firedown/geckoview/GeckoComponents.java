@@ -62,6 +62,18 @@ public class GeckoComponents {
 
     private static final String TAG = GeckoComponents.class.getSimpleName();
 
+    /**
+     * A page that fires a Play Store navigation within this many
+     * milliseconds of finishing its own load is treated as a tracker
+     * /redirector page that the user has no reason to stay on — the
+     * blocker will goBack() past it so the user lands on the page
+     * that actually contained the link. 3 s is generous enough to
+     * catch slow JS redirects on cold-cache loads but short enough
+     * not to misfire on regular pages where the user clicked a
+     * Play Store link deliberately.
+     */
+    private static final long REDIRECTOR_WINDOW_MS = 3000L;
+
     public final ContentDelegate mContentDelegate;
     public final ProgressDelegate mProgressDelegate;
     public final NavigationDelegate mNavigationDelegate;
@@ -1408,11 +1420,26 @@ public class GeckoComponents {
             // otherwise fall to the external-app dialog below, which
             // has the wrong framing ("open another app?") for the
             // anti-nag use case.
+            //
+            // wasRedirector: most nag sites don't navigate to Play
+            // Store directly — they bounce through a tracker URL
+            // (e.g. ivoox.com/rf/{id}) that loads, runs JS, and only
+            // then redirects to play.google.com. If we just deny the
+            // play.google.com hop the user is stranded on the
+            // tracker. Detect this by checking whether the current
+            // page loaded "just now" (within REDIRECTOR_WINDOW_MS)
+            // AND there's a previous entry in history; if so, the
+            // observer will goBack() before showing the dialog so
+            // the user ends up on the page they actually wanted.
             if (UrlStringUtils.isPlayStoreUrl(request.uri) && !request.isDirectNavigation) {
                 String packageId = UrlStringUtils.extractPlayStorePackage(request.uri);
+                long ageMs = System.currentTimeMillis() - geckoState.getLastNavigationTime();
+                boolean wasRedirector = geckoState.getLastNavigationTime() > 0
+                        && ageMs < REDIRECTOR_WINDOW_MS
+                        && geckoState.canGoBackward();
                 mGeckoObserverRegistry.notifyObservers(
                         GeckoObserverInvoker.PLAYSTORE_REDIRECT,
-                        geckoState, request.uri, packageId);
+                        geckoState, request.uri, packageId, wasRedirector);
                 return GeckoResult.deny();
             }
 

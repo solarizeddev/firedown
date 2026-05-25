@@ -44,6 +44,16 @@ public class GeckoState {
 
     private ContextElementEntity mContextElementEntity;
 
+    /**
+     * Wall-clock time of the last NavigationDelegate.onLocationChange
+     * for this session. Used by the Play Store redirect blocker to
+     * tell apart a "redirector" page (one that fires a Play Store
+     * navigation within a few seconds of loading, without user input)
+     * from a legitimate page where the user clicked a Play Store
+     * link after spending time on it. 0 until the first onLocationChange.
+     */
+    private long mLastNavigationTime;
+
     private final GeckoStateEntity mGeckoStateEntity;
 
     /**
@@ -318,6 +328,13 @@ public class GeckoState {
     public void onLocationChange(@NonNull String uri) {
         if(URLUtil.isValidUrl(uri) && !URLUtil.isAboutUrl(uri))
             mGeckoStateEntity.setUri(uri);
+        mLastNavigationTime = System.currentTimeMillis();
+    }
+
+    /** Wall-clock time of the most recent onLocationChange. See
+     *  {@link #mLastNavigationTime} for the use case. */
+    public long getLastNavigationTime() {
+        return mLastNavigationTime;
     }
 
     public void setEntityState(GeckoSession.SessionState sessionState){

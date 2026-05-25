@@ -1403,10 +1403,21 @@ public class BrowserFragment extends BaseBrowserFragment
      *     link, or
      *   • pop BlockRedirectDialogFragment which surfaces three
      *     choices (Cancel / Open Play Store / Always block).
+     *
+     * When the delegate flagged the current page as a redirector
+     * (loaded just before firing the Play Store nav, and we have
+     * history to fall back on), call goBack first so the user is
+     * already on the source page by the time the dialog dismisses
+     * — otherwise they'd be stranded on the tracker URL like
+     * ivoox.com/rf/{id}.
      */
     @Override
-    public void onPlayStoreRedirect(GeckoState geckoState, String uri, String packageId) {
-        Log.d(TAG, "onPlayStoreRedirect: uri=" + uri + " pkg=" + packageId);
+    public void onPlayStoreRedirect(GeckoState geckoState, String uri, String packageId, boolean wasRedirector) {
+        Log.d(TAG, "onPlayStoreRedirect: uri=" + uri + " pkg=" + packageId
+                + " wasRedirector=" + wasRedirector);
+        if (wasRedirector) {
+            geckoState.goBack();
+        }
         boolean autoBlock = mSharedPreferences.getBoolean(
                 Preferences.SETTINGS_BLOCK_PLAYSTORE_REDIRECTS,
                 Preferences.DEFAULT_BLOCK_PLAYSTORE_REDIRECTS);
