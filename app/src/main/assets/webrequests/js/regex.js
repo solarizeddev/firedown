@@ -24,6 +24,16 @@ const DEFAULT_PATTERNS = [
   // TikTok
   'tiktok\\.com\\/aweme\\/v1\\/report',
   'tiktokw.*\\/web\\/report',
+  // TikTok video CDN — the parser webextension already captures these
+  // via the /api/*list*/ JSON responses with full author + caption
+  // metadata. If the generic content-script also forwards them, the
+  // raw-URL message wins the addValue race (page fetches the playAddr
+  // for autoplay before filterResponseData finishes parsing the JSON
+  // that contained it) and the entry shows a URL-derived name instead
+  // of the caption.
+  'v\\d+-webapp-prime\\.tiktok\\.com\\/video\\/',
+  'webapp-[a-z]+\\.tiktok\\.com\\/[a-f0-9]+\\/',
+  'tiktokcdn(-[a-z]+)?\\.com\\/',
 
   // Twitch
   '(ttvnw\\.net|hls\\.live-video).*\\.(m3u8|ts)',
