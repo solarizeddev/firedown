@@ -12,6 +12,10 @@
 (() => {
     'use strict';
 
+    // One-line unconditional marker so release builds (DEBUG=false)
+    // reveal whether the page-world inject ran at all.
+    console.info('[TT inject] page-world inject loaded');
+
     const PAT = /\/api\/[a-z_]+\/item_list\/?\?/i;
 
     // Page-world script — can't reach browser.*. The content-script
@@ -36,7 +40,10 @@
         // runtime.sendMessage + JSON.parse round-trip just to drop
         // them on the background side.
         if (!body) return;
-        log('[TT-INJECT] emit url=' + (url || '').slice(0, 120) + ' bodyLen=' + body.length);
+        // Unconditional so release builds confirm an item_list XHR
+        // actually fired and was forwarded.
+        console.info('[TT inject] emit url=' + (url || '').slice(0, 120)
+            + ' bodyLen=' + body.length);
         try {
             window.postMessage({ __firedown_tt__: 1, url, body }, '*');
         } catch (e) {

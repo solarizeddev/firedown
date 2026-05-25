@@ -5,9 +5,13 @@ const QUEUE_MAX_LENGTH = 256;
 // boot-time log() calls land before the response arrives — that's the
 // price of avoiding a synchronous bridge.
 let DEBUG = false;
+// Two-arg .then (no separate .catch) so the rejection handler is
+// already attached when the promise is created. The intermediate
+// promise created by a separate .catch can outlive the JS context on
+// extension hot-replace and trigger "Promise rejected after context
+// unloaded: Actor 'Conduits' destroyed" at the platform level.
 browser.runtime.sendNativeMessage("parser", { kind: "get-debug-flag" })
-    .then(r => { DEBUG = r === true; })
-    .catch(() => {});
+    .then(r => { DEBUG = r === true; }, () => {});
 const COOKIE_CACHE_KEY = "instagram_cookie_cache";
 const COOKIE_CACHE_TTL = 5 * 60 * 1000;
 
@@ -814,6 +818,35 @@ browser.webNavigation.onHistoryStateUpdated.addListener(
 // TikTok
 // ============================================================================
 
+// Strip ?refer=embed from TikTok profile/video URLs before the page
+// loads. With refer=embed present, TikTok's frontend renders the
+// embed-preview layout and skips /api/post/item_list/ entirely — only
+// /api/preload/item_list/ (FYP cold-start) fires, so the profile
+// owner's actual posts never become visible to the capture hook.
+// Removing the query param makes TikTok render the full profile and
+// triggers the normal post-grid fetch.
+browser.webRequest.onBeforeRequest.addListener(
+    (details) => {
+        if (details.type !== "main_frame") return {};
+        try {
+            const u = new URL(details.url);
+            if (!u.hostname.endsWith("tiktok.com")) return {};
+            if (!u.searchParams.has("refer")) return {};
+            const refer = u.searchParams.get("refer");
+            if (refer !== "embed" && refer !== "embeded") return {};
+            u.searchParams.delete("refer");
+            const clean = u.toString();
+            console.info('[TT bg] stripping refer=embed ' + details.url.slice(0, 100)
+                + ' -> ' + clean.slice(0, 100));
+            return { redirectUrl: clean };
+        } catch (_) {
+            return {};
+        }
+    },
+    { urls: ["*://www.tiktok.com/*", "*://m.tiktok.com/*"], types: ["main_frame"] },
+    ["blocking"]
+);
+
 // Build the header set that lets v*-webapp-prime.tiktok.com /video/
 // URLs replay successfully from the native downloader. Mirrors what
 // Firefox itself sends on the page-driven media fetch (captured via
@@ -872,18 +905,77 @@ async function handleTikTokItemList(msg, sender) {
 
     const json = tryParseJson(msg.body);
     if (!json) {
+        console.info('[TT bg] JSON parse failed head=' + msg.body.slice(0, 200));
         log("TIKTOK", `JSON parse failed`, { head: msg.body.slice(0, 200) });
         return;
     }
-    const items = json?.itemList;
+
+    // /api/preload/item_list/ and the various /api/*/item_list/
+    // endpoints don't share a single response shape. Try the common
+    // keys first, then fall back to a deep-walk for the first
+    // video-bearing array.
+    let items = null;
+    let itemsSource = null;
+    const candidates = [
+        ['itemList', json.itemList],
+        ['aweme_list', json.aweme_list],
+        ['data.itemList', json?.data?.itemList],
+        ['data.aweme_list', json?.data?.aweme_list],
+        ['itemListResponse.itemList', json?.itemListResponse?.itemList],
+        ['videos', json.videos],
+    ];
+    for (const [src, val] of candidates) {
+        if (Array.isArray(val) && val.length > 0) {
+            items = val;
+            itemsSource = src;
+            break;
+        }
+    }
+    if (!items) {
+        // Deep-walk: pick the first array whose first element looks
+        // like a TikTok video item.
+        const seen = new WeakSet();
+        const walk = (obj, depth, path) => {
+            if (items || !obj || typeof obj !== 'object' || depth > 6) return;
+            if (seen.has(obj)) return;
+            seen.add(obj);
+            if (Array.isArray(obj)) {
+                const first = obj[0];
+                if (first && typeof first === 'object' && first.video
+                        && (first.video.playAddr || first.video.downloadAddr
+                            || first.video.bitrateInfo)) {
+                    items = obj;
+                    itemsSource = 'deep:' + path;
+                    return;
+                }
+                for (let i = 0; i < obj.length && !items; i++) {
+                    walk(obj[i], depth + 1, path + '[' + i + ']');
+                }
+            } else {
+                for (const k of Object.keys(obj)) {
+                    if (items) break;
+                    walk(obj[k], depth + 1, path + '.' + k);
+                }
+            }
+        };
+        walk(json, 0, '$');
+    }
+
     if (!Array.isArray(items)) {
+        console.info('[TT bg] no video array; topKeys='
+            + JSON.stringify(Object.keys(json).slice(0, 12))
+            + ' bodyLen=' + msg.body.length);
         log("TIKTOK", `no itemList[] in body`, { topKeys: Object.keys(json).slice(0, 12) });
         return;
     }
     if (items.length === 0) {
+        console.info('[TT bg] empty items array (' + itemsSource + ')');
         log("TIKTOK", `empty itemList[]`);
         return;
     }
+    console.info('[TT bg] items found count=' + items.length
+        + ' source=' + itemsSource
+        + ' firstId=' + (items[0] && items[0].id));
 
     const pathname = (() => {
         try { return new URL(msg.url, sender.tab?.url || "https://www.tiktok.com/").pathname; }

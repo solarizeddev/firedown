@@ -19,112 +19,127 @@
 // inline scripts even when injected by an extension content script.
 // moz-extension:// resources are exempt from page CSP because they're
 // a different origin.
+//
+// Dependency on Gecko Fingerprinting Protection. TikTok's anti-abuse
+// stack uses a device/session fingerprint to drive two suppressions
+// we directly care about: (1) the Take-A-Break modal that gates the
+// profile view, and (2) per-session throttling that withholds
+// /api/post/item_list/ on subsequent loads. Empirically — verified
+// from side-by-side logs — when FPP is enabled the fingerprint never
+// stabilises, neither suppression engages, and /api/post/ fires
+// reliably on every cold load (the Take-A-Break overlay may still
+// render visually but TikTok no longer holds the XHR back behind it).
+// With FPP off, the same loads stochastically produce no XHR and
+// require manual refreshes. Several elaborate workarounds tried here
+// previously (auto-reload, multi-checkpoint scans, scroll-trigger
+// nudges) were all chasing symptoms of that throttle. Don't add them
+// back; if reliability regresses, check FPP state before patching.
 (() => {
     'use strict';
 
-    // DEBUG flag bridged from BuildConfig.DEBUG via the parser
-    // native channel. Defaults to false so release builds don't pay
-    // the per-call argument-evaluation cost.
+    console.info('[TT] content script loaded ' + location.href);
+
     let DEBUG = false;
     const log = (...args) => { if (DEBUG) console.log(...args); };
     browser.runtime.sendNativeMessage("parser", { kind: "get-debug-flag" })
         .then(r => {
             DEBUG = r === true;
-            // Page-world inject can't read browser.* — forward the
-            // flag via window.postMessage so its own DEBUG flips on
-            // the same channel we already use for body emission.
             try {
                 window.postMessage({ __firedown_tt__: 2, debug: DEBUG }, '*');
             } catch (_) {}
-        })
-        .catch(() => {});
-
-    log('[TT-CONTENT] loaded at', location.href);
+        }, () => {});
 
     const src = browser.runtime.getURL('tiktok-inject.js');
     const s = document.createElement('script');
     s.src = src;
     s.async = false;
-    s.onload = () => log('[TT-CONTENT] inject loaded');
-    s.onerror = (e) => log('[TT-CONTENT] inject failed to load:', e && e.message);
     (document.head || document.documentElement || document).appendChild(s);
-    log('[TT-CONTENT] inject element appended, src=' + src);
 
+    // Page-world inject → background bridge.
     window.addEventListener('message', (event) => {
         if (event.source !== window) return;
         const d = event.data;
         if (!d || d.__firedown_tt__ !== 1) return;
-        log('[TT-CONTENT] postMessage received url=' + (d.url || '').slice(0, 120) + ' bodyLen=' + (d.body ? d.body.length : 0));
         browser.runtime.sendMessage({
             kind: 'tiktok-itemlist',
             url: d.url,
             body: d.body
-        }).then(r => {
-            log('[TT-CONTENT] sendMessage ack', r);
-        }).catch(e => {
-            log('[TT-CONTENT] sendMessage failed:', e && e.message);
-        });
+        }).then(() => {}, () => {});
     });
-    log('[TT-CONTENT] message bridge listening');
 
-    // SSR pass. On first load TikTok server-renders the profile feed
-    // into a single <script id="__UNIVERSAL_DATA_FOR_REHYDRATION__">
-    // JSON blob and the React app hydrates from it — no XHR fires (or
-    // /api/post/item_list/ fires with an empty body because the
-    // ServiceWorker / cache already satisfied the page). Without
-    // reading the SSR blob we capture nothing until the user
-    // refreshes and TikTok finally hits the API for real.
-    //
-    // Deep-walk the JSON looking for any object that carries an
-    // itemList[] of video items. Each match is forwarded through the
-    // same background channel as the XHR/fetch hook, so the existing
-    // dedup-by-origin in sendVariants prevents double-publishing if a
-    // later real XHR returns the same ids.
-    function scanSSRForItemList() {
+    // Single-video pages (/@user/video/ID) never fire /api/*item_list/ —
+    // TikTok hydrates the player directly from the JSON blob in
+    // __UNIVERSAL_DATA_FOR_REHYDRATION__ under
+    // __DEFAULT_SCOPE__["webapp.video-detail"].itemInfo.itemStruct.
+    // Read that one object and forward it through the same bridge
+    // wrapped as a one-item itemList, so the background parser picks
+    // it up with no special-casing.
+    function captureVideoDetailSSR() {
         try {
+            if (!/^\/@[^/]+\/video\/\d+/.test(location.pathname)) return;
             const tag = document.getElementById('__UNIVERSAL_DATA_FOR_REHYDRATION__');
             if (!tag || !tag.textContent) return;
             const data = JSON.parse(tag.textContent);
-            const found = [];
-            const seen = new WeakSet();
-            const walk = (obj, depth) => {
-                if (!obj || typeof obj !== 'object' || depth > 12) return;
-                if (seen.has(obj)) return;
-                seen.add(obj);
-                if (Array.isArray(obj.itemList) && obj.itemList.length > 0
-                        && obj.itemList[0] && obj.itemList[0].video) {
-                    found.push(obj.itemList);
-                    // Don't recurse into a matched branch — the inner
-                    // video objects don't carry nested itemLists worth
-                    // walking.
-                    return;
-                }
-                if (Array.isArray(obj)) {
-                    for (const v of obj) walk(v, depth + 1);
-                } else {
-                    for (const k of Object.keys(obj)) walk(obj[k], depth + 1);
-                }
-            };
-            walk(data, 0);
-            if (found.length === 0) {
-                log('[TT-CONTENT] SSR scan: no itemList[] in __UNIVERSAL_DATA_FOR_REHYDRATION__');
-                return;
-            }
-            for (const itemList of found) {
-                log('[TT-CONTENT] SSR itemList items=' + itemList.length);
-                browser.runtime.sendMessage({
-                    kind: 'tiktok-itemlist',
-                    url: location.href,
-                    body: JSON.stringify({ itemList })
-                }).catch(() => {});
-            }
-        } catch (e) {
-            log('[TT-CONTENT] SSR scan error:', e && e.message);
-        }
+            const scope = data && data.__DEFAULT_SCOPE__;
+            const detail = scope && scope['webapp.video-detail'];
+            const item = detail && detail.itemInfo && detail.itemInfo.itemStruct;
+            if (!item || !item.video) return;
+            console.info('[TT] video-detail SSR captured id=' + item.id);
+            browser.runtime.sendMessage({
+                kind: 'tiktok-itemlist',
+                url: location.href,
+                body: JSON.stringify({ itemList: [item] })
+            }).then(() => {}, () => {});
+        } catch (_) {}
     }
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', scanSSRForItemList, { once: true });
+        document.addEventListener('DOMContentLoaded', captureVideoDetailSSR, { once: true });
     } else {
-        scanSSRForItemList();
+        captureVideoDetailSSR();
     }
+
+    // Take-A-Break dismiss-in-place. The overlay suppresses /api/*
+    // calls until it goes away. Reloading flagged the session and
+    // made things worse, so we just close the modal: Escape key first,
+    // then a text/aria-label match for the dismiss button.
+    let dismissed = false;
+    function tryDismissTakeABreak() {
+        if (dismissed) return;
+        const img = document.querySelector('img[src*="Take_A_Break_Reminder"]');
+        if (!img) return;
+        try {
+            document.dispatchEvent(new KeyboardEvent('keydown', {
+                key: 'Escape', code: 'Escape', keyCode: 27, which: 27,
+                bubbles: true, cancelable: true
+            }));
+        } catch (_) {}
+        const dismissText = /^\s*(keep watching|continue watching|continue|got it!?|ok(ay)?|dismiss|skip|close|i understand|let me watch|watch on)\s*[.!]?\s*$/i;
+        let node = img;
+        for (let i = 0; i < 14 && node; i++) {
+            const candidates = node.querySelectorAll(
+                'button, [role="button"], a[role="button"], [aria-label]'
+            );
+            for (const btn of candidates) {
+                const text = (btn.textContent || '').trim();
+                const aria = (btn.getAttribute('aria-label') || '').trim();
+                if ((text && dismissText.test(text))
+                        || (aria && dismissText.test(aria))) {
+                    try { btn.click(); } catch (_) {}
+                    dismissed = true;
+                    console.info('[TT] Take-A-Break dismissed via "'
+                        + (text || aria).slice(0, 40) + '"');
+                    return;
+                }
+            }
+            node = node.parentElement;
+        }
+    }
+
+    // Poll briefly for the overlay (it can mount any time during the
+    // first ~6s) and dismiss as soon as it appears.
+    const dismissInterval = setInterval(() => {
+        tryDismissTakeABreak();
+        if (dismissed) clearInterval(dismissInterval);
+    }, 400);
+    setTimeout(() => clearInterval(dismissInterval), 8000);
 })();
