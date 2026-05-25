@@ -975,17 +975,16 @@ function listenerTikTokPlay(details) {
 browser.webRequest.onBeforeRequest.addListener(
     listenerTikTokJson,
     {
+        // Broad match — every TikTok feed/profile/playlist endpoint
+        // ends in some flavor of `_list`. The handler defensively
+        // ignores responses with no itemList[], so /api/comment/list/
+        // and friends fall through silently. Narrower per-endpoint
+        // patterns were missing matches in practice (likely a Firefox
+        // match-pattern quirk with paths that end in `/` followed by
+        // a query string).
         urls: [
-            "*://www.tiktok.com/api/recommend/item_list/*",
-            "*://www.tiktok.com/api/preload/item_list/*",
-            "*://www.tiktok.com/api/prefetch/explore/item_list/*",
-            "*://www.tiktok.com/api/post/item_list/*",
-            "*://www.tiktok.com/api/repost/item_list/*",
-            "*://www.tiktok.com/api/user/collection_list/*",
-            "*://www.tiktok.com/api/user/playlist/*",
-            "*://m.tiktok.com/api/recommend/item_list/*",
-            "*://m.tiktok.com/api/preload/item_list/*",
-            "*://m.tiktok.com/api/post/item_list/*"
+            "*://www.tiktok.com/api/*list*",
+            "*://m.tiktok.com/api/*list*"
         ],
         types: ["xmlhttprequest"]
     },
