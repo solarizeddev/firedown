@@ -317,6 +317,12 @@
     <string name="blocked_trackers_detail_title">Blocked trackers</string>
     <string name="blocked_trackers_detail_empty">No trackers blocked yet on this page.</string>
     <string name="blocked_trackers_host_count_multiplier">×%1$d</string>
+    <plurals name="blocked_ads_summary">
+        <item quantity="one">%d request blocked on this page</item>
+        <item quantity="other">%d requests blocked on this page</item>
+    </plurals>
+    <string name="blocked_ads_detail_title">Blocked ads</string>
+    <string name="blocked_ads_detail_empty">No ads blocked yet on this page.</string>
     <string name="quit_application">Quitting the application to apply changes…</string>
     <string name="rename">Rename</string>
     <string name="rename_file">Rename file</string>
@@ -336,10 +342,9 @@
     <string name="security_blocked_in_this_page">Blocked on this page</string>
     <string name="security_block_ads">Block ads</string>
     <string name="security_tracking_protection">Tracking protection</string>
-    <string name="security_stat_ads_blocked">Ads blocked</string>
-    <string name="security_stat_trackers_blocked">Trackers blocked</string>
+    <string name="security_stat_ads_blocked">Ads</string>
+    <string name="security_stat_trackers_blocked">Trackers</string>
     <string name="security_section_protection">Protection</string>
-    <string name="security_section_this_page">This page</string>
     <string name="security_section_manage">Manage</string>
     <string name="select_all">Select all</string>
     <string name="select_all_not">Deselect all</string>

@@ -65,14 +65,14 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
     private TextView mTrackingSubtext;
     private TextView mHostText;
     private View mHostCert;
+    private View mAdsStatCard;
+    private View mTrackersStatCard;
     private AppCompatImageView mTrackingIcon;
     private AppCompatImageView mHostImage;
     private String mDomain;
     private String mLastIconUrl;
-    private View mThisPageSectionHeader;
-    private View mBlockedTrackersSummaryRow;
-    private TextView mBlockedTrackersSummaryText;
     private boolean mTrackingEnabledForSite;
+    private int mTrackersBlockedTotal;
 
     // Running per-page counters used to recompute the Data saved stat
     // card. Each observer updates its own field then calls
@@ -132,16 +132,28 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
         mAdsSwitch = mView.findViewById(R.id.ads_toogle);
         mHostText = mView.findViewById(R.id.host_secure_text);
         mHostCert = mView.findViewById(R.id.host_secure);
-        mThisPageSectionHeader = mView.findViewById(R.id.this_page_section_header);
-        mBlockedTrackersSummaryRow = mView.findViewById(R.id.blocked_trackers_summary_row);
-        mBlockedTrackersSummaryText = mView.findViewById(R.id.blocked_trackers_summary_text);
+        mAdsStatCard = mView.findViewById(R.id.ads_stat_card);
+        mTrackersStatCard = mView.findViewById(R.id.trackers_stat_card);
 
-        // Tap → drill into the per-host detail sheet. The detail sheet
-        // pulls its data from the same GeckoState the parent sheet
-        // observes, so there's nothing to pass through arguments other
-        // than the incognito flag (forwarded automatically by the
-        // BaseBottomSheetDialogFragment arg pipeline).
-        mBlockedTrackersSummaryRow.setOnClickListener(v -> {
+        // Stat-card taps drill into per-mechanism detail sheets.
+        // - Ads card  → BlockedAdsDetailDialogFragment (uBlock blocks)
+        // - Trackers card → BlockedTrackersDetailDialogFragment (ETP blocks)
+        // Both nav actions popUpTo dialog_security_info inclusive, so
+        // back from a detail sheet returns to the browser rather than
+        // re-opening the security parent (mirrors the prior summary-row
+        // behavior). The Trackers card only fires when ETP is on for
+        // this site and at least one tracker has been blocked — drilling
+        // into "zero blocked" wouldn't show anything useful.
+        mAdsStatCard.setOnClickListener(v -> {
+            Bundle args = new Bundle();
+            args.putBoolean(Keys.IS_INCOGNITO, mIsIncognito);
+            NavigationUtils.navigateSafe(mNavController,
+                    R.id.action_security_to_blocked_ads_detail,
+                    R.id.dialog_security_info,
+                    args);
+        });
+        mTrackersStatCard.setOnClickListener(v -> {
+            if (!mTrackingEnabledForSite || mTrackersBlockedTotal <= 0) return;
             Bundle args = new Bundle();
             args.putBoolean(Keys.IS_INCOGNITO, mIsIncognito);
             NavigationUtils.navigateSafe(mNavController,
@@ -247,15 +259,10 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
 
 
     /**
-     * Update the Trackers blocked stat card and the THIS PAGE summary
-     * row from the page's running tracker-category counters.
-     *
-     * <p>The summary row + its section header are hidden when the
-     * user has added a tracking exception for this site (counts
-     * wouldn't be meaningful — events stop firing) or when nothing
-     * has been blocked yet. The Trackers blocked stat card stays
-     * visible (showing 0) so the user can still see all three stats
-     * line up at a glance.</p>
+     * Updates the Trackers blocked stat card from the page's running
+     * tracker-category counters and keeps the running total around
+     * for the stat card's drill-down gate (the Trackers card is only
+     * tappable when something has actually been blocked).
      */
     private void renderBlockedTrackerCounts(Map<TrackingCategory, Integer> counts) {
         int total = 0;
@@ -266,23 +273,11 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
         }
 
         mTrackersBlockedCount = total;
+        mTrackersBlockedTotal = total;
         if (mTrackersCounterTextView != null) {
             mTrackersCounterTextView.setText(String.valueOf(total));
         }
         updateDataSavedDisplay();
-
-        if (mBlockedTrackersSummaryRow == null) return;
-
-        boolean show = mTrackingEnabledForSite && total > 0;
-        int visibility = show ? View.VISIBLE : View.GONE;
-        mBlockedTrackersSummaryRow.setVisibility(visibility);
-        if (mThisPageSectionHeader != null) {
-            mThisPageSectionHeader.setVisibility(visibility);
-        }
-        if (show) {
-            mBlockedTrackersSummaryText.setText(getResources().getQuantityString(
-                    R.plurals.blocked_trackers_summary, total, total));
-        }
     }
 
 
@@ -389,19 +384,6 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
         mTrackingSubtext.setText(isEnabled ?
                 R.string.protection_panel_etp_toggle_enabled_description_2 :
                 R.string.protection_panel_etp_toggle_disabled_description_2);
-        // When the user flips the per-site toggle off we drop the
-        // THIS PAGE section (header + summary row) immediately — its
-        // counts are stale the moment we stop applying ETP, and
-        // re-showing them would look like an exception is still being
-        // protected.
-        if (!isEnabled) {
-            if (mBlockedTrackersSummaryRow != null) {
-                mBlockedTrackersSummaryRow.setVisibility(View.GONE);
-            }
-            if (mThisPageSectionHeader != null) {
-                mThisPageSectionHeader.setVisibility(View.GONE);
-            }
-        }
     }
 
     @Override
@@ -453,9 +435,8 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
         mTrackingIcon = null;
         mTrackingSubtext = null;
         mHostImage = null;
-        mThisPageSectionHeader = null;
-        mBlockedTrackersSummaryRow = null;
-        mBlockedTrackersSummaryText = null;
+        mAdsStatCard = null;
+        mTrackersStatCard = null;
         mView = null;
     }
 }

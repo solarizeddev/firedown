@@ -494,6 +494,21 @@ public class GeckoRuntimeHelper {
                 }
             }
 
+            // Per-page blocked-host tally for the currently active tab.
+            // Pushed in response to a {requestPageBlocks:true} from
+            // Java (see requestPageBlocks below); the sender side is
+            // always the active tab, so the incognito-ness of the
+            // payload is whatever the active GeckoSession is.
+            if (json.has("pageBlocks")) {
+                JSONObject payload = json.optJSONObject("pageBlocks");
+                if (payload != null) {
+                    JSONArray items = payload.optJSONArray("items");
+                    boolean isIncognito = session != null
+                            && mIncognitoStateRepository.getGeckoState(session) != null;
+                    mGeckoUblockHelper.onPageBlocks(items, isIncognito);
+                }
+            }
+
             // uBlock sends a firewall state change
             if (json.has("firewall")) {
                 JSONObject firewall = json.optJSONObject("firewall");
@@ -715,6 +730,24 @@ public class GeckoRuntimeHelper {
             sendPortMessage("ublock", msg);
         } catch (JSONException e) {
             Log.e(TAG, "setAds error", e);
+        }
+    }
+
+    /**
+     * Asks firedown.js to push the active tab's per-host blocked
+     * tally. Routes through the same long-lived ublock port the
+     * setAds toggle uses. Caller observes
+     * {@code GeckoUblockHelper.getPageBlocksLive()} for the response;
+     * the JS side replies with {@code pageBlocks:{items:[...]}} which
+     * handleUblockMessage above forwards to onPageBlocks.
+     */
+    public void requestPageBlocks() {
+        try {
+            JSONObject msg = new JSONObject();
+            msg.put("requestPageBlocks", true);
+            sendPortMessage("ublock", msg);
+        } catch (JSONException e) {
+            Log.e(TAG, "requestPageBlocks error", e);
         }
     }
 

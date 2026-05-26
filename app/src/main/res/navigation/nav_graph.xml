@@ -201,10 +201,22 @@
             app:popUpTo="@+id/dialog_security_info"
             app:popUpToInclusive="true"
             app:destination="@id/dialog_blocked_trackers_detail" />
+        <!-- Drill-down to the per-page uBlock blocked-host list. Same
+             popUpToInclusive treatment as the trackers drill above so
+             back-press from the detail sheet lands on the browser
+             rather than re-opening the security parent. -->
+        <action
+            android:id="@+id/action_security_to_blocked_ads_detail"
+            app:popUpTo="@+id/dialog_security_info"
+            app:popUpToInclusive="true"
+            app:destination="@id/dialog_blocked_ads_detail" />
     </dialog>
     <dialog
         android:id="@+id/dialog_blocked_trackers_detail"
         android:name="com.solarized.firedown.phone.dialogs.BlockedTrackersDetailDialogFragment" />
+    <dialog
+        android:id="@+id/dialog_blocked_ads_detail"
+        android:name="com.solarized.firedown.phone.dialogs.BlockedAdsDetailDialogFragment" />
     <dialog
         android:id="@+id/dialog_search_engine"
         android:name="com.solarized.firedown.phone.dialogs.SearchEngineSheetDialogFragment" />

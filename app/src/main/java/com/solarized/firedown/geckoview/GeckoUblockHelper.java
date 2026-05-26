@@ -6,6 +6,7 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.preference.PreferenceManager;
@@ -86,6 +87,27 @@ public class GeckoUblockHelper {
     }
 
     private final MutableLiveData<List<HostCount>> mTopTrackersLive =
+            new MutableLiveData<>(Collections.emptyList());
+
+    /**
+     * Per-page blocked-host tally for the currently active tab.
+     * Updates only in response to {@link #requestPageBlocks
+     * GeckoRuntimeHelper.requestPageBlocks()}: firedown.js maintains
+     * the per-tab Map on its side and only crosses the port when
+     * Java explicitly asks, so this stream stays cold (and the
+     * BlockedAdsDetailDialogFragment empty) until the SecuritySheet
+     * routes the user into it.
+     *
+     * <p>Per-mode like the ads count: the JS pushes data from the
+     * sending tab regardless of mode, but we land it on the regular
+     * or incognito stream based on the session's incognito-ness so
+     * the incognito sheet never sees data from regular browsing
+     * and vice versa.
+     */
+    private final MutableLiveData<List<HostCount>> mPageBlocksLive =
+            new MutableLiveData<>(Collections.emptyList());
+
+    private final MutableLiveData<List<HostCount>> mPageBlocksLiveIncognito =
             new MutableLiveData<>(Collections.emptyList());
 
     // Firewall activation is a global user preference — not per-mode.
@@ -230,6 +252,54 @@ public class GeckoUblockHelper {
         mTopTrackersLive.postValue(next);
     }
 
+    /**
+     * @return LiveData with the active tab's blocked-host tally for
+     * regular browsing. See {@link #mPageBlocksLive} for lifecycle.
+     */
+    public LiveData<List<HostCount>> getPageBlocksLive() {
+        return mPageBlocksLive;
+    }
+
+    /**
+     * @return LiveData with the active tab's blocked-host tally for
+     * incognito browsing. See {@link #mPageBlocksLive} for lifecycle.
+     */
+    public LiveData<List<HostCount>> getPageBlocksLiveIncognito() {
+        return mPageBlocksLiveIncognito;
+    }
+
+    /**
+     * Called from {@code handleUblockMessage} when firedown.js
+     * responds to a requestPageBlocks. Same JSON shape as the
+     * top-trackers payload — {@code [{host, count}, …]} sorted
+     * descending — but scoped to the active tab and zero-tolerant
+     * (an empty array means "nothing blocked here yet" and is a
+     * valid response, unlike topTrackers where empties are dropped).
+     * Routed to the per-mode stream based on the sending session's
+     * incognito-ness, mirroring onAdsCount.
+     */
+    public void onPageBlocks(@Nullable JSONArray array, boolean isIncognito) {
+        List<HostCount> next;
+        if (array == null || array.length() == 0) {
+            next = Collections.emptyList();
+        } else {
+            next = new ArrayList<>(array.length());
+            for (int i = 0; i < array.length(); i++) {
+                JSONObject row = array.optJSONObject(i);
+                if (row == null) continue;
+                String host = row.optString("host", "");
+                long count = row.optLong("count", 0);
+                if (host.isEmpty() || count <= 0) continue;
+                next.add(new HostCount(host, count));
+            }
+        }
+        if (isIncognito) {
+            mPageBlocksLiveIncognito.postValue(next);
+        } else {
+            mPageBlocksLive.postValue(next);
+        }
+    }
+
     public void onCategoryBlocked(long scripts, long pixels, long frames, long other) {
         Map<Category, Long> next = emptyCategoryMap();
         next.put(Category.SCRIPTS, Math.max(0L, scripts));
@@ -300,5 +370,7 @@ public class GeckoUblockHelper {
         mCookieNoticesBlockedLive.postValue(false);
         mCategoryBlockedLive.postValue(emptyCategoryMap());
         mTopTrackersLive.postValue(Collections.emptyList());
+        mPageBlocksLive.postValue(Collections.emptyList());
+        mPageBlocksLiveIncognito.postValue(Collections.emptyList());
     }
 }

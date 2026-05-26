@@ -116,11 +116,22 @@
             android:layout_marginTop="12dp"
             android:orientation="horizontal">
 
+            <!--
+                Ads card. Tap drills into BlockedAdsDetailDialogFragment
+                which lists every uBlock-blocked host on the current
+                page. selectableItemBackground gives ripple feedback so
+                the user can tell the card is interactive even though
+                it carries no chevron.
+            -->
             <com.google.android.material.card.MaterialCardView
+                android:id="@+id/ads_stat_card"
                 style="@style/TrackersInfoStatCard"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="1">
+                android:layout_weight="1"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground">
 
                 <LinearLayout style="@style/TrackersInfoStatBody">
 
@@ -139,11 +150,20 @@
                 android:layout_width="8dp"
                 android:layout_height="match_parent" />
 
+            <!--
+                Trackers card. Tap drills into
+                BlockedTrackersDetailDialogFragment (the existing per-
+                category sheet). Same ripple foreground as the Ads card.
+            -->
             <com.google.android.material.card.MaterialCardView
+                android:id="@+id/trackers_stat_card"
                 style="@style/TrackersInfoStatCard"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="1">
+                android:layout_weight="1"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground">
 
                 <LinearLayout style="@style/TrackersInfoStatBody">
 
@@ -291,69 +311,6 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="12dp" />
-
-        </LinearLayout>
-
-
-        <!-- ── THIS PAGE (conditional) ────────────────────────────── -->
-        <!--
-            Header + row both stay GONE until ETP is on for this site
-            AND blocked-tracker count > 0 (same gating that drove the
-            old blocked_trackers_summary_row visibility). Toggled
-            together so the section name doesn't sit above empty space.
-        -->
-        <TextView
-            android:id="@+id/this_page_section_header"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:layout_marginBottom="4dp"
-            android:letterSpacing="0.08"
-            android:text="@string/security_section_this_page"
-            android:textAllCaps="true"
-            android:textAppearance="?attr/textAppearanceTitleSmallEmphasized"
-            android:textColor="?attr/colorOnSurfaceVariant"
-            android:visibility="gone"
-            tools:visibility="visible" />
-
-        <LinearLayout
-            android:id="@+id/blocked_trackers_summary_row"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:background="?attr/selectableItemBackground"
-            android:clickable="true"
-            android:focusable="true"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:visibility="gone"
-            tools:visibility="visible">
-
-            <androidx.appcompat.widget.AppCompatImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:layout_marginEnd="16dp"
-                android:contentDescription="@null"
-                app:srcCompat="@drawable/ic_view_list_24"
-                app:tint="?attr/colorOnSurfaceVariant" />
-
-            <TextView
-                android:id="@+id/blocked_trackers_summary_text"
-                style="@style/TextAppearance.Material3.TitleMedium"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:ellipsize="end"
-                android:maxLines="1"
-                android:textColor="?attr/colorOnSurfaceVariant"
-                android:textSize="15sp" />
-
-            <androidx.appcompat.widget.AppCompatImageView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:contentDescription="@null"
-                app:srcCompat="@drawable/ic_chevron_right_24"
-                app:tint="?attr/colorOnSurfaceVariant" />
 
         </LinearLayout>
 

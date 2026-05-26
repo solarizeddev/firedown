@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Per-page uBlock blocked-host list. Opened from the SecurityStateSheet
+    when the user taps the "Ads blocked" stat card. Mirrors the shape of
+    fragment_dialog_blocked_trackers_detail.xml (same title row + empty
+    state + RecyclerView) so the two drill-down sheets feel like
+    siblings, but renders a flat host+count list — no per-category
+    grouping, because uBlock can't honestly classify its own blocks
+    by filter-list origin.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <include layout="@layout/dialog_drag_handle" />
+
+
+    <!-- Title row. Mirrors the host_secure / host_clear rows on the
+         parent security sheet for visual continuity. -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:minHeight="56dp"
+        android:orientation="horizontal"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp">
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginEnd="16dp"
+            app:srcCompat="@drawable/ads_click_24"
+            app:tint="?attr/colorOnSurfaceVariant" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                style="@style/TextAppearance.Material3.TitleMedium"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/blocked_ads_detail_title"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:textSize="15sp" />
+
+            <TextView
+                android:id="@+id/detail_subtitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:maxLines="2"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:textSize="12sp"
+                tools:text="24 requests blocked on this page" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+
+    <!-- Empty state — when the count card on the parent showed 0 OR
+         when the JS reply hasn't landed yet (the LiveData starts as an
+         empty list and only repopulates once firedown.js answers the
+         requestPageBlocks round-trip). -->
+    <TextView
+        android:id="@+id/detail_empty"
+        style="@style/TextAppearance.Material3.BodyMedium"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:padding="32dp"
+        android:text="@string/blocked_ads_detail_empty"
+        android:textColor="?attr/colorOnSurfaceVariant"
+        android:visibility="gone"
+        tools:visibility="gone" />
+
+
+    <!-- Flat host+count list. Reuses TopTrackersAdapter + item_top_tracker
+         since the (host, count) row shape is identical to the
+         TrackersInfoSheet's Top trackers list. Padding mirrors the
+         trackers-detail layout. -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/detail_recycler"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:clipToPadding="false"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="8dp"
+        android:scrollbars="vertical" />
+
+
+</LinearLayout>

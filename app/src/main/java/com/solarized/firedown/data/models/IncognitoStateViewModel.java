@@ -166,6 +166,15 @@ public class IncognitoStateViewModel extends ViewModel {
         return mGeckoUblockHelper.getAdsBlockedLiveIncognito();
     }
 
+    /**
+     * Incognito-scoped per-tab blocked-host tally. Mirrors
+     * {@link GeckoStateViewModel#getPageBlocks()} but only carries
+     * data for incognito tabs.
+     */
+    public LiveData<java.util.List<GeckoUblockHelper.HostCount>> getPageBlocks() {
+        return mGeckoUblockHelper.getPageBlocksLiveIncognito();
+    }
+
     public LiveData<Map<TrackingCategory, Integer>> getBlockedTrackerCounts() {
         return mRepository.getBlockedTrackerLiveData();
     }

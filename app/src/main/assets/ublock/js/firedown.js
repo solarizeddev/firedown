@@ -29,6 +29,10 @@ import { PageStore } from './pagestore.js';
             toggleCookieNotices({ enable: response.cookies });
         } else if (Object.hasOwn(response, "update")) {
             updateState();
+        } else if (Object.hasOwn(response, "requestPageBlocks")) {
+            // Java asks for the active tab's blocked-host tally —
+            // drives the SecuritySheet's "Ads blocked" detail sheet.
+            pushPageBlocks();
         }
     });
 
@@ -481,6 +485,93 @@ import { PageStore } from './pagestore.js';
         } catch (_) { /* best-effort */ }
     }
 
+    /**************************************************************************
+     * Per-page blocked-host map.
+     *
+     * Map<tabId, Map<hostname, count>> — distinct from the day-scoped
+     * trackerBlocks above. Source for the SecuritySheet's "Ads blocked"
+     * detail sheet: when the user taps the Ads stat card, Java asks
+     * "what got blocked on the currently active tab?" and we reply
+     * with this tab's hostname tally.
+     *
+     * Lifecycle:
+     *   - Counters accumulate at journalProcess time alongside the
+     *     category + tracker counters above.
+     *   - Cleared per-tab on navigation away (tabs.onUpdated with
+     *     {status:"loading", url:...}) so the list always reflects
+     *     the page the user is currently looking at, not the previous
+     *     one in the same tab.
+     *   - Cleared per-tab on close (tabs.onRemoved).
+     *   - Never persisted. Never crosses the native port except when
+     *     Java explicitly requests the active tab's tally.
+     *   - Counted in both regular and incognito tabs — the data never
+     *     leaves the device beyond Java's process and is only read
+     *     while the user is on that page.
+     *
+     * Cap: PAGE_BLOCK_MAP_CAP per tab. Same LFU-ish eviction as the
+     * cross-tab tracker map (drop the lowest-count entry on overflow).
+     *************************************************************************/
+    const PAGE_BLOCK_MAP_CAP = 500;
+    const pageBlocks = new Map();
+
+    function recordPageBlock(tabId, hostname) {
+        if (typeof tabId !== 'number' || tabId <= 0) { return; }
+        if (!hostname || hostname === '') { return; }
+        let m = pageBlocks.get(tabId);
+        if (m === undefined) {
+            m = new Map();
+            pageBlocks.set(tabId, m);
+        }
+        m.set(hostname, (m.get(hostname) || 0) + 1);
+        if (m.size <= PAGE_BLOCK_MAP_CAP) { return; }
+        // Overflow: drop the lowest-count entry. Same shape as the
+        // tracker-map eviction above.
+        let lowestHost = null;
+        let lowestCount = Infinity;
+        for (const [h, c] of m) {
+            if (c < lowestCount) { lowestCount = c; lowestHost = h; }
+        }
+        if (lowestHost !== null) { m.delete(lowestHost); }
+    }
+
+    function pageBlocksList(tabId) {
+        const m = pageBlocks.get(tabId);
+        if (m === undefined) { return []; }
+        const arr = Array.from(m, ([host, count]) => ({ host, count }));
+        arr.sort((a, b) => b.count - a.count);
+        return arr;
+    }
+
+    async function pushPageBlocks() {
+        try {
+            const tab = await vAPI.tabs.getCurrent();
+            if (tab instanceof Object === false) { return; }
+            browser.runtime.sendNativeMessage("ublock", {
+                pageBlocks: {
+                    tabId: tab.id,
+                    items: pageBlocksList(tab.id),
+                }
+            });
+        } catch (_) { /* port not ready */ }
+    }
+
+    // Wipe the per-tab list when the user navigates away (loading a
+    // new URL in the same tab) — the next page starts with a clean
+    // counter. Also wipe on tab close so the Map doesn't leak entries
+    // for tabs that no longer exist.
+    if (browser.tabs && browser.tabs.onUpdated) {
+        browser.tabs.onUpdated.addListener((tabId, changeInfo) => {
+            if (changeInfo && typeof changeInfo.url === 'string') {
+                pageBlocks.delete(tabId);
+            }
+        });
+    }
+    if (browser.tabs && browser.tabs.onRemoved) {
+        browser.tabs.onRemoved.addListener(tabId => {
+            pageBlocks.delete(tabId);
+        });
+    }
+
     // Restore persisted state — only if the saved day key still matches
     // today. Stale (yesterday's) data is dropped; old pre-today-scope
     // blobs without a 'day' key are dropped the same way.
@@ -513,6 +604,7 @@ import { PageStore } from './pagestore.js';
         ensureTrackerToday();
         const journal = this.journal;
         const isIncognito = incognitoTabIds.has(this.tabId);
+        const tabId = this.tabId;
         for (let i = 0; i < journal.length; i += 3) {
             if (journal[i + 1] !== 1) { continue; } // allowed
             categoryCounters[bucketItype(journal[i + 2])] += 1;
@@ -524,6 +616,13 @@ import { PageStore } from './pagestore.js';
             if (isIncognito === false) {
                 recordTrackerBlock(journal[i + 0]);
             }
+            // Per-page blocked-hostname map for the SecuritySheet's
+            // "Ads blocked" drill-down. Counted in both regular and
+            // incognito tabs — the data is per-page-load only (cleared
+            // on navigation), never persisted, never crosses the
+            // native port unless Java explicitly requests it for the
+            // currently active tab.
+            recordPageBlock(tabId, journal[i + 0]);
         }
         return originalJournalProcess.call(this);
     };
