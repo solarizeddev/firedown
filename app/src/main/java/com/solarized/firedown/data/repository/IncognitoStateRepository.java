@@ -258,13 +258,18 @@ public class IncognitoStateRepository {
         }
         mCurrentId = GeckoState.NULL_SESSION_ID;
 
+        // dismissActivePrompt invokes AlertDialog.dismiss(), which must
+        // run on the main thread — co-locate it with the closeGeckoSession
+        // dispatch so both share the same main-thread guarantee.
         if (Looper.myLooper() == Looper.getMainLooper()) {
             for (GeckoState state : toClose) {
+                state.dismissActivePrompt();
                 state.closeGeckoSession();
             }
         } else {
             new android.os.Handler(Looper.getMainLooper()).post(() -> {
                 for (GeckoState state : toClose) {
+                    state.dismissActivePrompt();
                     state.closeGeckoSession();
                 }
             });
