@@ -334,6 +334,13 @@
     <string name="search_store">Search on the store</string>
     <string name="security_ads">Ads</string>
     <string name="security_blocked_in_this_page">Blocked on this page</string>
+    <string name="security_block_ads">Block ads</string>
+    <string name="security_tracking_protection">Tracking protection</string>
+    <string name="security_stat_ads_blocked">Ads blocked</string>
+    <string name="security_stat_trackers_blocked">Trackers blocked</string>
+    <string name="security_section_protection">Protection</string>
+    <string name="security_section_this_page">This page</string>
+    <string name="security_section_manage">Manage</string>
     <string name="select_all">Select all</string>
     <string name="select_all_not">Deselect all</string>
     <string name="separator">-</string>

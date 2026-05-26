@@ -1,4 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    Per-site security / protection sheet.
+
+    Layout vocabulary mirrors fragment_dialog_trackers_info.xml so the
+    two sheets read as siblings on the browser surface — three equal
+    stat cards near the top, then small-caps section headers above
+    flat row lists. Earlier this sheet used a filled MaterialCard with
+    internal 1dp dividers; data-display + control hybrids read better
+    as labelled sections than as one unlabelled grouped list.
+
+    Sections (top → bottom):
+      1. Site identity header (favicon + host + URL) — anchors the
+         sheet to a specific site.
+      2. Stats row — Ads blocked / Trackers blocked / Data saved.
+         All three are per-page numerics. Data saved is computed in
+         the fragment as (adsBlocked + trackersBlocked) × 50_000
+         bytes, matching the formula HomeFragment and the
+         TrackersInfoSheet use for the same display.
+      3. PROTECTION section — Block ads toggle, Tracking protection
+         toggle (with subtext describing the current state).
+      4. THIS PAGE section (header + row both visibility="gone" until
+         ETP is on for this site AND blocked-tracker count > 0). Row
+         drills into the per-host blocked-tracker detail sheet.
+      5. MANAGE section — Connection (drill-down to cert details),
+         Clear browsing data (drill-down).
+
+    Outer LinearLayout is left unpadded because
+    BaseBottomSheetDialogFragment's window-insets listener applies
+    padding directly to mView (same pattern as the TrackersInfoSheet
+    layout).
+-->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -9,18 +40,21 @@
     <include layout="@layout/dialog_drag_handle" />
 
 
-    <!-- Site header. Stays as a separate block above the controls card —
-         it's site identity, not a control, so distinct hierarchy. -->
+    <!--
+        Site identity. Stays at the top as a distinct block above the
+        protection controls — it's the site anchor, not a control, so
+        it sits in its own hierarchy level.
+    -->
     <LinearLayout
         android:id="@+id/host_domain"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:layout_marginBottom="16dp"
+        android:layout_marginBottom="4dp"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:paddingStart="16dp"
-        android:paddingEnd="16dp">
+        android:paddingStart="24dp"
+        android:paddingEnd="24dp">
 
         <androidx.appcompat.widget.AppCompatImageView
             android:id="@+id/host_image"
@@ -58,284 +92,358 @@
     </LinearLayout>
 
 
-    <!-- One filled card holds every per-site control. Sections are
-         separated by colorOutlineVariant rules instead of stacking
-         multiple elevated surfaces, matching Material3 list-in-card
-         guidance. -->
-    <com.google.android.material.card.MaterialCardView
-        style="@style/Widget.Material3.CardView.Filled"
+    <!--
+        Body container — paddingHorizontal matches the TrackersInfoSheet
+        (24dp) so the two sheets line up visually.
+    -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"
-        android:layout_marginBottom="8dp">
+        android:orientation="vertical"
+        android:paddingHorizontal="24dp"
+        android:paddingBottom="8dp">
 
+
+        <!--
+            Stats row. Three equal cards using weight=1 with 8dp Spaces
+            between (gutter doesn't accumulate at screen edges). Same
+            Widget.Material3.CardView.Filled tonal style the
+            TrackersInfoSheet uses.
+        -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:layout_marginTop="12dp"
+            android:orientation="horizontal">
 
-
-            <!-- Connection status. Tap to open the cert details. -->
-            <LinearLayout
-                android:id="@+id/host_secure"
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:background="?attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingStart="16dp"
-                android:paddingEnd="16dp">
-
-                <TextView
-                    android:id="@+id/host_secure_text"
-                    style="@style/TextAppearance.Material3.TitleMedium"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:drawablePadding="16dp"
-                    android:maxLines="1"
-                    android:ellipsize="end"
-                    android:text="@string/connection_secure"
-                    android:textColor="?attr/colorOnSurfaceVariant"
-                    android:textSize="15sp"
-                    app:drawableStartCompat="@drawable/encryption_light_24" />
-
-                <androidx.appcompat.widget.AppCompatImageView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    app:srcCompat="@drawable/ic_chevron_right_24"
-                    app:tint="?attr/colorOnSurfaceVariant" />
-
-            </LinearLayout>
-
-            <View
-                style="@style/Firedown.Divider.InCard" />
-
-
-            <!-- Ads / uBlock counter + per-site toggle. -->
-            <LinearLayout
-                android:layout_width="match_parent"
+            <com.google.android.material.card.MaterialCardView
+                style="@style/TrackersInfoStatCard"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:minHeight="64dp"
-                android:orientation="horizontal"
-                android:paddingStart="16dp"
-                android:paddingEnd="16dp"
-                android:paddingTop="10dp"
-                android:paddingBottom="10dp">
+                android:layout_weight="1">
 
-                <androidx.appcompat.widget.AppCompatImageView
-                    android:id="@+id/ads_icon"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:layout_marginEnd="16dp"
-                    app:srcCompat="@drawable/ads_click_24" />
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
+                <LinearLayout style="@style/TrackersInfoStatBody">
 
                     <TextView
-                        style="@style/TextAppearance.Material3.TitleMedium"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/security_ads"
-                        android:textColor="?attr/colorOnSurfaceVariant"
-                        android:textSize="15sp" />
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
-
-                        <TextView
-                            android:id="@+id/ads_subtext"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:ellipsize="end"
-                            android:maxLines="1"
-                            android:text="@string/security_blocked_in_this_page"
-                            android:textColor="?attr/colorOnSurfaceVariant"
-                            android:textSize="12sp" />
-
-                        <TextView
-                            android:id="@+id/ads_counter"
-                            style="@style/TextAppearance.Material3.TitleSmall.Emphasized"
-                            android:layout_width="24dp"
-                            android:layout_height="wrap_content"
-                            android:gravity="center"
-                            android:layout_marginStart="8dp"
-                            android:background="@drawable/rounded_primary"
-                            android:maxLines="1"
-                            android:paddingTop="2dp"
-                            android:paddingBottom="2dp"
-                            android:textColor="?attr/colorOnPrimaryContainer"
-                            android:textSize="11sp" />
-
-                    </LinearLayout>
-
-                </LinearLayout>
-
-                <com.google.android.material.materialswitch.MaterialSwitch
-                    android:id="@+id/ads_toogle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp" />
-
-            </LinearLayout>
-
-            <View
-                style="@style/Firedown.Divider.InCard" />
-
-
-            <!-- Tracking-protection section. Toggle row at top, then an
-                 expandable per-page breakdown that lights up only when
-                 ETP is on AND something has actually been blocked. -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:minHeight="64dp"
-                    android:orientation="horizontal"
-                    android:paddingStart="16dp"
-                    android:paddingEnd="16dp"
-                    android:paddingTop="10dp"
-                    android:paddingBottom="10dp">
-
-                    <androidx.appcompat.widget.AppCompatImageView
-                        android:id="@+id/tracking_icon"
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:layout_marginEnd="16dp"
-                        app:srcCompat="@drawable/ic_shield_24" />
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:id="@+id/tracking_text"
-                            style="@style/TextAppearance.Material3.TitleMedium"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="@string/quick_settings_sheet_tracking_site_title"
-                            android:textColor="?attr/colorOnSurfaceVariant"
-                            android:textSize="15sp" />
-
-                        <TextView
-                            android:id="@+id/tracking_subtext"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:maxLines="2"
-                            android:text="@string/protection_panel_etp_toggle_enabled_description_2"
-                            android:textColor="?attr/colorOnSurfaceVariant"
-                            android:textSize="12sp" />
-
-                    </LinearLayout>
-
-                    <com.google.android.material.materialswitch.MaterialSwitch
-                        android:id="@+id/tracking_toogle"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="12dp" />
-
-                </LinearLayout>
-
-                <!-- Single tappable summary row. Replaces the previous
-                     in-line expandable; tapping fires the detail sheet
-                     which shows the per-category breakdown alongside the
-                     actual blocked domains. Hidden until counts > 0 and
-                     ETP is on for this site. -->
-                <LinearLayout
-                    android:id="@+id/blocked_trackers_summary_row"
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:background="?attr/selectableItemBackground"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:paddingStart="54dp"
-                    android:paddingEnd="16dp"
-                    android:visibility="gone">
+                        android:id="@+id/ads_counter"
+                        style="@style/TrackersInfoStatValue"
+                        tools:text="24" />
 
                     <TextView
-                        android:id="@+id/blocked_trackers_summary_text"
-                        style="@style/TextAppearance.Material3.TitleSmall"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:ellipsize="end"
-                        android:maxLines="1"
-                        android:textColor="?attr/colorOnSurfaceVariant" />
-
-                    <androidx.appcompat.widget.AppCompatImageView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"
-                        app:srcCompat="@drawable/ic_chevron_right_24"
-                        app:tint="?attr/colorOnSurfaceVariant" />
-
+                        style="@style/TrackersInfoStatLabel"
+                        android:text="@string/security_stat_ads_blocked" />
                 </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
-            </LinearLayout>
+            <Space
+                android:layout_width="8dp"
+                android:layout_height="match_parent" />
 
-            <View
-                style="@style/Firedown.Divider.InCard" />
+            <com.google.android.material.card.MaterialCardView
+                style="@style/TrackersInfoStatCard"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1">
 
+                <LinearLayout style="@style/TrackersInfoStatBody">
 
-            <!-- Clear cookies / site data for this hostname. -->
-            <LinearLayout
-                android:id="@+id/host_clear"
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:background="?attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingStart="16dp"
-                android:paddingEnd="16dp">
+                    <TextView
+                        android:id="@+id/trackers_counter"
+                        style="@style/TrackersInfoStatValue"
+                        tools:text="14" />
 
-                <TextView
-                    style="@style/TextAppearance.Material3.TitleMedium"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:drawablePadding="16dp"
-                    android:maxLines="1"
-                    android:ellipsize="end"
-                    android:text="@string/settings_clear_browsing"
-                    android:textColor="?attr/colorOnSurfaceVariant"
-                    android:textSize="15sp"
-                    app:drawableStartCompat="@drawable/ic_baseline_delete_24" />
+                    <TextView
+                        style="@style/TrackersInfoStatLabel"
+                        android:text="@string/security_stat_trackers_blocked" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
-                <androidx.appcompat.widget.AppCompatImageView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    app:srcCompat="@drawable/ic_chevron_right_24"
-                    app:tint="?attr/colorOnSurfaceVariant" />
+            <Space
+                android:layout_width="8dp"
+                android:layout_height="match_parent" />
 
-            </LinearLayout>
+            <com.google.android.material.card.MaterialCardView
+                style="@style/TrackersInfoStatCard"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1">
+
+                <LinearLayout style="@style/TrackersInfoStatBody">
+
+                    <TextView
+                        android:id="@+id/data_saved_text"
+                        style="@style/TrackersInfoStatValue"
+                        tools:text="1.9 MB" />
+
+                    <TextView
+                        style="@style/TrackersInfoStatLabel"
+                        android:text="@string/trackers_info_stat_saved" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
         </LinearLayout>
 
-    </com.google.android.material.card.MaterialCardView>
 
+        <!-- ── PROTECTION ─────────────────────────────────────────── -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:layout_marginBottom="4dp"
+            android:letterSpacing="0.08"
+            android:text="@string/security_section_protection"
+            android:textAllCaps="true"
+            android:textAppearance="?attr/textAppearanceTitleSmallEmphasized"
+            android:textColor="?attr/colorOnSurfaceVariant" />
+
+
+        <!--
+            Block ads — toggle row. The row's whole surface is the
+            click target; the switch carries duplicateParentState so
+            tapping anywhere in the row flips it, matching how the
+            popup's Desktop site row behaves.
+        -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginEnd="16dp"
+                android:contentDescription="@null"
+                app:srcCompat="@drawable/ads_click_24"
+                app:tint="?attr/colorOnSurfaceVariant" />
+
+            <TextView
+                style="@style/TextAppearance.Material3.TitleMedium"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="@string/security_block_ads"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:textSize="15sp" />
+
+            <com.google.android.material.materialswitch.MaterialSwitch
+                android:id="@+id/ads_toogle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp" />
+
+        </LinearLayout>
+
+
+        <!--
+            Tracking protection — toggle row with a subtitle line for
+            the "if something looks broken, try turning it off" hint.
+            Subtitle copy is swapped in updateTrackingUI based on the
+            current toggle state.
+        -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:minHeight="64dp"
+            android:orientation="horizontal"
+            android:paddingTop="10dp"
+            android:paddingBottom="10dp">
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/tracking_icon"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginEnd="16dp"
+                android:contentDescription="@null"
+                app:srcCompat="@drawable/ic_shield_24"
+                app:tint="?attr/colorOnSurfaceVariant" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    style="@style/TextAppearance.Material3.TitleMedium"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/security_tracking_protection"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:textSize="15sp" />
+
+                <TextView
+                    android:id="@+id/tracking_subtext"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:maxLines="2"
+                    android:text="@string/protection_panel_etp_toggle_enabled_description_2"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:textSize="12sp" />
+
+            </LinearLayout>
+
+            <com.google.android.material.materialswitch.MaterialSwitch
+                android:id="@+id/tracking_toogle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp" />
+
+        </LinearLayout>
+
+
+        <!-- ── THIS PAGE (conditional) ────────────────────────────── -->
+        <!--
+            Header + row both stay GONE until ETP is on for this site
+            AND blocked-tracker count > 0 (same gating that drove the
+            old blocked_trackers_summary_row visibility). Toggled
+            together so the section name doesn't sit above empty space.
+        -->
+        <TextView
+            android:id="@+id/this_page_section_header"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="4dp"
+            android:letterSpacing="0.08"
+            android:text="@string/security_section_this_page"
+            android:textAllCaps="true"
+            android:textAppearance="?attr/textAppearanceTitleSmallEmphasized"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:visibility="gone"
+            tools:visibility="visible" />
+
+        <LinearLayout
+            android:id="@+id/blocked_trackers_summary_row"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:visibility="gone"
+            tools:visibility="visible">
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginEnd="16dp"
+                android:contentDescription="@null"
+                app:srcCompat="@drawable/ic_view_list_24"
+                app:tint="?attr/colorOnSurfaceVariant" />
+
+            <TextView
+                android:id="@+id/blocked_trackers_summary_text"
+                style="@style/TextAppearance.Material3.TitleMedium"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:textSize="15sp" />
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:contentDescription="@null"
+                app:srcCompat="@drawable/ic_chevron_right_24"
+                app:tint="?attr/colorOnSurfaceVariant" />
+
+        </LinearLayout>
+
+
+        <!-- ── MANAGE ─────────────────────────────────────────────── -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="4dp"
+            android:letterSpacing="0.08"
+            android:text="@string/security_section_manage"
+            android:textAllCaps="true"
+            android:textAppearance="?attr/textAppearanceTitleSmallEmphasized"
+            android:textColor="?attr/colorOnSurfaceVariant" />
+
+
+        <!-- Connection — drill-down to cert details. Icon and label
+             flip between secure / insecure variants in the fragment. -->
+        <LinearLayout
+            android:id="@+id/host_secure"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/host_secure_text"
+                style="@style/TextAppearance.Material3.TitleMedium"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:drawablePadding="16dp"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="@string/connection_secure"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:textSize="15sp"
+                app:drawableStartCompat="@drawable/encryption_light_24"
+                app:drawableTint="?attr/colorOnSurfaceVariant" />
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:contentDescription="@null"
+                app:srcCompat="@drawable/ic_chevron_right_24"
+                app:tint="?attr/colorOnSurfaceVariant" />
+
+        </LinearLayout>
+
+
+        <!-- Clear cookies / site data for this hostname. -->
+        <LinearLayout
+            android:id="@+id/host_clear"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                style="@style/TextAppearance.Material3.TitleMedium"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:drawablePadding="16dp"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="@string/settings_clear_browsing"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:textSize="15sp"
+                app:drawableStartCompat="@drawable/ic_baseline_delete_24"
+                app:drawableTint="?attr/colorOnSurfaceVariant" />
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:contentDescription="@null"
+                app:srcCompat="@drawable/ic_chevron_right_24"
+                app:tint="?attr/colorOnSurfaceVariant" />
+
+        </LinearLayout>
+
+    </LinearLayout>
 
 </LinearLayout>

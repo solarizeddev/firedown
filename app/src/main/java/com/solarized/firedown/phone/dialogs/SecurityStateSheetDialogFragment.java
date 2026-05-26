@@ -31,6 +31,7 @@ import com.solarized.firedown.geckoview.TrackingCategory;
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.utils.NavigationUtils;
 import com.solarized.firedown.utils.UrlStringUtils;
+import com.solarized.firedown.utils.Utils;
 import com.solarized.firedown.utils.WebUtils;
 
 import java.util.List;
@@ -40,11 +41,25 @@ import java.util.Objects;
 public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragment
         implements View.OnClickListener, CompoundButton.OnCheckedChangeListener {
 
+    /**
+     * Mirrors the constant in {@code HomeFragment} and
+     * {@code TrackersInfoSheet} — uBlock cancels blocked requests
+     * before the response body is seen, so the true byte count is
+     * unknown. The published average we display everywhere bytes-
+     * saved appears is ~50 KB per blocked request (Brave's
+     * methodology). Keeping the same constant here means the
+     * SecuritySheet's per-page figure scales consistently with the
+     * Home trackers card's all-time figure.
+     */
+    private static final long AVG_BYTES_PER_BLOCKED_REQUEST = 50_000L;
+
     private GeckoStateViewModel mGeckoStateViewModel;
     private IncognitoStateViewModel mIncognitoStateViewModel;
     private GeckoState mGeckoState;
     private CertificateInfoEntity mCertificateInfoEntity;
     private TextView mAdsCounterTextView;
+    private TextView mTrackersCounterTextView;
+    private TextView mDataSavedTextView;
     private MaterialSwitch mAdsSwitch;
     private MaterialSwitch mTrackingSwitch;
     private TextView mTrackingSubtext;
@@ -54,9 +69,17 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
     private AppCompatImageView mHostImage;
     private String mDomain;
     private String mLastIconUrl;
+    private View mThisPageSectionHeader;
     private View mBlockedTrackersSummaryRow;
     private TextView mBlockedTrackersSummaryText;
     private boolean mTrackingEnabledForSite;
+
+    // Running per-page counters used to recompute the Data saved stat
+    // card. Each observer updates its own field then calls
+    // updateDataSavedDisplay() so the figure stays in sync regardless
+    // of which counter ticked.
+    private int mAdsBlockedCount = 0;
+    private int mTrackersBlockedCount = 0;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -104,9 +127,12 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
         mTrackingSwitch = mView.findViewById(R.id.tracking_toogle);
         mTrackingSubtext = mView.findViewById(R.id.tracking_subtext);
         mAdsCounterTextView = mView.findViewById(R.id.ads_counter);
+        mTrackersCounterTextView = mView.findViewById(R.id.trackers_counter);
+        mDataSavedTextView = mView.findViewById(R.id.data_saved_text);
         mAdsSwitch = mView.findViewById(R.id.ads_toogle);
         mHostText = mView.findViewById(R.id.host_secure_text);
         mHostCert = mView.findViewById(R.id.host_secure);
+        mThisPageSectionHeader = mView.findViewById(R.id.this_page_section_header);
         mBlockedTrackersSummaryRow = mView.findViewById(R.id.blocked_trackers_summary_row);
         mBlockedTrackersSummaryText = mView.findViewById(R.id.blocked_trackers_summary_text);
 
@@ -166,6 +192,11 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
         mLastIconUrl = mGeckoState.getEntityIcon();
         loadFavicon(mHostImage, mDomain);
 
+        // Initialise the Data saved stat at 0 B so the card doesn't
+        // render blank on first paint before either counter observer
+        // fires.
+        updateDataSavedDisplay();
+
         // Ads count — routed to the correct per-mode stream so the incognito
         // sheet never reflects counts from regular browsing and vice versa.
         // Both streams are backed by the same GeckoUblockHelper singleton;
@@ -176,7 +207,9 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
                 : mGeckoStateViewModel.getAdsCount();
 
         adsCountLive.observe(getViewLifecycleOwner(), count -> {
-            mAdsCounterTextView.setText(String.valueOf(count));
+            mAdsCounterTextView.setText(count);
+            mAdsBlockedCount = parseCount(count);
+            updateDataSavedDisplay();
         });
 
         // Ads filter enabled state is a per-URL whitelist concept (netWhitelist
@@ -214,19 +247,17 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
 
 
     /**
-     * Update the summary row with the page's running tracker total. The
-     * row itself opens the per-host detail sheet on tap; we don't render
-     * the per-category breakdown here any more.
+     * Update the Trackers blocked stat card and the THIS PAGE summary
+     * row from the page's running tracker-category counters.
      *
-     * <p>Hidden when the user has added a tracking exception for this
-     * site (counts wouldn't be meaningful — events stop firing) or when
-     * the page hasn't blocked anything yet. The toggle row above keeps
-     * showing the existing subtext in both cases, so the sheet stays
-     * useful.
+     * <p>The summary row + its section header are hidden when the
+     * user has added a tracking exception for this site (counts
+     * wouldn't be meaningful — events stop firing) or when nothing
+     * has been blocked yet. The Trackers blocked stat card stays
+     * visible (showing 0) so the user can still see all three stats
+     * line up at a glance.</p>
      */
     private void renderBlockedTrackerCounts(Map<TrackingCategory, Integer> counts) {
-        if (mBlockedTrackersSummaryRow == null) return;
-
         int total = 0;
         if (counts != null) {
             for (Integer v : counts.values()) {
@@ -234,14 +265,56 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
             }
         }
 
-        if (!mTrackingEnabledForSite || total == 0) {
-            mBlockedTrackersSummaryRow.setVisibility(View.GONE);
-            return;
+        mTrackersBlockedCount = total;
+        if (mTrackersCounterTextView != null) {
+            mTrackersCounterTextView.setText(String.valueOf(total));
         }
+        updateDataSavedDisplay();
 
-        mBlockedTrackersSummaryRow.setVisibility(View.VISIBLE);
-        mBlockedTrackersSummaryText.setText(getResources().getQuantityString(
-                R.plurals.blocked_trackers_summary, total, total));
+        if (mBlockedTrackersSummaryRow == null) return;
+
+        boolean show = mTrackingEnabledForSite && total > 0;
+        int visibility = show ? View.VISIBLE : View.GONE;
+        mBlockedTrackersSummaryRow.setVisibility(visibility);
+        if (mThisPageSectionHeader != null) {
+            mThisPageSectionHeader.setVisibility(visibility);
+        }
+        if (show) {
+            mBlockedTrackersSummaryText.setText(getResources().getQuantityString(
+                    R.plurals.blocked_trackers_summary, total, total));
+        }
+    }
+
+
+    /**
+     * Recomputes the Data saved stat card from the two running
+     * counters using the same average-bytes-per-blocked-request
+     * constant as HomeFragment and TrackersInfoSheet. Cheap enough
+     * to call from every counter observer; no debouncing needed.
+     */
+    private void updateDataSavedDisplay() {
+        if (mDataSavedTextView == null) return;
+        long bytes = (long) (mAdsBlockedCount + mTrackersBlockedCount)
+                * AVG_BYTES_PER_BLOCKED_REQUEST;
+        mDataSavedTextView.setText(Utils.readableFileSize(bytes));
+    }
+
+
+    /**
+     * Tolerant int parse for the ads counter LiveData — the stream
+     * emits formatted strings ("12,345") so a vanilla Integer.parseInt
+     * would throw on the comma. Strip any non-digit and parse the
+     * remainder; on any failure return 0 so the running total stays
+     * a non-negative integer.
+     */
+    private static int parseCount(@Nullable String value) {
+        if (TextUtils.isEmpty(value)) return 0;
+        try {
+            String digits = value.replaceAll("\\D", "");
+            return digits.isEmpty() ? 0 : Integer.parseInt(digits);
+        } catch (NumberFormatException ignored) {
+            return 0;
+        }
     }
 
 
@@ -317,11 +390,17 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
                 R.string.protection_panel_etp_toggle_enabled_description_2 :
                 R.string.protection_panel_etp_toggle_disabled_description_2);
         // When the user flips the per-site toggle off we drop the
-        // summary row immediately — its counts are stale the moment we
-        // stop applying ETP, and re-showing them would look like an
-        // exception is still being protected.
-        if (!isEnabled && mBlockedTrackersSummaryRow != null) {
-            mBlockedTrackersSummaryRow.setVisibility(View.GONE);
+        // THIS PAGE section (header + summary row) immediately — its
+        // counts are stale the moment we stop applying ETP, and
+        // re-showing them would look like an exception is still being
+        // protected.
+        if (!isEnabled) {
+            if (mBlockedTrackersSummaryRow != null) {
+                mBlockedTrackersSummaryRow.setVisibility(View.GONE);
+            }
+            if (mThisPageSectionHeader != null) {
+                mThisPageSectionHeader.setVisibility(View.GONE);
+            }
         }
     }
 
@@ -369,9 +448,12 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
         mAdsSwitch = null;
         mTrackingSwitch = null;
         mAdsCounterTextView = null;
+        mTrackersCounterTextView = null;
+        mDataSavedTextView = null;
         mTrackingIcon = null;
         mTrackingSubtext = null;
         mHostImage = null;
+        mThisPageSectionHeader = null;
         mBlockedTrackersSummaryRow = null;
         mBlockedTrackersSummaryText = null;
         mView = null;
