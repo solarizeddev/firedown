@@ -80,6 +80,14 @@
                     android:paddingHorizontal="14dp"
                     android:paddingVertical="14dp">
 
+                    <!--
+                        No app:tint here. The fallback ic_bookmark_24
+                        vector carries its own android:tint, so the
+                        placeholder still reads themed; once Glide
+                        swaps in a real favicon bitmap, an ImageView-
+                        level tint would paint over its colours and
+                        flatten the loaded icon to one shade of grey.
+                    -->
                     <androidx.appcompat.widget.AppCompatImageView
                         android:id="@+id/edit_favicon"
                         android:layout_width="44dp"
@@ -87,8 +95,8 @@
                         android:background="@drawable/bg_popup_chip_neutral"
                         android:contentDescription="@null"
                         android:padding="6dp"
-                        android:src="@drawable/ic_bookmark_24"
-                        app:tint="?attr/colorOnSurfaceVariant" />
+                        android:scaleType="fitCenter"
+                        android:src="@drawable/ic_bookmark_24" />
 
                     <LinearLayout
                         android:layout_width="0dp"
@@ -280,58 +288,28 @@
                 android:text="@string/prompt_save_confirmation" />
 
 
-            <!-- ── Delete (destructive) ────────────────────────────── -->
+            <!-- ── Delete (destructive low-emphasis) ───────────────── -->
             <!--
-                MaterialCard + error-tinted chip mirror the popup Quit
-                card so destructive actions read the same way
-                everywhere — visually quarantined, not a passive text
-                button blending in with Save.
+                Conventional text-button treatment with colorError text.
+                Earlier iteration used the popup's destructive-card
+                pattern (MaterialCard + error chip) for parity, but
+                that pattern only lives in the popup-row context today;
+                every other delete surface in the app goes through a
+                MaterialAlertDialog confirmation. Keeping a plain
+                Material3 TextButton here matches that vocabulary and
+                still reads clearly as the destructive sibling of Save.
             -->
-            <com.google.android.material.card.MaterialCardView
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/delete_button"
+                style="@style/Widget.Material3.Button.TextButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                app:cardBackgroundColor="?attr/colorSurfaceContainer"
-                app:cardCornerRadius="14dp"
-                app:cardElevation="0dp"
-                app:strokeWidth="0dp">
-
-                <LinearLayout
-                    android:id="@+id/delete_button"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="?attr/selectableItemBackground"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:paddingHorizontal="14dp"
-                    android:paddingVertical="10dp">
-
-                    <FrameLayout
-                        android:layout_width="32dp"
-                        android:layout_height="32dp"
-                        android:background="@drawable/bg_popup_chip_error">
-
-                        <androidx.appcompat.widget.AppCompatImageView
-                            android:layout_width="18dp"
-                            android:layout_height="18dp"
-                            android:layout_gravity="center"
-                            android:contentDescription="@null"
-                            android:src="@drawable/ic_baseline_delete_24"
-                            app:tint="?attr/colorOnErrorContainer" />
-                    </FrameLayout>
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="14dp"
-                        android:layout_weight="1"
-                        android:text="@string/bookmark_delete_action"
-                        android:textAppearance="?attr/textAppearanceTitleSmall"
-                        android:textColor="?attr/colorError" />
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
+                android:layout_marginTop="4dp"
+                android:padding="12dp"
+                android:stateListAnimator="@null"
+                android:text="@string/bookmark_delete_action"
+                android:textColor="?attr/colorError"
+                app:iconTint="?attr/colorError" />
 
 
         </LinearLayout>
