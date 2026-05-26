@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Tabs holder — swipe conflict fix</title>
+<style>
+  :root {
+    --bg: #0a0a0c;
+    --panel: #131316;
+    --surface: #1a1a1c;
+    --surface-container: #232327;
+    --surface-container-high: #2a2a2e;
+    --surface-container-highest: #36363a;
+    --on-surface: #e6e1e5;
+    --on-surface-variant: #b8b4c0;
+    --on-surface-faint: #7a7681;
+    --primary: #ff8a65;
+    --on-primary: #4a1f12;
+    --primary-container: #4d2419;
+    --on-primary-container: #ffdad0;
+    --divider: #2a2a2e;
+    --good: #86d493;
+    --bad: #e6856b;
+    --warn: #ffb74d;
+    --tab-tile: #1e1e21;
+    --tab-active-border: #d4ff5e;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 28px;
+    background: var(--bg);
+    color: var(--on-surface);
+    font-family: -apple-system, system-ui, "Roboto", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1 { font-size: 22px; font-weight: 500; margin: 0 0 6px; }
+  h2.section {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--on-surface-faint);
+    margin: 36px 0 16px;
+    border-top: 1px solid var(--divider);
+    padding-top: 24px;
+  }
+  .lede {
+    color: var(--on-surface-variant);
+    font-size: 13px;
+    margin: 0 0 24px;
+    max-width: 1100px;
+    line-height: 1.6;
+  }
+  .lede strong { color: var(--on-surface); }
+  code, .mono { font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+
+  .row {
+    display: grid;
+    grid-template-columns: minmax(280px, 320px) 1fr;
+    gap: 28px;
+    align-items: start;
+    background: var(--panel);
+    border: 1px solid var(--divider);
+    border-radius: 16px;
+    padding: 22px;
+    margin-bottom: 22px;
+  }
+  .row h3 { font-size: 15px; font-weight: 600; margin: 0 0 4px; }
+  .row .descr {
+    font-size: 13px;
+    color: var(--on-surface-variant);
+    line-height: 1.55;
+    margin: 0 0 12px;
+  }
+  .row .descr strong { color: var(--on-surface); }
+  .row .descr em { color: var(--on-surface); font-style: normal; background: rgba(255,138,101,0.12); padding: 1px 5px; border-radius: 3px; }
+
+  /* Phone */
+  .phone {
+    width: 100%;
+    max-width: 280px;
+    aspect-ratio: 9 / 19;
+    background: var(--surface);
+    border: 1px solid var(--divider);
+    border-radius: 22px;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    margin: 0 auto;
+  }
+  .statusbar {
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 14px 0 60px;
+    font-size: 8px;
+    color: var(--on-surface-variant);
+  }
+  .toolbar {
+    height: 42px;
+    display: flex;
+    align-items: center;
+    padding: 0 6px;
+    gap: 4px;
+  }
+  .toolbar .back, .toolbar .icon-btn {
+    width: 32px; height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--on-surface);
+  }
+  .toolbar .back svg, .toolbar .icon-btn svg { width: 18px; height: 18px; }
+  .toolbar .title {
+    flex: 1;
+    font-size: 15px;
+    font-weight: 500;
+    padding: 0 6px;
+  }
+
+  /* Segmented selector */
+  .segmented {
+    display: flex;
+    margin: 4px 12px 8px;
+    background: var(--surface-container);
+    border-radius: 999px;
+    padding: 3px;
+    gap: 3px;
+  }
+  .segmented .seg {
+    flex: 1;
+    text-align: center;
+    padding: 6px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    color: var(--on-surface-variant);
+  }
+  .segmented .seg.active {
+    background: var(--primary-container);
+    color: var(--on-primary-container);
+    font-weight: 600;
+  }
+
+  /* Archived banner */
+  .banner {
+    background: var(--surface-container);
+    border-radius: 10px;
+    margin: 0 12px 10px;
+    padding: 8px 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 10px;
+    color: var(--on-surface-variant);
+  }
+  .banner svg { width: 16px; height: 16px; color: var(--on-surface-faint); flex-shrink: 0; }
+  .banner .body { flex: 1; min-width: 0; }
+  .banner .body .t { color: var(--on-surface); font-weight: 500; line-height: 13px; }
+  .banner .x { color: var(--on-surface-faint); }
+
+  /* Tab grid */
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding: 0 12px;
+  }
+  .tile {
+    background: var(--tab-tile);
+    border-radius: 10px;
+    overflow: hidden;
+    aspect-ratio: 9 / 13;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+  .tile.active {
+    border: 2px solid var(--tab-active-border);
+  }
+  .tile .head {
+    height: 22px;
+    display: flex;
+    align-items: center;
+    padding: 0 6px;
+    gap: 5px;
+    font-size: 9px;
+    color: var(--on-surface);
+  }
+  .tile .fav {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 7px;
+    font-weight: 700;
+    color: white;
+  }
+  .fav.n  { background: #cf2061; }
+  .fav.yt { background: #ff0000; }
+  .fav.ep { background: #444; }
+  .fav.new { background: var(--surface-container-highest); }
+  .tile .head .title {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 9px;
+  }
+  .tile .head .x { color: var(--on-surface-faint); font-size: 11px; }
+  .tile .thumb {
+    flex: 1;
+    background: #eee;
+    position: relative;
+  }
+  .tile .thumb.empty { background: var(--tab-tile); }
+  .tile .thumb.gh { background: linear-gradient(180deg, #1a1a1a 0%, #2a2a2a 100%); }
+  .tile .thumb.yt { background: #2c1f1f; }
+  .tile .thumb.ep { background: #f7f7f7; }
+  .tile .thumb.new { background: var(--surface); display: flex; align-items: center; justify-content: center; }
+  .tile .thumb.new::before {
+    content: '+';
+    color: var(--primary);
+    font-size: 28px;
+    font-weight: 300;
+  }
+
+  /* FAB */
+  .fab {
+    position: absolute;
+    bottom: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 44px;
+    height: 44px;
+    background: var(--primary);
+    color: var(--on-primary);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    font-weight: 300;
+  }
+
+  /* Gesture arrows */
+  .gesture {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+  }
+  .gesture.left {
+    left: 8px;
+  }
+  .gesture.right {
+    right: 8px;
+  }
+  .gesture-label {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255,138,101,0.85);
+    color: var(--on-primary);
+    padding: 3px 7px;
+    border-radius: 4px;
+    font-size: 9px;
+    font-weight: 600;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+  .gesture-label.left {
+    left: 22px;
+  }
+  .gesture-label.right {
+    right: 22px;
+  }
+  .gesture-label.good { background: rgba(134, 212, 147, 0.85); color: #062a10; }
+  .gesture-label.bad  { background: rgba(230, 133, 107, 0.85); color: #2a0e07; }
+
+  /* Conflict zone overlay */
+  .conflict-overlay {
+    position: absolute;
+    top: 80px;
+    left: 12px;
+    right: 12px;
+    bottom: 80px;
+    border: 2px dashed rgba(255, 183, 77, 0.7);
+    border-radius: 10px;
+    pointer-events: none;
+  }
+  .conflict-overlay::after {
+    content: 'gesture overlap';
+    position: absolute;
+    top: -10px;
+    left: 12px;
+    background: var(--warn);
+    color: #1a1100;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .verdict {
+    margin-top: 28px;
+    background: #131316;
+    border: 1px solid var(--divider);
+    border-radius: 14px;
+    padding: 20px 24px;
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--on-surface-variant);
+    max-width: 1100px;
+  }
+  .verdict strong { color: var(--on-surface); }
+  .verdict h3 { color: var(--on-surface); margin: 0 0 10px; font-size: 16px; }
+  .verdict ul { padding-left: 20px; margin: 6px 0; }
+  .verdict ul li { margin: 4px 0; }
+
+  .pros, .cons {
+    font-size: 12px;
+    line-height: 1.55;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .pros li::before { content: "+ "; color: var(--good); font-weight: 700; }
+  .cons li::before { content: "− "; color: var(--bad); font-weight: 700; }
+
+  .codeblock {
+    background: var(--surface-container);
+    border: 1px solid var(--divider);
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 11px;
+    color: var(--on-surface);
+    margin: 10px 0;
+    overflow-x: auto;
+  }
+  .codeblock .comment { color: var(--on-surface-faint); }
+  .codeblock .change { color: var(--good); }
+  .codeblock .remove { color: var(--bad); text-decoration: line-through; }
+</style>
+</head>
+<body>
+
+<h1>Tabs holder — swipe-to-close vs ViewPager swipe</h1>
+<p class="lede">Two horizontal-swipe gestures live in the same coordinate space on this screen. The ViewPager swiping Tabs ↔ Incognito and the per-tile swipe-to-close both want the same drag, so they race the system's <code>onInterceptTouchEvent</code> chain — ViewPager2 wins when the drag has any horizontal component, which means swipe-to-close only fires reliably if the user starts dragging from the card center with no vertical drift.</p>
+
+<!-- ============================================================ -->
+<h2 class="section">Today — gesture overlap</h2>
+<div class="row">
+
+  <div>
+    <div class="phone">
+      <div class="statusbar"><span>0:57</span><span>85%</span></div>
+      <div class="toolbar">
+        <div class="back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></div>
+        <div class="title">Tabs</div>
+        <div class="icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></div>
+        <div class="icon-btn"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg></div>
+      </div>
+
+      <div class="segmented">
+        <div class="seg active">Tabs</div>
+        <div class="seg">Incognito</div>
+      </div>
+
+      <div class="banner">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7v13h18V7M3 7l3-4h12l3 4M3 7h18M10 12h4"/></svg>
+        <div class="body"><div class="t">1 tab archived this week</div><div>Tap to view or reopen</div></div>
+        <div class="x">×</div>
+      </div>
+
+      <div class="grid">
+        <div class="tile">
+          <div class="head"><div class="fav n">N</div><div class="title">NoGood</div><div class="x">×</div></div>
+          <div class="thumb empty" style="background: #1e1e21;"></div>
+        </div>
+        <div class="tile active">
+          <div class="head"><div class="fav yt">▶</div><div class="title">La Psicología</div><div class="x">×</div></div>
+          <div class="thumb yt"></div>
+        </div>
+        <div class="tile">
+          <div class="head"><div class="fav ep">E</div><div class="title">EL PAÍS</div><div class="x">×</div></div>
+          <div class="thumb ep"></div>
+        </div>
+        <div class="tile">
+          <div class="head"><div class="fav new">+</div><div class="title">New tab</div><div class="x">×</div></div>
+          <div class="thumb new"></div>
+        </div>
+      </div>
+
+      <!-- Conflict zone overlay -->
+      <div class="conflict-overlay"></div>
+
+      <!-- Gesture arrows: both compete -->
+      <div class="gesture-label bad left">tile: close</div>
+      <div class="gesture-label bad right">pager: switch</div>
+
+      <div class="fab">+</div>
+    </div>
+  </div>
+
+  <div>
+    <h3>What's happening</h3>
+    <p class="descr">Two horizontal-swipe handlers are attached in the same view tree:</p>
+    <ul class="cons">
+      <li><strong>ViewPager2</strong> at the root, <code>setUserInputEnabled(true)</code>, swaps Tabs ↔ Incognito</li>
+      <li><strong>ItemTouchHelper</strong> on each tile's RecyclerView, <em>LEFT | RIGHT</em> swipe directions, calls <code>onSwiped</code> → close</li>
+    </ul>
+    <p class="descr" style="margin-top:10px;">ViewPager2 intercepts touches that look like horizontal scrolls at its own <code>onInterceptTouchEvent</code> layer, before ItemTouchHelper sees them. So:</p>
+    <ul class="cons" style="margin-top:4px;">
+      <li>Slow / careful horizontal drag from the tile centre → ItemTouchHelper wins → close</li>
+      <li>Any drag that has even slight horizontal velocity / drift → ViewPager2 grabs it → page switch</li>
+      <li>Effect: swipe-to-close feels broken / unreliable; users default to the × button instead</li>
+    </ul>
+    <p class="descr" style="margin-top:10px;">Both gesture targets compete for the dashed zone above. The × button on each tile already covers the close action reliably — swipe is the redundant one in the pair.</p>
+  </div>
+
+</div>
+
+
+<!-- ============================================================ -->
+<h2 class="section">Proposed — disable ViewPager swipe</h2>
+<div class="row">
+
+  <div>
+    <div class="phone">
+      <div class="statusbar"><span>0:57</span><span>85%</span></div>
+      <div class="toolbar">
+        <div class="back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></div>
+        <div class="title">Tabs</div>
+        <div class="icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></div>
+        <div class="icon-btn"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg></div>
+      </div>
+
+      <div class="segmented">
+        <div class="seg active">Tabs</div>
+        <div class="seg">Incognito</div>
+      </div>
+
+      <div class="banner">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7v13h18V7M3 7l3-4h12l3 4M3 7h18M10 12h4"/></svg>
+        <div class="body"><div class="t">1 tab archived this week</div><div>Tap to view or reopen</div></div>
+        <div class="x">×</div>
+      </div>
+
+      <div class="grid">
+        <div class="tile">
+          <div class="head"><div class="fav n">N</div><div class="title">NoGood</div><div class="x">×</div></div>
+          <div class="thumb empty" style="background: #1e1e21;"></div>
+        </div>
+        <div class="tile active">
+          <div class="head"><div class="fav yt">▶</div><div class="title">La Psicología</div><div class="x">×</div></div>
+          <div class="thumb yt"></div>
+        </div>
+        <div class="tile">
+          <div class="head"><div class="fav ep">E</div><div class="title">EL PAÍS</div><div class="x">×</div></div>
+          <div class="thumb ep"></div>
+        </div>
+        <div class="tile">
+          <div class="head"><div class="fav new">+</div><div class="title">New tab</div><div class="x">×</div></div>
+          <div class="thumb new"></div>
+        </div>
+      </div>
+
+      <div class="gesture-label good left">tile: close (reliable)</div>
+
+      <div class="fab">+</div>
+    </div>
+  </div>
+
+  <div>
+    <h3>The fix</h3>
+    <p class="descr">Disable ViewPager2's built-in swipe. The segmented Tabs / Incognito selector at the top already covers mode switching — it's the affordance the user actually looks at. Tap-only switching is the dominant pattern in modern Android (Gmail, Drive, Files).</p>
+
+    <div class="codeblock">
+<span class="comment">// TabsHolderFragment.setupViewPager()</span>
+mViewPager.setAdapter(new TabsPagerAdapter(this));
+mViewPager.setOffscreenPageLimit(1);
+<span class="remove">mViewPager.setUserInputEnabled(true);</span>
+<span class="change">mViewPager.setUserInputEnabled(false);  // tap-only via segmented selector</span></div>
+
+    <h3 style="margin-top:14px;">Wins</h3>
+    <ul class="pros">
+      <li>Swipe-to-close on tab tiles now fires reliably — no upstream interceptor</li>
+      <li>Mode-switch UX is unchanged for users who tap (the dominant path)</li>
+      <li>One-line change, no layout or adapter touched</li>
+    </ul>
+
+    <h3 style="margin-top:14px;">Trade-offs</h3>
+    <ul class="cons">
+      <li>Users who learned the swipe-to-switch-mode gesture lose it. The segmented buttons stay; muscle memory shifts to taps.</li>
+      <li>The ViewPager2 backing graph stays in place (still hosting the two fragments) — we only suppress its input handling, not the page model. Cheap and reversible.</li>
+    </ul>
+  </div>
+
+</div>
+
+
+<div class="verdict">
+  <h3>Why drop ViewPager swipe instead of dropping swipe-to-close?</h3>
+  <p>Either gesture would resolve the conflict. The argument for keeping <strong>swipe-to-close</strong> over swipe-to-switch:</p>
+  <ul>
+    <li><strong>Frequency mismatch.</strong> Closing tabs is something users do dozens of times a session. Switching between Regular and Incognito tab modes is something a privacy-conscious user might do a few times a day at most.</li>
+    <li><strong>Discoverability.</strong> The segmented selector is a visible affordance for mode switching. The × button on each tile is the visible affordance for close. The hidden gestures (swipe-to-close and swipe-to-switch) are accelerators — swipe-to-close is the one users actually internalise because it matches every other list in Android (Gmail archive, notification dismiss).</li>
+    <li><strong>Symmetry.</strong> Once swipe-to-close is reliable, the per-tile × button can stay as the visible affordance for newer users; the swipe becomes the accelerator for users who learn it. Two paths, no conflict.</li>
+  </ul>
+  <p><strong>Layout note:</strong> the current grid + banner + segmented + FAB shape is solid. The only thing that read as off in the screenshot was the "New tab" tile, but that's a real newly-opened blank tab using <code>R.drawable.new_tab</code> as a placeholder, not a UI affordance — leaving it alone.</p>
+</div>
+
+</body>
+</html>
