@@ -294,7 +294,16 @@ public class TabsHolderFragment extends BaseFocusFragment {
     private void setupViewPager() {
         mViewPager.setAdapter(new TabsPagerAdapter(this));
         mViewPager.setOffscreenPageLimit(1);
-        mViewPager.setUserInputEnabled(true);
+        // Tap-only mode switching via the segmented selector above.
+        // ViewPager2's input handling intercepts horizontal drags at
+        // onInterceptTouchEvent, which races the per-tile
+        // ItemTouchHelper that owns swipe-to-close — the tile only
+        // wins for slow, perfectly-horizontal drags from the centre,
+        // so swipe-to-close felt broken on any natural gesture.
+        // Closing tabs is high-frequency, mode-switching is low-
+        // frequency, and the segmented selector is the visible
+        // affordance for the latter anyway.
+        mViewPager.setUserInputEnabled(false);
 
         mViewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
             @Override
