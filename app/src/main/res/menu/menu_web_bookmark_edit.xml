@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Toolbar menu for the bookmark edit screen.
+
+    Two page-level secondary actions surface as icons in the app
+    bar — standard Android detail-screen pattern. Both icons
+    operate on the bookmark's current URL: Open hands it off to
+    the browser (popping back to home so the edit surface doesn't
+    linger on the stack), Share invokes the system share sheet.
+-->
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/menu_open_in_browser"
+        android:icon="@drawable/ic_open_in_new_24"
+        android:title="@string/bookmark_action_open"
+        app:iconTint="?attr/colorOnSurfaceVariant"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/menu_share"
+        android:icon="@drawable/ic_share_24"
+        android:title="@string/browser_menu_share"
+        app:iconTint="?attr/colorOnSurfaceVariant"
+        app:showAsAction="ifRoom" />
+
+</menu>

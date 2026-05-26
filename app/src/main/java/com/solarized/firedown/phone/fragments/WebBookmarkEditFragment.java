@@ -48,8 +48,6 @@ public class WebBookmarkEditFragment extends BaseFocusFragment implements View.O
 
     private MaterialButton mSaveButton;
     private View mDeleteButton;
-    private View mOpenInBrowserRow;
-    private View mShareRow;
     private TextInputLayout mHostLayout;
     private TextInputEditText mHostnameInput;
     private TextInputEditText mTitleNameInput;
@@ -82,8 +80,6 @@ public class WebBookmarkEditFragment extends BaseFocusFragment implements View.O
 
         mDeleteButton = v.findViewById(R.id.delete_button);
         mSaveButton = v.findViewById(R.id.save_button);
-        mOpenInBrowserRow = v.findViewById(R.id.open_in_browser_row);
-        mShareRow = v.findViewById(R.id.share_row);
         mHostLayout = v.findViewById(R.id.host_text_input_layout);
         mHostnameInput = v.findViewById(R.id.host_field);
         mTitleNameInput = v.findViewById(R.id.title_field);
@@ -93,8 +89,6 @@ public class WebBookmarkEditFragment extends BaseFocusFragment implements View.O
 
         mSaveButton.setOnClickListener(this);
         mDeleteButton.setOnClickListener(this);
-        mOpenInBrowserRow.setOnClickListener(this);
-        mShareRow.setOnClickListener(this);
 
         // Rounded-corner transform so the favicon visually sits inside
         // the chip background rather than poking through its corners.
@@ -218,16 +212,53 @@ public class WebBookmarkEditFragment extends BaseFocusFragment implements View.O
         mToolbar = v.findViewById(R.id.toolbar);
         mToolbar.setNavigationOnClickListener(v1 -> handleBack());
         mToolbar.addMenuProvider(new MenuProvider() {
-            @Override public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater menuInflater) {}
+            @Override
+            public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater menuInflater) {
+                menuInflater.inflate(R.menu.menu_web_bookmark_edit, menu);
+            }
+
             @Override
             public boolean onMenuItemSelected(@NonNull MenuItem item) {
-                if (item.getItemId() == android.R.id.home) {
+                int itemId = item.getItemId();
+                if (itemId == android.R.id.home) {
                     handleBack();
+                    return true;
+                }
+                if (itemId == R.id.menu_open_in_browser) {
+                    openInBrowser();
+                    return true;
+                }
+                if (itemId == R.id.menu_share) {
+                    shareBookmarkUrl();
                     return true;
                 }
                 return false;
             }
         }, getViewLifecycleOwner(), Lifecycle.State.RESUMED);
+    }
+
+    /**
+     * Mirror of the bookmark list's "tap to open" flow: publish an
+     * OPEN_URI event on the shared ViewModel, then navigate to the
+     * browser via the action that pops back to home so the edit
+     * surface isn't left on the back stack.
+     */
+    private void openInBrowser() {
+        if (mWebBookmarkEntity == null) return;
+        GeckoStateEntity entity = new GeckoStateEntity(false);
+        entity.setUri(mWebBookmarkEntity.getUrl());
+        mBrowserURIViewModel.onEventSelected(entity, IntentActions.OPEN_URI);
+        NavigationUtils.navigateSafe(mNavController,
+                R.id.action_web_bookmark_edit_to_browser);
+    }
+
+    private void shareBookmarkUrl() {
+        if (mWebBookmarkEntity == null) return;
+        new ShareCompat.IntentBuilder(mActivity)
+                .setType("text/plain")
+                .setChooserTitle(R.string.share_url)
+                .setText(mWebBookmarkEntity.getUrl())
+                .startChooser();
     }
 
     private void handleBack() {
@@ -254,24 +285,6 @@ public class WebBookmarkEditFragment extends BaseFocusFragment implements View.O
                 mWebBookmarkViewModel.delete(mWebBookmarkEntity);
             }
             mNavController.popBackStack();
-        } else if (viewId == R.id.open_in_browser_row) {
-            if (mWebBookmarkEntity == null) return;
-            // Mirror the bookmark list's "tap to open" flow: publish an
-            // OPEN_URI event on the shared ViewModel, then navigate to
-            // browser via the action that pops back to home so the
-            // edit surface isn't left on the back stack.
-            GeckoStateEntity entity = new GeckoStateEntity(false);
-            entity.setUri(mWebBookmarkEntity.getUrl());
-            mBrowserURIViewModel.onEventSelected(entity, IntentActions.OPEN_URI);
-            NavigationUtils.navigateSafe(mNavController,
-                    R.id.action_web_bookmark_edit_to_browser);
-        } else if (viewId == R.id.share_row) {
-            if (mWebBookmarkEntity == null) return;
-            new ShareCompat.IntentBuilder(mActivity)
-                    .setType("text/plain")
-                    .setChooserTitle(R.string.share_url)
-                    .setText(mWebBookmarkEntity.getUrl())
-                    .startChooser();
         }
     }
 
@@ -283,8 +296,6 @@ public class WebBookmarkEditFragment extends BaseFocusFragment implements View.O
         mHostLayout = null;
         mSaveButton = null;
         mDeleteButton = null;
-        mOpenInBrowserRow = null;
-        mShareRow = null;
         mTitlePreview = null;
         mUrlPreview = null;
         mFaviconView = null;

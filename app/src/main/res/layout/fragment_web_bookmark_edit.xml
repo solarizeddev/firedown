@@ -2,27 +2,30 @@
 <!--
     Bookmark edit screen.
 
-    Layout (top → bottom):
-      • App bar with up-navigation
-      • Identity header card — favicon + title + URL preview. Updates
-        live as the user edits the fields below, so the screen always
-        shows the bookmark "as it will be saved".
-      • Inputs card — Title and URL fields wrapped in a single
-        MaterialCard matching the Home / popup vocabulary.
-      • Actions card — "Open in browser" and "Share". Both are
-        contextual page-actions that belong with the bookmark surface
-        rather than buried in a toolbar overflow menu.
-      • Primary "Save" button (enabled when both fields are non-empty).
-      • Destructive "Delete bookmark" card (error-tinted chip + label;
-        same visual quarantine pattern as the popup Quit card).
+    Bare form layout matching the rest of the app's form surfaces
+    (preference inputs, lock screen, vault) — no MaterialCard
+    wrappers around the inputs or actions. Earlier iterations grouped
+    everything into surfaceContainer cards, which looked closer to
+    the Home dashboard cards than the form screens this fragment
+    actually sits next to.
 
-    Fields are editable from entry — the prior two-tap "Edit then
-    Save" pattern is gone. Save dispatches the update and pops back;
-    Delete dispatches the deletion and pops back. The screen never
-    differentiates a view-mode from an edit-mode state.
+    Layout (top → bottom):
+      • App bar with up-navigation + "Open in browser" / "Share"
+        menu icons (standard detail-screen secondary-action slot).
+      • Identity header — favicon + title + URL preview. Lives at
+        the top as a bare block, no card chrome; updates live as the
+        user edits the fields below.
+      • Title TextInputLayout
+      • URL TextInputLayout
+      • Primary "Save" button (enabled when both fields are non-empty
+        and the URL parses).
+      • Destructive "Delete bookmark" text button (colorError).
+
+    Fields are editable from entry; no view-mode / edit-mode toggle.
 -->
 <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="?attr/colorSurface">
@@ -56,225 +59,106 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingHorizontal="16dp"
-            android:paddingTop="14dp"
-            android:paddingBottom="16dp">
+            android:orientation="vertical">
 
 
-            <!-- ── Identity header ─────────────────────────────────── -->
-            <com.google.android.material.card.MaterialCardView
+            <!-- ── Identity header (bare, unwrapped) ───────────────── -->
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="12dp"
-                app:cardBackgroundColor="?attr/colorSurfaceContainer"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="0dp"
-                app:strokeWidth="0dp">
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="30dp"
+                android:paddingTop="20dp"
+                android:paddingBottom="8dp">
+
+                <!--
+                    No app:tint. The fallback ic_bookmark_24 vector
+                    carries its own android:tint so the placeholder
+                    reads themed; once Glide swaps in a real favicon
+                    bitmap, an ImageView-level tint would paint over
+                    its colours and flatten the loaded icon to one
+                    shade of grey.
+                -->
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:id="@+id/edit_favicon"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="@drawable/bg_popup_chip_neutral"
+                    android:contentDescription="@null"
+                    android:padding="6dp"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/ic_bookmark_24" />
 
                 <LinearLayout
-                    android:layout_width="match_parent"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:paddingHorizontal="14dp"
-                    android:paddingVertical="14dp">
-
-                    <!--
-                        No app:tint here. The fallback ic_bookmark_24
-                        vector carries its own android:tint, so the
-                        placeholder still reads themed; once Glide
-                        swaps in a real favicon bitmap, an ImageView-
-                        level tint would paint over its colours and
-                        flatten the loaded icon to one shade of grey.
-                    -->
-                    <androidx.appcompat.widget.AppCompatImageView
-                        android:id="@+id/edit_favicon"
-                        android:layout_width="44dp"
-                        android:layout_height="44dp"
-                        android:background="@drawable/bg_popup_chip_neutral"
-                        android:contentDescription="@null"
-                        android:padding="6dp"
-                        android:scaleType="fitCenter"
-                        android:src="@drawable/ic_bookmark_24" />
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="14dp"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:id="@+id/edit_title_preview"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:ellipsize="end"
-                            android:maxLines="1"
-                            android:textAppearance="?attr/textAppearanceTitleSmall"
-                            android:textColor="?attr/colorOnSurface" />
-
-                        <TextView
-                            android:id="@+id/edit_url_preview"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:ellipsize="end"
-                            android:layout_marginTop="2dp"
-                            android:maxLines="1"
-                            android:textAppearance="?attr/textAppearanceBodySmall"
-                            android:textColor="?attr/colorOnSurfaceVariant" />
-
-                    </LinearLayout>
-
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-
-
-            <!-- ── Inputs ──────────────────────────────────────────── -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="12dp"
-                app:cardBackgroundColor="?attr/colorSurfaceContainer"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="0dp"
-                app:strokeWidth="0dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:paddingHorizontal="14dp"
-                    android:paddingTop="6dp"
-                    android:paddingBottom="14dp">
-
-                    <com.solarized.firedown.ui.LoginPanelTextInputLayout
-                        android:id="@+id/title_text_input_layout"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp">
-
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/title_field"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:hint="@string/bookmark_name"
-                            android:imeOptions="actionNext"
-                            android:singleLine="true"
-                            android:textSize="16sp" />
-                    </com.solarized.firedown.ui.LoginPanelTextInputLayout>
-
-                    <com.solarized.firedown.ui.LoginPanelTextInputLayout
-                        android:id="@+id/host_text_input_layout"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        app:endIconMode="none">
-
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/host_field"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:hint="@string/login_host"
-                            android:imeOptions="actionDone"
-                            android:inputType="textWebEditText"
-                            android:singleLine="true"
-                            android:textSize="16sp" />
-                    </com.solarized.firedown.ui.LoginPanelTextInputLayout>
-
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-
-
-            <!-- ── Actions ─────────────────────────────────────────── -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="12dp"
-                app:cardBackgroundColor="?attr/colorSurfaceContainer"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="0dp"
-                app:strokeWidth="0dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_marginStart="14dp"
+                    android:layout_weight="1"
                     android:orientation="vertical">
 
-                    <LinearLayout
-                        android:id="@+id/open_in_browser_row"
+                    <TextView
+                        android:id="@+id/edit_title_preview"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:background="?attr/selectableItemBackground"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal"
-                        android:paddingHorizontal="14dp"
-                        android:paddingVertical="10dp">
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:textAppearance="?attr/textAppearanceTitleSmall"
+                        android:textColor="?attr/colorOnSurface" />
 
-                        <FrameLayout
-                            android:layout_width="32dp"
-                            android:layout_height="32dp"
-                            android:background="@drawable/bg_popup_chip_neutral">
-
-                            <androidx.appcompat.widget.AppCompatImageView
-                                android:layout_width="18dp"
-                                android:layout_height="18dp"
-                                android:layout_gravity="center"
-                                android:contentDescription="@null"
-                                android:src="@drawable/ic_open_in_new_24"
-                                app:tint="?attr/colorOnSurfaceVariant" />
-                        </FrameLayout>
-
-                        <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="14dp"
-                            android:layout_weight="1"
-                            android:text="@string/bookmark_action_open"
-                            android:textAppearance="?attr/textAppearanceTitleSmall"
-                            android:textColor="?attr/colorOnSurface" />
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:id="@+id/share_row"
+                    <TextView
+                        android:id="@+id/edit_url_preview"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:background="?attr/selectableItemBackground"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal"
-                        android:paddingHorizontal="14dp"
-                        android:paddingVertical="10dp">
-
-                        <FrameLayout
-                            android:layout_width="32dp"
-                            android:layout_height="32dp"
-                            android:background="@drawable/bg_popup_chip_neutral">
-
-                            <androidx.appcompat.widget.AppCompatImageView
-                                android:layout_width="18dp"
-                                android:layout_height="18dp"
-                                android:layout_gravity="center"
-                                android:contentDescription="@null"
-                                android:src="@drawable/ic_share_24"
-                                app:tint="?attr/colorOnSurfaceVariant" />
-                        </FrameLayout>
-
-                        <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="14dp"
-                            android:layout_weight="1"
-                            android:text="@string/browser_menu_share"
-                            android:textAppearance="?attr/textAppearanceTitleSmall"
-                            android:textColor="?attr/colorOnSurface" />
-                    </LinearLayout>
+                        android:layout_marginTop="2dp"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:textAppearance="?attr/textAppearanceBodySmall"
+                        android:textColor="?attr/colorOnSurfaceVariant" />
 
                 </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
+
+            </LinearLayout>
+
+
+            <!-- ── Inputs (bare TextInputLayouts) ──────────────────── -->
+            <com.solarized.firedown.ui.LoginPanelTextInputLayout
+                android:id="@+id/title_text_input_layout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="30dp"
+                android:layout_marginTop="16dp"
+                android:layout_marginEnd="30dp">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/title_field"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="@string/bookmark_name"
+                    android:imeOptions="actionNext"
+                    android:singleLine="true"
+                    android:textSize="16sp" />
+            </com.solarized.firedown.ui.LoginPanelTextInputLayout>
+
+            <com.solarized.firedown.ui.LoginPanelTextInputLayout
+                android:id="@+id/host_text_input_layout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="30dp"
+                android:layout_marginTop="12dp"
+                android:layout_marginEnd="30dp"
+                app:endIconMode="none">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/host_field"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="@string/login_host"
+                    android:imeOptions="actionDone"
+                    android:inputType="textWebEditText"
+                    android:singleLine="true"
+                    android:textSize="16sp" />
+            </com.solarized.firedown.ui.LoginPanelTextInputLayout>
 
 
             <!-- ── Save (primary) ──────────────────────────────────── -->
@@ -283,34 +167,27 @@
                 style="@style/Widget.Material3.Button"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
+                android:layout_marginStart="30dp"
+                android:layout_marginTop="30dp"
+                android:layout_marginEnd="30dp"
                 android:padding="12dp"
                 android:text="@string/prompt_save_confirmation" />
 
 
             <!-- ── Delete (destructive low-emphasis) ───────────────── -->
-            <!--
-                Conventional text-button treatment with colorError text.
-                Earlier iteration used the popup's destructive-card
-                pattern (MaterialCard + error chip) for parity, but
-                that pattern only lives in the popup-row context today;
-                every other delete surface in the app goes through a
-                MaterialAlertDialog confirmation. Keeping a plain
-                Material3 TextButton here matches that vocabulary and
-                still reads clearly as the destructive sibling of Save.
-            -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/delete_button"
                 style="@style/Widget.Material3.Button.TextButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
+                android:layout_marginStart="30dp"
+                android:layout_marginTop="6dp"
+                android:layout_marginEnd="30dp"
+                android:layout_marginBottom="20dp"
                 android:padding="12dp"
                 android:stateListAnimator="@null"
                 android:text="@string/bookmark_delete_action"
-                android:textColor="?attr/colorError"
-                app:iconTint="?attr/colorError" />
-
+                android:textColor="?attr/colorError" />
 
         </LinearLayout>
 
