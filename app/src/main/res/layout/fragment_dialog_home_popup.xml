@@ -2,11 +2,10 @@
 <!--
     Home "more" popup sheet.
 
-    Try 3 of the incognito card-visibility iteration: card removed,
-    rows sit flat on the sheet surface. With only two-or-three rows
-    (History / Settings / optional Quit) section headers felt heavy,
-    so the home sheet is left unlabelled — the destructive Quit row
-    still differentiates itself via colorPrimary text + tint.
+    Card removed, rows sit flat on the sheet surface. No section
+    rules — with only two-or-three rows the structure is obvious,
+    and the destructive Quit row marks itself via colorPrimary
+    text + tint.
 
     Incognito home reuses this layout: the fragment swaps the History
     row's icon, label, and dispatched id over to Downloads.

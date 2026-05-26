@@ -2,17 +2,19 @@
 <!--
     Browser "more" popup sheet.
 
-    Try 3 of the incognito card-visibility iteration: card removed,
-    rows sit flat on the sheet surface, grouped by small-caps section
-    headers (same TitleSmallEmphasized vocabulary the new SecuritySheet
-    uses for PROTECTION / MANAGE).
+    Card removed, rows sit flat on the sheet surface, semantic groups
+    separated by hairline rules. Tried section labels (PAGE / LIBRARY
+    / APP) over the same rules, but the labels were redundant — the
+    rules already broke the groups apart and the rows speak for
+    themselves. SecuritySheet keeps labelled sections because its
+    rows (toggles vs drill-downs) carry less self-evident structure.
 
     Shape (top→bottom):
       1. Drag handle (shared include).
       2. Quick-row header: Back · Forward · Share · Refresh.
-      3. PAGE section    — Bookmark page, Find in page, Desktop site
-      4. LIBRARY section — Bookmarks, History, Safe Folder
-      5. APP section     — Settings, optional Quit
+      3. Page actions    — Bookmark page, Find in page, Desktop site
+      4. Library         — Bookmarks, History, Safe Folder
+      5. App + exit      — Settings, optional Quit
 
     Row anatomy:
       • 56dp tall, 16dp horizontal padding
@@ -58,21 +60,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
+            android:paddingTop="4dp"
             android:paddingBottom="8dp">
-
-
-            <!-- ── PAGE ───────────────────────────────────────────── -->
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:layout_marginBottom="4dp"
-                android:letterSpacing="0.08"
-                android:paddingHorizontal="16dp"
-                android:text="@string/browser_menu_section_page"
-                android:textAllCaps="true"
-                android:textAppearance="?attr/textAppearanceTitleSmallEmphasized"
-                android:textColor="?attr/colorOnSurfaceVariant" />
 
 
             <!-- Bookmark page — drawableStart + label flip in
@@ -173,18 +162,10 @@
             </LinearLayout>
 
 
-            <!-- ── LIBRARY ────────────────────────────────────────── -->
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:layout_marginBottom="4dp"
-                android:letterSpacing="0.08"
-                android:paddingHorizontal="16dp"
-                android:text="@string/browser_menu_section_library"
-                android:textAllCaps="true"
-                android:textAppearance="?attr/textAppearanceTitleSmallEmphasized"
-                android:textColor="?attr/colorOnSurfaceVariant" />
+            <View
+                style="@style/Firedown.Divider.InCard"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="8dp" />
 
 
             <!-- Bookmarks. -->
@@ -273,18 +254,10 @@
             </LinearLayout>
 
 
-            <!-- ── APP ────────────────────────────────────────────── -->
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:layout_marginBottom="4dp"
-                android:letterSpacing="0.08"
-                android:paddingHorizontal="16dp"
-                android:text="@string/browser_menu_section_app"
-                android:textAllCaps="true"
-                android:textAppearance="?attr/textAppearanceTitleSmallEmphasized"
-                android:textColor="?attr/colorOnSurfaceVariant" />
+            <View
+                style="@style/Firedown.Divider.InCard"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="8dp" />
 
 
             <!-- Settings. -->
