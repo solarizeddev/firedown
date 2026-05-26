@@ -93,9 +93,20 @@
 
 
     <!--
-        Body container — paddingHorizontal matches the TrackersInfoSheet
-        (24dp) so the two sheets line up visually.
+        Body container — wrapped in a NestedScrollView so the sheet's
+        full content (stats + PROTECTION toggles + MANAGE drill-downs)
+        stays reachable in landscape and on short screens, where the
+        bottom-sheet height would otherwise clip the MANAGE section
+        off the bottom. The drag-handle + site-identity rows above
+        stay outside the scroller — that's the bottom-sheet drag
+        zone, scroll happens in here. paddingHorizontal mirrors
+        TrackersInfoSheet (24dp) so the two sheets line up.
     -->
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:overScrollMode="never">
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -384,5 +395,7 @@
         </LinearLayout>
 
     </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
 
 </LinearLayout>
