@@ -2,24 +2,11 @@
 <!--
     Home "more" popup sheet.
 
-    Single filled MaterialCard with rows separated by
-    Firedown.Divider.InCard rules — the same list-in-card vocabulary
-    SecurityStateSheet uses for its per-site controls. Two or three
-    rows depending on the quit-on-exit preference.
-
-    Same list-in-card vocabulary as the Browser popup. History,
-    Settings, and the conditional Quit sit flush in one group, no
-    dividers — the colorPrimary tint on the Quit row is what marks
-    it as destructive, mirroring the brand-orange Delete row in
-    Downloads / Bookmarks popups.
-
-    Row anatomy:
-      • 56dp tall, 16dp horizontal padding
-      • TextView with drawableStartCompat icon, TitleMedium / 15sp
-        text, onSurfaceVariant
-      • No trailing chevron — the ripple already communicates
-        tappability
-      • Quit row renders in colorPrimary text + drawable tint
+    Try 3 of the incognito card-visibility iteration: card removed,
+    rows sit flat on the sheet surface. With only two-or-three rows
+    (History / Settings / optional Quit) section headers felt heavy,
+    so the home sheet is left unlabelled — the destructive Quit row
+    still differentiates itself via colorPrimary text + tint.
 
     Incognito home reuses this layout: the fragment swaps the History
     row's icon, label, and dispatched id over to Downloads.
@@ -29,117 +16,99 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:paddingBottom="8dp">
 
     <include
         layout="@layout/dialog_drag_handle" />
 
-    <com.google.android.material.card.MaterialCardView
-        style="@style/Widget.Material3.CardView.Filled"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="12dp"
-        android:layout_marginEnd="16dp"
-        android:layout_marginBottom="12dp">
 
-        <LinearLayout
+    <!-- History. Fragment repaints drawableStart + label to
+         Downloads under incognito. -->
+    <LinearLayout
+        android:id="@+id/popup_history"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:background="?attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="16dp">
+
+        <TextView
+            android:id="@+id/popup_history_text"
+            style="@style/TextAppearance.Material3.TitleMedium"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:drawablePadding="16dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:text="@string/library_history"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:textSize="15sp"
+            app:drawableStartCompat="@drawable/ic_history_24"
+            app:drawableTint="?attr/colorOnSurfaceVariant" />
+
+    </LinearLayout>
 
 
-            <!-- History. Fragment repaints drawableStart + label to
-                 Downloads under incognito. -->
-            <LinearLayout
-                android:id="@+id/popup_history"
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:background="?attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingHorizontal="16dp">
+    <!-- Settings. -->
+    <LinearLayout
+        android:id="@+id/popup_settings"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:background="?attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="16dp">
 
-                <TextView
-                    android:id="@+id/popup_history_text"
-                    style="@style/TextAppearance.Material3.TitleMedium"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:drawablePadding="16dp"
-                    android:ellipsize="end"
-                    android:maxLines="1"
-                    android:text="@string/library_history"
-                    android:textColor="?attr/colorOnSurfaceVariant"
-                    android:textSize="15sp"
-                    app:drawableStartCompat="@drawable/ic_history_24"
-                    app:drawableTint="?attr/colorOnSurfaceVariant" />
+        <TextView
+            style="@style/TextAppearance.Material3.TitleMedium"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:drawablePadding="16dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:text="@string/browser_menu_settings"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:textSize="15sp"
+            app:drawableStartCompat="@drawable/ic_settings_24"
+            app:drawableTint="?attr/colorOnSurfaceVariant" />
 
-            </LinearLayout>
+    </LinearLayout>
 
 
-            <!-- Settings. -->
-            <LinearLayout
-                android:id="@+id/popup_settings"
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:background="?attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingHorizontal="16dp">
+    <!-- Destructive Quit — GONE unless SETTINGS_QUIT_PREF is on.
+         colorPrimary text + drawable tint is what differentiates it. -->
+    <LinearLayout
+        android:id="@+id/popup_quit"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:background="?attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="16dp"
+        android:visibility="gone"
+        tools:visibility="visible">
 
-                <TextView
-                    style="@style/TextAppearance.Material3.TitleMedium"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:drawablePadding="16dp"
-                    android:ellipsize="end"
-                    android:maxLines="1"
-                    android:text="@string/browser_menu_settings"
-                    android:textColor="?attr/colorOnSurfaceVariant"
-                    android:textSize="15sp"
-                    app:drawableStartCompat="@drawable/ic_settings_24"
-                    app:drawableTint="?attr/colorOnSurfaceVariant" />
+        <TextView
+            style="@style/TextAppearance.Material3.TitleMedium"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:drawablePadding="16dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:text="@string/delete_browsing_data_on_quit_action"
+            android:textColor="?attr/colorPrimary"
+            android:textSize="15sp"
+            app:drawableStartCompat="@drawable/ic_logout_24"
+            app:drawableTint="?attr/colorPrimary" />
 
-            </LinearLayout>
-
-
-            <!-- Destructive Quit — GONE unless SETTINGS_QUIT_PREF is
-                 on. Sits flush with Settings; the colorPrimary text +
-                 drawable tint is what differentiates it. -->
-            <LinearLayout
-                android:id="@+id/popup_quit"
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:background="?attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingHorizontal="16dp"
-                android:visibility="gone"
-                tools:visibility="visible">
-
-                <TextView
-                    style="@style/TextAppearance.Material3.TitleMedium"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:drawablePadding="16dp"
-                    android:ellipsize="end"
-                    android:maxLines="1"
-                    android:text="@string/delete_browsing_data_on_quit_action"
-                    android:textColor="?attr/colorPrimary"
-                    android:textSize="15sp"
-                    app:drawableStartCompat="@drawable/ic_logout_24"
-                    app:drawableTint="?attr/colorPrimary" />
-
-            </LinearLayout>
-
-        </LinearLayout>
-
-    </com.google.android.material.card.MaterialCardView>
+    </LinearLayout>
 
 </LinearLayout>
