@@ -43,16 +43,26 @@
     </integer-array>
 
 
+    <!--
+        Home popup carries only items that don't already have a surface
+        on the Home screen: History (no card), Settings, and Quit when
+        the quit-on-exit preference is enabled. Safe Folder and Bookmarks
+        used to live here too, but they're already reachable as a Home
+        card and as the bottom-bar cradle respectively, so listing them
+        again just duplicated the entry points.
+
+        Incognito home reuses these arrays: PopupHomeSheetDialogFragment
+        overrides position 0 with Downloads when IS_INCOGNITO is set,
+        since incognito home lacks a Downloads card. Keeping History
+        first means incognito's position-0 override hides History (which
+        is irrelevant in private browsing) rather than hiding Settings.
+    -->
     <integer-array name="popup_home_text">
-        <item>@string/navigation_vault</item>
-        <item>@string/library_bookmarks</item>
         <item>@string/library_history</item>
         <item>@string/browser_menu_settings</item>
     </integer-array>
 
     <integer-array name="popup_home_quit_text">
-        <item>@string/navigation_vault</item>
-        <item>@string/library_bookmarks</item>
         <item>@string/library_history</item>
         <item>@string/browser_menu_settings</item>
         <item>@string/delete_browsing_data_on_quit_action</item>
@@ -60,15 +70,11 @@
 
 
     <integer-array name="popup_home_icon">
-        <item>@drawable/ic_lock_24</item>
-        <item>@drawable/ic_bookmarks_24</item>
         <item>@drawable/ic_history_24</item>
         <item>@drawable/ic_settings_24</item>
     </integer-array>
 
     <integer-array name="popup_home_quit_icon">
-        <item>@drawable/ic_lock_24</item>
-        <item>@drawable/ic_bookmarks_24</item>
         <item>@drawable/ic_history_24</item>
         <item>@drawable/ic_baseline_settings_24</item>
         <item>@drawable/ic_logout_24</item>
