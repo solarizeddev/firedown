@@ -5,28 +5,40 @@
     Shape (top→bottom):
       1. Drag handle (shared include).
       2. Quick-row header: Back · Forward · Share · Refresh.
-      3. Body — four MaterialCard sections in a scrolling column, each
-         grouping rows that share semantic purpose:
-            • Page state   — Bookmark page (state toggle, star icon
-                              flips filled/outline), Find in page,
-                              Desktop site (with switch)
-            • Library      — Bookmarks, History, Safe Folder/Downloads
-            • App          — Settings
-            • Destructive  — Quit Firedown (only visible when the
-                              SETTINGS_QUIT_PREF preference is on)
+      3. Filled MaterialCard wrapping every action row, with
+         Firedown.Divider.InCard rules between semantic groups (not
+         between every row). Same list-in-card vocabulary the
+         SecurityStateSheet uses for per-site controls.
 
-    Chip palette is intentionally minimal: every row uses the neutral
-    32dp chip (surfaceContainerHighest on surfaceContainer card —
-    one tone above the card background) except Quit, which uses the
-    error-tinted chip as the functional cue for a destructive action.
-    Tinted library chips were tried and read as visual noise; the
-    section grouping does enough work on its own.
+         Groups, in order:
+           a. Page actions  — Bookmark page, Find in page, Desktop site
+           b. Library       — Bookmarks, History, Safe Folder
+           c. App + exit    — Settings, Quit (Quit conditional via
+                              SETTINGS_QUIT_PREF; sits flush with
+                              Settings, no divider between, mirroring
+                              the Home popup which packs its two
+                              rows + conditional Quit the same way)
 
-    Downloads is deliberately omitted from the library group: it's
-    primary chrome (bottom-bar slot + Home card) and listing it here
-    would demote it to a peer. The Vault row swaps to Downloads in
-    incognito mode since incognito home lacks a Downloads card; the
-    swap is per-instance in the fragment, not a separate row.
+    Row anatomy follows SecuritySheet:
+      • 56dp tall, 16dp horizontal padding
+      • TextView with drawableStartCompat icon at 16dp drawablePadding,
+        TitleMedium / 15sp text, onSurfaceVariant
+      • Trailing element only when it carries information:
+          – toggles (Desktop site) carry a MaterialSwitch
+          – everything else, including drill-downs, carries nothing
+            — the row's ripple is enough to communicate tappability,
+            chevrons on every drill-down were visual noise
+
+    State handling stays in the fragment:
+      • Bookmark page row flips its drawableStart icon and label
+        between outline/"Bookmark page" and filled/"Edit bookmark"
+        based on mHasBookmark; dispatched id swaps in lockstep.
+      • Vault row swaps to Downloads in incognito (icon + label +
+        dispatched id).
+      • Desktop site switch mirrors the current tab's isDesktop().
+      • Quit row + its divider stay GONE unless SETTINGS_QUIT_PREF
+        is on; the row uses colorError text + tint so the destructive
+        treatment matches Downloads' / Bookmarks' Delete row.
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -43,422 +55,281 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
 
-    <com.google.android.material.divider.MaterialDivider
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
-
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
         android:overScrollMode="never">
 
-        <LinearLayout
+        <com.google.android.material.card.MaterialCardView
+            style="@style/Widget.Material3.CardView.Filled"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingHorizontal="12dp"
-            android:paddingTop="10dp"
-            android:paddingBottom="14dp">
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="12dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="12dp">
 
-
-            <!-- ── Section: Page state ─────────────────────────────── -->
-            <com.google.android.material.card.MaterialCardView
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="10dp"
-                app:cardBackgroundColor="?attr/colorSurfaceContainer"
-                app:cardCornerRadius="14dp"
-                app:cardElevation="0dp"
-                app:strokeWidth="0dp">
+                android:orientation="vertical">
 
+
+                <!-- Bookmark page — drawableStart + label flip in
+                     applyBookmarkState; dispatched id flips in bindRows. -->
                 <LinearLayout
+                    android:id="@+id/popup_bookmark_page"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical">
+                    android:layout_height="56dp"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="16dp">
 
-                    <!--
-                        Bookmark page — first row, stateful. Icon flips
-                        between ic_bookmark_border_24 (outline, "not
-                        bookmarked") and ic_bookmark_24 (filled, "saved
-                        on this page"). Label and dispatched id flip
-                        in parallel; chip stays neutral because the
-                        star glyph already carries the toggle reading.
-                    -->
-                    <LinearLayout
-                        android:id="@+id/popup_bookmark_page"
+                    <TextView
+                        android:id="@+id/popup_bookmark_page_text"
+                        style="@style/TextAppearance.Material3.TitleMedium"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:background="?attr/selectableItemBackground"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal"
-                        android:paddingHorizontal="14dp"
-                        android:paddingVertical="10dp">
+                        android:drawablePadding="16dp"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:text="@string/browser_menu_bookmark_this_page_2"
+                        android:textColor="?attr/colorOnSurfaceVariant"
+                        android:textSize="15sp"
+                        app:drawableStartCompat="@drawable/ic_bookmark_border_24"
+                        app:drawableTint="?attr/colorOnSurfaceVariant" />
 
-                        <FrameLayout
-                            android:layout_width="32dp"
-                            android:layout_height="32dp"
-                            android:background="@drawable/bg_popup_chip_neutral">
-
-                            <androidx.appcompat.widget.AppCompatImageView
-                                android:id="@+id/popup_bookmark_page_icon"
-                                android:layout_width="18dp"
-                                android:layout_height="18dp"
-                                android:layout_gravity="center"
-                                android:contentDescription="@null"
-                                android:src="@drawable/ic_bookmark_border_24"
-                                app:tint="?attr/colorOnSurfaceVariant" />
-                        </FrameLayout>
-
-                        <TextView
-                            android:id="@+id/popup_bookmark_page_label"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="14dp"
-                            android:layout_weight="1"
-                            android:text="@string/browser_menu_bookmark_this_page_2"
-                            android:textAppearance="?attr/textAppearanceTitleSmall"
-                            android:textColor="?attr/colorOnSurface" />
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:id="@+id/popup_find"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:background="?attr/selectableItemBackground"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal"
-                        android:paddingHorizontal="14dp"
-                        android:paddingVertical="10dp">
-
-                        <FrameLayout
-                            android:layout_width="32dp"
-                            android:layout_height="32dp"
-                            android:background="@drawable/bg_popup_chip_neutral">
-
-                            <androidx.appcompat.widget.AppCompatImageView
-                                android:layout_width="18dp"
-                                android:layout_height="18dp"
-                                android:layout_gravity="center"
-                                android:contentDescription="@null"
-                                android:src="@drawable/ic_search_24"
-                                app:tint="?attr/colorOnSurfaceVariant" />
-                        </FrameLayout>
-
-                        <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="14dp"
-                            android:layout_weight="1"
-                            android:text="@string/browser_menu_find_in_page"
-                            android:textAppearance="?attr/textAppearanceTitleSmall"
-                            android:textColor="?attr/colorOnSurface" />
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:id="@+id/popup_desktop"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:background="?attr/selectableItemBackground"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal"
-                        android:paddingHorizontal="14dp"
-                        android:paddingVertical="10dp">
-
-                        <FrameLayout
-                            android:layout_width="32dp"
-                            android:layout_height="32dp"
-                            android:background="@drawable/bg_popup_chip_neutral">
-
-                            <androidx.appcompat.widget.AppCompatImageView
-                                android:layout_width="18dp"
-                                android:layout_height="18dp"
-                                android:layout_gravity="center"
-                                android:contentDescription="@null"
-                                android:src="@drawable/ic_computer_24"
-                                app:tint="?attr/colorOnSurfaceVariant" />
-                        </FrameLayout>
-
-                        <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="14dp"
-                            android:layout_weight="1"
-                            android:text="@string/browser_menu_desktop_site"
-                            android:textAppearance="?attr/textAppearanceTitleSmall"
-                            android:textColor="?attr/colorOnSurface" />
-
-                        <!--
-                            Status pill — On/Off label with a rounded
-                            chip background. Replaces a MaterialSwitch
-                            which was ~48dp tall and made this row read
-                            visibly taller than its siblings. The pill
-                            is decorative status only; the whole row
-                            click target (popup_desktop) does the
-                            actual toggle.
-                        -->
-                        <TextView
-                            android:id="@+id/popup_desktop_state"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:background="@drawable/bg_popup_pill"
-                            android:minWidth="44dp"
-                            android:paddingHorizontal="14dp"
-                            android:paddingVertical="6dp"
-                            android:text="@string/popup_desktop_off"
-                            android:textAlignment="center"
-                            android:textAppearance="?attr/textAppearanceLabelMedium"
-                            android:textColor="?attr/colorOnSurfaceVariant" />
-                    </LinearLayout>
                 </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
 
 
-            <!-- ── Section: Library ─────────────────────────────────── -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="10dp"
-                app:cardBackgroundColor="?attr/colorSurfaceContainer"
-                app:cardCornerRadius="14dp"
-                app:cardElevation="0dp"
-                app:strokeWidth="0dp">
-
+                <!-- Find in page — pure action, no trailing element. -->
                 <LinearLayout
+                    android:id="@+id/popup_find"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical">
+                    android:layout_height="56dp"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="16dp">
 
-                    <LinearLayout
-                        android:id="@+id/popup_bookmarks"
+                    <TextView
+                        style="@style/TextAppearance.Material3.TitleMedium"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:background="?attr/selectableItemBackground"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal"
-                        android:paddingHorizontal="14dp"
-                        android:paddingVertical="10dp">
+                        android:drawablePadding="16dp"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:text="@string/browser_menu_find_in_page"
+                        android:textColor="?attr/colorOnSurfaceVariant"
+                        android:textSize="15sp"
+                        app:drawableStartCompat="@drawable/ic_search_24"
+                        app:drawableTint="?attr/colorOnSurfaceVariant" />
 
-                        <FrameLayout
-                            android:layout_width="32dp"
-                            android:layout_height="32dp"
-                            android:background="@drawable/bg_popup_chip_neutral">
-
-                            <androidx.appcompat.widget.AppCompatImageView
-                                android:layout_width="18dp"
-                                android:layout_height="18dp"
-                                android:layout_gravity="center"
-                                android:contentDescription="@null"
-                                android:src="@drawable/ic_bookmarks_24"
-                                app:tint="?attr/colorOnSurfaceVariant" />
-                        </FrameLayout>
-
-                        <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="14dp"
-                            android:layout_weight="1"
-                            android:text="@string/library_bookmarks"
-                            android:textAppearance="?attr/textAppearanceTitleSmall"
-                            android:textColor="?attr/colorOnSurface" />
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:id="@+id/popup_history"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:background="?attr/selectableItemBackground"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal"
-                        android:paddingHorizontal="14dp"
-                        android:paddingVertical="10dp">
-
-                        <FrameLayout
-                            android:layout_width="32dp"
-                            android:layout_height="32dp"
-                            android:background="@drawable/bg_popup_chip_neutral">
-
-                            <androidx.appcompat.widget.AppCompatImageView
-                                android:layout_width="18dp"
-                                android:layout_height="18dp"
-                                android:layout_gravity="center"
-                                android:contentDescription="@null"
-                                android:src="@drawable/ic_history_24"
-                                app:tint="?attr/colorOnSurfaceVariant" />
-                        </FrameLayout>
-
-                        <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="14dp"
-                            android:layout_weight="1"
-                            android:text="@string/library_history"
-                            android:textAppearance="?attr/textAppearanceTitleSmall"
-                            android:textColor="?attr/colorOnSurface" />
-                    </LinearLayout>
-
-                    <!--
-                        Vault row. In incognito mode, the fragment swaps
-                        the icon, label, and dispatched OptionEntity id
-                        over to Downloads — incognito chrome lacks a
-                        Downloads card and Vault deliberately doesn't
-                        surface from private browsing.
-                    -->
-                    <LinearLayout
-                        android:id="@+id/popup_vault"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:background="?attr/selectableItemBackground"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal"
-                        android:paddingHorizontal="14dp"
-                        android:paddingVertical="10dp">
-
-                        <FrameLayout
-                            android:layout_width="32dp"
-                            android:layout_height="32dp"
-                            android:background="@drawable/bg_popup_chip_neutral">
-
-                            <androidx.appcompat.widget.AppCompatImageView
-                                android:id="@+id/popup_vault_icon"
-                                android:layout_width="18dp"
-                                android:layout_height="18dp"
-                                android:layout_gravity="center"
-                                android:contentDescription="@null"
-                                android:src="@drawable/ic_lock_24"
-                                app:tint="?attr/colorOnSurfaceVariant" />
-                        </FrameLayout>
-
-                        <TextView
-                            android:id="@+id/popup_vault_label"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="14dp"
-                            android:layout_weight="1"
-                            android:text="@string/navigation_vault"
-                            android:textAppearance="?attr/textAppearanceTitleSmall"
-                            android:textColor="?attr/colorOnSurface" />
-                    </LinearLayout>
                 </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
 
 
-            <!-- ── Section: App ─────────────────────────────────────── -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="10dp"
-                app:cardBackgroundColor="?attr/colorSurfaceContainer"
-                app:cardCornerRadius="14dp"
-                app:cardElevation="0dp"
-                app:strokeWidth="0dp">
+                <!-- Desktop site — MaterialSwitch reflects isDesktop().
+                     Whole row is the click target; switch is duplicate-
+                     parent-state status, not the hit target. -->
+                <LinearLayout
+                    android:id="@+id/popup_desktop"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="16dp">
 
+                    <TextView
+                        style="@style/TextAppearance.Material3.TitleMedium"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:drawablePadding="16dp"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:text="@string/browser_menu_desktop_site"
+                        android:textColor="?attr/colorOnSurfaceVariant"
+                        android:textSize="15sp"
+                        app:drawableStartCompat="@drawable/ic_computer_24"
+                        app:drawableTint="?attr/colorOnSurfaceVariant" />
+
+                    <com.google.android.material.materialswitch.MaterialSwitch
+                        android:id="@+id/popup_desktop_switch"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:clickable="false"
+                        android:duplicateParentState="true"
+                        android:focusable="false" />
+
+                </LinearLayout>
+
+                <View style="@style/Firedown.Divider.InCard" />
+
+
+                <!-- Bookmarks. -->
+                <LinearLayout
+                    android:id="@+id/popup_bookmarks"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="16dp">
+
+                    <TextView
+                        style="@style/TextAppearance.Material3.TitleMedium"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:drawablePadding="16dp"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:text="@string/library_bookmarks"
+                        android:textColor="?attr/colorOnSurfaceVariant"
+                        android:textSize="15sp"
+                        app:drawableStartCompat="@drawable/ic_bookmarks_24"
+                        app:drawableTint="?attr/colorOnSurfaceVariant" />
+
+                </LinearLayout>
+
+
+                <!-- History. -->
+                <LinearLayout
+                    android:id="@+id/popup_history"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="16dp">
+
+                    <TextView
+                        style="@style/TextAppearance.Material3.TitleMedium"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:drawablePadding="16dp"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:text="@string/library_history"
+                        android:textColor="?attr/colorOnSurfaceVariant"
+                        android:textSize="15sp"
+                        app:drawableStartCompat="@drawable/ic_history_24"
+                        app:drawableTint="?attr/colorOnSurfaceVariant" />
+
+                </LinearLayout>
+
+
+                <!-- Vault (Downloads in incognito; the fragment
+                     repaints drawableStart + label + dispatched id). -->
+                <LinearLayout
+                    android:id="@+id/popup_vault"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="16dp">
+
+                    <TextView
+                        android:id="@+id/popup_vault_text"
+                        style="@style/TextAppearance.Material3.TitleMedium"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:drawablePadding="16dp"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:text="@string/navigation_vault"
+                        android:textColor="?attr/colorOnSurfaceVariant"
+                        android:textSize="15sp"
+                        app:drawableStartCompat="@drawable/ic_lock_24"
+                        app:drawableTint="?attr/colorOnSurfaceVariant" />
+
+                </LinearLayout>
+
+                <View style="@style/Firedown.Divider.InCard" />
+
+
+                <!-- Settings. -->
                 <LinearLayout
                     android:id="@+id/popup_settings"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="56dp"
                     android:background="?attr/selectableItemBackground"
                     android:clickable="true"
                     android:focusable="true"
                     android:gravity="center_vertical"
                     android:orientation="horizontal"
-                    android:paddingHorizontal="14dp"
-                    android:paddingVertical="10dp">
-
-                    <FrameLayout
-                        android:layout_width="32dp"
-                        android:layout_height="32dp"
-                        android:background="@drawable/bg_popup_chip_neutral">
-
-                        <androidx.appcompat.widget.AppCompatImageView
-                            android:layout_width="18dp"
-                            android:layout_height="18dp"
-                            android:layout_gravity="center"
-                            android:contentDescription="@null"
-                            android:src="@drawable/ic_settings_24"
-                            app:tint="?attr/colorOnSurfaceVariant" />
-                    </FrameLayout>
+                    android:paddingHorizontal="16dp">
 
                     <TextView
-                        android:layout_width="0dp"
+                        style="@style/TextAppearance.Material3.TitleMedium"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="14dp"
-                        android:layout_weight="1"
+                        android:drawablePadding="16dp"
+                        android:ellipsize="end"
+                        android:maxLines="1"
                         android:text="@string/browser_menu_settings"
-                        android:textAppearance="?attr/textAppearanceTitleSmall"
-                        android:textColor="?attr/colorOnSurface" />
+                        android:textColor="?attr/colorOnSurfaceVariant"
+                        android:textSize="15sp"
+                        app:drawableStartCompat="@drawable/ic_settings_24"
+                        app:drawableTint="?attr/colorOnSurfaceVariant" />
+
                 </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
 
 
-            <!-- ── Section: Destructive ─────────────────────────────── -->
-            <!--
-                Quit Firedown lives in its own MaterialCard so the error
-                tint quarantines it from the rest of the menu. The card
-                is GONE unless the SETTINGS_QUIT_PREF preference is on;
-                the fragment toggles visibility at inflation time.
-            -->
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/popup_quit_card"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:visibility="gone"
-                app:cardBackgroundColor="?attr/colorSurfaceContainer"
-                app:cardCornerRadius="14dp"
-                app:cardElevation="0dp"
-                app:strokeWidth="0dp"
-                tools:visibility="visible">
-
+                <!-- Destructive Quit — GONE unless SETTINGS_QUIT_PREF
+                     is on. Sits flush with Settings, no divider above;
+                     the colorPrimary text + drawable tint (same brand
+                     orange the Downloads/Bookmarks Delete row uses
+                     via Firedown.Widget.DialogOption.Final) is what
+                     differentiates it. -->
                 <LinearLayout
                     android:id="@+id/popup_quit"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="56dp"
                     android:background="?attr/selectableItemBackground"
                     android:clickable="true"
                     android:focusable="true"
                     android:gravity="center_vertical"
                     android:orientation="horizontal"
-                    android:paddingHorizontal="14dp"
-                    android:paddingVertical="10dp">
-
-                    <FrameLayout
-                        android:layout_width="32dp"
-                        android:layout_height="32dp"
-                        android:background="@drawable/bg_popup_chip_error">
-
-                        <androidx.appcompat.widget.AppCompatImageView
-                            android:layout_width="18dp"
-                            android:layout_height="18dp"
-                            android:layout_gravity="center"
-                            android:contentDescription="@null"
-                            android:src="@drawable/ic_logout_24"
-                            app:tint="?attr/colorOnErrorContainer" />
-                    </FrameLayout>
+                    android:paddingHorizontal="16dp"
+                    android:visibility="gone"
+                    tools:visibility="visible">
 
                     <TextView
-                        android:layout_width="0dp"
+                        style="@style/TextAppearance.Material3.TitleMedium"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="14dp"
-                        android:layout_weight="1"
+                        android:drawablePadding="16dp"
+                        android:ellipsize="end"
+                        android:maxLines="1"
                         android:text="@string/delete_browsing_data_on_quit_action"
-                        android:textAppearance="?attr/textAppearanceTitleSmall"
-                        android:textColor="?attr/colorError" />
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
+                        android:textColor="?attr/colorPrimary"
+                        android:textSize="15sp"
+                        app:drawableStartCompat="@drawable/ic_logout_24"
+                        app:drawableTint="?attr/colorPrimary" />
 
-        </LinearLayout>
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
     </androidx.core.widget.NestedScrollView>
 
 </LinearLayout>

@@ -10,12 +10,9 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.widget.AppCompatImageView;
-import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.google.android.material.color.MaterialColors;
-
+import com.google.android.material.materialswitch.MaterialSwitch;
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
@@ -37,27 +34,29 @@ import dagger.hilt.android.AndroidEntryPoint;
 /**
  * Browser "more" bottom sheet.
  *
- * <p>Replaces the previous RecyclerView-of-rows with a static layout
- * of MaterialCard sections (page state · library · app · destructive).
- * The structure is intentionally inline rather than data-driven: the
- * row count is small enough (6–7 items, depending on mode and the
- * quit-on-exit preference) that the section-grouping is easier to
- * read in XML than to assemble from arrays.</p>
+ * <p>Flat list of {@link TextView} rows at the
+ * {@code Firedown.Widget.DialogOption} style, matching the dialog
+ * vocabulary the rest of the app's popups (Downloads, Bookmarks list,
+ * WebOption) already use. Earlier iterations grouped everything into
+ * MaterialCard sections with chip-style icons, which looked closer to
+ * the Home dashboard cards than to an action menu.</p>
  *
  * <p>State-dependent UI lives here, not in the layout:</p>
  * <ul>
- *   <li><b>Bookmark page row</b> at the top of the page-state card
- *       toggles its star icon (outline ↔ filled), label, and dispatched
- *       OptionEntity id based on {@code mHasBookmark}.</li>
- *   <li><b>Vault row</b> swaps to Downloads in incognito mode — icon,
- *       label, and dispatched id all change so incognito chrome reaches
- *       Downloads (no Downloads card there) without surfacing the
- *       Vault entrypoint at all.</li>
+ *   <li><b>Bookmark page row</b> flips its drawableStart icon and
+ *       label between outline/"Bookmark page" and filled/"Edit
+ *       bookmark" based on {@code mHasBookmark}; the dispatched
+ *       OptionEntity id swaps in lockstep.</li>
+ *   <li><b>Vault row</b> swaps to Downloads in incognito (icon +
+ *       label + dispatched id) — incognito chrome lacks a Downloads
+ *       card and Vault deliberately doesn't surface from private
+ *       browsing.</li>
  *   <li><b>Desktop site switch</b> mirrors the current page's
  *       {@code isDesktop()} on inflate.</li>
- *   <li><b>Quit card</b> stays GONE unless {@link Preferences#SETTINGS_QUIT_PREF}
- *       is on; rendered in its own MaterialCard with error-tinted chip
- *       so the destructive action is visually quarantined.</li>
+ *   <li><b>Quit row</b> stays GONE unless
+ *       {@link Preferences#SETTINGS_QUIT_PREF} is on; rendered in the
+ *       destructive .Final variant so the colour treatment matches
+ *       Downloads' / Bookmarks' "Delete" row.</li>
  * </ul>
  */
 @AndroidEntryPoint
@@ -130,16 +129,16 @@ public class PopupBrowserSheetDialogFragment extends BaseBottomSheetDialogFragme
 
 
     /**
-     * Hooks every list row in the body. Most rows are wired through
-     * the shared {@link #onClick(View)} since their LinearLayout id
-     * matches the wire id expected by the BrowserFragment dispatcher;
-     * Bookmark page and Vault have specialized listeners because the
-     * dispatched id depends on state (mHasBookmark / mIsIncognito).
+     * Hooks every list row. Most rows route through the shared
+     * {@link #onClick(View)} since their view id matches the wire id
+     * the BrowserFragment dispatcher listens for; Bookmark page and
+     * Vault use specialised listeners because the dispatched id
+     * depends on state (mHasBookmark / mIsIncognito).
      */
     private void bindRows() {
+        mView.findViewById(R.id.popup_bookmarks).setOnClickListener(this);
         mView.findViewById(R.id.popup_find).setOnClickListener(this);
         mView.findViewById(R.id.popup_desktop).setOnClickListener(this);
-        mView.findViewById(R.id.popup_bookmarks).setOnClickListener(this);
         mView.findViewById(R.id.popup_history).setOnClickListener(this);
         mView.findViewById(R.id.popup_settings).setOnClickListener(this);
         mView.findViewById(R.id.popup_quit).setOnClickListener(this);
@@ -153,81 +152,64 @@ public class PopupBrowserSheetDialogFragment extends BaseBottomSheetDialogFragme
 
 
     /**
-     * Paints the Bookmark page row's icon and label to reflect whether
-     * the current page is already saved. Click dispatch is wired to
-     * the same flag in {@link #bindRows()} so the row consistently
-     * routes to {@code popup_bookmark_add} or {@code popup_bookmark_edit}.
+     * Paints the Bookmark page row's drawableStart icon and label
+     * (on the inner TextView) to reflect whether the current page is
+     * already saved. Click dispatch is wired to the same flag in
+     * {@link #bindRows()}.
      */
     private void applyBookmarkState() {
-        AppCompatImageView icon = mView.findViewById(R.id.popup_bookmark_page_icon);
-        TextView label = mView.findViewById(R.id.popup_bookmark_page_label);
-        if (icon == null || label == null) return;
-
-        icon.setImageResource(
-                mHasBookmark ? R.drawable.ic_bookmark_24 : R.drawable.ic_bookmark_border_24);
-        label.setText(
-                mHasBookmark ? R.string.browser_menu_edit_bookmark
-                             : R.string.browser_menu_bookmark_this_page_2);
+        TextView label = mView.findViewById(R.id.popup_bookmark_page_text);
+        if (label == null) return;
+        label.setCompoundDrawablesRelativeWithIntrinsicBounds(
+                mHasBookmark ? R.drawable.ic_bookmark_24 : R.drawable.ic_bookmark_border_24,
+                0, 0, 0);
+        label.setText(mHasBookmark
+                ? R.string.browser_menu_edit_bookmark
+                : R.string.browser_menu_bookmark_this_page_2);
     }
 
 
     /**
-     * Repaints the Vault row to read as Downloads when this popup was
-     * launched from incognito chrome. The view's id stays
-     * {@code popup_vault} — it's just the user-visible icon and label
-     * that flip; the dispatched OptionEntity id is set in
-     * {@link #bindRows()} based on the same {@code mIsIncognito} flag.
-     * The chip background is already neutral for every row, so no
-     * tint swap is needed — just the icon and label.
+     * Repaints the Vault row as Downloads when the popup was launched
+     * from incognito chrome. The row id stays {@code popup_vault} —
+     * only the inner label's drawableStart icon and text change; the
+     * dispatched OptionEntity id is set in {@link #bindRows()} based
+     * on the same {@code mIsIncognito} flag.
      */
     private void applyIncognitoSwap() {
         if (!mIsIncognito) return;
-
-        AppCompatImageView icon = mView.findViewById(R.id.popup_vault_icon);
-        TextView label = mView.findViewById(R.id.popup_vault_label);
-        if (icon == null || label == null) return;
-
-        icon.setImageResource(R.drawable.download_24);
+        TextView label = mView.findViewById(R.id.popup_vault_text);
+        if (label == null) return;
+        label.setCompoundDrawablesRelativeWithIntrinsicBounds(
+                R.drawable.download_24, 0, 0, 0);
         label.setText(R.string.navigation_downloads);
     }
 
 
     /**
-     * Mirrors the current tab's Desktop-mode state into the status pill.
-     * On state uses the primary-container background + onPrimaryContainer
-     * text so the active mode reads at a glance; off uses the neutral
-     * surface palette to recede. The whole row is the click target
-     * (handled by the shared onClick → popup_desktop) — the pill is
-     * decorative status, not the hit target. A pill replaces the original
-     * MaterialSwitch which was ~48dp tall and made this row read visibly
-     * taller than its siblings.
+     * Mirrors the current tab's Desktop-mode state into the row
+     * switch. The whole row is the click target (handled by the
+     * shared onClick → popup_desktop); the switch is decorative
+     * status via duplicateParentState, not the only hit target.
      */
     private void applyDesktopState() {
-        TextView desktopState = mView.findViewById(R.id.popup_desktop_state);
-        if (desktopState == null) return;
-
-        boolean isDesktop = mGeckoState.isDesktop();
-        desktopState.setText(isDesktop ? R.string.popup_desktop_on : R.string.popup_desktop_off);
-        desktopState.setBackground(ContextCompat.getDrawable(requireContext(),
-                isDesktop ? R.drawable.bg_popup_pill_on : R.drawable.bg_popup_pill));
-        desktopState.setTextColor(MaterialColors.getColor(desktopState, isDesktop
-                ? com.google.android.material.R.attr.colorOnPrimaryContainer
-                : com.google.android.material.R.attr.colorOnSurfaceVariant));
+        MaterialSwitch desktopSwitch = mView.findViewById(R.id.popup_desktop_switch);
+        if (desktopSwitch == null) return;
+        desktopSwitch.setChecked(mGeckoState.isDesktop());
     }
 
 
     /**
-     * Toggles the destructive Quit card based on the user's "quit on
-     * exit" preference. The card carries its own MaterialCard chrome
-     * with error-tinted chip and label — visually quarantined so the
-     * action can't be hit by accident when scanning the menu.
+     * Toggles the destructive Quit row based on the user's "quit on
+     * exit" preference. The row sits flush with Settings (no divider
+     * above) and renders in colorPrimary so the brand-orange tint is
+     * what marks it destructive — same treatment as the Downloads /
+     * Bookmarks Delete row.
      */
     private void applyQuitVisibility() {
         boolean quitEnabled = mSharedPreferences.getBoolean(Preferences.SETTINGS_QUIT_PREF, false);
-        View quitCard = mView.findViewById(R.id.popup_quit_card);
-        if (quitCard != null) {
-            quitCard.setVisibility(quitEnabled ? View.VISIBLE : View.GONE);
-        }
+        View quit = mView.findViewById(R.id.popup_quit);
+        if (quit != null) quit.setVisibility(quitEnabled ? View.VISIBLE : View.GONE);
     }
 
 
@@ -275,10 +257,10 @@ public class PopupBrowserSheetDialogFragment extends BaseBottomSheetDialogFragme
 
     /**
      * Central dispatch — dismisses the sheet and fires the option event
-     * for the BrowserFragment handler to act on. Used both as the shared
-     * row click listener and by the specialized listeners (Bookmark
-     * page row, Vault row) that need to send a different id than their
-     * view's own.
+     * for the BrowserFragment handler to act on. Used both as the
+     * shared row click listener and by the specialised listeners
+     * (Bookmark page, Vault) that need to send a different id than
+     * their view's own.
      */
     private void dispatch(int id) {
         OptionEntity entity = new OptionEntity();

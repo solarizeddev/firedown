@@ -8,7 +8,6 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
-import androidx.appcompat.widget.AppCompatImageView;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.solarized.firedown.Preferences;
@@ -22,20 +21,19 @@ import javax.inject.Inject;
 import dagger.hilt.android.AndroidEntryPoint;
 
 /**
- * Home "more" bottom sheet — slimmer sibling of the Browser popup.
+ * Home "more" bottom sheet.
  *
- * <p>Replaces the RecyclerView-of-rows with a static layout of two
- * MaterialCard sections (library/app and conditional destructive).
- * The popup carries only items that don't already have a primary
- * surface on Home — History and Settings — plus Quit when the
- * {@link Preferences#SETTINGS_QUIT_PREF} preference is on. The
- * structure matches the Browser popup so the two sheets share a
- * vocabulary.</p>
+ * <p>Flat list of {@link TextView} rows at the
+ * {@code Firedown.Widget.DialogOption} style, matching the dialog
+ * vocabulary the rest of the app's popups (Downloads, Bookmarks list,
+ * WebOption) already use. Carries only items without another surface
+ * on Home: History (no card), Settings, and Quit when
+ * {@link Preferences#SETTINGS_QUIT_PREF} is on.</p>
  *
  * <p>Incognito home reuses this fragment: when launched with
- * {@code IS_INCOGNITO=true} the History row is repainted as Downloads
- * (icon + label + dispatched id), since incognito home has no
- * Downloads card and the History destination is irrelevant under
+ * {@code IS_INCOGNITO=true} the History row's drawableStart icon,
+ * label, and dispatched id all swap to Downloads, since incognito
+ * home lacks a Downloads card and History is irrelevant under
  * private browsing.</p>
  */
 @AndroidEntryPoint
@@ -69,9 +67,9 @@ public class PopupHomeSheetDialogFragment extends BaseBottomSheetDialogFragment
 
 
     /**
-     * Hooks every row in the popup. Settings and Quit use the shared
-     * {@link #onClick(View)} since their LinearLayout id matches the
-     * wire id the home fragment listens for. History has a specialized
+     * Hooks every row. Settings and Quit use the shared
+     * {@link #onClick(View)} since the view id matches the wire id
+     * the home fragments listen for; History has a specialised
      * listener because its dispatched id flips to Downloads under
      * incognito (see {@link #applyIncognitoSwap()}).
      */
@@ -85,36 +83,33 @@ public class PopupHomeSheetDialogFragment extends BaseBottomSheetDialogFragment
 
 
     /**
-     * Repaints the History row as Downloads when the popup was
-     * launched from incognito chrome. The view's id stays
-     * {@code popup_history} — only the user-visible icon and label
-     * flip; the dispatched OptionEntity id is set in
-     * {@link #bindRows()} based on the same {@code mIsIncognito} flag.
+     * Repaints the History row as Downloads when launched from
+     * incognito home. The row id stays {@code popup_history} — only
+     * the inner label's drawableStart icon and text change; the
+     * dispatched OptionEntity id is set in {@link #bindRows()} based
+     * on the same {@code mIsIncognito} flag.
      */
     private void applyIncognitoSwap() {
         if (!mIsIncognito) return;
-
-        AppCompatImageView icon = mView.findViewById(R.id.popup_history_icon);
-        TextView label = mView.findViewById(R.id.popup_history_label);
-        if (icon == null || label == null) return;
-
-        icon.setImageResource(R.drawable.download_24);
+        TextView label = mView.findViewById(R.id.popup_history_text);
+        if (label == null) return;
+        label.setCompoundDrawablesRelativeWithIntrinsicBounds(
+                R.drawable.download_24, 0, 0, 0);
         label.setText(R.string.navigation_downloads);
     }
 
 
     /**
-     * Toggles the destructive Quit card based on the user's "quit on
-     * exit" preference. The card carries its own MaterialCard chrome
-     * with error-tinted chip and label — same destructive quarantine
-     * as the Browser popup.
+     * Toggles the destructive Quit row based on the user's "quit on
+     * exit" preference. The row sits flush with Settings (no divider
+     * above) and renders in colorPrimary so the brand-orange tint is
+     * what marks it destructive — same treatment as the Downloads /
+     * Bookmarks Delete row.
      */
     private void applyQuitVisibility() {
         boolean quitEnabled = mSharedPreferences.getBoolean(Preferences.SETTINGS_QUIT_PREF, false);
-        View quitCard = mView.findViewById(R.id.popup_quit_card);
-        if (quitCard != null) {
-            quitCard.setVisibility(quitEnabled ? View.VISIBLE : View.GONE);
-        }
+        View quit = mView.findViewById(R.id.popup_quit);
+        if (quit != null) quit.setVisibility(quitEnabled ? View.VISIBLE : View.GONE);
     }
 
 
@@ -124,12 +119,6 @@ public class PopupHomeSheetDialogFragment extends BaseBottomSheetDialogFragment
     }
 
 
-    /**
-     * Central dispatch — dismisses the sheet and fires the option
-     * event for the host fragment's handler. Used as both the shared
-     * row click listener and by the History row's specialized
-     * listener that sends a different id under incognito.
-     */
     private void dispatch(int id) {
         OptionEntity entity = new OptionEntity();
         entity.setId(id);

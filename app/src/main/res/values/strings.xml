@@ -13,8 +13,6 @@
     <string name="browser_menu_back">Back</string>
     <string name="browser_menu_bookmark_this_page_2">Bookmark page</string>
     <string name="browser_menu_desktop_site">Desktop site</string>
-    <string name="popup_desktop_on">On</string>
-    <string name="popup_desktop_off">Off</string>
     <string name="browser_menu_edit_bookmark">Edit bookmark</string>
     <string name="bookmark_delete_action">Delete bookmark</string>
     <string name="bookmark_action_open">Open in browser</string>
