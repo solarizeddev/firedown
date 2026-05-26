@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Bookmarks card — sketches</title>
+<style>
+  :root {
+    /* Approximated Material 3 dark tokens, matching firedown's home theme */
+    --bg: #121212;
+    --surface-container-high: #2a2a2e;
+    --surface-container-highest: #36363a;
+    --on-surface: #e6e1e5;
+    --on-surface-variant: #c9c5d0;
+    --primary-container: #4a4458;
+    --on-primary-container: #ead8ff;
+    --tertiary-container: #4b3a3a;
+    --on-tertiary-container: #ffd8d8;
+    --secondary-container: #3a4a3f;
+    --on-secondary-container: #cfecd7;
+  }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--on-surface);
+    font-family: -apple-system, system-ui, "Roboto", sans-serif;
+    padding: 24px;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1 { font-size: 18px; font-weight: 500; margin: 0 0 4px; }
+  .lede { color: var(--on-surface-variant); font-size: 13px; margin: 0 0 24px; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 24px;
+    max-width: 1280px;
+  }
+  .col {
+    background: #0e0e10;
+    padding: 16px;
+    border-radius: 16px;
+    border: 1px solid #2a2a2e;
+  }
+  .col h2 {
+    font-size: 13px;
+    font-weight: 600;
+    margin: 0 0 4px;
+    color: var(--on-surface);
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+  }
+  .col p.note {
+    font-size: 12px;
+    color: var(--on-surface-variant);
+    margin: 0 0 14px;
+    line-height: 1.4;
+  }
+
+  /* The actual card mirroring the app's MaterialCardView */
+  .card {
+    background: var(--surface-container-high);
+    border-radius: 12px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+    cursor: pointer;
+  }
+  .card:last-child { margin-bottom: 0; }
+
+  .chip {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .chip.primary    { background: var(--primary-container); }
+  .chip.primary svg{ color: var(--on-primary-container); }
+  .chip.tertiary   { background: var(--tertiary-container); }
+  .chip.tertiary svg { color: var(--on-tertiary-container); }
+  .chip.secondary  { background: var(--secondary-container); }
+  .chip.secondary svg { color: var(--on-secondary-container); }
+  .chip svg { width: 24px; height: 24px; }
+
+  .body {
+    margin-left: 14px;
+    flex: 1;
+    min-width: 0;
+  }
+  .title {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--on-surface);
+    line-height: 20px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .subtitle {
+    font-size: 12px;
+    color: var(--on-surface-variant);
+    line-height: 16px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Trailing favicon stack (option C) */
+  .favstack {
+    display: flex;
+    margin-left: 12px;
+    flex-shrink: 0;
+  }
+  .favstack .fav {
+    width: 20px;
+    height: 20px;
+    border-radius: 6px;
+    background: var(--surface-container-highest);
+    margin-left: -6px;
+    border: 2px solid var(--surface-container-high);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--on-surface-variant);
+  }
+  .favstack .fav:first-child { margin-left: 0; }
+  .fav.gh { background: #24292e; color: #e6e1e5; }
+  .fav.so { background: #f48024; color: #fff; }
+  .fav.mz { background: #ff7139; color: #fff; }
+  .fav.yt { background: #ff0000; color: #fff; }
+  .fav.gn { background: #4285f4; color: #fff; }
+
+  /* Trailing count pill (option D) */
+  .pill {
+    margin-left: 12px;
+    background: var(--surface-container-highest);
+    color: var(--on-surface-variant);
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    flex-shrink: 0;
+    font-weight: 500;
+  }
+
+  hr.div {
+    border: 0;
+    border-top: 1px solid #2a2a2e;
+    margin: 16px 0;
+  }
+  .label {
+    font-size: 11px;
+    color: var(--on-surface-variant);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .verdict {
+    margin-top: 32px;
+    max-width: 1280px;
+    background: #0e0e10;
+    border: 1px solid #2a2a2e;
+    border-radius: 16px;
+    padding: 18px 20px;
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--on-surface-variant);
+  }
+  .verdict strong { color: var(--on-surface); }
+</style>
+</head>
+<body>
+
+<h1>Bookmarks home card — variants</h1>
+<p class="lede">All four match the existing card shape: surfaceContainerHigh background, 12dp corners, 40dp icon chip, title + subtitle. Each panel shows the card in context with the existing Downloads / Vault siblings so you can read the rhythm.</p>
+
+<div class="grid">
+
+  <!-- ============================================================ -->
+  <div class="col">
+    <h2>A — Counter subtitle (literal mirror)</h2>
+    <p class="note">Pure KISS. Indistinguishable shape from Downloads/Vault. The number is informational only, not actionable.</p>
+
+    <div class="label">Home</div>
+    <div class="card">
+      <div class="chip primary">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 16l-4 2V4h8v14z" stroke="currentColor" stroke-width="2" fill="none"/></svg>
+      </div>
+      <div class="body">
+        <div class="title">Downloads</div>
+        <div class="subtitle">150 files saved · 2.4 GB</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="chip tertiary">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"/></svg>
+      </div>
+      <div class="body">
+        <div class="title">Bookmarks</div>
+        <div class="subtitle">42 bookmarks</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="chip tertiary">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>
+      </div>
+      <div class="body">
+        <div class="title">Safe Folder</div>
+        <div class="subtitle">12 items saved</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <div class="col">
+    <h2>B — Last-added subtitle</h2>
+    <p class="note">Same shape, but the subtitle teases content rather than counting it. More personal, but URLs/titles vary in length and read noisier than a fixed format like "42 bookmarks".</p>
+
+    <div class="label">Home</div>
+    <div class="card">
+      <div class="chip primary">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 16l-4 2V4h8v14z" stroke="currentColor" stroke-width="2" fill="none"/></svg>
+      </div>
+      <div class="body">
+        <div class="title">Downloads</div>
+        <div class="subtitle">150 files saved · 2.4 GB</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="chip tertiary">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"/></svg>
+      </div>
+      <div class="body">
+        <div class="title">Bookmarks</div>
+        <div class="subtitle">Last added · GitHub Notifications</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="chip tertiary">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>
+      </div>
+      <div class="body">
+        <div class="title">Safe Folder</div>
+        <div class="subtitle">12 items saved</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <div class="col">
+    <h2>C — Counter + trailing favicon stack</h2>
+    <p class="note">Single-row shape preserved (same height, same padding) — just trades the empty trailing space for a 3-favicon stack. Reads at a glance as "bookmarks live here" without breaking the card grid rhythm. Falls back to empty space when bookmark count &lt; 3.</p>
+
+    <div class="label">Home</div>
+    <div class="card">
+      <div class="chip primary">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 16l-4 2V4h8v14z" stroke="currentColor" stroke-width="2" fill="none"/></svg>
+      </div>
+      <div class="body">
+        <div class="title">Downloads</div>
+        <div class="subtitle">150 files saved · 2.4 GB</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="chip tertiary">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"/></svg>
+      </div>
+      <div class="body">
+        <div class="title">Bookmarks</div>
+        <div class="subtitle">42 saved</div>
+      </div>
+      <div class="favstack">
+        <div class="fav gh">G</div>
+        <div class="fav so">S</div>
+        <div class="fav mz">M</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="chip tertiary">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>
+      </div>
+      <div class="body">
+        <div class="title">Safe Folder</div>
+        <div class="subtitle">12 items saved</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <div class="col">
+    <h2>D — Trailing count pill</h2>
+    <p class="note">Drop the subtitle entirely, surface the count as a trailing pill. Tighter (single line, no subtitle) — but breaks parity since Downloads/Vault keep their subtitle. Probably the least uniform of the four.</p>
+
+    <div class="label">Home</div>
+    <div class="card">
+      <div class="chip primary">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 16l-4 2V4h8v14z" stroke="currentColor" stroke-width="2" fill="none"/></svg>
+      </div>
+      <div class="body">
+        <div class="title">Downloads</div>
+        <div class="subtitle">150 files saved · 2.4 GB</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="chip tertiary">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"/></svg>
+      </div>
+      <div class="body">
+        <div class="title">Bookmarks</div>
+      </div>
+      <div class="pill">42</div>
+    </div>
+    <div class="card">
+      <div class="chip tertiary">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>
+      </div>
+      <div class="body">
+        <div class="title">Safe Folder</div>
+        <div class="subtitle">12 items saved</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="verdict">
+  <strong>Recommendation: A (counter subtitle).</strong> It is literally the same shape as Downloads / Vault, so the home reads as a uniform stack of destinations — exactly the KISS rule you flagged. The trailing-favicon variant (C) is the strongest "more informative" option and still keeps the row shape, but it introduces a new visual element nothing else in the stack has, and favicon fetch/cache adds load-order complexity. B trades a stable subtitle format for a noisier one. D breaks subtitle parity with the siblings.
+  <br><br>
+  <strong>One small refinement for A:</strong> hide the subtitle when count = 0 (title-only "Bookmarks"), matching how Safe Folder hides "0 items saved" — so a fresh install reads cleanly without a misleading "0 bookmarks" line.
+</div>
+
+</body>
+</html>

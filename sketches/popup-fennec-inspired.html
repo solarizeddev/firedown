@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Browser popup — Fennec-inspired sectioning</title>
+<style>
+  :root {
+    --bg: #0a0a0c;
+    --panel: #131316;
+    --surface: #1c1c1f;
+    --surface-container: #232327;
+    --surface-container-high: #2a2a2e;
+    --surface-container-highest: #36363a;
+    --on-surface: #e6e1e5;
+    --on-surface-variant: #b8b4c0;
+    --on-surface-faint: #7a7681;
+    --primary: #cfbcff;
+    --error: #ffb4ab;
+    --divider: #2a2a2e;
+    --good: #86d493;
+    --bad: #e6856b;
+    --toggle-on: #cfbcff;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 28px;
+    background: var(--bg);
+    color: var(--on-surface);
+    font-family: -apple-system, system-ui, "Roboto", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1 { font-size: 22px; font-weight: 500; margin: 0 0 6px; }
+  h2.section {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--on-surface-faint);
+    margin: 36px 0 16px;
+    border-top: 1px solid var(--divider);
+    padding-top: 24px;
+  }
+  .lede {
+    color: var(--on-surface-variant);
+    font-size: 13px;
+    margin: 0 0 14px;
+    max-width: 1100px;
+    line-height: 1.6;
+  }
+  .lede strong { color: var(--on-surface); }
+
+  .row {
+    background: var(--panel);
+    border: 1px solid var(--divider);
+    border-radius: 18px;
+    padding: 22px;
+    margin-bottom: 22px;
+  }
+  .row h3 { font-size: 16px; font-weight: 600; margin: 0 0 4px; }
+  .row .descr {
+    font-size: 13px;
+    color: var(--on-surface-variant);
+    line-height: 1.55;
+    margin: 0 0 18px;
+    max-width: 1000px;
+  }
+  .row .descr strong { color: var(--on-surface); }
+  .row .descr em { color: var(--on-surface); font-style: normal; background: rgba(207,188,255,0.1); padding: 1px 5px; border-radius: 3px; }
+
+  .popup-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 22px;
+    align-items: start;
+  }
+
+  .popup {
+    background: var(--surface);
+    border: 1px solid var(--divider);
+    border-radius: 22px;
+    padding: 16px 0 12px;
+    overflow: hidden;
+  }
+  .popup-grab {
+    width: 40px;
+    height: 4px;
+    background: var(--surface-container-highest);
+    border-radius: 2px;
+    margin: 0 auto 14px;
+  }
+  .popup-title {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
+    color: var(--on-surface-faint);
+    padding: 0 18px;
+    margin-bottom: 12px;
+  }
+
+  /* Quick-row */
+  .quickrow {
+    display: flex;
+    justify-content: space-around;
+    padding: 4px 8px 16px;
+  }
+  .quick {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    width: 60px;
+    padding: 6px 2px;
+  }
+  .quick svg { width: 22px; height: 22px; color: var(--on-surface); }
+  .quick .label { font-size: 11px; color: var(--on-surface); }
+  .quick.disabled svg, .quick.disabled .label { color: var(--on-surface-faint); }
+
+  /* Section blocks */
+  .sec {
+    margin: 0 12px 8px;
+    background: var(--surface-container);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .sec:last-child { margin-bottom: 0; }
+
+  /* Vertical list rows */
+  .vrow {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    font-size: 13.5px;
+    color: var(--on-surface);
+  }
+  .vrow + .vrow {
+    border-top: 1px solid rgba(255,255,255,0.04);
+  }
+  .vrow svg { width: 20px; height: 20px; color: var(--on-surface); margin-right: 16px; flex-shrink: 0; }
+  .vrow .text { flex: 1; }
+  .vrow .pill {
+    background: var(--surface-container-highest);
+    color: var(--on-surface-variant);
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-weight: 500;
+  }
+  .vrow.starred svg { color: var(--toggle-on); }
+  .vrow.destructive { color: var(--error); }
+  .vrow.destructive svg { color: var(--error); }
+  .vrow.removed {
+    text-decoration: line-through;
+    color: var(--on-surface-faint);
+    opacity: 0.55;
+  }
+  .vrow.removed svg { color: var(--on-surface-faint); }
+  .vrow.moved {
+    background: rgba(207,188,255,0.05);
+  }
+  .vrow .arrow-hint {
+    font-size: 10px;
+    color: var(--on-surface-faint);
+    margin-left: 10px;
+  }
+
+  /* 2x2 library tile grid */
+  .tilegrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap: 6px;
+    padding: 10px;
+  }
+  .tile {
+    background: var(--surface-container-high);
+    border-radius: 12px;
+    padding: 14px 6px 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+  .tile svg { width: 22px; height: 22px; color: var(--on-surface); }
+  .tile .label { font-size: 11px; color: var(--on-surface); }
+
+  .takes {
+    background: #131316;
+    border: 1px solid var(--divider);
+    border-radius: 12px;
+    padding: 14px 16px;
+    font-size: 12.5px;
+    line-height: 1.6;
+    margin-top: 16px;
+  }
+  .takes h4 {
+    font-size: 12px;
+    margin: 0 0 8px;
+    color: var(--on-surface);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .takes p { margin: 0 0 6px; color: var(--on-surface-variant); }
+  .takes ul { list-style: none; padding: 0; margin: 0; }
+  .takes ul li { padding: 3px 0; color: var(--on-surface-variant); font-size: 12px; }
+  .takes ul.pros li::before { content: "+ "; color: var(--good); font-weight: 700; }
+  .takes ul.cons li::before { content: "− "; color: var(--bad); font-weight: 700; }
+
+  .verdict {
+    margin-top: 28px;
+    background: #131316;
+    border: 1px solid var(--divider);
+    border-radius: 16px;
+    padding: 22px 26px;
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--on-surface-variant);
+    max-width: 1100px;
+  }
+  .verdict strong { color: var(--on-surface); }
+  .verdict h3 { color: var(--on-surface); margin: 0 0 12px; font-size: 16px; }
+  .verdict ul { padding-left: 20px; margin: 6px 0; }
+
+  .key {
+    display: flex;
+    gap: 14px;
+    font-size: 11px;
+    color: var(--on-surface-variant);
+    margin-bottom: 14px;
+  }
+  .key .swatch {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    margin-right: 4px;
+    vertical-align: middle;
+  }
+  .key .swatch.q { background: rgba(255,255,255,0.05); border: 1px solid var(--divider); }
+  .key .swatch.p { background: rgba(255,255,255,0.05); border: 1px solid var(--divider); }
+  .key .swatch.l { background: rgba(207,188,255,0.18); border: 1px solid var(--toggle-on); }
+  .key .swatch.a { background: rgba(255,180,171,0.12); border: 1px solid var(--error); }
+</style>
+</head>
+<body>
+
+<h1>Browser popup — sectioned, Fennec-inspired</h1>
+<p class="lede">Fennec uses <strong>three structural primitives</strong> instead of one flat list: a transient-actions <strong>quick-row</strong>, a page-state <strong>vertical list</strong>, and a <strong>library tile grid</strong>. The grid is the move I missed — four library destinations pack into the vertical space of two rows, become a single visual unit, and read as "your stuff" at a glance. Below: today vs proposed for Firedown's Browser popup, plus the (much simpler) Home popup.</p>
+
+<div class="key">
+  <span><span class="swatch q"></span>Quick-row (transient)</span>
+  <span><span class="swatch p"></span>Page state (this tab)</span>
+  <span><span class="swatch l"></span>Library tile grid</span>
+  <span><span class="swatch a"></span>App-level / destructive</span>
+</div>
+
+<!-- ====================================================================== -->
+<h2 class="section">Browser popup</h2>
+<div class="row">
+  <h3>Today vs proposed</h3>
+  <p class="descr">Today's Browser popup is quick-row + one flat list of 7 mixed items (page actions, library, app). Proposed: keep the quick-row, split the list into three grouped sections — page state, library grid, app — using subtle container backgrounds (not labels) to separate them. <em>Bookmark page</em> stays a list row with a star icon (matching Fennec) since it's a stateful toggle that benefits from the readable row width. <em>Library destinations</em> compact into a 4-tile grid so the popup gets shorter while access stays direct.</p>
+
+  <div class="popup-grid">
+
+    <!-- TODAY -->
+    <div>
+      <div class="popup">
+        <div class="popup-grab"></div>
+        <div class="popup-title">Browser — today</div>
+        <div class="quickrow">
+          <div class="quick disabled"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg><div class="label">Back</div></div>
+          <div class="quick disabled"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg><div class="label">Forward</div></div>
+          <div class="quick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg><div class="label">Share</div></div>
+          <div class="quick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 11-3-6.7M21 3v6h-6"/></svg><div class="label">Refresh</div></div>
+        </div>
+        <div class="sec" style="background:transparent;">
+          <div class="vrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"/></svg><div class="text">Bookmark page</div></div>
+          <div class="vrow"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h12v17l-6-4-6 4z"/></svg><div class="text">Bookmarks</div></div>
+          <div class="vrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4-4"/></svg><div class="text">Find in page</div></div>
+          <div class="vrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="12" rx="1"/><path d="M9 21h6"/></svg><div class="text">Desktop site</div><div class="pill">Off</div></div>
+          <div class="vrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><div class="text">History</div></div>
+          <div class="vrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg><div class="text">Safe Folder</div></div>
+          <div class="vrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/></svg><div class="text">Settings</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROPOSED -->
+    <div>
+      <div class="popup">
+        <div class="popup-grab"></div>
+        <div class="popup-title">Browser — proposed</div>
+        <div class="quickrow">
+          <div class="quick disabled"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg><div class="label">Back</div></div>
+          <div class="quick disabled"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg><div class="label">Forward</div></div>
+          <div class="quick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg><div class="label">Share</div></div>
+          <div class="quick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 11-3-6.7M21 3v6h-6"/></svg><div class="label">Refresh</div></div>
+        </div>
+
+        <!-- Section: page state -->
+        <div class="sec">
+          <div class="vrow starred"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"/></svg><div class="text">Bookmark page</div></div>
+          <div class="vrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4-4"/></svg><div class="text">Find in page</div></div>
+          <div class="vrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="12" rx="1"/><path d="M9 21h6"/></svg><div class="text">Desktop site</div><div class="pill">Off</div></div>
+        </div>
+
+        <!-- Section: library tile grid -->
+        <div class="sec">
+          <div class="tilegrid">
+            <div class="tile">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+              <div class="label">History</div>
+            </div>
+            <div class="tile">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h12v17l-6-4-6 4z"/></svg>
+              <div class="label">Bookmarks</div>
+            </div>
+            <div class="tile">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4v12m0 0l-4-4m4 4l4-4M5 20h14"/></svg>
+              <div class="label">Downloads</div>
+            </div>
+            <div class="tile">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>
+              <div class="label">Safe Folder</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section: app / destructive -->
+        <div class="sec">
+          <div class="vrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 00.32 1.76l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.6 1.6 0 00-1.76-.32 1.6 1.6 0 00-.97 1.46V21a2 2 0 11-4 0v-.09a1.6 1.6 0 00-1-1.51 1.6 1.6 0 00-1.76.32l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.6 1.6 0 00.32-1.76 1.6 1.6 0 00-1.46-.97H3a2 2 0 110-4h.09a1.6 1.6 0 001.51-1 1.6 1.6 0 00-.32-1.76l-.06-.06a2 2 0 112.83-2.83l.06.06a1.6 1.6 0 001.76.32H9a1.6 1.6 0 001-1.46V3a2 2 0 114 0v.09a1.6 1.6 0 001 1.46 1.6 1.6 0 001.76-.32l.06-.06a2 2 0 112.83 2.83l-.06.06a1.6 1.6 0 00-.32 1.76V9a1.6 1.6 0 001.46 1H21a2 2 0 110 4h-.09a1.6 1.6 0 00-1.46 1z"/></svg><div class="text">Settings</div></div>
+        </div>
+        <div class="sec">
+          <div class="vrow destructive"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg><div class="text">Quit Firedown</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="takes">
+    <h4>What changes and why</h4>
+    <p>The flat 7-row list becomes three semantic sections, each in its own rounded container. <strong>Page state</strong> = things that change THIS page. <strong>Library</strong> = places that contain your stuff. <strong>App</strong> = preferences and exit. Containers do the grouping work that labels would — same outcome, no text bloat.</p>
+    <ul class="pros">
+      <li>Library grid compresses 4 destinations into ~2 rows of vertical space</li>
+      <li>Bookmark page stays a row but its star icon makes the toggle nature visible (fills when bookmarked)</li>
+      <li>Quit gets destructive tint to match its weight (mirrors Fennec's "Quit Fennec" treatment)</li>
+      <li>Adds Downloads to the library group — accepted mild redundancy with the bottom bar in exchange for "library lives here, all of it"</li>
+      <li>Bookmark/Bookmarks word-collision is gone — they're in different sections now</li>
+    </ul>
+    <ul class="cons">
+      <li>One more layout primitive (the tile grid) to maintain</li>
+      <li>Tile labels at narrow widths may need 10px font / abbreviated text ("Safe" instead of "Safe Folder")</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ====================================================================== -->
+<h2 class="section">Home popup (already simplified by the commit just pushed)</h2>
+<div class="row">
+  <h3>Home doesn't need sections — it's too thin</h3>
+  <p class="descr">Home popup is now just History · Settings (+ Quit when enabled) after dropping the Vault/Bookmarks dupes. Sectioning makes sense when a list crosses ~5 mixed items; for 2-3 homogeneous items, sections add visual noise without aiding scanning. Apply the destructive tint to Quit and call it done.</p>
+
+  <div class="popup-grid">
+    <div>
+      <div class="popup">
+        <div class="popup-grab"></div>
+        <div class="popup-title">Home — proposed (quit-off)</div>
+        <div class="sec">
+          <div class="vrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><div class="text">History</div></div>
+          <div class="vrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/></svg><div class="text">Settings</div></div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="popup">
+        <div class="popup-grab"></div>
+        <div class="popup-title">Home — proposed (quit-on)</div>
+        <div class="sec">
+          <div class="vrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><div class="text">History</div></div>
+          <div class="vrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/></svg><div class="text">Settings</div></div>
+        </div>
+        <div class="sec">
+          <div class="vrow destructive"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg><div class="text">Quit Firedown</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="takes">
+    <h4>Optional polish, no code change required</h4>
+    <p>If you adopt the Browser-popup sectioning pattern, the only Home-side gain is putting Quit in its own bottom container (separated by a 4dp gap) to signal destructiveness, matching the Browser app/destructive section. The dedup commit I just pushed already gets the contents right; this is purely a visual treatment that could ship later in the same Browser-popup PR.</p>
+  </div>
+</div>
+
+<!-- ====================================================================== -->
+<div class="verdict">
+  <h3>What I'd commit to</h3>
+  <p><strong>Browser popup</strong> — three sections, in this order:</p>
+  <ul>
+    <li><strong>Quick-row</strong> (unchanged): Back · Forward · Share · Refresh</li>
+    <li><strong>Page state</strong> (rows in a container): ★ Bookmark page · Find in page · Desktop site [pill]</li>
+    <li><strong>Library</strong> (4-tile grid in a container): History · Bookmarks · Downloads · Safe Folder</li>
+    <li><strong>Settings</strong> (single-row container)</li>
+    <li><strong>Quit Firedown</strong> (single-row container, destructive tint) when the pref is on</li>
+  </ul>
+  <p><strong>Home popup</strong> — content already done in the dedup commit. Visual upgrade (optional, paired with Browser): wrap History + Settings in a container, wrap Quit in a separate destructive-tinted container below.</p>
+  <p>The actual code work for Browser is bigger than the Home dedup was — it touches the popup layout XML, adds a tile-grid view holder, and rebinds the existing Bookmark-page / Find / Desktop site / History / Bookmarks / Safe Folder / Settings click handlers to the new positions. Want me to go ahead and build it on a fresh branch?</p>
+</div>
+
+</body>
+</html>

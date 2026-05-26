@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Home — bottom-bar & cards alternatives</title>
+<style>
+  :root {
+    --bg: #0e0e10;
+    --surface: #1a1a1c;
+    --surface-container: #232327;
+    --surface-container-high: #2a2a2e;
+    --surface-container-highest: #36363a;
+    --on-surface: #e6e1e5;
+    --on-surface-variant: #c9c5d0;
+    --on-surface-faint: #8b8794;
+    --primary-container: #4a4458;
+    --on-primary-container: #ead8ff;
+    --tertiary-container: #4b3a3a;
+    --on-tertiary-container: #ffd8d8;
+    --secondary-container: #3a4a3f;
+    --on-secondary-container: #cfecd7;
+    --primary: #cfbcff;
+    --fab-bg: #ead8ff;
+    --fab-on: #381e72;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 28px;
+    background: var(--bg);
+    color: var(--on-surface);
+    font-family: -apple-system, system-ui, "Roboto", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1 { font-size: 20px; font-weight: 500; margin: 0 0 6px; }
+  .lede {
+    color: var(--on-surface-variant);
+    font-size: 13px;
+    margin: 0 0 28px;
+    max-width: 900px;
+    line-height: 1.55;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+    gap: 32px;
+    max-width: 1700px;
+  }
+
+  .col {
+    display: flex;
+    flex-direction: column;
+  }
+  .col h2 {
+    font-size: 14px;
+    font-weight: 600;
+    margin: 0 0 4px;
+    letter-spacing: 0.2px;
+  }
+  .col .note {
+    font-size: 12px;
+    color: var(--on-surface-variant);
+    margin: 0 0 14px;
+    line-height: 1.5;
+  }
+  .col .pros, .col .cons {
+    font-size: 11px;
+    line-height: 1.55;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .col .pros li::before { content: "+ "; color: #86d493; }
+  .col .cons li::before { content: "− "; color: #e6856b; }
+  .col .meta {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid #2a2a2e;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  /* Phone frame */
+  .phone {
+    width: 100%;
+    aspect-ratio: 9 / 19;
+    max-width: 360px;
+    margin: 0 auto;
+    background: var(--surface);
+    border: 1px solid #2a2a2e;
+    border-radius: 26px;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+  .statusbar {
+    height: 22px;
+    background: var(--surface);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    font-size: 9px;
+    color: var(--on-surface-variant);
+  }
+  .statusbar .right { display: flex; gap: 4px; }
+
+  /* Top toolbar */
+  .toolbar {
+    height: 52px;
+    background: var(--surface);
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    gap: 10px;
+    border-bottom: 1px solid #232327;
+  }
+  .toolbar .menu, .toolbar .home-ico {
+    width: 22px; height: 22px;
+    color: var(--on-surface-variant);
+  }
+  .toolbar .urlbar {
+    flex: 1;
+    height: 36px;
+    background: var(--surface-container-high);
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    font-size: 11px;
+    color: var(--on-surface-faint);
+  }
+
+  /* Content area */
+  .content {
+    flex: 1;
+    overflow: hidden;
+    padding: 8px 12px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  /* Standard row card */
+  .card {
+    background: var(--surface-container-high);
+    border-radius: 12px;
+    padding: 11px 12px;
+    display: flex;
+    align-items: center;
+  }
+  .card .chip {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .chip.primary    { background: var(--primary-container); color: var(--on-primary-container); }
+  .chip.tertiary   { background: var(--tertiary-container); color: var(--on-tertiary-container); }
+  .chip.secondary  { background: var(--secondary-container); color: var(--on-secondary-container); }
+  .chip svg { width: 18px; height: 18px; }
+  .card .body {
+    margin-left: 11px;
+    flex: 1;
+    min-width: 0;
+  }
+  .card .title { font-size: 12px; line-height: 16px; font-weight: 500; }
+  .card .sub   { font-size: 10px; line-height: 14px; color: var(--on-surface-variant); }
+  .card .trail {
+    margin-left: 8px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+  }
+  .pill {
+    background: var(--surface-container-highest);
+    color: var(--on-surface-variant);
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-weight: 500;
+  }
+  .favstack { display: flex; }
+  .favstack .fav {
+    width: 16px; height: 16px;
+    border-radius: 5px;
+    background: var(--surface-container-highest);
+    margin-left: -5px;
+    border: 2px solid var(--surface-container-high);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 8px;
+    font-weight: 700;
+    color: white;
+  }
+  .favstack .fav:first-child { margin-left: 0; }
+  .fav.gh { background: #24292e; }
+  .fav.mz { background: #ff7139; }
+  .fav.so { background: #f48024; }
+  .fav.yt { background: #ff0000; }
+  .fav.gn { background: #4285f4; }
+
+  /* Trackers strip */
+  .strip {
+    background: var(--surface-container-high);
+    border-radius: 12px;
+    padding: 11px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .strip .label { font-size: 11px; color: var(--on-surface-variant); }
+  .strip .num { font-size: 18px; font-weight: 600; }
+
+  /* Bottom bar */
+  .bottombar {
+    height: 56px;
+    background: var(--surface);
+    border-top: 1px solid #232327;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    position: relative;
+  }
+  .bottombar .slot {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--on-surface-variant);
+    position: relative;
+  }
+  .bottombar .slot svg { width: 22px; height: 22px; }
+  .bottombar .slot.empty { opacity: 0; }
+  .bottombar .slot .tabcount {
+    width: 22px; height: 22px;
+    border: 1.5px solid var(--on-surface-variant);
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 600;
+  }
+  .bottombar .slot .dot-badge {
+    position: absolute;
+    top: 9px;
+    right: 9px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--primary);
+    border: 1.5px solid var(--surface);
+  }
+
+  /* FAB overlay (cradle) */
+  .fab {
+    position: absolute;
+    top: -22px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 52px;
+    height: 52px;
+    background: var(--fab-bg);
+    color: var(--fab-on);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  }
+  .fab svg { width: 26px; height: 26px; }
+
+  /* Bottom bar accent for "current" highlight */
+  .slot.accent { color: var(--primary); }
+  .slot.accent svg path { stroke-width: 2; }
+
+  /* Labels */
+  .badge-label {
+    position: absolute;
+    top: 6px;
+    left: 14px;
+    background: #2a2a2e;
+    color: var(--on-surface-variant);
+    font-size: 9px;
+    padding: 3px 7px;
+    border-radius: 999px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+  }
+
+  /* Notes overlay under phone */
+  .phone-cap {
+    text-align: center;
+    font-size: 10px;
+    color: var(--on-surface-faint);
+    margin: 10px 0 16px;
+    font-style: italic;
+  }
+
+  .verdict {
+    margin-top: 36px;
+    max-width: 1700px;
+    background: #131316;
+    border: 1px solid #2a2a2e;
+    border-radius: 16px;
+    padding: 20px 24px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--on-surface-variant);
+  }
+  .verdict strong { color: var(--on-surface); }
+  .verdict h3 { color: var(--on-surface); margin: 0 0 10px; font-size: 15px; }
+  .verdict p { margin: 0 0 10px; }
+</style>
+</head>
+<body>
+
+<h1>Home — bottom bar & cards, four directions</h1>
+<p class="lede">Each phone frame shows Home as one coherent unit: top toolbar, content cards, bottom bar. The reference for Browser sits at the right so you can read the relationship between contexts. Today, Home's center cradle = Bookmarks; Browser's center cradle = FAB (download/firedown).</p>
+
+<div class="grid">
+
+  <!-- ============================================================ -->
+  <!-- A: Search swap + Bookmarks card -->
+  <div class="col">
+    <h2>A — Search cradle + Bookmarks card</h2>
+    <p class="note">Your original proposal. Cradle becomes search (focus toolbar + expand autocomplete); Bookmarks demotes to a Home card mirroring Vault/Downloads shape.</p>
+
+    <div class="phone">
+      <div class="badge-label">Home</div>
+      <div class="statusbar"><span>9:41</span><div class="right"><span>·</span><span>·</span><span>97</span></div></div>
+      <div class="toolbar">
+        <svg class="home-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-9 9 9M5 10v10h14V10"/></svg>
+        <div class="urlbar">Search or enter address</div>
+        <svg class="menu" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>
+      </div>
+      <div class="content">
+        <div class="card">
+          <div class="chip primary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/></svg></div>
+          <div class="body"><div class="title">Downloads</div><div class="sub">150 files saved · 2.4 GB</div></div>
+        </div>
+        <div class="card">
+          <div class="chip tertiary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 4h12v17l-6-4-6 4z"/></svg></div>
+          <div class="body"><div class="title">Bookmarks</div><div class="sub">42 bookmarks</div></div>
+        </div>
+        <div class="card">
+          <div class="chip tertiary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg></div>
+          <div class="body"><div class="title">Safe Folder</div><div class="sub">12 items saved</div></div>
+        </div>
+        <div class="strip">
+          <div><div class="label">Trackers blocked</div><div class="num">1,284</div></div>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--on-surface-variant)" stroke-width="2"><path d="M12 2l8 4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V6l8-4z"/></svg>
+        </div>
+      </div>
+      <div class="bottombar">
+        <div class="slot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14m-7-7h14"/></svg></div>
+        <div class="slot"><div class="tabcount">3</div></div>
+        <div class="slot accent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg></div>
+        <div class="slot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/></svg><div class="dot-badge"></div></div>
+        <div class="slot"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></div>
+      </div>
+    </div>
+    <div class="phone-cap">Browser bar identical, FAB returns over center.</div>
+
+    <div class="meta">
+      <ul class="pros">
+        <li>Search ≠ Bookmarks: high-frequency wins the slot</li>
+        <li>Bookmarks gets a visible Home surface</li>
+        <li>Card uniformity preserved</li>
+      </ul>
+      <ul class="cons">
+        <li>Search button duplicates toolbar tap</li>
+        <li>"42 bookmarks" is a vanity stat</li>
+        <li>Adds 4th card to the stack</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- B: No cradle on Home — even 5-slot bar, Bookmarks promoted to a real card -->
+  <div class="col">
+    <h2>B — Flat 5-slot bar + Bookmarks card</h2>
+    <p class="note">Drop the cradle on Home entirely. Bottom bar becomes a flat row of five equal slots: new tab · tabs · <em>history</em> · downloads · more. History gets the formerly-cradled slot since it's the only frequent action currently buried only in the popup. Bookmarks demotes to a Home card.</p>
+
+    <div class="phone">
+      <div class="badge-label">Home</div>
+      <div class="statusbar"><span>9:41</span><div class="right"><span>·</span><span>·</span><span>97</span></div></div>
+      <div class="toolbar">
+        <svg class="home-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-9 9 9M5 10v10h14V10"/></svg>
+        <div class="urlbar">Search or enter address</div>
+        <svg class="menu" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>
+      </div>
+      <div class="content">
+        <div class="card">
+          <div class="chip primary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/></svg></div>
+          <div class="body"><div class="title">Downloads</div><div class="sub">150 files · 2.4 GB</div></div>
+        </div>
+        <div class="card">
+          <div class="chip tertiary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 4h12v17l-6-4-6 4z"/></svg></div>
+          <div class="body"><div class="title">Bookmarks</div><div class="sub">42 bookmarks</div></div>
+          <div class="trail"><div class="favstack"><div class="fav gh">G</div><div class="fav mz">M</div><div class="fav so">S</div></div></div>
+        </div>
+        <div class="card">
+          <div class="chip tertiary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg></div>
+          <div class="body"><div class="title">Safe Folder</div><div class="sub">12 items saved</div></div>
+        </div>
+        <div class="strip">
+          <div><div class="label">Trackers blocked</div><div class="num">1,284</div></div>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--on-surface-variant)" stroke-width="2"><path d="M12 2l8 4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V6l8-4z"/></svg>
+        </div>
+      </div>
+      <div class="bottombar">
+        <div class="slot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14m-7-7h14"/></svg></div>
+        <div class="slot"><div class="tabcount">3</div></div>
+        <div class="slot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+        <div class="slot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/></svg><div class="dot-badge"></div></div>
+        <div class="slot"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></div>
+      </div>
+    </div>
+    <div class="phone-cap">Browser keeps FAB cradle; Home stays flat — visual asymmetry but meaningful one.</div>
+
+    <div class="meta">
+      <ul class="pros">
+        <li>Each Home bar slot is a unique action — no redundancy</li>
+        <li>History stops being menu-only</li>
+        <li>Bookmarks card uses C-style favicon hint to earn its space</li>
+      </ul>
+      <ul class="cons">
+        <li>Home/Browser bottom bars don't visually match</li>
+        <li>Cradle's strong visual hierarchy lost on Home</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- C: Home as a dashboard — cards do all the navigation -->
+  <div class="col">
+    <h2>C — Home as dashboard, minimal bar</h2>
+    <p class="note">Push the navigation into cards, shrink the bar. Bottom bar carries only what is universal across contexts: new tab · tabs · more (cradle preserved for visual continuity but holds new-tab FAB on Home). Every destination — bookmarks, history, vault, downloads — lives as a Home card.</p>
+
+    <div class="phone">
+      <div class="badge-label">Home</div>
+      <div class="statusbar"><span>9:41</span><div class="right"><span>·</span><span>·</span><span>97</span></div></div>
+      <div class="toolbar">
+        <svg class="home-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-9 9 9M5 10v10h14V10"/></svg>
+        <div class="urlbar">Search or enter address</div>
+        <svg class="menu" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>
+      </div>
+      <div class="content" style="gap:8px;">
+        <div class="card">
+          <div class="chip primary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/></svg></div>
+          <div class="body"><div class="title">Downloads</div><div class="sub">150 files · 2.4 GB</div></div>
+        </div>
+        <div class="card">
+          <div class="chip tertiary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 4h12v17l-6-4-6 4z"/></svg></div>
+          <div class="body"><div class="title">Bookmarks</div><div class="sub">42 bookmarks</div></div>
+        </div>
+        <div class="card">
+          <div class="chip secondary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+          <div class="body"><div class="title">History</div><div class="sub">Last visit · 2h ago</div></div>
+        </div>
+        <div class="card">
+          <div class="chip tertiary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg></div>
+          <div class="body"><div class="title">Safe Folder</div><div class="sub">12 items saved</div></div>
+        </div>
+        <div class="strip" style="padding:8px 14px;">
+          <div><div class="label">Trackers blocked</div><div class="num" style="font-size:16px;">1,284</div></div>
+        </div>
+      </div>
+      <div class="bottombar">
+        <div class="slot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14m-7-7h14"/></svg></div>
+        <div class="slot"><div class="tabcount">3</div></div>
+        <div class="slot empty"></div>
+        <div class="fab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14m-7-7h14"/></svg></div>
+        <div class="slot"></div>
+        <div class="slot"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></div>
+      </div>
+    </div>
+    <div class="phone-cap">FAB on Home = new tab (matches the bar's left slot but cradle-promoted).</div>
+
+    <div class="meta">
+      <ul class="pros">
+        <li>Home reads as a true dashboard</li>
+        <li>Bar/cradle visually matches Browser</li>
+        <li>"More" popup can shrink to just Settings/Quit</li>
+      </ul>
+      <ul class="cons">
+        <li>4-card stack — scroll-heavy on small phones</li>
+        <li>New-tab FAB on Home duplicates the bar's + slot</li>
+        <li>Downloads-as-card means losing the bar's badge-on-glance</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- D: Keep bookmarks cradle, fix the popup -->
+  <div class="col">
+    <h2>D — Keep cradle, dedupe the popup</h2>
+    <p class="note">No movement of nav surfaces. The cradle stays Bookmarks (the only Home slot that gives a one-tap entry to that destination). Instead, clean up the "more" popup: drop Vault (it's already a card) and stop being a second route to surfaces that already have one. Popup shrinks to true overflow: History, Settings, Quit.</p>
+
+    <div class="phone">
+      <div class="badge-label">Home (today)</div>
+      <div class="statusbar"><span>9:41</span><div class="right"><span>·</span><span>·</span><span>97</span></div></div>
+      <div class="toolbar">
+        <svg class="home-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-9 9 9M5 10v10h14V10"/></svg>
+        <div class="urlbar">Search or enter address</div>
+        <svg class="menu" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>
+      </div>
+      <div class="content">
+        <div class="card">
+          <div class="chip primary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/></svg></div>
+          <div class="body"><div class="title">Downloads</div><div class="sub">150 files · 2.4 GB</div></div>
+        </div>
+        <div class="card">
+          <div class="chip tertiary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg></div>
+          <div class="body"><div class="title">Safe Folder</div><div class="sub">12 items saved</div></div>
+        </div>
+        <div class="strip">
+          <div><div class="label">Trackers blocked</div><div class="num">1,284</div></div>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--on-surface-variant)" stroke-width="2"><path d="M12 2l8 4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V6l8-4z"/></svg>
+        </div>
+      </div>
+      <div class="bottombar">
+        <div class="slot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14m-7-7h14"/></svg></div>
+        <div class="slot"><div class="tabcount">3</div></div>
+        <div class="slot accent"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h12v17l-6-4-6 4z"/></svg></div>
+        <div class="slot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/></svg><div class="dot-badge"></div></div>
+        <div class="slot"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></div>
+      </div>
+    </div>
+    <div class="phone-cap">Bar/cards unchanged. Just clean up the popup duplication.</div>
+
+    <div class="meta">
+      <ul class="pros">
+        <li>Zero risk: nothing user-facing moves</li>
+        <li>Bookmarks one-tap entry already exists</li>
+        <li>Popup becomes true "overflow" not "second copy"</li>
+      </ul>
+      <ul class="cons">
+        <li>Ignores the search-on-bottom-bar question entirely</li>
+        <li>Home/Browser bottom bars still differ at center</li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+
+<div class="verdict">
+  <h3>My honest read</h3>
+  <p><strong>D is the least change for the most consistency win</strong> — bookmarks already has its one-tap entry on the cradle, so a Home card would duplicate it; the actual fixable problem is that the "more" popup is currently a second route to Vault (already a card) and Bookmarks (already in the bar). Shrink it to History + Settings + Quit and the home gets cleaner without moving anything.</p>
+  <p><strong>If you do want a search button on the bar</strong>, B is the cleanest: a flat 5-slot bar with History promoted from popup to slot, and Bookmarks as a card with the favicon-stack trailing. The search action is missing from B by design — I kept arguing it's redundant with the toolbar.</p>
+  <p><strong>C is the bold redesign</strong> but I think it overcommits: Downloads losing its badge slot on the bar is a real downgrade for users who rely on glance-able download progress, and the new-tab FAB doubles the new-tab access.</p>
+  <p><strong>A is the version I'd build last</strong> — it ships the search/bookmarks swap but doesn't fix the underlying duplication question, and the "42 bookmarks" subtitle adds nothing.</p>
+</div>
+
+</body>
+</html>

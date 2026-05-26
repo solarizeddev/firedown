@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Browser popup — Firedown-native</title>
+<style>
+  :root {
+    --bg: #0a0a0c;
+    --panel: #131316;
+    --surface: #1c1c1f;
+    --surface-container: #232327;
+    --surface-container-high: #2a2a2e;
+    --surface-container-highest: #36363a;
+    --on-surface: #e6e1e5;
+    --on-surface-variant: #b8b4c0;
+    --on-surface-faint: #7a7681;
+    --primary: #cfbcff;
+    --primary-container: #4a4458;
+    --on-primary-container: #ead8ff;
+    --tertiary-container: #4b3a3a;
+    --on-tertiary-container: #ffd8d8;
+    --secondary-container: #3a4a3f;
+    --on-secondary-container: #cfecd7;
+    --error: #ffb4ab;
+    --error-container: #5b2826;
+    --on-error-container: #ffdad6;
+    --divider: #2a2a2e;
+    --good: #86d493;
+    --bad: #e6856b;
+    --toggle-on: #cfbcff;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 28px;
+    background: var(--bg);
+    color: var(--on-surface);
+    font-family: -apple-system, system-ui, "Roboto", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1 { font-size: 22px; font-weight: 500; margin: 0 0 6px; }
+  h2.section {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--on-surface-faint);
+    margin: 36px 0 16px;
+    border-top: 1px solid var(--divider);
+    padding-top: 24px;
+  }
+  .lede {
+    color: var(--on-surface-variant);
+    font-size: 13px;
+    margin: 0 0 14px;
+    max-width: 1100px;
+    line-height: 1.6;
+  }
+  .lede strong { color: var(--on-surface); }
+
+  .principles {
+    background: #131316;
+    border: 1px solid var(--divider);
+    border-radius: 14px;
+    padding: 16px 20px;
+    margin: 0 0 24px;
+    max-width: 1100px;
+  }
+  .principles h4 {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0 0 10px;
+    color: var(--on-surface);
+  }
+  .principles ul { margin: 0; padding-left: 22px; font-size: 13px; line-height: 1.6; color: var(--on-surface-variant); }
+  .principles li { margin: 4px 0; }
+  .principles li strong { color: var(--on-surface); }
+
+  .row {
+    background: var(--panel);
+    border: 1px solid var(--divider);
+    border-radius: 18px;
+    padding: 22px;
+    margin-bottom: 22px;
+  }
+  .row h3 { font-size: 16px; font-weight: 600; margin: 0 0 4px; }
+  .row .descr {
+    font-size: 13px;
+    color: var(--on-surface-variant);
+    line-height: 1.55;
+    margin: 0 0 18px;
+    max-width: 1000px;
+  }
+
+  .popup-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 22px;
+    align-items: start;
+  }
+
+  .popup {
+    background: var(--surface);
+    border: 1px solid var(--divider);
+    border-radius: 22px;
+    padding: 16px 0 14px;
+    overflow: hidden;
+  }
+  .popup-grab {
+    width: 40px;
+    height: 4px;
+    background: var(--surface-container-highest);
+    border-radius: 2px;
+    margin: 0 auto 14px;
+  }
+  .popup-title {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
+    color: var(--on-surface-faint);
+    padding: 0 18px;
+    margin-bottom: 12px;
+  }
+
+  /* Quick-row */
+  .quickrow {
+    display: flex;
+    justify-content: space-around;
+    padding: 4px 8px 16px;
+  }
+  .quick {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    width: 60px;
+    padding: 6px 2px;
+  }
+  .quick svg { width: 22px; height: 22px; color: var(--on-surface); }
+  .quick .label { font-size: 11px; color: var(--on-surface); }
+  .quick.disabled svg, .quick.disabled .label { color: var(--on-surface-faint); }
+  .quick.starred svg { color: var(--toggle-on); }
+  .quick.starred .label { color: var(--toggle-on); }
+
+  /* Section card — Firedown signature */
+  .sec {
+    margin: 0 12px 10px;
+    background: var(--surface-container);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .sec:last-child { margin-bottom: 0; }
+  .sec.destructive { background: rgba(91, 40, 38, 0.25); }
+
+  /* Row — uses Firedown's icon-chip pattern from Home cards */
+  .vrow {
+    display: flex;
+    align-items: center;
+    padding: 10px 14px;
+    font-size: 13.5px;
+    color: var(--on-surface);
+  }
+  .vrow + .vrow {
+    border-top: 1px solid rgba(255,255,255,0.04);
+  }
+  .vrow .chip {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-right: 12px;
+  }
+  .vrow .chip svg { width: 18px; height: 18px; }
+  .chip.neutral  { background: var(--surface-container-high); color: var(--on-surface-variant); }
+  .chip.primary  { background: var(--primary-container); color: var(--on-primary-container); }
+  .chip.tertiary { background: var(--tertiary-container); color: var(--on-tertiary-container); }
+  .chip.secondary{ background: var(--secondary-container); color: var(--on-secondary-container); }
+  .chip.error    { background: var(--error-container); color: var(--on-error-container); }
+
+  .vrow .text { flex: 1; }
+  .vrow .pill {
+    background: var(--surface-container-highest);
+    color: var(--on-surface-variant);
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-weight: 500;
+  }
+  .vrow.destructive { color: var(--error); }
+
+  .takes {
+    background: #131316;
+    border: 1px solid var(--divider);
+    border-radius: 12px;
+    padding: 14px 16px;
+    font-size: 12.5px;
+    line-height: 1.6;
+    margin-top: 16px;
+  }
+  .takes h4 {
+    font-size: 12px;
+    margin: 0 0 8px;
+    color: var(--on-surface);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .takes p { margin: 0 0 6px; color: var(--on-surface-variant); }
+  .takes ul { list-style: none; padding: 0; margin: 0; }
+  .takes ul li { padding: 3px 0; color: var(--on-surface-variant); font-size: 12px; }
+  .takes ul.pros li::before { content: "+ "; color: var(--good); font-weight: 700; }
+  .takes ul.cons li::before { content: "− "; color: var(--bad); font-weight: 700; }
+  .takes ul.delta li::before { content: "• "; color: var(--primary); font-weight: 700; }
+
+  .verdict {
+    margin-top: 28px;
+    background: #131316;
+    border: 1px solid var(--divider);
+    border-radius: 16px;
+    padding: 22px 26px;
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--on-surface-variant);
+    max-width: 1100px;
+  }
+  .verdict strong { color: var(--on-surface); }
+  .verdict h3 { color: var(--on-surface); margin: 0 0 12px; font-size: 16px; }
+  .verdict ul { padding-left: 20px; margin: 6px 0; }
+
+  .note-inline {
+    font-size: 10px;
+    color: var(--on-surface-faint);
+    font-style: italic;
+    margin-left: 8px;
+  }
+</style>
+</head>
+<body>
+
+<h1>Browser popup — Firedown-native, not Firefox copy</h1>
+<p class="lede">Stripped the Fennec-isms (tile grid, Downloads-as-library-peer) and leaned into what's already <strong>yours</strong>: the MaterialCard grouping you said you like, the 32dp icon-chip pattern from Home cards, and tinted-container colors as category signal. Pinging back to the bigger questions about Firedown identity: Downloads is your primary feature, not a library peer; Safe Folder is privacy chrome, not "your stuff"; the quick-row can hold a state toggle because Firedown's chrome is denser than Fennec's.</p>
+
+<div class="principles">
+  <h4>Firedown-native principles I'm following</h4>
+  <ul>
+    <li><strong>Card-as-grouping</strong> — MaterialCard containers with surface-container background, 14dp corners (matching Home stack)</li>
+    <li><strong>Tinted icon chips</strong> as the row leading element — same chip language as Home cards (Downloads = primary, Vault/Bookmarks = tertiary, time = secondary, destructive = error)</li>
+    <li><strong>Downloads stays out of the popup</strong> — it's a primary chrome feature with its own bottom-bar slot and FAB. Listing it in a "library" group demotes it. Firefox can do that because Downloads is a peer in Firefox; in Firedown it's <em>the</em> feature</li>
+    <li><strong>No tile grid</strong> — copied Firefox aesthetic that doesn't earn its place at our content volume</li>
+    <li><strong>Quick-row carries ★ Bookmark</strong> — different from Fennec by choice. Firedown's quick-row already mixes transient (Share, Refresh) and stateful (Refresh re-runs JS state); the ★ as a fifth icon makes "is this page saved?" glance-able the moment the sheet opens</li>
+    <li><strong>Quit is conditional</strong> — only renders when SETTINGS_QUIT_PREF is true. Rendered as a separate destructive-tinted card section, so it's visually quarantined when present</li>
+  </ul>
+</div>
+
+<!-- ====================================================================== -->
+<h2 class="section">Browser popup</h2>
+<div class="row">
+  <h3>Today → proposed</h3>
+  <p class="descr">Three semantic sections wrapped in MaterialCard containers, separated by 10dp gaps. Each row gets a 32dp tinted icon chip. Bookmark page promotes to the quick-row as ★ (the Firedown-specific choice). Bookmark/Bookmarks word collision dissolves because they live in different surfaces now.</p>
+
+  <div class="popup-grid">
+
+    <!-- TODAY -->
+    <div>
+      <div class="popup">
+        <div class="popup-grab"></div>
+        <div class="popup-title">Browser — today</div>
+        <div class="quickrow">
+          <div class="quick disabled"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg><div class="label">Back</div></div>
+          <div class="quick disabled"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg><div class="label">Forward</div></div>
+          <div class="quick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg><div class="label">Share</div></div>
+          <div class="quick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 11-3-6.7M21 3v6h-6"/></svg><div class="label">Refresh</div></div>
+        </div>
+        <div class="sec" style="background:transparent; margin:0;">
+          <div class="vrow"><div class="chip neutral"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"/></svg></div><div class="text">Bookmark page</div></div>
+          <div class="vrow"><div class="chip neutral"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h12v17l-6-4-6 4z"/></svg></div><div class="text">Bookmarks</div></div>
+          <div class="vrow"><div class="chip neutral"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4-4"/></svg></div><div class="text">Find in page</div></div>
+          <div class="vrow"><div class="chip neutral"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="12" rx="1"/><path d="M9 21h6"/></svg></div><div class="text">Desktop site</div><div class="pill">Off</div></div>
+          <div class="vrow"><div class="chip neutral"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div><div class="text">History</div></div>
+          <div class="vrow"><div class="chip neutral"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg></div><div class="text">Safe Folder</div></div>
+          <div class="vrow"><div class="chip neutral"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/></svg></div><div class="text">Settings</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROPOSED -->
+    <div>
+      <div class="popup">
+        <div class="popup-grab"></div>
+        <div class="popup-title">Browser — Firedown-native</div>
+        <div class="quickrow">
+          <div class="quick disabled"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg><div class="label">Back</div></div>
+          <div class="quick disabled"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg><div class="label">Forward</div></div>
+          <div class="quick starred"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"/></svg><div class="label">Bookmark</div></div>
+          <div class="quick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg><div class="label">Share</div></div>
+          <div class="quick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 11-3-6.7M21 3v6h-6"/></svg><div class="label">Refresh</div></div>
+        </div>
+
+        <!-- Page-state card -->
+        <div class="sec">
+          <div class="vrow"><div class="chip neutral"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4-4"/></svg></div><div class="text">Find in page</div></div>
+          <div class="vrow"><div class="chip neutral"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="12" rx="1"/><path d="M9 21h6"/></svg></div><div class="text">Desktop site</div><div class="pill">Off</div></div>
+        </div>
+
+        <!-- Library card -->
+        <div class="sec">
+          <div class="vrow"><div class="chip tertiary"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h12v17l-6-4-6 4z"/></svg></div><div class="text">Bookmarks</div></div>
+          <div class="vrow"><div class="chip secondary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div><div class="text">History</div></div>
+          <div class="vrow"><div class="chip tertiary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg></div><div class="text">Safe Folder</div></div>
+        </div>
+
+        <!-- App card -->
+        <div class="sec">
+          <div class="vrow"><div class="chip neutral"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/></svg></div><div class="text">Settings</div></div>
+        </div>
+
+        <!-- Destructive card — only when SETTINGS_QUIT_PREF is true -->
+        <div class="sec destructive">
+          <div class="vrow destructive"><div class="chip error"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg></div><div class="text">Quit Firedown</div><div class="note-inline">conditional</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="takes">
+    <h4>Deltas from current popup</h4>
+    <ul class="delta">
+      <li><strong>Bookmark page</strong> → promoted to the quick-row as ★ (state-toggle, fills when bookmarked). Different from Fennec; justified by Firedown's denser chrome.</li>
+      <li><strong>Page-state group</strong> (Find · Desktop site) gets its own MaterialCard container</li>
+      <li><strong>Library group</strong> (Bookmarks · History · Safe Folder) gets a MaterialCard. <em>Downloads excluded</em> — already primary chrome, doesn't belong listed as a library peer</li>
+      <li><strong>Icon chips</strong> appear on every row using the Home-card chip vocabulary; chip tint signals category (tertiary = saved content, secondary = time, error = destructive)</li>
+      <li><strong>Settings</strong> in its own single-row card</li>
+      <li><strong>Quit Firedown</strong> in its own destructive-tinted MaterialCard, only present when SETTINGS_QUIT_PREF is on. Visually quarantined — can't be hit by accident</li>
+    </ul>
+    <h4 style="margin-top:14px;">Why this isn't a Firefox copy</h4>
+    <ul class="pros">
+      <li>No tile grid (that was the obvious lift)</li>
+      <li>Downloads deliberately excluded from popup library — a Firedown identity choice Firefox can't make</li>
+      <li>Star promoted to quick-row — Fennec chose otherwise; we have different chrome density</li>
+      <li>Tinted icon chips are <em>your</em> Home-card visual signature carried into the popup</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ====================================================================== -->
+<h2 class="section">Home popup — same vocabulary, lighter content</h2>
+<div class="row">
+  <h3>Single library/app card + conditional destructive card</h3>
+  <p class="descr">Two cards max. First wraps History + Settings (already-shipped content from the dedup commit), second wraps Quit when the pref is on. Same chip language as Browser popup — consistent vocabulary across surfaces. No quick-row (no page context to act on).</p>
+
+  <div class="popup-grid">
+    <div>
+      <div class="popup">
+        <div class="popup-grab"></div>
+        <div class="popup-title">Home — pref off</div>
+        <div class="sec">
+          <div class="vrow"><div class="chip secondary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div><div class="text">History</div></div>
+          <div class="vrow"><div class="chip neutral"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/></svg></div><div class="text">Settings</div></div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="popup">
+        <div class="popup-grab"></div>
+        <div class="popup-title">Home — pref on</div>
+        <div class="sec">
+          <div class="vrow"><div class="chip secondary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div><div class="text">History</div></div>
+          <div class="vrow"><div class="chip neutral"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/></svg></div><div class="text">Settings</div></div>
+        </div>
+        <div class="sec destructive">
+          <div class="vrow destructive"><div class="chip error"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg></div><div class="text">Quit Firedown</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="verdict">
+  <h3>What I'd commit to (revised, honestly Firedown-native)</h3>
+  <p><strong>Browser popup contents</strong>:</p>
+  <ul>
+    <li>Quick-row: Back · Forward · <strong>★ Bookmark</strong> · Share · Refresh</li>
+    <li>Card 1 — page state: Find in page · Desktop site <span class="note-inline">[pill]</span></li>
+    <li>Card 2 — library: Bookmarks · History · Safe Folder &nbsp;<em>(no Downloads — it stays primary chrome)</em></li>
+    <li>Card 3 — app: Settings</li>
+    <li>Card 4 — destructive (conditional): Quit Firedown</li>
+  </ul>
+  <p><strong>Home popup contents</strong>:</p>
+  <ul>
+    <li>Card 1 — library/app: History · Settings <em>(content already shipped in the dedup commit)</em></li>
+    <li>Card 2 — destructive (conditional): Quit Firedown</li>
+  </ul>
+  <p><strong>Cross-surface vocabulary</strong>: same chip language, same MaterialCard container, same destructive treatment. The popup becomes a small mirror of Home-card aesthetics, instead of a borrowed Firefox shape.</p>
+  <p>This is real work — popup layout XML rewrite, view holder for the chip-row, conditional rendering for the destructive card, and rebinding the click handlers to the new structure. Want me to go ahead and build it?</p>
+</div>
+
+</body>
+</html>
