@@ -181,7 +181,22 @@ browser.tabs.onUpdated.addListener((tabId, changeInfo) => {
 
 browser.tabs.query({ active: true, currentWindow: true })
   .then((tabs) => {
-    if (tabs[0]) lastActiveTabId = tabs[0].id;
+    if (!tabs[0]) return;
+    lastActiveTabId = tabs[0].id;
+    // Bootstrap Java's GeckoRuntimeHelper.mTabId at extension load.
+    // Java only updates mTabId from this native "onActivated" message,
+    // and Gecko's onActivated event fires only on tab switches — never
+    // on cold-start session restore. Without this synthetic message,
+    // mTabId stays at DEFAULT_TAB_ID (10001) until the user manually
+    // switches tabs, while captured content lands with the real Gecko
+    // tabId. BrowserDownloadViewModel.filter compares the two for
+    // strict equality and silently drops everything on the mismatch.
+    browser.runtime.sendNativeMessage('browser', {
+      listener: 'onActivated',
+      id: tabs[0].id,
+      previousId: -1,
+      windows: tabs[0].windowId,
+    });
   })
   .catch(() => {});
 
