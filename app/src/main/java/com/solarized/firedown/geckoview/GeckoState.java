@@ -65,6 +65,15 @@ public class GeckoState {
      */
     private int mPendingRestoreIndex = -1;
 
+    /**
+     * Action to invoke once when this state next becomes inactive via
+     * {@link #setActive(boolean) setActive(false)}. {@code null} when
+     * no action is registered. Used by {@code GeckoPromptManager} to
+     * dismiss any open prompt dialog on tab switch.
+     */
+    @Nullable
+    private Runnable mOnDeactivateAction;
+
     private final GeckoStateEntity mGeckoStateEntity;
 
     /**
@@ -320,8 +329,55 @@ public class GeckoState {
     }
 
     public void setActive(boolean active){
+        if (!active && mOnDeactivateAction != null) {
+            // A prompt dialog is open for this tab. The dialog is a
+            // global UI overlay (AlertDialog.show()) — not tied to the
+            // GeckoView surface — so without this dismiss it would
+            // remain on top after a tab switch, appearing to belong to
+            // whatever tab the user switched to. The action stored by
+            // GeckoPromptManager invokes dialog.dismiss(), and the
+            // dialog's OnDismissListener in PromptViewFactory then
+            // routes prompt.dismiss() back to Gecko (so the page
+            // resolves rather than hanging on a pending PromptResponse)
+            // and clears setPromptDisplaying(false).
+            //
+            // Clear the field before running the action so a recursive
+            // call (e.g. the dismiss listener triggering another
+            // setActive(false)) is a no-op rather than re-entering.
+            Runnable action = mOnDeactivateAction;
+            mOnDeactivateAction = null;
+            action.run();
+        }
         if(mGeckoSession != null) mGeckoSession.setActive(active);
         mGeckoStateEntity.setActive(active);
+    }
+
+    /**
+     * Hook invoked once when this state next transitions to inactive
+     * via {@link #setActive(boolean) setActive(false)}. Used by
+     * {@code GeckoPromptManager} to dismiss any open prompt dialog when
+     * the user switches away from the tab that opened it. Setting the
+     * action does not retain it across multiple deactivations — it
+     * fires once and resets. Pass {@code null} to clear without firing.
+     */
+    public void setOnDeactivateAction(@Nullable Runnable action) {
+        mOnDeactivateAction = action;
+    }
+
+    /**
+     * Invoke and clear the deactivate action without flipping the
+     * {@code isActive} flag. Used by {@code closeGeckoState} on the
+     * tab-close path — where the state is being removed entirely and
+     * we still need to dismiss any open prompt dialog, but the close
+     * logic downstream reads {@link #isActive()} to decide whether to
+     * promote a parent tab. Tab-switch paths use {@link #setActive}
+     * which both flips the flag and fires the action.
+     */
+    public void dismissActivePrompt() {
+        if (mOnDeactivateAction == null) return;
+        Runnable action = mOnDeactivateAction;
+        mOnDeactivateAction = null;
+        action.run();
     }
 
     public boolean isActive(){

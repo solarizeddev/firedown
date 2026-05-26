@@ -343,6 +343,12 @@ public class GeckoStateDataRepository {
         //Notify the Media Controller to prevent orphaned Notification
         mGeckoMediaController.onTabClosed(geckoState.getEntityId());
         geckoState.clearCachedThumb();
+        // Dismiss any prompt dialog still open for this tab. Tab-switch
+        // already routes through setActive(false) which fires the same
+        // hook; here on the close path we use dismissActivePrompt
+        // because closeGeckoState reads isActive() below to decide
+        // parent-tab promotion, and setActive(false) would flip it.
+        geckoState.dismissActivePrompt();
         synchronized (mGeckoStates) {
             int currentPosition = mGeckoStates.indexOf(geckoState);
             if (currentPosition == -1) return;

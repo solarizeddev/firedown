@@ -184,6 +184,11 @@ public class PromptViewFactory {
         // Centralized state cleanup
         dialog.setOnDismissListener(d -> {
             state.setPromptDisplaying(false);
+            // Clear the tab-switch dismissal hook now that the dialog
+            // is gone — the lambda otherwise retains the (dismissed)
+            // dialog, which retains the Activity, leaking it through
+            // the singleton-scoped GeckoState.
+            state.setOnDeactivateAction(null);
             // If no choice was made (dismissed by back/click-out), default to DENY or PROMPT
             handler.onPermission(state.getGeckoSession(),
                     GeckoSession.PermissionDelegate.ContentPermission.VALUE_DENY);
@@ -495,6 +500,11 @@ public class PromptViewFactory {
     private static AlertDialog setupDismissListener(AlertDialog dialog, GeckoState state, PromptDelegate.BasePrompt prompt, PromptResponseHandler handler) {
         dialog.setOnDismissListener(d -> {
             state.setPromptDisplaying(false);
+            // Clear the tab-switch dismissal hook now that the dialog
+            // is gone — the lambda otherwise retains the (dismissed)
+            // dialog, which retains the Activity, leaking it through
+            // the singleton-scoped GeckoState.
+            state.setOnDeactivateAction(null);
             if (!prompt.isComplete()) handler.onResponse(state.getGeckoSession(), prompt.dismiss());
         });
         return dialog;

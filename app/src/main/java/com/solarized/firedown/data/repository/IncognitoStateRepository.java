@@ -206,6 +206,10 @@ public class IncognitoStateRepository {
     public void closeGeckoState(GeckoState geckoState) {
         mGeckoMediaController.onTabClosed(geckoState.getEntityId());
         geckoState.clearCachedThumb();
+        // Dismiss any prompt dialog still open for this tab (mirrors
+        // the regular-repo path; the incognito repo lacks an undo so
+        // the session closes immediately downstream).
+        geckoState.dismissActivePrompt();
         synchronized (mGeckoStates) {
             int currentPosition = mGeckoStates.indexOf(geckoState);
             if (currentPosition == -1) return;

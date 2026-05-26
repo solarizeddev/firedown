@@ -74,6 +74,7 @@ public class GeckoPromptManager {
 
         AlertDialog dialog = PromptViewFactory.createAlertDialog(activity, state, prompt, this::sendResponse);
 
+        state.setOnDeactivateAction(dialog::dismiss);
         state.setPromptDisplaying(true);
         dialog.show();
     }
@@ -86,6 +87,7 @@ public class GeckoPromptManager {
 
         AlertDialog dialog = PromptViewFactory.createBeforeUnloadDialog(activity, state, prompt, this::sendResponse);
 
+        state.setOnDeactivateAction(dialog::dismiss);
         state.setPromptDisplaying(true);
         dialog.show();
     }
@@ -99,6 +101,7 @@ public class GeckoPromptManager {
 
         AlertDialog dialog = PromptViewFactory.createColorDialog(activity, state, prompt, this::sendResponse);
 
+        state.setOnDeactivateAction(dialog::dismiss);
         state.setPromptDisplaying(true);
         dialog.show();
     }
@@ -111,6 +114,7 @@ public class GeckoPromptManager {
 
         AlertDialog dialog = PromptViewFactory.createTextDialog(activity, state, prompt, this::sendResponse);
 
+        state.setOnDeactivateAction(dialog::dismiss);
         state.setPromptDisplaying(true);
         dialog.show();
     }
@@ -124,6 +128,7 @@ public class GeckoPromptManager {
 
         AlertDialog dialog = PromptViewFactory.createButtonDialog(activity, state, prompt, this::sendResponse);
 
+        state.setOnDeactivateAction(dialog::dismiss);
         state.setPromptDisplaying(true);
         dialog.show();
     }
@@ -136,6 +141,7 @@ public class GeckoPromptManager {
 
         AlertDialog dialog = PromptViewFactory.createRepostDialog(activity, state, prompt, this::sendResponse);
 
+        state.setOnDeactivateAction(dialog::dismiss);
         state.setPromptDisplaying(true);
         dialog.show();
     }
@@ -147,6 +153,7 @@ public class GeckoPromptManager {
 
         AlertDialog dialog = PromptViewFactory.createContentPermissionDialog(activity, state, permission, message, this::onPermission);
 
+        state.setOnDeactivateAction(dialog::dismiss);
         state.setPromptDisplaying(true);
         dialog.show();
     }
@@ -160,6 +167,7 @@ public class GeckoPromptManager {
         // We reuse the createDateTimeDialog since it handles DATE, TIME, and DATETIME types
         AlertDialog dialog = PromptViewFactory.createDateTimeDialog(activity, state, prompt, this::sendResponse);
 
+        state.setOnDeactivateAction(dialog::dismiss);
         state.setPromptDisplaying(true);
         dialog.show();
     }
@@ -173,6 +181,7 @@ public class GeckoPromptManager {
         // Delegate UI creation to a specialized builder
         AlertDialog dialog = PromptViewFactory.createChoiceDialog(activity, state, prompt, this::sendResponse);
 
+        state.setOnDeactivateAction(dialog::dismiss);
         state.setPromptDisplaying(true);
         dialog.show();
     }
@@ -185,6 +194,7 @@ public class GeckoPromptManager {
 
         AlertDialog dialog = PromptViewFactory.createAuthDialog(activity, state, prompt, this::sendResponse);
 
+        state.setOnDeactivateAction(dialog::dismiss);
         state.setPromptDisplaying(true);
         dialog.show();
     }
