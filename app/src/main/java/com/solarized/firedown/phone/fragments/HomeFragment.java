@@ -419,17 +419,12 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
                 GeckoState geckoState = new GeckoState(entity);
                 mIncognitoStateViewModel.setGeckoState(geckoState, true);
                 NavigationUtils.navigateSafe(mNavController, R.id.action_home_to_home_incognito);
-            } else if (id == R.drawable.ic_lock_24) {
-                Intent vaultIntent = new Intent(mActivity, VaultActivity.class);
-                mStartForResult.launch(vaultIntent);
-            } else if (id == R.drawable.ic_bookmarks_24) {
-                NavigationUtils.navigateSafe(mNavController, R.id.action_home_to_bookmarks);
-            } else if (id == R.drawable.ic_history_24) {
+            } else if (id == R.id.popup_history) {
                 NavigationUtils.navigateSafe(mNavController, R.id.action_home_to_history);
-            } else if(id == R.drawable.ic_baseline_settings_24 || id == R.drawable.ic_settings_24){
+            } else if (id == R.id.popup_settings) {
                 Intent settingsIntent = new Intent(mActivity, SettingsActivity.class);
                 mStartForResult.launch(settingsIntent);
-            } else if (id == R.drawable.ic_logout_24) {
+            } else if (id == R.id.popup_quit) {
                 quitApp();
             }
 

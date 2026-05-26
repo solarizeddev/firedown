@@ -194,13 +194,27 @@
                             android:textAppearance="?attr/textAppearanceTitleSmall"
                             android:textColor="?attr/colorOnSurface" />
 
-                        <com.google.android.material.materialswitch.MaterialSwitch
-                            android:id="@+id/popup_desktop_switch"
+                        <!--
+                            Status pill — On/Off label with a rounded
+                            chip background. Replaces a MaterialSwitch
+                            which was ~48dp tall and made this row read
+                            visibly taller than its siblings. The pill
+                            is decorative status only; the whole row
+                            click target (popup_desktop) does the
+                            actual toggle.
+                        -->
+                        <TextView
+                            android:id="@+id/popup_desktop_state"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:clickable="false"
-                            android:focusable="false"
-                            android:duplicateParentState="true" />
+                            android:background="@drawable/bg_popup_pill"
+                            android:minWidth="36dp"
+                            android:paddingHorizontal="10dp"
+                            android:paddingVertical="3dp"
+                            android:text="@string/popup_desktop_off"
+                            android:textAlignment="center"
+                            android:textAppearance="?attr/textAppearanceLabelSmall"
+                            android:textColor="?attr/colorOnSurfaceVariant" />
                     </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>

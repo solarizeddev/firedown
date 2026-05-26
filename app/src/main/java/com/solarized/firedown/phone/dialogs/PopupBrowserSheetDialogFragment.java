@@ -13,7 +13,6 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatImageView;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.google.android.material.materialswitch.MaterialSwitch;
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
@@ -191,15 +190,19 @@ public class PopupBrowserSheetDialogFragment extends BaseBottomSheetDialogFragme
 
 
     /**
-     * Mirrors the current tab's Desktop-mode state into the row switch.
-     * The whole row is the click target (handled by the shared
-     * onClick → popup_desktop), so the switch is decorative status
-     * via duplicateParentState — not the only hit target.
+     * Mirrors the current tab's Desktop-mode state into the status pill
+     * ("On"/"Off"). The whole row is the click target (handled by the
+     * shared onClick → popup_desktop) — the pill is decorative status,
+     * not the hit target. A pill replaces the original MaterialSwitch
+     * which was ~48dp tall and made this row read visibly taller than
+     * its siblings.
      */
     private void applyDesktopState() {
-        MaterialSwitch desktopSwitch = mView.findViewById(R.id.popup_desktop_switch);
-        if (desktopSwitch == null) return;
-        desktopSwitch.setChecked(mGeckoState.isDesktop());
+        TextView desktopState = mView.findViewById(R.id.popup_desktop_state);
+        if (desktopState == null) return;
+        desktopState.setText(mGeckoState.isDesktop()
+                ? R.string.popup_desktop_on
+                : R.string.popup_desktop_off);
     }
 
 
