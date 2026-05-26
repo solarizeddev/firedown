@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Neutral 32dp chip background for popup rows whose icon should not
+    carry a category tint — Find in page, Desktop site, Settings.
+    Sits at surfaceContainerHighest so it reads as one tone above the
+    section card (surfaceContainer), keeping the chip legible without
+    a colored container claiming "this row is special".
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="?attr/colorSurfaceContainerHighest" />
+    <corners android:radius="10dp" />
+</shape>

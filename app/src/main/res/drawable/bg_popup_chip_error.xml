@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Destructive 32dp chip background for Quit. Pairs with the
+    error-tinted "Quit Firedown" row and lives inside its own
+    MaterialCard so the visual quarantine is unambiguous: this
+    action discards state, don't tap it by accident.
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="?attr/colorErrorContainer" />
+    <corners android:radius="10dp" />
+</shape>

@@ -1,4 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    Browser popup quick-row: page-context actions, evenly weighted.
+    Order: Back · Forward · Bookmark · Share · Refresh.
+
+    The Bookmark button is a state toggle: outlined star when the
+    current page isn't bookmarked, filled star when it is. The icon
+    and click-id (popup_bookmark_add vs popup_bookmark_edit) are
+    swapped in PopupBrowserSheetDialogFragment based on mHasBookmark.
+    Sits between Forward and Share so the row reads as
+    "navigate · save · communicate · reload".
+-->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/popup_header"
@@ -40,6 +51,24 @@
         android:lines="1"
         android:ellipsize="end"
         android:text="@string/browser_menu_forward"
+        app:iconGravity="textTop"
+        app:iconTint="@color/popup_header_selector" />
+
+
+
+    <com.solarized.firedown.ui.browser.BookmarkBrowserButton
+        android:id="@+id/popup_bookmark"
+        style="@style/Widget.Material3.Button.IconButton"
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:layout_height="wrap_content"
+        android:textColor="@color/popup_header_selector"
+        app:icon="@drawable/ic_bookmark_border_24"
+        app:cornerRadius="16dp"
+        app:iconPadding="8dp"
+        android:lines="1"
+        android:ellipsize="end"
+        android:text="@string/browser_menu_bookmark_short"
         app:iconGravity="textTop"
         app:iconTint="@color/popup_header_selector" />
 

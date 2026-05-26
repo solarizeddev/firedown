@@ -12,35 +12,14 @@
     </string-array>
 
 
-    <integer-array name="popup_browser_ids">
-        <item>@id/popup_bookmark_add</item>
-        <item>@id/popup_bookmarks</item>
-        <item>@id/popup_find</item>
-        <item>@id/popup_desktop</item>
-        <item>@id/popup_history</item>
-        <item>@id/popup_vault</item>
-        <item>@id/popup_settings</item>
-    </integer-array>
-
-    <integer-array name="popup_browser_text">
-        <item>@string/browser_menu_bookmark_this_page_2</item>
-        <item>@string/library_bookmarks</item>
-        <item>@string/browser_menu_find_in_page</item>
-        <item>@string/browser_menu_desktop_site</item>
-        <item>@string/library_history</item>
-        <item>@string/navigation_vault</item>
-        <item>@string/browser_settings</item>
-    </integer-array>
-
-    <integer-array name="popup_browser_icon">
-        <item>@drawable/ic_bookmark_border_24</item>
-        <item>@drawable/ic_bookmarks_24</item>
-        <item>@drawable/ic_search_24</item>
-        <item>@drawable/ic_computer_24</item>
-        <item>@drawable/ic_history_24</item>
-        <item>@drawable/ic_lock_24</item>
-        <item>@drawable/ic_settings_24</item>
-    </integer-array>
+    <!--
+        Browser popup contents used to live as three parallel arrays
+        (ids / labels / icons) consumed by a RecyclerView adapter. The
+        popup is now a static layout of MaterialCard sections in
+        fragment_dialog_browser_popup.xml — the section grouping is too
+        structurally meaningful to flatten back into a string array, and
+        the click dispatch happens directly on each row's view id.
+    -->
 
 
     <!--
