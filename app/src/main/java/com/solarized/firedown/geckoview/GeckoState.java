@@ -54,6 +54,17 @@ public class GeckoState {
      */
     private long mLastNavigationTime;
 
+    /**
+     * Original index in {@link GeckoStateDataRepository#mGeckoStates}
+     * captured at the moment {@code closeGeckoState} removes this state,
+     * so an undo-on-close (the snackbar action in {@code TabsFragment})
+     * can re-insert the tab at its prior position instead of appending
+     * to the end of the list. -1 means "no pending restore"; setting
+     * any non-negative value here is a transient hint consumed once by
+     * the next {@code setGeckoState} call that re-adds this state.
+     */
+    private int mPendingRestoreIndex = -1;
+
     private final GeckoStateEntity mGeckoStateEntity;
 
     /**
@@ -176,6 +187,16 @@ public class GeckoState {
 
     public int getTabId(){
         return mGeckoStateEntity.getTabId();
+    }
+
+    public void setPendingRestoreIndex(int index) {
+        mPendingRestoreIndex = index;
+    }
+
+    public int consumePendingRestoreIndex() {
+        int index = mPendingRestoreIndex;
+        mPendingRestoreIndex = -1;
+        return index;
     }
 
     public GeckoSession getGeckoSession(){

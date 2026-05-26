@@ -254,8 +254,19 @@ public class GeckoStateDataRepository {
         boolean changed = false;
         synchronized (mGeckoStates) {
             if (!mGeckoStates.contains(geckoState)) {
-                Log.d(TAG, "setGeckoState: adding NEW tab to list (size was " + mGeckoStates.size() + ")");
-                mGeckoStates.add(geckoState);
+                // Honour a pending restore index from a prior
+                // closeGeckoState (undo-on-close path). If the index is
+                // out of range — list shrank in the meantime — clamp to
+                // the end instead of throwing.
+                int restoreIndex = geckoState.consumePendingRestoreIndex();
+                if (restoreIndex >= 0 && restoreIndex <= mGeckoStates.size()) {
+                    Log.d(TAG, "setGeckoState: restoring tab at index " + restoreIndex
+                            + " (size was " + mGeckoStates.size() + ")");
+                    mGeckoStates.add(restoreIndex, geckoState);
+                } else {
+                    Log.d(TAG, "setGeckoState: adding NEW tab to list (size was " + mGeckoStates.size() + ")");
+                    mGeckoStates.add(geckoState);
+                }
                 changed = true;
             }
             if (active && geckoState.getEntityId() != mCurrentId) {
@@ -335,6 +346,14 @@ public class GeckoStateDataRepository {
         synchronized (mGeckoStates) {
             int currentPosition = mGeckoStates.indexOf(geckoState);
             if (currentPosition == -1) return;
+
+            // Stash the index for a potential undo-on-close. The
+            // TabsFragment snackbar calls setGeckoState(_, true) to
+            // reinsert this state if the user taps "Undo"; without
+            // this hint the reinsert appended to the end of the list
+            // and the tab silently moved to last position. Consumed
+            // once by setGeckoState on re-add.
+            geckoState.setPendingRestoreIndex(currentPosition);
 
             mGeckoStates.remove(geckoState);
 
