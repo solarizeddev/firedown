@@ -2,18 +2,24 @@
 <!--
     Bookmark edit screen.
 
-    Layout:
+    Layout (top → bottom):
       • App bar with up-navigation
-      • Title TextInputLayout (floating-label hint = "Name")
-      • URL   TextInputLayout (floating-label hint = "Website URL")
-      • Primary "Save" button (enabled when both fields are non-empty)
+      • Identity header card — favicon + title + URL preview. Updates
+        live as the user edits the fields below, so the screen always
+        shows the bookmark "as it will be saved".
+      • Inputs card — Title and URL fields wrapped in a single
+        MaterialCard matching the Home / popup vocabulary.
+      • Actions card — "Open in browser" and "Share". Both are
+        contextual page-actions that belong with the bookmark surface
+        rather than buried in a toolbar overflow menu.
+      • Primary "Save" button (enabled when both fields are non-empty).
       • Destructive "Delete bookmark" card (error-tinted chip + label;
-        same visual quarantine pattern as the popup Quit card)
+        same visual quarantine pattern as the popup Quit card).
 
     Fields are editable from entry — the prior two-tap "Edit then
     Save" pattern is gone. Save dispatches the update and pops back;
     Delete dispatches the deletion and pops back. The screen never
-    needs to differentiate a view-mode from an edit-mode state.
+    differentiates a view-mode from an edit-mode state.
 -->
 <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -41,6 +47,7 @@
     </com.google.android.material.appbar.AppBarLayout>
 
     <androidx.core.widget.NestedScrollView
+        android:id="@+id/nested"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_gravity="fill_vertical"
@@ -49,74 +56,241 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:paddingHorizontal="16dp"
+            android:paddingTop="14dp"
+            android:paddingBottom="16dp">
 
 
-            <com.solarized.firedown.ui.LoginPanelTextInputLayout
-                android:id="@+id/title_text_input_layout"
+            <!-- ── Identity header ─────────────────────────────────── -->
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="30dp"
-                android:layout_marginTop="16dp"
-                android:layout_marginEnd="30dp">
+                android:layout_marginBottom="12dp"
+                app:cardBackgroundColor="?attr/colorSurfaceContainer"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="0dp">
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/title_field"
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="@string/bookmark_name"
-                    android:imeOptions="actionDone"
-                    android:singleLine="true"
-                    android:textSize="16sp" />
-            </com.solarized.firedown.ui.LoginPanelTextInputLayout>
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="14dp"
+                    android:paddingVertical="14dp">
+
+                    <androidx.appcompat.widget.AppCompatImageView
+                        android:id="@+id/edit_favicon"
+                        android:layout_width="44dp"
+                        android:layout_height="44dp"
+                        android:background="@drawable/bg_popup_chip_neutral"
+                        android:contentDescription="@null"
+                        android:padding="6dp"
+                        android:src="@drawable/ic_bookmark_24"
+                        app:tint="?attr/colorOnSurfaceVariant" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="14dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/edit_title_preview"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:ellipsize="end"
+                            android:maxLines="1"
+                            android:textAppearance="?attr/textAppearanceTitleSmall"
+                            android:textColor="?attr/colorOnSurface" />
+
+                        <TextView
+                            android:id="@+id/edit_url_preview"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:ellipsize="end"
+                            android:layout_marginTop="2dp"
+                            android:maxLines="1"
+                            android:textAppearance="?attr/textAppearanceBodySmall"
+                            android:textColor="?attr/colorOnSurfaceVariant" />
+
+                    </LinearLayout>
+
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
 
-            <com.solarized.firedown.ui.LoginPanelTextInputLayout
-                android:id="@+id/host_text_input_layout"
+            <!-- ── Inputs ──────────────────────────────────────────── -->
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="30dp"
-                android:layout_marginTop="12dp"
-                android:layout_marginEnd="30dp"
-                app:endIconMode="none">
+                android:layout_marginBottom="12dp"
+                app:cardBackgroundColor="?attr/colorSurfaceContainer"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="0dp">
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/host_field"
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="@string/login_host"
-                    android:imeOptions="actionDone"
-                    android:inputType="textWebEditText"
-                    android:singleLine="true"
-                    android:textSize="16sp" />
-            </com.solarized.firedown.ui.LoginPanelTextInputLayout>
+                    android:orientation="vertical"
+                    android:paddingHorizontal="14dp"
+                    android:paddingTop="6dp"
+                    android:paddingBottom="14dp">
+
+                    <com.solarized.firedown.ui.LoginPanelTextInputLayout
+                        android:id="@+id/title_text_input_layout"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/title_field"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:hint="@string/bookmark_name"
+                            android:imeOptions="actionNext"
+                            android:singleLine="true"
+                            android:textSize="16sp" />
+                    </com.solarized.firedown.ui.LoginPanelTextInputLayout>
+
+                    <com.solarized.firedown.ui.LoginPanelTextInputLayout
+                        android:id="@+id/host_text_input_layout"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        app:endIconMode="none">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/host_field"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:hint="@string/login_host"
+                            android:imeOptions="actionDone"
+                            android:inputType="textWebEditText"
+                            android:singleLine="true"
+                            android:textSize="16sp" />
+                    </com.solarized.firedown.ui.LoginPanelTextInputLayout>
+
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
 
+            <!-- ── Actions ─────────────────────────────────────────── -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                app:cardBackgroundColor="?attr/colorSurfaceContainer"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <LinearLayout
+                        android:id="@+id/open_in_browser_row"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="?attr/selectableItemBackground"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingHorizontal="14dp"
+                        android:paddingVertical="10dp">
+
+                        <FrameLayout
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:background="@drawable/bg_popup_chip_neutral">
+
+                            <androidx.appcompat.widget.AppCompatImageView
+                                android:layout_width="18dp"
+                                android:layout_height="18dp"
+                                android:layout_gravity="center"
+                                android:contentDescription="@null"
+                                android:src="@drawable/ic_open_in_new_24"
+                                app:tint="?attr/colorOnSurfaceVariant" />
+                        </FrameLayout>
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="14dp"
+                            android:layout_weight="1"
+                            android:text="@string/bookmark_action_open"
+                            android:textAppearance="?attr/textAppearanceTitleSmall"
+                            android:textColor="?attr/colorOnSurface" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/share_row"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="?attr/selectableItemBackground"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingHorizontal="14dp"
+                        android:paddingVertical="10dp">
+
+                        <FrameLayout
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:background="@drawable/bg_popup_chip_neutral">
+
+                            <androidx.appcompat.widget.AppCompatImageView
+                                android:layout_width="18dp"
+                                android:layout_height="18dp"
+                                android:layout_gravity="center"
+                                android:contentDescription="@null"
+                                android:src="@drawable/ic_share_24"
+                                app:tint="?attr/colorOnSurfaceVariant" />
+                        </FrameLayout>
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="14dp"
+                            android:layout_weight="1"
+                            android:text="@string/browser_menu_share"
+                            android:textAppearance="?attr/textAppearanceTitleSmall"
+                            android:textColor="?attr/colorOnSurface" />
+                    </LinearLayout>
+
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+
+            <!-- ── Save (primary) ──────────────────────────────────── -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/save_button"
                 style="@style/Widget.Material3.Button"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
                 android:padding="12dp"
-                android:layout_marginTop="30dp"
-                android:layout_marginStart="30dp"
-                android:layout_marginEnd="30dp"
-                android:layout_gravity="center_horizontal"
                 android:text="@string/prompt_save_confirmation" />
 
 
+            <!-- ── Delete (destructive) ────────────────────────────── -->
             <!--
-                Destructive Delete row. MaterialCard + error-tinted chip
-                mirror the popup Quit card so destructive actions read
-                the same way everywhere — visually quarantined, not a
-                passive text button blending in with the save action.
+                MaterialCard + error-tinted chip mirror the popup Quit
+                card so destructive actions read the same way
+                everywhere — visually quarantined, not a passive text
+                button blending in with Save.
             -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="30dp"
-                android:layout_marginTop="15dp"
-                android:layout_marginEnd="30dp"
+                android:layout_marginTop="12dp"
                 app:cardBackgroundColor="?attr/colorSurfaceContainer"
                 app:cardCornerRadius="14dp"
                 app:cardElevation="0dp"
@@ -162,11 +336,6 @@
 
         </LinearLayout>
 
-
-
     </androidx.core.widget.NestedScrollView>
-
-
-
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

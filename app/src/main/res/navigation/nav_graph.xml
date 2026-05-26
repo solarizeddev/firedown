@@ -126,7 +126,19 @@
     </fragment>
     <fragment
         android:id="@+id/web_bookmark_edit"
-        android:name="com.solarized.firedown.phone.fragments.WebBookmarkEditFragment" />
+        android:name="com.solarized.firedown.phone.fragments.WebBookmarkEditFragment" >
+        <!--
+            "Open in browser" action from the edit screen. Mirrors
+            action_web_bookmark_to_browser: pop back to home, push
+            browser, so back from browser lands on home rather than
+            leaving the edit surface on the stack.
+        -->
+        <action
+            android:id="@+id/action_web_bookmark_edit_to_browser"
+            app:destination="@id/browser"
+            app:popUpTo="@id/home"
+            app:popUpToInclusive="false" />
+    </fragment>
 
     <!--
         History surfaces (inlined from former nav_graph_history.xml).
