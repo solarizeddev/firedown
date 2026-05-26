@@ -105,10 +105,15 @@
 
 
         <!--
-            Stats row. Three equal cards using weight=1 with 8dp Spaces
-            between (gutter doesn't accumulate at screen edges). Same
-            Widget.Material3.CardView.Filled tonal style the
-            TrackersInfoSheet uses.
+            Stats row. Two equal cards using weight=1 with an 8dp Space
+            between. Same Widget.Material3.CardView.Filled tonal style
+            the TrackersInfoSheet uses for its three-card row, but
+            scoped to the per-page actionable counters only — Ads and
+            Trackers each carry a tappable list drill-down beneath
+            them. A previous iteration had a third "Data saved" card
+            here, but it was a derived stat (count × ~50KB) with no
+            list to drill into, so it sat alongside two tappable peers
+            as a non-tappable look-alike — the worst of both worlds.
         -->
         <LinearLayout
             android:layout_width="match_parent"
@@ -175,29 +180,6 @@
                     <TextView
                         style="@style/TrackersInfoStatLabel"
                         android:text="@string/security_stat_trackers_blocked" />
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-
-            <Space
-                android:layout_width="8dp"
-                android:layout_height="match_parent" />
-
-            <com.google.android.material.card.MaterialCardView
-                style="@style/TrackersInfoStatCard"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1">
-
-                <LinearLayout style="@style/TrackersInfoStatBody">
-
-                    <TextView
-                        android:id="@+id/data_saved_text"
-                        style="@style/TrackersInfoStatValue"
-                        tools:text="1.9 MB" />
-
-                    <TextView
-                        style="@style/TrackersInfoStatLabel"
-                        android:text="@string/trackers_info_stat_saved" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 

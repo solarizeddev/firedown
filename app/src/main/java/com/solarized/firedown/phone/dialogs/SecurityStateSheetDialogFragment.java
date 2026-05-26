@@ -31,7 +31,6 @@ import com.solarized.firedown.geckoview.TrackingCategory;
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.utils.NavigationUtils;
 import com.solarized.firedown.utils.UrlStringUtils;
-import com.solarized.firedown.utils.Utils;
 import com.solarized.firedown.utils.WebUtils;
 
 import java.util.List;
@@ -41,25 +40,12 @@ import java.util.Objects;
 public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragment
         implements View.OnClickListener, CompoundButton.OnCheckedChangeListener {
 
-    /**
-     * Mirrors the constant in {@code HomeFragment} and
-     * {@code TrackersInfoSheet} — uBlock cancels blocked requests
-     * before the response body is seen, so the true byte count is
-     * unknown. The published average we display everywhere bytes-
-     * saved appears is ~50 KB per blocked request (Brave's
-     * methodology). Keeping the same constant here means the
-     * SecuritySheet's per-page figure scales consistently with the
-     * Home trackers card's all-time figure.
-     */
-    private static final long AVG_BYTES_PER_BLOCKED_REQUEST = 50_000L;
-
     private GeckoStateViewModel mGeckoStateViewModel;
     private IncognitoStateViewModel mIncognitoStateViewModel;
     private GeckoState mGeckoState;
     private CertificateInfoEntity mCertificateInfoEntity;
     private TextView mAdsCounterTextView;
     private TextView mTrackersCounterTextView;
-    private TextView mDataSavedTextView;
     private MaterialSwitch mAdsSwitch;
     private MaterialSwitch mTrackingSwitch;
     private TextView mTrackingSubtext;
@@ -73,13 +59,6 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
     private String mLastIconUrl;
     private boolean mTrackingEnabledForSite;
     private int mTrackersBlockedTotal;
-
-    // Running per-page counters used to recompute the Data saved stat
-    // card. Each observer updates its own field then calls
-    // updateDataSavedDisplay() so the figure stays in sync regardless
-    // of which counter ticked.
-    private int mAdsBlockedCount = 0;
-    private int mTrackersBlockedCount = 0;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -128,7 +107,6 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
         mTrackingSubtext = mView.findViewById(R.id.tracking_subtext);
         mAdsCounterTextView = mView.findViewById(R.id.ads_counter);
         mTrackersCounterTextView = mView.findViewById(R.id.trackers_counter);
-        mDataSavedTextView = mView.findViewById(R.id.data_saved_text);
         mAdsSwitch = mView.findViewById(R.id.ads_toogle);
         mHostText = mView.findViewById(R.id.host_secure_text);
         mHostCert = mView.findViewById(R.id.host_secure);
@@ -204,11 +182,6 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
         mLastIconUrl = mGeckoState.getEntityIcon();
         loadFavicon(mHostImage, mDomain);
 
-        // Initialise the Data saved stat at 0 B so the card doesn't
-        // render blank on first paint before either counter observer
-        // fires.
-        updateDataSavedDisplay();
-
         // Ads count — routed to the correct per-mode stream so the incognito
         // sheet never reflects counts from regular browsing and vice versa.
         // Both streams are backed by the same GeckoUblockHelper singleton;
@@ -218,11 +191,7 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
                 ? mIncognitoStateViewModel.getAdsCount()
                 : mGeckoStateViewModel.getAdsCount();
 
-        adsCountLive.observe(getViewLifecycleOwner(), count -> {
-            mAdsCounterTextView.setText(count);
-            mAdsBlockedCount = parseCount(count);
-            updateDataSavedDisplay();
-        });
+        adsCountLive.observe(getViewLifecycleOwner(), count -> mAdsCounterTextView.setText(count));
 
         // Ads filter enabled state is a per-URL whitelist concept (netWhitelist
         // Map in µb), not per-mode. Always read from the regular ViewModel.
@@ -271,44 +240,9 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
                 if (v != null) total += v;
             }
         }
-
-        mTrackersBlockedCount = total;
         mTrackersBlockedTotal = total;
         if (mTrackersCounterTextView != null) {
             mTrackersCounterTextView.setText(String.valueOf(total));
-        }
-        updateDataSavedDisplay();
-    }
-
-
-    /**
-     * Recomputes the Data saved stat card from the two running
-     * counters using the same average-bytes-per-blocked-request
-     * constant as HomeFragment and TrackersInfoSheet. Cheap enough
-     * to call from every counter observer; no debouncing needed.
-     */
-    private void updateDataSavedDisplay() {
-        if (mDataSavedTextView == null) return;
-        long bytes = (long) (mAdsBlockedCount + mTrackersBlockedCount)
-                * AVG_BYTES_PER_BLOCKED_REQUEST;
-        mDataSavedTextView.setText(Utils.readableFileSize(bytes));
-    }
-
-
-    /**
-     * Tolerant int parse for the ads counter LiveData — the stream
-     * emits formatted strings ("12,345") so a vanilla Integer.parseInt
-     * would throw on the comma. Strip any non-digit and parse the
-     * remainder; on any failure return 0 so the running total stays
-     * a non-negative integer.
-     */
-    private static int parseCount(@Nullable String value) {
-        if (TextUtils.isEmpty(value)) return 0;
-        try {
-            String digits = value.replaceAll("\\D", "");
-            return digits.isEmpty() ? 0 : Integer.parseInt(digits);
-        } catch (NumberFormatException ignored) {
-            return 0;
         }
     }
 
@@ -431,7 +365,6 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
         mTrackingSwitch = null;
         mAdsCounterTextView = null;
         mTrackersCounterTextView = null;
-        mDataSavedTextView = null;
         mTrackingIcon = null;
         mTrackingSubtext = null;
         mHostImage = null;
