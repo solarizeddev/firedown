@@ -77,6 +77,7 @@ import com.solarized.firedown.ui.OnItemClickListener;
 import com.solarized.firedown.ui.diffs.SearchDiffCallback;
 import com.solarized.firedown.IntentActions;
 import com.solarized.firedown.Preferences;
+import com.solarized.firedown.data.repository.WebBookmarkDataRepository;
 import com.solarized.firedown.utils.BuildUtils;
 import com.solarized.firedown.utils.AppLinkUseCases;
 import com.solarized.firedown.utils.FileUriHelper;
@@ -583,7 +584,12 @@ public class BrowserFragment extends BaseBrowserFragment
                 if (mGeckoState == null) return;
                 String url = mGeckoState.getEntityUri();
                 Bundle editArgs = new Bundle();
-                editArgs.putInt(Keys.ITEM_ID, url.hashCode());
+                // Repository's canonical id so the edit fragment looks
+                // up the right row even when the GeckoSession URL has a
+                // trailing slash / mixed-case host that doesn't match
+                // the user-typed save string verbatim.
+                editArgs.putInt(Keys.ITEM_ID,
+                        WebBookmarkDataRepository.bookmarkIdFor(url));
                 NavigationUtils.navigateSafe(mNavController,
                         R.id.action_browser_to_bookmark_edit, R.id.browser, editArgs);
             } else if (id == R.id.popup_reload) {

@@ -34,6 +34,7 @@ import com.solarized.firedown.data.entity.GeckoStateEntity;
 import com.solarized.firedown.data.entity.WebBookmarkEntity;
 import com.solarized.firedown.data.models.BrowserURIViewModel;
 import com.solarized.firedown.data.models.WebBookmarkViewModel;
+import com.solarized.firedown.data.repository.WebBookmarkDataRepository;
 import com.solarized.firedown.utils.NavigationUtils;
 import com.solarized.firedown.utils.WebUtils;
 
@@ -179,7 +180,13 @@ public class WebBookmarkEditFragment extends BaseFocusFragment implements View.O
                     String normalized = rawUrl.startsWith("http")
                             ? rawUrl : "https://" + rawUrl;
                     mWebBookmarkEntity.setFileUrl(normalized);
-                    mWebBookmarkEntity.setId(normalized.hashCode());
+                    // Route the id through the repository's canonical
+                    // hash so the saved bookmark matches what the
+                    // browser popup looks up when the user later visits
+                    // this URL — keeps trailing-slash and case variants
+                    // pointing to the same row.
+                    mWebBookmarkEntity.setId(
+                            WebBookmarkDataRepository.bookmarkIdFor(normalized));
                     updatePreview(title, normalized);
                 } else {
                     updatePreview(title, rawUrl);

@@ -103,7 +103,11 @@ public class LegacyShortcutsMigrator {
                     if (url == null || url.isEmpty()) continue;
 
                     WebBookmarkEntity entity = new WebBookmarkEntity();
-                    entity.setId(url.hashCode());
+                    // Same canonical id as every other bookmark create
+                    // path so the migrated row collides cleanly with
+                    // any existing bookmark for this URL on REPLACE.
+                    entity.setId(com.solarized.firedown.data.repository
+                            .WebBookmarkDataRepository.bookmarkIdFor(url));
                     entity.setFileUrl(url);
                     entity.setFileTitle(colTitle >= 0 ? c.getString(colTitle) : url);
                     entity.setFileIcon(colIcon >= 0 ? c.getString(colIcon) : null);

@@ -1,5 +1,7 @@
 package com.solarized.firedown.data.repository;
 
+import android.text.TextUtils;
+
 import androidx.lifecycle.LiveData;
 import androidx.paging.PagingSource;
 
@@ -12,6 +14,7 @@ import com.solarized.firedown.utils.Utils;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.Executor;
 import javax.inject.Inject;
@@ -43,11 +46,67 @@ public class WebBookmarkDataRepository {
         this.mMainExecutor = mainExecutor;
         // Initialize the sync set on a background thread
         mDiskExecutor.execute(() -> {
+            // One-shot migration: rows persisted before URL normalization
+            // landed have uids hashed from the raw user-typed string
+            // (case-sensitive, trailing slash sensitive), which mismatch
+            // the post-redirect URIs GeckoSession reports. Re-key any
+            // row whose stored URL doesn't already match the normalized
+            // hash so contains() / getId() resolve consistently.
+            List<WebBookmarkEntity> all = mWebBookmarkDao.getAllRaw();
+            if (all != null) {
+                for (WebBookmarkEntity entity : all) {
+                    int normalizedId = bookmarkIdFor(entity.getUrl());
+                    if (entity.getId() != normalizedId) {
+                        mWebBookmarkDao.deleteById(entity.getId());
+                        entity.setId(normalizedId);
+                        mWebBookmarkDao.insert(entity);
+                    }
+                }
+            }
             List<Integer> ids = mWebBookmarkDao.getAllIds();
             if (ids != null) {
                 mSyncEntities.addAll(ids);
             }
         });
+    }
+
+    /**
+     * Canonical bookmark id for a URL.
+     *
+     * <p>Identity is the hash of a normalized form so that user-typed
+     * variants ("Https://Example.com", "https://example.com/") and the
+     * post-redirect URL the GeckoSession ends up reporting all resolve
+     * to the same bookmark. Normalization:</p>
+     * <ul>
+     *   <li>strip a single trailing "/" so root-path URLs don't double-up
+     *   <li>lowercase the scheme + host portion (everything before the
+     *       first "/" after "://"), leaving the path / query case-sensitive
+     *       since servers can — and some do — treat path segments as
+     *       case-sensitive
+     * </ul>
+     *
+     * <p>Null/empty input maps to 0 so the call site doesn't have to
+     * branch.</p>
+     */
+    public static int bookmarkIdFor(String url) {
+        return normalize(url).hashCode();
+    }
+
+    private static String normalize(String url) {
+        if (TextUtils.isEmpty(url)) return "";
+        String trimmed = url.endsWith("/") && url.length() > 1
+                ? url.substring(0, url.length() - 1)
+                : url;
+        int schemeEnd = trimmed.indexOf("://");
+        if (schemeEnd == -1) {
+            return trimmed.toLowerCase(Locale.ROOT);
+        }
+        int pathStart = trimmed.indexOf('/', schemeEnd + 3);
+        if (pathStart == -1) {
+            return trimmed.toLowerCase(Locale.ROOT);
+        }
+        return trimmed.substring(0, pathStart).toLowerCase(Locale.ROOT)
+                + trimmed.substring(pathStart);
     }
 
     public int getCount() { return mSyncEntities.size(); }
@@ -66,11 +125,12 @@ public class WebBookmarkDataRepository {
 
     public void add(GeckoState geckoState) {
         if (geckoState == null) return;
+        String uri = geckoState.getEntityUri();
         WebBookmarkEntity entity = new WebBookmarkEntity();
         entity.setFileDate(System.currentTimeMillis());
         entity.setFileTitle(Utils.capitalize(geckoState.getEntityTitle()));
-        entity.setFileUrl(geckoState.getEntityUri());
-        entity.setId(geckoState.getEntityUri().hashCode());
+        entity.setFileUrl(uri);
+        entity.setId(bookmarkIdFor(uri));
         entity.setFileIcon(geckoState.getEntityIcon());
         add(entity);
     }
@@ -78,7 +138,7 @@ public class WebBookmarkDataRepository {
     public boolean contains(GeckoState geckoState) {
         if (geckoState == null)
             return false;
-        return mSyncEntities.contains(geckoState.getEntityUri().hashCode());
+        return mSyncEntities.contains(bookmarkIdFor(geckoState.getEntityUri()));
     }
 
     public void add(WebBookmarkEntity web) {
