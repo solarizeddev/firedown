@@ -115,13 +115,22 @@ public class WebBookmarkEditFragment extends BaseFocusFragment implements View.O
             if (result != null) {
                 mWebBookmarkEntity = result;
                 mPreviousId = result.getId();
-                mTitleNameInput.setText(result.getTitle());
-                mHostnameInput.setText(result.getUrl());
-                updatePreview(result.getTitle(), result.getUrl());
+                // Cache the loaded strings BEFORE any setText. The text
+                // watcher fires on each setText and writes back into
+                // mWebBookmarkEntity (== result), which means the title
+                // setText mutates result.getUrl() to "https://" while
+                // the host field is still empty — and the next line
+                // would then pick that mutated value up instead of the
+                // original. Holding the snapshot in locals avoids that.
+                String loadedTitle = result.getTitle();
+                String loadedUrl = result.getUrl();
+                mTitleNameInput.setText(loadedTitle);
+                mHostnameInput.setText(loadedUrl);
+                updatePreview(loadedTitle, loadedUrl);
                 // Same Glide call shape the bookmark list adapter uses
                 // — falls back to a domain-derived placeholder when the
                 // entity's icon column is empty.
-                GlideHelper.load(result.getIcon(), result.getUrl(),
+                GlideHelper.load(result.getIcon(), loadedUrl,
                         mFaviconView, mFaviconRequestOptions);
                 // Both fields populated → save is meaningful. The text
                 // watcher will keep the state in sync as the user edits.
