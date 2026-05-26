@@ -1,4 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    Bookmark edit screen.
+
+    Layout:
+      • App bar with up-navigation
+      • Title TextInputLayout (floating-label hint = "Name")
+      • URL   TextInputLayout (floating-label hint = "Website URL")
+      • Primary "Save" button (enabled when both fields are non-empty)
+      • Destructive "Delete bookmark" card (error-tinted chip + label;
+        same visual quarantine pattern as the popup Quit card)
+
+    Fields are editable from entry — the prior two-tap "Edit then
+    Save" pattern is gone. Save dispatches the update and pops back;
+    Delete dispatches the deletion and pops back. The screen never
+    needs to differentiate a view-mode from an edit-mode state.
+-->
 <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
@@ -42,8 +58,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="30dp"
                 android:layout_marginTop="16dp"
-                android:layout_marginEnd="30dp"
-                android:enabled="false">
+                android:layout_marginEnd="30dp">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/title_field"
@@ -52,7 +67,6 @@
                     android:hint="@string/bookmark_name"
                     android:imeOptions="actionDone"
                     android:singleLine="true"
-                    android:enabled="false"
                     android:textSize="16sp" />
             </com.solarized.firedown.ui.LoginPanelTextInputLayout>
 
@@ -64,7 +78,6 @@
                 android:layout_marginStart="30dp"
                 android:layout_marginTop="12dp"
                 android:layout_marginEnd="30dp"
-                android:enabled="false"
                 app:endIconMode="none">
 
                 <com.google.android.material.textfield.TextInputEditText
@@ -75,7 +88,6 @@
                     android:imeOptions="actionDone"
                     android:inputType="textWebEditText"
                     android:singleLine="true"
-                    android:enabled="false"
                     android:textSize="16sp" />
             </com.solarized.firedown.ui.LoginPanelTextInputLayout>
 
@@ -90,20 +102,62 @@
                 android:layout_marginStart="30dp"
                 android:layout_marginEnd="30dp"
                 android:layout_gravity="center_horizontal"
-                android:text="@string/edit" />
+                android:text="@string/prompt_save_confirmation" />
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/delete_button"
-                style="@style/Widget.Material3.Button.TextButton"
+
+            <!--
+                Destructive Delete row. MaterialCard + error-tinted chip
+                mirror the popup Quit card so destructive actions read
+                the same way everywhere — visually quarantined, not a
+                passive text button blending in with the save action.
+            -->
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:padding="12dp"
-                android:stateListAnimator="@null"
-                android:layout_marginTop="15dp"
                 android:layout_marginStart="30dp"
+                android:layout_marginTop="15dp"
                 android:layout_marginEnd="30dp"
-                android:layout_gravity="center_horizontal"
-                android:text="@string/delete" />
+                app:cardBackgroundColor="?attr/colorSurfaceContainer"
+                app:cardCornerRadius="14dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="0dp">
+
+                <LinearLayout
+                    android:id="@+id/delete_button"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="14dp"
+                    android:paddingVertical="10dp">
+
+                    <FrameLayout
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:background="@drawable/bg_popup_chip_error">
+
+                        <androidx.appcompat.widget.AppCompatImageView
+                            android:layout_width="18dp"
+                            android:layout_height="18dp"
+                            android:layout_gravity="center"
+                            android:contentDescription="@null"
+                            android:src="@drawable/ic_baseline_delete_24"
+                            app:tint="?attr/colorOnErrorContainer" />
+                    </FrameLayout>
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="14dp"
+                        android:layout_weight="1"
+                        android:text="@string/bookmark_delete_action"
+                        android:textAppearance="?attr/textAppearanceTitleSmall"
+                        android:textColor="?attr/colorError" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
 
         </LinearLayout>
@@ -111,7 +165,6 @@
 
 
     </androidx.core.widget.NestedScrollView>
-
 
 
 
