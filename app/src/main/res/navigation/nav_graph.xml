@@ -46,12 +46,6 @@
             app:destination="@id/home"
             app:popUpTo="@id/nav_graph"
             app:popUpToInclusive="true" />
-        <action
-            android:id="@+id/action_home_incognito_to_bookmarks"
-            app:destination="@id/web_bookmark" />
-        <action
-            android:id="@+id/action_home_incognito_to_history"
-            app:destination="@id/web_history" />
     </fragment>
     <fragment
         android:id="@+id/browser"
@@ -124,11 +118,6 @@
     <fragment
         android:id="@+id/web_bookmark"
         android:name="com.solarized.firedown.phone.fragments.WebBookmarkFragment">
-        <action
-            android:id="@+id/action_web_bookmark_edit"
-            app:destination="@id/web_bookmark_edit"
-            app:popUpTo="@id/web_bookmark"
-            app:popUpToInclusive="true" />
         <action
             android:id="@+id/action_web_bookmark_to_browser"
             app:destination="@id/browser"
