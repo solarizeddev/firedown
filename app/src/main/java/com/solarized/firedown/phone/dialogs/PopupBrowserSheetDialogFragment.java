@@ -11,7 +11,10 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatImageView;
+import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProvider;
+
+import com.google.android.material.color.MaterialColors;
 
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.Preferences;
@@ -190,19 +193,26 @@ public class PopupBrowserSheetDialogFragment extends BaseBottomSheetDialogFragme
 
 
     /**
-     * Mirrors the current tab's Desktop-mode state into the status pill
-     * ("On"/"Off"). The whole row is the click target (handled by the
-     * shared onClick → popup_desktop) — the pill is decorative status,
-     * not the hit target. A pill replaces the original MaterialSwitch
-     * which was ~48dp tall and made this row read visibly taller than
-     * its siblings.
+     * Mirrors the current tab's Desktop-mode state into the status pill.
+     * On state uses the primary-container background + onPrimaryContainer
+     * text so the active mode reads at a glance; off uses the neutral
+     * surface palette to recede. The whole row is the click target
+     * (handled by the shared onClick → popup_desktop) — the pill is
+     * decorative status, not the hit target. A pill replaces the original
+     * MaterialSwitch which was ~48dp tall and made this row read visibly
+     * taller than its siblings.
      */
     private void applyDesktopState() {
         TextView desktopState = mView.findViewById(R.id.popup_desktop_state);
         if (desktopState == null) return;
-        desktopState.setText(mGeckoState.isDesktop()
-                ? R.string.popup_desktop_on
-                : R.string.popup_desktop_off);
+
+        boolean isDesktop = mGeckoState.isDesktop();
+        desktopState.setText(isDesktop ? R.string.popup_desktop_on : R.string.popup_desktop_off);
+        desktopState.setBackground(ContextCompat.getDrawable(requireContext(),
+                isDesktop ? R.drawable.bg_popup_pill_on : R.drawable.bg_popup_pill));
+        desktopState.setTextColor(MaterialColors.getColor(desktopState, isDesktop
+                ? com.google.android.material.R.attr.colorOnPrimaryContainer
+                : com.google.android.material.R.attr.colorOnSurfaceVariant));
     }
 
 
