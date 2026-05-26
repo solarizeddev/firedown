@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Edit bookmark — improvements</title>
+<style>
+  :root {
+    --bg: #0a0a0c;
+    --panel: #131316;
+    --surface: #1a1a1c;
+    --surface-container: #232327;
+    --surface-container-high: #2a2a2e;
+    --surface-container-highest: #36363a;
+    --on-surface: #e6e1e5;
+    --on-surface-variant: #b8b4c0;
+    --on-surface-faint: #7a7681;
+    --primary: #cfbcff;
+    --primary-container: #4a4458;
+    --on-primary-container: #ead8ff;
+    --tertiary-container: #4b3a3a;
+    --on-tertiary-container: #ffd8d8;
+    --error: #ffb4ab;
+    --error-container: #5b2826;
+    --on-error-container: #ffdad6;
+    --divider: #2a2a2e;
+    --good: #86d493;
+    --bad: #e6856b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 28px;
+    background: var(--bg);
+    color: var(--on-surface);
+    font-family: -apple-system, system-ui, "Roboto", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1 { font-size: 22px; font-weight: 500; margin: 0 0 6px; }
+  .lede {
+    color: var(--on-surface-variant);
+    font-size: 13px;
+    margin: 0 0 24px;
+    max-width: 1100px;
+    line-height: 1.6;
+  }
+  .lede strong { color: var(--on-surface); }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 24px;
+    max-width: 1500px;
+  }
+  .col h2 {
+    font-size: 14px;
+    font-weight: 600;
+    margin: 0 0 6px;
+    letter-spacing: 0.2px;
+  }
+  .col .note {
+    font-size: 12px;
+    color: var(--on-surface-variant);
+    margin: 0 0 14px;
+    line-height: 1.55;
+  }
+
+  /* Phone frame */
+  .phone {
+    width: 100%;
+    aspect-ratio: 9 / 19;
+    background: var(--surface);
+    border: 1px solid var(--divider);
+    border-radius: 24px;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+  .ctxlabel {
+    position: absolute;
+    top: 10px;
+    left: 12px;
+    z-index: 5;
+    background: #2a2a2e;
+    color: var(--on-surface-variant);
+    font-size: 9px;
+    padding: 3px 7px;
+    border-radius: 999px;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    font-weight: 600;
+  }
+  .statusbar {
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 14px 0 60px;
+    font-size: 9px;
+    color: var(--on-surface-variant);
+  }
+
+  /* Top toolbar */
+  .toolbar {
+    height: 50px;
+    display: flex;
+    align-items: center;
+    padding: 0 6px;
+    gap: 6px;
+  }
+  .toolbar .back, .toolbar .menu {
+    width: 36px; height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--on-surface-variant);
+  }
+  .toolbar .back svg, .toolbar .menu svg { width: 20px; height: 20px; }
+  .toolbar .title {
+    flex: 1;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--on-surface);
+    padding: 0 4px;
+  }
+
+  /* Content scroll */
+  .content {
+    flex: 1;
+    overflow: hidden;
+    padding: 8px 16px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  /* Identity card (proposed) */
+  .id-card {
+    background: var(--surface-container);
+    border-radius: 16px;
+    padding: 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .favicon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-weight: 700;
+    font-size: 18px;
+  }
+  .favicon.gh { background: #24292e; color: white; }
+  .favicon.fallback {
+    background: var(--surface-container-highest);
+    color: var(--on-surface-variant);
+  }
+  .id-body { flex: 1; min-width: 0; }
+  .id-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--on-surface);
+    line-height: 16px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .id-url {
+    font-size: 11px;
+    color: var(--on-surface-variant);
+    line-height: 14px;
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Text input — disabled state (today) */
+  .input {
+    margin: 0 0 16px;
+  }
+  .input.disabled .field {
+    background: transparent;
+    border: 1px solid var(--on-surface-faint);
+    color: var(--on-surface-faint);
+    opacity: 0.55;
+  }
+  .input.active .field {
+    background: var(--surface-container);
+    border: 1px solid var(--primary);
+    color: var(--on-surface);
+  }
+  .field {
+    width: 100%;
+    height: 46px;
+    border-radius: 4px;
+    padding: 0 14px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    background: var(--surface-container);
+    border: 1px solid transparent;
+    color: var(--on-surface);
+  }
+  .field-label {
+    font-size: 11px;
+    color: var(--on-surface-variant);
+    margin: 0 0 6px 14px;
+  }
+
+  /* Section card (for inputs) */
+  .input-card {
+    background: var(--surface-container);
+    border-radius: 16px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .input-card .row {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .input-card .row label {
+    font-size: 10.5px;
+    color: var(--on-surface-variant);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    font-weight: 500;
+    padding-left: 2px;
+  }
+  .input-card input.text-edit {
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid var(--on-surface-faint);
+    color: var(--on-surface);
+    font-size: 14px;
+    padding: 6px 2px;
+    outline: none;
+  }
+  .input-card input.text-edit:focus,
+  .input-card input.text-edit:active {
+    border-bottom-color: var(--primary);
+  }
+
+  /* Buttons */
+  .btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 48px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 500;
+    text-align: center;
+    gap: 8px;
+  }
+  .btn-primary {
+    background: var(--primary);
+    color: #381e72;
+  }
+  .btn-text {
+    background: transparent;
+    color: var(--on-surface);
+  }
+  .btn-destructive-text {
+    background: transparent;
+    color: var(--error);
+  }
+  .btn-destructive-card {
+    background: rgba(91, 40, 38, 0.25);
+    color: var(--error);
+    border-radius: 14px;
+  }
+  .btn svg { width: 18px; height: 18px; }
+
+  /* Destructive card style */
+  .destructive-card {
+    background: rgba(91, 40, 38, 0.25);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .destructive-card .row-tap {
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    color: var(--error);
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .destructive-card .chip-err {
+    width: 32px;
+    height: 32px;
+    background: var(--error-container);
+    color: var(--on-error-container);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 14px;
+  }
+  .destructive-card .chip-err svg { width: 18px; height: 18px; }
+
+  /* Overflow menu (the "open in browser / share" extras) */
+  .actions-card {
+    background: var(--surface-container);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .actions-card .row-action {
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    color: var(--on-surface);
+    font-size: 14px;
+  }
+  .actions-card .row-action + .row-action {
+    border-top: 1px solid rgba(255,255,255,0.04);
+  }
+  .actions-card .chip-neu {
+    width: 32px;
+    height: 32px;
+    background: var(--surface-container-highest);
+    color: var(--on-surface-variant);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 14px;
+  }
+  .actions-card .chip-neu svg { width: 18px; height: 18px; }
+
+  /* Nav bar */
+  .navbar {
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    color: var(--on-surface-faint);
+    border-top: 1px solid var(--divider);
+  }
+  .navbar div { width: 14px; height: 2px; background: currentColor; border-radius: 1px; }
+  .navbar div:nth-child(2) { width: 8px; height: 8px; background: none; border: 1.5px solid currentColor; border-radius: 1px; }
+  .navbar div:nth-child(3) { width: 0; height: 0; border-style: solid; border-width: 5px 4px 5px 0; border-color: transparent currentColor transparent transparent; background: none; }
+
+  .meta {
+    margin-top: 14px;
+    background: #131316;
+    border: 1px solid var(--divider);
+    border-radius: 12px;
+    padding: 14px;
+    font-size: 12.5px;
+    line-height: 1.6;
+  }
+  .meta h4 {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0 0 8px;
+    color: var(--on-surface);
+  }
+  .meta ul { list-style: none; padding: 0; margin: 0; }
+  .meta ul li { padding: 2px 0; color: var(--on-surface-variant); font-size: 12px; }
+  .meta ul.pros li::before { content: "+ "; color: var(--good); font-weight: 700; }
+  .meta ul.cons li::before { content: "− "; color: var(--bad); font-weight: 700; }
+  .meta ul.delta li::before { content: "• "; color: var(--primary); font-weight: 700; }
+
+  .verdict {
+    margin-top: 32px;
+    background: #131316;
+    border: 1px solid var(--divider);
+    border-radius: 16px;
+    padding: 22px 26px;
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--on-surface-variant);
+    max-width: 1100px;
+  }
+  .verdict strong { color: var(--on-surface); }
+  .verdict h3 { color: var(--on-surface); margin: 0 0 12px; font-size: 16px; }
+  .verdict ul { padding-left: 20px; margin: 6px 0; }
+</style>
+</head>
+<body>
+
+<h1>Edit bookmark — three directions</h1>
+<p class="lede">Today's screen is two text fields gated behind an "Edit / Save" two-tap pattern, with a plain text-button Delete at the bottom. Below: today as baseline, a <strong>minimal</strong> fix that just removes the friction without redesigning anything, and a <strong>refined</strong> version that brings the screen into the Firedown card vocabulary with an identity header, overflow actions, and a destructive-card Delete that matches the popup's Quit treatment.</p>
+
+<div class="grid">
+
+  <!-- ============================================================ -->
+  <!-- TODAY -->
+  <div class="col">
+    <h2>Today — baseline</h2>
+    <p class="note">Save button is initially labelled "Edit" with disabled fields. First tap unlocks editing and relabels to "Save". Delete is a plain text button beneath. No visual cue for <em>which</em> bookmark this is.</p>
+
+    <div class="phone">
+      <div class="ctxlabel">Today</div>
+      <div class="statusbar"><span>17:40</span><span>85%</span></div>
+      <div class="toolbar">
+        <div class="back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></div>
+        <div class="title">Edit bookmark</div>
+      </div>
+      <div class="content" style="gap:0;">
+        <div style="height:16px;"></div>
+        <div class="field-label" style="display:none;"></div>
+        <div class="input disabled" style="padding:0 14px;">
+          <div class="field">GitHub Notifications</div>
+        </div>
+        <div class="input disabled" style="padding:0 14px;">
+          <div class="field">https://github.com/notifications</div>
+        </div>
+        <div style="padding:14px 16px 0;">
+          <div class="btn btn-primary">Edit</div>
+        </div>
+        <div style="padding:8px 16px 0;">
+          <div class="btn btn-text">Delete</div>
+        </div>
+      </div>
+      <div class="navbar"><div></div><div></div><div></div></div>
+    </div>
+
+    <div class="meta">
+      <h4>Friction points</h4>
+      <ul class="cons">
+        <li>"Edit" → "Save" two-tap pattern with no benefit</li>
+        <li>Delete reads as a passive text link, equal weight to "Edit"</li>
+        <li>No visual anchor — both fields read as empty on entry</li>
+        <li>No "test the URL" or "share" affordance</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- MINIMAL -->
+  <div class="col">
+    <h2>A — Minimal fix</h2>
+    <p class="note">Smallest change that resolves the real friction. Fields are editable on entry. Save button always says "Save", enabled when title + URL are non-empty. Delete adopts the error-container chip + error text treatment from the popup's Quit row.</p>
+
+    <div class="phone">
+      <div class="ctxlabel">A — Minimal</div>
+      <div class="statusbar"><span>17:40</span><span>85%</span></div>
+      <div class="toolbar">
+        <div class="back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></div>
+        <div class="title">Edit bookmark</div>
+      </div>
+      <div class="content" style="gap:14px;">
+        <div class="input active" style="margin:8px 0 0;">
+          <div class="field-label">Title</div>
+          <div class="field">GitHub Notifications</div>
+        </div>
+        <div class="input active" style="margin:0;">
+          <div class="field-label">URL</div>
+          <div class="field">https://github.com/notifications</div>
+        </div>
+        <div style="margin-top:auto;">
+          <div class="btn btn-primary">Save</div>
+        </div>
+        <div class="destructive-card" style="margin-top:0;">
+          <div class="row-tap">
+            <div class="chip-err"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg></div>
+            <span>Delete bookmark</span>
+          </div>
+        </div>
+      </div>
+      <div class="navbar"><div></div><div></div><div></div></div>
+    </div>
+
+    <div class="meta">
+      <h4>Deltas from today</h4>
+      <ul class="delta">
+        <li>Fields always editable; Save button label is stable</li>
+        <li>Delete is now visually destructive — error chip + error text</li>
+        <li>Field labels added so you know which is which</li>
+      </ul>
+      <ul class="cons" style="margin-top:6px;">
+        <li>Still no favicon / identity anchor — entry screen is still text-heavy</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- REFINED -->
+  <div class="col">
+    <h2>B — Refined, card vocabulary</h2>
+    <p class="note">Same minimal fixes plus an identity header (favicon + title + URL — updates live as you type) and a small actions card with "Open in browser" and "Share". Visually matches the Home/popup MaterialCard stack so the edit screen feels part of the same app.</p>
+
+    <div class="phone">
+      <div class="ctxlabel">B — Refined</div>
+      <div class="statusbar"><span>17:40</span><span>85%</span></div>
+      <div class="toolbar">
+        <div class="back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></div>
+        <div class="title">Edit bookmark</div>
+      </div>
+      <div class="content">
+        <!-- Identity header -->
+        <div class="id-card">
+          <div class="favicon gh">G</div>
+          <div class="id-body">
+            <div class="id-title">GitHub Notifications</div>
+            <div class="id-url">github.com/notifications</div>
+          </div>
+        </div>
+
+        <!-- Inputs -->
+        <div class="input-card">
+          <div class="row">
+            <label>Title</label>
+            <input class="text-edit" type="text" value="GitHub Notifications" />
+          </div>
+          <div class="row">
+            <label>URL</label>
+            <input class="text-edit" type="text" value="https://github.com/notifications" />
+          </div>
+        </div>
+
+        <!-- Optional actions -->
+        <div class="actions-card">
+          <div class="row-action">
+            <div class="chip-neu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 4h6v6M10 14L20 4M18 14v5a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h5"/></svg></div>
+            Open in browser
+          </div>
+          <div class="row-action">
+            <div class="chip-neu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg></div>
+            Share
+          </div>
+        </div>
+
+        <div style="margin-top:auto;">
+          <div class="btn btn-primary">Save</div>
+        </div>
+
+        <div class="destructive-card" style="margin-top:0;">
+          <div class="row-tap">
+            <div class="chip-err"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg></div>
+            <span>Delete bookmark</span>
+          </div>
+        </div>
+      </div>
+      <div class="navbar"><div></div><div></div><div></div></div>
+    </div>
+
+    <div class="meta">
+      <h4>Deltas from today</h4>
+      <ul class="delta">
+        <li>Identity header — favicon + title + URL, updates live</li>
+        <li>Inputs wrapped in a MaterialCard with inline labels</li>
+        <li>"Open in browser" and "Share" pulled out as separate actions</li>
+        <li>Same destructive Delete + Save treatment as A</li>
+      </ul>
+      <ul class="pros" style="margin-top:6px;">
+        <li>Visually consistent with Home cards and the new popup</li>
+        <li>Two new affordances (open / share) cover the "I just want to test this URL" path</li>
+      </ul>
+      <ul class="cons" style="margin-top:6px;">
+        <li>More work — header view, actions card, share intent wiring</li>
+        <li>Favicon fallback needed when file_icon column is empty</li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+
+<div class="verdict">
+  <h3>My pick</h3>
+  <p><strong>A first, then B on top of it.</strong> A is the actual UX bug fix — the Edit/Save two-step is friction and the plain Delete is wrong. Should land in one small commit and resolve the real complaint. B is a polish layer that brings the screen into the Firedown card vocabulary we've been establishing across Home and the popup; worth doing but doesn't have to be the same commit.</p>
+  <p><strong>If you want one shot</strong>, do B — the visual cost is the same to read either way once you're committed to a layout change.</p>
+  <p><strong>What I'd hold off on:</strong> folder support (only worth it if the data model already has folders), confirm-on-back for unsaved changes (real risk, but minor), inline URL validation (current "prepend https://" is fine for now).</p>
+</div>
+
+</body>
+</html>
