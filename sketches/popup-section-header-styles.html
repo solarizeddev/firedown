@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Popup section header — style alternatives</title>
+<style>
+  :root {
+    --inc-surface-container-high: #4a2779;
+    --inc-on-surface:             #E4E2E5;
+    --inc-on-surface-variant:     #C5C6CD;
+    --inc-outline-variant:        #696d75;
+    --inc-primary:                #f0716c;
+    --inc-primary-container:      #F66A66;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: #1a1320;
+    color: #E4E2E5;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    padding: 32px 24px 64px;
+    line-height: 1.5;
+  }
+  h1 { font-size: 22px; margin: 0 0 8px; font-weight: 600; }
+  .lede { color: #b8b1c4; max-width: 760px; margin: 0 0 28px; font-size: 14px; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+    gap: 28px;
+  }
+  .card {
+    background: #221830;
+    border-radius: 16px;
+    padding: 16px 16px 20px;
+    border: 1px solid #2e2440;
+  }
+  h2 { font-size: 14px; margin: 0 0 4px; font-weight: 600; color: #fff; }
+  h2 .tag {
+    display: inline-block; margin-left: 6px;
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px;
+    padding: 2px 6px; border-radius: 4px; vertical-align: middle; font-weight: 700;
+    background: #3a2d50; color: #d6cce8;
+  }
+  h2 .tag.current { background: #4a3a18; color: #f3d99c; }
+  .desc { color: #b8b1c4; font-size: 12.5px; margin: 4px 0 12px; min-height: 36px; }
+
+  .frame {
+    background: var(--inc-surface-container-high);
+    border-radius: 18px;
+    padding: 8px 0 8px;
+    overflow: hidden;
+  }
+  .handle {
+    width: 32px; height: 4px;
+    background: var(--inc-outline-variant);
+    border-radius: 2px;
+    margin: 4px auto 6px;
+    opacity: 0.7;
+  }
+
+  .row {
+    display: flex; align-items: center; gap: 16px;
+    height: 48px; padding: 0 16px;
+    color: var(--inc-on-surface-variant);
+    font-size: 14px;
+  }
+  .row .ic {
+    width: 18px; height: 18px; border-radius: 3px;
+    background: currentColor; opacity: 0.85; flex: 0 0 auto;
+  }
+  .row .label { flex: 1; }
+  .row.quit { color: var(--inc-primary); }
+
+  /* ----- header variants ----- */
+
+  /* A: current small-caps */
+  .h-current {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--inc-on-surface-variant);
+    padding: 14px 16px 4px;
+    font-weight: 700;
+  }
+
+  /* B: title-case TitleSmall, brand colorPrimary */
+  .h-brand {
+    font-size: 13px;
+    color: var(--inc-primary);
+    padding: 16px 16px 4px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+
+  /* C: title-case Body, onSurface, no caps, no weight bump */
+  .h-quiet {
+    font-size: 13px;
+    color: var(--inc-on-surface);
+    padding: 16px 16px 4px;
+    font-weight: 500;
+    opacity: 0.65;
+  }
+
+  /* D: heading + hairline rule */
+  .h-rule {
+    display: flex; align-items: center; gap: 12px;
+    padding: 16px 16px 4px;
+    color: var(--inc-on-surface-variant);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 700;
+  }
+  .h-rule::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--inc-outline-variant);
+    opacity: 0.5;
+  }
+
+  /* E: larger title (TitleMedium) onSurface, no caps */
+  .h-large {
+    font-size: 15px;
+    color: var(--inc-on-surface);
+    padding: 18px 16px 4px;
+    font-weight: 600;
+  }
+
+  /* F: chip / pill */
+  .h-chip {
+    padding: 14px 16px 6px;
+  }
+  .h-chip span {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: #2e1d49;
+    color: var(--inc-on-surface);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+  }
+
+  /* G: indented title-case, no weight */
+  .h-indent {
+    font-size: 12.5px;
+    color: var(--inc-on-surface-variant);
+    padding: 16px 16px 4px 52px; /* aligned with row label start (16px + 20 ic + 16 gap) */
+    font-weight: 500;
+    opacity: 0.8;
+  }
+
+  /* H: bold black, almost form-section */
+  .h-strong {
+    font-size: 12px;
+    color: var(--inc-on-surface);
+    padding: 18px 16px 6px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+  }
+</style>
+</head>
+<body>
+
+<h1>Section header — style alternatives</h1>
+<p class="lede">
+  Flat layout from Try 3 is locked in. Below is the same browser popup with eight different header treatments for the PAGE / LIBRARY / APP labels (which would also apply to SecuritySheet's PROTECTION / MANAGE so the whole app stays consistent).
+</p>
+
+<div class="grid">
+
+  <!-- A: current -->
+  <div class="card">
+    <h2>A · Small-caps <span class="tag current">Current</span></h2>
+    <div class="desc">TitleSmallEmphasized, all caps, letter-spacing 0.08em, onSurfaceVariant.</div>
+    <div class="frame">
+      <div class="handle"></div>
+      <div class="h-current">PAGE</div>
+      <div class="row"><span class="ic"></span><span class="label">Bookmark page</span></div>
+      <div class="row"><span class="ic"></span><span class="label">Find in page</span></div>
+      <div class="h-current">LIBRARY</div>
+      <div class="row"><span class="ic"></span><span class="label">Bookmarks</span></div>
+      <div class="row"><span class="ic"></span><span class="label">History</span></div>
+      <div class="h-current">APP</div>
+      <div class="row"><span class="ic"></span><span class="label">Settings</span></div>
+      <div class="row quit"><span class="ic"></span><span class="label">Quit</span></div>
+    </div>
+  </div>
+
+  <!-- B: brand -->
+  <div class="card">
+    <h2>B · Brand accent</h2>
+    <div class="desc">Title case, 13sp, colorPrimary. Reads like a section anchor. Picks up the brand orange already on Quit.</div>
+    <div class="frame">
+      <div class="handle"></div>
+      <div class="h-brand">Page</div>
+      <div class="row"><span class="ic"></span><span class="label">Bookmark page</span></div>
+      <div class="row"><span class="ic"></span><span class="label">Find in page</span></div>
+      <div class="h-brand">Library</div>
+      <div class="row"><span class="ic"></span><span class="label">Bookmarks</span></div>
+      <div class="row"><span class="ic"></span><span class="label">History</span></div>
+      <div class="h-brand">App</div>
+      <div class="row"><span class="ic"></span><span class="label">Settings</span></div>
+      <div class="row quit"><span class="ic"></span><span class="label">Quit</span></div>
+    </div>
+  </div>
+
+  <!-- C: quiet -->
+  <div class="card">
+    <h2>C · Quiet title case</h2>
+    <div class="desc">Title case, 13sp, onSurface @ 65% opacity. Quietest of the lot. iOS Settings-y feel.</div>
+    <div class="frame">
+      <div class="handle"></div>
+      <div class="h-quiet">Page</div>
+      <div class="row"><span class="ic"></span><span class="label">Bookmark page</span></div>
+      <div class="row"><span class="ic"></span><span class="label">Find in page</span></div>
+      <div class="h-quiet">Library</div>
+      <div class="row"><span class="ic"></span><span class="label">Bookmarks</span></div>
+      <div class="row"><span class="ic"></span><span class="label">History</span></div>
+      <div class="h-quiet">App</div>
+      <div class="row"><span class="ic"></span><span class="label">Settings</span></div>
+      <div class="row quit"><span class="ic"></span><span class="label">Quit</span></div>
+    </div>
+  </div>
+
+  <!-- D: small-caps + rule -->
+  <div class="card">
+    <h2>D · Small-caps + rule</h2>
+    <div class="desc">Same small-caps but trailed by a hairline rule that fills the width. Gives a clearer section break than the current bare label.</div>
+    <div class="frame">
+      <div class="handle"></div>
+      <div class="h-rule">PAGE</div>
+      <div class="row"><span class="ic"></span><span class="label">Bookmark page</span></div>
+      <div class="row"><span class="ic"></span><span class="label">Find in page</span></div>
+      <div class="h-rule">LIBRARY</div>
+      <div class="row"><span class="ic"></span><span class="label">Bookmarks</span></div>
+      <div class="row"><span class="ic"></span><span class="label">History</span></div>
+      <div class="h-rule">APP</div>
+      <div class="row"><span class="ic"></span><span class="label">Settings</span></div>
+      <div class="row quit"><span class="ic"></span><span class="label">Quit</span></div>
+    </div>
+  </div>
+
+  <!-- E: large title -->
+  <div class="card">
+    <h2>E · Larger title</h2>
+    <div class="desc">TitleMedium, 15sp, onSurface, title case. Loudest. Almost a sub-heading. Adds vertical weight.</div>
+    <div class="frame">
+      <div class="handle"></div>
+      <div class="h-large">Page</div>
+      <div class="row"><span class="ic"></span><span class="label">Bookmark page</span></div>
+      <div class="row"><span class="ic"></span><span class="label">Find in page</span></div>
+      <div class="h-large">Library</div>
+      <div class="row"><span class="ic"></span><span class="label">Bookmarks</span></div>
+      <div class="row"><span class="ic"></span><span class="label">History</span></div>
+      <div class="h-large">App</div>
+      <div class="row"><span class="ic"></span><span class="label">Settings</span></div>
+      <div class="row quit"><span class="ic"></span><span class="label">Quit</span></div>
+    </div>
+  </div>
+
+  <!-- F: chip -->
+  <div class="card">
+    <h2>F · Chip</h2>
+    <div class="desc">Label sits in a small surface chip. Distinctive but heavy; works once or twice, gets noisy with three sections.</div>
+    <div class="frame">
+      <div class="handle"></div>
+      <div class="h-chip"><span>PAGE</span></div>
+      <div class="row"><span class="ic"></span><span class="label">Bookmark page</span></div>
+      <div class="row"><span class="ic"></span><span class="label">Find in page</span></div>
+      <div class="h-chip"><span>LIBRARY</span></div>
+      <div class="row"><span class="ic"></span><span class="label">Bookmarks</span></div>
+      <div class="row"><span class="ic"></span><span class="label">History</span></div>
+      <div class="h-chip"><span>APP</span></div>
+      <div class="row"><span class="ic"></span><span class="label">Settings</span></div>
+      <div class="row quit"><span class="ic"></span><span class="label">Quit</span></div>
+    </div>
+  </div>
+
+  <!-- G: indented title-case -->
+  <div class="card">
+    <h2>G · Indented title case</h2>
+    <div class="desc">Title case, 12.5sp, indented to align with the row label (past the icon column). Reads as a quiet grouping cue rather than a heading.</div>
+    <div class="frame">
+      <div class="handle"></div>
+      <div class="h-indent">Page</div>
+      <div class="row"><span class="ic"></span><span class="label">Bookmark page</span></div>
+      <div class="row"><span class="ic"></span><span class="label">Find in page</span></div>
+      <div class="h-indent">Library</div>
+      <div class="row"><span class="ic"></span><span class="label">Bookmarks</span></div>
+      <div class="row"><span class="ic"></span><span class="label">History</span></div>
+      <div class="h-indent">App</div>
+      <div class="row"><span class="ic"></span><span class="label">Settings</span></div>
+      <div class="row quit"><span class="ic"></span><span class="label">Quit</span></div>
+    </div>
+  </div>
+
+  <!-- H: strong all-caps -->
+  <div class="card">
+    <h2>H · Strong all-caps</h2>
+    <div class="desc">All caps, onSurface (not variant), heavier letter-spacing. More structural than the current style — closer to form section headings.</div>
+    <div class="frame">
+      <div class="handle"></div>
+      <div class="h-strong">PAGE</div>
+      <div class="row"><span class="ic"></span><span class="label">Bookmark page</span></div>
+      <div class="row"><span class="ic"></span><span class="label">Find in page</span></div>
+      <div class="h-strong">LIBRARY</div>
+      <div class="row"><span class="ic"></span><span class="label">Bookmarks</span></div>
+      <div class="row"><span class="ic"></span><span class="label">History</span></div>
+      <div class="h-strong">APP</div>
+      <div class="row"><span class="ic"></span><span class="label">Settings</span></div>
+      <div class="row quit"><span class="ic"></span><span class="label">Quit</span></div>
+    </div>
+  </div>
+
+</div>
+
+<p class="lede" style="margin-top:32px">
+  Whichever you pick, I'll apply it to the two popup XMLs <em>and</em> the SecuritySheet's PROTECTION / MANAGE headers so the section-header vocabulary stays one thing across the app.
+</p>
+
+</body>
+</html>
