@@ -37,8 +37,6 @@
 (() => {
     'use strict';
 
-    console.info('[TT] content script loaded ' + location.href);
-
     let DEBUG = false;
     const log = (...args) => { if (DEBUG) console.log(...args); };
     browser.runtime.sendNativeMessage("parser", { kind: "get-debug-flag" })
@@ -47,6 +45,7 @@
             try {
                 window.postMessage({ __firedown_tt__: 2, debug: DEBUG }, '*');
             } catch (_) {}
+            log('[TT] content script loaded ' + location.href);
         }, () => {});
 
     const src = browser.runtime.getURL('tiktok-inject.js');
@@ -84,18 +83,18 @@
         if (videoDetailCaptured) return;
         try {
             if (!/^\/@[^/]+\/video\/\d+/.test(location.pathname)) {
-                console.info('[TT] video-detail(' + label + '): path no-match ' + location.pathname);
+                log('[TT] video-detail(' + label + '): path no-match ' + location.pathname);
                 return;
             }
             const tag = document.getElementById('__UNIVERSAL_DATA_FOR_REHYDRATION__');
             if (!tag || !tag.textContent) {
-                console.info('[TT] video-detail(' + label + '): SSR tag missing');
+                log('[TT] video-detail(' + label + '): SSR tag missing');
                 return;
             }
             let data;
             try { data = JSON.parse(tag.textContent); }
             catch (e) {
-                console.info('[TT] video-detail(' + label + '): JSON parse failed: '
+                log('[TT] video-detail(' + label + '): JSON parse failed: '
                     + (e && e.message));
                 return;
             }
@@ -152,12 +151,12 @@
                         ? Object.keys(scope[k]).slice(0, 8).join(',')
                         : 'null') + '}')
                     .join(' | ');
-                console.info('[TT] video-detail(' + label + '): no itemStruct (matched='
+                log('[TT] video-detail(' + label + '): no itemStruct (matched='
                     + (dump || 'none') + ')');
                 return;
             }
             videoDetailCaptured = true;
-            console.info('[TT] video-detail SSR captured (' + label + ') id='
+            log('[TT] video-detail SSR captured (' + label + ') id='
                 + item.id + ' via ' + itemKey);
             browser.runtime.sendMessage({
                 kind: 'tiktok-itemlist',
@@ -165,7 +164,7 @@
                 body: JSON.stringify({ itemList: [item] })
             }).then(() => {}, () => {});
         } catch (e) {
-            console.info('[TT] video-detail(' + label + ') threw: ' + (e && e.message));
+            log('[TT] video-detail(' + label + ') threw: ' + (e && e.message));
         }
     }
     captureVideoDetailSSR('document_start');
@@ -205,7 +204,7 @@
                         || (aria && dismissText.test(aria))) {
                     try { btn.click(); } catch (_) {}
                     dismissed = true;
-                    console.info('[TT] Take-A-Break dismissed via "'
+                    log('[TT] Take-A-Break dismissed via "'
                         + (text || aria).slice(0, 40) + '"');
                     return;
                 }

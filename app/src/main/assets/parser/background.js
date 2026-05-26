@@ -836,8 +836,7 @@ browser.webRequest.onBeforeRequest.addListener(
             if (refer !== "embed" && refer !== "embeded") return {};
             u.searchParams.delete("refer");
             const clean = u.toString();
-            console.info('[TT bg] stripping refer=embed ' + details.url.slice(0, 100)
-                + ' -> ' + clean.slice(0, 100));
+            log("TIKTOK", "stripping refer=embed", { from: details.url.slice(0, 100), to: clean.slice(0, 100) });
             return { redirectUrl: clean };
         } catch (_) {
             return {};
@@ -905,7 +904,6 @@ async function handleTikTokItemList(msg, sender) {
 
     const json = tryParseJson(msg.body);
     if (!json) {
-        console.info('[TT bg] JSON parse failed head=' + msg.body.slice(0, 200));
         log("TIKTOK", `JSON parse failed`, { head: msg.body.slice(0, 200) });
         return;
     }
@@ -962,20 +960,14 @@ async function handleTikTokItemList(msg, sender) {
     }
 
     if (!Array.isArray(items)) {
-        console.info('[TT bg] no video array; topKeys='
-            + JSON.stringify(Object.keys(json).slice(0, 12))
-            + ' bodyLen=' + msg.body.length);
-        log("TIKTOK", `no itemList[] in body`, { topKeys: Object.keys(json).slice(0, 12) });
+        log("TIKTOK", `no itemList[] in body`, { topKeys: Object.keys(json).slice(0, 12), bodyLen: msg.body.length });
         return;
     }
     if (items.length === 0) {
-        console.info('[TT bg] empty items array (' + itemsSource + ')');
-        log("TIKTOK", `empty itemList[]`);
+        log("TIKTOK", `empty itemList[]`, { source: itemsSource });
         return;
     }
-    console.info('[TT bg] items found count=' + items.length
-        + ' source=' + itemsSource
-        + ' firstId=' + (items[0] && items[0].id));
+    log("TIKTOK", "items found", { count: items.length, source: itemsSource, firstId: items[0] && items[0].id });
 
     const pathname = (() => {
         try { return new URL(msg.url, sender.tab?.url || "https://www.tiktok.com/").pathname; }
