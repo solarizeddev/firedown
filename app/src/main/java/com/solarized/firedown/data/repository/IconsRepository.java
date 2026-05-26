@@ -23,16 +23,19 @@ public class IconsRepository {
 
     private static final String TAG = IconsRepository.class.getSimpleName();
     private final WebHistoryDatabase mHistoryDb;
+    private final WebBookmarkDataRepository mBookmarkRepository;
     private final OkHttpClient mOkHttpClient;
     private final Executor mDiskExecutor;
 
     @Inject
     public IconsRepository(
             WebHistoryDatabase historyDb,
+            WebBookmarkDataRepository bookmarkRepository,
             OkHttpClient okHttpClient,
             @Qualifiers.DiskIO Executor diskExecutor
     ) {
         this.mHistoryDb = historyDb;
+        this.mBookmarkRepository = bookmarkRepository;
         this.mOkHttpClient = okHttpClient;
         this.mDiskExecutor = diskExecutor;
     }
@@ -93,6 +96,12 @@ public class IconsRepository {
                 mHistoryDb.webHistoryDao().updateIconData(url, iconUrl, resolution);
             }
         });
+        // Update Bookmark if one exists for this URL. The repository
+        // short-circuits when the URL isn't bookmarked, so this is
+        // cheap on the common path. Stored without a resolution column
+        // — bookmarks always take the newest icon since there's no
+        // higher-res preference to defend.
+        mBookmarkRepository.updateIcon(url, iconUrl);
     }
 
 

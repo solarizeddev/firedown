@@ -166,6 +166,22 @@ public class WebBookmarkDataRepository {
         mDiskExecutor.execute(mWebBookmarkDao::deleteAll);
     }
 
+    /**
+     * Refreshes the stored favicon for whichever bookmark matches the
+     * canonical id of this URL. Called by IconsRepository when
+     * GeckoRuntimeHelper signals a new icon: the persisted history row
+     * always gets updated, the bookmark row only if the URL is
+     * actually bookmarked (no-op otherwise). The sync-set check skips
+     * the disk hop for the common "icon arrived for a URL we don't
+     * track" case.
+     */
+    public void updateIcon(String url, String iconUrl) {
+        if (TextUtils.isEmpty(url) || TextUtils.isEmpty(iconUrl)) return;
+        int id = bookmarkIdFor(url);
+        if (!mSyncEntities.contains(id)) return;
+        mDiskExecutor.execute(() -> mWebBookmarkDao.updateIcon(id, iconUrl));
+    }
+
     public void getId(int id, DataCallback<WebBookmarkEntity> callback){
         mDiskExecutor.execute(() -> {
             try {
