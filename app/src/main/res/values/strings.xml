@@ -18,6 +18,7 @@
     <string name="browser_menu_edit_bookmark">Edit bookmark</string>
     <string name="bookmark_delete_action">Delete bookmark</string>
     <string name="bookmark_action_open">Open in browser</string>
+    <string name="bookmark_url_invalid">Enter a valid URL</string>
     <string name="browser_menu_find_in_page">Find in page</string>
     <string name="browser_menu_forward">Forward</string>
     <string name="browser_menu_refresh">Refresh</string>

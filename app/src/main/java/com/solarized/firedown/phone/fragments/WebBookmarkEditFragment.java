@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
+import android.util.Patterns;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -24,6 +25,7 @@ import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
 import com.bumptech.glide.request.RequestOptions;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 import com.solarized.firedown.GlideHelper;
 import com.solarized.firedown.IntentActions;
 import com.solarized.firedown.Keys;
@@ -47,6 +49,7 @@ public class WebBookmarkEditFragment extends BaseFocusFragment implements View.O
     private View mDeleteButton;
     private View mOpenInBrowserRow;
     private View mShareRow;
+    private TextInputLayout mHostLayout;
     private TextInputEditText mHostnameInput;
     private TextInputEditText mTitleNameInput;
     private TextView mTitlePreview;
@@ -80,6 +83,7 @@ public class WebBookmarkEditFragment extends BaseFocusFragment implements View.O
         mSaveButton = v.findViewById(R.id.save_button);
         mOpenInBrowserRow = v.findViewById(R.id.open_in_browser_row);
         mShareRow = v.findViewById(R.id.share_row);
+        mHostLayout = v.findViewById(R.id.host_text_input_layout);
         mHostnameInput = v.findViewById(R.id.host_field);
         mTitleNameInput = v.findViewById(R.id.title_field);
         mTitlePreview = v.findViewById(R.id.edit_title_preview);
@@ -148,16 +152,38 @@ public class WebBookmarkEditFragment extends BaseFocusFragment implements View.O
                 if (mWebBookmarkEntity == null) return;
 
                 String title = mTitleNameInput.getText().toString();
-                String url = mHostnameInput.getText().toString();
+                String rawUrl = mHostnameInput.getText().toString();
 
-                mSaveButton.setEnabled(!TextUtils.isEmpty(title) && !TextUtils.isEmpty(url));
+                boolean urlEmpty = TextUtils.isEmpty(rawUrl);
+                boolean urlValid = !urlEmpty
+                        && Patterns.WEB_URL.matcher(rawUrl).matches();
+
+                // Inline error only when the user has typed something
+                // invalid — leaving the field empty shouldn't badge it,
+                // Save being disabled already communicates "incomplete".
+                if (mHostLayout != null) {
+                    mHostLayout.setError(!urlEmpty && !urlValid
+                            ? getString(R.string.bookmark_url_invalid)
+                            : null);
+                }
+
+                mSaveButton.setEnabled(!TextUtils.isEmpty(title) && urlValid);
 
                 mWebBookmarkEntity.setFileTitle(title);
-                if (!url.startsWith("http")) url = "https://" + url;
-                mWebBookmarkEntity.setFileUrl(url);
-                mWebBookmarkEntity.setId(url.hashCode());
-
-                updatePreview(title, url);
+                // Only fold the URL into the entity once it parses, so
+                // the persisted id (= url.hashCode) doesn't churn off
+                // invalid keystrokes like "ahdhdhdh" → "https://ahdhdhdh"
+                // and end up saving garbage if the button somehow fires
+                // before this watcher catches up.
+                if (urlValid) {
+                    String normalized = rawUrl.startsWith("http")
+                            ? rawUrl : "https://" + rawUrl;
+                    mWebBookmarkEntity.setFileUrl(normalized);
+                    mWebBookmarkEntity.setId(normalized.hashCode());
+                    updatePreview(title, normalized);
+                } else {
+                    updatePreview(title, rawUrl);
+                }
             }
         };
 
@@ -247,6 +273,7 @@ public class WebBookmarkEditFragment extends BaseFocusFragment implements View.O
         super.onDestroyView();
         mTitleNameInput = null;
         mHostnameInput = null;
+        mHostLayout = null;
         mSaveButton = null;
         mDeleteButton = null;
         mOpenInBrowserRow = null;
