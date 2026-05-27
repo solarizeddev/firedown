@@ -1135,6 +1135,29 @@ int jni_extract_bitmap (JNIEnv * env, jobject thiz, jlong stream_pos){
             /* [FIX BUG 8] Check av_read_frame return BEFORE accessing packet fields */
             if (ret < 0) {
                 LOGI(1, "jni_extract_bitmap av_read_frame returned %d", ret);
+                /* End-of-stream doesn't mean we're out of frames — the AV1
+                 * decoder (and most send/receive-API codecs) buffers a
+                 * frame across the send_packet call and only emits it once
+                 * a NULL packet flushes the pipeline. AVIF still images
+                 * are the pathological case: a single AV1 packet + EOF,
+                 * with got_frame=0 every time around the receive loop
+                 * until we drain. Send the flush, take the frame if one
+                 * drops out, and only then fall through to the
+                 * retry-from-start / hard-fail paths below. */
+                if (ret == AVERROR_EOF) {
+                    int drained = utils_decode_frame(codec_ctx, frame, &got_frame, NULL);
+                    if (drained >= 0 && got_frame) {
+                        LOGI(1, "jni_extract_bitmap drained frame after EOF");
+                        if (create_thumbnail(env, thiz, thumbnail, frame, codec_ctx) >= 0) {
+                            ret = 0;
+                            goto end;
+                        }
+                        LOGE(1, "jni_extract_bitmap failed to create bitmap from drained frame");
+                        ret = -ERROR_FAILED_TO_DECODE_FRAME;
+                        goto end;
+                    }
+                    av_frame_unref(frame);
+                }
                 /* Truncated downloads (e.g. a YouTube file stopped at 10%)
                  * can have a moov atom that advertises full duration, so the
                  * seek above lands past the available data and av_read_frame
