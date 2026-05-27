@@ -192,6 +192,17 @@ public class BrowserFragment extends BaseBrowserFragment
 
         Log.d(TAG, "onCreate");
 
+        // Restore incognito-mode flag across fragment recreation
+        // (config change, process death). Without this, the recreated
+        // BrowserFragment defaults mIsIncognitoThemed to false, and
+        // peekCurrentGeckoState() then resolves to the regular
+        // ViewModel — onResume's ensureSessionConnected opens a
+        // regular tab and the user lands on regular browser even
+        // though they were on an incognito tab before the recreation.
+        if (savedInstanceState != null) {
+            mIsIncognitoThemed = savedInstanceState.getBoolean(Keys.IS_INCOGNITO, false);
+        }
+
         mGeckoToolbarSize = getResources().getDimensionPixelSize(R.dimen.app_bar_size);
         mBottomBarSize    = getResources().getDimensionPixelSize(R.dimen.app_bar_size);
 
@@ -861,6 +872,14 @@ public class BrowserFragment extends BaseBrowserFragment
             // rendering. setActive is idempotent when already active.
             current.setActive(true);
         }
+    }
+
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        // Pair with the onCreate restore — keeps incognito mode pinned
+        // across config changes and process death.
+        outState.putBoolean(Keys.IS_INCOGNITO, mIsIncognitoThemed);
     }
 
     @Override

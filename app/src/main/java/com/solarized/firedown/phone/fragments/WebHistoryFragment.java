@@ -58,6 +58,13 @@ public class WebHistoryFragment extends BaseFocusFragment implements SearchView.
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        // Reset the activity window decor so we don't inherit a stale
+        // incognito background when opened from the incognito browser's
+        // popup menu. BrowserFragment paints the decor purple via
+        // applyBrowserIncognitoTheme; without this call, the regular
+        // History list sat on a purple field until the user backed out.
+        resetWindowTheme();
+
         postponeEnterTransition();
 
         final ViewGroup parentView = (ViewGroup) view.getParent();

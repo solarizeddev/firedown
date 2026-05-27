@@ -78,6 +78,13 @@ public class WebBookmarkEditFragment extends BaseFocusFragment implements View.O
                              @Nullable Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.fragment_web_bookmark_edit, container, false);
 
+        // Reset the activity window decor so we don't inherit a stale
+        // incognito background when opened from the incognito browser's
+        // popup "Edit bookmark" action. BrowserFragment paints the
+        // decor purple via applyBrowserIncognitoTheme; without this
+        // call, the edit form sat on a purple field.
+        resetWindowTheme();
+
         mDeleteButton = v.findViewById(R.id.delete_button);
         mSaveButton = v.findViewById(R.id.save_button);
         mHostLayout = v.findViewById(R.id.host_text_input_layout);
