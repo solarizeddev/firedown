@@ -236,7 +236,11 @@ public class WebHistoryFragment extends BaseFocusFragment implements SearchView.
             if (resId == R.id.file_more) {
                 mWebHistoryViewModel.delete(entity);
             } else if (resId == R.id.item_web_history) {
-                GeckoStateEntity geckoState = new GeckoStateEntity(mIncognito);
+                // GeckoStateEntity(boolean) is the home-flag constructor —
+                // not incognito. We're loading a real URL, so home=false;
+                // incognito is set explicitly below.
+                GeckoStateEntity geckoState = new GeckoStateEntity(false);
+                geckoState.setIncognito(mIncognito);
                 geckoState.setUri(entity.getUrl());
                 // Mirrors WebBookmarkFragment: publish OPEN_URI, then
                 // pop back to the home that matches our launch mode.

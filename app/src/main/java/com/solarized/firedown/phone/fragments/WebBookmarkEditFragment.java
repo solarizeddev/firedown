@@ -260,7 +260,11 @@ public class WebBookmarkEditFragment extends BaseFocusFragment implements View.O
      */
     private void openInBrowser() {
         if (mWebBookmarkEntity == null) return;
-        GeckoStateEntity entity = new GeckoStateEntity(mIncognito);
+        // GeckoStateEntity(boolean) is the home-flag constructor —
+        // not incognito. We're loading a real URL, so home=false;
+        // incognito is set explicitly below.
+        GeckoStateEntity entity = new GeckoStateEntity(false);
+        entity.setIncognito(mIncognito);
         entity.setUri(mWebBookmarkEntity.getUrl());
         mBrowserURIViewModel.onEventSelected(entity, IntentActions.OPEN_URI);
         NavOptions navOptions = new NavOptions.Builder()

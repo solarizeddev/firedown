@@ -252,7 +252,11 @@ public class WebBookmarkFragment extends BaseFocusFragment implements OnItemClic
             }else if(resId == R.id.item_web_bookmark){
                 WebBookmarkEntity webBookmarkEntity = mAdapter.snapshot().get(position);
                 if(webBookmarkEntity != null){
-                    GeckoStateEntity geckoStateEntity = new GeckoStateEntity(mIncognito);
+                    // GeckoStateEntity(boolean) is the home-flag constructor —
+                    // not incognito. We're loading a real URL, so home=false;
+                    // incognito is set explicitly below.
+                    GeckoStateEntity geckoStateEntity = new GeckoStateEntity(false);
+                    geckoStateEntity.setIncognito(mIncognito);
                     geckoStateEntity.setUri(webBookmarkEntity.getUrl());
                     // Publish OPEN_URI on the shared ViewModel, then
                     // navigate to browser popping back to the home that

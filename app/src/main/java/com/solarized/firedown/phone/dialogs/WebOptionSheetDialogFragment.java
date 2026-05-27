@@ -145,7 +145,11 @@ public class WebOptionSheetDialogFragment extends BaseBottomSheetDialogFragment 
             // Old flow used setResult(ACTION_VIEW) + finish on
             // BookmarkActivity / HistoryActivity, which closed the whole
             // app once those Activities were dropped.
-            GeckoStateEntity geckoStateEntity = new GeckoStateEntity(mIncognito, mCurrentUrl);
+            // GeckoStateEntity(boolean, String) is the (home, uri)
+            // constructor — not incognito. We're loading a real URL, so
+            // home=false; incognito is set explicitly below.
+            GeckoStateEntity geckoStateEntity = new GeckoStateEntity(false, mCurrentUrl);
+            geckoStateEntity.setIncognito(mIncognito);
             geckoStateEntity.setExternal(true);
             mBrowserURIViewModel.onEventSelected(geckoStateEntity, IntentActions.OPEN_EXTERNAL_URI);
             NavOptions navOptions = new NavOptions.Builder()
