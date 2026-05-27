@@ -118,37 +118,48 @@ public class BlockedTrackersDetailDialogFragment extends BaseBottomSheetDialogFr
             return;
         }
 
-        List<BlockedTrackerDetailAdapter.Item> items = new ArrayList<>();
+        // Flatten every category into a single host→count map, then emit
+        // one HostRow per host sorted by count descending. Same shape as
+        // the Blocked ads detail sheet — category section headers
+        // ("Tracking content", "Social media", …) added more chrome than
+        // signal, especially since most blocks land in the catch-all
+        // "Tracking content" bucket.
+        java.util.LinkedHashMap<String, Integer> merged = new java.util.LinkedHashMap<>();
         int grandTotal = 0;
 
         for (TrackingCategory category : CATEGORY_ORDER) {
             Map<String, Integer> hosts = state.getBlockedTrackerHostsSnapshot(category);
             if (hosts.isEmpty()) continue;
 
-            // Per-category total = sum of per-host counts. Falls back to
-            // the live counts map when a category's hosts dictionary
-            // exists but has been capped (host limit hit) so we still
-            // show the accurate total even when not every host is listed.
             int categoryTotal = 0;
-            for (Integer v : hosts.values()) {
-                if (v != null) categoryTotal += v;
+            for (Map.Entry<String, Integer> e : hosts.entrySet()) {
+                int count = e.getValue() != null ? e.getValue() : 0;
+                categoryTotal += count;
+                // Same host could appear under multiple categories — sum
+                // counts so a tracker doesn't end up as two adjacent rows.
+                merged.merge(e.getKey(), count, Integer::sum);
             }
+            // Per-category total falls back to the live counts map when
+            // the hosts dictionary has been capped (host limit hit) so the
+            // grand total stays accurate even when not every host is
+            // listed.
             if (countsMap != null && countsMap.get(category) != null) {
                 categoryTotal = Math.max(categoryTotal, countsMap.get(category));
             }
             grandTotal += categoryTotal;
-
-            items.add(new BlockedTrackerDetailAdapter.Header(
-                    getString(labelResForCategory(category)),
-                    categoryTotal));
-            for (Map.Entry<String, Integer> e : hosts.entrySet()) {
-                items.add(new BlockedTrackerDetailAdapter.HostRow(e.getKey(), e.getValue()));
-            }
         }
 
-        if (items.isEmpty()) {
+        if (merged.isEmpty()) {
             showEmpty(grandTotal);
             return;
+        }
+
+        List<Map.Entry<String, Integer>> sorted = new ArrayList<>(merged.entrySet());
+        sorted.sort((a, b) -> Integer.compare(b.getValue(), a.getValue()));
+
+        List<BlockedTrackerDetailAdapter.Item> items = new ArrayList<>(sorted.size());
+        for (Map.Entry<String, Integer> e : sorted) {
+            items.add(new BlockedTrackerDetailAdapter.HostRow(e.getKey(), e.getValue()));
         }
 
         mEmptyView.setVisibility(View.GONE);
@@ -165,16 +176,5 @@ public class BlockedTrackersDetailDialogFragment extends BaseBottomSheetDialogFr
         mRecyclerView.setVisibility(View.GONE);
         mSubtitle.setText(getResources().getQuantityString(
                 R.plurals.blocked_trackers_summary, total, total));
-    }
-
-
-    private static int labelResForCategory(@NonNull TrackingCategory category) {
-        return switch (category) {
-            case CROSS_SITE_COOKIES -> R.string.blocked_trackers_cross_site_cookies;
-            case SOCIAL_MEDIA -> R.string.blocked_trackers_social_media;
-            case FINGERPRINTERS -> R.string.blocked_trackers_fingerprinters;
-            case CRYPTOMINERS -> R.string.blocked_trackers_cryptominers;
-            default -> R.string.blocked_trackers_tracking_content;
-        };
     }
 }
