@@ -495,16 +495,20 @@ public class GeckoRuntimeHelper {
             }
 
             // Per-page blocked-host tally for the currently active tab.
-            // Pushed in response to a {requestPageBlocks:true} from
-            // Java (see requestPageBlocks below); the sender side is
-            // always the active tab, so the incognito-ness of the
-            // payload is whatever the active GeckoSession is.
+            // Pushed in response to a {requestPageBlocks:true, tabId:N}
+            // from Java (see requestPageBlocks below). The JS side
+            // echoes back isIncognito (looked up against
+            // incognitoTabIds for the resolved tabId) — we trust that
+            // flag rather than sender.session because messages from
+            // the extension's background script don't carry a
+            // per-tab session, so session.isIncognito would always
+            // resolve to false and the incognito SecuritySheet's
+            // detail list would land on the regular stream.
             if (json.has("pageBlocks")) {
                 JSONObject payload = json.optJSONObject("pageBlocks");
                 if (payload != null) {
                     JSONArray items = payload.optJSONArray("items");
-                    boolean isIncognito = session != null
-                            && mIncognitoStateRepository.getGeckoState(session) != null;
+                    boolean isIncognito = payload.optBoolean("isIncognito", false);
                     mGeckoUblockHelper.onPageBlocks(items, isIncognito);
                 }
             }
@@ -734,17 +738,27 @@ public class GeckoRuntimeHelper {
     }
 
     /**
-     * Asks firedown.js to push the active tab's per-host blocked
-     * tally. Routes through the same long-lived ublock port the
-     * setAds toggle uses. Caller observes
-     * {@code GeckoUblockHelper.getPageBlocksLive()} for the response;
-     * the JS side replies with {@code pageBlocks:{items:[...]}} which
+     * Asks firedown.js to push the per-host blocked tally for the
+     * currently active tab (the tabId Java has been tracking via
+     * browser.tabs.onActivated/onUpdated). Routes through the same
+     * long-lived ublock port the setAds toggle uses. Caller observes
+     * {@code GeckoUblockHelper.getPageBlocksLive()} (or the incognito
+     * variant) for the response; the JS side replies with
+     * {@code pageBlocks:{tabId, isIncognito, items:[...]}} which
      * handleUblockMessage above forwards to onPageBlocks.
+     *
+     * <p>The explicit tabId in the request bypasses vAPI.tabs.getCurrent()
+     * in firedown.js, which queries {active:true, currentWindow:true}
+     * and doesn't reliably resolve to the active incognito tab in
+     * GeckoView — without this, the incognito SecuritySheet's "Ads
+     * blocked" drill-down sat empty even when the badge counter said
+     * a dozen things had been blocked on the page.
      */
     public void requestPageBlocks() {
         try {
             JSONObject msg = new JSONObject();
             msg.put("requestPageBlocks", true);
+            msg.put("tabId", mTabId);
             sendPortMessage("ublock", msg);
         } catch (JSONException e) {
             Log.e(TAG, "requestPageBlocks error", e);

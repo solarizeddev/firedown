@@ -32,7 +32,11 @@ import { PageStore } from './pagestore.js';
         } else if (Object.hasOwn(response, "requestPageBlocks")) {
             // Java asks for the active tab's blocked-host tally —
             // drives the SecuritySheet's "Ads blocked" detail sheet.
-            pushPageBlocks();
+            // tabId comes from Java's browser.tabs.onActivated/onUpdated
+            // tracker; passing it through bypasses vAPI.tabs.getCurrent(),
+            // which doesn't resolve incognito-tab queries reliably in
+            // GeckoView.
+            pushPageBlocks(typeof response.tabId === 'number' ? response.tabId : null);
         }
     });
 
@@ -542,14 +546,26 @@ import { PageStore } from './pagestore.js';
         return arr;
     }
 
-    async function pushPageBlocks() {
+    async function pushPageBlocks(tabIdArg) {
         try {
-            const tab = await vAPI.tabs.getCurrent();
-            if (tab instanceof Object === false) { return; }
+            let tabId = tabIdArg;
+            if (typeof tabId !== 'number' || tabId <= 0) {
+                // Fallback for the no-tabId-supplied path (older Java
+                // builds, or any future caller that doesn't pass one).
+                const tab = await vAPI.tabs.getCurrent();
+                if (tab instanceof Object === false) { return; }
+                tabId = tab.id;
+            }
             browser.runtime.sendNativeMessage("ublock", {
                 pageBlocks: {
-                    tabId: tab.id,
-                    items: pageBlocksList(tab.id),
+                    tabId,
+                    // Echo back so Java can route to the correct per-mode
+                    // stream — sender.session on the Java side doesn't
+                    // carry a tab for messages from the extension's
+                    // background script, so it can't make this call
+                    // itself.
+                    isIncognito: incognitoTabIds.has(tabId),
+                    items: pageBlocksList(tabId),
                 }
             });
         } catch (_) { /* port not ready */ }
