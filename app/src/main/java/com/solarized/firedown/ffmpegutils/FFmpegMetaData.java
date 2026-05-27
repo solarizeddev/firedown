@@ -244,6 +244,31 @@ public class FFmpegMetaData {
 
         Log.d(TAG, "Format Image Name: " + mFormatName);
 
+        // AVIF / HEIF still images live in the ISO BMFF container, so
+        // ffprobe reports them in the mov,mp4,m4a,3gp,3g2,mj2 family —
+        // none of which would match the format-name list below.
+        // Discriminate via the ftyp major_brand, mirroring the brand
+        // list in FFmpegMetaDataReader.getMimeType. Without this,
+        // FFmpegMetaDataReader.getStreams falls into the "%dp" video
+        // formatter and the BrowserOption row renders "190p" for a
+        // 190x190 still — the user-visible "IMAGE 190p" symptom.
+        if (mFormatName.contains("mp4")) {
+            String brand = getMajorBrand();
+            if (brand != null) {
+                switch (brand) {
+                    case "avif":
+                    case "avis":
+                    case "heic":
+                    case "heix":
+                    case "heim":
+                    case "heis":
+                    case "mif1":
+                    case "msf1":
+                        return true;
+                }
+            }
+        }
+
         return (mFormatName.equals("webp")
                 || mFormatName.contains("jpeg")
                 || mFormatName.equals("png")
