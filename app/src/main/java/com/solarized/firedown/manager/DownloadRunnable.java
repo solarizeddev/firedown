@@ -70,6 +70,22 @@ public class DownloadRunnable implements Runnable {
             } else {
                 callback.onError(MessageHelper.IOEXCEPTION);
             }
+        } catch (Exception e) {
+            // okhttp is Kotlin and lets InterruptedException propagate without
+            // declaring it — when RunnableManager calls Thread.interrupt() to
+            // unblock an in-flight TCP connect or socket read, it bubbles all
+            // the way out of RealCall.execute() bypassing the Java throws
+            // contract. Treat it as a normal cancellation: clear the interrupt
+            // (the finally below does this), don't fire onError, exit quietly.
+            // Catching Exception (not InterruptedException directly) because
+            // the try body's declared checked exception is IOException only,
+            // so the compiler rejects a direct catch.
+            if (e instanceof InterruptedException) {
+                Log.d(TAG, "Download interrupted (cancellation)", e);
+            } else {
+                Log.e(TAG, "Download unexpected failure", e);
+                callback.onError(MessageHelper.IOEXCEPTION);
+            }
         } finally {
             /* Clear any stale thread interrupt flag before returning the thread
              * to the pool. Thread.interrupt() is used by RunnableManager to break
