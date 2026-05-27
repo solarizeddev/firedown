@@ -1872,11 +1872,9 @@ public class BrowserFragment extends BaseBrowserFragment
 
 
     private void applyBrowserIncognitoTheme(boolean incognito) {
-        // Sync FLAG_SECURE every call, before the early-exit cache guard
-        // below. The cached mIsIncognitoThemed resets to false on fragment
-        // recreation while the Activity's Window may still hold FLAG_SECURE
-        // from the previous fragment incarnation; without this, switching
-        // back to a regular tab would leave the flag stuck on.
+        // Sync FLAG_SECURE every call. The Activity's Window may hold
+        // FLAG_SECURE from a previous fragment incarnation regardless
+        // of what mIsIncognitoThemed currently says.
         if (mActivity != null) {
             Window w = mActivity.getWindow();
             if (incognito) {
@@ -1886,8 +1884,13 @@ public class BrowserFragment extends BaseBrowserFragment
             }
         }
 
-        if (incognito == mIsIncognitoThemed)
-            return;
+        // No "incognito == mIsIncognitoThemed" early exit: onViewCreated
+        // resets the freshly-inflated chrome to non-incognito on every
+        // view re-creation, but mIsIncognitoThemed is preserved across
+        // back-press so the two go out of sync. With the early-exit
+        // here, restoring BrowserFragment from web_history / web_bookmark
+        // would skip the re-paint and leave incognito browsing under a
+        // regular toolbar + window decor.
         mIsIncognitoThemed = incognito;
         if (mActivity == null || mGeckoToolbar == null || mBottomNavigationBar == null)
             return;
