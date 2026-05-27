@@ -24,7 +24,7 @@ import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import okhttp3.Headers;
+import com.solarized.firedown.okhttp.SafeHeaders;
 import okhttp3.MediaType;
 import okhttp3.Request;
 import okhttp3.RequestBody;
@@ -242,7 +242,7 @@ public class WebUtils {
         try {
 
             Request request = new Request.Builder()
-                    .headers(Headers.of(headers))
+                    .headers(SafeHeaders.of(headers))
                     .url(url)
                     .build();
 
@@ -338,7 +338,7 @@ public class WebUtils {
         try {
 
             Request request = new Request.Builder()
-                    .headers(Headers.of(headers))
+                    .headers(SafeHeaders.of(headers))
                     .url(url)
                     .build();
 
@@ -455,7 +455,7 @@ public class WebUtils {
             }
 
             Request request = new Request.Builder()
-                    .headers(Headers.of(headers))
+                    .headers(SafeHeaders.of(headers))
                     .url(url)
                     .post(reqbody)
                     .header("Content-Length", String.valueOf(reqbody.contentLength()))

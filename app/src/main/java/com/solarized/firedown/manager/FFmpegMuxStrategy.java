@@ -24,7 +24,7 @@ import java.net.HttpURLConnection;
 import java.util.Locale;
 import java.util.Map;
 
-import okhttp3.Headers;
+import com.solarized.firedown.okhttp.SafeHeaders;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -68,7 +68,7 @@ public class FFmpegMuxStrategy implements DownloadStrategy, FFmpegListener {
             // Probe
             Request httpRequest = new Request.Builder()
                     .url(contentAddress)
-                    .headers(Headers.of(context.getHeaders()))
+                    .headers(SafeHeaders.of(context.getHeaders()))
                     .build();
 
             httpResponse = client.newCall(httpRequest).execute();
@@ -166,7 +166,7 @@ public class FFmpegMuxStrategy implements DownloadStrategy, FFmpegListener {
                     // Fresh request for raw byte copy fallback
                     Request fallbackRequest = new Request.Builder()
                             .url(contentAddress)
-                            .headers(Headers.of(context.getHeaders()))
+                            .headers(SafeHeaders.of(context.getHeaders()))
                             .build();
                     httpResponse = client.newCall(fallbackRequest).execute();
                     body = httpResponse.body();

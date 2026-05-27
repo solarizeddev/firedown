@@ -24,7 +24,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import dagger.hilt.android.EntryPointAccessors;
-import okhttp3.Headers;
+import com.solarized.firedown.okhttp.SafeHeaders;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
@@ -107,7 +107,7 @@ public class GeckoStreamStrategy implements DownloadStrategy {
                 headers.remove(BrowserHeaders.RANGES);
                 Request httpRequest = new Request.Builder()
                         .url(request.getUrl())
-                        .headers(Headers.of(headers))
+                        .headers(SafeHeaders.of(headers))
                         .build();
 
                 httpResponse = context.getOkHttpClient().newCall(httpRequest).execute();

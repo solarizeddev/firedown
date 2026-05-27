@@ -22,6 +22,7 @@ import java.util.Locale;
 import java.util.Map;
 
 import okhttp3.Headers;
+import com.solarized.firedown.okhttp.SafeHeaders;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -211,7 +212,7 @@ public class FFmpegOkhttp {
             }
 
             Request request = new Request.Builder()
-                    .headers(Headers.of(headers))
+                    .headers(SafeHeaders.of(headers))
                     .url(mUrl)
                     .build();
 

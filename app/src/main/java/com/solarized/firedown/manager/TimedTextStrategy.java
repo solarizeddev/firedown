@@ -19,7 +19,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 
-import okhttp3.Headers;
+import com.solarized.firedown.okhttp.SafeHeaders;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
@@ -56,7 +56,7 @@ public class TimedTextStrategy implements DownloadStrategy {
 
             Request httpRequest = new Request.Builder()
                     .url(downloadUrl)
-                    .headers(Headers.of(context.getHeaders()))
+                    .headers(SafeHeaders.of(context.getHeaders()))
                     .build();
 
             httpResponse = context.getOkHttpClient().newCall(httpRequest).execute();

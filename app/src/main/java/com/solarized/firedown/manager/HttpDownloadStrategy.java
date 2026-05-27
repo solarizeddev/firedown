@@ -26,7 +26,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 
-import okhttp3.Headers;
+import com.solarized.firedown.okhttp.SafeHeaders;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -255,7 +255,7 @@ public class HttpDownloadStrategy implements DownloadStrategy {
 
         Request request = new Request.Builder()
                 .url(url)
-                .headers(Headers.of(perCallHeaders))
+                .headers(SafeHeaders.of(perCallHeaders))
                 .build();
         Log.d(TAG, "makeRequest: url=" + url
                 + " isResume=" + isResume
@@ -270,7 +270,7 @@ public class HttpDownloadStrategy implements DownloadStrategy {
             perCallHeaders.remove(BrowserHeaders.RANGES);
             Request retry = new Request.Builder()
                     .url(url)
-                    .headers(Headers.of(perCallHeaders))
+                    .headers(SafeHeaders.of(perCallHeaders))
                     .build();
             return client.newCall(retry).execute();
         }
