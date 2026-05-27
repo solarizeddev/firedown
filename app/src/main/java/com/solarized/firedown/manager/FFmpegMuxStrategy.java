@@ -130,13 +130,24 @@ public class FFmpegMuxStrategy implements DownloadStrategy, FFmpegListener {
             downloader = new FFmpegDownloader();
             downloader.addListener(this);
 
-            Map<String, String> dict = FFmpegUtils.buildFFmpegOptions(context.getHeaders());
-
+            // FFmpegDownloader.start() runs the headers through
+            // buildFFmpegOptions itself — passing a pre-wrapped dict
+            // here meant buildFFmpegOptions ran twice. The second
+            // pass's headersToFFmpegString stripped all the \r\n
+            // separators out of the already-joined 'headers' value
+            // (see FFmpegUtils.headersToFFmpegString line 120), so
+            // FFmpegOkhttp ended up reading back a single garbage
+            // header named 'headers' whose value was every original
+            // request header concatenated without delimiters. The
+            // upstream HTTP/2 server then RSTed the stream with
+            // PROTOCOL_ERROR, killing the m3u8 download with
+            // 'End of file' / 'StreamResetException'. Hand start()
+            // the raw header map; it will wrap exactly once.
             StreamSelection selection = request.toStreamSelection();
             int videoStream = selection.getVideoNumber() >= 0 ? selection.getVideoNumber() : -1;
             int audioStream = selection.getAudioNumber() >= 0 ? selection.getAudioNumber() : -1;
 
-            int error = downloader.start(dict, null, contentAddress,
+            int error = downloader.start(context.getHeaders(), null, contentAddress,
                     file.getAbsolutePath(), videoStream, audioStream, totalLength);
 
             // Free after start() returns (C threads have exited)
