@@ -10,10 +10,12 @@ import androidx.annotation.*;
 import androidx.appcompat.widget.SearchView;
 import androidx.core.view.MenuProvider;
 import androidx.lifecycle.*;
+import androidx.navigation.NavOptions;
 import androidx.paging.LoadState;
 import androidx.recyclerview.widget.*;
 
 import com.solarized.firedown.IntentActions;
+import com.solarized.firedown.Keys;
 import com.solarized.firedown.R;
 import com.solarized.firedown.data.entity.GeckoStateEntity;
 import com.solarized.firedown.data.entity.WebHistoryEntity;
@@ -32,6 +34,7 @@ public class WebHistoryFragment extends BaseFocusFragment implements SearchView.
     private WebHistoryViewModel mWebHistoryViewModel;
     private BrowserURIViewModel mBrowserURIViewModel;
     private WebHistoryAdapter mAdapter;
+    private boolean mIncognito;
 
     /** Set when a new query has been dispatched; consumed on the next successful refresh. */
     private boolean mPendingScrollToTop = false;
@@ -39,6 +42,8 @@ public class WebHistoryFragment extends BaseFocusFragment implements SearchView.
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Bundle args = getArguments();
+        mIncognito = args != null && args.getBoolean(Keys.IS_INCOGNITO, false);
         mWebHistoryViewModel = new ViewModelProvider(this).get(WebHistoryViewModel.class);
         // Activity-scoped so BrowserFragment observes the same event.
         mBrowserURIViewModel = new ViewModelProvider(mActivity).get(BrowserURIViewModel.class);
@@ -48,6 +53,14 @@ public class WebHistoryFragment extends BaseFocusFragment implements SearchView.
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        // Match WebBookmarkFragment: overlay the Material colour
+        // tokens with their incognito variants when launched from an
+        // incognito context so the list paints in the same palette as
+        // the chrome that brought us here.
+        if (mIncognito) {
+            inflater = inflater.cloneInContext(new ContextThemeWrapper(
+                    inflater.getContext(), R.style.ThemeOverlay_FireDown_Incognito));
+        }
         View v = inflater.inflate(R.layout.fragment_web_history, container, false);
         setupViews(v);
         setupToolbar();
@@ -58,12 +71,9 @@ public class WebHistoryFragment extends BaseFocusFragment implements SearchView.
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // Reset the activity window decor so we don't inherit a stale
-        // incognito background when opened from the incognito browser's
-        // popup menu. BrowserFragment paints the decor purple via
-        // applyBrowserIncognitoTheme; without this call, the regular
-        // History list sat on a purple field until the user backed out.
-        resetWindowTheme();
+        // Sync window decor + system bars to the mode we were opened
+        // in. Mirrors WebBookmarkFragment — see the rationale there.
+        applyWindowIncognitoTheme(mIncognito);
 
         postponeEnterTransition();
 
@@ -226,12 +236,15 @@ public class WebHistoryFragment extends BaseFocusFragment implements SearchView.
             if (resId == R.id.file_more) {
                 mWebHistoryViewModel.delete(entity);
             } else if (resId == R.id.item_web_history) {
-                GeckoStateEntity geckoState = new GeckoStateEntity(false);
+                GeckoStateEntity geckoState = new GeckoStateEntity(mIncognito);
                 geckoState.setUri(entity.getUrl());
                 // Mirrors WebBookmarkFragment: publish OPEN_URI, then
-                // pop back to home + push browser.
+                // pop back to the home that matches our launch mode.
                 mBrowserURIViewModel.onEventSelected(geckoState, IntentActions.OPEN_URI);
-                NavigationUtils.navigateSafe(mNavController, R.id.action_web_history_to_browser);
+                NavOptions navOptions = new NavOptions.Builder()
+                        .setPopUpTo(mIncognito ? R.id.home_incognito : R.id.home, false)
+                        .build();
+                NavigationUtils.navigateSafe(mNavController, R.id.browser, null, navOptions);
             }
         }
     }

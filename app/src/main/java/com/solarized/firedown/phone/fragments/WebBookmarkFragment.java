@@ -3,6 +3,7 @@ package com.solarized.firedown.phone.fragments;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -17,6 +18,7 @@ import androidx.appcompat.widget.SearchView;
 import androidx.core.view.MenuProvider;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.NavOptions;
 import androidx.paging.LoadState;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -43,10 +45,13 @@ public class WebBookmarkFragment extends BaseFocusFragment implements OnItemClic
     private WebBookmarkViewModel mWebBookmarkViewModel;
     private BrowserURIViewModel mBrowserURIViewModel;
     private boolean mPendingScrollToTop = false;
+    private boolean mIncognito;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Bundle args = getArguments();
+        mIncognito = args != null && args.getBoolean(Keys.IS_INCOGNITO, false);
         mWebBookmarkViewModel = new ViewModelProvider(this).get(WebBookmarkViewModel.class);
         // Activity-scoped so BrowserFragment (the OPEN_URI observer)
         // picks up the same event instance we publish here.
@@ -58,7 +63,16 @@ public class WebBookmarkFragment extends BaseFocusFragment implements OnItemClic
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
+        // Re-inflate against a ContextThemeWrapper that overlays every
+        // Material colour token with its incognito variant so the
+        // app bar, toolbar, list cards and empty-state surfaces all
+        // paint in the same purple-ish palette the incognito browser
+        // chrome uses. Window decor + status / nav bar are handled
+        // separately by applyWindowIncognitoTheme below.
+        if (mIncognito) {
+            inflater = inflater.cloneInContext(new ContextThemeWrapper(
+                    inflater.getContext(), R.style.ThemeOverlay_FireDown_Incognito));
+        }
         View v = inflater.inflate(R.layout.fragment_web_bookmark, container, false);
 
         mWebBookmarkViewModel.getDispatchedQuery().observe(getViewLifecycleOwner(), q -> mPendingScrollToTop = true);
@@ -74,13 +88,13 @@ public class WebBookmarkFragment extends BaseFocusFragment implements OnItemClic
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // Reset the activity window decor so we don't inherit a stale
-        // incognito background when opened from the incognito browser's
-        // popup menu. BrowserFragment paints the decor purple via
-        // applyBrowserIncognitoTheme; without this call, the regular
-        // Bookmarks list sat on a purple field until the user backed
-        // out.
-        resetWindowTheme();
+        // Sync window decor + system bars to the mode we were opened
+        // in. Without this, the list inherits whatever theming the
+        // previous fragment left on the activity window — e.g. an
+        // incognito-themed bookmark list opened from normal home would
+        // appear with normal-coloured system bars, and the reverse is
+        // even more visually broken.
+        applyWindowIncognitoTheme(mIncognito);
 
         postponeEnterTransition();
 
@@ -229,19 +243,26 @@ public class WebBookmarkFragment extends BaseFocusFragment implements OnItemClic
                     bundle.putString(Keys.SHARE_URL, webBookmarkEntity.getUrl());
                     bundle.putString(Keys.TITLE, webBookmarkEntity.getTitle());
                     bundle.putBoolean(Keys.EDIT, true);
+                    // Carry the incognito flag through so the bookmark
+                    // edit surface (and its 'Open in New Tab' path)
+                    // continues in the same mode.
+                    bundle.putBoolean(Keys.IS_INCOGNITO, mIncognito);
                     NavigationUtils.navigateSafe(mNavController,R.id.dialog_web_options, R.id.web_bookmark, bundle);
                 }
             }else if(resId == R.id.item_web_bookmark){
                 WebBookmarkEntity webBookmarkEntity = mAdapter.snapshot().get(position);
                 if(webBookmarkEntity != null){
-                    GeckoStateEntity geckoStateEntity = new GeckoStateEntity(false);
+                    GeckoStateEntity geckoStateEntity = new GeckoStateEntity(mIncognito);
                     geckoStateEntity.setUri(webBookmarkEntity.getUrl());
-                    // Same shape HomeFragment uses to open a URL — publish the
-                    // OPEN_URI event on the shared ViewModel, then navigate to
-                    // browser via the action that pops back to home (so the
-                    // bookmark surface isn't left on the back stack).
+                    // Publish OPEN_URI on the shared ViewModel, then
+                    // navigate to browser popping back to the home that
+                    // matches our mode — keeps the back stack
+                    // consistent so back-from-browser lands on
+                    // home / home_incognito to match the launching
+                    // chrome.
                     mBrowserURIViewModel.onEventSelected(geckoStateEntity, IntentActions.OPEN_URI);
-                    NavigationUtils.navigateSafe(mNavController, R.id.action_web_bookmark_to_browser);
+                    NavigationUtils.navigateSafe(mNavController, R.id.browser, null,
+                            buildToBrowserNavOptions());
                 }
             }
         }
@@ -286,6 +307,23 @@ public class WebBookmarkFragment extends BaseFocusFragment implements OnItemClic
         mToolbar.invalidateMenu();
         mToolbar.setTitle(getString(R.string.navigation_web_bookmarks));
     }
+
+
+    /**
+     * Builds the pop-and-push NavOptions for navigating into the
+     * browser. Pops the back stack up to (but not including) the home
+     * that matches our launch mode — so a normal-mode bookmark list
+     * unwinds to {@code @id/home} and an incognito-mode list unwinds
+     * to {@code @id/home_incognito}. Replaces the XML-level
+     * action_web_bookmark_to_browser whose popUpTo was hard-coded to
+     * {@code @id/home}.
+     */
+    private NavOptions buildToBrowserNavOptions() {
+        return new NavOptions.Builder()
+                .setPopUpTo(mIncognito ? R.id.home_incognito : R.id.home, false)
+                .build();
+    }
+
 
 
 

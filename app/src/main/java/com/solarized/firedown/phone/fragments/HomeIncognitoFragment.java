@@ -326,8 +326,12 @@ public class HomeIncognitoFragment extends BaseBrowserFragment implements
             // is just URLs the user explicitly chose to save earlier —
             // showing it inside an incognito session doesn't leak any
             // private-session browsing state out, and the URL bar at
-            // the top already covers the search path.
-            NavigationUtils.navigateSafe(mNavController, R.id.action_home_incognito_to_bookmarks);
+            // the top already covers the search path. Pass the
+            // incognito flag through so the list paints in incognito
+            // tones and tapping an entry opens an incognito tab.
+            Bundle args = new Bundle();
+            args.putBoolean(Keys.IS_INCOGNITO, true);
+            NavigationUtils.navigateSafe(mNavController, R.id.action_home_incognito_to_bookmarks, args);
         }
     }
 

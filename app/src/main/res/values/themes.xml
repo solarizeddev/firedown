@@ -144,6 +144,60 @@
     </style>
 
 
+    <!--
+        Color-only overlay that redirects every Material colour token to
+        its incognito variant. Applied as a ContextThemeWrapper around
+        the LayoutInflater in WebBookmarkFragment / WebHistoryFragment /
+        WebBookmarkEditFragment when they're entered from an incognito
+        context, so the toolbar, app bar, cards and other Material
+        surfaces pick up incognito tones without needing per-view
+        retinting code. Mirrors the colour block of Theme.FireDown.Vault
+        — keep both in sync.
+    -->
+    <style name="ThemeOverlay.FireDown.Incognito" parent="">
+        <item name="colorPrimary">@color/incognito_primary</item>
+        <item name="colorOnPrimary">@color/incognito_on_primary</item>
+        <item name="colorPrimaryContainer">@color/incognito_primary_container</item>
+        <item name="colorOnPrimaryContainer">@color/incognito_on_primary_container</item>
+        <item name="colorPrimaryInverse">@color/incognito_primary_inverse</item>
+
+        <item name="colorSecondary">@color/incognito_secondary</item>
+        <item name="colorOnSecondary">@color/incognito_on_secondary</item>
+        <item name="colorSecondaryContainer">@color/incognito_secondary_container</item>
+        <item name="colorOnSecondaryContainer">@color/incognito_on_secondary_container</item>
+
+        <item name="colorTertiary">@color/incognito_tertiary</item>
+        <item name="colorOnTertiary">@color/incognito_on_tertiary</item>
+        <item name="colorTertiaryContainer">@color/incognito_tertiary_container</item>
+        <item name="colorOnTertiaryContainer">@color/incognito_on_tertiary_container</item>
+
+        <item name="colorError">@color/incognito_error</item>
+        <item name="colorOnError">@color/incognito_on_error</item>
+        <item name="colorErrorContainer">@color/incognito_error_container</item>
+        <item name="colorOnErrorContainer">@color/incognito_on_error_container</item>
+
+        <item name="colorSurface">@color/incognito_surface</item>
+        <item name="colorOnSurface">@color/incognito_on_surface</item>
+        <item name="colorSurfaceVariant">@color/incognito_surface_variant</item>
+        <item name="colorOnSurfaceVariant">@color/incognito_on_surface_variant</item>
+        <item name="colorSurfaceInverse">@color/incognito_surface_inverse</item>
+        <item name="colorOnSurfaceInverse">@color/incognito_on_surface_inverse</item>
+        <item name="colorSurfaceDim">@color/incognito_surface_dim</item>
+        <item name="colorSurfaceBright">@color/incognito_surface_bright</item>
+        <item name="colorSurfaceContainer">@color/incognito_surface_container</item>
+        <item name="colorSurfaceContainerLow">@color/incognito_surface_container_low</item>
+        <item name="colorSurfaceContainerHigh">@color/incognito_surface_container_high</item>
+        <item name="colorSurfaceContainerHighest">@color/incognito_surface_container_highest</item>
+        <item name="colorSurfaceContainerLowest">@color/incognito_surface_container_lowest</item>
+
+        <item name="android:colorBackground">@color/incognito_background</item>
+        <item name="colorOnBackground">@color/incognito_on_surface</item>
+
+        <item name="colorOutline">@color/incognito_outline</item>
+        <item name="colorOutlineVariant">@color/incognito_outline_variant</item>
+    </style>
+
+
     <style name="Theme.FireDown.SegmentedButton" parent="Widget.Material3.Button.OutlinedButton">
         <item name="backgroundTint">@color/segmented_button_background</item>
         <item name="android:textColor">@color/segmented_button_text_color</item>

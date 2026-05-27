@@ -553,9 +553,16 @@ public class BrowserFragment extends BaseBrowserFragment
             } else if (id == R.id.popup_downloads) {
                 mStartForResult.launch(new Intent(mActivity, DownloadsActivity.class));
             }else if (id == R.id.popup_bookmarks) {
-                NavigationUtils.navigateSafe(mNavController, R.id.action_browser_to_bookmarks);
+                // Carry the incognito flag through so the list paints
+                // in incognito tones and tapping a bookmark opens an
+                // incognito tab + unwinds to home_incognito on back.
+                Bundle args = new Bundle();
+                args.putBoolean(Keys.IS_INCOGNITO, mIsIncognitoThemed);
+                NavigationUtils.navigateSafe(mNavController, R.id.action_browser_to_bookmarks, args);
             } else if (id == R.id.popup_history) {
-                NavigationUtils.navigateSafe(mNavController, R.id.action_browser_to_history);
+                Bundle args = new Bundle();
+                args.putBoolean(Keys.IS_INCOGNITO, mIsIncognitoThemed);
+                NavigationUtils.navigateSafe(mNavController, R.id.action_browser_to_history, args);
             } else if (id == R.id.popup_settings) {
                 mStartForResult.launch(new Intent(mActivity, SettingsActivity.class));
             } else if (id == R.id.popup_share) {
@@ -601,6 +608,10 @@ public class BrowserFragment extends BaseBrowserFragment
                 // the user-typed save string verbatim.
                 editArgs.putInt(Keys.ITEM_ID,
                         WebBookmarkDataRepository.bookmarkIdFor(url));
+                // Carry incognito through so the edit form paints in
+                // matching tones and 'Open in browser' from there opens
+                // an incognito tab.
+                editArgs.putBoolean(Keys.IS_INCOGNITO, mIsIncognitoThemed);
                 NavigationUtils.navigateSafe(mNavController,
                         R.id.action_browser_to_bookmark_edit, R.id.browser, editArgs);
             } else if (id == R.id.popup_reload) {

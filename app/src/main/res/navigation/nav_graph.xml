@@ -121,6 +121,18 @@
     <fragment
         android:id="@+id/web_bookmark"
         android:name="com.solarized.firedown.phone.fragments.WebBookmarkFragment">
+        <!--
+            Carried from the launcher (Home / HomeIncognito / Browser
+            popup) so the list paints itself in incognito tones and the
+            to-browser nav lands on the incognito home / browser. The
+            XML-level popUpTo target stays @id/home; WebBookmarkFragment
+            overrides the NavOptions at nav-time when incognito so the
+            stack unwinds to home_incognito instead.
+        -->
+        <argument
+            android:name="com.solarized.firedown.IS_INCOGNTO"
+            app:argType="boolean"
+            android:defaultValue="false" />
         <action
             android:id="@+id/action_web_bookmark_to_browser"
             app:destination="@id/browser"
@@ -130,6 +142,10 @@
     <fragment
         android:id="@+id/web_bookmark_edit"
         android:name="com.solarized.firedown.phone.fragments.WebBookmarkEditFragment" >
+        <argument
+            android:name="com.solarized.firedown.IS_INCOGNTO"
+            app:argType="boolean"
+            android:defaultValue="false" />
         <!--
             "Open in browser" action from the edit screen. Mirrors
             action_web_bookmark_to_browser: pop back to home, push
@@ -151,6 +167,10 @@
     <fragment
         android:id="@+id/web_history"
         android:name="com.solarized.firedown.phone.fragments.WebHistoryFragment">
+        <argument
+            android:name="com.solarized.firedown.IS_INCOGNTO"
+            app:argType="boolean"
+            android:defaultValue="false" />
         <action
             android:id="@+id/action_web_history_to_browser"
             app:destination="@id/browser"

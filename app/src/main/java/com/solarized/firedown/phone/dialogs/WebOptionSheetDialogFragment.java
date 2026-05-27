@@ -43,6 +43,8 @@ public class WebOptionSheetDialogFragment extends BaseBottomSheetDialogFragment 
 
     private boolean mEdit;
 
+    private boolean mIncognito;
+
     private boolean mArgsMissing;
 
     @Override
@@ -62,6 +64,8 @@ public class WebOptionSheetDialogFragment extends BaseBottomSheetDialogFragment 
         mCurrentUrl = bundle.getString(Keys.SHARE_URL, null);
 
         mEdit = bundle.getBoolean(Keys.EDIT, false);
+
+        mIncognito = bundle.getBoolean(Keys.IS_INCOGNITO, false);
 
         mWebBookmarkViewModel = new ViewModelProvider(this).get(WebBookmarkViewModel.class);
 
@@ -141,11 +145,11 @@ public class WebOptionSheetDialogFragment extends BaseBottomSheetDialogFragment 
             // Old flow used setResult(ACTION_VIEW) + finish on
             // BookmarkActivity / HistoryActivity, which closed the whole
             // app once those Activities were dropped.
-            GeckoStateEntity geckoStateEntity = new GeckoStateEntity(false, mCurrentUrl);
+            GeckoStateEntity geckoStateEntity = new GeckoStateEntity(mIncognito, mCurrentUrl);
             geckoStateEntity.setExternal(true);
             mBrowserURIViewModel.onEventSelected(geckoStateEntity, IntentActions.OPEN_EXTERNAL_URI);
             NavOptions navOptions = new NavOptions.Builder()
-                    .setPopUpTo(R.id.home, false)
+                    .setPopUpTo(mIncognito ? R.id.home_incognito : R.id.home, false)
                     .build();
             NavigationUtils.navigateSafe(mNavController, R.id.browser, null, navOptions);
         } else if (id == R.drawable.ic_baseline_delete_24) {

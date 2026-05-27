@@ -5,6 +5,7 @@ import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Patterns;
+import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -20,6 +21,7 @@ import androidx.core.app.ShareCompat;
 import androidx.core.view.MenuProvider;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.NavOptions;
 
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
 import com.bumptech.glide.request.RequestOptions;
@@ -60,6 +62,7 @@ public class WebBookmarkEditFragment extends BaseFocusFragment implements View.O
     private WebBookmarkEntity mWebBookmarkEntity;
     private int mId;
     private int mPreviousId;
+    private boolean mIncognito;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -67,6 +70,7 @@ public class WebBookmarkEditFragment extends BaseFocusFragment implements View.O
         Bundle bundle = getArguments();
         if (bundle != null) {
             mId = bundle.getInt(Keys.ITEM_ID);
+            mIncognito = bundle.getBoolean(Keys.IS_INCOGNITO, false);
         }
         mWebBookmarkViewModel = new ViewModelProvider(this).get(WebBookmarkViewModel.class);
         mBrowserURIViewModel = new ViewModelProvider(mActivity).get(BrowserURIViewModel.class);
@@ -76,14 +80,18 @@ public class WebBookmarkEditFragment extends BaseFocusFragment implements View.O
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
+        // Mirror WebBookmarkFragment: overlay Material colour tokens
+        // with incognito variants when entered from an incognito
+        // context so the form chrome matches the browser we came from.
+        if (mIncognito) {
+            inflater = inflater.cloneInContext(new ContextThemeWrapper(
+                    inflater.getContext(), R.style.ThemeOverlay_FireDown_Incognito));
+        }
         View v = inflater.inflate(R.layout.fragment_web_bookmark_edit, container, false);
 
-        // Reset the activity window decor so we don't inherit a stale
-        // incognito background when opened from the incognito browser's
-        // popup "Edit bookmark" action. BrowserFragment paints the
-        // decor purple via applyBrowserIncognitoTheme; without this
-        // call, the edit form sat on a purple field.
-        resetWindowTheme();
+        // Sync window decor + system bars to the mode we were opened
+        // in.
+        applyWindowIncognitoTheme(mIncognito);
 
         mDeleteButton = v.findViewById(R.id.delete_button);
         mSaveButton = v.findViewById(R.id.save_button);
@@ -252,11 +260,13 @@ public class WebBookmarkEditFragment extends BaseFocusFragment implements View.O
      */
     private void openInBrowser() {
         if (mWebBookmarkEntity == null) return;
-        GeckoStateEntity entity = new GeckoStateEntity(false);
+        GeckoStateEntity entity = new GeckoStateEntity(mIncognito);
         entity.setUri(mWebBookmarkEntity.getUrl());
         mBrowserURIViewModel.onEventSelected(entity, IntentActions.OPEN_URI);
-        NavigationUtils.navigateSafe(mNavController,
-                R.id.action_web_bookmark_edit_to_browser);
+        NavOptions navOptions = new NavOptions.Builder()
+                .setPopUpTo(mIncognito ? R.id.home_incognito : R.id.home, false)
+                .build();
+        NavigationUtils.navigateSafe(mNavController, R.id.browser, null, navOptions);
     }
 
     private void shareBookmarkUrl() {

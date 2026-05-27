@@ -314,17 +314,37 @@ public class BaseFocusFragment extends Fragment {
      * <p>Idempotent — safe to call when already in normal mode.</p>
      */
     protected void resetWindowTheme() {
+        applyWindowIncognitoTheme(false);
+    }
+
+    /**
+     * Window-level incognito theming for fragments that don't own a
+     * full toolbar/bottom-nav repaint cycle of their own (the bookmark
+     * + history list surfaces). Paints the decor view, status bar and
+     * nav bar to match the requested mode and forces light bars off
+     * under incognito so the dark incognito surface reads correctly.
+     *
+     * <p>FLAG_SECURE is only cleared in non-incognito mode (and only
+     * when AppLock isn't holding it) — the incognito-side fragments
+     * leave FLAG_SECURE up so the system thumbnail of an incognito
+     * surface stays blanked.</p>
+     */
+    protected void applyWindowIncognitoTheme(boolean incognito) {
         if (mActivity == null) return;
 
         int nightMode = getResources().getConfiguration().uiMode
                 & Configuration.UI_MODE_NIGHT_MASK;
-        boolean lightBars = nightMode != Configuration.UI_MODE_NIGHT_YES;
+        boolean lightBars = !incognito && nightMode != Configuration.UI_MODE_NIGHT_YES;
 
         Window window = mActivity.getWindow();
         window.getDecorView().setBackgroundColor(
-                IncognitoColors.getSurface(mActivity, false));
+                IncognitoColors.getSurface(mActivity, incognito));
 
-        window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE);
+        if (incognito) {
+            window.addFlags(WindowManager.LayoutParams.FLAG_SECURE);
+        } else {
+            window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE);
+        }
 
         WindowInsetsControllerCompat insetsController =
                 WindowCompat.getInsetsController(window, window.getDecorView());
