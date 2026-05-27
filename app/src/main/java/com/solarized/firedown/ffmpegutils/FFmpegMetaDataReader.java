@@ -382,6 +382,27 @@ public class FFmpegMetaDataReader {
         Log.d(TAG, "getMimeType: " + " mFormatName: " + mFormatName);
 
         if (mFormatName.contains("mp4")) {
+            // AVIF / HEIF still images live in an ISO BMFF container that
+            // ffprobe reports under the mov,mp4,m4a,3gp,3g2,mj2 format
+            // family with a single AV1 / HEVC video stream. Without the
+            // major_brand check below we hand back image/avif-as-mp4 and
+            // the download lands on disk as .mp4 with a video icon.
+            String brand = mFFmpegMetaData.getMajorBrand();
+            if (brand != null) {
+                switch (brand) {
+                    case "avif":
+                    case "avis":
+                        return FileUriHelper.MIMETYPE_AVIF;
+                    case "heic":
+                    case "heix":
+                    case "heim":
+                    case "heis":
+                        return FileUriHelper.MIMETYPE_HEIC;
+                    case "mif1":
+                    case "msf1":
+                        return FileUriHelper.MIMETYPE_HEIF;
+                }
+            }
             if (!hasVideo)
                 return FileUriHelper.MIMETYPE_AUDIO_MP4;
             return FileUriHelper.MIMETYPE_MP4;

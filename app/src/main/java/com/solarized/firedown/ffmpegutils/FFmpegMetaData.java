@@ -120,6 +120,24 @@ public class FFmpegMetaData {
         return mFormatName;
     }
 
+    /**
+     * ISO BMFF major_brand from the container header (the {@code ftyp} box's
+     * first compatible brand). Returned lowercased and trimmed so callers can
+     * match against known image-in-MP4 brands ({@code avif}, {@code heic},
+     * etc.) and avoid mis-classifying still images whose container probe lands
+     * in the {@code mov,mp4,m4a,3gp,3g2,mj2} format family.
+     *
+     * <p>Returns null when the container isn't ISO BMFF or the demuxer didn't
+     * surface the tag in {@link #mMetadata}.</p>
+     */
+    public String getMajorBrand() {
+        if (mMetadata == null) return null;
+        String brand = mMetadata.get("major_brand");
+        if (brand == null) return null;
+        brand = brand.trim().toLowerCase();
+        return brand.isEmpty() ? null : brand;
+    }
+
     public FFmpegStreamInfo[] getFFmpegStreamInfo() {
         return mFFmpegStreamInfo;
     }
