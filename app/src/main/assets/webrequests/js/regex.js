@@ -61,6 +61,17 @@ const DEFAULT_PATTERNS = [
     // Akamai
   '\\.akamaized\\.net\\/.*\\/(init|cmaf-|chunk-|segment[-_]?)[^/]*\\.(mp4|m4s)',
 
+  // Generic CMAF / fMP4 initialization segments. These hold the moov
+  // box for an HLS / DASH stream and are referenced by the parent
+  // playlist's #EXT-X-MAP: URI=... — they're never standalone media,
+  // so probing one in isolation triggers the same
+  // 'trun track id unknown, no tfhd was found' decoder dead-end as a
+  // bare .m4s fragment. Filename is universally 'init' across CDNs
+  // that ship CMAF (smoothpal, generic nginx setups, …); the
+  // domain-specific entries above cover the cases where the path
+  // doesn't follow that convention.
+  '\\/init\\.(mp4|m4s)(?:[?#]|$)',
+
   // Other
   'startpage\\.com\\/sp\\/cl',
   'rumble\\.com\\/service\\.php\\?name=video\\.watching-now',
