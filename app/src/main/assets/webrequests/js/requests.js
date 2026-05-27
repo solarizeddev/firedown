@@ -33,6 +33,14 @@ const PATTERNS = {
   media: /^https?:\/\/[^/]+\/[^?#]*\.(?:mp[34]|flv|avi|3gp|m4v|aac|mpe?g|wmv|mkv|mpd|m3u8?|webm|wav|midi|weba|opus|flac|m4a)(?:[?#]|$)/i,
   ts: /^https?:\/\/[^/]+\/[^?#]*\.ts(?:[?#]|$)/i,
   svg: /^https?:\/\/[^/]+\/[^?#]*\.svg(?:[?#]|$)/i,
+  // CMAF fragment used by fMP4 HLS / DASH. Always a fragment of a master
+  // playlist — never standalone media — so probing one in isolation
+  // gets ffmpeg's mov demuxer to bail with 'trun track id unknown, no
+  // tfhd was found' (the moov box lives in the init.mp4 sibling). Drop
+  // these at classify-time so we don't fan out N concurrent probes to
+  // the origin and trip its HTTP/2 stream limits, taking the real
+  // playlist download down with PROTOCOL_ERROR resets.
+  m4sSegment: /^https?:\/\/[^/]+\/[^?#]*\.m4s(?:[?#]|$)/i,
 };
 
 const MEDIA_CONTENT_TYPES = [
@@ -417,6 +425,11 @@ function classifyXhr(data, headers) {
   }
 
   if (lowerCT.includes('video') || lowerCT.includes('audio')) {
+    // CMAF .m4s fragments come back as video/mp4 — drop them, the parent
+    // m3u8 / mpd already covers the stream.
+    if (PATTERNS.m4sSegment.test(data.url)) {
+      return false;
+    }
     data.type = PATTERNS.ts.test(data.url) ? 'ts' : 'media';
     return true;
   }
