@@ -84,8 +84,11 @@ public class BrowserDownloadDialogFragment extends BaseDialogFragment {
         ((TextView) v.findViewById(R.id.file_name)).setText(mEntity.getFileName());
         bindDestinationRow(v);
 
+        // No title: the verbose "A file is ready to be downloaded:" string
+        // crowded the dialog above an already-long filename. The filename is
+        // now the headline (see layout), with the Download button + icon
+        // carrying the intent.
         return new MaterialAlertDialogBuilder(requireContext(), themeResId)
-                .setTitle(getString(R.string.download_file))
                 .setView(v)
                 .setPositiveButton(getString(R.string.download), (dialog, which) -> {
                     DownloadRequest request = DownloadRequest.from(mEntity);
