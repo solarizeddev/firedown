@@ -119,7 +119,7 @@
     <string name="exit_fullscreen_with_back_button_short">Režim ukončíte potiahnutím zhora a použitím tlačidla Naspäť</string>
     <string name="file_view">Zobraziť</string>
     <string name="finish_origin">Skončiť</string>
-    <string name="info_welcome">Firedown vám pomôže stiahnuť všetko z webu &lt;b&gt;Zistite ako&lt;/b&gt;.</string>
+    <string name="info_welcome">Klepnite na &lt;b&gt;Fire-Button&lt;/b&gt; na ktorejkoľvek stránke a stiahnite si jej videá, zvuk a obrázky. &lt;b&gt;Viac informácií&lt;/b&gt;</string>
     <string name="interval_minutes_ago">%1$dm</string>
     <string name="interval_month">Posledných 30 dní</string>
     <string name="interval_now">Teraz</string>

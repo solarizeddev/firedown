@@ -206,7 +206,7 @@
     <string name="incognito_notification_channel_desc">已打开隐私标签页的通知</string>
     <string name="incognito_notification_close_action">全部关闭</string>
     <string name="incognito_notification_tap_to_open">点击返回隐私浏览</string>
-    <string name="info_welcome">Firedown 可帮助您从网络下载所有内容。&lt;b&gt;了解具体操作方法&lt;/b&gt;。</string>
+    <string name="info_welcome">在任何网站上点按 &lt;b&gt;Fire-Button&lt;/b&gt;，即可下载其中的视频、音频和图片。&lt;b&gt;了解更多&lt;/b&gt;</string>
     <string name="interval_minutes_ago">%1$d 分钟</string>
     <string name="interval_month">过去 30 天</string>
     <string name="interval_now">刚刚</string>

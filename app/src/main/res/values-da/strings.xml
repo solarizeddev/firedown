@@ -130,7 +130,7 @@
     <string name="gif_maker_speed_very_fast">Meget hurtig</string>
     <string name="gif_maker_speed_very_slow">Meget langsom</string>
     <string name="gif_maker_title">Opret GIF</string>
-    <string name="info_welcome">Firedown hjælper dig med at downloade alt fra nettet &lt;b&gt;Se hvordan&lt;/b&gt;.</string>
+    <string name="info_welcome">Tryk på &lt;b&gt;Fire-Button&lt;/b&gt; på et hvilket som helst websted for at hente videoer, lyd og billeder. &lt;b&gt;Læs mere&lt;/b&gt;</string>
     <string name="interval_minutes_ago">%1$dm</string>
     <string name="interval_month">Sidste 30 dage</string>
     <string name="interval_now">Nu</string>

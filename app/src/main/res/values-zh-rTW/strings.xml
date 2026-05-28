@@ -122,7 +122,7 @@
     <string name="exit_fullscreen_with_back_button_short">從畫面頂端向下拖曳，並點擊返回上一頁的按鈕離開</string>
     <string name="file_view">查看</string>
     <string name="finish_origin">結束</string>
-    <string name="info_welcome">Firedown 可協助您從網路下載所有內容。&lt;b&gt;瞭解特定操作方法&lt;/b&gt;。</string>
+    <string name="info_welcome">在任何網站上輕觸 &lt;b&gt;Fire-Button&lt;/b&gt;，即可下載其中的影片、音訊和圖片。&lt;b&gt;瞭解更多&lt;/b&gt;</string>
     <string name="interval_minutes_ago">%1$d 分鐘前</string>
     <string name="interval_month">過去 30 天</string>
     <string name="interval_now">現在</string>

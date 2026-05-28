@@ -131,7 +131,7 @@
     <string name="gif_maker_speed_very_slow">Velmi pomalu</string>
     <string name="gif_maker_title">Vytvořit GIF</string>
     <string name="if_preferences_security">Bezpečnost</string>
-    <string name="info_welcome">Firedown vám pomůže stáhnout vše z webu &lt;b&gt;Další informace&lt;/b&gt;.</string>
+    <string name="info_welcome">Klepněte na &lt;b&gt;Fire-Button&lt;/b&gt; na libovolném webu a stáhněte si jeho videa, zvuk a obrázky. &lt;b&gt;Více informací&lt;/b&gt;</string>
     <string name="interval_minutes_ago">%1$dm</string>
     <string name="interval_month">Posledních 30 dní</string>
     <string name="interval_now">Teď</string>

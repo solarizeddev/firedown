@@ -133,7 +133,7 @@
     <string name="gif_maker_speed_very_fast">매우 빠름</string>
     <string name="gif_maker_speed_very_slow">매우 느림</string>
     <string name="gif_maker_title">GIF 만들기</string>
-    <string name="info_welcome">Firedown을 사용하면 웹에서 모든 것을 다운로드할 수 있습니다. &lt;b&gt;방법 알아보기&lt;/b&gt;</string>
+    <string name="info_welcome">어떤 사이트에서든 &lt;b&gt;Fire-Button&lt;/b&gt;을 누르면 동영상, 오디오, 이미지를 받을 수 있습니다. &lt;b&gt;자세히 알아보기&lt;/b&gt;</string>
     <string name="interval_minutes_ago">%1$d분</string>
     <string name="interval_month">지난 30일</string>
     <string name="interval_now">지금</string>

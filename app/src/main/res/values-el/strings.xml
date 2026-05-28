@@ -119,7 +119,7 @@
     <string name="exit_fullscreen_with_back_button_short">Σύρετε από το πάνω μέρος και πατήστε το κουμπί επιστροφής για έξοδο</string>
     <string name="file_view">Προβολή</string>
     <string name="finish_origin">Τέλος</string>
-    <string name="info_welcome">Το Firedown σάς βοηθά να κατεβάσετε τα πάντα από τον ιστό &lt;b&gt;Μάθετε πώς&lt;/b&gt;</string>
+    <string name="info_welcome">Πατήστε το &lt;b&gt;Fire-Button&lt;/b&gt; σε οποιονδήποτε ιστότοπο για να κατεβάσετε βίντεο, ήχο και εικόνες. &lt;b&gt;Μάθετε περισσότερα&lt;/b&gt;</string>
     <string name="interval_minutes_ago">%1$dλ</string>
     <string name="interval_month">Τελευταίες 30 ημέρες</string>
     <string name="interval_now">Τώρα</string>
