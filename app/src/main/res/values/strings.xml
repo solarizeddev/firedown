@@ -340,6 +340,9 @@
     <string name="restart_origin">Restart</string>
     <string name="save_file">Save file as</string>
     <string name="save_file_name">File name</string>
+    <string name="save_dest_vault">Private vault · %s</string>
+    <string name="save_dest_downloads">Downloads/Firedown · %s</string>
+    <string name="save_dest_size_format">%1$s · %2$s</string>
 <string name="search">Search</string>
     <string name="search_clip">Fill link from clipboard</string>
     <string name="search_for">Search for %s</string>

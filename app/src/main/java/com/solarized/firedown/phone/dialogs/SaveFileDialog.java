@@ -10,6 +10,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -17,6 +19,7 @@ import androidx.navigation.NavBackStackEntry;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.solarized.firedown.R;
+import com.solarized.firedown.utils.Utils;
 import com.solarized.firedown.data.entity.BrowserDownloadEntity;
 import com.solarized.firedown.data.entity.OptionEntity;
 import com.solarized.firedown.IntentActions;
@@ -154,6 +157,8 @@ public class SaveFileDialog extends BaseDialogFragment {
 
         mEditText.setSelection(mFilename.length());
 
+        bindDestinationRow(v);
+
         return new MaterialAlertDialogBuilder(requireContext(), themeResId)
                 .setTitle(getString(R.string.save_file))
                 .setView(v)
@@ -192,6 +197,32 @@ public class SaveFileDialog extends BaseDialogFragment {
                 .create();
     }
 
+
+
+    /**
+     * Surfaces where the file will land. Incognito downloads are routed to
+     * the private vault (DownloadRequest.from sets saveToVault from the
+     * entity's incognito flag), so the row mirrors that with a distinct icon
+     * and label, plus the size (when known) and output format.
+     */
+    private void bindDestinationRow(View v) {
+        ImageView icon = v.findViewById(R.id.destination_icon);
+        TextView text = v.findViewById(R.id.destination_text);
+
+        String format = outputExtension(mBrowserDownloadEntity.getMimeType())
+                .toUpperCase(java.util.Locale.ROOT);
+        long length = mBrowserDownloadEntity.getFileLength();
+        String sizeFormat = length > 0
+                ? getString(R.string.save_dest_size_format, Utils.getFileSize(length), format)
+                : format;
+
+        icon.setImageResource(mIsIncognito
+                ? R.drawable.ic_incognito_24
+                : R.drawable.download_24);
+        text.setText(getString(mIsIncognito
+                ? R.string.save_dest_vault
+                : R.string.save_dest_downloads, sizeFormat));
+    }
 
 
     private final InputFilter filter = (source, start, end, dest, dstart, dend) -> {
