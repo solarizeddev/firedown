@@ -54,6 +54,13 @@ public class BrowserDownloadDialogFragment extends BaseDialogFragment {
         // death wipes session state). onCreateDialog dismisses in that case.
         if (mGeckoState == null || mGeckoState.getWebResponse() == null) return;
         mEntity = new BrowserDownloadEntity(mGeckoState);
+        // The GeckoState constructor doesn't carry the tab's incognito state,
+        // so stamp it from the authoritative IS_INCOGNITO arg (mIsIncognito,
+        // set by super.onCreate). DownloadRequest.from() reads this to route
+        // the file to the private vault — without it an incognito download
+        // would silently save to public Downloads while the dialog claims
+        // otherwise.
+        mEntity.setIncognito(mIsIncognito);
     }
 
     @NonNull
