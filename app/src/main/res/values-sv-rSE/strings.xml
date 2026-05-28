@@ -57,7 +57,6 @@
     <string name="snackbar_tab_closed">Flik stängd</string>
     <string name="switch_to_tab_description">Växla till flik</string>
     <string name="bookmark_name">Namn</string>
-    <string name="home_onboarding_sites_label">Prova Firedown på</string>
     <string name="home_media_playing">Spelar upp</string>
     <string name="home_media_paused">Pausad</string>
     <string name="settings_webrtc_enabled_summary">Tillåter video- och röstsamtal i realtid. Inaktivering minskar nätverkssonderingsytan.</string>

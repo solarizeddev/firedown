@@ -93,7 +93,6 @@
     <string name="error_unknown">ଅଜ୍ଞାତ ତ୍ରୁଟି ଘଟିଗଲା |</string>
     <string name="file_view">ଭ୍ୟୁ କର</string>
     <string name="finish_origin">ସମାପ୍ତ</string>
-    <string name="info_welcome">ୱେୟାରଡାଉନ୍ ଆପଣଙ୍କୁ ୱେବରୁ ସବୁକିଛି ଡାଉନଲୋଡ୍ କରିବାରେ ସାହାଯ୍ୟ କରେ | &lt;b&gt; କିପରି &lt;/ b&gt; ଶିଖନ୍ତୁ |</string>
     <string name="interval_month">ଗତ 30 ଦିନ |</string>
     <string name="interval_older">ପୁରାତନ</string>
     <string name="interval_today">ଆଜି |</string>
@@ -214,7 +213,6 @@
     <string name="vault_decrypting">ଫାଇଲ୍ ଡିକ୍ରିପ୍ଟ କରିବା, ଦୟାକରି ଅପେକ୍ଷା କରନ୍ତୁ…</string>
     <string name="vault_encrypting">ଫାଇଲ୍ ଏନକ୍ରିପ୍ଟ କରିବା, ଦୟାକରି ଅପେକ୍ଷା କରନ୍ତୁ…</string>
     <string name="vault_unsupported">ଏହି ଫାଇଲ୍ ଖୋଲିପାରିବ ନାହିଁ | ଖୋଲିବାକୁ, ଏହାକୁ ସୁରକ୍ଷିତ ଫୋଲ୍ଡରରୁ ବାହାର କରି ପୁନର୍ବାର ଚେଷ୍ଟା କରନ୍ତୁ |</string>
-    <string name="home_onboarding_sites_label">Firedown ଚେଷ୍ଟା କରନ୍ତୁ</string>
     <string name="home_vault_button">ସୁରକ୍ଷିତ ଫୋଲ୍ଡର୍</string>
     <string name="home_media_playing">ଚାଲୁଛି</string>
     <string name="home_media_paused">ବିରତି ଦିଆଯାଇଛି</string>

@@ -52,14 +52,6 @@
             tools:visibility="visible">
 
 
-            <com.solarized.firedown.ui.OnBoardingCard
-                android:id="@+id/onboarding"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_gravity="top"
-                android:layout_marginBottom="12dp" />
-
-
             <include
                 android:id="@+id/home_return_tab"
                 layout="@layout/view_home_return_tab"

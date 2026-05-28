@@ -91,7 +91,6 @@
         <item quantity="other">%d downloads anônimos em andamento</item>
     </plurals>
     <string name="incognito_downloads_in_progress_subtitle">Toque para ver na Pasta trancada</string>
-    <string name="home_onboarding_sites_label">Experimente o Firedown em</string>
     <string name="home_vault_button">Pasta trancada</string>
     <string name="home_media_playing">Reproduzindo</string>
     <string name="home_media_paused">Pausado</string>

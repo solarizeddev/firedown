@@ -118,7 +118,6 @@
     <string name="exit_fullscreen_with_back_button_short">Arrastra desde arriba e preme cara atrás para saír</string>
     <string name="file_view">Ver</string>
     <string name="finish_origin">Remate</string>
-    <string name="info_welcome">Toca o &lt;b&gt;Fire-Button&lt;/b&gt; en calquera sitio para descargar os seus vídeos, audio e imaxes. &lt;b&gt;Máis información&lt;/b&gt;</string>
     <string name="interval_minutes_ago">%1$dm</string>
     <string name="interval_month">Últimos 30 días</string>
     <string name="interval_now">Agora</string>
@@ -263,7 +262,6 @@
     <string name="vault_encrypting">Cifrando o ficheiro, agarda…</string>
     <string name="vault_unsupported">Non se pode abrir este ficheiro. Para abrilo, saia do cartafol seguro e téntao de novo.</string>
     <string name="bookmark_name">Nome</string>
-    <string name="home_onboarding_sites_label">Proba Firedown en</string>
     <string name="home_vault_button">Cartafol seguro</string>
     <string name="home_media_playing">Reproducindo</string>
     <string name="home_media_paused">En pausa</string>

@@ -110,7 +110,6 @@
     <string name="error_unknown">অজানা ত্রুটি ঘটেছে</string>
     <string name="file_view">দেখুন</string>
     <string name="finish_origin">শেষ করুন</string>
-    <string name="info_welcome">ফায়ারডাউন আপনাকে ওয়েব থেকে সবকিছু ডাউনলোড করতে সাহায্য করে। &lt;b&gt;কিভাবে জানুন&lt;/b&gt;</string>
     <string name="interval_minutes_ago">%1$d মি.</string>
     <string name="interval_month">শেষ 30 দিন</string>
     <string name="interval_now">এখন</string>
@@ -244,7 +243,6 @@
     <string name="vault_decrypting">ফাইল ডিক্রিপ্ট করা হচ্ছে, অনুগ্রহ করে অপেক্ষা করুন…</string>
     <string name="vault_encrypting">ফাইল এনক্রিপ্ট করা হচ্ছে, অনুগ্রহ করে অপেক্ষা করুন…</string>
     <string name="vault_unsupported">এই ফাইলটি খুলতে পারছি না। খুলতে, এটিকে নিরাপদ ফোল্ডার থেকে সরান এবং আবার চেষ্টা করুন।</string>
-    <string name="home_onboarding_sites_label">Firedown ব্যবহার করুন</string>
     <string name="home_vault_button">নিরাপদ ফোল্ডার</string>
     <string name="home_media_playing">চলছে</string>
     <string name="home_media_paused">বিরতি</string>

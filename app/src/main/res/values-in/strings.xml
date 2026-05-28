@@ -118,7 +118,6 @@
     <string name="exit_fullscreen_with_back_button_short">Seret dari atas &amp; tekan kembali untuk keluar</string>
     <string name="file_view">Lihat</string>
     <string name="finish_origin">Menyelesaikan</string>
-    <string name="info_welcome">Ketuk &lt;b&gt;Fire-Button&lt;/b&gt; di situs mana pun untuk mengunduh video, audio, dan gambar. &lt;b&gt;Pelajari selengkapnya&lt;/b&gt;</string>
     <string name="interval_minutes_ago">%1$dmenit</string>
     <string name="interval_month">30 hari terakhir</string>
     <string name="interval_now">Sekarang</string>
@@ -263,7 +262,6 @@
     <string name="vault_encrypting">Mengenkripsi file, harap tunggu…</string>
     <string name="vault_unsupported">Tidak dapat membuka file ini. Untuk membukanya, keluarkan dari Folder Aman dan coba lagi.</string>
     <string name="bookmark_name">Nama</string>
-    <string name="home_onboarding_sites_label">Coba Firedown di</string>
     <string name="home_vault_button">Folder Aman</string>
     <string name="home_media_playing">Memutar</string>
     <string name="home_media_paused">Dijeda</string>

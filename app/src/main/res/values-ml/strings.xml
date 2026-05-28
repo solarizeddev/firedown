@@ -112,7 +112,6 @@
     <string name="exit_fullscreen_with_back_button_short">പുറത്തുകടക്കാൻ മുകളിൽ നിന്ന് വലിച്ചിട്ട് \"തിരികെ\" എന്നു് എഴുതിയ ബട്ടണിൽ അമർത്തുക</string>
     <string name="file_view">കാണുക</string>
     <string name="finish_origin">പൂർത്തിയാക്കുക</string>
-    <string name="info_welcome">വെബിൽ നിന്ന് എല്ലാം ഡൗൺലോഡ് ചെയ്യാൻ Firedown നിങ്ങളെ സഹായിക്കുന്നു. &lt;b&gt;എങ്ങനെയെന്ന് അറിയുക&lt;/b&gt;</string>
     <string name="interval_month">കഴിഞ്ഞ 30 ദിവസം</string>
     <string name="interval_older">പഴയത്</string>
     <string name="interval_today">ഇന്ന്</string>
@@ -253,7 +252,6 @@
     <string name="vault_encrypting">ഫയൽ എൻക്രിപ്റ്റ് ചെയ്യുന്നു, കാത്തിരിക്കൂ…</string>
     <string name="vault_unsupported">ഈ ഫയൽ തുറക്കാൻ കഴിയില്ല. തുറക്കാൻ, അത് സുരക്ഷിത ഫോൾഡറിൽ നിന്ന് നീക്കി വീണ്ടും ശ്രമിക്കുക.</string>
     <string name="bookmark_name">പേരു്</string>
-    <string name="home_onboarding_sites_label">Firedown പരീക്ഷിക്കൂ</string>
     <string name="home_vault_button">സുരക്ഷിത ഫോൾഡർ</string>
     <string name="home_media_playing">പ്ലേ ചെയ്യുന്നു</string>
     <string name="home_media_paused">താൽക്കാലികമായി നിർത്തി</string>

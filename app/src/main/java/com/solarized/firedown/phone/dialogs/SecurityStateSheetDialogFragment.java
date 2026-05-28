@@ -26,7 +26,6 @@ import com.solarized.firedown.data.entity.CertificateInfoEntity;
 import com.solarized.firedown.data.entity.GeckoStateEntity;
 import com.solarized.firedown.data.models.GeckoStateViewModel;
 import com.solarized.firedown.data.models.IncognitoStateViewModel;
-import com.solarized.firedown.geckoview.GeckoResources;
 import com.solarized.firedown.geckoview.GeckoState;
 import com.solarized.firedown.geckoview.TrackingCategory;
 import com.solarized.firedown.Keys;
@@ -178,7 +177,7 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
 
         mHostCert.setEnabled(mCertificateInfoEntity != null);
 
-        host.setText(GeckoResources.isOnboarding(url) ? GeckoResources.ABOUT_ONBOARDING : mGeckoState.getEntityTitle());
+        host.setText(mGeckoState.getEntityTitle());
         hostUrl.setText(mDomain);
 
         boolean isSecure = mCertificateInfoEntity != null && mCertificateInfoEntity.isSecure;

@@ -105,7 +105,6 @@
     <string name="exit_fullscreen_with_back_button_short">Arraste do topo e pressione para trás para sair</string>
     <string name="file_view">Ver</string>
     <string name="finish_origin">Terminar</string>
-    <string name="info_welcome">Toque no &lt;b&gt;Fire-Button&lt;/b&gt; em qualquer site para transferir os seus vídeos, áudio e imagens. &lt;b&gt;Saber mais&lt;/b&gt;</string>
     <string name="library_bookmarks">Marcadores</string>
     <string name="library_history">Histórico</string>
     <string name="lock_biometric">Desbloqueie usando suas credenciais biométricas</string>
@@ -221,7 +220,6 @@
     <string name="vault_encrypting">Criptografando arquivo, aguarde…</string>
     <string name="vault_unsupported">Não é possível abrir este ficheiro. Para abrir, retira-o da Pasta segura e tenta novamente.</string>
     <string name="bookmark_name">Nome</string>
-    <string name="home_onboarding_sites_label">Experimente o Firedown em</string>
     <string name="home_vault_button">Pasta segura</string>
     <string name="home_media_playing">A reproduzir</string>
     <string name="home_media_paused">Em pausa</string>

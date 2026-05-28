@@ -258,26 +258,14 @@ public class GeckoToolbar extends FrameLayout implements View.OnClickListener, V
     }
 
     public void setUri(String uri) {
-        if (GeckoResources.isOnboarding(uri)){
-            mEditText.setText(GeckoResources.ABOUT_ONBOARDING);
-            return;
-        }
         mEditText.setText(uri);
     }
 
     public void setUri(String uri, boolean autoComplete) {
-        if (GeckoResources.isOnboarding(uri)){
-            mEditText.setText(GeckoResources.ABOUT_ONBOARDING, false);
-            return;
-        }
         mEditText.setText(uri, autoComplete);
     }
 
     public void onLocationChange(String uri) {
-        if (GeckoResources.isOnboarding(uri)){
-            mEditText.setLocation(GeckoResources.ABOUT_ONBOARDING);
-            return;
-        }
         if (mSearchMode) disableSearch();
         mEditText.setLocation(uri);
     }

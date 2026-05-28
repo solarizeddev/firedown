@@ -28,7 +28,6 @@ import com.solarized.firedown.data.entity.OptionEntity;
 import com.solarized.firedown.data.models.BrowserDialogViewModel;
 import com.solarized.firedown.data.models.GeckoStateViewModel;
 import com.solarized.firedown.data.models.IncognitoStateViewModel;
-import com.solarized.firedown.geckoview.GeckoResources;
 import com.solarized.firedown.geckoview.GeckoState;
 import com.solarized.firedown.ui.IncognitoColors;
 import com.solarized.firedown.ui.browser.BackwardBrowserButton;
@@ -133,9 +132,7 @@ public class PopupBrowserSheetDialogFragment extends BaseBottomSheetDialogFragme
     /**
      * Populates the site-identity row: favicon, page title, hostname.
      * Mirrors the identity block the SecuritySheet uses on the same
-     * browser surface so the two sheets read as siblings. Onboarding
-     * pages get the static about:firedown placeholder title rather
-     * than the live tab title, matching SecuritySheet's behaviour.
+     * browser surface so the two sheets read as siblings.
      */
     private void bindIdentity() {
         mTitle = mView.findViewById(R.id.popup_identity_title);
@@ -164,17 +161,11 @@ public class PopupBrowserSheetDialogFragment extends BaseBottomSheetDialogFragme
 
 
     /**
-     * Paints the identity title TextView from the cached
-     * {@code mGeckoState}. Onboarding pages render the static
-     * about:firedown label rather than whatever live title the
-     * placeholder tab happens to expose, matching SecuritySheet's
-     * carve-out.
+     * Paints the identity title TextView from the cached title.
      */
     private void renderTitle() {
         if (mTitle == null) return;
-        mTitle.setText(GeckoResources.isOnboarding(mLastUri)
-                ? GeckoResources.ABOUT_ONBOARDING
-                : mLastTitle);
+        mTitle.setText(mLastTitle);
     }
 
 
@@ -361,9 +352,6 @@ public class PopupBrowserSheetDialogFragment extends BaseBottomSheetDialogFragme
                     mGeckoState.setEntityUri(uri);
                     mDomain = WebUtils.getDomainName(uri);
                     renderHost();
-                    // Title carve-out for about:firedown is URL-driven,
-                    // so a URI swap can flip the rendered title even
-                    // when the entity's title string hasn't moved yet.
                     renderTitle();
                 }
 

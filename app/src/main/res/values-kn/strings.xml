@@ -101,7 +101,6 @@
     <string name="error_unknown">ಅಜ್ಞಾತ ದೋಷ ಸಂಭವಿಸಿದೆ</string>
     <string name="file_view">ವೀಕ್ಷಿಸಿ</string>
     <string name="finish_origin">ಮುಗಿಸು</string>
-    <string name="info_welcome">ವೆಬ್‌ನಿಂದ ಎಲ್ಲವನ್ನೂ ಡೌನ್‌ಲೋಡ್ ಮಾಡಲು Firedown ನಿಮಗೆ ಸಹಾಯ ಮಾಡುತ್ತದೆ. &lt;b&gt;ಹೇಗೆಂದು ತಿಳಿಯಿರಿ&lt;/b&gt;</string>
     <string name="interval_minutes_ago">%1$dನಿ</string>
     <string name="interval_month">ಕಳೆದ 30 ದಿನಗಳು</string>
     <string name="interval_now">ಈಗ</string>
@@ -236,7 +235,6 @@
     <string name="vault_decrypting">ಫೈಲ್ ಅನ್ನು ಡೀಕ್ರಿಪ್ಟ್ ಮಾಡಲಾಗುತ್ತಿದೆ, ದಯವಿಟ್ಟು ನಿರೀಕ್ಷಿಸಿ…</string>
     <string name="vault_encrypting">ಫೈಲ್ ಎನ್‌ಕ್ರಿಪ್ಟ್ ಮಾಡಲಾಗುತ್ತಿದೆ, ದಯವಿಟ್ಟು ನಿರೀಕ್ಷಿಸಿ…</string>
     <string name="vault_unsupported">ಈ ಫೈಲ್ ಅನ್ನು ತೆರೆಯಲು ಸಾಧ್ಯವಿಲ್ಲ. ತೆರೆಯಲು, ಅದನ್ನು ಸುರಕ್ಷಿತ ಫೋಲ್ಡರ್‌ನಿಂದ ಹೊರಗೆ ಸರಿಸಿ ಮತ್ತು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.</string>
-    <string name="home_onboarding_sites_label">Firedown ಬಳಸಿ ನೋಡಿ</string>
     <string name="home_vault_button">ಸುರಕ್ಷಿತ ಫೋಲ್ಡರ್</string>
     <string name="home_media_playing">ಪ್ಲೇ ಆಗುತ್ತಿದೆ</string>
     <string name="home_media_paused">ವಿರಾಮಗೊಳಿಸಲಾಗಿದೆ</string>

@@ -109,7 +109,6 @@
     <string name="error_unknown">نامعلوم خرابی پیش آگئی</string>
     <string name="file_view">دیکھیں</string>
     <string name="finish_origin">ختم کرنا</string>
-    <string name="info_welcome">فائر ڈاؤن آپ کو ویب سے ہر چیز ڈاؤن لوڈ کرنے میں مدد کرتا ہے۔ &lt;b&gt;طریقہ جانیں&lt;/b&gt;</string>
     <string name="interval_minutes_ago">%1$dایم</string>
     <string name="interval_month">آخری 30 دن</string>
     <string name="interval_now">اب</string>
@@ -250,7 +249,6 @@
     <string name="vault_decrypting">فائل کو ڈکرپٹ کیا جا رہا ہے، براہ کرم انتظار کریں…</string>
     <string name="vault_encrypting">فائل کو خفیہ کر رہا ہے، براہ کرم انتظار کریں…</string>
     <string name="vault_unsupported">اس فائل کو نہیں کھولا جا سکتا۔ کھولنے کے لیے، اسے محفوظ فولڈر سے باہر لے جائیں اور دوبارہ کوشش کریں۔</string>
-    <string name="home_onboarding_sites_label">Firedown آزمائیں</string>
     <string name="home_vault_button">محفوظ فولڈر</string>
     <string name="home_media_playing">چل رہا ہے</string>
     <string name="home_media_paused">روکا ہوا</string>

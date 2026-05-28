@@ -123,7 +123,6 @@
     <string name="gif_maker_speed_very_fast">سريع جداً</string>
     <string name="gif_maker_speed_very_slow">بطيء جداً</string>
     <string name="gif_maker_title">إنشاء GIF</string>
-    <string name="info_welcome">يساعدك Firedown على تنزيل كل شيء من الويب &lt;b&gt;تعرّف على كيفية القيام بذلك&lt;/b&gt;.</string>
     <string name="interval_minutes_ago">%1$d دقيقة</string>
     <string name="interval_month">آخر 30 يوما</string>
     <string name="interval_now">الآن</string>
@@ -298,7 +297,6 @@
     <string name="play">تشغيل</string>
     <string name="pip_play">تشغيل</string>
     <string name="pip_pause">إيقاف مؤقت</string>
-    <string name="home_onboarding_sites_label">جرّب Firedown على</string>
     <string name="home_vault_button">مجلد آمن</string>
     <string name="home_media_playing">قيد التشغيل</string>
     <string name="home_media_paused">متوقف مؤقتًا</string>

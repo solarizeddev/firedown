@@ -113,7 +113,6 @@
     <string name="exit_fullscreen_with_back_button_short">Trage de sus și apasă înapoi pentru a ieși</string>
     <string name="file_view">Afișează</string>
     <string name="finish_origin">Finalizați</string>
-    <string name="info_welcome">Atinge &lt;b&gt;Fire-Button&lt;/b&gt; pe orice site pentru a descărca videoclipurile, fișierele audio și imaginile. &lt;b&gt;Află mai multe&lt;/b&gt;</string>
     <string name="interval_minutes_ago">%1$dm</string>
     <string name="interval_month">Ultimele 30 de zile</string>
     <string name="interval_now">Acum</string>
@@ -260,7 +259,6 @@
     <string name="vault_encrypting">Se criptează fișierul, așteptați…</string>
     <string name="vault_unsupported">Nu se poate deschide acest fișier. Pentru a deschide, mutați-l din Folder sigur și încercați din nou.</string>
     <string name="bookmark_name">Nume</string>
-    <string name="home_onboarding_sites_label">Încearcă Firedown pe</string>
     <string name="home_vault_button">Dosar sigur</string>
     <string name="home_media_playing">Se redă</string>
     <string name="home_media_paused">În pauză</string>

@@ -89,7 +89,6 @@
     <string name="error_unknown">अज्ञात त्रुटि भयो</string>
     <string name="file_view">हेर्नुहोस्</string>
     <string name="finish_origin">समाप्त गर्नुहोस्</string>
-    <string name="info_welcome">फायरडाउनले तपाईंलाई वेबबाट सबै डाउनलोड गर्न मद्दत गर्दछ। &lt;b&gt;कसरी जान्नुहोस्&lt;/b&gt;</string>
     <string name="interval_month">पछिल्लो 30 दिन</string>
     <string name="interval_older">पुरानो</string>
     <string name="interval_today">आज</string>
@@ -202,7 +201,6 @@
     <string name="vault_decrypting">फाइल डिक्रिप्ट गर्दै, कृपया प्रतीक्षा गर्नुहोस्…</string>
     <string name="vault_encrypting">फाइल इन्क्रिप्ट गर्दै, कृपया प्रतीक्षा गर्नुहोस्…</string>
     <string name="vault_unsupported">यो फाइल खोल्न सकिँदैन। खोल्न, यसलाई सुरक्षित फोल्डरबाट बाहिर सार्नुहोस् र पुन: प्रयास गर्नुहोस्।</string>
-    <string name="home_onboarding_sites_label">Firedown प्रयास गर्नुहोस्</string>
     <string name="home_vault_button">सुरक्षित फोल्डर</string>
     <string name="home_media_playing">बजाइरहेको छ</string>
     <string name="home_media_paused">रोकिएको</string>

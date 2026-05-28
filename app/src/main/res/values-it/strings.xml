@@ -133,7 +133,6 @@
     <string name="gif_maker_speed_very_fast">Molto veloce</string>
     <string name="gif_maker_speed_very_slow">Molto lento</string>
     <string name="gif_maker_title">Crea GIF</string>
-    <string name="info_welcome">Tocca il &lt;b&gt;Fire-Button&lt;/b&gt; su qualsiasi sito per scaricare video, audio e immagini. &lt;b&gt;Scopri di più&lt;/b&gt;</string>
     <string name="interval_minutes_ago">%1$d min</string>
     <string name="interval_month">Ultimi 30 giorni</string>
     <string name="interval_now">Ora</string>
@@ -322,7 +321,6 @@
         <item quantity="other">%d download in incognito in corso</item>
     </plurals>
     <string name="incognito_downloads_in_progress_subtitle">Tocca per visualizzare nella Cartella di sicurezza</string>
-    <string name="home_onboarding_sites_label">Prova Firedown su</string>
     <string name="home_vault_button">Cartella di sicurezza</string>
     <string name="home_media_playing">In riproduzione</string>
     <string name="home_media_paused">In pausa</string>

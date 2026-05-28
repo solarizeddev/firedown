@@ -117,7 +117,6 @@
     <string name="error_unknown">ເກີດຄວາມຜິດພາດທີ່ບໍ່ຮູ້ຈັກ</string>
     <string name="file_view">ເບິ່ງ</string>
     <string name="finish_origin">ຈົບ</string>
-    <string name="info_welcome">Firedown ຊ່ວຍໃຫ້ທ່ານດາວໂຫລດທຸກຢ່າງຈາກເວັບ. &lt;b&gt;ຮຽນຮູ້ວິທີ&lt;/b&gt;</string>
     <string name="interval_month">30 ມື້ທີ່ຜ່ານມາ</string>
     <string name="interval_older">ແກ່ກວ່າ</string>
     <string name="interval_today">ມື້​ນີ້</string>
@@ -255,7 +254,6 @@
     <string name="vault_encrypting">ກຳລັງເຂົ້າລະຫັດໄຟລ໌, ກະລຸນາລໍຖ້າ…</string>
     <string name="vault_unsupported">ບໍ່ສາມາດເປີດໄຟລ໌ນີ້ໄດ້. ເພື່ອເປີດ, ຍ້າຍມັນອອກຈາກໂຟນເດີປອດໄພ ແລະລອງໃໝ່ອີກ.</string>
     <string name="bookmark_name">ຊື່</string>
-    <string name="home_onboarding_sites_label">ລອງ Firedown ໃນ</string>
     <string name="home_vault_button">ໂຟນເດີປອດໄພ</string>
     <string name="home_media_playing">ກຳລັງຫຼິ້ນ</string>
     <string name="home_media_paused">ຢຸດຊົ່ວຄາວ</string>

@@ -119,7 +119,6 @@
     <string name="exit_fullscreen_with_back_button_short">Σύρετε από το πάνω μέρος και πατήστε το κουμπί επιστροφής για έξοδο</string>
     <string name="file_view">Προβολή</string>
     <string name="finish_origin">Τέλος</string>
-    <string name="info_welcome">Πατήστε το &lt;b&gt;Fire-Button&lt;/b&gt; σε οποιονδήποτε ιστότοπο για να κατεβάσετε βίντεο, ήχο και εικόνες. &lt;b&gt;Μάθετε περισσότερα&lt;/b&gt;</string>
     <string name="interval_minutes_ago">%1$dλ</string>
     <string name="interval_month">Τελευταίες 30 ημέρες</string>
     <string name="interval_now">Τώρα</string>
@@ -272,7 +271,6 @@
     <string name="play">Αναπαραγωγή</string>
     <string name="pip_play">Αναπαραγωγή</string>
     <string name="pip_pause">Παύση</string>
-    <string name="home_onboarding_sites_label">Δοκιμάστε το Firedown σε</string>
     <string name="home_vault_button">Ασφαλής φάκελος</string>
     <string name="home_media_playing">Αναπαραγωγή</string>
     <string name="home_media_paused">Σε παύση</string>

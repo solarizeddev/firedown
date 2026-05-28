@@ -111,7 +111,6 @@
     <string name="file_view">Kuva</string>
     <string name="finish_origin">Lõpetama</string>
     <string name="if_preferences_security">Turvalisus</string>
-    <string name="info_welcome">Firedown aitab teil kõike veebist alla laadida. &lt;b&gt;Vaadake, kuidas&lt;/b&gt;.</string>
     <string name="interval_minutes_ago">%1$dm</string>
     <string name="interval_month">Viimased 30 päeva</string>
     <string name="interval_now">Nüüd</string>
@@ -259,7 +258,6 @@
     <string name="vault_encrypting">Faili krüptimine, palun oodake…</string>
     <string name="vault_unsupported">Seda faili ei saa avada. Avamiseks teisaldage see turvalisest kaustast välja ja proovige uuesti.</string>
     <string name="bookmark_name">Nimi</string>
-    <string name="home_onboarding_sites_label">Proovi Firedowni saidil</string>
     <string name="home_vault_button">Turvaline kaust</string>
     <string name="home_media_playing">Esitamine</string>
     <string name="home_media_paused">Peatatud</string>

@@ -160,10 +160,6 @@
          %1$s is the plural (home_downloads_file_count), %2$s is the
          size string (Utils.readableFileSize). -->
     <string name="home_downloads_subtitle_with_size">%1$s · %2$s</string>
-    <!-- Header label for the supported-sites chip strip inside the
-         onboarding card. Frames the brand chips as 'we test against
-         these'. Tap a chip → visits the site. -->
-    <string name="home_onboarding_sites_label">Try Firedown on</string>
     <string name="download_adaptative">Adaptive</string>
     <string name="download_file">A file is ready to be downloaded:</string>
     <string name="download_finished">Download finished</string>
@@ -242,7 +238,6 @@
     <string name="incognito_notification_channel_desc">Notification for open private tabs</string>
     <string name="incognito_notification_close_action">Close all</string>
     <string name="incognito_notification_tap_to_open">Tap to return to private browsing</string>
-    <string name="info_welcome">Tap the &lt;b&gt;Fire-Button&lt;/b&gt; on any site to grab its videos, audio &amp; images. &lt;b&gt;Learn more&lt;/b&gt;</string>
     <string name="interval_minutes_ago">%1$d m</string>
     <string name="interval_month">Last 30 days</string>
     <string name="interval_now">Now</string>

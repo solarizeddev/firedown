@@ -131,7 +131,6 @@
     <string name="gif_maker_speed_very_slow">Velmi pomalu</string>
     <string name="gif_maker_title">Vytvořit GIF</string>
     <string name="if_preferences_security">Bezpečnost</string>
-    <string name="info_welcome">Klepněte na &lt;b&gt;Fire-Button&lt;/b&gt; na libovolném webu a stáhněte si jeho videa, zvuk a obrázky. &lt;b&gt;Více informací&lt;/b&gt;</string>
     <string name="interval_minutes_ago">%1$dm</string>
     <string name="interval_month">Posledních 30 dní</string>
     <string name="interval_now">Teď</string>
@@ -293,7 +292,6 @@
     <string name="play">Přehrát</string>
     <string name="pip_play">Přehrát</string>
     <string name="pip_pause">Pozastavit</string>
-    <string name="home_onboarding_sites_label">Vyzkoušejte Firedown na</string>
     <string name="home_vault_button">Bezpečná složka</string>
     <string name="home_media_playing">Přehrává se</string>
     <string name="home_media_paused">Pozastaveno</string>

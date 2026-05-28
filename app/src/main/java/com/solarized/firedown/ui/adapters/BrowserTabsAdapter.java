@@ -29,7 +29,6 @@ import com.google.android.material.color.MaterialColors;
 import com.solarized.firedown.GlideHelper;
 import com.solarized.firedown.R;
 import com.solarized.firedown.data.entity.GeckoStateEntity;
-import com.solarized.firedown.geckoview.GeckoResources;
 import com.solarized.firedown.ui.IncognitoColors;
 import com.solarized.firedown.ui.OnItemClickListener;
 import com.solarized.firedown.ui.diffs.GeckoStateDiffCallback;
@@ -295,15 +294,7 @@ public class BrowserTabsAdapter extends GridListBaseAdapter<GeckoStateEntity, Re
 
             holder.file_icon.setVisibility(View.VISIBLE);
 
-            if (GeckoResources.isOnboarding(url)) {
-                holder.file_name.setText(mContext.getText(R.string.app_name));
-                holder.file_url.setText(mContext.getText(R.string.app_name));
-                Glide.with(holder.itemView)
-                        .load(R.drawable.ic_firedown_splash)
-                        .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
-                        .apply(RequestOptions.bitmapTransform(mRoundedCorners))
-                        .into(holder.file_icon);
-            } else {
+            {
                 holder.file_name.setText(TextUtils.isEmpty(title) ? url : title);
                 holder.file_url.setText(url);
                 GlideHelper.load(fileIcon, url, holder.file_icon, mRequestOptions);

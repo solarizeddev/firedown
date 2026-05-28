@@ -39,7 +39,6 @@
     <string name="snackbar_deleted_undo">UNDO</string>
     <string name="snackbar_tab_closed">टैब बंद हो गया</string>
     <string name="switch_to_tab_description">टैब पर जाएँ</string>
-    <string name="home_onboarding_sites_label">Firedown आज़माएं</string>
     <string name="home_media_playing">चल रहा है</string>
     <string name="home_media_paused">रोका गया</string>
 <string name="settings_theme_app_category">ऐप थीम</string>

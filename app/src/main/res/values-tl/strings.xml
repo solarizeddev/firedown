@@ -117,7 +117,6 @@
     <string name="exit_fullscreen_with_back_button_short">I-drag mula sa taas at pindutin ang back para makaalis</string>
     <string name="file_view">Tingnan</string>
     <string name="finish_origin">Tapusin</string>
-    <string name="info_welcome">Tinutulungan ka ng Firedown na i-download ang lahat mula sa web. &lt;b&gt;Alamin kung paano&lt;/b&gt;</string>
     <string name="interval_minutes_ago">%1$dm</string>
     <string name="interval_month">Huling 30 araw</string>
     <string name="interval_now">Ngayon</string>
@@ -257,7 +256,6 @@
     <string name="vault_encrypting">Ini-encrypt ang file, mangyaring maghintay…</string>
     <string name="vault_unsupported">Hindi mabuksan ang file na ito. Upang buksan, alisin ito sa Safe Folder at subukang muli.</string>
     <string name="bookmark_name">Pangalan</string>
-    <string name="home_onboarding_sites_label">Subukan ang Firedown sa</string>
     <string name="home_vault_button">Ligtas na folder</string>
     <string name="home_media_playing">Pinapatugtog</string>
     <string name="home_media_paused">Naka-pause</string>

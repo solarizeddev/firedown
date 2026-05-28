@@ -62,7 +62,6 @@
          BaseBottomSheetDialogFragment treats 0 as "no cap" via the same
          sentinel as bottom_sheet_max_width. -->
     <dimen name="bottom_sheet_max_height">640dp</dimen>
-    <dimen name="onboarding_item_height">60dp</dimen>
     <dimen name="snack_bar_anchor_margin">2dp</dimen>
     <dimen name="phone_icon_height">28dp</dimen>
     <dimen name="progress_bar_elevation">12dp</dimen>

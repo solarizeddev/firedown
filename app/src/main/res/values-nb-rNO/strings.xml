@@ -57,7 +57,6 @@
     <string name="snackbar_tab_closed">Fane lukket</string>
     <string name="switch_to_tab_description">Bytt til fane</string>
     <string name="bookmark_name">Navn</string>
-    <string name="home_onboarding_sites_label">Prøv Firedown på</string>
     <string name="home_media_playing">Spiller av</string>
     <string name="home_media_paused">Satt på pause</string>
     <string name="settings_webrtc_enabled_summary">Tillater video- og taleanrop i sanntid. Å slå av reduserer nettverkssonderingsflaten.</string>

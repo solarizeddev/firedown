@@ -109,7 +109,6 @@
     <string name="error_unknown">తెలియని లోపం సంభవించింది</string>
     <string name="file_view">చూడండి</string>
     <string name="finish_origin">ముగించు</string>
-    <string name="info_welcome">వెబ్ నుండి ప్రతిదీ డౌన్‌లోడ్ చేయడంలో Firedown మీకు సహాయం చేస్తుంది. &lt;b&gt;ఎలాగో తెలుసుకోండి&lt;/b&gt;</string>
     <string name="interval_minutes_ago">%1$dm</string>
     <string name="interval_month">గత 30 రోజులు</string>
     <string name="interval_now">ఇప్పుడు</string>
@@ -251,7 +250,6 @@
     <string name="vault_encrypting">ఫైల్‌ని ఎన్‌క్రిప్ట్ చేస్తోంది, దయచేసి వేచి ఉండండి…</string>
     <string name="vault_unsupported">ఈ ఫైల్‌ను తెరవడం సాధ్యపడదు. తెరవడానికి, సురక్షిత ఫోల్డర్ నుండి దాన్ని తరలించి, మళ్లీ ప్రయత్నించండి.</string>
     <string name="bookmark_name">పేరు</string>
-    <string name="home_onboarding_sites_label">Firedown ప్రయత్నించండి</string>
     <string name="home_vault_button">సురక్షిత ఫోల్డర్</string>
     <string name="home_media_playing">ప్లే అవుతోంది</string>
     <string name="home_media_paused">పాజ్ చేయబడింది</string>

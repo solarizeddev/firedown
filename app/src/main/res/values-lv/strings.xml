@@ -90,7 +90,6 @@
     <string name="error_unknown">Radās nezināma kļūda</string>
     <string name="file_view">Skatīt</string>
     <string name="finish_origin">Pabeigt</string>
-    <string name="info_welcome">Firedown palīdz lejupielādēt visu no tīmekļa. &lt;b&gt;Uzziniet, kā&lt;/b&gt;.</string>
     <string name="interval_minutes_ago">%1$d min</string>
     <string name="interval_month">Pēdējās 30 dienas</string>
     <string name="interval_now">Tagad</string>
@@ -211,7 +210,6 @@
     <string name="vault_decrypting">Notiek faila atšifrēšana, uzgaidiet…</string>
     <string name="vault_encrypting">Notiek faila šifrēšana, uzgaidiet…</string>
     <string name="vault_unsupported">Nevar atvērt šo failu. Lai atvērtu, izņemiet to no drošās mapes un mēģiniet vēlreiz.</string>
-    <string name="home_onboarding_sites_label">Izmēģiniet Firedown</string>
     <string name="home_vault_button">Drošā mape</string>
     <string name="home_media_playing">Atskaņo</string>
     <string name="home_media_paused">Pauzēts</string>

@@ -206,7 +206,6 @@
     <string name="incognito_notification_channel_desc">Benachrichtigung für offene private Tabs</string>
     <string name="incognito_notification_close_action">Alle schließen</string>
     <string name="incognito_notification_tap_to_open">Tippen, um zum privaten Surfen zurückzukehren</string>
-    <string name="info_welcome">Tippen Sie auf einer beliebigen Website auf den &lt;b&gt;Fire-Button&lt;/b&gt;, um deren Videos, Audio und Bilder herunterzuladen. &lt;b&gt;Mehr erfahren&lt;/b&gt;</string>
     <string name="interval_minutes_ago">%1$dmin</string>
     <string name="interval_month">Letzte 30 Tage</string>
     <string name="interval_now">Jetzt</string>
@@ -488,7 +487,6 @@
     <string name="play">Wiedergabe</string>
     <string name="pip_play">Wiedergabe</string>
     <string name="pip_pause">Pause</string>
-    <string name="home_onboarding_sites_label">Firedown ausprobieren auf</string>
     <string name="home_vault_button">Sicherer Ordner</string>
     <string name="home_media_playing">Wiedergabe</string>
     <string name="home_media_paused">Pausiert</string>

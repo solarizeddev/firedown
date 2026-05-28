@@ -53,7 +53,6 @@ import com.solarized.firedown.data.models.IncognitoStateViewModel;
 import com.solarized.firedown.data.models.TaskViewModel;
 import com.solarized.firedown.data.models.WebBookmarkViewModel;
 import com.solarized.firedown.geckoview.GeckoComponents;
-import com.solarized.firedown.geckoview.GeckoResources;
 import com.solarized.firedown.geckoview.GeckoState;
 import com.solarized.firedown.geckoview.GeckoSwipeRefreshLayout;
 import com.solarized.firedown.geckoview.GeckoToolbarBehavior;
@@ -2026,10 +2025,6 @@ public class BrowserFragment extends BaseBrowserFragment
     private void openUri(GeckoState geckoState) {
         Log.d(TAG, "openUri: " + geckoState.getEntityUri());
         String currentUri = geckoState.getEntityUri();
-        if (GeckoResources.isAboutOnboarding(currentUri)) {
-            currentUri = GeckoResources.createFiredownTab(mActivity);
-            geckoState.setEntityUri(currentUri);
-        }
         geckoState.getOrCreateGeckoSession().loadUri(currentUri);
         applyOpenUriUi(geckoState, currentUri);
     }

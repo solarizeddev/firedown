@@ -90,7 +90,6 @@
     <string name="error_unknown">Ralat tidak diketahui berlaku</string>
     <string name="file_view">Lihat</string>
     <string name="finish_origin">Selesai</string>
-    <string name="info_welcome">Ketik &lt;b&gt;Fire-Button&lt;/b&gt; di mana-mana tapak untuk memuat turun video, audio dan imej. &lt;b&gt;Ketahui lebih lanjut&lt;/b&gt;</string>
     <string name="interval_minutes_ago">%1$dmin</string>
     <string name="interval_month">30 hari lepas</string>
     <string name="interval_now">Sekarang</string>
@@ -211,7 +210,6 @@
     <string name="vault_decrypting">Menyahsulit fail, sila tunggu…</string>
     <string name="vault_encrypting">Menyulitkan fail, sila tunggu…</string>
     <string name="vault_unsupported">Tidak dapat membuka fail ini. Untuk membuka, alihkannya keluar daripada Folder Selamat dan cuba lagi.</string>
-    <string name="home_onboarding_sites_label">Cuba Firedown di</string>
     <string name="home_vault_button">Folder selamat</string>
     <string name="home_media_playing">Memainkan</string>
     <string name="home_media_paused">Dijeda</string>

@@ -90,7 +90,6 @@
     <string name="error_unknown">Kwenzeke iphutha elingaziwa</string>
     <string name="file_view">Buka</string>
     <string name="finish_origin">Qeda</string>
-    <string name="info_welcome">I-Firedown ikusiza ukuthi ulande yonke into kuwebhu &lt;b&gt;Funda ukuthi kanjani&lt;/b&gt;.</string>
     <string name="interval_month">Izinsuku zokugcina ezingu-30</string>
     <string name="interval_older">Omdala</string>
     <string name="interval_today">Namuhla</string>
@@ -208,7 +207,6 @@
     <string name="vault_decrypting">Isusa ukubethela kwefayela, sicela ulinde…</string>
     <string name="vault_encrypting">Ibethela ifayela, sicela ulinde…</string>
     <string name="vault_unsupported">Ayikwazi ukuvula leli fayela. Ukuze uyivule, ikhiphe Kufolda Evikelekile bese uzama futhi.</string>
-    <string name="home_onboarding_sites_label">Zama i-Firedown ku</string>
     <string name="home_vault_button">Ifolda ephephile</string>
     <string name="home_media_playing">Iyadlala</string>
     <string name="home_media_paused">Imisiwe</string>

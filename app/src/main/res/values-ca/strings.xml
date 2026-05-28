@@ -119,7 +119,6 @@
     <string name="exit_fullscreen_with_back_button_short">Arrossegueu des de dalt i premeu el botó d’enrere per a sortir</string>
     <string name="file_view">Mostra</string>
     <string name="finish_origin">Acabar</string>
-    <string name="info_welcome">Toca el &lt;b&gt;Fire-Button&lt;/b&gt; a qualsevol lloc per baixar-ne els vídeos, l\'àudio i les imatges. &lt;b&gt;Més informació&lt;/b&gt;</string>
     <string name="interval_minutes_ago">%1$d min</string>
     <string name="interval_month">Últims 30 dies</string>
     <string name="interval_now">Ara</string>
@@ -272,7 +271,6 @@
     <string name="play">Reprodueix</string>
     <string name="pip_play">Reprodueix</string>
     <string name="pip_pause">Pausa</string>
-    <string name="home_onboarding_sites_label">Prova Firedown a</string>
     <string name="home_vault_button">Carpeta segura</string>
     <string name="home_media_playing">S\'està reproduint</string>
     <string name="home_media_paused">En pausa</string>

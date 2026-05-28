@@ -115,7 +115,6 @@
     <string name="gif_maker_speed_very_slow">Muito lento</string>
     <string name="gif_maker_title">Criar GIF</string>
     <string name="if_preferences_security">Segurança</string>
-    <string name="info_welcome">Toque no &lt;b&gt;Fire-Button&lt;/b&gt; em qualquer site para baixar seus vídeos, áudios e imagens. &lt;b&gt;Saiba mais&lt;/b&gt;</string>
     <string name="interval_minutes_ago">%1$dm</string>
     <string name="interval_month">Últimos 30 dias</string>
     <string name="interval_now">Agora</string>
@@ -278,7 +277,6 @@
         <item quantity="other">%d transferências anónimas em curso</item>
     </plurals>
     <string name="incognito_downloads_in_progress_subtitle">Toque para ver na Pasta segura</string>
-    <string name="home_onboarding_sites_label">Experimente o Firedown em</string>
     <string name="home_vault_button">Pasta segura</string>
     <string name="home_media_playing">A reproduzir</string>
     <string name="home_media_paused">Em pausa</string>

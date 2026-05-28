@@ -90,7 +90,6 @@
   <string name="error_unknown">Se produjo un error desconocido</string>
   <string name="file_view">Ver</string>
   <string name="finish_origin">Finalizar</string>
-    <string name="info_welcome">Toca el &lt;b&gt;Fire-Button&lt;/b&gt; en cualquier sitio para descargar sus videos, audio e imágenes. &lt;b&gt;Más información&lt;/b&gt;</string>
   <string name="interval_month">Últimos 30 días</string>
   <string name="interval_older">Más viejo</string>
   <string name="interval_today">Hoy</string>
@@ -208,7 +207,6 @@
     <string name="vault_decrypting">Descifrando archivo, espere…</string>
     <string name="vault_encrypting">Cifrando archivo, espere…</string>
     <string name="vault_unsupported">No se puede abrir este archivo. Para abrirlo, sácalo de la Carpeta segura y vuelve a intentarlo.</string>
-    <string name="home_onboarding_sites_label">Probá Firedown en</string>
     <string name="home_vault_button">Carpeta segura</string>
     <string name="home_media_playing">Reproduciendo</string>
     <string name="home_media_paused">En pausa</string>

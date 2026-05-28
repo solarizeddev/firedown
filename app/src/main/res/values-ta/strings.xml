@@ -105,7 +105,6 @@
     <string name="error_unknown">அறியப்படாத பிழை ஏற்பட்டது</string>
     <string name="file_view">காட்டு</string>
     <string name="finish_origin">முடிக்கவும்</string>
-    <string name="info_welcome">இணையத்திலிருந்து அனைத்தையும் பதிவிறக்கம் செய்ய Firedown உதவுகிறது. &lt;b&gt;எப்படி என்பதை அறிக&lt;/b&gt;</string>
     <string name="interval_minutes_ago">%1$d மீ</string>
     <string name="interval_month">கடந்த 30 நாட்கள்</string>
     <string name="interval_now">இப்போது</string>
@@ -239,7 +238,6 @@
     <string name="vault_decrypting">கோப்பை மறைகுறியாக்குகிறது, காத்திருக்கவும்…</string>
     <string name="vault_encrypting">கோப்பை என்க்ரிப்ட் செய்கிறது, காத்திருக்கவும்…</string>
     <string name="vault_unsupported">இந்தக் கோப்பைத் திறக்க முடியவில்லை. திறக்க, பாதுகாப்பான கோப்புறையிலிருந்து அதை நகர்த்தி மீண்டும் முயற்சிக்கவும்.</string>
-    <string name="home_onboarding_sites_label">Firedown ஐ முயற்சிக்கவும்</string>
     <string name="home_vault_button">பாதுகாப்பான ஃபோல்டர்</string>
     <string name="home_media_playing">இயக்கப்படுகிறது</string>
     <string name="home_media_paused">இடைநிறுத்தப்பட்டது</string>

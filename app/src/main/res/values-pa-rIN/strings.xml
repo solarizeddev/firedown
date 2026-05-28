@@ -112,7 +112,6 @@
     <string name="exit_fullscreen_with_back_button_short">ਬਾਹਰ ਜਾਣ ਲਈ ਸਿਖਰ ਤੋਂ ਖਿੱਚ ਕੇ ਪਿੱਛੇ ਨੂੰ ਦਬਾਓ</string>
     <string name="file_view">ਦੇਖੋ</string>
     <string name="finish_origin">ਸਮਾਪਤ</string>
-    <string name="info_welcome">ਫਾਇਰਡਾਊਨ ਵੈੱਬ ਤੋਂ ਹਰ ਚੀਜ਼ ਨੂੰ ਡਾਊਨਲੋਡ ਕਰਨ ਵਿੱਚ ਤੁਹਾਡੀ ਮਦਦ ਕਰਦਾ ਹੈ। &lt;b&gt;ਸਿੱਖੋ ਕਿਵੇਂ&lt;/b&gt;</string>
     <string name="interval_month">ਪਿਛਲੇ 30 ਦਿਨ</string>
     <string name="interval_older">ਪੁਰਾਣੀ</string>
     <string name="interval_today">ਅੱਜ</string>
@@ -248,7 +247,6 @@
     <string name="vault_encrypting">ਫ਼ਾਈਲ ਨੂੰ ਐਨਕ੍ਰਿਪਟ ਕੀਤਾ ਜਾ ਰਿਹਾ ਹੈ, ਕਿਰਪਾ ਕਰਕੇ ਉਡੀਕ ਕਰੋ…</string>
     <string name="vault_unsupported">ਇਸ ਫ਼ਾਈਲ ਨੂੰ ਖੋਲ੍ਹਿਆ ਨਹੀਂ ਜਾ ਸਕਦਾ। ਖੋਲ੍ਹਣ ਲਈ, ਇਸਨੂੰ ਸੁਰੱਖਿਅਤ ਫੋਲਡਰ ਤੋਂ ਬਾਹਰ ਲੈ ਜਾਓ ਅਤੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।</string>
     <string name="bookmark_name">ਨਾਂ</string>
-    <string name="home_onboarding_sites_label">Firedown ਅਜ਼ਮਾਓ</string>
     <string name="home_vault_button">ਸੁਰੱਖਿਅਤ ਫੋਲਡਰ</string>
     <string name="home_media_playing">ਚੱਲ ਰਿਹਾ ਹੈ</string>
     <string name="home_media_paused">ਰੁਕਿਆ</string>

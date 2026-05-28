@@ -206,7 +206,6 @@
     <string name="incognito_notification_channel_desc">Notification pour les onglets privés ouverts</string>
     <string name="incognito_notification_close_action">Tout fermer</string>
     <string name="incognito_notification_tap_to_open">Toucher pour revenir à la navigation privée</string>
-    <string name="info_welcome">Appuyez sur le &lt;b&gt;Fire-Button&lt;/b&gt; sur n\'importe quel site pour récupérer ses vidéos, audio et images. &lt;b&gt;En savoir plus&lt;/b&gt;</string>
     <string name="interval_minutes_ago">%1$d min</string>
     <string name="interval_month">Les 30 derniers jours</string>
     <string name="interval_now">À l’instant</string>
@@ -488,7 +487,6 @@
     <string name="play">Lecture</string>
     <string name="pip_play">Lecture</string>
     <string name="pip_pause">Pause</string>
-    <string name="home_onboarding_sites_label">Essayez Firedown sur</string>
     <string name="home_vault_button">Dossier sécurisé</string>
     <string name="home_media_playing">Lecture</string>
     <string name="home_media_paused">En pause</string>

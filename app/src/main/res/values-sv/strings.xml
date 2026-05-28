@@ -101,7 +101,6 @@
     <string name="gif_maker_speed_very_fast">Mycket snabb</string>
     <string name="gif_maker_speed_very_slow">Mycket långsam</string>
     <string name="gif_maker_title">Skapa GIF</string>
-    <string name="info_welcome">Tryck på &lt;b&gt;Fire-Button&lt;/b&gt; på valfri webbplats för att hämta dess videor, ljud och bilder. &lt;b&gt;Läs mer&lt;/b&gt;</string>
     <string name="interval_minutes_ago">%1$dm</string>
     <string name="interval_month">Senaste 30 dagarna</string>
     <string name="interval_now">Nu</string>
@@ -229,7 +228,6 @@
     <string name="play">Spela upp</string>
     <string name="pip_play">Spela upp</string>
     <string name="pip_pause">Paus</string>
-    <string name="home_onboarding_sites_label">Prova Firedown på</string>
     <string name="home_vault_button">Säker mapp</string>
     <string name="home_media_playing">Spelar upp</string>
     <string name="home_media_paused">Pausad</string>
