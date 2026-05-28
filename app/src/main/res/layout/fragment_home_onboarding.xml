@@ -6,82 +6,86 @@
     android:layout_height="wrap_content"
     android:layout_marginStart="@dimen/list_spacing"
     android:layout_marginEnd="@dimen/list_spacing"
-    app:strokeWidth="0dp"
-    app:cardBackgroundColor="?attr/colorPrimaryContainer"
-    app:cardCornerRadius="8dp">
+    app:cardBackgroundColor="?attr/colorSurfaceContainerHigh"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="0dp"
+    app:strokeWidth="0dp">
 
-
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/item_onboarding_frame"
-        android:padding="@dimen/list_spacing"
+    <!--
+        Launchpad, not a manual: instead of explaining the Fire-Button, the
+        card offers a few sites to try. Tapping a chip opens that site so the
+        user discovers the button by using it. Shares the surface-container
+        shape of the Downloads / Vault / Trackers cards so it reads as part
+        of the same shelf. Auto-retires after the first finished download
+        (HomeFragment).
+    -->
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="14dp">
 
-        <!--
-            Launchpad, not a manual: instead of explaining the Fire-Button,
-            the card offers a few sites to try. Tapping a chip opens that
-            site so the user discovers the button by using it. The card
-            auto-retires after the first finished download (HomeFragment).
-        -->
-        <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/onboarding_icon"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:padding="8dp"
-            app:tint="?attr/colorOnPrimaryContainer"
-            app:srcCompat="@drawable/auto_awesome_24"
-            android:scaleType="fitCenter"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="@id/onboarding_label" />
-
-        <TextView
-            android:id="@+id/onboarding_label"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="4dp"
+            android:baselineAligned="false"
             android:gravity="center_vertical"
-            android:letterSpacing="0.04"
-            android:textAllCaps="true"
-            android:textColor="?attr/colorOnPrimaryContainer"
-            android:textSize="12sp"
-            android:textStyle="bold"
-            android:text="@string/home_onboarding_sites_label"
-            app:layout_constraintBottom_toBottomOf="@id/onboarding_remove"
-            app:layout_constraintEnd_toStartOf="@id/onboarding_remove"
-            app:layout_constraintStart_toEndOf="@id/onboarding_icon"
-            app:layout_constraintTop_toTopOf="@id/onboarding_remove" />
+            android:orientation="horizontal">
 
-        <androidx.appcompat.widget.AppCompatImageButton
-            android:id="@+id/onboarding_remove"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:padding="@dimen/button_icons_padding"
-            android:contentDescription="@string/cancel"
-            app:tint="?attr/colorOnPrimaryContainer"
-            android:src="@drawable/ic_clear_24"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            <FrameLayout
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="@drawable/bg_icon_container_secondary">
+
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:id="@+id/onboarding_icon"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="center"
+                    android:contentDescription="@null"
+                    app:srcCompat="@drawable/auto_awesome_24"
+                    app:tint="?attr/colorOnSecondaryContainer" />
+
+            </FrameLayout>
+
+            <TextView
+                android:id="@+id/onboarding_label"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="14dp"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="@string/home_onboarding_sites_label"
+                android:textAppearance="?attr/textAppearanceTitleSmall"
+                android:textColor="?attr/colorOnSurface" />
+
+            <androidx.appcompat.widget.AppCompatImageButton
+                android:id="@+id/onboarding_remove"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/cancel"
+                android:padding="@dimen/button_icons_padding"
+                android:src="@drawable/ic_clear_24"
+                app:tint="?attr/colorOnSurfaceVariant" />
+
+        </LinearLayout>
 
         <HorizontalScrollView
             android:id="@+id/onboarding_sites_scroll"
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:paddingStart="4dp"
-            android:paddingEnd="4dp"
+            android:layout_marginTop="10dp"
             android:clipToPadding="false"
-            android:scrollbars="none"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/onboarding_remove">
+            android:scrollbars="none">
 
             <com.google.android.material.chip.ChipGroup
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                app:singleLine="true"
-                app:chipSpacingHorizontal="8dp">
+                app:chipSpacingHorizontal="8dp"
+                app:singleLine="true">
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chip_youtube"
@@ -90,8 +94,9 @@
                     android:layout_height="wrap_content"
                     android:text="YouTube"
                     android:textColor="?attr/colorOnSurface"
-                    app:chipBackgroundColor="?attr/colorSurface"
-                    app:chipStrokeWidth="0dp" />
+                    app:chipBackgroundColor="?attr/colorSurfaceContainerHighest"
+                    app:chipStrokeColor="?attr/colorOutlineVariant"
+                    app:chipStrokeWidth="1dp" />
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chip_reddit"
@@ -100,8 +105,9 @@
                     android:layout_height="wrap_content"
                     android:text="Reddit"
                     android:textColor="?attr/colorOnSurface"
-                    app:chipBackgroundColor="?attr/colorSurface"
-                    app:chipStrokeWidth="0dp" />
+                    app:chipBackgroundColor="?attr/colorSurfaceContainerHighest"
+                    app:chipStrokeColor="?attr/colorOutlineVariant"
+                    app:chipStrokeWidth="1dp" />
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chip_instagram"
@@ -110,8 +116,9 @@
                     android:layout_height="wrap_content"
                     android:text="Instagram"
                     android:textColor="?attr/colorOnSurface"
-                    app:chipBackgroundColor="?attr/colorSurface"
-                    app:chipStrokeWidth="0dp" />
+                    app:chipBackgroundColor="?attr/colorSurfaceContainerHighest"
+                    app:chipStrokeColor="?attr/colorOutlineVariant"
+                    app:chipStrokeWidth="1dp" />
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chip_tiktok"
@@ -120,8 +127,9 @@
                     android:layout_height="wrap_content"
                     android:text="TikTok"
                     android:textColor="?attr/colorOnSurface"
-                    app:chipBackgroundColor="?attr/colorSurface"
-                    app:chipStrokeWidth="0dp" />
+                    app:chipBackgroundColor="?attr/colorSurfaceContainerHighest"
+                    app:chipStrokeColor="?attr/colorOutlineVariant"
+                    app:chipStrokeWidth="1dp" />
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chip_x"
@@ -130,14 +138,14 @@
                     android:layout_height="wrap_content"
                     android:text="X"
                     android:textColor="?attr/colorOnSurface"
-                    app:chipBackgroundColor="?attr/colorSurface"
-                    app:chipStrokeWidth="0dp" />
+                    app:chipBackgroundColor="?attr/colorSurfaceContainerHighest"
+                    app:chipStrokeColor="?attr/colorOutlineVariant"
+                    app:chipStrokeWidth="1dp" />
 
             </com.google.android.material.chip.ChipGroup>
 
         </HorizontalScrollView>
 
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
+    </LinearLayout>
 
 </com.google.android.material.card.MaterialCardView>
