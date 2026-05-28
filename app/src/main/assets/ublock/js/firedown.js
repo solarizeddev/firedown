@@ -519,7 +519,19 @@ import { PageStore } from './pagestore.js';
     const pageBlocks = new Map();
 
     function recordPageBlock(tabId, hostname) {
-        if (typeof tabId !== 'number' || tabId <= 0) { return; }
+        // Defensive coercion: PageStore.tabId can in some GeckoView WebExt
+        // builds arrive as a string-typed integer ("10001") which fails
+        // `typeof tabId === 'number'` and silently drops the recording.
+        // Java's requestPageBlocks always passes a JSON number, so the
+        // query side keys with a number; if recording keyed with a
+        // string the Map lookup would miss. Force both sides through
+        // Number() so the Map keys agree regardless of provenance.
+        tabId = Number(tabId);
+        if (!Number.isFinite(tabId) || tabId <= 0) {
+            console.log('[firedown] recordPageBlock skipped: tabId='
+                + JSON.stringify(arguments[0]) + ' host=' + hostname);
+            return;
+        }
         if (!hostname || hostname === '') { return; }
         let m = pageBlocks.get(tabId);
         if (m === undefined) {
@@ -539,8 +551,20 @@ import { PageStore } from './pagestore.js';
     }
 
     function pageBlocksList(tabId) {
+        // Mirror the coercion in recordPageBlock so the lookup key
+        // matches the recording key regardless of provenance.
+        tabId = Number(tabId);
+        if (!Number.isFinite(tabId) || tabId <= 0) {
+            console.log('[firedown] pageBlocksList bad tabId='
+                + JSON.stringify(arguments[0]));
+            return [];
+        }
         const m = pageBlocks.get(tabId);
-        if (m === undefined) { return []; }
+        if (m === undefined) {
+            console.log('[firedown] pageBlocksList miss: tabId=' + tabId
+                + ' known=' + Array.from(pageBlocks.keys()).join(','));
+            return [];
+        }
         const arr = Array.from(m, ([host, count]) => ({ host, count }));
         arr.sort((a, b) => b.count - a.count);
         return arr;
@@ -548,14 +572,17 @@ import { PageStore } from './pagestore.js';
 
     async function pushPageBlocks(tabIdArg) {
         try {
-            let tabId = tabIdArg;
-            if (typeof tabId !== 'number' || tabId <= 0) {
+            let tabId = Number(tabIdArg);
+            if (!Number.isFinite(tabId) || tabId <= 0) {
                 // Fallback for the no-tabId-supplied path (older Java
                 // builds, or any future caller that doesn't pass one).
                 const tab = await vAPI.tabs.getCurrent();
                 if (tab instanceof Object === false) { return; }
                 tabId = tab.id;
             }
+            const items = pageBlocksList(tabId);
+            console.log('[firedown] pushPageBlocks tabId=' + tabId
+                + ' items=' + items.length);
             browser.runtime.sendNativeMessage("ublock", {
                 pageBlocks: {
                     tabId,
@@ -565,7 +592,7 @@ import { PageStore } from './pagestore.js';
                     // background script, so it can't make this call
                     // itself.
                     isIncognito: incognitoTabIds.has(tabId),
-                    items: pageBlocksList(tabId),
+                    items,
                 }
             });
         } catch (_) { /* port not ready */ }
@@ -621,6 +648,15 @@ import { PageStore } from './pagestore.js';
         const journal = this.journal;
         const isIncognito = incognitoTabIds.has(this.tabId);
         const tabId = this.tabId;
+        // Diagnostic: see what tabId PageStore is carrying when blocks
+        // get recorded, so we can confirm it matches the tabId Java
+        // sends in requestPageBlocks. Logs once per non-empty journal
+        // tick to avoid spam.
+        if (journal.length > 0) {
+            console.log('[firedown] journalProcess tabId=' + tabId
+                + ' (typeof=' + (typeof tabId) + ') entries='
+                + (journal.length / 3));
+        }
         for (let i = 0; i < journal.length; i += 3) {
             if (journal[i + 1] !== 1) { continue; } // allowed
             categoryCounters[bucketItype(journal[i + 2])] += 1;
