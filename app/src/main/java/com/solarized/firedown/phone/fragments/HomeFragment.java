@@ -39,7 +39,6 @@ import com.solarized.firedown.data.models.BrowserURIViewModel;
 import com.solarized.firedown.data.models.GeckoStateViewModel;
 import com.solarized.firedown.data.models.IncognitoStateViewModel;
 import com.solarized.firedown.data.models.RecentDownloadsViewModel;
-import com.solarized.firedown.geckoview.GeckoResources;
 import com.solarized.firedown.geckoview.GeckoState;
 import com.solarized.firedown.geckoview.GeckoToolbar;
 import com.solarized.firedown.manager.DownloadRequest;
@@ -342,6 +341,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mRecentDownloadsViewModel.getFinishedCount().observe(getViewLifecycleOwner(), count -> {
             mLastFinishedCount = count;
             bindDownloadsSubtitle();
+            maybeRetireOnboarding(count);
         });
         mRecentDownloadsViewModel.getFinishedSize().observe(getViewLifecycleOwner(), size -> {
             mLastFinishedSize = size == null ? 0L : size;
@@ -1197,13 +1197,29 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
 
     @Override
     public void OnBoardingCardClicked(int id) {
-        if (id == R.id.onboarding_card) {
-            String uri = GeckoResources.createFiredownTab(mActivity);
-            openUri(uri);
-        } else if (id == R.id.onboarding_remove) {
+        if (id == R.id.onboarding_remove) {
             mSharedPreferences.edit().putBoolean(Preferences.ONBOARDING_INFO, false).apply();
             mOnBoardingCard.setVisibility(View.GONE);
         }
+    }
+
+    @Override
+    public void onOnboardingSiteClicked(String url) {
+        // Launchpad chip — open the site so the user discovers the
+        // Fire-Button by using it, rather than reading about it.
+        openUri(url);
+    }
+
+    /**
+     * Retire the onboarding launchpad once the user has finished their first
+     * download — they've clearly learned the flow, so the card removes itself
+     * instead of lingering until manually dismissed.
+     */
+    private void maybeRetireOnboarding(Integer finishedCount) {
+        if (finishedCount == null || finishedCount <= 0) return;
+        if (mOnBoardingCard == null || mOnBoardingCard.getVisibility() != View.VISIBLE) return;
+        mSharedPreferences.edit().putBoolean(Preferences.ONBOARDING_INFO, false).apply();
+        mOnBoardingCard.setVisibility(View.GONE);
     }
 
 }
