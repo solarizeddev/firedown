@@ -63,6 +63,7 @@
         android:textColorHint="?attr/colorOnSurface"
         android:textSize="14.5sp"
         android:maxLines="1"
+        android:layout_marginStart="-6dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@id/action_edit"
         app:layout_constraintStart_toEndOf="@id/security_button"
