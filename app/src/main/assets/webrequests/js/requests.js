@@ -582,11 +582,17 @@ async function processResponse(data, listenerName) {
         new Promise((resolve) => setTimeout(() => resolve(null), 300)),
       ]);
       if (meta) {
-        // name → og:title > twitter:title > document.title.
-        // description → meta description > og:description > twitter:description.
+        // Prefer video-specific sources first: on video SPAs (YouTube, etc.)
+        // the JSON-LD VideoObject / og:video:title carry the real current
+        // video name while <title>/og:title are often generic ("YouTube").
+        // Then fall back to the page-level chain.
+        //   name → videoLd > og:video:title > og:title > twitter:title > title
+        //   description → videoLd > meta description > og:description > twitter:description
         // Native side sanitises both; we keep them as the raw page strings here.
-        const name = meta.ogTitle || meta.twitterTitle || meta.title || '';
-        const description = meta.description || meta.ogDescription || meta.twitterDescription || '';
+        const name = meta.videoLdName || meta.ogVideoTitle
+          || meta.ogTitle || meta.twitterTitle || meta.title || '';
+        const description = meta.videoLdDescription || meta.description
+          || meta.ogDescription || meta.twitterDescription || '';
         if (name && !message.name) message.name = name;
         if (description && !message.description) message.description = description;
       }

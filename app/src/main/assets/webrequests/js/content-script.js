@@ -129,12 +129,47 @@ console.log('[cs] loaded', location.href);
 // background's tabs.sendMessage (which broadcasts to all frames in a tab
 // by default) doesn't return an iframe's title instead of the page's.
 if (window === window.top) {
+  // Walk the page's JSON-LD blocks for a VideoObject (schema.org). On video
+  // SPAs (YouTube, etc.) the <title>/og: tags are often generic or stale
+  // ("YouTube") while the JSON-LD VideoObject carries the real, current
+  // video name + description — so for media captures this is the most
+  // accurate source. Returns {name, description} or null. Defensive: each
+  // block is parsed in isolation (one malformed block must not kill the
+  // rest), and we handle the common shapes — a bare object, an array, or a
+  // node graph under @graph.
+  const readVideoJsonLd = () => {
+    const scripts = document.querySelectorAll('script[type="application/ld+json"]');
+    for (const s of scripts) {
+      let data;
+      try {
+        data = JSON.parse(s.textContent);
+      } catch (_) {
+        continue;
+      }
+      const nodes = Array.isArray(data)
+        ? data
+        : (Array.isArray(data && data['@graph']) ? data['@graph'] : [data]);
+      for (const node of nodes) {
+        if (!node || typeof node !== 'object') continue;
+        const type = node['@type'];
+        const isVideo = type === 'VideoObject'
+          || (Array.isArray(type) && type.includes('VideoObject'));
+        if (!isVideo) continue;
+        const name = typeof node.name === 'string' ? node.name : '';
+        const description = typeof node.description === 'string' ? node.description : '';
+        if (name || description) return { name, description };
+      }
+    }
+    return null;
+  };
+
   browser.runtime.onMessage.addListener((msg, sender) => {
     if (!msg || msg.kind !== 'get-page-metadata') return;
     const meta = (selector, attr) => {
       const el = document.querySelector(selector);
       return el && el.getAttribute(attr) ? el.getAttribute(attr) : '';
     };
+    const videoLd = readVideoJsonLd();
     return Promise.resolve({
       url: location.href,
       title: document.title || '',
@@ -143,6 +178,10 @@ if (window === window.top) {
       ogDescription: meta('meta[property="og:description"]', 'content'),
       twitterTitle: meta('meta[name="twitter:title"]', 'content'),
       twitterDescription: meta('meta[name="twitter:description"]', 'content'),
+      // og:video:* and JSON-LD VideoObject — most accurate on video SPAs.
+      ogVideoTitle: meta('meta[property="og:video:title"]', 'content'),
+      videoLdName: videoLd ? videoLd.name : '',
+      videoLdDescription: videoLd ? videoLd.description : '',
     });
   });
 }
