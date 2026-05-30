@@ -133,12 +133,86 @@ if (window === window.top) {
   // SPAs (YouTube, etc.) the <title>/og: tags are often generic or stale
   // ("YouTube") while the JSON-LD VideoObject carries the real, current
   // video name + description — so for media captures this is the most
-  // accurate source. Returns {name, description} or null. Defensive: each
-  // block is parsed in isolation (one malformed block must not kill the
-  // rest), and we handle the common shapes — a bare object, an array, or a
-  // node graph under @graph.
+  // accurate source. Returns {name, description} or null.
+  //
+  // Robust against the shapes seen in the wild:
+  //   - a bare object, an array of objects, or nodes under @graph
+  //   - a VideoObject *nested* as a property (WebPage.video, mainEntity,
+  //     ItemList.itemListElement[].item, …) rather than top-level — so we
+  //     recurse the whole tree, depth-limited, instead of only scanning the
+  //     first level
+  //   - @type as a string OR an array of strings
+  //   - name/description as a plain string, a localized {@value:"…"} object,
+  //     or an array of either (take the first usable string)
+  // Defensive throughout: each script block is parsed in isolation (one
+  // malformed block must not kill the rest), recursion is depth- and
+  // breadth-bounded so a pathological page can't hang the responder, and we
+  // prefer a VideoObject that has a name, accepting description-only last.
+  const MAX_LD_DEPTH = 8;
+  const MAX_LD_NODES = 5000;
+
+  const ldString = (v) => {
+    if (typeof v === 'string') return v.trim();
+    if (Array.isArray(v)) {
+      for (const item of v) {
+        const s = ldString(item);
+        if (s) return s;
+      }
+      return '';
+    }
+    if (v && typeof v === 'object' && typeof v['@value'] === 'string') {
+      return v['@value'].trim();
+    }
+    return '';
+  };
+
+  const isVideoType = (t) =>
+    t === 'VideoObject' || (Array.isArray(t) && t.includes('VideoObject'));
+
   const readVideoJsonLd = () => {
     const scripts = document.querySelectorAll('script[type="application/ld+json"]');
+    let descriptionOnly = null; // fallback if no node has a name
+    let budget = MAX_LD_NODES;
+
+    // Returns a {name, description} with a name as soon as one is found
+    // (best result); otherwise records a description-only candidate and
+    // keeps looking. Iterative stack walk with a visited set to bound cost
+    // and survive cyclic references.
+    const search = (root) => {
+      const stack = [{ node: root, depth: 0 }];
+      const seen = new Set();
+      while (stack.length) {
+        if (budget-- <= 0) break;
+        const { node, depth } = stack.pop();
+        if (!node || typeof node !== 'object' || depth > MAX_LD_DEPTH) continue;
+        if (seen.has(node)) continue;
+        seen.add(node);
+
+        if (isVideoType(node['@type'])) {
+          const name = ldString(node.name);
+          const description = ldString(node.description);
+          if (name) return { name, description };
+          if (description && !descriptionOnly) {
+            descriptionOnly = { name: '', description };
+          }
+        }
+
+        // Descend into children (array entries and object property values).
+        if (Array.isArray(node)) {
+          for (const item of node) {
+            if (item && typeof item === 'object') stack.push({ node: item, depth: depth + 1 });
+          }
+        } else {
+          for (const key in node) {
+            if (key === '@type') continue;
+            const val = node[key];
+            if (val && typeof val === 'object') stack.push({ node: val, depth: depth + 1 });
+          }
+        }
+      }
+      return null;
+    };
+
     for (const s of scripts) {
       let data;
       try {
@@ -146,40 +220,37 @@ if (window === window.top) {
       } catch (_) {
         continue;
       }
-      const nodes = Array.isArray(data)
-        ? data
-        : (Array.isArray(data && data['@graph']) ? data['@graph'] : [data]);
-      for (const node of nodes) {
-        if (!node || typeof node !== 'object') continue;
-        const type = node['@type'];
-        const isVideo = type === 'VideoObject'
-          || (Array.isArray(type) && type.includes('VideoObject'));
-        if (!isVideo) continue;
-        const name = typeof node.name === 'string' ? node.name : '';
-        const description = typeof node.description === 'string' ? node.description : '';
-        if (name || description) return { name, description };
-      }
+      const hit = search(data);
+      if (hit) return hit;
     }
-    return null;
+    return descriptionOnly;
   };
 
   browser.runtime.onMessage.addListener((msg, sender) => {
     if (!msg || msg.kind !== 'get-page-metadata') return;
     const meta = (selector, attr) => {
       const el = document.querySelector(selector);
-      return el && el.getAttribute(attr) ? el.getAttribute(attr) : '';
+      return el && el.getAttribute(attr) ? el.getAttribute(attr).trim() : '';
     };
+    // og: and twitter: properties are sometimes carried on name= instead of
+    // property= (and vice-versa) depending on the site's templating — accept
+    // either so we don't miss a tag over an attribute-name technicality.
+    const ogp = (prop) =>
+      meta(`meta[property="${prop}"]`, 'content') || meta(`meta[name="${prop}"]`, 'content');
     const videoLd = readVideoJsonLd();
     return Promise.resolve({
       url: location.href,
       title: document.title || '',
-      description: meta('meta[name="description"]', 'content'),
-      ogTitle: meta('meta[property="og:title"]', 'content'),
-      ogDescription: meta('meta[property="og:description"]', 'content'),
-      twitterTitle: meta('meta[name="twitter:title"]', 'content'),
-      twitterDescription: meta('meta[name="twitter:description"]', 'content'),
-      // og:video:* and JSON-LD VideoObject — most accurate on video SPAs.
-      ogVideoTitle: meta('meta[property="og:video:title"]', 'content'),
+      description: ogp('description'),
+      ogTitle: ogp('og:title'),
+      ogDescription: ogp('og:description'),
+      twitterTitle: ogp('twitter:title'),
+      twitterDescription: ogp('twitter:description'),
+      // JSON-LD VideoObject + og:video:* — most accurate on video SPAs, where
+      // <title>/og:title are often the generic site name. og:video:title is
+      // rarer than og:title but, when present, is video-specific so we rank it
+      // above the page-level og:title in the consumer.
+      ogVideoTitle: ogp('og:video:title'),
       videoLdName: videoLd ? videoLd.name : '',
       videoLdDescription: videoLd ? videoLd.description : '',
     });
