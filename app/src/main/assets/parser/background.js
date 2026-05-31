@@ -1162,8 +1162,17 @@ function emitTwitterTweetVideos(details, result) {
     const media = legacy?.extended_entities?.media;
     if (!media || media.length === 0) return false;
 
-    const screenName = tweetResult.core?.user_results?.result?.legacy?.screen_name
-        || result.core?.user_results?.result?.legacy?.screen_name
+    // X migrated User fields (screen_name, name) out of `legacy` into a new
+    // `core` sub-object on the user result; older responses still carry them
+    // in `legacy`. Reading only `legacy.screen_name` made every timeline
+    // video resolve to "unknown" (the home/feed view has no /status/ URL for
+    // extractScreenNameFromUrl to fall back on). Check the new `core`
+    // location first, then `legacy`. NB: user.core (the user's handle/name)
+    // is a different object from tweet.core (which holds user_results).
+    const userResult = tweetResult.core?.user_results?.result
+        || result.core?.user_results?.result;
+    const screenName = userResult?.core?.screen_name
+        || userResult?.legacy?.screen_name
         || extractScreenNameFromUrl(details)
         || "unknown";
     const tweetId = tweetResult.rest_id || legacy.id_str;
