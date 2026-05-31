@@ -63,6 +63,7 @@ import com.solarized.firedown.geckoview.toolbar.BottomNavigationBar;
 import com.solarized.firedown.manager.DownloadRequest;
 import com.solarized.firedown.phone.DownloadsActivity;
 import com.solarized.firedown.phone.dialogs.BlockRedirectDialogFragment;
+import com.solarized.firedown.phone.dialogs.BrowserAppDialogFragment;
 import com.solarized.firedown.phone.SettingsActivity;
 import com.solarized.firedown.phone.VaultActivity;
 import com.solarized.firedown.ui.IncognitoColors;
@@ -829,6 +830,20 @@ public class BrowserFragment extends BaseBrowserFragment
                     state.getOrCreateGeckoSession().loadUri(uri);
                 });
 
+        // BrowserAppDialogFragment reports a blocked Play Store "open in
+        // app" redirect here — the user tapped Open but the target app
+        // isn't installed and the block-redirects pref is on, so instead of
+        // launching Google Play we surface the same snackbar the direct
+        // anti-nag path uses, so the no-op isn't invisible.
+        getParentFragmentManager().setFragmentResultListener(
+                BrowserAppDialogFragment.RESULT_KEY,
+                getViewLifecycleOwner(),
+                (requestKey, result) -> {
+                    if (result.getBoolean(BrowserAppDialogFragment.RESULT_BLOCKED, false)) {
+                        makeAnchoredSnackbar(getString(R.string.block_redirect_snackbar)).show();
+                    }
+                });
+
         Log.d(TAG, "onViewCreated finished");
     }
 
@@ -1488,10 +1503,22 @@ public class BrowserFragment extends BaseBrowserFragment
                 // never surface the "open in app" dialog.
                 || UrlStringUtils.isBlobLike(uri))
             return;
+        // "Open in app" links to an uninstalled app get rewritten by
+        // createBrowsableIntent into a Play Store intent (the "install our
+        // app" nag). That hop is born after the NavigationDelegate's
+        // URL-level anti-nag check, so honour SETTINGS_BLOCK_PLAYSTORE_REDIRECTS
+        // here too: when it's on and this resolves to the store, the dialog's
+        // "Open" blocks + shows the snackbar instead of launching Google Play.
+        // The dialog itself is unchanged for genuine app opens.
+        boolean blockStoreRedirect = AppLinkUseCases.isMarketplaceIntent(browsableIntent)
+                && mSharedPreferences.getBoolean(
+                        Preferences.SETTINGS_BLOCK_PLAYSTORE_REDIRECTS,
+                        Preferences.DEFAULT_BLOCK_PLAYSTORE_REDIRECTS);
         try {
             Bundle bundle = new Bundle();
             bundle.putParcelable(Keys.ITEM_ID, browsableIntent);
             bundle.putBoolean(Keys.OPEN_INCOGNITO, mIsIncognitoThemed);
+            bundle.putBoolean(Keys.BLOCK_STORE_REDIRECT, blockStoreRedirect);
             NavigationUtils.navigateSafe(mNavController, R.id.dialog_browser_open_in_app, R.id.browser, bundle);
         } catch (ActivityNotFoundException e) {
             Log.e(TAG, "No Activity found: " + browsableIntent, e);

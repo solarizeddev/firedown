@@ -115,6 +115,30 @@ public class AppLinkUseCases {
 
     }
 
+    /**
+     * True when {@code intent} targets the Play Store — either the
+     * {@code market://} scheme or a {@code play.google.com} listing URL.
+     *
+     * {@link #createBrowsableIntent(String)} silently mints exactly such an
+     * intent when an {@code intent://} "open in app" link names a package
+     * that isn't installed (the "install our app" nag pattern). That
+     * manufactured Play Store hop happens *after* the NavigationDelegate's
+     * URL-level anti-nag check (which only inspects the navigation URI), so
+     * it would otherwise escape the SETTINGS_BLOCK_PLAYSTORE_REDIRECTS
+     * toggle and dump the user on Google Play. Callers use this to route it
+     * back through the same block-and-snackbar path.
+     */
+    public static boolean isMarketplaceIntent(Intent intent) {
+        if (intent == null) return false;
+        Uri data = intent.getData();
+        if (data == null) return false;
+        String scheme = data.getScheme();
+        if ("market".equalsIgnoreCase(scheme)) return true;
+        String host = data.getHost();
+        return ("http".equalsIgnoreCase(scheme) || "https".equalsIgnoreCase(scheme))
+                && "play.google.com".equalsIgnoreCase(host);
+    }
+
     private static ResolveInfo findDefaultActivity(Intent intent) {
         return App.getAppContext().getPackageManager().resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY);
     }
