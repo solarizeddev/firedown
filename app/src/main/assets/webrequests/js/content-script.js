@@ -63,6 +63,24 @@ console.log('[cs] loaded', location.href);
     probeRan = true;
   }, { capture: true, once: true });
 
+  // Whether WASM is currently disabled for this page. The probe's only job is
+  // to detect "this site wants WASM while it's turned off" so we can offer to
+  // re-enable it; when WASM is ENABLED the probe has nothing to do. Worse,
+  // injecting its moz-extension <script> into a cross-origin-isolated document
+  // — e.g. x.com's login, which runs WASM in a COEP (require-corp) worker —
+  // can make Gecko deny that worker's cross-origin chunk loads with
+  // "Content at https://x.com/ may not load data from https://abs.twimg.com/…",
+  // breaking login. So capture the state up front (before the pre-arm getter
+  // below shadows the global) and only run the probe when WASM is disabled.
+  let wasmDisabled = false;
+  try {
+    const pw = window.wrappedJSObject;
+    wasmDisabled = pw ? (typeof pw.WebAssembly === 'undefined')
+                      : (typeof WebAssembly === 'undefined');
+  } catch (_) {
+    wasmDisabled = (typeof WebAssembly === 'undefined');
+  }
+
   // --- Synchronous pre-arm of the WebAssembly read-trap -------------------
   // The external probe below loads async, so a very early page script could
   // read WebAssembly before it arms. Content scripts run synchronously at
@@ -103,25 +121,32 @@ console.log('[cs] loaded', location.href);
   // 'unsafe-inline') refuse an injected inline <script>, so the old
   // textContent probe never executed there. Extension-origin resource loads
   // bypass the page CSP, so the external probe runs everywhere.
-  try {
-    const s = document.createElement('script');
-    s.src = browser.runtime.getURL('js/wasm-probe.js');
-    s.async = false; // execute ASAP, before the page's own scripts use wasm
-    s.onload = () => s.remove();
-    (document.documentElement || document.head || document.body).appendChild(s);
-  } catch (e) {
-    console.log('[cs] wasm probe injection failed:', e && e.message);
-  }
-
-  // CSP-block detector: if the probe never signals within 1.5s, even the
-  // external moz-extension script was refused — we'd need a deeper hook.
-  setTimeout(() => {
-    if (!probeRan) {
-      console.log('[cs] WASM-DEBUG: page-world probe DID NOT RUN within 1.5s on '
-        + location.href + ' — even the external web_accessible_resource script '
-        + 'was blocked. Page CSP is rejecting moz-extension: scripts too.');
+  // Only inject when WASM is disabled (see wasmDisabled note above). When it's
+  // enabled the probe is a no-op anyway, and skipping the injection keeps us
+  // from perturbing cross-origin-isolated pages like x.com's login worker.
+  if (wasmDisabled) {
+    try {
+      const s = document.createElement('script');
+      s.src = browser.runtime.getURL('js/wasm-probe.js');
+      s.async = false; // execute ASAP, before the page's own scripts use wasm
+      s.onload = () => s.remove();
+      (document.documentElement || document.head || document.body).appendChild(s);
+    } catch (e) {
+      console.log('[cs] wasm probe injection failed:', e && e.message);
     }
-  }, 1500);
+
+    // CSP-block detector: if the probe never signals within 1.5s, even the
+    // external moz-extension script was refused — we'd need a deeper hook.
+    setTimeout(() => {
+      if (!probeRan) {
+        console.log('[cs] WASM-DEBUG: page-world probe DID NOT RUN within 1.5s on '
+          + location.href + ' — even the external web_accessible_resource script '
+          + 'was blocked. Page CSP is rejecting moz-extension: scripts too.');
+      }
+    }, 1500);
+  } else {
+    console.log('[cs] wasm enabled — skipping probe injection on', location.href);
+  }
 })();
 
 
