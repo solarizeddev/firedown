@@ -111,11 +111,13 @@ public class OptionsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         public void bind(OptionItem item) {
             this.currentItem = item;
             textView.setText(item.getLabel());
-            if (item.hasIcon()) {
-                textView.setCompoundDrawablesRelativeWithIntrinsicBounds(item.getIconRes(), 0, 0, 0);
-            } else {
-                textView.setCompoundDrawablesRelativeWithIntrinsicBounds(0, 0, 0, 0);
-            }
+            // Leading icon (drawableStart) + optional trailing icon
+            // (drawableEnd) — the trailing slot carries a chevron on a
+            // group row that opens a sub-list. The style's drawableTint
+            // tints both; on a match_parent row the end drawable sits at
+            // the right edge.
+            textView.setCompoundDrawablesRelativeWithIntrinsicBounds(
+                    item.hasIcon() ? item.getIconRes() : 0, 0, item.getTrailingIconRes(), 0);
         }
     }
 }

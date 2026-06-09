@@ -35,6 +35,13 @@ public class DownloadsOptionDialogFragment extends BaseBottomSheetDialogFragment
 
     private int mPosition;
 
+    private RecyclerView mRecyclerView;
+    private View mQuickRow;
+    private List<OptionItem> mRootItems;
+    // Quick-action header (Share / Open with / Rename) shows for finished-file
+    // cases; the video case also has the "Media tools" group → sub-list.
+    private boolean mShowQuickHeader;
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -75,28 +82,38 @@ public class DownloadsOptionDialogFragment extends BaseBottomSheetDialogFragment
 
         mView = inflater.inflate(R.layout.fragment_dialog_options, container, false);
 
-        RecyclerView mRecyclerView = mView.findViewById(R.id.recycler_view);
+        mRecyclerView = mView.findViewById(R.id.recycler_view);
 
-        List<OptionItem> optionItemList = buildOptionItems();
+        // resolveArrayPair also sets mShowQuickHeader for this download's case.
+        int[] arrayPair = resolveArrayPair();
+        mRootItems = loadOptionItems(arrayPair[0], arrayPair[1]);
 
-        OptionsAdapter optionsAdapter = new OptionsAdapter(optionItemList, this);
-
-        mRecyclerView.setAdapter(optionsAdapter);
-
+        mRecyclerView.setAdapter(new OptionsAdapter(mRootItems, this));
         mRecyclerView.setHasFixedSize(true);
+
+        // Quick-action header: Share / Open with / Rename, lifted out of the
+        // list. Each button dispatches through the same icon-keyed path as a
+        // list row. Shown only for finished-file cases.
+        mQuickRow = mView.findViewById(R.id.options_quick_row);
+        if (mShowQuickHeader) {
+            mQuickRow.setVisibility(View.VISIBLE);
+            mView.findViewById(R.id.qa_share).setOnClickListener(v -> dispatch(R.drawable.ic_share_24));
+            mView.findViewById(R.id.qa_open_with).setOnClickListener(v -> dispatch(R.drawable.ic_web_24));
+            mView.findViewById(R.id.qa_rename).setOnClickListener(v -> dispatch(R.drawable.ic_edit_24));
+        }
 
         return mView;
 
     }
 
-
-    private List<OptionItem> buildOptionItems() {
-        int[] arrayPair = resolveArrayPair();
-        return loadOptionItems(arrayPair[0], arrayPair[1]);
-    }
-
-    /** Returns {labelArrayRes, iconArrayRes} based on download state. */
+    /**
+     * Returns {labelArrayRes, iconArrayRes} based on download state, and sets
+     * {@link #mShowQuickHeader} (the Share/Open with/Rename header shows for
+     * the finished-file cases — video, non-video, archive — but not for the
+     * in-progress / errored / encrypted cases).
+     */
     private int[] resolveArrayPair() {
+        mShowQuickHeader = false;
         if (mDownloadEntity.getFileErrorType() != Download.PROGRESS) {
             return new int[]{R.array.download_options_error_type, R.array.download_options_error_icon};
         }
@@ -106,6 +123,7 @@ public class DownloadsOptionDialogFragment extends BaseBottomSheetDialogFragment
         if (mDownloadEntity.isFileSafe()) {
             return new int[]{R.array.download_options_encrypted_type, R.array.download_options_encrypted_icon};
         }
+        mShowQuickHeader = true;
         if (FileUriHelper.isZip(mDownloadEntity.getFileMimeType())) {
             return new int[]{R.array.download_options_archive_type, R.array.download_options_archive_icon};
         }
@@ -124,12 +142,56 @@ public class DownloadsOptionDialogFragment extends BaseBottomSheetDialogFragment
         try {
             for (int i = 0; i < labels.length; i++) {
                 int iconResId = icons.getResourceId(i, 0);
-                items.add(new OptionItem(labels[i], iconResId));
+                // The "Media tools" group row gets a trailing chevron to
+                // signal it opens a sub-list rather than firing an action.
+                if (iconResId == R.drawable.ic_movie_24) {
+                    items.add(new OptionItem(labels[i], iconResId, 0, R.drawable.ic_chevron_right_24));
+                } else {
+                    items.add(new OptionItem(labels[i], iconResId));
+                }
             }
         } finally {
             icons.recycle();
         }
         return items;
+    }
+
+    /**
+     * Swaps the list to the video-only "Media tools" sub-sheet in place
+     * (Extract audio / Create GIF / Save frame / Regenerate thumbnail),
+     * led by a back row. No destructive final item, so it's bound with the
+     * no-final adapter. The quick-action header is hidden here.
+     */
+    private void showTools() {
+        List<OptionItem> tools = new ArrayList<>();
+        tools.add(new OptionItem(getString(R.string.media_tools), R.drawable.ic_arrow_back_24));
+        tools.addAll(loadOptionItems(R.array.download_options_tools_type,
+                R.array.download_options_tools_icon));
+        mRecyclerView.setAdapter(new OptionsAdapter(tools, this, false));
+        if (mQuickRow != null) mQuickRow.setVisibility(View.GONE);
+    }
+
+    /** Returns from the "Media tools" sub-sheet to the root list. */
+    private void showRoot() {
+        mRecyclerView.setAdapter(new OptionsAdapter(mRootItems, this));
+        if (mQuickRow != null && mShowQuickHeader) mQuickRow.setVisibility(View.VISIBLE);
+    }
+
+    /**
+     * Pops back to the Downloads list with the chosen action, keyed by its
+     * icon res id (the dispatch contract handleOptionSelection switches on).
+     * Shared by list-row clicks and the quick-action header buttons.
+     */
+    private void dispatch(int actionId) {
+        NavBackStackEntry navBackStackEntry = mNavController.getPreviousBackStackEntry();
+        if (navBackStackEntry != null) {
+            OptionEntity optionEntity = new OptionEntity();
+            optionEntity.setId(actionId);
+            optionEntity.setDownloadEntity(mDownloadEntity);
+            optionEntity.setPosition(mPosition);
+            navBackStackEntry.getSavedStateHandle().set(IntentActions.DOWNLOAD_ITEM, optionEntity);
+        }
+        mNavController.popBackStack();
     }
 
     @Override
@@ -152,16 +214,18 @@ public class DownloadsOptionDialogFragment extends BaseBottomSheetDialogFragment
         if (position == RecyclerView.NO_POSITION)
             return;
 
-        NavBackStackEntry navBackStackEntry = mNavController.getPreviousBackStackEntry();
-
-        if (navBackStackEntry != null) {
-            OptionEntity optionEntity = new OptionEntity();
-            optionEntity.setId(item.getIconRes());
-            optionEntity.setDownloadEntity(mDownloadEntity);
-            optionEntity.setPosition(mPosition);
-            navBackStackEntry.getSavedStateHandle().set(IntentActions.DOWNLOAD_ITEM, optionEntity);
+        int iconRes = item.getIconRes();
+        // The "Media tools" group row and the sub-sheet's back row navigate
+        // within the sheet rather than firing a download action.
+        if (iconRes == R.drawable.ic_movie_24) {
+            showTools();
+            return;
         }
-        mNavController.popBackStack();
+        if (iconRes == R.drawable.ic_arrow_back_24) {
+            showRoot();
+            return;
+        }
+        dispatch(iconRes);
     }
 }
 

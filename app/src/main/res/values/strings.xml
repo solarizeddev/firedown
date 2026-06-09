@@ -81,6 +81,7 @@
     <string name="close_tabs_manually">Never</string>
     <string name="close_tabs_manually_summary">Close manually</string>
     <string name="compress">Compress</string>
+    <string name="media_tools">Media tools</string>
 <string name="connection_secure">Connection is secure</string>
     <string name="delete">Delete</string>
     <string name="delete_all_bookmarks">This will delete all your bookmarks data.</string>

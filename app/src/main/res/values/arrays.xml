@@ -185,16 +185,16 @@
     </integer-array>
 
 
+    <!-- Video, finished. Open with / Share / Rename live in the sheet's
+         quick-action header row; the four video-only tools (Extract audio,
+         Create GIF, Save frame, Regenerate thumbnail) collapse behind the
+         "Media tools" group row (ic_movie_24), which opens the
+         download_options_tools_* sub-list in place. See
+         DownloadsOptionDialogFragment. -->
     <integer-array name="download_options_type">
-        <item>@string/open_with</item>
         <item>@string/open_origin</item>
-        <item>@string/extract_audio</item>
-        <item>@string/make_gif</item>
-        <item>@string/save_frame</item>
-        <item>@string/share</item>
+        <item>@string/media_tools</item>
         <item>@string/compress</item>
-        <item>@string/popular_list_thumbnail</item>
-        <item>@string/rename</item>
         <item>@string/lock_cipher</item>
         <item>@string/details</item>
         <item>@string/delete</item>
@@ -202,27 +202,38 @@
 
 
     <integer-array name="download_options_icon">
-        <item>@drawable/ic_web_24</item>
         <item>@drawable/ic_travel_explore_24</item>
-        <item>@drawable/ic_headphones_24</item>
-        <item>@drawable/ic_gif_box_24</item>
-        <item>@drawable/ic_photo_camera_24</item>
-        <item>@drawable/ic_share_24</item>
+        <item>@drawable/ic_movie_24</item>
         <item>@drawable/ic_baseline_archive_24</item>
-        <item>@drawable/ic_baseline_image_24</item>
-        <item>@drawable/ic_edit_24</item>
         <item>@drawable/ic_lock_24</item>
         <item>@drawable/ic_info_24</item>
         <item>@drawable/ic_baseline_delete_24</item>
     </integer-array>
 
 
+    <!-- The "Media tools" sub-sheet (video only). No final/destructive
+         item, so it's bound with the no-final OptionsAdapter. -->
+    <integer-array name="download_options_tools_type">
+        <item>@string/extract_audio</item>
+        <item>@string/make_gif</item>
+        <item>@string/save_frame</item>
+        <item>@string/popular_list_thumbnail</item>
+    </integer-array>
+
+
+    <integer-array name="download_options_tools_icon">
+        <item>@drawable/ic_headphones_24</item>
+        <item>@drawable/ic_gif_box_24</item>
+        <item>@drawable/ic_photo_camera_24</item>
+        <item>@drawable/ic_baseline_image_24</item>
+    </integer-array>
+
+
+    <!-- Non-video, finished. Open with / Share / Rename are in the
+         quick-action header row; no media tools (those are video-only). -->
     <integer-array name="download_options_no_thumb_type">
-        <item>@string/open_with</item>
         <item>@string/open_origin</item>
-        <item>@string/share</item>
         <item>@string/compress</item>
-        <item>@string/rename</item>
         <item>@string/lock_cipher</item>
         <item>@string/details</item>
         <item>@string/delete</item>
@@ -230,34 +241,26 @@
 
 
     <integer-array name="download_options_no_thumb_icon">
-        <item>@drawable/ic_web_24</item>
         <item>@drawable/ic_travel_explore_24</item>
-        <item>@drawable/ic_share_24</item>
         <item>@drawable/ic_baseline_archive_24</item>
-        <item>@drawable/ic_edit_24</item>
         <item>@drawable/ic_lock_24</item>
         <item>@drawable/ic_info_24</item>
         <item>@drawable/ic_baseline_delete_24</item>
     </integer-array>
 
-    <!-- Finished archive (zip): offers Extract in place of Compress. -->
+    <!-- Finished archive (zip): offers Extract in place of Compress.
+         Open with / Share / Rename are in the quick-action header row. -->
     <integer-array name="download_options_archive_type">
-        <item>@string/open_with</item>
         <item>@string/open_origin</item>
-        <item>@string/share</item>
         <item>@string/extract</item>
-        <item>@string/rename</item>
         <item>@string/lock_cipher</item>
         <item>@string/details</item>
         <item>@string/delete</item>
     </integer-array>
 
     <integer-array name="download_options_archive_icon">
-        <item>@drawable/ic_web_24</item>
         <item>@drawable/ic_travel_explore_24</item>
-        <item>@drawable/ic_share_24</item>
         <item>@drawable/ic_baseline_unarchive_24</item>
-        <item>@drawable/ic_edit_24</item>
         <item>@drawable/ic_lock_24</item>
         <item>@drawable/ic_info_24</item>
         <item>@drawable/ic_baseline_delete_24</item>
