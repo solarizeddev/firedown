@@ -109,7 +109,7 @@ ext {
     geckoviewChannel = "lite"
     // Locally-built GeckoView from firedown-geckoview, published to mavenLocal
     // (~/.m2). VERIFIED published coordinate (ls ~/.m2/.../org/mozilla/geckoview/):
-    //   org.mozilla.geckoview:geckoview-default:151.0.20260601110758
+    //   org.mozilla.geckoview:geckoview-default:151.0.20260608154138
     // - artifactId is `geckoview-default`: a local/unofficial build uses the
     //   "default" MOZ_UPDATE_CHANNEL (→ `-default` suffix) and
     //   `--enable-geckoview-lite` drops the `-omni`. Mozilla's OFFICIAL artifact is
@@ -120,7 +120,7 @@ ext {
     // resolves the in-house patched build (0001–0006), never Mozilla's. To use
     // Mozilla's official AAR instead, switch the dep back to `:geckoview:` + an
     // official version and drop that exclusiveContent block.
-    geckoviewVersion = "151.0.20260601110758"
+    geckoviewVersion = "151.0.20260608154138"
 }
 
 
@@ -208,9 +208,9 @@ dependencies {
 
     implementation 'commons-codec:commons-codec:1.22.0'
 
-    implementation "com.squareup.okhttp3:okhttp-dnsoverhttps:5.3.2"
+    implementation "com.squareup.okhttp3:okhttp-dnsoverhttps:5.4.0"
 
-    implementation 'com.squareup.okhttp3:okhttp:5.3.2'
+    implementation 'com.squareup.okhttp3:okhttp:5.4.0'
 
     implementation 'com.caverock:androidsvg-aar:1.4'
 
