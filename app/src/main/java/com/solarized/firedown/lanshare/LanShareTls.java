@@ -1,6 +1,7 @@
 package com.solarized.firedown.lanshare;
 
 import android.security.keystore.KeyGenParameterSpec;
+import android.security.keystore.KeyInfo;
 import android.security.keystore.KeyProperties;
 import android.util.Log;
 
@@ -8,6 +9,7 @@ import androidx.annotation.Nullable;
 
 import java.math.BigInteger;
 import java.net.Socket;
+import java.security.KeyFactory;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
 import java.security.Principal;
@@ -83,6 +85,14 @@ public final class LanShareTls {
                 generateIdentity();
             }
             PrivateKey privateKey = (PrivateKey) keyStore.getKey(KEY_ALIAS, null);
+            // Self-heal a key minted without DIGEST_NONE (an earlier build's
+            // spec): keystore rejects every handshake signature on it with
+            // 'Incompatible digest', so it can only be replaced.
+            if (privateKey == null || !supportsRawSigning(privateKey)) {
+                keyStore.deleteEntry(KEY_ALIAS);
+                generateIdentity();
+                privateKey = (PrivateKey) keyStore.getKey(KEY_ALIAS, null);
+            }
             Certificate[] storedChain = keyStore.getCertificateChain(KEY_ALIAS);
             if (privateKey == null || storedChain == null || storedChain.length == 0) {
                 Log.e(TAG, "keystore returned no usable identity");
@@ -101,6 +111,31 @@ public final class LanShareTls {
         return sCachedContext;
     }
 
+    /**
+     * Whether the keystore key permits raw-digest signing
+     * ({@code DIGEST_NONE}) — the operation conscrypt's TLS handshake
+     * performs. Introspection failure counts as "no" so the key gets
+     * regenerated rather than failing every handshake.
+     */
+    private static boolean supportsRawSigning(@Nullable PrivateKey privateKey) {
+        if (privateKey == null) {
+            return false;
+        }
+        try {
+            KeyFactory factory = KeyFactory.getInstance(
+                    privateKey.getAlgorithm(), ANDROID_KEY_STORE);
+            KeyInfo info = factory.getKeySpec(privateKey, KeyInfo.class);
+            for (String digest : info.getDigests()) {
+                if (KeyProperties.DIGEST_NONE.equalsIgnoreCase(digest)) {
+                    return true;
+                }
+            }
+            return false;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     private static void generateIdentity() throws Exception {
         Calendar notBefore = Calendar.getInstance();
         notBefore.add(Calendar.DAY_OF_YEAR, -1);
@@ -109,10 +144,17 @@ public final class LanShareTls {
 
         KeyPairGenerator generator = KeyPairGenerator.getInstance(
                 KeyProperties.KEY_ALGORITHM_EC, ANDROID_KEY_STORE);
+        // DIGEST_NONE is LOAD-BEARING for TLS: in the handshake, BoringSSL
+        // hashes the transcript itself and asks the key to sign the raw
+        // digest (NONEwithECDSA). Keystore enforces the digest whitelist,
+        // so a key without NONE fails every handshake signature with
+        // 'Incompatible digest' (observed on-device: ERR_CONNECTION_CLOSED
+        // in the receiving browser). The SHA digests stay listed for the
+        // self-signed certificate's own SHA256withECDSA signature.
         KeyGenParameterSpec spec = new KeyGenParameterSpec.Builder(
                 KEY_ALIAS, KeyProperties.PURPOSE_SIGN)
-                .setDigests(KeyProperties.DIGEST_SHA256, KeyProperties.DIGEST_SHA384,
-                        KeyProperties.DIGEST_SHA512)
+                .setDigests(KeyProperties.DIGEST_NONE, KeyProperties.DIGEST_SHA256,
+                        KeyProperties.DIGEST_SHA384, KeyProperties.DIGEST_SHA512)
                 .setCertificateSubject(new X500Principal("CN=Firedown LAN share"))
                 .setCertificateSerialNumber(BigInteger.valueOf(System.currentTimeMillis()))
                 .setCertificateNotBefore(notBefore.getTime())
