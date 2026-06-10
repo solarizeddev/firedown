@@ -19,6 +19,7 @@ import androidx.annotation.Nullable;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
+import com.google.android.material.snackbar.Snackbar;
 import com.solarized.firedown.R;
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.data.entity.DownloadEntity;
@@ -145,9 +146,9 @@ public class LanShareDialogFragment extends BaseBottomSheetDialogFragment {
         if (mActivity == null) {
             return;
         }
-        com.google.android.material.snackbar.Snackbar.make(
+        Snackbar.make(
                 mActivity.getSnackAnchorView(), textRes,
-                com.google.android.material.snackbar.Snackbar.LENGTH_LONG).show();
+                Snackbar.LENGTH_LONG).show();
     }
 
     @Nullable

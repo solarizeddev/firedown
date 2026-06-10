@@ -1,6 +1,10 @@
 package com.solarized.firedown.phone.fragments;
 
 import android.content.Intent;
+import androidx.recyclerview.widget.ConcatAdapter;
+import android.provider.DocumentsContract;
+import android.net.Uri;
+import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.view.KeyEvent;
@@ -71,7 +75,7 @@ public class DownloadFragment extends BaseDownloadFragment implements
      *  flow — the transport-free recovery path (see DownloadBackupMirror).
      *  Registered as a field initializer so it exists before the fragment
      *  reaches STARTED, as the activity-result API requires. */
-    private final ActivityResultLauncher<android.net.Uri> mRestoreFolderPicker =
+    private final ActivityResultLauncher<Uri> mRestoreFolderPicker =
             registerForActivityResult(new ActivityResultContracts.OpenDocumentTree(),
                     this::onRestoreTreePicked);
 
@@ -190,7 +194,7 @@ public class DownloadFragment extends BaseDownloadFragment implements
         // Order = priority: the incognito hint (live state) above the restore
         // banner — and the fragment additionally keeps at most ONE visible at
         // a time (updateRestoreBannerVisibility yields to the incognito one).
-        mRecyclerView.setAdapter(new androidx.recyclerview.widget.ConcatAdapter(
+        mRecyclerView.setAdapter(new ConcatAdapter(
                 mIncognitoHeaderAdapter, mRestoreBannerAdapter, mAdapter));
         updateRestoreBannerVisibility();
         mRecyclerView.setVerticalScrollBarEnabled(true);
@@ -394,7 +398,7 @@ public class DownloadFragment extends BaseDownloadFragment implements
         // has to confirm "Use this folder". Providers that don't honour the
         // initial URI just open at their default root; the scan also accepts
         // the backup/ subfolder if that's what gets picked.
-        android.net.Uri initial = android.provider.DocumentsContract.buildDocumentUri(
+        Uri initial = DocumentsContract.buildDocumentUri(
                 "com.android.externalstorage.documents", "primary:Download/Firedown");
         try {
             mRestoreFolderPicker.launch(initial);
@@ -403,7 +407,7 @@ public class DownloadFragment extends BaseDownloadFragment implements
         }
     }
 
-    private void onRestoreTreePicked(@Nullable android.net.Uri treeUri) {
+    private void onRestoreTreePicked(@Nullable Uri treeUri) {
         if (treeUri == null) {
             return; // user backed out of the picker
         }
@@ -417,7 +421,7 @@ public class DownloadFragment extends BaseDownloadFragment implements
         } catch (SecurityException e) {
             // Non-persistable grant — the one-shot read below still works.
         }
-        android.content.Context appContext = requireContext().getApplicationContext();
+        Context appContext = requireContext().getApplicationContext();
         mDiskExecutor.execute(() -> {
             int result = DownloadBackupMirror.restoreFromTree(appContext, mDownloadDatabase, treeUri);
             View view = getView();

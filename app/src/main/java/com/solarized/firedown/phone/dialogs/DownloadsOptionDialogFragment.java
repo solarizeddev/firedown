@@ -6,6 +6,7 @@ import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.os.Bundle;
 import android.view.LayoutInflater;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -78,10 +79,10 @@ public class DownloadsOptionDialogFragment extends BaseBottomSheetDialogFragment
         // DOWN can't reach the dialog's default dismiss handling, with the
         // navigation done once, on UP.
         dialog.setOnKeyListener((d, keyCode, event) -> {
-            if (keyCode != android.view.KeyEvent.KEYCODE_BACK || !mInTools) {
+            if (keyCode != KeyEvent.KEYCODE_BACK || !mInTools) {
                 return false;
             }
-            if (event.getAction() == android.view.KeyEvent.ACTION_UP) {
+            if (event.getAction() == KeyEvent.ACTION_UP) {
                 showRoot();
             }
             return true;

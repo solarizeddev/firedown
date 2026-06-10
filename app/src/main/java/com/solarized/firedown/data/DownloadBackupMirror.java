@@ -5,12 +5,12 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.net.Uri;
-import android.provider.DocumentsContract;
+import Uri;
+import DocumentsContract;
 import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Log;
-import android.util.Pair;
+import Pair;
 
 import androidx.annotation.NonNull;
 import androidx.sqlite.db.SupportSQLiteDatabase;
@@ -19,17 +19,23 @@ import com.solarized.firedown.BuildConfig;
 import com.solarized.firedown.StoragePaths;
 
 import java.io.File;
-import java.io.InputStream;
+import androidx.preference.PreferenceManager;
+import java.util.UUID;
+import java.io.IOException;
+import java.io.FileOutputStream;
+import java.io.FileInputStream;
+import java.io.ByteArrayOutputStream;
+import InputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
-import java.util.ArrayList;
+import ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.crypto.Cipher;
-import javax.crypto.spec.GCMParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
+import Cipher;
+import GCMParameterSpec;
+import SecretKeySpec;
 
 /**
  * Sanitized backup mirror of the download database for Android Auto Backup.
@@ -160,7 +166,7 @@ public final class DownloadBackupMirror {
     private static final int GCM_TAG_BITS = 128;
     private static final String KEY_CONTEXT = "firedown-mirror-v1:";
 
-    private static javax.crypto.spec.SecretKeySpec deriveKey(@NonNull Context context) throws Exception {
+    private static SecretKeySpec deriveKey(@NonNull Context context) throws Exception {
         String ssaid = Settings.Secure.getString(
                 context.getContentResolver(), Settings.Secure.ANDROID_ID);
         if (TextUtils.isEmpty(ssaid)) {
@@ -195,7 +201,7 @@ public final class DownloadBackupMirror {
         new SecureRandom().nextBytes(iv);
         byte[] cipherText;
         try {
-            Cipher cipher = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding");
+            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
             cipher.init(Cipher.ENCRYPT_MODE, deriveKey(context),
                     new GCMParameterSpec(GCM_TAG_BITS, iv));
             cipherText = cipher.doFinal(plain);
@@ -226,8 +232,8 @@ public final class DownloadBackupMirror {
     }
 
     private static void writeMirrorBytes(@NonNull File out, @NonNull byte[] iv, @NonNull byte[] cipherText)
-            throws java.io.IOException {
-        try (java.io.FileOutputStream fos = new java.io.FileOutputStream(out, false)) {
+            throws IOException {
+        try (FileOutputStream fos = new FileOutputStream(out, false)) {
             fos.write(PUBLIC_MAGIC);
             fos.write(iv);
             fos.write(cipherText);
@@ -235,18 +241,18 @@ public final class DownloadBackupMirror {
         }
     }
 
-    private static byte[] readAllBytes(@NonNull File file) throws java.io.IOException {
+    private static byte[] readAllBytes(@NonNull File file) throws IOException {
         long length = file.length();
         if (length <= 0 || length > 64L * 1024 * 1024) {
-            throw new java.io.IOException("implausible mirror size: " + length);
+            throw new IOException("implausible mirror size: " + length);
         }
         byte[] buf = new byte[(int) length];
-        try (java.io.FileInputStream fis = new java.io.FileInputStream(file)) {
+        try (FileInputStream fis = new FileInputStream(file)) {
             int off = 0;
             while (off < buf.length) {
                 int n = fis.read(buf, off, buf.length - off);
                 if (n < 0) {
-                    throw new java.io.IOException("short read at " + off);
+                    throw new IOException("short read at " + off);
                 }
                 off += n;
             }
@@ -264,7 +270,7 @@ public final class DownloadBackupMirror {
      *  kept for the future content-URI playback fallback on Android 13+. */
     private static final String KEY_RESTORE_TREE = "restore_tree_uri";
 
-    public static void rememberRestoreTree(@NonNull Context context, @NonNull android.net.Uri treeUri) {
+    public static void rememberRestoreTree(@NonNull Context context, @NonNull Uri treeUri) {
         context.getSharedPreferences(LOCAL_PREFS, Context.MODE_PRIVATE)
                 .edit().putString(KEY_RESTORE_TREE, treeUri.toString()).apply();
     }
@@ -282,10 +288,10 @@ public final class DownloadBackupMirror {
      */
     public static int restoreFromTree(@NonNull Context context,
                                       @NonNull DownloadDatabase database,
-                                      @NonNull android.net.Uri treeUri) {
-        java.util.ArrayList<android.util.Pair<android.net.Uri, Long>> candidates = new java.util.ArrayList<>();
+                                      @NonNull Uri treeUri) {
+        ArrayList<Pair<Uri, Long>> candidates = new ArrayList<>();
         try {
-            String rootDocId = android.provider.DocumentsContract.getTreeDocumentId(treeUri);
+            String rootDocId = DocumentsContract.getTreeDocumentId(treeUri);
             collectFdbkCandidates(context, treeUri, rootDocId, candidates, true);
         } catch (Exception e) {
             Log.e(TAG, "restoreFromTree: tree scan failed", e);
@@ -352,7 +358,7 @@ public final class DownloadBackupMirror {
                         collectFdbkCandidates(context, treeUri, docId, out, false);
                     }
                 } else if (name != null && name.endsWith(".fdbk")) {
-                    out.add(new android.util.Pair<>(
+                    out.add(new Pair<>(
                             DocumentsContract.buildDocumentUriUsingTree(treeUri, docId),
                             modified));
                 }
@@ -373,10 +379,10 @@ public final class DownloadBackupMirror {
      * {@link #importMirrorDatabase}.
      */
     public static boolean decryptPublicMirror(@NonNull Context context,
-                                              @NonNull java.io.InputStream in,
+                                              @NonNull InputStream in,
                                               @NonNull File outPlain) {
         try {
-            java.io.ByteArrayOutputStream all = new java.io.ByteArrayOutputStream();
+            ByteArrayOutputStream all = new ByteArrayOutputStream();
             byte[] chunk = new byte[8192];
             int n;
             int total = 0;
@@ -397,12 +403,12 @@ public final class DownloadBackupMirror {
                     return false;
                 }
             }
-            javax.crypto.spec.GCMParameterSpec spec = new javax.crypto.spec.GCMParameterSpec(
+            GCMParameterSpec spec = new GCMParameterSpec(
                     GCM_TAG_BITS, blob, PUBLIC_MAGIC.length, GCM_IV_BYTES);
-            javax.crypto.Cipher cipher = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding");
-            cipher.init(javax.crypto.Cipher.DECRYPT_MODE, deriveKey(context), spec);
+            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+            cipher.init(Cipher.DECRYPT_MODE, deriveKey(context), spec);
             byte[] plain = cipher.doFinal(blob, headerLen, blob.length - headerLen);
-            try (java.io.FileOutputStream fos = new java.io.FileOutputStream(outPlain, false)) {
+            try (FileOutputStream fos = new FileOutputStream(outPlain, false)) {
                 fos.write(plain);
                 fos.flush();
             }
@@ -489,14 +495,14 @@ public final class DownloadBackupMirror {
 
     private static boolean detectReinstall(@NonNull Context context, @NonNull SharedPreferences localPrefs) {
         SharedPreferences defaultPrefs =
-                androidx.preference.PreferenceManager.getDefaultSharedPreferences(context);
+                PreferenceManager.getDefaultSharedPreferences(context);
         String backedUp = defaultPrefs.getString(KEY_SENTINEL_BACKED_UP, null);
         String local = localPrefs.getString(KEY_SENTINEL_LOCAL, null);
 
         boolean reinstall = backedUp != null && !backedUp.equals(local);
 
         // (Re)pair the sentinels for this install either way.
-        String sentinel = java.util.UUID.randomUUID().toString();
+        String sentinel = UUID.randomUUID().toString();
         defaultPrefs.edit().putString(KEY_SENTINEL_BACKED_UP, sentinel).apply();
         localPrefs.edit().putString(KEY_SENTINEL_LOCAL, sentinel).apply();
         return reinstall;

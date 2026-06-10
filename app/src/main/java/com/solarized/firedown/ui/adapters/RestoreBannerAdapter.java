@@ -9,6 +9,7 @@ import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.solarized.firedown.R;
+import com.google.android.material.card.MaterialCardView;
 import com.solarized.firedown.utils.SelectionStyling;
 
 /**
@@ -65,7 +66,7 @@ public class RestoreBannerAdapter extends RecyclerView.Adapter<RestoreBannerAdap
                 .inflate(R.layout.item_restore_banner, parent, false);
         // Same brand wash as the incognito-in-progress header — composed in
         // code because the tone is derived, not a resource color.
-        if (v instanceof com.google.android.material.card.MaterialCardView card) {
+        if (v instanceof MaterialCardView card) {
             card.setCardBackgroundColor(SelectionStyling.selectedCardWashOver(
                     parent.getContext(), com.google.android.material.R.attr.colorSurface));
         }

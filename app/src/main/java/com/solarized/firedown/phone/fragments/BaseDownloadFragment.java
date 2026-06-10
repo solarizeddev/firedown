@@ -38,6 +38,7 @@ import com.solarized.firedown.GlideHelper;
 import com.solarized.firedown.IntentActions;
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.R;
+import com.solarized.firedown.phone.dialogs.LanShareDialogFragment;
 import com.solarized.firedown.data.Download;
 import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.data.entity.OptionEntity;
@@ -274,8 +275,7 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment implements 
             // "Send to browser" — LAN share. Shown directly (not a nav
             // destination): its lifetime IS the share-server's lifetime, and
             // a plain DialogFragment keeps that 1:1 without nav-graph state.
-            com.solarized.firedown.phone.dialogs.LanShareDialogFragment lanShare =
-                    new com.solarized.firedown.phone.dialogs.LanShareDialogFragment();
+            LanShareDialogFragment lanShare = new LanShareDialogFragment();
             lanShare.setArguments(bundle);
             lanShare.show(getParentFragmentManager(), "lan_share");
         } else if (iconId == R.drawable.ic_edit_24) {

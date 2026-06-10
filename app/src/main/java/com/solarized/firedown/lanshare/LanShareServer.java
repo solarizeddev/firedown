@@ -1,6 +1,7 @@
 package com.solarized.firedown.lanshare;
 
 import android.text.TextUtils;
+import android.net.Uri;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -450,7 +451,7 @@ public final class LanShareServer {
         long length = file.length();
         // RFC 6266 / RFC 8187: ASCII fallback + UTF-8 form for non-ASCII names.
         String asciiName = shared.name.replaceAll("[^\\x20-\\x7E]", "_").replace("\"", "'");
-        String encodedName = android.net.Uri.encode(shared.name);
+        String encodedName = Uri.encode(shared.name);
         String head = "HTTP/1.1 200 OK\r\n"
                 + "Content-Type: " + shared.mime + "\r\n"
                 + "Content-Length: " + length + "\r\n"

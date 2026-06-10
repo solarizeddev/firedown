@@ -1583,6 +1583,17 @@ head frame.
   leaving a trail of one-commit branches.
 - Commit messages: explain the root cause and how it was verified, not just the
   change.
+- **Java: never use fully-qualified class names inline in code — add an
+  `import` and use the simple name.** Not
+  `com.solarized.firedown.phone.dialogs.LanShareDialogFragment f = …` or
+  `android.net.Uri.encode(…)`; import the class and write
+  `LanShareDialogFragment f = …` / `Uri.encode(…)`. Applies to types,
+  static calls, constants (`KeyEvent.KEYCODE_BACK`, `Snackbar.LENGTH_LONG`),
+  and generics (`ActivityResultLauncher<Uri>`). The one legitimate exception
+  is a genuine same-simple-name collision in one file (e.g.
+  `android.provider.Settings` vs a local `Settings`) — qualify only the
+  loser, and only at its use sites. Javadoc `{@link}` targets may stay
+  fully qualified.
 - **C style (all native sources under `app/src/main/cpp/`): write standard,
   explicit, readable C.** This is a general rule for every `.c`/`.h` here, not
   about any one line. In particular:

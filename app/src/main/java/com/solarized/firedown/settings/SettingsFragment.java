@@ -3,6 +3,8 @@ package com.solarized.firedown.settings;
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
+import android.provider.DocumentsContract;
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
@@ -75,7 +77,7 @@ public class SettingsFragment extends BasePreferenceFragment
     /** Settings door for the transport-free SAF restore — same flow as the
      *  Downloads empty-state button (DownloadFragment), reachable once the
      *  list is no longer empty. See DownloadBackupMirror. */
-    private final ActivityResultLauncher<android.net.Uri> mRestoreFolderPicker =
+    private final ActivityResultLauncher<Uri> mRestoreFolderPicker =
             registerForActivityResult(new ActivityResultContracts.OpenDocumentTree(),
                     this::onRestoreTreePicked);
 
@@ -536,7 +538,7 @@ public class SettingsFragment extends BasePreferenceFragment
     }
 
     private void launchRestoreFolderPicker() {
-        android.net.Uri initial = android.provider.DocumentsContract.buildDocumentUri(
+        Uri initial = DocumentsContract.buildDocumentUri(
                 "com.android.externalstorage.documents", "primary:Download/Firedown");
         try {
             mRestoreFolderPicker.launch(initial);
@@ -546,7 +548,7 @@ public class SettingsFragment extends BasePreferenceFragment
         }
     }
 
-    private void onRestoreTreePicked(@Nullable android.net.Uri treeUri) {
+    private void onRestoreTreePicked(@Nullable Uri treeUri) {
         if (treeUri == null) {
             return; // user backed out of the picker
         }
@@ -557,7 +559,7 @@ public class SettingsFragment extends BasePreferenceFragment
         } catch (SecurityException e) {
             // Non-persistable grant — the one-shot read below still works.
         }
-        final android.content.Context appContext = requireContext().getApplicationContext();
+        final Context appContext = requireContext().getApplicationContext();
         mDiskExecutor.execute(() -> {
             int result = DownloadBackupMirror.restoreFromTree(appContext, mDownloadDatabase, treeUri);
             View view = getView();
