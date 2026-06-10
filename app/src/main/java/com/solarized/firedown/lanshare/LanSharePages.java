@@ -20,59 +20,68 @@ final class LanSharePages {
     private LanSharePages() {
     }
 
+    // Palette + type mirror the firedown.app marketing site (style.css):
+    // warm off-white content background, the signature coral brand gradient
+    // (#d44e86 → #f06560 → #f5a97a), IBM Plex Sans / Mono with a system
+    // fallback (the LAN receiver may be offline, so the @import degrades
+    // gracefully).
     private static final String STYLE =
             "<style>"
-            + "body{background:#141218;color:#e6e0e9;font-family:Roboto,system-ui,sans-serif;"
+            + "@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,600;1,600&display=swap');"
+            + "*{box-sizing:border-box}"
+            + "body{background:#f7f3ef;color:#1e1c2e;font-family:'IBM Plex Sans',system-ui,sans-serif;"
             + "margin:0;min-height:100vh;display:flex;flex-direction:column;align-items:center;"
             + "padding:0 20px 40px}"
-            // Brand orange (#f0716c) is the dominant surface: a full-width hero
-            // band carries the logo, the same way the marketing site leads with
-            // the brand colour.
-            + ".hero{width:100%;background:linear-gradient(135deg,#f0716c,#ff857f);"
-            + "display:flex;flex-direction:column;align-items:center;justify-content:center;"
-            + "padding:40px 20px 36px;margin-bottom:-20px}"
+            // Signature coral gradient hero with the site's radial glow overlay.
+            + ".hero{width:100%;position:relative;"
+            + "background:radial-gradient(ellipse at 72% 28%,rgba(255,255,255,.14),transparent 60%),"
+            + "linear-gradient(150deg,#d44e86 0%,#f06560 55%,#f5a97a 100%);"
+            + "display:flex;align-items:center;justify-content:center;"
+            + "padding:38px 20px 50px;margin-bottom:-26px}"
             + ".brand{display:flex;align-items:center;gap:12px}"
             + ".flame{width:40px;height:40px;border-radius:11px;background:#fff;"
-            + "display:flex;align-items:center;justify-content:center;color:#f0716c;font-weight:800;font-size:24px}"
-            + ".brand span{font-size:22px;font-weight:700;letter-spacing:.4px;color:#fff}"
-            + ".card{width:100%;max-width:460px;text-align:center;background:#1b1a1f;"
-            + "border:1px solid #2c2a31;border-radius:22px;padding:30px 26px;"
-            + "box-shadow:0 14px 40px rgba(0,0,0,.45)}"
-            + "h1{font-weight:600;font-size:21px;margin:4px 0 8px;color:#fff}"
-            + "p{color:#a39ba6;font-size:13.5px;line-height:1.6;margin:0 0 24px}"
-            + "input[type=text]{width:180px;text-align:center;letter-spacing:12px;font-size:28px;"
-            + "background:#211f26;border:2px solid #3a3640;border-radius:14px;color:#fff;"
-            + "padding:13px 0 13px 12px;outline:none;margin-bottom:24px}"
-            + "input[type=text]:focus{border-color:#f0716c}"
-            + "button,.dl{background:#f0716c;color:#fff;font-weight:600;border:0;border-radius:24px;"
-            + "padding:14px 40px;font-size:15px;cursor:pointer;text-decoration:none;display:inline-block;"
-            + "box-shadow:0 4px 14px rgba(240,113,108,.4)}"
-            + "button:hover,.dl:hover{background:#ff857f}"
-            + ".file{display:flex;align-items:center;gap:16px;text-align:left;background:#211f26;"
-            + "border:1px solid #2c2a31;border-radius:16px;padding:16px 18px;margin:0 0 14px}"
+            + "display:flex;align-items:center;justify-content:center;color:#f06560;font-weight:700;font-size:24px}"
+            + ".brand span{font-size:22px;font-weight:600;letter-spacing:-.01em;color:#fff}"
+            + ".card{width:100%;max-width:460px;text-align:center;background:#fff;"
+            + "border-radius:24px;padding:32px 26px;box-shadow:0 16px 60px rgba(30,28,46,.16)}"
+            + ".eyebrow{font-family:'IBM Plex Mono',monospace;font-size:.7rem;font-weight:600;"
+            + "letter-spacing:.18em;text-transform:uppercase;color:#d44e86;margin-bottom:10px}"
+            + "h1{font-weight:600;font-size:22px;margin:4px 0 8px;color:#1e1c2e;letter-spacing:-.02em}"
+            + "p{color:#4a475e;font-size:13.5px;line-height:1.6;margin:0 0 24px}"
+            + "input[type=text]{width:190px;text-align:center;letter-spacing:12px;font-size:28px;"
+            + "font-family:'IBM Plex Mono',monospace;background:#f7f3ef;border:2px solid rgba(30,28,46,.12);"
+            + "border-radius:14px;color:#1e1c2e;padding:13px 0 13px 12px;outline:none;margin-bottom:24px}"
+            + "input[type=text]:focus{border-color:#f06560}"
+            + "button,.dl{background:linear-gradient(135deg,#d44e86,#f06560);color:#fff;font-weight:600;"
+            + "border:0;border-radius:24px;padding:14px 40px;font-size:15px;cursor:pointer;"
+            + "text-decoration:none;display:inline-block;box-shadow:0 8px 28px rgba(212,78,134,.32)}"
+            + "button:hover,.dl:hover{transform:translateY(-2px)}"
+            + ".file{display:flex;align-items:center;gap:16px;text-align:left;background:#faf7f4;"
+            + "border:1px solid rgba(30,28,46,.09);border-radius:16px;padding:16px 18px;margin:0 0 14px}"
             + ".file .ic{width:54px;height:54px;border-radius:12px;"
-            + "background:linear-gradient(135deg,#f0716c,#ff857f);"
+            + "background:linear-gradient(135deg,#d44e86,#f06560);"
             + "flex:none;display:flex;align-items:center;justify-content:center;font-size:24px}"
-            + ".file .meta{flex:1;min-width:0}.file .n{font-size:15px;color:#fff;word-break:break-word}"
-            + ".file .s{font-size:12px;color:#a39ba6;margin-top:3px}"
+            + ".file .meta{flex:1;min-width:0}.file .n{font-size:15px;color:#1e1c2e;word-break:break-word}"
+            + ".file .s{font-size:12px;color:#8a8898;margin-top:3px;font-family:'IBM Plex Mono',monospace}"
             + ".file .dl{padding:10px 22px;font-size:13.5px;flex:none}"
-            + ".foot{color:#6f6879;font-size:11.5px;margin-top:28px;line-height:1.6}"
-            + ".lock{color:#f0716c}.err{color:#ff857f;font-size:13px;margin:-12px 0 18px;font-weight:500}"
+            + ".foot{color:#8a8898;font-size:11.5px;margin-top:28px;line-height:1.6}"
+            + ".lock{color:#d44e86}.err{color:#c0436b;font-size:13px;margin:-12px 0 18px;font-weight:600}"
             // "Get Firedown" cross-promo: a receiver on a plain browser (esp.
             // Android, without the app) can grab it; on a device that then has
             // Firedown the QR resolves in-app next time. Secondary styling so
             // it never competes with the Download CTA.
-            + ".get{display:block;margin-top:22px;color:#f0716c;font-size:13px;font-weight:600;"
-            + "text-decoration:none}.get span{color:#a39ba6;font-weight:400}"
+            + ".get{display:block;margin-top:22px;color:#d44e86;font-size:13px;font-weight:600;"
+            + "text-decoration:none}.get span{color:#8a8898;font-weight:400}"
             + "</style>";
 
-    /** Official site — hosts the APK and the store links. */
-    private static final String WEBSITE_URL = "https://firedown.app";
+    /** Official site — hosts the download and the store links (F-Droid,
+     *  Zapstore, Obtainium, direct APK). */
+    private static final String WEBSITE_URL = "https://firedown.app/install";
 
     private static String shell(String inner) {
         return "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"utf-8\">"
                 + "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">"
-                + "<meta name=\"theme-color\" content=\"#f0716c\">"
+                + "<meta name=\"theme-color\" content=\"#f06560\">"
                 + "<title>Firedown</title>" + STYLE + "</head><body>"
                 + "<div class=\"hero\"><div class=\"brand\"><div class=\"flame\">F</div>"
                 + "<span>Firedown</span></div></div>"
