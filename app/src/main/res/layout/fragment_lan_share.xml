@@ -345,13 +345,16 @@
 
     </androidx.core.widget.NestedScrollView>
 
+    <!-- Pinned footer bar: tonal surface so it reads as a fixed bar over
+         the scrolling content, not a floating caption. -->
     <TextView
         android:id="@+id/lan_share_footer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="?attr/colorSurfaceContainerHigh"
         android:gravity="center"
         android:paddingHorizontal="16dp"
-        android:paddingTop="10dp"
+        android:paddingTop="12dp"
         android:paddingBottom="16dp"
         android:text="@string/lan_share_footer"
         android:textAppearance="?attr/textAppearanceBodySmall"
