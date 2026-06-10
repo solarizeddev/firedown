@@ -20,10 +20,13 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PushbackInputStream;
+import java.io.SequenceInputStream;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketAddress;
+import java.net.SocketException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
@@ -95,6 +98,164 @@ public final class LanShareServer {
             this.name = name;
             this.file = file;
             this.mime = TextUtils.isEmpty(mime) ? "application/octet-stream" : mime;
+        }
+    }
+
+    /**
+     * A connected socket whose input stream replays one already-consumed
+     * byte before the live stream — the transport sniff reads the first
+     * byte to tell TLS from HTTP, and the layered SSLSocket needs to see
+     * the complete ClientHello including it. Delegates everything else.
+     */
+    private static final class PrereadSocket extends Socket {
+        private final Socket mDelegate;
+        private final InputStream mInput;
+
+        PrereadSocket(@NonNull Socket delegate, int firstByte) throws IOException {
+            this.mDelegate = delegate;
+            this.mInput = new SequenceInputStream(
+                    new ByteArrayInputStream(new byte[]{(byte) firstByte}),
+                    delegate.getInputStream());
+        }
+
+        @Override
+        public InputStream getInputStream() {
+            return mInput;
+        }
+
+        @Override
+        public OutputStream getOutputStream() throws IOException {
+            return mDelegate.getOutputStream();
+        }
+
+        @Override
+        public synchronized void close() throws IOException {
+            mDelegate.close();
+        }
+
+        @Override
+        public InetAddress getInetAddress() {
+            return mDelegate.getInetAddress();
+        }
+
+        @Override
+        public InetAddress getLocalAddress() {
+            return mDelegate.getLocalAddress();
+        }
+
+        @Override
+        public int getPort() {
+            return mDelegate.getPort();
+        }
+
+        @Override
+        public int getLocalPort() {
+            return mDelegate.getLocalPort();
+        }
+
+        @Override
+        public SocketAddress getRemoteSocketAddress() {
+            return mDelegate.getRemoteSocketAddress();
+        }
+
+        @Override
+        public SocketAddress getLocalSocketAddress() {
+            return mDelegate.getLocalSocketAddress();
+        }
+
+        @Override
+        public boolean isConnected() {
+            return mDelegate.isConnected();
+        }
+
+        @Override
+        public boolean isBound() {
+            return mDelegate.isBound();
+        }
+
+        @Override
+        public boolean isClosed() {
+            return mDelegate.isClosed();
+        }
+
+        @Override
+        public synchronized void setSoTimeout(int timeout) throws SocketException {
+            mDelegate.setSoTimeout(timeout);
+        }
+
+        @Override
+        public synchronized int getSoTimeout() throws SocketException {
+            return mDelegate.getSoTimeout();
+        }
+
+        @Override
+        public void setTcpNoDelay(boolean on) throws SocketException {
+            mDelegate.setTcpNoDelay(on);
+        }
+
+        @Override
+        public boolean getTcpNoDelay() throws SocketException {
+            return mDelegate.getTcpNoDelay();
+        }
+
+        @Override
+        public void setSoLinger(boolean on, int linger) throws SocketException {
+            mDelegate.setSoLinger(on, linger);
+        }
+
+        @Override
+        public int getSoLinger() throws SocketException {
+            return mDelegate.getSoLinger();
+        }
+
+        @Override
+        public void setKeepAlive(boolean on) throws SocketException {
+            mDelegate.setKeepAlive(on);
+        }
+
+        @Override
+        public boolean getKeepAlive() throws SocketException {
+            return mDelegate.getKeepAlive();
+        }
+
+        @Override
+        public synchronized void setSendBufferSize(int size) throws SocketException {
+            mDelegate.setSendBufferSize(size);
+        }
+
+        @Override
+        public synchronized int getSendBufferSize() throws SocketException {
+            return mDelegate.getSendBufferSize();
+        }
+
+        @Override
+        public synchronized void setReceiveBufferSize(int size) throws SocketException {
+            mDelegate.setReceiveBufferSize(size);
+        }
+
+        @Override
+        public synchronized int getReceiveBufferSize() throws SocketException {
+            return mDelegate.getReceiveBufferSize();
+        }
+
+        @Override
+        public void shutdownInput() throws IOException {
+            mDelegate.shutdownInput();
+        }
+
+        @Override
+        public void shutdownOutput() throws IOException {
+            mDelegate.shutdownOutput();
+        }
+
+        @Override
+        public boolean isInputShutdown() {
+            return mDelegate.isInputShutdown();
+        }
+
+        @Override
+        public boolean isOutputShutdown() {
+            return mDelegate.isOutputShutdown();
         }
     }
 
@@ -343,8 +504,15 @@ public final class LanShareServer {
                     // Client speaks TLS, we can't — nothing useful to say.
                     return;
                 }
+                // Android's SSLSocketFactory lacks the JDK's
+                // createSocket(Socket, InputStream consumed, boolean)
+                // overload, so the peeked byte is handed back through a
+                // delegating socket whose getInputStream() prepends it —
+                // the layered TLS socket reads the full ClientHello.
+                Socket preread = new PrereadSocket(client, firstByte);
                 SSLSocket sslSocket = (SSLSocket) mSslContext.getSocketFactory().createSocket(
-                        client, new ByteArrayInputStream(new byte[]{(byte) firstByte}), true);
+                        preread, client.getInetAddress().getHostAddress(), client.getPort(),
+                        true);
                 sslSocket.setUseClientMode(false);
                 socket = sslSocket;
                 requestIn = sslSocket.getInputStream();
