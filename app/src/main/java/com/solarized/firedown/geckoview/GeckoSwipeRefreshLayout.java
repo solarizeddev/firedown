@@ -116,7 +116,8 @@ public class GeckoSwipeRefreshLayout extends SwipeRefreshLayout {
     //
     // When pull-to-refresh is NOT enabled (isEnabled=false): we are acting as a plain
     // container. Delegate to super so the NestedScrollingParent chain works correctly
-    // for GeckoToolbarBehavior and BottomNavigationBehavior which depend on it.
+    // for GeckoToolbarBehavior which depends on it. (The bottom bar no longer listens to
+    // nested scrolls — BottomNavigationBehavior is slaved to the toolbar's translation.)
     //
     // The previous code had this inverted (returning false when !isEnabled), which blocked
     // nested scrolls exactly when P2R was disabled — the opposite of correct behaviour.

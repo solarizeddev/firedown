@@ -17,6 +17,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
+import android.view.accessibility.AccessibilityManager;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResultLauncher;
@@ -54,7 +55,6 @@ import com.solarized.firedown.geckoview.GeckoComponents;
 import com.solarized.firedown.geckoview.GeckoState;
 import com.solarized.firedown.geckoview.GeckoSwipeRefreshLayout;
 import com.solarized.firedown.geckoview.GeckoToolbarBehavior;
-import com.solarized.firedown.geckoview.toolbar.BottomNavigationBehavior;
 import com.solarized.firedown.geckoview.NestedGeckoView;
 import com.solarized.firedown.geckoview.NestedGeckoViewBehavior;
 import com.solarized.firedown.geckoview.media.GeckoMediaPlaybackService;
@@ -137,6 +137,34 @@ public class BrowserFragment extends BaseBrowserFragment
     private boolean mRecreatingSession = false;
 
     private UiState mUiState = UiState.INIT;
+
+    // ── Toolbar scroll policy (Fenix ToolbarBehaviorController equivalent) ───────────────────────
+    //
+    // Fenix forces the dynamic toolbar visible and disables scroll-to-hide in a handful of
+    // states; we mirror them through one decision point, applyToolbarScrollPolicy(), fed by
+    // these flags (plus mUiState). See that method for the policy itself.
+
+    /** True between onStart (page load begins) and onStop (load finished/halted). */
+    private boolean mPageLoading = false;
+
+    /** True while the soft keyboard is visible (tracked via the root window-insets listener). */
+    private boolean mImeVisible = false;
+
+    /**
+     * True while TalkBack-style touch exploration is active. Scroll-to-hide chrome is hostile
+     * to screen-reader users (Fenix pins the toolbar via shouldUseFixedTopToolbar), so the
+     * bars are pinned visible for the duration.
+     */
+    private boolean mTouchExplorationEnabled = false;
+
+    private AccessibilityManager mAccessibilityManager;
+
+    private final AccessibilityManager.TouchExplorationStateChangeListener
+            mTouchExplorationListener = enabled -> {
+        mTouchExplorationEnabled = enabled;
+        expandBars();
+        applyToolbarScrollPolicy();
+    };
 
     // ── Views ─────────────────────────────────────────────────────────────────────────────────────
 
@@ -296,9 +324,7 @@ public class BrowserFragment extends BaseBrowserFragment
         if (mAutoCompleteView.getVisibility() != View.VISIBLE) return false;
         hideKeyboard(mAutoCompleteEditText);
         mBrowserDownloadViewModel.update();
-        if (mUiState == UiState.BROWSING) {
-            mGeckoToolbar.enableScrolling();
-        }
+        applyToolbarScrollPolicy();
         mGeckoToolbar.clearFocus();
         mGeckoToolbar.startAnimation(false);
         mAutoCompleteView.updateVisibility(false);
@@ -331,7 +357,10 @@ public class BrowserFragment extends BaseBrowserFragment
         mGeckoView          = v.findViewById(R.id.geckoview);
         mGeckoToolbar       = v.findViewById(R.id.toolbar_layout);
 
-        mGeckoToolbar.disableScrolling();
+        // NOTE: no disableScrolling() here — at this point the toolbar has no behavior yet
+        // (installed below), so the old call was a silent no-op. GeckoToolbarBehavior now
+        // starts with isScrollEnabled=false (upstream default); applyToolbarScrollPolicy()
+        // flips it once browsing actually starts.
         mGeckoToolbar.setOnClearFocusListener(this);
         mGeckoToolbar.setListener(this);
 
@@ -419,8 +448,31 @@ public class BrowserFragment extends BaseBrowserFragment
             Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars()
                     | WindowInsetsCompat.Type.displayCutout());
             view.setPadding(insets.left, insets.top, insets.right, insets.bottom);
+
+            // Keyboard tracking for the toolbar scroll policy (Fenix parity): while the IME
+            // is up the bars must not be able to scroll away mid-typing, and when it closes
+            // the bars are brought back (Fenix's setupShowingToolbarsAfterKeyboardHidden).
+            // Fenix doesn't force-expand on IME *open* — a form field at the bottom of a
+            // scrolled page shouldn't lose more height to chrome — so neither do we.
+            boolean imeVisible = windowInsets.isVisible(WindowInsetsCompat.Type.ime());
+            if (imeVisible != mImeVisible) {
+                mImeVisible = imeVisible;
+                if (!imeVisible) {
+                    expandBars();
+                }
+                applyToolbarScrollPolicy();
+            }
             return WindowInsetsCompat.CONSUMED;
         });
+
+        // Pin the bars while touch exploration (TalkBack et al.) is on — a toolbar that
+        // hides on scroll is unusable under a screen reader (same rationale as Fenix's
+        // shouldUseFixedTopToolbar). Listener unregistered in the ON_DESTROY block below.
+        mAccessibilityManager = mActivity.getSystemService(AccessibilityManager.class);
+        if (mAccessibilityManager != null) {
+            mTouchExplorationEnabled = mAccessibilityManager.isTouchExplorationEnabled();
+            mAccessibilityManager.addTouchExplorationStateChangeListener(mTouchExplorationListener);
+        }
 
         // Download badge: subscribe to both count streams and gate on
         // mIsIncognitoThemed (same pattern as the tab-count observers
@@ -758,6 +810,10 @@ public class BrowserFragment extends BaseBrowserFragment
             if (Lifecycle.Event.ON_DESTROY.equals(event)) {
                 Log.d(TAG, "onDestroy");
                 mGeckoObserverRegistry.unregister(BrowserFragment.this);
+                if (mAccessibilityManager != null) {
+                    mAccessibilityManager
+                            .removeTouchExplorationStateChangeListener(mTouchExplorationListener);
+                }
             } else if (Lifecycle.Event.ON_CREATE.equals(event)) {
                 Log.d(TAG, "onCreate");
                 mGeckoObserverRegistry.register(BrowserFragment.this);
@@ -793,6 +849,12 @@ public class BrowserFragment extends BaseBrowserFragment
                 // or return from Settings/Downloads), ensureSessionConnected()
                 // re-attaches the session that was released in onDestroyView().
                 ensureSessionConnected();
+
+                // Returning to the app always brings the bars back (Fenix dispatches
+                // showToolbarAsExpanded in onResume) — half-hidden chrome from the
+                // previous session's last scroll shouldn't greet the user.
+                expandBars();
+                applyToolbarScrollPolicy();
             }
         });
 
@@ -934,7 +996,7 @@ public class BrowserFragment extends BaseBrowserFragment
         // instant fallback (no animation); harmless, and never a regression.
         mDownloadButton.show();
         mGeckoView.setVisibility(View.VISIBLE);
-        mGeckoToolbar.enableScrolling();
+        applyToolbarScrollPolicy();
         mGeckoToolbar.onLocationChange(geckoState.getEntityUri());
         mBottomNavigationBar.show();
     }
@@ -949,9 +1011,12 @@ public class BrowserFragment extends BaseBrowserFragment
         GeckoState geckoState = peekCurrentGeckoState();
         if (geckoState == null)
             return;
+        // The toolbar IS the find bar — it must be fully on-screen before search starts
+        // (it may be half-hidden from the scroll that preceded opening the menu).
+        expandBars();
         mUiState = UiState.SEARCH;
         geckoState.setSearchMode(true);
-        mGeckoToolbar.disableScrolling();
+        applyToolbarScrollPolicy();
         mGeckoToolbar.enableSearch();
         mBottomNavigationBar.setVisibility(View.GONE);
         mDownloadButton.hide();
@@ -976,9 +1041,9 @@ public class BrowserFragment extends BaseBrowserFragment
             geckoState.setSearchMode(false);
         }
 
-        // Always restore UI even if geckoState is null
+        // Always restore UI even if geckoState is null. Scroll policy is re-applied by
+        // enterBrowsing() below once mUiState is BROWSING again.
         mGeckoToolbar.clearText();
-        mGeckoToolbar.enableScrolling();
         mBottomNavigationBar.setVisibility(View.VISIBLE);
         mBottomNavigationBar.show();
         mDownloadButton.show();
@@ -1293,7 +1358,26 @@ public class BrowserFragment extends BaseBrowserFragment
     }
 
     @Override
+    public void onStart(GeckoState geckoState) {
+        // Page load started (foreground tab only — GeckoComponents gates START on
+        // isCurrentGeckoState). Mirror Fenix's ToolbarBehaviorController: expand the
+        // bars and keep them pinned for the whole load, so the user always has the
+        // URL/progress in view and a half-hidden toolbar never carries across a
+        // navigation. Scrolling is re-enabled in onStop.
+        mPageLoading = true;
+        expandBars();
+        applyToolbarScrollPolicy();
+    }
+
+    @Override
     public void onStop(GeckoState geckoState) {
+        // Load finished — scroll-to-hide may resume (Fenix enables scrolling only when
+        // content.loading flips false). Runs before the autocomplete early-return below:
+        // that gate is about the *progress UI*, not the scroll policy, and the policy
+        // itself refuses to enable while the keyboard is up.
+        mPageLoading = false;
+        applyToolbarScrollPolicy();
+
         // Page finished (or was halted by the engine). The loading indicator
         // is otherwise cleared only by onProgressChange(100); if a page stalls
         // mid-load or its final progress tick never arrives, the stop button
@@ -1368,16 +1452,10 @@ public class BrowserFragment extends BaseBrowserFragment
 
     @Override
     public void onShowDynamicToolbar() {
-        CoordinatorLayout.LayoutParams topParams =
-                (CoordinatorLayout.LayoutParams) mGeckoToolbar.getLayoutParams();
-        if (topParams.getBehavior() instanceof GeckoToolbarBehavior) {
-            ((GeckoToolbarBehavior) topParams.getBehavior()).forceExpand(mGeckoToolbar);
-        }
-        CoordinatorLayout.LayoutParams bottomParams =
-                (CoordinatorLayout.LayoutParams) mBottomNavigationBar.getLayoutParams();
-        if (bottomParams.getBehavior() instanceof BottomNavigationBehavior) {
-            ((BottomNavigationBehavior) bottomParams.getBehavior()).forceExpand(mBottomNavigationBar);
-        }
+        // Gecko asks the app to show the dynamic toolbar fully expanded (e.g. content/IME
+        // needs the space declared via setDynamicToolbarMaxHeight). The bottom bar follows
+        // the toolbar through BottomNavigationBehavior — no separate call needed.
+        expandBars();
     }
 
     @Override
@@ -2177,6 +2255,13 @@ public class BrowserFragment extends BaseBrowserFragment
         // Apply incognito theme BEFORE enterBrowsing so peekCurrentGeckoState works
         applyBrowserIncognitoTheme(geckoState.getGeckoStateEntity().isIncognito());
         enterBrowsing(geckoState);
+        // Every tab switch / (re)connect lands here — bring the bars back (Fenix's
+        // handleTabSelected → browserToolbar.expand()) and reset the load flag: the
+        // new tab's own START/STOP events re-assert it, and enterBrowsing() above
+        // early-returns when already BROWSING so it can't be relied on for this.
+        mPageLoading = false;
+        expandBars();
+        applyToolbarScrollPolicy();
         Log.d(TAG, "openSession end: id=" + geckoState.getEntityId());
     }
 
@@ -2250,7 +2335,7 @@ public class BrowserFragment extends BaseBrowserFragment
         mGeckoObserverRegistry.register(this);
         mDownloadButton.show();
         mGeckoView.setVisibility(View.VISIBLE);
-        mGeckoToolbar.enableScrolling();
+        applyToolbarScrollPolicy();
         mGeckoToolbar.onLocationChange(geckoState.getEntityUri());
         mBottomNavigationBar.show();
     }
@@ -2261,18 +2346,15 @@ public class BrowserFragment extends BaseBrowserFragment
     // ─────────────────────────────────────────────────────────────────────────────────────────────
 
     private void expandBrowserView() {
+        // Only the toolbar is force-collapsed; the bottom bar is slaved to it
+        // (BottomNavigationBehavior) and both are GONE for the whole fullscreen
+        // stay anyway — visibility is what hides them, translation is bookkeeping.
         CoordinatorLayout.LayoutParams topParams =
                 (CoordinatorLayout.LayoutParams) mGeckoToolbar.getLayoutParams();
         if (topParams.getBehavior() instanceof GeckoToolbarBehavior) {
             ((GeckoToolbarBehavior) topParams.getBehavior()).forceCollapse(mGeckoToolbar);
         }
         mGeckoToolbar.setVisibility(View.GONE);
-
-        CoordinatorLayout.LayoutParams bottomParams =
-                (CoordinatorLayout.LayoutParams) mBottomNavigationBar.getLayoutParams();
-        if (bottomParams.getBehavior() instanceof BottomNavigationBehavior) {
-            ((BottomNavigationBehavior) bottomParams.getBehavior()).forceCollapse(mBottomNavigationBar);
-        }
         mBottomNavigationBar.setVisibility(View.GONE);
 
         CoordinatorLayout.LayoutParams srlParams =
@@ -2289,18 +2371,15 @@ public class BrowserFragment extends BaseBrowserFragment
     }
 
     private void collapseBrowserView() {
+        // Both bars VISIBLE first, then expand the toolbar — the bottom bar re-syncs from
+        // the toolbar's translation on its layout pass (BottomNavigationBehavior.onLayoutChild)
+        // and follows the expand animation frame-by-frame.
         mGeckoToolbar.setVisibility(View.VISIBLE);
+        mBottomNavigationBar.setVisibility(View.VISIBLE);
         CoordinatorLayout.LayoutParams topParams =
                 (CoordinatorLayout.LayoutParams) mGeckoToolbar.getLayoutParams();
         if (topParams.getBehavior() instanceof GeckoToolbarBehavior) {
             ((GeckoToolbarBehavior) topParams.getBehavior()).forceExpand(mGeckoToolbar);
-        }
-
-        mBottomNavigationBar.setVisibility(View.VISIBLE);
-        CoordinatorLayout.LayoutParams bottomParams =
-                (CoordinatorLayout.LayoutParams) mBottomNavigationBar.getLayoutParams();
-        if (bottomParams.getBehavior() instanceof BottomNavigationBehavior) {
-            ((BottomNavigationBehavior) bottomParams.getBehavior()).forceExpand(mBottomNavigationBar);
         }
 
         CoordinatorLayout.LayoutParams srlParams =
@@ -2311,6 +2390,47 @@ public class BrowserFragment extends BaseBrowserFragment
         mSwipeRefreshLayout.requestLayout();
 
         mGeckoView.setDynamicToolbarMaxHeight(mGeckoToolbarSize + mBottomBarSize);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────────────────────────
+    // Toolbar scroll policy (Fenix ToolbarBehaviorController equivalent)
+    // ─────────────────────────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Animates the toolbar fully on-screen; the bottom bar follows through its slaved
+     * {@code BottomNavigationBehavior} (and the engine view re-clips via
+     * {@link NestedGeckoViewBehavior}), so this is the single force-show entry point.
+     *
+     * <p>No-op in fullscreen: both bars are GONE and the engine-parent behavior is detached
+     * there — {@link #collapseBrowserView()} owns the restore on exit.
+     */
+    private void expandBars() {
+        if (mUiState == UiState.FULL_SCREEN) return;
+        CoordinatorLayout.LayoutParams topParams =
+                (CoordinatorLayout.LayoutParams) mGeckoToolbar.getLayoutParams();
+        if (topParams.getBehavior() instanceof GeckoToolbarBehavior) {
+            ((GeckoToolbarBehavior) topParams.getBehavior()).forceExpand(mGeckoToolbar);
+        }
+    }
+
+    /**
+     * The one decision point for whether the bars may scroll away — the conditions Fenix
+     * spreads across ToolbarBehaviorController (loading), BrowserToolbarComposable
+     * (keyboard), and shouldUseFixedTopToolbar (accessibility). Call after every change to
+     * one of the inputs; the non-scrollable-page case needs no policy because
+     * {@code GeckoToolbarBehavior.shouldScroll} already gates on
+     * {@code InputResultDetail.canScrollToTop/Bottom}.
+     */
+    private void applyToolbarScrollPolicy() {
+        boolean allowHide = mUiState == UiState.BROWSING
+                && !mPageLoading
+                && !mImeVisible
+                && !mTouchExplorationEnabled;
+        if (allowHide) {
+            mGeckoToolbar.enableScrolling();
+        } else {
+            mGeckoToolbar.disableScrolling();
+        }
     }
 
     // ─────────────────────────────────────────────────────────────────────────────────────────────

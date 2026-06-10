@@ -2,172 +2,118 @@ package com.solarized.firedown.geckoview.toolbar;
 
 import android.content.Context;
 import android.util.AttributeSet;
-import android.view.MotionEvent;
 import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
-import androidx.core.view.ViewCompat;
 
-import com.solarized.firedown.geckoview.BrowserGestureDetector;
-import com.solarized.firedown.geckoview.NestedGeckoView;
-import com.solarized.firedown.geckoview.ViewPosition;
-import com.solarized.firedown.geckoview.YTranslator;
-import com.solarized.firedown.utils.FindViewUtils;
+import com.solarized.firedown.geckoview.GeckoToolbar;
+
+import java.util.List;
 
 
 /**
- * {@link CoordinatorLayout.Behavior} for the bottom navigation bar ({@link BottomNavigationBar}).
+ * {@link CoordinatorLayout.Behavior} for the bottom navigation bar ({@link BottomNavigationBar}):
+ * a passive FOLLOWER of the top toolbar, not an independent scroll listener.
  *
- * <p>Matches upstream {@code EngineViewScrollingGesturesBehavior} from android-components.
- * See {@code GeckoToolbarBehavior} for a full description of the changes vs the previous
- * Firedown implementation — both behaviors are kept in sync with each other.
+ * <p>Matches Fenix's {@code NavbarToolbarSyncBehavior} (the top-toolbar + bottom-navbar
+ * configuration of the 2024+ toolbar redesign): only the top toolbar owns scroll detection
+ * ({@code GeckoToolbarBehavior} — gesture detector, nested-scroll handshake, snap logic), and
+ * the bottom bar mirrors its translation through a CoordinatorLayout dependency.
  *
- * <p>Summary of upstream alignment:
- * <ul>
- *   <li>{@code onNestedPreScroll} removed — translation driven by BrowserGestureDetector only.
- *   <li>{@code shouldScroll} requires {@code INPUT_HANDLED} (no UNKNOWN optimism).
- *   <li>{@code scrollConfirmed} guard removed — snap unconditionally on gesture end.
- *   <li>{@code startNestedScroll} no longer force-expands on {@code isTouchUnhandled}.
- *   <li>{@code onVerticalScroll} simplified — no force-expand fallback.
- * </ul>
+ * <p><b>Why this replaced the previous gesture-driven implementation.</b> The old
+ * {@code BottomNavigationBehavior} was a full copy of {@code EngineViewScrollingGesturesBehavior}
+ * with its own {@code BrowserGestureDetector} and {@code YTranslator}. Two independent
+ * behaviors see the same gesture but snap on their <em>own</em> half-height: with unequal bar
+ * heights (the bottom bar self-pads with the navigation-bar inset, so its runtime height can
+ * exceed {@code app_bar_size}) a drag can end past the toolbar's halfway point but short of the
+ * bottom bar's — one bar snaps open while the other snaps closed, a state Fenix's master/slave
+ * design makes impossible. It also doubled every force-show call site (fullscreen,
+ * {@code onShowDynamicToolbar}, …). Don't reintroduce a second gesture listener here.
+ *
+ * <p><b>Proportional, not a raw mirror.</b> Fenix slaves with
+ * {@code child.translationY = -toolbar.translationY}, which assumes equal heights (its navbar
+ * over-translates harmlessly when the toolbar is taller, but would never fully hide if the
+ * toolbar were the shorter bar). We sync on the <em>hidden fraction</em> instead:
+ * {@code child.translationY = (-toolbar.translationY / toolbarHeight) * childHeight}, so both
+ * bars reach fully-hidden/fully-visible together regardless of heights, and
+ * {@code NestedGeckoViewBehavior}'s clipping ({@code topTranslation - bottomTranslation})
+ * lands exactly on {@code -dynamicToolbarMaxHeight} when hidden.
+ *
+ * <p>{@link #onLayoutChild} re-syncs from the toolbar's current state on every layout pass —
+ * a bar coming back from GONE (fullscreen exit, find-in-page exit) would otherwise keep a
+ * stale translation until the toolbar next moves, because {@code onDependentViewChanged}
+ * only fires on dependency <em>changes</em>.
  */
 public final class BottomNavigationBehavior
-        extends CoordinatorLayout.Behavior<BottomNavigationBar>
-        implements BrowserGestureDetector.BrowserGestureListener {
+        extends CoordinatorLayout.Behavior<BottomNavigationBar> {
 
     @SuppressWarnings("unused")
     private static final String TAG = BottomNavigationBehavior.class.getName();
 
-    private final YTranslator           yTranslator;
-    private final BrowserGestureDetector mBrowserGestureDetector;
-
-    private NestedGeckoView    mNestedGeckoView;
-    private BottomNavigationBar mBottomNavigationBar;
-
-    private boolean shouldSnapAfterScroll = true;
-    private boolean isScrollEnabled       = true;
-    private boolean startedScroll         = false;
-
 
     public BottomNavigationBehavior(@Nullable Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
-        yTranslator             = new YTranslator(ViewPosition.BOTTOM);
-        mBrowserGestureDetector = new BrowserGestureDetector(context, this);
     }
 
     // ── CoordinatorLayout.Behavior ────────────────────────────────────────────────────────────────
 
     @Override
+    public boolean layoutDependsOn(@NonNull CoordinatorLayout parent,
+                                   @NonNull BottomNavigationBar child,
+                                   @NonNull View dependency) {
+        return dependency instanceof GeckoToolbar;
+    }
+
+    @Override
+    public boolean onDependentViewChanged(@NonNull CoordinatorLayout parent,
+                                          @NonNull BottomNavigationBar child,
+                                          @NonNull View dependency) {
+        return syncWithToolbar(child, dependency);
+    }
+
+    @Override
     public boolean onLayoutChild(@NonNull CoordinatorLayout parent,
                                  @NonNull BottomNavigationBar child,
                                  int layoutDirection) {
-        mBottomNavigationBar = child;
-        mNestedGeckoView     = FindViewUtils.recursivelyFindGeckoView(parent);
-        return super.onLayoutChild(parent, child, layoutDirection);
-    }
-
-    @Override
-    public boolean onStartNestedScroll(@NonNull CoordinatorLayout coordinatorLayout,
-                                       @NonNull BottomNavigationBar child,
-                                       @NonNull View directTargetChild,
-                                       @NonNull View target,
-                                       int axes,
-                                       int type) {
-        if (mBottomNavigationBar != null) {
-            return startNestedScroll(axes, type);
+        parent.onLayoutChild(child, layoutDirection);
+        List<View> dependencies = parent.getDependencies(child);
+        for (int i = 0; i < dependencies.size(); i++) {
+            View dependency = dependencies.get(i);
+            if (dependency instanceof GeckoToolbar) {
+                syncWithToolbar(child, dependency);
+                break;
+            }
         }
-        return false;
+        return true;
     }
 
-    @Override
-    public void onStopNestedScroll(@NonNull CoordinatorLayout coordinatorLayout,
-                                   @NonNull BottomNavigationBar child,
-                                   @NonNull View target,
-                                   int type) {
-        if (mBottomNavigationBar != null) {
-            stopNestedScroll(type, child);
-        }
-    }
-
-    // NOTE: onNestedPreScroll is intentionally NOT overridden here.
-
-    @Override
-    public boolean onInterceptTouchEvent(@NonNull CoordinatorLayout parent,
-                                         @NonNull BottomNavigationBar child,
-                                         @NonNull MotionEvent ev) {
-        if (mBottomNavigationBar != null) {
-            mBrowserGestureDetector.handleTouchEvent(ev);
-        }
-        return false;
-    }
-
-    // ── Public control API ────────────────────────────────────────────────────────────────────────
-
-    public void forceExpand(View view)   { yTranslator.expandWithAnimation(view); }
-    public void forceCollapse(View view) { yTranslator.collapseWithAnimation(view); }
-
-    public void enableScrolling()  { isScrollEnabled = true; }
-    public void disableScrolling() { isScrollEnabled = false; }
-
-    // ── BrowserGestureDetector.BrowserGestureListener ────────────────────────────────────────────
-
-    @Override public void onScroll(float distanceX, float distanceY) { /* unused */ }
-
-    @Override
-    public void onVerticalScroll(float distance) {
-        if (mBottomNavigationBar != null) {
-            tryToScrollVertically(distance);
-        }
-    }
-
-    @Override public void onHorizontalScroll(float distance) { /* unused */ }
-
-    @Override
-    public void onScaleBegin(float scaleFactor) {
-        if (mBottomNavigationBar != null) {
-            yTranslator.snapImmediately(mBottomNavigationBar);
-        }
-    }
-
-    @Override public void onScale(float scaleFactor)    { /* unused */ }
-    @Override public void onScaleEnd(float scaleFactor) { /* unused */ }
-
-    // ── Internal helpers ──────────────────────────────────────────────────────────────────────────
-
-    private void tryToScrollVertically(float distance) {
-        if (shouldScroll() && startedScroll) {
-            yTranslator.translate(mBottomNavigationBar, distance);
-        }
-    }
+    // ── Internal ──────────────────────────────────────────────────────────────────────────────────
 
     /**
-     * Requires {@code INPUT_HANDLED} — matches upstream exactly.
-     * No UNKNOWN optimism (removed from Firedown's earlier override).
+     * Mirrors the toolbar's hidden fraction onto the bottom bar.
+     * Toolbar translationY ∈ [-toolbarHeight, 0] → bar translationY ∈ [0, barHeight].
      */
-    private boolean shouldScroll() {
-        if (mNestedGeckoView != null) {
-            return (mNestedGeckoView.canScrollBottom() || mNestedGeckoView.canScrollTop())
-                    && isScrollEnabled;
+    private boolean syncWithToolbar(@NonNull BottomNavigationBar child, @NonNull View toolbar) {
+        if (child.getVisibility() != View.VISIBLE) {
+            return false;
         }
-        return false;
-    }
-
-    private boolean startNestedScroll(int axes, int type) {
-        if (shouldScroll() && axes == ViewCompat.SCROLL_AXIS_VERTICAL) {
-            startedScroll         = true;
-            shouldSnapAfterScroll = (type == ViewCompat.TYPE_TOUCH);
-            yTranslator.cancelInProgressTranslation();
-            return true;
+        int toolbarHeight = toolbar.getHeight();
+        int childHeight   = child.getHeight();
+        if (toolbarHeight <= 0 || childHeight <= 0) {
+            return false;
         }
-        return false;
-    }
-
-    private void stopNestedScroll(int type, View view) {
-        startedScroll = false;
-        if (shouldSnapAfterScroll || type == ViewCompat.TYPE_NON_TOUCH) {
-            yTranslator.snapWithAnimation(view);
+        float toolbarTranslationY = toolbar.getTranslationY();
+        if (Float.isNaN(toolbarTranslationY)) {
+            return false;
         }
+        float hiddenFraction = Math.max(0f, Math.min(1f, -toolbarTranslationY / toolbarHeight));
+        float target = hiddenFraction * childHeight;
+        if (child.getTranslationY() == target) {
+            return false;
+        }
+        child.setTranslationY(target);
+        return true;
     }
 }
