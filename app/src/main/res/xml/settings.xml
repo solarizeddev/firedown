@@ -84,7 +84,7 @@
             android:title="@string/restore_downloads_button"
             android:summary="@string/restore_downloads_settings_summary"
             app:singleLineTitle="false"
-            app:icon="@drawable/ic_history_24"/>
+            app:icon="@drawable/settings_backup_restore_24"/>
 
     </PreferenceCategory>
 
