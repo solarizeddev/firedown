@@ -578,8 +578,9 @@
     <string name="lan_share_footer">Die Freigabe endet, wenn du diesen Bildschirm verlässt. Nichts verlässt dein Netzwerk.</string>
     <string name="lan_share_no_network">Zum Teilen mit einem WLAN verbinden</string>
     <string name="lan_share_vpn_warning">VPN aktiv — falls sich das andere Gerät nicht verbinden kann, LAN-Zugriff in der VPN-App erlauben oder VPN ausschalten</string>
-    <string name="lan_direct_intro">Kein WLAN. Dieses Telefon kann stattdessen einen temporären Hotspot erstellen — das andere Gerät tritt ihm bei und die Datei wird direkt zwischen beiden Telefonen übertragen. Das Internet wird nicht genutzt.</string>
+    <string name="lan_direct_intro">Dieses Telefon kann stattdessen einen temporären Hotspot erstellen — das andere Gerät tritt ihm bei und die Datei wird direkt zwischen beiden Telefonen übertragen. Das Internet wird nicht genutzt.</string>
     <string name="lan_direct_start">Direktverbindung starten</string>
+    <string name="lan_direct_switch">Stattdessen Direktverbindung verwenden</string>
     <string name="lan_direct_join_hint">Mit der Kamera des anderen Geräts scannen, um dem Hotspot beizutreten, dann auf Weiter tippen</string>
     <string name="lan_direct_password">Passwort</string>
     <string name="lan_direct_next">Weiter</string>

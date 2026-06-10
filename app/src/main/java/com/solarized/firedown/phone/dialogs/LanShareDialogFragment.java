@@ -79,6 +79,13 @@ public class LanShareDialogFragment extends BaseBottomSheetDialogFragment {
     private LanShareServer mServer;
     private LanShareServer.SharedFile mSharedFile;
     private WifiManager.LocalOnlyHotspotReservation mHotspotReservation;
+    /**
+     * The Wi-Fi STA address at sheet-open time, or null. Passed to
+     * {@link LanShareServer#getHotspotIpv4} so the hotspot step can tell the
+     * AP interface apart from a still-connected STA (the "use direct
+     * connection instead" escape keeps Wi-Fi up).
+     */
+    private String mPreHotspotIp;
 
     private final ActivityResultLauncher<String> mLocationPermissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestPermission(),
@@ -134,6 +141,7 @@ public class LanShareDialogFragment extends BaseBottomSheetDialogFragment {
 
         String ip = LanShareServer.getLocalIpv4();
         if (ip != null) {
+            mPreHotspotIp = ip;
             if (!startSharing(ip)) {
                 return mView;
             }
@@ -146,7 +154,7 @@ public class LanShareDialogFragment extends BaseBottomSheetDialogFragment {
         } else {
             // No LAN (cellular-only, Wi-Fi off): offer the hotspot direct
             // connection instead of a dead-end snackbar.
-            showDirectIntro();
+            showDirectIntro(true);
         }
 
         mView.findViewById(R.id.lan_share_stop).setOnClickListener(v -> dismiss());
@@ -209,16 +217,50 @@ public class LanShareDialogFragment extends BaseBottomSheetDialogFragment {
         mView.findViewById(R.id.lan_share_content).setVisibility(View.VISIBLE);
         mView.findViewById(R.id.lan_direct_group).setVisibility(View.GONE);
         mView.findViewById(R.id.lan_share_next).setVisibility(View.GONE);
+
+        // AP-isolation escape (LAN mode only): guest Wi-Fi that blocks
+        // client-to-client traffic looks fine from here but the receiver
+        // times out — undetectable sender-side, so offer the hotspot as a
+        // manual way out. Pointless once already ON the hotspot.
+        View useDirect = mView.findViewById(R.id.lan_share_use_direct);
+        if (mHotspotReservation == null) {
+            useDirect.setVisibility(View.VISIBLE);
+            useDirect.setOnClickListener(v -> switchToDirect());
+        } else {
+            useDirect.setVisibility(View.GONE);
+        }
         return true;
+    }
+
+    /** "Use direct connection instead" — leave LAN mode for the hotspot flow. */
+    private void switchToDirect() {
+        if (mServer != null) {
+            mServer.stop();
+            mServer = null;
+        }
+        mView.findViewById(R.id.lan_share_use_direct).setVisibility(View.GONE);
+        mView.findViewById(R.id.lan_share_vpn).setVisibility(View.GONE);
+        showDirectIntro(false);
     }
 
     // ------------------------------------------------------------------
     // Direct connection (LocalOnlyHotspot) — the no-common-LAN path
     // ------------------------------------------------------------------
 
-    private void showDirectIntro() {
-        ((TextView) mView.findViewById(R.id.lan_share_lead))
-                .setText(R.string.lan_share_no_network);
+    /**
+     * @param noNetwork true when entering because there is no LAN at all
+     *                  (the lead explains that); false when the user chose
+     *                  the direct connection over a working LAN (no claim
+     *                  about missing Wi-Fi — hide the lead).
+     */
+    private void showDirectIntro(boolean noNetwork) {
+        TextView lead = mView.findViewById(R.id.lan_share_lead);
+        if (noNetwork) {
+            lead.setText(R.string.lan_share_no_network);
+            lead.setVisibility(View.VISIBLE);
+        } else {
+            lead.setVisibility(View.GONE);
+        }
         mView.findViewById(R.id.lan_share_content).setVisibility(View.GONE);
         mView.findViewById(R.id.lan_direct_group).setVisibility(View.VISIBLE);
         mView.findViewById(R.id.lan_direct_start).setOnClickListener(v -> {
@@ -330,9 +372,11 @@ public class LanShareDialogFragment extends BaseBottomSheetDialogFragment {
         View next = mView.findViewById(R.id.lan_share_next);
         next.setVisibility(View.VISIBLE);
         next.setOnClickListener(v -> {
-            // The hotspot AP interface is up now, so getLocalIpv4 returns its
-            // address — the wlan STA has none (that's why we're in this mode).
-            String ip = LanShareServer.getLocalIpv4();
+            // Hotspot-aware lookup: when the user switched here FROM a
+            // working Wi-Fi, the STA keeps its address — which a hotspot
+            // client can't reach — so the AP interface must win (told apart
+            // by name, or by differing from the pre-hotspot STA address).
+            String ip = LanShareServer.getHotspotIpv4(mPreHotspotIp);
             if (ip == null) {
                 makeSnackbar(R.string.lan_direct_failed);
                 return;

@@ -960,7 +960,17 @@ cellular share no network, so the LAN flow can't work. When
 `getLocalIpv4()` finds nothing, the sheet doesn't dead-end: it offers
 "Start direct connection" → `WifiManager.startLocalOnlyHotspot()` (no
 internet upstream, torn down with the sheet via `reservation.close()` in
-`stopSharing`). Step 1 repurposes the same sheet views as the join screen
+`stopSharing`). The same flow is ALSO reachable from LAN mode via the
+"Use direct connection instead" text button (`lan_share_use_direct`) —
+the **AP-isolation escape**: guest/café Wi-Fi that blocks
+client-to-client traffic is undetectable sender-side (the sheet looks
+fine, the receiver times out). In that path the Wi-Fi STA keeps its
+address, so step 2 resolves the URL with **`getHotspotIpv4(staIp)`**, not
+`getLocalIpv4()`: preference inverted to the AP interface
+(ap*/swlan*/softap* by name, or any address differing from the
+pre-hotspot STA address for vendors that name the AP wlan1/wlan2) —
+`getLocalIpv4()` would prefer the STA address, which a hotspot client
+can't reach. Step 1 repurposes the same sheet views as the join screen
 (URL chip = SSID, PIN slot = passphrase, QR = standard `WIFI:` payload any
 camera app joins from); the **Next** button flips to the normal URL/PIN QR,
 with the server bound on the hotspot's AP address. Platform tax: fine

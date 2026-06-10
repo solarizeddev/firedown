@@ -447,8 +447,9 @@
     <string name="lan_share_footer">A partilha termina quando sai deste ecrã. Nada sai da sua rede.</string>
     <string name="lan_share_no_network">Ligue-se a uma rede Wi-Fi para partilhar</string>
     <string name="lan_share_vpn_warning">VPN ativa — se o recetor não conseguir ligar, permita o acesso à rede local na app de VPN ou desative-a</string>
-    <string name="lan_direct_intro">Sem rede Wi‑Fi. Este telefone pode criar um hotspot temporário — o outro dispositivo liga-se a ele e o ficheiro passa diretamente entre os dois telefones. A internet não é usada.</string>
+    <string name="lan_direct_intro">Este telefone pode criar um hotspot temporário — o outro dispositivo liga-se a ele e o ficheiro passa diretamente entre os dois telefones. A internet não é usada.</string>
     <string name="lan_direct_start">Iniciar ligação direta</string>
+    <string name="lan_direct_switch">Usar antes uma ligação direta</string>
     <string name="lan_direct_join_hint">Digitalize com a câmara do outro dispositivo para aderir ao hotspot e depois toque em Seguinte</string>
     <string name="lan_direct_password">Palavra-passe</string>
     <string name="lan_direct_next">Seguinte</string>

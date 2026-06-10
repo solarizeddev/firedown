@@ -444,8 +444,9 @@
     <string name="lan_share_footer">Udostępnianie kończy się po opuszczeniu tego ekranu. Nic nie opuszcza Twojej sieci.</string>
     <string name="lan_share_no_network">Połącz się z siecią Wi-Fi, aby udostępniać</string>
     <string name="lan_share_vpn_warning">VPN aktywny — jeśli odbiorca nie może się połączyć, zezwól na dostęp do sieci lokalnej w aplikacji VPN lub wyłącz VPN</string>
-    <string name="lan_direct_intro">Brak sieci Wi‑Fi. Ten telefon może utworzyć tymczasowy hotspot — drugie urządzenie dołącza do niego, a plik przechodzi bezpośrednio między telefonami. Internet nie jest używany.</string>
+    <string name="lan_direct_intro">Ten telefon może utworzyć tymczasowy hotspot — drugie urządzenie dołącza do niego, a plik przechodzi bezpośrednio między telefonami. Internet nie jest używany.</string>
     <string name="lan_direct_start">Rozpocznij połączenie bezpośrednie</string>
+    <string name="lan_direct_switch">Użyj połączenia bezpośredniego</string>
     <string name="lan_direct_join_hint">Zeskanuj aparatem drugiego urządzenia, aby dołączyć do hotspotu, a następnie dotknij Dalej</string>
     <string name="lan_direct_password">Hasło</string>
     <string name="lan_direct_next">Dalej</string>

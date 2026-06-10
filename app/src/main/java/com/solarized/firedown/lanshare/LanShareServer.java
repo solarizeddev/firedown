@@ -145,15 +145,60 @@ public final class LanShareServer {
     /**
      * The device's reachable site-local IPv4 (Wi-Fi, hotspot AP, or
      * ethernet), or null when there is none. Static so the UI can check
-     * connectivity before starting. After a LocalOnlyHotspot is up on an
-     * otherwise-offline device, this returns the hotspot's AP address (the
-     * wlan STA has no address then, so the ap/swlan fallback wins).
+     * connectivity before starting. Prefers the Wi-Fi STA (wlan*).
      */
     @Nullable
     public static String getLocalIpv4() {
+        List<String[]> candidates = listShareableIpv4s();
+        for (String[] candidate : candidates) {
+            if (candidate[0].startsWith("wlan")) {
+                return candidate[1];
+            }
+        }
+        return candidates.isEmpty() ? null : candidates.get(0)[1];
+    }
+
+    /**
+     * The LocalOnlyHotspot AP's IPv4 — the address a receiver JOINED TO THE
+     * HOTSPOT can reach. Distinct from {@link #getLocalIpv4()} because the
+     * preference is inverted: when the user switched to the direct
+     * connection FROM a working Wi-Fi (AP-isolation escape), the wlan STA
+     * keeps its address, and that address is on the wrong network for a
+     * hotspot client — preferring wlan there would serve an unreachable URL.
+     *
+     * @param staIp the STA address captured BEFORE the hotspot came up (or
+     *              null) — used to tell the AP apart from the STA on vendors
+     *              that name the AP interface wlan1/wlan2 (no ap*/swlan*
+     *              prefix to recognise it by).
+     */
+    @Nullable
+    public static String getHotspotIpv4(@Nullable String staIp) {
+        List<String[]> candidates = listShareableIpv4s();
+        // A recognisably-named AP interface wins outright.
+        for (String[] candidate : candidates) {
+            String name = candidate[0];
+            if (name.startsWith("ap") || name.startsWith("swlan") || name.startsWith("softap")) {
+                return candidate[1];
+            }
+        }
+        // Otherwise: any address that isn't the pre-hotspot STA one (covers
+        // a wlan1/wlan2 AP next to the wlan0 STA).
+        for (String[] candidate : candidates) {
+            if (!candidate[1].equals(staIp)) {
+                return candidate[1];
+            }
+        }
+        // Only the old STA address remains (or nothing) — Wi-Fi may have
+        // been dropped by the hotspot start; better than null.
+        return candidates.isEmpty() ? null : candidates.get(0)[1];
+    }
+
+    /** Every (interface name, site-local IPv4) pair on the allowlisted interfaces. */
+    @NonNull
+    private static List<String[]> listShareableIpv4s() {
+        List<String[]> result = new ArrayList<>();
         try {
             Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
-            String fallback = null;
             while (interfaces != null && interfaces.hasMoreElements()) {
                 NetworkInterface networkInterface = interfaces.nextElement();
                 if (!networkInterface.isUp() || networkInterface.isLoopback()) {
@@ -172,19 +217,13 @@ public final class LanShareServer {
                     if (!address.isSiteLocalAddress()) {
                         continue;
                     }
-                    if (name.startsWith("wlan")) {
-                        return address.getHostAddress();
-                    }
-                    if (fallback == null) {
-                        fallback = address.getHostAddress();
-                    }
+                    result.add(new String[]{name, address.getHostAddress()});
                 }
             }
-            return fallback;
         } catch (Exception e) {
-            Log.e(TAG, "getLocalIpv4 failed", e);
-            return null;
+            Log.e(TAG, "listShareableIpv4s failed", e);
         }
+        return result;
     }
 
     private static boolean isShareableInterface(@Nullable String name) {

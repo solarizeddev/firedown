@@ -576,8 +576,9 @@
     <string name="lan_share_footer">离开此屏幕即停止共享。任何数据都不会离开你的网络。</string>
     <string name="lan_share_no_network">请连接 Wi-Fi 网络后再共享</string>
     <string name="lan_share_vpn_warning">VPN 已开启 — 如果接收方无法连接，请在 VPN 应用中允许局域网访问或关闭 VPN</string>
-    <string name="lan_direct_intro">没有 Wi‑Fi 网络。这部手机可以创建一个临时热点 — 对方设备加入后，文件将在两部手机之间直接传输，不使用互联网。</string>
+    <string name="lan_direct_intro">这部手机可以创建一个临时热点 — 对方设备加入后，文件将在两部手机之间直接传输，不使用互联网。</string>
     <string name="lan_direct_start">开始直接连接</string>
+    <string name="lan_direct_switch">改用直接连接</string>
     <string name="lan_direct_join_hint">用对方设备的相机扫码加入热点，然后点按“下一步”</string>
     <string name="lan_direct_password">密码</string>
     <string name="lan_direct_next">下一步</string>

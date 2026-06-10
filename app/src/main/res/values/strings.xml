@@ -688,8 +688,9 @@
     <string name="lan_share_footer">Sharing ends when you leave this screen. Nothing leaves your network.</string>
     <string name="lan_share_no_network">Connect to a Wi-Fi network to share</string>
     <string name="lan_share_vpn_warning">VPN active — if the receiver can\'t connect, allow LAN access in the VPN app or turn it off</string>
-    <string name="lan_direct_intro">No Wi‑Fi network. This phone can create a temporary hotspot instead — the other device joins it and the file moves directly between the two phones. The internet is not used.</string>
+    <string name="lan_direct_intro">This phone can create a temporary hotspot instead — the other device joins it and the file moves directly between the two phones. The internet is not used.</string>
     <string name="lan_direct_start">Start direct connection</string>
+    <string name="lan_direct_switch">Use direct connection instead</string>
     <string name="lan_direct_join_hint">Scan with the other device\'s camera to join the hotspot, then tap Next</string>
     <string name="lan_direct_password">Password</string>
     <string name="lan_direct_next">Next</string>

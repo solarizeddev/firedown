@@ -578,8 +578,9 @@
     <string name="lan_share_footer">El uso compartido termina al salir de esta pantalla. Nada sale de tu red.</string>
     <string name="lan_share_no_network">Conéctate a una red Wi-Fi para compartir</string>
     <string name="lan_share_vpn_warning">VPN activa — si el receptor no puede conectarse, permite el acceso a la red local en la app de VPN o desactívala</string>
-    <string name="lan_direct_intro">Sin red Wi‑Fi. Este teléfono puede crear un punto de acceso temporal: el otro dispositivo se une a él y el archivo pasa directamente entre los dos teléfonos. No se usa internet.</string>
+    <string name="lan_direct_intro">Este teléfono puede crear un punto de acceso temporal: el otro dispositivo se une a él y el archivo pasa directamente entre los dos teléfonos. No se usa internet.</string>
     <string name="lan_direct_start">Iniciar conexión directa</string>
+    <string name="lan_direct_switch">Usar una conexión directa en su lugar</string>
     <string name="lan_direct_join_hint">Escanea con la cámara del otro dispositivo para unirte al punto de acceso y luego toca Siguiente</string>
     <string name="lan_direct_password">Contraseña</string>
     <string name="lan_direct_next">Siguiente</string>

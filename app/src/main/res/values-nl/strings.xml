@@ -447,8 +447,9 @@
     <string name="lan_share_footer">Delen stopt zodra je dit scherm verlaat. Niets verlaat je netwerk.</string>
     <string name="lan_share_no_network">Verbind met een wifi-netwerk om te delen</string>
     <string name="lan_share_vpn_warning">VPN actief — als de ontvanger geen verbinding kan maken, sta LAN-toegang toe in de VPN-app of schakel de VPN uit</string>
-    <string name="lan_direct_intro">Geen wifi-netwerk. Deze telefoon kan een tijdelijke hotspot maken — het andere apparaat verbindt ermee en het bestand gaat rechtstreeks tussen de twee telefoons. Internet wordt niet gebruikt.</string>
+    <string name="lan_direct_intro">Deze telefoon kan een tijdelijke hotspot maken — het andere apparaat verbindt ermee en het bestand gaat rechtstreeks tussen de twee telefoons. Internet wordt niet gebruikt.</string>
     <string name="lan_direct_start">Directe verbinding starten</string>
+    <string name="lan_direct_switch">Gebruik een directe verbinding</string>
     <string name="lan_direct_join_hint">Scan met de camera van het andere apparaat om met de hotspot te verbinden en tik daarna op Volgende</string>
     <string name="lan_direct_password">Wachtwoord</string>
     <string name="lan_direct_next">Volgende</string>

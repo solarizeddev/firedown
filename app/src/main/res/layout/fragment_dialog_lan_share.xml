@@ -188,6 +188,20 @@
 
     </LinearLayout>
 
+    <!-- AP-isolation escape: shown in LAN mode only. Guest/café Wi-Fi often
+         blocks client-to-client traffic, which the sender can't detect — the
+         sheet looks fine but the receiver times out. This switches the same
+         sheet into the hotspot direct-connection flow. -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/lan_share_use_direct"
+        style="@style/Widget.Material3.Button.TextButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:text="@string/lan_direct_switch"
+        android:visibility="gone"
+        tools:visibility="visible" />
+
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

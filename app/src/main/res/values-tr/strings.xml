@@ -446,8 +446,9 @@
     <string name="lan_share_footer">Bu ekrandan ayrıldığınızda paylaşım sona erer. Hiçbir şey ağınızın dışına çıkmaz.</string>
     <string name="lan_share_no_network">Paylaşmak için bir Wi-Fi ağına bağlanın</string>
     <string name="lan_share_vpn_warning">VPN etkin — alıcı bağlanamıyorsa VPN uygulamasında yerel ağ erişimine izin verin veya VPN\'i kapatın</string>
-    <string name="lan_direct_intro">Wi‑Fi ağı yok. Bu telefon geçici bir erişim noktası oluşturabilir — diğer cihaz ona katılır ve dosya iki telefon arasında doğrudan aktarılır. İnternet kullanılmaz.</string>
+    <string name="lan_direct_intro">Bu telefon geçici bir erişim noktası oluşturabilir — diğer cihaz ona katılır ve dosya iki telefon arasında doğrudan aktarılır. İnternet kullanılmaz.</string>
     <string name="lan_direct_start">Doğrudan bağlantıyı başlat</string>
+    <string name="lan_direct_switch">Bunun yerine doğrudan bağlantıyı kullan</string>
     <string name="lan_direct_join_hint">Erişim noktasına katılmak için diğer cihazın kamerasıyla tarayın, sonra İleri\'ye dokunun</string>
     <string name="lan_direct_password">Parola</string>
     <string name="lan_direct_next">İleri</string>
