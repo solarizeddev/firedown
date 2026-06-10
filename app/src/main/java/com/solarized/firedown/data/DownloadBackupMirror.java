@@ -5,17 +5,31 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.net.Uri;
+import android.provider.DocumentsContract;
+import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Log;
+import android.util.Pair;
 
 import androidx.annotation.NonNull;
 import androidx.sqlite.db.SupportSQLiteDatabase;
 
 import com.solarized.firedown.BuildConfig;
+import com.solarized.firedown.StoragePaths;
 
 import java.io.File;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.SecureRandom;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
+
+import javax.crypto.Cipher;
+import javax.crypto.spec.GCMParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 
 /**
  * Sanitized backup mirror of the download database for Android Auto Backup.
@@ -147,21 +161,21 @@ public final class DownloadBackupMirror {
     private static final String KEY_CONTEXT = "firedown-mirror-v1:";
 
     private static javax.crypto.spec.SecretKeySpec deriveKey(@NonNull Context context) throws Exception {
-        String ssaid = android.provider.Settings.Secure.getString(
-                context.getContentResolver(), android.provider.Settings.Secure.ANDROID_ID);
+        String ssaid = Settings.Secure.getString(
+                context.getContentResolver(), Settings.Secure.ANDROID_ID);
         if (TextUtils.isEmpty(ssaid)) {
             throw new IllegalStateException("no ANDROID_ID");
         }
-        java.security.MessageDigest digest = java.security.MessageDigest.getInstance("SHA-256");
-        byte[] key = digest.digest((KEY_CONTEXT + ssaid).getBytes(java.nio.charset.StandardCharsets.UTF_8));
-        return new javax.crypto.spec.SecretKeySpec(key, "AES");
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        byte[] key = digest.digest((KEY_CONTEXT + ssaid).getBytes(StandardCharsets.UTF_8));
+        return new SecretKeySpec(key, "AES");
     }
 
     private static void writeEncryptedPublicMirror(@NonNull Context context, @NonNull File plainMirror) {
         if (!plainMirror.exists()) {
             return;
         }
-        File dir = new File(com.solarized.firedown.StoragePaths.getDownloadPath(context), PUBLIC_DIR);
+        File dir = new File(StoragePaths.getDownloadPath(context), PUBLIC_DIR);
         if (!dir.exists() && !dir.mkdirs()) {
             // Public storage unavailable/unwritable — Auto Backup still has
             // the private mirror; nothing else to do.
@@ -178,12 +192,12 @@ public final class DownloadBackupMirror {
             return;
         }
         byte[] iv = new byte[GCM_IV_BYTES];
-        new java.security.SecureRandom().nextBytes(iv);
+        new SecureRandom().nextBytes(iv);
         byte[] cipherText;
         try {
-            javax.crypto.Cipher cipher = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding");
-            cipher.init(javax.crypto.Cipher.ENCRYPT_MODE, deriveKey(context),
-                    new javax.crypto.spec.GCMParameterSpec(GCM_TAG_BITS, iv));
+            Cipher cipher = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding");
+            cipher.init(Cipher.ENCRYPT_MODE, deriveKey(context),
+                    new GCMParameterSpec(GCM_TAG_BITS, iv));
             cipherText = cipher.doFinal(plain);
         } catch (Exception e) {
             Log.e(TAG, "public mirror: encrypt failed", e);
@@ -283,8 +297,8 @@ public final class DownloadBackupMirror {
 
         File plain = new File(context.getCacheDir(), "restore-mirror-" + System.currentTimeMillis() + ".db");
         try {
-            for (android.util.Pair<android.net.Uri, Long> candidate : candidates) {
-                try (java.io.InputStream in = context.getContentResolver().openInputStream(candidate.first)) {
+            for (Pair<Uri, Long> candidate : candidates) {
+                try (InputStream in = context.getContentResolver().openInputStream(candidate.first)) {
                     if (in == null) {
                         continue;
                     }
@@ -308,17 +322,17 @@ public final class DownloadBackupMirror {
     }
 
     private static void collectFdbkCandidates(@NonNull Context context,
-                                              @NonNull android.net.Uri treeUri,
+                                              @NonNull Uri treeUri,
                                               @NonNull String parentDocId,
-                                              @NonNull java.util.ArrayList<android.util.Pair<android.net.Uri, Long>> out,
+                                              @NonNull ArrayList<Pair<Uri, Long>> out,
                                               boolean recurseIntoBackupDir) {
-        android.net.Uri children = android.provider.DocumentsContract
+        Uri children = DocumentsContract
                 .buildChildDocumentsUriUsingTree(treeUri, parentDocId);
         String[] projection = {
-                android.provider.DocumentsContract.Document.COLUMN_DOCUMENT_ID,
-                android.provider.DocumentsContract.Document.COLUMN_DISPLAY_NAME,
-                android.provider.DocumentsContract.Document.COLUMN_MIME_TYPE,
-                android.provider.DocumentsContract.Document.COLUMN_LAST_MODIFIED,
+                DocumentsContract.Document.COLUMN_DOCUMENT_ID,
+                DocumentsContract.Document.COLUMN_DISPLAY_NAME,
+                DocumentsContract.Document.COLUMN_MIME_TYPE,
+                DocumentsContract.Document.COLUMN_LAST_MODIFIED,
         };
         try (Cursor cursor = context.getContentResolver().query(children, projection, null, null, null)) {
             if (cursor == null) {
@@ -329,13 +343,13 @@ public final class DownloadBackupMirror {
                 String name = cursor.getString(1);
                 String mime = cursor.getString(2);
                 long modified = cursor.isNull(3) ? 0L : cursor.getLong(3);
-                if (android.provider.DocumentsContract.Document.MIME_TYPE_DIR.equals(mime)) {
+                if (DocumentsContract.Document.MIME_TYPE_DIR.equals(mime)) {
                     if (recurseIntoBackupDir && PUBLIC_DIR.equals(name)) {
                         collectFdbkCandidates(context, treeUri, docId, out, false);
                     }
                 } else if (name != null && name.endsWith(".fdbk")) {
                     out.add(new android.util.Pair<>(
-                            android.provider.DocumentsContract.buildDocumentUriUsingTree(treeUri, docId),
+                            DocumentsContract.buildDocumentUriUsingTree(treeUri, docId),
                             modified));
                 }
             }
