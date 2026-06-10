@@ -352,4 +352,5 @@
     <string name="capture_help_menu">Довідка</string>
     <string name="capture_help_banner_title">Відео немає у списку?</string>
     <string name="capture_help_banner">Деякі вбудовані медіа потрібно спочатку відтворити. Торкніться, щоб дізнатися як.</string>
+    <string name="media_tools">Медіаінструменти</string>
 </resources>

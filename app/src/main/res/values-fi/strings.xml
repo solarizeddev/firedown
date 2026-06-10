@@ -359,6 +359,7 @@
     <string name="security_stat_blocked_scope">estetty tällä sivulla</string>
     <string name="tabs_incognito_empty">Ei yksityisiä välilehtiä</string>
     <string name="compress">Pakkaa</string>
+    <string name="media_tools">Mediatyökalut</string>
     <string name="download_saving_compress">Pakataan, odota…</string>
     <string name="task_compress_finished">Arkisto luotu</string>
     <string name="task_compress_failed">Arkiston luonti epäonnistui</string>

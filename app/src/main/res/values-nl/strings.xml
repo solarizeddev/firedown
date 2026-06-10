@@ -420,6 +420,7 @@
     <string name="security_stat_blocked_scope">geblokkeerd op deze pagina</string>
     <string name="tabs_incognito_empty">Geen privétabbladen</string>
     <string name="compress">Comprimeren</string>
+    <string name="media_tools">Mediahulpmiddelen</string>
     <string name="download_saving_compress">Bezig met comprimeren, even geduld…</string>
     <string name="task_compress_finished">Archief aangemaakt</string>
     <string name="task_compress_failed">Kan archief niet aanmaken</string>

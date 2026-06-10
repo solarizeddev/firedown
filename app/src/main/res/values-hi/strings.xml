@@ -319,6 +319,7 @@
     <string name="snackbar_tab_closed">टैब बंद हो गया</string>
     <string name="switch_to_tab_description">टैब पर जाएँ</string>
     <string name="compress">संपीड़ित करें</string>
+    <string name="media_tools">मीडिया टूल</string>
     <string name="download_saving_compress">संपीड़ित किया जा रहा है, कृपया प्रतीक्षा करें…</string>
     <string name="task_compress_finished">संग्रह बन गया</string>
     <string name="task_compress_failed">संग्रह नहीं बना सके</string>

@@ -419,6 +419,7 @@
     <string name="security_stat_blocked_scope">bu sayfada engellendi</string>
     <string name="tabs_incognito_empty">Özel sekme yok</string>
     <string name="compress">Sıkıştır</string>
+    <string name="media_tools">Medya araçları</string>
     <string name="download_saving_compress">Sıkıştırılıyor, lütfen bekleyin…</string>
     <string name="task_compress_finished">Arşiv oluşturuldu</string>
     <string name="task_compress_failed">Arşiv oluşturulamadı</string>

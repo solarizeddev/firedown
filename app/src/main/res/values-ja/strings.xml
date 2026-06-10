@@ -549,6 +549,7 @@
     <string name="security_tracking_protection">トラッキング保護</string>
     <string name="security_stat_blocked_scope">このページでブロック</string>
     <string name="compress">圧縮</string>
+    <string name="media_tools">メディアツール</string>
     <string name="download_saving_compress">圧縮しています。お待ちください…</string>
     <string name="task_compress_finished">アーカイブを作成しました</string>
     <string name="task_compress_failed">アーカイブを作成できませんでした</string>

@@ -7,6 +7,42 @@
 
     <include layout="@layout/dialog_drag_handle" />
 
+    <!-- Quick-action header: the universal verbs (Share / Open with /
+         Rename) lifted out of the list so finished-file sheets stay short.
+         GONE by default; DownloadsOptionDialogFragment shows it for the
+         finished-file cases. Icon-over-label buttons reuse the browser
+         popup's quick-row style. Send slots in here as a 4th button once
+         the device-send feature lands. -->
+    <LinearLayout
+        android:id="@+id/options_quick_row"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:paddingHorizontal="8dp"
+        android:paddingBottom="4dp"
+        android:visibility="gone">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/qa_share"
+            style="@style/Firedown.Widget.PopupQuickRowButton"
+            app:icon="@drawable/ic_share_24"
+            android:text="@string/share" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/qa_open_with"
+            style="@style/Firedown.Widget.PopupQuickRowButton"
+            app:icon="@drawable/ic_web_24"
+            android:text="@string/open_with" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/qa_rename"
+            style="@style/Firedown.Widget.PopupQuickRowButton"
+            app:icon="@drawable/ic_edit_24"
+            android:text="@string/rename" />
+
+    </LinearLayout>
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycler_view"
         android:layout_width="match_parent"
