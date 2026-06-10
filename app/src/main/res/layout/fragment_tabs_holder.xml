@@ -136,22 +136,10 @@
             android:layout_height="@dimen/app_bar_size"
             android:layout_weight="1" />
 
-        <FrameLayout
+        <Space
             android:layout_width="0dp"
             android:layout_height="@dimen/app_bar_size"
-            android:layout_weight="1">
-
-            <com.google.android.material.floatingactionbutton.FloatingActionButton
-                android:id="@+id/fab_new_tab"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:contentDescription="@string/popup_tabs_new"
-                app:fabSize="normal"
-                app:maxImageSize="24dp"
-                app:srcCompat="@drawable/add_24" />
-
-        </FrameLayout>
+            android:layout_weight="1" />
 
         <Space
             android:layout_width="0dp"
@@ -171,5 +159,21 @@
             android:tint="?attr/colorOnSurface" />
 
     </LinearLayout>
+
+    <!-- Hero FAB floats OVER the bar's middle slot, exactly like the
+         browser's fire FAB: that one rides its anchored position with a
+         16dp (app_bar_fab_margin) lift from BottomNavigationFABBehavior,
+         which puts its top edge slightly over the bar's top border —
+         docking a FAB inside the 64dp row can't match that. Bottom margin
+         (nav inset + the same 16dp constant) is applied in code. -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fab_new_tab"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center_horizontal"
+        android:contentDescription="@string/popup_tabs_new"
+        app:fabSize="normal"
+        app:maxImageSize="24dp"
+        app:srcCompat="@drawable/add_24" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

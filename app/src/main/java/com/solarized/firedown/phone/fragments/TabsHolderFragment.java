@@ -225,11 +225,24 @@ public class TabsHolderFragment extends BaseFocusFragment {
         });
 
         // Bar paints edge-to-edge behind gesture nav; the pager bottom-pads
-        // by the bar's final height so the last tab row clears it.
+        // by the bar's final height so the last tab row clears it. The FAB
+        // floats over the bar's middle slot lifted by the same
+        // app_bar_fab_margin the browser's fire FAB uses, so the hero
+        // button's vertical position matches across the two screens.
         ViewCompat.setOnApplyWindowInsetsListener(mBottomBar, (v, windowInsets) -> {
             Insets bars = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(v.getPaddingLeft(), v.getPaddingTop(), v.getPaddingRight(),
                     bars.bottom);
+            if (mFab != null) {
+                ViewGroup.MarginLayoutParams params =
+                        (ViewGroup.MarginLayoutParams) mFab.getLayoutParams();
+                int lift = getResources().getDimensionPixelOffset(R.dimen.app_bar_fab_margin);
+                int margin = bars.bottom + lift;
+                if (params.bottomMargin != margin) {
+                    params.bottomMargin = margin;
+                    mFab.setLayoutParams(params);
+                }
+            }
             return windowInsets;
         });
         mBottomBar.addOnLayoutChangeListener(
