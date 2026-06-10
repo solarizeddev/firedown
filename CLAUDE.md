@@ -1015,7 +1015,17 @@ hint hides). Costs, accepted deliberately: the receiver clicks through ONE
 `lan_share_cert_hint` — because the warning appears before any page of
 ours can), and an **ACTIVE MITM can still present its own self-signed
 cert** — indistinguishable to the receiver; cert-*pinned* verification is
-the LocalSend-protocol phase. Do NOT try to fix the sniffing ceiling with
+the LocalSend-protocol phase. **Chromium gotcha (observed on Brave): the
+download manager does NOT inherit the page's cert exception** — a native
+`<a download>` navigation fails its own TLS handshake
+(`CERTIFICATE_UNKNOWN`) before headers and dies as a 0-byte file named
+from the URL path. So `files.html` intercepts the Download click and
+fetches the bytes **in the page context** (which holds the exception) →
+`Blob` → object-URL `<a download>` save; browsers disk-back large blobs.
+On any failure it falls back to the native navigation (correct for the
+plain-HTTP mode), and the file URL carries the name as a trailing segment
+(`/f/<i>/<name>`, ignored server-side) so even that fallback names the
+file correctly. Do NOT try to fix the sniffing ceiling with
 in-page JS crypto instead: on an `http://<ip>` origin the browser disables
 `crypto.subtle` and ServiceWorkers entirely (insecure context), and
 routing GB-sized videos through JS decryption breaks the native download

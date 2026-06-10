@@ -1,1 +1,37 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#d44e86"><title>Firedown</title><link rel="stylesheet" href="/style.css?v=9"></head><body><div class="hero"><img class="logo" src="/logo.svg?v=9" alt="Firedown"></div><div class="main"><p class="eyebrow">From {{DEVICE}} &middot; {{COUNT}}</p><h1>Shared <em>with you</em></h1>{{FILES}}<a class="get" href="https://firedown.app">Don&#8217;t have Firedown?&nbsp;<b>Get the app &rarr;</b></a></div><footer><span class="lock">&#9679;</span> <b>PIN-verified session</b> &middot; expires when the sender stops sharing<br>Transfer never leaves your local network</footer></body></html>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#d44e86"><title>Firedown</title><link rel="stylesheet" href="/style.css?v=9"></head><body><div class="hero"><img class="logo" src="/logo.svg?v=9" alt="Firedown"></div><div class="main"><p class="eyebrow">From {{DEVICE}} &middot; {{COUNT}}</p><h1>Shared <em>with you</em></h1>{{FILES}}<a class="get" href="https://firedown.app">Don&#8217;t have Firedown?&nbsp;<b>Get the app &rarr;</b></a></div><footer><span class="lock">&#9679;</span> <b>PIN-verified session</b> &middot; expires when the sender stops sharing<br>Transfer never leaves your local network</footer><script>
+// Chromium's download manager does NOT inherit the page's self-signed-cert
+// exception — a native <a download> navigation fails the TLS handshake
+// (CERTIFICATE_UNKNOWN) before headers and dies as a 0-byte file. The page
+// context DOES hold the exception (this page loaded over it), so fetch the
+// bytes here and hand the browser a local blob to save; large responses are
+// disk-backed by the browser's blob storage. On any failure, fall back to
+// the native navigation (correct for plain-HTTP mode and exotic browsers).
+document.addEventListener('click', function (e) {
+  var a = e.target && e.target.closest ? e.target.closest('a.dl') : null;
+  if (!a || !window.fetch) { return; }
+  e.preventDefault();
+  if (a.dataset.busy) { return; }
+  a.dataset.busy = '1';
+  var label = a.textContent;
+  a.textContent = 'Downloading…';
+  fetch(a.getAttribute('href')).then(function (r) {
+    if (!r.ok) { throw new Error('http ' + r.status); }
+    return r.blob();
+  }).then(function (b) {
+    var u = URL.createObjectURL(b);
+    var t = document.createElement('a');
+    t.href = u;
+    t.download = a.dataset.name || 'download';
+    document.body.appendChild(t);
+    t.click();
+    t.remove();
+    setTimeout(function () { URL.revokeObjectURL(u); }, 60000);
+    a.textContent = 'Saved ✓';
+    setTimeout(function () { a.textContent = label; delete a.dataset.busy; }, 4000);
+  }).catch(function () {
+    a.textContent = label;
+    delete a.dataset.busy;
+    window.location.href = a.getAttribute('href');
+  });
+});
+</script></body></html>

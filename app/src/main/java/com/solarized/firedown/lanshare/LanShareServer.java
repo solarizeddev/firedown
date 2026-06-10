@@ -700,9 +700,17 @@ public final class LanShareServer {
                     sendRedirect(out, "/");
                     return;
                 }
+                // /f/<index>/<name> — the trailing name segment is ignored
+                // server-side; it exists so a NATIVE download (the blob-save
+                // fallback path) names the file from the URL instead of "0".
+                String indexPart = path.substring(3);
+                int slash = indexPart.indexOf('/');
+                if (slash >= 0) {
+                    indexPart = indexPart.substring(0, slash);
+                }
                 int index;
                 try {
-                    index = Integer.parseInt(path.substring(3));
+                    index = Integer.parseInt(indexPart);
                 } catch (NumberFormatException e) {
                     sendHtml(out, 404, page("notfound.html"));
                     return;
@@ -871,6 +879,7 @@ public final class LanShareServer {
             rows.append(row
                     .replace("{{ICON}}", iconFor(f.mime))
                     .replace("{{NAME}}", escapeHtml(f.name))
+                    .replace("{{NAMEURL}}", Uri.encode(f.name))
                     .replace("{{TYPE}}", typeLabel(f.mime))
                     .replace("{{SIZE}}", formatSize(f.file.length()))
                     .replace("{{INDEX}}", Integer.toString(i)));
