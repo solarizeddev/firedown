@@ -442,6 +442,7 @@
     <string name="lan_share_title">Naar browser sturen</string>
     <string name="lan_share_lead">Open dit adres op het andere apparaat in een willekeurige browser op dezelfde wifi</string>
     <string name="lan_share_qr_hint">Door de code te scannen opent de pagina met de pin al ingevuld</string>
+    <string name="lan_share_cert_hint">De browser van het andere apparaat toont eerst een beveiligingswaarschuwing — kies Geavanceerd en dan Doorgaan. De verbinding tussen de twee apparaten is wel versleuteld.</string>
     <string name="lan_share_pin">PIN</string>
     <string name="lan_share_stop">Stoppen met delen</string>
     <string name="lan_share_footer">Delen stopt zodra je dit scherm verlaat. Niets verlaat je netwerk.</string>

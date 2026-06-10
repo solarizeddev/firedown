@@ -124,6 +124,23 @@
             android:textAppearance="?attr/textAppearanceBodySmall"
             android:textColor="?attr/colorOnSurfaceVariant" />
 
+        <!-- Self-signed TLS: the receiver's browser warns once before any
+             of our pages can explain — so the explanation lives on the
+             SENDER sheet (the two people are side by side). Hidden in the
+             plain-HTTP fallback and the hotspot join step. -->
+        <TextView
+            android:id="@+id/lan_share_cert"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:paddingHorizontal="16dp"
+            android:paddingTop="6dp"
+            android:text="@string/lan_share_cert_hint"
+            android:textAppearance="?attr/textAppearanceBodySmall"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:visibility="gone"
+            tools:visibility="visible" />
+
         <TextView
             android:id="@+id/lan_share_pin_label"
             android:layout_width="match_parent"

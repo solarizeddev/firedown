@@ -439,6 +439,7 @@
     <string name="lan_share_title">Wyślij do przeglądarki</string>
     <string name="lan_share_lead">Na drugim urządzeniu otwórz ten adres w dowolnej przeglądarce w tej samej sieci Wi-Fi</string>
     <string name="lan_share_qr_hint">Zeskanowanie kodu otwiera stronę z już wpisanym PIN-em</string>
+    <string name="lan_share_cert_hint">Przeglądarka drugiego urządzenia najpierw pokaże ostrzeżenie bezpieczeństwa — wybierz Zaawansowane, a potem Kontynuuj. Połączenie między urządzeniami i tak jest szyfrowane.</string>
     <string name="lan_share_pin">PIN</string>
     <string name="lan_share_stop">Zatrzymaj udostępnianie</string>
     <string name="lan_share_footer">Udostępnianie kończy się po opuszczeniu tego ekranu. Nic nie opuszcza Twojej sieci.</string>

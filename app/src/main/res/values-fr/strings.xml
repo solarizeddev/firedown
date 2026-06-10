@@ -573,6 +573,7 @@
     <string name="lan_share_title">Envoyer vers un navigateur</string>
     <string name="lan_share_lead">Sur l\'autre appareil, ouvrez cette adresse dans n\'importe quel navigateur sur le même Wi-Fi</string>
     <string name="lan_share_qr_hint">Scanner le code ouvre la page avec le PIN déjà rempli</string>
+    <string name="lan_share_cert_hint">Le navigateur de l\'autre appareil affiche d\'abord un avertissement de sécurité — choisissez Paramètres avancés puis Continuer. La connexion entre les deux appareils reste chiffrée.</string>
     <string name="lan_share_pin">PIN</string>
     <string name="lan_share_stop">Arrêter le partage</string>
     <string name="lan_share_footer">Le partage s\'arrête quand vous quittez cet écran. Rien ne quitte votre réseau.</string>

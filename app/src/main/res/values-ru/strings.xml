@@ -442,6 +442,7 @@
     <string name="lan_share_title">Отправить в браузер</string>
     <string name="lan_share_lead">На другом устройстве откройте этот адрес в любом браузере в той же сети Wi-Fi</string>
     <string name="lan_share_qr_hint">При сканировании кода страница откроется с уже введённым PIN</string>
+    <string name="lan_share_cert_hint">Браузер другого устройства сначала покажет предупреждение безопасности — выберите «Дополнительно», затем «Продолжить». Соединение между устройствами всё равно зашифровано.</string>
     <string name="lan_share_pin">PIN</string>
     <string name="lan_share_stop">Остановить общий доступ</string>
     <string name="lan_share_footer">Общий доступ завершится, когда вы покинете этот экран. Ничего не покидает вашу сеть.</string>

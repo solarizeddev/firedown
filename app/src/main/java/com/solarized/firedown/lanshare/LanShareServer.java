@@ -11,6 +11,7 @@ import androidx.annotation.Nullable;
 import com.solarized.firedown.BuildConfig;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -18,6 +19,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.PushbackInputStream;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.ServerSocket;
@@ -36,6 +38,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocket;
+
 /**
  * "Send to browser" — a tiny, ephemeral HTTP server that shares one or more
  * finished downloads with any browser on the local network.
@@ -49,12 +54,22 @@ import java.util.concurrent.atomic.AtomicInteger;
  * yields the PIN page. A correct PIN (typed, or carried by the QR's
  * {@code ?pin=} form) sets a random {@code HttpOnly} session cookie that
  * gates the file list and the file bytes. Three wrong attempts lock the
- * session permanently — the 4-digit space cannot be brute-forced. The PIN
- * protects <i>access</i> (who on the LAN can download), not transport
- * secrecy: this is plain HTTP, so a passive sniffer on a hostile network can
- * still capture the bytes. That ceiling is accepted for v1 (TLS on a LAN IP
- * means self-signed-certificate interstitials that would kill the
- * zero-install flow); a LocalSend-protocol phase would bring pinned HTTPS.
+ * session permanently — the 4-digit space cannot be brute-forced.
+ *
+ * <p><b>Transport:</b> TLS by default, with a self-signed per-install
+ * certificate ({@link LanShareTls}) — the receiver clicks through one
+ * "connection not private" interstitial, and in exchange a passive sniffer
+ * on hostile Wi-Fi (open networks; shared-PSK WPA2 where anyone with the
+ * password can decrypt the air) gets only ECDHE ciphertext: file bytes, the
+ * QR's {@code ?pin=} and the session cookie all stop being readable. The
+ * port speaks BOTH protocols: the first byte of each connection is sniffed
+ * (a TLS ClientHello starts 0x16), plain-HTTP requests get a 301 to the
+ * {@code https://} URL (so a typed {@code ip:port} still works), and when
+ * the TLS identity is unavailable the server degrades to serving plain HTTP
+ * rather than not sharing at all. Remaining ceiling, documented and
+ * accepted: an ACTIVE MITM can present its own self-signed cert — the
+ * receiver can't tell it apart; cert-pinned verification is the
+ * LocalSend-protocol phase.
  *
  * <p>The vault never reaches this class: the Send affordance only exists on
  * finished, non-safe entries (the options sheet's quick row), same contract
@@ -96,16 +111,19 @@ public final class LanShareServer {
     private final AtomicInteger mPinAttempts = new AtomicInteger(0);
     private final AtomicBoolean mLocked = new AtomicBoolean(false);
     private final AtomicBoolean mRunning = new AtomicBoolean(false);
+    /** Null = TLS unavailable, serve plain HTTP (degraded but working). */
+    private final SSLContext mSslContext;
 
     private ServerSocket mServerSocket;
     private Thread mAcceptThread;
     private ExecutorService mHandlerPool;
 
     public LanShareServer(@NonNull List<SharedFile> files, @NonNull String deviceName,
-                          @NonNull AssetManager assets) {
+                          @NonNull AssetManager assets, @Nullable SSLContext sslContext) {
         this.mFiles = new ArrayList<>(files);
         this.mDeviceName = deviceName;
         this.mAssets = assets;
+        this.mSslContext = sslContext;
         SecureRandom random = new SecureRandom();
         this.mPin = String.format(Locale.ROOT, "%04d", random.nextInt(10_000));
         byte[] cookie = new byte[16];
@@ -127,6 +145,11 @@ public final class LanShareServer {
     public int getPort() {
         ServerSocket socket = mServerSocket;
         return socket != null ? socket.getLocalPort() : -1;
+    }
+
+    /** Whether connections are TLS-encrypted (false = plain-HTTP fallback). */
+    public boolean isTls() {
+        return mSslContext != null;
     }
 
     /**
@@ -298,9 +321,88 @@ public final class LanShareServer {
     }
 
     private void handleConnection(Socket client) {
-        try (Socket socket = client) {
-            socket.setSoTimeout(15_000);
-            InputStream rawIn = socket.getInputStream();
+        // Transport negotiation: one port, both protocols. The first byte
+        // tells them apart — a TLS ClientHello record starts with 0x16; no
+        // HTTP method does. TLS connections are wrapped server-side (the
+        // peeked byte handed back via the factory's `consumed` stream);
+        // plain HTTP gets a 301 to the https:// URL so a typed ip:port
+        // still lands on the encrypted flow. With no TLS identity
+        // (LanShareTls failed), plain HTTP is served directly — degraded
+        // beats not sharing.
+        Socket socket = client;
+        try {
+            client.setSoTimeout(15_000);
+            InputStream transportIn = client.getInputStream();
+            int firstByte = transportIn.read();
+            if (firstByte < 0) {
+                return;
+            }
+            InputStream requestIn;
+            if (firstByte == 0x16) {
+                if (mSslContext == null) {
+                    // Client speaks TLS, we can't — nothing useful to say.
+                    return;
+                }
+                SSLSocket sslSocket = (SSLSocket) mSslContext.getSocketFactory().createSocket(
+                        client, new ByteArrayInputStream(new byte[]{(byte) firstByte}), true);
+                sslSocket.setUseClientMode(false);
+                socket = sslSocket;
+                requestIn = sslSocket.getInputStream();
+            } else {
+                PushbackInputStream pushback = new PushbackInputStream(transportIn, 1);
+                pushback.unread(firstByte);
+                requestIn = pushback;
+                if (mSslContext != null) {
+                    redirectToHttps(pushback, client);
+                    return;
+                }
+            }
+            serveRequest(socket, requestIn);
+        } catch (Exception e) {
+            if (BuildConfig.DEBUG) {
+                Log.d(TAG, "connection transport", e);
+            }
+        } finally {
+            try {
+                socket.close();
+            } catch (IOException ignored) {
+            }
+            try {
+                client.close();
+            } catch (IOException ignored) {
+            }
+        }
+    }
+
+    /**
+     * Answer a plain-HTTP request with a 301 to the same path/query on
+     * {@code https://} — the typed-URL on-ramp to the encrypted flow.
+     */
+    private void redirectToHttps(@NonNull InputStream in, @NonNull Socket client)
+            throws IOException {
+        BufferedReader reader = new BufferedReader(
+                new InputStreamReader(in, StandardCharsets.UTF_8));
+        String requestLine = reader.readLine();
+        String target = "/";
+        if (requestLine != null) {
+            String[] parts = requestLine.split(" ");
+            if (parts.length >= 2 && parts[1].startsWith("/")) {
+                target = parts[1];
+            }
+        }
+        InetAddress local = client.getLocalAddress();
+        String host = local != null ? local.getHostAddress() : getLocalIpv4();
+        String location = "https://" + host + ":" + getPort() + target;
+        OutputStream out = client.getOutputStream();
+        out.write(("HTTP/1.1 301 Moved Permanently\r\n"
+                + "Location: " + location + "\r\n"
+                + "Content-Length: 0\r\n"
+                + "Connection: close\r\n\r\n").getBytes(StandardCharsets.UTF_8));
+        out.flush();
+    }
+
+    private void serveRequest(Socket socket, InputStream rawIn) {
+        try {
             BufferedReader in = new BufferedReader(
                     new InputStreamReader(rawIn, StandardCharsets.UTF_8));
             OutputStream out = socket.getOutputStream();

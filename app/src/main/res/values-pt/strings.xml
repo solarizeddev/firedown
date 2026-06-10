@@ -442,6 +442,7 @@
     <string name="lan_share_title">Enviar para o navegador</string>
     <string name="lan_share_lead">No outro dispositivo, abra este endereço em qualquer navegador na mesma rede Wi-Fi</string>
     <string name="lan_share_qr_hint">Ao ler o código, a página abre com o PIN já preenchido</string>
+    <string name="lan_share_cert_hint">O navegador do outro dispositivo mostra primeiro um aviso de segurança — escolha Avançadas e depois Continuar. A ligação entre os dois dispositivos continua cifrada.</string>
     <string name="lan_share_pin">PIN</string>
     <string name="lan_share_stop">Parar de partilhar</string>
     <string name="lan_share_footer">A partilha termina quando sai deste ecrã. Nada sai da sua rede.</string>

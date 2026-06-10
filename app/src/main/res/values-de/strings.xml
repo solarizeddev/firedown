@@ -573,6 +573,7 @@
     <string name="lan_share_title">An Browser senden</string>
     <string name="lan_share_lead">Öffne diese Adresse auf dem anderen Gerät in einem beliebigen Browser im selben WLAN</string>
     <string name="lan_share_qr_hint">Beim Scannen des Codes öffnet sich die Seite mit bereits ausgefüllter PIN</string>
+    <string name="lan_share_cert_hint">Der Browser des anderen Geräts zeigt zuerst eine Sicherheitswarnung — wähle Erweitert und dann Fortfahren. Die Verbindung zwischen beiden Geräten ist trotzdem verschlüsselt.</string>
     <string name="lan_share_pin">PIN</string>
     <string name="lan_share_stop">Freigabe beenden</string>
     <string name="lan_share_footer">Die Freigabe endet, wenn du diesen Bildschirm verlässt. Nichts verlässt dein Netzwerk.</string>

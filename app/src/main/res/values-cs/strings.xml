@@ -395,6 +395,7 @@
     <string name="lan_share_title">Odeslat do prohlížeče</string>
     <string name="lan_share_lead">Na druhém zařízení otevřete tuto adresu v libovolném prohlížeči na stejné Wi-Fi</string>
     <string name="lan_share_qr_hint">Naskenování kódu otevře stránku s již vyplněným PINem</string>
+    <string name="lan_share_cert_hint">Prohlížeč druhého zařízení nejprve zobrazí bezpečnostní varování — zvolte Rozšířené a pak Pokračovat. Spojení mezi oběma zařízeními je přesto šifrované.</string>
     <string name="lan_share_pin">PIN</string>
     <string name="lan_share_stop">Ukončit sdílení</string>
     <string name="lan_share_footer">Sdílení skončí, jakmile opustíte tuto obrazovku. Nic neopustí vaši síť.</string>

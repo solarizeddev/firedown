@@ -38,6 +38,7 @@ import com.solarized.firedown.R;
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.lanshare.LanShareServer;
+import com.solarized.firedown.lanshare.LanShareTls;
 import com.solarized.firedown.utils.FileUriHelper;
 import com.solarized.firedown.utils.FragmentArgs;
 import com.solarized.firedown.StoragePaths;
@@ -176,8 +177,11 @@ public class LanShareDialogFragment extends BaseBottomSheetDialogFragment {
             // Double-tap on Next — the first call already owns the server.
             return true;
         }
+        // TLS with the per-install self-signed cert (LanShareTls): a passive
+        // sniffer on hostile Wi-Fi gets only ciphertext. Null context =
+        // exotic-keystore fallback to plain HTTP — degraded beats not sharing.
         mServer = new LanShareServer(Collections.singletonList(mSharedFile), Build.MODEL,
-                requireContext().getAssets());
+                requireContext().getAssets(), LanShareTls.getServerContext());
         try {
             mServer.start();
         } catch (Exception e) {
@@ -202,17 +206,26 @@ public class LanShareDialogFragment extends BaseBottomSheetDialogFragment {
         pin.setLetterSpacing(0.45f);
 
         // The QR carries the PIN too — scanning authenticates in one hop;
-        // the displayed short URL is for typing and still hits the PIN gate.
+        // the displayed short URL is for typing and still hits the PIN gate
+        // (typed ip:port arrives as plain http and the server 301s it to
+        // https, so both paths land encrypted).
         //
-        // PLAIN http on purpose — do not "upgrade" this to an intent:// URI
+        // A plain URL on purpose — do not "upgrade" this to an intent:// URI
         // to prefer Firedown on the receiver. intent:// is a Chrome-ism for
         // links navigated INSIDE a browser page; a camera/QR scanner
         // resolves it as a literal scheme no app handles, and Samsung's
         // scanner showed "no app can handle this" (tested on-device). A
-        // plain http URL is the only payload every scanner opens, and the
+        // plain URL is the only payload every scanner opens, and the
         // receiver's default browser is fine — the page carries the
         // Get-the-app link for the Firedown pitch instead.
-        setQr("http://" + hostPort + "/?pin=" + mServer.getPin());
+        String scheme = mServer.isTls() ? "https" : "http";
+        setQr(scheme + "://" + hostPort + "/?pin=" + mServer.getPin());
+
+        // The self-signed cert means the receiver clicks through one
+        // browser warning — explain it on the SENDER sheet (the warning
+        // shows before any page of ours can).
+        mView.findViewById(R.id.lan_share_cert).setVisibility(
+                mServer.isTls() ? View.VISIBLE : View.GONE);
 
         mView.findViewById(R.id.lan_share_content).setVisibility(View.VISIBLE);
         mView.findViewById(R.id.lan_direct_group).setVisibility(View.GONE);
@@ -350,8 +363,10 @@ public class LanShareDialogFragment extends BaseBottomSheetDialogFragment {
         }
 
         // The join instruction lives under the QR; a lead saying the same
-        // thing above it is noise — hide it for this step.
+        // thing above it is noise — hide it for this step. The cert hint is
+        // also irrelevant here (the WIFI: QR is a hotspot join, not a page).
         mView.findViewById(R.id.lan_share_lead).setVisibility(View.GONE);
+        mView.findViewById(R.id.lan_share_cert).setVisibility(View.GONE);
         ((TextView) mView.findViewById(R.id.lan_share_url)).setText(ssid);
         ((TextView) mView.findViewById(R.id.lan_share_hint))
                 .setText(R.string.lan_direct_join_hint);
