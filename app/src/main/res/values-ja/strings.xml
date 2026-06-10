@@ -143,6 +143,12 @@
     <string name="downloading">ダウンロード中…</string>
     <string name="edit">編集</string>
     <string name="empty_learn_more">詳細</string>
+    <string name="restore_downloads_button">以前のダウンロードを復元</string>
+    <string name="restore_downloads_message">Firedown を再インストールした場合、ダウンロードしたファイルは Download/Firedown フォルダーに残っている可能性があります。そのフォルダーを選択すると、Firedown がダウンロード一覧を復元します。</string>
+    <string name="restore_downloads_choose">フォルダーを選択</string>
+    <string name="restore_downloads_done">復元したダウンロード: %1$d</string>
+    <string name="restore_downloads_none">このフォルダーにバックアップが見つかりません</string>
+    <string name="restore_downloads_wrong_device">このバックアップは別の端末のものです</string>
     <string name="empty_list">ダウンロードがここに表示されます。</string>
     <string name="empty_list_bookmarks">まだ何もブックマークされていません。</string>
     <string name="empty_list_browser_history">ブラウザの履歴は空です。</string>

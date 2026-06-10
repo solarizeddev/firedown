@@ -85,6 +85,12 @@
     <string name="downloading">Aan het downloaden…</string>
     <string name="edit">Bewerken</string>
     <string name="empty_learn_more">Meer informatie</string>
+    <string name="restore_downloads_button">Eerdere downloads herstellen</string>
+    <string name="restore_downloads_message">Als je Firedown opnieuw hebt geïnstalleerd, staan je downloads mogelijk nog in de map Download/Firedown. Kies die map en Firedown herstelt je downloadlijst.</string>
+    <string name="restore_downloads_choose">Map kiezen</string>
+    <string name="restore_downloads_done">Herstelde downloads: %1$d</string>
+    <string name="restore_downloads_none">Geen back-up gevonden in deze map</string>
+    <string name="restore_downloads_wrong_device">Deze back-up hoort bij een ander apparaat</string>
     <string name="empty_list">Uw downloads verschijnen hier.</string>
     <string name="empty_list_bookmarks">Er is nog niets gemarkeerd.</string>
     <string name="empty_list_browser_history">Uw browsergeschiedenis is leeg.</string>

@@ -175,6 +175,12 @@
     <string name="downloads_active_header">Downloading</string>
     <string name="edit">Edit</string>
     <string name="empty_learn_more">Learn more</string>
+    <string name="restore_downloads_button">Restore previous downloads</string>
+    <string name="restore_downloads_message">If you reinstalled Firedown, your downloads may still be in the Download/Firedown folder. Choose that folder and Firedown will restore your download list.</string>
+    <string name="restore_downloads_choose">Choose folder</string>
+    <string name="restore_downloads_done">Restored downloads: %1$d</string>
+    <string name="restore_downloads_none">No backup found in this folder</string>
+    <string name="restore_downloads_wrong_device">This backup belongs to a different device</string>
     <string name="empty_list">Your downloads will appear here.</string>
     <string name="empty_list_bookmarks">Nothing bookmarked yet.</string>
     <string name="empty_list_browser_history">Your browser history is empty.</string>

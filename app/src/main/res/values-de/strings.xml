@@ -143,6 +143,12 @@
     <string name="downloading">Wird heruntergeladen…</string>
     <string name="edit">Bearbeiten</string>
     <string name="empty_learn_more">Weitere Informationen</string>
+    <string name="restore_downloads_button">Frühere Downloads wiederherstellen</string>
+    <string name="restore_downloads_message">Wenn du Firedown neu installiert hast, befinden sich deine Downloads möglicherweise noch im Ordner Download/Firedown. Wähle diesen Ordner aus und Firedown stellt deine Download-Liste wieder her.</string>
+    <string name="restore_downloads_choose">Ordner auswählen</string>
+    <string name="restore_downloads_done">Wiederhergestellte Downloads: %1$d</string>
+    <string name="restore_downloads_none">Keine Sicherung in diesem Ordner gefunden</string>
+    <string name="restore_downloads_wrong_device">Diese Sicherung gehört zu einem anderen Gerät</string>
     <string name="empty_list">Ihre Downloads werden hier angezeigt.</string>
     <string name="empty_list_bookmarks">Noch nichts mit Lesezeichen versehen.</string>
     <string name="empty_list_browser_history">Ihr Browserverlauf ist leer.</string>

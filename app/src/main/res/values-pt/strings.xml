@@ -67,6 +67,12 @@
     <string name="downloading">Baixando…</string>
     <string name="edit">Editar</string>
     <string name="empty_learn_more">Saber mais</string>
+    <string name="restore_downloads_button">Restaurar transferências anteriores</string>
+    <string name="restore_downloads_message">Se reinstalou o Firedown, as suas transferências podem ainda estar na pasta Download/Firedown. Escolha essa pasta e o Firedown restaurará a sua lista de transferências.</string>
+    <string name="restore_downloads_choose">Escolher pasta</string>
+    <string name="restore_downloads_done">Transferências restauradas: %1$d</string>
+    <string name="restore_downloads_none">Nenhuma cópia de segurança encontrada nesta pasta</string>
+    <string name="restore_downloads_wrong_device">Esta cópia de segurança pertence a outro dispositivo</string>
     <string name="empty_list">Seus downloads aparecerão aqui.</string>
     <string name="empty_list_bookmarks">Nada marcado ainda.</string>
     <string name="empty_list_browser_history">O histórico do seu navegador está vazio.</string>

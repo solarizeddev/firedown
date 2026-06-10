@@ -82,6 +82,12 @@
     <string name="downloading">Stahování…</string>
     <string name="edit">Upravit</string>
     <string name="empty_learn_more">Další informace</string>
+    <string name="restore_downloads_button">Obnovit předchozí stahování</string>
+    <string name="restore_downloads_message">Pokud jste Firedown přeinstalovali, vaše stažené soubory mohou stále být ve složce Download/Firedown. Vyberte tuto složku a Firedown obnoví seznam stahování.</string>
+    <string name="restore_downloads_choose">Vybrat složku</string>
+    <string name="restore_downloads_done">Obnovená stahování: %1$d</string>
+    <string name="restore_downloads_none">V této složce nebyla nalezena žádná záloha</string>
+    <string name="restore_downloads_wrong_device">Tato záloha patří jinému zařízení</string>
     <string name="empty_list">Zde se zobrazí vaše stažené soubory.</string>
     <string name="empty_list_bookmarks">Zatím nic není v záložkách.</string>
     <string name="empty_list_browser_history">Historie vašeho prohlížeče je prázdná.</string>

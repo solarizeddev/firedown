@@ -82,6 +82,12 @@
     <string name="downloading">Ladataan…</string>
     <string name="edit">Muokata</string>
     <string name="empty_learn_more">Lue lisää</string>
+    <string name="restore_downloads_button">Palauta aiemmat lataukset</string>
+    <string name="restore_downloads_message">Jos asensit Firedownin uudelleen, latauksesi voivat yhä olla Download/Firedown-kansiossa. Valitse kyseinen kansio, niin Firedown palauttaa latausluettelosi.</string>
+    <string name="restore_downloads_choose">Valitse kansio</string>
+    <string name="restore_downloads_done">Palautettuja latauksia: %1$d</string>
+    <string name="restore_downloads_none">Tästä kansiosta ei löytynyt varmuuskopiota</string>
+    <string name="restore_downloads_wrong_device">Tämä varmuuskopio kuuluu toiselle laitteelle</string>
     <string name="empty_list">Latauksesi näkyvät täällä.</string>
     <string name="empty_list_bookmarks">Mitään ei ole vielä lisätty kirjanmerkkeihin.</string>
     <string name="empty_list_browser_history">Selaushistoriasi on tyhjä.</string>

@@ -240,6 +240,112 @@ public final class DownloadBackupMirror {
         return buf;
     }
 
+    /** {@link #restoreFromTree} result: no {@code .fdbk} found in the tree. */
+    public static final int RESTORE_NO_BACKUP = -1;
+    /** {@link #restoreFromTree} result: mirror(s) found, none decryptable —
+     *  written by a different device or signing identity. */
+    public static final int RESTORE_WRONG_DEVICE = -2;
+
+    /** Install-local record of the SAF tree the user granted for restore —
+     *  kept for the future content-URI playback fallback on Android 13+. */
+    private static final String KEY_RESTORE_TREE = "restore_tree_uri";
+
+    public static void rememberRestoreTree(@NonNull Context context, @NonNull android.net.Uri treeUri) {
+        context.getSharedPreferences(LOCAL_PREFS, Context.MODE_PRIVATE)
+                .edit().putString(KEY_RESTORE_TREE, treeUri.toString()).apply();
+    }
+
+    /**
+     * SAF restore: scan a user-granted document tree (normally
+     * {@code Download/Firedown}) for encrypted public mirrors and import the
+     * newest decryptable one. Call on a background thread.
+     *
+     * <p>Looks for {@code *.fdbk} both directly in the picked folder and in
+     * its {@code backup/} child (covering a user who picked either level),
+     * newest-first by last-modified. Returns the number of rows imported
+     * (0 is a legitimate result: everything already present),
+     * {@link #RESTORE_NO_BACKUP}, or {@link #RESTORE_WRONG_DEVICE}.
+     */
+    public static int restoreFromTree(@NonNull Context context,
+                                      @NonNull DownloadDatabase database,
+                                      @NonNull android.net.Uri treeUri) {
+        java.util.ArrayList<android.util.Pair<android.net.Uri, Long>> candidates = new java.util.ArrayList<>();
+        try {
+            String rootDocId = android.provider.DocumentsContract.getTreeDocumentId(treeUri);
+            collectFdbkCandidates(context, treeUri, rootDocId, candidates, true);
+        } catch (Exception e) {
+            Log.e(TAG, "restoreFromTree: tree scan failed", e);
+        }
+        if (candidates.isEmpty()) {
+            return RESTORE_NO_BACKUP;
+        }
+        candidates.sort((a, b) -> Long.compare(b.second, a.second));
+
+        File plain = new File(context.getCacheDir(), "restore-mirror-" + System.currentTimeMillis() + ".db");
+        try {
+            for (android.util.Pair<android.net.Uri, Long> candidate : candidates) {
+                try (java.io.InputStream in = context.getContentResolver().openInputStream(candidate.first)) {
+                    if (in == null) {
+                        continue;
+                    }
+                    if (decryptPublicMirror(context, in, plain)) {
+                        int restored = importMirrorDatabase(database, plain);
+                        Log.i(TAG, "restoreFromTree: restored " + restored + " entries from SAF mirror");
+                        return restored;
+                    }
+                } catch (Exception e) {
+                    if (BuildConfig.DEBUG) {
+                        Log.d(TAG, "restoreFromTree: candidate failed", e);
+                    }
+                }
+            }
+        } finally {
+            if (plain.exists() && !plain.delete()) {
+                Log.w(TAG, "restoreFromTree: temp mirror not deleted");
+            }
+        }
+        return RESTORE_WRONG_DEVICE;
+    }
+
+    private static void collectFdbkCandidates(@NonNull Context context,
+                                              @NonNull android.net.Uri treeUri,
+                                              @NonNull String parentDocId,
+                                              @NonNull java.util.ArrayList<android.util.Pair<android.net.Uri, Long>> out,
+                                              boolean recurseIntoBackupDir) {
+        android.net.Uri children = android.provider.DocumentsContract
+                .buildChildDocumentsUriUsingTree(treeUri, parentDocId);
+        String[] projection = {
+                android.provider.DocumentsContract.Document.COLUMN_DOCUMENT_ID,
+                android.provider.DocumentsContract.Document.COLUMN_DISPLAY_NAME,
+                android.provider.DocumentsContract.Document.COLUMN_MIME_TYPE,
+                android.provider.DocumentsContract.Document.COLUMN_LAST_MODIFIED,
+        };
+        try (Cursor cursor = context.getContentResolver().query(children, projection, null, null, null)) {
+            if (cursor == null) {
+                return;
+            }
+            while (cursor.moveToNext()) {
+                String docId = cursor.getString(0);
+                String name = cursor.getString(1);
+                String mime = cursor.getString(2);
+                long modified = cursor.isNull(3) ? 0L : cursor.getLong(3);
+                if (android.provider.DocumentsContract.Document.MIME_TYPE_DIR.equals(mime)) {
+                    if (recurseIntoBackupDir && PUBLIC_DIR.equals(name)) {
+                        collectFdbkCandidates(context, treeUri, docId, out, false);
+                    }
+                } else if (name != null && name.endsWith(".fdbk")) {
+                    out.add(new android.util.Pair<>(
+                            android.provider.DocumentsContract.buildDocumentUriUsingTree(treeUri, docId),
+                            modified));
+                }
+            }
+        } catch (Exception e) {
+            if (BuildConfig.DEBUG) {
+                Log.d(TAG, "collectFdbkCandidates: query failed for " + parentDocId, e);
+            }
+        }
+    }
+
     /**
      * Decrypt an encrypted public mirror (a {@code .fdbk} stream read through
      * a SAF grant after reinstall) back into a plain SQLite file. Returns
@@ -352,6 +458,19 @@ public final class DownloadBackupMirror {
             }
         }
 
+        // Dedup by file_path: the SAF restore button can run against a
+        // NON-empty table (the user may have downloaded again before tapping
+        // Restore, or tap twice) — a row whose path already exists must not
+        // be duplicated. Makes the import idempotent.
+        Set<String> existingPaths = new HashSet<>();
+        try (Cursor paths = db.query("SELECT file_path FROM " + TABLE)) {
+            while (paths.moveToNext()) {
+                if (!paths.isNull(0)) {
+                    existingPaths.add(paths.getString(0));
+                }
+            }
+        }
+
         int restored = 0;
         SQLiteDatabase src = null;
         try {
@@ -383,9 +502,11 @@ public final class DownloadBackupMirror {
                     // rows, but a tampered/foreign mirror must not be able to
                     // inject entries into the vault list.
                     values.put("file_safe", 0);
-                    if (TextUtils.isEmpty(values.getAsString("file_path"))) {
+                    String rowPath = values.getAsString("file_path");
+                    if (TextUtils.isEmpty(rowPath) || existingPaths.contains(rowPath)) {
                         continue;
                     }
+                    existingPaths.add(rowPath);
                     try {
                         db.insert(TABLE, SQLiteDatabase.CONFLICT_IGNORE, values);
                         restored++;

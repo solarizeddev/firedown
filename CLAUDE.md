@@ -869,8 +869,17 @@ folder grant** (`ACTION_OPEN_DOCUMENT_TREE` on `Download/Firedown`) →
 importer the Auto Backup restore uses; `file_safe` forced 0). The write side
 handles the name collision a reinstall causes (foreign-owned old file at the
 fixed name → fall back to a timestamped `.fdbk`; restore scans for all of
-them and takes the newest it can decrypt). The SAF restore UI is NOT built
-yet — only the write side + decrypt/import plumbing ship today.
+them and takes the newest it can decrypt). The SAF restore UI lives on the
+Downloads **empty state** (`DownloadFragment` — the LCEE empty view's
+built-in button, shown only on the unfiltered chip): confirm dialog →
+`OpenDocumentTree` pre-pointed at `Download/Firedown` (the scan accepts the
+`backup/` subfolder too) → persist the grant (kept in `backup_local.xml` for
+the future content-URI playback fallback on 13+) → `restoreFromTree` →
+snackbar with the count / "no backup" / "different device".
+`importMirrorDatabase` dedups by `file_path` against the live table, so the
+button is idempotent — tapping twice or restoring on a non-empty list never
+duplicates rows. Strings are translated across the same 16 locales as the
+JIT toggle.
 
 ## URL-bar clipboard chip & system-service binder calls
 

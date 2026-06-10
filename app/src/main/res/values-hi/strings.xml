@@ -53,6 +53,12 @@
     <string name="downloading">डाउनलोड हो रहा है…</string>
     <string name="edit">संपादन करे</string>
     <string name="empty_learn_more">&gt;ज़्यादा जानें</string>
+    <string name="restore_downloads_button">पिछले डाउनलोड बहाल करें</string>
+    <string name="restore_downloads_message">अगर आपने Firedown फिर से इंस्टॉल किया है, तो आपके डाउनलोड अब भी Download/Firedown फ़ोल्डर में हो सकते हैं। वह फ़ोल्डर चुनें और Firedown आपकी डाउनलोड सूची बहाल कर देगा।</string>
+    <string name="restore_downloads_choose">फ़ोल्डर चुनें</string>
+    <string name="restore_downloads_done">बहाल किए गए डाउनलोड: %1$d</string>
+    <string name="restore_downloads_none">इस फ़ोल्डर में कोई बैकअप नहीं मिला</string>
+    <string name="restore_downloads_wrong_device">यह बैकअप किसी दूसरे डिवाइस का है</string>
     <string name="empty_list">आपके डाउनलोड यहां दिखाई देंगे.</string>
     <string name="empty_list_bookmarks">अभी तक कुछ भी बुकमार्क नहीं किया गया है.</string>
     <string name="empty_list_browser_history">आपका ब्राउज़र इतिहास रिक्त है.</string>

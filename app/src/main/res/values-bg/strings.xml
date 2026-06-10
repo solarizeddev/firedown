@@ -80,6 +80,12 @@
     <string name="downloading">Изтегля се…</string>
     <string name="edit">Редактиране</string>
     <string name="empty_learn_more">Научете повече</string>
+    <string name="restore_downloads_button">Възстановяване на предишни изтегляния</string>
+    <string name="restore_downloads_message">Ако сте преинсталирали Firedown, изтеглянията ви може още да са в папката Download/Firedown. Изберете тази папка и Firedown ще възстанови списъка с изтегляния.</string>
+    <string name="restore_downloads_choose">Избор на папка</string>
+    <string name="restore_downloads_done">Възстановени изтегляния: %1$d</string>
+    <string name="restore_downloads_none">В тази папка не е намерено резервно копие</string>
+    <string name="restore_downloads_wrong_device">Това резервно копие е от друго устройство</string>
     <string name="empty_list">Вашите изтеглени файлове ще се появят тук.</string>
     <string name="empty_list_bookmarks">Още няма отметки.</string>
     <string name="empty_list_browser_history">Историята на браузъра ви е празна.</string>

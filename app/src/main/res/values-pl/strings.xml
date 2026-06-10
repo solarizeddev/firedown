@@ -85,6 +85,12 @@
     <string name="downloading">Ściąganie…</string>
     <string name="edit">Edytuj</string>
     <string name="empty_learn_more">Więcej informacji</string>
+    <string name="restore_downloads_button">Przywróć poprzednie pobrania</string>
+    <string name="restore_downloads_message">Jeśli ponownie zainstalowano Firedown, pobrane pliki mogą nadal znajdować się w folderze Download/Firedown. Wybierz ten folder, a Firedown przywróci listę pobrań.</string>
+    <string name="restore_downloads_choose">Wybierz folder</string>
+    <string name="restore_downloads_done">Przywrócone pobrania: %1$d</string>
+    <string name="restore_downloads_none">Nie znaleziono kopii zapasowej w tym folderze</string>
+    <string name="restore_downloads_wrong_device">Ta kopia zapasowa należy do innego urządzenia</string>
     <string name="empty_list">Twoje pliki do pobrania pojawią się tutaj.</string>
     <string name="empty_list_bookmarks">Jeszcze nic nie zostało dodane do zakładek.</string>
     <string name="empty_list_browser_history">Historia Twojej przeglądarki jest pusta.</string>

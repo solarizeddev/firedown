@@ -143,6 +143,12 @@
     <string name="downloading">Descargando…</string>
     <string name="edit">Editar</string>
     <string name="empty_learn_more">Saber más</string>
+    <string name="restore_downloads_button">Restaurar descargas anteriores</string>
+    <string name="restore_downloads_message">Si reinstalaste Firedown, tus descargas pueden seguir en la carpeta Download/Firedown. Elige esa carpeta y Firedown restaurará tu lista de descargas.</string>
+    <string name="restore_downloads_choose">Elegir carpeta</string>
+    <string name="restore_downloads_done">Descargas restauradas: %1$d</string>
+    <string name="restore_downloads_none">No se encontró ninguna copia de seguridad en esta carpeta</string>
+    <string name="restore_downloads_wrong_device">Esta copia de seguridad pertenece a otro dispositivo</string>
     <string name="empty_list">Tus descargas aparecerán aquí.</string>
     <string name="empty_list_bookmarks">No hay nada marcado todavía.</string>
     <string name="empty_list_browser_history">El historial de tu navegador está vacío.</string>

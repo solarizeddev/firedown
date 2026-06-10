@@ -81,6 +81,12 @@
     <string name="downloading">Завантаження…</string>
     <string name="edit">Редагувати</string>
     <string name="empty_learn_more">Докладніше</string>
+    <string name="restore_downloads_button">Відновити попередні завантаження</string>
+    <string name="restore_downloads_message">Якщо ви перевстановили Firedown, ваші завантаження можуть досі бути в папці Download/Firedown. Виберіть цю папку, і Firedown відновить список завантажень.</string>
+    <string name="restore_downloads_choose">Вибрати папку</string>
+    <string name="restore_downloads_done">Відновлено завантажень: %1$d</string>
+    <string name="restore_downloads_none">У цій папці не знайдено резервної копії</string>
+    <string name="restore_downloads_wrong_device">Ця резервна копія належить іншому пристрою</string>
     <string name="empty_list">Ваші завантаження відображатимуться тут.</string>
     <string name="empty_list_bookmarks">Ще нічого не додано в закладки.</string>
     <string name="empty_list_browser_history">Ваша історія браузера порожня.</string>

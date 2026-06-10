@@ -85,6 +85,12 @@
     <string name="downloading">İndiriliyor…</string>
     <string name="edit">Düzenlemek</string>
     <string name="empty_learn_more">Daha fazla bilgi</string>
+    <string name="restore_downloads_button">Önceki indirmeleri geri yükle</string>
+    <string name="restore_downloads_message">Firedown\'u yeniden yüklediyseniz indirmeleriniz hâlâ Download/Firedown klasöründe olabilir. Bu klasörü seçin, Firedown indirme listenizi geri yüklesin.</string>
+    <string name="restore_downloads_choose">Klasör seç</string>
+    <string name="restore_downloads_done">Geri yüklenen indirmeler: %1$d</string>
+    <string name="restore_downloads_none">Bu klasörde yedek bulunamadı</string>
+    <string name="restore_downloads_wrong_device">Bu yedek başka bir cihaza ait</string>
     <string name="empty_list">İndirdiğiniz dosyalar burada görünecek.</string>
     <string name="empty_list_bookmarks">Henüz yer işareti konmuş bir şey yok.</string>
     <string name="empty_list_browser_history">Tarayıcı geçmişiniz boş.</string>

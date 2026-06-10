@@ -13,6 +13,8 @@ import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.graphics.drawable.DrawableCompat;
@@ -24,9 +26,13 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.color.MaterialColors;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
 import com.solarized.firedown.data.Download;
+import com.solarized.firedown.data.DownloadBackupMirror;
+import com.solarized.firedown.data.DownloadDatabase;
+import com.solarized.firedown.data.di.Qualifiers;
 import com.solarized.firedown.data.TaskEvent;
 import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.data.models.DownloadsViewModel;
@@ -42,6 +48,9 @@ import com.solarized.firedown.Keys;
 import com.solarized.firedown.utils.NavigationUtils;
 
 import java.util.List;
+import java.util.concurrent.Executor;
+
+import javax.inject.Inject;
 
 public class DownloadFragment extends BaseDownloadFragment implements
         EditText.OnEditorActionListener,
@@ -50,6 +59,20 @@ public class DownloadFragment extends BaseDownloadFragment implements
 
     private static final String TAG = DownloadFragment.class.getSimpleName();
     private ChipGroup mChipGroup;
+
+    @Inject
+    DownloadDatabase mDownloadDatabase;
+    @Inject
+    @Qualifiers.DiskIO
+    Executor mDiskExecutor;
+
+    /** SAF folder picker for the empty-state "Restore previous downloads"
+     *  flow — the transport-free recovery path (see DownloadBackupMirror).
+     *  Registered as a field initializer so it exists before the fragment
+     *  reaches STARTED, as the activity-result API requires. */
+    private final ActivityResultLauncher<android.net.Uri> mRestoreFolderPicker =
+            registerForActivityResult(new ActivityResultContracts.OpenDocumentTree(),
+                    this::onRestoreTreePicked);
 
     /** Single-item header surfaced via {@link androidx.recyclerview.widget.ConcatAdapter}
      *  when the user has vault (incognito-tab) downloads in flight while
@@ -149,6 +172,19 @@ public class DownloadFragment extends BaseDownloadFragment implements
                     int chipId = mChipGroup.getCheckedChipId();
                     mLCEERecyclerView.setEmptyText(chipId == R.id.chip_all ? R.string.empty_list : R.string.empty_list_type);
                     mLCEERecyclerView.setEmptyImageView(getEmptyIcon(chipId));
+                    // Empty + unfiltered is the post-reinstall sight: offer the
+                    // transport-free SAF restore (reads the encrypted mirror
+                    // surviving in Download/Firedown — see DownloadBackupMirror).
+                    // Idempotent, so offering it to a genuinely-new user is
+                    // harmless ("no backup found"). Filtered-empty keeps the
+                    // plain message — the list isn't actually empty.
+                    if (chipId == R.id.chip_all) {
+                        mLCEERecyclerView.setEmptyButtonText(R.string.restore_downloads_button);
+                        mLCEERecyclerView.setEmptyButtonVisibility(View.VISIBLE);
+                        mLCEERecyclerView.setButtonListener(id -> showRestoreDownloadsDialog());
+                    } else {
+                        mLCEERecyclerView.setEmptyButtonVisibility(View.GONE);
+                    }
                     mLCEERecyclerView.showEmpty();
                 } else {
                     mLCEERecyclerView.hideAll();
@@ -294,6 +330,72 @@ public class DownloadFragment extends BaseDownloadFragment implements
     @Override
     public void onItemVariantClick(int position, int variant, int resId) {
 
+    }
+
+    // ── Transport-free restore (SAF) ────────────────────────────────────
+    // The encrypted public mirror in Download/Firedown survives uninstall;
+    // after a reinstall the file is foreign-owned and only reachable through
+    // a user-granted document tree. One folder pick restores the full
+    // download list. See DownloadBackupMirror for the data side.
+
+    private void showRestoreDownloadsDialog() {
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.restore_downloads_button)
+                .setMessage(R.string.restore_downloads_message)
+                .setPositiveButton(R.string.restore_downloads_choose, (dialog, which) -> launchRestoreFolderPicker())
+                .setNegativeButton(R.string.cancel, null)
+                .show();
+    }
+
+    private void launchRestoreFolderPicker() {
+        // Pre-point the system picker at Download/Firedown — the user only
+        // has to confirm "Use this folder". Providers that don't honour the
+        // initial URI just open at their default root; the scan also accepts
+        // the backup/ subfolder if that's what gets picked.
+        android.net.Uri initial = android.provider.DocumentsContract.buildDocumentUri(
+                "com.android.externalstorage.documents", "primary:Download/Firedown");
+        try {
+            mRestoreFolderPicker.launch(initial);
+        } catch (android.content.ActivityNotFoundException e) {
+            showErrorSnackbar(R.string.restore_downloads_none);
+        }
+    }
+
+    private void onRestoreTreePicked(@Nullable android.net.Uri treeUri) {
+        if (treeUri == null) {
+            return; // user backed out of the picker
+        }
+        try {
+            // Persist the grant: it is also the future content-URI access
+            // path for the restored files on Android 13+ (the reinstalled
+            // app no longer owns them).
+            requireContext().getContentResolver().takePersistableUriPermission(
+                    treeUri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            DownloadBackupMirror.rememberRestoreTree(requireContext(), treeUri);
+        } catch (SecurityException e) {
+            // Non-persistable grant — the one-shot read below still works.
+        }
+        android.content.Context appContext = requireContext().getApplicationContext();
+        mDiskExecutor.execute(() -> {
+            int result = DownloadBackupMirror.restoreFromTree(appContext, mDownloadDatabase, treeUri);
+            View view = getView();
+            if (view == null) {
+                return;
+            }
+            view.post(() -> {
+                if (!isAdded() || mActivity == null) {
+                    return;
+                }
+                if (result >= 0) {
+                    makeSnackbar(mActivity.getSnackAnchorView(),
+                            getString(R.string.restore_downloads_done, result), false).show();
+                } else if (result == DownloadBackupMirror.RESTORE_NO_BACKUP) {
+                    showErrorSnackbar(R.string.restore_downloads_none);
+                } else {
+                    showErrorSnackbar(R.string.restore_downloads_wrong_device);
+                }
+            });
+        });
     }
 
     private int getEmptyIcon(int chipId) {

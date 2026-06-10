@@ -72,6 +72,12 @@
     <string name="downloading">Allalaadimine…</string>
     <string name="edit">Muuda</string>
     <string name="empty_learn_more">Lisateave</string>
+    <string name="restore_downloads_button">Taasta varasemad allalaadimised</string>
+    <string name="restore_downloads_message">Kui installisid Firedowni uuesti, võivad su allalaadimised endiselt olla kaustas Download/Firedown. Vali see kaust ja Firedown taastab su allalaadimiste loendi.</string>
+    <string name="restore_downloads_choose">Vali kaust</string>
+    <string name="restore_downloads_done">Taastatud allalaadimisi: %1$d</string>
+    <string name="restore_downloads_none">Sellest kaustast varukoopiat ei leitud</string>
+    <string name="restore_downloads_wrong_device">See varukoopia kuulub teisele seadmele</string>
     <string name="empty_list">Teie allalaaditavad failid kuvatakse siin.</string>
     <string name="empty_list_bookmarks">Midagi pole veel järjehoidjatesse lisatud.</string>
     <string name="empty_list_browser_history">Teie brauseri ajalugu on tühi.</string>
