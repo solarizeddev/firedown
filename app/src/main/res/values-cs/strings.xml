@@ -393,6 +393,7 @@
     <string name="capture_help_banner">Některá vložená média je nutné nejdřív přehrát. Klepnutím zjistíte jak.</string>
     <string name="lan_send">Odeslat</string>
     <string name="lan_share_title">Odeslat do prohlížeče</string>
+    <string name="tabs_more_options">Další možnosti</string>
     <string name="lan_share_lead">Na druhém zařízení otevřete tuto adresu v libovolném prohlížeči na stejné Wi-Fi</string>
     <string name="lan_share_qr_hint">Naskenování kódu otevře stránku s již vyplněným PINem</string>
     <string name="lan_share_cert_hint">Prohlížeč druhého zařízení nejprve zobrazí bezpečnostní varování — zvolte Rozšířené a pak Pokračovat. Spojení mezi oběma zařízeními je přesto šifrované.</string>

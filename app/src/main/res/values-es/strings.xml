@@ -571,6 +571,7 @@
     <string name="capture_help_banner">Algunos medios incrustados deben reproducirse primero. Toca para saber cómo.</string>
     <string name="lan_send">Enviar</string>
     <string name="lan_share_title">Enviar al navegador</string>
+    <string name="tabs_more_options">Más opciones</string>
     <string name="lan_share_lead">En el otro dispositivo, abre esta dirección en cualquier navegador en la misma Wi-Fi</string>
     <string name="lan_share_qr_hint">Al escanear el código se abre la página con el PIN ya rellenado</string>
     <string name="lan_share_cert_hint">El navegador del otro dispositivo muestra primero un aviso de seguridad — elige Avanzado y luego Continuar. La conexión entre los dos dispositivos sigue cifrada.</string>

@@ -569,6 +569,7 @@
     <string name="capture_help_banner">一部の埋め込みメディアは先に再生する必要があります。タップして詳細をご覧ください。</string>
     <string name="lan_send">送信</string>
     <string name="lan_share_title">ブラウザーに送信</string>
+    <string name="tabs_more_options">その他のオプション</string>
     <string name="lan_share_lead">同じ Wi-Fi 上の別の端末で、任意のブラウザーからこのアドレスを開いてください</string>
     <string name="lan_share_qr_hint">コードをスキャンすると PIN 入力済みのページが開きます</string>
     <string name="lan_share_cert_hint">相手の端末のブラウザには最初にセキュリティ警告が表示されます。「詳細設定」→「続行」を選んでください。2 台の端末間の通信は暗号化されています。</string>

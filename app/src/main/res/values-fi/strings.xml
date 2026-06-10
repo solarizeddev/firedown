@@ -379,6 +379,7 @@
     <string name="capture_help_banner">Jotkin upotetut mediat on toistettava ensin. Napauta nähdäksesi ohjeet.</string>
     <string name="lan_send">Lähetä</string>
     <string name="lan_share_title">Lähetä selaimeen</string>
+    <string name="tabs_more_options">Lisää vaihtoehtoja</string>
     <string name="lan_share_lead">Avaa tämä osoite toisella laitteella millä tahansa selaimella samassa Wi-Fi-verkossa</string>
     <string name="lan_share_qr_hint">Koodin skannaus avaa sivun, jossa PIN on jo valmiina</string>
     <string name="lan_share_cert_hint">Toisen laitteen selain näyttää ensin suojausvaroituksen — valitse Lisäasetukset ja sitten Jatka. Yhteys laitteiden välillä on silti salattu.</string>

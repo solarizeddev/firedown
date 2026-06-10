@@ -681,6 +681,7 @@
     <string name="home_trackers_subtitle_idle">Protection active</string>
     <string name="lan_send">Send</string>
     <string name="lan_share_title">Send to browser</string>
+    <string name="tabs_more_options">More options</string>
     <string name="lan_share_lead">On the other device, open this address in any browser on the same Wi-Fi</string>
     <string name="lan_share_qr_hint">Scanning the code opens the page with the PIN already filled in</string>
     <string name="lan_share_cert_hint">The other device\'s browser shows a security warning first — choose Advanced, then Continue. The connection is still encrypted between the two devices.</string>

@@ -440,6 +440,7 @@
     <string name="capture_help_banner">Sommige ingesloten media moeten eerst worden afgespeeld. Tik voor meer info.</string>
     <string name="lan_send">Versturen</string>
     <string name="lan_share_title">Naar browser sturen</string>
+    <string name="tabs_more_options">Meer opties</string>
     <string name="lan_share_lead">Open dit adres op het andere apparaat in een willekeurige browser op dezelfde wifi</string>
     <string name="lan_share_qr_hint">Door de code te scannen opent de pagina met de pin al ingevuld</string>
     <string name="lan_share_cert_hint">De browser van het andere apparaat toont eerst een beveiligingswaarschuwing — kies Geavanceerd en dan Doorgaan. De verbinding tussen de twee apparaten is wel versleuteld.</string>

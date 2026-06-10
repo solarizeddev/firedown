@@ -440,6 +440,7 @@
     <string name="capture_help_banner">Algumas mídias incorporadas precisam ser reproduzidas primeiro. Toque para saber como.</string>
     <string name="lan_send">Enviar</string>
     <string name="lan_share_title">Enviar para o navegador</string>
+    <string name="tabs_more_options">Mais opções</string>
     <string name="lan_share_lead">No outro dispositivo, abra este endereço em qualquer navegador na mesma rede Wi-Fi</string>
     <string name="lan_share_qr_hint">Ao ler o código, a página abre com o PIN já preenchido</string>
     <string name="lan_share_cert_hint">O navegador do outro dispositivo mostra primeiro um aviso de segurança — escolha Avançadas e depois Continuar. A ligação entre os dois dispositivos continua cifrada.</string>

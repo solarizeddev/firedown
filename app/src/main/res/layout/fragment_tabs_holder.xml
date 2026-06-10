@@ -6,10 +6,14 @@
     android:layout_height="match_parent">
 
     <!--
+        Header is the segmented toggle ALONE — the old toolbar ("Tabs" title
+        + back arrow) was redundant: the toggle already names the screen and
+        system back serves handleBack. Its actions moved to the bottom bar.
+
         AppBar background is a STATIC resting surface colour (set in
         applyIncognitoTheme / onCreateView). The "lifted" look on scroll is
         produced by fading in the sibling @id/appbar_lift_scrim view which
-        sits behind the toolbar and segmented toggle.
+        sits behind the toggle.
 
         We DO NOT use AppBarLayout's built-in liftOnScroll — its internal
         shouldLift / canScrollVertically path races our updates across the
@@ -20,8 +24,9 @@
         own lifted-state tracking. Any shadow, if desired, would be added by
         the scrim itself.
 
-        The toolbar and toggle group are transparent so the scrim shows
-        through them uniformly when it fades in.
+        The toggle container is transparent so the scrim shows through it
+        uniformly when it fades in. The container takes the status-bar inset
+        as top padding in code (the toolbar used to absorb it).
     -->
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appbar_layout"
@@ -42,20 +47,10 @@
                 android:alpha="0" />
 
             <LinearLayout
+                android:id="@+id/tabs_header"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
-
-                <com.google.android.material.appbar.MaterialToolbar
-                    android:id="@+id/toolbar"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="@android:color/transparent"
-                    android:theme="@style/ThemeOverlay.FireDown.Toolbar"
-                    app:navigationIcon="?attr/homeAsUpIndicator"
-                    app:navigationIconTint="?attr/colorOnSurface"
-                    app:popupTheme="@style/Theme.FireDown.Popup"
-                    app:title="@string/navigation_tabs" />
 
                 <!-- Material3 Segmented Button -->
                 <com.google.android.material.button.MaterialButtonToggleGroup
@@ -65,6 +60,7 @@
                     android:background="@android:color/transparent"
                     android:layout_marginStart="8dp"
                     android:layout_marginEnd="8dp"
+                    android:layout_marginTop="10dp"
                     android:layout_marginBottom="8dp"
                     app:singleSelection="true"
                     app:selectionRequired="true"
@@ -106,23 +102,48 @@
         android:layout_height="match_parent"
         app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior" />
 
-    <View
-        android:id="@+id/navigation_scrim"
+    <!-- Bottom action bar: the old toolbar's actions around the FAB —
+         grid/list toggle, new tab, overflow (close all / archive /
+         settings via PopupMenu). Background + icon tints follow
+         applyIncognitoTheme; bottom padding gains the nav-bar inset in
+         code so the bar paints edge-to-edge behind gesture nav. -->
+    <LinearLayout
+        android:id="@+id/tabs_bottom_bar"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_gravity="bottom"
-        android:background="?android:attr/colorBackground" />
-
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/fab_new_tab"
-        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="0dp"
-        android:contentDescription="@string/popup_tabs_new"
-        app:layout_anchor="@id/navigation_scrim"
-        app:layout_anchorGravity="center|top"
-        app:fabCustomSize="48dp"
-        app:maxImageSize="20dp"
-        app:srcCompat="@drawable/add_24" />
+        android:layout_gravity="bottom"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:paddingVertical="8dp">
+
+        <ImageButton
+            android:id="@+id/action_view_btn"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/popup_toggle"
+            android:src="@drawable/ic_view_list_24"
+            android:tint="?attr/colorOnSurface" />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fab_new_tab"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="32dp"
+            android:contentDescription="@string/popup_tabs_new"
+            app:fabCustomSize="48dp"
+            app:maxImageSize="20dp"
+            app:srcCompat="@drawable/add_24" />
+
+        <ImageButton
+            android:id="@+id/action_overflow_btn"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/tabs_more_options"
+            android:src="@drawable/ic_baseline_more_vert_24"
+            android:tint="?attr/colorOnSurface" />
+
+    </LinearLayout>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

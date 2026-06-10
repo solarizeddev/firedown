@@ -327,6 +327,7 @@
     <string name="media_tools">Медийни инструменти</string>
     <string name="lan_send">Изпращане</string>
     <string name="lan_share_title">Изпращане към браузър</string>
+    <string name="tabs_more_options">Още опции</string>
     <string name="lan_share_lead">На другото устройство отворете този адрес в произволен браузър в същата Wi-Fi мрежа</string>
     <string name="lan_share_qr_hint">Сканирането на кода отваря страницата с вече попълнен PIN</string>
     <string name="lan_share_cert_hint">Браузърът на другото устройство първо показва предупреждение за сигурност — изберете „Разширени“, после „Продължи“. Връзката между двете устройства остава шифрована.</string>
