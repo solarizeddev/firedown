@@ -86,6 +86,7 @@
     <string name="edit">Düzenlemek</string>
     <string name="empty_learn_more">Daha fazla bilgi</string>
     <string name="restore_downloads_button">Önceki indirmeleri geri yükle</string>
+    <string name="restore_downloads_settings_summary">Uygulamayı yeniden yükledikten sonra indirme listenizi geri alın</string>
     <string name="restore_downloads_message">Firedown\'u yeniden yüklediyseniz indirmeleriniz hâlâ Download/Firedown klasöründe olabilir. Bu klasörü seçin, Firedown indirme listenizi geri yüklesin.</string>
     <string name="restore_downloads_choose">Klasör seç</string>
     <string name="restore_downloads_done">Geri yüklenen indirmeler: %1$d</string>

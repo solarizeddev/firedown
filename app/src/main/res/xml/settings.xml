@@ -79,6 +79,13 @@
             android:title="@string/settings_downloads_path"
             app:icon="@drawable/ic_baseline_download_24"/>
 
+        <Preference
+            android:key="com.solarized.firedown.preferences.downloads.restore"
+            android:title="@string/restore_downloads_button"
+            android:summary="@string/restore_downloads_settings_summary"
+            app:singleLineTitle="false"
+            app:icon="@drawable/ic_history_24"/>
+
     </PreferenceCategory>
 
     <PreferenceCategory

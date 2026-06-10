@@ -83,6 +83,7 @@
     <string name="edit">Muokata</string>
     <string name="empty_learn_more">Lue lisää</string>
     <string name="restore_downloads_button">Palauta aiemmat lataukset</string>
+    <string name="restore_downloads_settings_summary">Palauta latausluettelo sovelluksen uudelleenasennuksen jälkeen</string>
     <string name="restore_downloads_message">Jos asensit Firedownin uudelleen, latauksesi voivat yhä olla Download/Firedown-kansiossa. Valitse kyseinen kansio, niin Firedown palauttaa latausluettelosi.</string>
     <string name="restore_downloads_choose">Valitse kansio</string>
     <string name="restore_downloads_done">Palautettuja latauksia: %1$d</string>

@@ -13,6 +13,8 @@ import android.util.Log;
 import android.view.View;
 import android.view.autofill.AutofillManager;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.lifecycle.ViewModelProvider;
@@ -20,6 +22,7 @@ import androidx.preference.Preference;
 import androidx.preference.PreferenceGroup;
 import androidx.preference.PreferenceScreen;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
 import com.solarized.firedown.App;
 import com.solarized.firedown.IntentActions;
@@ -27,11 +30,18 @@ import com.solarized.firedown.Keys;
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
 import com.solarized.firedown.StoragePaths;
+import com.solarized.firedown.data.DownloadBackupMirror;
+import com.solarized.firedown.data.DownloadDatabase;
+import com.solarized.firedown.data.di.Qualifiers;
 import com.solarized.firedown.data.models.GeckoStateViewModel;
 import com.solarized.firedown.geckoview.GeckoState;
 import com.solarized.firedown.utils.NavigationUtils;
 
 import org.mozilla.geckoview.ContentBlocking;
+
+import java.util.concurrent.Executor;
+
+import javax.inject.Inject;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
@@ -55,6 +65,19 @@ public class SettingsFragment extends BasePreferenceFragment
     private Preference autoFillPreference;
 
     private GeckoStateViewModel mGeckoStateViewModel;
+
+    @Inject
+    DownloadDatabase mDownloadDatabase;
+    @Inject
+    @Qualifiers.DiskIO
+    Executor mDiskExecutor;
+
+    /** Settings door for the transport-free SAF restore — same flow as the
+     *  Downloads empty-state button (DownloadFragment), reachable once the
+     *  list is no longer empty. See DownloadBackupMirror. */
+    private final ActivityResultLauncher<android.net.Uri> mRestoreFolderPicker =
+            registerForActivityResult(new ActivityResultContracts.OpenDocumentTree(),
+                    this::onRestoreTreePicked);
 
 
     @Override
@@ -415,6 +438,7 @@ public class SettingsFragment extends BasePreferenceFragment
         final String key = preference.getKey();
 
         switch (key) {
+            case Preferences.SETTINGS_RESTORE_DOWNLOADS -> showRestoreDownloadsDialog();
             case Preferences.SETTINGS_CLEAR_DATA ->
                     NavigationUtils.navigateSafe(mNavController, R.id.dialog_delete_browsing);
             case Preferences.SETTINGS_ABOUT ->
@@ -493,5 +517,67 @@ public class SettingsFragment extends BasePreferenceFragment
             Snackbar.make(anchor, R.string.error_open_settings,
                     Snackbar.LENGTH_LONG).show();
         }
+    }
+
+    // ── Transport-free restore (SAF) — Settings door ────────────────────
+    // Mirrors DownloadFragment's empty-state flow so the restore stays
+    // reachable after the list is no longer empty. The data side is shared:
+    // DownloadBackupMirror.restoreFromTree dedups by file_path, so running
+    // this on a populated list never duplicates rows.
+
+    private void showRestoreDownloadsDialog() {
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.restore_downloads_button)
+                .setMessage(R.string.restore_downloads_message)
+                .setPositiveButton(R.string.restore_downloads_choose,
+                        (dialog, which) -> launchRestoreFolderPicker())
+                .setNegativeButton(R.string.cancel, null)
+                .show();
+    }
+
+    private void launchRestoreFolderPicker() {
+        android.net.Uri initial = android.provider.DocumentsContract.buildDocumentUri(
+                "com.android.externalstorage.documents", "primary:Download/Firedown");
+        try {
+            mRestoreFolderPicker.launch(initial);
+        } catch (ActivityNotFoundException e) {
+            Snackbar.make(requireView(), R.string.restore_downloads_none,
+                    Snackbar.LENGTH_LONG).show();
+        }
+    }
+
+    private void onRestoreTreePicked(@Nullable android.net.Uri treeUri) {
+        if (treeUri == null) {
+            return; // user backed out of the picker
+        }
+        try {
+            requireContext().getContentResolver().takePersistableUriPermission(
+                    treeUri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            DownloadBackupMirror.rememberRestoreTree(requireContext(), treeUri);
+        } catch (SecurityException e) {
+            // Non-persistable grant — the one-shot read below still works.
+        }
+        final android.content.Context appContext = requireContext().getApplicationContext();
+        mDiskExecutor.execute(() -> {
+            int result = DownloadBackupMirror.restoreFromTree(appContext, mDownloadDatabase, treeUri);
+            View view = getView();
+            if (view == null) {
+                return;
+            }
+            view.post(() -> {
+                if (!isAdded()) {
+                    return;
+                }
+                String text;
+                if (result >= 0) {
+                    text = getString(R.string.restore_downloads_done, result);
+                } else if (result == DownloadBackupMirror.RESTORE_NO_BACKUP) {
+                    text = getString(R.string.restore_downloads_none);
+                } else {
+                    text = getString(R.string.restore_downloads_wrong_device);
+                }
+                Snackbar.make(requireView(), text, Snackbar.LENGTH_LONG).show();
+            });
+        });
     }
 }

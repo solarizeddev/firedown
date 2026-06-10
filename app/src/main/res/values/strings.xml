@@ -176,6 +176,7 @@
     <string name="edit">Edit</string>
     <string name="empty_learn_more">Learn more</string>
     <string name="restore_downloads_button">Restore previous downloads</string>
+    <string name="restore_downloads_settings_summary">Recover your download list after reinstalling the app</string>
     <string name="restore_downloads_message">If you reinstalled Firedown, your downloads may still be in the Download/Firedown folder. Choose that folder and Firedown will restore your download list.</string>
     <string name="restore_downloads_choose">Choose folder</string>
     <string name="restore_downloads_done">Restored downloads: %1$d</string>

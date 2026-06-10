@@ -169,8 +169,14 @@ public class DownloadFragment extends BaseDownloadFragment implements
             if (mAdapter == null || mLCEERecyclerView == null) return null;
             if (loadStates.getRefresh() instanceof LoadState.NotLoading) {
                 if (mAdapter.getItemCount() == 0) {
+                    // There is NO "All" chip in the rail — unfiltered means no
+                    // chip is checked, i.e. getCheckedChipId() == View.NO_ID
+                    // (R.id.chip_all is only the ViewModel's no-filter
+                    // sentinel, set in onCheckedChanged; it is never a real
+                    // checked id here).
                     int chipId = mChipGroup.getCheckedChipId();
-                    mLCEERecyclerView.setEmptyText(chipId == R.id.chip_all ? R.string.empty_list : R.string.empty_list_type);
+                    boolean unfiltered = chipId == View.NO_ID || chipId == R.id.chip_all;
+                    mLCEERecyclerView.setEmptyText(unfiltered ? R.string.empty_list : R.string.empty_list_type);
                     mLCEERecyclerView.setEmptyImageView(getEmptyIcon(chipId));
                     // Empty + unfiltered is the post-reinstall sight: offer the
                     // transport-free SAF restore (reads the encrypted mirror
@@ -178,7 +184,7 @@ public class DownloadFragment extends BaseDownloadFragment implements
                     // Idempotent, so offering it to a genuinely-new user is
                     // harmless ("no backup found"). Filtered-empty keeps the
                     // plain message — the list isn't actually empty.
-                    if (chipId == R.id.chip_all) {
+                    if (unfiltered) {
                         mLCEERecyclerView.setEmptyButtonText(R.string.restore_downloads_button);
                         mLCEERecyclerView.setEmptyButtonVisibility(View.VISIBLE);
                         mLCEERecyclerView.setButtonListener(id -> showRestoreDownloadsDialog());

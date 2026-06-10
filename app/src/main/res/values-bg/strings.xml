@@ -81,6 +81,7 @@
     <string name="edit">Редактиране</string>
     <string name="empty_learn_more">Научете повече</string>
     <string name="restore_downloads_button">Възстановяване на предишни изтегляния</string>
+    <string name="restore_downloads_settings_summary">Възстановете списъка с изтегляния след преинсталиране на приложението</string>
     <string name="restore_downloads_message">Ако сте преинсталирали Firedown, изтеглянията ви може още да са в папката Download/Firedown. Изберете тази папка и Firedown ще възстанови списъка с изтегляния.</string>
     <string name="restore_downloads_choose">Избор на папка</string>
     <string name="restore_downloads_done">Възстановени изтегляния: %1$d</string>

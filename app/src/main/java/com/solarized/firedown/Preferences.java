@@ -256,6 +256,8 @@ public class Preferences {
 
     public static final String SETTINGS_DOWNLOADS = "com.solarized.firedown.preferences.downloads.location";
 
+    public static final String SETTINGS_RESTORE_DOWNLOADS = "com.solarized.firedown.preferences.downloads.restore";
+
     public static final String SETTINGS_SAVE_ASK = "com.solarized.firedown.preferences.downloads.save.ask";
 
     public static final String SETTINGS_GALLERY = "com.solarized.firedown.preferences.downloads.gallery";

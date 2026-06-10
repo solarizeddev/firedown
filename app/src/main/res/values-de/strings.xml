@@ -144,6 +144,7 @@
     <string name="edit">Bearbeiten</string>
     <string name="empty_learn_more">Weitere Informationen</string>
     <string name="restore_downloads_button">Frühere Downloads wiederherstellen</string>
+    <string name="restore_downloads_settings_summary">Stelle deine Download-Liste nach einer Neuinstallation wieder her</string>
     <string name="restore_downloads_message">Wenn du Firedown neu installiert hast, befinden sich deine Downloads möglicherweise noch im Ordner Download/Firedown. Wähle diesen Ordner aus und Firedown stellt deine Download-Liste wieder her.</string>
     <string name="restore_downloads_choose">Ordner auswählen</string>
     <string name="restore_downloads_done">Wiederhergestellte Downloads: %1$d</string>
