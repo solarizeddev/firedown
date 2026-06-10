@@ -5,12 +5,12 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import Uri;
-import DocumentsContract;
+import android.net.Uri;
+import android.provider.DocumentsContract;
 import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Log;
-import Pair;
+import android.util.Pair;
 
 import androidx.annotation.NonNull;
 import androidx.sqlite.db.SupportSQLiteDatabase;
@@ -25,17 +25,17 @@ import java.io.IOException;
 import java.io.FileOutputStream;
 import java.io.FileInputStream;
 import java.io.ByteArrayOutputStream;
-import InputStream;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
-import ArrayList;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
-import Cipher;
-import GCMParameterSpec;
-import SecretKeySpec;
+import javax.crypto.Cipher;
+import javax.crypto.spec.GCMParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 
 /**
  * Sanitized backup mirror of the download database for Android Auto Backup.
