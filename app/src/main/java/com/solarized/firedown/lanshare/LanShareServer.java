@@ -514,6 +514,17 @@ public final class LanShareServer {
                         preread, client.getInetAddress().getHostAddress(), client.getPort(),
                         true);
                 sslSocket.setUseClientMode(false);
+                try {
+                    // Explicit handshake so a failure logs HERE with its
+                    // real cause instead of surfacing as a read error.
+                    sslSocket.startHandshake();
+                } catch (IOException handshake) {
+                    if (BuildConfig.DEBUG) {
+                        Log.w(TAG, "TLS handshake failed (client sees connection closed)",
+                                handshake);
+                    }
+                    return;
+                }
                 socket = sslSocket;
                 requestIn = sslSocket.getInputStream();
             } else {
