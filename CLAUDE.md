@@ -869,17 +869,44 @@ folder grant** (`ACTION_OPEN_DOCUMENT_TREE` on `Download/Firedown`) →
 importer the Auto Backup restore uses; `file_safe` forced 0). The write side
 handles the name collision a reinstall causes (foreign-owned old file at the
 fixed name → fall back to a timestamped `.fdbk`; restore scans for all of
-them and takes the newest it can decrypt). The SAF restore UI lives on the
-Downloads **empty state** (`DownloadFragment` — the LCEE empty view's
-built-in button, shown only on the unfiltered chip): confirm dialog →
-`OpenDocumentTree` pre-pointed at `Download/Firedown` (the scan accepts the
-`backup/` subfolder too) → persist the grant (kept in `backup_local.xml` for
-the future content-URI playback fallback on 13+) → `restoreFromTree` →
-snackbar with the count / "no backup" / "different device".
-`importMirrorDatabase` dedups by `file_path` against the live table, so the
-button is idempotent — tapping twice or restoring on a non-empty list never
-duplicates rows. Strings are translated across the same 16 locales as the
-JIT toggle.
+them and takes the newest it can decrypt). The SAF restore UI has **two
+doors running one flow**: the Downloads **empty state** (`DownloadFragment`
+— the LCEE empty view's built-in button, shown only when unfiltered) and
+**Settings → Downloads → "Restore previous downloads"**
+(`SettingsFragment`, `SETTINGS_RESTORE_DOWNLOADS`) — the latter exists
+because a user with any downloads (or any filter active) can never see the
+empty state. Flow: confirm dialog → `OpenDocumentTree` pre-pointed at
+`Download/Firedown` (the scan accepts the `backup/` subfolder too) →
+persist the grant (kept in `backup_local.xml` for the future content-URI
+playback fallback on 13+) → `restoreFromTree` → snackbar with the count /
+"no backup" / "different device". `importMirrorDatabase` dedups by
+`file_path` against the live table, so the flow is idempotent — tapping
+twice or restoring on a non-empty list never duplicates rows. Strings are
+translated across the same 16 locales as the JIT toggle.
+
+**Downloads chip-rail gotcha: there is NO "All" chip.** Unfiltered means no
+chip is checked — `ChipGroup.getCheckedChipId()` returns `View.NO_ID`.
+`R.id.chip_all` is only the ViewModel's no-filter *sentinel* (set in
+`onCheckedChanged` when the checked list is empty); it is never a real
+checked id. Any UI gated "only when unfiltered" must test `NO_ID` — gating
+on `chip_all` silently never fires (this bug shipped twice: the empty-state
+restore button, and the older empty-text line that showed "nothing of this
+type" on an unfiltered empty list).
+
+**The missing-file sweep (`MediaListenerWorker`, runs on every
+DownloadsActivity resume via unique work `media-existence-check`/KEEP) is
+restore-aware — keep these three properties if you touch it:**
+- **Trust is per path.** `File.exists() == false` also means "present but
+  unreadable" — the state of every restored entry before the storage grant
+  (≤ 12) or for foreign-owned files (13+). Missing is only *marked*
+  (ERROR/`FILE_NOT_FOUND`) when the negative is trustworthy: app-private
+  paths always, shared storage only while `READ_EXTERNAL_STORAGE` is held
+  (≤ 32), null path always (broken data).
+- **It self-heals.** An entry it errored whose file is readable again flips
+  back to FINISHED — only its own error type, so genuine failures stay.
+- **It never deletes rows.** `exists()` is not reliable enough for an
+  irreversible action, and the record of what was downloaded is user data;
+  removal is the user's call on the visible error entry.
 
 ## URL-bar clipboard chip & system-service binder calls
 
