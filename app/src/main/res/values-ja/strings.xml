@@ -575,4 +575,11 @@
     <string name="lan_share_stop">共有を停止</string>
     <string name="lan_share_footer">この画面を離れると共有は終了します。データがネットワークの外に出ることはありません。</string>
     <string name="lan_share_no_network">共有するには Wi-Fi ネットワークに接続してください</string>
+    <string name="lan_share_vpn_warning">VPN が有効です — 受信側が接続できない場合は、VPN アプリで LAN アクセスを許可するか VPN をオフにしてください</string>
+    <string name="lan_direct_intro">Wi‑Fi ネットワークがありません。この端末で一時的なテザリングを作成できます。相手の端末がそれに接続すると、ファイルは 2 台の端末間で直接転送されます。インターネットは使用しません。</string>
+    <string name="lan_direct_start">ダイレクト接続を開始</string>
+    <string name="lan_direct_join_hint">相手の端末のカメラでスキャンしてテザリングに接続し、「次へ」をタップしてください</string>
+    <string name="lan_direct_password">パスワード</string>
+    <string name="lan_direct_next">次へ</string>
+    <string name="lan_direct_failed">ダイレクト接続を開始できませんでした</string>
 </resources>

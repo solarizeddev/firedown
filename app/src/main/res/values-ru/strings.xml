@@ -446,4 +446,11 @@
     <string name="lan_share_stop">Остановить общий доступ</string>
     <string name="lan_share_footer">Общий доступ завершится, когда вы покинете этот экран. Ничего не покидает вашу сеть.</string>
     <string name="lan_share_no_network">Подключитесь к сети Wi-Fi, чтобы делиться файлами</string>
+    <string name="lan_share_vpn_warning">VPN активен — если получатель не может подключиться, разрешите доступ к локальной сети в приложении VPN или отключите его</string>
+    <string name="lan_direct_intro">Нет сети Wi‑Fi. Этот телефон может создать временную точку доступа — другое устройство подключается к ней, и файл передаётся напрямую между телефонами. Интернет не используется.</string>
+    <string name="lan_direct_start">Начать прямое подключение</string>
+    <string name="lan_direct_join_hint">Отсканируйте камерой другого устройства, чтобы подключиться к точке доступа, затем нажмите «Далее»</string>
+    <string name="lan_direct_password">Пароль</string>
+    <string name="lan_direct_next">Далее</string>
+    <string name="lan_direct_failed">Не удалось начать прямое подключение</string>
 </resources>

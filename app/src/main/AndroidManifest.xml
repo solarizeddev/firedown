@@ -15,6 +15,13 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <!-- LAN-share "direct connection" only: startLocalOnlyHotspot() requires
+         CHANGE_WIFI_STATE + fine location (an Android platform requirement —
+         hotspot config is considered location-revealing). Location is
+         requested at runtime exclusively from the Send sheet's direct-
+         connection flow; the browser itself never reads location. -->
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"
         tools:ignore="RequestInstallPackagesPolicy" />
     <uses-permission android:name="android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION"/>

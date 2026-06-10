@@ -309,4 +309,11 @@
     <string name="lan_share_stop">Lõpeta jagamine</string>
     <string name="lan_share_footer">Jagamine lõpeb, kui sellelt ekraanilt lahkud. Miski ei lahku sinu võrgust.</string>
     <string name="lan_share_no_network">Jagamiseks ühendu Wi-Fi võrguga</string>
+    <string name="lan_share_vpn_warning">VPN on aktiivne — kui vastuvõtja ei saa ühendust, luba VPN-rakenduses kohtvõrgu juurdepääs või lülita VPN välja</string>
+    <string name="lan_direct_intro">Wi‑Fi võrku pole. See telefon saab luua ajutise kuumkoha — teine seade liitub sellega ja fail liigub otse kahe telefoni vahel. Internetti ei kasutata.</string>
+    <string name="lan_direct_start">Käivita otseühendus</string>
+    <string name="lan_direct_join_hint">Skanni teise seadme kaameraga, et kuumkohaga liituda, seejärel puuduta Edasi</string>
+    <string name="lan_direct_password">Parool</string>
+    <string name="lan_direct_next">Edasi</string>
+    <string name="lan_direct_failed">Otseühenduse käivitamine ebaõnnestus</string>
 </resources>

@@ -951,8 +951,33 @@ announcement, nothing listens when the sheet isn't open. Any browser on the
 LAN (PC, phone, TV — and another Firedown, which downloads it through the
 normal pipeline since Firedown *is* a browser) opens `http://<ip>:53317`
 (ephemeral fallback if the port's taken) and gets Firedown-styled pages
-(`LanSharePages`, English-only on purpose — the receiver's locale is
-unknown).
+(served from `assets/lanshare/` templates with `{{TOKEN}}` substitution —
+the error-pages assets+Java pattern; firedown.app's design language;
+English-only on purpose — the receiver's locale is unknown).
+
+**No common LAN — the direct-connection (hotspot) path.** Two phones on
+cellular share no network, so the LAN flow can't work. When
+`getLocalIpv4()` finds nothing, the sheet doesn't dead-end: it offers
+"Start direct connection" → `WifiManager.startLocalOnlyHotspot()` (no
+internet upstream, torn down with the sheet via `reservation.close()` in
+`stopSharing`). Step 1 repurposes the same sheet views as the join screen
+(URL chip = SSID, PIN slot = passphrase, QR = standard `WIFI:` payload any
+camera app joins from); the **Next** button flips to the normal URL/PIN QR,
+with the server bound on the hotspot's AP address. Platform tax: fine
+location permission at runtime (an Android requirement for hotspot APIs —
+manifest carries `ACCESS_FINE_LOCATION`+`CHANGE_WIFI_STATE` for exactly
+this; the browser never reads location) and location services must be on.
+Related, in `getLocalIpv4`: interface selection is an **allowlist**
+(`wlan/ap/swlan/softap/eth`), NOT "any site-local address" — carrier-grade
+NAT gives cellular `rmnet` interfaces 10.x addresses that pass
+`isSiteLocalAddress()`, so the old open fallback showed an unreachable
+carrier IP on a 5G-only device (and `tun*` VPN addresses are equally
+unreachable). After the hotspot is up the same method returns the AP
+address, because the wlan STA has none in that state. **VPN:** a
+sender-side VPN shows a warning line (`TRANSPORT_VPN` on the active
+network — block-LAN/kill-switch configs break local sockets); a
+RECEIVER-side VPN is undetectable from the sender, the docs/warning text
+is all we can do.
 
 **Access control:** the bare URL only ever yields the PIN page; the 4-digit
 PIN (shown big on the sender's sheet) sets a random `HttpOnly` session

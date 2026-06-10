@@ -130,8 +130,24 @@ public final class LanShareServer {
     }
 
     /**
-     * The device's site-local IPv4 (Wi-Fi) address, or null when not on a
-     * LAN. Static so the UI can check connectivity before starting.
+     * Interface-name prefixes a receiver could actually reach: Wi-Fi STA
+     * (wlan), the LocalOnlyHotspot AP (ap/swlan/softap, vendor-dependent),
+     * and wired ethernet. Deliberately an ALLOWLIST, not "any site-local
+     * address": carrier-grade NAT hands cellular interfaces (rmnet*) 10.x
+     * addresses, which pass isSiteLocalAddress() — the old open fallback
+     * would show a carrier IP on a 5G-only device that no peer can ever
+     * reach. VPN tunnels (tun*) are equally unreachable and also excluded
+     * by not being listed.
+     */
+    private static final String[] SHAREABLE_INTERFACE_PREFIXES =
+            {"wlan", "ap", "swlan", "softap", "eth"};
+
+    /**
+     * The device's reachable site-local IPv4 (Wi-Fi, hotspot AP, or
+     * ethernet), or null when there is none. Static so the UI can check
+     * connectivity before starting. After a LocalOnlyHotspot is up on an
+     * otherwise-offline device, this returns the hotspot's AP address (the
+     * wlan STA has no address then, so the ap/swlan fallback wins).
      */
     @Nullable
     public static String getLocalIpv4() {
@@ -143,6 +159,10 @@ public final class LanShareServer {
                 if (!networkInterface.isUp() || networkInterface.isLoopback()) {
                     continue;
                 }
+                String name = networkInterface.getName();
+                if (!isShareableInterface(name)) {
+                    continue;
+                }
                 Enumeration<InetAddress> addresses = networkInterface.getInetAddresses();
                 while (addresses.hasMoreElements()) {
                     InetAddress address = addresses.nextElement();
@@ -152,8 +172,7 @@ public final class LanShareServer {
                     if (!address.isSiteLocalAddress()) {
                         continue;
                     }
-                    String name = networkInterface.getName();
-                    if (name != null && name.startsWith("wlan")) {
+                    if (name.startsWith("wlan")) {
                         return address.getHostAddress();
                     }
                     if (fallback == null) {
@@ -166,6 +185,18 @@ public final class LanShareServer {
             Log.e(TAG, "getLocalIpv4 failed", e);
             return null;
         }
+    }
+
+    private static boolean isShareableInterface(@Nullable String name) {
+        if (name == null) {
+            return false;
+        }
+        for (String prefix : SHAREABLE_INTERFACE_PREFIXES) {
+            if (name.startsWith(prefix)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** Bind and start serving. Throws on bind failure. */

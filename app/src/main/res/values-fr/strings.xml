@@ -577,4 +577,11 @@
     <string name="lan_share_stop">Arrêter le partage</string>
     <string name="lan_share_footer">Le partage s\'arrête quand vous quittez cet écran. Rien ne quitte votre réseau.</string>
     <string name="lan_share_no_network">Connectez-vous à un réseau Wi-Fi pour partager</string>
+    <string name="lan_share_vpn_warning">VPN actif — si le destinataire ne peut pas se connecter, autorisez l\'accès au réseau local dans l\'app VPN ou désactivez-le</string>
+    <string name="lan_direct_intro">Pas de réseau Wi‑Fi. Ce téléphone peut créer un point d\'accès temporaire : l\'autre appareil s\'y connecte et le fichier passe directement d\'un téléphone à l\'autre. Internet n\'est pas utilisé.</string>
+    <string name="lan_direct_start">Démarrer la connexion directe</string>
+    <string name="lan_direct_join_hint">Scannez avec la caméra de l\'autre appareil pour rejoindre le point d\'accès, puis touchez Suivant</string>
+    <string name="lan_direct_password">Mot de passe</string>
+    <string name="lan_direct_next">Suivant</string>
+    <string name="lan_direct_failed">Impossible de démarrer la connexion directe</string>
 </resources>
