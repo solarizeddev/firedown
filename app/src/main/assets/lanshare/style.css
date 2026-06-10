@@ -1,102 +1,108 @@
-/* Firedown "Send to browser" pages — mirrors the firedown.app marketing
-   site: warm off-white surface, the signature coral brand gradient
-   (#d44e86 -> #f06560 -> #f5a97a), IBM Plex Sans/Mono. Served at
-   /style.css by LanShareServer. English-only by design (the LAN
-   receiver's locale is unknown); the @import degrades to system fonts
-   when the receiver is offline.
-
-   Mobile-first: the card grows to fill the viewport below the hero (no
-   floating cut-off card), the Download CTA is a full-width row under the
-   file info (never crushes the name), and Get-the-app is a real pill. */
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,600;1,600&display=swap');
+/* Firedown "Send to browser" pages — built from the firedown.app site's own
+   design vocabulary (style.css + install.html): warm off-white surface,
+   signature coral gradient (#d44e86 -> #f06560 -> #f5a97a), IBM Plex
+   Sans/Mono, channel-card pattern (white card, hairline border, floating
+   mono chip), rounded-rect CTAs (10px — the site uses no pills), and the
+   dark navy footer bar. Served at /style.css; English-only by design.
+   The @import degrades to system fonts offline. */
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,600;1,600&display=swap');
+:root{
+  --coral:#f06560; --coral-dark:#d44e86;
+  --bg-warm:#f7f3ef; --bg-card:#ffffff;
+  --text:#1e1c2e; --text-mid:#4a475e; --text-soft:#8a8898;
+  --border:rgba(30,28,46,.09);
+  --shadow:0 4px 24px rgba(30,28,46,.10);
+  --shadow-lg:0 16px 60px rgba(30,28,46,.16);
+}
 *{box-sizing:border-box}
 html,body{height:100%}
-body{background:#f7f3ef;color:#1e1c2e;font-family:'IBM Plex Sans',system-ui,sans-serif;
-  margin:0;min-height:100vh;display:flex;flex-direction:column;align-items:center}
+body{background:var(--bg-warm);color:var(--text);
+  font-family:'IBM Plex Sans',system-ui,sans-serif;
+  margin:0;min-height:100vh;display:flex;flex-direction:column}
 
-/* ── hero (signature coral gradient) ── */
-.hero{width:100%;position:relative;flex:none;
-  background:radial-gradient(ellipse at 72% 28%,rgba(255,255,255,.14),transparent 60%),
-  linear-gradient(150deg,#d44e86 0%,#f06560 55%,#f5a97a 100%);
-  display:flex;align-items:center;justify-content:center;padding:42px 20px 60px}
-.logo{height:64px;width:auto;max-width:70%;filter:brightness(0) invert(1)}
+/* ── hero: the signature coral gradient band ── */
+.hero{position:relative;flex:none;
+  background:linear-gradient(150deg,#d44e86 0%,#f06560 55%,#f5a97a 100%);
+  display:flex;align-items:center;justify-content:center;padding:46px 20px 64px;overflow:hidden}
+.hero::after{content:"";position:absolute;inset:0;
+  background:radial-gradient(ellipse at 72% 28%,rgba(255,255,255,.14),transparent 60%);pointer-events:none}
+.logo{height:60px;width:auto;max-width:68%;filter:brightness(0) invert(1);position:relative}
 
-/* ── content card: overlaps the hero, fills the rest of the phone ── */
-.card{width:100%;max-width:560px;flex:1;text-align:center;background:#fff;
-  border-radius:28px 28px 0 0;margin-top:-26px;padding:28px 22px 34px;
-  box-shadow:0 -10px 40px rgba(30,28,46,.10);
-  display:flex;flex-direction:column}
-.card > :last-child{margin-top:auto}
+/* ── main column ── */
+.main{flex:1;width:100%;max-width:560px;margin:-30px auto 0;padding:0 18px 36px;position:relative}
 
-.eyebrow{font-family:'IBM Plex Mono',monospace;font-size:.72rem;font-weight:600;
-  letter-spacing:.18em;text-transform:uppercase;color:#d44e86;margin-bottom:12px}
-h1{font-weight:600;font-size:24px;margin:2px 0 8px;color:#1e1c2e;letter-spacing:-.02em}
-p{color:#4a475e;font-size:14.5px;line-height:1.55;margin:0 0 22px}
+/* site headline voice: light weight + italic em emphasis */
+h1{font-weight:300;font-size:30px;line-height:1.12;letter-spacing:-.03em;
+  color:var(--text);margin:26px 4px 10px;text-align:center}
+h1 em{font-style:italic;font-weight:600}
+.eyebrow{font-family:'IBM Plex Mono',monospace;font-size:.7rem;font-weight:500;
+  letter-spacing:.2em;text-transform:uppercase;color:var(--coral-dark);
+  text-align:center;margin:30px 0 0}
+.lead{color:var(--text-mid);font-size:15px;line-height:1.6;margin:0 12px 24px;text-align:center}
+
+/* ── channel-card (the install page's card pattern) ── */
+.cardx{position:relative;background:var(--bg-card);border:1px solid var(--border);
+  border-radius:24px;padding:26px 22px 24px;box-shadow:var(--shadow);margin-bottom:16px}
+.cardx .chip{position:absolute;top:-10px;left:22px;
+  font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:700;
+  letter-spacing:.08em;text-transform:uppercase;color:#fff;padding:4px 10px;border-radius:6px;
+  background:linear-gradient(135deg,var(--coral-dark),var(--coral));
+  box-shadow:0 6px 18px rgba(240,101,96,.28)}
+
+/* file presentation inside the card */
+.file-head{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+.ic{width:52px;height:52px;border-radius:14px;flex:none;
+  background:linear-gradient(135deg,var(--coral-dark),var(--coral));
+  display:flex;align-items:center;justify-content:center}
+.ic svg{width:26px;height:26px;display:block}
+.meta{flex:1;min-width:0;text-align:left}
+.n{font-size:16px;font-weight:600;color:var(--text);line-height:1.35;overflow-wrap:anywhere}
+.tag{font-family:'IBM Plex Mono',monospace;font-size:.68rem;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--text-soft);margin-top:4px}
+
+/* ── CTAs: the site's rounded-rect buttons, not pills ── */
+.dl,button{display:block;width:100%;text-align:center;border:0;cursor:pointer;
+  background:linear-gradient(135deg,var(--coral-dark),var(--coral));color:#fff;
+  font-family:inherit;font-size:15px;font-weight:600;border-radius:10px;
+  padding:15px 18px;text-decoration:none;box-shadow:0 4px 14px rgba(240,101,96,.3)}
+.dl:active,button:active{transform:translateY(1px)}
+
+/* secondary CTA — install-page channel-cta geometry */
+.get{display:flex;align-items:center;justify-content:center;gap:8px;margin:18px 0 0;
+  padding:13px 18px;border-radius:10px;background:var(--bg-warm);
+  border:1.5px solid var(--border);color:var(--text-mid);
+  font-size:14px;font-weight:600;text-decoration:none}
+.get b{color:var(--coral-dark);font-weight:600}
+.get:active{border-color:var(--coral)}
 
 /* ── PIN ── */
-input[type=text]{width:210px;text-align:center;letter-spacing:14px;font-size:32px;
-  font-family:'IBM Plex Mono',monospace;background:#f7f3ef;border:2px solid rgba(30,28,46,.12);
-  border-radius:16px;color:#1e1c2e;padding:15px 0 15px 14px;outline:none;margin-bottom:28px}
-input[type=text]:focus{border-color:#f06560}
-button{background:linear-gradient(135deg,#d44e86,#f06560);color:#fff;font-weight:600;
-  font-family:inherit;border:0;border-radius:28px;padding:16px 52px;font-size:16px;
-  cursor:pointer;box-shadow:0 8px 28px rgba(212,78,134,.32)}
-button:active{transform:translateY(1px)}
+form{text-align:center}
+input[type=text]{width:208px;text-align:center;letter-spacing:14px;font-size:32px;
+  font-family:'IBM Plex Mono',monospace;background:var(--bg-warm);
+  border:2px solid rgba(30,28,46,.12);border-radius:14px;color:var(--text);
+  padding:14px 0 14px 14px;outline:none;margin:2px auto 20px;display:block}
+input[type=text]:focus{border-color:var(--coral)}
+.err{color:#c0436b;font-size:13.5px;font-weight:600;text-align:center;margin:0 0 14px}
 
-/* ── file rows: info on top, full-width Download below — the name always
-      gets the whole card width, the CTA is unmissable on a phone ── */
-.file{text-align:left;background:#faf7f4;border:1px solid rgba(30,28,46,.09);
-  border-radius:18px;padding:18px;margin:0 0 16px}
-.file-head{display:flex;align-items:center;gap:14px;margin-bottom:14px}
-.file .ic{width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,#d44e86,#f06560);
-  flex:none;display:flex;align-items:center;justify-content:center;font-size:26px}
-.file .meta{flex:1;min-width:0}
-.file .n{font-size:16px;font-weight:600;color:#1e1c2e;line-height:1.35;
-  overflow-wrap:anywhere}
-.file .s{font-size:13px;color:#8a8898;margin-top:3px}
-.dl{display:block;text-align:center;background:linear-gradient(135deg,#d44e86,#f06560);
-  color:#fff;font-weight:600;border-radius:26px;padding:15px 0;font-size:15.5px;
-  text-decoration:none;box-shadow:0 8px 28px rgba(212,78,134,.28)}
-.dl:active{transform:translateY(1px)}
+/* ── dark navy footer bar (site footer voice) ── */
+footer{flex:none;background:var(--text);margin-top:auto;
+  padding:18px 22px;text-align:center;font-size:12.5px;line-height:1.8;color:rgba(255,255,255,.5)}
+footer .lock{color:var(--coral)}
+footer b{color:rgba(255,255,255,.75);font-weight:500}
 
-/* ── get-the-app: a real pill, clearly visible ── */
-.get{display:block;max-width:max-content;margin:22px auto 0;padding:12px 24px;
-  border:1.5px solid #f06560;border-radius:26px;color:#d44e86;font-weight:600;
-  font-size:14px;text-decoration:none;background:#fff}
-.get span{color:#8a8898;font-weight:400}
-
-.foot{color:#8a8898;font-size:12px;padding-top:24px;line-height:1.7}
-.lock{color:#d44e86}
-.err{color:#c0436b;font-size:13.5px;margin:-14px 0 20px;font-weight:600}
-
-/* ── desktop: centered floating card, hero stays a band ── */
+/* desktop: breathe a little more */
 @media(min-width:680px){
-  body{padding-bottom:48px}
-  .hero{padding:46px 20px 64px}
-  .card{flex:none;border-radius:26px;margin-top:-30px;
-    box-shadow:0 16px 60px rgba(30,28,46,.16);padding:38px 34px 42px}
+  .hero{padding:52px 20px 72px}
+  .main{padding-bottom:48px}
+  .cardx{padding:30px 28px 28px}
 }
 
-/* ── dark scheme: follow the receiver's OS preference. The brand stays
-      constant (coral hero gradient + coral CTAs are identical); only the
-      surfaces and text adapt — warm near-black instead of warm off-white,
-      so night-time receivers aren't hit with a white page. ── */
+/* ── dark scheme: brand constant, surfaces adapt ── */
 @media (prefers-color-scheme: dark){
-  body{background:#16141a;color:#eae6ee}
-  .card{background:#1d1b22;box-shadow:0 -10px 40px rgba(0,0,0,.5)}
-  h1{color:#eae6ee}
-  p{color:#aaa4b2}
-  input[type=text]{background:#16141a;border-color:rgba(255,255,255,.14);color:#eae6ee}
-  input[type=text]:focus{border-color:#f06560}
-  .file{background:#252229;border-color:rgba(255,255,255,.08)}
-  .file .n{color:#eae6ee}
-  .file .s{color:#9a93a5}
-  .get{background:#1d1b22}
-  .foot{color:#7d7689}
-  @media(min-width:680px){
-    .card{box-shadow:0 16px 60px rgba(0,0,0,.55)}
-  }
+  :root{--bg-warm:#16141a;--bg-card:#1d1b22;--text:#eae6ee;--text-mid:#aaa4b2;
+    --text-soft:#9a93a5;--border:rgba(255,255,255,.09);
+    --shadow:0 4px 24px rgba(0,0,0,.4);--shadow-lg:0 16px 60px rgba(0,0,0,.55)}
+  input[type=text]{background:#16141a;border-color:rgba(255,255,255,.14)}
+  .get{background:#252229}
+  footer{background:#0e0d11}
 }
-
-/* drawable-based file icons (inline SVG, white on the coral tile) */
-.ic svg{width:26px;height:26px;display:block}
