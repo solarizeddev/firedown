@@ -191,7 +191,7 @@ public final class LanShareServer {
      *
      * @param staIp the STA address captured BEFORE the hotspot came up (or
      *              null) — used to tell the AP apart from the STA on vendors
-     *              that name the AP interface wlan1/wlan2 (no ap*/swlan*
+     *              that name the AP interface wlan1/wlan2 (no ap- or swlan-
      *              prefix to recognise it by).
      */
     @Nullable
