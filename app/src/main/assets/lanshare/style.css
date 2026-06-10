@@ -1,40 +1,78 @@
 /* Firedown "Send to browser" pages — mirrors the firedown.app marketing
-   site (style.css): warm off-white surface, the signature coral brand
-   gradient (#d44e86 -> #f06560 -> #f5a97a), IBM Plex Sans / Mono. Served
-   at /style.css by LanShareServer; English-only by design (the LAN
-   receiver's locale is unknown). The @import degrades to system fonts when
-   the receiver is offline. */
+   site: warm off-white surface, the signature coral brand gradient
+   (#d44e86 -> #f06560 -> #f5a97a), IBM Plex Sans/Mono. Served at
+   /style.css by LanShareServer. English-only by design (the LAN
+   receiver's locale is unknown); the @import degrades to system fonts
+   when the receiver is offline.
+
+   Mobile-first: the card grows to fill the viewport below the hero (no
+   floating cut-off card), the Download CTA is a full-width row under the
+   file info (never crushes the name), and Get-the-app is a real pill. */
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,600;1,600&display=swap');
 *{box-sizing:border-box}
+html,body{height:100%}
 body{background:#f7f3ef;color:#1e1c2e;font-family:'IBM Plex Sans',system-ui,sans-serif;
-  margin:0;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:0 20px 40px}
-.hero{width:100%;position:relative;
+  margin:0;min-height:100vh;display:flex;flex-direction:column;align-items:center}
+
+/* ── hero (signature coral gradient) ── */
+.hero{width:100%;position:relative;flex:none;
   background:radial-gradient(ellipse at 72% 28%,rgba(255,255,255,.14),transparent 60%),
   linear-gradient(150deg,#d44e86 0%,#f06560 55%,#f5a97a 100%);
-  display:flex;align-items:center;justify-content:center;padding:38px 20px 50px;margin-bottom:-26px}
-.logo{height:34px;width:auto;filter:brightness(0) invert(1)}
-.card{width:100%;max-width:460px;text-align:center;background:#fff;border-radius:24px;
-  padding:32px 26px;box-shadow:0 16px 60px rgba(30,28,46,.16)}
-.eyebrow{font-family:'IBM Plex Mono',monospace;font-size:.7rem;font-weight:600;
-  letter-spacing:.18em;text-transform:uppercase;color:#d44e86;margin-bottom:10px}
-h1{font-weight:600;font-size:22px;margin:4px 0 8px;color:#1e1c2e;letter-spacing:-.02em}
-p{color:#4a475e;font-size:13.5px;line-height:1.6;margin:0 0 24px}
-input[type=text]{width:190px;text-align:center;letter-spacing:12px;font-size:28px;
+  display:flex;align-items:center;justify-content:center;padding:54px 20px 72px}
+.logo{height:46px;width:auto;filter:brightness(0) invert(1)}
+
+/* ── content card: overlaps the hero, fills the rest of the phone ── */
+.card{width:100%;max-width:560px;flex:1;text-align:center;background:#fff;
+  border-radius:28px 28px 0 0;margin-top:-28px;padding:36px 24px 44px;
+  box-shadow:0 -10px 40px rgba(30,28,46,.10);
+  display:flex;flex-direction:column}
+.card > :last-child{margin-top:auto}
+
+.eyebrow{font-family:'IBM Plex Mono',monospace;font-size:.72rem;font-weight:600;
+  letter-spacing:.18em;text-transform:uppercase;color:#d44e86;margin-bottom:12px}
+h1{font-weight:600;font-size:26px;margin:4px 0 10px;color:#1e1c2e;letter-spacing:-.02em}
+p{color:#4a475e;font-size:15px;line-height:1.6;margin:0 0 28px}
+
+/* ── PIN ── */
+input[type=text]{width:210px;text-align:center;letter-spacing:14px;font-size:32px;
   font-family:'IBM Plex Mono',monospace;background:#f7f3ef;border:2px solid rgba(30,28,46,.12);
-  border-radius:14px;color:#1e1c2e;padding:13px 0 13px 12px;outline:none;margin-bottom:24px}
+  border-radius:16px;color:#1e1c2e;padding:15px 0 15px 14px;outline:none;margin-bottom:28px}
 input[type=text]:focus{border-color:#f06560}
-button,.dl{background:linear-gradient(135deg,#d44e86,#f06560);color:#fff;font-weight:600;
-  border:0;border-radius:24px;padding:14px 40px;font-size:15px;cursor:pointer;
-  text-decoration:none;display:inline-block;box-shadow:0 8px 28px rgba(212,78,134,.32)}
-button:hover,.dl:hover{transform:translateY(-2px)}
-.file{display:flex;align-items:center;gap:16px;text-align:left;background:#faf7f4;
-  border:1px solid rgba(30,28,46,.09);border-radius:16px;padding:16px 18px;margin:0 0 14px}
-.file .ic{width:54px;height:54px;border-radius:12px;background:linear-gradient(135deg,#d44e86,#f06560);
-  flex:none;display:flex;align-items:center;justify-content:center;font-size:24px}
-.file .meta{flex:1;min-width:0}.file .n{font-size:15px;color:#1e1c2e;word-break:break-word}
-.file .s{font-size:12px;color:#8a8898;margin-top:3px;font-family:'IBM Plex Mono',monospace}
-.file .dl{padding:10px 22px;font-size:13.5px;flex:none}
-.foot{color:#8a8898;font-size:11.5px;margin-top:28px;line-height:1.6}
-.lock{color:#d44e86}.err{color:#c0436b;font-size:13px;margin:-12px 0 18px;font-weight:600}
-.get{display:block;margin-top:22px;color:#d44e86;font-size:13px;font-weight:600;text-decoration:none}
+button{background:linear-gradient(135deg,#d44e86,#f06560);color:#fff;font-weight:600;
+  font-family:inherit;border:0;border-radius:28px;padding:16px 52px;font-size:16px;
+  cursor:pointer;box-shadow:0 8px 28px rgba(212,78,134,.32)}
+button:active{transform:translateY(1px)}
+
+/* ── file rows: info on top, full-width Download below — the name always
+      gets the whole card width, the CTA is unmissable on a phone ── */
+.file{text-align:left;background:#faf7f4;border:1px solid rgba(30,28,46,.09);
+  border-radius:18px;padding:18px;margin:0 0 16px}
+.file-head{display:flex;align-items:center;gap:14px;margin-bottom:14px}
+.file .ic{width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,#d44e86,#f06560);
+  flex:none;display:flex;align-items:center;justify-content:center;font-size:26px}
+.file .meta{flex:1;min-width:0}
+.file .n{font-size:16px;font-weight:600;color:#1e1c2e;line-height:1.35;
+  overflow-wrap:anywhere}
+.file .s{font-size:13px;color:#8a8898;margin-top:3px}
+.dl{display:block;text-align:center;background:linear-gradient(135deg,#d44e86,#f06560);
+  color:#fff;font-weight:600;border-radius:26px;padding:15px 0;font-size:15.5px;
+  text-decoration:none;box-shadow:0 8px 28px rgba(212,78,134,.28)}
+.dl:active{transform:translateY(1px)}
+
+/* ── get-the-app: a real pill, clearly visible ── */
+.get{display:block;max-width:max-content;margin:30px auto 0;padding:13px 26px;
+  border:1.5px solid #f06560;border-radius:26px;color:#d44e86;font-weight:600;
+  font-size:14px;text-decoration:none;background:#fff}
 .get span{color:#8a8898;font-weight:400}
+
+.foot{color:#8a8898;font-size:12px;margin-top:30px;line-height:1.7}
+.lock{color:#d44e86}
+.err{color:#c0436b;font-size:13.5px;margin:-14px 0 20px;font-weight:600}
+
+/* ── desktop: centered floating card, hero stays a band ── */
+@media(min-width:680px){
+  body{padding-bottom:48px}
+  .hero{padding:46px 20px 64px}
+  .card{flex:none;border-radius:26px;margin-top:-30px;
+    box-shadow:0 16px 60px rgba(30,28,46,.16);padding:38px 34px 42px}
+}
