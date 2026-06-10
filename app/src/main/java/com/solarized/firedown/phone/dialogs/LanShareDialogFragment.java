@@ -43,8 +43,6 @@ import com.solarized.firedown.utils.FragmentArgs;
 import com.solarized.firedown.StoragePaths;
 
 import java.io.File;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Locale;
 
@@ -198,14 +196,15 @@ public class LanShareDialogFragment extends BaseBottomSheetDialogFragment {
         // The QR carries the PIN too — scanning authenticates in one hop;
         // the displayed short URL is for typing and still hits the PIN gate.
         //
-        // "Prefer Firedown, keep http": the QR encodes an Android intent:
-        // URI that pins package=<this app> with an S.browser_fallback_url. A
-        // scanner on a device that HAS Firedown resolves straight to it (no
-        // chooser); a device without it follows the fallback to the plain
-        // http page in whatever browser. The DISPLAYED url stays plain http
-        // for the PC/typed path (PCs don't scan).
-        String httpUrl = "http://" + hostPort + "/?pin=" + mServer.getPin();
-        setQr(buildQrIntentUri(hostPort, mServer.getPin(), httpUrl));
+        // PLAIN http on purpose — do not "upgrade" this to an intent:// URI
+        // to prefer Firedown on the receiver. intent:// is a Chrome-ism for
+        // links navigated INSIDE a browser page; a camera/QR scanner
+        // resolves it as a literal scheme no app handles, and Samsung's
+        // scanner showed "no app can handle this" (tested on-device). A
+        // plain http URL is the only payload every scanner opens, and the
+        // receiver's default browser is fine — the page carries the
+        // Get-the-app link for the Firedown pitch instead.
+        setQr("http://" + hostPort + "/?pin=" + mServer.getPin());
 
         mView.findViewById(R.id.lan_share_content).setVisibility(View.VISIBLE);
         mView.findViewById(R.id.lan_direct_group).setVisibility(View.GONE);
@@ -396,28 +395,6 @@ public class LanShareDialogFragment extends BaseBottomSheetDialogFragment {
         Bitmap code = encodeQr(content);
         if (code != null) {
             qr.setImageBitmap(code);
-        }
-    }
-
-    /**
-     * Build the QR's {@code intent://} URI: resolves directly to Firedown
-     * (package-pinned, no chooser) on a device that has it, and follows the
-     * {@code browser_fallback_url} to the plain http page on a device that
-     * doesn't. Firedown opens it through its normal browser intent-filter and
-     * the page's Download button routes the file into the download pipeline.
-     */
-    @NonNull
-    private String buildQrIntentUri(@NonNull String hostPort, @NonNull String pin,
-                                    @NonNull String httpUrl) {
-        try {
-            String fallback = URLEncoder.encode(httpUrl, StandardCharsets.UTF_8.name());
-            return "intent://" + hostPort + "/?pin=" + pin
-                    + "#Intent;scheme=http;package=" + requireContext().getPackageName()
-                    + ";S.browser_fallback_url=" + fallback + ";end";
-        } catch (Exception e) {
-            // Encoder failure is implausible for UTF-8, but never let the QR
-            // break — fall back to the plain http url, which works everywhere.
-            return httpUrl;
         }
     }
 
