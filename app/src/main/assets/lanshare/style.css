@@ -76,3 +76,24 @@ button:active{transform:translateY(1px)}
   .card{flex:none;border-radius:26px;margin-top:-30px;
     box-shadow:0 16px 60px rgba(30,28,46,.16);padding:38px 34px 42px}
 }
+
+/* ── dark scheme: follow the receiver's OS preference. The brand stays
+      constant (coral hero gradient + coral CTAs are identical); only the
+      surfaces and text adapt — warm near-black instead of warm off-white,
+      so night-time receivers aren't hit with a white page. ── */
+@media (prefers-color-scheme: dark){
+  body{background:#16141a;color:#eae6ee}
+  .card{background:#1d1b22;box-shadow:0 -10px 40px rgba(0,0,0,.5)}
+  h1{color:#eae6ee}
+  p{color:#aaa4b2}
+  input[type=text]{background:#16141a;border-color:rgba(255,255,255,.14);color:#eae6ee}
+  input[type=text]:focus{border-color:#f06560}
+  .file{background:#252229;border-color:rgba(255,255,255,.08)}
+  .file .n{color:#eae6ee}
+  .file .s{color:#9a93a5}
+  .get{background:#1d1b22}
+  .foot{color:#7d7689}
+  @media(min-width:680px){
+    .card{box-shadow:0 16px 60px rgba(0,0,0,.55)}
+  }
+}
