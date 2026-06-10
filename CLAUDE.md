@@ -957,8 +957,19 @@ LAN (PC, phone, TV — and another Firedown, which downloads it through the
 normal pipeline since Firedown *is* a browser) opens `http://<ip>:53317`
 (ephemeral fallback if the port's taken) and gets Firedown-styled pages
 (served from `assets/lanshare/` templates with `{{TOKEN}}` substitution —
-the error-pages assets+Java pattern; firedown.app's design language;
-English-only on purpose — the receiver's locale is unknown).
+the error-pages assets+Java pattern; firedown.app's design language).
+**Served pages are localized per REQUEST from the receiver's own
+`Accept-Language` header** (`resolveLang`/`strings`/`localize` in
+`LanShareServer`; the sender's locale is irrelevant — the reader is the
+other person): all user-visible strings live as `{{T_*}}` tokens resolved
+from `assets/lanshare/i18n.json` (the app's 16 locales + English; values
+may carry the trusted `<em>/<b>` markup and `{{DEVICE}}/{{N}}`
+placeholders), with per-key English fallback. The files page's JS button
+states come via `<body data-*>` attributes, not JS string literals (an
+apostrophe in a translation would break a literal). Gotcha fixed once
+already: inside the `.steps` flex `<li>`, the step text must be ONE
+`<span>` — a bare text node + `<b>` become separate flex items and the
+bold word drifts to the far edge.
 
 **No common LAN — the direct-connection (hotspot) path.** Two phones on
 cellular share no network, so the LAN flow can't work. When

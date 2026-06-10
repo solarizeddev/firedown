@@ -83,6 +83,9 @@ ol.steps li{counter-increment:s;display:flex;align-items:center;gap:12px;
 ol.steps li::before{content:counter(s);flex:none;width:26px;height:26px;border-radius:50%;
   background:linear-gradient(135deg,var(--coral-dark),var(--coral));color:#fff;
   font-weight:600;font-size:13px;display:flex;align-items:center;justify-content:center}
+/* each step's text is ONE span: without it the bare text node and the <b>
+   become separate flex items and the bold word drifts to the far edge */
+ol.steps li span{flex:1;min-width:0}
 ol.steps b{color:var(--text)}
 
 /* ── PIN ── */

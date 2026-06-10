@@ -10,6 +10,8 @@ import androidx.annotation.Nullable;
 
 import com.solarized.firedown.BuildConfig;
 
+import org.json.JSONObject;
+
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -33,6 +35,7 @@ import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -89,6 +92,16 @@ public final class LanShareServer {
     private static final int PREFERRED_PORT = 53317;
     private static final int MAX_PIN_ATTEMPTS = 3;
     private static final String COOKIE_NAME = "fdshare";
+    /**
+     * Languages with a block in {@code assets/lanshare/i18n.json} — the app's
+     * 16 translated locales + English. The served pages are localized per
+     * REQUEST from the receiver's own {@code Accept-Language} header (the
+     * sender's locale is irrelevant — the reader is the other person);
+     * anything unsupported falls back to English, and any key missing from
+     * a language block falls back to the English value.
+     */
+    private static final String[] SUPPORTED_LANGS = {"en", "bg", "cs", "de", "es", "et",
+            "fi", "fr", "hi", "ja", "nl", "pl", "pt", "ru", "tr", "uk", "zh"};
 
     /** One shared file: display name, on-disk file, mime. */
     public static final class SharedFile {
@@ -271,6 +284,8 @@ public final class LanShareServer {
     // bytes — no HTML is built in Java. Assets are read once and cached.
     private final AssetManager mAssets;
     private final Map<String, byte[]> mAssetCache = new HashMap<>();
+    /** Per-language resolved string tables (en merged under), built lazily. */
+    private final Map<String, Map<String, String>> mStringsCache = new HashMap<>();
     private final AtomicInteger mPinAttempts = new AtomicInteger(0);
     private final AtomicBoolean mLocked = new AtomicBoolean(false);
     private final AtomicBoolean mRunning = new AtomicBoolean(false);
@@ -583,6 +598,19 @@ public final class LanShareServer {
         if (q >= 0) {
             path = path.substring(0, q);
         }
+        // Drain the headers for Accept-Language (the receiver's locale).
+        String acceptLanguage = null;
+        String line;
+        while ((line = reader.readLine()) != null && !line.isEmpty()) {
+            int colon = line.indexOf(':');
+            if (colon <= 0) {
+                continue;
+            }
+            String name = line.substring(0, colon).trim().toLowerCase(Locale.ROOT);
+            if (name.equals("accept-language")) {
+                acceptLanguage = line.substring(colon + 1).trim();
+            }
+        }
         OutputStream out = client.getOutputStream();
         if (path.equals("/logo.svg")) {
             sendAsset(out, "logo.svg", "image/svg+xml");
@@ -592,10 +620,12 @@ public final class LanShareServer {
             sendAsset(out, "style.css", "text/css; charset=utf-8");
             return;
         }
+        String lang = resolveLang(acceptLanguage);
+        Map<String, String> t = strings(lang);
         InetAddress local = client.getLocalAddress();
         String host = local != null ? local.getHostAddress() : getLocalIpv4();
         String continueUrl = "https://" + host + ":" + getPort() + "/";
-        String html = page("onboard.html")
+        String html = localize(page("onboard.html"), t, lang)
                 .replace("{{CONTINUE}}", continueUrl)
                 .replace("{{DEVICE}}", escapeHtml(mDeviceName));
         sendHtml(out, 200, html);
@@ -618,8 +648,10 @@ public final class LanShareServer {
             String method = parts[0];
             String target = parts[1];
 
-            // Headers — we only need Cookie and Content-Length.
+            // Headers — we need Cookie, Content-Length and Accept-Language
+            // (the receiver's locale, which drives page localization).
             String cookieHeader = null;
+            String acceptLanguage = null;
             int contentLength = 0;
             String line;
             while ((line = in.readLine()) != null && !line.isEmpty()) {
@@ -636,8 +668,13 @@ public final class LanShareServer {
                         contentLength = Integer.parseInt(value);
                     } catch (NumberFormatException ignored) {
                     }
+                } else if (name.equals("accept-language")) {
+                    acceptLanguage = value;
                 }
             }
+
+            String lang = resolveLang(acceptLanguage);
+            Map<String, String> t = strings(lang);
 
             String path = target;
             String query = null;
@@ -661,7 +698,7 @@ public final class LanShareServer {
             boolean authed = isAuthed(cookieHeader);
 
             if (mLocked.get() && !authed) {
-                sendHtml(out, 403, page("locked.html"));
+                sendHtml(out, 403, localize(page("locked.html"), t, lang));
                 return;
             }
 
@@ -673,14 +710,14 @@ public final class LanShareServer {
                     return;
                 }
                 if (pinParam != null && mLocked.get()) {
-                    sendHtml(out, 403, page("locked.html"));
+                    sendHtml(out, 403, localize(page("locked.html"), t, lang));
                     return;
                 }
                 if (authed) {
                     sendRedirect(out, "/s");
                     return;
                 }
-                sendHtml(out, 200, renderPin(pinParam != null));
+                sendHtml(out, 200, renderPin(pinParam != null, t, lang));
                 return;
             }
 
@@ -700,10 +737,10 @@ public final class LanShareServer {
                     return;
                 }
                 if (mLocked.get()) {
-                    sendHtml(out, 403, page("locked.html"));
+                    sendHtml(out, 403, localize(page("locked.html"), t, lang));
                     return;
                 }
-                sendHtml(out, 200, renderPin(true));
+                sendHtml(out, 200, renderPin(true, t, lang));
                 return;
             }
 
@@ -712,7 +749,7 @@ public final class LanShareServer {
                     sendRedirect(out, "/");
                     return;
                 }
-                sendHtml(out, 200, renderFiles());
+                sendHtml(out, 200, renderFiles(t, lang));
                 return;
             }
 
@@ -733,18 +770,18 @@ public final class LanShareServer {
                 try {
                     index = Integer.parseInt(indexPart);
                 } catch (NumberFormatException e) {
-                    sendHtml(out, 404, page("notfound.html"));
+                    sendHtml(out, 404, localize(page("notfound.html"), t, lang));
                     return;
                 }
                 if (index < 0 || index >= mFiles.size()) {
-                    sendHtml(out, 404, page("notfound.html"));
+                    sendHtml(out, 404, localize(page("notfound.html"), t, lang));
                     return;
                 }
-                sendFile(out, mFiles.get(index));
+                sendFile(out, mFiles.get(index), t, lang);
                 return;
             }
 
-            sendHtml(out, 404, page("notfound.html"));
+            sendHtml(out, 404, localize(page("notfound.html"), t, lang));
         } catch (Exception e) {
             if (BuildConfig.DEBUG) {
                 Log.d(TAG, "connection handler", e);
@@ -827,7 +864,8 @@ public final class LanShareServer {
     private void sendAsset(OutputStream out, String name, String contentType) throws IOException {
         byte[] body = readAsset(name);
         if (body == null) {
-            sendHtml(out, 404, page("notfound.html"));
+            // Internal error (missing bundled asset) — English is fine here.
+            sendHtml(out, 404, localize(page("notfound.html"), strings("en"), "en"));
             return;
         }
         // no-store, deliberately: a receiver's browser that cached an older
@@ -872,6 +910,88 @@ public final class LanShareServer {
         }
     }
 
+    // ------------------------------------------------------------------
+    // Localization — receiver-driven (Accept-Language), assets/lanshare/i18n.json
+    // ------------------------------------------------------------------
+
+    /**
+     * Resolved string table for a language: the English block with the
+     * requested language's block merged over it, so a missing key degrades
+     * to English per-key instead of failing the page. Cached per language.
+     */
+    @NonNull
+    private synchronized Map<String, String> strings(@NonNull String lang) {
+        Map<String, String> cached = mStringsCache.get(lang);
+        if (cached != null) {
+            return cached;
+        }
+        Map<String, String> result = new HashMap<>();
+        try {
+            JSONObject root = new JSONObject(page("i18n.json"));
+            fillStrings(result, root.optJSONObject("en"));
+            if (!lang.equals("en")) {
+                fillStrings(result, root.optJSONObject(lang));
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "i18n load failed — pages fall back to raw tokens", e);
+        }
+        mStringsCache.put(lang, result);
+        return result;
+    }
+
+    private static void fillStrings(Map<String, String> out, @Nullable JSONObject block) {
+        if (block == null) {
+            return;
+        }
+        Iterator<String> keys = block.keys();
+        while (keys.hasNext()) {
+            String key = keys.next();
+            out.put(key, block.optString(key));
+        }
+    }
+
+    /** First supported primary language subtag of an Accept-Language header. */
+    @NonNull
+    private static String resolveLang(@Nullable String acceptLanguage) {
+        if (acceptLanguage == null) {
+            return "en";
+        }
+        for (String part : acceptLanguage.split(",")) {
+            String tag = part.trim();
+            int semicolon = tag.indexOf(';');
+            if (semicolon >= 0) {
+                tag = tag.substring(0, semicolon).trim();
+            }
+            int dash = tag.indexOf('-');
+            if (dash >= 0) {
+                tag = tag.substring(0, dash);
+            }
+            tag = tag.toLowerCase(Locale.ROOT);
+            for (String supported : SUPPORTED_LANGS) {
+                if (supported.equals(tag)) {
+                    return tag;
+                }
+            }
+        }
+        return "en";
+    }
+
+    /** Substitute every {{T_*}} token (and {{LANG}}) in a template. */
+    private static String localize(String template, Map<String, String> t, String lang) {
+        String result = template.replace("{{LANG}}", lang);
+        for (Map.Entry<String, String> entry : t.entrySet()) {
+            result = result.replace("{{" + entry.getKey() + "}}", entry.getValue());
+        }
+        return result;
+    }
+
+    /** A single translated string, never null. */
+    @NonNull
+    private static String tr(Map<String, String> t, String key) {
+        String value = t.get(key);
+        return value != null ? value : "";
+    }
+
     /** A template asset as a UTF-8 string ("" if missing — never null so the
      *  caller's substitutions stay simple). */
     private String page(String name) {
@@ -879,21 +999,21 @@ public final class LanShareServer {
         return bytes == null ? "" : new String(bytes, StandardCharsets.UTF_8);
     }
 
-    private String renderPin(boolean wrongAttempt) {
+    private String renderPin(boolean wrongAttempt, Map<String, String> t, String lang) {
         String error = "";
         if (wrongAttempt) {
-            int left = MAX_PIN_ATTEMPTS - mPinAttempts.get();
-            error = "<div class=\"err\">Wrong PIN &mdash; " + Math.max(left, 0)
-                    + (left == 1 ? " attempt" : " attempts")
-                    + " left before this session locks</div>";
+            int left = Math.max(MAX_PIN_ATTEMPTS - mPinAttempts.get(), 0);
+            String message = tr(t, left == 1 ? "T_PIN_WRONG_ONE" : "T_PIN_WRONG_MANY")
+                    .replace("{{N}}", Integer.toString(left));
+            error = "<div class=\"err\">" + message + "</div>";
         }
-        return page("pin.html")
+        return localize(page("pin.html"), t, lang)
                 .replace("{{ERROR}}", error)
                 .replace("{{DEVICE}}", escapeHtml(mDeviceName));
     }
 
-    private String renderFiles() {
-        String row = page("row.html");
+    private String renderFiles(Map<String, String> t, String lang) {
+        String row = localize(page("row.html"), t, lang);
         StringBuilder rows = new StringBuilder();
         for (int i = 0; i < mFiles.size(); i++) {
             SharedFile f = mFiles.get(i);
@@ -901,12 +1021,14 @@ public final class LanShareServer {
                     .replace("{{ICON}}", iconFor(f.mime))
                     .replace("{{NAME}}", escapeHtml(f.name))
                     .replace("{{NAMEURL}}", Uri.encode(f.name))
-                    .replace("{{TYPE}}", typeLabel(f.mime))
+                    .replace("{{TYPE}}", tr(t, typeLabelKey(f.mime)))
                     .replace("{{SIZE}}", formatSize(f.file.length()))
                     .replace("{{INDEX}}", Integer.toString(i)));
         }
-        String count = mFiles.size() + (mFiles.size() == 1 ? " file" : " files");
-        return page("files.html")
+        String count = mFiles.size() == 1
+                ? tr(t, "T_FILE_ONE")
+                : tr(t, "T_FILES_MANY").replace("{{N}}", Integer.toString(mFiles.size()));
+        return localize(page("files.html"), t, lang)
                 .replace("{{DEVICE}}", escapeHtml(mDeviceName))
                 .replace("{{COUNT}}", count)
                 .replace("{{FILES}}", rows.toString());
@@ -949,28 +1071,28 @@ public final class LanShareServer {
         return ICON_FILE;
     }
 
-    /** Friendly type word for display (the precise mime drives Content-Type
-     *  + the icon; a receiver shouldn't see "video/iso.segment"). */
-    private static String typeLabel(String mime) {
+    /** i18n key of the friendly type word (the precise mime drives
+     *  Content-Type + the icon; a receiver shouldn't see "video/iso.segment"). */
+    private static String typeLabelKey(String mime) {
         if (mime == null) {
-            return "File";
+            return "T_FILE";
         }
         if (mime.startsWith("video/")) {
-            return "Video";
+            return "T_VIDEO";
         }
         if (mime.startsWith("audio/")) {
-            return "Audio";
+            return "T_AUDIO";
         }
         if (mime.startsWith("image/")) {
-            return "Image";
+            return "T_IMAGE";
         }
         if (mime.equals("application/pdf")) {
-            return "PDF";
+            return "T_PDF";
         }
         if (mime.startsWith("text/")) {
-            return "Text";
+            return "T_TEXT";
         }
-        return "File";
+        return "T_FILE";
     }
 
     private static String formatSize(long bytes) {
@@ -1013,10 +1135,11 @@ public final class LanShareServer {
         out.flush();
     }
 
-    private void sendFile(OutputStream out, SharedFile shared) throws IOException {
+    private void sendFile(OutputStream out, SharedFile shared,
+                          Map<String, String> t, String lang) throws IOException {
         File file = shared.file;
         if (!file.exists() || !file.canRead()) {
-            sendHtml(out, 404, page("notfound.html"));
+            sendHtml(out, 404, localize(page("notfound.html"), t, lang));
             return;
         }
         long length = file.length();

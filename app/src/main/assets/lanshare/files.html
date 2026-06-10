@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#d44e86"><title>Firedown</title><link rel="stylesheet" href="/style.css?v=10"></head><body><div class="hero"><img class="logo" src="/logo.svg?v=10" alt="Firedown"></div><div class="main"><p class="eyebrow">From {{DEVICE}} &middot; {{COUNT}}</p><h1>Shared <em>with you</em></h1>{{FILES}}<a class="get" href="https://firedown.app">Don&#8217;t have Firedown?&nbsp;<b>Get the app &rarr;</b></a></div><footer><span class="lock">&#9679;</span> <b>PIN-verified session</b> &middot; expires when the sender stops sharing<br>Transfer never leaves your local network</footer><script>
+<!DOCTYPE html><html lang="{{LANG}}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#d44e86"><title>Firedown</title><link rel="stylesheet" href="/style.css?v=11"></head><body data-downloading="{{T_DOWNLOADING}}" data-saved="{{T_SAVED}}"><div class="hero"><img class="logo" src="/logo.svg?v=11" alt="Firedown"></div><div class="main"><p class="eyebrow">{{T_FROM}} &middot; {{COUNT}}</p><h1>{{T_FILES_TITLE}}</h1>{{FILES}}<a class="get" href="https://firedown.app">{{T_GET_APP}}</a></div><footer><span class="lock">&#9679;</span> {{T_FOOTER_PIN}}<br>{{T_FOOTER_LOCAL}}</footer><script>
 // Chromium's download manager does NOT inherit the page's self-signed-cert
 // exception — a native <a download> navigation fails the TLS handshake
 // (CERTIFICATE_UNKNOWN) before headers and dies as a 0-byte file. The page
@@ -6,6 +6,8 @@
 // bytes here and hand the browser a local blob to save; large responses are
 // disk-backed by the browser's blob storage. On any failure, fall back to
 // the native navigation (correct for plain-HTTP mode and exotic browsers).
+// Button-state strings come from body data-* (translated server-side; a
+// JS string literal would break on an apostrophe in some language).
 document.addEventListener('click', function (e) {
   var a = e.target && e.target.closest ? e.target.closest('a.dl') : null;
   if (!a || !window.fetch) { return; }
@@ -13,7 +15,7 @@ document.addEventListener('click', function (e) {
   if (a.dataset.busy) { return; }
   a.dataset.busy = '1';
   var label = a.textContent;
-  a.textContent = 'Downloading…';
+  a.textContent = document.body.dataset.downloading || label;
   fetch(a.getAttribute('href')).then(function (r) {
     if (!r.ok) { throw new Error('http ' + r.status); }
     return r.blob();
@@ -26,7 +28,7 @@ document.addEventListener('click', function (e) {
     t.click();
     t.remove();
     setTimeout(function () { URL.revokeObjectURL(u); }, 60000);
-    a.textContent = 'Saved ✓';
+    a.textContent = document.body.dataset.saved || label;
     setTimeout(function () { a.textContent = label; delete a.dataset.busy; }, 4000);
   }).catch(function () {
     a.textContent = label;
