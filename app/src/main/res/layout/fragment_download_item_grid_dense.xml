@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Downloads dense grid tile — used ONLY while the images/GIF filter chip
+  is active in grid mode (see BaseDownloadFragment.configureRecyclerView).
+  Every item is an image, whose tile already carries no title (the
+  hide-title-for-images rule) and whose mime the active chip states — so
+  the tile is a pure square thumbnail: no scrim block, no mime chip, no
+  per-tile action button (tap opens the viewer, long-press enters
+  selection; per-item actions live there). What stays is the machinery a
+  download state still needs: the progress overlay, a status_text inside
+  a scrim block that bindErrorInner re-shows for ERROR rows, and the
+  selection checkmark for action mode.
+-->
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/item"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintDimensionRatio="1:1"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:cardBackgroundColor="?attr/colorSurfaceContainerHigh"
+        app:cardCornerRadius="8dp"
+        app:strokeWidth="2dp">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/image"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/mask_image_rounded"
+                android:contentDescription="@null"
+                android:duplicateParentState="true"
+                android:outlineProvider="background"
+                android:scaleType="centerCrop" />
+
+            <!-- Progress overlay on thumbnail (PROGRESS only) -->
+            <com.solarized.firedown.ui.ProgressOverlayView
+                android:id="@+id/image_progress"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:visibility="gone"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <!-- Hidden by default (the dense tile is bare); bindErrorInner
+                 re-shows the block so an ERROR row still reads its message. -->
+            <LinearLayout
+                android:id="@+id/bottom_block"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bottom_scrim"
+                android:orientation="vertical"
+                android:paddingHorizontal="8dp"
+                android:paddingTop="14dp"
+                android:paddingBottom="7dp"
+                android:visibility="gone"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent">
+
+                <TextView
+                    android:id="@+id/status_text"
+                    style="@style/TextAppearance.Material3.BodySmall"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:singleLine="true"
+                    android:ellipsize="end"
+                    android:textColor="?attr/colorPrimaryContainer"
+                    android:visibility="gone"
+                    tools:text="@string/error_check_internet_connection" />
+
+            </LinearLayout>
+
+            <!-- Selection indicator (action mode) -->
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/item_download_selected"
+                style="@style/Theme.FireDown.Selected.Button"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:srcCompat="@drawable/ic_baseline_check_circle_24" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </com.google.android.material.card.MaterialCardView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

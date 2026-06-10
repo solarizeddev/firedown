@@ -183,6 +183,12 @@ public class BrowserOptionFragment extends BaseFocusFragment implements OnItemCl
         mRecyclerView.setLayoutManager(mLayoutManager);
 
         mAdapter = new BrowserOptionAdapter(mActivity, new BrowserDownloadsDiffCallback(), this, mEnableGrid);
+        // The persisted chip is checked above (before the listener attaches,
+        // which suppresses the synthetic callback) — so when the sheet
+        // reopens with the images filter active in grid mode, the dense
+        // mosaic state must be seeded here; getSpanCount() above already
+        // read the same chip state.
+        mAdapter.enableDenseGrid(!mEnableGrid && isDenseImageFilter());
         mRecyclerView.setAdapter(mAdapter);
 
         // The RecyclerView's own dimensions don't depend on the adapter
@@ -406,7 +412,7 @@ public class BrowserOptionFragment extends BaseFocusFragment implements OnItemCl
     private void toggleViewMode(MenuItem item) {
         mEnableGrid = !mEnableGrid;
         mAdapter.enableGrid(mEnableGrid);
-        mLayoutManager.setSpanCount(getSpanCount());
+        refreshGridDensity();
         updateItemDecoration();
         item.setIcon(mEnableGrid ? R.drawable.ic_grid_view_24 : R.drawable.ic_view_list_24);
     }
@@ -418,8 +424,39 @@ public class BrowserOptionFragment extends BaseFocusFragment implements OnItemCl
         }
     }
 
+    /** NOTE the historic naming inversion: {@code mEnableGrid == true} is
+     *  LIST mode (it persists {@code Preferences.SORT_LIST} and maps to
+     *  {@code browser_list_number}); grid mode is {@code !mEnableGrid}. */
     private int getSpanCount() {
-        return getResources().getInteger(mEnableGrid ? R.integer.browser_list_number : R.integer.browser_grid_number);
+        if (mEnableGrid) {
+            return getResources().getInteger(R.integer.browser_list_number);
+        }
+        // Grid + images-only filter → the dense square mosaic (the tiles
+        // carry no text there, so the density costs no information).
+        return getResources().getInteger(isDenseImageFilter()
+                ? R.integer.browser_grid_dense_number
+                : R.integer.browser_grid_number);
+    }
+
+    /** Images and GIF chips both narrow to image-mime captures (the same
+     *  class whose grid tiles already hide the title), so both go dense. */
+    private boolean isDenseImageFilter() {
+        if (mChipGroup == null) {
+            return false;
+        }
+        int chipId = mChipGroup.getCheckedChipId();
+        return chipId == R.id.chip_image || chipId == R.id.chip_gif;
+    }
+
+    /** Re-syncs the adapter's dense flag and the span count with the
+     *  current view mode + filter chip. enableDenseGrid no-ops (and skips
+     *  its notifyDataSetChanged) when the flag didn't actually change. */
+    private void refreshGridDensity() {
+        if (mAdapter == null || mLayoutManager == null) {
+            return;
+        }
+        mAdapter.enableDenseGrid(!mEnableGrid && isDenseImageFilter());
+        mLayoutManager.setSpanCount(getSpanCount());
     }
 
     /**
@@ -705,6 +742,9 @@ public class BrowserOptionFragment extends BaseFocusFragment implements OnItemCl
         int selectedId = checkedIds.isEmpty() ? View.NO_ID : checkedIds.get(0);
         String type = mBrowserDownloadViewModel.getCurrentSortForIds(selectedId);
         mBrowserDownloadViewModel.sortBrowserDownloads(type);
+        // Crossing the images-filter boundary in grid mode flips the grid
+        // between the normal tiles and the dense square mosaic.
+        refreshGridDensity();
         // Only intercept Back while a chip is actually checked — otherwise
         // Back must behave normally (close the screen).
         if (mClearFilterOnBack != null) mClearFilterOnBack.setEnabled(!checkedIds.isEmpty());

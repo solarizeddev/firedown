@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Captured dense grid tile — used ONLY while the images/GIF filter chip is
+  active in grid mode (see BrowserOptionFragment.refreshGridDensity).
+  Every item is an image, whose tile already carries no title (the
+  hide-title-for-images rule) and whose mime the active chip states — so
+  the tile is a pure square thumbnail: no scrim, no mime chip, no
+  resolution line, no variants button (images don't carry variants; tap
+  still downloads, long-press enters selection). The selection checkmark
+  and the selected-stroke on the card are the only chrome.
+-->
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/item"
+        style="@style/Widget.Material3.CardView.Elevated"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:cardBackgroundColor="?attr/colorSurfaceContainerLow"
+        app:layout_constraintDimensionRatio="1:1"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:cardCornerRadius="8dp"
+        app:strokeColor="@color/transparent"
+        app:strokeWidth="2dp">
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/image"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="center"
+            android:contentDescription="@null"
+            android:duplicateParentState="true"
+            android:scaleType="centerCrop" />
+
+        <!-- Selection indicator (action mode) -->
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/item_download_more_checked"
+            app:tint="?attr/colorPrimaryContainer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|end"
+            android:padding="@dimen/button_icons_padding"
+            android:visibility="gone"
+            app:srcCompat="@drawable/ic_baseline_check_circle_24" />
+
+    </com.google.android.material.card.MaterialCardView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

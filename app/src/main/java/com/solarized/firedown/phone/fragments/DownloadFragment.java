@@ -512,10 +512,26 @@ public class DownloadFragment extends BaseDownloadFragment implements
     public void onCheckedChanged(@NonNull ChipGroup g, @NonNull List<Integer> checkedIds) {
         if (checkedIds.isEmpty()) {
             mDownloadsViewModel.setFilterChip(R.id.chip_all);
-            return;
+        } else {
+            mDownloadsViewModel.setFilterChip(checkedIds.get(0));
         }
-        int checkedId = checkedIds.get(0);
-        mDownloadsViewModel.setFilterChip(checkedId);
+        // Crossing the images-filter boundary in grid mode flips the grid
+        // between the normal tiles and the dense square mosaic.
+        refreshGridDensityIfChanged();
+    }
+
+    /**
+     * Images and GIF chips both narrow the list to image-mime entries
+     * (FileUriHelper.isImage covers GIF/SVG — the same rule that already
+     * hides grid titles), so both get the dense mosaic.
+     */
+    @Override
+    protected boolean isDenseImageFilterActive() {
+        if (mChipGroup == null) {
+            return false;
+        }
+        int chipId = mChipGroup.getCheckedChipId();
+        return chipId == R.id.chip_image || chipId == R.id.chip_gif;
     }
 
     /**

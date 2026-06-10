@@ -99,6 +99,12 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
     private boolean mActionMode;
     private boolean mEnabled;
     private boolean mEnableGrid;
+    /** Images-only filtered grid → square bare tiles (no scrim/title/chip/
+     *  action button) at a denser span. Set by configureRecyclerView; the
+     *  setter doesn't notify because configureRecyclerView always follows
+     *  with {@link #enableGrid}, whose notifyDataSetChanged re-resolves
+     *  every view type. */
+    private boolean mDenseImages;
 
     /** Per-category aggregates used to fill the header subtitle
      *  ("N files · X MB"). Empty until the ViewModel's aggregator emits. */
@@ -290,6 +296,11 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         notifyDataSetChanged();
     }
 
+    /** See {@link #mDenseImages}. Field-only — call before enableGrid. */
+    public void setDenseImages(boolean dense) {
+        mDenseImages = dense;
+    }
+
     @Nullable
     public DownloadEntity getDownloadEntity(int position) {
         Object item = peek(position);
@@ -318,6 +329,15 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         if (item instanceof DownloadSeparatorEntity) return Download.HEADER;
         if (item instanceof DownloadEntity entity) {
             int status = entity.getFileStatus();
+            if (mEnableGrid && mDenseImages) {
+                return switch (status) {
+                    case Download.FINISHED -> Download.FINISHED_GRID_DENSE;
+                    case Download.PROGRESS -> Download.PROGRESS_GRID_DENSE;
+                    case Download.QUEUED   -> Download.QUEUED_GRID_DENSE;
+                    case Download.ERROR    -> Download.ERROR_GRID_DENSE;
+                    default -> status;
+                };
+            }
             return switch (status) {
                 case Download.FINISHED -> mEnableGrid ? Download.FINISHED_GRID : Download.FINISHED;
                 case Download.PROGRESS -> mEnableGrid ? Download.PROGRESS_GRID : Download.PROGRESS;
@@ -334,15 +354,25 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
                 || viewType == Download.PROGRESS_GRID
                 || viewType == Download.QUEUED_GRID
                 || viewType == Download.ERROR_GRID
-                || viewType == Download.PAUSED_GRID;
+                || viewType == Download.PAUSED_GRID
+                || isDenseType(viewType);
+    }
+
+    private boolean isDenseType(int viewType) {
+        return viewType == Download.FINISHED_GRID_DENSE
+                || viewType == Download.PROGRESS_GRID_DENSE
+                || viewType == Download.QUEUED_GRID_DENSE
+                || viewType == Download.ERROR_GRID_DENSE
+                || viewType == Download.PAUSED_GRID_DENSE;
     }
 
     private int getStatus(int viewType) {
         return switch (viewType) {
-            case Download.PROGRESS, Download.PROGRESS_GRID -> Download.PROGRESS;
-            case Download.FINISHED, Download.FINISHED_GRID -> Download.FINISHED;
-            case Download.QUEUED, Download.QUEUED_GRID, Download.PAUSED_GRID -> Download.QUEUED;
-            case Download.ERROR, Download.ERROR_GRID -> Download.ERROR;
+            case Download.PROGRESS, Download.PROGRESS_GRID, Download.PROGRESS_GRID_DENSE -> Download.PROGRESS;
+            case Download.FINISHED, Download.FINISHED_GRID, Download.FINISHED_GRID_DENSE -> Download.FINISHED;
+            case Download.QUEUED, Download.QUEUED_GRID, Download.PAUSED_GRID,
+                    Download.QUEUED_GRID_DENSE, Download.PAUSED_GRID_DENSE -> Download.QUEUED;
+            case Download.ERROR, Download.ERROR_GRID, Download.ERROR_GRID_DENSE -> Download.ERROR;
             default -> -1;
         };
     }
@@ -378,13 +408,16 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
             }
 
             boolean isGrid = isGridType(viewType);
-            int layoutRes = isGrid
-                    ? R.layout.fragment_download_item_grid
-                    : R.layout.fragment_download_item;
+            boolean isDense = isDenseType(viewType);
+            int layoutRes = isDense
+                    ? R.layout.fragment_download_item_grid_dense
+                    : isGrid
+                            ? R.layout.fragment_download_item_grid
+                            : R.layout.fragment_download_item;
 
-            Tracing.begin(isGrid ? "inflate:row(grid)" : "inflate:row(list)");
+            Tracing.begin(isDense ? "inflate:row(dense)" : isGrid ? "inflate:row(grid)" : "inflate:row(list)");
             try {
-                return new DownloadViewHolder(inflater.inflate(layoutRes, parent, false), mOnItemClickListener);
+                return new DownloadViewHolder(inflater.inflate(layoutRes, parent, false), mOnItemClickListener, isDense);
             } finally { Tracing.end(); }
         } finally { Tracing.end(); }
     }
@@ -425,11 +458,14 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
                     holder.item.setStrokeColor(washSelected ? mColorSelected : mColorNormal);
                     holder.selected.setVisibility(mActionMode ? View.VISIBLE : View.GONE);
                     holder.selected.setImageDrawable(mActionMode ? (contains ? mChecked : mUnChecked) : null);
-                    holder.actionButton.setVisibility(mActionMode ? View.INVISIBLE : View.VISIBLE);
-                    setActionIcon(holder, isGrid,
-                            status == Download.QUEUED
-                                    ? R.drawable.ic_clear_24
-                                    : R.drawable.ic_baseline_more_vert_24);
+                    // The dense tile carries no action button (null-guarded).
+                    if (holder.actionButton != null) {
+                        holder.actionButton.setVisibility(mActionMode ? View.INVISIBLE : View.VISIBLE);
+                        setActionIcon(holder, isGrid,
+                                status == Download.QUEUED
+                                        ? R.drawable.ic_clear_24
+                                        : R.drawable.ic_baseline_more_vert_24);
+                    }
                     return;
                 } finally { Tracing.end(); }
             }
@@ -547,12 +583,16 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         // mMimeLabelCache / mMimeLabelListCache. Without the cache,
         // every bind paid for a resource lookup (theme + LocaleList
         // resolution) plus a String concat on the list-mode path.
-        String mimeLabel = mimeLabelFor(mimeType, isGrid);
-        if (TextUtils.isEmpty(mimeLabel)) {
-            holder.mimeText.setVisibility(View.GONE);
-        } else {
-            holder.mimeText.setVisibility(View.VISIBLE);
-            holder.mimeText.setText(mimeLabel);
+        // The dense tile has no mime view at all (the active filter chip
+        // already states the type) — null-guarded.
+        if (holder.mimeText != null) {
+            String mimeLabel = mimeLabelFor(mimeType, isGrid);
+            if (TextUtils.isEmpty(mimeLabel)) {
+                holder.mimeText.setVisibility(View.GONE);
+            } else {
+                holder.mimeText.setVisibility(View.VISIBLE);
+                holder.mimeText.setText(mimeLabel);
+            }
         }
 
         // ── Row surface ─────────────────────────────────────────────
@@ -587,12 +627,12 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
 
 
         // ── Action button icon ──────────────────────────────────────
-        if (status == Download.QUEUED) {
+        // The dense tile carries no per-item button — tap opens the
+        // viewer, long-press enters selection; per-item actions live there.
+        if (holder.actionButton != null) {
             holder.actionButton.setVisibility(mActionMode ? View.INVISIBLE : View.VISIBLE);
-            setActionIcon(holder, isGrid, R.drawable.ic_clear_24);
-        } else {
-            holder.actionButton.setVisibility(mActionMode ? View.INVISIBLE : View.VISIBLE);
-            setActionIcon(holder, isGrid, R.drawable.ic_baseline_more_vert_24);
+            setActionIcon(holder, isGrid,
+                    status == Download.QUEUED ? R.drawable.ic_clear_24 : R.drawable.ic_baseline_more_vert_24);
         }
 
         // ── Reset all status views ──────────────────────────────────
@@ -602,8 +642,10 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         setVisible(holder.topScrim, false);
         setVisible(holder.mimeDuration, false);
         // Grid info block is shown by default; PROGRESS hides it so the
-        // progress overlay owns the whole tile.
-        setVisible(holder.bottomBlock, true);
+        // progress overlay owns the whole tile. The dense tile is a pure
+        // thumbnail — its block stays hidden (bindErrorInner re-shows it
+        // so an ERROR row still reads its message).
+        setVisible(holder.bottomBlock, !holder.denseTile);
 
         // ── Status-specific binding ─────────────────────────────────
         switch (status) {
@@ -682,9 +724,17 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
 
         if (isGrid) {
             setVisible(holder.topScrim, true);
-            if (holder.mimeDuration != null && !TextUtils.isEmpty(secondary)) {
-                holder.mimeDuration.setVisibility(View.VISIBLE);
-                holder.mimeDuration.setText(secondary);
+            // Grid meta row reads "[chip] duration · size" (or
+            // "resolution · size" for images): size is the one list-line
+            // fact with no other home in the grid — date is carried by the
+            // section headers, so it stays out. (mimeDuration is absent in
+            // the dense tile, which shows no text at all.)
+            if (holder.mimeDuration != null) {
+                String label = joinWithSize(secondary, entity.getFileSize());
+                if (!TextUtils.isEmpty(label)) {
+                    holder.mimeDuration.setVisibility(View.VISIBLE);
+                    holder.mimeDuration.setText(label);
+                }
             }
         }
 
@@ -749,6 +799,10 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
     }
 
     private void bindErrorInner(DownloadViewHolder holder, DownloadEntity entity, boolean isGrid) {
+        // The dense tile hides its scrim block by default (pure thumbnail);
+        // an ERROR row is the one state that must surface text, so re-show
+        // it. No-op for the other layouts (list has no block; grid shows it).
+        setVisible(holder.bottomBlock, true);
         if (holder.statusText != null) {
             // Grid scrim is darker so the error reads better on
             // colorPrimaryContainer; the list row is on plain surface
@@ -824,6 +878,24 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
     }
 
     /**
+     * "{secondary} · {size}" — the grid tile's meta-row facts after the mime
+     * chip. Either part may be absent (HLS captures can finish with no
+     * duration until the post-download refresh runs; size can be 0 for a
+     * live/chunked source) — the join degrades to whichever part exists,
+     * or null when neither does (caller keeps the view GONE).
+     */
+    private static @Nullable String joinWithSize(@Nullable String secondary, long size) {
+        String sizeText = size > 0 ? Utils.getFileSize(size) : null;
+        if (TextUtils.isEmpty(secondary)) {
+            return sizeText;
+        }
+        if (sizeText == null) {
+            return secondary;
+        }
+        return secondary + " · " + sizeText;
+    }
+
+    /**
      * The single secondary metadatum for an item, chosen by type: duration
      * (video/audio), resolution (image), or language (subtitle). Rendered as a
      * distinct element — the badge overlay in grid, appended to the finished
@@ -862,10 +934,14 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         final MaterialCardView item;
         final AppCompatImageView selected;
         final AppCompatImageView image;
-        final TextView mimeText;
+        /** Absent (null) in the dense tile, which renders no text/chrome. */
+        final @Nullable TextView mimeText;
         final @Nullable TextView fileName;
         final @Nullable TextView fileUrl;
-        final View actionButton;
+        final @Nullable View actionButton;
+        /** True for the dense (images-filter) square tile — pure thumbnail;
+         *  bindFull keeps its scrim block hidden except for ERROR. */
+        final boolean denseTile;
 
         // Status-specific (nullable — not all layouts have all views)
         final @Nullable ProgressOverlayView imageProgress;
@@ -905,9 +981,10 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         long cachedDomainEntityId = Long.MIN_VALUE;
         @Nullable String cachedDomain;
 
-        DownloadViewHolder(View view, OnItemClickListener onItemClickListener) {
+        DownloadViewHolder(View view, OnItemClickListener onItemClickListener, boolean denseTile) {
             super(view);
             listener = onItemClickListener;
+            this.denseTile = denseTile;
 
             item = view.findViewById(R.id.item);
             selected = view.findViewById(R.id.item_download_selected);

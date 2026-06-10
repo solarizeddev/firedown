@@ -99,9 +99,16 @@ public class BrowserOptionAdapter extends GridListBaseAdapter<BrowserDownloadEnt
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        int layoutRes = viewType == TYPE_LIST
-                ? R.layout.fragment_browser_options_item_list
-                : R.layout.fragment_browser_options_item;
+        int layoutRes;
+        if (viewType == TYPE_LIST) {
+            layoutRes = R.layout.fragment_browser_options_item_list;
+        } else if (viewType == TYPE_GRID_DENSE) {
+            // Images-only filter active: square bare tile (thumbnail +
+            // selection checkmark only) — see the layout's header comment.
+            layoutRes = R.layout.fragment_browser_options_item_dense;
+        } else {
+            layoutRes = R.layout.fragment_browser_options_item;
+        }
         View view = LayoutInflater.from(parent.getContext()).inflate(layoutRes, parent, false);
         return new ViewHolder(view, mOnItemClickListener, viewType == TYPE_LIST);
     }
@@ -143,14 +150,18 @@ public class BrowserOptionAdapter extends GridListBaseAdapter<BrowserDownloadEnt
         // domain ('VÍDEO · m.youtube.com'); grid renders it as a filled
         // chip in the bottom metadata row. Hide the view entirely if the
         // mime resolves to empty so the row doesn't render a stray ' · '.
-        String mimeLabel = FileUriHelper.getLongMimeText(context, entity.getMimeType());
-        if (mSuppressMime || TextUtils.isEmpty(mimeLabel)) {
-            // Suppressed while a single-type filter is active (chip rail
-            // already states the type), or when the mime resolves to empty.
-            holder.mimeText.setVisibility(View.GONE);
-        } else {
-            holder.mimeText.setVisibility(View.VISIBLE);
-            holder.mimeText.setText(holder.isList ? mimeLabel + " · " : mimeLabel);
+        // The dense tile carries no mime view at all (null-guarded — the
+        // active images filter already states the type).
+        if (holder.mimeText != null) {
+            String mimeLabel = FileUriHelper.getLongMimeText(context, entity.getMimeType());
+            if (mSuppressMime || TextUtils.isEmpty(mimeLabel)) {
+                // Suppressed while a single-type filter is active (chip rail
+                // already states the type), or when the mime resolves to empty.
+                holder.mimeText.setVisibility(View.GONE);
+            } else {
+                holder.mimeText.setVisibility(View.VISIBLE);
+                holder.mimeText.setText(holder.isList ? mimeLabel + " · " : mimeLabel);
+            }
         }
 
         RequestOptions options = mRequestOptions
@@ -177,10 +188,15 @@ public class BrowserOptionAdapter extends GridListBaseAdapter<BrowserDownloadEnt
         }
 
         // ── Layout-specific bindings ─────────────────────────────────────
+        // The dense tile has no variants/more button (null-guarded): images
+        // carry no variants, and the per-item affordances live behind tap
+        // (download) and long-press (selection).
         if (holder.isList) {
             holder.setTextOrHide(holder.fileUrl, domain);
-            holder.more.setVisibility(hasVariants ? View.VISIBLE : View.GONE);
-        } else {
+            if (holder.more != null) {
+                holder.more.setVisibility(hasVariants ? View.VISIBLE : View.GONE);
+            }
+        } else if (holder.more != null) {
             int variantVisibility = !mActionMode && hasVariants ? View.VISIBLE : View.GONE;
             holder.more.setEnabled(!mActionMode);
             holder.more.setVisibility(variantVisibility);
@@ -404,15 +420,17 @@ public class BrowserOptionAdapter extends GridListBaseAdapter<BrowserDownloadEnt
         final boolean isList;
         final OnItemClickListener listener;
 
-        // Common views (present in both layouts)
+        // Common views (present in the list and grid layouts; the DENSE
+        // grid tile is thumbnail + checkmark only, so everything textual
+        // and the more button are null there)
         final MaterialCardView item;
         final AppCompatImageView image;
         final AppCompatImageView checkedView;
-        final TextView mimeText;
-        final MaterialButton more;
-        final TextView tagQuality;
-        final TextView tagDuration;
-        final View tagSeparator;
+        @Nullable final TextView mimeText;
+        @Nullable final MaterialButton more;
+        @Nullable final TextView tagQuality;
+        @Nullable final TextView tagDuration;
+        @Nullable final View tagSeparator;
         @Nullable final TextView tagCc;
         @Nullable final View tagCcSeparator;
 

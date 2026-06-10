@@ -4,4 +4,6 @@
     <integer name="browser_grid_number">2</integer>
     <integer name="image_grid_number">2</integer>
     <integer name="image_list_number">1</integer>
+    <integer name="browser_grid_dense_number">3</integer>
+    <integer name="image_grid_dense_number">3</integer>
 </resources>

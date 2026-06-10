@@ -80,6 +80,11 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment implements 
 
     protected boolean mEnableGrid;
 
+    /** Whether the last configureRecyclerView ran in dense-mosaic mode
+     *  (grid + images-only filter). Lets refreshGridDensityIfChanged()
+     *  reconfigure only on an actual density transition. */
+    private boolean mDenseGrid;
+
     /** RecyclerView that {@link #installThumbnailPreloader} last attached the
      *  preload OnScrollListener to. configureRecyclerView() runs repeatedly on
      *  grid/list toggle (don't double-attach), but rotation rebuilds the
@@ -581,6 +586,34 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment implements 
         return 0;
     }
 
+    /**
+     * Whether the active filter narrows the list to images only (the
+     * images/GIF chips) — the one filtered view whose grid tiles carry no
+     * text at all, so it renders as a denser square mosaic. Default false;
+     * {@code DownloadFragment} overrides by reading its chip rail (the
+     * vault has no chip rail and stays at the normal density).
+     */
+    protected boolean isDenseImageFilterActive() {
+        return false;
+    }
+
+    /**
+     * Re-runs {@link #configureRecyclerView} when a filter change crossed
+     * the dense-mosaic boundary (images filter checked/unchecked in grid
+     * mode). Gated on an actual transition so the chip taps that don't
+     * change density (video → audio) skip the notifyDataSetChanged the
+     * reconfigure implies.
+     */
+    protected void refreshGridDensityIfChanged() {
+        if (mAdapter == null || mRecyclerView == null) {
+            return;
+        }
+        boolean dense = mEnableGrid && isDenseImageFilterActive();
+        if (dense != mDenseGrid) {
+            configureRecyclerView(mAdapter, mEnableGrid);
+        }
+    }
+
     protected void configureRecyclerView(DownloadItemAdapter adapter, boolean isGrid) {
         if (mRecyclerView == null) return;
 
@@ -599,7 +632,18 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment implements 
         installThumbnailPreloader(adapter);
 
         // 1. Get or Create LayoutManager
-        int spans = getResources().getInteger(isGrid ? R.integer.image_grid_number : R.integer.image_list_number);
+        // Dense mode: grid + images-only filter → square bare tiles at a
+        // denser span. Density there costs no information — every tile is
+        // already a pure thumbnail (no title by the hide-title-for-images
+        // rule; the active filter chip states the type, so no mime chip).
+        boolean dense = isGrid && isDenseImageFilterActive();
+        mDenseGrid = dense;
+        // Field-only setter; the enableGrid(isGrid) below notifies and
+        // re-resolves every view type, so the dense flag must be set first.
+        adapter.setDenseImages(dense);
+        int spans = getResources().getInteger(dense
+                ? R.integer.image_grid_dense_number
+                : isGrid ? R.integer.image_grid_number : R.integer.image_list_number);
 
         if (mGridLayoutManager == null) {
             // If it's null or the wrong type, set a new one
