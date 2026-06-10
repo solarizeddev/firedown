@@ -1,8 +1,8 @@
 /* Firedown "Send to browser" pages — built from the firedown.app site's own
    design vocabulary (style.css + install.html): warm off-white surface,
    signature coral gradient (#d44e86 -> #f06560 -> #f5a97a), IBM Plex
-   Sans/Mono, channel-card pattern (white card, hairline border, floating
-   mono chip), rounded-rect CTAs (10px — the site uses no pills), and the
+   Sans/Mono, channel-card pattern (white card, hairline border),
+   rounded-rect CTAs (10px — the site uses no pills), and the
    dark navy footer bar. Served at /style.css; English-only by design.
    The @import degrades to system fonts offline. */
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,600;1,600&display=swap');
@@ -35,19 +35,16 @@ body{background:var(--bg-warm);color:var(--text);
 h1{font-weight:300;font-size:30px;line-height:1.12;letter-spacing:-.03em;
   color:var(--text);margin:26px 4px 10px;text-align:center}
 h1 em{font-style:italic;font-weight:600}
+/* .main pulls itself up -30px over the hero, so the eyebrow's top margin
+   must clear that overlap AND leave visible air below the gradient band. */
 .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:.7rem;font-weight:500;
   letter-spacing:.2em;text-transform:uppercase;color:var(--coral-dark);
-  text-align:center;margin:30px 0 0}
+  text-align:center;margin:54px 0 0}
 .lead{color:var(--text-mid);font-size:15px;line-height:1.6;margin:0 12px 24px;text-align:center}
 
 /* ── channel-card (the install page's card pattern) ── */
 .cardx{position:relative;background:var(--bg-card);border:1px solid var(--border);
   border-radius:24px;padding:26px 22px 24px;box-shadow:var(--shadow);margin-bottom:16px}
-.cardx .chip{position:absolute;top:-10px;left:22px;
-  font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:700;
-  letter-spacing:.08em;text-transform:uppercase;color:#fff;padding:4px 10px;border-radius:6px;
-  background:linear-gradient(135deg,var(--coral-dark),var(--coral));
-  box-shadow:0 6px 18px rgba(240,101,96,.28)}
 
 /* file presentation inside the card */
 .file-head{display:flex;align-items:center;gap:14px;margin-bottom:16px}
