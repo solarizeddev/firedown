@@ -18,36 +18,39 @@
 html,body{height:100%}
 body{background:var(--bg-warm);color:var(--text);
   font-family:'IBM Plex Sans',system-ui,sans-serif;
-  margin:0;min-height:100vh;display:flex;flex-direction:column}
+  /* dvh: mobile 100vh includes the area under the browser's URL bar, which
+     pushed the footer below the fold on Brave/Chrome. dvh is the actually
+     visible height; the vh line is the fallback for older WebViews. */
+  margin:0;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column}
 
 /* ── hero: the signature coral gradient band ── */
 .hero{position:relative;flex:none;
   background:linear-gradient(150deg,#d44e86 0%,#f06560 55%,#f5a97a 100%);
-  display:flex;align-items:center;justify-content:center;padding:46px 20px 64px;overflow:hidden}
+  display:flex;align-items:center;justify-content:center;padding:34px 20px 52px;overflow:hidden}
 .hero::after{content:"";position:absolute;inset:0;
   background:radial-gradient(ellipse at 72% 28%,rgba(255,255,255,.14),transparent 60%);pointer-events:none}
 .logo{height:60px;width:auto;max-width:68%;filter:brightness(0) invert(1);position:relative}
 
 /* ── main column ── */
-.main{flex:1;width:100%;max-width:560px;margin:-30px auto 0;padding:0 18px 36px;position:relative}
+.main{flex:1;width:100%;max-width:560px;margin:-30px auto 0;padding:0 18px 24px;position:relative}
 
 /* site headline voice: light weight + italic em emphasis */
 h1{font-weight:300;font-size:30px;line-height:1.12;letter-spacing:-.03em;
-  color:var(--text);margin:26px 4px 10px;text-align:center}
+  color:var(--text);margin:18px 4px 8px;text-align:center}
 h1 em{font-style:italic;font-weight:600}
 /* .main pulls itself up -30px over the hero, so the eyebrow's top margin
    must clear that overlap AND leave visible air below the gradient band. */
 .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:.7rem;font-weight:500;
   letter-spacing:.2em;text-transform:uppercase;color:var(--coral-dark);
-  text-align:center;margin:54px 0 0}
-.lead{color:var(--text-mid);font-size:15px;line-height:1.6;margin:0 12px 24px;text-align:center}
+  text-align:center;margin:48px 0 0}
+.lead{color:var(--text-mid);font-size:15px;line-height:1.6;margin:0 12px 18px;text-align:center}
 
 /* ── channel-card (the install page's card pattern) ── */
 .cardx{position:relative;background:var(--bg-card);border:1px solid var(--border);
-  border-radius:24px;padding:26px 22px 24px;box-shadow:var(--shadow);margin-bottom:16px}
+  border-radius:24px;padding:22px 20px 20px;box-shadow:var(--shadow);margin-bottom:14px}
 
 /* file presentation inside the card */
-.file-head{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+.file-head{display:flex;align-items:center;gap:14px;margin-bottom:14px}
 .ic{width:52px;height:52px;border-radius:14px;flex:none;
   background:linear-gradient(135deg,var(--coral-dark),var(--coral));
   display:flex;align-items:center;justify-content:center}
@@ -61,12 +64,12 @@ h1 em{font-style:italic;font-weight:600}
 .dl,button{display:block;width:100%;text-align:center;border:0;cursor:pointer;
   background:linear-gradient(135deg,var(--coral-dark),var(--coral));color:#fff;
   font-family:inherit;font-size:15px;font-weight:600;border-radius:10px;
-  padding:15px 18px;text-decoration:none;box-shadow:0 4px 14px rgba(240,101,96,.3)}
+  padding:14px 18px;text-decoration:none;box-shadow:0 4px 14px rgba(240,101,96,.3)}
 .dl:active,button:active{transform:translateY(1px)}
 
 /* secondary CTA — install-page channel-cta geometry */
-.get{display:flex;align-items:center;justify-content:center;gap:8px;margin:18px 0 0;
-  padding:13px 18px;border-radius:10px;background:var(--bg-warm);
+.get{display:flex;align-items:center;justify-content:center;gap:8px;margin:14px 0 0;
+  padding:12px 18px;border-radius:10px;background:var(--bg-warm);
   border:1.5px solid var(--border);color:var(--text-mid);
   font-size:14px;font-weight:600;text-decoration:none}
 .get b{color:var(--coral-dark);font-weight:600}
@@ -77,13 +80,13 @@ form{text-align:center}
 input[type=text]{width:208px;text-align:center;letter-spacing:14px;font-size:32px;
   font-family:'IBM Plex Mono',monospace;background:var(--bg-warm);
   border:2px solid rgba(30,28,46,.12);border-radius:14px;color:var(--text);
-  padding:14px 0 14px 14px;outline:none;margin:2px auto 20px;display:block}
+  padding:14px 0 14px 14px;outline:none;margin:2px auto 16px;display:block}
 input[type=text]:focus{border-color:var(--coral)}
 .err{color:#c0436b;font-size:13.5px;font-weight:600;text-align:center;margin:0 0 14px}
 
 /* ── dark navy footer bar (site footer voice) ── */
 footer{flex:none;background:var(--text);margin-top:auto;
-  padding:18px 22px;text-align:center;font-size:12.5px;line-height:1.8;color:rgba(255,255,255,.5)}
+  padding:14px 20px;text-align:center;font-size:12px;line-height:1.7;color:rgba(255,255,255,.5)}
 footer .lock{color:var(--coral)}
 footer b{color:rgba(255,255,255,.75);font-weight:500}
 
