@@ -145,6 +145,8 @@
     <string name="empty_learn_more">Saber más</string>
     <string name="restore_downloads_button">Restaurar descargas anteriores</string>
     <string name="restore_downloads_settings_summary">Recupera tu lista de descargas tras reinstalar la aplicación</string>
+    <string name="restore_banner_title">¿Reinstalaste Firedown?</string>
+    <string name="restore_banner_subtitle">Tus descargas anteriores podrían recuperarse — toca para restaurar</string>
     <string name="restore_downloads_message">Si reinstalaste Firedown, tus descargas pueden seguir en la carpeta Download/Firedown. Elige esa carpeta y Firedown restaurará tu lista de descargas.</string>
     <string name="restore_downloads_choose">Elegir carpeta</string>
     <string name="restore_downloads_done">Descargas restauradas: %1$d</string>

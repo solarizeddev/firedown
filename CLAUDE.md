@@ -894,6 +894,27 @@ playback fallback on 13+) → `restoreFromTree` → snackbar with the count /
 twice or restoring on a non-empty list never duplicates rows. Strings are
 translated across the same 16 locales as the JIT toggle.
 
+**A third door, the detected-reinstall banner** (`RestoreBannerAdapter`, a
+self-hiding ConcatAdapter header like the incognito in-flight hint): shown
+only when a reinstall is *detected* and the automatic restore came back
+empty — never speculatively to fresh installs (a no-transport reinstall is
+bit-identical to a fresh install, and scoped storage forbids peeking at the
+public folder to check for a `.fdbk`; those users rely on the empty-state
+button, which shows at exactly that moment). Detection is a **sentinel
+pair** (`detectReinstall`): a random UUID lives in BOTH the default prefs
+(backed up) and `backup_local.xml` (excluded); present-but-mismatched after
+a restore-at-install = reinstall. A bare "are default prefs non-empty" check
+does NOT work — `App.onCreate` writes boot keys (history-purge timestamp)
+before detection runs, so a fresh install's prefs are never empty. **Banner
+policy: at most ONE informational banner at a time** — the restore banner
+yields to the incognito header (`updateRestoreBannerVisibility`,
+re-evaluated on every `getSafeCount` change), and both report into
+`getLeadingHeaderCount` for the grid SpanSizeLookup. Banner state lives in
+`backup_local.xml` on purpose: a dismissal must never ride a backup into
+the next reinstall — which is exactly when the banner is needed again.
+Retired permanently on dismiss or any completed restore (cleared at the
+data layer in `restoreFromTree`, so the Settings door retires it too).
+
 **Downloads chip-rail gotcha: there is NO "All" chip.** Unfiltered means no
 chip is checked — `ChipGroup.getCheckedChipId()` returns `View.NO_ID`.
 `R.id.chip_all` is only the ViewModel's no-filter *sentinel* (set in

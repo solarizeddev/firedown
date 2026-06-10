@@ -84,6 +84,8 @@
     <string name="empty_learn_more">Další informace</string>
     <string name="restore_downloads_button">Obnovit předchozí stahování</string>
     <string name="restore_downloads_settings_summary">Obnovte seznam stahování po přeinstalaci aplikace</string>
+    <string name="restore_banner_title">Přeinstalovali jste Firedown?</string>
+    <string name="restore_banner_subtitle">Vaše dřívější stahování může být možné obnovit — klepnutím je obnovíte</string>
     <string name="restore_downloads_message">Pokud jste Firedown přeinstalovali, vaše stažené soubory mohou stále být ve složce Download/Firedown. Vyberte tuto složku a Firedown obnoví seznam stahování.</string>
     <string name="restore_downloads_choose">Vybrat složku</string>
     <string name="restore_downloads_done">Obnovená stahování: %1$d</string>

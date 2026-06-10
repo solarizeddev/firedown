@@ -305,6 +305,10 @@ public final class DownloadBackupMirror {
                     if (decryptPublicMirror(context, in, plain)) {
                         int restored = importMirrorDatabase(database, plain);
                         Log.i(TAG, "restoreFromTree: restored " + restored + " entries from SAF mirror");
+                        // Any completed restore retires the reinstall banner,
+                        // whichever door (empty state / Settings / banner)
+                        // launched the flow.
+                        clearRestoreBanner(context);
                         return restored;
                     }
                 } catch (Exception e) {
@@ -429,23 +433,87 @@ public final class DownloadBackupMirror {
         // duplicate rows.
         prefs.edit().putBoolean(KEY_RESTORE_DONE, true).apply();
 
-        File mirror = mirrorFile(context);
-        if (!mirror.exists()) {
-            return;
-        }
+        boolean reinstall = detectReinstall(context, prefs);
 
-        SupportSQLiteDatabase db = database.getOpenHelper().getWritableDatabase();
-        try (Cursor count = db.query("SELECT COUNT(*) FROM " + TABLE + " WHERE file_safe = 0")) {
-            if (count.moveToFirst() && count.getInt(0) > 0) {
+        int restored = 0;
+        File mirror = mirrorFile(context);
+        if (mirror.exists()) {
+            SupportSQLiteDatabase db = database.getOpenHelper().getWritableDatabase();
+            boolean populated = false;
+            try (Cursor count = db.query("SELECT COUNT(*) FROM " + TABLE + " WHERE file_safe = 0")) {
+                populated = count.moveToFirst() && count.getInt(0) > 0;
+            }
+            if (populated) {
                 if (BuildConfig.DEBUG) {
                     Log.d(TAG, "restoreIfPending: table populated — in-place update, skipping");
                 }
                 return;
             }
+            restored = importMirrorDatabase(database, mirror);
+            Log.i(TAG, "restoreIfPending: restored " + restored + " download entries from backup mirror");
         }
 
-        int restored = importMirrorDatabase(database, mirror);
-        Log.i(TAG, "restoreIfPending: restored " + restored + " download entries from backup mirror");
+        // Detected reinstall whose automatic restore brought nothing back
+        // (no mirror in the backup, quota, partial restore): the encrypted
+        // public mirror may still be sitting in Download/Firedown, so arm the
+        // Downloads-screen banner pointing at the SAF restore. A reinstall
+        // the auto-restore DID handle needs no banner.
+        if (reinstall && restored == 0) {
+            prefs.edit().putBoolean(KEY_RESTORE_BANNER, true).apply();
+            Log.i(TAG, "restoreIfPending: reinstall detected, auto-restore empty — banner armed");
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // Reinstall detection — the sentinel pair
+    // ------------------------------------------------------------------
+    //
+    // "Did this install's shared prefs come back from a backup?" can't be
+    // answered by "are the default prefs non-empty" — App.onCreate writes
+    // boot-keys (e.g. the history-purge timestamp) before this runs, so a
+    // fresh install is never empty. Instead a random sentinel UUID is kept
+    // in BOTH prefs files: the DEFAULT prefs (which Auto Backup backs up)
+    // and backup_local.xml (which is excluded). On a same-install launch the
+    // two match. After a reinstall-with-restore the default-prefs sentinel
+    // survives the trip through the backup while the local one died with the
+    // install → present-but-mismatched = reinstall. Boot-written keys can't
+    // fake that, and an in-place update keeps both files so it never trips.
+    // (A backup written by a pre-sentinel app version has no sentinel →
+    // undetected → no banner; acceptable roll-out behavior.)
+
+    private static final String KEY_SENTINEL_LOCAL = "install_sentinel";
+    /** Lives in the DEFAULT shared prefs — deliberately backed up. */
+    private static final String KEY_SENTINEL_BACKED_UP =
+            "com.solarized.firedown.preferences.backup.install.sentinel";
+    private static final String KEY_RESTORE_BANNER = "restore_banner_pending";
+
+    private static boolean detectReinstall(@NonNull Context context, @NonNull SharedPreferences localPrefs) {
+        SharedPreferences defaultPrefs =
+                androidx.preference.PreferenceManager.getDefaultSharedPreferences(context);
+        String backedUp = defaultPrefs.getString(KEY_SENTINEL_BACKED_UP, null);
+        String local = localPrefs.getString(KEY_SENTINEL_LOCAL, null);
+
+        boolean reinstall = backedUp != null && !backedUp.equals(local);
+
+        // (Re)pair the sentinels for this install either way.
+        String sentinel = java.util.UUID.randomUUID().toString();
+        defaultPrefs.edit().putString(KEY_SENTINEL_BACKED_UP, sentinel).apply();
+        localPrefs.edit().putString(KEY_SENTINEL_LOCAL, sentinel).apply();
+        return reinstall;
+    }
+
+    /** Whether the Downloads screen should show the "restore your previous
+     *  downloads" banner (reinstall detected, automatic restore came back
+     *  empty, user hasn't dismissed or completed a restore yet). */
+    public static boolean isRestoreBannerPending(@NonNull Context context) {
+        return context.getSharedPreferences(LOCAL_PREFS, Context.MODE_PRIVATE)
+                .getBoolean(KEY_RESTORE_BANNER, false);
+    }
+
+    /** Permanently retire the banner: user dismissed it, or a restore ran. */
+    public static void clearRestoreBanner(@NonNull Context context) {
+        context.getSharedPreferences(LOCAL_PREFS, Context.MODE_PRIVATE)
+                .edit().putBoolean(KEY_RESTORE_BANNER, false).apply();
     }
 
     /**

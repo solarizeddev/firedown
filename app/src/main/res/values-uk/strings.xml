@@ -83,6 +83,8 @@
     <string name="empty_learn_more">Докладніше</string>
     <string name="restore_downloads_button">Відновити попередні завантаження</string>
     <string name="restore_downloads_settings_summary">Відновіть список завантажень після перевстановлення застосунку</string>
+    <string name="restore_banner_title">Перевстановили Firedown?</string>
+    <string name="restore_banner_subtitle">Попередні завантаження можна спробувати відновити — торкніться, щоб відновити</string>
     <string name="restore_downloads_message">Якщо ви перевстановили Firedown, ваші завантаження можуть досі бути в папці Download/Firedown. Виберіть цю папку, і Firedown відновить список завантажень.</string>
     <string name="restore_downloads_choose">Вибрати папку</string>
     <string name="restore_downloads_done">Відновлено завантажень: %1$d</string>

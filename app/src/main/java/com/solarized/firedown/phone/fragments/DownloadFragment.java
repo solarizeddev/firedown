@@ -41,6 +41,7 @@ import com.solarized.firedown.manager.ServiceActions;
 import com.solarized.firedown.phone.VaultActivity;
 import com.solarized.firedown.ui.adapters.DownloadItemAdapter;
 import com.solarized.firedown.ui.adapters.IncognitoInProgressHeaderAdapter;
+import com.solarized.firedown.ui.adapters.RestoreBannerAdapter;
 import com.solarized.firedown.ui.OnItemClickListener;
 import com.solarized.firedown.ui.diffs.DownloadDiffCallback;
 import com.solarized.firedown.IntentActions;
@@ -81,6 +82,16 @@ public class DownloadFragment extends BaseDownloadFragment implements
      *  {@code TaskViewModel#getSafeCount} LiveData. */
     private IncognitoInProgressHeaderAdapter mIncognitoHeaderAdapter;
 
+    /** "Reinstalled? Restore your previous downloads" header — armed only by
+     *  DownloadBackupMirror's detected-reinstall path, retired permanently on
+     *  dismiss or any completed restore. Yields to the incognito header so at
+     *  most one informational banner shows at a time. */
+    private RestoreBannerAdapter mRestoreBannerAdapter;
+
+    /** Latest TaskViewModel#getSafeCount value — the incognito header's
+     *  visibility input, which the restore banner yields to. */
+    private int mSafeCount = 0;
+
     /** Set when a new query has been dispatched; consumed on the next successful refresh. */
     private boolean mPendingScrollToTop = false;
 
@@ -117,18 +128,26 @@ public class DownloadFragment extends BaseDownloadFragment implements
 
     @Override
     protected int getLeadingHeaderCount() {
-        // ConcatAdapter prepends the incognito-in-progress header at
-        // adapter position 0 when there are vault downloads in flight.
-        // Report it to the base's SpanSizeLookup so the row spans the
-        // full grid width and the date-divider lookup against the
-        // paged adapter is shifted by 1.
-        return mIncognitoHeaderAdapter != null ? mIncognitoHeaderAdapter.getItemCount() : 0;
+        // ConcatAdapter prepends the informational headers (incognito
+        // in-flight hint, restore-after-reinstall banner) at the top of the
+        // list. Report their combined count to the base's SpanSizeLookup so
+        // the rows span the full grid width and the date-divider lookup
+        // against the paged adapter is shifted accordingly.
+        int headers = 0;
+        if (mIncognitoHeaderAdapter != null) {
+            headers += mIncognitoHeaderAdapter.getItemCount();
+        }
+        if (mRestoreBannerAdapter != null) {
+            headers += mRestoreBannerAdapter.getItemCount();
+        }
+        return headers;
     }
 
     @Override
     public void onDestroyView() {
         mAdapter = null;
         mIncognitoHeaderAdapter = null;
+        mRestoreBannerAdapter = null;
         mGridLayoutManager = null;
         mBottomProgressView = null;
         mChipGroup = null;
@@ -154,13 +173,26 @@ public class DownloadFragment extends BaseDownloadFragment implements
         mAdapter = new DownloadItemAdapter(getContext(), new DownloadDiffCallback(), this, mEnableGrid);
         mIncognitoHeaderAdapter = new IncognitoInProgressHeaderAdapter(() ->
                 startActivity(new Intent(requireContext(), VaultActivity.class)));
-        // ConcatAdapter puts the incognito-in-progress hint at adapter
-        // position 0 so it scrolls with the list. The header adapter
-        // hides itself (getItemCount == 0) when there are no vault
-        // downloads, so positions don't shift for the paginated list
-        // when the count goes back to zero.
+        mRestoreBannerAdapter = new RestoreBannerAdapter(new RestoreBannerAdapter.OnBannerListener() {
+            @Override
+            public void onRestoreBannerClicked() {
+                showRestoreDownloadsDialog();
+            }
+
+            @Override
+            public void onRestoreBannerDismissed() {
+                retireRestoreBanner();
+            }
+        });
+        // ConcatAdapter puts the informational headers at the top so they
+        // scroll with the list; each adapter hides itself (getItemCount == 0)
+        // so positions don't shift for the paginated list when they retire.
+        // Order = priority: the incognito hint (live state) above the restore
+        // banner — and the fragment additionally keeps at most ONE visible at
+        // a time (updateRestoreBannerVisibility yields to the incognito one).
         mRecyclerView.setAdapter(new androidx.recyclerview.widget.ConcatAdapter(
-                mIncognitoHeaderAdapter, mAdapter));
+                mIncognitoHeaderAdapter, mRestoreBannerAdapter, mAdapter));
+        updateRestoreBannerVisibility();
         mRecyclerView.setVerticalScrollBarEnabled(true);
 
         configureRecyclerView(mAdapter, mEnableGrid);
@@ -245,7 +277,11 @@ public class DownloadFragment extends BaseDownloadFragment implements
         // mixed case where they end up here looking for a vault file.
         mTaskViewModel.getSafeCount().observe(getViewLifecycleOwner(), count -> {
             if (mIncognitoHeaderAdapter == null) return;
-            mIncognitoHeaderAdapter.setCount(count != null ? count : 0);
+            mSafeCount = count != null ? count : 0;
+            mIncognitoHeaderAdapter.setCount(mSafeCount);
+            // The restore banner yields to the incognito header — re-evaluate
+            // whenever that header's visibility input changes.
+            updateRestoreBannerVisibility();
         });
 
         mTaskViewModel.getObservableEvent().observe(getViewLifecycleOwner(), event -> {
@@ -392,6 +428,11 @@ public class DownloadFragment extends BaseDownloadFragment implements
                 if (!isAdded() || mActivity == null) {
                     return;
                 }
+                // A completed restore attempt — whatever the outcome — retires
+                // the reinstall banner: the user has now been through the flow,
+                // re-prompting adds nothing ("no backup" stays reachable from
+                // Settings).
+                retireRestoreBanner();
                 if (result >= 0) {
                     makeSnackbar(mActivity.getSnackAnchorView(),
                             getString(R.string.restore_downloads_done, result), false).show();
@@ -402,6 +443,26 @@ public class DownloadFragment extends BaseDownloadFragment implements
                 }
             });
         });
+    }
+
+    /** Show the detected-reinstall banner iff it's armed (DownloadBackupMirror)
+     *  AND the incognito in-flight header isn't occupying the banner slot —
+     *  at most one informational banner at a time. */
+    private void updateRestoreBannerVisibility() {
+        if (mRestoreBannerAdapter == null) {
+            return;
+        }
+        boolean show = mSafeCount == 0
+                && DownloadBackupMirror.isRestoreBannerPending(requireContext());
+        mRestoreBannerAdapter.setVisible(show);
+    }
+
+    /** Permanently retire the reinstall banner (dismissed, or a restore ran). */
+    private void retireRestoreBanner() {
+        DownloadBackupMirror.clearRestoreBanner(requireContext());
+        if (mRestoreBannerAdapter != null) {
+            mRestoreBannerAdapter.setVisible(false);
+        }
     }
 
     private int getEmptyIcon(int chipId) {

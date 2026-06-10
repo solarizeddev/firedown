@@ -145,6 +145,8 @@
     <string name="empty_learn_more">詳細</string>
     <string name="restore_downloads_button">以前のダウンロードを復元</string>
     <string name="restore_downloads_settings_summary">アプリ再インストール後にダウンロード一覧を復元します</string>
+    <string name="restore_banner_title">Firedown を再インストールしましたか？</string>
+    <string name="restore_banner_subtitle">以前のダウンロードを復元できる可能性があります — タップして復元</string>
     <string name="restore_downloads_message">Firedown を再インストールした場合、ダウンロードしたファイルは Download/Firedown フォルダーに残っている可能性があります。そのフォルダーを選択すると、Firedown がダウンロード一覧を復元します。</string>
     <string name="restore_downloads_choose">フォルダーを選択</string>
     <string name="restore_downloads_done">復元したダウンロード: %1$d</string>
