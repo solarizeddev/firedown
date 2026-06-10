@@ -450,10 +450,15 @@ public final class LanShareServer {
             sendHtml(out, 404, page("notfound.html"));
             return;
         }
+        // no-store, deliberately: a receiver's browser that cached an older
+        // stylesheet for an hour kept rendering a stale design under fresh
+        // HTML (observed on-device). These assets are tiny and the transfer
+        // is LAN-local, so freshness wins over caching; the templates also
+        // version the URLs (?v=N) to bust anything already cached.
         String head = "HTTP/1.1 200 OK\r\n"
                 + "Content-Type: " + contentType + "\r\n"
                 + "Content-Length: " + body.length + "\r\n"
-                + "Cache-Control: max-age=3600\r\n"
+                + "Cache-Control: no-store\r\n"
                 + "Connection: close\r\n\r\n";
         out.write(head.getBytes(StandardCharsets.UTF_8));
         out.write(body);
@@ -526,20 +531,41 @@ public final class LanShareServer {
                 .replace("{{FILES}}", rows.toString());
     }
 
+    // Inline SVGs of the app's OWN drawables (ic_movie_24 / ic_headphones_24 /
+    // ic_baseline_image_24 / ic_draft_24 pathData verbatim), white on the
+    // coral tile. Emoji were device-font dependent and rendered badly
+    // (observed on-device: Samsung's clapperboard on the gradient).
+    private static final String SVG_OPEN_24 = "<svg viewBox=\"0 0 24 24\" fill=\"#fff\"><path d=\"";
+    private static final String SVG_OPEN_960 = "<svg viewBox=\"0 0 960 960\" fill=\"#fff\"><path d=\"";
+    private static final String SVG_CLOSE = "\"/></svg>";
+
+    private static final String ICON_VIDEO = SVG_OPEN_24
+            + "M4,4 L6,8H9L7,4H9L11,8H14L12,4H14L16,8H19L17,4H20Q20.825,4 21.413,4.588Q22,5.175 22,6V18Q22,18.825 21.413,19.413Q20.825,20 20,20H4Q3.175,20 2.588,19.413Q2,18.825 2,18V6Q2,5.175 2.588,4.588Q3.175,4 4,4ZM4,10V18Q4,18 4,18Q4,18 4,18H20Q20,18 20,18Q20,18 20,18V10Z"
+            + SVG_CLOSE;
+    private static final String ICON_AUDIO = SVG_OPEN_960
+            + "M360,840L200,840Q167,840 143.5,816.5Q120,793 120,760L120,480Q120,405 148.5,339.5Q177,274 225.5,225.5Q274,177 339.5,148.5Q405,120 480,120Q555,120 620.5,148.5Q686,177 734.5,225.5Q783,274 811.5,339.5Q840,405 840,480L840,760Q840,793 816.5,816.5Q793,840 760,840L600,840L600,520L760,520L760,480Q760,363 678.5,281.5Q597,200 480,200Q363,200 281.5,281.5Q200,363 200,480L200,520L360,520L360,840Z"
+            + SVG_CLOSE;
+    private static final String ICON_IMAGE = SVG_OPEN_24
+            + "M21,19V5c0,-1.1 -0.9,-2 -2,-2H5c-1.1,0 -2,0.9 -2,2v14c0,1.1 0.9,2 2,2h14c1.1,0 2,-0.9 2,-2zM8.5,13.5l2.5,3.01L14.5,12l4.5,6H5l3.5,-4.5z"
+            + SVG_CLOSE;
+    private static final String ICON_FILE = SVG_OPEN_24
+            + "M6,22Q5.175,22 4.588,21.413Q4,20.825 4,20V4Q4,3.175 4.588,2.587Q5.175,2 6,2H14L20,8V20Q20,20.825 19.413,21.413Q18.825,22 18,22ZM13,9V4H6Q6,4 6,4Q6,4 6,4V20Q6,20 6,20Q6,20 6,20H18Q18,20 18,20Q18,20 18,20V9Z"
+            + SVG_CLOSE;
+
     private static String iconFor(String mime) {
         if (mime == null) {
-            return "&#128196;";
+            return ICON_FILE;
         }
         if (mime.startsWith("video/")) {
-            return "&#127916;";
+            return ICON_VIDEO;
         }
         if (mime.startsWith("audio/")) {
-            return "&#127911;";
+            return ICON_AUDIO;
         }
         if (mime.startsWith("image/")) {
-            return "&#128247;";
+            return ICON_IMAGE;
         }
-        return "&#128196;";
+        return ICON_FILE;
     }
 
     /** Friendly type word for display (the precise mime drives Content-Type

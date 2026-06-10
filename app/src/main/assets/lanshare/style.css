@@ -18,20 +18,20 @@ body{background:#f7f3ef;color:#1e1c2e;font-family:'IBM Plex Sans',system-ui,sans
 .hero{width:100%;position:relative;flex:none;
   background:radial-gradient(ellipse at 72% 28%,rgba(255,255,255,.14),transparent 60%),
   linear-gradient(150deg,#d44e86 0%,#f06560 55%,#f5a97a 100%);
-  display:flex;align-items:center;justify-content:center;padding:54px 20px 72px}
-.logo{height:46px;width:auto;filter:brightness(0) invert(1)}
+  display:flex;align-items:center;justify-content:center;padding:40px 20px 58px}
+.logo{height:40px;width:auto;filter:brightness(0) invert(1)}
 
 /* ── content card: overlaps the hero, fills the rest of the phone ── */
 .card{width:100%;max-width:560px;flex:1;text-align:center;background:#fff;
-  border-radius:28px 28px 0 0;margin-top:-28px;padding:36px 24px 44px;
+  border-radius:28px 28px 0 0;margin-top:-26px;padding:28px 22px 34px;
   box-shadow:0 -10px 40px rgba(30,28,46,.10);
   display:flex;flex-direction:column}
 .card > :last-child{margin-top:auto}
 
 .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:.72rem;font-weight:600;
   letter-spacing:.18em;text-transform:uppercase;color:#d44e86;margin-bottom:12px}
-h1{font-weight:600;font-size:26px;margin:4px 0 10px;color:#1e1c2e;letter-spacing:-.02em}
-p{color:#4a475e;font-size:15px;line-height:1.6;margin:0 0 28px}
+h1{font-weight:600;font-size:24px;margin:2px 0 8px;color:#1e1c2e;letter-spacing:-.02em}
+p{color:#4a475e;font-size:14.5px;line-height:1.55;margin:0 0 22px}
 
 /* ── PIN ── */
 input[type=text]{width:210px;text-align:center;letter-spacing:14px;font-size:32px;
@@ -60,12 +60,12 @@ button:active{transform:translateY(1px)}
 .dl:active{transform:translateY(1px)}
 
 /* ── get-the-app: a real pill, clearly visible ── */
-.get{display:block;max-width:max-content;margin:30px auto 0;padding:13px 26px;
+.get{display:block;max-width:max-content;margin:22px auto 0;padding:12px 24px;
   border:1.5px solid #f06560;border-radius:26px;color:#d44e86;font-weight:600;
   font-size:14px;text-decoration:none;background:#fff}
 .get span{color:#8a8898;font-weight:400}
 
-.foot{color:#8a8898;font-size:12px;margin-top:30px;line-height:1.7}
+.foot{color:#8a8898;font-size:12px;padding-top:24px;line-height:1.7}
 .lock{color:#d44e86}
 .err{color:#c0436b;font-size:13.5px;margin:-14px 0 20px;font-weight:600}
 
@@ -97,3 +97,6 @@ button:active{transform:translateY(1px)}
     .card{box-shadow:0 16px 60px rgba(0,0,0,.55)}
   }
 }
+
+/* drawable-based file icons (inline SVG, white on the coral tile) */
+.ic svg{width:26px;height:26px;display:block}
