@@ -364,6 +364,7 @@
     <string name="security_stat_blocked_scope">blokováno na této stránce</string>
     <string name="tabs_incognito_empty">Žádné soukromé karty</string>
     <string name="compress">Komprimovat</string>
+    <string name="media_tools">Nástroje pro média</string>
     <string name="download_saving_compress">Probíhá komprese, čekejte prosím…</string>
     <string name="task_compress_finished">Archiv vytvořen</string>
     <string name="task_compress_failed">Nepodařilo se vytvořit archiv</string>

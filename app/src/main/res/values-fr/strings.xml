@@ -542,6 +542,7 @@
     <string name="security_tracking_protection">Protection contre le suivi</string>
     <string name="security_stat_blocked_scope">bloqué sur cette page</string>
     <string name="compress">Compresser</string>
+    <string name="media_tools">Outils multimédias</string>
     <string name="download_saving_compress">Compression en cours, veuillez patienter…</string>
     <string name="task_compress_finished">Archive créée</string>
     <string name="task_compress_failed">Impossible de créer l\'archive</string>

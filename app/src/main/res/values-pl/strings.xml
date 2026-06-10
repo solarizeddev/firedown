@@ -408,6 +408,7 @@
     <string name="security_stat_blocked_scope">zablokowano na tej stronie</string>
     <string name="tabs_incognito_empty">Brak prywatnych kart</string>
     <string name="compress">Kompresuj</string>
+    <string name="media_tools">Narzędzia multimedialne</string>
     <string name="download_saving_compress">Kompresowanie, proszę czekać…</string>
     <string name="task_compress_finished">Utworzono archiwum</string>
     <string name="task_compress_failed">Nie udało się utworzyć archiwum</string>

@@ -411,6 +411,7 @@
     <string name="trackers_info_stat_blocked">Bloqueados</string>
     <string name="trackers_info_stat_saved">Dados economizados</string>
     <string name="compress">Comprimir</string>
+    <string name="media_tools">Ferramentas multimédia</string>
     <string name="download_saving_compress">A comprimir, aguarde…</string>
     <string name="task_compress_finished">Arquivo criado</string>
     <string name="task_compress_failed">Não foi possível criar o arquivo</string>

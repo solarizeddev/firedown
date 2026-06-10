@@ -542,6 +542,7 @@
     <string name="security_tracking_protection">Protección de seguimiento</string>
     <string name="security_stat_blocked_scope">bloqueado en esta página</string>
     <string name="compress">Comprimir</string>
+    <string name="media_tools">Herramientas multimedia</string>
     <string name="download_saving_compress">Comprimiendo, espera…</string>
     <string name="task_compress_finished">Archivo creado</string>
     <string name="task_compress_failed">No se pudo crear el archivo</string>
