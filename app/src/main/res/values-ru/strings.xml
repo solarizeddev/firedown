@@ -438,4 +438,12 @@
     <string name="capture_help_menu">Справка</string>
     <string name="capture_help_banner_title">Видео нет в списке?</string>
     <string name="capture_help_banner">Некоторые встроенные медиа нужно сначала воспроизвести. Нажмите, чтобы узнать как.</string>
+    <string name="lan_send">Отправить</string>
+    <string name="lan_share_title">Отправить в браузер</string>
+    <string name="lan_share_lead">На другом устройстве откройте этот адрес в любом браузере в той же сети Wi-Fi</string>
+    <string name="lan_share_qr_hint">При сканировании кода страница откроется с уже введённым PIN</string>
+    <string name="lan_share_pin">PIN</string>
+    <string name="lan_share_stop">Остановить общий доступ</string>
+    <string name="lan_share_footer">Общий доступ завершится, когда вы покинете этот экран. Ничего не покидает вашу сеть.</string>
+    <string name="lan_share_no_network">Подключитесь к сети Wi-Fi, чтобы делиться файлами</string>
 </resources>

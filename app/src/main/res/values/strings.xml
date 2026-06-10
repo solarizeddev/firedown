@@ -679,4 +679,12 @@
          zero (fresh install, no browsing). Avoids the cosmetic
          '0 · ~0 saved' that would otherwise appear. -->
     <string name="home_trackers_subtitle_idle">Protection active</string>
+    <string name="lan_send">Send</string>
+    <string name="lan_share_title">Send to browser</string>
+    <string name="lan_share_lead">On the other device, open this address in any browser on the same Wi-Fi</string>
+    <string name="lan_share_qr_hint">Scanning the code opens the page with the PIN already filled in</string>
+    <string name="lan_share_pin">PIN</string>
+    <string name="lan_share_stop">Stop sharing</string>
+    <string name="lan_share_footer">Sharing ends when you leave this screen. Nothing leaves your network.</string>
+    <string name="lan_share_no_network">Connect to a Wi-Fi network to share</string>
 </resources>

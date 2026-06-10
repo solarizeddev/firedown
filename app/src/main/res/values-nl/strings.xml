@@ -438,4 +438,12 @@
     <string name="capture_help_menu">Help</string>
     <string name="capture_help_banner_title">Video niet in de lijst?</string>
     <string name="capture_help_banner">Sommige ingesloten media moeten eerst worden afgespeeld. Tik voor meer info.</string>
+    <string name="lan_send">Versturen</string>
+    <string name="lan_share_title">Naar browser sturen</string>
+    <string name="lan_share_lead">Open dit adres op het andere apparaat in een willekeurige browser op dezelfde wifi</string>
+    <string name="lan_share_qr_hint">Door de code te scannen opent de pagina met de pin al ingevuld</string>
+    <string name="lan_share_pin">PIN</string>
+    <string name="lan_share_stop">Stoppen met delen</string>
+    <string name="lan_share_footer">Delen stopt zodra je dit scherm verlaat. Niets verlaat je netwerk.</string>
+    <string name="lan_share_no_network">Verbind met een wifi-netwerk om te delen</string>
 </resources>

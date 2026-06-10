@@ -567,4 +567,12 @@
     <string name="capture_help_menu">ヘルプ</string>
     <string name="capture_help_banner_title">動画が見つかりませんか？</string>
     <string name="capture_help_banner">一部の埋め込みメディアは先に再生する必要があります。タップして詳細をご覧ください。</string>
+    <string name="lan_send">送信</string>
+    <string name="lan_share_title">ブラウザーに送信</string>
+    <string name="lan_share_lead">同じ Wi-Fi 上の別の端末で、任意のブラウザーからこのアドレスを開いてください</string>
+    <string name="lan_share_qr_hint">コードをスキャンすると PIN 入力済みのページが開きます</string>
+    <string name="lan_share_pin">PIN</string>
+    <string name="lan_share_stop">共有を停止</string>
+    <string name="lan_share_footer">この画面を離れると共有は終了します。データがネットワークの外に出ることはありません。</string>
+    <string name="lan_share_no_network">共有するには Wi-Fi ネットワークに接続してください</string>
 </resources>

@@ -41,6 +41,12 @@
             app:icon="@drawable/ic_edit_24"
             android:text="@string/rename" />
 
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/qa_send"
+            style="@style/Firedown.Widget.PopupQuickRowButton"
+            app:icon="@drawable/ic_send_lan_24"
+            android:text="@string/lan_send" />
+
     </LinearLayout>
 
     <androidx.recyclerview.widget.RecyclerView

@@ -435,4 +435,12 @@
     <string name="capture_help_menu">Pomoc</string>
     <string name="capture_help_banner_title">Nie ma filmu na liście?</string>
     <string name="capture_help_banner">Niektóre osadzone multimedia trzeba najpierw odtworzyć. Dotknij, aby dowiedzieć się jak.</string>
+    <string name="lan_send">Wyślij</string>
+    <string name="lan_share_title">Wyślij do przeglądarki</string>
+    <string name="lan_share_lead">Na drugim urządzeniu otwórz ten adres w dowolnej przeglądarce w tej samej sieci Wi-Fi</string>
+    <string name="lan_share_qr_hint">Zeskanowanie kodu otwiera stronę z już wpisanym PIN-em</string>
+    <string name="lan_share_pin">PIN</string>
+    <string name="lan_share_stop">Zatrzymaj udostępnianie</string>
+    <string name="lan_share_footer">Udostępnianie kończy się po opuszczeniu tego ekranu. Nic nie opuszcza Twojej sieci.</string>
+    <string name="lan_share_no_network">Połącz się z siecią Wi-Fi, aby udostępniać</string>
 </resources>

@@ -939,7 +939,34 @@ restore-aware — keep these three properties if you touch it:**
   irreversible action, and the record of what was downloaded is user data;
   removal is the user's call on the visible error entry.
 
-## URL-bar clipboard chip & system-service binder calls
+## "Send to browser" — LAN share (`lanshare/`)
+
+The Downloads options sheet's quick-action row has a **Send** button
+(finished, non-safe entries only — **the vault is never sendable**, same
+contract as the backup mirror). It opens `LanShareDialogFragment`, which
+runs `LanShareServer` — a dependency-free `ServerSocket` HTTP server whose
+**lifetime is exactly the sheet's lifetime** (started in onCreateView,
+stopped in onDismiss/onDestroyView): no background service, no discovery
+announcement, nothing listens when the sheet isn't open. Any browser on the
+LAN (PC, phone, TV — and another Firedown, which downloads it through the
+normal pipeline since Firedown *is* a browser) opens `http://<ip>:53317`
+(ephemeral fallback if the port's taken) and gets Firedown-styled pages
+(`LanSharePages`, English-only on purpose — the receiver's locale is
+unknown).
+
+**Access control:** the bare URL only ever yields the PIN page; the 4-digit
+PIN (shown big on the sender's sheet) sets a random `HttpOnly` session
+cookie that gates the file list and bytes; **3 wrong attempts lock the
+session permanently** (un-brute-forceable). The QR encodes `?pin=` so a
+scan authenticates in one hop; the typed URL stays short. **Known ceiling,
+accepted for v1:** plain HTTP — the PIN protects *access*, not transport
+secrecy; a passive sniffer on hostile Wi-Fi can capture the bytes. TLS on a
+LAN IP means self-signed-cert interstitials that kill the zero-install
+flow; the upgrade path is the LocalSend protocol (pinned HTTPS + ecosystem
+of native clients), deliberately deferred until there's demand. File names
+are HTML-escaped in the served pages (user/site-controlled); the
+`Content-Disposition` carries an ASCII fallback + RFC 8187 UTF-8 name. QR
+via the existing zxing-core dependency.
 
 Two hardenings in `AutoCompleteView.showClipboard()` (the clipboard suggestion
 chip shown when the address bar gains focus) — both from one on-device episode:

@@ -353,4 +353,12 @@
     <string name="capture_help_banner_title">Відео немає у списку?</string>
     <string name="capture_help_banner">Деякі вбудовані медіа потрібно спочатку відтворити. Торкніться, щоб дізнатися як.</string>
     <string name="media_tools">Медіаінструменти</string>
+    <string name="lan_send">Надіслати</string>
+    <string name="lan_share_title">Надіслати в браузер</string>
+    <string name="lan_share_lead">На іншому пристрої відкрийте цю адресу в будь-якому браузері в тій самій мережі Wi-Fi</string>
+    <string name="lan_share_qr_hint">Сканування коду відкриє сторінку з уже введеним PIN</string>
+    <string name="lan_share_pin">PIN</string>
+    <string name="lan_share_stop">Зупинити надсилання</string>
+    <string name="lan_share_footer">Надсилання завершиться, щойно ви залишите цей екран. Ніщо не залишає вашу мережу.</string>
+    <string name="lan_share_no_network">Підключіться до мережі Wi-Fi, щоб ділитися</string>
 </resources>

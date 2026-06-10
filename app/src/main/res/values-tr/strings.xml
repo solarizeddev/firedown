@@ -437,4 +437,12 @@
     <string name="capture_help_menu">Yardım</string>
     <string name="capture_help_banner_title">Video listede yok mu?</string>
     <string name="capture_help_banner">Bazı gömülü medyaların önce oynatılması gerekir. Nasıl olduğunu öğrenmek için dokunun.</string>
+    <string name="lan_send">Gönder</string>
+    <string name="lan_share_title">Tarayıcıya gönder</string>
+    <string name="lan_share_lead">Diğer cihazda, aynı Wi-Fi üzerindeki herhangi bir tarayıcıda bu adresi açın</string>
+    <string name="lan_share_qr_hint">Kodu taramak sayfayı PIN zaten girilmiş olarak açar</string>
+    <string name="lan_share_pin">PIN</string>
+    <string name="lan_share_stop">Paylaşımı durdur</string>
+    <string name="lan_share_footer">Bu ekrandan ayrıldığınızda paylaşım sona erer. Hiçbir şey ağınızın dışına çıkmaz.</string>
+    <string name="lan_share_no_network">Paylaşmak için bir Wi-Fi ağına bağlanın</string>
 </resources>

@@ -567,4 +567,12 @@
     <string name="capture_help_menu">帮助</string>
     <string name="capture_help_banner_title">找不到视频？</string>
     <string name="capture_help_banner">部分嵌入的媒体需先播放才能识别。点按了解详情。</string>
+    <string name="lan_send">发送</string>
+    <string name="lan_share_title">发送到浏览器</string>
+    <string name="lan_share_lead">在另一台设备上，用同一 Wi-Fi 下的任意浏览器打开此地址</string>
+    <string name="lan_share_qr_hint">扫描二维码即可打开已自动填入 PIN 的页面</string>
+    <string name="lan_share_pin">PIN</string>
+    <string name="lan_share_stop">停止共享</string>
+    <string name="lan_share_footer">离开此屏幕即停止共享。任何数据都不会离开你的网络。</string>
+    <string name="lan_share_no_network">请连接 Wi-Fi 网络后再共享</string>
 </resources>

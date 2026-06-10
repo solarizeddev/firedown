@@ -569,4 +569,12 @@
     <string name="capture_help_menu">Ayuda</string>
     <string name="capture_help_banner_title">¿No aparece el vídeo?</string>
     <string name="capture_help_banner">Algunos medios incrustados deben reproducirse primero. Toca para saber cómo.</string>
+    <string name="lan_send">Enviar</string>
+    <string name="lan_share_title">Enviar al navegador</string>
+    <string name="lan_share_lead">En el otro dispositivo, abre esta dirección en cualquier navegador en la misma Wi-Fi</string>
+    <string name="lan_share_qr_hint">Al escanear el código se abre la página con el PIN ya rellenado</string>
+    <string name="lan_share_pin">PIN</string>
+    <string name="lan_share_stop">Dejar de compartir</string>
+    <string name="lan_share_footer">El uso compartido termina al salir de esta pantalla. Nada sale de tu red.</string>
+    <string name="lan_share_no_network">Conéctate a una red Wi-Fi para compartir</string>
 </resources>

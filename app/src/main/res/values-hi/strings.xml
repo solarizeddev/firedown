@@ -337,4 +337,12 @@
     <string name="capture_help_menu">मदद</string>
     <string name="capture_help_banner_title">वीडियो सूची में नहीं है?</string>
     <string name="capture_help_banner">कुछ एम्बेड किए गए मीडिया को पहले चलाना ज़रूरी है. जानने के लिए टैप करें.</string>
+    <string name="lan_send">भेजें</string>
+    <string name="lan_share_title">ब्राउज़र पर भेजें</string>
+    <string name="lan_share_lead">दूसरे डिवाइस पर, उसी Wi-Fi पर किसी भी ब्राउज़र में यह पता खोलें</string>
+    <string name="lan_share_qr_hint">कोड स्कैन करने पर पेज PIN पहले से भरा हुआ खुलता है</string>
+    <string name="lan_share_pin">PIN</string>
+    <string name="lan_share_stop">साझा करना बंद करें</string>
+    <string name="lan_share_footer">इस स्क्रीन से बाहर जाते ही साझा करना बंद हो जाता है। कुछ भी आपके नेटवर्क से बाहर नहीं जाता।</string>
+    <string name="lan_share_no_network">साझा करने के लिए Wi-Fi नेटवर्क से कनेक्ट करें</string>
 </resources>

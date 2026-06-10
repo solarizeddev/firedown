@@ -301,4 +301,12 @@
 
 
     <string name="media_tools">Meediatööriistad</string>
+    <string name="lan_send">Saada</string>
+    <string name="lan_share_title">Saada brauserisse</string>
+    <string name="lan_share_lead">Ava teises seadmes see aadress mis tahes brauseris samas Wi-Fi võrgus</string>
+    <string name="lan_share_qr_hint">Koodi skannimine avab lehe, kus PIN on juba sisestatud</string>
+    <string name="lan_share_pin">PIN</string>
+    <string name="lan_share_stop">Lõpeta jagamine</string>
+    <string name="lan_share_footer">Jagamine lõpeb, kui sellelt ekraanilt lahkud. Miski ei lahku sinu võrgust.</string>
+    <string name="lan_share_no_network">Jagamiseks ühendu Wi-Fi võrguga</string>
 </resources>

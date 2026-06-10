@@ -270,6 +270,14 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment implements 
             mDownloadsViewModel.updateDownloadThumb(entity);
         } else if (iconId == R.drawable.ic_share_24) {
             shareItem(entity);
+        } else if (iconId == R.drawable.ic_send_lan_24) {
+            // "Send to browser" — LAN share. Shown directly (not a nav
+            // destination): its lifetime IS the share-server's lifetime, and
+            // a plain DialogFragment keeps that 1:1 without nav-graph state.
+            com.solarized.firedown.phone.dialogs.LanShareDialogFragment lanShare =
+                    new com.solarized.firedown.phone.dialogs.LanShareDialogFragment();
+            lanShare.setArguments(bundle);
+            lanShare.show(getParentFragmentManager(), "lan_share");
         } else if (iconId == R.drawable.ic_edit_24) {
             NavigationUtils.navigateSafe(mNavController, R.id.dialog_rename, bundle);
         } else if (iconId == R.id.action_delete || iconId == R.drawable.ic_baseline_delete_24) {
