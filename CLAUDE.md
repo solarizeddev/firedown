@@ -807,6 +807,16 @@ flag. No unconditional logging ships.**
   uppercase category (e.g. `RUMBLE`).
 - **Java:** wrap log calls in `if (BuildConfig.DEBUG) { … }` (or an equivalent
   guarded helper). Do not leave bare `Log.d/​i/​w/​e` on hot paths in release.
+- **Native (`app/src/main/cpp/`):** the `LOGI/LOGE/LOGW(level, …)` macros expand
+  to `if (level <= LOG_LEVEL) { __android_log_print(…); }`, so the variadic args
+  are evaluated *only* when the level passes — an inline `LOGE(1, "…%s", av_err2str(ret))`
+  costs nothing at `LOG_LEVEL 0`. But a **dedicated logging helper FUNCTION** does
+  NOT get that for free: calling it always marshals its args and runs its body
+  (an internal `if (LOG_LEVEL < 1) return;` still paid the call + arg eval every
+  time). On a per-tick/per-packet hot path, gate the **call site and the
+  definition** with `#if LOG_LEVEL >= N` (as `downloader_log_progress` and the
+  `av_dump_format` calls do) so it vanishes entirely at the default level — don't
+  rely on a runtime early-return inside an unconditionally-called helper.
 - Rationale: this is a privacy/no-telemetry app — logs can contain URLs, titles,
   cookies-adjacent data. Release builds must be silent.
 - **Never log user-controlled text whole — truncate it.** The URL bar can hold

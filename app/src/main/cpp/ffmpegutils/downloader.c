@@ -931,10 +931,13 @@ static int64_t downloader_muxed_position(struct Downloader *downloader) {
     return pos;
 }
 
-/* Per-tick progress diagnostics (gated at level 1; silent at the default
- * LOG_LEVEL 0). "trigger" is the stream of the packet that fired this tick; the
- * per-stream lines show each accumulator so the A/V divergence — and that the
- * TIME value tracks the lagging track — stays visible. */
+/* Per-tick progress diagnostics (compiled in only at LOG_LEVEL >= 1; the
+ * whole function and its call site vanish at the default LOG_LEVEL 0, so the
+ * mux hot path pays nothing — not even the call + argument marshalling — for
+ * logging that isn't built). "trigger" is the stream of the packet that fired
+ * this tick; the per-stream lines show each accumulator so the A/V divergence
+ * — and that the TIME value tracks the lagging track — stays visible. */
+#if LOG_LEVEL >= 1
 static void downloader_log_progress(const struct Downloader *downloader,
                                      enum ProgressMode progress_mode,
                                      enum AVMediaType trigger_type,
@@ -944,10 +947,6 @@ static void downloader_log_progress(const struct Downloader *downloader,
     const char *trigger_tag;
     double pct;
     int s;
-
-    if (LOG_LEVEL < 1) {
-        return;
-    }
 
     mode_tag = progress_mode == PROGRESS_TIME ? "TIME"
              : progress_mode == PROGRESS_SIZE ? "SIZE" : "NONE";
@@ -976,6 +975,7 @@ static void downloader_log_progress(const struct Downloader *downloader,
              s, stream_tag, downloader->current_recording_time[s]);
     }
 }
+#endif
 
 
 /* =========================================================================
@@ -1236,8 +1236,10 @@ void *downloader_mux(void *data) {
                     break;
             }
 
+#if LOG_LEVEL >= 1
             downloader_log_progress(downloader, progress_mode, codec_type,
                                     progress_value, progress_total);
+#endif
 
             (*env)->CallVoidMethod(env, downloader->thiz,
                                    downloader->downloader_on_progress_update_method,
