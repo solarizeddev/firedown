@@ -51,11 +51,15 @@ public class MediaListenerWorker extends Worker {
         // on 13+ files owned by the pre-reinstall install stay invisible to
         // the File API entirely. Marking on an untrustworthy negative would
         // wreck the whole restored list on the first Downloads open. So:
-        //  - only MARK a file missing when the negative is trustworthy (the
-        //    read permission is held; on 33+ no read permission exists in the
-        //    manifest and the app's own files are always readable — restored
-        //    foreign entries there can't be validated by path at all, which
-        //    the SAF restore flow owns);
+        //  - only MARK a file missing when the negative is trustworthy. The
+        //    trust is PER PATH: app-private paths (filesDir — the safe vault
+        //    lives there) are always readable, no permission involved, so a
+        //    missing vault file is always marked. Shared-storage paths are
+        //    trustworthy only while the read permission is held on <= 32 (on
+        //    33+ no read permission exists in the manifest and the app's own
+        //    files are always readable — restored foreign entries there
+        //    can't be validated by path at all, which the SAF restore flow
+        //    owns);
         //  - always HEAL: an entry this worker errored (FILE_NOT_FOUND) whose
         //    file is readable again (permission granted since) goes back to
         //    FINISHED. Only this worker's own error type is healed, so a
@@ -64,14 +68,15 @@ public class MediaListenerWorker extends Worker {
         // trustworthy enough for an irreversible action, and the record of
         // what was downloaded (origin, title) is user data in its own right —
         // removing it is the user's call, made on the visible error entry.
-        boolean canTrustMissing;
+        boolean sharedStorageTrustworthy;
         if (Build.VERSION.SDK_INT <= 32) {
-            canTrustMissing = getApplicationContext().checkSelfPermission(
+            sharedStorageTrustworthy = getApplicationContext().checkSelfPermission(
                     Manifest.permission.READ_EXTERNAL_STORAGE)
                     == PackageManager.PERMISSION_GRANTED;
         } else {
-            canTrustMissing = true;
+            sharedStorageTrustworthy = true;
         }
+        String privateRoot = getApplicationContext().getFilesDir().getAbsolutePath();
 
         try {
             // Get all records from the database
@@ -84,6 +89,12 @@ public class MediaListenerWorker extends Worker {
             for (DownloadEntity entity : entityList) {
                 String path = entity.getFilePath();
                 boolean onDisk = path != null && new File(path).exists();
+                // A null path is broken data, not a permission question — always
+                // markable. Otherwise trust is per path: app-private always,
+                // shared storage only while readable.
+                boolean canTrustMissing = path == null
+                        || path.startsWith(privateRoot)
+                        || sharedStorageTrustworthy;
 
                 if (entity.getFileStatus() == Download.FINISHED) {
                     if (!onDisk && canTrustMissing) {

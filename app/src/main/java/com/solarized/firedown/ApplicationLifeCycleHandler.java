@@ -12,6 +12,7 @@ import android.view.WindowManager;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.Observer;
+import androidx.work.ExistingWorkPolicy;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
 
@@ -189,8 +190,13 @@ public class ApplicationLifeCycleHandler implements Application.ActivityLifecycl
     }
 
     private void triggerMediaScan(Activity activity) {
+        // Unique + KEEP: this fires on EVERY DownloadsActivity resume, and
+        // rapid resume cycles (rotation, app-switch ping-pong, lock/unlock)
+        // would otherwise stack concurrent full-table sweeps, each statting
+        // every file. A sweep already queued or running absorbs the trigger.
         OneTimeWorkRequest request = new OneTimeWorkRequest.Builder(MediaListenerWorker.class).build();
-        WorkManager.getInstance(activity.getApplicationContext()).enqueue(request);
+        WorkManager.getInstance(activity.getApplicationContext())
+                .enqueueUniqueWork("media-existence-check", ExistingWorkPolicy.KEEP, request);
     }
 
     private void stopMediaPlaybackService() {
