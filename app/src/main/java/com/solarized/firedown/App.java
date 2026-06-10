@@ -24,6 +24,8 @@ import androidx.preference.PreferenceManager;
 import androidx.work.Configuration;
 
 import com.solarized.firedown.crash.CrashHandler;
+import com.solarized.firedown.data.DownloadBackupMirror;
+import com.solarized.firedown.data.DownloadDatabase;
 import com.solarized.firedown.data.di.Qualifiers;
 import com.solarized.firedown.data.repository.WebHistoryDataRepository;
 import com.solarized.firedown.phone.BrowserActivity;
@@ -65,6 +67,8 @@ public class App extends Application implements Configuration.Provider{
     @Inject
     @Qualifiers.DiskIO
     Executor mDiskExecutor;
+    @Inject
+    DownloadDatabase mDownloadDatabase;
 
     @Override
     public void onCreate() {
@@ -106,6 +110,12 @@ public class App extends Application implements Configuration.Provider{
         // because RunnableManager is a Service that died with the previous
         // process — no SABR download is in flight at this point.
         mDiskExecutor.execute(() -> StoragePaths.cleanupSabrTempDirs(mAppContext));
+        // One-shot import of the Auto Backup download mirror after a fresh
+        // install restored from backup (no-op on every other launch — see
+        // DownloadBackupMirror's three guards). Restores the PUBLIC download
+        // list only; the safe vault never enters a backup.
+        mDiskExecutor.execute(() ->
+                DownloadBackupMirror.restoreIfPending(mAppContext, mDownloadDatabase));
         registerActivityLifecycleCallbacks(lifeCycleHandler);
         registerComponentCallbacks(lifeCycleHandler);
         createMediaNotificationChannel(mAppContext);

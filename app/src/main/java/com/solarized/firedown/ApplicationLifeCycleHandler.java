@@ -15,6 +15,8 @@ import androidx.lifecycle.Observer;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
 
+import com.solarized.firedown.data.DownloadBackupMirror;
+import com.solarized.firedown.data.DownloadDatabase;
 import com.solarized.firedown.data.di.Qualifiers;
 import com.solarized.firedown.data.observer.GeckoStateObserver;
 import com.solarized.firedown.data.repository.GeckoStateDataRepository;
@@ -47,7 +49,7 @@ public class ApplicationLifeCycleHandler implements Application.ActivityLifecycl
     private final GeckoStateObserver mGeckoStateObserver;
     private final Executor mDiskExecutor;
     private final Context mContext;
-
+    private final DownloadDatabase mDownloadDatabase;
     // Observer for incognito tab count → notification
     private final Observer<Integer> mIncognitoCountObserver = this::onIncognitoCountChanged;
 
@@ -69,6 +71,7 @@ public class ApplicationLifeCycleHandler implements Application.ActivityLifecycl
             AppLock appLock,
             GeckoStateObserver geckoStateObserver,
             @Qualifiers.DiskIO Executor diskExecutor,
+            DownloadDatabase downloadDatabase,
             @ApplicationContext Context context){
         this.mGeckoStateRepository = geckoStateRepository;
         this.mIncognitoStateRepository = incognitoStateRepository;
@@ -77,6 +80,7 @@ public class ApplicationLifeCycleHandler implements Application.ActivityLifecycl
         this.mGeckoStateObserver = geckoStateObserver;
         this.mAppLock = appLock;
         this.mDiskExecutor = diskExecutor;
+        this.mDownloadDatabase = downloadDatabase;
 
         this.mContext = context;
     }
@@ -149,6 +153,12 @@ public class ApplicationLifeCycleHandler implements Application.ActivityLifecycl
 
             // Clear cache on background thread using injected executor
             mDiskExecutor.execute(() -> StoragePaths.clearCacheFolder(mContext));
+
+            // Refresh the Auto Backup mirror (non-safe, finished download rows
+            // only — see DownloadBackupMirror). Backgrounding is also the
+            // moment the system considers the app for an Auto Backup pass, so
+            // the mirror is at its freshest exactly when it matters.
+            mDiskExecutor.execute(() -> DownloadBackupMirror.writeMirror(mContext, mDownloadDatabase));
 
             mAppLock.setLockRequired(true);
             mAppLock.setLockTime();

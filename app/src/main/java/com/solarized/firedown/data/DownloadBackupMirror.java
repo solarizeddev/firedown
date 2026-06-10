@@ -1,0 +1,217 @@
+package com.solarized.firedown.data;
+
+import android.content.ContentValues;
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.text.TextUtils;
+import android.util.Log;
+
+import androidx.annotation.NonNull;
+import androidx.sqlite.db.SupportSQLiteDatabase;
+
+import com.solarized.firedown.BuildConfig;
+
+import java.io.File;
+import java.util.HashSet;
+import java.util.Set;
+
+/**
+ * Sanitized backup mirror of the download database for Android Auto Backup.
+ *
+ * <p><b>Why a mirror and not the database itself:</b> the {@code download-db}
+ * file holds BOTH the public Downloads rows and the safe-vault rows
+ * ({@code file_safe = 1} — names, origin URLs, file paths of vaulted items).
+ * Auto Backup is file-granular, so backing up the database file would ship
+ * vault metadata to the cloud. Instead, every time the app goes to the
+ * background we re-write {@code filesDir/backup/downloads-mirror.db}
+ * containing ONLY the finished, non-safe rows, and the backup rules
+ * ({@code backup_rules.xml} / {@code data_extraction.xml}) include exactly
+ * that one file — never the real database, never the vault.
+ *
+ * <p><b>Restore:</b> on a fresh install restored from backup, the mirror file
+ * reappears while the real database starts empty. {@link #restoreIfPending}
+ * copies the mirror rows back into the live table — once per install, guarded
+ * three ways: a marker in {@code backup_local.xml} (a prefs file EXCLUDED
+ * from backup, so it never travels with a restore), an empty-table check (an
+ * in-place update keeps its rows and must never re-import), and the mirror's
+ * existence. Rows are copied by column-name intersection so a schema a
+ * version ahead/behind degrades gracefully instead of failing the whole
+ * restore; {@code uid} is dropped (autoincrement re-assigns) and
+ * {@code file_safe} is forced to 0 defensively.
+ *
+ * <p>The restored entries point at the surviving public
+ * {@code Download/Firedown} files. Note the scoped-storage caveat: on
+ * Android 13+ a reinstalled app no longer OWNS those files, so playback may
+ * need a permission grant even though the entries are listed — the metadata
+ * (origin, title, duration) is preserved regardless, which the files alone
+ * could never give back.
+ */
+public final class DownloadBackupMirror {
+
+    private static final String TAG = DownloadBackupMirror.class.getSimpleName();
+
+    /** Keep in sync with backup_rules.xml and data_extraction.xml. */
+    private static final String MIRROR_DIR = "backup";
+    private static final String MIRROR_FILE = "downloads-mirror.db";
+
+    /** Prefs file EXCLUDED from backup — install-local state only. */
+    private static final String LOCAL_PREFS = "backup_local";
+    private static final String KEY_RESTORE_DONE = "mirror_restore_done";
+
+    private static final String TABLE = "download";
+
+    private DownloadBackupMirror() {
+        // Static utility.
+    }
+
+    private static File mirrorFile(@NonNull Context context) {
+        return new File(new File(context.getFilesDir(), MIRROR_DIR), MIRROR_FILE);
+    }
+
+    /**
+     * Re-write the mirror from the live database. Call on a background thread
+     * whenever the app goes to the background (the same trigger Auto Backup
+     * keys off). Cheap: one CREATE TABLE AS SELECT over the indexed
+     * {@code file_safe} partition.
+     *
+     * <p>Only FINISHED ({@code file_status = 1}) non-safe rows are mirrored:
+     * in-flight/queued rows are dead after a reinstall (their runnables and
+     * temp state died with the process), and vault rows must never leave the
+     * device.
+     */
+    public static void writeMirror(@NonNull Context context, @NonNull DownloadDatabase database) {
+        File mirror = mirrorFile(context);
+        File dir = mirror.getParentFile();
+        if (dir != null && !dir.exists() && !dir.mkdirs()) {
+            Log.w(TAG, "writeMirror: cannot create " + dir);
+            return;
+        }
+        SupportSQLiteDatabase db = database.getOpenHelper().getWritableDatabase();
+        try {
+            db.execSQL("ATTACH DATABASE ? AS mirror", new Object[]{mirror.getAbsolutePath()});
+        } catch (Exception e) {
+            Log.e(TAG, "writeMirror: attach failed", e);
+            return;
+        }
+        try {
+            db.execSQL("DROP TABLE IF EXISTS mirror." + TABLE);
+            db.execSQL("CREATE TABLE mirror." + TABLE + " AS SELECT * FROM " + TABLE
+                    + " WHERE file_safe = 0 AND file_status = 1");
+            if (BuildConfig.DEBUG) {
+                Log.d(TAG, "writeMirror: mirrored to " + mirror.getName());
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "writeMirror: copy failed", e);
+        } finally {
+            try {
+                db.execSQL("DETACH DATABASE mirror");
+            } catch (Exception e) {
+                Log.e(TAG, "writeMirror: detach failed", e);
+            }
+        }
+    }
+
+    /**
+     * One-shot restore of mirrored rows into an empty download table. Call on
+     * a background thread at app startup. No-op unless ALL of: the
+     * install-local marker is absent (fresh install — the marker file is
+     * excluded from backup), the live table has no non-safe rows (a fresh
+     * database, not an in-place update), and a mirror file exists (i.e. a
+     * backup restore actually delivered one).
+     */
+    public static void restoreIfPending(@NonNull Context context, @NonNull DownloadDatabase database) {
+        SharedPreferences prefs = context.getSharedPreferences(LOCAL_PREFS, Context.MODE_PRIVATE);
+        if (prefs.getBoolean(KEY_RESTORE_DONE, false)) {
+            return;
+        }
+        // Whatever happens below, never attempt again on this install — a
+        // failed half-restore retried against a now-populated table would
+        // duplicate rows.
+        prefs.edit().putBoolean(KEY_RESTORE_DONE, true).apply();
+
+        File mirror = mirrorFile(context);
+        if (!mirror.exists()) {
+            return;
+        }
+
+        SupportSQLiteDatabase db = database.getOpenHelper().getWritableDatabase();
+        try (Cursor count = db.query("SELECT COUNT(*) FROM " + TABLE + " WHERE file_safe = 0")) {
+            if (count.moveToFirst() && count.getInt(0) > 0) {
+                if (BuildConfig.DEBUG) {
+                    Log.d(TAG, "restoreIfPending: table populated — in-place update, skipping");
+                }
+                return;
+            }
+        }
+
+        // Columns of the LIVE table — the mirror may come from a different
+        // app version; only the intersection is copied.
+        Set<String> liveColumns = new HashSet<>();
+        try (Cursor info = db.query("PRAGMA table_info(" + TABLE + ")")) {
+            int nameIdx = info.getColumnIndex("name");
+            while (info.moveToNext()) {
+                liveColumns.add(info.getString(nameIdx));
+            }
+        }
+
+        int restored = 0;
+        SQLiteDatabase src = null;
+        try {
+            src = SQLiteDatabase.openDatabase(mirror.getAbsolutePath(), null, SQLiteDatabase.OPEN_READONLY);
+            try (Cursor rows = src.rawQuery("SELECT * FROM " + TABLE, null)) {
+                String[] cols = rows.getColumnNames();
+                while (rows.moveToNext()) {
+                    ContentValues values = new ContentValues();
+                    for (int i = 0; i < cols.length; i++) {
+                        String col = cols[i];
+                        // uid: let autoincrement re-assign; unknown columns:
+                        // not in this version's schema, drop.
+                        if ("uid".equals(col) || !liveColumns.contains(col)) {
+                            continue;
+                        }
+                        if (rows.isNull(i)) {
+                            values.putNull(col);
+                        } else if (rows.getType(i) == Cursor.FIELD_TYPE_INTEGER) {
+                            values.put(col, rows.getLong(i));
+                        } else if (rows.getType(i) == Cursor.FIELD_TYPE_FLOAT) {
+                            values.put(col, rows.getDouble(i));
+                        } else if (rows.getType(i) == Cursor.FIELD_TYPE_BLOB) {
+                            values.put(col, rows.getBlob(i));
+                        } else {
+                            values.put(col, rows.getString(i));
+                        }
+                    }
+                    // Defense in depth: the mirror is written without vault
+                    // rows, but a tampered/foreign mirror must not be able to
+                    // inject entries into the vault list.
+                    values.put("file_safe", 0);
+                    if (TextUtils.isEmpty(values.getAsString("file_path"))) {
+                        continue;
+                    }
+                    try {
+                        db.insert(TABLE, SQLiteDatabase.CONFLICT_IGNORE, values);
+                        restored++;
+                    } catch (Exception e) {
+                        // Per-row: a NOT NULL column added in a newer schema
+                        // without a default fails that row, not the restore.
+                        if (BuildConfig.DEBUG) {
+                            Log.d(TAG, "restoreIfPending: row skipped", e);
+                        }
+                    }
+                }
+            }
+            Log.i(TAG, "restoreIfPending: restored " + restored + " download entries from backup mirror");
+        } catch (Exception e) {
+            Log.e(TAG, "restoreIfPending: restore failed after " + restored + " rows", e);
+        } finally {
+            if (src != null) {
+                try {
+                    src.close();
+                } catch (Exception ignored) {
+                }
+            }
+        }
+    }
+}

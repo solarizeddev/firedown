@@ -817,6 +817,39 @@ flag. No unconditional logging ships.**
   suffix). Apply the same cap to any new log of field content, page titles,
   clipboard text, etc.
 
+## Auto Backup — the vault NEVER leaves the device
+
+Downloads live in the **public** `Download/Firedown` (survive uninstall); the
+download DB is app-private (wiped on uninstall). To survive a
+reinstall-with-restore, the PUBLIC download list is backed up via a
+**sanitized mirror**, never the database file: `download-db` holds the
+safe-vault rows too (`file_safe = 1` — names/origins/paths of vaulted items),
+and Auto Backup is file-granular, so backing up the DB would ship vault
+metadata to the cloud. `DownloadBackupMirror` re-writes
+`filesDir/backup/downloads-mirror.db` (non-safe + FINISHED rows only, via
+`ATTACH … CREATE TABLE AS SELECT`) every time the app backgrounds
+(`ApplicationLifeCycleHandler.onTrimMemory`), and `App.onCreate` restores it
+**once per install** (`restoreIfPending`, guarded by: a marker in
+`backup_local.xml` — a prefs file *excluded* from backup so it can't follow a
+restore; an empty-table check so an in-place update never re-imports; and
+column-name-intersection row copy so a schema-version skew degrades per-row
+instead of failing). `file_safe` is forced to 0 on restore — a tampered
+mirror can't inject vault entries.
+
+The backup surface is an **include-list** in BOTH rule files —
+`backup_rules.xml` (API ≤ 30) and `data_extraction.xml` (API 31+, cloud +
+device-transfer), kept in lockstep: shared prefs (minus `device.xml`,
+`secret_shared_prefs.xml`, `backup_local.xml`) + the mirror file. **Nothing
+else** — not `domain="database"`, not `filesDir` (the `files/safe/` vault
+content). History: `data_extraction.xml` used to be **empty**, which on API
+31+ means *no rules* = **default full backup of everything** (vault DB rows,
+vault files, secret prefs) while the legacy exclusions were silently ignored
+— if you touch these files, never leave the 31+ rules empty, and mirror any
+change across both files. Scoped-storage caveat: restored entries point at
+the surviving public files, but on Android 13+ a reinstalled app doesn't OWN
+them (MediaStore attribution died with the uninstall), so playback may need
+a permission story even though the list+metadata are intact.
+
 ## URL-bar clipboard chip & system-service binder calls
 
 Two hardenings in `AutoCompleteView.showClipboard()` (the clipboard suggestion

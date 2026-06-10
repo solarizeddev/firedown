@@ -1,7 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Auto Backup rules for Android <= 11 (API <= 30). API 31+ uses
+     data_extraction.xml instead - keep the two files' content in lockstep.
+
+     Include-list semantics: once ANY <include> is present, ONLY included
+     paths are backed up. So what is listed here is the COMPLETE backup
+     surface:
+       - shared prefs (settings), minus the install-local and secret files;
+       - the sanitized download mirror (DownloadBackupMirror): the PUBLIC,
+         finished download rows only.
+     Deliberately NOT backed up - do not add:
+       - domain="database" (download-db holds the safe-vault rows; the
+         public rows travel via the mirror instead);
+       - filesDir wholesale (files/safe/ is the encrypted vault content);
+       - backup_local.xml (the restore-once marker must never follow a
+         restore onto a new install). -->
 <full-backup-content>
     <include domain="sharedpref" path="."/>
     <exclude domain="sharedpref" path="device.xml"/>
-    <exclude domain="sharedpref" path="secret_shared_prefs.xml" />
-    <exclude domain="file" />
+    <exclude domain="sharedpref" path="secret_shared_prefs.xml"/>
+    <exclude domain="sharedpref" path="backup_local.xml"/>
+    <include domain="file" path="backup/downloads-mirror.db"/>
 </full-backup-content>
