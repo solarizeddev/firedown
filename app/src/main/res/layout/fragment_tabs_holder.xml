@@ -102,9 +102,14 @@
         android:layout_height="match_parent"
         app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior" />
 
-    <!-- Bottom action bar: the old toolbar's actions around the FAB —
-         grid/list toggle, new tab, overflow (close all / archive /
-         settings via PopupMenu). Background + icon tints follow
+    <!-- Bottom action bar — same chrome grammar as the BROWSER's bar
+         (bottom_bar.xml): app_bar_size height, five equal-weight slots,
+         the 56dp hero FAB in the centre slot. Browser -> tabs is the
+         highest-frequency navigation in the app; keeping the skeleton
+         identical (hero button pixel-aligned with the fire FAB, overflow
+         in the same rightmost slot as the browser's more_button) makes
+         the transition read as "the same bar changed mode". Slots 2/4
+         are empty on purpose. Background + icon tints follow
          applyIncognitoTheme; bottom padding gains the nav-bar inset in
          code so the bar paints edge-to-edge behind gesture nav. -->
     <LinearLayout
@@ -112,35 +117,56 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
-        android:gravity="center"
-        android:orientation="horizontal"
-        android:paddingVertical="8dp">
+        android:orientation="horizontal">
 
         <ImageButton
             android:id="@+id/action_view_btn"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
+            android:layout_width="0dp"
+            android:layout_height="@dimen/app_bar_size"
+            android:layout_weight="1"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/popup_toggle"
+            android:padding="6dp"
+            android:scaleType="centerInside"
             android:src="@drawable/ic_view_list_24"
             android:tint="?attr/colorOnSurface" />
 
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/fab_new_tab"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="32dp"
-            android:contentDescription="@string/popup_tabs_new"
-            app:fabCustomSize="48dp"
-            app:maxImageSize="20dp"
-            app:srcCompat="@drawable/add_24" />
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="@dimen/app_bar_size"
+            android:layout_weight="1" />
+
+        <FrameLayout
+            android:layout_width="0dp"
+            android:layout_height="@dimen/app_bar_size"
+            android:layout_weight="1">
+
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/fab_new_tab"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:contentDescription="@string/popup_tabs_new"
+                app:fabSize="normal"
+                app:maxImageSize="24dp"
+                app:srcCompat="@drawable/add_24" />
+
+        </FrameLayout>
+
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="@dimen/app_bar_size"
+            android:layout_weight="1" />
 
         <ImageButton
             android:id="@+id/action_overflow_btn"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
+            android:layout_width="0dp"
+            android:layout_height="@dimen/app_bar_size"
+            android:layout_weight="1"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/tabs_more_options"
+            android:padding="6dp"
+            android:scaleType="centerInside"
             android:src="@drawable/ic_baseline_more_vert_24"
             android:tint="?attr/colorOnSurface" />
 
