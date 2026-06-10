@@ -579,6 +579,7 @@
     <string name="lan_share_vpn_warning">VPN が有効です — 受信側が接続できない場合は、VPN アプリで LAN アクセスを許可するか VPN をオフにしてください</string>
     <string name="lan_direct_intro">この端末で一時的なテザリングを作成できます。相手の端末がそれに接続すると、ファイルは 2 台の端末間で直接転送されます。インターネットは使用しません。</string>
     <string name="lan_direct_start">ダイレクト接続を開始</string>
+    <string name="lan_direct_step">ステップ 1/2 — テザリングに接続</string>
     <string name="lan_direct_switch">代わりにダイレクト接続を使う</string>
     <string name="lan_direct_join_hint">相手の端末のカメラでスキャンしてテザリングに接続し、「次へ」をタップしてください</string>
     <string name="lan_direct_password">パスワード</string>

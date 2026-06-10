@@ -450,6 +450,7 @@
     <string name="lan_share_vpn_warning">VPN активен — если получатель не может подключиться, разрешите доступ к локальной сети в приложении VPN или отключите его</string>
     <string name="lan_direct_intro">Этот телефон может создать временную точку доступа — другое устройство подключается к ней, и файл передаётся напрямую между телефонами. Интернет не используется.</string>
     <string name="lan_direct_start">Начать прямое подключение</string>
+    <string name="lan_direct_step">Шаг 1 из 2 — подключение к точке доступа</string>
     <string name="lan_direct_switch">Использовать прямое подключение</string>
     <string name="lan_direct_join_hint">Отсканируйте камерой другого устройства, чтобы подключиться к точке доступа, затем нажмите «Далее»</string>
     <string name="lan_direct_password">Пароль</string>

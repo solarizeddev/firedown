@@ -581,6 +581,7 @@
     <string name="lan_share_vpn_warning">VPN actif — si le destinataire ne peut pas se connecter, autorisez l\'accès au réseau local dans l\'app VPN ou désactivez-le</string>
     <string name="lan_direct_intro">Ce téléphone peut créer un point d\'accès temporaire : l\'autre appareil s\'y connecte et le fichier passe directement d\'un téléphone à l\'autre. Internet n\'est pas utilisé.</string>
     <string name="lan_direct_start">Démarrer la connexion directe</string>
+    <string name="lan_direct_step">Étape 1 sur 2 — rejoindre le point d\'accès</string>
     <string name="lan_direct_switch">Utiliser plutôt une connexion directe</string>
     <string name="lan_direct_join_hint">Scannez avec la caméra de l\'autre appareil pour rejoindre le point d\'accès, puis touchez Suivant</string>
     <string name="lan_direct_password">Mot de passe</string>

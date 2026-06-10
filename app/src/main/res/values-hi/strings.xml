@@ -349,6 +349,7 @@
     <string name="lan_share_vpn_warning">VPN सक्रिय है — अगर पाने वाला कनेक्ट नहीं कर पाता, तो VPN ऐप में LAN एक्सेस की अनुमति दें या VPN बंद करें</string>
     <string name="lan_direct_intro">यह फ़ोन एक अस्थायी हॉटस्पॉट बना सकता है — दूसरा डिवाइस उससे जुड़ता है और फ़ाइल सीधे दोनों फ़ोन के बीच जाती है। इंटरनेट का उपयोग नहीं होता।</string>
     <string name="lan_direct_start">सीधा कनेक्शन शुरू करें</string>
+    <string name="lan_direct_step">चरण 1/2 — हॉटस्पॉट से जुड़ें</string>
     <string name="lan_direct_switch">इसके बजाय सीधा कनेक्शन इस्तेमाल करें</string>
     <string name="lan_direct_join_hint">हॉटस्पॉट से जुड़ने के लिए दूसरे डिवाइस के कैमरे से स्कैन करें, फिर आगे पर टैप करें</string>
     <string name="lan_direct_password">पासवर्ड</string>

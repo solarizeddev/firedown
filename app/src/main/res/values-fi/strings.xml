@@ -389,6 +389,7 @@
     <string name="lan_share_vpn_warning">VPN käytössä — jos vastaanottaja ei saa yhteyttä, salli lähiverkon käyttö VPN-sovelluksessa tai poista VPN käytöstä</string>
     <string name="lan_direct_intro">Tämä puhelin voi luoda väliaikaisen yhteyspisteen — toinen laite liittyy siihen ja tiedosto siirtyy suoraan puhelinten välillä. Internetiä ei käytetä.</string>
     <string name="lan_direct_start">Aloita suora yhteys</string>
+    <string name="lan_direct_step">Vaihe 1/2 — liity yhteyspisteeseen</string>
     <string name="lan_direct_switch">Käytä sen sijaan suoraa yhteyttä</string>
     <string name="lan_direct_join_hint">Skannaa toisen laitteen kameralla liittyäksesi yhteyspisteeseen ja napauta sitten Seuraava</string>
     <string name="lan_direct_password">Salasana</string>

@@ -337,6 +337,7 @@
     <string name="lan_share_vpn_warning">Активен VPN — ако получателят не може да се свърже, разрешете локалния достъп във VPN приложението или го изключете</string>
     <string name="lan_direct_intro">Този телефон може да създаде временна точка за достъп — другото устройство се свързва към нея и файлът се прехвърля директно между двата телефона. Интернет не се използва.</string>
     <string name="lan_direct_start">Стартиране на директна връзка</string>
+    <string name="lan_direct_step">Стъпка 1 от 2 — свържете се с точката за достъп</string>
     <string name="lan_direct_switch">Използване на директна връзка вместо това</string>
     <string name="lan_direct_join_hint">Сканирайте с камерата на другото устройство, за да се свържете с точката за достъп, после натиснете „Напред“</string>
     <string name="lan_direct_password">Парола</string>

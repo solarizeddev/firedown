@@ -1,10 +1,13 @@
 package com.solarized.firedown.phone.fragments;
 
 import android.Manifest;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
@@ -16,11 +19,13 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -32,10 +37,14 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.bumptech.glide.request.RequestOptions;
+import com.google.android.material.color.MaterialColors;
+import com.google.android.material.imageview.ShapeableImageView;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 import com.google.android.material.snackbar.Snackbar;
+import com.solarized.firedown.GlideHelper;
 import com.solarized.firedown.R;
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.data.entity.DownloadEntity;
@@ -141,9 +150,29 @@ public class LanShareFragment extends BaseFocusFragment {
         String mime = FileUriHelper.getMimeTypeFromFile(file.getName());
         mSharedFile = new LanShareServer.SharedFile(file.getName(), file, mime);
 
-        ((TextView) mView.findViewById(R.id.lan_share_file)).setText(String.format(Locale.ROOT,
-                "%s · %s", file.getName(),
-                StoragePaths.convertToStringRepresentation(file.length())));
+        // Shared-file card: the real thumbnail (same Glide pipeline as the
+        // Downloads rows), name, and a MIME · size tag.
+        ShapeableImageView thumb = mView.findViewById(R.id.lan_share_thumb);
+        GlideHelper.load(mDownloadEntity, new RequestOptions(), thumb);
+        ((TextView) mView.findViewById(R.id.lan_share_file_name)).setText(file.getName());
+        String size = StoragePaths.convertToStringRepresentation(file.length());
+        String mimeWord = FileUriHelper.getLongMimeText(requireContext(), mime);
+        ((TextView) mView.findViewById(R.id.lan_share_file_tag)).setText(
+                mimeWord != null
+                        ? String.format(Locale.ROOT, "%s · %s", mimeWord, size)
+                        : size);
+
+        // The URL pill copies whatever it currently shows (host:port in LAN
+        // mode, the hotspot SSID in the join step).
+        mView.findViewById(R.id.lan_share_url_chip).setOnClickListener(v -> {
+            CharSequence text = ((TextView) mView.findViewById(R.id.lan_share_url)).getText();
+            ClipboardManager clipboard = (ClipboardManager)
+                    requireContext().getSystemService(Context.CLIPBOARD_SERVICE);
+            if (clipboard != null) {
+                clipboard.setPrimaryClip(ClipData.newPlainText("Firedown", text));
+                makeSnackbar(R.string.clipboard);
+            }
+        });
 
         String ip = LanShareServer.getLocalIpv4();
         if (ip != null) {
@@ -241,10 +270,8 @@ public class LanShareFragment extends BaseFocusFragment {
         lead.setVisibility(View.VISIBLE);
         ((TextView) mView.findViewById(R.id.lan_share_hint)).setText(R.string.lan_share_qr_hint);
         ((TextView) mView.findViewById(R.id.lan_share_pin_label)).setText(R.string.lan_share_pin);
-        TextView pin = mView.findViewById(R.id.lan_share_pin_value);
-        pin.setText(mServer.getPin());
-        pin.setTextSize(34);
-        pin.setLetterSpacing(0.45f);
+        showPinTiles(mServer.getPin());
+        mView.findViewById(R.id.lan_share_step).setVisibility(View.GONE);
 
         // TLS mode scans land on the plain-http ONBOARDING page first (no
         // warning) which explains the upcoming interstitial, then Continue
@@ -414,12 +441,8 @@ public class LanShareFragment extends BaseFocusFragment {
         ((TextView) mView.findViewById(R.id.lan_share_pin_label))
                 .setText(R.string.lan_direct_password);
 
-        // The passphrase is much longer than the 4-digit PIN — drop the
-        // display size/tracking so it fits one line.
-        TextView pin = mView.findViewById(R.id.lan_share_pin_value);
-        pin.setText(passphrase);
-        pin.setTextSize(20);
-        pin.setLetterSpacing(0.1f);
+        showPassphraseTile(passphrase);
+        mView.findViewById(R.id.lan_share_step).setVisibility(View.VISIBLE);
 
         setQr("WIFI:T:WPA;S:" + escapeWifiQr(ssid) + ";P:" + escapeWifiQr(passphrase) + ";;");
 
@@ -459,6 +482,51 @@ public class LanShareFragment extends BaseFocusFragment {
             mHotspotReservation.close();
             mHotspotReservation = null;
         }
+    }
+
+    /** The 4-digit PIN as OTP-style digit tiles. */
+    private void showPinTiles(@NonNull String pin) {
+        LinearLayout row = mView.findViewById(R.id.lan_share_pin_row);
+        row.removeAllViews();
+        float density = getResources().getDisplayMetrics().density;
+        for (int i = 0; i < pin.length(); i++) {
+            TextView tile = buildCodeTile();
+            tile.setText(String.valueOf(pin.charAt(i)));
+            tile.setTextSize(26);
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                    Math.round(46 * density), Math.round(56 * density));
+            if (i > 0) {
+                params.setMarginStart(Math.round(10 * density));
+            }
+            row.addView(tile, params);
+        }
+    }
+
+    /** The hotspot passphrase as one wide tile (it's far longer than a PIN). */
+    private void showPassphraseTile(@NonNull String passphrase) {
+        LinearLayout row = mView.findViewById(R.id.lan_share_pin_row);
+        row.removeAllViews();
+        float density = getResources().getDisplayMetrics().density;
+        TextView tile = buildCodeTile();
+        tile.setText(passphrase);
+        tile.setTextSize(19);
+        tile.setLetterSpacing(0.08f);
+        int paddingHorizontal = Math.round(22 * density);
+        tile.setPadding(paddingHorizontal, 0, paddingHorizontal, 0);
+        row.addView(tile, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT, Math.round(56 * density)));
+    }
+
+    @NonNull
+    private TextView buildCodeTile() {
+        TextView tile = new TextView(requireContext());
+        tile.setBackgroundResource(R.drawable.bg_lan_share_tile);
+        tile.setGravity(Gravity.CENTER);
+        tile.setTypeface(null, Typeface.BOLD);
+        tile.setMaxLines(1);
+        tile.setTextColor(MaterialColors.getColor(tile,
+                com.google.android.material.R.attr.colorPrimary));
+        return tile;
     }
 
     private void makeSnackbar(int textRes) {

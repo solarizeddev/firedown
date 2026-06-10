@@ -313,6 +313,7 @@
     <string name="lan_share_vpn_warning">VPN on aktiivne — kui vastuvõtja ei saa ühendust, luba VPN-rakenduses kohtvõrgu juurdepääs või lülita VPN välja</string>
     <string name="lan_direct_intro">See telefon saab luua ajutise kuumkoha — teine seade liitub sellega ja fail liigub otse kahe telefoni vahel. Internetti ei kasutata.</string>
     <string name="lan_direct_start">Käivita otseühendus</string>
+    <string name="lan_direct_step">Samm 1/2 — liitu kuumkohaga</string>
     <string name="lan_direct_switch">Kasuta hoopis otseühendust</string>
     <string name="lan_direct_join_hint">Skanni teise seadme kaameraga, et kuumkohaga liituda, seejärel puuduta Edasi</string>
     <string name="lan_direct_password">Parool</string>

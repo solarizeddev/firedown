@@ -403,6 +403,7 @@
     <string name="lan_share_vpn_warning">Aktivní VPN — pokud se příjemce nemůže připojit, povolte ve VPN aplikaci přístup k místní síti nebo ji vypněte</string>
     <string name="lan_direct_intro">Tento telefon může vytvořit dočasný hotspot — druhé zařízení se k němu připojí a soubor se přenese přímo mezi oběma telefony. Internet se nepoužívá.</string>
     <string name="lan_direct_start">Spustit přímé připojení</string>
+    <string name="lan_direct_step">Krok 1 z 2 — připojte se k hotspotu</string>
     <string name="lan_direct_switch">Použít místo toho přímé připojení</string>
     <string name="lan_direct_join_hint">Naskenujte kamerou druhého zařízení pro připojení k hotspotu a pak klepněte na Další</string>
     <string name="lan_direct_password">Heslo</string>
