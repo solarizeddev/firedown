@@ -524,8 +524,12 @@ public class LanShareFragment extends BaseFocusFragment {
         tile.setGravity(Gravity.CENTER);
         tile.setTypeface(null, Typeface.BOLD);
         tile.setMaxLines(1);
+        // android.R.attr.colorPrimary, not material's R: with
+        // nonTransitiveRClass the material R class only carries material's
+        // OWN attrs (colorPrimaryContainer yes, colorPrimary no — that one
+        // is appcompat/platform). Same idiom as DownloadItemAdapter.
         tile.setTextColor(MaterialColors.getColor(tile,
-                com.google.android.material.R.attr.colorPrimary));
+                android.R.attr.colorPrimary));
         return tile;
     }
 
