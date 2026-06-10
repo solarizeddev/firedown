@@ -24,6 +24,7 @@ import com.solarized.firedown.R;
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.lanshare.LanShareServer;
+import com.solarized.firedown.utils.FileUriHelper;
 import com.solarized.firedown.utils.FragmentArgs;
 import com.solarized.firedown.StoragePaths;
 
@@ -88,9 +89,15 @@ public class LanShareDialogFragment extends BaseBottomSheetDialogFragment {
 
         mView = inflater.inflate(R.layout.fragment_dialog_lan_share, container, false);
 
+        // Derive the served Content-Type from the saved file's extension (the
+        // bytes on disk are ground truth), not the entity's stored mime label
+        // — that label is Firedown's internal/UI value and serves a wrong or
+        // unusable Content-Type to the receiving browser.
+        String mime = FileUriHelper.getMimeTypeFromFile(file.getName());
         LanShareServer.SharedFile shared = new LanShareServer.SharedFile(
-                file.getName(), file, mDownloadEntity.getFileMimeType());
-        mServer = new LanShareServer(Collections.singletonList(shared), Build.MODEL);
+                file.getName(), file, mime);
+        mServer = new LanShareServer(Collections.singletonList(shared), Build.MODEL,
+                requireContext().getAssets());
         try {
             mServer.start();
         } catch (Exception e) {

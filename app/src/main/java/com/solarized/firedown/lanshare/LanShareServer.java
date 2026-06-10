@@ -1,7 +1,8 @@
 package com.solarized.firedown.lanshare;
 
-import android.text.TextUtils;
+import android.content.res.AssetManager;
 import android.net.Uri;
+import android.text.TextUtils;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -10,6 +11,7 @@ import androidx.annotation.Nullable;
 import com.solarized.firedown.BuildConfig;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -25,8 +27,10 @@ import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -83,6 +87,12 @@ public final class LanShareServer {
     private final String mPin;
     private final String mCookieValue;
     private final String mDeviceName;
+    // The served pages are static asset templates under assets/lanshare/
+    // (style.css, logo.svg, pin.html, files.html, row.html, locked.html,
+    // notfound.html); this server only substitutes {{TOKENS}} and serves the
+    // bytes — no HTML is built in Java. Assets are read once and cached.
+    private final AssetManager mAssets;
+    private final Map<String, byte[]> mAssetCache = new HashMap<>();
     private final AtomicInteger mPinAttempts = new AtomicInteger(0);
     private final AtomicBoolean mLocked = new AtomicBoolean(false);
     private final AtomicBoolean mRunning = new AtomicBoolean(false);
@@ -91,9 +101,11 @@ public final class LanShareServer {
     private Thread mAcceptThread;
     private ExecutorService mHandlerPool;
 
-    public LanShareServer(@NonNull List<SharedFile> files, @NonNull String deviceName) {
+    public LanShareServer(@NonNull List<SharedFile> files, @NonNull String deviceName,
+                          @NonNull AssetManager assets) {
         this.mFiles = new ArrayList<>(files);
         this.mDeviceName = deviceName;
+        this.mAssets = assets;
         SecureRandom random = new SecureRandom();
         this.mPin = String.format(Locale.ROOT, "%04d", random.nextInt(10_000));
         byte[] cookie = new byte[16];
@@ -263,10 +275,21 @@ public final class LanShareServer {
                 query = target.substring(q + 1);
             }
 
+            // Static assets — branding, not data — served unauthenticated so
+            // the pre-auth PIN page can pull them. They leak nothing.
+            if (path.equals("/logo.svg") && method.equals("GET")) {
+                sendAsset(out, "logo.svg", "image/svg+xml");
+                return;
+            }
+            if (path.equals("/style.css") && method.equals("GET")) {
+                sendAsset(out, "style.css", "text/css; charset=utf-8");
+                return;
+            }
+
             boolean authed = isAuthed(cookieHeader);
 
             if (mLocked.get() && !authed) {
-                sendHtml(out, 403, LanSharePages.locked());
+                sendHtml(out, 403, page("locked.html"));
                 return;
             }
 
@@ -278,15 +301,14 @@ public final class LanShareServer {
                     return;
                 }
                 if (pinParam != null && mLocked.get()) {
-                    sendHtml(out, 403, LanSharePages.locked());
+                    sendHtml(out, 403, page("locked.html"));
                     return;
                 }
                 if (authed) {
                     sendRedirect(out, "/s");
                     return;
                 }
-                sendHtml(out, 200, LanSharePages.pinGate(mDeviceName,
-                        pinParam != null, MAX_PIN_ATTEMPTS - mPinAttempts.get()));
+                sendHtml(out, 200, renderPin(pinParam != null));
                 return;
             }
 
@@ -306,11 +328,10 @@ public final class LanShareServer {
                     return;
                 }
                 if (mLocked.get()) {
-                    sendHtml(out, 403, LanSharePages.locked());
+                    sendHtml(out, 403, page("locked.html"));
                     return;
                 }
-                sendHtml(out, 200, LanSharePages.pinGate(mDeviceName,
-                        true, MAX_PIN_ATTEMPTS - mPinAttempts.get()));
+                sendHtml(out, 200, renderPin(true));
                 return;
             }
 
@@ -319,7 +340,7 @@ public final class LanShareServer {
                     sendRedirect(out, "/");
                     return;
                 }
-                sendHtml(out, 200, LanSharePages.fileList(mDeviceName, mFiles));
+                sendHtml(out, 200, renderFiles());
                 return;
             }
 
@@ -332,18 +353,18 @@ public final class LanShareServer {
                 try {
                     index = Integer.parseInt(path.substring(3));
                 } catch (NumberFormatException e) {
-                    sendHtml(out, 404, LanSharePages.notFound());
+                    sendHtml(out, 404, page("notfound.html"));
                     return;
                 }
                 if (index < 0 || index >= mFiles.size()) {
-                    sendHtml(out, 404, LanSharePages.notFound());
+                    sendHtml(out, 404, page("notfound.html"));
                     return;
                 }
                 sendFile(out, mFiles.get(index));
                 return;
             }
 
-            sendHtml(out, 404, LanSharePages.notFound());
+            sendHtml(out, 404, page("notfound.html"));
         } catch (Exception e) {
             if (BuildConfig.DEBUG) {
                 Log.d(TAG, "connection handler", e);
@@ -423,6 +444,149 @@ public final class LanShareServer {
         out.flush();
     }
 
+    private void sendAsset(OutputStream out, String name, String contentType) throws IOException {
+        byte[] body = readAsset(name);
+        if (body == null) {
+            sendHtml(out, 404, page("notfound.html"));
+            return;
+        }
+        String head = "HTTP/1.1 200 OK\r\n"
+                + "Content-Type: " + contentType + "\r\n"
+                + "Content-Length: " + body.length + "\r\n"
+                + "Cache-Control: max-age=3600\r\n"
+                + "Connection: close\r\n\r\n";
+        out.write(head.getBytes(StandardCharsets.UTF_8));
+        out.write(body);
+        out.flush();
+    }
+
+    // ------------------------------------------------------------------
+    // Asset templates
+    // ------------------------------------------------------------------
+
+    /** Read assets/lanshare/<name> once, cached. Null if missing. */
+    @Nullable
+    private synchronized byte[] readAsset(String name) {
+        byte[] cached = mAssetCache.get(name);
+        if (cached != null) {
+            return cached;
+        }
+        try (InputStream in = mAssets.open("lanshare/" + name)) {
+            ByteArrayOutputStream buf = new ByteArrayOutputStream();
+            byte[] chunk = new byte[8192];
+            int n;
+            while ((n = in.read(chunk)) > 0) {
+                buf.write(chunk, 0, n);
+            }
+            byte[] bytes = buf.toByteArray();
+            mAssetCache.put(name, bytes);
+            return bytes;
+        } catch (IOException e) {
+            Log.e(TAG, "asset read failed: " + name, e);
+            return null;
+        }
+    }
+
+    /** A template asset as a UTF-8 string ("" if missing — never null so the
+     *  caller's substitutions stay simple). */
+    private String page(String name) {
+        byte[] bytes = readAsset(name);
+        return bytes == null ? "" : new String(bytes, StandardCharsets.UTF_8);
+    }
+
+    private String renderPin(boolean wrongAttempt) {
+        String error = "";
+        if (wrongAttempt) {
+            int left = MAX_PIN_ATTEMPTS - mPinAttempts.get();
+            error = "<div class=\"err\">Wrong PIN &mdash; " + Math.max(left, 0)
+                    + (left == 1 ? " attempt" : " attempts")
+                    + " left before this session locks</div>";
+        }
+        return page("pin.html")
+                .replace("{{ERROR}}", error)
+                .replace("{{DEVICE}}", escapeHtml(mDeviceName));
+    }
+
+    private String renderFiles() {
+        String row = page("row.html");
+        StringBuilder rows = new StringBuilder();
+        for (int i = 0; i < mFiles.size(); i++) {
+            SharedFile f = mFiles.get(i);
+            rows.append(row
+                    .replace("{{ICON}}", iconFor(f.mime))
+                    .replace("{{NAME}}", escapeHtml(f.name))
+                    .replace("{{TYPE}}", typeLabel(f.mime))
+                    .replace("{{SIZE}}", formatSize(f.file.length()))
+                    .replace("{{INDEX}}", Integer.toString(i)));
+        }
+        String count = mFiles.size() + (mFiles.size() == 1 ? " file" : " files");
+        return page("files.html")
+                .replace("{{DEVICE}}", escapeHtml(mDeviceName))
+                .replace("{{COUNT}}", count)
+                .replace("{{FILES}}", rows.toString());
+    }
+
+    private static String iconFor(String mime) {
+        if (mime == null) {
+            return "&#128196;";
+        }
+        if (mime.startsWith("video/")) {
+            return "&#127916;";
+        }
+        if (mime.startsWith("audio/")) {
+            return "&#127911;";
+        }
+        if (mime.startsWith("image/")) {
+            return "&#128247;";
+        }
+        return "&#128196;";
+    }
+
+    /** Friendly type word for display (the precise mime drives Content-Type
+     *  + the icon; a receiver shouldn't see "video/iso.segment"). */
+    private static String typeLabel(String mime) {
+        if (mime == null) {
+            return "File";
+        }
+        if (mime.startsWith("video/")) {
+            return "Video";
+        }
+        if (mime.startsWith("audio/")) {
+            return "Audio";
+        }
+        if (mime.startsWith("image/")) {
+            return "Image";
+        }
+        if (mime.equals("application/pdf")) {
+            return "PDF";
+        }
+        if (mime.startsWith("text/")) {
+            return "Text";
+        }
+        return "File";
+    }
+
+    private static String formatSize(long bytes) {
+        if (bytes >= 1L << 30) {
+            return String.format(Locale.ROOT, "%.1f GB", bytes / (double) (1L << 30));
+        }
+        if (bytes >= 1L << 20) {
+            return String.format(Locale.ROOT, "%.1f MB", bytes / (double) (1L << 20));
+        }
+        if (bytes >= 1L << 10) {
+            return String.format(Locale.ROOT, "%.0f KB", bytes / (double) (1L << 10));
+        }
+        return bytes + " B";
+    }
+
+    private static String escapeHtml(String s) {
+        if (s == null) {
+            return "";
+        }
+        return s.replace("&", "&amp;").replace("<", "&lt;")
+                .replace(">", "&gt;").replace("\"", "&quot;");
+    }
+
     private void sendRedirect(OutputStream out, String location) throws IOException {
         String head = "HTTP/1.1 303 See Other\r\n"
                 + "Location: " + location + "\r\n"
@@ -445,7 +609,7 @@ public final class LanShareServer {
     private void sendFile(OutputStream out, SharedFile shared) throws IOException {
         File file = shared.file;
         if (!file.exists() || !file.canRead()) {
-            sendHtml(out, 404, LanSharePages.notFound());
+            sendHtml(out, 404, page("notfound.html"));
             return;
         }
         long length = file.length();
