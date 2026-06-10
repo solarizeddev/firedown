@@ -125,7 +125,7 @@ public class GeckoStateViewModel extends ViewModel {
      * after a caller fires {@link com.solarized.firedown.geckoview.GeckoRuntimeHelper#requestPageBlocks()}
      * and firedown.js responds.
      */
-    public LiveData<java.util.List<GeckoUblockHelper.HostCount>> getPageBlocks() {
+    public LiveData<List<GeckoUblockHelper.HostCount>> getPageBlocks() {
         return mGeckoUblockHelper.getPageBlocksLive();
     }
 

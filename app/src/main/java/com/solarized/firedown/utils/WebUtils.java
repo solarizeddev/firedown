@@ -119,7 +119,7 @@ public class WebUtils {
         if (siteName != null) {
             // (?i) for case-insensitive; allow surrounding whitespace.
             // \\s*[-—|:·]\\s* matches the separator. Anchor to end.
-            String pattern = "(?i)\\s*[-—|:·]\\s*" + java.util.regex.Pattern.quote(siteName) + "\\s*$";
+            String pattern = "(?i)\\s*[-—|:·]\\s*" + Pattern.quote(siteName) + "\\s*$";
             s = s.replaceAll(pattern, "");
         }
 

@@ -28,6 +28,7 @@ import com.solarized.firedown.manager.DownloadRequest;
 import com.solarized.firedown.utils.FileUriHelper;
 import com.solarized.firedown.utils.FragmentArgs;
 
+import java.util.Locale;
 import org.apache.commons.io.FilenameUtils;
 
 
@@ -210,7 +211,7 @@ public class SaveFileDialog extends BaseDialogFragment {
         TextView text = v.findViewById(R.id.destination_text);
 
         String format = outputExtension(mBrowserDownloadEntity.getMimeType())
-                .toUpperCase(java.util.Locale.ROOT);
+                .toUpperCase(Locale.ROOT);
         long length = mBrowserDownloadEntity.getFileLength();
         String sizeFormat = length > 0
                 ? getString(R.string.save_dest_size_format, Utils.getFileSize(length), format)

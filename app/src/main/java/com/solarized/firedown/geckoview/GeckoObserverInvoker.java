@@ -3,8 +3,6 @@ package com.solarized.firedown.geckoview;
 import android.content.Intent;
 import android.view.PointerIcon;
 
-import org.mozilla.geckoview.Autocomplete;
-import org.mozilla.geckoview.GeckoResult;
 import org.mozilla.geckoview.GeckoSession;
 import org.mozilla.geckoview.MediaSession;
 import org.mozilla.geckoview.WebResponse;

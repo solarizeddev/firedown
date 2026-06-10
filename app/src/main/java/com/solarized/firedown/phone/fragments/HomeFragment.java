@@ -1,5 +1,7 @@
 package com.solarized.firedown.phone.fragments;
 
+import android.animation.ObjectAnimator;
+import android.animation.ValueAnimator;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -11,17 +13,20 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.graphics.ColorUtils;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleEventObserver;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.card.MaterialCardView;
@@ -29,6 +34,8 @@ import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
+import com.solarized.firedown.geckoview.GeckoUblockHelper;
+import com.solarized.firedown.ui.HomeCardStyle;
 import com.solarized.firedown.data.Download;
 import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.data.entity.GeckoStateEntity;
@@ -49,14 +56,20 @@ import com.solarized.firedown.phone.VaultActivity;
 import com.solarized.firedown.autocomplete.AutoCompleteEditText;
 import com.solarized.firedown.autocomplete.AutoCompleteView;
 import com.solarized.firedown.geckoview.toolbar.BottomNavigationBar;
+import com.solarized.firedown.phone.dialogs.TrackersInfoSheet;
 import com.solarized.firedown.ui.OnItemClickListener;
 import com.solarized.firedown.ui.adapters.SearchAutocompleteAdapter;
 import com.solarized.firedown.ui.diffs.SearchDiffCallback;
 import com.solarized.firedown.IntentActions;
+import com.solarized.firedown.utils.FileUriHelper;
 import com.solarized.firedown.utils.NavigationUtils;
 import com.solarized.firedown.utils.Utils;
 
 import dagger.hilt.android.AndroidEntryPoint;
+import java.text.NumberFormat;
+import java.util.List;
+import java.util.Locale;
+import javax.inject.Inject;
 
 
 @AndroidEntryPoint
@@ -85,14 +98,14 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     private LinearProgressIndicator mActiveStripBar;
     private View mActiveStripCancel;
     private View mActiveStripIcon;
-    @Nullable private android.animation.ObjectAnimator mActiveStripPulse;
+    @Nullable private ObjectAnimator mActiveStripPulse;
     private TextView mHomeVaultSubtitle;
     private TextView mRecentDownloadsSubtitle;
     private MaterialCardView mTrackersCard;
     private TextView mTrackersSubtitle;
-    @javax.inject.Inject
-    com.solarized.firedown.geckoview.GeckoUblockHelper mGeckoUblockHelper;
-    @Nullable private java.util.List<DownloadEntity> mLastActiveList;
+    @Inject
+    GeckoUblockHelper mGeckoUblockHelper;
+    @Nullable private List<DownloadEntity> mLastActiveList;
     @Nullable private Integer mLastFinishedCount;
     private long mLastFinishedSize = 0L;
 
@@ -198,7 +211,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mTrackersSubtitle = v.findViewById(R.id.home_trackers_subtitle);
         if (mTrackersCard != null) {
             mTrackersCard.setOnClickListener(view ->
-                    com.solarized.firedown.phone.dialogs.TrackersInfoSheet.show(
+                    TrackersInfoSheet.show(
                             getChildFragmentManager()));
         }
 
@@ -333,8 +346,8 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
                 mTrackersSubtitle.setText(R.string.home_trackers_subtitle_idle);
                 return;
             }
-            String formattedCount = java.text.NumberFormat
-                    .getInstance(java.util.Locale.getDefault())
+            String formattedCount = NumberFormat
+                    .getInstance(Locale.getDefault())
                     .format(n);
             String savedBytes = Utils.readableFileSize(n * AVG_BYTES_PER_BLOCKED_REQUEST);
             mTrackersSubtitle.setText(getString(
@@ -548,11 +561,11 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     private void startActiveStripPulse() {
         if (mActiveStripIcon == null) return;
         if (mActiveStripPulse != null && mActiveStripPulse.isStarted()) return;
-        mActiveStripPulse = android.animation.ObjectAnimator.ofFloat(
+        mActiveStripPulse = ObjectAnimator.ofFloat(
                 mActiveStripIcon, "alpha", 1.0f, 0.45f);
         mActiveStripPulse.setDuration(1100L);
-        mActiveStripPulse.setRepeatCount(android.animation.ValueAnimator.INFINITE);
-        mActiveStripPulse.setRepeatMode(android.animation.ValueAnimator.REVERSE);
+        mActiveStripPulse.setRepeatCount(ValueAnimator.INFINITE);
+        mActiveStripPulse.setRepeatMode(ValueAnimator.REVERSE);
         mActiveStripPulse.start();
     }
 
@@ -569,29 +582,29 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     /**
      * Paints the home cards — active download, Downloads, Safe Folder,
      * Trackers blocked — with the user's picked
-     * {@link com.solarized.firedown.ui.HomeCardStyle}. One pref, all
+     * {@link HomeCardStyle}. One pref, all
      * cards flip together; the picker rewards a coherent look rather
      * than per-card tweaks. Called from {@code onCreateView} and again
      * on {@code ON_RESUME} so a style change made in Settings shows up
      * when the user navigates back, without forcing a fragment rebuild.
      */
     private void applyHomeCardStyle(@NonNull View root) {
-        SharedPreferences prefs = androidx.preference.PreferenceManager
+        SharedPreferences prefs = PreferenceManager
                 .getDefaultSharedPreferences(requireContext());
         String key = prefs.getString(
                 Preferences.SETTINGS_HOME_CARD_STYLE,
                 Preferences.DEFAULT_HOME_CARD_STYLE);
-        com.solarized.firedown.ui.HomeCardStyle style =
-                com.solarized.firedown.ui.HomeCardStyle.fromKey(
-                        key, com.solarized.firedown.ui.HomeCardStyle.NEUTRAL);
-        boolean night = com.solarized.firedown.ui.HomeCardStyle.isNightMode(getResources());
+        HomeCardStyle style =
+                HomeCardStyle.fromKey(
+                        key, HomeCardStyle.NEUTRAL);
+        boolean night = HomeCardStyle.isNightMode(getResources());
 
         if (mActiveStrip != null) {
-            com.solarized.firedown.ui.HomeCardStyle.CardLook activeLook = style.active(night);
-            com.solarized.firedown.ui.HomeCardStyle.applyToCard(
+            HomeCardStyle.CardLook activeLook = style.active(night);
+            HomeCardStyle.applyToCard(
                     mActiveStrip,
                     null,
-                    (android.widget.ImageView) mActiveStripIcon,
+                    (ImageView) mActiveStripIcon,
                     mActiveStripTitle,
                     null,
                     mActiveStripLabel,
@@ -601,7 +614,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
 
         MaterialCardView downloadsCard = root.findViewById(R.id.recent_downloads_card);
         if (downloadsCard != null) {
-            com.solarized.firedown.ui.HomeCardStyle.applyToCard(
+            HomeCardStyle.applyToCard(
                     downloadsCard,
                     root.findViewById(R.id.recent_downloads_chip),
                     root.findViewById(R.id.recent_downloads_icon),
@@ -612,7 +625,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
 
         MaterialCardView vaultCard = root.findViewById(R.id.home_vault_card);
         if (vaultCard != null) {
-            com.solarized.firedown.ui.HomeCardStyle.applyToCard(
+            HomeCardStyle.applyToCard(
                     vaultCard,
                     root.findViewById(R.id.home_vault_chip),
                     root.findViewById(R.id.home_vault_icon),
@@ -623,7 +636,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
 
         MaterialCardView trackersCard = root.findViewById(R.id.home_trackers_card);
         if (trackersCard != null) {
-            com.solarized.firedown.ui.HomeCardStyle.applyToCard(
+            HomeCardStyle.applyToCard(
                     trackersCard,
                     root.findViewById(R.id.home_trackers_chip),
                     root.findViewById(R.id.home_trackers_icon),
@@ -663,7 +676,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
      * <p>Progress bar is indeterminate while QUEUED or 'live' (size
      * not yet known), determinate once the percentage is real.</p>
      */
-    private void bindActiveStrip(@NonNull java.util.List<DownloadEntity> active) {
+    private void bindActiveStrip(@NonNull List<DownloadEntity> active) {
         if (mActiveStripBar == null || active.isEmpty()) return;
         DownloadEntity item = active.get(0);
         int extras = active.size() - 1;
@@ -673,20 +686,20 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         // diverges from the default ACTIVE_BRAND tone. Indicator at
         // full opacity, track at ~24% alpha to read as a subtle ghost
         // rather than a competing colour.
-        SharedPreferences prefs = androidx.preference.PreferenceManager
+        SharedPreferences prefs = PreferenceManager
                 .getDefaultSharedPreferences(requireContext());
-        com.solarized.firedown.ui.HomeCardStyle style =
-                com.solarized.firedown.ui.HomeCardStyle.fromKey(
+        HomeCardStyle style =
+                HomeCardStyle.fromKey(
                         prefs.getString(
                                 Preferences.SETTINGS_HOME_CARD_STYLE,
                                 Preferences.DEFAULT_HOME_CARD_STYLE),
-                        com.solarized.firedown.ui.HomeCardStyle.NEUTRAL);
-        boolean night = com.solarized.firedown.ui.HomeCardStyle
+                        HomeCardStyle.NEUTRAL);
+        boolean night = HomeCardStyle
                 .isNightMode(getResources());
         int activeFg = style.active(night).fg;
         mActiveStripBar.setIndicatorColor(activeFg);
         mActiveStripBar.setTrackColor(
-                androidx.core.graphics.ColorUtils.setAlphaComponent(activeFg, 0x3D));
+                ColorUtils.setAlphaComponent(activeFg, 0x3D));
 
         mActiveStripTitle.setText(item.getFileName());
         boolean live = item.getFileIsLive();
@@ -711,8 +724,8 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
             mActiveStripBar.setProgress(pct);
             long size = item.getFileSize();
             metric = size > 0
-                    ? String.format(java.util.Locale.US, "%d%% · %s", pct, Utils.readableFileSize(size))
-                    : String.format(java.util.Locale.US, "%d%%", pct);
+                    ? String.format(Locale.US, "%d%% · %s", pct, Utils.readableFileSize(size))
+                    : String.format(Locale.US, "%d%%", pct);
         }
 
         String base = extras > 0
@@ -728,7 +741,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
      * mime is missing so the line is never blank.
      */
     private String mediaTypeLabel(DownloadEntity item) {
-        String label = com.solarized.firedown.utils.FileUriHelper.getLongMimeText(
+        String label = FileUriHelper.getLongMimeText(
                 requireContext(), item.getFileMimeType());
         return label != null ? label : getString(R.string.downloading);
     }

@@ -2,6 +2,7 @@ package com.solarized.firedown.data.repository;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
@@ -377,7 +378,7 @@ public class GeckoStateDataRepository {
                 state.closeGeckoSession();
             }
         } else {
-            new android.os.Handler(Looper.getMainLooper()).post(() -> {
+            new Handler(Looper.getMainLooper()).post(() -> {
                 for (GeckoState state : toClose) {
                     state.dismissActivePrompt();
                     state.closeGeckoSession();
@@ -662,7 +663,7 @@ public class GeckoStateDataRepository {
             if (Looper.myLooper() == Looper.getMainLooper()) {
                 for (GeckoState state : toCloseSessions) state.closeGeckoSession();
             } else {
-                new android.os.Handler(Looper.getMainLooper()).post(() -> {
+                new Handler(Looper.getMainLooper()).post(() -> {
                     for (GeckoState state : toCloseSessions) state.closeGeckoSession();
                 });
             }

@@ -14,6 +14,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.view.Window;
 
 import androidx.activity.OnBackPressedCallback;
@@ -389,16 +390,16 @@ public class TabsHolderFragment extends BaseFocusFragment {
     private void scheduleScrimRecheck() {
         final RecyclerView target = mLiftTarget;
         if (target == null) return;
-        android.view.ViewTreeObserver vto = target.getViewTreeObserver();
+        ViewTreeObserver vto = target.getViewTreeObserver();
         if (!vto.isAlive()) {
             target.post(() -> recheckScrimAfterAnimations(target));
             return;
         }
         vto.addOnGlobalLayoutListener(
-                new android.view.ViewTreeObserver.OnGlobalLayoutListener() {
+                new ViewTreeObserver.OnGlobalLayoutListener() {
                     @Override
                     public void onGlobalLayout() {
-                        android.view.ViewTreeObserver current = target.getViewTreeObserver();
+                        ViewTreeObserver current = target.getViewTreeObserver();
                         if (current.isAlive()) {
                             current.removeOnGlobalLayoutListener(this);
                         }

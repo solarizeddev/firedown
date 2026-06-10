@@ -14,16 +14,13 @@ import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool;
 import com.bumptech.glide.load.resource.bitmap.BitmapResource;
 import com.bumptech.glide.load.resource.bitmap.DownsampleStrategy;
 import com.solarized.firedown.GlideRequestOptions;
-import com.solarized.firedown.ffmpegutils.FFmpegConstants;
 import com.solarized.firedown.ffmpegutils.FFmpegThumbnailer;
 import com.solarized.firedown.ffmpegutils.FFmpegUtils;
 import com.solarized.firedown.utils.BitmapUtils;
-import com.solarized.firedown.utils.BrowserHeaders;
 import com.solarized.firedown.utils.FileUriHelper;
 import com.solarized.firedown.utils.Utils;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
 
 public class FFmpegUriDecoder implements ResourceDecoder<Uri, Bitmap> {

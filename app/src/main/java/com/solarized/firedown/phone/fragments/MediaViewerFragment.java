@@ -3,6 +3,7 @@ package com.solarized.firedown.phone.fragments;
 import android.annotation.SuppressLint;
 import android.content.Context;
 
+import android.content.res.Resources;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.media.MediaMetadataRetriever;
@@ -48,7 +49,6 @@ import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.Target;
 import com.bumptech.glide.signature.ObjectKey;
-import com.google.android.material.snackbar.Snackbar;
 import com.solarized.firedown.App;
 import com.solarized.firedown.BuildConfig;
 import com.solarized.firedown.GlideRequestOptions;
@@ -59,6 +59,7 @@ import com.solarized.firedown.R;
 import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.utils.FileUriHelper;
 import com.solarized.firedown.Keys;
+import com.solarized.firedown.utils.FragmentArgs;
 
 public class MediaViewerFragment extends Fragment {
 
@@ -121,7 +122,7 @@ public class MediaViewerFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        mDownloadEntity = com.solarized.firedown.utils.FragmentArgs.parcelable(
+        mDownloadEntity = FragmentArgs.parcelable(
                 this, Keys.ITEM_ID, DownloadEntity.class);
 
         if (mDownloadEntity == null) {
@@ -670,8 +671,8 @@ public class MediaViewerFragment extends Fragment {
         for (int i = 0; i < bottomBarGroup.getChildCount(); i++) {
             View c = bottomBarGroup.getChildAt(i);
             appendViewSummary(sb, "child[" + i + "]", c);
-            if (c instanceof android.view.ViewGroup) {
-                android.view.ViewGroup cg = (android.view.ViewGroup) c;
+            if (c instanceof ViewGroup) {
+                ViewGroup cg = (ViewGroup) c;
                 for (int j = 0; j < cg.getChildCount(); j++) {
                     appendViewSummary(sb, "  inner[" + j + "]", cg.getChildAt(j));
                 }
@@ -687,18 +688,18 @@ public class MediaViewerFragment extends Fragment {
                 .append(" h=").append(v.getHeight())
                 .append(" measuredH=").append(v.getMeasuredHeight())
                 .append(" minH=").append(v.getMinimumHeight());
-        android.view.ViewGroup.LayoutParams lp = v.getLayoutParams();
+        ViewGroup.LayoutParams lp = v.getLayoutParams();
         if (lp != null) {
             sb.append(" lpH=").append(lpHName(lp.height));
         }
-        if (v instanceof android.view.ViewGroup) {
-            sb.append(" cc=").append(((android.view.ViewGroup) v).getChildCount());
+        if (v instanceof ViewGroup) {
+            sb.append(" cc=").append(((ViewGroup) v).getChildCount());
         }
     }
 
     private String lpHName(int v) {
-        if (v == android.view.ViewGroup.LayoutParams.MATCH_PARENT) return "MATCH";
-        if (v == android.view.ViewGroup.LayoutParams.WRAP_CONTENT) return "WRAP";
+        if (v == ViewGroup.LayoutParams.MATCH_PARENT) return "MATCH";
+        if (v == ViewGroup.LayoutParams.WRAP_CONTENT) return "WRAP";
         if (v == Integer.MIN_VALUE) return "n/a";
         return String.valueOf(v);
     }
@@ -707,7 +708,7 @@ public class MediaViewerFragment extends Fragment {
         if (id == View.NO_ID) return "no-id";
         try {
             return getResources().getResourceEntryName(id);
-        } catch (android.content.res.Resources.NotFoundException e) {
+        } catch (Resources.NotFoundException e) {
             return "0x" + Integer.toHexString(id);
         }
     }

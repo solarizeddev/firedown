@@ -13,7 +13,6 @@ import com.google.android.material.snackbar.Snackbar;
 import com.solarized.firedown.App;
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
-import com.solarized.firedown.data.entity.GeckoStateEntity;
 import com.solarized.firedown.IntentActions;
 import com.solarized.firedown.Keys;
 

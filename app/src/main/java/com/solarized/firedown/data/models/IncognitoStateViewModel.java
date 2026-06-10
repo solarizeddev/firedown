@@ -171,7 +171,7 @@ public class IncognitoStateViewModel extends ViewModel {
      * {@link GeckoStateViewModel#getPageBlocks()} but only carries
      * data for incognito tabs.
      */
-    public LiveData<java.util.List<GeckoUblockHelper.HostCount>> getPageBlocks() {
+    public LiveData<List<GeckoUblockHelper.HostCount>> getPageBlocks() {
         return mGeckoUblockHelper.getPageBlocksLiveIncognito();
     }
 

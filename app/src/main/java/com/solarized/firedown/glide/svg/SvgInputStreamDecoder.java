@@ -4,7 +4,6 @@ import static com.bumptech.glide.request.target.Target.SIZE_ORIGINAL;
 
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.os.ParcelFileDescriptor;
 
 import androidx.annotation.NonNull;
 
@@ -18,7 +17,6 @@ import com.caverock.androidsvg.SVGParseException;
 import com.solarized.firedown.GlideRequestOptions;
 import com.solarized.firedown.utils.FileUriHelper;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 

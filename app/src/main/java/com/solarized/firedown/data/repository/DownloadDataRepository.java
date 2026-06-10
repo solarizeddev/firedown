@@ -75,11 +75,11 @@ public class DownloadDataRepository {
         return mDatabase.downloadDao().search(sorting, safe, query);
     }
 
-    public androidx.lifecycle.LiveData<java.util.List<DownloadEntity>> getAllRegularLive() {
+    public LiveData<List<DownloadEntity>> getAllRegularLive() {
         return mDatabase.downloadDao().getAllRegularLive();
     }
 
-    public androidx.lifecycle.LiveData<java.util.List<DownloadEntity>> getAllSafeLive() {
+    public LiveData<List<DownloadEntity>> getAllSafeLive() {
         return mDatabase.downloadDao().getAllSafeLive();
     }
 

@@ -31,17 +31,20 @@ import androidx.media3.extractor.DefaultExtractorsFactory;
 import androidx.media3.extractor.ExtractorsFactory;
 import androidx.media3.ui.PlayerView;
 
+import androidx.navigation.NavBackStackEntry;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.slider.Slider;
 import com.google.android.material.snackbar.Snackbar;
 import com.solarized.firedown.IntentActions;
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.R;
+import com.solarized.firedown.ffmpegutils.FFmpegThumbnailer;
 import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.ffmpegutils.FFmpegGifMaker;
 import com.solarized.firedown.manager.tasks.TaskManager;
 import com.solarized.firedown.ui.FilmstripTrimSlider;
 import com.solarized.firedown.utils.BuildUtils;
+import com.solarized.firedown.utils.FragmentArgs;
 import com.solarized.firedown.utils.NavigationUtils;
 
 import java.util.ArrayList;
@@ -122,7 +125,7 @@ public class GifMakerFragment extends BaseFocusFragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        mDownloadEntity = com.solarized.firedown.utils.FragmentArgs.parcelable(
+        mDownloadEntity = FragmentArgs.parcelable(
                 this, Keys.ITEM_ID, DownloadEntity.class);
         // Null on restore: nothing to edit, pop back to caller. onCreateView
         // returns null for the same reason.
@@ -411,8 +414,8 @@ public class GifMakerFragment extends BaseFocusFragment {
      *  frame from the file head, which the filmstrip view tiles across
      *  the whole strip. Beats an empty grey strip. */
     private @Nullable Bitmap extractWithFFmpegThumbnailer(String filePath) {
-        com.solarized.firedown.ffmpegutils.FFmpegThumbnailer thumb =
-                new com.solarized.firedown.ffmpegutils.FFmpegThumbnailer();
+        FFmpegThumbnailer thumb =
+                new FFmpegThumbnailer();
         try {
             int err = thumb.setDataSource(filePath, null);
             if (err < 0) {
@@ -549,7 +552,7 @@ public class GifMakerFragment extends BaseFocusFragment {
         gifArgs.putInt(Keys.GIF_FPS, currentFps());
         gifArgs.putInt(Keys.GIF_WIDTH, FFmpegGifMaker.DEFAULT_WIDTH);
 
-        androidx.navigation.NavBackStackEntry previous = mNavController.getPreviousBackStackEntry();
+        NavBackStackEntry previous = mNavController.getPreviousBackStackEntry();
         if (previous != null) {
             previous.getSavedStateHandle().set(IntentActions.DOWNLOAD_START_MAKE_GIF, gifArgs);
         } else {

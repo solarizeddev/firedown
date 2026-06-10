@@ -23,7 +23,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.util.Locale;
-import java.util.Map;
 
 import com.solarized.firedown.okhttp.SafeHeaders;
 import okhttp3.OkHttpClient;

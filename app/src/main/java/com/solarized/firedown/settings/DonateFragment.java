@@ -1,6 +1,7 @@
 package com.solarized.firedown.settings;
 
 
+import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.ClipData;
 import android.content.ClipboardManager;
@@ -10,6 +11,8 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
@@ -30,6 +33,7 @@ import com.google.android.material.snackbar.Snackbar;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.EncodeHintType;
 import com.google.zxing.WriterException;
+import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 
@@ -198,7 +202,7 @@ public class DonateFragment extends BasePreferenceFragment {
         mFiatHeader.setOnClickListener(v -> {
             Intent resultIntent = new Intent(Intent.ACTION_VIEW)
                     .setData(Uri.parse(FIAT_URL));
-            requireActivity().setResult(android.app.Activity.RESULT_OK, resultIntent);
+            requireActivity().setResult(Activity.RESULT_OK, resultIntent);
             requireActivity().finish();
         });
     }
@@ -240,10 +244,10 @@ public class DonateFragment extends BasePreferenceFragment {
             hideInvoiceFallback();
         });
 
-        mCustomSatsInput.addTextChangedListener(new android.text.TextWatcher() {
+        mCustomSatsInput.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int a, int b, int c) {}
             @Override public void onTextChanged(CharSequence s, int a, int b, int c) {}
-            @Override public void afterTextChanged(android.text.Editable s) {
+            @Override public void afterTextChanged(Editable s) {
                 String txt = s.toString().trim();
                 if (txt.isEmpty()) return;
                 try {
@@ -405,7 +409,7 @@ public class DonateFragment extends BasePreferenceFragment {
         int colorAttr = isError
                 ? android.R.attr.colorPrimary
                 : android.R.attr.textColorSecondary;
-        TypedValue tv = new android.util.TypedValue();
+        TypedValue tv = new TypedValue();
         requireContext().getTheme().resolveAttribute(colorAttr, tv, true);
         mStatusText.setTextColor(tv.data);
     }
@@ -443,7 +447,7 @@ public class DonateFragment extends BasePreferenceFragment {
             Map<EncodeHintType, Object> hints = new HashMap<>();
             hints.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.M);
             hints.put(EncodeHintType.MARGIN, 1);
-            com.google.zxing.common.BitMatrix matrix =
+            BitMatrix matrix =
                     writer.encode(content, BarcodeFormat.QR_CODE, sizePx, sizePx, hints);
             int w = matrix.getWidth(), h = matrix.getHeight();
             Bitmap bmp = Bitmap.createBitmap(w, h, Bitmap.Config.RGB_565);

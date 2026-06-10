@@ -16,6 +16,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatImageView;
 import androidx.core.content.ContextCompat;
+import androidx.core.graphics.ColorUtils;
 import androidx.paging.PagingDataAdapter;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
@@ -43,6 +44,7 @@ import com.solarized.firedown.utils.WebUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -109,11 +111,11 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
      *  row added up during cold-start scroll. Per-adapter (not static)
      *  so a configuration change that rebuilds the adapter under a new
      *  locale rebuilds the cache too. */
-    private final java.util.HashMap<String, String> mMimeLabelCache = new java.util.HashMap<>(16);
+    private final HashMap<String, String> mMimeLabelCache = new HashMap<>(16);
     /** Same string with the list-mode trailing " · " separator already
      *  appended — saves a String concat per list-mode bind in addition
      *  to the resource lookup. */
-    private final java.util.HashMap<String, String> mMimeLabelListCache = new java.util.HashMap<>(16);
+    private final HashMap<String, String> mMimeLabelListCache = new HashMap<>(16);
 
 
 
@@ -154,7 +156,7 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
                 com.google.android.material.R.attr.colorSurfaceContainerHigh);
         mDefaultPrimary = MaterialColors.getColor(context,
                 android.R.attr.colorPrimary, Color.BLACK);
-        mDefaultPrimaryAlpha = androidx.core.graphics.ColorUtils
+        mDefaultPrimaryAlpha = ColorUtils
                 .setAlphaComponent(mDefaultPrimary, 0x33);
         mActionIconTintList = MaterialColors.getColor(context,
                 com.google.android.material.R.attr.colorOnSurfaceVariant, Color.BLACK);
@@ -808,7 +810,7 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
      */
     private @Nullable String mimeLabelFor(@Nullable String mimeType, boolean isGrid) {
         if (mimeType == null) return null;
-        java.util.HashMap<String, String> cache = isGrid ? mMimeLabelCache : mMimeLabelListCache;
+        HashMap<String, String> cache = isGrid ? mMimeLabelCache : mMimeLabelListCache;
         String cached = cache.get(mimeType);
         if (cached != null) return cached;
         Tracing.begin("mimeLabel:miss");

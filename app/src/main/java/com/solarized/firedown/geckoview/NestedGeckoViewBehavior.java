@@ -10,8 +10,8 @@ import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
 
-import com.solarized.firedown.App;
 import com.solarized.firedown.BuildConfig;
+import com.solarized.firedown.geckoview.toolbar.BottomNavigationBar;
 import com.solarized.firedown.utils.FindViewUtils;
 
 
@@ -184,6 +184,6 @@ public class NestedGeckoViewBehavior extends CoordinatorLayout.Behavior<View> {
      */
     private boolean isToolbar(View v) {
         return v instanceof GeckoToolbar
-                || v instanceof com.solarized.firedown.geckoview.toolbar.BottomNavigationBar;
+                || v instanceof BottomNavigationBar;
     }
 }

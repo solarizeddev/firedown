@@ -1,5 +1,6 @@
 package com.solarized.firedown.manager;
 
+import com.solarized.firedown.geckoview.GeckoRuntimeHelper;
 import java.io.File;
 
 import android.Manifest;
@@ -122,7 +123,7 @@ public class RunnableManager extends Service {
 	OkHttpClient mOkHttpClient;
 
 	@Inject
-	com.solarized.firedown.geckoview.GeckoRuntimeHelper mGeckoRuntimeHelper;
+	GeckoRuntimeHelper mGeckoRuntimeHelper;
 
 	// A managed pool of background decoder threads
 	private final ThreadPoolExecutor mDownloadThreadPool = new ThreadPoolExecutor(

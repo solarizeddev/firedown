@@ -9,7 +9,6 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.solarized.firedown.phone.BrowserActivity;
 import com.solarized.firedown.utils.AppLinkUseCases;
-import com.solarized.firedown.utils.BuildUtils;
 import com.solarized.firedown.utils.Utils;
 
 public class SearchIntentActivity extends AppCompatActivity {

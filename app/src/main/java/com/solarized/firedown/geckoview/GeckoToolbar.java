@@ -5,6 +5,7 @@ import android.animation.ArgbEvaluator;
 import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.content.Context;
+import android.content.res.ColorStateList;
 import android.content.res.TypedArray;
 import android.graphics.drawable.GradientDrawable;
 import android.text.Editable;
@@ -446,25 +447,25 @@ public class GeckoToolbar extends FrameLayout implements View.OnClickListener, V
 
         // 4. Security button icon tint
         if (mAddressBarButton != null) {
-            mAddressBarButton.setIconTint(android.content.res.ColorStateList.valueOf(onSurfaceColor));
+            mAddressBarButton.setIconTint(ColorStateList.valueOf(onSurfaceColor));
         }
 
         // 5. Reload/stop button icon tint
         if (mReloadButton != null) {
-            mReloadButton.setIconTint(android.content.res.ColorStateList.valueOf(onSurfaceColor));
+            mReloadButton.setIconTint(ColorStateList.valueOf(onSurfaceColor));
         }
 
         // 6. Clear button icon tint
         if (mClearButton != null) {
-            mClearButton.setIconTint(android.content.res.ColorStateList.valueOf(onSurfaceColor));
+            mClearButton.setIconTint(ColorStateList.valueOf(onSurfaceColor));
         }
 
         // 7. Search up/down button icon tints
         if (mSearchUpButton instanceof MaterialButton btn) {
-            btn.setIconTint(android.content.res.ColorStateList.valueOf(onSurfaceColor));
+            btn.setIconTint(ColorStateList.valueOf(onSurfaceColor));
         }
         if (mSearchDownButton instanceof MaterialButton btn) {
-            btn.setIconTint(android.content.res.ColorStateList.valueOf(onSurfaceColor));
+            btn.setIconTint(ColorStateList.valueOf(onSurfaceColor));
         }
 
         // 8. Search text color

@@ -9,6 +9,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.card.MaterialCardView;
 import com.solarized.firedown.R;
 import com.solarized.firedown.utils.SelectionStyling;
 
@@ -72,7 +73,7 @@ public class IncognitoInProgressHeaderAdapter
         // primaryContainer the home active-download card uses) while still
         // setting it apart from the plain download rows. Set here, not in the
         // layout, because the wash is composed in code.
-        if (v instanceof com.google.android.material.card.MaterialCardView card) {
+        if (v instanceof MaterialCardView card) {
             card.setCardBackgroundColor(SelectionStyling.selectedCardWashOver(
                     parent.getContext(), com.google.android.material.R.attr.colorSurface));
         }

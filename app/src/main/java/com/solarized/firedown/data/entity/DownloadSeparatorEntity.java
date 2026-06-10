@@ -1,5 +1,6 @@
 package com.solarized.firedown.data.entity;
 
+import java.util.Objects;
 /**
  * Represents a section header/separator inserted between download items.
  * Used by PagingDataTransforms.insertSeparators to group downloads
@@ -29,11 +30,11 @@ public class DownloadSeparatorEntity {
         if (!(o instanceof DownloadSeparatorEntity that)) return false;
         return category == that.category
                 && titleResId == that.titleResId
-                && java.util.Objects.equals(titleText, that.titleText);
+                && Objects.equals(titleText, that.titleText);
     }
 
     @Override
     public int hashCode() {
-        return java.util.Objects.hash(titleResId, titleText, category);
+        return Objects.hash(titleResId, titleText, category);
     }
 }

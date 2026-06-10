@@ -2,6 +2,8 @@ package com.solarized.firedown.sabr;
 
 import com.solarized.firedown.sabr.ProtobufWire.Writer;
 import com.solarized.firedown.sabr.ProtobufWire.Reader;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Hand-coded protobuf messages for SABR protocol.
@@ -469,16 +471,16 @@ public class SabrMessages {
             SabrContextSendingPolicy p = new SabrContextSendingPolicy();
             // These are packed repeated int32 fields
             Reader r = new Reader(data, offset, length);
-            java.util.List<Integer> starts = new java.util.ArrayList<>();
-            java.util.List<Integer> stops = new java.util.ArrayList<>();
-            java.util.List<Integer> discards = new java.util.ArrayList<>();
+            List<Integer> starts = new ArrayList<>();
+            List<Integer> stops = new ArrayList<>();
+            List<Integer> discards = new ArrayList<>();
             while (r.hasRemaining()) {
                 int tag = r.readTag();
                 int fn = r.getFieldNumber(tag);
                 int wt = r.getWireType(tag);
                 if (wt == 2) { // packed
                     Reader sub = r.readSubMessage();
-                    java.util.List<Integer> target = fn == 1 ? starts : fn == 2 ? stops : fn == 3 ? discards : null;
+                    List<Integer> target = fn == 1 ? starts : fn == 2 ? stops : fn == 3 ? discards : null;
                     if (target != null) {
                         while (sub.hasRemaining()) target.add(sub.readInt32());
                     }

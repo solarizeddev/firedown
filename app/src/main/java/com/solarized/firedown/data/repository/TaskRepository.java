@@ -2,7 +2,6 @@ package com.solarized.firedown.data.repository;
 
 import android.content.Context;
 import android.content.Intent;
-import android.os.Message;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;

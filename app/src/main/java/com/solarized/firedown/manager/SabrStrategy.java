@@ -17,6 +17,7 @@ import com.solarized.firedown.utils.FileUriHelper;
 import com.solarized.firedown.utils.MessageHelper;
 import com.solarized.firedown.utils.WebUtils;
 
+import java.util.Map;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 
@@ -279,7 +280,7 @@ public class SabrStrategy implements DownloadStrategy {
 
         int muxResult = ffmpegDownloader.start(
                 inputs,
-                (java.util.Map<String, String>) null,
+                (Map<String, String>) null,
                 null,
                 file.getAbsolutePath(),
                 result.videoFile.length()

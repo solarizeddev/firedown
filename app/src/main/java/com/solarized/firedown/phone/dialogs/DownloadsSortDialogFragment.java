@@ -18,7 +18,6 @@ import com.solarized.firedown.IntentActions;
 import com.solarized.firedown.Sorting;
 import com.solarized.firedown.data.models.DownloadsViewModel;
 
-import javax.inject.Inject;
 
 import dagger.hilt.android.AndroidEntryPoint;
 

@@ -5,7 +5,6 @@ import static com.bumptech.glide.request.target.Target.SIZE_ORIGINAL;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.net.Uri;
-import android.os.ParcelFileDescriptor;
 
 import androidx.annotation.NonNull;
 

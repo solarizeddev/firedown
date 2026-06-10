@@ -27,6 +27,7 @@ import com.solarized.firedown.utils.DownloadAggregator;
 import com.solarized.firedown.utils.DownloadSortOrganizer;
 import com.solarized.firedown.utils.GroupAggregate;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -164,7 +165,7 @@ public class DownloadsViewModel extends ViewModel {
         MediatorLiveData<Map<Integer, GroupAggregate>> mediator = new MediatorLiveData<>();
         mediator.addSource(source, list -> {
             if (list == null) {
-                mediator.postValue(java.util.Collections.emptyMap());
+                mediator.postValue(Collections.emptyMap());
                 return;
             }
             // Dispatch off the main looper; postValue routes the result

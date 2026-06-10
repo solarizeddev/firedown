@@ -5,8 +5,8 @@ import static android.content.Context.INPUT_METHOD_SERVICE;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.util.Log;
-import android.os.Build;
 import android.view.ViewTreeObserver;
+import android.view.WindowInsets;
 import android.view.WindowInsetsController;
 import android.view.inputmethod.InputMethodManager;
 
@@ -58,7 +58,7 @@ public class FocusEditText extends AppCompatEditText {
                     if (BuildUtils.hasAndroidR()) {
                         WindowInsetsController wic = getWindowInsetsController();
                         if (wic != null) {
-                            wic.show(android.view.WindowInsets.Type.ime());
+                            wic.show(WindowInsets.Type.ime());
                             return;
                         }
                     }

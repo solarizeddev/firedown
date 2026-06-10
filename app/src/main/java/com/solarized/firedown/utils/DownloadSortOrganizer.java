@@ -5,6 +5,8 @@ import com.solarized.firedown.Sorting;
 import com.solarized.firedown.data.Download;
 import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.data.entity.DownloadSeparatorEntity;
+import java.util.HashMap;
+import java.util.Locale;
 
 /**
  * Determines the section category for a DownloadEntity based on the current sort mode.
@@ -141,13 +143,13 @@ public class DownloadSortOrganizer {
     // --- Domain ---
 
     // Maps domain hash → domain string for label lookup within a single paging pass
-    private final java.util.HashMap<Integer, String> mDomainLabels = new java.util.HashMap<>();
+    private final HashMap<Integer, String> mDomainLabels = new HashMap<>();
 
     private int getDomainCategory(String originUrl, String fileUrl) {
         String url = (originUrl != null && !originUrl.isEmpty()) ? originUrl : fileUrl;
         String domain = WebUtils.getDomainName(url);
         if (domain == null || domain.isEmpty()) domain = "Unknown";
-        int hash = domain.toLowerCase(java.util.Locale.ROOT).hashCode();
+        int hash = domain.toLowerCase(Locale.ROOT).hashCode();
         mDomainLabels.put(hash, domain);
         return hash;
     }

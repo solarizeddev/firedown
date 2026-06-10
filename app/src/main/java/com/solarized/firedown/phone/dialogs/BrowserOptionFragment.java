@@ -1,5 +1,6 @@
 package com.solarized.firedown.phone.dialogs;
 
+import android.app.Dialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.drawable.Drawable;
@@ -16,11 +17,14 @@ import android.view.ViewGroup;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
+import androidx.activity.ComponentDialog;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.core.view.MenuProvider;
+import androidx.fragment.app.DialogFragment;
+import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.GridLayoutManager;
@@ -388,11 +392,11 @@ public class BrowserOptionFragment extends BaseFocusFragment implements OnItemCl
                 }
             }
         };
-        androidx.fragment.app.Fragment parent = getParentFragment();
-        if (parent instanceof androidx.fragment.app.DialogFragment) {
-            android.app.Dialog dialog = ((androidx.fragment.app.DialogFragment) parent).getDialog();
-            if (dialog instanceof androidx.activity.ComponentDialog) {
-                ((androidx.activity.ComponentDialog) dialog).getOnBackPressedDispatcher()
+        Fragment parent = getParentFragment();
+        if (parent instanceof DialogFragment) {
+            Dialog dialog = ((DialogFragment) parent).getDialog();
+            if (dialog instanceof ComponentDialog) {
+                ((ComponentDialog) dialog).getOnBackPressedDispatcher()
                         .addCallback(getViewLifecycleOwner(), mClearFilterOnBack);
             }
         }
@@ -698,7 +702,7 @@ public class BrowserOptionFragment extends BaseFocusFragment implements OnItemCl
         // convention, matches DownloadFragment's effective behavior.
         // getCurrentSortForIds returns SORT_TYPE_ALL on an unknown id,
         // so View.NO_ID routes to the same predicate fall-through.
-        int selectedId = checkedIds.isEmpty() ? android.view.View.NO_ID : checkedIds.get(0);
+        int selectedId = checkedIds.isEmpty() ? View.NO_ID : checkedIds.get(0);
         String type = mBrowserDownloadViewModel.getCurrentSortForIds(selectedId);
         mBrowserDownloadViewModel.sortBrowserDownloads(type);
         // Only intercept Back while a chip is actually checked — otherwise

@@ -3,6 +3,7 @@ package com.solarized.firedown.data.models;
 import android.content.Context;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.LiveData;
+import androidx.lifecycle.Transformations;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelKt;
 import androidx.paging.Pager;
@@ -13,7 +14,6 @@ import androidx.paging.PagingLiveData;
 
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
-import com.solarized.firedown.data.di.Qualifiers;
 import com.solarized.firedown.data.entity.TabStateArchivedEntity;
 import com.solarized.firedown.data.entity.TabStateHeaderArchivedEntity;
 import com.solarized.firedown.data.repository.TabStateArchivedRepository;
@@ -61,7 +61,7 @@ public class TabsArchiveViewModel extends ViewModel {
         // 2. Transform the data to insert separators using our internal executor
         // We map the PagingData to a version that includes Headers (Object)
         mArchiveData = PagingLiveData.cachedIn(
-                androidx.lifecycle.Transformations.map(rawPagingData, pagingData -> {
+                Transformations.map(rawPagingData, pagingData -> {
                     mDateOrganizer.reset(); // Reset organizer state for each new page generation
                     return PagingDataTransforms.insertSeparators(
                             pagingData,

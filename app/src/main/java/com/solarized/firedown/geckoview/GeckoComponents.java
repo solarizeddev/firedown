@@ -10,6 +10,7 @@ import android.content.pm.ActivityInfo;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
+import android.provider.OpenableColumns;
 import android.text.TextUtils;
 import android.util.Log;
 import android.webkit.URLUtil;
@@ -476,7 +477,7 @@ public class GeckoComponents {
                 try (Cursor cursor = activity.getContentResolver().query(
                         sourceUri, null, null, null, null)) {
                     if (cursor != null && cursor.moveToFirst()) {
-                        int nameIndex = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME);
+                        int nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
                         if (nameIndex >= 0) {
                             fileName = cursor.getString(nameIndex);
                         }

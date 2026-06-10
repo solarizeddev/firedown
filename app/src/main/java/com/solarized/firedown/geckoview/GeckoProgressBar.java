@@ -1,13 +1,10 @@
 package com.solarized.firedown.geckoview;
 
 import android.content.Context;
-import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.widget.ProgressBar;
 
-import androidx.core.content.res.ResourcesCompat;
 
-import com.solarized.firedown.R;
 
 public class GeckoProgressBar extends ProgressBar {
 

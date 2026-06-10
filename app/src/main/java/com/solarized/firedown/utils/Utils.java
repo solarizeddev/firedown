@@ -2,11 +2,13 @@ package com.solarized.firedown.utils;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.Intent;
 import android.content.res.AssetManager;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
@@ -17,6 +19,7 @@ import android.os.Parcelable;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.TouchDelegate;
 import android.view.View;
 
 
@@ -62,7 +65,7 @@ public class Utils {
     private final static String NON_THIN = "[^iIl1\\.,']";
 
     public static boolean isActivityDestroyed(Context context) {
-        while (context instanceof android.content.ContextWrapper wrapper) {
+        while (context instanceof ContextWrapper wrapper) {
             if (context instanceof Activity activity) {
                 return activity.isDestroyed() || activity.isFinishing();
             }
@@ -75,13 +78,13 @@ public class Utils {
     public static void expandTouchArea(View view) {
         int extra = (int) (view.getContext().getResources().getDisplayMetrics().density * Preferences.EXTRA_TOUCH_AREA_DP);
         ((View) view.getParent()).post(() -> {
-            android.graphics.Rect rect = new android.graphics.Rect();
+            Rect rect = new Rect();
             view.getHitRect(rect);
             rect.top -= extra;
             rect.bottom += extra;
             rect.left -= extra;
             rect.right += extra;
-            ((View) view.getParent()).setTouchDelegate(new android.view.TouchDelegate(rect, view));
+            ((View) view.getParent()).setTouchDelegate(new TouchDelegate(rect, view));
         });
     }
 

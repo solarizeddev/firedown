@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.provider.Settings;
 
+import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.biometric.BiometricManager;
@@ -25,7 +26,7 @@ public class LockFragment extends BasePreferenceFragment implements
     private SwitchPreferenceCompat mLockPref;
     private Preference mTimePref;
 
-    private final androidx.activity.result.ActivityResultLauncher<Intent> mSettingsLauncher =
+    private final ActivityResultLauncher<Intent> mSettingsLauncher =
             registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
                     result -> syncUIState());
 

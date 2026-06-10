@@ -3,6 +3,7 @@ package com.solarized.firedown.data.entity;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import android.util.Base64;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -215,7 +216,7 @@ public class CertificateInfoEntity implements Parcelable {
         try {
             byte[] encoded = cert.getEncoded();
             b.pemEncoded = "-----BEGIN CERTIFICATE-----\n"
-                    + android.util.Base64.encodeToString(encoded, android.util.Base64.DEFAULT)
+                    + Base64.encodeToString(encoded, Base64.DEFAULT)
                     + "-----END CERTIFICATE-----";
         } catch (CertificateEncodingException ignored) {
         }

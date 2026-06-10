@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -807,7 +808,7 @@ public class SabrDownloader {
     private String generateCpn() {
         if (cpn == null) {
             StringBuilder sb = new StringBuilder(16);
-            java.util.Random rng = new java.util.Random();
+            Random rng = new Random();
             for (int i = 0; i < 16; i++) sb.append(CPN_CHARS.charAt(rng.nextInt(CPN_CHARS.length())));
             cpn = sb.toString();
         }

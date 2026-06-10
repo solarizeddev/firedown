@@ -13,8 +13,8 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Build;
+import android.os.Process;
 import android.os.StrictMode;
-import android.util.Base64;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -26,14 +26,13 @@ import androidx.work.Configuration;
 import com.solarized.firedown.crash.CrashHandler;
 import com.solarized.firedown.data.DownloadBackupMirror;
 import com.solarized.firedown.data.DownloadDatabase;
+import com.solarized.firedown.data.LegacyShortcutsMigrator;
 import com.solarized.firedown.data.di.Qualifiers;
 import com.solarized.firedown.data.repository.WebHistoryDataRepository;
 import com.solarized.firedown.phone.BrowserActivity;
 
 
-import java.security.SecureRandom;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.Executor;
 
 import javax.inject.Inject;
@@ -57,7 +56,7 @@ public class App extends Application implements Configuration.Provider{
     @Inject
     WebHistoryDataRepository mWebHistoryDataRepository;
     @Inject
-    com.solarized.firedown.data.LegacyShortcutsMigrator mLegacyShortcutsMigrator;
+    LegacyShortcutsMigrator mLegacyShortcutsMigrator;
     @Inject
     ApplicationLifeCycleHandler lifeCycleHandler;
     @Inject
@@ -174,7 +173,7 @@ public class App extends Application implements Configuration.Provider{
 
     private String getCurrentProcessName() {
         String processName = "";
-        int pid = android.os.Process.myPid();
+        int pid = Process.myPid();
         ActivityManager manager = (ActivityManager) this.getSystemService(Context.ACTIVITY_SERVICE);
         for (ActivityManager.RunningAppProcessInfo processInfo : manager.getRunningAppProcesses()) {
             if (processInfo.pid == pid) {
@@ -216,7 +215,7 @@ public class App extends Application implements Configuration.Provider{
         if (isMainProcess != null) return isMainProcess;
         if (mAppContext == null) return false;
 
-        int pid = android.os.Process.myPid();
+        int pid = Process.myPid();
 
         ActivityManager activityManager = ((ActivityManager) mAppContext.getSystemService(ACTIVITY_SERVICE));
 
@@ -297,7 +296,7 @@ public class App extends Application implements Configuration.Provider{
             List<ActivityManager.RunningAppProcessInfo> listProcesses = manager.getRunningAppProcesses();
             if(listProcesses != null){
                 for (ActivityManager.RunningAppProcessInfo processInfo : listProcesses) {
-                    if (processInfo.pid == android.os.Process.myPid()) {
+                    if (processInfo.pid == Process.myPid()) {
                         return processInfo.processName;
                     }
                 }
@@ -324,7 +323,7 @@ public class App extends Application implements Configuration.Provider{
     public static String getDeviceModel(){
         return Build.MANUFACTURER
                 + " " + Build.MODEL + " " + Build.VERSION.RELEASE
-                + " " + Build.VERSION_CODES.class.getFields()[android.os.Build.VERSION.SDK_INT].getName();
+                + " " + Build.VERSION_CODES.class.getFields()[Build.VERSION.SDK_INT].getName();
     }
 
     public static String getVersionName() {

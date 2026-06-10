@@ -8,6 +8,7 @@ import androidx.annotation.VisibleForTesting;
 import androidx.core.text.TextDirectionHeuristicCompat;
 import androidx.core.text.TextDirectionHeuristicsCompat;
 
+import java.util.Locale;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.regex.Matcher;
@@ -249,7 +250,7 @@ public class UrlStringUtils {
      */
     public static boolean isPlayStoreUrl(String url) {
         if (TextUtils.isEmpty(url)) return false;
-        String lower = url.toLowerCase(java.util.Locale.ROOT);
+        String lower = url.toLowerCase(Locale.ROOT);
         if (lower.startsWith("market://")) return true;
         // Match scheme + host + path prefix without committing to a
         // regex (cheaper, and the surface area is tiny).
@@ -265,7 +266,7 @@ public class UrlStringUtils {
      */
     public static boolean isUserCommsScheme(String url) {
         if (TextUtils.isEmpty(url)) return false;
-        String lower = url.toLowerCase(java.util.Locale.ROOT);
+        String lower = url.toLowerCase(Locale.ROOT);
         return lower.startsWith("mailto:")
                 || lower.startsWith("tel:")
                 || lower.startsWith("sms:")

@@ -13,6 +13,8 @@ import androidx.preference.PreferenceManager;
 
 import dagger.hilt.android.qualifiers.ApplicationContext;
 
+import java.util.Calendar;
+import java.util.Locale;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -317,11 +319,11 @@ public class GeckoUblockHelper {
     }
 
     private static String todayKey() {
-        java.util.Calendar c = java.util.Calendar.getInstance();
-        return String.format(java.util.Locale.US, "%04d-%02d-%02d",
-                c.get(java.util.Calendar.YEAR),
-                c.get(java.util.Calendar.MONTH) + 1,
-                c.get(java.util.Calendar.DAY_OF_MONTH));
+        Calendar c = Calendar.getInstance();
+        return String.format(Locale.US, "%04d-%02d-%02d",
+                c.get(Calendar.YEAR),
+                c.get(Calendar.MONTH) + 1,
+                c.get(Calendar.DAY_OF_MONTH));
     }
 
     /**

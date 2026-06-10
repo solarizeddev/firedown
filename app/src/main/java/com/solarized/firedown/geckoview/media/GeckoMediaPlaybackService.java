@@ -15,10 +15,12 @@ import android.media.AudioFocusRequest;
 import android.media.AudioManager;
 import android.os.Build;
 import android.os.IBinder;
+import android.os.SystemClock;
 import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.text.TextUtils;
+import android.util.Base64;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -266,7 +268,7 @@ public class GeckoMediaPlaybackService extends Service {
 
         long lastPosition = state.getPosition();
         if (state.getState() == PlaybackStateCompat.STATE_PLAYING) {
-            long elapsed = android.os.SystemClock.elapsedRealtime() - state.getLastPositionUpdateTime();
+            long elapsed = SystemClock.elapsedRealtime() - state.getLastPositionUpdateTime();
             float rate = state.getPlaybackSpeed();
             lastPosition += (long) (elapsed * rate);
         }
@@ -574,7 +576,7 @@ public class GeckoMediaPlaybackService extends Service {
         if (iconUrl.startsWith("data:image/")) {
             try {
                 String base64 = iconUrl.substring(iconUrl.indexOf(",") + 1);
-                byte[] bytes = android.util.Base64.decode(base64, android.util.Base64.DEFAULT);
+                byte[] bytes = Base64.decode(base64, Base64.DEFAULT);
                 Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
                 if (bitmap != null) {
                     meta.setIconBitmap(bitmap);

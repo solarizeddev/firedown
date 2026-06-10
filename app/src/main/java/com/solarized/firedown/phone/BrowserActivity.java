@@ -1,6 +1,7 @@
 package com.solarized.firedown.phone;
 
 import android.os.Bundle;
+import android.os.Process;
 import androidx.core.splashscreen.SplashScreen;
 
 import com.solarized.firedown.BaseActivity;
@@ -42,7 +43,7 @@ public class BrowserActivity extends BaseActivity {
     @Override
     protected void onDestroy() {
         if (mKillProcessOnDestroy) {
-            android.os.Process.killProcess(android.os.Process.myPid());
+            Process.killProcess(Process.myPid());
         }
         mGeckoRuntimeHelper.getGeckoRuntime().setDelegate(null);
         mActivityContentFrame = null;

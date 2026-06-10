@@ -6,6 +6,8 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import java.io.FileInputStream;
+import java.io.IOException;
 import org.json.JSONObject;
 
 import java.io.File;
@@ -113,8 +115,8 @@ public final class CrashStorage {
         }
     }
 
-    private static byte[] readAll(@NonNull File file) throws java.io.IOException {
-        try (java.io.FileInputStream fis = new java.io.FileInputStream(file)) {
+    private static byte[] readAll(@NonNull File file) throws IOException {
+        try (FileInputStream fis = new FileInputStream(file)) {
             byte[] buf = new byte[(int) Math.min(file.length(), 1024 * 1024)];
             int read = 0;
             while (read < buf.length) {

@@ -1,5 +1,6 @@
 package com.solarized.firedown.phone.fragments;
 
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import androidx.recyclerview.widget.ConcatAdapter;
 import android.provider.DocumentsContract;
@@ -402,7 +403,7 @@ public class DownloadFragment extends BaseDownloadFragment implements
                 "com.android.externalstorage.documents", "primary:Download/Firedown");
         try {
             mRestoreFolderPicker.launch(initial);
-        } catch (android.content.ActivityNotFoundException e) {
+        } catch (ActivityNotFoundException e) {
             showErrorSnackbar(R.string.restore_downloads_none);
         }
     }

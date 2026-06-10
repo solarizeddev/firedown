@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.format.DateUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,6 +24,7 @@ import com.solarized.firedown.R;
 import com.solarized.firedown.phone.dialogs.BaseBottomSheetDialogFragment;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.List;
 
 import dagger.hilt.android.AndroidEntryPoint;
@@ -59,7 +61,7 @@ public class CrashReportSheet extends BaseBottomSheetDialogFragment {
     @Nullable
     private CrashReport mReport;
     @NonNull
-    private List<File> mPending = java.util.Collections.emptyList();
+    private List<File> mPending = Collections.emptyList();
 
     /**
      * Shows the sheet if at least one pending report exists. Safe to
@@ -71,7 +73,7 @@ public class CrashReportSheet extends BaseBottomSheetDialogFragment {
     public static void showIfPending(@NonNull Context context,
                                      @NonNull FragmentManager fm) {
         List<File> pending = CrashStorage.listPending(context);
-        android.util.Log.i(TAG, "showIfPending: pending=" + pending.size()
+        Log.i(TAG, "showIfPending: pending=" + pending.size()
                 + " stateSaved=" + fm.isStateSaved()
                 + " alreadyShown=" + (fm.findFragmentByTag(TAG) != null));
         if (pending.isEmpty()) return;

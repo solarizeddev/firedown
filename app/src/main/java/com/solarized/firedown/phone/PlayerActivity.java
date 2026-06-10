@@ -7,6 +7,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Rect;
@@ -27,6 +28,7 @@ import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import androidx.core.view.WindowCompat;
 
+import androidx.fragment.app.Fragment;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -321,9 +323,9 @@ public class PlayerActivity extends AppCompatActivity {
      */
     public void toggleOrientation() {
         int requested = getRequestedOrientation();
-        int target = (requested == android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
-                ? android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-                : android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
+        int target = (requested == ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
+                ? ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+                : ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
         setRequestedOrientation(target);
     }
 
@@ -446,7 +448,7 @@ public class PlayerActivity extends AppCompatActivity {
 
     @Nullable
     private MediaViewerFragment getMediaFragment() {
-        androidx.fragment.app.Fragment f = getSupportFragmentManager()
+        Fragment f = getSupportFragmentManager()
                 .findFragmentByTag(MediaViewerFragment.class.getSimpleName());
         return (f instanceof MediaViewerFragment) ? (MediaViewerFragment) f : null;
     }

@@ -1,6 +1,8 @@
 package com.solarized.firedown.geckoview;
 
+import android.net.Uri;
 import android.text.TextUtils;
+import android.util.Base64;
 import android.util.Log;
 
 import com.caverock.androidsvg.SVG;
@@ -720,8 +722,8 @@ public class GeckoInspectTask implements Runnable, ProbeRegistry {
             if (jpeg == null || jpeg.length == 0) {
                 return null;
             }
-            return "data:image/jpeg;base64," + android.util.Base64.encodeToString(
-                    jpeg, android.util.Base64.NO_WRAP);
+            return "data:image/jpeg;base64," + Base64.encodeToString(
+                    jpeg, Base64.NO_WRAP);
         } catch (Exception e) {
             Log.w(TAG, "Mega: thumbnail fetch failed", e);
             return null;
@@ -822,7 +824,7 @@ public class GeckoInspectTask implements Runnable, ProbeRegistry {
 
         String hostname = null;
         try {
-            hostname = android.net.Uri.parse(entity.getFileOrigin()).getHost();
+            hostname = Uri.parse(entity.getFileOrigin()).getHost();
         } catch (Exception ignored) {
         }
         String descriptive = WebUtils.sanitizeTitleForFilename(mName, hostname);

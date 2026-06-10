@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import dagger.hilt.android.AndroidEntryPoint;
+import org.mozilla.geckoview.GeckoSession;
 
 /**
  * Tab switcher for regular (non-incognito) tabs.
@@ -152,7 +153,7 @@ public class TabsFragment extends BaseTabsFragment {
     }
 
     private void reactivateExtensionTab(GeckoState geckoState) {
-        org.mozilla.geckoview.GeckoSession session = geckoState.getGeckoSession();
+        GeckoSession session = geckoState.getGeckoSession();
         if (session == null) return;
         try {
             mGeckoRuntimeHelper.getGeckoRuntime()

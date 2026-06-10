@@ -1,5 +1,6 @@
 package com.solarized.firedown.manager;
 
+import android.os.Process;
 import android.util.Log;
 
 import com.solarized.firedown.StoragePaths;
@@ -48,7 +49,7 @@ public class DownloadRunnable implements Runnable {
 
         try {
             StoragePaths.ensureDownloadPath(context.getContext());
-            android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);
+            Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
 
             if (context.isInterrupted()) {
                 Log.d(TAG, "Interrupted before start");

@@ -1,9 +1,11 @@
 package com.solarized.firedown.crash;
 
 import android.content.Context;
+import android.os.Process;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import java.io.File;
 
 /**
  * {@link Thread.UncaughtExceptionHandler} that captures Java crashes
@@ -47,7 +49,7 @@ public final class CrashHandler implements Thread.UncaughtExceptionHandler {
     public void uncaughtException(@NonNull Thread t, @NonNull Throwable e) {
         try {
             CrashReport report = CrashReport.fromThrowable(t, e);
-            java.io.File f = CrashStorage.write(mContext, report);
+            File f = CrashStorage.write(mContext, report);
             Log.i(TAG, "captured " + e.getClass().getSimpleName()
                     + " on thread " + t.getName()
                     + " → " + (f != null ? f.getName() : "WRITE FAILED"));
@@ -60,7 +62,7 @@ public final class CrashHandler implements Thread.UncaughtExceptionHandler {
         if (mPrevious != null) {
             mPrevious.uncaughtException(t, e);
         } else {
-            android.os.Process.killProcess(android.os.Process.myPid());
+            Process.killProcess(Process.myPid());
             System.exit(10);
         }
     }

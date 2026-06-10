@@ -431,7 +431,7 @@ public class HttpDownloadStrategy implements DownloadStrategy {
             // Referer/Origin here is the smoking gun for the "1 MiB then EOF"
             // truncation symptom.
             StringBuilder hdrs = new StringBuilder();
-            for (java.util.Map.Entry<String, String> e : perCallHeaders.entrySet()) {
+            for (Map.Entry<String, String> e : perCallHeaders.entrySet()) {
                 String k = e.getKey(), v = e.getValue();
                 String klc = k.toLowerCase(Locale.ROOT);
                 hdrs.append(k).append('=');

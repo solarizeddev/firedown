@@ -2,6 +2,7 @@ package com.solarized.firedown.ui;
 
 import android.content.Context;
 import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.util.TypedValue;
 
 import com.solarized.firedown.R;
@@ -210,7 +211,7 @@ public final class IncognitoColors {
                 },
                 new int[]{
                         getSecondaryContainer(context, incognito),
-                        android.graphics.Color.TRANSPARENT
+                        Color.TRANSPARENT
                 }
         );
     }

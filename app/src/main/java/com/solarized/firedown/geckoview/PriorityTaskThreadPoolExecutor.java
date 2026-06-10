@@ -5,6 +5,7 @@ import android.util.Log;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -206,7 +207,7 @@ public class PriorityTaskThreadPoolExecutor {
         if (awaitingTasks.isEmpty()) {
             return;
         }
-        java.util.ArrayList<Task> pending = new java.util.ArrayList<>(awaitingTasks.size());
+        ArrayList<Task> pending = new ArrayList<>(awaitingTasks.size());
         awaitingTasks.drainTo(pending);
         for (Task t : pending) {
             t.priority = effectivePriority(t);

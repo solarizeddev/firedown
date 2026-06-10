@@ -14,6 +14,7 @@ import com.solarized.firedown.ffmpegutils.FFmpegMetaData;
 import com.solarized.firedown.ffmpegutils.FFmpegMetaDataReader;
 import com.solarized.firedown.ffmpegutils.FFmpegStreamInfo;
 import com.solarized.firedown.ffmpegutils.FFmpegUtils;
+import com.solarized.firedown.geckoview.PoTokenGenerator;
 import com.solarized.firedown.utils.FileUriHelper;
 import com.solarized.firedown.utils.GalleryPublisher;
 import com.solarized.firedown.utils.Utils;
@@ -61,7 +62,7 @@ public class DownloadTask implements DownloadCallback {
     public DownloadTask(RunnableManager runnableManager,
                         DownloadDataRepository repository,
                         OkHttpClient okHttpClient,
-                        com.solarized.firedown.geckoview.PoTokenGenerator poTokenGenerator) {
+                        PoTokenGenerator poTokenGenerator) {
         this.runnableManager = runnableManager;
         this.repository = repository;
         this.okHttpClient = okHttpClient;
@@ -69,7 +70,7 @@ public class DownloadTask implements DownloadCallback {
         this.entity = new DownloadEntity();
     }
 
-    private final com.solarized.firedown.geckoview.PoTokenGenerator poTokenGenerator;
+    private final PoTokenGenerator poTokenGenerator;
 
     // ========================================================================
     // Initialization

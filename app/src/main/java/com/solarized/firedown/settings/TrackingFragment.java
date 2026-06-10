@@ -11,7 +11,6 @@ import com.solarized.firedown.utils.NavigationUtils;
 import dagger.hilt.android.AndroidEntryPoint;
 import org.mozilla.geckoview.ContentBlocking;
 
-import dagger.hilt.android.AndroidEntryPoint;
 
 @AndroidEntryPoint
 public class TrackingFragment extends BasePreferenceFragment implements Preference.OnPreferenceClickListener {

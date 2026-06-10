@@ -28,6 +28,7 @@ import androidx.media3.extractor.DefaultExtractorsFactory;
 import androidx.media3.extractor.ExtractorsFactory;
 import androidx.media3.ui.PlayerView;
 
+import androidx.navigation.NavBackStackEntry;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.slider.Slider;
 import com.google.android.material.snackbar.Snackbar;
@@ -36,6 +37,7 @@ import com.solarized.firedown.Keys;
 import com.solarized.firedown.R;
 import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.manager.tasks.TaskManager;
+import com.solarized.firedown.utils.FragmentArgs;
 import com.solarized.firedown.utils.NavigationUtils;
 
 import java.util.ArrayList;
@@ -83,7 +85,7 @@ public class FrameGrabberFragment extends BaseFocusFragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mDownloadEntity = com.solarized.firedown.utils.FragmentArgs.parcelable(
+        mDownloadEntity = FragmentArgs.parcelable(
                 this, Keys.ITEM_ID, DownloadEntity.class);
         if (mDownloadEntity == null && mNavController != null) {
             mNavController.popBackStack();
@@ -213,7 +215,7 @@ public class FrameGrabberFragment extends BaseFocusFragment {
         args.putParcelableArrayList(Keys.ITEM_LIST_ID, entities);
         args.putLong(Keys.FRAME_POSITION_MS, posMs);
 
-        androidx.navigation.NavBackStackEntry previous = mNavController.getPreviousBackStackEntry();
+        NavBackStackEntry previous = mNavController.getPreviousBackStackEntry();
         if (previous != null) {
             previous.getSavedStateHandle().set(IntentActions.DOWNLOAD_START_SAVE_FRAME, args);
         } else {

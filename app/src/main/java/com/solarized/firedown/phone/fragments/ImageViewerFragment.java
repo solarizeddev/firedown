@@ -34,6 +34,7 @@ import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.ui.ZoomableImageView;
 import com.solarized.firedown.utils.FileUriHelper;
 import com.solarized.firedown.Keys;
+import com.solarized.firedown.utils.FragmentArgs;
 
 public class ImageViewerFragment extends Fragment {
 
@@ -80,8 +81,8 @@ public class ImageViewerFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        mDownloadEntity = com.solarized.firedown.utils.FragmentArgs.parcelable(
-                this, Keys.ITEM_ID, com.solarized.firedown.data.entity.DownloadEntity.class);
+        mDownloadEntity = FragmentArgs.parcelable(
+                this, Keys.ITEM_ID, DownloadEntity.class);
         // Args lost on process-death restore: PlayerActivity is just a
         // shell for this viewer, so finishing the activity is the right
         // recovery — the user lands back where they launched from.

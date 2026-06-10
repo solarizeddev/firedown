@@ -19,6 +19,7 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.WindowCompat;
@@ -29,6 +30,7 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 
+import androidx.preference.PreferenceManager;
 import com.google.android.material.snackbar.Snackbar;
 import com.solarized.firedown.crash.CrashReportSheet;
 import com.solarized.firedown.data.entity.BrowserDownloadEntity;
@@ -160,10 +162,10 @@ public abstract class BaseActivity extends AppCompatActivity implements IntentHa
         // up the overridden surface tokens. App.setTheme already coerced
         // the night mode to YES for the OLED sentinel; this layers the
         // pure-black surfaces on top of the dark theme that just came up.
-        int themePref = androidx.preference.PreferenceManager
+        int themePref = PreferenceManager
                 .getDefaultSharedPreferences(this)
                 .getInt(Preferences.SETTINGS_THEME,
-                        androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
+                        AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
         if (themePref == Preferences.THEME_OLED && !isIncognitoTheme()) {
             getTheme().applyStyle(R.style.ThemeOverlay_App_OLED, true);
         }
@@ -541,10 +543,10 @@ public abstract class BaseActivity extends AppCompatActivity implements IntentHa
      * theme.
      */
     private boolean isIncognitoTheme() {
-        android.util.TypedValue tv = new android.util.TypedValue();
+        TypedValue tv = new TypedValue();
         if (!getTheme().resolveAttribute(R.attr.isIncognitoTheme, tv, true)) {
             return false;
         }
-        return tv.type == android.util.TypedValue.TYPE_INT_BOOLEAN && tv.data != 0;
+        return tv.type == TypedValue.TYPE_INT_BOOLEAN && tv.data != 0;
     }
 }

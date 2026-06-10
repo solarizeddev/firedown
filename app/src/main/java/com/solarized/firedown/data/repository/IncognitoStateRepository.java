@@ -1,5 +1,6 @@
 package com.solarized.firedown.data.repository;
 
+import android.os.Handler;
 import android.os.Looper;
 
 import androidx.annotation.Nullable;
@@ -270,7 +271,7 @@ public class IncognitoStateRepository {
                 state.closeGeckoSession();
             }
         } else {
-            new android.os.Handler(Looper.getMainLooper()).post(() -> {
+            new Handler(Looper.getMainLooper()).post(() -> {
                 for (GeckoState state : toClose) {
                     state.dismissActivePrompt();
                     state.closeGeckoSession();

@@ -17,12 +17,16 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.graphics.ColorUtils;
 import androidx.core.widget.ImageViewCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.card.MaterialCardView;
 import com.solarized.firedown.R;
+import com.solarized.firedown.ui.AutocompleteSectionDecoration;
 import com.solarized.firedown.ui.IncognitoColors;
+import com.solarized.firedown.utils.UrlStringUtils;
 
 public class AutoCompleteView extends FrameLayout {
 
@@ -40,7 +44,7 @@ public class AutoCompleteView extends FrameLayout {
 
     private View mSearchCard;
 
-    private com.solarized.firedown.ui.AutocompleteSectionDecoration mSectionDecoration;
+    private AutocompleteSectionDecoration mSectionDecoration;
 
     private MaterialButton mVisibilityView;
 
@@ -118,7 +122,7 @@ public class AutoCompleteView extends FrameLayout {
         mSearchView.setItemAnimator(null);
 
         // Inset hairlines between suggestion sections (search / history / tabs).
-        mSectionDecoration = new com.solarized.firedown.ui.AutocompleteSectionDecoration(context);
+        mSectionDecoration = new AutocompleteSectionDecoration(context);
         mSearchView.addItemDecoration(mSectionDecoration);
 
         mClipboardView.setOnClickListener(v2 -> consumeClipboard());
@@ -148,7 +152,7 @@ public class AutoCompleteView extends FrameLayout {
         }
 
         // 2. Clipboard card background
-        if (mClipboardView instanceof com.google.android.material.card.MaterialCardView card) {
+        if (mClipboardView instanceof MaterialCardView card) {
             card.setCardBackgroundColor(surfaceContainerHighest);
         }
 
@@ -188,7 +192,7 @@ public class AutoCompleteView extends FrameLayout {
         //    resolves to the 'highest' tone) so the list and the pill above
         //    it sit on the same surface. Per-row text/icon tints are handled
         //    in the adapter via setIncognito().
-        if (mSearchCard instanceof com.google.android.material.card.MaterialCardView card) {
+        if (mSearchCard instanceof MaterialCardView card) {
             card.setCardBackgroundColor(surfaceContainerHighest);
         }
 
@@ -197,7 +201,7 @@ public class AutoCompleteView extends FrameLayout {
         //    incognito (no dedicated outline token exists for incognito).
         if (mSectionDecoration != null) {
             mSectionDecoration.setColor(
-                    androidx.core.graphics.ColorUtils.setAlphaComponent(onSurfaceVariant, 0x40));
+                    ColorUtils.setAlphaComponent(onSurfaceVariant, 0x40));
             mSearchView.invalidateItemDecorations();
         }
     }
@@ -304,7 +308,7 @@ public class AutoCompleteView extends FrameLayout {
         // what openUri()/parseUri does with the same text downstream.
         if (mClipboardImage != null) {
             mClipboardImage.setImageResource(
-                    com.solarized.firedown.utils.UrlStringUtils.isURLLike(text.trim())
+                    UrlStringUtils.isURLLike(text.trim())
                             ? R.drawable.ic_globe_24
                             : R.drawable.ic_search_24);
         }

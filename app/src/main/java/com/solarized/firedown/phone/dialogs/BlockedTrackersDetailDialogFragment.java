@@ -21,6 +21,7 @@ import com.solarized.firedown.geckoview.TrackingCategory;
 import com.solarized.firedown.ui.adapters.BlockedTrackerDetailAdapter;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -126,7 +127,7 @@ public class BlockedTrackersDetailDialogFragment extends BaseBottomSheetDialogFr
         // ("Tracking content", "Social media", …) added more chrome than
         // signal, especially since most blocks land in the catch-all
         // "Tracking content" bucket.
-        java.util.LinkedHashMap<String, Integer> merged = new java.util.LinkedHashMap<>();
+        LinkedHashMap<String, Integer> merged = new LinkedHashMap<>();
         int grandTotal = 0;
 
         for (TrackingCategory category : CATEGORY_ORDER) {

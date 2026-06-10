@@ -5,6 +5,7 @@ import android.text.TextUtils;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+import java.net.URL;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.regex.Pattern;
 
@@ -135,7 +136,7 @@ public final class FiredownNameHelper {
 
         String host;
         try {
-            host = new java.net.URL(url).getHost();
+            host = new URL(url).getHost();
         } catch (Exception e) {
             return "unknown";
         }
@@ -158,7 +159,7 @@ public final class FiredownNameHelper {
     static String extractExtension(String url) {
         if (TextUtils.isEmpty(url)) return "";
         try {
-            String path = new java.net.URL(url).getPath();
+            String path = new URL(url).getPath();
             int slash = path.lastIndexOf('/');
             String last = (slash >= 0) ? path.substring(slash + 1) : path;
             int dot = last.lastIndexOf('.');

@@ -3,7 +3,6 @@ package com.solarized.firedown.ui;
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.content.res.TypedArray;
-import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 
 import androidx.annotation.NonNull;
@@ -13,7 +12,6 @@ import androidx.core.content.ContextCompat;
 import com.google.android.material.textfield.TextInputLayout;
 import com.solarized.firedown.R;
 
-import java.util.ArrayList;
 
 public class LoginPanelTextInputLayout extends TextInputLayout {
 
