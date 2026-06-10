@@ -1,55 +1,56 @@
 /* Firedown "Send to browser" pages — built from the firedown.app site's own
-   design vocabulary (style.css + install.html): warm off-white surface,
-   signature coral gradient (#d44e86 -> #f06560 -> #f5a97a), IBM Plex
-   Sans/Mono, channel-card pattern (white card, hairline border),
-   rounded-rect CTAs (10px — the site uses no pills), and the
-   dark navy footer bar. Served at /style.css; English-only by design.
-   The @import degrades to system fonts offline. */
+   design vocabulary (style.css + install.html): the signature coral gradient
+   (#d44e86 -> #f06560 -> #f5a97a) as the FULL page background, one white
+   feature card holding the content (the site's feature-card pattern), IBM
+   Plex Sans/Mono, rounded-rect CTAs (10px — the site uses no pills).
+   Single fixed theme by design — the gradient + white card ARE the brand,
+   so there is no prefers-color-scheme adaptation. Served at /style.css;
+   English-only by design. The @import degrades to system fonts offline. */
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,600;1,600&display=swap');
 :root{
   --coral:#f06560; --coral-dark:#d44e86;
   --bg-warm:#f7f3ef; --bg-card:#ffffff;
   --text:#1e1c2e; --text-mid:#4a475e; --text-soft:#8a8898;
   --border:rgba(30,28,46,.09);
-  --shadow:0 4px 24px rgba(30,28,46,.10);
-  --shadow-lg:0 16px 60px rgba(30,28,46,.16);
+  --shadow-lg:0 18px 60px rgba(30,28,46,.28);
 }
 *{box-sizing:border-box}
 html,body{height:100%}
-body{background:var(--bg-warm);color:var(--text);
+body{color:var(--text);
   font-family:'IBM Plex Sans',system-ui,sans-serif;
+  background:linear-gradient(150deg,#d44e86 0%,#f06560 55%,#f5a97a 100%);
   /* dvh: mobile 100vh includes the area under the browser's URL bar, which
      pushed the footer below the fold on Brave/Chrome. dvh is the actually
      visible height; the vh line is the fallback for older WebViews. */
   margin:0;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column}
+/* the site hero's radial glow, over the whole page now */
+body::before{content:"";position:fixed;inset:0;
+  background:radial-gradient(ellipse at 72% 18%,rgba(255,255,255,.16),transparent 60%);
+  pointer-events:none}
 
-/* ── hero: the signature coral gradient band ── */
-.hero{position:relative;flex:none;
-  background:linear-gradient(150deg,#d44e86 0%,#f06560 55%,#f5a97a 100%);
-  display:flex;align-items:center;justify-content:center;padding:34px 20px 52px;overflow:hidden}
-.hero::after{content:"";position:absolute;inset:0;
-  background:radial-gradient(ellipse at 72% 28%,rgba(255,255,255,.14),transparent 60%);pointer-events:none}
-.logo{height:60px;width:auto;max-width:68%;filter:brightness(0) invert(1);position:relative}
+/* ── header: just the whitened wordmark on the gradient ── */
+.hero{position:relative;flex:none;display:flex;align-items:center;justify-content:center;
+  padding:36px 20px 26px}
+.logo{height:56px;width:auto;max-width:66%;filter:brightness(0) invert(1);position:relative}
 
-/* ── main column ── */
-.main{flex:1;width:100%;max-width:560px;margin:-30px auto 0;padding:0 18px 24px;position:relative}
+/* ── the white feature card: the page's single content surface ── */
+.main{position:relative;width:calc(100% - 32px);max-width:560px;margin:0 auto;
+  background:var(--bg-card);border-radius:24px;box-shadow:var(--shadow-lg);
+  padding:8px 22px 24px}
 
 /* site headline voice: light weight + italic em emphasis */
-h1{font-weight:300;font-size:30px;line-height:1.12;letter-spacing:-.03em;
-  color:var(--text);margin:18px 4px 8px;text-align:center}
+h1{font-weight:300;font-size:29px;line-height:1.12;letter-spacing:-.03em;
+  color:var(--text);margin:8px 4px 8px;text-align:center}
 h1 em{font-style:italic;font-weight:600}
-/* .main pulls itself up -30px over the hero, so the eyebrow's top margin
-   must clear that overlap AND leave visible air below the gradient band. */
 .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:.7rem;font-weight:500;
   letter-spacing:.2em;text-transform:uppercase;color:var(--coral-dark);
-  text-align:center;margin:48px 0 0}
+  text-align:center;margin:18px 0 0}
 .lead{color:var(--text-mid);font-size:15px;line-height:1.6;margin:0 12px 18px;text-align:center}
 
-/* ── channel-card (the install page's card pattern) ── */
-.cardx{position:relative;background:var(--bg-card);border:1px solid var(--border);
-  border-radius:24px;padding:22px 20px 20px;box-shadow:var(--shadow);margin-bottom:14px}
+/* ── file panel: warm inset inside the white card ── */
+.cardx{background:var(--bg-warm);border:1px solid var(--border);
+  border-radius:16px;padding:18px;margin:14px 0 0}
 
-/* file presentation inside the card */
 .file-head{display:flex;align-items:center;gap:14px;margin-bottom:14px}
 .ic{width:52px;height:52px;border-radius:14px;flex:none;
   background:linear-gradient(135deg,var(--coral-dark),var(--coral));
@@ -78,31 +79,22 @@ h1 em{font-style:italic;font-weight:600}
 /* ── PIN ── */
 form{text-align:center}
 input[type=text]{width:208px;text-align:center;letter-spacing:14px;font-size:32px;
-  font-family:'IBM Plex Mono',monospace;background:var(--bg-warm);
+  font-family:'IBM Plex Mono',monospace;background:var(--bg-card);
   border:2px solid rgba(30,28,46,.12);border-radius:14px;color:var(--text);
   padding:14px 0 14px 14px;outline:none;margin:2px auto 16px;display:block}
 input[type=text]:focus{border-color:var(--coral)}
 .err{color:#c0436b;font-size:13.5px;font-weight:600;text-align:center;margin:0 0 14px}
 
-/* ── dark navy footer bar (site footer voice) ── */
-footer{flex:none;background:var(--text);margin-top:auto;
-  padding:14px 20px;text-align:center;font-size:12px;line-height:1.7;color:rgba(255,255,255,.5)}
-footer .lock{color:var(--coral)}
-footer b{color:rgba(255,255,255,.75);font-weight:500}
+/* ── footer: white-alpha text straight on the gradient ── */
+footer{flex:none;position:relative;margin-top:auto;
+  padding:18px 20px;text-align:center;font-size:12px;line-height:1.7;
+  color:rgba(255,255,255,.75)}
+footer .lock{color:#fff}
+footer b{color:#fff;font-weight:600}
 
 /* desktop: breathe a little more */
 @media(min-width:680px){
-  .hero{padding:52px 20px 72px}
-  .main{padding-bottom:48px}
-  .cardx{padding:30px 28px 28px}
-}
-
-/* ── dark scheme: brand constant, surfaces adapt ── */
-@media (prefers-color-scheme: dark){
-  :root{--bg-warm:#16141a;--bg-card:#1d1b22;--text:#eae6ee;--text-mid:#aaa4b2;
-    --text-soft:#9a93a5;--border:rgba(255,255,255,.09);
-    --shadow:0 4px 24px rgba(0,0,0,.4);--shadow-lg:0 16px 60px rgba(0,0,0,.55)}
-  input[type=text]{background:#16141a;border-color:rgba(255,255,255,.14)}
-  .get{background:#252229}
-  footer{background:#0e0d11}
+  .hero{padding:48px 20px 34px}
+  .main{padding:14px 28px 28px}
+  footer{padding:24px 20px}
 }
