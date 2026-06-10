@@ -20,6 +20,11 @@
         android:name="com.solarized.firedown.phone.fragments.FrameGrabberFragment"
         android:label="fragment_frame_grabber"
         tools:layout="@layout/fragment_frame_grabber" />
+    <fragment
+        android:id="@+id/lan_share"
+        android:name="com.solarized.firedown.phone.fragments.LanShareFragment"
+        android:label="fragment_lan_share"
+        tools:layout="@layout/fragment_lan_share" />
     <dialog
         android:id="@+id/dialog_download_sort"
         android:name="com.solarized.firedown.phone.dialogs.DownloadsSortDialogFragment" />

@@ -66,10 +66,12 @@ import javax.net.ssl.SSLSocket;
  * password can decrypt the air) gets only ECDHE ciphertext: file bytes, the
  * QR's {@code ?pin=} and the session cookie all stop being readable. The
  * port speaks BOTH protocols: the first byte of each connection is sniffed
- * (a TLS ClientHello starts 0x16), plain-HTTP requests get a 301 to the
- * {@code https://} URL (so a typed {@code ip:port} still works), and when
- * the TLS identity is unavailable the server degrades to serving plain HTTP
- * rather than not sharing at all. Remaining ceiling, documented and
+ * (a TLS ClientHello starts 0x16), plain-HTTP requests get the branded
+ * ONBOARDING page (it explains the upcoming certificate warning, Continue
+ * goes to {@code https://}; the QR lands here first, PIN in the URL
+ * fragment so it never crosses plaintext), and when the TLS identity is
+ * unavailable the server degrades to serving plain HTTP rather than not
+ * sharing at all. Remaining ceiling, documented and
  * accepted: an ACTIVE MITM can present its own self-signed cert — the
  * receiver can't tell it apart; cert-pinned verification is the
  * LocalSend-protocol phase.
@@ -532,7 +534,7 @@ public final class LanShareServer {
                 pushback.unread(firstByte);
                 requestIn = pushback;
                 if (mSslContext != null) {
-                    redirectToHttps(pushback, client);
+                    serveOnboarding(pushback, client);
                     return;
                 }
             }
@@ -554,10 +556,17 @@ public final class LanShareServer {
     }
 
     /**
-     * Answer a plain-HTTP request with a 301 to the same path/query on
-     * {@code https://} — the typed-URL on-ramp to the encrypted flow.
+     * Plain-HTTP side of the dual-protocol port (TLS available): the
+     * receiver's ON-RAMP. Instead of a cold 301 into the certificate
+     * interstitial, serve a branded onboarding page that explains the
+     * warning they're about to accept, with a Continue button to the
+     * {@code https://} URL. The QR carries the PIN in the URL FRAGMENT
+     * ({@code #p=NNNN}) — fragments never cross the wire, so nothing
+     * secret travels over this plaintext request; the page's JS forwards
+     * it to the https side as the usual {@code ?pin=}. The two style
+     * assets are served here too so the page renders branded.
      */
-    private void redirectToHttps(@NonNull InputStream in, @NonNull Socket client)
+    private void serveOnboarding(@NonNull InputStream in, @NonNull Socket client)
             throws IOException {
         BufferedReader reader = new BufferedReader(
                 new InputStreamReader(in, StandardCharsets.UTF_8));
@@ -569,15 +578,27 @@ public final class LanShareServer {
                 target = parts[1];
             }
         }
+        String path = target;
+        int q = path.indexOf('?');
+        if (q >= 0) {
+            path = path.substring(0, q);
+        }
+        OutputStream out = client.getOutputStream();
+        if (path.equals("/logo.svg")) {
+            sendAsset(out, "logo.svg", "image/svg+xml");
+            return;
+        }
+        if (path.equals("/style.css")) {
+            sendAsset(out, "style.css", "text/css; charset=utf-8");
+            return;
+        }
         InetAddress local = client.getLocalAddress();
         String host = local != null ? local.getHostAddress() : getLocalIpv4();
-        String location = "https://" + host + ":" + getPort() + target;
-        OutputStream out = client.getOutputStream();
-        out.write(("HTTP/1.1 301 Moved Permanently\r\n"
-                + "Location: " + location + "\r\n"
-                + "Content-Length: 0\r\n"
-                + "Connection: close\r\n\r\n").getBytes(StandardCharsets.UTF_8));
-        out.flush();
+        String continueUrl = "https://" + host + ":" + getPort() + "/";
+        String html = page("onboard.html")
+                .replace("{{CONTINUE}}", continueUrl)
+                .replace("{{DEVICE}}", escapeHtml(mDeviceName));
+        sendHtml(out, 200, html);
     }
 
     private void serveRequest(Socket socket, InputStream rawIn) {

@@ -943,10 +943,15 @@ restore-aware — keep these three properties if you touch it:**
 
 The Downloads options sheet's quick-action row has a **Send** button
 (finished, non-safe entries only — **the vault is never sendable**, same
-contract as the backup mirror). It opens `LanShareDialogFragment`, which
+contract as the backup mirror). It navigates to `LanShareFragment` — a
+**full nav-graph destination** in `nav_graph_downloads` extending
+`BaseFocusFragment`, same pattern as FrameGrabber/GifMaker (it was a bottom
+sheet originally, promoted because the QR/PIN handover wants a whole page;
+toolbar back / Stop both just pop the back stack) — which
 runs `LanShareServer` — a dependency-free `ServerSocket` HTTP server whose
-**lifetime is exactly the sheet's lifetime** (started in onCreateView,
-stopped in onDismiss/onDestroyView): no background service, no discovery
+**lifetime is exactly the fragment's VIEW lifetime** (started in
+onCreateView, stopped in onDestroyView, hotspot reservation closed with
+it): no background service, no discovery
 announcement, nothing listens when the sheet isn't open. Any browser on the
 LAN (PC, phone, TV — and another Firedown, which downloads it through the
 normal pipeline since Firedown *is* a browser) opens `http://<ip>:53317`
@@ -1005,15 +1010,27 @@ buys: ECDHE forward secrecy, so a **passive sniffer gets only ciphertext**
 with the café password + your join handshake can decrypt your air);
 WPA3 and the LocalOnlyHotspot (random per-session passphrase) were already
 sniff-resistant. The **one port speaks both protocols**: the handler peeks
-the first byte (TLS ClientHello = `0x16`), wraps TLS via
-`SSLSocketFactory.createSocket(socket, consumed, true)`, and 301s plain
-HTTP to `https://` (typed `ip:port` defaults to http — the redirect is the
-on-ramp); if the keystore can't produce the identity, the server **falls
-back to serving plain HTTP** (degraded beats not sharing; the sheet's cert
-hint hides). Costs, accepted deliberately: the receiver clicks through ONE
-"connection not private" interstitial (explained on the **sender** sheet —
-`lan_share_cert_hint` — because the warning appears before any page of
-ours can), and an **ACTIVE MITM can still present its own self-signed
+the first byte (TLS ClientHello = `0x16`), wraps TLS via a `PrereadSocket`
++ the layered `createSocket(Socket, host, port, autoClose)` overload (the
+JDK's consumed-bytes overload doesn't exist on Android), and answers plain
+HTTP with the **onboarding page** (`onboard.html`) — the receiver's
+on-ramp: typed `ip:port` and the QR both land there over http (no warning),
+it explains the upcoming interstitial with numbered steps, and Continue
+goes to `https://`. **The QR carries the PIN in the URL FRAGMENT**
+(`#p=NNNN`, never sent on the wire — nothing secret crosses the plaintext
+hop); the onboarding JS forwards it as `?pin=` to the https side, and
+without JS the receiver just types the PIN at the gate. If the keystore
+can't produce the identity, the server **falls back to serving plain
+HTTP** (degraded beats not sharing; the sheet's cert hint hides and the QR
+reverts to direct `?pin=`). The keystore key MUST whitelist
+`DIGEST_NONE` (BoringSSL signs the raw transcript digest — NONEwithECDSA;
+without it every handshake dies with 'Incompatible digest'), and the key
+managers are built explicitly (`FixedKeyManager`) — the default PKIX
+factory silently selects no AndroidKeyStore alias. Costs, accepted
+deliberately: the receiver clicks through ONE
+"connection not private" interstitial (waylaid by the onboarding page and
+explained on the **sender** sheet — `lan_share_cert_hint`), and an
+**ACTIVE MITM can still present its own self-signed
 cert** — indistinguishable to the receiver; cert-*pinned* verification is
 the LocalSend-protocol phase. **Chromium gotcha (observed on Brave): the
 download manager does NOT inherit the page's cert exception** — a native

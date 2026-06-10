@@ -1,0 +1,11 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#d44e86"><title>Firedown</title><link rel="stylesheet" href="/style.css?v=10"></head><body><div class="hero"><img class="logo" src="/logo.svg?v=10" alt="Firedown"></div><div class="main"><p class="eyebrow">Secure transfer</p><h1>One quick <em>step</em></h1><p class="lead">{{DEVICE}} wants to send you a file over an encrypted, device&#8209;to&#8209;device link. Local connections can&#8217;t be verified by an internet authority, so your browser shows a warning first &mdash; that&#8217;s expected.</p><div class="cardx"><ol class="steps"><li>Tap <b>Continue</b> below</li><li>On the warning, choose <b>Advanced</b></li><li>Tap <b>Proceed&nbsp;/ Continue to site</b></li></ol></div><a class="dl" id="go" href="{{CONTINUE}}">Continue</a></div><footer>Served by <b>Firedown</b> on {{DEVICE}} &middot; local network only</footer><script>
+// The QR carries the PIN in the URL FRAGMENT (#p=NNNN) — fragments never
+// cross the wire, so the PIN stays off this page's plaintext-http request.
+// Forward it to the https side as the usual ?pin= one-hop auth. Without
+// JS (or a typed URL with no fragment) the link still works — the receiver
+// just types the PIN on the gate page.
+(function () {
+  var m = (location.hash || '').match(/p=([0-9]{4})/);
+  if (m) { document.getElementById('go').href = '{{CONTINUE}}' + '?pin=' + m[1]; }
+})();
+</script></body></html>
