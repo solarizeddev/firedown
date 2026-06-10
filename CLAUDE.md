@@ -850,6 +850,28 @@ the surviving public files, but on Android 13+ a reinstalled app doesn't OWN
 them (MediaStore attribution died with the uninstall), so playback may need
 a permission story even though the list+metadata are intact.
 
+**Transport-free recovery — the encrypted PUBLIC mirror.** Auto Backup needs
+a backup transport (Google's = Play Services on stock devices; Seedvault on
+de-Googled ROMs); the app must not *depend* on either. So `writeMirror` also
+writes an **AES-256-GCM-encrypted** copy of the same sanitized mirror to the
+public folder (`Download/Firedown/backup/downloads-mirror.fdbk`, format
+`FDBK1 | 12-byte IV | ciphertext`), which survives uninstall like the media
+files. The key is derived from **`ANDROID_ID` (SSAID)** — scoped per (app
+signing key, device, user) since Android 8, so it survives a same-signed
+reinstall, while every other app sees a *different* SSAID and cannot decrypt
+the file; nothing secret is embedded in the APK. By design this makes the
+file same-device-only (cross-device migration is the transport's job; a
+factory reset orphans old mirrors — `decryptPublicMirror` just rejects what
+GCM can't authenticate). After a reinstall the file is foreign-owned
+(invisible to File API), so the planned restore path is a one-tap **SAF
+folder grant** (`ACTION_OPEN_DOCUMENT_TREE` on `Download/Firedown`) →
+`decryptPublicMirror` → `importMirrorDatabase` (the same column-intersection
+importer the Auto Backup restore uses; `file_safe` forced 0). The write side
+handles the name collision a reinstall causes (foreign-owned old file at the
+fixed name → fall back to a timestamped `.fdbk`; restore scans for all of
+them and takes the newest it can decrypt). The SAF restore UI is NOT built
+yet — only the write side + decrypt/import plumbing ship today.
+
 ## URL-bar clipboard chip & system-service binder calls
 
 Two hardenings in `AutoCompleteView.showClipboard()` (the clipboard suggestion

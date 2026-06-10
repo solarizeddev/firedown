@@ -111,6 +111,184 @@ public final class DownloadBackupMirror {
                 Log.e(TAG, "writeMirror: detach failed", e);
             }
         }
+
+        writeEncryptedPublicMirror(context, mirror);
+    }
+
+    // ------------------------------------------------------------------
+    // Encrypted public copy — the transport-free recovery path
+    // ------------------------------------------------------------------
+    //
+    // The filesDir mirror above rides Android Auto Backup, which needs a
+    // backup TRANSPORT (Google's on stock devices, Seedvault on de-Googled
+    // ROMs). For devices with neither, a second, ENCRYPTED copy of the same
+    // mirror is written into the public download folder, which survives
+    // uninstall exactly like the media files do; a post-reinstall SAF folder
+    // grant lets the new install read and import it.
+    //
+    // Encryption: AES-256-GCM with a key derived from ANDROID_ID (SSAID).
+    // SSAID is scoped per (app signing key, device, user) since Android 8:
+    // it SURVIVES uninstall/reinstall of the same-signed APK, and every
+    // OTHER app sees a different value — so a file manager or another app
+    // that reads the public file cannot derive the key, and nothing secret
+    // is embedded in the APK (the key is device-bound, not in the code).
+    // Consequence, by design: the file is only decryptable by Firedown on
+    // the SAME device — cross-device migration is the backup transport's
+    // job, not this file's. A factory reset or signing-key change also
+    // rotates SSAID and orphans old mirrors (restore just skips what it
+    // cannot decrypt).
+
+    /** Public mirror format: MAGIC | 12-byte GCM IV | ciphertext. */
+    private static final byte[] PUBLIC_MAGIC = {'F', 'D', 'B', 'K', '1'};
+    private static final String PUBLIC_DIR = "backup";
+    private static final String PUBLIC_FILE = "downloads-mirror.fdbk";
+    private static final int GCM_IV_BYTES = 12;
+    private static final int GCM_TAG_BITS = 128;
+    private static final String KEY_CONTEXT = "firedown-mirror-v1:";
+
+    private static javax.crypto.spec.SecretKeySpec deriveKey(@NonNull Context context) throws Exception {
+        String ssaid = android.provider.Settings.Secure.getString(
+                context.getContentResolver(), android.provider.Settings.Secure.ANDROID_ID);
+        if (TextUtils.isEmpty(ssaid)) {
+            throw new IllegalStateException("no ANDROID_ID");
+        }
+        java.security.MessageDigest digest = java.security.MessageDigest.getInstance("SHA-256");
+        byte[] key = digest.digest((KEY_CONTEXT + ssaid).getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        return new javax.crypto.spec.SecretKeySpec(key, "AES");
+    }
+
+    private static void writeEncryptedPublicMirror(@NonNull Context context, @NonNull File plainMirror) {
+        if (!plainMirror.exists()) {
+            return;
+        }
+        File dir = new File(com.solarized.firedown.StoragePaths.getDownloadPath(context), PUBLIC_DIR);
+        if (!dir.exists() && !dir.mkdirs()) {
+            // Public storage unavailable/unwritable — Auto Backup still has
+            // the private mirror; nothing else to do.
+            if (BuildConfig.DEBUG) {
+                Log.d(TAG, "public mirror: cannot create " + dir);
+            }
+            return;
+        }
+        byte[] plain;
+        try {
+            plain = readAllBytes(plainMirror);
+        } catch (Exception e) {
+            Log.e(TAG, "public mirror: read failed", e);
+            return;
+        }
+        byte[] iv = new byte[GCM_IV_BYTES];
+        new java.security.SecureRandom().nextBytes(iv);
+        byte[] cipherText;
+        try {
+            javax.crypto.Cipher cipher = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding");
+            cipher.init(javax.crypto.Cipher.ENCRYPT_MODE, deriveKey(context),
+                    new javax.crypto.spec.GCMParameterSpec(GCM_TAG_BITS, iv));
+            cipherText = cipher.doFinal(plain);
+        } catch (Exception e) {
+            Log.e(TAG, "public mirror: encrypt failed", e);
+            return;
+        }
+        // Fixed name first. After a reinstall the previous install's file at
+        // this path is foreign-owned (invisible but name-colliding on
+        // Android 11+), so a failed open falls back to a timestamped name —
+        // the restore side scans for every *.fdbk and takes the newest it
+        // can decrypt.
+        File out = new File(dir, PUBLIC_FILE);
+        try {
+            writeMirrorBytes(out, iv, cipherText);
+        } catch (Exception first) {
+            out = new File(dir, "downloads-mirror-" + System.currentTimeMillis() + ".fdbk");
+            try {
+                writeMirrorBytes(out, iv, cipherText);
+            } catch (Exception second) {
+                Log.e(TAG, "public mirror: write failed", second);
+                return;
+            }
+        }
+        if (BuildConfig.DEBUG) {
+            Log.d(TAG, "public mirror: wrote " + out.getName() + " (" + cipherText.length + " bytes)");
+        }
+    }
+
+    private static void writeMirrorBytes(@NonNull File out, @NonNull byte[] iv, @NonNull byte[] cipherText)
+            throws java.io.IOException {
+        try (java.io.FileOutputStream fos = new java.io.FileOutputStream(out, false)) {
+            fos.write(PUBLIC_MAGIC);
+            fos.write(iv);
+            fos.write(cipherText);
+            fos.flush();
+        }
+    }
+
+    private static byte[] readAllBytes(@NonNull File file) throws java.io.IOException {
+        long length = file.length();
+        if (length <= 0 || length > 64L * 1024 * 1024) {
+            throw new java.io.IOException("implausible mirror size: " + length);
+        }
+        byte[] buf = new byte[(int) length];
+        try (java.io.FileInputStream fis = new java.io.FileInputStream(file)) {
+            int off = 0;
+            while (off < buf.length) {
+                int n = fis.read(buf, off, buf.length - off);
+                if (n < 0) {
+                    throw new java.io.IOException("short read at " + off);
+                }
+                off += n;
+            }
+        }
+        return buf;
+    }
+
+    /**
+     * Decrypt an encrypted public mirror (a {@code .fdbk} stream read through
+     * a SAF grant after reinstall) back into a plain SQLite file. Returns
+     * false — without logging secrets — when the payload isn't ours or was
+     * written by a different device/signing identity (SSAID mismatch makes
+     * GCM authentication fail). The SAF restore flow feeds the result to
+     * {@link #importMirrorDatabase}.
+     */
+    public static boolean decryptPublicMirror(@NonNull Context context,
+                                              @NonNull java.io.InputStream in,
+                                              @NonNull File outPlain) {
+        try {
+            java.io.ByteArrayOutputStream all = new java.io.ByteArrayOutputStream();
+            byte[] chunk = new byte[8192];
+            int n;
+            int total = 0;
+            while ((n = in.read(chunk)) > 0) {
+                total += n;
+                if (total > 64 * 1024 * 1024) {
+                    return false;
+                }
+                all.write(chunk, 0, n);
+            }
+            byte[] blob = all.toByteArray();
+            int headerLen = PUBLIC_MAGIC.length + GCM_IV_BYTES;
+            if (blob.length <= headerLen) {
+                return false;
+            }
+            for (int i = 0; i < PUBLIC_MAGIC.length; i++) {
+                if (blob[i] != PUBLIC_MAGIC[i]) {
+                    return false;
+                }
+            }
+            javax.crypto.spec.GCMParameterSpec spec = new javax.crypto.spec.GCMParameterSpec(
+                    GCM_TAG_BITS, blob, PUBLIC_MAGIC.length, GCM_IV_BYTES);
+            javax.crypto.Cipher cipher = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding");
+            cipher.init(javax.crypto.Cipher.DECRYPT_MODE, deriveKey(context), spec);
+            byte[] plain = cipher.doFinal(blob, headerLen, blob.length - headerLen);
+            try (java.io.FileOutputStream fos = new java.io.FileOutputStream(outPlain, false)) {
+                fos.write(plain);
+                fos.flush();
+            }
+            return true;
+        } catch (Exception e) {
+            if (BuildConfig.DEBUG) {
+                Log.d(TAG, "decryptPublicMirror: rejected", e);
+            }
+            return false;
+        }
     }
 
     /**
@@ -146,8 +324,26 @@ public final class DownloadBackupMirror {
             }
         }
 
-        // Columns of the LIVE table — the mirror may come from a different
-        // app version; only the intersection is copied.
+        int restored = importMirrorDatabase(database, mirror);
+        Log.i(TAG, "restoreIfPending: restored " + restored + " download entries from backup mirror");
+    }
+
+    /**
+     * Copy every row of a plain mirror SQLite file into the live download
+     * table. Shared by the Auto Backup restore above and the SAF restore flow
+     * (which first runs an encrypted public mirror through
+     * {@link #decryptPublicMirror}). Returns the number of rows inserted.
+     *
+     * <p>Rows are copied by column-name intersection with the LIVE table —
+     * the mirror may come from a different app version, and a missing/extra
+     * column must degrade that row (or just that column), never the whole
+     * import. {@code uid} is dropped (autoincrement re-assigns) and
+     * {@code file_safe} is forced to 0 so no mirror, however obtained, can
+     * inject entries into the vault list.
+     */
+    public static int importMirrorDatabase(@NonNull DownloadDatabase database, @NonNull File plainMirror) {
+        SupportSQLiteDatabase db = database.getOpenHelper().getWritableDatabase();
+
         Set<String> liveColumns = new HashSet<>();
         try (Cursor info = db.query("PRAGMA table_info(" + TABLE + ")")) {
             int nameIdx = info.getColumnIndex("name");
@@ -159,7 +355,7 @@ public final class DownloadBackupMirror {
         int restored = 0;
         SQLiteDatabase src = null;
         try {
-            src = SQLiteDatabase.openDatabase(mirror.getAbsolutePath(), null, SQLiteDatabase.OPEN_READONLY);
+            src = SQLiteDatabase.openDatabase(plainMirror.getAbsolutePath(), null, SQLiteDatabase.OPEN_READONLY);
             try (Cursor rows = src.rawQuery("SELECT * FROM " + TABLE, null)) {
                 String[] cols = rows.getColumnNames();
                 while (rows.moveToNext()) {
@@ -197,14 +393,13 @@ public final class DownloadBackupMirror {
                         // Per-row: a NOT NULL column added in a newer schema
                         // without a default fails that row, not the restore.
                         if (BuildConfig.DEBUG) {
-                            Log.d(TAG, "restoreIfPending: row skipped", e);
+                            Log.d(TAG, "importMirrorDatabase: row skipped", e);
                         }
                     }
                 }
             }
-            Log.i(TAG, "restoreIfPending: restored " + restored + " download entries from backup mirror");
         } catch (Exception e) {
-            Log.e(TAG, "restoreIfPending: restore failed after " + restored + " rows", e);
+            Log.e(TAG, "importMirrorDatabase: failed after " + restored + " rows", e);
         } finally {
             if (src != null) {
                 try {
@@ -213,5 +408,6 @@ public final class DownloadBackupMirror {
                 }
             }
         }
+        return restored;
     }
 }
