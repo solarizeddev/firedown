@@ -23,37 +23,60 @@ final class LanSharePages {
     private static final String STYLE =
             "<style>"
             + "body{background:#141218;color:#e6e0e9;font-family:Roboto,system-ui,sans-serif;"
-            + "margin:0;display:flex;justify-content:center;padding:48px 20px}"
-            + ".card{width:100%;max-width:460px;text-align:center}"
-            + ".brand{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:26px}"
-            + ".flame{width:30px;height:30px;border-radius:8px;background:linear-gradient(160deg,#ffb74d,#ff7043);"
-            + "display:flex;align-items:center;justify-content:center;color:#3e2200;font-weight:700;font-size:17px}"
-            + ".brand span{font-size:17px;font-weight:500;letter-spacing:.4px}"
-            + "h1{font-weight:400;font-size:21px;margin:6px 0 8px}"
-            + "p{color:#9a93a5;font-size:13.5px;line-height:1.6;margin:0 0 24px}"
-            + "input[type=text]{width:170px;text-align:center;letter-spacing:10px;font-size:26px;"
-            + "background:#211f26;border:1.5px solid #49454f;border-radius:12px;color:#e6e0e9;"
-            + "padding:12px 0 12px 10px;outline:none;margin-bottom:22px}"
-            + "input[type=text]:focus{border-color:#ffb74d}"
-            + "button,.dl{background:#ffb74d;color:#3e2200;font-weight:500;border:0;border-radius:24px;"
-            + "padding:13px 38px;font-size:15px;cursor:pointer;text-decoration:none;display:inline-block}"
+            + "margin:0;min-height:100vh;display:flex;flex-direction:column;align-items:center;"
+            + "padding:0 20px 40px}"
+            // Brand orange (#f0716c) is the dominant surface: a full-width hero
+            // band carries the logo, the same way the marketing site leads with
+            // the brand colour.
+            + ".hero{width:100%;background:linear-gradient(135deg,#f0716c,#ff857f);"
+            + "display:flex;flex-direction:column;align-items:center;justify-content:center;"
+            + "padding:40px 20px 36px;margin-bottom:-20px}"
+            + ".brand{display:flex;align-items:center;gap:12px}"
+            + ".flame{width:40px;height:40px;border-radius:11px;background:#fff;"
+            + "display:flex;align-items:center;justify-content:center;color:#f0716c;font-weight:800;font-size:24px}"
+            + ".brand span{font-size:22px;font-weight:700;letter-spacing:.4px;color:#fff}"
+            + ".card{width:100%;max-width:460px;text-align:center;background:#1b1a1f;"
+            + "border:1px solid #2c2a31;border-radius:22px;padding:30px 26px;"
+            + "box-shadow:0 14px 40px rgba(0,0,0,.45)}"
+            + "h1{font-weight:600;font-size:21px;margin:4px 0 8px;color:#fff}"
+            + "p{color:#a39ba6;font-size:13.5px;line-height:1.6;margin:0 0 24px}"
+            + "input[type=text]{width:180px;text-align:center;letter-spacing:12px;font-size:28px;"
+            + "background:#211f26;border:2px solid #3a3640;border-radius:14px;color:#fff;"
+            + "padding:13px 0 13px 12px;outline:none;margin-bottom:24px}"
+            + "input[type=text]:focus{border-color:#f0716c}"
+            + "button,.dl{background:#f0716c;color:#fff;font-weight:600;border:0;border-radius:24px;"
+            + "padding:14px 40px;font-size:15px;cursor:pointer;text-decoration:none;display:inline-block;"
+            + "box-shadow:0 4px 14px rgba(240,113,108,.4)}"
+            + "button:hover,.dl:hover{background:#ff857f}"
             + ".file{display:flex;align-items:center;gap:16px;text-align:left;background:#211f26;"
-            + "border-radius:16px;padding:16px 18px;margin:0 0 14px}"
-            + ".file .ic{width:54px;height:54px;border-radius:12px;background:linear-gradient(135deg,#46395c,#2a2336);"
-            + "flex:none;display:flex;align-items:center;justify-content:center;font-size:22px}"
-            + ".file .meta{flex:1;min-width:0}.file .n{font-size:15px;word-break:break-word}"
-            + ".file .s{font-size:12px;color:#9a93a5;margin-top:3px}"
-            + ".file .dl{padding:9px 20px;font-size:13.5px;flex:none}"
-            + ".foot{color:#6f6879;font-size:11.5px;margin-top:30px;line-height:1.6}"
-            + ".lock{color:#7ad97a}.err{color:#f2b8b5;font-size:13px;margin:-12px 0 18px}"
+            + "border:1px solid #2c2a31;border-radius:16px;padding:16px 18px;margin:0 0 14px}"
+            + ".file .ic{width:54px;height:54px;border-radius:12px;"
+            + "background:linear-gradient(135deg,#f0716c,#ff857f);"
+            + "flex:none;display:flex;align-items:center;justify-content:center;font-size:24px}"
+            + ".file .meta{flex:1;min-width:0}.file .n{font-size:15px;color:#fff;word-break:break-word}"
+            + ".file .s{font-size:12px;color:#a39ba6;margin-top:3px}"
+            + ".file .dl{padding:10px 22px;font-size:13.5px;flex:none}"
+            + ".foot{color:#6f6879;font-size:11.5px;margin-top:28px;line-height:1.6}"
+            + ".lock{color:#f0716c}.err{color:#ff857f;font-size:13px;margin:-12px 0 18px;font-weight:500}"
+            // "Get Firedown" cross-promo: a receiver on a plain browser (esp.
+            // Android, without the app) can grab it; on a device that then has
+            // Firedown the QR resolves in-app next time. Secondary styling so
+            // it never competes with the Download CTA.
+            + ".get{display:block;margin-top:22px;color:#f0716c;font-size:13px;font-weight:600;"
+            + "text-decoration:none}.get span{color:#a39ba6;font-weight:400}"
             + "</style>";
+
+    /** Official site — hosts the APK and the store links. */
+    private static final String WEBSITE_URL = "https://firedown.app";
 
     private static String shell(String inner) {
         return "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"utf-8\">"
                 + "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">"
-                + "<title>Firedown</title>" + STYLE + "</head><body><div class=\"card\">"
-                + "<div class=\"brand\"><div class=\"flame\">F</div><span>Firedown</span></div>"
-                + inner + "</div></body></html>";
+                + "<meta name=\"theme-color\" content=\"#f0716c\">"
+                + "<title>Firedown</title>" + STYLE + "</head><body>"
+                + "<div class=\"hero\"><div class=\"brand\"><div class=\"flame\">F</div>"
+                + "<span>Firedown</span></div></div>"
+                + "<div class=\"card\">" + inner + "</div></body></html>";
     }
 
     /** PIN entry. {@code wrongAttempt} shows the error line + remaining count. */
@@ -98,6 +121,8 @@ final class LanSharePages {
         inner.append("<div class=\"foot\"><span class=\"lock\">&#9679;</span> PIN-verified session ")
                 .append("&middot; expires when the sender stops sharing<br>")
                 .append("Transfer never leaves your local network</div>");
+        inner.append("<a class=\"get\" href=\"").append(WEBSITE_URL)
+                .append("\"><span>Don&#8217;t have Firedown?</span> Get the app &rarr;</a>");
         return shell(inner.toString());
     }
 
