@@ -60,6 +60,14 @@ import java.util.concurrent.Executor;
 
 import javax.inject.Inject;
 
+import dagger.hilt.android.AndroidEntryPoint;
+
+/* @AndroidEntryPoint must be on THIS class, not only on BaseDownloadFragment:
+ * Hilt members-injection only covers fields declared on the annotated class
+ * (and its supers) — an unannotated subclass's own @Inject fields are left
+ * null. mDiskExecutor/mDownloadDatabase live here, so without the annotation
+ * the SAF restore callback NPE'd the moment the folder picker returned. */
+@AndroidEntryPoint
 public class DownloadFragment extends BaseDownloadFragment implements
         EditText.OnEditorActionListener,
         ChipGroup.OnCheckedStateChangeListener,
