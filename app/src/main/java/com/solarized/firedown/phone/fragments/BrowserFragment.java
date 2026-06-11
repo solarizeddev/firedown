@@ -1391,8 +1391,13 @@ public class BrowserFragment extends BaseBrowserFragment
     }
 
     @Override
-    public void onLocationChange(GeckoState geckoState) {
-        mGeckoToolbar.onLocationChange(geckoState.getEntityUri());
+    public void onLocationChange(GeckoState geckoState, String url) {
+        // Paint the toolbar from the event's url, NOT geckoState.getEntityUri():
+        // the entity URI is mutable shared state, and re-reading it here is how a
+        // late commit of an abandoned load used to revert the toolbar to the old
+        // URL after the user had already typed a new one (the value read back was
+        // whatever the last NavigationDelegate write left, not this event's).
+        mGeckoToolbar.onLocationChange(url);
         // A navigation while find-in-page is active dismisses the search bar.
         if (mUiState == UiState.SEARCH) {
             exitSearch();
@@ -2279,7 +2284,37 @@ public class BrowserFragment extends BaseBrowserFragment
             openSession(geckoState);
             return;
         }
+
+        // The load must go to the session that's actually ON SCREEN. If the
+        // resolved state's session isn't the one attached to the GeckoView
+        // (mCurrentId drift), loadUri here would load into a DETACHED session:
+        // the visible page keeps loading its old URL and "wins" while the
+        // typed URL loads invisibly — the lost-commit failure. Fenix never
+        // hits this because its load funnels through the selected tab's
+        // engine session; we re-attach first. (setGeckoViewSession is
+        // idempotent for an open session — it only swaps the view attachment
+        // and the active/tab bookkeeping. The nested call from its own
+        // !isOpen branch can re-enter here, where the session is by then open
+        // and gets attached one step earlier than before — harmless.)
+        if (mGeckoView.getSession() != session) {
+            Log.d(TAG, "openUri: resolved session not attached to GeckoView — re-attaching");
+            setGeckoViewSession(geckoState);
+        }
+
+        // Re-activate BEFORE loading. The URL-bar focus handler deactivates
+        // the session while the autocomplete sheet is up (onFocusChanged →
+        // setActive(false)); previously the load was issued on the inactive
+        // session and only applyOpenUriUi's clearFocus() reactivated it
+        // afterwards. setActive is idempotent, so asserting it first is free.
+        geckoState.setActive(true);
+
         String currentUri = geckoState.getEntityUri();
+        // Arm the stale-commit guard: until Gecko STARTS this load
+        // (onPageStart), any onLocationChange from this session is a late
+        // commit of the load the user just abandoned and must not overwrite
+        // the entity URI / toolbar. See GeckoState.mPendingUserLoadUri and the
+        // suppression in GeckoComponents.NavigationDelegate.onLocationChange.
+        geckoState.setPendingUserLoadUri(currentUri);
         session.loadUri(currentUri);
         applyOpenUriUi(geckoState, currentUri);
     }

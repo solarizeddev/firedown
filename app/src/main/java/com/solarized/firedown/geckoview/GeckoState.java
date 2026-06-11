@@ -127,6 +127,24 @@ public class GeckoState {
     @Nullable
     private Runnable mOnDeactivateAction;
 
+    /**
+     * URI of a user-committed load ({@code BrowserFragment.openUri} → {@code loadUri})
+     * that Gecko has not yet STARTED (no {@code onPageStart} observed since it was
+     * issued). While this is set, any {@code onLocationChange} from the session is by
+     * definition a STALE commit of the <em>previous</em> load racing the user's new
+     * navigation — Gecko's docshell cancels the in-flight load the moment the new one
+     * reaches {@code InternalLoad}, so once the new load has started (onPageStart) the
+     * old one can never commit again. Fenix needs no such flag only because its toolbar
+     * never writes optimistically; ours does ({@code applyOpenUriUi}), so the stale
+     * commit window (loadUri issued → docshell processes it) must be guarded or the
+     * old page's commit overwrites the entity URI + toolbar with the abandoned URL.
+     * Cleared on {@code onPageStart} AND {@code onPageStop} (the stop bounds the case
+     * where the committed load never starts at all — e.g. denied by onLoadRequest — so
+     * a lingering flag can't suppress later legit SPA/pushState location changes).
+     */
+    @Nullable
+    private String mPendingUserLoadUri;
+
     private final GeckoStateEntity mGeckoStateEntity;
 
     /**
@@ -458,6 +476,25 @@ public class GeckoState {
 
     public long getCreationDate(){
         return mGeckoStateEntity.getCreationDate();
+    }
+
+    // ── Pending user load (see mPendingUserLoadUri) ──────────────────────────
+
+    public void setPendingUserLoadUri(@Nullable String uri) {
+        mPendingUserLoadUri = uri;
+    }
+
+    @Nullable
+    public String getPendingUserLoadUri() {
+        return mPendingUserLoadUri;
+    }
+
+    public boolean hasPendingUserLoad() {
+        return mPendingUserLoadUri != null;
+    }
+
+    public void clearPendingUserLoad() {
+        mPendingUserLoadUri = null;
     }
 
 

@@ -141,7 +141,7 @@ public class BaseBrowserFragment extends BaseFocusFragment implements AutoComple
     }
 
     @Override
-    public void onLocationChange(GeckoState geckoState) {
+    public void onLocationChange(GeckoState geckoState, String url) {
 
     }
 

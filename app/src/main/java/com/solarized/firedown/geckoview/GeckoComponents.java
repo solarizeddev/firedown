@@ -831,6 +831,12 @@ public class GeckoComponents {
             if(geckoState == null)
                 return;
 
+            // A load has STARTED — from here on, location changes belong to it
+            // (Gecko cancelled any previous in-flight load on InternalLoad), so
+            // the stale-commit suppression window closes. Must run before the
+            // isCurrentGeckoState gate: the flag is per-tab state, not UI.
+            geckoState.clearPendingUserLoad();
+
             geckoState.setInitialLoad(false);           // no longer a brand new tab
             geckoState.setFirstContentFulPaint(false);  // reset — new page hasn't painted yet
             geckoState.resetBlockedTrackerCounts();     // counts are per-page
@@ -856,7 +862,18 @@ public class GeckoComponents {
 
             final GeckoState geckoState =findGeckoState(session);
 
-            if(geckoState == null || !isCurrentGeckoState(geckoState))
+            if(geckoState == null)
+                return;
+
+            // Belt-and-braces close of the stale-commit window: a user load
+            // that never STARTS (e.g. denied by onLoadRequest) would leave the
+            // pending flag set and suppress later legit location changes
+            // (SPA/pushState fires onLocationChange with no onPageStart). Any
+            // page-stop means the current load cycle is over either way.
+            // Before the isCurrentGeckoState gate — per-tab state, not UI.
+            geckoState.clearPendingUserLoad();
+
+            if(!isCurrentGeckoState(geckoState))
                 return;
 
             Log.d(TAG, "onStop: " + success + " isFirstContent: " + geckoState.isFirstContentFulPaint() + " success: " + success);
@@ -1348,6 +1365,22 @@ public class GeckoComponents {
             if(UrlStringUtils.isURLDataLike(url))
                 return;
 
+            // Stale-commit guard (the "typed B while A was stuck loading" race).
+            // Between BrowserFragment.openUri's loadUri(B) and Gecko's docshell
+            // actually starting B (which cancels the in-flight A — verified
+            // against Fenix/nsDocShell::InternalLoad → StopInternal), A's commit
+            // can still land here. Writing it through would overwrite the
+            // entity URI + toolbar with the URL the user just navigated AWAY
+            // from. Once B starts, onPageStart clears the flag and A can never
+            // commit again, so suppression is bounded to that window. B's own
+            // commit (or its redirect target) always arrives after onPageStart
+            // and passes normally.
+            if (geckoState.hasPendingUserLoad()) {
+                Log.d(TAG, "OnLocationChange: suppressed stale " + url
+                        + " — user load pending: " + geckoState.getPendingUserLoadUri());
+                return;
+            }
+
             Log.d(TAG, "OnLocationChange: " + session + " here location: " + url);
 
             geckoState.setEntityUri(url);
@@ -1365,7 +1398,13 @@ public class GeckoComponents {
                 // picking the dynamic-global mode.
                 mGeckoRuntimeHelper.setWebAssembly(
                         mGeckoRuntimeHelper.shouldEnableWasmFor(url));
-                mGeckoObserverRegistry.notifyObservers(GeckoObserverInvoker.LOCATION, geckoState);
+                // Pass the event's url alongside the state: the observer must
+                // paint the toolbar from THIS value, not re-read the mutable
+                // entity URI (which another callback may have rewritten by the
+                // time the observer runs) — single-writer, like Fenix's
+                // UpdateUrlAction carrying the url in the action.
+                mGeckoObserverRegistry.notifyObservers(
+                        GeckoObserverInvoker.LOCATION, geckoState, url);
             }
 
 

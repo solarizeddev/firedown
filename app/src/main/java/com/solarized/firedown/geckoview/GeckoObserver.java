@@ -13,7 +13,15 @@ public interface GeckoObserver {
 
     void updateProgress(int progress);
 
-    void onLocationChange(GeckoState geckoState);
+    /**
+     * @param url the location the engine just committed — display code must use
+     *            THIS value, never re-read {@code geckoState.getEntityUri()}
+     *            (mutable shared state another callback may have rewritten by
+     *            the time the observer runs; re-reading it is how a stale
+     *            commit used to revert the toolbar after a user typed a new URL
+     *            mid-load).
+     */
+    void onLocationChange(GeckoState geckoState, String url);
 
     void onFullScreen(boolean fullScreen);
 

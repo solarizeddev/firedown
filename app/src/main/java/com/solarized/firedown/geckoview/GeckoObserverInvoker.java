@@ -13,7 +13,7 @@ public interface GeckoObserverInvoker {
 
     GeckoObserverInvoker PROGRESS = (geckoObserver, objects) -> geckoObserver.updateProgress((int) objects[0]);
 
-    GeckoObserverInvoker LOCATION = (geckoObserver, objects) -> geckoObserver.onLocationChange((GeckoState) objects[0]);
+    GeckoObserverInvoker LOCATION = (geckoObserver, objects) -> geckoObserver.onLocationChange((GeckoState) objects[0], (String) objects[1]);
 
     GeckoObserverInvoker FULL_SCREEN = (geckoObserver, objects) -> geckoObserver.onFullScreen((boolean) objects[0]);
 
