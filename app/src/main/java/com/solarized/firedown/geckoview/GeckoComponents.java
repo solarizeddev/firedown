@@ -91,7 +91,10 @@ public class GeckoComponents {
     private final WebHistoryDataRepository mWebHistoryDataRepository;
     private final GeckoMediaController mGeckoMediaController;
     private final GeckoRuntimeHelper mGeckoRuntimeHelper;
-    private final Executor mDiskExecutor;
+    /** File-upload prompt staging (copyToCache of user-picked files, possibly
+     *  multi-GB) — unbounded file IO, so it rides the HEAVY lane, never
+     *  @DiskIO (which must stay free for short DB mutations). */
+    private final Executor mHeavyExecutor;
     private final Executor mMainExecutor;
     private final Context mContext;
     private final SharedPreferences mSharedPreferences;
@@ -106,7 +109,7 @@ public class GeckoComponents {
             GeckoRuntimeHelper geckoRuntimeHelper,
             GeckoObserverRegistry observerRegistry,
             SharedPreferences sharedPreferences,
-            @Qualifiers.DiskIO Executor diskExecutor,
+            @Qualifiers.HeavyIO Executor heavyExecutor,
             @Qualifiers.MainThread Executor mainExecutor,
             @ApplicationContext Context context) {
         this.mContext = context;
@@ -126,7 +129,7 @@ public class GeckoComponents {
         this.mScrollDelegate = new ScrollDelegate();
         this.mContentDelegate = new ContentDelegate();
         this.mMediaSessionDelegate = new MediaSessionDelegate();
-        this.mDiskExecutor = diskExecutor;
+        this.mHeavyExecutor = heavyExecutor;
         this.mMainExecutor = mainExecutor;
     }
 
@@ -559,7 +562,7 @@ public class GeckoComponents {
 
             final ClipData clip = data.getClipData();
 
-            mDiskExecutor.execute(() -> {
+            mHeavyExecutor.execute(() -> {
                 cleanUploadCache(activity);
 
                 Uri cachedUri = null;

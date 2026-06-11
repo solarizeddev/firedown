@@ -8,6 +8,7 @@ import android.net.Uri;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -32,6 +33,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.color.MaterialColors;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.solarized.firedown.BuildConfig;
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
 import com.solarized.firedown.data.Download;
@@ -204,6 +206,14 @@ public class DownloadFragment extends BaseDownloadFragment implements
 
         mAdapter.addLoadStateListener(loadStates -> {
             if (mAdapter == null || mLCEERecyclerView == null) return null;
+            // Third diagnostic checkpoint: the differ's observable output.
+            // A refresh that reaches NotLoading here presented the new
+            // generation; a generation that was submitted but never gets
+            // past Loading stalled in the page-event transforms.
+            if (BuildConfig.DEBUG) {
+                Log.d(TAG, "loadState refresh=" + loadStates.getRefresh()
+                        + " items=" + mAdapter.getItemCount());
+            }
             if (loadStates.getRefresh() instanceof LoadState.NotLoading) {
                 if (mAdapter.getItemCount() == 0) {
                     // There is NO "All" chip in the rail — unfiltered means no
@@ -312,8 +322,17 @@ public class DownloadFragment extends BaseDownloadFragment implements
             }
         });
 
-        mDownloadsViewModel.getDownloads().observe(getViewLifecycleOwner(), data ->
-                mAdapter.submitData(getLifecycle(), data));
+        mDownloadsViewModel.getDownloads().observe(getViewLifecycleOwner(), data -> {
+            // Diagnostic checkpoint (pairs with DownloadsViewModel's
+            // "new paging generation" log): a generation that was emitted
+            // but never logged here died in the cachedIn/LiveData leg; one
+            // logged here but never followed by the load-state refresh
+            // below stalled in the transform executor / differ.
+            if (BuildConfig.DEBUG) {
+                Log.d(TAG, "submitData: new paging generation");
+            }
+            mAdapter.submitData(getLifecycle(), data);
+        });
 
         // Push per-group aggregates (count + total size) so the adapter
         // can fill section-header subtitles. Re-fires whenever the

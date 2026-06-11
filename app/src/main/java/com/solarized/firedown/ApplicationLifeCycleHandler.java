@@ -49,6 +49,7 @@ public class ApplicationLifeCycleHandler implements Application.ActivityLifecycl
     private final AppLock mAppLock;
     private final GeckoStateObserver mGeckoStateObserver;
     private final Executor mDiskExecutor;
+    private final Executor mHeavyExecutor;
     private final Context mContext;
     private final DownloadDatabase mDownloadDatabase;
     // Observer for incognito tab count → notification
@@ -72,6 +73,7 @@ public class ApplicationLifeCycleHandler implements Application.ActivityLifecycl
             AppLock appLock,
             GeckoStateObserver geckoStateObserver,
             @Qualifiers.DiskIO Executor diskExecutor,
+            @Qualifiers.HeavyIO Executor heavyExecutor,
             DownloadDatabase downloadDatabase,
             @ApplicationContext Context context){
         this.mGeckoStateRepository = geckoStateRepository;
@@ -81,6 +83,7 @@ public class ApplicationLifeCycleHandler implements Application.ActivityLifecycl
         this.mGeckoStateObserver = geckoStateObserver;
         this.mAppLock = appLock;
         this.mDiskExecutor = diskExecutor;
+        this.mHeavyExecutor = heavyExecutor;
         this.mDownloadDatabase = downloadDatabase;
 
         this.mContext = context;
@@ -152,14 +155,20 @@ public class ApplicationLifeCycleHandler implements Application.ActivityLifecycl
         if (level == ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN) {
             Log.d(TAG, "App went to background - Securing session");
 
-            // Clear cache on background thread using injected executor
-            mDiskExecutor.execute(() -> StoragePaths.clearCacheFolder(mContext));
+            // Both run on the HEAVY executor, not @DiskIO: a recursive cache
+            // sweep (and the full mirror rewrite + encrypt) can take a long
+            // time, and the @DiskIO thread is the single serial lane every
+            // short DB mutation rides on. Parking these two there made a
+            // Downloads delete queue invisibly for minutes — the rows only
+            // vanished after leaving and reopening the fragment, because
+            // Room invalidation can't fire before the DELETE actually runs.
+            mHeavyExecutor.execute(() -> StoragePaths.clearCacheFolder(mContext));
 
             // Refresh the Auto Backup mirror (non-safe, finished download rows
             // only — see DownloadBackupMirror). Backgrounding is also the
             // moment the system considers the app for an Auto Backup pass, so
             // the mirror is at its freshest exactly when it matters.
-            mDiskExecutor.execute(() -> DownloadBackupMirror.writeMirror(mContext, mDownloadDatabase));
+            mHeavyExecutor.execute(() -> DownloadBackupMirror.writeMirror(mContext, mDownloadDatabase));
 
             mAppLock.setLockRequired(true);
             mAppLock.setLockTime();
