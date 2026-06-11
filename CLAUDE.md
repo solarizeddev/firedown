@@ -827,6 +827,55 @@ flag. No unconditional logging ships.**
   suffix). Apply the same cap to any new log of field content, page titles,
   clipboard text, etc.
 
+## Room invalidation — persistent tracking mode (do NOT revert)
+
+Every `Room.databaseBuilder` in `DatabaseModule` sets
+**`setInMemoryTrackingMode(false)`**. Reason: Room's InvalidationTracker (what
+makes LiveData/Paging re-query after a write) defaults to a per-connection
+**TEMP** table (`room_table_modification_log`) + TEMP triggers — and the
+framework can recycle the native SQLite connection underneath Room (Samsung
+OneUI enables the idle-connection timeout system-wide; reproduced on an
+SM-A536B/SDK 36 after the app sat idle). The recycled connection comes back
+with no temp objects, and Room 2.7+ never re-creates them: the refresh path
+**swallows** the `SQLiteException` and reports "nothing invalidated". Symptom:
+`(1) no such table: room_table_modification_log` in logcat and a UI that loads
+but never refreshes after writes — a deleted download that won't leave the
+list (first delete removes the row, list stays; retries log
+`deleteDownloads: rowsRemoved=0` on the ghost). On Room 2.6 the same root
+cause **crashed** instead (`syncTriggers` on the `addObserver` path). Two
+dead-ends, both tried: bumping Room (2.7.2 and 2.8.4 contain **no** fix —
+release-notes-verified; an earlier commit message claiming 2.7.2 fixed it was
+wrong) and treating the `rowsRemoved=0` delete log as a uid/Parcel bug (the
+uid was fine; the row was already gone from a previous tap). Persistent mode
+(`@ExperimentalRoomApi`, added in 2.7.0-alpha12 for exactly this —
+b/185414040) puts the tracking table and triggers in the database file, immune
+to connection recycling. Cost is a trigger write through the journal —
+negligible here. Related: raw writes via `getOpenHelper()` (the backup
+mirror's import) bypass Room's auto-refresh even with working tracking; the
+persistent triggers still mark the change, which the next Room-managed write
+flushes to observers.
+
+**Persistent mode is a ONE-WAY door — never run a pre-fix binary on a
+post-fix database.** The fixed build writes persistent triggers
+(`room_table_modification_trigger_download_*`) into the DB file. A PRE-fix
+binary opening that file drops the persistent tracking table at open
+(`configureConnection` runs an unqualified `DROP TABLE IF EXISTS` and
+recreates only a TEMP one) but never drops the persistent triggers — leaving
+main-schema triggers referencing a missing main-schema table, which makes
+**every write to `download` crash at statement compile**:
+`no such table: main.room_table_modification_log` (the **`main.` prefix is
+the tell** — the no-prefix variant of the error is the original
+recycled-TEMP-table symptom instead). Observed in the wild on an SM-A426B
+after dev builds with the same versionCode (1177) were installed over each
+other in both orders. Installing the fixed build heals the DB automatically
+at first open; the only other recovery is clearing app data. Consequences:
+**bump `versionCode` when releasing the persistent-mode build** so Android's
+downgrade protection makes the broken ordering impossible in the field, and
+if `setInMemoryTrackingMode(false)` is ever reverted, the reverting build
+must explicitly `DROP TRIGGER IF EXISTS` each
+`room_table_modification_trigger_*` in the main schema or it recreates this
+exact crash for itself.
+
 ## Auto Backup — the vault NEVER leaves the device
 
 Downloads live in the **public** `Download/Firedown` (survive uninstall); the
