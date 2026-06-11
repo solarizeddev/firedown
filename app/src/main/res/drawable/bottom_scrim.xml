@@ -1,10 +1,17 @@
 <shape xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Strong dark band at the bottom edge fading up to transparent so the
+    <!-- Dark band at the bottom edge fading up to transparent so the
          overlaid title + metadata stay legible over bright thumbnail art
-         (e.g. the yellow "OTRA TURRA" frames). angle=90 runs bottom→top. -->
+         (e.g. the yellow "OTRA TURRA" frames). angle=90 runs bottom→top.
+         The curve is deliberately strong-then-gone: darkest where the text
+         actually sits (bottom edge), fading fast above it. The previous
+         #EE/#99 curve still held 60% black at the gradient's midpoint —
+         on the light generated mime thumbnails (audio tiles) that read as
+         a dark smear over half the tile. The text's own drop shadow
+         carries the worst-case bright-art legibility the softer mid-stop
+         gives up. -->
     <gradient
         android:angle="90"
-        android:startColor="#EE000000"
-        android:centerColor="#99000000"
+        android:startColor="#CC000000"
+        android:centerColor="#59000000"
         android:endColor="@android:color/transparent" />
 </shape>

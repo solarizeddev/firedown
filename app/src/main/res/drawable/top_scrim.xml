@@ -1,5 +1,10 @@
 <shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Soft protection for the corner more/variants button only — NOT a
+         banner. Kept light (#55 ≈ 33% black) because it paints the full
+         tile width for the sake of one 24dp icon: at the previous
+         #88 (53%) it read as a heavy dark band across the top of every
+         tile, glaring on the light generated mime thumbnails (audio). -->
     <gradient
         android:angle="270"
         android:endColor="@android:color/transparent"
-        android:startColor="#88000000" /> </shape>
+        android:startColor="#55000000" /> </shape>
