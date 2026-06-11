@@ -439,6 +439,7 @@
     <string name="capture_help_banner">Bazı gömülü medyaların önce oynatılması gerekir. Nasıl olduğunu öğrenmek için dokunun.</string>
     <string name="lan_send">Gönder</string>
     <string name="lan_share_title">Tarayıcıya gönder</string>
+    <string name="tabs_more_options">Diğer seçenekler</string>
     <string name="lan_share_lead">Diğer cihazda, aynı Wi-Fi üzerindeki herhangi bir tarayıcıda bu adresi açın</string>
     <string name="lan_share_qr_hint">Kodu taramak sayfayı PIN zaten girilmiş olarak açar</string>
     <string name="lan_share_cert_hint">Diğer cihazın tarayıcısı önce bir güvenlik uyarısı gösterir — Gelişmiş\'i, sonra Devam\'ı seçin. İki cihaz arasındaki bağlantı yine de şifrelidir.</string>
@@ -449,6 +450,7 @@
     <string name="lan_share_vpn_warning">VPN etkin — alıcı bağlanamıyorsa VPN uygulamasında yerel ağ erişimine izin verin veya VPN\'i kapatın</string>
     <string name="lan_direct_intro">Bu telefon geçici bir erişim noktası oluşturabilir — diğer cihaz ona katılır ve dosya iki telefon arasında doğrudan aktarılır. İnternet kullanılmaz.</string>
     <string name="lan_direct_start">Doğrudan bağlantıyı başlat</string>
+    <string name="lan_direct_step">Adım 1/2 — erişim noktasına katılın</string>
     <string name="lan_direct_switch">Bunun yerine doğrudan bağlantıyı kullan</string>
     <string name="lan_direct_join_hint">Erişim noktasına katılmak için diğer cihazın kamerasıyla tarayın, sonra İleri\'ye dokunun</string>
     <string name="lan_direct_password">Parola</string>

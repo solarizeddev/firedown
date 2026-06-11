@@ -569,6 +569,7 @@
     <string name="capture_help_banner">一部の埋め込みメディアは先に再生する必要があります。タップして詳細をご覧ください。</string>
     <string name="lan_send">送信</string>
     <string name="lan_share_title">ブラウザーに送信</string>
+    <string name="tabs_more_options">その他のオプション</string>
     <string name="lan_share_lead">同じ Wi-Fi 上の別の端末で、任意のブラウザーからこのアドレスを開いてください</string>
     <string name="lan_share_qr_hint">コードをスキャンすると PIN 入力済みのページが開きます</string>
     <string name="lan_share_cert_hint">相手の端末のブラウザには最初にセキュリティ警告が表示されます。「詳細設定」→「続行」を選んでください。2 台の端末間の通信は暗号化されています。</string>
@@ -579,6 +580,7 @@
     <string name="lan_share_vpn_warning">VPN が有効です — 受信側が接続できない場合は、VPN アプリで LAN アクセスを許可するか VPN をオフにしてください</string>
     <string name="lan_direct_intro">この端末で一時的なテザリングを作成できます。相手の端末がそれに接続すると、ファイルは 2 台の端末間で直接転送されます。インターネットは使用しません。</string>
     <string name="lan_direct_start">ダイレクト接続を開始</string>
+    <string name="lan_direct_step">ステップ 1/2 — テザリングに接続</string>
     <string name="lan_direct_switch">代わりにダイレクト接続を使う</string>
     <string name="lan_direct_join_hint">相手の端末のカメラでスキャンしてテザリングに接続し、「次へ」をタップしてください</string>
     <string name="lan_direct_password">パスワード</string>

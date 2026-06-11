@@ -5,28 +5,27 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
 import android.content.res.Configuration;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.Window;
+import android.widget.ImageButton;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.graphics.drawable.DrawableCompat;
-import androidx.core.view.MenuProvider;
+import androidx.appcompat.widget.PopupMenu;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
-import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
@@ -57,6 +56,12 @@ import dagger.hilt.android.AndroidEntryPoint;
 
 /**
  * Holder fragment with Material3 segmented toggle + ViewPager2.
+ *
+ * <p><b>Chrome:</b> there is NO toolbar — the segmented toggle IS the header
+ * (the old "Tabs" title restated it, and system back serves
+ * {@link #handleBack}). The toolbar's actions live in the bottom action bar
+ * around the FAB: the grid/list toggle as a dedicated button, the rest
+ * (close all / archive / settings) behind an overflow {@link PopupMenu}.
  *
  * <p><b>AppBar lift (scrim approach):</b> AppBar's own liftOnScroll machinery
  * races our updates across the ViewPager2 boundary — its async
@@ -94,8 +99,12 @@ public class TabsHolderFragment extends BaseFocusFragment {
     private View mCoordinatorRoot;
     private AppBarLayout mAppBarLayout;
     private View mAppBarLiftScrim;
+    private View mTabsHeader;
     private MaterialButtonToggleGroup mToggleGroup;
     private ViewPager2 mViewPager;
+    private View mBottomBar;
+    private ImageButton mViewButton;
+    private ImageButton mOverflowButton;
     private NavController mNavController;
     private GeckoStateViewModel mGeckoStateViewModel;
     private IncognitoStateViewModel mIncognitoStateViewModel;
@@ -177,9 +186,12 @@ public class TabsHolderFragment extends BaseFocusFragment {
         mCoordinatorRoot = view.findViewById(R.id.coordinator_root);
         mAppBarLayout = view.findViewById(R.id.appbar_layout);
         mAppBarLiftScrim = view.findViewById(R.id.appbar_lift_scrim);
-        mToolbar = view.findViewById(R.id.toolbar);
+        mTabsHeader = view.findViewById(R.id.tabs_header);
         mToggleGroup = view.findViewById(R.id.tab_mode_toggle);
         mViewPager = view.findViewById(R.id.tabs_view_pager);
+        mBottomBar = view.findViewById(R.id.tabs_bottom_bar);
+        mViewButton = view.findViewById(R.id.action_view_btn);
+        mOverflowButton = view.findViewById(R.id.action_overflow_btn);
         mFab = view.findViewById(R.id.fab_new_tab);
 
         // AppBar stays at resting surface colour forever. The scrim view
@@ -193,49 +205,56 @@ public class TabsHolderFragment extends BaseFocusFragment {
                 IncognitoColors.getSurfaceContainerHigh(mActivity, false));
         mAppBarLiftScrim.setAlpha(0f);
 
-        mToolbar.addMenuProvider(new MenuProvider() {
-            @Override
-            public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater menuInflater) {
-                menuInflater.inflate(R.menu.menu_tabs, menu);
-                MenuItem actionView = menu.findItem(R.id.action_view);
-                if (actionView != null) {
-                    actionView.setIcon(!mEnabledGrid ? R.drawable.ic_view_list_24 : R.drawable.ic_grid_view_24);
-                }
-            }
+        // Bottom action bar: the grid/list toggle as a dedicated button,
+        // everything else behind the overflow PopupMenu (menu_tabs.xml).
+        mViewButton.setImageResource(
+                !mEnabledGrid ? R.drawable.ic_view_list_24 : R.drawable.ic_grid_view_24);
+        mViewButton.setOnClickListener(v -> toggleViewMode());
+        mOverflowButton.setOnClickListener(v -> showOverflowMenu());
+        mBottomBar.setBackgroundColor(
+                IncognitoColors.getSurfaceContainer(mActivity, false));
 
-            @Override
-            public boolean onMenuItemSelected(@NonNull MenuItem menuItem) {
-                int id = menuItem.getItemId();
-                if (id == R.id.action_view) {
-                    mEnabledGrid = !mEnabledGrid;
-                    menuItem.setIcon(!mEnabledGrid ? R.drawable.ic_view_list_24 : R.drawable.ic_grid_view_24);
-                    if (mIsIncognitoThemed && mActivity != null) {
-                        Drawable icon = menuItem.getIcon();
-                        if (icon != null) {
-                            DrawableCompat.setTint(icon, IncognitoColors.getOnSurface(mActivity, true));
-                        }
-                    }
-                    applyGridModeToChildren(mEnabledGrid);
-                    return true;
-                } else if (id == R.id.action_close_all) {
-                    mGeckoStateViewModel.deleteAll();
-                    mIncognitoStateViewModel.deleteAll();
-                    return true;
-                } else if (id == R.id.action_tabs_archive) {
-                    NavigationUtils.navigateSafe(mNavController, R.id.tabs_archive);
-                    return true;
-                } else if (id == R.id.action_settings) {
-                    Intent intent = new Intent(mActivity, SettingsActivity.class);
-                    startActivity(intent);
-                    return true;
+        // The toolbar used to absorb the status-bar inset; with the toggle
+        // as the header, its container takes it (the lift scrim fills the
+        // same frame, so the lifted tone covers the status-bar area too).
+        ViewCompat.setOnApplyWindowInsetsListener(mTabsHeader, (v, windowInsets) -> {
+            Insets bars = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(v.getPaddingLeft(), bars.top, v.getPaddingRight(),
+                    v.getPaddingBottom());
+            return windowInsets;
+        });
+
+        // Bar paints edge-to-edge behind gesture nav; the pager bottom-pads
+        // by the bar's final height so the last tab row clears it. The FAB
+        // floats over the bar's middle slot lifted by the same
+        // app_bar_fab_margin the browser's fire FAB uses, so the hero
+        // button's vertical position matches across the two screens.
+        ViewCompat.setOnApplyWindowInsetsListener(mBottomBar, (v, windowInsets) -> {
+            Insets bars = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(v.getPaddingLeft(), v.getPaddingTop(), v.getPaddingRight(),
+                    bars.bottom);
+            if (mFab != null) {
+                ViewGroup.MarginLayoutParams params =
+                        (ViewGroup.MarginLayoutParams) mFab.getLayoutParams();
+                int lift = getResources().getDimensionPixelOffset(R.dimen.app_bar_fab_margin);
+                int margin = bars.bottom + lift;
+                if (params.bottomMargin != margin) {
+                    params.bottomMargin = margin;
+                    mFab.setLayoutParams(params);
                 }
-                return false;
             }
-        }, getViewLifecycleOwner(), Lifecycle.State.RESUMED);
+            return windowInsets;
+        });
+        mBottomBar.addOnLayoutChangeListener(
+                (v, l, t, r, b, ol, ot, or, ob) -> {
+                    int height = b - t;
+                    if (mViewPager != null && mViewPager.getPaddingBottom() != height) {
+                        mViewPager.setPadding(0, 0, 0, height);
+                    }
+                });
 
         mFab.setOnClickListener(v -> addNewTab());
 
-        setupToolbar();
         setupViewPager();
         setupToggle();
         setupFragmentResultListener();
@@ -287,15 +306,47 @@ public class TabsHolderFragment extends BaseFocusFragment {
         mFab = null;
         mAppBarLayout = null;
         mAppBarLiftScrim = null;
-        mToolbar = null;
+        mTabsHeader = null;
+        mBottomBar = null;
+        mViewButton = null;
+        mOverflowButton = null;
         mToggleGroup = null;
         mViewPager = null;
     }
 
     // ── Setup ────────────────────────────────────────────────────────
 
-    private void setupToolbar() {
-        mToolbar.setNavigationOnClickListener(v -> handleBack());
+    /** The bottom bar's grid/list button (the old action_view menu item). */
+    private void toggleViewMode() {
+        mEnabledGrid = !mEnabledGrid;
+        mViewButton.setImageResource(
+                !mEnabledGrid ? R.drawable.ic_view_list_24 : R.drawable.ic_grid_view_24);
+        applyGridModeToChildren(mEnabledGrid);
+    }
+
+    /** The bottom bar's overflow: close all / archive / settings. */
+    private void showOverflowMenu() {
+        PopupMenu popup = new PopupMenu(
+                new ContextThemeWrapper(mActivity, R.style.Theme_FireDown_Popup),
+                mOverflowButton);
+        popup.getMenuInflater().inflate(R.menu.menu_tabs, popup.getMenu());
+        popup.setOnMenuItemClickListener(menuItem -> {
+            int id = menuItem.getItemId();
+            if (id == R.id.action_close_all) {
+                mGeckoStateViewModel.deleteAll();
+                mIncognitoStateViewModel.deleteAll();
+                return true;
+            } else if (id == R.id.action_tabs_archive) {
+                NavigationUtils.navigateSafe(mNavController, R.id.tabs_archive);
+                return true;
+            } else if (id == R.id.action_settings) {
+                Intent intent = new Intent(mActivity, SettingsActivity.class);
+                startActivity(intent);
+                return true;
+            }
+            return false;
+        });
+        popup.show();
     }
 
     private void setupViewPager() {
@@ -557,9 +608,6 @@ public class TabsHolderFragment extends BaseFocusFragment {
         }
 
         mCoordinatorRoot.setBackgroundColor(surfaceColor);
-        if (mNavScrim != null) {
-            mNavScrim.setBackgroundColor(surfaceColor);
-        }
 
         // AppBar = resting surface (static, never animated).
         // Scrim = lifted colour (alpha driven by scroll state).
@@ -568,26 +616,16 @@ public class TabsHolderFragment extends BaseFocusFragment {
             mAppBarLiftScrim.setBackgroundColor(liftedColor);
         }
 
-        mToolbar.setTitleTextColor(onSurfaceColor);
-
-        Drawable navIcon = mToolbar.getNavigationIcon();
-        if (navIcon != null) {
-            DrawableCompat.setTint(navIcon, onSurfaceColor);
+        // Bottom action bar follows the mode: tonal surface + icon tints.
+        if (mBottomBar != null) {
+            mBottomBar.setBackgroundColor(
+                    IncognitoColors.getSurfaceContainer(mActivity, incognito));
         }
-
-        Menu menu = mToolbar.getMenu();
-        if (menu != null) {
-            for (int i = 0; i < menu.size(); i++) {
-                Drawable icon = menu.getItem(i).getIcon();
-                if (icon != null) {
-                    DrawableCompat.setTint(icon, onSurfaceColor);
-                }
-            }
+        if (mViewButton != null) {
+            mViewButton.setColorFilter(onSurfaceColor);
         }
-
-        Drawable overflowIcon = mToolbar.getOverflowIcon();
-        if (overflowIcon != null) {
-            DrawableCompat.setTint(overflowIcon, onSurfaceColor);
+        if (mOverflowButton != null) {
+            mOverflowButton.setColorFilter(onSurfaceColor);
         }
 
         updateSegmentedButtons(mActivity, incognito);

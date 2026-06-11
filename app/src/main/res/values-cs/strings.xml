@@ -393,6 +393,7 @@
     <string name="capture_help_banner">Některá vložená média je nutné nejdřív přehrát. Klepnutím zjistíte jak.</string>
     <string name="lan_send">Odeslat</string>
     <string name="lan_share_title">Odeslat do prohlížeče</string>
+    <string name="tabs_more_options">Další možnosti</string>
     <string name="lan_share_lead">Na druhém zařízení otevřete tuto adresu v libovolném prohlížeči na stejné Wi-Fi</string>
     <string name="lan_share_qr_hint">Naskenování kódu otevře stránku s již vyplněným PINem</string>
     <string name="lan_share_cert_hint">Prohlížeč druhého zařízení nejprve zobrazí bezpečnostní varování — zvolte Rozšířené a pak Pokračovat. Spojení mezi oběma zařízeními je přesto šifrované.</string>
@@ -403,6 +404,7 @@
     <string name="lan_share_vpn_warning">Aktivní VPN — pokud se příjemce nemůže připojit, povolte ve VPN aplikaci přístup k místní síti nebo ji vypněte</string>
     <string name="lan_direct_intro">Tento telefon může vytvořit dočasný hotspot — druhé zařízení se k němu připojí a soubor se přenese přímo mezi oběma telefony. Internet se nepoužívá.</string>
     <string name="lan_direct_start">Spustit přímé připojení</string>
+    <string name="lan_direct_step">Krok 1 z 2 — připojte se k hotspotu</string>
     <string name="lan_direct_switch">Použít místo toho přímé připojení</string>
     <string name="lan_direct_join_hint">Naskenujte kamerou druhého zařízení pro připojení k hotspotu a pak klepněte na Další</string>
     <string name="lan_direct_password">Heslo</string>

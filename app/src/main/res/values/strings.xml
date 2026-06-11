@@ -681,6 +681,7 @@
     <string name="home_trackers_subtitle_idle">Protection active</string>
     <string name="lan_send">Send</string>
     <string name="lan_share_title">Send to browser</string>
+    <string name="tabs_more_options">More options</string>
     <string name="lan_share_lead">On the other device, open this address in any browser on the same Wi-Fi</string>
     <string name="lan_share_qr_hint">Scanning the code opens the page with the PIN already filled in</string>
     <string name="lan_share_cert_hint">The other device\'s browser shows a security warning first — choose Advanced, then Continue. The connection is still encrypted between the two devices.</string>
@@ -691,6 +692,7 @@
     <string name="lan_share_vpn_warning">VPN active — if the receiver can\'t connect, allow LAN access in the VPN app or turn it off</string>
     <string name="lan_direct_intro">This phone can create a temporary hotspot instead — the other device joins it and the file moves directly between the two phones. The internet is not used.</string>
     <string name="lan_direct_start">Start direct connection</string>
+    <string name="lan_direct_step">Step 1 of 2 — join the hotspot</string>
     <string name="lan_direct_switch">Use direct connection instead</string>
     <string name="lan_direct_join_hint">Scan with the other device\'s camera to join the hotspot, then tap Next</string>
     <string name="lan_direct_password">Password</string>

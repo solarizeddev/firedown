@@ -571,6 +571,7 @@
     <string name="capture_help_banner">Algunos medios incrustados deben reproducirse primero. Toca para saber cómo.</string>
     <string name="lan_send">Enviar</string>
     <string name="lan_share_title">Enviar al navegador</string>
+    <string name="tabs_more_options">Más opciones</string>
     <string name="lan_share_lead">En el otro dispositivo, abre esta dirección en cualquier navegador en la misma Wi-Fi</string>
     <string name="lan_share_qr_hint">Al escanear el código se abre la página con el PIN ya rellenado</string>
     <string name="lan_share_cert_hint">El navegador del otro dispositivo muestra primero un aviso de seguridad — elige Avanzado y luego Continuar. La conexión entre los dos dispositivos sigue cifrada.</string>
@@ -581,6 +582,7 @@
     <string name="lan_share_vpn_warning">VPN activa — si el receptor no puede conectarse, permite el acceso a la red local en la app de VPN o desactívala</string>
     <string name="lan_direct_intro">Este teléfono puede crear un punto de acceso temporal: el otro dispositivo se une a él y el archivo pasa directamente entre los dos teléfonos. No se usa internet.</string>
     <string name="lan_direct_start">Iniciar conexión directa</string>
+    <string name="lan_direct_step">Paso 1 de 2 — únete al punto de acceso</string>
     <string name="lan_direct_switch">Usar una conexión directa en su lugar</string>
     <string name="lan_direct_join_hint">Escanea con la cámara del otro dispositivo para unirte al punto de acceso y luego toca Siguiente</string>
     <string name="lan_direct_password">Contraseña</string>

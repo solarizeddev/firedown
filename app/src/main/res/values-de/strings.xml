@@ -571,6 +571,7 @@
     <string name="capture_help_banner">Manche eingebetteten Medien müssen erst abgespielt werden – zum Erfahren tippen.</string>
     <string name="lan_send">Senden</string>
     <string name="lan_share_title">An Browser senden</string>
+    <string name="tabs_more_options">Weitere Optionen</string>
     <string name="lan_share_lead">Öffne diese Adresse auf dem anderen Gerät in einem beliebigen Browser im selben WLAN</string>
     <string name="lan_share_qr_hint">Beim Scannen des Codes öffnet sich die Seite mit bereits ausgefüllter PIN</string>
     <string name="lan_share_cert_hint">Der Browser des anderen Geräts zeigt zuerst eine Sicherheitswarnung — wähle Erweitert und dann Fortfahren. Die Verbindung zwischen beiden Geräten ist trotzdem verschlüsselt.</string>
@@ -581,6 +582,7 @@
     <string name="lan_share_vpn_warning">VPN aktiv — falls sich das andere Gerät nicht verbinden kann, LAN-Zugriff in der VPN-App erlauben oder VPN ausschalten</string>
     <string name="lan_direct_intro">Dieses Telefon kann stattdessen einen temporären Hotspot erstellen — das andere Gerät tritt ihm bei und die Datei wird direkt zwischen beiden Telefonen übertragen. Das Internet wird nicht genutzt.</string>
     <string name="lan_direct_start">Direktverbindung starten</string>
+    <string name="lan_direct_step">Schritt 1 von 2 — dem Hotspot beitreten</string>
     <string name="lan_direct_switch">Stattdessen Direktverbindung verwenden</string>
     <string name="lan_direct_join_hint">Mit der Kamera des anderen Geräts scannen, um dem Hotspot beizutreten, dann auf Weiter tippen</string>
     <string name="lan_direct_password">Passwort</string>

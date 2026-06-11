@@ -1,25 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- "Send to browser" — full share screen (LanShareFragment, a downloads
-     nav-graph destination like FrameGrabber/GifMaker). Shows the local URL,
-     the QR, the PIN, the shared file, and Stop. The LanShareServer's
+     nav-graph destination like FrameGrabber/GifMaker). The LanShareServer's
      lifetime is this screen's lifetime — leaving it stops sharing.
 
-     Two modes: with a usable LAN the share content shows immediately; with
-     none (cellular-only) the direct-connection intro shows instead, and
+     Composition (the redesign): a shared-file card (real Glide thumbnail +
+     live dot), the QR on a surface card with the URL as a tap-to-copy pill
+     INSIDE it (same credential, one container), the PIN as digit tiles
+     (built programmatically into lan_share_pin_row), pill buttons. Two
+     modes: with a usable LAN the share content shows immediately; with none
+     (cellular-only) the direct-connection intro card shows instead, and
      accepting it raises a LocalOnlyHotspot — step 1 reuses the SAME content
-     views (URL chip = hotspot name, PIN slot = password, QR = Wi-Fi join
-     code) and the Next button flips them to the normal URL/PIN/QR. -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+     views (URL pill = hotspot name, tile row = passphrase, QR = Wi-Fi join
+     code, plus the step chip) and Next flips them to the normal URL/PIN/QR. -->
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:layout_height="match_parent">
 
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appbar_layout"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        app:liftOnScroll="true"
+        app:liftOnScrollTargetViewId="@+id/lan_share_scroll">
 
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/toolbar"
@@ -32,7 +37,16 @@
 
     </com.google.android.material.appbar.AppBarLayout>
 
-    <ScrollView
+    <!-- Lift-on-scroll needs NESTED scroll events, so this is a
+         NestedScrollView (a plain ScrollView never lifts the bar). -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior">
+
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/lan_share_scroll"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
@@ -67,21 +81,88 @@
                 android:visibility="gone"
                 tools:visibility="visible" />
 
-            <!-- No-LAN case: offer the hotspot direct connection instead of
-                 a dead-end snackbar -->
+            <!-- Shared file: real thumbnail + name + mime/size + live dot -->
+            <LinearLayout
+                android:id="@+id/lan_share_file_card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_lan_share_filecard"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="12dp">
+
+                <com.google.android.material.imageview.ShapeableImageView
+                    android:id="@+id/lan_share_thumb"
+                    android:layout_width="54dp"
+                    android:layout_height="54dp"
+                    android:scaleType="centerCrop"
+                    app:shapeAppearanceOverlay="@style/RoundedThumbnail" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="14dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/lan_share_file_name"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:ellipsize="middle"
+                        android:maxLines="1"
+                        android:textAppearance="?attr/textAppearanceTitleSmall"
+                        android:textColor="?attr/colorOnSurface"
+                        tools:text="Robot head buddy.mp4" />
+
+                    <TextView
+                        android:id="@+id/lan_share_file_tag"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:maxLines="1"
+                        android:textAppearance="?attr/textAppearanceBodySmall"
+                        android:textColor="?attr/colorOnSurfaceVariant"
+                        tools:text="VIDEO · 48.2 MB" />
+
+                </LinearLayout>
+
+                <View
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:layout_marginStart="10dp"
+                    android:background="@drawable/bg_lan_share_dot" />
+
+            </LinearLayout>
+
+            <!-- No-LAN case: the hotspot direct-connection offer card -->
             <LinearLayout
                 android:id="@+id/lan_direct_group"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginTop="16dp"
+                android:background="@drawable/bg_lan_share_card"
+                android:gravity="center_horizontal"
                 android:orientation="vertical"
+                android:padding="24dp"
                 android:visibility="gone"
                 tools:visibility="visible">
+
+                <ImageView
+                    android:layout_width="34dp"
+                    android:layout_height="34dp"
+                    android:contentDescription="@null"
+                    android:src="@drawable/ic_send_lan_24"
+                    app:tint="?attr/colorPrimary" />
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:paddingHorizontal="16dp"
-                    android:paddingTop="14dp"
+                    android:layout_marginTop="12dp"
+                    android:gravity="center"
                     android:text="@string/lan_direct_intro"
                     android:textAppearance="?attr/textAppearanceBodyMedium"
                     android:textColor="?attr/colorOnSurfaceVariant" />
@@ -90,8 +171,7 @@
                     android:id="@+id/lan_direct_start"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="center_horizontal"
-                    android:layout_marginTop="16dp"
+                    android:layout_marginTop="18dp"
                     android:text="@string/lan_direct_start" />
 
             </LinearLayout>
@@ -103,39 +183,82 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
 
-                <!-- The short URL the receiver types (hotspot step 1: SSID) -->
+                <!-- Hotspot step 1 -> 2 progress chip -->
                 <TextView
-                    android:id="@+id/lan_share_url"
+                    android:id="@+id/lan_share_step"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginTop="14dp"
+                    android:background="@drawable/bg_lan_share_step"
+                    android:paddingHorizontal="14dp"
+                    android:paddingVertical="6dp"
+                    android:text="@string/lan_direct_step"
+                    android:textAppearance="?attr/textAppearanceLabelMedium"
+                    android:textColor="?attr/colorOnPrimaryContainer"
+                    android:visibility="gone"
+                    tools:visibility="visible" />
+
+                <!-- QR stage: code + the URL pill (tap to copy) in one card -->
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginHorizontal="16dp"
-                    android:layout_marginTop="18dp"
-                    android:background="@drawable/bg_lan_share_url"
-                    android:fontFamily="monospace"
-                    android:gravity="center"
-                    android:padding="12dp"
-                    android:textColor="?attr/colorOnPrimaryContainer"
-                    android:textIsSelectable="true"
-                    android:textSize="18sp"
-                    tools:text="192.168.1.57:53317" />
+                    android:layout_marginTop="16dp"
+                    android:background="@drawable/bg_lan_share_card"
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical"
+                    android:paddingHorizontal="22dp"
+                    android:paddingTop="22dp"
+                    android:paddingBottom="16dp">
 
-                <ImageView
-                    android:id="@+id/lan_share_qr"
-                    android:layout_width="240dp"
-                    android:layout_height="240dp"
-                    android:layout_gravity="center_horizontal"
-                    android:layout_marginTop="20dp"
-                    android:background="@drawable/bg_lan_share_qr"
-                    android:contentDescription="@string/lan_share_qr_hint"
-                    android:padding="14dp" />
+                    <ImageView
+                        android:id="@+id/lan_share_qr"
+                        android:layout_width="232dp"
+                        android:layout_height="232dp"
+                        android:background="@drawable/bg_lan_share_qr"
+                        android:contentDescription="@string/lan_share_qr_hint"
+                        android:padding="12dp" />
+
+                    <LinearLayout
+                        android:id="@+id/lan_share_url_chip"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:background="@drawable/bg_lan_share_pill"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingHorizontal="18dp"
+                        android:paddingVertical="9dp">
+
+                        <TextView
+                            android:id="@+id/lan_share_url"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="monospace"
+                            android:textColor="?attr/colorOnSurface"
+                            android:textSize="16sp"
+                            tools:text="192.168.1.57:53317" />
+
+                        <ImageView
+                            android:layout_width="18dp"
+                            android:layout_height="18dp"
+                            android:layout_marginStart="10dp"
+                            android:contentDescription="@string/clipboard"
+                            android:src="@drawable/ic_copy_24"
+                            app:tint="?attr/colorOnSurfaceVariant" />
+
+                    </LinearLayout>
+
+                </LinearLayout>
 
                 <TextView
                     android:id="@+id/lan_share_hint"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center"
-                    android:paddingHorizontal="16dp"
-                    android:paddingTop="10dp"
+                    android:paddingHorizontal="32dp"
+                    android:paddingTop="12dp"
                     android:text="@string/lan_share_qr_hint"
                     android:textAppearance="?attr/textAppearanceBodySmall"
                     android:textColor="?attr/colorOnSurfaceVariant" />
@@ -148,8 +271,9 @@
                     android:id="@+id/lan_share_cert"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:alpha="0.75"
                     android:gravity="center"
-                    android:paddingHorizontal="16dp"
+                    android:paddingHorizontal="32dp"
                     android:paddingTop="6dp"
                     android:text="@string/lan_share_cert_hint"
                     android:textAppearance="?attr/textAppearanceBodySmall"
@@ -162,36 +286,21 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center"
-                    android:paddingTop="18dp"
+                    android:letterSpacing="0.18"
+                    android:paddingTop="16dp"
                     android:text="@string/lan_share_pin"
                     android:textAppearance="?attr/textAppearanceLabelSmall"
                     android:textColor="?attr/colorOnSurfaceVariant" />
 
-                <TextView
-                    android:id="@+id/lan_share_pin_value"
-                    android:layout_width="match_parent"
+                <!-- PIN digit tiles / hotspot passphrase tile, built in code -->
+                <LinearLayout
+                    android:id="@+id/lan_share_pin_row"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginTop="8dp"
                     android:gravity="center"
-                    android:letterSpacing="0.45"
-                    android:paddingTop="2dp"
-                    android:textColor="?attr/colorPrimary"
-                    android:textSize="34sp"
-                    android:textStyle="bold"
-                    tools:text="4729" />
-
-                <!-- Shared file summary -->
-                <TextView
-                    android:id="@+id/lan_share_file"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginHorizontal="16dp"
-                    android:layout_marginTop="16dp"
-                    android:ellipsize="middle"
-                    android:gravity="center"
-                    android:maxLines="2"
-                    android:textAppearance="?attr/textAppearanceBodyMedium"
-                    android:textColor="?attr/colorOnSurfaceVariant"
-                    tools:text="Robot head buddy.mp4 · 6.8 MB" />
+                    android:orientation="horizontal" />
 
             </LinearLayout>
 
@@ -234,18 +343,23 @@
 
         </LinearLayout>
 
-    </ScrollView>
+    </androidx.core.widget.NestedScrollView>
 
+    <!-- Pinned footer bar: tonal surface so it reads as a fixed bar over
+         the scrolling content, not a floating caption. -->
     <TextView
         android:id="@+id/lan_share_footer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="?attr/colorSurfaceContainerHigh"
         android:gravity="center"
         android:paddingHorizontal="16dp"
-        android:paddingTop="10dp"
+        android:paddingTop="12dp"
         android:paddingBottom="16dp"
         android:text="@string/lan_share_footer"
         android:textAppearance="?attr/textAppearanceBodySmall"
         android:textColor="?attr/colorOnSurfaceVariant" />
 
-</LinearLayout>
+    </LinearLayout>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

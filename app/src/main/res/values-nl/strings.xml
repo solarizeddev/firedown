@@ -440,6 +440,7 @@
     <string name="capture_help_banner">Sommige ingesloten media moeten eerst worden afgespeeld. Tik voor meer info.</string>
     <string name="lan_send">Versturen</string>
     <string name="lan_share_title">Naar browser sturen</string>
+    <string name="tabs_more_options">Meer opties</string>
     <string name="lan_share_lead">Open dit adres op het andere apparaat in een willekeurige browser op dezelfde wifi</string>
     <string name="lan_share_qr_hint">Door de code te scannen opent de pagina met de pin al ingevuld</string>
     <string name="lan_share_cert_hint">De browser van het andere apparaat toont eerst een beveiligingswaarschuwing — kies Geavanceerd en dan Doorgaan. De verbinding tussen de twee apparaten is wel versleuteld.</string>
@@ -450,6 +451,7 @@
     <string name="lan_share_vpn_warning">VPN actief — als de ontvanger geen verbinding kan maken, sta LAN-toegang toe in de VPN-app of schakel de VPN uit</string>
     <string name="lan_direct_intro">Deze telefoon kan een tijdelijke hotspot maken — het andere apparaat verbindt ermee en het bestand gaat rechtstreeks tussen de twee telefoons. Internet wordt niet gebruikt.</string>
     <string name="lan_direct_start">Directe verbinding starten</string>
+    <string name="lan_direct_step">Stap 1 van 2 — verbind met de hotspot</string>
     <string name="lan_direct_switch">Gebruik een directe verbinding</string>
     <string name="lan_direct_join_hint">Scan met de camera van het andere apparaat om met de hotspot te verbinden en tik daarna op Volgende</string>
     <string name="lan_direct_password">Wachtwoord</string>

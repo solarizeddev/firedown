@@ -39,6 +39,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -295,6 +297,14 @@ public final class LanShareServer {
     private ServerSocket mServerSocket;
     private Thread mAcceptThread;
     private ExecutorService mHandlerPool;
+    /**
+     * Live per-connection sockets, closed by {@link #stop} for deterministic
+     * teardown. SO_TIMEOUT bounds only READS — a receiver that stops ACKing
+     * mid-download leaves sendFile blocked in a socket WRITE indefinitely
+     * (no write timeout, no keepalive), and shutdownNow()'s interrupt cannot
+     * unblock socket I/O; only closing the socket can.
+     */
+    private final Set<Socket> mClientSockets = ConcurrentHashMap.newKeySet();
 
     public LanShareServer(@NonNull List<SharedFile> files, @NonNull String deviceName,
                           @NonNull AssetManager assets, @Nullable SSLContext sslContext) {
@@ -474,6 +484,14 @@ public final class LanShareServer {
         if (mHandlerPool != null) {
             mHandlerPool.shutdownNow();
         }
+        // Unblock any handler stuck in a socket write (see mClientSockets).
+        for (Socket client : mClientSockets) {
+            try {
+                client.close();
+            } catch (IOException ignored) {
+            }
+        }
+        mClientSockets.clear();
         if (BuildConfig.DEBUG) {
             Log.d(TAG, "stopped");
         }
@@ -508,6 +526,7 @@ public final class LanShareServer {
         // (LanShareTls failed), plain HTTP is served directly — degraded
         // beats not sharing.
         Socket socket = client;
+        mClientSockets.add(client);
         try {
             client.setSoTimeout(15_000);
             InputStream transportIn = client.getInputStream();
@@ -567,6 +586,7 @@ public final class LanShareServer {
                 client.close();
             } catch (IOException ignored) {
             }
+            mClientSockets.remove(client);
         }
     }
 
