@@ -30,14 +30,8 @@
             android:text="@string/sort_by_type_audio"
             android:checkable="true"/>
 
-        <com.google.android.material.chip.Chip
-            android:id="@+id/chip_subtitle"
-            style="@style/Firedown.Widget.App.Chip.Filter"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/sort_by_type_subtitle"
-            android:checkable="true"/>
-
+        <!-- Images/GIF before Subtitle — frequency-first, in lockstep with
+             fragment_download_list_options.xml (Downloads). -->
         <com.google.android.material.chip.Chip
             android:id="@+id/chip_image"
             style="@style/Firedown.Widget.App.Chip.Filter"
@@ -52,6 +46,14 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/sort_by_type_gif"
+            android:checkable="true"/>
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/chip_subtitle"
+            style="@style/Firedown.Widget.App.Chip.Filter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/sort_by_type_subtitle"
             android:checkable="true"/>
 
     </com.google.android.material.chip.ChipGroup>

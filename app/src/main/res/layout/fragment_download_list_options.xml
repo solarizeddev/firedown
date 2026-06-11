@@ -30,14 +30,11 @@
             android:text="@string/sort_by_type_audio"
             android:checkable="true"/>
 
-        <com.google.android.material.chip.Chip
-            android:id="@+id/chip_subtitle"
-            style="@style/Theme.FireDown.Download.Chip"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/sort_by_type_subtitle"
-            android:checkable="true"/>
-
+        <!-- Chip order is frequency-first within the visible window: Images
+             (the generic catcher's most numerous type after video) and GIF sit
+             ahead of the rarely-filtered Subtitle, which leads the long-tail
+             half. Keep this order in lockstep with
+             fragment_dialog_browser_options_list_options.xml (Captured). -->
         <com.google.android.material.chip.Chip
             android:id="@+id/chip_image"
             style="@style/Theme.FireDown.Download.Chip"
@@ -52,6 +49,14 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/sort_by_type_gif"
+            android:checkable="true"/>
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/chip_subtitle"
+            style="@style/Theme.FireDown.Download.Chip"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/sort_by_type_subtitle"
             android:checkable="true"/>
 
         <com.google.android.material.chip.Chip
