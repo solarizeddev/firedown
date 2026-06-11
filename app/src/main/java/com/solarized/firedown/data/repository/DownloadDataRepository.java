@@ -5,6 +5,7 @@ import android.util.Log;
 import androidx.lifecycle.LiveData;
 import androidx.paging.PagingSource;
 
+import com.solarized.firedown.BuildConfig;
 import com.solarized.firedown.data.DownloadDatabase;
 import com.solarized.firedown.data.di.Qualifiers;
 import com.solarized.firedown.data.entity.DownloadEntity;
@@ -30,11 +31,15 @@ public class DownloadDataRepository {
 
     private final DownloadDatabase mDatabase;
     private final Executor mDiskExecutor;
+    private final Executor mHeavyExecutor;
 
     @Inject
-    public DownloadDataRepository(DownloadDatabase database, @Qualifiers.DiskIO Executor diskExecutor) {
+    public DownloadDataRepository(DownloadDatabase database,
+                                  @Qualifiers.DiskIO Executor diskExecutor,
+                                  @Qualifiers.HeavyIO Executor heavyExecutor) {
         this.mDatabase = database;
         this.mDiskExecutor = diskExecutor;
+        this.mHeavyExecutor = heavyExecutor;
     }
 
     // --- Paging Queries ---
@@ -157,9 +162,16 @@ public class DownloadDataRepository {
 
     /**
      * Refreshes metadata and thumbnail timestamp for a download.
+     *
+     * <p>Runs on the HEAVY executor, not {@code @DiskIO}: the FFmpeg probe
+     * below can grind for a long time on a corrupt/odd file, and {@code
+     * @DiskIO} is the single serial lane all short DB mutations (incl.
+     * deletes) ride on — one wedged probe there froze the Downloads list
+     * for the rest of the session. The final Room insert is thread-safe
+     * from any executor.</p>
      */
     public void updateDownloadThumb(DownloadEntity download) {
-        mDiskExecutor.execute(() -> {
+        mHeavyExecutor.execute(() -> {
             DownloadEntity newEntity = new DownloadEntity(download);
             String filePath = newEntity.getFilePath();
             long duration = newEntity.getDuration();
@@ -216,8 +228,21 @@ public class DownloadDataRepository {
             return;
         }
         mDiskExecutor.execute(() -> {
+            // Sum the rows actually removed: @Delete matches by PRIMARY KEY
+            // (uid), while the file cleanup below matches by PATH — so
+            // "files vanished but list entries stayed" means this count was
+            // 0 (stale/mismatched uid), not a UI-refresh failure. Keep the
+            // diagnostic; it splits the two failure modes in one logcat line.
+            int removed = 0;
             for (DownloadEntity entity : downloads) {
-                mDatabase.downloadDao().deleteSyncEntity(entity);
+                Integer result = mDatabase.downloadDao().deleteSyncEntity(entity);
+                if (result != null) {
+                    removed += result;
+                }
+            }
+            if (BuildConfig.DEBUG) {
+                Log.d(TAG, "deleteDownloads: requested=" + downloads.size()
+                        + " rowsRemoved=" + removed);
             }
             deleteFilesInternal(downloads);
             if (onComplete != null) onComplete.run();

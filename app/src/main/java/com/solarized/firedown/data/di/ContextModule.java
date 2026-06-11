@@ -44,6 +44,18 @@ public class ContextModule {
 
     @Provides
     @Singleton
+    @Qualifiers.HeavyIO
+    public Executor provideHeavyExecutor() {
+        // Single thread on purpose: heavy jobs (cache sweep, mirror write,
+        // FFmpeg probe) serialize among themselves instead of contending,
+        // and crucially they no longer sit in front of the DiskIO queue's
+        // short DB mutations (see the Qualifiers.DiskIO javadoc).
+        return Executors.newSingleThreadExecutor();
+    }
+
+
+    @Provides
+    @Singleton
     @Qualifiers.AutoComplete // Label it!
     public ExecutorService provideAutoCompleteExecutor() {
         return Executors.newFixedThreadPool(4);
