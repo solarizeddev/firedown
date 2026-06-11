@@ -101,8 +101,6 @@ public class BrowserFragment extends BaseBrowserFragment
 
     private static final String TAG = BrowserFragment.class.getSimpleName();
 
-    private static final int MINIMUM_TRIGGER_Y = 10;
-
     // ── UI state machine ──────────────────────────────────────────────────────────────────────────
     //
     // Replaces BrowserStateViewModel + BrowserViewState + BrowserViewStateLiveData.
@@ -372,6 +370,19 @@ public class BrowserFragment extends BaseBrowserFragment
         mAutoCompleteEditText.setOnFocusChangeListener(this);
 
         mSwipeRefreshLayout.setProgressViewOffset(false, 0, mGeckoToolbarSize + mBottomBarSize);
+
+        // Pull-to-refresh gesture-time veto — Fenix SwipeRefreshFeature.canChildScrollUp
+        // parity. Stock SwipeRefreshLayout decides "may I start the drag?" by asking
+        // child.canScrollVertically(-1), which a GeckoView always answers false ("cannot
+        // scroll up"), so to the stock logic EVERY downward drag looks like a refresh
+        // candidate whenever the layout is enabled. Polling the LIVE InputResultDetail
+        // instead makes the decision per-event from the CURRENT gesture's APZ answer:
+        // content not at top, or the site consumed the touch → "child can scroll up" →
+        // no spinner. This is the second, independent veto beside NestedGeckoView's
+        // disallow-intercept arbitration (which can only be lifted once APZ reports
+        // canOverscrollTop for the gesture) — defense in depth, exactly Fenix's shape.
+        mSwipeRefreshLayout.setOnChildScrollUpCallback((parent, child) ->
+                !mGeckoView.getInputResultDetail().canOverscrollTop());
 
         mAutoCompleteView.setClipboardCallback(new AutoCompleteView.OnClipboardListener() {
             @Override
@@ -1490,8 +1501,19 @@ public class BrowserFragment extends BaseBrowserFragment
 
     @Override
     public void onScrollChange(int scrollY) {
-        mSwipeRefreshLayout.setEnabled(
-                scrollY < MINIMUM_TRIGGER_Y && !mGeckoView.getInputResultDetail().canScrollToTop());
+        // Deliberately NO SwipeRefreshLayout gating here (Fenix parity — don't re-add
+        // it). The old heuristic, setEnabled(scrollY < 10 && !canScrollToTop()),
+        // derived the pull-to-refresh decision from two stale inputs: the ASYNC
+        // ScrollDelegate position (which lags the page and never moves at all when a
+        // site scrolls an inner container — root scrollY stuck at 0 kept P2R armed
+        // mid-page) and the PREVIOUS gesture's InputResultDetail (reset to UNKNOWN on
+        // every ACTION_UP, so canScrollToTop() was almost always false at decision
+        // time; a fling settling at scrollY 10..N left P2R dead for the next at-top
+        // pull). The result was the "is this a scroll or a refresh?" coin-flip. The
+        // per-gesture mechanisms own the decision now: NestedGeckoView's
+        // disallow-intercept arbitration + the live canChildScrollUp veto installed in
+        // onCreateView. Fenix never toggles isEnabled from scroll events either —
+        // only settings and fullscreen do.
     }
 
     @Override
