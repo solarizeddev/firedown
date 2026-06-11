@@ -3,6 +3,7 @@ package com.solarized.firedown.data.models;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.TextUtils;
+import android.util.Log;
 
 import androidx.annotation.Nullable;
 import androidx.lifecycle.LiveData;
@@ -18,6 +19,7 @@ import androidx.paging.PagingDataTransforms;
 import androidx.paging.PagingLiveData;
 import androidx.paging.PagingSource;
 
+import com.solarized.firedown.BuildConfig;
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
 import com.solarized.firedown.Sorting;
@@ -41,6 +43,8 @@ import kotlinx.coroutines.CoroutineScope;
 
 @HiltViewModel
 public class DownloadsViewModel extends ViewModel {
+
+    private static final String TAG = "DownloadsViewModel";
 
     private static final long SEARCH_DEBOUNCE_MS = 250L;
 
@@ -96,6 +100,16 @@ public class DownloadsViewModel extends ViewModel {
 
             // 3. Apply the "Chip" Filter, then map to Object, then insert separators
             return Transformations.map(rawData, pagingData -> {
+
+                // Diagnostic checkpoint: Room invalidation (insert/update/
+                // delete on the download table) must land here as a new
+                // generation. A delete whose rowsRemoved log fired but never
+                // produced this line means the invalidation→Pager leg is
+                // broken; this line without a subsequent adapter refresh
+                // means the transform/differ leg is.
+                if (BuildConfig.DEBUG) {
+                    Log.d(TAG, "downloads: new paging generation");
+                }
 
                 PagingData<DownloadEntity> filtered = PagingDataTransforms.filter(pagingData, mExecutor,
                         entity -> mSorting.getPredicateDownloads(entity, state.chipId));

@@ -11,7 +11,6 @@ import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewTreeObserver;
 import android.view.Window;
 import android.widget.ImageButton;
 
@@ -27,7 +26,6 @@ import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 
@@ -55,32 +53,22 @@ import javax.inject.Inject;
 import dagger.hilt.android.AndroidEntryPoint;
 
 /**
- * Holder fragment with Material3 segmented toggle + ViewPager2.
+ * Holder fragment with a compact icon-only mode switcher + ViewPager2.
  *
- * <p><b>Chrome:</b> there is NO toolbar — the segmented toggle IS the header
- * (the old "Tabs" title restated it, and system back serves
- * {@link #handleBack}). The toolbar's actions live in the bottom action bar
- * around the FAB: the grid/list toggle as a dedicated button, the rest
- * (close all / archive / settings) behind an overflow {@link PopupMenu}.
+ * <p><b>Chrome:</b> no toolbar — the centred icon-pill switcher IS the
+ * header, on an ALWAYS-TONAL bar (surfaceContainer, same tone as the bottom
+ * action bar, so the screen reads as a framed switcher). The toolbar's old
+ * actions live in the bottom bar around the FAB: grid/list as a dedicated
+ * button, the rest (close all / archive / settings) behind an overflow
+ * {@link PopupMenu}.
  *
- * <p><b>AppBar lift (scrim approach):</b> AppBar's own liftOnScroll machinery
- * races our updates across the ViewPager2 boundary — its async
- * {@code shouldLift} check runs {@code canScrollVertically(-1)} on its target
- * and flips state behind our back. We bypass that entirely:
- *
- * <ul>
- * <li>AppBarLayout itself: static resting {@code surface} background,
- *     {@code elevation=0}, {@code liftOnScroll=false}. We never touch
- *     {@code setLifted}.</li>
- * <li>A sibling View inside the AppBar ({@code @id/appbar_lift_scrim})
- *     holds the "lifted" colour and fades its alpha 0↔1 based on scroll.</li>
- * <li>Scroll state is driven by observing the currently-visible RecyclerView
- *     (scroll listener + adapter observer) and checking
- *     {@code computeVerticalScrollOffset() > 0}.</li>
- * </ul>
- *
- * <p>There's no AppBar state machine to race because we never write to
- * AppBar. A plain {@code View.setAlpha} call has no async reconciliation.</p>
+ * <p><b>No lift-on-scroll.</b> The header being always tonal removed the
+ * need for the old hand-rolled lift scrim (a sibling View whose alpha was
+ * driven by the visible page's RecyclerView). If a scroll-elevation effect
+ * is ever wanted again, resurrect that scrim approach from git history —
+ * AppBarLayout's own liftOnScroll machinery races its async shouldLift /
+ * canScrollVertically check across the ViewPager2 boundary and must not be
+ * used here.
  */
 @AndroidEntryPoint
 public class TabsHolderFragment extends BaseFocusFragment {
@@ -98,7 +86,6 @@ public class TabsHolderFragment extends BaseFocusFragment {
 
     private View mCoordinatorRoot;
     private AppBarLayout mAppBarLayout;
-    private View mAppBarLiftScrim;
     private View mTabsHeader;
     private MaterialButtonToggleGroup mToggleGroup;
     private ViewPager2 mViewPager;
@@ -111,30 +98,6 @@ public class TabsHolderFragment extends BaseFocusFragment {
     private BrowserURIViewModel mBrowserURIViewModel;
     private boolean mIsIncognitoThemed = false;
     private boolean mEnabledGrid;
-
-    /**
-     * Observer infrastructure for the lift scrim. See class doc.
-     */
-    @Nullable private RecyclerView mLiftTarget;
-    @Nullable private RecyclerView.Adapter<?> mLiftObservedAdapter;
-
-    private final RecyclerView.OnScrollListener mLiftScrollListener =
-            new RecyclerView.OnScrollListener() {
-                @Override
-                public void onScrolled(@NonNull RecyclerView rv, int dx, int dy) {
-                    updateScrimFor(rv);
-                }
-            };
-
-    private final RecyclerView.AdapterDataObserver mLiftAdapterObserver =
-            new RecyclerView.AdapterDataObserver() {
-                @Override public void onChanged() { scheduleScrimRecheck(); }
-                @Override public void onItemRangeInserted(int s, int c) { scheduleScrimRecheck(); }
-                @Override public void onItemRangeRemoved(int s, int c) { scheduleScrimRecheck(); }
-                @Override public void onItemRangeChanged(int s, int c) { scheduleScrimRecheck(); }
-                @Override public void onItemRangeChanged(int s, int c, @Nullable Object p) { scheduleScrimRecheck(); }
-                @Override public void onItemRangeMoved(int f, int t, int c) { scheduleScrimRecheck(); }
-            };
 
     @Inject
     SharedPreferences mSharedPreferences;
@@ -185,7 +148,6 @@ public class TabsHolderFragment extends BaseFocusFragment {
 
         mCoordinatorRoot = view.findViewById(R.id.coordinator_root);
         mAppBarLayout = view.findViewById(R.id.appbar_layout);
-        mAppBarLiftScrim = view.findViewById(R.id.appbar_lift_scrim);
         mTabsHeader = view.findViewById(R.id.tabs_header);
         mToggleGroup = view.findViewById(R.id.tab_mode_toggle);
         mViewPager = view.findViewById(R.id.tabs_view_pager);
@@ -194,16 +156,11 @@ public class TabsHolderFragment extends BaseFocusFragment {
         mOverflowButton = view.findViewById(R.id.action_overflow_btn);
         mFab = view.findViewById(R.id.fab_new_tab);
 
-        // AppBar stays at resting surface colour forever. The scrim view
-        // underneath the toolbar holds the "lifted" (surfaceContainerHigh)
-        // colour and has its alpha driven by scroll. Neither colour is ever
-        // written to the AppBar itself after this initial setup —
-        // applyIncognitoTheme swaps both at once for incognito mode.
+        // Header bar is ALWAYS tonal — the same surfaceContainer as the
+        // bottom action bar, so the two frame the grid symmetrically.
+        // applyIncognitoTheme swaps it for incognito mode.
         mAppBarLayout.setBackgroundColor(
-                IncognitoColors.getSurface(mActivity, false));
-        mAppBarLiftScrim.setBackgroundColor(
-                IncognitoColors.getSurfaceContainerHigh(mActivity, false));
-        mAppBarLiftScrim.setAlpha(0f);
+                IncognitoColors.getSurfaceContainer(mActivity, false));
 
         // Bottom action bar: the grid/list toggle as a dedicated button,
         // everything else behind the overflow PopupMenu (menu_tabs.xml).
@@ -214,9 +171,8 @@ public class TabsHolderFragment extends BaseFocusFragment {
         mBottomBar.setBackgroundColor(
                 IncognitoColors.getSurfaceContainer(mActivity, false));
 
-        // The toolbar used to absorb the status-bar inset; with the toggle
-        // as the header, its container takes it (the lift scrim fills the
-        // same frame, so the lifted tone covers the status-bar area too).
+        // The header container takes the status-bar inset as top padding,
+        // so the tonal bar paints up behind the status bar.
         ViewCompat.setOnApplyWindowInsetsListener(mTabsHeader, (v, windowInsets) -> {
             Insets bars = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(v.getPaddingLeft(), bars.top, v.getPaddingRight(),
@@ -283,10 +239,6 @@ public class TabsHolderFragment extends BaseFocusFragment {
                 applyIncognitoTheme(true);
             });
         }
-        // ViewPager2 doesn't always fire onPageSelected for the initial item
-        // set via setCurrentItem(…, false). Wire the scrim observer to the
-        // initial page's RecyclerView.
-        view.post(() -> bindScrimTargetForPage(mViewPager.getCurrentItem()));
     }
 
     @Override
@@ -300,12 +252,9 @@ public class TabsHolderFragment extends BaseFocusFragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        unbindScrimObservers();
-        mLiftTarget = null;
         mCoordinatorRoot = null;
         mFab = null;
         mAppBarLayout = null;
-        mAppBarLiftScrim = null;
         mTabsHeader = null;
         mBottomBar = null;
         mViewButton = null;
@@ -368,147 +317,8 @@ public class TabsHolderFragment extends BaseFocusFragment {
             public void onPageSelected(int position) {
                 updateToggle(position);
                 applyIncognitoTheme(position == PAGE_INCOGNITO);
-                // Rebind the scrim observer to the newly-visible page's RV.
-                mViewPager.post(() -> bindScrimTargetForPage(position));
             }
         });
-    }
-
-    // ── Scrim driver ────────────────────────────────────────────────
-    //
-    // The AppBar is static; a sibling View inside it (@id/appbar_lift_scrim)
-    // holds the "lifted" colour and has its alpha driven by scroll. We never
-    // touch AppBarLayout's own lift/background machinery, so there's no
-    // internal state to race.
-
-    private void bindScrimTargetForPage(int pageIndex) {
-        Fragment page = getChildFragmentManager().findFragmentByTag("f" + pageIndex);
-        RecyclerView rv = (page instanceof BaseTabsFragment)
-                ? ((BaseTabsFragment) page).getRecyclerView()
-                : null;
-        bindScrimTarget(rv);
-    }
-
-    private void bindScrimTarget(@Nullable RecyclerView rv) {
-        if (rv == mLiftTarget) {
-            if (rv != null) updateScrimFor(rv);
-            return;
-        }
-        unbindScrimObservers();
-        mLiftTarget = rv;
-        if (rv != null) {
-            rv.addOnScrollListener(mLiftScrollListener);
-            RecyclerView.Adapter<?> adapter = rv.getAdapter();
-            if (adapter != null) {
-                try {
-                    adapter.registerAdapterDataObserver(mLiftAdapterObserver);
-                    mLiftObservedAdapter = adapter;
-                } catch (IllegalStateException e) {
-                    Log.w(TAG, "Could not register scrim adapter observer", e);
-                }
-            }
-            // Sample scroll state immediately. For page swaps, the newly
-            // visible RV is already settled (offscreenPageLimit=1 kept it
-            // measured), so this paints the correct scrim alpha without
-            // waiting. For the initial open where data is still loading,
-            // computeVerticalScrollOffset returns 0 (no content yet), which
-            // is the right answer — scheduleScrimRecheck runs afterward to
-            // update once data arrives and any scroll-to-active lands.
-            updateScrimFor(rv);
-            scheduleScrimRecheck();
-        } else {
-            setScrimVisible(false, false);
-        }
-    }
-
-    private void unbindScrimObservers() {
-        if (mLiftTarget != null) {
-            mLiftTarget.removeOnScrollListener(mLiftScrollListener);
-        }
-        if (mLiftObservedAdapter != null) {
-            try {
-                mLiftObservedAdapter.unregisterAdapterDataObserver(mLiftAdapterObserver);
-            } catch (IllegalStateException ignored) { }
-            mLiftObservedAdapter = null;
-        }
-    }
-
-    /**
-     * Re-read scroll state after layout + item animations settle + one extra
-     * frame. Needed for programmatic scroll-to-position (which doesn't emit
-     * onScrolled) and for initial data arrival.
-     */
-    private void scheduleScrimRecheck() {
-        final RecyclerView target = mLiftTarget;
-        if (target == null) return;
-        ViewTreeObserver vto = target.getViewTreeObserver();
-        if (!vto.isAlive()) {
-            target.post(() -> recheckScrimAfterAnimations(target));
-            return;
-        }
-        vto.addOnGlobalLayoutListener(
-                new ViewTreeObserver.OnGlobalLayoutListener() {
-                    @Override
-                    public void onGlobalLayout() {
-                        ViewTreeObserver current = target.getViewTreeObserver();
-                        if (current.isAlive()) {
-                            current.removeOnGlobalLayoutListener(this);
-                        }
-                        if (target != mLiftTarget) return;
-                        target.post(() -> {
-                            if (target == mLiftTarget) recheckScrimAfterAnimations(target);
-                        });
-                    }
-                });
-    }
-
-    private void recheckScrimAfterAnimations(@NonNull RecyclerView target) {
-        RecyclerView.ItemAnimator anim = target.getItemAnimator();
-        if (anim == null) {
-            if (target == mLiftTarget) updateScrimFor(target);
-            return;
-        }
-        anim.isRunning(() -> {
-            if (target == mLiftTarget) updateScrimFor(target);
-        });
-    }
-
-    private void updateScrimFor(@NonNull RecyclerView rv) {
-        setScrimVisible(rv.computeVerticalScrollOffset() > 0, true);
-    }
-
-    /**
-     * Fade the scrim to the given visibility. 80ms fade matches Material's
-     * standard elevation change timing.
-     */
-    private void setScrimVisible(boolean visible, boolean animate) {
-        if (mAppBarLiftScrim == null) return;
-        float target = visible ? 1f : 0f;
-        if (mAppBarLiftScrim.getAlpha() == target) return;
-        mAppBarLiftScrim.animate().cancel();
-        if (animate) {
-            mAppBarLiftScrim.animate()
-                    .alpha(target)
-                    .setDuration(80L)
-                    .start();
-        } else {
-            mAppBarLiftScrim.setAlpha(target);
-        }
-    }
-
-    /**
-     * Called by child fragments after a programmatic scroll. Child's scroll
-     * listener covers finger scrolls; programmatic scrollToPosition doesn't
-     * emit onScrolled, so we re-sample after layout settles.
-     */
-    void refreshAppBarLiftFor(@NonNull RecyclerView rv) {
-        if (rv == mLiftTarget) updateScrimFor(rv);
-    }
-
-    /** Kept for API compatibility with child fragment callsites. No-ops. */
-    void suspendAppBarLift() { /* no-op */ }
-    void resumeAppBarLift(@NonNull RecyclerView rv) {
-        refreshAppBarLiftFor(rv);
     }
 
     private void setupToggle() {
@@ -599,7 +409,6 @@ public class TabsHolderFragment extends BaseFocusFragment {
 
         int surfaceColor = IncognitoColors.getSurface(mActivity, incognito);
         int onSurfaceColor = IncognitoColors.getOnSurface(mActivity, incognito);
-        int liftedColor = IncognitoColors.getSurfaceContainerHigh(mActivity, incognito);
 
         Fragment incognitoPage = getChildFragmentManager()
                 .findFragmentByTag("f" + PAGE_INCOGNITO);
@@ -609,12 +418,9 @@ public class TabsHolderFragment extends BaseFocusFragment {
 
         mCoordinatorRoot.setBackgroundColor(surfaceColor);
 
-        // AppBar = resting surface (static, never animated).
-        // Scrim = lifted colour (alpha driven by scroll state).
-        mAppBarLayout.setBackgroundColor(surfaceColor);
-        if (mAppBarLiftScrim != null) {
-            mAppBarLiftScrim.setBackgroundColor(liftedColor);
-        }
+        // Header bar: always-tonal surfaceContainer, matching the bottom bar.
+        mAppBarLayout.setBackgroundColor(
+                IncognitoColors.getSurfaceContainer(mActivity, incognito));
 
         // Bottom action bar follows the mode: tonal surface + icon tints.
         if (mBottomBar != null) {
