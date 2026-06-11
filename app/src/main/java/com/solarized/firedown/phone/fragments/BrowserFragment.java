@@ -2167,18 +2167,28 @@ public class BrowserFragment extends BaseBrowserFragment
                 + " newSession=" + newSession
                 + " isOpen=" + newSession.isOpen());
 
-        // Deactivate the previous session if we're switching.
-        // Known limitation: this is the raw GeckoSession — the previous
-        // session's owning GeckoState is not resolved here, so its
-        // setActive(false) wrapper (and with it mOnDeactivateAction, the
-        // prompt-dialog dismissal) does not run on the mCurrentId-drift
-        // re-attach path; the normal tab-switch path covers it via the
-        // repo's current-id sweep. Narrow (drift + open prompt); resolving
-        // the state by session would need new repo API — revisit if it bites.
+        // Deactivate the previous session if we're switching. Route through
+        // the owning GeckoState when one can be resolved: GeckoState
+        // .setActive(false) is a strict superset of the raw session call — it
+        // first fires mOnDeactivateAction (GeckoPromptManager's prompt-dialog
+        // dismissal) and stamps the entity's active flag, then forwards to
+        // the same GeckoSession.setActive(false). On the normal tab-switch
+        // path the repo's current-id sweep does this, but on the
+        // mCurrentId-DRIFT re-attach (openUri found a different session on
+        // screen) mCurrentId doesn't change, the sweep never runs, and the
+        // raw call alone left the drifted-but-visible tab's open prompt
+        // floating over the newly attached tab. Fall back to the raw call
+        // for an orphaned session no repo knows (or one whose state already
+        // swapped its session reference) — same behavior as before.
         if (previousSession != null && previousSession != newSession) {
             Log.d(TAG, "setGeckoViewSession: deactivating previousSession");
             controller.setTabActive(previousSession, false);
-            previousSession.setActive(false);
+            GeckoState previousState = findGeckoStateBySession(previousSession);
+            if (previousState != null) {
+                previousState.setActive(false);
+            } else {
+                previousSession.setActive(false);
+            }
         }
 
         mAutoCompleteEditText.setEnabled(true);
@@ -2632,6 +2642,32 @@ public class BrowserFragment extends BaseBrowserFragment
         return mIsIncognitoThemed
                 ? mIncognitoStateViewModel.peekCurrentGeckoState()
                 : mGeckoStateViewModel.peekCurrentGeckoState();
+    }
+
+    /**
+     * Resolves the GeckoState that owns {@code session}, checking the
+     * current theme's repo first (a session can only belong to one repo, so
+     * the order is just a likely-hit optimization). Used by
+     * {@link #setGeckoViewSession} to route the previous session's
+     * deactivation through the state wrapper. Returns null for a session no
+     * repo tracks (orphaned) or one whose state already swapped/discarded
+     * its session reference.
+     */
+    @Nullable
+    private GeckoState findGeckoStateBySession(GeckoSession session) {
+        GeckoState state;
+        if (mIsIncognitoThemed) {
+            state = mIncognitoStateViewModel.getGeckoState(session);
+            if (state == null) {
+                state = mGeckoStateViewModel.getGeckoState(session);
+            }
+        } else {
+            state = mGeckoStateViewModel.getGeckoState(session);
+            if (state == null) {
+                state = mIncognitoStateViewModel.getGeckoState(session);
+            }
+        }
+        return state;
     }
 
     /**
