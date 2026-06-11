@@ -24,8 +24,8 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Packaged style for the home-page cards — active download,
- * Downloads, Safe Folder, Trackers blocked. Five variants give the
+ * Packaged style for the home-page shelf cards — Downloads,
+ * Safe Folder, Trackers blocked. Five variants give the
  * user a single 'home cards' choice rather than per-card colour knobs.
  *
  * <p>Colours are raw hex (not theme attrs) because most variants are
@@ -33,12 +33,6 @@ import java.util.List;
  * surfaces, dark-in-both-modes). Encoding them as tokens would mean
  * adding light + dark colour resources for every variant and still
  * end up with these constants, so we keep them inline.</p>
- *
- * <p>The active-download card keeps its branded coral treatment
- * across all variants — it's the home page's 'live' anchor. The
- * picker UI only previews the three shelf cards because the live card
- * looks identical across variants and showing it would be noise — see
- * HomeCardStylesFragment.</p>
  */
 public final class HomeCardStyle {
 
@@ -65,33 +59,21 @@ public final class HomeCardStyle {
     @NonNull private final CardLook downloadsLight, downloadsDark;
     @NonNull private final CardLook vaultLight, vaultDark;
     @NonNull private final CardLook trackersLight, trackersDark;
-    @NonNull private final CardLook activeLight, activeDark;
 
     private HomeCardStyle(@NonNull String key, @StringRes int nameRes,
                           @NonNull CardLook dl, @NonNull CardLook dd,
                           @NonNull CardLook vl, @NonNull CardLook vd,
-                          @NonNull CardLook tl, @NonNull CardLook td,
-                          @NonNull CardLook al, @NonNull CardLook ad) {
+                          @NonNull CardLook tl, @NonNull CardLook td) {
         this.key = key;
         this.nameRes = nameRes;
         this.downloadsLight = dl;  this.downloadsDark = dd;
         this.vaultLight = vl;      this.vaultDark = vd;
         this.trackersLight = tl;   this.trackersDark = td;
-        this.activeLight = al;     this.activeDark = ad;
     }
 
     @NonNull public CardLook downloads(boolean night) { return night ? downloadsDark : downloadsLight; }
     @NonNull public CardLook vault(boolean night)     { return night ? vaultDark     : vaultLight;     }
     @NonNull public CardLook trackers(boolean night)  { return night ? trackersDark  : trackersLight;  }
-    @NonNull public CardLook active(boolean night)    { return night ? activeDark    : activeLight;    }
-
-    // ── Shared 'branded live card' look used by variants 0–3 ─────
-    // Variants 0–3 all want the active-download card on its existing
-    // branded surface; only Ember overrides these.
-    private static final CardLook ACTIVE_BRAND_LIGHT =
-            new CardLook(0xFFFF857F, 0xFF460005, null, 0xFF460005);
-    private static final CardLook ACTIVE_BRAND_DARK =
-            new CardLook(0xFFF66A66, 0xFF0F0000, null, 0xFF0F0000);
 
     /** 0 — Neutral. True greyscale shelves — neutral surface, neutral
      *  chip backdrop (surfaceContainerHighest), icons tinted with
@@ -105,8 +87,7 @@ public final class HomeCardStyle {
             new CardLook(0xFFEFEDF0, 0xFF1B1B1E, 0xFFE4E2E5, 0xFF44474C),
             new CardLook(0xFF1F1F22, 0xFFE4E2E5, 0xFF343537, 0xFFC5C6CD),
             new CardLook(0xFFEFEDF0, 0xFF1B1B1E, 0xFFE4E2E5, 0xFF44474C),
-            new CardLook(0xFF1F1F22, 0xFFE4E2E5, 0xFF343537, 0xFFC5C6CD),
-            ACTIVE_BRAND_LIGHT, ACTIVE_BRAND_DARK);
+            new CardLook(0xFF1F1F22, 0xFFE4E2E5, 0xFF343537, 0xFFC5C6CD));
 
     /** 1 — Tonal. Neutral surface + tonal chips (coral Downloads,
      *  raspberry Safe Folder, peach Trackers). What 'Neutral' used
@@ -119,8 +100,7 @@ public final class HomeCardStyle {
             new CardLook(0xFFEFEDF0, 0xFF1B1B1E, 0xFFC8417B, 0xFFFFFFFF),
             new CardLook(0xFF1F1F22, 0xFFE4E2E5, 0xFFC8417B, 0xFFFFFFFF),
             new CardLook(0xFFEFEDF0, 0xFF1B1B1E, 0xFFFFBF9B, 0xFF5D2E0D),
-            new CardLook(0xFF1F1F22, 0xFFE4E2E5, 0xFFFAB186, 0xFF532606),
-            ACTIVE_BRAND_LIGHT, ACTIVE_BRAND_DARK);
+            new CardLook(0xFF1F1F22, 0xFFE4E2E5, 0xFFFAB186, 0xFF532606));
 
     /** 1 — Blush. Pale coral surface (light) / deep warm surface
      *  (dark), no chip. The 'soft tinted' option. */
@@ -131,8 +111,7 @@ public final class HomeCardStyle {
             new CardLook(0xFFFBE2EC, 0xFF5C1B3F, null, 0xFF8C1F49),
             new CardLook(0xFF3A1A28, 0xFFF4DDDB, null, 0xFFFFB0C9),
             new CardLook(0xFFFFEEDC, 0xFF5D2E0D, null, 0xFFA85918),
-            new CardLook(0xFF332218, 0xFFF4DDDB, null, 0xFFFAB186),
-            ACTIVE_BRAND_LIGHT, ACTIVE_BRAND_DARK);
+            new CardLook(0xFF332218, 0xFFF4DDDB, null, 0xFFFAB186));
 
     /** 2 — Bloom. Same tinted surface as Blush, with the brand chips
      *  kept on top — two layers of brand colour. */
@@ -143,8 +122,7 @@ public final class HomeCardStyle {
             new CardLook(0xFFFBE2EC, 0xFF5C1B3F, 0xFFC8417B, 0xFFFFFFFF),
             new CardLook(0xFF3A1A28, 0xFFF4DDDB, 0xFFC8417B, 0xFFFFFFFF),
             new CardLook(0xFFFFEEDC, 0xFF5D2E0D, 0xFFFFBF9B, 0xFF5D2E0D),
-            new CardLook(0xFF332218, 0xFFF4DDDB, 0xFFFAB186, 0xFF532606),
-            ACTIVE_BRAND_LIGHT, ACTIVE_BRAND_DARK);
+            new CardLook(0xFF332218, 0xFFF4DDDB, 0xFFFAB186, 0xFF532606));
 
     /** 3 — Coral. Full-saturation brand surface across the three
      *  shelves — Downloads coral, Safe Folder raspberry, Trackers
@@ -156,8 +134,7 @@ public final class HomeCardStyle {
             new CardLook(0xFFC8417B, 0xFFFFFFFF, null, 0xFFFFFFFF),
             new CardLook(0xFFC8417B, 0xFFFFFFFF, null, 0xFFFFFFFF),
             new CardLook(0xFFFFBF9B, 0xFF5D2E0D, null, 0xFF5D2E0D),
-            new CardLook(0xFFFAB186, 0xFF532606, null, 0xFF532606),
-            ACTIVE_BRAND_LIGHT, ACTIVE_BRAND_DARK);
+            new CardLook(0xFFFAB186, 0xFF532606, null, 0xFF532606));
 
     public static final List<HomeCardStyle> ALL =
             Arrays.asList(NEUTRAL, TONAL, BLUSH, BLOOM, CORAL);
@@ -176,7 +153,7 @@ public final class HomeCardStyle {
 
     /**
      * Paints one card with the given look — card surface, chip
-     * background (or transparent), icon tint, title / label /
+     * background (or transparent), icon tint, title /
      * subtitle colours all flip together. {@code mutate()} on the
      * chip drawable scopes the colour change to this view instance
      * so cards sharing a drawable resource don't smear into each
@@ -184,14 +161,13 @@ public final class HomeCardStyle {
      *
      * <p>Any view argument may be null — a card without a chip /
      * icon / subtitle just skips that branch, so the same method
-     * paints both shelf and live cards.</p>
+     * paints every shelf card.</p>
      */
     public static void applyToCard(@NonNull MaterialCardView card,
                                    @Nullable View chip,
                                    @Nullable ImageView icon,
                                    @Nullable TextView title,
                                    @Nullable TextView subtitle,
-                                   @Nullable TextView label,
                                    @NonNull CardLook look) {
         card.setCardBackgroundColor(look.bg);
 
@@ -212,17 +188,6 @@ public final class HomeCardStyle {
             ImageViewCompat.setImageTintList(icon, ColorStateList.valueOf(look.iconColor));
         }
         if (title != null)    title.setTextColor(look.fg);
-        if (label != null)    label.setTextColor(look.fg);
         if (subtitle != null) subtitle.setTextColor(ColorUtils.setAlphaComponent(look.fg, 0xB3));
-    }
-
-    /** Convenience overload — no separate label TextView. */
-    public static void applyToCard(@NonNull MaterialCardView card,
-                                   @Nullable View chip,
-                                   @Nullable ImageView icon,
-                                   @Nullable TextView title,
-                                   @Nullable TextView subtitle,
-                                   @NonNull CardLook look) {
-        applyToCard(card, chip, icon, title, subtitle, null, look);
     }
 }

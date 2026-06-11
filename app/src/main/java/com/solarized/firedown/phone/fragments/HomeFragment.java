@@ -1,7 +1,5 @@
 package com.solarized.firedown.phone.fragments;
 
-import android.animation.ObjectAnimator;
-import android.animation.ValueAnimator;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -13,13 +11,11 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
-import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.graphics.ColorUtils;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -30,14 +26,11 @@ import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.card.MaterialCardView;
-import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
 import com.solarized.firedown.geckoview.GeckoUblockHelper;
 import com.solarized.firedown.ui.HomeCardStyle;
-import com.solarized.firedown.data.Download;
-import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.data.entity.GeckoStateEntity;
 import com.solarized.firedown.data.entity.AutoCompleteEntity;
 import com.solarized.firedown.autocomplete.AutoCompleteViewModel;
@@ -61,13 +54,11 @@ import com.solarized.firedown.ui.OnItemClickListener;
 import com.solarized.firedown.ui.adapters.SearchAutocompleteAdapter;
 import com.solarized.firedown.ui.diffs.SearchDiffCallback;
 import com.solarized.firedown.IntentActions;
-import com.solarized.firedown.utils.FileUriHelper;
 import com.solarized.firedown.utils.NavigationUtils;
 import com.solarized.firedown.utils.Utils;
 
 import dagger.hilt.android.AndroidEntryPoint;
 import java.text.NumberFormat;
-import java.util.List;
 import java.util.Locale;
 import javax.inject.Inject;
 
@@ -92,20 +83,12 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     private BottomNavigationBar mBottomNavigationBar;
     private MaterialCardView mRecentDownloadsCard;
     private View mHomeScroll;
-    private MaterialCardView mActiveStrip;
-    private TextView mActiveStripLabel;
-    private TextView mActiveStripTitle;
-    private LinearProgressIndicator mActiveStripBar;
-    private View mActiveStripCancel;
-    private View mActiveStripIcon;
-    @Nullable private ObjectAnimator mActiveStripPulse;
     private TextView mHomeVaultSubtitle;
     private TextView mRecentDownloadsSubtitle;
     private MaterialCardView mTrackersCard;
     private TextView mTrackersSubtitle;
     @Inject
     GeckoUblockHelper mGeckoUblockHelper;
-    @Nullable private List<DownloadEntity> mLastActiveList;
     @Nullable private Integer mLastFinishedCount;
     private long mLastFinishedSize = 0L;
 
@@ -170,24 +153,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mAutoCompleteView = v.findViewById(R.id.auto_complete_view);
 
         mRecentDownloadsCard = v.findViewById(R.id.recent_downloads_card);
-
-        mActiveStrip = v.findViewById(R.id.active_download_strip);
-        mActiveStripIcon = v.findViewById(R.id.active_download_icon);
-        mActiveStripLabel = v.findViewById(R.id.active_download_label);
-        mActiveStripTitle = v.findViewById(R.id.active_download_title);
-        mActiveStripBar = v.findViewById(R.id.active_download_bar);
-        mActiveStripCancel = v.findViewById(R.id.active_download_cancel);
-        mActiveStrip.setOnClickListener(view ->
-                mStartForResult.launch(new Intent(mActivity, DownloadsActivity.class)));
-        // Cancel the in-flight download from Home. DOWNLOAD_DELETE routes
-        // through RunnableManager.cancelDownloadTask, which stops the active
-        // (or queued) task and removes its partial file — the same path the
-        // Downloads list uses. Acts on the head item the strip is bound to.
-        mActiveStripCancel.setOnClickListener(view -> {
-            if (mLastActiveList != null && !mLastActiveList.isEmpty()) {
-                handleItemAction(IntentActions.DOWNLOAD_DELETE, mLastActiveList.get(0));
-            }
-        });
 
         mHomeScroll = v.findViewById(R.id.home_scroll);
         mBottomNavigationBar = v.findViewById(R.id.bottom_app_bar);
@@ -257,12 +222,19 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
 
         Log.d(TAG, "onViewCreated");
 
-        // No download-count badge on the bottom bar in normal home —
-        // the active strip card above already shows what's downloading
-        // (with filenames + progress + a 3-row cap), so the red dot
-        // would signal a strict subset of what the card surfaces.
-        // BrowserFragment keeps the badge since the strip isn't
-        // visible there.
+        // Download-count badge on the bottom bar's Downloads button —
+        // same source BrowserFragment's regular-mode chrome uses
+        // (TaskRepository.getRegularCount keeps vault/incognito
+        // downloads out, so private activity never advertises itself
+        // here). Home is never incognito-themed (HomeIncognitoFragment
+        // is its own fragment), so no mIsIncognitoThemed gate is
+        // needed. This badge used to be deliberately omitted while the
+        // active-download strip card existed; with that card removed
+        // (redundant with both the ongoing download notification and
+        // the Downloads entry card), the badge is the one lightweight
+        // 'something is downloading' cue left on Home.
+        mTaskViewModel.getRegularCount().observe(getViewLifecycleOwner(), count ->
+                mBottomNavigationBar.onBadgeCount(count));
 
         mGeckoStateViewModel.getTabsCount().observe(getViewLifecycleOwner(), mObservableEntities
                 -> mBottomNavigationBar.onTabsCount(mObservableEntities));
@@ -287,20 +259,14 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
 
         });
 
-        // Three streams power the home Downloads surfaces:
-        //  * getActive — drives the active-download strip (visible
-        //    only when in-flight non-vault items exist).
+        // Two streams power the home Downloads card:
         //  * getFinishedCount / getFinishedSize — drive the
         //    Downloads card subtitle ('N files saved · X.Y GB').
         //    Card itself is visible whenever the toggle is on, even
         //    with zero saved files, so the entry is discoverable.
-        //  * keeps getRecent hot via the long-press handler — see
-        //    onBottomBarButtonLongClick — by reading getValue() at
-        //    tap time; the sheet itself owns its own observer.
-        mRecentDownloadsViewModel.getActive().observe(getViewLifecycleOwner(), list -> {
-            mLastActiveList = list;
-            applyActiveStripVisibility();
-        });
+        //  (In-flight downloads surface as the bottom-bar badge above
+        //  plus the ongoing system notification — there is no longer a
+        //  dedicated active-download card on Home.)
         mRecentDownloadsViewModel.getFinishedCount().observe(getViewLifecycleOwner(), count -> {
             mLastFinishedCount = count;
             bindDownloadsSubtitle();
@@ -354,17 +320,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
                     R.string.home_trackers_subtitle, formattedCount, savedBytes));
         });
 
-        // Refresh the active-download strip on media-session changes:
-        // its visibility depends on whether the current media session
-        // is incognito (see applyActiveStripVisibility), and the
-        // downloads LiveData doesn't fire on session changes — without
-        // this the incognito gate would only take effect on the next
-        // download mutation.
-        mGeckoMediaController.getCurrentSessionIdLiveData().observe(getViewLifecycleOwner(),
-                sessionId -> applyActiveStripVisibility());
-
         mRecentDownloadsCard.setVisibility(View.VISIBLE);
-        applyActiveStripVisibility();
 
         // NOTE: HomeFragment intentionally does NOT observe
         // BrowserURIViewModel.getEvents().  IntentHandler owns all tab
@@ -501,13 +457,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mNewTabView = null;
         mBottomNavigationBar = null;
         mRecentDownloadsCard = null;
-        mActiveStrip = null;
-        mActiveStripLabel = null;
-        mActiveStripTitle = null;
-        mActiveStripBar = null;
-        mActiveStripCancel = null;
-        stopActiveStripPulse();
-        mActiveStripIcon = null;
         mHomeVaultSubtitle = null;
         mRecentDownloadsSubtitle = null;
         mTrackersCard = null;
@@ -515,72 +464,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     }
 
     /**
-     * The media controller is a Singleton shared across both regular
-     * and incognito repositories — its mCurrentSessionId can name a
-     * session that lives in the incognito list. The regular home must
-     * never surface incognito activity, so resolve the owning
-     * repository here. Lookup in incognito first; absent = it's
-     * regular (or already torn down, in which case "not incognito" is
-     * the safe answer because the strip would hide on the
-     * sessionId == 0 check anyway).
-     */
-    private boolean isCurrentMediaIncognito() {
-        int sessionId = mGeckoMediaController.getCurrentSessionId();
-        if (sessionId == 0) return false;
-        return mIncognitoStateViewModel.getGeckoState(sessionId) != null;
-    }
-
-    /**
-     * Active-strip visibility tracks whether any non-vault download is
-     * in PROGRESS / QUEUED. When at least one is live, bind the rows
-     * and start the flame pulse; otherwise hide the card and stop the
-     * animator so it doesn't burn cycles off-screen.
-     *
-     * If the current media session is incognito, hide the whole strip
-     * — exposing any active activity on the regular home while an
-     * incognito tab is in use would leak that the user is browsing
-     * privately.
-     */
-    private void applyActiveStripVisibility() {
-        if (mActiveStrip == null) return;
-        boolean hasActive = mLastActiveList != null && !mLastActiveList.isEmpty();
-        boolean visible = hasActive && !isCurrentMediaIncognito();
-        mActiveStrip.setVisibility(visible ? View.VISIBLE : View.GONE);
-        if (visible) {
-            bindActiveStrip(mLastActiveList);
-            startActiveStripPulse();
-        } else {
-            stopActiveStripPulse();
-        }
-    }
-
-    /** Subtle alpha pulse on the active-strip's Firedown flame icon
-     *  to communicate 'live, this is happening now'. Lazily
-     *  instantiated; cancelled when the strip is hidden or the
-     *  view is destroyed. */
-    private void startActiveStripPulse() {
-        if (mActiveStripIcon == null) return;
-        if (mActiveStripPulse != null && mActiveStripPulse.isStarted()) return;
-        mActiveStripPulse = ObjectAnimator.ofFloat(
-                mActiveStripIcon, "alpha", 1.0f, 0.45f);
-        mActiveStripPulse.setDuration(1100L);
-        mActiveStripPulse.setRepeatCount(ValueAnimator.INFINITE);
-        mActiveStripPulse.setRepeatMode(ValueAnimator.REVERSE);
-        mActiveStripPulse.start();
-    }
-
-    private void stopActiveStripPulse() {
-        if (mActiveStripPulse != null) {
-            mActiveStripPulse.cancel();
-            mActiveStripPulse = null;
-        }
-        if (mActiveStripIcon != null) {
-            mActiveStripIcon.setAlpha(1.0f);
-        }
-    }
-
-    /**
-     * Paints the home cards — active download, Downloads, Safe Folder,
+     * Paints the home cards — Downloads, Safe Folder,
      * Trackers blocked — with the user's picked
      * {@link HomeCardStyle}. One pref, all
      * cards flip together; the picker rewards a coherent look rather
@@ -598,19 +482,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
                 HomeCardStyle.fromKey(
                         key, HomeCardStyle.NEUTRAL);
         boolean night = HomeCardStyle.isNightMode(getResources());
-
-        if (mActiveStrip != null) {
-            HomeCardStyle.CardLook activeLook = style.active(night);
-            HomeCardStyle.applyToCard(
-                    mActiveStrip,
-                    null,
-                    (ImageView) mActiveStripIcon,
-                    mActiveStripTitle,
-                    null,
-                    mActiveStripLabel,
-                    activeLook);
-            if (mActiveStripBar != null) mActiveStripBar.setIndicatorColor(activeLook.fg);
-        }
 
         MaterialCardView downloadsCard = root.findViewById(R.id.recent_downloads_card);
         if (downloadsCard != null) {
@@ -664,86 +535,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
                 : files;
         mRecentDownloadsSubtitle.setVisibility(View.VISIBLE);
         mRecentDownloadsSubtitle.setText(text);
-    }
-
-    /**
-     * Binds the active-download strip to the newest in-flight regular
-     * download. The DAO returns the list sorted newest-first; we show
-     * only the head and surface any extras as a '+N more' suffix on
-     * the header label — keeps the card a fixed height regardless of
-     * how many parallel downloads are in flight.
-     *
-     * <p>Progress bar is indeterminate while QUEUED or 'live' (size
-     * not yet known), determinate once the percentage is real.</p>
-     */
-    private void bindActiveStrip(@NonNull List<DownloadEntity> active) {
-        if (mActiveStripBar == null || active.isEmpty()) return;
-        DownloadEntity item = active.get(0);
-        int extras = active.size() - 1;
-
-        // Track + indicator both source from the picked HomeCardStyle's
-        // active(night).fg so they stay coordinated if a future style
-        // diverges from the default ACTIVE_BRAND tone. Indicator at
-        // full opacity, track at ~24% alpha to read as a subtle ghost
-        // rather than a competing colour.
-        SharedPreferences prefs = PreferenceManager
-                .getDefaultSharedPreferences(requireContext());
-        HomeCardStyle style =
-                HomeCardStyle.fromKey(
-                        prefs.getString(
-                                Preferences.SETTINGS_HOME_CARD_STYLE,
-                                Preferences.DEFAULT_HOME_CARD_STYLE),
-                        HomeCardStyle.NEUTRAL);
-        boolean night = HomeCardStyle
-                .isNightMode(getResources());
-        int activeFg = style.active(night).fg;
-        mActiveStripBar.setIndicatorColor(activeFg);
-        mActiveStripBar.setTrackColor(
-                ColorUtils.setAlphaComponent(activeFg, 0x3D));
-
-        mActiveStripTitle.setText(item.getFileName());
-        boolean live = item.getFileIsLive();
-        boolean queued = item.getFileStatus() == Download.QUEUED;
-        boolean indeterminate = live || queued;
-        mActiveStripBar.setIndeterminate(indeterminate);
-
-        // Build the eyebrow: "DOWNLOADING · <metric>" (+ " · +N more"). The
-        // metric folds into the label so there's no separate percent row.
-        //  - queued : "Pending…"
-        //  - live   : bytes-so-far once known, else media type (m3u8/FFmpeg
-        //             muxes report 0 on disk until done — see bindActiveStrip)
-        //  - else   : "<pct>%"  (+ " · <size>" when a byte count exists)
-        String metric;
-        if (queued) {
-            metric = getString(R.string.download_queued);
-        } else if (live) {
-            long liveSize = item.getFileSize();
-            metric = liveSize > 0 ? Utils.readableFileSize(liveSize) : mediaTypeLabel(item);
-        } else {
-            int pct = item.getFileProgress();
-            mActiveStripBar.setProgress(pct);
-            long size = item.getFileSize();
-            metric = size > 0
-                    ? String.format(Locale.US, "%d%% · %s", pct, Utils.readableFileSize(size))
-                    : String.format(Locale.US, "%d%%", pct);
-        }
-
-        String base = extras > 0
-                ? getString(R.string.home_active_downloads_more, extras)
-                : getString(R.string.downloading);
-        mActiveStripLabel.setText(base + " · " + metric);
-    }
-
-    /**
-     * Localized media-type label ("Video", "Audio", …) for the active-download
-     * line, used to fill the context slot when no byte size is available yet
-     * (e.g. an in-progress m3u8/FFmpeg mux). Falls back to "Downloading" if the
-     * mime is missing so the line is never blank.
-     */
-    private String mediaTypeLabel(DownloadEntity item) {
-        String label = FileUriHelper.getLongMimeText(
-                requireContext(), item.getFileMimeType());
-        return label != null ? label : getString(R.string.downloading);
     }
 
     @Override

@@ -3,10 +3,7 @@ package com.solarized.firedown.data.models;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.ViewModel;
 
-import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.data.repository.DownloadDataRepository;
-
-import java.util.List;
 
 import javax.inject.Inject;
 
@@ -16,9 +13,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel;
  * Small home-page metadata view-model. Exposes:
  *
  * <ul>
- *   <li>{@link #getActive()} — live list of in-flight regular
- *       downloads (PROGRESS / QUEUED, non-vault). Drives the
- *       active-download strip.</li>
  *   <li>{@link #getFinishedCount()} + {@link #getFinishedSize()} —
  *       count and total bytes of finished regular downloads. Drives
  *       the home Downloads card subtitle ('N files saved · X.Y GB').</li>
@@ -33,21 +27,15 @@ import dagger.hilt.android.lifecycle.HiltViewModel;
 @HiltViewModel
 public class RecentDownloadsViewModel extends ViewModel {
 
-    private final LiveData<List<DownloadEntity>> mActive;
     private final LiveData<Integer> mFinishedCount;
     private final LiveData<Long> mFinishedSize;
     private final LiveData<Integer> mVaultCount;
 
     @Inject
     public RecentDownloadsViewModel(DownloadDataRepository repository) {
-        mActive = repository.getActiveRegular();
         mFinishedCount = repository.getRegularFinishedCount();
         mFinishedSize = repository.getRegularFinishedSize();
         mVaultCount = repository.getSafeCount();
-    }
-
-    public LiveData<List<DownloadEntity>> getActive() {
-        return mActive;
     }
 
     public LiveData<Integer> getFinishedCount() {
