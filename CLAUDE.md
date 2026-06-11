@@ -1085,6 +1085,57 @@ chip shown when the address bar gains focus) — both from one on-device episode
   history/suggestion path. A deliberate long-press paste still works — the cap
   only stops the app from *offering* the blob.
 
+## Browser chrome, pull-to-refresh & session recovery (Fenix-parity invariants)
+
+The dynamic top/bottom bars, pull-to-refresh, and crash/kill recovery were
+aligned with current Firefox for Android (mozilla-firefox/firefox `main`).
+The invariants, each protecting against a shipped bug:
+
+- **Only the TOP toolbar owns scroll detection** (`GeckoToolbarBehavior`, a
+  port of `EngineViewScrollingGesturesBehavior`; `isScrollEnabled` defaults
+  **false**). The bottom bar is a **passive follower** —
+  `BottomNavigationBehavior` mirrors the toolbar's hidden *fraction*
+  (proportional, survives unequal heights; re-syncs in `onLayoutChild` for
+  GONE→VISIBLE). **Never reintroduce a second gesture listener on the bottom
+  bar**: two independent half-height snaps can land one bar open and one
+  closed. All force-show goes through the toolbar only
+  (`GeckoToolbar.forceExpand/forceCollapse`).
+- **One scroll-policy decision point** — `BrowserFragment.applyToolbarScrollPolicy`
+  (the Fenix `ToolbarBehaviorController` equivalent): bars may hide only when
+  `BROWSING && !mPageLoading && !IME && !touchExploration`. Loading truth is
+  **per-tab** (`GeckoState.isLoading`, set ungated in onPageStart/Stop,
+  cleared on crash/kill) because START/STOP observer events are
+  foreground-gated and can't be re-derived after a tab switch.
+- **Pull-to-refresh is gated per-gesture, never by scroll position**: the
+  `canChildScrollUp` callback polls the LIVE `InputResultDetail`
+  (`!canOverscrollTop()`, Fenix `SwipeRefreshFeature` parity) +
+  `NestedGeckoView`'s disallow-intercept arbitration. **Don't re-add a
+  `setEnabled(scrollY < N)` heuristic** — its stale inputs were the
+  scroll-vs-refresh coin-flip. `isEnabled` is owned by lifecycle/fullscreen
+  only. `GeckoSwipeRefreshLayout.onStartNestedScroll` returning false when
+  enabled is **load-bearing** (`NestedScrollingChildHelper` climbs past it to
+  the CoordinatorLayout; stock SRL would accept and starve the toolbar).
+- **Stale-commit guard is ONE-SHOT** (`GeckoState.mPendingUserLoadUri`, armed
+  by `openUri`): consumes itself on the first location change (match = the
+  user's own same-document commit; mismatch = the single stale commit a
+  cancelled load can produce). Also cleared by start/stop/equal-deny. **Never
+  make it persistent** — a load that fires no progress events (`#fragment`
+  nav, denied deeplink) would wedge it shut and swallow all SPA navigation.
+- **`isCurrentGeckoState` is PER-REPO** — every UI observer that receives a
+  `GeckoState` must also filter `isIncognito() != mIsIncognitoThemed`, or the
+  other mode's background tab drives the visible chrome (PROGRESS and
+  FULL_SCREEN now carry the state for exactly this).
+- **Crash/kill recovery**: `discardGeckoSession` happens at the DATA layer
+  (`GeckoComponents.onCrash/onKill`, before notify — must run even with no
+  fragment view alive or the closed-session reference makes the reopened tab
+  blank; `restoreState` replays only on fresh construction). The fragment
+  reopens **only the visible tab** (background/cross-mode crashes must not
+  steal the screen), and on a FOREGROUND kill of the visible tab it reopens
+  **eagerly** (no lazy path can ever fire — observed on-device; Fenix does
+  the same for the selected tab). `setGeckoViewSession` routes the previous
+  session's deactivation through its `GeckoState` (`findGeckoStateBySession`)
+  so the prompt-dismissal hook fires on the mCurrentId-drift re-attach too.
+
 ## Tabs, sessions & delegate callbacks (foreground-only UI)
 
 A tab is a `GeckoState` (+ its `GeckoSession`), **not** a separate fragment.
