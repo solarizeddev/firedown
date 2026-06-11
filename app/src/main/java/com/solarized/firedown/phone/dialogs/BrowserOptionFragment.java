@@ -1,5 +1,6 @@
 package com.solarized.firedown.phone.dialogs;
 
+import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -96,6 +97,12 @@ public class BrowserOptionFragment extends BaseFocusFragment implements OnItemCl
     // empty+busy → LCEE loading; content+busy → a toolbar spinner (action_progress).
     private MenuItem mProgressMenuItem;
     private boolean mListEmpty = true;
+
+    /** A presentation flip (mime suppression / dense mosaic) is set on the
+     *  adapter but its commit callback hasn't applied the span/rebind yet —
+     *  a newer submit can supersede the older one's callback, so the next
+     *  emission must re-run the commit path. See submitWithPresentation. */
+    private boolean mPresentationDirty;
     private boolean mBusyShown;
     private static final long SPINNER_HIDE_LINGER_MS = 500L;
     private final Handler mSpinnerHandler = new Handler(Looper.getMainLooper());
@@ -185,10 +192,12 @@ public class BrowserOptionFragment extends BaseFocusFragment implements OnItemCl
         mAdapter = new BrowserOptionAdapter(mActivity, new BrowserDownloadsDiffCallback(), this, mEnableGrid);
         // The persisted chip is checked above (before the listener attaches,
         // which suppresses the synthetic callback) — so when the sheet
-        // reopens with the images filter active in grid mode, the dense
-        // mosaic state must be seeded here; getSpanCount() above already
-        // read the same chip state.
-        mAdapter.enableDenseGrid(!mEnableGrid && isDenseImageFilter());
+        // reopens with a filter active, the presentation flags must be
+        // seeded here; getSpanCount() above already read the same chip
+        // state. Silent setter is fine pre-list (nothing bound yet).
+        mAdapter.setPresentation(
+                mChipGroup.getCheckedChipId() != View.NO_ID,
+                !mEnableGrid && isDenseImageFilter());
         mRecyclerView.setAdapter(mAdapter);
 
         // The RecyclerView's own dimensions don't depend on the adapter
@@ -366,14 +375,7 @@ public class BrowserOptionFragment extends BaseFocusFragment implements OnItemCl
             // repository) before submitting so the CC badge binds correctly
             // even when the active chip has filtered the subtitle siblings out.
             mAdapter.setSubtitleCounts(mBrowserDownloadViewModel.subtitleCountsByOrigin());
-            // Any single-type filter makes the per-tile mime tag pure
-            // redundancy with the checked chip — suppress it; unfiltered
-            // restores it, since there the type varies tile to tile.
-            // (Recomputed from the chip state on every emission so the
-            // initial persisted-chip open is covered too.)
-            mAdapter.setMimeSuppressed(
-                    mChipGroup != null && mChipGroup.getCheckedChipId() != View.NO_ID);
-            submitListPreservingScroll(downloads);
+            submitWithPresentation(downloads);
         });
 
         mBrowserDownloadViewModel.getInflight().observe(getViewLifecycleOwner(),
@@ -454,13 +456,51 @@ public class BrowserOptionFragment extends BaseFocusFragment implements OnItemCl
 
     /** Re-syncs the adapter's dense flag and the span count with the
      *  current view mode + filter chip. enableDenseGrid no-ops (and skips
-     *  its notifyDataSetChanged) when the flag didn't actually change. */
+     *  its notifyDataSetChanged) when the flag didn't actually change.
+     *  Used by the grid/list TOGGLE only, where the data doesn't change
+     *  and an immediate flip is correct — a filter chip change must go
+     *  through {@link #submitWithPresentation} instead. */
     private void refreshGridDensity() {
         if (mAdapter == null || mLayoutManager == null) {
             return;
         }
         mAdapter.enableDenseGrid(!mEnableGrid && isDenseImageFilter());
         mLayoutManager.setSpanCount(getSpanCount());
+    }
+
+    /**
+     * Submits a list with the chip-derived presentation (mime suppression +
+     * dense mosaic) applied ATOMICALLY with the commit. A chip tap's requery
+     * is async — flipping the adapter from the tap re-renders the old list
+     * in the new presentation for a beat. So the flags are set silently
+     * here, and when they changed the span/rebind runs in submitList's
+     * commit callback: the differ has already swapped the content (the
+     * dense flag is read per-bind, so freshly inserted tiles inflate the
+     * right layout), the span flip and the survivors' rebind land in the
+     * same main-thread message — no intermediate frame. mPresentationDirty
+     * covers a commit callback that never ran because a newer submit
+     * superseded it (AsyncListDiffer drops the older commit).
+     */
+    @SuppressLint("NotifyDataSetChanged")
+    private void submitWithPresentation(List<BrowserDownloadEntity> downloads) {
+        boolean suppress = mChipGroup != null && mChipGroup.getCheckedChipId() != View.NO_ID;
+        boolean dense = !mEnableGrid && isDenseImageFilter();
+        boolean changed = mAdapter.setPresentation(suppress, dense);
+        if (!changed && !mPresentationDirty) {
+            submitListPreservingScroll(downloads);
+            return;
+        }
+        mPresentationDirty = true;
+        // Scroll anchoring is meaningless across a filter flip (the lists
+        // are disjoint) — plain submit with the presentation commit.
+        mAdapter.submitList(downloads, () -> {
+            if (mAdapter == null || mLayoutManager == null) {
+                return;
+            }
+            mPresentationDirty = false;
+            mLayoutManager.setSpanCount(getSpanCount());
+            mAdapter.notifyDataSetChanged();
+        });
     }
 
     /**
@@ -746,14 +786,13 @@ public class BrowserOptionFragment extends BaseFocusFragment implements OnItemCl
         int selectedId = checkedIds.isEmpty() ? View.NO_ID : checkedIds.get(0);
         String type = mBrowserDownloadViewModel.getCurrentSortForIds(selectedId);
         mBrowserDownloadViewModel.sortBrowserDownloads(type);
-        // Crossing the images-filter boundary in grid mode flips the grid
-        // between the normal tiles and the dense square mosaic.
-        refreshGridDensity();
-        // Suppress the per-tile mime tag while a single-type filter is
-        // active (redundant with the checked chip). The downloads observer
-        // re-derives the same value on each emission; setting it here too
-        // flips the visible tiles immediately rather than on the requery.
-        mAdapter.setMimeSuppressed(selectedId != View.NO_ID);
+        // Deliberately NO presentation change here (density/span/mime
+        // suppression): the requery is async, so flipping the adapter now
+        // would re-render the OLD list in the NEW presentation first —
+        // on-device that showed the images mosaic collapsing to normal
+        // span-2 image tiles for a beat before the videos arrived. The
+        // downloads observer flips presentation atomically with the new
+        // list's commit (submitWithPresentation).
         // Only intercept Back while a chip is actually checked — otherwise
         // Back must behave normally (close the screen).
         if (mClearFilterOnBack != null) mClearFilterOnBack.setEnabled(!checkedIds.isEmpty());

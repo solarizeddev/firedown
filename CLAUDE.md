@@ -1743,9 +1743,16 @@ back to English (MissingTranslation isn't build-fatal here).
   when the title is hidden — but it is **suppressed while a single-type filter
   chip is active** in BOTH surfaces (`setMimeSuppressed` in both adapters,
   wired to the chip rails): stamping "VIDEO" on every tile under an active
-  Video filter merely repeats the checked chip. The suppression setters notify
-  on change because the differ won't rebind items that survived a filter flip
-  unchanged. (Captured used to *always* show the title as a pre-download
+  Video filter merely repeats the checked chip. **Presentation flips
+  (suppression/density/span) must land WITH the new list, never on the chip
+  tap** — the requery is async, and an eager flip re-renders the OLD list in
+  the NEW presentation first (on-device: the images mosaic collapsed to
+  normal span-2 image tiles for a beat before the videos arrived). Captured
+  sets the flags silently (`setPresentation`) and applies span+rebind in
+  `submitList`'s commit callback (`submitWithPresentation`); Downloads defers
+  to the paging load-state listener (`applyPendingPresentation` on refresh
+  NotLoading). The rebind-on-change is still required either way: the differ
+  won't rebind items that survived a filter flip unchanged. (Captured used to *always* show the title as a pre-download
   decision surface; that was changed to match Downloads — an image tile's slug
   name is noise on the decision surface too.)
 - **Images/GIF filter + grid = the dense bare mosaic.** When the images or GIF

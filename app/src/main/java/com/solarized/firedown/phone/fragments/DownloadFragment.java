@@ -110,6 +110,10 @@ public class DownloadFragment extends BaseDownloadFragment implements
     /** Set when a new query has been dispatched; consumed on the next successful refresh. */
     private boolean mPendingScrollToTop = false;
 
+    /** Set on a filter-chip change; consumed by the load-state listener
+     *  once the new generation is presented — see applyPendingPresentation. */
+    private boolean mPendingPresentation = false;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -223,6 +227,9 @@ public class DownloadFragment extends BaseDownloadFragment implements
                         + " items=" + mAdapter.getItemCount());
             }
             if (loadStates.getRefresh() instanceof LoadState.NotLoading) {
+                // A filter change deferred its presentation flip to here —
+                // the new generation is presented, flip atomically with it.
+                applyPendingPresentation();
                 if (mAdapter.getItemCount() == 0) {
                     // There is NO "All" chip in the rail — unfiltered means no
                     // chip is checked, i.e. getCheckedChipId() == View.NO_ID
@@ -542,15 +549,33 @@ public class DownloadFragment extends BaseDownloadFragment implements
         } else {
             mDownloadsViewModel.setFilterChip(checkedIds.get(0));
         }
-        if (mAdapter != null) {
-            // Any single-type filter makes the per-row mime label pure
-            // redundancy with the checked chip — suppress it (list and
-            // grid alike); unfiltered restores it, since there the type
-            // genuinely varies row to row.
-            mAdapter.setMimeSuppressed(!checkedIds.isEmpty());
+        // Presentation (mime suppression + dense mosaic span) is NOT
+        // flipped here: the paging requery is async, and flipping the
+        // adapter now re-renders the OLD list in the NEW presentation
+        // first (the images mosaic collapses to normal span-2 tiles for a
+        // beat before the videos arrive — same race fixed in
+        // BrowserOptionFragment.submitWithPresentation). The flag is
+        // consumed by the load-state listener once the new generation has
+        // been presented.
+        mPendingPresentation = true;
+    }
+
+    /**
+     * Applies the chip-derived presentation (mime suppression + dense
+     * mosaic) AFTER a refresh presented the new generation — called from
+     * the load-state listener on refresh NotLoading, in the same
+     * main-thread dispatch as the presentation, so no intermediate frame
+     * shows the new content in the old presentation. Both calls no-op
+     * when nothing actually changed, so the listener firing on every
+     * ordinary refresh costs nothing.
+     */
+    private void applyPendingPresentation() {
+        if (!mPendingPresentation || mAdapter == null) {
+            return;
         }
-        // Crossing the images-filter boundary in grid mode flips the grid
-        // between the normal tiles and the dense square mosaic.
+        mPendingPresentation = false;
+        int chipId = mChipGroup != null ? mChipGroup.getCheckedChipId() : View.NO_ID;
+        mAdapter.setMimeSuppressed(chipId != View.NO_ID);
         refreshGridDensityIfChanged();
     }
 

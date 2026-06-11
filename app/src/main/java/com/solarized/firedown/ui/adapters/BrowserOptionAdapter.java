@@ -1,6 +1,5 @@
 package com.solarized.firedown.ui.adapters;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
@@ -81,20 +80,24 @@ public class BrowserOptionAdapter extends GridListBaseAdapter<BrowserDownloadEnt
     }
 
     /**
-     * Hide the mime chip on every tile — used when the chip rail is filtered
-     * to a single type, so the chip ("IMAGE", "VIDEO") doesn't redundantly
-     * repeat what the active filter already states. Notifies itself on an
-     * actual change: a filter change re-submits the list, but the differ
-     * won't rebind items that survived the filter unchanged, so the flag
-     * flip has to rebind them (no-op when the value didn't change).
+     * SILENT combined setter for the filter-driven presentation flags
+     * (mime suppression + dense mosaic). Used by the downloads observer so
+     * the flags flip together with the NEW list's commit rather than
+     * instantly: the chip tap's requery is async, and a notifying setter
+     * fired from the tap rebinds the OLD list in the new presentation
+     * first (the images briefly re-render as normal span-2 tiles before
+     * the videos arrive). The caller owns the rebind — when this returns
+     * true, submit the new list with a commit callback that updates the
+     * span count and calls notifyDataSetChanged, so items that survived
+     * the diff take the new presentation too.
+     *
+     * @return whether either flag actually changed.
      */
-    @SuppressLint("NotifyDataSetChanged")
-    public void setMimeSuppressed(boolean suppressed) {
-        if (mSuppressMime == suppressed) {
-            return;
-        }
-        mSuppressMime = suppressed;
-        notifyDataSetChanged();
+    public boolean setPresentation(boolean suppressMime, boolean dense) {
+        boolean changed = mSuppressMime != suppressMime || mDense != dense;
+        mSuppressMime = suppressMime;
+        mDense = dense;
+        return changed;
     }
 
     @Override
