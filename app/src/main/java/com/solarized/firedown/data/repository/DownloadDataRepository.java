@@ -163,12 +163,15 @@ public class DownloadDataRepository {
     /**
      * Refreshes metadata and thumbnail timestamp for a download.
      *
-     * <p>Runs on the HEAVY executor, not {@code @DiskIO}: the FFmpeg probe
-     * below can grind for a long time on a corrupt/odd file, and {@code
-     * @DiskIO} is the single serial lane all short DB mutations (incl.
-     * deletes) ride on — one wedged probe there froze the Downloads list
-     * for the rest of the session. The final Room insert is thread-safe
-     * from any executor.</p>
+     * <p>The FFmpeg probe runs on the HEAVY executor, not {@code @DiskIO}:
+     * it can grind for a long time on a corrupt/odd file, and {@code @DiskIO}
+     * is the single serial lane all short DB mutations (incl. deletes) ride
+     * on — one wedged probe there froze the Downloads list for the rest of
+     * the session. The final write then HOPS BACK to {@code @DiskIO} with an
+     * existence check: every row delete runs on that same serial lane, so
+     * check+insert there cannot interleave with a delete — without the hop,
+     * a probe finishing after the user deleted the row would
+     * insert(REPLACE) it back (the two executors DO run concurrently).</p>
      */
     public void updateDownloadThumb(DownloadEntity download) {
         mHeavyExecutor.execute(() -> {
@@ -196,7 +199,14 @@ public class DownloadDataRepository {
             newEntity.setFileDurationFormatted(FFmpegUtils.getFileDuration(duration));
             newEntity.setFileThumbnailDuration(randomThumbPos);
 
-            mDatabase.downloadDao().insert(newEntity);
+            mDiskExecutor.execute(() -> {
+                // Row gone (deleted while the probe ran) — drop the result
+                // instead of resurrecting it via insert(REPLACE).
+                if (mDatabase.downloadDao().findByIdSync(newEntity.getId()) == null) {
+                    return;
+                }
+                mDatabase.downloadDao().insert(newEntity);
+            });
         });
     }
 
