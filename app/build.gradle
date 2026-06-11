@@ -240,7 +240,15 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.3.0'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.7.0'
 
-    def room_version = "2.7.1"
+    // 2.7.2+: fixes the 2.7.0/2.7.1 InvalidationTracker regression where the
+    // per-connection TEMP table (room_table_modification_log) was created only
+    // at connection setup — when the framework recycles a native SQLite
+    // connection (Samsung enables the idle-connection timeout system-wide),
+    // the recycled connection comes back without temp tables and the next
+    // LiveData activation crashes with "no such table:
+    // room_table_modification_log". Pre-2.7 trackers re-created it
+    // defensively; 2.7.2 restores that.
+    def room_version = "2.7.2"
 
     implementation "androidx.room:room-runtime:$room_version"
     annotationProcessor "androidx.room:room-compiler:$room_version"
