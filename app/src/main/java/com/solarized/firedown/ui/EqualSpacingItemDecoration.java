@@ -38,13 +38,20 @@ public class EqualSpacingItemDecoration extends RecyclerView.ItemDecoration {
 
         super.getItemOffsets(outRect, view, parent, state);
 
-        if (orientation == -1) {
-            orientation = getOrientation(parent);
-        }
-
-        if (spanCount == -1) {
-            spanCount = getTotalSpan(parent);
-        }
+        // Re-read BOTH from the live LayoutManager on every pass — never
+        // cache them across layouts. The old once-only cache
+        // (if (spanCount == -1) …) went stale when the span changed on a
+        // LIVE RecyclerView without recreating the decoration: the
+        // images-filter dense mosaic flips the Captured grid 2 → 3 via
+        // setSpanCount(), and the decoration kept computing column edges
+        // for 2 columns — every other tile got the left-edge inset and
+        // right-edge detection misfired, producing visibly uneven gutters.
+        // (Downloads dodged it only because configureRecyclerView happens
+        // to recreate its decoration on every density change.) The
+        // re-read is two instanceof checks + a getter per child per
+        // layout pass — negligible.
+        orientation = getOrientation(parent);
+        spanCount = getTotalSpan(parent);
 
         RecyclerView.LayoutManager layoutManager = parent.getLayoutManager();
 
