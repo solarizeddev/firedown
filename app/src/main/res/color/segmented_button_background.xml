@@ -1,5 +1,10 @@
-<!-- segmented_button_background.xml -->
+<!-- segmented_button_background.xml
+     Checked = onSurface at 12% alpha (a quiet tonal selection), NOT a
+     container colour: this palette's secondaryContainer is a loud peach
+     (#FFBF9B) that fought both the light theme and the incognito purple.
+     The alpha overlay adapts to any surface automatically. Keep in sync
+     with IncognitoColors.segmentedButtonBackground. -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:color="?attr/colorSecondaryContainer" android:state_checked="true" />
+    <item android:alpha="0.12" android:color="?attr/colorOnSurface" android:state_checked="true" />
     <item android:color="@android:color/transparent" />
 </selector>

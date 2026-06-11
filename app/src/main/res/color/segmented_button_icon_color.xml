@@ -1,4 +1,5 @@
+<!-- Mirrors segmented_button_text_color (see its header). -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:color="?attr/colorOnSecondaryContainer" android:state_checked="true" />
+    <item android:color="?attr/colorOnSurface" android:state_checked="true" />
     <item android:color="?attr/colorOnSurfaceVariant" />
 </selector>
