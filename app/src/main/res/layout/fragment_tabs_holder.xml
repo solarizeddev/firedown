@@ -6,27 +6,28 @@
     android:layout_height="match_parent">
 
     <!--
-        Header is the segmented toggle ALONE — the old toolbar ("Tabs" title
-        + back arrow) was redundant: the toggle already names the screen and
-        system back serves handleBack. Its actions moved to the bottom bar.
+        Header is a compact, centred, icon-only mode switcher on an ALWAYS
+        TONAL bar (surfaceContainer — the same tone as the bottom bar, so
+        the screen reads as a framed switcher, Chrome's tab-grid
+        composition). Two consequences, both deliberate:
 
-        AppBar background is a STATIC resting surface colour (set in
-        applyIncognitoTheme / onCreateView). The "lifted" look on scroll is
-        produced by fading in the sibling @id/appbar_lift_scrim view which
-        sits behind the toggle.
+        - The old full-width outlined segmented button was the heaviest
+          element on the screen for its least-used action; icon pills carry
+          the same state (selection fill + the full-page incognito theme
+          flip) at a fraction of the ink. contentDescriptions carry the
+          text for a11y.
 
-        We DO NOT use AppBarLayout's built-in liftOnScroll — its internal
-        shouldLift / canScrollVertically path races our updates across the
-        ViewPager2 boundary. Driving alpha on a plain sibling View has no
-        state machine to race.
+        - The lift-on-scroll scrim machinery was DELETED, not moved: its
+          only job was fading the tonal colour in on scroll, and an
+          always-tonal header has nothing to fade. (Historical note: it was
+          a hand-rolled sibling-View alpha fade because AppBarLayout's own
+          liftOnScroll races its shouldLift/canScrollVertically check
+          across the ViewPager2 boundary — if a scroll-elevation effect is
+          ever wanted again, resurrect the scrim approach from git history,
+          do NOT reach for liftOnScroll.)
 
-        Elevation is set to 0dp so AppBar never casts a shadow based on its
-        own lifted-state tracking. Any shadow, if desired, would be added by
-        the scrim itself.
-
-        The toggle container is transparent so the scrim shows through it
-        uniformly when it fades in. The container takes the status-bar inset
-        as top padding in code (the toolbar used to absorb it).
+        The header container takes the status-bar inset as top padding in
+        code; colours follow applyIncognitoTheme.
     -->
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appbar_layout"
@@ -36,63 +37,53 @@
         app:elevation="0dp"
         app:liftOnScroll="false">
 
-        <FrameLayout
+        <LinearLayout
+            android:id="@+id/tabs_header"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
 
-            <View
-                android:id="@+id/appbar_lift_scrim"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:alpha="0" />
-
-            <LinearLayout
-                android:id="@+id/tabs_header"
-                android:layout_width="match_parent"
+            <com.google.android.material.button.MaterialButtonToggleGroup
+                android:id="@+id/tab_mode_toggle"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="vertical">
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="6dp"
+                android:layout_marginBottom="6dp"
+                android:background="@android:color/transparent"
+                app:singleSelection="true"
+                app:selectionRequired="true"
+                app:checkedButton="@id/btn_regular_tabs">
 
-                <!-- Material3 Segmented Button -->
-                <com.google.android.material.button.MaterialButtonToggleGroup
-                    android:id="@+id/tab_mode_toggle"
-                    android:layout_width="match_parent"
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_regular_tabs"
+                    style="@style/Theme.FireDown.SegmentedButton"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:background="@android:color/transparent"
-                    android:layout_marginStart="8dp"
-                    android:layout_marginEnd="8dp"
-                    android:layout_marginTop="10dp"
-                    android:layout_marginBottom="8dp"
-                    app:singleSelection="true"
-                    app:selectionRequired="true"
-                    app:checkedButton="@id/btn_regular_tabs">
+                    android:contentDescription="@string/tabs_regular"
+                    android:minWidth="72dp"
+                    app:icon="@drawable/ic_tabs_24"
+                    app:iconGravity="textStart"
+                    app:iconPadding="0dp"
+                    app:iconSize="20dp"
+                    app:strokeWidth="0dp" />
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btn_regular_tabs"
-                        style="@style/Theme.FireDown.SegmentedButton"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/tabs_regular"
-                        app:icon="@drawable/ic_tabs_24"
-                        app:iconGravity="textStart"
-                        app:iconSize="18dp" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_incognito_tabs"
+                    style="@style/Theme.FireDown.SegmentedButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:contentDescription="@string/tabs_incognito"
+                    android:minWidth="72dp"
+                    app:icon="@drawable/ic_tabs_private_24"
+                    app:iconGravity="textStart"
+                    app:iconPadding="0dp"
+                    app:iconSize="20dp"
+                    app:strokeWidth="0dp" />
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btn_incognito_tabs"
-                        style="@style/Theme.FireDown.SegmentedButton"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/tabs_incognito"
-                        app:icon="@drawable/ic_tabs_private_24"
-                        app:iconGravity="textStart"
-                        app:iconSize="18dp" />
+            </com.google.android.material.button.MaterialButtonToggleGroup>
 
-                </com.google.android.material.button.MaterialButtonToggleGroup>
-
-            </LinearLayout>
-
-        </FrameLayout>
+        </LinearLayout>
 
     </com.google.android.material.appbar.AppBarLayout>
 
