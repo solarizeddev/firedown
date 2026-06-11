@@ -59,7 +59,7 @@ public class GeckoToolbarBehavior extends CoordinatorLayout.Behavior<GeckoToolba
 
     public GeckoToolbarBehavior(@Nullable Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
-        yTranslator          = new YTranslator(ViewPosition.TOP);
+        yTranslator          = new YTranslator();
         mBrowserGestureDetector = new BrowserGestureDetector(context, this);
     }
 

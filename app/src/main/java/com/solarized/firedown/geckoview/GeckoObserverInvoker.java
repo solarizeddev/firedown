@@ -11,11 +11,11 @@ public interface GeckoObserverInvoker {
 
     void callMethod(GeckoObserver geckoObserver, Object... object);
 
-    GeckoObserverInvoker PROGRESS = (geckoObserver, objects) -> geckoObserver.updateProgress((int) objects[0]);
+    GeckoObserverInvoker PROGRESS = (geckoObserver, objects) -> geckoObserver.updateProgress((GeckoState) objects[0], (int) objects[1]);
 
-    GeckoObserverInvoker LOCATION = (geckoObserver, objects) -> geckoObserver.onLocationChange((GeckoState) objects[0]);
+    GeckoObserverInvoker LOCATION = (geckoObserver, objects) -> geckoObserver.onLocationChange((GeckoState) objects[0], (String) objects[1]);
 
-    GeckoObserverInvoker FULL_SCREEN = (geckoObserver, objects) -> geckoObserver.onFullScreen((boolean) objects[0]);
+    GeckoObserverInvoker FULL_SCREEN = (geckoObserver, objects) -> geckoObserver.onFullScreen((GeckoState) objects[0], (boolean) objects[1]);
 
     GeckoObserverInvoker DYNAMIC_TOOLBAR = (geckoObserver, objects) -> geckoObserver.onShowDynamicToolbar();
 
