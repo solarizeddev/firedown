@@ -76,6 +76,18 @@ h1 em{font-style:italic;font-weight:600}
 .get b{color:var(--coral-dark);font-weight:600}
 .get:active{border-color:var(--coral)}
 
+/* ── onboarding steps (the pre-interstitial http page) ── */
+ol.steps{margin:0;padding:0 0 0 2px;list-style:none;counter-reset:s}
+ol.steps li{counter-increment:s;display:flex;align-items:center;gap:12px;
+  padding:7px 0;color:var(--text-mid);font-size:14.5px}
+ol.steps li::before{content:counter(s);flex:none;width:26px;height:26px;border-radius:50%;
+  background:linear-gradient(135deg,var(--coral-dark),var(--coral));color:#fff;
+  font-weight:600;font-size:13px;display:flex;align-items:center;justify-content:center}
+/* each step's text is ONE span: without it the bare text node and the <b>
+   become separate flex items and the bold word drifts to the far edge */
+ol.steps li span{flex:1;min-width:0}
+ol.steps b{color:var(--text)}
+
 /* ── PIN ── */
 form{text-align:center}
 input[type=text]{width:208px;text-align:center;letter-spacing:14px;font-size:32px;

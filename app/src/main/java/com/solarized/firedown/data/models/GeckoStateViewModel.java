@@ -42,6 +42,7 @@ public class GeckoStateViewModel extends ViewModel {
     private final TrackingPermissionRepository mTrackingRepository;
     private final WasmAllowlistRepository mWasmAllowlistRepository;
     private final Executor mDiskIOExecutor;
+    private final Executor mHeavyExecutor;
     private final Context mContext;
 
     @Inject
@@ -51,6 +52,7 @@ public class GeckoStateViewModel extends ViewModel {
                                TrackingPermissionRepository trackingRepository,
                                WasmAllowlistRepository wasmAllowlistRepository,
                                @Qualifiers.DiskIO Executor diskExecutor,
+                               @Qualifiers.HeavyIO Executor heavyExecutor,
                                @ApplicationContext Context context) {
         this.mGeckoUblockHelper = geckoUblockHelper;
         this.mRepository = repository;
@@ -58,6 +60,7 @@ public class GeckoStateViewModel extends ViewModel {
         this.mTrackingRepository = trackingRepository;
         this.mWasmAllowlistRepository = wasmAllowlistRepository;
         this.mDiskIOExecutor = diskExecutor;
+        this.mHeavyExecutor = heavyExecutor;
         this.mContext = context;
     }
 
@@ -229,8 +232,10 @@ public class GeckoStateViewModel extends ViewModel {
     }
 
     public void clearStorage(){
-        //Delete cache Files
-        mDiskIOExecutor.execute(() -> StoragePaths.clearCacheFolder(mContext));
+        // Delete cache files. Heavy executor — a recursive sweep of the
+        // whole cache dir is unbounded work and must not sit in front of
+        // the @DiskIO lane's short DB mutations (see Qualifiers.DiskIO).
+        mHeavyExecutor.execute(() -> StoragePaths.clearCacheFolder(mContext));
     }
 
     /**

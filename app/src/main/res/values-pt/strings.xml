@@ -440,8 +440,10 @@
     <string name="capture_help_banner">Algumas mídias incorporadas precisam ser reproduzidas primeiro. Toque para saber como.</string>
     <string name="lan_send">Enviar</string>
     <string name="lan_share_title">Enviar para o navegador</string>
+    <string name="tabs_more_options">Mais opções</string>
     <string name="lan_share_lead">No outro dispositivo, abra este endereço em qualquer navegador na mesma rede Wi-Fi</string>
     <string name="lan_share_qr_hint">Ao ler o código, a página abre com o PIN já preenchido</string>
+    <string name="lan_share_cert_hint">O navegador do outro dispositivo mostra primeiro um aviso de segurança — escolha Avançadas e depois Continuar. A ligação entre os dois dispositivos continua cifrada.</string>
     <string name="lan_share_pin">PIN</string>
     <string name="lan_share_stop">Parar de partilhar</string>
     <string name="lan_share_footer">A partilha termina quando sai deste ecrã. Nada sai da sua rede.</string>
@@ -449,6 +451,7 @@
     <string name="lan_share_vpn_warning">VPN ativa — se o recetor não conseguir ligar, permita o acesso à rede local na app de VPN ou desative-a</string>
     <string name="lan_direct_intro">Este telefone pode criar um hotspot temporário — o outro dispositivo liga-se a ele e o ficheiro passa diretamente entre os dois telefones. A internet não é usada.</string>
     <string name="lan_direct_start">Iniciar ligação direta</string>
+    <string name="lan_direct_step">Passo 1 de 2 — aderir ao hotspot</string>
     <string name="lan_direct_switch">Usar antes uma ligação direta</string>
     <string name="lan_direct_join_hint">Digitalize com a câmara do outro dispositivo para aderir ao hotspot e depois toque em Seguinte</string>
     <string name="lan_direct_password">Palavra-passe</string>

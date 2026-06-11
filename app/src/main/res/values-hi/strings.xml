@@ -339,8 +339,10 @@
     <string name="capture_help_banner">कुछ एम्बेड किए गए मीडिया को पहले चलाना ज़रूरी है. जानने के लिए टैप करें.</string>
     <string name="lan_send">भेजें</string>
     <string name="lan_share_title">ब्राउज़र पर भेजें</string>
+    <string name="tabs_more_options">अधिक विकल्प</string>
     <string name="lan_share_lead">दूसरे डिवाइस पर, उसी Wi-Fi पर किसी भी ब्राउज़र में यह पता खोलें</string>
     <string name="lan_share_qr_hint">कोड स्कैन करने पर पेज PIN पहले से भरा हुआ खुलता है</string>
+    <string name="lan_share_cert_hint">दूसरे डिवाइस का ब्राउज़र पहले एक सुरक्षा चेतावनी दिखाता है — उन्नत चुनें, फिर जारी रखें। दोनों डिवाइस के बीच कनेक्शन फिर भी एन्क्रिप्टेड है।</string>
     <string name="lan_share_pin">PIN</string>
     <string name="lan_share_stop">साझा करना बंद करें</string>
     <string name="lan_share_footer">इस स्क्रीन से बाहर जाते ही साझा करना बंद हो जाता है। कुछ भी आपके नेटवर्क से बाहर नहीं जाता।</string>
@@ -348,6 +350,7 @@
     <string name="lan_share_vpn_warning">VPN सक्रिय है — अगर पाने वाला कनेक्ट नहीं कर पाता, तो VPN ऐप में LAN एक्सेस की अनुमति दें या VPN बंद करें</string>
     <string name="lan_direct_intro">यह फ़ोन एक अस्थायी हॉटस्पॉट बना सकता है — दूसरा डिवाइस उससे जुड़ता है और फ़ाइल सीधे दोनों फ़ोन के बीच जाती है। इंटरनेट का उपयोग नहीं होता।</string>
     <string name="lan_direct_start">सीधा कनेक्शन शुरू करें</string>
+    <string name="lan_direct_step">चरण 1/2 — हॉटस्पॉट से जुड़ें</string>
     <string name="lan_direct_switch">इसके बजाय सीधा कनेक्शन इस्तेमाल करें</string>
     <string name="lan_direct_join_hint">हॉटस्पॉट से जुड़ने के लिए दूसरे डिवाइस के कैमरे से स्कैन करें, फिर आगे पर टैप करें</string>
     <string name="lan_direct_password">पासवर्ड</string>

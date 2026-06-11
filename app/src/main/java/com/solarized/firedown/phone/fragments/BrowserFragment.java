@@ -17,6 +17,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
+import android.view.accessibility.AccessibilityManager;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResultLauncher;
@@ -54,7 +55,6 @@ import com.solarized.firedown.geckoview.GeckoComponents;
 import com.solarized.firedown.geckoview.GeckoState;
 import com.solarized.firedown.geckoview.GeckoSwipeRefreshLayout;
 import com.solarized.firedown.geckoview.GeckoToolbarBehavior;
-import com.solarized.firedown.geckoview.toolbar.BottomNavigationBehavior;
 import com.solarized.firedown.geckoview.NestedGeckoView;
 import com.solarized.firedown.geckoview.NestedGeckoViewBehavior;
 import com.solarized.firedown.geckoview.media.GeckoMediaPlaybackService;
@@ -101,8 +101,6 @@ public class BrowserFragment extends BaseBrowserFragment
 
     private static final String TAG = BrowserFragment.class.getSimpleName();
 
-    private static final int MINIMUM_TRIGGER_Y = 10;
-
     // ── UI state machine ──────────────────────────────────────────────────────────────────────────
     //
     // Replaces BrowserStateViewModel + BrowserViewState + BrowserViewStateLiveData.
@@ -137,6 +135,33 @@ public class BrowserFragment extends BaseBrowserFragment
     private boolean mRecreatingSession = false;
 
     private UiState mUiState = UiState.INIT;
+
+    // ── Toolbar scroll policy (Fenix ToolbarBehaviorController equivalent) ───────────────────────
+    //
+    // Fenix forces the dynamic toolbar visible and disables scroll-to-hide in a handful of
+    // states; we mirror them through one decision point, applyToolbarScrollPolicy(), fed by
+    // these flags (plus mUiState). See that method for the policy itself.
+
+    /** True between onStart (page load begins) and onStop (load finished/halted). */
+    private boolean mPageLoading = false;
+
+    /** True while the soft keyboard is visible (tracked via the root window-insets listener). */
+    private boolean mImeVisible = false;
+
+    /**
+     * True while TalkBack-style touch exploration is active. Scroll-to-hide chrome is hostile
+     * to screen-reader users (Fenix pins the toolbar via shouldUseFixedTopToolbar), so the
+     * bars are pinned visible for the duration.
+     */
+    private boolean mTouchExplorationEnabled = false;
+
+    private AccessibilityManager mAccessibilityManager;
+
+    private final AccessibilityManager.TouchExplorationStateChangeListener
+            mTouchExplorationListener = enabled -> {
+        mTouchExplorationEnabled = enabled;
+        expandBarsAndApplyPolicy();
+    };
 
     // ── Views ─────────────────────────────────────────────────────────────────────────────────────
 
@@ -228,6 +253,16 @@ public class BrowserFragment extends BaseBrowserFragment
                     geckoState.exitFullScreen();
                     return;
                 }
+                // onHideDynamicToolbar enters the fullscreen UI WITHOUT DOM
+                // fullscreen (entityFullScreen stays false), so the branch
+                // above has nothing to exit and back used to fall through to
+                // history navigation, breaking the snackbar's "exit fullscreen
+                // with back" promise. Restore the chrome directly.
+                if (mUiState == UiState.FULL_SCREEN) {
+                    collapseBrowserView();
+                    exitFullScreen(mActivity.getWindow().getDecorView());
+                    return;
+                }
                 if (mUiState == UiState.SEARCH) {
                     exitSearch();
                     return;
@@ -296,9 +331,7 @@ public class BrowserFragment extends BaseBrowserFragment
         if (mAutoCompleteView.getVisibility() != View.VISIBLE) return false;
         hideKeyboard(mAutoCompleteEditText);
         mBrowserDownloadViewModel.update();
-        if (mUiState == UiState.BROWSING) {
-            mGeckoToolbar.enableScrolling();
-        }
+        applyToolbarScrollPolicy();
         mGeckoToolbar.clearFocus();
         mGeckoToolbar.startAnimation(false);
         mAutoCompleteView.updateVisibility(false);
@@ -331,7 +364,10 @@ public class BrowserFragment extends BaseBrowserFragment
         mGeckoView          = v.findViewById(R.id.geckoview);
         mGeckoToolbar       = v.findViewById(R.id.toolbar_layout);
 
-        mGeckoToolbar.disableScrolling();
+        // NOTE: no disableScrolling() here — at this point the toolbar has no behavior yet
+        // (installed below), so the old call was a silent no-op. GeckoToolbarBehavior now
+        // starts with isScrollEnabled=false (upstream default); applyToolbarScrollPolicy()
+        // flips it once browsing actually starts.
         mGeckoToolbar.setOnClearFocusListener(this);
         mGeckoToolbar.setListener(this);
 
@@ -343,6 +379,22 @@ public class BrowserFragment extends BaseBrowserFragment
         mAutoCompleteEditText.setOnFocusChangeListener(this);
 
         mSwipeRefreshLayout.setProgressViewOffset(false, 0, mGeckoToolbarSize + mBottomBarSize);
+
+        // Pull-to-refresh gesture-time veto — Fenix SwipeRefreshFeature.canChildScrollUp
+        // parity. Stock SwipeRefreshLayout decides "may I start the drag?" by asking
+        // child.canScrollVertically(-1), which a GeckoView always answers false ("cannot
+        // scroll up"), so to the stock logic EVERY downward drag looks like a refresh
+        // candidate whenever the layout is enabled. Polling the LIVE InputResultDetail
+        // instead makes the decision per-event from the CURRENT gesture's APZ answer:
+        // content not at top, or the site consumed the touch → "child can scroll up" →
+        // no spinner. This is the second, independent veto beside NestedGeckoView's
+        // disallow-intercept arbitration (which can only be lifted once APZ reports
+        // canOverscrollTop for the gesture) — defense in depth, exactly Fenix's shape.
+        // Null guard: the lambda outlives onDestroyView's field nulling by
+        // one teardown hop; null → veto (true = "child can scroll up"), the
+        // safe answer.
+        mSwipeRefreshLayout.setOnChildScrollUpCallback((parent, child) ->
+                mGeckoView == null || !mGeckoView.getInputResultDetail().canOverscrollTop());
 
         mAutoCompleteView.setClipboardCallback(new AutoCompleteView.OnClipboardListener() {
             @Override
@@ -419,8 +471,32 @@ public class BrowserFragment extends BaseBrowserFragment
             Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars()
                     | WindowInsetsCompat.Type.displayCutout());
             view.setPadding(insets.left, insets.top, insets.right, insets.bottom);
+
+            // Keyboard tracking for the toolbar scroll policy (Fenix parity): while the IME
+            // is up the bars must not be able to scroll away mid-typing, and when it closes
+            // the bars are brought back (Fenix's setupShowingToolbarsAfterKeyboardHidden).
+            // Fenix doesn't force-expand on IME *open* — a form field at the bottom of a
+            // scrolled page shouldn't lose more height to chrome — so neither do we.
+            boolean imeVisible = windowInsets.isVisible(WindowInsetsCompat.Type.ime());
+            if (imeVisible != mImeVisible) {
+                mImeVisible = imeVisible;
+                if (imeVisible) {
+                    applyToolbarScrollPolicy();
+                } else {
+                    expandBarsAndApplyPolicy();
+                }
+            }
             return WindowInsetsCompat.CONSUMED;
         });
+
+        // Pin the bars while touch exploration (TalkBack et al.) is on — a toolbar that
+        // hides on scroll is unusable under a screen reader (same rationale as Fenix's
+        // shouldUseFixedTopToolbar). Listener unregistered in the ON_DESTROY block below.
+        mAccessibilityManager = mActivity.getSystemService(AccessibilityManager.class);
+        if (mAccessibilityManager != null) {
+            mTouchExplorationEnabled = mAccessibilityManager.isTouchExplorationEnabled();
+            mAccessibilityManager.addTouchExplorationStateChangeListener(mTouchExplorationListener);
+        }
 
         // Download badge: subscribe to both count streams and gate on
         // mIsIncognitoThemed (same pattern as the tab-count observers
@@ -758,6 +834,10 @@ public class BrowserFragment extends BaseBrowserFragment
             if (Lifecycle.Event.ON_DESTROY.equals(event)) {
                 Log.d(TAG, "onDestroy");
                 mGeckoObserverRegistry.unregister(BrowserFragment.this);
+                if (mAccessibilityManager != null) {
+                    mAccessibilityManager
+                            .removeTouchExplorationStateChangeListener(mTouchExplorationListener);
+                }
             } else if (Lifecycle.Event.ON_CREATE.equals(event)) {
                 Log.d(TAG, "onCreate");
                 mGeckoObserverRegistry.register(BrowserFragment.this);
@@ -767,12 +847,16 @@ public class BrowserFragment extends BaseBrowserFragment
                 mSwipeRefreshLayout.setEnabled(false);
             } else if (Lifecycle.Event.ON_START.equals(event)) {
                 Log.d(TAG, "onStart");
-                mSwipeRefreshLayout.setEnabled(true);
+                // FULL_SCREEN-aware: a blanket enable resurrected
+                // pull-to-refresh over fullscreen video after a home-button
+                // round-trip (nothing re-disables until fullscreen exit now
+                // that the per-scroll heuristic is gone).
+                mSwipeRefreshLayout.setEnabled(mUiState != UiState.FULL_SCREEN);
 
             } else if (Lifecycle.Event.ON_RESUME.equals(event)) {
                 Log.d(TAG, "onResume");
                 mStop = false;
-                mSwipeRefreshLayout.setEnabled(true);
+                mSwipeRefreshLayout.setEnabled(mUiState != UiState.FULL_SCREEN);
                 mBrowserDownloadViewModel.update();
 
                 // ── FIX: Reconnect the current session after resume ──────────
@@ -793,6 +877,11 @@ public class BrowserFragment extends BaseBrowserFragment
                 // or return from Settings/Downloads), ensureSessionConnected()
                 // re-attaches the session that was released in onDestroyView().
                 ensureSessionConnected();
+
+                // Returning to the app always brings the bars back (Fenix dispatches
+                // showToolbarAsExpanded in onResume) — half-hidden chrome from the
+                // previous session's last scroll shouldn't greet the user.
+                expandBarsAndApplyPolicy();
             }
         });
 
@@ -891,7 +980,10 @@ public class BrowserFragment extends BaseBrowserFragment
     public void onDestroyView() {
         super.onDestroyView();
         Log.d(TAG, "onDestroyView: releasing GeckoView session");
-        if (mSwipeRefreshLayout != null) mSwipeRefreshLayout.setOnRefreshListener(null);
+        if (mSwipeRefreshLayout != null) {
+            mSwipeRefreshLayout.setOnRefreshListener(null);
+            mSwipeRefreshLayout.setOnChildScrollUpCallback(null);
+        }
         if (mGeckoView != null) {
             Log.d(TAG, "onDestroyView: current viewSession=" + mGeckoView.getSession());
             mGeckoView.releaseSession();
@@ -919,24 +1011,10 @@ public class BrowserFragment extends BaseBrowserFragment
      * popup go-forward/go-backward, onNew().
      */
     private void enterBrowsing() {
-        if (mUiState == UiState.BROWSING) return;
-
-        GeckoState geckoState = peekCurrentGeckoState();
-        if (geckoState == null) return;
-
-        mUiState = UiState.BROWSING;
-        geckoState.setSearchMode(false);
-        mGeckoObserverRegistry.register(this);
-        // show()/hide() (vs setVisibility) so the FAB scales + fades on the
-        // state changes where it's visible — re-appearing after find-in-page
-        // or fullscreen exit. On the initial home→browser arrival this is
-        // called before the first layout pass, so show() takes its documented
-        // instant fallback (no animation); harmless, and never a regression.
-        mDownloadButton.show();
-        mGeckoView.setVisibility(View.VISIBLE);
-        mGeckoToolbar.enableScrolling();
-        mGeckoToolbar.onLocationChange(geckoState.getEntityUri());
-        mBottomNavigationBar.show();
+        // Delegates to the explicit-state overload — the two used to be
+        // byte-identical clones and every BROWSING-transition tweak had to be
+        // made twice (and was once missed). One body, one truth.
+        enterBrowsing(null);
     }
 
     /**
@@ -949,9 +1027,12 @@ public class BrowserFragment extends BaseBrowserFragment
         GeckoState geckoState = peekCurrentGeckoState();
         if (geckoState == null)
             return;
+        // The toolbar IS the find bar — it must be fully on-screen before search starts
+        // (it may be half-hidden from the scroll that preceded opening the menu).
+        expandBars();
         mUiState = UiState.SEARCH;
         geckoState.setSearchMode(true);
-        mGeckoToolbar.disableScrolling();
+        applyToolbarScrollPolicy();
         mGeckoToolbar.enableSearch();
         mBottomNavigationBar.setVisibility(View.GONE);
         mDownloadButton.hide();
@@ -976,14 +1057,20 @@ public class BrowserFragment extends BaseBrowserFragment
             geckoState.setSearchMode(false);
         }
 
-        // Always restore UI even if geckoState is null
+        // Always restore UI even if geckoState is null.
         mGeckoToolbar.clearText();
-        mGeckoToolbar.enableScrolling();
         mBottomNavigationBar.setVisibility(View.VISIBLE);
         mBottomNavigationBar.show();
         mDownloadButton.show();
 
         enterBrowsing();
+        // enterBrowsing applies the scroll policy only when it actually
+        // transitions — with a null current state (find-in-page exit racing a
+        // tab swap/restore, the case the always-restore block above exists
+        // for) it early-returns and mUiState stays INIT. Apply unconditionally
+        // so this path never exits without a policy decision (idempotent when
+        // enterBrowsing already ran).
+        applyToolbarScrollPolicy();
     }
 
     /**
@@ -1069,11 +1156,21 @@ public class BrowserFragment extends BaseBrowserFragment
      * sensitive and synchronous; this one handles only the overlay UI bookkeeping (download
      * button, snackbar).
      *
-     * <p>Called from {@link #onFullScreen(boolean)} and {@link #onHideBars(GeckoState)}.
+     * <p>Called from {@link #onFullScreen(GeckoState, boolean)} and {@link #onHideBars(GeckoState)}.
      */
     private void enterFullScreen(View decorView) {
         decorView.setBackgroundColor(Color.BLACK);
         mUiState = UiState.FULL_SCREEN;
+        // The one mUiState transition that previously skipped the policy:
+        // without this, isScrollEnabled stays true for the whole fullscreen
+        // stay and the gesture detector keeps translating the GONE toolbar
+        // while the bottom-bar follower (not VISIBLE) refuses to sync.
+        applyToolbarScrollPolicy();
+        // Owned here (not only in onFullScreen) so the onHideBars pseudo-
+        // fullscreen disables pull-to-refresh too — its SwipeRefreshLayout
+        // behavior is detached and both bars are GONE, exactly the state a
+        // spinner must not appear over.
+        mSwipeRefreshLayout.setEnabled(false);
         mDownloadButton.hide();
         makeSnackbar(mBottomNavigationBar, R.string.exit_fullscreen_with_back_button_short, mIsIncognitoThemed).show();
     }
@@ -1082,15 +1179,21 @@ public class BrowserFragment extends BaseBrowserFragment
      * Exits FULL_SCREEN and returns to BROWSING.
      *
      * <p><b>Must be called AFTER</b> {@link #collapseBrowserView()}.
-     * Called from {@link #onFullScreen(boolean)}.
+     * Called from {@link #onFullScreen(GeckoState, boolean)}.
      */
     private void exitFullScreen(View decorView) {
         final TypedValue typedValue = new TypedValue();
         mActivity.getTheme().resolveAttribute(android.R.attr.colorBackground, typedValue, true);
         decorView.setBackgroundColor(typedValue.data);
         mUiState = UiState.INIT;
+        mSwipeRefreshLayout.setEnabled(true);
         mDownloadButton.show();
         enterBrowsing();
+        // Same null-current-state backstop as exitSearch: enterBrowsing
+        // early-returns when peekCurrentGeckoState() is null (kill-on-trim /
+        // tab-swap race), which would leave this path without any policy
+        // decision and the bars latched. Idempotent when enterBrowsing ran.
+        applyToolbarScrollPolicy();
     }
 
     // ─────────────────────────────────────────────────────────────────────────────────────────────
@@ -1273,7 +1376,12 @@ public class BrowserFragment extends BaseBrowserFragment
 
     @Override
     public void onRefresh() {
-        GeckoState geckoState = peekCurrentGeckoState();
+        // resolveActiveGeckoState, not peek: pull-to-refresh is the same user
+        // intent as the toolbar reload button (which already resolves) — it
+        // must act on the session actually shown in the GeckoView even if
+        // mCurrentId drifted (kill-on-trim → resume), or the pull reloads a
+        // non-visible tab while the spinner waits on the wrong one.
+        GeckoState geckoState = resolveActiveGeckoState();
         if (geckoState == null) {
             mSwipeRefreshLayout.setRefreshing(false);
             return;
@@ -1283,17 +1391,53 @@ public class BrowserFragment extends BaseBrowserFragment
     }
 
     @Override
-    public void updateProgress(int progress) {
+    public void updateProgress(GeckoState geckoState, int progress) {
         Log.d(TAG, "ToolbarViewModel progress: " + progress);
+        // Per-repo gating leak (see onStart) — the other mode's tab must not
+        // repaint this fragment's progress UI or clear its refresh spinner.
+        if (geckoState.isIncognito() != mIsIncognitoThemed) return;
+        // Spinner bookkeeping BEFORE the autocomplete early-return: the gate
+        // below is about the progress UI, but a pull-to-refresh whose 100%
+        // arrived while the URL-bar overlay was up used to keep mRefreshing
+        // true forever — and stock SwipeRefreshLayout fail-fasts on
+        // mRefreshing, silently disabling all future pull-to-refresh.
+        mSwipeRefreshLayout.setProgressRefreshing(progress);
         if (mGeckoToolbar.isAutoCompleteVisible()) return;
         mGeckoToolbar.setProgress(progress);
         mGeckoToolbar.setLoading(progress > 0 && progress < 100);
         mBrowserDialogViewModel.setLoading(progress > 0 && progress < 100);
-        mSwipeRefreshLayout.setProgressRefreshing(progress);
+    }
+
+    @Override
+    public void onStart(GeckoState geckoState) {
+        // isCurrentGeckoState in GeckoComponents is PER-REPO, so a background
+        // REGULAR tab's load events still reach the visible INCOGNITO fragment
+        // (and vice versa) — each fragment instance must filter for its own
+        // mode or the other mode's tab drives this UI's scroll policy.
+        if (geckoState.isIncognito() != mIsIncognitoThemed) return;
+        // Page load started on this mode's current tab. Mirror Fenix's
+        // ToolbarBehaviorController: expand the bars and keep them pinned for
+        // the whole load, so the user always has the URL/progress in view and a
+        // half-hidden toolbar never carries across a navigation. Scrolling is
+        // re-enabled in onStop.
+        mPageLoading = true;
+        expandBarsAndApplyPolicy();
     }
 
     @Override
     public void onStop(GeckoState geckoState) {
+        // Same per-repo gating leak as onStart — filter for this fragment's mode.
+        if (geckoState.isIncognito() != mIsIncognitoThemed) return;
+        // Load finished — scroll-to-hide may resume (Fenix enables scrolling only when
+        // content.loading flips false). Runs before the autocomplete early-return below:
+        // that gate is about the *progress UI*, not the scroll policy, and the policy
+        // itself refuses to enable while the keyboard is up.
+        mPageLoading = false;
+        applyToolbarScrollPolicy();
+        // Spinner bookkeeping before the autocomplete gate — same stuck-
+        // mRefreshing reasoning as updateProgress.
+        mSwipeRefreshLayout.setProgressRefreshing(100);
+
         // Page finished (or was halted by the engine). The loading indicator
         // is otherwise cleared only by onProgressChange(100); if a page stalls
         // mid-load or its final progress tick never arrives, the stop button
@@ -1303,12 +1447,20 @@ public class BrowserFragment extends BaseBrowserFragment
         mGeckoToolbar.setProgress(100);
         mGeckoToolbar.setLoading(false);
         mBrowserDialogViewModel.setLoading(false);
-        mSwipeRefreshLayout.setProgressRefreshing(100);
     }
 
     @Override
-    public void onLocationChange(GeckoState geckoState) {
-        mGeckoToolbar.onLocationChange(geckoState.getEntityUri());
+    public void onLocationChange(GeckoState geckoState, String url) {
+        // Per-repo gating leak (see onStart): without this, a background
+        // regular tab's commit paints its URL into the visible incognito
+        // toolbar and vice versa.
+        if (geckoState.isIncognito() != mIsIncognitoThemed) return;
+        // Paint the toolbar from the event's url, NOT geckoState.getEntityUri():
+        // the entity URI is mutable shared state, and re-reading it here is how a
+        // late commit of an abandoned load used to revert the toolbar to the old
+        // URL after the user had already typed a new one (the value read back was
+        // whatever the last NavigationDelegate write left, not this event's).
+        mGeckoToolbar.onLocationChange(url);
         // A navigation while find-in-page is active dismisses the search bar.
         if (mUiState == UiState.SEARCH) {
             exitSearch();
@@ -1316,8 +1468,10 @@ public class BrowserFragment extends BaseBrowserFragment
     }
 
     @Override
-    public void onFullScreen(boolean fullScreen) {
-
+    public void onFullScreen(GeckoState geckoState, boolean fullScreen) {
+        // Per-repo gating leak (see onStart): the other mode's tab must not
+        // flip this fragment's chrome.
+        if (geckoState.isIncognito() != mIsIncognitoThemed) return;
 
         // System UI / immersive mode — mirrors upstream enterImmersiveMode / exitImmersiveMode.
         final Window window = mActivity.getWindow();
@@ -1328,6 +1482,15 @@ public class BrowserFragment extends BaseBrowserFragment
         // before any other UI mutation (e.g. hiding the download button) to avoid racing with
         // the compositor. State bookkeeping (enterFullScreen / exitFullScreen) comes after.
         if (fullScreen) {
+            // Fullscreen entered while find-in-page is up: close the find bar
+            // first or the toolbar comes back from fullscreen still wearing
+            // the find UI while mUiState says BROWSING — onCommit would then
+            // load the find text as a URL and exitSearch could never run
+            // again (its SEARCH guard fails). Fenix closes find-in-page on
+            // fullscreen for the same reason.
+            if (mUiState == UiState.SEARCH) {
+                exitSearch();
+            }
             expandBrowserView();
             enterFullScreen(decorView);
         } else {
@@ -1360,24 +1523,39 @@ public class BrowserFragment extends BaseBrowserFragment
 
     @Override
     public void onHideBars(GeckoState geckoState) {
+        // Same mode filter as the other observers; GeckoComponents also gates
+        // HIDE_BARS on isCurrentGeckoState now.
+        if (geckoState.isIncognito() != mIsIncognitoThemed) return;
         final Window window = mActivity.getWindow();
         final View decorView = window.getDecorView();
+        if (mUiState == UiState.SEARCH) {
+            exitSearch(); // same hybrid-toolbar hazard as DOM fullscreen
+        }
         expandBrowserView();
         enterFullScreen(decorView);
     }
 
     @Override
     public void onShowDynamicToolbar() {
-        CoordinatorLayout.LayoutParams topParams =
-                (CoordinatorLayout.LayoutParams) mGeckoToolbar.getLayoutParams();
-        if (topParams.getBehavior() instanceof GeckoToolbarBehavior) {
-            ((GeckoToolbarBehavior) topParams.getBehavior()).forceExpand(mGeckoToolbar);
+        // onHideDynamicToolbar's paired exit. That path enters the fullscreen
+        // UI WITHOUT DOM fullscreen (entityFullScreen stays false), so nothing
+        // else ever restores the chrome — the old expandBars() call was
+        // self-locked-out by its own FULL_SCREEN guard and the user was wedged
+        // chrome-less until a real DOM fullscreen cycle. A genuine DOM
+        // fullscreen (entityFullScreen true) is left alone: its exit is
+        // onFullScreen(false).
+        if (mUiState == UiState.FULL_SCREEN) {
+            GeckoState geckoState = peekCurrentGeckoState();
+            if (geckoState == null || !geckoState.isFullScreen()) {
+                collapseBrowserView();
+                exitFullScreen(mActivity.getWindow().getDecorView());
+            }
+            return;
         }
-        CoordinatorLayout.LayoutParams bottomParams =
-                (CoordinatorLayout.LayoutParams) mBottomNavigationBar.getLayoutParams();
-        if (bottomParams.getBehavior() instanceof BottomNavigationBehavior) {
-            ((BottomNavigationBehavior) bottomParams.getBehavior()).forceExpand(mBottomNavigationBar);
-        }
+        // Gecko asks the app to show the dynamic toolbar fully expanded (e.g. content/IME
+        // needs the space declared via setDynamicToolbarMaxHeight). The bottom bar follows
+        // the toolbar through BottomNavigationBehavior — no separate call needed.
+        expandBars();
     }
 
     @Override
@@ -1407,8 +1585,19 @@ public class BrowserFragment extends BaseBrowserFragment
 
     @Override
     public void onScrollChange(int scrollY) {
-        mSwipeRefreshLayout.setEnabled(
-                scrollY < MINIMUM_TRIGGER_Y && !mGeckoView.getInputResultDetail().canScrollToTop());
+        // Deliberately NO SwipeRefreshLayout gating here (Fenix parity — don't re-add
+        // it). The old heuristic, setEnabled(scrollY < 10 && !canScrollToTop()),
+        // derived the pull-to-refresh decision from two stale inputs: the ASYNC
+        // ScrollDelegate position (which lags the page and never moves at all when a
+        // site scrolls an inner container — root scrollY stuck at 0 kept P2R armed
+        // mid-page) and the PREVIOUS gesture's InputResultDetail (reset to UNKNOWN on
+        // every ACTION_UP, so canScrollToTop() was almost always false at decision
+        // time; a fling settling at scrollY 10..N left P2R dead for the next at-top
+        // pull). The result was the "is this a scroll or a refresh?" coin-flip. The
+        // per-gesture mechanisms own the decision now: NestedGeckoView's
+        // disallow-intercept arbitration + the live canChildScrollUp veto installed in
+        // onCreateView. Fenix never toggles isEnabled from scroll events either —
+        // only settings and fullscreen do.
     }
 
     @Override
@@ -1596,11 +1785,20 @@ public class BrowserFragment extends BaseBrowserFragment
                 .show();
     }
 
-    /** Load a URL through the currently-visible session (regular/incognito). */
+    /**
+     * Load a URL through the currently-visible session (regular/incognito).
+     * Routes through {@link #openUri} rather than a raw
+     * {@code getOrCreateGeckoSession().loadUri()}: the raw call bypassed every
+     * load hardening — on a killed tab it constructed a fresh session that was
+     * never {@code connectSession}'d nor opened (delegate-less, load no-ops or
+     * later races restoreState), and it skipped the open/attach checks, the
+     * stale-commit guard, and reactivation. openUri owns all of that.
+     */
     private void loadInCurrentSession(String uri) {
-        GeckoState state = peekCurrentGeckoState();
+        GeckoState state = resolveActiveGeckoState();
         if (state != null && !TextUtils.isEmpty(uri)) {
-            state.getOrCreateGeckoSession().loadUri(uri);
+            state.setEntityUri(mSearchRepository.parseUri(uri));
+            openUri(state);
         }
     }
 
@@ -1618,13 +1816,20 @@ public class BrowserFragment extends BaseBrowserFragment
     @Override
     public void onCrash(GeckoState geckoState) {
         stopMedia(mGeckoMediaController, geckoState);
-        // Discard the dead session so getOrCreateGeckoSession() reconstructs
-        // a fresh one and re-queues restoreState's auto-navigation. Without
-        // this, openSession's setGeckoViewSession would just reopen the same
-        // (post-crash) GeckoSession without a navigation queued behind it
-        // and applyOpenUriUi would leave the tab blank.
-        geckoState.discardGeckoSession();
-        openSession(geckoState);
+        // The dead session was already discarded at the DATA layer
+        // (GeckoComponents.onCrash) — it must happen even when no fragment
+        // view is alive, or the closed session reference survives and a later
+        // reopen never replays restoreState (the blank-tab bug). Here only the
+        // UI decision remains: reopen ONLY when this fragment is showing the
+        // crashed tab. The old unconditional openSession let a BACKGROUND
+        // tab's crash rip the GeckoView off the page the user was reading —
+        // and a cross-MODE crash even flipped incognito theming off
+        // mid-private-session. Background tabs recover lazily on the next
+        // switch (setGeckoViewSession's !isOpen branch), same as onKill.
+        if (geckoState.isIncognito() == mIsIncognitoThemed
+                && geckoState == peekCurrentGeckoState()) {
+            openSession(geckoState);
+        }
     }
 
     @Override
@@ -1807,53 +2012,64 @@ public class BrowserFragment extends BaseBrowserFragment
     public void onKill(GeckoState geckoState) {
         super.onKill(geckoState);
         stopMedia(mGeckoMediaController, geckoState);
-        // Deliberately NOT calling openSession here. onKill fires because
-        // the OS reclaimed the content process to free memory — usually
-        // while we're backgrounded. Eagerly reopening would immediately
-        // spin a new content process back up, defeating the kill's whole
-        // purpose and probably failing under the same memory pressure
-        // that triggered it.
+        // A killed content process never delivers onPageStop — if the killed
+        // tab is the one this fragment is showing, drop the load-pin or the
+        // bars stay pinned for a load that no longer exists. (GeckoComponents
+        // already cleared the per-tab GeckoState.isLoading flag.)
+        if (geckoState.isIncognito() == mIsIncognitoThemed
+                && geckoState == peekCurrentGeckoState()) {
+            mPageLoading = false;
+            applyToolbarScrollPolicy();
+        }
+        // Lazy recovery for BACKGROUND kills. onKill usually fires because
+        // the OS reclaimed the content process while we're backgrounded —
+        // eagerly reopening then would immediately spin a new content process
+        // back up, defeating the kill's whole purpose and probably failing
+        // under the same memory pressure that triggered it.
         //
         // GeckoView flips isOpen() to false internally before this
         // callback runs (per the ContentDelegate contract), so the
-        // existing recovery paths handle it lazily:
+        // existing recovery paths handle the background cases lazily:
         //   - ensureSessionConnected on ON_RESUME sees !isOpen() and
         //     calls openSession when the user returns to the tab.
         //   - setGeckoViewSession's !isOpen() branch reopens on tab
         //     switch for non-current tabs.
-        // Matches Fenix's onProcessKilled → KillEngineSessionAction:
-        // tear down, no eager rebuild.
         //
-        // Detach the dead session from the GeckoView *before* discarding it.
-        // discardGeckoSession() only close()s the session and nulls the
-        // GeckoState's reference — it never touches the view. onKill almost
-        // always fires for the foreground tab (the OS reclaims our content
-        // process while we're backgrounded), so without this the GeckoView
-        // keeps the now-closed session attached, with its compositor/surface
-        // binding and all nine wired delegates pinned, until some later
-        // setSession() happens to swap it out. That stale attachment is what
-        // leaves the tab blank on return: the surface was never cleanly
-        // released, so when the user reselects and the session is already
-        // isOpen() (skipping setGeckoViewSession's !isOpen reload gate) the
-        // view comes back painting nothing.
+        // EXCEPTION — the kill hit the tab the user is LOOKING AT while the
+        // app is foregrounded (observed on-device: switching through several
+        // killed tabs spawns a burst of fresh content processes and the LMK
+        // immediately reclaims one of them). None of the lazy paths can ever
+        // fire then (no ON_RESUME coming, no tab switch happening), so the
+        // user would sit on a dead, blank tab until they happen to switch
+        // away and back or pull to refresh. Reopen eagerly for exactly this
+        // case — Fenix does the same (the SELECTED tab's engine session is
+        // recreated on demand; only background tabs stay torn down). The
+        // memory-pressure argument doesn't apply: the visible tab is the one
+        // process the user has explicitly asked for.
         //
-        // Guarded on identity: onKill also fires for *background* tabs under
-        // memory pressure, and releaseSession() detaches whatever the view is
-        // currently showing — calling it unconditionally would tear the live
-        // foreground tab off the view. Only release when the killed session is
-        // the one actually attached.
+        // Detach the dead session from the GeckoView first. The discard
+        // happens at the DATA layer (GeckoComponents.onKill, BEFORE this
+        // observer — it must run even when no fragment view is alive, or the
+        // closed session reference survives and a later reopen never replays
+        // restoreState, the blank-tab bug), so the GeckoState's reference is
+        // already null and an identity comparison can't work. Guard on the
+        // ATTACHED session being CLOSED instead: that is exactly the stale
+        // attachment this release exists to clean up (a live foreground
+        // tab's session is open, so a background-tab kill never tears the
+        // visible tab off the view). Without the release, the GeckoView
+        // keeps the dead session's compositor/surface binding pinned and the
+        // tab comes back painting nothing.
         if (mGeckoView != null
-                && mGeckoView.getSession() == geckoState.getGeckoSession()) {
+                && mGeckoView.getSession() != null
+                && !mGeckoView.getSession().isOpen()) {
             mGeckoView.releaseSession();
         }
 
-        // Discard the dead session reference so the lazy recovery path
-        // reconstructs a fresh GeckoSession (which re-queues restoreState
-        // and makes the saved history actually navigate on reopen).
-        // Reopening the same (post-kill) GeckoSession via open() does NOT
-        // replay restoreState — that only fires on a fresh construction —
-        // which is why killed tabs used to come back blank.
-        geckoState.discardGeckoSession();
+        if (isResumed()
+                && geckoState.isIncognito() == mIsIncognitoThemed
+                && geckoState == peekCurrentGeckoState()) {
+            openSession(geckoState);
+        }
     }
 
     // ─────────────────────────────────────────────────────────────────────────────────────────────
@@ -1965,11 +2181,28 @@ public class BrowserFragment extends BaseBrowserFragment
                 + " newSession=" + newSession
                 + " isOpen=" + newSession.isOpen());
 
-        // Deactivate the previous session if we're switching
+        // Deactivate the previous session if we're switching. Route through
+        // the owning GeckoState when one can be resolved: GeckoState
+        // .setActive(false) is a strict superset of the raw session call — it
+        // first fires mOnDeactivateAction (GeckoPromptManager's prompt-dialog
+        // dismissal) and stamps the entity's active flag, then forwards to
+        // the same GeckoSession.setActive(false). On the normal tab-switch
+        // path the repo's current-id sweep does this, but on the
+        // mCurrentId-DRIFT re-attach (openUri found a different session on
+        // screen) mCurrentId doesn't change, the sweep never runs, and the
+        // raw call alone left the drifted-but-visible tab's open prompt
+        // floating over the newly attached tab. Fall back to the raw call
+        // for an orphaned session no repo knows (or one whose state already
+        // swapped its session reference) — same behavior as before.
         if (previousSession != null && previousSession != newSession) {
             Log.d(TAG, "setGeckoViewSession: deactivating previousSession");
             controller.setTabActive(previousSession, false);
-            previousSession.setActive(false);
+            GeckoState previousState = findGeckoStateBySession(previousSession);
+            if (previousState != null) {
+                previousState.setActive(false);
+            } else {
+                previousSession.setActive(false);
+            }
         }
 
         mAutoCompleteEditText.setEnabled(true);
@@ -1991,7 +2224,16 @@ public class BrowserFragment extends BaseBrowserFragment
             if (hasRestoredState) {
                 applyOpenUriUi(geckoState, uri);
             } else {
-                openUri(geckoState);
+                // Load directly instead of routing through openUri: the session
+                // is freshly opened but not yet attached (the setSession below
+                // runs after this branch), so openUri's attached-session guard
+                // would RE-ENTER this method and double-run the whole
+                // deactivate/setTabActive/viewmodel tail. Inline exactly what
+                // openUri would do for an open session: arm the stale-commit
+                // guard, load, apply the UI half. Activation was done above.
+                geckoState.setPendingUserLoadUri(uri);
+                newSession.loadUri(uri);
+                applyOpenUriUi(geckoState, uri);
             }
         }
 
@@ -2173,10 +2415,21 @@ public class BrowserFragment extends BaseBrowserFragment
         mGeckoToolbar.onLocationChange(geckoState.getEntityUri());
         connectSession(geckoState.getOrCreateGeckoSession());
         setGeckoViewSession(geckoState);
-        updateProgress(0);
+        updateProgress(geckoState, 0);
+        // Adopt the incoming tab's load state BEFORE enterBrowsing applies the
+        // scroll policy. A flat `= false` was wrong for a tab that started
+        // loading while backgrounded: its onPageStart was foreground-gated out
+        // and will never re-fire, so nothing would re-pin the bars for the rest
+        // of that load. GeckoState.isLoading() is tracked ungated per tab.
+        mPageLoading = geckoState.isLoading();
         // Apply incognito theme BEFORE enterBrowsing so peekCurrentGeckoState works
         applyBrowserIncognitoTheme(geckoState.getGeckoStateEntity().isIncognito());
         enterBrowsing(geckoState);
+        // Every tab switch / (re)connect lands here — bring the bars back (Fenix's
+        // handleTabSelected → browserToolbar.expand()). Still needed despite
+        // enterBrowsing's own policy call: enterBrowsing early-returns when
+        // already BROWSING (the plain tab-switch case).
+        expandBarsAndApplyPolicy();
         Log.d(TAG, "openSession end: id=" + geckoState.getEntityId());
     }
 
@@ -2194,7 +2447,37 @@ public class BrowserFragment extends BaseBrowserFragment
             openSession(geckoState);
             return;
         }
+
+        // The load must go to the session that's actually ON SCREEN. If the
+        // resolved state's session isn't the one attached to the GeckoView
+        // (mCurrentId drift), loadUri here would load into a DETACHED session:
+        // the visible page keeps loading its old URL and "wins" while the
+        // typed URL loads invisibly — the lost-commit failure. Fenix never
+        // hits this because its load funnels through the selected tab's
+        // engine session; we re-attach first. (setGeckoViewSession is
+        // idempotent for an open session — it only swaps the view attachment
+        // and the active/tab bookkeeping. The nested call from its own
+        // !isOpen branch can re-enter here, where the session is by then open
+        // and gets attached one step earlier than before — harmless.)
+        if (mGeckoView.getSession() != session) {
+            Log.d(TAG, "openUri: resolved session not attached to GeckoView — re-attaching");
+            setGeckoViewSession(geckoState);
+        }
+
+        // Re-activate BEFORE loading. The URL-bar focus handler deactivates
+        // the session while the autocomplete sheet is up (onFocusChanged →
+        // setActive(false)); previously the load was issued on the inactive
+        // session and only applyOpenUriUi's clearFocus() reactivated it
+        // afterwards. setActive is idempotent, so asserting it first is free.
+        geckoState.setActive(true);
+
         String currentUri = geckoState.getEntityUri();
+        // Arm the stale-commit guard: until Gecko STARTS this load
+        // (onPageStart), any onLocationChange from this session is a late
+        // commit of the load the user just abandoned and must not overwrite
+        // the entity URI / toolbar. See GeckoState.mPendingUserLoadUri and the
+        // suppression in GeckoComponents.NavigationDelegate.onLocationChange.
+        geckoState.setPendingUserLoadUri(currentUri);
         session.loadUri(currentUri);
         applyOpenUriUi(geckoState, currentUri);
     }
@@ -2248,9 +2531,14 @@ public class BrowserFragment extends BaseBrowserFragment
         mUiState = UiState.BROWSING;
         geckoState.setSearchMode(false);
         mGeckoObserverRegistry.register(this);
+        // show()/hide() (vs setVisibility) so the FAB scales + fades on the
+        // state changes where it's visible — re-appearing after find-in-page
+        // or fullscreen exit. On the initial home→browser arrival this is
+        // called before the first layout pass, so show() takes its documented
+        // instant fallback (no animation); harmless, and never a regression.
         mDownloadButton.show();
         mGeckoView.setVisibility(View.VISIBLE);
-        mGeckoToolbar.enableScrolling();
+        applyToolbarScrollPolicy();
         mGeckoToolbar.onLocationChange(geckoState.getEntityUri());
         mBottomNavigationBar.show();
     }
@@ -2261,18 +2549,11 @@ public class BrowserFragment extends BaseBrowserFragment
     // ─────────────────────────────────────────────────────────────────────────────────────────────
 
     private void expandBrowserView() {
-        CoordinatorLayout.LayoutParams topParams =
-                (CoordinatorLayout.LayoutParams) mGeckoToolbar.getLayoutParams();
-        if (topParams.getBehavior() instanceof GeckoToolbarBehavior) {
-            ((GeckoToolbarBehavior) topParams.getBehavior()).forceCollapse(mGeckoToolbar);
-        }
+        // Only the toolbar is force-collapsed; the bottom bar is slaved to it
+        // (BottomNavigationBehavior) and both are GONE for the whole fullscreen
+        // stay anyway — visibility is what hides them, translation is bookkeeping.
+        mGeckoToolbar.forceCollapse();
         mGeckoToolbar.setVisibility(View.GONE);
-
-        CoordinatorLayout.LayoutParams bottomParams =
-                (CoordinatorLayout.LayoutParams) mBottomNavigationBar.getLayoutParams();
-        if (bottomParams.getBehavior() instanceof BottomNavigationBehavior) {
-            ((BottomNavigationBehavior) bottomParams.getBehavior()).forceCollapse(mBottomNavigationBar);
-        }
         mBottomNavigationBar.setVisibility(View.GONE);
 
         CoordinatorLayout.LayoutParams srlParams =
@@ -2289,19 +2570,12 @@ public class BrowserFragment extends BaseBrowserFragment
     }
 
     private void collapseBrowserView() {
+        // Both bars VISIBLE first, then expand the toolbar — the bottom bar re-syncs from
+        // the toolbar's translation on its layout pass (BottomNavigationBehavior.onLayoutChild)
+        // and follows the expand animation frame-by-frame.
         mGeckoToolbar.setVisibility(View.VISIBLE);
-        CoordinatorLayout.LayoutParams topParams =
-                (CoordinatorLayout.LayoutParams) mGeckoToolbar.getLayoutParams();
-        if (topParams.getBehavior() instanceof GeckoToolbarBehavior) {
-            ((GeckoToolbarBehavior) topParams.getBehavior()).forceExpand(mGeckoToolbar);
-        }
-
         mBottomNavigationBar.setVisibility(View.VISIBLE);
-        CoordinatorLayout.LayoutParams bottomParams =
-                (CoordinatorLayout.LayoutParams) mBottomNavigationBar.getLayoutParams();
-        if (bottomParams.getBehavior() instanceof BottomNavigationBehavior) {
-            ((BottomNavigationBehavior) bottomParams.getBehavior()).forceExpand(mBottomNavigationBar);
-        }
+        mGeckoToolbar.forceExpand();
 
         CoordinatorLayout.LayoutParams srlParams =
                 (CoordinatorLayout.LayoutParams) mSwipeRefreshLayout.getLayoutParams();
@@ -2311,6 +2585,63 @@ public class BrowserFragment extends BaseBrowserFragment
         mSwipeRefreshLayout.requestLayout();
 
         mGeckoView.setDynamicToolbarMaxHeight(mGeckoToolbarSize + mBottomBarSize);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────────────────────────
+    // Toolbar scroll policy (Fenix ToolbarBehaviorController equivalent)
+    // ─────────────────────────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Animates the toolbar fully on-screen; the bottom bar follows through its slaved
+     * {@code BottomNavigationBehavior} (and the engine view re-clips via
+     * {@link NestedGeckoViewBehavior}), so this is the single force-show entry point.
+     *
+     * <p>No-op in fullscreen: both bars are GONE and the engine-parent behavior is detached
+     * there — {@link #collapseBrowserView()} owns the restore on exit.
+     */
+    private void expandBars() {
+        if (mUiState == UiState.FULL_SCREEN) return;
+        // Null guard: system callbacks (AccessibilityManager posts its listener
+        // invocations) can race the view teardown by one main-loop hop — a
+        // posted callback captured before removal may run after onDestroyView
+        // nulled the fields. The bottom bar follows via BottomNavigationBehavior.
+        if (mGeckoToolbar != null) {
+            mGeckoToolbar.forceExpand();
+        }
+    }
+
+    /**
+     * The common "bring the bars back, then re-decide hideability" pair —
+     * every force-show trigger (page start, tab switch, resume, IME close,
+     * accessibility toggle) needs both halves or the bars end up expanded but
+     * scroll-locked / hideable but half-off-screen depending on the path.
+     */
+    private void expandBarsAndApplyPolicy() {
+        expandBars();
+        applyToolbarScrollPolicy();
+    }
+
+    /**
+     * The one decision point for whether the bars may scroll away — the conditions Fenix
+     * spreads across ToolbarBehaviorController (loading), BrowserToolbarComposable
+     * (keyboard), and shouldUseFixedTopToolbar (accessibility). Call after every change to
+     * one of the inputs; the non-scrollable-page case needs no policy because
+     * {@code GeckoToolbarBehavior.shouldScroll} already gates on
+     * {@code InputResultDetail.canScrollToTop/Bottom}.
+     */
+    private void applyToolbarScrollPolicy() {
+        if (mGeckoToolbar == null) {
+            return; // see expandBars() — a posted system callback can outlive the view
+        }
+        boolean allowHide = mUiState == UiState.BROWSING
+                && !mPageLoading
+                && !mImeVisible
+                && !mTouchExplorationEnabled;
+        if (allowHide) {
+            mGeckoToolbar.enableScrolling();
+        } else {
+            mGeckoToolbar.disableScrolling();
+        }
     }
 
     // ─────────────────────────────────────────────────────────────────────────────────────────────
@@ -2325,6 +2656,32 @@ public class BrowserFragment extends BaseBrowserFragment
         return mIsIncognitoThemed
                 ? mIncognitoStateViewModel.peekCurrentGeckoState()
                 : mGeckoStateViewModel.peekCurrentGeckoState();
+    }
+
+    /**
+     * Resolves the GeckoState that owns {@code session}, checking the
+     * current theme's repo first (a session can only belong to one repo, so
+     * the order is just a likely-hit optimization). Used by
+     * {@link #setGeckoViewSession} to route the previous session's
+     * deactivation through the state wrapper. Returns null for a session no
+     * repo tracks (orphaned) or one whose state already swapped/discarded
+     * its session reference.
+     */
+    @Nullable
+    private GeckoState findGeckoStateBySession(GeckoSession session) {
+        GeckoState state;
+        if (mIsIncognitoThemed) {
+            state = mIncognitoStateViewModel.getGeckoState(session);
+            if (state == null) {
+                state = mGeckoStateViewModel.getGeckoState(session);
+            }
+        } else {
+            state = mGeckoStateViewModel.getGeckoState(session);
+            if (state == null) {
+                state = mIncognitoStateViewModel.getGeckoState(session);
+            }
+        }
+        return state;
     }
 
     /**

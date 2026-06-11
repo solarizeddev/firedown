@@ -1,0 +1,11 @@
+<!DOCTYPE html><html lang="{{LANG}}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#d44e86"><title>Firedown</title><link rel="stylesheet" href="/style.css?v=11"></head><body><div class="hero"><img class="logo" src="/logo.svg?v=11" alt="Firedown"></div><div class="main"><p class="eyebrow">{{T_ONBOARD_EYEBROW}}</p><h1>{{T_ONBOARD_TITLE}}</h1><p class="lead">{{T_ONBOARD_LEAD}}</p><div class="cardx"><ol class="steps"><li><span>{{T_STEP1}}</span></li><li><span>{{T_STEP2}}</span></li><li><span>{{T_STEP3}}</span></li></ol></div><a class="dl" id="go" href="{{CONTINUE}}">{{T_CONTINUE}}</a></div><footer>{{T_SERVED}}</footer><script>
+// The QR carries the PIN in the URL FRAGMENT (#p=NNNN) — fragments never
+// cross the wire, so the PIN stays off this page's plaintext-http request.
+// Forward it to the https side as the usual ?pin= one-hop auth. Without
+// JS (or a typed URL with no fragment) the link still works — the receiver
+// just types the PIN on the gate page.
+(function () {
+  var m = (location.hash || '').match(/p=([0-9]{4})/);
+  if (m) { document.getElementById('go').href = '{{CONTINUE}}' + '?pin=' + m[1]; }
+})();
+</script></body></html>

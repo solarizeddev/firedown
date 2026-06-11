@@ -569,8 +569,10 @@
     <string name="capture_help_banner">部分嵌入的媒体需先播放才能识别。点按了解详情。</string>
     <string name="lan_send">发送</string>
     <string name="lan_share_title">发送到浏览器</string>
+    <string name="tabs_more_options">更多选项</string>
     <string name="lan_share_lead">在另一台设备上，用同一 Wi-Fi 下的任意浏览器打开此地址</string>
     <string name="lan_share_qr_hint">扫描二维码即可打开已自动填入 PIN 的页面</string>
+    <string name="lan_share_cert_hint">对方设备的浏览器会先显示安全警告 — 选择“高级”，然后“继续”。两台设备之间的连接仍然是加密的。</string>
     <string name="lan_share_pin">PIN</string>
     <string name="lan_share_stop">停止共享</string>
     <string name="lan_share_footer">离开此屏幕即停止共享。任何数据都不会离开你的网络。</string>
@@ -578,6 +580,7 @@
     <string name="lan_share_vpn_warning">VPN 已开启 — 如果接收方无法连接，请在 VPN 应用中允许局域网访问或关闭 VPN</string>
     <string name="lan_direct_intro">这部手机可以创建一个临时热点 — 对方设备加入后，文件将在两部手机之间直接传输，不使用互联网。</string>
     <string name="lan_direct_start">开始直接连接</string>
+    <string name="lan_direct_step">第 1 步（共 2 步）— 加入热点</string>
     <string name="lan_direct_switch">改用直接连接</string>
     <string name="lan_direct_join_hint">用对方设备的相机扫码加入热点，然后点按“下一步”</string>
     <string name="lan_direct_password">密码</string>

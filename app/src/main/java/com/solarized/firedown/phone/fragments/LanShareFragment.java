@@ -1,11 +1,13 @@
-package com.solarized.firedown.phone.dialogs;
+package com.solarized.firedown.phone.fragments;
 
 import android.Manifest;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
@@ -17,11 +19,13 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -29,17 +33,26 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 
+import com.bumptech.glide.request.RequestOptions;
+import com.google.android.material.color.MaterialColors;
+import com.google.android.material.imageview.ShapeableImageView;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 import com.google.android.material.snackbar.Snackbar;
+import com.solarized.firedown.GlideHelper;
 import com.solarized.firedown.R;
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.lanshare.LanShareServer;
+import com.solarized.firedown.lanshare.LanShareTls;
 import com.solarized.firedown.utils.FileUriHelper;
 import com.solarized.firedown.utils.FragmentArgs;
+import com.solarized.firedown.utils.NavigationUtils;
 import com.solarized.firedown.StoragePaths;
 
 import java.io.File;
@@ -47,20 +60,20 @@ import java.util.Collections;
 import java.util.Locale;
 
 /**
- * "Send to browser" sheet — the sender side of the LAN share (see
- * {@link LanShareServer} for the protocol and the threat model). Shows the
- * short URL, the QR (URL + PIN combined so a scan authenticates in one hop),
- * the PIN, and Stop.
+ * "Send to browser" — the sender side of the LAN share (see
+ * {@link LanShareServer} for the protocol and the threat model), a full
+ * fragment on the downloads nav graph (same pattern as FrameGrabber /
+ * GifMaker). Shows the short URL, the QR, the PIN, and Stop.
  *
- * <p><b>Sharing ends when the sheet does</b>: the server is started in
- * onCreateView and stopped in onDismiss/onDestroyView — there is no
- * background sharing state to forget about. The screen is kept on while the
- * sheet shows so the QR/PIN don't black out mid-handover.
+ * <p><b>Sharing ends when the screen does</b>: the server is started in
+ * onCreateView and stopped in onDestroyView — there is no background
+ * sharing state to forget about. The screen is kept on while the fragment
+ * is resumed so the QR/PIN don't black out mid-handover.
  *
  * <p><b>No usable LAN (both devices on cellular — the bar scenario)</b>: the
- * sheet offers a <i>direct connection</i> instead of dead-ending — a
+ * screen offers a <i>direct connection</i> instead of dead-ending — a
  * {@code LocalOnlyHotspot} this phone raises (no internet upstream, lives
- * only as long as the sheet). Step 1 shows a standard {@code WIFI:} QR the
+ * only as long as the screen). Step 1 shows a standard {@code WIFI:} QR the
  * receiver's camera joins from; Next flips to the normal URL/PIN QR served
  * on the hotspot's AP address. Needs fine location at runtime (an Android
  * platform requirement for hotspot APIs, requested only here). A
@@ -71,16 +84,16 @@ import java.util.Locale;
  * exists for finished, non-safe entries — the vault can never get here (and
  * a defensive check below enforces that).
  */
-public class LanShareDialogFragment extends BaseBottomSheetDialogFragment {
+public class LanShareFragment extends BaseFocusFragment {
 
-    private static final String TAG = LanShareDialogFragment.class.getSimpleName();
+    private static final String TAG = LanShareFragment.class.getSimpleName();
 
     private DownloadEntity mDownloadEntity;
     private LanShareServer mServer;
     private LanShareServer.SharedFile mSharedFile;
     private WifiManager.LocalOnlyHotspotReservation mHotspotReservation;
     /**
-     * The Wi-Fi STA address at sheet-open time, or null. Passed to
+     * The Wi-Fi STA address at open time, or null. Passed to
      * {@link LanShareServer#getHotspotIpv4} so the hotspot step can tell the
      * AP interface apart from a still-connected STA (the "use direct
      * connection instead" escape keeps Wi-Fi up).
@@ -97,10 +110,15 @@ public class LanShareDialogFragment extends BaseBottomSheetDialogFragment {
                         }
                     });
 
+    private View mView;
+
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mDownloadEntity = FragmentArgs.parcelable(this, Keys.ITEM_ID, DownloadEntity.class);
+        if (mDownloadEntity == null && mNavController != null) {
+            mNavController.popBackStack();
+        }
     }
 
     @Nullable
@@ -110,23 +128,20 @@ public class LanShareDialogFragment extends BaseBottomSheetDialogFragment {
                              @Nullable Bundle savedInstanceState) {
 
         // Defensive: vault entries must never be shareable, and a restored
-        // sheet without its entity has nothing to share.
+        // screen without its entity has nothing to share.
         if (mDownloadEntity == null || mDownloadEntity.isFileSafe()
                 || mDownloadEntity.getFilePath() == null) {
-            dismissAllowingStateLoss();
             return null;
         }
 
         File file = new File(mDownloadEntity.getFilePath());
         if (!file.exists() || !file.canRead()) {
-            if (mActivity != null) {
-                makeSnackbar(R.string.lan_share_no_network);
-            }
-            dismissAllowingStateLoss();
+            makeSnackbar(R.string.lan_share_no_network);
             return null;
         }
 
-        mView = inflater.inflate(R.layout.fragment_dialog_lan_share, container, false);
+        mView = inflater.inflate(R.layout.fragment_lan_share, container, false);
+        mToolbar = mView.findViewById(R.id.toolbar);
 
         // Derive the served Content-Type from the saved file's extension (the
         // bytes on disk are ground truth), not the entity's stored mime label
@@ -135,9 +150,29 @@ public class LanShareDialogFragment extends BaseBottomSheetDialogFragment {
         String mime = FileUriHelper.getMimeTypeFromFile(file.getName());
         mSharedFile = new LanShareServer.SharedFile(file.getName(), file, mime);
 
-        ((TextView) mView.findViewById(R.id.lan_share_file)).setText(String.format(Locale.ROOT,
-                "%s · %s", file.getName(),
-                StoragePaths.convertToStringRepresentation(file.length())));
+        // Shared-file card: the real thumbnail (same Glide pipeline as the
+        // Downloads rows), name, and a MIME · size tag.
+        ShapeableImageView thumb = mView.findViewById(R.id.lan_share_thumb);
+        GlideHelper.load(mDownloadEntity, new RequestOptions(), thumb);
+        ((TextView) mView.findViewById(R.id.lan_share_file_name)).setText(file.getName());
+        String size = StoragePaths.convertToStringRepresentation(file.length());
+        String mimeWord = FileUriHelper.getLongMimeText(requireContext(), mime);
+        ((TextView) mView.findViewById(R.id.lan_share_file_tag)).setText(
+                mimeWord != null
+                        ? String.format(Locale.ROOT, "%s · %s", mimeWord, size)
+                        : size);
+
+        // The URL pill copies whatever it currently shows (host:port in LAN
+        // mode, the hotspot SSID in the join step).
+        mView.findViewById(R.id.lan_share_url_chip).setOnClickListener(v -> {
+            CharSequence text = ((TextView) mView.findViewById(R.id.lan_share_url)).getText();
+            ClipboardManager clipboard = (ClipboardManager)
+                    requireContext().getSystemService(Context.CLIPBOARD_SERVICE);
+            if (clipboard != null) {
+                clipboard.setPrimaryClip(ClipData.newPlainText("Firedown", text));
+                makeSnackbar(R.string.clipboard);
+            }
+        });
 
         String ip = LanShareServer.getLocalIpv4();
         if (ip != null) {
@@ -157,33 +192,72 @@ public class LanShareDialogFragment extends BaseBottomSheetDialogFragment {
             showDirectIntro(true);
         }
 
-        mView.findViewById(R.id.lan_share_stop).setOnClickListener(v -> dismiss());
-
-        // Keep the screen on while the QR/PIN are being shown across the room.
-        if (getDialog() != null && getDialog().getWindow() != null) {
-            getDialog().getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        }
+        mView.findViewById(R.id.lan_share_stop).setOnClickListener(v -> close());
 
         return mView;
     }
 
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        if (mToolbar != null) {
+            mToolbar.setNavigationOnClickListener(v -> close());
+        }
+        // The footer sits below the scroll area — pad it clear of the nav bar.
+        View footer = view.findViewById(R.id.lan_share_footer);
+        if (footer != null) {
+            int basePadding = footer.getPaddingBottom();
+            ViewCompat.setOnApplyWindowInsetsListener(footer, (v, windowInsets) -> {
+                Insets bars = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
+                v.setPadding(v.getPaddingLeft(), v.getPaddingTop(), v.getPaddingRight(),
+                        basePadding + bars.bottom);
+                return windowInsets;
+            });
+        }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        // Keep the screen on while the QR/PIN are being shown across the room.
+        if (mActivity != null) {
+            mActivity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        }
+    }
+
+    @Override
+    public void onPause() {
+        if (mActivity != null) {
+            mActivity.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        }
+        super.onPause();
+    }
+
+    /** Leave the screen (and stop sharing — onDestroyView does the teardown). */
+    private void close() {
+        NavigationUtils.popBackStackSafe(mNavController, R.id.lan_share);
+    }
+
     /**
      * Start the HTTP server and populate the URL/QR/PIN views. Returns false
-     * when the server couldn't bind (sheet is dismissing).
+     * when the server couldn't bind (screen is closing).
      */
     private boolean startSharing(@NonNull String ip) {
         if (mServer != null) {
             // Double-tap on Next — the first call already owns the server.
             return true;
         }
+        // TLS with the per-install self-signed cert (LanShareTls): a passive
+        // sniffer on hostile Wi-Fi gets only ciphertext. Null context =
+        // exotic-keystore fallback to plain HTTP — degraded beats not sharing.
         mServer = new LanShareServer(Collections.singletonList(mSharedFile), Build.MODEL,
-                requireContext().getAssets());
+                requireContext().getAssets(), LanShareTls.getServerContext());
         try {
             mServer.start();
         } catch (Exception e) {
             Log.e(TAG, "share server failed to start", e);
             makeSnackbar(R.string.lan_share_no_network);
-            dismissAllowingStateLoss();
+            close();
             return false;
         }
 
@@ -196,23 +270,30 @@ public class LanShareDialogFragment extends BaseBottomSheetDialogFragment {
         lead.setVisibility(View.VISIBLE);
         ((TextView) mView.findViewById(R.id.lan_share_hint)).setText(R.string.lan_share_qr_hint);
         ((TextView) mView.findViewById(R.id.lan_share_pin_label)).setText(R.string.lan_share_pin);
-        TextView pin = mView.findViewById(R.id.lan_share_pin_value);
-        pin.setText(mServer.getPin());
-        pin.setTextSize(30);
-        pin.setLetterSpacing(0.45f);
+        showPinTiles(mServer.getPin());
+        mView.findViewById(R.id.lan_share_step).setVisibility(View.GONE);
 
-        // The QR carries the PIN too — scanning authenticates in one hop;
-        // the displayed short URL is for typing and still hits the PIN gate.
+        // TLS mode scans land on the plain-http ONBOARDING page first (no
+        // warning) which explains the upcoming interstitial, then Continue
+        // goes to https. The PIN rides the URL FRAGMENT (#p=NNNN) — never
+        // sent over the wire — and the onboarding JS forwards it to the
+        // https side as ?pin=. Plain-HTTP fallback keeps the direct ?pin=.
         //
-        // PLAIN http on purpose — do not "upgrade" this to an intent:// URI
+        // A plain URL on purpose — do not "upgrade" this to an intent:// URI
         // to prefer Firedown on the receiver. intent:// is a Chrome-ism for
         // links navigated INSIDE a browser page; a camera/QR scanner
-        // resolves it as a literal scheme no app handles, and Samsung's
-        // scanner showed "no app can handle this" (tested on-device). A
-        // plain http URL is the only payload every scanner opens, and the
-        // receiver's default browser is fine — the page carries the
-        // Get-the-app link for the Firedown pitch instead.
-        setQr("http://" + hostPort + "/?pin=" + mServer.getPin());
+        // resolves it as a literal scheme no app handles (tested on-device:
+        // Samsung's scanner showed "no app can handle this").
+        String qrContent = mServer.isTls()
+                ? "http://" + hostPort + "/#p=" + mServer.getPin()
+                : "http://" + hostPort + "/?pin=" + mServer.getPin();
+        setQr(qrContent);
+
+        // The self-signed cert means the receiver clicks through one
+        // browser warning — explain it on the SENDER screen too (the served
+        // onboarding page walks the receiver through it).
+        mView.findViewById(R.id.lan_share_cert).setVisibility(
+                mServer.isTls() ? View.VISIBLE : View.GONE);
 
         mView.findViewById(R.id.lan_share_content).setVisibility(View.VISIBLE);
         mView.findViewById(R.id.lan_direct_group).setVisibility(View.GONE);
@@ -287,7 +368,7 @@ public class LanShareDialogFragment extends BaseBottomSheetDialogFragment {
                 @Override
                 public void onStarted(WifiManager.LocalOnlyHotspotReservation reservation) {
                     if (!isAdded() || mView == null) {
-                        // Sheet died while the hotspot was coming up.
+                        // Screen died while the hotspot was coming up.
                         reservation.close();
                         return;
                     }
@@ -311,7 +392,7 @@ public class LanShareDialogFragment extends BaseBottomSheetDialogFragment {
                     mHotspotReservation = null;
                     if (isAdded()) {
                         makeSnackbar(R.string.lan_direct_failed);
-                        dismissAllowingStateLoss();
+                        close();
                     }
                 }
             }, new Handler(Looper.getMainLooper()));
@@ -345,25 +426,23 @@ public class LanShareDialogFragment extends BaseBottomSheetDialogFragment {
         }
         if (ssid == null || passphrase == null) {
             makeSnackbar(R.string.lan_direct_failed);
-            dismissAllowingStateLoss();
+            close();
             return;
         }
 
         // The join instruction lives under the QR; a lead saying the same
-        // thing above it is noise — hide it for this step.
+        // thing above it is noise — hide it for this step. The cert hint is
+        // also irrelevant here (the WIFI: QR is a hotspot join, not a page).
         mView.findViewById(R.id.lan_share_lead).setVisibility(View.GONE);
+        mView.findViewById(R.id.lan_share_cert).setVisibility(View.GONE);
         ((TextView) mView.findViewById(R.id.lan_share_url)).setText(ssid);
         ((TextView) mView.findViewById(R.id.lan_share_hint))
                 .setText(R.string.lan_direct_join_hint);
         ((TextView) mView.findViewById(R.id.lan_share_pin_label))
                 .setText(R.string.lan_direct_password);
 
-        // The passphrase is much longer than the 4-digit PIN — drop the
-        // display size/tracking so it fits one line.
-        TextView pin = mView.findViewById(R.id.lan_share_pin_value);
-        pin.setText(passphrase);
-        pin.setTextSize(20);
-        pin.setLetterSpacing(0.1f);
+        showPassphraseTile(passphrase);
+        mView.findViewById(R.id.lan_share_step).setVisibility(View.VISIBLE);
 
         setQr("WIFI:T:WPA;S:" + escapeWifiQr(ssid) + ";P:" + escapeWifiQr(passphrase) + ";;");
 
@@ -388,14 +467,9 @@ public class LanShareDialogFragment extends BaseBottomSheetDialogFragment {
     // ------------------------------------------------------------------
 
     @Override
-    public void onDismiss(@NonNull DialogInterface dialog) {
-        stopSharing();
-        super.onDismiss(dialog);
-    }
-
-    @Override
     public void onDestroyView() {
         stopSharing();
+        mView = null;
         super.onDestroyView();
     }
 
@@ -408,6 +482,55 @@ public class LanShareDialogFragment extends BaseBottomSheetDialogFragment {
             mHotspotReservation.close();
             mHotspotReservation = null;
         }
+    }
+
+    /** The 4-digit PIN as OTP-style digit tiles. */
+    private void showPinTiles(@NonNull String pin) {
+        LinearLayout row = mView.findViewById(R.id.lan_share_pin_row);
+        row.removeAllViews();
+        float density = getResources().getDisplayMetrics().density;
+        for (int i = 0; i < pin.length(); i++) {
+            TextView tile = buildCodeTile();
+            tile.setText(String.valueOf(pin.charAt(i)));
+            tile.setTextSize(26);
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                    Math.round(46 * density), Math.round(56 * density));
+            if (i > 0) {
+                params.setMarginStart(Math.round(10 * density));
+            }
+            row.addView(tile, params);
+        }
+    }
+
+    /** The hotspot passphrase as one wide tile (it's far longer than a PIN). */
+    private void showPassphraseTile(@NonNull String passphrase) {
+        LinearLayout row = mView.findViewById(R.id.lan_share_pin_row);
+        row.removeAllViews();
+        float density = getResources().getDisplayMetrics().density;
+        TextView tile = buildCodeTile();
+        tile.setText(passphrase);
+        tile.setTextSize(19);
+        tile.setLetterSpacing(0.08f);
+        int paddingHorizontal = Math.round(22 * density);
+        tile.setPadding(paddingHorizontal, 0, paddingHorizontal, 0);
+        row.addView(tile, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT, Math.round(56 * density)));
+    }
+
+    @NonNull
+    private TextView buildCodeTile() {
+        TextView tile = new TextView(requireContext());
+        tile.setBackgroundResource(R.drawable.bg_lan_share_tile);
+        tile.setGravity(Gravity.CENTER);
+        tile.setTypeface(null, Typeface.BOLD);
+        tile.setMaxLines(1);
+        // android.R.attr.colorPrimary, not material's R: with
+        // nonTransitiveRClass the material R class only carries material's
+        // OWN attrs (colorPrimaryContainer yes, colorPrimary no — that one
+        // is appcompat/platform). Same idiom as DownloadItemAdapter.
+        tile.setTextColor(MaterialColors.getColor(tile,
+                android.R.attr.colorPrimary));
+        return tile;
     }
 
     private void makeSnackbar(int textRes) {

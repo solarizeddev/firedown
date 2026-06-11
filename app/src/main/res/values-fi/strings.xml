@@ -379,8 +379,10 @@
     <string name="capture_help_banner">Jotkin upotetut mediat on toistettava ensin. Napauta nähdäksesi ohjeet.</string>
     <string name="lan_send">Lähetä</string>
     <string name="lan_share_title">Lähetä selaimeen</string>
+    <string name="tabs_more_options">Lisää vaihtoehtoja</string>
     <string name="lan_share_lead">Avaa tämä osoite toisella laitteella millä tahansa selaimella samassa Wi-Fi-verkossa</string>
     <string name="lan_share_qr_hint">Koodin skannaus avaa sivun, jossa PIN on jo valmiina</string>
+    <string name="lan_share_cert_hint">Toisen laitteen selain näyttää ensin suojausvaroituksen — valitse Lisäasetukset ja sitten Jatka. Yhteys laitteiden välillä on silti salattu.</string>
     <string name="lan_share_pin">PIN</string>
     <string name="lan_share_stop">Lopeta jakaminen</string>
     <string name="lan_share_footer">Jakaminen päättyy, kun poistut tältä näytöltä. Mikään ei poistu verkostasi.</string>
@@ -388,6 +390,7 @@
     <string name="lan_share_vpn_warning">VPN käytössä — jos vastaanottaja ei saa yhteyttä, salli lähiverkon käyttö VPN-sovelluksessa tai poista VPN käytöstä</string>
     <string name="lan_direct_intro">Tämä puhelin voi luoda väliaikaisen yhteyspisteen — toinen laite liittyy siihen ja tiedosto siirtyy suoraan puhelinten välillä. Internetiä ei käytetä.</string>
     <string name="lan_direct_start">Aloita suora yhteys</string>
+    <string name="lan_direct_step">Vaihe 1/2 — liity yhteyspisteeseen</string>
     <string name="lan_direct_switch">Käytä sen sijaan suoraa yhteyttä</string>
     <string name="lan_direct_join_hint">Skannaa toisen laitteen kameralla liittyäksesi yhteyspisteeseen ja napauta sitten Seuraava</string>
     <string name="lan_direct_password">Salasana</string>

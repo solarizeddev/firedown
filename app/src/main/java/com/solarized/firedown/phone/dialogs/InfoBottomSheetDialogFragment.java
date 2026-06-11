@@ -59,7 +59,7 @@ public class InfoBottomSheetDialogFragment extends BaseBottomSheetDialogFragment
 
     @Nullable
     @Override
-    public View onCreateView(LayoutInflater inflater,
+    public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
 

@@ -303,8 +303,10 @@
     <string name="media_tools">Meediatööriistad</string>
     <string name="lan_send">Saada</string>
     <string name="lan_share_title">Saada brauserisse</string>
+    <string name="tabs_more_options">Rohkem valikuid</string>
     <string name="lan_share_lead">Ava teises seadmes see aadress mis tahes brauseris samas Wi-Fi võrgus</string>
     <string name="lan_share_qr_hint">Koodi skannimine avab lehe, kus PIN on juba sisestatud</string>
+    <string name="lan_share_cert_hint">Teise seadme brauser näitab esmalt turvahoiatust — vali Täpsemalt ja seejärel Jätka. Ühendus kahe seadme vahel on siiski krüptitud.</string>
     <string name="lan_share_pin">PIN</string>
     <string name="lan_share_stop">Lõpeta jagamine</string>
     <string name="lan_share_footer">Jagamine lõpeb, kui sellelt ekraanilt lahkud. Miski ei lahku sinu võrgust.</string>
@@ -312,6 +314,7 @@
     <string name="lan_share_vpn_warning">VPN on aktiivne — kui vastuvõtja ei saa ühendust, luba VPN-rakenduses kohtvõrgu juurdepääs või lülita VPN välja</string>
     <string name="lan_direct_intro">See telefon saab luua ajutise kuumkoha — teine seade liitub sellega ja fail liigub otse kahe telefoni vahel. Internetti ei kasutata.</string>
     <string name="lan_direct_start">Käivita otseühendus</string>
+    <string name="lan_direct_step">Samm 1/2 — liitu kuumkohaga</string>
     <string name="lan_direct_switch">Kasuta hoopis otseühendust</string>
     <string name="lan_direct_join_hint">Skanni teise seadme kaameraga, et kuumkohaga liituda, seejärel puuduta Edasi</string>
     <string name="lan_direct_password">Parool</string>

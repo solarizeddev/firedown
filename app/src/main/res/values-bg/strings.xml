@@ -327,8 +327,10 @@
     <string name="media_tools">Медийни инструменти</string>
     <string name="lan_send">Изпращане</string>
     <string name="lan_share_title">Изпращане към браузър</string>
+    <string name="tabs_more_options">Още опции</string>
     <string name="lan_share_lead">На другото устройство отворете този адрес в произволен браузър в същата Wi-Fi мрежа</string>
     <string name="lan_share_qr_hint">Сканирането на кода отваря страницата с вече попълнен PIN</string>
+    <string name="lan_share_cert_hint">Браузърът на другото устройство първо показва предупреждение за сигурност — изберете „Разширени“, после „Продължи“. Връзката между двете устройства остава шифрована.</string>
     <string name="lan_share_pin">PIN</string>
     <string name="lan_share_stop">Спиране на споделянето</string>
     <string name="lan_share_footer">Споделянето спира, когато напуснете този екран. Нищо не напуска вашата мрежа.</string>
@@ -336,6 +338,7 @@
     <string name="lan_share_vpn_warning">Активен VPN — ако получателят не може да се свърже, разрешете локалния достъп във VPN приложението или го изключете</string>
     <string name="lan_direct_intro">Този телефон може да създаде временна точка за достъп — другото устройство се свързва към нея и файлът се прехвърля директно между двата телефона. Интернет не се използва.</string>
     <string name="lan_direct_start">Стартиране на директна връзка</string>
+    <string name="lan_direct_step">Стъпка 1 от 2 — свържете се с точката за достъп</string>
     <string name="lan_direct_switch">Използване на директна връзка вместо това</string>
     <string name="lan_direct_join_hint">Сканирайте с камерата на другото устройство, за да се свържете с точката за достъп, после натиснете „Напред“</string>
     <string name="lan_direct_password">Парола</string>

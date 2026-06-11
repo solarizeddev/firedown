@@ -10,7 +10,10 @@ import androidx.annotation.Nullable;
 
 import com.solarized.firedown.BuildConfig;
 
+import org.json.JSONObject;
+
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -18,23 +21,33 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.PushbackInputStream;
+import java.io.SequenceInputStream;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketAddress;
+import java.net.SocketException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocket;
 
 /**
  * "Send to browser" — a tiny, ephemeral HTTP server that shares one or more
@@ -49,12 +62,24 @@ import java.util.concurrent.atomic.AtomicInteger;
  * yields the PIN page. A correct PIN (typed, or carried by the QR's
  * {@code ?pin=} form) sets a random {@code HttpOnly} session cookie that
  * gates the file list and the file bytes. Three wrong attempts lock the
- * session permanently — the 4-digit space cannot be brute-forced. The PIN
- * protects <i>access</i> (who on the LAN can download), not transport
- * secrecy: this is plain HTTP, so a passive sniffer on a hostile network can
- * still capture the bytes. That ceiling is accepted for v1 (TLS on a LAN IP
- * means self-signed-certificate interstitials that would kill the
- * zero-install flow); a LocalSend-protocol phase would bring pinned HTTPS.
+ * session permanently — the 4-digit space cannot be brute-forced.
+ *
+ * <p><b>Transport:</b> TLS by default, with a self-signed per-install
+ * certificate ({@link LanShareTls}) — the receiver clicks through one
+ * "connection not private" interstitial, and in exchange a passive sniffer
+ * on hostile Wi-Fi (open networks; shared-PSK WPA2 where anyone with the
+ * password can decrypt the air) gets only ECDHE ciphertext: file bytes, the
+ * QR's {@code ?pin=} and the session cookie all stop being readable. The
+ * port speaks BOTH protocols: the first byte of each connection is sniffed
+ * (a TLS ClientHello starts 0x16), plain-HTTP requests get the branded
+ * ONBOARDING page (it explains the upcoming certificate warning, Continue
+ * goes to {@code https://}; the QR lands here first, PIN in the URL
+ * fragment so it never crosses plaintext), and when the TLS identity is
+ * unavailable the server degrades to serving plain HTTP rather than not
+ * sharing at all. Remaining ceiling, documented and
+ * accepted: an ACTIVE MITM can present its own self-signed cert — the
+ * receiver can't tell it apart; cert-pinned verification is the
+ * LocalSend-protocol phase.
  *
  * <p>The vault never reaches this class: the Send affordance only exists on
  * finished, non-safe entries (the options sheet's quick row), same contract
@@ -69,6 +94,16 @@ public final class LanShareServer {
     private static final int PREFERRED_PORT = 53317;
     private static final int MAX_PIN_ATTEMPTS = 3;
     private static final String COOKIE_NAME = "fdshare";
+    /**
+     * Languages with a block in {@code assets/lanshare/i18n.json} — the app's
+     * 16 translated locales + English. The served pages are localized per
+     * REQUEST from the receiver's own {@code Accept-Language} header (the
+     * sender's locale is irrelevant — the reader is the other person);
+     * anything unsupported falls back to English, and any key missing from
+     * a language block falls back to the English value.
+     */
+    private static final String[] SUPPORTED_LANGS = {"en", "bg", "cs", "de", "es", "et",
+            "fi", "fr", "hi", "ja", "nl", "pl", "pt", "ru", "tr", "uk", "zh"};
 
     /** One shared file: display name, on-disk file, mime. */
     public static final class SharedFile {
@@ -83,6 +118,164 @@ public final class LanShareServer {
         }
     }
 
+    /**
+     * A connected socket whose input stream replays one already-consumed
+     * byte before the live stream — the transport sniff reads the first
+     * byte to tell TLS from HTTP, and the layered SSLSocket needs to see
+     * the complete ClientHello including it. Delegates everything else.
+     */
+    private static final class PrereadSocket extends Socket {
+        private final Socket mDelegate;
+        private final InputStream mInput;
+
+        PrereadSocket(@NonNull Socket delegate, int firstByte) throws IOException {
+            this.mDelegate = delegate;
+            this.mInput = new SequenceInputStream(
+                    new ByteArrayInputStream(new byte[]{(byte) firstByte}),
+                    delegate.getInputStream());
+        }
+
+        @Override
+        public InputStream getInputStream() {
+            return mInput;
+        }
+
+        @Override
+        public OutputStream getOutputStream() throws IOException {
+            return mDelegate.getOutputStream();
+        }
+
+        @Override
+        public synchronized void close() throws IOException {
+            mDelegate.close();
+        }
+
+        @Override
+        public InetAddress getInetAddress() {
+            return mDelegate.getInetAddress();
+        }
+
+        @Override
+        public InetAddress getLocalAddress() {
+            return mDelegate.getLocalAddress();
+        }
+
+        @Override
+        public int getPort() {
+            return mDelegate.getPort();
+        }
+
+        @Override
+        public int getLocalPort() {
+            return mDelegate.getLocalPort();
+        }
+
+        @Override
+        public SocketAddress getRemoteSocketAddress() {
+            return mDelegate.getRemoteSocketAddress();
+        }
+
+        @Override
+        public SocketAddress getLocalSocketAddress() {
+            return mDelegate.getLocalSocketAddress();
+        }
+
+        @Override
+        public boolean isConnected() {
+            return mDelegate.isConnected();
+        }
+
+        @Override
+        public boolean isBound() {
+            return mDelegate.isBound();
+        }
+
+        @Override
+        public boolean isClosed() {
+            return mDelegate.isClosed();
+        }
+
+        @Override
+        public synchronized void setSoTimeout(int timeout) throws SocketException {
+            mDelegate.setSoTimeout(timeout);
+        }
+
+        @Override
+        public synchronized int getSoTimeout() throws SocketException {
+            return mDelegate.getSoTimeout();
+        }
+
+        @Override
+        public void setTcpNoDelay(boolean on) throws SocketException {
+            mDelegate.setTcpNoDelay(on);
+        }
+
+        @Override
+        public boolean getTcpNoDelay() throws SocketException {
+            return mDelegate.getTcpNoDelay();
+        }
+
+        @Override
+        public void setSoLinger(boolean on, int linger) throws SocketException {
+            mDelegate.setSoLinger(on, linger);
+        }
+
+        @Override
+        public int getSoLinger() throws SocketException {
+            return mDelegate.getSoLinger();
+        }
+
+        @Override
+        public void setKeepAlive(boolean on) throws SocketException {
+            mDelegate.setKeepAlive(on);
+        }
+
+        @Override
+        public boolean getKeepAlive() throws SocketException {
+            return mDelegate.getKeepAlive();
+        }
+
+        @Override
+        public synchronized void setSendBufferSize(int size) throws SocketException {
+            mDelegate.setSendBufferSize(size);
+        }
+
+        @Override
+        public synchronized int getSendBufferSize() throws SocketException {
+            return mDelegate.getSendBufferSize();
+        }
+
+        @Override
+        public synchronized void setReceiveBufferSize(int size) throws SocketException {
+            mDelegate.setReceiveBufferSize(size);
+        }
+
+        @Override
+        public synchronized int getReceiveBufferSize() throws SocketException {
+            return mDelegate.getReceiveBufferSize();
+        }
+
+        @Override
+        public void shutdownInput() throws IOException {
+            mDelegate.shutdownInput();
+        }
+
+        @Override
+        public void shutdownOutput() throws IOException {
+            mDelegate.shutdownOutput();
+        }
+
+        @Override
+        public boolean isInputShutdown() {
+            return mDelegate.isInputShutdown();
+        }
+
+        @Override
+        public boolean isOutputShutdown() {
+            return mDelegate.isOutputShutdown();
+        }
+    }
+
     private final List<SharedFile> mFiles;
     private final String mPin;
     private final String mCookieValue;
@@ -93,19 +286,32 @@ public final class LanShareServer {
     // bytes — no HTML is built in Java. Assets are read once and cached.
     private final AssetManager mAssets;
     private final Map<String, byte[]> mAssetCache = new HashMap<>();
+    /** Per-language resolved string tables (en merged under), built lazily. */
+    private final Map<String, Map<String, String>> mStringsCache = new HashMap<>();
     private final AtomicInteger mPinAttempts = new AtomicInteger(0);
     private final AtomicBoolean mLocked = new AtomicBoolean(false);
     private final AtomicBoolean mRunning = new AtomicBoolean(false);
+    /** Null = TLS unavailable, serve plain HTTP (degraded but working). */
+    private final SSLContext mSslContext;
 
     private ServerSocket mServerSocket;
     private Thread mAcceptThread;
     private ExecutorService mHandlerPool;
+    /**
+     * Live per-connection sockets, closed by {@link #stop} for deterministic
+     * teardown. SO_TIMEOUT bounds only READS — a receiver that stops ACKing
+     * mid-download leaves sendFile blocked in a socket WRITE indefinitely
+     * (no write timeout, no keepalive), and shutdownNow()'s interrupt cannot
+     * unblock socket I/O; only closing the socket can.
+     */
+    private final Set<Socket> mClientSockets = ConcurrentHashMap.newKeySet();
 
     public LanShareServer(@NonNull List<SharedFile> files, @NonNull String deviceName,
-                          @NonNull AssetManager assets) {
+                          @NonNull AssetManager assets, @Nullable SSLContext sslContext) {
         this.mFiles = new ArrayList<>(files);
         this.mDeviceName = deviceName;
         this.mAssets = assets;
+        this.mSslContext = sslContext;
         SecureRandom random = new SecureRandom();
         this.mPin = String.format(Locale.ROOT, "%04d", random.nextInt(10_000));
         byte[] cookie = new byte[16];
@@ -127,6 +333,11 @@ public final class LanShareServer {
     public int getPort() {
         ServerSocket socket = mServerSocket;
         return socket != null ? socket.getLocalPort() : -1;
+    }
+
+    /** Whether connections are TLS-encrypted (false = plain-HTTP fallback). */
+    public boolean isTls() {
+        return mSslContext != null;
     }
 
     /**
@@ -168,7 +379,7 @@ public final class LanShareServer {
      *
      * @param staIp the STA address captured BEFORE the hotspot came up (or
      *              null) — used to tell the AP apart from the STA on vendors
-     *              that name the AP interface wlan1/wlan2 (no ap*/swlan*
+     *              that name the AP interface wlan1/wlan2 (no ap- or swlan-
      *              prefix to recognise it by).
      */
     @Nullable
@@ -273,6 +484,14 @@ public final class LanShareServer {
         if (mHandlerPool != null) {
             mHandlerPool.shutdownNow();
         }
+        // Unblock any handler stuck in a socket write (see mClientSockets).
+        for (Socket client : mClientSockets) {
+            try {
+                client.close();
+            } catch (IOException ignored) {
+            }
+        }
+        mClientSockets.clear();
         if (BuildConfig.DEBUG) {
             Log.d(TAG, "stopped");
         }
@@ -298,9 +517,142 @@ public final class LanShareServer {
     }
 
     private void handleConnection(Socket client) {
-        try (Socket socket = client) {
-            socket.setSoTimeout(15_000);
-            InputStream rawIn = socket.getInputStream();
+        // Transport negotiation: one port, both protocols. The first byte
+        // tells them apart — a TLS ClientHello record starts with 0x16; no
+        // HTTP method does. TLS connections are wrapped server-side (the
+        // peeked byte handed back via the factory's `consumed` stream);
+        // plain HTTP gets a 301 to the https:// URL so a typed ip:port
+        // still lands on the encrypted flow. With no TLS identity
+        // (LanShareTls failed), plain HTTP is served directly — degraded
+        // beats not sharing.
+        Socket socket = client;
+        mClientSockets.add(client);
+        try {
+            client.setSoTimeout(15_000);
+            InputStream transportIn = client.getInputStream();
+            int firstByte = transportIn.read();
+            if (firstByte < 0) {
+                return;
+            }
+            InputStream requestIn;
+            if (firstByte == 0x16) {
+                if (mSslContext == null) {
+                    // Client speaks TLS, we can't — nothing useful to say.
+                    return;
+                }
+                // Android's SSLSocketFactory lacks the JDK's
+                // createSocket(Socket, InputStream consumed, boolean)
+                // overload, so the peeked byte is handed back through a
+                // delegating socket whose getInputStream() prepends it —
+                // the layered TLS socket reads the full ClientHello.
+                Socket preread = new PrereadSocket(client, firstByte);
+                SSLSocket sslSocket = (SSLSocket) mSslContext.getSocketFactory().createSocket(
+                        preread, client.getInetAddress().getHostAddress(), client.getPort(),
+                        true);
+                sslSocket.setUseClientMode(false);
+                try {
+                    // Explicit handshake so a failure logs HERE with its
+                    // real cause instead of surfacing as a read error.
+                    sslSocket.startHandshake();
+                } catch (IOException handshake) {
+                    if (BuildConfig.DEBUG) {
+                        Log.w(TAG, "TLS handshake failed (client sees connection closed)",
+                                handshake);
+                    }
+                    return;
+                }
+                socket = sslSocket;
+                requestIn = sslSocket.getInputStream();
+            } else {
+                PushbackInputStream pushback = new PushbackInputStream(transportIn, 1);
+                pushback.unread(firstByte);
+                requestIn = pushback;
+                if (mSslContext != null) {
+                    serveOnboarding(pushback, client);
+                    return;
+                }
+            }
+            serveRequest(socket, requestIn);
+        } catch (Exception e) {
+            if (BuildConfig.DEBUG) {
+                Log.d(TAG, "connection transport", e);
+            }
+        } finally {
+            try {
+                socket.close();
+            } catch (IOException ignored) {
+            }
+            try {
+                client.close();
+            } catch (IOException ignored) {
+            }
+            mClientSockets.remove(client);
+        }
+    }
+
+    /**
+     * Plain-HTTP side of the dual-protocol port (TLS available): the
+     * receiver's ON-RAMP. Instead of a cold 301 into the certificate
+     * interstitial, serve a branded onboarding page that explains the
+     * warning they're about to accept, with a Continue button to the
+     * {@code https://} URL. The QR carries the PIN in the URL FRAGMENT
+     * ({@code #p=NNNN}) — fragments never cross the wire, so nothing
+     * secret travels over this plaintext request; the page's JS forwards
+     * it to the https side as the usual {@code ?pin=}. The two style
+     * assets are served here too so the page renders branded.
+     */
+    private void serveOnboarding(@NonNull InputStream in, @NonNull Socket client)
+            throws IOException {
+        BufferedReader reader = new BufferedReader(
+                new InputStreamReader(in, StandardCharsets.UTF_8));
+        String requestLine = reader.readLine();
+        String target = "/";
+        if (requestLine != null) {
+            String[] parts = requestLine.split(" ");
+            if (parts.length >= 2 && parts[1].startsWith("/")) {
+                target = parts[1];
+            }
+        }
+        String path = target;
+        int q = path.indexOf('?');
+        if (q >= 0) {
+            path = path.substring(0, q);
+        }
+        // Drain the headers for Accept-Language (the receiver's locale).
+        String acceptLanguage = null;
+        String line;
+        while ((line = reader.readLine()) != null && !line.isEmpty()) {
+            int colon = line.indexOf(':');
+            if (colon <= 0) {
+                continue;
+            }
+            String name = line.substring(0, colon).trim().toLowerCase(Locale.ROOT);
+            if (name.equals("accept-language")) {
+                acceptLanguage = line.substring(colon + 1).trim();
+            }
+        }
+        OutputStream out = client.getOutputStream();
+        if (path.equals("/logo.svg")) {
+            sendAsset(out, "logo.svg", "image/svg+xml");
+            return;
+        }
+        if (path.equals("/style.css")) {
+            sendAsset(out, "style.css", "text/css; charset=utf-8");
+            return;
+        }
+        String lang = resolveLang(acceptLanguage);
+        Map<String, String> t = strings(lang);
+        InetAddress local = client.getLocalAddress();
+        String host = local != null ? local.getHostAddress() : getLocalIpv4();
+        String continueUrl = "https://" + host + ":" + getPort() + "/";
+        String html = localize(page("onboard.html"), t, lang)
+                .replace("{{CONTINUE}}", continueUrl)
+                .replace("{{DEVICE}}", escapeHtml(mDeviceName));
+        sendHtml(out, 200, html);
+    }
+
+    private void serveRequest(Socket socket, InputStream rawIn) {
+        try {
             BufferedReader in = new BufferedReader(
                     new InputStreamReader(rawIn, StandardCharsets.UTF_8));
             OutputStream out = socket.getOutputStream();
@@ -316,8 +668,10 @@ public final class LanShareServer {
             String method = parts[0];
             String target = parts[1];
 
-            // Headers — we only need Cookie and Content-Length.
+            // Headers — we need Cookie, Content-Length and Accept-Language
+            // (the receiver's locale, which drives page localization).
             String cookieHeader = null;
+            String acceptLanguage = null;
             int contentLength = 0;
             String line;
             while ((line = in.readLine()) != null && !line.isEmpty()) {
@@ -334,8 +688,13 @@ public final class LanShareServer {
                         contentLength = Integer.parseInt(value);
                     } catch (NumberFormatException ignored) {
                     }
+                } else if (name.equals("accept-language")) {
+                    acceptLanguage = value;
                 }
             }
+
+            String lang = resolveLang(acceptLanguage);
+            Map<String, String> t = strings(lang);
 
             String path = target;
             String query = null;
@@ -359,7 +718,7 @@ public final class LanShareServer {
             boolean authed = isAuthed(cookieHeader);
 
             if (mLocked.get() && !authed) {
-                sendHtml(out, 403, page("locked.html"));
+                sendHtml(out, 403, localize(page("locked.html"), t, lang));
                 return;
             }
 
@@ -371,14 +730,14 @@ public final class LanShareServer {
                     return;
                 }
                 if (pinParam != null && mLocked.get()) {
-                    sendHtml(out, 403, page("locked.html"));
+                    sendHtml(out, 403, localize(page("locked.html"), t, lang));
                     return;
                 }
                 if (authed) {
                     sendRedirect(out, "/s");
                     return;
                 }
-                sendHtml(out, 200, renderPin(pinParam != null));
+                sendHtml(out, 200, renderPin(pinParam != null, t, lang));
                 return;
             }
 
@@ -398,10 +757,10 @@ public final class LanShareServer {
                     return;
                 }
                 if (mLocked.get()) {
-                    sendHtml(out, 403, page("locked.html"));
+                    sendHtml(out, 403, localize(page("locked.html"), t, lang));
                     return;
                 }
-                sendHtml(out, 200, renderPin(true));
+                sendHtml(out, 200, renderPin(true, t, lang));
                 return;
             }
 
@@ -410,7 +769,7 @@ public final class LanShareServer {
                     sendRedirect(out, "/");
                     return;
                 }
-                sendHtml(out, 200, renderFiles());
+                sendHtml(out, 200, renderFiles(t, lang));
                 return;
             }
 
@@ -419,22 +778,30 @@ public final class LanShareServer {
                     sendRedirect(out, "/");
                     return;
                 }
+                // /f/<index>/<name> — the trailing name segment is ignored
+                // server-side; it exists so a NATIVE download (the blob-save
+                // fallback path) names the file from the URL instead of "0".
+                String indexPart = path.substring(3);
+                int slash = indexPart.indexOf('/');
+                if (slash >= 0) {
+                    indexPart = indexPart.substring(0, slash);
+                }
                 int index;
                 try {
-                    index = Integer.parseInt(path.substring(3));
+                    index = Integer.parseInt(indexPart);
                 } catch (NumberFormatException e) {
-                    sendHtml(out, 404, page("notfound.html"));
+                    sendHtml(out, 404, localize(page("notfound.html"), t, lang));
                     return;
                 }
                 if (index < 0 || index >= mFiles.size()) {
-                    sendHtml(out, 404, page("notfound.html"));
+                    sendHtml(out, 404, localize(page("notfound.html"), t, lang));
                     return;
                 }
-                sendFile(out, mFiles.get(index));
+                sendFile(out, mFiles.get(index), t, lang);
                 return;
             }
 
-            sendHtml(out, 404, page("notfound.html"));
+            sendHtml(out, 404, localize(page("notfound.html"), t, lang));
         } catch (Exception e) {
             if (BuildConfig.DEBUG) {
                 Log.d(TAG, "connection handler", e);
@@ -517,7 +884,8 @@ public final class LanShareServer {
     private void sendAsset(OutputStream out, String name, String contentType) throws IOException {
         byte[] body = readAsset(name);
         if (body == null) {
-            sendHtml(out, 404, page("notfound.html"));
+            // Internal error (missing bundled asset) — English is fine here.
+            sendHtml(out, 404, localize(page("notfound.html"), strings("en"), "en"));
             return;
         }
         // no-store, deliberately: a receiver's browser that cached an older
@@ -562,6 +930,88 @@ public final class LanShareServer {
         }
     }
 
+    // ------------------------------------------------------------------
+    // Localization — receiver-driven (Accept-Language), assets/lanshare/i18n.json
+    // ------------------------------------------------------------------
+
+    /**
+     * Resolved string table for a language: the English block with the
+     * requested language's block merged over it, so a missing key degrades
+     * to English per-key instead of failing the page. Cached per language.
+     */
+    @NonNull
+    private synchronized Map<String, String> strings(@NonNull String lang) {
+        Map<String, String> cached = mStringsCache.get(lang);
+        if (cached != null) {
+            return cached;
+        }
+        Map<String, String> result = new HashMap<>();
+        try {
+            JSONObject root = new JSONObject(page("i18n.json"));
+            fillStrings(result, root.optJSONObject("en"));
+            if (!lang.equals("en")) {
+                fillStrings(result, root.optJSONObject(lang));
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "i18n load failed — pages fall back to raw tokens", e);
+        }
+        mStringsCache.put(lang, result);
+        return result;
+    }
+
+    private static void fillStrings(Map<String, String> out, @Nullable JSONObject block) {
+        if (block == null) {
+            return;
+        }
+        Iterator<String> keys = block.keys();
+        while (keys.hasNext()) {
+            String key = keys.next();
+            out.put(key, block.optString(key));
+        }
+    }
+
+    /** First supported primary language subtag of an Accept-Language header. */
+    @NonNull
+    private static String resolveLang(@Nullable String acceptLanguage) {
+        if (acceptLanguage == null) {
+            return "en";
+        }
+        for (String part : acceptLanguage.split(",")) {
+            String tag = part.trim();
+            int semicolon = tag.indexOf(';');
+            if (semicolon >= 0) {
+                tag = tag.substring(0, semicolon).trim();
+            }
+            int dash = tag.indexOf('-');
+            if (dash >= 0) {
+                tag = tag.substring(0, dash);
+            }
+            tag = tag.toLowerCase(Locale.ROOT);
+            for (String supported : SUPPORTED_LANGS) {
+                if (supported.equals(tag)) {
+                    return tag;
+                }
+            }
+        }
+        return "en";
+    }
+
+    /** Substitute every {{T_*}} token (and {{LANG}}) in a template. */
+    private static String localize(String template, Map<String, String> t, String lang) {
+        String result = template.replace("{{LANG}}", lang);
+        for (Map.Entry<String, String> entry : t.entrySet()) {
+            result = result.replace("{{" + entry.getKey() + "}}", entry.getValue());
+        }
+        return result;
+    }
+
+    /** A single translated string, never null. */
+    @NonNull
+    private static String tr(Map<String, String> t, String key) {
+        String value = t.get(key);
+        return value != null ? value : "";
+    }
+
     /** A template asset as a UTF-8 string ("" if missing — never null so the
      *  caller's substitutions stay simple). */
     private String page(String name) {
@@ -569,33 +1019,36 @@ public final class LanShareServer {
         return bytes == null ? "" : new String(bytes, StandardCharsets.UTF_8);
     }
 
-    private String renderPin(boolean wrongAttempt) {
+    private String renderPin(boolean wrongAttempt, Map<String, String> t, String lang) {
         String error = "";
         if (wrongAttempt) {
-            int left = MAX_PIN_ATTEMPTS - mPinAttempts.get();
-            error = "<div class=\"err\">Wrong PIN &mdash; " + Math.max(left, 0)
-                    + (left == 1 ? " attempt" : " attempts")
-                    + " left before this session locks</div>";
+            int left = Math.max(MAX_PIN_ATTEMPTS - mPinAttempts.get(), 0);
+            String message = tr(t, left == 1 ? "T_PIN_WRONG_ONE" : "T_PIN_WRONG_MANY")
+                    .replace("{{N}}", Integer.toString(left));
+            error = "<div class=\"err\">" + message + "</div>";
         }
-        return page("pin.html")
+        return localize(page("pin.html"), t, lang)
                 .replace("{{ERROR}}", error)
                 .replace("{{DEVICE}}", escapeHtml(mDeviceName));
     }
 
-    private String renderFiles() {
-        String row = page("row.html");
+    private String renderFiles(Map<String, String> t, String lang) {
+        String row = localize(page("row.html"), t, lang);
         StringBuilder rows = new StringBuilder();
         for (int i = 0; i < mFiles.size(); i++) {
             SharedFile f = mFiles.get(i);
             rows.append(row
                     .replace("{{ICON}}", iconFor(f.mime))
                     .replace("{{NAME}}", escapeHtml(f.name))
-                    .replace("{{TYPE}}", typeLabel(f.mime))
+                    .replace("{{NAMEURL}}", Uri.encode(f.name))
+                    .replace("{{TYPE}}", tr(t, typeLabelKey(f.mime)))
                     .replace("{{SIZE}}", formatSize(f.file.length()))
                     .replace("{{INDEX}}", Integer.toString(i)));
         }
-        String count = mFiles.size() + (mFiles.size() == 1 ? " file" : " files");
-        return page("files.html")
+        String count = mFiles.size() == 1
+                ? tr(t, "T_FILE_ONE")
+                : tr(t, "T_FILES_MANY").replace("{{N}}", Integer.toString(mFiles.size()));
+        return localize(page("files.html"), t, lang)
                 .replace("{{DEVICE}}", escapeHtml(mDeviceName))
                 .replace("{{COUNT}}", count)
                 .replace("{{FILES}}", rows.toString());
@@ -638,28 +1091,28 @@ public final class LanShareServer {
         return ICON_FILE;
     }
 
-    /** Friendly type word for display (the precise mime drives Content-Type
-     *  + the icon; a receiver shouldn't see "video/iso.segment"). */
-    private static String typeLabel(String mime) {
+    /** i18n key of the friendly type word (the precise mime drives
+     *  Content-Type + the icon; a receiver shouldn't see "video/iso.segment"). */
+    private static String typeLabelKey(String mime) {
         if (mime == null) {
-            return "File";
+            return "T_FILE";
         }
         if (mime.startsWith("video/")) {
-            return "Video";
+            return "T_VIDEO";
         }
         if (mime.startsWith("audio/")) {
-            return "Audio";
+            return "T_AUDIO";
         }
         if (mime.startsWith("image/")) {
-            return "Image";
+            return "T_IMAGE";
         }
         if (mime.equals("application/pdf")) {
-            return "PDF";
+            return "T_PDF";
         }
         if (mime.startsWith("text/")) {
-            return "Text";
+            return "T_TEXT";
         }
-        return "File";
+        return "T_FILE";
     }
 
     private static String formatSize(long bytes) {
@@ -702,10 +1155,11 @@ public final class LanShareServer {
         out.flush();
     }
 
-    private void sendFile(OutputStream out, SharedFile shared) throws IOException {
+    private void sendFile(OutputStream out, SharedFile shared,
+                          Map<String, String> t, String lang) throws IOException {
         File file = shared.file;
         if (!file.exists() || !file.canRead()) {
-            sendHtml(out, 404, page("notfound.html"));
+            sendHtml(out, 404, localize(page("notfound.html"), t, lang));
             return;
         }
         long length = file.length();

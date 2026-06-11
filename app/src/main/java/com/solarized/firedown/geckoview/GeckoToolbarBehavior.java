@@ -50,13 +50,16 @@ public class GeckoToolbarBehavior extends CoordinatorLayout.Behavior<GeckoToolba
     private GeckoToolbar    mGeckoToolbar;
 
     private boolean shouldSnapAfterScroll = true;
-    private boolean isScrollEnabled       = true;
+    // Defaults to false like upstream EngineViewScrollingBehavior: the bars must not be able
+    // to hide before BrowserFragment's scroll policy (applyToolbarScrollPolicy — the Fenix
+    // ToolbarBehaviorController equivalent) explicitly enables it once a page load completes.
+    private boolean isScrollEnabled       = false;
     private boolean startedScroll         = false;
 
 
     public GeckoToolbarBehavior(@Nullable Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
-        yTranslator          = new YTranslator(ViewPosition.TOP);
+        yTranslator          = new YTranslator();
         mBrowserGestureDetector = new BrowserGestureDetector(context, this);
     }
 
