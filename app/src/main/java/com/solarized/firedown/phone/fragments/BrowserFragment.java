@@ -2021,40 +2021,54 @@ public class BrowserFragment extends BaseBrowserFragment
             mPageLoading = false;
             applyToolbarScrollPolicy();
         }
-        // Deliberately NOT calling openSession here. onKill fires because
-        // the OS reclaimed the content process to free memory — usually
-        // while we're backgrounded. Eagerly reopening would immediately
-        // spin a new content process back up, defeating the kill's whole
-        // purpose and probably failing under the same memory pressure
-        // that triggered it.
+        // Lazy recovery for BACKGROUND kills. onKill usually fires because
+        // the OS reclaimed the content process while we're backgrounded —
+        // eagerly reopening then would immediately spin a new content process
+        // back up, defeating the kill's whole purpose and probably failing
+        // under the same memory pressure that triggered it.
         //
         // GeckoView flips isOpen() to false internally before this
         // callback runs (per the ContentDelegate contract), so the
-        // existing recovery paths handle it lazily:
+        // existing recovery paths handle the background cases lazily:
         //   - ensureSessionConnected on ON_RESUME sees !isOpen() and
         //     calls openSession when the user returns to the tab.
         //   - setGeckoViewSession's !isOpen() branch reopens on tab
         //     switch for non-current tabs.
-        // Matches Fenix's onProcessKilled → KillEngineSessionAction:
-        // tear down, no eager rebuild.
         //
-        // Detach the dead session from the GeckoView. The discard now happens
-        // at the DATA layer (GeckoComponents.onKill, BEFORE this observer —
-        // it must run even when no fragment view is alive, or the closed
-        // session reference survives and a later reopen never replays
+        // EXCEPTION — the kill hit the tab the user is LOOKING AT while the
+        // app is foregrounded (observed on-device: switching through several
+        // killed tabs spawns a burst of fresh content processes and the LMK
+        // immediately reclaims one of them). None of the lazy paths can ever
+        // fire then (no ON_RESUME coming, no tab switch happening), so the
+        // user would sit on a dead, blank tab until they happen to switch
+        // away and back or pull to refresh. Reopen eagerly for exactly this
+        // case — Fenix does the same (the SELECTED tab's engine session is
+        // recreated on demand; only background tabs stay torn down). The
+        // memory-pressure argument doesn't apply: the visible tab is the one
+        // process the user has explicitly asked for.
+        //
+        // Detach the dead session from the GeckoView first. The discard
+        // happens at the DATA layer (GeckoComponents.onKill, BEFORE this
+        // observer — it must run even when no fragment view is alive, or the
+        // closed session reference survives and a later reopen never replays
         // restoreState, the blank-tab bug), so the GeckoState's reference is
-        // already null and the old identity comparison
-        // (getSession() == geckoState.getGeckoSession()) can no longer work.
-        // Guard on the ATTACHED session being CLOSED instead: that is exactly
-        // the stale attachment this release exists to clean up (a live
-        // foreground tab's session is open, so a background-tab kill never
-        // tears the visible tab off the view). Without the release, the
-        // GeckoView keeps the dead session's compositor/surface binding
-        // pinned and the tab comes back painting nothing.
+        // already null and an identity comparison can't work. Guard on the
+        // ATTACHED session being CLOSED instead: that is exactly the stale
+        // attachment this release exists to clean up (a live foreground
+        // tab's session is open, so a background-tab kill never tears the
+        // visible tab off the view). Without the release, the GeckoView
+        // keeps the dead session's compositor/surface binding pinned and the
+        // tab comes back painting nothing.
         if (mGeckoView != null
                 && mGeckoView.getSession() != null
                 && !mGeckoView.getSession().isOpen()) {
             mGeckoView.releaseSession();
+        }
+
+        if (isResumed()
+                && geckoState.isIncognito() == mIsIncognitoThemed
+                && geckoState == peekCurrentGeckoState()) {
+            openSession(geckoState);
         }
     }
 
