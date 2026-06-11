@@ -7,28 +7,18 @@ import android.view.animation.DecelerateInterpolator;
 /**
  * Helper class with methods for different behaviors when translating a {@link View} on the Y axis.
  *
- * <p>Matches upstream {@code ViewYTranslationStrategy} from android-components, translated to Java.
- *
- * <p><b>Key fix vs previous Firedown implementation:</b>
- * {@code BottomviewBehaviorStrategy.wasLastExpanding} is now set to
- * {@code targetTranslationY <= view.getTranslationY()} (moving <em>toward</em> 0 = expanding),
- * matching upstream {@code BottomViewBehaviorStrategy.animateToTranslationY}.
- * The old code used {@code >=} which inverted the flag and caused {@code forceExpandWithAnimation}
- * to incorrectly suppress expand animations for the bottom bar.
- *
- * <p>{@code TopviewBehaviorStrategy.wasLastExpanding} was already correct
- * ({@code targetTranslationY >= view.getTranslationY()} = moving toward 0 = expanding).
+ * <p>Matches upstream {@code ViewYTranslationStrategy} from android-components, translated to
+ * Java — reduced to the TOP strategy only. The old {@code BottomviewBehaviorStrategy} was
+ * deleted when {@code BottomNavigationBehavior} became a passive follower slaved to the
+ * toolbar's translation (see that class's header): the bottom bar no longer owns a translator,
+ * so the bottom strategy (and its inverted-{@code wasLastExpanding} bug-fix lore) had no
+ * remaining caller. Don't resurrect it for the bottom bar — mirror the toolbar instead.
  */
 public abstract class YTranslatorStrategy {
 
     static final long SNAP_ANIMATION_DURATION = 150L;
 
-    // Legacy constants kept for source compatibility.
-    public static final int TOP    = 0;
-    public static final int BOTTOM = 1;
-
     ValueAnimator animator;
-    ViewPosition  viewPosition;
 
     /** Snap to collapsed or expanded, whichever is closer, with animation. */
     public abstract void snapWithAnimation(View view);
@@ -70,97 +60,13 @@ public abstract class YTranslatorStrategy {
         animator.cancel();
     }
 
-    // ── Bottom bar strategy ───────────────────────────────────────────────────────────────────────
-
-    /**
-     * Translates a bottom-anchored {@link View} on the Y axis between 0 (fully visible) and
-     * {@code view.getHeight()} (fully hidden).
-     *
-     * <p>Matches upstream {@code BottomViewBehaviorStrategy}.
-     */
-    public static class BottomviewBehaviorStrategy extends YTranslatorStrategy {
-
-        /**
-         * {@code true} when the last animation moved toward 0 (= expanding / showing the bar).
-         *
-         * <p><b>BUG FIX:</b> upstream sets this in {@code animateToTranslationY} as
-         * {@code targetTranslationY <= view.getTranslationY()} — i.e. the target is <em>lower</em>
-         * on the Y axis, meaning the bar is moving up toward its visible position.
-         * The previous Firedown code used {@code >=} which inverted the semantic.
-         */
-        private boolean wasLastExpanding = false;
-
-        public BottomviewBehaviorStrategy() {
-            animator = new ValueAnimator();
-            animator.setInterpolator(new DecelerateInterpolator());
-            animator.setDuration(SNAP_ANIMATION_DURATION);
-        }
-
-        @Override
-        public void snapWithAnimation(View view) {
-            if (view.getTranslationY() >= (view.getHeight() / 2f)) {
-                collapseWithAnimation(view);
-            } else {
-                expandWithAnimation(view);
-            }
-        }
-
-        @Override
-        public void snapImmediately(View view) {
-            if (animator.isStarted()) {
-                animator.end();
-            } else if (view != null) {
-                float ty     = view.getTranslationY();
-                int   height = view.getHeight();
-                view.setTranslationY(ty >= (float) height / 2 ? height : 0f);
-            }
-        }
-
-        @Override
-        public void expandWithAnimation(View view) {
-            animateToTranslationY(view, 0f);
-        }
-
-        @Override
-        public void forceExpandWithAnimation(View view, float distance) {
-            boolean shouldExpand    = distance < 0;
-            boolean isExpanded      = view.getTranslationY() == 0f;
-            // Upstream guard: !wasLastExpanding (not "!isExpandingInProgress && wasLastExpanding")
-            if (shouldExpand && !isExpanded && !wasLastExpanding) {
-                animator.cancel();
-                expandWithAnimation(view);
-            }
-        }
-
-        @Override
-        public void collapseWithAnimation(View view) {
-            animateToTranslationY(view, (float) view.getHeight());
-        }
-
-        @Override
-        public void translate(View view, float distance) {
-            view.setTranslationY(
-                    Math.max(0f, Math.min(view.getHeight(), view.getTranslationY() + distance)));
-        }
-
-        /**
-         * Expanding = moving toward 0 (smaller translationY = bar sliding up into view).
-         * Target ≤ current means we're moving toward 0.
-         */
-        @Override
-        public void animateToTranslationY(View view, float targetTranslationY) {
-            wasLastExpanding = targetTranslationY <= view.getTranslationY();
-            super.animateToTranslationY(view, targetTranslationY);
-        }
-    }
-
     // ── Top bar strategy ──────────────────────────────────────────────────────────────────────────
 
     /**
      * Translates a top-anchored {@link View} on the Y axis between
      * {@code -view.getHeight()} (fully hidden) and 0 (fully visible).
      *
-     * <p>Matches upstream {@code TopViewBehaviorStrategy} — logic was already correct.
+     * <p>Matches upstream {@code TopViewBehaviorStrategy}.
      */
     public static class TopviewBehaviorStrategy extends YTranslatorStrategy {
 
@@ -195,6 +101,16 @@ public abstract class YTranslatorStrategy {
 
         @Override
         public void expandWithAnimation(View view) {
+            // Already fully expanded with nothing in flight — don't spin a
+            // no-op 150 ms animator. The scroll policy calls expand on every
+            // page start / tab switch / resume / IME close, and in the common
+            // case the bars are already pinned at 0; without this the render
+            // loop is kept awake ~9 frames per event for nothing. When a
+            // collapse is mid-flight (animator started), fall through so the
+            // expand correctly replaces it.
+            if (view.getTranslationY() == 0f && !animator.isStarted()) {
+                return;
+            }
             animateToTranslationY(view, 0f);
         }
 

@@ -14,6 +14,7 @@ import android.util.AttributeSet;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.widget.FrameLayout;
 import android.widget.TextView;
@@ -511,10 +512,35 @@ public class GeckoToolbar extends FrameLayout implements View.OnClickListener, V
         if (behavior != null) behavior.disableScrolling();
     }
 
+    /** Animates the toolbar fully on-screen (the bottom bar follows via its slaved behavior). */
+    public void forceExpand() {
+        GeckoToolbarBehavior behavior = getToolbarBehavior();
+        if (behavior != null) behavior.forceExpand(this);
+    }
+
+    /** Animates the toolbar fully off-screen (the bottom bar follows via its slaved behavior). */
+    public void forceCollapse() {
+        GeckoToolbarBehavior behavior = getToolbarBehavior();
+        if (behavior != null) behavior.forceCollapse(this);
+    }
+
+    /**
+     * Instanceof-guarded on both the LayoutParams and the Behavior: in
+     * HomeFragment's layout this toolbar sits inside an AppBarLayout
+     * (AppBarLayout.LayoutParams, no behavior), so the old blind casts were
+     * one stray call away from a ClassCastException.
+     */
     @Nullable
     private GeckoToolbarBehavior getToolbarBehavior() {
-        CoordinatorLayout.LayoutParams lp = (CoordinatorLayout.LayoutParams) getLayoutParams();
-        return lp != null ? (GeckoToolbarBehavior) lp.getBehavior() : null;
+        ViewGroup.LayoutParams lp = getLayoutParams();
+        if (!(lp instanceof CoordinatorLayout.LayoutParams)) {
+            return null;
+        }
+        CoordinatorLayout.Behavior<?> behavior = ((CoordinatorLayout.LayoutParams) lp).getBehavior();
+        if (behavior instanceof GeckoToolbarBehavior) {
+            return (GeckoToolbarBehavior) behavior;
+        }
+        return null;
     }
 
     // ─────────────────────────────────────────────────────────────────────────

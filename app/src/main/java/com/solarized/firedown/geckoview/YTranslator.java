@@ -5,18 +5,17 @@ import android.view.View;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+/**
+ * Facade over {@link YTranslatorStrategy}. Since {@code BottomNavigationBehavior} became a
+ * passive follower of the toolbar, the top toolbar is the only translated bar, so this
+ * always drives a {@link YTranslatorStrategy.TopviewBehaviorStrategy}.
+ */
 public final class YTranslator {
 
-    private YTranslatorStrategy strategy;
+    private final YTranslatorStrategy strategy;
 
-
-    @NonNull
-    public YTranslatorStrategy getStrategy() {
-        return strategy;
-    }
-
-    public void setStrategy(@NonNull YTranslatorStrategy yTranslatorStrategy) {
-        strategy = yTranslatorStrategy;
+    public YTranslator() {
+        strategy = new YTranslatorStrategy.TopviewBehaviorStrategy();
     }
 
     public void snapWithAnimation(@NonNull View view) {
@@ -31,7 +30,7 @@ public final class YTranslator {
         strategy.expandWithAnimation(view);
     }
 
-    public void forceExpandWithAnimation(View view, float distance) {
+    public void forceExpandIfNotAlready(@NonNull View view, float distance) {
         strategy.forceExpandWithAnimation(view, distance);
     }
 
@@ -39,25 +38,11 @@ public final class YTranslator {
         strategy.collapseWithAnimation(view);
     }
 
-    public void forceExpandIfNotAlready(@NonNull View view, float distance) {
-        strategy.forceExpandWithAnimation(view, distance);
-    }
-
     public void translate(@NonNull View view, float distance) {
-        this.strategy.translate(view, distance);
+        strategy.translate(view, distance);
     }
 
     public void cancelInProgressTranslation() {
         strategy.cancelInProgressTranslation();
-    }
-
-    public YTranslator(ViewPosition viewPosition) {
-        super();
-        if(viewPosition == ViewPosition.TOP){
-            strategy = new YTranslatorStrategy.TopviewBehaviorStrategy();
-        }else{
-            strategy = new YTranslatorStrategy.BottomviewBehaviorStrategy();
-        }
-
     }
 }

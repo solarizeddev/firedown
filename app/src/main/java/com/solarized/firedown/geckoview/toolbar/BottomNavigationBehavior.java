@@ -78,13 +78,12 @@ public final class BottomNavigationBehavior
                                  @NonNull BottomNavigationBar child,
                                  int layoutDirection) {
         parent.onLayoutChild(child, layoutDirection);
+        // getDependencies returns exactly the views layoutDependsOn accepted
+        // (the bar uses no anchor), so the first entry IS the toolbar — no
+        // second copy of the dependency predicate here.
         List<View> dependencies = parent.getDependencies(child);
-        for (int i = 0; i < dependencies.size(); i++) {
-            View dependency = dependencies.get(i);
-            if (dependency instanceof GeckoToolbar) {
-                syncWithToolbar(child, dependency);
-                break;
-            }
+        if (!dependencies.isEmpty()) {
+            syncWithToolbar(child, dependencies.get(0));
         }
         return true;
     }

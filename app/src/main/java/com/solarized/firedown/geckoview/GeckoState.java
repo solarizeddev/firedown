@@ -130,7 +130,7 @@ public class GeckoState {
     /**
      * URI of a user-committed load ({@code BrowserFragment.openUri} → {@code loadUri})
      * that Gecko has not yet STARTED (no {@code onPageStart} observed since it was
-     * issued). While this is set, any {@code onLocationChange} from the session is by
+     * issued). While this is set, an {@code onLocationChange} whose url differs is by
      * definition a STALE commit of the <em>previous</em> load racing the user's new
      * navigation — Gecko's docshell cancels the in-flight load the moment the new one
      * reaches {@code InternalLoad}, so once the new load has started (onPageStart) the
@@ -138,12 +138,31 @@ public class GeckoState {
      * never writes optimistically; ours does ({@code applyOpenUriUi}), so the stale
      * commit window (loadUri issued → docshell processes it) must be guarded or the
      * old page's commit overwrites the entity URI + toolbar with the abandoned URL.
-     * Cleared on {@code onPageStart} AND {@code onPageStop} (the stop bounds the case
-     * where the committed load never starts at all — e.g. denied by onLoadRequest — so
-     * a lingering flag can't suppress later legit SPA/pushState location changes).
+     *
+     * <p><b>ONE-SHOT by design — over-suppression is worse than a transient repaint.</b>
+     * The guard consumes itself on the FIRST location change it sees (match → process
+     * normally, the user's load committed same-document with no onPageStart; mismatch
+     * → suppress that single stale event), and is also cleared by onPageStart,
+     * onPageStop, and an onLoadRequest deny. A persistent flag wedged shut when the
+     * committed load produced NO progress events at all (same-document {@code #fragment}
+     * navigation, or a typed deeplink denied by onLoadRequest on a quiescent page) and
+     * then silently swallowed every later SPA/pushState location change on the tab —
+     * frozen toolbar, stale entity URI/history/capture attribution. The worst case of
+     * one-shot is one stale repaint that the new load's own commit corrects.
      */
     @Nullable
     private String mPendingUserLoadUri;
+
+    /**
+     * Whether this tab currently has a page load in flight, tracked UNGATED from
+     * {@code ProgressDelegate.onPageStart}/{@code onPageStop} (and cleared on
+     * crash/kill) — i.e. per-tab truth, unlike the foreground-gated START/STOP
+     * observer notifications. Read by {@code BrowserFragment.openSession} so a
+     * tab switch onto a tab that started loading while backgrounded (its START
+     * was gated out and will never re-fire) still pins the bars for the rest of
+     * the load.
+     */
+    private boolean mLoading;
 
     private final GeckoStateEntity mGeckoStateEntity;
 
@@ -489,12 +508,18 @@ public class GeckoState {
         return mPendingUserLoadUri;
     }
 
-    public boolean hasPendingUserLoad() {
-        return mPendingUserLoadUri != null;
-    }
-
     public void clearPendingUserLoad() {
         mPendingUserLoadUri = null;
+    }
+
+    // ── Per-tab load state (see mLoading) ────────────────────────────────────
+
+    public void setLoading(boolean loading) {
+        mLoading = loading;
+    }
+
+    public boolean isLoading() {
+        return mLoading;
     }
 
 

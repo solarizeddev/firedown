@@ -19,6 +19,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.UiThread;
 
+import com.solarized.firedown.BuildConfig;
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
 import com.solarized.firedown.data.di.Qualifiers;
@@ -189,6 +190,21 @@ public class GeckoComponents {
             return mIncognitoStateRepository.isCurrentGeckoState(geckoState);
         }
         return mGeckoStateDataRepository.isCurrentGeckoState(geckoState);
+    }
+
+    /**
+     * Truncates user-controlled text for logging (same 128-char cap +
+     * length-suffix convention as {@code AutoCompleteEditText.logPreview}) —
+     * a URL can be an arbitrarily large URL-bar paste; never log it whole.
+     */
+    private static String logPreview(String text) {
+        if (text == null) {
+            return "null";
+        }
+        if (text.length() <= 128) {
+            return text;
+        }
+        return text.substring(0, 128) + "…(" + text.length() + ")";
     }
 
     /**
@@ -756,6 +772,11 @@ public class GeckoComponents {
             if(geckoState == null){
                 return;
             }
+            // A mid-load crash fires no onPageStop — clear the per-tab load
+            // truth here or the bar-pinning policy stays latched for a load
+            // that no longer exists.
+            geckoState.setLoading(false);
+            geckoState.clearPendingUserLoad();
             mGeckoObserverRegistry.notifyObservers(GeckoObserverInvoker.CRASH, geckoState);
         }
 
@@ -776,6 +797,10 @@ public class GeckoComponents {
             if (geckoState == null) {
                 return;
             }
+            // Same as onCrash: a killed content process never delivers
+            // onPageStop for an in-flight load.
+            geckoState.setLoading(false);
+            geckoState.clearPendingUserLoad();
             mGeckoObserverRegistry.notifyObservers(GeckoObserverInvoker.KILL_SESSION, geckoState);
         }
 
@@ -835,7 +860,17 @@ public class GeckoComponents {
             // (Gecko cancelled any previous in-flight load on InternalLoad), so
             // the stale-commit suppression window closes. Must run before the
             // isCurrentGeckoState gate: the flag is per-tab state, not UI.
+            // (Deliberately URL-blind: if the start belongs to the abandoned
+            // page's own queued navigation rather than the user's load, the
+            // worst case is one transient repaint that the user's load corrects
+            // on its own commit — the guard is best-effort by design.)
             geckoState.clearPendingUserLoad();
+
+            // Per-tab load truth, ungated — the foreground-gated START observer
+            // below can't be re-derived later, but this can (openSession reads
+            // it when switching onto a tab that started loading while
+            // backgrounded).
+            geckoState.setLoading(true);
 
             geckoState.setInitialLoad(false);           // no longer a brand new tab
             geckoState.setFirstContentFulPaint(false);  // reset — new page hasn't painted yet
@@ -865,13 +900,12 @@ public class GeckoComponents {
             if(geckoState == null)
                 return;
 
-            // Belt-and-braces close of the stale-commit window: a user load
-            // that never STARTS (e.g. denied by onLoadRequest) would leave the
-            // pending flag set and suppress later legit location changes
-            // (SPA/pushState fires onLocationChange with no onPageStart). Any
-            // page-stop means the current load cycle is over either way.
-            // Before the isCurrentGeckoState gate — per-tab state, not UI.
+            // Close the stale-commit window (redundant with the guard's
+            // one-shot consumption and the onPageStart clear — kept as a free
+            // backstop) and record per-tab load truth. Before the
+            // isCurrentGeckoState gate — per-tab state, not UI.
             geckoState.clearPendingUserLoad();
+            geckoState.setLoading(false);
 
             if(!isCurrentGeckoState(geckoState))
                 return;
@@ -1371,14 +1405,28 @@ public class GeckoComponents {
             // against Fenix/nsDocShell::InternalLoad → StopInternal), A's commit
             // can still land here. Writing it through would overwrite the
             // entity URI + toolbar with the URL the user just navigated AWAY
-            // from. Once B starts, onPageStart clears the flag and A can never
-            // commit again, so suppression is bounded to that window. B's own
-            // commit (or its redirect target) always arrives after onPageStart
-            // and passes normally.
-            if (geckoState.hasPendingUserLoad()) {
-                Log.d(TAG, "OnLocationChange: suppressed stale " + url
-                        + " — user load pending: " + geckoState.getPendingUserLoadUri());
-                return;
+            // from.
+            //
+            // ONE-SHOT: the guard consumes itself on the first location change
+            // it sees, whatever it is. If the url MATCHES the pending load, this
+            // IS the user's load committing same-document (a #fragment commit
+            // fires neither onPageStart nor onPageStop) — process it normally.
+            // If it differs, it is the single stale commit the abandoned load
+            // can still produce — suppress just that one event. Never suppress
+            // more: a persistent flag wedged shut on loads that produce no
+            // progress events and then swallowed every later SPA/pushState
+            // location change on the tab (see GeckoState.mPendingUserLoadUri).
+            String pendingUserLoadUri = geckoState.getPendingUserLoadUri();
+            if (pendingUserLoadUri != null) {
+                geckoState.clearPendingUserLoad();
+                if (!pendingUserLoadUri.equals(url)) {
+                    if (BuildConfig.DEBUG) {
+                        Log.d(TAG, "OnLocationChange: suppressed stale "
+                                + logPreview(url) + " — user load pending: "
+                                + logPreview(pendingUserLoadUri));
+                    }
+                    return;
+                }
             }
 
             Log.d(TAG, "OnLocationChange: " + session + " here location: " + url);
@@ -1563,6 +1611,12 @@ public class GeckoComponents {
                     mGeckoObserverRegistry.notifyObservers(GeckoObserverInvoker.LOAD_REQUEST,
                             geckoState, request.uri, !request.isDirectNavigation, wasRedirector);
                 }
+                // A denied load never starts, so neither onPageStart nor
+                // onPageStop will fire for it — if this was a TYPED deeplink
+                // (openUri armed the stale-commit guard), disarm it here so the
+                // tab's next legitimate SPA/pushState location change isn't
+                // sacrificed to the guard's one-shot suppression.
+                geckoState.clearPendingUserLoad();
                 return GeckoResult.deny();
             }
 
