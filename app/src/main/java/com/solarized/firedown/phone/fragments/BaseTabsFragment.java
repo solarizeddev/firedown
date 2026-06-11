@@ -454,17 +454,18 @@ public abstract class BaseTabsFragment extends BaseFocusFragment implements OnIt
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // Bottom-inset padding — no gate hook anymore. The Chromium-style
-        // first-snapshot flow doesn't depend on insets being applied
-        // before the scroll: scrollToPositionWithOffset(target, 0)
-        // anchors the target at paddingTop regardless of paddingBottom.
-        // Late inset application just adds bottom padding; the LM
-        // keeps the anchor in view.
+        // Horizontal (cutout) insets only. Bottom clearance is owned by the
+        // HOLDER, which pads the ViewPager by the bottom action bar's full
+        // height (and that height already includes the nav-bar inset, since
+        // the bar pads itself). Adding the bottom system-bar inset here too
+        // double-reserved it — visible as a gap between the last card row and
+        // the bar (worst in landscape, where the short grid makes the clipped
+        // padding obvious).
         if (mRecyclerView != null) {
             ViewCompat.setOnApplyWindowInsetsListener(mRecyclerView, (v, windowInsets) -> {
                 Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars()
                         | WindowInsetsCompat.Type.displayCutout());
-                v.setPadding(insets.left, 0, insets.right, insets.bottom);
+                v.setPadding(insets.left, 0, insets.right, 0);
                 return WindowInsetsCompat.CONSUMED;
             });
         }

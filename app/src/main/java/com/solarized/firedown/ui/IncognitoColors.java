@@ -5,6 +5,8 @@ import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.util.TypedValue;
 
+import androidx.core.graphics.ColorUtils;
+
 import com.solarized.firedown.R;
 
 /**
@@ -203,19 +205,29 @@ public final class IncognitoColors {
 
     // ── ColorStateList builders ─────────────────────────────────────
 
+    /**
+     * Checked = onSurface at 12% alpha (a quiet tonal selection), NOT a
+     * container colour: this palette's secondaryContainer is a loud peach
+     * that fought both the light theme and the incognito purple; an alpha
+     * overlay adapts to any surface automatically. Keep in sync with
+     * res/color/segmented_button_background.xml.
+     */
     public static ColorStateList segmentedButtonBackground(Context context, boolean incognito) {
+        int onSurface = getOnSurface(context, incognito);
+        int checked = ColorUtils.setAlphaComponent(onSurface, 31);
         return new ColorStateList(
                 new int[][]{
                         new int[]{android.R.attr.state_checked},
                         new int[]{}
                 },
                 new int[]{
-                        getSecondaryContainer(context, incognito),
+                        checked,
                         Color.TRANSPARENT
                 }
         );
     }
 
+    /** Keep in sync with res/color/segmented_button_text_color.xml. */
     public static ColorStateList segmentedButtonContent(Context context, boolean incognito) {
         return new ColorStateList(
                 new int[][]{
@@ -223,7 +235,7 @@ public final class IncognitoColors {
                         new int[]{}
                 },
                 new int[]{
-                        getOnSecondaryContainer(context, incognito),
+                        getOnSurface(context, incognito),
                         getOnSurfaceVariant(context, incognito)
                 }
         );
