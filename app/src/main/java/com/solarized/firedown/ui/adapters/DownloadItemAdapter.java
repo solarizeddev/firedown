@@ -105,6 +105,10 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
      *  with {@link #enableGrid}, whose notifyDataSetChanged re-resolves
      *  every view type. */
     private boolean mDenseImages;
+    /** Hide the mime label/chip — active while a single-type filter chip
+     *  is checked (the chip rail already states the type). See
+     *  {@link #setMimeSuppressed}. */
+    private boolean mSuppressMime;
 
     /** Per-category aggregates used to fill the header subtitle
      *  ("N files · X MB"). Empty until the ViewModel's aggregator emits. */
@@ -299,6 +303,24 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
     /** See {@link #mDenseImages}. Field-only — call before enableGrid. */
     public void setDenseImages(boolean dense) {
         mDenseImages = dense;
+    }
+
+    /**
+     * Hide the mime label/chip on every row — set while a single-type
+     * filter chip is active, where stamping "VIDEO" on every tile merely
+     * repeats what the checked chip already states. Must notify itself:
+     * a filter change re-submits the paged list, but DiffUtil won't
+     * rebind the items that survived the filter unchanged, so the flag
+     * flip has to rebind them (no-op when the value didn't change, so
+     * video → audio chip taps don't pay the rebind).
+     */
+    @SuppressLint("NotifyDataSetChanged")
+    public void setMimeSuppressed(boolean suppressed) {
+        if (mSuppressMime == suppressed) {
+            return;
+        }
+        mSuppressMime = suppressed;
+        notifyDataSetChanged();
     }
 
     @Nullable
@@ -584,9 +606,11 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         // every bind paid for a resource lookup (theme + LocaleList
         // resolution) plus a String concat on the list-mode path.
         // The dense tile has no mime view at all (the active filter chip
-        // already states the type) — null-guarded.
+        // already states the type) — null-guarded. The normal tiles hide
+        // it while a single-type filter is active (mSuppressMime), same
+        // redundancy rule.
         if (holder.mimeText != null) {
-            String mimeLabel = mimeLabelFor(mimeType, isGrid);
+            String mimeLabel = mSuppressMime ? null : mimeLabelFor(mimeType, isGrid);
             if (TextUtils.isEmpty(mimeLabel)) {
                 holder.mimeText.setVisibility(View.GONE);
             } else {

@@ -1,5 +1,6 @@
 package com.solarized.firedown.ui.adapters;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
@@ -82,10 +83,18 @@ public class BrowserOptionAdapter extends GridListBaseAdapter<BrowserDownloadEnt
     /**
      * Hide the mime chip on every tile — used when the chip rail is filtered
      * to a single type, so the chip ("IMAGE", "VIDEO") doesn't redundantly
-     * repeat what the active filter already states. Call before submitList.
+     * repeat what the active filter already states. Notifies itself on an
+     * actual change: a filter change re-submits the list, but the differ
+     * won't rebind items that survived the filter unchanged, so the flag
+     * flip has to rebind them (no-op when the value didn't change).
      */
+    @SuppressLint("NotifyDataSetChanged")
     public void setMimeSuppressed(boolean suppressed) {
+        if (mSuppressMime == suppressed) {
+            return;
+        }
         mSuppressMime = suppressed;
+        notifyDataSetChanged();
     }
 
     @Override

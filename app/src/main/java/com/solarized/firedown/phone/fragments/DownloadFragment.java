@@ -542,6 +542,13 @@ public class DownloadFragment extends BaseDownloadFragment implements
         } else {
             mDownloadsViewModel.setFilterChip(checkedIds.get(0));
         }
+        if (mAdapter != null) {
+            // Any single-type filter makes the per-row mime label pure
+            // redundancy with the checked chip — suppress it (list and
+            // grid alike); unfiltered restores it, since there the type
+            // genuinely varies row to row.
+            mAdapter.setMimeSuppressed(!checkedIds.isEmpty());
+        }
         // Crossing the images-filter boundary in grid mode flips the grid
         // between the normal tiles and the dense square mosaic.
         refreshGridDensityIfChanged();

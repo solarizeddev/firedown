@@ -1732,11 +1732,32 @@ back to English (MissingTranslation isn't build-fatal here).
   the name. The list always shows the title (both adapters). Keep this keyed on
   the **mime** (`isImage`), not on a filename-content heuristic: the old
   "name has no spaces ⇒ junk" test was removed because it misclassifies
-  space-less scripts (CJK/Thai) and silently drops real titles. The mime chip is
-  always present in both grids, so type stays labelled even when the title is
-  hidden. (Captured used to *always* show the title as a pre-download decision
-  surface; that was changed to match Downloads — an image tile's slug name is
-  noise on the decision surface too.)
+  space-less scripts (CJK/Thai) and silently drops real titles. The mime chip
+  labels the type in the UNFILTERED grid (where it varies row to row), incl.
+  when the title is hidden — but it is **suppressed while a single-type filter
+  chip is active** in BOTH surfaces (`setMimeSuppressed` in both adapters,
+  wired to the chip rails): stamping "VIDEO" on every tile under an active
+  Video filter merely repeats the checked chip. The suppression setters notify
+  on change because the differ won't rebind items that survived a filter flip
+  unchanged. (Captured used to *always* show the title as a pre-download
+  decision surface; that was changed to match Downloads — an image tile's slug
+  name is noise on the decision surface too.)
+- **Images/GIF filter + grid = the dense bare mosaic.** When the images or GIF
+  chip is the active filter in grid mode, both surfaces switch to a denser
+  span (`image_grid_dense_number`/`browser_grid_dense_number`, 1.5x) of square
+  tiles with NO text/chrome at all (dedicated dense layouts + view types —
+  `*_GRID_DENSE`/`TYPE_GRID_DENSE`, distinct types because the
+  RecycledViewPool keys holders by view type). Images are the one type whose
+  tile is self-identifying (title already hidden, chip already suppressed), so
+  the density costs no information; do NOT extend the bare treatment to other
+  types — their titles/facts are load-bearing (see the title rule above). The
+  Downloads dense tile keeps the progress overlay, an ERROR scrim
+  (`bindErrorInner` re-shows the hidden block), and the selection checkmark.
+  Downloads reconfigures only on an actual density transition
+  (`refreshGridDensityIfChanged`); the vault has no chip rail and keeps normal
+  density. The Downloads grid meta row reads `[chip] duration · size`
+  (`joinWithSize`) — size is the one list-line fact with no other home in the
+  grid; date stays out because the sort headers carry it.
 
 ## Thumbnails (native `thumbnailer.c`)
 

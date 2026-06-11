@@ -366,9 +366,13 @@ public class BrowserOptionFragment extends BaseFocusFragment implements OnItemCl
             // repository) before submitting so the CC badge binds correctly
             // even when the active chip has filtered the subtitle siblings out.
             mAdapter.setSubtitleCounts(mBrowserDownloadViewModel.subtitleCountsByOrigin());
-            // Keep the mime tag on every tile regardless of the active chip —
-            // selecting a type chip no longer blanks it out.
-            mAdapter.setMimeSuppressed(false);
+            // Any single-type filter makes the per-tile mime tag pure
+            // redundancy with the checked chip — suppress it; unfiltered
+            // restores it, since there the type varies tile to tile.
+            // (Recomputed from the chip state on every emission so the
+            // initial persisted-chip open is covered too.)
+            mAdapter.setMimeSuppressed(
+                    mChipGroup != null && mChipGroup.getCheckedChipId() != View.NO_ID);
             submitListPreservingScroll(downloads);
         });
 
@@ -745,6 +749,11 @@ public class BrowserOptionFragment extends BaseFocusFragment implements OnItemCl
         // Crossing the images-filter boundary in grid mode flips the grid
         // between the normal tiles and the dense square mosaic.
         refreshGridDensity();
+        // Suppress the per-tile mime tag while a single-type filter is
+        // active (redundant with the checked chip). The downloads observer
+        // re-derives the same value on each emission; setting it here too
+        // flips the visible tiles immediately rather than on the requery.
+        mAdapter.setMimeSuppressed(selectedId != View.NO_ID);
         // Only intercept Back while a chip is actually checked — otherwise
         // Back must behave normally (close the screen).
         if (mClearFilterOnBack != null) mClearFilterOnBack.setEnabled(!checkedIds.isEmpty());
