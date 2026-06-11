@@ -29,12 +29,6 @@ public abstract class YTranslatorStrategy {
     /** Translate the view to its fully-visible position with animation. */
     public abstract void expandWithAnimation(View view);
 
-    /**
-     * Force-expand with animation if conditions are met (not already expanded, not already
-     * expanding, and {@code distance} implies an upward swipe).
-     */
-    public abstract void forceExpandWithAnimation(View view, float distance);
-
     /** Translate the view to its fully-hidden position with animation. */
     public abstract void collapseWithAnimation(View view);
 
@@ -69,9 +63,6 @@ public abstract class YTranslatorStrategy {
      * <p>Matches upstream {@code TopViewBehaviorStrategy}.
      */
     public static class TopviewBehaviorStrategy extends YTranslatorStrategy {
-
-        /** {@code true} when the last animation moved toward 0 (= expanding / showing the bar). */
-        private boolean wasLastExpanding = false;
 
         public TopviewBehaviorStrategy() {
             animator = new ValueAnimator();
@@ -115,17 +106,6 @@ public abstract class YTranslatorStrategy {
         }
 
         @Override
-        public void forceExpandWithAnimation(View view, float distance) {
-            boolean isExpandingInProgress = animator.isStarted() && wasLastExpanding;
-            boolean shouldExpand          = distance < 0;
-            boolean isExpanded            = view.getTranslationY() == 0f;
-            if (shouldExpand && !isExpanded && !isExpandingInProgress) {
-                animator.cancel();
-                expandWithAnimation(view);
-            }
-        }
-
-        @Override
         public void collapseWithAnimation(View view) {
             animateToTranslationY(view, -view.getHeight());
         }
@@ -134,16 +114,6 @@ public abstract class YTranslatorStrategy {
         public void translate(View view, float distance) {
             view.setTranslationY(
                     Math.min(0f, Math.max(-view.getHeight(), view.getTranslationY() - distance)));
-        }
-
-        /**
-         * Expanding = moving toward 0 (larger translationY = bar sliding down into view).
-         * Target ≥ current means we're moving toward 0.
-         */
-        @Override
-        public void animateToTranslationY(View view, float targetTranslationY) {
-            wasLastExpanding = targetTranslationY >= view.getTranslationY();
-            super.animateToTranslationY(view, targetTranslationY);
         }
     }
 }

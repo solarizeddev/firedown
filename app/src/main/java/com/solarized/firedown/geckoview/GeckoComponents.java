@@ -640,7 +640,11 @@ public class GeckoComponents {
             if(geckoState == null)
                 return;
 
-            mGeckoObserverRegistry.notifyObservers(GeckoObserverInvoker.HIDE_BARS, geckoState);
+            // Foreground-only UI rule (same gate as START/STOP/PROGRESS): a
+            // background tab must not collapse the visible tab's chrome.
+            if (isCurrentGeckoState(geckoState)) {
+                mGeckoObserverRegistry.notifyObservers(GeckoObserverInvoker.HIDE_BARS, geckoState);
+            }
         }
 
         @Override
@@ -714,7 +718,15 @@ public class GeckoComponents {
 
             geckoState.setEntityFullScreen(fullScreen);
 
-            mGeckoObserverRegistry.notifyObservers(GeckoObserverInvoker.FULL_SCREEN, fullScreen);
+            // Foreground-only UI rule: a background tab's late-resolving
+            // fullscreen grant (or exit) must not flip the visible tab's
+            // chrome — entityFullScreen above is per-tab and stays correct
+            // either way; only the UI notification is gated. The state rides
+            // along so the fragment can mode-filter (per-repo gate leak).
+            if (isCurrentGeckoState(geckoState)) {
+                mGeckoObserverRegistry.notifyObservers(
+                        GeckoObserverInvoker.FULL_SCREEN, geckoState, fullScreen);
+            }
 
 
         }
@@ -777,6 +789,15 @@ public class GeckoComponents {
             // that no longer exists.
             geckoState.setLoading(false);
             geckoState.clearPendingUserLoad();
+            // Discard at the DATA layer, before notify: the observer is
+            // view-lifecycle scoped, so a crash landing while the browser view
+            // is destroyed (user in Settings) used to skip the fragment's
+            // discard entirely — the GeckoState kept a non-null CLOSED session,
+            // and the later reopen of that same session never replays
+            // restoreState (fresh-construction-only), the blank-tab bug.
+            // Observers must not discard again (and onCrash's reopen relies on
+            // getOrCreateGeckoSession constructing fresh from here).
+            geckoState.discardGeckoSession();
             mGeckoObserverRegistry.notifyObservers(GeckoObserverInvoker.CRASH, geckoState);
         }
 
@@ -798,9 +819,15 @@ public class GeckoComponents {
                 return;
             }
             // Same as onCrash: a killed content process never delivers
-            // onPageStop for an in-flight load.
+            // onPageStop for an in-flight load, and the discard must live at
+            // the data layer so a kill during the destroyed-view window (the
+            // common case — kills happen while backgrounded) still drops the
+            // dead session reference. BrowserFragment.onKill's view-detach
+            // guard no longer compares against this (nulled) reference — it
+            // releases on the ATTACHED session being closed.
             geckoState.setLoading(false);
             geckoState.clearPendingUserLoad();
+            geckoState.discardGeckoSession();
             mGeckoObserverRegistry.notifyObservers(GeckoObserverInvoker.KILL_SESSION, geckoState);
         }
 
@@ -928,7 +955,12 @@ public class GeckoComponents {
             }
 
             if(isCurrentGeckoState(geckoState))
-                mGeckoObserverRegistry.notifyObservers(GeckoObserverInvoker.PROGRESS, progress);
+                // State rides along so the fragment can mode-filter: the gate
+                // above is per-repo, so without it a background regular tab's
+                // progress repainted the visible incognito progress bar and
+                // could clear its in-flight pull-to-refresh spinner.
+                mGeckoObserverRegistry.notifyObservers(
+                        GeckoObserverInvoker.PROGRESS, geckoState, progress);
 
 
 
@@ -1419,7 +1451,15 @@ public class GeckoComponents {
             String pendingUserLoadUri = geckoState.getPendingUserLoadUri();
             if (pendingUserLoadUri != null) {
                 geckoState.clearPendingUserLoad();
-                if (!pendingUserLoadUri.equals(url)) {
+                // Case-insensitive: Gecko's fix-up lowercases the host, so a
+                // typed "Example.com/page#sec" commits as "example.com/…" and
+                // an exact equals would mis-classify the user's own
+                // same-document commit as stale. Residual canonicalization
+                // gaps (trailing slash on bare hosts, punycode) remain —
+                // acceptable because the guard is one-shot: the worst case is
+                // this single commit's history/observer update being skipped,
+                // never a wedge.
+                if (!pendingUserLoadUri.equalsIgnoreCase(url)) {
                     if (BuildConfig.DEBUG) {
                         Log.d(TAG, "OnLocationChange: suppressed stale "
                                 + logPreview(url) + " — user load pending: "
@@ -1612,11 +1652,17 @@ public class GeckoComponents {
                             geckoState, request.uri, !request.isDirectNavigation, wasRedirector);
                 }
                 // A denied load never starts, so neither onPageStart nor
-                // onPageStop will fire for it — if this was a TYPED deeplink
-                // (openUri armed the stale-commit guard), disarm it here so the
-                // tab's next legitimate SPA/pushState location change isn't
-                // sacrificed to the guard's one-shot suppression.
-                geckoState.clearPendingUserLoad();
+                // onPageStop will fire for it — if THIS deny is the TYPED
+                // deeplink that armed the stale-commit guard (openUri), disarm
+                // it so the tab's next legitimate SPA/pushState location change
+                // isn't sacrificed to the guard's one-shot suppression.
+                // Equality-gated: an unconditional clear let a PAGE-initiated
+                // deeplink (the TikTok-class first-view intent:// nag) disarm a
+                // RACING typed load's guard — re-opening exactly the stale-
+                // commit window the guard exists to close.
+                if (request.uri.equals(geckoState.getPendingUserLoadUri())) {
+                    geckoState.clearPendingUserLoad();
+                }
                 return GeckoResult.deny();
             }
 

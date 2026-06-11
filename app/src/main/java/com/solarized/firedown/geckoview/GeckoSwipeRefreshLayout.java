@@ -114,13 +114,16 @@ public class GeckoSwipeRefreshLayout extends SwipeRefreshLayout {
     // descendants scrolling vertically would double-trigger the P2R throbber and compete
     // with the overscroll shadow. Return false to opt out of nested scroll entirely.
     //
-    // When pull-to-refresh is NOT enabled (isEnabled=false): we are acting as a plain
-    // container. Delegate to super so the NestedScrollingParent chain works correctly
-    // for GeckoToolbarBehavior which depends on it. (The bottom bar no longer listens to
-    // nested scrolls — BottomNavigationBehavior is slaved to the toolbar's translation.)
-    //
-    // The previous code had this inverted (returning false when !isEnabled), which blocked
-    // nested scrolls exactly when P2R was disabled — the opposite of correct behaviour.
+    // Returning false does NOT break the toolbar's nested-scroll handshake in either
+    // state: NestedScrollingChildHelper.startNestedScroll keeps CLIMBING the parent
+    // chain past refusing parents and stops only on acceptance, so NestedGeckoView's
+    // handshake reaches the CoordinatorLayout → GeckoToolbarBehavior regardless. (When
+    // disabled, super also returns false — the chain works because the helper climbs,
+    // not because anyone here accepts.) The explicit false-when-enabled is load-bearing:
+    // stock SwipeRefreshLayout would ACCEPT the vertical nested scroll when enabled,
+    // stopping the climb at this view and starving the toolbar behavior. The bottom bar
+    // never participates — BottomNavigationBehavior is slaved to the toolbar's
+    // translation.
     @Override
     public boolean onStartNestedScroll(View child, View target, int nestedScrollAxes) {
         if (isEnabled()) {

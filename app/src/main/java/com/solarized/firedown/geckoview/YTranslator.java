@@ -30,10 +30,6 @@ public final class YTranslator {
         strategy.expandWithAnimation(view);
     }
 
-    public void forceExpandIfNotAlready(@NonNull View view, float distance) {
-        strategy.forceExpandWithAnimation(view, distance);
-    }
-
     public void collapseWithAnimation(@NonNull View view) {
         strategy.collapseWithAnimation(view);
     }

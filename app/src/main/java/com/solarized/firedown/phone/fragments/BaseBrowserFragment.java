@@ -136,7 +136,7 @@ public class BaseBrowserFragment extends BaseFocusFragment implements AutoComple
     }
 
     @Override
-    public void updateProgress(int progress) {
+    public void updateProgress(GeckoState geckoState, int progress) {
 
     }
 
@@ -147,7 +147,7 @@ public class BaseBrowserFragment extends BaseFocusFragment implements AutoComple
 
 
     @Override
-    public void onFullScreen(boolean fullScreen) {
+    public void onFullScreen(GeckoState geckoState, boolean fullScreen) {
 
     }
 

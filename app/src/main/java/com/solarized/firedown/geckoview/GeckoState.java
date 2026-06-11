@@ -149,6 +149,13 @@ public class GeckoState {
      * then silently swallowed every later SPA/pushState location change on the tab —
      * frozen toolbar, stale entity URI/history/capture attribution. The worst case of
      * one-shot is one stale repaint that the new load's own commit corrects.
+     *
+     * <p><b>Scope:</b> armed only by the user-load entry points that write the toolbar
+     * optimistically ({@code openUri} / {@code setGeckoViewSession}'s fresh-session
+     * load). History navigation ({@code goBack}/{@code goForward}) and {@code reload()}
+     * deliberately do NOT arm it — they paint nothing optimistically, so a late commit
+     * from a load they cancelled is at worst a transient correct-at-the-time repaint,
+     * not a clobbered user intent.
      */
     @Nullable
     private String mPendingUserLoadUri;

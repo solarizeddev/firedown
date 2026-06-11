@@ -11,7 +11,8 @@ import org.mozilla.geckoview.WebResponse;
 
 public interface GeckoObserver {
 
-    void updateProgress(int progress);
+    /** @param geckoState the tab the progress belongs to — fragments must mode-filter it. */
+    void updateProgress(GeckoState geckoState, int progress);
 
     /**
      * @param url the location the engine just committed — display code must use
@@ -23,7 +24,8 @@ public interface GeckoObserver {
      */
     void onLocationChange(GeckoState geckoState, String url);
 
-    void onFullScreen(boolean fullScreen);
+    /** @param geckoState the tab whose DOM-fullscreen state changed — fragments must mode-filter it. */
+    void onFullScreen(GeckoState geckoState, boolean fullScreen);
 
     void onShowDynamicToolbar();
 
