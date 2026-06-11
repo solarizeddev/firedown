@@ -22,7 +22,15 @@ public abstract class GridListBaseAdapter<T, VH extends RecyclerView.ViewHolder>
 
     protected static final int TYPE_LIST = 1;
 
+    /** Dense grid — the images-only filtered mosaic (square bare tiles at a
+     *  denser span). A distinct view type, not a bind-time flag, because the
+     *  RecycledViewPool keys holders by view type: reusing TYPE_GRID across
+     *  a density toggle would hand back holders from the wrong layout. */
+    protected static final int TYPE_GRID_DENSE = 2;
+
     public boolean mList;
+
+    protected boolean mDense;
 
     final AsyncListDiffer<T> mDiffer;
     private final AsyncListDiffer.ListListener<T> mListener =
@@ -142,9 +150,27 @@ public abstract class GridListBaseAdapter<T, VH extends RecyclerView.ViewHolder>
         notifyDataSetChanged();
     }
 
+    /**
+     * Flips the grid between normal tiles and the dense mosaic. Must notify
+     * itself (unlike a submitList-driven change): the differ sees the same
+     * items and emits nothing, but their view TYPE changed — without the
+     * notify, holders bound before the flip would keep the stale layout.
+     */
+    @SuppressLint("NotifyDataSetChanged")
+    public void enableDenseGrid(boolean dense) {
+        if (mDense == dense) {
+            return;
+        }
+        mDense = dense;
+        notifyDataSetChanged();
+    }
+
     @Override
     public int getItemViewType(int position){
-        return mList ? TYPE_LIST : TYPE_GRID;
+        if (mList) {
+            return TYPE_LIST;
+        }
+        return mDense ? TYPE_GRID_DENSE : TYPE_GRID;
     }
 
     /**
