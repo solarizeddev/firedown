@@ -971,7 +971,13 @@ chip is checked — `ChipGroup.getCheckedChipId()` returns `View.NO_ID`.
 checked id. Any UI gated "only when unfiltered" must test `NO_ID` — gating
 on `chip_all` silently never fires (this bug shipped twice: the empty-state
 restore button, and the older empty-text line that showed "nothing of this
-type" on an unfiltered empty list).
+type" on an unfiltered empty list). Chip ORDER is frequency-first within the
+rail's visible window — `Video · Audio · Images · GIF · Subtitle · Documents
+· APK · Archives` (Images/GIF deliberately ahead of the rarely-filtered
+Subtitle, which leads the long-tail half) — kept in lockstep across the
+Downloads rail (`fragment_download_list_options.xml`) and the Captured sheet
+(`fragment_dialog_browser_options_list_options.xml`). Reordering is safe
+(all chip handling is id-keyed, never positional) but do it in both files.
 
 **The missing-file sweep (`MediaListenerWorker`, runs on every
 DownloadsActivity resume via unique work `media-existence-check`/KEEP) is
@@ -1777,6 +1783,20 @@ head frame.
   leaving a trail of one-commit branches.
 - Commit messages: explain the root cause and how it was verified, not just the
   change.
+- **Hilt: a class declaring `@Inject` fields must ITSELF be
+  `@AndroidEntryPoint`** — the annotation is not inherited downward. Hilt's
+  members-injection runs through the annotated class's generated injector;
+  an UNANNOTATED subclass of an annotated base gets its own `@Inject` fields
+  silently left **null** (no compile-time error — shipped as an NPE in
+  `DownloadFragment.onRestoreTreePicked`, whose `mDiskExecutor` /
+  `mDownloadDatabase` were never injected because only `BaseDownloadFragment`
+  was annotated). The reverse direction is fine: `@Inject` fields on an
+  unannotated BASE are injected when the leaf is annotated (that's why
+  `BaseTabsFragment`/`BasePreferenceFragment` work). Rule of thumb: annotate
+  the concrete fragment/activity you instantiate; with the Hilt Gradle
+  plugin, annotating both a subclass and its annotated superclass is the
+  supported shape. Symptom to recognize: an NPE on an `@Inject` field used
+  only on a rare path, in a class whose base is annotated.
 - **Java: never use fully-qualified class names inline in code — add an
   `import` and use the simple name.** Not
   `com.solarized.firedown.phone.dialogs.LanShareDialogFragment f = …` or
