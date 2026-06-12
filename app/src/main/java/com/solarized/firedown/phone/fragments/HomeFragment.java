@@ -196,6 +196,29 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         bookmarkButton.setOnClickListener(view ->
                 NavigationUtils.navigateSafe(mNavController, R.id.action_home_to_bookmarks));
 
+        // Dock the FAB the TABS way (TabsHolderFragment): bottomMargin =
+        // (bar height − the 64dp content row) + app_bar_fab_margin
+        // = nav inset + lift, so the FAB pokes just above the bar's top
+        // edge. Recomputed on every bar layout pass — the bar grows when
+        // BottomNavigationBar's own insets listener pads it by the nav
+        // inset, so a one-shot read would race that and dock too low.
+        mBottomNavigationBar.addOnLayoutChangeListener(
+                (bar, l, t, r, b, ol, ot, or, ob) -> {
+                    int barHeight = b - t;
+                    if (barHeight <= 0) {
+                        return;
+                    }
+                    int contentRow = getResources().getDimensionPixelOffset(R.dimen.app_bar_size);
+                    int lift = getResources().getDimensionPixelOffset(R.dimen.app_bar_fab_margin);
+                    int margin = Math.max(0, barHeight - contentRow) + lift;
+                    ViewGroup.MarginLayoutParams params =
+                            (ViewGroup.MarginLayoutParams) bookmarkButton.getLayoutParams();
+                    if (params.bottomMargin != margin) {
+                        params.bottomMargin = margin;
+                        bookmarkButton.setLayoutParams(params);
+                    }
+                });
+
         mGeckoToolbar = v.findViewById(R.id.toolbar_layout);
         mGeckoToolbar.setListener(this);
 

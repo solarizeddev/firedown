@@ -196,24 +196,28 @@
         android:background="?android:attr/colorBackground" />
 
     <!--
-        Bookmarks hero FAB over the bottom bar's middle slot — same
-        cradle treatment as the Browser capture FAB (fragment_browser).
-        The slot itself is hidden (hideMiddleSlot) so the FAB doesn't
-        collide with a flat icon underneath. The flame (ic_firedown)
-        stays exclusive to the browser capture FAB; this one carries
-        the bookmark glyph.
+        Bookmarks hero FAB over the bottom bar's middle slot. The slot
+        itself is hidden (hideMiddleSlot) so the FAB doesn't collide
+        with a flat icon underneath; the flame (ic_firedown) stays
+        exclusive to the browser capture FAB, this one carries the
+        bookmark glyph. Positioned the TABS way (fragment_tabs_holder),
+        NOT the browser way: no layout_anchor/Behavior — anchoring to
+        this bar plants the FAB on the bar's bottom edge (half over the
+        system nav) and BottomNavigationFABBehavior's lift only applies
+        when the bar scrolls, which Home's static bar never does. Plain
+        bottom|center gravity + a code-set bottomMargin (nav inset +
+        app_bar_fab_margin, mirrored from TabsHolderFragment) docks it
+        poking just above the bar's top edge.
     -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/bookmark_button"
         style="@style/Widget.Material3.FloatingActionButton.Primary"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center_horizontal"
         android:contentDescription="@string/library_bookmarks"
         android:elevation="0dp"
         app:elevation="0dp"
-        app:layout_behavior="com.solarized.firedown.geckoview.toolbar.BottomNavigationFABBehavior"
-        app:layout_anchorGravity="top|center"
-        app:layout_anchor="@id/bottom_app_bar"
         app:borderWidth="0dp"
         app:fabSize="normal"
         app:maxImageSize="@dimen/phone_icon_height"

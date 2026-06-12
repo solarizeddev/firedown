@@ -157,6 +157,27 @@ public class HomeIncognitoFragment extends BaseBrowserFragment implements
             NavigationUtils.navigateSafe(mNavController, R.id.action_home_incognito_to_bookmarks, args);
         });
 
+        // Dock the FAB the TABS way — same margin recipe as HomeFragment
+        // (bar height − content row + app_bar_fab_margin = nav inset +
+        // lift); see the comment there for why anchoring fails on a
+        // static bar.
+        mBottomNavigationBar.addOnLayoutChangeListener(
+                (bar, l, t, r, b, ol, ot, or, ob) -> {
+                    int barHeight = b - t;
+                    if (barHeight <= 0) {
+                        return;
+                    }
+                    int contentRow = getResources().getDimensionPixelOffset(R.dimen.app_bar_size);
+                    int lift = getResources().getDimensionPixelOffset(R.dimen.app_bar_fab_margin);
+                    int margin = Math.max(0, barHeight - contentRow) + lift;
+                    ViewGroup.MarginLayoutParams params =
+                            (ViewGroup.MarginLayoutParams) bookmarkButton.getLayoutParams();
+                    if (params.bottomMargin != margin) {
+                        params.bottomMargin = margin;
+                        bookmarkButton.setLayoutParams(params);
+                    }
+                });
+
         mGeckoToolbar = v.findViewById(R.id.toolbar_layout);
         mGeckoToolbar.setListener(this);
 
