@@ -1,8 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    clipToPadding=false is for browser_nav_backdrop below: the root is
+    padded by ALL insets (BrowserFragment.onViewCreated), so children
+    are laid out above the system-nav strip — the backdrop walks back
+    down over it with a negative bottom margin and must not be clipped
+    at the padding edge.
+-->
 <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:clipToPadding="false"
     android:descendantFocusability="beforeDescendants"
     android:focusableInTouchMode="true">
 
@@ -46,6 +54,24 @@
         app:layout_behavior="com.solarized.firedown.geckoview.toolbar.AnchorBehavior"/>
 
 
+
+    <!--
+        System-nav backdrop. The browser cannot use the navigation_scrim
+        pattern (the inset-padded root keeps every child above the nav
+        strip), and window.setNavigationBarColor is ignored on Android
+        15+ at targetSdk 35+, so this view paints the strip instead:
+        height and a NEGATIVE bottomMargin (escaping the root padding —
+        see the clipToPadding note on the root) are set from the insets
+        listener in BrowserFragment.onViewCreated; the tone follows the
+        bottom bar's surfaceContainer from the theme sites. Sits before
+        the bar so bar + FAB draw above it.
+    -->
+    <View
+        android:id="@+id/browser_nav_backdrop"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_gravity="bottom"
+        android:background="?android:attr/colorBackground" />
 
     <com.solarized.firedown.geckoview.toolbar.BottomNavigationBar
         android:id="@+id/bottom_app_bar"

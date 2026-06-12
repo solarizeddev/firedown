@@ -169,6 +169,7 @@ public class BrowserFragment extends BaseBrowserFragment
     private GeckoToolbar mGeckoToolbar;
     private BottomNavigationBar mBottomNavigationBar;
     private GeckoSwipeRefreshLayout mSwipeRefreshLayout;
+    private View mNavBackdrop;
     private AutoCompleteEditText mAutoCompleteEditText;
 
     // ── ViewModels ────────────────────────────────────────────────────────────────────────────────
@@ -467,10 +468,27 @@ public class BrowserFragment extends BaseBrowserFragment
         super.onViewCreated(view, savedInstanceState);
         Log.d(TAG, "onViewCreated");
 
+        mNavBackdrop = view.findViewById(R.id.browser_nav_backdrop);
+
         ViewCompat.setOnApplyWindowInsetsListener(view, (v, windowInsets) -> {
             Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars()
                     | WindowInsetsCompat.Type.displayCutout());
             view.setPadding(insets.left, insets.top, insets.right, insets.bottom);
+
+            // Size the system-nav backdrop: the root padding above keeps
+            // every child clear of the nav strip, so the backdrop escapes
+            // it with a negative bottom margin (root clipToPadding=false)
+            // to paint the strip in the bar's tone. Height tracks the
+            // inset, so browser fullscreen (inset 0) collapses it.
+            if (mNavBackdrop != null) {
+                ViewGroup.MarginLayoutParams lp =
+                        (ViewGroup.MarginLayoutParams) mNavBackdrop.getLayoutParams();
+                if (lp.height != insets.bottom || lp.bottomMargin != -insets.bottom) {
+                    lp.height = insets.bottom;
+                    lp.bottomMargin = -insets.bottom;
+                    mNavBackdrop.setLayoutParams(lp);
+                }
+            }
 
             // Keyboard tracking for the toolbar scroll policy (Fenix parity): while the IME
             // is up the bars must not be able to scroll away mid-typing, and when it closes
@@ -894,9 +912,13 @@ public class BrowserFragment extends BaseBrowserFragment
         // background, system bar colors) that persists across fragments.
         resetWindowTheme();
         mBottomNavigationBar.updateTheme(mActivity, false);
-        // Scrim follows the bar's surfaceContainer tone — see
-        // BaseFocusFragment.setNavScrimColor.
-        setNavScrimColor(IncognitoColors.getSurfaceContainer(mActivity, false));
+        // The browser has no navigation_scrim (inset-padded root) — its
+        // nav strip is painted by browser_nav_backdrop instead; keep it
+        // on the bar's surfaceContainer tone.
+        if (mNavBackdrop != null) {
+            mNavBackdrop.setBackgroundColor(
+                    IncognitoColors.getSurfaceContainer(mActivity, false));
+        }
         mGeckoToolbar.updateTheme(mActivity, false);
         mAutoCompleteView.updateTheme(mActivity, false);
         mSearchAutocompleteAdapter.setIncognito(false);
@@ -993,6 +1015,7 @@ public class BrowserFragment extends BaseBrowserFragment
         }
         mBottomNavigationBar      = null;
         mSwipeRefreshLayout       = null;
+        mNavBackdrop              = null;
         mAutoCompleteEditText     = null;
         mAutoCompleteView         = null;
         mGeckoView                = null;
@@ -2311,9 +2334,12 @@ public class BrowserFragment extends BaseBrowserFragment
 
         mGeckoToolbar.updateTheme(mActivity, incognito);
         mBottomNavigationBar.updateTheme(mActivity, incognito);
-        // Scrim follows the bar's surfaceContainer tone in either mode —
-        // see BaseFocusFragment.setNavScrimColor.
-        setNavScrimColor(IncognitoColors.getSurfaceContainer(mActivity, incognito));
+        // The browser has no navigation_scrim (inset-padded root) — its
+        // nav strip is painted by browser_nav_backdrop in either mode.
+        if (mNavBackdrop != null) {
+            mNavBackdrop.setBackgroundColor(
+                    IncognitoColors.getSurfaceContainer(mActivity, incognito));
+        }
         mAutoCompleteView.updateTheme(mActivity, incognito);
         mAutoCompleteViewModel.setIncognito(incognito);
         mSearchAutocompleteAdapter.setIncognito(incognito);
