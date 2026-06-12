@@ -459,14 +459,14 @@ public class GeckoToolbar extends FrameLayout implements View.OnClickListener, V
         // 2. Address bar rounded background (the GradientDrawable pill).
         // PER-HOLDER fill — the token-level contrast fix (a hairline
         // outline was tried and reverted as a band-aid):
-        //  - quiet holder (Home): surfaceContainerHigh — two tonal steps
-        //    above the surface canvas, the M3 search-bar pairing, and the
-        //    exact tone the Home cards share by design.
+        //  - quiet holder (Home): surfaceContainerHigh — the M3 SEARCH-BAR
+        //    role (Material 3 docked search = surfaceContainerHigh). The
+        //    Home cards are the FILLED-CARD role one step up
+        //    (surfaceContainerHighest), so the bar reads one step below the
+        //    cards — the by-the-book search/card relationship, NOT a match.
         //  - tonal holder (browser): surfaceContainerHighest — the High
         //    fill sat only ONE step above the surfaceContainer holder and
-        //    read nearly flat; Highest restores the same two-step lift the
-        //    quiet holder gets. Cards harmony is unaffected: cards exist
-        //    only on Home, whose pill is untouched.
+        //    read nearly flat; Highest restores a two-step lift.
         // Trade-off, accepted: the FOCUS pulse (mAnimColorFrom → Highest)
         // becomes a no-op on the tonal holder since rest == Highest there;
         // on the browser, focusing the bar immediately raises the
