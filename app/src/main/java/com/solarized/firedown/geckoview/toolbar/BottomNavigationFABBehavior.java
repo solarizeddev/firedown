@@ -57,6 +57,31 @@ public final class BottomNavigationFABBehavior extends CoordinatorLayout.Behavio
         return dependency instanceof BottomNavigationBar;
     }
 
+    /**
+     * Apply the resting lift at layout time so the FAB sits {@code restOffset}
+     * above the bar's top edge WITHOUT depending on a scroll event to fire
+     * {@link #onDependentViewChanged}. The anchor gravity alone
+     * ({@code bottom|center}) leaves the FAB centred on the bar's bottom edge —
+     * half over the system nav. On the BROWSER the dynamic toolbar scrolls, so
+     * {@code onDependentViewChanged} fires and repositions the FAB correctly;
+     * on a STATIC bar (the home screen, whose content never scrolls the bar) no
+     * such event ever arrives, leaving the FAB stuck at that raw low anchor.
+     * Seeding the same at-rest translation here fixes the static case and makes
+     * the initial position deterministic on the scrolling one too.
+     */
+    @Override
+    public boolean onLayoutChild(@NonNull CoordinatorLayout parent,
+                                 @NonNull FloatingActionButton child,
+                                 int layoutDirection) {
+        parent.onLayoutChild(child, layoutDirection);
+        // Don't disturb a FAB that's been snapped out with a collapsed bar; the
+        // hidden state owns its own translation until the bar expands again.
+        if (!hidden) {
+            child.setTranslationY(-restOffset);
+        }
+        return true;
+    }
+
     @Override
     public void onDependentViewRemoved(@NonNull CoordinatorLayout parent,
                                        @NonNull FloatingActionButton child,
