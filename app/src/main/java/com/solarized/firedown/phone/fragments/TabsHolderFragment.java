@@ -43,6 +43,7 @@ import com.solarized.firedown.geckoview.GeckoState;
 import com.solarized.firedown.IntentActions;
 import com.solarized.firedown.phone.SettingsActivity;
 import com.solarized.firedown.ui.IncognitoColors;
+import com.solarized.firedown.ui.browser.TabCountDrawable;
 import com.solarized.firedown.utils.NavigationUtils;
 
 import androidx.navigation.NavController;
@@ -340,6 +341,26 @@ public class TabsHolderFragment extends BaseFocusFragment {
                 mViewPager.setCurrentItem(PAGE_INCOGNITO, true);
             }
         });
+
+        // The regular segment shows the LIVE tab count in the same
+        // rounded-rect glyph the bottom bar's TabsBrowserButton renders
+        // (incl. the >99 🔥 cap — shared formatTabsCount, so the two can
+        // never drift). Fenix's tab-tray pattern: the count is most
+        // useful on the UNSELECTED segment (how many regular tabs wait
+        // while you're on the incognito page). The incognito segment
+        // deliberately stays the plain mask with NO count — advertising
+        // the private-tab count on a shared screen is a shoulder-surf
+        // leak (and Fenix doesn't count private either). Theming is
+        // free: updateSegmentedButtons' setIconTint flows into the
+        // drawable's setTintList/onStateChange, so selected/unselected/
+        // incognito content colors paint it with no extra wiring.
+        MaterialButton regularButton = mToggleGroup.findViewById(R.id.btn_regular_tabs);
+        if (regularButton != null) {
+            TabCountDrawable countDrawable = new TabCountDrawable(getResources());
+            regularButton.setIcon(countDrawable);
+            mGeckoStateViewModel.getTabsCount().observe(getViewLifecycleOwner(),
+                    count -> countDrawable.setCount(count != null ? count : 0));
+        }
     }
 
     private void setupFragmentResultListener() {
