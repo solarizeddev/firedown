@@ -80,7 +80,7 @@
                 android:layout_marginBottom="12dp"
                 android:clickable="true"
                 android:focusable="true"
-                app:cardBackgroundColor="@android:color/transparent"
+                app:cardBackgroundColor="?attr/colorSurfaceContainer"
                 app:cardCornerRadius="12dp"
                 app:cardElevation="0dp"
                 app:strokeWidth="0dp">
@@ -92,7 +92,7 @@
                     android:gravity="center_vertical"
                     android:orientation="horizontal"
                     android:paddingHorizontal="16dp"
-                    android:paddingVertical="14dp">
+                    android:paddingVertical="6dp">
 
                     <FrameLayout
                         android:id="@+id/home_vault_chip"

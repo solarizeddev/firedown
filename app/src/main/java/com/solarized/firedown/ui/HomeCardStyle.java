@@ -76,43 +76,44 @@ public final class HomeCardStyle {
     @NonNull public CardLook vault(boolean night)     { return night ? vaultDark     : vaultLight;     }
     @NonNull public CardLook trackers(boolean night)  { return night ? trackersDark  : trackersLight;  }
 
-    /** 0 — Neutral. FLAT greyscale rows — TRANSPARENT card surface
-     *  (the row sits directly on the canvas, incognito-home language),
-     *  a grey chip as the only fill, icons tinted onSurfaceVariant so no
-     *  brand colour leaks through. The 'minimal / calmest' option.
+    /** 0 — Neutral. Greyscale rows on a SUBTLE tile — card surface =
+     *  surfaceContainer (light #EFEDF0, dark #1F1F22): one gentle step off
+     *  the canvas, far quieter than the old home_surface_container fill,
+     *  so the tile reads as a tappable affordance without the battleship
+     *  weight. Grey chip, icons onSurfaceVariant so no brand colour leaks.
+     *  The 'minimal / calmest' option.
      *
-     *  <p>FLAT (here and in TONAL): card bg = transparent (0x00000000),
-     *  so the home is canvas + chip-rows + the single hero FAB — the
-     *  balance the filled-card Tonal lost (its coral chip twinned the
-     *  coral FAB). A trailing chevron (HomeCardStyle.applyToCard) is the
-     *  tappable affordance the flat row needs. The grey chip is the
-     *  recessed well: dark #292A2C, light #DAD8DD; icon onSurfaceVariant.
-     *  Coral is the one style that keeps a filled surface (see CORAL). */
+     *  <p>Subtle-tile surface (here and in TONAL); incognito's INFO rows
+     *  stay flat (they inform; these navigate — tile + chevron is the
+     *  honest "tap me"). Both homes still share canvas / chip / FAB /
+     *  spacing rhythm. Grey chip well one step up from the tile: dark
+     *  #292A2C, light #DAD8DD. Coral keeps the full-brand surface. */
     public static final HomeCardStyle NEUTRAL = new HomeCardStyle("neutral",
             R.string.home_card_style_neutral,
-            new CardLook(0x00000000, 0xFF1B1B1E, 0xFFDAD8DD, 0xFF44474C),
-            new CardLook(0x00000000, 0xFFE4E2E5, 0xFF292A2C, 0xFFC5C6CD),
-            new CardLook(0x00000000, 0xFF1B1B1E, 0xFFDAD8DD, 0xFF44474C),
-            new CardLook(0x00000000, 0xFFE4E2E5, 0xFF292A2C, 0xFFC5C6CD),
-            new CardLook(0x00000000, 0xFF1B1B1E, 0xFFDAD8DD, 0xFF44474C),
-            new CardLook(0x00000000, 0xFFE4E2E5, 0xFF292A2C, 0xFFC5C6CD));
+            new CardLook(0xFFEFEDF0, 0xFF1B1B1E, 0xFFDAD8DD, 0xFF44474C),
+            new CardLook(0xFF1F1F22, 0xFFE4E2E5, 0xFF292A2C, 0xFFC5C6CD),
+            new CardLook(0xFFEFEDF0, 0xFF1B1B1E, 0xFFDAD8DD, 0xFF44474C),
+            new CardLook(0xFF1F1F22, 0xFFE4E2E5, 0xFF292A2C, 0xFFC5C6CD),
+            new CardLook(0xFFEFEDF0, 0xFF1B1B1E, 0xFFDAD8DD, 0xFF44474C),
+            new CardLook(0xFF1F1F22, 0xFFE4E2E5, 0xFF292A2C, 0xFFC5C6CD));
 
-    /** 1 — Tonal (the DEFAULT). FLAT rows like Neutral, but the chips
-     *  carry their brand IDENTITY at DIMMED (tonal-container) chroma —
-     *  coral Downloads, raspberry Safe Folder, peach Trackers — so colour
-     *  is a small landmark, not an attention block, and the dimmed coral
-     *  chip no longer twins the full-coral hero FAB. Card surface is
-     *  TRANSPARENT (see NEUTRAL's doc); the brand chips were the
-     *  full-saturation containers before the flat redesign, kept here as
+    /** 1 — Tonal (the DEFAULT). Subtle-tile rows like Neutral
+     *  (surfaceContainer surface), but the chips carry their brand
+     *  IDENTITY at DIMMED (tonal-container) chroma — coral Downloads,
+     *  raspberry Safe Folder, peach Trackers — so colour is a small
+     *  landmark, not an attention block, and the dimmed coral chip no
+     *  longer twins the full-coral hero FAB. Card surface is
+     *  surfaceContainer (see NEUTRAL's doc); the brand chips were the
+     *  full-saturation containers before the redesign, kept here as
      *  history: dl #FF857F/#F66A66, vault #C8417B, trk #FFBF9B/#FAB186. */
     public static final HomeCardStyle TONAL = new HomeCardStyle("tonal",
             R.string.home_card_style_tonal,
-            new CardLook(0x00000000, 0xFF1B1B1E, 0xFFFAD9D6, 0xFFA23A36),
-            new CardLook(0x00000000, 0xFFE4E2E5, 0xFF5A2E2C, 0xFFF6B6B3),
-            new CardLook(0x00000000, 0xFF1B1B1E, 0xFFFAD7E4, 0xFF8C2F5A),
-            new CardLook(0x00000000, 0xFFE4E2E5, 0xFF552538, 0xFFF4A9C6),
-            new CardLook(0x00000000, 0xFF1B1B1E, 0xFFFAE0CC, 0xFF8A5A2A),
-            new CardLook(0x00000000, 0xFFE4E2E5, 0xFF4A3A28, 0xFFF3CBA3));
+            new CardLook(0xFFEFEDF0, 0xFF1B1B1E, 0xFFFAD9D6, 0xFFA23A36),
+            new CardLook(0xFF1F1F22, 0xFFE4E2E5, 0xFF5A2E2C, 0xFFF6B6B3),
+            new CardLook(0xFFEFEDF0, 0xFF1B1B1E, 0xFFFAD7E4, 0xFF8C2F5A),
+            new CardLook(0xFF1F1F22, 0xFFE4E2E5, 0xFF552538, 0xFFF4A9C6),
+            new CardLook(0xFFEFEDF0, 0xFF1B1B1E, 0xFFFAE0CC, 0xFF8A5A2A),
+            new CardLook(0xFF1F1F22, 0xFFE4E2E5, 0xFF4A3A28, 0xFFF3CBA3));
 
     /** 1 — Blush/Bloom REMOVED (maintainer's call): the tinted-surface
      *  pair was the muddy middle — a brand chip on a same-hue tinted card
