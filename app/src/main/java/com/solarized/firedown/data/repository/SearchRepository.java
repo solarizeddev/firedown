@@ -58,8 +58,25 @@ public class SearchRepository {
         this.mContext = context;
         this.mSharedPreferences = sharedPreferences;
 
+        migrateRemovedEngines();
+
         // Load JSON once in background
         diskExecutor.execute(this::loadSearchEngines);
+    }
+
+    /**
+     * One-time migration for engines removed from the built-in list. Yahoo
+     * was dropped (its results have been Bing-powered for years, and its
+     * suggestion path was a fragile regex over a legacy JSONP endpoint); a
+     * user who had it selected is mapped to Bing — literally the same index
+     * — rather than silently falling back to the default engine, which is
+     * what an unresolvable stored name would otherwise do.
+     */
+    private void migrateRemovedEngines() {
+        String selection = mSharedPreferences.getString(Preferences.SETTINGS_SEARCH_ENGINE, null);
+        if ("Yahoo".equals(selection)) {
+            mSharedPreferences.edit().putString(Preferences.SETTINGS_SEARCH_ENGINE, "Bing").apply();
+        }
     }
 
     private void loadSearchEngines() {

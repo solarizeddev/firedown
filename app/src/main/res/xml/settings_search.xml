@@ -50,12 +50,6 @@
     </com.solarized.firedown.settings.ui.RadioButtonPreference>
 
     <com.solarized.firedown.settings.ui.RadioButtonPreference
-        android:key="com.solarized.firedown.preferences.search.engine.yahoo"
-        android:title="Yahoo"
-        android:icon="@drawable/ic_yahoo_icon">
-    </com.solarized.firedown.settings.ui.RadioButtonPreference>
-
-    <com.solarized.firedown.settings.ui.RadioButtonPreference
         android:key="com.solarized.firedown.preferences.search.engine.yandex"
         android:title="Yandex"
         android:icon="@drawable/ic_yandex_icon">

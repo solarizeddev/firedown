@@ -46,7 +46,6 @@ public class AutoCompleteSearch {
 
     private static final String TAG = AutoCompleteSearch.class.getName();
     private static final Pattern PATTERN_JSON_BAIDU = Pattern.compile("(\\{.*?\\})");
-    private static final Pattern PATTERN_JSON_YAHOO = Pattern.compile("\\((.*?)\\)");
     private static final int MAX_RESULTS = 3;
     private final SearchRepository mSearchRepository;
     private final WebHistoryDataRepository mWebHistoryDataRepository;
@@ -193,17 +192,6 @@ public class AutoCompleteSearch {
                 if (m.find()) {
                     jsonArray = new JSONObject(m.group(1)).getJSONArray("s");
                     processJsonArray(result, jsonArray, engine, format);
-                }
-            }
-            case "Yahoo" -> {
-                m = PATTERN_JSON_YAHOO.matcher(response);
-                if (m.find()) {
-                    jsonArray = new JSONObject(m.group(1))
-                            .getJSONObject("gossip").getJSONArray("results");
-                    int length = Math.min(jsonArray.length(), MAX_RESULTS);
-                    for (int i = 0; i < length; i++) {
-                        parse(result, engine, format, jsonArray.getJSONObject(i).getString("key"));
-                    }
                 }
             }
             default -> {
