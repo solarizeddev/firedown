@@ -417,17 +417,29 @@ public class GeckoToolbar extends FrameLayout implements View.OnClickListener, V
     }
 
     public void updateTheme(Activity activity, boolean incognito) {
+        updateTheme(activity, incognito, true);
+    }
 
-        // surfaceContainer, NOT surface — completes the tonal frame: the
-        // bottom bar went surfaceContainer (BottomNavigationBar.updateTheme)
-        // and the browser's decor/nav-strip followed (BrowserFragment), so a
-        // surface toolbar would seam against both. On Home the toolbar pads
-        // itself by the status inset (HomeFragment's insets listener), so
-        // this tone paints the status strip there too; on the browser the
-        // inset-padded root leaves the strip to the matching decor. The URL
-        // pill stays surfaceContainerHigh — one tonal step above, the M3
-        // search-bar-on-container pairing.
-        int surfaceColor = IncognitoColors.getSurfaceContainer(activity, incognito);
+    /**
+     * @param tonalHolder picks the toolbar's holder tone per surface.
+     * TRUE (browser, the 2-arg default): surfaceContainer — the full
+     * tonal frame. The browser cannot split this: its inset-padded root
+     * leaves the status strip to the decor (painted surfaceContainer by
+     * BrowserFragment), so the toolbar must match or the top seams.
+     * FALSE (Home / incognito Home): plain surface — the toolbar merges
+     * with the page canvas. The toolbar pads itself by the status inset
+     * there (HomeFragment's insets listener), so this tone also paints
+     * the status strip: a seamless quiet top over the dashboard, no
+     * tonal band floating on the canvas. Bottom chrome stays tonal on
+     * both. The URL pill is surfaceContainerHigh in either mode — one
+     * step above the tonal holder (M3 search-bar-on-container pairing),
+     * two above the quiet one.
+     */
+    public void updateTheme(Activity activity, boolean incognito, boolean tonalHolder) {
+
+        int surfaceColor = tonalHolder
+                ? IncognitoColors.getSurfaceContainer(activity, incognito)
+                : IncognitoColors.getSurface(activity, incognito);
         int onSurfaceColor = IncognitoColors.getOnSurface(activity, incognito);
         int onSurfaceVariant = IncognitoColors.getOnSurfaceVariant(activity, incognito);
         int surfaceContainerHigh = IncognitoColors.getSurfaceContainerHigh(activity, incognito);

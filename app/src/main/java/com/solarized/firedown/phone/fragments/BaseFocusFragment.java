@@ -227,6 +227,37 @@ public class BaseFocusFragment extends Fragment {
         }
     }
 
+    /**
+     * Paints the SYSTEM bar strips (status + navigation) for this screen.
+     * Two painter layers exist and BOTH must agree:
+     * <ul>
+     * <li>Android &lt;= 14 honors the window's statusBarColor /
+     *     navigationBarColor — an OPAQUE value (the OLED overlay used to
+     *     pin both to #000000) paints the strips over anything the app
+     *     draws, which is why the tonal chrome showed black strips on
+     *     the OLED theme while the normal themes (transparent attrs)
+     *     looked right.</li>
+     * <li>Android 15+ (targetSdk 35+) IGNORES these setters; the strips
+     *     show whatever the app draws beneath them — the decor
+     *     background, a self-padded bar, the navigation scrim.</li>
+     * </ul>
+     * Chrome-owning screens call this on entry with the tone of the
+     * chrome ADJACENT to each strip (Home: surface top / surfaceContainer
+     * bottom; Browser and Tabs: surfaceContainer both). The theme attrs
+     * stay quiet defaults (#000000 under OLED, transparent otherwise) for
+     * the cold-start frame and for screens that don't paint chrome
+     * (Downloads/Settings ride the window background).
+     */
+    @SuppressWarnings("deprecation")
+    protected void paintSystemBars(int statusColor, int navColor) {
+        if (mActivity == null) {
+            return;
+        }
+        Window window = mActivity.getWindow();
+        window.setStatusBarColor(statusColor);
+        window.setNavigationBarColor(navColor);
+    }
+
     @Override
     public void onAttach(@NonNull Context context) {
         super.onAttach(context);

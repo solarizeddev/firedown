@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/address_bar_holder"
     android:layout_width="match_parent"
-    android:background="?attr/colorSurfaceContainer"
+    android:background="?attr/colorSurface"
     android:layout_height="@dimen/address_bar_height">
 
     <androidx.appcompat.widget.AppCompatImageView

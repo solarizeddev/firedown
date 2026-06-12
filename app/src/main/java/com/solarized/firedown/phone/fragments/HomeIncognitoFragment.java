@@ -321,7 +321,14 @@ public class HomeIncognitoFragment extends BaseBrowserFragment implements
         // Scrim follows the bar's incognito surfaceContainer tone — see
         // BaseFocusFragment.setNavScrimColor.
         setNavScrimColor(IncognitoColors.getSurfaceContainer(mActivity, true));
-        mGeckoToolbar.updateTheme(mActivity, true);
+        // Same chrome spec as normal Home: quiet top / tonal bottom,
+        // mirrored on the window layer for Android <= 14.
+        paintSystemBars(
+                IncognitoColors.getSurface(mActivity, true),
+                IncognitoColors.getSurfaceContainer(mActivity, true));
+        // tonalHolder=false: quiet top, toolbar merges with the canvas
+        // (same as normal Home — see GeckoToolbar.updateTheme javadoc).
+        mGeckoToolbar.updateTheme(mActivity, true, false);
         mAutoCompleteView.updateTheme(mActivity, true);
         mSearchAutocompleteAdapter.setIncognito(true);
 

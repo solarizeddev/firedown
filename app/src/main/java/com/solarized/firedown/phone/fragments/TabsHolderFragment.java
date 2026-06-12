@@ -437,6 +437,13 @@ public class TabsHolderFragment extends BaseFocusFragment {
         updateSegmentedButtons(mActivity, incognito);
 
         window.getDecorView().setBackgroundColor(surfaceColor);
+        // Window layer for Android <= 14: both strips follow the tonal
+        // header/bottom-bar frame (the OLED overlay's opaque bar attrs
+        // would otherwise paint them black). No-op on 15+, where the
+        // self-padded tonal bars above show through instead.
+        paintSystemBars(
+                IncognitoColors.getSurfaceContainer(mActivity, incognito),
+                IncognitoColors.getSurfaceContainer(mActivity, incognito));
 
         boolean lightBars;
         if (incognito) {

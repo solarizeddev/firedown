@@ -480,7 +480,14 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         // BaseFocusFragment.setNavScrimColor) so the system-nav strip
         // matches the bar instead of cutting a black seam under it.
         setNavScrimColor(IncognitoColors.getSurfaceContainer(mActivity, false));
-        mGeckoToolbar.updateTheme(mActivity, false);
+        // Home chrome: QUIET top (toolbar = surface, merging with the
+        // canvas — tonalHolder=false), tonal bottom. paintSystemBars
+        // mirrors that on the WINDOW layer for Android <= 14, where the
+        // theme's opaque bar attrs would otherwise paint the strips.
+        mGeckoToolbar.updateTheme(mActivity, false, false);
+        paintSystemBars(
+                IncognitoColors.getSurface(mActivity, false),
+                IncognitoColors.getSurfaceContainer(mActivity, false));
         mAutoCompleteView.updateTheme(mActivity, false);
         mSearchAutocompleteAdapter.setIncognito(false);
 

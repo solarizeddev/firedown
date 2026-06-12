@@ -905,6 +905,12 @@ public class BrowserFragment extends BaseBrowserFragment
         // their canvases. The top status strip rides along by design.
         mActivity.getWindow().getDecorView().setBackgroundColor(
                 IncognitoColors.getSurfaceContainer(mActivity, false));
+        // Window layer for Android <= 14: both strips follow the tonal
+        // frame (the OLED overlay's opaque attrs would otherwise paint
+        // them black over it). No-op on 15+, where the decor above shows.
+        paintSystemBars(
+                IncognitoColors.getSurfaceContainer(mActivity, false),
+                IncognitoColors.getSurfaceContainer(mActivity, false));
         mGeckoToolbar.updateTheme(mActivity, false);
         mAutoCompleteView.updateTheme(mActivity, false);
         mSearchAutocompleteAdapter.setIncognito(false);
@@ -2320,8 +2326,12 @@ public class BrowserFragment extends BaseBrowserFragment
         mGeckoToolbar.updateTheme(mActivity, incognito);
         mBottomNavigationBar.updateTheme(mActivity, incognito);
         // Decor repaint = the browser's nav-strip tone in either mode —
-        // see the comment at the resetWindowTheme site above.
+        // see the comment at the resetWindowTheme site above. The window
+        // layer mirrors it for Android <= 14.
         mActivity.getWindow().getDecorView().setBackgroundColor(
+                IncognitoColors.getSurfaceContainer(mActivity, incognito));
+        paintSystemBars(
+                IncognitoColors.getSurfaceContainer(mActivity, incognito),
                 IncognitoColors.getSurfaceContainer(mActivity, incognito));
         mAutoCompleteView.updateTheme(mActivity, incognito);
         mAutoCompleteViewModel.setIncognito(incognito);

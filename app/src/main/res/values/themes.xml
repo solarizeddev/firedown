@@ -278,20 +278,22 @@
         <item name="colorSurfaceBright">#1C1C1F</item>
         <item name="colorOutlineVariant">#2A2A2D</item>
         <!--
-            windowBackground stays pure black ON PURPOSE: it is the
+            All three stay pure black ON PURPOSE — these are quiet
+            DEFAULTS, not the live chrome. windowBackground is the
             pixel-off canvas for Settings/Downloads (bare roots) and the
-            cold-start frame. The browser's nav strip does NOT come from
-            here at runtime — BrowserFragment repaints the decor to
-            colorSurfaceContainer on entry. The two BAR colors below
-            follow the tonal chrome (toolbar + bottom bar are
-            colorSurfaceContainer now): they are honored on Android <=14
-            where they'd otherwise paint hard-black strips over the
-            tonal bars; on 15+ (targetSdk 35+) the system ignores them
-            and the app-painted surfaces show instead.
+            cold-start frame. The two bar colors only matter on Android
+            <=14 (15+/targetSdk 35+ ignores them) and only until a
+            chrome-owning screen paints its own values: Home, Browser
+            and Tabs each call BaseFocusFragment.paintSystemBars on
+            entry with the tones adjacent to each strip (Home: surface
+            top / surfaceContainer bottom; Browser+Tabs: surfaceContainer
+            both). Hardcoding a tonal value here instead would bleed
+            onto the non-painting screens (Downloads/Settings), whose
+            black canvas the strips must match.
         -->
         <item name="android:windowBackground">#000000</item>
-        <item name="android:statusBarColor">#141417</item>
-        <item name="android:navigationBarColor">#141417</item>
+        <item name="android:statusBarColor">#000000</item>
+        <item name="android:navigationBarColor">#000000</item>
     </style>
 
 
