@@ -52,7 +52,12 @@
     <color name="md_theme_surfaceContainerLow">#F5F3F6</color>
     <color name="md_theme_surfaceContainer">#EFEDF0</color>
     <color name="md_theme_surfaceContainerHigh">#E9E7EA</color>
-    <color name="md_theme_surfaceContainerHighest">#E4E2E5</color>
+    <!-- Strengthened from the spec-default #E4E2E5: High->Highest was only
+         ~5 levels in light, too tight to give a lifted surface (the browser
+         URL pill, the autocomplete suggestion cards) any separation. ~15
+         levels now, matching the visible steps dark/OLED/incognito already
+         have. Home is unaffected: its pill+cards use High, not Highest. -->
+    <color name="md_theme_surfaceContainerHighest">#DAD8DD</color>
     <color name="md_theme_surfaceContainerLow_highContrast">#F5F3F6</color>
     <!-- Incognito -->
     <!-- Primary -->
