@@ -894,6 +894,9 @@ public class BrowserFragment extends BaseBrowserFragment
         // background, system bar colors) that persists across fragments.
         resetWindowTheme();
         mBottomNavigationBar.updateTheme(mActivity, false);
+        // Scrim follows the bar's surfaceContainer tone — see
+        // BaseFocusFragment.setNavScrimColor.
+        setNavScrimColor(IncognitoColors.getSurfaceContainer(mActivity, false));
         mGeckoToolbar.updateTheme(mActivity, false);
         mAutoCompleteView.updateTheme(mActivity, false);
         mSearchAutocompleteAdapter.setIncognito(false);
@@ -2308,6 +2311,9 @@ public class BrowserFragment extends BaseBrowserFragment
 
         mGeckoToolbar.updateTheme(mActivity, incognito);
         mBottomNavigationBar.updateTheme(mActivity, incognito);
+        // Scrim follows the bar's surfaceContainer tone in either mode —
+        // see BaseFocusFragment.setNavScrimColor.
+        setNavScrimColor(IncognitoColors.getSurfaceContainer(mActivity, incognito));
         mAutoCompleteView.updateTheme(mActivity, incognito);
         mAutoCompleteViewModel.setIncognito(incognito);
         mSearchAutocompleteAdapter.setIncognito(incognito);

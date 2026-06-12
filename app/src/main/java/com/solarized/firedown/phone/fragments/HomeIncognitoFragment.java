@@ -318,6 +318,9 @@ public class HomeIncognitoFragment extends BaseBrowserFragment implements
         // Apply incognito theme to system bars
         applyIncognitoSystemBars();
         mBottomNavigationBar.updateTheme(mActivity,true);
+        // Scrim follows the bar's incognito surfaceContainer tone — see
+        // BaseFocusFragment.setNavScrimColor.
+        setNavScrimColor(IncognitoColors.getSurfaceContainer(mActivity, true));
         mGeckoToolbar.updateTheme(mActivity, true);
         mAutoCompleteView.updateTheme(mActivity, true);
         mSearchAutocompleteAdapter.setIncognito(true);

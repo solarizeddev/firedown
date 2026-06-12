@@ -221,7 +221,8 @@
         app:borderWidth="0dp"
         app:fabSize="normal"
         app:maxImageSize="@dimen/phone_icon_height"
-        app:srcCompat="@drawable/ic_bookmark_24" />
+        app:srcCompat="@drawable/ic_bookmark_24"
+        app:tint="?attr/colorOnPrimaryContainer" />
 
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

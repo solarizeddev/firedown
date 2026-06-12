@@ -209,6 +209,24 @@ public class BaseFocusFragment extends Fragment {
         return ((NavHostFragment) fragment).getNavController();
     }
 
+    /**
+     * Re-tones the navigation scrim. The scrim is a later sibling of the
+     * bottom bar, so it paints OVER the bar's nav-inset strip — its XML
+     * colorBackground left a black seam under the now-tonal
+     * (surfaceContainer) BottomNavigationBar, while the tabs screen (no
+     * scrim at all) showed the bar tone through the transparent system
+     * nav. Bar-hosting fragments call this beside updateTheme with the
+     * matching surfaceContainer; the scrim itself must STAY on the
+     * browser — it is the opaque backdrop for the system nav when the
+     * bottom bar scroll-hides over page content. Screens without a
+     * bottom bar keep the XML colorBackground default.
+     */
+    protected void setNavScrimColor(int color) {
+        if (mNavScrim != null) {
+            mNavScrim.setBackgroundColor(color);
+        }
+    }
+
     @Override
     public void onAttach(@NonNull Context context) {
         super.onAttach(context);

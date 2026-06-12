@@ -27,6 +27,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.solarized.firedown.ui.IncognitoColors;
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
@@ -475,6 +476,10 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         // is a visual no-op.
         resetWindowTheme();
         mBottomNavigationBar.updateTheme(mActivity, false);
+        // Scrim follows the bar's surfaceContainer tone (see
+        // BaseFocusFragment.setNavScrimColor) so the system-nav strip
+        // matches the bar instead of cutting a black seam under it.
+        setNavScrimColor(IncognitoColors.getSurfaceContainer(mActivity, false));
         mGeckoToolbar.updateTheme(mActivity, false);
         mAutoCompleteView.updateTheme(mActivity, false);
         mSearchAutocompleteAdapter.setIncognito(false);
