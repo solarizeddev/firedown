@@ -58,6 +58,10 @@
          even tiny and dark. -->
     <color name="home_chip_vault">#62294A</color>
     <color name="home_chip_vault_on">#F4A9C6</color>
-    <color name="home_chip_trackers">#4A3A28</color>
+    <!-- Trackers chip is the PEACH one (warm orange). #4A3A28 was the
+         most desaturated of the trio and read as plain brown; #573B22
+         warms it (bigger R-G gap) so it lands as peach and stays distinct
+         from the coral Downloads and raspberry Vault. -->
+    <color name="home_chip_trackers">#573B22</color>
     <color name="home_chip_trackers_on">#F3CBA3</color>
 </resources>
