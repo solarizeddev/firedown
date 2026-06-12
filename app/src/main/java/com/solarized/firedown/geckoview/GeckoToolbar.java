@@ -475,6 +475,15 @@ public class GeckoToolbar extends FrameLayout implements View.OnClickListener, V
                 ? IncognitoColors.getSurfaceContainerHighest(activity, incognito)
                 : surfaceContainerHigh;
         if (mBackground != null && mBackground.getBackground() instanceof GradientDrawable gd) {
+            // MUTATE before setColor: @drawable/address_bar is ONE cached
+            // resource, so its ConstantState is shared across every toolbar
+            // that inflated it. Without mutate, the Home toolbar (High) and
+            // the browser toolbar (Highest) overwrite each other's colour on
+            // that shared state — whichever updateTheme ran last wins for
+            // BOTH, so after visiting the browser the Home pill came back at
+            // Highest, one step lighter than the cards it is meant to match.
+            // mutate() gives this toolbar's pill its own state.
+            gd.mutate();
             gd.setColor(pillRestColor);
         }
 
