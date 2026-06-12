@@ -431,9 +431,9 @@ public class GeckoToolbar extends FrameLayout implements View.OnClickListener, V
      * there (HomeFragment's insets listener), so this tone also paints
      * the status strip: a seamless quiet top over the dashboard, no
      * tonal band floating on the canvas. Bottom chrome stays tonal on
-     * both. The URL pill is surfaceContainerHigh in either mode — one
-     * step above the tonal holder (M3 search-bar-on-container pairing),
-     * two above the quiet one.
+     * both. The URL pill keeps a TWO-step lift in either mode:
+     * surfaceContainerHigh on the quiet holder, surfaceContainerHighest
+     * on the tonal one (see the pill block below).
      */
     public void updateTheme(Activity activity, boolean incognito, boolean tonalHolder) {
 
@@ -457,15 +457,25 @@ public class GeckoToolbar extends FrameLayout implements View.OnClickListener, V
         }
 
         // 2. Address bar rounded background (the GradientDrawable pill).
-        // surfaceContainerHigh on either holder — the original tone, and
-        // the M3 search-bar spec pairing on the quiet (surface) Home
-        // toolbar, where it also matches the Home cards' tone by design.
-        // A hairline outline was tried here to add definition and was
-        // REVERTED as a band-aid (maintainer's call) — if the pill ever
-        // needs more lift, fix it at the token level (per-holder fill),
-        // not with decoration.
+        // PER-HOLDER fill — the token-level contrast fix (a hairline
+        // outline was tried and reverted as a band-aid):
+        //  - quiet holder (Home): surfaceContainerHigh — two tonal steps
+        //    above the surface canvas, the M3 search-bar pairing, and the
+        //    exact tone the Home cards share by design.
+        //  - tonal holder (browser): surfaceContainerHighest — the High
+        //    fill sat only ONE step above the surfaceContainer holder and
+        //    read nearly flat; Highest restores the same two-step lift the
+        //    quiet holder gets. Cards harmony is unaffected: cards exist
+        //    only on Home, whose pill is untouched.
+        // Trade-off, accepted: the FOCUS pulse (mAnimColorFrom → Highest)
+        // becomes a no-op on the tonal holder since rest == Highest there;
+        // on the browser, focusing the bar immediately raises the
+        // AutoCompleteView panel, which is the real focus affordance.
+        int pillRestColor = tonalHolder
+                ? IncognitoColors.getSurfaceContainerHighest(activity, incognito)
+                : surfaceContainerHigh;
         if (mBackground != null && mBackground.getBackground() instanceof GradientDrawable gd) {
-            gd.setColor(surfaceContainerHigh);
+            gd.setColor(pillRestColor);
         }
 
         // 3. Edit text colors
@@ -515,7 +525,10 @@ public class GeckoToolbar extends FrameLayout implements View.OnClickListener, V
         // address-bar holder. surfaceContainerHighest is one M3 step above the
         // resting surfaceContainerHigh tone in both themes, so focus stays
         // visible without breaking the dark-theme appearance.
-        mAnimColorFrom = surfaceContainerHigh;
+        // From = the holder-dependent REST fill, so the unfocus animation
+        // returns the pill to its true resting tone (animating back to a
+        // hardcoded High would visibly darken the browser's Highest pill).
+        mAnimColorFrom = pillRestColor;
         mAnimColorTo = IncognitoColors.getSurfaceContainerHighest(activity, incognito);
     }
 

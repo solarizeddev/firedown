@@ -18,12 +18,19 @@ import com.solarized.firedown.R;
 
 
 /**
- * Couples the floating action button to the {@link BottomNavigationBar} so the
- * FAB tracks the bar's vertical translation (smoothly follows the bar as the
- * user scrolls the page) and snaps fully off-screen once the bar is essentially
- * collapsed. Snap-out is needed because the FAB sits {@code restOffset} above
- * the bar's top edge — pure tracking would leave that strip of FAB visible
- * when the bar is fully hidden.
+ * PURE FOLLOWER: mirrors the {@link BottomNavigationBar}'s scroll-hide
+ * translation onto the FAB 1:1 and snaps it fully clear once the bar is
+ * essentially collapsed. The FAB's REST position is owned by LAYOUT, not by
+ * this behavior — bottom gravity plus a code-set bottomMargin of
+ * (nav inset + app_bar_fab_margin), the same Home/Tabs dock recipe, wired in
+ * BrowserFragment. History: this behavior used to add a {@code restOffset}
+ * lift on top of an anchored position, but anchoring broke when the
+ * edge-to-edge bar's bottom edge moved to the true window bottom (the FAB
+ * sank under the system nav), and an event-driven lift gives a
+ * non-deterministic first frame — layout-owned rest position has neither
+ * problem. {@code clearance} survives only in the snap-OUT target: the docked
+ * FAB pokes above the bar's top edge, so translating by barHeight alone would
+ * leave that overhang visible; barHeight + clearance clears it fully.
  *
  * <p>Thresholds are expressed as a collapse fraction
  * ({@code bar.translationY / bar.height}) with hysteresis so the FAB doesn't
@@ -37,15 +44,15 @@ public final class BottomNavigationFABBehavior extends CoordinatorLayout.Behavio
     private static final float SHOW_AT = 0.05f;
     private static final int   ANIM_DURATION_MS = 150;
 
-    /** Distance the FAB sits above the bar's top edge when fully expanded. */
-    private final int restOffset;
+    /** Overhang clearance for the snap-out target (see class javadoc). */
+    private final int clearance;
 
     @Nullable private Animator runningAnim;
     private boolean hidden = false;
 
     public BottomNavigationFABBehavior(@Nullable Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
-        restOffset = context != null
+        clearance = context != null
                 ? context.getResources().getDimensionPixelOffset(R.dimen.app_bar_fab_margin)
                 : 0;
     }
@@ -78,23 +85,22 @@ public final class BottomNavigationFABBehavior extends CoordinatorLayout.Behavio
 
         if (!hidden && collapse >= HIDE_AT) {
             hidden = true;
-            // FAB bottom edge at the bar's bottom edge → fully off-screen.
-            snapTo(child, barHeight);
+            // barHeight alone leaves the docked FAB's above-the-bar overhang
+            // visible; + clearance pushes it fully off-screen.
+            snapTo(child, barHeight + clearance);
             return true;
         }
         if (hidden && collapse <= SHOW_AT) {
             hidden = false;
-            snapTo(child, -restOffset);
+            // Back to the layout-owned rest position (translation 0).
+            snapTo(child, 0f);
             return true;
         }
         if (runningAnim == null) {
-            // Track the bar. The tracking offset depends on state: visible
-            // keeps the FAB restOffset above the bar's top edge; hidden glues
-            // the FAB to the bar (offset 0) so when the bar slides back up from
-            // off-screen, the FAB rides along smoothly. The snap-in animation
-            // covers the final restOffset lift once the bar is fully expanded.
-            final float offset = hidden ? 0f : restOffset;
-            child.setTranslationY(barTrans - offset);
+            // Pure 1:1 tracking — the rest position lives in the layout
+            // (gravity + bottomMargin), so the follower adds NO offset of
+            // its own; the snap animations cover the clearance delta.
+            child.setTranslationY(barTrans);
             return true;
         }
         return false;

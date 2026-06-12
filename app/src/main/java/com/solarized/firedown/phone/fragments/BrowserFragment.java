@@ -470,6 +470,29 @@ public class BrowserFragment extends BaseBrowserFragment
             bundle.putBoolean(Keys.IS_INCOGNITO, mIsIncognitoThemed);
             NavigationUtils.navigateSafe(mNavController, R.id.dialog_browser_options, R.id.browser, bundle);
         });
+
+        // Dock the FAB the Home/Tabs way: bottomMargin = (bar height − the
+        // 64dp content row) + app_bar_fab_margin ≡ nav inset + lift (the
+        // self-padding bar's height carries the inset). Recomputed on every
+        // bar layout pass so the inset landing — or rotating — can't leave a
+        // stale margin. The old layout_anchor placement broke with the
+        // edge-to-edge bar (its bottom edge is the true window bottom now);
+        // BottomNavigationFABBehavior remains purely the scroll-follower.
+        mBottomNavigationBar.addOnLayoutChangeListener(
+                (bar, l, t, r, b, ol, ot, or, ob) -> {
+                    int barHeight = b - t;
+                    if (barHeight <= 0 || mDownloadButton == null) {
+                        return;
+                    }
+                    int margin = Math.max(0, barHeight - mChromeBarBaseSize)
+                            + getResources().getDimensionPixelOffset(R.dimen.app_bar_fab_margin);
+                    ViewGroup.MarginLayoutParams params =
+                            (ViewGroup.MarginLayoutParams) mDownloadButton.getLayoutParams();
+                    if (params.bottomMargin != margin) {
+                        params.bottomMargin = margin;
+                        mDownloadButton.setLayoutParams(params);
+                    }
+                });
         return v;
     }
 
