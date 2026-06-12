@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Regular home in the incognito design language</title>
+<style>
+  :root{
+    --surface:#131315; --container:#1F1F22; --containerHigh:#292A2C;
+    --card:#343537; --chipWell:#292A2C;
+    --onSurface:#E4E2E5; --onSurfaceVar:#C5C6CD;
+    --coral:#F66A66; --onCoral:#0F0000;
+    --rasp:#C8417B;  --onRasp:#FFFFFF;
+    --peach:#FAB186; --onPeach:#532606;
+    /* incognito */
+    --inkCanvas:#2A1A40; --inkBar:#3A2756; --inkPill:#4B3470;
+    --inkChip1:#6E4A4A; --inkChip2:#7A3A52; --inkChip3:#7A5A3A;
+  }
+  *{box-sizing:border-box;}
+  body{background:#1b1b1d;color:#eee;font-family:Roboto,system-ui,sans-serif;margin:0;padding:26px;}
+  h1{font-size:18px;margin:0 0 2px;} .sub{color:#9a9a9e;font-size:13px;margin:0 0 20px;max-width:780px;line-height:1.5;}
+  .row{display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;}
+  .col{width:280px;}
+  .label{font-size:13px;font-weight:600;color:#cfcfd3;margin:0 0 8px;}
+  .label small{font-weight:400;color:#8a8a8e;}
+  .phone{border-radius:22px;padding:10px 10px 0;box-shadow:0 8px 30px rgba(0,0,0,.45);overflow:hidden;height:560px;display:flex;flex-direction:column;}
+  .pill{height:44px;border-radius:22px;display:flex;align-items:center;gap:9px;padding:0 14px;font-size:14px;margin:0 0 14px;}
+  .chip{width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+  .item{display:flex;align-items:center;gap:14px;padding:11px 12px;border-radius:14px;}
+  .it b{font-size:14px;font-weight:500;display:block;line-height:1.25;}
+  .it span{font-size:12px;}
+  .bar{margin-top:auto;height:60px;display:flex;align-items:center;justify-content:space-around;position:relative;
+       margin-left:-10px;margin-right:-10px;font-size:19px;}
+  .fab{position:absolute;left:50%;top:0;transform:translate(-50%,-32%);width:54px;height:54px;border-radius:17px;
+       background:var(--coral);color:var(--onCoral);display:flex;align-items:center;justify-content:center;font-size:21px;}
+
+  /* ===== INCOGNITO (reference) ===== */
+  .ink{background:var(--inkCanvas);}
+  .ink .pill{background:var(--inkPill);color:#cdbce6;}
+  .ink h2{color:#efe8fb;font-size:19px;margin:2px 4px 14px;font-weight:600;}
+  .ink .item .chip.c1{background:var(--inkChip1);} .ink .item .chip.c2{background:var(--inkChip2);} .ink .item .chip.c3{background:var(--inkChip3);}
+  .ink .it b{color:#efe8fb;} .ink .it span{color:#b9a9d4;}
+  .ink .bar{background:var(--inkBar);color:#cdbce6;}
+
+  /* ===== REGULAR CURRENT (Tonal, filled cards) ===== */
+  .cur{background:var(--surface);}
+  .cur .pill{background:var(--card);color:var(--onSurfaceVar);}
+  .cur .item{background:var(--card);margin-bottom:9px;}
+  .cur .it b{color:var(--onSurface);} .cur .it span{color:var(--onSurfaceVar);}
+  .cur .chip.c1{background:var(--coral);color:var(--onCoral);}
+  .cur .chip.c2{background:var(--rasp);color:var(--onRasp);}
+  .cur .chip.c3{background:var(--peach);color:var(--onPeach);}
+  .cur .bar{background:var(--container);color:var(--onSurface);}
+
+  /* ===== REGULAR NEW (incognito language) ===== */
+  .new{background:var(--surface);}
+  .new .pill{background:var(--card);color:var(--onSurfaceVar);}
+  .new h2{color:var(--onSurface);font-size:19px;margin:2px 4px 12px;font-weight:600;}
+  .new .item{background:transparent;margin-bottom:4px;}          /* FLAT rows, ripple-tappable */
+  .new .it b{color:var(--onSurface);} .new .it span{color:var(--onSurfaceVar);}
+  /* chips keep landmark hue but DESATURATED (tonal container), so they don't twin the FAB */
+  .new .chip.c1{background:#5A2E2C;color:#F6B6B3;}   /* coral, dimmed — no longer == FAB */
+  .new .chip.c2{background:#552538;color:#F4A9C6;}
+  .new .chip.c3{background:#4A3A28;color:#F3CBA3;}
+  .new .bar{background:var(--container);color:var(--onSurface);}
+</style>
+</head>
+<body>
+  <h1>Bringing the incognito language to regular home</h1>
+  <p class="sub">Why incognito reads best: flat rows + small tinted chips + ONE hero accent (the FAB). Regular home today puts colour in the whole card AND repeats the FAB's coral in the Downloads chip. The "NEW" column borrows the structure: flat rows, chips kept as landmarks but desaturated so they stop twinning the FAB.</p>
+
+  <div class="row">
+
+    <!-- INCOGNITO reference -->
+    <div class="col"><p class="label">Incognito <small>· the reference</small></p>
+      <div class="phone ink">
+        <div class="pill">⌕&nbsp; Search or Type URL</div>
+        <h2>Private Browsing</h2>
+        <div class="item"><div class="chip c1">↺</div><div class="it"><b>No history</b><span>Pages &amp; searches aren't saved.</span></div></div>
+        <div class="item"><div class="chip c2">◷</div><div class="it"><b>No cookies</b><span>Cleared when you close tabs.</span></div></div>
+        <div class="item"><div class="chip c3">🔒</div><div class="it"><b>Downloads stay private</b><span>Saved to your Safe Folder.</span></div></div>
+        <div class="bar"><span>＋</span><span>▢</span><span style="width:54px"></span><span>🔒</span><span>⋮</span><div class="fab">▮</div></div>
+      </div></div>
+
+    <!-- REGULAR current -->
+    <div class="col"><p class="label">Regular today <small>· Tonal, filled cards</small></p>
+      <div class="phone cur">
+        <div class="pill">⌕&nbsp; Search or Type URL</div>
+        <div class="item"><div class="chip c1">⬇</div><div class="it"><b>Downloads</b><span>97 files · 8.2 GB</span></div></div>
+        <div class="item"><div class="chip c2">🔒</div><div class="it"><b>Safe Folder</b><span>14 items</span></div></div>
+        <div class="item"><div class="chip c3">🛡</div><div class="it"><b>Trackers blocked</b><span>9,955</span></div></div>
+        <div class="bar"><span>＋</span><span>▢</span><span style="width:54px"></span><span>⬇</span><span>⋮</span><div class="fab">▮</div></div>
+      </div>
+      <p style="color:#8a8a8e;font-size:11.5px;margin:7px 4px;">Coral chip == coral FAB. Four colour focal points.</p>
+    </div>
+
+    <!-- REGULAR new -->
+    <div class="col"><p class="label">Regular NEW <small>· incognito language</small></p>
+      <div class="phone new">
+        <div class="pill">⌕&nbsp; Search or Type URL</div>
+        <h2>Home</h2>
+        <div class="item"><div class="chip c1">⬇</div><div class="it"><b>Downloads</b><span>97 files · 8.2 GB</span></div></div>
+        <div class="item"><div class="chip c2">🔒</div><div class="it"><b>Safe Folder</b><span>14 items</span></div></div>
+        <div class="item"><div class="chip c3">🛡</div><div class="it"><b>Trackers blocked</b><span>9,955</span></div></div>
+        <div class="bar"><span>＋</span><span>▢</span><span style="width:54px"></span><span>⬇</span><span>⋮</span><div class="fab">▮</div></div>
+      </div>
+      <p style="color:#8a8a8e;font-size:11.5px;margin:7px 4px;">Flat rows. Chips dimmed → FAB is the only saturated coral. One hero.</p>
+    </div>
+
+  </div>
+
+  <div style="margin-top:22px;max-width:840px;background:#242427;border-radius:10px;padding:13px 15px;font-size:13px;line-height:1.6;color:#ccc;">
+    <b>What carries over:</b> flat rows (ripple-tappable, like a settings list), small chips as colour landmarks, a single hero FAB. The chips keep their hue identity (coral/raspberry/peach) but at <i>tonal-container</i> chroma — dim enough that the Downloads chip no longer twins the coral FAB, so the FAB is unmistakably the one accent.
+    <br><br>
+    <b>Honest caveat:</b> regular can't borrow incognito's <i>tinted canvas</i> — it's the neutral mode, a purple regular home would be wrong. So this gets incognito's calm and balance, but not the coral-on-purple punch. A small optional touch to recover some warmth: a faint <code>"Home"</code> header (shown) gives the screen the same titled-anchor incognito has.
+    <br><br>
+    <b>This replaces the Tonal/Neutral/default debate:</b> if regular adopts this, the heavy filled-card "Tonal" and the flat "Neutral" both fold into ONE balanced default, and the styles picker could even retire (or keep only Coral as the "I want the loud version" opt-in).
+  </div>
+</body>
+</html>
