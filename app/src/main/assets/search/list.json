@@ -14,6 +14,13 @@
     "search": "https://www.startpage.com/do/dsearch?q=%s&cat=web"
   },
   {
+    "name": "Mojeek",
+    "url": "https://www.mojeek.com",
+    "suggestion": "",
+    "method": "GET",
+    "search": "https://www.mojeek.com/search?q=%s"
+  },
+  {
     "name": "DuckDuckGo",
     "url": "https://duckduckgo.com",
     "suggestion": "https://duckduckgo.com/ac/?q=%s&amp;type=list",
@@ -54,12 +61,5 @@
     "suggestion": "https://suggest.yandex.ru/suggest-ya.cgi?v=4&part=%s",
     "method": "GET",
     "search": "https://yandex.com/search/?text=%s&lr=10435&search_source=yacom_desktop_common"
-  },
-  {
-    "name": "Mojeek",
-    "url": "https://www.mojeek.com",
-    "suggestion": "",
-    "method": "GET",
-    "search": "https://www.mojeek.com/search?q=%s"
   }
 ]

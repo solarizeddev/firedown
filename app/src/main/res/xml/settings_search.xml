@@ -35,6 +35,12 @@
         android:icon="@drawable/ic_startpage_icon">
     </com.solarized.firedown.settings.ui.RadioButtonPreference>
 
+    <com.solarized.firedown.settings.ui.RadioButtonPreference
+        android:key="com.solarized.firedown.preferences.search.engine.mojeek"
+        android:title="Mojeek"
+        android:icon="@drawable/ic_mojeek_icon">
+    </com.solarized.firedown.settings.ui.RadioButtonPreference>
+
 
     <com.solarized.firedown.settings.ui.RadioButtonPreference
         android:key="com.solarized.firedown.preferences.search.engine.bing"
@@ -53,12 +59,6 @@
         android:key="com.solarized.firedown.preferences.search.engine.yandex"
         android:title="Yandex"
         android:icon="@drawable/ic_yandex_icon">
-    </com.solarized.firedown.settings.ui.RadioButtonPreference>
-
-    <com.solarized.firedown.settings.ui.RadioButtonPreference
-        android:key="com.solarized.firedown.preferences.search.engine.mojeek"
-        android:title="Mojeek"
-        android:icon="@drawable/ic_mojeek_icon">
     </com.solarized.firedown.settings.ui.RadioButtonPreference>
 
     <!-- The user-defined engine's radio row is added programmatically by
