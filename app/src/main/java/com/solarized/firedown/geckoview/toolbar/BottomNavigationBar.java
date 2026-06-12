@@ -16,9 +16,6 @@ import androidx.annotation.Nullable;
 import androidx.annotation.OptIn;
 import androidx.appcompat.widget.AppCompatImageButton;
 import androidx.core.content.ContextCompat;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 import androidx.core.widget.ImageViewCompat;
 
 import com.google.android.material.badge.ExperimentalBadgeUtils;
@@ -118,8 +115,10 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
             }
         });
 
-        applyWindowInsets();
-
+        // FRAMED model: the bar does NOT self-pad the nav inset — the
+        // browser root reserves the nav strip with its own safe-area
+        // padding, so the bar is a plain app_bar_size-tall bar. (It no
+        // longer consumes insets either; the root consumes them.)
     }
 
 
@@ -135,13 +134,10 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
 
         ColorStateList iconTint = ColorStateList.valueOf(iconColor);
 
-        // Background goes on THIS view, not the LinearLayout child: the
-        // nav-inset padding (applyWindowInsets) lives on this FrameLayout,
-        // so a child-only background leaves the inset strip transparent —
-        // fine while bar == window background, a visible two-tone seam at
-        // the gesture area once the bar is tonal. Painting the outer view
-        // covers the icon row AND the inset strip in one tone, same as the
-        // self-padded tabs bar.
+        // Background on THIS view (the FrameLayout), not the LinearLayout
+        // child — paints the whole bar in one tone. (In the framed model
+        // the bar no longer self-pads the nav inset; the root reserves the
+        // nav strip, so there is no inset strip to leak here.)
         setBackgroundColor(surfaceColor);
 
         // Tint each icon button
@@ -192,21 +188,6 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
         if (mBadge != null) {
             mBadge.setBackgroundColor(IncognitoColors.getPrimaryContainer(context, incognito));
         }
-    }
-
-    private void applyWindowInsets() {
-        ViewCompat.setOnApplyWindowInsetsListener(this, (v, windowInsets) -> {
-            Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars() |
-                    WindowInsetsCompat.Type.displayCutout());
-            // Apply the insets as padding to the view. Here, set all the dimensions
-            // as appropriate to your layout. You can also update the view's margin if
-            // more appropriate.
-            v.setPadding(insets.left, 0, insets.right, insets.bottom);
-
-            // Return CONSUMED if you don't want the window insets to keep passing down
-            // to descendant views.
-            return WindowInsetsCompat.CONSUMED;
-        });
     }
 
     public void onBadgeCount(int count){

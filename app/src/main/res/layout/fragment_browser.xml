@@ -1,8 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    FRAMED chrome (Fenix-style), not immersive-under-bars. The root pads
+    itself on ALL FOUR sides by the system-bar insets (BrowserFragment's
+    root insets listener), so every child — toolbar, engine, bottom bar,
+    FAB — lives strictly INSIDE the safe area. The status/nav strips are
+    this view's own background showing through that padding (painted the
+    chrome tone in resetWindowTheme / applyIncognitoTheme), i.e. an opaque
+    frame. clipToPadding stays at its default TRUE: a bar scroll-hiding
+    translates up/down INTO the padding region and is clipped clean at the
+    frame edge — it never draws over the status icons. This retires the
+    dead-zone the old self-padded toolbar had (it travelled height+inset
+    while the viewport only reclaimed height, so the bars never fully hid
+    on a normal scroll); now the bars are a true app_bar_size tall, which
+    MATCHES the content-only heights NestedGeckoViewBehavior already uses,
+    so bar travel == reclaimed viewport and the bars hide on a short flick.
+-->
 <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="?attr/colorSurfaceContainer"
     android:descendantFocusability="beforeDescendants"
     android:focusableInTouchMode="true">
 
@@ -48,12 +65,11 @@
 
 
     <!--
-        wrap_content, NOT a fixed app_bar_size: edge-to-edge, the bar
-        self-pads by the nav inset (BottomNavigationBar.applyWindowInsets)
-        so its background owns the system-nav strip — a fixed height would
-        squash the icon row by the inset instead of growing the bar. The
-        root insets listener (BrowserFragment.onViewCreated) deliberately
-        returns the insets unconsumed so this self-padding receives them.
+        wrap_content + minHeight app_bar_size: in the FRAMED model the bar
+        no longer self-pads the nav inset (the root padding reserves the
+        nav strip), so it is a plain app_bar_size-tall bar sitting just
+        above the nav frame. It scroll-hides DOWNWARD and clipToPadding
+        clips it at the content-area bottom edge.
     -->
     <com.solarized.firedown.geckoview.toolbar.BottomNavigationBar
         android:id="@+id/bottom_app_bar"
@@ -67,14 +83,13 @@
 
 
     <!--
-        No layout_anchor: edge-to-edge moved the bar's bottom edge to the
-        TRUE window bottom, so the old bottom|center anchor parked the FAB
-        half under the system nav. Rest position is owned by LAYOUT — the
-        Home/Tabs recipe: bottom gravity + a code-set bottomMargin of
-        (nav inset + app_bar_fab_margin), wired in BrowserFragment beside
-        the FAB binding. BottomNavigationFABBehavior stays, demoted to a
-        pure follower: it only mirrors the bar's scroll-hide translation
-        and snaps fully clear, never computing the rest position.
+        No layout_anchor. In the FRAMED model the FAB is a child of the
+        safe-area-padded root, so its rest position is just a bottom
+        gravity + app_bar_fab_margin bottomMargin (16dp above the nav
+        frame) — the nav inset is already reserved by the root padding.
+        BottomNavigationFABBehavior is a pure follower: it mirrors the
+        bar's scroll-hide translation 1:1 and clipToPadding clips it at
+        the content-area bottom edge as it goes.
     -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/download_button"
