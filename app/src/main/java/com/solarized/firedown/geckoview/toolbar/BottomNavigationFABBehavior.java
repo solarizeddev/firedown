@@ -19,18 +19,27 @@ import com.solarized.firedown.R;
 
 /**
  * PURE FOLLOWER: mirrors the {@link BottomNavigationBar}'s scroll-hide
- * translation onto the FAB 1:1 and snaps it fully clear once the bar is
- * essentially collapsed. The FAB's REST position is owned by LAYOUT, not by
- * this behavior — bottom gravity plus a code-set bottomMargin of
- * (nav inset + app_bar_fab_margin), the same Home/Tabs dock recipe, wired in
- * BrowserFragment. History: this behavior used to add a {@code restOffset}
- * lift on top of an anchored position, but anchoring broke when the
- * edge-to-edge bar's bottom edge moved to the true window bottom (the FAB
- * sank under the system nav), and an event-driven lift gives a
- * non-deterministic first frame — layout-owned rest position has neither
- * problem. {@code clearance} survives only in the snap-OUT target: the docked
- * FAB pokes above the bar's top edge, so translating by barHeight alone would
- * leave that overhang visible; barHeight + clearance clears it fully.
+ * translation onto the FAB 1:1 while the bar is visible, and parks the FAB
+ * at a deliberate PEEK once the bar is essentially collapsed — a tiny
+ * sliver of the hero button stays visible at the bottom edge as a handle
+ * (maintainer's call: "not hidden, not visible, tiny visible"; it remains
+ * tappable, opening the Captured sheet without re-summoning the bars). The
+ * FAB's REST position is owned by LAYOUT, not by this behavior — bottom
+ * gravity plus a code-set bottomMargin of (nav inset + app_bar_fab_margin),
+ * the same Home/Tabs dock recipe, wired in BrowserFragment. History: this
+ * behavior used to add a {@code restOffset} lift on top of an anchored
+ * position, but anchoring broke when the edge-to-edge bar's bottom edge
+ * moved to the true window bottom (the FAB sank under the system nav), and
+ * an event-driven lift gives a non-deterministic first frame — layout-owned
+ * rest has neither problem.
+ *
+ * <p>The peek position is HELD CONSTANT while hidden, never re-derived from
+ * the bar's translation: the hidden bar can still wiggle a few px (the
+ * inset dead-zone of the self-padded toolbar's extra travel), and 1:1
+ * tracking in the hidden state turned that wiggle into a bobbing sliver
+ * (observed on a Pixel-class device). Fullscreen video and find-in-page
+ * fully hide the FAB via {@code mDownloadButton.hide()} regardless, so the
+ * peek never shows there.
  *
  * <p>Thresholds are expressed as a collapse fraction
  * ({@code bar.translationY / bar.height}) with hysteresis so the FAB doesn't
@@ -44,16 +53,16 @@ public final class BottomNavigationFABBehavior extends CoordinatorLayout.Behavio
     private static final float SHOW_AT = 0.05f;
     private static final int   ANIM_DURATION_MS = 150;
 
-    /** Overhang clearance for the snap-out target (see class javadoc). */
-    private final int clearance;
+    /** Height of the FAB sliver left visible in the hidden (peek) state. */
+    private final int peek;
 
     @Nullable private Animator runningAnim;
     private boolean hidden = false;
 
     public BottomNavigationFABBehavior(@Nullable Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
-        clearance = context != null
-                ? context.getResources().getDimensionPixelOffset(R.dimen.app_bar_fab_margin)
+        peek = context != null
+                ? context.getResources().getDimensionPixelOffset(R.dimen.app_bar_fab_peek)
                 : 0;
     }
 
@@ -85,9 +94,7 @@ public final class BottomNavigationFABBehavior extends CoordinatorLayout.Behavio
 
         if (!hidden && collapse >= HIDE_AT) {
             hidden = true;
-            // barHeight alone leaves the docked FAB's above-the-bar overhang
-            // visible; + clearance pushes it fully off-screen.
-            snapTo(child, barHeight + clearance);
+            snapTo(child, peekTranslation(parent, child));
             return true;
         }
         if (hidden && collapse <= SHOW_AT) {
@@ -97,13 +104,34 @@ public final class BottomNavigationFABBehavior extends CoordinatorLayout.Behavio
             return true;
         }
         if (runningAnim == null) {
-            // Pure 1:1 tracking — the rest position lives in the layout
-            // (gravity + bottomMargin), so the follower adds NO offset of
-            // its own; the snap animations cover the clearance delta.
-            child.setTranslationY(barTrans);
+            if (hidden) {
+                // Hold the peek steady — re-deriving from the bar's
+                // translation here turned the dead-zone wiggle into a
+                // bobbing sliver (see class javadoc).
+                child.setTranslationY(peekTranslation(parent, child));
+            } else {
+                // Pure 1:1 tracking — the rest position lives in the layout
+                // (gravity + bottomMargin), so the follower adds NO offset
+                // of its own; the snap animations cover the peek delta.
+                child.setTranslationY(barTrans);
+            }
             return true;
         }
         return false;
+    }
+
+    /**
+     * Translation that leaves exactly {@code peek} px of the FAB visible
+     * above the window's bottom edge. Derived from the LAYOUT geometry
+     * (gravity-bottom + bottomMargin → the gap below the child is
+     * {@code parentHeight − child.bottom}), so it is correct for any nav
+     * inset, including zero (gesture-nav devices with no bar), where the
+     * old fixed-distance snap mis-aimed.
+     */
+    private float peekTranslation(@NonNull CoordinatorLayout parent,
+                                  @NonNull FloatingActionButton child) {
+        int marginBelow = parent.getHeight() - child.getBottom();
+        return marginBelow + child.getHeight() - peek;
     }
 
     private void snapTo(@NonNull FloatingActionButton child, float target) {

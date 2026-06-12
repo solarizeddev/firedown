@@ -10,6 +10,10 @@
     <dimen name="app_bar_icon_size">24dp</dimen>
     <dimen name="app_bar_fab_elevation">12dp</dimen>
     <dimen name="app_bar_fab_margin">16dp</dimen>
+    <!-- FAB sliver left visible when the browser bars scroll-hide
+         (BottomNavigationFABBehavior peek state) — a tappable handle,
+         deliberately neither hidden nor docked. -->
+    <dimen name="app_bar_fab_peek">10dp</dimen>
     <dimen name="autocomplete_elevation">20dp</dimen>
     <dimen name="badge_horizontal_offset">20dp</dimen>
     <dimen name="badge_vertical_offset">20dp</dimen>
