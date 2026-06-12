@@ -255,14 +255,6 @@
     <string name="bookmark_name">Pangalan</string>
     <string name="home_vault_button">Ligtas na folder</string>
 <string name="settings_theme_app_category">Tema ng app</string>
-    <string name="settings_theme_home_category">Home screen</string>
-    <string name="settings_home_cards">Home cards</string>
-    <string name="settings_home_cards_summary">Piliin ang istilo ng home cards</string>
-    <string name="settings_home_cards_header">Iisang tema ang nagpapalit sa lahat ng card sabay-sabay — piliin ang hitsurang gusto mo.</string>
-    <string name="home_card_style_neutral">Neutral</string>
-    <string name="home_card_style_coral">Coral</string>
-    <string name="home_card_style_preview_downloads_subtitle">150 file ang nai-save · 2.4 GB</string>
-    <string name="home_card_style_preview_vault_subtitle">12 item ang nai-save</string>
     <string name="crash_sheet_title">Natukoy ang pag-crash</string>
     <string name="crash_sheet_report">Iulat</string>
     <string name="crash_sheet_copy">Kopyahin</string>
@@ -273,7 +265,6 @@
     <string name="home_trackers_subtitle">%1$s · ~%2$s naitipid</string>
     <string name="home_trackers_subtitle_idle">Aktibo ang proteksyon</string>
     <string name="home_vault_empty_subtitle">Pribado at naka-encrypt</string>
-    <string name="home_card_style_preview_trackers_subtitle">12,345 · ~580 MB naitipid</string>
     <string name="trackers_info_count_label">tracker at ad ang na-block</string>
     <string name="trackers_info_saved">~%1$s ng bandwidth naitipid</string>
     <string name="trackers_info_categories">Tracker · Ad · Fingerprinting · Cookies</string>
@@ -287,7 +278,6 @@
     <string name="trackers_info_stat_saved">Naipong data</string>
     <string name="trackers_info_action">Pamahalaan ang proteksyon</string>
     <string name="trackers_info_today">%1$s na-block ngayon</string>
-    <string name="home_card_style_tonal">Tonal</string>
 
 
 

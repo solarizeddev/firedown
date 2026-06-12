@@ -58,14 +58,6 @@
     <string name="switch_to_tab_description">Cambiar a pestañas</string>
     <string name="bookmark_name">Nombre</string>
 <string name="settings_theme_app_category">Tema de la aplicación</string>
-    <string name="settings_theme_home_category">Página de inicio</string>
-    <string name="settings_home_cards">Tarjetas de inicio</string>
-    <string name="settings_home_cards_summary">Elige el estilo de las tarjetas de inicio</string>
-    <string name="settings_home_cards_header">Un solo tema cambia todas las tarjetas a la vez — elige el aspecto que prefieras.</string>
-    <string name="home_card_style_neutral">Neutro</string>
-    <string name="home_card_style_coral">Coral</string>
-    <string name="home_card_style_preview_downloads_subtitle">150 archivos guardados · 2,4 GB</string>
-    <string name="home_card_style_preview_vault_subtitle">12 elementos guardados</string>
     <string name="crash_sheet_title">Fallo detectado</string>
     <string name="crash_sheet_report">Informar</string>
     <string name="crash_sheet_copy">Copiar</string>
@@ -76,7 +68,6 @@
     <string name="home_trackers_subtitle">%1$s · ~%2$s ahorrados</string>
     <string name="home_trackers_subtitle_idle">Protección activa</string>
     <string name="home_vault_empty_subtitle">Privada y cifrada</string>
-    <string name="home_card_style_preview_trackers_subtitle">12.345 · ~580 MB ahorrados</string>
     <string name="trackers_info_count_label">rastreadores y anuncios bloqueados</string>
     <string name="trackers_info_saved">~%1$s de ancho de banda ahorrados</string>
     <string name="trackers_info_categories">Rastreadores · Anuncios · Huella digital · Cookies</string>
@@ -90,7 +81,6 @@
     <string name="trackers_info_stat_saved">Datos ahorrados</string>
     <string name="trackers_info_action">Gestionar protección</string>
     <string name="trackers_info_today">%1$s bloqueados hoy</string>
-    <string name="home_card_style_tonal">Tonal</string>
 
 
 

@@ -340,14 +340,6 @@
     <string name="settings_wasm_allowlist_remove_message">Rimuovere %s dalla lista consentiti di WebAssembly?</string>
     <string name="settings_wasm_allowlist_remove_confirm">Rimuovi</string>
 <string name="settings_theme_app_category">Tema dell\'app</string>
-    <string name="settings_theme_home_category">Schermata Home</string>
-    <string name="settings_home_cards">Schede Home</string>
-    <string name="settings_home_cards_summary">Scegli lo stile delle schede Home</string>
-    <string name="settings_home_cards_header">Un unico tema cambia tutte le schede insieme — scegli l\'aspetto che preferisci.</string>
-    <string name="home_card_style_neutral">Neutro</string>
-    <string name="home_card_style_coral">Coral</string>
-    <string name="home_card_style_preview_downloads_subtitle">150 file salvati · 2,4 GB</string>
-    <string name="home_card_style_preview_vault_subtitle">12 elementi salvati</string>
     <string name="crash_sheet_title">Arresto rilevato</string>
     <string name="crash_sheet_report">Segnala</string>
     <string name="crash_sheet_copy">Copia</string>
@@ -358,7 +350,6 @@
     <string name="home_trackers_subtitle">%1$s · ~%2$s risparmiati</string>
     <string name="home_trackers_subtitle_idle">Protezione attiva</string>
     <string name="home_vault_empty_subtitle">Privata e cifrata</string>
-    <string name="home_card_style_preview_trackers_subtitle">12.345 · ~580 MB risparmiati</string>
     <string name="trackers_info_count_label">tracker e annunci bloccati</string>
     <string name="trackers_info_saved">~%1$s di banda risparmiata</string>
     <string name="trackers_info_categories">Tracker · Annunci · Fingerprinting · Cookie</string>
@@ -372,7 +363,6 @@
     <string name="trackers_info_stat_saved">Dati risparmiati</string>
     <string name="trackers_info_action">Gestisci protezione</string>
     <string name="trackers_info_today">%1$s bloccati oggi</string>
-    <string name="home_card_style_tonal">Tonale</string>
 
 
 

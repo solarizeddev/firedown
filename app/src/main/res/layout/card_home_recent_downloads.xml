@@ -32,7 +32,8 @@
             android:id="@+id/recent_downloads_chip"
             android:layout_width="40dp"
             android:layout_height="40dp"
-            android:background="@drawable/bg_icon_container_primary">
+            android:background="@drawable/bg_icon_container_primary"
+            android:backgroundTint="@color/home_chip_downloads">
 
             <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/recent_downloads_icon"
@@ -41,7 +42,7 @@
                 android:layout_gravity="center"
                 android:contentDescription="@null"
                 android:src="@drawable/download_24"
-                app:tint="?attr/colorOnPrimaryContainer" />
+                app:tint="@color/home_chip_downloads_on" />
 
         </FrameLayout>
 

@@ -234,14 +234,6 @@
     <string name="vault_unsupported">ಈ ಫೈಲ್ ಅನ್ನು ತೆರೆಯಲು ಸಾಧ್ಯವಿಲ್ಲ. ತೆರೆಯಲು, ಅದನ್ನು ಸುರಕ್ಷಿತ ಫೋಲ್ಡರ್‌ನಿಂದ ಹೊರಗೆ ಸರಿಸಿ ಮತ್ತು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.</string>
     <string name="home_vault_button">ಸುರಕ್ಷಿತ ಫೋಲ್ಡರ್</string>
 <string name="settings_theme_app_category">ಆ್ಯಪ್ ಥೀಮ್</string>
-    <string name="settings_theme_home_category">ಮುಖಪುಟ</string>
-    <string name="settings_home_cards">ಮುಖಪುಟ ಕಾರ್ಡ್‌ಗಳು</string>
-    <string name="settings_home_cards_summary">ಮುಖಪುಟ ಕಾರ್ಡ್‌ಗಳ ಶೈಲಿಯನ್ನು ಆಯ್ಕೆಮಾಡಿ</string>
-    <string name="settings_home_cards_header">ಒಂದು ಥೀಮ್ ಎಲ್ಲಾ ಕಾರ್ಡ್‌ಗಳನ್ನು ಒಮ್ಮೆಲೇ ಬದಲಾಯಿಸುತ್ತದೆ — ನಿಮಗೆ ಇಷ್ಟವಾದ ನೋಟವನ್ನು ಆಯ್ಕೆಮಾಡಿ.</string>
-    <string name="home_card_style_neutral">ತಟಸ್ಥ</string>
-    <string name="home_card_style_coral">Coral</string>
-    <string name="home_card_style_preview_downloads_subtitle">150 ಫೈಲ್‌ಗಳು ಉಳಿಸಲಾಗಿದೆ · 2.4 GB</string>
-    <string name="home_card_style_preview_vault_subtitle">12 ಐಟಂಗಳು ಉಳಿಸಲಾಗಿದೆ</string>
     <string name="crash_sheet_title">ಕ್ರ್ಯಾಶ್ ಪತ್ತೆಯಾಗಿದೆ</string>
     <string name="crash_sheet_report">ವರದಿ</string>
     <string name="crash_sheet_copy">ನಕಲಿಸಿ</string>
@@ -252,13 +244,11 @@
     <string name="home_trackers_subtitle">%1$s · ~%2$s ಉಳಿತಾಯ</string>
     <string name="home_trackers_subtitle_idle">ರಕ್ಷಣೆ ಸಕ್ರಿಯವಾಗಿದೆ</string>
     <string name="home_vault_empty_subtitle">ಖಾಸಗಿ ಮತ್ತು ಎನ್‌ಕ್ರಿಪ್ಟ್ ಮಾಡಲಾಗಿದೆ</string>
-    <string name="home_card_style_preview_trackers_subtitle">12,345 · ~580 MB ಉಳಿತಾಯ</string>
     <string name="trackers_info_count_label">ಟ್ರ್ಯಾಕರ್‌ಗಳು ಮತ್ತು ಜಾಹೀರಾತುಗಳನ್ನು ನಿರ್ಬಂಧಿಸಲಾಗಿದೆ</string>
     <string name="trackers_info_saved">~%1$s ಬ್ಯಾಂಡ್‌ವಿಡ್ತ್ ಉಳಿತಾಯ</string>
     <string name="trackers_info_categories">ಟ್ರ್ಯಾಕರ್‌ಗಳು · ಜಾಹೀರಾತುಗಳು · ಫಿಂಗರ್‌ಪ್ರಿಂಟ್ · ಕುಕೀಗಳು</string>
     <string name="trackers_info_action">ರಕ್ಷಣೆಯನ್ನು ನಿರ್ವಹಿಸಿ</string>
     <string name="trackers_info_today">%1$s ಇಂದು ನಿರ್ಬಂಧಿಸಲಾಗಿದೆ</string>
-    <string name="home_card_style_tonal">ಟೋನಲ್</string>
 
 
 

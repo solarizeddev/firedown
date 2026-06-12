@@ -253,14 +253,6 @@
     <string name="bookmark_name">ຊື່</string>
     <string name="home_vault_button">ໂຟນເດີປອດໄພ</string>
 <string name="settings_theme_app_category">ຮູບແບບແອັບ</string>
-    <string name="settings_theme_home_category">ໜ້າຫຼັກ</string>
-    <string name="settings_home_cards">ບັດໜ້າຫຼັກ</string>
-    <string name="settings_home_cards_summary">ເລືອກສະໄຕລ໌ບັດໜ້າຫຼັກ</string>
-    <string name="settings_home_cards_header">ຮູບແບບໜຶ່ງປ່ຽນບັດທັງໝົດພ້ອມກັນ — ເລືອກລັກສະນະທີ່ທ່ານມັກ.</string>
-    <string name="home_card_style_neutral">ກາງ</string>
-    <string name="home_card_style_coral">Coral</string>
-    <string name="home_card_style_preview_downloads_subtitle">ບັນທຶກ 150 ໄຟລ໌ · 2.4 GB</string>
-    <string name="home_card_style_preview_vault_subtitle">ບັນທຶກ 12 ລາຍການ</string>
     <string name="crash_sheet_title">ກວດພົບການລົ້ມ</string>
     <string name="crash_sheet_report">ລາຍງານ</string>
     <string name="crash_sheet_copy">ສຳເນົາ</string>
@@ -271,7 +263,6 @@
     <string name="home_trackers_subtitle">%1$s · ປະຫຍັດ ~%2$s</string>
     <string name="home_trackers_subtitle_idle">ການປ້ອງກັນເຮັດວຽກຢູ່</string>
     <string name="home_vault_empty_subtitle">ສ່ວນຕົວ ແລະ ເຂົ້າລະຫັດ</string>
-    <string name="home_card_style_preview_trackers_subtitle">12,345 · ປະຫຍັດ ~580 MB</string>
     <string name="trackers_info_count_label">ຕົວຕິດຕາມ ແລະ ໂຄສະນາ ຖືກບລັອກ</string>
     <string name="trackers_info_saved">ປະຫຍັດແບນວິດ ~%1$s</string>
     <string name="trackers_info_categories">ຕົວຕິດຕາມ · ໂຄສະນາ · ລາຍນິ້ວມື · ຄຸກກີ</string>
@@ -285,7 +276,6 @@
     <string name="trackers_info_stat_saved">ຂໍ້ມູນທີ່ປະຢັດໄດ້</string>
     <string name="trackers_info_action">ຈັດການການປ້ອງກັນ</string>
     <string name="trackers_info_today">ບລັອກ %1$s ມື້ນີ້</string>
-    <string name="home_card_style_tonal">ໂທນ</string>
 
 
 

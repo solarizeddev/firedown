@@ -267,14 +267,6 @@
     <string name="incognito_fact_downloads_title">Descărcările rămân private</string>
     <string name="incognito_fact_downloads_sub">Salvate în Dosarul sigur, vizibile doar în Firedown.</string>
 <string name="settings_theme_app_category">Temă aplicație</string>
-    <string name="settings_theme_home_category">Pagina principală</string>
-    <string name="settings_home_cards">Carduri principale</string>
-    <string name="settings_home_cards_summary">Alege stilul cardurilor de pe pagina principală</string>
-    <string name="settings_home_cards_header">O singură temă schimbă toate cardurile odată — alege aspectul preferat.</string>
-    <string name="home_card_style_neutral">Neutru</string>
-    <string name="home_card_style_coral">Coral</string>
-    <string name="home_card_style_preview_downloads_subtitle">150 fișiere salvate · 2,4 GB</string>
-    <string name="home_card_style_preview_vault_subtitle">12 elemente salvate</string>
     <string name="crash_sheet_title">Eroare detectată</string>
     <string name="crash_sheet_report">Raportează</string>
     <string name="crash_sheet_copy">Copiază</string>
@@ -285,13 +277,11 @@
     <string name="home_trackers_subtitle">%1$s · ~%2$s economisiți</string>
     <string name="home_trackers_subtitle_idle">Protecție activă</string>
     <string name="home_vault_empty_subtitle">Privat și criptat</string>
-    <string name="home_card_style_preview_trackers_subtitle">12.345 · ~580 MB economisiți</string>
     <string name="trackers_info_count_label">urmăritoare și reclame blocate</string>
     <string name="trackers_info_saved">~%1$s de lățime de bandă economisiți</string>
     <string name="trackers_info_categories">Urmăritoare · Reclame · Amprentă · Cookie-uri</string>
     <string name="trackers_info_action">Gestionează protecția</string>
     <string name="trackers_info_today">%1$s blocate astăzi</string>
-    <string name="home_card_style_tonal">Tonal</string>
 
 
 

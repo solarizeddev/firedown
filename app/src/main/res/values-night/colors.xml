@@ -48,4 +48,11 @@
     <color name="md_theme_surfaceContainerHigh">#292A2C</color>
     <color name="md_theme_surfaceContainerHighest">#343537</color>
     <color name="md_theme_surfaceContainerLow_highContrast">#1B1B1E</color>
+    <!-- Home shelf-tile chips, dark — see values/colors.xml. -->
+    <color name="home_chip_downloads">#5A2E2C</color>
+    <color name="home_chip_downloads_on">#F6B6B3</color>
+    <color name="home_chip_vault">#552538</color>
+    <color name="home_chip_vault_on">#F4A9C6</color>
+    <color name="home_chip_trackers">#4A3A28</color>
+    <color name="home_chip_trackers_on">#F3CBA3</color>
 </resources>

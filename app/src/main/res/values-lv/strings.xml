@@ -209,14 +209,6 @@
     <string name="vault_unsupported">Nevar atvērt šo failu. Lai atvērtu, izņemiet to no drošās mapes un mēģiniet vēlreiz.</string>
     <string name="home_vault_button">Drošā mape</string>
 <string name="settings_theme_app_category">Lietotnes tēma</string>
-    <string name="settings_theme_home_category">Sākuma ekrāns</string>
-    <string name="settings_home_cards">Sākuma ekrāna kartītes</string>
-    <string name="settings_home_cards_summary">Izvēlieties sākuma ekrāna kartīšu stilu</string>
-    <string name="settings_home_cards_header">Viena tēma maina visas kartītes vienlaikus — izvēlieties izskatu, kas jums patīk.</string>
-    <string name="home_card_style_neutral">Neitrāla</string>
-    <string name="home_card_style_coral">Coral</string>
-    <string name="home_card_style_preview_downloads_subtitle">150 failu saglabāti · 2,4 GB</string>
-    <string name="home_card_style_preview_vault_subtitle">12 vienumi saglabāti</string>
     <string name="crash_sheet_title">Konstatēta avārija</string>
     <string name="crash_sheet_report">Ziņot</string>
     <string name="crash_sheet_copy">Kopēt</string>
@@ -227,13 +219,11 @@
     <string name="home_trackers_subtitle">%1$s · ~%2$s ietaupīti</string>
     <string name="home_trackers_subtitle_idle">Aizsardzība aktīva</string>
     <string name="home_vault_empty_subtitle">Privāts un šifrēts</string>
-    <string name="home_card_style_preview_trackers_subtitle">12 345 · ~580 MB ietaupīti</string>
     <string name="trackers_info_count_label">izsekotāji un reklāmas bloķētas</string>
     <string name="trackers_info_saved">~%1$s joslas platuma ietaupīts</string>
     <string name="trackers_info_categories">Izsekotāji · Reklāmas · Pirkstu nospiedumi · Sīkfaili</string>
     <string name="trackers_info_action">Pārvaldīt aizsardzību</string>
     <string name="trackers_info_today">%1$s šodien bloķēts</string>
-    <string name="home_card_style_tonal">Toņa</string>
 
 
 

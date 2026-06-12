@@ -522,21 +522,6 @@
          home-cards picker lives under the second so the two kinds of
          choices don't read as one continuous list. -->
     <string name="settings_theme_app_category">App theme</string>
-    <string name="settings_theme_home_category">Home page</string>
-    <!-- Settings → Theme → Home cards. Sub-screen that picks a
-         packaged style for the home page. -->
-    <string name="settings_home_cards">Home cards</string>
-    <string name="settings_home_cards_summary">Pick the style for home cards</string>
-    <string name="settings_home_cards_header">A single home theme flips all the home cards together — pick the look you like.</string>
-    <string name="home_card_style_neutral">Neutral</string>
-    <string name="home_card_style_tonal">Tonal</string>
-    <string name="home_card_style_coral">Coral</string>
-    <!-- Sample-data subtitles shown inside the style-picker previews.
-         Not surfaced anywhere else — purely illustrative so the
-         preview cards don't look anaemic. -->
-    <string name="home_card_style_preview_downloads_subtitle">150 files saved · 2.4 GB</string>
-    <string name="home_card_style_preview_vault_subtitle">12 items saved</string>
-    <string name="home_card_style_preview_trackers_subtitle">12,345 · ~580 MB saved</string>
     <string name="settings_utc_timezone">Spoof timezone to UTC</string>
     <string name="settings_utc_timezone_summary">Reports your timezone as UTC to reduce fingerprinting. May show wrong times on calendar sites.</string>
     <string name="settings_version">Version</string>

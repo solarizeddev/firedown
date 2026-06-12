@@ -261,14 +261,6 @@
     <string name="bookmark_name">Nome</string>
     <string name="home_vault_button">Cartafol seguro</string>
 <string name="settings_theme_app_category">Tema da aplicación</string>
-    <string name="settings_theme_home_category">Páxina de inicio</string>
-    <string name="settings_home_cards">Tarxetas de inicio</string>
-    <string name="settings_home_cards_summary">Elixe o estilo das tarxetas de inicio</string>
-    <string name="settings_home_cards_header">Un só tema cambia todas as tarxetas á vez — elixe o aspecto que prefiras.</string>
-    <string name="home_card_style_neutral">Neutro</string>
-    <string name="home_card_style_coral">Coral</string>
-    <string name="home_card_style_preview_downloads_subtitle">150 ficheiros gardados · 2,4 GB</string>
-    <string name="home_card_style_preview_vault_subtitle">12 elementos gardados</string>
     <string name="crash_sheet_title">Fallo detectado</string>
     <string name="crash_sheet_report">Informar</string>
     <string name="crash_sheet_copy">Copiar</string>
@@ -279,7 +271,6 @@
     <string name="home_trackers_subtitle">%1$s · ~%2$s aforrados</string>
     <string name="home_trackers_subtitle_idle">Protección activa</string>
     <string name="home_vault_empty_subtitle">Privada e cifrada</string>
-    <string name="home_card_style_preview_trackers_subtitle">12.345 · ~580 MB aforrados</string>
     <string name="trackers_info_count_label">rastrexadores e anuncios bloqueados</string>
     <string name="trackers_info_saved">~%1$s de largura de banda aforrados</string>
     <string name="trackers_info_categories">Rastrexadores · Anuncios · Pegada · Cookies</string>
@@ -293,7 +284,6 @@
     <string name="trackers_info_stat_saved">Datos aforrados</string>
     <string name="trackers_info_action">Xestionar protección</string>
     <string name="trackers_info_today">%1$s bloqueados hoxe</string>
-    <string name="home_card_style_tonal">Tonal</string>
 
 
 

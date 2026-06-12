@@ -1,7 +1,6 @@
 package com.solarized.firedown.phone.fragments;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextUtils;
@@ -22,7 +21,6 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleEventObserver;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.card.MaterialCardView;
@@ -32,7 +30,6 @@ import com.solarized.firedown.Keys;
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
 import com.solarized.firedown.geckoview.GeckoUblockHelper;
-import com.solarized.firedown.ui.HomeCardStyle;
 import com.solarized.firedown.data.entity.GeckoStateEntity;
 import com.solarized.firedown.data.entity.AutoCompleteEntity;
 import com.solarized.firedown.autocomplete.AutoCompleteViewModel;
@@ -181,9 +178,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
                     TrackersInfoSheet.show(
                             getChildFragmentManager()));
         }
-
-        applyHomeCardStyle(v);
-
 
         mBottomNavigationBar.setListener(this);
 
@@ -458,12 +452,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
             } else if (Lifecycle.Event.ON_RESUME.equals(event)) {
                 Log.d(TAG, "onResume");
                 mStop = false;
-                // Pick up any palette change made in Settings → Home
-                // cards. The settings sub-screen is hosted by another
-                // activity, so the home view survives the round-trip
-                // and only its chip backgrounds need to flip.
-                View root = getView();
-                if (root != null) applyHomeCardStyle(root);
             }
         });
 
@@ -507,61 +495,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mRecentDownloadsSubtitle = null;
         mTrackersCard = null;
         mTrackersSubtitle = null;
-    }
-
-    /**
-     * Paints the home cards — Downloads, Safe Folder,
-     * Trackers blocked — with the user's picked
-     * {@link HomeCardStyle}. One pref, all
-     * cards flip together; the picker rewards a coherent look rather
-     * than per-card tweaks. Called from {@code onCreateView} and again
-     * on {@code ON_RESUME} so a style change made in Settings shows up
-     * when the user navigates back, without forcing a fragment rebuild.
-     */
-    private void applyHomeCardStyle(@NonNull View root) {
-        SharedPreferences prefs = PreferenceManager
-                .getDefaultSharedPreferences(requireContext());
-        String key = prefs.getString(
-                Preferences.SETTINGS_HOME_CARD_STYLE,
-                Preferences.DEFAULT_HOME_CARD_STYLE);
-        // Fallback = the default (Tonal), so a stored key for a removed
-        // style (blush/bloom) renders the new default rather than Neutral.
-        HomeCardStyle style =
-                HomeCardStyle.fromKey(key, HomeCardStyle.TONAL);
-        boolean night = HomeCardStyle.isNightMode(getResources());
-
-        MaterialCardView downloadsCard = root.findViewById(R.id.recent_downloads_card);
-        if (downloadsCard != null) {
-            HomeCardStyle.applyToCard(
-                    downloadsCard,
-                    root.findViewById(R.id.recent_downloads_chip),
-                    root.findViewById(R.id.recent_downloads_icon),
-                    root.findViewById(R.id.recent_downloads_title),
-                    mRecentDownloadsSubtitle,
-                    style.downloads(night));
-        }
-
-        MaterialCardView vaultCard = root.findViewById(R.id.home_vault_card);
-        if (vaultCard != null) {
-            HomeCardStyle.applyToCard(
-                    vaultCard,
-                    root.findViewById(R.id.home_vault_chip),
-                    root.findViewById(R.id.home_vault_icon),
-                    root.findViewById(R.id.home_vault_title),
-                    mHomeVaultSubtitle,
-                    style.vault(night));
-        }
-
-        MaterialCardView trackersCard = root.findViewById(R.id.home_trackers_card);
-        if (trackersCard != null) {
-            HomeCardStyle.applyToCard(
-                    trackersCard,
-                    root.findViewById(R.id.home_trackers_chip),
-                    root.findViewById(R.id.home_trackers_icon),
-                    root.findViewById(R.id.home_trackers_title),
-                    mTrackersSubtitle,
-                    style.trackers(night));
-        }
     }
 
     /** Binds the 'N files saved · X.Y GB' subtitle on the Downloads

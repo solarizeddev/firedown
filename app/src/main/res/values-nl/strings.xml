@@ -380,14 +380,6 @@
     <string name="settings_wasm_allowlist_remove_message">%s uit de WebAssembly-toelatingslijst verwijderen?</string>
     <string name="settings_wasm_allowlist_remove_confirm">Verwijderen</string>
 <string name="settings_theme_app_category">Appthema</string>
-    <string name="settings_theme_home_category">Startpagina</string>
-    <string name="settings_home_cards">Startkaarten</string>
-    <string name="settings_home_cards_summary">Kies de stijl voor de startkaarten</string>
-    <string name="settings_home_cards_header">Eén thema verandert alle kaarten tegelijk — kies de look die je het mooiste vindt.</string>
-    <string name="home_card_style_neutral">Neutraal</string>
-    <string name="home_card_style_coral">Coral</string>
-    <string name="home_card_style_preview_downloads_subtitle">150 bestanden opgeslagen · 2,4 GB</string>
-    <string name="home_card_style_preview_vault_subtitle">12 items opgeslagen</string>
     <string name="crash_sheet_title">Crash gedetecteerd</string>
     <string name="crash_sheet_report">Rapporteren</string>
     <string name="crash_sheet_copy">Kopiëren</string>
@@ -398,7 +390,6 @@
     <string name="home_trackers_subtitle">%1$s · ~%2$s bespaard</string>
     <string name="home_trackers_subtitle_idle">Bescherming actief</string>
     <string name="home_vault_empty_subtitle">Privé en versleuteld</string>
-    <string name="home_card_style_preview_trackers_subtitle">12.345 · ~580 MB bespaard</string>
     <string name="trackers_info_count_label">trackers en advertenties geblokkeerd</string>
     <string name="trackers_info_saved">~%1$s aan bandbreedte bespaard</string>
     <string name="trackers_info_categories">Trackers · Advertenties · Fingerprinting · Cookies</string>
@@ -412,7 +403,6 @@
     <string name="trackers_info_stat_saved">Bespaarde data</string>
     <string name="trackers_info_action">Bescherming beheren</string>
     <string name="trackers_info_today">%1$s vandaag geblokkeerd</string>
-    <string name="home_card_style_tonal">Tonaal</string>
 
 
 

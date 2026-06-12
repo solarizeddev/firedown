@@ -294,14 +294,6 @@
     <string name="bookmark_name">Име</string>
     <string name="home_vault_button">Защитена папка</string>
 <string name="settings_theme_app_category">Тема на приложението</string>
-    <string name="settings_theme_home_category">Начален екран</string>
-    <string name="settings_home_cards">Карти на началния екран</string>
-    <string name="settings_home_cards_summary">Изберете стил за картите на началния екран</string>
-    <string name="settings_home_cards_header">Една тема променя всички карти наведнъж — изберете предпочитания вид.</string>
-    <string name="home_card_style_neutral">Неутрален</string>
-    <string name="home_card_style_coral">Coral</string>
-    <string name="home_card_style_preview_downloads_subtitle">150 файла запазени · 2,4 ГБ</string>
-    <string name="home_card_style_preview_vault_subtitle">12 елемента запазени</string>
     <string name="crash_sheet_title">Открит срив</string>
     <string name="crash_sheet_report">Докладвай</string>
     <string name="crash_sheet_copy">Копирай</string>
@@ -312,7 +304,6 @@
     <string name="home_trackers_subtitle">%1$s · ~%2$s спестени</string>
     <string name="home_trackers_subtitle_idle">Защитата е активна</string>
     <string name="home_vault_empty_subtitle">Поверително и шифровано</string>
-    <string name="home_card_style_preview_trackers_subtitle">12 345 · ~580 МБ спестени</string>
     <string name="trackers_info_count_label">тракери и реклами блокирани</string>
     <string name="trackers_info_saved">~%1$s трафик спестен</string>
     <string name="trackers_info_categories">Тракери · Реклами · Отпечатъци · Бисквитки</string>
@@ -326,7 +317,6 @@
     <string name="trackers_info_stat_saved">Спестени данни</string>
     <string name="trackers_info_action">Управление на защитата</string>
     <string name="trackers_info_today">%1$s блокирани днес</string>
-    <string name="home_card_style_tonal">Тонален</string>
 
 
 

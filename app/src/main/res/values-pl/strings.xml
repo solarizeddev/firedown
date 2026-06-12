@@ -375,14 +375,6 @@
     <string name="settings_wasm_allowlist_remove_message">Usunąć %s z listy dozwolonych WebAssembly?</string>
     <string name="settings_wasm_allowlist_remove_confirm">Usuń</string>
 <string name="settings_theme_app_category">Motyw aplikacji</string>
-    <string name="settings_theme_home_category">Ekran główny</string>
-    <string name="settings_home_cards">Karty ekranu głównego</string>
-    <string name="settings_home_cards_summary">Wybierz styl kart ekranu głównego</string>
-    <string name="settings_home_cards_header">Jeden motyw zmienia wszystkie karty naraz — wybierz wygląd, który Ci się podoba.</string>
-    <string name="home_card_style_neutral">Neutralny</string>
-    <string name="home_card_style_coral">Coral</string>
-    <string name="home_card_style_preview_downloads_subtitle">Zapisano 150 plików · 2,4 GB</string>
-    <string name="home_card_style_preview_vault_subtitle">Zapisano 12 elementów</string>
     <string name="crash_sheet_title">Wykryto awarię</string>
     <string name="crash_sheet_report">Zgłoś</string>
     <string name="crash_sheet_copy">Kopiuj</string>
@@ -393,7 +385,6 @@
     <string name="home_trackers_subtitle">%1$s · ~%2$s zaoszczędzonych</string>
     <string name="home_trackers_subtitle_idle">Ochrona aktywna</string>
     <string name="home_vault_empty_subtitle">Prywatny i zaszyfrowany</string>
-    <string name="home_card_style_preview_trackers_subtitle">12 345 · ~580 MB zaoszczędzonych</string>
     <string name="trackers_info_count_label">trackerów i reklam zablokowanych</string>
     <string name="trackers_info_saved">~%1$s zaoszczędzonego transferu</string>
     <string name="trackers_info_categories">Trackery · Reklamy · Odciski · Ciasteczka</string>
@@ -407,7 +398,6 @@
     <string name="trackers_info_stat_saved">Zaoszczędzone dane</string>
     <string name="trackers_info_action">Zarządzaj ochroną</string>
     <string name="trackers_info_today">%1$s zablokowanych dzisiaj</string>
-    <string name="home_card_style_tonal">Tonalny</string>
 
 
 

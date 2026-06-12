@@ -39,16 +39,4 @@
 
     </PreferenceCategory>
 
-    <PreferenceCategory
-        android:title="@string/settings_theme_home_category"
-        app:iconSpaceReserved="false">
-
-        <Preference
-            android:key="com.solarized.firedown.preferences.home.cards"
-            android:title="@string/settings_home_cards"
-            android:summary="@string/settings_home_cards_summary"
-            app:icon="@drawable/ic_colors_24" />
-
-    </PreferenceCategory>
-
 </PreferenceScreen>

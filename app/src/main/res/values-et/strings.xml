@@ -278,14 +278,6 @@
     <string name="bookmark_name">Nimi</string>
     <string name="home_vault_button">Turvaline kaust</string>
 <string name="settings_theme_app_category">Rakenduse teema</string>
-    <string name="settings_theme_home_category">Avaleht</string>
-    <string name="settings_home_cards">Avalehe kaardid</string>
-    <string name="settings_home_cards_summary">Valige avalehe kaartide stiil</string>
-    <string name="settings_home_cards_header">Üks teema muudab kõik kaardid korraga — valige välimus, mis sulle meeldib.</string>
-    <string name="home_card_style_neutral">Neutraalne</string>
-    <string name="home_card_style_coral">Coral</string>
-    <string name="home_card_style_preview_downloads_subtitle">150 faili salvestatud · 2,4 GB</string>
-    <string name="home_card_style_preview_vault_subtitle">12 elementi salvestatud</string>
     <string name="crash_sheet_title">Tuvastatud krahh</string>
     <string name="crash_sheet_report">Teata</string>
     <string name="crash_sheet_copy">Kopeeri</string>
@@ -296,13 +288,11 @@
     <string name="home_trackers_subtitle">%1$s · ~%2$s säästetud</string>
     <string name="home_trackers_subtitle_idle">Kaitse aktiivne</string>
     <string name="home_vault_empty_subtitle">Privaatne ja krüptitud</string>
-    <string name="home_card_style_preview_trackers_subtitle">12 345 · ~580 MB säästetud</string>
     <string name="trackers_info_count_label">jälitajat ja reklaami blokeeritud</string>
     <string name="trackers_info_saved">~%1$s ribalaiust säästetud</string>
     <string name="trackers_info_categories">Jälitajad · Reklaamid · Sõrmejälg · Küpsised</string>
     <string name="trackers_info_action">Halda kaitset</string>
     <string name="trackers_info_today">%1$s täna blokeeritud</string>
-    <string name="home_card_style_tonal">Tooniline</string>
 
 
 

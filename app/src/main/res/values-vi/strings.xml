@@ -279,14 +279,6 @@
     <string name="incognito_fact_downloads_title">Tải xuống luôn riêng tư</string>
     <string name="incognito_fact_downloads_sub">Lưu vào Thư mục an toàn, chỉ hiển thị trong Firedown.</string>
     <string name="settings_theme_app_category">Chủ đề ứng dụng</string>
-    <string name="settings_theme_home_category">Màn hình chính</string>
-    <string name="settings_home_cards">Thẻ trang chính</string>
-    <string name="settings_home_cards_summary">Chọn kiểu cho thẻ trang chính</string>
-    <string name="settings_home_cards_header">Một chủ đề thay đổi tất cả các thẻ cùng lúc — chọn diện mạo bạn thích.</string>
-    <string name="home_card_style_neutral">Trung tính</string>
-    <string name="home_card_style_coral">Coral</string>
-    <string name="home_card_style_preview_downloads_subtitle">Đã lưu 150 tệp · 2,4 GB</string>
-    <string name="home_card_style_preview_vault_subtitle">Đã lưu 12 mục</string>
     <string name="crash_sheet_title">Phát hiện sự cố</string>
     <string name="crash_sheet_report">Báo cáo</string>
     <string name="crash_sheet_copy">Sao chép</string>

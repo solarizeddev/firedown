@@ -279,14 +279,6 @@
     <string name="incognito_fact_downloads_title">Οι λήψεις παραμένουν ιδιωτικές</string>
     <string name="incognito_fact_downloads_sub">Αποθηκεύονται στον Ασφαλή φάκελο, ορατές μόνο μέσα στο Firedown.</string>
 <string name="settings_theme_app_category">Θέμα εφαρμογής</string>
-    <string name="settings_theme_home_category">Αρχική</string>
-    <string name="settings_home_cards">Κάρτες αρχικής</string>
-    <string name="settings_home_cards_summary">Επιλέξτε στυλ για τις κάρτες αρχικής</string>
-    <string name="settings_home_cards_header">Ένα θέμα αλλάζει όλες τις κάρτες ταυτόχρονα — διαλέξτε την εμφάνιση που σας αρέσει.</string>
-    <string name="home_card_style_neutral">Ουδέτερο</string>
-    <string name="home_card_style_coral">Coral</string>
-    <string name="home_card_style_preview_downloads_subtitle">150 αρχεία αποθηκεύτηκαν · 2,4 GB</string>
-    <string name="home_card_style_preview_vault_subtitle">12 στοιχεία αποθηκεύτηκαν</string>
     <string name="crash_sheet_title">Εντοπίστηκε κατάρρευση</string>
     <string name="crash_sheet_report">Αναφορά</string>
     <string name="crash_sheet_copy">Αντιγραφή</string>
@@ -297,7 +289,6 @@
     <string name="home_trackers_subtitle">%1$s · ~%2$s εξοικονομήθηκαν</string>
     <string name="home_trackers_subtitle_idle">Η προστασία είναι ενεργή</string>
     <string name="home_vault_empty_subtitle">Ιδιωτικός και κρυπτογραφημένος</string>
-    <string name="home_card_style_preview_trackers_subtitle">12.345 · ~580 MB εξοικονομήθηκαν</string>
     <string name="trackers_info_count_label">παρακολουθητές και διαφημίσεις αποκλείστηκαν</string>
     <string name="trackers_info_saved">~%1$s εύρους ζώνης εξοικονομήθηκε</string>
     <string name="trackers_info_categories">Παρακολούθηση · Διαφημίσεις · Δακτυλικό αποτύπωμα · Cookies</string>
@@ -311,7 +302,6 @@
     <string name="trackers_info_stat_saved">Δεδομένα που εξοικονομήθηκαν</string>
     <string name="trackers_info_action">Διαχείριση προστασίας</string>
     <string name="trackers_info_today">%1$s αποκλείστηκαν σήμερα</string>
-    <string name="home_card_style_tonal">Τονικό</string>
 
 
 

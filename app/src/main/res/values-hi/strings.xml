@@ -249,14 +249,6 @@
     <string name="vault_unsupported">यह फ़ाइल नहीं खुल सकती. खोलने के लिए, इसे सुरक्षित फ़ोल्डर से बाहर निकालें और पुनः प्रयास करें.</string>
     <string name="home_vault_button">सुरक्षित फ़ोल्डर</string>
 <string name="settings_theme_app_category">ऐप थीम</string>
-    <string name="settings_theme_home_category">होम स्क्रीन</string>
-    <string name="settings_home_cards">होम कार्ड</string>
-    <string name="settings_home_cards_summary">होम कार्ड का स्टाइल चुनें</string>
-    <string name="settings_home_cards_header">एक थीम सभी कार्ड एक साथ बदलती है — अपनी पसंद का लुक चुनें।</string>
-    <string name="home_card_style_neutral">तटस्थ</string>
-    <string name="home_card_style_coral">Coral</string>
-    <string name="home_card_style_preview_downloads_subtitle">150 फ़ाइलें सहेजी गईं · 2.4 GB</string>
-    <string name="home_card_style_preview_vault_subtitle">12 आइटम सहेजे गए</string>
     <string name="crash_sheet_title">क्रैश का पता चला</string>
     <string name="crash_sheet_report">रिपोर्ट</string>
     <string name="crash_sheet_copy">कॉपी</string>
@@ -267,13 +259,11 @@
     <string name="home_trackers_subtitle">%1$s · ~%2$s बचत</string>
     <string name="home_trackers_subtitle_idle">सुरक्षा सक्रिय</string>
     <string name="home_vault_empty_subtitle">निजी और एन्क्रिप्टेड</string>
-    <string name="home_card_style_preview_trackers_subtitle">12,345 · ~580 MB बचत</string>
     <string name="trackers_info_count_label">ट्रैकर और विज्ञापन ब्लॉक</string>
     <string name="trackers_info_saved">~%1$s बैंडविड्थ बची</string>
     <string name="trackers_info_categories">ट्रैकर · विज्ञापन · फ़िंगरप्रिंटिंग · कुकीज़</string>
     <string name="trackers_info_action">सुरक्षा प्रबंधित करें</string>
     <string name="trackers_info_today">%1$s आज ब्लॉक</string>
-    <string name="home_card_style_tonal">टोनल</string>
 
 
 

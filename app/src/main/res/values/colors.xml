@@ -60,6 +60,18 @@
          shelf tiles are surfaceContainer. -->
     <color name="md_theme_surfaceContainerHighest">#DAD8DD</color>
     <color name="md_theme_surfaceContainerLow_highContrast">#F5F3F6</color>
+    <!-- Home shelf-tile chips — the single baked "Tonal" look (the home
+         card-style picker was removed; this IS the home appearance).
+         Dimmed tonal-container chroma so the chip is a small landmark, not
+         an attention block, and the Downloads coral never twins the coral
+         hero FAB. bg = chip fill, _on = icon. Light here, dark in
+         values-night — keep in sync. -->
+    <color name="home_chip_downloads">#FAD9D6</color>
+    <color name="home_chip_downloads_on">#A23A36</color>
+    <color name="home_chip_vault">#FAD7E4</color>
+    <color name="home_chip_vault_on">#8C2F5A</color>
+    <color name="home_chip_trackers">#FAE0CC</color>
+    <color name="home_chip_trackers_on">#8A5A2A</color>
     <!-- Incognito -->
     <!-- Primary -->
     <color name="incognito_primary">#FFf0716c</color>

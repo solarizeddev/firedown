@@ -248,14 +248,6 @@
     <string name="vault_unsupported">اس فائل کو نہیں کھولا جا سکتا۔ کھولنے کے لیے، اسے محفوظ فولڈر سے باہر لے جائیں اور دوبارہ کوشش کریں۔</string>
     <string name="home_vault_button">محفوظ فولڈر</string>
 <string name="settings_theme_app_category">ایپ تھیم</string>
-    <string name="settings_theme_home_category">ہوم اسکرین</string>
-    <string name="settings_home_cards">ہوم کارڈز</string>
-    <string name="settings_home_cards_summary">ہوم کارڈز کے لیے اسٹائل منتخب کریں</string>
-    <string name="settings_home_cards_header">ایک تھیم تمام کارڈز ایک ساتھ بدل دیتا ہے — اپنا پسندیدہ ظہور منتخب کریں۔</string>
-    <string name="home_card_style_neutral">غیر جانبدار</string>
-    <string name="home_card_style_coral">Coral</string>
-    <string name="home_card_style_preview_downloads_subtitle">150 فائلیں محفوظ · 2.4 GB</string>
-    <string name="home_card_style_preview_vault_subtitle">12 آئٹمز محفوظ</string>
     <string name="crash_sheet_title">کریش کا پتہ چلا</string>
     <string name="crash_sheet_report">رپورٹ</string>
     <string name="crash_sheet_copy">کاپی</string>
@@ -266,13 +258,11 @@
     <string name="home_trackers_subtitle">%1$s · ~%2$s بچ گیا</string>
     <string name="home_trackers_subtitle_idle">تحفظ فعال ہے</string>
     <string name="home_vault_empty_subtitle">نجی اور انکرپٹڈ</string>
-    <string name="home_card_style_preview_trackers_subtitle">12,345 · ~580 MB بچ گیا</string>
     <string name="trackers_info_count_label">ٹریکرز اور اشتہارات بلاک ہوئے</string>
     <string name="trackers_info_saved">~%1$s بینڈوڈتھ بچ گئی</string>
     <string name="trackers_info_categories">ٹریکرز · اشتہارات · فنگرپرنٹنگ · کوکیز</string>
     <string name="trackers_info_action">تحفظ کا انتظام کریں</string>
     <string name="trackers_info_today">%1$s آج بلاک ہوا</string>
-    <string name="home_card_style_tonal">ٹونل</string>
 
 
 

@@ -201,14 +201,6 @@
     <string name="vault_unsupported">Հնարավոր չէ բացել այս ֆայլը: Բացելու համար տեղափոխեք այն Safe Folder-ից և նորից փորձեք:</string>
     <string name="home_vault_button">Ապահով պանակ</string>
 <string name="settings_theme_app_category">Հավելվածի ոճը</string>
-    <string name="settings_theme_home_category">Գլխավոր էջ</string>
-    <string name="settings_home_cards">Գլխավոր էջի քարտեր</string>
-    <string name="settings_home_cards_summary">Ընտրեք գլխավոր էջի քարտերի ոճը</string>
-    <string name="settings_home_cards_header">Մեկ թեման փոխում է բոլոր քարտերը միաժամանակ — ընտրեք ձեզ դուր եկած տեսքը։</string>
-    <string name="home_card_style_neutral">Չեզոք</string>
-    <string name="home_card_style_coral">Coral</string>
-    <string name="home_card_style_preview_downloads_subtitle">Պահպանված է 150 ֆայլ · 2,4 ԳԲ</string>
-    <string name="home_card_style_preview_vault_subtitle">Պահպանված է 12 տարր</string>
     <string name="crash_sheet_title">Հայտնաբերվեց խափանում</string>
     <string name="crash_sheet_report">Հաղորդել</string>
     <string name="crash_sheet_copy">Պատճենել</string>
@@ -219,13 +211,11 @@
     <string name="home_trackers_subtitle">%1$s · ~%2$s խնայվել է</string>
     <string name="home_trackers_subtitle_idle">Պաշտպանությունը միացված է</string>
     <string name="home_vault_empty_subtitle">Մասնավոր և կոդավորված</string>
-    <string name="home_card_style_preview_trackers_subtitle">12 345 · ~580 ՄԲ խնայվել է</string>
     <string name="trackers_info_count_label">հետևորդ և գովազդ արգելափակվել է</string>
     <string name="trackers_info_saved">~%1$s թողունակություն խնայվել է</string>
     <string name="trackers_info_categories">Հետևորդներ · Գովազդներ · Մատնահետք · Cookie</string>
     <string name="trackers_info_action">Կառավարել պաշտպանությունը</string>
     <string name="trackers_info_today">%1$s այսօր արգելափակվել է</string>
-    <string name="home_card_style_tonal">Տոնային</string>
 
 
 

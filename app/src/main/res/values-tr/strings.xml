@@ -379,14 +379,6 @@
     <string name="settings_wasm_allowlist_remove_message">%s sitesini WebAssembly izin listesinden kaldır?</string>
     <string name="settings_wasm_allowlist_remove_confirm">Kaldır</string>
 <string name="settings_theme_app_category">Uygulama teması</string>
-    <string name="settings_theme_home_category">Ana sayfa</string>
-    <string name="settings_home_cards">Ana sayfa kartları</string>
-    <string name="settings_home_cards_summary">Ana sayfa kartlarının stilini seçin</string>
-    <string name="settings_home_cards_header">Tek bir tema tüm kartları birden değiştirir — beğendiğiniz görünümü seçin.</string>
-    <string name="home_card_style_neutral">Nötr</string>
-    <string name="home_card_style_coral">Coral</string>
-    <string name="home_card_style_preview_downloads_subtitle">150 dosya kaydedildi · 2,4 GB</string>
-    <string name="home_card_style_preview_vault_subtitle">12 öğe kaydedildi</string>
     <string name="crash_sheet_title">Çökme algılandı</string>
     <string name="crash_sheet_report">Bildir</string>
     <string name="crash_sheet_copy">Kopyala</string>
@@ -397,7 +389,6 @@
     <string name="home_trackers_subtitle">%1$s · ~%2$s tasarruf edildi</string>
     <string name="home_trackers_subtitle_idle">Koruma etkin</string>
     <string name="home_vault_empty_subtitle">Özel ve şifreli</string>
-    <string name="home_card_style_preview_trackers_subtitle">12.345 · ~580 MB tasarruf edildi</string>
     <string name="trackers_info_count_label">izleyici ve reklam engellendi</string>
     <string name="trackers_info_saved">~%1$s bant genişliği tasarruf edildi</string>
     <string name="trackers_info_categories">İzleyiciler · Reklamlar · Parmak izi · Çerezler</string>
@@ -411,7 +402,6 @@
     <string name="trackers_info_stat_saved">Tasarruf edilen veri</string>
     <string name="trackers_info_action">Korumayı yönet</string>
     <string name="trackers_info_today">%1$s bugün engellendi</string>
-    <string name="home_card_style_tonal">Tonlu</string>
 
 
 

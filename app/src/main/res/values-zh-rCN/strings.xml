@@ -511,14 +511,6 @@
     <string name="settings_wasm_allowlist_remove_message">从 WebAssembly 允许列表中移除 %s？</string>
     <string name="settings_wasm_allowlist_remove_confirm">移除</string>
 <string name="settings_theme_app_category">应用主题</string>
-    <string name="settings_theme_home_category">主页</string>
-    <string name="settings_home_cards">主页卡片</string>
-    <string name="settings_home_cards_summary">选择主页卡片样式</string>
-    <string name="settings_home_cards_header">一个主题同时改变所有卡片 — 选择你喜欢的外观。</string>
-    <string name="home_card_style_neutral">中性</string>
-    <string name="home_card_style_coral">Coral</string>
-    <string name="home_card_style_preview_downloads_subtitle">已保存 150 个文件 · 2.4 GB</string>
-    <string name="home_card_style_preview_vault_subtitle">已保存 12 个项目</string>
     <string name="crash_sheet_title">检测到崩溃</string>
     <string name="crash_sheet_report">上报</string>
     <string name="crash_sheet_copy">复制</string>
@@ -529,7 +521,6 @@
     <string name="home_trackers_subtitle">%1$s · 约节省 %2$s</string>
     <string name="home_trackers_subtitle_idle">保护已开启</string>
     <string name="home_vault_empty_subtitle">私密且加密</string>
-    <string name="home_card_style_preview_trackers_subtitle">12,345 · 约节省 580 MB</string>
     <string name="trackers_info_count_label">个跟踪器和广告已拦截</string>
     <string name="trackers_info_saved">约节省 %1$s 流量</string>
     <string name="trackers_info_categories">跟踪器 · 广告 · 指纹识别 · Cookie 横幅</string>
@@ -543,7 +534,6 @@
     <string name="trackers_info_stat_saved">节省数据</string>
     <string name="trackers_info_action">管理保护</string>
     <string name="trackers_info_today">今日已拦截 %1$s</string>
-    <string name="home_card_style_tonal">色调</string>
 
 
 

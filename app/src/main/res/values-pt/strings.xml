@@ -296,14 +296,6 @@
     <string name="incognito_fact_downloads_title">As transferências ficam privadas</string>
     <string name="incognito_fact_downloads_sub">Guardadas na sua Pasta segura, visíveis apenas dentro do Firedown.</string>
 <string name="settings_theme_app_category">Tema do aplicativo</string>
-    <string name="settings_theme_home_category">Página inicial</string>
-    <string name="settings_home_cards">Cartões iniciais</string>
-    <string name="settings_home_cards_summary">Escolha o estilo dos cartões iniciais</string>
-    <string name="settings_home_cards_header">Um único tema muda todos os cartões de uma vez — escolha o visual que preferir.</string>
-    <string name="home_card_style_neutral">Neutro</string>
-    <string name="home_card_style_coral">Coral</string>
-    <string name="home_card_style_preview_downloads_subtitle">150 arquivos salvos · 2,4 GB</string>
-    <string name="home_card_style_preview_vault_subtitle">12 itens salvos</string>
     <string name="crash_sheet_title">Falha detectada</string>
     <string name="crash_sheet_report">Reportar</string>
     <string name="crash_sheet_copy">Copiar</string>
@@ -314,13 +306,11 @@
     <string name="home_trackers_subtitle">%1$s · ~%2$s economizados</string>
     <string name="home_trackers_subtitle_idle">Proteção ativa</string>
     <string name="home_vault_empty_subtitle">Privada e criptografada</string>
-    <string name="home_card_style_preview_trackers_subtitle">12.345 · ~580 MB economizados</string>
     <string name="trackers_info_count_label">rastreadores e anúncios bloqueados</string>
     <string name="trackers_info_saved">~%1$s de largura de banda economizados</string>
     <string name="trackers_info_categories">Rastreadores · Anúncios · Impressão digital · Cookies</string>
     <string name="trackers_info_action">Gerenciar proteção</string>
     <string name="trackers_info_today">%1$s bloqueados hoje</string>
-    <string name="home_card_style_tonal">Tonal</string>
 
 
 

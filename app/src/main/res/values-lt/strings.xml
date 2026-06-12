@@ -249,14 +249,6 @@
     <string name="vault_unsupported">Nepavyko atidaryti šio failo. Norėdami atidaryti, iškelkite jį iš saugaus aplanko ir bandykite dar kartą.</string>
     <string name="home_vault_button">Saugus aplankas</string>
 <string name="settings_theme_app_category">Programos tema</string>
-    <string name="settings_theme_home_category">Pradžios ekranas</string>
-    <string name="settings_home_cards">Pradžios ekrano kortelės</string>
-    <string name="settings_home_cards_summary">Pasirinkite pradžios ekrano kortelių stilių</string>
-    <string name="settings_home_cards_header">Viena tema pakeičia visas korteles iš karto — pasirinkite jums patinkančią išvaizdą.</string>
-    <string name="home_card_style_neutral">Neutrali</string>
-    <string name="home_card_style_coral">Coral</string>
-    <string name="home_card_style_preview_downloads_subtitle">150 failų išsaugota · 2,4 GB</string>
-    <string name="home_card_style_preview_vault_subtitle">12 elementų išsaugota</string>
     <string name="crash_sheet_title">Aptiktas strigties</string>
     <string name="crash_sheet_report">Pranešti</string>
     <string name="crash_sheet_copy">Kopijuoti</string>
@@ -267,13 +259,11 @@
     <string name="home_trackers_subtitle">%1$s · ~%2$s sutaupyta</string>
     <string name="home_trackers_subtitle_idle">Apsauga įjungta</string>
     <string name="home_vault_empty_subtitle">Privatu ir užšifruota</string>
-    <string name="home_card_style_preview_trackers_subtitle">12 345 · ~580 MB sutaupyta</string>
     <string name="trackers_info_count_label">sekiklių ir reklamų užblokuota</string>
     <string name="trackers_info_saved">~%1$s pralaidumo sutaupyta</string>
     <string name="trackers_info_categories">Sekikliai · Reklamos · Pirštų atspaudai · Slapukai</string>
     <string name="trackers_info_action">Valdyti apsaugą</string>
     <string name="trackers_info_today">%1$s šiandien užblokuota</string>
-    <string name="home_card_style_tonal">Tonų</string>
 
 
 

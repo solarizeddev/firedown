@@ -208,14 +208,6 @@
     <string name="vault_unsupported">ਇਸ ਫ਼ਾਈਲ ਨੂੰ ਖੋਲ੍ਹਿਆ ਨਹੀਂ ਜਾ ਸਕਦਾ। ਖੋਲ੍ਹਣ ਲਈ, ਇਸਨੂੰ ਸੁਰੱਖਿਅਤ ਫੋਲਡਰ ਤੋਂ ਬਾਹਰ ਲੈ ਜਾਓ ਅਤੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।</string>
     <string name="home_vault_button">ਸੁਰੱਖਿਅਤ ਫੋਲਡਰ</string>
 <string name="settings_theme_app_category">ایپ تھیم</string>
-    <string name="settings_theme_home_category">ہوم اسکرین</string>
-    <string name="settings_home_cards">ہوم کارڈز</string>
-    <string name="settings_home_cards_summary">ہوم کارڈز دا اسٹائل چنو</string>
-    <string name="settings_home_cards_header">اک تھیم سارے کارڈز اکٹھے بدلدا اے — اپنا پسندیدہ روپ چنو۔</string>
-    <string name="home_card_style_neutral">غیر جانبدار</string>
-    <string name="home_card_style_coral">Coral</string>
-    <string name="home_card_style_preview_downloads_subtitle">150 فائلاں محفوظ · 2.4 GB</string>
-    <string name="home_card_style_preview_vault_subtitle">12 آئٹم محفوظ</string>
     <string name="crash_sheet_title">کریش دا پتہ لگا</string>
     <string name="crash_sheet_report">رپورٹ</string>
     <string name="crash_sheet_copy">کاپی</string>
@@ -226,13 +218,11 @@
     <string name="home_trackers_subtitle">%1$s · ~%2$s بچت</string>
     <string name="home_trackers_subtitle_idle">تحفظ آن اے</string>
     <string name="home_vault_empty_subtitle">نجی تے انکرپٹڈ</string>
-    <string name="home_card_style_preview_trackers_subtitle">12,345 · ~580 MB بچت</string>
     <string name="trackers_info_count_label">ٹریکرز تے اشتہار بلاک</string>
     <string name="trackers_info_saved">~%1$s بینڈوڈتھ بچ گئی</string>
     <string name="trackers_info_categories">ٹریکرز · اشتہار · فنگرپرنٹ · کوکیز</string>
     <string name="trackers_info_action">تحفظ دا انتظام</string>
     <string name="trackers_info_today">%1$s اج بلاک</string>
-    <string name="home_card_style_tonal">ٹونل</string>
 
 
 

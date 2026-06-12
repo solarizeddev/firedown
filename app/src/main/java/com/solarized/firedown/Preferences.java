@@ -112,20 +112,6 @@ public class Preferences {
 
     public static final String SETTINGS_THEME_OLED = "com.solarized.firedown.preferences.theme.oled";
 
-    /** Home shelf-card style picker. Single preference (one of the
-     *  {@link com.solarized.firedown.ui.HomeCardStyle#key} values) flips
-     *  both the Downloads and Safe Folder cards together — the choices
-     *  are a packaged styling, not per-card colour tweaks. */
-    public static final String SETTINGS_HOME_CARDS = "com.solarized.firedown.preferences.home.cards";
-    public static final String SETTINGS_HOME_CARD_STYLE = "com.solarized.firedown.preferences.home.card.style";
-    // Tonal default: color-as-landmark reads best (on-device review). No
-    // migration needed — this is a String pref read as getString(KEY,
-    // DEFAULT), so an untouched install (no stored value) falls to the new
-    // default; an explicit chooser keeps their stored key. A user who had
-    // the removed "blush"/"bloom" lands on this via HomeCardStyle.fromKey's
-    // fallback (the key is no longer in ALL).
-    public static final String DEFAULT_HOME_CARD_STYLE = "tonal";
-
     /**
      * Sentinel value stored in {@link #SETTINGS_THEME} when the user picks
      * AMOLED mode. Distinct from {@link androidx.appcompat.app.AppCompatDelegate}

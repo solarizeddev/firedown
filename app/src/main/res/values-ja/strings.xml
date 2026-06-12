@@ -511,14 +511,6 @@
     <string name="settings_wasm_allowlist_remove_message">%sをWebAssembly許可リストから削除しますか？</string>
     <string name="settings_wasm_allowlist_remove_confirm">削除</string>
 <string name="settings_theme_app_category">アプリのテーマ</string>
-    <string name="settings_theme_home_category">ホーム画面</string>
-    <string name="settings_home_cards">ホームカード</string>
-    <string name="settings_home_cards_summary">ホームカードのスタイルを選択</string>
-    <string name="settings_home_cards_header">1 つのテーマですべてのカードがまとめて切り替わります — お好みの見た目を選んでください。</string>
-    <string name="home_card_style_neutral">ニュートラル</string>
-    <string name="home_card_style_coral">Coral</string>
-    <string name="home_card_style_preview_downloads_subtitle">150 件のファイルを保存 · 2.4 GB</string>
-    <string name="home_card_style_preview_vault_subtitle">12 件のアイテムを保存</string>
     <string name="crash_sheet_title">クラッシュを検出しました</string>
     <string name="crash_sheet_report">報告</string>
     <string name="crash_sheet_copy">コピー</string>
@@ -529,7 +521,6 @@
     <string name="home_trackers_subtitle">%1$s · 約 %2$s を節約</string>
     <string name="home_trackers_subtitle_idle">保護機能は有効です</string>
     <string name="home_vault_empty_subtitle">プライベートで暗号化済み</string>
-    <string name="home_card_style_preview_trackers_subtitle">12,345 · 約 580 MB を節約</string>
     <string name="trackers_info_count_label">件のトラッカーと広告をブロック</string>
     <string name="trackers_info_saved">約 %1$s の帯域幅を節約</string>
     <string name="trackers_info_categories">トラッカー · 広告 · フィンガープリント · Cookie バナー</string>
@@ -543,7 +534,6 @@
     <string name="trackers_info_stat_saved">節約データ</string>
     <string name="trackers_info_action">保護機能を管理</string>
     <string name="trackers_info_today">%1$s 件を本日ブロック</string>
-    <string name="home_card_style_tonal">トーナル</string>
 
 
 

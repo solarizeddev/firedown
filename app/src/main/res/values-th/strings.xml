@@ -269,14 +269,6 @@
     <string name="settings_webrtc_enabled_summary">อนุญาตการโทรวิดีโอและเสียงแบบเรียลไทม์ การปิดใช้งานจะลดพื้นผิวการสำรวจเครือข่าย</string>
     <string name="incognito_home_warning">การท่องเว็บแบบส่วนตัวไม่ได้ซ่อนกิจกรรมของคุณจากเครือข่าย นายจ้าง หรือเว็บไซต์ที่คุณเข้าชม</string>
 <string name="settings_theme_app_category">ธีมแอป</string>
-    <string name="settings_theme_home_category">หน้าหลัก</string>
-    <string name="settings_home_cards">การ์ดหน้าหลัก</string>
-    <string name="settings_home_cards_summary">เลือกสไตล์ของการ์ดหน้าหลัก</string>
-    <string name="settings_home_cards_header">ธีมเดียวเปลี่ยนการ์ดทั้งหมดพร้อมกัน — เลือกรูปลักษณ์ที่คุณชอบ</string>
-    <string name="home_card_style_neutral">เป็นกลาง</string>
-    <string name="home_card_style_coral">Coral</string>
-    <string name="home_card_style_preview_downloads_subtitle">บันทึก 150 ไฟล์ · 2.4 GB</string>
-    <string name="home_card_style_preview_vault_subtitle">บันทึก 12 รายการ</string>
     <string name="crash_sheet_title">ตรวจพบการขัดข้อง</string>
     <string name="crash_sheet_report">รายงาน</string>
     <string name="crash_sheet_copy">คัดลอก</string>
@@ -287,7 +279,6 @@
     <string name="home_trackers_subtitle">%1$s · ประหยัด ~%2$s</string>
     <string name="home_trackers_subtitle_idle">การป้องกันทำงานอยู่</string>
     <string name="home_vault_empty_subtitle">เป็นส่วนตัวและเข้ารหัส</string>
-    <string name="home_card_style_preview_trackers_subtitle">12,345 · ประหยัด ~580 MB</string>
     <string name="trackers_info_count_label">ตัวติดตามและโฆษณาถูกบล็อก</string>
     <string name="trackers_info_saved">ประหยัดแบนด์วิดท์ ~%1$s</string>
     <string name="trackers_info_categories">ตัวติดตาม · โฆษณา · ลายนิ้วมือดิจิทัล · คุกกี้</string>
@@ -301,7 +292,6 @@
     <string name="trackers_info_stat_saved">ข้อมูลที่ประหยัด</string>
     <string name="trackers_info_action">จัดการการป้องกัน</string>
     <string name="trackers_info_today">บล็อก %1$s รายการวันนี้</string>
-    <string name="home_card_style_tonal">โทนสี</string>
 
 
 

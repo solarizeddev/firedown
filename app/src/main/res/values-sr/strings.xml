@@ -262,14 +262,6 @@
     <string name="bookmark_name">Назив</string>
     <string name="home_vault_button">Безбедан фолдер</string>
 <string name="settings_theme_app_category">Тема апликације</string>
-    <string name="settings_theme_home_category">Почетни екран</string>
-    <string name="settings_home_cards">Картице почетног екрана</string>
-    <string name="settings_home_cards_summary">Изаберите стил картица почетног екрана</string>
-    <string name="settings_home_cards_header">Једна тема мења све картице одједном — изаберите изглед који вам се свиђа.</string>
-    <string name="home_card_style_neutral">Неутрална</string>
-    <string name="home_card_style_coral">Coral</string>
-    <string name="home_card_style_preview_downloads_subtitle">150 датотека сачувано · 2,4 ГБ</string>
-    <string name="home_card_style_preview_vault_subtitle">12 ставки сачувано</string>
     <string name="crash_sheet_title">Откривен пад</string>
     <string name="crash_sheet_report">Пријави</string>
     <string name="crash_sheet_copy">Копирај</string>
@@ -280,7 +272,6 @@
     <string name="home_trackers_subtitle">%1$s · ~%2$s сачувано</string>
     <string name="home_trackers_subtitle_idle">Заштита активна</string>
     <string name="home_vault_empty_subtitle">Приватно и шифровано</string>
-    <string name="home_card_style_preview_trackers_subtitle">12.345 · ~580 МБ сачувано</string>
     <string name="trackers_info_count_label">пратилаца и огласа блокирано</string>
     <string name="trackers_info_saved">~%1$s протока сачувано</string>
     <string name="trackers_info_categories">Пратиоци · Огласи · Отисци · Колачићи</string>
@@ -294,7 +285,6 @@
     <string name="trackers_info_stat_saved">Уштеђени подаци</string>
     <string name="trackers_info_action">Управљање заштитом</string>
     <string name="trackers_info_today">%1$s блокирано данас</string>
-    <string name="home_card_style_tonal">Тонски</string>
 
 
 

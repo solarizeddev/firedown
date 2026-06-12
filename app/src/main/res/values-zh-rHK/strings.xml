@@ -211,14 +211,6 @@
     <string name="settings_webrtc_enabled_summary">啟用即時視像及語音通話。停用可減少網絡探測攻擊面。</string>
     <string name="incognito_home_warning">私密瀏覽不會向你的網絡、僱主或瀏覽的網站隱藏你的活動。</string>
 <string name="settings_theme_app_category">應用程式主題</string>
-    <string name="settings_theme_home_category">主畫面</string>
-    <string name="settings_home_cards">主畫面卡片</string>
-    <string name="settings_home_cards_summary">選擇主畫面卡片樣式</string>
-    <string name="settings_home_cards_header">單一主題會一次改變所有卡片 — 選擇你喜歡的外觀。</string>
-    <string name="home_card_style_neutral">中性</string>
-    <string name="home_card_style_coral">Coral</string>
-    <string name="home_card_style_preview_downloads_subtitle">已儲存 150 個檔案 · 2.4 GB</string>
-    <string name="home_card_style_preview_vault_subtitle">已儲存 12 個項目</string>
     <string name="crash_sheet_title">偵測到當機</string>
     <string name="crash_sheet_report">回報</string>
     <string name="crash_sheet_copy">複製</string>
@@ -229,13 +221,11 @@
     <string name="home_trackers_subtitle">%1$s · 約節省 %2$s</string>
     <string name="home_trackers_subtitle_idle">防護已啟用</string>
     <string name="home_vault_empty_subtitle">私密並加密</string>
-    <string name="home_card_style_preview_trackers_subtitle">12,345 · 約節省 580 MB</string>
     <string name="trackers_info_count_label">個追蹤器與廣告已封鎖</string>
     <string name="trackers_info_saved">約節省 %1$s 流量</string>
     <string name="trackers_info_categories">追蹤器 · 廣告 · 指紋辨識 · Cookie 橫幅</string>
     <string name="trackers_info_action">管理防護</string>
     <string name="trackers_info_today">今日已封鎖 %1$s</string>
-    <string name="home_card_style_tonal">色調</string>
 
 
 

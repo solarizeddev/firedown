@@ -261,14 +261,6 @@
     <string name="bookmark_name">Аты</string>
     <string name="home_vault_button">Қауіпсіз қалта</string>
 <string name="settings_theme_app_category">Қолданба тақырыбы</string>
-    <string name="settings_theme_home_category">Басты бет</string>
-    <string name="settings_home_cards">Басты бет карточкалары</string>
-    <string name="settings_home_cards_summary">Басты бет карточкаларының стилін таңдаңыз</string>
-    <string name="settings_home_cards_header">Бір тақырып барлық карточкаларды бірден өзгертеді — өзіңізге ұнайтын көріністі таңдаңыз.</string>
-    <string name="home_card_style_neutral">Бейтарап</string>
-    <string name="home_card_style_coral">Coral</string>
-    <string name="home_card_style_preview_downloads_subtitle">150 файл сақталды · 2,4 ГБ</string>
-    <string name="home_card_style_preview_vault_subtitle">12 элемент сақталды</string>
     <string name="crash_sheet_title">Іркіліс анықталды</string>
     <string name="crash_sheet_report">Хабарлау</string>
     <string name="crash_sheet_copy">Көшіру</string>
@@ -279,7 +271,6 @@
     <string name="home_trackers_subtitle">%1$s · ~%2$s үнемделді</string>
     <string name="home_trackers_subtitle_idle">Қорғаныс қосулы</string>
     <string name="home_vault_empty_subtitle">Жеке және шифрленген</string>
-    <string name="home_card_style_preview_trackers_subtitle">12 345 · ~580 МБ үнемделді</string>
     <string name="trackers_info_count_label">бақылаушы мен жарнама бұғатталды</string>
     <string name="trackers_info_saved">~%1$s трафик үнемделді</string>
     <string name="trackers_info_categories">Бақылаушылар · Жарнамалар · Іздер · Cookie</string>
@@ -293,7 +284,6 @@
     <string name="trackers_info_stat_saved">Сақталған деректер</string>
     <string name="trackers_info_action">Қорғанысты басқару</string>
     <string name="trackers_info_today">%1$s бүгін бұғатталды</string>
-    <string name="home_card_style_tonal">Тонды</string>
 
 
 

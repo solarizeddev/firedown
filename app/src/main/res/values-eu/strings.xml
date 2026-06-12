@@ -262,14 +262,6 @@
     <string name="bookmark_name">Izena</string>
     <string name="home_vault_button">Karpeta segurua</string>
 <string name="settings_theme_app_category">Aplikazioaren itxura</string>
-    <string name="settings_theme_home_category">Hasiera-orria</string>
-    <string name="settings_home_cards">Hasierako txartelak</string>
-    <string name="settings_home_cards_summary">Aukeratu hasierako txartelen estiloa</string>
-    <string name="settings_home_cards_header">Itxura bakar batek txartel guztiak aldi berean aldatzen ditu — aukeratu nahien duzun estiloa.</string>
-    <string name="home_card_style_neutral">Neutroa</string>
-    <string name="home_card_style_coral">Coral</string>
-    <string name="home_card_style_preview_downloads_subtitle">150 fitxategi gordeta · 2,4 GB</string>
-    <string name="home_card_style_preview_vault_subtitle">12 elementu gordeta</string>
     <string name="crash_sheet_title">Hutsegitea atzemana</string>
     <string name="crash_sheet_report">Eman berri</string>
     <string name="crash_sheet_copy">Kopiatu</string>
@@ -280,7 +272,6 @@
     <string name="home_trackers_subtitle">%1$s · ~%2$s aurreztuta</string>
     <string name="home_trackers_subtitle_idle">Babesa aktibo</string>
     <string name="home_vault_empty_subtitle">Pribatua eta zifratua</string>
-    <string name="home_card_style_preview_trackers_subtitle">12.345 · ~580 MB aurreztuta</string>
     <string name="trackers_info_count_label">jarraitzaileak eta iragarkiak blokeatuta</string>
     <string name="trackers_info_saved">~%1$s banda-zabalera aurreztua</string>
     <string name="trackers_info_categories">Jarraitzaileak · Iragarkiak · Hatz-marka · Cookieak</string>
@@ -294,7 +285,6 @@
     <string name="trackers_info_stat_saved">Aurreztutako datuak</string>
     <string name="trackers_info_action">Kudeatu babesa</string>
     <string name="trackers_info_today">%1$s blokeatuta gaur</string>
-    <string name="home_card_style_tonal">Tonala</string>
 
 
 

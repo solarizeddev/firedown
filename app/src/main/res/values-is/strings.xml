@@ -258,14 +258,6 @@
     <string name="bookmark_name">Heiti</string>
     <string name="home_vault_button">Örugg mappa</string>
 <string name="settings_theme_app_category">Þema forrits</string>
-    <string name="settings_theme_home_category">Forsíða</string>
-    <string name="settings_home_cards">Forsíðuspjöld</string>
-    <string name="settings_home_cards_summary">Veldu stíl forsíðuspjaldanna</string>
-    <string name="settings_home_cards_header">Eitt þema breytir öllum spjöldum í einu — veldu útlitið sem þér líkar.</string>
-    <string name="home_card_style_neutral">Hlutlaust</string>
-    <string name="home_card_style_coral">Coral</string>
-    <string name="home_card_style_preview_downloads_subtitle">150 skrár vistaðar · 2,4 GB</string>
-    <string name="home_card_style_preview_vault_subtitle">12 atriði vistuð</string>
     <string name="crash_sheet_title">Hrun greint</string>
     <string name="crash_sheet_report">Tilkynna</string>
     <string name="crash_sheet_copy">Afrita</string>
@@ -276,7 +268,6 @@
     <string name="home_trackers_subtitle">%1$s · ~%2$s sparað</string>
     <string name="home_trackers_subtitle_idle">Vörn virk</string>
     <string name="home_vault_empty_subtitle">Einkamál og dulkóðað</string>
-    <string name="home_card_style_preview_trackers_subtitle">12.345 · ~580 MB sparað</string>
     <string name="trackers_info_count_label">rakningu og auglýsingar blokkað</string>
     <string name="trackers_info_saved">~%1$s af bandbreidd sparað</string>
     <string name="trackers_info_categories">Rakning · Auglýsingar · Fingrafar · Vafrakökur</string>
@@ -290,7 +281,6 @@
     <string name="trackers_info_stat_saved">Gögn sparast</string>
     <string name="trackers_info_action">Stjórna vörn</string>
     <string name="trackers_info_today">%1$s blokkað í dag</string>
-    <string name="home_card_style_tonal">Tónal</string>
 
 
 

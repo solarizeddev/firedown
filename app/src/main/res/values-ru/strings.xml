@@ -378,14 +378,6 @@
     <string name="settings_wasm_allowlist_remove_message">Удалить %s из списка разрешённых для WebAssembly?</string>
     <string name="settings_wasm_allowlist_remove_confirm">Удалить</string>
 <string name="settings_theme_app_category">Тема приложения</string>
-    <string name="settings_theme_home_category">Главный экран</string>
-    <string name="settings_home_cards">Карточки главного экрана</string>
-    <string name="settings_home_cards_summary">Выберите стиль карточек главного экрана</string>
-    <string name="settings_home_cards_header">Одна тема меняет все карточки сразу — выберите подходящий вид.</string>
-    <string name="home_card_style_neutral">Нейтральный</string>
-    <string name="home_card_style_coral">Coral</string>
-    <string name="home_card_style_preview_downloads_subtitle">150 файлов сохранено · 2,4 ГБ</string>
-    <string name="home_card_style_preview_vault_subtitle">12 элементов сохранено</string>
     <string name="crash_sheet_title">Сбой обнаружен</string>
     <string name="crash_sheet_report">Отправить</string>
     <string name="crash_sheet_copy">Копировать</string>
@@ -396,7 +388,6 @@
     <string name="home_trackers_subtitle">%1$s · ~%2$s сэкономлено</string>
     <string name="home_trackers_subtitle_idle">Защита включена</string>
     <string name="home_vault_empty_subtitle">Приватно и зашифровано</string>
-    <string name="home_card_style_preview_trackers_subtitle">12 345 · ~580 МБ сэкономлено</string>
     <string name="trackers_info_count_label">трекеров и рекламы заблокировано</string>
     <string name="trackers_info_saved">~%1$s трафика сэкономлено</string>
     <string name="trackers_info_categories">Трекеры · Реклама · Отпечатки · Cookie-баннеры</string>
@@ -410,7 +401,6 @@
     <string name="trackers_info_stat_saved">Сэкономлено</string>
     <string name="trackers_info_action">Настройка защиты</string>
     <string name="trackers_info_today">%1$s заблокировано сегодня</string>
-    <string name="home_card_style_tonal">Тональный</string>
 
 
 

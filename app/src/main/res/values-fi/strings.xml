@@ -319,14 +319,6 @@
     <string name="incognito_fact_downloads_title">Lataukset pysyvät yksityisinä</string>
     <string name="incognito_fact_downloads_sub">Tallennetaan Turvakansioon, näkyvät vain Firedownissa.</string>
 <string name="settings_theme_app_category">Sovelluksen teema</string>
-    <string name="settings_theme_home_category">Aloitusnäyttö</string>
-    <string name="settings_home_cards">Aloitusnäytön kortit</string>
-    <string name="settings_home_cards_summary">Valitse aloitusnäytön korttien tyyli</string>
-    <string name="settings_home_cards_header">Yksi teema vaihtaa kaikki kortit kerralla — valitse haluamasi tyyli.</string>
-    <string name="home_card_style_neutral">Neutraali</string>
-    <string name="home_card_style_coral">Coral</string>
-    <string name="home_card_style_preview_downloads_subtitle">150 tiedostoa tallennettu · 2,4 Gt</string>
-    <string name="home_card_style_preview_vault_subtitle">12 kohdetta tallennettu</string>
     <string name="crash_sheet_title">Kaatuminen havaittu</string>
     <string name="crash_sheet_report">Raportoi</string>
     <string name="crash_sheet_copy">Kopioi</string>
@@ -337,7 +329,6 @@
     <string name="home_trackers_subtitle">%1$s · ~%2$s säästetty</string>
     <string name="home_trackers_subtitle_idle">Suojaus käytössä</string>
     <string name="home_vault_empty_subtitle">Yksityinen ja salattu</string>
-    <string name="home_card_style_preview_trackers_subtitle">12 345 · ~580 Mt säästetty</string>
     <string name="trackers_info_count_label">seurantaohjelmaa ja mainosta estetty</string>
     <string name="trackers_info_saved">~%1$s kaistaa säästetty</string>
     <string name="trackers_info_categories">Seuranta · Mainokset · Sormenjälki · Evästeet</string>
@@ -351,7 +342,6 @@
     <string name="trackers_info_stat_saved">Säästetty tietoa</string>
     <string name="trackers_info_action">Hallitse suojausta</string>
     <string name="trackers_info_today">%1$s estetty tänään</string>
-    <string name="home_card_style_tonal">Sävyttynyt</string>
 
 
 

@@ -242,14 +242,6 @@
     <string name="vault_unsupported">ဤဖိုင်ကို ဖွင့်၍မရပါ။ ဖွင့်ရန်၊ ၎င်းကို Safe Folder မှရွှေ့ပြီး ထပ်စမ်းကြည့်ပါ။</string>
     <string name="home_vault_button">"'လုံခြုံရေး' ဖိုင်တွဲ"</string>
 <string name="settings_theme_app_category">အက်ပ်အပြင်အဆင်</string>
-    <string name="settings_theme_home_category">ပင်မစာမျက်နှာ</string>
-    <string name="settings_home_cards">ပင်မစာမျက်နှာ ကတ်များ</string>
-    <string name="settings_home_cards_summary">ပင်မစာမျက်နှာ ကတ်များအတွက် စတိုင်ရွေးပါ</string>
-    <string name="settings_home_cards_header">အပြင်အဆင်တစ်ခုက ကတ်အားလုံးကို တစ်ပြိုင်နက် ပြောင်းပေးသည် — ကြိုက်နှစ်သက်ရာ ပုံစံကို ရွေးပါ။</string>
-    <string name="home_card_style_neutral">ကြားနေ</string>
-    <string name="home_card_style_coral">Coral</string>
-    <string name="home_card_style_preview_downloads_subtitle">ဖိုင် ၁၅၀ သိမ်းပြီး · 2.4 GB</string>
-    <string name="home_card_style_preview_vault_subtitle">ပစ္စည်း ၁၂ ခု သိမ်းပြီး</string>
     <string name="crash_sheet_title">ပျက်စီးမှု တွေ့ရှိ</string>
     <string name="crash_sheet_report">တင်ပြ</string>
     <string name="crash_sheet_copy">ကူးယူ</string>
@@ -260,13 +252,11 @@
     <string name="home_trackers_subtitle">%1$s · ~%2$s သက်သာ</string>
     <string name="home_trackers_subtitle_idle">ကာကွယ်မှု ဖွင့်ထား</string>
     <string name="home_vault_empty_subtitle">ပုဂ္ဂလိက နှင့် စာဝှက်ထား</string>
-    <string name="home_card_style_preview_trackers_subtitle">12,345 · ~580 MB သက်သာ</string>
     <string name="trackers_info_count_label">ခြေရာခံများနှင့် ကြော်ငြာများ ပိတ်ပင်ထား</string>
     <string name="trackers_info_saved">~%1$s ဘန်းဝစ်သက်သာ</string>
     <string name="trackers_info_categories">ခြေရာခံ · ကြော်ငြာ · လက်ဗွေ · Cookie</string>
     <string name="trackers_info_action">ကာကွယ်မှု စီမံ</string>
     <string name="trackers_info_today">%1$s ယနေ့ ပိတ်ပင်ထား</string>
-    <string name="home_card_style_tonal">အသွေးအရောင်</string>
 
 
 
