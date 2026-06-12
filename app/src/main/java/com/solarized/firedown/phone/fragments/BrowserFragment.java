@@ -894,9 +894,17 @@ public class BrowserFragment extends BaseBrowserFragment
         // background, system bar colors) that persists across fragments.
         resetWindowTheme();
         mBottomNavigationBar.updateTheme(mActivity, false);
-        // Scrim follows the bar's surfaceContainer tone — see
-        // BaseFocusFragment.setNavScrimColor.
-        setNavScrimColor(IncognitoColors.getSurfaceContainer(mActivity, false));
+        // The browser's system-nav strip is the DECOR showing through the
+        // inset-padded root: fragment_browser has no navigation_scrim, and
+        // a child view can't reach under the root padding (a backdrop
+        // attempt broke bar scroll-hide and was reverted — commit 26b63d1).
+        // Repaint the decor to the bar's surfaceContainer tone, scoped to
+        // the browser: every other surface repaints the decor on entry
+        // (Home resetWindowTheme, tabs applyIncognitoTheme, bookmark /
+        // history applyWindowIncognitoTheme), so this never leaks onto
+        // their canvases. The top status strip rides along by design.
+        mActivity.getWindow().getDecorView().setBackgroundColor(
+                IncognitoColors.getSurfaceContainer(mActivity, false));
         mGeckoToolbar.updateTheme(mActivity, false);
         mAutoCompleteView.updateTheme(mActivity, false);
         mSearchAutocompleteAdapter.setIncognito(false);
@@ -2311,9 +2319,10 @@ public class BrowserFragment extends BaseBrowserFragment
 
         mGeckoToolbar.updateTheme(mActivity, incognito);
         mBottomNavigationBar.updateTheme(mActivity, incognito);
-        // Scrim follows the bar's surfaceContainer tone in either mode —
-        // see BaseFocusFragment.setNavScrimColor.
-        setNavScrimColor(IncognitoColors.getSurfaceContainer(mActivity, incognito));
+        // Decor repaint = the browser's nav-strip tone in either mode —
+        // see the comment at the resetWindowTheme site above.
+        mActivity.getWindow().getDecorView().setBackgroundColor(
+                IncognitoColors.getSurfaceContainer(mActivity, incognito));
         mAutoCompleteView.updateTheme(mActivity, incognito);
         mAutoCompleteViewModel.setIncognito(incognito);
         mSearchAutocompleteAdapter.setIncognito(incognito);
