@@ -185,12 +185,13 @@ public class BrowserFragment extends BaseBrowserFragment
     /** The bars' content row height (app_bar_size), without any inset. */
     private int mChromeBarBaseSize;
     /**
-     * LIVE chrome heights, inset-inclusive: toolbar = base + status inset,
-     * bottom bar = base + nav inset (the bars self-pad edge-to-edge, so
-     * their real heights include the system strip they own). Start at the
-     * bare base and are corrected by {@link #applyChromeInsets} on the
-     * first insets pass — every viewport consumer (dynamic-toolbar max
-     * height, NestedGeckoViewBehavior) reads these fields at call time.
+     * Dynamic-toolbar heights handed to Gecko — CONTENT-ONLY (= base, no
+     * system inset). The dynamic toolbar reserves space that becomes page
+     * content when a bar hides; system bars aren't reclaimable, so their
+     * insets are kept OUT of these and reserved via the engine container's
+     * padding ({@link #applyChromeInsets}) instead. Constant after init;
+     * the fields remain (rather than inlining base) so the fullscreen
+     * exit's behavior rebuild reads one source.
      */
     private int mGeckoToolbarSize;
     private int mBottomBarSize;
@@ -502,15 +503,13 @@ public class BrowserFragment extends BaseBrowserFragment
         Log.d(TAG, "onViewCreated");
 
         // Edge-to-edge: the root pads HORIZONTALLY only (cutout / 3-button
-        // landscape). Top and bottom flow through so the bars self-pad by
-        // their adjacent system strip (toolbar = status inset, bottom bar =
-        // nav inset via its built-in listener) and the engine view spans the
-        // FULL window — page content scrolls under the transparent system
-        // strips when the bars hide, and each strip is owned by its bar when
-        // they're visible (same model as Home/Tabs; this is what removed the
-        // browser's decor-painting special case). The insets must be
+        // landscape). Top/bottom flow through so the BARS self-pad their
+        // adjacent strip (toolbar = status, bottom bar = nav) and stay
+        // full-bleed; the ENGINE container is held in the safe area by
+        // applyChromeInsets (web content never under the system bars —
+        // sites rarely honor CSS safe-area-inset). The insets must be
         // RETURNED, not CONSUMED — consuming at the root starves the
-        // children's self-padding listeners.
+        // bars' and the toolbar's self-padding listeners.
         ViewCompat.setOnApplyWindowInsetsListener(view, (v, windowInsets) -> {
             Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars()
                     | WindowInsetsCompat.Type.displayCutout());
@@ -2665,50 +2664,36 @@ public class BrowserFragment extends BaseBrowserFragment
     }
 
     /**
-     * Folds the system insets into the LIVE chrome heights (edge-to-edge:
-     * toolbar owns the status strip, bottom bar owns the nav strip, so each
-     * bar's real height = content row + its inset) and rebuilds the viewport
-     * coordination when they actually change. No-ops on every repeat insets
-     * dispatch with unchanged values — the IME show/hide passes reuse this
-     * listener and must not churn behaviors.
+     * Keeps web content in the SAFE AREA: pads the engine container
+     * (SwipeRefreshLayout, parent of the GeckoView) by the system insets,
+     * so the page never flows under the status bar (top) or nav bar
+     * (bottom). Sites rarely honor CSS {@code env(safe-area-inset-*)}, so
+     * the browser must reserve the strips itself.
+     *
+     * <p>The dynamic-toolbar heights handed to Gecko ({@code
+     * mGeckoToolbarSize}/{@code mBottomBarSize}) stay CONTENT-ONLY
+     * (app_bar_size) — they are NOT touched here. Earlier this folded the
+     * insets into those heights, but a system bar is not reclaimable
+     * space: telling Gecko "the bar is status+64 / nav+64 tall, and all of
+     * it becomes content when the bar hides" let the page scroll under
+     * BOTH system bars (the top-under-status and bottom-under-nav bugs).
+     * Content rows only; the strips are reserved by this padding instead.
+     *
+     * <p>The bars themselves stay full-bleed (self-padding) and own their
+     * strips while visible; when a bar scroll-hides, the freed strip shows
+     * the decor tone ({@link #paintSystemBars}). No-ops on repeat dispatch
+     * (the IME passes reuse this listener) so it never thrashes layout.
      */
     private void applyChromeInsets(int statusInset, int navInset) {
-        int toolbarSize = mChromeBarBaseSize + statusInset;
-        int bottomSize  = mChromeBarBaseSize + navInset;
-        if (toolbarSize == mGeckoToolbarSize && bottomSize == mBottomBarSize) {
+        if (mSwipeRefreshLayout == null) {
             return;
         }
-        mGeckoToolbarSize = toolbarSize;
-        mBottomBarSize    = bottomSize;
-        rebuildViewportBehavior();
-    }
-
-    /**
-     * Re-creates the {@link NestedGeckoViewBehavior} and the dynamic-toolbar
-     * max height from the current chrome sizes — the same reconstruction the
-     * fullscreen exit ({@link #collapseBrowserView}) already performs, reused
-     * for insets changes (first insets pass after onCreateView, rotation).
-     * Skipped while fullscreen owns the viewport: {@link #expandBrowserView}
-     * nulls the SRL behavior and zeroes the max height, and
-     * {@code collapseBrowserView} rebuilds from the (updated) fields on exit
-     * — rebuilding mid-fullscreen would fight it. The fullscreen state is
-     * read from the behavior itself being null, not a separate flag, so the
-     * two can't drift.
-     */
-    private void rebuildViewportBehavior() {
-        if (mSwipeRefreshLayout == null || mGeckoView == null) {
+        if (mSwipeRefreshLayout.getPaddingTop() == statusInset
+                && mSwipeRefreshLayout.getPaddingBottom() == navInset) {
             return;
         }
-        CoordinatorLayout.LayoutParams srlParams =
-                (CoordinatorLayout.LayoutParams) mSwipeRefreshLayout.getLayoutParams();
-        if (srlParams.getBehavior() == null) {
-            return;
-        }
-        srlParams.setBehavior(new NestedGeckoViewBehavior(
-                mSwipeRefreshLayout.getContext(), null,
-                mSwipeRefreshLayout, mGeckoToolbarSize, mBottomBarSize));
+        mSwipeRefreshLayout.setPadding(0, statusInset, 0, navInset);
         mSwipeRefreshLayout.requestLayout();
-        mGeckoView.setDynamicToolbarMaxHeight(mGeckoToolbarSize + mBottomBarSize);
     }
 
     // ─────────────────────────────────────────────────────────────────────────────────────────────
