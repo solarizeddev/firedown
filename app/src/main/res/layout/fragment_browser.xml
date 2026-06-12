@@ -104,7 +104,7 @@
         app:layout_behavior="com.solarized.firedown.geckoview.toolbar.BottomNavigationFABBehavior"
         app:borderWidth="0dp"
         app:fabSize="normal"
-        app:maxImageSize="@dimen/phone_icon_height"
+        app:maxImageSize="@dimen/fab_flame_icon_size"
         app:srcCompat="@drawable/ic_firedown" />
 
 

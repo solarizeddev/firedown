@@ -47,5 +47,8 @@
     <color name="md_theme_surfaceContainer">#1F1F22</color>
     <color name="md_theme_surfaceContainerHigh">#292A2C</color>
     <color name="md_theme_surfaceContainerHighest">#343537</color>
+    <!-- Home pill + shelf cards; = night Highest (dark Home reviewed as
+         correct, only LIGHT needed the softer split — see values/colors.xml). -->
+    <color name="home_surface_container">#343537</color>
     <color name="md_theme_surfaceContainerLow_highContrast">#1B1B1E</color>
 </resources>

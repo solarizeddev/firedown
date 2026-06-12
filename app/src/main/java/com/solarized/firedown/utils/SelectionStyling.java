@@ -51,4 +51,15 @@ public final class SelectionStyling {
                 Color.TRANSPARENT);
         return MaterialColors.layer(surface, primaryContainer, WASH_ALPHA);
     }
+
+    /**
+     * Same wash, but over explicit colours — for surfaces that don't
+     * resolve from the theme (the incognito palette lives in colour
+     * resources, not attrs; BrowserTabsAdapter's active-tab chrome).
+     * Keeps {@link #WASH_ALPHA} the single source of the opacity.
+     */
+    @ColorInt
+    public static int washOver(@ColorInt int surface, @ColorInt int accent) {
+        return MaterialColors.layer(surface, accent, WASH_ALPHA);
+    }
 }

@@ -456,20 +456,27 @@ public class GeckoToolbar extends FrameLayout implements View.OnClickListener, V
         }
 
         // 2. Address bar rounded background (the GradientDrawable pill).
-        // surfaceContainerHighest on EVERY holder (maintainer's call):
-        //  - quiet holder (Home): matches the cards, which are the M3
-        //    filled-card role at Highest — one family, pill = cards. (The
-        //    strict M3 docked-search role would be High, one step below
-        //    the cards; tried and rejected in favour of the match.)
-        //  - tonal holder (browser): Highest is the two-step lift over the
-        //    surfaceContainer holder — a High fill sat only one step up
-        //    and read nearly flat.
-        // Trade-off, accepted: the FOCUS pulse (mAnimColorFrom → Highest)
-        // is a no-op everywhere now since rest == Highest; focusing the
-        // bar raises the AutoCompleteView panel, which is the real focus
-        // affordance.
-        int pillRestColor =
-                IncognitoColors.getSurfaceContainerHighest(activity, incognito);
+        // The pill MATCHES its screen's primary containers everywhere
+        // (maintainer's call — strict M3 docked-search High was tried and
+        // rejected in favour of the match):
+        //  - tonal holder (browser): surfaceContainerHighest — the two-step
+        //    lift over the surfaceContainer holder (a High fill sat only
+        //    one step up and read nearly flat). In light this is the
+        //    STRENGTHENED #DAD8DD token.
+        //  - quiet holder, regular Home: home_surface_container — the same
+        //    tone as the shelf cards (HomeCardStyle NEUTRAL/TONAL). Split
+        //    from Highest because the strengthened light value made the
+        //    white-canvas Home read battleship grey; night value == night
+        //    Highest, so dark Home is unchanged.
+        //  - quiet holder, incognito Home: incognito Highest, unchanged —
+        //    the lavender-on-purple pairing was reviewed as the best screen
+        //    in the app; don't touch it.
+        int pillRestColor;
+        if (tonalHolder || incognito) {
+            pillRestColor = IncognitoColors.getSurfaceContainerHighest(activity, incognito);
+        } else {
+            pillRestColor = ContextCompat.getColor(activity, R.color.home_surface_container);
+        }
         if (mBackground != null && mBackground.getBackground() instanceof GradientDrawable gd) {
             // MUTATE before setColor: @drawable/address_bar is ONE cached
             // resource, so its ConstantState is shared across every toolbar
@@ -525,10 +532,10 @@ public class GeckoToolbar extends FrameLayout implements View.OnClickListener, V
 
         // 9. Update the animation colors so focus/unfocus uses the right
         // palette. From = the REST fill so unfocus returns the pill to its
-        // true resting tone. With rest == Highest everywhere the focus
-        // pulse is currently a no-op (From == To) — kept wired so a future
-        // rest-tone change gets the pulse back for free; the real focus
-        // affordance is the AutoCompleteView panel raising.
+        // true resting tone. Where rest == Highest (browser, incognito
+        // Home, dark regular Home) the pulse is a no-op; on LIGHT regular
+        // Home it nudges #E4E2E5 → #DAD8DD, a subtle pressed-state darken.
+        // The real focus affordance is the AutoCompleteView panel raising.
         mAnimColorFrom = pillRestColor;
         mAnimColorTo = IncognitoColors.getSurfaceContainerHighest(activity, incognito);
     }
