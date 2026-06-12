@@ -457,20 +457,23 @@ public class GeckoToolbar extends FrameLayout implements View.OnClickListener, V
 
         // 2. Address bar rounded background (the GradientDrawable pill).
         // Pill tone per holder:
-        //  - tonal holder (browser): surfaceContainerHighest — the two-step
-        //    lift over the surfaceContainer holder (a High fill sat only one
-        //    step up and read nearly flat). Light = the STRENGTHENED #DAD8DD.
-        //  - quiet holder, incognito Home: incognito Highest, unchanged —
-        //    the lavender-on-purple pairing is the best screen in the app.
-        //  - quiet holder, regular Home: surfaceContainerHigh — the M3
-        //    docked-search role, and exactly ONE step above the home shelf
-        //    tiles (surfaceContainer). The pill used to sit at Highest (two
-        //    steps up, when the cards matched it), which left it floating
-        //    above the tile family once the cards dropped to the subtle
-        //    surfaceContainer tile; one step reads as "the input, gently
-        //    raised" and keeps an even surface→container→High ladder.
+        //  - tonal holder (browser, both modes): surfaceContainerHighest —
+        //    the two-step lift over the surfaceContainer holder (a High fill
+        //    sat only one step up and read nearly flat). Light = the
+        //    STRENGTHENED #DAD8DD.
+        //  - quiet holder (BOTH Homes, regular and incognito): High at REST
+        //    — the M3 docked-search role, exactly ONE step above the home
+        //    shelf tiles (surfaceContainer); one step reads as "the input,
+        //    gently raised" and keeps an even surface→container→High
+        //    ladder. Focus ANIMATES the pill to Highest (mAnimColorTo) so
+        //    it fuses with the AutoCompleteView panel, whose card sits at
+        //    Highest — rest belongs to the holder's ladder, focus belongs
+        //    to the overlay's surface. (Incognito Home used to REST at
+        //    Highest; that pre-dated the focus pulse — with the overlay
+        //    match handled by focus, its rest drops to incognito High like
+        //    regular Home, finally using the incognito High token.)
         int pillRestColor;
-        if (tonalHolder || incognito) {
+        if (tonalHolder) {
             pillRestColor = IncognitoColors.getSurfaceContainerHighest(activity, incognito);
         } else {
             pillRestColor = IncognitoColors.getSurfaceContainerHigh(activity, incognito);
@@ -530,10 +533,13 @@ public class GeckoToolbar extends FrameLayout implements View.OnClickListener, V
 
         // 9. Update the animation colors so focus/unfocus uses the right
         // palette. From = the REST fill so unfocus returns the pill to its
-        // true resting tone. Where rest == Highest (browser, incognito
-        // Home, dark regular Home) the pulse is a no-op; on LIGHT regular
-        // Home it nudges #E4E2E5 → #DAD8DD, a subtle pressed-state darken.
-        // The real focus affordance is the AutoCompleteView panel raising.
+        // true resting tone; To = Highest, ALWAYS — focused, the pill must
+        // sit on the same surface as the AutoCompleteView panel it opens
+        // (its suggestion card + clipboard card are Highest), so the pill
+        // and the panel read as one raised input. On the quiet holders
+        // (both Homes, rest = High) that's a real High→Highest lift; on
+        // the browser's tonal holder (rest = Highest) it's a no-op and the
+        // panel raise alone carries the affordance.
         mAnimColorFrom = pillRestColor;
         mAnimColorTo = IncognitoColors.getSurfaceContainerHighest(activity, incognito);
     }
