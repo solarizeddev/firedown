@@ -76,45 +76,43 @@ public final class HomeCardStyle {
     @NonNull public CardLook vault(boolean night)     { return night ? vaultDark     : vaultLight;     }
     @NonNull public CardLook trackers(boolean night)  { return night ? trackersDark  : trackersLight;  }
 
-    /** 0 — Neutral. True greyscale shelves — neutral surface, neutral
-     *  icons tinted with onSurfaceVariant so no brand colour leaks
-     *  through. The 'minimal' option for users who don't want coral /
-     *  raspberry / peach on the home page at all.
+    /** 0 — Neutral. FLAT greyscale rows — TRANSPARENT card surface
+     *  (the row sits directly on the canvas, incognito-home language),
+     *  a grey chip as the only fill, icons tinted onSurfaceVariant so no
+     *  brand colour leaks through. The 'minimal / calmest' option.
      *
-     *  <p>Neutral-surface card tone (here and in TONAL below) is
-     *  {@code home_surface_container} (values/colors.xml — keep the raw
-     *  hexes in sync): night #343537 == night Highest, light #E4E2E5,
-     *  the SOFT light value. The strengthened light Highest (#DAD8DD)
-     *  was tried here and reviewed as battleship grey across the white
-     *  canvas — that token serves the browser pill, not Home. The pill
-     *  shares this exact tone (GeckoToolbar quiet holder), so pill +
-     *  cards are one family. The grey chip steps DOWN one level
-     *  (recessed well) in BOTH modes: dark #292A2C (High), light
-     *  #DAD8DD. History: the card once sat at surfaceContainer, darker
-     *  than the pill — reported as a mismatch. */
+     *  <p>FLAT (here and in TONAL): card bg = transparent (0x00000000),
+     *  so the home is canvas + chip-rows + the single hero FAB — the
+     *  balance the filled-card Tonal lost (its coral chip twinned the
+     *  coral FAB). A trailing chevron (HomeCardStyle.applyToCard) is the
+     *  tappable affordance the flat row needs. The grey chip is the
+     *  recessed well: dark #292A2C, light #DAD8DD; icon onSurfaceVariant.
+     *  Coral is the one style that keeps a filled surface (see CORAL). */
     public static final HomeCardStyle NEUTRAL = new HomeCardStyle("neutral",
             R.string.home_card_style_neutral,
-            new CardLook(0xFFE4E2E5, 0xFF1B1B1E, 0xFFDAD8DD, 0xFF44474C),
-            new CardLook(0xFF343537, 0xFFE4E2E5, 0xFF292A2C, 0xFFC5C6CD),
-            new CardLook(0xFFE4E2E5, 0xFF1B1B1E, 0xFFDAD8DD, 0xFF44474C),
-            new CardLook(0xFF343537, 0xFFE4E2E5, 0xFF292A2C, 0xFFC5C6CD),
-            new CardLook(0xFFE4E2E5, 0xFF1B1B1E, 0xFFDAD8DD, 0xFF44474C),
-            new CardLook(0xFF343537, 0xFFE4E2E5, 0xFF292A2C, 0xFFC5C6CD));
+            new CardLook(0x00000000, 0xFF1B1B1E, 0xFFDAD8DD, 0xFF44474C),
+            new CardLook(0x00000000, 0xFFE4E2E5, 0xFF292A2C, 0xFFC5C6CD),
+            new CardLook(0x00000000, 0xFF1B1B1E, 0xFFDAD8DD, 0xFF44474C),
+            new CardLook(0x00000000, 0xFFE4E2E5, 0xFF292A2C, 0xFFC5C6CD),
+            new CardLook(0x00000000, 0xFF1B1B1E, 0xFFDAD8DD, 0xFF44474C),
+            new CardLook(0x00000000, 0xFFE4E2E5, 0xFF292A2C, 0xFFC5C6CD));
 
-    /** 1 — Tonal. Neutral surface + tonal chips (coral Downloads,
-     *  raspberry Safe Folder, peach Trackers). What 'Neutral' used
-     *  to mean before the true-greyscale Neutral landed — kept under
-     *  a new name for users who liked the per-card colour identity.
-     *  Card surface = home_surface_container, same as NEUTRAL (see its
-     *  doc); brand chips unchanged. */
+    /** 1 — Tonal (the DEFAULT). FLAT rows like Neutral, but the chips
+     *  carry their brand IDENTITY at DIMMED (tonal-container) chroma —
+     *  coral Downloads, raspberry Safe Folder, peach Trackers — so colour
+     *  is a small landmark, not an attention block, and the dimmed coral
+     *  chip no longer twins the full-coral hero FAB. Card surface is
+     *  TRANSPARENT (see NEUTRAL's doc); the brand chips were the
+     *  full-saturation containers before the flat redesign, kept here as
+     *  history: dl #FF857F/#F66A66, vault #C8417B, trk #FFBF9B/#FAB186. */
     public static final HomeCardStyle TONAL = new HomeCardStyle("tonal",
             R.string.home_card_style_tonal,
-            new CardLook(0xFFE4E2E5, 0xFF1B1B1E, 0xFFFF857F, 0xFF460005),
-            new CardLook(0xFF343537, 0xFFE4E2E5, 0xFFF66A66, 0xFF0F0000),
-            new CardLook(0xFFE4E2E5, 0xFF1B1B1E, 0xFFC8417B, 0xFFFFFFFF),
-            new CardLook(0xFF343537, 0xFFE4E2E5, 0xFFC8417B, 0xFFFFFFFF),
-            new CardLook(0xFFE4E2E5, 0xFF1B1B1E, 0xFFFFBF9B, 0xFF5D2E0D),
-            new CardLook(0xFF343537, 0xFFE4E2E5, 0xFFFAB186, 0xFF532606));
+            new CardLook(0x00000000, 0xFF1B1B1E, 0xFFFAD9D6, 0xFFA23A36),
+            new CardLook(0x00000000, 0xFFE4E2E5, 0xFF5A2E2C, 0xFFF6B6B3),
+            new CardLook(0x00000000, 0xFF1B1B1E, 0xFFFAD7E4, 0xFF8C2F5A),
+            new CardLook(0x00000000, 0xFFE4E2E5, 0xFF552538, 0xFFF4A9C6),
+            new CardLook(0x00000000, 0xFF1B1B1E, 0xFFFAE0CC, 0xFF8A5A2A),
+            new CardLook(0x00000000, 0xFFE4E2E5, 0xFF4A3A28, 0xFFF3CBA3));
 
     /** 1 — Blush/Bloom REMOVED (maintainer's call): the tinted-surface
      *  pair was the muddy middle — a brand chip on a same-hue tinted card
@@ -124,9 +122,10 @@ public final class HomeCardStyle {
      *  Coral (full expressive). Do NOT reintroduce them without a fresh
      *  contrast pass. */
 
-    /** 2 — Coral. Full-saturation brand surface across the three
-     *  shelves — Downloads coral, Safe Folder raspberry, Trackers
-     *  peach (each owns its M3 tonal container). */
+    /** 2 — Coral. The one FILLED style (Neutral/Tonal are flat rows now):
+     *  full-saturation brand surface across the three shelves — Downloads
+     *  coral, Safe Folder raspberry, Trackers peach. The loud, expressive
+     *  opt-in; the trailing chevron tints to each card's on-colour. */
     public static final HomeCardStyle CORAL = new HomeCardStyle("coral",
             R.string.home_card_style_coral,
             new CardLook(0xFFFF857F, 0xFF460005, null, 0xFF460005),
@@ -160,14 +159,22 @@ public final class HomeCardStyle {
      * other.
      *
      * <p>Any view argument may be null — a card without a chip /
-     * icon / subtitle just skips that branch, so the same method
-     * paints every shelf card.</p>
+     * icon / subtitle / chevron just skips that branch, so the same
+     * method paints every shelf card.</p>
+     *
+     * <p>The {@code chevron} is the navigation affordance for the FLAT
+     * styles (Neutral/Tonal have a transparent card surface, so without
+     * a trailing › a tappable row would read like incognito's
+     * NON-tappable info rows). It is tinted with {@code look.fg} (the
+     * subtitle alpha) so it stays legible on every surface: onSurface on
+     * the flat canvas, the brand on-colour on a Coral card.</p>
      */
     public static void applyToCard(@NonNull MaterialCardView card,
                                    @Nullable View chip,
                                    @Nullable ImageView icon,
                                    @Nullable TextView title,
                                    @Nullable TextView subtitle,
+                                   @Nullable ImageView chevron,
                                    @NonNull CardLook look) {
         card.setCardBackgroundColor(look.bg);
 
@@ -189,5 +196,9 @@ public final class HomeCardStyle {
         }
         if (title != null)    title.setTextColor(look.fg);
         if (subtitle != null) subtitle.setTextColor(ColorUtils.setAlphaComponent(look.fg, 0xB3));
+        if (chevron != null) {
+            ImageViewCompat.setImageTintList(chevron,
+                    ColorStateList.valueOf(ColorUtils.setAlphaComponent(look.fg, 0xB3)));
+        }
     }
 }

@@ -538,6 +538,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
                     root.findViewById(R.id.recent_downloads_icon),
                     root.findViewById(R.id.recent_downloads_title),
                     mRecentDownloadsSubtitle,
+                    root.findViewById(R.id.recent_downloads_chevron),
                     style.downloads(night));
         }
 
@@ -549,6 +550,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
                     root.findViewById(R.id.home_vault_icon),
                     root.findViewById(R.id.home_vault_title),
                     mHomeVaultSubtitle,
+                    root.findViewById(R.id.home_vault_chevron),
                     style.vault(night));
         }
 
@@ -560,6 +562,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
                     root.findViewById(R.id.home_trackers_icon),
                     root.findViewById(R.id.home_trackers_title),
                     mTrackersSubtitle,
+                    root.findViewById(R.id.home_trackers_chevron),
                     style.trackers(night));
         }
     }

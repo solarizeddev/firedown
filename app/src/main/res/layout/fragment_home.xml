@@ -80,7 +80,7 @@
                 android:layout_marginBottom="12dp"
                 android:clickable="true"
                 android:focusable="true"
-                app:cardBackgroundColor="@color/home_surface_container"
+                app:cardBackgroundColor="@android:color/transparent"
                 app:cardCornerRadius="12dp"
                 app:cardElevation="0dp"
                 app:strokeWidth="0dp">
@@ -141,6 +141,16 @@
                             tools:visibility="visible" />
 
                     </LinearLayout>
+
+                    <!-- Navigation affordance for the FLAT row — tinted per-style. -->
+                    <androidx.appcompat.widget.AppCompatImageView
+                        android:id="@+id/home_vault_chevron"
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_marginStart="8dp"
+                        android:contentDescription="@null"
+                        android:src="@drawable/ic_chevron_right_24"
+                        app:tint="?attr/colorOnSurfaceVariant" />
 
                 </LinearLayout>
 
