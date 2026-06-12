@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Add/edit dialog for the user-defined search engine (Firefox-style:
+    name + search URL with %s in place of the query + optional
+    suggestions URL). Bare LoginPanelTextInputLayouts, same form idiom
+    as the bookmark-edit screen; validation errors land on the
+    TextInputLayouts (SearchFragment.showCustomEngineDialog).
+-->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingHorizontal="24dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp">
+
+        <com.solarized.firedown.ui.LoginPanelTextInputLayout
+            android:id="@+id/custom_engine_name_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/custom_engine_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/settings_search_custom_name_hint"
+                android:imeOptions="actionNext"
+                android:inputType="text"
+                android:singleLine="true"
+                android:textSize="16sp" />
+        </com.solarized.firedown.ui.LoginPanelTextInputLayout>
+
+        <com.solarized.firedown.ui.LoginPanelTextInputLayout
+            android:id="@+id/custom_engine_url_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/custom_engine_url"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/settings_search_custom_url_hint"
+                android:imeOptions="actionNext"
+                android:inputType="textUri"
+                android:singleLine="true"
+                android:textSize="16sp" />
+        </com.solarized.firedown.ui.LoginPanelTextInputLayout>
+
+        <com.solarized.firedown.ui.LoginPanelTextInputLayout
+            android:id="@+id/custom_engine_suggestion_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/custom_engine_suggestion"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/settings_search_custom_suggestion_hint"
+                android:imeOptions="actionDone"
+                android:inputType="textUri"
+                android:singleLine="true"
+                android:textSize="16sp" />
+        </com.solarized.firedown.ui.LoginPanelTextInputLayout>
+
+    </LinearLayout>
+
+</ScrollView>

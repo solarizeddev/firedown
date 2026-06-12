@@ -299,6 +299,16 @@
     <string name="settings_save_file_title">İndirmeden önce yeniden adlandırın</string>
     <string name="settings_search_engine">Arama motoru</string>
     <string name="settings_search_engine_select">Burada ara:</string>
+    <string name="settings_search_custom_add">Özel arama motoru ekle</string>
+    <string name="settings_search_custom_edit">Özel arama motorunu düzenle</string>
+    <string name="settings_search_custom_name_hint">Ad</string>
+    <string name="settings_search_custom_url_hint" formatted="false">Arama URL\'si, sorgu yerine %s</string>
+    <string name="settings_search_custom_suggestion_hint" formatted="false">%s içeren öneri URL\'si (isteğe bağlı)</string>
+    <string name="settings_search_custom_error_name">Bir ad girin</string>
+    <string name="settings_search_custom_error_name_taken">Bu ada sahip bir arama motoru zaten var</string>
+    <string name="settings_search_custom_error_url" formatted="false">%s içeren geçerli bir URL girin</string>
+    <string name="settings_search_custom_delete_title">Özel arama motoru silinsin mi?</string>
+    <string name="settings_search_custom_delete_message">\"%1$s\" kaldırılacak</string>
     <string name="settings_storage_manager_button_decline">ŞİMDİ DEĞİL</string>
     <string name="settings_storage_manager_button_ok">AYARLARI AÇ</string>
     <string name="settings_theme">Tema</string>

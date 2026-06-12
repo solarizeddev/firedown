@@ -253,6 +253,16 @@
     <string name="settings_save_file_title">Перейменуйте перед завантаженням</string>
     <string name="settings_search_engine">Пошукова система</string>
     <string name="settings_search_engine_select">Шукати в:</string>
+    <string name="settings_search_custom_add">Додати власний пошуковий рушій</string>
+    <string name="settings_search_custom_edit">Змінити власний пошуковий рушій</string>
+    <string name="settings_search_custom_name_hint">Назва</string>
+    <string name="settings_search_custom_url_hint" formatted="false">URL пошуку, %s замість запиту</string>
+    <string name="settings_search_custom_suggestion_hint" formatted="false">URL підказок із %s (необов\'язково)</string>
+    <string name="settings_search_custom_error_name">Введіть назву</string>
+    <string name="settings_search_custom_error_name_taken">Пошуковий рушій із такою назвою вже існує</string>
+    <string name="settings_search_custom_error_url" formatted="false">Введіть коректний URL, що містить %s</string>
+    <string name="settings_search_custom_delete_title">Видалити власний пошуковий рушій?</string>
+    <string name="settings_search_custom_delete_message">\"%1$s\" буде вилучено</string>
     <string name="settings_storage_manager_button_decline">НЕ ЗАРАЗ</string>
     <string name="settings_storage_manager_button_ok">ВІДКРИТИ НАЛАШТУВАННЯ</string>
     <string name="settings_theme">Тема</string>

@@ -46,7 +46,6 @@ public class AutoCompleteSearch {
 
     private static final String TAG = AutoCompleteSearch.class.getName();
     private static final Pattern PATTERN_JSON_BAIDU = Pattern.compile("(\\{.*?\\})");
-    private static final Pattern PATTERN_JSON_YAHOO = Pattern.compile("\\((.*?)\\)");
     private static final int MAX_RESULTS = 3;
     private final SearchRepository mSearchRepository;
     private final WebHistoryDataRepository mWebHistoryDataRepository;
@@ -86,12 +85,23 @@ public class AutoCompleteSearch {
         final List<AutoCompleteEntity> result = new ArrayList<>();
         final String searchOption = mSearchRepository.getSearchType();
         final String searchFormat = mSearchRepository.getSearchFormat();
+        final String suggestionUrl = mSearchRepository.getSearchAutocomplete();
 
         ensureHeader(result, searchTerm, searchOption, searchFormat);
 
+        // An engine without a suggestions endpoint (Mojeek operates none —
+        // privacy stance; a custom engine's suggestion field is optional)
+        // still gets the search header + the local sources below — only the
+        // network fetch is skipped. Composing a request from an empty
+        // template would throw in Request.Builder.url().
+        if (TextUtils.isEmpty(suggestionUrl)) {
+            addLocalSources(result, searchTerm);
+            return result;
+        }
+
         Request request = new Request.Builder()
                 .header(BrowserHeaders.USER_AGENT, BrowserHeaders.getDefaultUserAgentString())
-                .url(URLUtil.composeSearchUrl(searchTerm, mSearchRepository.getSearchAutocomplete(), "%s"))
+                .url(URLUtil.composeSearchUrl(searchTerm, suggestionUrl, "%s"))
                 .build();
 
         try (Response response = mHttpClient.newCall(request).execute()) {
@@ -101,12 +111,17 @@ public class AutoCompleteSearch {
         } catch (IOException | JSONException e) {
             Log.e(TAG, "Autocomplete network/parse error", e);
         } finally {
-            addHistory(result, searchTerm);
-            // Add matching open tabs first (before network call, so they appear quickly in order)
-            addOpenTabs(result, searchTerm, mIncognito);
-            addBookmarks(result, searchTerm);
+            addLocalSources(result, searchTerm);
         }
         return result;
+    }
+
+    /** History, matching open tabs, bookmarks — the non-network suggestion sources. */
+    private void addLocalSources(List<AutoCompleteEntity> result, String searchTerm) {
+        addHistory(result, searchTerm);
+        // Add matching open tabs first (before network call, so they appear quickly in order)
+        addOpenTabs(result, searchTerm, mIncognito);
+        addBookmarks(result, searchTerm);
     }
 
     /** Cap on tab matches surfaced as switch-to-tab autocomplete
@@ -179,16 +194,15 @@ public class AutoCompleteSearch {
                     processJsonArray(result, jsonArray, engine, format);
                 }
             }
-            case "Yahoo" -> {
-                m = PATTERN_JSON_YAHOO.matcher(response);
-                if (m.find()) {
-                    jsonArray = new JSONObject(m.group(1))
-                            .getJSONObject("gossip").getJSONArray("results");
-                    int length = Math.min(jsonArray.length(), MAX_RESULTS);
-                    for (int i = 0; i < length; i++) {
-                        parse(result, engine, format, jsonArray.getJSONObject(i).getString("key"));
-                    }
-                }
+            default -> {
+                // User-defined custom engine: best-effort parse of the
+                // de-facto OpenSearch suggestion shape — ["query", ["s1", …]]
+                // (what Google/Brave/Ecosia-class endpoints return, and what
+                // Firefox expects of a custom engine's suggest URL). Any
+                // other payload lands in the caller's JSONException catch
+                // and degrades to the local sources.
+                jsonArray = new JSONArray(response).optJSONArray(1);
+                processJsonArray(result, jsonArray, engine, format);
             }
         }
     }

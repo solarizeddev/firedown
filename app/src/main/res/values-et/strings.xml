@@ -236,6 +236,16 @@
     <string name="settings_save_file_title">Nimetage enne allalaadimist ümber</string>
     <string name="settings_search_engine">Otsingumootor</string>
     <string name="settings_search_engine_select">Otsi seekord järgneva otsingumootoriga:</string>
+    <string name="settings_search_custom_add">Lisa kohandatud otsingumootor</string>
+    <string name="settings_search_custom_edit">Muuda kohandatud otsingumootorit</string>
+    <string name="settings_search_custom_name_hint">Nimi</string>
+    <string name="settings_search_custom_url_hint" formatted="false">Otsingu URL, %s päringu asemel</string>
+    <string name="settings_search_custom_suggestion_hint" formatted="false">Soovituste URL koos %s (valikuline)</string>
+    <string name="settings_search_custom_error_name">Sisesta nimi</string>
+    <string name="settings_search_custom_error_name_taken">Selle nimega otsingumootor on juba olemas</string>
+    <string name="settings_search_custom_error_url" formatted="false">Sisesta kehtiv URL, mis sisaldab %s</string>
+    <string name="settings_search_custom_delete_title">Kas kustutada kohandatud otsingumootor?</string>
+    <string name="settings_search_custom_delete_message">\"%1$s\" eemaldatakse</string>
     <string name="settings_storage_manager_button_decline">MITTE PRAEGU</string>
     <string name="settings_storage_manager_button_ok">AVA SEADED</string>
     <string name="settings_theme">Teema</string>

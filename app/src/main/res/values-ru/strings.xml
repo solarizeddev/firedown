@@ -301,6 +301,16 @@
     <string name="settings_save_file_title">Переименовать перед загрузкой</string>
     <string name="settings_search_engine">Поисковый движок</string>
     <string name="settings_search_engine_select">В этот раз искать в:</string>
+    <string name="settings_search_custom_add">Добавить свою поисковую систему</string>
+    <string name="settings_search_custom_edit">Изменить свою поисковую систему</string>
+    <string name="settings_search_custom_name_hint">Название</string>
+    <string name="settings_search_custom_url_hint" formatted="false">URL поиска, %s вместо запроса</string>
+    <string name="settings_search_custom_suggestion_hint" formatted="false">URL подсказок с %s (необязательно)</string>
+    <string name="settings_search_custom_error_name">Введите название</string>
+    <string name="settings_search_custom_error_name_taken">Поисковая система с таким названием уже существует</string>
+    <string name="settings_search_custom_error_url" formatted="false">Введите корректный URL, содержащий %s</string>
+    <string name="settings_search_custom_delete_title">Удалить свою поисковую систему?</string>
+    <string name="settings_search_custom_delete_message">\"%1$s\" будет удалена</string>
     <string name="settings_storage_manager_button_decline">НЕ СЕЙЧАС</string>
     <string name="settings_storage_manager_button_ok">ОТКРЫТЬ НАСТРОЙКИ</string>
     <string name="settings_theme">Тема</string>

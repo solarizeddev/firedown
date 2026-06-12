@@ -42,13 +42,6 @@
     "search": "https://www.baidu.com/s?ie=utf-8&f=8&rsv_bp=1&rsv_idx=1&ch=&tn=baidu&bar=&wd=%s"
   },
   {
-    "name": "Yahoo",
-    "url": "https://www.yahoo.com",
-    "suggestion": "https://sugg.search.yahoo.net/sg/?output=jsonp&nresults=10&command=%s",
-    "method": "GET",
-    "search": "https://search.yahoo.com/search?p=%s"
-  },
-  {
     "name": "Bing",
     "url": "https://www.bing.com",
     "suggestion": "https://api.bing.com/osjson.aspx?query=%s",
@@ -61,5 +54,12 @@
     "suggestion": "https://suggest.yandex.ru/suggest-ya.cgi?v=4&part=%s",
     "method": "GET",
     "search": "https://yandex.com/search/?text=%s&lr=10435&search_source=yacom_desktop_common"
+  },
+  {
+    "name": "Mojeek",
+    "url": "https://www.mojeek.com",
+    "suggestion": "",
+    "method": "GET",
+    "search": "https://www.mojeek.com/search?q=%s"
   }
 ]

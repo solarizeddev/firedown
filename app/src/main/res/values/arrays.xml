@@ -106,8 +106,8 @@
         <item>www.google.com</item>
         <item>www.bing.com</item>
         <item>www.baidu.com</item>
-        <item>www.yahoo.com</item>
         <item>www.yandex.com</item>
+        <item>www.mojeek.com</item>
     </string-array>
 
 
@@ -119,8 +119,8 @@
         <item>Google</item>
         <item>Bing</item>
         <item>Baidu</item>
-        <item>Yahoo</item>
         <item>Yandex</item>
+        <item>Mojeek</item>
     </string-array>
 
 
@@ -132,8 +132,8 @@
         <item>@drawable/ic_google_icon</item>
         <item>@drawable/ic_bing_icon</item>
         <item>@drawable/ic_baidu_icon</item>
-        <item>@drawable/ic_yahoo_icon</item>
         <item>@drawable/ic_yandex_icon</item>
+        <item>@drawable/ic_mojeek_icon</item>
     </string-array>
 
 
@@ -145,8 +145,8 @@
         <item>com.solarized.firedown.preferences.search.engine.google</item>
         <item>com.solarized.firedown.preferences.search.engine.bing</item>
         <item>com.solarized.firedown.preferences.search.engine.baidu</item>
-        <item>com.solarized.firedown.preferences.search.engine.yahoo</item>
         <item>com.solarized.firedown.preferences.search.engine.yandex</item>
+        <item>com.solarized.firedown.preferences.search.engine.mojeek</item>
     </string-array>
 
 

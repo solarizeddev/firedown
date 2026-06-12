@@ -299,6 +299,16 @@
     <string name="settings_save_file_title">Hernoemen voor het downloaden</string>
     <string name="settings_search_engine">Zoekmachine</string>
     <string name="settings_search_engine_select">Deze keer zoeken in:</string>
+    <string name="settings_search_custom_add">Aangepaste zoekmachine toevoegen</string>
+    <string name="settings_search_custom_edit">Aangepaste zoekmachine bewerken</string>
+    <string name="settings_search_custom_name_hint">Naam</string>
+    <string name="settings_search_custom_url_hint" formatted="false">Zoek-URL, %s in plaats van de zoekopdracht</string>
+    <string name="settings_search_custom_suggestion_hint" formatted="false">Suggestie-URL met %s (optioneel)</string>
+    <string name="settings_search_custom_error_name">Voer een naam in</string>
+    <string name="settings_search_custom_error_name_taken">Er bestaat al een zoekmachine met deze naam</string>
+    <string name="settings_search_custom_error_url" formatted="false">Voer een geldige URL in die %s bevat</string>
+    <string name="settings_search_custom_delete_title">Aangepaste zoekmachine verwijderen?</string>
+    <string name="settings_search_custom_delete_message">\"%1$s\" wordt verwijderd</string>
     <string name="settings_storage_manager_button_decline">NIET NU</string>
     <string name="settings_storage_manager_button_ok">INSTELLINGEN OPENEN</string>
     <string name="settings_theme">Thema</string>

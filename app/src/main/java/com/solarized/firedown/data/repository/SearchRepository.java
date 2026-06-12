@@ -3,6 +3,7 @@ package com.solarized.firedown.data.repository;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.TypedArray;
+import android.text.TextUtils;
 import android.util.Log;
 
 import com.solarized.firedown.Preferences;
@@ -57,8 +58,25 @@ public class SearchRepository {
         this.mContext = context;
         this.mSharedPreferences = sharedPreferences;
 
+        migrateRemovedEngines();
+
         // Load JSON once in background
         diskExecutor.execute(this::loadSearchEngines);
+    }
+
+    /**
+     * One-time migration for engines removed from the built-in list. Yahoo
+     * was dropped (its results have been Bing-powered for years, and its
+     * suggestion path was a fragile regex over a legacy JSONP endpoint); a
+     * user who had it selected is mapped to Bing — literally the same index
+     * — rather than silently falling back to the default engine, which is
+     * what an unresolvable stored name would otherwise do.
+     */
+    private void migrateRemovedEngines() {
+        String selection = mSharedPreferences.getString(Preferences.SETTINGS_SEARCH_ENGINE, null);
+        if ("Yahoo".equals(selection)) {
+            mSharedPreferences.edit().putString(Preferences.SETTINGS_SEARCH_ENGINE, "Bing").apply();
+        }
     }
 
     private void loadSearchEngines() {
@@ -78,17 +96,91 @@ public class SearchRepository {
         return mSharedPreferences.getString(Preferences.SETTINGS_SEARCH_ENGINE, Preferences.DEFAULT_SEARCH_ENGINE);
     }
 
+    // ── User-defined ("custom") engine ──────────────────────────────────
+    // Stored as three prefs (name / search template / optional suggestion
+    // template); selection is the CUSTOM_SEARCH_ENGINE sentinel in
+    // SETTINGS_SEARCH_ENGINE. When the sentinel is stored but the engine no
+    // longer exists (cleared data edge), every getter falls through to the
+    // default-engine path, same as an unknown built-in name.
+
+    public boolean hasCustomEngine() {
+        return !TextUtils.isEmpty(getCustomEngineName()) && !TextUtils.isEmpty(getCustomSearchUrl());
+    }
+
+    public String getCustomEngineName() {
+        return mSharedPreferences.getString(Preferences.SETTINGS_SEARCH_ENGINE_CUSTOM_NAME, "");
+    }
+
+    public String getCustomSearchUrl() {
+        return mSharedPreferences.getString(Preferences.SETTINGS_SEARCH_ENGINE_CUSTOM_URL, "");
+    }
+
+    public String getCustomSuggestionUrl() {
+        return mSharedPreferences.getString(Preferences.SETTINGS_SEARCH_ENGINE_CUSTOM_SUGGESTION, "");
+    }
+
+    private boolean isCustomEngineSelected() {
+        return Preferences.CUSTOM_SEARCH_ENGINE.equals(getCurrentEngineName()) && hasCustomEngine();
+    }
+
+    /** Persists the custom engine. Caller (SearchFragment) owns validation. */
+    public void setCustomEngine(String name, String searchUrl, String suggestionUrl) {
+        mSharedPreferences.edit()
+                .putString(Preferences.SETTINGS_SEARCH_ENGINE_CUSTOM_NAME, name)
+                .putString(Preferences.SETTINGS_SEARCH_ENGINE_CUSTOM_URL, searchUrl)
+                .putString(Preferences.SETTINGS_SEARCH_ENGINE_CUSTOM_SUGGESTION, suggestionUrl)
+                .apply();
+    }
+
+    /** Removes the custom engine; selection falls back to the default engine. */
+    public void removeCustomEngine() {
+        SharedPreferences.Editor editor = mSharedPreferences.edit()
+                .remove(Preferences.SETTINGS_SEARCH_ENGINE_CUSTOM_NAME)
+                .remove(Preferences.SETTINGS_SEARCH_ENGINE_CUSTOM_URL)
+                .remove(Preferences.SETTINGS_SEARCH_ENGINE_CUSTOM_SUGGESTION);
+        if (Preferences.CUSTOM_SEARCH_ENGINE.equals(getCurrentEngineName())) {
+            editor.putString(Preferences.SETTINGS_SEARCH_ENGINE, Preferences.DEFAULT_SEARCH_ENGINE);
+        }
+        editor.apply();
+    }
+
+    /** True when the name matches a built-in engine (the custom-name collision check). */
+    public boolean isBuiltInEngine(String name) {
+        String[] engineMap = mContext.getResources().getStringArray(R.array.settings_search);
+        for (String s : engineMap) {
+            if (s.equalsIgnoreCase(name)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public String getSearchType() {
+        if (isCustomEngineSelected()) {
+            return getCustomEngineName();
+        }
         EngineData data = mEngineCache.get(getCurrentEngineName());
         return (data != null) ? data.name : Preferences.DEFAULT_SEARCH_ENGINE;
     }
 
     public String getSearchFormat() {
+        if (isCustomEngineSelected()) {
+            return getCustomSearchUrl();
+        }
         EngineData data = mEngineCache.get(getCurrentEngineName());
         return (data != null) ? data.searchUrl : Preferences.DEFAULT_SEARCH_FORMAT;
     }
 
+    /**
+     * The suggestion-URL template — may be EMPTY for an engine without a
+     * suggestions endpoint (Mojeek runs none; a custom engine's field is
+     * optional). Callers must skip the network fetch on empty, not compose
+     * a request from it.
+     */
     public String getSearchAutocomplete() {
+        if (isCustomEngineSelected()) {
+            return getCustomSuggestionUrl();
+        }
         EngineData data = mEngineCache.get(getCurrentEngineName());
         return (data != null) ? data.suggestionUrl : Preferences.DEFAULT_SEARCH_AUTOCOMPLETE;
     }
@@ -121,6 +213,13 @@ public class SearchRepository {
     }
 
     public void setSearchEngine(String searchEngine) {
+        // The custom engine is selected via its sentinel, never by name.
+        if (Preferences.CUSTOM_SEARCH_ENGINE.equals(searchEngine)) {
+            if (hasCustomEngine()) {
+                mSharedPreferences.edit().putString(Preferences.SETTINGS_SEARCH_ENGINE, searchEngine).apply();
+            }
+            return;
+        }
         String[] engineMap = mContext.getResources().getStringArray(R.array.settings_search);
         for (String s : engineMap) {
             if (s.equals(searchEngine)) {

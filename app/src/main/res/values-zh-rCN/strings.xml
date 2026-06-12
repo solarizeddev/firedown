@@ -410,6 +410,16 @@
     <string name="settings_save_file_title">下载前重命名</string>
     <string name="settings_search_engine">搜索引擎</string>
     <string name="settings_search_engine_select">此次搜索：</string>
+    <string name="settings_search_custom_add">添加自定义搜索引擎</string>
+    <string name="settings_search_custom_edit">编辑自定义搜索引擎</string>
+    <string name="settings_search_custom_name_hint">名称</string>
+    <string name="settings_search_custom_url_hint" formatted="false">搜索网址,用 %s 代替搜索词</string>
+    <string name="settings_search_custom_suggestion_hint" formatted="false">包含 %s 的搜索建议网址(可选)</string>
+    <string name="settings_search_custom_error_name">请输入名称</string>
+    <string name="settings_search_custom_error_name_taken">已存在同名搜索引擎</string>
+    <string name="settings_search_custom_error_url" formatted="false">请输入包含 %s 的有效网址</string>
+    <string name="settings_search_custom_delete_title">删除自定义搜索引擎?</string>
+    <string name="settings_search_custom_delete_message">将移除“%1$s”</string>
     <string name="settings_storage_manager_button_decline">现在不要</string>
     <string name="settings_storage_manager_button_ok">打开设置</string>
     <string name="settings_tabs_archive_interval_title">关闭未活动的标签页</string>

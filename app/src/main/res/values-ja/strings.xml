@@ -410,6 +410,16 @@
     <string name="settings_save_file_title">ダウンロードする前に名前を変更してください</string>
     <string name="settings_search_engine">検索エンジン</string>
     <string name="settings_search_engine_select">今回だけ使う検索エンジン:</string>
+    <string name="settings_search_custom_add">カスタム検索エンジンを追加</string>
+    <string name="settings_search_custom_edit">カスタム検索エンジンを編集</string>
+    <string name="settings_search_custom_name_hint">名前</string>
+    <string name="settings_search_custom_url_hint" formatted="false">検索 URL(検索語の代わりに %s)</string>
+    <string name="settings_search_custom_suggestion_hint" formatted="false">%s を含む検索候補 URL(任意)</string>
+    <string name="settings_search_custom_error_name">名前を入力してください</string>
+    <string name="settings_search_custom_error_name_taken">同じ名前の検索エンジンが既に存在します</string>
+    <string name="settings_search_custom_error_url" formatted="false">%s を含む有効な URL を入力してください</string>
+    <string name="settings_search_custom_delete_title">カスタム検索エンジンを削除しますか?</string>
+    <string name="settings_search_custom_delete_message">「%1$s」を削除します</string>
     <string name="settings_storage_manager_button_decline">今じゃない</string>
     <string name="settings_storage_manager_button_ok">設定を開く</string>
     <string name="settings_tabs_archive_interval_title">非アクティブなタブを閉じる</string>

@@ -50,15 +50,25 @@
     </com.solarized.firedown.settings.ui.RadioButtonPreference>
 
     <com.solarized.firedown.settings.ui.RadioButtonPreference
-        android:key="com.solarized.firedown.preferences.search.engine.yahoo"
-        android:title="Yahoo"
-        android:icon="@drawable/ic_yahoo_icon">
-    </com.solarized.firedown.settings.ui.RadioButtonPreference>
-
-    <com.solarized.firedown.settings.ui.RadioButtonPreference
         android:key="com.solarized.firedown.preferences.search.engine.yandex"
         android:title="Yandex"
         android:icon="@drawable/ic_yandex_icon">
     </com.solarized.firedown.settings.ui.RadioButtonPreference>
+
+    <com.solarized.firedown.settings.ui.RadioButtonPreference
+        android:key="com.solarized.firedown.preferences.search.engine.mojeek"
+        android:title="Mojeek"
+        android:icon="@drawable/ic_mojeek_icon">
+    </com.solarized.firedown.settings.ui.RadioButtonPreference>
+
+    <!-- The user-defined engine's radio row is added programmatically by
+         SearchFragment (order 99, i.e. right above this row) whenever a
+         custom engine exists; this row opens the add/edit dialog. -->
+    <Preference
+        android:key="com.solarized.firedown.preferences.search.engine.custom.add"
+        android:title="@string/settings_search_custom_add"
+        android:icon="@drawable/manage_search_24"
+        android:order="100"
+        android:persistent="false" />
 
 </PreferenceScreen>

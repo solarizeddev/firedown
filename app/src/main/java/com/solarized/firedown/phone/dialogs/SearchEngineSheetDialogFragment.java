@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.SimpleItemAnimator;
 
+import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
 import com.solarized.firedown.data.entity.AutoCompleteEntity;
 import com.solarized.firedown.autocomplete.AutoCompleteViewModel;
@@ -88,6 +89,17 @@ public class SearchEngineSheetDialogFragment extends BaseBottomSheetDialogFragme
 
         imgs.recycle();
 
+        // The user-defined engine rides at the end of the rail. Its display
+        // name can never collide with a built-in (SearchFragment validates),
+        // so the adapter's title-based checked-state stays unambiguous.
+        if (mSearchRepository.hasCustomEngine()) {
+            AutoCompleteEntity customEntity = new AutoCompleteEntity();
+            customEntity.setDrawableId(R.drawable.ic_search_24);
+            customEntity.setTitle(mSearchRepository.getCustomEngineName());
+            customEntity.setUid(mNameArray.length);
+            mList.add(customEntity);
+        }
+
         RecyclerView recyclerView = mView.findViewById(R.id.recycler_view);
 
         mSearchEngineAdapter = new SearchEngineAdapter(new SearchDiffCallback(), this, mSearchRepository.getSearchType());
@@ -115,9 +127,18 @@ public class SearchEngineSheetDialogFragment extends BaseBottomSheetDialogFragme
 
         String[] mNameArray = getResources().getStringArray(R.array.settings_search);
 
-        mSearchRepository.setSearchEngine(mNameArray[position]);
+        // Positions past the built-ins are the custom engine's row: selected
+        // via its sentinel (the repository resolves it back to the display
+        // name), so a later rename doesn't orphan the selection.
+        boolean isCustom = position >= mNameArray.length;
 
-        mSearchEngineAdapter.setEngine(mNameArray[position]);
+        mSearchRepository.setSearchEngine(isCustom
+                ? Preferences.CUSTOM_SEARCH_ENGINE
+                : mNameArray[position]);
+
+        mSearchEngineAdapter.setEngine(isCustom
+                ? mSearchRepository.getCustomEngineName()
+                : mNameArray[position]);
 
         mAutoCompleteViewModel.resetEngines();
 

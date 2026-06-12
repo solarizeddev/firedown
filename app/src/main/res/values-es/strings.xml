@@ -412,6 +412,16 @@
     <string name="settings_save_file_title">Cambiar el nombre antes de descargar</string>
     <string name="settings_search_engine">Buscador</string>
     <string name="settings_search_engine_select">Esta vez buscar en:</string>
+    <string name="settings_search_custom_add">Añadir motor de búsqueda personalizado</string>
+    <string name="settings_search_custom_edit">Editar motor de búsqueda personalizado</string>
+    <string name="settings_search_custom_name_hint">Nombre</string>
+    <string name="settings_search_custom_url_hint" formatted="false">URL de búsqueda, %s en lugar de la consulta</string>
+    <string name="settings_search_custom_suggestion_hint" formatted="false">URL de sugerencias con %s (opcional)</string>
+    <string name="settings_search_custom_error_name">Introduce un nombre</string>
+    <string name="settings_search_custom_error_name_taken">Ya existe un motor de búsqueda con este nombre</string>
+    <string name="settings_search_custom_error_url" formatted="false">Introduce una URL válida que contenga %s</string>
+    <string name="settings_search_custom_delete_title">¿Eliminar el motor de búsqueda personalizado?</string>
+    <string name="settings_search_custom_delete_message">Se eliminará \"%1$s\"</string>
     <string name="settings_storage_manager_button_decline">AHORA NO</string>
     <string name="settings_storage_manager_button_ok">ABRIR CONFIGURACIÓN</string>
     <string name="settings_tabs_archive_interval_title">Cerrar pestañas inactivas</string>

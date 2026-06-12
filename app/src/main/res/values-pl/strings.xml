@@ -300,6 +300,16 @@
     <string name="settings_save_file_title">Zmień nazwę przed pobraniem</string>
     <string name="settings_search_engine">Wyszukiwarka</string>
     <string name="settings_search_engine_select">Tym razem szukaj w:</string>
+    <string name="settings_search_custom_add">Dodaj własną wyszukiwarkę</string>
+    <string name="settings_search_custom_edit">Edytuj własną wyszukiwarkę</string>
+    <string name="settings_search_custom_name_hint">Nazwa</string>
+    <string name="settings_search_custom_url_hint" formatted="false">Adres URL wyszukiwania, %s w miejscu zapytania</string>
+    <string name="settings_search_custom_suggestion_hint" formatted="false">Adres URL podpowiedzi z %s (opcjonalnie)</string>
+    <string name="settings_search_custom_error_name">Wpisz nazwę</string>
+    <string name="settings_search_custom_error_name_taken">Wyszukiwarka o tej nazwie już istnieje</string>
+    <string name="settings_search_custom_error_url" formatted="false">Wpisz prawidłowy adres URL zawierający %s</string>
+    <string name="settings_search_custom_delete_title">Usunąć własną wyszukiwarkę?</string>
+    <string name="settings_search_custom_delete_message">\"%1$s\" zostanie usunięta</string>
     <string name="settings_storage_manager_button_decline">NIE TERAZ</string>
     <string name="settings_storage_manager_button_ok">OTWÓRZ USTAWIENIA</string>
     <string name="settings_theme">Motyw</string>
