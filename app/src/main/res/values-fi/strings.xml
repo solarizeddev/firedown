@@ -324,8 +324,6 @@
     <string name="settings_home_cards_summary">Valitse aloitusnäytön korttien tyyli</string>
     <string name="settings_home_cards_header">Yksi teema vaihtaa kaikki kortit kerralla — valitse haluamasi tyyli.</string>
     <string name="home_card_style_neutral">Neutraali</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
     <string name="home_card_style_coral">Coral</string>
     <string name="home_card_style_preview_downloads_subtitle">150 tiedostoa tallennettu · 2,4 Gt</string>
     <string name="home_card_style_preview_vault_subtitle">12 kohdetta tallennettu</string>

@@ -268,8 +268,6 @@
     <string name="settings_home_cards_summary">سبک کارت‌های صفحهٔ خانه را انتخاب کنید</string>
     <string name="settings_home_cards_header">یک تم همهٔ کارت‌ها را با هم عوض می‌کند — ظاهری را که می‌پسندید انتخاب کنید.</string>
     <string name="home_card_style_neutral">خنثی</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
     <string name="home_card_style_coral">Coral</string>
     <string name="home_card_style_preview_downloads_subtitle">۱۵۰ فایل ذخیره شد · ۲٫۴ گیگابایت</string>
     <string name="home_card_style_preview_vault_subtitle">۱۲ مورد ذخیره شد</string>

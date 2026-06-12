@@ -267,8 +267,6 @@
     <string name="settings_home_cards_summary">Aukeratu hasierako txartelen estiloa</string>
     <string name="settings_home_cards_header">Itxura bakar batek txartel guztiak aldi berean aldatzen ditu — aukeratu nahien duzun estiloa.</string>
     <string name="home_card_style_neutral">Neutroa</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
     <string name="home_card_style_coral">Coral</string>
     <string name="home_card_style_preview_downloads_subtitle">150 fitxategi gordeta · 2,4 GB</string>
     <string name="home_card_style_preview_vault_subtitle">12 elementu gordeta</string>

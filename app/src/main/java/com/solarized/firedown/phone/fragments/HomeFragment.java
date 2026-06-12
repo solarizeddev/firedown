@@ -524,9 +524,10 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         String key = prefs.getString(
                 Preferences.SETTINGS_HOME_CARD_STYLE,
                 Preferences.DEFAULT_HOME_CARD_STYLE);
+        // Fallback = the default (Tonal), so a stored key for a removed
+        // style (blush/bloom) renders the new default rather than Neutral.
         HomeCardStyle style =
-                HomeCardStyle.fromKey(
-                        key, HomeCardStyle.NEUTRAL);
+                HomeCardStyle.fromKey(key, HomeCardStyle.TONAL);
         boolean night = HomeCardStyle.isNightMode(getResources());
 
         MaterialCardView downloadsCard = root.findViewById(R.id.recent_downloads_card);

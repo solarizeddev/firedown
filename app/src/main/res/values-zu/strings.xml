@@ -211,8 +211,6 @@
     <string name="settings_home_cards_summary">Khetha isitayela samakhadi asekhaya</string>
     <string name="settings_home_cards_header">Itimu eyodwa ishintsha onke amakhadi kanyekanye — khetha ukubukeka okuthandayo.</string>
     <string name="home_card_style_neutral">Okungathathi hlangothi</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
     <string name="home_card_style_coral">Coral</string>
     <string name="home_card_style_preview_downloads_subtitle">Amafayela angu-150 alondoloziwe · 2.4 GB</string>
     <string name="home_card_style_preview_vault_subtitle">Izinto ezingu-12 zilondoloziwe</string>

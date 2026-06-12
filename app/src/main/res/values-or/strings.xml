@@ -217,8 +217,6 @@
     <string name="settings_home_cards_summary">ମୂଳପୃଷ୍ଠା କାର୍ଡଗୁଡ଼ିକର ଶୈଳୀ ବାଛନ୍ତୁ</string>
     <string name="settings_home_cards_header">ଗୋଟିଏ ଥିମ୍ ସମସ୍ତ କାର୍ଡ ଏକାଠି ବଦଳାଇଥାଏ — ଆପଣ ପସନ୍ଦ କରୁଥିବା ରୂପ ବାଛନ୍ତୁ।</string>
     <string name="home_card_style_neutral">ନିରପେକ୍ଷ</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
     <string name="home_card_style_coral">Coral</string>
     <string name="home_card_style_preview_downloads_subtitle">150 ଫାଇଲ୍ ସଞ୍ଚୟ ହୋଇଛି · 2.4 GB</string>
     <string name="home_card_style_preview_vault_subtitle">12 ଆଇଟମ୍ ସଞ୍ଚୟ ହୋଇଛି</string>

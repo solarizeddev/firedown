@@ -266,8 +266,6 @@
     <string name="settings_home_cards_summary">Odaberite stil kartica početnog ekrana</string>
     <string name="settings_home_cards_header">Jedna tema mijenja sve kartice odjednom — odaberite izgled koji vam se sviđa.</string>
     <string name="home_card_style_neutral">Neutralno</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
     <string name="home_card_style_coral">Coral</string>
     <string name="home_card_style_preview_downloads_subtitle">150 datoteka sačuvano · 2,4 GB</string>
     <string name="home_card_style_preview_vault_subtitle">12 stavki sačuvano</string>

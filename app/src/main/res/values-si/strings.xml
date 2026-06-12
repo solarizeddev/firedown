@@ -257,8 +257,6 @@
     <string name="settings_home_cards_summary">මුල් පිටුවේ කාඩ්පත් සඳහා මෝස්තරය තෝරන්න</string>
     <string name="settings_home_cards_header">එක් තේමාවක් සියලුම කාඩ්පත් එකවර වෙනස් කරයි — ඔබට කැමති පෙනුම තෝරන්න.</string>
     <string name="home_card_style_neutral">මධ්‍යස්ථ</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
     <string name="home_card_style_coral">Coral</string>
     <string name="home_card_style_preview_downloads_subtitle">ගොනු 150ක් සුරැකූ · 2.4 GB</string>
     <string name="home_card_style_preview_vault_subtitle">අයිතම 12ක් සුරැකූ</string>

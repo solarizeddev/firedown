@@ -265,8 +265,6 @@
     <string name="settings_home_cards_summary">Zgjidh stilin për kartat e faqes kryesore</string>
     <string name="settings_home_cards_header">Një temë e ndryshon të gjitha kartat menjëherë — zgjidh pamjen që të pëlqen.</string>
     <string name="home_card_style_neutral">Neutrale</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
     <string name="home_card_style_coral">Coral</string>
     <string name="home_card_style_preview_downloads_subtitle">150 skedarë të ruajtur · 2,4 GB</string>
     <string name="home_card_style_preview_vault_subtitle">12 artikuj të ruajtur</string>

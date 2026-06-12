@@ -256,8 +256,6 @@
     <string name="settings_home_cards_summary">ഹോം കാർഡുകൾക്കുള്ള ശൈലി തിരഞ്ഞെടുക്കുക</string>
     <string name="settings_home_cards_header">ഒരു തീം എല്ലാ കാർഡുകളെയും ഒരുമിച്ച് മാറ്റുന്നു — നിങ്ങൾക്ക് ഇഷ്ടമുള്ള രൂപം തിരഞ്ഞെടുക്കുക.</string>
     <string name="home_card_style_neutral">നിഷ്പക്ഷം</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
     <string name="home_card_style_coral">Coral</string>
     <string name="home_card_style_preview_downloads_subtitle">150 ഫയലുകൾ സംരക്ഷിച്ചു · 2.4 GB</string>
     <string name="home_card_style_preview_vault_subtitle">12 ഇനങ്ങൾ സംരക്ഷിച്ചു</string>

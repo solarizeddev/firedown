@@ -206,8 +206,6 @@
     <string name="settings_home_cards_summary">Ընտրեք գլխավոր էջի քարտերի ոճը</string>
     <string name="settings_home_cards_header">Մեկ թեման փոխում է բոլոր քարտերը միաժամանակ — ընտրեք ձեզ դուր եկած տեսքը։</string>
     <string name="home_card_style_neutral">Չեզոք</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
     <string name="home_card_style_coral">Coral</string>
     <string name="home_card_style_preview_downloads_subtitle">Պահպանված է 150 ֆայլ · 2,4 ԳԲ</string>
     <string name="home_card_style_preview_vault_subtitle">Պահպանված է 12 տարր</string>

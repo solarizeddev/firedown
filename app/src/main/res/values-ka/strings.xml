@@ -266,8 +266,6 @@
     <string name="settings_home_cards_summary">აირჩიეთ მთავარი გვერდის ბარათების სტილი</string>
     <string name="settings_home_cards_header">ერთი თემა ცვლის ყველა ბარათს ერთდროულად — აირჩიეთ მოსაწონი იერსახე.</string>
     <string name="home_card_style_neutral">ნეიტრალური</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
     <string name="home_card_style_coral">Coral</string>
     <string name="home_card_style_preview_downloads_subtitle">შენახულია 150 ფაილი · 2,4 გბ</string>
     <string name="home_card_style_preview_vault_subtitle">შენახულია 12 ელემენტი</string>

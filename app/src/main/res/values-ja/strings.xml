@@ -516,8 +516,6 @@
     <string name="settings_home_cards_summary">ホームカードのスタイルを選択</string>
     <string name="settings_home_cards_header">1 つのテーマですべてのカードがまとめて切り替わります — お好みの見た目を選んでください。</string>
     <string name="home_card_style_neutral">ニュートラル</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
     <string name="home_card_style_coral">Coral</string>
     <string name="home_card_style_preview_downloads_subtitle">150 件のファイルを保存 · 2.4 GB</string>
     <string name="home_card_style_preview_vault_subtitle">12 件のアイテムを保存</string>

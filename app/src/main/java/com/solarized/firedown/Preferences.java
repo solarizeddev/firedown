@@ -118,7 +118,13 @@ public class Preferences {
      *  are a packaged styling, not per-card colour tweaks. */
     public static final String SETTINGS_HOME_CARDS = "com.solarized.firedown.preferences.home.cards";
     public static final String SETTINGS_HOME_CARD_STYLE = "com.solarized.firedown.preferences.home.card.style";
-    public static final String DEFAULT_HOME_CARD_STYLE = "neutral";
+    // Tonal default: color-as-landmark reads best (on-device review). No
+    // migration needed — this is a String pref read as getString(KEY,
+    // DEFAULT), so an untouched install (no stored value) falls to the new
+    // default; an explicit chooser keeps their stored key. A user who had
+    // the removed "blush"/"bloom" lands on this via HomeCardStyle.fromKey's
+    // fallback (the key is no longer in ALL).
+    public static final String DEFAULT_HOME_CARD_STYLE = "tonal";
 
     /**
      * Sentinel value stored in {@link #SETTINGS_THEME} when the user picks

@@ -242,8 +242,6 @@
     <string name="settings_home_cards_summary">முகப்பு கார்டுகளுக்கான பாணியைத் தேர்ந்தெடுக்கவும்</string>
     <string name="settings_home_cards_header">ஒரு தீம் அனைத்து கார்டுகளையும் ஒரே நேரத்தில் மாற்றுகிறது — விரும்பும் தோற்றத்தைத் தேர்ந்தெடுக்கவும்.</string>
     <string name="home_card_style_neutral">நடுநிலை</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
     <string name="home_card_style_coral">Coral</string>
     <string name="home_card_style_preview_downloads_subtitle">150 கோப்புகள் சேமிக்கப்பட்டன · 2.4 GB</string>
     <string name="home_card_style_preview_vault_subtitle">12 உருப்படிகள் சேமிக்கப்பட்டன</string>

@@ -385,8 +385,6 @@
     <string name="settings_home_cards_summary">Kies de stijl voor de startkaarten</string>
     <string name="settings_home_cards_header">Eén thema verandert alle kaarten tegelijk — kies de look die je het mooiste vindt.</string>
     <string name="home_card_style_neutral">Neutraal</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
     <string name="home_card_style_coral">Coral</string>
     <string name="home_card_style_preview_downloads_subtitle">150 bestanden opgeslagen · 2,4 GB</string>
     <string name="home_card_style_preview_vault_subtitle">12 items opgeslagen</string>

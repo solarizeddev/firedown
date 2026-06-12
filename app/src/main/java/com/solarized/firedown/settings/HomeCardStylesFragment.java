@@ -21,7 +21,7 @@ import com.solarized.firedown.ui.HomeCardStyle;
 
 /**
  * Settings sub-screen behind 'Home cards' on general settings. Single
- * radio list with five packaged styles; each row carries its own
+ * radio list with the three packaged styles; each row carries its own
  * miniature Downloads + Safe Folder preview rendered through the same
  * {@link HomeCardStyle#applyToCard} path the home page uses, so what
  * the user sees in the picker matches what they'll see on Home.
@@ -48,9 +48,13 @@ public class HomeCardStylesFragment extends BasePreferenceFragment {
         super.onViewCreated(view, savedInstanceState);
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(requireContext());
-        mSelectedKey = prefs.getString(
+        String stored = prefs.getString(
                 Preferences.SETTINGS_HOME_CARD_STYLE,
                 Preferences.DEFAULT_HOME_CARD_STYLE);
+        // Normalise a removed style (blush/bloom) to the current default so
+        // the radio matches what Home renders (HomeFragment falls back the
+        // same way) — otherwise the picker would show nothing checked.
+        mSelectedKey = HomeCardStyle.fromKey(stored, HomeCardStyle.TONAL).key;
 
         mContainer = view.findViewById(R.id.style_options_container);
         boolean night = HomeCardStyle.isNightMode(getResources());

@@ -208,8 +208,6 @@
     <string name="settings_home_cards_summary">હોમ કાર્ડ માટે શૈલી પસંદ કરો</string>
     <string name="settings_home_cards_header">એક થીમ બધા કાર્ડ એક સાથે બદલે છે — તમારી પસંદનો દેખાવ પસંદ કરો.</string>
     <string name="home_card_style_neutral">તટસ્થ</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
     <string name="home_card_style_coral">Coral</string>
     <string name="home_card_style_preview_downloads_subtitle">150 ફાઇલો સાચવી · 2.4 GB</string>
     <string name="home_card_style_preview_vault_subtitle">12 આઇટમ સાચવ્યા</string>

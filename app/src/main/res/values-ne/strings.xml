@@ -205,8 +205,6 @@
     <string name="settings_home_cards_summary">गृह कार्डहरूको शैली रोज्नुहोस्</string>
     <string name="settings_home_cards_header">एउटै थिमले सबै कार्डहरू एकैसाथ परिवर्तन गर्छ — आफूले मन पराएको रूप रोज्नुहोस्।</string>
     <string name="home_card_style_neutral">तटस्थ</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
     <string name="home_card_style_coral">Coral</string>
     <string name="home_card_style_preview_downloads_subtitle">150 फाइलहरू सुरक्षित · 2.4 GB</string>
     <string name="home_card_style_preview_vault_subtitle">12 वस्तुहरू सुरक्षित</string>

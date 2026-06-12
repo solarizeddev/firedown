@@ -239,8 +239,6 @@
     <string name="settings_home_cards_summary">ಮುಖಪುಟ ಕಾರ್ಡ್‌ಗಳ ಶೈಲಿಯನ್ನು ಆಯ್ಕೆಮಾಡಿ</string>
     <string name="settings_home_cards_header">ಒಂದು ಥೀಮ್ ಎಲ್ಲಾ ಕಾರ್ಡ್‌ಗಳನ್ನು ಒಮ್ಮೆಲೇ ಬದಲಾಯಿಸುತ್ತದೆ — ನಿಮಗೆ ಇಷ್ಟವಾದ ನೋಟವನ್ನು ಆಯ್ಕೆಮಾಡಿ.</string>
     <string name="home_card_style_neutral">ತಟಸ್ಥ</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
     <string name="home_card_style_coral">Coral</string>
     <string name="home_card_style_preview_downloads_subtitle">150 ಫೈಲ್‌ಗಳು ಉಳಿಸಲಾಗಿದೆ · 2.4 GB</string>
     <string name="home_card_style_preview_vault_subtitle">12 ಐಟಂಗಳು ಉಳಿಸಲಾಗಿದೆ</string>

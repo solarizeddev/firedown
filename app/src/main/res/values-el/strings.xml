@@ -284,8 +284,6 @@
     <string name="settings_home_cards_summary">Επιλέξτε στυλ για τις κάρτες αρχικής</string>
     <string name="settings_home_cards_header">Ένα θέμα αλλάζει όλες τις κάρτες ταυτόχρονα — διαλέξτε την εμφάνιση που σας αρέσει.</string>
     <string name="home_card_style_neutral">Ουδέτερο</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
     <string name="home_card_style_coral">Coral</string>
     <string name="home_card_style_preview_downloads_subtitle">150 αρχεία αποθηκεύτηκαν · 2,4 GB</string>
     <string name="home_card_style_preview_vault_subtitle">12 στοιχεία αποθηκεύτηκαν</string>

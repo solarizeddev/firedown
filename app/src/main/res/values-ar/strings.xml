@@ -321,8 +321,6 @@
     <string name="settings_home_cards_summary">اختر نمط بطاقات الصفحة الرئيسية</string>
     <string name="settings_home_cards_header">مظهر واحد يغير كل البطاقات معًا — اختر الشكل الذي يعجبك.</string>
     <string name="home_card_style_neutral">محايد</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
     <string name="home_card_style_coral">Coral</string>
     <string name="home_card_style_preview_downloads_subtitle">150 ملفًا محفوظًا · 2.4 جيجابايت</string>
     <string name="home_card_style_preview_vault_subtitle">12 عنصرًا محفوظًا</string>

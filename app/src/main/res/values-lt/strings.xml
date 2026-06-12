@@ -254,8 +254,6 @@
     <string name="settings_home_cards_summary">Pasirinkite pradžios ekrano kortelių stilių</string>
     <string name="settings_home_cards_header">Viena tema pakeičia visas korteles iš karto — pasirinkite jums patinkančią išvaizdą.</string>
     <string name="home_card_style_neutral">Neutrali</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
     <string name="home_card_style_coral">Coral</string>
     <string name="home_card_style_preview_downloads_subtitle">150 failų išsaugota · 2,4 GB</string>
     <string name="home_card_style_preview_vault_subtitle">12 elementų išsaugota</string>

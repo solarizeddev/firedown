@@ -214,8 +214,6 @@
     <string name="settings_home_cards_summary">Pilih gaya kad skrin utama</string>
     <string name="settings_home_cards_header">Satu tema mengubah semua kad sekali gus — pilih rupa yang anda suka.</string>
     <string name="home_card_style_neutral">Berkecuali</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
     <string name="home_card_style_coral">Coral</string>
     <string name="home_card_style_preview_downloads_subtitle">150 fail disimpan · 2.4 GB</string>
     <string name="home_card_style_preview_vault_subtitle">12 item disimpan</string>

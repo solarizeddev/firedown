@@ -263,8 +263,6 @@
     <string name="settings_home_cards_summary">Veldu stíl forsíðuspjaldanna</string>
     <string name="settings_home_cards_header">Eitt þema breytir öllum spjöldum í einu — veldu útlitið sem þér líkar.</string>
     <string name="home_card_style_neutral">Hlutlaust</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
     <string name="home_card_style_coral">Coral</string>
     <string name="home_card_style_preview_downloads_subtitle">150 skrár vistaðar · 2,4 GB</string>
     <string name="home_card_style_preview_vault_subtitle">12 atriði vistuð</string>

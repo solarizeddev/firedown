@@ -284,8 +284,6 @@
     <string name="settings_home_cards_summary">Chọn kiểu cho thẻ trang chính</string>
     <string name="settings_home_cards_header">Một chủ đề thay đổi tất cả các thẻ cùng lúc — chọn diện mạo bạn thích.</string>
     <string name="home_card_style_neutral">Trung tính</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
     <string name="home_card_style_coral">Coral</string>
     <string name="home_card_style_preview_downloads_subtitle">Đã lưu 150 tệp · 2,4 GB</string>
     <string name="home_card_style_preview_vault_subtitle">Đã lưu 12 mục</string>

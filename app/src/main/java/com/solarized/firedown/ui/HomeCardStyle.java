@@ -25,13 +25,14 @@ import java.util.List;
 
 /**
  * Packaged style for the home-page shelf cards — Downloads,
- * Safe Folder, Trackers blocked. Five variants give the
- * user a single 'home cards' choice rather than per-card colour knobs.
+ * Safe Folder, Trackers blocked. Three variants give the user a single
+ * 'home cards' choice rather than per-card colour knobs: Neutral (calm
+ * greyscale), Tonal (the DEFAULT — grey card + brand chip, color as a
+ * landmark), Coral (full brand surface, expressive).
  *
- * <p>Colours are raw hex (not theme attrs) because most variants are
- * deliberately off-palette (pale washes, full-saturation brand
- * surfaces, dark-in-both-modes). Encoding them as tokens would mean
- * adding light + dark colour resources for every variant and still
+ * <p>Colours are raw hex (not theme attrs) because Coral is deliberately
+ * off-palette (full-saturation brand surfaces); Neutral/Tonal mirror the
+ * surface tokens (see NEUTRAL's doc). Encoding them as tokens would still
  * end up with these constants, so we keep them inline.</p>
  */
 public final class HomeCardStyle {
@@ -115,29 +116,15 @@ public final class HomeCardStyle {
             new CardLook(0xFFE4E2E5, 0xFF1B1B1E, 0xFFFFBF9B, 0xFF5D2E0D),
             new CardLook(0xFF343537, 0xFFE4E2E5, 0xFFFAB186, 0xFF532606));
 
-    /** 1 — Blush. Pale coral surface (light) / deep warm surface
-     *  (dark), no chip. The 'soft tinted' option. */
-    public static final HomeCardStyle BLUSH = new HomeCardStyle("blush",
-            R.string.home_card_style_blush,
-            new CardLook(0xFFFFE6E0, 0xFF5C1313, null, 0xFFB11030),
-            new CardLook(0xFF3A1F1C, 0xFFF4DDDB, null, 0xFFF66A66),
-            new CardLook(0xFFFBE2EC, 0xFF5C1B3F, null, 0xFF8C1F49),
-            new CardLook(0xFF3A1A28, 0xFFF4DDDB, null, 0xFFFFB0C9),
-            new CardLook(0xFFFFEEDC, 0xFF5D2E0D, null, 0xFFA85918),
-            new CardLook(0xFF332218, 0xFFF4DDDB, null, 0xFFFAB186));
+    /** 1 — Blush/Bloom REMOVED (maintainer's call): the tinted-surface
+     *  pair was the muddy middle — a brand chip on a same-hue tinted card
+     *  loses the landmark value Tonal's chips carry, and the dark tints
+     *  read dirty rather than intentional (on-device review). Three styles
+     *  remain — Neutral (calm) / Tonal (default, meaningful accent) /
+     *  Coral (full expressive). Do NOT reintroduce them without a fresh
+     *  contrast pass. */
 
-    /** 2 — Bloom. Same tinted surface as Blush, with the brand chips
-     *  kept on top — two layers of brand colour. */
-    public static final HomeCardStyle BLOOM = new HomeCardStyle("bloom",
-            R.string.home_card_style_bloom,
-            new CardLook(0xFFFFE6E0, 0xFF5C1313, 0xFFFF857F, 0xFF460005),
-            new CardLook(0xFF3A1F1C, 0xFFF4DDDB, 0xFFF66A66, 0xFF0F0000),
-            new CardLook(0xFFFBE2EC, 0xFF5C1B3F, 0xFFC8417B, 0xFFFFFFFF),
-            new CardLook(0xFF3A1A28, 0xFFF4DDDB, 0xFFC8417B, 0xFFFFFFFF),
-            new CardLook(0xFFFFEEDC, 0xFF5D2E0D, 0xFFFFBF9B, 0xFF5D2E0D),
-            new CardLook(0xFF332218, 0xFFF4DDDB, 0xFFFAB186, 0xFF532606));
-
-    /** 3 — Coral. Full-saturation brand surface across the three
+    /** 2 — Coral. Full-saturation brand surface across the three
      *  shelves — Downloads coral, Safe Folder raspberry, Trackers
      *  peach (each owns its M3 tonal container). */
     public static final HomeCardStyle CORAL = new HomeCardStyle("coral",
@@ -150,7 +137,7 @@ public final class HomeCardStyle {
             new CardLook(0xFFFAB186, 0xFF532606, null, 0xFF532606));
 
     public static final List<HomeCardStyle> ALL =
-            Arrays.asList(NEUTRAL, TONAL, BLUSH, BLOOM, CORAL);
+            Arrays.asList(NEUTRAL, TONAL, CORAL);
 
     @NonNull
     public static HomeCardStyle fromKey(@Nullable String key, @NonNull HomeCardStyle fallback) {

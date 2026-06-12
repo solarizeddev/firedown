@@ -213,8 +213,6 @@
     <string name="settings_home_cards_summary">ہوم کارڈز دا اسٹائل چنو</string>
     <string name="settings_home_cards_header">اک تھیم سارے کارڈز اکٹھے بدلدا اے — اپنا پسندیدہ روپ چنو۔</string>
     <string name="home_card_style_neutral">غیر جانبدار</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
     <string name="home_card_style_coral">Coral</string>
     <string name="home_card_style_preview_downloads_subtitle">150 فائلاں محفوظ · 2.4 GB</string>
     <string name="home_card_style_preview_vault_subtitle">12 آئٹم محفوظ</string>

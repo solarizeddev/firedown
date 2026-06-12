@@ -252,8 +252,6 @@
     <string name="settings_home_cards_summary">Bosh sahifa kartalari uslubini tanlang</string>
     <string name="settings_home_cards_header">Bitta mavzu barcha kartalarni bir vaqtning o\'zida o\'zgartiradi — yoqqan ko\'rinishni tanlang.</string>
     <string name="home_card_style_neutral">Neytral</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
     <string name="home_card_style_coral">Coral</string>
     <string name="home_card_style_preview_downloads_subtitle">150 fayl saqlandi · 2,4 GB</string>
     <string name="home_card_style_preview_vault_subtitle">12 element saqlandi</string>

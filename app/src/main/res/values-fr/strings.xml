@@ -517,8 +517,6 @@
     <string name="settings_home_cards_summary">Choisissez le style des cartes d\'accueil</string>
     <string name="settings_home_cards_header">Un seul thème change toutes les cartes — choisissez l\'aspect qui vous plaît.</string>
     <string name="home_card_style_neutral">Neutre</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
     <string name="home_card_style_coral">Coral</string>
     <string name="home_card_style_preview_downloads_subtitle">150 fichiers enregistrés · 2,4 Go</string>
     <string name="home_card_style_preview_vault_subtitle">12 éléments enregistrés</string>

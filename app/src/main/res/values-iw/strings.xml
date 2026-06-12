@@ -292,8 +292,6 @@
     <string name="settings_home_cards_summary">בחר את הסגנון של כרטיסי מסך הבית</string>
     <string name="settings_home_cards_header">ערכה אחת משנה את כל הכרטיסים יחד — בחר את המראה שאתה אוהב.</string>
     <string name="home_card_style_neutral">ניטרלי</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
     <string name="home_card_style_coral">Coral</string>
     <string name="home_card_style_preview_downloads_subtitle">150 קבצים נשמרו · 2.4 GB</string>
     <string name="home_card_style_preview_vault_subtitle">12 פריטים נשמרו</string>

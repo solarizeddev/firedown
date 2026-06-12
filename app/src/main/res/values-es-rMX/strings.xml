@@ -57,8 +57,6 @@
     <string name="settings_home_cards_summary">Elige el estilo de las tarjetas de inicio</string>
     <string name="settings_home_cards_header">Un solo tema cambia todas las tarjetas a la vez — elige el aspecto que prefieras.</string>
     <string name="home_card_style_neutral">Neutro</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
     <string name="home_card_style_coral">Coral</string>
     <string name="home_card_style_preview_downloads_subtitle">150 archivos guardados · 2,4 GB</string>
     <string name="home_card_style_preview_vault_subtitle">12 elementos guardados</string>

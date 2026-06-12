@@ -247,8 +247,6 @@
     <string name="settings_home_cards_summary">ပင်မစာမျက်နှာ ကတ်များအတွက် စတိုင်ရွေးပါ</string>
     <string name="settings_home_cards_header">အပြင်အဆင်တစ်ခုက ကတ်အားလုံးကို တစ်ပြိုင်နက် ပြောင်းပေးသည် — ကြိုက်နှစ်သက်ရာ ပုံစံကို ရွေးပါ။</string>
     <string name="home_card_style_neutral">ကြားနေ</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
     <string name="home_card_style_coral">Coral</string>
     <string name="home_card_style_preview_downloads_subtitle">ဖိုင် ၁၅၀ သိမ်းပြီး · 2.4 GB</string>
     <string name="home_card_style_preview_vault_subtitle">ပစ္စည်း ၁၂ ခု သိမ်းပြီး</string>

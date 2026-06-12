@@ -272,8 +272,6 @@
     <string name="settings_home_cards_summary">Alege stilul cardurilor de pe pagina principală</string>
     <string name="settings_home_cards_header">O singură temă schimbă toate cardurile odată — alege aspectul preferat.</string>
     <string name="home_card_style_neutral">Neutru</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
     <string name="home_card_style_coral">Coral</string>
     <string name="home_card_style_preview_downloads_subtitle">150 fișiere salvate · 2,4 GB</string>
     <string name="home_card_style_preview_vault_subtitle">12 elemente salvate</string>

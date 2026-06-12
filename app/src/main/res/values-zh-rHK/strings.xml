@@ -216,8 +216,6 @@
     <string name="settings_home_cards_summary">選擇主畫面卡片樣式</string>
     <string name="settings_home_cards_header">單一主題會一次改變所有卡片 — 選擇你喜歡的外觀。</string>
     <string name="home_card_style_neutral">中性</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
     <string name="home_card_style_coral">Coral</string>
     <string name="home_card_style_preview_downloads_subtitle">已儲存 150 個檔案 · 2.4 GB</string>
     <string name="home_card_style_preview_vault_subtitle">已儲存 12 個項目</string>

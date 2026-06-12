@@ -267,8 +267,6 @@
     <string name="settings_home_cards_summary">Изаберите стил картица почетног екрана</string>
     <string name="settings_home_cards_header">Једна тема мења све картице одједном — изаберите изглед који вам се свиђа.</string>
     <string name="home_card_style_neutral">Неутрална</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
     <string name="home_card_style_coral">Coral</string>
     <string name="home_card_style_preview_downloads_subtitle">150 датотека сачувано · 2,4 ГБ</string>
     <string name="home_card_style_preview_vault_subtitle">12 ставки сачувано</string>

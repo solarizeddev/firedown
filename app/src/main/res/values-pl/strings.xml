@@ -380,8 +380,6 @@
     <string name="settings_home_cards_summary">Wybierz styl kart ekranu głównego</string>
     <string name="settings_home_cards_header">Jeden motyw zmienia wszystkie karty naraz — wybierz wygląd, który Ci się podoba.</string>
     <string name="home_card_style_neutral">Neutralny</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
     <string name="home_card_style_coral">Coral</string>
     <string name="home_card_style_preview_downloads_subtitle">Zapisano 150 plików · 2,4 GB</string>
     <string name="home_card_style_preview_vault_subtitle">Zapisano 12 elementów</string>

@@ -254,8 +254,6 @@
     <string name="settings_home_cards_summary">హోమ్ కార్డ్‌ల కోసం శైలిని ఎంచుకోండి</string>
     <string name="settings_home_cards_header">ఒక థీమ్ అన్ని కార్డ్‌లను ఒకేసారి మారుస్తుంది — మీకు నచ్చిన రూపాన్ని ఎంచుకోండి.</string>
     <string name="home_card_style_neutral">తటస్థం</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
     <string name="home_card_style_coral">Coral</string>
     <string name="home_card_style_preview_downloads_subtitle">150 ఫైళ్లు సేవ్ చేయబడ్డాయి · 2.4 GB</string>
     <string name="home_card_style_preview_vault_subtitle">12 అంశాలు సేవ్ చేయబడ్డాయి</string>

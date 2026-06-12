@@ -247,8 +247,6 @@
     <string name="settings_home_cards_summary">হোম কার্ডের স্টাইল বেছে নিন</string>
     <string name="settings_home_cards_header">একটি থিম সব কার্ড একসাথে বদলে দেয় — আপনার পছন্দের চেহারা বেছে নিন।</string>
     <string name="home_card_style_neutral">নিরপেক্ষ</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
     <string name="home_card_style_coral">Coral</string>
     <string name="home_card_style_preview_downloads_subtitle">150টি ফাইল সংরক্ষিত · 2.4 GB</string>
     <string name="home_card_style_preview_vault_subtitle">12টি আইটেম সংরক্ষিত</string>

@@ -384,8 +384,6 @@
     <string name="settings_home_cards_summary">Ana sayfa kartlarının stilini seçin</string>
     <string name="settings_home_cards_header">Tek bir tema tüm kartları birden değiştirir — beğendiğiniz görünümü seçin.</string>
     <string name="home_card_style_neutral">Nötr</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
     <string name="home_card_style_coral">Coral</string>
     <string name="home_card_style_preview_downloads_subtitle">150 dosya kaydedildi · 2,4 GB</string>
     <string name="home_card_style_preview_vault_subtitle">12 öğe kaydedildi</string>

@@ -295,8 +295,6 @@
     <string name="settings_home_cards_summary">Tria l\'estil de les targetes d\'inici</string>
     <string name="settings_home_cards_header">Un sol tema canvia totes les targetes alhora — tria l\'aspecte que prefereixis.</string>
     <string name="home_card_style_neutral">Neutre</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
     <string name="home_card_style_coral">Coral</string>
     <string name="home_card_style_preview_downloads_subtitle">150 fitxers desats · 2,4 GB</string>
     <string name="home_card_style_preview_vault_subtitle">12 elements desats</string>

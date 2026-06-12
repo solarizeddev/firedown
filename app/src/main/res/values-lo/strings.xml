@@ -258,8 +258,6 @@
     <string name="settings_home_cards_summary">ເລືອກສະໄຕລ໌ບັດໜ້າຫຼັກ</string>
     <string name="settings_home_cards_header">ຮູບແບບໜຶ່ງປ່ຽນບັດທັງໝົດພ້ອມກັນ — ເລືອກລັກສະນະທີ່ທ່ານມັກ.</string>
     <string name="home_card_style_neutral">ກາງ</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
     <string name="home_card_style_coral">Coral</string>
     <string name="home_card_style_preview_downloads_subtitle">ບັນທຶກ 150 ໄຟລ໌ · 2.4 GB</string>
     <string name="home_card_style_preview_vault_subtitle">ບັນທຶກ 12 ລາຍການ</string>
