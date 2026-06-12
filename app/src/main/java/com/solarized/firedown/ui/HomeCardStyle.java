@@ -83,11 +83,11 @@ public final class HomeCardStyle {
      *  weight. Grey chip, icons onSurfaceVariant so no brand colour leaks.
      *  The 'minimal / calmest' option.
      *
-     *  <p>Subtle-tile surface (here and in TONAL); incognito's INFO rows
-     *  stay flat (they inform; these navigate — tile + chevron is the
-     *  honest "tap me"). Both homes still share canvas / chip / FAB /
-     *  spacing rhythm. Grey chip well one step up from the tile: dark
-     *  #292A2C, light #DAD8DD. Coral keeps the full-brand surface. */
+     *  <p>Subtle-tile surface (here and in TONAL); the tile itself is the
+     *  tappable affordance (no chevron). Incognito's INFO rows stay flat
+     *  (they inform; these navigate). Both homes still share canvas / chip
+     *  / FAB. Grey chip well one step up from the tile: dark #292A2C,
+     *  light #DAD8DD. Coral keeps the full-brand surface. */
     public static final HomeCardStyle NEUTRAL = new HomeCardStyle("neutral",
             R.string.home_card_style_neutral,
             new CardLook(0xFFEFEDF0, 0xFF1B1B1E, 0xFFDAD8DD, 0xFF44474C),
@@ -123,10 +123,10 @@ public final class HomeCardStyle {
      *  Coral (full expressive). Do NOT reintroduce them without a fresh
      *  contrast pass. */
 
-    /** 2 — Coral. The one FILLED style (Neutral/Tonal are flat rows now):
-     *  full-saturation brand surface across the three shelves — Downloads
-     *  coral, Safe Folder raspberry, Trackers peach. The loud, expressive
-     *  opt-in; the trailing chevron tints to each card's on-colour. */
+    /** 2 — Coral. The loud FILLED style — full-saturation brand surface
+     *  across the three shelves (Downloads coral, Safe Folder raspberry,
+     *  Trackers peach) vs the subtle-tile Neutral/Tonal. The expressive
+     *  opt-in. */
     public static final HomeCardStyle CORAL = new HomeCardStyle("coral",
             R.string.home_card_style_coral,
             new CardLook(0xFFFF857F, 0xFF460005, null, 0xFF460005),
@@ -160,22 +160,16 @@ public final class HomeCardStyle {
      * other.
      *
      * <p>Any view argument may be null — a card without a chip /
-     * icon / subtitle / chevron just skips that branch, so the same
-     * method paints every shelf card.</p>
-     *
-     * <p>The {@code chevron} is the navigation affordance for the FLAT
-     * styles (Neutral/Tonal have a transparent card surface, so without
-     * a trailing › a tappable row would read like incognito's
-     * NON-tappable info rows). It is tinted with {@code look.fg} (the
-     * subtitle alpha) so it stays legible on every surface: onSurface on
-     * the flat canvas, the brand on-colour on a Coral card.</p>
+     * icon / subtitle just skips that branch, so the same method paints
+     * every shelf card. The tappable affordance is the TILE surface
+     * itself (no chevron — the subtle surfaceContainer tile reads as a
+     * pressable row).</p>
      */
     public static void applyToCard(@NonNull MaterialCardView card,
                                    @Nullable View chip,
                                    @Nullable ImageView icon,
                                    @Nullable TextView title,
                                    @Nullable TextView subtitle,
-                                   @Nullable ImageView chevron,
                                    @NonNull CardLook look) {
         card.setCardBackgroundColor(look.bg);
 
@@ -197,9 +191,5 @@ public final class HomeCardStyle {
         }
         if (title != null)    title.setTextColor(look.fg);
         if (subtitle != null) subtitle.setTextColor(ColorUtils.setAlphaComponent(look.fg, 0xB3));
-        if (chevron != null) {
-            ImageViewCompat.setImageTintList(chevron,
-                    ColorStateList.valueOf(ColorUtils.setAlphaComponent(look.fg, 0xB3)));
-        }
     }
 }

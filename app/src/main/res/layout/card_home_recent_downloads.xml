@@ -26,7 +26,7 @@
         android:gravity="center_vertical"
         android:orientation="horizontal"
         android:paddingHorizontal="16dp"
-        android:paddingVertical="6dp">
+        android:paddingVertical="16dp">
 
         <FrameLayout
             android:id="@+id/recent_downloads_chip"
@@ -81,17 +81,6 @@
                 tools:visibility="visible" />
 
         </LinearLayout>
-
-        <!-- Navigation affordance for the FLAT (Neutral/Tonal) row —
-             tinted per-style in HomeCardStyle.applyToCard. -->
-        <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/recent_downloads_chevron"
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:layout_marginStart="8dp"
-            android:contentDescription="@null"
-            android:src="@drawable/ic_chevron_right_24"
-            app:tint="?attr/colorOnSurfaceVariant" />
 
     </LinearLayout>
 

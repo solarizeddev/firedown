@@ -74,8 +74,6 @@ public class HomeCardStylesFragment extends BasePreferenceFragment {
         RadioButton radio = row.findViewById(R.id.style_option_radio);
         name.setText(style.nameRes);
 
-        // Previews pass null chevron — the mini-illustration shows surface
-        // + chip + text; the affordance chevron is only on the real rows.
         MaterialCardView downloadsCard = row.findViewById(R.id.style_option_downloads_card);
         HomeCardStyle.applyToCard(
                 downloadsCard,
@@ -83,7 +81,6 @@ public class HomeCardStylesFragment extends BasePreferenceFragment {
                 (AppCompatImageView) row.findViewById(R.id.style_option_downloads_icon),
                 row.findViewById(R.id.style_option_downloads_title),
                 row.findViewById(R.id.style_option_downloads_subtitle),
-                null,
                 style.downloads(night));
 
         MaterialCardView vaultCard = row.findViewById(R.id.style_option_vault_card);
@@ -93,7 +90,6 @@ public class HomeCardStylesFragment extends BasePreferenceFragment {
                 (AppCompatImageView) row.findViewById(R.id.style_option_vault_icon),
                 row.findViewById(R.id.style_option_vault_title),
                 row.findViewById(R.id.style_option_vault_subtitle),
-                null,
                 style.vault(night));
 
         MaterialCardView trackersCard = row.findViewById(R.id.style_option_trackers_card);
@@ -103,7 +99,6 @@ public class HomeCardStylesFragment extends BasePreferenceFragment {
                 (AppCompatImageView) row.findViewById(R.id.style_option_trackers_icon),
                 row.findViewById(R.id.style_option_trackers_title),
                 row.findViewById(R.id.style_option_trackers_subtitle),
-                null,
                 style.trackers(night));
 
         boolean selected = style.key.equals(mSelectedKey);
