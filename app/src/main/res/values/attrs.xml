@@ -21,6 +21,13 @@
              FAB to sit over it. Used by the browser layout; home shows the
              bookmarks/search action in the slot instead. -->
         <attr name="hideMiddleSlot" format="boolean" />
+        <!-- When true (default), the bar self-pads the system nav inset so
+             its background owns the nav strip and the icon row sits above
+             it — used by Home/incognito Home, which are NOT on the browser's
+             framed root-padding model. The browser sets this FALSE: its root
+             CoordinatorLayout reserves the nav strip with all-sides safe-area
+             padding, so a bar self-pad there would double-inset. -->
+        <attr name="selfPadSystemBars" format="boolean" />
     </declare-styleable>
     <declare-styleable name="GeckoToolbar">
         <attr name="enableHome" format="boolean" />

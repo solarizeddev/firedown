@@ -16,6 +16,9 @@ import androidx.annotation.Nullable;
 import androidx.annotation.OptIn;
 import androidx.appcompat.widget.AppCompatImageButton;
 import androidx.core.content.ContextCompat;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.core.widget.ImageViewCompat;
 
 import com.google.android.material.badge.ExperimentalBadgeUtils;
@@ -36,6 +39,8 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
     private TabsBrowserButton mTabsCountButton;
 
     private BadgeDrawable mBadge;
+
+    private boolean mSelfPadSystemBars = true;
 
 
 
@@ -81,6 +86,11 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
         // layout leaves it false; the attribute stays for any future surface
         // that wants the in-slot action instead of a FAB.
         boolean hideMiddleSlot = array.getBoolean(R.styleable.BottomNavigationBar_hideMiddleSlot, false);
+        // Default TRUE: Home/incognito Home self-pad the nav inset so the bar
+        // owns the nav strip. The browser sets it FALSE — its framed root
+        // reserves the strip with all-sides padding, so a self-pad there
+        // would double-inset (see the styleable doc).
+        mSelfPadSystemBars = array.getBoolean(R.styleable.BottomNavigationBar_selfPadSystemBars, true);
         array.recycle();
 
         LayoutInflater.from(context).inflate(R.layout.bottom_bar, this, true);
@@ -115,10 +125,11 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
             }
         });
 
-        // FRAMED model: the bar does NOT self-pad the nav inset — the
-        // browser root reserves the nav strip with its own safe-area
-        // padding, so the bar is a plain app_bar_size-tall bar. (It no
-        // longer consumes insets either; the root consumes them.)
+        // Self-pad the nav inset UNLESS the host opted out (the browser's
+        // framed root reserves the strip instead — see selfPadSystemBars).
+        if (mSelfPadSystemBars) {
+            applyWindowInsets();
+        }
     }
 
 
@@ -135,9 +146,11 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
         ColorStateList iconTint = ColorStateList.valueOf(iconColor);
 
         // Background on THIS view (the FrameLayout), not the LinearLayout
-        // child — paints the whole bar in one tone. (In the framed model
-        // the bar no longer self-pads the nav inset; the root reserves the
-        // nav strip, so there is no inset strip to leak here.)
+        // child — paints the whole bar in one tone INCLUDING the nav-inset
+        // self-pad strip when present (Home), so the gesture area matches
+        // the bar; a child-only background would leave that strip a
+        // two-tone seam. (The browser opts out of the self-pad, so there's
+        // no strip there, but painting the outer view is correct either way.)
         setBackgroundColor(surfaceColor);
 
         // Tint each icon button
@@ -188,6 +201,19 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
         if (mBadge != null) {
             mBadge.setBackgroundColor(IncognitoColors.getPrimaryContainer(context, incognito));
         }
+    }
+
+    private void applyWindowInsets() {
+        ViewCompat.setOnApplyWindowInsetsListener(this, (v, windowInsets) -> {
+            Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars() |
+                    WindowInsetsCompat.Type.displayCutout());
+            // Self-pad the bottom (nav) inset so the bar's background owns
+            // the nav strip; l/r for cutouts. Consume so the inset doesn't
+            // also reach a descendant. (Only registered when the host did
+            // NOT opt out via selfPadSystemBars — i.e. Home, not browser.)
+            v.setPadding(insets.left, 0, insets.right, insets.bottom);
+            return WindowInsetsCompat.CONSUMED;
+        });
     }
 
     public void onBadgeCount(int count){

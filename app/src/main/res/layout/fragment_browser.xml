@@ -79,6 +79,7 @@
         android:layout_gravity="bottom"
         android:background="?attr/colorSurfaceContainer"
         app:hideMiddleSlot="true"
+        app:selfPadSystemBars="false"
         app:layout_behavior="com.solarized.firedown.geckoview.toolbar.BottomNavigationBehavior"/>
 
 
