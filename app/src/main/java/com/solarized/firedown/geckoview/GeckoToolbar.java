@@ -456,26 +456,24 @@ public class GeckoToolbar extends FrameLayout implements View.OnClickListener, V
         }
 
         // 2. Address bar rounded background (the GradientDrawable pill).
-        // The pill MATCHES its screen's primary containers everywhere
-        // (maintainer's call — strict M3 docked-search High was tried and
-        // rejected in favour of the match):
+        // Pill tone per holder:
         //  - tonal holder (browser): surfaceContainerHighest — the two-step
-        //    lift over the surfaceContainer holder (a High fill sat only
-        //    one step up and read nearly flat). In light this is the
-        //    STRENGTHENED #DAD8DD token.
-        //  - quiet holder, regular Home: home_surface_container — the same
-        //    tone as the shelf cards (HomeCardStyle NEUTRAL/TONAL). Split
-        //    from Highest because the strengthened light value made the
-        //    white-canvas Home read battleship grey; night value == night
-        //    Highest, so dark Home is unchanged.
+        //    lift over the surfaceContainer holder (a High fill sat only one
+        //    step up and read nearly flat). Light = the STRENGTHENED #DAD8DD.
         //  - quiet holder, incognito Home: incognito Highest, unchanged —
-        //    the lavender-on-purple pairing was reviewed as the best screen
-        //    in the app; don't touch it.
+        //    the lavender-on-purple pairing is the best screen in the app.
+        //  - quiet holder, regular Home: surfaceContainerHigh — the M3
+        //    docked-search role, and exactly ONE step above the home shelf
+        //    tiles (surfaceContainer). The pill used to sit at Highest (two
+        //    steps up, when the cards matched it), which left it floating
+        //    above the tile family once the cards dropped to the subtle
+        //    surfaceContainer tile; one step reads as "the input, gently
+        //    raised" and keeps an even surface→container→High ladder.
         int pillRestColor;
         if (tonalHolder || incognito) {
             pillRestColor = IncognitoColors.getSurfaceContainerHighest(activity, incognito);
         } else {
-            pillRestColor = ContextCompat.getColor(activity, R.color.home_surface_container);
+            pillRestColor = IncognitoColors.getSurfaceContainerHigh(activity, incognito);
         }
         if (mBackground != null && mBackground.getBackground() instanceof GradientDrawable gd) {
             // MUTATE before setColor: @drawable/address_bar is ONE cached

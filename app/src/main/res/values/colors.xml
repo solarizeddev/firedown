@@ -56,19 +56,9 @@
          ~5 levels in light, too tight to give a lifted surface (the browser
          URL pill, the autocomplete suggestion cards) any separation. ~15
          levels now, matching the visible steps dark/OLED/incognito already
-         have. Home does NOT use this token — see home_surface_container. -->
+         have. Regular Home doesn't use Highest — its pill is High and its
+         shelf tiles are surfaceContainer. -->
     <color name="md_theme_surfaceContainerHighest">#DAD8DD</color>
-    <!-- Home pill + shelf-card surface. SPLIT from surfaceContainerHighest
-         on purpose: that token serves the BROWSER pill, which needs the
-         strengthened #DAD8DD to stand off its surfaceContainer holder —
-         but on Home the same value painted four large surfaces on a white
-         canvas and the screen went battleship grey (on-device review).
-         Home needs far less lift over #FBF9FB, so it gets the spec-default
-         Highest instead. The night value IS night Highest (the dark ladder
-         is compressed; dark Home was reviewed as correct) — see
-         values-night. Mirrored as raw hex in HomeCardStyle NEUTRAL/TONAL;
-         keep all three in sync. -->
-    <color name="home_surface_container">#E4E2E5</color>
     <color name="md_theme_surfaceContainerLow_highContrast">#F5F3F6</color>
     <!-- Incognito -->
     <!-- Primary -->
