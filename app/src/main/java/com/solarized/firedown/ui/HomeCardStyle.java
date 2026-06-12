@@ -76,31 +76,42 @@ public final class HomeCardStyle {
     @NonNull public CardLook trackers(boolean night)  { return night ? trackersDark  : trackersLight;  }
 
     /** 0 — Neutral. True greyscale shelves — neutral surface, neutral
-     *  chip backdrop (surfaceContainerHighest), icons tinted with
-     *  onSurfaceVariant so no brand colour leaks through. The
-     *  'minimal' option for users who don't want coral / raspberry /
-     *  peach on the home page at all. */
+     *  icons tinted with onSurfaceVariant so no brand colour leaks
+     *  through. The 'minimal' option for users who don't want coral /
+     *  raspberry / peach on the home page at all.
+     *
+     *  <p>Neutral-surface card tone (here and in TONAL below) is the M3
+     *  FILLED-card role — surfaceContainerHighest — because the cards
+     *  are flat (no stroke, no shadow). The grey chip steps DOWN to
+     *  surfaceContainerHigh: a recessed well, and the exact tone of the
+     *  Home search pill. History: the card used to sit at
+     *  surfaceContainer, which rendered DARKER than the search pill and
+     *  was reported as a tone mismatch; per Material the cards sit one
+     *  step LIGHTER than the pill (docked search = High). Hexes mirror
+     *  values(-night)/colors.xml Highest/High — keep them in sync. */
     public static final HomeCardStyle NEUTRAL = new HomeCardStyle("neutral",
             R.string.home_card_style_neutral,
-            new CardLook(0xFFEFEDF0, 0xFF1B1B1E, 0xFFE4E2E5, 0xFF44474C),
-            new CardLook(0xFF1F1F22, 0xFFE4E2E5, 0xFF343537, 0xFFC5C6CD),
-            new CardLook(0xFFEFEDF0, 0xFF1B1B1E, 0xFFE4E2E5, 0xFF44474C),
-            new CardLook(0xFF1F1F22, 0xFFE4E2E5, 0xFF343537, 0xFFC5C6CD),
-            new CardLook(0xFFEFEDF0, 0xFF1B1B1E, 0xFFE4E2E5, 0xFF44474C),
-            new CardLook(0xFF1F1F22, 0xFFE4E2E5, 0xFF343537, 0xFFC5C6CD));
+            new CardLook(0xFFDAD8DD, 0xFF1B1B1E, 0xFFE9E7EA, 0xFF44474C),
+            new CardLook(0xFF343537, 0xFFE4E2E5, 0xFF292A2C, 0xFFC5C6CD),
+            new CardLook(0xFFDAD8DD, 0xFF1B1B1E, 0xFFE9E7EA, 0xFF44474C),
+            new CardLook(0xFF343537, 0xFFE4E2E5, 0xFF292A2C, 0xFFC5C6CD),
+            new CardLook(0xFFDAD8DD, 0xFF1B1B1E, 0xFFE9E7EA, 0xFF44474C),
+            new CardLook(0xFF343537, 0xFFE4E2E5, 0xFF292A2C, 0xFFC5C6CD));
 
     /** 1 — Tonal. Neutral surface + tonal chips (coral Downloads,
      *  raspberry Safe Folder, peach Trackers). What 'Neutral' used
      *  to mean before the true-greyscale Neutral landed — kept under
-     *  a new name for users who liked the per-card colour identity. */
+     *  a new name for users who liked the per-card colour identity.
+     *  Card surface = surfaceContainerHighest, same filled-card role
+     *  as NEUTRAL (see its doc); brand chips unchanged. */
     public static final HomeCardStyle TONAL = new HomeCardStyle("tonal",
             R.string.home_card_style_tonal,
-            new CardLook(0xFFEFEDF0, 0xFF1B1B1E, 0xFFFF857F, 0xFF460005),
-            new CardLook(0xFF1F1F22, 0xFFE4E2E5, 0xFFF66A66, 0xFF0F0000),
-            new CardLook(0xFFEFEDF0, 0xFF1B1B1E, 0xFFC8417B, 0xFFFFFFFF),
-            new CardLook(0xFF1F1F22, 0xFFE4E2E5, 0xFFC8417B, 0xFFFFFFFF),
-            new CardLook(0xFFEFEDF0, 0xFF1B1B1E, 0xFFFFBF9B, 0xFF5D2E0D),
-            new CardLook(0xFF1F1F22, 0xFFE4E2E5, 0xFFFAB186, 0xFF532606));
+            new CardLook(0xFFDAD8DD, 0xFF1B1B1E, 0xFFFF857F, 0xFF460005),
+            new CardLook(0xFF343537, 0xFFE4E2E5, 0xFFF66A66, 0xFF0F0000),
+            new CardLook(0xFFDAD8DD, 0xFF1B1B1E, 0xFFC8417B, 0xFFFFFFFF),
+            new CardLook(0xFF343537, 0xFFE4E2E5, 0xFFC8417B, 0xFFFFFFFF),
+            new CardLook(0xFFDAD8DD, 0xFF1B1B1E, 0xFFFFBF9B, 0xFF5D2E0D),
+            new CardLook(0xFF343537, 0xFFE4E2E5, 0xFFFAB186, 0xFF532606));
 
     /** 1 — Blush. Pale coral surface (light) / deep warm surface
      *  (dark), no chip. The 'soft tinted' option. */
