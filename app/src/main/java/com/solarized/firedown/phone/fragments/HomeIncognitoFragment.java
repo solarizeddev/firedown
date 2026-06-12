@@ -39,6 +39,7 @@ import com.solarized.firedown.data.models.IncognitoStateViewModel;
 import com.solarized.firedown.data.models.GeckoStateViewModel;
 import com.solarized.firedown.geckoview.GeckoState;
 import com.solarized.firedown.geckoview.GeckoToolbar;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.solarized.firedown.geckoview.toolbar.BottomNavigationBar;
 import com.solarized.firedown.manager.DownloadRequest;
 import com.solarized.firedown.phone.DownloadsActivity;
@@ -142,6 +143,19 @@ public class HomeIncognitoFragment extends BaseBrowserFragment implements
         mBottomNavigationBar = v.findViewById(R.id.bottom_app_bar);
         mBottomNavigationBar.setListener(this);
 
+        // Hero FAB in the bottom bar's cradle — same action as normal
+        // home: Bookmarks. The list is just URLs the user explicitly
+        // chose to save earlier — showing it inside an incognito
+        // session doesn't leak any private-session browsing state out,
+        // and the URL bar at the top already covers the search path.
+        // Pass the incognito flag through so the list paints in
+        // incognito tones and tapping an entry opens an incognito tab.
+        FloatingActionButton bookmarkButton = v.findViewById(R.id.bookmark_button);
+        bookmarkButton.setOnClickListener(view -> {
+            Bundle args = new Bundle();
+            args.putBoolean(Keys.IS_INCOGNITO, true);
+            NavigationUtils.navigateSafe(mNavController, R.id.action_home_incognito_to_bookmarks, args);
+        });
 
         mGeckoToolbar = v.findViewById(R.id.toolbar_layout);
         mGeckoToolbar.setListener(this);
@@ -344,18 +358,10 @@ public class HomeIncognitoFragment extends BaseBrowserFragment implements
         } else if (id == R.id.downloads_button) {
             Intent downloadsIntent = new Intent(mActivity, VaultActivity.class);
             mStartForResult.launch(downloadsIntent);
-        } else if (id == R.id.search_button) {
-            // Same cradle action as normal home: Bookmarks. The list
-            // is just URLs the user explicitly chose to save earlier —
-            // showing it inside an incognito session doesn't leak any
-            // private-session browsing state out, and the URL bar at
-            // the top already covers the search path. Pass the
-            // incognito flag through so the list paints in incognito
-            // tones and tapping an entry opens an incognito tab.
-            Bundle args = new Bundle();
-            args.putBoolean(Keys.IS_INCOGNITO, true);
-            NavigationUtils.navigateSafe(mNavController, R.id.action_home_incognito_to_bookmarks, args);
         }
+        // No R.id.search_button branch: the middle slot is hidden
+        // (hideMiddleSlot) and never dispatches — Bookmarks is the
+        // hero FAB wired in onCreateView.
     }
 
     // ── Autocomplete callbacks ──────────────────────────────────────

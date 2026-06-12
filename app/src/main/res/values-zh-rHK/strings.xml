@@ -53,7 +53,7 @@
     <string name="edit">編輯</string>
     <string name="empty_learn_more">瞭解詳情</string>
     <string name="empty_list">您的下載將會出現在這裡。</string>
-    <string name="empty_list_bookmarks">尚未添加任何書籤。</string>
+    <string name="empty_list_bookmarks">尚未添加任何書籤。\n\n開啟任何頁面，在 ⋮ 選單中選擇「Bookmark page」即可儲存到這裡。</string>
     <string name="empty_list_browser_history">您的瀏覽器記錄為空。</string>
     <string name="empty_list_history">您的下載歷史記錄為空。</string>
     <string name="empty_list_query">未找到結果</string>

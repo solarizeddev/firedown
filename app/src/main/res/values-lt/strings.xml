@@ -73,7 +73,7 @@
     <string name="edit">Redaguoti</string>
     <string name="empty_learn_more">Sužinokite daugiau</string>
     <string name="empty_list">Jūsų atsisiuntimai bus rodomi čia.</string>
-    <string name="empty_list_bookmarks">Dar nieko nepažymėta.</string>
+    <string name="empty_list_bookmarks">Dar nieko nepažymėta.\n\nAtidarykite bet kurį puslapį ir ⋮ meniu pasirinkite „Bookmark page“, kad išsaugotumėte jį čia.</string>
     <string name="empty_list_browser_history">Jūsų naršyklės istorija tuščia.</string>
     <string name="empty_list_history">Atsisiuntimų istorija tuščia.</string>
     <string name="empty_list_query">Nieko nerasta</string>

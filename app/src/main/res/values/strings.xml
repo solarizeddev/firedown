@@ -181,7 +181,7 @@
     <string name="restore_downloads_none">No backup found in this folder</string>
     <string name="restore_downloads_wrong_device">This backup belongs to a different device</string>
     <string name="empty_list">Your downloads will appear here.</string>
-    <string name="empty_list_bookmarks">Nothing bookmarked yet.</string>
+    <string name="empty_list_bookmarks">Nothing bookmarked yet.\n\nOpen any page and choose “Bookmark page” from the ⋮ menu to save it here.</string>
     <string name="empty_list_browser_history">Your browser history is empty.</string>
     <string name="empty_list_history">Your downloads history is empty.</string>
     <string name="empty_list_query">No results found</string>

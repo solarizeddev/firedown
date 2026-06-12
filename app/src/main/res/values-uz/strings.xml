@@ -78,7 +78,7 @@
     <string name="edit">Tahrirlash</string>
     <string name="empty_learn_more">Batafsil</string>
     <string name="empty_list">Yuklab olishlaringiz shu yerda chiqadi.</string>
-    <string name="empty_list_bookmarks">Hali hech narsa belgilanmagan.</string>
+    <string name="empty_list_bookmarks">Hali hech narsa belgilanmagan.\n\nIstalgan sahifani oching va uni shu yerda saqlash uchun ⋮ menyusidan “Bookmark page” ni tanlang.</string>
     <string name="empty_list_browser_history">Brauzeringiz tarixi bo\'sh.</string>
     <string name="empty_list_history">Yuklab olishlar tarixi boʻsh.</string>
     <string name="empty_list_query">Hech qanday natija topilmadi</string>

@@ -95,7 +95,7 @@
     <string name="restore_downloads_none">Bu klasörde yedek bulunamadı</string>
     <string name="restore_downloads_wrong_device">Bu yedek başka bir cihaza ait</string>
     <string name="empty_list">İndirdiğiniz dosyalar burada görünecek.</string>
-    <string name="empty_list_bookmarks">Henüz yer işareti konmuş bir şey yok.</string>
+    <string name="empty_list_bookmarks">Henüz yer işareti konmuş bir şey yok.\n\nHerhangi bir sayfayı açın ve buraya kaydetmek için ⋮ menüsünden “Yer imlerine ekle” seçeneğini seçin.</string>
     <string name="empty_list_browser_history">Tarayıcı geçmişiniz boş.</string>
     <string name="empty_list_history">İndirme geçmişiniz boş.</string>
     <string name="empty_list_query">Sonuç bulunamadı</string>

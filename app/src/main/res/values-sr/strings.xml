@@ -80,7 +80,7 @@
     <string name="edit">Уреди</string>
     <string name="empty_learn_more">Сазнајте више</string>
     <string name="empty_list">Ваша преузимања ће се појавити овде.</string>
-    <string name="empty_list_bookmarks">Још ништа није обележено.</string>
+    <string name="empty_list_bookmarks">Још ништа није обележено.\n\nОтворите било коју страницу и изаберите „Bookmark page“ у менију ⋮ да бисте је сачували овде.</string>
     <string name="empty_list_browser_history">Ваша историја прегледача је празна.</string>
     <string name="empty_list_history">Ваша историја преузимања је празна.</string>
     <string name="empty_list_query">Нема резултата</string>

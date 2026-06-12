@@ -95,7 +95,7 @@
     <string name="restore_downloads_none">В этой папке не найдена резервная копия</string>
     <string name="restore_downloads_wrong_device">Эта резервная копия принадлежит другому устройству</string>
     <string name="empty_list">Ваши загрузки появятся здесь.</string>
-    <string name="empty_list_bookmarks">Пока ничего не добавлено в закладки.</string>
+    <string name="empty_list_bookmarks">Пока ничего не добавлено в закладки.\n\nОткройте любую страницу и выберите «Добавить в закладки» в меню ⋮, чтобы сохранить её здесь.</string>
     <string name="empty_list_browser_history">История вашего браузера пуста.</string>
     <string name="empty_list_history">Ваша история загрузок пуста.</string>
     <string name="empty_list_query">Результатов не найдено</string>

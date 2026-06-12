@@ -53,7 +53,7 @@
     <string name="edit">Editar</string>
   <string name="empty_learn_more">Saber más</string>
   <string name="empty_list">Tus descargas aparecerán aquí.</string>
-  <string name="empty_list_bookmarks">Aún no hay nada marcado como favorito.</string>
+  <string name="empty_list_bookmarks">Aún no hay nada marcado como favorito.\n\nAbre cualquier página y elige “Bookmark page” en el menú ⋮ para guardarla aquí.</string>
   <string name="empty_list_browser_history">El historial de tu navegador está vacío.</string>
   <string name="empty_list_history">Tu historial de descargas está vacío.</string>
   <string name="empty_list_query">No se han encontrado resultados</string>

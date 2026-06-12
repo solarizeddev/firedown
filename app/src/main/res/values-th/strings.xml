@@ -81,7 +81,7 @@
     <string name="edit">แก้ไข</string>
     <string name="empty_learn_more">ดูข้อมูลเพิ่มเติม</string>
     <string name="empty_list">การดาวน์โหลดของคุณจะปรากฏที่นี่</string>
-    <string name="empty_list_bookmarks">ยังไม่ได้บุ๊กมาร์กอะไรไว้เลย</string>
+    <string name="empty_list_bookmarks">ยังไม่ได้บุ๊กมาร์กอะไรไว้เลย\n\nเปิดหน้าใดก็ได้ แล้วเลือก “เพิ่มที่คั่นหน้าสำหรับหน้า” จากเมนู ⋮ เพื่อบันทึกไว้ที่นี่</string>
     <string name="empty_list_browser_history">ประวัติเบราว์เซอร์ของคุณว่างเปล่า</string>
     <string name="empty_list_history">ประวัติการดาวน์โหลดของคุณว่างเปล่า</string>
     <string name="empty_list_query">ไม่พบผลลัพธ์</string>

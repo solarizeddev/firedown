@@ -80,7 +80,7 @@
     <string name="edit">ແກ້ໄຂ</string>
     <string name="empty_learn_more">ສຶກສາເພີ່ມເຕີມ</string>
     <string name="empty_list">ການດາວໂຫຼດຂອງທ່ານຈະປາກົດຢູ່ບ່ອນນີ້.</string>
-    <string name="empty_list_bookmarks">ບໍ່ມີຫຍັງຖືກບຸກມາກເທື່ອ.</string>
+    <string name="empty_list_bookmarks">ບໍ່ມີຫຍັງຖືກບຸກມາກເທື່ອ.\n\nເປີດໜ້າໃດກໍໄດ້ ແລ້ວເລືອກ “ໜ້າບຸກມາກ” ຈາກເມນູ ⋮ ເພື່ອບັນທຶກໄວ້ບ່ອນນີ້.</string>
     <string name="empty_list_browser_history">ປະຫວັດໂປຣແກຣມທ່ອງເວັບຂອງທ່ານຫວ່າງເປົ່າ.</string>
     <string name="empty_list_history">ປະຫວັດການດາວໂຫຼດຂອງທ່ານຫວ່າງເປົ່າ.</string>
     <string name="empty_list_query">ບໍ່ພົບຜົນການຊອກຫາ</string>

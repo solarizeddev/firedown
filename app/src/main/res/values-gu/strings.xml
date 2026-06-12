@@ -52,7 +52,7 @@
     <string name="edit">સંપાદિત કરો</string>
     <string name="empty_learn_more">વધુ જાણો</string>
     <string name="empty_list">તમારા ડાઉનલોડ્સ અહીં દેખાશે.</string>
-    <string name="empty_list_bookmarks">હજુ સુધી કંઈપણ બુકમાર્ક કરેલ નથી.</string>
+    <string name="empty_list_bookmarks">હજુ સુધી કંઈપણ બુકમાર્ક કરેલ નથી.\n\nકોઈપણ પેજ ખોલો અને તેને અહીં સાચવવા માટે ⋮ મેનૂમાંથી “Bookmark page” પસંદ કરો.</string>
     <string name="empty_list_browser_history">તમારો બ્રાઉઝર ઇતિહાસ ખાલી છે.</string>
     <string name="empty_list_history">તમારો ડાઉનલોડ ઇતિહાસ ખાલી છે.</string>
     <string name="empty_list_query">કોઈ પરિણામો મળ્યા નથી</string>

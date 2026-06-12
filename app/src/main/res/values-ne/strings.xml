@@ -52,7 +52,7 @@
     <string name="edit">सम्पादन गर्नुहोस्</string>
     <string name="empty_learn_more">थप जान्नुहोस्</string>
     <string name="empty_list">तपाईंका डाउनलोडहरू यहाँ देखिनेछन्।</string>
-    <string name="empty_list_bookmarks">अझै कुनै पनि बुकमार्क गरिएको छैन।</string>
+    <string name="empty_list_bookmarks">अझै कुनै पनि बुकमार्क गरिएको छैन।\n\nकुनै पनि पृष्ठ खोल्नुहोस् र यसलाई यहाँ बचत गर्न ⋮ मेनुबाट “Bookmark page” छान्नुहोस्।</string>
     <string name="empty_list_browser_history">तपाईंको ब्राउजर इतिहास खाली छ।</string>
     <string name="empty_list_history">तपाईंको डाउनलोड इतिहास खाली छ।</string>
     <string name="empty_list_query">कुनै परिणाम फेला परेन</string>

@@ -56,7 +56,7 @@
     <string name="edit">ସଂପାଦନା କରନ୍ତୁ |</string>
     <string name="empty_learn_more">ଅଧିକ ଜାଣନ୍ତୁ</string>
     <string name="empty_list">ତୁମର ଡାଉନଲୋଡ୍ ଏଠାରେ ଦେଖାଯିବ |</string>
-    <string name="empty_list_bookmarks">ଏପର୍ଯ୍ୟନ୍ତ କିଛି ବୁକମାର୍କ ହୋଇନାହିଁ |</string>
+    <string name="empty_list_bookmarks">ଏପର୍ଯ୍ୟନ୍ତ କିଛି ବୁକମାର୍କ ହୋଇନାହିଁ |\n\nଯେକୌଣସି ପୃଷ୍ଠା ଖୋଲନ୍ତୁ ଏବଂ ଏହାକୁ ଏଠାରେ ସଂରକ୍ଷଣ କରିବାକୁ ⋮ ମେନୁରୁ “Bookmark page” ବାଛନ୍ତୁ।</string>
     <string name="empty_list_browser_history">ଆପଣଙ୍କର ବ୍ରାଉଜର୍ ଇତିହାସ ଖାଲି ଅଛି |</string>
     <string name="empty_list_history">ତୁମର ଡାଉନଲୋଡ୍ ଇତିହାସ ଖାଲି ଅଛି |</string>
     <string name="empty_list_query">କ results ଣସି ଫଳାଫଳ ମିଳିଲା ନାହିଁ |</string>

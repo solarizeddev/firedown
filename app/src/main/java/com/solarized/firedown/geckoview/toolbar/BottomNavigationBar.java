@@ -78,9 +78,11 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
     private void init(Context context, AttributeSet attrs, int defStyleAttr) {
 
         TypedArray array = context.obtainStyledAttributes(attrs, R.styleable.BottomNavigationBar, defStyleAttr, 0);
-        // Browser sets this true so an externally-anchored FAB can sit over the
-        // middle slot without colliding with the bookmarks/search action. Home
-        // leaves it false to show the action in the slot.
+        // Browser AND both Homes set this true so an externally-anchored hero
+        // FAB (capture on Browser, Bookmarks on Home) can sit over the middle
+        // slot without colliding with a flat action icon underneath. No current
+        // layout leaves it false; the attribute stays for any future surface
+        // that wants the in-slot action instead of a FAB.
         boolean hideMiddleSlot = array.getBoolean(R.styleable.BottomNavigationBar_hideMiddleSlot, false);
         array.recycle();
 
@@ -145,6 +147,9 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
         // just URLs the user explicitly saved, so it doesn't leak
         // any incognito-session browsing state. The id stays
         // 'search_button' since it's the slot id, not the action.
+        // Every current layout hides this slot under a hero FAB
+        // (hideMiddleSlot), so the glyph/tint below is dormant —
+        // kept for any future layout that shows the slot.
         AppCompatImageButton searchBtn = findViewById(R.id.search_button);
         if (searchBtn != null) {
             searchBtn.setImageResource(R.drawable.ic_bookmark_border_24);

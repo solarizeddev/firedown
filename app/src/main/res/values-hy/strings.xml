@@ -53,7 +53,7 @@
     <string name="edit">Խմբագրել</string>
     <string name="empty_learn_more">Իմանալ ավելին</string>
     <string name="empty_list">Ձեր ներբեռնումները կհայտնվեն այստեղ:</string>
-    <string name="empty_list_bookmarks">Դեռևս էջանշված ոչինչ չկա:</string>
+    <string name="empty_list_bookmarks">Դեռևս էջանշված ոչինչ չկա:\n\nԲացեք ցանկացած էջ և ⋮ ընտրացանկից ընտրեք “Էջանշել էջը”՝ այն այստեղ պահելու համար։</string>
     <string name="empty_list_browser_history">Ձեր դիտարկիչի պատմությունը դատարկ է:</string>
     <string name="empty_list_history">Ձեր ներբեռնումների պատմությունը դատարկ է:</string>
     <string name="empty_list_query">Ոչ մի արդյունք չի գտնվել</string>

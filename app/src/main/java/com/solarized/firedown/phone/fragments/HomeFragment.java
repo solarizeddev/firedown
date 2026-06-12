@@ -26,6 +26,7 @@ import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.card.MaterialCardView;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
@@ -184,6 +185,16 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
 
 
         mBottomNavigationBar.setListener(this);
+
+        // Hero FAB in the bottom bar's cradle is Bookmarks — the URL
+        // bar at the top already covers the search path, so the centre
+        // affordance gives the bookmarks list a one-tap entry. Promoted
+        // from the flat, unlabeled middle-slot icon to the same hero-FAB
+        // treatment Browser (capture) and Tabs already use; the middle
+        // slot itself is hidden (hideMiddleSlot) underneath it.
+        FloatingActionButton bookmarkButton = v.findViewById(R.id.bookmark_button);
+        bookmarkButton.setOnClickListener(view ->
+                NavigationUtils.navigateSafe(mNavController, R.id.action_home_to_bookmarks));
 
         mGeckoToolbar = v.findViewById(R.id.toolbar_layout);
         mGeckoToolbar.setListener(this);
@@ -551,12 +562,10 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         } else if(id == R.id.new_tab_button){
             flashNewTab(mNewTabView);
             addNewTab();
-        } else if(id == R.id.search_button){
-            // Cradle slot on normal home is Bookmarks — the URL bar at
-            // the top already covers the search path, so the centre
-            // tap-target gives the bookmarks list a one-tap entry.
-            NavigationUtils.navigateSafe(mNavController, R.id.action_home_to_bookmarks);
         }
+        // No R.id.search_button branch: the middle slot is hidden
+        // (hideMiddleSlot) and never dispatches — Bookmarks is the
+        // hero FAB wired in onCreateView.
     }
 
     @Override
@@ -567,8 +576,8 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         }
         // Home intentionally has no other long-press affordances —
         // every bottom-bar slot already has a visible-on-home
-        // entry (Downloads card, Safe Folder card, cradle Bookmarks
-        // button). Hidden long-press gestures were the right call
+        // entry (Downloads card, Safe Folder card, the Bookmarks
+        // hero FAB). Hidden long-press gestures were the right call
         // when the slot had no on-screen surface (BrowserFragment
         // keeps the Downloads long-press sheet for that reason),
         // not here.

@@ -73,7 +73,7 @@
     <string name="edit">সম্পাদনা করুন</string>
     <string name="empty_learn_more">আরও জানুন</string>
     <string name="empty_list">আপনার ডাউনলোড এখানে প্রদর্শিত হবে.</string>
-    <string name="empty_list_bookmarks">এখনও বুকমার্ক করা কিছুই নেই৷</string>
+    <string name="empty_list_bookmarks">এখনও বুকমার্ক করা কিছুই নেই৷\n\nযেকোনো পৃষ্ঠা খুলুন এবং এখানে সংরক্ষণ করতে ⋮ মেনু থেকে “Bookmark page” বেছে নিন।</string>
     <string name="empty_list_browser_history">আপনার ব্রাউজার ইতিহাস খালি আছে.</string>
     <string name="empty_list_history">আপনার ডাউনলোড ইতিহাস খালি আছে.</string>
     <string name="empty_list_query">কোন ফলাফল পাওয়া যায়নি</string>

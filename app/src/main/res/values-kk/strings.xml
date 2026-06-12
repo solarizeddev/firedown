@@ -80,7 +80,7 @@
     <string name="edit">Өңдеу</string>
     <string name="empty_learn_more">Толығырақ</string>
     <string name="empty_list">Жүктеп алынғандар осы жерде пайда болады.</string>
-    <string name="empty_list_bookmarks">Әлі ештеңе белгіленбеген.</string>
+    <string name="empty_list_bookmarks">Әлі ештеңе белгіленбеген.\n\nКез келген бетті ашып, оны осында сақтау үшін ⋮ мәзірінен “Бетті бетбелгілерге қосу” таңдаңыз.</string>
     <string name="empty_list_browser_history">Браузер тарихыңыз бос.</string>
     <string name="empty_list_history">Жүктеп алу тарихыңыз бос.</string>
     <string name="empty_list_query">Нәтиже табылмады</string>

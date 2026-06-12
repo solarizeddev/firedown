@@ -65,7 +65,7 @@
     <string name="edit">Redaktə et</string>
     <string name="empty_learn_more">Ətraflı öyrənin</string>
     <string name="empty_list">Endirmələriniz burada görünəcək.</string>
-    <string name="empty_list_bookmarks">Hələ heç nə əlfəcin edilməyib.</string>
+    <string name="empty_list_bookmarks">Hələ heç nə əlfəcin edilməyib.\n\nİstənilən səhifəni açın və onu burada saxlamaq üçün ⋮ menyusundan “Bookmark page” seçin.</string>
     <string name="empty_list_browser_history">Brauzer tarixçəniz boşdur.</string>
     <string name="empty_list_history">Endirmə tarixçəniz boşdur.</string>
     <string name="empty_list_query">Heç bir nəticə tapılmadı</string>

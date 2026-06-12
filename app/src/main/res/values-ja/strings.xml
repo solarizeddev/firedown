@@ -153,7 +153,7 @@
     <string name="restore_downloads_none">このフォルダーにバックアップが見つかりません</string>
     <string name="restore_downloads_wrong_device">このバックアップは別の端末のものです</string>
     <string name="empty_list">ダウンロードがここに表示されます。</string>
-    <string name="empty_list_bookmarks">まだ何もブックマークされていません。</string>
+    <string name="empty_list_bookmarks">まだ何もブックマークされていません。\n\nページを開き、⋮ メニューから「ページをブックマークに追加」を選ぶとここに保存されます。</string>
     <string name="empty_list_browser_history">ブラウザの履歴は空です。</string>
     <string name="empty_list_history">ダウンロード履歴は空です。</string>
     <string name="empty_list_query">結果が見つかりません</string>

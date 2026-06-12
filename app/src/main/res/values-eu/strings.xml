@@ -81,7 +81,7 @@
     <string name="edit">Editatu</string>
     <string name="empty_learn_more">Informazio gehiago</string>
     <string name="empty_list">Zure deskargak hemen agertuko dira.</string>
-    <string name="empty_list_bookmarks">Oraindik ez dago laster-markarik.</string>
+    <string name="empty_list_bookmarks">Oraindik ez dago laster-markarik.\n\nIreki edozein orri eta aukeratu “Egin orriaren laster-marka” ⋮ menuan, hemen gordetzeko.</string>
     <string name="empty_list_browser_history">Zure arakatzailearen historia hutsik dago.</string>
     <string name="empty_list_history">Zure deskarga-historia hutsik dago.</string>
     <string name="empty_list_query">Ez da emaitzarik aurkitu</string>

@@ -79,7 +79,7 @@
     <string name="edit">සංස්කරණය කරන්න</string>
     <string name="empty_learn_more">තවත් දැන ගන්න</string>
     <string name="empty_list">ඔබගේ බාගැනීම් මෙහි දිස්වනු ඇත.</string>
-    <string name="empty_list_bookmarks">කිසිවක් තවමත් පිටු සලකුණු කර නැත.</string>
+    <string name="empty_list_bookmarks">කිසිවක් තවමත් පිටු සලකුණු කර නැත.\n\nඕනෑම පිටුවක් විවෘත කර එය මෙහි සුරැකීමට ⋮ මෙනුවෙන් “Bookmark page” තෝරන්න.</string>
     <string name="empty_list_browser_history">ඔබගේ බ්‍රවුසර ඉතිහාසය හිස්ය.</string>
     <string name="empty_list_history">ඔබගේ බාගැනීම් ඉතිහාසය හිස්ය.</string>
     <string name="empty_list_query">ප්‍රතිඵල හමු නොවිණි</string>

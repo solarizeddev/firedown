@@ -82,7 +82,7 @@
     <string name="edit">Szerkesztés</string>
     <string name="empty_learn_more">További információ</string>
     <string name="empty_list">A letöltések itt fognak megjelenni.</string>
-    <string name="empty_list_bookmarks">Még nincs semmi könyvjelzővel ellátva.</string>
+    <string name="empty_list_bookmarks">Még nincs semmi könyvjelzővel ellátva.\n\nNyisson meg egy tetszőleges oldalt, és válassza a ⋮ menü „Lap könyvjelzőzése” pontját, hogy ide mentse.</string>
     <string name="empty_list_browser_history">A böngészési előzmények üresek.</string>
     <string name="empty_list_history">A letöltési előzmények üresek.</string>
     <string name="empty_list_query">Nincs találat</string>

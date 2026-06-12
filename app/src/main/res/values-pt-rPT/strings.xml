@@ -71,7 +71,7 @@
     <string name="downloading">Baixando…</string>
     <string name="empty_learn_more">Saber mais</string>
     <string name="empty_list">Seus downloads aparecerão aqui.</string>
-    <string name="empty_list_bookmarks">Nada marcado ainda.</string>
+    <string name="empty_list_bookmarks">Nada marcado ainda.\n\nAbra qualquer página e escolha “Adicionar página aos marcadores” no menu ⋮ para a guardar aqui.</string>
     <string name="empty_list_browser_history">O histórico do seu navegador está vazio.</string>
     <string name="empty_list_history">Seu histórico de downloads está vazio.</string>
     <string name="empty_list_query">Nenhum resultado encontrado</string>

@@ -57,6 +57,14 @@ public class Preferences {
 
     public static final String SORT_VAULT_LIST = "com.solarized.firedown.preferences.sort.vault.list";
 
+    /**
+     * Bookmarks-list sort order toggle: false (default) = recency
+     * (file_date DESC, the historical order), true = A–Z by title.
+     * Governs only the unfiltered list — search results stay
+     * recency-ordered.
+     */
+    public static final String SORT_BOOKMARKS_ALPHA = "com.solarized.firedown.preferences.sort.bookmarks.alpha";
+
     public static final String SETTINGS_AUTOFILL = "com.solarized.firedown.preferences.browser.password";
 
     public static final String SETTINGS_BLOCK_LOCATION = "com.solarized.firedown.preferences.browser.block.location";

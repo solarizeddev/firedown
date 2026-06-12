@@ -53,7 +53,7 @@
     <string name="edit">Hlela</string>
     <string name="empty_learn_more">Funda kabanzi</string>
     <string name="empty_list">Okulandiwe kwakho kuzovela lapha.</string>
-    <string name="empty_list_bookmarks">Akukho okubekisiwe okwamanje.</string>
+    <string name="empty_list_bookmarks">Akukho okubekisiwe okwamanje.\n\nVula noma yiliphi ikhasi bese ukhetha “Bookmark page” kumenyu ye-⋮ ukuze uyilondoloze lapha.</string>
     <string name="empty_list_browser_history">Umlando wesiphequluli sakho awunalutho.</string>
     <string name="empty_list_history">Umlando wakho wokulanda awunalutho.</string>
     <string name="empty_list_query">Ayikho imiphumela etholiwe</string>

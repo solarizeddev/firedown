@@ -72,7 +72,7 @@
     <string name="edit">ترمیم</string>
     <string name="empty_learn_more">مزید جانیں</string>
     <string name="empty_list">آپ کے ڈاؤن لوڈز یہاں ظاہر ہوں گے۔</string>
-    <string name="empty_list_bookmarks">ابھی تک کچھ بھی بک مارک نہیں ہے۔</string>
+    <string name="empty_list_bookmarks">ابھی تک کچھ بھی بک مارک نہیں ہے۔\n\nکوئی بھی صفحہ کھولیں اور اسے یہاں محفوظ کرنے کے لیے ⋮ مینو سے “Bookmark page” منتخب کریں۔</string>
     <string name="empty_list_browser_history">آپ کے براؤزر کی تاریخ خالی ہے۔</string>
     <string name="empty_list_history">آپ کی ڈاؤن لوڈ کی سرگزشت خالی ہے۔</string>
     <string name="empty_list_query">کوئی نتیجہ نہیں</string>

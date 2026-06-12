@@ -64,7 +64,7 @@
     <string name="edit">ತಿದ್ದು</string>
     <string name="empty_learn_more">ಇನ್ನಷ್ಟು ತಿಳಿಯಿರಿ</string>
     <string name="empty_list">ನಿಮ್ಮ ಡೌನ್‌ಲೋಡ್‌ಗಳು ಇಲ್ಲಿ ಗೋಚರಿಸುತ್ತವೆ.</string>
-    <string name="empty_list_bookmarks">ಇನ್ನೂ ಯಾವುದನ್ನೂ ಬುಕ್‌ಮಾರ್ಕ್ ಮಾಡಿಲ್ಲ.</string>
+    <string name="empty_list_bookmarks">ಇನ್ನೂ ಯಾವುದನ್ನೂ ಬುಕ್‌ಮಾರ್ಕ್ ಮಾಡಿಲ್ಲ.\n\nಯಾವುದೇ ಪುಟವನ್ನು ತೆರೆಯಿರಿ ಮತ್ತು ಅದನ್ನು ಇಲ್ಲಿ ಉಳಿಸಲು ⋮ ಮೆನುವಿನಿಂದ “Bookmark page” ಆಯ್ಕೆಮಾಡಿ.</string>
     <string name="empty_list_browser_history">ನಿಮ್ಮ ಬ್ರೌಸರ್ ಇತಿಹಾಸ ಖಾಲಿಯಾಗಿದೆ.</string>
     <string name="empty_list_history">ನಿಮ್ಮ ಡೌನ್‌ಲೋಡ್‌ಗಳ ಇತಿಹಾಸ ಖಾಲಿಯಾಗಿದೆ.</string>
     <string name="empty_list_query">ಯಾವುದೇ ಫಲಿತಾಂಶಗಳು ಕಂಡುಬರಲಿಲ್ಲ</string>

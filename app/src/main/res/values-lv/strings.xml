@@ -53,7 +53,7 @@
     <string name="edit">Rediģēt</string>
     <string name="empty_learn_more">Uzziniet vairāk</string>
     <string name="empty_list">Jūsu lejupielādes tiks parādītas šeit.</string>
-    <string name="empty_list_bookmarks">Vēl nekas nav pievienots grāmatzīmēm.</string>
+    <string name="empty_list_bookmarks">Vēl nekas nav pievienots grāmatzīmēm.\n\nAtveriet jebkuru lapu un izvēlnē ⋮ izvēlieties “Bookmark page”, lai to saglabātu šeit.</string>
     <string name="empty_list_browser_history">Jūsu pārlūkprogrammas vēsture ir tukša.</string>
     <string name="empty_list_history">Jūsu lejupielāžu vēsture ir tukša.</string>
     <string name="empty_list_query">Nekas nav atrasts</string>

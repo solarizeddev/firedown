@@ -27,6 +27,16 @@ public interface WebBookmarkDao {
     @Query("SELECT * FROM webbookmark ORDER BY file_date DESC")
     PagingSource<Integer, WebBookmarkEntity> getBookmarks();
 
+    /**
+     * A–Z variant of {@link #getBookmarks()} for the bookmarks-list
+     * sort toggle. COLLATE NOCASE so "amazon" and "Amazon" interleave
+     * instead of all-uppercase sorting first. Recency stays the
+     * default; {@link #search(String)} deliberately stays
+     * recency-ordered — the toggle governs only the unfiltered list.
+     */
+    @Query("SELECT * FROM webbookmark ORDER BY file_title COLLATE NOCASE ASC")
+    PagingSource<Integer, WebBookmarkEntity> getBookmarksAlphabetical();
+
     @Query("SELECT * FROM webbookmark ORDER BY file_date DESC LIMIT :limit")
     LiveData<List<WebBookmarkEntity>> getBookmark(int limit);
 

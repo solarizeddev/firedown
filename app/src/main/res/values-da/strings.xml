@@ -83,7 +83,7 @@
     <string name="edit">Rediger</string>
     <string name="empty_learn_more">Få flere oplysninger</string>
     <string name="empty_list">Dine downloads vises her.</string>
-    <string name="empty_list_bookmarks">Intet er bogmærket endnu.</string>
+    <string name="empty_list_bookmarks">Intet er bogmærket endnu.\n\nÅbn en side, og vælg “Bogmærk side” i menuen ⋮ for at gemme den her.</string>
     <string name="empty_list_browser_history">Din browserhistorik er tom.</string>
     <string name="empty_list_history">Din downloadhistorik er tom.</string>
     <string name="empty_list_query">Ingen resultater er fundet</string>

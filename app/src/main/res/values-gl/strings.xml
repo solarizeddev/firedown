@@ -80,7 +80,7 @@
     <string name="edit">Editar</string>
     <string name="empty_learn_more">Máis información</string>
     <string name="empty_list">As túas descargas aparecerán aquí.</string>
-    <string name="empty_list_bookmarks">Aínda non hai nada marcado.</string>
+    <string name="empty_list_bookmarks">Aínda non hai nada marcado.\n\nAbre calquera páxina e escolle “Engadir aos favoritos” no menú ⋮ para gardala aquí.</string>
     <string name="empty_list_browser_history">O historial do teu navegador está baleiro.</string>
     <string name="empty_list_history">O teu historial de descargas está baleiro.</string>
     <string name="empty_list_query">Non se atoparon resultados</string>

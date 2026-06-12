@@ -76,7 +76,7 @@
     <string name="edit">عدل</string>
     <string name="empty_learn_more">مزيد من المعلومات</string>
     <string name="empty_list">سوف تظهر التنزيلات الخاصة بك هنا.</string>
-    <string name="empty_list_bookmarks">لا شيء مرجعية حتى الآن.</string>
+    <string name="empty_list_bookmarks">لا شيء مرجعية حتى الآن.\n\nافتح أي صفحة واختر ”Bookmark page“ من قائمة ⋮ لحفظها هنا.</string>
     <string name="empty_list_browser_history">سجل المتصفح الخاص بك فارغ.</string>
     <string name="empty_list_history">سجل التنزيلات الخاص بك فارغ.</string>
     <string name="empty_list_query">لم يتم العثور على نتائج</string>

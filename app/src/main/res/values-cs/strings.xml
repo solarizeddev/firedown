@@ -92,7 +92,7 @@
     <string name="restore_downloads_none">V této složce nebyla nalezena žádná záloha</string>
     <string name="restore_downloads_wrong_device">Tato záloha patří jinému zařízení</string>
     <string name="empty_list">Zde se zobrazí vaše stažené soubory.</string>
-    <string name="empty_list_bookmarks">Zatím nic není v záložkách.</string>
+    <string name="empty_list_bookmarks">Zatím nic není v záložkách.\n\nOtevřete libovolnou stránku a v nabídce ⋮ zvolte „Přidat stránku do záložek“, aby se uložila sem.</string>
     <string name="empty_list_browser_history">Historie vašeho prohlížeče je prázdná.</string>
     <string name="empty_list_history">Vaše historie stahování je prázdná.</string>
     <string name="empty_list_query">Nebyly nalezeny žádné výsledky</string>

@@ -92,7 +92,7 @@
     <string name="restore_downloads_none">Tästä kansiosta ei löytynyt varmuuskopiota</string>
     <string name="restore_downloads_wrong_device">Tämä varmuuskopio kuuluu toiselle laitteelle</string>
     <string name="empty_list">Latauksesi näkyvät täällä.</string>
-    <string name="empty_list_bookmarks">Mitään ei ole vielä lisätty kirjanmerkkeihin.</string>
+    <string name="empty_list_bookmarks">Mitään ei ole vielä lisätty kirjanmerkkeihin.\n\nAvaa mikä tahansa sivu ja valitse ⋮-valikosta “Lisää sivu kirjanmerkkeihin” tallentaaksesi sen tänne.</string>
     <string name="empty_list_browser_history">Selaushistoriasi on tyhjä.</string>
     <string name="empty_list_history">Lataushistoriasi on tyhjä.</string>
     <string name="empty_list_query">Ei tuloksia</string>

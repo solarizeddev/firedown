@@ -82,7 +82,7 @@
     <string name="edit">Επεξεργασία</string>
     <string name="empty_learn_more">Μάθετε περισσότερα</string>
     <string name="empty_list">Οι λήψεις σας θα εμφανιστούν εδώ.</string>
-    <string name="empty_list_bookmarks">Δεν υπάρχει τίποτα ακόμα με σελιδοδείκτη.</string>
+    <string name="empty_list_bookmarks">Δεν υπάρχει τίποτα ακόμα με σελιδοδείκτη.\n\nΑνοίξτε οποιαδήποτε σελίδα και επιλέξτε “Προσθήκη σελιδοδείκτη” από το μενού ⋮ για να την αποθηκεύσετε εδώ.</string>
     <string name="empty_list_browser_history">Το ιστορικό του προγράμματος περιήγησής σας είναι κενό.</string>
     <string name="empty_list_history">Το ιστορικό λήψεων είναι κενό.</string>
     <string name="empty_list_query">Δεν βρέθηκαν αποτελέσματα</string>

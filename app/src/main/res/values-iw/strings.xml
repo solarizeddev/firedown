@@ -82,7 +82,7 @@
     <string name="edit">לַעֲרוֹך</string>
     <string name="empty_learn_more">מידע נוסף</string>
     <string name="empty_list">ההורדות שלך יופיעו כאן.</string>
-    <string name="empty_list_bookmarks">שום דבר עדיין לא מסומן.</string>
+    <string name="empty_list_bookmarks">שום דבר עדיין לא מסומן.\n\nפתחו כל דף ובחרו “הוספת העמוד לסימניות” מתפריט ⋮ כדי לשמור אותו כאן.</string>
     <string name="empty_list_browser_history">היסטוריית הדפדפן שלך ריקה.</string>
     <string name="empty_list_history">היסטוריית ההורדות שלך ריקה.</string>
     <string name="empty_list_query">לא נמצאו תוצאות</string>

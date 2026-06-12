@@ -81,7 +81,7 @@
     <string name="edit">ویرایش</string>
     <string name="empty_learn_more">بیشتر بدانید</string>
     <string name="empty_list">دانلودهای شما در اینجا ظاهر می شوند.</string>
-    <string name="empty_list_bookmarks">هنوز چیزی نشانک نشده است.</string>
+    <string name="empty_list_bookmarks">هنوز چیزی نشانک نشده است.\n\nهر صفحه‌ای را باز کنید و برای ذخیره آن در اینجا، از منوی ⋮ گزینه “نشانک‌گذاری صفحه” را انتخاب کنید.</string>
     <string name="empty_list_browser_history">سابقه مرورگر شما خالی است.</string>
     <string name="empty_list_history">سابقه دانلودهای شما خالی است.</string>
     <string name="empty_list_query">نتیجه ای پیدا نشد</string>

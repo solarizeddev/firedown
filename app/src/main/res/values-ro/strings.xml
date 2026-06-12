@@ -76,7 +76,7 @@
     <string name="edit">Editați</string>
     <string name="empty_learn_more">Aflați mai multe</string>
     <string name="empty_list">Descărcările dvs. vor apărea aici.</string>
-    <string name="empty_list_bookmarks">Nimic marcat încă.</string>
+    <string name="empty_list_bookmarks">Nimic marcat încă.\n\nDeschide orice pagină și alege „Adaugă la marcaje pagina” din meniul ⋮ pentru a o salva aici.</string>
     <string name="empty_list_browser_history">Istoricul browserului dvs. este gol.</string>
     <string name="empty_list_history">Istoricul dvs. de descărcări este gol.</string>
     <string name="empty_list_query">Niciun rezultat gasit</string>

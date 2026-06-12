@@ -81,7 +81,7 @@
     <string name="edit">Redakto</string>
     <string name="empty_learn_more">Mëso më shumë</string>
     <string name="empty_list">Shkarkimet tuaja do të shfaqen këtu.</string>
-    <string name="empty_list_bookmarks">Asgjë nuk është shënuar ende.</string>
+    <string name="empty_list_bookmarks">Asgjë nuk është shënuar ende.\n\nHapni çdo faqe dhe zgjidhni “Faqeruaje faqen” nga menyja ⋮ për ta ruajtur këtu.</string>
     <string name="empty_list_browser_history">Historia juaj e shfletuesit është bosh.</string>
     <string name="empty_list_history">Historia juaj e shkarkimeve është bosh.</string>
     <string name="empty_list_query">Nuk u gjet asnjë rezultat</string>

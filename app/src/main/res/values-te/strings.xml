@@ -72,7 +72,7 @@
     <string name="edit">సవరించు</string>
     <string name="empty_learn_more">మరింత తెలుసుకోండి</string>
     <string name="empty_list">మీ డౌన్‌లోడ్‌లు ఇక్కడ కనిపిస్తాయి.</string>
-    <string name="empty_list_bookmarks">ఇంకా ఏమీ బుక్‌మార్క్ చేయలేదు.</string>
+    <string name="empty_list_bookmarks">ఇంకా ఏమీ బుక్‌మార్క్ చేయలేదు.\n\nఏదైనా పేజీని తెరిచి, దాన్ని ఇక్కడ సేవ్ చేయడానికి ⋮ మెనూ నుండి “Bookmark page” ఎంచుకోండి.</string>
     <string name="empty_list_browser_history">మీ బ్రౌజర్ చరిత్ర ఖాళీగా ఉంది.</string>
     <string name="empty_list_history">మీ డౌన్‌లోడ్‌ల చరిత్ర ఖాళీగా ఉంది.</string>
     <string name="empty_list_query">ఎటువంటి ఫలితాలు లభించలేదు</string>

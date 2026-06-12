@@ -80,7 +80,7 @@
     <string name="edit">Breyta</string>
     <string name="empty_learn_more">Frekari upplýsingar</string>
     <string name="empty_list">Niðurhal þín mun birtast hér.</string>
-    <string name="empty_list_bookmarks">Ekkert bókamerki ennþá.</string>
+    <string name="empty_list_bookmarks">Ekkert bókamerki ennþá.\n\nOpnaðu hvaða síðu sem er og veldu “Bókamerkja síðu” í ⋮ valmyndinni til að vista hana hér.</string>
     <string name="empty_list_browser_history">Vafraferillinn þinn er tómur.</string>
     <string name="empty_list_history">Niðurhalsferillinn þinn er tómur.</string>
     <string name="empty_list_query">Engar niðurstöður fundust</string>

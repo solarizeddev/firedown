@@ -80,7 +80,7 @@
     <string name="edit">Рэдагаваць</string>
     <string name="empty_learn_more">Даведацца больш</string>
     <string name="empty_list">Вашы спампоўкі з\'явяцца тут.</string>
-    <string name="empty_list_bookmarks">Пакуль нічога не закладзена.</string>
+    <string name="empty_list_bookmarks">Пакуль нічога не закладзена.\n\nАдкрыйце любую старонку і выберыце “Зрабіць закладку” у меню ⋮, каб захаваць яе тут.</string>
     <string name="empty_list_browser_history">Ваша гісторыя браўзера пустая.</string>
     <string name="empty_list_history">Ваша гісторыя спамповак пустая.</string>
     <string name="empty_list_query">Нічога не знойдзена</string>

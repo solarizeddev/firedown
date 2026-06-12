@@ -81,7 +81,7 @@
     <string name="edit">Uredi</string>
     <string name="empty_learn_more">Več o tem</string>
     <string name="empty_list">Vaši prenosi bodo prikazani tukaj.</string>
-    <string name="empty_list_bookmarks">Nič še ni dodano med zaznamke.</string>
+    <string name="empty_list_bookmarks">Nič še ni dodano med zaznamke.\n\nOdprite katero koli stran in v meniju ⋮ izberite »Dodaj stran med zaznamke«, da jo shranite sem.</string>
     <string name="empty_list_browser_history">Vaša zgodovina brskalnika je prazna.</string>
     <string name="empty_list_history">Vaša zgodovina prenosov je prazna.</string>
     <string name="empty_list_query">Ni zadetkov</string>

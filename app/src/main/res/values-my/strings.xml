@@ -73,7 +73,7 @@
     <string name="edit">တည်းဖြတ်ပါ။</string>
     <string name="empty_learn_more">ပိုမိုလေ့လာရန်</string>
     <string name="empty_list">သင့်ဒေါင်းလုဒ်များ ဤနေရာတွင် ပေါ်လာပါမည်။</string>
-    <string name="empty_list_bookmarks">မှတ်သားစရာ ဘာမှ မရှိသေးပါဘူး။</string>
+    <string name="empty_list_bookmarks">မှတ်သားစရာ ဘာမှ မရှိသေးပါဘူး။\n\nမည်သည့်စာမျက်နှာကိုမဆို ဖွင့်ပြီး ဤနေရာတွင် သိမ်းရန် ⋮ မီနူးမှ “Bookmark page” ကို ရွေးပါ။</string>
     <string name="empty_list_browser_history">သင့်ဘရောက်ဆာမှတ်တမ်းသည် ဗလာဖြစ်နေသည်။</string>
     <string name="empty_list_history">သင့်ဒေါင်းလုဒ်မှတ်တမ်းသည် ဗလာဖြစ်နေသည်။</string>
     <string name="empty_list_query">ရလဒ်များမတွေ့ပါ။</string>

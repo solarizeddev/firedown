@@ -81,7 +81,7 @@
     <string name="edit">Sunting</string>
     <string name="empty_learn_more">Pelajari lebih lanjut</string>
     <string name="empty_list">Unduhan Anda akan muncul di sini.</string>
-    <string name="empty_list_bookmarks">Belum ada yang di-bookmark.</string>
+    <string name="empty_list_bookmarks">Belum ada yang di-bookmark.\n\nBuka halaman apa pun dan pilih “Markahi laman” dari menu ⋮ untuk menyimpannya di sini.</string>
     <string name="empty_list_browser_history">Riwayat browser Anda kosong.</string>
     <string name="empty_list_history">Riwayat unduhan Anda kosong.</string>
     <string name="empty_list_query">Tidak ada hasil yang ditemukan</string>

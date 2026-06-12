@@ -53,7 +53,7 @@
     <string name="edit">Sunting</string>
     <string name="empty_learn_more">Ketahui lebih lanjut</string>
     <string name="empty_list">Muat turun anda akan dipaparkan di sini.</string>
-    <string name="empty_list_bookmarks">Tiada apa-apa yang ditandakan lagi.</string>
+    <string name="empty_list_bookmarks">Tiada apa-apa yang ditandakan lagi.\n\nBuka mana-mana halaman dan pilih “Bookmark page” daripada menu ⋮ untuk menyimpannya di sini.</string>
     <string name="empty_list_browser_history">Sejarah penyemak imbas anda kosong.</string>
     <string name="empty_list_history">Sejarah muat turun anda kosong.</string>
     <string name="empty_list_query">Tiada keputusan dijumpai</string>

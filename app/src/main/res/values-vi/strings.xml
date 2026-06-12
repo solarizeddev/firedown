@@ -82,7 +82,7 @@
     <string name="edit">Chỉnh sửa</string>
     <string name="empty_learn_more">Tìm hiểu thêm</string>
     <string name="empty_list">Nội dung tải xuống của bạn sẽ xuất hiện ở đây.</string>
-    <string name="empty_list_bookmarks">Chưa có gì được đánh dấu.</string>
+    <string name="empty_list_bookmarks">Chưa có gì được đánh dấu.\n\nMở bất kỳ trang nào và chọn “Đánh dấu trang” trong menu ⋮ để lưu vào đây.</string>
     <string name="empty_list_browser_history">Lịch sử trình duyệt của bạn trống.</string>
     <string name="empty_list_history">Lịch sử tải xuống của bạn trống.</string>
     <string name="empty_list_query">Không tìm thấy kết quả nào</string>

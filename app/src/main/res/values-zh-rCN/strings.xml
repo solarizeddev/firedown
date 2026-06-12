@@ -153,7 +153,7 @@
     <string name="restore_downloads_none">在此文件夹中未找到备份</string>
     <string name="restore_downloads_wrong_device">此备份属于另一台设备</string>
     <string name="empty_list">您的下载将出现在这里。</string>
-    <string name="empty_list_bookmarks">尚未添加任何书签。</string>
+    <string name="empty_list_bookmarks">尚未添加任何书签。\n\n打开任意页面，在 ⋮ 菜单中选择“为页面添加书签”即可保存到这里。</string>
     <string name="empty_list_browser_history">您的浏览器历史记录为空。</string>
     <string name="empty_list_history">您的下载历史记录为空。</string>
     <string name="empty_list_query">未找到结果</string>

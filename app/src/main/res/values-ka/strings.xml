@@ -80,7 +80,7 @@
     <string name="edit">Რედაქტირება</string>
     <string name="empty_learn_more">შეიტყვეთ მეტი</string>
     <string name="empty_list">Თქვენი ჩამოტვირთვები აქ გამოჩნდება.</string>
-    <string name="empty_list_bookmarks">Ჯერ არაფერია მონიშნული.</string>
+    <string name="empty_list_bookmarks">Ჯერ არაფერია მონიშნული.\n\nგახსენით ნებისმიერი გვერდი და აირჩიეთ “გვერდის ჩანიშვნა” ⋮ მენიუდან, რომ აქ შეინახოთ.</string>
     <string name="empty_list_browser_history">Თქვენი ბრაუზერის ისტორია ცარიელია.</string>
     <string name="empty_list_history">Თქვენი ჩამოტვირთვების ისტორია ცარიელია.</string>
     <string name="empty_list_query">Შედეგები არ მოიძებნა</string>

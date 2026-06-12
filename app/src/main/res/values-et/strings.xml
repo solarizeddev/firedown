@@ -82,7 +82,7 @@
     <string name="restore_downloads_none">Sellest kaustast varukoopiat ei leitud</string>
     <string name="restore_downloads_wrong_device">See varukoopia kuulub teisele seadmele</string>
     <string name="empty_list">Teie allalaaditavad failid kuvatakse siin.</string>
-    <string name="empty_list_bookmarks">Midagi pole veel järjehoidjatesse lisatud.</string>
+    <string name="empty_list_bookmarks">Midagi pole veel järjehoidjatesse lisatud.\n\nAva mis tahes leht ja vali ⋮ menüüst “Bookmark page”, et see siia salvestada.</string>
     <string name="empty_list_browser_history">Teie brauseri ajalugu on tühi.</string>
     <string name="empty_list_history">Teie allalaadimiste ajalugu on tühi.</string>
     <string name="empty_list_query">Tulemusi ei leitud</string>

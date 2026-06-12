@@ -81,7 +81,7 @@
     <string name="edit">አርትዕ</string>
     <string name="empty_learn_more">የበለጠ ለመረዳት</string>
     <string name="empty_list">የእርስዎ ውርዶች እዚህ ይታያሉ።</string>
-    <string name="empty_list_bookmarks">እስካሁን ምንም ዕልባት የተደረገ ነገር የለም።</string>
+    <string name="empty_list_bookmarks">እስካሁን ምንም ዕልባት የተደረገ ነገር የለም።\n\nማንኛውንም ገጽ ይክፈቱ እና እዚህ ለማስቀመጥ ከ ⋮ ምናሌ ውስጥ “የዕልባት ገጽ” የሚለውን ይምረጡ።</string>
     <string name="empty_list_browser_history">የአሳሽ ታሪክዎ ባዶ ነው።</string>
     <string name="empty_list_history">የወርዶች ታሪክዎ ባዶ ነው።</string>
     <string name="empty_list_query">ምንም ውጤቶች አልተገኙም</string>

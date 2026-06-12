@@ -53,7 +53,7 @@
     <string name="edit">Hariri</string>
     <string name="empty_learn_more">Pata maelezo zaidi</string>
     <string name="empty_list">Vipakuliwa vyako vitaonekana hapa.</string>
-    <string name="empty_list_bookmarks">Bado hakuna chochote kilichoalamishwa.</string>
+    <string name="empty_list_bookmarks">Bado hakuna chochote kilichoalamishwa.\n\nFungua ukurasa wowote na uchague “Bookmark page” kutoka kwenye menyu ya ⋮ ili kuuhifadhi hapa.</string>
     <string name="empty_list_browser_history">Historia ya kivinjari chako ni tupu.</string>
     <string name="empty_list_history">Historia yako ya vipakuliwa ni tupu.</string>
     <string name="empty_list_query">Hakuna matokeo yaliyopatikana</string>

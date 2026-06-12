@@ -55,7 +55,7 @@
     <string name="edit">Rediger</string>
     <string name="empty_learn_more">Finn ut mer</string>
     <string name="empty_list">Nedlastingene dine vises her.</string>
-    <string name="empty_list_bookmarks">Ingenting er bokmerket ennå.</string>
+    <string name="empty_list_bookmarks">Ingenting er bokmerket ennå.\n\nÅpne en side og velg “Bokmerk side” i ⋮-menyen for å lagre den her.</string>
     <string name="empty_list_browser_history">Nettleserloggen din er tom.</string>
     <string name="empty_list_history">Nedlastingsloggen din er tom.</string>
     <string name="empty_list_query">Ingen resultater</string>

@@ -79,7 +79,7 @@
     <string name="edit">I-edit</string>
     <string name="empty_learn_more">Matuto pa</string>
     <string name="empty_list">Lalabas dito ang iyong mga download.</string>
-    <string name="empty_list_bookmarks">Wala pang naka-bookmark.</string>
+    <string name="empty_list_bookmarks">Wala pang naka-bookmark.\n\nBuksan ang anumang pahina at piliin ang “Bookmark page” mula sa ⋮ menu para i-save ito rito.</string>
     <string name="empty_list_browser_history">Walang laman ang history ng iyong browser.</string>
     <string name="empty_list_history">Walang laman ang iyong history ng pag-download.</string>
     <string name="empty_list_query">Walang nahanap na resulta</string>

@@ -82,7 +82,7 @@
     <string name="edit">Edita</string>
     <string name="empty_learn_more">Més informació</string>
     <string name="empty_list">Les teves baixades apareixeran aquí.</string>
-    <string name="empty_list_bookmarks">Encara no s\'ha marcat res.</string>
+    <string name="empty_list_bookmarks">Encara no s\'ha marcat res.\n\nObre qualsevol pàgina i tria “Afegeix la pàgina a les adreces d’interès” al menú ⋮ per desar-la aquí.</string>
     <string name="empty_list_browser_history">L\'historial del vostre navegador està buit.</string>
     <string name="empty_list_history">El teu historial de baixades està buit.</string>
     <string name="empty_list_query">No s\'ha trobat cap resultat</string>

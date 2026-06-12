@@ -55,7 +55,7 @@
     <string name="edit">Redigera</string>
     <string name="empty_learn_more">Läs mer</string>
     <string name="empty_list">Dina nedladdningar visas här.</string>
-    <string name="empty_list_bookmarks">Inget bokmärkt ännu.</string>
+    <string name="empty_list_bookmarks">Inget bokmärkt ännu.\n\nÖppna valfri sida och välj “Bokmärk sida” i ⋮-menyn för att spara den här.</string>
     <string name="empty_list_browser_history">Din webbläsarhistorik är tom.</string>
     <string name="empty_list_history">Din nedladdningshistorik är tom.</string>
     <string name="empty_list_query">Inga resultat funna</string>

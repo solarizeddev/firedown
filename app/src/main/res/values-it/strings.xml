@@ -86,7 +86,7 @@
     <string name="edit">Modifica</string>
     <string name="empty_learn_more">Ulteriori informazioni</string>
     <string name="empty_list">I tuoi download verranno visualizzati qui.</string>
-    <string name="empty_list_bookmarks">Non è stato ancora aggiunto niente ai segnalibri.</string>
+    <string name="empty_list_bookmarks">Non è stato ancora aggiunto niente ai segnalibri.\n\nApri una pagina qualsiasi e scegli “Aggiungi pagina ai segnalibri” dal menu ⋮ per salvarla qui.</string>
     <string name="empty_list_browser_history">La cronologia del tuo browser è vuota.</string>
     <string name="empty_list_history">La cronologia dei download è vuota.</string>
     <string name="empty_list_query">Nessun risultato trovato</string>

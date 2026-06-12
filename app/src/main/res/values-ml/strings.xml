@@ -74,7 +74,7 @@
     <string name="edit">എഡിറ്റ് ചെയ്യുക</string>
     <string name="empty_learn_more">കൂടുതലറിയുക</string>
     <string name="empty_list">നിങ്ങളുടെ ഡൗൺലോഡുകൾ ഇവിടെ ദൃശ്യമാകും.</string>
-    <string name="empty_list_bookmarks">ഇതുവരെ ഒന്നും ബുക്ക്‌മാർക്ക് ചെയ്‌തിട്ടില്ല.</string>
+    <string name="empty_list_bookmarks">ഇതുവരെ ഒന്നും ബുക്ക്‌മാർക്ക് ചെയ്‌തിട്ടില്ല.\n\nഏതെങ്കിലും പേജ് തുറന്ന് ഇവിടെ സംരക്ഷിക്കാൻ ⋮ മെനുവിൽ നിന്ന് “താളിനെ കുറിച്ചിടുക” തിരഞ്ഞെടുക്കുക.</string>
     <string name="empty_list_browser_history">നിങ്ങളുടെ ബ്രൗസർ ചരിത്രം ശൂന്യമാണ്.</string>
     <string name="empty_list_history">നിങ്ങളുടെ ഡൗൺലോഡ് ചരിത്രം ശൂന്യമാണ്.</string>
     <string name="empty_list_query">ഒരു ഫലവും കണ്ടെത്താനായില്ല</string>

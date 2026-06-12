@@ -95,7 +95,7 @@
     <string name="restore_downloads_none">Nie znaleziono kopii zapasowej w tym folderze</string>
     <string name="restore_downloads_wrong_device">Ta kopia zapasowa należy do innego urządzenia</string>
     <string name="empty_list">Twoje pliki do pobrania pojawią się tutaj.</string>
-    <string name="empty_list_bookmarks">Jeszcze nic nie zostało dodane do zakładek.</string>
+    <string name="empty_list_bookmarks">Jeszcze nic nie zostało dodane do zakładek.\n\nOtwórz dowolną stronę i wybierz „Dodaj zakładkę do strony” z menu ⋮, aby zapisać ją tutaj.</string>
     <string name="empty_list_browser_history">Historia Twojej przeglądarki jest pusta.</string>
     <string name="empty_list_history">Twoja historia pobrań jest pusta.</string>
     <string name="empty_list_query">Nie znaleziono wyników</string>

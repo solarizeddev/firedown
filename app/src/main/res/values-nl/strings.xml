@@ -95,7 +95,7 @@
     <string name="restore_downloads_none">Geen back-up gevonden in deze map</string>
     <string name="restore_downloads_wrong_device">Deze back-up hoort bij een ander apparaat</string>
     <string name="empty_list">Uw downloads verschijnen hier.</string>
-    <string name="empty_list_bookmarks">Er is nog niets gemarkeerd.</string>
+    <string name="empty_list_bookmarks">Er is nog niets gemarkeerd.\n\nOpen een pagina en kies “Bladwijzer voor pagina maken” in het ⋮-menu om deze hier op te slaan.</string>
     <string name="empty_list_browser_history">Uw browsergeschiedenis is leeg.</string>
     <string name="empty_list_history">Uw downloadgeschiedenis is leeg.</string>
     <string name="empty_list_query">geen resultaten gevonden</string>

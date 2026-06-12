@@ -81,7 +81,7 @@
     <string name="edit">Upraviť</string>
     <string name="empty_learn_more">Ďalšie informácie</string>
     <string name="empty_list">Tu sa zobrazia vaše stiahnuté súbory.</string>
-    <string name="empty_list_bookmarks">Zatiaľ nie je nič uložené.</string>
+    <string name="empty_list_bookmarks">Zatiaľ nie je nič uložené.\n\nOtvorte ľubovoľnú stránku a v ponuke ⋮ zvoľte „Pridať stránku medzi záložky“, aby sa uložila sem.</string>
     <string name="empty_list_browser_history">História vášho prehliadača je prázdna.</string>
     <string name="empty_list_history">Vaša história sťahovania je prázdna.</string>
     <string name="empty_list_query">Neboli nájdené žiadne výsledky</string>

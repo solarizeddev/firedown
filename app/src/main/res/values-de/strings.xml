@@ -153,7 +153,7 @@
     <string name="restore_downloads_none">Keine Sicherung in diesem Ordner gefunden</string>
     <string name="restore_downloads_wrong_device">Diese Sicherung gehört zu einem anderen Gerät</string>
     <string name="empty_list">Ihre Downloads werden hier angezeigt.</string>
-    <string name="empty_list_bookmarks">Noch nichts mit Lesezeichen versehen.</string>
+    <string name="empty_list_bookmarks">Noch nichts mit Lesezeichen versehen.\n\nÖffne eine beliebige Seite und wähle im ⋮-Menü „Lesezeichen für diese Seite hinzufügen“, um sie hier zu speichern.</string>
     <string name="empty_list_browser_history">Ihr Browserverlauf ist leer.</string>
     <string name="empty_list_history">Ihr Download-Verlauf ist leer.</string>
     <string name="empty_list_query">Keine Ergebnisse gefunden</string>

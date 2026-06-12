@@ -81,7 +81,7 @@
     <string name="edit">Uredi</string>
     <string name="empty_learn_more">Saznajte više</string>
     <string name="empty_list">Vaša preuzimanja će se pojaviti ovdje.</string>
-    <string name="empty_list_bookmarks">Još ništa nije označeno.</string>
+    <string name="empty_list_bookmarks">Još ništa nije označeno.\n\nOtvorite bilo koju stranicu i odaberite “Zabilježi stranicu” u meniju ⋮ da je sačuvate ovdje.</string>
     <string name="empty_list_browser_history">Vaša historija pretraživača je prazna.</string>
     <string name="empty_list_history">Vaša historija preuzimanja je prazna.</string>
     <string name="empty_list_query">Nema rezultata</string>
