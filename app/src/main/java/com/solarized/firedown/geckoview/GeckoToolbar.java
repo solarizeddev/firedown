@@ -431,9 +431,9 @@ public class GeckoToolbar extends FrameLayout implements View.OnClickListener, V
      * there (HomeFragment's insets listener), so this tone also paints
      * the status strip: a seamless quiet top over the dashboard, no
      * tonal band floating on the canvas. Bottom chrome stays tonal on
-     * both. The URL pill keeps a TWO-step lift in either mode:
-     * surfaceContainerHigh on the quiet holder, surfaceContainerHighest
-     * on the tonal one (see the pill block below).
+     * both. The URL pill is surfaceContainerHighest in BOTH modes —
+     * matching the Home cards on the quiet holder, and the two-step
+     * lift on the tonal one (see the pill block below).
      */
     public void updateTheme(Activity activity, boolean incognito, boolean tonalHolder) {
 
@@ -442,7 +442,6 @@ public class GeckoToolbar extends FrameLayout implements View.OnClickListener, V
                 : IncognitoColors.getSurface(activity, incognito);
         int onSurfaceColor = IncognitoColors.getOnSurface(activity, incognito);
         int onSurfaceVariant = IncognitoColors.getOnSurfaceVariant(activity, incognito);
-        int surfaceContainerHigh = IncognitoColors.getSurfaceContainerHigh(activity, incognito);
 
         // 1. Toolbar background. Painted on THIS view as well as the
         // address_bar_holder child: when the toolbar self-pads by the
@@ -457,31 +456,27 @@ public class GeckoToolbar extends FrameLayout implements View.OnClickListener, V
         }
 
         // 2. Address bar rounded background (the GradientDrawable pill).
-        // PER-HOLDER fill — the token-level contrast fix (a hairline
-        // outline was tried and reverted as a band-aid):
-        //  - quiet holder (Home): surfaceContainerHigh — the M3 SEARCH-BAR
-        //    role (Material 3 docked search = surfaceContainerHigh). The
-        //    Home cards are the FILLED-CARD role one step up
-        //    (surfaceContainerHighest), so the bar reads one step below the
-        //    cards — the by-the-book search/card relationship, NOT a match.
-        //  - tonal holder (browser): surfaceContainerHighest — the High
-        //    fill sat only ONE step above the surfaceContainer holder and
-        //    read nearly flat; Highest restores a two-step lift.
+        // surfaceContainerHighest on EVERY holder (maintainer's call):
+        //  - quiet holder (Home): matches the cards, which are the M3
+        //    filled-card role at Highest — one family, pill = cards. (The
+        //    strict M3 docked-search role would be High, one step below
+        //    the cards; tried and rejected in favour of the match.)
+        //  - tonal holder (browser): Highest is the two-step lift over the
+        //    surfaceContainer holder — a High fill sat only one step up
+        //    and read nearly flat.
         // Trade-off, accepted: the FOCUS pulse (mAnimColorFrom → Highest)
-        // becomes a no-op on the tonal holder since rest == Highest there;
-        // on the browser, focusing the bar immediately raises the
-        // AutoCompleteView panel, which is the real focus affordance.
-        int pillRestColor = tonalHolder
-                ? IncognitoColors.getSurfaceContainerHighest(activity, incognito)
-                : surfaceContainerHigh;
+        // is a no-op everywhere now since rest == Highest; focusing the
+        // bar raises the AutoCompleteView panel, which is the real focus
+        // affordance.
+        int pillRestColor =
+                IncognitoColors.getSurfaceContainerHighest(activity, incognito);
         if (mBackground != null && mBackground.getBackground() instanceof GradientDrawable gd) {
             // MUTATE before setColor: @drawable/address_bar is ONE cached
             // resource, so its ConstantState is shared across every toolbar
-            // that inflated it. Without mutate, the Home toolbar (High) and
-            // the browser toolbar (Highest) overwrite each other's colour on
-            // that shared state — whichever updateTheme ran last wins for
-            // BOTH, so after visiting the browser the Home pill came back at
-            // Highest, one step lighter than the cards it is meant to match.
+            // that inflated it. Without mutate, toolbars overwrite each
+            // other's colour on that shared state — last updateTheme wins
+            // for ALL of them (bit Home vs browser when their rest tones
+            // differed, and incognito vs regular still differ today).
             // mutate() gives this toolbar's pill its own state.
             gd.mutate();
             gd.setColor(pillRestColor);
@@ -528,15 +523,12 @@ public class GeckoToolbar extends FrameLayout implements View.OnClickListener, V
             mSearchTextDefaultColor = onSurfaceVariant;
         }
 
-        // 9. Update the animation colors so focus/unfocus uses the right palette.
-        // surfaceBright collapses to the same value as surface in the light M3
-        // palette (#FBF9FB), which made the focused pill disappear against the
-        // address-bar holder. surfaceContainerHighest is one M3 step above the
-        // resting surfaceContainerHigh tone in both themes, so focus stays
-        // visible without breaking the dark-theme appearance.
-        // From = the holder-dependent REST fill, so the unfocus animation
-        // returns the pill to its true resting tone (animating back to a
-        // hardcoded High would visibly darken the browser's Highest pill).
+        // 9. Update the animation colors so focus/unfocus uses the right
+        // palette. From = the REST fill so unfocus returns the pill to its
+        // true resting tone. With rest == Highest everywhere the focus
+        // pulse is currently a no-op (From == To) — kept wired so a future
+        // rest-tone change gets the pulse back for free; the real focus
+        // affordance is the AutoCompleteView panel raising.
         mAnimColorFrom = pillRestColor;
         mAnimColorTo = IncognitoColors.getSurfaceContainerHighest(activity, incognito);
     }
