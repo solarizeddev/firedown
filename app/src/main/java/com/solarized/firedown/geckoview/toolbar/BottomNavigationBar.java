@@ -126,16 +126,23 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
     public void updateTheme(Activity activity, boolean incognito) {
         Context context = getContext();
 
-        int surfaceColor = IncognitoColors.getSurface(activity, incognito);
+        // surfaceContainer, NOT surface — the same tonal tone the tabs
+        // screen's action bar uses (TabsHolderFragment), so the bar reads
+        // as a bar instead of dissolving into the dark window background,
+        // and the docked hero FAB visibly seats INTO it on every screen.
+        int surfaceColor = IncognitoColors.getSurfaceContainer(activity, incognito);
         int iconColor = IncognitoColors.getOnSurface(activity, incognito);
 
         ColorStateList iconTint = ColorStateList.valueOf(iconColor);
 
-        // Bar background — set on the LinearLayout child
-        ViewGroup bar = (ViewGroup) getChildAt(0);
-        if (bar != null) {
-            bar.setBackgroundColor(surfaceColor);
-        }
+        // Background goes on THIS view, not the LinearLayout child: the
+        // nav-inset padding (applyWindowInsets) lives on this FrameLayout,
+        // so a child-only background leaves the inset strip transparent —
+        // fine while bar == window background, a visible two-tone seam at
+        // the gesture area once the bar is tonal. Painting the outer view
+        // covers the icon row AND the inset strip in one tone, same as the
+        // self-padded tabs bar.
+        setBackgroundColor(surfaceColor);
 
         // Tint each icon button
         View newTabBtn = findViewById(R.id.new_tab_button);
