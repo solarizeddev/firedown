@@ -182,6 +182,16 @@ public class BrowserFragment extends BaseBrowserFragment
 
     // ── Layout sizing ─────────────────────────────────────────────────────────────────────────────
 
+    /** The bars' content row height (app_bar_size), without any inset. */
+    private int mChromeBarBaseSize;
+    /**
+     * LIVE chrome heights, inset-inclusive: toolbar = base + status inset,
+     * bottom bar = base + nav inset (the bars self-pad edge-to-edge, so
+     * their real heights include the system strip they own). Start at the
+     * bare base and are corrected by {@link #applyChromeInsets} on the
+     * first insets pass — every viewport consumer (dynamic-toolbar max
+     * height, NestedGeckoViewBehavior) reads these fields at call time.
+     */
     private int mGeckoToolbarSize;
     private int mBottomBarSize;
 
@@ -223,8 +233,9 @@ public class BrowserFragment extends BaseBrowserFragment
             mIsIncognitoThemed = savedInstanceState.getBoolean(Keys.IS_INCOGNITO, false);
         }
 
-        mGeckoToolbarSize = getResources().getDimensionPixelSize(R.dimen.app_bar_size);
-        mBottomBarSize    = getResources().getDimensionPixelSize(R.dimen.app_bar_size);
+        mChromeBarBaseSize = getResources().getDimensionPixelSize(R.dimen.app_bar_size);
+        mGeckoToolbarSize  = mChromeBarBaseSize;
+        mBottomBarSize     = mChromeBarBaseSize;
 
         mIncognitoStateViewModel = new ViewModelProvider(mActivity).get(IncognitoStateViewModel.class);
         mTaskViewModel          = new ViewModelProvider(this).get(TaskViewModel.class);
@@ -444,7 +455,7 @@ public class BrowserFragment extends BaseBrowserFragment
         CoordinatorLayout.LayoutParams layoutParamsSearch =
                 (CoordinatorLayout.LayoutParams) mAutoCompleteView.getLayoutParams();
         layoutParamsSearch.setBehavior(new AutoCompleteViewBehavior(
-                mAutoCompleteView.getContext(), null, mAutoCompleteView, mGeckoToolbarSize));
+                mAutoCompleteView.getContext(), null, mAutoCompleteView));
 
         mSwipeRefreshLayout.requestLayout();
 
@@ -467,10 +478,21 @@ public class BrowserFragment extends BaseBrowserFragment
         super.onViewCreated(view, savedInstanceState);
         Log.d(TAG, "onViewCreated");
 
+        // Edge-to-edge: the root pads HORIZONTALLY only (cutout / 3-button
+        // landscape). Top and bottom flow through so the bars self-pad by
+        // their adjacent system strip (toolbar = status inset, bottom bar =
+        // nav inset via its built-in listener) and the engine view spans the
+        // FULL window — page content scrolls under the transparent system
+        // strips when the bars hide, and each strip is owned by its bar when
+        // they're visible (same model as Home/Tabs; this is what removed the
+        // browser's decor-painting special case). The insets must be
+        // RETURNED, not CONSUMED — consuming at the root starves the
+        // children's self-padding listeners.
         ViewCompat.setOnApplyWindowInsetsListener(view, (v, windowInsets) -> {
             Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars()
                     | WindowInsetsCompat.Type.displayCutout());
-            view.setPadding(insets.left, insets.top, insets.right, insets.bottom);
+            view.setPadding(insets.left, 0, insets.right, 0);
+            applyChromeInsets(insets.top, insets.bottom);
 
             // Keyboard tracking for the toolbar scroll policy (Fenix parity): while the IME
             // is up the bars must not be able to scroll away mid-typing, and when it closes
@@ -486,7 +508,23 @@ public class BrowserFragment extends BaseBrowserFragment
                     expandBarsAndApplyPolicy();
                 }
             }
-            return WindowInsetsCompat.CONSUMED;
+            return windowInsets;
+        });
+
+        // The toolbar owns the status strip (the Home pattern): it pads
+        // itself by the top inset so its background paints up behind the
+        // status bar, and since View.getHeight() includes padding, the
+        // inset-inclusive height feeds GeckoToolbarBehavior's translation
+        // range and NestedGeckoViewBehavior's surface math automatically.
+        // Left/right stay untouched — the root already pads those.
+        ViewCompat.setOnApplyWindowInsetsListener(mGeckoToolbar, (tv, windowInsets) -> {
+            Insets bars = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars()
+                    | WindowInsetsCompat.Type.displayCutout());
+            if (tv.getPaddingTop() != bars.top) {
+                tv.setPadding(tv.getPaddingLeft(), bars.top,
+                        tv.getPaddingRight(), tv.getPaddingBottom());
+            }
+            return windowInsets;
         });
 
         // Pin the bars while touch exploration (TalkBack et al.) is on — a toolbar that
@@ -894,20 +932,13 @@ public class BrowserFragment extends BaseBrowserFragment
         // background, system bar colors) that persists across fragments.
         resetWindowTheme();
         mBottomNavigationBar.updateTheme(mActivity, false);
-        // The browser's system-nav strip is the DECOR showing through the
-        // inset-padded root: fragment_browser has no navigation_scrim, and
-        // a child view can't reach under the root padding (a backdrop
-        // attempt broke bar scroll-hide and was reverted — commit 26b63d1).
-        // Repaint the decor to the bar's surfaceContainer tone, scoped to
-        // the browser: every other surface repaints the decor on entry
-        // (Home resetWindowTheme, tabs applyIncognitoTheme, bookmark /
-        // history applyWindowIncognitoTheme), so this never leaks onto
-        // their canvases. The top status strip rides along by design.
-        mActivity.getWindow().getDecorView().setBackgroundColor(
-                IncognitoColors.getSurfaceContainer(mActivity, false));
-        // Window layer for Android <= 14: both strips follow the tonal
-        // frame (the OLED overlay's opaque attrs would otherwise paint
-        // them black over it). No-op on 15+, where the decor above shows.
+        // Edge-to-edge: the bars OWN their strips (toolbar self-pads the
+        // status inset, the bottom bar its nav inset), so the old
+        // browser-scoped decor repaint is gone — with the bars hidden the
+        // full-window engine view is what shows under the transparent
+        // strips, which is the intended modern look. paintSystemBars
+        // remains for Android <= 14, where the window attrs are the strip
+        // painter; per-strip freedom now exists, both currently tonal.
         paintSystemBars(
                 IncognitoColors.getSurfaceContainer(mActivity, false),
                 IncognitoColors.getSurfaceContainer(mActivity, false));
@@ -2325,11 +2356,9 @@ public class BrowserFragment extends BaseBrowserFragment
 
         mGeckoToolbar.updateTheme(mActivity, incognito);
         mBottomNavigationBar.updateTheme(mActivity, incognito);
-        // Decor repaint = the browser's nav-strip tone in either mode —
-        // see the comment at the resetWindowTheme site above. The window
-        // layer mirrors it for Android <= 14.
-        mActivity.getWindow().getDecorView().setBackgroundColor(
-                IncognitoColors.getSurfaceContainer(mActivity, incognito));
+        // Edge-to-edge: bars own their strips, no decor repaint — see the
+        // comment at the resetWindowTheme site above. The window layer
+        // remains for Android <= 14.
         paintSystemBars(
                 IncognitoColors.getSurfaceContainer(mActivity, incognito),
                 IncognitoColors.getSurfaceContainer(mActivity, incognito));
@@ -2609,6 +2638,53 @@ public class BrowserFragment extends BaseBrowserFragment
                 mSwipeRefreshLayout, mGeckoToolbarSize, mBottomBarSize));
         mSwipeRefreshLayout.requestLayout();
 
+        mGeckoView.setDynamicToolbarMaxHeight(mGeckoToolbarSize + mBottomBarSize);
+    }
+
+    /**
+     * Folds the system insets into the LIVE chrome heights (edge-to-edge:
+     * toolbar owns the status strip, bottom bar owns the nav strip, so each
+     * bar's real height = content row + its inset) and rebuilds the viewport
+     * coordination when they actually change. No-ops on every repeat insets
+     * dispatch with unchanged values — the IME show/hide passes reuse this
+     * listener and must not churn behaviors.
+     */
+    private void applyChromeInsets(int statusInset, int navInset) {
+        int toolbarSize = mChromeBarBaseSize + statusInset;
+        int bottomSize  = mChromeBarBaseSize + navInset;
+        if (toolbarSize == mGeckoToolbarSize && bottomSize == mBottomBarSize) {
+            return;
+        }
+        mGeckoToolbarSize = toolbarSize;
+        mBottomBarSize    = bottomSize;
+        rebuildViewportBehavior();
+    }
+
+    /**
+     * Re-creates the {@link NestedGeckoViewBehavior} and the dynamic-toolbar
+     * max height from the current chrome sizes — the same reconstruction the
+     * fullscreen exit ({@link #collapseBrowserView}) already performs, reused
+     * for insets changes (first insets pass after onCreateView, rotation).
+     * Skipped while fullscreen owns the viewport: {@link #expandBrowserView}
+     * nulls the SRL behavior and zeroes the max height, and
+     * {@code collapseBrowserView} rebuilds from the (updated) fields on exit
+     * — rebuilding mid-fullscreen would fight it. The fullscreen state is
+     * read from the behavior itself being null, not a separate flag, so the
+     * two can't drift.
+     */
+    private void rebuildViewportBehavior() {
+        if (mSwipeRefreshLayout == null || mGeckoView == null) {
+            return;
+        }
+        CoordinatorLayout.LayoutParams srlParams =
+                (CoordinatorLayout.LayoutParams) mSwipeRefreshLayout.getLayoutParams();
+        if (srlParams.getBehavior() == null) {
+            return;
+        }
+        srlParams.setBehavior(new NestedGeckoViewBehavior(
+                mSwipeRefreshLayout.getContext(), null,
+                mSwipeRefreshLayout, mGeckoToolbarSize, mBottomBarSize));
+        mSwipeRefreshLayout.requestLayout();
         mGeckoView.setDynamicToolbarMaxHeight(mGeckoToolbarSize + mBottomBarSize);
     }
 

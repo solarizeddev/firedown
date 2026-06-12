@@ -444,7 +444,13 @@ public class GeckoToolbar extends FrameLayout implements View.OnClickListener, V
         int onSurfaceVariant = IncognitoColors.getOnSurfaceVariant(activity, incognito);
         int surfaceContainerHigh = IncognitoColors.getSurfaceContainerHigh(activity, incognito);
 
-        // 1. Address bar holder background (the ConstraintLayout root)
+        // 1. Toolbar background. Painted on THIS view as well as the
+        // address_bar_holder child: when the toolbar self-pads by the
+        // status inset (the edge-to-edge browser, and Home), the inset
+        // strip lies in THIS view's padding area, which a child's
+        // background can never reach — painting only the holder would
+        // leave the status strip transparent over whatever is behind.
+        setBackgroundColor(surfaceColor);
         View addressBarHolder = findViewById(R.id.address_bar_holder);
         if (addressBarHolder != null) {
             addressBarHolder.setBackgroundColor(surfaceColor);

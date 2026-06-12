@@ -47,10 +47,18 @@
 
 
 
+    <!--
+        wrap_content, NOT a fixed app_bar_size: edge-to-edge, the bar
+        self-pads by the nav inset (BottomNavigationBar.applyWindowInsets)
+        so its background owns the system-nav strip — a fixed height would
+        squash the icon row by the inset instead of growing the bar. The
+        root insets listener (BrowserFragment.onViewCreated) deliberately
+        returns the insets unconsumed so this self-padding receives them.
+    -->
     <com.solarized.firedown.geckoview.toolbar.BottomNavigationBar
         android:id="@+id/bottom_app_bar"
         android:layout_width="match_parent"
-        android:layout_height="@dimen/app_bar_size"
+        android:layout_height="wrap_content"
         android:minHeight="@dimen/app_bar_size"
         android:layout_gravity="bottom"
         android:background="?attr/colorSurfaceContainer"
