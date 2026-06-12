@@ -277,9 +277,21 @@
         <item name="colorSurfaceDim">#000000</item>
         <item name="colorSurfaceBright">#1C1C1F</item>
         <item name="colorOutlineVariant">#2A2A2D</item>
+        <!--
+            windowBackground stays pure black ON PURPOSE: it is the
+            pixel-off canvas for Settings/Downloads (bare roots) and the
+            cold-start frame. The browser's nav strip does NOT come from
+            here at runtime — BrowserFragment repaints the decor to
+            colorSurfaceContainer on entry. The two BAR colors below
+            follow the tonal chrome (toolbar + bottom bar are
+            colorSurfaceContainer now): they are honored on Android <=14
+            where they'd otherwise paint hard-black strips over the
+            tonal bars; on 15+ (targetSdk 35+) the system ignores them
+            and the app-painted surfaces show instead.
+        -->
         <item name="android:windowBackground">#000000</item>
-        <item name="android:statusBarColor">#000000</item>
-        <item name="android:navigationBarColor">#000000</item>
+        <item name="android:statusBarColor">#141417</item>
+        <item name="android:navigationBarColor">#141417</item>
     </style>
 
 
