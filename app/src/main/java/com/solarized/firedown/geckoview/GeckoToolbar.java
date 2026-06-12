@@ -418,7 +418,16 @@ public class GeckoToolbar extends FrameLayout implements View.OnClickListener, V
 
     public void updateTheme(Activity activity, boolean incognito) {
 
-        int surfaceColor = IncognitoColors.getSurface(activity, incognito);
+        // surfaceContainer, NOT surface — completes the tonal frame: the
+        // bottom bar went surfaceContainer (BottomNavigationBar.updateTheme)
+        // and the browser's decor/nav-strip followed (BrowserFragment), so a
+        // surface toolbar would seam against both. On Home the toolbar pads
+        // itself by the status inset (HomeFragment's insets listener), so
+        // this tone paints the status strip there too; on the browser the
+        // inset-padded root leaves the strip to the matching decor. The URL
+        // pill stays surfaceContainerHigh — one tonal step above, the M3
+        // search-bar-on-container pairing.
+        int surfaceColor = IncognitoColors.getSurfaceContainer(activity, incognito);
         int onSurfaceColor = IncognitoColors.getOnSurface(activity, incognito);
         int onSurfaceVariant = IncognitoColors.getOnSurfaceVariant(activity, incognito);
         int surfaceContainerHigh = IncognitoColors.getSurfaceContainerHigh(activity, incognito);

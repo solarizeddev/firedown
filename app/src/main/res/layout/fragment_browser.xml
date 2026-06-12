@@ -53,7 +53,7 @@
         android:layout_height="@dimen/app_bar_size"
         android:minHeight="@dimen/app_bar_size"
         android:layout_gravity="bottom"
-        android:background="?android:attr/colorBackground"
+        android:background="?attr/colorSurfaceContainer"
         app:hideMiddleSlot="true"
         app:layout_behavior="com.solarized.firedown.geckoview.toolbar.BottomNavigationBehavior"/>
 
