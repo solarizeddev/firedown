@@ -450,9 +450,21 @@ public class GeckoToolbar extends FrameLayout implements View.OnClickListener, V
             addressBarHolder.setBackgroundColor(surfaceColor);
         }
 
-        // 2. Address bar rounded background (the GradientDrawable pill)
+        // 2. Address bar rounded background (the GradientDrawable pill).
+        // Fill stays surfaceContainerHigh in BOTH holder modes so the pill
+        // keeps matching the Home cards (bumping the fill instead would
+        // break that harmony — maintainer's constraint). The definition
+        // comes from a hairline outlineVariant stroke: on the quiet Home
+        // toolbar the fill alone is barely distinguishable from the
+        // canvas, and on the tonal browser holder it is only one tonal
+        // step up; the stroke gives the input affordance its edge in both
+        // without touching the fill.
         if (mBackground != null && mBackground.getBackground() instanceof GradientDrawable gd) {
             gd.setColor(surfaceContainerHigh);
+            int hairline = Math.max(1,
+                    (int) getResources().getDisplayMetrics().density);
+            gd.setStroke(hairline,
+                    IncognitoColors.getOutlineVariant(activity, incognito));
         }
 
         // 3. Edit text colors

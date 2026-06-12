@@ -171,6 +171,16 @@ public class TabsHolderFragment extends BaseFocusFragment {
         mBottomBar.setBackgroundColor(
                 IncognitoColors.getSurfaceContainer(mActivity, false));
 
+        // ENTRY-path window strips. applyIncognitoTheme (which also calls
+        // paintSystemBars) only runs on the page toggle / open-incognito
+        // arg / close-all — NOT on a plain normal-mode entry, so without
+        // this the strips keep the PREVIOUS screen's window colors (e.g.
+        // Home leaves a surface-black status bar under our tonal header
+        // on Android <= 14, where the window layer is the strip painter).
+        paintSystemBars(
+                IncognitoColors.getSurfaceContainer(mActivity, false),
+                IncognitoColors.getSurfaceContainer(mActivity, false));
+
         // The header container takes the status-bar inset as top padding,
         // so the tonal bar paints up behind the status bar.
         ViewCompat.setOnApplyWindowInsetsListener(mTabsHeader, (v, windowInsets) -> {
