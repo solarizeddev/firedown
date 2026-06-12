@@ -394,6 +394,16 @@
     <string name="settings_quit_fragment_summary">Excluir automaticamente os dados de navegação selecionados abaixo ao tocar em \"Sair\" no menu principal</string>
     <string name="settings_quit_title">Limpar dados de navegação ao sair</string>
     <string name="settings_search_engine_select">Desta vez, pesquisar em:</string>
+    <string name="settings_search_custom_add">Adicionar motor de busca personalizado</string>
+    <string name="settings_search_custom_edit">Editar motor de busca personalizado</string>
+    <string name="settings_search_custom_name_hint">Nome</string>
+    <string name="settings_search_custom_url_hint" formatted="false">URL de pesquisa, %s no lugar da consulta</string>
+    <string name="settings_search_custom_suggestion_hint" formatted="false">URL de sugestões com %s (opcional)</string>
+    <string name="settings_search_custom_error_name">Introduza um nome</string>
+    <string name="settings_search_custom_error_name_taken">Já existe um motor de busca com este nome</string>
+    <string name="settings_search_custom_error_url" formatted="false">Introduza um URL válido que contenha %s</string>
+    <string name="settings_search_custom_delete_title">Eliminar o motor de busca personalizado?</string>
+    <string name="settings_search_custom_delete_message">\"%1$s\" será removido</string>
     <string name="settings_theme">Tema</string>
     <string name="snackbar_deleted_undo">DESFAZER</string>
     <string name="snackbar_tab_closed">Aba fechada</string>

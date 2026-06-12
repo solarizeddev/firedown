@@ -61,5 +61,12 @@
     "suggestion": "https://suggest.yandex.ru/suggest-ya.cgi?v=4&part=%s",
     "method": "GET",
     "search": "https://yandex.com/search/?text=%s&lr=10435&search_source=yacom_desktop_common"
+  },
+  {
+    "name": "Mojeek",
+    "url": "https://www.mojeek.com",
+    "suggestion": "",
+    "method": "GET",
+    "search": "https://www.mojeek.com/search?q=%s"
   }
 ]

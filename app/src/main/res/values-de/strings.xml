@@ -412,6 +412,16 @@
     <string name="settings_save_file_title">Vor dem Herunterladen umbenennen</string>
     <string name="settings_search_engine">Suchmaschine</string>
     <string name="settings_search_engine_select">Dieses Mal suchen in:</string>
+    <string name="settings_search_custom_add">Eigene Suchmaschine hinzufügen</string>
+    <string name="settings_search_custom_edit">Eigene Suchmaschine bearbeiten</string>
+    <string name="settings_search_custom_name_hint">Name</string>
+    <string name="settings_search_custom_url_hint" formatted="false">Such-URL, %s anstelle der Suchanfrage</string>
+    <string name="settings_search_custom_suggestion_hint" formatted="false">Vorschlags-URL mit %s (optional)</string>
+    <string name="settings_search_custom_error_name">Namen eingeben</string>
+    <string name="settings_search_custom_error_name_taken">Eine Suchmaschine mit diesem Namen existiert bereits</string>
+    <string name="settings_search_custom_error_url" formatted="false">Gültige URL mit %s eingeben</string>
+    <string name="settings_search_custom_delete_title">Eigene Suchmaschine löschen?</string>
+    <string name="settings_search_custom_delete_message">\"%1$s\" wird entfernt</string>
     <string name="settings_storage_manager_button_decline">NICHT JETZT</string>
     <string name="settings_storage_manager_button_ok">EINSTELLUNGEN ÖFFNEN</string>
     <string name="settings_tabs_archive_interval_title">Inaktive Tabs schließen</string>

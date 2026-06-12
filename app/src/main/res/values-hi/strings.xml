@@ -210,6 +210,16 @@
     <string name="settings_save_file_summary">डाउनलोड करने से पहले फ़ाइल का नाम पूछें</string>
     <string name="settings_save_file_title">डाउनलोड करने से पहले नाम बदलें</string>
     <string name="settings_search_engine">सर्च इंजन</string>
+    <string name="settings_search_custom_add">कस्टम सर्च इंजन जोड़ें</string>
+    <string name="settings_search_custom_edit">कस्टम सर्च इंजन संपादित करें</string>
+    <string name="settings_search_custom_name_hint">नाम</string>
+    <string name="settings_search_custom_url_hint" formatted="false">सर्च URL, क्वेरी की जगह %s</string>
+    <string name="settings_search_custom_suggestion_hint" formatted="false">%s के साथ सुझाव URL (वैकल्पिक)</string>
+    <string name="settings_search_custom_error_name">नाम दर्ज करें</string>
+    <string name="settings_search_custom_error_name_taken">इस नाम का सर्च इंजन पहले से मौजूद है</string>
+    <string name="settings_search_custom_error_url" formatted="false">%s वाला मान्य URL दर्ज करें</string>
+    <string name="settings_search_custom_delete_title">कस्टम सर्च इंजन हटाएं?</string>
+    <string name="settings_search_custom_delete_message">\"%1$s\" हटा दिया जाएगा</string>
     <string name="settings_storage_manager_button_decline">अभी नहीं</string>
     <string name="settings_storage_manager_button_ok">सेटिंग्स खोलें</string>
     <string name="settings_utc_timezone">टाइमज़ोन को UTC के रूप में दिखाएँ</string>

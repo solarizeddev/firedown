@@ -327,6 +327,32 @@ public class Preferences {
 
     public static final String SETTINGS_SEARCH_ENGINE = "com.solarized.firedown.preferences.search.engine";
 
+    /**
+     * User-defined ("custom") search engine, Firefox-style: a display name,
+     * a search-URL template with {@code %s} in place of the query, and an
+     * optional suggestions-URL template (OpenSearch JSON). The templates are
+     * validated at save time (SearchFragment) to contain exactly the
+     * {@code %s} placeholder and no other {@code %} — both
+     * {@code String.format} (search) and {@code URLUtil.composeSearchUrl}
+     * (suggestions) consume them, and a stray {@code %} would throw in the
+     * former while surviving the latter.
+     */
+    public static final String SETTINGS_SEARCH_ENGINE_CUSTOM = "com.solarized.firedown.preferences.search.engine.custom";
+    public static final String SETTINGS_SEARCH_ENGINE_CUSTOM_ADD = "com.solarized.firedown.preferences.search.engine.custom.add";
+    public static final String SETTINGS_SEARCH_ENGINE_CUSTOM_NAME = "com.solarized.firedown.preferences.search.engine.custom.name";
+    public static final String SETTINGS_SEARCH_ENGINE_CUSTOM_URL = "com.solarized.firedown.preferences.search.engine.custom.url";
+    public static final String SETTINGS_SEARCH_ENGINE_CUSTOM_SUGGESTION = "com.solarized.firedown.preferences.search.engine.custom.suggestion";
+
+    /**
+     * Sentinel stored in {@link #SETTINGS_SEARCH_ENGINE} while the custom
+     * engine is selected. A sentinel — not the custom name — so renaming the
+     * engine keeps the selection, and a deleted/renamed custom engine can
+     * never shadow (or be shadowed by) a built-in. SearchFragment's name
+     * validation rejects this value (and the built-in names) as a custom
+     * engine name.
+     */
+    public static final String CUSTOM_SEARCH_ENGINE = "@custom";
+
     public static final String SETTINGS_ABOUT = "com.solarized.firedown.preferences.about";
 
     public static final String SETTINGS_LICENSE = "com.solarized.firedown.preferences.license";

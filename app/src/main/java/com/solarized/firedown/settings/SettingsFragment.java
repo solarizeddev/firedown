@@ -162,6 +162,21 @@ public class SettingsFragment extends BasePreferenceFragment
         tabsPreference.setSummary(resId);
     }
 
+    /**
+     * Display label for the selected search engine: the stored value, except
+     * the custom engine is stored as the {@code @custom} sentinel and must be
+     * resolved to its user-given name.
+     */
+    private String searchEngineLabel() {
+        String value = mSharedPreferences.getString(
+                Preferences.SETTINGS_SEARCH_ENGINE, Preferences.DEFAULT_SEARCH_ENGINE);
+        if (Preferences.CUSTOM_SEARCH_ENGINE.equals(value)) {
+            value = mSharedPreferences.getString(
+                    Preferences.SETTINGS_SEARCH_ENGINE_CUSTOM_NAME, Preferences.DEFAULT_SEARCH_ENGINE);
+        }
+        return value;
+    }
+
     private void updateSummaries() {
 
         if(autoFillPreference != null){
@@ -182,11 +197,8 @@ public class SettingsFragment extends BasePreferenceFragment
                     : R.string.delete_browsing_data_quit_off);
         }
 
-        String searchValue = mSharedPreferences.getString(
-                Preferences.SETTINGS_SEARCH_ENGINE, Preferences.DEFAULT_SEARCH_ENGINE);
-
         if (searchPreference != null)
-            searchPreference.setSummary(searchValue);
+            searchPreference.setSummary(searchEngineLabel());
 
         if (dohPreference != null) {
             boolean enabled = mSharedPreferences.getBoolean(Preferences.SETTINGS_DOH_SWITCH, false);
@@ -332,10 +344,8 @@ public class SettingsFragment extends BasePreferenceFragment
 
         } else if (Preferences.SETTINGS_SEARCH_ENGINE.equals(key)) {
 
-            String searchValue = sharedPreferences.getString(key, Preferences.DEFAULT_SEARCH_ENGINE);
-
             if (searchPreference != null)
-                searchPreference.setSummary(searchValue);
+                searchPreference.setSummary(searchEngineLabel());
 
         } else if (Preferences.SETTINGS_DOWNLOADS.equals(key)) {
 

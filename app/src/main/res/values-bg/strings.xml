@@ -252,6 +252,16 @@
     <string name="settings_save_file_title">Преименуване преди изтегляне</string>
     <string name="settings_search_engine">Търсачка</string>
     <string name="settings_search_engine_select">Търсене в:</string>
+    <string name="settings_search_custom_add">Добавяне на персонализирана търсачка</string>
+    <string name="settings_search_custom_edit">Редактиране на персонализираната търсачка</string>
+    <string name="settings_search_custom_name_hint">Име</string>
+    <string name="settings_search_custom_url_hint" formatted="false">URL за търсене, %s на мястото на заявката</string>
+    <string name="settings_search_custom_suggestion_hint" formatted="false">URL за предложения с %s (по избор)</string>
+    <string name="settings_search_custom_error_name">Въведете име</string>
+    <string name="settings_search_custom_error_name_taken">Търсачка с това име вече съществува</string>
+    <string name="settings_search_custom_error_url" formatted="false">Въведете валиден URL, съдържащ %s</string>
+    <string name="settings_search_custom_delete_title">Изтриване на персонализираната търсачка?</string>
+    <string name="settings_search_custom_delete_message">\"%1$s\" ще бъде премахната</string>
     <string name="settings_storage_manager_button_decline">НЕ СЕГА</string>
     <string name="settings_storage_manager_button_ok">ОТВАРЯНЕ НА НАСТРОЙКИ</string>
     <string name="settings_theme">Тема</string>

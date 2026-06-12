@@ -264,6 +264,16 @@
     <string name="settings_save_file_title">Nimeä uudelleen ennen lataamista</string>
     <string name="settings_search_engine">Hakukone</string>
     <string name="settings_search_engine_select">Tällä kertaa hae:</string>
+    <string name="settings_search_custom_add">Lisää mukautettu hakukone</string>
+    <string name="settings_search_custom_edit">Muokkaa mukautettua hakukonetta</string>
+    <string name="settings_search_custom_name_hint">Nimi</string>
+    <string name="settings_search_custom_url_hint" formatted="false">Haku-URL, %s kyselyn paikalla</string>
+    <string name="settings_search_custom_suggestion_hint" formatted="false">Ehdotusten URL, jossa %s (valinnainen)</string>
+    <string name="settings_search_custom_error_name">Anna nimi</string>
+    <string name="settings_search_custom_error_name_taken">Tämän niminen hakukone on jo olemassa</string>
+    <string name="settings_search_custom_error_url" formatted="false">Anna kelvollinen URL, joka sisältää %s</string>
+    <string name="settings_search_custom_delete_title">Poistetaanko mukautettu hakukone?</string>
+    <string name="settings_search_custom_delete_message">\"%1$s\" poistetaan</string>
     <string name="settings_storage_manager_button_decline">EI NYT</string>
     <string name="settings_storage_manager_button_ok">AVAA ASETUKSET</string>
     <string name="settings_theme">Teema</string>

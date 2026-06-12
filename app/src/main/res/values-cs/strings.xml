@@ -265,6 +265,16 @@
     <string name="settings_save_file_title">Před stažením přejmenujte</string>
     <string name="settings_search_engine">Vyhledávač</string>
     <string name="settings_search_engine_select">Tentokrát hledat v:</string>
+    <string name="settings_search_custom_add">Přidat vlastní vyhledávač</string>
+    <string name="settings_search_custom_edit">Upravit vlastní vyhledávač</string>
+    <string name="settings_search_custom_name_hint">Název</string>
+    <string name="settings_search_custom_url_hint" formatted="false">URL vyhledávání, %s místo dotazu</string>
+    <string name="settings_search_custom_suggestion_hint" formatted="false">URL návrhů s %s (volitelné)</string>
+    <string name="settings_search_custom_error_name">Zadejte název</string>
+    <string name="settings_search_custom_error_name_taken">Vyhledávač s tímto názvem už existuje</string>
+    <string name="settings_search_custom_error_url" formatted="false">Zadejte platnou URL obsahující %s</string>
+    <string name="settings_search_custom_delete_title">Smazat vlastní vyhledávač?</string>
+    <string name="settings_search_custom_delete_message">\"%1$s\" bude odstraněn</string>
     <string name="settings_storage_manager_button_decline">TEĎ NE</string>
     <string name="settings_storage_manager_button_ok">OTEVŘÍT NASTAVENÍ</string>
     <string name="settings_theme">Vzhled</string>

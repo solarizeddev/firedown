@@ -412,6 +412,16 @@
     <string name="settings_save_file_title">Renommer avant de télécharger</string>
     <string name="settings_search_engine">Moteur de recherche</string>
     <string name="settings_search_engine_select">Pour cette recherche :</string>
+    <string name="settings_search_custom_add">Ajouter un moteur de recherche personnalisé</string>
+    <string name="settings_search_custom_edit">Modifier le moteur de recherche personnalisé</string>
+    <string name="settings_search_custom_name_hint">Nom</string>
+    <string name="settings_search_custom_url_hint" formatted="false">URL de recherche, %s à la place de la requête</string>
+    <string name="settings_search_custom_suggestion_hint" formatted="false">URL de suggestions avec %s (facultatif)</string>
+    <string name="settings_search_custom_error_name">Saisissez un nom</string>
+    <string name="settings_search_custom_error_name_taken">Un moteur de recherche portant ce nom existe déjà</string>
+    <string name="settings_search_custom_error_url" formatted="false">Saisissez une URL valide contenant %s</string>
+    <string name="settings_search_custom_delete_title">Supprimer le moteur de recherche personnalisé ?</string>
+    <string name="settings_search_custom_delete_message">\"%1$s\" sera supprimé</string>
     <string name="settings_storage_manager_button_decline">PAS MAINTENANT</string>
     <string name="settings_storage_manager_button_ok">PARAMÈTRES OUVERTS</string>
     <string name="settings_tabs_archive_interval_title">Fermer les onglets inactifs</string>

@@ -502,6 +502,19 @@
     <string name="settings_save_file_title">Rename Before Downloading</string>
     <string name="settings_search_engine">Search Engine</string>
     <string name="settings_search_engine_select">This time search in:</string>
+    <!-- Custom (user-defined) search engine — the add/edit dialog reached
+         from Settings → Search Engine. The URL strings carry a literal %s
+         (the query placeholder the user must type), hence formatted="false". -->
+    <string name="settings_search_custom_add">Add custom search engine</string>
+    <string name="settings_search_custom_edit">Edit custom search engine</string>
+    <string name="settings_search_custom_name_hint">Name</string>
+    <string name="settings_search_custom_url_hint" formatted="false">Search URL, %s in place of the query</string>
+    <string name="settings_search_custom_suggestion_hint" formatted="false">Suggestions URL with %s (optional)</string>
+    <string name="settings_search_custom_error_name">Enter a name</string>
+    <string name="settings_search_custom_error_name_taken">A search engine with this name already exists</string>
+    <string name="settings_search_custom_error_url" formatted="false">Enter a valid URL containing %s</string>
+    <string name="settings_search_custom_delete_title">Delete custom search engine?</string>
+    <string name="settings_search_custom_delete_message">\"%1$s\" will be removed</string>
 <string name="settings_solarized_support" translatable="false">https://github.com/solarizeddev/firedown/issues</string>
     <string name="settings_storage_manager_button_decline">NOT NOW</string>
     <string name="settings_storage_manager_button_ok">OPEN SETTINGS</string>
