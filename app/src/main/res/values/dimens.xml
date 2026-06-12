@@ -10,13 +10,6 @@
     <dimen name="app_bar_icon_size">24dp</dimen>
     <dimen name="app_bar_fab_elevation">12dp</dimen>
     <dimen name="app_bar_fab_margin">16dp</dimen>
-    <!-- Browser hero-FAB flame only. ic_firedown's glyph fills ~50% of its
-         viewport width (intrinsic padding), so at the triad's shared 28dp
-         cap it rendered visibly smaller/weaker than the solid bookmark and
-         plus glyphs. 34dp brings its VISIBLE size in line — don't "fix"
-         this by editing the vector, the same asset is used at small sizes
-         elsewhere. -->
-    <dimen name="fab_flame_icon_size">34dp</dimen>
     <dimen name="autocomplete_elevation">20dp</dimen>
     <dimen name="badge_horizontal_offset">20dp</dimen>
     <dimen name="badge_vertical_offset">20dp</dimen>
