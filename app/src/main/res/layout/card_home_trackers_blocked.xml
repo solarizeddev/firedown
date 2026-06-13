@@ -80,6 +80,12 @@
 
         </LinearLayout>
 
+        <!-- NO trailing affordance, deliberately: the enter-chevron on
+             Downloads/Safe Folder means 'navigates to a screen'. Trackers
+             opens a bottom sheet IN PLACE (TrackersInfoSheet), so the
+             absence of a chevron is the signal it's a different kind of
+             row — adding an info glyph just over-decorates it. -->
+
     </LinearLayout>
 
 </com.google.android.material.card.MaterialCardView>

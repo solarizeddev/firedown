@@ -83,6 +83,19 @@
 
         </LinearLayout>
 
+        <!-- Trailing chevron — the 'enter' affordance. Re-added now the
+             cards are transparent: without a tile fill the row no longer
+             reads as obviously tappable, so the chevron carries that
+             signal. -->
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/recent_downloads_chevron"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_marginStart="8dp"
+            android:contentDescription="@null"
+            android:src="@drawable/ic_chevron_right_24"
+            app:tint="?attr/colorOnSurfaceVariant" />
+
     </LinearLayout>
 
 </com.google.android.material.card.MaterialCardView>
