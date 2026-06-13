@@ -954,7 +954,7 @@ public class BrowserFragment extends BaseBrowserFragment
                 IncognitoColors.getSurfaceContainer(mActivity, false),
                 IncognitoColors.getSurfaceContainer(mActivity, false));
         mGeckoToolbar.updateTheme(mActivity, false);
-        mAutoCompleteView.updateTheme(mActivity, false);
+        mAutoCompleteView.updateTheme(mActivity, false, true);
         mSearchAutocompleteAdapter.setIncognito(false);
 
         // BrowserAppDialogFragment reports a blocked Play Store "open in
@@ -2375,7 +2375,7 @@ public class BrowserFragment extends BaseBrowserFragment
         paintSystemBars(
                 IncognitoColors.getSurfaceContainer(mActivity, incognito),
                 IncognitoColors.getSurfaceContainer(mActivity, incognito));
-        mAutoCompleteView.updateTheme(mActivity, incognito);
+        mAutoCompleteView.updateTheme(mActivity, incognito, true);
         mAutoCompleteViewModel.setIncognito(incognito);
         mSearchAutocompleteAdapter.setIncognito(incognito);
 

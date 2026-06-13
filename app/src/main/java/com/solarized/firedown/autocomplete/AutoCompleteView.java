@@ -139,8 +139,26 @@ public class AutoCompleteView extends FrameLayout {
 
 
     public void updateTheme(Activity activity, boolean incognito) {
+        // Quiet-holder default (both Homes): the overlay root sits on plain
+        // surface, matching GeckoToolbar's quiet holder above it.
+        updateTheme(activity, incognito, false);
+    }
 
-        int surfaceColor = IncognitoColors.getSurface(activity, incognito);
+    /**
+     * @param tonalHolder true on the BROWSER (regular + incognito), whose
+     *     GeckoToolbar holder is surfaceContainer (the framed/tonal chrome).
+     *     The overlay root must then ALSO be surfaceContainer so the focused
+     *     panel reads as a seamless extension of the toolbar it drops from —
+     *     otherwise the toolbar strip (surfaceContainer) and the overlay body
+     *     (surface) show a visible seam. On Home the holder is plain surface,
+     *     so false keeps the two coinciding (as they already did). Mirrors the
+     *     identical tonalHolder branch in GeckoToolbar.updateTheme.
+     */
+    public void updateTheme(Activity activity, boolean incognito, boolean tonalHolder) {
+
+        int surfaceColor = tonalHolder
+                ? IncognitoColors.getSurfaceContainer(activity, incognito)
+                : IncognitoColors.getSurface(activity, incognito);
         int surfaceContainerHighest = IncognitoColors.getSurfaceContainerHighest(activity, incognito);
         int onSurfaceColor = IncognitoColors.getOnSurface(activity, incognito);
         int onSurfaceVariant = IncognitoColors.getOnSurfaceVariant(activity, incognito);
