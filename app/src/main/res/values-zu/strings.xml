@@ -53,7 +53,7 @@
     <string name="edit">Hlela</string>
     <string name="empty_learn_more">Funda kabanzi</string>
     <string name="empty_list">Okulandiwe kwakho kuzovela lapha.</string>
-    <string name="empty_list_bookmarks">Akukho okubekisiwe okwamanje.</string>
+    <string name="empty_list_bookmarks">Akukho okubekisiwe okwamanje.\n\nVula noma yiliphi ikhasi bese ukhetha “Bookmark page” kumenyu ye-⋮ ukuze uyilondoloze lapha.</string>
     <string name="empty_list_browser_history">Umlando wesiphequluli sakho awunalutho.</string>
     <string name="empty_list_history">Umlando wakho wokulanda awunalutho.</string>
     <string name="empty_list_query">Ayikho imiphumela etholiwe</string>
@@ -206,16 +206,6 @@
     <string name="vault_unsupported">Ayikwazi ukuvula leli fayela. Ukuze uyivule, ikhiphe Kufolda Evikelekile bese uzama futhi.</string>
     <string name="home_vault_button">Ifolda ephephile</string>
 <string name="settings_theme_app_category">Itimu yohlelo lokusebenza</string>
-    <string name="settings_theme_home_category">Isikrini sasekhaya</string>
-    <string name="settings_home_cards">Amakhadi asekhaya</string>
-    <string name="settings_home_cards_summary">Khetha isitayela samakhadi asekhaya</string>
-    <string name="settings_home_cards_header">Itimu eyodwa ishintsha onke amakhadi kanyekanye — khetha ukubukeka okuthandayo.</string>
-    <string name="home_card_style_neutral">Okungathathi hlangothi</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
-    <string name="home_card_style_coral">Coral</string>
-    <string name="home_card_style_preview_downloads_subtitle">Amafayela angu-150 alondoloziwe · 2.4 GB</string>
-    <string name="home_card_style_preview_vault_subtitle">Izinto ezingu-12 zilondoloziwe</string>
     <string name="crash_sheet_title">Kutholakele ukubhajwa</string>
     <string name="crash_sheet_report">Bika</string>
     <string name="crash_sheet_copy">Kopisha</string>
@@ -226,13 +216,11 @@
     <string name="home_trackers_subtitle">%1$s · ~%2$s konga</string>
     <string name="home_trackers_subtitle_idle">Ukuvikela kuyasebenza</string>
     <string name="home_vault_empty_subtitle">Eyimfihlo futhi ibhalwe ngokufihlekile</string>
-    <string name="home_card_style_preview_trackers_subtitle">12,345 · ~580 MB konga</string>
     <string name="trackers_info_count_label">abalandeli nezikhangiso zivinjelwe</string>
     <string name="trackers_info_saved">~%1$s ye-bandwidth konga</string>
     <string name="trackers_info_categories">Abalandeli · Izikhangiso · Izigxivizo zeminwe · Amakhukhi</string>
     <string name="trackers_info_action">Phatha ukuvikela</string>
     <string name="trackers_info_today">%1$s evinjelwe namuhla</string>
-    <string name="home_card_style_tonal">Tonali</string>
 
 
 

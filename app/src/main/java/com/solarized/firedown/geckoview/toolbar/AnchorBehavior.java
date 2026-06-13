@@ -2,7 +2,6 @@ package com.solarized.firedown.geckoview.toolbar;
 
 import android.content.Context;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.View;
 
 import androidx.annotation.NonNull;
@@ -15,11 +14,18 @@ public class AnchorBehavior extends CoordinatorLayout.Behavior<View> {
 
     private static final String TAG = AnchorBehavior.class.getSimpleName();
 
-    private final int mOffset;
+    /**
+     * Gap between the anchor and the bottom bar's top edge. The bar's own
+     * height is read LIVE from the dependency, not from app_bar_size: with
+     * the edge-to-edge browser the bar self-pads by the nav inset, so its
+     * real height is app_bar_size + inset — a hardcoded dimen would park
+     * the anchor (and every snackbar on it) inside the bar.
+     */
+    private final int mMargin;
 
     public AnchorBehavior(@Nullable Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
-        mOffset = context.getResources().getDimensionPixelOffset(R.dimen.snack_bar_anchor_margin) + context.getResources().getDimensionPixelOffset(R.dimen.app_bar_size);
+        mMargin = context.getResources().getDimensionPixelOffset(R.dimen.snack_bar_anchor_margin);
     }
 
     @Override
@@ -42,8 +48,7 @@ public class AnchorBehavior extends CoordinatorLayout.Behavior<View> {
         if (dependency instanceof BottomNavigationBar) {
             float oldTranslation = child.getTranslationY();
             float newTranslation = dependency.getTranslationY();
-            Log.d(TAG, "newTranslation: " + newTranslation);
-            child.setTranslationY(newTranslation - mOffset);
+            child.setTranslationY(newTranslation - dependency.getHeight() - mMargin);
             return oldTranslation != newTranslation;
         } else {
             return false;

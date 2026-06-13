@@ -91,7 +91,7 @@
     <string name="restore_downloads_none">У цій папці не знайдено резервної копії</string>
     <string name="restore_downloads_wrong_device">Ця резервна копія належить іншому пристрою</string>
     <string name="empty_list">Ваші завантаження відображатимуться тут.</string>
-    <string name="empty_list_bookmarks">Ще нічого не додано в закладки.</string>
+    <string name="empty_list_bookmarks">Ще нічого не додано в закладки.\n\nВідкрийте будь-яку сторінку й виберіть «Додати до закладок» у меню ⋮, щоб зберегти її тут.</string>
     <string name="empty_list_browser_history">Ваша історія браузера порожня.</string>
     <string name="empty_list_history">Ваша історія завантажень порожня.</string>
     <string name="empty_list_query">Нічого не знайдено</string>
@@ -317,16 +317,6 @@
     <string name="settings_wasm_allowlist_remove_message">Видалити %s зі списку дозволених для WebAssembly?</string>
     <string name="settings_wasm_allowlist_remove_confirm">Видалити</string>
 <string name="settings_theme_app_category">Тема застосунку</string>
-    <string name="settings_theme_home_category">Головний екран</string>
-    <string name="settings_home_cards">Картки головного екрана</string>
-    <string name="settings_home_cards_summary">Виберіть стиль карток головного екрана</string>
-    <string name="settings_home_cards_header">Одна тема змінює всі картки одночасно — оберіть бажаний вигляд.</string>
-    <string name="home_card_style_neutral">Нейтральний</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
-    <string name="home_card_style_coral">Coral</string>
-    <string name="home_card_style_preview_downloads_subtitle">150 файлів збережено · 2,4 ГБ</string>
-    <string name="home_card_style_preview_vault_subtitle">12 елементів збережено</string>
     <string name="crash_sheet_title">Виявлено збій</string>
     <string name="crash_sheet_report">Надіслати</string>
     <string name="crash_sheet_copy">Копіювати</string>
@@ -337,7 +327,6 @@
     <string name="home_trackers_subtitle">%1$s · ~%2$s заощаджено</string>
     <string name="home_trackers_subtitle_idle">Захист увімкнено</string>
     <string name="home_vault_empty_subtitle">Приватно та зашифровано</string>
-    <string name="home_card_style_preview_trackers_subtitle">12 345 · ~580 МБ заощаджено</string>
     <string name="trackers_info_count_label">трекерів та реклами заблоковано</string>
     <string name="trackers_info_saved">~%1$s трафіку заощаджено</string>
     <string name="trackers_info_categories">Трекери · Реклама · Відбитки · Cookie</string>
@@ -351,7 +340,6 @@
     <string name="trackers_info_stat_saved">Заощаджено</string>
     <string name="trackers_info_action">Налаштувати захист</string>
     <string name="trackers_info_today">%1$s заблоковано сьогодні</string>
-    <string name="home_card_style_tonal">Тональний</string>
 
 
 

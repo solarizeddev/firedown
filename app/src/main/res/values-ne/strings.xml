@@ -52,7 +52,7 @@
     <string name="edit">सम्पादन गर्नुहोस्</string>
     <string name="empty_learn_more">थप जान्नुहोस्</string>
     <string name="empty_list">तपाईंका डाउनलोडहरू यहाँ देखिनेछन्।</string>
-    <string name="empty_list_bookmarks">अझै कुनै पनि बुकमार्क गरिएको छैन।</string>
+    <string name="empty_list_bookmarks">अझै कुनै पनि बुकमार्क गरिएको छैन।\n\nकुनै पनि पृष्ठ खोल्नुहोस् र यसलाई यहाँ बचत गर्न ⋮ मेनुबाट “Bookmark page” छान्नुहोस्।</string>
     <string name="empty_list_browser_history">तपाईंको ब्राउजर इतिहास खाली छ।</string>
     <string name="empty_list_history">तपाईंको डाउनलोड इतिहास खाली छ।</string>
     <string name="empty_list_query">कुनै परिणाम फेला परेन</string>
@@ -200,16 +200,6 @@
     <string name="vault_unsupported">यो फाइल खोल्न सकिँदैन। खोल्न, यसलाई सुरक्षित फोल्डरबाट बाहिर सार्नुहोस् र पुन: प्रयास गर्नुहोस्।</string>
     <string name="home_vault_button">सुरक्षित फोल्डर</string>
 <string name="settings_theme_app_category">एप थिम</string>
-    <string name="settings_theme_home_category">गृह स्क्रिन</string>
-    <string name="settings_home_cards">गृह कार्डहरू</string>
-    <string name="settings_home_cards_summary">गृह कार्डहरूको शैली रोज्नुहोस्</string>
-    <string name="settings_home_cards_header">एउटै थिमले सबै कार्डहरू एकैसाथ परिवर्तन गर्छ — आफूले मन पराएको रूप रोज्नुहोस्।</string>
-    <string name="home_card_style_neutral">तटस्थ</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
-    <string name="home_card_style_coral">Coral</string>
-    <string name="home_card_style_preview_downloads_subtitle">150 फाइलहरू सुरक्षित · 2.4 GB</string>
-    <string name="home_card_style_preview_vault_subtitle">12 वस्तुहरू सुरक्षित</string>
     <string name="crash_sheet_title">क्र्यास पत्ता लाग्यो</string>
     <string name="crash_sheet_report">रिपोर्ट</string>
     <string name="crash_sheet_copy">प्रतिलिपि</string>
@@ -220,13 +210,11 @@
     <string name="home_trackers_subtitle">%1$s · ~%2$s बचत</string>
     <string name="home_trackers_subtitle_idle">सुरक्षा सक्रिय</string>
     <string name="home_vault_empty_subtitle">निजी र एन्क्रिप्टेड</string>
-    <string name="home_card_style_preview_trackers_subtitle">12,345 · ~580 MB बचत</string>
     <string name="trackers_info_count_label">ट्र्याकर र विज्ञापन ब्लक गरियो</string>
     <string name="trackers_info_saved">~%1$s ब्यान्डविड्थ बचत</string>
     <string name="trackers_info_categories">ट्र्याकरहरू · विज्ञापनहरू · फिंगरप्रिन्ट · कुकीहरू</string>
     <string name="trackers_info_action">सुरक्षा व्यवस्थापन गर्नुहोस्</string>
     <string name="trackers_info_today">%1$s आज ब्लक</string>
-    <string name="home_card_style_tonal">टोनल</string>
 
 
 

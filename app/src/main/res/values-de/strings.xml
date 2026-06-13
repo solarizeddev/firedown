@@ -153,7 +153,7 @@
     <string name="restore_downloads_none">Keine Sicherung in diesem Ordner gefunden</string>
     <string name="restore_downloads_wrong_device">Diese Sicherung gehört zu einem anderen Gerät</string>
     <string name="empty_list">Ihre Downloads werden hier angezeigt.</string>
-    <string name="empty_list_bookmarks">Noch nichts mit Lesezeichen versehen.</string>
+    <string name="empty_list_bookmarks">Noch nichts mit Lesezeichen versehen.\n\nÖffne eine beliebige Seite und wähle im ⋮-Menü „Lesezeichen für diese Seite hinzufügen“, um sie hier zu speichern.</string>
     <string name="empty_list_browser_history">Ihr Browserverlauf ist leer.</string>
     <string name="empty_list_history">Ihr Download-Verlauf ist leer.</string>
     <string name="empty_list_query">Keine Ergebnisse gefunden</string>
@@ -512,16 +512,6 @@
     <string name="settings_wasm_allowlist_remove_message">%s aus der WebAssembly-Erlaubnisliste entfernen?</string>
     <string name="settings_wasm_allowlist_remove_confirm">Entfernen</string>
 <string name="settings_theme_app_category">App-Design</string>
-    <string name="settings_theme_home_category">Startseite</string>
-    <string name="settings_home_cards">Startkarten</string>
-    <string name="settings_home_cards_summary">Wähle den Stil der Startkarten</string>
-    <string name="settings_home_cards_header">Ein Design ändert alle Startkarten gleichzeitig — wähle den Look, der dir gefällt.</string>
-    <string name="home_card_style_neutral">Neutral</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
-    <string name="home_card_style_coral">Coral</string>
-    <string name="home_card_style_preview_downloads_subtitle">150 Dateien gespeichert · 2,4 GB</string>
-    <string name="home_card_style_preview_vault_subtitle">12 Elemente gespeichert</string>
     <string name="crash_sheet_title">Absturz erkannt</string>
     <string name="crash_sheet_report">Melden</string>
     <string name="crash_sheet_copy">Kopieren</string>
@@ -532,7 +522,6 @@
     <string name="home_trackers_subtitle">%1$s · ~%2$s gespart</string>
     <string name="home_trackers_subtitle_idle">Schutz aktiv</string>
     <string name="home_vault_empty_subtitle">Privat und verschlüsselt</string>
-    <string name="home_card_style_preview_trackers_subtitle">12.345 · ~580 MB gespart</string>
     <string name="trackers_info_count_label">Tracker und Werbung blockiert</string>
     <string name="trackers_info_saved">~%1$s Bandbreite gespart</string>
     <string name="trackers_info_categories">Tracker · Werbung · Fingerprinting · Cookie-Banner</string>
@@ -546,7 +535,6 @@
     <string name="trackers_info_stat_saved">Daten gespart</string>
     <string name="trackers_info_action">Schutz verwalten</string>
     <string name="trackers_info_today">%1$s heute blockiert</string>
-    <string name="home_card_style_tonal">Tonal</string>
 
 
 

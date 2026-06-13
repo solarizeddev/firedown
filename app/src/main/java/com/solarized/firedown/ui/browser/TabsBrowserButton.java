@@ -87,9 +87,19 @@ public class TabsBrowserButton extends FrameLayout {
     }
 
     public void setTabsCount(int count){
-        mButton.setText(count > MAX_DISPLAYED_COUNT
+        mButton.setText(formatTabsCount(count));
+    }
+
+    /**
+     * The one place the count-to-glyph rule lives: verbatim digits up to
+     * {@link #MAX_DISPLAYED_COUNT}, the 🔥 easter egg beyond. Shared with
+     * {@link TabCountDrawable} (the tabs screen's segmented-toggle
+     * rendering of the same count) so the two can never drift.
+     */
+    public static String formatTabsCount(int count) {
+        return count > MAX_DISPLAYED_COUNT
                 ? LOTS_OF_TABS_GLYPH
-                : String.valueOf(count));
+                : String.valueOf(count);
     }
 
     public Drawable getTabsBackground() {

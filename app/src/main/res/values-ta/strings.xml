@@ -68,7 +68,7 @@
     <string name="edit">தொகு</string>
     <string name="empty_learn_more">மேலும் அறிக</string>
     <string name="empty_list">உங்கள் பதிவிறக்கங்கள் இங்கே தோன்றும்.</string>
-    <string name="empty_list_bookmarks">இதுவரை எதுவும் புக்மார்க் செய்யப்படவில்லை.</string>
+    <string name="empty_list_bookmarks">இதுவரை எதுவும் புக்மார்க் செய்யப்படவில்லை.\n\nஎந்தப் பக்கத்தையும் திறந்து, அதை இங்கே சேமிக்க ⋮ மெனுவில் “Bookmark page” என்பதைத் தேர்ந்தெடுக்கவும்.</string>
     <string name="empty_list_browser_history">உங்கள் உலாவி வரலாறு காலியாக உள்ளது.</string>
     <string name="empty_list_history">உங்கள் பதிவிறக்கங்கள் வரலாறு காலியாக உள்ளது.</string>
     <string name="empty_list_query">முடிவுகள் எதுவும் இல்லை</string>
@@ -237,16 +237,6 @@
     <string name="vault_unsupported">இந்தக் கோப்பைத் திறக்க முடியவில்லை. திறக்க, பாதுகாப்பான கோப்புறையிலிருந்து அதை நகர்த்தி மீண்டும் முயற்சிக்கவும்.</string>
     <string name="home_vault_button">பாதுகாப்பான ஃபோல்டர்</string>
 <string name="settings_theme_app_category">ஆப் தீம்</string>
-    <string name="settings_theme_home_category">முகப்புத் திரை</string>
-    <string name="settings_home_cards">முகப்பு கார்டுகள்</string>
-    <string name="settings_home_cards_summary">முகப்பு கார்டுகளுக்கான பாணியைத் தேர்ந்தெடுக்கவும்</string>
-    <string name="settings_home_cards_header">ஒரு தீம் அனைத்து கார்டுகளையும் ஒரே நேரத்தில் மாற்றுகிறது — விரும்பும் தோற்றத்தைத் தேர்ந்தெடுக்கவும்.</string>
-    <string name="home_card_style_neutral">நடுநிலை</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
-    <string name="home_card_style_coral">Coral</string>
-    <string name="home_card_style_preview_downloads_subtitle">150 கோப்புகள் சேமிக்கப்பட்டன · 2.4 GB</string>
-    <string name="home_card_style_preview_vault_subtitle">12 உருப்படிகள் சேமிக்கப்பட்டன</string>
     <string name="crash_sheet_title">செயலிழப்பு கண்டறியப்பட்டது</string>
     <string name="crash_sheet_report">புகாரளி</string>
     <string name="crash_sheet_copy">நகலெடு</string>
@@ -257,13 +247,11 @@
     <string name="home_trackers_subtitle">%1$s · ~%2$s சேமிக்கப்பட்டது</string>
     <string name="home_trackers_subtitle_idle">பாதுகாப்பு செயலில்</string>
     <string name="home_vault_empty_subtitle">தனிப்பட்டது மற்றும் குறியாக்கப்பட்டது</string>
-    <string name="home_card_style_preview_trackers_subtitle">12,345 · ~580 MB சேமிக்கப்பட்டது</string>
     <string name="trackers_info_count_label">கண்காணிப்பாளர்கள் மற்றும் விளம்பரங்கள் தடுக்கப்பட்டன</string>
     <string name="trackers_info_saved">~%1$s அலைவரிசை சேமிக்கப்பட்டது</string>
     <string name="trackers_info_categories">கண்காணிப்பு · விளம்பரங்கள் · கைரேகை · குக்கீகள்</string>
     <string name="trackers_info_action">பாதுகாப்பை நிர்வகி</string>
     <string name="trackers_info_today">%1$s இன்று தடுக்கப்பட்டது</string>
-    <string name="home_card_style_tonal">தொனி</string>
 
 
 

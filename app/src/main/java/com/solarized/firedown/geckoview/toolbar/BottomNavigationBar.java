@@ -40,6 +40,8 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
 
     private BadgeDrawable mBadge;
 
+    private boolean mSelfPadSystemBars = true;
+
 
 
 
@@ -78,10 +80,17 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
     private void init(Context context, AttributeSet attrs, int defStyleAttr) {
 
         TypedArray array = context.obtainStyledAttributes(attrs, R.styleable.BottomNavigationBar, defStyleAttr, 0);
-        // Browser sets this true so an externally-anchored FAB can sit over the
-        // middle slot without colliding with the bookmarks/search action. Home
-        // leaves it false to show the action in the slot.
+        // Browser AND both Homes set this true so an externally-anchored hero
+        // FAB (capture on Browser, Bookmarks on Home) can sit over the middle
+        // slot without colliding with a flat action icon underneath. No current
+        // layout leaves it false; the attribute stays for any future surface
+        // that wants the in-slot action instead of a FAB.
         boolean hideMiddleSlot = array.getBoolean(R.styleable.BottomNavigationBar_hideMiddleSlot, false);
+        // Default TRUE: Home/incognito Home self-pad the nav inset so the bar
+        // owns the nav strip. The browser sets it FALSE — its framed root
+        // reserves the strip with all-sides padding, so a self-pad there
+        // would double-inset (see the styleable doc).
+        mSelfPadSystemBars = array.getBoolean(R.styleable.BottomNavigationBar_selfPadSystemBars, true);
         array.recycle();
 
         LayoutInflater.from(context).inflate(R.layout.bottom_bar, this, true);
@@ -116,24 +125,33 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
             }
         });
 
-        applyWindowInsets();
-
+        // Self-pad the nav inset UNLESS the host opted out (the browser's
+        // framed root reserves the strip instead — see selfPadSystemBars).
+        if (mSelfPadSystemBars) {
+            applyWindowInsets();
+        }
     }
 
 
     public void updateTheme(Activity activity, boolean incognito) {
         Context context = getContext();
 
-        int surfaceColor = IncognitoColors.getSurface(activity, incognito);
+        // surfaceContainer, NOT surface — the same tonal tone the tabs
+        // screen's action bar uses (TabsHolderFragment), so the bar reads
+        // as a bar instead of dissolving into the dark window background,
+        // and the docked hero FAB visibly seats INTO it on every screen.
+        int surfaceColor = IncognitoColors.getSurfaceContainer(activity, incognito);
         int iconColor = IncognitoColors.getOnSurface(activity, incognito);
 
         ColorStateList iconTint = ColorStateList.valueOf(iconColor);
 
-        // Bar background — set on the LinearLayout child
-        ViewGroup bar = (ViewGroup) getChildAt(0);
-        if (bar != null) {
-            bar.setBackgroundColor(surfaceColor);
-        }
+        // Background on THIS view (the FrameLayout), not the LinearLayout
+        // child — paints the whole bar in one tone INCLUDING the nav-inset
+        // self-pad strip when present (Home), so the gesture area matches
+        // the bar; a child-only background would leave that strip a
+        // two-tone seam. (The browser opts out of the self-pad, so there's
+        // no strip there, but painting the outer view is correct either way.)
+        setBackgroundColor(surfaceColor);
 
         // Tint each icon button
         View newTabBtn = findViewById(R.id.new_tab_button);
@@ -145,6 +163,9 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
         // just URLs the user explicitly saved, so it doesn't leak
         // any incognito-session browsing state. The id stays
         // 'search_button' since it's the slot id, not the action.
+        // Every current layout hides this slot under a hero FAB
+        // (hideMiddleSlot), so the glyph/tint below is dormant —
+        // kept for any future layout that shows the slot.
         AppCompatImageButton searchBtn = findViewById(R.id.search_button);
         if (searchBtn != null) {
             searchBtn.setImageResource(R.drawable.ic_bookmark_border_24);
@@ -186,13 +207,11 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
         ViewCompat.setOnApplyWindowInsetsListener(this, (v, windowInsets) -> {
             Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars() |
                     WindowInsetsCompat.Type.displayCutout());
-            // Apply the insets as padding to the view. Here, set all the dimensions
-            // as appropriate to your layout. You can also update the view's margin if
-            // more appropriate.
+            // Self-pad the bottom (nav) inset so the bar's background owns
+            // the nav strip; l/r for cutouts. Consume so the inset doesn't
+            // also reach a descendant. (Only registered when the host did
+            // NOT opt out via selfPadSystemBars — i.e. Home, not browser.)
             v.setPadding(insets.left, 0, insets.right, insets.bottom);
-
-            // Return CONSUMED if you don't want the window insets to keep passing down
-            // to descendant views.
             return WindowInsetsCompat.CONSUMED;
         });
     }

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Cloud 4th card — A/B (gold vs ghost-state) across the 3 styles</title>
+<style>
+  :root{
+    --surface:#131315; --card:#343537; --chipWell:#292A2C;
+    --onSurface:#E4E2E5; --onSurfaceVar:#C5C6CD;
+    --coral:#F66A66; --onCoral:#0F0000;
+    --rasp:#C8417B;  --onRasp:#FFFFFF;
+    --peach:#FAB186; --onPeach:#532606;
+    --gold:#E7C06A;  --onGold:#3A2A00;
+  }
+  *{box-sizing:border-box;}
+  body{background:#1b1b1d;color:#eee;font-family:Roboto,system-ui,sans-serif;margin:0;padding:26px;}
+  h1{font-size:18px;margin:0 0 2px;}
+  .sub{color:#9a9a9e;font-size:13px;margin:0 0 18px;}
+  h2{font-size:15px;margin:26px 0 4px;}
+  .h2sub{color:#9a9a9e;font-size:12.5px;margin:0 0 12px;max-width:760px;line-height:1.5;}
+  .row{display:flex;gap:22px;flex-wrap:wrap;}
+  .col{width:260px;}
+  .label{font-size:12.5px;font-weight:600;color:#cfcfd3;margin:0 0 7px;}
+  .phone{background:var(--surface);border-radius:20px;padding:9px 9px 18px;box-shadow:0 8px 28px rgba(0,0,0,.45);}
+  .pill{height:40px;border-radius:20px;background:var(--card);display:flex;align-items:center;gap:8px;padding:0 13px;color:var(--onSurfaceVar);font-size:12px;margin-bottom:9px;}
+  .card{border-radius:11px;margin-bottom:8px;display:flex;align-items:center;gap:11px;padding:10px 11px;}
+  .chip{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
+  .t b{font-size:12.5px;font-weight:500;display:block;line-height:1.2;}
+  .t span{font-size:10.5px;opacity:.8;}
+  .card.fill{background:var(--card);} .card.fill .t b,.card.fill .t span{color:var(--onSurface);}
+  .card.fill .chip.grey{background:var(--chipWell);color:var(--onSurfaceVar);}
+  /* ghost card: dashed outline, transparent fill */
+  .card.ghost{background:transparent;border:1.5px dashed #4a4a4e;}
+  .card.ghost .t b{color:var(--onSurfaceVar);} .card.ghost .t span{color:#7d7d82;}
+  .card.ghost .chip{background:transparent;border:1.5px dashed #4a4a4e;color:var(--onSurfaceVar);}
+  .connect{margin-left:auto;font-size:10.5px;color:var(--coral);font-weight:600;
+           border:1px solid var(--coral);border-radius:20px;padding:3px 10px;}
+  .note{margin-top:10px;max-width:780px;background:#242427;border-radius:10px;padding:12px 14px;font-size:12.5px;line-height:1.55;color:#ccc;}
+  .verdict{margin-top:22px;max-width:780px;background:#2b2620;border:1px solid #4a3f2a;border-radius:10px;padding:13px 15px;font-size:13px;line-height:1.6;color:#e8dcc4;}
+</style>
+</head>
+<body>
+  <h1>Cloud — the 4th card, two ways</h1>
+  <p class="sub">Dark theme, real tokens. Both avoid adding a foreign blue. Shown across all three surviving styles.</p>
+
+  <!-- OPTION A : GOLD -->
+  <h2>Option A — warm gold accent</h2>
+  <p class="h2sub">Cloud joins the brand family as a 4th hue (gold <code style="color:#E7C06A">#E7C06A</code>),
+     "premium" tier. Stays warm, so no clash. Weakness: peach + gold are neighbours — three of four cards now sit in the orange family, only raspberry stands apart, so it can read a touch monotonous and Cloud isn't strongly distinct.</p>
+  <div class="row">
+    <div class="col"><p class="label">Neutral</p>
+      <div class="phone"><div class="pill">⌕ Search</div>
+        <div class="card fill"><div class="chip grey">⬇</div><div class="t"><b>Downloads</b><span>97 files · 8.2 GB</span></div></div>
+        <div class="card fill"><div class="chip grey">🔒</div><div class="t"><b>Safe Folder</b><span>14 items</span></div></div>
+        <div class="card fill"><div class="chip grey">🛡</div><div class="t"><b>Trackers blocked</b><span>9,928</span></div></div>
+        <div class="card fill"><div class="chip grey">☁</div><div class="t"><b>Cloud</b><span>Back up &amp; sync</span></div></div>
+      </div></div>
+    <div class="col"><p class="label">Tonal (default)</p>
+      <div class="phone"><div class="pill">⌕ Search</div>
+        <div class="card fill"><div class="chip" style="background:var(--coral);color:var(--onCoral)">⬇</div><div class="t"><b>Downloads</b><span>97 files · 8.2 GB</span></div></div>
+        <div class="card fill"><div class="chip" style="background:var(--rasp);color:var(--onRasp)">🔒</div><div class="t"><b>Safe Folder</b><span>14 items</span></div></div>
+        <div class="card fill"><div class="chip" style="background:var(--peach);color:var(--onPeach)">🛡</div><div class="t"><b>Trackers blocked</b><span>9,928</span></div></div>
+        <div class="card fill"><div class="chip" style="background:var(--gold);color:var(--onGold)">☁</div><div class="t"><b>Cloud</b><span>Back up &amp; sync</span></div></div>
+      </div></div>
+    <div class="col"><p class="label">Coral</p>
+      <div class="phone"><div class="pill">⌕ Search</div>
+        <div class="card" style="background:var(--coral)"><div class="chip" style="color:var(--onCoral)">⬇</div><div class="t" style="color:var(--onCoral)"><b>Downloads</b><span>97 files</span></div></div>
+        <div class="card" style="background:var(--rasp)"><div class="chip" style="color:var(--onRasp)">🔒</div><div class="t" style="color:var(--onRasp)"><b>Safe Folder</b><span>14 items</span></div></div>
+        <div class="card" style="background:var(--peach)"><div class="chip" style="color:var(--onPeach)">🛡</div><div class="t" style="color:var(--onPeach)"><b>Trackers</b><span>9,928</span></div></div>
+        <div class="card" style="background:var(--gold)"><div class="chip" style="color:var(--onGold)">☁</div><div class="t" style="color:var(--onGold)"><b>Cloud</b><span>Back up</span></div></div>
+      </div></div>
+  </div>
+
+  <!-- OPTION B : GHOST / STATE -->
+  <h2>Option B — ghost card / connect-state (recommended)</h2>
+  <p class="h2sub">Cloud isn't a peer feature yet — it's an <b>upgrade you turn on</b>. So it gets a distinct STATE, not a 4th colour:
+     a dashed ghost card with a "Connect" affordance while OFF. No new hue in any style. When connected it lights up (see far right).</p>
+  <div class="row">
+    <div class="col"><p class="label">Neutral · off</p>
+      <div class="phone"><div class="pill">⌕ Search</div>
+        <div class="card fill"><div class="chip grey">⬇</div><div class="t"><b>Downloads</b><span>97 files · 8.2 GB</span></div></div>
+        <div class="card fill"><div class="chip grey">🔒</div><div class="t"><b>Safe Folder</b><span>14 items</span></div></div>
+        <div class="card fill"><div class="chip grey">🛡</div><div class="t"><b>Trackers blocked</b><span>9,928</span></div></div>
+        <div class="card ghost"><div class="chip">☁</div><div class="t"><b>Cloud</b><span>Not connected</span></div><span class="connect" style="color:var(--onSurfaceVar);border-color:#4a4a4e">Connect</span></div>
+      </div></div>
+    <div class="col"><p class="label">Tonal (default) · off</p>
+      <div class="phone"><div class="pill">⌕ Search</div>
+        <div class="card fill"><div class="chip" style="background:var(--coral);color:var(--onCoral)">⬇</div><div class="t"><b>Downloads</b><span>97 files · 8.2 GB</span></div></div>
+        <div class="card fill"><div class="chip" style="background:var(--rasp);color:var(--onRasp)">🔒</div><div class="t"><b>Safe Folder</b><span>14 items</span></div></div>
+        <div class="card fill"><div class="chip" style="background:var(--peach);color:var(--onPeach)">🛡</div><div class="t"><b>Trackers blocked</b><span>9,928</span></div></div>
+        <div class="card ghost"><div class="chip">☁</div><div class="t"><b>Cloud</b><span>Not connected</span></div><span class="connect">Connect</span></div>
+      </div></div>
+    <div class="col"><p class="label">Tonal · CONNECTED</p>
+      <div class="phone"><div class="pill">⌕ Search</div>
+        <div class="card fill"><div class="chip" style="background:var(--coral);color:var(--onCoral)">⬇</div><div class="t"><b>Downloads</b><span>97 files · 8.2 GB</span></div></div>
+        <div class="card fill"><div class="chip" style="background:var(--rasp);color:var(--onRasp)">🔒</div><div class="t"><b>Safe Folder</b><span>14 items</span></div></div>
+        <div class="card fill"><div class="chip" style="background:var(--peach);color:var(--onPeach)">🛡</div><div class="t"><b>Trackers blocked</b><span>9,928</span></div></div>
+        <div class="card fill"><div class="chip" style="background:var(--coral);color:var(--onCoral)">☁</div><div class="t"><b>Cloud</b><span>Synced · 2 min ago</span></div></div>
+      </div></div>
+  </div>
+  <div class="note">
+    Why ghost wins per style — <b>Coral:</b> the one non-filled card instantly reads "not active yet", intentional rather than foreign (the failure mode of a blue full card). <b>Tonal:</b> ghost vs three brand chips = "available, not enabled". <b>Neutral:</b> already greyscale, fits free. And the payoff is product, not just visual: a quiet ghost card is an <i>invitation</i>; a loud always-on cloud card is nagware. On connect it adopts the brand coral as its "active/premium" state — colour becomes a reward.
+  </div>
+
+  <div class="verdict">
+    <b>My pick: Option B.</b> It solves the 4th-colour problem in all three styles at once, it's honest about Cloud being an upsell (off for most users), and it gives you a built-in "win" moment when they connect. Option A is the safe fallback if you'd rather Cloud always look like a first-class peer from day one — at the cost of a slightly monotonous warm wall. Either way: <b>nothing to build now</b> — Cloud isn't implemented. This just locks the direction.
+  </div>
+</body>
+</html>

@@ -170,7 +170,10 @@ public class WebBookmarkFragment extends BaseFocusFragment implements OnItemClic
                 if(mActionModeEnabled){
                     menuInflater.inflate(R.menu.menu_action, menu);
                 }else{
-                    menuInflater.inflate(R.menu.menu_web_options, menu);
+                    // Bookmarks-specific menu (search + sort + delete).
+                    // NOT menu_web_options — that one is shared with
+                    // WebHistoryFragment, which has no sort toggle.
+                    menuInflater.inflate(R.menu.menu_web_bookmark_options, menu);
                     mSearchItem = menu.findItem(R.id.action_search);
                     mSearchView = (SearchView) mSearchItem.getActionView();
                     if (mSearchView != null) {
@@ -182,7 +185,18 @@ public class WebBookmarkFragment extends BaseFocusFragment implements OnItemClic
             @Override
             public boolean onMenuItemSelected(@NonNull MenuItem menuItem) {
                 int id = menuItem.getItemId();
-                if (id == R.id.action_delete) {
+                if (id == R.id.action_sort) {
+                    // Recent ↔ A–Z toggle for the unfiltered list
+                    // (search results stay recency-ordered; flipping
+                    // mid-search just persists the mode and applies
+                    // once the query clears). Scroll-to-top so the new
+                    // order is visible from its head, matching the
+                    // query-dispatch pattern.
+                    mWebBookmarkViewModel.setSortAlphabetical(
+                            !mWebBookmarkViewModel.isSortAlphabetical());
+                    mPendingScrollToTop = true;
+                    return true;
+                } else if (id == R.id.action_delete) {
                     if (mActionModeEnabled) {
                         HashSet<Integer> selected = mAdapter.getSelected();
                         for (int position : selected) {

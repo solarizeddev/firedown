@@ -55,7 +55,7 @@
     <string name="edit">Rediger</string>
     <string name="empty_learn_more">Finn ut mer</string>
     <string name="empty_list">Nedlastingene dine vises her.</string>
-    <string name="empty_list_bookmarks">Ingenting er bokmerket ennå.</string>
+    <string name="empty_list_bookmarks">Ingenting er bokmerket ennå.\n\nÅpne en side og velg “Bokmerk side” i ⋮-menyen for å lagre den her.</string>
     <string name="empty_list_browser_history">Nettleserloggen din er tom.</string>
     <string name="empty_list_history">Nedlastingsloggen din er tom.</string>
     <string name="empty_list_query">Ingen resultater</string>
@@ -233,16 +233,6 @@
     <string name="incognito_fact_downloads_title">Nedlastinger forblir private</string>
     <string name="incognito_fact_downloads_sub">Lagres i din Sikre mappe, kun synlige i Firedown.</string>
 <string name="settings_theme_app_category">Apptema</string>
-    <string name="settings_theme_home_category">Startside</string>
-    <string name="settings_home_cards">Startkort</string>
-    <string name="settings_home_cards_summary">Velg stil for startkortene</string>
-    <string name="settings_home_cards_header">Ett tema endrer alle kortene samtidig — velg utseendet du liker.</string>
-    <string name="home_card_style_neutral">Nøytral</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
-    <string name="home_card_style_coral">Coral</string>
-    <string name="home_card_style_preview_downloads_subtitle">150 filer lagret · 2,4 GB</string>
-    <string name="home_card_style_preview_vault_subtitle">12 elementer lagret</string>
     <string name="crash_sheet_title">Krasj oppdaget</string>
     <string name="crash_sheet_report">Rapporter</string>
     <string name="crash_sheet_copy">Kopier</string>
@@ -253,13 +243,11 @@
     <string name="home_trackers_subtitle">%1$s · ~%2$s spart</string>
     <string name="home_trackers_subtitle_idle">Beskyttelse aktiv</string>
     <string name="home_vault_empty_subtitle">Privat og kryptert</string>
-    <string name="home_card_style_preview_trackers_subtitle">12 345 · ~580 MB spart</string>
     <string name="trackers_info_count_label">sporere og annonser blokkert</string>
     <string name="trackers_info_saved">~%1$s båndbredde spart</string>
     <string name="trackers_info_categories">Sporere · Annonser · Fingeravtrykk · Informasjonskapsler</string>
     <string name="trackers_info_action">Administrer beskyttelse</string>
     <string name="trackers_info_today">%1$s blokkert i dag</string>
-    <string name="home_card_style_tonal">Tonal</string>
 
 
 

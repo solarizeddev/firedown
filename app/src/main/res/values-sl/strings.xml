@@ -81,7 +81,7 @@
     <string name="edit">Uredi</string>
     <string name="empty_learn_more">Več o tem</string>
     <string name="empty_list">Vaši prenosi bodo prikazani tukaj.</string>
-    <string name="empty_list_bookmarks">Nič še ni dodano med zaznamke.</string>
+    <string name="empty_list_bookmarks">Nič še ni dodano med zaznamke.\n\nOdprite katero koli stran in v meniju ⋮ izberite »Dodaj stran med zaznamke«, da jo shranite sem.</string>
     <string name="empty_list_browser_history">Vaša zgodovina brskalnika je prazna.</string>
     <string name="empty_list_history">Vaša zgodovina prenosov je prazna.</string>
     <string name="empty_list_query">Ni zadetkov</string>
@@ -267,16 +267,6 @@
     <string name="bookmark_name">Ime</string>
     <string name="home_vault_button">Varna mapa</string>
 <string name="settings_theme_app_category">Tema aplikacije</string>
-    <string name="settings_theme_home_category">Začetni zaslon</string>
-    <string name="settings_home_cards">Kartice začetnega zaslona</string>
-    <string name="settings_home_cards_summary">Izberite slog kartic začetnega zaslona</string>
-    <string name="settings_home_cards_header">Ena tema spremeni vse kartice hkrati — izberite videz, ki vam je všeč.</string>
-    <string name="home_card_style_neutral">Nevtralno</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
-    <string name="home_card_style_coral">Coral</string>
-    <string name="home_card_style_preview_downloads_subtitle">150 datotek shranjenih · 2,4 GB</string>
-    <string name="home_card_style_preview_vault_subtitle">12 elementov shranjenih</string>
     <string name="crash_sheet_title">Zaznana sesutje</string>
     <string name="crash_sheet_report">Pošlji</string>
     <string name="crash_sheet_copy">Kopiraj</string>
@@ -287,7 +277,6 @@
     <string name="home_trackers_subtitle">%1$s · ~%2$s prihranjenih</string>
     <string name="home_trackers_subtitle_idle">Zaščita aktivna</string>
     <string name="home_vault_empty_subtitle">Zasebno in šifrirano</string>
-    <string name="home_card_style_preview_trackers_subtitle">12.345 · ~580 MB prihranjenih</string>
     <string name="trackers_info_count_label">sledilniki in oglasi blokirani</string>
     <string name="trackers_info_saved">~%1$s pasovne širine prihranjene</string>
     <string name="trackers_info_categories">Sledilniki · Oglasi · Prstni odtisi · Piškotki</string>
@@ -301,7 +290,6 @@
     <string name="trackers_info_stat_saved">Prihranjeni podatki</string>
     <string name="trackers_info_action">Upravljanje zaščite</string>
     <string name="trackers_info_today">%1$s blokiranih danes</string>
-    <string name="home_card_style_tonal">Tonski</string>
 
 
 

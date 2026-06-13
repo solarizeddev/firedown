@@ -120,7 +120,7 @@
             android:padding="6dp"
             android:scaleType="centerInside"
             android:src="@drawable/ic_view_list_24"
-            android:tint="?attr/colorOnSurface" />
+            app:tint="?attr/colorOnSurface" />
 
         <Space
             android:layout_width="0dp"
@@ -147,7 +147,7 @@
             android:padding="6dp"
             android:scaleType="centerInside"
             android:src="@drawable/ic_baseline_more_vert_24"
-            android:tint="?attr/colorOnSurface" />
+            app:tint="?attr/colorOnSurface" />
 
     </LinearLayout>
 

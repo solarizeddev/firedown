@@ -3,6 +3,8 @@ package com.solarized.firedown.ui.adapters;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -63,7 +65,9 @@ public class BrowserTabsAdapter extends GridListBaseAdapter<GeckoStateEntity, Re
     private final int mColorNormal;
     private final int mColorIncognitoNormal;
     private final int mColorSelected;
-    private final int mColorOnPrimaryContainer;
+    private final int mColorSelectedWash;
+    private final int mColorSelectedWashIncognito;
+    private final int mSelectedStrokePx;
     private final RoundedCorners mRoundedCorners;
     private final RequestOptions mRequestOptions;
     /** Set of session IDs that currently have active media playback. */
@@ -84,7 +88,16 @@ public class BrowserTabsAdapter extends GridListBaseAdapter<GeckoStateEntity, Re
         mColorNormal = MaterialColors.getColor(mContext,
                 com.google.android.material.R.attr.colorSurfaceContainer, 0);
         mColorSelected = ContextCompat.getColor(mContext, R.color.md_theme_primaryContainer);
-        mColorOnPrimaryContainer = IncognitoColors.getOnPrimaryContainer(mContext, true);
+        // Active-tab chrome = coral STROKE + faint coral wash, NOT the old
+        // full-primaryContainer card fill. On-device review: the full wash
+        // turned the current tab into the loudest object on the screen and
+        // fought the coral FAB (worst on the purple incognito grid, where
+        // coral-on-purple vibrates). Selection should be findable, not
+        // loud — same SelectionStyling 20% wash the action-mode rows use,
+        // composed over each mode's own resting card tone.
+        mColorSelectedWash = SelectionStyling.washOver(mColorNormal, mColorSelected);
+        mColorSelectedWashIncognito = SelectionStyling.washOver(mColorIncognitoNormal, mColorSelected);
+        mSelectedStrokePx = Math.round(2f * mContext.getResources().getDisplayMetrics().density);
         int mRoundedPixels = mContext.getResources().getDimensionPixelOffset(R.dimen.icon_rounded);
         mRoundedCorners = new RoundedCorners(mRoundedPixels);
         mRequestOptions = RequestOptions.bitmapTransform(mRoundedCorners);
@@ -239,17 +252,7 @@ public class BrowserTabsAdapter extends GridListBaseAdapter<GeckoStateEntity, Re
             }
             if (bundle.containsKey(GeckoStateDiffCallback.PAYLOAD_ACTIVE)) {
                 boolean active = bundle.getBoolean(GeckoStateDiffCallback.PAYLOAD_ACTIVE);
-                int bgColor;
-                if (active) {
-                    bgColor = mColorSelected;
-                } else {
-                    bgColor = entity.isIncognito() ? mColorIncognitoNormal : mColorNormal;
-                }
-                holder.item.setCardBackgroundColor(bgColor);
-                int onSurfaceColor = IncognitoColors.getOnSurface(mContext, incognito);
-                holder.file_name.setTextColor(active ? mColorOnPrimaryContainer : onSurfaceColor);
-                holder.file_url.setTextColor(active ? mColorOnPrimaryContainer : onSurfaceColor);
-                holder.close.setColorFilter(active ? mColorOnPrimaryContainer : onSurfaceColor);
+                applySelectionChrome(holder, active, incognito);
             }
             if (bundle.containsKey(GeckoStateDiffCallback.PAYLOAD_TITLE)) {
                 String title = bundle.getString(GeckoStateDiffCallback.PAYLOAD_TITLE);
@@ -311,31 +314,33 @@ public class BrowserTabsAdapter extends GridListBaseAdapter<GeckoStateEntity, Re
 
         Log.d(TAG, "TabsFragment adapter: " + geckoStateEntity.getId() + " active: " + geckoStateEntity.isActive());
 
-        int bgColor;
-        if (active) {
-            bgColor = mColorSelected;
-        } else {
-            bgColor = geckoStateEntity.isIncognito() ? mColorIncognitoNormal : mColorNormal;
-        }
-
-        int onSurfaceColor = IncognitoColors.getOnSurface(mContext, incognito);
-
-        holder.item.setCardBackgroundColor(bgColor);
-
-        holder.file_name.setTextColor(active
-                ? mColorOnPrimaryContainer
-                : onSurfaceColor);
-
-        holder.file_url.setTextColor(active
-                ? mColorOnPrimaryContainer
-                : onSurfaceColor);
-
-        holder.close.setColorFilter(active
-                ? mColorOnPrimaryContainer
-                : onSurfaceColor);
+        applySelectionChrome(holder, active, incognito);
 
         // Media indicator
         bindMediaIndicator(holder, geckoStateEntity);
+    }
+
+    /**
+     * Active-tab chrome: a 2dp coral stroke + the 20% coral wash over the
+     * mode's resting card tone; inactive = resting tone, no stroke. Text
+     * and the close glyph stay onSurface in BOTH states — with the faint
+     * wash the surface is still effectively the mode's surface, and the
+     * stroke alone carries "you are here" (the old full-coral fill needed
+     * onPrimaryContainer text, which is what made it shout). Shared by the
+     * full bind and the PAYLOAD_ACTIVE partial bind so the two can't drift.
+     */
+    private void applySelectionChrome(TabEntityViewHolderPhone holder,
+                                      boolean active, boolean incognito) {
+        int restingColor = incognito ? mColorIncognitoNormal : mColorNormal;
+        int washColor = incognito ? mColorSelectedWashIncognito : mColorSelectedWash;
+        holder.item.setCardBackgroundColor(active ? washColor : restingColor);
+        holder.item.setStrokeColor(active ? mColorSelected : Color.TRANSPARENT);
+        holder.item.setStrokeWidth(active ? mSelectedStrokePx : 0);
+
+        int onSurfaceColor = IncognitoColors.getOnSurface(mContext, incognito);
+        holder.file_name.setTextColor(onSurfaceColor);
+        holder.file_url.setTextColor(onSurfaceColor);
+        holder.close.setColorFilter(onSurfaceColor);
     }
 
 
@@ -403,10 +408,13 @@ public class BrowserTabsAdapter extends GridListBaseAdapter<GeckoStateEntity, Re
         if (TextUtils.isEmpty(thumb)) {
             Glide.with(holder.itemView).clear(holder.file_image);
             if (!entity.isActive()) {
-                Glide.with(holder.itemView)
-                        .load(R.color.md_theme_onSurfaceVariant)
-                        .dontAnimate()
-                        .into(holder.file_image);
+                // No-thumbnail placeholder = the mode's SURFACE tone — an
+                // "empty page" recessed into the card. The old
+                // md_theme_onSurfaceVariant fill resolved to #C5C6CD in
+                // dark: a near-white plate that glared out of the dark
+                // grid (on-device review, the 'white slabs').
+                holder.file_image.setImageDrawable(new ColorDrawable(
+                        IncognitoColors.getSurface(mContext, entity.isIncognito())));
             } else {
                 holder.file_image.setImageDrawable(null);
             }

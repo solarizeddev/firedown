@@ -82,7 +82,7 @@
     <string name="edit">לַעֲרוֹך</string>
     <string name="empty_learn_more">מידע נוסף</string>
     <string name="empty_list">ההורדות שלך יופיעו כאן.</string>
-    <string name="empty_list_bookmarks">שום דבר עדיין לא מסומן.</string>
+    <string name="empty_list_bookmarks">שום דבר עדיין לא מסומן.\n\nפתחו כל דף ובחרו “הוספת העמוד לסימניות” מתפריט ⋮ כדי לשמור אותו כאן.</string>
     <string name="empty_list_browser_history">היסטוריית הדפדפן שלך ריקה.</string>
     <string name="empty_list_history">היסטוריית ההורדות שלך ריקה.</string>
     <string name="empty_list_query">לא נמצאו תוצאות</string>
@@ -287,16 +287,6 @@
     <string name="settings_webrtc_enabled_summary">מאפשר שיחות וידאו וקול בזמן אמת. השבתה מקטינה את שטח הבדיקה של הרשת.</string>
     <string name="incognito_home_warning">גלישה פרטית לא מסתירה את הפעילות שלך מהרשת שלך, מהמעסיק שלך או מהאתרים שאתה מבקר בהם.</string>
 <string name="settings_theme_app_category">ערכת נושא של האפליקציה</string>
-    <string name="settings_theme_home_category">מסך הבית</string>
-    <string name="settings_home_cards">כרטיסי מסך הבית</string>
-    <string name="settings_home_cards_summary">בחר את הסגנון של כרטיסי מסך הבית</string>
-    <string name="settings_home_cards_header">ערכה אחת משנה את כל הכרטיסים יחד — בחר את המראה שאתה אוהב.</string>
-    <string name="home_card_style_neutral">ניטרלי</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
-    <string name="home_card_style_coral">Coral</string>
-    <string name="home_card_style_preview_downloads_subtitle">150 קבצים נשמרו · 2.4 GB</string>
-    <string name="home_card_style_preview_vault_subtitle">12 פריטים נשמרו</string>
     <string name="crash_sheet_title">התגלתה קריסה</string>
     <string name="crash_sheet_report">דווח</string>
     <string name="crash_sheet_copy">העתק</string>
@@ -307,7 +297,6 @@
     <string name="home_trackers_subtitle">%1$s · ~%2$s נחסכו</string>
     <string name="home_trackers_subtitle_idle">ההגנה פעילה</string>
     <string name="home_vault_empty_subtitle">פרטי ומוצפן</string>
-    <string name="home_card_style_preview_trackers_subtitle">12,345 · ~580 MB נחסכו</string>
     <string name="trackers_info_count_label">עוקבים ופרסומות נחסמו</string>
     <string name="trackers_info_saved">~%1$s רוחב פס נחסך</string>
     <string name="trackers_info_categories">עוקבים · פרסומות · טביעת אצבע · עוגיות</string>
@@ -321,7 +310,6 @@
     <string name="trackers_info_stat_saved">נתונים שנחסכו</string>
     <string name="trackers_info_action">ניהול ההגנה</string>
     <string name="trackers_info_today">%1$s נחסמו היום</string>
-    <string name="home_card_style_tonal">טונאלי</string>
 
 
 

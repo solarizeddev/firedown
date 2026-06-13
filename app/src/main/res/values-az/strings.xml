@@ -65,7 +65,7 @@
     <string name="edit">Redaktə et</string>
     <string name="empty_learn_more">Ətraflı öyrənin</string>
     <string name="empty_list">Endirmələriniz burada görünəcək.</string>
-    <string name="empty_list_bookmarks">Hələ heç nə əlfəcin edilməyib.</string>
+    <string name="empty_list_bookmarks">Hələ heç nə əlfəcin edilməyib.\n\nİstənilən səhifəni açın və onu burada saxlamaq üçün ⋮ menyusundan “Bookmark page” seçin.</string>
     <string name="empty_list_browser_history">Brauzer tarixçəniz boşdur.</string>
     <string name="empty_list_history">Endirmə tarixçəniz boşdur.</string>
     <string name="empty_list_query">Heç bir nəticə tapılmadı</string>
@@ -232,16 +232,6 @@
     <string name="vault_unsupported">Bu faylı açmaq mümkün deyil. Açmaq üçün onu Təhlükəsiz Qovluqdan çıxarın və yenidən cəhd edin.</string>
     <string name="home_vault_button">Təhlükəsiz Qovluq</string>
 <string name="settings_theme_app_category">Tətbiq mövzusu</string>
-    <string name="settings_theme_home_category">Ana səhifə</string>
-    <string name="settings_home_cards">Ana səhifə kartları</string>
-    <string name="settings_home_cards_summary">Ana səhifə kartlarının üslubunu seçin</string>
-    <string name="settings_home_cards_header">Bir mövzu bütün kartları eyni anda dəyişir — bəyəndiyiniz görünüşü seçin.</string>
-    <string name="home_card_style_neutral">Neytral</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
-    <string name="home_card_style_coral">Coral</string>
-    <string name="home_card_style_preview_downloads_subtitle">150 fayl yadda saxlanıldı · 2,4 GB</string>
-    <string name="home_card_style_preview_vault_subtitle">12 element yadda saxlanıldı</string>
     <string name="crash_sheet_title">Çökmə aşkarlandı</string>
     <string name="crash_sheet_report">Bildir</string>
     <string name="crash_sheet_copy">Kopyala</string>
@@ -252,13 +242,11 @@
     <string name="home_trackers_subtitle">%1$s · ~%2$s qənaət edildi</string>
     <string name="home_trackers_subtitle_idle">Mühafizə aktivdir</string>
     <string name="home_vault_empty_subtitle">Şəxsi və şifrlənmiş</string>
-    <string name="home_card_style_preview_trackers_subtitle">12.345 · ~580 MB qənaət edildi</string>
     <string name="trackers_info_count_label">izləyici və reklam bloklandı</string>
     <string name="trackers_info_saved">~%1$s zolaq genişliyi qənaət edildi</string>
     <string name="trackers_info_categories">İzləyicilər · Reklamlar · Barmaq izi · Kukilər</string>
     <string name="trackers_info_action">Mühafizəni idarə et</string>
     <string name="trackers_info_today">%1$s bu gün bloklandı</string>
-    <string name="home_card_style_tonal">Tonlu</string>
 
 
 

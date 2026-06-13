@@ -72,7 +72,7 @@
     <string name="edit">సవరించు</string>
     <string name="empty_learn_more">మరింత తెలుసుకోండి</string>
     <string name="empty_list">మీ డౌన్‌లోడ్‌లు ఇక్కడ కనిపిస్తాయి.</string>
-    <string name="empty_list_bookmarks">ఇంకా ఏమీ బుక్‌మార్క్ చేయలేదు.</string>
+    <string name="empty_list_bookmarks">ఇంకా ఏమీ బుక్‌మార్క్ చేయలేదు.\n\nఏదైనా పేజీని తెరిచి, దాన్ని ఇక్కడ సేవ్ చేయడానికి ⋮ మెనూ నుండి “Bookmark page” ఎంచుకోండి.</string>
     <string name="empty_list_browser_history">మీ బ్రౌజర్ చరిత్ర ఖాళీగా ఉంది.</string>
     <string name="empty_list_history">మీ డౌన్‌లోడ్‌ల చరిత్ర ఖాళీగా ఉంది.</string>
     <string name="empty_list_query">ఎటువంటి ఫలితాలు లభించలేదు</string>
@@ -249,16 +249,6 @@
     <string name="bookmark_name">పేరు</string>
     <string name="home_vault_button">సురక్షిత ఫోల్డర్</string>
 <string name="settings_theme_app_category">యాప్ థీమ్</string>
-    <string name="settings_theme_home_category">హోమ్ స్క్రీన్</string>
-    <string name="settings_home_cards">హోమ్ కార్డ్‌లు</string>
-    <string name="settings_home_cards_summary">హోమ్ కార్డ్‌ల కోసం శైలిని ఎంచుకోండి</string>
-    <string name="settings_home_cards_header">ఒక థీమ్ అన్ని కార్డ్‌లను ఒకేసారి మారుస్తుంది — మీకు నచ్చిన రూపాన్ని ఎంచుకోండి.</string>
-    <string name="home_card_style_neutral">తటస్థం</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
-    <string name="home_card_style_coral">Coral</string>
-    <string name="home_card_style_preview_downloads_subtitle">150 ఫైళ్లు సేవ్ చేయబడ్డాయి · 2.4 GB</string>
-    <string name="home_card_style_preview_vault_subtitle">12 అంశాలు సేవ్ చేయబడ్డాయి</string>
     <string name="crash_sheet_title">క్రాష్ గుర్తించబడింది</string>
     <string name="crash_sheet_report">నివేదిక</string>
     <string name="crash_sheet_copy">కాపీ</string>
@@ -269,13 +259,11 @@
     <string name="home_trackers_subtitle">%1$s · ~%2$s ఆదా</string>
     <string name="home_trackers_subtitle_idle">రక్షణ క్రియాశీలంగా ఉంది</string>
     <string name="home_vault_empty_subtitle">ప్రైవేట్ మరియు ఎన్‌క్రిప్ట్ చేయబడింది</string>
-    <string name="home_card_style_preview_trackers_subtitle">12,345 · ~580 MB ఆదా</string>
     <string name="trackers_info_count_label">ట్రాకర్లు మరియు ప్రకటనలు బ్లాక్ చేయబడ్డాయి</string>
     <string name="trackers_info_saved">~%1$s బ్యాండ్‌విడ్త్ ఆదా</string>
     <string name="trackers_info_categories">ట్రాకర్లు · ప్రకటనలు · ఫింగర్‌ప్రింట్ · కుకీలు</string>
     <string name="trackers_info_action">రక్షణను నిర్వహించండి</string>
     <string name="trackers_info_today">%1$s ఈరోజు బ్లాక్ చేయబడింది</string>
-    <string name="home_card_style_tonal">టోనల్</string>
 
 
 

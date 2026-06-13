@@ -39,6 +39,7 @@ import com.solarized.firedown.data.models.IncognitoStateViewModel;
 import com.solarized.firedown.data.models.GeckoStateViewModel;
 import com.solarized.firedown.geckoview.GeckoState;
 import com.solarized.firedown.geckoview.GeckoToolbar;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.solarized.firedown.geckoview.toolbar.BottomNavigationBar;
 import com.solarized.firedown.manager.DownloadRequest;
 import com.solarized.firedown.phone.DownloadsActivity;
@@ -142,6 +143,40 @@ public class HomeIncognitoFragment extends BaseBrowserFragment implements
         mBottomNavigationBar = v.findViewById(R.id.bottom_app_bar);
         mBottomNavigationBar.setListener(this);
 
+        // Hero FAB in the bottom bar's cradle — same action as normal
+        // home: Bookmarks. The list is just URLs the user explicitly
+        // chose to save earlier — showing it inside an incognito
+        // session doesn't leak any private-session browsing state out,
+        // and the URL bar at the top already covers the search path.
+        // Pass the incognito flag through so the list paints in
+        // incognito tones and tapping an entry opens an incognito tab.
+        FloatingActionButton bookmarkButton = v.findViewById(R.id.bookmark_button);
+        bookmarkButton.setOnClickListener(view -> {
+            Bundle args = new Bundle();
+            args.putBoolean(Keys.IS_INCOGNITO, true);
+            NavigationUtils.navigateSafe(mNavController, R.id.action_home_incognito_to_bookmarks, args);
+        });
+
+        // Dock the FAB the TABS way — same margin recipe as HomeFragment
+        // (bar height − content row + app_bar_fab_margin = nav inset +
+        // lift); see the comment there for why anchoring fails on a
+        // static bar.
+        mBottomNavigationBar.addOnLayoutChangeListener(
+                (bar, l, t, r, b, ol, ot, or, ob) -> {
+                    int barHeight = b - t;
+                    if (barHeight <= 0) {
+                        return;
+                    }
+                    int contentRow = getResources().getDimensionPixelOffset(R.dimen.app_bar_size);
+                    int lift = getResources().getDimensionPixelOffset(R.dimen.app_bar_fab_margin);
+                    int margin = Math.max(0, barHeight - contentRow) + lift;
+                    ViewGroup.MarginLayoutParams params =
+                            (ViewGroup.MarginLayoutParams) bookmarkButton.getLayoutParams();
+                    if (params.bottomMargin != margin) {
+                        params.bottomMargin = margin;
+                        bookmarkButton.setLayoutParams(params);
+                    }
+                });
 
         mGeckoToolbar = v.findViewById(R.id.toolbar_layout);
         mGeckoToolbar.setListener(this);
@@ -283,7 +318,17 @@ public class HomeIncognitoFragment extends BaseBrowserFragment implements
         // Apply incognito theme to system bars
         applyIncognitoSystemBars();
         mBottomNavigationBar.updateTheme(mActivity,true);
-        mGeckoToolbar.updateTheme(mActivity, true);
+        // Scrim follows the bar's incognito surfaceContainer tone — see
+        // BaseFocusFragment.setNavScrimColor.
+        setNavScrimColor(IncognitoColors.getSurfaceContainer(mActivity, true));
+        // Same chrome spec as normal Home: quiet top / tonal bottom,
+        // mirrored on the window layer for Android <= 14.
+        paintSystemBars(
+                IncognitoColors.getSurface(mActivity, true),
+                IncognitoColors.getSurfaceContainer(mActivity, true));
+        // tonalHolder=false: quiet top, toolbar merges with the canvas
+        // (same as normal Home — see GeckoToolbar.updateTheme javadoc).
+        mGeckoToolbar.updateTheme(mActivity, true, false);
         mAutoCompleteView.updateTheme(mActivity, true);
         mSearchAutocompleteAdapter.setIncognito(true);
 
@@ -344,18 +389,10 @@ public class HomeIncognitoFragment extends BaseBrowserFragment implements
         } else if (id == R.id.downloads_button) {
             Intent downloadsIntent = new Intent(mActivity, VaultActivity.class);
             mStartForResult.launch(downloadsIntent);
-        } else if (id == R.id.search_button) {
-            // Same cradle action as normal home: Bookmarks. The list
-            // is just URLs the user explicitly chose to save earlier —
-            // showing it inside an incognito session doesn't leak any
-            // private-session browsing state out, and the URL bar at
-            // the top already covers the search path. Pass the
-            // incognito flag through so the list paints in incognito
-            // tones and tapping an entry opens an incognito tab.
-            Bundle args = new Bundle();
-            args.putBoolean(Keys.IS_INCOGNITO, true);
-            NavigationUtils.navigateSafe(mNavController, R.id.action_home_incognito_to_bookmarks, args);
         }
+        // No R.id.search_button branch: the middle slot is hidden
+        // (hideMiddleSlot) and never dispatches — Bookmarks is the
+        // hero FAB wired in onCreateView.
     }
 
     // ── Autocomplete callbacks ──────────────────────────────────────

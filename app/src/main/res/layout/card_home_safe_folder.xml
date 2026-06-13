@@ -1,20 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Minimalist Downloads entry card on the home page. Same shape as
-  the Safe Folder card — icon + title + 'N files saved · X.Y GB'
-  subtitle — so the home reads as a small set of equal-weight
-  destinations rather than competing surfaces. Tap routes to
-  DownloadsActivity.
+  Safe Folder entry card on the home page. Mirrors the Downloads card
+  shape (transparent background, landmark chip + title + 'N items saved'
+  subtitle) so the two read as a pair. Subtitle shows only when count > 0;
+  otherwise title-only so a vault-curious user sees the entry name without
+  a misleading '0 items'. Trailing chevron = the 'enter' affordance (the
+  cards are transparent, so the row needs an explicit tappable signal).
+  Tap → VaultActivity (the app-lock gate handles PIN / biometric).
+
+  Extracted to its own file so it's an <include> like Downloads/Trackers
+  (card_home_recent_downloads / card_home_trackers_blocked) — margins live
+  on the include tag in fragment_home.xml, this root carries none.
 -->
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/recent_downloads_card"
+    android:id="@+id/home_vault_card"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:clickable="true"
     android:focusable="true"
-    android:visibility="gone"
     app:cardBackgroundColor="@color/transparent"
     app:cardCornerRadius="12dp"
     app:cardElevation="0dp"
@@ -23,26 +28,27 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:baselineAligned="false"
         android:gravity="center_vertical"
         android:orientation="horizontal"
         android:paddingHorizontal="16dp"
         android:paddingVertical="16dp">
 
         <FrameLayout
-            android:id="@+id/recent_downloads_chip"
+            android:id="@+id/home_vault_chip"
             android:layout_width="40dp"
             android:layout_height="40dp"
-            android:background="@drawable/bg_icon_container_primary"
-            android:backgroundTint="@color/home_chip_downloads">
+            android:background="@drawable/bg_icon_container_tertiary"
+            android:backgroundTint="@color/home_chip_vault">
 
             <androidx.appcompat.widget.AppCompatImageView
-                android:id="@+id/recent_downloads_icon"
+                android:id="@+id/home_vault_icon"
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:layout_gravity="center"
                 android:contentDescription="@null"
-                android:src="@drawable/download_24"
-                app:tint="@color/home_chip_downloads_on" />
+                android:src="@drawable/ic_lock_24"
+                app:tint="@color/home_chip_vault_on" />
 
         </FrameLayout>
 
@@ -54,23 +60,17 @@
             android:orientation="vertical">
 
             <TextView
-                android:id="@+id/recent_downloads_title"
+                android:id="@+id/home_vault_title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:ellipsize="end"
                 android:maxLines="1"
-                android:text="@string/navigation_downloads"
+                android:text="@string/home_vault_button"
                 android:textAppearance="?attr/textAppearanceTitleSmall"
                 android:textColor="?attr/colorOnSurface" />
 
-            <!--
-                'N files saved · X.Y GB' subtitle. Plural quantity drives
-                the file label; size suffix is appended in HomeFragment
-                from Utils.readableFileSize (kB / MB / GB). Hidden when
-                count = 0 (matches Safe Folder behaviour).
-            -->
             <TextView
-                android:id="@+id/recent_downloads_subtitle"
+                android:id="@+id/home_vault_subtitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:ellipsize="end"
@@ -78,17 +78,15 @@
                 android:textAppearance="?attr/textAppearanceBodySmall"
                 android:textColor="?attr/colorOnSurfaceVariant"
                 android:visibility="gone"
-                tools:text="150 files saved · 2.4 GB"
+                tools:text="12 items saved"
                 tools:visibility="visible" />
 
         </LinearLayout>
 
-        <!-- Trailing chevron — the 'enter' affordance. Re-added now the
-             cards are transparent: without a tile fill the row no longer
-             reads as obviously tappable, so the chevron carries that
-             signal. -->
+        <!-- Trailing chevron — 'enter' affordance for the now-transparent
+             card (Safe Folder navigates to VaultActivity, like Downloads). -->
         <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/recent_downloads_chevron"
+            android:id="@+id/home_vault_chevron"
             android:layout_width="20dp"
             android:layout_height="20dp"
             android:layout_marginStart="8dp"

@@ -81,7 +81,7 @@
     <string name="edit">Uredi</string>
     <string name="empty_learn_more">Saznajte više</string>
     <string name="empty_list">Vaša će se preuzimanja pojaviti ovdje.</string>
-    <string name="empty_list_bookmarks">Još ništa nije označeno.</string>
+    <string name="empty_list_bookmarks">Još ništa nije označeno.\n\nOtvorite bilo koju stranicu i odaberite “Zabilježi stranicu” u izborniku ⋮ kako biste je spremili ovdje.</string>
     <string name="empty_list_browser_history">Vaša povijest preglednika je prazna.</string>
     <string name="empty_list_history">Vaša povijest preuzimanja je prazna.</string>
     <string name="empty_list_query">Nema rezultata</string>
@@ -267,16 +267,6 @@
     <string name="settings_webrtc_enabled_summary">Omogućuje video- i glasovne pozive u stvarnom vremenu. Onemogućivanje smanjuje površinu mrežnog sondiranja.</string>
     <string name="incognito_home_warning">Privatno pregledavanje ne skriva tvoju aktivnost od mreže, poslodavca ili stranica koje posjećuješ.</string>
 <string name="settings_theme_app_category">Tema aplikacije</string>
-    <string name="settings_theme_home_category">Početni zaslon</string>
-    <string name="settings_home_cards">Kartice početnog zaslona</string>
-    <string name="settings_home_cards_summary">Odaberite stil kartica početnog zaslona</string>
-    <string name="settings_home_cards_header">Jedna tema mijenja sve kartice odjednom — odaberite izgled koji vam se sviđa.</string>
-    <string name="home_card_style_neutral">Neutralno</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
-    <string name="home_card_style_coral">Coral</string>
-    <string name="home_card_style_preview_downloads_subtitle">150 datoteka spremljeno · 2,4 GB</string>
-    <string name="home_card_style_preview_vault_subtitle">12 stavki spremljeno</string>
     <string name="crash_sheet_title">Otkriveno rušenje</string>
     <string name="crash_sheet_report">Prijavi</string>
     <string name="crash_sheet_copy">Kopiraj</string>
@@ -287,7 +277,6 @@
     <string name="home_trackers_subtitle">%1$s · ~%2$s spremljeno</string>
     <string name="home_trackers_subtitle_idle">Zaštita aktivna</string>
     <string name="home_vault_empty_subtitle">Privatno i šifrirano</string>
-    <string name="home_card_style_preview_trackers_subtitle">12.345 · ~580 MB spremljeno</string>
     <string name="trackers_info_count_label">pratitelja i oglasa blokirano</string>
     <string name="trackers_info_saved">~%1$s propusnosti spremljeno</string>
     <string name="trackers_info_categories">Pratitelji · Oglasi · Otisci · Kolačići</string>
@@ -301,7 +290,6 @@
     <string name="trackers_info_stat_saved">Ušteđeni podaci</string>
     <string name="trackers_info_action">Upravljanje zaštitom</string>
     <string name="trackers_info_today">%1$s blokirano danas</string>
-    <string name="home_card_style_tonal">Tonski</string>
 
 
 

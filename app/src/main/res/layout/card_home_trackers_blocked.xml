@@ -20,7 +20,7 @@
     android:layout_height="wrap_content"
     android:clickable="true"
     android:focusable="true"
-    app:cardBackgroundColor="?attr/colorSurfaceContainerHigh"
+    app:cardBackgroundColor="@color/transparent"
     app:cardCornerRadius="12dp"
     app:cardElevation="0dp"
     app:strokeWidth="0dp">
@@ -31,13 +31,14 @@
         android:gravity="center_vertical"
         android:orientation="horizontal"
         android:paddingHorizontal="16dp"
-        android:paddingVertical="14dp">
+        android:paddingVertical="16dp">
 
         <FrameLayout
             android:id="@+id/home_trackers_chip"
             android:layout_width="40dp"
             android:layout_height="40dp"
-            android:background="@drawable/bg_icon_container_secondary">
+            android:background="@drawable/bg_icon_container_secondary"
+            android:backgroundTint="@color/home_chip_trackers">
 
             <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/home_trackers_icon"
@@ -46,7 +47,7 @@
                 android:layout_gravity="center"
                 android:contentDescription="@null"
                 android:src="@drawable/ic_shield_24"
-                app:tint="?attr/colorOnSecondaryContainer" />
+                app:tint="@color/home_chip_trackers_on" />
 
         </FrameLayout>
 
@@ -78,6 +79,12 @@
                 tools:text="12,345 since install" />
 
         </LinearLayout>
+
+        <!-- NO trailing affordance, deliberately: the enter-chevron on
+             Downloads/Safe Folder means 'navigates to a screen'. Trackers
+             opens a bottom sheet IN PLACE (TrackersInfoSheet), so the
+             absence of a chevron is the signal it's a different kind of
+             row — adding an info glyph just over-decorates it. -->
 
     </LinearLayout>
 

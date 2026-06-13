@@ -1,5 +1,6 @@
 package com.solarized.firedown.data.models;
 
+import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.TextUtils;
@@ -34,11 +35,33 @@ public class WebBookmarkViewModel extends ViewModel {
 
     private final WebBookmarkDataRepository mRepository;
 
+    private final SharedPreferences mSharedPreferences;
+
     /** Raw query stream, updated on every keystroke. */
     private final MutableLiveData<String> mRawQuery = new MutableLiveData<>("");
 
-    /** Debounced query stream, drives the Pager. */
+    /** Debounced query stream, observed by the fragment for scroll-to-top. */
     private final MutableLiveData<String> mFilterData = new MutableLiveData<>("");
+
+    /**
+     * Immutable (query, sort) pair driving the Pager — ONE stream so
+     * the fragment's single getWebBookmark() observe keeps working and
+     * re-submits on either a dispatched search query or a sort flip.
+     */
+    private static final class ListSpec {
+        final String query;
+        final boolean alphabetical;
+
+        ListSpec(String query, boolean alphabetical) {
+            this.query = query;
+            this.alphabetical = alphabetical;
+        }
+    }
+
+    private final MutableLiveData<ListSpec> mListSpec;
+
+    /** Current sort mode; persisted so it survives navigation/restart. */
+    private boolean mSortAlphabetical;
 
     private final Handler mDebounceHandler = new Handler(Looper.getMainLooper());
     private Runnable mPendingDebounce;
@@ -47,24 +70,47 @@ public class WebBookmarkViewModel extends ViewModel {
     private final LiveData<PagingData<WebBookmarkEntity>> mData;
 
     @Inject
-    public WebBookmarkViewModel(WebBookmarkDataRepository repository) {
+    public WebBookmarkViewModel(WebBookmarkDataRepository repository, SharedPreferences sharedPreferences) {
         this.mRepository = repository;
+        this.mSharedPreferences = sharedPreferences;
+        mSortAlphabetical = sharedPreferences.getBoolean(Preferences.SORT_BOOKMARKS_ALPHA, false);
+        mListSpec = new MutableLiveData<>(new ListSpec("", mSortAlphabetical));
         CoroutineScope viewModelScope = ViewModelKt.getViewModelScope(this);
         PagingConfig pagingConfig = new PagingConfig(Preferences.LIST_LIMIT);
 
-        // switchMap produces raw (uncached) PagingData on each filter change.
-        // cachedIn is applied ONCE to the final stream so it survives config changes.
-        LiveData<PagingData<WebBookmarkEntity>> rawData = Transformations.switchMap(mFilterData, input -> {
-            if (TextUtils.isEmpty(input)) {
-                Pager<Integer, WebBookmarkEntity> pager = new Pager<>(pagingConfig, mRepository::get);
+        // switchMap produces raw (uncached) PagingData on each spec change
+        // (debounced query dispatch or sort flip). cachedIn is applied ONCE
+        // to the final stream so it survives config changes. The sort
+        // governs only the unfiltered list; search stays recency-ordered.
+        LiveData<PagingData<WebBookmarkEntity>> rawData = Transformations.switchMap(mListSpec, spec -> {
+            if (TextUtils.isEmpty(spec.query)) {
+                Pager<Integer, WebBookmarkEntity> pager = new Pager<>(pagingConfig,
+                        spec.alphabetical ? mRepository::getAlphabetical : mRepository::get);
                 return PagingLiveData.getLiveData(pager);
             } else {
                 Pager<Integer, WebBookmarkEntity> searchPager = new Pager<>(pagingConfig,
-                        () -> mRepository.getSearch("%" + input + "%"));
+                        () -> mRepository.getSearch("%" + spec.query + "%"));
                 return PagingLiveData.getLiveData(searchPager);
             }
         });
         mData = PagingLiveData.cachedIn(rawData, viewModelScope);
+    }
+
+    public boolean isSortAlphabetical() {
+        return mSortAlphabetical;
+    }
+
+    /**
+     * Flips/sets the unfiltered list's sort order, persists the choice,
+     * and re-emits the paging stream (no-op when the mode is unchanged).
+     */
+    public void setSortAlphabetical(boolean alphabetical) {
+        if (mSortAlphabetical == alphabetical) return;
+        mSortAlphabetical = alphabetical;
+        mSharedPreferences.edit()
+                .putBoolean(Preferences.SORT_BOOKMARKS_ALPHA, alphabetical)
+                .apply();
+        mListSpec.setValue(new ListSpec(mLastDispatchedQuery, alphabetical));
     }
 
     /**
@@ -82,6 +128,7 @@ public class WebBookmarkViewModel extends ViewModel {
             if (!Objects.equals(mLastDispatchedQuery, normalized)) {
                 mLastDispatchedQuery = normalized;
                 mFilterData.setValue(normalized);
+                mListSpec.setValue(new ListSpec(normalized, mSortAlphabetical));
             }
             mPendingDebounce = null;
         };
