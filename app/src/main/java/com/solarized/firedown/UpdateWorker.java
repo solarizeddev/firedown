@@ -110,8 +110,14 @@ public class UpdateWorker extends Worker {
         for (String url : Preferences.UPDATE_URL_FALLBACKS) {
             if (url == null || url.isEmpty()) continue;
 
+            // Send the app's stock browser UA instead of OkHttp's default
+            // "okhttp/x.y". Cloudflare fronts the primary endpoint and its
+            // bot heuristics treat bare library UAs unkindly; the browser UA
+            // blends in as ordinary traffic. It's a generic string (no
+            // device model / Android version), so nothing extra is leaked.
             Request request = new Request.Builder()
                     .url(url)
+                    .addHeader(BrowserHeaders.USER_AGENT, BrowserHeaders.getDefaultUserAgentString())
                     .addHeader(BrowserHeaders.X_APP_VERSION, App.getVersionName())
                     .build();
 
@@ -132,7 +138,13 @@ public class UpdateWorker extends Worker {
     }
 
     private Result downloadApk(String url, String remoteSha, String name) throws IOException {
-        Request downloadRequest = new Request.Builder().url(url).build();
+        // Same browser UA as the status fetch — the APK download hits the
+        // same Cloudflare front (or the GitHub fallback) and should look
+        // like the same client.
+        Request downloadRequest = new Request.Builder()
+                .url(url)
+                .addHeader(BrowserHeaders.USER_AGENT, BrowserHeaders.getDefaultUserAgentString())
+                .build();
 
         try (Response response = okHttpClient.newCall(downloadRequest).execute()) {
             if (!response.isSuccessful() || response.body() == null) return Result.retry();
