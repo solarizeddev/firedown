@@ -58,8 +58,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="@dimen/list_spacing"
-                android:layout_marginEnd="@dimen/list_spacing"
-                android:layout_marginBottom="12dp" />
+                android:layout_marginEnd="@dimen/list_spacing" />
 
 
             <!--
@@ -77,10 +76,9 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="@dimen/list_spacing"
                 android:layout_marginEnd="@dimen/list_spacing"
-                android:layout_marginBottom="12dp"
                 android:clickable="true"
                 android:focusable="true"
-                app:cardBackgroundColor="?attr/colorSurfaceContainer"
+                app:cardBackgroundColor="@color/transparent"
                 app:cardCornerRadius="12dp"
                 app:cardElevation="0dp"
                 app:strokeWidth="0dp">
