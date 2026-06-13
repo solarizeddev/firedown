@@ -1,6 +1,8 @@
 package com.solarized.firedown.utils;
 
 
+import org.mozilla.geckoview.BuildConfig;
+
 import java.util.Objects;
 
 import okhttp3.Request;
@@ -10,7 +12,24 @@ public class BrowserHeaders {
     private static final String TAG = BrowserHeaders.class.getSimpleName();
 
 
-    private static final String USER_AGENT_STRING = "Mozilla/5.0 (Windows NT 10.0; rv:122.0) Gecko/20100101 Firefox/149.0";
+    /**
+     * Desktop-Firefox shape on purpose — it carries no Android version or
+     * device model, so the media/update requests that send it leak nothing
+     * device-identifying. The version is derived from the bundled GeckoView
+     * (MOZ_APP_VERSION, e.g. "151.0") so the rv:/Firefox pair always matches
+     * the real engine and can't drift: the previous hardcoded string had
+     * aged into "rv:122.0 … Firefox/149.0", a mismatched pair no real
+     * browser ever sends — itself a bot tell to header-checking CDNs.
+     */
+    private static final String USER_AGENT_STRING = buildDefaultUserAgentString();
+
+    private static String buildDefaultUserAgentString() {
+        String version = BuildConfig.MOZ_APP_VERSION;
+        int dot = version.indexOf('.');
+        String major = (dot > 0) ? version.substring(0, dot) : version;
+        return "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:" + major + ".0)"
+                + " Gecko/20100101 Firefox/" + major + ".0";
+    }
 
     public static final String ACCEPT = "Accept";
 
