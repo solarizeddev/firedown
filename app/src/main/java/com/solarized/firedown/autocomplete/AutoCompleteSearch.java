@@ -7,6 +7,7 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.webkit.URLUtil;
 
+import com.solarized.firedown.BuildConfig;
 import com.solarized.firedown.data.entity.GeckoStateEntity;
 import com.solarized.firedown.data.entity.AutoCompleteEntity;
 import com.solarized.firedown.data.entity.WebBookmarkEntity;
@@ -87,6 +88,10 @@ public class AutoCompleteSearch {
         final String searchFormat = mSearchRepository.getSearchFormat();
         final String suggestionUrl = mSearchRepository.getSearchAutocomplete();
 
+        logDebug("engine=" + searchOption
+                + " suggestTemplate=" + (TextUtils.isEmpty(suggestionUrl) ? "<none>" : suggestionUrl)
+                + " term=" + preview(searchTerm));
+
         ensureHeader(result, searchTerm, searchOption, searchFormat);
 
         // An engine without a suggestions endpoint (Mojeek operates none —
@@ -95,6 +100,8 @@ public class AutoCompleteSearch {
         // network fetch is skipped. Composing a request from an empty
         // template would throw in Request.Builder.url().
         if (TextUtils.isEmpty(suggestionUrl)) {
+            logDebug("no suggestions endpoint for " + searchOption
+                    + " — skipping remote fetch (search header + local sources only)");
             addLocalSources(result, searchTerm);
             return result;
         }
@@ -105,15 +112,38 @@ public class AutoCompleteSearch {
                 .build();
 
         try (Response response = mHttpClient.newCall(request).execute()) {
-            if (!response.isSuccessful()) return result;
+            if (!response.isSuccessful()) {
+                logDebug("suggest fetch HTTP " + response.code() + " for " + searchOption);
+                return result;
+            }
             ResponseBody body = response.body();
+            int before = result.size();
             parseByEngine(result, body.string(), searchOption, searchFormat);
+            logDebug("suggest fetch HTTP 200 for " + searchOption
+                    + ", parsed " + (result.size() - before) + " suggestion(s)");
         } catch (IOException | JSONException e) {
-            Log.e(TAG, "Autocomplete network/parse error", e);
+            if (BuildConfig.DEBUG) {
+                Log.e(TAG, "Autocomplete network/parse error", e);
+            }
         } finally {
             addLocalSources(result, searchTerm);
         }
         return result;
+    }
+
+    /** Cap on logged user-typed text (the URL-bar paste lesson — never log it whole). */
+    private static final int LOG_TERM_PREVIEW = 64;
+
+    private static void logDebug(String message) {
+        if (BuildConfig.DEBUG) {
+            Log.d(TAG, message);
+        }
+    }
+
+    private static String preview(String s) {
+        if (s == null) return "null";
+        if (s.length() <= LOG_TERM_PREVIEW) return s;
+        return s.substring(0, LOG_TERM_PREVIEW) + "… (" + s.length() + " chars)";
     }
 
     /** History, matching open tabs, bookmarks — the non-network suggestion sources. */
