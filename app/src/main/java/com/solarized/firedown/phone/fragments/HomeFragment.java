@@ -24,7 +24,6 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.card.MaterialCardView;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.solarized.firedown.ui.IncognitoColors;
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.Preferences;
@@ -181,38 +180,10 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
 
         mBottomNavigationBar.setListener(this);
 
-        // Hero FAB in the bottom bar's cradle is Bookmarks — the URL
-        // bar at the top already covers the search path, so the centre
-        // affordance gives the bookmarks list a one-tap entry. Promoted
-        // from the flat, unlabeled middle-slot icon to the same hero-FAB
-        // treatment Browser (capture) and Tabs already use; the middle
-        // slot itself is hidden (hideMiddleSlot) underneath it.
-        FloatingActionButton bookmarkButton = v.findViewById(R.id.bookmark_button);
-        bookmarkButton.setOnClickListener(view ->
-                NavigationUtils.navigateSafe(mNavController, R.id.action_home_to_bookmarks));
-
-        // Dock the FAB the TABS way (TabsHolderFragment): bottomMargin =
-        // (bar height − the 64dp content row) + app_bar_fab_margin
-        // = nav inset + lift, so the FAB pokes just above the bar's top
-        // edge. Recomputed on every bar layout pass — the bar grows when
-        // BottomNavigationBar's own insets listener pads it by the nav
-        // inset, so a one-shot read would race that and dock too low.
-        mBottomNavigationBar.addOnLayoutChangeListener(
-                (bar, l, t, r, b, ol, ot, or, ob) -> {
-                    int barHeight = b - t;
-                    if (barHeight <= 0) {
-                        return;
-                    }
-                    int contentRow = getResources().getDimensionPixelOffset(R.dimen.app_bar_size);
-                    int lift = getResources().getDimensionPixelOffset(R.dimen.app_bar_fab_margin);
-                    int margin = Math.max(0, barHeight - contentRow) + lift;
-                    ViewGroup.MarginLayoutParams params =
-                            (ViewGroup.MarginLayoutParams) bookmarkButton.getLayoutParams();
-                    if (params.bottomMargin != margin) {
-                        params.bottomMargin = margin;
-                        bookmarkButton.setLayoutParams(params);
-                    }
-                });
+        // Bookmarks is the flat middle-slot button in the bottom bar
+        // (see onBottomBarButtonClick's R.id.search_button branch); the
+        // URL bar at the top covers search. The former hero FAB was
+        // removed in favour of this plain in-bar affordance.
 
         mGeckoToolbar = v.findViewById(R.id.toolbar_layout);
         mGeckoToolbar.setListener(this);
@@ -531,10 +502,10 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         } else if(id == R.id.new_tab_button){
             flashNewTab(mNewTabView);
             addNewTab();
+        } else if (id == R.id.search_button) {
+            // The middle slot is the flat Bookmarks button.
+            NavigationUtils.navigateSafe(mNavController, R.id.action_home_to_bookmarks);
         }
-        // No R.id.search_button branch: the middle slot is hidden
-        // (hideMiddleSlot) and never dispatches — Bookmarks is the
-        // hero FAB wired in onCreateView.
     }
 
     @Override

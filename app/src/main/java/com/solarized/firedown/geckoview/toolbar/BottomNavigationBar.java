@@ -80,11 +80,10 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
     private void init(Context context, AttributeSet attrs, int defStyleAttr) {
 
         TypedArray array = context.obtainStyledAttributes(attrs, R.styleable.BottomNavigationBar, defStyleAttr, 0);
-        // Browser AND both Homes set this true so an externally-anchored hero
-        // FAB (capture on Browser, Bookmarks on Home) can sit over the middle
-        // slot without colliding with a flat action icon underneath. No current
-        // layout leaves it false; the attribute stays for any future surface
-        // that wants the in-slot action instead of a FAB.
+        // The Browser sets this true so its externally-anchored capture hero
+        // FAB can sit over the middle slot without colliding with a flat action
+        // icon underneath. Both Homes leave it false (default): they show the
+        // flat in-slot Bookmarks button instead of a FAB.
         boolean hideMiddleSlot = array.getBoolean(R.styleable.BottomNavigationBar_hideMiddleSlot, false);
         // Default TRUE: Home/incognito Home self-pad the nav inset so the bar
         // owns the nav strip. The browser sets it FALSE — its framed root
@@ -159,13 +158,12 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
             ImageViewCompat.setImageTintList((AppCompatImageButton) newTabBtn, iconTint);
         }
 
-        // The cradle slot is Bookmarks in both modes — the list is
+        // The middle slot is Bookmarks in both Home modes — the list is
         // just URLs the user explicitly saved, so it doesn't leak
         // any incognito-session browsing state. The id stays
         // 'search_button' since it's the slot id, not the action.
-        // Every current layout hides this slot under a hero FAB
-        // (hideMiddleSlot), so the glyph/tint below is dormant —
-        // kept for any future layout that shows the slot.
+        // The Browser hides this slot under its capture hero FAB
+        // (hideMiddleSlot), so the glyph/tint below is dormant there.
         AppCompatImageButton searchBtn = findViewById(R.id.search_button);
         if (searchBtn != null) {
             searchBtn.setImageResource(R.drawable.ic_bookmark_border_24);
