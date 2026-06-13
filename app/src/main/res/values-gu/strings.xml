@@ -52,7 +52,7 @@
     <string name="edit">સંપાદિત કરો</string>
     <string name="empty_learn_more">વધુ જાણો</string>
     <string name="empty_list">તમારા ડાઉનલોડ્સ અહીં દેખાશે.</string>
-    <string name="empty_list_bookmarks">હજુ સુધી કંઈપણ બુકમાર્ક કરેલ નથી.</string>
+    <string name="empty_list_bookmarks">હજુ સુધી કંઈપણ બુકમાર્ક કરેલ નથી.\n\nકોઈપણ પેજ ખોલો અને તેને અહીં સાચવવા માટે ⋮ મેનૂમાંથી “Bookmark page” પસંદ કરો.</string>
     <string name="empty_list_browser_history">તમારો બ્રાઉઝર ઇતિહાસ ખાલી છે.</string>
     <string name="empty_list_history">તમારો ડાઉનલોડ ઇતિહાસ ખાલી છે.</string>
     <string name="empty_list_query">કોઈ પરિણામો મળ્યા નથી</string>
@@ -203,16 +203,6 @@
     <string name="vault_unsupported">આ ફાઇલ ખોલી શકાતી નથી. ખોલવા માટે, તેને સેફ ફોલ્ડરની બહાર ખસેડો અને ફરી પ્રયાસ કરો.</string>
     <string name="home_vault_button">સુરક્ષિત ફોલ્ડર</string>
 <string name="settings_theme_app_category">ઍપ થીમ</string>
-    <string name="settings_theme_home_category">હોમ સ્ક્રીન</string>
-    <string name="settings_home_cards">હોમ કાર્ડ</string>
-    <string name="settings_home_cards_summary">હોમ કાર્ડ માટે શૈલી પસંદ કરો</string>
-    <string name="settings_home_cards_header">એક થીમ બધા કાર્ડ એક સાથે બદલે છે — તમારી પસંદનો દેખાવ પસંદ કરો.</string>
-    <string name="home_card_style_neutral">તટસ્થ</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
-    <string name="home_card_style_coral">Coral</string>
-    <string name="home_card_style_preview_downloads_subtitle">150 ફાઇલો સાચવી · 2.4 GB</string>
-    <string name="home_card_style_preview_vault_subtitle">12 આઇટમ સાચવ્યા</string>
     <string name="crash_sheet_title">ક્રેશ શોધાયું</string>
     <string name="crash_sheet_report">રિપોર્ટ</string>
     <string name="crash_sheet_copy">કૉપિ</string>
@@ -223,13 +213,11 @@
     <string name="home_trackers_subtitle">%1$s · ~%2$s બચ્યું</string>
     <string name="home_trackers_subtitle_idle">સુરક્ષા સક્રિય</string>
     <string name="home_vault_empty_subtitle">ખાનગી અને એન્ક્રિપ્ટેડ</string>
-    <string name="home_card_style_preview_trackers_subtitle">12,345 · ~580 MB બચ્યું</string>
     <string name="trackers_info_count_label">ટ્રેકર્સ અને જાહેરાતો અવરોધિત</string>
     <string name="trackers_info_saved">~%1$s બેન્ડવિડ્થ બચી</string>
     <string name="trackers_info_categories">ટ્રેકર્સ · જાહેરાતો · ફિંગરપ્રિન્ટિંગ · કૂકીઝ</string>
     <string name="trackers_info_action">સુરક્ષાનું સંચાલન કરો</string>
     <string name="trackers_info_today">%1$s આજે અવરોધિત</string>
-    <string name="home_card_style_tonal">ટોનલ</string>
 
 
 

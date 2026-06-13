@@ -82,7 +82,7 @@
     <string name="edit">Szerkesztés</string>
     <string name="empty_learn_more">További információ</string>
     <string name="empty_list">A letöltések itt fognak megjelenni.</string>
-    <string name="empty_list_bookmarks">Még nincs semmi könyvjelzővel ellátva.</string>
+    <string name="empty_list_bookmarks">Még nincs semmi könyvjelzővel ellátva.\n\nNyisson meg egy tetszőleges oldalt, és válassza a ⋮ menü „Lap könyvjelzőzése” pontját, hogy ide mentse.</string>
     <string name="empty_list_browser_history">A böngészési előzmények üresek.</string>
     <string name="empty_list_history">A letöltési előzmények üresek.</string>
     <string name="empty_list_query">Nincs találat</string>
@@ -279,16 +279,6 @@
     <string name="incognito_fact_downloads_title">A letöltések privátak maradnak</string>
     <string name="incognito_fact_downloads_sub">A Biztonságos mappába mentve, csak a Firedownban láthatók.</string>
 <string name="settings_theme_app_category">Alkalmazás megjelenése</string>
-    <string name="settings_theme_home_category">Kezdőlap</string>
-    <string name="settings_home_cards">Kezdőlap kártyák</string>
-    <string name="settings_home_cards_summary">Válassza ki a kezdőlap kártyáinak stílusát</string>
-    <string name="settings_home_cards_header">Egyetlen téma mindegyik kártyát egyszerre váltja át — válassza ki a megjelenést, ami tetszik.</string>
-    <string name="home_card_style_neutral">Semleges</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
-    <string name="home_card_style_coral">Coral</string>
-    <string name="home_card_style_preview_downloads_subtitle">150 fájl mentve · 2,4 GB</string>
-    <string name="home_card_style_preview_vault_subtitle">12 elem mentve</string>
     <string name="crash_sheet_title">Összeomlás észlelve</string>
     <string name="crash_sheet_report">Jelentés</string>
     <string name="crash_sheet_copy">Másolás</string>
@@ -299,7 +289,6 @@
     <string name="home_trackers_subtitle">%1$s · ~%2$s megtakarítva</string>
     <string name="home_trackers_subtitle_idle">A védelem aktív</string>
     <string name="home_vault_empty_subtitle">Privát és titkosított</string>
-    <string name="home_card_style_preview_trackers_subtitle">12 345 · ~580 MB megtakarítva</string>
     <string name="trackers_info_count_label">nyomkövető és hirdetés blokkolva</string>
     <string name="trackers_info_saved">~%1$s sávszélesség megtakarítva</string>
     <string name="trackers_info_categories">Nyomkövetők · Hirdetések · Ujjlenyomat · Sütik</string>
@@ -313,7 +302,6 @@
     <string name="trackers_info_stat_saved">Megtakarított adat</string>
     <string name="trackers_info_action">Védelem kezelése</string>
     <string name="trackers_info_today">%1$s blokkolva ma</string>
-    <string name="home_card_style_tonal">Tónusos</string>
 
 
 

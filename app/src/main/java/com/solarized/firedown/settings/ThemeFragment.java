@@ -10,7 +10,6 @@ import androidx.preference.Preference;
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
 import com.solarized.firedown.settings.ui.RadioButtonPreference;
-import com.solarized.firedown.utils.NavigationUtils;
 
 
 public class ThemeFragment extends BasePreferenceFragment implements Preference.OnPreferenceClickListener {
@@ -24,8 +23,6 @@ public class ThemeFragment extends BasePreferenceFragment implements Preference.
     private RadioButtonPreference mDarkPreference;
 
     private RadioButtonPreference mOledPreference;
-
-    private Preference mHomeCardsPreference;
 
 
     @Override
@@ -41,8 +38,6 @@ public class ThemeFragment extends BasePreferenceFragment implements Preference.
         mLightPreference = getPreferenceScreen().findPreference(Preferences.SETTINGS_THEME_LIGHT);
 
         mOledPreference = getPreferenceScreen().findPreference(Preferences.SETTINGS_THEME_OLED);
-
-        mHomeCardsPreference = getPreferenceScreen().findPreference(Preferences.SETTINGS_HOME_CARDS);
 
         mDefaultPreference.addToRadioGroup(mDarkPreference);
         mDefaultPreference.addToRadioGroup(mLightPreference);
@@ -71,9 +66,6 @@ public class ThemeFragment extends BasePreferenceFragment implements Preference.
 
         if(mOledPreference != null)
             mOledPreference.setOnPreferenceClickListener(this);
-
-        if(mHomeCardsPreference != null)
-            mHomeCardsPreference.setOnPreferenceClickListener(this);
 
 
         tintIcons();
@@ -111,8 +103,6 @@ public class ThemeFragment extends BasePreferenceFragment implements Preference.
                 sharedPreferences.edit().putInt(Preferences.SETTINGS_THEME, Preferences.THEME_OLED).apply();
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
             recreateActivity();
-        }else if(Preferences.SETTINGS_HOME_CARDS.equals(preference.getKey())){
-            NavigationUtils.navigateSafe(mNavController, R.id.action_theme_to_home_cards);
         }
         return false;
     }

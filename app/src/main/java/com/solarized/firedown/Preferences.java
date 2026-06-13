@@ -57,6 +57,14 @@ public class Preferences {
 
     public static final String SORT_VAULT_LIST = "com.solarized.firedown.preferences.sort.vault.list";
 
+    /**
+     * Bookmarks-list sort order toggle: false (default) = recency
+     * (file_date DESC, the historical order), true = A–Z by title.
+     * Governs only the unfiltered list — search results stay
+     * recency-ordered.
+     */
+    public static final String SORT_BOOKMARKS_ALPHA = "com.solarized.firedown.preferences.sort.bookmarks.alpha";
+
     public static final String SETTINGS_AUTOFILL = "com.solarized.firedown.preferences.browser.password";
 
     public static final String SETTINGS_BLOCK_LOCATION = "com.solarized.firedown.preferences.browser.block.location";
@@ -103,14 +111,6 @@ public class Preferences {
     public static final String SETTINGS_THEME_LIGHT = "com.solarized.firedown.preferences.theme.light";
 
     public static final String SETTINGS_THEME_OLED = "com.solarized.firedown.preferences.theme.oled";
-
-    /** Home shelf-card style picker. Single preference (one of the
-     *  {@link com.solarized.firedown.ui.HomeCardStyle#key} values) flips
-     *  both the Downloads and Safe Folder cards together — the choices
-     *  are a packaged styling, not per-card colour tweaks. */
-    public static final String SETTINGS_HOME_CARDS = "com.solarized.firedown.preferences.home.cards";
-    public static final String SETTINGS_HOME_CARD_STYLE = "com.solarized.firedown.preferences.home.card.style";
-    public static final String DEFAULT_HOME_CARD_STYLE = "neutral";
 
     /**
      * Sentinel value stored in {@link #SETTINGS_THEME} when the user picks

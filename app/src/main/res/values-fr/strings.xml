@@ -153,7 +153,7 @@
     <string name="restore_downloads_none">Aucune sauvegarde trouvée dans ce dossier</string>
     <string name="restore_downloads_wrong_device">Cette sauvegarde appartient à un autre appareil</string>
     <string name="empty_list">Vos téléchargements apparaîtront ici.</string>
-    <string name="empty_list_bookmarks">Rien de mis en favoris pour l\'instant.</string>
+    <string name="empty_list_bookmarks">Rien de mis en favoris pour l\'instant.\n\nOuvrez n\'importe quelle page et choisissez « Marquer cette page » dans le menu ⋮ pour l\'enregistrer ici.</string>
     <string name="empty_list_browser_history">L\'historique de votre navigateur est vide.</string>
     <string name="empty_list_history">Votre historique de téléchargements est vide.</string>
     <string name="empty_list_query">Aucun résultat trouvé</string>
@@ -512,16 +512,6 @@
     <string name="settings_wasm_allowlist_remove_message">Retirer %s de la liste autorisée WebAssembly ?</string>
     <string name="settings_wasm_allowlist_remove_confirm">Retirer</string>
 <string name="settings_theme_app_category">Thème de l\'app</string>
-    <string name="settings_theme_home_category">Page d\'accueil</string>
-    <string name="settings_home_cards">Cartes d\'accueil</string>
-    <string name="settings_home_cards_summary">Choisissez le style des cartes d\'accueil</string>
-    <string name="settings_home_cards_header">Un seul thème change toutes les cartes — choisissez l\'aspect qui vous plaît.</string>
-    <string name="home_card_style_neutral">Neutre</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
-    <string name="home_card_style_coral">Coral</string>
-    <string name="home_card_style_preview_downloads_subtitle">150 fichiers enregistrés · 2,4 Go</string>
-    <string name="home_card_style_preview_vault_subtitle">12 éléments enregistrés</string>
     <string name="crash_sheet_title">Plantage détecté</string>
     <string name="crash_sheet_report">Signaler</string>
     <string name="crash_sheet_copy">Copier</string>
@@ -532,7 +522,6 @@
     <string name="home_trackers_subtitle">%1$s · ~%2$s économisés</string>
     <string name="home_trackers_subtitle_idle">Protection active</string>
     <string name="home_vault_empty_subtitle">Privé et chiffré</string>
-    <string name="home_card_style_preview_trackers_subtitle">12 345 · ~580 Mo économisés</string>
     <string name="trackers_info_count_label">traqueurs et pubs bloqués</string>
     <string name="trackers_info_saved">~%1$s de bande passante économisée</string>
     <string name="trackers_info_categories">Traqueurs · Pubs · Empreinte · Cookies</string>
@@ -546,7 +535,6 @@
     <string name="trackers_info_stat_saved">Données économisées</string>
     <string name="trackers_info_action">Gérer la protection</string>
     <string name="trackers_info_today">%1$s bloqués aujourd\'hui</string>
-    <string name="home_card_style_tonal">Tonal</string>
 
 
 

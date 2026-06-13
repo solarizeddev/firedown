@@ -82,7 +82,7 @@
     <string name="edit">Edita</string>
     <string name="empty_learn_more">Més informació</string>
     <string name="empty_list">Les teves baixades apareixeran aquí.</string>
-    <string name="empty_list_bookmarks">Encara no s\'ha marcat res.</string>
+    <string name="empty_list_bookmarks">Encara no s\'ha marcat res.\n\nObre qualsevol pàgina i tria “Afegeix la pàgina a les adreces d’interès” al menú ⋮ per desar-la aquí.</string>
     <string name="empty_list_browser_history">L\'historial del vostre navegador està buit.</string>
     <string name="empty_list_history">El teu historial de baixades està buit.</string>
     <string name="empty_list_query">No s\'ha trobat cap resultat</string>
@@ -290,16 +290,6 @@
     <string name="settings_wasm_allowlist_remove_message">Vols treure %s de la llista permesa de WebAssembly?</string>
     <string name="settings_wasm_allowlist_remove_confirm">Treu</string>
 <string name="settings_theme_app_category">Tema de l\'aplicació</string>
-    <string name="settings_theme_home_category">Pàgina d\'inici</string>
-    <string name="settings_home_cards">Targetes d\'inici</string>
-    <string name="settings_home_cards_summary">Tria l\'estil de les targetes d\'inici</string>
-    <string name="settings_home_cards_header">Un sol tema canvia totes les targetes alhora — tria l\'aspecte que prefereixis.</string>
-    <string name="home_card_style_neutral">Neutre</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
-    <string name="home_card_style_coral">Coral</string>
-    <string name="home_card_style_preview_downloads_subtitle">150 fitxers desats · 2,4 GB</string>
-    <string name="home_card_style_preview_vault_subtitle">12 elements desats</string>
     <string name="crash_sheet_title">Fallada detectada</string>
     <string name="crash_sheet_report">Informa</string>
     <string name="crash_sheet_copy">Copia</string>
@@ -310,7 +300,6 @@
     <string name="home_trackers_subtitle">%1$s · ~%2$s estalviats</string>
     <string name="home_trackers_subtitle_idle">Protecció activa</string>
     <string name="home_vault_empty_subtitle">Privada i xifrada</string>
-    <string name="home_card_style_preview_trackers_subtitle">12.345 · ~580 MB estalviats</string>
     <string name="trackers_info_count_label">rastrejadors i anuncis bloquejats</string>
     <string name="trackers_info_saved">~%1$s d\'ample de banda estalviats</string>
     <string name="trackers_info_categories">Rastrejadors · Anuncis · Empremta · Galetes</string>
@@ -324,7 +313,6 @@
     <string name="trackers_info_stat_saved">Dades estalviades</string>
     <string name="trackers_info_action">Gestiona la protecció</string>
     <string name="trackers_info_today">%1$s bloquejats avui</string>
-    <string name="home_card_style_tonal">Tonal</string>
 
 
 

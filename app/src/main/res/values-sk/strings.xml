@@ -81,7 +81,7 @@
     <string name="edit">Upraviť</string>
     <string name="empty_learn_more">Ďalšie informácie</string>
     <string name="empty_list">Tu sa zobrazia vaše stiahnuté súbory.</string>
-    <string name="empty_list_bookmarks">Zatiaľ nie je nič uložené.</string>
+    <string name="empty_list_bookmarks">Zatiaľ nie je nič uložené.\n\nOtvorte ľubovoľnú stránku a v ponuke ⋮ zvoľte „Pridať stránku medzi záložky“, aby sa uložila sem.</string>
     <string name="empty_list_browser_history">História vášho prehliadača je prázdna.</string>
     <string name="empty_list_history">Vaša história sťahovania je prázdna.</string>
     <string name="empty_list_query">Neboli nájdené žiadne výsledky</string>
@@ -269,16 +269,6 @@
     <string name="settings_webrtc_enabled_summary">Umožňuje videohovory a hlasové hovory v reálnom čase. Vypnutie zmenšuje plochu sieťového sondovania.</string>
     <string name="incognito_home_warning">Anonymné prehliadanie neskrýva vašu aktivitu pred sieťou, zamestnávateľom ani navštívenými stránkami.</string>
 <string name="settings_theme_app_category">Vzhľad aplikácie</string>
-    <string name="settings_theme_home_category">Domovská obrazovka</string>
-    <string name="settings_home_cards">Karty domovskej obrazovky</string>
-    <string name="settings_home_cards_summary">Vyberte štýl kariet domovskej obrazovky</string>
-    <string name="settings_home_cards_header">Jedna téma zmení všetky karty naraz — vyberte vzhľad, ktorý sa vám páči.</string>
-    <string name="home_card_style_neutral">Neutrálny</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
-    <string name="home_card_style_coral">Coral</string>
-    <string name="home_card_style_preview_downloads_subtitle">150 súborov uložených · 2,4 GB</string>
-    <string name="home_card_style_preview_vault_subtitle">12 položiek uložených</string>
     <string name="crash_sheet_title">Zistené zlyhanie</string>
     <string name="crash_sheet_report">Nahlásiť</string>
     <string name="crash_sheet_copy">Kopírovať</string>
@@ -289,7 +279,6 @@
     <string name="home_trackers_subtitle">%1$s · ~%2$s ušetrené</string>
     <string name="home_trackers_subtitle_idle">Ochrana aktívna</string>
     <string name="home_vault_empty_subtitle">Súkromné a šifrované</string>
-    <string name="home_card_style_preview_trackers_subtitle">12 345 · ~580 MB ušetrených</string>
     <string name="trackers_info_count_label">sledovačov a reklám zablokovaných</string>
     <string name="trackers_info_saved">~%1$s šírky pásma ušetrenej</string>
     <string name="trackers_info_categories">Sledovače · Reklamy · Odtlačky · Cookies</string>
@@ -303,7 +292,6 @@
     <string name="trackers_info_stat_saved">Ušetrené dáta</string>
     <string name="trackers_info_action">Spravovať ochranu</string>
     <string name="trackers_info_today">%1$s zablokovaných dnes</string>
-    <string name="home_card_style_tonal">Tónový</string>
 
 
 

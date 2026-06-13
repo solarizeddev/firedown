@@ -73,7 +73,7 @@
     <string name="edit">সম্পাদনা করুন</string>
     <string name="empty_learn_more">আরও জানুন</string>
     <string name="empty_list">আপনার ডাউনলোড এখানে প্রদর্শিত হবে.</string>
-    <string name="empty_list_bookmarks">এখনও বুকমার্ক করা কিছুই নেই৷</string>
+    <string name="empty_list_bookmarks">এখনও বুকমার্ক করা কিছুই নেই৷\n\nযেকোনো পৃষ্ঠা খুলুন এবং এখানে সংরক্ষণ করতে ⋮ মেনু থেকে “Bookmark page” বেছে নিন।</string>
     <string name="empty_list_browser_history">আপনার ব্রাউজার ইতিহাস খালি আছে.</string>
     <string name="empty_list_history">আপনার ডাউনলোড ইতিহাস খালি আছে.</string>
     <string name="empty_list_query">কোন ফলাফল পাওয়া যায়নি</string>
@@ -242,16 +242,6 @@
     <string name="vault_unsupported">এই ফাইলটি খুলতে পারছি না। খুলতে, এটিকে নিরাপদ ফোল্ডার থেকে সরান এবং আবার চেষ্টা করুন।</string>
     <string name="home_vault_button">নিরাপদ ফোল্ডার</string>
 <string name="settings_theme_app_category">অ্যাপ থিম</string>
-    <string name="settings_theme_home_category">হোম স্ক্রিন</string>
-    <string name="settings_home_cards">হোম কার্ড</string>
-    <string name="settings_home_cards_summary">হোম কার্ডের স্টাইল বেছে নিন</string>
-    <string name="settings_home_cards_header">একটি থিম সব কার্ড একসাথে বদলে দেয় — আপনার পছন্দের চেহারা বেছে নিন।</string>
-    <string name="home_card_style_neutral">নিরপেক্ষ</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
-    <string name="home_card_style_coral">Coral</string>
-    <string name="home_card_style_preview_downloads_subtitle">150টি ফাইল সংরক্ষিত · 2.4 GB</string>
-    <string name="home_card_style_preview_vault_subtitle">12টি আইটেম সংরক্ষিত</string>
     <string name="crash_sheet_title">ক্র্যাশ সনাক্ত করা হয়েছে</string>
     <string name="crash_sheet_report">রিপোর্ট</string>
     <string name="crash_sheet_copy">কপি</string>
@@ -262,13 +252,11 @@
     <string name="home_trackers_subtitle">%1$s · ~%2$s সাশ্রয়</string>
     <string name="home_trackers_subtitle_idle">সুরক্ষা সক্রিয়</string>
     <string name="home_vault_empty_subtitle">ব্যক্তিগত এবং এনক্রিপ্টেড</string>
-    <string name="home_card_style_preview_trackers_subtitle">12,345 · ~580 MB সাশ্রয়</string>
     <string name="trackers_info_count_label">ট্র্যাকার এবং বিজ্ঞাপন ব্লক</string>
     <string name="trackers_info_saved">~%1$s ব্যান্ডউইথ সাশ্রয়</string>
     <string name="trackers_info_categories">ট্র্যাকার · বিজ্ঞাপন · ফিঙ্গারপ্রিন্টিং · কুকি</string>
     <string name="trackers_info_action">সুরক্ষা পরিচালনা করুন</string>
     <string name="trackers_info_today">%1$s আজ ব্লক করা হয়েছে</string>
-    <string name="home_card_style_tonal">টোনাল</string>
 
 
 

@@ -109,12 +109,6 @@ public class DownloadDataRepository {
         return mDatabase.downloadDao().getRegularFinishedSizeLive();
     }
 
-    /** Live list of in-flight regular downloads. Drives the home
-     *  active-download strip. */
-    public LiveData<List<DownloadEntity>> getActiveRegular() {
-        return mDatabase.downloadDao().getActiveRegularLive();
-    }
-
     public List<DownloadEntity> getAllRawList() {
         return mDatabase.downloadDao().getAllRawList();
     }

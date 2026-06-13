@@ -56,7 +56,7 @@
     <string name="edit">ସଂପାଦନା କରନ୍ତୁ |</string>
     <string name="empty_learn_more">ଅଧିକ ଜାଣନ୍ତୁ</string>
     <string name="empty_list">ତୁମର ଡାଉନଲୋଡ୍ ଏଠାରେ ଦେଖାଯିବ |</string>
-    <string name="empty_list_bookmarks">ଏପର୍ଯ୍ୟନ୍ତ କିଛି ବୁକମାର୍କ ହୋଇନାହିଁ |</string>
+    <string name="empty_list_bookmarks">ଏପର୍ଯ୍ୟନ୍ତ କିଛି ବୁକମାର୍କ ହୋଇନାହିଁ |\n\nଯେକୌଣସି ପୃଷ୍ଠା ଖୋଲନ୍ତୁ ଏବଂ ଏହାକୁ ଏଠାରେ ସଂରକ୍ଷଣ କରିବାକୁ ⋮ ମେନୁରୁ “Bookmark page” ବାଛନ୍ତୁ।</string>
     <string name="empty_list_browser_history">ଆପଣଙ୍କର ବ୍ରାଉଜର୍ ଇତିହାସ ଖାଲି ଅଛି |</string>
     <string name="empty_list_history">ତୁମର ଡାଉନଲୋଡ୍ ଇତିହାସ ଖାଲି ଅଛି |</string>
     <string name="empty_list_query">କ results ଣସି ଫଳାଫଳ ମିଳିଲା ନାହିଁ |</string>
@@ -212,16 +212,6 @@
     <string name="vault_unsupported">ଏହି ଫାଇଲ୍ ଖୋଲିପାରିବ ନାହିଁ | ଖୋଲିବାକୁ, ଏହାକୁ ସୁରକ୍ଷିତ ଫୋଲ୍ଡରରୁ ବାହାର କରି ପୁନର୍ବାର ଚେଷ୍ଟା କରନ୍ତୁ |</string>
     <string name="home_vault_button">ସୁରକ୍ଷିତ ଫୋଲ୍ଡର୍</string>
 <string name="settings_theme_app_category">ଆପ୍ଲିକେସନର ଥିମ୍</string>
-    <string name="settings_theme_home_category">ମୂଳପୃଷ୍ଠା</string>
-    <string name="settings_home_cards">ମୂଳପୃଷ୍ଠାର କାର୍ଡଗୁଡ଼ିକ</string>
-    <string name="settings_home_cards_summary">ମୂଳପୃଷ୍ଠା କାର୍ଡଗୁଡ଼ିକର ଶୈଳୀ ବାଛନ୍ତୁ</string>
-    <string name="settings_home_cards_header">ଗୋଟିଏ ଥିମ୍ ସମସ୍ତ କାର୍ଡ ଏକାଠି ବଦଳାଇଥାଏ — ଆପଣ ପସନ୍ଦ କରୁଥିବା ରୂପ ବାଛନ୍ତୁ।</string>
-    <string name="home_card_style_neutral">ନିରପେକ୍ଷ</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
-    <string name="home_card_style_coral">Coral</string>
-    <string name="home_card_style_preview_downloads_subtitle">150 ଫାଇଲ୍ ସଞ୍ଚୟ ହୋଇଛି · 2.4 GB</string>
-    <string name="home_card_style_preview_vault_subtitle">12 ଆଇଟମ୍ ସଞ୍ଚୟ ହୋଇଛି</string>
     <string name="crash_sheet_title">କ୍ରାଶ୍ ଚିହ୍ନଟ ହୋଇଛି</string>
     <string name="crash_sheet_report">ରିପୋର୍ଟ</string>
     <string name="crash_sheet_copy">କପି</string>
@@ -232,13 +222,11 @@
     <string name="home_trackers_subtitle">%1$s · ~%2$s ସଞ୍ଚୟ</string>
     <string name="home_trackers_subtitle_idle">ସୁରକ୍ଷା ସକ୍ରିୟ</string>
     <string name="home_vault_empty_subtitle">ବ୍ୟକ୍ତିଗତ ଏବଂ ଏନକ୍ରିପ୍ଟେଡ୍</string>
-    <string name="home_card_style_preview_trackers_subtitle">12,345 · ~580 MB ସଞ୍ଚୟ</string>
     <string name="trackers_info_count_label">ଟ୍ରାକର ଏବଂ ବିଜ୍ଞାପନ ବ୍ଲକ ହୋଇଛି</string>
     <string name="trackers_info_saved">~%1$s ବ୍ୟାଣ୍ଡୱିଡଥ୍ ସଞ୍ଚୟ</string>
     <string name="trackers_info_categories">ଟ୍ରାକର · ବିଜ୍ଞାପନ · ଆଙ୍ଗୁଠିଚିହ୍ନ · କୁକି</string>
     <string name="trackers_info_action">ସୁରକ୍ଷା ପରିଚାଳନା</string>
     <string name="trackers_info_today">%1$s ଆଜି ବ୍ଲକ୍</string>
-    <string name="home_card_style_tonal">ଟୋନାଲ୍</string>
 
 
 

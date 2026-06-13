@@ -182,6 +182,19 @@ public class BrowserFragment extends BaseBrowserFragment
 
     // ── Layout sizing ─────────────────────────────────────────────────────────────────────────────
 
+    /** The bars' content row height (app_bar_size), without any inset. */
+    private int mChromeBarBaseSize;
+    /**
+     * Dynamic-toolbar heights handed to Gecko — CONTENT-ONLY (= base, no
+     * system inset). The dynamic toolbar reserves space that becomes page
+     * content when a bar hides; system bars aren't reclaimable, so their
+     * insets are kept OUT of these and reserved via the FRAMED root's
+     * all-sides safe-area padding instead (the root insets listener). In
+     * the framed model the bars are also a true base tall, so these
+     * heights now match the real bar heights exactly. Constant after init;
+     * the fields remain (rather than inlining base) so the fullscreen
+     * exit's behavior rebuild reads one source.
+     */
     private int mGeckoToolbarSize;
     private int mBottomBarSize;
 
@@ -223,8 +236,9 @@ public class BrowserFragment extends BaseBrowserFragment
             mIsIncognitoThemed = savedInstanceState.getBoolean(Keys.IS_INCOGNITO, false);
         }
 
-        mGeckoToolbarSize = getResources().getDimensionPixelSize(R.dimen.app_bar_size);
-        mBottomBarSize    = getResources().getDimensionPixelSize(R.dimen.app_bar_size);
+        mChromeBarBaseSize = getResources().getDimensionPixelSize(R.dimen.app_bar_size);
+        mGeckoToolbarSize  = mChromeBarBaseSize;
+        mBottomBarSize     = mChromeBarBaseSize;
 
         mIncognitoStateViewModel = new ViewModelProvider(mActivity).get(IncognitoStateViewModel.class);
         mTaskViewModel          = new ViewModelProvider(this).get(TaskViewModel.class);
@@ -444,7 +458,7 @@ public class BrowserFragment extends BaseBrowserFragment
         CoordinatorLayout.LayoutParams layoutParamsSearch =
                 (CoordinatorLayout.LayoutParams) mAutoCompleteView.getLayoutParams();
         layoutParamsSearch.setBehavior(new AutoCompleteViewBehavior(
-                mAutoCompleteView.getContext(), null, mAutoCompleteView, mGeckoToolbarSize));
+                mAutoCompleteView.getContext(), null, mAutoCompleteView));
 
         mSwipeRefreshLayout.requestLayout();
 
@@ -459,6 +473,30 @@ public class BrowserFragment extends BaseBrowserFragment
             bundle.putBoolean(Keys.IS_INCOGNITO, mIsIncognitoThemed);
             NavigationUtils.navigateSafe(mNavController, R.id.dialog_browser_options, R.id.browser, bundle);
         });
+
+        // Dock the FAB: bottomMargin = (bar height − the 64dp content row)
+        // + app_bar_fab_margin. In the FRAMED model the bar no longer
+        // self-pads, so bar height == the 64dp content row and this reduces
+        // to a plain app_bar_fab_margin (16dp) above the bar — the nav strip
+        // is already reserved by the root's safe-area padding. The formula
+        // is kept (not hardcoded 16dp) so it still self-corrects if the bar
+        // ever grows. Recomputed on every bar layout pass.
+        // BottomNavigationFABBehavior remains purely the scroll-follower.
+        mBottomNavigationBar.addOnLayoutChangeListener(
+                (bar, l, t, r, b, ol, ot, or, ob) -> {
+                    int barHeight = b - t;
+                    if (barHeight <= 0 || mDownloadButton == null) {
+                        return;
+                    }
+                    int margin = Math.max(0, barHeight - mChromeBarBaseSize)
+                            + getResources().getDimensionPixelOffset(R.dimen.app_bar_fab_margin);
+                    ViewGroup.MarginLayoutParams params =
+                            (ViewGroup.MarginLayoutParams) mDownloadButton.getLayoutParams();
+                    if (params.bottomMargin != margin) {
+                        params.bottomMargin = margin;
+                        mDownloadButton.setLayoutParams(params);
+                    }
+                });
         return v;
     }
 
@@ -467,10 +505,21 @@ public class BrowserFragment extends BaseBrowserFragment
         super.onViewCreated(view, savedInstanceState);
         Log.d(TAG, "onViewCreated");
 
+        // FRAMED chrome: the root pads itself on ALL FOUR sides by the
+        // system-bar (+ cutout) insets, so every child lives inside the
+        // safe area and the status/nav strips are this view's own
+        // background showing through the padding (an opaque frame; painted
+        // in resetWindowTheme / applyIncognitoTheme). clipToPadding (default
+        // true) clips a scroll-hiding bar clean at the frame edge. This
+        // REPLACES the old split where the root padded l/r only and each
+        // bar self-padded its strip (which created the dead-zone — see the
+        // layout comment): now the bars are a true app_bar_size tall and
+        // need no inset of their own. Insets are CONSUMED — no descendant
+        // self-pads any more, so nothing downstream needs them.
         ViewCompat.setOnApplyWindowInsetsListener(view, (v, windowInsets) -> {
             Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars()
                     | WindowInsetsCompat.Type.displayCutout());
-            view.setPadding(insets.left, insets.top, insets.right, insets.bottom);
+            v.setPadding(insets.left, insets.top, insets.right, insets.bottom);
 
             // Keyboard tracking for the toolbar scroll policy (Fenix parity): while the IME
             // is up the bars must not be able to scroll away mid-typing, and when it closes
@@ -894,6 +943,16 @@ public class BrowserFragment extends BaseBrowserFragment
         // background, system bar colors) that persists across fragments.
         resetWindowTheme();
         mBottomNavigationBar.updateTheme(mActivity, false);
+        // FRAMED chrome: the status/nav strips are the root view's own
+        // background showing through its all-sides safe-area padding, so
+        // paint that frame here in the chrome tone. paintSystemBars still
+        // sets the WINDOW bar colours for Android <= 14 (same tone, so the
+        // opaque window bar and the frame behind it are seamless); on 15+
+        // the window bars are transparent and this root frame is what shows.
+        paintFrameBackground(IncognitoColors.getSurfaceContainer(mActivity, false));
+        paintSystemBars(
+                IncognitoColors.getSurfaceContainer(mActivity, false),
+                IncognitoColors.getSurfaceContainer(mActivity, false));
         mGeckoToolbar.updateTheme(mActivity, false);
         mAutoCompleteView.updateTheme(mActivity, false);
         mSearchAutocompleteAdapter.setIncognito(false);
@@ -2308,6 +2367,14 @@ public class BrowserFragment extends BaseBrowserFragment
 
         mGeckoToolbar.updateTheme(mActivity, incognito);
         mBottomNavigationBar.updateTheme(mActivity, incognito);
+        // FRAMED chrome: paint the root frame in the incognito chrome tone
+        // (the strips are the root background through its safe-area padding)
+        // — see the resetWindowTheme site above. The window layer below
+        // remains for Android <= 14.
+        paintFrameBackground(IncognitoColors.getSurfaceContainer(mActivity, incognito));
+        paintSystemBars(
+                IncognitoColors.getSurfaceContainer(mActivity, incognito),
+                IncognitoColors.getSurfaceContainer(mActivity, incognito));
         mAutoCompleteView.updateTheme(mActivity, incognito);
         mAutoCompleteViewModel.setIncognito(incognito);
         mSearchAutocompleteAdapter.setIncognito(incognito);
@@ -2585,6 +2652,21 @@ public class BrowserFragment extends BaseBrowserFragment
         mSwipeRefreshLayout.requestLayout();
 
         mGeckoView.setDynamicToolbarMaxHeight(mGeckoToolbarSize + mBottomBarSize);
+    }
+
+    /**
+     * Paints the FRAMED chrome frame: the root CoordinatorLayout's
+     * background is what shows through its all-sides safe-area padding —
+     * i.e. the opaque status/nav strips. Called from both theme paths
+     * (regular {@link #resetWindowTheme} / {@link #applyBrowserIncognitoTheme})
+     * so the frame tracks the chrome tone. No-ops if the view isn't
+     * attached yet (the theme can be applied pre-onViewCreated).
+     */
+    private void paintFrameBackground(int color) {
+        View root = getView();
+        if (root != null) {
+            root.setBackgroundColor(color);
+        }
     }
 
     // ─────────────────────────────────────────────────────────────────────────────────────────────

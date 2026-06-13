@@ -119,6 +119,11 @@ public class WebBookmarkDataRepository {
         return mWebBookmarkDao.getBookmarks();
     }
 
+    /** A–Z (title, case-insensitive) variant of {@link #get()}. */
+    public PagingSource<Integer, WebBookmarkEntity> getAlphabetical() {
+        return mWebBookmarkDao.getBookmarksAlphabetical();
+    }
+
     public PagingSource<Integer, WebBookmarkEntity> getSearch(String search) {
         return mWebBookmarkDao.search(search);
     }

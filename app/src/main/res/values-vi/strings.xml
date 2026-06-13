@@ -82,7 +82,7 @@
     <string name="edit">Chỉnh sửa</string>
     <string name="empty_learn_more">Tìm hiểu thêm</string>
     <string name="empty_list">Nội dung tải xuống của bạn sẽ xuất hiện ở đây.</string>
-    <string name="empty_list_bookmarks">Chưa có gì được đánh dấu.</string>
+    <string name="empty_list_bookmarks">Chưa có gì được đánh dấu.\n\nMở bất kỳ trang nào và chọn “Đánh dấu trang” trong menu ⋮ để lưu vào đây.</string>
     <string name="empty_list_browser_history">Lịch sử trình duyệt của bạn trống.</string>
     <string name="empty_list_history">Lịch sử tải xuống của bạn trống.</string>
     <string name="empty_list_query">Không tìm thấy kết quả nào</string>
@@ -279,16 +279,6 @@
     <string name="incognito_fact_downloads_title">Tải xuống luôn riêng tư</string>
     <string name="incognito_fact_downloads_sub">Lưu vào Thư mục an toàn, chỉ hiển thị trong Firedown.</string>
     <string name="settings_theme_app_category">Chủ đề ứng dụng</string>
-    <string name="settings_theme_home_category">Màn hình chính</string>
-    <string name="settings_home_cards">Thẻ trang chính</string>
-    <string name="settings_home_cards_summary">Chọn kiểu cho thẻ trang chính</string>
-    <string name="settings_home_cards_header">Một chủ đề thay đổi tất cả các thẻ cùng lúc — chọn diện mạo bạn thích.</string>
-    <string name="home_card_style_neutral">Trung tính</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
-    <string name="home_card_style_coral">Coral</string>
-    <string name="home_card_style_preview_downloads_subtitle">Đã lưu 150 tệp · 2,4 GB</string>
-    <string name="home_card_style_preview_vault_subtitle">Đã lưu 12 mục</string>
     <string name="crash_sheet_title">Phát hiện sự cố</string>
     <string name="crash_sheet_report">Báo cáo</string>
     <string name="crash_sheet_copy">Sao chép</string>

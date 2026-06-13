@@ -74,7 +74,7 @@
     <string name="edit">എഡിറ്റ് ചെയ്യുക</string>
     <string name="empty_learn_more">കൂടുതലറിയുക</string>
     <string name="empty_list">നിങ്ങളുടെ ഡൗൺലോഡുകൾ ഇവിടെ ദൃശ്യമാകും.</string>
-    <string name="empty_list_bookmarks">ഇതുവരെ ഒന്നും ബുക്ക്‌മാർക്ക് ചെയ്‌തിട്ടില്ല.</string>
+    <string name="empty_list_bookmarks">ഇതുവരെ ഒന്നും ബുക്ക്‌മാർക്ക് ചെയ്‌തിട്ടില്ല.\n\nഏതെങ്കിലും പേജ് തുറന്ന് ഇവിടെ സംരക്ഷിക്കാൻ ⋮ മെനുവിൽ നിന്ന് “താളിനെ കുറിച്ചിടുക” തിരഞ്ഞെടുക്കുക.</string>
     <string name="empty_list_browser_history">നിങ്ങളുടെ ബ്രൗസർ ചരിത്രം ശൂന്യമാണ്.</string>
     <string name="empty_list_history">നിങ്ങളുടെ ഡൗൺലോഡ് ചരിത്രം ശൂന്യമാണ്.</string>
     <string name="empty_list_query">ഒരു ഫലവും കണ്ടെത്താനായില്ല</string>
@@ -251,16 +251,6 @@
     <string name="bookmark_name">പേരു്</string>
     <string name="home_vault_button">സുരക്ഷിത ഫോൾഡർ</string>
 <string name="settings_theme_app_category">ആപ്പ് തീം</string>
-    <string name="settings_theme_home_category">ഹോം സ്ക്രീൻ</string>
-    <string name="settings_home_cards">ഹോം കാർഡുകൾ</string>
-    <string name="settings_home_cards_summary">ഹോം കാർഡുകൾക്കുള്ള ശൈലി തിരഞ്ഞെടുക്കുക</string>
-    <string name="settings_home_cards_header">ഒരു തീം എല്ലാ കാർഡുകളെയും ഒരുമിച്ച് മാറ്റുന്നു — നിങ്ങൾക്ക് ഇഷ്ടമുള്ള രൂപം തിരഞ്ഞെടുക്കുക.</string>
-    <string name="home_card_style_neutral">നിഷ്പക്ഷം</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
-    <string name="home_card_style_coral">Coral</string>
-    <string name="home_card_style_preview_downloads_subtitle">150 ഫയലുകൾ സംരക്ഷിച്ചു · 2.4 GB</string>
-    <string name="home_card_style_preview_vault_subtitle">12 ഇനങ്ങൾ സംരക്ഷിച്ചു</string>
     <string name="crash_sheet_title">ക്രാഷ് കണ്ടെത്തി</string>
     <string name="crash_sheet_report">റിപ്പോർട്ട്</string>
     <string name="crash_sheet_copy">പകർത്തുക</string>
@@ -271,13 +261,11 @@
     <string name="home_trackers_subtitle">%1$s · ~%2$s ലാഭിച്ചു</string>
     <string name="home_trackers_subtitle_idle">സംരക്ഷണം സജീവം</string>
     <string name="home_vault_empty_subtitle">സ്വകാര്യവും എൻക്രിപ്റ്റും</string>
-    <string name="home_card_style_preview_trackers_subtitle">12,345 · ~580 MB ലാഭിച്ചു</string>
     <string name="trackers_info_count_label">ട്രാക്കറുകളും പരസ്യങ്ങളും തടഞ്ഞു</string>
     <string name="trackers_info_saved">~%1$s ബാൻഡ്‌വിഡ്ത് ലാഭിച്ചു</string>
     <string name="trackers_info_categories">ട്രാക്കറുകൾ · പരസ്യങ്ങൾ · ഫിംഗർപ്രിന്റ് · കുക്കികൾ</string>
     <string name="trackers_info_action">സംരക്ഷണം നിയന്ത്രിക്കുക</string>
     <string name="trackers_info_today">%1$s ഇന്ന് തടഞ്ഞു</string>
-    <string name="home_card_style_tonal">ടോണൽ</string>
 
 
 

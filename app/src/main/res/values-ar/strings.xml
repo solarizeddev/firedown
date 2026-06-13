@@ -76,7 +76,7 @@
     <string name="edit">عدل</string>
     <string name="empty_learn_more">مزيد من المعلومات</string>
     <string name="empty_list">سوف تظهر التنزيلات الخاصة بك هنا.</string>
-    <string name="empty_list_bookmarks">لا شيء مرجعية حتى الآن.</string>
+    <string name="empty_list_bookmarks">لا شيء مرجعية حتى الآن.\n\nافتح أي صفحة واختر ”Bookmark page“ من قائمة ⋮ لحفظها هنا.</string>
     <string name="empty_list_browser_history">سجل المتصفح الخاص بك فارغ.</string>
     <string name="empty_list_history">سجل التنزيلات الخاص بك فارغ.</string>
     <string name="empty_list_query">لم يتم العثور على نتائج</string>
@@ -316,16 +316,6 @@
     <string name="settings_wasm_allowlist_remove_message">إزالة %s من قائمة WebAssembly المسموح بها؟</string>
     <string name="settings_wasm_allowlist_remove_confirm">إزالة</string>
 <string name="settings_theme_app_category">مظهر التطبيق</string>
-    <string name="settings_theme_home_category">الصفحة الرئيسية</string>
-    <string name="settings_home_cards">بطاقات الصفحة الرئيسية</string>
-    <string name="settings_home_cards_summary">اختر نمط بطاقات الصفحة الرئيسية</string>
-    <string name="settings_home_cards_header">مظهر واحد يغير كل البطاقات معًا — اختر الشكل الذي يعجبك.</string>
-    <string name="home_card_style_neutral">محايد</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
-    <string name="home_card_style_coral">Coral</string>
-    <string name="home_card_style_preview_downloads_subtitle">150 ملفًا محفوظًا · 2.4 جيجابايت</string>
-    <string name="home_card_style_preview_vault_subtitle">12 عنصرًا محفوظًا</string>
     <string name="crash_sheet_title">تم رصد تعطل</string>
     <string name="crash_sheet_report">إبلاغ</string>
     <string name="crash_sheet_copy">نسخ</string>
@@ -336,13 +326,11 @@
     <string name="home_trackers_subtitle">%1$s · ~%2$s تم توفيرها</string>
     <string name="home_trackers_subtitle_idle">الحماية مفعّلة</string>
     <string name="home_vault_empty_subtitle">خاصة ومشفّرة</string>
-    <string name="home_card_style_preview_trackers_subtitle">12,345 · ~580 ميجابايت تم توفيرها</string>
     <string name="trackers_info_count_label">متعقّب وإعلان تم حظره</string>
     <string name="trackers_info_saved">~%1$s من حجم البيانات تم توفيرها</string>
     <string name="trackers_info_categories">المتعقبات · الإعلانات · بصمات الجهاز · ملفات تعريف الارتباط</string>
     <string name="trackers_info_action">إدارة الحماية</string>
     <string name="trackers_info_today">%1$s محظور اليوم</string>
-    <string name="home_card_style_tonal">متناسق</string>
 
 
 

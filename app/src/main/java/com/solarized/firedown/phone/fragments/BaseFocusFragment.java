@@ -40,6 +40,7 @@ import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.appbar.AppBarLayout;
+import com.google.android.material.color.MaterialColors;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.solarized.firedown.BaseActivity;
@@ -189,7 +190,36 @@ public class BaseFocusFragment extends Fragment {
             });
         }
 
-
+        // System-bar painting for the SECONDARY list screens (History,
+        // Bookmarks, Archive, Downloads, Vault, LanShare, bookmark edit) —
+        // gated on a lift-on-scroll appbar, which exactly selects them:
+        // Home/incognito Home/Tabs set liftOnScroll=false and Browser has
+        // no AppBarLayout; all of those paint their own chrome. These
+        // screens used to paint NOTHING, so on Android <= 14 (where the
+        // window attrs are the strip painter — see paintSystemBars) both
+        // strips showed LEFTOVER colors from whichever screen the user
+        // came from, and once the appbar lifted on scroll the status strip
+        // visibly mismatched the lifted bar. Android 15+ was already
+        // correct by construction (the appbar's own background shows under
+        // the status strip, the navigation_scrim under the nav strip) and
+        // ignores these setters — this block makes <= 14 agree with it:
+        //  - nav strip: android colorBackground, the navigation_scrim's
+        //    exact XML tone;
+        //  - status strip at rest: colorSurface, the M3 appbar's resting
+        //    background;
+        //  - status strip on lift: addLiftOnScrollListener reports the
+        //    appbar's ANIMATED background each frame, so the strip rides
+        //    the lift tint in lockstep instead of being painted once.
+        AppBarLayout appBarLayout = view.findViewById(R.id.appbar_layout);
+        if (appBarLayout != null && appBarLayout.isLiftOnScroll()) {
+            final int navColor = MaterialColors.getColor(
+                    appBarLayout, android.R.attr.colorBackground);
+            int restColor = MaterialColors.getColor(
+                    appBarLayout, com.google.android.material.R.attr.colorSurface);
+            paintSystemBars(restColor, navColor);
+            appBarLayout.addLiftOnScrollListener((elevation, backgroundColor) ->
+                    paintSystemBars(backgroundColor, navColor));
+        }
     }
 
     @Override
@@ -207,6 +237,55 @@ public class BaseFocusFragment extends Fragment {
                     + " does not have a NavHostFragment");
         }
         return ((NavHostFragment) fragment).getNavController();
+    }
+
+    /**
+     * Re-tones the navigation scrim. The scrim is a later sibling of the
+     * bottom bar, so it paints OVER the bar's nav-inset strip — its XML
+     * colorBackground left a black seam under the now-tonal
+     * (surfaceContainer) BottomNavigationBar, while the tabs screen (no
+     * scrim at all) showed the bar tone through the transparent system
+     * nav. Bar-hosting fragments call this beside updateTheme with the
+     * matching surfaceContainer; the scrim itself must STAY on the
+     * browser — it is the opaque backdrop for the system nav when the
+     * bottom bar scroll-hides over page content. Screens without a
+     * bottom bar keep the XML colorBackground default.
+     */
+    protected void setNavScrimColor(int color) {
+        if (mNavScrim != null) {
+            mNavScrim.setBackgroundColor(color);
+        }
+    }
+
+    /**
+     * Paints the SYSTEM bar strips (status + navigation) for this screen.
+     * Two painter layers exist and BOTH must agree:
+     * <ul>
+     * <li>Android &lt;= 14 honors the window's statusBarColor /
+     *     navigationBarColor — an OPAQUE value (the OLED overlay used to
+     *     pin both to #000000) paints the strips over anything the app
+     *     draws, which is why the tonal chrome showed black strips on
+     *     the OLED theme while the normal themes (transparent attrs)
+     *     looked right.</li>
+     * <li>Android 15+ (targetSdk 35+) IGNORES these setters; the strips
+     *     show whatever the app draws beneath them — the decor
+     *     background, a self-padded bar, the navigation scrim.</li>
+     * </ul>
+     * Chrome-owning screens call this on entry with the tone of the
+     * chrome ADJACENT to each strip (Home: surface top / surfaceContainer
+     * bottom; Browser and Tabs: surfaceContainer both). The theme attrs
+     * stay quiet defaults (#000000 under OLED, transparent otherwise) for
+     * the cold-start frame and for screens that don't paint chrome
+     * (Downloads/Settings ride the window background).
+     */
+    @SuppressWarnings("deprecation")
+    protected void paintSystemBars(int statusColor, int navColor) {
+        if (mActivity == null) {
+            return;
+        }
+        Window window = mActivity.getWindow();
+        window.setStatusBarColor(statusColor);
+        window.setNavigationBarColor(navColor);
     }
 
     @Override

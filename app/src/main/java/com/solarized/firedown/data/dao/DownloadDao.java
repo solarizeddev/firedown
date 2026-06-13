@@ -150,13 +150,6 @@ public interface DownloadDao {
     @Query("SELECT IFNULL(SUM(file_size), 0) FROM download WHERE file_safe = 0 AND file_status = 1")
     LiveData<Long> getRegularFinishedSizeLive();
 
-    /** Live list of in-flight regular downloads (PROGRESS=0, QUEUED=2,
-     *  non-vault), newest first. Drives the home active-download strip,
-     *  which renders only the head row and surfaces the rest as a
-     *  '+N more' suffix — so the full set is needed for an accurate count. */
-    @Query("SELECT * FROM download WHERE file_safe = 0 AND file_status IN (0, 2) ORDER BY file_date DESC")
-    LiveData<List<DownloadEntity>> getActiveRegularLive();
-
     /** Live full list of regular (non-vault) downloads, used purely for
      *  per-group aggregation on the downloads list section headers
      *  (count + total bytes by sort category). Separate from the paging

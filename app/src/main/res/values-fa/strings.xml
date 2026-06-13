@@ -81,7 +81,7 @@
     <string name="edit">ویرایش</string>
     <string name="empty_learn_more">بیشتر بدانید</string>
     <string name="empty_list">دانلودهای شما در اینجا ظاهر می شوند.</string>
-    <string name="empty_list_bookmarks">هنوز چیزی نشانک نشده است.</string>
+    <string name="empty_list_bookmarks">هنوز چیزی نشانک نشده است.\n\nهر صفحه‌ای را باز کنید و برای ذخیره آن در اینجا، از منوی ⋮ گزینه “نشانک‌گذاری صفحه” را انتخاب کنید.</string>
     <string name="empty_list_browser_history">سابقه مرورگر شما خالی است.</string>
     <string name="empty_list_history">سابقه دانلودهای شما خالی است.</string>
     <string name="empty_list_query">نتیجه ای پیدا نشد</string>
@@ -263,16 +263,6 @@
     <string name="bookmark_name">نام</string>
     <string name="home_vault_button">پوشه ایمن</string>
 <string name="settings_theme_app_category">زمینهٔ برنامه</string>
-    <string name="settings_theme_home_category">صفحهٔ خانه</string>
-    <string name="settings_home_cards">کارت‌های صفحهٔ خانه</string>
-    <string name="settings_home_cards_summary">سبک کارت‌های صفحهٔ خانه را انتخاب کنید</string>
-    <string name="settings_home_cards_header">یک تم همهٔ کارت‌ها را با هم عوض می‌کند — ظاهری را که می‌پسندید انتخاب کنید.</string>
-    <string name="home_card_style_neutral">خنثی</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
-    <string name="home_card_style_coral">Coral</string>
-    <string name="home_card_style_preview_downloads_subtitle">۱۵۰ فایل ذخیره شد · ۲٫۴ گیگابایت</string>
-    <string name="home_card_style_preview_vault_subtitle">۱۲ مورد ذخیره شد</string>
     <string name="crash_sheet_title">خرابی شناسایی شد</string>
     <string name="crash_sheet_report">گزارش</string>
     <string name="crash_sheet_copy">کپی</string>
@@ -283,7 +273,6 @@
     <string name="home_trackers_subtitle">%1$s · ~%2$s صرفه‌جویی</string>
     <string name="home_trackers_subtitle_idle">محافظت فعال است</string>
     <string name="home_vault_empty_subtitle">خصوصی و رمزگذاری شده</string>
-    <string name="home_card_style_preview_trackers_subtitle">۱۲٬۳۴۵ · ~۵۸۰ مگابایت صرفه‌جویی</string>
     <string name="trackers_info_count_label">ردیاب و تبلیغ مسدود شد</string>
     <string name="trackers_info_saved">~%1$s پهنای باند صرفه‌جویی شد</string>
     <string name="trackers_info_categories">ردیاب‌ها · تبلیغات · اثر انگشت · کوکی‌ها</string>
@@ -297,7 +286,6 @@
     <string name="trackers_info_stat_saved">داده ذخیره‌شده</string>
     <string name="trackers_info_action">مدیریت محافظت</string>
     <string name="trackers_info_today">%1$s امروز مسدود شد</string>
-    <string name="home_card_style_tonal">هم‌رنگ</string>
 
 
 

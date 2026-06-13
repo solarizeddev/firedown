@@ -48,4 +48,24 @@
     <color name="md_theme_surfaceContainerHigh">#292A2C</color>
     <color name="md_theme_surfaceContainerHighest">#343537</color>
     <color name="md_theme_surfaceContainerLow_highContrast">#1B1B1E</color>
+    <!-- Home shelf-tile chips, dark — see values/colors.xml. -->
+    <!-- Downloads chip is the CORAL one (the brand tone, #F66A66). The
+         old #5A2E2C was too dark/low-chroma and collapsed into brown;
+         #74362A brightens + adds the orange lean (G above B) so it reads
+         as a clear dark coral close to the brand. -->
+    <color name="home_chip_downloads">#74362A</color>
+    <color name="home_chip_downloads_on">#F6B6B3</color>
+    <!-- Vault chip is the RASPBERRY one (its distinct "private corner"
+         identity, set apart from the warm Downloads/Trackers chips). The
+         old #552538 was so desaturated it read muddy/gold on a small dark
+         chip; #62294A lifts the blue clearly above green so it reads pink
+         even tiny and dark. -->
+    <color name="home_chip_vault">#62294A</color>
+    <color name="home_chip_vault_on">#F4A9C6</color>
+    <!-- Trackers chip is the PEACH one (warm orange). #4A3A28 was the
+         most desaturated of the trio and read as plain brown; #573B22
+         warms it (bigger R-G gap) so it lands as peach and stays distinct
+         from the coral Downloads and raspberry Vault. -->
+    <color name="home_chip_trackers">#573B22</color>
+    <color name="home_chip_trackers_on">#F3CBA3</color>
 </resources>

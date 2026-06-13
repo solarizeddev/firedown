@@ -81,7 +81,7 @@
     <string name="edit">Redakto</string>
     <string name="empty_learn_more">Mëso më shumë</string>
     <string name="empty_list">Shkarkimet tuaja do të shfaqen këtu.</string>
-    <string name="empty_list_bookmarks">Asgjë nuk është shënuar ende.</string>
+    <string name="empty_list_bookmarks">Asgjë nuk është shënuar ende.\n\nHapni çdo faqe dhe zgjidhni “Faqeruaje faqen” nga menyja ⋮ për ta ruajtur këtu.</string>
     <string name="empty_list_browser_history">Historia juaj e shfletuesit është bosh.</string>
     <string name="empty_list_history">Historia juaj e shkarkimeve është bosh.</string>
     <string name="empty_list_query">Nuk u gjet asnjë rezultat</string>
@@ -260,16 +260,6 @@
     <string name="bookmark_name">Emër</string>
     <string name="home_vault_button">Dosja e sigurt</string>
 <string name="settings_theme_app_category">Tema e aplikacionit</string>
-    <string name="settings_theme_home_category">Faqja kryesore</string>
-    <string name="settings_home_cards">Kartat e faqes kryesore</string>
-    <string name="settings_home_cards_summary">Zgjidh stilin për kartat e faqes kryesore</string>
-    <string name="settings_home_cards_header">Një temë e ndryshon të gjitha kartat menjëherë — zgjidh pamjen që të pëlqen.</string>
-    <string name="home_card_style_neutral">Neutrale</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
-    <string name="home_card_style_coral">Coral</string>
-    <string name="home_card_style_preview_downloads_subtitle">150 skedarë të ruajtur · 2,4 GB</string>
-    <string name="home_card_style_preview_vault_subtitle">12 artikuj të ruajtur</string>
     <string name="crash_sheet_title">Zbulua një rrëzim</string>
     <string name="crash_sheet_report">Raporto</string>
     <string name="crash_sheet_copy">Kopjo</string>
@@ -280,7 +270,6 @@
     <string name="home_trackers_subtitle">%1$s · ~%2$s të kursyera</string>
     <string name="home_trackers_subtitle_idle">Mbrojtja aktive</string>
     <string name="home_vault_empty_subtitle">Privat dhe i koduar</string>
-    <string name="home_card_style_preview_trackers_subtitle">12 345 · ~580 MB të kursyera</string>
     <string name="trackers_info_count_label">gjurmues dhe reklama të bllokuara</string>
     <string name="trackers_info_saved">~%1$s gjerësi bande e kursyer</string>
     <string name="trackers_info_categories">Gjurmues · Reklama · Gjurmë · Cookies</string>
@@ -294,7 +283,6 @@
     <string name="trackers_info_stat_saved">Të dhëna të kursyera</string>
     <string name="trackers_info_action">Menaxho mbrojtjen</string>
     <string name="trackers_info_today">%1$s të bllokuara sot</string>
-    <string name="home_card_style_tonal">Tonal</string>
 
 
 

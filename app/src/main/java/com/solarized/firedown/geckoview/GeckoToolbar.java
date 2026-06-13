@@ -417,21 +417,77 @@ public class GeckoToolbar extends FrameLayout implements View.OnClickListener, V
     }
 
     public void updateTheme(Activity activity, boolean incognito) {
+        updateTheme(activity, incognito, true);
+    }
 
-        int surfaceColor = IncognitoColors.getSurface(activity, incognito);
+    /**
+     * @param tonalHolder picks the toolbar's holder tone per surface.
+     * TRUE (browser, the 2-arg default): surfaceContainer — the full
+     * tonal frame. The browser cannot split this: its inset-padded root
+     * leaves the status strip to the decor (painted surfaceContainer by
+     * BrowserFragment), so the toolbar must match or the top seams.
+     * FALSE (Home / incognito Home): plain surface — the toolbar merges
+     * with the page canvas. The toolbar pads itself by the status inset
+     * there (HomeFragment's insets listener), so this tone also paints
+     * the status strip: a seamless quiet top over the dashboard, no
+     * tonal band floating on the canvas. Bottom chrome stays tonal on
+     * both. The URL pill is surfaceContainerHighest in BOTH modes —
+     * matching the Home cards on the quiet holder, and the two-step
+     * lift on the tonal one (see the pill block below).
+     */
+    public void updateTheme(Activity activity, boolean incognito, boolean tonalHolder) {
+
+        int surfaceColor = tonalHolder
+                ? IncognitoColors.getSurfaceContainer(activity, incognito)
+                : IncognitoColors.getSurface(activity, incognito);
         int onSurfaceColor = IncognitoColors.getOnSurface(activity, incognito);
         int onSurfaceVariant = IncognitoColors.getOnSurfaceVariant(activity, incognito);
-        int surfaceContainerHigh = IncognitoColors.getSurfaceContainerHigh(activity, incognito);
 
-        // 1. Address bar holder background (the ConstraintLayout root)
+        // 1. Toolbar background. Painted on THIS view as well as the
+        // address_bar_holder child: when the toolbar self-pads by the
+        // status inset (the edge-to-edge browser, and Home), the inset
+        // strip lies in THIS view's padding area, which a child's
+        // background can never reach — painting only the holder would
+        // leave the status strip transparent over whatever is behind.
+        setBackgroundColor(surfaceColor);
         View addressBarHolder = findViewById(R.id.address_bar_holder);
         if (addressBarHolder != null) {
             addressBarHolder.setBackgroundColor(surfaceColor);
         }
 
-        // 2. Address bar rounded background (the GradientDrawable pill)
+        // 2. Address bar rounded background (the GradientDrawable pill).
+        // Pill tone per holder:
+        //  - tonal holder (browser, both modes): surfaceContainerHighest —
+        //    the two-step lift over the surfaceContainer holder (a High fill
+        //    sat only one step up and read nearly flat). Light = the
+        //    STRENGTHENED #DAD8DD.
+        //  - quiet holder (BOTH Homes, regular and incognito): High at REST
+        //    — the M3 docked-search role, exactly ONE step above the home
+        //    shelf tiles (surfaceContainer); one step reads as "the input,
+        //    gently raised" and keeps an even surface→container→High
+        //    ladder. Focus ANIMATES the pill to Highest (mAnimColorTo) so
+        //    it fuses with the AutoCompleteView panel, whose card sits at
+        //    Highest — rest belongs to the holder's ladder, focus belongs
+        //    to the overlay's surface. (Incognito Home used to REST at
+        //    Highest; that pre-dated the focus pulse — with the overlay
+        //    match handled by focus, its rest drops to incognito High like
+        //    regular Home, finally using the incognito High token.)
+        int pillRestColor;
+        if (tonalHolder) {
+            pillRestColor = IncognitoColors.getSurfaceContainerHighest(activity, incognito);
+        } else {
+            pillRestColor = IncognitoColors.getSurfaceContainerHigh(activity, incognito);
+        }
         if (mBackground != null && mBackground.getBackground() instanceof GradientDrawable gd) {
-            gd.setColor(surfaceContainerHigh);
+            // MUTATE before setColor: @drawable/address_bar is ONE cached
+            // resource, so its ConstantState is shared across every toolbar
+            // that inflated it. Without mutate, toolbars overwrite each
+            // other's colour on that shared state — last updateTheme wins
+            // for ALL of them (bit Home vs browser when their rest tones
+            // differed, and incognito vs regular still differ today).
+            // mutate() gives this toolbar's pill its own state.
+            gd.mutate();
+            gd.setColor(pillRestColor);
         }
 
         // 3. Edit text colors
@@ -475,13 +531,16 @@ public class GeckoToolbar extends FrameLayout implements View.OnClickListener, V
             mSearchTextDefaultColor = onSurfaceVariant;
         }
 
-        // 9. Update the animation colors so focus/unfocus uses the right palette.
-        // surfaceBright collapses to the same value as surface in the light M3
-        // palette (#FBF9FB), which made the focused pill disappear against the
-        // address-bar holder. surfaceContainerHighest is one M3 step above the
-        // resting surfaceContainerHigh tone in both themes, so focus stays
-        // visible without breaking the dark-theme appearance.
-        mAnimColorFrom = surfaceContainerHigh;
+        // 9. Update the animation colors so focus/unfocus uses the right
+        // palette. From = the REST fill so unfocus returns the pill to its
+        // true resting tone; To = Highest, ALWAYS — focused, the pill must
+        // sit on the same surface as the AutoCompleteView panel it opens
+        // (its suggestion card + clipboard card are Highest), so the pill
+        // and the panel read as one raised input. On the quiet holders
+        // (both Homes, rest = High) that's a real High→Highest lift; on
+        // the browser's tonal holder (rest = Highest) it's a no-op and the
+        // panel raise alone carries the affordance.
+        mAnimColorFrom = pillRestColor;
         mAnimColorTo = IncognitoColors.getSurfaceContainerHighest(activity, incognito);
     }
 

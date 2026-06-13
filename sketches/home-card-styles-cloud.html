@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Home card styles ×3 + Cloud — dark, real tokens</title>
+<style>
+  :root{
+    --surface:#131315;
+    --card:#343537;          /* home_surface_container dark (Neutral/Tonal) */
+    --chipWell:#292A2C;       /* Neutral grey chip well */
+    --onSurface:#E4E2E5;
+    --onSurfaceVar:#C5C6CD;
+    --pill:#343537;
+    /* brand chips (dark) */
+    --coral:#F66A66;   --onCoral:#0F0000;
+    --rasp:#C8417B;    --onRasp:#FFFFFF;
+    --peach:#FAB186;   --onPeach:#532606;
+    /* proposed Cloud accent — COOL on purpose (see note) */
+    --sky:#6EA8E8;     --onSky:#05203F;
+    /* warm alt for Cloud */
+    --gold:#E7C06A;    --onGold:#3A2A00;
+  }
+  *{box-sizing:border-box;}
+  body{background:#1b1b1d;font-family:Roboto,system-ui,sans-serif;margin:0;
+       padding:28px;color:#eee;}
+  h1{font-size:18px;font-weight:600;margin:0 0 4px;}
+  .sub{color:#9a9a9e;font-size:13px;margin:0 0 22px;}
+  .row{display:flex;gap:26px;flex-wrap:wrap;}
+  .col{width:300px;}
+  .label{font-size:13px;font-weight:600;margin:0 0 8px;color:#cfcfd3;}
+  .label small{font-weight:400;color:#8a8a8e;}
+  .phone{background:var(--surface);border-radius:22px;padding:10px 10px 22px;
+         box-shadow:0 8px 30px rgba(0,0,0,.45);}
+  .pill{height:44px;border-radius:22px;background:var(--pill);display:flex;
+        align-items:center;gap:9px;padding:0 14px;color:var(--onSurfaceVar);
+        font-size:13px;margin-bottom:10px;}
+  .card{border-radius:12px;margin-bottom:9px;display:flex;align-items:center;
+        gap:12px;padding:11px 12px;}
+  .chip{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;
+        justify-content:center;font-size:16px;flex-shrink:0;}
+  .t b{font-size:13px;font-weight:500;display:block;line-height:1.25;}
+  .t span{font-size:11px;opacity:.8;}
+  /* fill variants */
+  .card.neutral,.card.tonal{background:var(--card);}
+  .card.neutral .t b,.card.tonal .t b,
+  .card.neutral .t span,.card.tonal .t span{color:var(--onSurface);}
+  .card.neutral .chip{background:var(--chipWell);color:var(--onSurfaceVar);}
+  .note{margin-top:22px;max-width:760px;background:#242427;border-radius:10px;
+        padding:13px 15px;font-size:13px;line-height:1.55;color:#ccc;}
+  .swatchrow{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;}
+  .sw{display:flex;align-items:center;gap:6px;font-size:11.5px;color:#bbb;}
+  .sw i{width:18px;height:18px;border-radius:5px;display:inline-block;}
+  code{background:#000;padding:1px 5px;border-radius:4px;font-size:11.5px;}
+</style>
+</head>
+<body>
+  <h1>Three surviving styles, now with a 4th card — Cloud</h1>
+  <p class="sub">Dark theme, real tokens. Tonal = default · Neutral = option · Coral = expressive option.</p>
+
+  <div class="row">
+
+    <!-- NEUTRAL -->
+    <div class="col">
+      <p class="label">Neutral <small>· grey card, grey chip</small></p>
+      <div class="phone">
+        <div class="pill">⌕&nbsp; Search or Type URL</div>
+        <div class="card neutral"><div class="chip">⬇</div><div class="t"><b>Downloads</b><span>97 files · 8.2 GB</span></div></div>
+        <div class="card neutral"><div class="chip">🔒</div><div class="t"><b>Safe Folder</b><span>14 items</span></div></div>
+        <div class="card neutral"><div class="chip">🛡</div><div class="t"><b>Trackers blocked</b><span>9,928 · 473 MB</span></div></div>
+        <div class="card neutral"><div class="chip">☁</div><div class="t"><b>Cloud</b><span>Back up &amp; sync</span></div></div>
+      </div>
+    </div>
+
+    <!-- TONAL -->
+    <div class="col">
+      <p class="label">Tonal <small>· grey card, brand chip (DEFAULT)</small></p>
+      <div class="phone">
+        <div class="pill">⌕&nbsp; Search or Type URL</div>
+        <div class="card tonal"><div class="chip" style="background:var(--coral);color:var(--onCoral)">⬇</div><div class="t"><b>Downloads</b><span>97 files · 8.2 GB</span></div></div>
+        <div class="card tonal"><div class="chip" style="background:var(--rasp);color:var(--onRasp)">🔒</div><div class="t"><b>Safe Folder</b><span>14 items</span></div></div>
+        <div class="card tonal"><div class="chip" style="background:var(--peach);color:var(--onPeach)">🛡</div><div class="t"><b>Trackers blocked</b><span>9,928 · 473 MB</span></div></div>
+        <div class="card tonal"><div class="chip" style="background:var(--sky);color:var(--onSky)">☁</div><div class="t"><b>Cloud</b><span>Back up &amp; sync</span></div></div>
+      </div>
+    </div>
+
+    <!-- CORAL -->
+    <div class="col">
+      <p class="label">Coral <small>· full brand surface, no chip</small></p>
+      <div class="phone">
+        <div class="pill">⌕&nbsp; Search or Type URL</div>
+        <div class="card" style="background:var(--coral)"><div class="chip" style="color:var(--onCoral)">⬇</div><div class="t" style="color:var(--onCoral)"><b>Downloads</b><span>97 files · 8.2 GB</span></div></div>
+        <div class="card" style="background:var(--rasp)"><div class="chip" style="color:var(--onRasp)">🔒</div><div class="t" style="color:var(--onRasp)"><b>Safe Folder</b><span>14 items</span></div></div>
+        <div class="card" style="background:var(--peach)"><div class="chip" style="color:var(--onPeach)">🛡</div><div class="t" style="color:var(--onPeach)"><b>Trackers blocked</b><span>9,928 · 473 MB</span></div></div>
+        <div class="card" style="background:var(--sky)"><div class="chip" style="color:var(--onSky)">☁</div><div class="t" style="color:var(--onSky)"><b>Cloud</b><span>Back up &amp; sync</span></div></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="note">
+    <b>Cloud's accent is deliberately COOL (sky <code>#6EA8E8</code>), not another warm brand tone.</b>
+    The other three cards are <i>local device</i> features (downloads, vault, on-device blocking) — all warm.
+    Making Cloud the one cool card signals "this one lives somewhere else / it's the sync+monetize tier"
+    at a glance, without a label. Trade-off you should weigh:
+    <ul style="margin:8px 0 0;padding-left:18px;">
+      <li><b>Tonal</b> (default): the cool chip on the grey card reads great — clear odd-one-out, no clash. This is the strongest argument for the cool choice.</li>
+      <li><b>Coral</b>: a full <i>blue</i> card among three warm ones is the riskiest — it can look foreign rather than intentional. If that bothers you, Cloud in Coral could instead take a warm <b>gold</b> (<code>#E7C06A</code>) so the wall-of-warmth stays coherent and Cloud is just the "premium" gold.</li>
+      <li><b>Neutral</b>: greyscale anyway, so Cloud is just a 4th grey card — Cloud's identity comes only from the ☁ glyph. Fine, and on-brand for the "calm" pick.</li>
+    </ul>
+    <div class="swatchrow">
+      <span class="sw"><i style="background:#F66A66"></i>Downloads coral</span>
+      <span class="sw"><i style="background:#C8417B"></i>Vault raspberry</span>
+      <span class="sw"><i style="background:#FAB186"></i>Trackers peach</span>
+      <span class="sw"><i style="background:#6EA8E8"></i>Cloud sky (proposed)</span>
+      <span class="sw"><i style="background:#E7C06A"></i>Cloud gold (warm alt)</span>
+    </div>
+  </div>
+
+</body>
+</html>

@@ -81,7 +81,7 @@
     <string name="edit">አርትዕ</string>
     <string name="empty_learn_more">የበለጠ ለመረዳት</string>
     <string name="empty_list">የእርስዎ ውርዶች እዚህ ይታያሉ።</string>
-    <string name="empty_list_bookmarks">እስካሁን ምንም ዕልባት የተደረገ ነገር የለም።</string>
+    <string name="empty_list_bookmarks">እስካሁን ምንም ዕልባት የተደረገ ነገር የለም።\n\nማንኛውንም ገጽ ይክፈቱ እና እዚህ ለማስቀመጥ ከ ⋮ ምናሌ ውስጥ “የዕልባት ገጽ” የሚለውን ይምረጡ።</string>
     <string name="empty_list_browser_history">የአሳሽ ታሪክዎ ባዶ ነው።</string>
     <string name="empty_list_history">የወርዶች ታሪክዎ ባዶ ነው።</string>
     <string name="empty_list_query">ምንም ውጤቶች አልተገኙም</string>
@@ -261,16 +261,6 @@
     <string name="bookmark_name">ስም</string>
     <string name="home_vault_button">ደህንነቱ የተጠበቀ አቃፊ</string>
 <string name="settings_theme_app_category">የመተግበሪያ ገጽታ</string>
-    <string name="settings_theme_home_category">መነሻ ማያ ገጽ</string>
-    <string name="settings_home_cards">የመነሻ ካርዶች</string>
-    <string name="settings_home_cards_summary">የመነሻ ካርዶችን ስልት ይምረጡ</string>
-    <string name="settings_home_cards_header">አንድ ገጽታ ሁሉንም ካርዶች በአንድ ጊዜ ይቀይራል — የሚወዱትን ገጽታ ይምረጡ።</string>
-    <string name="home_card_style_neutral">ገለልተኛ</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
-    <string name="home_card_style_coral">Coral</string>
-    <string name="home_card_style_preview_downloads_subtitle">150 ፋይሎች ተቀምጠዋል · 2.4 ጂቢ</string>
-    <string name="home_card_style_preview_vault_subtitle">12 ዕቃዎች ተቀምጠዋል</string>
     <string name="crash_sheet_title">ብልሽት ተገኝቷል</string>
     <string name="crash_sheet_report">ሪፖርት</string>
     <string name="crash_sheet_copy">ቅዳ</string>
@@ -281,7 +271,6 @@
     <string name="home_trackers_subtitle">%1$s · ~%2$s ተቆጥቧል</string>
     <string name="home_trackers_subtitle_idle">ጥበቃ ስራ ላይ ነው</string>
     <string name="home_vault_empty_subtitle">የግል እና የተመሰጠረ</string>
-    <string name="home_card_style_preview_trackers_subtitle">12,345 · ~580 ሜባ ተቆጥቧል</string>
     <string name="trackers_info_count_label">ተከታታዮችና ማስታወቂያዎች ተዘግተዋል</string>
     <string name="trackers_info_saved">~%1$s የጥቅም ስፋት ተቆጥቧል</string>
     <string name="trackers_info_categories">ተከታታዮች · ማስታወቂያዎች · የጣት አሻራ · ኩኪዎች</string>
@@ -295,7 +284,6 @@
     <string name="trackers_info_stat_saved">የተቀመጠ ዳታ</string>
     <string name="trackers_info_action">ጥበቃ አስተዳድር</string>
     <string name="trackers_info_today">%1$s ዛሬ ተዘግተዋል</string>
-    <string name="home_card_style_tonal">ቀለም</string>
 
 
 

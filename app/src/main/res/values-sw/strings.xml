@@ -53,7 +53,7 @@
     <string name="edit">Hariri</string>
     <string name="empty_learn_more">Pata maelezo zaidi</string>
     <string name="empty_list">Vipakuliwa vyako vitaonekana hapa.</string>
-    <string name="empty_list_bookmarks">Bado hakuna chochote kilichoalamishwa.</string>
+    <string name="empty_list_bookmarks">Bado hakuna chochote kilichoalamishwa.\n\nFungua ukurasa wowote na uchague “Bookmark page” kutoka kwenye menyu ya ⋮ ili kuuhifadhi hapa.</string>
     <string name="empty_list_browser_history">Historia ya kivinjari chako ni tupu.</string>
     <string name="empty_list_history">Historia yako ya vipakuliwa ni tupu.</string>
     <string name="empty_list_query">Hakuna matokeo yaliyopatikana</string>
@@ -209,16 +209,6 @@
     <string name="vault_unsupported">Haiwezi kufungua faili hii. Ili kuifungua, iondoe kwenye Folda Salama na ujaribu tena.</string>
     <string name="home_vault_button">Folda salama</string>
 <string name="settings_theme_app_category">Mandhari ya programu</string>
-    <string name="settings_theme_home_category">Skrini ya nyumbani</string>
-    <string name="settings_home_cards">Kadi za skrini ya nyumbani</string>
-    <string name="settings_home_cards_summary">Chagua mtindo wa kadi za skrini ya nyumbani</string>
-    <string name="settings_home_cards_header">Mandhari moja hubadilisha kadi zote kwa pamoja — chagua mwonekano unaopenda.</string>
-    <string name="home_card_style_neutral">Wastani</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
-    <string name="home_card_style_coral">Coral</string>
-    <string name="home_card_style_preview_downloads_subtitle">Faili 150 zimehifadhiwa · 2.4 GB</string>
-    <string name="home_card_style_preview_vault_subtitle">Vipengee 12 vimehifadhiwa</string>
     <string name="crash_sheet_title">Hitilafu imegunduliwa</string>
     <string name="crash_sheet_report">Ripoti</string>
     <string name="crash_sheet_copy">Nakili</string>
@@ -229,13 +219,11 @@
     <string name="home_trackers_subtitle">%1$s · ~%2$s vimehifadhiwa</string>
     <string name="home_trackers_subtitle_idle">Ulinzi unafanya kazi</string>
     <string name="home_vault_empty_subtitle">Binafsi na imefichwa</string>
-    <string name="home_card_style_preview_trackers_subtitle">12,345 · ~580 MB vimehifadhiwa</string>
     <string name="trackers_info_count_label">vifuatiliaji na matangazo vimezuiwa</string>
     <string name="trackers_info_saved">~%1$s ya bandwidth imehifadhiwa</string>
     <string name="trackers_info_categories">Vifuatiliaji · Matangazo · Alama za kidole · Vidakuzi</string>
     <string name="trackers_info_action">Simamia ulinzi</string>
     <string name="trackers_info_today">%1$s zimezuiwa leo</string>
-    <string name="home_card_style_tonal">Toni</string>
 
 
 

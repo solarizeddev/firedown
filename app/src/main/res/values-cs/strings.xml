@@ -92,7 +92,7 @@
     <string name="restore_downloads_none">V této složce nebyla nalezena žádná záloha</string>
     <string name="restore_downloads_wrong_device">Tato záloha patří jinému zařízení</string>
     <string name="empty_list">Zde se zobrazí vaše stažené soubory.</string>
-    <string name="empty_list_bookmarks">Zatím nic není v záložkách.</string>
+    <string name="empty_list_bookmarks">Zatím nic není v záložkách.\n\nOtevřete libovolnou stránku a v nabídce ⋮ zvolte „Přidat stránku do záložek“, aby se uložila sem.</string>
     <string name="empty_list_browser_history">Historie vašeho prohlížeče je prázdná.</string>
     <string name="empty_list_history">Vaše historie stahování je prázdná.</string>
     <string name="empty_list_query">Nebyly nalezeny žádné výsledky</string>
@@ -332,16 +332,6 @@
     <string name="settings_wasm_allowlist_remove_message">Odstranit %s ze seznamu povolených pro WebAssembly?</string>
     <string name="settings_wasm_allowlist_remove_confirm">Odstranit</string>
 <string name="settings_theme_app_category">Vzhled aplikace</string>
-    <string name="settings_theme_home_category">Domovská obrazovka</string>
-    <string name="settings_home_cards">Karty domovské obrazovky</string>
-    <string name="settings_home_cards_summary">Vyberte styl karet domovské obrazovky</string>
-    <string name="settings_home_cards_header">Jeden motiv změní všechny karty naráz — vyberte vzhled, který se vám líbí.</string>
-    <string name="home_card_style_neutral">Neutrální</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
-    <string name="home_card_style_coral">Coral</string>
-    <string name="home_card_style_preview_downloads_subtitle">150 souborů uloženo · 2,4 GB</string>
-    <string name="home_card_style_preview_vault_subtitle">12 položek uloženo</string>
     <string name="crash_sheet_title">Zjištěno selhání</string>
     <string name="crash_sheet_report">Nahlásit</string>
     <string name="crash_sheet_copy">Kopírovat</string>
@@ -352,7 +342,6 @@
     <string name="home_trackers_subtitle">%1$s · ~%2$s ušetřeno</string>
     <string name="home_trackers_subtitle_idle">Ochrana aktivní</string>
     <string name="home_vault_empty_subtitle">Soukromé a šifrované</string>
-    <string name="home_card_style_preview_trackers_subtitle">12 345 · ~580 MB ušetřeno</string>
     <string name="trackers_info_count_label">sledovačů a reklam zablokováno</string>
     <string name="trackers_info_saved">~%1$s šířky pásma ušetřeno</string>
     <string name="trackers_info_categories">Sledovače · Reklamy · Otisky · Cookies</string>
@@ -366,7 +355,6 @@
     <string name="trackers_info_stat_saved">Uložená data</string>
     <string name="trackers_info_action">Spravovat ochranu</string>
     <string name="trackers_info_today">%1$s zablokováno dnes</string>
-    <string name="home_card_style_tonal">Tónový</string>
 
 
 

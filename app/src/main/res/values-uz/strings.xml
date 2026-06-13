@@ -78,7 +78,7 @@
     <string name="edit">Tahrirlash</string>
     <string name="empty_learn_more">Batafsil</string>
     <string name="empty_list">Yuklab olishlaringiz shu yerda chiqadi.</string>
-    <string name="empty_list_bookmarks">Hali hech narsa belgilanmagan.</string>
+    <string name="empty_list_bookmarks">Hali hech narsa belgilanmagan.\n\nIstalgan sahifani oching va uni shu yerda saqlash uchun ⋮ menyusidan “Bookmark page” ni tanlang.</string>
     <string name="empty_list_browser_history">Brauzeringiz tarixi bo\'sh.</string>
     <string name="empty_list_history">Yuklab olishlar tarixi boʻsh.</string>
     <string name="empty_list_query">Hech qanday natija topilmadi</string>
@@ -247,16 +247,6 @@
     <string name="vault_unsupported">Bu faylni ochib boʻlmadi. Ochish uchun uni xavfsiz jilddan olib tashlang va qaytadan urinib ko‘ring.</string>
     <string name="home_vault_button">Xavfsiz jild</string>
 <string name="settings_theme_app_category">Ilova mavzusi</string>
-    <string name="settings_theme_home_category">Bosh sahifa</string>
-    <string name="settings_home_cards">Bosh sahifa kartalari</string>
-    <string name="settings_home_cards_summary">Bosh sahifa kartalari uslubini tanlang</string>
-    <string name="settings_home_cards_header">Bitta mavzu barcha kartalarni bir vaqtning o\'zida o\'zgartiradi — yoqqan ko\'rinishni tanlang.</string>
-    <string name="home_card_style_neutral">Neytral</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
-    <string name="home_card_style_coral">Coral</string>
-    <string name="home_card_style_preview_downloads_subtitle">150 fayl saqlandi · 2,4 GB</string>
-    <string name="home_card_style_preview_vault_subtitle">12 element saqlandi</string>
     <string name="crash_sheet_title">Ishlamay qolish aniqlandi</string>
     <string name="crash_sheet_report">Xabar berish</string>
     <string name="crash_sheet_copy">Nusxa olish</string>
@@ -267,7 +257,6 @@
     <string name="home_trackers_subtitle">%1$s · ~%2$s tejaldi</string>
     <string name="home_trackers_subtitle_idle">Himoya yoqilgan</string>
     <string name="home_vault_empty_subtitle">Shaxsiy va shifrlangan</string>
-    <string name="home_card_style_preview_trackers_subtitle">12 345 · ~580 MB tejaldi</string>
     <string name="trackers_info_count_label">kuzatuvchilar va reklamalar bloklandi</string>
     <string name="trackers_info_saved">~%1$s tarmoq trafigi tejaldi</string>
     <string name="trackers_info_categories">Kuzatuvchilar · Reklamalar · Izlar · Cookie</string>
@@ -281,7 +270,6 @@
     <string name="trackers_info_stat_saved">Tejalgan maʼlumotlar</string>
     <string name="trackers_info_action">Himoyani boshqarish</string>
     <string name="trackers_info_today">%1$s bugun bloklandi</string>
-    <string name="home_card_style_tonal">Tonli</string>
 
 
 

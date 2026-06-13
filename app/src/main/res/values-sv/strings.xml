@@ -55,7 +55,7 @@
     <string name="edit">Redigera</string>
     <string name="empty_learn_more">Läs mer</string>
     <string name="empty_list">Dina nedladdningar visas här.</string>
-    <string name="empty_list_bookmarks">Inget bokmärkt ännu.</string>
+    <string name="empty_list_bookmarks">Inget bokmärkt ännu.\n\nÖppna valfri sida och välj “Bokmärk sida” i ⋮-menyn för att spara den här.</string>
     <string name="empty_list_browser_history">Din webbläsarhistorik är tom.</string>
     <string name="empty_list_history">Din nedladdningshistorik är tom.</string>
     <string name="empty_list_query">Inga resultat funna</string>
@@ -236,16 +236,6 @@
     <string name="incognito_fact_downloads_title">Nedladdningar förblir privata</string>
     <string name="incognito_fact_downloads_sub">Sparas i din Säkra mapp, syns bara i Firedown.</string>
 <string name="settings_theme_app_category">Apptema</string>
-    <string name="settings_theme_home_category">Startsida</string>
-    <string name="settings_home_cards">Startkort</string>
-    <string name="settings_home_cards_summary">Välj stil för startkorten</string>
-    <string name="settings_home_cards_header">Ett tema ändrar alla korten samtidigt — välj det utseende du vill ha.</string>
-    <string name="home_card_style_neutral">Neutral</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
-    <string name="home_card_style_coral">Coral</string>
-    <string name="home_card_style_preview_downloads_subtitle">150 filer sparade · 2,4 GB</string>
-    <string name="home_card_style_preview_vault_subtitle">12 objekt sparade</string>
     <string name="crash_sheet_title">Krasch upptäckt</string>
     <string name="crash_sheet_report">Rapportera</string>
     <string name="crash_sheet_copy">Kopiera</string>
@@ -256,13 +246,11 @@
     <string name="home_trackers_subtitle">%1$s · ~%2$s sparade</string>
     <string name="home_trackers_subtitle_idle">Skydd aktivt</string>
     <string name="home_vault_empty_subtitle">Privat och krypterad</string>
-    <string name="home_card_style_preview_trackers_subtitle">12 345 · ~580 MB sparade</string>
     <string name="trackers_info_count_label">spårare och annonser blockerade</string>
     <string name="trackers_info_saved">~%1$s bandbredd sparad</string>
     <string name="trackers_info_categories">Spårare · Annonser · Fingeravtryck · Cookies</string>
     <string name="trackers_info_action">Hantera skydd</string>
     <string name="trackers_info_today">%1$s blockerade idag</string>
-    <string name="home_card_style_tonal">Tonal</string>
 
 
 

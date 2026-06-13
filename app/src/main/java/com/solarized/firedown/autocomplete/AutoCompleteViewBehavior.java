@@ -16,12 +16,9 @@ public class AutoCompleteViewBehavior extends CoordinatorLayout.Behavior<View> {
 
     private final AutoCompleteView mAutoCompleteView;
 
-    private final int mToolbarHeight;
-
-    public AutoCompleteViewBehavior(@Nullable Context context, @Nullable AttributeSet attrs, @NonNull final View parentView, final int toolbarHeight) {
+    public AutoCompleteViewBehavior(@Nullable Context context, @Nullable AttributeSet attrs, @NonNull final View parentView) {
         super(context, attrs);
         mAutoCompleteView = recursivelyFindAutoCompleteView(parentView);
-        mToolbarHeight = toolbarHeight;
     }
 
     @Override
@@ -37,8 +34,12 @@ public class AutoCompleteViewBehavior extends CoordinatorLayout.Behavior<View> {
     @Override
     public boolean onDependentViewChanged(@NonNull CoordinatorLayout parent, @NonNull View child, @NonNull View dependency){
         if(mAutoCompleteView != null){
+            // The toolbar's height is read LIVE, not frozen at construction:
+            // with the edge-to-edge browser the toolbar self-pads by the
+            // status inset AFTER this behavior is built, so a constructor
+            // snapshot would park the suggestions panel under the toolbar.
             float newToolbarTranslationY = dependency.getTranslationY();
-            mAutoCompleteView.setTranslationY(newToolbarTranslationY + (float)mToolbarHeight);
+            mAutoCompleteView.setTranslationY(newToolbarTranslationY + (float) dependency.getHeight());
         }
         return true;
     }

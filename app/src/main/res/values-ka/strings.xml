@@ -80,7 +80,7 @@
     <string name="edit">Რედაქტირება</string>
     <string name="empty_learn_more">შეიტყვეთ მეტი</string>
     <string name="empty_list">Თქვენი ჩამოტვირთვები აქ გამოჩნდება.</string>
-    <string name="empty_list_bookmarks">Ჯერ არაფერია მონიშნული.</string>
+    <string name="empty_list_bookmarks">Ჯერ არაფერია მონიშნული.\n\nგახსენით ნებისმიერი გვერდი და აირჩიეთ “გვერდის ჩანიშვნა” ⋮ მენიუდან, რომ აქ შეინახოთ.</string>
     <string name="empty_list_browser_history">Თქვენი ბრაუზერის ისტორია ცარიელია.</string>
     <string name="empty_list_history">Თქვენი ჩამოტვირთვების ისტორია ცარიელია.</string>
     <string name="empty_list_query">Შედეგები არ მოიძებნა</string>
@@ -261,16 +261,6 @@
     <string name="bookmark_name">სახელი</string>
     <string name="home_vault_button">დაცული საქაღალდე</string>
 <string name="settings_theme_app_category">აპლიკაციის თემა</string>
-    <string name="settings_theme_home_category">მთავარი გვერდი</string>
-    <string name="settings_home_cards">მთავარი გვერდის ბარათები</string>
-    <string name="settings_home_cards_summary">აირჩიეთ მთავარი გვერდის ბარათების სტილი</string>
-    <string name="settings_home_cards_header">ერთი თემა ცვლის ყველა ბარათს ერთდროულად — აირჩიეთ მოსაწონი იერსახე.</string>
-    <string name="home_card_style_neutral">ნეიტრალური</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
-    <string name="home_card_style_coral">Coral</string>
-    <string name="home_card_style_preview_downloads_subtitle">შენახულია 150 ფაილი · 2,4 გბ</string>
-    <string name="home_card_style_preview_vault_subtitle">შენახულია 12 ელემენტი</string>
     <string name="crash_sheet_title">გამოვლენილია გათიშვა</string>
     <string name="crash_sheet_report">მოხსენება</string>
     <string name="crash_sheet_copy">ასლი</string>
@@ -281,7 +271,6 @@
     <string name="home_trackers_subtitle">%1$s · ~%2$s დაზოგა</string>
     <string name="home_trackers_subtitle_idle">დაცვა ჩართულია</string>
     <string name="home_vault_empty_subtitle">კერძო და დაშიფრული</string>
-    <string name="home_card_style_preview_trackers_subtitle">12 345 · ~580 მბ დაზოგა</string>
     <string name="trackers_info_count_label">ტრეკერი და რეკლამა დაბლოკილია</string>
     <string name="trackers_info_saved">~%1$s გამტარუნარიანობა დაზოგა</string>
     <string name="trackers_info_categories">ტრეკერები · რეკლამები · თითის ანაბეჭდი · ქუქი ფაილები</string>
@@ -295,7 +284,6 @@
     <string name="trackers_info_stat_saved">შენახული მონაცემები</string>
     <string name="trackers_info_action">დაცვის მართვა</string>
     <string name="trackers_info_today">%1$s დღეს დაბლოკილია</string>
-    <string name="home_card_style_tonal">ტონალური</string>
 
 
 

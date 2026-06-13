@@ -80,7 +80,7 @@
     <string name="edit">Рэдагаваць</string>
     <string name="empty_learn_more">Даведацца больш</string>
     <string name="empty_list">Вашы спампоўкі з\'явяцца тут.</string>
-    <string name="empty_list_bookmarks">Пакуль нічога не закладзена.</string>
+    <string name="empty_list_bookmarks">Пакуль нічога не закладзена.\n\nАдкрыйце любую старонку і выберыце “Зрабіць закладку” у меню ⋮, каб захаваць яе тут.</string>
     <string name="empty_list_browser_history">Ваша гісторыя браўзера пустая.</string>
     <string name="empty_list_history">Ваша гісторыя спамповак пустая.</string>
     <string name="empty_list_query">Нічога не знойдзена</string>
@@ -259,16 +259,6 @@
     <string name="bookmark_name">Назва</string>
     <string name="home_vault_button">Бяспечная тэчка</string>
 <string name="settings_theme_app_category">Тэма прыкладання</string>
-    <string name="settings_theme_home_category">Галоўны экран</string>
-    <string name="settings_home_cards">Карткі галоўнага экрана</string>
-    <string name="settings_home_cards_summary">Выберыце стыль картак галоўнага экрана</string>
-    <string name="settings_home_cards_header">Адна тэма змяняе ўсе карткі адразу — выберыце выгляд, які вам падабаецца.</string>
-    <string name="home_card_style_neutral">Нейтральны</string>
-    <string name="home_card_style_blush">Blush</string>
-    <string name="home_card_style_bloom">Bloom</string>
-    <string name="home_card_style_coral">Coral</string>
-    <string name="home_card_style_preview_downloads_subtitle">150 файлаў захавана · 2,4 ГБ</string>
-    <string name="home_card_style_preview_vault_subtitle">12 элементаў захавана</string>
     <string name="crash_sheet_title">Выяўлены збой</string>
     <string name="crash_sheet_report">Адправіць</string>
     <string name="crash_sheet_copy">Капіяваць</string>
@@ -279,7 +269,6 @@
     <string name="home_trackers_subtitle">%1$s · ~%2$s зэканомлена</string>
     <string name="home_trackers_subtitle_idle">Абарона ўключана</string>
     <string name="home_vault_empty_subtitle">Прыватна і зашыфравана</string>
-    <string name="home_card_style_preview_trackers_subtitle">12 345 · ~580 МБ зэканомлена</string>
     <string name="trackers_info_count_label">трэкераў і рэкламы заблакіравана</string>
     <string name="trackers_info_saved">~%1$s трафіку зэканомлена</string>
     <string name="trackers_info_categories">Трэкеры · Рэклама · Адбіткі · Cookie</string>
@@ -293,7 +282,6 @@
     <string name="trackers_info_stat_saved">Зэканомлена</string>
     <string name="trackers_info_action">Кіраваць абаронай</string>
     <string name="trackers_info_today">%1$s заблакіравана сёння</string>
-    <string name="home_card_style_tonal">Танальны</string>
 
 
 
