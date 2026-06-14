@@ -185,8 +185,37 @@ browser.tabs.onUpdated.addListener((tabId, changeInfo) => {
         originTabCache.delete(origin);
       }
     }
+    // A tab opened+focused by window.open / target=_blank (the embedded-player
+    // "open in new tab" case — e.g. dailymotion's geo.dailymotion.com/player
+    // embed) fires NO tabs.onActivated: that event only fires on a user tab
+    // SWITCH. This navigation is its first observable event, so promote it here.
+    // Otherwise Java's mTabId stays on the previous tab while the capture lands
+    // under the new tab's real id, and BrowserDownloadViewModel.filter (strict
+    // tabId equality) silently drops it from the Captured sheet.
+    syncActiveTab();
   }
 });
+
+// Resolve the genuinely-active tab (the source of truth — not the event's
+// tabId, which may be a BACKGROUND tab navigating) and, when it actually
+// changed, emit the same synthetic 'onActivated' the bootstrap below uses so
+// Java updates mTabId. Idempotent: no message when the active tab is unchanged,
+// so a background tab can never steal the foreground id.
+function syncActiveTab() {
+  browser.tabs.query({ active: true, currentWindow: true })
+    .then((tabs) => {
+      if (!tabs[0] || tabs[0].id === lastActiveTabId) return;
+      const previousId = lastActiveTabId;
+      lastActiveTabId = tabs[0].id;
+      browser.runtime.sendNativeMessage('browser', {
+        listener: 'onActivated',
+        id: tabs[0].id,
+        previousId,
+        windows: tabs[0].windowId,
+      });
+    })
+    .catch(() => {});
+}
 
 browser.tabs.query({ active: true, currentWindow: true })
   .then((tabs) => {
