@@ -156,6 +156,13 @@ public class FFmpegMetaDataReader {
      * Add Codecs info.
      */
     private String getRelatedAudioCodec(int bitrate, FFmpegStreamInfo[] fFmpegStreamInfo) {
+        // Same bitrate-collapse guard as getRelatedAudioNumber: a zero video
+        // bitrate (every stream on a muxed HLS master) would match the FIRST
+        // audio's codec. Return null instead — VariantProcessor backfills the
+        // audio codec from the probe of the actually-selected variant.
+        if (bitrate <= 0) {
+            return null;
+        }
         for (FFmpegStreamInfo info : fFmpegStreamInfo) {
             if (info == null)
                 continue;
@@ -614,6 +621,21 @@ public class FFmpegMetaDataReader {
     }
 
     private int getRelatedAudioNumber(int bitrate, FFmpegStreamInfo[] fFmpegStreamInfo) {
+        // Pair the audio for a video stream by matching the video's bitrate. This
+        // is only meaningful when the video carries a REAL (non-zero) bitrate: on
+        // a muxed HLS master ffmpeg reports per-stream bit_rate=0 for every stream,
+        // so the old unconditional `bitrate == info.getBitRate()` matched 0==0 and
+        // returned the FIRST audio — pairing every quality with the lowest rung's
+        // audio, which lives in a DIFFERENT variant program than the chosen video
+        // (the unplayable-Periscope/X bug: two child playlists muxed at once).
+        // When we can't pair reliably, return UNKNOWN_STREAM (-1 = "auto", the
+        // FFmpegDownloader contract) and let the native downloader pick the audio
+        // in the SAME AVProgram as the chosen video (av_find_best_stream with
+        // related_stream), exactly as `ffmpeg -i master.m3u8 -c copy` does — rather
+        // than emit a confidently-wrong index here.
+        if (bitrate <= 0) {
+            return UNKNOWN_STREAM;
+        }
         for (FFmpegStreamInfo info : fFmpegStreamInfo) {
 
             if (info == null)

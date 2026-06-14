@@ -1633,6 +1633,17 @@ single-rendition child (Twitch/Kick via `processHlsMaster`, one program) and
 separate-audio inputs (DASH/YouTube, different input) are untouched, and it falls
 back to the recommended index if the video's program genuinely has no audio.
 
+Two layers, defense in depth. The **enumeration** is fixed at the source too:
+`FFmpegMetaDataReader.getRelatedAudioNumber`/`getRelatedAudioCodec` only trust the
+bitrate pairing when the video's bitrate is **> 0**; on a muxed master (all
+per-stream `bit_rate = 0`) they now return `UNKNOWN_STREAM` (**-1 = "auto"**, the
+`FFmpegDownloader` contract) instead of confidently emitting the first audio. So
+the quality list no longer carries a wrong audio index — native auto-selects the
+program-paired audio. The native cross-program override above remains as a
+backstop for any caller that still passes a non-`-1` audio index that crosses
+programs. Don't reinstate the unconditional `bitrate == getBitRate()` match — the
+0==0 collapse is exactly the bug.
+
 ### Per-site request quirks live in the parser, never the transport
 
 `FFmpegOkhttp` / the fork's `http.c` (the ffmpeg↔OkHttp bridge) is **generic**
