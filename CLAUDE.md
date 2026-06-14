@@ -1644,6 +1644,26 @@ backstop for any caller that still passes a non-`-1` audio index that crosses
 programs. Don't reinstate the unconditional `bitrate == getBitRate()` match — the
 0==0 collapse is exactly the bug.
 
+**This did NOT make the `downloader_read` type-match remap redundant — keep it.**
+It's tempting to think the Kick/Twitch remap and this Periscope corruption were
+one bug (both fire the same `re-bind (discontinuity remap)` log), but they're
+distinct root causes and the remap fixes one the audio selection can't touch:
+- The remap follows **MPEG-TS AVStream index renumbering/reuse across an
+  `EXT-X-DISCONTINUITY` WITHIN a single rendition** (a Kick preroll ad on pid
+  0x101, then main content reusing index 1 for *video* → a frozen index map feeds
+  H264 into the audio slot → `aac_adtstoasc` abort). Stream **selection** picks
+  indices once at find time; it fundamentally **cannot** follow an index that gets
+  reused mid-download — only matching by codec **type** + re-bind can.
+- Twitch/Kick go through `processHlsMaster` (skipProbe) and download a **single
+  child rendition = one program**, so they **never run** `getRelatedAudioNumber`
+  and never had the cross-program audio bug. Their need for the remap is the
+  within-rendition discontinuity above, unchanged by this fix.
+- Periscope only *looked* like the Kick bug: the remap was the victim, fed **two
+  concurrent programs** by the mis-paired audio. Fixing selection removes the
+  second program from its input; the remap then (correctly) follows only genuine
+  within-rendition discontinuities in the selected rendition. So both the
+  audio-selection fix AND the remap are load-bearing, for different scenarios.
+
 ### Per-site request quirks live in the parser, never the transport
 
 `FFmpegOkhttp` / the fork's `http.c` (the ffmpeg↔OkHttp bridge) is **generic**
