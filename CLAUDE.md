@@ -1601,6 +1601,38 @@ callback) rather than showing a nonsensical >100 %. Don't "fix" it by switching
 these to SIZE (playlist bytes) or NONE (indeterminate) — both are worse UX than
 a saturated TIME bar.
 
+### HLS master stream selection — pair audio to the video's PROGRAM
+
+When the **generic catcher** captures a multi-variant HLS **master** (no
+dedicated parser — e.g. X/Periscope `master_dynamic_*.m3u8` on `video.pscp.tv`),
+the qualities are enumerated by ffmpeg-probing the master, and each quality is a
+`(videoStreamNumber, audioStreamNumber)` pair fed to the native downloader, which
+opens the master and captures those two stream indices. The audio index is paired
+in `FFmpegMetaDataReader.getRelatedAudioNumber` **by bitrate equality** — and a
+muxed master reports per-stream `bit_rate = 0` for every stream, so the match
+collapses to the **first** audio stream. Every quality but the lowest then gets an
+audio stream from a **different variant program** than its video (e.g. 2160p video
++ 480p audio). Two un-discarded streams in two different child playlists → ffmpeg
+keeps **both** playlists live and demuxes them at once → `downloader_read`'s
+type-match remap flip-flops between the two same-type streams and muxes two PTS
+epochs into one track → unplayable file (the on-device tell: a flood of
+`re-bind … (discontinuity remap)` **and** `clamping dts` alternating between two
+timestamp ranges).
+
+The fix is **not** in the read-loop remap (that faithfully muxes whatever streams
+it's told to take) — it's in `downloader_find_streams`, made **program-aware the
+way ffmpeg's own CLI is**: an HLS master puts each variant's streams in their own
+`AVProgram`, and `av_find_best_stream(ctx, AUDIO, /*wanted*/-1, /*related*/<video>)`
+scopes the search to the video's program (`av_find_program_from_stream`) and
+returns the audio muxed with that rung. So when the Java-recommended audio index
+lands in a **different program** than the selected video (a genuine `nb_programs
+> 1` master, same input), we discard it and let `av_find_best_stream(related=video)`
+pick the program-paired audio. Both selected streams then live in **one** program
+→ only that child playlist is downloaded → clean single-rendition mux. Scoped so a
+single-rendition child (Twitch/Kick via `processHlsMaster`, one program) and
+separate-audio inputs (DASH/YouTube, different input) are untouched, and it falls
+back to the recommended index if the video's program genuinely has no audio.
+
 ### Per-site request quirks live in the parser, never the transport
 
 `FFmpegOkhttp` / the fork's `http.c` (the ffmpeg↔OkHttp bridge) is **generic**
