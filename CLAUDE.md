@@ -1583,6 +1583,24 @@ packet's stream made the bar jump backward — the min is monotonic and is the
 position every track has reached. SIZE is never used for HLS/DASH because their
 probe `Content-Length` is the *playlist* size, not the media.
 
+The TIME position is clamped on **both** ends. The lower clamp (non-regress, in
+`downloader_muxed_position`) keeps the bar from stepping backward when a stream
+flips between stalled and advancing. The **upper** clamp (in the
+`PROGRESS_TIME` branch) keeps it from exceeding the total: the denominator is
+ffmpeg's *probe-estimated* duration (`input_format_ctx->duration`, fixed once),
+but on a **discontinuity-spliced VOD (Twitch/Kick ad-stitching)** the MPEG-TS
+PTS **resets** at every `EXT-X-DISCONTINUITY`, so `find_stream_info`'s pts-span
+estimate **underestimates** the true length while `current_recording_time`
+accumulates the real summed `pkt->duration` and grows **past** it — the
+on-device symptom was progress reported at **165 %+ and climbing** on a Kick
+m3u8 (both V and A accumulators agreed and overshot together, so it was the
+denominator that was short, not the min/stall logic). The accumulator is the
+better measure of muxed output, but it's capped at the total so the bar
+saturates at 100 % (matching the `recording_time, recording_time` completion
+callback) rather than showing a nonsensical >100 %. Don't "fix" it by switching
+these to SIZE (playlist bytes) or NONE (indeterminate) — both are worse UX than
+a saturated TIME bar.
+
 ### Per-site request quirks live in the parser, never the transport
 
 `FFmpegOkhttp` / the fork's `http.c` (the ffmpeg↔OkHttp bridge) is **generic**

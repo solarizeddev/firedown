@@ -1227,6 +1227,23 @@ void *downloader_mux(void *data) {
             switch (progress_mode) {
                 case PROGRESS_TIME:
                     progress_value = downloader_muxed_position(downloader);
+                    /* Upper-clamp to the total — the symmetric partner of the
+                     * non-regress (lower) clamp in downloader_muxed_position.
+                     * The denominator (progress_total) is ffmpeg's PROBE-estimated
+                     * duration, computed once from input_format_ctx->duration. On a
+                     * discontinuity-spliced VOD (Twitch/Kick ad-stitching) the
+                     * MPEG-TS PTS RESETS at every EXT-X-DISCONTINUITY, so
+                     * find_stream_info's pts-span estimate UNDERESTIMATES the true
+                     * length, while current_recording_time accumulates the real
+                     * summed pkt->duration and grows past it — driving the reported
+                     * position over 100% (observed at 165%+ and climbing). The
+                     * accumulator is the better measure of muxed output, but it must
+                     * never be reported above the total: the bar saturates at 100%
+                     * (matching the recording_time/recording_time completion
+                     * callback) instead of showing a nonsensical >100%. */
+                    if (progress_total > 0 && progress_value > progress_total) {
+                        progress_value = progress_total;
+                    }
                     break;
                 case PROGRESS_SIZE:
                     progress_value = downloader->current_size;
