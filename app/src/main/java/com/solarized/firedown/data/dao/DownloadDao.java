@@ -130,23 +130,8 @@ public interface DownloadDao {
     @Query("SELECT COUNT(*) FROM download")
     Integer getRowCount();
 
-    /**
-     * Live count of vault-stored downloads (file_safe = 1). Surfaced
-     * on the home empty hero so the vault entry can carry an item
-     * count badge that updates as the user saves / deletes private
-     * files. LiveData (not a one-shot Integer) so the badge stays in
-     * sync without manual refresh hooks.
-     */
-    @Query("SELECT COUNT(*) FROM download WHERE file_safe = 1")
-    LiveData<Integer> getSafeCountLive();
-
-    /** Live count of finished regular (non-vault) downloads. Drives
-     *  the home 'Downloads' card subtitle (N files saved). */
-    @Query("SELECT COUNT(*) FROM download WHERE file_safe = 0 AND file_status = 1")
-    LiveData<Integer> getRegularFinishedCountLive();
-
     /** Live sum of bytes for finished regular (non-vault) downloads.
-     *  Drives the home 'Downloads' card subtitle's size suffix. */
+     *  Drives the home "N saved" stat chip. */
     @Query("SELECT IFNULL(SUM(file_size), 0) FROM download WHERE file_safe = 0 AND file_status = 1")
     LiveData<Long> getRegularFinishedSizeLive();
 
@@ -161,20 +146,4 @@ public interface DownloadDao {
     /** Vault equivalent of {@link #getAllRegularLive}. */
     @Query("SELECT * FROM download WHERE file_safe = 1")
     LiveData<List<DownloadEntity>> getAllSafeLive();
-
-    /** The currently ACTIVE regular (non-vault) downloads — PROGRESS=0 and
-     *  QUEUED=2 — newest first. Drives the home active-download banner. Progress
-     *  is written to the row each tick, so this re-emits and the banner's bar
-     *  animates; when the last active download finishes the list empties and the
-     *  banner hides. */
-    @Query("SELECT * FROM download WHERE file_safe = 0 AND file_status IN (0, 2) "
-            + "ORDER BY file_date DESC")
-    LiveData<List<DownloadEntity>> getActiveLive();
-
-    /** The most recent FINISHED regular (non-vault) downloads, newest first,
-     *  capped at {@code limit}. Drives the home 'Latest downloads' thumbnail
-     *  carousel. LiveData so it refreshes as downloads finish or are deleted. */
-    @Query("SELECT * FROM download WHERE file_safe = 0 AND file_status = 1 "
-            + "ORDER BY file_date DESC LIMIT :limit")
-    LiveData<List<DownloadEntity>> getRecentFinishedLive(int limit);
 }

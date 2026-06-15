@@ -70,5 +70,4 @@
     <color name="home_chip_trackers_on">#F3CBA3</color>
     <!-- Faded onPrimaryContainer (night #0F0000) for the download banner's
          progress track, so the bar reads in the text colour. ~30% alpha. -->
-    <color name="home_download_track">#4D0F0000</color>
 </resources>

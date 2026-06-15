@@ -53,18 +53,6 @@
             android:paddingBottom="8dp">
 
 
-            <!-- Active-download banner - the one COLOURED surface on the home
-                 (coral). Shown only while a download is running. -->
-            <include
-                android:id="@+id/home_download_banner"
-                layout="@layout/banner_home_download"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="@dimen/list_spacing"
-                android:layout_marginEnd="@dimen/list_spacing"
-                android:layout_marginBottom="8dp" />
-
-
             <!-- Brand lockup: the small branded-colour logo next to a small
                  "Firedown" wordmark (plain colorOnSurface — the colour lives in
                  the mark, not the text). Compact; the splash already does the big

@@ -18,9 +18,8 @@ import com.solarized.firedown.data.Download;
  * <ul>
  *   <li>(file_safe, file_date) — getDownloads / getSafe, the default
  *       sort. Also the filter the per-group aggregator walks.</li>
- *   <li>(file_safe, file_status) — getRegularFinishedCountLive
- *       (file_status = 1), getRegularFinishedSizeLive (same), the
- *       home vault count, and as a side-effect the
+ *   <li>(file_safe, file_status) — getRegularFinishedSizeLive
+ *       (file_status = 1) and, as a side-effect, the
  *       (file_status IN (0,2)) DESC expression in every paging
  *       ORDER BY (SQLite can use the leading (file_safe, file_status)
  *       pair to pre-partition rows before the secondary sort).</li>

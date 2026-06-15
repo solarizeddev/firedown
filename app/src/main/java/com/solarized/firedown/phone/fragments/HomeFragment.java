@@ -28,15 +28,11 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
 import com.bumptech.glide.request.RequestOptions;
 import com.google.android.material.card.MaterialCardView;
-import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.solarized.firedown.GlideHelper;
 import com.solarized.firedown.ui.IncognitoColors;
 import com.solarized.firedown.Keys;
-import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
 import com.solarized.firedown.geckoview.GeckoUblockHelper;
-import com.solarized.firedown.data.Download;
-import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.data.entity.GeckoStateEntity;
 import com.solarized.firedown.data.entity.AutoCompleteEntity;
 import com.solarized.firedown.autocomplete.AutoCompleteViewModel;
@@ -48,7 +44,6 @@ import com.solarized.firedown.data.models.RecentDownloadsViewModel;
 import com.solarized.firedown.geckoview.GeckoState;
 import com.solarized.firedown.geckoview.GeckoToolbar;
 import com.solarized.firedown.manager.DownloadRequest;
-import com.solarized.firedown.manager.RunnableManager;
 
 import com.solarized.firedown.phone.DownloadsActivity;
 import com.solarized.firedown.phone.SettingsActivity;
@@ -66,7 +61,6 @@ import com.solarized.firedown.utils.Utils;
 import com.solarized.firedown.utils.WebUtils;
 
 import dagger.hilt.android.AndroidEntryPoint;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import javax.inject.Inject;
@@ -107,12 +101,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     private View mDownloadsRow;
     private TextView mDownloadsText;
     private View mStatSeparator;
-    // Active-download banner (the one coloured surface; shown while downloading).
-    private View mDownloadBanner;
-    private TextView mDownloadStatus;
-    private TextView mDownloadName;
-    private LinearProgressIndicator mDownloadBar;
-    @Nullable private DownloadEntity mActiveEntity;
     @Inject
     GeckoUblockHelper mGeckoUblockHelper;
 
@@ -155,13 +143,17 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     }
 
     /**
-     * Closes the URL-bar autocomplete overlay if it's currently up, and
-     * returns true to short-circuit the back-press handler. Returns
-     * false (no-op) when the overlay isn't visible, so the caller can
-     * fall through to its default back behavior.
+     * Back handling while the URL-bar autocomplete overlay is up — TWO steps,
+     * so a single back never skips one. While the soft keyboard is showing, the
+     * first back only LOWERS it (the overlay and the typed query stay); a second
+     * back (keyboard already down) dismisses the overlay. Returns true when it
+     * consumed the press, false (overlay not visible) so the caller falls
+     * through to its default back behavior.
      */
     private boolean dismissAutocompleteOverlayIfVisible() {
-        if (mAutoCompleteView.getVisibility() != View.VISIBLE) return false;
+        if (mAutoCompleteView == null || mAutoCompleteView.getVisibility() != View.VISIBLE) {
+            return false;
+        }
         hideKeyboard(mAutoCompleteEditText);
         mGeckoToolbar.clearFocus();
         mGeckoToolbar.startAnimation(false);
@@ -209,23 +201,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         if (mDownloadsRow != null) {
             mDownloadsRow.setOnClickListener(view ->
                     mStartForResult.launch(new Intent(mActivity, DownloadsActivity.class)));
-        }
-
-        // Active-download banner — the one coloured surface, shown only while
-        // downloading (bound below). Tap → Downloads; the X cancels the active
-        // download via the same DOWNLOAD_DELETE service intent the downloads UI
-        // uses.
-        mDownloadBanner = v.findViewById(R.id.home_download_banner);
-        mDownloadStatus = v.findViewById(R.id.home_download_status);
-        mDownloadName = v.findViewById(R.id.home_download_name);
-        mDownloadBar = v.findViewById(R.id.home_download_bar);
-        if (mDownloadBanner != null) {
-            mDownloadBanner.setOnClickListener(view ->
-                    mStartForResult.launch(new Intent(mActivity, DownloadsActivity.class)));
-        }
-        View downloadCancel = v.findViewById(R.id.home_download_cancel);
-        if (downloadCancel != null) {
-            downloadCancel.setOnClickListener(view -> cancelActiveDownload());
         }
 
         mBottomNavigationBar.setListener(this);
@@ -318,12 +293,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         // non-home tab exists, hidden otherwise (see bindContinueBrowsing).
         mGeckoStateViewModel.getTabs().observe(
                 getViewLifecycleOwner(), this::bindContinueBrowsing);
-
-        // Active-download banner — the most recent in-progress / queued download
-        // with a live bar; hidden when none are active. Re-emits on each
-        // progress write, so the bar animates.
-        mRecentDownloadsViewModel.getActiveDownloads().observe(
-                getViewLifecycleOwner(), this::bindDownloadBanner);
 
         // Live trackers footnote. firedown.js pushes uBlock's cumulative
         // blocked value periodically; format with locale-aware grouping
@@ -520,11 +489,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mDownloadsRow = null;
         mDownloadsText = null;
         mStatSeparator = null;
-        mDownloadBanner = null;
-        mDownloadStatus = null;
-        mDownloadName = null;
-        mDownloadBar = null;
-        mActiveEntity = null;
     }
 
     /**
@@ -576,69 +540,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
                 mContinueSubtitle.setVisibility(View.VISIBLE);
             }
         }
-    }
-
-    /**
-     * Binds the active-download banner (the one coloured surface). Shows the
-     * most recent in-progress / queued download with a live bar; hides the
-     * banner when none are active. The stream re-emits on each progress write,
-     * so the bar tracks the download and the banner removes itself when the
-     * last active download finishes.
-     */
-    private void bindDownloadBanner(@Nullable List<DownloadEntity> active) {
-        if (mDownloadBanner == null) return;
-        DownloadEntity top = null;
-        if (active != null) {
-            for (DownloadEntity e : active) {
-                if (e != null) {
-                    top = e;
-                    break;
-                }
-            }
-        }
-        mActiveEntity = top;
-        if (top == null) {
-            mDownloadBanner.setVisibility(View.GONE);
-            return;
-        }
-        mDownloadBanner.setVisibility(View.VISIBLE);
-        mDownloadName.setText(top.getFileName());
-
-        boolean retrieving = top.getFileIsLive();
-        boolean queued = top.getFileStatus() == Download.QUEUED;
-        boolean indeterminate = retrieving || queued;
-        mDownloadBar.setIndeterminate(indeterminate);
-        if (!indeterminate) {
-            mDownloadBar.setProgress(top.getFileProgress());
-        }
-
-        // 'Downloading…' + percent / running size; the layout's textAllCaps
-        // uppercases it ('DOWNLOADING… · 46%').
-        String label = getString(R.string.downloading);
-        String detail;
-        if (retrieving) {
-            detail = Utils.readableFileSize(top.getFileSize());
-        } else if (queued) {
-            detail = null;
-        } else {
-            detail = String.format(Locale.US, "%d%%", top.getFileProgress());
-        }
-        mDownloadStatus.setText(detail == null ? label : (label + " · " + detail));
-    }
-
-    /**
-     * Cancels the currently-shown active download via the same DOWNLOAD_DELETE
-     * service intent the downloads list uses (stops the runnable + removes the
-     * partial file). The banner then hides on the next stream emit.
-     */
-    private void cancelActiveDownload() {
-        if (mActiveEntity == null) return;
-        ArrayList<DownloadEntity> list = new ArrayList<>(1);
-        list.add(mActiveEntity);
-        Intent intent = new Intent(mActivity, RunnableManager.class);
-        intent.putExtra(Keys.ITEM_LIST_ID, list);
-        intent.setAction(IntentActions.DOWNLOAD_DELETE);
-        mActivity.startService(intent);
     }
 
     @Override

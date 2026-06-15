@@ -342,7 +342,9 @@ public class BrowserFragment extends BaseBrowserFragment
      * navigate.
      */
     private boolean dismissAutocompleteOverlayIfVisible() {
-        if (mAutoCompleteView.getVisibility() != View.VISIBLE) return false;
+        if (mAutoCompleteView == null || mAutoCompleteView.getVisibility() != View.VISIBLE) {
+            return false;
+        }
         hideKeyboard(mAutoCompleteEditText);
         mBrowserDownloadViewModel.update();
         applyToolbarScrollPolicy();

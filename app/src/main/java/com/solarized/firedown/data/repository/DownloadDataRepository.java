@@ -88,35 +88,10 @@ public class DownloadDataRepository {
         return mDatabase.downloadDao().getAllSafeLive();
     }
 
-    /** The currently active (in-progress / queued) regular downloads, newest
-     *  first — drives the home active-download banner. */
-    public LiveData<List<DownloadEntity>> getActiveDownloads() {
-        return mDatabase.downloadDao().getActiveLive();
-    }
-
-    /** The most recent finished regular downloads (newest first, capped) -
-     *  drives the home 'Latest downloads' thumbnail carousel. */
-    public LiveData<List<DownloadEntity>> getRecentFinished(int limit) {
-        return mDatabase.downloadDao().getRecentFinishedLive(limit);
-    }
-
     // --- Standard Queries ---
 
-    /** Live count of vault-saved downloads. Drives the home empty-hero
-     *  vault tile's visibility (any count > 0 → tile reads as occupied)
-     *  and its badge label. */
-    public LiveData<Integer> getSafeCount() {
-        return mDatabase.downloadDao().getSafeCountLive();
-    }
-
-    /** Live count of finished regular downloads — drives the home
-     *  Downloads card subtitle. */
-    public LiveData<Integer> getRegularFinishedCount() {
-        return mDatabase.downloadDao().getRegularFinishedCountLive();
-    }
-
     /** Live total bytes for finished regular downloads — drives the
-     *  home Downloads card subtitle's size suffix. */
+     *  home "N saved" stat chip. */
     public LiveData<Long> getRegularFinishedSize() {
         return mDatabase.downloadDao().getRegularFinishedSizeLive();
     }

@@ -117,7 +117,9 @@ public class HomeIncognitoFragment extends BaseBrowserFragment implements
      * fall through to its default back behavior.
      */
     private boolean dismissAutocompleteOverlayIfVisible() {
-        if (mAutoCompleteView.getVisibility() != View.VISIBLE) return false;
+        if (mAutoCompleteView == null || mAutoCompleteView.getVisibility() != View.VISIBLE) {
+            return false;
+        }
         hideKeyboard(mAutoCompleteEditText);
         mGeckoToolbar.clearFocus();
         mGeckoToolbar.startAnimation(false);

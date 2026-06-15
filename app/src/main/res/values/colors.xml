@@ -76,7 +76,6 @@
          onPrimaryContainer (the same colour as the banner's text + the solid
          progress indicator), so the whole bar reads in the text colour. ~30%
          alpha of md_theme_onPrimaryContainer; night value in values-night. -->
-    <color name="home_download_track">#4D460005</color>
     <!-- Incognito -->
     <!-- Primary -->
     <color name="incognito_primary">#FFf0716c</color>
