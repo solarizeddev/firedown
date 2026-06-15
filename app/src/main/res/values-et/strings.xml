@@ -318,4 +318,6 @@
     <string name="lan_direct_password">Parool</string>
     <string name="lan_direct_next">Edasi</string>
     <string name="lan_direct_failed">Otseühenduse käivitamine ebaõnnestus</string>
+    <string name="home_privacy_line">%1$s jälitajat</string>
+    <string name="home_downloads_line">%1$s salvestatud</string>
 </resources>

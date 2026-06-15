@@ -174,7 +174,7 @@ public class GeckoToolbar extends FrameLayout implements View.OnClickListener, V
 
         if (mHomeEnabled) {
             mAddressBarButton.setIconTintResource(R.color.md_theme_onSurface);
-            mAddressBarButton.setIconResource(R.drawable.manage_search_24);
+            mAddressBarButton.setIconResource(R.drawable.ic_search_24);
             mGeckoProgressBar.setVisibility(View.GONE);
             mReloadButton.setVisibility(View.GONE);
         }
@@ -457,10 +457,11 @@ public class GeckoToolbar extends FrameLayout implements View.OnClickListener, V
 
         // 2. Address bar rounded background (the GradientDrawable pill).
         // Pill tone per holder:
-        //  - tonal holder (browser, both modes): surfaceContainerHighest —
-        //    the two-step lift over the surfaceContainer holder (a High fill
-        //    sat only one step up and read nearly flat). Light = the
-        //    STRENGTHENED #DAD8DD.
+        //  - tonal holder (browser, both modes): High at REST — one step above
+        //    the surfaceContainer holder, matching the quiet-holder ladder so
+        //    the input reads "gently raised" instead of a heavy two-step lift.
+        //    Focus ANIMATES it to Highest (mAnimColorTo) to fuse with the
+        //    AutoCompleteView panel, same as the Homes.
         //  - quiet holder (BOTH Homes, regular and incognito): High at REST
         //    — the M3 docked-search role, exactly ONE step above the home
         //    shelf tiles (surfaceContainer); one step reads as "the input,
@@ -472,12 +473,8 @@ public class GeckoToolbar extends FrameLayout implements View.OnClickListener, V
         //    Highest; that pre-dated the focus pulse — with the overlay
         //    match handled by focus, its rest drops to incognito High like
         //    regular Home, finally using the incognito High token.)
-        int pillRestColor;
-        if (tonalHolder) {
-            pillRestColor = IncognitoColors.getSurfaceContainerHighest(activity, incognito);
-        } else {
-            pillRestColor = IncognitoColors.getSurfaceContainerHigh(activity, incognito);
-        }
+        // Both holders now rest at High; focus lifts to Highest (step 9 below).
+        int pillRestColor = IncognitoColors.getSurfaceContainerHigh(activity, incognito);
         if (mBackground != null && mBackground.getBackground() instanceof GradientDrawable gd) {
             // MUTATE before setColor: @drawable/address_bar is ONE cached
             // resource, so its ConstantState is shared across every toolbar

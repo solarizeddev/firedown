@@ -455,4 +455,6 @@
     <string name="lan_direct_password">Wachtwoord</string>
     <string name="lan_direct_next">Volgende</string>
     <string name="lan_direct_failed">Directe verbinding kon niet worden gestart</string>
+    <string name="home_privacy_line">%1$s trackers</string>
+    <string name="home_downloads_line">%1$s opgeslagen</string>
 </resources>

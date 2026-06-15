@@ -454,4 +454,6 @@
     <string name="lan_direct_password">Parola</string>
     <string name="lan_direct_next">İleri</string>
     <string name="lan_direct_failed">Doğrudan bağlantı başlatılamadı</string>
+    <string name="home_privacy_line">%1$s izleyici</string>
+    <string name="home_downloads_line">%1$s kaydedildi</string>
 </resources>

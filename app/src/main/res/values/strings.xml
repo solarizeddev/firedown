@@ -153,6 +153,20 @@
          %1$s is the plural (home_downloads_file_count), %2$s is the
          size string (Utils.readableFileSize). -->
     <string name="home_downloads_subtitle_with_size">%1$s · %2$s</string>
+    <!-- Header of the home 'Latest downloads' thumbnail carousel. -->
+    <string name="home_latest_downloads">Latest downloads</string>
+    <!-- Link in the 'Latest downloads' header -> the full Downloads screen. -->
+    <string name="home_see_all">See all</string>
+    <!-- Title of the home card that resumes the last-used browsing tab. -->
+    <string name="home_continue_browsing">Continue browsing</string>
+    <!-- Home trackers chip: just the count; the shield icon carries the
+         "blocked" meaning, so no verb (keeps it tight in every locale). The
+         count is compacted in HomeFragment, e.g. "1.4M". -->
+    <string name="home_privacy_line">%1$s trackers</string>
+    <!-- Downloaded chip beside it: "<size> saved". A short trailing word
+         balances the trackers chip; "saved" translates more compactly than
+         "downloaded" (the ⬇ icon already conveys the download). -->
+    <string name="home_downloads_line">%1$s saved</string>
     <string name="download_file">A file is ready to be downloaded:</string>
     <string name="download_finished">Download finished</string>
     <string name="download_ongoing_notification">Firedown</string>

@@ -24,6 +24,17 @@
     </com.google.android.material.appbar.AppBarLayout>
 
 
+    <!--
+        MINIMAL home (a slick private browser; downloading is a quiet superpower,
+        not a billboard). Top→bottom: the functional URL bar (GeckoToolbar, in the
+        AppBarLayout above), then a brand block + a single live PRIVACY line, a
+        weighted spacer, and the browsing utility (Continue browsing) kept low
+        and quiet. There is deliberately NO downloads carousel, Safe Folder card,
+        or Trackers card here — downloads live behind the bottom-bar download
+        button (badge), the Captured sheet fills as you browse, and the trackers
+        stat is folded into the privacy line. fillViewport + the weighted spacer
+        push the utility to the lower third.
+    -->
     <androidx.core.widget.NestedScrollView
         android:id="@+id/home_scroll"
         android:layout_width="match_parent"
@@ -34,45 +45,177 @@
         android:overScrollMode="never"
         app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior">
 
-        <!--
-            Stack spacing model: a single 4dp paddingTop on the column
-            provides the gap from the toolbar to whichever card lands
-            first. Each card carries its own marginBottom for the gap
-            below it — so when a card is GONE neither its top nor its
-            bottom margin contributes, and the next visible card sits
-            4dp under the toolbar regardless of which one it is.
-            Using marginTop instead would 'inherit' a 12dp top gap
-            onto the new first card and push it down too far.
-        -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:paddingTop="6dp"
-            tools:visibility="visible">
+            android:paddingBottom="8dp">
 
 
+            <!-- Active-download banner - the one COLOURED surface on the home
+                 (coral). Shown only while a download is running. -->
             <include
-                android:id="@+id/recent_downloads_card"
-                layout="@layout/card_home_recent_downloads"
+                android:id="@+id/home_download_banner"
+                layout="@layout/banner_home_download"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="@dimen/list_spacing"
-                android:layout_marginEnd="@dimen/list_spacing" />
+                android:layout_marginEnd="@dimen/list_spacing"
+                android:layout_marginBottom="8dp" />
 
 
-            <include
-                android:id="@+id/home_vault_card"
-                layout="@layout/card_home_safe_folder"
-                android:layout_width="match_parent"
+            <!-- Brand lockup: the small branded-colour logo next to a small
+                 "Firedown" wordmark (plain colorOnSurface — the colour lives in
+                 the mark, not the text). Compact; the splash already does the big
+                 reveal. -->
+            <LinearLayout
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="@dimen/list_spacing"
-                android:layout_marginEnd="@dimen/list_spacing" />
+                android:layout_gravity="center_horizontal"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingTop="40dp">
+
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
+                    android:contentDescription="@string/app_name"
+                    android:src="@drawable/ic_firedown_logo" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="9dp"
+                    android:text="@string/app_name"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="-0.02" />
+
+            </LinearLayout>
 
 
+            <!-- Two independent stat chips under the brand — Firedown's dual
+                 identity in one line: trackers blocked (tap → trackers info sheet)
+                 and total downloaded (tap → Downloads). Each is its own
+                 transparent MaterialCardView so the press is a rounded inset pill;
+                 the "·" between them is a plain, non-tappable divider. The
+                 downloaded chip + the divider are hidden until something has been
+                 downloaded (HomeFragment, driven by finished-size). idle trackers
+                 = "Protection active". -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="20dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/home_privacy_row"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:clickable="true"
+                    android:focusable="true"
+                    app:cardBackgroundColor="@android:color/transparent"
+                    app:cardCornerRadius="14dp"
+                    app:cardElevation="0dp"
+                    app:strokeWidth="0dp">
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingHorizontal="10dp"
+                        android:paddingVertical="8dp">
+
+                        <androidx.appcompat.widget.AppCompatImageView
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:layout_marginEnd="8dp"
+                            android:contentDescription="@null"
+                            app:srcCompat="@drawable/ic_shield_24"
+                            app:tint="?attr/colorOnSurfaceVariant" />
+
+                        <TextView
+                            android:id="@+id/home_privacy_text"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textAppearance="?attr/textAppearanceBodySmall"
+                            android:textColor="?attr/colorOnSurfaceVariant"
+                            tools:text="1.4M trackers" />
+
+                    </LinearLayout>
+
+                </com.google.android.material.card.MaterialCardView>
+
+                <TextView
+                    android:id="@+id/home_stat_separator"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="·"
+                    android:textAppearance="?attr/textAppearanceBodySmall"
+                    android:textColor="?attr/colorOnSurfaceVariant" />
+
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/home_downloads_row"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:clickable="true"
+                    android:focusable="true"
+                    app:cardBackgroundColor="@android:color/transparent"
+                    app:cardCornerRadius="14dp"
+                    app:cardElevation="0dp"
+                    app:strokeWidth="0dp">
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingHorizontal="10dp"
+                        android:paddingVertical="8dp">
+
+                        <androidx.appcompat.widget.AppCompatImageView
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:layout_marginEnd="8dp"
+                            android:contentDescription="@null"
+                            app:srcCompat="@drawable/download_24"
+                            app:tint="?attr/colorOnSurfaceVariant" />
+
+                        <TextView
+                            android:id="@+id/home_downloads_text"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textAppearance="?attr/textAppearanceBodySmall"
+                            android:textColor="?attr/colorOnSurfaceVariant"
+                            tools:text="9.2 GB saved" />
+
+                    </LinearLayout>
+
+                </com.google.android.material.card.MaterialCardView>
+
+            </LinearLayout>
+
+
+            <!-- Weighted spacer: pushes the browsing utility to the lower third
+                 so the brand + search breathe up top (works because the
+                 NestedScrollView is fillViewport). -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:minHeight="24dp" />
+
+
+            <!-- 'Continue browsing' — quiet single row, shown only when a
+                 non-home tab exists (HomeFragment.bindContinueBrowsing). -->
             <include
-                android:id="@+id/home_trackers_card"
-                layout="@layout/card_home_trackers_blocked"
+                android:id="@+id/continue_browsing_card"
+                layout="@layout/card_home_continue_browsing"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="@dimen/list_spacing"
@@ -104,12 +247,17 @@
         android:background="?attr/colorSurfaceContainerLow"
         android:visibility="gone" />
 
+    <!--
+        Middle slot shows the flat Bookmarks button in-bar (no
+        hideMiddleSlot) - the URL bar at the top covers search, so the
+        centre slot is the bookmarks-list entry. (The former hero
+        Bookmarks FAB was removed.)
+    -->
     <com.solarized.firedown.geckoview.toolbar.BottomNavigationBar
         android:id="@+id/bottom_app_bar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
-        app:hideMiddleSlot="true" />
+        android:layout_gravity="bottom" />
 
     <View
         android:id="@+id/navigation_scrim"
@@ -117,35 +265,5 @@
         android:layout_height="0dp"
         android:layout_gravity="bottom"
         android:background="?android:attr/colorBackground" />
-
-    <!--
-        Bookmarks hero FAB over the bottom bar's middle slot. The slot
-        itself is hidden (hideMiddleSlot) so the FAB doesn't collide
-        with a flat icon underneath; the flame (ic_firedown) stays
-        exclusive to the browser capture FAB, this one carries the
-        bookmark glyph. Positioned the TABS way (fragment_tabs_holder),
-        NOT the browser way: no layout_anchor/Behavior — anchoring to
-        this bar plants the FAB on the bar's bottom edge (half over the
-        system nav) and BottomNavigationFABBehavior's lift only applies
-        when the bar scrolls, which Home's static bar never does. Plain
-        bottom|center gravity + a code-set bottomMargin (nav inset +
-        app_bar_fab_margin, mirrored from TabsHolderFragment) docks it
-        poking just above the bar's top edge.
-    -->
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/bookmark_button"
-        style="@style/Widget.Material3.FloatingActionButton.Primary"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|center_horizontal"
-        android:contentDescription="@string/library_bookmarks"
-        android:elevation="0dp"
-        app:elevation="0dp"
-        app:borderWidth="0dp"
-        app:fabSize="normal"
-        app:maxImageSize="@dimen/phone_icon_height"
-        app:srcCompat="@drawable/ic_bookmark_24"
-        app:tint="?attr/colorOnPrimaryContainer" />
-
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

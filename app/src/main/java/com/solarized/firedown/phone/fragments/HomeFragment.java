@@ -1,6 +1,7 @@
 package com.solarized.firedown.phone.fragments;
 
 import android.content.Intent;
+import android.icu.text.CompactDecimalFormat;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextUtils;
@@ -15,6 +16,7 @@ import android.widget.TextView;
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.widget.AppCompatImageView;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -23,13 +25,18 @@ import androidx.lifecycle.LifecycleEventObserver;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
+import com.bumptech.glide.request.RequestOptions;
 import com.google.android.material.card.MaterialCardView;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.progressindicator.LinearProgressIndicator;
+import com.solarized.firedown.GlideHelper;
 import com.solarized.firedown.ui.IncognitoColors;
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
 import com.solarized.firedown.geckoview.GeckoUblockHelper;
+import com.solarized.firedown.data.Download;
+import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.data.entity.GeckoStateEntity;
 import com.solarized.firedown.data.entity.AutoCompleteEntity;
 import com.solarized.firedown.autocomplete.AutoCompleteViewModel;
@@ -41,6 +48,7 @@ import com.solarized.firedown.data.models.RecentDownloadsViewModel;
 import com.solarized.firedown.geckoview.GeckoState;
 import com.solarized.firedown.geckoview.GeckoToolbar;
 import com.solarized.firedown.manager.DownloadRequest;
+import com.solarized.firedown.manager.RunnableManager;
 
 import com.solarized.firedown.phone.DownloadsActivity;
 import com.solarized.firedown.phone.SettingsActivity;
@@ -55,9 +63,11 @@ import com.solarized.firedown.ui.diffs.SearchDiffCallback;
 import com.solarized.firedown.IntentActions;
 import com.solarized.firedown.utils.NavigationUtils;
 import com.solarized.firedown.utils.Utils;
+import com.solarized.firedown.utils.WebUtils;
 
 import dagger.hilt.android.AndroidEntryPoint;
-import java.text.NumberFormat;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import javax.inject.Inject;
 
@@ -80,23 +90,31 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     private View mNewTabView;
     private GeckoToolbar mGeckoToolbar;
     private BottomNavigationBar mBottomNavigationBar;
-    private MaterialCardView mRecentDownloadsCard;
+    private MaterialCardView mContinueCard;
+    private AppCompatImageView mContinueIcon;
+    // Continue-browsing favicon: rounded to match the M3 chip behind it (a
+    // full-bleed square favicon gets rounded; a transparent glyph is
+    // unaffected). Built in onCreateView once resources are available.
+    private RequestOptions mContinueIconOptions = new RequestOptions();
     private View mHomeScroll;
-    private TextView mHomeVaultSubtitle;
-    private TextView mRecentDownloadsSubtitle;
-    private MaterialCardView mTrackersCard;
-    private TextView mTrackersSubtitle;
+    private TextView mContinueSubtitle;
+    // Live privacy line (folds in the old Trackers card): "N trackers blocked ·
+    // ~X saved", tappable → trackers info sheet.
+    private View mPrivacyRow;
+    private TextView mPrivacyText;
+    // Total-downloaded chip beside the trackers chip — its own tap target
+    // (→ Downloads). Hidden, with the "·" divider, until something's downloaded.
+    private View mDownloadsRow;
+    private TextView mDownloadsText;
+    private View mStatSeparator;
+    // Active-download banner (the one coloured surface; shown while downloading).
+    private View mDownloadBanner;
+    private TextView mDownloadStatus;
+    private TextView mDownloadName;
+    private LinearProgressIndicator mDownloadBar;
+    @Nullable private DownloadEntity mActiveEntity;
     @Inject
     GeckoUblockHelper mGeckoUblockHelper;
-    @Nullable private Integer mLastFinishedCount;
-    private long mLastFinishedSize = 0L;
-
-    /** Estimated bytes that would have been transferred per blocked
-     *  request. uBlock cancels the request before the response, so the
-     *  real number is unknown — Brave's published methodology pegs the
-     *  average at ~50KB and we follow the same so users comparing
-     *  across browsers see consistent figures. */
-    private static final long AVG_BYTES_PER_BLOCKED_REQUEST = 50_000L;
 
 
     @Override
@@ -125,6 +143,17 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
 
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        // Being on Home means the user is on the home tab; if the tab list is
+        // empty (e.g. just closed the last tab), materialise it so the count and
+        // the Tabs screen agree that there's >=1 tab. No-op when a tab exists.
+        if (mGeckoStateViewModel != null) {
+            mGeckoStateViewModel.ensureHomeTabIfEmpty();
+        }
+    }
+
     /**
      * Closes the URL-bar autocomplete overlay if it's currently up, and
      * returns true to short-circuit the back-press handler. Returns
@@ -151,68 +180,60 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mNewTabView = v.findViewById(R.id.bottom_new_tab);
         mAutoCompleteView = v.findViewById(R.id.auto_complete_view);
 
-        mRecentDownloadsCard = v.findViewById(R.id.recent_downloads_card);
+        // 'Continue browsing' card - resumes the most-recently-used non-home
+        // tab (bound below; tap handler set there since it needs the tab id).
+        mContinueCard = v.findViewById(R.id.continue_browsing_card);
+        mContinueIcon = v.findViewById(R.id.continue_browsing_icon);
+        mContinueSubtitle = v.findViewById(R.id.continue_browsing_subtitle);
+        mContinueIconOptions = RequestOptions.bitmapTransform(new RoundedCorners(
+                getResources().getDimensionPixelOffset(R.dimen.icon_rounded)));
 
         mHomeScroll = v.findViewById(R.id.home_scroll);
         mBottomNavigationBar = v.findViewById(R.id.bottom_app_bar);
 
 
-        mRecentDownloadsSubtitle = v.findViewById(R.id.recent_downloads_subtitle);
-        mRecentDownloadsCard.setOnClickListener(view ->
-                mStartForResult.launch(new Intent(mActivity, DownloadsActivity.class)));
+        // Live privacy line — the old Trackers card, folded into one quiet row.
+        // Text bound from uBlock's cumulative blocked count (below); tapping the
+        // row opens the same contextual trackers info sheet the card used to.
+        mPrivacyRow = v.findViewById(R.id.home_privacy_row);
+        mPrivacyText = v.findViewById(R.id.home_privacy_text);
+        if (mPrivacyRow != null) {
+            mPrivacyRow.setOnClickListener(view ->
+                    TrackersInfoSheet.show(getChildFragmentManager()));
+        }
 
-        View vaultCard = v.findViewById(R.id.home_vault_card);
-        mHomeVaultSubtitle = v.findViewById(R.id.home_vault_subtitle);
-        vaultCard.setOnClickListener(view ->
-                mStartForResult.launch(new Intent(mActivity, VaultActivity.class)));
+        // Downloaded-total chip: independent tap target → Downloads.
+        mDownloadsRow = v.findViewById(R.id.home_downloads_row);
+        mDownloadsText = v.findViewById(R.id.home_downloads_text);
+        mStatSeparator = v.findViewById(R.id.home_stat_separator);
+        if (mDownloadsRow != null) {
+            mDownloadsRow.setOnClickListener(view ->
+                    mStartForResult.launch(new Intent(mActivity, DownloadsActivity.class)));
+        }
 
-        // Trackers-blocked shelf card. Subtitle reflects uBlock's
-        // cumulative requestStats.blockedCount, relayed live via
-        // GeckoUblockHelper. Tap spawns a contextual info sheet —
-        // big number, bytes-saved estimate, breakdown of what's
-        // being blocked, and a CTA into Privacy settings.
-        mTrackersCard = v.findViewById(R.id.home_trackers_card);
-        mTrackersSubtitle = v.findViewById(R.id.home_trackers_subtitle);
-        if (mTrackersCard != null) {
-            mTrackersCard.setOnClickListener(view ->
-                    TrackersInfoSheet.show(
-                            getChildFragmentManager()));
+        // Active-download banner — the one coloured surface, shown only while
+        // downloading (bound below). Tap → Downloads; the X cancels the active
+        // download via the same DOWNLOAD_DELETE service intent the downloads UI
+        // uses.
+        mDownloadBanner = v.findViewById(R.id.home_download_banner);
+        mDownloadStatus = v.findViewById(R.id.home_download_status);
+        mDownloadName = v.findViewById(R.id.home_download_name);
+        mDownloadBar = v.findViewById(R.id.home_download_bar);
+        if (mDownloadBanner != null) {
+            mDownloadBanner.setOnClickListener(view ->
+                    mStartForResult.launch(new Intent(mActivity, DownloadsActivity.class)));
+        }
+        View downloadCancel = v.findViewById(R.id.home_download_cancel);
+        if (downloadCancel != null) {
+            downloadCancel.setOnClickListener(view -> cancelActiveDownload());
         }
 
         mBottomNavigationBar.setListener(this);
 
-        // Hero FAB in the bottom bar's cradle is Bookmarks — the URL
-        // bar at the top already covers the search path, so the centre
-        // affordance gives the bookmarks list a one-tap entry. Promoted
-        // from the flat, unlabeled middle-slot icon to the same hero-FAB
-        // treatment Browser (capture) and Tabs already use; the middle
-        // slot itself is hidden (hideMiddleSlot) underneath it.
-        FloatingActionButton bookmarkButton = v.findViewById(R.id.bookmark_button);
-        bookmarkButton.setOnClickListener(view ->
-                NavigationUtils.navigateSafe(mNavController, R.id.action_home_to_bookmarks));
-
-        // Dock the FAB the TABS way (TabsHolderFragment): bottomMargin =
-        // (bar height − the 64dp content row) + app_bar_fab_margin
-        // = nav inset + lift, so the FAB pokes just above the bar's top
-        // edge. Recomputed on every bar layout pass — the bar grows when
-        // BottomNavigationBar's own insets listener pads it by the nav
-        // inset, so a one-shot read would race that and dock too low.
-        mBottomNavigationBar.addOnLayoutChangeListener(
-                (bar, l, t, r, b, ol, ot, or, ob) -> {
-                    int barHeight = b - t;
-                    if (barHeight <= 0) {
-                        return;
-                    }
-                    int contentRow = getResources().getDimensionPixelOffset(R.dimen.app_bar_size);
-                    int lift = getResources().getDimensionPixelOffset(R.dimen.app_bar_fab_margin);
-                    int margin = Math.max(0, barHeight - contentRow) + lift;
-                    ViewGroup.MarginLayoutParams params =
-                            (ViewGroup.MarginLayoutParams) bookmarkButton.getLayoutParams();
-                    if (params.bottomMargin != margin) {
-                        params.bottomMargin = margin;
-                        bookmarkButton.setLayoutParams(params);
-                    }
-                });
+        // Bookmarks is the flat middle-slot button in the bottom bar
+        // (see onBottomBarButtonClick's R.id.search_button branch); the
+        // URL bar at the top covers search. The former hero FAB was
+        // removed in favour of this plain in-bar affordance.
 
         mGeckoToolbar = v.findViewById(R.id.toolbar_layout);
         mGeckoToolbar.setListener(this);
@@ -265,8 +286,12 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mTaskViewModel.getRegularCount().observe(getViewLifecycleOwner(), count ->
                 mBottomNavigationBar.onBadgeCount(count));
 
-        mGeckoStateViewModel.getTabsCount().observe(getViewLifecycleOwner(), mObservableEntities
-                -> mBottomNavigationBar.onTabsCount(mObservableEntities));
+        // Floor the displayed count at 1: while Home is on screen the user IS
+        // on the home tab, so the counter must never read 0 (it could after a
+        // close-all / close-last, or a race where the home GeckoState isn't in
+        // the list yet - the current tab is still at least tab 1).
+        mGeckoStateViewModel.getTabsCount().observe(getViewLifecycleOwner(), count
+                -> mBottomNavigationBar.onTabsCount(count == null ? 1 : Math.max(1, count)));
 
         mAutoCompleteViewModel.setIncognito(false);
 
@@ -288,68 +313,63 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
 
         });
 
-        // Two streams power the home Downloads card:
-        //  * getFinishedCount / getFinishedSize — drive the
-        //    Downloads card subtitle ('N files saved · X.Y GB').
-        //    Card itself is visible whenever the toggle is on, even
-        //    with zero saved files, so the entry is discoverable.
-        //  (In-flight downloads surface as the bottom-bar badge above
-        //  plus the ongoing system notification — there is no longer a
-        //  dedicated active-download card on Home.)
-        mRecentDownloadsViewModel.getFinishedCount().observe(getViewLifecycleOwner(), count -> {
-            mLastFinishedCount = count;
-            bindDownloadsSubtitle();
-        });
-        mRecentDownloadsViewModel.getFinishedSize().observe(getViewLifecycleOwner(), size -> {
-            mLastFinishedSize = size == null ? 0L : size;
-            bindDownloadsSubtitle();
-        });
+        // 'Continue browsing' — the one quiet utility row that jumps back into
+        // the user's last browsing tab. Driven by the tab list: shown only when a
+        // non-home tab exists, hidden otherwise (see bindContinueBrowsing).
+        mGeckoStateViewModel.getTabs().observe(
+                getViewLifecycleOwner(), this::bindContinueBrowsing);
 
-        // Vault subtitle. Populated state shows 'N items saved'; empty
-        // state shows the 'Private and encrypted' explainer so the
-        // card has a stable two-line layout matching the Downloads
-        // and Trackers shelves, and a first-time user sees a
-        // one-line description of what the card even does.
-        mRecentDownloadsViewModel.getVaultCount().observe(getViewLifecycleOwner(), count -> {
-            if (mHomeVaultSubtitle == null) return;
-            int n = count == null ? 0 : count;
-            mHomeVaultSubtitle.setVisibility(View.VISIBLE);
-            if (n > 0) {
-                mHomeVaultSubtitle.setText(getResources().getQuantityString(
-                        R.plurals.home_vault_item_count, n, n));
-            } else {
-                mHomeVaultSubtitle.setText(R.string.home_vault_empty_subtitle);
-            }
-        });
+        // Active-download banner — the most recent in-progress / queued download
+        // with a live bar; hidden when none are active. Re-emits on each
+        // progress write, so the bar animates.
+        mRecentDownloadsViewModel.getActiveDownloads().observe(
+                getViewLifecycleOwner(), this::bindDownloadBanner);
 
-        // Trackers-blocked subtitle. firedown.js pushes the cumulative
-        // value periodically; format with locale-aware grouping
-        // separators so 12345 reads as '12,345' or '12.345' depending
-        // on the user's locale, and append an estimated-bytes-saved
-        // figure (Brave's published methodology: 50KB average per
-        // blocked request — flagged with '~' so users read it as an
-        // estimate, not a measured value).
-        //
-        // Zero case → 'Protection active' placeholder instead of the
-        // cosmetic '0 · ~0 saved' you'd otherwise see between app
-        // start and the extension's first push, or on a fresh install
-        // before any browsing.
+        // Live trackers footnote. firedown.js pushes uBlock's cumulative
+        // blocked value periodically; format with locale-aware grouping
+        // separators so 12345 reads as '12,345' / '12.345'. Just the count —
+        // no estimated-bytes figure (kept deliberately minimal). Zero case →
+        // 'Protection active' between app start and the extension's first push.
         mGeckoUblockHelper.getCumulativeBlockedLive().observe(getViewLifecycleOwner(), blocked -> {
-            if (mTrackersSubtitle == null) return;
+            if (mPrivacyText == null) return;
             long n = blocked == null ? 0L : blocked;
             if (n <= 0) {
-                mTrackersSubtitle.setText(R.string.home_trackers_subtitle_idle);
+                mPrivacyText.setText(R.string.home_trackers_subtitle_idle);
                 return;
             }
-            String formattedCount = NumberFormat
-                    .getInstance(Locale.getDefault())
-                    .format(n);
-            String savedBytes = Utils.readableFileSize(n * AVG_BYTES_PER_BLOCKED_REQUEST);
-            mTrackersSubtitle.setText(getString(
-                    R.string.home_trackers_subtitle, formattedCount, savedBytes));
+            // Compact, locale-aware count ("10.5K" / "1.4M" / "1,4 Mio.") — bounds
+            // the chip width as the cumulative count climbs to 6–7 digits, and
+            // reads cleaner than a long comma-grouped number. The shield icon
+            // carries the "blocked" meaning, so the label is just "N trackers".
+            CompactDecimalFormat fmt = CompactDecimalFormat.getInstance(
+                    Locale.getDefault(), CompactDecimalFormat.CompactStyle.SHORT);
+            fmt.setMaximumFractionDigits(1);
+            mPrivacyText.setText(getString(R.string.home_privacy_line, fmt.format(n)));
         });
 
-        mRecentDownloadsCard.setVisibility(View.VISIBLE);
+        // Total downloaded — the downloader half of the home's identity line:
+        // the live sum of finished regular (non-vault) download sizes. The chip
+        // and its "·" divider stay hidden until there's at least one finished
+        // download, so a fresh install shows only the trackers stat (never a sad
+        // '0 B downloaded').
+        mRecentDownloadsViewModel.getFinishedSize().observe(getViewLifecycleOwner(), size -> {
+            long bytes = size == null ? 0L : size;
+            boolean show = bytes > 0;
+            if (mDownloadsRow != null) {
+                mDownloadsRow.setVisibility(show ? View.VISIBLE : View.GONE);
+            }
+            if (mStatSeparator != null) {
+                mStatSeparator.setVisibility(show ? View.VISIBLE : View.GONE);
+            }
+            if (show && mDownloadsText != null) {
+                // "<size> saved" — a short trailing word balances the trackers
+                // chip; "saved" translates more compactly than "downloaded" (the
+                // ⬇ icon already conveys it was a download). Size is locale-
+                // formatted by readableFileSize.
+                mDownloadsText.setText(getString(
+                        R.string.home_downloads_line, Utils.readableFileSize(bytes)));
+            }
+        });
 
         // NOTE: HomeFragment intentionally does NOT observe
         // BrowserURIViewModel.getEvents().  IntentHandler owns all tab
@@ -464,18 +484,20 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         // is a visual no-op.
         resetWindowTheme();
         mBottomNavigationBar.updateTheme(mActivity, false);
-        // Scrim follows the bar's surfaceContainer tone (see
-        // BaseFocusFragment.setNavScrimColor) so the system-nav strip
-        // matches the bar instead of cutting a black seam under it.
-        setNavScrimColor(IncognitoColors.getSurfaceContainer(mActivity, false));
+        // Flat bar (Firefox-parity): the bar is now SURFACE, so the scrim
+        // under the system-nav strip matches at surface too (its top hairline
+        // provides the division, not a tonal step). See
+        // BaseFocusFragment.setNavScrimColor.
+        setNavScrimColor(IncognitoColors.getSurface(mActivity, false));
         // Home chrome: QUIET top (toolbar = surface, merging with the
-        // canvas — tonalHolder=false), tonal bottom. paintSystemBars
-        // mirrors that on the WINDOW layer for Android <= 14, where the
-        // theme's opaque bar attrs would otherwise paint the strips.
+        // canvas — tonalHolder=false) and now a flat-surface bottom too, so
+        // the whole window is one surface tone. paintSystemBars mirrors that
+        // on the WINDOW layer for Android <= 14, where the theme's opaque bar
+        // attrs would otherwise paint the strips.
         mGeckoToolbar.updateTheme(mActivity, false, false);
         paintSystemBars(
                 IncognitoColors.getSurface(mActivity, false),
-                IncognitoColors.getSurfaceContainer(mActivity, false));
+                IncognitoColors.getSurface(mActivity, false));
         mAutoCompleteView.updateTheme(mActivity, false);
         mSearchAutocompleteAdapter.setIncognito(false);
 
@@ -490,31 +512,133 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mGeckoToolbar = null;
         mNewTabView = null;
         mBottomNavigationBar = null;
-        mRecentDownloadsCard = null;
-        mHomeVaultSubtitle = null;
-        mRecentDownloadsSubtitle = null;
-        mTrackersCard = null;
-        mTrackersSubtitle = null;
+        mContinueCard = null;
+        mContinueIcon = null;
+        mContinueSubtitle = null;
+        mPrivacyRow = null;
+        mPrivacyText = null;
+        mDownloadsRow = null;
+        mDownloadsText = null;
+        mStatSeparator = null;
+        mDownloadBanner = null;
+        mDownloadStatus = null;
+        mDownloadName = null;
+        mDownloadBar = null;
+        mActiveEntity = null;
     }
 
-    /** Binds the 'N files saved · X.Y GB' subtitle on the Downloads
-     *  card. Hidden when no finished files exist so a curious user
-     *  with nothing downloaded yet sees the bare entry label. */
-    private void bindDownloadsSubtitle() {
-        if (mRecentDownloadsSubtitle == null) return;
-        int n = mLastFinishedCount == null ? 0 : mLastFinishedCount;
-        if (n <= 0) {
-            mRecentDownloadsSubtitle.setVisibility(View.GONE);
+    /**
+     * Binds the 'Continue browsing' card from the tab list: picks the
+     * most-recently-used NON-home tab (by lastAccess, stamped on every tab
+     * switch) and wires the tap to resume it via {@link #openSessionId(int)}.
+     * The icon is that tab's FAVICON (falling back to the generated
+     * domain-letter tile when the site has none, the app-wide favicon
+     * pattern); the subtitle is the tab's title, falling back to its domain.
+     * Hidden when there's no non-home tab (a fresh install / all tabs closed),
+     * so the card never offers a dead resume. The home tab itself is excluded
+     * (isHome) - resuming "to home" from home is a no-op.
+     */
+    private void bindContinueBrowsing(@Nullable List<GeckoStateEntity> tabs) {
+        if (mContinueCard == null) return;
+        GeckoStateEntity last = null;
+        if (tabs != null) {
+            for (GeckoStateEntity e : tabs) {
+                if (e == null || e.isHome()) continue;
+                if (last == null || e.getLastAccess() > last.getLastAccess()) {
+                    last = e;
+                }
+            }
+        }
+        if (last == null) {
+            mContinueCard.setVisibility(View.GONE);
             return;
         }
-        String files = getResources().getQuantityString(
-                R.plurals.home_downloads_file_count, n, n);
-        String text = mLastFinishedSize > 0
-                ? getString(R.string.home_downloads_subtitle_with_size,
-                        files, Utils.readableFileSize(mLastFinishedSize))
-                : files;
-        mRecentDownloadsSubtitle.setVisibility(View.VISIBLE);
-        mRecentDownloadsSubtitle.setText(text);
+        final int sessionId = last.getId();
+        mContinueCard.setVisibility(View.VISIBLE);
+        mContinueCard.setOnClickListener(view -> openSessionId(sessionId));
+
+        if (mContinueIcon != null) {
+            // Site favicon as a rounded tile (full colour); GlideHelper falls
+            // back to the generated domain-letter tile when the tab has no icon
+            // - the same favicon path the tabs / bookmarks lists use.
+            GlideHelper.load(last.getIcon(), last.getUri(), mContinueIcon, mContinueIconOptions);
+        }
+
+        if (mContinueSubtitle != null) {
+            String label = last.getTitle();
+            if (label == null || label.trim().isEmpty()) {
+                label = WebUtils.getDomainName(last.getUri());
+            }
+            if (label == null || label.trim().isEmpty()) {
+                mContinueSubtitle.setVisibility(View.GONE);
+            } else {
+                mContinueSubtitle.setText(label);
+                mContinueSubtitle.setVisibility(View.VISIBLE);
+            }
+        }
+    }
+
+    /**
+     * Binds the active-download banner (the one coloured surface). Shows the
+     * most recent in-progress / queued download with a live bar; hides the
+     * banner when none are active. The stream re-emits on each progress write,
+     * so the bar tracks the download and the banner removes itself when the
+     * last active download finishes.
+     */
+    private void bindDownloadBanner(@Nullable List<DownloadEntity> active) {
+        if (mDownloadBanner == null) return;
+        DownloadEntity top = null;
+        if (active != null) {
+            for (DownloadEntity e : active) {
+                if (e != null) {
+                    top = e;
+                    break;
+                }
+            }
+        }
+        mActiveEntity = top;
+        if (top == null) {
+            mDownloadBanner.setVisibility(View.GONE);
+            return;
+        }
+        mDownloadBanner.setVisibility(View.VISIBLE);
+        mDownloadName.setText(top.getFileName());
+
+        boolean retrieving = top.getFileIsLive();
+        boolean queued = top.getFileStatus() == Download.QUEUED;
+        boolean indeterminate = retrieving || queued;
+        mDownloadBar.setIndeterminate(indeterminate);
+        if (!indeterminate) {
+            mDownloadBar.setProgress(top.getFileProgress());
+        }
+
+        // 'Downloading…' + percent / running size; the layout's textAllCaps
+        // uppercases it ('DOWNLOADING… · 46%').
+        String label = getString(R.string.downloading);
+        String detail;
+        if (retrieving) {
+            detail = Utils.readableFileSize(top.getFileSize());
+        } else if (queued) {
+            detail = null;
+        } else {
+            detail = String.format(Locale.US, "%d%%", top.getFileProgress());
+        }
+        mDownloadStatus.setText(detail == null ? label : (label + " · " + detail));
+    }
+
+    /**
+     * Cancels the currently-shown active download via the same DOWNLOAD_DELETE
+     * service intent the downloads list uses (stops the runnable + removes the
+     * partial file). The banner then hides on the next stream emit.
+     */
+    private void cancelActiveDownload() {
+        if (mActiveEntity == null) return;
+        ArrayList<DownloadEntity> list = new ArrayList<>(1);
+        list.add(mActiveEntity);
+        Intent intent = new Intent(mActivity, RunnableManager.class);
+        intent.putExtra(Keys.ITEM_LIST_ID, list);
+        intent.setAction(IntentActions.DOWNLOAD_DELETE);
+        mActivity.startService(intent);
     }
 
     @Override
@@ -531,10 +655,10 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         } else if(id == R.id.new_tab_button){
             flashNewTab(mNewTabView);
             addNewTab();
+        } else if (id == R.id.search_button) {
+            // The middle slot is the flat Bookmarks button.
+            NavigationUtils.navigateSafe(mNavController, R.id.action_home_to_bookmarks);
         }
-        // No R.id.search_button branch: the middle slot is hidden
-        // (hideMiddleSlot) and never dispatches — Bookmarks is the
-        // hero FAB wired in onCreateView.
     }
 
     @Override

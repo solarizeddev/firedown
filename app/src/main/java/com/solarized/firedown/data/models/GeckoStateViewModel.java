@@ -191,6 +191,12 @@ public class GeckoStateViewModel extends ViewModel {
         return mRepository.getCurrentGeckoState();
     }
 
+    /** Materialises a home tab when the list is empty (see the repository) so
+     *  the counter / Tabs screen always reflect the home you're sitting on. */
+    public void ensureHomeTabIfEmpty(){
+        mRepository.ensureHomeTabIfEmpty();
+    }
+
     /**
      * Returns the current active GeckoState without side effects, or
      * {@code null} if no active tab exists.
