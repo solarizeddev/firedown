@@ -10,6 +10,26 @@ uBlock Origin. Media capture is done by a set of **built-in WebExtensions**
 bundled as assets and loaded via `GeckoRuntimeHelper.registerBuiltIn(...)`
 (`app/src/main/java/com/solarized/firedown/geckoview/GeckoRuntimeHelper.java`).
 
+### Capture requires a live GeckoSession — there is NO "paste a link → grab"
+
+**Media capture ONLY happens while a page is actually loaded in a
+`GeckoSession`.** The WebExtensions observe a *live* page — the wire
+(`webRequest`/`filterResponseData`), the DOM (content script), and page-world JS
+state — so there is **nothing to capture until the user navigates to the page and
+it loads/plays in the GeckoView.** You cannot hand a bare URL to a background
+fetcher and get rich media + variants: a plain fetch has no page context, no
+player, no SW, no cookies/headers/anti-bot fingerprint, and most sites only
+expose the real media URL after the page's own JS runs (often on play). So:
+
+- **Do NOT design or propose a "paste a link and download it" home action / hero
+  / flow.** It is not a feature this architecture can deliver. (A pasted URL can
+  only do what the address bar already does — *open* it in a tab, which then
+  captures normally.)
+- The capture surface is the in-app browser itself (the Captured sheet fills as
+  you browse), not a standalone URL-in/file-out box.
+- This is a product-level invariant, not a missing feature to add. Don't
+  re-suggest it in UX sketches or redesigns.
+
 ### The extensions (`app/src/main/assets/`)
 
 | dir           | id                       | role |
