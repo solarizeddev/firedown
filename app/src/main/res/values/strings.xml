@@ -158,7 +158,7 @@
     <!-- Home trackers chip: just the count; the shield icon carries the
          "blocked" meaning, so no verb (keeps it tight in every locale). The
          count is compacted in HomeFragment, e.g. "1.4M". -->
-    <string name="home_privacy_line">%1$s trackers</string>
+    <string name="home_privacy_line">%1$s blocked</string>
     <!-- Downloaded chip beside it: "<size> saved". A short trailing word
          balances the trackers chip; "saved" translates more compactly than
          "downloaded" (the ⬇ icon already conveys the download). -->

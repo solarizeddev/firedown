@@ -403,6 +403,6 @@
     <string name="lan_direct_password">Heslo</string>
     <string name="lan_direct_next">Další</string>
     <string name="lan_direct_failed">Přímé připojení se nepodařilo spustit</string>
-    <string name="home_privacy_line">%1$s sledovačů</string>
+    <string name="home_privacy_line">%1$s zablokováno</string>
     <string name="home_downloads_line">Uloženo %1$s</string>
 </resources>

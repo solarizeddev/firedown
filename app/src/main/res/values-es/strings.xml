@@ -581,6 +581,6 @@
     <string name="lan_direct_password">Contraseña</string>
     <string name="lan_direct_next">Siguiente</string>
     <string name="lan_direct_failed">No se pudo iniciar la conexión directa</string>
-    <string name="home_privacy_line">%1$s rastreadores</string>
+    <string name="home_privacy_line">%1$s bloqueados</string>
     <string name="home_downloads_line">%1$s guardados</string>
 </resources>

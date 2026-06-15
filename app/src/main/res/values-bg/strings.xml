@@ -337,6 +337,6 @@
     <string name="lan_direct_password">Парола</string>
     <string name="lan_direct_next">Напред</string>
     <string name="lan_direct_failed">Директната връзка не можа да стартира</string>
-    <string name="home_privacy_line">%1$s тракера</string>
+    <string name="home_privacy_line">%1$s блокирани</string>
     <string name="home_downloads_line">%1$s запазени</string>
 </resources>

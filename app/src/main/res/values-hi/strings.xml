@@ -349,6 +349,6 @@
     <string name="lan_direct_password">पासवर्ड</string>
     <string name="lan_direct_next">आगे</string>
     <string name="lan_direct_failed">सीधा कनेक्शन शुरू नहीं हो सका</string>
-    <string name="home_privacy_line">%1$s ट्रैकर</string>
+    <string name="home_privacy_line">%1$s अवरोधित</string>
     <string name="home_downloads_line">%1$s सहेजे गए</string>
 </resources>
