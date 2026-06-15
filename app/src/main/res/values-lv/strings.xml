@@ -9,7 +9,6 @@
     <string name="browser_enter_url">Meklējiet vai ierakstiet vietrādi URL</string>
     <string name="browser_error_image_title">Liesma ir pazudusi</string>
     <string name="browser_find_in_page">Atrast lapā</string>
-    <string name="browser_settings">Iestatījumi</string>
     <string name="browser_tabs_empty">Šeit tiks rādītas jūsu atvērtās cilnes.</string>
     <string name="browser_tabs_empty_archive">Nav nesen aizvērtu cilņu.</string>
     <string name="cancel">Atcelt</string>
@@ -43,7 +42,6 @@
     <string name="details_size">Izmērs</string>
     <string name="details_url">Vietrādis URL</string>
     <string name="download">Lejupielādēt</string>
-    <string name="download_file">Fails ir gatavs lejupielādei:</string>
     <string name="download_finished">Lejupielāde ir pabeigta</string>
     <string name="download_ongoing_notification">Firedown</string>
     <string name="download_quality">Lejupielādes kvalitāte</string>
@@ -109,7 +107,6 @@
     <string name="navigation_captured">Uzņemtais saturs</string>
     <string name="navigation_downloads">Lejupielādes</string>
     <string name="navigation_settings">Iestatījumi</string>
-    <string name="navigation_tabs">Cilnes</string>
     <string name="navigation_tabs_archive">Nesen aizvērtās cilnes</string>
     <string name="navigation_vault">Drošā mape</string>
     <string name="navigation_web_bookmarks">Visas grāmatzīmes</string>
@@ -216,9 +213,7 @@
     <string name="crash_sheet_copied">Avārijas ziņojums kopēts starpliktuvē</string>
     <string name="crash_sheet_open_failed">Pārlūku neizdevās atvērt. Ziņojums ir starpliktuvē — ielīmējiet to jaunā GitHub problēmā.</string>
     <string name="home_trackers_title">Izsekotāji un reklāmas bloķētas</string>
-    <string name="home_trackers_subtitle">%1$s · ~%2$s ietaupīti</string>
     <string name="home_trackers_subtitle_idle">Aizsardzība aktīva</string>
-    <string name="home_vault_empty_subtitle">Privāts un šifrēts</string>
     <string name="trackers_info_count_label">izsekotāji un reklāmas bloķētas</string>
     <string name="trackers_info_saved">~%1$s joslas platuma ietaupīts</string>
     <string name="trackers_info_categories">Izsekotāji · Reklāmas · Pirkstu nospiedumi · Sīkfaili</string>

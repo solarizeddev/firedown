@@ -19,7 +19,6 @@
     <string name="browser_menu_settings">Nastavitve</string>
     <string name="browser_menu_share">Deli</string>
     <string name="browser_menu_stop">Ustavi</string>
-    <string name="browser_settings">nastavitve</string>
     <string name="browser_tabs_empty">Tukaj bodo prikazani vaši odprti zavihki.</string>
     <string name="browser_tabs_empty_archive">Ni nedavno zaprtih zavihkov.</string>
     <string name="cancel">Prekliči</string>
@@ -71,7 +70,6 @@
     <string name="details_size">Velikost</string>
     <string name="details_url">URL</string>
     <string name="download">Prenesi</string>
-    <string name="download_file">Datoteka je pripravljena za prenos:</string>
     <string name="download_finished">Prenos končan</string>
     <string name="download_ongoing_notification">Firedown</string>
     <string name="download_quality">Kakovost prenosa</string>
@@ -140,7 +138,6 @@
     <string name="navigation_captured">Zajeta vsebina</string>
     <string name="navigation_downloads">Prenosi</string>
     <string name="navigation_settings">nastavitve</string>
-    <string name="navigation_tabs">Zavihki</string>
     <string name="navigation_tabs_archive">Nedavno zaprti zavihki</string>
     <string name="navigation_vault">Varna mapa</string>
     <string name="navigation_web_bookmarks">Zaznamki</string>
@@ -274,9 +271,7 @@
     <string name="crash_sheet_copied">Poročilo o sesutju kopirano v odložišče</string>
     <string name="crash_sheet_open_failed">Brskalnika ni bilo mogoče odpreti. Poročilo je v odložišču — prilepite ga v novo prijavo na GitHub.</string>
     <string name="home_trackers_title">Sledilniki in oglasi blokirani</string>
-    <string name="home_trackers_subtitle">%1$s · ~%2$s prihranjenih</string>
     <string name="home_trackers_subtitle_idle">Zaščita aktivna</string>
-    <string name="home_vault_empty_subtitle">Zasebno in šifrirano</string>
     <string name="trackers_info_count_label">sledilniki in oglasi blokirani</string>
     <string name="trackers_info_saved">~%1$s pasovne širine prihranjene</string>
     <string name="trackers_info_categories">Sledilniki · Oglasi · Prstni odtisi · Piškotki</string>

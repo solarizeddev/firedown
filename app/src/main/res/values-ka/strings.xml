@@ -18,7 +18,6 @@
     <string name="browser_menu_settings">პარამეტრები</string>
     <string name="browser_menu_share">გაზიარება</string>
     <string name="browser_menu_stop">შეჩერება</string>
-    <string name="browser_settings">Პარამეტრები</string>
     <string name="browser_tabs_empty">Თქვენი ღია ჩანართები აქ გამოჩნდება.</string>
     <string name="browser_tabs_empty_archive">Ახლახან დახურული ჩანართები არ არის.</string>
     <string name="cancel">Გაუქმება</string>
@@ -70,7 +69,6 @@
     <string name="details_size">Ზომა</string>
     <string name="details_url">URL</string>
     <string name="download">Ჩამოტვირთვა</string>
-    <string name="download_file">Ფაილი მზად არის ჩამოსატვირთად:</string>
     <string name="download_finished">Ჩამოტვირთვა დასრულდა</string>
     <string name="download_ongoing_notification">Firedown</string>
     <string name="download_quality">Ჩამოტვირთვის ხარისხი</string>
@@ -139,7 +137,6 @@
     <string name="navigation_captured">Გადაღებული კონტენტი</string>
     <string name="navigation_downloads">Ჩამოტვირთვები</string>
     <string name="navigation_settings">Პარამეტრები</string>
-    <string name="navigation_tabs">Ჩანართები</string>
     <string name="navigation_tabs_archive">Ახლახან დახურული ჩანართები</string>
     <string name="navigation_vault">დაცული საქაღალდე</string>
     <string name="navigation_web_bookmarks">სანიშნები</string>
@@ -268,9 +265,7 @@
     <string name="crash_sheet_copied">გათიშვის ანგარიში დაკოპირდა გაცვლის ბუფერში</string>
     <string name="crash_sheet_open_failed">ბრაუზერი ვერ გაიხსნა. ანგარიში გაცვლის ბუფერშია — ჩასვით ის ახალ GitHub issue-ში.</string>
     <string name="home_trackers_title">ტრეკერები და რეკლამები დაბლოკილია</string>
-    <string name="home_trackers_subtitle">%1$s · ~%2$s დაზოგა</string>
     <string name="home_trackers_subtitle_idle">დაცვა ჩართულია</string>
-    <string name="home_vault_empty_subtitle">კერძო და დაშიფრული</string>
     <string name="trackers_info_count_label">ტრეკერი და რეკლამა დაბლოკილია</string>
     <string name="trackers_info_saved">~%1$s გამტარუნარიანობა დაზოგა</string>
     <string name="trackers_info_categories">ტრეკერები · რეკლამები · თითის ანაბეჭდი · ქუქი ფაილები</string>

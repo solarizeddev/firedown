@@ -18,7 +18,6 @@
     <string name="browser_menu_settings">Баптаулар</string>
     <string name="browser_menu_share">Бөлісу</string>
     <string name="browser_menu_stop">Тоқтату</string>
-    <string name="browser_settings">Параметрлер</string>
     <string name="browser_tabs_empty">Ашық қойындылар осы жерде көрсетіледі.</string>
     <string name="browser_tabs_empty_archive">Жақында жабылған қойындылар жоқ.</string>
     <string name="cancel">Болдырмау</string>
@@ -70,7 +69,6 @@
     <string name="details_size">Өлшем</string>
     <string name="details_url">URL</string>
     <string name="download">Жүктеп алу</string>
-    <string name="download_file">Файл жүктеп алуға дайын:</string>
     <string name="download_finished">Жүктеп алу аяқталды</string>
     <string name="download_ongoing_notification">Өрт сөндіру</string>
     <string name="download_quality">Жүктеп алу сапасы</string>
@@ -139,7 +137,6 @@
     <string name="navigation_captured">Түсірілген мазмұн</string>
     <string name="navigation_downloads">Жүктеулер</string>
     <string name="navigation_settings">Параметрлер</string>
-    <string name="navigation_tabs">Қойындылар</string>
     <string name="navigation_tabs_archive">Жақында жабылған қойындылар</string>
     <string name="navigation_vault">Қауіпсіз қалта</string>
     <string name="navigation_web_bookmarks">Бетбелгілер</string>
@@ -268,9 +265,7 @@
     <string name="crash_sheet_copied">Іркіліс есебі алмасу буферіне көшірілді</string>
     <string name="crash_sheet_open_failed">Браузерді ашу мүмкін болмады. Есеп алмасу буферінде — оны жаңа GitHub мәселесіне қойыңыз.</string>
     <string name="home_trackers_title">Бақылаушылар мен жарнамалар бұғатталды</string>
-    <string name="home_trackers_subtitle">%1$s · ~%2$s үнемделді</string>
     <string name="home_trackers_subtitle_idle">Қорғаныс қосулы</string>
-    <string name="home_vault_empty_subtitle">Жеке және шифрленген</string>
     <string name="trackers_info_count_label">бақылаушы мен жарнама бұғатталды</string>
     <string name="trackers_info_saved">~%1$s трафик үнемделді</string>
     <string name="trackers_info_categories">Бақылаушылар · Жарнамалар · Іздер · Cookie</string>

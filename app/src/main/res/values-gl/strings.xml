@@ -18,7 +18,6 @@
     <string name="browser_menu_settings">Configuración</string>
     <string name="browser_menu_share">Compartir</string>
     <string name="browser_menu_stop">Parar</string>
-    <string name="browser_settings">Configuración</string>
     <string name="browser_tabs_empty">As túas pestanas abertas mostraranse aquí.</string>
     <string name="browser_tabs_empty_archive">Non hai pestanas pechadas recentemente.</string>
     <string name="cancel">Cancelar</string>
@@ -70,7 +69,6 @@
     <string name="details_size">Tamaño</string>
     <string name="details_url">URL</string>
     <string name="download">Descargar</string>
-    <string name="download_file">Un ficheiro está listo para ser descargado:</string>
     <string name="download_finished">Descarga rematada</string>
     <string name="download_ongoing_notification">Firedown</string>
     <string name="download_quality">Calidade de descarga</string>
@@ -139,7 +137,6 @@
     <string name="navigation_captured">Contido capturado</string>
     <string name="navigation_downloads">Descargas</string>
     <string name="navigation_settings">Configuración</string>
-    <string name="navigation_tabs">Fichas</string>
     <string name="navigation_tabs_archive">Pestanas pechadas recentemente</string>
     <string name="navigation_vault">Cartafol seguro</string>
     <string name="navigation_web_bookmarks">Marcadores</string>
@@ -268,9 +265,7 @@
     <string name="crash_sheet_copied">Informe de fallo copiado ao portapapeis</string>
     <string name="crash_sheet_open_failed">Non se puido abrir o navegador. O informe está no portapapeis — pégao nunha nova incidencia de GitHub.</string>
     <string name="home_trackers_title">Rastrexadores e anuncios bloqueados</string>
-    <string name="home_trackers_subtitle">%1$s · ~%2$s aforrados</string>
     <string name="home_trackers_subtitle_idle">Protección activa</string>
-    <string name="home_vault_empty_subtitle">Privada e cifrada</string>
     <string name="trackers_info_count_label">rastrexadores e anuncios bloqueados</string>
     <string name="trackers_info_saved">~%1$s de largura de banda aforrados</string>
     <string name="trackers_info_categories">Rastrexadores · Anuncios · Pegada · Cookies</string>

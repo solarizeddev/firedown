@@ -17,7 +17,6 @@
     <string name="browser_menu_settings">সেটিংস</string>
     <string name="browser_menu_share">শেয়ার</string>
     <string name="browser_menu_stop">থামুন</string>
-    <string name="browser_settings">সেটিংস</string>
     <string name="browser_tabs_empty">আপনার খোলা ট্যাব এখানে দেখানো হবে.</string>
     <string name="browser_tabs_empty_archive">কোনো সম্প্রতি বন্ধ ট্যাব.</string>
     <string name="cancel">বাতিল করুন</string>
@@ -63,7 +62,6 @@
     <string name="details_size">আকার</string>
     <string name="details_url">URL</string>
     <string name="download">ডাউনলোড করুন</string>
-    <string name="download_file">একটি ফাইল ডাউনলোড করার জন্য প্রস্তুত:</string>
     <string name="download_finished">ডাউনলোড শেষ</string>
     <string name="download_ongoing_notification">ফায়ারডাউন</string>
     <string name="download_quality">ডাউনলোড গুণমান</string>
@@ -131,7 +129,6 @@
     <string name="navigation_captured">ক্যাপচার করা বিষয়বস্তু</string>
     <string name="navigation_downloads">ডাউনলোড</string>
     <string name="navigation_settings">সেটিংস</string>
-    <string name="navigation_tabs">ট্যাব</string>
     <string name="navigation_tabs_archive">সম্প্রতি বন্ধ হওয়া ট্যাব</string>
     <string name="navigation_vault">নিরাপদ ফোল্ডার</string>
     <string name="navigation_web_bookmarks">বুকমার্কসমূহ</string>
@@ -249,9 +246,7 @@
     <string name="crash_sheet_copied">ক্র্যাশ রিপোর্ট ক্লিপবোর্ডে কপি করা হয়েছে</string>
     <string name="crash_sheet_open_failed">ব্রাউজার খোলা যায়নি। রিপোর্ট ক্লিপবোর্ডে আছে — এটি একটি নতুন GitHub ইস্যুতে পেস্ট করুন।</string>
     <string name="home_trackers_title">ট্র্যাকার এবং বিজ্ঞাপন ব্লক করা হয়েছে</string>
-    <string name="home_trackers_subtitle">%1$s · ~%2$s সাশ্রয়</string>
     <string name="home_trackers_subtitle_idle">সুরক্ষা সক্রিয়</string>
-    <string name="home_vault_empty_subtitle">ব্যক্তিগত এবং এনক্রিপ্টেড</string>
     <string name="trackers_info_count_label">ট্র্যাকার এবং বিজ্ঞাপন ব্লক</string>
     <string name="trackers_info_saved">~%1$s ব্যান্ডউইথ সাশ্রয়</string>
     <string name="trackers_info_categories">ট্র্যাকার · বিজ্ঞাপন · ফিঙ্গারপ্রিন্টিং · কুকি</string>

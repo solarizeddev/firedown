@@ -19,7 +19,6 @@
     <string name="browser_menu_settings">Asetukset</string>
     <string name="browser_menu_share">Jaa</string>
     <string name="browser_menu_stop">Pysäytä</string>
-    <string name="browser_settings">Asetukset</string>
     <string name="browser_tabs_empty">Ei avoimia välilehtiä</string>
     <string name="browser_tabs_empty_archive">Ei äskettäin suljettuja välilehtiä.</string>
     <string name="cancel">Peruuttaa</string>
@@ -72,7 +71,6 @@
     <string name="details_size">Koko</string>
     <string name="details_url">URL-osoite</string>
     <string name="download">Ladata</string>
-    <string name="download_file">Tiedosto on valmis ladattavaksi:</string>
     <string name="download_finished">Lataus valmis</string>
     <string name="download_ongoing_notification">Firedown</string>
     <string name="download_quality">Latauksen laatu</string>
@@ -163,7 +161,6 @@
     <string name="navigation_captured">Kaapattu sisältö</string>
     <string name="navigation_downloads">Lataukset</string>
     <string name="navigation_settings">Asetukset</string>
-    <string name="navigation_tabs">Välilehdet</string>
     <string name="navigation_tabs_archive">Viimeksi suljetut välilehdet</string>
     <string name="navigation_vault">Turvakansio</string>
     <string name="navigation_web_bookmarks">Kirjanmerkit</string>
@@ -326,9 +323,7 @@
     <string name="crash_sheet_copied">Kaatumisraportti kopioitu leikepöydälle</string>
     <string name="crash_sheet_open_failed">Selainta ei voitu avata. Raportti on leikepöydällä — liitä se uuteen GitHub-asiaan.</string>
     <string name="home_trackers_title">Seurantaohjelmat ja mainokset estetty</string>
-    <string name="home_trackers_subtitle">%1$s · ~%2$s säästetty</string>
     <string name="home_trackers_subtitle_idle">Suojaus käytössä</string>
-    <string name="home_vault_empty_subtitle">Yksityinen ja salattu</string>
     <string name="trackers_info_count_label">seurantaohjelmaa ja mainosta estetty</string>
     <string name="trackers_info_saved">~%1$s kaistaa säästetty</string>
     <string name="trackers_info_categories">Seuranta · Mainokset · Sormenjälki · Evästeet</string>

@@ -19,7 +19,6 @@
     <string name="browser_menu_settings">Налаштування</string>
     <string name="browser_menu_share">Поділитися</string>
     <string name="browser_menu_stop">Зупинити</string>
-    <string name="browser_settings">Налаштування</string>
     <string name="browser_tabs_empty">Немає відкритих вкладок</string>
     <string name="browser_tabs_empty_archive">Немає нещодавно закритих вкладок.</string>
     <string name="cancel">Скасувати</string>
@@ -72,7 +71,6 @@
     <string name="details_size">Розмір</string>
     <string name="details_url">URL-адреса</string>
     <string name="download">Завантажити</string>
-    <string name="download_file">Файл готовий до завантаження:</string>
     <string name="download_finished">Завантаження завершено</string>
     <string name="download_ongoing_notification">Firedown</string>
     <string name="download_quality">Якість завантаження</string>
@@ -151,7 +149,6 @@
     <string name="navigation_captured">Скрін контенту</string>
     <string name="navigation_downloads">Завантаження</string>
     <string name="navigation_settings">Налаштування</string>
-    <string name="navigation_tabs">Вкладки</string>
     <string name="navigation_tabs_archive">Нещодавно закриті вкладки</string>
     <string name="navigation_vault">Захищена папка</string>
     <string name="navigation_web_bookmarks">Закладки</string>
@@ -324,9 +321,7 @@
     <string name="crash_sheet_copied">Звіт про збій скопійовано в буфер обміну</string>
     <string name="crash_sheet_open_failed">Не вдалося відкрити браузер. Звіт у буфері обміну — вставте його в нову задачу GitHub.</string>
     <string name="home_trackers_title">Трекери та реклама заблоковані</string>
-    <string name="home_trackers_subtitle">%1$s · ~%2$s заощаджено</string>
     <string name="home_trackers_subtitle_idle">Захист увімкнено</string>
-    <string name="home_vault_empty_subtitle">Приватно та зашифровано</string>
     <string name="trackers_info_count_label">трекерів та реклами заблоковано</string>
     <string name="trackers_info_saved">~%1$s трафіку заощаджено</string>
     <string name="trackers_info_categories">Трекери · Реклама · Відбитки · Cookie</string>

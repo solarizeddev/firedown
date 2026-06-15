@@ -17,7 +17,6 @@
     <string name="browser_menu_settings">Nuostatos</string>
     <string name="browser_menu_share">Dalintis</string>
     <string name="browser_menu_stop">Stabdyti</string>
-    <string name="browser_settings">Nustatymai</string>
     <string name="browser_tabs_empty">Čia bus rodomi jūsų atidaryti skirtukai.</string>
     <string name="browser_tabs_empty_archive">Nėra neseniai uždarytų skirtukų.</string>
     <string name="cancel">Atšaukti</string>
@@ -63,7 +62,6 @@
     <string name="details_size">Dydis</string>
     <string name="details_url">URL</string>
     <string name="download">parsisiųsti</string>
-    <string name="download_file">Failas paruoštas atsisiųsti:</string>
     <string name="download_finished">Atsisiuntimas baigtas</string>
     <string name="download_ongoing_notification">„Firedown“</string>
     <string name="download_quality">Atsisiuntimo kokybė</string>
@@ -131,7 +129,6 @@
     <string name="navigation_captured">Užfiksuotas turinys</string>
     <string name="navigation_downloads">Atsisiuntimai</string>
     <string name="navigation_settings">Nustatymai</string>
-    <string name="navigation_tabs">Skirtukai</string>
     <string name="navigation_tabs_archive">Neseniai uždaryti skirtukai</string>
     <string name="navigation_vault">Saugus aplankas</string>
     <string name="navigation_web_bookmarks">Adresynas</string>
@@ -256,9 +253,7 @@
     <string name="crash_sheet_copied">Strigties pranešimas nukopijuotas į iškarpinę</string>
     <string name="crash_sheet_open_failed">Nepavyko atidaryti naršyklės. Pranešimas yra iškarpinėje — įklijuokite jį į naują GitHub problemą.</string>
     <string name="home_trackers_title">Sekikliai ir reklamos užblokuoti</string>
-    <string name="home_trackers_subtitle">%1$s · ~%2$s sutaupyta</string>
     <string name="home_trackers_subtitle_idle">Apsauga įjungta</string>
-    <string name="home_vault_empty_subtitle">Privatu ir užšifruota</string>
     <string name="trackers_info_count_label">sekiklių ir reklamų užblokuota</string>
     <string name="trackers_info_saved">~%1$s pralaidumo sutaupyta</string>
     <string name="trackers_info_categories">Sekikliai · Reklamos · Pirštų atspaudai · Slapukai</string>

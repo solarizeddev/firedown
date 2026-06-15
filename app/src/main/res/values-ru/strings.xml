@@ -22,7 +22,6 @@
     <string name="browser_menu_settings">Настройки</string>
     <string name="browser_menu_share">Поделиться</string>
     <string name="browser_menu_stop">Остановить</string>
-    <string name="browser_settings">Настройки</string>
     <string name="browser_tabs_empty">Нет открытых вкладок</string>
     <string name="browser_tabs_empty_archive">Нет недавно закрытых вкладок.</string>
     <string name="cancel">Отмена</string>
@@ -75,7 +74,6 @@
     <string name="details_size">Размер</string>
     <string name="details_url">URL</string>
     <string name="download">Скачать</string>
-    <string name="download_file">Файл готов к загрузке:</string>
     <string name="download_finished">Загрузка завершена</string>
     <string name="download_ongoing_notification">Firedown</string>
     <string name="download_quality">Качество загрузки</string>
@@ -166,7 +164,6 @@
     <string name="navigation_captured">Захваченный контент</string>
     <string name="navigation_downloads">Загрузки</string>
     <string name="navigation_settings">Настройки</string>
-    <string name="navigation_tabs">Вкладки</string>
     <string name="navigation_tabs_archive">Недавно закрытые вкладки</string>
     <string name="navigation_vault">Безопасная папка</string>
     <string name="navigation_web_bookmarks">Закладки</string>
@@ -385,9 +382,7 @@
     <string name="crash_sheet_copied">Отчёт о сбое скопирован в буфер обмена</string>
     <string name="crash_sheet_open_failed">Не удалось открыть браузер. Отчёт о сбое в буфере обмена — вставьте его в новую заявку на GitHub.</string>
     <string name="home_trackers_title">Трекеры и реклама заблокированы</string>
-    <string name="home_trackers_subtitle">%1$s · ~%2$s сэкономлено</string>
     <string name="home_trackers_subtitle_idle">Защита включена</string>
-    <string name="home_vault_empty_subtitle">Приватно и зашифровано</string>
     <string name="trackers_info_count_label">трекеров и рекламы заблокировано</string>
     <string name="trackers_info_saved">~%1$s трафика сэкономлено</string>
     <string name="trackers_info_categories">Трекеры · Реклама · Отпечатки · Cookie-баннеры</string>

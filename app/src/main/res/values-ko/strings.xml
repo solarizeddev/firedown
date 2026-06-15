@@ -22,7 +22,6 @@
     <string name="browser_menu_settings">설정</string>
     <string name="browser_menu_share">공유</string>
     <string name="browser_menu_stop">중지</string>
-    <string name="browser_settings">설정</string>
     <string name="browser_tabs_empty">열린 탭 없음</string>
     <string name="browser_tabs_empty_archive">최근에 닫은 탭이 없습니다.</string>
     <string name="cancel">취소</string>
@@ -75,7 +74,6 @@
     <string name="details_size">크기</string>
     <string name="details_url">URL</string>
     <string name="download">다운로드</string>
-    <string name="download_file">파일을 다운로드할 준비가 되었습니다:</string>
     <string name="download_finished">다운로드 완료</string>
     <string name="download_ongoing_notification">Firedown</string>
     <string name="download_quality">다운로드 품질</string>
@@ -156,7 +154,6 @@
     <string name="navigation_captured">캡처된 콘텐츠</string>
     <string name="navigation_downloads">다운로드</string>
     <string name="navigation_settings">설정</string>
-    <string name="navigation_tabs">탭</string>
     <string name="navigation_tabs_archive">최근에 닫은 탭</string>
     <string name="navigation_vault">보안 폴더</string>
     <string name="navigation_web_bookmarks">북마크</string>
@@ -345,9 +342,7 @@
     <string name="crash_sheet_copied">충돌 보고서가 클립보드에 복사됨</string>
     <string name="crash_sheet_open_failed">브라우저를 열 수 없습니다. 보고서가 클립보드에 있습니다 — 새로운 GitHub 이슈에 붙여넣어 주세요.</string>
     <string name="home_trackers_title">추적기 및 광고 차단됨</string>
-    <string name="home_trackers_subtitle">%1$s · 약 %2$s 절약</string>
     <string name="home_trackers_subtitle_idle">보호 기능이 활성화됨</string>
-    <string name="home_vault_empty_subtitle">비공개 및 암호화됨</string>
     <string name="trackers_info_count_label">개의 추적기 및 광고 차단됨</string>
     <string name="trackers_info_saved">약 %1$s 의 대역폭 절약</string>
     <string name="trackers_info_categories">추적기 · 광고 · 핑거프린팅 · 쿠키 배너</string>

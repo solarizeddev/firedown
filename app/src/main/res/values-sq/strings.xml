@@ -19,7 +19,6 @@
     <string name="browser_menu_settings">Rregullime</string>
     <string name="browser_menu_share">Ndajeni me të tjerët</string>
     <string name="browser_menu_stop">Ndale</string>
-    <string name="browser_settings">Cilësimet</string>
     <string name="browser_tabs_empty">Skedat tuaja të hapura do të shfaqen këtu.</string>
     <string name="browser_tabs_empty_archive">Nuk ka skeda të mbyllura së fundi.</string>
     <string name="cancel">Anulo</string>
@@ -71,7 +70,6 @@
     <string name="details_size">Madhësia</string>
     <string name="details_url">URL</string>
     <string name="download">Shkarko</string>
-    <string name="download_file">Një skedar është gati për t\'u shkarkuar:</string>
     <string name="download_finished">Shkarkimi përfundoi</string>
     <string name="download_ongoing_notification">Shkarkimi</string>
     <string name="download_quality">Cilësia e shkarkimit</string>
@@ -140,7 +138,6 @@
     <string name="navigation_captured">Përmbajtja e kapur</string>
     <string name="navigation_downloads">Shkarkimet</string>
     <string name="navigation_settings">Cilësimet</string>
-    <string name="navigation_tabs">Skedat</string>
     <string name="navigation_tabs_archive">Skedat e mbyllura së fundmi</string>
     <string name="navigation_vault">Dosja e sigurt</string>
     <string name="navigation_web_bookmarks">Faqerojtës</string>
@@ -267,9 +264,7 @@
     <string name="crash_sheet_copied">Raporti i rrëzimit u kopjua në kujtesë</string>
     <string name="crash_sheet_open_failed">Nuk u hap dot shfletuesi. Raporti është në kujtesë — ngjite në një issue të ri në GitHub.</string>
     <string name="home_trackers_title">Gjurmuesit dhe reklamat të bllokuara</string>
-    <string name="home_trackers_subtitle">%1$s · ~%2$s të kursyera</string>
     <string name="home_trackers_subtitle_idle">Mbrojtja aktive</string>
-    <string name="home_vault_empty_subtitle">Privat dhe i koduar</string>
     <string name="trackers_info_count_label">gjurmues dhe reklama të bllokuara</string>
     <string name="trackers_info_saved">~%1$s gjerësi bande e kursyer</string>
     <string name="trackers_info_categories">Gjurmues · Reklama · Gjurmë · Cookies</string>

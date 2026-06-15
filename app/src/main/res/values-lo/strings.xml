@@ -18,7 +18,6 @@
     <string name="browser_menu_settings">ການຕັ້ງຄ່າ</string>
     <string name="browser_menu_share">ແບ່ງປັນ</string>
     <string name="browser_menu_stop">ຢຸດ</string>
-    <string name="browser_settings">ການຕັ້ງຄ່າ</string>
     <string name="browser_tabs_empty">ແຖບເປີດຂອງທ່ານຈະປາກົດຢູ່ບ່ອນນີ້.</string>
     <string name="browser_tabs_empty_archive">ບໍ່ມີແຖບທີ່ປິດເມື່ອບໍ່ດົນມານີ້.</string>
     <string name="cancel">ຍົກເລີກ</string>
@@ -70,7 +69,6 @@
     <string name="details_size">ຂະໜາດ</string>
     <string name="details_url">URL</string>
     <string name="download">ດາວໂຫຼດ</string>
-    <string name="download_file">ໄຟລ໌ພ້ອມໃຫ້ດາວໂຫຼດແລ້ວ:</string>
     <string name="download_finished">ດາວໂຫຼດແລ້ວໆ</string>
     <string name="download_ongoing_notification">ໄຟໄໝ້</string>
     <string name="download_quality">ຄຸນນະພາບການດາວໂຫຼດ</string>
@@ -136,7 +134,6 @@
     <string name="navigation_captured">ເນື້ອຫາທີ່ຖືກຈັບ</string>
     <string name="navigation_downloads">ດາວໂຫຼດ</string>
     <string name="navigation_settings">ການຕັ້ງຄ່າ</string>
-    <string name="navigation_tabs">ແຖບ</string>
     <string name="navigation_tabs_archive">ແຖບທີ່ປິດບໍ່ດົນມານີ້</string>
     <string name="navigation_vault">ໂຟນເດີປອດໄພ</string>
     <string name="navigation_web_bookmarks">ບຸກມາກ</string>
@@ -260,9 +257,7 @@
     <string name="crash_sheet_copied">ສຳເນົາລາຍງານການລົ້ມໄປຍັງຄລິບບອດແລ້ວ</string>
     <string name="crash_sheet_open_failed">ບໍ່ສາມາດເປີດເບຣົາເຊີໄດ້. ລາຍງານຢູ່ໃນຄລິບບອດ — ວາງລົງໃນ issue GitHub ໃໝ່.</string>
     <string name="home_trackers_title">ບລັອກຕົວຕິດຕາມ ແລະ ໂຄສະນາແລ້ວ</string>
-    <string name="home_trackers_subtitle">%1$s · ປະຫຍັດ ~%2$s</string>
     <string name="home_trackers_subtitle_idle">ການປ້ອງກັນເຮັດວຽກຢູ່</string>
-    <string name="home_vault_empty_subtitle">ສ່ວນຕົວ ແລະ ເຂົ້າລະຫັດ</string>
     <string name="trackers_info_count_label">ຕົວຕິດຕາມ ແລະ ໂຄສະນາ ຖືກບລັອກ</string>
     <string name="trackers_info_saved">ປະຫຍັດແບນວິດ ~%1$s</string>
     <string name="trackers_info_categories">ຕົວຕິດຕາມ · ໂຄສະນາ · ລາຍນິ້ວມື · ຄຸກກີ</string>

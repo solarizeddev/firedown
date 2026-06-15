@@ -9,7 +9,6 @@
     <string name="browser_enter_url">Recherchez ou saisissez une URL</string>
     <string name="browser_error_image_title">Le feu est parti</string>
     <string name="browser_find_in_page">Rechercher dans la page</string>
-    <string name="browser_settings">Paramètres</string>
     <string name="browser_tabs_empty">Vos onglets ouverts seront affichés ici.</string>
     <string name="browser_tabs_empty_archive">Aucun onglet récemment fermé.</string>
     <string name="cancel">Annuler</string>
@@ -43,7 +42,6 @@
     <string name="details_size">Taille</string>
     <string name="details_url">URL</string>
     <string name="download">Télécharger</string>
-    <string name="download_file">Un fichier est prêt à être téléchargé:</string>
     <string name="download_finished">Téléchargement terminé</string>
     <string name="download_ongoing_notification">Arrêt du feu</string>
     <string name="download_quality">Qualité de téléchargement</string>
@@ -107,7 +105,6 @@
     <string name="navigation_captured">Contenu capturé</string>
     <string name="navigation_downloads">Téléchargements</string>
     <string name="navigation_settings">Paramètres</string>
-    <string name="navigation_tabs">Onglets</string>
     <string name="navigation_tabs_archive">Onglets récemment fermés</string>
     <string name="navigation_vault">Dossier sécurisé</string>
     <string name="navigation_web_bookmarks">Favoris</string>
@@ -213,9 +210,7 @@
     <string name="crash_sheet_copied">Rapport de plantage copié dans le presse-papiers</string>
     <string name="crash_sheet_open_failed">Impossible d\'ouvrir le navigateur. Le rapport est dans le presse-papiers — collez-le dans un nouveau ticket GitHub.</string>
     <string name="home_trackers_title">Traqueurs et pubs bloqués</string>
-    <string name="home_trackers_subtitle">%1$s · ~%2$s économisés</string>
     <string name="home_trackers_subtitle_idle">Protection active</string>
-    <string name="home_vault_empty_subtitle">Privé et chiffré</string>
     <string name="trackers_info_count_label">traqueurs et pubs bloqués</string>
     <string name="trackers_info_saved">~%1$s de bande passante économisée</string>
     <string name="trackers_info_categories">Traqueurs · Pubs · Empreinte · Cookies</string>

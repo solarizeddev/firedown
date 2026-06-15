@@ -18,7 +18,6 @@
     <string name="browser_menu_settings">الإعدادات</string>
     <string name="browser_menu_share">شارِك</string>
     <string name="browser_menu_stop">أوقف</string>
-    <string name="browser_settings">إعدادات</string>
     <string name="browser_tabs_empty">لا توجد علامات تبويب مفتوحة</string>
     <string name="browser_tabs_empty_archive">لا توجد علامات تبويب مغلقة مؤخرًا.</string>
     <string name="cancel">يلغي</string>
@@ -65,7 +64,6 @@
     <string name="details_size">مقاس</string>
     <string name="details_url">عنوان URL</string>
     <string name="download">تحميل</string>
-    <string name="download_file">الملف جاهز للتحميل:</string>
     <string name="download_finished">انتهى التنزيل</string>
     <string name="download_ongoing_notification">النار أسفل</string>
     <string name="download_quality">جودة التنزيل</string>
@@ -146,7 +144,6 @@
     <string name="navigation_captured">المحتوى الملتقط</string>
     <string name="navigation_downloads">التحميلات</string>
     <string name="navigation_settings">إعدادات</string>
-    <string name="navigation_tabs">نوافذ التبويب</string>
     <string name="navigation_tabs_archive">صفحات اقفلت قبل قليل</string>
     <string name="navigation_vault">مجلد آمن</string>
     <string name="navigation_web_bookmarks">العلامات</string>
@@ -323,9 +320,7 @@
     <string name="crash_sheet_copied">تم نسخ تقرير التعطل إلى الحافظة</string>
     <string name="crash_sheet_open_failed">تعذر فتح المتصفح. التقرير في الحافظة — الصقه في مشكلة جديدة على GitHub.</string>
     <string name="home_trackers_title">تم حظر المتعقبات والإعلانات</string>
-    <string name="home_trackers_subtitle">%1$s · ~%2$s تم توفيرها</string>
     <string name="home_trackers_subtitle_idle">الحماية مفعّلة</string>
-    <string name="home_vault_empty_subtitle">خاصة ومشفّرة</string>
     <string name="trackers_info_count_label">متعقّب وإعلان تم حظره</string>
     <string name="trackers_info_saved">~%1$s من حجم البيانات تم توفيرها</string>
     <string name="trackers_info_categories">المتعقبات · الإعلانات · بصمات الجهاز · ملفات تعريف الارتباط</string>

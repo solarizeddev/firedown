@@ -22,7 +22,6 @@
     <string name="browser_menu_settings">Instellingen</string>
     <string name="browser_menu_share">Delen</string>
     <string name="browser_menu_stop">Stoppen</string>
-    <string name="browser_settings">Instellingen</string>
     <string name="browser_tabs_empty">Geen open tabbladen</string>
     <string name="browser_tabs_empty_archive">Geen recent gesloten tabbladen.</string>
     <string name="cancel">Annuleren</string>
@@ -75,7 +74,6 @@
     <string name="details_size">Maat</string>
     <string name="details_url">URL</string>
     <string name="download">Downloaden</string>
-    <string name="download_file">Er is een bestand klaar om te downloaden:</string>
     <string name="download_finished">Downloaden voltooid</string>
     <string name="download_ongoing_notification">Firedown</string>
     <string name="download_quality">Downloadkwaliteit</string>
@@ -166,7 +164,6 @@
     <string name="navigation_captured">Gevangen inhoud</string>
     <string name="navigation_downloads">Downloads</string>
     <string name="navigation_settings">Instellingen</string>
-    <string name="navigation_tabs">Tabbladen</string>
     <string name="navigation_tabs_archive">Recent gesloten tabbladen</string>
     <string name="navigation_vault">Beveiligde map</string>
     <string name="navigation_web_bookmarks">Bladwijzers</string>
@@ -387,9 +384,7 @@
     <string name="crash_sheet_copied">Crashrapport gekopieerd naar klembord</string>
     <string name="crash_sheet_open_failed">Kan de browser niet openen. Het crashrapport staat op je klembord — plak het in een nieuw GitHub-issue.</string>
     <string name="home_trackers_title">Trackers en advertenties geblokkeerd</string>
-    <string name="home_trackers_subtitle">%1$s · ~%2$s bespaard</string>
     <string name="home_trackers_subtitle_idle">Bescherming actief</string>
-    <string name="home_vault_empty_subtitle">Privé en versleuteld</string>
     <string name="trackers_info_count_label">trackers en advertenties geblokkeerd</string>
     <string name="trackers_info_saved">~%1$s aan bandbreedte bespaard</string>
     <string name="trackers_info_categories">Trackers · Advertenties · Fingerprinting · Cookies</string>

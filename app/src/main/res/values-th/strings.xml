@@ -19,7 +19,6 @@
     <string name="browser_menu_settings">การตั้งค่า</string>
     <string name="browser_menu_share">แบ่งปัน</string>
     <string name="browser_menu_stop">หยุด</string>
-    <string name="browser_settings">การตั้งค่า</string>
     <string name="browser_tabs_empty">แท็บที่เปิดอยู่ของคุณจะแสดงที่นี่</string>
     <string name="browser_tabs_empty_archive">ไม่มีแท็บที่เพิ่งปิดไป</string>
     <string name="cancel">ยกเลิก</string>
@@ -71,7 +70,6 @@
     <string name="details_size">ขนาด</string>
     <string name="details_url">URL</string>
     <string name="download">ดาวน์โหลด</string>
-    <string name="download_file">ไฟล์พร้อมที่จะดาวน์โหลดแล้ว:</string>
     <string name="download_finished">ดาวน์โหลดเสร็จแล้ว</string>
     <string name="download_ongoing_notification">ไฟดับ</string>
     <string name="download_quality">คุณภาพการดาวน์โหลด</string>
@@ -140,7 +138,6 @@
     <string name="navigation_captured">เนื้อหาที่บันทึกไว้</string>
     <string name="navigation_downloads">ดาวน์โหลด</string>
     <string name="navigation_settings">การตั้งค่า</string>
-    <string name="navigation_tabs">แท็บ</string>
     <string name="navigation_tabs_archive">แท็บที่เพิ่งปิดไป</string>
     <string name="navigation_vault">โฟลเดอร์ที่ปลอดภัย</string>
     <string name="navigation_web_bookmarks">ที่คั่นหน้า</string>
@@ -276,9 +273,7 @@
     <string name="crash_sheet_copied">คัดลอกรายงานการขัดข้องไปยังคลิปบอร์ดแล้ว</string>
     <string name="crash_sheet_open_failed">ไม่สามารถเปิดเบราว์เซอร์ได้ รายงานอยู่ในคลิปบอร์ด — วางลงใน GitHub issue ใหม่</string>
     <string name="home_trackers_title">บล็อกตัวติดตามและโฆษณาแล้ว</string>
-    <string name="home_trackers_subtitle">%1$s · ประหยัด ~%2$s</string>
     <string name="home_trackers_subtitle_idle">การป้องกันทำงานอยู่</string>
-    <string name="home_vault_empty_subtitle">เป็นส่วนตัวและเข้ารหัส</string>
     <string name="trackers_info_count_label">ตัวติดตามและโฆษณาถูกบล็อก</string>
     <string name="trackers_info_saved">ประหยัดแบนด์วิดท์ ~%1$s</string>
     <string name="trackers_info_categories">ตัวติดตาม · โฆษณา · ลายนิ้วมือดิจิทัล · คุกกี้</string>

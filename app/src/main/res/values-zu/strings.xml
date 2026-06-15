@@ -9,7 +9,6 @@
     <string name="browser_enter_url">Sesha noma Thayipha i-URL</string>
     <string name="browser_error_image_title">Uphelile Umlilo</string>
     <string name="browser_find_in_page">Thola ekhasini</string>
-    <string name="browser_settings">Izilungiselelo</string>
     <string name="browser_tabs_empty">Amathebhu akho avuliwe azoboniswa lapha.</string>
     <string name="browser_tabs_empty_archive">Awekho amathebhu asanda kuvalwa.</string>
     <string name="cancel">Khansela</string>
@@ -43,7 +42,6 @@
     <string name="details_size">Usayizi</string>
     <string name="details_url">I-URL</string>
     <string name="download">Landa</string>
-    <string name="download_file">Ifayela lilungele ukulandwa:</string>
     <string name="download_finished">Ukulanda kuqedile</string>
     <string name="download_ongoing_notification">I-Firedown</string>
     <string name="download_quality">Download izinga</string>
@@ -107,7 +105,6 @@
     <string name="navigation_captured">Okuqukethwe Okuthunjiwe</string>
     <string name="navigation_downloads">Okulandwayo</string>
     <string name="navigation_settings">Izilungiselelo</string>
-    <string name="navigation_tabs">Amathebhu</string>
     <string name="navigation_tabs_archive">Amathebhu asanda kuvalwa</string>
     <string name="navigation_vault">Ifolda ephephile</string>
     <string name="navigation_web_bookmarks">Wonke Amabhukumaka</string>
@@ -213,9 +210,7 @@
     <string name="crash_sheet_copied">Umbiko wokubhajwa ukopishelwe ebhodini lokukopisha</string>
     <string name="crash_sheet_open_failed">Akukwazanga ukuvulwa kwesiphequluli. Umbiko usebhodini lokukopisha — unamathisele endabeni entsha ye-GitHub.</string>
     <string name="home_trackers_title">Abalandeli nezikhangiso zivinjelwe</string>
-    <string name="home_trackers_subtitle">%1$s · ~%2$s konga</string>
     <string name="home_trackers_subtitle_idle">Ukuvikela kuyasebenza</string>
-    <string name="home_vault_empty_subtitle">Eyimfihlo futhi ibhalwe ngokufihlekile</string>
     <string name="trackers_info_count_label">abalandeli nezikhangiso zivinjelwe</string>
     <string name="trackers_info_saved">~%1$s ye-bandwidth konga</string>
     <string name="trackers_info_categories">Abalandeli · Izikhangiso · Izigxivizo zeminwe · Amakhukhi</string>

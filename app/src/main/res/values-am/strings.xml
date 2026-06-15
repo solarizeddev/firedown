@@ -19,7 +19,6 @@
     <string name="browser_menu_settings">ቅንብሮች</string>
     <string name="browser_menu_share">አጋራ</string>
     <string name="browser_menu_stop">አቁም</string>
-    <string name="browser_settings">ቅንብሮች</string>
     <string name="browser_tabs_empty">ክፍት ትሮችዎ እዚህ ይታያሉ።</string>
     <string name="browser_tabs_empty_archive">በቅርብ ጊዜ የተዘጉ ትሮች የሉም።</string>
     <string name="cancel">ሰርዝ</string>
@@ -71,7 +70,6 @@
     <string name="details_size">መጠን</string>
     <string name="details_url">URL</string>
     <string name="download">አውርድ</string>
-    <string name="download_file">አንድ ፋይል ለመውረድ ዝግጁ ነው፡-</string>
     <string name="download_finished">ማውረዱ አልቋል</string>
     <string name="download_ongoing_notification">Firedown</string>
     <string name="download_quality">የማውረድ ጥራት</string>
@@ -138,7 +136,6 @@
     <string name="navigation_captured">የተያዘ ይዘት</string>
     <string name="navigation_downloads">ውርዶች</string>
     <string name="navigation_settings">ቅንብሮች</string>
-    <string name="navigation_tabs">ትሮች</string>
     <string name="navigation_tabs_archive">በቅርብ ጊዜ የተዘጉ ትሮች</string>
     <string name="navigation_vault">ደህንነቱ የተጠበቀ አቃፊ</string>
     <string name="navigation_web_bookmarks">ሁሉም ዕልባቶች</string>
@@ -268,9 +265,7 @@
     <string name="crash_sheet_copied">የብልሽት ሪፖርት ወደ ቅንጥብ ሰሌዳ ተቀድቷል</string>
     <string name="crash_sheet_open_failed">አሳሹን መክፈት አልተቻለም። ሪፖርቱ በቅንጥብ ሰሌዳ ላይ ነው — በአዲስ GitHub issue ውስጥ ይለጥፉት።</string>
     <string name="home_trackers_title">ተከታታዮችና ማስታወቂያዎች ተዘግተዋል</string>
-    <string name="home_trackers_subtitle">%1$s · ~%2$s ተቆጥቧል</string>
     <string name="home_trackers_subtitle_idle">ጥበቃ ስራ ላይ ነው</string>
-    <string name="home_vault_empty_subtitle">የግል እና የተመሰጠረ</string>
     <string name="trackers_info_count_label">ተከታታዮችና ማስታወቂያዎች ተዘግተዋል</string>
     <string name="trackers_info_saved">~%1$s የጥቅም ስፋት ተቆጥቧል</string>
     <string name="trackers_info_categories">ተከታታዮች · ማስታወቂያዎች · የጣት አሻራ · ኩኪዎች</string>

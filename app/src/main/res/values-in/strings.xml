@@ -18,7 +18,6 @@
     <string name="browser_menu_settings">Setelan</string>
     <string name="browser_menu_share">Bagikan</string>
     <string name="browser_menu_stop">Hentikan</string>
-    <string name="browser_settings">Pengaturan</string>
     <string name="browser_tabs_empty">Tidak ada tab terbuka</string>
     <string name="browser_tabs_empty_archive">Tidak ada tab yang baru saja ditutup.</string>
     <string name="cancel">Membatalkan</string>
@@ -71,7 +70,6 @@
     <string name="details_size">Ukuran</string>
     <string name="details_url">URL</string>
     <string name="download">Unduh</string>
-    <string name="download_file">File siap diunduh:</string>
     <string name="download_finished">Pengunduhan selesai</string>
     <string name="download_ongoing_notification">Penembakan</string>
     <string name="download_quality">Kualitas unduhan</string>
@@ -140,7 +138,6 @@
     <string name="navigation_captured">Konten yang Diambil</string>
     <string name="navigation_downloads">Unduhan</string>
     <string name="navigation_settings">Pengaturan</string>
-    <string name="navigation_tabs">Tab</string>
     <string name="navigation_tabs_archive">Tab yang baru saja ditutup</string>
     <string name="navigation_vault">Folder Aman</string>
     <string name="navigation_web_bookmarks">Markah</string>
@@ -277,9 +274,7 @@
     <string name="crash_sheet_copied">Laporan crash disalin ke papan klip</string>
     <string name="crash_sheet_open_failed">Tidak dapat membuka browser. Laporan ada di papan klip — tempel ke issue GitHub baru.</string>
     <string name="home_trackers_title">Pelacak dan iklan diblokir</string>
-    <string name="home_trackers_subtitle">%1$s · ~%2$s dihemat</string>
     <string name="home_trackers_subtitle_idle">Perlindungan aktif</string>
-    <string name="home_vault_empty_subtitle">Pribadi dan terenkripsi</string>
     <string name="trackers_info_count_label">pelacak dan iklan diblokir</string>
     <string name="trackers_info_saved">~%1$s bandwidth dihemat</string>
     <string name="trackers_info_categories">Pelacak · Iklan · Sidik jari · Cookie</string>

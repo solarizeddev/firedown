@@ -16,7 +16,6 @@
     <string name="browser_menu_settings">అమరికలు</string>
     <string name="browser_menu_share">పంచుకోండి</string>
     <string name="browser_menu_stop">ఆపివేయి</string>
-    <string name="browser_settings">సెట్టింగ్‌లు</string>
     <string name="browser_tabs_empty">మీ తెరిచిన ట్యాబ్‌లు ఇక్కడ చూపబడతాయి.</string>
     <string name="browser_tabs_empty_archive">ఇటీవల మూసివేయబడిన ట్యాబ్‌లు లేవు.</string>
     <string name="cancel">రద్దు చేయండి</string>
@@ -62,7 +61,6 @@
     <string name="details_size">పరిమాణం</string>
     <string name="details_url">URL</string>
     <string name="download">డౌన్‌లోడ్ చేయండి</string>
-    <string name="download_file">ఫైల్ డౌన్‌లోడ్ చేయడానికి సిద్ధంగా ఉంది:</string>
     <string name="download_finished">డౌన్‌లోడ్ పూర్తయింది</string>
     <string name="download_ongoing_notification">ఫైర్డౌన్</string>
     <string name="download_quality">డౌన్‌లోడ్ నాణ్యత</string>
@@ -130,7 +128,6 @@
     <string name="navigation_captured">క్యాప్చర్ చేయబడిన కంటెంట్</string>
     <string name="navigation_downloads">డౌన్‌లోడ్‌లు</string>
     <string name="navigation_settings">సెట్టింగ్‌లు</string>
-    <string name="navigation_tabs">ట్యాబ్‌లు</string>
     <string name="navigation_tabs_archive">ఇటీవల మూసివేయబడిన ట్యాబ్‌లు</string>
     <string name="navigation_vault">సురక్షిత ఫోల్డర్</string>
     <string name="navigation_web_bookmarks">ఇష్టాంశాలు</string>
@@ -256,9 +253,7 @@
     <string name="crash_sheet_copied">క్రాష్ నివేదిక క్లిప్‌బోర్డ్‌కు కాపీ చేయబడింది</string>
     <string name="crash_sheet_open_failed">బ్రౌజర్‌ను తెరవలేకపోయింది. నివేదిక క్లిప్‌బోర్డ్‌లో ఉంది — దానిని కొత్త GitHub ఇష్యూలో పేస్ట్ చేయండి.</string>
     <string name="home_trackers_title">ట్రాకర్లు మరియు ప్రకటనలు బ్లాక్ చేయబడ్డాయి</string>
-    <string name="home_trackers_subtitle">%1$s · ~%2$s ఆదా</string>
     <string name="home_trackers_subtitle_idle">రక్షణ క్రియాశీలంగా ఉంది</string>
-    <string name="home_vault_empty_subtitle">ప్రైవేట్ మరియు ఎన్‌క్రిప్ట్ చేయబడింది</string>
     <string name="trackers_info_count_label">ట్రాకర్లు మరియు ప్రకటనలు బ్లాక్ చేయబడ్డాయి</string>
     <string name="trackers_info_saved">~%1$s బ్యాండ్‌విడ్త్ ఆదా</string>
     <string name="trackers_info_categories">ట్రాకర్లు · ప్రకటనలు · ఫింగర్‌ప్రింట్ · కుకీలు</string>

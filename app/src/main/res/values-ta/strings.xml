@@ -16,7 +16,6 @@
     <string name="browser_menu_settings">அமைவுகள்</string>
     <string name="browser_menu_share">பகிர்</string>
     <string name="browser_menu_stop">நிறுத்து</string>
-    <string name="browser_settings">அமைப்புகள்</string>
     <string name="browser_tabs_empty">உங்கள் திறந்த தாவல்கள் இங்கே காட்டப்படும்.</string>
     <string name="browser_tabs_empty_archive">சமீபத்தில் மூடப்பட்ட தாவல்கள் இல்லை.</string>
     <string name="cancel">ரத்து செய்</string>
@@ -58,7 +57,6 @@
     <string name="details_size">அளவு</string>
     <string name="details_url">URL</string>
     <string name="download">பதிவிறக்க Tamil</string>
-    <string name="download_file">ஒரு கோப்பு பதிவிறக்கம் செய்ய தயாராக உள்ளது:</string>
     <string name="download_finished">பதிவிறக்கம் முடிந்தது</string>
     <string name="download_ongoing_notification">சுடுகாடு</string>
     <string name="download_quality">தரவிறக்கம்</string>
@@ -126,7 +124,6 @@
     <string name="navigation_captured">கைப்பற்றப்பட்ட உள்ளடக்கம்</string>
     <string name="navigation_downloads">பதிவிறக்கங்கள்</string>
     <string name="navigation_settings">அமைப்புகள்</string>
-    <string name="navigation_tabs">தாவல்கள்</string>
     <string name="navigation_tabs_archive">சமீபத்தில் மூடப்பட்ட தாவல்கள்</string>
     <string name="navigation_vault">பாதுகாப்பான ஃபோல்டர்</string>
     <string name="navigation_web_bookmarks">புத்தகக்குறிகள்</string>
@@ -244,9 +241,7 @@
     <string name="crash_sheet_copied">செயலிழப்பு அறிக்கை கிளிப்போர்டுக்கு நகலெடுக்கப்பட்டது</string>
     <string name="crash_sheet_open_failed">உலாவியைத் திறக்க முடியவில்லை. அறிக்கை கிளிப்போர்டில் உள்ளது — அதை புதிய GitHub பிரச்சினையில் ஒட்டவும்.</string>
     <string name="home_trackers_title">கண்காணிப்பாளர்கள் மற்றும் விளம்பரங்கள் தடுக்கப்பட்டன</string>
-    <string name="home_trackers_subtitle">%1$s · ~%2$s சேமிக்கப்பட்டது</string>
     <string name="home_trackers_subtitle_idle">பாதுகாப்பு செயலில்</string>
-    <string name="home_vault_empty_subtitle">தனிப்பட்டது மற்றும் குறியாக்கப்பட்டது</string>
     <string name="trackers_info_count_label">கண்காணிப்பாளர்கள் மற்றும் விளம்பரங்கள் தடுக்கப்பட்டன</string>
     <string name="trackers_info_saved">~%1$s அலைவரிசை சேமிக்கப்பட்டது</string>
     <string name="trackers_info_categories">கண்காணிப்பு · விளம்பரங்கள் · கைரேகை · குக்கீகள்</string>

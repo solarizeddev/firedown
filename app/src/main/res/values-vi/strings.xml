@@ -19,7 +19,6 @@
     <string name="browser_menu_settings">Cài đặt</string>
     <string name="browser_menu_share">Chia sẻ</string>
     <string name="browser_menu_stop">Dừng</string>
-    <string name="browser_settings">Cài đặt</string>
     <string name="browser_tabs_empty">Không có thẻ đang mở</string>
     <string name="browser_tabs_empty_archive">Không có tab nào đã đóng gần đây.</string>
     <string name="cancel">Hủy</string>
@@ -72,7 +71,6 @@
     <string name="details_size">Kích cỡ</string>
     <string name="details_url">URL</string>
     <string name="download">Tải xuống</string>
-    <string name="download_file">Một tập tin đã sẵn sàng để tải xuống:</string>
     <string name="download_finished">Tải xuống đã hoàn tất</string>
     <string name="download_ongoing_notification">Firedown</string>
     <string name="download_quality">Chất lượng tải xuống</string>
@@ -141,7 +139,6 @@
     <string name="navigation_captured">Nội dung đã chụp</string>
     <string name="navigation_downloads">Tải xuống</string>
     <string name="navigation_settings">Cài đặt</string>
-    <string name="navigation_tabs">Tab</string>
     <string name="navigation_tabs_archive">Các tab đã đóng gần đây</string>
     <string name="navigation_vault">Thư mục an toàn</string>
     <string name="navigation_web_bookmarks">Dấu trang</string>

@@ -19,7 +19,6 @@
     <string name="browser_menu_settings">Indstillinger</string>
     <string name="browser_menu_share">Del</string>
     <string name="browser_menu_stop">Stop</string>
-    <string name="browser_settings">Indstillinger</string>
     <string name="browser_tabs_empty">Ingen åbne faner</string>
     <string name="browser_tabs_empty_archive">Ingen nyligt lukkede faner.</string>
     <string name="cancel">Afbestil</string>
@@ -72,7 +71,6 @@
     <string name="details_size">Størrelse</string>
     <string name="details_url">URL</string>
     <string name="download">Download</string>
-    <string name="download_file">En fil er klar til at blive downloadet:</string>
     <string name="download_finished">Download er afsluttet</string>
     <string name="download_ongoing_notification">Firedown</string>
     <string name="download_quality">Download kvalitet</string>
@@ -153,7 +151,6 @@
     <string name="navigation_captured">Optaget indhold</string>
     <string name="navigation_downloads">Downloads</string>
     <string name="navigation_settings">Indstillinger</string>
-    <string name="navigation_tabs">Faner</string>
     <string name="navigation_tabs_archive">Nyligt lukkede faner</string>
     <string name="navigation_vault">Sikker mappe</string>
     <string name="navigation_web_bookmarks">Bogmærker</string>
@@ -301,9 +298,7 @@
     <string name="crash_sheet_copied">Nedbrudsrapport kopieret til udklipsholderen</string>
     <string name="crash_sheet_open_failed">Kunne ikke åbne en browser. Nedbrudsrapporten er i din udklipsholder — indsæt den i et nyt GitHub-issue.</string>
     <string name="home_trackers_title">Sporing og annoncer blokeret</string>
-    <string name="home_trackers_subtitle">%1$s · ~%2$s sparet</string>
     <string name="home_trackers_subtitle_idle">Beskyttelse aktiv</string>
-    <string name="home_vault_empty_subtitle">Privat og krypteret</string>
     <string name="trackers_info_count_label">sporing og annoncer blokeret</string>
     <string name="trackers_info_saved">~%1$s båndbredde sparet</string>
     <string name="trackers_info_categories">Sporing · Annoncer · Fingeraftryk · Cookies</string>

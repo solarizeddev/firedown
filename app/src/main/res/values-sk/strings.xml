@@ -19,7 +19,6 @@
     <string name="browser_menu_settings">Nastavenia</string>
     <string name="browser_menu_share">Zdieľať</string>
     <string name="browser_menu_stop">Zastaviť</string>
-    <string name="browser_settings">Nastavenia</string>
     <string name="browser_tabs_empty">Tu sa zobrazia vaše otvorené karty.</string>
     <string name="browser_tabs_empty_archive">Žiadne nedávno zatvorené karty.</string>
     <string name="cancel">Zrušiť</string>
@@ -71,7 +70,6 @@
     <string name="details_size">Veľkosť</string>
     <string name="details_url">URL</string>
     <string name="download">Stiahnuť ▼</string>
-    <string name="download_file">Súbor je pripravený na stiahnutie:</string>
     <string name="download_finished">Sťahovanie dokončené</string>
     <string name="download_ongoing_notification">Firedown</string>
     <string name="download_quality">Kvalita sťahovania</string>
@@ -140,7 +138,6 @@
     <string name="navigation_captured">Zachytený obsah</string>
     <string name="navigation_downloads">K stiahnutiu</string>
     <string name="navigation_settings">Nastavenia</string>
-    <string name="navigation_tabs">Karty</string>
     <string name="navigation_tabs_archive">Nedávno zatvorené karty</string>
     <string name="navigation_vault">Bezpečný priečinok</string>
     <string name="navigation_web_bookmarks">Záložky</string>
@@ -276,9 +273,7 @@
     <string name="crash_sheet_copied">Hlásenie o páde skopírované do schránky</string>
     <string name="crash_sheet_open_failed">Nepodarilo sa otvoriť prehliadač. Hlásenie je v schránke — vložte ho do nového GitHub issue.</string>
     <string name="home_trackers_title">Sledovače a reklamy zablokované</string>
-    <string name="home_trackers_subtitle">%1$s · ~%2$s ušetrené</string>
     <string name="home_trackers_subtitle_idle">Ochrana aktívna</string>
-    <string name="home_vault_empty_subtitle">Súkromné a šifrované</string>
     <string name="trackers_info_count_label">sledovačov a reklám zablokovaných</string>
     <string name="trackers_info_saved">~%1$s šírky pásma ušetrenej</string>
     <string name="trackers_info_categories">Sledovače · Reklamy · Odtlačky · Cookies</string>

@@ -17,7 +17,6 @@
     <string name="browser_menu_settings">Mga Setting</string>
     <string name="browser_menu_share">Ibahagi</string>
     <string name="browser_menu_stop">Tumigil</string>
-    <string name="browser_settings">Mga setting</string>
     <string name="browser_tabs_empty">Ang iyong mga bukas na tab ay ipapakita dito.</string>
     <string name="browser_tabs_empty_archive">Walang kamakailang isinarang tab.</string>
     <string name="cancel">Kanselahin</string>
@@ -69,7 +68,6 @@
     <string name="details_size">Sukat</string>
     <string name="details_url">URL</string>
     <string name="download">I-download</string>
-    <string name="download_file">Handa nang i-download ang isang file:</string>
     <string name="download_finished">Tapos na ang pag-download</string>
     <string name="download_ongoing_notification">Firedown</string>
     <string name="download_quality">Kalidad ng pag-download</string>
@@ -138,7 +136,6 @@
     <string name="navigation_captured">Nakuhang Nilalaman</string>
     <string name="navigation_downloads">Mga download</string>
     <string name="navigation_settings">Mga setting</string>
-    <string name="navigation_tabs">Mga tab</string>
     <string name="navigation_tabs_archive">Mga tab na kamakailang isinara</string>
     <string name="navigation_vault">Ligtas na folder</string>
     <string name="navigation_web_bookmarks">Mga Bookmark</string>
@@ -262,9 +259,7 @@
     <string name="crash_sheet_copied">Nakopya ang ulat ng pag-crash sa clipboard</string>
     <string name="crash_sheet_open_failed">Hindi mabuksan ang browser. Nasa clipboard ang ulat — i-paste ito sa bagong GitHub issue.</string>
     <string name="home_trackers_title">Na-block ang mga tracker at ad</string>
-    <string name="home_trackers_subtitle">%1$s · ~%2$s naitipid</string>
     <string name="home_trackers_subtitle_idle">Aktibo ang proteksyon</string>
-    <string name="home_vault_empty_subtitle">Pribado at naka-encrypt</string>
     <string name="trackers_info_count_label">tracker at ad ang na-block</string>
     <string name="trackers_info_saved">~%1$s ng bandwidth naitipid</string>
     <string name="trackers_info_categories">Tracker · Ad · Fingerprinting · Cookies</string>

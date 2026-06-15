@@ -17,7 +17,6 @@
     <string name="browser_menu_settings">Sätted</string>
     <string name="browser_menu_share">Jaga</string>
     <string name="browser_menu_stop">Peata</string>
-    <string name="browser_settings">Seaded</string>
     <string name="browser_tabs_empty">Siin kuvatakse teie avatud vahelehed.</string>
     <string name="browser_tabs_empty_archive">Hiljuti suletud vahelehti pole.</string>
     <string name="cancel">Tühista</string>
@@ -63,7 +62,6 @@
     <string name="details_size">Suurus</string>
     <string name="details_url">URL</string>
     <string name="download">Lae alla</string>
-    <string name="download_file">Fail on allalaadimiseks valmis:</string>
     <string name="download_finished">Allalaadimine on lõppenud</string>
     <string name="download_ongoing_notification">Tulekahju</string>
     <string name="download_quality">Allalaadimise kvaliteet</string>
@@ -141,7 +139,6 @@
     <string name="navigation_captured">Jäädvustatud sisu</string>
     <string name="navigation_downloads">Allalaadimised</string>
     <string name="navigation_settings">Seaded</string>
-    <string name="navigation_tabs">Vahekaardid</string>
     <string name="navigation_tabs_archive">Hiljuti suletud vahelehed</string>
     <string name="navigation_vault">Turvaline kaust</string>
     <string name="navigation_web_bookmarks">Järjehoidjad</string>
@@ -285,9 +282,7 @@
     <string name="crash_sheet_copied">Krahhi aruanne kopeeritud lõikelauale</string>
     <string name="crash_sheet_open_failed">Brauserit ei õnnestunud avada. Aruanne on lõikelaual — kleebi see uude GitHub probleemi.</string>
     <string name="home_trackers_title">Jälitajad ja reklaamid blokeeritud</string>
-    <string name="home_trackers_subtitle">%1$s · ~%2$s säästetud</string>
     <string name="home_trackers_subtitle_idle">Kaitse aktiivne</string>
-    <string name="home_vault_empty_subtitle">Privaatne ja krüptitud</string>
     <string name="trackers_info_count_label">jälitajat ja reklaami blokeeritud</string>
     <string name="trackers_info_saved">~%1$s ribalaiust säästetud</string>
     <string name="trackers_info_categories">Jälitajad · Reklaamid · Sõrmejälg · Küpsised</string>

@@ -19,7 +19,6 @@
     <string name="browser_menu_settings">تنظیمات</string>
     <string name="browser_menu_share">اشتراک‌گذاری</string>
     <string name="browser_menu_stop">توقف</string>
-    <string name="browser_settings">تنظیمات</string>
     <string name="browser_tabs_empty">برگه های باز شما در اینجا نشان داده می شود.</string>
     <string name="browser_tabs_empty_archive">برگه اخیراً بسته شده وجود ندارد.</string>
     <string name="cancel">لغو کنید</string>
@@ -71,7 +70,6 @@
     <string name="details_size">اندازه</string>
     <string name="details_url">URL</string>
     <string name="download">دانلود</string>
-    <string name="download_file">یک فایل آماده دانلود است:</string>
     <string name="download_finished">دانلود تمام شد</string>
     <string name="download_ongoing_notification">آتش سوزی</string>
     <string name="download_quality">کیفیت دانلود</string>
@@ -140,7 +138,6 @@
     <string name="navigation_captured">محتوای ضبط شده</string>
     <string name="navigation_downloads">دانلودها</string>
     <string name="navigation_settings">تنظیمات</string>
-    <string name="navigation_tabs">زبانه ها</string>
     <string name="navigation_tabs_archive">برگه‌هایی که اخیرا بسته شده‌اند</string>
     <string name="navigation_vault">پوشه ایمن</string>
     <string name="navigation_web_bookmarks">نشانک‌ها</string>
@@ -270,9 +267,7 @@
     <string name="crash_sheet_copied">گزارش خرابی در حافظه موقت کپی شد</string>
     <string name="crash_sheet_open_failed">مرورگر باز نشد. گزارش در حافظه موقت است — آن را در یک issue جدید GitHub بچسبانید.</string>
     <string name="home_trackers_title">ردیاب‌ها و تبلیغات مسدود شد</string>
-    <string name="home_trackers_subtitle">%1$s · ~%2$s صرفه‌جویی</string>
     <string name="home_trackers_subtitle_idle">محافظت فعال است</string>
-    <string name="home_vault_empty_subtitle">خصوصی و رمزگذاری شده</string>
     <string name="trackers_info_count_label">ردیاب و تبلیغ مسدود شد</string>
     <string name="trackers_info_saved">~%1$s پهنای باند صرفه‌جویی شد</string>
     <string name="trackers_info_categories">ردیاب‌ها · تبلیغات · اثر انگشت · کوکی‌ها</string>

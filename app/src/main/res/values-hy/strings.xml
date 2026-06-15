@@ -9,7 +9,6 @@
     <string name="browser_enter_url">Որոնեք կամ մուտքագրեք URL</string>
     <string name="browser_error_image_title">Կրակը անհետացել է</string>
     <string name="browser_find_in_page">Գտնել էջում</string>
-    <string name="browser_settings">Կարգավորումներ</string>
     <string name="browser_tabs_empty">Ձեր բաց ներդիրները կցուցադրվեն այստեղ:</string>
     <string name="browser_tabs_empty_archive">Վերջերս փակված ներդիրներ չկան:</string>
     <string name="cancel">Չեղարկել</string>
@@ -43,7 +42,6 @@
     <string name="details_size">Չափը</string>
     <string name="details_url">URL</string>
     <string name="download">Բեռնել</string>
-    <string name="download_file">Ֆայլը պատրաստ է ներբեռնման.</string>
     <string name="download_finished">Ներբեռնումն ավարտված է</string>
     <string name="download_ongoing_notification">Հրդեհաշիջում</string>
     <string name="download_quality">Ներբեռնման որակը</string>
@@ -107,7 +105,6 @@
     <string name="navigation_captured">Գրավված բովանդակություն</string>
     <string name="navigation_downloads">Ներբեռնումներ</string>
     <string name="navigation_settings">Կարգավորումներ</string>
-    <string name="navigation_tabs">Ներդիրներ</string>
     <string name="navigation_tabs_archive">Վերջերս փակված ներդիրները</string>
     <string name="navigation_vault">Ապահով պանակ</string>
     <string name="navigation_web_bookmarks">Էջանիշեր</string>
@@ -208,9 +205,7 @@
     <string name="crash_sheet_copied">Խափանման հաշվետվությունը պատճենվեց փոխանակման բուֆեր</string>
     <string name="crash_sheet_open_failed">Չհաջողվեց բացել զննարկիչը։ Հաշվետվությունը փոխանակման բուֆերում է — տեղադրեք այն նոր GitHub հարցում։</string>
     <string name="home_trackers_title">Հետևորդները և գովազդները արգելափակվել են</string>
-    <string name="home_trackers_subtitle">%1$s · ~%2$s խնայվել է</string>
     <string name="home_trackers_subtitle_idle">Պաշտպանությունը միացված է</string>
-    <string name="home_vault_empty_subtitle">Մասնավոր և կոդավորված</string>
     <string name="trackers_info_count_label">հետևորդ և գովազդ արգելափակվել է</string>
     <string name="trackers_info_saved">~%1$s թողունակություն խնայվել է</string>
     <string name="trackers_info_categories">Հետևորդներ · Գովազդներ · Մատնահետք · Cookie</string>

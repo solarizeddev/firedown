@@ -42,9 +42,7 @@
     <string name="crash_sheet_copied">کریش رپورٹ کلپ بورڈ تے کاپی ہوگئی</string>
     <string name="crash_sheet_open_failed">براؤزر نئیں کھل سکیا۔ رپورٹ کلپ بورڈ تے اے — ایہنوں نویں GitHub مسئلے وچ چپکاؤ۔</string>
     <string name="home_trackers_title">ٹریکرز اور اشتہارات بلاک</string>
-    <string name="home_trackers_subtitle">%1$s · ~%2$s بچت</string>
     <string name="home_trackers_subtitle_idle">تحفظ آن اے</string>
-    <string name="home_vault_empty_subtitle">نجی تے انکرپٹڈ</string>
     <string name="trackers_info_count_label">ٹریکرز تے اشتہار بلاک</string>
     <string name="trackers_info_saved">~%1$s بینڈوڈتھ بچ گئی</string>
     <string name="trackers_info_categories">ٹریکرز · اشتہار · فنگرپرنٹ · کوکیز</string>

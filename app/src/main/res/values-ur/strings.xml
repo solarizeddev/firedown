@@ -16,7 +16,6 @@
     <string name="browser_menu_settings">سیٹنگز</string>
     <string name="browser_menu_share">شیئر کریں</string>
     <string name="browser_menu_stop">روکیں</string>
-    <string name="browser_settings">ترتیبات</string>
     <string name="browser_tabs_empty">آپ کے کھلے ٹیبز یہاں دکھائے جائیں گے۔</string>
     <string name="browser_tabs_empty_archive">کوئی حال ہی میں بند کردہ ٹیبز نہیں ہیں۔</string>
     <string name="cancel">منسوخ کریں۔</string>
@@ -62,7 +61,6 @@
     <string name="details_size">سائز</string>
     <string name="details_url">URL</string>
     <string name="download">ڈاؤن لوڈ کریں</string>
-    <string name="download_file">ایک فائل ڈاؤن لوڈ ہونے کے لیے تیار ہے:</string>
     <string name="download_finished">ڈاؤن لوڈ مکمل</string>
     <string name="download_ongoing_notification">فائر ڈاون</string>
     <string name="download_quality">کوالٹی ڈاؤن لوڈ کریں۔</string>
@@ -130,7 +128,6 @@
     <string name="navigation_captured">قبضہ شدہ مواد</string>
     <string name="navigation_downloads">ڈاؤن لوڈ</string>
     <string name="navigation_settings">ترتیبات</string>
-    <string name="navigation_tabs">ٹیبز</string>
     <string name="navigation_tabs_archive">حال ہی میں بند ٹیبز</string>
     <string name="navigation_vault">محفوظ فولڈر</string>
     <string name="navigation_web_bookmarks">بک مارکس</string>
@@ -255,9 +252,7 @@
     <string name="crash_sheet_copied">کریش رپورٹ کلپ بورڈ پر کاپی ہو گئی</string>
     <string name="crash_sheet_open_failed">براؤزر نہیں کھل سکا۔ رپورٹ آپ کے کلپ بورڈ پر ہے — اسے نئے GitHub مسئلے میں چسپاں کریں۔</string>
     <string name="home_trackers_title">ٹریکر اور اشتہارات بلاک کیے گئے</string>
-    <string name="home_trackers_subtitle">%1$s · ~%2$s بچ گیا</string>
     <string name="home_trackers_subtitle_idle">تحفظ فعال ہے</string>
-    <string name="home_vault_empty_subtitle">نجی اور انکرپٹڈ</string>
     <string name="trackers_info_count_label">ٹریکرز اور اشتہارات بلاک ہوئے</string>
     <string name="trackers_info_saved">~%1$s بینڈوڈتھ بچ گئی</string>
     <string name="trackers_info_categories">ٹریکرز · اشتہارات · فنگرپرنٹنگ · کوکیز</string>

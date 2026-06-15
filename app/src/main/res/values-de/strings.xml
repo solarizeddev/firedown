@@ -22,7 +22,6 @@
     <string name="browser_menu_settings">Einstellungen</string>
     <string name="browser_menu_share">Teilen</string>
     <string name="browser_menu_stop">Anhalten</string>
-    <string name="browser_settings">Einstellungen</string>
     <string name="browser_tabs_empty">Keine offenen Tabs</string>
     <string name="browser_tabs_empty_archive">Keine kürzlich geschlossenen Tabs.</string>
     <string name="cancel">Abbrechen</string>
@@ -131,7 +130,6 @@
     <string name="donate_subtitle">Firedown ist kostenlos. Wenn es dir Zeit oder Ärger erspart hat, gib zurück, was es dir wert war — auf einem dieser Wege.</string>
     <string name="donate_title">Wert für Wert</string>
     <string name="download">Herunterladen</string>
-    <string name="download_file">Eine Datei steht zum Herunterladen bereit:</string>
     <string name="download_finished">Download abgeschlossen</string>
     <string name="download_ongoing_notification">Firedown</string>
     <string name="download_quality">Download-Qualität</string>
@@ -247,7 +245,6 @@
     <string name="navigation_captured">Erfasster Inhalt</string>
     <string name="navigation_downloads">Downloads</string>
     <string name="navigation_settings">Einstellungen</string>
-    <string name="navigation_tabs">Tabs</string>
     <string name="navigation_tabs_archive">Kürzlich geschlossene Tabs</string>
     <string name="navigation_vault">Sicherer Ordner</string>
     <string name="navigation_web_bookmarks">Lesezeichen</string>
@@ -519,9 +516,7 @@
     <string name="crash_sheet_copied">Absturzbericht in die Zwischenablage kopiert</string>
     <string name="crash_sheet_open_failed">Browser konnte nicht geöffnet werden. Der Absturzbericht ist in deiner Zwischenablage — füge ihn in einem neuen GitHub-Issue ein.</string>
     <string name="home_trackers_title">Tracker und Werbung blockiert</string>
-    <string name="home_trackers_subtitle">%1$s · ~%2$s gespart</string>
     <string name="home_trackers_subtitle_idle">Schutz aktiv</string>
-    <string name="home_vault_empty_subtitle">Privat und verschlüsselt</string>
     <string name="trackers_info_count_label">Tracker und Werbung blockiert</string>
     <string name="trackers_info_saved">~%1$s Bandbreite gespart</string>
     <string name="trackers_info_categories">Tracker · Werbung · Fingerprinting · Cookie-Banner</string>

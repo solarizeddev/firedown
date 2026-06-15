@@ -18,7 +18,6 @@
     <string name="browser_menu_settings">ക്രമീകരണങ്ങള്‍</string>
     <string name="browser_menu_share">പങ്കിടുക</string>
     <string name="browser_menu_stop">നിർത്തുക</string>
-    <string name="browser_settings">ക്രമീകരണങ്ങൾ</string>
     <string name="browser_tabs_empty">നിങ്ങളുടെ തുറന്ന ടാബുകൾ ഇവിടെ കാണിക്കും.</string>
     <string name="browser_tabs_empty_archive">അടുത്തിടെ അടച്ച ടാബുകളൊന്നുമില്ല.</string>
     <string name="cancel">റദ്ദാക്കുക</string>
@@ -64,7 +63,6 @@
     <string name="details_size">വലിപ്പം</string>
     <string name="details_url">URL</string>
     <string name="download">ഡൗൺലോഡ്</string>
-    <string name="download_file">ഒരു ഫയൽ ഡൗൺലോഡ് ചെയ്യാൻ തയ്യാറാണ്:</string>
     <string name="download_finished">ഡൗൺലോഡ് പൂർത്തിയായി</string>
     <string name="download_ongoing_notification">ഫയർഡൗൺ</string>
     <string name="download_quality">ഡൗൺലോഡ് നിലവാരം</string>
@@ -131,7 +129,6 @@
     <string name="navigation_captured">പിടിച്ചെടുത്ത ഉള്ളടക്കം</string>
     <string name="navigation_downloads">ഡൗൺലോഡുകൾ</string>
     <string name="navigation_settings">ക്രമീകരണങ്ങൾ</string>
-    <string name="navigation_tabs">ടാബുകൾ</string>
     <string name="navigation_tabs_archive">അടുത്തിടെ അടച്ച ടാബുകൾ</string>
     <string name="navigation_vault">സുരക്ഷിത ഫോൾഡർ</string>
     <string name="navigation_web_bookmarks">അടയാളക്കുറിപ്പുകള്‍</string>
@@ -258,9 +255,7 @@
     <string name="crash_sheet_copied">ക്രാഷ് റിപ്പോർട്ട് ക്ലിപ്പ്ബോർഡിലേക്ക് പകർത്തി</string>
     <string name="crash_sheet_open_failed">ബ്രൗസർ തുറക്കാനായില്ല. റിപ്പോർട്ട് ക്ലിപ്പ്ബോർഡിലുണ്ട് — അത് ഒരു പുതിയ GitHub ഇഷ്യൂവിൽ ഒട്ടിക്കുക.</string>
     <string name="home_trackers_title">ട്രാക്കറുകളും പരസ്യങ്ങളും തടഞ്ഞു</string>
-    <string name="home_trackers_subtitle">%1$s · ~%2$s ലാഭിച്ചു</string>
     <string name="home_trackers_subtitle_idle">സംരക്ഷണം സജീവം</string>
-    <string name="home_vault_empty_subtitle">സ്വകാര്യവും എൻക്രിപ്റ്റും</string>
     <string name="trackers_info_count_label">ട്രാക്കറുകളും പരസ്യങ്ങളും തടഞ്ഞു</string>
     <string name="trackers_info_saved">~%1$s ബാൻഡ്‌വിഡ്ത് ലാഭിച്ചു</string>
     <string name="trackers_info_categories">ട്രാക്കറുകൾ · പരസ്യങ്ങൾ · ഫിംഗർപ്രിന്റ് · കുക്കികൾ</string>

@@ -19,7 +19,6 @@
     <string name="browser_menu_settings">Настройки</string>
     <string name="browser_menu_share">Споделяне</string>
     <string name="browser_menu_stop">Спиране</string>
-    <string name="browser_settings">Настройки</string>
     <string name="browser_tabs_empty">Вашите отворени раздели ще се покажат тук.</string>
     <string name="browser_tabs_empty_archive">Няма наскоро затворени раздели.</string>
     <string name="cancel">Отказ</string>
@@ -71,7 +70,6 @@
     <string name="details_size">Размер</string>
     <string name="details_url">URL</string>
     <string name="download">Изтегляне</string>
-    <string name="download_file">Файлът е готов за изтегляне:</string>
     <string name="download_finished">Изтеглянето приключи</string>
     <string name="download_ongoing_notification">Firedown</string>
     <string name="download_quality">Качество на изтеглянето</string>
@@ -150,7 +148,6 @@
     <string name="navigation_captured">Заснето съдържание</string>
     <string name="navigation_downloads">Изтегляния</string>
     <string name="navigation_settings">Настройки</string>
-    <string name="navigation_tabs">Раздели</string>
     <string name="navigation_tabs_archive">Наскоро затворени раздели</string>
     <string name="navigation_vault">Защитена папка</string>
     <string name="navigation_web_bookmarks">Отметки</string>
@@ -301,9 +298,7 @@
     <string name="crash_sheet_copied">Докладът за срив е копиран в клипборда</string>
     <string name="crash_sheet_open_failed">Браузерът не можа да се отвори. Докладът е в клипборда — поставете го в нов GitHub проблем.</string>
     <string name="home_trackers_title">Тракери и реклами блокирани</string>
-    <string name="home_trackers_subtitle">%1$s · ~%2$s спестени</string>
     <string name="home_trackers_subtitle_idle">Защитата е активна</string>
-    <string name="home_vault_empty_subtitle">Поверително и шифровано</string>
     <string name="trackers_info_count_label">тракери и реклами блокирани</string>
     <string name="trackers_info_saved">~%1$s трафик спестен</string>
     <string name="trackers_info_categories">Тракери · Реклами · Отпечатъци · Бисквитки</string>

@@ -8,7 +8,6 @@
     <string name="browser_enter_url">खोज्नुहोस् वा URL टाइप गर्नुहोस्</string>
     <string name="browser_error_image_title">आगो गएको छ</string>
     <string name="browser_find_in_page">पृष्ठमा फेला पार्नुहोस्</string>
-    <string name="browser_settings">सेटिङहरू</string>
     <string name="browser_tabs_empty">तपाईंका खुला ट्याबहरू यहाँ देखाइने छन्।</string>
     <string name="browser_tabs_empty_archive">हालसालै बन्द गरिएका ट्याबहरू छैनन्।</string>
     <string name="cancel">रद्द गर्नुहोस्</string>
@@ -42,7 +41,6 @@
     <string name="details_size">साइज</string>
     <string name="details_url">URL</string>
     <string name="download">डाउनलोड गर्नुहोस्</string>
-    <string name="download_file">एउटा फाइल डाउनलोड गर्न तयार छ:</string>
     <string name="download_finished">डाउनलोड समाप्त भयो</string>
     <string name="download_ongoing_notification">फायरडाउन</string>
     <string name="download_quality">गुणस्तर डाउनलोड गर्नुहोस्</string>
@@ -106,7 +104,6 @@
     <string name="navigation_captured">कब्जा गरिएको सामग्री</string>
     <string name="navigation_downloads">डाउनलोडहरू</string>
     <string name="navigation_settings">सेटिङहरू</string>
-    <string name="navigation_tabs">ट्याबहरू</string>
     <string name="navigation_tabs_archive">भर्खरै बन्द गरिएका ट्याबहरू</string>
     <string name="navigation_vault">सुरक्षित फोल्डर</string>
     <string name="navigation_web_bookmarks">बुकमार्कहरु</string>
@@ -207,9 +204,7 @@
     <string name="crash_sheet_copied">क्र्यास रिपोर्ट क्लिपबोर्डमा प्रतिलिपि भयो</string>
     <string name="crash_sheet_open_failed">ब्राउजर खोल्न सकिएन। रिपोर्ट क्लिपबोर्डमा छ — यसलाई नयाँ GitHub इस्युमा टाँस्नुहोस्।</string>
     <string name="home_trackers_title">ट्र्याकरहरू र विज्ञापनहरू ब्लक गरियो</string>
-    <string name="home_trackers_subtitle">%1$s · ~%2$s बचत</string>
     <string name="home_trackers_subtitle_idle">सुरक्षा सक्रिय</string>
-    <string name="home_vault_empty_subtitle">निजी र एन्क्रिप्टेड</string>
     <string name="trackers_info_count_label">ट्र्याकर र विज्ञापन ब्लक गरियो</string>
     <string name="trackers_info_saved">~%1$s ब्यान्डविड्थ बचत</string>
     <string name="trackers_info_categories">ट्र्याकरहरू · विज्ञापनहरू · फिंगरप्रिन्ट · कुकीहरू</string>

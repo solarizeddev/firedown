@@ -16,7 +16,6 @@
     <string name="browser_menu_settings">ಸಿದ್ಧತೆಗಳು</string>
     <string name="browser_menu_share">ಹಂಚು</string>
     <string name="browser_menu_stop">ನಿಲ್ಲಿಸು</string>
-    <string name="browser_settings">ಸಂಯೋಜನೆಗಳು</string>
     <string name="browser_tabs_empty">ನಿಮ್ಮ ತೆರೆದ ಟ್ಯಾಬ್‌ಗಳನ್ನು ಇಲ್ಲಿ ತೋರಿಸಲಾಗುತ್ತದೆ.</string>
     <string name="browser_tabs_empty_archive">ಇತ್ತೀಚೆಗೆ ಮುಚ್ಚಿದ ಟ್ಯಾಬ್‌ಗಳಿಲ್ಲ.</string>
     <string name="cancel">ರದ್ದುಮಾಡಿ</string>
@@ -54,7 +53,6 @@
     <string name="details_size">ಗಾತ್ರ</string>
     <string name="details_url">URL</string>
     <string name="download">ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ</string>
-    <string name="download_file">ಫೈಲ್ ಡೌನ್‌ಲೋಡ್ ಮಾಡಲು ಸಿದ್ಧವಾಗಿದೆ:</string>
     <string name="download_finished">ಡೌನ್‌ಲೋಡ್ ಮುಗಿದಿದೆ</string>
     <string name="download_ongoing_notification">ಫೈರ್ಡೌನ್</string>
     <string name="download_quality">ಡೌನ್‌ಲೋಡ್ ಗುಣಮಟ್ಟ</string>
@@ -122,7 +120,6 @@
     <string name="navigation_captured">ಸೆರೆಹಿಡಿಯಲಾದ ವಿಷಯ</string>
     <string name="navigation_downloads">ಡೌನ್‌ಲೋಡ್‌ಗಳು</string>
     <string name="navigation_settings">ಸಂಯೋಜನೆಗಳು</string>
-    <string name="navigation_tabs">ಟ್ಯಾಬ್‌ಗಳು</string>
     <string name="navigation_tabs_archive">ಇತ್ತೀಚೆಗೆ ಮುಚ್ಚಿದ ಟ್ಯಾಬ್‌ಗಳು</string>
     <string name="navigation_vault">ಸುರಕ್ಷಿತ ಫೋಲ್ಡರ್</string>
     <string name="navigation_web_bookmarks">ಪುಟಗುರುತುಗಳು</string>
@@ -241,9 +238,7 @@
     <string name="crash_sheet_copied">ಕ್ರ್ಯಾಶ್ ವರದಿಯನ್ನು ಕ್ಲಿಪ್‌ಬೋರ್ಡ್‌ಗೆ ನಕಲಿಸಲಾಗಿದೆ</string>
     <string name="crash_sheet_open_failed">ಬ್ರೌಸರ್ ತೆರೆಯಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ವರದಿಯು ಕ್ಲಿಪ್‌ಬೋರ್ಡ್‌ನಲ್ಲಿದೆ — ಅದನ್ನು ಹೊಸ GitHub ಇಷ್ಯೂನಲ್ಲಿ ಅಂಟಿಸಿ.</string>
     <string name="home_trackers_title">ಟ್ರ್ಯಾಕರ್‌ಗಳು ಮತ್ತು ಜಾಹೀರಾತುಗಳನ್ನು ನಿರ್ಬಂಧಿಸಲಾಗಿದೆ</string>
-    <string name="home_trackers_subtitle">%1$s · ~%2$s ಉಳಿತಾಯ</string>
     <string name="home_trackers_subtitle_idle">ರಕ್ಷಣೆ ಸಕ್ರಿಯವಾಗಿದೆ</string>
-    <string name="home_vault_empty_subtitle">ಖಾಸಗಿ ಮತ್ತು ಎನ್‌ಕ್ರಿಪ್ಟ್ ಮಾಡಲಾಗಿದೆ</string>
     <string name="trackers_info_count_label">ಟ್ರ್ಯಾಕರ್‌ಗಳು ಮತ್ತು ಜಾಹೀರಾತುಗಳನ್ನು ನಿರ್ಬಂಧಿಸಲಾಗಿದೆ</string>
     <string name="trackers_info_saved">~%1$s ಬ್ಯಾಂಡ್‌ವಿಡ್ತ್ ಉಳಿತಾಯ</string>
     <string name="trackers_info_categories">ಟ್ರ್ಯಾಕರ್‌ಗಳು · ಜಾಹೀರಾತುಗಳು · ಫಿಂಗರ್‌ಪ್ರಿಂಟ್ · ಕುಕೀಗಳು</string>

@@ -9,7 +9,6 @@
     <string name="browser_enter_url">Søk eller skriv inn URL</string>
     <string name="browser_error_image_title">Ilden er slukket</string>
     <string name="browser_find_in_page">Finn på siden</string>
-    <string name="browser_settings">Innstillinger</string>
     <string name="browser_tabs_empty">Ingen åpne faner</string>
     <string name="browser_tabs_empty_archive">Ingen nylig lukkede faner.</string>
     <string name="cancel">Avbryt</string>
@@ -44,7 +43,6 @@
     <string name="details_size">Størrelse</string>
     <string name="details_url">URL</string>
     <string name="download">Last ned</string>
-    <string name="download_file">En fil er klar til å lastes ned:</string>
     <string name="download_finished">Nedlasting fullført</string>
     <string name="download_ongoing_notification">Firedown</string>
     <string name="download_quality">Nedlastingskvalitet</string>
@@ -122,7 +120,6 @@
     <string name="navigation_captured">Innfanget innhold</string>
     <string name="navigation_downloads">Nedlastinger</string>
     <string name="navigation_settings">Innstillinger</string>
-    <string name="navigation_tabs">Faner</string>
     <string name="navigation_tabs_archive">Nylig lukkede faner</string>
     <string name="navigation_vault">Sikker mappe</string>
     <string name="navigation_web_bookmarks">Bokmerker</string>
@@ -240,9 +237,7 @@
     <string name="crash_sheet_copied">Krasjrapport kopiert til utklippstavlen</string>
     <string name="crash_sheet_open_failed">Kunne ikke åpne en nettleser. Krasjrapporten er på utklippstavlen — lim den inn i en ny GitHub-sak.</string>
     <string name="home_trackers_title">Sporere og annonser blokkert</string>
-    <string name="home_trackers_subtitle">%1$s · ~%2$s spart</string>
     <string name="home_trackers_subtitle_idle">Beskyttelse aktiv</string>
-    <string name="home_vault_empty_subtitle">Privat og kryptert</string>
     <string name="trackers_info_count_label">sporere og annonser blokkert</string>
     <string name="trackers_info_saved">~%1$s båndbredde spart</string>
     <string name="trackers_info_categories">Sporere · Annonser · Fingeravtrykk · Informasjonskapsler</string>

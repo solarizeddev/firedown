@@ -16,7 +16,6 @@
     <string name="browser_menu_settings">Sozlamalar</string>
     <string name="browser_menu_share">Ulashish</string>
     <string name="browser_menu_stop">Toʻxtatish</string>
-    <string name="browser_settings">Sozlamalar</string>
     <string name="browser_tabs_empty">Ochiq varaqlaringiz shu yerda ko‘rsatiladi.</string>
     <string name="browser_tabs_empty_archive">Yaqinda yopilgan varaqlar yoʻq.</string>
     <string name="cancel">Bekor qilish</string>
@@ -68,7 +67,6 @@
     <string name="details_size">Hajmi</string>
     <string name="details_url">URL</string>
     <string name="download">Yuklab olish</string>
-    <string name="download_file">Fayl yuklab olishga tayyor:</string>
     <string name="download_finished">Yuklab olish tugallandi</string>
     <string name="download_ongoing_notification">Yong\'in o\'chirildi</string>
     <string name="download_quality">Yuklab olish sifati</string>
@@ -134,7 +132,6 @@
     <string name="navigation_captured">Olingan kontent</string>
     <string name="navigation_downloads">Yuklashlar</string>
     <string name="navigation_settings">Sozlamalar</string>
-    <string name="navigation_tabs">Yorliqlar</string>
     <string name="navigation_tabs_archive">Yaqinda yopilgan varaqlar</string>
     <string name="navigation_vault">Xavfsiz jild</string>
     <string name="navigation_web_bookmarks">Xatchoʻplar</string>
@@ -254,9 +251,7 @@
     <string name="crash_sheet_copied">Ishlamay qolish hisoboti vaqtinchalik xotiraga nusxalandi</string>
     <string name="crash_sheet_open_failed">Brauzer ochilmadi. Hisobot vaqtinchalik xotirada — yangi GitHub muammosiga joylashtiring.</string>
     <string name="home_trackers_title">Kuzatuvchilar va reklamalar bloklandi</string>
-    <string name="home_trackers_subtitle">%1$s · ~%2$s tejaldi</string>
     <string name="home_trackers_subtitle_idle">Himoya yoqilgan</string>
-    <string name="home_vault_empty_subtitle">Shaxsiy va shifrlangan</string>
     <string name="trackers_info_count_label">kuzatuvchilar va reklamalar bloklandi</string>
     <string name="trackers_info_saved">~%1$s tarmoq trafigi tejaldi</string>
     <string name="trackers_info_categories">Kuzatuvchilar · Reklamalar · Izlar · Cookie</string>

@@ -22,7 +22,6 @@
     <string name="browser_menu_settings">Ustawienia</string>
     <string name="browser_menu_share">Udostępnij</string>
     <string name="browser_menu_stop">Zatrzymaj</string>
-    <string name="browser_settings">Ustawienia</string>
     <string name="browser_tabs_empty">Brak otwartych kart</string>
     <string name="browser_tabs_empty_archive">Brak ostatnio zamkniętych kart.</string>
     <string name="cancel">Anulować</string>
@@ -75,7 +74,6 @@
     <string name="details_size">Rozmiar</string>
     <string name="details_url">Adres URL</string>
     <string name="download">Pobierać</string>
-    <string name="download_file">Plik jest gotowy do pobrania:</string>
     <string name="download_finished">Pobieranie zakończone</string>
     <string name="download_ongoing_notification">Wystrzał</string>
     <string name="download_quality">Jakość pobierania</string>
@@ -166,7 +164,6 @@
     <string name="navigation_captured">Przechwycona treść</string>
     <string name="navigation_downloads">Pliki do pobrania</string>
     <string name="navigation_settings">Ustawienia</string>
-    <string name="navigation_tabs">Zakładki</string>
     <string name="navigation_tabs_archive">Ostatnio zamknięte karty</string>
     <string name="navigation_vault">Bezpieczny folder</string>
     <string name="navigation_web_bookmarks">Zakładki</string>
@@ -382,9 +379,7 @@
     <string name="crash_sheet_copied">Raport awarii skopiowany do schowka</string>
     <string name="crash_sheet_open_failed">Nie można otworzyć przeglądarki. Raport awarii jest w schowku — wklej go do nowego zgłoszenia w GitHub.</string>
     <string name="home_trackers_title">Trackery i reklamy zablokowane</string>
-    <string name="home_trackers_subtitle">%1$s · ~%2$s zaoszczędzonych</string>
     <string name="home_trackers_subtitle_idle">Ochrona aktywna</string>
-    <string name="home_vault_empty_subtitle">Prywatny i zaszyfrowany</string>
     <string name="trackers_info_count_label">trackerów i reklam zablokowanych</string>
     <string name="trackers_info_saved">~%1$s zaoszczędzonego transferu</string>
     <string name="trackers_info_categories">Trackery · Reklamy · Odciski · Ciasteczka</string>

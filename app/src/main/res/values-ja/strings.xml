@@ -22,7 +22,6 @@
     <string name="browser_menu_settings">設定</string>
     <string name="browser_menu_share">共有</string>
     <string name="browser_menu_stop">中止</string>
-    <string name="browser_settings">設定</string>
     <string name="browser_tabs_empty">開いているタブはありません</string>
     <string name="browser_tabs_empty_archive">最近閉じたタブはありません。</string>
     <string name="cancel">キャンセル</string>
@@ -131,7 +130,6 @@
     <string name="donate_subtitle">Firedownは無料です。時間や手間が省けたなら、その価値ぶんを以下のいずれかの方法で還元してください。</string>
     <string name="donate_title">価値には価値で</string>
     <string name="download">ダウンロード</string>
-    <string name="download_file">ファイルをダウンロードする準備ができました:</string>
     <string name="download_finished">ダウンロードが完了しました</string>
     <string name="download_ongoing_notification">ファイアダウン</string>
     <string name="download_quality">ダウンロード品質</string>
@@ -247,7 +245,6 @@
     <string name="navigation_captured">キャプチャされたコンテンツ</string>
     <string name="navigation_downloads">ダウンロード</string>
     <string name="navigation_settings">設定</string>
-    <string name="navigation_tabs">タブ</string>
     <string name="navigation_tabs_archive">最近閉じたタブ</string>
     <string name="navigation_vault">セーフフォルダ</string>
     <string name="navigation_web_bookmarks">ブックマーク</string>
@@ -518,9 +515,7 @@
     <string name="crash_sheet_copied">クラッシュレポートをクリップボードにコピーしました</string>
     <string name="crash_sheet_open_failed">ブラウザを開けませんでした。レポートはクリップボードにあります — 新しい GitHub の issue に貼り付けてください。</string>
     <string name="home_trackers_title">トラッカーと広告をブロック</string>
-    <string name="home_trackers_subtitle">%1$s · 約 %2$s を節約</string>
     <string name="home_trackers_subtitle_idle">保護機能は有効です</string>
-    <string name="home_vault_empty_subtitle">プライベートで暗号化済み</string>
     <string name="trackers_info_count_label">件のトラッカーと広告をブロック</string>
     <string name="trackers_info_saved">約 %1$s の帯域幅を節約</string>
     <string name="trackers_info_categories">トラッカー · 広告 · フィンガープリント · Cookie バナー</string>

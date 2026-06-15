@@ -19,7 +19,6 @@
     <string name="browser_menu_settings">Beállítások</string>
     <string name="browser_menu_share">Megosztás</string>
     <string name="browser_menu_stop">Leállítás</string>
-    <string name="browser_settings">Beállítások</string>
     <string name="browser_tabs_empty">Nincsenek nyitott lapok</string>
     <string name="browser_tabs_empty_archive">Nincsenek nemrégiben bezárt lapok.</string>
     <string name="cancel">Mégse</string>
@@ -72,7 +71,6 @@
     <string name="details_size">Méret</string>
     <string name="details_url">URL</string>
     <string name="download">Letöltés</string>
-    <string name="download_file">Egy fájl letöltésre készen áll:</string>
     <string name="download_finished">Letöltés kész</string>
     <string name="download_ongoing_notification">Firedown</string>
     <string name="download_quality">Letöltési minőség</string>
@@ -141,7 +139,6 @@
     <string name="navigation_captured">Rögzített tartalom</string>
     <string name="navigation_downloads">Letöltések</string>
     <string name="navigation_settings">Beállítások</string>
-    <string name="navigation_tabs">Tabs</string>
     <string name="navigation_tabs_archive">Nemrég bezárt lapok</string>
     <string name="navigation_vault">Biztonságos mappa</string>
     <string name="navigation_web_bookmarks">Könyvjelzők</string>
@@ -286,9 +283,7 @@
     <string name="crash_sheet_copied">Összeomlási jelentés a vágólapra másolva</string>
     <string name="crash_sheet_open_failed">Nem sikerült megnyitni a böngészőt. A jelentés a vágólapon van — illessze be egy új GitHub bejegyzésbe.</string>
     <string name="home_trackers_title">Nyomkövetők és hirdetések blokkolva</string>
-    <string name="home_trackers_subtitle">%1$s · ~%2$s megtakarítva</string>
     <string name="home_trackers_subtitle_idle">A védelem aktív</string>
-    <string name="home_vault_empty_subtitle">Privát és titkosított</string>
     <string name="trackers_info_count_label">nyomkövető és hirdetés blokkolva</string>
     <string name="trackers_info_saved">~%1$s sávszélesség megtakarítva</string>
     <string name="trackers_info_categories">Nyomkövetők · Hirdetések · Ujjlenyomat · Sütik</string>

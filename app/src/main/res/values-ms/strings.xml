@@ -9,7 +9,6 @@
     <string name="browser_enter_url">Cari atau Taip URL</string>
     <string name="browser_error_image_title">Api sudah padam</string>
     <string name="browser_find_in_page">Cari dalam halaman</string>
-    <string name="browser_settings">Tetapan</string>
     <string name="browser_tabs_empty">Tab terbuka anda akan ditunjukkan di sini.</string>
     <string name="browser_tabs_empty_archive">Tiada tab yang ditutup baru-baru ini.</string>
     <string name="cancel">Batal</string>
@@ -43,7 +42,6 @@
     <string name="details_size">Saiz</string>
     <string name="details_url">URL</string>
     <string name="download">Download</string>
-    <string name="download_file">Satu fail sedia untuk dimuat turun:</string>
     <string name="download_finished">Muat turun selesai</string>
     <string name="download_ongoing_notification">Firedown</string>
     <string name="download_quality">Kualiti muat turun</string>
@@ -109,7 +107,6 @@
     <string name="navigation_captured">Kandungan yang Ditangkap</string>
     <string name="navigation_downloads">Muat turun</string>
     <string name="navigation_settings">Tetapan</string>
-    <string name="navigation_tabs">Tab</string>
     <string name="navigation_tabs_archive">Tab yang ditutup baru-baru ini</string>
     <string name="navigation_vault">Folder selamat</string>
     <string name="navigation_web_bookmarks">Semua Penanda Halaman</string>
@@ -216,9 +213,7 @@
     <string name="crash_sheet_copied">Laporan ranap disalin ke papan keratan</string>
     <string name="crash_sheet_open_failed">Tidak dapat membuka pelayar. Laporan ada di papan keratan — tampal ke issue GitHub baharu.</string>
     <string name="home_trackers_title">Penjejak dan iklan disekat</string>
-    <string name="home_trackers_subtitle">%1$s · ~%2$s dijimatkan</string>
     <string name="home_trackers_subtitle_idle">Perlindungan aktif</string>
-    <string name="home_vault_empty_subtitle">Peribadi dan disulitkan</string>
     <string name="trackers_info_count_label">penjejak dan iklan disekat</string>
     <string name="trackers_info_saved">~%1$s lebar jalur dijimatkan</string>
     <string name="trackers_info_categories">Penjejak · Iklan · Cap jari · Kuki</string>

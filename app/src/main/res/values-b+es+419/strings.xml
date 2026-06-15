@@ -9,7 +9,6 @@
   <string name="browser_enter_url">Buscar o escribir URL</string>
   <string name="browser_error_image_title">El fuego se ha ido</string>
   <string name="browser_find_in_page">Buscar en la página</string>
-    <string name="browser_settings">Ajustes</string>
   <string name="browser_tabs_empty">Tus pestañas abiertas se mostrarán aquí.</string>
   <string name="browser_tabs_empty_archive">No hay pestañas cerradas recientemente.</string>
   <string name="cancel">Cancelar</string>
@@ -43,7 +42,6 @@
   <string name="details_size">Tamaño</string>
   <string name="details_url">URL</string>
   <string name="download">Descargar</string>
-  <string name="download_file">Un archivo está listo para ser descargado:</string>
   <string name="download_finished">Descarga terminada</string>
   <string name="download_ongoing_notification">Firedown</string>
   <string name="download_quality">Calidad de descarga</string>
@@ -107,7 +105,6 @@
     <string name="navigation_captured">Contenido capturado</string>
   <string name="navigation_downloads">Descargas</string>
   <string name="navigation_settings">Ajustes</string>
-  <string name="navigation_tabs">Pestañas</string>
   <string name="navigation_tabs_archive">Pestañas cerradas recientemente</string>
   <string name="navigation_vault">Carpeta segura</string>
   <string name="navigation_web_bookmarks">Marcadores</string>
@@ -213,9 +210,7 @@
     <string name="crash_sheet_copied">Informe de fallo copiado al portapapeles</string>
     <string name="crash_sheet_open_failed">No se pudo abrir el navegador. El informe está en tu portapapeles — pégalo en una nueva incidencia de GitHub.</string>
     <string name="home_trackers_title">Rastreadores y anuncios bloqueados</string>
-    <string name="home_trackers_subtitle">%1$s · ~%2$s ahorrados</string>
     <string name="home_trackers_subtitle_idle">Protección activa</string>
-    <string name="home_vault_empty_subtitle">Privada y cifrada</string>
     <string name="trackers_info_count_label">rastreadores y anuncios bloqueados</string>
     <string name="trackers_info_saved">~%1$s de ancho de banda ahorrados</string>
     <string name="trackers_info_categories">Rastreadores · Anuncios · Huella digital · Cookies</string>

@@ -18,7 +18,6 @@
     <string name="browser_menu_settings">Stillingar</string>
     <string name="browser_menu_share">Deila</string>
     <string name="browser_menu_stop">Stöðva</string>
-    <string name="browser_settings">Stillingar</string>
     <string name="browser_tabs_empty">Opnu fliparnir þínir verða sýndir hér.</string>
     <string name="browser_tabs_empty_archive">Engir nýlega lokaðir flipar.</string>
     <string name="cancel">Hætta við</string>
@@ -70,7 +69,6 @@
     <string name="details_size">Stærð</string>
     <string name="details_url">URL</string>
     <string name="download">Sækja</string>
-    <string name="download_file">Skrá er tilbúin til niðurhals:</string>
     <string name="download_finished">Niðurhali lokið</string>
     <string name="download_ongoing_notification">Firedown</string>
     <string name="download_quality">Sækja gæði</string>
@@ -137,7 +135,6 @@
     <string name="navigation_captured">Tekið efni</string>
     <string name="navigation_downloads">Niðurhal</string>
     <string name="navigation_settings">Stillingar</string>
-    <string name="navigation_tabs">Flipar</string>
     <string name="navigation_tabs_archive">Nýlega lokaðir flipar</string>
     <string name="navigation_vault">Örugg mappa</string>
     <string name="navigation_web_bookmarks">Bókamerki</string>
@@ -265,9 +262,7 @@
     <string name="crash_sheet_copied">Hrunskýrsla afrituð á klemmuspjald</string>
     <string name="crash_sheet_open_failed">Tókst ekki að opna vafra. Skýrslan er á klemmuspjaldinu — límdu hana inn í nýja GitHub-vandamálatilkynningu.</string>
     <string name="home_trackers_title">Rakningu og auglýsingar blokkað</string>
-    <string name="home_trackers_subtitle">%1$s · ~%2$s sparað</string>
     <string name="home_trackers_subtitle_idle">Vörn virk</string>
-    <string name="home_vault_empty_subtitle">Einkamál og dulkóðað</string>
     <string name="trackers_info_count_label">rakningu og auglýsingar blokkað</string>
     <string name="trackers_info_saved">~%1$s af bandbreidd sparað</string>
     <string name="trackers_info_categories">Rakning · Auglýsingar · Fingrafar · Vafrakökur</string>

@@ -17,7 +17,6 @@
     <string name="browser_menu_settings">အပြင်အဆင်များ</string>
     <string name="browser_menu_share">မျှဝေ</string>
     <string name="browser_menu_stop">ရပ်ပါ</string>
-    <string name="browser_settings">ဆက်တင်များ</string>
     <string name="browser_tabs_empty">သင်၏ဖွင့်ထားသော တက်ဘ်များကို ဤနေရာတွင် ပြပါမည်။</string>
     <string name="browser_tabs_empty_archive">လတ်တလော ပိတ်ထားသော တဘ်များ မရှိပါ။</string>
     <string name="cancel">မလုပ်တော့</string>
@@ -63,7 +62,6 @@
     <string name="details_size">အရွယ်အစား</string>
     <string name="details_url">URL</string>
     <string name="download">ဒေါင်းလုဒ်လုပ်ပါ။</string>
-    <string name="download_file">ဖိုင်တစ်ခုကို ဒေါင်းလုဒ်လုပ်ရန် အသင့်ဖြစ်နေပါပြီ-</string>
     <string name="download_finished">ဒေါင်းလုဒ် ပြီးပါပြီ။</string>
     <string name="download_ongoing_notification">မီးပျက်</string>
     <string name="download_quality">ဒေါင်းလုဒ်အရည်အသွေး</string>
@@ -131,7 +129,6 @@
     <string name="navigation_captured">ရိုက်ကူးထားသော အကြောင်းအရာ</string>
     <string name="navigation_downloads">ဒေါင်းလုဒ်များ</string>
     <string name="navigation_settings">ဆက်တင်များ</string>
-    <string name="navigation_tabs">တက်ဘ်များ</string>
     <string name="navigation_tabs_archive">မကြာသေးမီက ပိတ်ထားသော တက်ဘ်များ</string>
     <string name="navigation_vault">"'လုံခြုံရေး' ဖိုင်တွဲ"</string>
     <string name="navigation_web_bookmarks">စာမှတ်များ</string>
@@ -249,9 +246,7 @@
     <string name="crash_sheet_copied">ပျက်စီးမှု အစီရင်ခံစာ ကလစ်ဘုတ်သို့ ကူးယူပြီး</string>
     <string name="crash_sheet_open_failed">ဘရောက်ဆာ ဖွင့်၍မရပါ။ အစီရင်ခံစာ ကလစ်ဘုတ်တွင်ရှိသည် — GitHub issue အသစ်တွင် ကူးထည့်ပါ။</string>
     <string name="home_trackers_title">ခြေရာခံများနှင့် ကြော်ငြာများ ပိတ်ပင်ထား</string>
-    <string name="home_trackers_subtitle">%1$s · ~%2$s သက်သာ</string>
     <string name="home_trackers_subtitle_idle">ကာကွယ်မှု ဖွင့်ထား</string>
-    <string name="home_vault_empty_subtitle">ပုဂ္ဂလိက နှင့် စာဝှက်ထား</string>
     <string name="trackers_info_count_label">ခြေရာခံများနှင့် ကြော်ငြာများ ပိတ်ပင်ထား</string>
     <string name="trackers_info_saved">~%1$s ဘန်းဝစ်သက်သာ</string>
     <string name="trackers_info_categories">ခြေရာခံ · ကြော်ငြာ · လက်ဗွေ · Cookie</string>

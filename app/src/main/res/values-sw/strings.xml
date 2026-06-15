@@ -9,7 +9,6 @@
     <string name="browser_enter_url">Tafuta au Andika URL</string>
     <string name="browser_error_image_title">Fire Imekwisha</string>
     <string name="browser_find_in_page">Tafuta kwenye ukurasa</string>
-    <string name="browser_settings">Mipangilio</string>
     <string name="browser_tabs_empty">Vichupo vyako vilivyo wazi vitaonyeshwa hapa.</string>
     <string name="browser_tabs_empty_archive">Hakuna vichupo vilivyofungwa hivi majuzi.</string>
     <string name="cancel">Ghairi</string>
@@ -43,7 +42,6 @@
     <string name="details_size">Ukubwa</string>
     <string name="details_url">URL</string>
     <string name="download">Pakua</string>
-    <string name="download_file">Faili iko tayari kupakuliwa:</string>
     <string name="download_finished">Upakuaji umekamilika</string>
     <string name="download_ongoing_notification">Firedown</string>
     <string name="download_quality">Ubora wa kupakua</string>
@@ -109,7 +107,6 @@
     <string name="navigation_captured">Maudhui Yaliyonaswa</string>
     <string name="navigation_downloads">Vipakuliwa</string>
     <string name="navigation_settings">Mipangilio</string>
-    <string name="navigation_tabs">Vichupo</string>
     <string name="navigation_tabs_archive">Vichupo vilivyofungwa hivi karibuni</string>
     <string name="navigation_vault">Folda salama</string>
     <string name="navigation_web_bookmarks">Alamisho Zote</string>
@@ -216,9 +213,7 @@
     <string name="crash_sheet_copied">Ripoti ya hitilafu imenakiliwa kwenye ubao wa kunakili</string>
     <string name="crash_sheet_open_failed">Imeshindwa kufungua kivinjari. Ripoti iko kwenye ubao wa kunakili — bandika kwenye issue mpya ya GitHub.</string>
     <string name="home_trackers_title">Vifuatiliaji na matangazo vimezuiwa</string>
-    <string name="home_trackers_subtitle">%1$s · ~%2$s vimehifadhiwa</string>
     <string name="home_trackers_subtitle_idle">Ulinzi unafanya kazi</string>
-    <string name="home_vault_empty_subtitle">Binafsi na imefichwa</string>
     <string name="trackers_info_count_label">vifuatiliaji na matangazo vimezuiwa</string>
     <string name="trackers_info_saved">~%1$s ya bandwidth imehifadhiwa</string>
     <string name="trackers_info_categories">Vifuatiliaji · Matangazo · Alama za kidole · Vidakuzi</string>

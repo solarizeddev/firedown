@@ -22,7 +22,6 @@
     <string name="browser_menu_settings">设置</string>
     <string name="browser_menu_share">分享</string>
     <string name="browser_menu_stop">停止</string>
-    <string name="browser_settings">设置</string>
     <string name="browser_tabs_empty">没有打开的标签页</string>
     <string name="browser_tabs_empty_archive">没有最近关闭的标签。</string>
     <string name="cancel">取消</string>
@@ -131,7 +130,6 @@
     <string name="donate_subtitle">Firedown 是免费的。如果它为你节省了时间或减少了麻烦，请通过以下任一方式回馈它的价值。</string>
     <string name="donate_title">等价交换</string>
     <string name="download">下载</string>
-    <string name="download_file">文件已准备好下载：</string>
     <string name="download_finished">下载完成</string>
     <string name="download_ongoing_notification">Firedown</string>
     <string name="download_quality">下载质量</string>
@@ -247,7 +245,6 @@
     <string name="navigation_captured">截取的内容</string>
     <string name="navigation_downloads">下载</string>
     <string name="navigation_settings">设置</string>
-    <string name="navigation_tabs">选项卡</string>
     <string name="navigation_tabs_archive">最近关闭的标签页</string>
     <string name="navigation_vault">安全文件夹</string>
     <string name="navigation_web_bookmarks">书签</string>
@@ -518,9 +515,7 @@
     <string name="crash_sheet_copied">崩溃报告已复制到剪贴板</string>
     <string name="crash_sheet_open_failed">无法打开浏览器。崩溃报告已在剪贴板中 — 请粘贴到新的 GitHub issue 中。</string>
     <string name="home_trackers_title">已拦截跟踪器和广告</string>
-    <string name="home_trackers_subtitle">%1$s · 约节省 %2$s</string>
     <string name="home_trackers_subtitle_idle">保护已开启</string>
-    <string name="home_vault_empty_subtitle">私密且加密</string>
     <string name="trackers_info_count_label">个跟踪器和广告已拦截</string>
     <string name="trackers_info_saved">约节省 %1$s 流量</string>
     <string name="trackers_info_categories">跟踪器 · 广告 · 指纹识别 · Cookie 横幅</string>

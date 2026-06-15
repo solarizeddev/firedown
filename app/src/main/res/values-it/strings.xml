@@ -22,7 +22,6 @@
     <string name="browser_menu_settings">Impostazioni</string>
     <string name="browser_menu_share">Condividi</string>
     <string name="browser_menu_stop">Interrompi</string>
-    <string name="browser_settings">Impostazioni</string>
     <string name="browser_tabs_empty">Nessuna scheda aperta</string>
     <string name="browser_tabs_empty_archive">Nessuna scheda chiusa di recente.</string>
     <string name="cancel">Annulla</string>
@@ -75,7 +74,6 @@
     <string name="details_size">Dimensione</string>
     <string name="details_url">URL</string>
     <string name="download">Download</string>
-    <string name="download_file">Un file è pronto per essere scaricato:</string>
     <string name="download_finished">Download terminato</string>
     <string name="download_ongoing_notification">Incendio</string>
     <string name="download_quality">Scarica la qualità</string>
@@ -156,7 +154,6 @@
     <string name="navigation_captured">Contenuto catturato</string>
     <string name="navigation_downloads">Download</string>
     <string name="navigation_settings">Impostazioni</string>
-    <string name="navigation_tabs">Schede</string>
     <string name="navigation_tabs_archive">Schede chiuse di recente</string>
     <string name="navigation_vault">Cartella di sicurezza</string>
     <string name="navigation_web_bookmarks">Segnalibri</string>
@@ -347,9 +344,7 @@
     <string name="crash_sheet_copied">Rapporto di arresto copiato negli appunti</string>
     <string name="crash_sheet_open_failed">Impossibile aprire il browser. Il rapporto è negli appunti — incollalo in un nuovo issue su GitHub.</string>
     <string name="home_trackers_title">Tracker e annunci bloccati</string>
-    <string name="home_trackers_subtitle">%1$s · ~%2$s risparmiati</string>
     <string name="home_trackers_subtitle_idle">Protezione attiva</string>
-    <string name="home_vault_empty_subtitle">Privata e cifrata</string>
     <string name="trackers_info_count_label">tracker e annunci bloccati</string>
     <string name="trackers_info_saved">~%1$s di banda risparmiata</string>
     <string name="trackers_info_categories">Tracker · Annunci · Fingerprinting · Cookie</string>

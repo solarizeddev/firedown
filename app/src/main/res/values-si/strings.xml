@@ -17,7 +17,6 @@
     <string name="browser_menu_settings">සැකසුම්</string>
     <string name="browser_menu_share">බෙදාගන්න</string>
     <string name="browser_menu_stop">නවතන්න</string>
-    <string name="browser_settings">සැකසුම්</string>
     <string name="browser_tabs_empty">ඔබේ විවෘත ටැබ් මෙහි පෙන්වනු ඇත.</string>
     <string name="browser_tabs_empty_archive">මෑතකදී වසා දැමූ ටැබ් නැත.</string>
     <string name="cancel">අවලංගු කරන්න</string>
@@ -69,7 +68,6 @@
     <string name="details_size">ප්රමාණය</string>
     <string name="details_url">URL</string>
     <string name="download">බාගත</string>
-    <string name="download_file">ගොනුවක් බාගත කිරීමට සූදානම්:</string>
     <string name="download_finished">බාගැනීම අවසන්</string>
     <string name="download_ongoing_notification">වෙඩි තැබීම</string>
     <string name="download_quality">බාගත කිරීමේ ගුණාත්මකභාවය</string>
@@ -135,7 +133,6 @@
     <string name="navigation_captured">ග්‍රහණය කරගත් අන්තර්ගතය</string>
     <string name="navigation_downloads">බාගත කිරීම්</string>
     <string name="navigation_settings">සැකසුම්</string>
-    <string name="navigation_tabs">ටැබ්</string>
     <string name="navigation_tabs_archive">මෑතකදී වසා දැමූ ටැබ්</string>
     <string name="navigation_vault">ආරක්ෂිත ෆෝල්ඩරය</string>
     <string name="navigation_web_bookmarks">පොත්යො</string>
@@ -259,9 +256,7 @@
     <string name="crash_sheet_copied">බිඳවැටීමේ වාර්තාව ක්ලිප්බෝඩයට පිටපත් කරන ලදී</string>
     <string name="crash_sheet_open_failed">බ්‍රවුසරය විවෘත කළ නොහැකි විය. වාර්තාව ක්ලිප්බෝඩයේ ඇත — එය නව GitHub issue එකකට අලවන්න.</string>
     <string name="home_trackers_title">ට්‍රැකර් සහ දැන්වීම් අවහිර කළා</string>
-    <string name="home_trackers_subtitle">%1$s · ~%2$s ඉතිරි කළා</string>
     <string name="home_trackers_subtitle_idle">ආරක්ෂාව සක්‍රියයි</string>
-    <string name="home_vault_empty_subtitle">පෞද්ගලික සහ සංකේතනය කළ</string>
     <string name="trackers_info_count_label">ට්‍රැකර් සහ දැන්වීම් අවහිර කළා</string>
     <string name="trackers_info_saved">~%1$s කලාප පළල ඉතිරි කළා</string>
     <string name="trackers_info_categories">ට්‍රැකර් · දැන්වීම් · ඇඟිලි සලකුණු · කුකීස්</string>

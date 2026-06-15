@@ -19,7 +19,6 @@
     <string name="browser_menu_settings">Paràmetres</string>
     <string name="browser_menu_share">Comparteix</string>
     <string name="browser_menu_stop">Atura</string>
-    <string name="browser_settings">Configuració</string>
     <string name="browser_tabs_empty">Cap pestanya oberta</string>
     <string name="browser_tabs_empty_archive">No hi ha pestanyes tancades recentment.</string>
     <string name="cancel">Cancel·lar</string>
@@ -72,7 +71,6 @@
     <string name="details_size">Mida</string>
     <string name="details_url">URL</string>
     <string name="download">Descarregar</string>
-    <string name="download_file">Hi ha un fitxer a punt per baixar:</string>
     <string name="download_finished">Descàrrega acabada</string>
     <string name="download_ongoing_notification">Firedown</string>
     <string name="download_quality">Qualitat de descàrrega</string>
@@ -141,7 +139,6 @@
     <string name="navigation_captured">Contingut capturat</string>
     <string name="navigation_downloads">Descàrregues</string>
     <string name="navigation_settings">Configuració</string>
-    <string name="navigation_tabs">Pestanyes</string>
     <string name="navigation_tabs_archive">Pestanyes tancades recentment</string>
     <string name="navigation_vault">Carpeta segura</string>
     <string name="navigation_web_bookmarks">Marcadors</string>
@@ -297,9 +294,7 @@
     <string name="crash_sheet_copied">Informe de fallada copiat al porta-retalls</string>
     <string name="crash_sheet_open_failed">No s\'ha pogut obrir el navegador. L\'informe és al porta-retalls — enganxa\'l a una nova incidència de GitHub.</string>
     <string name="home_trackers_title">Rastrejadors i anuncis bloquejats</string>
-    <string name="home_trackers_subtitle">%1$s · ~%2$s estalviats</string>
     <string name="home_trackers_subtitle_idle">Protecció activa</string>
-    <string name="home_vault_empty_subtitle">Privada i xifrada</string>
     <string name="trackers_info_count_label">rastrejadors i anuncis bloquejats</string>
     <string name="trackers_info_saved">~%1$s d\'ample de banda estalviats</string>
     <string name="trackers_info_categories">Rastrejadors · Anuncis · Empremta · Galetes</string>

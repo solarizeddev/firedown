@@ -9,7 +9,6 @@
     <string name="browser_enter_url">Pesquise ou digite a URL</string>
     <string name="browser_error_image_title">O fogo se foi</string>
     <string name="browser_find_in_page">Encontrar na página</string>
-    <string name="browser_settings">Configurações</string>
     <string name="browser_tabs_empty">Sem separadores abertos</string>
     <string name="browser_tabs_empty_archive">Nenhuma guia fechada recentemente.</string>
     <string name="cancel">Cancelar</string>
@@ -57,7 +56,6 @@
     <string name="details_size">Tamanho</string>
     <string name="details_url">URL</string>
     <string name="download">Download</string>
-    <string name="download_file">Um arquivo está pronto para ser baixado:</string>
     <string name="download_finished">Download concluído</string>
     <string name="download_ongoing_notification">Incêndio</string>
     <string name="download_quality">Qualidade de download</string>
@@ -145,7 +143,6 @@
     <string name="navigation_captured">Conteúdo capturado</string>
     <string name="navigation_downloads">Transferências</string>
     <string name="navigation_settings">Configurações</string>
-    <string name="navigation_tabs">Guias</string>
     <string name="navigation_tabs_archive">Guias fechadas recentemente</string>
     <string name="navigation_vault">Pasta segura</string>
     <string name="navigation_web_bookmarks">Favoritos</string>
@@ -303,9 +300,7 @@
     <string name="crash_sheet_copied">Relatório de falha copiado para a área de transferência</string>
     <string name="crash_sheet_open_failed">Não foi possível abrir o navegador. O relatório está na área de transferência — cole-o em uma nova issue do GitHub.</string>
     <string name="home_trackers_title">Rastreadores e anúncios bloqueados</string>
-    <string name="home_trackers_subtitle">%1$s · ~%2$s economizados</string>
     <string name="home_trackers_subtitle_idle">Proteção ativa</string>
-    <string name="home_vault_empty_subtitle">Privada e criptografada</string>
     <string name="trackers_info_count_label">rastreadores e anúncios bloqueados</string>
     <string name="trackers_info_saved">~%1$s de largura de banda economizados</string>
     <string name="trackers_info_categories">Rastreadores · Anúncios · Impressão digital · Cookies</string>

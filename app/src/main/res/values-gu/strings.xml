@@ -8,7 +8,6 @@
     <string name="browser_enter_url">શોધો અથવા URL લખો</string>
     <string name="browser_error_image_title">ધ ફાયર ઇઝ ગોન</string>
     <string name="browser_find_in_page">पृष्ठ में ढूँढें</string>
-    <string name="browser_settings">સેટિંગ્સ</string>
     <string name="browser_tabs_empty">તમારી ખુલ્લી ટૅબ્સ અહીં બતાવવામાં આવશે.</string>
     <string name="browser_tabs_empty_archive">તાજેતરમાં બંધ કરાયેલા કોઈ ટૅબ નથી.</string>
     <string name="cancel">રદ કરો</string>
@@ -42,7 +41,6 @@
     <string name="details_size">કદ</string>
     <string name="details_url">URL</string>
     <string name="download">ડાઉનલોડ કરો</string>
-    <string name="download_file">ફાઇલ ડાઉનલોડ કરવા માટે તૈયાર છે:</string>
     <string name="download_finished">ડાઉનલોડ સમાપ્ત</string>
     <string name="download_ongoing_notification">ફાયરડાઉન</string>
     <string name="download_quality">ગુણવત્તા ડાઉનલોડ કરો</string>
@@ -108,7 +106,6 @@
     <string name="navigation_captured">કબજે કરેલ સામગ્રી</string>
     <string name="navigation_downloads">ડાઉનલોડ્સ</string>
     <string name="navigation_settings">સેટિંગ્સ</string>
-    <string name="navigation_tabs">ટૅબ્સ</string>
     <string name="navigation_tabs_archive">તાજેતરમાં બંધ થયેલ ટેબ</string>
     <string name="navigation_vault">સુરક્ષિત ફોલ્ડર</string>
     <string name="navigation_web_bookmarks">બુકમાર્ક્સ</string>
@@ -210,9 +207,7 @@
     <string name="crash_sheet_copied">ક્રેશ રિપોર્ટ ક્લિપબોર્ડ પર કૉપિ થયો</string>
     <string name="crash_sheet_open_failed">બ્રાઉઝર ખોલી શકાયું નહીં. રિપોર્ટ ક્લિપબોર્ડ પર છે — તેને નવા GitHub ઈશ્યૂમાં પેસ્ટ કરો.</string>
     <string name="home_trackers_title">ટ્રેકર્સ અને જાહેરાતો અવરોધિત</string>
-    <string name="home_trackers_subtitle">%1$s · ~%2$s બચ્યું</string>
     <string name="home_trackers_subtitle_idle">સુરક્ષા સક્રિય</string>
-    <string name="home_vault_empty_subtitle">ખાનગી અને એન્ક્રિપ્ટેડ</string>
     <string name="trackers_info_count_label">ટ્રેકર્સ અને જાહેરાતો અવરોધિત</string>
     <string name="trackers_info_saved">~%1$s બેન્ડવિડ્થ બચી</string>
     <string name="trackers_info_categories">ટ્રેકર્સ · જાહેરાતો · ફિંગરપ્રિન્ટિંગ · કૂકીઝ</string>

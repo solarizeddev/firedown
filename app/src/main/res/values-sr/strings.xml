@@ -18,7 +18,6 @@
     <string name="browser_menu_settings">Подешавања</string>
     <string name="browser_menu_share">Подели</string>
     <string name="browser_menu_stop">Заустави</string>
-    <string name="browser_settings">Подешавања</string>
     <string name="browser_tabs_empty">Ваше отворене картице ће бити приказане овде.</string>
     <string name="browser_tabs_empty_archive">Нема недавно затворених картица.</string>
     <string name="cancel">Поништи</string>
@@ -70,7 +69,6 @@
     <string name="details_size">Величина</string>
     <string name="details_url">URL</string>
     <string name="download">Преузимање</string>
-    <string name="download_file">Датотека је спремна за преузимање:</string>
     <string name="download_finished">Преузимање је завршено</string>
     <string name="download_ongoing_notification">Firedown</string>
     <string name="download_quality">Квалитет преузимања</string>
@@ -139,7 +137,6 @@
     <string name="navigation_captured">Ухваћени садржај</string>
     <string name="navigation_downloads">Преузимања</string>
     <string name="navigation_settings">Подешавања</string>
-    <string name="navigation_tabs">Картице</string>
     <string name="navigation_tabs_archive">Недавно затворене картице</string>
     <string name="navigation_vault">Безбедан фолдер</string>
     <string name="navigation_web_bookmarks">Забелешке</string>
@@ -269,9 +266,7 @@
     <string name="crash_sheet_copied">Извештај о паду копиран у клипборд</string>
     <string name="crash_sheet_open_failed">Прегледач није могао да се отвори. Извештај је у клипборду — налепите га у нови GitHub проблем.</string>
     <string name="home_trackers_title">Пратиоци и огласи блокирани</string>
-    <string name="home_trackers_subtitle">%1$s · ~%2$s сачувано</string>
     <string name="home_trackers_subtitle_idle">Заштита активна</string>
-    <string name="home_vault_empty_subtitle">Приватно и шифровано</string>
     <string name="trackers_info_count_label">пратилаца и огласа блокирано</string>
     <string name="trackers_info_saved">~%1$s протока сачувано</string>
     <string name="trackers_info_categories">Пратиоци · Огласи · Отисци · Колачићи</string>

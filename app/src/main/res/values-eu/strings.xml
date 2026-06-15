@@ -19,7 +19,6 @@
     <string name="browser_menu_settings">Ezarpenak</string>
     <string name="browser_menu_share">Partekatu</string>
     <string name="browser_menu_stop">Gelditu</string>
-    <string name="browser_settings">Ezarpenak</string>
     <string name="browser_tabs_empty">Zure fitxa irekiak hemen erakutsiko dira.</string>
     <string name="browser_tabs_empty_archive">Ez dago itxitako fitxarik duela gutxi.</string>
     <string name="cancel">Utzi</string>
@@ -71,7 +70,6 @@
     <string name="details_size">Tamaina</string>
     <string name="details_url">URLa</string>
     <string name="download">Deskargatu</string>
-    <string name="download_file">Fitxategi bat deskargatzeko prest dago:</string>
     <string name="download_finished">Deskarga amaitu da</string>
     <string name="download_ongoing_notification">Firedown</string>
     <string name="download_quality">Deskarga kalitatea</string>
@@ -140,7 +138,6 @@
     <string name="navigation_captured">Ateratako edukia</string>
     <string name="navigation_downloads">Deskargak</string>
     <string name="navigation_settings">Ezarpenak</string>
-    <string name="navigation_tabs">Fitxak</string>
     <string name="navigation_tabs_archive">Itxitako fitxak duela gutxi</string>
     <string name="navigation_vault">Karpeta segurua</string>
     <string name="navigation_web_bookmarks">Laster-markak</string>
@@ -269,9 +266,7 @@
     <string name="crash_sheet_copied">Hutsegite txostena arbelean kopiatu da</string>
     <string name="crash_sheet_open_failed">Ezin izan da arakatzailea ireki. Txostena arbelean dago — itsatsi GitHub-eko gai berri batean.</string>
     <string name="home_trackers_title">Jarraitzaileak eta iragarkiak blokeatuta</string>
-    <string name="home_trackers_subtitle">%1$s · ~%2$s aurreztuta</string>
     <string name="home_trackers_subtitle_idle">Babesa aktibo</string>
-    <string name="home_vault_empty_subtitle">Pribatua eta zifratua</string>
     <string name="trackers_info_count_label">jarraitzaileak eta iragarkiak blokeatuta</string>
     <string name="trackers_info_saved">~%1$s banda-zabalera aurreztua</string>
     <string name="trackers_info_categories">Jarraitzaileak · Iragarkiak · Hatz-marka · Cookieak</string>

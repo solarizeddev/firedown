@@ -19,7 +19,6 @@
     <string name="browser_menu_settings">Ρυθμίσεις</string>
     <string name="browser_menu_share">Κοινή χρήση</string>
     <string name="browser_menu_stop">Διακοπή</string>
-    <string name="browser_settings">Ρυθμίσεις</string>
     <string name="browser_tabs_empty">Καμία ανοιχτή καρτέλα</string>
     <string name="browser_tabs_empty_archive">Δεν υπάρχουν πρόσφατα κλειστές καρτέλες.</string>
     <string name="cancel">Ακύρωση</string>
@@ -72,7 +71,6 @@
     <string name="details_size">Μέγεθος</string>
     <string name="details_url">Διεύθυνση URL</string>
     <string name="download">Λήψη</string>
-    <string name="download_file">Ένα αρχείο είναι έτοιμο για λήψη:</string>
     <string name="download_finished">Η λήψη ολοκληρώθηκε</string>
     <string name="download_ongoing_notification">Firedown</string>
     <string name="download_quality">Ποιότητα λήψης</string>
@@ -141,7 +139,6 @@
     <string name="navigation_captured">Αποτυπωμένο περιεχόμενο</string>
     <string name="navigation_downloads">Λήψεις</string>
     <string name="navigation_settings">Ρυθμίσεις</string>
-    <string name="navigation_tabs">Καρτέλες</string>
     <string name="navigation_tabs_archive">Καρτέλες που έκλεισαν πρόσφατα</string>
     <string name="navigation_vault">Ασφαλής φάκελος</string>
     <string name="navigation_web_bookmarks">Όλοι οι σελιδοδείκτες</string>
@@ -286,9 +283,7 @@
     <string name="crash_sheet_copied">Η αναφορά κατάρρευσης αντιγράφηκε στο πρόχειρο</string>
     <string name="crash_sheet_open_failed">Δεν ήταν δυνατό το άνοιγμα του προγράμματος περιήγησης. Η αναφορά είναι στο πρόχειρό σας — επικολλήστε την σε ένα νέο GitHub issue.</string>
     <string name="home_trackers_title">Παρακολουθητές και διαφημίσεις αποκλείστηκαν</string>
-    <string name="home_trackers_subtitle">%1$s · ~%2$s εξοικονομήθηκαν</string>
     <string name="home_trackers_subtitle_idle">Η προστασία είναι ενεργή</string>
-    <string name="home_vault_empty_subtitle">Ιδιωτικός και κρυπτογραφημένος</string>
     <string name="trackers_info_count_label">παρακολουθητές και διαφημίσεις αποκλείστηκαν</string>
     <string name="trackers_info_saved">~%1$s εύρους ζώνης εξοικονομήθηκε</string>
     <string name="trackers_info_categories">Παρακολούθηση · Διαφημίσεις · Δακτυλικό αποτύπωμα · Cookies</string>

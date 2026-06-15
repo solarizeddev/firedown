@@ -65,9 +65,7 @@
     <string name="crash_sheet_copied">Informe de fallo copiado al portapapeles</string>
     <string name="crash_sheet_open_failed">No se pudo abrir el navegador. El informe está en tu portapapeles — pégalo en una nueva incidencia de GitHub.</string>
     <string name="home_trackers_title">Rastreadores y anuncios bloqueados</string>
-    <string name="home_trackers_subtitle">%1$s · ~%2$s ahorrados</string>
     <string name="home_trackers_subtitle_idle">Protección activa</string>
-    <string name="home_vault_empty_subtitle">Privada y cifrada</string>
     <string name="trackers_info_count_label">rastreadores y anuncios bloqueados</string>
     <string name="trackers_info_saved">~%1$s de ancho de banda ahorrados</string>
     <string name="trackers_info_categories">Rastreadores · Anuncios · Huella digital · Cookies</string>

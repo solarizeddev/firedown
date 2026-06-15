@@ -17,7 +17,6 @@
     <string name="browser_menu_settings">Tənzimləmələr</string>
     <string name="browser_menu_share">Paylaş</string>
     <string name="browser_menu_stop">Dayandır</string>
-    <string name="browser_settings">Parametrlər</string>
     <string name="browser_tabs_empty">Açıq tablarınız burada göstəriləcək.</string>
     <string name="browser_tabs_empty_archive">Bu yaxınlarda bağlanan tab yoxdur.</string>
     <string name="cancel">Ləğv et</string>
@@ -55,7 +54,6 @@
     <string name="details_size">Ölçü</string>
     <string name="details_url">URL</string>
     <string name="download">Yüklə</string>
-    <string name="download_file">Fayl endirməyə hazırdır:</string>
     <string name="download_finished">Yükləmə tamamlandı</string>
     <string name="download_ongoing_notification">Yanğın söndürülməsi</string>
     <string name="download_quality">Keyfiyyəti yükləyin</string>
@@ -123,7 +121,6 @@
     <string name="navigation_captured">Tutulmuş Məzmun</string>
     <string name="navigation_downloads">Yükləmələr</string>
     <string name="navigation_settings">Parametrlər</string>
-    <string name="navigation_tabs">Nişanlar</string>
     <string name="navigation_tabs_archive">Bu yaxınlarda bağlanmış tablar</string>
     <string name="navigation_vault">Təhlükəsiz Qovluq</string>
     <string name="navigation_web_bookmarks">Əlfəcinlər</string>
@@ -239,9 +236,7 @@
     <string name="crash_sheet_copied">Çökmə hesabatı mübadilə yaddaşına kopyalandı</string>
     <string name="crash_sheet_open_failed">Brauzer açıla bilmədi. Hesabat mübadilə yaddaşındadır — yeni GitHub məsələsinə yapışdırın.</string>
     <string name="home_trackers_title">İzləyicilər və reklamlar bloklandı</string>
-    <string name="home_trackers_subtitle">%1$s · ~%2$s qənaət edildi</string>
     <string name="home_trackers_subtitle_idle">Mühafizə aktivdir</string>
-    <string name="home_vault_empty_subtitle">Şəxsi və şifrlənmiş</string>
     <string name="trackers_info_count_label">izləyici və reklam bloklandı</string>
     <string name="trackers_info_saved">~%1$s zolaq genişliyi qənaət edildi</string>
     <string name="trackers_info_categories">İzləyicilər · Reklamlar · Barmaq izi · Kukilər</string>

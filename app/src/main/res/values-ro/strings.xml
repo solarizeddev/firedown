@@ -19,7 +19,6 @@
     <string name="browser_menu_settings">Setări</string>
     <string name="browser_menu_share">Partajează</string>
     <string name="browser_menu_stop">Oprire</string>
-    <string name="browser_settings">Setări</string>
     <string name="browser_tabs_empty">Nicio filă deschisă</string>
     <string name="browser_tabs_empty_archive">Nicio filă închisă recent.</string>
     <string name="cancel">Anulare</string>
@@ -66,7 +65,6 @@
     <string name="details_size">Mărime</string>
     <string name="details_url">URL</string>
     <string name="download">Descarcă</string>
-    <string name="download_file">Un fișier este gata pentru a fi descărcat:</string>
     <string name="download_finished">Descărcarea s-a terminat</string>
     <string name="download_ongoing_notification">Firedown</string>
     <string name="download_quality">Calitate descărcare</string>
@@ -135,7 +133,6 @@
     <string name="navigation_captured">Conținut capturat</string>
     <string name="navigation_downloads">Descărcări</string>
     <string name="navigation_settings">Setări</string>
-    <string name="navigation_tabs">File</string>
     <string name="navigation_tabs_archive">File închise recent</string>
     <string name="navigation_vault">Dosar sigur</string>
     <string name="navigation_web_bookmarks">Marcaje</string>
@@ -274,9 +271,7 @@
     <string name="crash_sheet_copied">Raportul de eroare copiat în clipboard</string>
     <string name="crash_sheet_open_failed">Nu s-a putut deschide browserul. Raportul este în clipboard — lipește-l într-un nou issue GitHub.</string>
     <string name="home_trackers_title">Urmăritoare și reclame blocate</string>
-    <string name="home_trackers_subtitle">%1$s · ~%2$s economisiți</string>
     <string name="home_trackers_subtitle_idle">Protecție activă</string>
-    <string name="home_vault_empty_subtitle">Privat și criptat</string>
     <string name="trackers_info_count_label">urmăritoare și reclame blocate</string>
     <string name="trackers_info_saved">~%1$s de lățime de bandă economisiți</string>
     <string name="trackers_info_categories">Urmăritoare · Reclame · Amprentă · Cookie-uri</string>

@@ -8,7 +8,6 @@
     <string name="browser_enter_url">URL ਖੋਜੋ ਜਾਂ ਟਾਈਪ ਕਰੋ</string>
     <string name="browser_error_image_title">ਅੱਗ ਚਲੀ ਗਈ ਹੈ</string>
     <string name="browser_find_in_page">ਸਫ਼ੇ ‘ਚ ਲੱਭੋ</string>
-    <string name="browser_settings">ਸੈਟਿੰਗਾਂ</string>
     <string name="browser_tabs_empty">ਤੁਹਾਡੀਆਂ ਖੁੱਲ੍ਹੀਆਂ ਟੈਬਾਂ ਇੱਥੇ ਦਿਖਾਈਆਂ ਜਾਣਗੀਆਂ।</string>
     <string name="browser_tabs_empty_archive">ਕੋਈ ਹਾਲ ਹੀ ਵਿੱਚ ਬੰਦ ਕੀਤੀਆਂ ਟੈਬਾਂ ਨਹੀਂ ਹਨ।</string>
     <string name="cancel">ਰੱਦ ਕਰੋ</string>
@@ -42,7 +41,6 @@
     <string name="details_size">ਆਕਾਰ</string>
     <string name="details_url">URL</string>
     <string name="download">ਡਾਊਨਲੋਡ ਕਰੋ</string>
-    <string name="download_file">ਇੱਕ ਫਾਈਲ ਡਾਊਨਲੋਡ ਕਰਨ ਲਈ ਤਿਆਰ ਹੈ:</string>
     <string name="download_finished">ਡਾਊਨਲੋਡ ਪੂਰਾ ਹੋਇਆ</string>
     <string name="download_ongoing_notification">ਫਾਇਰਡਾਊਨ</string>
     <string name="download_quality">ਗੁਣਵੱਤਾ ਡਾਊਨਲੋਡ ਕਰੋ</string>
@@ -108,7 +106,6 @@
     <string name="navigation_captured">ਕੈਪਚਰ ਕੀਤੀ ਸਮੱਗਰੀ</string>
     <string name="navigation_downloads">ਡਾਊਨਲੋਡ</string>
     <string name="navigation_settings">ਸੈਟਿੰਗਾਂ</string>
-    <string name="navigation_tabs">ਟੈਬਸ</string>
     <string name="navigation_tabs_archive">ਹਾਲ ਹੀ ਵਿੱਚ ਬੰਦ ਕੀਤੀਆਂ ਟੈਬਾਂ</string>
     <string name="navigation_vault">ਸੁਰੱਖਿਅਤ ਫੋਲਡਰ</string>
     <string name="navigation_web_bookmarks">ਸਾਰੇ ਬੁੱਕਮਾਰਕਸ</string>
@@ -215,9 +212,7 @@
     <string name="crash_sheet_copied">کریش رپورٹ کلپ بورڈ تے کاپی ہوگئی</string>
     <string name="crash_sheet_open_failed">براؤزر نئیں کھل سکیا۔ رپورٹ کلپ بورڈ تے اے — ایہنوں نویں GitHub مسئلے وچ چپکاؤ۔</string>
     <string name="home_trackers_title">ٹریکرز اور اشتہارات بلاک</string>
-    <string name="home_trackers_subtitle">%1$s · ~%2$s بچت</string>
     <string name="home_trackers_subtitle_idle">تحفظ آن اے</string>
-    <string name="home_vault_empty_subtitle">نجی تے انکرپٹڈ</string>
     <string name="trackers_info_count_label">ٹریکرز تے اشتہار بلاک</string>
     <string name="trackers_info_saved">~%1$s بینڈوڈتھ بچ گئی</string>
     <string name="trackers_info_categories">ٹریکرز · اشتہار · فنگرپرنٹ · کوکیز</string>

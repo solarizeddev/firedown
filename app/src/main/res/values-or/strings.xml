@@ -11,7 +11,6 @@
     <string name="browser_menu_desktop_site">ଡେସ୍କଟପ୍ ସାଇଟ୍</string>
     <string name="browser_menu_find_in_page">ପୃଷ୍ଠାରେ ଖୋଜି ପାଆନ୍ତୁ</string>
     <string name="browser_menu_settings">ସେଟିଂସମୂହ</string>
-    <string name="browser_settings">ସେଟିଂସମୂହ</string>
     <string name="browser_tabs_empty">ତୁମର ଖୋଲା ଟ୍ୟାବଗୁଡ଼ିକ ଏଠାରେ ଦେଖାଯିବ |</string>
     <string name="browser_tabs_empty_archive">ସମ୍ପ୍ରତି ବନ୍ଦ ଟ୍ୟାବଗୁଡ଼ିକ ନାହିଁ |</string>
     <string name="cancel">ବାତିଲ୍ କରନ୍ତୁ |</string>
@@ -46,7 +45,6 @@
     <string name="details_size">ଆକାର |</string>
     <string name="details_url">URL</string>
     <string name="download">ଡାଉନଲୋଡ୍ କରନ୍ତୁ |</string>
-    <string name="download_file">ଏକ ଫାଇଲ୍ ଡାଉନଲୋଡ୍ କରିବାକୁ ପ୍ରସ୍ତୁତ:</string>
     <string name="download_finished">ଡାଉନଲୋଡ୍ ସମାପ୍ତ ହୋଇଛି |</string>
     <string name="download_ongoing_notification">ଫାୟାରଡାଉନ୍ |</string>
     <string name="download_quality">ଗୁଣବତ୍ତା ଡାଉନଲୋଡ୍ କରନ୍ତୁ |</string>
@@ -111,7 +109,6 @@
     <string name="navigation_captured">କ୍ୟାପଚର ବିଷୟବସ୍ତୁ |</string>
     <string name="navigation_downloads">ଡାଉନଲୋଡ୍ |</string>
     <string name="navigation_settings">ସେଟିଂସମୂହ</string>
-    <string name="navigation_tabs">ଟ୍ୟାବ୍ସ |</string>
     <string name="navigation_tabs_archive">ସମ୍ପ୍ରତି ବନ୍ଦ ଟ୍ୟାବଗୁଡ଼ିକ |</string>
     <string name="navigation_vault">ସୁରକ୍ଷିତ ଫୋଲ୍ଡର୍</string>
     <string name="navigation_web_bookmarks">ସମସ୍ତ ବୁକମାର୍କ |</string>
@@ -219,9 +216,7 @@
     <string name="crash_sheet_copied">କ୍ରାଶ୍ ରିପୋର୍ଟ କ୍ଲିପ୍ବୋର୍ଡକୁ କପି ହୋଇଛି</string>
     <string name="crash_sheet_open_failed">ବ୍ରାଉଜର୍ ଖୋଲିପାରିଲା ନାହିଁ। ରିପୋର୍ଟ କ୍ଲିପ୍ବୋର୍ଡରେ ଅଛି — ଏହାକୁ ଏକ ନୂଆ GitHub ଇସ୍ୟୁରେ ପେଷ୍ଟ କରନ୍ତୁ।</string>
     <string name="home_trackers_title">ଟ୍ରାକର ଓ ବିଜ୍ଞାପନ ବ୍ଲକ ହୋଇଛି</string>
-    <string name="home_trackers_subtitle">%1$s · ~%2$s ସଞ୍ଚୟ</string>
     <string name="home_trackers_subtitle_idle">ସୁରକ୍ଷା ସକ୍ରିୟ</string>
-    <string name="home_vault_empty_subtitle">ବ୍ୟକ୍ତିଗତ ଏବଂ ଏନକ୍ରିପ୍ଟେଡ୍</string>
     <string name="trackers_info_count_label">ଟ୍ରାକର ଏବଂ ବିଜ୍ଞାପନ ବ୍ଲକ ହୋଇଛି</string>
     <string name="trackers_info_saved">~%1$s ବ୍ୟାଣ୍ଡୱିଡଥ୍ ସଞ୍ଚୟ</string>
     <string name="trackers_info_categories">ଟ୍ରାକର · ବିଜ୍ଞାପନ · ଆଙ୍ଗୁଠିଚିହ୍ନ · କୁକି</string>

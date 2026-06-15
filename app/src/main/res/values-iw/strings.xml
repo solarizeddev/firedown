@@ -19,7 +19,6 @@
     <string name="browser_menu_settings">הגדרות</string>
     <string name="browser_menu_share">שיתוף</string>
     <string name="browser_menu_stop">עצירה</string>
-    <string name="browser_settings">הגדרות</string>
     <string name="browser_tabs_empty">הכרטיסיות הפתוחות שלך יוצגו כאן.</string>
     <string name="browser_tabs_empty_archive">אין כרטיסיות שנסגרו לאחרונה.</string>
     <string name="cancel">לְבַטֵל</string>
@@ -71,7 +70,6 @@
     <string name="details_size">גודל</string>
     <string name="details_url">כתובת אתר</string>
     <string name="download">הורד</string>
-    <string name="download_file">קובץ מוכן להורדה:</string>
     <string name="download_finished">ההורדה הסתיימה</string>
     <string name="download_ongoing_notification">Firedown</string>
     <string name="download_quality">איכות הורדה</string>
@@ -152,7 +150,6 @@
     <string name="navigation_captured">תוכן שנלכד</string>
     <string name="navigation_downloads">הורדות</string>
     <string name="navigation_settings">הגדרות</string>
-    <string name="navigation_tabs">כרטיסיות</string>
     <string name="navigation_tabs_archive">כרטיסיות שנסגרו לאחרונה</string>
     <string name="navigation_vault">תיקייה בטוחה</string>
     <string name="navigation_web_bookmarks">סימניות</string>
@@ -294,9 +291,7 @@
     <string name="crash_sheet_copied">דוח הקריסה הועתק ללוח</string>
     <string name="crash_sheet_open_failed">לא ניתן לפתוח דפדפן. הדוח נמצא בלוח — הדבק אותו ב-issue חדש בגיטהאב.</string>
     <string name="home_trackers_title">עוקבים ופרסומות חסומים</string>
-    <string name="home_trackers_subtitle">%1$s · ~%2$s נחסכו</string>
     <string name="home_trackers_subtitle_idle">ההגנה פעילה</string>
-    <string name="home_vault_empty_subtitle">פרטי ומוצפן</string>
     <string name="trackers_info_count_label">עוקבים ופרסומות נחסמו</string>
     <string name="trackers_info_saved">~%1$s רוחב פס נחסך</string>
     <string name="trackers_info_categories">עוקבים · פרסומות · טביעת אצבע · עוגיות</string>
