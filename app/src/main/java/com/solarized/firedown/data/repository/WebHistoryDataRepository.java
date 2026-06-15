@@ -54,9 +54,9 @@ public class WebHistoryDataRepository {
         return mDao.getAutoCompleteHistory();
     }
 
-    public void updateTitle(int id, String title) {
-        if (TextUtils.isEmpty(title)) return;
-        mDiskExecutor.execute(() -> mDao.updateTitle(id, title));
+    public void updateTitle(String url, String title) {
+        if (TextUtils.isEmpty(url) || TextUtils.isEmpty(title)) return;
+        mDiskExecutor.execute(() -> mDao.updateTitleByUrl(url, title));
     }
 
     public WebHistoryEntity searchHistory(String url, String title) {

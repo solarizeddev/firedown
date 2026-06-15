@@ -531,8 +531,31 @@ public class GeckoState {
 
 
     public void onLocationChange(@NonNull String uri) {
-        if(URLUtil.isValidUrl(uri) && !URLUtil.isAboutUrl(uri))
+        if(URLUtil.isValidUrl(uri) && !URLUtil.isAboutUrl(uri)) {
+            // Firefox parity (android-components ContentStateReducer, the
+            // UpdateUrlAction case: `title = if (!isUrlSame) "" else title` /
+            // `icon = if (!isHostEquals) null else icon`). When the URL commits a
+            // DIFFERENT document, clear the now-stale title — and the favicon on
+            // a host change — BEFORE adopting the new URL. GeckoView delivers
+            // onTitleChange as an independent, LATER event, so without this the
+            // tab briefly (and on title-less SPA navs, indefinitely) holds the
+            // NEW url paired with the PREVIOUS page's title; onHistoryStateChange
+            // then snapshots that pair into a url-keyed history row, which
+            // surfaces in autocomplete as a mangled entry (e.g. elmundo.com
+            // showing a Twitter post's title). Same-document churn (#fragment,
+            // pushState, tracking-param mutations) keeps the title/icon: it is
+            // gated on the same page-identity key updateVisit() uses, which
+            // ignores the fragment and noise params exactly like Firefox's
+            // isUrlSame. Clearing to null lets the url-keyed onTitleChange repair
+            // (GeckoComponents) re-fill the row once the real title arrives.
+            String previous = mGeckoStateEntity.getUri();
+            String key = pageIdentityKey(uri);
+            if (key != null && !key.equals(pageIdentityKey(previous))) {
+                setEntityTitle(null);
+                if (!sameHost(previous, uri)) setEntityIcon(null);
+            }
             mGeckoStateEntity.setUri(uri);
+        }
         mLastNavigationTime = System.currentTimeMillis();
         updateVisit(uri);
     }
@@ -557,10 +580,9 @@ public class GeckoState {
      * re-capturing them.
      */
     private void updateVisit(String uri) {
-        String host = normalizedHost(uri);
-        if (host == null) return;                       // unparseable / opaque → keep anchor
+        String key = pageIdentityKey(uri);
+        if (key == null) return;                        // unparseable / opaque → keep anchor
 
-        String key = host + pageKeyTail(uri);
         if (key.equals(mCurrentPageKey)) return;        // same logical page → churn, ignore
 
         mCurrentPageKey = key;
@@ -618,6 +640,28 @@ public class GeckoState {
         } catch (Exception e) {
             return "";
         }
+    }
+
+    /** Page-identity key: normalized host + path/identity-query, with the
+     *  {@code #fragment}, tracking/noise params and {@code www.}/{@code m.} host
+     *  spelling all ignored. Two URLs with the same key are the SAME document.
+     *  null for an opaque/relative host. This is the one notion of "same page"
+     *  shared by {@link #updateVisit} (visit-id re-anchoring) and
+     *  {@link #onLocationChange} (the Firefox-parity title/icon reset) — it is
+     *  the local equivalent of android-components' {@code isUrlSame}. */
+    private static String pageIdentityKey(String uri) {
+        String host = normalizedHost(uri);
+        if (host == null) return null;
+        return host + pageKeyTail(uri);
+    }
+
+    /** True when both URLs resolve to the same normalized host. Decides whether a
+     *  cross-document navigation should also drop the favicon — a same-host path
+     *  change keeps the site icon (Firefox's {@code isHostEquals} icon rule),
+     *  only a host change clears it. false if either host is opaque/null. */
+    private static boolean sameHost(String a, String b) {
+        String ha = normalizedHost(a);
+        return ha != null && ha.equals(normalizedHost(b));
     }
 
     /** Current navigation-visit id for this tab. See {@link #mVisitId}. */

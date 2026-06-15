@@ -672,7 +672,6 @@ public class GeckoComponents {
                 return;
 
             final String url = geckoState.getEntityUri();
-            final int id = geckoState.getEntityId();
 
             Log.i(TAG, "Content title changed to " + title + " url: " + url);
 
@@ -681,7 +680,15 @@ public class GeckoComponents {
 
             // Don't save history for incognito tabs
             if (!geckoState.isIncognito()) {
-                mWebHistoryDataRepository.updateTitle(id, title);
+                // Repair the history row for THIS url. onHistoryStateChange may
+                // have inserted it title-less (the title hadn't arrived yet —
+                // GeckoView fires onTitleChange as a separate, later event), so
+                // stamp the now-known title onto the row keyed by file_url. The
+                // old id-keyed update never matched: a history row's uid is
+                // generateId(url), NOT the tab's entity id, so the repair was a
+                // silent no-op and the title-less/stale row survived into
+                // autocomplete.
+                mWebHistoryDataRepository.updateTitle(url, title);
             }
 
             geckoState.setEntityTitle(title);
@@ -1304,10 +1311,21 @@ public class GeckoComponents {
 
             String uri = geckoState.getEntityUri();
 
+            // The title may not have arrived yet for this url: onLocationChange
+            // has already cleared the previous page's title (see GeckoState), and
+            // GeckoView fires onTitleChange separately and later. Don't pair the
+            // row with the "about:blank" sentinel getEntityTitle() returns when
+            // unset — store no title and let the url-keyed onTitleChange repair
+            // fill it in. A null/empty title is strictly better than a stale or
+            // placeholder one in autocomplete (the previous behaviour persisted
+            // whichever title the tab happened to hold at this instant).
+            String title = geckoState.getEntityTitle();
+            if (UrlStringUtils.isAboutBlank(title)) title = null;
+
             WebHistoryEntity webHistoryEntity = new WebHistoryEntity();
             webHistoryEntity.setId(WebHistoryDataRepository.generateId(uri));
             webHistoryEntity.setFileDate(System.currentTimeMillis());
-            webHistoryEntity.setFileTitle(geckoState.getEntityTitle());
+            webHistoryEntity.setFileTitle(title);
             webHistoryEntity.setFileUrl(uri);
             webHistoryEntity.setFileIcon(geckoState.getEntityIcon());
             webHistoryEntity.setFileIconResolution(geckoState.getEntityIconResolution());

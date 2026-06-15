@@ -79,8 +79,13 @@ public interface WebHistoryDao {
     @Query("UPDATE webhistory SET file_icon = :icon, file_icon_resolution = :res WHERE file_url = :url")
     void updateIconData(String url, String icon, int res);
 
-    @Query("UPDATE webhistory SET file_title = :title WHERE uid = :id")
-    Integer updateTitle(int id, String title);
+    // Repair the title for a url after onTitleChange (which arrives separately
+    // from, and usually later than, the row insert in onHistoryStateChange).
+    // Keyed by file_url, NOT uid: the row's uid is generateId(url), so the old
+    // tab-id-keyed update never matched the row it was meant to fix. Mirrors the
+    // url-keyed updateIconData above.
+    @Query("UPDATE webhistory SET file_title = :title WHERE file_url = :url")
+    Integer updateTitleByUrl(String url, String title);
 
     @Query("SELECT COUNT(file_url) FROM webhistory")
     Integer getRowCount();
