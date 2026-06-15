@@ -88,6 +88,18 @@ public class DownloadDataRepository {
         return mDatabase.downloadDao().getAllSafeLive();
     }
 
+    /** The currently active (in-progress / queued) regular downloads, newest
+     *  first — drives the home active-download banner. */
+    public LiveData<List<DownloadEntity>> getActiveDownloads() {
+        return mDatabase.downloadDao().getActiveLive();
+    }
+
+    /** The most recent finished regular downloads (newest first, capped) -
+     *  drives the home 'Latest downloads' thumbnail carousel. */
+    public LiveData<List<DownloadEntity>> getRecentFinished(int limit) {
+        return mDatabase.downloadDao().getRecentFinishedLive(limit);
+    }
+
     // --- Standard Queries ---
 
     /** Live count of vault-saved downloads. Drives the home empty-hero

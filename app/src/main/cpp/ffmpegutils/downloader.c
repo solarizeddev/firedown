@@ -493,8 +493,56 @@ int downloader_find_streams(struct Downloader *downloader,
 
         /* Hard selection (e.g. user picked a specific HLS rendition). */
         if (recommended >= 0 && recommended < downloader->input_format_ctx[i]->nb_streams) {
-            AVStream *candidate = downloader->input_format_ctx[i]->streams[recommended];
-            if (candidate->codecpar->codec_type == codec_type) {
+            AVFormatContext *rctx = downloader->input_format_ctx[i];
+            AVStream *candidate = rctx->streams[recommended];
+            int accept = (candidate->codecpar->codec_type == codec_type);
+
+            /* Program affinity for audio — mirror ffmpeg's own stream selection
+             * (`ffmpeg -i master.m3u8 -c copy`). An HLS master exposes one
+             * AVProgram per variant; for a muxed ladder each program holds that
+             * rung's video AND audio. The Java side pairs the audio index by
+             * bitrate, which on a master (per-stream bitrates all report 0)
+             * collapses to the FIRST audio — so every quality but the lowest is
+             * paired with an audio stream from a DIFFERENT program than the chosen
+             * video. Honouring that index keeps two child playlists live, and
+             * ffmpeg then muxes two unrelated encoders into one output track: the
+             * read loop's type-match flip-flops between the two same-type streams
+             * ("discontinuity remap" thrash), two PTS epochs land on one track
+             * (the "clamping dts" flood), and the file is unplayable.
+             *
+             * So when the recommended audio sits in a different program than the
+             * already-selected video, defer to av_find_best_stream with
+             * related_stream = the video: with wanted<0 it scopes the search to
+             * the video's AVProgram (av_find_program_from_stream) and returns the
+             * audio muxed with that exact rung — precisely how ffmpeg's CLI pairs
+             * them. Scoped to a real multi-program master in the SAME input, so a
+             * single-rendition child (Twitch/Kick, one program) and separate-audio
+             * inputs (DASH/YouTube, different input) are untouched; and only
+             * applied when the video's program actually has an audio stream (a
+             * video-only program keeps the recommended index rather than dropping
+             * audio). */
+            if (accept && codec_type == AVMEDIA_TYPE_AUDIO
+                    && downloader->video_stream_no >= 0
+                    && i == downloader->input_source_index[downloader->video_stream_no]
+                    && rctx->nb_programs > 1) {
+                AVProgram *video_program = av_find_program_from_stream(rctx, NULL, related_stream);
+                AVProgram *audio_program = av_find_program_from_stream(rctx, NULL, recommended);
+                if (video_program != NULL && video_program != audio_program) {
+                    int related_audio = av_find_best_stream(rctx, AVMEDIA_TYPE_AUDIO,
+                                                            -1, related_stream, NULL, 0);
+                    if (related_audio >= 0) {
+                        bn_stream = related_audio;
+                        source_input = i;
+                        LOGI(3, "downloader_find_stream type=%d requested audio=%d crosses the video's variant program; using program-paired audio=%d in input[%d]",
+                             codec_type, recommended, related_audio, i);
+                        break;
+                    }
+                    LOGI(3, "downloader_find_stream type=%d requested audio=%d crosses program but video program has no audio; keeping requested",
+                         codec_type, recommended);
+                }
+            }
+
+            if (accept) {
                 bn_stream = recommended;
                 source_input = i;
                 LOGI(3, "downloader_find_stream type=%d using requested stream=%d in input[%d]",
@@ -1227,6 +1275,23 @@ void *downloader_mux(void *data) {
             switch (progress_mode) {
                 case PROGRESS_TIME:
                     progress_value = downloader_muxed_position(downloader);
+                    /* Upper-clamp to the total — the symmetric partner of the
+                     * non-regress (lower) clamp in downloader_muxed_position.
+                     * The denominator (progress_total) is ffmpeg's PROBE-estimated
+                     * duration, computed once from input_format_ctx->duration. On a
+                     * discontinuity-spliced VOD (Twitch/Kick ad-stitching) the
+                     * MPEG-TS PTS RESETS at every EXT-X-DISCONTINUITY, so
+                     * find_stream_info's pts-span estimate UNDERESTIMATES the true
+                     * length, while current_recording_time accumulates the real
+                     * summed pkt->duration and grows past it — driving the reported
+                     * position over 100% (observed at 165%+ and climbing). The
+                     * accumulator is the better measure of muxed output, but it must
+                     * never be reported above the total: the bar saturates at 100%
+                     * (matching the recording_time/recording_time completion
+                     * callback) instead of showing a nonsensical >100%. */
+                    if (progress_total > 0 && progress_value > progress_total) {
+                        progress_value = progress_total;
+                    }
                     break;
                 case PROGRESS_SIZE:
                     progress_value = downloader->current_size;

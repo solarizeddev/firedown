@@ -140,7 +140,7 @@ public class WebHistoryFragment extends BaseFocusFragment implements SearchView.
         mRecyclerView = mLCEERecyclerView.getRecyclerView();
         mToolbar = v.findViewById(R.id.toolbar);
         mToolbar.setContentInsetsAbsolute(getResources().getDimensionPixelSize(R.dimen.address_bar_inset), 0);
-        mAdapter = new WebHistoryAdapter(mActivity, new WebHistoryDiffCallback(), this);
+        mAdapter = new WebHistoryAdapter(mActivity, new WebHistoryDiffCallback(), this, mIncognito);
         // Match WebBookmarkFragment: EqualSpacingItemDecoration gives
         // halfSpacing between rows + full list_spacing on the edges,
         // so adjacent 2dp card strokes don't touch (which would have

@@ -285,6 +285,29 @@ public class GeckoStateDataRepository {
     }
 
 
+    /**
+     * Guarantees the list holds at least the current (home) tab. Closing the
+     * last tab leaves the list empty (count 0); when the user then lands on
+     * Home, Home is itself a tab, so materialise a home {@link GeckoState} - the
+     * count becomes a truthful 1 and the Tabs screen shows it. Gated on
+     * initialization so it can't race {@link #initializeGeckoStates} (which
+     * already guarantees >=1 at startup), and a no-op when ANY tab already
+     * exists, so it never duplicates and never fights the close-undo window
+     * (that lives on the Tabs screen, before Home is shown).
+     */
+    public void ensureHomeTabIfEmpty() {
+        if (!Boolean.TRUE.equals(mInitialized.getValue())) {
+            return;
+        }
+        synchronized (mGeckoStates) {
+            if (!mGeckoStates.isEmpty()) {
+                return;
+            }
+        }
+        setGeckoState(new GeckoState(new GeckoStateEntity(true)), true);
+    }
+
+
     public void setGeckoState(GeckoState geckoState, boolean active) {
         Log.d(TAG, "setGeckoState: id=" + geckoState.getEntityId()
                 + " uri=" + geckoState.getEntityUri()

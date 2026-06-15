@@ -287,14 +287,15 @@ public class HomeIncognitoFragment extends BaseBrowserFragment implements
         // Apply incognito theme to system bars
         applyIncognitoSystemBars();
         mBottomNavigationBar.updateTheme(mActivity,true);
-        // Scrim follows the bar's incognito surfaceContainer tone — see
-        // BaseFocusFragment.setNavScrimColor.
-        setNavScrimColor(IncognitoColors.getSurfaceContainer(mActivity, true));
-        // Same chrome spec as normal Home: quiet top / tonal bottom,
+        // Flat bar (Firefox-parity): bar is now incognito SURFACE, so the
+        // scrim under the system-nav strip matches at surface too (the bar's
+        // top hairline divides it). See BaseFocusFragment.setNavScrimColor.
+        setNavScrimColor(IncognitoColors.getSurface(mActivity, true));
+        // Same chrome spec as normal Home: quiet top / flat-surface bottom,
         // mirrored on the window layer for Android <= 14.
         paintSystemBars(
                 IncognitoColors.getSurface(mActivity, true),
-                IncognitoColors.getSurfaceContainer(mActivity, true));
+                IncognitoColors.getSurface(mActivity, true));
         // tonalHolder=false: quiet top, toolbar merges with the canvas
         // (same as normal Home — see GeckoToolbar.updateTheme javadoc).
         mGeckoToolbar.updateTheme(mActivity, true, false);

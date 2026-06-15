@@ -3,10 +3,10 @@ package com.solarized.firedown.geckoview.toolbar;
 import android.app.Activity;
 import android.content.Context;
 import android.content.res.ColorStateList;
+import android.content.res.Configuration;
 import android.content.res.TypedArray;
-import android.graphics.drawable.Drawable;
-import android.graphics.drawable.GradientDrawable;
 import android.util.AttributeSet;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -40,9 +40,12 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
 
     private BadgeDrawable mBadge;
 
-    private boolean mSelfPadSystemBars = true;
-
-
+    // Top hairline divider (Firefox-parity). The bar is painted the page
+    // SURFACE tone (not a tonal surfaceContainer step), so it would dissolve
+    // into surface content (Home) or arbitrary web content (Browser) without
+    // this 1dp line. Drawn as a top-gravity child OVER the bar background, so
+    // it rides the bar's scroll-hide. Coloured (incognito-aware) in updateTheme.
+    private View mSeparator;
 
 
     public interface OnBottomBarListener {
@@ -89,7 +92,7 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
         // owns the nav strip. The browser sets it FALSE — its framed root
         // reserves the strip with all-sides padding, so a self-pad there
         // would double-inset (see the styleable doc).
-        mSelfPadSystemBars = array.getBoolean(R.styleable.BottomNavigationBar_selfPadSystemBars, true);
+        boolean mSelfPadSystemBars = array.getBoolean(R.styleable.BottomNavigationBar_selfPadSystemBars, true);
         array.recycle();
 
         LayoutInflater.from(context).inflate(R.layout.bottom_bar, this, true);
@@ -124,6 +127,16 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
             }
         });
 
+        // Top hairline divider, added as the LAST child of this FrameLayout so
+        // it draws OVER the bar background at the very top edge. Not a child of
+        // the inflated button row, so the click-listener loop above never sees
+        // it. 1dp tall; tinted in updateTheme.
+        int hairline = Math.max(1, Math.round(getResources().getDisplayMetrics().density));
+        mSeparator = new View(context);
+        mSeparator.setLayoutParams(new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT, hairline, Gravity.TOP));
+        addView(mSeparator);
+
         // Self-pad the nav inset UNLESS the host opted out (the browser's
         // framed root reserves the strip instead — see selfPadSystemBars).
         if (mSelfPadSystemBars) {
@@ -135,11 +148,12 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
     public void updateTheme(Activity activity, boolean incognito) {
         Context context = getContext();
 
-        // surfaceContainer, NOT surface — the same tonal tone the tabs
-        // screen's action bar uses (TabsHolderFragment), so the bar reads
-        // as a bar instead of dissolving into the dark window background,
-        // and the docked hero FAB visibly seats INTO it on every screen.
-        int surfaceColor = IncognitoColors.getSurfaceContainer(activity, incognito);
+        // SURFACE (Firefox-parity) — the bar is the page background tone, not a
+        // tonal surfaceContainer step. The old tonal tone existed so the bar
+        // "read as a bar" and the docked hero FAB seated into it; the FAB is
+        // gone, so the bar now rides flat on the background and the top hairline
+        // (mSeparator, below) provides the division instead of a colour step.
+        int surfaceColor = IncognitoColors.getSurface(activity, incognito);
         int iconColor = IncognitoColors.getOnSurface(activity, incognito);
 
         ColorStateList iconTint = ColorStateList.valueOf(iconColor);
@@ -182,22 +196,27 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
             ImageViewCompat.setImageTintList((AppCompatImageButton) moreBtn, iconTint);
         }
 
-        // TabsBrowserButton (custom view — uses setColorFilter or a tint method)
+        // Tab counter (TabCountDrawable) — one tint colours its rect + digits
+        // (it owns its own stroke, so no GradientDrawable restroke here).
         if (mTabsCountButton != null) {
             mTabsCountButton.setTabsTextColor(iconColor);
-            Drawable bg = mTabsCountButton.getTabsBackground();
-            if (bg instanceof GradientDrawable gd) {
-                // Mutate so we don't affect the shared drawable cache
-                gd.mutate();
-                gd.setStroke(
-                        (int) (1.8f * getResources().getDisplayMetrics().density),
-                        iconColor);
-            }
         }
 
         // Badge color
         if (mBadge != null) {
             mBadge.setBackgroundColor(IncognitoColors.getPrimaryContainer(context, incognito));
+        }
+
+        // Top hairline — a soft line (outlineVariant read too prominent).
+        // Any dark surface (system-dark OR incognito) gets a translucent-WHITE
+        // line (a black groove is invisible on dark); a light surface gets a
+        // faint translucent-BLACK line.
+        if (mSeparator != null) {
+            int nightMode = getResources().getConfiguration().uiMode
+                    & Configuration.UI_MODE_NIGHT_MASK;
+            boolean dark = incognito || nightMode == Configuration.UI_MODE_NIGHT_YES;
+            mSeparator.setBackgroundColor(ContextCompat.getColor(context,
+                    dark ? R.color.bottom_bar_divider_dark : R.color.bottom_bar_divider_light));
         }
     }
 

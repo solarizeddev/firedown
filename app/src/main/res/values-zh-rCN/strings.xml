@@ -584,4 +584,6 @@
     <string name="lan_direct_password">密码</string>
     <string name="lan_direct_next">下一步</string>
     <string name="lan_direct_failed">无法开始直接连接</string>
+    <string name="home_privacy_line">%1$s 个跟踪器</string>
+    <string name="home_downloads_line">已保存 %1$s</string>
 </resources>

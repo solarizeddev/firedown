@@ -6,10 +6,10 @@
     android:layout_height="match_parent">
 
     <!--
-        Header is a compact, centred, icon-only mode switcher on an ALWAYS
-        TONAL bar (surfaceContainer — the same tone as the bottom bar, so
-        the screen reads as a framed switcher, Chrome's tab-grid
-        composition). Two consequences, both deliberate:
+        Header is a compact, centred, icon-only mode switcher on a FLAT
+        surface bar (the same tone as the grid and the bottom bar, like
+        Home's chrome), divided from the grid by a bottom hairline. Two
+        consequences, both deliberate:
 
         - The old full-width outlined segmented button was the heaviest
           element on the screen for its least-used action; icon pills carry
@@ -83,6 +83,13 @@
 
             </com.google.android.material.button.MaterialButtonToggleGroup>
 
+            <!-- Bottom hairline dividing the tonal header from the grid (mirrors
+                 the bottom bar's top hairline). Coloured in applyIncognitoTheme. -->
+            <View
+                android:id="@+id/tabs_header_divider"
+                android:layout_width="match_parent"
+                android:layout_height="1dp" />
+
         </LinearLayout>
 
     </com.google.android.material.appbar.AppBarLayout>
@@ -103,51 +110,67 @@
          are empty on purpose. Background + icon tints follow
          applyIncognitoTheme; bottom padding gains the nav-bar inset in
          code so the bar paints edge-to-edge behind gesture nav. -->
+    <!-- Vertical wrapper: a top hairline divider over the action row, matching
+         the home/browser bottom bar (the bar is now flat SURFACE, so the line
+         carries the division). The wrapper keeps the id/bg/inset-padding the
+         code drives; the divider is coloured in applyIncognitoTheme. -->
     <LinearLayout
         android:id="@+id/tabs_bottom_bar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
-        android:orientation="horizontal">
+        android:orientation="vertical">
 
-        <ImageButton
-            android:id="@+id/action_view_btn"
-            android:layout_width="0dp"
-            android:layout_height="@dimen/app_bar_size"
-            android:layout_weight="1"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/popup_toggle"
-            android:padding="6dp"
-            android:scaleType="centerInside"
-            android:src="@drawable/ic_view_list_24"
-            app:tint="?attr/colorOnSurface" />
+        <View
+            android:id="@+id/tabs_bottom_bar_divider"
+            android:layout_width="match_parent"
+            android:layout_height="1dp" />
 
-        <Space
-            android:layout_width="0dp"
-            android:layout_height="@dimen/app_bar_size"
-            android:layout_weight="1" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
 
-        <Space
-            android:layout_width="0dp"
-            android:layout_height="@dimen/app_bar_size"
-            android:layout_weight="1" />
+            <ImageButton
+                android:id="@+id/action_view_btn"
+                android:layout_width="0dp"
+                android:layout_height="@dimen/app_bar_size"
+                android:layout_weight="1"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/popup_toggle"
+                android:padding="6dp"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_view_list_24"
+                app:tint="?attr/colorOnSurface" />
 
-        <Space
-            android:layout_width="0dp"
-            android:layout_height="@dimen/app_bar_size"
-            android:layout_weight="1" />
+            <Space
+                android:layout_width="0dp"
+                android:layout_height="@dimen/app_bar_size"
+                android:layout_weight="1" />
 
-        <ImageButton
-            android:id="@+id/action_overflow_btn"
-            android:layout_width="0dp"
-            android:layout_height="@dimen/app_bar_size"
-            android:layout_weight="1"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/tabs_more_options"
-            android:padding="6dp"
-            android:scaleType="centerInside"
-            android:src="@drawable/ic_baseline_more_vert_24"
-            app:tint="?attr/colorOnSurface" />
+            <Space
+                android:layout_width="0dp"
+                android:layout_height="@dimen/app_bar_size"
+                android:layout_weight="1" />
+
+            <Space
+                android:layout_width="0dp"
+                android:layout_height="@dimen/app_bar_size"
+                android:layout_weight="1" />
+
+            <ImageButton
+                android:id="@+id/action_overflow_btn"
+                android:layout_width="0dp"
+                android:layout_height="@dimen/app_bar_size"
+                android:layout_weight="1"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/tabs_more_options"
+                android:padding="6dp"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_baseline_more_vert_24"
+                app:tint="?attr/colorOnSurface" />
+
+        </LinearLayout>
 
     </LinearLayout>
 

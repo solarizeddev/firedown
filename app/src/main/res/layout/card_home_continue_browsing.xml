@@ -1,22 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Minimalist Downloads entry card on the home page. Same shape as
-  the Safe Folder card — icon + title + 'N files saved · X.Y GB'
-  subtitle — so the home reads as a small set of equal-weight
-  destinations rather than competing surfaces. Tap routes to
-  DownloadsActivity.
+  'Continue browsing' entry card on the home page. Filled surfaceContainerHigh
+  card with a NEUTRAL chip (grey square + onSurfaceVariant icon - deliberately a
+  generic browser glyph, NOT the last tab's favicon) + 'Continue browsing' title
+  + the last tab's title/domain as subtitle. No trailing chevron. The only
+  coloured surface on the home is the active-download banner; these landmark
+  cards stay monochrome. Tap resumes the most-recently-used non-home tab
+  (HomeFragment.openSessionId). Hidden by HomeFragment when there's no such tab.
+  Theme attrs -> works light + dark.
 -->
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/recent_downloads_card"
+    android:id="@+id/continue_browsing_card"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:clickable="true"
     android:focusable="true"
     android:visibility="gone"
-    app:cardBackgroundColor="@color/transparent"
-    app:cardCornerRadius="12dp"
+    app:cardBackgroundColor="?attr/colorSurfaceContainerHigh"
+    app:cardCornerRadius="16dp"
     app:cardElevation="0dp"
     app:strokeWidth="0dp">
 
@@ -28,21 +31,25 @@
         android:paddingHorizontal="16dp"
         android:paddingVertical="16dp">
 
+        <!-- Same rounded-square chip as the other cards (consistent row), with
+             the site FAVICON centered inside it - fitCenter keeps the favicon's
+             aspect ratio (no stretch) at a readable 26dp. ic_web_24 is the
+             pre-load placeholder; GlideHelper falls back to the domain tile. -->
         <FrameLayout
-            android:id="@+id/recent_downloads_chip"
+            android:id="@+id/continue_browsing_chip"
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:background="@drawable/bg_icon_container_primary"
-            android:backgroundTint="@color/home_chip_downloads">
+            android:backgroundTint="?attr/colorSurfaceContainerHighest">
 
             <androidx.appcompat.widget.AppCompatImageView
-                android:id="@+id/recent_downloads_icon"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
+                android:id="@+id/continue_browsing_icon"
+                android:layout_width="26dp"
+                android:layout_height="26dp"
                 android:layout_gravity="center"
                 android:contentDescription="@null"
-                android:src="@drawable/download_24"
-                app:tint="@color/home_chip_downloads_on" />
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_web_24" />
 
         </FrameLayout>
 
@@ -54,23 +61,21 @@
             android:orientation="vertical">
 
             <TextView
-                android:id="@+id/recent_downloads_title"
+                android:id="@+id/continue_browsing_title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:ellipsize="end"
                 android:maxLines="1"
-                android:text="@string/navigation_downloads"
+                android:text="@string/home_continue_browsing"
                 android:textAppearance="?attr/textAppearanceTitleSmall"
                 android:textColor="?attr/colorOnSurface" />
 
             <!--
-                'N files saved · X.Y GB' subtitle. Plural quantity drives
-                the file label; size suffix is appended in HomeFragment
-                from Utils.readableFileSize (kB / MB / GB). Hidden when
-                count = 0 (matches Safe Folder behaviour).
+                Subtitle: the last tab's title, falling back to its domain.
+                Set + shown in HomeFragment; hidden when neither is known.
             -->
             <TextView
-                android:id="@+id/recent_downloads_subtitle"
+                android:id="@+id/continue_browsing_subtitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:ellipsize="end"
@@ -78,23 +83,10 @@
                 android:textAppearance="?attr/textAppearanceBodySmall"
                 android:textColor="?attr/colorOnSurfaceVariant"
                 android:visibility="gone"
-                tools:text="150 files saved · 2.4 GB"
+                tools:text="en.wikipedia.org"
                 tools:visibility="visible" />
 
         </LinearLayout>
-
-        <!-- Trailing chevron — the 'enter' affordance. Re-added now the
-             cards are transparent: without a tile fill the row no longer
-             reads as obviously tappable, so the chevron carries that
-             signal. -->
-        <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/recent_downloads_chevron"
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:layout_marginStart="8dp"
-            android:contentDescription="@null"
-            android:src="@drawable/ic_chevron_right_24"
-            app:tint="?attr/colorOnSurfaceVariant" />
 
     </LinearLayout>
 

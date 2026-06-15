@@ -22,4 +22,11 @@ public abstract class WebBookmarkDatabase extends RoomDatabase {
             database.execSQL("ALTER TABLE 'webbookmark' ADD COLUMN 'file_preview' TEXT DEFAULT NULL");
         }
     };
+
+    // NOTE: a 2→3 migration (pinned / pin_order columns for the home-shortcuts
+    // feature) existed only on a dev branch and was reverted with the feature —
+    // it never shipped to main, so the DB stays at version 2. Dev devices that
+    // ran the v3 build downgrade gracefully via
+    // fallbackToDestructiveMigrationOnDowngrade in DatabaseModule (rebuilds the
+    // bookmark table on those devices only).
 }

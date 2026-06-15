@@ -56,22 +56,27 @@
          ~5 levels in light, too tight to give a lifted surface (the browser
          URL pill, the autocomplete suggestion cards) any separation. ~15
          levels now, matching the visible steps dark/OLED/incognito already
-         have. Regular Home doesn't use Highest — its pill is High and its
+         have. Regular Home doesn't use Highest - its pill is High and its
          shelf tiles are surfaceContainer. -->
     <color name="md_theme_surfaceContainerHighest">#DAD8DD</color>
     <color name="md_theme_surfaceContainerLow_highContrast">#F5F3F6</color>
-    <!-- Home shelf-tile chips — the single baked "Tonal" look (the home
+    <!-- Home shelf-tile chips - the single baked "Tonal" look (the home
          card-style picker was removed; this IS the home appearance).
          Dimmed tonal-container chroma so the chip is a small landmark, not
          an attention block, and the Downloads coral never twins the coral
          hero FAB. bg = chip fill, _on = icon. Light here, dark in
-         values-night — keep in sync. -->
+         values-night - keep in sync. -->
     <color name="home_chip_downloads">#FAD9D6</color>
     <color name="home_chip_downloads_on">#A23A36</color>
     <color name="home_chip_vault">#FAD7E4</color>
     <color name="home_chip_vault_on">#8C2F5A</color>
     <color name="home_chip_trackers">#FAE0CC</color>
     <color name="home_chip_trackers_on">#8A5A2A</color>
+    <!-- Track of the home download banner's progress bar: a faded version of
+         onPrimaryContainer (the same colour as the banner's text + the solid
+         progress indicator), so the whole bar reads in the text colour. ~30%
+         alpha of md_theme_onPrimaryContainer; night value in values-night. -->
+    <color name="home_download_track">#4D460005</color>
     <!-- Incognito -->
     <!-- Primary -->
     <color name="incognito_primary">#FFf0716c</color>
@@ -94,7 +99,7 @@
     <color name="incognito_on_error">#FF690005</color>
     <color name="incognito_error_container">#FF93000A</color>
     <color name="incognito_on_error_container">#FFFFDAD6</color>
-    <!-- Surface — one purple family (hue ~265°), ordered by elevation so
+    <!-- Surface - one purple family (hue ~265), ordered by elevation so
          the tones ramp consistently instead of mixing neutral greys with
          purple. Lightness ascends: lowest < dim < surface < container_low
          < container < high < highest < bright. Previously surface_variant /
@@ -128,5 +133,16 @@
     <!-- Outline -->
     <color name="incognito_outline">#FF8F9097</color>
     <color name="incognito_outline_variant">#FF696d75</color>
+
+    <!--
+      Bottom-bar / header hairline (outlineVariant read too prominent). Picked
+      by EFFECTIVE darkness in code (not a -night qualifier, because incognito
+      is always dark regardless of system theme): a soft translucent-BLACK line
+      on a light surface (faint grey), a soft translucent-WHITE line on any dark
+      surface (system-dark near-black OR incognito purple) - a black groove is
+      invisible on a dark surface, so dark always uses white.
+    -->
+    <color name="bottom_bar_divider_light">#14000000</color>
+    <color name="bottom_bar_divider_dark">#14FFFFFF</color>
 
 </resources>

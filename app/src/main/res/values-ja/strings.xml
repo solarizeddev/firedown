@@ -584,4 +584,6 @@
     <string name="lan_direct_password">パスワード</string>
     <string name="lan_direct_next">次へ</string>
     <string name="lan_direct_failed">ダイレクト接続を開始できませんでした</string>
+    <string name="home_privacy_line">%1$s トラッカー</string>
+    <string name="home_downloads_line">%1$s 保存済み</string>
 </resources>

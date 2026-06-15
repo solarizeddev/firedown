@@ -10,6 +10,26 @@ uBlock Origin. Media capture is done by a set of **built-in WebExtensions**
 bundled as assets and loaded via `GeckoRuntimeHelper.registerBuiltIn(...)`
 (`app/src/main/java/com/solarized/firedown/geckoview/GeckoRuntimeHelper.java`).
 
+### Capture requires a live GeckoSession — there is NO "paste a link → grab"
+
+**Media capture ONLY happens while a page is actually loaded in a
+`GeckoSession`.** The WebExtensions observe a *live* page — the wire
+(`webRequest`/`filterResponseData`), the DOM (content script), and page-world JS
+state — so there is **nothing to capture until the user navigates to the page and
+it loads/plays in the GeckoView.** You cannot hand a bare URL to a background
+fetcher and get rich media + variants: a plain fetch has no page context, no
+player, no SW, no cookies/headers/anti-bot fingerprint, and most sites only
+expose the real media URL after the page's own JS runs (often on play). So:
+
+- **Do NOT design or propose a "paste a link and download it" home action / hero
+  / flow.** It is not a feature this architecture can deliver. (A pasted URL can
+  only do what the address bar already does — *open* it in a tab, which then
+  captures normally.)
+- The capture surface is the in-app browser itself (the Captured sheet fills as
+  you browse), not a standalone URL-in/file-out box.
+- This is a product-level invariant, not a missing feature to add. Don't
+  re-suggest it in UX sketches or redesigns.
+
 ### The extensions (`app/src/main/assets/`)
 
 | dir           | id                       | role |
@@ -1582,6 +1602,87 @@ audio+video the two advance at different rates, so reporting the current
 packet's stream made the bar jump backward — the min is monotonic and is the
 position every track has reached. SIZE is never used for HLS/DASH because their
 probe `Content-Length` is the *playlist* size, not the media.
+
+The TIME position is clamped on **both** ends. The lower clamp (non-regress, in
+`downloader_muxed_position`) keeps the bar from stepping backward when a stream
+flips between stalled and advancing. The **upper** clamp (in the
+`PROGRESS_TIME` branch) keeps it from exceeding the total: the denominator is
+ffmpeg's *probe-estimated* duration (`input_format_ctx->duration`, fixed once),
+but on a **discontinuity-spliced VOD (Twitch/Kick ad-stitching)** the MPEG-TS
+PTS **resets** at every `EXT-X-DISCONTINUITY`, so `find_stream_info`'s pts-span
+estimate **underestimates** the true length while `current_recording_time`
+accumulates the real summed `pkt->duration` and grows **past** it — the
+on-device symptom was progress reported at **165 %+ and climbing** on a Kick
+m3u8 (both V and A accumulators agreed and overshot together, so it was the
+denominator that was short, not the min/stall logic). The accumulator is the
+better measure of muxed output, but it's capped at the total so the bar
+saturates at 100 % (matching the `recording_time, recording_time` completion
+callback) rather than showing a nonsensical >100 %. Don't "fix" it by switching
+these to SIZE (playlist bytes) or NONE (indeterminate) — both are worse UX than
+a saturated TIME bar.
+
+### HLS master stream selection — pair audio to the video's PROGRAM
+
+When the **generic catcher** captures a multi-variant HLS **master** (no
+dedicated parser — e.g. X/Periscope `master_dynamic_*.m3u8` on `video.pscp.tv`),
+the qualities are enumerated by ffmpeg-probing the master, and each quality is a
+`(videoStreamNumber, audioStreamNumber)` pair fed to the native downloader, which
+opens the master and captures those two stream indices. The audio index is paired
+in `FFmpegMetaDataReader.getRelatedAudioNumber` **by bitrate equality** — and a
+muxed master reports per-stream `bit_rate = 0` for every stream, so the match
+collapses to the **first** audio stream. Every quality but the lowest then gets an
+audio stream from a **different variant program** than its video (e.g. 2160p video
++ 480p audio). Two un-discarded streams in two different child playlists → ffmpeg
+keeps **both** playlists live and demuxes them at once → `downloader_read`'s
+type-match remap flip-flops between the two same-type streams and muxes two PTS
+epochs into one track → unplayable file (the on-device tell: a flood of
+`re-bind … (discontinuity remap)` **and** `clamping dts` alternating between two
+timestamp ranges).
+
+The fix is **not** in the read-loop remap (that faithfully muxes whatever streams
+it's told to take) — it's in `downloader_find_streams`, made **program-aware the
+way ffmpeg's own CLI is**: an HLS master puts each variant's streams in their own
+`AVProgram`, and `av_find_best_stream(ctx, AUDIO, /*wanted*/-1, /*related*/<video>)`
+scopes the search to the video's program (`av_find_program_from_stream`) and
+returns the audio muxed with that rung. So when the Java-recommended audio index
+lands in a **different program** than the selected video (a genuine `nb_programs
+> 1` master, same input), we discard it and let `av_find_best_stream(related=video)`
+pick the program-paired audio. Both selected streams then live in **one** program
+→ only that child playlist is downloaded → clean single-rendition mux. Scoped so a
+single-rendition child (Twitch/Kick via `processHlsMaster`, one program) and
+separate-audio inputs (DASH/YouTube, different input) are untouched, and it falls
+back to the recommended index if the video's program genuinely has no audio.
+
+Two layers, defense in depth. The **enumeration** is fixed at the source too:
+`FFmpegMetaDataReader.getRelatedAudioNumber`/`getRelatedAudioCodec` only trust the
+bitrate pairing when the video's bitrate is **> 0**; on a muxed master (all
+per-stream `bit_rate = 0`) they now return `UNKNOWN_STREAM` (**-1 = "auto"**, the
+`FFmpegDownloader` contract) instead of confidently emitting the first audio. So
+the quality list no longer carries a wrong audio index — native auto-selects the
+program-paired audio. The native cross-program override above remains as a
+backstop for any caller that still passes a non-`-1` audio index that crosses
+programs. Don't reinstate the unconditional `bitrate == getBitRate()` match — the
+0==0 collapse is exactly the bug.
+
+**This did NOT make the `downloader_read` type-match remap redundant — keep it.**
+It's tempting to think the Kick/Twitch remap and this Periscope corruption were
+one bug (both fire the same `re-bind (discontinuity remap)` log), but they're
+distinct root causes and the remap fixes one the audio selection can't touch:
+- The remap follows **MPEG-TS AVStream index renumbering/reuse across an
+  `EXT-X-DISCONTINUITY` WITHIN a single rendition** (a Kick preroll ad on pid
+  0x101, then main content reusing index 1 for *video* → a frozen index map feeds
+  H264 into the audio slot → `aac_adtstoasc` abort). Stream **selection** picks
+  indices once at find time; it fundamentally **cannot** follow an index that gets
+  reused mid-download — only matching by codec **type** + re-bind can.
+- Twitch/Kick go through `processHlsMaster` (skipProbe) and download a **single
+  child rendition = one program**, so they **never run** `getRelatedAudioNumber`
+  and never had the cross-program audio bug. Their need for the remap is the
+  within-rendition discontinuity above, unchanged by this fix.
+- Periscope only *looked* like the Kick bug: the remap was the victim, fed **two
+  concurrent programs** by the mis-paired audio. Fixing selection removes the
+  second program from its input; the remap then (correctly) follows only genuine
+  within-rendition discontinuities in the selected rendition. So both the
+  audio-selection fix AND the remap are load-bearing, for different scenarios.
 
 ### Per-site request quirks live in the parser, never the transport
 
