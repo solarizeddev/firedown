@@ -98,55 +98,65 @@
         <item>2</item>
     </string-array>
 
+    <!-- Search engines: ONE order across all four parallel arrays below
+         (settings_search / _host / _icon / _preference) — they're index-aligned
+         and read together (SearchRepository.getEngineHost/getEngineIcon map
+         name→index→host/icon). Selection is stored by NAME (SETTINGS_SEARCH_ENGINE)
+         and URLs come from search/list.json keyed by name, so reordering is safe;
+         just keep the four arrays in lockstep. Order is privacy-forward (this is
+         a privacy/no-telemetry browser): the privacy engines users here are most
+         likely to want lead, by recognition (DuckDuckGo, Brave, Startpage, Ecosia,
+         Mojeek), then the mainstream giants (Google, Bing), then regional last
+         (Yandex, Baidu). -->
     <string-array name="settings_host">
-        <item>www.ecosia.org</item>
-        <item>www.startpage.com</item>
-        <item>www.mojeek.com</item>
         <item>www.dudckduckgo.com</item>
         <item>search.brave.com</item>
+        <item>www.startpage.com</item>
+        <item>www.ecosia.org</item>
+        <item>www.mojeek.com</item>
         <item>www.google.com</item>
         <item>www.bing.com</item>
-        <item>www.baidu.com</item>
         <item>www.yandex.com</item>
+        <item>www.baidu.com</item>
     </string-array>
 
 
     <string-array name="settings_search">
-        <item>Ecosia</item>
-        <item>StartPage</item>
-        <item>Mojeek</item>
         <item>DuckDuckGo</item>
         <item>Brave</item>
+        <item>StartPage</item>
+        <item>Ecosia</item>
+        <item>Mojeek</item>
         <item>Google</item>
         <item>Bing</item>
-        <item>Baidu</item>
         <item>Yandex</item>
+        <item>Baidu</item>
     </string-array>
 
 
     <string-array name="settings_search_icon">
-        <item>@drawable/ic_ecosia_icon</item>
-        <item>@drawable/ic_startpage_icon</item>
-        <item>@drawable/ic_mojeek_icon</item>
         <item>@drawable/ic_duckduckgo_icon</item>
         <item>@drawable/ic_brave_icon</item>
+        <item>@drawable/ic_startpage_icon</item>
+        <item>@drawable/ic_ecosia_icon</item>
+        <item>@drawable/ic_mojeek_icon</item>
         <item>@drawable/ic_google_icon</item>
         <item>@drawable/ic_bing_icon</item>
-        <item>@drawable/ic_baidu_icon</item>
         <item>@drawable/ic_yandex_icon</item>
+        <item>@drawable/ic_baidu_icon</item>
     </string-array>
 
 
     <string-array name="settings_search_preference">
-        <item>com.solarized.firedown.preferences.search.engine.ecosia</item>
-        <item>com.solarized.firedown.preferences.search.engine.startpage</item>
-        <item>com.solarized.firedown.preferences.search.engine.mojeek</item>
         <item>com.solarized.firedown.preferences.search.engine.duck</item>
         <item>com.solarized.firedown.preferences.search.engine.brave</item>
+        <item>com.solarized.firedown.preferences.search.engine.startpage</item>
+        <item>com.solarized.firedown.preferences.search.engine.ecosia</item>
+        <item>com.solarized.firedown.preferences.search.engine.mojeek</item>
         <item>com.solarized.firedown.preferences.search.engine.google</item>
         <item>com.solarized.firedown.preferences.search.engine.bing</item>
-        <item>com.solarized.firedown.preferences.search.engine.baidu</item>
         <item>com.solarized.firedown.preferences.search.engine.yandex</item>
+        <item>com.solarized.firedown.preferences.search.engine.baidu</item>
     </string-array>
 
 
