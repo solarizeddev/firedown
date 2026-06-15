@@ -22,6 +22,7 @@ import com.solarized.firedown.GlideHelper;
 import com.solarized.firedown.R;
 import com.solarized.firedown.data.entity.WebHistoryEntity;
 import com.solarized.firedown.data.entity.WebHistorySeparatorEntity;
+import com.solarized.firedown.ui.IncognitoColors;
 import com.solarized.firedown.utils.SelectionStyling;
 import com.solarized.firedown.ui.OnItemClickListener;
 import com.solarized.firedown.utils.Utils;
@@ -59,13 +60,21 @@ public class WebHistoryAdapter extends PagingDataAdapter<Object, RecyclerView.Vi
 
     private final RequestOptions mRequestOptions;
 
+    /** Row + header text tones, resolved incognito-aware so an incognito list
+     *  ALWAYS uses the dark/incognito palette instead of inheriting the system
+     *  theme (a light device would otherwise paint dark text on the purple). */
+    private final int mTextPrimary;
+    private final int mTextSecondary;
+
     private boolean mActionMode;
 
 
-    public WebHistoryAdapter(Context context, @NonNull DiffUtil.ItemCallback<Object> diffCallback, OnItemClickListener onItemClickListener) {
+    public WebHistoryAdapter(Context context, @NonNull DiffUtil.ItemCallback<Object> diffCallback, OnItemClickListener onItemClickListener, boolean incognito) {
         super(diffCallback);
         mOnItemClickListener = onItemClickListener;
         mSelected = new HashSet<>();
+        mTextPrimary = IncognitoColors.getOnSurface(context, incognito);
+        mTextSecondary = IncognitoColors.getOnSurfaceVariant(context, incognito);
         int mRoundedPixels = context.getResources().getDimensionPixelOffset(R.dimen.icon_rounded);
         RoundedCorners mRoundedCorners = new RoundedCorners(mRoundedPixels);
         mColorNormal = ContextCompat.getColor(context, R.color.transparent);
@@ -117,6 +126,8 @@ public class WebHistoryAdapter extends PagingDataAdapter<Object, RecyclerView.Vi
         if (viewHolder instanceof WebHistoryHeaderViewHolder headerHolder && item instanceof WebHistorySeparatorEntity separator) {
             // Use the Resource ID from the separator for localization
             headerHolder.header.setText(headerHolder.itemView.getContext().getString(separator.getTitleResId()));
+            // Incognito-aware (don't inherit the system theme on the purple).
+            headerHolder.header.setTextColor(mTextPrimary);
         }
 
         // 4. Bind History Item View
@@ -126,6 +137,10 @@ public class WebHistoryAdapter extends PagingDataAdapter<Object, RecyclerView.Vi
             // Basic Text
             historyHolder.file_name.setText(entity.getTitle());
             historyHolder.file_url.setText(WebUtils.getDomainName(entity.getUrl()));
+            // Incognito-aware text + more-icon tones (don't inherit the system theme).
+            historyHolder.file_name.setTextColor(mTextPrimary);
+            historyHolder.file_url.setTextColor(mTextSecondary);
+            historyHolder.file_more.setColorFilter(mTextSecondary);
 
             // Selection & Action Mode UI logic
             historyHolder.selected.setVisibility(mActionMode ? View.VISIBLE : View.GONE);

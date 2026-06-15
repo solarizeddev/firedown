@@ -147,7 +147,7 @@ public class WebBookmarkFragment extends BaseFocusFragment implements OnItemClic
         // strokes touched and read as a doubled border in action mode.
         // Same decoration the downloads list now uses.
         mRecyclerView.addItemDecoration(new EqualSpacingItemDecoration(mActivity, R.dimen.list_spacing));
-        mAdapter = new WebBookmarkAdapter(mActivity, new WebBookmarkDiffCallback(), this);
+        mAdapter = new WebBookmarkAdapter(mActivity, new WebBookmarkDiffCallback(), this, mIncognito);
         mRecyclerView.setAdapter(mAdapter);
 
         mWebBookmarkViewModel.getWebBookmark().observe(getViewLifecycleOwner(), mObservableDownloads ->

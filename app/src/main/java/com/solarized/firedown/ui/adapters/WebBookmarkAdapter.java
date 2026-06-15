@@ -21,6 +21,7 @@ import com.google.android.material.card.MaterialCardView;
 import com.solarized.firedown.GlideHelper;
 import com.solarized.firedown.R;
 import com.solarized.firedown.data.entity.WebBookmarkEntity;
+import com.solarized.firedown.ui.IncognitoColors;
 import com.solarized.firedown.utils.SelectionStyling;
 import com.solarized.firedown.ui.OnItemClickListener;
 import com.solarized.firedown.utils.Utils;
@@ -54,14 +55,22 @@ public class WebBookmarkAdapter extends PagingDataAdapter<WebBookmarkEntity, Rec
 
     private final Drawable mUnChecked;
 
+    /** Row text tones, resolved incognito-aware so an incognito list ALWAYS
+     *  uses the dark/incognito palette instead of inheriting the system theme
+     *  (a light-mode device would otherwise paint dark text on the purple). */
+    private final int mTextPrimary;
+    private final int mTextSecondary;
+
     private boolean mActionMode;
 
     private final RequestOptions mRequestOptions;
 
-    public WebBookmarkAdapter(Context context, @NonNull DiffUtil.ItemCallback<WebBookmarkEntity> diffCallback, OnItemClickListener onItemClickListener) {
+    public WebBookmarkAdapter(Context context, @NonNull DiffUtil.ItemCallback<WebBookmarkEntity> diffCallback, OnItemClickListener onItemClickListener, boolean incognito) {
         super(diffCallback);
         mOnItemClickListener = onItemClickListener;
         mSelected = new HashSet<>();
+        mTextPrimary = IncognitoColors.getOnSurface(context, incognito);
+        mTextSecondary = IncognitoColors.getOnSurfaceVariant(context, incognito);
         int mRoundedPixels = context.getResources().getDimensionPixelOffset(R.dimen.icon_rounded);
         RoundedCorners mRoundedCorners = new RoundedCorners(mRoundedPixels);
         mColorNormal = ContextCompat.getColor(context, R.color.transparent);
@@ -113,6 +122,10 @@ public class WebBookmarkAdapter extends PagingDataAdapter<WebBookmarkEntity, Rec
         WebBookmarkViewHolder webHistoryViewHolder = (WebBookmarkViewHolder) viewHolder;
         webHistoryViewHolder.file_name.setText(webBookmarkEntity.getTitle());
         webHistoryViewHolder.file_url.setText(WebUtils.getDomainName(webBookmarkEntity.getUrl()));
+        // Incognito-aware text + more-icon tones (don't inherit the system theme).
+        webHistoryViewHolder.file_name.setTextColor(mTextPrimary);
+        webHistoryViewHolder.file_url.setTextColor(mTextSecondary);
+        webHistoryViewHolder.file_more.setColorFilter(mTextSecondary);
         boolean washSelected = mActionMode && contains;
         webHistoryViewHolder.selected.setVisibility(mActionMode ? View.VISIBLE : View.GONE);
         webHistoryViewHolder.selected.setImageDrawable(mActionMode ? (contains ? mChecked : mUnChecked) : null);

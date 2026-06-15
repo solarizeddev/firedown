@@ -949,12 +949,19 @@ public class BrowserFragment extends BaseBrowserFragment
         // sets the WINDOW bar colours for Android <= 14 (same tone, so the
         // opaque window bar and the frame behind it are seamless); on 15+
         // the window bars are transparent and this root frame is what shows.
-        paintFrameBackground(IncognitoColors.getSurfaceContainer(mActivity, false));
+        // Flat SURFACE chrome (Firefox-parity): the whole frame - status strip,
+        // sides and nav strip - is surface, matching the surface toolbar and
+        // bottom bar, so the browser reads as one surface plane (the bar's
+        // hairline carries the division). The window layer below mirrors it for
+        // Android <= 14.
+        paintFrameBackground(IncognitoColors.getSurface(mActivity, false));
         paintSystemBars(
-                IncognitoColors.getSurfaceContainer(mActivity, false),
-                IncognitoColors.getSurfaceContainer(mActivity, false));
-        mGeckoToolbar.updateTheme(mActivity, false);
-        mAutoCompleteView.updateTheme(mActivity, false, true);
+                IncognitoColors.getSurface(mActivity, false),
+                IncognitoColors.getSurface(mActivity, false));
+        // tonalHolder=false: surface holder (the quiet Home spec), not the old
+        // tonal surfaceContainer chrome.
+        mGeckoToolbar.updateTheme(mActivity, false, false);
+        mAutoCompleteView.updateTheme(mActivity, false, false);
         mSearchAutocompleteAdapter.setIncognito(false);
 
         // BrowserAppDialogFragment reports a blocked Play Store "open in
@@ -2365,17 +2372,16 @@ public class BrowserFragment extends BaseBrowserFragment
         if (mActivity == null || mGeckoToolbar == null || mBottomNavigationBar == null)
             return;
 
-        mGeckoToolbar.updateTheme(mActivity, incognito);
+        mGeckoToolbar.updateTheme(mActivity, incognito, false);
         mBottomNavigationBar.updateTheme(mActivity, incognito);
-        // FRAMED chrome: paint the root frame in the incognito chrome tone
-        // (the strips are the root background through its safe-area padding)
-        // — see the resetWindowTheme site above. The window layer below
-        // remains for Android <= 14.
-        paintFrameBackground(IncognitoColors.getSurfaceContainer(mActivity, incognito));
+        // Flat SURFACE chrome (see resetWindowTheme): the whole frame is the
+        // incognito surface tone, matching the surface toolbar + bottom bar.
+        // The window layer below mirrors it for Android <= 14.
+        paintFrameBackground(IncognitoColors.getSurface(mActivity, incognito));
         paintSystemBars(
-                IncognitoColors.getSurfaceContainer(mActivity, incognito),
-                IncognitoColors.getSurfaceContainer(mActivity, incognito));
-        mAutoCompleteView.updateTheme(mActivity, incognito, true);
+                IncognitoColors.getSurface(mActivity, incognito),
+                IncognitoColors.getSurface(mActivity, incognito));
+        mAutoCompleteView.updateTheme(mActivity, incognito, false);
         mAutoCompleteViewModel.setIncognito(incognito);
         mSearchAutocompleteAdapter.setIncognito(incognito);
 
@@ -2655,12 +2661,13 @@ public class BrowserFragment extends BaseBrowserFragment
     }
 
     /**
-     * Paints the FRAMED chrome frame: the root CoordinatorLayout's
-     * background is what shows through its all-sides safe-area padding —
-     * i.e. the opaque status/nav strips. Called from both theme paths
-     * (regular {@link #resetWindowTheme} / {@link #applyBrowserIncognitoTheme})
-     * so the frame tracks the chrome tone. No-ops if the view isn't
-     * attached yet (the theme can be applied pre-onViewCreated).
+     * Paints the FRAMED chrome frame: the root CoordinatorLayout's background
+     * is what shows through its all-sides safe-area padding — i.e. the opaque
+     * status/nav strips. The whole browser chrome is now one flat surface tone
+     * (toolbar + bottom bar + both strips), so this is a single colour. Called
+     * from both theme paths (regular {@link #resetWindowTheme} /
+     * {@link #applyBrowserIncognitoTheme}). No-ops if the view isn't attached
+     * yet (the theme can be applied pre-onViewCreated).
      */
     private void paintFrameBackground(int color) {
         View root = getView();

@@ -91,6 +91,8 @@ public class TabsHolderFragment extends BaseFocusFragment {
     private MaterialButtonToggleGroup mToggleGroup;
     private ViewPager2 mViewPager;
     private View mBottomBar;
+    private View mBottomBarDivider;
+    private View mHeaderDivider;
     private ImageButton mViewButton;
     private ImageButton mOverflowButton;
     private NavController mNavController;
@@ -153,15 +155,18 @@ public class TabsHolderFragment extends BaseFocusFragment {
         mToggleGroup = view.findViewById(R.id.tab_mode_toggle);
         mViewPager = view.findViewById(R.id.tabs_view_pager);
         mBottomBar = view.findViewById(R.id.tabs_bottom_bar);
+        mBottomBarDivider = view.findViewById(R.id.tabs_bottom_bar_divider);
+        mHeaderDivider = view.findViewById(R.id.tabs_header_divider);
         mViewButton = view.findViewById(R.id.action_view_btn);
         mOverflowButton = view.findViewById(R.id.action_overflow_btn);
         mFab = view.findViewById(R.id.fab_new_tab);
 
-        // Header bar is ALWAYS tonal — the same surfaceContainer as the
-        // bottom action bar, so the two frame the grid symmetrically.
-        // applyIncognitoTheme swaps it for incognito mode.
+        // Header + bottom bar are both flat SURFACE (the same tone as the grid
+        // and as Home's chrome); each is divided from the grid by its hairline
+        // (mHeaderDivider below the header, mBottomBarDivider above the bar).
+        // applyIncognitoTheme swaps the tone for incognito mode.
         mAppBarLayout.setBackgroundColor(
-                IncognitoColors.getSurfaceContainer(mActivity, false));
+                IncognitoColors.getSurface(mActivity, false));
 
         // Bottom action bar: the grid/list toggle as a dedicated button,
         // everything else behind the overflow PopupMenu (menu_tabs.xml).
@@ -169,18 +174,24 @@ public class TabsHolderFragment extends BaseFocusFragment {
                 !mEnabledGrid ? R.drawable.ic_view_list_24 : R.drawable.ic_grid_view_24);
         mViewButton.setOnClickListener(v -> toggleViewMode());
         mOverflowButton.setOnClickListener(v -> showOverflowMenu());
-        mBottomBar.setBackgroundColor(
-                IncognitoColors.getSurfaceContainer(mActivity, false));
+        mBottomBar.setBackgroundColor(IncognitoColors.getSurface(mActivity, false));
+        if (mBottomBarDivider != null) {
+            mBottomBarDivider.setBackgroundColor(bottomBarDividerColor(false));
+        }
+        if (mHeaderDivider != null) {
+            mHeaderDivider.setBackgroundColor(bottomBarDividerColor(false));
+        }
 
         // ENTRY-path window strips. applyIncognitoTheme (which also calls
         // paintSystemBars) only runs on the page toggle / open-incognito
         // arg / close-all — NOT on a plain normal-mode entry, so without
         // this the strips keep the PREVIOUS screen's window colors (e.g.
-        // Home leaves a surface-black status bar under our tonal header
-        // on Android <= 14, where the window layer is the strip painter).
+        // Home leaves a surface-black status bar under our header on
+        // Android <= 14, where the window layer is the strip painter).
+        // Both strips = surface (the flat header + bottom bar).
         paintSystemBars(
-                IncognitoColors.getSurfaceContainer(mActivity, false),
-                IncognitoColors.getSurfaceContainer(mActivity, false));
+                IncognitoColors.getSurface(mActivity, false),
+                IncognitoColors.getSurface(mActivity, false));
 
         // The header container takes the status-bar inset as top padding,
         // so the tonal bar paints up behind the status bar.
@@ -268,6 +279,8 @@ public class TabsHolderFragment extends BaseFocusFragment {
         mAppBarLayout = null;
         mTabsHeader = null;
         mBottomBar = null;
+        mBottomBarDivider = null;
+        mHeaderDivider = null;
         mViewButton = null;
         mOverflowButton = null;
         mToggleGroup = null;
@@ -431,6 +444,20 @@ public class TabsHolderFragment extends BaseFocusFragment {
         }
     }
 
+    /**
+     * Soft hairline tone for the header / bottom-bar dividers — same scheme as
+     * the home/browser bar. Any dark surface (system-dark OR incognito) gets a
+     * translucent-WHITE line (a black groove is invisible on dark); a light
+     * surface gets a faint translucent-BLACK line.
+     */
+    private int bottomBarDividerColor(boolean incognito) {
+        int nightMode = getResources().getConfiguration().uiMode
+                & Configuration.UI_MODE_NIGHT_MASK;
+        boolean dark = incognito || nightMode == Configuration.UI_MODE_NIGHT_YES;
+        return mActivity.getColor(
+                dark ? R.color.bottom_bar_divider_dark : R.color.bottom_bar_divider_light);
+    }
+
     private void applyIncognitoTheme(boolean incognito) {
         Log.d(TAG, "applyIncognito: " + incognito + " mIsIncognitoThemed: " + mIsIncognitoThemed);
         if (incognito == mIsIncognitoThemed) return;
@@ -449,14 +476,20 @@ public class TabsHolderFragment extends BaseFocusFragment {
 
         mCoordinatorRoot.setBackgroundColor(surfaceColor);
 
-        // Header bar: always-tonal surfaceContainer, matching the bottom bar.
+        // Header bar: flat surface (same tone as the grid + bottom bar; divided
+        // by its bottom hairline).
         mAppBarLayout.setBackgroundColor(
-                IncognitoColors.getSurfaceContainer(mActivity, incognito));
+                IncognitoColors.getSurface(mActivity, incognito));
 
-        // Bottom action bar follows the mode: tonal surface + icon tints.
+        // Bottom action bar: flat surface too + its top hairline + icon tints.
         if (mBottomBar != null) {
-            mBottomBar.setBackgroundColor(
-                    IncognitoColors.getSurfaceContainer(mActivity, incognito));
+            mBottomBar.setBackgroundColor(IncognitoColors.getSurface(mActivity, incognito));
+        }
+        if (mBottomBarDivider != null) {
+            mBottomBarDivider.setBackgroundColor(bottomBarDividerColor(incognito));
+        }
+        if (mHeaderDivider != null) {
+            mHeaderDivider.setBackgroundColor(bottomBarDividerColor(incognito));
         }
         if (mViewButton != null) {
             mViewButton.setColorFilter(onSurfaceColor);
@@ -468,13 +501,11 @@ public class TabsHolderFragment extends BaseFocusFragment {
         updateSegmentedButtons(mActivity, incognito);
 
         window.getDecorView().setBackgroundColor(surfaceColor);
-        // Window layer for Android <= 14: both strips follow the tonal
-        // header/bottom-bar frame (the OLED overlay's opaque bar attrs
-        // would otherwise paint them black). No-op on 15+, where the
-        // self-padded tonal bars above show through instead.
-        paintSystemBars(
-                IncognitoColors.getSurfaceContainer(mActivity, incognito),
-                IncognitoColors.getSurfaceContainer(mActivity, incognito));
+        // Window layer for Android <= 14: both strips follow the flat surface
+        // header + bottom bar (the OLED overlay's opaque bar attrs would
+        // otherwise paint them black). No-op on 15+, where the self-padded bars
+        // above show through instead.
+        paintSystemBars(surfaceColor, surfaceColor);
 
         boolean lightBars;
         if (incognito) {
