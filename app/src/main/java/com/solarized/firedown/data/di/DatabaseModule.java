@@ -83,6 +83,13 @@ public class DatabaseModule {
     public WebBookmarkDatabase provideWebBookmarkDatabase(@ApplicationContext Context context) {
         return Room.databaseBuilder(context, WebBookmarkDatabase.class, WebBookmarkDatabase.DATABASE_NAME)
                 .addMigrations(WebBookmarkDatabase.MIGRATION_1_2)
+                // The shortcuts feature briefly bumped this DB to v3 (pinned /
+                // pin_order) on a dev branch; the feature + its migration were
+                // reverted, so the schema is back at v2. A dev device that ran the
+                // v3 build has a higher on-disk version than the code now requests
+                // — allow that downgrade to rebuild the bookmark table rather than
+                // crash (dev-only; main never saw v3). Normal upgrades unaffected.
+                .fallbackToDestructiveMigrationOnDowngrade(true)
                 .setJournalMode(RoomDatabase.JournalMode.AUTOMATIC)
                 .fallbackToDestructiveMigration(false)
                 .setInMemoryTrackingMode(false)

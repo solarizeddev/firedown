@@ -28,8 +28,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext;
  *
  * <p>The standalone 'shortcuts' concept and its Room database have
  * been retired (see commit). Existing users get their shortcuts
- * back as pinned bookmarks; the bookmarks list renders pinned items
- * at the top with a pin badge.</p>
+ * back as regular bookmarks — there is no pinned/favorite tier.</p>
  *
  * <p>Reads shortcuts via raw SQLite — there's no Room entity / DAO
  * left in the codebase for the legacy table, so the migrator owns
@@ -117,10 +116,10 @@ public class LegacyShortcutsMigrator {
 
                     // REPLACE conflict strategy on the DAO: if a
                     // bookmark already exists for this URL (same
-                    // hashCode), we promote it to pinned and use the
-                    // shortcut's title/icon. Loses any existing
-                    // preview text, which is acceptable — the user
-                    // explicitly pinned this URL via shortcuts.
+                    // hashCode), the shortcut's title/icon win.
+                    // Loses any existing preview text, which is
+                    // acceptable — the user explicitly saved this URL
+                    // as a shortcut.
                     mBookmarkDao.insert(entity);
                     copied++;
                 }
@@ -140,7 +139,7 @@ public class LegacyShortcutsMigrator {
         // main file, plus -journal / -wal / -shm sidecars).
         mContext.deleteDatabase(LEGACY_DB_NAME);
 
-        Log.i(TAG, "Migrated " + copied + " shortcut(s) -> pinned bookmarks");
+        Log.i(TAG, "Migrated " + copied + " shortcut(s) -> bookmarks");
         markMigrated();
     }
 
