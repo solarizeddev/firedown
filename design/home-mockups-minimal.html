@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Firedown — Minimal home sketches (C & E)</title>
+<style>
+  :root{
+    --brand:#FF5A1F;--brand-2:#FF8A3D;
+    --bg:#000000;--card:#1C1C1E;--card-2:#262629;
+    --on:#F2F2F4;--on-dim:#9A9AA2;--hair:#2C2C30;
+    --inc-surface:#391D5B;--inc-on:#E4E2E5;--inc-on-dim:#CAC2D6;
+    --inc-chip-hist:#2EFAB186;--inc-chip-cook:#33F66A66;--inc-chip-dl:#3DC8417B;
+    --inc-icon-hist:#FAB186;--inc-icon-cook:#F66A66;--inc-icon-dl:#F48FBB;
+  }
+  *{box-sizing:border-box;-webkit-font-smoothing:antialiased}
+  body{margin:0;background:#0d0d10;color:#e8e8ee;
+    font-family:'Segoe UI',Roboto,-apple-system,system-ui,sans-serif;padding:44px 20px 80px}
+  h1{font-size:26px;font-weight:700;margin:0 0 6px;letter-spacing:-.02em}
+  .sub{color:#8b8b97;font-size:14px;margin:0 0 40px;max-width:720px;line-height:1.5}
+  .grid{display:flex;flex-wrap:wrap;gap:56px 56px;align-items:flex-start}
+  .item{width:320px}
+  .cap{margin-top:16px}
+  .cap .tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.08em;
+    text-transform:uppercase;color:#0d0d10;background:var(--brand);padding:3px 9px;border-radius:6px}
+  .cap .tag.inc{background:#9b6ad6}
+  .cap h3{margin:11px 0 5px;font-size:16px;font-weight:600}
+  .cap p{margin:0;font-size:13px;line-height:1.55;color:#9a9aa6}
+
+  .phone{width:320px;height:680px;border-radius:36px;background:#000;border:1px solid #2a2a30;
+    padding:9px;position:relative;box-shadow:0 18px 50px rgba(0,0,0,.55),0 0 0 6px #161619}
+  .screen{width:100%;height:100%;border-radius:28px;overflow:hidden;position:relative;
+    display:flex;flex-direction:column}
+  .screen.dark{background:var(--bg);color:var(--on)}
+  .screen.inc{background:var(--inc-surface);color:var(--inc-on)}
+
+  .status{display:flex;justify-content:space-between;align-items:center;
+    padding:11px 18px 4px;font-size:12px;font-weight:600;opacity:.92}
+  .status .r{display:flex;gap:6px;align-items:center;font-size:11px}
+
+  .omni{margin:8px 13px 4px;height:44px;border-radius:22px;display:flex;align-items:center;
+    gap:11px;padding:0 17px;font-size:13.5px}
+  .dark .omni{background:#1e1e21;color:#7d7d86}
+  .inc .omni{background:#4a3a5e;color:#b9aecb}
+  .omni .ic{width:16px;height:16px;opacity:.85}
+  .inc .omni .duck{width:19px;height:19px;border-radius:50%;
+    background:radial-gradient(circle at 35% 35%,#ffb37a,var(--brand) 70%);flex:0 0 auto}
+
+  .body{flex:1;overflow:hidden;padding:0 13px}
+
+  .brand{display:flex;align-items:center;justify-content:center;gap:9px}
+  .flame{width:22px;height:26px}
+  .brand b{font-size:19px;font-weight:700;letter-spacing:-.02em}
+
+  /* C — stats card with trends + coral hairline */
+  .stats{background:var(--card);border-radius:16px;display:flex;padding:16px 6px}
+  .stats.accent{border:1px solid rgba(255,90,31,.35);
+    background:linear-gradient(180deg,#1f1a18,#1c1c1e)}
+  .col{flex:1;text-align:center;display:flex;flex-direction:column;align-items:center;gap:3px}
+  .col .gi{width:19px;height:19px;opacity:.7;margin-bottom:3px}
+  .col .v{font-size:20px;font-weight:700;letter-spacing:-.01em}
+  .col .l{font-size:11px;color:var(--on-dim)}
+  .col .t{font-size:10px;color:var(--brand-2);font-weight:600;margin-top:2px}
+
+  /* incognito */
+  .inc-title{display:flex;align-items:center;gap:10px;justify-content:center;font-size:22px;font-weight:600}
+  .fact{display:flex;align-items:center;gap:14px;margin-top:20px}
+  .chip{width:40px;height:40px;border-radius:13px;flex:0 0 auto;display:flex;
+    align-items:center;justify-content:center;font-size:18px}
+  .chip.hist{background:var(--inc-chip-hist)}
+  .chip.cook{background:var(--inc-chip-cook)}
+  .chip.dl{background:var(--inc-chip-dl)}
+  .fact .ft .t{font-size:14.5px;font-weight:600;color:var(--inc-on)}
+  .fact .ft .s{font-size:12px;color:var(--inc-on-dim);margin-top:2px;line-height:1.35}
+  .warn.card{font-size:12px;color:var(--inc-on-dim);line-height:1.45;
+    background:rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.06);
+    border-radius:12px;padding:13px 15px;margin-top:26px}
+
+  .nav{display:flex;justify-content:space-around;align-items:center;padding:14px 0 15px;
+    border-top:1px solid rgba(255,255,255,.06)}
+  .inc .nav{border-top-color:rgba(255,255,255,.08)}
+  .nav .ni{width:22px;height:22px;opacity:.78;display:flex;align-items:center;justify-content:center}
+  .nav .tabs{width:22px;height:22px;border:1.6px solid currentColor;border-radius:5px;
+    font-size:11px;display:flex;align-items:center;justify-content:center;opacity:.85}
+  svg{display:block}
+</style>
+</head>
+<body>
+  <h1>Minimal sketches — C &amp; E</h1>
+  <p class="sub">The two minimal directions, faithful to the originals. No new sections, no behavior changes — both just make the existing content sit better in the space and read with clearer hierarchy.</p>
+
+  <div class="grid">
+
+    <!-- Direction C -->
+    <div class="item">
+      <div class="phone"><div class="screen dark">
+        <div class="status"><span>12:58</span><span class="r">&#9889; &#128246; 85%</span></div>
+        <div class="omni"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#7d7d86" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>Search or Type URL</div>
+        <div class="body" style="display:flex;flex-direction:column;justify-content:center">
+          <div class="brand">
+            <svg class="flame" viewBox="0 0 24 28"><path d="M12 0C12 8 4 9 4 17a8 8 0 0016 0c0-5-3-7-4-10-1 3-2 4-4 4 0-4 0-8 0-11z" fill="#FF5A1F"/></svg>
+            <b>Firedown</b>
+          </div>
+          <div class="stats accent" style="margin-top:20px">
+            <div class="col">
+              <svg class="gi" viewBox="0 0 24 24" fill="none" stroke="#9a9aa6" stroke-width="2"><path d="M12 2l8 3v6c0 5-3.5 8.5-8 11-4.5-2.5-8-6-8-11V5z"/></svg>
+              <div class="v">10.7K</div><div class="l">Blocked</div><div class="t">+340 today</div>
+            </div>
+            <div class="col">
+              <svg class="gi" viewBox="0 0 24 24" fill="none" stroke="#9a9aa6" stroke-width="2"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 21h16"/></svg>
+              <div class="v">9.2 GB</div><div class="l">Saved</div><div class="t">3 this week</div>
+            </div>
+            <div class="col">
+              <svg class="gi" viewBox="0 0 24 24" fill="none" stroke="#9a9aa6" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>
+              <div class="v">14</div><div class="l">Safe Folder</div><div class="t">private</div>
+            </div>
+          </div>
+        </div>
+        <div class="nav">
+          <div class="ni">+</div><div class="tabs">3</div>
+          <div class="ni">&#9734;</div><div class="ni">&#8595;</div><div class="ni">&#8942;</div>
+        </div>
+      </div></div>
+      <div class="cap">
+        <span class="tag">C · regular home</span>
+        <h3>Make the one card earn it</h3>
+        <p>Each stat gains a live trend line, a faint coral hairline lifts the card off the black, and the lockup+card center in the void so the emptiness looks intentional.</p>
+      </div>
+    </div>
+
+    <!-- Direction E -->
+    <div class="item">
+      <div class="phone"><div class="screen inc">
+        <div class="status"><span>12:45</span><span class="r">&#128263; &#128246; 85%</span></div>
+        <div class="omni"><span class="duck"></span>Search or Type URL</div>
+        <div class="body" style="display:flex;flex-direction:column;justify-content:center">
+          <div class="inc-title">&#128374; Private Browsing</div>
+          <div style="margin-top:16px">
+            <div class="fact"><div class="chip hist">&#128336;</div><div class="ft"><div class="t">No history</div><div class="s">Pages, searches and cache aren't saved.</div></div></div>
+            <div class="fact"><div class="chip cook">&#127850;</div><div class="ft"><div class="t">No cookies</div><div class="s">Cleared when you close these tabs.</div></div></div>
+            <div class="fact"><div class="chip dl">&#128274;</div><div class="ft"><div class="t">Downloads stay private</div><div class="s">Saved to your Safe Folder, visible only inside Firedown.</div></div></div>
+          </div>
+          <div class="warn card">Private Browsing doesn't hide your activity from your network, employer, or the sites you visit.</div>
+        </div>
+        <div class="nav">
+          <div class="ni">+</div><div class="tabs">1</div>
+          <div class="ni">&#9734;</div><div class="ni">&#128274;</div><div class="ni">&#8942;</div>
+        </div>
+      </div></div>
+      <div class="cap">
+        <span class="tag inc">E · incognito home</span>
+        <h3>Same content, better hierarchy</h3>
+        <p>No behavior change: the fact group centers vertically and the disclaimer drops into a faint bordered footer card so it reads as a system note rather than loose body text.</p>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>

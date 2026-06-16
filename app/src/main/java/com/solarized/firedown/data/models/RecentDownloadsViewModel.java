@@ -21,13 +21,21 @@ import dagger.hilt.android.lifecycle.HiltViewModel;
 @HiltViewModel
 public class RecentDownloadsViewModel extends ViewModel {
 
+    /** Rolling "this week" window for the Saved trend line. */
+    private static final long WEEK_MILLIS = 7L * 24 * 60 * 60 * 1000;
+
     private final LiveData<Long> mFinishedSize;
     private final LiveData<Integer> mSafeCount;
+    private final LiveData<Integer> mFinishedThisWeek;
 
     @Inject
     public RecentDownloadsViewModel(DownloadDataRepository repository) {
         mFinishedSize = repository.getRegularFinishedSize();
         mSafeCount = repository.getSafeCount();
+        // The 7-day cutoff is fixed at VM creation (this surface is recreated
+        // each time Home is shown), which is plenty fresh for a trend line.
+        mFinishedThisWeek = repository.getRegularFinishedCountSince(
+                System.currentTimeMillis() - WEEK_MILLIS);
     }
 
     public LiveData<Long> getFinishedSize() {
@@ -37,5 +45,11 @@ public class RecentDownloadsViewModel extends ViewModel {
     /** Live count of Safe Folder (vault) items — home stats card's third column. */
     public LiveData<Integer> getSafeCount() {
         return mSafeCount;
+    }
+
+    /** Live count of files finished in the last 7 days — home Saved column's
+     *  "N this week" trend line. */
+    public LiveData<Integer> getFinishedThisWeekCount() {
+        return mFinishedThisWeek;
     }
 }

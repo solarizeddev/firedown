@@ -140,6 +140,13 @@ public interface DownloadDao {
     @Query("SELECT COUNT(*) FROM download WHERE file_safe = 1")
     LiveData<Integer> getSafeCountLive();
 
+    /** Live count of finished regular (non-vault) downloads dated on/after
+     *  :since (epoch millis) — drives the home Saved column's "N this week"
+     *  trend line. Uses the (file_safe, file_status) index; file_date is a
+     *  residual filter. */
+    @Query("SELECT COUNT(*) FROM download WHERE file_safe = 0 AND file_status = 1 AND file_date >= :since")
+    LiveData<Integer> getRegularFinishedCountSinceLive(long since);
+
     /** Live full list of regular (non-vault) downloads, used purely for
      *  per-group aggregation on the downloads list section headers
      *  (count + total bytes by sort category). Separate from the paging

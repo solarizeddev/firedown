@@ -157,6 +157,12 @@
          existing labels: trackers_info_stat_blocked ("Blocked") and
          home_vault_button ("Safe Folder"). -->
     <string name="home_stat_saved">Saved</string>
+    <!-- Home stats card trend/context lines (small coral text under each stat).
+         %1$s is a preformatted, locale-aware count (the "+" sign, when shown,
+         is prepended in code). -->
+    <string name="home_stat_trend_today">%1$s today</string>
+    <string name="home_stat_trend_week">%1$s this week</string>
+    <string name="home_stat_trend_private">private</string>
     <string name="download_finished">Download finished</string>
     <string name="download_ongoing_notification">Firedown</string>
     <string name="download_quality">Download quality</string>

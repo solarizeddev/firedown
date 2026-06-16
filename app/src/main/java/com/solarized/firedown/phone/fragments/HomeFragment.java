@@ -58,6 +58,7 @@ import com.solarized.firedown.utils.NavigationUtils;
 import com.solarized.firedown.utils.Utils;
 
 import dagger.hilt.android.AndroidEntryPoint;
+import java.text.NumberFormat;
 import java.util.Locale;
 import javax.inject.Inject;
 
@@ -88,6 +89,10 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     private TextView mTrackersValue;
     private TextView mDownloadsValue;
     private TextView mSafeValue;
+    // Small coral trend/context lines under the trackers (today) and saved
+    // (this week) figures; the Safe column's "private" line is static in XML.
+    private TextView mTrackersTrend;
+    private TextView mDownloadsTrend;
     @Inject
     GeckoUblockHelper mGeckoUblockHelper;
 
@@ -169,6 +174,8 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mTrackersValue = v.findViewById(R.id.home_trackers_value);
         mDownloadsValue = v.findViewById(R.id.home_downloads_value);
         mSafeValue = v.findViewById(R.id.home_safe_value);
+        mTrackersTrend = v.findViewById(R.id.home_trackers_trend);
+        mDownloadsTrend = v.findViewById(R.id.home_downloads_trend);
 
         View trackersCol = v.findViewById(R.id.home_trackers_col);
         if (trackersCol != null) {
@@ -290,12 +297,39 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
             mTrackersValue.setText(withSmallUnit(fmt.format(n)));
         });
 
+        // Trackers trend line — today's blocked count. Always shown: a positive
+        // count gets a leading "+" ("+340 today"), a quiet day reads "0 today"
+        // so the column never looks empty.
+        mGeckoUblockHelper.getTodayBlockedLive().observe(getViewLifecycleOwner(), today -> {
+            if (mTrackersTrend == null) return;
+            long n = today == null ? 0L : today;
+            CompactDecimalFormat fmt = CompactDecimalFormat.getInstance(
+                    Locale.getDefault(), CompactDecimalFormat.CompactStyle.SHORT);
+            fmt.setMaximumFractionDigits(1);
+            String count = (n > 0 ? "+" : "") + fmt.format(n);
+            mTrackersTrend.setText(getString(R.string.home_stat_trend_today, count));
+        });
+
         // Stats card column 2 — total saved: live sum of finished regular
         // (non-vault) download bytes, locale-formatted by readableFileSize.
         mRecentDownloadsViewModel.getFinishedSize().observe(getViewLifecycleOwner(), size -> {
             if (mDownloadsValue == null) return;
             long bytes = size == null ? 0L : size;
             mDownloadsValue.setText(bytes > 0 ? withSmallUnit(Utils.readableFileSize(bytes)) : "0");
+        });
+
+        // Saved trend line — files finished in the last 7 days ("3 this week").
+        // Hidden when none, like the trackers trend.
+        mRecentDownloadsViewModel.getFinishedThisWeekCount().observe(getViewLifecycleOwner(), week -> {
+            if (mDownloadsTrend == null) return;
+            int n = week == null ? 0 : week;
+            if (n <= 0) {
+                mDownloadsTrend.setVisibility(View.GONE);
+                return;
+            }
+            mDownloadsTrend.setText(getString(R.string.home_stat_trend_week,
+                    NumberFormat.getInstance(Locale.getDefault()).format(n)));
+            mDownloadsTrend.setVisibility(View.VISIBLE);
         });
 
         // Stats card column 3 — Safe Folder item count.
@@ -448,6 +482,8 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mTrackersValue = null;
         mDownloadsValue = null;
         mSafeValue = null;
+        mTrackersTrend = null;
+        mDownloadsTrend = null;
     }
 
     /**

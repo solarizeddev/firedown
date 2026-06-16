@@ -101,6 +101,12 @@ public class DownloadDataRepository {
         return mDatabase.downloadDao().getSafeCountLive();
     }
 
+    /** Live count of finished regular downloads since :since (epoch millis) —
+     *  drives the home Saved column's "this week" trend line. */
+    public LiveData<Integer> getRegularFinishedCountSince(long since) {
+        return mDatabase.downloadDao().getRegularFinishedCountSinceLive(since);
+    }
+
     public List<DownloadEntity> getAllRawList() {
         return mDatabase.downloadDao().getAllRawList();
     }

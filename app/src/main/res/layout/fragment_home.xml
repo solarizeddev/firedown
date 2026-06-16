@@ -44,11 +44,15 @@
         android:overScrollMode="never"
         app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior">
 
+        <!-- Top-anchored: the hero card sits just below the search bar so the
+             two read as one home header, with the empty space falling to the
+             bottom (room to breathe above the bottom bar). Centring it floated
+             the card mid-screen with a large, disconnected gap under the search
+             bar — pronounced on tall devices. -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingTop="6dp"
             android:paddingBottom="8dp">
 
 
@@ -70,7 +74,8 @@
                 app:cardBackgroundColor="?attr/colorSurfaceContainer"
                 app:cardCornerRadius="20dp"
                 app:cardElevation="0dp"
-                app:strokeWidth="0dp">
+                app:strokeColor="@color/home_stat_card_stroke"
+                app:strokeWidth="1dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -84,7 +89,7 @@
                         android:gravity="center_vertical"
                         android:orientation="horizontal"
                         android:paddingStart="16dp"
-                        android:paddingTop="14dp"
+                        android:paddingTop="24dp"
                         android:paddingEnd="16dp"
                         android:paddingBottom="2dp">
 
@@ -115,7 +120,7 @@
                         android:baselineAligned="false"
                         android:orientation="horizontal"
                         android:paddingTop="8dp"
-                        android:paddingBottom="16dp">
+                        android:paddingBottom="32dp">
 
                     <!-- Trackers blocked → trackers info sheet -->
                     <LinearLayout
@@ -164,6 +169,19 @@
                                 android:textColor="?attr/colorOnSurfaceVariant" />
 
                         </LinearLayout>
+
+                        <!-- Live trend line: today's blocked count. Always shown
+                             (bound in HomeFragment) — reads "0 today" on a quiet
+                             day so the column never looks empty. -->
+                        <TextView
+                            android:id="@+id/home_trackers_trend"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="3dp"
+                            android:textColor="@color/brand_orange"
+                            android:textSize="11sp"
+                            android:textStyle="bold"
+                            tools:text="+340 today" />
 
                     </LinearLayout>
 
@@ -215,6 +233,20 @@
 
                         </LinearLayout>
 
+                        <!-- Live trend line: files finished in the last 7 days.
+                             Hidden at 0 (bound in HomeFragment). -->
+                        <TextView
+                            android:id="@+id/home_downloads_trend"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="3dp"
+                            android:textColor="@color/brand_orange"
+                            android:textSize="11sp"
+                            android:textStyle="bold"
+                            android:visibility="gone"
+                            tools:text="3 this week"
+                            tools:visibility="visible" />
+
                     </LinearLayout>
 
 <!-- Safe Folder item count → vault -->
@@ -264,6 +296,19 @@
                                 android:textColor="?attr/colorOnSurfaceVariant" />
 
                         </LinearLayout>
+
+                        <!-- Static context line: the Safe Folder is always
+                             private, so no live figure — it labels the column's
+                             nature, matching the trend lines beside it. -->
+                        <TextView
+                            android:id="@+id/home_safe_trend"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="3dp"
+                            android:text="@string/home_stat_trend_private"
+                            android:textColor="@color/brand_orange"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
 
                     </LinearLayout>
 

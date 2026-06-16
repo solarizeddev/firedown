@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Firedown — Home redesign sketches</title>
+<style>
+  :root{
+    /* brand */
+    --brand:#FF5A1F;          /* firedown coral-orange */
+    --brand-2:#FF8A3D;
+    /* regular (true-black) home */
+    --bg:#000000;
+    --card:#1C1C1E;
+    --card-2:#262629;
+    --on:#F2F2F4;
+    --on-dim:#9A9AA2;
+    --hair:#2C2C30;
+    /* incognito */
+    --inc-surface:#391D5B;
+    --inc-surface-2:#4A3A5E;
+    --inc-on:#E4E2E5;
+    --inc-on-dim:#CAC2D6;
+    --inc-chip-hist:#2EFAB186;
+    --inc-chip-cook:#33F66A66;
+    --inc-chip-dl:#3DC8417B;
+    --inc-icon-hist:#FAB186;
+    --inc-icon-cook:#F66A66;
+    --inc-icon-dl:#F48FBB;
+  }
+  *{box-sizing:border-box;-webkit-font-smoothing:antialiased}
+  body{
+    margin:0;background:#0d0d10;color:#e8e8ee;
+    font-family:'Segoe UI',Roboto,-apple-system,system-ui,sans-serif;
+    padding:40px 20px 80px;
+  }
+  h1{font-size:26px;font-weight:700;margin:0 0 6px;letter-spacing:-.02em}
+  .sub{color:#8b8b97;font-size:14px;margin:0 0 36px;max-width:760px;line-height:1.5}
+  .sub b{color:var(--brand-2)}
+  .grid{
+    display:flex;flex-wrap:wrap;gap:44px 40px;align-items:flex-start;
+    justify-content:flex-start;
+  }
+  .item{width:300px}
+  .cap{margin-top:14px}
+  .cap .tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.08em;
+    text-transform:uppercase;color:#0d0d10;background:var(--brand);
+    padding:3px 9px;border-radius:6px}
+  .cap .tag.inc{background:#9b6ad6}
+  .cap h3{margin:10px 0 4px;font-size:15px;font-weight:600}
+  .cap p{margin:0;font-size:12.5px;line-height:1.5;color:#9a9aa6}
+
+  /* phone frame */
+  .phone{
+    width:300px;height:638px;border-radius:34px;background:#000;
+    border:1px solid #2a2a30;padding:9px;position:relative;
+    box-shadow:0 18px 50px rgba(0,0,0,.55), 0 0 0 6px #161619;
+  }
+  .screen{width:100%;height:100%;border-radius:26px;overflow:hidden;position:relative;
+    display:flex;flex-direction:column}
+  .screen.dark{background:var(--bg);color:var(--on)}
+  .screen.inc{background:var(--inc-surface);color:var(--inc-on)}
+
+  /* status bar */
+  .status{display:flex;justify-content:space-between;align-items:center;
+    padding:9px 16px 4px;font-size:11px;font-weight:600;opacity:.92}
+  .status .r{display:flex;gap:6px;align-items:center;font-size:10px}
+
+  /* address bar */
+  .omni{margin:6px 12px 4px;height:42px;border-radius:21px;display:flex;align-items:center;
+    gap:10px;padding:0 16px;font-size:13px}
+  .dark .omni{background:#1e1e21;color:#7d7d86}
+  .inc .omni{background:#4a3a5e;color:#b9aecb}
+  .omni .ic{width:15px;height:15px;opacity:.85}
+  .inc .omni .duck{width:18px;height:18px;border-radius:50%;
+    background:radial-gradient(circle at 35% 35%,#ffb37a,var(--brand) 70%);flex:0 0 auto}
+
+  .body{flex:1;overflow:hidden;padding:0 12px}
+
+  /* brand lockup */
+  .brand{display:flex;align-items:center;justify-content:center;gap:8px;margin:18px 0 6px}
+  .brand.tight{margin:12px 0 4px}
+  .flame{width:20px;height:24px}
+  .brand b{font-size:18px;font-weight:700;letter-spacing:-.02em}
+
+  /* stats card */
+  .stats{background:var(--card);border-radius:16px;display:flex;padding:14px 6px;margin-top:6px}
+  .stats.accent{border:1px solid rgba(255,90,31,.35);
+    background:linear-gradient(180deg,#1f1a18,#1c1c1e)}
+  .col{flex:1;text-align:center;display:flex;flex-direction:column;align-items:center;gap:3px}
+  .col .gi{width:18px;height:18px;opacity:.7;margin-bottom:2px}
+  .col .v{font-size:19px;font-weight:700;letter-spacing:-.01em}
+  .col .l{font-size:11px;color:var(--on-dim)}
+  .col .t{font-size:9.5px;color:var(--brand-2);font-weight:600;margin-top:1px}
+
+  /* section heading */
+  .sec{display:flex;justify-content:space-between;align-items:baseline;margin:20px 4px 10px}
+  .sec h4{margin:0;font-size:13px;font-weight:600;letter-spacing:.01em}
+  .sec a{font-size:11.5px;color:var(--brand-2);text-decoration:none}
+
+  /* shortcut tiles */
+  .shorts{display:flex;gap:12px}
+  .short{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px}
+  .short .fav{width:46px;height:46px;border-radius:14px;background:var(--card-2);
+    display:flex;align-items:center;justify-content:center;font-size:18px}
+  .short .nm{font-size:10px;color:var(--on-dim);max-width:100%;overflow:hidden;
+    text-overflow:ellipsis;white-space:nowrap}
+
+  /* recent thumbs */
+  .thumbs{display:flex;gap:10px;overflow:hidden}
+  .thumb{width:88px;flex:0 0 auto}
+  .thumb .ph{height:60px;border-radius:10px;position:relative;overflow:hidden;
+    background:linear-gradient(135deg,#33333a,#1f1f24)}
+  .thumb .ph.aud{background:linear-gradient(135deg,#3a2c1f,#241a12)}
+  .thumb .ph.img{background:linear-gradient(135deg,#1f2e3a,#12202a)}
+  .thumb .badge{position:absolute;left:6px;bottom:6px;font-size:9px;background:rgba(0,0,0,.6);
+    padding:1px 5px;border-radius:5px}
+  .thumb .play{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-size:18px;opacity:.85}
+  .thumb .cn{font-size:10px;color:var(--on-dim);margin-top:5px;overflow:hidden;
+    text-overflow:ellipsis;white-space:nowrap}
+
+  /* continue rows */
+  .cont{background:var(--card);border-radius:14px;overflow:hidden}
+  .row{display:flex;align-items:center;gap:11px;padding:11px 13px}
+  .row+.row{border-top:1px solid var(--hair)}
+  .row .g{width:18px;height:18px;border-radius:50%;background:#3a3a40;flex:0 0 auto;
+    display:flex;align-items:center;justify-content:center;font-size:9px}
+  .row .tx{overflow:hidden}
+  .row .tx .t{font-size:12.5px;font-weight:500;overflow:hidden;text-overflow:ellipsis;
+    white-space:nowrap}
+  .row .tx .u{font-size:10.5px;color:var(--on-dim);overflow:hidden;text-overflow:ellipsis;
+    white-space:nowrap}
+
+  /* one-line stat strip */
+  .strip{display:flex;align-items:center;gap:8px;background:var(--card);border-radius:12px;
+    padding:11px 14px;font-size:12.5px;color:var(--on-dim);margin-top:18px}
+  .strip b{color:var(--on);font-weight:600}
+  .strip .sh{width:15px;height:15px;opacity:.8}
+
+  /* incognito */
+  .inc-title{display:flex;align-items:center;gap:9px;margin:18px 4px 4px;
+    font-size:21px;font-weight:600}
+  .fact{display:flex;align-items:center;gap:13px;margin-top:18px}
+  .fact.compact{margin-top:13px}
+  .chip{width:40px;height:40px;border-radius:13px;flex:0 0 auto;display:flex;
+    align-items:center;justify-content:center;font-size:18px}
+  .chip.hist{background:var(--inc-chip-hist)}
+  .chip.cook{background:var(--inc-chip-cook)}
+  .chip.dl{background:var(--inc-chip-dl)}
+  .fact .ft{}
+  .fact .ft .t{font-size:14px;font-weight:600;color:var(--inc-on)}
+  .fact .ft .s{font-size:12px;color:var(--inc-on-dim);margin-top:2px;line-height:1.35}
+  .pill{display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:12px;
+    background:rgba(255,255,255,.05);margin-top:10px}
+  .pill .pi{width:26px;height:26px;border-radius:8px;display:flex;align-items:center;
+    justify-content:center;font-size:14px;flex:0 0 auto}
+  .pill .pt{font-size:13px;color:var(--inc-on)}
+  .session{margin-top:22px;text-align:center}
+  .session .cnt{font-size:13px;color:var(--inc-on-dim)}
+  .session .btn{margin-top:11px;display:inline-block;padding:11px 22px;border-radius:22px;
+    background:rgba(244,143,187,.16);color:var(--inc-icon-dl);font-size:13px;font-weight:600;
+    border:1px solid rgba(244,143,187,.3)}
+  .warn{font-size:11.5px;color:var(--inc-on-dim);text-align:center;line-height:1.45;
+    margin-top:22px;padding:0 6px}
+  .warn.card{background:rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.06);
+    border-radius:12px;padding:12px 14px;text-align:left}
+
+  /* bottom bar */
+  .nav{display:flex;justify-content:space-around;align-items:center;padding:13px 0 14px;
+    border-top:1px solid rgba(255,255,255,.06)}
+  .inc .nav{border-top-color:rgba(255,255,255,.08)}
+  .nav .ni{width:21px;height:21px;opacity:.78;display:flex;align-items:center;justify-content:center}
+  .nav .tabs{width:21px;height:21px;border:1.6px solid currentColor;border-radius:5px;
+    font-size:11px;display:flex;align-items:center;justify-content:center;opacity:.85}
+  svg{display:block}
+  .hr{height:1px;background:rgba(255,255,255,.06);margin:18px 0}
+  .group-h{font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:#6f6f7a;
+    font-weight:700;margin:14px 0 24px;width:100%}
+</style>
+</head>
+<body>
+  <h1>Firedown — Home redesign sketches</h1>
+  <p class="sub">Mockups styled to the app's real palette (true-black regular home, deep-purple incognito, coral-brand accents). These are static sketches, not pixel-final. Every widget shown maps to data the app <b>already has</b> — uBlock counts, the downloads repo, web history, the vault — so nothing here proposes a new capture surface (no "paste-a-link" flow, per the architecture).</p>
+
+  <div class="grid">
+
+    <!-- ============ REGULAR HOME ============ -->
+    <div class="group-h">Regular home</div>
+
+    <!-- Direction A -->
+    <div class="item">
+      <div class="phone"><div class="screen dark">
+        <div class="status"><span>12:58</span><span class="r">&#9889; &#128246; 85%</span></div>
+        <div class="omni"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#7d7d86" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>Search or Type URL</div>
+        <div class="body">
+          <div class="brand tight">
+            <svg class="flame" viewBox="0 0 24 28"><path d="M12 0C12 8 4 9 4 17a8 8 0 0016 0c0-5-3-7-4-10-1 3-2 4-4 4 0-4 0-8 0-11z" fill="#FF5A1F"/></svg>
+            <b>Firedown</b>
+          </div>
+          <div class="stats">
+            <div class="col"><div class="v">10.7K</div><div class="l">Blocked</div></div>
+            <div class="col"><div class="v">9.2 GB</div><div class="l">Saved</div></div>
+            <div class="col"><div class="v">14</div><div class="l">Safe Folder</div></div>
+          </div>
+          <div class="sec"><h4>Shortcuts</h4></div>
+          <div class="shorts">
+            <div class="short"><div class="fav">&#9654;</div><div class="nm">youtube</div></div>
+            <div class="short"><div class="fav">&#119909;</div><div class="nm">x.com</div></div>
+            <div class="short"><div class="fav">&#127909;</div><div class="nm">vimeo</div></div>
+            <div class="short"><div class="fav">&#128240;</div><div class="nm">elmundo</div></div>
+          </div>
+          <div class="sec"><h4>Recent downloads</h4><a>See all</a></div>
+          <div class="thumbs">
+            <div class="thumb"><div class="ph"><div class="play">&#9654;</div><div class="badge">3:21</div></div><div class="cn">clip_final.mp4</div></div>
+            <div class="thumb"><div class="ph"><div class="play">&#9654;</div><div class="badge">0:48</div></div><div class="cn">reel.mp4</div></div>
+            <div class="thumb"><div class="ph aud">&#9834;<div class="badge">31:02</div></div><div class="cn">ep156.mp3</div></div>
+            <div class="thumb"><div class="ph img"></div><div class="cn">image.jpg</div></div>
+          </div>
+        </div>
+        <div class="nav">
+          <div class="ni">+</div><div class="tabs">3</div>
+          <div class="ni">&#9734;</div><div class="ni">&#8595;</div><div class="ni">&#8942;</div>
+        </div>
+      </div></div>
+      <div class="cap">
+        <span class="tag">A · recommended</span>
+        <h3>Stats stay, fill the void</h3>
+        <p>Keeps the tap-through stats card, then earns the empty space with Shortcuts (top sites from history) and a Recent-downloads thumb strip — reinforcing that you captured these while browsing.</p>
+      </div>
+    </div>
+
+    <!-- Direction B -->
+    <div class="item">
+      <div class="phone"><div class="screen dark">
+        <div class="status"><span>12:58</span><span class="r">&#9889; &#128246; 85%</span></div>
+        <div class="omni"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#7d7d86" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>Search or Type URL</div>
+        <div class="body">
+          <div class="sec" style="margin-top:14px"><h4>Continue browsing</h4></div>
+          <div class="cont">
+            <div class="row"><div class="g">&#9654;</div><div class="tx"><div class="t">The making of a parser</div><div class="u">youtube.com</div></div></div>
+            <div class="row"><div class="g">&#128240;</div><div class="tx"><div class="t">Última hora del día</div><div class="u">elmundo.es</div></div></div>
+            <div class="row"><div class="g">&#119909;</div><div class="tx"><div class="t">A thread about caching</div><div class="u">x.com</div></div></div>
+          </div>
+          <div class="sec"><h4>Recent captures</h4><a>See all</a></div>
+          <div class="thumbs">
+            <div class="thumb"><div class="ph"><div class="play">&#9654;</div><div class="badge">3:21</div></div><div class="cn">clip.mp4</div></div>
+            <div class="thumb"><div class="ph"><div class="play">&#9654;</div><div class="badge">0:48</div></div><div class="cn">reel.mp4</div></div>
+            <div class="thumb"><div class="ph aud">&#9834;<div class="badge">31:02</div></div><div class="cn">ep156.mp3</div></div>
+          </div>
+          <div class="strip">
+            <svg class="sh" viewBox="0 0 24 24" fill="none" stroke="#9a9aa6" stroke-width="2"><path d="M12 2l8 3v6c0 5-3.5 8.5-8 11-4.5-2.5-8-6-8-11V5z"/></svg>
+            <span><b>10.7K</b> blocked · <b>9.2 GB</b> saved · <b>14</b> vault</span>
+          </div>
+        </div>
+        <div class="nav">
+          <div class="ni">+</div><div class="tabs">3</div>
+          <div class="ni">&#9734;</div><div class="ni">&#8595;</div><div class="ni">&#8942;</div>
+        </div>
+      </div></div>
+      <div class="cap">
+        <span class="tag">B</span>
+        <h3>Activity-first, stats demoted</h3>
+        <p>Leads with re-entry: Continue browsing + Recent captures. The three stats collapse into one quiet tappable line — discoverable, but no longer the headline.</p>
+      </div>
+    </div>
+
+    <!-- Direction C -->
+    <div class="item">
+      <div class="phone"><div class="screen dark">
+        <div class="status"><span>12:58</span><span class="r">&#9889; &#128246; 85%</span></div>
+        <div class="omni"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#7d7d86" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>Search or Type URL</div>
+        <div class="body" style="display:flex;flex-direction:column;justify-content:center">
+          <div class="brand">
+            <svg class="flame" viewBox="0 0 24 28"><path d="M12 0C12 8 4 9 4 17a8 8 0 0016 0c0-5-3-7-4-10-1 3-2 4-4 4 0-4 0-8 0-11z" fill="#FF5A1F"/></svg>
+            <b>Firedown</b>
+          </div>
+          <div class="stats accent" style="margin-top:18px">
+            <div class="col">
+              <svg class="gi" viewBox="0 0 24 24" fill="none" stroke="#9a9aa6" stroke-width="2"><path d="M12 2l8 3v6c0 5-3.5 8.5-8 11-4.5-2.5-8-6-8-11V5z"/></svg>
+              <div class="v">10.7K</div><div class="l">Blocked</div><div class="t">+340 today</div>
+            </div>
+            <div class="col">
+              <svg class="gi" viewBox="0 0 24 24" fill="none" stroke="#9a9aa6" stroke-width="2"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 21h16"/></svg>
+              <div class="v">9.2 GB</div><div class="l">Saved</div><div class="t">3 this week</div>
+            </div>
+            <div class="col">
+              <svg class="gi" viewBox="0 0 24 24" fill="none" stroke="#9a9aa6" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>
+              <div class="v">14</div><div class="l">Safe Folder</div><div class="t">private</div>
+            </div>
+          </div>
+        </div>
+        <div class="nav">
+          <div class="ni">+</div><div class="tabs">3</div>
+          <div class="ni">&#9734;</div><div class="ni">&#8595;</div><div class="ni">&#8942;</div>
+        </div>
+      </div></div>
+      <div class="cap">
+        <span class="tag">C · minimal</span>
+        <h3>Make the one card earn it</h3>
+        <p>No new sections — give each stat a live trend line, a faint coral hairline so the card stops reading as a placeholder on black, and center it so the emptiness looks intentional.</p>
+      </div>
+    </div>
+
+    <!-- ============ INCOGNITO ============ -->
+    <div class="group-h">Incognito home</div>
+
+    <!-- Direction D -->
+    <div class="item">
+      <div class="phone"><div class="screen inc">
+        <div class="status"><span>12:45</span><span class="r">&#128263; &#128246; 85%</span></div>
+        <div class="omni"><span class="duck"></span>Search or Type URL</div>
+        <div class="body">
+          <div class="inc-title">&#128374; Private Browsing</div>
+          <div class="fact compact"><div class="chip hist">&#128336;</div><div class="ft"><div class="t">Nothing here is saved</div><div class="s">Pages, searches & cache aren't kept.</div></div></div>
+          <div class="fact compact"><div class="chip cook">&#127850;</div><div class="ft"><div class="t">Cookies clear on close</div><div class="s">Wiped when these tabs close.</div></div></div>
+          <div class="fact compact"><div class="chip dl">&#128274;</div><div class="ft"><div class="t">Downloads stay private</div><div class="s">Into your Safe Folder, in-app only.</div></div></div>
+
+          <div class="session">
+            <div class="cnt">3 private tabs open</div>
+            <div class="btn">Close all &amp; clear</div>
+          </div>
+
+          <div class="warn">Private Browsing doesn't hide your activity from your network, employer, or the sites you visit.</div>
+        </div>
+        <div class="nav">
+          <div class="ni">+</div><div class="tabs">3</div>
+          <div class="ni">&#9734;</div><div class="ni">&#128274;</div><div class="ni">&#8942;</div>
+        </div>
+      </div></div>
+      <div class="cap">
+        <span class="tag inc">D · recommended</span>
+        <h3>Compress the lesson, add a pulse</h3>
+        <p>Tighter fact list, plus the one genuinely useful thing on a private home: a live tab count and a "Close all &amp; clear" action. Turns a read-once brochure into a tool.</p>
+      </div>
+    </div>
+
+    <!-- Direction E -->
+    <div class="item">
+      <div class="phone"><div class="screen inc">
+        <div class="status"><span>12:45</span><span class="r">&#128263; &#128246; 85%</span></div>
+        <div class="omni"><span class="duck"></span>Search or Type URL</div>
+        <div class="body" style="display:flex;flex-direction:column;justify-content:center">
+          <div class="inc-title" style="justify-content:center">&#128374; Private Browsing</div>
+          <div style="margin-top:14px">
+            <div class="fact"><div class="chip hist">&#128336;</div><div class="ft"><div class="t">No history</div><div class="s">Pages, searches and cache aren't saved.</div></div></div>
+            <div class="fact"><div class="chip cook">&#127850;</div><div class="ft"><div class="t">No cookies</div><div class="s">Cleared when you close these tabs.</div></div></div>
+            <div class="fact"><div class="chip dl">&#128274;</div><div class="ft"><div class="t">Downloads stay private</div><div class="s">Saved to your Safe Folder, visible only inside Firedown.</div></div></div>
+          </div>
+          <div class="warn card">Private Browsing doesn't hide your activity from your network, employer, or the sites you visit.</div>
+        </div>
+        <div class="nav">
+          <div class="ni">+</div><div class="tabs">1</div>
+          <div class="ni">&#9734;</div><div class="ni">&#128274;</div><div class="ni">&#8942;</div>
+        </div>
+      </div></div>
+      <div class="cap">
+        <span class="tag inc">E · minimal</span>
+        <h3>Same content, better hierarchy</h3>
+        <p>No behavior change: vertically center the facts, set the disclaimer in a faint bordered footer card so it reads as a system note instead of body text. Smallest possible polish.</p>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>

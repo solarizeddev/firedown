@@ -2,6 +2,10 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <color name="ic_launcher_background">@color/md_theme_background</color>
     <color name="brand_orange">#f0716c</color>
+    <!-- Faint coral hairline on the home hero stats card (~35% of brand_orange)
+         so the flat, elevation-0 card lifts off the true-black home background
+         instead of reading as a placeholder. -->
+    <color name="home_stat_card_stroke">#59F0716C</color>
     <color name="incognito">#FF391D5B</color>
     <color name="white">#FFFFFFFF</color>
     <color name="transparent">#00FFFFFF</color>
@@ -125,6 +129,12 @@
     <color name="incognito_chip_cookies">#33F66A66</color>
     <color name="incognito_chip_downloads">#3DC8417B</color>
     <color name="incognito_fact_downloads_icon">#FFF48FBB</color>
+
+    <!-- Faint footer card around the private-mode disclaimer: a dark fill + a
+         barely-there white hairline so the caveat reads as a system note rather
+         than loose body text. -->
+    <color name="incognito_warning_card_bg">#22000000</color>
+    <color name="incognito_warning_card_stroke">#16FFFFFF</color>
 
     <!-- Background -->
     <color name="incognito_background">#FF391D5B</color>

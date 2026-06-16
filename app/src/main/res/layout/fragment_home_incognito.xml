@@ -42,14 +42,13 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:gravity="center_horizontal"
-            android:paddingTop="6dp"
+            android:paddingTop="16dp"
             android:paddingStart="24dp"
             android:paddingEnd="24dp">
 
-            <!-- Anchor the content to the upper area rather than the vertical
-                 centre: the mascot that used to balance the top moved to the
-                 incognito tabs empty state, so a fixed gap under the search bar
-                 + a bottom spacer reads better than floating it mid-screen. -->
+            <!-- Top-anchored to match the regular home: title + facts sit just
+                 below the search bar (the bottom spacer pushes the empty space
+                 down), so both home surfaces read the same on tall devices. -->
 
             <!-- Title -->
             <TextView
@@ -224,19 +223,33 @@
 
             </LinearLayout>
 
-            <!-- Honest caveat: private mode is not invisibility. Reuses the
-                 existing (already-translated) warning string. -->
-            <TextView
-                android:id="@+id/incognito_warning"
+            <!-- Honest caveat in a faint footer card: a dark fill + a
+                 barely-there hairline so the disclaimer reads as a system note
+                 rather than loose body text. Reuses the existing
+                 (already-translated) warning string. -->
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="22dp"
-                android:text="@string/incognito_home_warning"
-                android:textAppearance="?attr/textAppearanceBodySmall"
-                android:textColor="@color/incognito_on_surface_variant"
-                android:lineSpacingMultiplier="1.3" />
+                android:layout_marginTop="24dp"
+                app:cardBackgroundColor="@color/incognito_warning_card_bg"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/incognito_warning_card_stroke"
+                app:strokeWidth="1dp">
 
-            <!-- Spacer to push content toward center -->
+                <TextView
+                    android:id="@+id/incognito_warning"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="14dp"
+                    android:text="@string/incognito_home_warning"
+                    android:textAppearance="?attr/textAppearanceBodySmall"
+                    android:textColor="@color/incognito_on_surface_variant"
+                    android:lineSpacingMultiplier="1.3" />
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Spacer pushes the empty space to the bottom (top-anchored). -->
             <Space
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
