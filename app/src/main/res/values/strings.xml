@@ -163,6 +163,11 @@
     <string name="home_stat_trend_today">%1$s today</string>
     <string name="home_stat_trend_week">%1$s this week</string>
     <string name="home_stat_trend_private">private</string>
+    <!-- Saved column context line shown on a fresh install (nothing ever
+         saved, so there's no size and no "this week" count). Keeps the column
+         from looking empty, parallel to the trackers "0 today" and the vault
+         "private" lines. -->
+    <string name="home_stat_trend_empty">Nothing yet</string>
     <string name="download_finished">Download finished</string>
     <string name="download_ongoing_notification">Firedown</string>
     <string name="download_quality">Download quality</string>

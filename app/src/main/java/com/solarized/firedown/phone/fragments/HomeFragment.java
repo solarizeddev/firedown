@@ -93,6 +93,12 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     // (this week) figures; the Safe column's "private" line is static in XML.
     private TextView mTrackersTrend;
     private TextView mDownloadsTrend;
+    // Latest values feeding the Saved column's context line. The line needs
+    // BOTH the total saved bytes and the 7-day finished count to decide what
+    // to show, but each arrives from its own LiveData — so they're cached here
+    // and updateSavedTrend() reconciles them (see the observers below).
+    private long mFinishedBytes;
+    private int mFinishedThisWeek;
     @Inject
     GeckoUblockHelper mGeckoUblockHelper;
 
@@ -313,23 +319,18 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         // Stats card column 2 — total saved: live sum of finished regular
         // (non-vault) download bytes, locale-formatted by readableFileSize.
         mRecentDownloadsViewModel.getFinishedSize().observe(getViewLifecycleOwner(), size -> {
-            if (mDownloadsValue == null) return;
-            long bytes = size == null ? 0L : size;
-            mDownloadsValue.setText(bytes > 0 ? withSmallUnit(Utils.readableFileSize(bytes)) : "0");
+            mFinishedBytes = size == null ? 0L : size;
+            if (mDownloadsValue != null) {
+                mDownloadsValue.setText(mFinishedBytes > 0
+                        ? withSmallUnit(Utils.readableFileSize(mFinishedBytes)) : "0");
+            }
+            updateSavedTrend();
         });
 
         // Saved trend line — files finished in the last 7 days ("3 this week").
-        // Hidden when none, like the trackers trend.
         mRecentDownloadsViewModel.getFinishedThisWeekCount().observe(getViewLifecycleOwner(), week -> {
-            if (mDownloadsTrend == null) return;
-            int n = week == null ? 0 : week;
-            if (n <= 0) {
-                mDownloadsTrend.setVisibility(View.GONE);
-                return;
-            }
-            mDownloadsTrend.setText(getString(R.string.home_stat_trend_week,
-                    NumberFormat.getInstance(Locale.getDefault()).format(n)));
-            mDownloadsTrend.setVisibility(View.VISIBLE);
+            mFinishedThisWeek = week == null ? 0 : week;
+            updateSavedTrend();
         });
 
         // Stats card column 3 — Safe Folder item count.
@@ -484,6 +485,32 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mSafeValue = null;
         mTrackersTrend = null;
         mDownloadsTrend = null;
+    }
+
+    /**
+     * Reconciles the Saved column's context line from the two LiveData feeding
+     * it. Three states, so the column never looks empty (parallel to the
+     * trackers "0 today" and the always-on vault "private"):
+     * <ul>
+     *   <li>nothing ever saved (no bytes) — a fresh install — reads
+     *       "Nothing yet";</li>
+     *   <li>something saved in the last 7 days — "N this week";</li>
+     *   <li>saved before but nothing this week — hidden (no trend to show,
+     *       same as the original behaviour).</li>
+     * </ul>
+     */
+    private void updateSavedTrend() {
+        if (mDownloadsTrend == null) return;
+        if (mFinishedBytes <= 0) {
+            mDownloadsTrend.setText(R.string.home_stat_trend_empty);
+            mDownloadsTrend.setVisibility(View.VISIBLE);
+        } else if (mFinishedThisWeek > 0) {
+            mDownloadsTrend.setText(getString(R.string.home_stat_trend_week,
+                    NumberFormat.getInstance(Locale.getDefault()).format(mFinishedThisWeek)));
+            mDownloadsTrend.setVisibility(View.VISIBLE);
+        } else {
+            mDownloadsTrend.setVisibility(View.GONE);
+        }
     }
 
     /**
