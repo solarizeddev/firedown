@@ -96,44 +96,62 @@
                     android:orientation="horizontal"
                     android:visibility="gone">
 
-                    <TextView
+                    <com.google.android.material.card.MaterialCardView
                         android:id="@+id/home_subtitle_blocked"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:background="@drawable/bg_subtitle_ripple"
                         android:clickable="true"
                         android:focusable="true"
-                        android:paddingHorizontal="11dp"
-                        android:paddingVertical="6dp"
-                        android:textColor="?attr/colorOnSurfaceVariant"
-                        android:textSize="13sp"
                         android:visibility="gone"
-                        tools:text="10.5K blocked" />
+                        app:cardBackgroundColor="?attr/colorSurfaceContainerHigh"
+                        app:cardCornerRadius="14dp"
+                        app:cardElevation="0dp">
+
+                        <TextView
+                            android:id="@+id/home_subtitle_blocked_text"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:paddingHorizontal="11dp"
+                            android:paddingVertical="6dp"
+                            android:textColor="?attr/colorOnSurfaceVariant"
+                            android:textSize="13sp"
+                            tools:text="10.5K blocked" />
+
+                    </com.google.android.material.card.MaterialCardView>
 
                     <TextView
                         android:id="@+id/home_subtitle_sep"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:paddingHorizontal="2dp"
+                        android:paddingHorizontal="5dp"
                         android:text="·"
                         android:textColor="?attr/colorOnSurfaceVariant"
                         android:textSize="13sp"
                         android:visibility="gone"
                         tools:ignore="HardcodedText" />
 
-                    <TextView
+                    <com.google.android.material.card.MaterialCardView
                         android:id="@+id/home_subtitle_saved"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:background="@drawable/bg_subtitle_ripple"
                         android:clickable="true"
                         android:focusable="true"
-                        android:paddingHorizontal="11dp"
-                        android:paddingVertical="6dp"
-                        android:textColor="?attr/colorOnSurfaceVariant"
-                        android:textSize="13sp"
                         android:visibility="gone"
-                        tools:text="9.5 GB saved" />
+                        app:cardBackgroundColor="?attr/colorSurfaceContainerHigh"
+                        app:cardCornerRadius="14dp"
+                        app:cardElevation="0dp">
+
+                        <TextView
+                            android:id="@+id/home_subtitle_saved_text"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:paddingHorizontal="11dp"
+                            android:paddingVertical="6dp"
+                            android:textColor="?attr/colorOnSurfaceVariant"
+                            android:textSize="13sp"
+                            tools:text="9.5 GB saved" />
+
+                    </com.google.android.material.card.MaterialCardView>
 
                 </LinearLayout>
 

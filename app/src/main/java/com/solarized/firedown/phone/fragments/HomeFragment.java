@@ -87,9 +87,13 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     // lives in the bottom bar / menu — no dashboard.
     private RecentDownloadsViewModel mRecentDownloadsViewModel;
     private View mSubtitle;
-    private TextView mSubtitleBlocked;
+    // The two figures are MaterialCardView pills (own the tap target + ripple +
+    // visibility); their text lives in the inner *_text TextViews.
+    private View mSubtitleBlocked;
+    private TextView mSubtitleBlockedText;
     private View mSubtitleSep;
-    private TextView mSubtitleSaved;
+    private View mSubtitleSaved;
+    private TextView mSubtitleSavedText;
     @Inject
     GeckoUblockHelper mGeckoUblockHelper;
 
@@ -170,8 +174,10 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         // DownloadsActivity own their own auth/result handling.)
         mSubtitle = v.findViewById(R.id.home_subtitle);
         mSubtitleBlocked = v.findViewById(R.id.home_subtitle_blocked);
+        mSubtitleBlockedText = v.findViewById(R.id.home_subtitle_blocked_text);
         mSubtitleSep = v.findViewById(R.id.home_subtitle_sep);
         mSubtitleSaved = v.findViewById(R.id.home_subtitle_saved);
+        mSubtitleSavedText = v.findViewById(R.id.home_subtitle_saved_text);
         if (mSubtitleBlocked != null) {
             mSubtitleBlocked.setOnClickListener(view ->
                     TrackersInfoSheet.show(getChildFragmentManager()));
@@ -249,13 +255,13 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         // Subtitle, left half — lifetime trackers blocked (uBlock cumulative,
         // pushed by firedown.js). Compact + locale-aware ("10.5K"); hidden at 0.
         mGeckoUblockHelper.getCumulativeBlockedLive().observe(getViewLifecycleOwner(), blocked -> {
-            if (mSubtitleBlocked == null) return;
+            if (mSubtitleBlocked == null || mSubtitleBlockedText == null) return;
             long n = blocked == null ? 0L : blocked;
             if (n > 0) {
                 CompactDecimalFormat fmt = CompactDecimalFormat.getInstance(
                         Locale.getDefault(), CompactDecimalFormat.CompactStyle.SHORT);
                 fmt.setMaximumFractionDigits(1);
-                mSubtitleBlocked.setText(getString(R.string.home_subtitle_blocked, fmt.format(n)));
+                mSubtitleBlockedText.setText(getString(R.string.home_subtitle_blocked, fmt.format(n)));
                 mSubtitleBlocked.setVisibility(View.VISIBLE);
             } else {
                 mSubtitleBlocked.setVisibility(View.GONE);
@@ -266,10 +272,10 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         // Subtitle, right half — total bytes of finished regular downloads,
         // locale-formatted ("9.5 GB"); hidden at 0.
         mRecentDownloadsViewModel.getFinishedSize().observe(getViewLifecycleOwner(), size -> {
-            if (mSubtitleSaved == null) return;
+            if (mSubtitleSaved == null || mSubtitleSavedText == null) return;
             long bytes = size == null ? 0L : size;
             if (bytes > 0) {
-                mSubtitleSaved.setText(getString(R.string.home_subtitle_saved,
+                mSubtitleSavedText.setText(getString(R.string.home_subtitle_saved,
                         Utils.readableFileSize(bytes)));
                 mSubtitleSaved.setVisibility(View.VISIBLE);
             } else {
@@ -441,8 +447,10 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mBottomNavigationBar = null;
         mSubtitle = null;
         mSubtitleBlocked = null;
+        mSubtitleBlockedText = null;
         mSubtitleSep = null;
         mSubtitleSaved = null;
+        mSubtitleSavedText = null;
     }
 
     /**
