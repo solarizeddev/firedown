@@ -582,4 +582,5 @@
     <string name="lan_direct_next">Siguiente</string>
     <string name="lan_direct_failed">No se pudo iniciar la conexión directa</string>
     <string name="home_stat_saved">Guardado</string>
+    <string name="home_stat_trend_empty">Vacío</string>
 </resources>

@@ -338,4 +338,5 @@
     <string name="lan_direct_next">Напред</string>
     <string name="lan_direct_failed">Директната връзка не можа да стартира</string>
     <string name="home_stat_saved">Запазено</string>
+    <string name="home_stat_trend_empty">Празно</string>
 </resources>

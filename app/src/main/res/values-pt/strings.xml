@@ -451,4 +451,5 @@
     <string name="lan_direct_next">Seguinte</string>
     <string name="lan_direct_failed">Não foi possível iniciar a ligação direta</string>
     <string name="home_stat_saved">Guardado</string>
+    <string name="home_stat_trend_empty">Vazio</string>
 </resources>

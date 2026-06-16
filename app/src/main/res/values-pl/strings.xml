@@ -448,4 +448,5 @@
     <string name="lan_direct_next">Dalej</string>
     <string name="lan_direct_failed">Nie udało się rozpocząć połączenia bezpośredniego</string>
     <string name="home_stat_saved">Zapisano</string>
+    <string name="home_stat_trend_empty">Pusto</string>
 </resources>

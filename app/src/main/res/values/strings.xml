@@ -166,8 +166,9 @@
     <!-- Saved column context line shown on a fresh install (nothing ever
          saved, so there's no size and no "this week" count). Keeps the column
          from looking empty, parallel to the trackers "0 today" and the vault
-         "private" lines. -->
-    <string name="home_stat_trend_empty">Nothing yet</string>
+         "private" lines. One word on purpose — it maps to a single clean word
+         across the translated locales (unlike a "nothing yet" phrase). -->
+    <string name="home_stat_trend_empty">Empty</string>
     <string name="download_finished">Download finished</string>
     <string name="download_ongoing_notification">Firedown</string>
     <string name="download_quality">Download quality</string>

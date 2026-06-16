@@ -366,4 +366,5 @@
     <string name="lan_direct_next">Далі</string>
     <string name="lan_direct_failed">Не вдалося почати пряме з\'єднання</string>
     <string name="home_stat_saved">Збережено</string>
+    <string name="home_stat_trend_empty">Порожньо</string>
 </resources>
