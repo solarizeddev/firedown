@@ -581,21 +581,4 @@
     <string name="lan_direct_password">Passwort</string>
     <string name="lan_direct_next">Weiter</string>
     <string name="lan_direct_failed">Direktverbindung konnte nicht gestartet werden</string>
-    <string name="home_stat_saved">Gespeichert</string>
-    <string name="home_stat_trend_empty">Downloads</string>
-    <string name="home_brand_tagline">Privater Browser &amp; Downloader</string>
-    <plurals name="home_safe_item_count">
-        <item quantity="one">%d Element</item>
-        <item quantity="other">%d Elemente</item>
-    </plurals>
-    <string name="home_onboard_title">Ein Browser, der herunterlädt, was er abspielt.</string>
-    <string name="home_onboard_lede">Öffne eine beliebige Seite und Firedown erfasst Video, Audio oder Bilder im Hintergrund — keine Links zum Kopieren.</string>
-    <string name="home_onboard_step_1_title">Zu einer Seite navigieren</string>
-    <string name="home_onboard_step_1_desc">Ein Reel, ein Song, eine Galerie — alles, was abgespielt wird.</string>
-    <string name="home_onboard_step_2_title">Abspielen oder scrollen</string>
-    <string name="home_onboard_step_2_desc">Firedown erfasst es automatisch beim Laden.</string>
-    <string name="home_onboard_step_3_title">Zum Speichern tippen</string>
-    <string name="home_onboard_step_3_desc">Qualität wählen und auf dem Telefon speichern.</string>
-    <string name="home_onboard_cta">Surfen starten</string>
-    <string name="home_onboard_hint">Tipp: Probiere YouTube, Instagram oder X — die Erfassung funktioniert einfach.</string>
 </resources>

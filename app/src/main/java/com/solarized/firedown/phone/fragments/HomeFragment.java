@@ -1,6 +1,5 @@
 package com.solarized.firedown.phone.fragments;
 
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
@@ -11,7 +10,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
-import android.view.inputmethod.InputMethodManager;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
@@ -26,7 +24,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.solarized.firedown.ui.IncognitoColors;
 import com.solarized.firedown.Keys;
-import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
 import com.solarized.firedown.data.entity.GeckoStateEntity;
 import com.solarized.firedown.data.entity.AutoCompleteEntity;
@@ -45,7 +42,6 @@ import com.solarized.firedown.phone.VaultActivity;
 import com.solarized.firedown.autocomplete.AutoCompleteEditText;
 import com.solarized.firedown.autocomplete.AutoCompleteView;
 import com.solarized.firedown.geckoview.toolbar.BottomNavigationBar;
-import com.solarized.firedown.phone.dialogs.TrackersInfoSheet;
 import com.solarized.firedown.ui.OnItemClickListener;
 import com.solarized.firedown.ui.adapters.SearchAutocompleteAdapter;
 import com.solarized.firedown.ui.diffs.SearchDiffCallback;
@@ -73,18 +69,9 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     private GeckoToolbar mGeckoToolbar;
     private BottomNavigationBar mBottomNavigationBar;
     private View mHomeScroll;
-    // The two mutually-exclusive home views (only one is ever VISIBLE):
-    //  * mBrandMark — the minimalist steady-state landing (flame + wordmark +
-    //    tagline, nothing else);
-    //  * mOnboardCard — the first-run "how capture works" card.
-    // mOnboardingDone is a one-way flag mirrored from prefs: while unset the
-    // onboarding card shows, and the first navigation retires it for good (see
-    // updateHomeCard / retireOnboarding). There are deliberately NO stats here
-    // — tabs and the downloads badge live in the bottom bar, the vault in the
-    // menu; the home is a calm landing, not a dashboard.
-    private View mBrandMark;
-    private View mOnboardCard;
-    private boolean mOnboardingDone;
+    // The home is a calm minimalist landing — a single centred brand mark in the
+    // layout, no stats and no onboarding. Tabs and the downloads badge live in
+    // the bottom bar; the vault is in the menu.
 
 
     @Override
@@ -157,16 +144,9 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mBottomNavigationBar = v.findViewById(R.id.bottom_app_bar);
 
 
-        // Minimalist home: the calm brand mark vs the first-run onboarding card
-        // (exactly one visible, toggled in updateHomeCard). The onboarding CTA
-        // just focuses the URL bar (the same thing tapping the omnibox does) —
-        // it opens nothing, per the "no paste-a-link flow" architecture invariant.
-        mBrandMark = v.findViewById(R.id.home_brand_mark);
-        mOnboardCard = v.findViewById(R.id.home_onboard_card);
-        View onboardCta = v.findViewById(R.id.home_onboard_cta);
-        if (onboardCta != null) {
-            onboardCta.setOnClickListener(view -> focusUrlBar());
-        }
+        // Minimalist home: a single centred brand mark (logo + wordmark)
+        // inflated by the layout. Nothing to bind or toggle — no stats, no
+        // onboarding. Tabs and the downloads badge live in the bottom bar.
 
         mBottomNavigationBar.setListener(this);
 
@@ -211,12 +191,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         super.onViewCreated(view, savedInstanceState);
 
         Log.d(TAG, "onViewCreated");
-
-        // Decide which home card shows BEFORE the stat observers attach, so a
-        // returning user never sees a flash of onboarding. Read straight from
-        // prefs (the flag is one-way; once retired it stays retired).
-        mOnboardingDone = mSharedPreferences.getBoolean(Preferences.HOME_ONBOARDING_DONE, false);
-        updateHomeCard();
 
         // Download-count badge on the bottom bar's Downloads button —
         // same source BrowserFragment's regular-mode chrome uses
@@ -400,51 +374,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mGeckoToolbar = null;
         mNewTabView = null;
         mBottomNavigationBar = null;
-        mBrandMark = null;
-        mOnboardCard = null;
-    }
-
-    /**
-     * Shows exactly one of the two home views from {@link #mOnboardingDone}: the
-     * first-run onboarding card while it is false, the minimalist brand mark once
-     * it is true. Safe to call before the views exist (no-op then).
-     */
-    private void updateHomeCard() {
-        if (mBrandMark == null || mOnboardCard == null) return;
-        boolean showOnboard = !mOnboardingDone;
-        mOnboardCard.setVisibility(showOnboard ? View.VISIBLE : View.GONE);
-        mBrandMark.setVisibility(showOnboard ? View.GONE : View.VISIBLE);
-    }
-
-    /**
-     * Retires the first-run onboarding card the first time the user navigates
-     * away from Home (opens a URL / a recent tab) — i.e. they've started using
-     * the browser, so the teaching is done and the calm brand mark takes over.
-     * One-way and persisted, so it fires at most once and never reappears (a
-     * returning user always gets the brand mark). Cheap no-op after the first
-     * retire.
-     */
-    private void retireOnboarding() {
-        if (mOnboardingDone) return;
-        mOnboardingDone = true;
-        mSharedPreferences.edit().putBoolean(Preferences.HOME_ONBOARDING_DONE, true).apply();
-        updateHomeCard();
-    }
-
-    /**
-     * Focuses the URL bar exactly as a tap on the omnibox would — requests focus
-     * on the address EditText (which fires {@link #onFocusChanged} to raise the
-     * autocomplete overlay) and shows the keyboard. It opens nothing: the
-     * onboarding CTA only invites the user to start browsing, where capture
-     * actually happens.
-     */
-    private void focusUrlBar() {
-        if (mAutoCompleteEditText == null) return;
-        mAutoCompleteEditText.requestFocus();
-        InputMethodManager imm = (InputMethodManager) mActivity.getSystemService(Context.INPUT_METHOD_SERVICE);
-        if (imm != null) {
-            imm.showSoftInput(mAutoCompleteEditText, InputMethodManager.SHOW_IMPLICIT);
-        }
     }
 
     @Override
@@ -526,8 +455,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
 
 
     private void openUri(String text){
-        // Starting to browse retires the first-run onboarding card for good.
-        retireOnboarding();
         // Format here, not downstream. BrowserFragment.setGeckoViewSession
         // only runs parseUri when opening a brand-new GeckoSession, so a
         // toolbar commit that lands on an already-open session would
@@ -553,7 +480,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
 
 
     private void openSessionId(int sessionId){
-        retireOnboarding();
         Log.d(TAG, "openSessionId: sessionId=" + sessionId);
         GeckoState geckoState = mGeckoStateViewModel.getGeckoState(sessionId);
         if (geckoState == null) {

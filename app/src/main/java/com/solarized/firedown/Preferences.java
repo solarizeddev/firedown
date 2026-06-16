@@ -283,13 +283,6 @@ public class Preferences {
     public static final String SETTINGS_TABS = "com.solarized.firedown.preferences.browser.tabs";
     public static final String SETTINGS_QUIT = "com.solarized.firedown.preferences.browser.quit";
 
-    // One-way flag: set true the first time any home figure (trackers blocked /
-    // bytes saved / Safe Folder count) becomes non-zero. While false, the home
-    // shows the first-run onboarding card in place of the stats card. Persisted
-    // (not derived live) so it never flashes onboarding to a returning user, and
-    // so a user who later clears all their data isn't shown the welcome again.
-    public static final String HOME_ONBOARDING_DONE = "com.solarized.firedown.preferences.home.onboarding.done";
-
     public static final String SETTINGS_QUIT_PREF = "com.solarized.firedown.preferences.browser.quit.pref";
 
     public static final String SETTINGS_QUIT_PREF_TABS = "com.solarized.firedown.preferences.browser.quit.pref.tabs";

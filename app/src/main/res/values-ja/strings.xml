@@ -579,20 +579,4 @@
     <string name="lan_direct_password">パスワード</string>
     <string name="lan_direct_next">次へ</string>
     <string name="lan_direct_failed">ダイレクト接続を開始できませんでした</string>
-    <string name="home_stat_saved">保存済み</string>
-    <string name="home_stat_trend_empty">ダウンロード</string>
-    <string name="home_brand_tagline">プライベートブラウザ＆ダウンローダー</string>
-    <plurals name="home_safe_item_count">
-        <item quantity="other">%d 件</item>
-    </plurals>
-    <string name="home_onboard_title">再生したものをダウンロードするブラウザ。</string>
-    <string name="home_onboard_lede">どんなサイトを開いても、Firedown が動画・音声・画像をバックグラウンドで取り込みます。リンクのコピーは不要です。</string>
-    <string name="home_onboard_step_1_title">ページを開く</string>
-    <string name="home_onboard_step_1_desc">リール、曲、ギャラリーなど、再生されるものなら何でも。</string>
-    <string name="home_onboard_step_2_title">再生またはスクロール</string>
-    <string name="home_onboard_step_2_desc">読み込み時に Firedown が自動で取り込みます。</string>
-    <string name="home_onboard_step_3_title">タップして保存</string>
-    <string name="home_onboard_step_3_desc">画質を選んでスマホに保存。</string>
-    <string name="home_onboard_cta">ブラウジングを始める</string>
-    <string name="home_onboard_hint">ヒント：YouTube、Instagram、X で試してみてください。取り込みは自動で動きます。</string>
 </resources>

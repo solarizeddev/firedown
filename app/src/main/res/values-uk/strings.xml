@@ -365,23 +365,4 @@
     <string name="lan_direct_password">Пароль</string>
     <string name="lan_direct_next">Далі</string>
     <string name="lan_direct_failed">Не вдалося почати пряме з\'єднання</string>
-    <string name="home_stat_saved">Збережено</string>
-    <string name="home_stat_trend_empty">Завантаження</string>
-    <string name="home_brand_tagline">Приватний браузер і завантажувач</string>
-    <plurals name="home_safe_item_count">
-        <item quantity="one">%d елемент</item>
-        <item quantity="few">%d елементи</item>
-        <item quantity="many">%d елементів</item>
-        <item quantity="other">%d елемента</item>
-    </plurals>
-    <string name="home_onboard_title">Браузер, який завантажує те, що відтворює.</string>
-    <string name="home_onboard_lede">Відкрийте будь-який сайт, і Firedown перехопить відео, аудіо чи зображення у фоні — без копіювання посилань.</string>
-    <string name="home_onboard_step_1_title">Перейдіть на сторінку</string>
-    <string name="home_onboard_step_1_desc">Ролик, трек, галерея — усе, що відтворюється.</string>
-    <string name="home_onboard_step_2_title">Увімкніть або прокрутіть</string>
-    <string name="home_onboard_step_2_desc">Firedown перехоплює це автоматично під час завантаження.</string>
-    <string name="home_onboard_step_3_title">Торкніться, щоб зберегти</string>
-    <string name="home_onboard_step_3_desc">Виберіть якість і збережіть на телефон.</string>
-    <string name="home_onboard_cta">Почати перегляд</string>
-    <string name="home_onboard_hint">Порада: спробуйте YouTube, Instagram або X — перехоплення просто працює.</string>
 </resources>

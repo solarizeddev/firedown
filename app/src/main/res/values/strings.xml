@@ -151,54 +151,6 @@
          plural with a readable byte size — '150 files saved · 2.4 GB'.
          %1$s is the plural (home_downloads_file_count), %2$s is the
          size string (Utils.readableFileSize). -->
-    <!-- Home stats card, downloads column label (under the total saved
-         figure). "Saved" is shorter than "downloaded" across locales and the
-         ⬇ icon already conveys it was a download. The other two columns reuse
-         existing labels: trackers_info_stat_blocked ("Blocked") and
-         home_vault_button ("Safe Folder"). -->
-    <string name="home_stat_saved">Saved</string>
-    <!-- Home stats card trend/context lines (small coral text under each stat).
-         %1$s is a preformatted, locale-aware count (the "+" sign, when shown,
-         is prepended in code). -->
-    <string name="home_stat_trend_today">%1$s today</string>
-    <string name="home_stat_trend_week">%1$s this week</string>
-    <string name="home_stat_trend_private">private</string>
-    <!-- Safe Folder column footer line — the vault item count ("12 items").
-         The headline above it now shows the vault's total size (mirroring the
-         Saved column), so the count moved here. %d is the number of items. -->
-    <plurals name="home_safe_item_count">
-        <item quantity="one">%d item</item>
-        <item quantity="other">%d items</item>
-    </plurals>
-    <!-- Saved column context line shown on a fresh install (nothing ever
-         saved, so there's no size and no "this week" count). Keeps the column
-         from looking empty, parallel to the trackers "0 today" and the vault
-         "private" lines — it just labels the column's nature ("downloads"),
-         reusing each locale's existing navigation_downloads wording. -->
-    <string name="home_stat_trend_empty">downloads</string>
-    <!-- First-run onboarding card (Direction A), shown in place of the stats
-         card while every figure is still zero. It teaches the browse-to-capture
-         mechanic; there is deliberately no "paste a link" wording because the
-         app captures from live pages, not pasted URLs. -->
-    <string name="home_onboard_title">A browser that downloads what it plays.</string>
-    <string name="home_onboard_lede">Open any site and Firedown grabs the video, audio or images in the background — no links to copy.</string>
-    <string name="home_onboard_step_1_num">1</string>
-    <string name="home_onboard_step_1_title">Browse to a page</string>
-    <string name="home_onboard_step_1_desc">A reel, a track, a gallery — anything that plays.</string>
-    <string name="home_onboard_step_2_num">2</string>
-    <string name="home_onboard_step_2_title">Play or scroll it</string>
-    <string name="home_onboard_step_2_desc">Firedown captures it automatically as it loads.</string>
-    <string name="home_onboard_step_3_num">3</string>
-    <string name="home_onboard_step_3_title">Tap to save</string>
-    <string name="home_onboard_step_3_desc">Pick a quality and save it to your phone.</string>
-    <!-- Primary button on the onboarding card. Focuses the address bar (it does
-         not open anything) so the user can start browsing, where capture
-         happens. -->
-    <string name="home_onboard_cta">Start browsing</string>
-    <string name="home_onboard_hint">Tip: try YouTube, Instagram or X — capture just works.</string>
-    <!-- Tagline under the wordmark on the minimalist home (the calm landing
-         shown once onboarding has retired). One short descriptor. -->
-    <string name="home_brand_tagline">Private browser &amp; downloader</string>
     <string name="download_finished">Download finished</string>
     <string name="download_ongoing_notification">Firedown</string>
     <string name="download_quality">Download quality</string>

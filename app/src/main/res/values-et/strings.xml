@@ -313,21 +313,4 @@
     <string name="lan_direct_password">Parool</string>
     <string name="lan_direct_next">Edasi</string>
     <string name="lan_direct_failed">Otseühenduse käivitamine ebaõnnestus</string>
-    <string name="home_stat_saved">Salvestatud</string>
-    <string name="home_stat_trend_empty">Allalaadimised</string>
-    <string name="home_brand_tagline">Privaatne brauser ja allalaadija</string>
-    <plurals name="home_safe_item_count">
-        <item quantity="one">%d üksus</item>
-        <item quantity="other">%d üksust</item>
-    </plurals>
-    <string name="home_onboard_title">Brauser, mis laadib alla seda, mida esitab.</string>
-    <string name="home_onboard_lede">Ava ükskõik milline sait ja Firedown püüab video, heli või pildid taustal kinni — linke pole vaja kopeerida.</string>
-    <string name="home_onboard_step_1_title">Ava mõni leht</string>
-    <string name="home_onboard_step_1_desc">Lühivideo, lugu, galerii — kõik, mis mängib.</string>
-    <string name="home_onboard_step_2_title">Esita või keri</string>
-    <string name="home_onboard_step_2_desc">Firedown püüab selle laadimise ajal automaatselt kinni.</string>
-    <string name="home_onboard_step_3_title">Salvestamiseks puuduta</string>
-    <string name="home_onboard_step_3_desc">Vali kvaliteet ja salvesta telefoni.</string>
-    <string name="home_onboard_cta">Alusta sirvimist</string>
-    <string name="home_onboard_hint">Näpunäide: proovi YouTube\'i, Instagrami või X-i — püüdmine lihtsalt töötab.</string>
 </resources>

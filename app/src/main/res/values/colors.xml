@@ -2,9 +2,6 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <color name="ic_launcher_background">@color/md_theme_background</color>
     <color name="brand_orange">#f0716c</color>
-    <!-- Soft coral fill behind the onboarding step-number chips (~14% of
-         brand_orange). Translucent so it works on both home surfaces. -->
-    <color name="onboard_step_bg">#24F0716C</color>
     <color name="incognito">#FF391D5B</color>
     <color name="white">#FFFFFFFF</color>
     <color name="transparent">#00FFFFFF</color>

@@ -447,23 +447,4 @@
     <string name="lan_direct_password">Hasło</string>
     <string name="lan_direct_next">Dalej</string>
     <string name="lan_direct_failed">Nie udało się rozpocząć połączenia bezpośredniego</string>
-    <string name="home_stat_saved">Zapisano</string>
-    <string name="home_stat_trend_empty">Pliki do pobrania</string>
-    <string name="home_brand_tagline">Prywatna przeglądarka i menedżer pobierania</string>
-    <plurals name="home_safe_item_count">
-        <item quantity="one">%d element</item>
-        <item quantity="few">%d elementy</item>
-        <item quantity="many">%d elementów</item>
-        <item quantity="other">%d elementu</item>
-    </plurals>
-    <string name="home_onboard_title">Przeglądarka, która pobiera to, co odtwarza.</string>
-    <string name="home_onboard_lede">Otwórz dowolną stronę, a Firedown przechwyci wideo, dźwięk lub obrazy w tle — bez kopiowania linków.</string>
-    <string name="home_onboard_step_1_title">Przejdź na stronę</string>
-    <string name="home_onboard_step_1_desc">Rolka, utwór, galeria — wszystko, co się odtwarza.</string>
-    <string name="home_onboard_step_2_title">Odtwórz lub przewiń</string>
-    <string name="home_onboard_step_2_desc">Firedown przechwytuje to automatycznie podczas ładowania.</string>
-    <string name="home_onboard_step_3_title">Dotknij, aby zapisać</string>
-    <string name="home_onboard_step_3_desc">Wybierz jakość i zapisz na telefonie.</string>
-    <string name="home_onboard_cta">Zacznij przeglądać</string>
-    <string name="home_onboard_hint">Wskazówka: wypróbuj YouTube, Instagram lub X — przechwytywanie po prostu działa.</string>
 </resources>

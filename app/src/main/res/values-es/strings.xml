@@ -581,21 +581,4 @@
     <string name="lan_direct_password">Contraseña</string>
     <string name="lan_direct_next">Siguiente</string>
     <string name="lan_direct_failed">No se pudo iniciar la conexión directa</string>
-    <string name="home_stat_saved">Guardado</string>
-    <string name="home_stat_trend_empty">Descargas</string>
-    <string name="home_brand_tagline">Navegador privado y gestor de descargas</string>
-    <plurals name="home_safe_item_count">
-        <item quantity="one">%d elemento</item>
-        <item quantity="other">%d elementos</item>
-    </plurals>
-    <string name="home_onboard_title">Un navegador que descarga lo que reproduce.</string>
-    <string name="home_onboard_lede">Abre cualquier sitio y Firedown captura el vídeo, el audio o las imágenes en segundo plano, sin pegar enlaces.</string>
-    <string name="home_onboard_step_1_title">Navega a una página</string>
-    <string name="home_onboard_step_1_desc">Un reel, una canción, una galería… cualquier cosa que se reproduzca.</string>
-    <string name="home_onboard_step_2_title">Reprodúcelo o desplázate</string>
-    <string name="home_onboard_step_2_desc">Firedown lo captura automáticamente mientras se carga.</string>
-    <string name="home_onboard_step_3_title">Toca para guardar</string>
-    <string name="home_onboard_step_3_desc">Elige una calidad y guárdalo en tu teléfono.</string>
-    <string name="home_onboard_cta">Empezar a navegar</string>
-    <string name="home_onboard_hint">Consejo: prueba YouTube, Instagram o X; la captura simplemente funciona.</string>
 </resources>

@@ -130,30 +130,6 @@ public interface DownloadDao {
     @Query("SELECT COUNT(*) FROM download")
     Integer getRowCount();
 
-    /** Live sum of bytes for finished regular (non-vault) downloads.
-     *  Drives the home "N saved" stat chip. */
-    @Query("SELECT IFNULL(SUM(file_size), 0) FROM download WHERE file_safe = 0 AND file_status = 1")
-    LiveData<Long> getRegularFinishedSizeLive();
-
-    /** Live count of items in the Safe Folder (vault) — drives the home
-     *  stats card's third column. */
-    @Query("SELECT COUNT(*) FROM download WHERE file_safe = 1")
-    LiveData<Integer> getSafeCountLive();
-
-    /** Live sum of bytes for items in the Safe Folder (vault) — drives the
-     *  home stats card's third column headline (mirrors the Saved size; the
-     *  count moves to that column's footer line). Same file_safe = 1 predicate
-     *  as getSafeCountLive so the size and count describe the same set. */
-    @Query("SELECT IFNULL(SUM(file_size), 0) FROM download WHERE file_safe = 1")
-    LiveData<Long> getSafeTotalSizeLive();
-
-    /** Live count of finished regular (non-vault) downloads dated on/after
-     *  :since (epoch millis) — drives the home Saved column's "N this week"
-     *  trend line. Uses the (file_safe, file_status) index; file_date is a
-     *  residual filter. */
-    @Query("SELECT COUNT(*) FROM download WHERE file_safe = 0 AND file_status = 1 AND file_date >= :since")
-    LiveData<Integer> getRegularFinishedCountSinceLive(long since);
-
     /** Live full list of regular (non-vault) downloads, used purely for
      *  per-group aggregation on the downloads list section headers
      *  (count + total bytes by sort category). Separate from the paging
