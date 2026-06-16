@@ -2,11 +2,16 @@ package com.solarized.firedown.data.entity;
 
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
+import androidx.room.Index;
 import androidx.room.PrimaryKey;
 
 import com.solarized.firedown.data.WebHistory;
 
-@Entity(tableName = "webhistory")
+// Index on file_url: every favicon/title update keys on it
+// (updateIconData / updateTitleByUrl, WHERE file_url = ?), so without an index
+// each is a full table scan. The uid PK doesn't help those (uid = hash(url)+day,
+// not the lookup key). See WebHistoryDatabase.MIGRATION_3_4.
+@Entity(tableName = "webhistory", indices = {@Index(value = {"file_url"})})
 public class WebHistoryEntity implements WebHistory {
 
     @PrimaryKey

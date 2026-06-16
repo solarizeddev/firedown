@@ -181,7 +181,10 @@ public class AutoCompleteSearch {
             // is useless (the user already sees the start page when they open
             // a new tab). isHome() isn't always set on restored sessions, so
             // also match the URL directly as a backstop.
-            if (tab.isActive() || tab.isHome() || UrlStringUtils.isURLResouceLike(uri)) continue;
+            // Never surface an about:blank tab (a new/loading tab) — the URL
+            // fallback below would otherwise render "about:blank" as the label.
+            if (tab.isActive() || tab.isHome() || UrlStringUtils.isURLResouceLike(uri)
+                    || UrlStringUtils.isAboutBlank(uri)) continue;
 
             boolean matchesUri = !TextUtils.isEmpty(uri) && uri.toLowerCase().contains(lowerInput);
             boolean matchesTitle = !TextUtils.isEmpty(title) && title.toLowerCase().contains(lowerInput);
@@ -253,6 +256,11 @@ public class AutoCompleteSearch {
 
         List<AutoCompleteEntity> historyItems = new ArrayList<>();
         for (WebHistoryEntity entity : history) {
+            // Skip an about:blank row entirely — never show "about:blank" as a
+            // suggestion (the URL fallback can't rescue a row whose URL is itself
+            // about:blank). Such rows shouldn't exist (the history insert excludes
+            // about: URLs) but legacy/edge rows are guarded here too.
+            if (UrlStringUtils.isAboutBlank(entity.getUrl())) continue;
             AutoCompleteEntity s = new AutoCompleteEntity();
             s.setType(AutoCompleteEntity.HISTORY);
             // Blank/about:blank title → show the URL (Firefox shows the URL for a
@@ -277,6 +285,8 @@ public class AutoCompleteSearch {
 
         List<AutoCompleteEntity> bookmarkItems = new ArrayList<>();
         for (WebBookmarkEntity entity : bookmarks) {
+            // Same about:blank guard as history — no "about:blank" suggestion.
+            if (UrlStringUtils.isAboutBlank(entity.getUrl())) continue;
             AutoCompleteEntity s = new AutoCompleteEntity();
             s.setType(AutoCompleteEntity.BOOKMARK);
             // Blank/about:blank title → show the URL (covers a bookmark saved

@@ -57,7 +57,10 @@ public interface WebBookmarkDao {
      * Returns the number of rows affected — 0 when no bookmark
      * matches, which is the no-op case and not an error.
      */
-    @Query("UPDATE webbookmark SET file_icon = :icon WHERE uid = :id")
+    // file_icon IS NOT :icon (null-safe) skips the write — and Room's
+    // invalidation — when the favicon is unchanged, so revisiting a bookmarked
+    // page doesn't needlessly requery the bookmark list.
+    @Query("UPDATE webbookmark SET file_icon = :icon WHERE uid = :id AND file_icon IS NOT :icon")
     int updateIcon(int id, String icon);
 
     /**

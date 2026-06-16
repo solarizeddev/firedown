@@ -73,11 +73,19 @@ public interface WebHistoryDao {
     @Query("DELETE FROM webhistory WHERE file_date <= :date")
     Integer purgeDatabase(long date);
 
-    @Query("SELECT file_icon_resolution FROM webhistory WHERE file_url = :url LIMIT 1")
-    int getResolution(String url);
-
-    @Query("UPDATE webhistory SET file_icon = :icon, file_icon_resolution = :res WHERE file_url = :url")
-    void updateIconData(String url, String icon, int res);
+    // Set a history row's favicon in ONE statement (no read-modify-write): the
+    // resolution gate (keep a higher-res icon — only overwrite when the new res
+    // is >= the stored one, or the stored one is unknown) and a no-op guard
+    // (don't rewrite an identical icon+res) both live in the WHERE clause. The
+    // no-op guard matters because an unconditional UPDATE fires Room's
+    // invalidation on every revisit, needlessly requerying the history Paging
+    // list even when the favicon hasn't changed. IS NOT is the null-safe
+    // inequality (covers a NULL stored icon on first set). Returns rows changed.
+    @Query("UPDATE webhistory SET file_icon = :icon, file_icon_resolution = :res "
+            + "WHERE file_url = :url "
+            + "AND (file_icon_resolution <= 0 OR :res >= file_icon_resolution) "
+            + "AND (file_icon IS NOT :icon OR file_icon_resolution IS NOT :res)")
+    int updateIconData(String url, String icon, int res);
 
     // Repair the title for a url after onTitleChange (which arrives separately
     // from, and usually later than, the row insert in onHistoryStateChange).

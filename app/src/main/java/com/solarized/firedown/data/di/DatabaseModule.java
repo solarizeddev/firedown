@@ -72,7 +72,8 @@ public class DatabaseModule {
     @OptIn(markerClass = ExperimentalRoomApi.class)
     public WebHistoryDatabase provideDatabase(@ApplicationContext Context context) {
         return Room.databaseBuilder(context, WebHistoryDatabase.class, WebHistoryDatabase.DATABASE_NAME)
-                .addMigrations(WebHistoryDatabase.MIGRATION_1_2, WebHistoryDatabase.MIGRATION_2_3)
+                .addMigrations(WebHistoryDatabase.MIGRATION_1_2, WebHistoryDatabase.MIGRATION_2_3,
+                        WebHistoryDatabase.MIGRATION_3_4)
                 .setInMemoryTrackingMode(false)
                 .build();
     }

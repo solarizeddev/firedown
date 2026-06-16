@@ -89,13 +89,13 @@ public class IconsRepository {
     }
 
     private void syncToDatabases(String url, String iconUrl, int resolution) {
-        mDiskExecutor.execute(() -> {
-            // Update History
-            int historyRes = mHistoryDb.webHistoryDao().getResolution(url);
-            if (resolution >= historyRes || historyRes <= 0) {
-                mHistoryDb.webHistoryDao().updateIconData(url, iconUrl, resolution);
-            }
-        });
+        // History: ONE conditional UPDATE. The old read-then-write
+        // (getResolution + unconditional updateIconData) did two table scans per
+        // icon signal AND rewrote an unchanged icon on every revisit, firing
+        // Room invalidation that requeried the history list for nothing. The
+        // resolution gate (keep the higher-res icon) and the no-op guard now live
+        // in the WHERE clause, so a redundant signal does no write at all.
+        mDiskExecutor.execute(() -> mHistoryDb.webHistoryDao().updateIconData(url, iconUrl, resolution));
         // Update Bookmark if one exists for this URL. The repository
         // short-circuits when the URL isn't bookmarked, so this is
         // cheap on the common path. Stored without a resolution column
