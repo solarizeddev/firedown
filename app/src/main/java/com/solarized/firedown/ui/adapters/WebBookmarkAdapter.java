@@ -2,6 +2,7 @@ package com.solarized.firedown.ui.adapters;
 
 import android.content.Context;
 import android.graphics.drawable.Drawable;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -120,7 +121,11 @@ public class WebBookmarkAdapter extends PagingDataAdapter<WebBookmarkEntity, Rec
         String icon = webBookmarkEntity.getIcon();
 
         WebBookmarkViewHolder webHistoryViewHolder = (WebBookmarkViewHolder) viewHolder;
-        webHistoryViewHolder.file_name.setText(webBookmarkEntity.getTitle());
+        // Fall back to the URL when the title is empty (fenix#2163) — a bookmark
+        // saved mid-load has no title yet (the onTitleChange backfill fills it in
+        // later), so show the URL instead of a blank row in the meantime.
+        String title = webBookmarkEntity.getTitle();
+        webHistoryViewHolder.file_name.setText(TextUtils.isEmpty(title) ? url : title);
         webHistoryViewHolder.file_url.setText(WebUtils.getDomainName(webBookmarkEntity.getUrl()));
         // Incognito-aware text + more-icon tones (don't inherit the system theme).
         webHistoryViewHolder.file_name.setTextColor(mTextPrimary);

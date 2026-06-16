@@ -10,6 +10,7 @@ import com.solarized.firedown.data.dao.WebBookmarkDao;
 import com.solarized.firedown.data.di.Qualifiers;
 import com.solarized.firedown.data.entity.WebBookmarkEntity;
 import com.solarized.firedown.geckoview.GeckoState;
+import com.solarized.firedown.utils.UrlStringUtils;
 import com.solarized.firedown.utils.Utils;
 import java.util.Collections;
 import java.util.HashSet;
@@ -137,7 +138,12 @@ public class WebBookmarkDataRepository {
         String uri = geckoState.getEntityUri();
         WebBookmarkEntity entity = new WebBookmarkEntity();
         entity.setFileDate(System.currentTimeMillis());
-        entity.setFileTitle(Utils.capitalize(geckoState.getEntityTitle()));
+        // Don't store the "about:blank" sentinel getEntityTitle() returns when the
+        // page title hasn't arrived (bookmarking mid-load) as a real title — keep
+        // it null so the display falls back to the URL (fenix#2163) and
+        // updateTitleIfPlaceholder can fill it in once onTitleChange fires.
+        String rawTitle = geckoState.getEntityTitle();
+        entity.setFileTitle(UrlStringUtils.isAboutBlank(rawTitle) ? null : Utils.capitalize(rawTitle));
         entity.setFileUrl(uri);
         entity.setId(bookmarkIdFor(uri));
         entity.setFileIcon(geckoState.getEntityIcon());
