@@ -473,6 +473,15 @@ public class DownloadFragment extends BaseDownloadFragment implements
                 // Settings).
                 retireRestoreBanner();
                 if (result >= 0) {
+                    // The import writes rows through getOpenHelper() (raw
+                    // SQLite), which bypasses Room's InvalidationTracker — the
+                    // Paging source is never told the table changed, so the
+                    // list would stay empty until the next Room-managed write.
+                    // Force the PagingSource to reload so the restored entries
+                    // appear now. (No-op-cheap when result == 0.)
+                    if (result > 0 && mAdapter != null) {
+                        mAdapter.refresh();
+                    }
                     makeSnackbar(mActivity.getSnackAnchorView(),
                             getString(R.string.restore_downloads_done, result), false).show();
                 } else if (result == DownloadBackupMirror.RESTORE_NO_BACKUP) {
