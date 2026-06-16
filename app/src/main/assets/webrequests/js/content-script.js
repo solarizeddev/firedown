@@ -64,6 +64,25 @@ if (window === window.top) {
     return '';
   };
 
+  // thumbnailUrl / thumbnail can be a URL string, an array of URL strings, an
+  // ImageObject ({url}), or an array of those — take the first usable URL.
+  // (ldString can't read ImageObject.url; that's why this is separate.)
+  const ldImage = (v) => {
+    if (typeof v === 'string') return v.trim();
+    if (Array.isArray(v)) {
+      for (const item of v) {
+        const s = ldImage(item);
+        if (s) return s;
+      }
+      return '';
+    }
+    if (v && typeof v === 'object') {
+      if (typeof v.url === 'string') return v.url.trim();
+      if (typeof v['@value'] === 'string') return v['@value'].trim();
+    }
+    return '';
+  };
+
   const isVideoType = (t) =>
     t === 'VideoObject' || (Array.isArray(t) && t.includes('VideoObject'));
 
@@ -89,9 +108,11 @@ if (window === window.top) {
         if (isVideoType(node['@type'])) {
           const name = ldString(node.name);
           const description = ldString(node.description);
-          if (name) return { name, description };
+          // thumbnailUrl is the schema.org canonical; some pages use thumbnail.
+          const thumbnail = ldImage(node.thumbnailUrl) || ldImage(node.thumbnail);
+          if (name) return { name, description, thumbnail };
           if (description && !descriptionOnly) {
-            descriptionOnly = { name: '', description };
+            descriptionOnly = { name: '', description, thumbnail };
           }
         }
 
@@ -136,6 +157,14 @@ if (window === window.top) {
     const ogp = (prop) =>
       meta(`meta[property="${prop}"]`, 'content') || meta(`meta[name="${prop}"]`, 'content');
     const videoLd = readVideoJsonLd();
+    // Poster for the page's video, so the native side can use it as the
+    // capture's thumbnail instead of decoding a frame from the media with
+    // FFmpeg. el.poster reflects the attribute and resolves it to an absolute
+    // URL. We take the first <video poster>; on a single-video page (the common
+    // case, same scope as the page-level title/description below) that is the
+    // captured clip's poster. og:image / JSON-LD thumbnailUrl are the fallbacks.
+    const videoEl = document.querySelector('video[poster]');
+    const poster = videoEl && videoEl.poster ? videoEl.poster : '';
     return Promise.resolve({
       url: location.href,
       title: document.title || '',
@@ -151,6 +180,10 @@ if (window === window.top) {
       ogVideoTitle: ogp('og:video:title'),
       videoLdName: videoLd ? videoLd.name : '',
       videoLdDescription: videoLd ? videoLd.description : '',
+      // Thumbnail sources, most-specific first (consumer ranks poster highest).
+      poster,
+      ogImage: ogp('og:image:secure_url') || ogp('og:image'),
+      videoLdThumbnail: (videoLd && videoLd.thumbnail) || '',
     });
   });
 }

@@ -218,6 +218,22 @@ public class BrowserDownloadRepository {
         int hash = url.indexOf('#');
         if (hash >= 0) url = url.substring(0, hash);
         if (url.endsWith("/")) url = url.substring(0, url.length() - 1);
+        // Drop a leading "www." on the host. The same media file is routinely
+        // reachable from both the apex and the www host, and a page can mix the
+        // two for one video: its <source>/relative URL (and the actual on-wire
+        // fetch) resolve to whatever host the page loaded from — e.g. the apex —
+        // while its og:video / JSON-LD contentUrl hardcode the www host. Those
+        // two URLs differ only by the "www." label, so uid (= url.hashCode())
+        // differs and the capture lands twice. Folding the prefix here collapses
+        // them to one entry; an honest cross-host duplicate is not a case worth
+        // preserving on the capture sheet.
+        int scheme = url.indexOf("://");
+        if (scheme >= 0) {
+            int hostStart = scheme + 3;
+            if (url.regionMatches(true, hostStart, "www.", 0, 4)) {
+                url = url.substring(0, hostStart) + url.substring(hostStart + 4);
+            }
+        }
         return url;
     }
 

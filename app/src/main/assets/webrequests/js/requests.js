@@ -690,8 +690,17 @@ async function processResponse(data, listenerName, skipClassify = false) {
           || meta.ogTitle || meta.twitterTitle || meta.title || '';
         const description = meta.videoLdDescription || meta.description
           || meta.ogDescription || meta.twitterDescription || '';
+        // Thumbnail: the page's poster, ranked most-specific first. The native
+        // side stores it as the entity's thumbnail (JsonHelper "img" →
+        // setFileThumbnail), and GlideHelper then loads that image directly
+        // instead of pointing FFmpeg at the media URL to decode a frame — a
+        // plain JPEG fetch in place of a video-demux probe. The generic catcher
+        // never sets img itself, so this is the only source for it; a dedicated
+        // parser that already supplied img is not overwritten.
+        const img = meta.poster || meta.videoLdThumbnail || meta.ogImage || '';
         if (name && !message.name) message.name = name;
         if (description && !message.description) message.description = description;
+        if (img && !message.img) message.img = img;
       }
     } catch (e) {
       // Content script not loaded (file://, about:, restricted) — fine, skip.
