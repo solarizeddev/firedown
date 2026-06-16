@@ -174,44 +174,12 @@ public class GeckoToolbar extends FrameLayout implements View.OnClickListener, V
 
         if (mHomeEnabled) {
             mAddressBarButton.setIconTintResource(R.color.md_theme_onSurface);
-            mAddressBarButton.setIconResource(R.drawable.ic_search_24);
+            // Magnifier + dropdown chevron — the button opens the search-engine
+            // picker, so the chevron hints "selector" rather than "search".
+            mAddressBarButton.setIconResource(R.drawable.ic_search_dropdown_24);
             mGeckoProgressBar.setVisibility(View.GONE);
             mReloadButton.setVisibility(View.GONE);
         }
-    }
-
-    /** Home-mode address-bar button icon = the active search engine's brand
-     *  icon. 0 until HomeFragment sets it (the ic_search_24 placeholder from
-     *  the home-init block above stands in until then). */
-    private int mSearchEngineIcon = 0;
-
-    /**
-     * Home only: show the active search engine's icon on the address-bar button
-     * (which opens the engine picker), so it both says "pick engine" and shows
-     * which one is active — instead of a generic magnifier. A real brand icon is
-     * shown in FULL COLOUR (tint cleared); the ic_search_24 fallback (a custom
-     * engine, or an unmatched name) stays monochrome-tinted. Call from
-     * HomeFragment with SearchRepository.getIcon(getSearchType()).
-     */
-    public void setSearchEngineIcon(int drawableRes) {
-        mSearchEngineIcon = drawableRes;
-        if (mAddressBarButton == null) {
-            return;
-        }
-        mAddressBarButton.setIconResource(drawableRes);
-        if (isBrandEngineIcon()) {
-            mAddressBarButton.setIconTint(null);
-        } else {
-            mAddressBarButton.setIconTintResource(R.color.md_theme_onSurface);
-        }
-    }
-
-    /** True when a real (coloured) engine icon is set — not the magnifier
-     *  fallback and not browser mode (where the button is the security icon). */
-    private boolean isBrandEngineIcon() {
-        return mHomeEnabled
-                && mSearchEngineIcon != 0
-                && mSearchEngineIcon != R.drawable.ic_search_24;
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -533,14 +501,9 @@ public class GeckoToolbar extends FrameLayout implements View.OnClickListener, V
             mEditText.setAutoCompleteHighlightColor(highlightColor);
         }
 
-        // 4. Security button icon tint — but DON'T re-tint a full-colour search
-        //    engine brand icon on home (that would turn it monochrome).
+        // 4. Security button icon tint
         if (mAddressBarButton != null) {
-            if (isBrandEngineIcon()) {
-                mAddressBarButton.setIconTint(null);
-            } else {
-                mAddressBarButton.setIconTint(ColorStateList.valueOf(onSurfaceColor));
-            }
+            mAddressBarButton.setIconTint(ColorStateList.valueOf(onSurfaceColor));
         }
 
         // 5. Reload/stop button icon tint

@@ -127,23 +127,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         if (mGeckoStateViewModel != null) {
             mGeckoStateViewModel.ensureHomeTabIfEmpty();
         }
-        // Re-read in case the user just changed engine in the picker (a nav
-        // dialog dismiss returns this fragment to RESUMED).
-        refreshSearchEngineIcon();
-    }
-
-    /**
-     * Set the home address-bar button to the active search engine's icon
-     * (SearchRepository maps the engine name → its brand drawable; unmatched /
-     * custom engines fall back to the magnifier, which GeckoToolbar keeps
-     * monochrome-tinted).
-     */
-    private void refreshSearchEngineIcon() {
-        if (mGeckoToolbar == null || mSearchRepository == null) {
-            return;
-        }
-        mGeckoToolbar.setSearchEngineIcon(
-                mSearchRepository.getIcon(mSearchRepository.getSearchType()));
     }
 
     /**
@@ -213,10 +196,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
 
         mGeckoToolbar = v.findViewById(R.id.toolbar_layout);
         mGeckoToolbar.setListener(this);
-        // The home address-bar button opens the search-engine picker, so it
-        // shows the ACTIVE engine's icon (not a generic magnifier). Refreshed
-        // in onResume too, which fires when the picker dialog is dismissed.
-        refreshSearchEngineIcon();
 
         mAutoCompleteEditText = mGeckoToolbar.getAutoCompleteEditText();
         mAutoCompleteEditText.setOnTextChangedListener(this);
