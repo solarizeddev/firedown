@@ -3,11 +3,15 @@ package com.solarized.firedown.data.repository;
 import android.text.TextUtils;
 import androidx.lifecycle.LiveData;
 import androidx.paging.PagingSource;
+import androidx.sqlite.db.SimpleSQLiteQuery;
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.data.dao.WebHistoryDao;
 import com.solarized.firedown.data.di.Qualifiers;
 import com.solarized.firedown.data.entity.WebHistoryEntity;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
@@ -42,8 +46,67 @@ public class WebHistoryDataRepository {
         return mDao.getSearch(input);
     }
 
+    // Max autocomplete history rows (mirrors the LIMIT in the LIKE DAO query).
+    private static final int AUTOCOMPLETE_LIMIT = 3;
+
+    // FTS-backed autocomplete lookup over webhistory_fts (see WebHistoryDatabase).
+    // The old infix `LIKE '%term%'` was a full table scan on the (unbounded)
+    // history table on every keystroke; the FTS index makes the common prefix
+    // typeahead a seek instead.
+    private static final String FTS_SQL =
+            "SELECT * FROM webhistory WHERE uid IN "
+                    + "(SELECT docid FROM webhistory_fts WHERE webhistory_fts MATCH ?) "
+                    + "ORDER BY file_date DESC LIMIT ?";
+
     public List<WebHistoryEntity> getAutoCompleteSearch(String input) {
-        return mDao.getAutoCompleteSearch("%" + input + "%");
+        String match = toFtsPrefixQuery(input);
+        if (match == null) {
+            // The term sanitised to nothing the FTS 'simple' tokenizer indexes
+            // (e.g. all-punctuation, or a CJK-only term — the simple tokenizer
+            // isn't word-segmenting). Fall back to the infix scan so such a term
+            // never regresses to zero results.
+            return mDao.getAutoCompleteSearch("%" + input + "%");
+        }
+
+        List<WebHistoryEntity> fts = mDao.getAutoCompleteFts(
+                new SimpleSQLiteQuery(FTS_SQL, new Object[]{match, AUTOCOMPLETE_LIMIT}));
+        if (fts.size() >= AUTOCOMPLETE_LIMIT) {
+            return fts;
+        }
+
+        // FTS matches token PREFIXES (youtube* → youtube.com) but cannot match
+        // mid-token (tube → youtube). When the indexed query underfills, top up
+        // with the infix LIKE scan so that capability is preserved — this scan
+        // only runs on the rare underfill, so the common prefix path stays fully
+        // indexed. Dedup by uid; the FTS hits keep their leading (recency) order.
+        return mergeDistinctById(fts, mDao.getAutoCompleteSearch("%" + input + "%"));
+    }
+
+    // Turn the typed term into an FTS4 prefix query: lowercase, split on the
+    // ASCII non-alphanumerics the 'simple' tokenizer treats as separators, and
+    // append '*' to each token so it prefix-matches ("github co" → "github* co*",
+    // ANDed). Returns null when nothing indexable remains (caller falls back).
+    private static String toFtsPrefixQuery(String input) {
+        if (TextUtils.isEmpty(input)) return null;
+        StringBuilder sb = new StringBuilder();
+        for (String token : input.toLowerCase().split("[^\\p{Alnum}]+")) {
+            if (token.isEmpty()) continue;
+            if (sb.length() > 0) sb.append(' ');
+            sb.append(token).append('*');
+        }
+        return sb.length() == 0 ? null : sb.toString();
+    }
+
+    private static List<WebHistoryEntity> mergeDistinctById(
+            List<WebHistoryEntity> primary, List<WebHistoryEntity> extra) {
+        List<WebHistoryEntity> out = new ArrayList<>(primary);
+        Set<Integer> seen = new HashSet<>();
+        for (WebHistoryEntity e : primary) seen.add(e.getId());
+        for (WebHistoryEntity e : extra) {
+            if (out.size() >= AUTOCOMPLETE_LIMIT) break;
+            if (seen.add(e.getId())) out.add(e);
+        }
+        return out;
     }
 
     public LiveData<List<WebHistoryEntity>> getWebHistory(int limit) {

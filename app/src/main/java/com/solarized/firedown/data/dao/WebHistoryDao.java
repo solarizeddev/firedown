@@ -7,6 +7,8 @@ import androidx.room.Delete;
 import androidx.room.Insert;
 import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
+import androidx.room.RawQuery;
+import androidx.sqlite.db.SupportSQLiteQuery;
 
 
 import com.solarized.firedown.data.entity.WebHistoryEntity;
@@ -45,6 +47,14 @@ public interface WebHistoryDao {
      */
     @Query("SELECT * FROM webhistory WHERE file_url LIKE :search OR file_title LIKE :search ORDER BY file_date DESC LIMIT 3")
     List<WebHistoryEntity> getAutoCompleteSearch(String search);
+
+    // FTS-backed autocomplete lookup. @RawQuery because the query references the
+    // webhistory_fts virtual table, which is NOT a modeled Room entity (see
+    // WebHistoryDatabase) — a @Query would fail Room's compile-time SQL
+    // verification ("no such table"). The SQL + bound args are built in
+    // WebHistoryDataRepository.getAutoCompleteSearch.
+    @RawQuery
+    List<WebHistoryEntity> getAutoCompleteFts(SupportSQLiteQuery query);
 
     @Query("SELECT * FROM webhistory ORDER BY file_date DESC LIMIT 20")
     List<WebHistoryEntity> getAutoCompleteHistory();
