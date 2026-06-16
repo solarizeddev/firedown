@@ -47,6 +47,7 @@ import com.google.android.material.snackbar.Snackbar;
 import com.solarized.firedown.GlideHelper;
 import com.solarized.firedown.R;
 import com.solarized.firedown.Keys;
+import com.solarized.firedown.data.RestoredFileAccess;
 import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.lanshare.LanShareServer;
 import com.solarized.firedown.lanshare.LanShareTls;
@@ -135,7 +136,10 @@ public class LanShareFragment extends BaseFocusFragment {
         }
 
         File file = new File(mDownloadEntity.getFilePath());
-        if (!file.exists() || !file.canRead()) {
+        // Readable directly when owned, or via the persisted SAF grant for a
+        // foreign-owned RESTORED file — openableUri returns null only when
+        // neither works (then there's genuinely nothing to serve).
+        if (RestoredFileAccess.openableUri(requireContext(), mDownloadEntity.getFilePath()) == null) {
             makeSnackbar(R.string.lan_share_no_network);
             return null;
         }
@@ -148,14 +152,15 @@ public class LanShareFragment extends BaseFocusFragment {
         // — that label is Firedown's internal/UI value and serves a wrong or
         // unusable Content-Type to the receiving browser.
         String mime = FileUriHelper.getMimeTypeFromFile(file.getName());
-        mSharedFile = new LanShareServer.SharedFile(file.getName(), file, mime);
+        mSharedFile = new LanShareServer.SharedFile(requireContext(), file.getName(), file, mime);
 
         // Shared-file card: the real thumbnail (same Glide pipeline as the
         // Downloads rows), name, and a MIME · size tag.
         ShapeableImageView thumb = mView.findViewById(R.id.lan_share_thumb);
         GlideHelper.load(mDownloadEntity, new RequestOptions(), thumb);
         ((TextView) mView.findViewById(R.id.lan_share_file_name)).setText(file.getName());
-        String size = StoragePaths.convertToStringRepresentation(file.length());
+        String size = StoragePaths.convertToStringRepresentation(
+                RestoredFileAccess.length(requireContext(), mDownloadEntity.getFilePath()));
         String mimeWord = FileUriHelper.getLongMimeText(requireContext(), mime);
         ((TextView) mView.findViewById(R.id.lan_share_file_tag)).setText(
                 mimeWord != null

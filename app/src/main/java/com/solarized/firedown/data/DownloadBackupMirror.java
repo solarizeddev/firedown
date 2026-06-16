@@ -637,6 +637,15 @@ public final class DownloadBackupMirror {
                     // rows, but a tampered/foreign mirror must not be able to
                     // inject entries into the vault list.
                     values.put("file_safe", 0);
+                    // A restored file is re-owned via the SAF grant — its
+                    // thumbnail availability must be RE-DERIVED, never trusted
+                    // from the mirror (which may predate the file or carry a
+                    // stale negative-cache from a pre-grant access failure).
+                    // Clear it so the Glide pipeline retries instead of
+                    // short-circuiting to a mime icon forever.
+                    if (liveColumns.contains("file_thumbnail_unavailable")) {
+                        values.put("file_thumbnail_unavailable", 0);
+                    }
                     String rowPath = values.getAsString("file_path");
                     if (TextUtils.isEmpty(rowPath) || existingPaths.contains(rowPath)) {
                         continue;
