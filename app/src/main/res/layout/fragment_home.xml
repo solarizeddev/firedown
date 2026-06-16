@@ -173,9 +173,9 @@
 
                         </LinearLayout>
 
-                        <!-- Live trend line: today's blocked delta. Hidden at 0
-                             (bound in HomeFragment) so the card never reads
-                             "+0 today". -->
+                        <!-- Live trend line: today's blocked count. Always shown
+                             (bound in HomeFragment) — reads "0 today" on a quiet
+                             day so the column never looks empty. -->
                         <TextView
                             android:id="@+id/home_trackers_trend"
                             android:layout_width="wrap_content"
@@ -184,9 +184,7 @@
                             android:textColor="@color/brand_orange"
                             android:textSize="11sp"
                             android:textStyle="bold"
-                            android:visibility="gone"
-                            tools:text="+340 today"
-                            tools:visibility="visible" />
+                            tools:text="+340 today" />
 
                     </LinearLayout>
 

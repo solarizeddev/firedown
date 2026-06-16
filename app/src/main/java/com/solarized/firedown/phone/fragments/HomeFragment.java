@@ -297,20 +297,17 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
             mTrackersValue.setText(withSmallUnit(fmt.format(n)));
         });
 
-        // Trackers trend line — today's blocked delta ("+340 today"). Hidden at
-        // 0 so a quiet day never shows "+0 today".
+        // Trackers trend line — today's blocked count. Always shown: a positive
+        // count gets a leading "+" ("+340 today"), a quiet day reads "0 today"
+        // so the column never looks empty.
         mGeckoUblockHelper.getTodayBlockedLive().observe(getViewLifecycleOwner(), today -> {
             if (mTrackersTrend == null) return;
             long n = today == null ? 0L : today;
-            if (n <= 0) {
-                mTrackersTrend.setVisibility(View.GONE);
-                return;
-            }
             CompactDecimalFormat fmt = CompactDecimalFormat.getInstance(
                     Locale.getDefault(), CompactDecimalFormat.CompactStyle.SHORT);
             fmt.setMaximumFractionDigits(1);
-            mTrackersTrend.setText(getString(R.string.home_stat_trend_today, fmt.format(n)));
-            mTrackersTrend.setVisibility(View.VISIBLE);
+            String count = (n > 0 ? "+" : "") + fmt.format(n);
+            mTrackersTrend.setText(getString(R.string.home_stat_trend_today, count));
         });
 
         // Stats card column 2 — total saved: live sum of finished regular
