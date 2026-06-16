@@ -175,8 +175,12 @@ public class GeckoToolbar extends FrameLayout implements View.OnClickListener, V
         if (mHomeEnabled) {
             mAddressBarButton.setIconTintResource(R.color.md_theme_onSurface);
             // Magnifier + dropdown chevron — the button opens the search-engine
-            // picker, so the chevron hints "selector" rather than "search".
+            // picker, so the chevron hints "selector" rather than "search". It's
+            // a horizontal glyph pair, so render it in a LARGER icon box than the
+            // default single-glyph size or the magnifier ends up half-size.
             mAddressBarButton.setIconResource(R.drawable.ic_search_dropdown_24);
+            mAddressBarButton.setIconSize(
+                    getResources().getDimensionPixelSize(R.dimen.app_bar_icon_size_home));
             mGeckoProgressBar.setVisibility(View.GONE);
             mReloadButton.setVisibility(View.GONE);
         }
