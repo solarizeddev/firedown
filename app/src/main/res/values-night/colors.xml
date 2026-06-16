@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Soft coral glow behind the home flame on the dark/true-black home
+         (~30% of brand_orange, fades to transparent in bg_flame_glow). The
+         light variant is transparent — glow only on dark. -->
+    <color name="home_flame_glow">#4DF0716C</color>
     <color name="ic_launcher_background">@color/md_theme_surface</color>
     <color name="md_theme_primary">#f0716c</color>
     <color name="md_theme_onPrimary">#68000C</color>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Subtle radial coral glow behind the home flame. Theme-aware via
+  @color/home_flame_glow: TRANSPARENT in light (no glow on the cream home, where
+  a glow only smudges), a soft coral in values-night (the flame is the lone point
+  of colour on the true-black home, so a faint halo makes it read as lit, not
+  lonely). Flat-friendly — the gradient's own transparent falloff IS the glow,
+  no blur view. Radius 50dp matches the 100dp host box (fades to nothing at the
+  edge).
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <gradient
+        android:type="radial"
+        android:gradientRadius="50dp"
+        android:startColor="@color/home_flame_glow"
+        android:endColor="@android:color/transparent" />
+</shape>

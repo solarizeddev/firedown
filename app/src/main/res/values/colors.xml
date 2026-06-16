@@ -2,6 +2,10 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <color name="ic_launcher_background">@color/md_theme_background</color>
     <color name="brand_orange">#f0716c</color>
+    <!-- Glow behind the home flame (see bg_flame_glow). Transparent here so the
+         light/cream home has NO glow (it only smudges); a soft coral in
+         values-night gives the dark/true-black home a faint, lit halo. -->
+    <color name="home_flame_glow">#00F0716C</color>
     <color name="incognito">#FF391D5B</color>
     <color name="white">#FFFFFFFF</color>
     <color name="transparent">#00FFFFFF</color>
