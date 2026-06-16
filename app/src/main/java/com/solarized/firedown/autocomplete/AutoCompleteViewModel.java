@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
 
 import javax.inject.Inject;
 
@@ -155,11 +156,17 @@ public class AutoCompleteViewModel extends ViewModel {
     /**
      * The debounced body of {@link #search(CharSequence)} — runs on the main
      * thread after the quiet window, then submits the blocking lookup to the
-     * background executor. Two-phase: posts the on-device rows (history / open
-     * tabs / bookmarks) the moment they're ready, then posts the merged list once
-     * the network suggestions arrive — so the dropdown is never blocked behind
-     * the network call. The generation counter discards both posts of a search
-     * that has since been superseded.
+     * background executor.
+     *
+     * <p>The local-first phase (posting the on-device history/tabs/bookmarks
+     * before the network suggestions arrive) is emitted ONLY when the dropdown is
+     * currently EMPTY — i.e. its first paint, where showing instant on-device
+     * results matters. While results are already showing (steady-state typing),
+     * a local-only phase would briefly DROP the network suggestions and re-add
+     * them on the second post, which reads as a flicker on every keystroke. There
+     * we post just ONCE — the merged list — for a single smooth update. The
+     * generation counter discards posts of a search that has since been
+     * superseded.
      */
     private void runSearch(String searchTerm) {
         mPendingSearch = null;
@@ -167,15 +174,19 @@ public class AutoCompleteViewModel extends ViewModel {
         mCurrentSearchTerm = searchTerm;
         final long gen = mSearchGen.incrementAndGet();
 
+        List<AutoCompleteEntity> shown = mSearchData.getValue();
+        final boolean emitLocalFirst = (shown == null || shown.isEmpty());
+
         mSearchFuture = mAutoCompleteExecutor.submit(() -> {
             try {
-                List<AutoCompleteEntity> full = mAutoCompleteSearch.searchSync(searchTerm, local -> {
-                    // Phase 1: on-device results, posted the instant they're ready.
-                    if (gen == mSearchGen.get()) {
-                        mSearchData.postValue(local);
-                    }
-                });
-                // Phase 2: full list (local rows + network suggestions).
+                Consumer<List<AutoCompleteEntity>> localEmitter = emitLocalFirst
+                        ? local -> {
+                            if (gen == mSearchGen.get()) {
+                                mSearchData.postValue(local);
+                            }
+                        }
+                        : null;
+                List<AutoCompleteEntity> full = mAutoCompleteSearch.searchSync(searchTerm, localEmitter);
                 if (gen == mSearchGen.get()) {
                     mSearchData.postValue(full);
                 }
