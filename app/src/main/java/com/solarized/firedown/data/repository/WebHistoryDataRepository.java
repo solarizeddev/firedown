@@ -66,6 +66,11 @@ public class WebHistoryDataRepository {
     public void purgeDatabase() {
         // Purge records older than the retention window (HISTORY_RETENTION_INTERVAL).
         // Throttled to once/day by App.purgeDatabases().
+        //
+        // A non-positive window means "keep forever" — skip the purge entirely.
+        // Without this guard a NEVER (-1) window would compute a cutoff of
+        // now + 1ms and delete the ENTIRE history (file_date <= future).
+        if (Preferences.HISTORY_RETENTION_INTERVAL <= 0) return;
         mDiskExecutor.execute(() -> mDao.purgeDatabase(System.currentTimeMillis() - Preferences.HISTORY_RETENTION_INTERVAL));
     }
 

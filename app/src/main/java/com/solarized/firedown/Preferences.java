@@ -415,8 +415,13 @@ public class Preferences {
     public static final long THIRTY_DAYS_INTERVAL = 2_592_000_000L;
     public static final long NEVER_INTERVAL     = -1L;
 
-    /** Web-history retention window: entries older than this are purged. */
-    public static final long HISTORY_RETENTION_INTERVAL = 180L * ONE_DAY_INTERVAL;
+    /** Web-history retention window: entries older than this are purged.
+     *  NEVER_INTERVAL disables purging — history is kept indefinitely (like
+     *  Firefox, which expires history by storage size, not a fixed age). The
+     *  user can still clear it manually via the Delete-browsing dialog.
+     *  WebHistoryDataRepository.purgeDatabase guards this value (a non-positive
+     *  window must skip the purge, not delete everything). */
+    public static final long HISTORY_RETENTION_INTERVAL = NEVER_INTERVAL;
 
     public static final int LIST_LIMIT = 25;
 
