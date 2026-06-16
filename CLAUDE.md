@@ -925,9 +925,24 @@ content). History: `data_extraction.xml` used to be **empty**, which on API
 vault files, secret prefs) while the legacy exclusions were silently ignored
 — if you touch these files, never leave the 31+ rules empty, and mirror any
 change across both files. Scoped-storage caveat: restored entries point at
-the surviving public files, but on Android 13+ a reinstalled app doesn't OWN
-them (MediaStore attribution died with the uninstall), so playback may need
-a permission story even though the list+metadata are intact.
+the surviving public files, but on Android 11+ a reinstalled app doesn't OWN
+them (MediaStore attribution died with the uninstall), so a DIRECT
+`File`/`FileProvider` open `EACCES`-es (the symptom: restored rows with no
+thumbnail that play nothing). This is bridged by **`RestoredFileAccess`**: it
+maps a download's absolute path to a `DocumentsContract` child URI under the
+**persisted SAF tree grant** the restore flow already took
+(`DownloadBackupMirror.rememberRestoreTree`/`getRestoreTree`), and every read
+path tries the owned file FIRST, then that `content://` grant —
+`openableUri` (a `file://` for owned, `content://` for foreign) and
+`openReadOnly` (a `ParcelFileDescriptor`). Wired into the Glide `DownloadEntity`
+loaders (PFD + Uri) and `GlideHelper`/`ImageViewerFragment`'s raw-path loads
+(list/grid + viewer thumbnails), `MediaViewerFragment` (ExoPlayer via
+`DefaultDataSource` + the `MediaMetadataRetriever` aspect probe),
+`BaseFocusFragment.viewerUri` (text viewer / open-with) and `PlayerActivity`
+share. Scoped to non-vault entries on the player path so encrypted/safe
+playback is byte-identical. No new permission — it reuses the grant; a file on
+removable storage (not primary) or with no grant still falls back to "no
+access" gracefully.
 
 **Transport-free recovery — the encrypted PUBLIC mirror.** Auto Backup needs
 a backup transport (Google's = Play Services on stock devices; Seedvault on
@@ -956,8 +971,9 @@ doors running one flow**: the Downloads **empty state** (`DownloadFragment`
 because a user with any downloads (or any filter active) can never see the
 empty state. Flow: confirm dialog → `OpenDocumentTree` pre-pointed at
 `Download/Firedown` (the scan accepts the `backup/` subfolder too) →
-persist the grant (kept in `backup_local.xml` for the future content-URI
-playback fallback on 13+) → `restoreFromTree` → snackbar with the count /
+persist the grant (kept in `backup_local.xml` — `RestoredFileAccess` reads it
+back as the content-URI access path for foreign-owned files, see the
+scoped-storage caveat above) → `restoreFromTree` → snackbar with the count /
 "no backup" / "different device". `importMirrorDatabase` dedups by
 `file_path` against the live table, so the flow is idempotent — tapping
 twice or restoring on a non-empty list never duplicates rows. Strings are

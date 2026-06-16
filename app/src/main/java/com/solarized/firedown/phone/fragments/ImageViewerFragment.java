@@ -30,6 +30,7 @@ import com.solarized.firedown.App;
 import com.solarized.firedown.GlideRequestOptions;
 import com.solarized.firedown.phone.PlayerActivity;
 import com.solarized.firedown.R;
+import com.solarized.firedown.data.RestoredFileAccess;
 import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.ui.ZoomableImageView;
 import com.solarized.firedown.utils.FileUriHelper;
@@ -195,7 +196,7 @@ public class ImageViewerFragment extends Fragment {
              * explicit start() guarantees animation. */
             Glide.with(this)
                     .asGif()
-                    .load(filePath)
+                    .load(RestoredFileAccess.openableUri(App.getAppContext(), filePath))
                     .diskCacheStrategy(DiskCacheStrategy.NONE)
                     .listener(new RequestListener<GifDrawable>() {
                         @Override
@@ -262,7 +263,7 @@ public class ImageViewerFragment extends Fragment {
             RequestOptions options = new RequestOptions().frame(interval)
                     .set(GlideRequestOptions.MIMETYPE, mimeType).set(GlideRequestOptions.FILEPATH, filePath);
             Glide.with(App.getAppContext())
-                    .load(filePath)
+                    .load(RestoredFileAccess.openableUri(App.getAppContext(), filePath))
                     .apply(options)
                     .listener(mRequestListener)
                     .fallback(R.drawable.ic_baseline_image_24)

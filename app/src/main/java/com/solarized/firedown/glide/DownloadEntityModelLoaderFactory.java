@@ -1,5 +1,6 @@
 package com.solarized.firedown.glide;
 
+import android.content.Context;
 import android.os.ParcelFileDescriptor;
 
 import androidx.annotation.NonNull;
@@ -12,10 +13,17 @@ import com.solarized.firedown.data.entity.DownloadEntity;
 
 
 public class DownloadEntityModelLoaderFactory implements ModelLoaderFactory<DownloadEntity, ParcelFileDescriptor> {
+
+    private final Context mContext;
+
+    public DownloadEntityModelLoaderFactory(@NonNull Context context) {
+        mContext = context.getApplicationContext();
+    }
+
     @NonNull
     @Override
     public ModelLoader<DownloadEntity, ParcelFileDescriptor> build(@NonNull MultiModelLoaderFactory multiFactory) {
-        return new DownloadEntityModelLoader();
+        return new DownloadEntityModelLoader(mContext);
     }
 
     @Override

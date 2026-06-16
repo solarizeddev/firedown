@@ -64,8 +64,8 @@ public class GlideModule extends AppGlideModule {
 
         registry.register(SVG.class, PictureDrawable.class, new SvgDrawableTranscoder());
         registry.replace(GlideUrl.class, InputStream.class, new OkHttpUrlLoader.Factory(client));
-        registry.append(DownloadEntity.class, ParcelFileDescriptor.class, new DownloadEntityModelLoaderFactory());
-        registry.append(DownloadEntity.class, Uri.class, new DownloadEntityUriModelLoaderFactory());
+        registry.append(DownloadEntity.class, ParcelFileDescriptor.class, new DownloadEntityModelLoaderFactory(context));
+        registry.append(DownloadEntity.class, Uri.class, new DownloadEntityUriModelLoaderFactory(context));
         registry.append(ParcelFileDescriptor.class, Bitmap.class, new PdfDecoder(glide.getBitmapPool()));
         registry.append(Registry.BUCKET_BITMAP, GlideUrl.class, Bitmap.class, new FFmpegGlideUrlDecoder(glide.getBitmapPool()));
         registry.append(Registry.BUCKET_BITMAP, Uri.class, Bitmap.class, new FFmpegUriDecoder(glide.getBitmapPool()));

@@ -34,6 +34,7 @@ import java.util.List;
 
 import com.google.android.material.snackbar.Snackbar;
 import com.solarized.firedown.R;
+import com.solarized.firedown.data.RestoredFileAccess;
 import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.phone.fragments.ImageViewerFragment;
 import com.solarized.firedown.phone.fragments.MediaViewerFragment;
@@ -467,7 +468,13 @@ public class PlayerActivity extends AppCompatActivity {
             String filePath = mDownloadEntity.getFilePath();
             if(filePath != null){
                 File file = new File(filePath);
-                Uri uri = FileProvider.getUriForFile(this, getPackageName() + ".fileprovider", file);
+                // FileProvider can't serve a foreign-owned RESTORED file; fall
+                // back to the persisted SAF content:// grant (ShareCompat adds
+                // FLAG_GRANT_READ_URI_PERMISSION for the stream either way).
+                Uri openable = RestoredFileAccess.openableUri(this, filePath);
+                Uri uri = (openable != null && "content".equals(openable.getScheme()))
+                        ? openable
+                        : FileProvider.getUriForFile(this, getPackageName() + ".fileprovider", file);
                 Intent intent = new ShareCompat.IntentBuilder(this)
                         .setType(mimeType)
                         .setChooserTitle(getString(R.string.share))

@@ -27,6 +27,7 @@ import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.Target;
 import com.bumptech.glide.signature.ObjectKey;
 import com.solarized.firedown.data.Download;
+import com.solarized.firedown.data.RestoredFileAccess;
 import com.solarized.firedown.data.entity.BrowserDownloadEntity;
 import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.data.repository.DownloadDataRepository;
@@ -345,7 +346,7 @@ public class GlideHelper {
                 .set(GlideRequestOptions.FILEPATH, entity.getFilePath());
 
         if (FileUriHelper.isGIF(mimeType) || FileUriHelper.isWEP(mimeType) || FileUriHelper.isSVG(mimeType)) {
-            Glide.with(image).load(entity.getFilePath())
+            Glide.with(image).load(RestoredFileAccess.openableUri(App.getAppContext(), entity.getFilePath()))
                     .listener(fallbackListener(mimeType, image))
                     .apply(options)
                     .into(image);
@@ -394,7 +395,7 @@ public class GlideHelper {
                     .into(image);
 
         } else if (FileUriHelper.isApk(mimeType)) {
-            Glide.with(image).load(entity.getFilePath())
+            Glide.with(image).load(RestoredFileAccess.openableUri(App.getAppContext(), entity.getFilePath()))
                     .signature(new ObjectKey(entity.getId()))
                     .listener(fallbackListener(mimeType, image))
                     .apply(options)
@@ -445,7 +446,7 @@ public class GlideHelper {
                 .set(GlideRequestOptions.FILEPATH, entity.getFilePath());
 
         if (FileUriHelper.isGIF(mimeType) || FileUriHelper.isWEP(mimeType) || FileUriHelper.isSVG(mimeType)) {
-            return glide.load(entity.getFilePath()).apply(options);
+            return glide.load(RestoredFileAccess.openableUri(App.getAppContext(), entity.getFilePath())).apply(options);
         }
 
         if (FileUriHelper.isImage(mimeType) || FileUriHelper.isPdf(mimeType)) {
@@ -473,7 +474,7 @@ public class GlideHelper {
         }
 
         if (FileUriHelper.isApk(mimeType)) {
-            return glide.load(entity.getFilePath())
+            return glide.load(RestoredFileAccess.openableUri(App.getAppContext(), entity.getFilePath()))
                     .signature(new ObjectKey(entity.getId()))
                     .apply(options);
         }
