@@ -399,11 +399,11 @@ public class Preferences {
     public static final String SETTINGS_BLOCK_COOKIE_NOTICES = "com.solarized.firedown.preferences.ublock.block.cookie.notices";
     public static final boolean DEFAULT_BLOCK_COOKIE_NOTICES = false;
 
-    public static final String DEFAULT_SEARCH_ENGINE = "Ecosia";
+    public static final String DEFAULT_SEARCH_ENGINE = "DuckDuckGo";
 
-    public static final String DEFAULT_SEARCH_AUTOCOMPLETE = "https://ac.ecosia.org/?q=%s&type=list";
+    public static final String DEFAULT_SEARCH_AUTOCOMPLETE = "https://duckduckgo.com/ac/?q=%s&type=list";
 
-    public static final String DEFAULT_SEARCH_FORMAT = "https://www.ecosia.org/search?q=%s";
+    public static final String DEFAULT_SEARCH_FORMAT = "https://duckduckgo.com/?q=%s&ia=web";
 
     public static final int DEFAULT_DOWNLOADS = 0;
 
