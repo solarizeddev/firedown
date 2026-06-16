@@ -4,8 +4,8 @@
   with the stock dropdown caret (arrow_drop_down_24) to its right, composed as a
   layer-list so we reuse the real, properly-drawn Material assets instead of a
   hand-rolled combined path. The button opens the search-engine picker, so the
-  caret reads as "selector". Rendered in app_bar_icon_size_home (36dp) so the
-  24dp magnifier + 12dp caret sit side by side at full size; the button's
+  caret reads as "selector". Rendered in app_bar_icon_size_home (38dp) so the
+  24dp magnifier + 14dp caret sit side by side at full size; the button's
   iconTint recolours both layers to onSurface.
 -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
@@ -15,8 +15,8 @@
         android:drawable="@drawable/ic_search_24"
         android:gravity="start|center_vertical" />
     <item
-        android:width="12dp"
-        android:height="12dp"
+        android:width="14dp"
+        android:height="14dp"
         android:drawable="@drawable/arrow_drop_down_24"
         android:gravity="end|center_vertical" />
 </layer-list>
