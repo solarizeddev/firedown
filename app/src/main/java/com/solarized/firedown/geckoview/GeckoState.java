@@ -590,14 +590,14 @@ public class GeckoState {
         // the real title arrives. mCurrentPageKey (not the entity URI) is the
         // gate on purpose — the caller already overwrote the entity URI with the
         // new value before we run, so "previous" is only knowable from here.
+        String newHost = normalizedHost(uri);
         if (mCurrentPageKey != null) {
             setEntityTitle(null);
-            String newHost = normalizedHost(uri);
             if (mCurrentPageHost == null || !mCurrentPageHost.equals(newHost)) {
                 setEntityIcon(null);
             }
         }
-        mCurrentPageHost = normalizedHost(uri);
+        mCurrentPageHost = newHost;
         mCurrentPageKey = key;
 
         Integer known = mVisitIdByKey.get(key);
