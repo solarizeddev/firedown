@@ -94,6 +94,32 @@ public final class RestoredFileAccess {
     }
 
     /**
+     * The byte length of a download's file: {@code File.length()} when owned,
+     * else the SAF descriptor's stat size for a foreign-owned restored file,
+     * or {@code 0} when neither is available.
+     */
+    public static long length(@NonNull Context context, @Nullable String absPath) {
+        if (TextUtils.isEmpty(absPath)) {
+            return 0;
+        }
+        File file = new File(absPath);
+        if (file.canRead()) {
+            return file.length();
+        }
+        try (ParcelFileDescriptor pfd = openReadOnly(context, absPath)) {
+            if (pfd != null) {
+                long size = pfd.getStatSize();
+                return size > 0 ? size : 0;
+            }
+        } catch (Exception e) {
+            if (BuildConfig.DEBUG) {
+                Log.d(TAG, "length: failed", e);
+            }
+        }
+        return 0;
+    }
+
+    /**
      * Map an absolute path under primary shared storage to a child document
      * URI of the persisted restore tree grant, or {@code null} when there is
      * no grant or the path isn't under it. The externalstorage provider maps a

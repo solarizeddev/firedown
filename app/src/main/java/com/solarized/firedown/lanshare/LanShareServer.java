@@ -1,7 +1,9 @@
 package com.solarized.firedown.lanshare;
 
+import android.content.Context;
 import android.content.res.AssetManager;
 import android.net.Uri;
+import android.os.ParcelFileDescriptor;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -9,6 +11,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.solarized.firedown.BuildConfig;
+import com.solarized.firedown.data.RestoredFileAccess;
 
 import org.json.JSONObject;
 
@@ -110,8 +113,14 @@ public final class LanShareServer {
         public final String name;
         public final File file;
         public final String mime;
+        /** App context, so the server can open a foreign-owned RESTORED file
+         *  through the persisted SAF grant (RestoredFileAccess) rather than a
+         *  bare FileInputStream that would EACCES. */
+        public final Context context;
 
-        public SharedFile(@NonNull String name, @NonNull File file, @Nullable String mime) {
+        public SharedFile(@NonNull Context context, @NonNull String name,
+                          @NonNull File file, @Nullable String mime) {
+            this.context = context.getApplicationContext();
             this.name = name;
             this.file = file;
             this.mime = TextUtils.isEmpty(mime) ? "application/octet-stream" : mime;
@@ -1042,7 +1051,7 @@ public final class LanShareServer {
                     .replace("{{NAME}}", escapeHtml(f.name))
                     .replace("{{NAMEURL}}", Uri.encode(f.name))
                     .replace("{{TYPE}}", tr(t, typeLabelKey(f.mime)))
-                    .replace("{{SIZE}}", formatSize(f.file.length()))
+                    .replace("{{SIZE}}", formatSize(RestoredFileAccess.length(f.context, f.file.getPath())))
                     .replace("{{INDEX}}", Integer.toString(i)));
         }
         String count = mFiles.size() == 1
@@ -1158,32 +1167,44 @@ public final class LanShareServer {
     private void sendFile(OutputStream out, SharedFile shared,
                           Map<String, String> t, String lang) throws IOException {
         File file = shared.file;
-        if (!file.exists() || !file.canRead()) {
+        // Open through RestoredFileAccess: the owned file directly, or a
+        // foreign-owned RESTORED file via the persisted SAF grant (a bare
+        // FileInputStream EACCES-es on the latter).
+        ParcelFileDescriptor pfd = RestoredFileAccess.openReadOnly(shared.context, file.getPath());
+        if (pfd == null) {
             sendHtml(out, 404, localize(page("notfound.html"), t, lang));
             return;
         }
-        long length = file.length();
-        // RFC 6266 / RFC 8187: ASCII fallback + UTF-8 form for non-ASCII names.
-        String asciiName = shared.name.replaceAll("[^\\x20-\\x7E]", "_").replace("\"", "'");
-        String encodedName = Uri.encode(shared.name);
-        String head = "HTTP/1.1 200 OK\r\n"
-                + "Content-Type: " + shared.mime + "\r\n"
-                + "Content-Length: " + length + "\r\n"
-                + "Content-Disposition: attachment; filename=\"" + asciiName
-                + "\"; filename*=UTF-8''" + encodedName + "\r\n"
-                + "Cache-Control: no-store\r\n"
-                + "Connection: close\r\n\r\n";
-        out.write(head.getBytes(StandardCharsets.UTF_8));
-        byte[] buffer = new byte[64 * 1024];
-        try (FileInputStream fis = new FileInputStream(file)) {
-            int n;
-            while ((n = fis.read(buffer)) > 0) {
-                if (!mRunning.get()) {
-                    return; // stop() mid-transfer — socket is going away anyway
+        try {
+            long statSize = pfd.getStatSize();
+            long length = statSize > 0 ? statSize : file.length();
+            // RFC 6266 / RFC 8187: ASCII fallback + UTF-8 form for non-ASCII names.
+            String asciiName = shared.name.replaceAll("[^\\x20-\\x7E]", "_").replace("\"", "'");
+            String encodedName = Uri.encode(shared.name);
+            String head = "HTTP/1.1 200 OK\r\n"
+                    + "Content-Type: " + shared.mime + "\r\n"
+                    + "Content-Length: " + length + "\r\n"
+                    + "Content-Disposition: attachment; filename=\"" + asciiName
+                    + "\"; filename*=UTF-8''" + encodedName + "\r\n"
+                    + "Cache-Control: no-store\r\n"
+                    + "Connection: close\r\n\r\n";
+            out.write(head.getBytes(StandardCharsets.UTF_8));
+            byte[] buffer = new byte[64 * 1024];
+            try (FileInputStream fis = new FileInputStream(pfd.getFileDescriptor())) {
+                int n;
+                while ((n = fis.read(buffer)) > 0) {
+                    if (!mRunning.get()) {
+                        return; // stop() mid-transfer — socket is going away anyway
+                    }
+                    out.write(buffer, 0, n);
                 }
-                out.write(buffer, 0, n);
+            }
+            out.flush();
+        } finally {
+            try {
+                pfd.close();
+            } catch (IOException ignored) {
             }
         }
-        out.flush();
     }
 }

@@ -19,6 +19,8 @@ import com.bumptech.glide.RequestManager;
 import com.bumptech.glide.load.DataSource;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.engine.GlideException;
+
+import java.io.FileNotFoundException;
 import com.bumptech.glide.load.model.GlideUrl;
 import com.bumptech.glide.load.model.LazyHeaders;
 import com.bumptech.glide.load.resource.bitmap.VideoDecoder;
@@ -174,8 +176,18 @@ public class GlideHelper {
             public boolean onLoadFailed(GlideException e, Object model,
                                         @NonNull Target<T> target, boolean isFirstResource) {
                 image.setImageDrawable(generateThumbnail(mimeType, image));
+                // Only negative-cache a GENUINE decode failure (file opened,
+                // no extractable frame). An ACCESS failure
+                // (FileNotFoundException / EACCES) is transient — e.g. a
+                // RESTORED foreign-owned file before its SAF grant resolves,
+                // or shared storage before the permission is held. Poisoning
+                // on that would permanently stick the mime icon even once the
+                // file becomes readable (the short-circuit at the top of
+                // load() never retries). Same "trust is per path" stance as
+                // MediaListenerWorker.
                 if (entity.getFileStatus() == Download.FINISHED
-                        && !entity.isFileThumbnailUnavailable()) {
+                        && !entity.isFileThumbnailUnavailable()
+                        && !isAccessFailure(e)) {
                     markThumbnailUnavailableAsync(image.getContext(), entity);
                 }
                 return true; // handled
@@ -188,6 +200,26 @@ public class GlideHelper {
                 return false; // let Glide handle it
             }
         };
+    }
+
+    /**
+     * Whether a Glide load failed because the file couldn't be OPENED (an
+     * access error: {@link FileNotFoundException}, which is how an EACCES on a
+     * foreign-owned restored file surfaces) rather than because it decoded to
+     * nothing. Access failures are transient and must not poison the
+     * negative-cache. Walks the GlideException root causes since the real
+     * cause is nested under the per-decoder wrapper exceptions.
+     */
+    private static boolean isAccessFailure(GlideException e) {
+        if (e == null) {
+            return false;
+        }
+        for (Throwable cause : e.getRootCauses()) {
+            if (cause instanceof FileNotFoundException) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
