@@ -8,10 +8,10 @@
     <dimen name="address_bar_radius_focused">24dp</dimen>
     <dimen name="app_bar_size">64dp</dimen>
     <dimen name="app_bar_icon_size">24dp</dimen>
-    <!-- Home search glyph (magnifier + dropdown chevron) is a horizontal pair,
-         so it needs a larger icon box than a single glyph or the magnifier
-         renders half-size. The 48dp button has room. -->
-    <dimen name="app_bar_icon_size_home">34dp</dimen>
+    <!-- Home search glyph is a layer-list pairing the 24dp magnifier with a
+         12dp dropdown caret side by side, so the icon box must be 24+12 = 36dp
+         (a smaller box would clip/overlap them). The 48dp button has room. -->
+    <dimen name="app_bar_icon_size_home">36dp</dimen>
     <dimen name="app_bar_fab_elevation">12dp</dimen>
     <dimen name="app_bar_fab_margin">16dp</dimen>
     <dimen name="autocomplete_elevation">20dp</dimen>
