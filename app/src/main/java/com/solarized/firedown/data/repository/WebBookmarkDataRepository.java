@@ -191,6 +191,24 @@ public class WebBookmarkDataRepository {
         mDiskExecutor.execute(() -> mWebBookmarkDao.updateIcon(id, iconUrl));
     }
 
+    /**
+     * Backfills the title for whichever bookmark matches the canonical id of
+     * this URL — but ONLY when the stored title is still a placeholder
+     * (empty / "about:blank"). Called from onTitleChange when the page's real
+     * title arrives, to repair a bookmark that was created while the page was
+     * still loading (its title snapshot was empty). The DAO's WHERE clause does
+     * the placeholder check, so a user's renamed bookmark is never overwritten;
+     * the sync-set check skips the disk hop for the common "title arrived for a
+     * URL we don't track" case. Mirrors {@link #updateIcon}.
+     */
+    public void updateTitle(String url, String title) {
+        if (TextUtils.isEmpty(url) || TextUtils.isEmpty(title)) return;
+        int id = bookmarkIdFor(url);
+        if (!mSyncEntities.contains(id)) return;
+        String capitalized = Utils.capitalize(title);
+        mDiskExecutor.execute(() -> mWebBookmarkDao.updateTitleIfPlaceholder(id, capitalized));
+    }
+
     public void getId(int id, DataCallback<WebBookmarkEntity> callback){
         mDiskExecutor.execute(() -> {
             try {

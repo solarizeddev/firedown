@@ -29,6 +29,7 @@ import com.solarized.firedown.data.entity.GeckoStateEntity;
 import com.solarized.firedown.data.entity.WebHistoryEntity;
 import com.solarized.firedown.data.repository.GeckoStateDataRepository;
 import com.solarized.firedown.data.repository.IncognitoStateRepository;
+import com.solarized.firedown.data.repository.WebBookmarkDataRepository;
 import com.solarized.firedown.data.repository.WebHistoryDataRepository;
 import com.solarized.firedown.geckoview.media.GeckoMediaController;
 import com.solarized.firedown.utils.FileUriHelper;
@@ -89,6 +90,8 @@ public class GeckoComponents {
     private final GeckoStateDataRepository mGeckoStateDataRepository;
     private final IncognitoStateRepository mIncognitoStateRepository;
     private final WebHistoryDataRepository mWebHistoryDataRepository;
+
+    private final WebBookmarkDataRepository mWebBookmarkDataRepository;
     private final GeckoMediaController mGeckoMediaController;
     private final GeckoRuntimeHelper mGeckoRuntimeHelper;
     /** File-upload prompt staging (copyToCache of user-picked files, possibly
@@ -106,6 +109,7 @@ public class GeckoComponents {
             GeckoStateDataRepository geckoStateRepository,
             IncognitoStateRepository incognitoStateRepository,
             WebHistoryDataRepository webHistoryRepository,
+            WebBookmarkDataRepository webBookmarkRepository,
             GeckoRuntimeHelper geckoRuntimeHelper,
             GeckoObserverRegistry observerRegistry,
             SharedPreferences sharedPreferences,
@@ -117,6 +121,7 @@ public class GeckoComponents {
         this.mGeckoStateDataRepository = geckoStateRepository;
         this.mIncognitoStateRepository = incognitoStateRepository;
         this.mWebHistoryDataRepository = webHistoryRepository;
+        this.mWebBookmarkDataRepository = webBookmarkRepository;
         this.mGeckoRuntimeHelper = geckoRuntimeHelper;
         this.mGeckoObserverRegistry = observerRegistry;
         this.mGeckoMediaController = geckoMediaController;
@@ -690,6 +695,19 @@ public class GeckoComponents {
                 // autocomplete.
                 mWebHistoryDataRepository.updateTitle(url, title);
             }
+
+            // Backfill a PLACEHOLDER bookmark title once the page's real title
+            // arrives. A bookmark made while the page was still loading captured
+            // an empty/"About:blank" title — onTitleChange fires later than the
+            // bookmark tap, and onLocationChange has already cleared any prior
+            // page's title (see GeckoState) — and there is otherwise NO
+            // bookmark-title repair (only the favicon is backfilled, via
+            // IconsRepository), so it would read "About:blank" forever. The repo
+            // updates ONLY a placeholder title (the DAO guards on empty/about:blank)
+            // so a user's renamed bookmark is never overwritten, and no-ops when
+            // the url isn't bookmarked — so this is safe to run regardless of
+            // incognito (a bookmark persists either way).
+            mWebBookmarkDataRepository.updateTitle(url, title);
 
             geckoState.setEntityTitle(title);
 

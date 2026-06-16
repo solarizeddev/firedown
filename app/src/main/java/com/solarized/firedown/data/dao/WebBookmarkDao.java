@@ -60,6 +60,18 @@ public interface WebBookmarkDao {
     @Query("UPDATE webbookmark SET file_icon = :icon WHERE uid = :id")
     int updateIcon(int id, String icon);
 
+    /**
+     * Backfills the title for a bookmark created before its page's real title
+     * arrived. PLACEHOLDER-ONLY: the WHERE clause restricts the update to a row
+     * whose title is still empty or the "About:blank" sentinel (capitalize() of
+     * the about:blank fallback getEntityTitle() returns when unset), so a user's
+     * renamed bookmark — any other title — is never touched. Returns rows
+     * affected (0 = not bookmarked, or already has a real title; both no-ops).
+     */
+    @Query("UPDATE webbookmark SET file_title = :title WHERE uid = :id "
+            + "AND (file_title IS NULL OR file_title = '' OR LOWER(file_title) = 'about:blank')")
+    int updateTitleIfPlaceholder(int id, String title);
+
     @Delete
     Integer delete(WebBookmarkEntity web);
 
