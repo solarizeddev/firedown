@@ -44,19 +44,17 @@
         android:overScrollMode="never"
         app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior">
 
-        <!-- gravity=center_vertical + the parent's fillViewport center the
-             single hero card in the screen, so the space below it reads as
-             intentional negative space rather than a layout that stopped short.
-             The extra paddingBottom (one bar-height) biases the centring UP to
-             optically compensate for the top toolbar — geometric-centring the
-             card within the scroll area lands it a touch low under the header. -->
+        <!-- Top-anchored: the hero card sits just below the search bar so the
+             two read as one home header, with the empty space falling to the
+             bottom (room to breathe above the bottom bar). Centring it floated
+             the card mid-screen with a large, disconnected gap under the search
+             bar — pronounced on tall devices. -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center_vertical"
             android:orientation="vertical"
-            android:paddingTop="6dp"
-            android:paddingBottom="@dimen/app_bar_size">
+            android:paddingTop="16dp"
+            android:paddingBottom="8dp">
 
 
             <!-- Unified hero card: the brand lockup IS the card header (logo +
