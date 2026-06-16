@@ -65,15 +65,16 @@
                 android:orientation="vertical"
                 android:paddingHorizontal="32dp">
 
-<!-- 100dp host box: the flame src draws at 40dp (30dp padding, fitCenter)
+<!-- 120dp host box: the flame src draws at 40dp (40dp padding, fitCenter)
                      while the bg_flame_glow radial fills the full box so the halo
-                     bleeds ~30dp around the flame. The glow is transparent on the
-                     light home; the wordmark's negative top margin pulls it back up
-                     under the flame (the glow box would otherwise add ~30dp). -->
+                     bleeds ~40dp around the flame — wide and soft, not a tight
+                     disc. Transparent on the light home; the wordmark's negative
+                     top margin pulls it back up under the flame (the glow box
+                     would otherwise add ~40dp). -->
                 <androidx.appcompat.widget.AppCompatImageView
-                    android:layout_width="100dp"
-                    android:layout_height="100dp"
-                    android:padding="30dp"
+                    android:layout_width="120dp"
+                    android:layout_height="120dp"
+                    android:padding="40dp"
                     android:background="@drawable/bg_flame_glow"
                     android:contentDescription="@string/app_name"
                     android:src="@drawable/ic_firedown_logo" />
@@ -81,7 +82,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="-16dp"
+                    android:layout_marginTop="-26dp"
                     android:letterSpacing="-0.02"
                     android:text="@string/app_name"
                     android:textColor="?attr/colorOnSurface"
