@@ -52,62 +52,73 @@
             android:paddingBottom="8dp">
 
 
-            <!-- Brand lockup: the small branded-colour logo next to a small
-                 "Firedown" wordmark (plain colorOnSurface — the colour lives in
-                 the mark, not the text). Compact; the splash already does the big
-                 reveal. -->
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingTop="40dp">
-
-                <androidx.appcompat.widget.AppCompatImageView
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
-                    android:contentDescription="@string/app_name"
-                    android:src="@drawable/ic_firedown_logo" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="9dp"
-                    android:text="@string/app_name"
-                    android:textColor="?attr/colorOnSurface"
-                    android:textSize="24sp"
-                    android:textStyle="bold"
-                    android:letterSpacing="-0.02" />
-
-            </LinearLayout>
-
-
-            <!-- Stats card (Brave-style): one contained surface split into three
-                 equal, independently-tappable columns — Trackers blocked
-                 (→ trackers info sheet), total Saved (→ Downloads), and the
-                 Safe Folder item count (→ vault). Each column owns a borderless
-                 ripple; the figures (home_*_value) are bound live in
-                 HomeFragment. Labels reuse existing strings (Blocked / Safe
-                 Folder); the icon carries each column's domain. -->
+            <!-- Unified hero card: the brand lockup IS the card header (logo +
+                 wordmark), a hairline splits it from the live stats, and the
+                 three columns (Trackers blocked → trackers info sheet, total
+                 Saved → Downloads, Safe Folder count → vault) are divided by
+                 thin rules. One cohesive surface instead of a floating logo
+                 above a separate box. Each column owns a borderless ripple;
+                 figures (home_*_value) bind in HomeFragment; labels reuse
+                 existing strings (Blocked / Safe Folder). -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/home_stats_card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="@dimen/list_spacing"
                 android:layout_marginEnd="@dimen/list_spacing"
-                android:layout_marginTop="16dp"
+                android:layout_marginTop="24dp"
                 app:cardBackgroundColor="?attr/colorSurfaceContainer"
-                app:cardCornerRadius="16dp"
+                app:cardCornerRadius="20dp"
                 app:cardElevation="0dp"
                 app:strokeWidth="0dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:baselineAligned="false"
-                    android:orientation="horizontal"
-                    android:paddingVertical="10dp">
+                    android:orientation="vertical">
+
+                    <!-- Header = brand lockup (logo + wordmark), left-aligned. -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingStart="16dp"
+                        android:paddingTop="15dp"
+                        android:paddingEnd="16dp"
+                        android:paddingBottom="13dp">
+
+                        <androidx.appcompat.widget.AppCompatImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:contentDescription="@string/app_name"
+                            android:src="@drawable/ic_firedown_logo" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="9dp"
+                            android:text="@string/app_name"
+                            android:textColor="?attr/colorOnSurface"
+                            android:textSize="18sp"
+                            android:textStyle="bold"
+                            android:letterSpacing="-0.02" />
+
+                    </LinearLayout>
+
+                    <!-- Hairline dividing the brand header from the stats. -->
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="?attr/colorOutlineVariant" />
+
+                    <!-- Stats row: three equal columns, thin rules between. -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:baselineAligned="false"
+                        android:orientation="horizontal"
+                        android:paddingVertical="14dp">
 
                     <!-- Trackers blocked → trackers info sheet -->
                     <LinearLayout
@@ -152,6 +163,12 @@
 
                     </LinearLayout>
 
+                    <View
+                        android:layout_width="1dp"
+                        android:layout_height="match_parent"
+                        android:layout_marginVertical="10dp"
+                        android:background="?attr/colorOutlineVariant" />
+
                     <!-- Total saved → Downloads -->
                     <LinearLayout
                         android:id="@+id/home_downloads_col"
@@ -195,6 +212,12 @@
 
                     </LinearLayout>
 
+                    <View
+                        android:layout_width="1dp"
+                        android:layout_height="match_parent"
+                        android:layout_marginVertical="10dp"
+                        android:background="?attr/colorOutlineVariant" />
+
                     <!-- Safe Folder item count → vault -->
                     <LinearLayout
                         android:id="@+id/home_safe_col"
@@ -235,6 +258,8 @@
                             android:text="@string/home_vault_button"
                             android:textAppearance="?attr/textAppearanceBodySmall"
                             android:textColor="?attr/colorOnSurfaceVariant" />
+
+                    </LinearLayout>
 
                     </LinearLayout>
 
