@@ -339,6 +339,7 @@
     <string name="lan_direct_failed">Директната връзка не можа да стартира</string>
     <string name="home_stat_saved">Запазено</string>
     <string name="home_stat_trend_empty">Изтегляния</string>
+    <string name="home_brand_tagline">Частен браузър и инструмент за изтегляне</string>
     <plurals name="home_safe_item_count">
         <item quantity="one">%d елемент</item>
         <item quantity="other">%d елемента</item>

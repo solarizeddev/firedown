@@ -351,6 +351,7 @@
     <string name="lan_direct_failed">सीधा कनेक्शन शुरू नहीं हो सका</string>
     <string name="home_stat_saved">सहेजा गया</string>
     <string name="home_stat_trend_empty">डाउनलोड</string>
+    <string name="home_brand_tagline">निजी ब्राउज़र और डाउनलोडर</string>
     <plurals name="home_safe_item_count">
         <item quantity="one">%d आइटम</item>
         <item quantity="other">%d आइटम</item>

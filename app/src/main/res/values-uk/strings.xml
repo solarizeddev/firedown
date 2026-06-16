@@ -367,6 +367,7 @@
     <string name="lan_direct_failed">Не вдалося почати пряме з\'єднання</string>
     <string name="home_stat_saved">Збережено</string>
     <string name="home_stat_trend_empty">Завантаження</string>
+    <string name="home_brand_tagline">Приватний браузер і завантажувач</string>
     <plurals name="home_safe_item_count">
         <item quantity="one">%d елемент</item>
         <item quantity="few">%d елементи</item>

@@ -44,14 +44,13 @@
         android:overScrollMode="never"
         app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior">
 
-        <!-- Two mutually-exclusive home cards share this frame; exactly one is
+        <!-- Two mutually-exclusive home views share this frame; exactly one is
              VISIBLE at a time (toggled in HomeFragment, see updateHomeCard):
 
-             * home_stats_card  — the live 3-up (trackers / saved / Safe Folder),
-               top-anchored (wrap_content + gravity=top) so it reads as one
-               header with the search bar, empty space falling to the bottom.
+             * home_brand_mark  — the calm steady-state home: a centred flame +
+               wordmark + tagline, nothing else (the minimalist landing).
              * home_onboard_card — the first-run "how capture works" card, shown
-               only while every figure is still zero. It is height=match_parent
+               once, while the onboarding flag is unset. It is height=match_parent
                so it FILLS the viewport (the parent NestedScrollView has
                fillViewport=true): in portrait it never scrolls (content + the
                weighted spacer inside fit the stretched height), and only when
@@ -63,270 +62,46 @@
             android:paddingBottom="8dp">
 
 
-            <!-- Unified hero card: the brand lockup IS the card header (logo +
-                 wordmark), a hairline splits it from the live stats, and the
-                 three columns (Trackers blocked → trackers info sheet, total
-                 Saved → Downloads, Safe Folder count → vault) are divided by
-                 thin rules. One cohesive surface instead of a floating logo
-                 above a separate box. Each column owns a borderless ripple;
-                 figures (home_*_value) bind in HomeFragment; labels reuse
-                 existing strings (Blocked / Safe Folder). -->
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/home_stats_card"
-                android:layout_width="match_parent"
+            <!-- Minimalist home: a calm, centred brand mark — flame +
+                 wordmark + one muted tagline — and nothing else. No stats,
+                 shortcuts, recents, or active-download strip; tabs and the
+                 downloads badge live in the bottom bar, the vault in the menu.
+                 Centred in the fillViewport frame via layout_gravity. Shown once
+                 the first-run onboarding card has retired (see updateHomeCard). -->
+            <LinearLayout
+                android:id="@+id/home_brand_mark"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="top"
-                android:layout_marginStart="@dimen/list_spacing"
-                android:layout_marginEnd="@dimen/list_spacing"
-                android:layout_marginTop="8dp"
-                app:cardBackgroundColor="?attr/colorSurfaceContainer"
-                app:cardCornerRadius="20dp"
-                app:cardElevation="0dp"
-                app:strokeColor="?attr/colorOutlineVariant"
-                app:strokeWidth="1dp">
+                android:layout_gravity="center"
+                android:gravity="center_horizontal"
+                android:orientation="vertical"
+                android:paddingHorizontal="32dp">
 
-                <LinearLayout
-                    android:layout_width="match_parent"
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:contentDescription="@string/app_name"
+                    android:src="@drawable/ic_firedown_logo" />
+
+                <TextView
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical">
+                    android:layout_marginTop="14dp"
+                    android:letterSpacing="-0.02"
+                    android:text="@string/app_name"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="22sp"
+                    android:textStyle="bold" />
 
-                    <!-- Header = brand lockup (small logo + wordmark), left-aligned. -->
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal"
-                        android:paddingStart="16dp"
-                        android:paddingTop="24dp"
-                        android:paddingEnd="16dp"
-                        android:paddingBottom="2dp">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="@string/home_brand_tagline"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:textSize="13sp" />
 
-                        <androidx.appcompat.widget.AppCompatImageView
-                            android:layout_width="16dp"
-                            android:layout_height="16dp"
-                            android:contentDescription="@string/app_name"
-                            android:src="@drawable/ic_firedown_logo" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="7dp"
-                            android:text="@string/app_name"
-                            android:textColor="?attr/colorOnSurface"
-                            android:textSize="14sp"
-                            android:textStyle="bold"
-                            android:letterSpacing="-0.01" />
-
-                    </LinearLayout>
-
-                    <!-- Stats row: three equal columns, thin rules between.
-                         No horizontal divider above it — the header just sits
-                         atop the stats; spacing carries the separation. -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:baselineAligned="false"
-                        android:orientation="horizontal"
-                        android:paddingTop="8dp"
-                        android:paddingBottom="32dp">
-
-                    <!-- Trackers blocked → trackers info sheet -->
-                    <LinearLayout
-                        android:id="@+id/home_trackers_col"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:background="@drawable/bg_home_stat_ripple"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:gravity="center_horizontal"
-                        android:orientation="vertical"
-                        android:paddingHorizontal="6dp"
-                        android:paddingVertical="2dp">
-
-<TextView
-                            android:id="@+id/home_trackers_value"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:textAppearance="?attr/textAppearanceHeadlineSmall"
-                            android:textColor="?attr/colorOnSurface"
-                            tools:text="44K" />
-
-                        <LinearLayout
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            android:gravity="center_vertical"
-                            android:orientation="horizontal">
-
-                            <androidx.appcompat.widget.AppCompatImageView
-                                android:layout_width="13dp"
-                                android:layout_height="13dp"
-                                android:layout_marginEnd="4dp"
-                                android:contentDescription="@null"
-                                app:srcCompat="@drawable/ic_shield_24"
-                                app:tint="?attr/colorOnSurfaceVariant" />
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:ellipsize="end"
-                                android:maxLines="1"
-                                android:text="@string/trackers_info_stat_blocked"
-                                android:textAppearance="?attr/textAppearanceBodySmall"
-                                android:textColor="?attr/colorOnSurfaceVariant" />
-
-                        </LinearLayout>
-
-                        <!-- Live trend line: today's blocked count. Always shown
-                             (bound in HomeFragment) — reads "0 today" on a quiet
-                             day so the column never looks empty. -->
-                        <TextView
-                            android:id="@+id/home_trackers_trend"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="3dp"
-                            android:textColor="@color/brand_orange"
-                            android:textSize="11sp"
-                            android:textStyle="bold"
-                            tools:text="+340 today" />
-
-                    </LinearLayout>
-
-<!-- Total saved → Downloads -->
-                    <LinearLayout
-                        android:id="@+id/home_downloads_col"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:background="@drawable/bg_home_stat_ripple"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:gravity="center_horizontal"
-                        android:orientation="vertical"
-                        android:paddingHorizontal="6dp"
-                        android:paddingVertical="2dp">
-
-<TextView
-                            android:id="@+id/home_downloads_value"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:textAppearance="?attr/textAppearanceHeadlineSmall"
-                            android:textColor="?attr/colorOnSurface"
-                            tools:text="9.2 GB" />
-
-                        <LinearLayout
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            android:gravity="center_vertical"
-                            android:orientation="horizontal">
-
-                            <androidx.appcompat.widget.AppCompatImageView
-                                android:layout_width="13dp"
-                                android:layout_height="13dp"
-                                android:layout_marginEnd="4dp"
-                                android:contentDescription="@null"
-                                app:srcCompat="@drawable/download_24"
-                                app:tint="?attr/colorOnSurfaceVariant" />
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:ellipsize="end"
-                                android:maxLines="1"
-                                android:text="@string/home_stat_saved"
-                                android:textAppearance="?attr/textAppearanceBodySmall"
-                                android:textColor="?attr/colorOnSurfaceVariant" />
-
-                        </LinearLayout>
-
-                        <!-- Live trend line: files finished in the last 7 days.
-                             Hidden at 0 (bound in HomeFragment). -->
-                        <TextView
-                            android:id="@+id/home_downloads_trend"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="3dp"
-                            android:textColor="@color/brand_orange"
-                            android:textSize="11sp"
-                            android:textStyle="bold"
-                            android:visibility="gone"
-                            tools:text="3 this week"
-                            tools:visibility="visible" />
-
-                    </LinearLayout>
-
-<!-- Safe Folder item count → vault -->
-                    <LinearLayout
-                        android:id="@+id/home_safe_col"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:background="@drawable/bg_home_stat_ripple"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:gravity="center_horizontal"
-                        android:orientation="vertical"
-                        android:paddingHorizontal="6dp"
-                        android:paddingVertical="2dp">
-
-<TextView
-                            android:id="@+id/home_safe_value"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:textAppearance="?attr/textAppearanceHeadlineSmall"
-                            android:textColor="?attr/colorOnSurface"
-                            tools:text="12" />
-
-                        <LinearLayout
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            android:gravity="center_vertical"
-                            android:orientation="horizontal">
-
-                            <androidx.appcompat.widget.AppCompatImageView
-                                android:layout_width="13dp"
-                                android:layout_height="13dp"
-                                android:layout_marginEnd="4dp"
-                                android:contentDescription="@null"
-                                app:srcCompat="@drawable/ic_lock_24"
-                                app:tint="?attr/colorOnSurfaceVariant" />
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:ellipsize="end"
-                                android:maxLines="1"
-                                android:text="@string/home_vault_button"
-                                android:textAppearance="?attr/textAppearanceBodySmall"
-                                android:textColor="?attr/colorOnSurfaceVariant" />
-
-                        </LinearLayout>
-
-                        <!-- Item-count footer line: the headline above now shows
-                             the vault's total SIZE (mirroring Saved), so this
-                             carries the element count ("12 items"), bound in
-                             HomeFragment. The lock icon + "Safe Folder" label
-                             still convey that it's private. -->
-                        <TextView
-                            android:id="@+id/home_safe_trend"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="3dp"
-                            android:textColor="@color/brand_orange"
-                            android:textSize="11sp"
-                            android:textStyle="bold"
-                            tools:text="12 items" />
-
-                    </LinearLayout>
-
-                    </LinearLayout>
-
-                </LinearLayout>
-
-            </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
 
 
             <!-- First-run onboarding card (Direction A). Shown only while every

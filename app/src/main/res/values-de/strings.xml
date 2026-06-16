@@ -583,6 +583,7 @@
     <string name="lan_direct_failed">Direktverbindung konnte nicht gestartet werden</string>
     <string name="home_stat_saved">Gespeichert</string>
     <string name="home_stat_trend_empty">Downloads</string>
+    <string name="home_brand_tagline">Privater Browser &amp; Downloader</string>
     <plurals name="home_safe_item_count">
         <item quantity="one">%d Element</item>
         <item quantity="other">%d Elemente</item>

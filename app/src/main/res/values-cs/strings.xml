@@ -405,6 +405,7 @@
     <string name="lan_direct_failed">Přímé připojení se nepodařilo spustit</string>
     <string name="home_stat_saved">Uloženo</string>
     <string name="home_stat_trend_empty">Stahování</string>
+    <string name="home_brand_tagline">Soukromý prohlížeč a stahovač</string>
     <plurals name="home_safe_item_count">
         <item quantity="one">%d položka</item>
         <item quantity="few">%d položky</item>

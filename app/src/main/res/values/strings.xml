@@ -196,6 +196,9 @@
          happens. -->
     <string name="home_onboard_cta">Start browsing</string>
     <string name="home_onboard_hint">Tip: try YouTube, Instagram or X — capture just works.</string>
+    <!-- Tagline under the wordmark on the minimalist home (the calm landing
+         shown once onboarding has retired). One short descriptor. -->
+    <string name="home_brand_tagline">Private browser &amp; downloader</string>
     <string name="download_finished">Download finished</string>
     <string name="download_ongoing_notification">Firedown</string>
     <string name="download_quality">Download quality</string>

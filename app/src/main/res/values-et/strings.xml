@@ -315,6 +315,7 @@
     <string name="lan_direct_failed">Otseühenduse käivitamine ebaõnnestus</string>
     <string name="home_stat_saved">Salvestatud</string>
     <string name="home_stat_trend_empty">Allalaadimised</string>
+    <string name="home_brand_tagline">Privaatne brauser ja allalaadija</string>
     <plurals name="home_safe_item_count">
         <item quantity="one">%d üksus</item>
         <item quantity="other">%d üksust</item>

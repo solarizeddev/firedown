@@ -581,6 +581,7 @@
     <string name="lan_direct_failed">ダイレクト接続を開始できませんでした</string>
     <string name="home_stat_saved">保存済み</string>
     <string name="home_stat_trend_empty">ダウンロード</string>
+    <string name="home_brand_tagline">プライベートブラウザ＆ダウンローダー</string>
     <plurals name="home_safe_item_count">
         <item quantity="other">%d 件</item>
     </plurals>

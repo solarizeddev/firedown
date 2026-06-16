@@ -581,6 +581,7 @@
     <string name="lan_direct_failed">无法开始直接连接</string>
     <string name="home_stat_saved">已保存</string>
     <string name="home_stat_trend_empty">下载</string>
+    <string name="home_brand_tagline">隐私浏览器和下载器</string>
     <plurals name="home_safe_item_count">
         <item quantity="other">%d 项</item>
     </plurals>

@@ -452,6 +452,7 @@
     <string name="lan_direct_failed">Não foi possível iniciar a ligação direta</string>
     <string name="home_stat_saved">Guardado</string>
     <string name="home_stat_trend_empty">Transferências</string>
+    <string name="home_brand_tagline">Navegador privado e gestor de transferências</string>
     <plurals name="home_safe_item_count">
         <item quantity="one">%d item</item>
         <item quantity="other">%d itens</item>

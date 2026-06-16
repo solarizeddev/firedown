@@ -583,6 +583,7 @@
     <string name="lan_direct_failed">Impossible de démarrer la connexion directe</string>
     <string name="home_stat_saved">Enregistré</string>
     <string name="home_stat_trend_empty">Téléchargements</string>
+    <string name="home_brand_tagline">Navigateur privé et téléchargeur</string>
     <plurals name="home_safe_item_count">
         <item quantity="one">%d élément</item>
         <item quantity="other">%d éléments</item>

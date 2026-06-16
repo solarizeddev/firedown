@@ -391,6 +391,7 @@
     <string name="lan_direct_failed">Suoraa yhteyttä ei voitu aloittaa</string>
     <string name="home_stat_saved">Tallennettu</string>
     <string name="home_stat_trend_empty">Lataukset</string>
+    <string name="home_brand_tagline">Yksityinen selain ja lataaja</string>
     <plurals name="home_safe_item_count">
         <item quantity="one">%d kohde</item>
         <item quantity="other">%d kohdetta</item>

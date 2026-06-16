@@ -452,6 +452,7 @@
     <string name="lan_direct_failed">Directe verbinding kon niet worden gestart</string>
     <string name="home_stat_saved">Opgeslagen</string>
     <string name="home_stat_trend_empty">Downloads</string>
+    <string name="home_brand_tagline">Privébrowser en downloader</string>
     <plurals name="home_safe_item_count">
         <item quantity="one">%d item</item>
         <item quantity="other">%d items</item>

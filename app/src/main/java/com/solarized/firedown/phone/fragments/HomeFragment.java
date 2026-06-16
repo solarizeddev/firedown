@@ -2,13 +2,9 @@ package com.solarized.firedown.phone.fragments;
 
 import android.content.Context;
 import android.content.Intent;
-import android.icu.text.CompactDecimalFormat;
 import android.os.Bundle;
 import android.text.Editable;
-import android.text.SpannableString;
-import android.text.Spanned;
 import android.text.TextUtils;
-import android.text.style.RelativeSizeSpan;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -16,7 +12,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.TextView;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
@@ -33,7 +28,6 @@ import com.solarized.firedown.ui.IncognitoColors;
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
-import com.solarized.firedown.geckoview.GeckoUblockHelper;
 import com.solarized.firedown.data.entity.GeckoStateEntity;
 import com.solarized.firedown.data.entity.AutoCompleteEntity;
 import com.solarized.firedown.autocomplete.AutoCompleteViewModel;
@@ -41,7 +35,6 @@ import com.solarized.firedown.data.models.BrowserDialogViewModel;
 import com.solarized.firedown.data.models.BrowserURIViewModel;
 import com.solarized.firedown.data.models.GeckoStateViewModel;
 import com.solarized.firedown.data.models.IncognitoStateViewModel;
-import com.solarized.firedown.data.models.RecentDownloadsViewModel;
 import com.solarized.firedown.geckoview.GeckoState;
 import com.solarized.firedown.geckoview.GeckoToolbar;
 import com.solarized.firedown.manager.DownloadRequest;
@@ -58,12 +51,8 @@ import com.solarized.firedown.ui.adapters.SearchAutocompleteAdapter;
 import com.solarized.firedown.ui.diffs.SearchDiffCallback;
 import com.solarized.firedown.IntentActions;
 import com.solarized.firedown.utils.NavigationUtils;
-import com.solarized.firedown.utils.Utils;
 
 import dagger.hilt.android.AndroidEntryPoint;
-import java.text.NumberFormat;
-import java.util.Locale;
-import javax.inject.Inject;
 
 
 @AndroidEntryPoint
@@ -78,44 +67,24 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     private BrowserDialogViewModel mBrowserDialogViewModel;
     private GeckoStateViewModel mGeckoStateViewModel;
     private IncognitoStateViewModel mIncognitoStateViewModel;
-    private RecentDownloadsViewModel mRecentDownloadsViewModel;
     private AutoCompleteEditText mAutoCompleteEditText;
     private AutoCompleteView mAutoCompleteView;
     private View mNewTabView;
     private GeckoToolbar mGeckoToolbar;
     private BottomNavigationBar mBottomNavigationBar;
     private View mHomeScroll;
-    // Home stats card (Brave-style): three live figures, each its own tap
-    // target — trackers blocked (→ trackers info sheet), total saved
-    // (→ Downloads), Safe Folder item count (→ vault). Only the value
-    // TextViews are held; the column tap handlers are wired in onCreateView.
-    private TextView mTrackersValue;
-    private TextView mDownloadsValue;
-    private TextView mSafeValue;
-    // First-run onboarding: the two mutually-exclusive home cards (only one is
-    // ever VISIBLE) and a one-way "retired" flag mirrored from prefs. While the
-    // flag is false (a fresh install with all figures still zero) the onboarding
-    // card replaces the stats card; the first non-zero figure retires it for
-    // good. See updateHomeCard / retireOnboarding.
-    private View mStatsCard;
+    // The two mutually-exclusive home views (only one is ever VISIBLE):
+    //  * mBrandMark — the minimalist steady-state landing (flame + wordmark +
+    //    tagline, nothing else);
+    //  * mOnboardCard — the first-run "how capture works" card.
+    // mOnboardingDone is a one-way flag mirrored from prefs: while unset the
+    // onboarding card shows, and the first navigation retires it for good (see
+    // updateHomeCard / retireOnboarding). There are deliberately NO stats here
+    // — tabs and the downloads badge live in the bottom bar, the vault in the
+    // menu; the home is a calm landing, not a dashboard.
+    private View mBrandMark;
     private View mOnboardCard;
     private boolean mOnboardingDone;
-    // Small coral trend/context lines under the trackers (today) and saved
-    // (this week) figures; the Safe column's "private" line is static in XML.
-    private TextView mTrackersTrend;
-    private TextView mDownloadsTrend;
-    // Safe column footer — now the vault ITEM COUNT (the headline shows the
-    // vault's total size, mirroring Saved). Held because it's bound from
-    // LiveData instead of being a static XML string.
-    private TextView mSafeTrend;
-    // Latest values feeding the Saved column's context line. The line needs
-    // BOTH the total saved bytes and the 7-day finished count to decide what
-    // to show, but each arrives from its own LiveData — so they're cached here
-    // and updateSavedTrend() reconciles them (see the observers below).
-    private long mFinishedBytes;
-    private int mFinishedThisWeek;
-    @Inject
-    GeckoUblockHelper mGeckoUblockHelper;
 
 
     @Override
@@ -123,7 +92,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         super.onCreate(savedInstanceState);
 
         mAutoCompleteViewModel = new ViewModelProvider(this).get(AutoCompleteViewModel.class);
-        mRecentDownloadsViewModel = new ViewModelProvider(this).get(RecentDownloadsViewModel.class);
         mGeckoStateViewModel = new ViewModelProvider(mActivity).get(GeckoStateViewModel.class);
         mIncognitoStateViewModel = new ViewModelProvider(mActivity).get(IncognitoStateViewModel.class);
         mBrowserURIViewModel = new ViewModelProvider(mActivity).get(BrowserURIViewModel.class);
@@ -189,37 +157,11 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mBottomNavigationBar = v.findViewById(R.id.bottom_app_bar);
 
 
-        // Home stats card — three live, independently-tappable columns.
-        // Values bound from their LiveData in onViewCreated; each column's tap
-        // opens that domain's surface.
-        mTrackersValue = v.findViewById(R.id.home_trackers_value);
-        mDownloadsValue = v.findViewById(R.id.home_downloads_value);
-        mSafeValue = v.findViewById(R.id.home_safe_value);
-        mTrackersTrend = v.findViewById(R.id.home_trackers_trend);
-        mDownloadsTrend = v.findViewById(R.id.home_downloads_trend);
-        mSafeTrend = v.findViewById(R.id.home_safe_trend);
-
-        View trackersCol = v.findViewById(R.id.home_trackers_col);
-        if (trackersCol != null) {
-            trackersCol.setOnClickListener(view ->
-                    TrackersInfoSheet.show(getChildFragmentManager()));
-        }
-        View downloadsCol = v.findViewById(R.id.home_downloads_col);
-        if (downloadsCol != null) {
-            downloadsCol.setOnClickListener(view ->
-                    mStartForResult.launch(new Intent(mActivity, DownloadsActivity.class)));
-        }
-        View safeCol = v.findViewById(R.id.home_safe_col);
-        if (safeCol != null) {
-            // VaultActivity owns its own auth gate, same as the menu's Vault row.
-            safeCol.setOnClickListener(view ->
-                    mStartForResult.launch(new Intent(mActivity, VaultActivity.class)));
-        }
-
-        // First-run onboarding card and its CTA. The CTA just focuses the URL
-        // bar (the same thing tapping the omnibox does) — it opens nothing, per
-        // the "no paste-a-link flow" architecture invariant.
-        mStatsCard = v.findViewById(R.id.home_stats_card);
+        // Minimalist home: the calm brand mark vs the first-run onboarding card
+        // (exactly one visible, toggled in updateHomeCard). The onboarding CTA
+        // just focuses the URL bar (the same thing tapping the omnibox does) —
+        // it opens nothing, per the "no paste-a-link flow" architecture invariant.
+        mBrandMark = v.findViewById(R.id.home_brand_mark);
         mOnboardCard = v.findViewById(R.id.home_onboard_card);
         View onboardCta = v.findViewById(R.id.home_onboard_cta);
         if (onboardCta != null) {
@@ -315,74 +257,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
             Log.d(TAG, "Size :" + (mObservableWebSearch != null ? mObservableWebSearch.size() : 0));
             mSearchAutocompleteAdapter.submitList(mObservableWebSearch);
 
-        });
-
-        // Stats card column 1 — trackers blocked. firedown.js pushes uBlock's
-        // cumulative blocked value periodically; show it compact + locale-aware
-        // ("10.5K" / "1.4M" / "1,4 Mio.") so the figure stays bounded as it
-        // climbs to 6–7 digits. Fresh install (no push yet) reads "0" — the card
-        // is a numeric 3-up, so a bare figure fits better than a sentence.
-        mGeckoUblockHelper.getCumulativeBlockedLive().observe(getViewLifecycleOwner(), blocked -> {
-            if (mTrackersValue == null) return;
-            long n = blocked == null ? 0L : blocked;
-            retireOnboarding(n);
-            if (n <= 0) {
-                mTrackersValue.setText("0");
-                return;
-            }
-            CompactDecimalFormat fmt = CompactDecimalFormat.getInstance(
-                    Locale.getDefault(), CompactDecimalFormat.CompactStyle.SHORT);
-            fmt.setMaximumFractionDigits(1);
-            mTrackersValue.setText(withSmallUnit(fmt.format(n)));
-        });
-
-        // Trackers trend line — today's blocked count. Always shown: a positive
-        // count gets a leading "+" ("+340 today"), a quiet day reads "0 today"
-        // so the column never looks empty.
-        mGeckoUblockHelper.getTodayBlockedLive().observe(getViewLifecycleOwner(), today -> {
-            if (mTrackersTrend == null) return;
-            long n = today == null ? 0L : today;
-            CompactDecimalFormat fmt = CompactDecimalFormat.getInstance(
-                    Locale.getDefault(), CompactDecimalFormat.CompactStyle.SHORT);
-            fmt.setMaximumFractionDigits(1);
-            String count = (n > 0 ? "+" : "") + fmt.format(n);
-            mTrackersTrend.setText(getString(R.string.home_stat_trend_today, count));
-        });
-
-        // Stats card column 2 — total saved: live sum of finished regular
-        // (non-vault) download bytes, locale-formatted by readableFileSize.
-        mRecentDownloadsViewModel.getFinishedSize().observe(getViewLifecycleOwner(), size -> {
-            mFinishedBytes = size == null ? 0L : size;
-            retireOnboarding(mFinishedBytes);
-            if (mDownloadsValue != null) {
-                mDownloadsValue.setText(mFinishedBytes > 0
-                        ? withSmallUnit(Utils.readableFileSize(mFinishedBytes)) : "0");
-            }
-            updateSavedTrend();
-        });
-
-        // Saved trend line — files finished in the last 7 days ("3 this week").
-        mRecentDownloadsViewModel.getFinishedThisWeekCount().observe(getViewLifecycleOwner(), week -> {
-            mFinishedThisWeek = week == null ? 0 : week;
-            updateSavedTrend();
-        });
-
-        // Stats card column 3 — Safe Folder. Headline = total vault SIZE
-        // (mirrors the Saved column, locale-formatted with the shrunk unit);
-        // footer = the item COUNT (replaces the old static "private" — the lock
-        // icon + label still convey privacy).
-        mRecentDownloadsViewModel.getSafeSize().observe(getViewLifecycleOwner(), size -> {
-            if (mSafeValue == null) return;
-            long bytes = size == null ? 0L : size;
-            mSafeValue.setText(bytes > 0 ? withSmallUnit(Utils.readableFileSize(bytes)) : "0");
-        });
-
-        mRecentDownloadsViewModel.getSafeCount().observe(getViewLifecycleOwner(), count -> {
-            int n = count == null ? 0 : count;
-            retireOnboarding(n);
-            if (mSafeTrend == null) return;
-            mSafeTrend.setText(getResources().getQuantityString(
-                    R.plurals.home_safe_item_count, n, n));
         });
 
         // NOTE: HomeFragment intentionally does NOT observe
@@ -526,37 +400,32 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mGeckoToolbar = null;
         mNewTabView = null;
         mBottomNavigationBar = null;
-        mTrackersValue = null;
-        mDownloadsValue = null;
-        mSafeValue = null;
-        mTrackersTrend = null;
-        mDownloadsTrend = null;
-        mSafeTrend = null;
-        mStatsCard = null;
+        mBrandMark = null;
         mOnboardCard = null;
     }
 
     /**
-     * Shows exactly one of the two home cards from {@link #mOnboardingDone}: the
-     * first-run onboarding card while it is false, the live stats card once it
-     * is true. Safe to call before the views exist (no-op then).
+     * Shows exactly one of the two home views from {@link #mOnboardingDone}: the
+     * first-run onboarding card while it is false, the minimalist brand mark once
+     * it is true. Safe to call before the views exist (no-op then).
      */
     private void updateHomeCard() {
-        if (mStatsCard == null || mOnboardCard == null) return;
+        if (mBrandMark == null || mOnboardCard == null) return;
         boolean showOnboard = !mOnboardingDone;
         mOnboardCard.setVisibility(showOnboard ? View.VISIBLE : View.GONE);
-        mStatsCard.setVisibility(showOnboard ? View.GONE : View.VISIBLE);
+        mBrandMark.setVisibility(showOnboard ? View.GONE : View.VISIBLE);
     }
 
     /**
-     * Retires the onboarding card the first time any home figure goes non-zero
-     * (a tracker blocked, a byte saved, a vaulted item). One-way and persisted,
-     * so it fires at most once and never reappears — a returning user, or one
-     * who later clears all data, keeps the stats card. Cheap no-op after the
-     * first retire.
+     * Retires the first-run onboarding card the first time the user navigates
+     * away from Home (opens a URL / a recent tab) — i.e. they've started using
+     * the browser, so the teaching is done and the calm brand mark takes over.
+     * One-way and persisted, so it fires at most once and never reappears (a
+     * returning user always gets the brand mark). Cheap no-op after the first
+     * retire.
      */
-    private void retireOnboarding(long figure) {
-        if (mOnboardingDone || figure <= 0) return;
+    private void retireOnboarding() {
+        if (mOnboardingDone) return;
         mOnboardingDone = true;
         mSharedPreferences.edit().putBoolean(Preferences.HOME_ONBOARDING_DONE, true).apply();
         updateHomeCard();
@@ -576,67 +445,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         if (imm != null) {
             imm.showSoftInput(mAutoCompleteEditText, InputMethodManager.SHOW_IMPLICIT);
         }
-    }
-
-    /**
-     * Reconciles the Saved column's context line from the two LiveData feeding
-     * it. Three states, so the column never looks empty (parallel to the
-     * trackers "0 today" and the always-on vault "private"):
-     * <ul>
-     *   <li>nothing ever saved (no bytes) — a fresh install — reads
-     *       "Nothing yet";</li>
-     *   <li>something saved in the last 7 days — "N this week";</li>
-     *   <li>saved before but nothing this week — hidden (no trend to show,
-     *       same as the original behaviour).</li>
-     * </ul>
-     */
-    private void updateSavedTrend() {
-        if (mDownloadsTrend == null) return;
-        if (mFinishedBytes <= 0) {
-            mDownloadsTrend.setText(R.string.home_stat_trend_empty);
-            mDownloadsTrend.setVisibility(View.VISIBLE);
-        } else if (mFinishedThisWeek > 0) {
-            mDownloadsTrend.setText(getString(R.string.home_stat_trend_week,
-                    NumberFormat.getInstance(Locale.getDefault()).format(mFinishedThisWeek)));
-            mDownloadsTrend.setVisibility(View.VISIBLE);
-        } else {
-            mDownloadsTrend.setVisibility(View.GONE);
-        }
-    }
-
-    /**
-     * Brave-style stat figure: shrink the trailing UNIT so the number reads as
-     * the hero and the unit as a small suffix — "9.2 GB", "10.6 K", "1,4 Mio.".
-     * The unit is the trailing run of letters (plus an optional dot and one
-     * leading space); a pure number ("14") is returned unchanged. Locale-safe:
-     * letters are matched by {@link Character#isLetter} so CJK compact units
-     * ("万") shrink too.
-     */
-    private static CharSequence withSmallUnit(String s) {
-        if (s == null || s.isEmpty()) {
-            return s == null ? "" : s;
-        }
-        int end = s.length();
-        int i = end;
-        while (i > 0) {
-            char c = s.charAt(i - 1);
-            if (Character.isLetter(c) || c == '.') {
-                i--;
-            } else {
-                break;
-            }
-        }
-        if (i == end || i == 0) {
-            // no trailing unit (a bare number), or it's all letters — leave it.
-            return s;
-        }
-        int unitStart = i;
-        if (s.charAt(unitStart - 1) == ' ') {
-            unitStart--;
-        }
-        SpannableString out = new SpannableString(s);
-        out.setSpan(new RelativeSizeSpan(0.6f), unitStart, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        return out;
     }
 
     @Override
@@ -718,6 +526,8 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
 
 
     private void openUri(String text){
+        // Starting to browse retires the first-run onboarding card for good.
+        retireOnboarding();
         // Format here, not downstream. BrowserFragment.setGeckoViewSession
         // only runs parseUri when opening a brand-new GeckoSession, so a
         // toolbar commit that lands on an already-open session would
@@ -743,6 +553,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
 
 
     private void openSessionId(int sessionId){
+        retireOnboarding();
         Log.d(TAG, "openSessionId: sessionId=" + sessionId);
         GeckoState geckoState = mGeckoStateViewModel.getGeckoState(sessionId);
         if (geckoState == null) {

@@ -452,6 +452,7 @@
     <string name="lan_direct_failed">Не удалось начать прямое подключение</string>
     <string name="home_stat_saved">Сохранено</string>
     <string name="home_stat_trend_empty">Загрузки</string>
+    <string name="home_brand_tagline">Приватный браузер и загрузчик</string>
     <plurals name="home_safe_item_count">
         <item quantity="one">%d элемент</item>
         <item quantity="few">%d элемента</item>
