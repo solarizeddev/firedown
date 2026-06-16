@@ -404,5 +404,5 @@
     <string name="lan_direct_next">Další</string>
     <string name="lan_direct_failed">Přímé připojení se nepodařilo spustit</string>
     <string name="home_stat_saved">Uloženo</string>
-    <string name="home_stat_trend_empty">Prázdné</string>
+    <string name="home_stat_trend_empty">Stahování</string>
 </resources>

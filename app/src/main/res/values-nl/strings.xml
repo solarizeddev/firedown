@@ -451,5 +451,5 @@
     <string name="lan_direct_next">Volgende</string>
     <string name="lan_direct_failed">Directe verbinding kon niet worden gestart</string>
     <string name="home_stat_saved">Opgeslagen</string>
-    <string name="home_stat_trend_empty">Leeg</string>
+    <string name="home_stat_trend_empty">Downloads</string>
 </resources>

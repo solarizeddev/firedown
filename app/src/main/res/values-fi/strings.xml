@@ -390,5 +390,5 @@
     <string name="lan_direct_next">Seuraava</string>
     <string name="lan_direct_failed">Suoraa yhteyttä ei voitu aloittaa</string>
     <string name="home_stat_saved">Tallennettu</string>
-    <string name="home_stat_trend_empty">Tyhjä</string>
+    <string name="home_stat_trend_empty">Lataukset</string>
 </resources>

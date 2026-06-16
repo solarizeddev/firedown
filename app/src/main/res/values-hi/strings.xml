@@ -350,5 +350,5 @@
     <string name="lan_direct_next">आगे</string>
     <string name="lan_direct_failed">सीधा कनेक्शन शुरू नहीं हो सका</string>
     <string name="home_stat_saved">सहेजा गया</string>
-    <string name="home_stat_trend_empty">खाली</string>
+    <string name="home_stat_trend_empty">डाउनलोड</string>
 </resources>

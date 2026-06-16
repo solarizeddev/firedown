@@ -314,5 +314,5 @@
     <string name="lan_direct_next">Edasi</string>
     <string name="lan_direct_failed">Otseühenduse käivitamine ebaõnnestus</string>
     <string name="home_stat_saved">Salvestatud</string>
-    <string name="home_stat_trend_empty">Tühi</string>
+    <string name="home_stat_trend_empty">Allalaadimised</string>
 </resources>
