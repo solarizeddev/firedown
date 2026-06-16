@@ -141,10 +141,21 @@ public class BrowserOptionFragment extends BaseFocusFragment implements OnItemCl
         // Brand wash (primaryContainer @ 20% over surface) — composed in code, so
         // set here rather than XML — matching the archive / incognito-in-progress
         // banners so the three list-banners read as siblings.
+        //
+        // Resolve the wash off the BANNER's own context, NOT requireContext():
+        // this sheet inflates against the incognito-themed dialog context
+        // (Theme_FireDown_BottomSheetVaultDialogTheme — see
+        // BaseBottomSheetDialogFragment.getTheme), so the banner's XML
+        // ?attr/colorOnSurface text is the incognito (light) onSurface. The
+        // fragment's requireContext() is the regular (light) activity theme, so
+        // washing over its colorSurface produced a LIGHT pink card — light text
+        // on a light card, illegible (the incognito Captured sheet bug). Using
+        // the themed view context makes the wash track whatever palette the
+        // text does, exactly as the sibling adapters do with parent.getContext().
         if (mHelpBanner instanceof MaterialCardView) {
             ((MaterialCardView) mHelpBanner).setCardBackgroundColor(
                     SelectionStyling.selectedCardWashOver(
-                            requireContext(),
+                            mHelpBanner.getContext(),
                             com.google.android.material.R.attr.colorSurface));
         }
         mHelpBanner.setOnClickListener(v -> {
