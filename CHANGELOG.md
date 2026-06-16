@@ -1,3 +1,9 @@
+## [1.1.78] - 2026-06-16
+
+- Home screen now labels the Saved counter even before your first download
+- Fixed an unreadable help banner on the incognito Captured sheet
+- Minor bugfixes and improvements
+
 ## [1.1.77] - 2026-06-08
 
 - Download from Mega.nz — folder links, single file links, and embedded Mega videos
