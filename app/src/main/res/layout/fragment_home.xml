@@ -46,14 +46,17 @@
 
         <!-- gravity=center_vertical + the parent's fillViewport center the
              single hero card in the screen, so the space below it reads as
-             intentional negative space rather than a layout that stopped short. -->
+             intentional negative space rather than a layout that stopped short.
+             The extra paddingBottom (one bar-height) biases the centring UP to
+             optically compensate for the top toolbar — geometric-centring the
+             card within the scroll area lands it a touch low under the header. -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
             android:orientation="vertical"
             android:paddingTop="6dp"
-            android:paddingBottom="8dp">
+            android:paddingBottom="@dimen/app_bar_size">
 
 
             <!-- Unified hero card: the brand lockup IS the card header (logo +
