@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Home address-bar button glyph: a magnifier with a small dropdown chevron,
-  hinting that the button opens the search-engine picker (it isn't a plain
-  "search/submit" action). Stroked paths so the single iconTint recolours the
-  whole glyph to onSurface. Magnifier shrunk to the left to leave room for the
-  chevron on the right within the 24x24 box.
+  Home address-bar button glyph: a full-size magnifier with a dropdown chevron
+  centered BELOW it, hinting that the button opens the search-engine picker
+  (not a plain "search/submit" action). Stroked paths so the single iconTint
+  recolours the whole glyph to onSurface. The ring fills the upper box (so the
+  magnifier reads at full size, like ic_search_24) with the chevron tucked at
+  the very bottom.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
@@ -12,26 +13,26 @@
     android:viewportWidth="24"
     android:viewportHeight="24"
     android:tint="?attr/colorOnSurface">
-    <!-- magnifier ring (center 9,10 r 4.5) -->
+    <!-- magnifier ring (center 10.5,9 r 6) -->
     <path
         android:fillColor="#00000000"
         android:strokeColor="@android:color/white"
         android:strokeWidth="2"
         android:strokeLineCap="round"
-        android:pathData="M4.5,10 a4.5,4.5 0 1,0 9,0 a4.5,4.5 0 1,0 -9,0" />
-    <!-- magnifier handle -->
+        android:pathData="M4.5,9 a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0" />
+    <!-- magnifier handle (to lower-right) -->
     <path
         android:fillColor="#00000000"
         android:strokeColor="@android:color/white"
         android:strokeWidth="2"
         android:strokeLineCap="round"
-        android:pathData="M12.4,13.4 L15.5,16.5" />
-    <!-- dropdown chevron -->
+        android:pathData="M14.8,13.3 L17.8,16.3" />
+    <!-- dropdown chevron, centered at the bottom under the ring -->
     <path
         android:fillColor="#00000000"
         android:strokeColor="@android:color/white"
         android:strokeWidth="2"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"
-        android:pathData="M17.5,9.5 L19.75,11.75 L22,9.5" />
+        android:pathData="M7.5,18.7 L10.5,21.5 L13.5,18.7" />
 </vector>
