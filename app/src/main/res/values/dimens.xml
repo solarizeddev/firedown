@@ -16,7 +16,7 @@
     <!-- Home only: start margin for the address-bar hint/edit text, replacing the
          browser's -6dp, so the text begins after the home search glyph's caret
          instead of under it. Browser keeps -6dp (the shield needs no extra room). -->
-    <dimen name="address_bar_home_text_inset">2dp</dimen>
+    <dimen name="address_bar_home_text_inset">8dp</dimen>
     <dimen name="app_bar_fab_elevation">12dp</dimen>
     <dimen name="app_bar_fab_margin">16dp</dimen>
     <dimen name="autocomplete_elevation">20dp</dimen>
