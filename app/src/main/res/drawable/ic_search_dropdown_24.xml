@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   Home address-bar button glyph: a full-size magnifier with a dropdown chevron
-  centered BELOW it, hinting that the button opens the search-engine picker
-  (not a plain "search/submit" action). Stroked paths so the single iconTint
-  recolours the whole glyph to onSurface. The ring fills the upper box (so the
-  magnifier reads at full size, like ic_search_24) with the chevron tucked at
-  the very bottom.
+  clearly separated BELOW it, hinting that the button opens the search-engine
+  picker (not a plain "search/submit" action). Stroked paths so the single
+  iconTint recolours the whole glyph to onSurface. Geometry previewed
+  pixel-exact before shipping: ring center (11,8) r5.5, short handle to the
+  lower-right, chevron centered at the bottom with a clear vertical gap so the
+  handle and chevron never merge.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
@@ -13,26 +14,26 @@
     android:viewportWidth="24"
     android:viewportHeight="24"
     android:tint="?attr/colorOnSurface">
-    <!-- magnifier ring (center 10.5,9 r 6) -->
+    <!-- magnifier ring (center 11,8 r 5.5) -->
     <path
         android:fillColor="#00000000"
         android:strokeColor="@android:color/white"
         android:strokeWidth="2"
         android:strokeLineCap="round"
-        android:pathData="M4.5,9 a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0" />
-    <!-- magnifier handle (to lower-right) -->
+        android:pathData="M5.5,8 a5.5,5.5 0 1,0 11,0 a5.5,5.5 0 1,0 -11,0" />
+    <!-- magnifier handle (short, to lower-right) -->
     <path
         android:fillColor="#00000000"
         android:strokeColor="@android:color/white"
         android:strokeWidth="2"
         android:strokeLineCap="round"
-        android:pathData="M14.8,13.3 L17.8,16.3" />
-    <!-- dropdown chevron, centered at the bottom under the ring -->
+        android:pathData="M14.9,11.9 L17,14" />
+    <!-- dropdown chevron, centered at the bottom, clear gap above it -->
     <path
         android:fillColor="#00000000"
         android:strokeColor="@android:color/white"
         android:strokeWidth="2"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"
-        android:pathData="M7.5,18.7 L10.5,21.5 L13.5,18.7" />
+        android:pathData="M8,19.5 L11,22 L14,19.5" />
 </vector>
