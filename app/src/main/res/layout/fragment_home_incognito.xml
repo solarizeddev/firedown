@@ -59,17 +59,22 @@
                 android:orientation="vertical"
                 android:paddingHorizontal="32dp">
 
+                <!-- The "privacy bandit" illustration (already drawn in the
+                     incognito purple/coral palette) is the mark here, in place
+                     of the regular home's small flame icon — richer and clearly
+                     private-mode, no recolouring needed. adjustViewBounds keeps
+                     its 6:5 aspect at a fixed width. -->
                 <androidx.appcompat.widget.AppCompatImageView
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
+                    android:layout_width="220dp"
+                    android:layout_height="wrap_content"
+                    android:adjustViewBounds="true"
                     android:contentDescription="@string/incognito_home_title"
-                    android:src="@drawable/ic_incognito_24"
-                    app:tint="@color/incognito_primary" />
+                    android:src="@drawable/ill_privacy_purple" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="14dp"
+                    android:layout_marginTop="12dp"
                     android:letterSpacing="-0.02"
                     android:text="@string/incognito_home_title"
                     android:textColor="@color/incognito_on_surface"
