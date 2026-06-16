@@ -27,13 +27,12 @@
     <!--
         MINIMAL home (a slick private browser; downloading is a quiet superpower,
         not a billboard). Top→bottom: the functional URL bar (GeckoToolbar, in the
-        AppBarLayout above), then a brand block + a single live PRIVACY line, a
-        weighted spacer, and the browsing utility (Continue browsing) kept low
-        and quiet. There is deliberately NO downloads carousel, Safe Folder card,
-        or Trackers card here — downloads live behind the bottom-bar download
-        button (badge), the Captured sheet fills as you browse, and the trackers
-        stat is folded into the privacy line. fillViewport + the weighted spacer
-        push the utility to the lower third.
+        AppBarLayout above), then a brand block + a single live stat line
+        (trackers blocked · total saved). There is deliberately NO downloads
+        carousel, Safe Folder card, Trackers card, or Continue-browsing card here
+        — the search bar is the home, tabs live behind the bottom-bar tab button,
+        downloads behind the download button (badge), the Captured sheet fills as
+        you browse, and the trackers stat is folded into the privacy line.
     -->
     <androidx.core.widget.NestedScrollView
         android:id="@+id/home_scroll"
@@ -187,28 +186,6 @@
                 </com.google.android.material.card.MaterialCardView>
 
             </LinearLayout>
-
-
-            <!-- Weighted spacer: pushes the browsing utility to the lower third
-                 so the brand + search breathe up top (works because the
-                 NestedScrollView is fillViewport). -->
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:minHeight="24dp" />
-
-
-            <!-- 'Continue browsing' — quiet single row, shown only when a
-                 non-home tab exists (HomeFragment.bindContinueBrowsing). -->
-            <include
-                android:id="@+id/continue_browsing_card"
-                layout="@layout/card_home_continue_browsing"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="@dimen/list_spacing"
-                android:layout_marginEnd="@dimen/list_spacing"
-                android:layout_marginBottom="12dp" />
 
 
         </LinearLayout>

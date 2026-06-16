@@ -16,7 +16,6 @@ import android.widget.TextView;
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.widget.AppCompatImageView;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -25,10 +24,6 @@ import androidx.lifecycle.LifecycleEventObserver;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
-import com.bumptech.glide.request.RequestOptions;
-import com.google.android.material.card.MaterialCardView;
-import com.solarized.firedown.GlideHelper;
 import com.solarized.firedown.ui.IncognitoColors;
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.R;
@@ -58,10 +53,8 @@ import com.solarized.firedown.ui.diffs.SearchDiffCallback;
 import com.solarized.firedown.IntentActions;
 import com.solarized.firedown.utils.NavigationUtils;
 import com.solarized.firedown.utils.Utils;
-import com.solarized.firedown.utils.WebUtils;
 
 import dagger.hilt.android.AndroidEntryPoint;
-import java.util.List;
 import java.util.Locale;
 import javax.inject.Inject;
 
@@ -84,14 +77,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     private View mNewTabView;
     private GeckoToolbar mGeckoToolbar;
     private BottomNavigationBar mBottomNavigationBar;
-    private MaterialCardView mContinueCard;
-    private AppCompatImageView mContinueIcon;
-    // Continue-browsing favicon: rounded to match the M3 chip behind it (a
-    // full-bleed square favicon gets rounded; a transparent glyph is
-    // unaffected). Built in onCreateView once resources are available.
-    private RequestOptions mContinueIconOptions = new RequestOptions();
     private View mHomeScroll;
-    private TextView mContinueSubtitle;
     // Live privacy line (folds in the old Trackers card): "N trackers blocked ·
     // ~X saved", tappable → trackers info sheet.
     private View mPrivacyRow;
@@ -171,14 +157,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
 
         mNewTabView = v.findViewById(R.id.bottom_new_tab);
         mAutoCompleteView = v.findViewById(R.id.auto_complete_view);
-
-        // 'Continue browsing' card - resumes the most-recently-used non-home
-        // tab (bound below; tap handler set there since it needs the tab id).
-        mContinueCard = v.findViewById(R.id.continue_browsing_card);
-        mContinueIcon = v.findViewById(R.id.continue_browsing_icon);
-        mContinueSubtitle = v.findViewById(R.id.continue_browsing_subtitle);
-        mContinueIconOptions = RequestOptions.bitmapTransform(new RoundedCorners(
-                getResources().getDimensionPixelOffset(R.dimen.icon_rounded)));
 
         mHomeScroll = v.findViewById(R.id.home_scroll);
         mBottomNavigationBar = v.findViewById(R.id.bottom_app_bar);
@@ -287,12 +265,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
             mSearchAutocompleteAdapter.submitList(mObservableWebSearch);
 
         });
-
-        // 'Continue browsing' — the one quiet utility row that jumps back into
-        // the user's last browsing tab. Driven by the tab list: shown only when a
-        // non-home tab exists, hidden otherwise (see bindContinueBrowsing).
-        mGeckoStateViewModel.getTabs().observe(
-                getViewLifecycleOwner(), this::bindContinueBrowsing);
 
         // Live trackers footnote. firedown.js pushes uBlock's cumulative
         // blocked value periodically; format with locale-aware grouping
@@ -481,65 +453,11 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mGeckoToolbar = null;
         mNewTabView = null;
         mBottomNavigationBar = null;
-        mContinueCard = null;
-        mContinueIcon = null;
-        mContinueSubtitle = null;
         mPrivacyRow = null;
         mPrivacyText = null;
         mDownloadsRow = null;
         mDownloadsText = null;
         mStatSeparator = null;
-    }
-
-    /**
-     * Binds the 'Continue browsing' card from the tab list: picks the
-     * most-recently-used NON-home tab (by lastAccess, stamped on every tab
-     * switch) and wires the tap to resume it via {@link #openSessionId(int)}.
-     * The icon is that tab's FAVICON (falling back to the generated
-     * domain-letter tile when the site has none, the app-wide favicon
-     * pattern); the subtitle is the tab's title, falling back to its domain.
-     * Hidden when there's no non-home tab (a fresh install / all tabs closed),
-     * so the card never offers a dead resume. The home tab itself is excluded
-     * (isHome) - resuming "to home" from home is a no-op.
-     */
-    private void bindContinueBrowsing(@Nullable List<GeckoStateEntity> tabs) {
-        if (mContinueCard == null) return;
-        GeckoStateEntity last = null;
-        if (tabs != null) {
-            for (GeckoStateEntity e : tabs) {
-                if (e == null || e.isHome()) continue;
-                if (last == null || e.getLastAccess() > last.getLastAccess()) {
-                    last = e;
-                }
-            }
-        }
-        if (last == null) {
-            mContinueCard.setVisibility(View.GONE);
-            return;
-        }
-        final int sessionId = last.getId();
-        mContinueCard.setVisibility(View.VISIBLE);
-        mContinueCard.setOnClickListener(view -> openSessionId(sessionId));
-
-        if (mContinueIcon != null) {
-            // Site favicon as a rounded tile (full colour); GlideHelper falls
-            // back to the generated domain-letter tile when the tab has no icon
-            // - the same favicon path the tabs / bookmarks lists use.
-            GlideHelper.load(last.getIcon(), last.getUri(), mContinueIcon, mContinueIconOptions);
-        }
-
-        if (mContinueSubtitle != null) {
-            String label = last.getTitle();
-            if (label == null || label.trim().isEmpty()) {
-                label = WebUtils.getDomainName(last.getUri());
-            }
-            if (label == null || label.trim().isEmpty()) {
-                mContinueSubtitle.setVisibility(View.GONE);
-            } else {
-                mContinueSubtitle.setText(label);
-                mContinueSubtitle.setVisibility(View.VISIBLE);
-            }
-        }
     }
 
     @Override
