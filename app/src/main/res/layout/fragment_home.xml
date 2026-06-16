@@ -123,7 +123,7 @@
                         android:baselineAligned="false"
                         android:orientation="horizontal"
                         android:paddingTop="8dp"
-                        android:paddingBottom="16dp">
+                        android:paddingBottom="26dp">
 
                     <!-- Trackers blocked → trackers info sheet -->
                     <LinearLayout
