@@ -257,12 +257,6 @@
     <string name="home_vault_button">Dosar sigur</string>
     <string name="settings_webrtc_enabled_summary">Permite apeluri video și vocale în timp real. Dezactivarea reduce suprafața de sondare a rețelei.</string>
     <string name="incognito_home_warning">Navigarea privată nu îți ascunde activitatea față de rețea, angajator sau site-urile pe care le vizitezi.</string>
-    <string name="incognito_fact_history_title">Fără istoric</string>
-    <string name="incognito_fact_history_sub">Paginile, căutările și memoria cache nu sunt salvate.</string>
-    <string name="incognito_fact_cookies_title">Fără cookie-uri</string>
-    <string name="incognito_fact_cookies_sub">Șterse când închizi aceste file.</string>
-    <string name="incognito_fact_downloads_title">Descărcările rămân private</string>
-    <string name="incognito_fact_downloads_sub">Salvate în Dosarul sigur, vizibile doar în Firedown.</string>
 <string name="settings_theme_app_category">Temă aplicație</string>
     <string name="crash_sheet_title">Eroare detectată</string>
     <string name="crash_sheet_report">Raportează</string>

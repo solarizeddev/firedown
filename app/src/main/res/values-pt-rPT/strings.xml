@@ -218,12 +218,6 @@
     <string name="home_vault_button">Pasta segura</string>
     <string name="settings_webrtc_enabled_summary">Permite chamadas de vídeo e voz em tempo real. Desativar reduz a superfície de sondagem de rede.</string>
     <string name="incognito_home_warning">A navegação privada não esconde a tua atividade da tua rede, do teu empregador ou dos sites que visitas.</string>
-    <string name="incognito_fact_history_title">Sem histórico</string>
-    <string name="incognito_fact_history_sub">Páginas, pesquisas e cache não são guardados.</string>
-    <string name="incognito_fact_cookies_title">Sem cookies</string>
-    <string name="incognito_fact_cookies_sub">Apagados ao fechar estes separadores.</string>
-    <string name="incognito_fact_downloads_title">As transferências ficam privadas</string>
-    <string name="incognito_fact_downloads_sub">Guardadas na sua Pasta segura, visíveis apenas dentro do Firedown.</string>
     <string name="wasm_snackbar_message">%s precisa do WebAssembly para funcionar</string>
     <string name="wasm_snackbar_action_enable">Ativar</string>
     <string name="settings_wasm_allowlist_title">Sites permitidos</string>

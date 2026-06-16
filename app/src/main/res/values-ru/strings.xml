@@ -357,12 +357,6 @@
     <string name="home_vault_button">Безопасная папка</string>
     <string name="settings_webrtc_enabled_summary">Включает видео- и голосовые вызовы в реальном времени. Отключение уменьшает площадь зондирования сети.</string>
     <string name="incognito_home_warning">Приватный просмотр не скрывает вашу активность от сети, работодателя или посещаемых сайтов.</string>
-    <string name="incognito_fact_history_title">Без истории</string>
-    <string name="incognito_fact_history_sub">Страницы, запросы и кеш не сохраняются.</string>
-    <string name="incognito_fact_cookies_title">Без файлов cookie</string>
-    <string name="incognito_fact_cookies_sub">Удаляются при закрытии этих вкладок.</string>
-    <string name="incognito_fact_downloads_title">Загрузки остаются приватными</string>
-    <string name="incognito_fact_downloads_sub">Сохраняются в Безопасную папку, видны только в Firedown.</string>
     <string name="wasm_snackbar_message">Для %s нужен WebAssembly</string>
     <string name="wasm_snackbar_action_enable">Включить</string>
     <string name="settings_wasm_allowlist_title">Разрешённые сайты</string>

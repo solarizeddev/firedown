@@ -296,12 +296,6 @@
     <string name="home_vault_button">Захищена папка</string>
     <string name="settings_webrtc_enabled_summary">Дозволяє відео- та голосові виклики в реальному часі. Вимкнення зменшує поверхню сканування мережі.</string>
     <string name="incognito_home_warning">Приватний перегляд не приховує вашу активність від мережі, роботодавця чи відвідуваних сайтів.</string>
-    <string name="incognito_fact_history_title">Без історії</string>
-    <string name="incognito_fact_history_sub">Сторінки, запити та кеш не зберігаються.</string>
-    <string name="incognito_fact_cookies_title">Без файлів cookie</string>
-    <string name="incognito_fact_cookies_sub">Видаляються після закриття цих вкладок.</string>
-    <string name="incognito_fact_downloads_title">Завантаження лишаються приватними</string>
-    <string name="incognito_fact_downloads_sub">Зберігаються в Захищену папку, видно лише у Firedown.</string>
     <string name="wasm_snackbar_message">Для %s потрібен WebAssembly</string>
     <string name="wasm_snackbar_action_enable">Увімкнути</string>
     <string name="settings_wasm_allowlist_title">Дозволені сайти</string>

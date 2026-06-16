@@ -260,12 +260,6 @@
     <string name="home_vault_button">Folder Aman</string>
     <string name="settings_webrtc_enabled_summary">Mengizinkan panggilan video dan suara realtime. Menonaktifkan mengurangi permukaan penyelidikan jaringan.</string>
     <string name="incognito_home_warning">Penjelajahan pribadi tidak menyembunyikan aktivitas Anda dari jaringan, atasan, atau situs yang Anda kunjungi.</string>
-    <string name="incognito_fact_history_title">Tanpa riwayat</string>
-    <string name="incognito_fact_history_sub">Halaman, pencarian, dan cache tidak disimpan.</string>
-    <string name="incognito_fact_cookies_title">Tanpa cookie</string>
-    <string name="incognito_fact_cookies_sub">Dihapus saat Anda menutup tab ini.</string>
-    <string name="incognito_fact_downloads_title">Unduhan tetap privat</string>
-    <string name="incognito_fact_downloads_sub">Disimpan di Folder Aman, hanya terlihat di dalam Firedown.</string>
 <string name="settings_theme_app_category">Tema aplikasi</string>
     <string name="crash_sheet_title">Crash terdeteksi</string>
     <string name="crash_sheet_report">Laporkan</string>

@@ -311,12 +311,6 @@
     <string name="home_vault_button">Bezpečná složka</string>
     <string name="settings_webrtc_enabled_summary">Umožňuje videohovory a hlasové hovory v reálném čase. Vypnutí zmenšuje plochu pro síťové sondování.</string>
     <string name="incognito_home_warning">Anonymní prohlížení neskrývá vaši aktivitu před sítí, zaměstnavatelem ani navštívenými stránkami.</string>
-    <string name="incognito_fact_history_title">Žádná historie</string>
-    <string name="incognito_fact_history_sub">Stránky, vyhledávání a mezipaměť se neukládají.</string>
-    <string name="incognito_fact_cookies_title">Žádné cookies</string>
-    <string name="incognito_fact_cookies_sub">Smažou se po zavření těchto karet.</string>
-    <string name="incognito_fact_downloads_title">Stahování zůstává soukromé</string>
-    <string name="incognito_fact_downloads_sub">Ukládá se do Bezpečné složky, viditelné jen ve Firedown.</string>
     <string name="wasm_snackbar_message">%s vyžaduje WebAssembly</string>
     <string name="wasm_snackbar_action_enable">Povolit</string>
     <string name="settings_wasm_allowlist_title">Povolené weby</string>

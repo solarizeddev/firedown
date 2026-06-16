@@ -203,12 +203,6 @@
     <string name="if_preferences_security">Sécurité</string>
     <string name="incognito_home_title">Navigation privée</string>
     <string name="incognito_home_warning">La navigation privée ne masque pas votre activité vis-à-vis de votre réseau, de votre employeur ou des sites que vous visitez.</string>
-    <string name="incognito_fact_history_title">Aucun historique</string>
-    <string name="incognito_fact_history_sub">Les pages, recherches et le cache ne sont pas enregistrés.</string>
-    <string name="incognito_fact_cookies_title">Aucun cookie</string>
-    <string name="incognito_fact_cookies_sub">Effacés à la fermeture de ces onglets.</string>
-    <string name="incognito_fact_downloads_title">Téléchargements privés</string>
-    <string name="incognito_fact_downloads_sub">Enregistrés dans votre Dossier sécurisé, visibles uniquement dans Firedown.</string>
     <string name="incognito_notification_channel">Navigation privée</string>
     <string name="incognito_notification_channel_desc">Notification pour les onglets privés ouverts</string>
     <string name="incognito_notification_close_action">Tout fermer</string>

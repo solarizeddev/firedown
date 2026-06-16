@@ -25,8 +25,8 @@
     </com.google.android.material.appbar.AppBarLayout>
 
     <!-- Scrollable content area. The bottom margin reserves the bottom-nav's
-         height so the tail (warning / last fact) never hides behind it in
-         landscape, and remains scrollable into view — mirrors HomeFragment. -->
+         height so the disclaimer never hides behind it in landscape, and
+         remains scrollable into view — mirrors HomeFragment. -->
     <androidx.core.widget.NestedScrollView
         android:id="@+id/home_scroll"
         android:layout_width="match_parent"
@@ -37,225 +37,65 @@
         android:overScrollMode="never"
         app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior">
 
-        <LinearLayout
+        <!-- The incognito home mirrors the regular home's single calm, centred
+             brand mark — the incognito mask + "Private Browsing" wordmark —
+             with the one addition private mode genuinely needs: a faint,
+             bottom-anchored disclaimer that private browsing isn't anonymity.
+             No fact chips, shortcuts, or stats (the regular home's live stats
+             would themselves leak activity, so incognito stays bare). The
+             FrameLayout (stretched to the viewport by fillViewport) centres
+             the mark via layout_gravity and pins the disclaimer to the
+             bottom. -->
+        <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:gravity="center_horizontal"
-            android:paddingTop="16dp"
-            android:paddingStart="24dp"
-            android:paddingEnd="24dp">
+            android:paddingBottom="8dp">
 
-            <!-- Top-anchored to match the regular home: title + facts sit just
-                 below the search bar (the bottom spacer pushes the empty space
-                 down), so both home surfaces read the same on tall devices. -->
-
-            <!-- Title -->
-            <TextView
-                android:id="@+id/incognito_title"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/incognito_home_title"
-                android:textAppearance="?attr/textAppearanceHeadlineSmall"
-                android:textColor="@color/incognito_on_surface" />
-
-            <!-- Three facts: the only things that matter in private mode —
-                 no history, no cookies, and where downloads land. Each is an
-                 icon chip + one-line explainer; replaces the old four
-                 overlapping bullets and adds the Safe-Folder behaviour. -->
             <LinearLayout
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="22dp"
-                android:orientation="vertical">
+                android:layout_gravity="center"
+                android:gravity="center_horizontal"
+                android:orientation="vertical"
+                android:paddingHorizontal="32dp">
 
-                <!-- No history -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:baselineAligned="false"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:contentDescription="@string/incognito_home_title"
+                    android:src="@drawable/ic_incognito_24"
+                    app:tint="@color/incognito_primary" />
 
-                    <FrameLayout
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:background="@drawable/bg_incognito_chip"
-                        android:backgroundTint="@color/incognito_chip_history">
-
-                        <androidx.appcompat.widget.AppCompatImageView
-                            android:layout_width="22dp"
-                            android:layout_height="22dp"
-                            android:layout_gravity="center"
-                            android:contentDescription="@null"
-                            android:src="@drawable/ic_history_24"
-                            app:tint="@color/incognito_secondary_container" />
-
-                    </FrameLayout>
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="14dp"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="@string/incognito_fact_history_title"
-                            android:textAppearance="?attr/textAppearanceTitleSmall"
-                            android:textColor="@color/incognito_on_surface" />
-
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="1dp"
-                            android:text="@string/incognito_fact_history_sub"
-                            android:textAppearance="?attr/textAppearanceBodySmall"
-                            android:textColor="@color/incognito_on_surface_variant" />
-
-                    </LinearLayout>
-
-                </LinearLayout>
-
-                <!-- No cookies -->
-                <LinearLayout
-                    android:layout_width="match_parent"
+                <TextView
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="14dp"
-                    android:baselineAligned="false"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <FrameLayout
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:background="@drawable/bg_incognito_chip"
-                        android:backgroundTint="@color/incognito_chip_cookies">
-
-                        <androidx.appcompat.widget.AppCompatImageView
-                            android:layout_width="22dp"
-                            android:layout_height="22dp"
-                            android:layout_gravity="center"
-                            android:contentDescription="@null"
-                            android:src="@drawable/cookie_24"
-                            app:tint="@color/incognito_primary_container" />
-
-                    </FrameLayout>
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="14dp"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="@string/incognito_fact_cookies_title"
-                            android:textAppearance="?attr/textAppearanceTitleSmall"
-                            android:textColor="@color/incognito_on_surface" />
-
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="1dp"
-                            android:text="@string/incognito_fact_cookies_sub"
-                            android:textAppearance="?attr/textAppearanceBodySmall"
-                            android:textColor="@color/incognito_on_surface_variant" />
-
-                    </LinearLayout>
-
-                </LinearLayout>
-
-                <!-- Downloads → Safe Folder -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="14dp"
-                    android:baselineAligned="false"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <FrameLayout
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:background="@drawable/bg_incognito_chip"
-                        android:backgroundTint="@color/incognito_chip_downloads">
-
-                        <androidx.appcompat.widget.AppCompatImageView
-                            android:layout_width="22dp"
-                            android:layout_height="22dp"
-                            android:layout_gravity="center"
-                            android:contentDescription="@null"
-                            android:src="@drawable/ic_lock_24"
-                            app:tint="@color/incognito_fact_downloads_icon" />
-
-                    </FrameLayout>
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="14dp"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="@string/incognito_fact_downloads_title"
-                            android:textAppearance="?attr/textAppearanceTitleSmall"
-                            android:textColor="@color/incognito_on_surface" />
-
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="1dp"
-                            android:text="@string/incognito_fact_downloads_sub"
-                            android:textAppearance="?attr/textAppearanceBodySmall"
-                            android:textColor="@color/incognito_on_surface_variant" />
-
-                    </LinearLayout>
-
-                </LinearLayout>
+                    android:letterSpacing="-0.02"
+                    android:text="@string/incognito_home_title"
+                    android:textColor="@color/incognito_on_surface"
+                    android:textSize="22sp"
+                    android:textStyle="bold" />
 
             </LinearLayout>
 
-            <!-- Honest caveat in a faint footer card: a dark fill + a
-                 barely-there hairline so the disclaimer reads as a system note
-                 rather than loose body text. Reuses the existing
+            <!-- The one concession incognito carries that the regular home
+                 doesn't: a faint privacy disclaimer pinned to the bottom, so
+                 the mode never over-promises anonymity. Reuses the existing
                  (already-translated) warning string. -->
-            <com.google.android.material.card.MaterialCardView
+            <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                app:cardBackgroundColor="@color/incognito_warning_card_bg"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="0dp"
-                app:strokeColor="@color/incognito_warning_card_stroke"
-                app:strokeWidth="1dp">
+                android:layout_gravity="bottom"
+                android:alpha="0.75"
+                android:gravity="center"
+                android:lineSpacingMultiplier="1.35"
+                android:paddingHorizontal="28dp"
+                android:paddingBottom="12dp"
+                android:text="@string/incognito_home_warning"
+                android:textColor="@color/incognito_on_surface_variant"
+                android:textSize="11sp" />
 
-                <TextView
-                    android:id="@+id/incognito_warning"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:padding="14dp"
-                    android:text="@string/incognito_home_warning"
-                    android:textAppearance="?attr/textAppearanceBodySmall"
-                    android:textColor="@color/incognito_on_surface_variant"
-                    android:lineSpacingMultiplier="1.3" />
-
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- Spacer pushes the empty space to the bottom (top-anchored). -->
-            <Space
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1" />
-
-        </LinearLayout>
+        </FrameLayout>
 
     </androidx.core.widget.NestedScrollView>
 

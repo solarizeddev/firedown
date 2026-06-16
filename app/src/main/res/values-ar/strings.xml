@@ -295,12 +295,6 @@
     <string name="home_vault_button">مجلد آمن</string>
     <string name="settings_webrtc_enabled_summary">يتيح مكالمات الفيديو والصوت في الوقت الفعلي. التعطيل يقلل مساحة استكشاف الشبكة.</string>
     <string name="incognito_home_warning">التصفح الخاص لا يخفي نشاطك عن شبكتك أو صاحب العمل أو المواقع التي تزورها.</string>
-    <string name="incognito_fact_history_title">بلا سجلّ</string>
-    <string name="incognito_fact_history_sub">لا تُحفظ الصفحات وعمليات البحث وذاكرة التخزين المؤقت.</string>
-    <string name="incognito_fact_cookies_title">بلا كوكيز</string>
-    <string name="incognito_fact_cookies_sub">تُحذف عند إغلاق علامات التبويب هذه.</string>
-    <string name="incognito_fact_downloads_title">التنزيلات تبقى خاصة</string>
-    <string name="incognito_fact_downloads_sub">تُحفظ في مجلدك الآمن، وتظهر داخل Firedown فقط.</string>
     <string name="wasm_snackbar_message">يحتاج %s إلى WebAssembly</string>
     <string name="wasm_snackbar_action_enable">تفعيل</string>
     <string name="settings_wasm_allowlist_title">المواقع المسموح بها</string>

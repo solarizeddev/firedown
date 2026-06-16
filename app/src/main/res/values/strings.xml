@@ -232,13 +232,6 @@
     <string name="if_preferences_security">Security</string>
     <string name="incognito_home_title">Private Browsing</string>
     <string name="incognito_home_warning">Private Browsing doesn\'t hide your activity from your network, employer, or the sites you visit.</string>
-    <!-- The three incognito-home facts: title + one-line explainer each. -->
-    <string name="incognito_fact_history_title">No history</string>
-    <string name="incognito_fact_history_sub">Pages, searches and cache aren\'t saved.</string>
-    <string name="incognito_fact_cookies_title">No cookies</string>
-    <string name="incognito_fact_cookies_sub">Cleared when you close these tabs.</string>
-    <string name="incognito_fact_downloads_title">Downloads stay private</string>
-    <string name="incognito_fact_downloads_sub">Saved to your Safe Folder, visible only inside Firedown.</string>
     <string name="incognito_notification_channel">Private Browsing</string>
     <string name="incognito_notification_channel_desc">Notification for open private tabs</string>
     <string name="incognito_notification_close_action">Close all</string>

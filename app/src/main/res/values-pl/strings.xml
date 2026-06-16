@@ -354,12 +354,6 @@
     <string name="home_vault_button">Bezpieczny folder</string>
     <string name="settings_webrtc_enabled_summary">Umożliwia połączenia wideo i głosowe w czasie rzeczywistym. Wyłączenie zmniejsza powierzchnię sondowania sieci.</string>
     <string name="incognito_home_warning">Tryb prywatny nie ukrywa twojej aktywności przed siecią, pracodawcą ani odwiedzanymi stronami.</string>
-    <string name="incognito_fact_history_title">Brak historii</string>
-    <string name="incognito_fact_history_sub">Strony, wyszukiwania i pamięć podręczna nie są zapisywane.</string>
-    <string name="incognito_fact_cookies_title">Brak plików cookie</string>
-    <string name="incognito_fact_cookies_sub">Usuwane po zamknięciu tych kart.</string>
-    <string name="incognito_fact_downloads_title">Pobrane pliki pozostają prywatne</string>
-    <string name="incognito_fact_downloads_sub">Zapisywane w Bezpiecznym folderze, widoczne tylko w Firedown.</string>
     <string name="wasm_snackbar_message">%s wymaga WebAssembly</string>
     <string name="wasm_snackbar_action_enable">Włącz</string>
     <string name="settings_wasm_allowlist_title">Dozwolone witryny</string>

@@ -359,12 +359,6 @@
     <string name="home_vault_button">Beveiligde map</string>
     <string name="settings_webrtc_enabled_summary">Maakt realtime video- en spraakoproepen mogelijk. Uitschakelen verkleint het netwerk-onderzoeksoppervlak.</string>
     <string name="incognito_home_warning">Privénavigatie verbergt je activiteit niet voor je netwerk, je werkgever of de sites die je bezoekt.</string>
-    <string name="incognito_fact_history_title">Geen geschiedenis</string>
-    <string name="incognito_fact_history_sub">Pagina\'s, zoekopdrachten en cache worden niet bewaard.</string>
-    <string name="incognito_fact_cookies_title">Geen cookies</string>
-    <string name="incognito_fact_cookies_sub">Gewist wanneer je deze tabbladen sluit.</string>
-    <string name="incognito_fact_downloads_title">Downloads blijven privé</string>
-    <string name="incognito_fact_downloads_sub">Opgeslagen in je Beveiligde map, alleen zichtbaar in Firedown.</string>
     <string name="wasm_snackbar_message">%s heeft WebAssembly nodig</string>
     <string name="wasm_snackbar_action_enable">Inschakelen</string>
     <string name="settings_wasm_allowlist_title">Toegestane sites</string>

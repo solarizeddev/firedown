@@ -203,12 +203,6 @@
     <string name="if_preferences_security">安全</string>
     <string name="incognito_home_title">隐私浏览</string>
     <string name="incognito_home_warning">隐私浏览不会向你的网络、雇主或访问的网站隐藏你的活动。</string>
-    <string name="incognito_fact_history_title">无历史记录</string>
-    <string name="incognito_fact_history_sub">不保存页面、搜索和缓存。</string>
-    <string name="incognito_fact_cookies_title">无 Cookie</string>
-    <string name="incognito_fact_cookies_sub">关闭这些标签页后清除。</string>
-    <string name="incognito_fact_downloads_title">下载保持私密</string>
-    <string name="incognito_fact_downloads_sub">保存到您的安全文件夹，仅在 Firedown 内可见。</string>
     <string name="incognito_notification_channel">隐私浏览</string>
     <string name="incognito_notification_channel_desc">已打开隐私标签页的通知</string>
     <string name="incognito_notification_close_action">全部关闭</string>

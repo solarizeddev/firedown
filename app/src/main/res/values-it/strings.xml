@@ -319,12 +319,6 @@
     <string name="home_vault_button">Cartella di sicurezza</string>
     <string name="settings_webrtc_enabled_summary">Consente videochiamate e chiamate vocali in tempo reale. Disattivarlo riduce la superficie di sondaggio di rete.</string>
     <string name="incognito_home_warning">La navigazione privata non nasconde la tua attività alla rete, al datore di lavoro o ai siti che visiti.</string>
-    <string name="incognito_fact_history_title">Nessuna cronologia</string>
-    <string name="incognito_fact_history_sub">Pagine, ricerche e cache non vengono salvate.</string>
-    <string name="incognito_fact_cookies_title">Nessun cookie</string>
-    <string name="incognito_fact_cookies_sub">Eliminati alla chiusura di queste schede.</string>
-    <string name="incognito_fact_downloads_title">Download privati</string>
-    <string name="incognito_fact_downloads_sub">Salvati nella tua Cartella di sicurezza, visibili solo dentro Firedown.</string>
     <string name="wasm_snackbar_message">%s richiede WebAssembly per funzionare</string>
     <string name="wasm_snackbar_action_enable">Attiva</string>
     <string name="settings_wasm_allowlist_title">Siti consentiti</string>

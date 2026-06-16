@@ -269,12 +269,6 @@
     <string name="home_vault_button">Thư mục an toàn</string>
     <string name="settings_webrtc_enabled_summary">Cho phép gọi video và thoại theo thời gian thực. Tắt sẽ giảm bề mặt thăm dò mạng.</string>
     <string name="incognito_home_warning">Duyệt web riêng tư không che giấu hoạt động của bạn khỏi mạng, chủ lao động hoặc các trang bạn truy cập.</string>
-    <string name="incognito_fact_history_title">Không lưu lịch sử</string>
-    <string name="incognito_fact_history_sub">Trang, tìm kiếm và bộ nhớ đệm không được lưu.</string>
-    <string name="incognito_fact_cookies_title">Không có cookie</string>
-    <string name="incognito_fact_cookies_sub">Bị xóa khi bạn đóng các thẻ này.</string>
-    <string name="incognito_fact_downloads_title">Tải xuống luôn riêng tư</string>
-    <string name="incognito_fact_downloads_sub">Lưu vào Thư mục an toàn, chỉ hiển thị trong Firedown.</string>
     <string name="settings_theme_app_category">Chủ đề ứng dụng</string>
     <string name="crash_sheet_title">Phát hiện sự cố</string>
     <string name="crash_sheet_report">Báo cáo</string>

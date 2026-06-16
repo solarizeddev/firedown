@@ -269,12 +269,6 @@
     <string name="home_vault_button">Ασφαλής φάκελος</string>
     <string name="settings_webrtc_enabled_summary">Επιτρέπει βιντεοκλήσεις και φωνητικές κλήσεις σε πραγματικό χρόνο. Η απενεργοποίηση μειώνει την επιφάνεια σάρωσης δικτύου.</string>
     <string name="incognito_home_warning">Η ιδιωτική περιήγηση δεν κρύβει τη δραστηριότητά σας από το δίκτυό σας, τον εργοδότη σας ή τις ιστοσελίδες που επισκέπτεστε.</string>
-    <string name="incognito_fact_history_title">Χωρίς ιστορικό</string>
-    <string name="incognito_fact_history_sub">Σελίδες, αναζητήσεις και προσωρινή μνήμη δεν αποθηκεύονται.</string>
-    <string name="incognito_fact_cookies_title">Χωρίς cookies</string>
-    <string name="incognito_fact_cookies_sub">Διαγράφονται όταν κλείνετε αυτές τις καρτέλες.</string>
-    <string name="incognito_fact_downloads_title">Οι λήψεις παραμένουν ιδιωτικές</string>
-    <string name="incognito_fact_downloads_sub">Αποθηκεύονται στον Ασφαλή φάκελο, ορατές μόνο μέσα στο Firedown.</string>
 <string name="settings_theme_app_category">Θέμα εφαρμογής</string>
     <string name="crash_sheet_title">Εντοπίστηκε κατάρρευση</string>
     <string name="crash_sheet_report">Αναφορά</string>

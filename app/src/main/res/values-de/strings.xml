@@ -203,12 +203,6 @@
     <string name="if_preferences_security">Sicherheit</string>
     <string name="incognito_home_title">Privater Modus</string>
     <string name="incognito_home_warning">Privates Surfen verbirgt deine Aktivität nicht vor deinem Netzwerk, deinem Arbeitgeber oder den besuchten Webseiten.</string>
-    <string name="incognito_fact_history_title">Kein Verlauf</string>
-    <string name="incognito_fact_history_sub">Seiten, Suchen und Cache werden nicht gespeichert.</string>
-    <string name="incognito_fact_cookies_title">Keine Cookies</string>
-    <string name="incognito_fact_cookies_sub">Werden beim Schließen dieser Tabs gelöscht.</string>
-    <string name="incognito_fact_downloads_title">Downloads bleiben privat</string>
-    <string name="incognito_fact_downloads_sub">Werden in deinem Sicheren Ordner gespeichert, nur in Firedown sichtbar.</string>
     <string name="incognito_notification_channel">Privater Modus</string>
     <string name="incognito_notification_channel_desc">Benachrichtigung für offene private Tabs</string>
     <string name="incognito_notification_close_action">Alle schließen</string>

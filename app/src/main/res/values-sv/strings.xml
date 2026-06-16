@@ -226,12 +226,6 @@
     <string name="home_vault_button">Säker mapp</string>
     <string name="settings_webrtc_enabled_summary">Tillåter video- och röstsamtal i realtid. Inaktivering minskar nätverkssonderingsytan.</string>
     <string name="incognito_home_warning">Privat surfning döljer inte din aktivitet för ditt nätverk, din arbetsgivare eller webbplatserna du besöker.</string>
-    <string name="incognito_fact_history_title">Ingen historik</string>
-    <string name="incognito_fact_history_sub">Sidor, sökningar och cache sparas inte.</string>
-    <string name="incognito_fact_cookies_title">Inga cookies</string>
-    <string name="incognito_fact_cookies_sub">Rensas när du stänger dessa flikar.</string>
-    <string name="incognito_fact_downloads_title">Nedladdningar förblir privata</string>
-    <string name="incognito_fact_downloads_sub">Sparas i din Säkra mapp, syns bara i Firedown.</string>
 <string name="settings_theme_app_category">Apptema</string>
     <string name="crash_sheet_title">Krasch upptäckt</string>
     <string name="crash_sheet_report">Rapportera</string>

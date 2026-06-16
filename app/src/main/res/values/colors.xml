@@ -118,20 +118,6 @@
     <color name="incognito_surface_container_highest">#FF553090</color>
     <color name="incognito_surface_container_lowest">#FF170B30</color>
 
-    <!-- Incognito-home fact chips: soft translucent fills (drawn over the
-         deep-purple surface) paired with a full-opacity accent icon. Each
-         fact owns a brand hue so the three read as distinct at a glance. -->
-    <color name="incognito_chip_history">#2EFAB186</color>
-    <color name="incognito_chip_cookies">#33F66A66</color>
-    <color name="incognito_chip_downloads">#3DC8417B</color>
-    <color name="incognito_fact_downloads_icon">#FFF48FBB</color>
-
-    <!-- Faint footer card around the private-mode disclaimer: a dark fill + a
-         barely-there white hairline so the caveat reads as a system note rather
-         than loose body text. -->
-    <color name="incognito_warning_card_bg">#22000000</color>
-    <color name="incognito_warning_card_stroke">#16FFFFFF</color>
-
     <!-- Background -->
     <color name="incognito_background">#FF391D5B</color>
 

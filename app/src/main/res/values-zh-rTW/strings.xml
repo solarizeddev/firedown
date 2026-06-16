@@ -276,12 +276,6 @@
     <string name="home_vault_button">安全資料夾</string>
     <string name="settings_webrtc_enabled_summary">啟用即時視訊和語音通話。停用可減少網路探測攻擊面。</string>
     <string name="incognito_home_warning">私密瀏覽不會向你的網路、雇主或造訪的網站隱藏你的活動。</string>
-    <string name="incognito_fact_history_title">無歷史記錄</string>
-    <string name="incognito_fact_history_sub">不會儲存頁面、搜尋與快取。</string>
-    <string name="incognito_fact_cookies_title">無 Cookie</string>
-    <string name="incognito_fact_cookies_sub">關閉這些分頁後清除。</string>
-    <string name="incognito_fact_downloads_title">下載保持私密</string>
-    <string name="incognito_fact_downloads_sub">儲存至您的安全資料夾，僅在 Firedown 內可見。</string>
     <string name="wasm_snackbar_message">%s 需要 WebAssembly 才能執行</string>
     <string name="wasm_snackbar_action_enable">啟用</string>
     <string name="settings_wasm_allowlist_title">允許的網站</string>

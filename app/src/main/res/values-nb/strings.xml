@@ -223,12 +223,6 @@
     <string name="home_vault_button">Sikker mappe</string>
     <string name="settings_webrtc_enabled_summary">Tillater video- og taleanrop i sanntid. Å slå av reduserer nettverkssonderingsflaten.</string>
     <string name="incognito_home_warning">Privat surfing skjuler ikke aktiviteten din fra nettverket ditt, arbeidsgiveren din eller nettstedene du besøker.</string>
-    <string name="incognito_fact_history_title">Ingen historikk</string>
-    <string name="incognito_fact_history_sub">Sider, søk og buffer lagres ikke.</string>
-    <string name="incognito_fact_cookies_title">Ingen informasjonskapsler</string>
-    <string name="incognito_fact_cookies_sub">Slettes når du lukker disse fanene.</string>
-    <string name="incognito_fact_downloads_title">Nedlastinger forblir private</string>
-    <string name="incognito_fact_downloads_sub">Lagres i din Sikre mappe, kun synlige i Firedown.</string>
 <string name="settings_theme_app_category">Apptema</string>
     <string name="crash_sheet_title">Krasj oppdaget</string>
     <string name="crash_sheet_report">Rapporter</string>

@@ -358,12 +358,6 @@
     <string name="home_vault_button">Güvenli klasör</string>
     <string name="settings_webrtc_enabled_summary">Gerçek zamanlı görüntülü ve sesli aramaları etkinleştirir. Devre dışı bırakmak ağ tarama yüzeyini azaltır.</string>
     <string name="incognito_home_warning">Gizli gezinti, etkinliğinizi ağınızdan, işvereninizden veya ziyaret ettiğiniz sitelerden gizlemez.</string>
-    <string name="incognito_fact_history_title">Geçmiş yok</string>
-    <string name="incognito_fact_history_sub">Sayfalar, aramalar ve önbellek kaydedilmez.</string>
-    <string name="incognito_fact_cookies_title">Çerez yok</string>
-    <string name="incognito_fact_cookies_sub">Bu sekmeleri kapattığınızda silinir.</string>
-    <string name="incognito_fact_downloads_title">İndirilenler gizli kalır</string>
-    <string name="incognito_fact_downloads_sub">Güvenli klasörünüze kaydedilir, yalnızca Firedown içinde görünür.</string>
     <string name="wasm_snackbar_message">%s WebAssembly gerektiriyor</string>
     <string name="wasm_snackbar_action_enable">Etkinleştir</string>
     <string name="settings_wasm_allowlist_title">İzin verilen siteler</string>

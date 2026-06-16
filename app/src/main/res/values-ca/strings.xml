@@ -269,12 +269,6 @@
     <string name="home_vault_button">Carpeta segura</string>
     <string name="settings_webrtc_enabled_summary">Permet videotrucades i trucades de veu en temps real. Desactivar-ho redueix la superfície de sondeig de xarxa.</string>
     <string name="incognito_home_warning">La navegació privada no amaga la teva activitat a la teva xarxa, al teu empleador o als llocs que visites.</string>
-    <string name="incognito_fact_history_title">Sense historial</string>
-    <string name="incognito_fact_history_sub">No es desen pàgines, cerques ni memòria cau.</string>
-    <string name="incognito_fact_cookies_title">Sense galetes</string>
-    <string name="incognito_fact_cookies_sub">S\'esborren en tancar aquestes pestanyes.</string>
-    <string name="incognito_fact_downloads_title">Les baixades són privades</string>
-    <string name="incognito_fact_downloads_sub">Es desen a la Carpeta segura, visibles només dins de Firedown.</string>
     <string name="wasm_snackbar_message">%s necessita WebAssembly per funcionar</string>
     <string name="wasm_snackbar_action_enable">Activa</string>
     <string name="settings_wasm_allowlist_title">Llocs permesos</string>

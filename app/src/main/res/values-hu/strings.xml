@@ -269,12 +269,6 @@
     <string name="home_vault_button">Biztonságos mappa</string>
     <string name="settings_webrtc_enabled_summary">Engedélyezi a valós idejű video- és hanghívásokat. Kikapcsolása csökkenti a hálózati szondázási felületet.</string>
     <string name="incognito_home_warning">A privát böngészés nem rejti el a tevékenységedet a hálózatod, a munkáltatód vagy a meglátogatott oldalak elől.</string>
-    <string name="incognito_fact_history_title">Nincs előzmény</string>
-    <string name="incognito_fact_history_sub">Az oldalak, keresések és a gyorsítótár nem kerülnek mentésre.</string>
-    <string name="incognito_fact_cookies_title">Nincsenek sütik</string>
-    <string name="incognito_fact_cookies_sub">Törlődnek, amikor bezárod ezeket a lapokat.</string>
-    <string name="incognito_fact_downloads_title">A letöltések privátak maradnak</string>
-    <string name="incognito_fact_downloads_sub">A Biztonságos mappába mentve, csak a Firedownban láthatók.</string>
 <string name="settings_theme_app_category">Alkalmazás megjelenése</string>
     <string name="crash_sheet_title">Összeomlás észlelve</string>
     <string name="crash_sheet_report">Jelentés</string>
