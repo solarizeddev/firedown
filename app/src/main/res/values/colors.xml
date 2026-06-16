@@ -6,6 +6,9 @@
          so the flat, elevation-0 card lifts off the true-black home background
          instead of reading as a placeholder. -->
     <color name="home_stat_card_stroke">#59F0716C</color>
+    <!-- Soft coral fill behind the onboarding step-number chips (~14% of
+         brand_orange). Translucent so it works on both home surfaces. -->
+    <color name="onboard_step_bg">#24F0716C</color>
     <color name="incognito">#FF391D5B</color>
     <color name="white">#FFFFFFFF</color>
     <color name="transparent">#00FFFFFF</color>

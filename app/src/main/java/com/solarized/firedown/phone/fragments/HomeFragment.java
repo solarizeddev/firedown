@@ -1,5 +1,6 @@
 package com.solarized.firedown.phone.fragments;
 
+import android.content.Context;
 import android.content.Intent;
 import android.icu.text.CompactDecimalFormat;
 import android.os.Bundle;
@@ -14,6 +15,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.TextView;
 
 import androidx.activity.OnBackPressedCallback;
@@ -29,6 +31,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.solarized.firedown.ui.IncognitoColors;
 import com.solarized.firedown.Keys;
+import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
 import com.solarized.firedown.geckoview.GeckoUblockHelper;
 import com.solarized.firedown.data.entity.GeckoStateEntity;
@@ -89,6 +92,14 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     private TextView mTrackersValue;
     private TextView mDownloadsValue;
     private TextView mSafeValue;
+    // First-run onboarding: the two mutually-exclusive home cards (only one is
+    // ever VISIBLE) and a one-way "retired" flag mirrored from prefs. While the
+    // flag is false (a fresh install with all figures still zero) the onboarding
+    // card replaces the stats card; the first non-zero figure retires it for
+    // good. See updateHomeCard / retireOnboarding.
+    private View mStatsCard;
+    private View mOnboardCard;
+    private boolean mOnboardingDone;
     // Small coral trend/context lines under the trackers (today) and saved
     // (this week) figures; the Safe column's "private" line is static in XML.
     private TextView mTrackersTrend;
@@ -200,6 +211,16 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
                     mStartForResult.launch(new Intent(mActivity, VaultActivity.class)));
         }
 
+        // First-run onboarding card and its CTA. The CTA just focuses the URL
+        // bar (the same thing tapping the omnibox does) — it opens nothing, per
+        // the "no paste-a-link flow" architecture invariant.
+        mStatsCard = v.findViewById(R.id.home_stats_card);
+        mOnboardCard = v.findViewById(R.id.home_onboard_card);
+        View onboardCta = v.findViewById(R.id.home_onboard_cta);
+        if (onboardCta != null) {
+            onboardCta.setOnClickListener(view -> focusUrlBar());
+        }
+
         mBottomNavigationBar.setListener(this);
 
         // Bookmarks is the flat middle-slot button in the bottom bar
@@ -243,6 +264,12 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         super.onViewCreated(view, savedInstanceState);
 
         Log.d(TAG, "onViewCreated");
+
+        // Decide which home card shows BEFORE the stat observers attach, so a
+        // returning user never sees a flash of onboarding. Read straight from
+        // prefs (the flag is one-way; once retired it stays retired).
+        mOnboardingDone = mSharedPreferences.getBoolean(Preferences.HOME_ONBOARDING_DONE, false);
+        updateHomeCard();
 
         // Download-count badge on the bottom bar's Downloads button —
         // same source BrowserFragment's regular-mode chrome uses
@@ -293,6 +320,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mGeckoUblockHelper.getCumulativeBlockedLive().observe(getViewLifecycleOwner(), blocked -> {
             if (mTrackersValue == null) return;
             long n = blocked == null ? 0L : blocked;
+            retireOnboarding(n);
             if (n <= 0) {
                 mTrackersValue.setText("0");
                 return;
@@ -320,6 +348,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         // (non-vault) download bytes, locale-formatted by readableFileSize.
         mRecentDownloadsViewModel.getFinishedSize().observe(getViewLifecycleOwner(), size -> {
             mFinishedBytes = size == null ? 0L : size;
+            retireOnboarding(mFinishedBytes);
             if (mDownloadsValue != null) {
                 mDownloadsValue.setText(mFinishedBytes > 0
                         ? withSmallUnit(Utils.readableFileSize(mFinishedBytes)) : "0");
@@ -335,6 +364,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
 
         // Stats card column 3 — Safe Folder item count.
         mRecentDownloadsViewModel.getSafeCount().observe(getViewLifecycleOwner(), count -> {
+            retireOnboarding(count == null ? 0 : count);
             if (mSafeValue == null) return;
             mSafeValue.setText(String.valueOf(count == null ? 0 : count));
         });
@@ -485,6 +515,50 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mSafeValue = null;
         mTrackersTrend = null;
         mDownloadsTrend = null;
+        mStatsCard = null;
+        mOnboardCard = null;
+    }
+
+    /**
+     * Shows exactly one of the two home cards from {@link #mOnboardingDone}: the
+     * first-run onboarding card while it is false, the live stats card once it
+     * is true. Safe to call before the views exist (no-op then).
+     */
+    private void updateHomeCard() {
+        if (mStatsCard == null || mOnboardCard == null) return;
+        boolean showOnboard = !mOnboardingDone;
+        mOnboardCard.setVisibility(showOnboard ? View.VISIBLE : View.GONE);
+        mStatsCard.setVisibility(showOnboard ? View.GONE : View.VISIBLE);
+    }
+
+    /**
+     * Retires the onboarding card the first time any home figure goes non-zero
+     * (a tracker blocked, a byte saved, a vaulted item). One-way and persisted,
+     * so it fires at most once and never reappears — a returning user, or one
+     * who later clears all data, keeps the stats card. Cheap no-op after the
+     * first retire.
+     */
+    private void retireOnboarding(long figure) {
+        if (mOnboardingDone || figure <= 0) return;
+        mOnboardingDone = true;
+        mSharedPreferences.edit().putBoolean(Preferences.HOME_ONBOARDING_DONE, true).apply();
+        updateHomeCard();
+    }
+
+    /**
+     * Focuses the URL bar exactly as a tap on the omnibox would — requests focus
+     * on the address EditText (which fires {@link #onFocusChanged} to raise the
+     * autocomplete overlay) and shows the keyboard. It opens nothing: the
+     * onboarding CTA only invites the user to start browsing, where capture
+     * actually happens.
+     */
+    private void focusUrlBar() {
+        if (mAutoCompleteEditText == null) return;
+        mAutoCompleteEditText.requestFocus();
+        InputMethodManager imm = (InputMethodManager) mActivity.getSystemService(Context.INPUT_METHOD_SERVICE);
+        if (imm != null) {
+            imm.showSoftInput(mAutoCompleteEditText, InputMethodManager.SHOW_IMPLICIT);
+        }
     }
 
     /**

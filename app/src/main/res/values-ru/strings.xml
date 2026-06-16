@@ -452,4 +452,14 @@
     <string name="lan_direct_failed">Не удалось начать прямое подключение</string>
     <string name="home_stat_saved">Сохранено</string>
     <string name="home_stat_trend_empty">Загрузки</string>
+    <string name="home_onboard_title">Браузер, который скачивает то, что воспроизводит.</string>
+    <string name="home_onboard_lede">Откройте любой сайт, и Firedown перехватит видео, аудио или изображения в фоне — без копирования ссылок.</string>
+    <string name="home_onboard_step_1_title">Перейдите на страницу</string>
+    <string name="home_onboard_step_1_desc">Ролик, трек, галерея — всё, что воспроизводится.</string>
+    <string name="home_onboard_step_2_title">Включите или прокрутите</string>
+    <string name="home_onboard_step_2_desc">Firedown перехватывает это автоматически при загрузке.</string>
+    <string name="home_onboard_step_3_title">Нажмите, чтобы сохранить</string>
+    <string name="home_onboard_step_3_desc">Выберите качество и сохраните на телефон.</string>
+    <string name="home_onboard_cta">Начать просмотр</string>
+    <string name="home_onboard_hint">Совет: попробуйте YouTube, Instagram или X — перехват просто работает.</string>
 </resources>

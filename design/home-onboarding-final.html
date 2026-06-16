@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Firedown — onboarding card (as implemented)</title>
+<style>
+  :root{--brand:#f0716c;--brand-soft:rgba(240,113,108,.14);--stroke:rgba(240,113,108,.35)}
+  *{box-sizing:border-box;-webkit-font-smoothing:antialiased}
+  body{margin:0;background:#E9E6E4;color:#2a2838;font-family:'Segoe UI',Roboto,system-ui,sans-serif;padding:40px 20px 60px}
+  h1{font-size:24px;margin:0 0 4px}.sub{color:#6d6b78;font-size:13px;margin:0 0 30px;max-width:760px;line-height:1.5}
+  .grid{display:flex;flex-wrap:wrap;gap:40px}
+  .lbl{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#8a8893;margin:0 0 12px}
+  .phone{width:300px;height:638px;border-radius:34px;padding:9px;border:1px solid #d7d3d1;
+    box-shadow:0 18px 50px rgba(80,60,50,.18),0 0 0 6px #efeceb}
+  .phone.dk{background:#000;border-color:#2a2a30;box-shadow:0 18px 50px rgba(0,0,0,.5),0 0 0 6px #161619}
+  .screen{width:100%;height:100%;border-radius:26px;overflow:hidden;display:flex;flex-direction:column}
+  .lt .screen{background:#F4F2F1;color:#1E1C2E}
+  .dk .screen{background:#000;color:#F2F2F4}
+  .status{display:flex;justify-content:space-between;padding:9px 16px 4px;font-size:11px;font-weight:600;opacity:.85}
+  .omni{margin:6px 12px 4px;height:42px;border-radius:21px;display:flex;align-items:center;gap:10px;padding:0 16px;font-size:13px}
+  .lt .omni{background:#E5E2E1;color:#7d7b86}.dk .omni{background:#1e1e21;color:#7d7d86}
+  .body{flex:1;padding:0 12px;display:flex}
+  .card{flex:1;margin:8px 0;border:1px solid var(--stroke);border-radius:20px;padding:24px 20px 20px;display:flex;flex-direction:column}
+  .lt .card{background:#FBFAFA}.dk .card{background:#1C1C1E}
+  .brand{display:flex;align-items:center;gap:8px}
+  .flame{width:18px;height:22px}.brand b{font-size:15px;font-weight:700}
+  .hello{font-size:20px;font-weight:700;letter-spacing:-.02em;margin:16px 0 0;line-height:1.18}
+  .lede{font-size:13px;line-height:1.25;margin:8px 0 0}
+  .lt .lede,.lt .sd{color:#6C6A78}.dk .lede,.dk .sd{color:#9A9AA2}
+  .step{display:flex;gap:13px;margin-top:18px}
+  .step:first-of-type{margin-top:22px}
+  .n{width:28px;height:28px;flex:0 0 auto;border-radius:9px;background:var(--brand-soft);color:var(--brand);
+    font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center}
+  .st{font-size:14px;font-weight:700;display:flex;align-items:center;gap:6px}
+  .sd{font-size:12.5px;margin-top:2px;line-height:1.2}
+  .dl{width:14px;height:14px}
+  .sp{flex:1;min-height:16px}
+  .cta{height:52px;border-radius:26px;background:var(--brand);color:#fff;display:flex;align-items:center;
+    justify-content:center;gap:9px;font-size:15px;font-weight:600;margin-top:20px}
+  .cta svg{width:16px;height:16px}
+  .hint{text-align:center;font-size:11px;margin-top:12px}.lt .hint{color:#6C6A78}.dk .hint{color:#9A9AA2}
+  .nav{display:flex;justify-content:space-around;padding:13px 0 14px;border-top:1px solid rgba(128,128,128,.18);opacity:.8}
+  .nav .i{font-size:17px}.nav .t{width:20px;height:20px;border:1.6px solid currentColor;border-radius:5px;font-size:11px;display:flex;align-items:center;justify-content:center}
+  svg{display:block}
+</style></head><body>
+<h1>Onboarding card — as implemented (Direction A)</h1>
+<p class="sub">Real brand coral (<b>#f0716c</b>) and theme surfaces. Fills the viewport via a weighted spacer (CTA pinned to the bottom); in portrait it never scrolls. Left: light home. Right: dark (true-black) home — the same card, themed by <code>?attr/colorOnSurface</code> / <code>colorSurfaceContainer</code>.</p>
+<div class="grid">
+  <div><p class="lbl">Light home</p>
+  <div class="phone lt"><div class="screen">
+    <div class="status"><span>16:51</span><span>&#128246; 98%</span></div>
+    <div class="omni"><svg style="width:15px;height:15px" viewBox="0 0 24 24" fill="none" stroke="#7d7b86" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>Buscar o escribir URL</div>
+    <div class="body"><div class="card" id="cardL"></div></div>
+    <div class="nav"><span class="i">+</span><span class="t">1</span><span class="i">&#9734;</span><span class="i">&#8595;</span><span class="i">&#8942;</span></div>
+  </div></div></div>
+  <div><p class="lbl">Dark home</p>
+  <div class="phone dk"><div class="screen">
+    <div class="status"><span>16:51</span><span>&#128246; 98%</span></div>
+    <div class="omni"><svg style="width:15px;height:15px" viewBox="0 0 24 24" fill="none" stroke="#7d7d86" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>Search or type URL</div>
+    <div class="body"><div class="card" id="cardD"></div></div>
+    <div class="nav"><span class="i">+</span><span class="t">1</span><span class="i">&#9734;</span><span class="i">&#8595;</span><span class="i">&#8942;</span></div>
+  </div></div></div>
+</div>
+<script>
+const card = (cta,hint)=>`
+  <div class="brand"><svg class="flame" viewBox="0 0 24 28"><path d="M12 0C12 8 4 9 4 17a8 8 0 0016 0c0-5-3-7-4-10-1 3-2 4-4 4 0-4 0-8 0-11z" fill="#f0716c"/></svg><b>Firedown</b></div>
+  <div class="hello">A browser that<br>downloads what it plays.</div>
+  <div class="lede">Open any site and Firedown grabs the video, audio or images in the background — no links to copy.</div>
+  <div class="step"><div class="n">1</div><div><div class="st">Browse to a page</div><div class="sd">A reel, a track, a gallery — anything that plays.</div></div></div>
+  <div class="step"><div class="n">2</div><div><div class="st">Play or scroll it</div><div class="sd">Firedown captures it automatically as it loads.</div></div></div>
+  <div class="step"><div class="n">3</div><div><div class="st">Tap to save <svg class="dl" viewBox="0 0 24 24" fill="none" stroke="#f0716c" stroke-width="2"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 21h16"/></svg></div><div class="sd">Pick a quality and save it to your phone.</div></div></div>
+  <div class="sp"></div>
+  <div class="cta"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>${cta}</div>
+  <div class="hint">${hint}</div>`;
+document.getElementById('cardL').innerHTML = card('Empezar a navegar','Consejo: prueba YouTube, Instagram o X.');
+document.getElementById('cardD').innerHTML = card('Start browsing','Tip: try YouTube, Instagram or X — capture just works.');
+</script>
+</body></html>

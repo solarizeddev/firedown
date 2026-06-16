@@ -405,4 +405,14 @@
     <string name="lan_direct_failed">Přímé připojení se nepodařilo spustit</string>
     <string name="home_stat_saved">Uloženo</string>
     <string name="home_stat_trend_empty">Stahování</string>
+    <string name="home_onboard_title">Prohlížeč, který stahuje to, co přehrává.</string>
+    <string name="home_onboard_lede">Otevřete jakýkoli web a Firedown zachytí video, zvuk nebo obrázky na pozadí — bez kopírování odkazů.</string>
+    <string name="home_onboard_step_1_title">Přejděte na stránku</string>
+    <string name="home_onboard_step_1_desc">Krátké video, skladba, galerie — cokoli, co se přehrává.</string>
+    <string name="home_onboard_step_2_title">Přehrajte nebo posouvejte</string>
+    <string name="home_onboard_step_2_desc">Firedown to zachytí automaticky při načítání.</string>
+    <string name="home_onboard_step_3_title">Klepnutím uložíte</string>
+    <string name="home_onboard_step_3_desc">Vyberte kvalitu a uložte do telefonu.</string>
+    <string name="home_onboard_cta">Začít prohlížet</string>
+    <string name="home_onboard_hint">Tip: zkuste YouTube, Instagram nebo X — zachytávání prostě funguje.</string>
 </resources>

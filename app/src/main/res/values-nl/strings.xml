@@ -452,4 +452,14 @@
     <string name="lan_direct_failed">Directe verbinding kon niet worden gestart</string>
     <string name="home_stat_saved">Opgeslagen</string>
     <string name="home_stat_trend_empty">Downloads</string>
+    <string name="home_onboard_title">Een browser die downloadt wat hij afspeelt.</string>
+    <string name="home_onboard_lede">Open een willekeurige site en Firedown vangt de video, audio of afbeeldingen op de achtergrond op — geen links om te kopiëren.</string>
+    <string name="home_onboard_step_1_title">Ga naar een pagina</string>
+    <string name="home_onboard_step_1_desc">Een reel, een nummer, een galerij — alles wat afspeelt.</string>
+    <string name="home_onboard_step_2_title">Speel af of scroll</string>
+    <string name="home_onboard_step_2_desc">Firedown vangt het automatisch op tijdens het laden.</string>
+    <string name="home_onboard_step_3_title">Tik om op te slaan</string>
+    <string name="home_onboard_step_3_desc">Kies een kwaliteit en sla het op je telefoon op.</string>
+    <string name="home_onboard_cta">Begin met browsen</string>
+    <string name="home_onboard_hint">Tip: probeer YouTube, Instagram of X — opvangen werkt gewoon.</string>
 </resources>

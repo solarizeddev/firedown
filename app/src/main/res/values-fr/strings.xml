@@ -583,4 +583,14 @@
     <string name="lan_direct_failed">Impossible de démarrer la connexion directe</string>
     <string name="home_stat_saved">Enregistré</string>
     <string name="home_stat_trend_empty">Téléchargements</string>
+    <string name="home_onboard_title">Un navigateur qui télécharge ce qu\'il lit.</string>
+    <string name="home_onboard_lede">Ouvrez n\'importe quel site et Firedown capture la vidéo, l\'audio ou les images en arrière-plan — aucun lien à copier.</string>
+    <string name="home_onboard_step_1_title">Accédez à une page</string>
+    <string name="home_onboard_step_1_desc">Un reel, un morceau, une galerie — tout ce qui se lit.</string>
+    <string name="home_onboard_step_2_title">Lancez la lecture ou faites défiler</string>
+    <string name="home_onboard_step_2_desc">Firedown la capture automatiquement au chargement.</string>
+    <string name="home_onboard_step_3_title">Touchez pour enregistrer</string>
+    <string name="home_onboard_step_3_desc">Choisissez une qualité et enregistrez sur votre téléphone.</string>
+    <string name="home_onboard_cta">Commencer à naviguer</string>
+    <string name="home_onboard_hint">Astuce : essayez YouTube, Instagram ou X — la capture fonctionne tout simplement.</string>
 </resources>

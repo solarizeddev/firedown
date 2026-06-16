@@ -169,6 +169,26 @@
          "private" lines — it just labels the column's nature ("downloads"),
          reusing each locale's existing navigation_downloads wording. -->
     <string name="home_stat_trend_empty">downloads</string>
+    <!-- First-run onboarding card (Direction A), shown in place of the stats
+         card while every figure is still zero. It teaches the browse-to-capture
+         mechanic; there is deliberately no "paste a link" wording because the
+         app captures from live pages, not pasted URLs. -->
+    <string name="home_onboard_title">A browser that downloads what it plays.</string>
+    <string name="home_onboard_lede">Open any site and Firedown grabs the video, audio or images in the background — no links to copy.</string>
+    <string name="home_onboard_step_1_num">1</string>
+    <string name="home_onboard_step_1_title">Browse to a page</string>
+    <string name="home_onboard_step_1_desc">A reel, a track, a gallery — anything that plays.</string>
+    <string name="home_onboard_step_2_num">2</string>
+    <string name="home_onboard_step_2_title">Play or scroll it</string>
+    <string name="home_onboard_step_2_desc">Firedown captures it automatically as it loads.</string>
+    <string name="home_onboard_step_3_num">3</string>
+    <string name="home_onboard_step_3_title">Tap to save</string>
+    <string name="home_onboard_step_3_desc">Pick a quality and save it to your phone.</string>
+    <!-- Primary button on the onboarding card. Focuses the address bar (it does
+         not open anything) so the user can start browsing, where capture
+         happens. -->
+    <string name="home_onboard_cta">Start browsing</string>
+    <string name="home_onboard_hint">Tip: try YouTube, Instagram or X — capture just works.</string>
     <string name="download_finished">Download finished</string>
     <string name="download_ongoing_notification">Firedown</string>
     <string name="download_quality">Download quality</string>

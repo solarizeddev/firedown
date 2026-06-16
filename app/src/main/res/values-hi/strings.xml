@@ -351,4 +351,14 @@
     <string name="lan_direct_failed">सीधा कनेक्शन शुरू नहीं हो सका</string>
     <string name="home_stat_saved">सहेजा गया</string>
     <string name="home_stat_trend_empty">डाउनलोड</string>
+    <string name="home_onboard_title">एक ब्राउज़र जो जो चलाता है उसे डाउनलोड करता है।</string>
+    <string name="home_onboard_lede">कोई भी साइट खोलें और Firedown वीडियो, ऑडियो या इमेज को बैकग्राउंड में कैप्चर कर लेता है — कोई लिंक कॉपी करने की ज़रूरत नहीं।</string>
+    <string name="home_onboard_step_1_title">किसी पेज पर जाएँ</string>
+    <string name="home_onboard_step_1_desc">एक रील, एक गाना, एक गैलरी — जो भी चले।</string>
+    <string name="home_onboard_step_2_title">चलाएँ या स्क्रॉल करें</string>
+    <string name="home_onboard_step_2_desc">लोड होते ही Firedown इसे अपने आप कैप्चर कर लेता है।</string>
+    <string name="home_onboard_step_3_title">सहेजने के लिए टैप करें</string>
+    <string name="home_onboard_step_3_desc">एक क्वालिटी चुनें और अपने फ़ोन में सहेजें।</string>
+    <string name="home_onboard_cta">ब्राउज़ करना शुरू करें</string>
+    <string name="home_onboard_hint">सुझाव: YouTube, Instagram या X आज़माएँ — कैप्चर बस काम करता है।</string>
 </resources>

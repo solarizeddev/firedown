@@ -451,4 +451,14 @@
     <string name="lan_direct_failed">Doğrudan bağlantı başlatılamadı</string>
     <string name="home_stat_saved">Kaydedildi</string>
     <string name="home_stat_trend_empty">İndirilenler</string>
+    <string name="home_onboard_title">Oynattığını indiren bir tarayıcı.</string>
+    <string name="home_onboard_lede">Herhangi bir siteyi açın, Firedown videoyu, sesi veya görselleri arka planda yakalasın — kopyalanacak bağlantı yok.</string>
+    <string name="home_onboard_step_1_title">Bir sayfaya gidin</string>
+    <string name="home_onboard_step_1_desc">Bir reel, bir şarkı, bir galeri — oynayan her şey.</string>
+    <string name="home_onboard_step_2_title">Oynatın veya kaydırın</string>
+    <string name="home_onboard_step_2_desc">Firedown yüklenirken otomatik olarak yakalar.</string>
+    <string name="home_onboard_step_3_title">Kaydetmek için dokunun</string>
+    <string name="home_onboard_step_3_desc">Bir kalite seçin ve telefonunuza kaydedin.</string>
+    <string name="home_onboard_cta">Gezinmeye başla</string>
+    <string name="home_onboard_hint">İpucu: YouTube, Instagram veya X\'i deneyin — yakalama kendiliğinden çalışır.</string>
 </resources>

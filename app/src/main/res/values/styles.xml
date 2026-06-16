@@ -585,4 +585,49 @@
         <item name="android:textColor">?attr/colorOnSurface</item>
         <item name="android:fontFeatureSettings">"tnum"</item>
     </style>
+
+    <!-- First-run onboarding card (Direction A) — one numbered step row:
+         a coral-tinted number chip beside a title + description. Factored to
+         styles so the three rows stay in lockstep. -->
+    <style name="Firedown.Onboard.Step" parent="">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:orientation">horizontal</item>
+        <item name="android:gravity">top</item>
+    </style>
+
+    <style name="Firedown.Onboard.StepNum" parent="">
+        <item name="android:layout_width">28dp</item>
+        <item name="android:layout_height">28dp</item>
+        <item name="android:gravity">center</item>
+        <item name="android:background">@drawable/bg_onboard_step_num</item>
+        <item name="android:textColor">@color/brand_orange</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="Firedown.Onboard.StepText" parent="">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginStart">13dp</item>
+        <item name="android:orientation">vertical</item>
+    </style>
+
+    <style name="Firedown.Onboard.StepTitle" parent="">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:textColor">?attr/colorOnSurface</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="Firedown.Onboard.StepDesc" parent="">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">2dp</item>
+        <item name="android:lineSpacingMultiplier">1.2</item>
+        <item name="android:textColor">?attr/colorOnSurfaceVariant</item>
+        <item name="android:textSize">12.5sp</item>
+    </style>
 </resources>

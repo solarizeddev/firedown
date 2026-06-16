@@ -339,4 +339,14 @@
     <string name="lan_direct_failed">Директната връзка не можа да стартира</string>
     <string name="home_stat_saved">Запазено</string>
     <string name="home_stat_trend_empty">Изтегляния</string>
+    <string name="home_onboard_title">Браузър, който изтегля това, което възпроизвежда.</string>
+    <string name="home_onboard_lede">Отворете който и да е сайт и Firedown улавя видеото, звука или изображенията във фонов режим — без копиране на връзки.</string>
+    <string name="home_onboard_step_1_title">Отидете на страница</string>
+    <string name="home_onboard_step_1_desc">Кратко видео, песен, галерия — всичко, което се възпроизвежда.</string>
+    <string name="home_onboard_step_2_title">Пуснете или превъртете</string>
+    <string name="home_onboard_step_2_desc">Firedown го улавя автоматично, докато се зарежда.</string>
+    <string name="home_onboard_step_3_title">Докоснете, за да запазите</string>
+    <string name="home_onboard_step_3_desc">Изберете качество и запазете на телефона си.</string>
+    <string name="home_onboard_cta">Започнете да сърфирате</string>
+    <string name="home_onboard_hint">Съвет: опитайте YouTube, Instagram или X — улавянето просто работи.</string>
 </resources>

@@ -391,4 +391,14 @@
     <string name="lan_direct_failed">Suoraa yhteyttä ei voitu aloittaa</string>
     <string name="home_stat_saved">Tallennettu</string>
     <string name="home_stat_trend_empty">Lataukset</string>
+    <string name="home_onboard_title">Selain, joka lataa sen, mitä se toistaa.</string>
+    <string name="home_onboard_lede">Avaa mikä tahansa sivusto, niin Firedown nappaa videon, äänen tai kuvat taustalla — linkkejä ei tarvitse kopioida.</string>
+    <string name="home_onboard_step_1_title">Siirry sivulle</string>
+    <string name="home_onboard_step_1_desc">Reels-video, kappale, galleria — mikä tahansa, joka toistuu.</string>
+    <string name="home_onboard_step_2_title">Toista tai vieritä</string>
+    <string name="home_onboard_step_2_desc">Firedown nappaa sen automaattisesti latautuessa.</string>
+    <string name="home_onboard_step_3_title">Tallenna napauttamalla</string>
+    <string name="home_onboard_step_3_desc">Valitse laatu ja tallenna puhelimeesi.</string>
+    <string name="home_onboard_cta">Aloita selailu</string>
+    <string name="home_onboard_hint">Vinkki: kokeile YouTubea, Instagramia tai X:ää — nappaaminen vain toimii.</string>
 </resources>

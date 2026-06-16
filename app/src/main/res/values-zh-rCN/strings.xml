@@ -581,4 +581,14 @@
     <string name="lan_direct_failed">无法开始直接连接</string>
     <string name="home_stat_saved">已保存</string>
     <string name="home_stat_trend_empty">下载</string>
+    <string name="home_onboard_title">一款会下载所播放内容的浏览器。</string>
+    <string name="home_onboard_lede">打开任意网站，Firedown 就会在后台抓取视频、音频或图片——无需复制链接。</string>
+    <string name="home_onboard_step_1_title">浏览到某个页面</string>
+    <string name="home_onboard_step_1_desc">短视频、歌曲、相册——任何能播放的内容。</string>
+    <string name="home_onboard_step_2_title">播放或滑动</string>
+    <string name="home_onboard_step_2_desc">加载时 Firedown 会自动抓取。</string>
+    <string name="home_onboard_step_3_title">点按即可保存</string>
+    <string name="home_onboard_step_3_desc">选择画质并保存到手机。</string>
+    <string name="home_onboard_cta">开始浏览</string>
+    <string name="home_onboard_hint">提示：试试 YouTube、Instagram 或 X——抓取自动生效。</string>
 </resources>

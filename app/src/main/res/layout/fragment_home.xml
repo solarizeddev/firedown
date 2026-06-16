@@ -44,15 +44,22 @@
         android:overScrollMode="never"
         app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior">
 
-        <!-- Top-anchored: the hero card sits just below the search bar so the
-             two read as one home header, with the empty space falling to the
-             bottom (room to breathe above the bottom bar). Centring it floated
-             the card mid-screen with a large, disconnected gap under the search
-             bar — pronounced on tall devices. -->
-        <LinearLayout
+        <!-- Two mutually-exclusive home cards share this frame; exactly one is
+             VISIBLE at a time (toggled in HomeFragment, see updateHomeCard):
+
+             * home_stats_card  — the live 3-up (trackers / saved / Safe Folder),
+               top-anchored (wrap_content + gravity=top) so it reads as one
+               header with the search bar, empty space falling to the bottom.
+             * home_onboard_card — the first-run "how capture works" card, shown
+               only while every figure is still zero. It is height=match_parent
+               so it FILLS the viewport (the parent NestedScrollView has
+               fillViewport=true): in portrait it never scrolls (content + the
+               weighted spacer inside fit the stretched height), and only when
+               the viewport is short (landscape) does the content exceed it and
+               the scroll view scroll. -->
+        <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
             android:paddingBottom="8dp">
 
 
@@ -68,6 +75,7 @@
                 android:id="@+id/home_stats_card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_gravity="top"
                 android:layout_marginStart="@dimen/list_spacing"
                 android:layout_marginEnd="@dimen/list_spacing"
                 android:layout_marginTop="8dp"
@@ -319,7 +327,193 @@
             </com.google.android.material.card.MaterialCardView>
 
 
-        </LinearLayout>
+            <!-- First-run onboarding card (Direction A). Shown only while every
+                 live figure is zero; see HomeFragment.updateHomeCard. Fills the
+                 viewport (match_parent height) with a weighted spacer pushing
+                 the CTA to the bottom, so it reads as a full-height welcome and
+                 only scrolls when the viewport is too short (landscape). -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/home_onboard_card"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginStart="@dimen/list_spacing"
+                android:layout_marginEnd="@dimen/list_spacing"
+                android:layout_marginTop="8dp"
+                android:visibility="gone"
+                app:cardBackgroundColor="?attr/colorSurfaceContainer"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/home_stat_card_stroke"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical"
+                    android:paddingStart="20dp"
+                    android:paddingTop="24dp"
+                    android:paddingEnd="20dp"
+                    android:paddingBottom="20dp">
+
+                    <!-- Brand lockup -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <androidx.appcompat.widget.AppCompatImageView
+                            android:layout_width="18dp"
+                            android:layout_height="18dp"
+                            android:contentDescription="@string/app_name"
+                            android:src="@drawable/ic_firedown_logo" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:letterSpacing="-0.01"
+                            android:text="@string/app_name"
+                            android:textColor="?attr/colorOnSurface"
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
+
+                    </LinearLayout>
+
+                    <!-- Headline + lede -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:letterSpacing="-0.02"
+                        android:lineSpacingMultiplier="1.05"
+                        android:text="@string/home_onboard_title"
+                        android:textColor="?attr/colorOnSurface"
+                        android:textSize="20sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:lineSpacingMultiplier="1.25"
+                        android:text="@string/home_onboard_lede"
+                        android:textColor="?attr/colorOnSurfaceVariant"
+                        android:textSize="13sp" />
+
+                    <!-- Step 1 -->
+                    <LinearLayout
+                        style="@style/Firedown.Onboard.Step"
+                        android:layout_marginTop="22dp">
+
+                        <TextView
+                            style="@style/Firedown.Onboard.StepNum"
+                            android:text="@string/home_onboard_step_1_num" />
+
+                        <LinearLayout style="@style/Firedown.Onboard.StepText">
+
+                            <TextView
+                                style="@style/Firedown.Onboard.StepTitle"
+                                android:text="@string/home_onboard_step_1_title" />
+
+                            <TextView
+                                style="@style/Firedown.Onboard.StepDesc"
+                                android:text="@string/home_onboard_step_1_desc" />
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                    <!-- Step 2 -->
+                    <LinearLayout
+                        style="@style/Firedown.Onboard.Step"
+                        android:layout_marginTop="16dp">
+
+                        <TextView
+                            style="@style/Firedown.Onboard.StepNum"
+                            android:text="@string/home_onboard_step_2_num" />
+
+                        <LinearLayout style="@style/Firedown.Onboard.StepText">
+
+                            <TextView
+                                style="@style/Firedown.Onboard.StepTitle"
+                                android:text="@string/home_onboard_step_2_title" />
+
+                            <TextView
+                                style="@style/Firedown.Onboard.StepDesc"
+                                android:text="@string/home_onboard_step_2_desc" />
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                    <!-- Step 3 -->
+                    <LinearLayout
+                        style="@style/Firedown.Onboard.Step"
+                        android:layout_marginTop="16dp">
+
+                        <TextView
+                            style="@style/Firedown.Onboard.StepNum"
+                            android:text="@string/home_onboard_step_3_num" />
+
+                        <LinearLayout style="@style/Firedown.Onboard.StepText">
+
+                            <TextView
+                                style="@style/Firedown.Onboard.StepTitle"
+                                android:drawableEnd="@drawable/download_24"
+                                android:drawablePadding="6dp"
+                                android:text="@string/home_onboard_step_3_title"
+                                app:drawableTint="@color/brand_orange" />
+
+                            <TextView
+                                style="@style/Firedown.Onboard.StepDesc"
+                                android:text="@string/home_onboard_step_3_desc" />
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                    <!-- Weighted spacer: absorbs the slack when the card is
+                         stretched to the viewport so the CTA sits at the bottom;
+                         collapses to 0 when the viewport is too short to fit. -->
+                    <Space
+                        android:layout_width="match_parent"
+                        android:layout_height="16dp"
+                        android:layout_weight="1" />
+
+                    <!-- Primary CTA — focuses the URL bar (no new surface; same
+                         as tapping the omnibox). Honors the "no paste-a-link
+                         flow" invariant: it opens nothing, just lets the user
+                         start browsing, where capture happens. -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/home_onboard_cta"
+                        android:layout_width="match_parent"
+                        android:layout_height="52dp"
+                        android:layout_marginTop="20dp"
+                        android:text="@string/home_onboard_cta"
+                        android:textColor="@color/white"
+                        android:textSize="15sp"
+                        app:backgroundTint="@color/brand_orange"
+                        app:cornerRadius="26dp"
+                        app:icon="@drawable/ic_search_24"
+                        app:iconGravity="textStart"
+                        app:iconTint="@color/white" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:gravity="center"
+                        android:text="@string/home_onboard_hint"
+                        android:textColor="?attr/colorOnSurfaceVariant"
+                        android:textSize="11sp" />
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+
+        </FrameLayout>
 
     </androidx.core.widget.NestedScrollView>
 
