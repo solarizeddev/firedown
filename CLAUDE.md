@@ -1322,6 +1322,100 @@ which starts/updates the service directly (the tell was that the controller alre
 *stopped* it directly via `stopService()` — only start was UI-delegated). So the
 notification follows actual playback, including a background tab that autoplays.
 
+## Page titles, history, bookmarks & favicons
+
+Aligned with current Firefox for Android. The spine is one invariant:
+
+**A tab's title must always belong to the tab's current URL.** GeckoView fires
+`onTitleChange` as a SEPARATE, LATER event than `onLocationChange`, so without
+care a tab briefly (and on title-less SPA navigations, indefinitely) holds the
+NEW url paired with the PREVIOUS page's title. That mismatch then gets persisted
+(history row) and shown (autocomplete "recent tabs"), e.g. `elmundo.com`
+displaying a Twitter post's title.
+
+- **Clear the title on a cross-document navigation** —
+  `GeckoState.updateVisit` (the one place that already detects a page-identity
+  change for visit-id anchoring) clears `setEntityTitle(null)` (and
+  `setEntityIcon(null)` on a HOST change) when the page-identity KEY changes. This
+  ports android-components `ContentStateReducer`'s `UpdateUrlAction`
+  (`title = if (!isUrlSame) ""` / `icon = if (!isHostEquals) null`). "Same
+  document" is `pageIdentityKey` = normalized host + path/identity-query, FRAGMENT
+  and noise-params IGNORED — so `#fragment`/pushState/tracking-param churn KEEPS
+  the title (matches Firefox `isUrlSame`; ours is slightly more lenient by design,
+  reusing the existing visit-id key). **Gate on `mCurrentPageKey != null`** so a
+  fresh/restored tab keeps its title on its FIRST location change.
+  - **Landmine (cost a round):** the clear MUST gate on `mCurrentPageKey`, NOT a
+    re-derived "previous URL" from the entity — `GeckoComponents.NavigationDelegate.onLocationChange`
+    writes the new URI into the entity (`setEntityUri`) BEFORE calling
+    `geckoState.onLocationChange`, so by the time `updateVisit` runs the entity
+    URI is ALREADY the new one and any entity-derived "previous" compares equal
+    (the clear silently never fires). The location delegate notifies only the
+    LOCATION observer (toolbar), NOT the tab list, so there's no "about:blank"
+    flash; the tab list rebinds on `notifyTabs` (from `onTitleChange`) once the
+    new title is set. `BrowserTabsAdapter` shows the URL when the title is empty,
+    so a tab never renders a literal null.
+
+- **History title — auto-update, url-keyed** (matches Firefox Places, which
+  updates `moz_places.title` on every visit). `onTitleChange` →
+  `WebHistoryDataRepository.updateTitle(url, title)` →
+  `WebHistoryDao.updateTitleByUrl` (`WHERE file_url = :url`). **Keyed by
+  `file_url`, NOT the tab's entity id** — a history row's uid is
+  `generateId(url) = hash(url)+today`, so the old id-keyed update never matched
+  the row and the repair was a silent no-op. `onHistoryStateChange` stores the
+  entity title, but **null when it's the `about:blank` sentinel** (`getEntityTitle`
+  returns `"about:blank"` for an unset title — never persist that as a real
+  title); the url-keyed repair fills it in once the title arrives. The single-
+  thread DiskIO executor serialises insert vs. repair, so either order converges.
+
+- **Bookmark title — placeholder-only backfill** (Firefox does NOT auto-update
+  bookmark titles; a bookmark title is captured once and is user-editable). A
+  bookmark saved mid-load snapshots an empty title, and there was no repair, so it
+  read `About:blank` forever. `onTitleChange` →
+  `WebBookmarkDataRepository.updateTitle(url, title)` →
+  `WebBookmarkDao.updateTitleIfPlaceholder` whose `WHERE` only matches a row still
+  holding a placeholder (`NULL`/`''`/`LOWER = 'about:blank'`) — so a RENAMED
+  bookmark (`WebBookmarkEditFragment`) is NEVER overwritten. `add()` stores null
+  (not the `About:blank` sentinel) for a mid-load title. The favicon has the
+  analogous backfill already (`IconsRepository` → `WebBookmarkDao.updateIcon`,
+  fires when the favicon loads, sync-set gated).
+
+- **`about:blank`/blank titles never SHOWN** — Firefox displays the URL for a
+  titleless entry (fenix#2163). `UrlStringUtils.isBlankTitle(title)` (null/empty/
+  `about:blank` in EITHER casing — `isAboutBlank` is case-sensitive `startsWith`
+  and missed the capitalized bookmark form) drives a URL fallback in
+  `WebHistoryAdapter`, `WebBookmarkAdapter`, and the three `AutoCompleteSearch`
+  suggestion builders. And a suggestion whose **URL itself** is `about:blank` is
+  SKIPPED entirely (history/bookmark/tab) — the URL fallback can't rescue an
+  about:blank URL, and an about:blank tab isn't caught by `isURLResouceLike`
+  (`resource://` only).
+
+- **Favicon updates — resolution policy + efficiency.** `IconsRepository.updateIcon`:
+  when the resolution is unknown (`<= 0`) it HEAD-fetches and estimates from
+  `Content-Length` (`estimateResolution`); then `WebHistoryDao.updateIconData` is
+  ONE conditional UPDATE that (1) **keeps the higher-res icon** —
+  `(file_icon_resolution <= 0 OR :res >= file_icon_resolution)` — and (2) skips a
+  **no-op write** — `(file_icon IS NOT :icon OR file_icon_resolution IS NOT :res)`
+  (`IS NOT` = null-safe). The no-op guard matters because an unconditional UPDATE
+  fires Room invalidation on EVERY revisit, needlessly requerying the Paging list.
+  Don't reintroduce the old `getResolution` read-then-write: it did two scans per
+  signal and, worse, sampled ONE arbitrary row (`LIMIT 1`) then overwrote ALL rows
+  — so it could DOWNGRADE a high-res row. The per-row gate fixes that. Bookmark
+  `updateIcon` got the same `AND file_icon IS NOT :icon` no-op guard. Bookmarks
+  have **no** resolution policy by design (no `file_icon_resolution` column —
+  "always newest").
+  - **`webhistory(file_url)` is INDEXED** (`@Index` + `MIGRATION_3_4`, version
+    3→4, `CREATE INDEX` matching Room's exact DDL — same proven pattern as
+    `DownloadDatabase.MIGRATION_10_11`). The uid PK is `hash(url)+day`, NOT the
+    lookup key, so the url-keyed favicon/title updates would otherwise full-scan.
+
+- **History is kept INDEFINITELY** (`HISTORY_RETENTION_INTERVAL = NEVER_INTERVAL`).
+  Firefox expires history by storage size, not a fixed age; manual clear (the
+  Delete-browsing dialog) still works. **`WebHistoryDataRepository.purgeDatabase`
+  guards a non-positive window and skips the purge** — load-bearing: the cutoff is
+  `now - interval`, so a NEVER (`-1`) value unguarded would be `now + 1ms` and the
+  daily purge would delete the ENTIRE history. (The `file_url` index matters more
+  now that the table is unbounded.)
+
 ## Downloading & networking
 
 Two download paths, one shared OkHttp client (`NetworkModule`, with
