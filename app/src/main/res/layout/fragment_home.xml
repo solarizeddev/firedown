@@ -91,7 +91,7 @@
                     android:id="@+id/home_subtitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
+                    android:layout_marginTop="6dp"
                     android:gravity="center_vertical"
                     android:orientation="horizontal"
                     android:visibility="gone">
@@ -112,8 +112,8 @@
                             android:id="@+id/home_subtitle_blocked_text"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:paddingHorizontal="11dp"
-                            android:paddingVertical="6dp"
+                            android:paddingHorizontal="12dp"
+                            android:paddingVertical="8dp"
                             android:textColor="?attr/colorOnSurfaceVariant"
                             android:textSize="13sp"
                             tools:text="10.5K blocked" />
@@ -148,8 +148,8 @@
                             android:id="@+id/home_subtitle_saved_text"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:paddingHorizontal="11dp"
-                            android:paddingVertical="6dp"
+                            android:paddingHorizontal="12dp"
+                            android:paddingVertical="8dp"
                             android:textColor="?attr/colorOnSurfaceVariant"
                             android:textSize="13sp"
                             tools:text="9.5 GB saved" />
