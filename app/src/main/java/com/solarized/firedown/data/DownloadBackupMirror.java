@@ -115,12 +115,18 @@ public final class DownloadBackupMirror {
             Log.e(TAG, "writeMirror: attach failed", e);
             return;
         }
+        long mirrorRows = 0;
         try {
             db.execSQL("DROP TABLE IF EXISTS mirror." + TABLE);
             db.execSQL("CREATE TABLE mirror." + TABLE + " AS SELECT * FROM " + TABLE
                     + " WHERE file_safe = 0 AND file_status = 1");
+            try (Cursor count = db.query("SELECT COUNT(*) FROM mirror." + TABLE)) {
+                if (count.moveToFirst()) {
+                    mirrorRows = count.getLong(0);
+                }
+            }
             if (BuildConfig.DEBUG) {
-                Log.d(TAG, "writeMirror: mirrored to " + mirror.getName());
+                Log.d(TAG, "writeMirror: mirrored " + mirrorRows + " rows to " + mirror.getName());
             }
         } catch (Exception e) {
             Log.e(TAG, "writeMirror: copy failed", e);
@@ -132,7 +138,19 @@ public final class DownloadBackupMirror {
             }
         }
 
-        writeEncryptedPublicMirror(context, mirror);
+        // Never PUBLISH an empty backup. A fresh install (the reinstall
+        // window, before the user runs the SAF restore) has an empty database,
+        // so this would otherwise write an empty public mirror with a NEWER
+        // timestamp than the real backup left by the previous install — and
+        // since restoreFromTree takes the newest decryptable mirror, the user
+        // would restore that empty one and see "0 entries". The filesDir
+        // mirror (Auto Backup) is still recreated above; only the public
+        // .fdbk write is gated, so a genuinely-empty backup never clobbers /
+        // out-dates a real one. (restoreFromTree also now tries every
+        // candidate, not just the newest — belt and suspenders.)
+        if (mirrorRows > 0) {
+            writeEncryptedPublicMirror(context, mirror);
+        }
     }
 
     // ------------------------------------------------------------------
@@ -281,10 +299,12 @@ public final class DownloadBackupMirror {
      * newest decryptable one. Call on a background thread.
      *
      * <p>Looks for {@code *.fdbk} both directly in the picked folder and in
-     * its {@code backup/} child (covering a user who picked either level),
-     * newest-first by last-modified. Returns the number of rows imported
-     * (0 is a legitimate result: everything already present),
-     * {@link #RESTORE_NO_BACKUP}, or {@link #RESTORE_WRONG_DEVICE}.
+     * its {@code backup/} child (covering a user who picked either level), and
+     * imports EVERY one it can decrypt (not just the newest — see the loop
+     * comment for the reinstall-window empty-mirror reason), summing the rows.
+     * Returns the number of rows imported (0 is a legitimate result: everything
+     * already present), {@link #RESTORE_NO_BACKUP}, or
+     * {@link #RESTORE_WRONG_DEVICE}.
      */
     public static int restoreFromTree(@NonNull Context context,
                                       @NonNull DownloadDatabase database,
@@ -302,20 +322,27 @@ public final class DownloadBackupMirror {
         candidates.sort((a, b) -> Long.compare(b.second, a.second));
 
         File plain = new File(context.getCacheDir(), "restore-mirror-" + System.currentTimeMillis() + ".db");
+        boolean anyDecrypted = false;
+        int totalRestored = 0;
         try {
+            // Try EVERY decryptable mirror, not just the newest. After a
+            // reinstall the app's first background re-writes a public mirror
+            // from the (still-empty) fresh database, so the NEWEST .fdbk in the
+            // folder can be an EMPTY one that decrypts fine and imports 0 rows
+            // — the real backup is an OLDER file. Bailing on the first
+            // decryptable candidate would import that empty mirror and report
+            // "0 restored" while the actual data sits one file back. So we
+            // decrypt + import all of them and SUM: importMirrorDatabase dedups
+            // by file_path against the (growing) live table, so overlapping
+            // mirrors contribute each row once and re-imports add 0.
             for (Pair<Uri, Long> candidate : candidates) {
                 try (InputStream in = context.getContentResolver().openInputStream(candidate.first)) {
                     if (in == null) {
                         continue;
                     }
                     if (decryptPublicMirror(context, in, plain)) {
-                        int restored = importMirrorDatabase(database, plain);
-                        Log.i(TAG, "restoreFromTree: restored " + restored + " entries from SAF mirror");
-                        // Any completed restore retires the reinstall banner,
-                        // whichever door (empty state / Settings / banner)
-                        // launched the flow.
-                        clearRestoreBanner(context);
-                        return restored;
+                        anyDecrypted = true;
+                        totalRestored += importMirrorDatabase(database, plain);
                     }
                 } catch (Exception e) {
                     if (BuildConfig.DEBUG) {
@@ -328,7 +355,15 @@ public final class DownloadBackupMirror {
                 Log.w(TAG, "restoreFromTree: temp mirror not deleted");
             }
         }
-        return RESTORE_WRONG_DEVICE;
+        // No candidate decrypted at all → written by a different device/identity.
+        if (!anyDecrypted) {
+            return RESTORE_WRONG_DEVICE;
+        }
+        Log.i(TAG, "restoreFromTree: restored " + totalRestored + " entries from SAF mirror");
+        // Any completed restore retires the reinstall banner, whichever door
+        // (empty state / Settings / banner) launched the flow.
+        clearRestoreBanner(context);
+        return totalRestored;
     }
 
     private static void collectFdbkCandidates(@NonNull Context context,
