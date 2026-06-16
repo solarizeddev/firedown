@@ -181,6 +181,14 @@ public class GeckoToolbar extends FrameLayout implements View.OnClickListener, V
             mAddressBarButton.setIconResource(R.drawable.ic_search_dropdown_24);
             mAddressBarButton.setIconSize(
                     getResources().getDimensionPixelSize(R.dimen.app_bar_icon_size_home));
+            // Indent the hint text so the (bigger) dropdown caret has room — home
+            // only; the browser shield keeps the XML -6dp start margin.
+            ViewGroup.LayoutParams editParams = mEditText.getLayoutParams();
+            if (editParams instanceof ViewGroup.MarginLayoutParams marginParams) {
+                marginParams.setMarginStart(
+                        getResources().getDimensionPixelSize(R.dimen.address_bar_home_text_inset));
+                mEditText.setLayoutParams(marginParams);
+            }
             mGeckoProgressBar.setVisibility(View.GONE);
             mReloadButton.setVisibility(View.GONE);
         }

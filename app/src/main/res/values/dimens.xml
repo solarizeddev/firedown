@@ -8,12 +8,15 @@
     <dimen name="address_bar_radius_focused">24dp</dimen>
     <dimen name="app_bar_size">64dp</dimen>
     <dimen name="app_bar_icon_size">24dp</dimen>
-    <!-- Home search glyph is a layer-list: the 24dp magnifier (inset to align
-         with the browser shield's band) plus a small dropdown caret in the gap
-         before the hint text. Box is 36dp so the icon spans the same 12..36dp
-         band as the 24dp-centered shield, leaving the caret room before the
-         edit text. -->
-    <dimen name="app_bar_icon_size_home">36dp</dimen>
+    <!-- Home search glyph is a layer-list: the 24dp magnifier (inset to the same
+         12..36dp band as the 24dp-centered browser shield) plus a 14dp dropdown
+         caret to its right. Box is the full 48dp button so the caret has room at
+         the right edge; the home hint text is indented (below) to clear it. -->
+    <dimen name="app_bar_icon_size_home">48dp</dimen>
+    <!-- Home only: start margin for the address-bar hint/edit text, replacing the
+         browser's -6dp, so the text begins after the home search glyph's caret
+         instead of under it. Browser keeps -6dp (the shield needs no extra room). -->
+    <dimen name="address_bar_home_text_inset">2dp</dimen>
     <dimen name="app_bar_fab_elevation">12dp</dimen>
     <dimen name="app_bar_fab_margin">16dp</dimen>
     <dimen name="autocomplete_elevation">20dp</dimen>

@@ -4,21 +4,22 @@
   with the stock chevron (keyboard_arrow_down_24) to its right, composed as a
   layer-list so we reuse the real, properly-drawn Material assets instead of a
   hand-rolled combined path. The button opens the search-engine picker, so the
-  caret reads as "selector". The magnifier is inset (android:left) so it lands in
-  the SAME 24dp band as the browser shield (the security button) — otherwise the
-  wider icon box shoves it flush to the left edge with no start margin. The box
-  is 36dp; the chevron takes the gap between the aligned magnifier and the hint.
+  caret reads as "selector". The magnifier is inset (android:left=12dp) so in the
+  full 48dp button box it lands in the SAME 12..36dp band as the 24dp-centered
+  browser shield (the security button), giving home the same start margin. The
+  14dp caret sits at the right edge; the home hint text is indented
+  (address_bar_home_text_inset, applied in GeckoToolbar) so it clears the caret.
 -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:width="24dp"
         android:height="24dp"
-        android:left="6dp"
+        android:left="12dp"
         android:drawable="@drawable/ic_search_24"
         android:gravity="start|center_vertical" />
     <item
-        android:width="8dp"
-        android:height="8dp"
+        android:width="14dp"
+        android:height="14dp"
         android:drawable="@drawable/keyboard_arrow_down_24"
         android:gravity="end|center_vertical" />
 </layer-list>
