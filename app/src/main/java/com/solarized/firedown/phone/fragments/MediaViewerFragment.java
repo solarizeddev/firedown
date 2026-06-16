@@ -33,6 +33,7 @@ import androidx.media3.common.Player;
 import androidx.media3.common.VideoSize;
 import androidx.media3.common.util.UnstableApi;
 import androidx.media3.datasource.DataSource;
+import androidx.media3.datasource.DefaultDataSource;
 import androidx.media3.datasource.FileDataSource;
 import androidx.media3.exoplayer.ExoPlayer;
 import androidx.media3.exoplayer.source.MediaSource;
@@ -56,6 +57,7 @@ import com.solarized.firedown.glide.MimeTypeThumbnail;
 import com.solarized.firedown.phone.PlayerActivity;
 import com.solarized.firedown.ui.AspectRatioImageView;
 import com.solarized.firedown.R;
+import com.solarized.firedown.data.RestoredFileAccess;
 import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.utils.FileUriHelper;
 import com.solarized.firedown.Keys;
@@ -370,13 +372,28 @@ public class MediaViewerFragment extends Fragment {
             }
         });
 
-        final DataSource.Factory dataSourceFactory = new FileDataSource.Factory();
+        // Default: read the raw path with a FileDataSource (owned files; the
+        // vault's encrypted/safe entries keep this exact path untouched).
+        DataSource.Factory dataSourceFactory = new FileDataSource.Factory();
+        Uri playUri = Uri.parse(mDownloadEntity.getFilePath());
+
+        // A foreign-owned RESTORED file can't be opened by path (EACCES). When
+        // it resolves to the persisted SAF content:// grant, play THAT through
+        // a DefaultDataSource (which speaks content://). Scoped to non-vault
+        // entries so encrypted/safe playback is byte-identical to before.
+        if (!mDownloadEntity.isFileEncrypted() && !mDownloadEntity.isFileSafe()) {
+            Uri openable = RestoredFileAccess.openableUri(mActivity, mDownloadEntity.getFilePath());
+            if (openable != null && "content".equals(openable.getScheme())) {
+                playUri = openable;
+                dataSourceFactory = new DefaultDataSource.Factory(mActivity);
+            }
+        }
 
         ExtractorsFactory extractorsFactory = new DefaultExtractorsFactory()
                 .setConstantBitrateSeekingEnabled(true)
                 .setConstantBitrateSeekingAlwaysEnabled(true);
 
-        MediaItem mediaItem = MediaItem.fromUri(Uri.parse(mDownloadEntity.getFilePath()));
+        MediaItem mediaItem = MediaItem.fromUri(playUri);
 
         MediaSource videoSource = new ProgressiveMediaSource.Factory(dataSourceFactory, extractorsFactory).createMediaSource(mediaItem);
 
@@ -391,7 +408,7 @@ public class MediaViewerFragment extends Fragment {
         // flash. See androidx/media#536 (closed as "question", no
         // upstream fix in 1.10.0).
         if (!FileUriHelper.isAudio(mimeType)) {
-            presetVideoAspectRatio(mDownloadEntity.getFilePath());
+            presetVideoAspectRatio(playUri);
         }
 
         mExoPlayer.prepare();
@@ -742,14 +759,17 @@ public class MediaViewerFragment extends Fragment {
      * normal runtime resize.
      */
     @OptIn(markerClass = UnstableApi.class)
-    private void presetVideoAspectRatio(String filePath) {
-        if (filePath == null || mPlayerView == null || mActivity == null) return;
+    private void presetVideoAspectRatio(Uri uri) {
+        if (uri == null || mPlayerView == null || mActivity == null) return;
         View contentFrame = mPlayerView.findViewById(androidx.media3.ui.R.id.exo_content_frame);
         if (!(contentFrame instanceof AspectRatioFrameLayout)) return;
 
         MediaMetadataRetriever retriever = new MediaMetadataRetriever();
         try {
-            retriever.setDataSource(mActivity, Uri.parse(filePath));
+            // uri is the same source ExoPlayer plays: a file:// for owned files
+            // or the SAF content:// grant for a foreign-owned restored file
+            // (setDataSource(Context, Uri) opens content:// via the resolver).
+            retriever.setDataSource(mActivity, uri);
             String wStr = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH);
             String hStr = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT);
             String rStr = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION);

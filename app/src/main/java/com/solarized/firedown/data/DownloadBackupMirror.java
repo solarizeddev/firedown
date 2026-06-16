@@ -13,6 +13,7 @@ import android.util.Log;
 import android.util.Pair;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.sqlite.db.SupportSQLiteDatabase;
 
 import com.solarized.firedown.BuildConfig;
@@ -291,6 +292,17 @@ public final class DownloadBackupMirror {
     public static void rememberRestoreTree(@NonNull Context context, @NonNull Uri treeUri) {
         context.getSharedPreferences(LOCAL_PREFS, Context.MODE_PRIVATE)
                 .edit().putString(KEY_RESTORE_TREE, treeUri.toString()).apply();
+    }
+
+    /** The persisted SAF tree grant from the last restore (the
+     *  {@code Download/Firedown} folder the user picked), or {@code null} if
+     *  none. {@link RestoredFileAccess} uses it to open foreign-owned restored
+     *  files this install can't read by path. */
+    @Nullable
+    public static Uri getRestoreTree(@NonNull Context context) {
+        String stored = context.getSharedPreferences(LOCAL_PREFS, Context.MODE_PRIVATE)
+                .getString(KEY_RESTORE_TREE, null);
+        return TextUtils.isEmpty(stored) ? null : Uri.parse(stored);
     }
 
     /**

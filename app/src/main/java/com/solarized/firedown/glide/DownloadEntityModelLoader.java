@@ -2,6 +2,7 @@ package com.solarized.firedown.glide;
 
 
 
+import android.content.Context;
 import android.os.ParcelFileDescriptor;
 import android.text.TextUtils;
 import android.util.Log;
@@ -15,8 +16,8 @@ import com.bumptech.glide.load.Options;
 import com.bumptech.glide.load.data.DataFetcher;
 import com.bumptech.glide.load.model.ModelLoader;
 import com.bumptech.glide.signature.ObjectKey;
+import com.solarized.firedown.data.RestoredFileAccess;
 import com.solarized.firedown.data.entity.DownloadEntity;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
@@ -25,6 +26,12 @@ public class DownloadEntityModelLoader implements ModelLoader<DownloadEntity, Pa
 
 
     private static final String TAG = DownloadEntityModelLoader.class.getSimpleName();
+
+    private final Context mContext;
+
+    public DownloadEntityModelLoader(@NonNull Context context) {
+        mContext = context.getApplicationContext();
+    }
 
 
     @Nullable
@@ -38,7 +45,7 @@ public class DownloadEntityModelLoader implements ModelLoader<DownloadEntity, Pa
         // applied at the call site discriminates regenerate-thumbnail changes.
         return new LoadData<>(
                 new ObjectKey("download_entity:" + downloadEntity.getId()),
-                new DownloadEnitityDataFetcher(downloadEntity));
+                new DownloadEnitityDataFetcher(mContext, downloadEntity));
     }
 
     @Override
@@ -49,11 +56,14 @@ public class DownloadEntityModelLoader implements ModelLoader<DownloadEntity, Pa
 
     private static class DownloadEnitityDataFetcher implements DataFetcher<ParcelFileDescriptor> {
 
+        private final Context mContext;
+
         private final DownloadEntity mDownloadEntity;
 
         private ParcelFileDescriptor mParcelFileDescriptor;
 
-        public DownloadEnitityDataFetcher(DownloadEntity downloadEntity){
+        public DownloadEnitityDataFetcher(Context context, DownloadEntity downloadEntity){
+            mContext = context;
             mDownloadEntity = downloadEntity;
 
         }
@@ -64,11 +74,15 @@ public class DownloadEntityModelLoader implements ModelLoader<DownloadEntity, Pa
 
             String fileImg = mDownloadEntity.getFileImg();
 
-            File file = new File(!TextUtils.isEmpty(filePath) ? filePath : fileImg);
+            String path = !TextUtils.isEmpty(filePath) ? filePath : fileImg;
 
-            try {
-                mParcelFileDescriptor = ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY);
-            } catch (FileNotFoundException e) {
+            // openReadOnly opens the owned file directly when this install can
+            // read it, and falls back to the persisted SAF restore grant for a
+            // foreign-owned RESTORED file (which a bare File open would EACCES).
+            mParcelFileDescriptor = RestoredFileAccess.openReadOnly(mContext, path);
+
+            if (mParcelFileDescriptor == null) {
+                FileNotFoundException e = new FileNotFoundException("Unreadable: " + path);
                 Log.e(TAG, "loadData", e);
                 callback.onLoadFailed(e);
                 return;

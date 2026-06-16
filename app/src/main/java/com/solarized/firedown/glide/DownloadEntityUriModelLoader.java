@@ -2,6 +2,7 @@ package com.solarized.firedown.glide;
 
 
 
+import android.content.Context;
 import android.net.Uri;
 import android.text.TextUtils;
 
@@ -14,9 +15,9 @@ import com.bumptech.glide.load.Options;
 import com.bumptech.glide.load.data.DataFetcher;
 import com.bumptech.glide.load.model.ModelLoader;
 import com.bumptech.glide.signature.ObjectKey;
+import com.solarized.firedown.data.RestoredFileAccess;
 import com.solarized.firedown.data.entity.DownloadEntity;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 
 
@@ -24,6 +25,12 @@ public class DownloadEntityUriModelLoader implements ModelLoader<DownloadEntity,
 
 
     private static final String TAG = DownloadEntityUriModelLoader.class.getSimpleName();
+
+    private final Context mContext;
+
+    public DownloadEntityUriModelLoader(@NonNull Context context) {
+        mContext = context.getApplicationContext();
+    }
 
 
     @Nullable
@@ -34,7 +41,7 @@ public class DownloadEntityUriModelLoader implements ModelLoader<DownloadEntity,
         // and changes every process restart, defeating Glide's disk cache.
         return new LoadData<>(
                 new ObjectKey("download_entity:" + downloadEntity.getId()),
-                new DownloadEnitityDataFetcher(downloadEntity));
+                new DownloadEnitityDataFetcher(mContext, downloadEntity));
     }
 
     @Override
@@ -45,10 +52,13 @@ public class DownloadEntityUriModelLoader implements ModelLoader<DownloadEntity,
 
     private static class DownloadEnitityDataFetcher implements DataFetcher<Uri> {
 
+        private final Context mContext;
+
         private final DownloadEntity mDownloadEntity;
 
 
-        public DownloadEnitityDataFetcher(DownloadEntity downloadEntity){
+        public DownloadEnitityDataFetcher(Context context, DownloadEntity downloadEntity){
+            mContext = context;
             mDownloadEntity = downloadEntity;
 
         }
@@ -59,14 +69,20 @@ public class DownloadEntityUriModelLoader implements ModelLoader<DownloadEntity,
 
             String fileImg = mDownloadEntity.getFileImg();
 
-            File file = new File(!TextUtils.isEmpty(filePath) ? filePath : fileImg);
+            String path = !TextUtils.isEmpty(filePath) ? filePath : fileImg;
 
-            if (!file.exists()) {
-                callback.onLoadFailed(new FileNotFoundException("File not found: " + file.getPath()));
+            // file:// for an owned file, else the SAF content:// URI for a
+            // foreign-owned RESTORED file (Glide's built-in ContentResolver
+            // fetchers open it via the persisted grant). A bare Uri.fromFile
+            // would EACCES on the restored case.
+            Uri uri = RestoredFileAccess.openableUri(mContext, path);
+
+            if (uri == null) {
+                callback.onLoadFailed(new FileNotFoundException("Unreadable: " + path));
                 return;
             }
 
-            callback.onDataReady(Uri.fromFile(file));
+            callback.onDataReady(uri);
 
 
         }

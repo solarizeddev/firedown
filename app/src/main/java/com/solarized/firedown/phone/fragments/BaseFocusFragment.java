@@ -52,6 +52,7 @@ import com.solarized.firedown.manager.tasks.TaskManager;
 import com.solarized.firedown.phone.DownloadsActivity;
 import com.solarized.firedown.phone.PlayerActivity;
 import com.solarized.firedown.R;
+import com.solarized.firedown.data.RestoredFileAccess;
 import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.manager.DownloadRequest;
 import com.solarized.firedown.manager.RunnableManager;
@@ -475,6 +476,24 @@ public class BaseFocusFragment extends Fragment {
         mActivity.finish();
     }
 
+    /**
+     * The URI to hand a viewer/ACTION_VIEW for a finished download. A
+     * {@code FileProvider} URI for an owned file (as before); but a
+     * foreign-owned RESTORED file can't be served by FileProvider (the app
+     * can't read it), so resolve it to the persisted SAF {@code content://}
+     * grant instead — readable in-process and forwardable to another app with
+     * {@code FLAG_GRANT_READ_URI_PERMISSION} (which the external-open intents
+     * already set).
+     */
+    private Uri viewerUri(String filePath, File file) {
+        Uri openable = RestoredFileAccess.openableUri(mActivity, filePath);
+        if (openable != null && "content".equals(openable.getScheme())) {
+            return openable;
+        }
+        return FileProvider.getUriForFile(
+                mActivity, mActivity.getPackageName() + ".fileprovider", file);
+    }
+
     protected void openItemWith(DownloadEntity downloadEntity){
         if(downloadEntity == null){
             Snackbar snackbar = Snackbar.make(mActivity.getSnackAnchorView(),  R.string.error_general, Snackbar.LENGTH_LONG);
@@ -486,7 +505,7 @@ public class BaseFocusFragment extends Fragment {
         try {
             File file = new File(filePath);
             Intent intent = new Intent(Intent.ACTION_VIEW);
-            Uri uri = FileProvider.getUriForFile(mActivity, mActivity.getPackageName() + ".fileprovider", file);
+            Uri uri = viewerUri(filePath, file);
             intent.setDataAndType(uri, mimeType);
             intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
             startActivity(intent);
@@ -517,7 +536,7 @@ public class BaseFocusFragment extends Fragment {
         try {
             File file = new File(filePath);
             Intent intent = new Intent(Intent.ACTION_VIEW);
-            Uri uri = FileProvider.getUriForFile(mActivity, mActivity.getPackageName() + ".fileprovider", file);
+            Uri uri = viewerUri(filePath, file);
             if(FileUriHelper.isSVG(mimeType) || FileUriHelper.isImage(mimeType)){
                 if(viewHolder != null){
                     View image = viewHolder.itemView.findViewById(R.id.image);
@@ -590,7 +609,7 @@ public class BaseFocusFragment extends Fragment {
         String filePath = downloadEntity.getFilePath();
         if(filePath != null){
             File file = new File(filePath);
-            Uri uri = FileProvider.getUriForFile(mActivity, mActivity.getPackageName() + ".fileprovider", file);
+            Uri uri = viewerUri(filePath, file);
             Intent intent = new ShareCompat.IntentBuilder(mActivity)
                     .setType(mimeType)
                     .setChooserTitle(getString(R.string.share))
@@ -612,7 +631,7 @@ public class BaseFocusFragment extends Fragment {
         ArrayList<Uri> files = new ArrayList<>();
         for(String path : filesToSend /* List of the files you want to send */) {
             File file = new File(path);
-            Uri uri = FileProvider.getUriForFile(mActivity, mActivity.getPackageName() + ".fileprovider", file);
+            Uri uri = viewerUri(filePath, file);
             files.add(uri);
         }
         intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, files);
