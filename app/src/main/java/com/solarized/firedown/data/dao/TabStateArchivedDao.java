@@ -30,11 +30,33 @@ public interface TabStateArchivedDao {
     LiveData<Integer> getCountSinceLive(long sinceMs);
 
     /**
-     * PagingSource for Paging 3.
-     * Uses file_date DESC to show the most recent tabs first.
+     * PagingSource for Paging 3. Ordered by when each tab was ARCHIVED
+     * (archived_at DESC) so the most recently archived tab sits on top —
+     * what the user expects. file_date (original creation) is the tiebreaker
+     * and the fallback for legacy pre-v2 rows (archived_at = 0), which sort
+     * to the bottom among themselves by creation date.
      */
-    @Query("SELECT * FROM tabstate ORDER BY file_date DESC")
+    @Query("SELECT * FROM tabstate ORDER BY archived_at DESC, file_date DESC")
     PagingSource<Integer, TabStateArchivedEntity> getArchive();
+
+    /**
+     * Age purge: drop archived tabs whose archive time is older than
+     * {@code cutoffMs}. Legacy pre-v2 rows (archived_at = 0) carry no archive
+     * time and are intentionally NOT aged out here — the count cap
+     * ({@code trimToNewest}) is what bounds them instead.
+     */
+    @Query("DELETE FROM tabstate WHERE archived_at > 0 AND archived_at < :cutoffMs")
+    Integer purgeOlderThan(long cutoffMs);
+
+    /**
+     * Count cap: keep the newest {@code keep} archived tabs (by archive time,
+     * creation date as tiebreaker — same order as {@link #getArchive()}) and
+     * delete the rest. Legacy archived_at = 0 rows sort last, so they're the
+     * first dropped when over the cap.
+     */
+    @Query("DELETE FROM tabstate WHERE uid NOT IN "
+            + "(SELECT uid FROM tabstate ORDER BY archived_at DESC, file_date DESC LIMIT :keep)")
+    Integer trimToNewest(int keep);
 
     @Query("SELECT * FROM tabstate WHERE uid = :id")
     LiveData<TabStateArchivedEntity> getTabState(int id);

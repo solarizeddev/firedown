@@ -423,6 +423,18 @@ public class Preferences {
      *  window must skip the purge, not delete everything). */
     public static final long HISTORY_RETENTION_INTERVAL = NEVER_INTERVAL;
 
+    // Archive hygiene bounds, enforced on every auto-archive sweep
+    // (GeckoStateDataRepository.archiveInactiveTabsLocked) so the archive
+    // can't grow without limit — each archived row carries a full serialized
+    // sessionState blob, so an "archive after 1 week" user would otherwise
+    // accumulate them forever. No setting: these are sane fixed bounds. The
+    // age horizon sits ABOVE the longest auto-archive interval (30 days) so a
+    // tab the archive itself just moved is never immediately re-purged.
+    /** Never keep more than this many archived tabs (newest by archive time). */
+    public static final int  TABS_ARCHIVE_MAX_COUNT       = 200;
+    /** Drop archived tabs whose archive time is older than this. */
+    public static final long TABS_ARCHIVE_MAX_AGE_INTERVAL = 90L * ONE_DAY_INTERVAL;
+
     public static final int LIST_LIMIT = 25;
 
 

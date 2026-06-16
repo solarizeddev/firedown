@@ -109,6 +109,31 @@ public class TabStateArchivedRepository {
 
     }
 
+    /**
+     * Enforces the archive bounds SYNCHRONOUSLY (caller must already be
+     * off-main — this runs from the auto-archive sweep, which is on the disk
+     * executor / a background thread). Age purge first, then the count cap.
+     * {@code maxCount <= 0} or {@code maxAgeMillis <= 0} skips that bound.
+     * Returns the number of archived rows removed.
+     */
+    public int purgeSync(int maxCount, long maxAgeMillis) {
+        int removed = 0;
+        if (maxAgeMillis > 0) {
+            long cutoff = System.currentTimeMillis() - maxAgeMillis;
+            Integer aged = mTabStateDao.purgeOlderThan(cutoff);
+            if (aged != null) {
+                removed += aged;
+            }
+        }
+        if (maxCount > 0) {
+            Integer capped = mTabStateDao.trimToNewest(maxCount);
+            if (capped != null) {
+                removed += capped;
+            }
+        }
+        return removed;
+    }
+
     // --- Private Helpers ---
 
     private boolean shouldSkip(GeckoStateEntity entity) {

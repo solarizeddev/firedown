@@ -248,7 +248,11 @@ public class TabsArchiveFragment extends BaseFocusFragment implements OnItemClic
         geckoEntity.setUri(entity.getUri());
         geckoEntity.setSessionState(entity.getSessionState());
         geckoEntity.setIcon(entity.getIcon());
-        geckoEntity.setCreationDate(System.currentTimeMillis());
+        // Preserve the tab's ORIGINAL creation date — the archived row kept it
+        // (TabStateArchivedRepository.mapToArchivedEntity). Stamping "now" made
+        // a restored years-old tab look brand-new and mis-sorted it among the
+        // live tabs (which order by creation date).
+        geckoEntity.setCreationDate(entity.getCreationDate());
 
         // 1. Create the GeckoState and activate it in the repository
         GeckoState geckoState = new GeckoState(geckoEntity);

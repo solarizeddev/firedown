@@ -10,6 +10,7 @@ import androidx.annotation.Nullable;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
+import com.solarized.firedown.Preferences;
 import com.solarized.firedown.StoragePaths;
 import com.solarized.firedown.data.di.Qualifiers;
 import com.solarized.firedown.data.entity.CertificateInfoEntity;
@@ -713,6 +714,18 @@ public class GeckoStateDataRepository {
                     }
                 }
             }
+        }
+
+        // Bound the archive on every sweep (not only when we added rows): each
+        // archived row holds a full sessionState blob, so an unbounded archive
+        // is real storage growth. Age purge + count cap, both synchronous —
+        // we're already off-main here (disk executor at init, background thread
+        // for the periodic job), same context as the addSync() above.
+        int purged = mArchivedRepository.purgeSync(
+                Preferences.TABS_ARCHIVE_MAX_COUNT,
+                Preferences.TABS_ARCHIVE_MAX_AGE_INTERVAL);
+        if (purged > 0) {
+            Log.d(TAG, "archiveInactiveTabsLocked: purged " + purged + " stale archived tabs");
         }
 
         return toArchive.size();
