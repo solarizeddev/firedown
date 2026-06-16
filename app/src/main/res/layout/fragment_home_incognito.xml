@@ -65,7 +65,7 @@
                      private-mode, no recolouring needed. adjustViewBounds keeps
                      its 6:5 aspect at a fixed width. -->
                 <androidx.appcompat.widget.AppCompatImageView
-                    android:layout_width="220dp"
+                    android:layout_width="168dp"
                     android:layout_height="wrap_content"
                     android:adjustViewBounds="true"
                     android:contentDescription="@string/incognito_home_title"
