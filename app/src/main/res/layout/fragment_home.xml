@@ -103,7 +103,8 @@
                         android:clickable="true"
                         android:focusable="true"
                         android:visibility="gone"
-                        app:cardBackgroundColor="?attr/colorSurfaceContainerHigh"
+                        app:cardBackgroundColor="@color/transparent"
+                        app:strokeWidth="0dp"
                         app:cardCornerRadius="14dp"
                         app:cardElevation="0dp">
 
@@ -118,6 +119,7 @@
                             tools:text="10.5K blocked" />
 
                     </com.google.android.material.card.MaterialCardView>
+
 
                     <TextView
                         android:id="@+id/home_subtitle_sep"
@@ -137,7 +139,8 @@
                         android:clickable="true"
                         android:focusable="true"
                         android:visibility="gone"
-                        app:cardBackgroundColor="?attr/colorSurfaceContainerHigh"
+                        app:cardBackgroundColor="@color/transparent"
+                        app:strokeWidth="0dp"
                         app:cardCornerRadius="14dp"
                         app:cardElevation="0dp">
 
