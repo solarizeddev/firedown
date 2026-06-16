@@ -2,7 +2,6 @@ package com.solarized.firedown.ui.adapters;
 
 import android.content.Context;
 import android.graphics.drawable.Drawable;
-import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -24,6 +23,7 @@ import com.solarized.firedown.R;
 import com.solarized.firedown.data.entity.WebBookmarkEntity;
 import com.solarized.firedown.ui.IncognitoColors;
 import com.solarized.firedown.utils.SelectionStyling;
+import com.solarized.firedown.utils.UrlStringUtils;
 import com.solarized.firedown.ui.OnItemClickListener;
 import com.solarized.firedown.utils.Utils;
 import com.solarized.firedown.utils.WebUtils;
@@ -121,11 +121,12 @@ public class WebBookmarkAdapter extends PagingDataAdapter<WebBookmarkEntity, Rec
         String icon = webBookmarkEntity.getIcon();
 
         WebBookmarkViewHolder webHistoryViewHolder = (WebBookmarkViewHolder) viewHolder;
-        // Fall back to the URL when the title is empty (fenix#2163) — a bookmark
-        // saved mid-load has no title yet (the onTitleChange backfill fills it in
-        // later), so show the URL instead of a blank row in the meantime.
+        // Fall back to the URL when the title is blank/about:blank (fenix#2163) —
+        // a bookmark saved mid-load has no title yet (the onTitleChange backfill
+        // fills it in later), so show the URL instead of a blank row meanwhile.
+        // isBlankTitle also covers legacy rows holding the "About:blank" sentinel.
         String title = webBookmarkEntity.getTitle();
-        webHistoryViewHolder.file_name.setText(TextUtils.isEmpty(title) ? url : title);
+        webHistoryViewHolder.file_name.setText(UrlStringUtils.isBlankTitle(title) ? url : title);
         webHistoryViewHolder.file_url.setText(WebUtils.getDomainName(webBookmarkEntity.getUrl()));
         // Incognito-aware text + more-icon tones (don't inherit the system theme).
         webHistoryViewHolder.file_name.setTextColor(mTextPrimary);

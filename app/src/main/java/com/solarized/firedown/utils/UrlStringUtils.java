@@ -150,6 +150,19 @@ public class UrlStringUtils {
         return string != null && string.startsWith(ABOUT_BLANK);
     }
 
+    /**
+     * True when a stored page TITLE carries no real information: null, empty, or
+     * the about:blank sentinel in EITHER stored casing — the lowercase
+     * "about:blank" the history path stored before titles were nulled, and the
+     * capitalized "About:blank" the bookmark path produced via Utils.capitalize.
+     * Display surfaces (history/bookmark lists, autocomplete) fall back to the
+     * URL for these, matching Firefox's empty-title-shows-URL behaviour and
+     * covering legacy rows written before the null-placeholder change.
+     */
+    public static boolean isBlankTitle(String title){
+        return title == null || title.isEmpty() || title.equalsIgnoreCase(ABOUT_BLANK);
+    }
+
     public static boolean isViewSource(String string){
         return string != null && string.startsWith(VIEW_SOURCE);
     }

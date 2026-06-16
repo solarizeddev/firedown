@@ -190,7 +190,9 @@ public class AutoCompleteSearch {
                 AutoCompleteEntity entity = new AutoCompleteEntity();
                 entity.setType(AutoCompleteEntity.TAB);
                 entity.setSessionId(tab.getId());
-                entity.setTitle(title);
+                // Blank/about:blank title (a tab still loading) → show the URL,
+                // never a blank suggestion (Firefox awesomebar parity).
+                entity.setTitle(UrlStringUtils.isBlankTitle(title) ? uri : title);
                 entity.setSubText(uri);
                 entity.setIcon(tab.getIcon());
                 entity.setUid(tab.getId());
@@ -253,7 +255,10 @@ public class AutoCompleteSearch {
         for (WebHistoryEntity entity : history) {
             AutoCompleteEntity s = new AutoCompleteEntity();
             s.setType(AutoCompleteEntity.HISTORY);
-            s.setTitle(entity.getTitle());
+            // Blank/about:blank title → show the URL (Firefox shows the URL for a
+            // titleless entry); covers a mid-load row and legacy about:blank rows.
+            String historyTitle = entity.getTitle();
+            s.setTitle(UrlStringUtils.isBlankTitle(historyTitle) ? entity.getUrl() : historyTitle);
             s.setIcon(entity.getIcon());
             s.setSubText(entity.getUrl());
             s.setUid(entity.getId());
@@ -274,7 +279,10 @@ public class AutoCompleteSearch {
         for (WebBookmarkEntity entity : bookmarks) {
             AutoCompleteEntity s = new AutoCompleteEntity();
             s.setType(AutoCompleteEntity.BOOKMARK);
-            s.setTitle(entity.getTitle());
+            // Blank/about:blank title → show the URL (covers a bookmark saved
+            // mid-load, before its title backfilled, and legacy About:blank rows).
+            String bookmarkTitle = entity.getTitle();
+            s.setTitle(UrlStringUtils.isBlankTitle(bookmarkTitle) ? entity.getUrl() : bookmarkTitle);
             s.setIcon(entity.getIcon());
             s.setSubText(entity.getUrl());
             s.setUid(entity.getId());

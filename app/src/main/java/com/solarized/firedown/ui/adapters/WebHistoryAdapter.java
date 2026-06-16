@@ -25,6 +25,7 @@ import com.solarized.firedown.data.entity.WebHistorySeparatorEntity;
 import com.solarized.firedown.ui.IncognitoColors;
 import com.solarized.firedown.utils.SelectionStyling;
 import com.solarized.firedown.ui.OnItemClickListener;
+import com.solarized.firedown.utils.UrlStringUtils;
 import com.solarized.firedown.utils.Utils;
 import com.solarized.firedown.utils.WebUtils;
 
@@ -134,8 +135,12 @@ public class WebHistoryAdapter extends PagingDataAdapter<Object, RecyclerView.Vi
         else if (viewHolder instanceof WebHistoryViewHolder historyHolder && item instanceof WebHistoryEntity entity) {
             boolean isSelected = mSelected.contains(position);
 
-            // Basic Text
-            historyHolder.file_name.setText(entity.getTitle());
+            // Basic Text. Fall back to the URL when the title is blank/about:blank
+            // (Firefox shows the URL for a titleless history entry) — a row
+            // captured mid-load has no title until onTitleChange backfills it, and
+            // legacy rows may hold the old "about:blank" sentinel.
+            String title = entity.getTitle();
+            historyHolder.file_name.setText(UrlStringUtils.isBlankTitle(title) ? entity.getUrl() : title);
             historyHolder.file_url.setText(WebUtils.getDomainName(entity.getUrl()));
             // Incognito-aware text + more-icon tones (don't inherit the system theme).
             historyHolder.file_name.setTextColor(mTextPrimary);
