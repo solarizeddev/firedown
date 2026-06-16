@@ -631,7 +631,7 @@ public class BaseFocusFragment extends Fragment {
         ArrayList<Uri> files = new ArrayList<>();
         for(String path : filesToSend /* List of the files you want to send */) {
             File file = new File(path);
-            Uri uri = viewerUri(filePath, file);
+            Uri uri = viewerUri(path, file);
             files.add(uri);
         }
         intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, files);
