@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   Home address-bar button glyph: the stock Material magnifier (ic_search_24)
-  with the stock dropdown caret (arrow_drop_down_24) to its right, composed as a
+  with the stock chevron (keyboard_arrow_down_24) to its right, composed as a
   layer-list so we reuse the real, properly-drawn Material assets instead of a
   hand-rolled combined path. The button opens the search-engine picker, so the
   caret reads as "selector". Rendered in app_bar_icon_size_home (38dp) so the
@@ -17,6 +17,6 @@
     <item
         android:width="14dp"
         android:height="14dp"
-        android:drawable="@drawable/arrow_drop_down_24"
+        android:drawable="@drawable/keyboard_arrow_down_24"
         android:gravity="end|center_vertical" />
 </layer-list>
