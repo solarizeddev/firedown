@@ -365,4 +365,6 @@
     <string name="lan_direct_password">Пароль</string>
     <string name="lan_direct_next">Далі</string>
     <string name="lan_direct_failed">Не вдалося почати пряме з\'єднання</string>
+    <string name="home_subtitle_blocked">%1$s заблоковано</string>
+    <string name="home_subtitle_saved">%1$s збережено</string>
 </resources>

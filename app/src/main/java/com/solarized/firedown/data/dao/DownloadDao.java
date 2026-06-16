@@ -130,6 +130,11 @@ public interface DownloadDao {
     @Query("SELECT COUNT(*) FROM download")
     Integer getRowCount();
 
+    /** Live sum of bytes for finished regular (non-vault) downloads — drives the
+     *  home subtitle's "N saved" figure. */
+    @Query("SELECT IFNULL(SUM(file_size), 0) FROM download WHERE file_safe = 0 AND file_status = 1")
+    LiveData<Long> getRegularFinishedSizeLive();
+
     /** Live full list of regular (non-vault) downloads, used purely for
      *  per-group aggregation on the downloads list section headers
      *  (count + total bytes by sort category). Separate from the paging

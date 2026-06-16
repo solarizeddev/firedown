@@ -609,6 +609,11 @@
          Folder' becomes 'Carpeta segura' in es, 'Sicherer Ordner' in
          de, etc. -->
     <string name="home_vault_button">Safe Folder</string>
+    <!-- Home subtitle line: two tappable live figures under the wordmark.
+         %1$s is a preformatted, locale-aware figure (a compact count like
+         "10.5K" / a readable size like "9.5 GB"). -->
+    <string name="home_subtitle_blocked">%1$s blocked</string>
+    <string name="home_subtitle_saved">%1$s saved</string>
     <!-- Subtitle shown on the Home Safe Folder card when the vault
          is empty. Populated state uses the home_vault_item_count
          plural ('12 items saved') instead. Keeps the card on two

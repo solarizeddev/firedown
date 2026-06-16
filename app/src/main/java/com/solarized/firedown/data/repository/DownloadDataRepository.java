@@ -90,6 +90,12 @@ public class DownloadDataRepository {
 
     // --- Standard Queries ---
 
+    /** Live total bytes for finished regular downloads — drives the home
+     *  subtitle's "N saved" figure. */
+    public LiveData<Long> getRegularFinishedSize() {
+        return mDatabase.downloadDao().getRegularFinishedSizeLive();
+    }
+
     public List<DownloadEntity> getAllRawList() {
         return mDatabase.downloadDao().getAllRawList();
     }

@@ -81,6 +81,62 @@
                     android:textSize="22sp"
                     android:textStyle="bold" />
 
+                <!-- One quiet subtitle line: two independently-tappable live
+                     figures — trackers blocked (→ trackers info sheet) and total
+                     downloaded (→ Downloads) — with a middle-dot divider. Each
+                     half hides when its value is 0 (and the divider hides unless
+                     both show), so a fresh install reads just the wordmark. Bound
+                     in HomeFragment. -->
+                <LinearLayout
+                    android:id="@+id/home_subtitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:id="@+id/home_subtitle_blocked"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:paddingHorizontal="4dp"
+                        android:paddingVertical="2dp"
+                        android:textColor="?attr/colorOnSurfaceVariant"
+                        android:textSize="13sp"
+                        android:visibility="gone"
+                        tools:text="10.5K blocked" />
+
+                    <TextView
+                        android:id="@+id/home_subtitle_sep"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:paddingHorizontal="2dp"
+                        android:text="·"
+                        android:textColor="?attr/colorOnSurfaceVariant"
+                        android:textSize="13sp"
+                        android:visibility="gone"
+                        tools:ignore="HardcodedText" />
+
+                    <TextView
+                        android:id="@+id/home_subtitle_saved"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:paddingHorizontal="4dp"
+                        android:paddingVertical="2dp"
+                        android:textColor="?attr/colorOnSurfaceVariant"
+                        android:textSize="13sp"
+                        android:visibility="gone"
+                        tools:text="9.5 GB saved" />
+
+                </LinearLayout>
+
             </LinearLayout>
 
 

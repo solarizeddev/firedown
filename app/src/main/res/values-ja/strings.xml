@@ -579,4 +579,6 @@
     <string name="lan_direct_password">パスワード</string>
     <string name="lan_direct_next">次へ</string>
     <string name="lan_direct_failed">ダイレクト接続を開始できませんでした</string>
+    <string name="home_subtitle_blocked">%1$s ブロック</string>
+    <string name="home_subtitle_saved">%1$s 保存</string>
 </resources>

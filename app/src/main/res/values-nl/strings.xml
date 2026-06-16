@@ -450,4 +450,6 @@
     <string name="lan_direct_password">Wachtwoord</string>
     <string name="lan_direct_next">Volgende</string>
     <string name="lan_direct_failed">Directe verbinding kon niet worden gestart</string>
+    <string name="home_subtitle_blocked">%1$s geblokkeerd</string>
+    <string name="home_subtitle_saved">%1$s opgeslagen</string>
 </resources>

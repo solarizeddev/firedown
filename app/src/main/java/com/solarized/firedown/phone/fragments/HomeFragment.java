@@ -1,6 +1,7 @@
 package com.solarized.firedown.phone.fragments;
 
 import android.content.Intent;
+import android.icu.text.CompactDecimalFormat;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextUtils;
@@ -10,6 +11,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.widget.TextView;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
@@ -32,8 +34,10 @@ import com.solarized.firedown.data.models.BrowserDialogViewModel;
 import com.solarized.firedown.data.models.BrowserURIViewModel;
 import com.solarized.firedown.data.models.GeckoStateViewModel;
 import com.solarized.firedown.data.models.IncognitoStateViewModel;
+import com.solarized.firedown.data.models.RecentDownloadsViewModel;
 import com.solarized.firedown.geckoview.GeckoState;
 import com.solarized.firedown.geckoview.GeckoToolbar;
+import com.solarized.firedown.geckoview.GeckoUblockHelper;
 import com.solarized.firedown.manager.DownloadRequest;
 
 import com.solarized.firedown.phone.DownloadsActivity;
@@ -42,11 +46,17 @@ import com.solarized.firedown.phone.VaultActivity;
 import com.solarized.firedown.autocomplete.AutoCompleteEditText;
 import com.solarized.firedown.autocomplete.AutoCompleteView;
 import com.solarized.firedown.geckoview.toolbar.BottomNavigationBar;
+import com.solarized.firedown.phone.dialogs.TrackersInfoSheet;
 import com.solarized.firedown.ui.OnItemClickListener;
 import com.solarized.firedown.ui.adapters.SearchAutocompleteAdapter;
 import com.solarized.firedown.ui.diffs.SearchDiffCallback;
 import com.solarized.firedown.IntentActions;
 import com.solarized.firedown.utils.NavigationUtils;
+import com.solarized.firedown.utils.Utils;
+
+import java.util.Locale;
+
+import javax.inject.Inject;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
@@ -69,9 +79,19 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     private GeckoToolbar mGeckoToolbar;
     private BottomNavigationBar mBottomNavigationBar;
     private View mHomeScroll;
-    // The home is a calm minimalist landing — a single centred brand mark in the
-    // layout, no stats and no onboarding. Tabs and the downloads badge live in
-    // the bottom bar; the vault is in the menu.
+    // The home is a calm minimalist landing — the centred brand mark plus ONE
+    // quiet subtitle line of two independently-tappable live figures: trackers
+    // blocked (→ trackers info sheet) and total downloaded (→ Downloads). Each
+    // half hides at 0 and the divider hides unless both show, so a fresh install
+    // reads just the wordmark. Everything else (tabs, downloads badge, vault)
+    // lives in the bottom bar / menu — no dashboard.
+    private RecentDownloadsViewModel mRecentDownloadsViewModel;
+    private View mSubtitle;
+    private TextView mSubtitleBlocked;
+    private View mSubtitleSep;
+    private TextView mSubtitleSaved;
+    @Inject
+    GeckoUblockHelper mGeckoUblockHelper;
 
 
     @Override
@@ -79,6 +99,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         super.onCreate(savedInstanceState);
 
         mAutoCompleteViewModel = new ViewModelProvider(this).get(AutoCompleteViewModel.class);
+        mRecentDownloadsViewModel = new ViewModelProvider(this).get(RecentDownloadsViewModel.class);
         mGeckoStateViewModel = new ViewModelProvider(mActivity).get(GeckoStateViewModel.class);
         mIncognitoStateViewModel = new ViewModelProvider(mActivity).get(IncognitoStateViewModel.class);
         mBrowserURIViewModel = new ViewModelProvider(mActivity).get(BrowserURIViewModel.class);
@@ -144,9 +165,21 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mBottomNavigationBar = v.findViewById(R.id.bottom_app_bar);
 
 
-        // Minimalist home: a single centred brand mark (logo + wordmark)
-        // inflated by the layout. Nothing to bind or toggle — no stats, no
-        // onboarding. Tabs and the downloads badge live in the bottom bar.
+        // Brand mark + the two-figure subtitle. Each half is its own tap target:
+        // blocked → the trackers info sheet, saved → Downloads. (VaultActivity /
+        // DownloadsActivity own their own auth/result handling.)
+        mSubtitle = v.findViewById(R.id.home_subtitle);
+        mSubtitleBlocked = v.findViewById(R.id.home_subtitle_blocked);
+        mSubtitleSep = v.findViewById(R.id.home_subtitle_sep);
+        mSubtitleSaved = v.findViewById(R.id.home_subtitle_saved);
+        if (mSubtitleBlocked != null) {
+            mSubtitleBlocked.setOnClickListener(view ->
+                    TrackersInfoSheet.show(getChildFragmentManager()));
+        }
+        if (mSubtitleSaved != null) {
+            mSubtitleSaved.setOnClickListener(view ->
+                    mStartForResult.launch(new Intent(mActivity, DownloadsActivity.class)));
+        }
 
         mBottomNavigationBar.setListener(this);
 
@@ -212,6 +245,38 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         // the list yet - the current tab is still at least tab 1).
         mGeckoStateViewModel.getTabsCount().observe(getViewLifecycleOwner(), count
                 -> mBottomNavigationBar.onTabsCount(count == null ? 1 : Math.max(1, count)));
+
+        // Subtitle, left half — lifetime trackers blocked (uBlock cumulative,
+        // pushed by firedown.js). Compact + locale-aware ("10.5K"); hidden at 0.
+        mGeckoUblockHelper.getCumulativeBlockedLive().observe(getViewLifecycleOwner(), blocked -> {
+            if (mSubtitleBlocked == null) return;
+            long n = blocked == null ? 0L : blocked;
+            if (n > 0) {
+                CompactDecimalFormat fmt = CompactDecimalFormat.getInstance(
+                        Locale.getDefault(), CompactDecimalFormat.CompactStyle.SHORT);
+                fmt.setMaximumFractionDigits(1);
+                mSubtitleBlocked.setText(getString(R.string.home_subtitle_blocked, fmt.format(n)));
+                mSubtitleBlocked.setVisibility(View.VISIBLE);
+            } else {
+                mSubtitleBlocked.setVisibility(View.GONE);
+            }
+            updateSubtitleVisibility();
+        });
+
+        // Subtitle, right half — total bytes of finished regular downloads,
+        // locale-formatted ("9.5 GB"); hidden at 0.
+        mRecentDownloadsViewModel.getFinishedSize().observe(getViewLifecycleOwner(), size -> {
+            if (mSubtitleSaved == null) return;
+            long bytes = size == null ? 0L : size;
+            if (bytes > 0) {
+                mSubtitleSaved.setText(getString(R.string.home_subtitle_saved,
+                        Utils.readableFileSize(bytes)));
+                mSubtitleSaved.setVisibility(View.VISIBLE);
+            } else {
+                mSubtitleSaved.setVisibility(View.GONE);
+            }
+            updateSubtitleVisibility();
+        });
 
         mAutoCompleteViewModel.setIncognito(false);
 
@@ -374,6 +439,26 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mGeckoToolbar = null;
         mNewTabView = null;
         mBottomNavigationBar = null;
+        mSubtitle = null;
+        mSubtitleBlocked = null;
+        mSubtitleSep = null;
+        mSubtitleSaved = null;
+    }
+
+    /**
+     * Shows the subtitle row only when at least one half has a value, and the
+     * middle-dot divider only when BOTH do. So a fresh install (both 0) shows
+     * just the wordmark; one figure shows that figure alone; both show
+     * "10.5K blocked · 9.5 GB saved".
+     */
+    private void updateSubtitleVisibility() {
+        if (mSubtitle == null) return;
+        boolean blocked = mSubtitleBlocked != null && mSubtitleBlocked.getVisibility() == View.VISIBLE;
+        boolean saved = mSubtitleSaved != null && mSubtitleSaved.getVisibility() == View.VISIBLE;
+        if (mSubtitleSep != null) {
+            mSubtitleSep.setVisibility(blocked && saved ? View.VISIBLE : View.GONE);
+        }
+        mSubtitle.setVisibility(blocked || saved ? View.VISIBLE : View.GONE);
     }
 
     @Override

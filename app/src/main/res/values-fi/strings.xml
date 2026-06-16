@@ -389,4 +389,6 @@
     <string name="lan_direct_password">Salasana</string>
     <string name="lan_direct_next">Seuraava</string>
     <string name="lan_direct_failed">Suoraa yhteyttä ei voitu aloittaa</string>
+    <string name="home_subtitle_blocked">%1$s estetty</string>
+    <string name="home_subtitle_saved">%1$s tallennettu</string>
 </resources>

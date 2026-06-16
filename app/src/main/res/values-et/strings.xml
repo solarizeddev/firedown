@@ -313,4 +313,6 @@
     <string name="lan_direct_password">Parool</string>
     <string name="lan_direct_next">Edasi</string>
     <string name="lan_direct_failed">Otseühenduse käivitamine ebaõnnestus</string>
+    <string name="home_subtitle_blocked">%1$s blokeeritud</string>
+    <string name="home_subtitle_saved">%1$s salvestatud</string>
 </resources>
