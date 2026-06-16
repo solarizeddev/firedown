@@ -46,7 +46,12 @@ public class VaultFragment extends BaseDownloadFragment implements OnItemClickLi
         mGridPreference = Preferences.SORT_VAULT_LIST;
         mDestinationTitle = R.string.navigation_vault;
         mCurrentDestinationId = R.id.vault;
-        mEnableGrid = mSharedPreferences.getBoolean(mGridPreference, false);
+        // Grid is the default view for the vault too (matches Downloads). No
+        // semantic inversion (the stored bool still means grid=true) and the
+        // default isn't persisted, so an untouched install gets grid while
+        // anyone who explicitly toggled to list keeps their stored choice — no
+        // new pref key needed.
+        mEnableGrid = mSharedPreferences.getBoolean(mGridPreference, true);
 
         mDownloadsViewModel = new ViewModelProvider(this).get(DownloadsViewModel.class);
         mTaskViewModel = new ViewModelProvider(this).get(TaskViewModel.class);
