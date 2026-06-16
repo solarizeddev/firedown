@@ -135,6 +135,11 @@ public interface DownloadDao {
     @Query("SELECT IFNULL(SUM(file_size), 0) FROM download WHERE file_safe = 0 AND file_status = 1")
     LiveData<Long> getRegularFinishedSizeLive();
 
+    /** Live count of items in the Safe Folder (vault) — drives the home
+     *  stats card's third column. */
+    @Query("SELECT COUNT(*) FROM download WHERE file_safe = 1")
+    LiveData<Integer> getSafeCountLive();
+
     /** Live full list of regular (non-vault) downloads, used purely for
      *  per-group aggregation on the downloads list section headers
      *  (count + total bytes by sort category). Separate from the paging

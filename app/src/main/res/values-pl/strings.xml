@@ -447,6 +447,5 @@
     <string name="lan_direct_password">Hasło</string>
     <string name="lan_direct_next">Dalej</string>
     <string name="lan_direct_failed">Nie udało się rozpocząć połączenia bezpośredniego</string>
-    <string name="home_privacy_line">%1$s zablokowano</string>
-    <string name="home_downloads_line">Zapisano %1$s</string>
+    <string name="home_stat_saved">Zapisano</string>
 </resources>

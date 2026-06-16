@@ -450,6 +450,5 @@
     <string name="lan_direct_password">Пароль</string>
     <string name="lan_direct_next">Далее</string>
     <string name="lan_direct_failed">Не удалось начать прямое подключение</string>
-    <string name="home_privacy_line">%1$s заблокировано</string>
-    <string name="home_downloads_line">Сохранено %1$s</string>
+    <string name="home_stat_saved">Сохранено</string>
 </resources>

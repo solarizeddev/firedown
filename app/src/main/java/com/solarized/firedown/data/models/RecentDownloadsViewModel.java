@@ -22,13 +22,20 @@ import dagger.hilt.android.lifecycle.HiltViewModel;
 public class RecentDownloadsViewModel extends ViewModel {
 
     private final LiveData<Long> mFinishedSize;
+    private final LiveData<Integer> mSafeCount;
 
     @Inject
     public RecentDownloadsViewModel(DownloadDataRepository repository) {
         mFinishedSize = repository.getRegularFinishedSize();
+        mSafeCount = repository.getSafeCount();
     }
 
     public LiveData<Long> getFinishedSize() {
         return mFinishedSize;
+    }
+
+    /** Live count of Safe Folder (vault) items — home stats card's third column. */
+    public LiveData<Integer> getSafeCount() {
+        return mSafeCount;
     }
 }

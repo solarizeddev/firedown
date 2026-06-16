@@ -96,6 +96,11 @@ public class DownloadDataRepository {
         return mDatabase.downloadDao().getRegularFinishedSizeLive();
     }
 
+    /** Live count of Safe Folder (vault) items — drives the home stats card. */
+    public LiveData<Integer> getSafeCount() {
+        return mDatabase.downloadDao().getSafeCountLive();
+    }
+
     public List<DownloadEntity> getAllRawList() {
         return mDatabase.downloadDao().getAllRawList();
     }

@@ -78,15 +78,13 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     private GeckoToolbar mGeckoToolbar;
     private BottomNavigationBar mBottomNavigationBar;
     private View mHomeScroll;
-    // Live privacy line (folds in the old Trackers card): "N trackers blocked ·
-    // ~X saved", tappable → trackers info sheet.
-    private View mPrivacyRow;
-    private TextView mPrivacyText;
-    // Total-downloaded chip beside the trackers chip — its own tap target
-    // (→ Downloads). Hidden, with the "·" divider, until something's downloaded.
-    private View mDownloadsRow;
-    private TextView mDownloadsText;
-    private View mStatSeparator;
+    // Home stats card (Brave-style): three live figures, each its own tap
+    // target — trackers blocked (→ trackers info sheet), total saved
+    // (→ Downloads), Safe Folder item count (→ vault). Only the value
+    // TextViews are held; the column tap handlers are wired in onCreateView.
+    private TextView mTrackersValue;
+    private TextView mDownloadsValue;
+    private TextView mSafeValue;
     @Inject
     GeckoUblockHelper mGeckoUblockHelper;
 
@@ -162,23 +160,28 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mBottomNavigationBar = v.findViewById(R.id.bottom_app_bar);
 
 
-        // Live privacy line — the old Trackers card, folded into one quiet row.
-        // Text bound from uBlock's cumulative blocked count (below); tapping the
-        // row opens the same contextual trackers info sheet the card used to.
-        mPrivacyRow = v.findViewById(R.id.home_privacy_row);
-        mPrivacyText = v.findViewById(R.id.home_privacy_text);
-        if (mPrivacyRow != null) {
-            mPrivacyRow.setOnClickListener(view ->
+        // Home stats card — three live, independently-tappable columns.
+        // Values bound from their LiveData in onViewCreated; each column's tap
+        // opens that domain's surface.
+        mTrackersValue = v.findViewById(R.id.home_trackers_value);
+        mDownloadsValue = v.findViewById(R.id.home_downloads_value);
+        mSafeValue = v.findViewById(R.id.home_safe_value);
+
+        View trackersCol = v.findViewById(R.id.home_trackers_col);
+        if (trackersCol != null) {
+            trackersCol.setOnClickListener(view ->
                     TrackersInfoSheet.show(getChildFragmentManager()));
         }
-
-        // Downloaded-total chip: independent tap target → Downloads.
-        mDownloadsRow = v.findViewById(R.id.home_downloads_row);
-        mDownloadsText = v.findViewById(R.id.home_downloads_text);
-        mStatSeparator = v.findViewById(R.id.home_stat_separator);
-        if (mDownloadsRow != null) {
-            mDownloadsRow.setOnClickListener(view ->
+        View downloadsCol = v.findViewById(R.id.home_downloads_col);
+        if (downloadsCol != null) {
+            downloadsCol.setOnClickListener(view ->
                     mStartForResult.launch(new Intent(mActivity, DownloadsActivity.class)));
+        }
+        View safeCol = v.findViewById(R.id.home_safe_col);
+        if (safeCol != null) {
+            // VaultActivity owns its own auth gate, same as the menu's Vault row.
+            safeCol.setOnClickListener(view ->
+                    mStartForResult.launch(new Intent(mActivity, VaultActivity.class)));
         }
 
         mBottomNavigationBar.setListener(this);
@@ -266,50 +269,36 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
 
         });
 
-        // Live trackers footnote. firedown.js pushes uBlock's cumulative
-        // blocked value periodically; format with locale-aware grouping
-        // separators so 12345 reads as '12,345' / '12.345'. Just the count —
-        // no estimated-bytes figure (kept deliberately minimal). Zero case →
-        // 'Protection active' between app start and the extension's first push.
+        // Stats card column 1 — trackers blocked. firedown.js pushes uBlock's
+        // cumulative blocked value periodically; show it compact + locale-aware
+        // ("10.5K" / "1.4M" / "1,4 Mio.") so the figure stays bounded as it
+        // climbs to 6–7 digits. Fresh install (no push yet) reads "0" — the card
+        // is a numeric 3-up, so a bare figure fits better than a sentence.
         mGeckoUblockHelper.getCumulativeBlockedLive().observe(getViewLifecycleOwner(), blocked -> {
-            if (mPrivacyText == null) return;
+            if (mTrackersValue == null) return;
             long n = blocked == null ? 0L : blocked;
             if (n <= 0) {
-                mPrivacyText.setText(R.string.home_trackers_subtitle_idle);
+                mTrackersValue.setText("0");
                 return;
             }
-            // Compact, locale-aware count ("10.5K" / "1.4M" / "1,4 Mio.") — bounds
-            // the chip width as the cumulative count climbs to 6–7 digits, and
-            // reads cleaner than a long comma-grouped number. The shield icon
-            // carries the "blocked" meaning, so the label is just "N trackers".
             CompactDecimalFormat fmt = CompactDecimalFormat.getInstance(
                     Locale.getDefault(), CompactDecimalFormat.CompactStyle.SHORT);
             fmt.setMaximumFractionDigits(1);
-            mPrivacyText.setText(getString(R.string.home_privacy_line, fmt.format(n)));
+            mTrackersValue.setText(fmt.format(n));
         });
 
-        // Total downloaded — the downloader half of the home's identity line:
-        // the live sum of finished regular (non-vault) download sizes. The chip
-        // and its "·" divider stay hidden until there's at least one finished
-        // download, so a fresh install shows only the trackers stat (never a sad
-        // '0 B downloaded').
+        // Stats card column 2 — total saved: live sum of finished regular
+        // (non-vault) download bytes, locale-formatted by readableFileSize.
         mRecentDownloadsViewModel.getFinishedSize().observe(getViewLifecycleOwner(), size -> {
+            if (mDownloadsValue == null) return;
             long bytes = size == null ? 0L : size;
-            boolean show = bytes > 0;
-            if (mDownloadsRow != null) {
-                mDownloadsRow.setVisibility(show ? View.VISIBLE : View.GONE);
-            }
-            if (mStatSeparator != null) {
-                mStatSeparator.setVisibility(show ? View.VISIBLE : View.GONE);
-            }
-            if (show && mDownloadsText != null) {
-                // "<size> saved" — a short trailing word balances the trackers
-                // chip; "saved" translates more compactly than "downloaded" (the
-                // ⬇ icon already conveys it was a download). Size is locale-
-                // formatted by readableFileSize.
-                mDownloadsText.setText(getString(
-                        R.string.home_downloads_line, Utils.readableFileSize(bytes)));
-            }
+            mDownloadsValue.setText(bytes > 0 ? Utils.readableFileSize(bytes) : "0");
+        });
+
+        // Stats card column 3 — Safe Folder item count.
+        mRecentDownloadsViewModel.getSafeCount().observe(getViewLifecycleOwner(), count -> {
+            if (mSafeValue == null) return;
+            mSafeValue.setText(String.valueOf(count == null ? 0 : count));
         });
 
         // NOTE: HomeFragment intentionally does NOT observe
@@ -453,11 +442,9 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mGeckoToolbar = null;
         mNewTabView = null;
         mBottomNavigationBar = null;
-        mPrivacyRow = null;
-        mPrivacyText = null;
-        mDownloadsRow = null;
-        mDownloadsText = null;
-        mStatSeparator = null;
+        mTrackersValue = null;
+        mDownloadsValue = null;
+        mSafeValue = null;
     }
 
     @Override

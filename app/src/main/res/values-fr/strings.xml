@@ -581,6 +581,5 @@
     <string name="lan_direct_password">Mot de passe</string>
     <string name="lan_direct_next">Suivant</string>
     <string name="lan_direct_failed">Impossible de démarrer la connexion directe</string>
-    <string name="home_privacy_line">%1$s bloqués</string>
-    <string name="home_downloads_line">%1$s enregistrés</string>
+    <string name="home_stat_saved">Enregistré</string>
 </resources>
