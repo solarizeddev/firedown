@@ -40,7 +40,6 @@ import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.appbar.AppBarLayout;
-import com.google.android.material.color.MaterialColors;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.solarized.firedown.BaseActivity;
@@ -190,36 +189,6 @@ public class BaseFocusFragment extends Fragment {
             });
         }
 
-        // System-bar painting for the SECONDARY list screens (History,
-        // Bookmarks, Archive, Downloads, Vault, LanShare, bookmark edit) —
-        // gated on a lift-on-scroll appbar, which exactly selects them:
-        // Home/incognito Home/Tabs set liftOnScroll=false and Browser has
-        // no AppBarLayout; all of those paint their own chrome. These
-        // screens used to paint NOTHING, so on Android <= 14 (where the
-        // window attrs are the strip painter — see paintSystemBars) both
-        // strips showed LEFTOVER colors from whichever screen the user
-        // came from, and once the appbar lifted on scroll the status strip
-        // visibly mismatched the lifted bar. Android 15+ was already
-        // correct by construction (the appbar's own background shows under
-        // the status strip, the navigation_scrim under the nav strip) and
-        // ignores these setters — this block makes <= 14 agree with it:
-        //  - nav strip: android colorBackground, the navigation_scrim's
-        //    exact XML tone;
-        //  - status strip at rest: colorSurface, the M3 appbar's resting
-        //    background;
-        //  - status strip on lift: addLiftOnScrollListener reports the
-        //    appbar's ANIMATED background each frame, so the strip rides
-        //    the lift tint in lockstep instead of being painted once.
-        AppBarLayout appBarLayout = view.findViewById(R.id.appbar_layout);
-        if (appBarLayout != null && appBarLayout.isLiftOnScroll()) {
-            final int navColor = MaterialColors.getColor(
-                    appBarLayout, android.R.attr.colorBackground);
-            int restColor = MaterialColors.getColor(
-                    appBarLayout, com.google.android.material.R.attr.colorSurface);
-            paintSystemBars(restColor, navColor);
-            appBarLayout.addLiftOnScrollListener((elevation, backgroundColor) ->
-                    paintSystemBars(backgroundColor, navColor));
-        }
     }
 
     @Override
