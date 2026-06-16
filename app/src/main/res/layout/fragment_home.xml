@@ -53,7 +53,6 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingTop="16dp"
             android:paddingBottom="8dp">
 
 
@@ -90,7 +89,7 @@
                         android:gravity="center_vertical"
                         android:orientation="horizontal"
                         android:paddingStart="16dp"
-                        android:paddingTop="14dp"
+                        android:paddingTop="24dp"
                         android:paddingEnd="16dp"
                         android:paddingBottom="2dp">
 
@@ -121,7 +120,7 @@
                         android:baselineAligned="false"
                         android:orientation="horizontal"
                         android:paddingTop="8dp"
-                        android:paddingBottom="26dp">
+                        android:paddingBottom="32dp">
 
                     <!-- Trackers blocked → trackers info sheet -->
                     <LinearLayout
