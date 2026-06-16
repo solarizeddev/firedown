@@ -26,12 +26,14 @@ public class RecentDownloadsViewModel extends ViewModel {
 
     private final LiveData<Long> mFinishedSize;
     private final LiveData<Integer> mSafeCount;
+    private final LiveData<Long> mSafeSize;
     private final LiveData<Integer> mFinishedThisWeek;
 
     @Inject
     public RecentDownloadsViewModel(DownloadDataRepository repository) {
         mFinishedSize = repository.getRegularFinishedSize();
         mSafeCount = repository.getSafeCount();
+        mSafeSize = repository.getSafeTotalSize();
         // The 7-day cutoff is fixed at VM creation (this surface is recreated
         // each time Home is shown), which is plenty fresh for a trend line.
         mFinishedThisWeek = repository.getRegularFinishedCountSince(
@@ -42,9 +44,16 @@ public class RecentDownloadsViewModel extends ViewModel {
         return mFinishedSize;
     }
 
-    /** Live count of Safe Folder (vault) items — home stats card's third column. */
+    /** Live count of Safe Folder (vault) items — home stats card's third
+     *  column footer line. */
     public LiveData<Integer> getSafeCount() {
         return mSafeCount;
+    }
+
+    /** Live total bytes of Safe Folder (vault) items — home stats card's third
+     *  column headline (mirrors Saved). */
+    public LiveData<Long> getSafeSize() {
+        return mSafeSize;
     }
 
     /** Live count of files finished in the last 7 days — home Saved column's

@@ -315,6 +315,10 @@
     <string name="lan_direct_failed">Otseühenduse käivitamine ebaõnnestus</string>
     <string name="home_stat_saved">Salvestatud</string>
     <string name="home_stat_trend_empty">Allalaadimised</string>
+    <plurals name="home_safe_item_count">
+        <item quantity="one">%d üksus</item>
+        <item quantity="other">%d üksust</item>
+    </plurals>
     <string name="home_onboard_title">Brauser, mis laadib alla seda, mida esitab.</string>
     <string name="home_onboard_lede">Ava ükskõik milline sait ja Firedown püüab video, heli või pildid taustal kinni — linke pole vaja kopeerida.</string>
     <string name="home_onboard_step_1_title">Ava mõni leht</string>

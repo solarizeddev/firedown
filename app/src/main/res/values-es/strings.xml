@@ -583,6 +583,10 @@
     <string name="lan_direct_failed">No se pudo iniciar la conexión directa</string>
     <string name="home_stat_saved">Guardado</string>
     <string name="home_stat_trend_empty">Descargas</string>
+    <plurals name="home_safe_item_count">
+        <item quantity="one">%d elemento</item>
+        <item quantity="other">%d elementos</item>
+    </plurals>
     <string name="home_onboard_title">Un navegador que descarga lo que reproduce.</string>
     <string name="home_onboard_lede">Abre cualquier sitio y Firedown captura el vídeo, el audio o las imágenes en segundo plano, sin pegar enlaces.</string>
     <string name="home_onboard_step_1_title">Navega a una página</string>

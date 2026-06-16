@@ -452,6 +452,12 @@
     <string name="lan_direct_failed">Не удалось начать прямое подключение</string>
     <string name="home_stat_saved">Сохранено</string>
     <string name="home_stat_trend_empty">Загрузки</string>
+    <plurals name="home_safe_item_count">
+        <item quantity="one">%d элемент</item>
+        <item quantity="few">%d элемента</item>
+        <item quantity="many">%d элементов</item>
+        <item quantity="other">%d элемента</item>
+    </plurals>
     <string name="home_onboard_title">Браузер, который скачивает то, что воспроизводит.</string>
     <string name="home_onboard_lede">Откройте любой сайт, и Firedown перехватит видео, аудио или изображения в фоне — без копирования ссылок.</string>
     <string name="home_onboard_step_1_title">Перейдите на страницу</string>

@@ -449,6 +449,12 @@
     <string name="lan_direct_failed">Nie udało się rozpocząć połączenia bezpośredniego</string>
     <string name="home_stat_saved">Zapisano</string>
     <string name="home_stat_trend_empty">Pliki do pobrania</string>
+    <plurals name="home_safe_item_count">
+        <item quantity="one">%d element</item>
+        <item quantity="few">%d elementy</item>
+        <item quantity="many">%d elementów</item>
+        <item quantity="other">%d elementu</item>
+    </plurals>
     <string name="home_onboard_title">Przeglądarka, która pobiera to, co odtwarza.</string>
     <string name="home_onboard_lede">Otwórz dowolną stronę, a Firedown przechwyci wideo, dźwięk lub obrazy w tle — bez kopiowania linków.</string>
     <string name="home_onboard_step_1_title">Przejdź na stronę</string>

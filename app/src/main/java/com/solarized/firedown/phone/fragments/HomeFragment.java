@@ -104,6 +104,10 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     // (this week) figures; the Safe column's "private" line is static in XML.
     private TextView mTrackersTrend;
     private TextView mDownloadsTrend;
+    // Safe column footer — now the vault ITEM COUNT (the headline shows the
+    // vault's total size, mirroring Saved). Held because it's bound from
+    // LiveData instead of being a static XML string.
+    private TextView mSafeTrend;
     // Latest values feeding the Saved column's context line. The line needs
     // BOTH the total saved bytes and the 7-day finished count to decide what
     // to show, but each arrives from its own LiveData — so they're cached here
@@ -193,6 +197,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mSafeValue = v.findViewById(R.id.home_safe_value);
         mTrackersTrend = v.findViewById(R.id.home_trackers_trend);
         mDownloadsTrend = v.findViewById(R.id.home_downloads_trend);
+        mSafeTrend = v.findViewById(R.id.home_safe_trend);
 
         View trackersCol = v.findViewById(R.id.home_trackers_col);
         if (trackersCol != null) {
@@ -362,11 +367,22 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
             updateSavedTrend();
         });
 
-        // Stats card column 3 — Safe Folder item count.
-        mRecentDownloadsViewModel.getSafeCount().observe(getViewLifecycleOwner(), count -> {
-            retireOnboarding(count == null ? 0 : count);
+        // Stats card column 3 — Safe Folder. Headline = total vault SIZE
+        // (mirrors the Saved column, locale-formatted with the shrunk unit);
+        // footer = the item COUNT (replaces the old static "private" — the lock
+        // icon + label still convey privacy).
+        mRecentDownloadsViewModel.getSafeSize().observe(getViewLifecycleOwner(), size -> {
             if (mSafeValue == null) return;
-            mSafeValue.setText(String.valueOf(count == null ? 0 : count));
+            long bytes = size == null ? 0L : size;
+            mSafeValue.setText(bytes > 0 ? withSmallUnit(Utils.readableFileSize(bytes)) : "0");
+        });
+
+        mRecentDownloadsViewModel.getSafeCount().observe(getViewLifecycleOwner(), count -> {
+            int n = count == null ? 0 : count;
+            retireOnboarding(n);
+            if (mSafeTrend == null) return;
+            mSafeTrend.setText(getResources().getQuantityString(
+                    R.plurals.home_safe_item_count, n, n));
         });
 
         // NOTE: HomeFragment intentionally does NOT observe
@@ -515,6 +531,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mSafeValue = null;
         mTrackersTrend = null;
         mDownloadsTrend = null;
+        mSafeTrend = null;
         mStatsCard = null;
         mOnboardCard = null;
     }

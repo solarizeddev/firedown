@@ -140,6 +140,13 @@ public interface DownloadDao {
     @Query("SELECT COUNT(*) FROM download WHERE file_safe = 1")
     LiveData<Integer> getSafeCountLive();
 
+    /** Live sum of bytes for items in the Safe Folder (vault) — drives the
+     *  home stats card's third column headline (mirrors the Saved size; the
+     *  count moves to that column's footer line). Same file_safe = 1 predicate
+     *  as getSafeCountLive so the size and count describe the same set. */
+    @Query("SELECT IFNULL(SUM(file_size), 0) FROM download WHERE file_safe = 1")
+    LiveData<Long> getSafeTotalSizeLive();
+
     /** Live count of finished regular (non-vault) downloads dated on/after
      *  :since (epoch millis) — drives the home Saved column's "N this week"
      *  trend line. Uses the (file_safe, file_status) index; file_date is a

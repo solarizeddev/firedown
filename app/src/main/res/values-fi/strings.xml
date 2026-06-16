@@ -391,6 +391,10 @@
     <string name="lan_direct_failed">Suoraa yhteyttä ei voitu aloittaa</string>
     <string name="home_stat_saved">Tallennettu</string>
     <string name="home_stat_trend_empty">Lataukset</string>
+    <plurals name="home_safe_item_count">
+        <item quantity="one">%d kohde</item>
+        <item quantity="other">%d kohdetta</item>
+    </plurals>
     <string name="home_onboard_title">Selain, joka lataa sen, mitä se toistaa.</string>
     <string name="home_onboard_lede">Avaa mikä tahansa sivusto, niin Firedown nappaa videon, äänen tai kuvat taustalla — linkkejä ei tarvitse kopioida.</string>
     <string name="home_onboard_step_1_title">Siirry sivulle</string>

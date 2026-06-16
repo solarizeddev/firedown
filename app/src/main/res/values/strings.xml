@@ -163,6 +163,13 @@
     <string name="home_stat_trend_today">%1$s today</string>
     <string name="home_stat_trend_week">%1$s this week</string>
     <string name="home_stat_trend_private">private</string>
+    <!-- Safe Folder column footer line — the vault item count ("12 items").
+         The headline above it now shows the vault's total size (mirroring the
+         Saved column), so the count moved here. %d is the number of items. -->
+    <plurals name="home_safe_item_count">
+        <item quantity="one">%d item</item>
+        <item quantity="other">%d items</item>
+    </plurals>
     <!-- Saved column context line shown on a fresh install (nothing ever
          saved, so there's no size and no "this week" count). Keeps the column
          from looking empty, parallel to the trackers "0 today" and the vault

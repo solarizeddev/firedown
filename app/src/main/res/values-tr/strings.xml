@@ -451,6 +451,10 @@
     <string name="lan_direct_failed">Doğrudan bağlantı başlatılamadı</string>
     <string name="home_stat_saved">Kaydedildi</string>
     <string name="home_stat_trend_empty">İndirilenler</string>
+    <plurals name="home_safe_item_count">
+        <item quantity="one">%d öğe</item>
+        <item quantity="other">%d öğe</item>
+    </plurals>
     <string name="home_onboard_title">Oynattığını indiren bir tarayıcı.</string>
     <string name="home_onboard_lede">Herhangi bir siteyi açın, Firedown videoyu, sesi veya görselleri arka planda yakalasın — kopyalanacak bağlantı yok.</string>
     <string name="home_onboard_step_1_title">Bir sayfaya gidin</string>

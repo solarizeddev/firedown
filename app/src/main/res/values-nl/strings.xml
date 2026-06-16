@@ -452,6 +452,10 @@
     <string name="lan_direct_failed">Directe verbinding kon niet worden gestart</string>
     <string name="home_stat_saved">Opgeslagen</string>
     <string name="home_stat_trend_empty">Downloads</string>
+    <plurals name="home_safe_item_count">
+        <item quantity="one">%d item</item>
+        <item quantity="other">%d items</item>
+    </plurals>
     <string name="home_onboard_title">Een browser die downloadt wat hij afspeelt.</string>
     <string name="home_onboard_lede">Open een willekeurige site en Firedown vangt de video, audio of afbeeldingen op de achtergrond op — geen links om te kopiëren.</string>
     <string name="home_onboard_step_1_title">Ga naar een pagina</string>

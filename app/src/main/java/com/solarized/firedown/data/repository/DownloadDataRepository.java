@@ -101,6 +101,12 @@ public class DownloadDataRepository {
         return mDatabase.downloadDao().getSafeCountLive();
     }
 
+    /** Live total bytes of Safe Folder (vault) items — drives the home stats
+     *  card's third column headline (the item count goes to its footer). */
+    public LiveData<Long> getSafeTotalSize() {
+        return mDatabase.downloadDao().getSafeTotalSizeLive();
+    }
+
     /** Live count of finished regular downloads since :since (epoch millis) —
      *  drives the home Saved column's "this week" trend line. */
     public LiveData<Integer> getRegularFinishedCountSince(long since) {

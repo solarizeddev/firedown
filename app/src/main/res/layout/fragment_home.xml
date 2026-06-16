@@ -305,18 +305,20 @@
 
                         </LinearLayout>
 
-                        <!-- Static context line: the Safe Folder is always
-                             private, so no live figure — it labels the column's
-                             nature, matching the trend lines beside it. -->
+                        <!-- Item-count footer line: the headline above now shows
+                             the vault's total SIZE (mirroring Saved), so this
+                             carries the element count ("12 items"), bound in
+                             HomeFragment. The lock icon + "Safe Folder" label
+                             still convey that it's private. -->
                         <TextView
                             android:id="@+id/home_safe_trend"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="3dp"
-                            android:text="@string/home_stat_trend_private"
                             android:textColor="@color/brand_orange"
                             android:textSize="11sp"
-                            android:textStyle="bold" />
+                            android:textStyle="bold"
+                            tools:text="12 items" />
 
                     </LinearLayout>
 
