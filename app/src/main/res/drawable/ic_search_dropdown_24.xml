@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Home address-bar button glyph: a full-size magnifier with a dropdown chevron
-  clearly separated BELOW it, hinting that the button opens the search-engine
-  picker (not a plain "search/submit" action). Stroked paths so the single
-  iconTint recolours the whole glyph to onSurface. Geometry previewed
-  pixel-exact before shipping: ring center (11,8) r5.5, short handle to the
-  lower-right, chevron centered at the bottom with a clear vertical gap so the
-  handle and chevron never merge.
+  Home address-bar button glyph: a magnifier with a small dropdown chevron to
+  its RIGHT ("search v"), hinting that the button opens the search-engine picker
+  (not a plain "search/submit" action). Stroked paths so the single iconTint
+  recolours the whole glyph to onSurface. Geometry previewed pixel-exact before
+  shipping: ring center (8.5,11) r5, short handle to the lower-right, small
+  down-chevron to the right, vertically centered on the ring.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
@@ -14,26 +13,26 @@
     android:viewportWidth="24"
     android:viewportHeight="24"
     android:tint="?attr/colorOnSurface">
-    <!-- magnifier ring (center 11,8 r 5.5) -->
+    <!-- magnifier ring (center 8.5,11 r 5) -->
     <path
         android:fillColor="#00000000"
         android:strokeColor="@android:color/white"
         android:strokeWidth="2"
         android:strokeLineCap="round"
-        android:pathData="M5.5,8 a5.5,5.5 0 1,0 11,0 a5.5,5.5 0 1,0 -11,0" />
+        android:pathData="M3.5,11 a5,5 0 1,0 10,0 a5,5 0 1,0 -10,0" />
     <!-- magnifier handle (short, to lower-right) -->
     <path
         android:fillColor="#00000000"
         android:strokeColor="@android:color/white"
         android:strokeWidth="2"
         android:strokeLineCap="round"
-        android:pathData="M14.9,11.9 L17,14" />
-    <!-- dropdown chevron, centered at the bottom, clear gap above it -->
+        android:pathData="M12,14.5 L13.5,16" />
+    <!-- dropdown chevron to the right, centered on the ring -->
     <path
         android:fillColor="#00000000"
         android:strokeColor="@android:color/white"
         android:strokeWidth="2"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"
-        android:pathData="M8,19.5 L11,22 L14,19.5" />
+        android:pathData="M16.5,9.8 L19,12.3 L21.5,9.8" />
 </vector>
