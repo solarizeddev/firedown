@@ -42,26 +42,19 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:gravity="center_horizontal"
-            android:paddingTop="6dp"
+            android:paddingTop="16dp"
             android:paddingStart="24dp"
             android:paddingEnd="24dp">
 
-            <!-- Center the fact group vertically: a weighted spacer above
-                 balances the one below, floating the title + facts + disclaimer
-                 to the middle of the screen (fillViewport gives the spacers
-                 room), so the empty space reads as intentional rather than a
-                 top-anchored list. -->
-            <Space
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1" />
+            <!-- Top-anchored to match the regular home: title + facts sit just
+                 below the search bar (the bottom spacer pushes the empty space
+                 down), so both home surfaces read the same on tall devices. -->
 
             <!-- Title -->
             <TextView
                 android:id="@+id/incognito_title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center_horizontal"
                 android:text="@string/incognito_home_title"
                 android:textAppearance="?attr/textAppearanceHeadlineSmall"
                 android:textColor="@color/incognito_on_surface" />
@@ -256,7 +249,7 @@
 
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Spacer to push content toward center -->
+            <!-- Spacer pushes the empty space to the bottom (top-anchored). -->
             <Space
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
