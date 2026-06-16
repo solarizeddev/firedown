@@ -44,9 +44,13 @@
         android:overScrollMode="never"
         app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior">
 
+        <!-- gravity=center_vertical + the parent's fillViewport center the
+             single hero card in the screen, so the space below it reads as
+             intentional negative space rather than a layout that stopped short. -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:gravity="center_vertical"
             android:orientation="vertical"
             android:paddingTop="6dp"
             android:paddingBottom="8dp">
@@ -70,7 +74,8 @@
                 app:cardBackgroundColor="?attr/colorSurfaceContainer"
                 app:cardCornerRadius="20dp"
                 app:cardElevation="0dp"
-                app:strokeWidth="0dp">
+                app:strokeColor="@color/home_stat_card_stroke"
+                app:strokeWidth="1dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -165,6 +170,21 @@
 
                         </LinearLayout>
 
+                        <!-- Live trend line: today's blocked delta. Hidden at 0
+                             (bound in HomeFragment) so the card never reads
+                             "+0 today". -->
+                        <TextView
+                            android:id="@+id/home_trackers_trend"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="3dp"
+                            android:textColor="@color/brand_orange"
+                            android:textSize="11sp"
+                            android:textStyle="bold"
+                            android:visibility="gone"
+                            tools:text="+340 today"
+                            tools:visibility="visible" />
+
                     </LinearLayout>
 
 <!-- Total saved → Downloads -->
@@ -215,6 +235,20 @@
 
                         </LinearLayout>
 
+                        <!-- Live trend line: files finished in the last 7 days.
+                             Hidden at 0 (bound in HomeFragment). -->
+                        <TextView
+                            android:id="@+id/home_downloads_trend"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="3dp"
+                            android:textColor="@color/brand_orange"
+                            android:textSize="11sp"
+                            android:textStyle="bold"
+                            android:visibility="gone"
+                            tools:text="3 this week"
+                            tools:visibility="visible" />
+
                     </LinearLayout>
 
 <!-- Safe Folder item count → vault -->
@@ -264,6 +298,19 @@
                                 android:textColor="?attr/colorOnSurfaceVariant" />
 
                         </LinearLayout>
+
+                        <!-- Static context line: the Safe Folder is always
+                             private, so no live figure — it labels the column's
+                             nature, matching the trend lines beside it. -->
+                        <TextView
+                            android:id="@+id/home_safe_trend"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="3dp"
+                            android:text="@string/home_stat_trend_private"
+                            android:textColor="@color/brand_orange"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
 
                     </LinearLayout>
 
