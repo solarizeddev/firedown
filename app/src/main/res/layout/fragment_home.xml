@@ -96,9 +96,9 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="@dimen/list_spacing"
                 android:layout_marginEnd="@dimen/list_spacing"
-                android:layout_marginTop="28dp"
+                android:layout_marginTop="16dp"
                 app:cardBackgroundColor="?attr/colorSurfaceContainer"
-                app:cardCornerRadius="20dp"
+                app:cardCornerRadius="16dp"
                 app:cardElevation="0dp"
                 app:strokeWidth="0dp">
 
@@ -107,7 +107,7 @@
                     android:layout_height="wrap_content"
                     android:baselineAligned="false"
                     android:orientation="horizontal"
-                    android:paddingVertical="18dp">
+                    android:paddingVertical="10dp">
 
                     <!-- Trackers blocked → trackers info sheet -->
                     <LinearLayout
@@ -121,12 +121,12 @@
                         android:gravity="center_horizontal"
                         android:orientation="vertical"
                         android:paddingHorizontal="6dp"
-                        android:paddingVertical="6dp">
+                        android:paddingVertical="2dp">
 
                         <androidx.appcompat.widget.AppCompatImageView
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
-                            android:layout_marginBottom="8dp"
+                            android:layout_width="18dp"
+                            android:layout_height="18dp"
+                            android:layout_marginBottom="5dp"
                             android:contentDescription="@null"
                             app:srcCompat="@drawable/ic_shield_24"
                             app:tint="?attr/colorOnSurfaceVariant" />
@@ -135,7 +135,7 @@
                             android:id="@+id/home_trackers_value"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:textAppearance="?attr/textAppearanceHeadlineSmall"
+                            android:textAppearance="?attr/textAppearanceTitleLarge"
                             android:textColor="?attr/colorOnSurface"
                             tools:text="44K" />
 
@@ -164,12 +164,12 @@
                         android:gravity="center_horizontal"
                         android:orientation="vertical"
                         android:paddingHorizontal="6dp"
-                        android:paddingVertical="6dp">
+                        android:paddingVertical="2dp">
 
                         <androidx.appcompat.widget.AppCompatImageView
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
-                            android:layout_marginBottom="8dp"
+                            android:layout_width="18dp"
+                            android:layout_height="18dp"
+                            android:layout_marginBottom="5dp"
                             android:contentDescription="@null"
                             app:srcCompat="@drawable/download_24"
                             app:tint="?attr/colorOnSurfaceVariant" />
@@ -178,7 +178,7 @@
                             android:id="@+id/home_downloads_value"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:textAppearance="?attr/textAppearanceHeadlineSmall"
+                            android:textAppearance="?attr/textAppearanceTitleLarge"
                             android:textColor="?attr/colorOnSurface"
                             tools:text="9.2 GB" />
 
@@ -207,12 +207,12 @@
                         android:gravity="center_horizontal"
                         android:orientation="vertical"
                         android:paddingHorizontal="6dp"
-                        android:paddingVertical="6dp">
+                        android:paddingVertical="2dp">
 
                         <androidx.appcompat.widget.AppCompatImageView
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
-                            android:layout_marginBottom="8dp"
+                            android:layout_width="18dp"
+                            android:layout_height="18dp"
+                            android:layout_marginBottom="5dp"
                             android:contentDescription="@null"
                             app:srcCompat="@drawable/ic_lock_24"
                             app:tint="?attr/colorOnSurfaceVariant" />
@@ -221,7 +221,7 @@
                             android:id="@+id/home_safe_value"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:textAppearance="?attr/textAppearanceHeadlineSmall"
+                            android:textAppearance="?attr/textAppearanceTitleLarge"
                             android:textColor="?attr/colorOnSurface"
                             tools:text="12" />
 
