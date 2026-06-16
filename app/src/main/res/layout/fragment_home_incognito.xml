@@ -74,7 +74,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
+                    android:layout_marginTop="-8dp"
                     android:letterSpacing="-0.02"
                     android:text="@string/incognito_home_title"
                     android:textColor="@color/incognito_on_surface"
