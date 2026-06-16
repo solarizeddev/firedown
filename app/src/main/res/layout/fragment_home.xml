@@ -77,32 +77,32 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical">
 
-                    <!-- Header = brand lockup (logo + wordmark), left-aligned. -->
+                    <!-- Header = brand lockup (small logo + wordmark), left-aligned. -->
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:gravity="center_vertical"
                         android:orientation="horizontal"
                         android:paddingStart="16dp"
-                        android:paddingTop="16dp"
+                        android:paddingTop="14dp"
                         android:paddingEnd="16dp"
-                        android:paddingBottom="6dp">
+                        android:paddingBottom="2dp">
 
                         <androidx.appcompat.widget.AppCompatImageView
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
                             android:contentDescription="@string/app_name"
                             android:src="@drawable/ic_firedown_logo" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="9dp"
+                            android:layout_marginStart="7dp"
                             android:text="@string/app_name"
                             android:textColor="?attr/colorOnSurface"
-                            android:textSize="18sp"
+                            android:textSize="14sp"
                             android:textStyle="bold"
-                            android:letterSpacing="-0.02" />
+                            android:letterSpacing="-0.01" />
 
                     </LinearLayout>
 
@@ -131,26 +131,18 @@
                         android:paddingHorizontal="6dp"
                         android:paddingVertical="2dp">
 
-                        <androidx.appcompat.widget.AppCompatImageView
-                            android:layout_width="18dp"
-                            android:layout_height="18dp"
-                            android:layout_marginBottom="5dp"
-                            android:contentDescription="@null"
-                            app:srcCompat="@drawable/ic_shield_24"
-                            app:tint="?attr/colorOnSurfaceVariant" />
-
-                        <TextView
+<TextView
                             android:id="@+id/home_trackers_value"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:textAppearance="?attr/textAppearanceTitleLarge"
+                            android:textAppearance="?attr/textAppearanceHeadlineSmall"
                             android:textColor="?attr/colorOnSurface"
                             tools:text="44K" />
 
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="2dp"
+                            android:layout_marginTop="4dp"
                             android:ellipsize="end"
                             android:gravity="center"
                             android:maxLines="2"
@@ -160,13 +152,7 @@
 
                     </LinearLayout>
 
-                    <View
-                        android:layout_width="1dp"
-                        android:layout_height="match_parent"
-                        android:layout_marginVertical="10dp"
-                        android:background="?attr/colorOutlineVariant" />
-
-                    <!-- Total saved → Downloads -->
+<!-- Total saved → Downloads -->
                     <LinearLayout
                         android:id="@+id/home_downloads_col"
                         android:layout_width="0dp"
@@ -180,26 +166,18 @@
                         android:paddingHorizontal="6dp"
                         android:paddingVertical="2dp">
 
-                        <androidx.appcompat.widget.AppCompatImageView
-                            android:layout_width="18dp"
-                            android:layout_height="18dp"
-                            android:layout_marginBottom="5dp"
-                            android:contentDescription="@null"
-                            app:srcCompat="@drawable/download_24"
-                            app:tint="?attr/colorOnSurfaceVariant" />
-
-                        <TextView
+<TextView
                             android:id="@+id/home_downloads_value"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:textAppearance="?attr/textAppearanceTitleLarge"
+                            android:textAppearance="?attr/textAppearanceHeadlineSmall"
                             android:textColor="?attr/colorOnSurface"
                             tools:text="9.2 GB" />
 
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="2dp"
+                            android:layout_marginTop="4dp"
                             android:ellipsize="end"
                             android:gravity="center"
                             android:maxLines="2"
@@ -209,13 +187,7 @@
 
                     </LinearLayout>
 
-                    <View
-                        android:layout_width="1dp"
-                        android:layout_height="match_parent"
-                        android:layout_marginVertical="10dp"
-                        android:background="?attr/colorOutlineVariant" />
-
-                    <!-- Safe Folder item count → vault -->
+<!-- Safe Folder item count → vault -->
                     <LinearLayout
                         android:id="@+id/home_safe_col"
                         android:layout_width="0dp"
@@ -229,26 +201,18 @@
                         android:paddingHorizontal="6dp"
                         android:paddingVertical="2dp">
 
-                        <androidx.appcompat.widget.AppCompatImageView
-                            android:layout_width="18dp"
-                            android:layout_height="18dp"
-                            android:layout_marginBottom="5dp"
-                            android:contentDescription="@null"
-                            app:srcCompat="@drawable/ic_lock_24"
-                            app:tint="?attr/colorOnSurfaceVariant" />
-
-                        <TextView
+<TextView
                             android:id="@+id/home_safe_value"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:textAppearance="?attr/textAppearanceTitleLarge"
+                            android:textAppearance="?attr/textAppearanceHeadlineSmall"
                             android:textColor="?attr/colorOnSurface"
                             tools:text="12" />
 
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="2dp"
+                            android:layout_marginTop="4dp"
                             android:ellipsize="end"
                             android:gravity="center"
                             android:maxLines="2"

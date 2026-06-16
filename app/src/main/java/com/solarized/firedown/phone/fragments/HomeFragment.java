@@ -4,7 +4,10 @@ import android.content.Intent;
 import android.icu.text.CompactDecimalFormat;
 import android.os.Bundle;
 import android.text.Editable;
+import android.text.SpannableString;
+import android.text.Spanned;
 import android.text.TextUtils;
+import android.text.style.RelativeSizeSpan;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -284,7 +287,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
             CompactDecimalFormat fmt = CompactDecimalFormat.getInstance(
                     Locale.getDefault(), CompactDecimalFormat.CompactStyle.SHORT);
             fmt.setMaximumFractionDigits(1);
-            mTrackersValue.setText(fmt.format(n));
+            mTrackersValue.setText(withSmallUnit(fmt.format(n)));
         });
 
         // Stats card column 2 — total saved: live sum of finished regular
@@ -292,7 +295,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mRecentDownloadsViewModel.getFinishedSize().observe(getViewLifecycleOwner(), size -> {
             if (mDownloadsValue == null) return;
             long bytes = size == null ? 0L : size;
-            mDownloadsValue.setText(bytes > 0 ? Utils.readableFileSize(bytes) : "0");
+            mDownloadsValue.setText(bytes > 0 ? withSmallUnit(Utils.readableFileSize(bytes)) : "0");
         });
 
         // Stats card column 3 — Safe Folder item count.
@@ -445,6 +448,41 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mTrackersValue = null;
         mDownloadsValue = null;
         mSafeValue = null;
+    }
+
+    /**
+     * Brave-style stat figure: shrink the trailing UNIT so the number reads as
+     * the hero and the unit as a small suffix — "9.2 GB", "10.6 K", "1,4 Mio.".
+     * The unit is the trailing run of letters (plus an optional dot and one
+     * leading space); a pure number ("14") is returned unchanged. Locale-safe:
+     * letters are matched by {@link Character#isLetter} so CJK compact units
+     * ("万") shrink too.
+     */
+    private static CharSequence withSmallUnit(String s) {
+        if (s == null || s.isEmpty()) {
+            return s == null ? "" : s;
+        }
+        int end = s.length();
+        int i = end;
+        while (i > 0) {
+            char c = s.charAt(i - 1);
+            if (Character.isLetter(c) || c == '.') {
+                i--;
+            } else {
+                break;
+            }
+        }
+        if (i == end || i == 0) {
+            // no trailing unit (a bare number), or it's all letters — leave it.
+            return s;
+        }
+        int unitStart = i;
+        if (s.charAt(unitStart - 1) == ' ') {
+            unitStart--;
+        }
+        SpannableString out = new SpannableString(s);
+        out.setSpan(new RelativeSizeSpan(0.6f), unitStart, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        return out;
     }
 
     @Override
