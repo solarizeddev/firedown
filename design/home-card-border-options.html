@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Firedown — card border options</title>
+<style>
+  :root{--brand:#f0716c;--soft:rgba(240,113,108,.14)}
+  *{box-sizing:border-box;-webkit-font-smoothing:antialiased}
+  body{margin:0;background:#E9E6E4;color:#2a2838;font-family:'Segoe UI',Roboto,system-ui,sans-serif;padding:34px 22px 60px}
+  h1{font-size:23px;margin:0 0 4px}
+  .sub{color:#6d6b78;font-size:13px;margin:0 0 8px;max-width:880px;line-height:1.5}
+  .sub b{color:#2a2838}
+  h2{font-size:13px;letter-spacing:.10em;text-transform:uppercase;color:#8a8893;margin:34px 0 14px}
+  .row{display:flex;flex-wrap:wrap;gap:26px}
+  .opt{width:300px}
+  .optlbl{font-size:12px;font-weight:700;margin:0 0 8px}
+  .optlbl .pill{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+    color:#fff;background:var(--brand);border-radius:5px;padding:2px 7px;margin-left:6px;vertical-align:1px}
+  .optlbl .pill.rec{background:#3a9d6a}
+  .note{font-size:11.5px;color:#6d6b78;margin:7px 2px 0;line-height:1.45}
+  /* home canvas */
+  .home{border-radius:18px;padding:12px;overflow:hidden}
+  .home.lt{background:#F4F2F1}
+  .home.dk{background:#000}
+  .omni{height:38px;border-radius:19px;display:flex;align-items:center;gap:9px;padding:0 14px;font-size:12px;margin-bottom:10px}
+  .lt .omni{background:#E5E2E1;color:#7d7b86}.dk .omni{background:#1e1e21;color:#7d7d86}
+  /* card */
+  .card{border-radius:20px;padding:18px 16px}
+  .lt .card{background:#FBFAFA}.dk .card{background:#1C1C1E}
+  .card.coral{border:1px solid rgba(240,113,108,.35)}
+  .lt .card.neutral{border:1px solid rgba(30,28,46,.11)}
+  .dk .card.neutral{border:1px solid rgba(255,255,255,.12)}
+  .card.bare{border:1px solid transparent}
+  /* stats card content */
+  .brand{display:flex;align-items:center;gap:7px;margin-bottom:14px}
+  .flame{width:17px;height:21px}.brand b{font-size:15px;font-weight:700}
+  .lt .brand b{color:#1E1C2E}.dk .brand b{color:#F2F2F4}
+  .stat3{display:flex}
+  .sc{flex:1;text-align:center;display:flex;flex-direction:column;gap:4px}
+  .sc .v{font-size:22px;font-weight:600}.lt .sc .v{color:#39374a}.dk .sc .v{color:#e7e6ee}
+  .sc .l{font-size:10.5px}.lt .sc .l{color:#6C6A78}.dk .sc .l{color:#9A9AA2}
+  .sc .t{font-size:10px;font-weight:700;color:var(--brand)}
+  /* onboarding content (compact) */
+  .hello{font-size:17px;font-weight:700;letter-spacing:-.02em;line-height:1.18;margin:13px 0 0}
+  .lt .hello{color:#1E1C2E}.dk .hello{color:#F2F2F4}
+  .lede{font-size:12px;line-height:1.3;margin:7px 0 0}.lt .lede,.lt .sd{color:#6C6A78}.dk .lede,.dk .sd{color:#9A9AA2}
+  .step{display:flex;gap:11px;margin-top:13px}
+  .n{width:25px;height:25px;flex:0 0 auto;border-radius:8px;background:var(--soft);color:var(--brand);font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center}
+  .st{font-size:13px;font-weight:700}.lt .st{color:#1E1C2E}.dk .st{color:#F2F2F4}
+  .sd{font-size:11.5px;margin-top:1px;line-height:1.2}
+  .cta{height:46px;border-radius:23px;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;margin-top:16px}
+</style></head><body>
+<h1>Card border — coral vs neutral vs borderless</h1>
+<p class="sub">Same cards, three border treatments. <b>Coral</b> = what ships now (<code>#59F0716C</code>). <b>Neutral</b> = <code>?attr/colorOutlineVariant</code>, the hairline the donate cards + the website's resting cards use. <b>Borderless</b> = tonal lift only. Coral &amp; the step numbers/CTA stay coral as accents in every version.</p>
+
+<h2>Light home · onboarding card (your main surface)</h2>
+<div class="row" id="onb"></div>
+
+<h2>Light home · stats card</h2>
+<div class="row" id="stL"></div>
+
+<h2>Dark (true-black) home · stats card — does neutral still read?</h2>
+<div class="row" id="stD"></div>
+
+<script>
+const onbCard = `
+  <div class="brand"><svg class="flame" viewBox="0 0 24 28"><path d="M12 0C12 8 4 9 4 17a8 8 0 0016 0c0-5-3-7-4-10-1 3-2 4-4 4 0-4 0-8 0-11z" fill="#f0716c"/></svg><b>Firedown</b></div>
+  <div class="hello">A browser that<br>downloads what it plays.</div>
+  <div class="lede">Open any site and Firedown grabs the video, audio or images in the background.</div>
+  <div class="step"><div class="n">1</div><div><div class="st">Browse to a page</div><div class="sd">Anything that plays.</div></div></div>
+  <div class="step"><div class="n">2</div><div><div class="st">Play or scroll it</div><div class="sd">Captured automatically.</div></div></div>
+  <div class="cta">Start browsing</div>`;
+const statCard = `
+  <div class="brand"><svg class="flame" viewBox="0 0 24 28"><path d="M12 0C12 8 4 9 4 17a8 8 0 0016 0c0-5-3-7-4-10-1 3-2 4-4 4 0-4 0-8 0-11z" fill="#f0716c"/></svg><b>Firedown</b></div>
+  <div class="stat3">
+    <div class="sc"><div class="v">10.7K</div><div class="l">Blocked</div><div class="t">+340 today</div></div>
+    <div class="sc"><div class="v">9.2 GB</div><div class="l">Saved</div><div class="t">3 this week</div></div>
+    <div class="sc"><div class="v">14</div><div class="l">Safe Folder</div><div class="t">private</div></div>
+  </div>`;
+const omni = t=>`<div class="omni"><svg style="width:14px;height:14px" viewBox="0 0 24 24" fill="none" stroke="${t}" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>Search or type URL</div>`;
+const opts = [
+  ['coral','Coral border','current','— deliberate on black; a loud orange box on cream, and a one-off vs every other card.'],
+  ['neutral','Neutral hairline','rec','— matches the donate cards and the site resting-card hairline; subtle on both themes.'],
+  ['bare','Borderless','','— cleanest on light, but on true-black it risks reading as a placeholder (the reason coral was added).'],
+];
+function build(elId, theme, inner){
+  document.getElementById(elId).innerHTML = opts.map(([cls,name,tag,note])=>`
+    <div class="opt">
+      <p class="optlbl">${name}${tag==='rec'?' <span class="pill rec">recommended</span>':tag==='current'?' <span class="pill">ships now</span>':''}</p>
+      <div class="home ${theme}">${omni(theme==='dk'?'#7d7d86':'#7d7b86')}<div class="card ${cls}">${inner}</div></div>
+      <p class="note">${note}</p>
+    </div>`).join('');
+}
+build('onb','lt',onbCard);
+build('stL','lt',statCard);
+build('stD','dk',statCard);
+</script>
+</body></html>

@@ -82,7 +82,7 @@
                 app:cardBackgroundColor="?attr/colorSurfaceContainer"
                 app:cardCornerRadius="20dp"
                 app:cardElevation="0dp"
-                app:strokeColor="@color/home_stat_card_stroke"
+                app:strokeColor="?attr/colorOutlineVariant"
                 app:strokeWidth="1dp">
 
                 <LinearLayout
@@ -332,6 +332,14 @@
                  viewport (match_parent height) with a weighted spacer pushing
                  the CTA to the bottom, so it reads as a full-height welcome and
                  only scrolls when the viewport is too short (landscape). -->
+            <!-- Borderless on purpose: the onboarding card FILLS the viewport, so
+                 it IS the screen, not a card-in-a-page — an empty/first-run state
+                 needs no frame to separate from a surrounding surface. Transparent
+                 background + no stroke = the content sits directly on the home
+                 surface (light cream / true-black), reading as the home screen
+                 itself. Coral stays only on the step numbers + CTA accents, never
+                 as a frame. (The stats card above keeps a NEUTRAL hairline because
+                 it is a small discrete widget floating in empty space.) -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/home_onboard_card"
                 android:layout_width="match_parent"
@@ -340,11 +348,10 @@
                 android:layout_marginEnd="@dimen/list_spacing"
                 android:layout_marginTop="8dp"
                 android:visibility="gone"
-                app:cardBackgroundColor="?attr/colorSurfaceContainer"
-                app:cardCornerRadius="20dp"
+                app:cardBackgroundColor="@android:color/transparent"
+                app:cardCornerRadius="0dp"
                 app:cardElevation="0dp"
-                app:strokeColor="@color/home_stat_card_stroke"
-                app:strokeWidth="1dp">
+                app:strokeWidth="0dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"

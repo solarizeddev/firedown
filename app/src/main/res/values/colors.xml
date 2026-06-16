@@ -2,10 +2,6 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <color name="ic_launcher_background">@color/md_theme_background</color>
     <color name="brand_orange">#f0716c</color>
-    <!-- Faint coral hairline on the home hero stats card (~35% of brand_orange)
-         so the flat, elevation-0 card lifts off the true-black home background
-         instead of reading as a placeholder. -->
-    <color name="home_stat_card_stroke">#59F0716C</color>
     <!-- Soft coral fill behind the onboarding step-number chips (~14% of
          brand_orange). Translucent so it works on both home surfaces. -->
     <color name="onboard_step_bg">#24F0716C</color>
