@@ -2,6 +2,8 @@ package com.solarized.firedown.autocomplete;
 
 import android.content.ClipData;
 import android.content.ClipboardManager;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -37,10 +39,18 @@ public class AutoCompleteViewModel extends ViewModel {
     private final MutableLiveData<String> mAutoCompleteData = new MutableLiveData<>();
     private final MutableLiveData<List<AutoCompleteEntity>> mSearchData = new MutableLiveData<>();
 
+    // Debounce window for the suggestion search: a burst of keystrokes collapses
+    // to ONE query fired after the typing pauses. Kept short (below the ~100ms
+    // perception threshold) so it feels instant while still sparing a DB lookup +
+    // network call on every intermediate character.
+    private static final long SEARCH_DEBOUNCE_MS = 90;
+
     private final WebHistoryDataRepository mWebHistoryDataRepository;
     private final AutoCompleteSearch mAutoCompleteSearch;
     private final ClipboardManager mClipboardManager;
     private final ExecutorService mAutoCompleteExecutor;
+    private final Handler mDebounceHandler = new Handler(Looper.getMainLooper());
+    private Runnable mPendingSearch;
     private Future<?> mAutoCompleteFuture;
     private Future<?> mSearchFuture;
     private volatile String mCurrentSearchTerm;
@@ -119,6 +129,11 @@ public class AutoCompleteViewModel extends ViewModel {
 
     /**
      * Fetches search suggestions from the web search engine.
+     *
+     * <p>Called from the URL-bar TextWatcher (main thread) on every keystroke.
+     * Debounced: the actual lookup is scheduled after a short quiet window and
+     * rescheduled on each new keystroke, so fast typing fires one query, not one
+     * per character. Clearing the field is handled immediately (no debounce).
      */
     public void search(CharSequence constraint) {
         final String searchTerm = constraint != null
@@ -132,15 +147,37 @@ public class AutoCompleteViewModel extends ViewModel {
 
         if (searchTerm.equals(mCurrentSearchTerm)) return;
 
+        cancelPendingSearch();
+        mPendingSearch = () -> runSearch(searchTerm);
+        mDebounceHandler.postDelayed(mPendingSearch, SEARCH_DEBOUNCE_MS);
+    }
+
+    /**
+     * The debounced body of {@link #search(CharSequence)} — runs on the main
+     * thread after the quiet window, then submits the blocking lookup to the
+     * background executor. Two-phase: posts the on-device rows (history / open
+     * tabs / bookmarks) the moment they're ready, then posts the merged list once
+     * the network suggestions arrive — so the dropdown is never blocked behind
+     * the network call. The generation counter discards both posts of a search
+     * that has since been superseded.
+     */
+    private void runSearch(String searchTerm) {
+        mPendingSearch = null;
         cancelFuture(mSearchFuture);
         mCurrentSearchTerm = searchTerm;
         final long gen = mSearchGen.incrementAndGet();
 
         mSearchFuture = mAutoCompleteExecutor.submit(() -> {
             try {
-                List<AutoCompleteEntity> result = mAutoCompleteSearch.searchSync(searchTerm);
+                List<AutoCompleteEntity> full = mAutoCompleteSearch.searchSync(searchTerm, local -> {
+                    // Phase 1: on-device results, posted the instant they're ready.
+                    if (gen == mSearchGen.get()) {
+                        mSearchData.postValue(local);
+                    }
+                });
+                // Phase 2: full list (local rows + network suggestions).
                 if (gen == mSearchGen.get()) {
-                    mSearchData.postValue(result);
+                    mSearchData.postValue(full);
                 }
             } catch (Exception e) {
                 if (!Thread.currentThread().isInterrupted()) {
@@ -148,6 +185,13 @@ public class AutoCompleteViewModel extends ViewModel {
                 }
             }
         });
+    }
+
+    private void cancelPendingSearch() {
+        if (mPendingSearch != null) {
+            mDebounceHandler.removeCallbacks(mPendingSearch);
+            mPendingSearch = null;
+        }
     }
 
     public void clearClipboard() {
@@ -161,6 +205,10 @@ public class AutoCompleteViewModel extends ViewModel {
     }
 
     public void resetEngines() {
+        // Drop any debounced search still waiting to fire — without this a pending
+        // runnable would run AFTER the reset and re-populate the just-cleared list
+        // (it sets its own fresh generation, so the gen bump below can't stop it).
+        cancelPendingSearch();
         mCurrentSearchTerm = null;
         mSearchGen.incrementAndGet();
         mSearchData.postValue(null);
@@ -169,6 +217,7 @@ public class AutoCompleteViewModel extends ViewModel {
     @Override
     protected void onCleared() {
         super.onCleared();
+        cancelPendingSearch();
         cancelFuture(mAutoCompleteFuture);
         cancelFuture(mSearchFuture);
     }

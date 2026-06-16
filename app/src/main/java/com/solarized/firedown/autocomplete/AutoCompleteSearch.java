@@ -31,6 +31,8 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.TreeSet;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -48,12 +50,18 @@ public class AutoCompleteSearch {
     private static final String TAG = AutoCompleteSearch.class.getName();
     private static final Pattern PATTERN_JSON_BAIDU = Pattern.compile("(\\{.*?\\})");
     private static final int MAX_RESULTS = 3;
+    // Typeahead suggestion fetch is a best-effort enrichment of an already-shown
+    // dropdown, not a download — so it gets a SHORT overall budget. The shared
+    // client (NetworkModule) is tuned for video streaming (no callTimeout, 30s
+    // read) which would let a slow/hung engine pin a worker thread for tens of
+    // seconds; a dedicated 1.5s callTimeout bounds the whole call.
+    private static final long SUGGEST_CALL_TIMEOUT_MS = 1500;
     private final SearchRepository mSearchRepository;
     private final WebHistoryDataRepository mWebHistoryDataRepository;
     private final WebBookmarkDataRepository mWebBookmarkDataRepository;
     private final GeckoStateDataRepository mGeckoStateDataRepository;
     private final IncognitoStateRepository mIncognitoStateDataRepository;
-    private final OkHttpClient mHttpClient;
+    private final OkHttpClient mSuggestClient;
 
     private volatile boolean mIncognito;
 
@@ -70,7 +78,11 @@ public class AutoCompleteSearch {
         this.mGeckoStateDataRepository = geckoStateDataRepository;
         this.mWebHistoryDataRepository = webHistoryRepository;
         this.mWebBookmarkDataRepository = webBookmarkRepository;
-        this.mHttpClient = httpClient;
+        // Reuse the shared client's connection pool / dispatcher (cheap newBuilder
+        // share) but cap the suggestion call so typeahead never stalls on it.
+        this.mSuggestClient = httpClient.newBuilder()
+                .callTimeout(SUGGEST_CALL_TIMEOUT_MS, TimeUnit.MILLISECONDS)
+                .build();
     }
 
     public void setIncognito(boolean incognito) {
@@ -79,8 +91,22 @@ public class AutoCompleteSearch {
 
     /**
      * Blocking call — must be invoked from a background thread.
+     *
+     * <p>Two-phase by design. The on-device sources (history / open tabs /
+     * bookmarks) are built and handed to {@code localEmitter} FIRST, so the
+     * dropdown fills in single-digit milliseconds and is never gated behind the
+     * network suggestion fetch (the old code added the local rows only in a
+     * {@code finally} after the HTTP call, so a slow engine delayed the user's
+     * OWN history). The returned list is the full, merged result (header +
+     * network suggestions + local rows); the caller posts the partial first and
+     * the full second, and the adapter's DiffUtil collapses the second post to a
+     * no-op when the network added nothing.
+     *
+     * @param localEmitter receives the header + local rows the instant they are
+     *                     ready (may be {@code null} to skip the early emit).
      */
-    public List<AutoCompleteEntity> searchSync(String searchTerm) {
+    public List<AutoCompleteEntity> searchSync(String searchTerm,
+                                               Consumer<List<AutoCompleteEntity>> localEmitter) {
         if (TextUtils.isEmpty(searchTerm)) return null;
 
         final List<AutoCompleteEntity> result = new ArrayList<>();
@@ -93,16 +119,24 @@ public class AutoCompleteSearch {
                 + " term=" + preview(searchTerm));
 
         ensureHeader(result, searchTerm, searchOption, searchFormat);
+        // Local sources up front (they were previously appended in the network
+        // finally) — see the two-phase rationale above.
+        addLocalSources(result, searchTerm);
+
+        // Phase 1: emit header + local rows now. A defensive copy, because we keep
+        // mutating `result` below to splice the network suggestions into it.
+        if (localEmitter != null) {
+            localEmitter.accept(new ArrayList<>(result));
+        }
 
         // An engine without a suggestions endpoint (Mojeek operates none —
         // privacy stance; a custom engine's suggestion field is optional)
-        // still gets the search header + the local sources below — only the
+        // still gets the search header + the local sources above — only the
         // network fetch is skipped. Composing a request from an empty
         // template would throw in Request.Builder.url().
         if (TextUtils.isEmpty(suggestionUrl)) {
             logDebug("no suggestions endpoint for " + searchOption
                     + " — skipping remote fetch (search header + local sources only)");
-            addLocalSources(result, searchTerm);
             return result;
         }
 
@@ -111,22 +145,24 @@ public class AutoCompleteSearch {
                 .url(URLUtil.composeSearchUrl(searchTerm, suggestionUrl, "%s"))
                 .build();
 
-        try (Response response = mHttpClient.newCall(request).execute()) {
+        // Phase 2: fetch the engine's suggestions and splice them in just AFTER
+        // the search header (index 1) — preserving the historical ordering of
+        // header, engine suggestions, then the local history/tabs/bookmarks rows.
+        try (Response response = mSuggestClient.newCall(request).execute()) {
             if (!response.isSuccessful()) {
                 logDebug("suggest fetch HTTP " + response.code() + " for " + searchOption);
                 return result;
             }
             ResponseBody body = response.body();
-            int before = result.size();
-            parseByEngine(result, body.string(), searchOption, searchFormat);
+            List<AutoCompleteEntity> networkItems = new ArrayList<>();
+            parseByEngine(networkItems, body.string(), searchOption, searchFormat);
+            result.addAll(1, networkItems);
             logDebug("suggest fetch HTTP 200 for " + searchOption
-                    + ", parsed " + (result.size() - before) + " suggestion(s)");
+                    + ", parsed " + networkItems.size() + " suggestion(s)");
         } catch (IOException | JSONException e) {
             if (BuildConfig.DEBUG) {
                 Log.e(TAG, "Autocomplete network/parse error", e);
             }
-        } finally {
-            addLocalSources(result, searchTerm);
         }
         return result;
     }
