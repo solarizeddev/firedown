@@ -166,6 +166,19 @@
         <item name="elevationOverlayEnabled">false</item>
     </style>
 
+    <!-- In-place search bar (the second app-bar row on Downloads/Vault). The
+         vault's toolbar theme overlay can't reach this view — it lives in the
+         AppBarLayout, not inside the toolbar — so recolor the surface + the
+         on-surface tones to the incognito palette here, so the search field
+         matches the vault's purple chrome. -->
+    <style name="ThemeOverlay.FireDown.SearchBar.Vault" parent="">
+        <item name="colorSurfaceContainerHigh">@color/incognito_surface_container_high</item>
+        <item name="colorOnSurface">@color/incognito_on_surface</item>
+        <item name="colorOnSurfaceVariant">@color/incognito_on_surface_variant</item>
+        <item name="android:textColorHint">@color/incognito_on_surface_variant</item>
+        <item name="elevationOverlayEnabled">false</item>
+    </style>
+
     <style name="Firedown.Widget.App.Chip.Filter" parent="Widget.Material3.Chip.Filter">
         <item name="materialThemeOverlay">@style/ThemeOverlay.App.Chip</item>
         <!-- Matches Theme.FireDown.Download.Chip: full pill + 36dp

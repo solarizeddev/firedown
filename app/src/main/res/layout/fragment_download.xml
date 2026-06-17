@@ -22,14 +22,88 @@
             app:popupTheme="@style/Theme.FireDown.Popup"
             app:title="@string/navigation_downloads" />
 
-        <!-- Filter chip rail. No scrollFlags so it stays pinned under
-             the toolbar — the chips are the primary filter affordance
-             on this screen and forcing the user to scroll back to the
-             top to switch type is a friction tax. -->
-        <include
-            layout="@layout/fragment_download_list_options"
+        <!-- Second app-bar row: the filter chip rail OR the in-place search
+             bar occupy the same slot (swapped by visibility). No scrollFlags
+             so it stays pinned under the toolbar — the chips are the primary
+             filter affordance on this screen and forcing the user to scroll
+             back to the top to switch type is a friction tax. Putting the
+             search bar HERE (a second row, not over the toolbar) sidesteps
+             the status-bar inset the toolbar already consumes. -->
+        <FrameLayout
+            android:id="@+id/subheader_container"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content">
+
+            <include
+                android:id="@+id/chip_rail"
+                layout="@layout/fragment_download_list_options"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <!-- In-place Material search bar. Tapping the toolbar search icon
+                 reveals it here; the list filters live below (no overlay) and
+                 the chip rail hides while it's open. Replaces the old
+                 collapsible appcompat SearchView action view, which read as a
+                 bare, barely-visible underline when expanded. -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/search_bar"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginStart="@dimen/list_spacing"
+                android:layout_marginEnd="@dimen/list_spacing"
+                android:layout_marginTop="2dp"
+                android:layout_marginBottom="6dp"
+                android:visibility="gone"
+                app:cardBackgroundColor="?attr/colorSurfaceContainerHigh"
+                app:cardCornerRadius="24dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingStart="14dp"
+                    android:paddingEnd="4dp">
+
+                    <ImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_search_24"
+                        app:tint="?attr/colorOnSurfaceVariant" />
+
+                    <EditText
+                        android:id="@+id/search_edit"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:background="@null"
+                        android:hint="@string/search"
+                        android:imeOptions="actionSearch"
+                        android:importantForAutofill="no"
+                        android:inputType="text"
+                        android:maxLines="1"
+                        android:paddingStart="10dp"
+                        android:paddingEnd="6dp"
+                        android:textColor="?attr/colorOnSurface"
+                        android:textColorHint="?attr/colorOnSurfaceVariant"
+                        android:textSize="16sp" />
+
+                    <ImageButton
+                        android:id="@+id/search_clear"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="@string/abc_searchview_description_clear"
+                        android:src="@drawable/ic_clear_24"
+                        android:visibility="gone"
+                        app:tint="?attr/colorOnSurfaceVariant" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+        </FrameLayout>
 
     </com.google.android.material.appbar.AppBarLayout>
 

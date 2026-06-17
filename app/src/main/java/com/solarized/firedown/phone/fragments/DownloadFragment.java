@@ -75,6 +75,13 @@ public class DownloadFragment extends BaseDownloadFragment implements
 
     private static final String TAG = DownloadFragment.class.getSimpleName();
     private ChipGroup mChipGroup;
+    /** The filter chip rail's root (the include in fragment_download.xml). It
+     *  shares the second app-bar row with the search bar, so it's hidden while
+     *  search is open. */
+    private View mChipRail;
+    /** The chip checked when search opened, restored when it closes. Search
+     *  runs globally (chip cleared) so we never apply a hidden filter. */
+    private int mSavedChipId = View.NO_ID;
 
     @Inject
     DownloadDatabase mDownloadDatabase;
@@ -174,8 +181,7 @@ public class DownloadFragment extends BaseDownloadFragment implements
         mGridLayoutManager = null;
         mBottomProgressView = null;
         mChipGroup = null;
-        mSearchView = null;
-        mSearchItem = null;
+        mChipRail = null;
         super.onDestroyView();
     }
 
@@ -184,9 +190,11 @@ public class DownloadFragment extends BaseDownloadFragment implements
         mAppBarLayout = view.findViewById(R.id.appbar_layout);
         mLCEERecyclerView = view.findViewById(R.id.list_recycler_lcee);
         mChipGroup = view.findViewById(R.id.chip_group);
+        mChipRail = view.findViewById(R.id.chip_rail);
         mToolbar = view.findViewById(R.id.toolbar);
 
         mChipGroup.setOnCheckedStateChangeListener(this);
+        setupSearchBar(view);
     }
 
     private void setupRecyclerView() {
@@ -242,20 +250,30 @@ public class DownloadFragment extends BaseDownloadFragment implements
                     // checked id here).
                     int chipId = mChipGroup.getCheckedChipId();
                     boolean unfiltered = chipId == View.NO_ID || chipId == R.id.chip_all;
-                    mLCEERecyclerView.setEmptyText(unfiltered ? R.string.empty_list : R.string.empty_list_type);
-                    mLCEERecyclerView.setEmptyImageView(getEmptyIcon(chipId));
-                    // Empty + unfiltered is the post-reinstall sight: offer the
-                    // transport-free SAF restore (reads the encrypted mirror
-                    // surviving in Download/Firedown — see DownloadBackupMirror).
-                    // Idempotent, so offering it to a genuinely-new user is
-                    // harmless ("no backup found"). Filtered-empty keeps the
-                    // plain message — the list isn't actually empty.
-                    if (unfiltered) {
-                        mLCEERecyclerView.setEmptyButtonText(R.string.restore_downloads_button);
-                        mLCEERecyclerView.setEmptyButtonVisibility(View.VISIBLE);
-                        mLCEERecyclerView.setButtonListener(id -> showRestoreDownloadsDialog());
-                    } else {
+                    if (isSearchActive()) {
+                        // Live search with no matches — NOT the post-reinstall
+                        // empty state (search clears the chip, so the unfiltered
+                        // test below would otherwise offer the restore button on
+                        // every no-result query).
+                        mLCEERecyclerView.setEmptyText(R.string.empty_list_type);
+                        mLCEERecyclerView.setEmptyImageView(R.drawable.ill_baloons);
                         mLCEERecyclerView.setEmptyButtonVisibility(View.GONE);
+                    } else {
+                        mLCEERecyclerView.setEmptyText(unfiltered ? R.string.empty_list : R.string.empty_list_type);
+                        mLCEERecyclerView.setEmptyImageView(getEmptyIcon(chipId));
+                        // Empty + unfiltered is the post-reinstall sight: offer the
+                        // transport-free SAF restore (reads the encrypted mirror
+                        // surviving in Download/Firedown — see DownloadBackupMirror).
+                        // Idempotent, so offering it to a genuinely-new user is
+                        // harmless ("no backup found"). Filtered-empty keeps the
+                        // plain message — the list isn't actually empty.
+                        if (unfiltered) {
+                            mLCEERecyclerView.setEmptyButtonText(R.string.restore_downloads_button);
+                            mLCEERecyclerView.setEmptyButtonVisibility(View.VISIBLE);
+                            mLCEERecyclerView.setButtonListener(id -> showRestoreDownloadsDialog());
+                        } else {
+                            mLCEERecyclerView.setEmptyButtonVisibility(View.GONE);
+                        }
                     }
                     mLCEERecyclerView.showEmpty();
                 } else {
@@ -280,6 +298,7 @@ public class DownloadFragment extends BaseDownloadFragment implements
         mToolbar.setNavigationOnClickListener(v -> {
             if (mOperationActive && mActionModeEnabled) navigateToCancelDialog();
             else if (mActionModeEnabled) stopActionMode();
+            else if (isSearchActive()) closeSearchBar();
             else mActivity.finish();
         });
 
@@ -290,7 +309,6 @@ public class DownloadFragment extends BaseDownloadFragment implements
                     inflater.inflate(mOperationActive ? R.menu.menu_action_empty : R.menu.menu_action_download, menu);
                 } else {
                     inflater.inflate(R.menu.menu_download, menu);
-                    setupSearchView(menu);
                     MenuItem actionView = menu.findItem(R.id.action_view);
                     if (actionView != null) actionView.setIcon(mEnableGrid ? R.drawable.ic_view_list_24 : R.drawable.ic_grid_view_24);
                 }
@@ -619,5 +637,39 @@ public class DownloadFragment extends BaseDownloadFragment implements
             return true;
         }
         return false;
+    }
+
+    /**
+     * Search opens → hide the chip rail and drop the active chip so search
+     * runs globally (across all types). The chips share the second app-bar
+     * row with the search bar, so they'd be hidden anyway; clearing the chip
+     * is what actually makes the search global rather than scoped to a filter
+     * the user can no longer see. {@code clearCheck()} fires
+     * {@link #onCheckedChanged}, which resets the ViewModel filter.
+     */
+    @Override
+    protected void onSearchBarOpening() {
+        if (mChipGroup == null) {
+            return;
+        }
+        mSavedChipId = mChipGroup.getCheckedChipId();
+        if (mSavedChipId != View.NO_ID) {
+            mChipGroup.clearCheck();
+        }
+        if (mChipRail != null) {
+            mChipRail.setVisibility(View.GONE);
+        }
+    }
+
+    /** Search closes → restore the chip rail and the chip that was active. */
+    @Override
+    protected void onSearchBarClosing() {
+        if (mChipRail != null) {
+            mChipRail.setVisibility(View.VISIBLE);
+        }
+        if (mChipGroup != null && mSavedChipId != View.NO_ID) {
+            mChipGroup.check(mSavedChipId);
+        }
+        mSavedChipId = View.NO_ID;
     }
 }

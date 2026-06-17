@@ -1,12 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
+    <!-- Plain action icon: it reveals the in-place Material search bar in the
+         second app-bar row (handled in BaseDownloadFragment.handleMenuAction),
+         no longer a collapsible appcompat SearchView action view. -->
     <item
         android:id="@+id/action_search"
         android:icon="@drawable/ic_search_24"
         app:iconTint="?attr/colorOnSurface"
-        app:showAsAction="always|collapseActionView"
-        app:actionViewClass="androidx.appcompat.widget.SearchView"
+        app:showAsAction="always"
         android:title="@string/search"/>
 
     <item
