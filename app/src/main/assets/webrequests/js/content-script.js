@@ -145,6 +145,37 @@ if (window === window.top) {
     return descriptionOnly;
   };
 
+  // Most JS players DON'T render their poster as a <video poster> attribute —
+  // they paint it as a CSS background-image on an overlay div (JWPlayer
+  // .jw-preview, Video.js .vjs-poster, Plyr .plyr__poster, …). When the generic
+  // catcher is the winning capturer for such a player (its API isn't readable,
+  // or it wins the dedup race against the page-state bridge), <video poster> is
+  // empty and the clip lands with no thumbnail even though one is plainly on the
+  // page. Read the computed background-image of the known player poster
+  // containers (most-specific first) and parse its url(...). Conservative: only
+  // a handful of recognised player classes, and a match still REQUIRES a real
+  // http(s) url() — a gradient/none/data: background is ignored — so this can't
+  // grab a decorative element's background. Ranks BELOW <video poster> (a real
+  // poster attribute, when present, is authoritative). og:image / JSON-LD remain
+  // the page-level fallbacks below.
+  function posterFromPlayerBg() {
+    const sels = ['.jw-preview', '.vjs-poster', '.plyr__poster', '.video-js .vjs-poster'];
+    for (let i = 0; i < sels.length; i++) {
+      let els;
+      try { els = document.querySelectorAll(sels[i]); } catch (_) { continue; }
+      for (let j = 0; j < els.length; j++) {
+        let bg;
+        try { bg = getComputedStyle(els[j]).backgroundImage; } catch (_) { bg = ''; }
+        if (!bg || bg === 'none') continue;
+        // backgroundImage can be a comma list / carry quotes; take the first
+        // http(s) url(...).
+        const m = /url\(\s*["']?(https?:\/\/[^"')]+)["']?\s*\)/i.exec(bg);
+        if (m && m[1]) return m[1];
+      }
+    }
+    return '';
+  }
+
   browser.runtime.onMessage.addListener((msg, sender) => {
     if (!msg || msg.kind !== 'get-page-metadata') return;
     const meta = (selector, attr) => {
@@ -164,7 +195,7 @@ if (window === window.top) {
     // case, same scope as the page-level title/description below) that is the
     // captured clip's poster. og:image / JSON-LD thumbnailUrl are the fallbacks.
     const videoEl = document.querySelector('video[poster]');
-    const poster = videoEl && videoEl.poster ? videoEl.poster : '';
+    const poster = (videoEl && videoEl.poster ? videoEl.poster : '') || posterFromPlayerBg();
     return Promise.resolve({
       url: location.href,
       title: document.title || '',
