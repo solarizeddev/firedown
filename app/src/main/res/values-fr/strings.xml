@@ -152,7 +152,7 @@
     <string name="restore_downloads_none">Aucune sauvegarde trouvée dans ce dossier</string>
     <string name="restore_downloads_wrong_device">Cette sauvegarde appartient à un autre appareil</string>
     <string name="delete_needs_grant">Un accès au stockage est nécessaire pour supprimer les fichiers restaurés</string>
-    <string name="delete_grant_action">Autoriser l'accès</string>
+    <string name="delete_grant_action">Autoriser l\'accès</string>
     <string name="empty_list">Vos téléchargements apparaîtront ici.</string>
     <string name="empty_list_bookmarks">Rien de mis en favoris pour l\'instant.\n\nOuvrez n\'importe quelle page et choisissez « Marquer cette page » dans le menu ⋮ pour l\'enregistrer ici.</string>
     <string name="empty_list_browser_history">L\'historique de votre navigateur est vide.</string>
