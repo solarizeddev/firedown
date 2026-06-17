@@ -53,6 +53,8 @@
         <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:clipChildren="false"
+            android:clipToPadding="false"
             android:paddingBottom="8dp">
 
 
@@ -61,15 +63,42 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
+                android:clipChildren="false"
+                android:clipToPadding="false"
                 android:gravity="center_horizontal"
                 android:orientation="vertical"
                 android:paddingHorizontal="32dp">
 
-                <androidx.appcompat.widget.AppCompatImageView
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:contentDescription="@string/app_name"
-                    android:src="@drawable/ic_firedown_logo" />
+                <!-- Flame + the breathing ember glow behind it. The wrapper is
+                     sized to the 40dp flame (no layout change vs the bare
+                     ImageView); the glow is also 40dp and only becomes a halo
+                     via the animator's SCALE transform, drawn beyond the box
+                     because this and the ancestors set clipChildren="false".
+                     The glow is GONE/alpha 0 at rest — HomeFragment shows it
+                     and runs the breath only while a download is active. -->
+                <FrameLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:clipChildren="false"
+                    android:clipToPadding="false">
+
+                    <View
+                        android:id="@+id/home_brand_glow"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:layout_gravity="center"
+                        android:alpha="0"
+                        android:background="@drawable/home_ember_glow"
+                        android:visibility="gone" />
+
+                    <androidx.appcompat.widget.AppCompatImageView
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:layout_gravity="center"
+                        android:contentDescription="@string/app_name"
+                        android:src="@drawable/ic_firedown_logo" />
+
+                </FrameLayout>
 
                 <TextView
                     android:layout_width="wrap_content"
