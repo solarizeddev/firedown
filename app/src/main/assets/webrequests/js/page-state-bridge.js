@@ -433,6 +433,37 @@
         return false;
     }
 
+    // A per-clip title from the EXPLICIT, author-provided signals on/around a
+    // media element — NOT a guess from nearby headings (noisy on real pages). In
+    // order: the element's own title / aria-label / data-title(-video-title), an
+    // aria-labelledby target's text, then an enclosing <figure>'s <figcaption>.
+    // Returns a trimmed, length-capped string or null (caller falls back to the
+    // page title). Pure DOM reads — safe on an Xray-wrapped element.
+    function domTitleFor(el) {
+        if (!el) return null;
+        const clean = (s) => (typeof s === "string" && s.trim()) ? s.trim().slice(0, 300) : null;
+        let v;
+        try { v = el.getAttribute("title"); } catch (_) {}
+        if (clean(v)) return clean(v);
+        try { v = el.getAttribute("aria-label"); } catch (_) {}
+        if (clean(v)) return clean(v);
+        try { v = el.getAttribute("data-title") || el.getAttribute("data-video-title"); } catch (_) {}
+        if (clean(v)) return clean(v);
+        try {
+            const id = el.getAttribute("aria-labelledby");
+            if (id) {
+                const ref = document.getElementById(id);
+                if (ref) { const x = clean(ref.textContent); if (x) return x; }
+            }
+        } catch (_) {}
+        try {
+            const fig = el.closest ? el.closest("figure") : null;
+            const cap = fig && fig.querySelector ? fig.querySelector("figcaption") : null;
+            if (cap) { const x = clean(cap.textContent); if (x) return x; }
+        } catch (_) {}
+        return null;
+    }
+
     // Player-agnostic DOM read: each <video>/<audio> element is its OWN clip —
     // ONE media group PER element (its src/currentSrc + <source> children + its
     // own poster). Multiple players in one document therefore become multiple
@@ -499,7 +530,7 @@
                 else if (kind === "progressive") variants.push({ url, height: heightFrom(info.label, url) });
             }
             if (variants.length || hls.length) {
-                groups.push({ variants, hls, delegates: [], img, title: null, durationSec: 0 });
+                groups.push({ variants, hls, delegates: [], img, title: domTitleFor(el), durationSec: 0 });
             }
         }
         if (!groups.length) return null;
@@ -592,8 +623,16 @@
             try { p = pl.poster ? pl.poster() : null; } catch (_) { p = null; }
             p = absolutize(p);
             if (typeof p === "string" && /^https?:\/\//i.test(p)) img = p;
+            // Title from the player's element (its own title/aria-label/… or an
+            // enclosing figcaption) — the <video> tech first, then the root.
+            let title = null;
+            try {
+                const root = pl.el ? pl.el() : null;
+                const vEl = root && root.querySelector ? root.querySelector("video, audio") : null;
+                title = domTitleFor(vEl) || domTitleFor(root);
+            } catch (_) { title = null; }
             if (variants.length || hls.length) {
-                groups.push({ variants, hls, delegates: [], img, title: null, durationSec: 0 });
+                groups.push({ variants, hls, delegates: [], img, title, durationSec: 0 });
             }
         }
         if (!groups.length) return null;
