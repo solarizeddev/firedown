@@ -59,10 +59,11 @@ public class TabsIncognitoFragment extends BaseTabsFragment {
 
     @Override
     protected int getEmptyImageRes() {
-        // Private-browsing mascot (relocated from the incognito home) gives
-        // the empty incognito switcher its own identity, instead of the same
-        // folder art the regular tabs page uses.
-        return R.drawable.ill_privacy_purple;
+        // Dedicated empty-incognito-switcher art: the tabs folder recolored to
+        // the incognito palette + the domino mask, so it reads as "no private
+        // tabs" while staying distinct from the regular tabs page and from the
+        // private-browsing mascot (which the incognito home/new-tab keeps).
+        return R.drawable.ill_tabs_incognito;
     }
 
     @Override
