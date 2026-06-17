@@ -189,6 +189,22 @@
         } catch (_) { return null; }
     }
 
+    // Resolve a player-fed media URL against this frame's document base. A player
+    // keeps source URLs AS AUTHORED — JWPlayer (and Video.js) only absolutize a
+    // remote-playlist loader, never an inline sources[].file — so getPlaylist()
+    // can hand us a ROOT-RELATIVE master ("/stream/…/master.m3u8", e.g. StreamHG/
+    // series.ly jw8 embeds). hls.js resolves it against document.baseURI when it
+    // fetches, but we read the player object, not the wire; mediaKindOf then drops
+    // it on its ^https?:// gate (returns null) so the whole group is empty and the
+    // bridge captures NOTHING — leaving only the generic catcher's bare wire master
+    // (no poster). Resolve it here, the same base the player/hls.js uses (honours a
+    // <base> tag), so the absolute URL classifies + emits with the page-world poster.
+    // Already-absolute and blob:/data:/mediasource: URLs pass through unchanged.
+    function absolutize(url) {
+        if (typeof url !== "string" || !url) return url;
+        try { return new URL(url, document.baseURI || location.href).href; } catch (_) { return url; }
+    }
+
     // Bilibili.tv episode model lives at root.ogv: season.title + the playing
     // episode (ogv.epId matched against ogv.sectionsList[].episodes[].episode_id)
     // give an episode-precise "Season Episode" title and a per-episode cover.
@@ -337,6 +353,7 @@
         const variants = [];
         const hls = [];
         const take = (url, label, type) => {
+            url = absolutize(url);
             const kind = mediaKindOf(url, type);
             if (kind === "hls") hls.push(url);
             else if (kind === "progressive") variants.push({ url, height: heightFrom(label, url) });
@@ -435,6 +452,7 @@
         const byUrl = new Map();
         let img;
         const add = (url, type, label) => {
+            url = absolutize(url);
             if (typeof url !== "string" || !/^https?:\/\//i.test(url)) return;
             const prev = byUrl.get(url);
             if (!prev) { byUrl.set(url, { type: type || "", label: label || "" }); return; }
@@ -534,6 +552,7 @@
         const hls = [];
         let img;
         const take = (url, type, label) => {
+            url = absolutize(url);
             const kind = mediaKindOf(url, type);
             if (kind === "hls") hls.push(url);
             else if (kind === "progressive") variants.push({ url, height: heightFrom(label, url) });
