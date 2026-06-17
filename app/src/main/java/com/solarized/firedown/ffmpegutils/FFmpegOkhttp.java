@@ -57,6 +57,14 @@ public class FFmpegOkhttp {
     private boolean rangeChunkingProbed = false;
     private long chunkBytesRead = 0;
 
+    // ── Range-required fallback state ───────────────────────────────────
+    // Some CDNs (e.g. tvc1.watchsomuch.tv — IIS anti-leech) 416 a Range-LESS
+    // request and only serve a ranged one, the inverse of a range-hostile
+    // server. The browser's <video> always sends "Range: bytes=0-", so it
+    // gets 206; our probe's initial open at pos 0 sends no Range and gets 416.
+    // Once set, okhttpOpen injects "bytes=0-" when no other Range applies.
+    private boolean forceFullRange = false;
+
     public FFmpegOkhttp(String url, String headers) {
         this.mUrl = url;
         this.mHeaders = headers;
@@ -248,6 +256,20 @@ public class FFmpegOkhttp {
                 }
             }
 
+            // ── Range-required fallback ─────────────────────────────
+            // A previous open got 416 on a Range-less request from this
+            // CDN, which only serves ranged requests. Inject a zero-offset
+            // Range when nothing above already set one.
+            if (forceFullRange && !headers.containsKey(BrowserHeaders.RANGES)) {
+                headers.put(BrowserHeaders.RANGES, "bytes=0-");
+            }
+
+            // Did this request carry a Range header? Drives the 416 branch
+            // below: a 416 on a Range-LESS request means the server REQUIRES
+            // a range; a 416 on a ranged request means the range was
+            // unsatisfiable (asked past EOF).
+            boolean requestHadRange = headers.containsKey(BrowserHeaders.RANGES);
+
             Request request = new Request.Builder()
                     .headers(SafeHeaders.of(headers))
                     .url(mUrl)
@@ -280,26 +302,44 @@ public class FFmpegOkhttp {
                 }
             }
 
-            // Handle 416 Range Not Satisfiable
-            //
-            // The server rejected our Range request. Fall back to a ranged-less
-            // request from byte 0. We MUST reset mReadPosition here — otherwise
-            // the server returns bytes [0..N] but our internal position counter
-            // still reads 10MB (or wherever we were), and ffmpeg interprets the
-            // incoming bytes as starting at that offset → silent data corruption
-            // manifesting as 'moov atom not found' mid-stream or garbage frames.
-            //
-            // The caller (ffmpeg) will notice position jumped backwards through
-            // its own AVIOContext bookkeeping only if it performs a seek; for
-            // a plain sequential read the reset is invisible to ffmpeg.
-            if (statusCode == FFmpegConstants.HTTP_RANGE_NOT_SATISFIABLE && seekable) {
-                okhttpClose();
-                this.seekable = false;
-                this.useRangeChunking = false;
-                this.rangeChunkingProbed = true;
-                this.mReadPosition = 0;
-                this.chunkBytesRead = 0;
-                return okhttpOpen(options);
+            // Handle 416 Range Not Satisfiable — two opposite causes.
+            if (statusCode == FFmpegConstants.HTTP_RANGE_NOT_SATISFIABLE) {
+
+                // (B) Range-REQUIRED server: it 416s a Range-LESS request and
+                // only serves a ranged one (e.g. tvc1.watchsomuch.tv — IIS
+                // anti-leech). The browser's <video> always sends
+                // "Range: bytes=0-" → 206; our probe's initial open sends none
+                // → 416. Retry ONCE with a zero-offset range. Reactive and
+                // host-agnostic, mirroring HttpDownloadStrategy's 403/404/416
+                // range-retry: a range-HOSTILE server answers the Range-less
+                // GET (it never 416s), so it can't reach this branch.
+                if (!requestHadRange && !forceFullRange) {
+                    okhttpClose();
+                    this.forceFullRange = true;
+                    return okhttpOpen(options);
+                }
+
+                // (A) Range-UNSATISFIABLE: we DID send a Range and it was past
+                // EOF. Fall back to a Range-less sequential read from byte 0.
+                // We MUST reset mReadPosition here — otherwise the server
+                // returns bytes [0..N] but our internal position counter still
+                // reads 10MB (or wherever we were), and ffmpeg interprets the
+                // incoming bytes as starting at that offset → silent data
+                // corruption manifesting as 'moov atom not found' mid-stream or
+                // garbage frames.
+                //
+                // The caller (ffmpeg) will notice position jumped backwards
+                // through its own AVIOContext bookkeeping only if it performs a
+                // seek; for a plain sequential read the reset is invisible.
+                if (seekable && !forceFullRange) {
+                    okhttpClose();
+                    this.seekable = false;
+                    this.useRangeChunking = false;
+                    this.rangeChunkingProbed = true;
+                    this.mReadPosition = 0;
+                    this.chunkBytesRead = 0;
+                    return okhttpOpen(options);
+                }
             }
 
             if (!httpResponse.isSuccessful()) {
