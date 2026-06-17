@@ -404,13 +404,13 @@
         // article videos site-wide. The API readers are self-gating (the global
         // must exist), so they always run.
         if (looksLikePlayerFrame()) {
-            const dom = readDomMedia();
-            if (dom) groups.push(dom);
+            const dom = readDomMedia(); // array of per-element groups | null
+            if (dom) for (let i = 0; i < dom.length; i++) groups.push(dom[i]);
         }
-        const jw = readJwPlayer();
+        const jw = readJwPlayer(); // single group | null
         if (jw) groups.push(jw);
-        const vjs = readVideoJs();
-        if (vjs) groups.push(vjs);
+        const vjs = readVideoJs(); // array of per-player groups | null
+        if (vjs) for (let i = 0; i < vjs.length; i++) groups.push(vjs[i]);
         return groups.length ? groups : null;
     }
 
@@ -433,37 +433,43 @@
         return false;
     }
 
-    // Player-agnostic DOM read: every <video>/<audio> element's own src/currentSrc
-    // plus its <source> children, classified by mediaKindOf (type-primary, the
-    // extension is not a gate — the element's source IS media).
-    // Poster → thumbnail. Returns a media group or null.
+    // Player-agnostic DOM read: each <video>/<audio> element is its OWN clip —
+    // ONE media group PER element (its src/currentSrc + <source> children + its
+    // own poster). Multiple players in one document therefore become multiple
+    // entities, NOT one merged entry whose primary is the first clip and whose
+    // "quality variants" are actually different clips (the playbook's
+    // "one entity per video, no merging"). A single element's <source> children
+    // still group together as that clip's qualities. Returns an ARRAY of groups,
+    // or null. (The module-level sentKeys guard in emitOneGroup still collapses a
+    // url seen by two readers — e.g. DOM + Video.js on the same element.)
     function readDomMedia() {
         let els;
         try { els = document.querySelectorAll("video, audio"); } catch (_) { return null; }
         const n = els ? els.length : 0;
         if (!n) return null;
 
-        // Collect (url -> {type,label}) deduped, preferring an EXPLICIT type over
-        // none. A <video> with a <source type="video/mp4"> ALSO exposes the SAME
-        // url via currentSrc with NO type — without this merge that one url is
-        // classified twice (progressive from the typed <source>, HLS from the
-        // typeless currentSrc default), emitting a spurious second entity for one
-        // video.
-        const byUrl = new Map();
-        let img;
-        const add = (url, type, label) => {
-            url = absolutize(url);
-            if (typeof url !== "string" || !/^https?:\/\//i.test(url)) return;
-            const prev = byUrl.get(url);
-            if (!prev) { byUrl.set(url, { type: type || "", label: label || "" }); return; }
-            if (!prev.type && type) prev.type = type;
-            if (!prev.label && label) prev.label = label;
-        };
+        const groups = [];
         for (let i = 0; i < n; i++) {
             const el = els[i];
+            // Collect (url -> {type,label}) for THIS element, deduped, preferring an
+            // EXPLICIT type over none. A <video> with a <source type="video/mp4">
+            // ALSO exposes the SAME url via currentSrc with NO type — without this
+            // per-element merge that one url is classified twice (progressive from
+            // the typed <source>, HLS from the typeless currentSrc default).
+            const byUrl = new Map();
+            const add = (url, type, label) => {
+                url = absolutize(url);
+                if (typeof url !== "string" || !/^https?:\/\//i.test(url)) return;
+                const prev = byUrl.get(url);
+                if (!prev) { byUrl.set(url, { type: type || "", label: label || "" }); return; }
+                if (!prev.type && type) prev.type = type;
+                if (!prev.label && label) prev.label = label;
+            };
+            let img;
             let poster;
             try { poster = el.getAttribute("poster"); } catch (_) {}
-            if (!img && typeof poster === "string" && /^https?:\/\//i.test(poster)) img = poster;
+            poster = absolutize(poster);
+            if (typeof poster === "string" && /^https?:\/\//i.test(poster)) img = poster;
             // currentSrc resolves to the playing URL (a blob for MSE — rejected by
             // mediaKindOf); the src attribute is the declared one.
             let cur, attr, etype;
@@ -483,19 +489,22 @@
                 try { sl = s.getAttribute("size") || s.getAttribute("label") || s.getAttribute("data-quality"); } catch (_) {}
                 add(su, st, sl);
             }
+            const variants = [];
+            const hls = [];
+            for (const entry of byUrl) {
+                const url = entry[0];
+                const info = entry[1];
+                const kind = mediaKindOf(url, info.type);
+                if (kind === "hls") hls.push(url);
+                else if (kind === "progressive") variants.push({ url, height: heightFrom(info.label, url) });
+            }
+            if (variants.length || hls.length) {
+                groups.push({ variants, hls, delegates: [], img, title: null, durationSec: 0 });
+            }
         }
-        const variants = [];
-        const hls = [];
-        for (const entry of byUrl) {
-            const url = entry[0];
-            const info = entry[1];
-            const kind = mediaKindOf(url, info.type);
-            if (kind === "hls") hls.push(url);
-            else if (kind === "progressive") variants.push({ url, height: heightFrom(info.label, url) });
-        }
-        if (!variants.length && !hls.length) return null;
-        log("player-probe: DOM <video>/<source> @", location.host, "variants=", variants.length, "hls=", hls.length);
-        return { variants, hls, delegates: [], img, title: null, durationSec: 0 };
+        if (!groups.length) return null;
+        log("player-probe: DOM <video>/<source> @", location.host, "groups=", groups.length);
+        return groups;
     }
 
     // JWPlayer (jw8): jwplayer().getPlaylist() → [{file, sources:[{file,label}],
@@ -534,6 +543,9 @@
 
     // Video.js: videojs.getAllPlayers() → each player's currentSources() (or src()).
     // currentSources() holds the real .m3u8 even when the <video> shows a blob.
+    // ONE group PER player (with that player's own poster()) — multiple Video.js
+    // instances in one document are distinct clips, same rule as readDomMedia.
+    // Returns an ARRAY of groups, or null.
     function readVideoJs() {
         let pw;
         try { pw = window.wrappedJSObject; } catch (_) { pw = null; }
@@ -548,18 +560,18 @@
         let n = 0;
         try { n = (players && typeof players.length === "number") ? players.length : 0; } catch (_) { n = 0; }
 
-        const variants = [];
-        const hls = [];
-        let img;
-        const take = (url, type, label) => {
-            url = absolutize(url);
-            const kind = mediaKindOf(url, type);
-            if (kind === "hls") hls.push(url);
-            else if (kind === "progressive") variants.push({ url, height: heightFrom(label, url) });
-        };
+        const groups = [];
         for (let i = 0; i < n; i++) {
             let pl;
             try { pl = players[i]; } catch (_) { continue; }
+            const variants = [];
+            const hls = [];
+            const take = (url, type, label) => {
+                url = absolutize(url);
+                const kind = mediaKindOf(url, type);
+                if (kind === "hls") hls.push(url);
+                else if (kind === "progressive") variants.push({ url, height: heightFrom(label, url) });
+            };
             let srcs;
             try { srcs = pl.currentSources ? pl.currentSources() : null; } catch (_) { srcs = null; }
             let sn = 0;
@@ -575,15 +587,18 @@
                 take(typeof one === "string" ? one : null, null);
             }
             // Poster from the player config: Video.js exposes poster().
-            if (!img) {
-                let p;
-                try { p = pl.poster ? pl.poster() : null; } catch (_) { p = null; }
-                if (typeof p === "string" && /^https?:\/\//i.test(p)) img = p;
+            let img;
+            let p;
+            try { p = pl.poster ? pl.poster() : null; } catch (_) { p = null; }
+            p = absolutize(p);
+            if (typeof p === "string" && /^https?:\/\//i.test(p)) img = p;
+            if (variants.length || hls.length) {
+                groups.push({ variants, hls, delegates: [], img, title: null, durationSec: 0 });
             }
         }
-        if (!variants.length && !hls.length) return null;
-        log("player-probe: videojs @", location.host, "variants=", variants.length, "hls=", hls.length);
-        return { variants, hls, delegates: [], img, title: null, durationSec: 0 };
+        if (!groups.length) return null;
+        log("player-probe: videojs @", location.host, "groups=", groups.length);
+        return groups;
     }
 
     // Browser-shaped navigator hints for a native re-fetch that must look real to
