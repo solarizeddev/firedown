@@ -46,6 +46,7 @@
                     android:includeFontPadding="false"
                     android:inputType="text"
                     android:maxLines="1"
+                    android:paddingTop="4dp"
                     android:textColor="?attr/colorOnSurface"
                     android:textColorHint="?attr/colorOnSurfaceVariant"
                     android:textSize="18sp" />
