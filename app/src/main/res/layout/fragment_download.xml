@@ -30,7 +30,7 @@
             <LinearLayout
                 android:id="@+id/search_bar"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="?attr/actionBarSize"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
                 android:visibility="gone">
@@ -38,27 +38,26 @@
                 <EditText
                     android:id="@+id/search_edit"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
                     android:layout_weight="1"
                     android:background="@null"
                     android:gravity="center_vertical"
                     android:hint="@string/search"
                     android:imeOptions="actionSearch"
                     android:importantForAutofill="no"
-                    android:includeFontPadding="false"
                     android:inputType="text"
                     android:maxLines="1"
-                    android:paddingTop="4dp"
                     android:textColor="?attr/colorOnSurface"
                     android:textColorHint="?attr/colorOnSurfaceVariant"
                     android:textSize="18sp" />
 
                 <ImageButton
                     android:id="@+id/search_clear"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:contentDescription="@string/abc_searchview_description_clear"
+                    android:scaleType="center"
                     android:src="@drawable/ic_clear_24"
                     android:visibility="gone"
                     app:tint="?attr/colorOnSurfaceVariant" />
