@@ -489,11 +489,11 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
      * out beyond the flame.
      */
     private static Animator buildBrandGlowAnimator(View v) {
-        v.setScaleX(1.4f);
-        v.setScaleY(1.4f);
-        ObjectAnimator alpha = ObjectAnimator.ofFloat(v, View.ALPHA, 0.2f, 0.5f);
-        ObjectAnimator scaleX = ObjectAnimator.ofFloat(v, View.SCALE_X, 1.4f, 1.85f);
-        ObjectAnimator scaleY = ObjectAnimator.ofFloat(v, View.SCALE_Y, 1.4f, 1.85f);
+        v.setScaleX(1.3f);
+        v.setScaleY(1.3f);
+        ObjectAnimator alpha = ObjectAnimator.ofFloat(v, View.ALPHA, 0.15f, 0.42f);
+        ObjectAnimator scaleX = ObjectAnimator.ofFloat(v, View.SCALE_X, 1.3f, 1.6f);
+        ObjectAnimator scaleY = ObjectAnimator.ofFloat(v, View.SCALE_Y, 1.3f, 1.6f);
         ObjectAnimator[] parts = {alpha, scaleX, scaleY};
         for (ObjectAnimator part : parts) {
             part.setRepeatCount(ValueAnimator.INFINITE);
