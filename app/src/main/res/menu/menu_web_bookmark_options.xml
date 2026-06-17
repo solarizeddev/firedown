@@ -8,12 +8,13 @@
 -->
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
+    <!-- Plain icon: reveals the in-place search field hosted in the toolbar
+         (handled in WebBookmarkFragment), not a collapsible action view. -->
     <item
         android:id="@+id/action_search"
         android:icon="@drawable/ic_search_24"
         app:iconTint="?attr/colorOnSurface"
-        app:showAsAction="always|collapseActionView"
-        app:actionViewClass="androidx.appcompat.widget.SearchView"
+        app:showAsAction="always"
         android:title="@string/search"/>
     <item
         android:id="@+id/action_sort"

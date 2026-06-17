@@ -8,13 +8,15 @@ import android.content.res.Configuration;
 import android.net.Uri;
 
 import android.os.Bundle;
+import android.text.Editable;
 import android.text.TextUtils;
+import android.text.TextWatcher;
 import android.util.Log;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
 
 import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
@@ -22,7 +24,6 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.core.app.ActivityOptionsCompat;
@@ -96,9 +97,17 @@ public class BaseFocusFragment extends Fragment {
 
     protected TaskViewModel mTaskViewModel;
 
-    protected MenuItem mSearchItem;
+    /** In-place Material search bar: a field hosted INSIDE the toolbar
+     *  (R.id.search_bar / R.id.search_edit) that takes over the toolbar row
+     *  when opened — the Gmail/Contacts pattern. Shared by every list screen
+     *  (Downloads, Vault, History, Bookmarks); each routes typing to its own
+     *  ViewModel via {@link #onSearchQueryChanged}. Replaces the old
+     *  collapsible appcompat SearchView action view. */
+    protected View mSearchBar;
+    protected EditText mSearchEdit;
 
-    protected SearchView mSearchView;
+    /** Toolbar title captured when search opens, restored when it closes. */
+    private CharSequence mTitleBeforeSearch;
 
     protected boolean mActionModeEnabled;
 
@@ -275,10 +284,8 @@ public class BaseFocusFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        if(mSearchView != null){
-            mSearchView.setOnQueryTextListener(null);
-            mSearchView = null;
-        }
+        mSearchBar = null;
+        mSearchEdit = null;
         if(mRecyclerView != null){
             mRecyclerView = null;
         }
@@ -288,7 +295,6 @@ public class BaseFocusFragment extends Fragment {
         }
         mFab = null;
         mNavScrim = null;
-        mSearchItem = null;
         mToolbar = null;
     }
 
@@ -306,14 +312,100 @@ public class BaseFocusFragment extends Fragment {
         geckoMediaController.stopMediaForSession(geckoState.getEntityId());
     }
 
-    protected void closeSearchView(){
-        if (mSearchItem != null) {
-            mSearchItem.collapseActionView();
+    /**
+     * Wires the in-place Material search bar (R.id.search_bar, hosted inside
+     * the toolbar). Each concrete fragment calls this once its view tree
+     * exists. Typing routes to {@link #onSearchQueryChanged}; the trailing
+     * clear button only empties the field (it does not exit search — that's
+     * the toolbar up-arrow / system Back).
+     */
+    protected void setupSearchBar(View root) {
+        mSearchBar = root.findViewById(R.id.search_bar);
+        mSearchEdit = root.findViewById(R.id.search_edit);
+        if (mSearchBar == null || mSearchEdit == null) {
+            return;
         }
-        if(mSearchView != null){
-            mSearchView.setQuery("", false);
-            mSearchView.clearFocus();
-            mSearchView.setIconified(true);
+        final View clear = root.findViewById(R.id.search_clear);
+        mSearchEdit.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+                onSearchQueryChanged(s.toString());
+                if (clear != null) {
+                    clear.setVisibility(s.length() > 0 ? View.VISIBLE : View.GONE);
+                }
+            }
+            @Override public void afterTextChanged(Editable s) {}
+        });
+        // Results filter live as you type, so the IME action just dismisses the
+        // keyboard rather than running a separate query.
+        mSearchEdit.setOnEditorActionListener((v, actionId, event) -> {
+            hideKeyboard(mSearchEdit);
+            return true;
+        });
+        if (clear != null) {
+            clear.setOnClickListener(v -> mSearchEdit.setText(""));
+        }
+    }
+
+    /** Reveal the search field; it takes over the toolbar row. */
+    protected void openSearchBar() {
+        if (mSearchBar == null || mSearchEdit == null) {
+            return;
+        }
+        // Re-entrancy guard: tapping the search icon again must not re-snapshot
+        // the (now-hidden) title or re-run the open hook.
+        if (mSearchBar.getVisibility() != View.VISIBLE) {
+            onSearchBarOpening();
+            if (mToolbar != null) {
+                mTitleBeforeSearch = mToolbar.getTitle();
+                mToolbar.setTitle("");
+                mToolbar.invalidateMenu();
+            }
+            mSearchBar.setVisibility(View.VISIBLE);
+        }
+        mSearchEdit.requestFocus();
+        mSearchEdit.post(() -> showKeyboard(mSearchEdit));
+    }
+
+    /** Hide the search field, clear the query, restore the toolbar. */
+    protected void closeSearchBar() {
+        if (mSearchBar == null || mSearchEdit == null
+                || mSearchBar.getVisibility() != View.VISIBLE) {
+            return;
+        }
+        // Emptying the field drives onSearchQueryChanged("") so the list drops
+        // back to the unfiltered view.
+        mSearchEdit.setText("");
+        hideKeyboard(mSearchEdit);
+        mSearchBar.setVisibility(View.GONE);
+        if (mToolbar != null) {
+            mToolbar.setTitle(mTitleBeforeSearch);
+            mToolbar.invalidateMenu();
+        }
+        onSearchBarClosing();
+    }
+
+    /** True while the in-place search field is showing. */
+    protected boolean isSearchActive() {
+        return mSearchBar != null && mSearchBar.getVisibility() == View.VISIBLE;
+    }
+
+    /** Route the live query to the screen's ViewModel. No-op by default. */
+    protected void onSearchQueryChanged(String query) {}
+
+    /** Hook: search bar opening (e.g. hide a filter chip rail). */
+    protected void onSearchBarOpening() {}
+
+    /** Hook: search bar closing (e.g. restore a filter chip rail). */
+    protected void onSearchBarClosing() {}
+
+    private void showKeyboard(View view) {
+        if (mActivity == null) {
+            return;
+        }
+        InputMethodManager imm = (InputMethodManager) mActivity.getSystemService(Context.INPUT_METHOD_SERVICE);
+        if (imm != null) {
+            imm.showSoftInput(view, InputMethodManager.SHOW_IMPLICIT);
         }
     }
 

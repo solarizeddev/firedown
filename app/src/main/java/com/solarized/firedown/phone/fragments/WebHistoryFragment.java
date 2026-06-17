@@ -1,13 +1,11 @@
 package com.solarized.firedown.phone.fragments;
 
 import android.os.Bundle;
-import android.text.TextUtils;
 import android.util.Log;
 import android.view.*;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.*;
-import androidx.appcompat.widget.SearchView;
 import androidx.core.view.MenuProvider;
 import androidx.lifecycle.*;
 import androidx.navigation.NavOptions;
@@ -29,7 +27,7 @@ import com.solarized.firedown.utils.NavigationUtils;
 import dagger.hilt.android.AndroidEntryPoint;
 
 @AndroidEntryPoint
-public class WebHistoryFragment extends BaseFocusFragment implements SearchView.OnQueryTextListener, OnItemClickListener {
+public class WebHistoryFragment extends BaseFocusFragment implements OnItemClickListener {
 
     private static final String TAG = WebHistoryFragment.class.getSimpleName();
     private WebHistoryViewModel mWebHistoryViewModel;
@@ -83,8 +81,7 @@ public class WebHistoryFragment extends BaseFocusFragment implements SearchView.
         mAdapter.addLoadStateListener(loadStates -> {
             if (loadStates.getRefresh() instanceof LoadState.NotLoading) {
                 if (mAdapter.getItemCount() == 0) {
-                    if (mSearchView != null && !TextUtils.isEmpty(mSearchView.getQuery())) {
-                        Log.d(TAG, "SearchView Query: " + mSearchView.getQuery());
+                    if (isSearchActive() && mSearchEdit != null && mSearchEdit.getText().length() > 0) {
                         mLCEERecyclerView.setEmptyText(R.string.empty_list_query);
                     } else {
                         mLCEERecyclerView.setEmptyText(R.string.empty_list_history);
@@ -122,8 +119,8 @@ public class WebHistoryFragment extends BaseFocusFragment implements SearchView.
                 Log.d(TAG, "handleBackPressed");
                 if (mActionModeEnabled) {
                     stopActionMode();
-                } else if (mSearchItem != null && mSearchItem.isActionViewExpanded()) {
-                    closeSearchView();
+                } else if (isSearchActive()) {
+                    closeSearchBar();
                 } else {
                     setEnabled(false);
                     mActivity.getOnBackPressedDispatcher().onBackPressed();
@@ -148,10 +145,17 @@ public class WebHistoryFragment extends BaseFocusFragment implements SearchView.
         // fragment had no decoration and items ran edge-to-edge.
         mRecyclerView.addItemDecoration(new EqualSpacingItemDecoration(mActivity, R.dimen.list_spacing));
         mRecyclerView.setAdapter(mAdapter);
+        setupSearchBar(v);
 
         mWebHistoryViewModel.getWebHistory().observe(getViewLifecycleOwner(), data -> {
             mAdapter.submitData(getLifecycle(), data);
         });
+    }
+
+    /** Route the live search query to the history list. */
+    @Override
+    protected void onSearchQueryChanged(String query) {
+        mWebHistoryViewModel.search(query);
     }
 
     private void setupToolbar() {
@@ -159,18 +163,19 @@ public class WebHistoryFragment extends BaseFocusFragment implements SearchView.
             @Override
             public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater menuInflater) {
                 menuInflater.inflate(mActionModeEnabled ? R.menu.menu_action : R.menu.menu_web_options, menu);
-                if (!mActionModeEnabled) {
-                    mSearchItem = menu.findItem(R.id.action_search);
-                    mSearchView = (SearchView) mSearchItem.getActionView();
-                    if (mSearchView != null) {
-                        mSearchView.setOnQueryTextListener(WebHistoryFragment.this);
-                    }
+                if (!mActionModeEnabled && isSearchActive()) {
+                    // Search field owns the toolbar row — hide every icon.
+                    for (int i = 0; i < menu.size(); i++) menu.getItem(i).setVisible(false);
                 }
             }
 
             @Override
             public boolean onMenuItemSelected(@NonNull MenuItem item) {
-                if (item.getItemId() == R.id.action_delete) {
+                int id = item.getItemId();
+                if (id == R.id.action_search) {
+                    openSearchBar();
+                    return true;
+                } else if (id == R.id.action_delete) {
                     handleDeletion();
                     return true;
                 }
@@ -181,6 +186,8 @@ public class WebHistoryFragment extends BaseFocusFragment implements SearchView.
         mToolbar.setNavigationOnClickListener(v1 -> {
             if (mActionModeEnabled) {
                 stopActionMode();
+            } else if (isSearchActive()) {
+                closeSearchBar();
             } else {
                 mNavController.popBackStack();
             }
@@ -199,18 +206,6 @@ public class WebHistoryFragment extends BaseFocusFragment implements SearchView.
         } else {
             NavigationUtils.navigateSafe(mNavController, R.id.dialog_delete_history);
         }
-    }
-
-    @Override
-    public boolean onQueryTextChange(String newText) {
-        mWebHistoryViewModel.search(newText);
-        return true;
-    }
-
-    @Override
-    public boolean onQueryTextSubmit(String query) {
-        mWebHistoryViewModel.search(query);
-        return true;
     }
 
     public void stopActionMode() {

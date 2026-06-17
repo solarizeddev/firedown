@@ -12,6 +12,9 @@
         app:liftOnScroll="true"
         app:liftOnScrollTargetViewId="@+id/recycler_view">
 
+        <!-- The toolbar hosts the in-place search field as a child: tapping
+             the search icon hides the title + menu and reveals search_bar,
+             which fills the toolbar row (the Gmail/Contacts pattern). -->
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
@@ -20,7 +23,45 @@
             app:navigationIcon="?attr/homeAsUpIndicator"
             app:navigationIconTint="?attr/colorOnSurface"
             app:popupTheme="@style/Theme.FireDown.Popup"
-            app:title="@string/navigation_web_history" />
+            app:title="@string/navigation_web_history">
+
+            <LinearLayout
+                android:id="@+id/search_bar"
+                android:layout_width="match_parent"
+                android:layout_height="?attr/actionBarSize"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:visibility="gone">
+
+                <EditText
+                    android:id="@+id/search_edit"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:background="@null"
+                    android:gravity="center_vertical"
+                    android:hint="@string/search"
+                    android:imeOptions="actionSearch"
+                    android:importantForAutofill="no"
+                    android:inputType="text"
+                    android:maxLines="1"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textColorHint="?attr/colorOnSurfaceVariant"
+                    android:textSize="18sp" />
+
+                <ImageButton
+                    android:id="@+id/search_clear"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/abc_searchview_description_clear"
+                    android:scaleType="center"
+                    android:src="@drawable/ic_clear_24"
+                    android:visibility="gone"
+                    app:tint="?attr/colorOnSurfaceVariant" />
+            </LinearLayout>
+
+        </com.google.android.material.appbar.MaterialToolbar>
 
     </com.google.android.material.appbar.AppBarLayout>
 

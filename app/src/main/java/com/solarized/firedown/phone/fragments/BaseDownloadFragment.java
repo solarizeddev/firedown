@@ -1,23 +1,18 @@
 package com.solarized.firedown.phone.fragments;
 
 
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
-import android.view.inputmethod.InputMethodManager;
-import android.widget.EditText;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
@@ -73,15 +68,6 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
     protected SharedPreferences mSharedPreferences;
 
     protected DownloadsViewModel mDownloadsViewModel;
-
-    /** In-place Material search bar (R.id.search_bar in the Downloads/Vault
-     *  app bar) and its input. Replaces the old collapsible appcompat
-     *  SearchView action view — a bare underline that read as "dull / barely
-     *  visible" when expanded. Tapping the toolbar search icon reveals it in
-     *  the second app-bar row; the list filters live below (no overlay) and
-     *  the type-filter chips hide while it's open (see DownloadFragment). */
-    protected View mSearchBar;
-    protected EditText mSearchEdit;
 
     protected TaskViewModel mTaskViewModel;
 
@@ -176,106 +162,10 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
         else if (mNotificationAction == ServiceActions.DECRYPTION.getValue()) handleItemAction(IntentActions.CANCEL_DECRYPTION, null);
     }
 
-    /**
-     * Wires the in-place Material search bar (R.id.search_bar). Each concrete
-     * fragment calls this from its {@code initViews} once the view tree
-     * exists. Typing drives the same debounced {@link DownloadsViewModel#search};
-     * the trailing clear button only empties the field (it does not exit
-     * search — that's the toolbar up-arrow / system Back).
-     */
-    protected void setupSearchBar(View root) {
-        mSearchBar = root.findViewById(R.id.search_bar);
-        mSearchEdit = root.findViewById(R.id.search_edit);
-        if (mSearchBar == null || mSearchEdit == null) {
-            return;
-        }
-        final View clear = root.findViewById(R.id.search_clear);
-        mSearchEdit.addTextChangedListener(new TextWatcher() {
-            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
-                mDownloadsViewModel.search(s.toString());
-                if (clear != null) {
-                    clear.setVisibility(s.length() > 0 ? View.VISIBLE : View.GONE);
-                }
-            }
-            @Override public void afterTextChanged(Editable s) {}
-        });
-        // Results filter live as you type, so the IME action just dismisses the
-        // keyboard rather than running a separate query.
-        mSearchEdit.setOnEditorActionListener((v, actionId, event) -> {
-            hideKeyboard(mSearchEdit);
-            return true;
-        });
-        if (clear != null) {
-            clear.setOnClickListener(v -> mSearchEdit.setText(""));
-        }
-    }
-
-    /** Reveal the search bar and focus it. */
-    protected void openSearchBar() {
-        if (mSearchBar == null || mSearchEdit == null) {
-            return;
-        }
-        // Re-entrancy guard: tapping the (still-visible) toolbar search icon
-        // again must NOT re-run onSearchBarOpening — that would re-snapshot the
-        // now-cleared chip and lose the one to restore on close. Just re-focus.
-        if (mSearchBar.getVisibility() != View.VISIBLE) {
-            onSearchBarOpening();
-            // The field takes over the toolbar row: drop the title and (via
-            // onCreateMenu reading isSearchActive()) hide every menu icon, so
-            // it reads like Gmail/Contacts search — one field, no magnifier.
-            if (mToolbar != null) {
-                mToolbar.setTitle("");
-            }
-            mSearchBar.setVisibility(View.VISIBLE);
-            if (mToolbar != null) {
-                mToolbar.invalidateMenu();
-            }
-        }
-        mSearchEdit.requestFocus();
-        mSearchEdit.post(() -> showKeyboard(mSearchEdit));
-    }
-
-    /** Hide the search bar and clear the query (back to the full list). */
-    protected void closeSearchBar() {
-        if (mSearchBar == null || mSearchEdit == null
-                || mSearchBar.getVisibility() != View.VISIBLE) {
-            return;
-        }
-        // Emptying the field drives search("") through the watcher, so the list
-        // drops back to the unfiltered view.
-        mSearchEdit.setText("");
-        hideKeyboard(mSearchEdit);
-        mSearchBar.setVisibility(View.GONE);
-        // Restore the title + menu now that the field is gone.
-        if (mToolbar != null) {
-            mToolbar.setTitle(mDestinationTitle);
-            mToolbar.invalidateMenu();
-        }
-        onSearchBarClosing();
-    }
-
-    /**
-     * Hook: the search bar is opening. {@code DownloadFragment} hides the
-     * filter-chip rail and drops the active chip so search runs GLOBALLY
-     * across all types — we never apply a filter the user can't see.
-     */
-    protected void onSearchBarOpening() {}
-
-    /**
-     * Hook: the search bar is closing. {@code DownloadFragment} restores the
-     * chip rail and the previously-active chip.
-     */
-    protected void onSearchBarClosing() {}
-
-    private void showKeyboard(View view) {
-        if (mActivity == null) {
-            return;
-        }
-        InputMethodManager imm = (InputMethodManager) mActivity.getSystemService(Context.INPUT_METHOD_SERVICE);
-        if (imm != null) {
-            imm.showSoftInput(view, InputMethodManager.SHOW_IMPLICIT);
-        }
+    /** Route the live search query to the downloads/vault list. */
+    @Override
+    protected void onSearchQueryChanged(String query) {
+        mDownloadsViewModel.search(query);
     }
 
     protected void showActionSnackbar(int res, int count, boolean incognito) {
@@ -867,8 +757,6 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
         // pins the dead view subtree until the fragment instance dies
         // (or until the next configureRecyclerView re-installs).
         mPreloaderInstalledOn = null;
-        mSearchBar = null;
-        mSearchEdit = null;
         super.onDestroyView();
     }
 
@@ -920,10 +808,6 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
         mToolbar.setTitle(mDestinationTitle);
     }
 
-
-    protected boolean isSearchActive() {
-        return mSearchBar != null && mSearchBar.getVisibility() == View.VISIBLE;
-    }
 
     protected void startActionMode(int position) {
         mActionModeEnabled = true;

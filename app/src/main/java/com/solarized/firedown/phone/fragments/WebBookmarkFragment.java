@@ -1,7 +1,6 @@
 package com.solarized.firedown.phone.fragments;
 
 import android.os.Bundle;
-import android.text.TextUtils;
 import android.util.Log;
 import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
@@ -14,7 +13,6 @@ import android.view.ViewTreeObserver;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
-import androidx.appcompat.widget.SearchView;
 import androidx.core.view.MenuProvider;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.ViewModelProvider;
@@ -38,7 +36,7 @@ import com.solarized.firedown.utils.NavigationUtils;
 import java.util.HashSet;
 
 
-public class WebBookmarkFragment extends BaseFocusFragment implements OnItemClickListener, SearchView.OnQueryTextListener {
+public class WebBookmarkFragment extends BaseFocusFragment implements OnItemClickListener {
 
     private static final String TAG = WebBookmarkFragment.class.getName();
     private WebBookmarkAdapter mAdapter;
@@ -104,7 +102,7 @@ public class WebBookmarkFragment extends BaseFocusFragment implements OnItemClic
         mAdapter.addLoadStateListener(loadStates -> {
             if (loadStates.getRefresh() instanceof LoadState.NotLoading) {
                 if (mAdapter.getItemCount() == 0) {
-                    if (mSearchView != null && !TextUtils.isEmpty(mSearchView.getQuery())) {
+                    if (isSearchActive() && mSearchEdit != null && mSearchEdit.getText().length() > 0) {
                         mLCEERecyclerView.setEmptyText(R.string.empty_list_query);
                     } else {
                         mLCEERecyclerView.setEmptyText(R.string.empty_list_bookmarks);
@@ -157,9 +155,12 @@ public class WebBookmarkFragment extends BaseFocusFragment implements OnItemClic
     public void setupToolbar(View v){
         mToolbar = v.findViewById(R.id.toolbar);
         mToolbar.setContentInsetsAbsolute(getResources().getDimensionPixelSize(R.dimen.address_bar_inset),0);
+        setupSearchBar(v);
         mToolbar.setNavigationOnClickListener(v1 -> {
             if(mActionModeEnabled){
                 stopActionMode();
+            } else if (isSearchActive()) {
+                closeSearchBar();
             }else{
                 mNavController.popBackStack();
             }
@@ -174,10 +175,9 @@ public class WebBookmarkFragment extends BaseFocusFragment implements OnItemClic
                     // NOT menu_web_options — that one is shared with
                     // WebHistoryFragment, which has no sort toggle.
                     menuInflater.inflate(R.menu.menu_web_bookmark_options, menu);
-                    mSearchItem = menu.findItem(R.id.action_search);
-                    mSearchView = (SearchView) mSearchItem.getActionView();
-                    if (mSearchView != null) {
-                        mSearchView.setOnQueryTextListener(WebBookmarkFragment.this);
+                    if (isSearchActive()) {
+                        // Search field owns the toolbar row — hide every icon.
+                        for (int i = 0; i < menu.size(); i++) menu.getItem(i).setVisible(false);
                     }
                 }
             }
@@ -185,7 +185,10 @@ public class WebBookmarkFragment extends BaseFocusFragment implements OnItemClic
             @Override
             public boolean onMenuItemSelected(@NonNull MenuItem menuItem) {
                 int id = menuItem.getItemId();
-                if (id == R.id.action_sort) {
+                if (id == R.id.action_search) {
+                    openSearchBar();
+                    return true;
+                } else if (id == R.id.action_sort) {
                     // Recent ↔ A–Z toggle for the unfiltered list
                     // (search results stay recency-ordered; flipping
                     // mid-search just persists the mode and applies
@@ -223,8 +226,8 @@ public class WebBookmarkFragment extends BaseFocusFragment implements OnItemClic
                 Log.d(TAG, "handleBackPressed");
                 if(mActionModeEnabled){
                     stopActionMode();
-                } else if (mSearchItem != null && mSearchItem.isActionViewExpanded()) {
-                    closeSearchView();
+                } else if (isSearchActive()) {
+                    closeSearchBar();
                 }else {
                     setEnabled(false); //this is important line
                     mActivity.getOnBackPressedDispatcher().onBackPressed();
@@ -311,16 +314,10 @@ public class WebBookmarkFragment extends BaseFocusFragment implements OnItemClic
     }
 
 
+    /** Route the live search query to the bookmark list. */
     @Override
-    public boolean onQueryTextSubmit(String query) {
+    protected void onSearchQueryChanged(String query) {
         mWebBookmarkViewModel.search(query);
-        return false;
-    }
-
-    @Override
-    public boolean onQueryTextChange(String newText) {
-        mWebBookmarkViewModel.search(newText);
-        return false;
     }
 
 
