@@ -94,6 +94,11 @@ public class WebBookmarkFragment extends BaseFocusFragment implements OnItemClic
         // even more visually broken.
         applyWindowIncognitoTheme(mIncognito);
 
+        // Drop any opaque status-bar tint inherited from a chrome-owning
+        // screen so the liftOnScroll AppBarLayout paints/tracks the status
+        // strip itself on scroll (see clearStatusBarForLift).
+        clearStatusBarForLift();
+
         postponeEnterTransition();
 
         final ViewGroup parentView = (ViewGroup) view.getParent();

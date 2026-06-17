@@ -74,6 +74,11 @@ public class WebHistoryFragment extends BaseFocusFragment implements OnItemClick
         // in. Mirrors WebBookmarkFragment — see the rationale there.
         applyWindowIncognitoTheme(mIncognito);
 
+        // Drop any opaque status-bar tint inherited from a chrome-owning
+        // screen so the liftOnScroll AppBarLayout paints/tracks the status
+        // strip itself on scroll (see clearStatusBarForLift).
+        clearStatusBarForLift();
+
         postponeEnterTransition();
 
         final ViewGroup parentView = (ViewGroup) view.getParent();

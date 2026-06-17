@@ -5,6 +5,7 @@ import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
+import android.graphics.Color;
 import android.net.Uri;
 
 import android.os.Bundle;
@@ -538,6 +539,36 @@ public class BaseFocusFragment extends Fragment {
                 WindowCompat.getInsetsController(window, window.getDecorView());
         insetsController.setAppearanceLightStatusBars(lightBars);
         insetsController.setAppearanceLightNavigationBars(lightBars);
+    }
+
+    /**
+     * Clears the window's status-bar color so the edge-to-edge AppBarLayout
+     * paints (and tracks) the strip itself.
+     *
+     * <p>Root cause this fixes: the History/Bookmark list screens never set
+     * their own status-bar color — they only call {@link
+     * #applyWindowIncognitoTheme(boolean)}, which paints the decor background
+     * and light-bar appearance but leaves {@code window.setStatusBarColor}
+     * untouched. So they INHERIT whatever opaque chrome tone the previously
+     * shown chrome-owning screen (Home/Browser via {@link
+     * #paintSystemBars(int, int)}) left on the window. On Android ≤14 that
+     * persisted opaque strip sits ON TOP of the app-drawn chrome, so when the
+     * {@code liftOnScroll} AppBarLayout elevates to its tonal surface on
+     * scroll, the status strip stays the stale inherited color instead of
+     * tracking the lifted toolbar. (Android 15+ ignores
+     * {@code setStatusBarColor} entirely and already shows what's drawn
+     * beneath, so it was never affected.) Downloads/Vault don't hit this
+     * because their activity leaves the status bar transparent.</p>
+     *
+     * <p>Making the strip transparent lets the AppBarLayout — which draws
+     * under the status bar in edge-to-edge — own that region, so it matches
+     * the toolbar at rest AND while lifted. The navigation bar is left
+     * untouched (only the status strip overlaps the AppBarLayout).</p>
+     */
+    @SuppressWarnings("deprecation")
+    protected void clearStatusBarForLift() {
+        if (mActivity == null) return;
+        mActivity.getWindow().setStatusBarColor(Color.TRANSPARENT);
     }
 
 
