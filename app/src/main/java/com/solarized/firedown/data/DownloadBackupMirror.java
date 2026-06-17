@@ -354,7 +354,7 @@ public final class DownloadBackupMirror {
                     }
                     if (decryptPublicMirror(context, in, plain)) {
                         anyDecrypted = true;
-                        totalRestored += importMirrorDatabase(database, plain);
+                        totalRestored += importMirrorDatabase(context, database, plain);
                     }
                 } catch (Exception e) {
                     if (BuildConfig.DEBUG) {
@@ -502,7 +502,7 @@ public final class DownloadBackupMirror {
                 }
                 return;
             }
-            restored = importMirrorDatabase(database, mirror);
+            restored = importMirrorDatabase(context, database, mirror);
             Log.i(TAG, "restoreIfPending: restored " + restored + " download entries from backup mirror");
         }
 
@@ -582,7 +582,9 @@ public final class DownloadBackupMirror {
      * {@code file_safe} is forced to 0 so no mirror, however obtained, can
      * inject entries into the vault list.
      */
-    public static int importMirrorDatabase(@NonNull DownloadDatabase database, @NonNull File plainMirror) {
+    public static int importMirrorDatabase(@NonNull Context context,
+                                           @NonNull DownloadDatabase database,
+                                           @NonNull File plainMirror) {
         SupportSQLiteDatabase db = database.getOpenHelper().getWritableDatabase();
 
         Set<String> liveColumns = new HashSet<>();
@@ -648,6 +650,19 @@ public final class DownloadBackupMirror {
                     }
                     String rowPath = values.getAsString("file_path");
                     if (TextUtils.isEmpty(rowPath) || existingPaths.contains(rowPath)) {
+                        continue;
+                    }
+                    // Don't resurrect a row whose file the user already DELETED.
+                    // Restore reads (and sums) EVERY .fdbk in the folder, incl.
+                    // stale ones written before the delete, so without this an
+                    // old mirror keeps bringing dead entries back. Only skips
+                    // when the SAF grant proves the file is gone (restoreFromTree
+                    // holds it); never on the grantless App.onCreate path, where
+                    // a foreign file's absence isn't trustworthy.
+                    if (RestoredFileAccess.isRestoredFileMissing(context, rowPath)) {
+                        if (BuildConfig.DEBUG) {
+                            Log.d(TAG, "importMirrorDatabase: skip deleted-file row " + rowPath);
+                        }
                         continue;
                     }
                     existingPaths.add(rowPath);

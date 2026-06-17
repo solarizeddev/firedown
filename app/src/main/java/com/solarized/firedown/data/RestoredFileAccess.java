@@ -1,6 +1,7 @@
 package com.solarized.firedown.data;
 
 import android.content.Context;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
@@ -185,5 +186,41 @@ public final class RestoredFileAccess {
             return false;
         }
         return absPath.startsWith(externalRoot.getAbsolutePath() + "/");
+    }
+
+    /**
+     * True ONLY when a download's file is VERIFIABLY gone: the path sits under
+     * the persisted SAF restore grant but the document doesn't exist (the user
+     * deleted it). Returns false when the file is present, when there's no
+     * grant, or when the path isn't under the grant tree — i.e. whenever we
+     * CANNOT prove the file is missing. A foreign file's absence is otherwise
+     * untrustworthy (the File API can't see it without the grant — the same
+     * caveat the MediaListenerWorker missing-file sweep is built around), so
+     * "can't tell" must mean "keep it", never "drop it". Used by the mirror
+     * import to avoid resurrecting a row whose file was already deleted.
+     */
+    public static boolean isRestoredFileMissing(@NonNull Context context, @Nullable String absPath) {
+        if (TextUtils.isEmpty(absPath)) {
+            return false;
+        }
+        if (new File(absPath).exists()) {
+            return false; // owned and present
+        }
+        Uri saf = safDocumentUri(context, absPath);
+        if (saf == null) {
+            return false; // no grant / outside the tree → can't verify
+        }
+        try (Cursor c = context.getContentResolver().query(
+                saf, new String[]{DocumentsContract.Document.COLUMN_DOCUMENT_ID},
+                null, null, null)) {
+            // A returned row = the document exists; no row = it was deleted.
+            return c == null || !c.moveToFirst();
+        } catch (Exception e) {
+            // Unsure (transient/SAF error) — be conservative and keep the row.
+            if (BuildConfig.DEBUG) {
+                Log.d(TAG, "isRestoredFileMissing: check failed for " + absPath, e);
+            }
+            return false;
+        }
     }
 }
