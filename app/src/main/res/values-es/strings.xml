@@ -151,6 +151,8 @@
     <string name="restore_downloads_done">Descargas restauradas: %1$d</string>
     <string name="restore_downloads_none">No se encontró ninguna copia de seguridad en esta carpeta</string>
     <string name="restore_downloads_wrong_device">Esta copia de seguridad pertenece a otro dispositivo</string>
+    <string name="delete_needs_grant">Se necesita acceso al almacenamiento para eliminar los archivos restaurados</string>
+    <string name="delete_grant_action">Conceder acceso</string>
     <string name="empty_list">Tus descargas aparecerán aquí.</string>
     <string name="empty_list_bookmarks">No hay nada marcado todavía.\n\nAbre cualquier página y elige “Marcar página” en el menú ⋮ para guardarla aquí.</string>
     <string name="empty_list_browser_history">El historial de tu navegador está vacío.</string>

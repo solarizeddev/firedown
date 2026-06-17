@@ -564,8 +564,12 @@ public class SettingsFragment extends BasePreferenceFragment
             return; // user backed out of the picker
         }
         try {
+            // READ+WRITE: read to view/play restored files, WRITE so they can
+            // be deleted later (a foreign-owned public file isn't removable via
+            // File.delete() on Android 11+, only through this SAF grant).
             requireContext().getContentResolver().takePersistableUriPermission(
-                    treeUri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    treeUri, Intent.FLAG_GRANT_READ_URI_PERMISSION
+                            | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
             DownloadBackupMirror.rememberRestoreTree(requireContext(), treeUri);
         } catch (SecurityException e) {
             // Non-persistable grant — the one-shot read below still works.

@@ -75,6 +75,8 @@
     <string name="restore_downloads_done">Transferências restauradas: %1$d</string>
     <string name="restore_downloads_none">Nenhuma cópia de segurança encontrada nesta pasta</string>
     <string name="restore_downloads_wrong_device">Esta cópia de segurança pertence a outro dispositivo</string>
+    <string name="delete_needs_grant">É necessário acesso ao armazenamento para excluir os arquivos restaurados</string>
+    <string name="delete_grant_action">Conceder acesso</string>
     <string name="empty_list">Seus downloads aparecerão aqui.</string>
     <string name="empty_list_bookmarks">Nada marcado ainda.\n\nAbra qualquer página e escolha “Adicionar aos favoritos” no menu ⋮ para salvá-la aqui.</string>
     <string name="empty_list_browser_history">O histórico do seu navegador está vazio.</string>

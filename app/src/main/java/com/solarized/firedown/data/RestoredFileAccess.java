@@ -167,4 +167,23 @@ public final class RestoredFileAccess {
             return null;
         }
     }
+
+    /**
+     * True if {@code absPath} lives under primary shared storage (e.g.
+     * {@code /storage/emulated/0/...}). A file there that this install can't
+     * delete with {@code File.delete()} is a foreign-owned restored file
+     * (Android 11+ scoped storage) — removable only through a SAF tree WRITE
+     * grant. App-private vault paths ({@code filesDir}) are never under this
+     * root, so they never take the grant path.
+     */
+    public static boolean isSharedStoragePath(@Nullable String absPath) {
+        if (TextUtils.isEmpty(absPath)) {
+            return false;
+        }
+        File externalRoot = Environment.getExternalStorageDirectory();
+        if (externalRoot == null) {
+            return false;
+        }
+        return absPath.startsWith(externalRoot.getAbsolutePath() + "/");
+    }
 }

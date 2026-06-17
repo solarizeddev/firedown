@@ -151,6 +151,8 @@
     <string name="restore_downloads_done">已恢复的下载：%1$d</string>
     <string name="restore_downloads_none">在此文件夹中未找到备份</string>
     <string name="restore_downloads_wrong_device">此备份属于另一台设备</string>
+    <string name="delete_needs_grant">删除已恢复的文件需要存储访问权限</string>
+    <string name="delete_grant_action">授予访问权限</string>
     <string name="empty_list">您的下载将出现在这里。</string>
     <string name="empty_list_bookmarks">尚未添加任何书签。\n\n打开任意页面，在 ⋮ 菜单中选择“为页面添加书签”即可保存到这里。</string>
     <string name="empty_list_browser_history">您的浏览器历史记录为空。</string>

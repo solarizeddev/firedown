@@ -1,5 +1,8 @@
 package com.solarized.firedown.data.repository;
 
+import android.content.Context;
+import android.net.Uri;
+import android.provider.DocumentsContract;
 import android.util.Log;
 
 import androidx.lifecycle.LiveData;
@@ -7,6 +10,7 @@ import androidx.paging.PagingSource;
 
 import com.solarized.firedown.BuildConfig;
 import com.solarized.firedown.data.DownloadDatabase;
+import com.solarized.firedown.data.RestoredFileAccess;
 import com.solarized.firedown.data.di.Qualifiers;
 import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.ffmpegutils.FFmpegMetaData;
@@ -16,27 +20,34 @@ import com.solarized.firedown.utils.Utils;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Consumer;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+
+import dagger.hilt.android.qualifiers.ApplicationContext;
 
 @Singleton
 public class DownloadDataRepository {
 
     private static final String TAG = "DownloadRepository";
 
+    private final Context mContext;
     private final DownloadDatabase mDatabase;
     private final Executor mDiskExecutor;
     private final Executor mHeavyExecutor;
 
     @Inject
-    public DownloadDataRepository(DownloadDatabase database,
+    public DownloadDataRepository(@ApplicationContext Context context,
+                                  DownloadDatabase database,
                                   @Qualifiers.DiskIO Executor diskExecutor,
                                   @Qualifiers.HeavyIO Executor heavyExecutor) {
+        this.mContext = context;
         this.mDatabase = database;
         this.mDiskExecutor = diskExecutor;
         this.mHeavyExecutor = heavyExecutor;
@@ -211,21 +222,32 @@ public class DownloadDataRepository {
     }
 
     /**
-     * Batch-deletes a list of downloads, running onComplete once after ALL are processed.
+     * Batch-deletes a list of downloads. The FILE is removed first, per entity:
+     * an entity whose file can't be deleted because it's a foreign-owned
+     * restored file needing a SAF WRITE grant we don't hold KEEPS its row (so
+     * the entry stays visible) and is collected; everything else has its row
+     * removed. {@code onComplete} receives the kept (needs-grant) entities so
+     * the caller can prompt for the grant and retry — see
+     * {@link com.solarized.firedown.data.TaskEvent.NeedsDeleteGrant}.
      */
-    public void deleteDownloads(List<DownloadEntity> downloads, Runnable onComplete) {
+    public void deleteDownloads(List<DownloadEntity> downloads,
+                                Consumer<ArrayList<DownloadEntity>> onComplete) {
         if (downloads == null || downloads.isEmpty()) {
-            if (onComplete != null) onComplete.run();
+            if (onComplete != null) onComplete.accept(new ArrayList<>());
             return;
         }
         mDiskExecutor.execute(() -> {
-            // Sum the rows actually removed: @Delete matches by PRIMARY KEY
-            // (uid), while the file cleanup below matches by PATH — so
-            // "files vanished but list entries stayed" means this count was
-            // 0 (stale/mismatched uid), not a UI-refresh failure. Keep the
-            // diagnostic; it splits the two failure modes in one logcat line.
+            ArrayList<DownloadEntity> needGrant = new ArrayList<>();
+            // Row removal matches by PRIMARY KEY (uid); the file cleanup
+            // matches by PATH. Delete the file FIRST so a foreign restored
+            // file we can't remove keeps its row (no orphaned-file-with-no-row
+            // state) and the UI can prompt to fix it.
             int removed = 0;
             for (DownloadEntity entity : downloads) {
+                if (fileNeedsDeleteGrant(entity)) {
+                    needGrant.add(entity);
+                    continue;
+                }
                 Integer result = mDatabase.downloadDao().deleteSyncEntity(entity);
                 if (result != null) {
                     removed += result;
@@ -233,40 +255,80 @@ public class DownloadDataRepository {
             }
             if (BuildConfig.DEBUG) {
                 Log.d(TAG, "deleteDownloads: requested=" + downloads.size()
-                        + " rowsRemoved=" + removed);
+                        + " rowsRemoved=" + removed + " needGrant=" + needGrant.size());
             }
-            deleteFilesInternal(downloads);
-            if (onComplete != null) onComplete.run();
+            if (onComplete != null) onComplete.accept(needGrant);
         });
     }
 
 
 
     /**
-     * Internal helper to clean up physical files after DB records are removed.
+     * Internal helper to clean up physical files after DB records are removed
+     * (the single-delete paths). Best-effort: tries the owned file, then the
+     * SAF grant for a foreign restored file; an undeletable foreign file is
+     * just left (these callers have no UI to prompt for a grant — only the
+     * batch {@link #deleteDownloads} path surfaces that).
      */
     private void deleteFilesInternal(List<DownloadEntity> entities) {
         if (entities == null || entities.isEmpty()) return;
-
         for (DownloadEntity entity : entities) {
-            String path = entity.getFilePath();
-            if (path == null) continue;
+            fileNeedsDeleteGrant(entity);
+        }
+    }
 
-            File file = new File(path);
-            if (!file.exists()) continue;
+    /**
+     * Remove the entity's file. Returns {@code true} iff the file still exists
+     * because deleting it needs a folder (SAF) WRITE grant we don't hold — a
+     * restored, foreign-owned public file (Android 11+ scoped storage). Every
+     * other outcome (deleted, absent, a directory, or an unrecoverable failure
+     * on an owned path) returns {@code false}.
+     */
+    private boolean fileNeedsDeleteGrant(DownloadEntity entity) {
+        String path = entity.getFilePath();
+        if (path == null) return false;
 
-            // Mutually exclusive — directory deletion is recursive and
-            // already removes the entry, so falling through to file.delete()
-            // afterwards would always return false and log a misleading
-            // "Failed to delete file" warning for every directory we cleaned.
-            if (file.isDirectory()) {
-                Utils.deleteDirectory(file);
-                Log.d(TAG, "Deleted directory: " + path);
-            } else if (file.delete()) {
-                Log.d(TAG, "Deleted file: " + path);
-            } else {
-                Log.w(TAG, "Failed to delete file: " + path);
+        File file = new File(path);
+        if (!file.exists()) return false;
+
+        // Mutually exclusive — directory deletion is recursive and already
+        // removes the entry, so falling through to file.delete() afterwards
+        // would always return false and log a misleading warning.
+        if (file.isDirectory()) {
+            Utils.deleteDirectory(file);
+            Log.d(TAG, "Deleted directory: " + path);
+            return false;
+        }
+        if (file.delete()) {
+            Log.d(TAG, "Deleted file: " + path);
+            return false;
+        }
+        // File.delete() failed. A restored entry points at a public file this
+        // install no longer OWNS; delete it through the persisted SAF tree
+        // grant (the same grant RestoredFileAccess reads foreign files through).
+        Uri saf = RestoredFileAccess.safDocumentUri(mContext, path);
+        if (saf != null) {
+            try {
+                if (DocumentsContract.deleteDocument(mContext.getContentResolver(), saf)) {
+                    Log.d(TAG, "Deleted file via SAF: " + path);
+                    return false;
+                }
+            } catch (Exception e) {
+                // SecurityException = the persisted grant is read-only (taken
+                // before write was requested); fall through to needs-grant.
+                if (BuildConfig.DEBUG) {
+                    Log.d(TAG, "SAF delete failed: " + path, e);
+                }
             }
         }
+        // Still here: the file exists and we couldn't remove it. A foreign file
+        // in shared storage is fixable with a folder WRITE grant — signal the
+        // UI to prompt. An owned-path failure can't be helped by a grant.
+        if (RestoredFileAccess.isSharedStoragePath(path)) {
+            Log.w(TAG, "File needs SAF write grant to delete: " + path);
+            return true;
+        }
+        Log.w(TAG, "Failed to delete file: " + path);
+        return false;
     }
 }

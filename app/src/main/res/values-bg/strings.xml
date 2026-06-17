@@ -88,6 +88,8 @@
     <string name="restore_downloads_done">Възстановени изтегляния: %1$d</string>
     <string name="restore_downloads_none">В тази папка не е намерено резервно копие</string>
     <string name="restore_downloads_wrong_device">Това резервно копие е от друго устройство</string>
+    <string name="delete_needs_grant">Необходим е достъп до хранилището за изтриване на възстановените файлове</string>
+    <string name="delete_grant_action">Разрешаване на достъп</string>
     <string name="empty_list">Вашите изтеглени файлове ще се появят тук.</string>
     <string name="empty_list_bookmarks">Още няма отметки.\n\nОтворете която и да е страница и изберете „Отмятане на страницата“ от менюто ⋮, за да я запазите тук.</string>
     <string name="empty_list_browser_history">Историята на браузъра ви е празна.</string>

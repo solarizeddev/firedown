@@ -1,6 +1,9 @@
 package com.solarized.firedown.data;
 
+import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.manager.ServiceActions;
+
+import java.util.ArrayList;
 
 /**
  * Type-safe event hierarchy replacing the raw {@link android.os.Message} event bus.
@@ -86,6 +89,26 @@ public abstract class TaskEvent {
     /** The user cancelled an ongoing operation. */
     public static final class Cancelled extends TaskEvent {
         public Cancelled() {}
+    }
+
+    /**
+     * Some restored entries couldn't have their FILES deleted because removing
+     * them needs a folder (SAF) WRITE grant this install doesn't hold — a
+     * foreign-owned public file (Android 11+ scoped storage), where
+     * {@code File.delete()} silently fails. Their DB rows are kept so the
+     * entries stay visible; the UI prompts for the grant and retries the
+     * delete on these {@code entities}.
+     */
+    public static final class NeedsDeleteGrant extends TaskEvent {
+        private final ArrayList<DownloadEntity> entities;
+
+        public NeedsDeleteGrant(ArrayList<DownloadEntity> entities) {
+            this.entities = entities;
+        }
+
+        public ArrayList<DownloadEntity> getEntities() {
+            return entities;
+        }
     }
 
 }

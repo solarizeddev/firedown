@@ -90,6 +90,8 @@
     <string name="restore_downloads_done">Obnovená stahování: %1$d</string>
     <string name="restore_downloads_none">V této složce nebyla nalezena žádná záloha</string>
     <string name="restore_downloads_wrong_device">Tato záloha patří jinému zařízení</string>
+    <string name="delete_needs_grant">K odstranění obnovených souborů je potřeba přístup k úložišti</string>
+    <string name="delete_grant_action">Povolit přístup</string>
     <string name="empty_list">Zde se zobrazí vaše stažené soubory.</string>
     <string name="empty_list_bookmarks">Zatím nic není v záložkách.\n\nOtevřete libovolnou stránku a v nabídce ⋮ zvolte „Přidat stránku do záložek“, aby se uložila sem.</string>
     <string name="empty_list_browser_history">Historie vašeho prohlížeče je prázdná.</string>

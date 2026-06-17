@@ -61,6 +61,8 @@
     <string name="restore_downloads_done">बहाल किए गए डाउनलोड: %1$d</string>
     <string name="restore_downloads_none">इस फ़ोल्डर में कोई बैकअप नहीं मिला</string>
     <string name="restore_downloads_wrong_device">यह बैकअप किसी दूसरे डिवाइस का है</string>
+    <string name="delete_needs_grant">पुनर्स्थापित फ़ाइलें हटाने के लिए संग्रहण अनुमति आवश्यक है</string>
+    <string name="delete_grant_action">अनुमति दें</string>
     <string name="empty_list">आपके डाउनलोड यहां दिखाई देंगे.</string>
     <string name="empty_list_bookmarks">अभी तक कुछ भी बुकमार्क नहीं किया गया है.\n\nकोई भी पेज खोलें और उसे यहां सहेजने के लिए ⋮ मेनू से “Bookmark page” चुनें.</string>
     <string name="empty_list_browser_history">आपका ब्राउज़र इतिहास रिक्त है.</string>

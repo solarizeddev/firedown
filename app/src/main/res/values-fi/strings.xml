@@ -90,6 +90,8 @@
     <string name="restore_downloads_done">Palautettuja latauksia: %1$d</string>
     <string name="restore_downloads_none">Tästä kansiosta ei löytynyt varmuuskopiota</string>
     <string name="restore_downloads_wrong_device">Tämä varmuuskopio kuuluu toiselle laitteelle</string>
+    <string name="delete_needs_grant">Palautettujen tiedostojen poistamiseen tarvitaan tallennustilan käyttöoikeus</string>
+    <string name="delete_grant_action">Myönnä käyttöoikeus</string>
     <string name="empty_list">Latauksesi näkyvät täällä.</string>
     <string name="empty_list_bookmarks">Mitään ei ole vielä lisätty kirjanmerkkeihin.\n\nAvaa mikä tahansa sivu ja valitse ⋮-valikosta “Lisää sivu kirjanmerkkeihin” tallentaaksesi sen tänne.</string>
     <string name="empty_list_browser_history">Selaushistoriasi on tyhjä.</string>

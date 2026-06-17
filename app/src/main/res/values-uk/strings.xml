@@ -89,6 +89,8 @@
     <string name="restore_downloads_done">Відновлено завантажень: %1$d</string>
     <string name="restore_downloads_none">У цій папці не знайдено резервної копії</string>
     <string name="restore_downloads_wrong_device">Ця резервна копія належить іншому пристрою</string>
+    <string name="delete_needs_grant">Для видалення відновлених файлів потрібен доступ до сховища</string>
+    <string name="delete_grant_action">Надати доступ</string>
     <string name="empty_list">Ваші завантаження відображатимуться тут.</string>
     <string name="empty_list_bookmarks">Ще нічого не додано в закладки.\n\nВідкрийте будь-яку сторінку й виберіть «Додати до закладок» у меню ⋮, щоб зберегти її тут.</string>
     <string name="empty_list_browser_history">Ваша історія браузера порожня.</string>

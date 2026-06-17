@@ -483,10 +483,19 @@ public class RunnableManager extends Service {
 			cancelDownloadTask(entity, activeById, queuedById);
 		}
 
-		// 3. Batch-delete from repository; fire TaskEvent on completion
-		mDownloadRepository.deleteDownloads(downloadEntities, () ->
-				mTaskRepository.sendEvent(new TaskEvent.Deleted(count))
-		);
+		// 3. Batch-delete from repository; fire TaskEvent on completion.
+		//    needGrant = entities whose foreign restored FILE couldn't be
+		//    deleted without a SAF write grant (rows kept). Prefer the
+		//    grant prompt over the "deleted" toast when any are pending —
+		//    the SingleLiveEvent would coalesce two posts to the last one
+		//    anyway, and the prompt is the actionable signal.
+		mDownloadRepository.deleteDownloads(downloadEntities, needGrant -> {
+			if (!needGrant.isEmpty()) {
+				mTaskRepository.sendEvent(new TaskEvent.NeedsDeleteGrant(needGrant));
+			} else if (count > 0) {
+				mTaskRepository.sendEvent(new TaskEvent.Deleted(count));
+			}
+		});
 
 		// 4. Stop service if empty
 		Message msg = serviceHandler.obtainMessage();

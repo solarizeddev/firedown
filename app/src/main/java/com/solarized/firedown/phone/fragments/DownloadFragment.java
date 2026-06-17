@@ -33,6 +33,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.color.MaterialColors;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.snackbar.Snackbar;
 import com.solarized.firedown.BuildConfig;
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
@@ -55,6 +56,7 @@ import com.solarized.firedown.IntentActions;
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.utils.NavigationUtils;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executor;
 
@@ -96,6 +98,19 @@ public class DownloadFragment extends BaseDownloadFragment implements
     private final ActivityResultLauncher<Uri> mRestoreFolderPicker =
             registerForActivityResult(new ActivityResultContracts.OpenDocumentTree(),
                     this::onRestoreTreePicked);
+
+    /** Separate SAF folder picker for the delete-a-restored-file flow: a
+     *  restored entry's public file is foreign-owned (Android 11+ scoped
+     *  storage), so {@code File.delete()} can't remove it — we need a folder
+     *  WRITE grant. Distinct from the restore picker because the after-action
+     *  differs (retry the delete, not run a restore). */
+    private final ActivityResultLauncher<Uri> mDeleteGrantPicker =
+            registerForActivityResult(new ActivityResultContracts.OpenDocumentTree(),
+                    this::onDeleteGrantPicked);
+
+    /** Entities from a {@link TaskEvent.NeedsDeleteGrant} awaiting a folder
+     *  WRITE grant; consumed by {@link #onDeleteGrantPicked}. */
+    private ArrayList<DownloadEntity> mPendingDeleteGrant;
 
     /** Single-item header surfaced via {@link androidx.recyclerview.widget.ConcatAdapter}
      *  when the user has vault (incognito-tab) downloads in flight while
@@ -362,6 +377,9 @@ public class DownloadFragment extends BaseDownloadFragment implements
 
             } else if (event instanceof TaskEvent.Cancelled) {
                 mOperationActive = false;
+
+            } else if (event instanceof TaskEvent.NeedsDeleteGrant needsGrant) {
+                promptDeleteGrant(needsGrant.getEntities());
             }
         });
 
@@ -470,16 +488,68 @@ public class DownloadFragment extends BaseDownloadFragment implements
         }
     }
 
+    // ── Delete a restored (foreign-owned) file ──────────────────────────
+    // A restored entry's public file isn't owned by this install (scoped
+    // storage), so File.delete() silently fails and the file lingers after the
+    // row is gone. The repository keeps the row and reports the entity via
+    // TaskEvent.NeedsDeleteGrant; we take a folder WRITE grant and retry — the
+    // retry deletes the file through SAF and removes the row with it.
+
+    /** Offer a folder WRITE grant so a restored file can be deleted. */
+    private void promptDeleteGrant(ArrayList<DownloadEntity> entities) {
+        if (entities == null || entities.isEmpty() || mActivity == null) {
+            return;
+        }
+        mPendingDeleteGrant = entities;
+        Snackbar snackbar = makeSnackbar(mActivity.getSnackAnchorView(),
+                getString(R.string.delete_needs_grant), false);
+        snackbar.setAction(R.string.delete_grant_action, v -> launchDeleteGrantPicker());
+        snackbar.show();
+    }
+
+    private void launchDeleteGrantPicker() {
+        // Same Download/Firedown tree the restore flow uses — one confirm.
+        Uri initial = DocumentsContract.buildDocumentUri(
+                "com.android.externalstorage.documents", "primary:Download/Firedown");
+        try {
+            mDeleteGrantPicker.launch(initial);
+        } catch (ActivityNotFoundException e) {
+            mPendingDeleteGrant = null;
+            showErrorSnackbar(R.string.restore_downloads_none);
+        }
+    }
+
+    private void onDeleteGrantPicked(@Nullable Uri treeUri) {
+        ArrayList<DownloadEntity> pending = mPendingDeleteGrant;
+        mPendingDeleteGrant = null;
+        if (treeUri == null || pending == null || pending.isEmpty()) {
+            return; // user backed out — entries stay; files remain on disk
+        }
+        try {
+            requireContext().getContentResolver().takePersistableUriPermission(
+                    treeUri, Intent.FLAG_GRANT_READ_URI_PERMISSION
+                            | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+            DownloadBackupMirror.rememberRestoreTree(requireContext(), treeUri);
+        } catch (SecurityException e) {
+            // Without a persistable WRITE grant the retry can't delete the file.
+        }
+        // Retry the SAME delete: with the WRITE grant the file delete now
+        // succeeds via SAF and the row is removed with it (same pipeline).
+        mTaskViewModel.requestDelete(requireContext(), pending);
+    }
+
     private void onRestoreTreePicked(@Nullable Uri treeUri) {
         if (treeUri == null) {
             return; // user backed out of the picker
         }
         try {
-            // Persist the grant: it is also the future content-URI access
-            // path for the restored files on Android 13+ (the reinstalled
-            // app no longer owns them).
+            // Persist the grant READ+WRITE: it is the future content-URI access
+            // path for the restored files on Android 13+ (the reinstalled app no
+            // longer owns them) — read to view/play, WRITE so they can be DELETED
+            // (File.delete() can't remove a foreign-owned public file; SAF can).
             requireContext().getContentResolver().takePersistableUriPermission(
-                    treeUri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    treeUri, Intent.FLAG_GRANT_READ_URI_PERMISSION
+                            | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
             DownloadBackupMirror.rememberRestoreTree(requireContext(), treeUri);
         } catch (SecurityException e) {
             // Non-persistable grant — the one-shot read below still works.

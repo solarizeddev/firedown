@@ -151,6 +151,8 @@
     <string name="restore_downloads_done">復元したダウンロード: %1$d</string>
     <string name="restore_downloads_none">このフォルダーにバックアップが見つかりません</string>
     <string name="restore_downloads_wrong_device">このバックアップは別の端末のものです</string>
+    <string name="delete_needs_grant">復元したファイルを削除するにはストレージへのアクセスが必要です</string>
+    <string name="delete_grant_action">アクセスを許可</string>
     <string name="empty_list">ダウンロードがここに表示されます。</string>
     <string name="empty_list_bookmarks">まだ何もブックマークされていません。\n\nページを開き、⋮ メニューから「ページをブックマークに追加」を選ぶとここに保存されます。</string>
     <string name="empty_list_browser_history">ブラウザの履歴は空です。</string>

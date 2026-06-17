@@ -93,6 +93,8 @@
     <string name="restore_downloads_done">Geri yüklenen indirmeler: %1$d</string>
     <string name="restore_downloads_none">Bu klasörde yedek bulunamadı</string>
     <string name="restore_downloads_wrong_device">Bu yedek başka bir cihaza ait</string>
+    <string name="delete_needs_grant">Geri yüklenen dosyaları silmek için depolama erişimi gerekiyor</string>
+    <string name="delete_grant_action">Erişim ver</string>
     <string name="empty_list">İndirdiğiniz dosyalar burada görünecek.</string>
     <string name="empty_list_bookmarks">Henüz yer işareti konmuş bir şey yok.\n\nHerhangi bir sayfayı açın ve buraya kaydetmek için ⋮ menüsünden “Yer imlerine ekle” seçeneğini seçin.</string>
     <string name="empty_list_browser_history">Tarayıcı geçmişiniz boş.</string>
