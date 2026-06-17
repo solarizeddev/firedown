@@ -5,7 +5,6 @@ import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
-import android.graphics.Paint;
 import android.net.Uri;
 
 import android.os.Bundle;
@@ -31,7 +30,6 @@ import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.core.app.ActivityOptionsCompat;
 import androidx.core.app.ShareCompat;
 import androidx.core.content.FileProvider;
-import androidx.core.widget.TextViewCompat;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -419,37 +417,44 @@ public class BaseFocusFragment extends Fragment {
     }
 
     /**
-     * Vertically centre the toolbar title on the nav-arrow's line.
+     * Optically centre the toolbar title on the nav-arrow's line.
      *
-     * <p>MaterialToolbar centres its title using the Material3 TitleLarge text
-     * appearance, whose extra line-height leading (28sp on 22sp text) plus the
-     * font's bottom padding land BELOW the single-line title — so it reads
-     * slightly HIGH next to the tightly-centred nav arrow (a gap underneath it).
-     * The toolbar doesn't expose its title view, so find it (the TextView child
-     * whose text is the current title) and tighten its metrics in place: drop
-     * the font padding and pin the line height to the natural font height. The
-     * toolbar reuses the same title view for later setTitle() calls (action
-     * mode, search open/close), so this sticks.</p>
+     * <p>MaterialToolbar geometrically centres its title, but next to the
+     * nav arrow the single-line title reads slightly HIGH (a gap beneath it) —
+     * the usual cap-height optical illusion, not a real layout offset. The
+     * toolbar doesn't expose its title view, so find it (the direct TextView
+     * child whose text is the current title) and nudge it down a couple dp with
+     * a pure {@code translationY} — no layout change, exactly tunable. Posted so
+     * it runs after the title view is created/laid out; the toolbar reuses the
+     * same title view for later setTitle() calls (action mode / search), so the
+     * nudge sticks.</p>
      */
     protected void tightenToolbarTitle() {
         if (mToolbar == null) {
             return;
         }
-        CharSequence title = mToolbar.getTitle();
-        if (TextUtils.isEmpty(title)) {
-            return;
-        }
-        for (int i = 0; i < mToolbar.getChildCount(); i++) {
-            View child = mToolbar.getChildAt(i);
-            if (child instanceof TextView && TextUtils.equals(title, ((TextView) child).getText())) {
-                TextView titleView = (TextView) child;
-                titleView.setIncludeFontPadding(false);
-                Paint.FontMetricsInt fm = titleView.getPaint().getFontMetricsInt();
-                TextViewCompat.setLineHeight(titleView, fm.descent - fm.ascent);
-                break;
+        mToolbar.post(() -> {
+            if (mToolbar == null) {
+                return;
             }
-        }
+            CharSequence title = mToolbar.getTitle();
+            if (TextUtils.isEmpty(title)) {
+                return;
+            }
+            float nudge = getResources().getDisplayMetrics().density * TITLE_VERTICAL_NUDGE_DP;
+            for (int i = 0; i < mToolbar.getChildCount(); i++) {
+                View child = mToolbar.getChildAt(i);
+                if (child instanceof TextView && !(child instanceof EditText)
+                        && TextUtils.equals(title, ((TextView) child).getText())) {
+                    child.setTranslationY(nudge);
+                    break;
+                }
+            }
+        });
     }
+
+    /** Downward optical nudge for the toolbar title (see tightenToolbarTitle). */
+    private static final float TITLE_VERTICAL_NUDGE_DP = 2f;
 
     public ActivityResultLauncher<Intent> getActivityResultLauncher(){
         return mStartForResult;
