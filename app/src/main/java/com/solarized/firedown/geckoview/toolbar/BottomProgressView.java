@@ -99,4 +99,12 @@ public class BottomProgressView extends FrameLayout {
     public void setProgress(int progress){
         mProgressIndicator.setProgress(progress);
     }
+
+    /** Switch the bar between determinate (task progress, the default) and
+     *  indeterminate (a spinner for work with no progress signal — the SAF
+     *  restore). Material throws if switched to indeterminate while the
+     *  indicator is shown, so callers must flip this while the view is GONE. */
+    public void setIndeterminate(boolean indeterminate){
+        mProgressIndicator.setIndeterminate(indeterminate);
+    }
 }

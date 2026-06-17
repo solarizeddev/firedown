@@ -23,7 +23,6 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.core.view.MenuProvider;
 import androidx.lifecycle.Lifecycle;
@@ -487,21 +486,18 @@ public class DownloadFragment extends BaseDownloadFragment implements
         }
         Context appContext = requireContext().getApplicationContext();
         // The scan + AES-GCM decrypt + DB import below run off the main thread and
-        // can take a few seconds; show a modal indeterminate spinner so the gap
-        // between the folder pick and the result snackbar isn't dead air.
-        final AlertDialog progress = showRestoreProgressDialog();
+        // can take a few seconds; show the bottom progress bar (indeterminate)
+        // so the gap between the folder pick and the result snackbar isn't dead
+        // air, and hide the empty-state restore button while it runs.
+        showRestoreProgress();
         mDiskExecutor.execute(() -> {
             int result = DownloadBackupMirror.restoreFromTree(appContext, mDownloadDatabase, treeUri);
             View view = getView();
             if (view == null) {
-                // Fragment view gone (navigated away / config change) — Dialog
-                // .dismiss() is thread-safe (posts to its own handler), so this
-                // tears down the window instead of leaking it.
-                progress.dismiss();
-                return;
+                return; // fragment view gone — the progress bar went with it
             }
             view.post(() -> {
-                progress.dismiss();
+                hideRestoreProgress();
                 if (!isAdded() || mActivity == null) {
                     return;
                 }
@@ -510,16 +506,16 @@ public class DownloadFragment extends BaseDownloadFragment implements
                 // re-prompting adds nothing ("no backup" stays reachable from
                 // Settings).
                 retireRestoreBanner();
+                // Always reload the Paging source. On success it surfaces the
+                // restored rows — the import writes through getOpenHelper() (raw
+                // SQLite), bypassing Room's InvalidationTracker, so the list
+                // wouldn't otherwise update. On an empty/failed result it re-runs
+                // the load-state listener, which re-shows the empty-state restore
+                // button hidden by showRestoreProgress(). Cheap when empty.
+                if (mAdapter != null) {
+                    mAdapter.refresh();
+                }
                 if (result >= 0) {
-                    // The import writes rows through getOpenHelper() (raw
-                    // SQLite), which bypasses Room's InvalidationTracker — the
-                    // Paging source is never told the table changed, so the
-                    // list would stay empty until the next Room-managed write.
-                    // Force the PagingSource to reload so the restored entries
-                    // appear now. (No-op-cheap when result == 0.)
-                    if (result > 0 && mAdapter != null) {
-                        mAdapter.refresh();
-                    }
                     makeSnackbar(mActivity.getSnackAnchorView(),
                             getString(R.string.restore_downloads_done, result), false).show();
                 } else if (result == DownloadBackupMirror.RESTORE_NO_BACKUP) {
@@ -531,18 +527,34 @@ public class DownloadFragment extends BaseDownloadFragment implements
         });
     }
 
-    /** Modal, non-cancelable indeterminate spinner shown while restoreFromTree
-     *  runs. Non-cancelable on purpose: the work can't be cancelled mid-import,
-     *  and dismissing it would leave the user with no feedback until the
-     *  snackbar. Dismissed by the executor callback. */
-    private AlertDialog showRestoreProgressDialog() {
-        AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
-                .setView(LayoutInflater.from(requireContext())
-                        .inflate(R.layout.dialog_restore_progress, null))
-                .setCancelable(false)
-                .create();
-        dialog.show();
-        return dialog;
+    /** Bottom-bar progress for the in-flight restore. Indeterminate (the work
+     *  gives no progress signal) and action-button-less (the DB import can't be
+     *  safely cancelled mid-flight). Also hides the empty-state restore button
+     *  so a second tap can't launch a concurrent restore. Driven directly, NOT
+     *  through the RunnableManager/TaskViewModel task system — restore is a
+     *  one-shot DB op, not a cancellable ffmpeg/encode task. */
+    private void showRestoreProgress() {
+        if (mLCEERecyclerView != null) {
+            mLCEERecyclerView.setEmptyButtonVisibility(View.GONE);
+        }
+        if (mBottomProgressView != null) {
+            mBottomProgressView.setActionButtonVisibility(View.GONE);
+            // setIndeterminate must be flipped while the bar is GONE (Material
+            // throws if switched to indeterminate while shown); it is GONE here
+            // because restore is launched from the empty list, no task running.
+            mBottomProgressView.setIndeterminate(true);
+            mBottomProgressView.setTitle(R.string.restore_downloads_progress);
+            mBottomProgressView.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void hideRestoreProgress() {
+        if (mBottomProgressView != null) {
+            mBottomProgressView.setVisibility(View.GONE);
+            // Back to determinate so the shared bar is clean for the task
+            // observers (encrypt/compress/…) that drive setProgress.
+            mBottomProgressView.setIndeterminate(false);
+        }
     }
 
     /** Show the detected-reinstall banner iff it's armed (DownloadBackupMirror)
