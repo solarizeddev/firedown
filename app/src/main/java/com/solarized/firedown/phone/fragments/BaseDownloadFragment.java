@@ -221,10 +221,13 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
         // now-cleared chip and lose the one to restore on close. Just re-focus.
         if (mSearchBar.getVisibility() != View.VISIBLE) {
             onSearchBarOpening();
+            // The field takes over the toolbar row: drop the title and (via
+            // onCreateMenu reading isSearchActive()) hide every menu icon, so
+            // it reads like Gmail/Contacts search — one field, no magnifier.
+            if (mToolbar != null) {
+                mToolbar.setTitle("");
+            }
             mSearchBar.setVisibility(View.VISIBLE);
-            // The toolbar's search icon has "expanded" into the bar — hide it so
-            // there aren't two magnifiers on screen at once (onCreateMenu reads
-            // isSearchActive()).
             if (mToolbar != null) {
                 mToolbar.invalidateMenu();
             }
@@ -244,8 +247,9 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
         mSearchEdit.setText("");
         hideKeyboard(mSearchEdit);
         mSearchBar.setVisibility(View.GONE);
-        // Restore the toolbar's search icon now that the bar is gone.
+        // Restore the title + menu now that the field is gone.
         if (mToolbar != null) {
+            mToolbar.setTitle(mDestinationTitle);
             mToolbar.invalidateMenu();
         }
         onSearchBarClosing();
