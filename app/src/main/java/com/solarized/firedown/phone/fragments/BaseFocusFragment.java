@@ -5,6 +5,7 @@ import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
+import android.graphics.Paint;
 import android.net.Uri;
 
 import android.os.Bundle;
@@ -17,6 +18,7 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
+import android.widget.TextView;
 
 import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
@@ -29,6 +31,7 @@ import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.core.app.ActivityOptionsCompat;
 import androidx.core.app.ShareCompat;
 import androidx.core.content.FileProvider;
+import androidx.core.widget.TextViewCompat;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -185,6 +188,8 @@ public class BaseFocusFragment extends Fragment {
             });
 
         }
+
+        tightenToolbarTitle();
 
         if(mRecyclerView != null){
             ViewCompat.setOnApplyWindowInsetsListener(mRecyclerView, (v, windowInsets) -> {
@@ -356,12 +361,16 @@ public class BaseFocusFragment extends Fragment {
         // the (now-hidden) title or re-run the open hook.
         if (mSearchBar.getVisibility() != View.VISIBLE) {
             onSearchBarOpening();
+            // Make the field VISIBLE before invalidating the menu: the
+            // onCreateMenu re-run reads isSearchActive() to hide every toolbar
+            // icon, so the field must already be showing or the search/delete
+            // icons stay and the field can't take the full width.
+            mSearchBar.setVisibility(View.VISIBLE);
             if (mToolbar != null) {
                 mTitleBeforeSearch = mToolbar.getTitle();
                 mToolbar.setTitle("");
                 mToolbar.invalidateMenu();
             }
-            mSearchBar.setVisibility(View.VISIBLE);
         }
         mSearchEdit.requestFocus();
         mSearchEdit.post(() -> showKeyboard(mSearchEdit));
@@ -406,6 +415,39 @@ public class BaseFocusFragment extends Fragment {
         InputMethodManager imm = (InputMethodManager) mActivity.getSystemService(Context.INPUT_METHOD_SERVICE);
         if (imm != null) {
             imm.showSoftInput(view, InputMethodManager.SHOW_IMPLICIT);
+        }
+    }
+
+    /**
+     * Vertically centre the toolbar title on the nav-arrow's line.
+     *
+     * <p>MaterialToolbar centres its title using the Material3 TitleLarge text
+     * appearance, whose extra line-height leading (28sp on 22sp text) plus the
+     * font's bottom padding land BELOW the single-line title — so it reads
+     * slightly HIGH next to the tightly-centred nav arrow (a gap underneath it).
+     * The toolbar doesn't expose its title view, so find it (the TextView child
+     * whose text is the current title) and tighten its metrics in place: drop
+     * the font padding and pin the line height to the natural font height. The
+     * toolbar reuses the same title view for later setTitle() calls (action
+     * mode, search open/close), so this sticks.</p>
+     */
+    protected void tightenToolbarTitle() {
+        if (mToolbar == null) {
+            return;
+        }
+        CharSequence title = mToolbar.getTitle();
+        if (TextUtils.isEmpty(title)) {
+            return;
+        }
+        for (int i = 0; i < mToolbar.getChildCount(); i++) {
+            View child = mToolbar.getChildAt(i);
+            if (child instanceof TextView && TextUtils.equals(title, ((TextView) child).getText())) {
+                TextView titleView = (TextView) child;
+                titleView.setIncludeFontPadding(false);
+                Paint.FontMetricsInt fm = titleView.getPaint().getFontMetricsInt();
+                TextViewCompat.setLineHeight(titleView, fm.descent - fm.ascent);
+                break;
+            }
         }
     }
 
