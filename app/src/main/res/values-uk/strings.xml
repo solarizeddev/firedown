@@ -85,6 +85,7 @@
     <string name="restore_banner_subtitle">Попередні завантаження можна спробувати відновити — торкніться, щоб відновити</string>
     <string name="restore_downloads_message">Якщо ви перевстановили Firedown, ваші завантаження можуть досі бути в папці Download/Firedown. Виберіть цю папку, і Firedown відновить список завантажень.</string>
     <string name="restore_downloads_choose">Вибрати папку</string>
+    <string name="restore_downloads_progress">Відновлення завантажень…</string>
     <string name="restore_downloads_done">Відновлено завантажень: %1$d</string>
     <string name="restore_downloads_none">У цій папці не знайдено резервної копії</string>
     <string name="restore_downloads_wrong_device">Ця резервна копія належить іншому пристрою</string>

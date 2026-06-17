@@ -89,6 +89,7 @@
     <string name="restore_banner_subtitle">Je eerdere downloads zijn mogelijk te herstellen — tik om te herstellen</string>
     <string name="restore_downloads_message">Als je Firedown opnieuw hebt geïnstalleerd, staan je downloads mogelijk nog in de map Download/Firedown. Kies die map en Firedown herstelt je downloadlijst.</string>
     <string name="restore_downloads_choose">Map kiezen</string>
+    <string name="restore_downloads_progress">Downloads worden hersteld…</string>
     <string name="restore_downloads_done">Herstelde downloads: %1$d</string>
     <string name="restore_downloads_none">Geen back-up gevonden in deze map</string>
     <string name="restore_downloads_wrong_device">Deze back-up hoort bij een ander apparaat</string>

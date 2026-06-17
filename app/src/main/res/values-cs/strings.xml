@@ -86,6 +86,7 @@
     <string name="restore_banner_subtitle">Vaše dřívější stahování může být možné obnovit — klepnutím je obnovíte</string>
     <string name="restore_downloads_message">Pokud jste Firedown přeinstalovali, vaše stažené soubory mohou stále být ve složce Download/Firedown. Vyberte tuto složku a Firedown obnoví seznam stahování.</string>
     <string name="restore_downloads_choose">Vybrat složku</string>
+    <string name="restore_downloads_progress">Obnovování stažených souborů…</string>
     <string name="restore_downloads_done">Obnovená stahování: %1$d</string>
     <string name="restore_downloads_none">V této složce nebyla nalezena žádná záloha</string>
     <string name="restore_downloads_wrong_device">Tato záloha patří jinému zařízení</string>

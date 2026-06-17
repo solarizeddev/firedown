@@ -89,6 +89,7 @@
     <string name="restore_banner_subtitle">Poprzednie pobrania mogą być do odzyskania — dotknij, aby przywrócić</string>
     <string name="restore_downloads_message">Jeśli ponownie zainstalowano Firedown, pobrane pliki mogą nadal znajdować się w folderze Download/Firedown. Wybierz ten folder, a Firedown przywróci listę pobrań.</string>
     <string name="restore_downloads_choose">Wybierz folder</string>
+    <string name="restore_downloads_progress">Przywracanie pobranych plików…</string>
     <string name="restore_downloads_done">Przywrócone pobrania: %1$d</string>
     <string name="restore_downloads_none">Nie znaleziono kopii zapasowej w tym folderze</string>
     <string name="restore_downloads_wrong_device">Ta kopia zapasowa należy do innego urządzenia</string>

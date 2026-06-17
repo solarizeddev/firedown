@@ -23,6 +23,7 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.core.view.MenuProvider;
 import androidx.lifecycle.Lifecycle;
@@ -485,13 +486,22 @@ public class DownloadFragment extends BaseDownloadFragment implements
             // Non-persistable grant — the one-shot read below still works.
         }
         Context appContext = requireContext().getApplicationContext();
+        // The scan + AES-GCM decrypt + DB import below run off the main thread and
+        // can take a few seconds; show a modal indeterminate spinner so the gap
+        // between the folder pick and the result snackbar isn't dead air.
+        final AlertDialog progress = showRestoreProgressDialog();
         mDiskExecutor.execute(() -> {
             int result = DownloadBackupMirror.restoreFromTree(appContext, mDownloadDatabase, treeUri);
             View view = getView();
             if (view == null) {
+                // Fragment view gone (navigated away / config change) — Dialog
+                // .dismiss() is thread-safe (posts to its own handler), so this
+                // tears down the window instead of leaking it.
+                progress.dismiss();
                 return;
             }
             view.post(() -> {
+                progress.dismiss();
                 if (!isAdded() || mActivity == null) {
                     return;
                 }
@@ -519,6 +529,20 @@ public class DownloadFragment extends BaseDownloadFragment implements
                 }
             });
         });
+    }
+
+    /** Modal, non-cancelable indeterminate spinner shown while restoreFromTree
+     *  runs. Non-cancelable on purpose: the work can't be cancelled mid-import,
+     *  and dismissing it would leave the user with no feedback until the
+     *  snackbar. Dismissed by the executor callback. */
+    private AlertDialog showRestoreProgressDialog() {
+        AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
+                .setView(LayoutInflater.from(requireContext())
+                        .inflate(R.layout.dialog_restore_progress, null))
+                .setCancelable(false)
+                .create();
+        dialog.show();
+        return dialog;
     }
 
     /** Show the detected-reinstall banner iff it's armed (DownloadBackupMirror)

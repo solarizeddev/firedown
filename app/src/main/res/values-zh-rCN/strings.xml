@@ -147,6 +147,7 @@
     <string name="restore_banner_subtitle">你之前的下载可能可以恢复 — 点按即可恢复</string>
     <string name="restore_downloads_message">如果你重新安装了 Firedown，你的下载文件可能仍在 Download/Firedown 文件夹中。选择该文件夹，Firedown 将恢复你的下载列表。</string>
     <string name="restore_downloads_choose">选择文件夹</string>
+    <string name="restore_downloads_progress">正在恢复下载…</string>
     <string name="restore_downloads_done">已恢复的下载：%1$d</string>
     <string name="restore_downloads_none">在此文件夹中未找到备份</string>
     <string name="restore_downloads_wrong_device">此备份属于另一台设备</string>

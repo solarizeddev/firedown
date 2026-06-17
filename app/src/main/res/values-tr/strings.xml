@@ -89,6 +89,7 @@
     <string name="restore_banner_subtitle">Önceki indirmeleriniz kurtarılabilir — geri yüklemek için dokunun</string>
     <string name="restore_downloads_message">Firedown\'u yeniden yüklediyseniz indirmeleriniz hâlâ Download/Firedown klasöründe olabilir. Bu klasörü seçin, Firedown indirme listenizi geri yüklesin.</string>
     <string name="restore_downloads_choose">Klasör seç</string>
+    <string name="restore_downloads_progress">İndirilenler geri yükleniyor…</string>
     <string name="restore_downloads_done">Geri yüklenen indirmeler: %1$d</string>
     <string name="restore_downloads_none">Bu klasörde yedek bulunamadı</string>
     <string name="restore_downloads_wrong_device">Bu yedek başka bir cihaza ait</string>

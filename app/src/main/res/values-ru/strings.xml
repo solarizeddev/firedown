@@ -89,6 +89,7 @@
     <string name="restore_banner_subtitle">Прежние загрузки можно попробовать восстановить — нажмите для восстановления</string>
     <string name="restore_downloads_message">Если вы переустановили Firedown, ваши загрузки могут всё ещё находиться в папке Download/Firedown. Выберите эту папку, и Firedown восстановит список загрузок.</string>
     <string name="restore_downloads_choose">Выбрать папку</string>
+    <string name="restore_downloads_progress">Восстановление загрузок…</string>
     <string name="restore_downloads_done">Восстановлено загрузок: %1$d</string>
     <string name="restore_downloads_none">В этой папке не найдена резервная копия</string>
     <string name="restore_downloads_wrong_device">Эта резервная копия принадлежит другому устройству</string>

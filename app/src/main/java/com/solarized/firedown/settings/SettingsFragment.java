@@ -18,6 +18,7 @@ import android.view.autofill.AutofillManager;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.Preference;
@@ -570,13 +571,21 @@ public class SettingsFragment extends BasePreferenceFragment
             // Non-persistable grant — the one-shot read below still works.
         }
         final Context appContext = requireContext().getApplicationContext();
+        // The scan + AES-GCM decrypt + DB import below run off the main thread and
+        // can take a few seconds; show a modal indeterminate spinner so the gap
+        // between the folder pick and the result snackbar isn't dead air.
+        final AlertDialog progress = showRestoreProgressDialog();
         mDiskExecutor.execute(() -> {
             int result = DownloadBackupMirror.restoreFromTree(appContext, mDownloadDatabase, treeUri);
             View view = getView();
             if (view == null) {
+                // Fragment view gone — Dialog.dismiss() is thread-safe (posts to
+                // its own handler), so this tears down the window not leaks it.
+                progress.dismiss();
                 return;
             }
             view.post(() -> {
+                progress.dismiss();
                 if (!isAdded()) {
                     return;
                 }
@@ -591,5 +600,17 @@ public class SettingsFragment extends BasePreferenceFragment
                 Snackbar.make(requireView(), text, Snackbar.LENGTH_LONG).show();
             });
         });
+    }
+
+    /** Modal, non-cancelable indeterminate spinner shown while restoreFromTree
+     *  runs (mirrors DownloadFragment's empty-state door). Dismissed by the
+     *  executor callback. */
+    private AlertDialog showRestoreProgressDialog() {
+        AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
+                .setView(getLayoutInflater().inflate(R.layout.dialog_restore_progress, null))
+                .setCancelable(false)
+                .create();
+        dialog.show();
+        return dialog;
     }
 }
