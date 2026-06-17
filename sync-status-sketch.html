@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Firedown — home sync status sketch</title>
+<style>
+  :root{
+    /* Firedown-ish dark surface + brand orange */
+    --bg:#121212;
+    --surface:#121212;
+    --on-surface:#ECECEC;
+    --on-surface-variant:#9A9A9A;
+    --outline:#2A2A2A;
+    --brand:#FF6A2B;          /* brand orange (spinner / accent) */
+    --error:#FF6B6B;
+    --check:#7BC67E;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;
+    background:#0a0a0a;
+    color:var(--on-surface);
+    padding:32px 16px 64px;
+  }
+  h1{font-size:15px;font-weight:600;color:var(--on-surface-variant);text-align:center;margin:0 0 4px}
+  .sub{font-size:12px;color:#666;text-align:center;margin:0 0 28px}
+  .grid{
+    display:flex;flex-wrap:wrap;gap:20px;justify-content:center;align-items:flex-start;
+  }
+
+  /* ---- phone frame ---- */
+  .phone{
+    width:300px;height:540px;border-radius:34px;background:var(--bg);
+    border:1px solid var(--outline);position:relative;overflow:hidden;
+    display:flex;flex-direction:column;
+    box-shadow:0 8px 40px rgba(0,0,0,.5);
+  }
+  .label{font-size:11px;color:var(--on-surface-variant);text-align:center;margin-top:10px;letter-spacing:.02em}
+
+  /* top toolbar (url bar) */
+  .toolbar{padding:12px 14px}
+  .urlbar{
+    height:40px;border-radius:20px;background:#1d1d1d;display:flex;align-items:center;
+    padding:0 14px;color:#6b6b6b;font-size:13px;gap:8px;
+  }
+  .urlbar .lock{width:13px;height:13px;border-radius:3px;border:1.5px solid #555}
+
+  /* centred brand mark */
+  .home{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;padding:0 24px}
+  .logo{width:40px;height:40px;display:flex;align-items:center;justify-content:center;margin-bottom:14px}
+  .logo svg{width:40px;height:40px}
+  .wordmark{font-size:22px;font-weight:700;letter-spacing:-.02em;color:var(--on-surface)}
+
+  /* the existing "two pills" subtitle line */
+  .subtitle{
+    margin-top:6px;display:flex;align-items:center;gap:0;
+    font-size:13px;color:var(--on-surface-variant);
+  }
+  .pill{padding:8px 12px;border-radius:14px}
+  .dot-sep{padding:0 5px;color:var(--on-surface-variant)}
+
+  /* ---- the NEW sync status entry ---- */
+  .sync{
+    margin-top:8px;display:flex;align-items:center;gap:8px;
+    padding:8px 12px;border-radius:14px;font-size:13px;color:var(--on-surface-variant);
+    max-width:240px;
+  }
+  .sync .txt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sync.err{color:var(--error)}
+  .sync .action{color:var(--brand);font-weight:600}
+
+  /* leading slot variants */
+  .spinner{
+    width:14px;height:14px;border-radius:50%;flex:0 0 auto;
+    border:2px solid rgba(255,106,43,.25);border-top-color:var(--brand);
+    animation:spin .8s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .glyph{width:14px;height:14px;flex:0 0 auto;display:flex;align-items:center;justify-content:center}
+  .glyph svg{width:14px;height:14px}
+  .hollow{width:11px;height:11px;border-radius:50%;border:1.6px solid var(--on-surface-variant);box-sizing:border-box}
+
+  /* optional hairline progress (uploading) */
+  .prog-wrap{margin-top:7px;width:200px;height:2px;border-radius:2px;background:#262626;overflow:hidden}
+  .prog{height:100%;width:38%;background:var(--brand);border-radius:2px}
+
+  /* bottom bar */
+  .bottombar{
+    height:52px;border-top:1px solid var(--outline);display:flex;align-items:center;
+    justify-content:space-around;color:#777;
+  }
+  .bicon{width:20px;height:20px;border-radius:5px;border:1.6px solid #555}
+
+  .note{max-width:680px;margin:36px auto 0;font-size:13px;line-height:1.6;color:#9a9a9a}
+  .note b{color:#cfcfcf}
+  .note code{background:#1d1d1d;padding:1px 5px;border-radius:4px;font-size:12px}
+</style>
+</head>
+<body>
+  <h1>Firedown — home “sync status” entry</h1>
+  <p class="sub">a quiet third line below the blocked · saved pills · dark theme · brand-orange accent only where it earns it</p>
+
+  <div class="grid">
+
+    <!-- 1. SYNCING -->
+    <div>
+      <div class="phone">
+        <div class="toolbar"><div class="urlbar"><span class="lock"></span>Search or enter address</div></div>
+        <div class="home">
+          <div class="logo">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M12 2c1.5 3.5-1 5-1 7 0 1.6 1.1 2.5 2.4 2.5 1.6 0 2.6-1.3 2.6-3 2 1.6 3 4 3 6.2A7 7 0 1 1 6 13c0-1 .2-1.8.6-2.6C8 12 9 12.8 10 12.8c-1.2-2.6.4-7.8 2-10.8Z" fill="#FF6A2B"/></svg>
+          </div>
+          <div class="wordmark">Firedown</div>
+          <div class="subtitle">
+            <span class="pill">10.5K blocked</span>
+            <span class="dot-sep">·</span>
+            <span class="pill">9.5 GB saved</span>
+          </div>
+          <div class="sync"><span class="spinner"></span><span class="txt">Syncing…</span></div>
+        </div>
+        <div class="bottombar"><span class="bicon"></span><span class="bicon"></span><span class="bicon"></span><span class="bicon"></span></div>
+      </div>
+      <div class="label">Working — indeterminate spinner</div>
+    </div>
+
+    <!-- 2. UPLOADING FILE -->
+    <div>
+      <div class="phone">
+        <div class="toolbar"><div class="urlbar"><span class="lock"></span>Search or enter address</div></div>
+        <div class="home">
+          <div class="logo">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M12 2c1.5 3.5-1 5-1 7 0 1.6 1.1 2.5 2.4 2.5 1.6 0 2.6-1.3 2.6-3 2 1.6 3 4 3 6.2A7 7 0 1 1 6 13c0-1 .2-1.8.6-2.6C8 12 9 12.8 10 12.8c-1.2-2.6.4-7.8 2-10.8Z" fill="#FF6A2B"/></svg>
+          </div>
+          <div class="wordmark">Firedown</div>
+          <div class="subtitle">
+            <span class="pill">10.5K blocked</span>
+            <span class="dot-sep">·</span>
+            <span class="pill">9.5 GB saved</span>
+          </div>
+          <div class="sync"><span class="spinner"></span><span class="txt">Uploading video.mp4 · 3 of 12</span></div>
+          <div class="prog-wrap"><div class="prog"></div></div>
+        </div>
+        <div class="bottombar"><span class="bicon"></span><span class="bicon"></span><span class="bicon"></span><span class="bicon"></span></div>
+      </div>
+      <div class="label">Uploading file — name · count (+ optional hairline)</div>
+    </div>
+
+    <!-- 3. SYNCED / IDLE -->
+    <div>
+      <div class="phone">
+        <div class="toolbar"><div class="urlbar"><span class="lock"></span>Search or enter address</div></div>
+        <div class="home">
+          <div class="logo">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M12 2c1.5 3.5-1 5-1 7 0 1.6 1.1 2.5 2.4 2.5 1.6 0 2.6-1.3 2.6-3 2 1.6 3 4 3 6.2A7 7 0 1 1 6 13c0-1 .2-1.8.6-2.6C8 12 9 12.8 10 12.8c-1.2-2.6.4-7.8 2-10.8Z" fill="#FF6A2B"/></svg>
+          </div>
+          <div class="wordmark">Firedown</div>
+          <div class="subtitle">
+            <span class="pill">10.5K blocked</span>
+            <span class="dot-sep">·</span>
+            <span class="pill">9.5 GB saved</span>
+          </div>
+          <div class="sync">
+            <span class="glyph"><svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#7BC67E" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            <span class="txt">Synced · 2m ago</span>
+          </div>
+        </div>
+        <div class="bottombar"><span class="bicon"></span><span class="bicon"></span><span class="bicon"></span><span class="bicon"></span></div>
+      </div>
+      <div class="label">Idle / done — check, muted</div>
+    </div>
+
+    <!-- 4. OFF -->
+    <div>
+      <div class="phone">
+        <div class="toolbar"><div class="urlbar"><span class="lock"></span>Search or enter address</div></div>
+        <div class="home">
+          <div class="logo">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M12 2c1.5 3.5-1 5-1 7 0 1.6 1.1 2.5 2.4 2.5 1.6 0 2.6-1.3 2.6-3 2 1.6 3 4 3 6.2A7 7 0 1 1 6 13c0-1 .2-1.8.6-2.6C8 12 9 12.8 10 12.8c-1.2-2.6.4-7.8 2-10.8Z" fill="#FF6A2B"/></svg>
+          </div>
+          <div class="wordmark">Firedown</div>
+          <div class="subtitle">
+            <span class="pill">10.5K blocked</span>
+            <span class="dot-sep">·</span>
+            <span class="pill">9.5 GB saved</span>
+          </div>
+          <div class="sync"><span class="glyph"><span class="hollow"></span></span><span class="txt">Sync off</span></div>
+        </div>
+        <div class="bottombar"><span class="bicon"></span><span class="bicon"></span><span class="bicon"></span><span class="bicon"></span></div>
+      </div>
+      <div class="label">Disabled — hollow dot · tap to enable</div>
+    </div>
+
+    <!-- 5. ERROR -->
+    <div>
+      <div class="phone">
+        <div class="toolbar"><div class="urlbar"><span class="lock"></span>Search or enter address</div></div>
+        <div class="home">
+          <div class="logo">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M12 2c1.5 3.5-1 5-1 7 0 1.6 1.1 2.5 2.4 2.5 1.6 0 2.6-1.3 2.6-3 2 1.6 3 4 3 6.2A7 7 0 1 1 6 13c0-1 .2-1.8.6-2.6C8 12 9 12.8 10 12.8c-1.2-2.6.4-7.8 2-10.8Z" fill="#FF6A2B"/></svg>
+          </div>
+          <div class="wordmark">Firedown</div>
+          <div class="subtitle">
+            <span class="pill">10.5K blocked</span>
+            <span class="dot-sep">·</span>
+            <span class="pill">9.5 GB saved</span>
+          </div>
+          <div class="sync err">
+            <span class="glyph"><svg viewBox="0 0 24 24" fill="none"><path d="M12 8v5M12 16.5v.5" stroke="#FF6B6B" stroke-width="2.2" stroke-linecap="round"/><path d="M12 3l9 16H3l9-16Z" stroke="#FF6B6B" stroke-width="1.8" stroke-linejoin="round"/></svg></span>
+            <span class="txt">Sync failed · <span class="action">Retry</span></span>
+          </div>
+        </div>
+        <div class="bottombar"><span class="bicon"></span><span class="bicon"></span><span class="bicon"></span><span class="bicon"></span></div>
+      </div>
+      <div class="label">Error — warning tint · Retry action</div>
+    </div>
+
+    <!-- 6. NOTHING TO SHOW -->
+    <div>
+      <div class="phone">
+        <div class="toolbar"><div class="urlbar"><span class="lock"></span>Search or enter address</div></div>
+        <div class="home">
+          <div class="logo">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M12 2c1.5 3.5-1 5-1 7 0 1.6 1.1 2.5 2.4 2.5 1.6 0 2.6-1.3 2.6-3 2 1.6 3 4 3 6.2A7 7 0 1 1 6 13c0-1 .2-1.8.6-2.6C8 12 9 12.8 10 12.8c-1.2-2.6.4-7.8 2-10.8Z" fill="#FF6A2B"/></svg>
+          </div>
+          <div class="wordmark">Firedown</div>
+          <!-- fresh install: subtitle + sync line both GONE -->
+        </div>
+        <div class="bottombar"><span class="bicon"></span><span class="bicon"></span><span class="bicon"></span><span class="bicon"></span></div>
+      </div>
+      <div class="label">Fresh install — entry hidden (just the wordmark)</div>
+    </div>
+
+  </div>
+
+  <div class="note">
+    <p><b>Reality check:</b> Firedown has no cloud sync today — “the vault never leaves the device.”
+    The only existing analogue is the <b>backup mirror</b> (local <code>downloads-mirror.db</code> +
+    AES-GCM public <code>.fdbk</code> + SAF restore). If this is wired to that, the copy should read
+    <b>“Backed up · 2m ago” / “Backing up…”</b> rather than “Synced”, which implies a remote peer that
+    doesn’t exist. “Sync” copy means you’re proposing a new transport — a product decision, not just UI.</p>
+    <p>The leading slot swaps between a <b>brand-orange spinner</b> (active states — same one the Captured
+    sheet uses for “scanning”) and a single <b>glyph</b> (check / hollow dot / warning). One line, ellipsized.
+    Self-hiding like the subtitle halves: nothing to say → <code>GONE</code>, so a fresh install is just the
+    wordmark. The hairline progress bar is shown only on the uploading variant, and I’d treat even that as
+    optional — the minimal home pushes back on chrome.</p>
+  </div>
+</body>
+</html>

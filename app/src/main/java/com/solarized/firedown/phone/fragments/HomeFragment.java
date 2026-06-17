@@ -1,8 +1,13 @@
 package com.solarized.firedown.phone.fragments;
 
+import android.animation.Animator;
+import android.animation.AnimatorSet;
+import android.animation.ObjectAnimator;
+import android.animation.ValueAnimator;
 import android.content.Intent;
 import android.icu.text.CompactDecimalFormat;
 import android.os.Bundle;
+import android.view.animation.AccelerateDecelerateInterpolator;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.util.Log;
@@ -94,6 +99,14 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     private View mSubtitleSep;
     private View mSubtitleSaved;
     private TextView mSubtitleSavedText;
+    // The brand flame doubles as the live "a download is running" indicator:
+    // a soft ember glow that breathes behind the logo while the active+queued
+    // count (the same signal as the bottom-bar badge) is > 0, and is GONE
+    // otherwise so the idle home is just the wordmark. Identity-as-status, no
+    // extra widget — status that's actionable lives on the bottom bar (the
+    // badge); the home only gives the calm ambient heartbeat.
+    private View mBrandGlow;
+    private Animator mBrandGlowAnimator;
     @Inject
     GeckoUblockHelper mGeckoUblockHelper;
 
@@ -172,6 +185,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         // Brand mark + the two-figure subtitle. Each half is its own tap target:
         // blocked → the trackers info sheet, saved → Downloads. (VaultActivity /
         // DownloadsActivity own their own auth/result handling.)
+        mBrandGlow = v.findViewById(R.id.home_brand_glow);
         mSubtitle = v.findViewById(R.id.home_subtitle);
         mSubtitleBlocked = v.findViewById(R.id.home_subtitle_blocked);
         mSubtitleBlockedText = v.findViewById(R.id.home_subtitle_blocked_text);
@@ -242,8 +256,12 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         // (redundant with both the ongoing download notification and
         // the Downloads entry card), the badge is the one lightweight
         // 'something is downloading' cue left on Home.
-        mTaskViewModel.getRegularCount().observe(getViewLifecycleOwner(), count ->
-                mBottomNavigationBar.onBadgeCount(count));
+        mTaskViewModel.getRegularCount().observe(getViewLifecycleOwner(), count -> {
+            mBottomNavigationBar.onBadgeCount(count);
+            // Same active+queued signal drives the breathing ember behind the
+            // flame: on while something downloads, off (idle wordmark) at 0.
+            setBrandGlowActive(count != null && count > 0);
+        });
 
         // Floor the displayed count at 1: while Home is on screen the user IS
         // on the home tab, so the counter must never read 0 (it could after a
@@ -437,9 +455,65 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
 
     }
 
+    /**
+     * Shows/hides the breathing ember behind the flame. ON while a download is
+     * active (a soft, constant "something's happening" pulse — deliberately NOT
+     * progress-linked: how-far belongs to the bottom bar, the home only says
+     * whether); OFF returns the home to the plain wordmark. The glow is sized
+     * to the flame and grown into a halo purely by the SCALE transform, so it
+     * costs no layout and bleeds past its box (wrappers clipChildren="false").
+     */
+    private void setBrandGlowActive(boolean active) {
+        if (mBrandGlow == null) return;
+        if (active) {
+            mBrandGlow.setVisibility(View.VISIBLE);
+            if (mBrandGlowAnimator == null) {
+                mBrandGlowAnimator = buildBrandGlowAnimator(mBrandGlow);
+            }
+            if (!mBrandGlowAnimator.isStarted()) {
+                mBrandGlowAnimator.start();
+            }
+        } else {
+            if (mBrandGlowAnimator != null) {
+                mBrandGlowAnimator.cancel();
+            }
+            mBrandGlow.setVisibility(View.GONE);
+            mBrandGlow.setAlpha(0f);
+        }
+    }
+
+    /**
+     * A slow alpha+scale breath, infinite and reversing, on the ember view.
+     * Soft on purpose (never fully dies, never flares) so it reads as a calm
+     * heartbeat rather than a notification blink; the scale carries the halo
+     * out beyond the flame.
+     */
+    private static Animator buildBrandGlowAnimator(View v) {
+        v.setScaleX(1.3f);
+        v.setScaleY(1.3f);
+        ObjectAnimator alpha = ObjectAnimator.ofFloat(v, View.ALPHA, 0.15f, 0.42f);
+        ObjectAnimator scaleX = ObjectAnimator.ofFloat(v, View.SCALE_X, 1.3f, 1.6f);
+        ObjectAnimator scaleY = ObjectAnimator.ofFloat(v, View.SCALE_Y, 1.3f, 1.6f);
+        ObjectAnimator[] parts = {alpha, scaleX, scaleY};
+        for (ObjectAnimator part : parts) {
+            part.setRepeatCount(ValueAnimator.INFINITE);
+            part.setRepeatMode(ValueAnimator.REVERSE);
+        }
+        AnimatorSet set = new AnimatorSet();
+        set.setDuration(2200);
+        set.setInterpolator(new AccelerateDecelerateInterpolator());
+        set.playTogether(alpha, scaleX, scaleY);
+        return set;
+    }
+
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+        if (mBrandGlowAnimator != null) {
+            mBrandGlowAnimator.cancel();
+            mBrandGlowAnimator = null;
+        }
+        mBrandGlow = null;
         mHomeScroll = null;
         mAutoCompleteView = null;
         mGeckoToolbar = null;

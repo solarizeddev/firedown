@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Firedown — slick home / status directions</title>
+<style>
+  :root{
+    --surface:#121212; --container:#1b1b1b; --on:#e6e1e5; --variant:#a9a3ad;
+    --brand:#ff6a1a; --brand-soft:#ff8a4c; --outline:#262626; --ok:#7ad28a;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,Roboto,"Segoe UI",sans-serif;
+    background:#0a0a0a;color:var(--on);padding:24px 16px 64px}
+  h1{font-size:17px;font-weight:600;text-align:center;margin:0 0 4px}
+  .sub{text-align:center;color:#7d7d7d;font-size:12px;margin:0 0 20px}
+
+  /* ---- shared control panel ---- */
+  .panel{position:sticky;top:0;z-index:10;background:#0a0a0acc;
+    backdrop-filter:blur(8px);padding:12px;border:1px solid var(--outline);
+    border-radius:16px;max-width:560px;margin:0 auto 26px;
+    display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center}
+  .panel button{background:var(--container);color:var(--on);
+    border:1px solid var(--outline);border-radius:16px;padding:7px 13px;
+    font-size:12px;cursor:pointer}
+  .panel button.active{border-color:var(--brand);color:var(--brand)}
+  .panel .scrub{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--variant)}
+  input[type=range]{accent-color:var(--brand)}
+
+  /* ---- gallery ---- */
+  .gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,270px));
+    gap:22px;justify-content:center}
+  .card{display:flex;flex-direction:column;align-items:center;gap:10px}
+  .tag{font-size:13px;font-weight:600}
+  .desc{font-size:11.5px;color:#8a8a8a;text-align:center;line-height:1.5;max-width:250px;min-height:48px}
+
+  /* ---- phone ---- */
+  .phone{width:250px;height:480px;border-radius:30px;background:var(--surface);
+    border:1px solid #2b2b2b;overflow:hidden;position:relative;
+    display:flex;flex-direction:column}
+  .toolbar{height:44px;display:flex;align-items:center;gap:8px;padding:0 12px;
+    color:var(--variant);position:relative}
+  .urlbar{flex:1;height:32px;border-radius:16px;background:var(--container);
+    display:flex;align-items:center;padding:0 13px;font-size:11px;color:var(--variant)}
+  .home{flex:1;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;gap:5px;position:relative}
+  .flamewrap{position:relative;width:60px;height:60px;display:grid;place-items:center}
+  .flame{font-size:32px;position:relative;z-index:2;transition:filter .4s}
+  .wordmark{font-size:18px;font-weight:700;letter-spacing:-.02em;margin-top:6px}
+  .stat{font-size:11px;color:var(--variant)}
+  .stat b{font-weight:400}
+
+  /* bottom bar */
+  .bbar{height:48px;border-top:1px solid var(--outline);display:flex;
+    align-items:center;justify-content:space-around;color:var(--variant)}
+  .bslot{position:relative;width:34px;height:34px;display:grid;place-items:center;font-size:16px}
+  .badge{position:absolute;top:-2px;right:-4px;min-width:15px;height:15px;padding:0 3px;
+    border-radius:8px;background:var(--brand);color:#1a0a00;font-size:9px;font-weight:700;
+    display:grid;place-items:center;z-index:3}
+
+  /* progress ring (SVG) */
+  .ring{position:absolute;inset:-3px;transform:rotate(-90deg);pointer-events:none}
+  .ring circle{fill:none;stroke-width:2.5}
+  .ring .track{stroke:#ffffff14}
+  .ring .fill{stroke:var(--brand);stroke-linecap:round;
+    stroke-dasharray:75.4;stroke-dashoffset:75.4;transition:stroke-dashoffset .25s}
+
+  /* ---- treatment 2: flame ember glow ---- */
+  .ember{position:absolute;inset:-14px;border-radius:50%;z-index:1;opacity:0;
+    background:radial-gradient(circle,rgba(255,106,26,.55),rgba(255,106,26,0) 70%)}
+  .active-dl .ember{animation:breathe 2.4s ease-in-out infinite}
+  .scanning .ember{animation:shimmer 1s ease-in-out infinite}
+  @keyframes breathe{0%,100%{opacity:.25;transform:scale(.9)}50%{opacity:.7;transform:scale(1.12)}}
+  @keyframes shimmer{0%,100%{opacity:.15}50%{opacity:.45}}
+  .active-dl .flame, .scanning .flame{filter:drop-shadow(0 0 6px rgba(255,138,76,.7))}
+
+  /* ---- treatment 4: completion flare (one-shot) ---- */
+  .flare .ember{animation:flare .9s ease-out 1 !important;opacity:0}
+  @keyframes flare{0%{opacity:.9;transform:scale(.6)}60%{opacity:.8;transform:scale(1.5)}
+    100%{opacity:0;transform:scale(1.9)}}
+  .pop{position:absolute;inset:0;display:grid;place-items:center;color:var(--ok);
+    font-size:13px;opacity:0;z-index:4}
+  .flare .pop{animation:pop .9s ease-out 1}
+  @keyframes pop{0%{opacity:0;transform:scale(.4)}30%{opacity:1;transform:scale(1)}
+    70%{opacity:1}100%{opacity:0;transform:scale(1)}}
+
+  .mini-spin{width:13px;height:13px;border-radius:50%;
+    border:2px solid #ffffff22;border-top-color:var(--brand);animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+  <h1>Home & status — slickness directions</h1>
+  <p class="sub">Identity-first home · status lives on the surface that owns it · nothing speculative.
+     Drive the shared state below; every phone reacts to it.</p>
+
+  <div class="panel">
+    <button data-mode="idle" class="active">Idle</button>
+    <button data-mode="dl">Downloading</button>
+    <button data-mode="scan">Scanning capture</button>
+    <button data-mode="done">Just finished ✓</button>
+    <span class="scrub">progress
+      <input id="scrub" type="range" min="0" max="100" value="42">
+      <span id="pct">42%</span>
+    </span>
+  </div>
+
+  <div class="gallery">
+
+    <!-- 1 — badge progress ring -->
+    <div class="card">
+      <div class="tag">1 · Progress ring on the badge</div>
+      <div class="phone" data-t="ring">
+        <div class="toolbar"><span>‹</span><span>›</span><div class="urlbar">Search or enter address</div><span>⋮</span></div>
+        <div class="home">
+          <div class="flamewrap"><div class="ember"></div><div class="flame">🔥</div><div class="pop">✓</div></div>
+          <div class="wordmark">Firedown</div>
+          <div class="stat">10.5K <b>blocked ·</b> 9.5 GB <b>saved</b></div>
+        </div>
+        <div class="bbar">
+          <div class="bslot">⌂</div><div class="bslot">★</div><div class="bslot">▤</div>
+          <div class="bslot dl-slot">⬇
+            <svg class="ring" viewBox="0 0 28 28"><circle class="track" cx="14" cy="14" r="12"/><circle class="fill" cx="14" cy="14" r="12"/></svg>
+            <span class="badge">3</span>
+          </div>
+          <div class="bslot">◳</div>
+        </div>
+      </div>
+      <div class="desc">Precision on the owner. The download icon grows a thin determinate ring; badge still counts. Nothing added to the home.</div>
+    </div>
+
+    <!-- 2 — flame ember -->
+    <div class="card">
+      <div class="tag">2 · The flame is the status light</div>
+      <div class="phone" data-t="ember">
+        <div class="toolbar"><span>‹</span><span>›</span><div class="urlbar">Search or enter address</div><span>⋮</span></div>
+        <div class="home">
+          <div class="flamewrap"><div class="ember"></div><div class="flame">🔥</div><div class="pop">✓</div></div>
+          <div class="wordmark">Firedown</div>
+          <div class="stat">10.5K <b>blocked ·</b> 9.5 GB <b>saved</b></div>
+        </div>
+        <div class="bbar">
+          <div class="bslot">⌂</div><div class="bslot">★</div><div class="bslot">▤</div>
+          <div class="bslot dl-slot">⬇<span class="badge">3</span></div>
+          <div class="bslot">◳</div>
+        </div>
+      </div>
+      <div class="desc">Identity as ambient status — the logo breathes a soft ember while work runs, a quick shimmer while capturing. Zero widgets. "Firedown" → embers.</div>
+    </div>
+
+    <!-- 3 — combined -->
+    <div class="card">
+      <div class="tag">3 · Combined (recommended)</div>
+      <div class="phone" data-t="combo">
+        <div class="toolbar"><span>‹</span><span>›</span><div class="urlbar">Search or enter address</div><span>⋮</span></div>
+        <div class="home">
+          <div class="flamewrap"><div class="ember"></div><div class="flame">🔥</div><div class="pop">✓</div></div>
+          <div class="wordmark">Firedown</div>
+          <div class="stat">10.5K <b>blocked ·</b> 9.5 GB <b>saved</b></div>
+        </div>
+        <div class="bbar">
+          <div class="bslot">⌂</div><div class="bslot">★</div><div class="bslot">▤</div>
+          <div class="bslot dl-slot">⬇
+            <svg class="ring" viewBox="0 0 28 28"><circle class="track" cx="14" cy="14" r="12"/><circle class="fill" cx="14" cy="14" r="12"/></svg>
+            <span class="badge">3</span>
+          </div>
+          <div class="bslot">◳</div>
+        </div>
+      </div>
+      <div class="desc">Two registers: ember = "something's happening" (glanceable from the home), ring = "how far" (precise on the bar). Each fact in exactly one place.</div>
+    </div>
+
+    <!-- 4 — completion flare -->
+    <div class="card">
+      <div class="tag">4 · Completion flare (the finish beat)</div>
+      <div class="phone" data-t="flare">
+        <div class="toolbar"><span>‹</span><span>›</span><div class="urlbar">Search or enter address</div><span>⋮</span></div>
+        <div class="home">
+          <div class="flamewrap"><div class="ember"></div><div class="flame">🔥</div><div class="pop">✓</div></div>
+          <div class="wordmark">Firedown</div>
+          <div class="stat">10.5K <b>blocked ·</b> 9.5 GB <b>saved</b></div>
+        </div>
+        <div class="bbar">
+          <div class="bslot">⌂</div><div class="bslot">★</div><div class="bslot">▤</div>
+          <div class="bslot dl-slot">⬇<span class="badge">3</span></div>
+          <div class="bslot">◳</div>
+        </div>
+      </div>
+      <div class="desc">A one-shot micro-delight: on finish the flame flares warm and a check pops, then settles. Ephemeral reward, not persistent chrome. Hit "Just finished".</div>
+    </div>
+
+  </div>
+
+<script>
+  const C = 2 * Math.PI * 12;            // ring circumference
+  const phones = [...document.querySelectorAll('.phone')];
+  const scrub = document.getElementById('scrub');
+  const pct = document.getElementById('pct');
+  let mode = 'idle', progress = 0.42;
+
+  function render(){
+    pct.textContent = Math.round(progress*100) + '%';
+    phones.forEach(p=>{
+      const t = p.dataset.t;
+      p.classList.remove('active-dl','scanning','flare');
+
+      // ring fill (treatments that have a ring)
+      const fill = p.querySelector('.ring .fill');
+      const ringActive = (mode==='dl') && (t==='ring'||t==='combo');
+      if(fill){
+        fill.style.strokeDashoffset = ringActive ? C*(1-progress) : C;
+        fill.style.opacity = ringActive ? 1 : 0;
+      }
+      // badge shows count when downloading; could swap to spinner — kept as count
+      const badge = p.querySelector('.badge');
+      if(badge) badge.style.display = (mode==='idle') ? 'none' : 'grid';
+
+      // ember / flame treatments
+      const hasEmber = (t==='ember'||t==='combo');
+      if(mode==='dl' && hasEmber) p.classList.add('active-dl');
+      if(mode==='scan' && hasEmber) p.classList.add('scanning');
+
+      // completion flare (treatment 4 + combo get the beat)
+      if(mode==='done' && (t==='flare'||t==='combo')) p.classList.add('flare');
+    });
+  }
+
+  document.querySelectorAll('.panel button').forEach(b=>{
+    b.onclick=()=>{
+      mode=b.dataset.mode;
+      document.querySelectorAll('.panel button').forEach(x=>x.classList.toggle('active',x===b));
+      render();
+      // auto-clear the one-shot flare back to idle so it can re-trigger
+      if(mode==='done') setTimeout(()=>{ if(mode==='done'){ mode='idle';
+        document.querySelectorAll('.panel button').forEach(x=>x.classList.toggle('active',x.dataset.mode==='idle'));
+        render();} }, 1000);
+    };
+  });
+  scrub.oninput=()=>{ progress=scrub.value/100; if(mode!=='dl'){mode='dl';
+    document.querySelectorAll('.panel button').forEach(x=>x.classList.toggle('active',x.dataset.mode==='dl'));}
+    render(); };
+
+  render();
+</script>
+</body>
+</html>
