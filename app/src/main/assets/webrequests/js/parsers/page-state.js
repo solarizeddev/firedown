@@ -134,7 +134,13 @@ registerMessageHandler("page-state-progressive", (message, sender) => {
         name: p.title,
         img: p.img,
         duration: p.durationMs > 0 ? p.durationMs : 0,
-        requestHeaders
+        requestHeaders,
+        // Per-CLIP dedup: a single page can hold MANY distinct clips (multiple
+        // players in one document), all with this same page origin — keying dedup
+        // on the primary media URL lets each clip through instead of collapsing
+        // them to the first. Cross-pass re-emit of the same clip is still gated by
+        // the bridge's URL sentKeys + the repository's url-hash dedup.
+        dedupKey: primaryUrl
     });
 });
 

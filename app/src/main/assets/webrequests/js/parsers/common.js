@@ -133,7 +133,7 @@ async function sendNative(message) {
  * Unified variant sender for Twitter, Instagram, and future parsers.
  * Handles dedup, sorting, and message construction.
  */
-async function sendVariants(details, { variants, origin, description, img, name, duration, requestHeaders, skipProbe, manifest }) {
+async function sendVariants(details, { variants, origin, description, img, name, duration, requestHeaders, skipProbe, manifest, dedupKey }) {
     if (!Array.isArray(variants) || variants.length === 0) return;
 
     // If the parser already has what the capture-time ffmpeg probe would supply
@@ -152,15 +152,23 @@ async function sendVariants(details, { variants, origin, description, img, name,
     // Sort by height descending — best quality first
     variants.sort((a, b) => (b.height || 0) - (a.height || 0));
 
-    // Dedup by (tabId, origin). Resolve the tab first so the key matches the tab
-    // the entity is attributed to (and the repository's per-tab dedup).
+    // Dedup by (tabId, KEY). The key is the page origin by default — correct for a
+    // per-site parser, where a page is ONE video and origin-dedup collapses its
+    // refresh/retry re-emits. But a generic page-state-bridge page can hold MANY
+    // distinct clips (multiple <video>/players in one document), all sharing the
+    // SAME page origin — origin-dedup would drop every clip after the first. Such
+    // callers pass a per-CLIP `dedupKey` (the primary media URL) so each clip gets
+    // through; cross-pass re-emit of the SAME clip is still prevented by the
+    // bridge's own URL `sentKeys` and the repository's url-hash dedup. Resolve the
+    // tab first so the key matches the tab the entity is attributed to.
     const tabId = await resolveTabId(details);
+    const key = dedupKey || origin;
 
-    if (alreadySent(origin, tabId)) {
-        log("DEDUP", `Already sent for ${origin} (tab ${tabId}), skipping`);
+    if (alreadySent(key, tabId)) {
+        log("DEDUP", `Already sent for ${key} (tab ${tabId}), skipping`);
         return;
     }
-    markSent(origin, tabId);
+    markSent(key, tabId);
 
     log("VARIANTS", `Sending ${variants.length} variant(s)`, { origin });
 
