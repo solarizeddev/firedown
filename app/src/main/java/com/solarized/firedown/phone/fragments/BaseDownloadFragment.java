@@ -222,6 +222,12 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
         if (mSearchBar.getVisibility() != View.VISIBLE) {
             onSearchBarOpening();
             mSearchBar.setVisibility(View.VISIBLE);
+            // The toolbar's search icon has "expanded" into the bar — hide it so
+            // there aren't two magnifiers on screen at once (onCreateMenu reads
+            // isSearchActive()).
+            if (mToolbar != null) {
+                mToolbar.invalidateMenu();
+            }
         }
         mSearchEdit.requestFocus();
         mSearchEdit.post(() -> showKeyboard(mSearchEdit));
@@ -238,6 +244,10 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
         mSearchEdit.setText("");
         hideKeyboard(mSearchEdit);
         mSearchBar.setVisibility(View.GONE);
+        // Restore the toolbar's search icon now that the bar is gone.
+        if (mToolbar != null) {
+            mToolbar.invalidateMenu();
+        }
         onSearchBarClosing();
     }
 

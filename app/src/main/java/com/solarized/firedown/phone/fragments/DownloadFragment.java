@@ -309,6 +309,11 @@ public class DownloadFragment extends BaseDownloadFragment implements
                     inflater.inflate(mOperationActive ? R.menu.menu_action_empty : R.menu.menu_action_download, menu);
                 } else {
                     inflater.inflate(R.menu.menu_download, menu);
+                    // Hide the search icon while the in-place search bar is open
+                    // — otherwise the toolbar magnifier and the bar's own glyph
+                    // both show (open/close calls invalidateMenu to re-evaluate).
+                    MenuItem searchItem = menu.findItem(R.id.action_search);
+                    if (searchItem != null) searchItem.setVisible(!isSearchActive());
                     MenuItem actionView = menu.findItem(R.id.action_view);
                     if (actionView != null) actionView.setIcon(mEnableGrid ? R.drawable.ic_view_list_24 : R.drawable.ic_grid_view_24);
                 }
