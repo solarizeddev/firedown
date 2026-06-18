@@ -321,6 +321,10 @@ public final class DownloadBackupMirror {
     public static int restoreFromTree(@NonNull Context context,
                                       @NonNull DownloadDatabase database,
                                       @NonNull Uri treeUri) {
+        // The user picked a folder and ran a restore — record it (any outcome,
+        // both doors) so the empty-state stops re-offering a restore that
+        // already ran. Runs on the caller's background thread.
+        markRestoreAttempted(context);
         ArrayList<Pair<Uri, Long>> candidates = new ArrayList<>();
         try {
             String rootDocId = DocumentsContract.getTreeDocumentId(treeUri);
@@ -567,6 +571,7 @@ public final class DownloadBackupMirror {
     private static final String KEY_SENTINEL_BACKED_UP =
             "com.solarized.firedown.preferences.backup.install.sentinel";
     private static final String KEY_RESTORE_BANNER = "restore_banner_pending";
+    private static final String KEY_RESTORE_ATTEMPTED = "restore_attempted";
 
     private static boolean detectReinstall(@NonNull Context context, @NonNull SharedPreferences localPrefs) {
         SharedPreferences defaultPrefs =
@@ -595,6 +600,23 @@ public final class DownloadBackupMirror {
     public static void clearRestoreBanner(@NonNull Context context) {
         context.getSharedPreferences(LOCAL_PREFS, Context.MODE_PRIVATE)
                 .edit().putBoolean(KEY_RESTORE_BANNER, false).apply();
+    }
+
+    /** Set once the user has run a SAF restore on THIS install (any outcome).
+     *  Lives in {@code backup_local.xml} — EXCLUDED from backup — so it RESETS
+     *  on a genuine reinstall (the empty-state offers restore again) but
+     *  persists within the install (a futile re-tap is not re-offered). */
+    public static void markRestoreAttempted(@NonNull Context context) {
+        context.getSharedPreferences(LOCAL_PREFS, Context.MODE_PRIVATE)
+                .edit().putBoolean(KEY_RESTORE_ATTEMPTED, true).apply();
+    }
+
+    /** Whether a SAF restore has already been attempted on this install. The
+     *  empty-state restore button is hidden once true — the Settings →
+     *  "Restore previous downloads" door remains for a deliberate retry. */
+    public static boolean isRestoreAttempted(@NonNull Context context) {
+        return context.getSharedPreferences(LOCAL_PREFS, Context.MODE_PRIVATE)
+                .getBoolean(KEY_RESTORE_ATTEMPTED, false);
     }
 
     /**

@@ -282,7 +282,15 @@ public class DownloadFragment extends BaseDownloadFragment implements
                         // Idempotent, so offering it to a genuinely-new user is
                         // harmless ("no backup found"). Filtered-empty keeps the
                         // plain message — the list isn't actually empty.
-                        if (unfiltered) {
+                        //
+                        // BUT only until the user has actually RUN a restore on this
+                        // install: once attempted (any outcome — 0 restored / wrong
+                        // device / no backup), re-tapping the same flow can't help,
+                        // so stop re-offering it here. The flag is excluded from
+                        // backup, so a genuine reinstall offers it afresh; Settings →
+                        // "Restore previous downloads" stays for a deliberate retry.
+                        if (unfiltered
+                                && !DownloadBackupMirror.isRestoreAttempted(requireContext())) {
                             mLCEERecyclerView.setEmptyButtonText(R.string.restore_downloads_button);
                             mLCEERecyclerView.setEmptyButtonVisibility(View.VISIBLE);
                             mLCEERecyclerView.setButtonListener(id -> showRestoreDownloadsDialog());
