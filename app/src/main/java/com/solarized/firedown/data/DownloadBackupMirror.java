@@ -6,6 +6,7 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
+import android.os.StrictMode;
 import android.provider.DocumentsContract;
 import android.provider.Settings;
 import android.text.TextUtils;
@@ -289,8 +290,26 @@ public final class DownloadBackupMirror {
      *  kept for the future content-URI playback fallback on Android 13+. */
     private static final String KEY_RESTORE_TREE = "restore_tree_uri";
 
+    /**
+     * The {@code backup_local.xml} prefs. The FIRST access to a prefs file does
+     * synchronous disk I/O to load the XML — and these are read on the main
+     * thread (e.g. {@link #isRestoreBannerPending} from
+     * {@code DownloadFragment.onCreateView}), which trips StrictMode's
+     * DiskReadViolation. The file is tiny and the load is one-time
+     * (ContextImpl caches the instance, so later calls do no I/O), so we permit
+     * the read here rather than penalize a benign, unavoidable startup read.
+     */
+    private static SharedPreferences localPrefs(@NonNull Context context) {
+        StrictMode.ThreadPolicy old = StrictMode.allowThreadDiskReads();
+        try {
+            return context.getSharedPreferences(LOCAL_PREFS, Context.MODE_PRIVATE);
+        } finally {
+            StrictMode.setThreadPolicy(old);
+        }
+    }
+
     public static void rememberRestoreTree(@NonNull Context context, @NonNull Uri treeUri) {
-        context.getSharedPreferences(LOCAL_PREFS, Context.MODE_PRIVATE)
+        localPrefs(context)
                 .edit().putString(KEY_RESTORE_TREE, treeUri.toString()).apply();
     }
 
@@ -300,7 +319,7 @@ public final class DownloadBackupMirror {
      *  files this install can't read by path. */
     @Nullable
     public static Uri getRestoreTree(@NonNull Context context) {
-        String stored = context.getSharedPreferences(LOCAL_PREFS, Context.MODE_PRIVATE)
+        String stored = localPrefs(context)
                 .getString(KEY_RESTORE_TREE, null);
         return TextUtils.isEmpty(stored) ? null : Uri.parse(stored);
     }
@@ -477,7 +496,7 @@ public final class DownloadBackupMirror {
      * backup restore actually delivered one).
      */
     public static void restoreIfPending(@NonNull Context context, @NonNull DownloadDatabase database) {
-        SharedPreferences prefs = context.getSharedPreferences(LOCAL_PREFS, Context.MODE_PRIVATE);
+        SharedPreferences prefs = localPrefs(context);
         if (prefs.getBoolean(KEY_RESTORE_DONE, false)) {
             return;
         }
@@ -559,13 +578,13 @@ public final class DownloadBackupMirror {
      *  downloads" banner (reinstall detected, automatic restore came back
      *  empty, user hasn't dismissed or completed a restore yet). */
     public static boolean isRestoreBannerPending(@NonNull Context context) {
-        return context.getSharedPreferences(LOCAL_PREFS, Context.MODE_PRIVATE)
+        return localPrefs(context)
                 .getBoolean(KEY_RESTORE_BANNER, false);
     }
 
     /** Permanently retire the banner: user dismissed it, or a restore ran. */
     public static void clearRestoreBanner(@NonNull Context context) {
-        context.getSharedPreferences(LOCAL_PREFS, Context.MODE_PRIVATE)
+        localPrefs(context)
                 .edit().putBoolean(KEY_RESTORE_BANNER, false).apply();
     }
 
