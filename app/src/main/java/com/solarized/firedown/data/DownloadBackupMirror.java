@@ -336,6 +336,13 @@ public final class DownloadBackupMirror {
         File plain = new File(context.getCacheDir(), "restore-mirror-" + System.currentTimeMillis() + ".db");
         boolean anyDecrypted = false;
         int totalRestored = 0;
+        // Mirrors that decrypted but imported ZERO rows — every entry was a
+        // file the user already deleted (the skip in importMirrorDatabase) or a
+        // duplicate already covered by another mirror. They can never restore
+        // anything again, so they only cause the recurring "0 restored" on a
+        // clean install. Collected here and pruned after the read loop (so the
+        // candidate's InputStream is closed first).
+        ArrayList<Uri> staleMirrors = new ArrayList<>();
         try {
             // Try EVERY decryptable mirror, not just the newest. After a
             // reinstall the app's first background re-writes a public mirror
@@ -354,7 +361,11 @@ public final class DownloadBackupMirror {
                     }
                     if (decryptPublicMirror(context, in, plain)) {
                         anyDecrypted = true;
-                        totalRestored += importMirrorDatabase(context, database, plain);
+                        int rows = importMirrorDatabase(context, database, plain);
+                        totalRestored += rows;
+                        if (rows == 0) {
+                            staleMirrors.add(candidate.first);
+                        }
                     }
                 } catch (Exception e) {
                     if (BuildConfig.DEBUG) {
@@ -370,6 +381,23 @@ public final class DownloadBackupMirror {
         // No candidate decrypted at all → written by a different device/identity.
         if (!anyDecrypted) {
             return RESTORE_WRONG_DEVICE;
+        }
+        // Best-effort prune of the now-worthless mirrors (we hold the SAF WRITE
+        // grant from rememberRestoreTree). Never touches a mirror that restored
+        // rows — that one stays the live backup until the next background
+        // re-writes a fresh consolidated mirror.
+        for (Uri stale : staleMirrors) {
+            try {
+                boolean deleted = DocumentsContract.deleteDocument(
+                        context.getContentResolver(), stale);
+                if (BuildConfig.DEBUG) {
+                    Log.d(TAG, "restoreFromTree: pruned stale mirror (deleted=" + deleted + ") " + stale);
+                }
+            } catch (Exception e) {
+                if (BuildConfig.DEBUG) {
+                    Log.d(TAG, "restoreFromTree: prune failed for " + stale, e);
+                }
+            }
         }
         Log.i(TAG, "restoreFromTree: restored " + totalRestored + " entries from SAF mirror");
         // Any completed restore retires the reinstall banner, whichever door
