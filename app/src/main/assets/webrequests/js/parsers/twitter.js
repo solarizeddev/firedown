@@ -1,5 +1,5 @@
 // Twitter / X parser — split verbatim out of the former parser-background.js.
-import { log, sendVariants, sendSubtitles, urlToTabCache, readFilteredJson } from './common.js';
+import { log, sendVariants, sendSubtitles, urlToTabCache, cacheTabUrl, readFilteredJson, readFilteredBody } from './common.js';
 
 // ============================================================================
 // Twitter / X
@@ -134,43 +134,21 @@ function extractTwitterSubtitles(m) {
     return out;
 }
 
-// Turn one tweet_results.result into download variants and send them.
-// Returns true if at least one video was emitted.
-function emitTwitterTweetVideos(details, result) {
-    const tweetResult = unwrapTweet(result);
-    const legacy = tweetResult?.legacy;
-    const media = legacy?.extended_entities?.media;
+// Shared emit core: turn a NORMALISED tweet — a media array plus author / text /
+// thumbnail — into download variants and send them. Returns true if at least one
+// video was emitted. Fed by BOTH capture paths:
+//   - the GraphQL XHR path (emitTwitterTweetVideos), and
+//   - the SSR document path (emitSsrTweet, below).
+// The per-media-ITEM shape is identical between them (video_info.variants
+// {content_type,url,bitrate}, media_url_https, the subtitle locations), so only
+// the TWEET-level field names differ (legacy.extended_entities/full_text vs the
+// new media_entities2/details SSR layout) — each caller normalises those and
+// hands the common shape here.
+function emitTweetMedia(details, { screenName, tweetId, text, imageUrl, media }) {
     if (!media || media.length === 0) return false;
-
-    // X migrated User fields (screen_name, name) out of `legacy` into a new
-    // `core` sub-object on the user result; older responses still carry them
-    // in `legacy`. Reading only `legacy.screen_name` made every timeline
-    // video resolve to "unknown" (the home/feed view has no /status/ URL for
-    // extractScreenNameFromUrl to fall back on). Check the new `core`
-    // location first, then `legacy`. NB: user.core (the user's handle/name)
-    // is a different object from tweet.core (which holds user_results).
-    const userResult = tweetResult.core?.user_results?.result
-        || result.core?.user_results?.result;
-    const screenName = userResult?.core?.screen_name
-        || userResult?.legacy?.screen_name
-        || extractScreenNameFromUrl(details)
-        || "unknown";
-    const tweetId = tweetResult.rest_id || legacy.id_str;
-    const originUrl = screenName !== "unknown"
+    const originUrl = (screenName && screenName !== "unknown")
         ? `https://x.com/${screenName}/status/${tweetId}`
         : `https://x.com/i/status/${tweetId}`;
-    const videoText = legacy.full_text || "";
-
-    let imageUrl = media[0]?.media_url_https;
-    if (!imageUrl) {
-        const bindings = tweetResult.card?.legacy?.binding_values;
-        const keys = ["thumbnail_image_original", "player_image_large", "player_image",
-                      "summary_photo_image_original", "thumbnail_image"];
-        for (const key of keys) {
-            const url = bindings?.find(b => b.key === key)?.value?.image_value?.url;
-            if (url) { imageUrl = url; break; }
-        }
-    }
 
     let emitted = false;
     for (const m of media) {
@@ -207,9 +185,9 @@ function emitTwitterTweetVideos(details, result) {
         sendVariants(details, {
             variants,
             origin: originUrl,
-            description: videoText,
+            description: text || "",
             img: imageUrl,
-            name: screenName,
+            name: screenName || "unknown",
             duration: m.video_info.duration_millis || 0
         });
 
@@ -220,6 +198,44 @@ function emitTwitterTweetVideos(details, result) {
         }
     }
     return emitted;
+}
+
+// GraphQL adapter: normalise one tweet_results.result (the XHR / SPA shape) and
+// emit. Returns true if at least one video was emitted.
+function emitTwitterTweetVideos(details, result) {
+    const tweetResult = unwrapTweet(result);
+    const legacy = tweetResult?.legacy;
+    const media = legacy?.extended_entities?.media;
+    if (!media || media.length === 0) return false;
+
+    // X migrated User fields (screen_name, name) out of `legacy` into a new
+    // `core` sub-object on the user result; older responses still carry them
+    // in `legacy`. Reading only `legacy.screen_name` made every timeline
+    // video resolve to "unknown" (the home/feed view has no /status/ URL for
+    // extractScreenNameFromUrl to fall back on). Check the new `core`
+    // location first, then `legacy`. NB: user.core (the user's handle/name)
+    // is a different object from tweet.core (which holds user_results).
+    const userResult = tweetResult.core?.user_results?.result
+        || result.core?.user_results?.result;
+    const screenName = userResult?.core?.screen_name
+        || userResult?.legacy?.screen_name
+        || extractScreenNameFromUrl(details)
+        || "unknown";
+    const tweetId = tweetResult.rest_id || legacy.id_str;
+    const videoText = legacy.full_text || "";
+
+    let imageUrl = media[0]?.media_url_https;
+    if (!imageUrl) {
+        const bindings = tweetResult.card?.legacy?.binding_values;
+        const keys = ["thumbnail_image_original", "player_image_large", "player_image",
+                      "summary_photo_image_original", "thumbnail_image"];
+        for (const key of keys) {
+            const url = bindings?.find(b => b.key === key)?.value?.image_value?.url;
+            if (url) { imageUrl = url; break; }
+        }
+    }
+
+    return emitTweetMedia(details, { screenName, tweetId, text: videoText, imageUrl, media });
 }
 
 // Process one already-parsed GraphQL response, branching on query kind.
@@ -280,4 +296,313 @@ browser.webRequest.onBeforeRequest.addListener(
     { urls: TWITTER_GRAPHQL_URLS, types: ["xmlhttprequest"] },
     ["blocking"]
 );
+
+// ============================================================================
+// X streaming-SSR document path (no GraphQL XHR)
+// ============================================================================
+// The single-tweet page (x.com/<user>/status/<id>) no longer fires a GraphQL
+// XHR (TweetResultByRestId / TweetDetail): X server-side-renders the tweet into
+// the main_frame DOCUMENT, inside <script class="$tsr">, as a normalised Relay
+// store. Confirmed from a HAR — the document carried video_info / media_entities2
+// while the only graphql requests were the login user_flow.json. Because
+// video.twimg.com is parser-block-listed, a miss here loses the video ENTIRELY
+// (the generic catcher can't grab it either), so this is a second capture path
+// beside the GraphQL listener above — exactly like Threads' doc filter beside
+// its API filter, and Bluesky's two hls paths. Both emit the same origin
+// (x.com/<screen>/status/<id>), so the per-origin dedup (alreadySent) collapses
+// them when both fire on one tweet.
+//
+// The store is serialized as a JS OBJECT LITERAL, not JSON, so JSON.parse and
+// the GraphQL walkers (collectTweetResults — tweet_results.result /
+// legacy.extended_entities) don't apply. Quirks of the format, all handled by
+// parseRelayValue:
+//   - unquoted identifier object keys (quoted keys still appear — the
+//     "client:..." record ids, and the tweet_result_by_rest_id(...) field key);
+//   - `void 0` for undefined and the minified booleans `!0`/`!1`;
+//   - a `$R[n]=value` / `$R[n]` capture+back-reference scheme that dedups
+//     repeated VALUES within ONE serialization (distinct from record links).
+// Records are a FLAT map (the relayRecords object) keyed by id; they link to one
+// another by string `__ref` (one id) / `__refs` (id array). Those links are
+// resolved against the flat map, NOT via $R. The new SSR field layout differs
+// from the GraphQL `legacy.*` shape: a tweet's media is `media_entities2[]`, its
+// text is `details.full_text`, and the author is
+// `core.user_results.result.core.screen_name` (the same `core` location the
+// GraphQL path already reads). Per-media-item shape (video_info.variants
+// {content_type,url,bitrate}, media_url_https) is identical, so emitTweetMedia
+// is shared.
+
+// Recursive-descent parser for the restricted grammar above. Returns the value
+// starting at `state.i`, advancing the index. `state.R` is the per-parse $R
+// capture table (numeric id -> already-parsed value). Bounded by the input
+// length (the document is a single bounded response body).
+function parseRelayValue(src, state) {
+    skipWs(src, state);
+    // $R[n]  (back-reference)  or  $R[n]=<value>  (capture).
+    if (src.startsWith("$R[", state.i)) {
+        const close = src.indexOf("]", state.i);
+        const n = src.slice(state.i + 3, close);
+        state.i = close + 1;
+        skipWs(src, state);
+        if (src[state.i] === "=") {
+            state.i++;
+            const v = parseRelayValue(src, state);
+            state.R[n] = v;
+            return v;
+        }
+        return state.R[n]; // may be undefined if it points outside relayRecords
+    }
+    const c = src[state.i];
+    if (c === "{") return parseRelayObject(src, state);
+    if (c === "[") return parseRelayArray(src, state);
+    if (c === '"') return parseRelayString(src, state);
+    if (src.startsWith("!0", state.i)) { state.i += 2; return true; }   // minified true
+    if (src.startsWith("!1", state.i)) { state.i += 2; return false; }  // minified false
+    if (src.startsWith("void 0", state.i)) { state.i += 6; return undefined; }
+    if (src.startsWith("true", state.i)) { state.i += 4; return true; }
+    if (src.startsWith("false", state.i)) { state.i += 5; return false; }
+    if (src.startsWith("null", state.i)) { state.i += 4; return null; }
+    return parseRelayNumber(src, state);
+}
+
+function skipWs(src, state) {
+    while (state.i < src.length) {
+        const c = src[state.i];
+        if (c === " " || c === "\n" || c === "\t" || c === "\r") state.i++;
+        else break;
+    }
+}
+
+function parseRelayObject(src, state) {
+    const o = {};
+    state.i++; // {
+    skipWs(src, state);
+    if (src[state.i] === "}") { state.i++; return o; }
+    while (state.i < src.length) {
+        skipWs(src, state);
+        let key;
+        if (src[state.i] === '"') {
+            key = parseRelayString(src, state);
+        } else {
+            let j = state.i;
+            while (j < src.length && src[j] !== ":" && !/\s/.test(src[j])) j++;
+            key = src.slice(state.i, j);
+            state.i = j;
+        }
+        skipWs(src, state);
+        state.i++; // :
+        o[key] = parseRelayValue(src, state);
+        skipWs(src, state);
+        if (src[state.i] === ",") { state.i++; continue; }
+        if (src[state.i] === "}") { state.i++; break; }
+        break; // unexpected token — stop this object (caller decides)
+    }
+    return o;
+}
+
+function parseRelayArray(src, state) {
+    const a = [];
+    state.i++; // [
+    skipWs(src, state);
+    if (src[state.i] === "]") { state.i++; return a; }
+    while (state.i < src.length) {
+        a.push(parseRelayValue(src, state));
+        skipWs(src, state);
+        if (src[state.i] === ",") { state.i++; skipWs(src, state); continue; }
+        if (src[state.i] === "]") { state.i++; break; }
+        break;
+    }
+    return a;
+}
+
+function parseRelayString(src, state) {
+    state.i++; // opening "
+    let s = "";
+    while (state.i < src.length) {
+        const c = src[state.i];
+        if (c === "\\") {
+            const n = src[state.i + 1];
+            if (n === "n") s += "\n";
+            else if (n === "t") s += "\t";
+            else if (n === "r") s += "\r";
+            else if (n === "u") { s += String.fromCharCode(parseInt(src.slice(state.i + 2, state.i + 6), 16)); state.i += 4; }
+            else s += n; // \" \\ \/ etc. -> the literal char
+            state.i += 2;
+            continue;
+        }
+        if (c === '"') { state.i++; break; }
+        s += c;
+        state.i++;
+    }
+    return s;
+}
+
+function parseRelayNumber(src, state) {
+    let j = state.i;
+    while (j < src.length && /[-+0-9.eEnx]/.test(src[j])) j++;
+    const t = src.slice(state.i, j);
+    state.i = j;
+    if (t.endsWith("n")) return Number(t.slice(0, -1)); // BigInt literal
+    return Number(t);
+}
+
+// Pull every <script class="$tsr"> body out of the document. SSR is streamed,
+// so there can be more than one; we parse relayRecords from each that has it
+// and merge into one flat map (later scripts add/override).
+function extractTsrScripts(html) {
+    const out = [];
+    const re = /<script[^>]*\bclass="\$tsr"[^>]*>/g;
+    let m;
+    while ((m = re.exec(html)) !== null) {
+        const start = m.index + m[0].length;
+        const end = html.indexOf("</script>", start);
+        if (end > start) out.push(html.slice(start, end));
+    }
+    return out;
+}
+
+// Parse the flat relayRecords map (id -> record) out of the document's $tsr
+// scripts. Merged across scripts. Returns {} when none present.
+function parseTwitterSsrRecords(html) {
+    const records = {};
+    for (const script of extractTsrScripts(html)) {
+        const at = script.indexOf("relayRecords:");
+        if (at === -1) continue;
+        const state = { i: at + "relayRecords:".length, R: {} };
+        let map;
+        try { map = parseRelayValue(script, state); }
+        catch (e) { continue; }
+        if (map && typeof map === "object") {
+            for (const id in map) records[id] = map[id];
+        }
+    }
+    return records;
+}
+
+// Resolve a record's __ref / __refs links against the flat store, recursively
+// inlining the referenced records. Cycle-guarded (a record can't appear twice on
+// one branch) and depth-capped.
+function makeRelayResolver(records) {
+    function resolve(node, depth, seen) {
+        if (depth > 40 || node === null || typeof node !== "object") return node;
+        if (Array.isArray(node)) return node.map(v => resolve(v, depth + 1, seen));
+        if (typeof node.__ref === "string") {
+            if (seen.has(node.__ref)) return null;
+            const t = records[node.__ref];
+            return t ? resolve(t, depth + 1, new Set(seen).add(node.__ref)) : null;
+        }
+        if (Array.isArray(node.__refs)) {
+            return node.__refs.map(id => {
+                if (seen.has(id)) return null;
+                const t = records[id];
+                return t ? resolve(t, depth + 1, new Set(seen).add(id)) : null;
+            });
+        }
+        const o = {};
+        for (const k in node) o[k] = resolve(node[k], depth + 1, seen);
+        return o;
+    }
+    return (node) => resolve(node, 0, new Set());
+}
+
+// Follow result / tweet wrappers (TweetResults.result, TweetWithVisibilityResults
+// .tweet) down to the underlying Tweet record. Returns null if there isn't one.
+function unwrapSsrTweet(node) {
+    let n = node;
+    let hops = 0;
+    while (n && typeof n === "object" && n.__typename !== "Tweet" && hops < 6) {
+        if (n.result) n = n.result;
+        else if (n.tweet) n = n.tweet;
+        else break;
+        hops++;
+    }
+    return (n && typeof n === "object" && n.__typename === "Tweet") ? n : null;
+}
+
+// Normalise a resolved SSR Tweet record into the shape emitTweetMedia consumes.
+function normalizeSsrTweet(tweet, details) {
+    const media = Array.isArray(tweet.media_entities2) ? tweet.media_entities2 : [];
+    const screenName = tweet.core?.user_results?.result?.core?.screen_name
+        || extractScreenNameFromUrl(details)
+        || "unknown";
+    return {
+        screenName,
+        tweetId: tweet.rest_id,
+        text: tweet.details?.full_text || "",
+        imageUrl: media[0]?.media_url_https,
+        media
+    };
+}
+
+// Resolve the focal tweet (and a quoted tweet, if present) from the SSR store
+// and return their normalised contexts. Single-tweet pages SSR only the focal
+// tweet's conversation root here; replies load later as XHRs (the GraphQL
+// listener), so this stays focal-only — it does NOT scan the whole store, which
+// would grab reply videos.
+function collectTwitterSsrTweets(html, details) {
+    const records = parseTwitterSsrRecords(html);
+    const root = records["client:root"];
+    if (!root) return [];
+    const focalKey = Object.keys(root).find(k => k.startsWith("tweet_result_by_rest_id"));
+    if (!focalKey) return [];
+
+    const resolve = makeRelayResolver(records);
+    const focal = unwrapSsrTweet(resolve(root[focalKey]));
+    if (!focal) return [];
+
+    const out = [];
+    const seenIds = new Set();
+    const add = (tweet) => {
+        if (!tweet || seenIds.has(tweet.rest_id)) return;
+        seenIds.add(tweet.rest_id);
+        out.push(normalizeSsrTweet(tweet, details));
+    };
+    add(focal);
+    add(unwrapSsrTweet(focal.quoted_tweet_results)); // already resolved by resolve()
+    return out;
+}
+
+function processTwitterDocument(details, html) {
+    // Cheap gate: the store marker is absent on non-tweet documents and on the
+    // ad/tracker iframes this never matches anyway (main_frame only).
+    if (!html || html.indexOf("relayRecords") === -1) return;
+    let tweets;
+    try {
+        tweets = collectTwitterSsrTweets(html, details);
+    } catch (e) {
+        log("TWITTER", "ssr doc parse threw", { error: e.message });
+        return;
+    }
+    let withVideo = 0;
+    for (const t of tweets) {
+        if (emitTweetMedia(details, t)) withVideo++;
+    }
+    log("TWITTER", `ssr doc: ${withVideo}/${tweets.length} tweet(s) with video`);
+}
+
+// Read the main_frame document RESPONSE (not the DOM — the SSR <script> can be
+// consumed/replaced during hydration, the Threads lesson) via filterResponseData.
+function listenerTwitterDocument(details) {
+    if (details.type !== "main_frame") return {};
+    if (details.tabId >= 0) cacheTabUrl(details.url, details.tabId);
+    readFilteredBody(details, "TWITTER", "ssr doc", (html) => {
+        processTwitterDocument(details, html);
+    });
+    return {};
+}
+
+// Match the single-tweet page on both hosts. main_frame only.
+const TWITTER_PAGE_URLS = [
+    "*://x.com/*/status/*",
+    "*://twitter.com/*/status/*"
+];
+
+browser.webRequest.onBeforeRequest.addListener(
+    listenerTwitterDocument,
+    { urls: TWITTER_PAGE_URLS, types: ["main_frame"] },
+    ["blocking"]
+);
+
+// Exported for the HAR-replay smoke test (run the REAL extractor against a
+// serialized-store fixture, not a copy-paste). Not used by index.js.
+export { parseTwitterSsrRecords, collectTwitterSsrTweets };
 

@@ -94,7 +94,7 @@ const count = (path) => (registrations[path] ?? []).length;
 // Inventory of listener registrations across the background module graph
 // (js/parsers/* + requests.js + cookies.js + debug.js). Update deliberately
 // when adding/removing a listener — that's the point of the check.
-expect(count("webRequest.onBeforeRequest") === 26, `webRequest.onBeforeRequest registrations == 26 (got ${count("webRequest.onBeforeRequest")})`);
+expect(count("webRequest.onBeforeRequest") === 27, `webRequest.onBeforeRequest registrations == 27 (got ${count("webRequest.onBeforeRequest")})`);
 expect(count("webRequest.onSendHeaders") === 2, `webRequest.onSendHeaders registrations == 2 (got ${count("webRequest.onSendHeaders")})`);
 expect(count("webRequest.onHeadersReceived") === 2, `webRequest.onHeadersReceived registrations == 2 (got ${count("webRequest.onHeadersReceived")})`);
 expect(count("webRequest.onResponseStarted") === 1, `webRequest.onResponseStarted registrations == 1 (got ${count("webRequest.onResponseStarted")})`);
@@ -185,6 +185,46 @@ expect(variants[0]?.videoCodec === "h264" && variants[0]?.audioCodec === "aac",
 
 expect(decodeHtmlEntities("&#x41c;&amp;&#1052; &hellip;") === "М&М …",
   "decodeHtmlEntities: hex/named/decimal references");
+
+// Twitter/X streaming-SSR extractor — runs the REAL walker (parseTwitterSsrRecords
+// / collectTwitterSsrTweets imported from twitter.js) against a serialized-store
+// fixture that mirrors X's <script class="$tsr"> Relay format: unquoted keys,
+// minified booleans !0/!1, `void 0`, the $R[n]= capture / $R[n] back-reference
+// scheme, quoted "client:..." record-id keys, and __ref/__refs record links. This
+// is the HAR-replay guard for the bug fixed here (single-tweet pages SSR the video
+// into the document and fire no GraphQL XHR), per CLAUDE.md's "run the real code
+// against the bytes" rule.
+const { parseTwitterSsrRecords, collectTwitterSsrTweets } = await import(
+  pathToFileURL(join(ext, "js/parsers/twitter.js"))
+);
+const ssrFixture = `<html><body><script class="$tsr">($R=>$R[0]={dehydratedData:$R[1]={relayRecords:$R[2]={`
+  + `"client:root":$R[3]={__id:"client:root",__typename:"__Root","tweet_result_by_rest_id(rest_id:111)":$R[4]={__ref:"TweetResults:111"}},`
+  + `"TweetResults:111":$R[5]={__id:"TweetResults:111",__typename:"TweetResults",rest_id:"111",result:$R[6]={__ref:"Tweet:111"}},`
+  + `"Tweet:111":$R[7]={__id:"Tweet:111",__typename:"Tweet",rest_id:"111",conversation_muted:!1,core:$R[8]={__ref:"client:Tweet:111:core"},details:$R[9]={__ref:"client:Tweet:111:details"},media_entities2:$R[10]={__refs:$R[11]=["client:Tweet:111:media:0"]}},`
+  + `"client:Tweet:111:core":$R[12]={__id:"client:Tweet:111:core",__typename:"TweetCore",user_results:$R[13]={__ref:"UserResults:9"}},`
+  + `"UserResults:9":$R[14]={__id:"UserResults:9",__typename:"UserResults",result:$R[15]={__ref:"User:9"}},`
+  + `"User:9":$R[16]={__id:"User:9",__typename:"User",rest_id:"9",core:$R[17]={__id:"client:User:9:core",__typename:"UserCore",screen_name:"jack",name:"Jack"}},`
+  + `"client:Tweet:111:details":$R[18]={__id:"client:Tweet:111:details",__typename:"TBirdData",full_text:"hello world",ssr:void 0},`
+  + `"client:Tweet:111:media:0":$R[19]={__id:"client:Tweet:111:media:0",__typename:"ApiMedia",media_url_https:"https://pbs.twimg.com/t.jpg",video_info:$R[20]={__ref:"client:Tweet:111:media:0:video_info"}},`
+  + `"client:Tweet:111:media:0:video_info":$R[21]={__id:"client:Tweet:111:media:0:video_info",__typename:"ApiMediaEntityVideoInfo",duration_millis:12345,variants:$R[22]={__refs:$R[23]=["client:Tweet:111:media:0:video_info:variants:0","client:Tweet:111:media:0:video_info:variants:1"]}},`
+  + `"client:Tweet:111:media:0:video_info:variants:0":$R[24]={__typename:"ApiMediaEntityVideoVariant",bitrate:void 0,content_type:"application/x-mpegURL",url:"https://video.twimg.com/amplify_video/111/pl/x.m3u8?tag=27"},`
+  + `"client:Tweet:111:media:0:video_info:variants:1":$R[25]={__typename:"ApiMediaEntityVideoVariant",bitrate:832000,content_type:"video/mp4",url:"https://video.twimg.com/amplify_video/111/vid/avc1/550x360/y.mp4?tag=27"}`
+  + `}}})(self.$R=self.$R||{});</script></body></html>`;
+
+const ssrRecords = parseTwitterSsrRecords(ssrFixture);
+expect(Object.keys(ssrRecords).length === 11, `ssr: relayRecords parsed (got ${Object.keys(ssrRecords).length})`);
+
+const ssrTweets = collectTwitterSsrTweets(ssrFixture, { url: "https://x.com/jack/status/111", type: "main_frame", tabId: 1 });
+expect(ssrTweets.length === 1, `ssr: one focal tweet (got ${ssrTweets.length})`);
+const st = ssrTweets[0];
+expect(st?.screenName === "jack", `ssr: author from core.user_results (got ${st?.screenName})`);
+expect(st?.tweetId === "111", `ssr: tweet id (got ${st?.tweetId})`);
+expect(st?.text === "hello world", `ssr: details.full_text (got ${JSON.stringify(st?.text)})`);
+expect(st?.imageUrl === "https://pbs.twimg.com/t.jpg", "ssr: media_url_https thumbnail");
+const mp4 = (st?.media?.[0]?.video_info?.variants || []).filter(v => v.content_type === "video/mp4");
+expect(mp4.length === 1 && mp4[0].url === "https://video.twimg.com/amplify_video/111/vid/avc1/550x360/y.mp4?tag=27",
+  `ssr: progressive mp4 variant recovered (got ${mp4.length})`);
+expect(st?.media?.[0]?.video_info?.duration_millis === 12345, "ssr: duration_millis");
 
 if (failures) {
   console.error(`\n${failures} failure(s)`);
