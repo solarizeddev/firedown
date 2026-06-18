@@ -213,21 +213,50 @@ public final class RestoredFileAccess {
         // Probe existence by OPENING the document, NOT by querying its metadata.
         // ExternalStorageProvider.queryDocument builds a cursor row from the
         // doc-id PATH without confirming the file is on disk, so a deleted file
-        // still returns a row (looks present); openFileDescriptor calls through
-        // to ParcelFileDescriptor.open, which throws FileNotFoundException when
-        // the file is truly gone. So a thrown FileNotFoundException is the
-        // ground-truth "the user deleted it" signal; any OTHER failure is
-        // treated as "unsure" and keeps the row (never drop on a transient).
+        // still returns a row (looks present); opening the document forces the
+        // provider to touch the real file. A deleted file surfaces as a missing
+        // file from the provider — but NOT always as a top-level
+        // FileNotFoundException: ExternalStorageProvider verifies the tree-child
+        // relationship first and rethrows the FileNotFoundException wrapped in an
+        // IllegalArgumentException ("Failed to determine if X is child of Y:
+        // java.io.FileNotFoundException: Missing file ..."). So we scan the whole
+        // throwable chain/message for that missing-file signal (treat = gone) and
+        // keep the row on any OTHER failure (conservative — never drop on a
+        // transient/permission error).
         try (ParcelFileDescriptor pfd =
                      context.getContentResolver().openFileDescriptor(saf, "r")) {
             return pfd == null;
-        } catch (FileNotFoundException e) {
-            return true; // the document is gone
         } catch (Exception e) {
+            if (indicatesMissingFile(e)) {
+                return true; // the document is gone
+            }
             if (BuildConfig.DEBUG) {
-                Log.d(TAG, "isRestoredFileMissing: check failed for " + absPath, e);
+                Log.d(TAG, "isRestoredFileMissing: inconclusive for " + absPath, e);
             }
             return false;
         }
+    }
+
+    /**
+     * True if a throwable (anywhere in its cause chain) reports that the backing
+     * file is missing. ExternalStorageProvider raises a deleted file either as a
+     * {@link FileNotFoundException} or, on the tree-child verification path, as an
+     * {@code IllegalArgumentException} that embeds the {@code FileNotFoundException}
+     * /{@code "Missing file"} text in its message. Those framework strings are
+     * AOSP-internal English constants, so matching them is stable.
+     */
+    private static boolean indicatesMissingFile(@Nullable Throwable t) {
+        for (Throwable c = t; c != null; c = c.getCause()) {
+            if (c instanceof FileNotFoundException) {
+                return true;
+            }
+            String message = c.getMessage();
+            if (message != null
+                    && (message.contains("FileNotFoundException")
+                    || message.contains("Missing file"))) {
+                return true;
+            }
+        }
+        return false;
     }
 }
