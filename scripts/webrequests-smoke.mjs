@@ -94,7 +94,7 @@ const count = (path) => (registrations[path] ?? []).length;
 // Inventory of listener registrations across the background module graph
 // (js/parsers/* + requests.js + cookies.js + debug.js). Update deliberately
 // when adding/removing a listener — that's the point of the check.
-expect(count("webRequest.onBeforeRequest") === 27, `webRequest.onBeforeRequest registrations == 27 (got ${count("webRequest.onBeforeRequest")})`);
+expect(count("webRequest.onBeforeRequest") === 29, `webRequest.onBeforeRequest registrations == 29 (got ${count("webRequest.onBeforeRequest")})`);
 expect(count("webRequest.onSendHeaders") === 2, `webRequest.onSendHeaders registrations == 2 (got ${count("webRequest.onSendHeaders")})`);
 expect(count("webRequest.onHeadersReceived") === 2, `webRequest.onHeadersReceived registrations == 2 (got ${count("webRequest.onHeadersReceived")})`);
 expect(count("webRequest.onResponseStarted") === 1, `webRequest.onResponseStarted registrations == 1 (got ${count("webRequest.onResponseStarted")})`);
@@ -194,7 +194,11 @@ expect(decodeHtmlEntities("&#x41c;&amp;&#1052; &hellip;") === "М&М …",
 // is the HAR-replay guard for the bug fixed here (single-tweet pages SSR the video
 // into the document and fire no GraphQL XHR), per CLAUDE.md's "run the real code
 // against the bytes" rule.
-const { parseTwitterSsrRecords, collectTwitterSsrTweets } = await import(
+const {
+  parseTwitterSsrRecords, collectTwitterSsrTweets,
+  collectTweetResults, extractTweetCapture,
+  twimgMediaId, isTwitterMasterUrl,
+} = await import(
   pathToFileURL(join(ext, "js/parsers/twitter.js"))
 );
 const ssrFixture = `<html><body><script class="$tsr">($R=>$R[0]={dehydratedData:$R[1]={relayRecords:$R[2]={`
@@ -214,9 +218,12 @@ const ssrFixture = `<html><body><script class="$tsr">($R=>$R[0]={dehydratedData:
 const ssrRecords = parseTwitterSsrRecords(ssrFixture);
 expect(Object.keys(ssrRecords).length === 11, `ssr: relayRecords parsed (got ${Object.keys(ssrRecords).length})`);
 
-const ssrTweets = collectTwitterSsrTweets(ssrFixture, { url: "https://x.com/jack/status/111", type: "main_frame", tabId: 1 });
+// collectTwitterSsrTweets returns RESOLVED Tweet records (new media_entities2
+// shape); they go through the same shape-tolerant extractTweetCapture as GraphQL.
+const ssrDetails = { url: "https://x.com/jack/status/111", documentUrl: "https://x.com/jack/status/111", type: "main_frame", tabId: 1 };
+const ssrTweets = collectTwitterSsrTweets(ssrFixture, ssrDetails);
 expect(ssrTweets.length === 1, `ssr: one focal tweet (got ${ssrTweets.length})`);
-const st = ssrTweets[0];
+const st = extractTweetCapture(ssrTweets[0], ssrDetails);
 expect(st?.screenName === "jack", `ssr: author from core.user_results (got ${st?.screenName})`);
 expect(st?.tweetId === "111", `ssr: tweet id (got ${st?.tweetId})`);
 expect(st?.text === "hello world", `ssr: details.full_text (got ${JSON.stringify(st?.text)})`);
@@ -225,6 +232,40 @@ const mp4 = (st?.media?.[0]?.video_info?.variants || []).filter(v => v.content_t
 expect(mp4.length === 1 && mp4[0].url === "https://video.twimg.com/amplify_video/111/vid/avc1/550x360/y.mp4?tag=27",
   `ssr: progressive mp4 variant recovered (got ${mp4.length})`);
 expect(st?.media?.[0]?.video_info?.duration_millis === 12345, "ssr: duration_millis");
+
+// Shape-tolerant extractor on the OLD GraphQL layout (the shape the home feed
+// still uses): legacy.extended_entities.media + core.user_results screen_name.
+// Proves one extractor serves both surfaces (Layer 1).
+const gqlResponse = { data: { home: { home_timeline_urt: { instructions: [{ entries: [
+  { content: { itemContent: { tweet_results: { result: {
+    __typename: "Tweet", rest_id: "222",
+    core: { user_results: { result: { core: { screen_name: "alice" } } } },
+    legacy: { full_text: "feed clip", extended_entities: { media: [
+      { media_url_https: "https://pbs.twimg.com/ext_tw_video_thumb/333/pu/img/a.jpg",
+        video_info: { duration_millis: 5000, variants: [
+          { content_type: "application/x-mpegURL", url: "https://video.twimg.com/ext_tw_video/333/pu/pl/m.m3u8" },
+          { content_type: "video/mp4", bitrate: 832000, url: "https://video.twimg.com/ext_tw_video/333/pu/vid/avc1/640x360/v.mp4?tag=12" },
+        ] } } ] } },
+  } } } } },
+] }] } } } };
+const gqlDetails = { url: "https://x.com/home", documentUrl: "https://x.com/home", type: "xmlhttprequest", tabId: 5 };
+const gqlResults = [];
+collectTweetResults(gqlResponse.data, gqlResults, new Set());
+expect(gqlResults.length === 1, `gql: collectTweetResults found tweet (got ${gqlResults.length})`);
+const gt = extractTweetCapture(gqlResults[0], gqlDetails);
+expect(gt?.screenName === "alice", `gql: author from core.user_results (got ${gt?.screenName})`);
+expect(gt?.tweetId === "222", `gql: tweet id (got ${gt?.tweetId})`);
+expect(gt?.text === "feed clip", `gql: legacy.full_text (got ${JSON.stringify(gt?.text)})`);
+expect(gt?.imageUrl === "https://pbs.twimg.com/ext_tw_video_thumb/333/pu/img/a.jpg", "gql: extended_entities thumbnail");
+const gmp4 = (gt?.media?.[0]?.video_info?.variants || []).filter(v => v.content_type === "video/mp4");
+expect(gmp4.length === 1, `gql: progressive mp4 from extended_entities (got ${gmp4.length})`);
+
+// media-id + master-URL helpers (Layer 3 dedup / gating).
+expect(twimgMediaId("https://video.twimg.com/amplify_video/444/vid/avc1/960x628/x.mp4?tag=27") === "444", "media-id: amplify_video");
+expect(twimgMediaId("https://video.twimg.com/ext_tw_video/555/pu/vid/avc1/1080x1920/x.mp4") === "555", "media-id: ext_tw_video");
+expect(twimgMediaId("https://pbs.twimg.com/ext_tw_video_thumb/555/pu/img/x.jpg") === "555", "media-id: thumb links to video id");
+expect(isTwitterMasterUrl("https://video.twimg.com/amplify_video/444/pl/VbJ6.m3u8?tag=27&v=bfe") === true, "master-url: master matched");
+expect(isTwitterMasterUrl("https://video.twimg.com/amplify_video/444/pl/avc1/550x360/c.m3u8") === false, "master-url: child playlist excluded");
 
 if (failures) {
   console.error(`\n${failures} failure(s)`);

@@ -1,28 +1,33 @@
 // Twitter / X parser — split verbatim out of the former parser-background.js.
-import { log, sendVariants, sendSubtitles, urlToTabCache, cacheTabUrl, readFilteredJson, readFilteredBody } from './common.js';
+import { log, sendVariants, sendSubtitles, urlToTabCache, cacheTabUrl, readFilteredJson, readFilteredBody, enumerateMasterNative } from './common.js';
 
 // ============================================================================
 // Twitter / X
 // ============================================================================
 
-// GraphQL queries that resolve to a single focal tweet (open-tweet view /
-// embed). Parsed via extractTwitterFocalResult so we grab only the tweet the
-// user is looking at, not replies in the thread.
-const TWITTER_TWEET_QUERIES = ["TweetResultByRestId", "TweetDetail"];
-// Timeline queries — feeds / profiles / search / lists / bookmarks / likes.
-// These carry many tweets; we emit every video tweet in them so scrolling a
-// feed surfaces its videos without opening each one.
-const TWITTER_TIMELINE_QUERIES = [
-    "HomeTimeline", "HomeLatestTimeline",
-    "UserTweets", "UserTweetsAndReplies", "UserMedia",
-    "SearchTimeline", "ListLatestTweetsTimeline",
-    "Bookmarks", "Likes", "TweetActivity", "CommunityTweetsTimeline",
-    "ImmersiveMedia"
+// GraphQL operation STEMS, matched as substrings of the request URL (the op
+// name is in the path: /graphql/<hash>/<OpName>). Stems, not exact names, so a
+// minor X rename (HomeTimeline -> HomeTimeline_v2, TweetDetail -> TweetDetailV2)
+// still gets read — operation-name churn is one of X's regular breakages, and a
+// listener that never reads the response can't extract from it. The classifier
+// (collectTweetResults / extractTweetCapture) self-filters: a matched op that
+// turns out to carry no tweet media emits nothing, so a loose match only costs a
+// body read, never a bad capture.
+//
+// "tweet" = resolves to ONE focal tweet (open-tweet / embed) — we pick the focal
+// one, not thread replies. "timeline" = many tweets (feed / profile / search /
+// list / bookmarks / likes) — we emit every video tweet so scrolling surfaces
+// them without opening each. The "Timeline" stem alone covers Home/HomeLatest/
+// SearchTimeline/ListLatestTweetsTimeline/CommunityTweetsTimeline.
+const TWITTER_TWEET_QUERY_STEMS = ["TweetResultByRestId", "TweetDetail"];
+const TWITTER_TIMELINE_QUERY_STEMS = [
+    "Timeline", "UserTweets", "UserMedia",
+    "Bookmarks", "Likes", "TweetActivity", "ImmersiveMedia"
 ];
 
 function twitterQueryKind(url) {
-    if (TWITTER_TWEET_QUERIES.some(q => url.includes(q))) return "tweet";
-    if (TWITTER_TIMELINE_QUERIES.some(q => url.includes(q))) return "timeline";
+    if (TWITTER_TWEET_QUERY_STEMS.some(q => url.includes(q))) return "tweet";
+    if (TWITTER_TIMELINE_QUERY_STEMS.some(q => url.includes(q))) return "timeline";
     return null;
 }
 
@@ -94,10 +99,11 @@ function extractTwitterFocalResult(parsed, details) {
         });
         if (focal) return focal;
     }
-    // No focalTweetId match: prefer the first candidate that actually has video.
+    // No focalTweetId match: prefer the first candidate that actually has video
+    // (shape-tolerant — findTweetMedia covers extended_entities/media_entities2).
     const withVideo = candidates.find(r => {
-        const t = unwrapTweet(r);
-        return t?.legacy?.extended_entities?.media?.some(med => med.video_info?.variants);
+        const media = findTweetMedia(unwrapTweet(r));
+        return media.some(med => med.video_info?.variants);
     });
     return withVideo || candidates[0];
 }
@@ -134,16 +140,133 @@ function extractTwitterSubtitles(m) {
     return out;
 }
 
-// Shared emit core: turn a NORMALISED tweet — a media array plus author / text /
-// thumbnail — into download variants and send them. Returns true if at least one
-// video was emitted. Fed by BOTH capture paths:
-//   - the GraphQL XHR path (emitTwitterTweetVideos), and
-//   - the SSR document path (emitSsrTweet, below).
-// The per-media-ITEM shape is identical between them (video_info.variants
-// {content_type,url,bitrate}, media_url_https, the subtitle locations), so only
-// the TWEET-level field names differ (legacy.extended_entities/full_text vs the
-// new media_entities2/details SSR layout) — each caller normalises those and
-// hands the common shape here.
+// ---------------------------------------------------------------------------
+// Shared: twimg media-id + the rich-capture dedup set (used by the wire-master
+// fallback in Layer 3 below). EVERY twimg video/thumb URL — progressive mp4,
+// HLS master, .m4s segment, poster image — embeds the SAME media-id:
+//   video.twimg.com/{amplify_video,ext_tw_video,tweet_video}/<id>/...
+//   pbs.twimg.com/{amplify_video_thumb,ext_tw_video_thumb,tweet_video_thumb}/<id>/...
+// so it links the player's wire requests to the rich parser's capture with no
+// dependence on page-state shape. (ext_tw_video carries an extra /pu/ segment;
+// the id is still the first numeric path component.)
+const TWIMG_MEDIA_ID_RE = /\/(?:amplify_video|ext_tw_video|tweet_video)(?:_thumb)?\/(\d+)\//;
+function twimgMediaId(url) {
+    const m = TWIMG_MEDIA_ID_RE.exec(url || "");
+    return m ? m[1] : null;
+}
+
+// Media-ids the RICH parser (GraphQL/SSR) emitted, so the wire-master fallback
+// can skip a media already richly captured (no progressive-vs-HLS duplicate).
+// Insertion-ordered FIFO trim — capture is recent-biased.
+const twitterRichCaptured = new Set();
+const TWITTER_RICH_CAPTURED_MAX = 512;
+function markRichCaptured(id) {
+    if (!id) return;
+    if (twitterRichCaptured.size >= TWITTER_RICH_CAPTURED_MAX) {
+        twitterRichCaptured.delete(twitterRichCaptured.values().next().value);
+    }
+    twitterRichCaptured.add(id);
+}
+
+// ---------------------------------------------------------------------------
+// Layer 1 — shape-tolerant extraction. X churns its field LAYOUT (the break that
+// started this: legacy.extended_entities.media -> media_entities2; full_text ->
+// details.full_text; user fields legacy.* -> core.*), AND the two live surfaces
+// currently DISAGREE (the HomeTimeline XHR still uses extended_entities while the
+// SSR single-tweet uses media_entities2). So media/metadata are read by SHAPE,
+// from a list of known locations with a bounded shape-scan fallback, rather than
+// one hardcoded path — one extractor serves the GraphQL tweet_results.result AND
+// the resolved SSR Tweet, and survives the next rename.
+
+// Tweet fields that are THEMSELVES other tweets — never descend into them in the
+// shape scan (they're separate entities, captured on their own; descending would
+// attribute a quoted/reply video to the wrong tweet).
+const TWEET_NESTED_TWEET_KEYS = new Set([
+    "quoted_tweet_results", "quoted_status_result", "retweeted_status_result",
+    "tweet_results", "reply_to_results", "reply_to_user_results"
+]);
+
+// Bounded DFS for the first array whose elements look like media entities (carry
+// video_info.variants). Depth-capped, skips nested-tweet keys. The fallback when
+// none of the known media keys match — so a future key rename still captures.
+function scanForMediaArray(node, depth) {
+    if (depth > 4 || !node || typeof node !== "object") return null;
+    if (Array.isArray(node)) {
+        if (node.some(it => it && typeof it === "object" && it.video_info?.variants)) return node;
+        for (const v of node) {
+            const r = scanForMediaArray(v, depth + 1);
+            if (r) return r;
+        }
+        return null;
+    }
+    for (const k in node) {
+        if (TWEET_NESTED_TWEET_KEYS.has(k)) continue;
+        const r = scanForMediaArray(node[k], depth + 1);
+        if (r) return r;
+    }
+    return null;
+}
+
+// The tweet's own media array, regardless of layout. Known locations first
+// (newest -> oldest), then the shape scan.
+function findTweetMedia(tweet) {
+    if (!tweet || typeof tweet !== "object") return [];
+    const direct = tweet.media_entities2
+        || tweet.legacy?.extended_entities?.media
+        || tweet.extended_entities?.media;
+    if (Array.isArray(direct) && direct.length) return direct;
+    return scanForMediaArray(tweet, 0) || [];
+}
+
+function tweetScreenName(tweet, result, details) {
+    const userResult = tweet.core?.user_results?.result
+        || result?.core?.user_results?.result;
+    return userResult?.core?.screen_name
+        || userResult?.legacy?.screen_name
+        || extractScreenNameFromUrl(details)
+        || "unknown";
+}
+
+function tweetText(tweet) {
+    return tweet.legacy?.full_text
+        || tweet.details?.full_text
+        || tweet.note_tweet?.note_tweet_results?.result?.text
+        || "";
+}
+
+function tweetThumbnail(tweet, media) {
+    const img = media?.[0]?.media_url_https;
+    if (img) return img;
+    const bindings = tweet.card?.legacy?.binding_values;
+    const keys = ["thumbnail_image_original", "player_image_large", "player_image",
+                  "summary_photo_image_original", "thumbnail_image"];
+    for (const key of keys) {
+        const url = bindings?.find(b => b.key === key)?.value?.image_value?.url;
+        if (url) return url;
+    }
+    return undefined;
+}
+
+// Normalise one tweet (GraphQL tweet_results.result OR a resolved SSR Tweet) into
+// the common capture context emitTweetMedia consumes. Returns null when there is
+// no video media. Exported for the HAR-replay smoke test.
+function extractTweetCapture(result, details) {
+    const tweet = unwrapTweet(result);
+    if (!tweet || typeof tweet !== "object") return null;
+    const media = findTweetMedia(tweet);
+    if (!media.length || !media.some(m => m.video_info?.variants)) return null;
+    return {
+        screenName: tweetScreenName(tweet, result, details),
+        tweetId: tweet.rest_id || tweet.legacy?.id_str,
+        text: tweetText(tweet),
+        imageUrl: tweetThumbnail(tweet, media),
+        media
+    };
+}
+
+// Shared emit core: turn a normalised capture context — media array plus author
+// / text / thumbnail — into download variants and send them. Returns true if at
+// least one video was emitted.
 function emitTweetMedia(details, { screenName, tweetId, text, imageUrl, media }) {
     if (!media || media.length === 0) return false;
     const originUrl = (screenName && screenName !== "unknown")
@@ -200,42 +323,17 @@ function emitTweetMedia(details, { screenName, tweetId, text, imageUrl, media })
     return emitted;
 }
 
-// GraphQL adapter: normalise one tweet_results.result (the XHR / SPA shape) and
-// emit. Returns true if at least one video was emitted.
+// Normalise one tweet (GraphQL or SSR shape) and emit. Returns true if at least
+// one video was emitted. Records the media-ids it captured so the wire-master
+// fallback (Layer 3) knows not to re-capture them as a duplicate HLS entity.
 function emitTwitterTweetVideos(details, result) {
-    const tweetResult = unwrapTweet(result);
-    const legacy = tweetResult?.legacy;
-    const media = legacy?.extended_entities?.media;
-    if (!media || media.length === 0) return false;
-
-    // X migrated User fields (screen_name, name) out of `legacy` into a new
-    // `core` sub-object on the user result; older responses still carry them
-    // in `legacy`. Reading only `legacy.screen_name` made every timeline
-    // video resolve to "unknown" (the home/feed view has no /status/ URL for
-    // extractScreenNameFromUrl to fall back on). Check the new `core`
-    // location first, then `legacy`. NB: user.core (the user's handle/name)
-    // is a different object from tweet.core (which holds user_results).
-    const userResult = tweetResult.core?.user_results?.result
-        || result.core?.user_results?.result;
-    const screenName = userResult?.core?.screen_name
-        || userResult?.legacy?.screen_name
-        || extractScreenNameFromUrl(details)
-        || "unknown";
-    const tweetId = tweetResult.rest_id || legacy.id_str;
-    const videoText = legacy.full_text || "";
-
-    let imageUrl = media[0]?.media_url_https;
-    if (!imageUrl) {
-        const bindings = tweetResult.card?.legacy?.binding_values;
-        const keys = ["thumbnail_image_original", "player_image_large", "player_image",
-                      "summary_photo_image_original", "thumbnail_image"];
-        for (const key of keys) {
-            const url = bindings?.find(b => b.key === key)?.value?.image_value?.url;
-            if (url) { imageUrl = url; break; }
-        }
+    const ctx = extractTweetCapture(result, details);
+    if (!ctx) return false;
+    for (const m of ctx.media) {
+        if (!Array.isArray(m.video_info?.variants)) continue;
+        for (const v of m.video_info.variants) markRichCaptured(twimgMediaId(v.url));
     }
-
-    return emitTweetMedia(details, { screenName, tweetId, text: videoText, imageUrl, media });
+    return emitTweetMedia(details, ctx);
 }
 
 // Process one already-parsed GraphQL response, branching on query kind.
@@ -518,26 +616,12 @@ function unwrapSsrTweet(node) {
     return (n && typeof n === "object" && n.__typename === "Tweet") ? n : null;
 }
 
-// Normalise a resolved SSR Tweet record into the shape emitTweetMedia consumes.
-function normalizeSsrTweet(tweet, details) {
-    const media = Array.isArray(tweet.media_entities2) ? tweet.media_entities2 : [];
-    const screenName = tweet.core?.user_results?.result?.core?.screen_name
-        || extractScreenNameFromUrl(details)
-        || "unknown";
-    return {
-        screenName,
-        tweetId: tweet.rest_id,
-        text: tweet.details?.full_text || "",
-        imageUrl: media[0]?.media_url_https,
-        media
-    };
-}
-
-// Resolve the focal tweet (and a quoted tweet, if present) from the SSR store
-// and return their normalised contexts. Single-tweet pages SSR only the focal
-// tweet's conversation root here; replies load later as XHRs (the GraphQL
-// listener), so this stays focal-only — it does NOT scan the whole store, which
-// would grab reply videos.
+// Resolve the focal tweet (and a quoted tweet, if present) from the SSR store and
+// return the RESOLVED Tweet records — fed through the same shape-tolerant
+// extractTweetCapture/emitTwitterTweetVideos as the GraphQL path. Single-tweet
+// pages SSR only the focal tweet's conversation root here; replies load later as
+// XHRs (the GraphQL listener), so this stays focal-only — it does NOT scan the
+// whole store, which would grab reply videos.
 function collectTwitterSsrTweets(html, details) {
     const records = parseTwitterSsrRecords(html);
     const root = records["client:root"];
@@ -554,7 +638,7 @@ function collectTwitterSsrTweets(html, details) {
     const add = (tweet) => {
         if (!tweet || seenIds.has(tweet.rest_id)) return;
         seenIds.add(tweet.rest_id);
-        out.push(normalizeSsrTweet(tweet, details));
+        out.push(tweet);
     };
     add(focal);
     add(unwrapSsrTweet(focal.quoted_tweet_results)); // already resolved by resolve()
@@ -574,7 +658,7 @@ function processTwitterDocument(details, html) {
     }
     let withVideo = 0;
     for (const t of tweets) {
-        if (emitTweetMedia(details, t)) withVideo++;
+        if (emitTwitterTweetVideos(details, t)) withVideo++;
     }
     log("TWITTER", `ssr doc: ${withVideo}/${tweets.length} tweet(s) with video`);
 }
@@ -602,7 +686,86 @@ browser.webRequest.onBeforeRequest.addListener(
     ["blocking"]
 );
 
-// Exported for the HAR-replay smoke test (run the REAL extractor against a
-// serialized-store fixture, not a copy-paste). Not used by index.js.
-export { parseTwitterSsrRecords, collectTwitterSsrTweets };
+// ============================================================================
+// Layer 3 — wire-master backbone (the reliability floor, page-agnostic)
+// ============================================================================
+// The rich parsers above (GraphQL + SSR) give full metadata but key off X's
+// page-state SHAPE, so a deep rewrite blinds them — and because video.twimg.com
+// is parser-block-listed, the generic catcher can't pick up the slack, so the
+// video would be lost ENTIRELY. This layer is the floor: it captures the HLS
+// MASTER the player fetches whenever a video plays/autoplays — a request keyed
+// off the invariant URL format, not page state, so it survives any SSR/GraphQL
+// change. Same pattern as Bluesky's listenerBskyMaster.
+//
+// It is the FALLBACK, not a second capture: it skips any media-id the rich
+// parser already emitted (markRichCaptured), so when the rich path works there is
+// no progressive-vs-HLS duplicate. When the rich path is stale it still captures
+// the played video as HLS, enriched with a real thumbnail from twitterThumbCache
+// (the poster the page fetched, see below) and the author from the page URL —
+// generic title only.
+
+// media-id -> poster URL, observed from the page's OWN poster fetches on the
+// wire. The poster (<video poster>) is fetched before/at play, so it's cached by
+// the time the master fires. Independent of the rich parser, so it gives the
+// fallback a thumbnail even when page-state parsing is fully broken.
+const twitterThumbCache = new Map();
+const TWITTER_THUMB_CACHE_MAX = 512;
+function listenerTwitterThumb(details) {
+    const id = twimgMediaId(details.url);
+    if (id) {
+        if (twitterThumbCache.size >= TWITTER_THUMB_CACHE_MAX) {
+            twitterThumbCache.delete(twitterThumbCache.keys().next().value);
+        }
+        twitterThumbCache.set(id, details.url.split(/[?#]/)[0]);
+    }
+    return {};
+}
+
+browser.webRequest.onBeforeRequest.addListener(
+    listenerTwitterThumb,
+    { urls: ["*://pbs.twimg.com/*_video_thumb/*"], types: ["image", "imageset", "xmlhttprequest", "object", "other"] },
+    []
+);
+
+// The HLS master is /pl/<hash>.m3u8 (one segment after /pl/); the per-quality
+// CHILD playlists are /pl/avc1/... and /pl/mp4a/... (a subdir after /pl/), so
+// `[^/]+\.m3u8` matches the master only and never a child.
+const TWITTER_MASTER_RE = /\/pl\/[^/]+\.m3u8(?:[?#]|$)/;
+function isTwitterMasterUrl(url) {
+    return TWITTER_MASTER_RE.test(url || "");
+}
+
+function listenerTwitterMaster(details) {
+    if (details.tabId < 0) return {};                 // page player only, not our own probe
+    if (!isTwitterMasterUrl(details.url)) return {};   // master, not a child playlist
+    const id = twimgMediaId(details.url);
+    if (id && twitterRichCaptured.has(id)) return {};  // rich parser already captured -> no dup
+
+    const stripped = details.url.split(/[?#]/)[0];     // stable per-media dedup key (tag query rotates)
+    const screenName = extractScreenNameFromUrl(details);
+    log("TWITTER", "wire-master fallback", { id, url: stripped.slice(0, 90) });
+    enumerateMasterNative(details, {
+        url: details.url,
+        origin: stripped,
+        name: screenName || "X video",
+        description: "x.com",
+        img: id ? twitterThumbCache.get(id) : undefined,
+        requestHeaders: [{ name: "Referer", value: "https://x.com/" }],
+    });
+    return {};
+}
+
+browser.webRequest.onBeforeRequest.addListener(
+    listenerTwitterMaster,
+    { urls: ["*://video.twimg.com/*/pl/*"], types: ["xmlhttprequest", "media", "object", "other"] },
+    []
+);
+
+// Exported for the HAR-replay smoke test (run the REAL extractor against fixtures
+// / HAR bytes, not a copy-paste). Not used by index.js.
+export {
+    collectTweetResults, extractTweetCapture,
+    parseTwitterSsrRecords, collectTwitterSsrTweets,
+    twimgMediaId, isTwitterMasterUrl,
+};
 
