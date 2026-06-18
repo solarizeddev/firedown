@@ -94,7 +94,7 @@ const count = (path) => (registrations[path] ?? []).length;
 // Inventory of listener registrations across the background module graph
 // (js/parsers/* + requests.js + cookies.js + debug.js). Update deliberately
 // when adding/removing a listener — that's the point of the check.
-expect(count("webRequest.onBeforeRequest") === 29, `webRequest.onBeforeRequest registrations == 29 (got ${count("webRequest.onBeforeRequest")})`);
+expect(count("webRequest.onBeforeRequest") === 30, `webRequest.onBeforeRequest registrations == 30 (got ${count("webRequest.onBeforeRequest")})`);
 expect(count("webRequest.onSendHeaders") === 2, `webRequest.onSendHeaders registrations == 2 (got ${count("webRequest.onSendHeaders")})`);
 expect(count("webRequest.onHeadersReceived") === 2, `webRequest.onHeadersReceived registrations == 2 (got ${count("webRequest.onHeadersReceived")})`);
 expect(count("webRequest.onResponseStarted") === 1, `webRequest.onResponseStarted registrations == 1 (got ${count("webRequest.onResponseStarted")})`);
@@ -266,6 +266,64 @@ expect(twimgMediaId("https://video.twimg.com/ext_tw_video/555/pu/vid/avc1/1080x1
 expect(twimgMediaId("https://pbs.twimg.com/ext_tw_video_thumb/555/pu/img/x.jpg") === "555", "media-id: thumb links to video id");
 expect(isTwitterMasterUrl("https://video.twimg.com/amplify_video/444/pl/VbJ6.m3u8?tag=27&v=bfe") === true, "master-url: master matched");
 expect(isTwitterMasterUrl("https://video.twimg.com/amplify_video/444/pl/avc1/550x360/c.m3u8") === false, "master-url: child playlist excluded");
+
+// Telegram (t.me) post-page extractor — runs the REAL helpers from telegram.js
+// against a fixture mirroring the tgme widget markup (og: meta + <video src> +
+// <time message_video_duration>), the HAR-replay guard per CLAUDE.md. Covers a
+// single video, an album (two <video>s), and the og:video-only poster fallback.
+const {
+  TELEGRAM_POST_RE, metaContent, collectVideoSrcs, collectDurations, parseClock,
+} = await import(pathToFileURL(join(ext, "js/parsers/telegram.js")));
+const { matchInParserBlocklist } = await import(pathToFileURL(join(ext, "js/parser-blocklist.js")));
+
+expect(TELEGRAM_POST_RE.test("https://t.me/WatcherGuru/14028"), "tg: post URL matches");
+expect(TELEGRAM_POST_RE.test("https://t.me/s/WatcherGuru/14028?embed=1"), "tg: /s/ + query matches");
+expect(!TELEGRAM_POST_RE.test("https://t.me/WatcherGuru"), "tg: bare channel feed does not match");
+const tgm = "https://t.me/WatcherGuru/14028".match(TELEGRAM_POST_RE);
+expect(tgm[1] === "WatcherGuru" && tgm[2] === "14028", `tg: channel+id captured (got ${tgm[1]}/${tgm[2]})`);
+
+const tgSingle = `<html><head>`
+  + `<meta property="og:title" content="Watcher Guru">`
+  + `<meta property="og:description" content="Breaking &amp; news">`
+  + `<meta property="og:image" content="https://cdn4.cdn-telegram.org/file/poster.jpg">`
+  + `</head><body><div class="tgme_widget_message_video_wrap">`
+  + `<video class="tgme_widget_message_video js-message_video" poster="https://cdn4.cdn-telegram.org/file/poster.jpg" `
+  + `src="https://cdn4.cdn-telegram.org/file/abc.mp4?token=XYZ"></video>`
+  + `<time class="message_video_duration js-message_video_duration">1:23</time>`
+  + `</div></body></html>`;
+expect(metaContent(tgSingle, "og:title") === "Watcher Guru", "tg: og:title");
+expect(metaContent(tgSingle, "og:image") === "https://cdn4.cdn-telegram.org/file/poster.jpg", "tg: og:image");
+const tgSrcs = collectVideoSrcs(tgSingle);
+expect(tgSrcs.length === 1 && tgSrcs[0] === "https://cdn4.cdn-telegram.org/file/abc.mp4?token=XYZ",
+  `tg: single video src (got ${JSON.stringify(tgSrcs)})`);
+expect(collectDurations(tgSingle)[0] === 83, `tg: duration 1:23 -> 83 (got ${collectDurations(tgSingle)[0]})`);
+
+const tgAlbum = `<video src="https://cdn4.telesco.pe/file/one.mp4"></video>`
+  + `<time class="message_video_duration">0:30</time>`
+  + `<video src="https://cdn4.telesco.pe/file/two.mp4"></video>`
+  + `<time class="message_video_duration">2:05:09</time>`;
+const albumSrcs = collectVideoSrcs(tgAlbum);
+expect(albumSrcs.length === 2, `tg: album two videos (got ${albumSrcs.length})`);
+const albumDurs = collectDurations(tgAlbum);
+expect(albumDurs[0] === 30 && albumDurs[1] === 7509, `tg: album durations (got ${JSON.stringify(albumDurs)})`);
+
+// Poster-only page: no <video src>, recover from og:video.
+const tgPosterOnly = `<meta property="og:video" content="https://cdn4.cdn-telegram.org/file/v.mp4">`
+  + `<meta property="og:video:width" content="1280">`
+  + `<meta property="og:video:height" content="720">`;
+expect(collectVideoSrcs(tgPosterOnly).length === 0, "tg: poster-only has no <video src>");
+expect(metaContent(tgPosterOnly, "og:video") === "https://cdn4.cdn-telegram.org/file/v.mp4", "tg: og:video fallback");
+expect(parseInt(metaContent(tgPosterOnly, "og:video:height"), 10) === 720, "tg: og:video:height");
+expect(parseClock("not-a-time") === 0 && parseClock("") === 0, "tg: bad clock -> 0");
+
+// The emitted .mp4 must be parser-block-listed (cardinal rule) so the generic
+// catcher can't double-capture; the poster .jpg must NOT be blocked.
+expect(matchInParserBlocklist("https://cdn4.cdn-telegram.org/file/abc.mp4?token=XYZ"),
+  "tg: emitted .mp4 is parser-block-listed");
+expect(matchInParserBlocklist("https://cdn4.telesco.pe/file/two.mp4"),
+  "tg: legacy telesco.pe .mp4 is parser-block-listed");
+expect(!matchInParserBlocklist("https://cdn4.cdn-telegram.org/file/poster.jpg"),
+  "tg: poster .jpg is NOT block-listed");
 
 if (failures) {
   console.error(`\n${failures} failure(s)`);

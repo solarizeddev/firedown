@@ -164,6 +164,16 @@ const PARSER_BLOCKLIST = {
   youtube: [
     'googlevideo\\.com\\/',
   ],
+
+  // Telegram (t.me) — the parser reads the post page's <video>/og:video and
+  // emits the progressive .mp4 served from Telegram's media CDN
+  // (cdn*.cdn-telegram.org and the legacy cdn*.telesco.pe). Block that .mp4 so
+  // the generic catcher doesn't grab a second, bare, metadata-less copy when
+  // the player fetches the same URL on play. Scoped to /file/*.mp4 so the
+  // poster .jpg these same hosts serve (the thumbnail) is untouched.
+  telegram: [
+    '(cdn-telegram\\.org|telesco\\.pe)\\/file\\/.*\\.mp4',
+  ],
 };
 
 // Flatten every parser's patterns into one compiled RegExp — same approach and

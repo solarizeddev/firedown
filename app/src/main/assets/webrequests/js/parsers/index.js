@@ -19,4 +19,5 @@ import './rumble.js';
 import './page-state.js';
 import './niconico.js';
 import './facebook.js';
+import './telegram.js';
 import './boot.js';
