@@ -1,3 +1,10 @@
+## [1.1.79] - 2026-06-18
+
+- Fixed video capture on X / Twitter — single posts and the home feed reliably detect videos again, and capture now keeps working through X's frequent layout changes
+- Fixed restoring your downloads from a backup
+- Updated the GeckoView browser engine to 152.0.20260612001812
+- Minor bugfixes and improvements
+
 ## [1.1.78] - 2026-06-16
 
 - Home screen now labels the Saved counter even before your first download
