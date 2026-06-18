@@ -1536,6 +1536,8 @@ int downloader_read(struct Downloader *downloader) {
     int all_eof;
     AVStream *pkt_stream;
     enum AVMediaType pkt_type;
+    AVProgram *sel_prog;
+    AVProgram *pkt_prog;
 
     /* read_thread_created is now set by jni_downloader_start before
      * it releases mutex_operation, so dealloc's threads-free wait sees
@@ -1634,6 +1636,43 @@ int downloader_read(struct Downloader *downloader) {
                     continue;
                 if (pkt_type != downloader->capture_codec_type[stream_no])
                     continue;
+
+                /* Multi-program ABR-master guard. The generic catcher captures
+                 * the HLS MASTER itself (a site with no dedicated parser — e.g.
+                 * Reddit v.redd.it), so the download input can be a whole ABR
+                 * ladder: N renditions, each in its OWN AVProgram. ffmpeg then
+                 * hands us packets from MORE playlists than the one we discarded
+                 * down to, and the bare codec-TYPE match below would re-bind the
+                 * single capture slot to every rendition in turn — muxing six
+                 * resolutions into one output track (the on-device tell: a flood
+                 * of "re-bind 0->1->2->3->4->5->0", "Invalid NAL unit size",
+                 * "missing picture", a "clamping dts" storm, and an unplayable
+                 * GREEN file). Confirmed on a 6-rendition video-only v.redd.it
+                 * CMAF ladder.
+                 *
+                 * Each rendition lives in its own program, so when the input has
+                 * more than one program, accept a packet only if its stream
+                 * shares the program of the stream we actually SELECTED; a packet
+                 * from another program is a different rendition we discarded —
+                 * drop it (continue → no capture matches → av_packet_unref below).
+                 * This mirrors the program-affinity audio selection already in
+                 * downloader_find_streams. Single-program inputs are unaffected:
+                 * a single child rendition from processHlsMaster (Twitch/Kick), a
+                 * separate-audio DASH/YouTube input, or a progressive file all
+                 * keep following an intra-rendition MPEG-TS index renumber exactly
+                 * as before (that within-rendition discontinuity remap is a
+                 * DISTINCT fix — see the Kick aac_adtstoasc note below — and must
+                 * stay). Falls through unchanged when the selected stream isn't in
+                 * any program (sel_prog == NULL). */
+                if (fmt_ctx->nb_programs > 1) {
+                    sel_prog = av_find_program_from_stream(fmt_ctx, NULL,
+                                                           downloader->input_stream_numbers[stream_no]);
+                    pkt_prog = av_find_program_from_stream(fmt_ctx, NULL, pkt->stream_index);
+                    if (sel_prog != NULL && pkt_prog != NULL && sel_prog != pkt_prog) {
+                        continue;
+                    }
+                }
+
                 /* Packet belongs to this capture's type. Follow a discontinuity
                  * remap by re-pointing the slot at the packet's current input
                  * stream. Only input_stream_numbers is updated (read by this

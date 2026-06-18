@@ -1794,6 +1794,35 @@ distinct root causes and the remap fixes one the audio selection can't touch:
   within-rendition discontinuities in the selected rendition. So both the
   audio-selection fix AND the remap are load-bearing, for different scenarios.
 
+**The remap itself is program-gated for a multi-program master input — the
+Reddit `v.redd.it` green-pixel bug.** The remap's own assumption ("a multi-
+resolution ABR master is never one input here, each rendition is its own playlist
+and we download one") is **false** when the generic catcher captures the HLS
+**master** of a parser-less site: the download input is then the whole ABR ladder
+in ONE `AVFormatContext`, N renditions each in its own `AVProgram`. ffmpeg
+delivers packets from MORE playlists than the one we discarded down to (a
+video-only Reddit CMAF master = 6 programs `Stream #0:0..#0:5`, 1080→220, no
+audio), and a bare codec-**type** remap re-binds the single video capture slot to
+**every** rendition in turn (`re-bind 0->1->2->3->4->5->0…`), muxing six
+resolutions into one track → `Invalid NAL unit size` / `missing picture` /
+`Packet corrupt` / a `clamping dts` storm → an **unplayable green file**. Fix
+(`downloader_read`, mirrors the audio program-affinity above): when
+`fmt_ctx->nb_programs > 1`, accept a packet only if its stream shares the
+`AVProgram` of the stream we actually selected (`av_find_program_from_stream`);
+a packet from another program is a different rendition we discarded — drop it.
+Scoped to `nb_programs > 1`, so a single child rendition (Twitch/Kick via
+`processHlsMaster`), a separate-audio DASH/YouTube input, and progressive files
+are untouched and keep following the **within-rendition** TS renumber above
+(the two are distinct and both load-bearing). Known remaining limit: ffmpeg
+still *reads* the discarded sibling playlists (the per-stream `AVDISCARD_ALL`
+isn't fully honored by the hls demuxer for this master shape), so the download
+fetches the other renditions' bytes too — wasteful but harmless now that their
+packets are dropped instead of muxed; a future hls.c discard fix in the fork
+could avoid the extra fetches. The proper long-term cure is a Reddit **parser**
+that emits one chosen rendition (a single child playlist = one program), which
+sidesteps the master-as-input entirely — same reasoning as every other
+parser-owned site.
+
 ### Per-site request quirks live in the parser, never the transport
 
 `FFmpegOkhttp` / the fork's `http.c` (the ffmpeg↔OkHttp bridge) is **generic**
