@@ -247,6 +247,17 @@ public class AutoCompleteView extends FrameLayout {
         if (mSearchCard != null) mSearchCard.setVisibility(View.VISIBLE);
     }
 
+    /** Empty-focus state, Option A: the clipboard chip AND the "most visited"
+     *  list shown TOGETHER — unlike {@link #showEmpty()} (clipboard only) or
+     *  {@link #hideAll()} (list only, the typed-results state). showClipboard()
+     *  re-evaluates the chip (so a dismissed/oversized/empty clip is still
+     *  correctly withheld). */
+    public void showMostVisited(){
+        showClipboard();
+        mSearchView.setVisibility(View.VISIBLE);
+        if (mSearchCard != null) mSearchCard.setVisibility(View.VISIBLE);
+    }
+
     public void updateVisibility(boolean hasFocus){
         setVisibility(hasFocus ? View.VISIBLE : View.GONE);
     }

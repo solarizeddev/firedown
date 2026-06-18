@@ -89,6 +89,45 @@ public class AutoCompleteSearch {
         mIncognito = incognito;
     }
 
+    /** How many "most visited" rows fill the empty-focus suggestion list. */
+    private static final int MAX_MOST_VISITED = 5;
+
+    /**
+     * Top-frecency history rows for the EMPTY-focus suggestion list (Option A:
+     * the existing list is filled with these instead of left blank when the
+     * address bar is focused and empty). Blocking — call off the main thread.
+     *
+     * <p>Suppressed in incognito (no history surface there): returns empty, so
+     * the caller posts {@code null} and the list stays hidden — the old
+     * empty state (clipboard chip only). Reuses the exact HISTORY mapping +
+     * about:blank / blank-title guards as {@link #addHistory}, so the rows
+     * render identically to typed history suggestions (no adapter change).
+     */
+    public List<AutoCompleteEntity> mostVisited() {
+        if (mIncognito) return new ArrayList<>();
+
+        List<WebHistoryEntity> history = mWebHistoryDataRepository.getMostVisited(MAX_MOST_VISITED);
+        List<AutoCompleteEntity> items = new ArrayList<>();
+        if (history == null) return items;
+
+        for (WebHistoryEntity entity : history) {
+            // No "about:blank" tile — the URL fallback below can't rescue a row
+            // whose URL is itself about:blank (same guard as addHistory; the
+            // query already excludes about: URLs, this covers legacy rows).
+            if (UrlStringUtils.isAboutBlank(entity.getUrl())) continue;
+            AutoCompleteEntity s = new AutoCompleteEntity();
+            s.setType(AutoCompleteEntity.HISTORY);
+            // Blank/about:blank title → show the URL (Firefox parity).
+            String title = entity.getTitle();
+            s.setTitle(UrlStringUtils.isBlankTitle(title) ? entity.getUrl() : title);
+            s.setIcon(entity.getIcon());
+            s.setSubText(entity.getUrl());
+            s.setUid(entity.getId());
+            items.add(s);
+        }
+        return items;
+    }
+
     /**
      * Blocking call — must be invoked from a background thread.
      *

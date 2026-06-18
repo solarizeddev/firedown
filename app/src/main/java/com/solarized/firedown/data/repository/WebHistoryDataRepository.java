@@ -117,6 +117,12 @@ public class WebHistoryDataRepository {
         return mDao.getAutoCompleteHistory();
     }
 
+    /** Top-frecency rows for the empty-focus "most visited" list. Blocking —
+     *  call from a background thread. */
+    public List<WebHistoryEntity> getMostVisited(int limit) {
+        return mDao.getMostVisited(limit);
+    }
+
     public void updateTitle(String url, String title) {
         if (TextUtils.isEmpty(url) || TextUtils.isEmpty(title)) return;
         mDiskExecutor.execute(() -> mDao.updateTitleByUrl(url, title));

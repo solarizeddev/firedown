@@ -314,6 +314,9 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mAutoCompleteViewModel.getWebSearch().observe(getViewLifecycleOwner(), mObservableWebSearch -> {
             if (mObservableWebSearch == null || mObservableWebSearch.isEmpty()) {
                 mAutoCompleteView.showEmpty();
+            } else if (mAutoCompleteViewModel.isShowingMostVisited()) {
+                // Empty field: most-visited rows fill the list, clipboard stays.
+                mAutoCompleteView.showMostVisited();
             } else {
                 mAutoCompleteView.hideAll();
             }
@@ -600,7 +603,14 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mGeckoToolbar.updateViewVisibility(hasFocus);
         mGeckoToolbar.setAutoCompleteVisible(hasFocus);
         mGeckoToolbar.startAnimation(hasFocus);
-        mAutoCompleteViewModel.resetEngines();
+        // On focus with an empty field, fill the list with most-visited rows
+        // (the observer upgrades showEmpty → showMostVisited when they arrive);
+        // on blur just clear. showEmpty() paints the clipboard chip immediately.
+        if (hasFocus) {
+            mAutoCompleteViewModel.loadMostVisited();
+        } else {
+            mAutoCompleteViewModel.resetEngines();
+        }
         mAutoCompleteView.showEmpty();
         mAutoCompleteView.updateVisibility(hasFocus);
     }
@@ -608,10 +618,11 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     @Override
     public void onTextChanged(String afterText, String currentText) {
         if(TextUtils.isEmpty(afterText)){
-            mAutoCompleteViewModel.resetEngines();
+            mAutoCompleteViewModel.loadMostVisited();
             mAutoCompleteView.showEmpty();
+        } else {
+            mAutoCompleteViewModel.search(afterText);
         }
-        mAutoCompleteViewModel.search(afterText);
     }
 
 
@@ -672,7 +683,9 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     @Override
     public void onToolbarButtonClick(View v, int id) {
         if (id == R.id.clear_button) {
-            mAutoCompleteViewModel.resetEngines();
+            // Field is now empty again → most-visited (the observer upgrades to
+            // showMostVisited when the rows land).
+            mAutoCompleteViewModel.loadMostVisited();
             mAutoCompleteView.showEmpty();
             mGeckoToolbar.clearText();
         }else if (id == R.id.security_button) {

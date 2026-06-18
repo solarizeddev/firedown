@@ -1153,6 +1153,36 @@ flow. File names are HTML-escaped in the served pages
 (user/site-controlled); the `Content-Disposition` carries an ASCII
 fallback + RFC 8187 UTF-8 name. QR via the existing zxing-core dependency.
 
+### Empty-focus "most visited" — the existing list, filled (not a new widget)
+
+When the address bar is focused and EMPTY, the suggestion list (the existing
+`search_card` + `AutoCompleteRecyclerView`, normally `gone` until you type) is
+filled with top-frecency **most-visited** rows instead of left blank — the
+clipboard chip stays above them. This is deliberately **not** a new view/widget
+(the home screen stays bare by product choice): it reuses the same card, the
+same `AutoCompleteEntity.HISTORY` rows, the same adapter. Wiring:
+
+- **Frecency without a visit counter.** `webhistory` has no visit-count column;
+  the uid is `hash(url)+day`, so there's one row per (url, day), and
+  `COUNT(*)` grouped by url = distinct days visited — a lightweight proxy.
+  `WebHistoryDao.getMostVisited` orders by that count then recency, excludes
+  `about:%`, and keeps `COUNT/MAX` in `ORDER BY` only so the projection is
+  exactly the entity columns (no Room cursor-mismatch warning).
+- **One LiveData, one generation guard.** `loadMostVisited()` posts to the SAME
+  `mSearchData` as typed search and shares `mSearchGen`, so a late most-visited
+  post can't clobber a newer typed result (or vice-versa) — the older task's
+  post is dropped by the gen check. Replaces `resetEngines()` at the three
+  empty-field entry points (focus-gain, delete-to-empty, clear button) in
+  Home/Browser; `search()`/`resetEngines()` clear the `mShowingMostVisited`
+  flag, `loadMostVisited()` sets it. The `getWebSearch` observer adds one branch:
+  non-empty list + `isShowingMostVisited()` → `showMostVisited()` (clipboard +
+  list together, vs `showEmpty()` = clipboard only, `hideAll()` = list only).
+- **Incognito is the gate, centralized.** `AutoCompleteSearch.mostVisited()`
+  returns empty when `mIncognito` → `null` post → list stays hidden = the old
+  clipboard-only empty state. So even though the incognito BROWSER now calls
+  `loadMostVisited()`, no history surfaces; incognito HOME still uses
+  `resetEngines()` and is untouched. Never show most-visited in incognito.
+
 Two hardenings in `AutoCompleteView.showClipboard()` (the clipboard suggestion
 chip shown when the address bar gains focus) — both from one on-device episode:
 

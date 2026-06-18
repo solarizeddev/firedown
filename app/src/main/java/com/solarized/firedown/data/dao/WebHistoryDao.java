@@ -60,6 +60,23 @@ public interface WebHistoryDao {
     List<WebHistoryEntity> getAutoCompleteHistory();
 
     /**
+     * "Most visited" frecency for the empty-focus suggestion list (the existing
+     * list, filled instead of left blank, when the address bar is focused and
+     * empty). There is NO visit-count column: the uid is {@code hash(url)+day},
+     * so there is exactly one row per (url, day), and {@code COUNT(*)} grouped by
+     * url is therefore the number of DISTINCT DAYS a url was visited — a
+     * lightweight frecency proxy. Ordered by that count, then recency. about:
+     * URLs (home/blank) are excluded at the source. The bare columns
+     * (title/icon) come from an arbitrary row of each group, which is fine —
+     * a site's title/icon is stable per url in practice. COUNT/MAX live only in
+     * ORDER BY so the projection is exactly the entity's columns (no Room
+     * cursor-mismatch warning).
+     */
+    @Query("SELECT * FROM webhistory WHERE file_url NOT LIKE 'about:%' "
+            + "GROUP BY file_url ORDER BY COUNT(*) DESC, MAX(file_date) DESC LIMIT :limit")
+    List<WebHistoryEntity> getMostVisited(int limit);
+
+    /**
      * Persistence operations.
      */
     @Insert(onConflict = OnConflictStrategy.REPLACE)

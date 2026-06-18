@@ -875,6 +875,9 @@ public class BrowserFragment extends BaseBrowserFragment
         mAutoCompleteViewModel.getWebSearch().observe(getViewLifecycleOwner(), webSearch -> {
             if (webSearch == null || webSearch.isEmpty()) {
                 mAutoCompleteView.showEmpty();
+            } else if (mAutoCompleteViewModel.isShowingMostVisited()) {
+                // Empty field: most-visited rows fill the list, clipboard stays.
+                mAutoCompleteView.showMostVisited();
             } else {
                 mAutoCompleteView.hideAll();
             }
@@ -1277,7 +1280,9 @@ public class BrowserFragment extends BaseBrowserFragment
             args.putBoolean(Keys.OPEN_INCOGNITO, mIsIncognitoThemed);
             NavigationUtils.navigateSafe(mNavController, R.id.tabs, R.id.browser, args);
         } else if (id == R.id.clear_button) {
-            mAutoCompleteViewModel.resetEngines();
+            // Field empty again → most-visited (observer upgrades to
+            // showMostVisited once the rows arrive).
+            mAutoCompleteViewModel.loadMostVisited();
             mAutoCompleteView.showEmpty();
             mGeckoToolbar.clearText();
         } else {
@@ -1381,10 +1386,11 @@ public class BrowserFragment extends BaseBrowserFragment
             findNextResult(currentText, 0);
         } else if (mUiState == UiState.BROWSING) {
             if (TextUtils.isEmpty(afterText)) {
-                mAutoCompleteViewModel.resetEngines();
+                mAutoCompleteViewModel.loadMostVisited();
                 mAutoCompleteView.showEmpty();
+            } else {
+                mAutoCompleteViewModel.search(afterText);
             }
-            mAutoCompleteViewModel.search(afterText);
         }
     }
 
@@ -1424,7 +1430,13 @@ public class BrowserFragment extends BaseBrowserFragment
                     }
                 }
             }
-            mAutoCompleteViewModel.resetEngines();
+            // Focus + empty field → most-visited list (observer upgrades
+            // showEmpty → showMostVisited when the rows arrive); blur → clear.
+            if (hasFocus) {
+                mAutoCompleteViewModel.loadMostVisited();
+            } else {
+                mAutoCompleteViewModel.resetEngines();
+            }
             mAutoCompleteView.showEmpty();
             mGeckoToolbar.updateViewVisibility(hasFocus);
             mGeckoToolbar.setAutoCompleteVisible(hasFocus);
