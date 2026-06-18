@@ -1,7 +1,6 @@
 package com.solarized.firedown.data;
 
 import android.content.Context;
-import android.database.Cursor;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
@@ -15,6 +14,7 @@ import androidx.annotation.Nullable;
 import com.solarized.firedown.BuildConfig;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 
 /**
  * Read access to RESTORED download files that this install does NOT own.
@@ -210,13 +210,20 @@ public final class RestoredFileAccess {
         if (saf == null) {
             return false; // no grant / outside the tree → can't verify
         }
-        try (Cursor c = context.getContentResolver().query(
-                saf, new String[]{DocumentsContract.Document.COLUMN_DOCUMENT_ID},
-                null, null, null)) {
-            // A returned row = the document exists; no row = it was deleted.
-            return c == null || !c.moveToFirst();
+        // Probe existence by OPENING the document, NOT by querying its metadata.
+        // ExternalStorageProvider.queryDocument builds a cursor row from the
+        // doc-id PATH without confirming the file is on disk, so a deleted file
+        // still returns a row (looks present); openFileDescriptor calls through
+        // to ParcelFileDescriptor.open, which throws FileNotFoundException when
+        // the file is truly gone. So a thrown FileNotFoundException is the
+        // ground-truth "the user deleted it" signal; any OTHER failure is
+        // treated as "unsure" and keeps the row (never drop on a transient).
+        try (ParcelFileDescriptor pfd =
+                     context.getContentResolver().openFileDescriptor(saf, "r")) {
+            return pfd == null;
+        } catch (FileNotFoundException e) {
+            return true; // the document is gone
         } catch (Exception e) {
-            // Unsure (transient/SAF error) — be conservative and keep the row.
             if (BuildConfig.DEBUG) {
                 Log.d(TAG, "isRestoredFileMissing: check failed for " + absPath, e);
             }
