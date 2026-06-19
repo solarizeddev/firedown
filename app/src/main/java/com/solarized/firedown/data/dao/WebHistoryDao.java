@@ -66,14 +66,25 @@ public interface WebHistoryDao {
      * so there is exactly one row per (url, day), and {@code COUNT(*)} grouped by
      * url is therefore the number of DISTINCT DAYS a url was visited — a
      * lightweight frecency proxy. Ordered by that count, then recency. about:
-     * URLs (home/blank) are excluded at the source. The bare columns
-     * (title/icon) come from an arbitrary row of each group, which is fine —
-     * a site's title/icon is stable per url in practice. COUNT/MAX live only in
-     * ORDER BY so the projection is exactly the entity's columns (no Room
-     * cursor-mismatch warning).
+     * URLs (home/blank) are excluded at the source.
+     *
+     * <p>The bare title/icon/uid come from each url's MOST RECENT visit, not an
+     * arbitrary row of the group: the inner query carries a single
+     * {@code MAX(file_date)}, which under SQLite's "bare columns in an aggregate
+     * query" rule makes the non-aggregate columns report from that max-date row
+     * (the latest visit usually holds the best, fully-loaded title — earlier
+     * mid-load visits often had none). The {@code COUNT}/{@code MAX} helpers are
+     * confined to the SUBQUERY and the outer projection lists only the entity's
+     * columns, so there is no Room cursor-mismatch warning.
+     *
+     * <p>{@code limit} is a CANDIDATE pool, not the final count — the caller
+     * (AutoCompleteSearch.mostVisited) over-fetches and then drops still-blank
+     * titles and caps per host, so pass several times the rows you want shown.
      */
-    @Query("SELECT * FROM webhistory WHERE file_url NOT LIKE 'about:%' "
-            + "GROUP BY file_url ORDER BY COUNT(*) DESC, MAX(file_date) DESC LIMIT :limit")
+    @Query("SELECT uid, file_title, file_url, file_date, file_icon, file_icon_resolution FROM ("
+            + "SELECT *, MAX(file_date) AS _md, COUNT(*) AS _cnt FROM webhistory "
+            + "WHERE file_url NOT LIKE 'about:%' GROUP BY file_url"
+            + ") ORDER BY _cnt DESC, _md DESC LIMIT :limit")
     List<WebHistoryEntity> getMostVisited(int limit);
 
     /**

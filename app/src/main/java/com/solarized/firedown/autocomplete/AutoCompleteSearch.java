@@ -3,6 +3,7 @@ package com.solarized.firedown.autocomplete;
 import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.toCollection;
 
+import android.net.Uri;
 import android.text.TextUtils;
 import android.util.Log;
 import android.webkit.URLUtil;
@@ -29,7 +30,10 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -91,6 +95,10 @@ public class AutoCompleteSearch {
 
     /** How many "most visited" rows fill the empty-focus suggestion list. */
     private static final int MAX_MOST_VISITED = 5;
+    // mostVisited() over-fetches this many candidates and then drops still-blank
+    // titles and caps to one row per host, so the query must return well more
+    // than the MAX_MOST_VISITED rows actually shown.
+    private static final int MOST_VISITED_CANDIDATES = 30;
 
     /**
      * Top-frecency history rows for the EMPTY-focus suggestion list (Option A:
@@ -106,26 +114,65 @@ public class AutoCompleteSearch {
     public List<AutoCompleteEntity> mostVisited() {
         if (mIncognito) return new ArrayList<>();
 
-        List<WebHistoryEntity> history = mWebHistoryDataRepository.getMostVisited(MAX_MOST_VISITED);
+        // Over-fetch: the per-host cap and blank-title skip below thin the list,
+        // so we ask for many candidates and stop once MAX_MOST_VISITED are kept.
+        List<WebHistoryEntity> history =
+                mWebHistoryDataRepository.getMostVisited(MOST_VISITED_CANDIDATES);
         List<AutoCompleteEntity> items = new ArrayList<>();
         if (history == null) return items;
 
+        // One row per host — a "most visited" rail should show distinct SITES,
+        // not several deep links of one binge-watched site (which the exact-URL
+        // GROUP BY would otherwise let crowd out everything else). Matches the
+        // new-tab "top sites" behaviour of Chrome/Firefox.
+        Set<String> seenHosts = new HashSet<>();
         for (WebHistoryEntity entity : history) {
-            // No "about:blank" tile — the URL fallback below can't rescue a row
-            // whose URL is itself about:blank (same guard as addHistory; the
-            // query already excludes about: URLs, this covers legacy rows).
-            if (UrlStringUtils.isAboutBlank(entity.getUrl())) continue;
+            if (items.size() >= MAX_MOST_VISITED) break;
+            String url = entity.getUrl();
+            // No "about:blank" tile — the URL fallback can't rescue a row whose
+            // URL is itself about:blank (same guard as addHistory; the query
+            // already excludes about: URLs, this covers legacy rows).
+            if (UrlStringUtils.isAboutBlank(url)) continue;
+            // Skip blank-title rows here (unlike typed search, which shows the
+            // URL as the title): in a "top sites" rail next to titled rows a
+            // bare-URL row reads as broken, and a page that never got a title is
+            // the weakest top-site candidate anyway. The query already sources
+            // the title from each url's MOST RECENT visit, so this only drops
+            // urls that have NEVER had a title.
+            String title = entity.getTitle();
+            if (UrlStringUtils.isBlankTitle(title)) continue;
+            String host = hostOf(url);
+            if (host != null && !seenHosts.add(host)) continue;
             AutoCompleteEntity s = new AutoCompleteEntity();
             s.setType(AutoCompleteEntity.HISTORY);
-            // Blank/about:blank title → show the URL (Firefox parity).
-            String title = entity.getTitle();
-            s.setTitle(UrlStringUtils.isBlankTitle(title) ? entity.getUrl() : title);
+            s.setTitle(title);
             s.setIcon(entity.getIcon());
-            s.setSubText(entity.getUrl());
+            s.setSubText(url);
             s.setUid(entity.getId());
             items.add(s);
         }
         return items;
+    }
+
+    /**
+     * Registrable-ish host of a URL for the most-visited per-host cap, lowercased
+     * and with a leading {@code www.} stripped so {@code www.site.com} and
+     * {@code site.com} collapse to one site. Other subdomains stay distinct
+     * (no public-suffix list here). Returns {@code null} when the URL has no host
+     * (the caller then skips the cap and keeps the row).
+     */
+    private static String hostOf(String url) {
+        if (url == null) return null;
+        String host;
+        try {
+            host = Uri.parse(url).getHost();
+        } catch (Exception e) {
+            return null;
+        }
+        if (host == null) return null;
+        host = host.toLowerCase(Locale.ROOT);
+        if (host.startsWith("www.")) host = host.substring(4);
+        return host.isEmpty() ? null : host;
     }
 
     /**

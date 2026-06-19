@@ -1166,8 +1166,21 @@ same `AutoCompleteEntity.HISTORY` rows, the same adapter. Wiring:
   the uid is `hash(url)+day`, so there's one row per (url, day), and
   `COUNT(*)` grouped by url = distinct days visited — a lightweight proxy.
   `WebHistoryDao.getMostVisited` orders by that count then recency, excludes
-  `about:%`, and keeps `COUNT/MAX` in `ORDER BY` only so the projection is
-  exactly the entity columns (no Room cursor-mismatch warning).
+  `about:%`. The title/icon come from each url's **most recent visit** (a single
+  `MAX(file_date)` in a subquery → SQLite's "bare columns in an aggregate query"
+  rule picks that row; the latest visit usually holds the fully-loaded title,
+  earlier mid-load visits often had none). `COUNT`/`MAX` are confined to the
+  subquery so the outer projection is exactly the entity columns (no Room
+  cursor-mismatch warning).
+- **The query `limit` is a CANDIDATE pool, not the shown count.**
+  `AutoCompleteSearch.mostVisited` over-fetches (`MOST_VISITED_CANDIDATES`) and
+  then thins to `MAX_MOST_VISITED` rows: it **caps to one row per host**
+  (`hostOf` — lowercased, leading `www.` stripped; other subdomains stay
+  distinct) so a binged site's many deep links can't crowd out the rail (distinct
+  SITES, like a new-tab "top sites" grid), and it **skips blank-title rows**
+  (unlike typed search, which shows the URL as the title — a bare-URL row reads
+  as broken next to titled rows, and a never-titled page is the weakest top-site
+  candidate; the most-recent-visit title above already minimises these).
 - **One LiveData, one generation guard.** `loadMostVisited()` posts to the SAME
   `mSearchData` as typed search and shares `mSearchGen`, so a late most-visited
   post can't clobber a newer typed result (or vice-versa) — the older task's
