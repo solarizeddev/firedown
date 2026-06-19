@@ -240,9 +240,9 @@ public class WebBookmarkFragment extends BaseFocusFragment implements OnItemClic
                     mExportLauncher.launch(EXPORT_FILE_NAME);
                     return true;
                 } else if (id == R.id.action_import) {
-                    // text/html primarily; "*/*" so a mislabeled .html export
-                    // is still pickable.
-                    mImportLauncher.launch(new String[]{"text/html", "*/*"});
+                    // Filter the picker to HTML (the Netscape bookmark format);
+                    // xhtml covered too. Browser exports are always text/html.
+                    mImportLauncher.launch(new String[]{"text/html", "application/xhtml+xml"});
                     return true;
                 } else if (id == android.R.id.home) {
                     mNavController.popBackStack();
