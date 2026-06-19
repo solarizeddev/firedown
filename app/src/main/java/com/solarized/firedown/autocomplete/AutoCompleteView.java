@@ -17,11 +17,11 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.widget.AppCompatImageButton;
 import androidx.core.graphics.ColorUtils;
 import androidx.core.widget.ImageViewCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
 import com.solarized.firedown.R;
 import com.solarized.firedown.ui.AutocompleteSectionDecoration;
@@ -46,7 +46,7 @@ public class AutoCompleteView extends FrameLayout {
 
     private AutocompleteSectionDecoration mSectionDecoration;
 
-    private MaterialButton mVisibilityView;
+    private AppCompatImageButton mVisibilityView;
 
     private TextView mClipboardTextView;
 
@@ -196,7 +196,7 @@ public class AutoCompleteView extends FrameLayout {
         // 6. Trailing forward ('go') button — themed primary so it reads as
         //    the action accent (matches the layout's ?attr/colorPrimary).
         if (mVisibilityView != null) {
-            mVisibilityView.setIconTint(ColorStateList.valueOf(
+            ImageViewCompat.setImageTintList(mVisibilityView, ColorStateList.valueOf(
                     IncognitoColors.getPrimary(activity, incognito)));
         }
 

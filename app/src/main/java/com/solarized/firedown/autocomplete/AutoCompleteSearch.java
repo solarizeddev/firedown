@@ -145,6 +145,7 @@ public class AutoCompleteSearch {
             if (host != null && !seenHosts.add(host)) continue;
             AutoCompleteEntity s = new AutoCompleteEntity();
             s.setType(AutoCompleteEntity.HISTORY);
+            s.setMostVisited(true); // flame glyph instead of the history clock
             s.setTitle(title);
             s.setIcon(entity.getIcon());
             s.setSubText(url);

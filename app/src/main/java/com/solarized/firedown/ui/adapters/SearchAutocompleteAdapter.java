@@ -44,6 +44,8 @@ public class SearchAutocompleteAdapter extends ListAdapter<AutoCompleteEntity, R
 
     private final Drawable historyDrawable;
 
+    private final Drawable mostVisitedDrawable;
+
     private final Drawable tabDrawable;
 
     private final Drawable bookmarkDrawable;
@@ -70,6 +72,11 @@ public class SearchAutocompleteAdapter extends ListAdapter<AutoCompleteEntity, R
         if (historyDrawable != null) {
             int size = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 22, context.getResources().getDisplayMetrics());
             historyDrawable.setBounds(0, 0, size, size);
+        }
+        mostVisitedDrawable = ContextCompat.getDrawable(context, R.drawable.ic_whatshot_24);
+        if (mostVisitedDrawable != null) {
+            int size = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 22, context.getResources().getDisplayMetrics());
+            mostVisitedDrawable.setBounds(0, 0, size, size);
         }
         tabDrawable = ContextCompat.getDrawable(context, R.drawable.ic_tabs_24);
         if (tabDrawable != null) {
@@ -181,7 +188,11 @@ public class SearchAutocompleteAdapter extends ListAdapter<AutoCompleteEntity, R
                     break;
                 case AutoCompleteEntity.HISTORY:
                     searchViewHolderPhone.subTextView.setText(searchEntity.getSubText());
-                    searchViewHolderPhone.buttonTextView.setImageDrawable(historyDrawable);
+                    // Most-visited rows (empty-focus) get the flame glyph so they
+                    // read as top sites; a typed-search history match keeps the
+                    // clock. Both are type HISTORY, distinguished by the flag.
+                    searchViewHolderPhone.buttonTextView.setImageDrawable(
+                            searchEntity.isMostVisited() ? mostVisitedDrawable : historyDrawable);
                     searchViewHolderPhone.textView.setText(searchEntity.getTitle());
                     GlideHelper.load(searchEntity.getIcon(), searchEntity.getSubText(), searchViewHolderPhone.buttonSearchView, mRequestOptions);
                     break;

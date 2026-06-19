@@ -32,7 +32,8 @@
         android:baselineAligned="false"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:paddingHorizontal="12dp"
+        android:paddingStart="12dp"
+        android:paddingEnd="0dp"
         android:paddingVertical="12dp">
 
         <ImageView
@@ -71,18 +72,23 @@
 
         </LinearLayout>
 
-        <com.google.android.material.button.MaterialButton
+        <!--
+            Plain image button mirroring the suggestion rows' trailing icon
+            (fragment_autocomplete_item: wrap_content + 12dp padding, no card
+            inset) so the arrow lands in the SAME column as the list's clock /
+            flame glyphs. A MaterialButton.IconOnly here carried its own insets /
+            min-width and sat off that column.
+        -->
+        <androidx.appcompat.widget.AppCompatImageButton
             android:id="@+id/clipboard_button"
-            style="@style/Widget.Material3.Button.IconOnly"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
             android:background="@null"
             android:contentDescription="@null"
-            app:backgroundTint="@color/transparent"
-            app:icon="@drawable/ic_arrow_forward_24"
-            app:iconTint="?attr/colorPrimary"
-            app:rippleColor="?attr/colorControlNormal" />
+            android:padding="12dp"
+            android:src="@drawable/ic_arrow_forward_24"
+            android:tint="?attr/colorPrimary" />
 
     </LinearLayout>
 
