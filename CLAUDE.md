@@ -1425,6 +1425,22 @@ displaying a Twitter post's title.
   analogous backfill already (`IconsRepository` → `WebBookmarkDao.updateIcon`,
   fires when the favicon loads, sync-set gated).
 
+- **Bookmark import/export — Netscape HTML, the universal browser format.** The
+  bookmarks-list toolbar overflow (`menu_web_bookmark_options.xml`,
+  `action_import`/`action_export`, `WebBookmarkFragment`) reads/writes the
+  Netscape Bookmark File Format every browser (Firefox/Chrome/…) uses, via SAF
+  (`CreateDocument`/`OpenDocument`). Format logic is the pure `utils/BookmarkHtml`
+  (export/parse, no DB/Context dep beyond `Html` (un)escaping); the IO +
+  threading live in `WebBookmarkDataRepository.exportBookmarks/importBookmarks`
+  (disk executor, main-thread count callback, stream owned+closed there). Import
+  is **merge-by-URL, not append**: each parsed link gets the canonical
+  `bookmarkIdFor(url)` uid and the set is `insertAll`'d in ONE transaction
+  (REPLACE → re-importing the same file can't duplicate; one Room invalidation
+  refreshes the Paging list). Import keeps **http/https only**, flattens any
+  folder hierarchy (`<H3>` ignored), and reads `ADD_DATE`/`ICON_URI` when present.
+  Bookmarks are a single shared DB (incognito only themes the list), so both
+  actions work in either mode — no incognito gate.
+
 - **`about:blank`/blank titles never SHOWN** — Firefox displays the URL for a
   titleless entry (fenix#2163). `UrlStringUtils.isBlankTitle(title)` (null/empty/
   `about:blank` in EITHER casing — `isAboutBlank` is case-sensitive `startsWith`

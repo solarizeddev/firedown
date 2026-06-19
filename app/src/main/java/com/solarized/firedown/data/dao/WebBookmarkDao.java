@@ -49,6 +49,12 @@ public interface WebBookmarkDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     Long insert(WebBookmarkEntity web);
 
+    /** Bulk insert for "Import bookmarks" — one transaction, one Room
+     *  invalidation (the Paging list refreshes once for the whole import,
+     *  not per row). REPLACE so a re-imported URL merges by uid. */
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    void insertAll(List<WebBookmarkEntity> bookmarks);
+
     /**
      * In-place icon refresh for an existing bookmark. Used by
      * IconsRepository when GeckoRuntimeHelper signals a new icon for

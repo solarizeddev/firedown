@@ -28,4 +28,14 @@
         app:iconTint="?attr/colorOnSurface"
         app:showAsAction="ifRoom"
         android:title="@string/delete"/>
+    <!-- Infrequent actions live in the overflow (never as toolbar icons) so the
+         row stays search / sort / delete. -->
+    <item
+        android:id="@+id/action_import"
+        app:showAsAction="never"
+        android:title="@string/bookmark_import"/>
+    <item
+        android:id="@+id/action_export"
+        app:showAsAction="never"
+        android:title="@string/bookmark_export"/>
 </menu>

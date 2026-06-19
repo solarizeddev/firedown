@@ -1,5 +1,6 @@
 package com.solarized.firedown.phone.fragments;
 
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.ContextThemeWrapper;
@@ -12,6 +13,8 @@ import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 
 import androidx.activity.OnBackPressedCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.core.view.MenuProvider;
 import androidx.lifecycle.Lifecycle;
@@ -20,6 +23,7 @@ import androidx.navigation.NavOptions;
 import androidx.paging.LoadState;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.snackbar.Snackbar;
 import com.solarized.firedown.IntentActions;
 import com.solarized.firedown.R;
 import com.solarized.firedown.data.entity.GeckoStateEntity;
@@ -33,17 +37,34 @@ import com.solarized.firedown.ui.adapters.WebBookmarkAdapter;
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.utils.NavigationUtils;
 
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.HashSet;
 
 
 public class WebBookmarkFragment extends BaseFocusFragment implements OnItemClickListener {
 
     private static final String TAG = WebBookmarkFragment.class.getName();
+
+    /** Default filename suggested by the export "Save as" picker. */
+    private static final String EXPORT_FILE_NAME = "firedown_bookmarks.html";
+
     private WebBookmarkAdapter mAdapter;
     private WebBookmarkViewModel mWebBookmarkViewModel;
     private BrowserURIViewModel mBrowserURIViewModel;
     private boolean mPendingScrollToTop = false;
     private boolean mIncognito;
+
+    // SAF pickers for bookmark export/import (Netscape HTML, the universal
+    // browser format). Registered as field initializers so they exist before
+    // the fragment reaches STARTED, as the activity-result API requires.
+    private final ActivityResultLauncher<String> mExportLauncher =
+            registerForActivityResult(new ActivityResultContracts.CreateDocument("text/html"),
+                    uri -> { if (uri != null) doExport(uri); });
+
+    private final ActivityResultLauncher<String[]> mImportLauncher =
+            registerForActivityResult(new ActivityResultContracts.OpenDocument(),
+                    uri -> { if (uri != null) doImport(uri); });
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -215,6 +236,14 @@ public class WebBookmarkFragment extends BaseFocusFragment implements OnItemClic
                         NavigationUtils.navigateSafe(mNavController, R.id.dialog_delete_bookmarks);
                     }
                     return true;
+                } else if (id == R.id.action_export) {
+                    mExportLauncher.launch(EXPORT_FILE_NAME);
+                    return true;
+                } else if (id == R.id.action_import) {
+                    // text/html primarily; "*/*" so a mislabeled .html export
+                    // is still pickable.
+                    mImportLauncher.launch(new String[]{"text/html", "*/*"});
+                    return true;
                 } else if (id == android.R.id.home) {
                     mNavController.popBackStack();
                     return true;
@@ -222,6 +251,50 @@ public class WebBookmarkFragment extends BaseFocusFragment implements OnItemClic
                 return false;
             }
         }, getViewLifecycleOwner(), Lifecycle.State.RESUMED);
+    }
+
+    /** Write all bookmarks to the user-picked file (Netscape HTML). IO + the
+     *  count-reporting callback run on background/main via the repository. */
+    private void doExport(Uri uri) {
+        try {
+            OutputStream os = requireContext().getContentResolver().openOutputStream(uri);
+            if (os == null) {
+                showSnack(getString(R.string.bookmark_io_error));
+                return;
+            }
+            mWebBookmarkViewModel.exportBookmarks(os, count -> {
+                if (!isAdded()) return;
+                showSnack(count >= 0
+                        ? getString(R.string.bookmark_export_done, count)
+                        : getString(R.string.bookmark_io_error));
+            });
+        } catch (Exception e) {
+            showSnack(getString(R.string.bookmark_io_error));
+        }
+    }
+
+    /** Read bookmarks from the user-picked file. Imported links merge with
+     *  existing bookmarks by URL; the Paging list refreshes via Room. */
+    private void doImport(Uri uri) {
+        try {
+            InputStream is = requireContext().getContentResolver().openInputStream(uri);
+            if (is == null) {
+                showSnack(getString(R.string.bookmark_io_error));
+                return;
+            }
+            mWebBookmarkViewModel.importBookmarks(is, count -> {
+                if (!isAdded()) return;
+                showSnack(count >= 0
+                        ? getString(R.string.bookmark_import_done, count)
+                        : getString(R.string.bookmark_io_error));
+            });
+        } catch (Exception e) {
+            showSnack(getString(R.string.bookmark_io_error));
+        }
+    }
+
+    private void showSnack(String message) {
+        Snackbar.make(mActivity.getSnackAnchorView(), message, Snackbar.LENGTH_LONG).show();
     }
 
     public void setupBackPress(){

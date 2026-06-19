@@ -21,7 +21,10 @@ import com.solarized.firedown.data.entity.WebBookmarkEntity;
 import com.solarized.firedown.data.repository.WebBookmarkDataRepository;
 import com.solarized.firedown.geckoview.GeckoState;
 
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 import javax.inject.Inject;
 
@@ -153,6 +156,18 @@ public class WebBookmarkViewModel extends ViewModel {
 
     public void getId(int id, DataCallback<WebBookmarkEntity> callback) {
         mRepository.getId(id, callback);
+    }
+
+    /** Export all bookmarks to {@code out} (Netscape HTML); {@code onDone}
+     *  receives the count on the main thread, or -1 on failure. */
+    public void exportBookmarks(OutputStream out, Consumer<Integer> onDone) {
+        mRepository.exportBookmarks(out, onDone);
+    }
+
+    /** Import bookmarks from {@code in} (Netscape HTML); {@code onDone} receives
+     *  the count imported on the main thread, or -1 on failure. */
+    public void importBookmarks(InputStream in, Consumer<Integer> onDone) {
+        mRepository.importBookmarks(in, onDone);
     }
 
     @Override

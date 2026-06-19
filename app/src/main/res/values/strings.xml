@@ -275,6 +275,11 @@
     <string name="navigation_vault">Safe Folder</string>
     <string name="navigation_web_bookmarks">Bookmarks</string>
     <string name="navigation_web_bookmarks_edit">Edit Bookmark</string>
+    <string name="bookmark_import">Import bookmarks</string>
+    <string name="bookmark_export">Export bookmarks</string>
+    <string name="bookmark_export_done">Exported %1$d bookmarks</string>
+    <string name="bookmark_import_done">Imported %1$d bookmarks</string>
+    <string name="bookmark_io_error">Couldn\'t read the bookmarks file</string>
     <string name="navigation_web_history">History</string>
     <string name="notifications_downloads_channel">Downloads</string>
     <string name="notifications_media_channel">Media</string>

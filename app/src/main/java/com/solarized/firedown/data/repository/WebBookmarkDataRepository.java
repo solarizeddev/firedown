@@ -10,14 +10,22 @@ import com.solarized.firedown.data.dao.WebBookmarkDao;
 import com.solarized.firedown.data.di.Qualifiers;
 import com.solarized.firedown.data.entity.WebBookmarkEntity;
 import com.solarized.firedown.geckoview.GeckoState;
+import com.solarized.firedown.utils.BookmarkHtml;
 import com.solarized.firedown.utils.UrlStringUtils;
 import com.solarized.firedown.utils.Utils;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.Executor;
+import java.util.function.Consumer;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -226,5 +234,81 @@ public class WebBookmarkDataRepository {
             }
 
         });
+    }
+
+    /** Cap on an imported bookmark file (Netscape HTML is tiny; this only
+     *  guards against an accidentally-picked giant file OOM'ing the read). */
+    private static final int MAX_IMPORT_BYTES = 32 * 1024 * 1024;
+
+    /**
+     * Export every bookmark to {@code out} as Netscape bookmark HTML, on the
+     * disk executor; the stream is CLOSED here (it's owned by us once handed
+     * over). {@code onDone} is posted to the MAIN thread with the count written,
+     * or {@code -1} on failure.
+     */
+    public void exportBookmarks(OutputStream out, Consumer<Integer> onDone) {
+        mDiskExecutor.execute(() -> {
+            int count = -1;
+            try (OutputStream os = out) {
+                List<WebBookmarkEntity> all = mWebBookmarkDao.getAllRaw();
+                os.write(BookmarkHtml.export(all).getBytes(StandardCharsets.UTF_8));
+                os.flush();
+                count = all != null ? all.size() : 0;
+            } catch (Exception e) {
+                count = -1;
+            }
+            final int result = count;
+            mMainExecutor.execute(() -> onDone.accept(result));
+        });
+    }
+
+    /**
+     * Import bookmarks from a Netscape bookmark HTML {@code in} stream, on the
+     * disk executor; the stream is CLOSED here. Each parsed link gets the
+     * canonical {@link #bookmarkIdFor} uid (so a re-import MERGES with existing
+     * bookmarks by URL rather than duplicating), and the whole set is inserted
+     * in ONE transaction ({@link WebBookmarkDao#insertAll}) — a single Room
+     * invalidation refreshes the Paging list once. {@code onDone} is posted to
+     * the MAIN thread with the number imported, or {@code -1} on failure.
+     */
+    public void importBookmarks(InputStream in, Consumer<Integer> onDone) {
+        mDiskExecutor.execute(() -> {
+            int count = -1;
+            try (InputStream is = in) {
+                String html = readAll(is);
+                List<WebBookmarkEntity> parsed = BookmarkHtml.parse(html);
+                List<WebBookmarkEntity> toInsert = new ArrayList<>(parsed.size());
+                for (WebBookmarkEntity entity : parsed) {
+                    int id = bookmarkIdFor(entity.getUrl());
+                    if (id == 0) continue; // empty/garbage URL
+                    entity.setId(id);
+                    mSyncEntities.add(id);
+                    toInsert.add(entity);
+                }
+                if (!toInsert.isEmpty()) {
+                    mWebBookmarkDao.insertAll(toInsert);
+                }
+                count = toInsert.size();
+            } catch (Exception e) {
+                count = -1;
+            }
+            final int result = count;
+            mMainExecutor.execute(() -> onDone.accept(result));
+        });
+    }
+
+    private static String readAll(InputStream is) throws IOException {
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        byte[] chunk = new byte[8192];
+        int total = 0;
+        int n;
+        while ((n = is.read(chunk)) != -1) {
+            total += n;
+            if (total > MAX_IMPORT_BYTES) {
+                throw new IOException("bookmark file too large");
+            }
+            buffer.write(chunk, 0, n);
+        }
+        return buffer.toString(StandardCharsets.UTF_8.name());
     }
 }
