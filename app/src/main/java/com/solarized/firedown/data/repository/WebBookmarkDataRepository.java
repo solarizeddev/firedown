@@ -15,6 +15,8 @@ import com.solarized.firedown.utils.UrlStringUtils;
 import com.solarized.firedown.utils.Utils;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -241,19 +243,30 @@ public class WebBookmarkDataRepository {
     private static final int MAX_IMPORT_BYTES = 32 * 1024 * 1024;
 
     /**
-     * Export every bookmark to {@code out} as Netscape bookmark HTML, on the
-     * disk executor; the stream is CLOSED here (it's owned by us once handed
-     * over). {@code onDone} is posted to the MAIN thread with the count written,
-     * or {@code -1} on failure.
+     * Export every bookmark as Netscape bookmark HTML to {@code target}, on the
+     * disk executor (parent dirs created). Targets the public
+     * {@code Download/Firedown/backup} folder — which survives uninstall like
+     * the download mirror, so a manual bookmark backup rides alongside it and
+     * can be re-imported after a reinstall (bookmarks are NOT in Android Auto
+     * Backup). Direct {@code FileOutputStream}, the same mechanism
+     * {@code DownloadBackupMirror} uses to write its {@code .fdbk} there.
+     * {@code onDone} is posted to the MAIN thread with the count written, or
+     * {@code -1} on failure.
      */
-    public void exportBookmarks(OutputStream out, Consumer<Integer> onDone) {
+    public void exportBookmarks(File target, Consumer<Integer> onDone) {
         mDiskExecutor.execute(() -> {
             int count = -1;
-            try (OutputStream os = out) {
-                List<WebBookmarkEntity> all = mWebBookmarkDao.getAllRaw();
-                os.write(BookmarkHtml.export(all).getBytes(StandardCharsets.UTF_8));
-                os.flush();
-                count = all != null ? all.size() : 0;
+            try {
+                File dir = target.getParentFile();
+                if (dir != null && !dir.exists()) {
+                    dir.mkdirs();
+                }
+                try (OutputStream os = new FileOutputStream(target, false)) {
+                    List<WebBookmarkEntity> all = mWebBookmarkDao.getAllRaw();
+                    os.write(BookmarkHtml.export(all).getBytes(StandardCharsets.UTF_8));
+                    os.flush();
+                    count = all != null ? all.size() : 0;
+                }
             } catch (Exception e) {
                 count = -1;
             }

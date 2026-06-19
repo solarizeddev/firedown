@@ -1428,18 +1428,33 @@ displaying a Twitter post's title.
 - **Bookmark import/export — Netscape HTML, the universal browser format.** The
   bookmarks-list toolbar overflow (`menu_web_bookmark_options.xml`,
   `action_import`/`action_export`, `WebBookmarkFragment`) reads/writes the
-  Netscape Bookmark File Format every browser (Firefox/Chrome/…) uses, via SAF
-  (`CreateDocument`/`OpenDocument`). Format logic is the pure `utils/BookmarkHtml`
-  (export/parse, no DB/Context dep beyond `Html` (un)escaping); the IO +
-  threading live in `WebBookmarkDataRepository.exportBookmarks/importBookmarks`
-  (disk executor, main-thread count callback, stream owned+closed there). Import
-  is **merge-by-URL, not append**: each parsed link gets the canonical
-  `bookmarkIdFor(url)` uid and the set is `insertAll`'d in ONE transaction
-  (REPLACE → re-importing the same file can't duplicate; one Room invalidation
-  refreshes the Paging list). Import keeps **http/https only**, flattens any
-  folder hierarchy (`<H3>` ignored), and reads `ADD_DATE`/`ICON_URI` when present.
-  Bookmarks are a single shared DB (incognito only themes the list), so both
-  actions work in either mode — no incognito gate.
+  Netscape Bookmark File Format every browser (Firefox/Chrome/…) uses. Format
+  logic is the pure `utils/BookmarkHtml` (export/parse, no DB/Context dep beyond
+  `Html` (un)escaping); IO + threading live in
+  `WebBookmarkDataRepository.exportBookmarks(File)/importBookmarks(InputStream)`
+  (disk executor, main-thread count callback). Import is **merge-by-URL, not
+  append**: each parsed link gets the canonical `bookmarkIdFor(url)` uid and the
+  set is `insertAll`'d in ONE transaction (REPLACE → re-importing the same file
+  can't duplicate; one Room invalidation refreshes the Paging list). Import keeps
+  **http/https only**, flattens any folder hierarchy (`<H3>` ignored), and reads
+  `ADD_DATE`/`ICON_URI` when present.
+  - **Export is NO picker — it writes straight to the public
+    `Download/Firedown/backup/firedown_bookmarks.html`** via `FileOutputStream`
+    (the same direct write `DownloadBackupMirror` uses for its `.fdbk` there;
+    the app owns that subtree). That folder **survives uninstall**, so a manual
+    bookmark backup rides alongside the download mirror and can be re-imported
+    after a reinstall — which matters because **bookmarks are NOT in Android Auto
+    Backup** (the backup include-list is prefs + the download mirror only, see
+    "Auto Backup"). Overwrites latest-wins, like the mirror.
+  - **Import IS a SAF picker** (`OpenDocument`): a reinstalled app must take a
+    read grant on the now-foreign-owned file. The contract is overridden to force
+    a **single `text/html` type** (the `*/*` + `EXTRA_MIME_TYPES` combo is ignored
+    by many OEM pickers / the Recents view, which then show every png/mp4 in the
+    download pile) and to pre-point `EXTRA_INITIAL_URI` at
+    `Download/Firedown/backup` so the export file is right there. Both are
+    best-effort at the SAF layer (a stubborn provider may ignore them).
+  - Bookmarks are a single shared DB (incognito only themes the list), so both
+    actions work in either mode — no incognito gate.
 
 - **`about:blank`/blank titles never SHOWN** — Firefox displays the URL for a
   titleless entry (fenix#2163). `UrlStringUtils.isBlankTitle(title)` (null/empty/

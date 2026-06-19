@@ -38,10 +38,11 @@ import com.solarized.firedown.ui.OnItemClickListener;
 import com.solarized.firedown.ui.diffs.WebBookmarkDiffCallback;
 import com.solarized.firedown.ui.adapters.WebBookmarkAdapter;
 import com.solarized.firedown.Keys;
+import com.solarized.firedown.StoragePaths;
 import com.solarized.firedown.utils.NavigationUtils;
 
+import java.io.File;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.HashSet;
 
 
@@ -49,8 +50,11 @@ public class WebBookmarkFragment extends BaseFocusFragment implements OnItemClic
 
     private static final String TAG = WebBookmarkFragment.class.getName();
 
-    /** Default filename suggested by the export "Save as" picker. */
+    /** Bookmark backup file name + folder, inside Download/Firedown (the
+     *  public folder that survives uninstall — kept in step with
+     *  DownloadBackupMirror's "backup" subdir). */
     private static final String EXPORT_FILE_NAME = "firedown_bookmarks.html";
+    private static final String BACKUP_DIR_NAME = "backup";
 
     private WebBookmarkAdapter mAdapter;
     private WebBookmarkViewModel mWebBookmarkViewModel;
@@ -58,13 +62,13 @@ public class WebBookmarkFragment extends BaseFocusFragment implements OnItemClic
     private boolean mPendingScrollToTop = false;
     private boolean mIncognito;
 
-    // SAF pickers for bookmark export/import (Netscape HTML, the universal
-    // browser format). Registered as field initializers so they exist before
-    // the fragment reaches STARTED, as the activity-result API requires.
-    private final ActivityResultLauncher<String> mExportLauncher =
-            registerForActivityResult(new ActivityResultContracts.CreateDocument("text/html"),
-                    uri -> { if (uri != null) doExport(uri); });
-
+    // Export writes directly into the public Download/Firedown/backup folder
+    // (no picker) — it survives uninstall like the download mirror, so the
+    // bookmark backup can be re-imported after a reinstall. Import is a SAF
+    // picker (a reinstalled app must take a read grant on the foreign-owned
+    // file), filtered to HTML and pre-pointed at that same backup folder.
+    // Registered as a field initializer so it exists before the fragment
+    // reaches STARTED, as the activity-result API requires.
     private final ActivityResultLauncher<String[]> mImportLauncher =
             registerForActivityResult(new ActivityResultContracts.OpenDocument() {
                 @NonNull
@@ -79,14 +83,13 @@ public class WebBookmarkFragment extends BaseFocusFragment implements OnItemClic
                     Intent intent = super.createIntent(context, input);
                     intent.setType("text/html");
                     intent.removeExtra(Intent.EXTRA_MIME_TYPES);
-                    // Start the picker at the general Downloads root rather than
-                    // inside the media-filled Download/Firedown (where it tends to
-                    // land after a download) — a bookmark .html is never in there.
-                    // Best-effort: providers that ignore EXTRA_INITIAL_URI just
-                    // open at their own default.
+                    // Open in the backup folder where Export writes, so the
+                    // bookmark file is right there. Best-effort: providers that
+                    // ignore EXTRA_INITIAL_URI just open at their own default.
                     intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI,
                             DocumentsContract.buildDocumentUri(
-                                    "com.android.externalstorage.documents", "primary:Download"));
+                                    "com.android.externalstorage.documents",
+                                    "primary:Download/Firedown/backup"));
                     return intent;
                 }
             }, uri -> { if (uri != null) doImport(uri); });
@@ -262,7 +265,7 @@ public class WebBookmarkFragment extends BaseFocusFragment implements OnItemClic
                     }
                     return true;
                 } else if (id == R.id.action_export) {
-                    mExportLauncher.launch(EXPORT_FILE_NAME);
+                    doExport();
                     return true;
                 } else if (id == R.id.action_import) {
                     // The contract override forces a single text/html type, so
@@ -278,24 +281,20 @@ public class WebBookmarkFragment extends BaseFocusFragment implements OnItemClic
         }, getViewLifecycleOwner(), Lifecycle.State.RESUMED);
     }
 
-    /** Write all bookmarks to the user-picked file (Netscape HTML). IO + the
-     *  count-reporting callback run on background/main via the repository. */
-    private void doExport(Uri uri) {
-        try {
-            OutputStream os = requireContext().getContentResolver().openOutputStream(uri);
-            if (os == null) {
-                showSnack(getString(R.string.bookmark_io_error));
-                return;
-            }
-            mWebBookmarkViewModel.exportBookmarks(os, count -> {
-                if (!isAdded()) return;
-                showSnack(count >= 0
-                        ? getString(R.string.bookmark_export_done, count)
-                        : getString(R.string.bookmark_io_error));
-            });
-        } catch (Exception e) {
-            showSnack(getString(R.string.bookmark_io_error));
-        }
+    /** Export all bookmarks (Netscape HTML) directly into the public
+     *  Download/Firedown/backup folder — survives uninstall, alongside the
+     *  download mirror. The write + count callback run on background/main via
+     *  the repository; only the (cheap) path is computed here. */
+    private void doExport() {
+        File target = new File(
+                new File(StoragePaths.getDownloadPath(requireContext()), BACKUP_DIR_NAME),
+                EXPORT_FILE_NAME);
+        mWebBookmarkViewModel.exportBookmarks(target, count -> {
+            if (!isAdded()) return;
+            showSnack(count >= 0
+                    ? getString(R.string.bookmark_export_done, count)
+                    : getString(R.string.bookmark_io_error));
+        });
     }
 
     /** Read bookmarks from the user-picked file. Imported links merge with

@@ -21,8 +21,8 @@ import com.solarized.firedown.data.entity.WebBookmarkEntity;
 import com.solarized.firedown.data.repository.WebBookmarkDataRepository;
 import com.solarized.firedown.geckoview.GeckoState;
 
+import java.io.File;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.Objects;
 import java.util.function.Consumer;
 
@@ -160,8 +160,8 @@ public class WebBookmarkViewModel extends ViewModel {
 
     /** Export all bookmarks to {@code out} (Netscape HTML); {@code onDone}
      *  receives the count on the main thread, or -1 on failure. */
-    public void exportBookmarks(OutputStream out, Consumer<Integer> onDone) {
-        mRepository.exportBookmarks(out, onDone);
+    public void exportBookmarks(File target, Consumer<Integer> onDone) {
+        mRepository.exportBookmarks(target, onDone);
     }
 
     /** Import bookmarks from {@code in} (Netscape HTML); {@code onDone} receives
