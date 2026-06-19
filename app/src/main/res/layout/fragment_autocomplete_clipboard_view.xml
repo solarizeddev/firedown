@@ -1,13 +1,17 @@
 <!--
     Empty-autocomplete clipboard card (Option A, content-forward). Shown
     under the address bar when the field is empty and the clipboard holds
-    usable text. 16dp corners to match the suggestion container card.
+    usable text. 16dp corners + colorSurfaceContainerHighest to match the
+    suggestion container card directly below it.
 
-    Layout: leading icon chip (globe for a URL / search for plain text,
-    set in AutoCompleteView.showClipboard) + two lines (an action label —
-    "Open copied link" / "Search clipboard" — over the actual clipboard
-    content) + a trailing forward arrow. Tapping the card acts on the
-    content; the clipboard itself is left intact.
+    Layout intentionally lines up with the suggestion rows
+    (fragment_autocomplete_item): a 24dp leading icon at a 12dp inset with a
+    12dp text gap, so the clipboard icon sits in the SAME column as the list
+    favicons and the whole stack reads as one list. The icon (globe for a URL
+    / search for plain text, set in AutoCompleteView.showClipboard) signals the
+    ACTION; the "From clipboard" label + the primary-tinted forward arrow keep
+    the chip recognisable as the top action without breaking the column. Tapping
+    the card acts on the content; the clipboard itself is left intact.
 -->
 <com.google.android.material.card.MaterialCardView
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -28,31 +32,22 @@
         android:baselineAligned="false"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:paddingHorizontal="14dp"
+        android:paddingHorizontal="12dp"
         android:paddingVertical="12dp">
 
-        <FrameLayout
-            android:id="@+id/clipboard_icon_chip"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:background="@drawable/bg_incognito_chip"
-            android:backgroundTint="?attr/colorSurfaceContainerHigh">
-
-            <ImageView
-                android:id="@+id/clipboard_image"
-                android:layout_width="22dp"
-                android:layout_height="22dp"
-                android:layout_gravity="center"
-                android:contentDescription="@null"
-                android:src="@drawable/ic_globe_24"
-                app:tint="?attr/colorOnSurfaceVariant" />
-
-        </FrameLayout>
+        <ImageView
+            android:id="@+id/clipboard_image"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_gravity="center_vertical"
+            android:contentDescription="@null"
+            android:src="@drawable/ic_globe_24"
+            app:tint="?attr/colorOnSurfaceVariant" />
 
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="14dp"
+            android:layout_marginStart="12dp"
             android:layout_weight="1"
             android:orientation="vertical">
 
