@@ -1,6 +1,7 @@
 package com.solarized.firedown.ui.adapters;
 
 import android.content.Context;
+import android.net.Uri;
 import android.content.res.ColorStateList;
 import android.graphics.drawable.Drawable;
 import android.util.TypedValue;
@@ -27,6 +28,8 @@ import com.solarized.firedown.data.entity.AutoCompleteEntity;
 import com.solarized.firedown.ui.AutocompleteSectionDecoration;
 import com.solarized.firedown.ui.IncognitoColors;
 import com.solarized.firedown.ui.OnItemClickListener;
+
+import java.util.Locale;
 
 
 public class SearchAutocompleteAdapter extends ListAdapter<AutoCompleteEntity, RecyclerView.ViewHolder>
@@ -194,9 +197,10 @@ public class SearchAutocompleteAdapter extends ListAdapter<AutoCompleteEntity, R
             SectionHeaderViewHolder headerHolder = (SectionHeaderViewHolder) holder;
             headerHolder.textView.setText(mMostVisited);
         }else if(type == MOST_VISITED){
-            // Top-sites row: favicon-in-a-badge + title only (no URL, no glyph).
+            // Top-sites row: favicon-in-a-badge + title over the bare domain.
             MostVisitedViewHolder mvHolder = (MostVisitedViewHolder) holder;
             mvHolder.textView.setText(searchEntity.getTitle());
+            mvHolder.subText.setText(domainOf(searchEntity.getSubText()));
             GlideHelper.load(searchEntity.getIcon(), searchEntity.getSubText(), mvHolder.favicon, mRequestOptions);
         }else{
             int searchType = searchEntity.getType();
@@ -247,6 +251,7 @@ public class SearchAutocompleteAdapter extends ListAdapter<AutoCompleteEntity, R
             ImageViewCompat.setImageTintList(h.icon, variantTint);
         } else if (holder instanceof MostVisitedViewHolder h) {
             h.textView.setTextColor(onSurface);
+            h.subText.setTextColor(onSurfaceVariant);
         } else if (holder instanceof SectionHeaderViewHolder h) {
             h.textView.setTextColor(onSurfaceVariant);
         }
@@ -308,11 +313,35 @@ public class SearchAutocompleteAdapter extends ListAdapter<AutoCompleteEntity, R
         }
     }
 
-    /** Empty-focus MOST-VISITED row: favicon-in-a-badge + title. Reuses the
-     *  item_search click contract (opens the entity's URL). */
+    /** Bare host of a most-visited row's URL for its subtitle line — lowercased,
+     *  leading {@code www.} stripped (other subdomains kept). Just the domain,
+     *  no path/query, so the row reads as a site rather than a long URL. */
+    private static String domainOf(String url) {
+        if (url == null) {
+            return "";
+        }
+        String host;
+        try {
+            host = Uri.parse(url).getHost();
+        } catch (Exception e) {
+            return "";
+        }
+        if (host == null) {
+            return "";
+        }
+        host = host.toLowerCase(Locale.ROOT);
+        if (host.startsWith("www.")) {
+            host = host.substring(4);
+        }
+        return host;
+    }
+
+    /** Empty-focus MOST-VISITED row: favicon-in-a-badge + title over the domain.
+     *  Reuses the item_search click contract (opens the entity's URL). */
     static class MostVisitedViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
 
         TextView textView;
+        TextView subText;
         AppCompatImageView favicon;
         OnItemClickListener mOnItemClickListener;
 
@@ -320,6 +349,7 @@ public class SearchAutocompleteAdapter extends ListAdapter<AutoCompleteEntity, R
             super(view);
             mOnItemClickListener = onItemClickListener;
             textView = view.findViewById(R.id.text);
+            subText = view.findViewById(R.id.subtext);
             favicon = view.findViewById(R.id.search_badge);
             favicon.setClipToOutline(true);
             View item = view.findViewById(R.id.item_search);

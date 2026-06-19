@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    Empty-focus MOST-VISITED row: favicon-in-a-rounded-badge + title only (no
-    URL, no trailing glyph) so the list reads as "top sites", not history. The
-    40dp badge at a 14dp inset matches the clipboard chip's icon, so the chip
-    and these rows share one icon column. Flat row — the wrapping search_card
-    supplies the rounded surface; ripple via selectableItemBackground. Root id
-    is item_search so it reuses the existing onItemClick (opens the URL held in
-    the entity's subtext, which is not shown).
+    Empty-focus MOST-VISITED row: favicon-in-a-rounded-badge + title over the
+    bare DOMAIN (host only, no path/query — set by the adapter from the entity's
+    URL), so the list reads as "top sites" without the full-URL clutter. The
+    40dp badge at a 14dp inset matches the clipboard chip's icon, so the chip and
+    these rows share one icon column. Flat row — the wrapping search_card
+    supplies the rounded surface; ripple via selectableItemBackground. Root id is
+    item_search so it reuses the existing onItemClick (opens the URL held in the
+    entity's subtext).
 -->
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -38,17 +39,35 @@
 
     </FrameLayout>
 
-    <TextView
-        android:id="@+id/text"
-        style="?attr/textAppearanceTitleMedium"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_centerVertical="true"
         android:layout_marginStart="14dp"
         android:layout_marginEnd="14dp"
         android:layout_toEndOf="@id/mv_icon_chip"
-        android:ellipsize="end"
-        android:singleLine="true"
-        android:textSize="14sp" />
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/text"
+            style="?attr/textAppearanceTitleMedium"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:singleLine="true"
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/subtext"
+            style="?attr/textAppearanceSubtitle1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="1dp"
+            android:ellipsize="end"
+            android:singleLine="true"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:textSize="12sp" />
+
+    </LinearLayout>
 
 </RelativeLayout>
