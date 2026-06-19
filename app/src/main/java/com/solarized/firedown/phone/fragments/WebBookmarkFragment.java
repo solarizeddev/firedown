@@ -1,5 +1,7 @@
 package com.solarized.firedown.phone.fragments;
 
+import android.content.Context;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -63,8 +65,22 @@ public class WebBookmarkFragment extends BaseFocusFragment implements OnItemClic
                     uri -> { if (uri != null) doExport(uri); });
 
     private final ActivityResultLauncher<String[]> mImportLauncher =
-            registerForActivityResult(new ActivityResultContracts.OpenDocument(),
-                    uri -> { if (uri != null) doImport(uri); });
+            registerForActivityResult(new ActivityResultContracts.OpenDocument() {
+                @NonNull
+                @Override
+                public Intent createIntent(@NonNull Context context, @NonNull String[] input) {
+                    // SAF filters by MIME, and the OpenDocument contract sends
+                    // type=*/* + EXTRA_MIME_TYPES — which many OEM pickers and the
+                    // "Recent" view IGNORE, showing every file (png/mp4/…). A
+                    // single concrete type filters far more reliably, so override
+                    // to text/html and drop the multi-type extra. (Browser
+                    // bookmark exports are always text/html.)
+                    Intent intent = super.createIntent(context, input);
+                    intent.setType("text/html");
+                    intent.removeExtra(Intent.EXTRA_MIME_TYPES);
+                    return intent;
+                }
+            }, uri -> { if (uri != null) doImport(uri); });
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -240,9 +256,9 @@ public class WebBookmarkFragment extends BaseFocusFragment implements OnItemClic
                     mExportLauncher.launch(EXPORT_FILE_NAME);
                     return true;
                 } else if (id == R.id.action_import) {
-                    // Filter the picker to HTML (the Netscape bookmark format);
-                    // xhtml covered too. Browser exports are always text/html.
-                    mImportLauncher.launch(new String[]{"text/html", "application/xhtml+xml"});
+                    // The contract override forces a single text/html type, so
+                    // the input array is unused (kept for the launcher signature).
+                    mImportLauncher.launch(new String[0]);
                     return true;
                 } else if (id == android.R.id.home) {
                     mNavController.popBackStack();
