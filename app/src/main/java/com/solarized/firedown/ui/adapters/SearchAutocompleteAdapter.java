@@ -102,10 +102,20 @@ public class SearchAutocompleteAdapter extends ListAdapter<AutoCompleteEntity, R
 
     @Override
     public int getItemViewType(int position){
-        if(position == 0)
+        // The search-header layout (fragment_autocomplete_item_search — one line,
+        // a magnifier glyph, title only, NO favicon/URL) is ONLY for the typed-
+        // search header, which AutoCompleteSearch.ensureHeader always puts at
+        // position 0 with type SEARCH. The empty-focus MOST-VISITED list has no
+        // header: its position 0 is a real HISTORY row. Keying the view type on
+        // the raw INDEX therefore mis-rendered that first row as a title-only
+        // search row (the "Messier 101" anomaly — favicon replaced by a
+        // magnifier, URL line dropped) and made tapping it run a search instead
+        // of opening the URL. Key on the entity TYPE so only a genuine header
+        // gets the header layout; every real suggestion uses the LIST row.
+        if (position == 0 && getItem(0).getType() == AutoCompleteEntity.SEARCH) {
             return SEARCH;
-        else
-            return LIST;
+        }
+        return LIST;
     }
 
     /**
