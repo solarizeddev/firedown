@@ -37,7 +37,7 @@ public class AutocompleteSectionDecoration extends RecyclerView.ItemDecoration {
     public AutocompleteSectionDecoration(@NonNull Context context) {
         float d = context.getResources().getDisplayMetrics().density;
         mThickness = Math.max(1, Math.round(d));           // 1dp hairline
-        mInsetStart = Math.round(48 * d);                  // align with row text (12 + 24 + 12)
+        mInsetStart = Math.round(68 * d);                  // align with row text (14 + 40 slot + 14)
         mInsetEnd = Math.round(12 * d);
         mPaint.setStyle(Paint.Style.FILL);
         // Sensible default until the host calls setColor() from its theme pass.

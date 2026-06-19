@@ -39,6 +39,9 @@
     <dimen name="icon_rounded">4dp</dimen>
     <dimen name="list_autocomplete_search_height">50dp</dimen>
     <dimen name="list_autocomplete_middle_height">58dp</dimen>
+    <!-- Shared height for ALL autocomplete data rows (most-visited + typed
+         suggestions) so the list keeps one rhythm across empty/typed. -->
+    <dimen name="list_autocomplete_row_height">64dp</dimen>
     <dimen name="list_svg_width">220dp</dimen>
     <dimen name="list_svg_height">100dp</dimen>
     <dimen name="list_download_image_width">78dp</dimen>

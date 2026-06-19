@@ -1179,6 +1179,21 @@ same adapter. Wiring:
   treatment is a labeled, de-cluttered list, the favicon as the identity. (A
   horizontal speed-dial **tile** strip was the considered-and-shelved richer
   alternative "A"; this is "B".)
+- **One shared row scaffold across empty AND typed — no layout jump.** The
+  most-visited rows, the typed suggestion rows (`fragment_autocomplete_item`) and
+  the search header (`fragment_autocomplete_item_search`) all use the **same 40dp
+  leading icon SLOT at a 14dp inset** (favicon/glyph centered; the filled badge
+  ring is drawn only on the most-visited / clipboard surface, never the dense
+  typed list) and the **same `list_autocomplete_row_height` (64dp)**. So typing
+  or clearing the field only swaps the row *content* (domain↔match subtitle,
+  trailing type-glyph appears/disappears) — the favicon column, the title column
+  and the row height all stay fixed, instead of the old triple jump (favicon
+  resized 40→24 + slid, titles shifted ~20dp, rows reflowed 64↔58). The
+  `AutocompleteSectionDecoration` inset moved 48→68dp to match the new text
+  column. The clipboard chip stays **empty-only** (hidden on typing, per browser
+  convention — showing a "From clipboard" chip over live results is clutter); its
+  hide is now the *only* motion on type, a single expected dismissal rather than a
+  morph. Keep these three layouts' icon-slot geometry + height in lockstep.
 
 - **Frecency without a visit counter.** `webhistory` has no visit-count column;
   the uid is `hash(url)+day`, so there's one row per (url, day), and

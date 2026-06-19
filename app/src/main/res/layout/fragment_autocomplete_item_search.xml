@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    Header row of the autocomplete list ("search for <query>"). Flat row
-    (no per-row card) — the wrapping search_card supplies the single M3
-    container surface. Ripple via selectableItemBackground.
+    Header row of the autocomplete list ("search for <query>"). The magnifier
+    sits in the same 40dp icon SLOT at a 14dp inset as the data rows below it
+    (fragment_autocomplete_item / _most_visited_item), so its glyph and the
+    header text share the list's icon + title columns. Flat row — the wrapping
+    search_card supplies the rounded surface; ripple via selectableItemBackground.
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/item_search"
     android:layout_width="match_parent"
     android:layout_height="@dimen/list_autocomplete_search_height"
@@ -15,23 +16,29 @@
     android:gravity="center_vertical"
     android:orientation="horizontal">
 
-    <androidx.appcompat.widget.AppCompatImageView
-        android:id="@+id/icon"
-        android:layout_width="24dp"
-        android:layout_height="24dp"
-        android:layout_marginStart="12dp"
-        android:background="@null"
-        android:src="@drawable/ic_search_24"
-        android:tint="?attr/colorOnSurfaceVariant" />
+    <FrameLayout
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginStart="14dp">
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/icon"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_gravity="center"
+            android:src="@drawable/ic_search_24"
+            android:tint="?attr/colorOnSurfaceVariant" />
+
+    </FrameLayout>
 
     <TextView
         android:id="@+id/text"
         style="?attr/textAppearanceTitleMedium"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="12dp"
+        android:layout_marginStart="14dp"
         android:layout_marginEnd="12dp"
-        android:ellipsize="marquee"
+        android:ellipsize="end"
         android:singleLine="true"
         android:text="@string/search_clip"
         android:textSize="16sp" />
