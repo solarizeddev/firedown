@@ -278,6 +278,7 @@
     <string name="bookmark_import">Import bookmarks</string>
     <string name="bookmark_export">Export bookmarks</string>
     <string name="bookmark_export_done">Exported %1$d bookmarks to Download/Firedown/backup</string>
+    <string name="most_visited">Most visited</string>
     <string name="bookmark_import_done">Imported %1$d bookmarks</string>
     <string name="bookmark_io_error">Couldn\'t read the bookmarks file</string>
     <string name="navigation_web_history">History</string>

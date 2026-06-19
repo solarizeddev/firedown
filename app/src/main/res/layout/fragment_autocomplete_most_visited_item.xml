@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Empty-focus MOST-VISITED row: favicon-in-a-rounded-badge + title only (no
+    URL, no trailing glyph) so the list reads as "top sites", not history. The
+    40dp badge at a 14dp inset matches the clipboard chip's icon, so the chip
+    and these rows share one icon column. Flat row — the wrapping search_card
+    supplies the rounded surface; ripple via selectableItemBackground. Root id
+    is item_search so it reuses the existing onItemClick (opens the URL held in
+    the entity's subtext, which is not shown).
+-->
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/item_search"
+    android:layout_width="match_parent"
+    android:layout_height="64dp"
+    android:background="?attr/selectableItemBackground"
+    android:clickable="true"
+    android:focusable="true">
+
+    <FrameLayout
+        android:id="@+id/mv_icon_chip"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_alignParentStart="true"
+        android:layout_centerVertical="true"
+        android:layout_marginStart="14dp"
+        android:background="@drawable/bg_incognito_chip"
+        android:backgroundTint="?attr/colorSurfaceContainerHigh">
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/search_badge"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_gravity="center"
+            android:background="@drawable/mask_icon_rounded"
+            android:contentDescription="@null"
+            android:scaleType="fitXY" />
+
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/text"
+        style="?attr/textAppearanceTitleMedium"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_marginStart="14dp"
+        android:layout_marginEnd="14dp"
+        android:layout_toEndOf="@id/mv_icon_chip"
+        android:ellipsize="end"
+        android:singleLine="true"
+        android:textSize="14sp" />
+
+</RelativeLayout>

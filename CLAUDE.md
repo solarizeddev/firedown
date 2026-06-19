@@ -1159,8 +1159,26 @@ When the address bar is focused and EMPTY, the suggestion list (the existing
 `search_card` + `AutoCompleteRecyclerView`, normally `gone` until you type) is
 filled with top-frecency **most-visited** rows instead of left blank — the
 clipboard chip stays above them. This is deliberately **not** a new view/widget
-(the home screen stays bare by product choice): it reuses the same card, the
-same `AutoCompleteEntity.HISTORY` rows, the same adapter. Wiring:
+(the home screen stays bare by product choice): it reuses the same card and the
+same adapter. Wiring:
+
+- **Presentation — a labeled section of clean "top-site" rows (NOT history
+  rows).** The rows are `AutoCompleteEntity` with `mostVisited=true`; a
+  non-clickable `sectionHeader=true` "Most visited" row is prepended
+  (`AutoCompleteSearch.mostVisited`, stable `MOST_VISITED_HEADER_UID`). The
+  adapter renders these as **dedicated view types** keyed on the entity flags
+  (`getItemViewType`: `isSectionHeader`→HEADER, `isMostVisited`→MOST_VISITED),
+  NOT by index: `fragment_autocomplete_section_header` (small caps label) over
+  `fragment_autocomplete_most_visited_item` (**favicon-in-a-40dp-rounded-badge +
+  title only — no URL, no trailing glyph**; the badge matches the clipboard
+  chip's icon so the chip and the rows share one icon column). The row root id is
+  `item_search`, reusing the existing `onItemClick` to open the entity's
+  (unshown) subtext URL. `sectionAt` puts the header + rows in one section (key
+  4) so no inset hairline is drawn within. This replaced an earlier
+  trailing-flame-glyph-on-history-rows attempt, which read as "weak"/bleak — the
+  treatment is a labeled, de-cluttered list, the favicon as the identity. (A
+  horizontal speed-dial **tile** strip was the considered-and-shelved richer
+  alternative "A"; this is "B".)
 
 - **Frecency without a visit counter.** `webhistory` has no visit-count column;
   the uid is `hash(url)+day`, so there's one row per (url, day), and

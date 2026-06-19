@@ -28,9 +28,14 @@ public class AutoCompleteEntity {
 
     public String title;
 
-    /** True for empty-focus MOST-VISITED rows (type HISTORY): the adapter shows
-     *  the flame glyph instead of the history clock so they read as top sites. */
+    /** True for empty-focus MOST-VISITED rows: the adapter renders them with a
+     *  dedicated clean layout (favicon + title only, no URL, no trailing glyph)
+     *  under a section header, so they read as top sites rather than history. */
     public boolean mostVisited;
+
+    /** True for the non-clickable "Most visited" section-header row prepended to
+     *  the most-visited list. */
+    public boolean sectionHeader;
 
     public void setMostVisited(boolean mostVisited){
         this.mostVisited = mostVisited;
@@ -38,6 +43,14 @@ public class AutoCompleteEntity {
 
     public boolean isMostVisited(){
         return mostVisited;
+    }
+
+    public void setSectionHeader(boolean sectionHeader){
+        this.sectionHeader = sectionHeader;
+    }
+
+    public boolean isSectionHeader(){
+        return sectionHeader;
     }
 
     public void setSubText(String url){

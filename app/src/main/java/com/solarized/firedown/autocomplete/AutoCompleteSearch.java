@@ -99,6 +99,9 @@ public class AutoCompleteSearch {
     // titles and caps to one row per host, so the query must return well more
     // than the MAX_MOST_VISITED rows actually shown.
     private static final int MOST_VISITED_CANDIDATES = 30;
+    // Stable uid for the prepended "Most visited" header (a real history uid is
+    // hash(url)+day, so this fixed sentinel can't collide). Keeps DiffUtil happy.
+    private static final int MOST_VISITED_HEADER_UID = "firedown.most_visited.header".hashCode();
 
     /**
      * Top-frecency history rows for the EMPTY-focus suggestion list (Option A:
@@ -107,9 +110,10 @@ public class AutoCompleteSearch {
      *
      * <p>Suppressed in incognito (no history surface there): returns empty, so
      * the caller posts {@code null} and the list stays hidden — the old
-     * empty state (clipboard chip only). Reuses the exact HISTORY mapping +
-     * about:blank / blank-title guards as {@link #addHistory}, so the rows
-     * render identically to typed history suggestions (no adapter change).
+     * empty state (clipboard chip only). Rows carry {@code mostVisited=true} and
+     * a non-clickable {@code sectionHeader} row is prepended, so the adapter
+     * renders them as a labeled "Most visited" section of clean favicon+title
+     * rows (its own view types) rather than as history suggestions.
      */
     public List<AutoCompleteEntity> mostVisited() {
         if (mIncognito) return new ArrayList<>();
@@ -145,12 +149,24 @@ public class AutoCompleteSearch {
             if (host != null && !seenHosts.add(host)) continue;
             AutoCompleteEntity s = new AutoCompleteEntity();
             s.setType(AutoCompleteEntity.HISTORY);
-            s.setMostVisited(true); // flame glyph instead of the history clock
+            // Renders via the dedicated MOST_VISITED row (favicon-in-a-badge +
+            // title, no URL/glyph); subtext still carries the URL for the tap.
+            s.setMostVisited(true);
             s.setTitle(title);
             s.setIcon(entity.getIcon());
             s.setSubText(url);
             s.setUid(entity.getId());
             items.add(s);
+        }
+        // Prepend the "Most visited" section header (only when there are rows;
+        // an empty list stays empty so the observer falls back to showEmpty).
+        // The label text is a UI string set by the adapter; the entity just
+        // carries the flag + a stable uid for DiffUtil.
+        if (!items.isEmpty()) {
+            AutoCompleteEntity header = new AutoCompleteEntity();
+            header.setSectionHeader(true);
+            header.setUid(MOST_VISITED_HEADER_UID);
+            items.add(0, header);
         }
         return items;
     }

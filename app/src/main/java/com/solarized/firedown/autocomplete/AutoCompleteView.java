@@ -185,12 +185,17 @@ public class AutoCompleteView extends FrameLayout {
             mClipboardTextView.setTextColor(onSurfaceVariant);
         }
 
-        // 5. Clipboard icon. It's now a bare 24dp glyph aligned to the list
-        //    favicons (no filled chip badge), so only the icon tint needs the
-        //    incognito palette here.
+        // 5. Clipboard icon + its rounded chip background (the chip uses
+        //    ?attr/colorSurfaceContainerHigh, which doesn't follow the incognito
+        //    palette, so retint it here for incognito parity).
         if (mClipboardImage != null) {
             ImageViewCompat.setImageTintList(mClipboardImage,
                     ColorStateList.valueOf(onSurfaceVariant));
+        }
+        View clipboardChip = findViewById(R.id.clipboard_icon_chip);
+        if (clipboardChip != null) {
+            clipboardChip.setBackgroundTintList(ColorStateList.valueOf(
+                    IncognitoColors.getSurfaceContainerHigh(activity, incognito)));
         }
 
         // 6. Trailing forward ('go') button — themed primary so it reads as

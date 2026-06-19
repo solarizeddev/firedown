@@ -36,6 +36,10 @@ public class SearchAutocompleteAdapter extends ListAdapter<AutoCompleteEntity, R
 
     private static final int LIST = 1;
 
+    private static final int HEADER = 2;
+
+    private static final int MOST_VISITED = 3;
+
     private static final String TAG = SearchAutocompleteAdapter.class.getSimpleName();
 
     private final OnItemClickListener mOnItemClickListener;
@@ -43,8 +47,6 @@ public class SearchAutocompleteAdapter extends ListAdapter<AutoCompleteEntity, R
     private final Drawable searchDrawable;
 
     private final Drawable historyDrawable;
-
-    private final Drawable mostVisitedDrawable;
 
     private final Drawable tabDrawable;
 
@@ -54,6 +56,8 @@ public class SearchAutocompleteAdapter extends ListAdapter<AutoCompleteEntity, R
 
     private final String mSwitchTab;
 
+    private final String mMostVisited;
+
     private final RequestOptions mRequestOptions;
 
     private boolean mIncognito = false;
@@ -62,6 +66,7 @@ public class SearchAutocompleteAdapter extends ListAdapter<AutoCompleteEntity, R
         super(diffCallback);
         mSearchFor = context.getString(R.string.search_for);
         mSwitchTab = context.getString(R.string.switch_to_tab_description);
+        mMostVisited = context.getString(R.string.most_visited);
         mOnItemClickListener = onItemClickListener;
         searchDrawable = ContextCompat.getDrawable(context, R.drawable.ic_search_24);
         if (searchDrawable != null) {
@@ -72,11 +77,6 @@ public class SearchAutocompleteAdapter extends ListAdapter<AutoCompleteEntity, R
         if (historyDrawable != null) {
             int size = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 22, context.getResources().getDisplayMetrics());
             historyDrawable.setBounds(0, 0, size, size);
-        }
-        mostVisitedDrawable = ContextCompat.getDrawable(context, R.drawable.ic_whatshot_24);
-        if (mostVisitedDrawable != null) {
-            int size = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 22, context.getResources().getDisplayMetrics());
-            mostVisitedDrawable.setBounds(0, 0, size, size);
         }
         tabDrawable = ContextCompat.getDrawable(context, R.drawable.ic_tabs_24);
         if (tabDrawable != null) {
@@ -98,6 +98,8 @@ public class SearchAutocompleteAdapter extends ListAdapter<AutoCompleteEntity, R
         super.onViewRecycled(holder);
         if (holder instanceof SearchViewHolderPhone h) {
             GlideHelper.clearSafe(h.buttonSearchView);
+        } else if (holder instanceof MostVisitedViewHolder h) {
+            GlideHelper.clearSafe(h.favicon);
         }
     }
 
@@ -109,17 +111,21 @@ public class SearchAutocompleteAdapter extends ListAdapter<AutoCompleteEntity, R
 
     @Override
     public int getItemViewType(int position){
-        // The search-header layout (fragment_autocomplete_item_search — one line,
-        // a magnifier glyph, title only, NO favicon/URL) is ONLY for the typed-
-        // search header, which AutoCompleteSearch.ensureHeader always puts at
-        // position 0 with type SEARCH. The empty-focus MOST-VISITED list has no
-        // header: its position 0 is a real HISTORY row. Keying the view type on
-        // the raw INDEX therefore mis-rendered that first row as a title-only
-        // search row (the "Messier 101" anomaly — favicon replaced by a
-        // magnifier, URL line dropped) and made tapping it run a search instead
-        // of opening the URL. Key on the entity TYPE so only a genuine header
-        // gets the header layout; every real suggestion uses the LIST row.
-        if (position == 0 && getItem(0).getType() == AutoCompleteEntity.SEARCH) {
+        // Key the view type on the ENTITY, never the raw index. The empty-focus
+        // MOST-VISITED list is a "MOST VISITED" header (HEADER) over clean
+        // favicon+title rows (MOST_VISITED); typed search is a magnifier header
+        // (SEARCH, always position 0 via AutoCompleteSearch.ensureHeader) over
+        // ordinary suggestion rows (LIST). Indexing by position mis-rendered the
+        // first most-visited row as the search header (the old "Messier 101"
+        // anomaly).
+        AutoCompleteEntity entity = getItem(position);
+        if (entity.isSectionHeader()) {
+            return HEADER;
+        }
+        if (entity.isMostVisited()) {
+            return MOST_VISITED;
+        }
+        if (position == 0 && entity.getType() == AutoCompleteEntity.SEARCH) {
             return SEARCH;
         }
         return LIST;
@@ -133,7 +139,11 @@ public class SearchAutocompleteAdapter extends ListAdapter<AutoCompleteEntity, R
      */
     @Override
     public int sectionAt(int position) {
-        int type = getItem(position).getType();
+        AutoCompleteEntity entity = getItem(position);
+        // The most-visited block (its header + rows) is one clean section, so no
+        // inset hairline is drawn within it.
+        if (entity.isSectionHeader() || entity.isMostVisited()) return 4;
+        int type = entity.getType();
         if (type == AutoCompleteEntity.HISTORY) return 1;
         if (type == AutoCompleteEntity.TAB) return 2;
         if (type == AutoCompleteEntity.BOOKMARK) return 3;
@@ -151,14 +161,18 @@ public class SearchAutocompleteAdapter extends ListAdapter<AutoCompleteEntity, R
     @NonNull
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int viewType) {
+        LayoutInflater inflater = LayoutInflater.from(viewGroup.getContext());
         if (viewType == SEARCH) {
-            View view = LayoutInflater.from(viewGroup.getContext())
-                    .inflate(R.layout.fragment_autocomplete_item_search, viewGroup, false);
+            View view = inflater.inflate(R.layout.fragment_autocomplete_item_search, viewGroup, false);
             return new SearchViewHolderPhoneSearch(view, mOnItemClickListener);
-
+        } else if (viewType == HEADER) {
+            View view = inflater.inflate(R.layout.fragment_autocomplete_section_header, viewGroup, false);
+            return new SectionHeaderViewHolder(view);
+        } else if (viewType == MOST_VISITED) {
+            View view = inflater.inflate(R.layout.fragment_autocomplete_most_visited_item, viewGroup, false);
+            return new MostVisitedViewHolder(view, mOnItemClickListener);
         } else {
-            View view = LayoutInflater.from(viewGroup.getContext())
-                    .inflate(R.layout.fragment_autocomplete_item, viewGroup, false);
+            View view = inflater.inflate(R.layout.fragment_autocomplete_item, viewGroup, false);
             return new SearchViewHolderPhone(view, mOnItemClickListener);
         }
     }
@@ -176,6 +190,14 @@ public class SearchAutocompleteAdapter extends ListAdapter<AutoCompleteEntity, R
         if(type == SEARCH){
             SearchViewHolderPhoneSearch searchViewHolderPhoneSearch = (SearchViewHolderPhoneSearch) holder;
             searchViewHolderPhoneSearch.textView.setText(searchEntity.getTitle());
+        }else if(type == HEADER){
+            SectionHeaderViewHolder headerHolder = (SectionHeaderViewHolder) holder;
+            headerHolder.textView.setText(mMostVisited);
+        }else if(type == MOST_VISITED){
+            // Top-sites row: favicon-in-a-badge + title only (no URL, no glyph).
+            MostVisitedViewHolder mvHolder = (MostVisitedViewHolder) holder;
+            mvHolder.textView.setText(searchEntity.getTitle());
+            GlideHelper.load(searchEntity.getIcon(), searchEntity.getSubText(), mvHolder.favicon, mRequestOptions);
         }else{
             int searchType = searchEntity.getType();
             SearchViewHolderPhone searchViewHolderPhone = (SearchViewHolderPhone) holder;
@@ -188,11 +210,7 @@ public class SearchAutocompleteAdapter extends ListAdapter<AutoCompleteEntity, R
                     break;
                 case AutoCompleteEntity.HISTORY:
                     searchViewHolderPhone.subTextView.setText(searchEntity.getSubText());
-                    // Most-visited rows (empty-focus) get the flame glyph so they
-                    // read as top sites; a typed-search history match keeps the
-                    // clock. Both are type HISTORY, distinguished by the flag.
-                    searchViewHolderPhone.buttonTextView.setImageDrawable(
-                            searchEntity.isMostVisited() ? mostVisitedDrawable : historyDrawable);
+                    searchViewHolderPhone.buttonTextView.setImageDrawable(historyDrawable);
                     searchViewHolderPhone.textView.setText(searchEntity.getTitle());
                     GlideHelper.load(searchEntity.getIcon(), searchEntity.getSubText(), searchViewHolderPhone.buttonSearchView, mRequestOptions);
                     break;
@@ -227,6 +245,10 @@ public class SearchAutocompleteAdapter extends ListAdapter<AutoCompleteEntity, R
         } else if (holder instanceof SearchViewHolderPhoneSearch h) {
             h.textView.setTextColor(onSurface);
             ImageViewCompat.setImageTintList(h.icon, variantTint);
+        } else if (holder instanceof MostVisitedViewHolder h) {
+            h.textView.setTextColor(onSurface);
+        } else if (holder instanceof SectionHeaderViewHolder h) {
+            h.textView.setTextColor(onSurfaceVariant);
         }
     }
 
@@ -283,6 +305,44 @@ public class SearchAutocompleteAdapter extends ListAdapter<AutoCompleteEntity, R
             if(mOnItemClickListener != null){
                 mOnItemClickListener.onItemClick(position, view.getId());
             }
+        }
+    }
+
+    /** Empty-focus MOST-VISITED row: favicon-in-a-badge + title. Reuses the
+     *  item_search click contract (opens the entity's URL). */
+    static class MostVisitedViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+
+        TextView textView;
+        AppCompatImageView favicon;
+        OnItemClickListener mOnItemClickListener;
+
+        public MostVisitedViewHolder(View view, OnItemClickListener onItemClickListener){
+            super(view);
+            mOnItemClickListener = onItemClickListener;
+            textView = view.findViewById(R.id.text);
+            favicon = view.findViewById(R.id.search_badge);
+            favicon.setClipToOutline(true);
+            View item = view.findViewById(R.id.item_search);
+            item.setOnClickListener(this);
+        }
+
+        @Override
+        public void onClick(View view) {
+            int position = getAbsoluteAdapterPosition();
+            if(mOnItemClickListener != null){
+                mOnItemClickListener.onItemClick(position, view.getId());
+            }
+        }
+    }
+
+    /** Non-clickable "MOST VISITED" section header. */
+    static class SectionHeaderViewHolder extends RecyclerView.ViewHolder {
+
+        TextView textView;
+
+        public SectionHeaderViewHolder(View view){
+            super(view);
+            textView = (TextView) view;
         }
     }
 
