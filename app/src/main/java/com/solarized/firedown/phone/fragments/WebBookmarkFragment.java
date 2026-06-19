@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.DocumentsContract;
 import android.util.Log;
 import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
@@ -78,6 +79,14 @@ public class WebBookmarkFragment extends BaseFocusFragment implements OnItemClic
                     Intent intent = super.createIntent(context, input);
                     intent.setType("text/html");
                     intent.removeExtra(Intent.EXTRA_MIME_TYPES);
+                    // Start the picker at the general Downloads root rather than
+                    // inside the media-filled Download/Firedown (where it tends to
+                    // land after a download) — a bookmark .html is never in there.
+                    // Best-effort: providers that ignore EXTRA_INITIAL_URI just
+                    // open at their own default.
+                    intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI,
+                            DocumentsContract.buildDocumentUri(
+                                    "com.android.externalstorage.documents", "primary:Download"));
                     return intent;
                 }
             }, uri -> { if (uri != null) doImport(uri); });
