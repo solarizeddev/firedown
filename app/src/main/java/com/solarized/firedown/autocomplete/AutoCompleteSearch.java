@@ -17,6 +17,7 @@ import com.solarized.firedown.data.repository.GeckoStateDataRepository;
 import com.solarized.firedown.data.repository.IncognitoStateRepository;
 import com.solarized.firedown.data.repository.SearchRepository;
 import com.solarized.firedown.data.repository.WebBookmarkDataRepository;
+import com.solarized.firedown.data.repository.MostVisitedBlockRepository;
 import com.solarized.firedown.data.repository.WebHistoryDataRepository;
 import com.solarized.firedown.utils.BrowserHeaders;
 import com.solarized.firedown.utils.UrlStringUtils;
@@ -62,6 +63,7 @@ public class AutoCompleteSearch {
     private static final long SUGGEST_CALL_TIMEOUT_MS = 1500;
     private final SearchRepository mSearchRepository;
     private final WebHistoryDataRepository mWebHistoryDataRepository;
+    private final MostVisitedBlockRepository mMostVisitedBlockRepository;
     private final WebBookmarkDataRepository mWebBookmarkDataRepository;
     private final GeckoStateDataRepository mGeckoStateDataRepository;
     private final IncognitoStateRepository mIncognitoStateDataRepository;
@@ -73,6 +75,7 @@ public class AutoCompleteSearch {
     public AutoCompleteSearch(
             SearchRepository searchRepository,
             WebHistoryDataRepository webHistoryRepository,
+            MostVisitedBlockRepository mostVisitedBlockRepository,
             WebBookmarkDataRepository webBookmarkRepository,
             GeckoStateDataRepository geckoStateDataRepository,
             IncognitoStateRepository incognitoStateRepository,
@@ -81,6 +84,7 @@ public class AutoCompleteSearch {
         this.mIncognitoStateDataRepository = incognitoStateRepository;
         this.mGeckoStateDataRepository = geckoStateDataRepository;
         this.mWebHistoryDataRepository = webHistoryRepository;
+        this.mMostVisitedBlockRepository = mostVisitedBlockRepository;
         this.mWebBookmarkDataRepository = webBookmarkRepository;
         // Reuse the shared client's connection pool / dispatcher (cheap newBuilder
         // share) but cap the suggestion call so typeahead never stalls on it.
@@ -109,10 +113,13 @@ public class AutoCompleteSearch {
      *
      * <p>Suppressed in incognito (no history surface there): returns empty, so
      * the caller posts {@code null} and the list stays hidden — the old
-     * empty state (clipboard chip only). Rows carry {@code mostVisited=true} and
-     * a non-clickable {@code sectionHeader} row is prepended, so the adapter
-     * renders them as a labeled "Most visited" section of clean favicon+title
-     * rows (its own view types) rather than as history suggestions.
+     * empty state (clipboard chip only). The rows feed the separate tile-strip
+     * adapter (not the suggestion list).
+     *
+     * <p>Blocklist (Chromium/Brave "Top Sites" model): a URL the user removed
+     * from the strip is in {@code MostVisitedBlockRepository} and is skipped here
+     * — the site is HIDDEN from the strip, history untouched. Runs on a
+     * background executor, so the synchronous blocklist read is fine.
      */
     public List<AutoCompleteEntity> mostVisited() {
         if (mIncognito) return new ArrayList<>();
@@ -124,6 +131,8 @@ public class AutoCompleteSearch {
         List<AutoCompleteEntity> items = new ArrayList<>();
         if (history == null) return items;
 
+        Set<String> blocked = new HashSet<>(mMostVisitedBlockRepository.getBlockedUrlsSync());
+
         // One row per host — a "most visited" rail should show distinct SITES,
         // not several deep links of one binge-watched site (which the exact-URL
         // GROUP BY would otherwise let crowd out everything else). Matches the
@@ -132,6 +141,8 @@ public class AutoCompleteSearch {
         for (WebHistoryEntity entity : history) {
             if (items.size() >= MAX_MOST_VISITED) break;
             String url = entity.getUrl();
+            // Blocklisted (user removed this tile) — hide it, history kept.
+            if (url != null && blocked.contains(url)) continue;
             // No "about:blank" tile — the URL fallback can't rescue a row whose
             // URL is itself about:blank (same guard as addHistory; the query
             // already excludes about: URLs, this covers legacy rows).
@@ -155,6 +166,13 @@ public class AutoCompleteSearch {
             items.add(s);
         }
         return items;
+    }
+
+    /** Block (hide) a URL from the most-visited strip — synchronous, call off the
+     *  main thread (the ViewModel runs this then re-queries {@link #mostVisited}
+     *  on the same thread so the refreshed strip excludes it). History untouched. */
+    public void blockMostVisited(String url) {
+        mMostVisitedBlockRepository.blockSync(url);
     }
 
     /**

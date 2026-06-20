@@ -38,13 +38,6 @@ public class WebHistoryDataRepository {
         mDiskExecutor.execute(() -> mDao.deleteRange(range));
     }
 
-    /** Synchronous delete of a URL from history (all its day-rows). MUST be
-     *  called off the main thread; the caller (the most-visited removal) runs it
-     *  on its own executor so it can re-query most-visited right after. */
-    public void deleteByUrlSync(String url) {
-        mDao.deleteByUrl(url);
-    }
-
     public PagingSource<Integer, WebHistoryEntity> get() {
         return mDao.getHistory();
     }

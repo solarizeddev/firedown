@@ -581,6 +581,6 @@
     <string name="home_subtitle_blocked">%1$s blockiert</string>
     <string name="home_subtitle_saved">%1$s gespeichert</string>
     <string name="most_visited">Meistbesucht</string>
-    <string name="most_visited_remove_title">Aus Verlauf entfernen?</string>
+    <string name="most_visited_remove_title">Aus „Meistbesucht“ entfernen?</string>
     <string name="most_visited_remove">Entfernen</string>
 </resources>

@@ -447,6 +447,6 @@
     <string name="home_subtitle_blocked">%1$s zablokowano</string>
     <string name="home_subtitle_saved">%1$s zapisano</string>
     <string name="most_visited">Najczęściej odwiedzane</string>
-    <string name="most_visited_remove_title">Usunąć z historii?</string>
+    <string name="most_visited_remove_title">Usunąć z najczęściej odwiedzanych?</string>
     <string name="most_visited_remove">Usuń</string>
 </resources>

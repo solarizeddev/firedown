@@ -121,24 +121,25 @@ public class AutoCompleteViewModel extends ViewModel {
     }
 
     /**
-     * Remove a most-visited site from history (long-press on a tile, confirmed)
-     * and refresh the strip. The delete and the re-query run on the SAME executor
-     * thread, in order, so the refreshed strip reflects the removal.
+     * Hide a site from the most-visited strip (long-press on a tile, confirmed) —
+     * Chromium/Brave "Top Sites" model: it's added to the blocklist, history is
+     * NOT touched. The block and the re-query run on the SAME executor thread, in
+     * order, so the refreshed strip excludes it.
      */
-    public void removeFromHistory(String url) {
+    public void hideFromMostVisited(String url) {
         if (url == null) return;
         cancelFuture(mMostVisitedFuture);
         final long gen = mMostVisitedGen.incrementAndGet();
         mMostVisitedFuture = mAutoCompleteExecutor.submit(() -> {
             try {
-                mWebHistoryDataRepository.deleteByUrlSync(url);
+                mAutoCompleteSearch.blockMostVisited(url);
                 List<AutoCompleteEntity> list = mAutoCompleteSearch.mostVisited();
                 if (gen == mMostVisitedGen.get()) {
                     mMostVisitedData.postValue(list);
                 }
             } catch (Exception e) {
                 if (!Thread.currentThread().isInterrupted() && gen == mMostVisitedGen.get()) {
-                    Log.e(TAG, "removeFromHistory failed:", e);
+                    Log.e(TAG, "hideFromMostVisited failed:", e);
                 }
             }
         });

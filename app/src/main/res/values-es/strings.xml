@@ -581,6 +581,6 @@
     <string name="home_subtitle_blocked">%1$s bloqueados</string>
     <string name="home_subtitle_saved">%1$s guardados</string>
     <string name="most_visited">Más visitados</string>
-    <string name="most_visited_remove_title">¿Quitar del historial?</string>
+    <string name="most_visited_remove_title">¿Quitar de Más visitados?</string>
     <string name="most_visited_remove">Quitar</string>
 </resources>

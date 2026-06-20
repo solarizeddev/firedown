@@ -1180,6 +1180,22 @@ product choice; this lives only in the focused panel.
   "youtube"). Tap → `OnMostVisitedClickListener` → the host opens the entity's
   subtext URL (same as a history-suggestion tap). The strip has a small "MOST
   VISITED" label above it.
+- **Removal = HIDE via a blocklist, NOT a history delete (Chromium/Brave "Top
+  Sites" model).** Long-press a tile → confirm dialog (owned by `AutoCompleteView`,
+  it has the context) → the site's URL is added to a standalone
+  `MostVisitedBlockDatabase` (`most_visited_block`, keyed by URL) via
+  `MostVisitedBlockRepository`. `AutoCompleteSearch.mostVisited()` reads the
+  blocklist (`getBlockedUrlsSync`, it already runs on a background executor) and
+  **skips blocked URLs** — so the tile disappears but **history is untouched**
+  (the site still appears in typed history suggestions and the History screen).
+  The block + the strip re-query run on the SAME executor thread (ViewModel
+  `hideFromMostVisited`), so the refresh excludes it. It's a STANDALONE DB on
+  purpose — not a table in `WebHistoryDatabase` (whose tracking-mode history makes
+  migrations there a minefield), and the blocklist is filtered in Java (no JOIN
+  with history needed). `unblock`/`clear` exist on the repo for a future un-hide /
+  reset. (This replaced an earlier `deleteByUrl` history-deletion approach — the
+  Chromium split is: top-sites tiles HIDE, omnibox suggestions DELETE; the strip
+  is the tile case.)
 - **Visibility gating.** `AutoCompleteView.setMostVisited(list)` populates the
   strip adapter and calls `updateMostVisitedVisibility()`, which shows the card
   only when `mEmptyState` is active AND the strip has tiles — so a late

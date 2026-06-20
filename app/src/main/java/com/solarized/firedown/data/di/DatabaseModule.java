@@ -10,10 +10,12 @@ import androidx.room.RoomDatabase;
 
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.data.DownloadDatabase;
+import com.solarized.firedown.data.MostVisitedBlockDatabase;
 import com.solarized.firedown.data.TabStateArchivedDatabase;
 import com.solarized.firedown.data.TrackingPermissionDatabase;
 import com.solarized.firedown.data.WasmAllowlistDatabase;
 import com.solarized.firedown.data.dao.DownloadDao;
+import com.solarized.firedown.data.dao.MostVisitedBlockDao;
 import com.solarized.firedown.data.dao.TabStateArchivedDao;
 import com.solarized.firedown.data.dao.TrackingPermissionDao;
 import com.solarized.firedown.data.dao.WasmAllowlistDao;
@@ -213,6 +215,23 @@ public class DatabaseModule {
     @Provides
     public WasmAllowlistDao provideWasmAllowlistDao(WasmAllowlistDatabase database) {
         return database.wasmAllowlistDao();
+    }
+
+    @Provides
+    @Singleton
+    @OptIn(markerClass = ExperimentalRoomApi.class)
+    public MostVisitedBlockDatabase provideMostVisitedBlockDatabase(@ApplicationContext Context context) {
+        return Room.databaseBuilder(context,
+                        MostVisitedBlockDatabase.class, MostVisitedBlockDatabase.DATABASE_NAME)
+                .setJournalMode(RoomDatabase.JournalMode.AUTOMATIC)
+                .fallbackToDestructiveMigration(false)
+                .setInMemoryTrackingMode(false)
+                .build();
+    }
+
+    @Provides
+    public MostVisitedBlockDao provideMostVisitedBlockDao(MostVisitedBlockDatabase database) {
+        return database.mostVisitedBlockDao();
     }
 
 

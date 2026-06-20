@@ -355,6 +355,6 @@
     <string name="home_subtitle_blocked">%1$s ब्लॉक किए गए</string>
     <string name="home_subtitle_saved">%1$s सहेजे गए</string>
     <string name="most_visited">सबसे ज़्यादा देखे गए</string>
-    <string name="most_visited_remove_title">इतिहास से हटाएँ?</string>
+    <string name="most_visited_remove_title">सबसे ज़्यादा देखे गए से हटाएँ?</string>
     <string name="most_visited_remove">हटाएँ</string>
 </resources>
