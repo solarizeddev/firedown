@@ -578,4 +578,7 @@
     <string name="lan_direct_failed">无法开始直接连接</string>
     <string name="home_subtitle_blocked">已拦截 %1$s</string>
     <string name="home_subtitle_saved">已保存 %1$s</string>
+    <string name="most_visited">常访问</string>
+    <string name="most_visited_remove_title">从历史记录中移除？</string>
+    <string name="most_visited_remove">移除</string>
 </resources>

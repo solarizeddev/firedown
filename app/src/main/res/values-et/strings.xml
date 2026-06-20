@@ -318,4 +318,7 @@
     <string name="lan_direct_failed">Otseühenduse käivitamine ebaõnnestus</string>
     <string name="home_subtitle_blocked">%1$s blokeeritud</string>
     <string name="home_subtitle_saved">%1$s salvestatud</string>
+    <string name="most_visited">Enim külastatud</string>
+    <string name="most_visited_remove_title">Kas eemaldada ajaloost?</string>
+    <string name="most_visited_remove">Eemalda</string>
 </resources>

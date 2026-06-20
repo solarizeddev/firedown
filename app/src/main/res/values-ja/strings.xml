@@ -578,4 +578,7 @@
     <string name="lan_direct_failed">ダイレクト接続を開始できませんでした</string>
     <string name="home_subtitle_blocked">%1$s ブロック</string>
     <string name="home_subtitle_saved">%1$s 保存</string>
+    <string name="most_visited">よく見るサイト</string>
+    <string name="most_visited_remove_title">履歴から削除しますか？</string>
+    <string name="most_visited_remove">削除</string>
 </resources>

@@ -448,4 +448,7 @@
     <string name="lan_direct_failed">Doğrudan bağlantı başlatılamadı</string>
     <string name="home_subtitle_blocked">%1$s engellendi</string>
     <string name="home_subtitle_saved">%1$s kaydedildi</string>
+    <string name="most_visited">En çok ziyaret edilenler</string>
+    <string name="most_visited_remove_title">Geçmişten kaldırılsın mı?</string>
+    <string name="most_visited_remove">Kaldır</string>
 </resources>

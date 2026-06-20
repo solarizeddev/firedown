@@ -388,4 +388,7 @@
     <string name="lan_direct_failed">Suoraa yhteyttä ei voitu aloittaa</string>
     <string name="home_subtitle_blocked">%1$s estetty</string>
     <string name="home_subtitle_saved">%1$s tallennettu</string>
+    <string name="most_visited">Useimmin vieraillut</string>
+    <string name="most_visited_remove_title">Poistetaanko historiasta?</string>
+    <string name="most_visited_remove">Poista</string>
 </resources>

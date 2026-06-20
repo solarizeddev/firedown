@@ -580,4 +580,7 @@
     <string name="lan_direct_failed">Impossible de démarrer la connexion directe</string>
     <string name="home_subtitle_blocked">%1$s bloqués</string>
     <string name="home_subtitle_saved">%1$s enregistrés</string>
+    <string name="most_visited">Les plus visités</string>
+    <string name="most_visited_remove_title">Supprimer de l\'historique ?</string>
+    <string name="most_visited_remove">Supprimer</string>
 </resources>

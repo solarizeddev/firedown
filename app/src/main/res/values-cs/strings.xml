@@ -402,4 +402,7 @@
     <string name="lan_direct_failed">Přímé připojení se nepodařilo spustit</string>
     <string name="home_subtitle_blocked">%1$s blokováno</string>
     <string name="home_subtitle_saved">%1$s uloženo</string>
+    <string name="most_visited">Nejnavštěvovanější</string>
+    <string name="most_visited_remove_title">Odebrat z historie?</string>
+    <string name="most_visited_remove">Odebrat</string>
 </resources>

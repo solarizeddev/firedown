@@ -449,4 +449,7 @@
     <string name="lan_direct_failed">Не удалось начать прямое подключение</string>
     <string name="home_subtitle_blocked">%1$s заблокировано</string>
     <string name="home_subtitle_saved">%1$s сохранено</string>
+    <string name="most_visited">Часто посещаемые</string>
+    <string name="most_visited_remove_title">Удалить из истории?</string>
+    <string name="most_visited_remove">Удалить</string>
 </resources>

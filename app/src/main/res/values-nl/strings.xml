@@ -449,4 +449,7 @@
     <string name="lan_direct_failed">Directe verbinding kon niet worden gestart</string>
     <string name="home_subtitle_blocked">%1$s geblokkeerd</string>
     <string name="home_subtitle_saved">%1$s opgeslagen</string>
+    <string name="most_visited">Meest bezocht</string>
+    <string name="most_visited_remove_title">Uit geschiedenis verwijderen?</string>
+    <string name="most_visited_remove">Verwijderen</string>
 </resources>
