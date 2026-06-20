@@ -184,6 +184,7 @@ public class AutoCompleteViewModel extends ViewModel {
      */
     public void search(CharSequence constraint) {
         // Leaving the most-visited (empty) state — these are typed results.
+        final boolean wasMostVisited = mShowingMostVisited;
         mShowingMostVisited = false;
         final String searchTerm = constraint != null
                 ? StringUtils.stripEnd(constraint.toString(), " ")
@@ -198,7 +199,16 @@ public class AutoCompleteViewModel extends ViewModel {
 
         cancelPendingSearch();
         mPendingSearch = () -> runSearch(searchTerm);
-        mDebounceHandler.postDelayed(mPendingSearch, SEARCH_DEBOUNCE_MS);
+        if (wasMostVisited) {
+            // First keystroke out of most-visited: transition NOW, not after the
+            // debounce — the stale top-sites list isn't search results and
+            // shouldn't sit on screen waiting. (Debounce still applies to the
+            // steady-state typing that follows, since mShowingMostVisited is now
+            // false.)
+            mDebounceHandler.post(mPendingSearch);
+        } else {
+            mDebounceHandler.postDelayed(mPendingSearch, SEARCH_DEBOUNCE_MS);
+        }
     }
 
     /**
@@ -223,7 +233,15 @@ public class AutoCompleteViewModel extends ViewModel {
         final long gen = mSearchGen.incrementAndGet();
 
         List<AutoCompleteEntity> shown = mSearchData.getValue();
-        final boolean emitLocalFirst = (shown == null || shown.isEmpty());
+        // The most-visited list (its first row is a section header) is NOT search
+        // results — treat the dropdown as a FIRST paint so the local-first phase
+        // posts immediately. Otherwise emitLocalFirst is false (the list is
+        // "non-empty"), and runSearch waits for the NETWORK before replacing it,
+        // so the stale top-sites list lingers on screen and then "jumps" to the
+        // suggestions when the network returns.
+        final boolean shownIsMostVisited = shown != null && !shown.isEmpty()
+                && shown.get(0).isSectionHeader();
+        final boolean emitLocalFirst = (shown == null || shown.isEmpty() || shownIsMostVisited);
 
         mSearchFuture = mAutoCompleteExecutor.submit(() -> {
             try {

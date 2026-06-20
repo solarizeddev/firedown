@@ -1217,7 +1217,13 @@ same adapter. Wiring:
 - **One LiveData, one generation guard.** `loadMostVisited()` posts to the SAME
   `mSearchData` as typed search and shares `mSearchGen`, so a late most-visited
   post can't clobber a newer typed result (or vice-versa) — the older task's
-  post is dropped by the gen check. Replaces `resetEngines()` at the three
+  post is dropped by the gen check. **Leaving most-visited must not linger on the
+  stale list:** `search()` posts the first keystroke's lookup with no debounce
+  when `mShowingMostVisited` was set (`mDebounceHandler.post`, not `postDelayed`),
+  and `runSearch` treats a shown most-visited list (first row `isSectionHeader`)
+  as a FIRST paint so the local-first phase emits immediately — otherwise
+  `emitLocalFirst` is false (the list is "non-empty") and the top-sites list sits
+  on screen until the NETWORK suggestions return, then visibly jumps to them. Replaces `resetEngines()` at the three
   empty-field entry points (focus-gain, delete-to-empty, clear button) in
   Home/Browser; `search()`/`resetEngines()` clear the `mShowingMostVisited`
   flag, `loadMostVisited()` sets it. The `getWebSearch` observer adds one branch:
