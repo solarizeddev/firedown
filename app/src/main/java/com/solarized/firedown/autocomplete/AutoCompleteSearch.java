@@ -454,6 +454,22 @@ public class AutoCompleteSearch {
         result.add(entity);
     }
 
+    /**
+     * Builds JUST the search header row for {@code searchTerm}, synchronously and
+     * with NO DB/network hit (only the engine's icon/format from prefs). Used to
+     * swap the empty-focus most-visited list for the typed state in the SAME
+     * frame as the first keystroke, so the stale top-sites list never lingers
+     * while the background lookup runs; {@link #searchSync} then grows the local
+     * + network rows under it.
+     */
+    public List<AutoCompleteEntity> buildHeaderOnly(String searchTerm) {
+        List<AutoCompleteEntity> result = new ArrayList<>();
+        if (TextUtils.isEmpty(searchTerm)) return result;
+        ensureHeader(result, searchTerm,
+                mSearchRepository.getSearchType(), mSearchRepository.getSearchFormat());
+        return result;
+    }
+
     private void ensureHeader(List<AutoCompleteEntity> result, String s, String option, String format) {
         AutoCompleteEntity header = new AutoCompleteEntity();
         header.setDrawableId(mSearchRepository.getIcon(option));

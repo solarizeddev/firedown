@@ -63,6 +63,11 @@ public class AutoCompleteViewModel extends ViewModel {
     // — and a stale post is independently dropped by the mSearchGen guard.
     private volatile boolean mShowingMostVisited;
 
+    // Set when the search header was just posted synchronously (leaving the
+    // most-visited state) so the next runSearch emits its local rows immediately
+    // under that header instead of waiting for the network — consumed once.
+    private boolean mForceLocalFirst;
+
     // Generation counters: each new submission bumps the counter; tasks check
     // their captured generation before posting so a slow cancelled task can't
     // overwrite the result of a newer submission.
@@ -198,13 +203,24 @@ public class AutoCompleteViewModel extends ViewModel {
         if (searchTerm.equals(mCurrentSearchTerm)) return;
 
         cancelPendingSearch();
+        if (wasMostVisited) {
+            // Swap the top-sites list for the typed state SYNCHRONOUSLY (the
+            // search header, built with no DB/network hit) so it never lingers
+            // on screen while the background lookup runs — the on-device flash
+            // the previous debounce/local-first fix didn't fully close. Cancel
+            // the in-flight most-visited query and bump the gen so its late post
+            // can't overwrite this; force the next runSearch to local-first so
+            // history still paints immediately UNDER the header.
+            cancelFuture(mSearchFuture);
+            mSearchGen.incrementAndGet();
+            mForceLocalFirst = true;
+            mSearchData.setValue(mAutoCompleteSearch.buildHeaderOnly(searchTerm));
+        }
         mPendingSearch = () -> runSearch(searchTerm);
         if (wasMostVisited) {
-            // First keystroke out of most-visited: transition NOW, not after the
-            // debounce — the stale top-sites list isn't search results and
-            // shouldn't sit on screen waiting. (Debounce still applies to the
-            // steady-state typing that follows, since mShowingMostVisited is now
-            // false.)
+            // Run the real lookup NOW, not after the debounce (the header is
+            // already up; we just need the rows). Steady-state typing that
+            // follows still debounces, since mShowingMostVisited is now false.
             mDebounceHandler.post(mPendingSearch);
         } else {
             mDebounceHandler.postDelayed(mPendingSearch, SEARCH_DEBOUNCE_MS);
@@ -233,15 +249,13 @@ public class AutoCompleteViewModel extends ViewModel {
         final long gen = mSearchGen.incrementAndGet();
 
         List<AutoCompleteEntity> shown = mSearchData.getValue();
-        // The most-visited list (its first row is a section header) is NOT search
-        // results — treat the dropdown as a FIRST paint so the local-first phase
-        // posts immediately. Otherwise emitLocalFirst is false (the list is
-        // "non-empty"), and runSearch waits for the NETWORK before replacing it,
-        // so the stale top-sites list lingers on screen and then "jumps" to the
-        // suggestions when the network returns.
-        final boolean shownIsMostVisited = shown != null && !shown.isEmpty()
-                && shown.get(0).isSectionHeader();
-        final boolean emitLocalFirst = (shown == null || shown.isEmpty() || shownIsMostVisited);
+        // Emit the local rows first when the dropdown is on its first paint, OR
+        // when search() just synchronously posted the header leaving most-visited
+        // (mForceLocalFirst) — there the shown list is the lone header, so the
+        // "empty" test below is false, but we still want history to paint at once
+        // under it rather than wait for the network.
+        final boolean emitLocalFirst = mForceLocalFirst || shown == null || shown.isEmpty();
+        mForceLocalFirst = false;
 
         mSearchFuture = mAutoCompleteExecutor.submit(() -> {
             try {
@@ -288,6 +302,7 @@ public class AutoCompleteViewModel extends ViewModel {
         cancelPendingSearch();
         mCurrentSearchTerm = null;
         mShowingMostVisited = false;
+        mForceLocalFirst = false;
         mSearchGen.incrementAndGet();
         mSearchData.postValue(null);
     }
