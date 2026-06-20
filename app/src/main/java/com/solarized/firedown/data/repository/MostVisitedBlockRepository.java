@@ -28,20 +28,20 @@ public class MostVisitedBlockRepository {
         mDiskExecutor = diskExecutor;
     }
 
-    /** Block (hide) a URL — synchronous; call off the main thread. */
-    public void blockSync(String url) {
-        if (url == null || url.isEmpty()) return;
-        mDao.insert(new MostVisitedBlockEntity(url, System.currentTimeMillis()));
+    /** Block (hide) a host — synchronous; call off the main thread. */
+    public void blockSync(String host) {
+        if (host == null || host.isEmpty()) return;
+        mDao.insert(new MostVisitedBlockEntity(host, System.currentTimeMillis()));
     }
 
-    /** All blocked URLs — synchronous; call off the main thread. */
-    public List<String> getBlockedUrlsSync() {
-        return mDao.getAllUrls();
+    /** All blocked hosts — synchronous; call off the main thread. */
+    public List<String> getBlockedHostsSync() {
+        return mDao.getAllHosts();
     }
 
-    /** Un-hide a single URL (async). */
-    public void unblock(String url) {
-        mDiskExecutor.execute(() -> mDao.delete(url));
+    /** Un-hide a single host (async). */
+    public void unblock(String host) {
+        mDiskExecutor.execute(() -> mDao.delete(host));
     }
 
     /** Clear the whole blocklist (async) — e.g. when history is cleared. */

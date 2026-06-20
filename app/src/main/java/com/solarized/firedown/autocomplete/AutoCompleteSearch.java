@@ -131,7 +131,7 @@ public class AutoCompleteSearch {
         List<AutoCompleteEntity> items = new ArrayList<>();
         if (history == null) return items;
 
-        Set<String> blocked = new HashSet<>(mMostVisitedBlockRepository.getBlockedUrlsSync());
+        Set<String> blocked = new HashSet<>(mMostVisitedBlockRepository.getBlockedHostsSync());
 
         // One row per host — a "most visited" rail should show distinct SITES,
         // not several deep links of one binge-watched site (which the exact-URL
@@ -141,8 +141,10 @@ public class AutoCompleteSearch {
         for (WebHistoryEntity entity : history) {
             if (items.size() >= MAX_MOST_VISITED) break;
             String url = entity.getUrl();
-            // Blocklisted (user removed this tile) — hide it, history kept.
-            if (url != null && blocked.contains(url)) continue;
+            // Blocklisted (user removed this site) — hide ALL of its host's
+            // variants (www/non-www, paths, schemes), keyed the same way the
+            // strip dedups tiles. History kept.
+            if (blocked.contains(blockKey(url))) continue;
             // No "about:blank" tile — the URL fallback can't rescue a row whose
             // URL is itself about:blank (same guard as addHistory; the query
             // already excludes about: URLs, this covers legacy rows).
@@ -168,11 +170,21 @@ public class AutoCompleteSearch {
         return items;
     }
 
-    /** Block (hide) a URL from the most-visited strip — synchronous, call off the
+    /** Block (hide) a site from the most-visited strip — synchronous, call off the
      *  main thread (the ViewModel runs this then re-queries {@link #mostVisited}
-     *  on the same thread so the refreshed strip excludes it). History untouched. */
+     *  on the same thread so the refreshed strip excludes it). Keyed by HOST so
+     *  every canonical variant of the site is hidden, not just the tapped URL.
+     *  History untouched. */
     public void blockMostVisited(String url) {
-        mMostVisitedBlockRepository.blockSync(url);
+        mMostVisitedBlockRepository.blockSync(blockKey(url));
+    }
+
+    /** The most-visited blocklist key for a URL: its {@code hostOf} host (so
+     *  www/non-www and all paths collapse to one site), or the raw URL when it
+     *  has no host. Used identically when blocking and when filtering. */
+    private static String blockKey(String url) {
+        String host = hostOf(url);
+        return host != null ? host : url;
     }
 
     /**

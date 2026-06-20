@@ -15,11 +15,11 @@ public interface MostVisitedBlockDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insert(MostVisitedBlockEntity entity);
 
-    @Query("SELECT url FROM most_visited_block")
-    List<String> getAllUrls();
+    @Query("SELECT host FROM most_visited_block")
+    List<String> getAllHosts();
 
-    @Query("DELETE FROM most_visited_block WHERE url = :url")
-    void delete(String url);
+    @Query("DELETE FROM most_visited_block WHERE host = :host")
+    void delete(String host);
 
     @Query("DELETE FROM most_visited_block")
     void deleteAll();

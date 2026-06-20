@@ -1182,11 +1182,16 @@ product choice; this lives only in the focused panel.
   VISITED" label above it.
 - **Removal = HIDE via a blocklist, NOT a history delete (Chromium/Brave "Top
   Sites" model).** Long-press a tile → confirm dialog (owned by `AutoCompleteView`,
-  it has the context) → the site's URL is added to a standalone
-  `MostVisitedBlockDatabase` (`most_visited_block`, keyed by URL) via
-  `MostVisitedBlockRepository`. `AutoCompleteSearch.mostVisited()` reads the
-  blocklist (`getBlockedUrlsSync`, it already runs on a background executor) and
-  **skips blocked URLs** — so the tile disappears but **history is untouched**
+  it has the context) → the site's **host** is added to a standalone
+  `MostVisitedBlockDatabase` (`most_visited_block`, keyed by HOST) via
+  `MostVisitedBlockRepository`. Keyed by host (`blockKey` = `hostOf`, the SAME
+  www-stripping the strip dedups tiles by), NOT the exact URL — otherwise hiding
+  one canonical variant (`firedown.app`) lets another (`www.firedown.app`)
+  resurface as a fresh tile, since the strip's per-host cap only collapses them
+  for display. `AutoCompleteSearch.mostVisited()` reads the blocklist
+  (`getBlockedHostsSync`, it already runs on a background executor) and **skips
+  any candidate whose `blockKey` is blocked** — so the tile disappears but
+  **history is untouched**
   (the site still appears in typed history suggestions and the History screen).
   The block + the strip re-query run on the SAME executor thread (ViewModel
   `hideFromMostVisited`), so the refresh excludes it. It's a STANDALONE DB on
