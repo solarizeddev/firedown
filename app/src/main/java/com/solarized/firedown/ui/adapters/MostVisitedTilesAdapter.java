@@ -37,9 +37,12 @@ public class MostVisitedTilesAdapter extends RecyclerView.Adapter<MostVisitedTil
     private final List<AutoCompleteEntity> mItems = new ArrayList<>();
     private final RequestOptions mRequestOptions;
     private final Consumer<String> mOnTileClick;
+    private final Consumer<String> mOnTileLongClick;
 
-    public MostVisitedTilesAdapter(Context context, Consumer<String> onTileClick) {
+    public MostVisitedTilesAdapter(Context context, Consumer<String> onTileClick,
+                                   Consumer<String> onTileLongClick) {
         mOnTileClick = onTileClick;
+        mOnTileLongClick = onTileLongClick;
         int rounded = context.getResources().getDimensionPixelOffset(R.dimen.icon_rounded);
         mRequestOptions = RequestOptions.bitmapTransform(new RoundedCorners(rounded));
     }
@@ -63,7 +66,7 @@ public class MostVisitedTilesAdapter extends RecyclerView.Adapter<MostVisitedTil
     public TileViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.fragment_autocomplete_tile, parent, false);
-        return new TileViewHolder(view, mOnTileClick);
+        return new TileViewHolder(view, mOnTileClick, mOnTileLongClick);
     }
 
     @Override
@@ -115,15 +118,23 @@ public class MostVisitedTilesAdapter extends RecyclerView.Adapter<MostVisitedTil
         final TextView label;
         String url;
 
-        TileViewHolder(View view, Consumer<String> onTileClick) {
+        TileViewHolder(View view, Consumer<String> onTileClick, Consumer<String> onTileLongClick) {
             super(view);
             favicon = view.findViewById(R.id.tile_favicon);
             favicon.setClipToOutline(true);
             label = view.findViewById(R.id.tile_label);
-            view.findViewById(R.id.tile_root).setOnClickListener(v -> {
+            View root = view.findViewById(R.id.tile_root);
+            root.setOnClickListener(v -> {
                 if (onTileClick != null && url != null) {
                     onTileClick.accept(url);
                 }
+            });
+            root.setOnLongClickListener(v -> {
+                if (onTileLongClick != null && url != null) {
+                    onTileLongClick.accept(url);
+                    return true;
+                }
+                return false;
             });
         }
     }

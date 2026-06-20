@@ -99,6 +99,12 @@ public interface WebHistoryDao {
     @Query("DELETE FROM webhistory WHERE uid = :id")
     Integer deleteById(int id);
 
+    // Remove a URL from history entirely — ALL its per-day rows (uid is
+    // hash(url)+day, one row per day visited), so it also drops off the
+    // most-visited strip (which counts distinct days per url).
+    @Query("DELETE FROM webhistory WHERE file_url = :url")
+    void deleteByUrl(String url);
+
     @Query("DELETE FROM webhistory")
     void deleteAll(); // Changed to void for simple background execution via Repository
 

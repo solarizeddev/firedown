@@ -223,6 +223,10 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
 
         // Most-visited tile tap → open the URL (same path as the clipboard chip).
         mAutoCompleteView.setMostVisitedClickListener(url -> openUri(url));
+        // Long-press a tile → confirm dialog (in AutoCompleteView) → remove the
+        // site from history, which refreshes the strip without it.
+        mAutoCompleteView.setMostVisitedRemoveListener(
+                url -> mAutoCompleteViewModel.removeFromHistory(url));
 
         mAutoCompleteView.setClipboardCallback(new AutoCompleteView.OnClipboardListener() {
             @Override

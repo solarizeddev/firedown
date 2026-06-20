@@ -442,6 +442,10 @@ public class BrowserFragment extends BaseBrowserFragment
             geckoState.setEntityUri(mSearchRepository.parseUri(url));
             openUri(geckoState);
         });
+        // Long-press a tile → confirm dialog (in AutoCompleteView) → remove the
+        // site from history, which refreshes the strip without it.
+        mAutoCompleteView.setMostVisitedRemoveListener(
+                url -> mAutoCompleteViewModel.removeFromHistory(url));
 
         mSwipeRefreshLayout.setOnRefreshListener(this);
         mSwipeRefreshLayout.setEnabled(false);

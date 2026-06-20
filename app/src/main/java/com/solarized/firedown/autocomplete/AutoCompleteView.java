@@ -7,6 +7,7 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.res.ColorStateList;
+import android.net.Uri;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -24,6 +25,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.card.MaterialCardView;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.solarized.firedown.R;
 import com.solarized.firedown.data.entity.AutoCompleteEntity;
 import com.solarized.firedown.ui.AutocompleteSectionDecoration;
@@ -55,6 +57,9 @@ public class AutoCompleteView extends FrameLayout {
     private RecyclerView mMostVisitedView;
     private MostVisitedTilesAdapter mMostVisitedAdapter;
     private OnMostVisitedClickListener mMostVisitedClickListener;
+    // The host's "remove this site from history" action, invoked after the
+    // long-press confirm dialog (owned here — this view has the context).
+    private OnMostVisitedClickListener mMostVisitedRemoveListener;
     // True while showEmpty() is the active state — gates the strip's visibility
     // so a late setMostVisited() during typing can't pop the strip back open.
     private boolean mEmptyState;
@@ -141,11 +146,13 @@ public class AutoCompleteView extends FrameLayout {
         mMostVisitedView.setLayoutManager(
                 new LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false));
         mMostVisitedView.setItemAnimator(null);
-        mMostVisitedAdapter = new MostVisitedTilesAdapter(context, url -> {
-            if (mMostVisitedClickListener != null) {
-                mMostVisitedClickListener.onMostVisitedClick(url);
-            }
-        });
+        mMostVisitedAdapter = new MostVisitedTilesAdapter(context,
+                url -> {
+                    if (mMostVisitedClickListener != null) {
+                        mMostVisitedClickListener.onMostVisitedClick(url);
+                    }
+                },
+                this::showRemoveFromHistoryDialog);
         mMostVisitedView.setAdapter(mMostVisitedAdapter);
 
         mClipboardView = v.findViewById(R.id.clipboard_view);
@@ -292,6 +299,30 @@ public class AutoCompleteView extends FrameLayout {
 
     public void setMostVisitedClickListener(OnMostVisitedClickListener listener) {
         mMostVisitedClickListener = listener;
+    }
+
+    /** The host's action to remove a site from history — invoked when the user
+     *  confirms the long-press dialog. */
+    public void setMostVisitedRemoveListener(OnMostVisitedClickListener listener) {
+        mMostVisitedRemoveListener = listener;
+    }
+
+    /** Long-press on a tile → confirm dialog → the host's remove action. */
+    private void showRemoveFromHistoryDialog(String url) {
+        if (url == null || mMostVisitedRemoveListener == null) return;
+        String host;
+        try {
+            host = Uri.parse(url).getHost();
+        } catch (Exception e) {
+            host = null;
+        }
+        new MaterialAlertDialogBuilder(mContext)
+                .setTitle(R.string.most_visited_remove_title)
+                .setMessage(host != null ? host : url)
+                .setNegativeButton(R.string.cancel, null)
+                .setPositiveButton(R.string.most_visited_remove,
+                        (d, w) -> mMostVisitedRemoveListener.onMostVisitedClick(url))
+                .show();
     }
 
     /** Empty-focus state: clipboard chip + the most-visited strip (if it has
