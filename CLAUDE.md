@@ -1155,45 +1155,39 @@ fallback + RFC 8187 UTF-8 name. QR via the existing zxing-core dependency.
 
 ### Empty-focus "most visited" — the existing list, filled (not a new widget)
 
-When the address bar is focused and EMPTY, the suggestion list (the existing
-`search_card` + `AutoCompleteRecyclerView`, normally `gone` until you type) is
-filled with top-frecency **most-visited** rows instead of left blank — the
-clipboard chip stays above them. This is deliberately **not** a new view/widget
-(the home screen stays bare by product choice): it reuses the same card and the
-same adapter. Wiring:
+When the address bar is focused and EMPTY, a **most-visited strip** is shown
+under the clipboard chip with top-frecency sites. The home screen stays bare by
+product choice; this lives only in the focused panel.
 
-- **Presentation — a labeled section of clean "top-site" rows (NOT history
-  rows).** The rows are `AutoCompleteEntity` with `mostVisited=true`; a
-  non-clickable `sectionHeader=true` "Most visited" row is prepended
-  (`AutoCompleteSearch.mostVisited`, stable `MOST_VISITED_HEADER_UID`). The
-  adapter renders these as **dedicated view types** keyed on the entity flags
-  (`getItemViewType`: `isSectionHeader`→HEADER, `isMostVisited`→MOST_VISITED),
-  NOT by index: `fragment_autocomplete_section_header` (small caps label) over
-  `fragment_autocomplete_most_visited_item` (**favicon-in-a-40dp-rounded-badge +
-  title only — no URL, no trailing glyph**; the badge matches the clipboard
-  chip's icon so the chip and the rows share one icon column). The row root id is
-  `item_search`, reusing the existing `onItemClick` to open the entity's
-  (unshown) subtext URL. `sectionAt` puts the header + rows in one section (key
-  4) so no inset hairline is drawn within. This replaced an earlier
-  trailing-flame-glyph-on-history-rows attempt, which read as "weak"/bleak — the
-  treatment is a labeled, de-cluttered list, the favicon as the identity. (A
-  horizontal speed-dial **tile** strip was the considered-and-shelved richer
-  alternative "A"; this is "B".)
-- **One shared row scaffold across empty AND typed — no layout jump.** The
-  most-visited rows, the typed suggestion rows (`fragment_autocomplete_item`) and
-  the search header (`fragment_autocomplete_item_search`) all use the **same 40dp
-  leading icon SLOT at a 14dp inset** (favicon/glyph centered; the filled badge
-  ring is drawn only on the most-visited / clipboard surface, never the dense
-  typed list) and the **same `list_autocomplete_row_height` (64dp)**. So typing
-  or clearing the field only swaps the row *content* (domain↔match subtitle,
-  trailing type-glyph appears/disappears) — the favicon column, the title column
-  and the row height all stay fixed, instead of the old triple jump (favicon
-  resized 40→24 + slid, titles shifted ~20dp, rows reflowed 64↔58). The
-  `AutocompleteSectionDecoration` inset moved 48→68dp to match the new text
-  column. The clipboard chip stays **empty-only** (hidden on typing, per browser
-  convention — showing a "From clipboard" chip over live results is clutter); its
-  hide is now the *only* motion on type, a single expected dismissal rather than a
-  morph. Keep these three layouts' icon-slot geometry + height in lockstep.
+- **It is its OWN view, NOT the suggestion list — this is load-bearing.** A
+  horizontal **strip of favicon tiles** (`fragment_autocomplete_tile` +
+  `MostVisitedTilesAdapter`, a plain `RecyclerView.Adapter`) in its own
+  `most_visited_card`, **separate** from the suggestion `RecyclerView`
+  (`search_view`, which stays history/tabs/bookmarks/search **only**, exactly as
+  before). The empty↔typed transition is a pure **visibility flip**
+  (`showEmpty()` reveals clipboard + strip; `hideAll()` hides them and shows the
+  suggestion list) — **no shared adapter, no `ListAdapter` async diff, so no
+  blink.** History: most-visited was first built as rows INSIDE the suggestion
+  list (a flame-glyph attempt, then a labeled "MOST VISITED" badge-row section
+  with a unified scaffold). Every variant **blinked** on the first keystroke
+  because the single `ListAdapter` diffs the most-visited→typed swap on a
+  background thread (a frame+ late), which **no** sync-header / local-first /
+  debounce trick fully closed. The fix was architectural: split it into a second
+  view. **Do not** re-merge most-visited into the suggestion adapter.
+- **Tile:** favicon in a 52dp rounded badge (the same `bg_incognito_chip` /
+  surfaceContainerHigh treatment as the clipboard icon) + a short site label
+  (`siteLabel` = the registrable domain's main label, e.g. `m.youtube.com` →
+  "youtube"). Tap → `OnMostVisitedClickListener` → the host opens the entity's
+  subtext URL (same as a history-suggestion tap). The strip has a small "MOST
+  VISITED" label above it.
+- **Visibility gating.** `AutoCompleteView.setMostVisited(list)` populates the
+  strip adapter and calls `updateMostVisitedVisibility()`, which shows the card
+  only when `mEmptyState` is active AND the strip has tiles — so a late
+  most-visited post arriving mid-typing can't pop the strip open, and an empty
+  list (no history / **incognito**) keeps it hidden (clipboard-chip-only empty
+  state). The clipboard chip stays **empty-only** (hidden on typing, per browser
+  convention). Both are separate views above the suggestion card, so the only
+  motion on the first keystroke is two `setVisibility` calls.
 
 - **Frecency without a visit counter.** `webhistory` has no visit-count column;
   the uid is `hash(url)+day`, so there's one row per (url, day), and
@@ -1214,26 +1208,19 @@ same adapter. Wiring:
   (unlike typed search, which shows the URL as the title — a bare-URL row reads
   as broken next to titled rows, and a never-titled page is the weakest top-site
   candidate; the most-recent-visit title above already minimises these).
-- **One LiveData, one generation guard.** `loadMostVisited()` posts to the SAME
-  `mSearchData` as typed search and shares `mSearchGen`, so a late most-visited
-  post can't clobber a newer typed result (or vice-versa) — the older task's
-  post is dropped by the gen check. **Leaving most-visited must not linger on the
-  stale list:** `search()` posts the first keystroke's lookup with no debounce
-  when `mShowingMostVisited` was set (`mDebounceHandler.post`, not `postDelayed`),
-  and `runSearch` treats a shown most-visited list (first row `isSectionHeader`)
-  as a FIRST paint so the local-first phase emits immediately — otherwise
-  `emitLocalFirst` is false (the list is "non-empty") and the top-sites list sits
-  on screen until the NETWORK suggestions return, then visibly jumps to them. Replaces `resetEngines()` at the three
-  empty-field entry points (focus-gain, delete-to-empty, clear button) in
-  Home/Browser; `search()`/`resetEngines()` clear the `mShowingMostVisited`
-  flag, `loadMostVisited()` sets it. The `getWebSearch` observer adds one branch:
-  non-empty list + `isShowingMostVisited()` → `showMostVisited()` (clipboard +
-  list together, vs `showEmpty()` = clipboard only, `hideAll()` = list only).
+- **Separate LiveData stream.** `loadMostVisited()` posts to its OWN
+  `mMostVisitedData` (own `mMostVisitedGen` guard), NOT the suggestion
+  `mSearchData` — the whole point of the split, so the strip and the typed list
+  never share state. The Home/Browser fragments observe `getMostVisited()` →
+  `AutoCompleteView.setMostVisited(list)`. The empty-field entry points
+  (focus-gain, delete-to-empty, clear button) call `loadMostVisited()` +
+  `showEmpty()`; typing calls `search()` (suggestions) + the `getWebSearch`
+  observer's `hideAll()`. `search()`/`runSearch()` are back to their plain form
+  (no most-visited entanglement — no sync-header, no `mForceLocalFirst`).
 - **Incognito is the gate, centralized.** `AutoCompleteSearch.mostVisited()`
-  returns empty when `mIncognito` → `null` post → list stays hidden = the old
-  clipboard-only empty state. So even though the incognito BROWSER now calls
-  `loadMostVisited()`, no history surfaces; incognito HOME still uses
-  `resetEngines()` and is untouched. Never show most-visited in incognito.
+  returns empty when `mIncognito`, so the strip stays hidden = the clipboard-only
+  empty state. The incognito fragment doesn't even observe `getMostVisited()`.
+  Never show most-visited in incognito.
 
 Two hardenings in `AutoCompleteView.showClipboard()` (the clipboard suggestion
 chip shown when the address bar gains focus) — both from one on-device episode:

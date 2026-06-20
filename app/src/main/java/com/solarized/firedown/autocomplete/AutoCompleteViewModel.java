@@ -22,6 +22,7 @@ import com.solarized.firedown.utils.WebUtils;
 
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.ExecutorService;
@@ -39,6 +40,11 @@ public class AutoCompleteViewModel extends ViewModel {
 
     private final MutableLiveData<String> mAutoCompleteData = new MutableLiveData<>();
     private final MutableLiveData<List<AutoCompleteEntity>> mSearchData = new MutableLiveData<>();
+    // Most-visited tiles for the empty-focus strip — a SEPARATE stream from the
+    // suggestion list (mSearchData), so the strip is its own view that toggles by
+    // visibility (no shared adapter / no diff / no blink on the empty<->typed
+    // transition).
+    private final MutableLiveData<List<AutoCompleteEntity>> mMostVisitedData = new MutableLiveData<>();
 
     // Debounce window for the suggestion search: a burst of keystrokes collapses
     // to ONE query fired after the typing pauses. Kept short (below the ~100ms
@@ -54,25 +60,15 @@ public class AutoCompleteViewModel extends ViewModel {
     private Runnable mPendingSearch;
     private Future<?> mAutoCompleteFuture;
     private Future<?> mSearchFuture;
+    private Future<?> mMostVisitedFuture;
     private volatile String mCurrentSearchTerm;
-
-    // True while the suggestion list currently holds the empty-focus "most
-    // visited" rows (Option A) rather than typed search results. Set/cleared on
-    // the main thread (the callers below all run from the URL-bar handlers); the
-    // getWebSearch observer reads it on the main thread too, so there is no race
-    // — and a stale post is independently dropped by the mSearchGen guard.
-    private volatile boolean mShowingMostVisited;
-
-    // Set when the search header was just posted synchronously (leaving the
-    // most-visited state) so the next runSearch emits its local rows immediately
-    // under that header instead of waiting for the network — consumed once.
-    private boolean mForceLocalFirst;
 
     // Generation counters: each new submission bumps the counter; tasks check
     // their captured generation before posting so a slow cancelled task can't
     // overwrite the result of a newer submission.
     private final AtomicLong mAutoCompleteGen = new AtomicLong();
     private final AtomicLong mSearchGen = new AtomicLong();
+    private final AtomicLong mMostVisitedGen = new AtomicLong();
 
     @Inject
     public AutoCompleteViewModel(
@@ -91,40 +87,34 @@ public class AutoCompleteViewModel extends ViewModel {
         return mSearchData;
     }
 
-    /** True when the current {@link #getWebSearch()} list is the empty-focus
-     *  "most visited" set, so the view keeps the clipboard chip visible
-     *  alongside it (vs. typed results, which hide the chip). */
-    public boolean isShowingMostVisited() {
-        return mShowingMostVisited;
+    /** Empty-focus most-visited tiles for the strip. SEPARATE LiveData from the
+     *  suggestion list, so the strip is its own view the host toggles by
+     *  visibility. The host observes this and calls
+     *  {@code AutoCompleteView.setMostVisited(list)}; an empty list (no history /
+     *  incognito) keeps the strip hidden. */
+    public LiveData<List<AutoCompleteEntity>> getMostVisited() {
+        return mMostVisitedData;
     }
 
     /**
-     * Empty-focus state (Option A): fill the suggestion list with top-frecency
-     * "most visited" rows instead of leaving it blank. Routed through the SAME
-     * {@link #mSearchData} LiveData and {@link #mSearchGen} generation guard as
-     * the typed search, so a late most-visited post can't clobber a newer
-     * typed-search result, nor vice-versa (whichever request is newest wins;
-     * the older task's post is discarded by the generation check). Incognito
-     * yields an empty list → {@code null} post → the list stays hidden, i.e. the
-     * old empty state (clipboard chip only).
+     * Load the empty-focus most-visited tiles into {@link #mMostVisitedData}. Its
+     * own generation guard (independent of the suggestion search), so it never
+     * touches the typed-results stream. Incognito yields an empty list → the
+     * strip stays hidden (clipboard chip only).
      */
     public void loadMostVisited() {
-        cancelPendingSearch();
-        cancelFuture(mSearchFuture);
-        mCurrentSearchTerm = null;
-        mShowingMostVisited = true;
-        final long gen = mSearchGen.incrementAndGet();
-
-        mSearchFuture = mAutoCompleteExecutor.submit(() -> {
+        cancelFuture(mMostVisitedFuture);
+        final long gen = mMostVisitedGen.incrementAndGet();
+        mMostVisitedFuture = mAutoCompleteExecutor.submit(() -> {
             try {
                 List<AutoCompleteEntity> list = mAutoCompleteSearch.mostVisited();
-                if (gen == mSearchGen.get()) {
-                    mSearchData.postValue(list.isEmpty() ? null : list);
+                if (gen == mMostVisitedGen.get()) {
+                    mMostVisitedData.postValue(list);
                 }
             } catch (Exception e) {
-                if (!Thread.currentThread().isInterrupted() && gen == mSearchGen.get()) {
+                if (!Thread.currentThread().isInterrupted() && gen == mMostVisitedGen.get()) {
                     Log.e(TAG, "loadMostVisited failed:", e);
-                    mSearchData.postValue(null);
+                    mMostVisitedData.postValue(new ArrayList<>());
                 }
             }
         });
@@ -188,9 +178,6 @@ public class AutoCompleteViewModel extends ViewModel {
      * per character. Clearing the field is handled immediately (no debounce).
      */
     public void search(CharSequence constraint) {
-        // Leaving the most-visited (empty) state — these are typed results.
-        final boolean wasMostVisited = mShowingMostVisited;
-        mShowingMostVisited = false;
         final String searchTerm = constraint != null
                 ? StringUtils.stripEnd(constraint.toString(), " ")
                 : null;
@@ -203,28 +190,8 @@ public class AutoCompleteViewModel extends ViewModel {
         if (searchTerm.equals(mCurrentSearchTerm)) return;
 
         cancelPendingSearch();
-        if (wasMostVisited) {
-            // Swap the top-sites list for the typed state SYNCHRONOUSLY (the
-            // search header, built with no DB/network hit) so it never lingers
-            // on screen while the background lookup runs — the on-device flash
-            // the previous debounce/local-first fix didn't fully close. Cancel
-            // the in-flight most-visited query and bump the gen so its late post
-            // can't overwrite this; force the next runSearch to local-first so
-            // history still paints immediately UNDER the header.
-            cancelFuture(mSearchFuture);
-            mSearchGen.incrementAndGet();
-            mForceLocalFirst = true;
-            mSearchData.setValue(mAutoCompleteSearch.buildHeaderOnly(searchTerm));
-        }
         mPendingSearch = () -> runSearch(searchTerm);
-        if (wasMostVisited) {
-            // Run the real lookup NOW, not after the debounce (the header is
-            // already up; we just need the rows). Steady-state typing that
-            // follows still debounces, since mShowingMostVisited is now false.
-            mDebounceHandler.post(mPendingSearch);
-        } else {
-            mDebounceHandler.postDelayed(mPendingSearch, SEARCH_DEBOUNCE_MS);
-        }
+        mDebounceHandler.postDelayed(mPendingSearch, SEARCH_DEBOUNCE_MS);
     }
 
     /**
@@ -249,13 +216,7 @@ public class AutoCompleteViewModel extends ViewModel {
         final long gen = mSearchGen.incrementAndGet();
 
         List<AutoCompleteEntity> shown = mSearchData.getValue();
-        // Emit the local rows first when the dropdown is on its first paint, OR
-        // when search() just synchronously posted the header leaving most-visited
-        // (mForceLocalFirst) — there the shown list is the lone header, so the
-        // "empty" test below is false, but we still want history to paint at once
-        // under it rather than wait for the network.
-        final boolean emitLocalFirst = mForceLocalFirst || shown == null || shown.isEmpty();
-        mForceLocalFirst = false;
+        final boolean emitLocalFirst = (shown == null || shown.isEmpty());
 
         mSearchFuture = mAutoCompleteExecutor.submit(() -> {
             try {
@@ -301,8 +262,6 @@ public class AutoCompleteViewModel extends ViewModel {
         // (it sets its own fresh generation, so the gen bump below can't stop it).
         cancelPendingSearch();
         mCurrentSearchTerm = null;
-        mShowingMostVisited = false;
-        mForceLocalFirst = false;
         mSearchGen.incrementAndGet();
         mSearchData.postValue(null);
     }

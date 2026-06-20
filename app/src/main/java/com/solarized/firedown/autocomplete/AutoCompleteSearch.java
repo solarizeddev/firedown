@@ -94,14 +94,13 @@ public class AutoCompleteSearch {
     }
 
     /** How many "most visited" rows fill the empty-focus suggestion list. */
-    private static final int MAX_MOST_VISITED = 5;
+    // Tiles shown in the empty-focus most-visited strip. A horizontal strip has
+    // room for more than the old vertical list, and it scrolls.
+    private static final int MAX_MOST_VISITED = 8;
     // mostVisited() over-fetches this many candidates and then drops still-blank
-    // titles and caps to one row per host, so the query must return well more
-    // than the MAX_MOST_VISITED rows actually shown.
+    // titles and caps to one per host, so the query must return well more than
+    // the MAX_MOST_VISITED tiles actually shown.
     private static final int MOST_VISITED_CANDIDATES = 30;
-    // Stable uid for the prepended "Most visited" header (a real history uid is
-    // hash(url)+day, so this fixed sentinel can't collide). Keeps DiffUtil happy.
-    private static final int MOST_VISITED_HEADER_UID = "firedown.most_visited.header".hashCode();
 
     /**
      * Top-frecency history rows for the EMPTY-focus suggestion list (Option A:
@@ -149,24 +148,11 @@ public class AutoCompleteSearch {
             if (host != null && !seenHosts.add(host)) continue;
             AutoCompleteEntity s = new AutoCompleteEntity();
             s.setType(AutoCompleteEntity.HISTORY);
-            // Renders via the dedicated MOST_VISITED row (favicon-in-a-badge +
-            // title, no URL/glyph); subtext still carries the URL for the tap.
-            s.setMostVisited(true);
             s.setTitle(title);
             s.setIcon(entity.getIcon());
             s.setSubText(url);
             s.setUid(entity.getId());
             items.add(s);
-        }
-        // Prepend the "Most visited" section header (only when there are rows;
-        // an empty list stays empty so the observer falls back to showEmpty).
-        // The label text is a UI string set by the adapter; the entity just
-        // carries the flag + a stable uid for DiffUtil.
-        if (!items.isEmpty()) {
-            AutoCompleteEntity header = new AutoCompleteEntity();
-            header.setSectionHeader(true);
-            header.setUid(MOST_VISITED_HEADER_UID);
-            items.add(0, header);
         }
         return items;
     }
@@ -452,22 +438,6 @@ public class AutoCompleteSearch {
         entity.setSubText(encodeSearch(format, text));
         entity.setUid(text.hashCode());
         result.add(entity);
-    }
-
-    /**
-     * Builds JUST the search header row for {@code searchTerm}, synchronously and
-     * with NO DB/network hit (only the engine's icon/format from prefs). Used to
-     * swap the empty-focus most-visited list for the typed state in the SAME
-     * frame as the first keystroke, so the stale top-sites list never lingers
-     * while the background lookup runs; {@link #searchSync} then grows the local
-     * + network rows under it.
-     */
-    public List<AutoCompleteEntity> buildHeaderOnly(String searchTerm) {
-        List<AutoCompleteEntity> result = new ArrayList<>();
-        if (TextUtils.isEmpty(searchTerm)) return result;
-        ensureHeader(result, searchTerm,
-                mSearchRepository.getSearchType(), mSearchRepository.getSearchFormat());
-        return result;
     }
 
     private void ensureHeader(List<AutoCompleteEntity> result, String s, String option, String format) {

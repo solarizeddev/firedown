@@ -20,13 +20,18 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatImageButton;
 import androidx.core.graphics.ColorUtils;
 import androidx.core.widget.ImageViewCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.card.MaterialCardView;
 import com.solarized.firedown.R;
+import com.solarized.firedown.data.entity.AutoCompleteEntity;
 import com.solarized.firedown.ui.AutocompleteSectionDecoration;
 import com.solarized.firedown.ui.IncognitoColors;
+import com.solarized.firedown.ui.adapters.MostVisitedTilesAdapter;
 import com.solarized.firedown.utils.UrlStringUtils;
+
+import java.util.List;
 
 public class AutoCompleteView extends FrameLayout {
 
@@ -43,6 +48,16 @@ public class AutoCompleteView extends FrameLayout {
     private AutoCompleteRecyclerView mSearchView;
 
     private View mSearchCard;
+
+    // Most-visited strip — its own RecyclerView/adapter, separate from the
+    // suggestion list so the empty<->typed switch is a pure visibility flip.
+    private View mMostVisitedCard;
+    private RecyclerView mMostVisitedView;
+    private MostVisitedTilesAdapter mMostVisitedAdapter;
+    private OnMostVisitedClickListener mMostVisitedClickListener;
+    // True while showEmpty() is the active state — gates the strip's visibility
+    // so a late setMostVisited() during typing can't pop the strip back open.
+    private boolean mEmptyState;
 
     private AutocompleteSectionDecoration mSectionDecoration;
 
@@ -65,6 +80,11 @@ public class AutoCompleteView extends FrameLayout {
         void onClipboardClick(CharSequence text);
 
         void onClipboardLongClick(CharSequence text);
+    }
+
+    /** A most-visited tile was tapped; the host opens the given URL. */
+    public interface OnMostVisitedClickListener{
+        void onMostVisitedClick(String url);
     }
 
     public AutoCompleteView(@NonNull Context context) {
@@ -115,6 +135,18 @@ public class AutoCompleteView extends FrameLayout {
         mSearchView = v.findViewById(R.id.search_view);
 
         mSearchCard = v.findViewById(R.id.search_card);
+
+        mMostVisitedCard = v.findViewById(R.id.most_visited_card);
+        mMostVisitedView = v.findViewById(R.id.most_visited_view);
+        mMostVisitedView.setLayoutManager(
+                new LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false));
+        mMostVisitedView.setItemAnimator(null);
+        mMostVisitedAdapter = new MostVisitedTilesAdapter(context, url -> {
+            if (mMostVisitedClickListener != null) {
+                mMostVisitedClickListener.onMostVisitedClick(url);
+            }
+        });
+        mMostVisitedView.setAdapter(mMostVisitedAdapter);
 
         mClipboardView = v.findViewById(R.id.clipboard_view);
 
@@ -214,6 +246,16 @@ public class AutoCompleteView extends FrameLayout {
             card.setCardBackgroundColor(surfaceContainerHighest);
         }
 
+        // 7b. Most-visited strip card (same surface as the suggestion card and
+        //     the clipboard chip) + its label.
+        if (mMostVisitedCard instanceof MaterialCardView card) {
+            card.setCardBackgroundColor(surfaceContainerHighest);
+        }
+        TextView mvLabel = findViewById(R.id.most_visited_label);
+        if (mvLabel != null) {
+            mvLabel.setTextColor(onSurfaceVariant);
+        }
+
         // 8. Section dividers. Derive a hairline from onSurfaceVariant at low
         //    alpha so it reads as a subtle outline in both regular and
         //    incognito (no dedicated outline token exists for incognito).
@@ -232,28 +274,45 @@ public class AutoCompleteView extends FrameLayout {
         return mSearchView;
     }
 
+    /** Populate the most-visited strip (its own RecyclerView). Safe to call any
+     *  time — the strip is only made visible by {@link #showEmpty()}, and only
+     *  when it actually has tiles. An empty list (no history / incognito) keeps
+     *  it hidden. */
+    public void setMostVisited(List<AutoCompleteEntity> list) {
+        if (mMostVisitedAdapter == null) return;
+        mMostVisitedAdapter.setItems(list);
+        updateMostVisitedVisibility();
+    }
 
+    private void updateMostVisitedVisibility() {
+        if (mMostVisitedCard == null) return;
+        boolean show = mEmptyState && mMostVisitedAdapter != null && mMostVisitedAdapter.size() > 0;
+        mMostVisitedCard.setVisibility(show ? View.VISIBLE : View.GONE);
+    }
+
+    public void setMostVisitedClickListener(OnMostVisitedClickListener listener) {
+        mMostVisitedClickListener = listener;
+    }
+
+    /** Empty-focus state: clipboard chip + the most-visited strip (if it has
+     *  tiles); the suggestion list is hidden. The two are SEPARATE views, so the
+     *  transition to/from typing is a pure visibility flip with no list diff. */
     public void showEmpty() {
+        mEmptyState = true;
         showClipboard();
         mSearchView.setVisibility(View.GONE);
         // Hide the container card too, otherwise its filled surface would
         // show as an empty panel under the address bar with no rows in it.
         if (mSearchCard != null) mSearchCard.setVisibility(View.GONE);
+        updateMostVisitedVisibility();
     }
 
+    /** Typed-results state: the suggestion list only. Clipboard chip and the
+     *  most-visited strip are hidden (just GONE — never diffed). */
     public void hideAll(){
+        mEmptyState = false;
         hideClipboard();
-        mSearchView.setVisibility(View.VISIBLE);
-        if (mSearchCard != null) mSearchCard.setVisibility(View.VISIBLE);
-    }
-
-    /** Empty-focus state, Option A: the clipboard chip AND the "most visited"
-     *  list shown TOGETHER — unlike {@link #showEmpty()} (clipboard only) or
-     *  {@link #hideAll()} (list only, the typed-results state). showClipboard()
-     *  re-evaluates the chip (so a dismissed/oversized/empty clip is still
-     *  correctly withheld). */
-    public void showMostVisited(){
-        showClipboard();
+        if (mMostVisitedCard != null) mMostVisitedCard.setVisibility(View.GONE);
         mSearchView.setVisibility(View.VISIBLE);
         if (mSearchCard != null) mSearchCard.setVisibility(View.VISIBLE);
     }

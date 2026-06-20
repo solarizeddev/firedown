@@ -434,6 +434,15 @@ public class BrowserFragment extends BaseBrowserFragment
         mSearchAutocompleteAdapter = new SearchAutocompleteAdapter(mActivity, new SearchDiffCallback(), this);
         mAutoCompleteView.getRecyclerView().setAdapter(mSearchAutocompleteAdapter);
 
+        // Most-visited tile tap → open the URL in the current tab (same as a
+        // history-suggestion tap).
+        mAutoCompleteView.setMostVisitedClickListener(url -> {
+            GeckoState geckoState = peekCurrentGeckoState();
+            if (geckoState == null) return;
+            geckoState.setEntityUri(mSearchRepository.parseUri(url));
+            openUri(geckoState);
+        });
+
         mSwipeRefreshLayout.setOnRefreshListener(this);
         mSwipeRefreshLayout.setEnabled(false);
         mSwipeRefreshLayout.setColorSchemeResources(
@@ -875,14 +884,16 @@ public class BrowserFragment extends BaseBrowserFragment
         mAutoCompleteViewModel.getWebSearch().observe(getViewLifecycleOwner(), webSearch -> {
             if (webSearch == null || webSearch.isEmpty()) {
                 mAutoCompleteView.showEmpty();
-            } else if (mAutoCompleteViewModel.isShowingMostVisited()) {
-                // Empty field: most-visited rows fill the list, clipboard stays.
-                mAutoCompleteView.showMostVisited();
             } else {
                 mAutoCompleteView.hideAll();
             }
             mSearchAutocompleteAdapter.submitList(webSearch);
         });
+
+        // Empty-focus most-visited strip — its own view, populated here and
+        // toggled by showEmpty()/hideAll() (visibility only, no list diff).
+        mAutoCompleteViewModel.getMostVisited().observe(getViewLifecycleOwner(),
+                list -> mAutoCompleteView.setMostVisited(list));
 
         getViewLifecycleOwner().getLifecycle().addObserver((LifecycleEventObserver) (source, event) -> {
             if (Lifecycle.Event.ON_DESTROY.equals(event)) {
@@ -1280,8 +1291,8 @@ public class BrowserFragment extends BaseBrowserFragment
             args.putBoolean(Keys.OPEN_INCOGNITO, mIsIncognitoThemed);
             NavigationUtils.navigateSafe(mNavController, R.id.tabs, R.id.browser, args);
         } else if (id == R.id.clear_button) {
-            // Field empty again → most-visited (observer upgrades to
-            // showMostVisited once the rows arrive).
+            // Field empty again → most-visited strip (its observer fills the
+            // strip; showEmpty reveals it when it has tiles).
             mAutoCompleteViewModel.loadMostVisited();
             mAutoCompleteView.showEmpty();
             mGeckoToolbar.clearText();
@@ -1430,8 +1441,8 @@ public class BrowserFragment extends BaseBrowserFragment
                     }
                 }
             }
-            // Focus + empty field → most-visited list (observer upgrades
-            // showEmpty → showMostVisited when the rows arrive); blur → clear.
+            // Focus + empty field → most-visited strip (its observer fills the
+            // strip; showEmpty reveals it when it has tiles); blur → clear.
             if (hasFocus) {
                 mAutoCompleteViewModel.loadMostVisited();
             } else {

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    One most-visited tile for the empty-focus horizontal strip
+    (MostVisitedTilesAdapter): a favicon in a rounded badge over a short site
+    label. Fixed width so the strip scrolls predictably. Tapping opens the URL.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/tile_root"
+    android:layout_width="64dp"
+    android:layout_height="wrap_content"
+    android:background="?attr/selectableItemBackgroundBorderless"
+    android:clickable="true"
+    android:focusable="true"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    android:paddingVertical="4dp">
+
+    <FrameLayout
+        android:layout_width="52dp"
+        android:layout_height="52dp"
+        android:background="@drawable/bg_incognito_chip"
+        android:backgroundTint="?attr/colorSurfaceContainerHigh">
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/tile_favicon"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:layout_gravity="center"
+            android:background="@drawable/mask_icon_rounded"
+            android:contentDescription="@null"
+            android:scaleType="fitXY" />
+
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/tile_label"
+        android:layout_width="64dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="7dp"
+        android:ellipsize="end"
+        android:gravity="center"
+        android:singleLine="true"
+        android:textColor="?attr/colorOnSurfaceVariant"
+        android:textSize="11sp" />
+
+</LinearLayout>

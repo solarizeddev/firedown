@@ -221,6 +221,9 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mSearchAutocompleteAdapter = new SearchAutocompleteAdapter(mActivity, new SearchDiffCallback(), this);
         mAutoCompleteView.getRecyclerView().setAdapter(mSearchAutocompleteAdapter);
 
+        // Most-visited tile tap → open the URL (same path as the clipboard chip).
+        mAutoCompleteView.setMostVisitedClickListener(url -> openUri(url));
+
         mAutoCompleteView.setClipboardCallback(new AutoCompleteView.OnClipboardListener() {
             @Override
             public void onClipboardClick(CharSequence text) {
@@ -314,9 +317,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mAutoCompleteViewModel.getWebSearch().observe(getViewLifecycleOwner(), mObservableWebSearch -> {
             if (mObservableWebSearch == null || mObservableWebSearch.isEmpty()) {
                 mAutoCompleteView.showEmpty();
-            } else if (mAutoCompleteViewModel.isShowingMostVisited()) {
-                // Empty field: most-visited rows fill the list, clipboard stays.
-                mAutoCompleteView.showMostVisited();
             } else {
                 mAutoCompleteView.hideAll();
             }
@@ -324,6 +324,11 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
             mSearchAutocompleteAdapter.submitList(mObservableWebSearch);
 
         });
+
+        // Empty-focus most-visited strip — its own view, populated here and
+        // toggled by showEmpty()/hideAll() (visibility only, no list diff).
+        mAutoCompleteViewModel.getMostVisited().observe(getViewLifecycleOwner(),
+                list -> mAutoCompleteView.setMostVisited(list));
 
         // NOTE: HomeFragment intentionally does NOT observe
         // BrowserURIViewModel.getEvents().  IntentHandler owns all tab
@@ -603,8 +608,8 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mGeckoToolbar.updateViewVisibility(hasFocus);
         mGeckoToolbar.setAutoCompleteVisible(hasFocus);
         mGeckoToolbar.startAnimation(hasFocus);
-        // On focus with an empty field, fill the list with most-visited rows
-        // (the observer upgrades showEmpty → showMostVisited when they arrive);
+        // On focus with an empty field, load the most-visited tiles (the strip
+        // observer fills its own view; showEmpty() reveals it once it has tiles);
         // on blur just clear. showEmpty() paints the clipboard chip immediately.
         if (hasFocus) {
             mAutoCompleteViewModel.loadMostVisited();
@@ -683,8 +688,8 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     @Override
     public void onToolbarButtonClick(View v, int id) {
         if (id == R.id.clear_button) {
-            // Field is now empty again → most-visited (the observer upgrades to
-            // showMostVisited when the rows land).
+            // Field is now empty again → most-visited strip (its observer fills
+            // the strip; showEmpty reveals it when it has tiles).
             mAutoCompleteViewModel.loadMostVisited();
             mAutoCompleteView.showEmpty();
             mGeckoToolbar.clearText();

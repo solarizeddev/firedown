@@ -18,6 +18,61 @@
 
 
     <!--
+        Empty-focus MOST-VISITED strip — its OWN view, separate from the
+        suggestion card below, so switching empty<->typed is a pure visibility
+        flip (no shared RecyclerView, no diff, no blink). Shown with the
+        clipboard chip when the field is empty; GONE while typing. A horizontal
+        row of favicon tiles (MostVisitedTilesAdapter) under a small label.
+    -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/most_visited_card"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/address_bar_margin"
+        android:layout_marginEnd="@dimen/address_bar_margin"
+        android:layout_marginTop="6dp"
+        app:cardBackgroundColor="?attr/colorSurfaceContainerHighest"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="0dp"
+        app:strokeWidth="0dp"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/most_visited_label"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:paddingTop="13dp"
+                android:paddingBottom="2dp"
+                android:text="@string/most_visited"
+                android:textAllCaps="true"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.08" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/most_visited_view"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:clipToPadding="false"
+                android:overScrollMode="never"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
+                android:paddingBottom="8dp" />
+
+        </LinearLayout>
+
+    </com.google.android.material.card.MaterialCardView>
+
+
+    <!--
         Single Material 3 container card holding the suggestion list. It
         wraps its content (the RecyclerView is wrap_content too) so the card
         grows and shrinks with the number of suggestions instead of showing

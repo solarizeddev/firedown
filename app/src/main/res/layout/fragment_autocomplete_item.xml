@@ -1,42 +1,65 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    Typed-suggestion row (history / tab / bookmark / search result). Shares ONE
-    scaffold with the empty-focus most-visited row
-    (fragment_autocomplete_most_visited_item): a 40dp leading icon SLOT at a 14dp
-    inset (favicon centered, no filled badge ring here — the ring is reserved for
-    the most-visited / clipboard surface) + a two-line title/subtext block, at the
-    shared row height. So when the user types or clears, the favicon column, the
-    title column and the row height all stay put — only the content and the
-    trailing type-glyph change. Flat row — the wrapping search_card supplies the
-    rounded surface; ripple via selectableItemBackground.
+    Suggestion row (history / tab / search result). Flat row — the wrapping
+    search_card supplies the single M3 container surface; ripple via
+    selectableItemBackground. The centered 1dp "divider" View is an invisible
+    layout anchor that splits the title (above) from the subtext (below), not
+    a visible separator.
 -->
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/item_search"
     android:layout_width="match_parent"
-    android:layout_height="@dimen/list_autocomplete_row_height"
+    android:layout_height="@dimen/list_autocomplete_middle_height"
     android:background="?attr/selectableItemBackground"
     android:clickable="true"
     android:focusable="true">
 
-    <FrameLayout
-        android:id="@+id/icon_slot"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
+    <View
+        android:id="@+id/divider"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_centerVertical="true" />
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/search_badge"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
         android:layout_alignParentStart="true"
         android:layout_centerVertical="true"
-        android:layout_marginStart="14dp">
+        android:layout_marginStart="12dp"
+        android:background="@drawable/mask_icon_rounded"
+        android:scaleType="fitXY"
+        app:srcCompat="@drawable/ic_duckduckgo_icon" />
 
-        <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/search_badge"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_gravity="center"
-            android:background="@drawable/mask_icon_rounded"
-            android:scaleType="fitXY"
-            app:srcCompat="@drawable/ic_duckduckgo_icon" />
+    <TextView
+        android:id="@+id/text"
+        style="?attr/textAppearanceTitleMedium"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/divider"
+        android:layout_marginStart="12dp"
+        android:layout_marginEnd="12dp"
+        android:layout_toStartOf="@id/button"
+        android:layout_toEndOf="@id/search_badge"
+        android:ellipsize="marquee"
+        android:singleLine="true"
+        android:textSize="14sp" />
 
-    </FrameLayout>
+    <TextView
+        android:id="@+id/subtext"
+        style="?attr/textAppearanceSubtitle1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/divider"
+        android:layout_marginStart="12dp"
+        android:layout_marginEnd="12dp"
+        android:layout_toStartOf="@id/button"
+        android:layout_toEndOf="@id/search_badge"
+        android:ellipsize="marquee"
+        android:singleLine="true"
+        android:textColor="?attr/colorOnSurfaceVariant"
+        android:textSize="12sp" />
 
     <androidx.appcompat.widget.AppCompatImageButton
         android:id="@+id/button"
@@ -47,37 +70,5 @@
         android:background="@null"
         android:padding="12dp"
         android:tint="?attr/colorOnSurfaceVariant" />
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_centerVertical="true"
-        android:layout_marginStart="14dp"
-        android:layout_marginEnd="12dp"
-        android:layout_toStartOf="@id/button"
-        android:layout_toEndOf="@id/icon_slot"
-        android:orientation="vertical">
-
-        <TextView
-            android:id="@+id/text"
-            style="?attr/textAppearanceTitleMedium"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:ellipsize="end"
-            android:singleLine="true"
-            android:textSize="14sp" />
-
-        <TextView
-            android:id="@+id/subtext"
-            style="?attr/textAppearanceSubtitle1"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="1dp"
-            android:ellipsize="end"
-            android:singleLine="true"
-            android:textColor="?attr/colorOnSurfaceVariant"
-            android:textSize="12sp" />
-
-    </LinearLayout>
 
 </RelativeLayout>

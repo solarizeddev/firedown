@@ -4,12 +4,11 @@
     usable text. 16dp corners + colorSurfaceContainerHighest to match the
     suggestion container card directly below it.
 
-    Leading icon sits in a 40dp rounded badge (the same treatment the
-    most-visited rows use, fragment_autocomplete_most_visited_item) so the
-    clipboard chip and the top-sites list share one icon column. The icon
-    (globe for a URL / search for plain text, set in
-    AutoCompleteView.showClipboard) signals the ACTION; the "From clipboard"
-    label + the primary-tinted forward arrow keep the chip recognisable.
+    Leading icon sits in a 40dp rounded badge — the same badge treatment the
+    most-visited strip tiles use (fragment_autocomplete_tile), so the empty-focus
+    surface reads as one family. The icon (globe for a URL / search for plain
+    text, set in AutoCompleteView.showClipboard) signals the ACTION; the "From
+    clipboard" label + the primary-tinted forward arrow keep the chip recognisable.
     Tapping the card acts on the content; the clipboard itself is left intact.
 -->
 <com.google.android.material.card.MaterialCardView
