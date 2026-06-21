@@ -289,10 +289,20 @@ public class GlideHelper {
             return;
         }
 
-        GlideUrl glideUrl = new GlideUrl(icon, new LazyHeaders.Builder()
+        // Fetch the favicon like a browser would: a Referer of the page that
+        // declared it (so a hotlink-gated CDN — e.g. some site favicons — serves
+        // it instead of 403'ing a bare request) and an image Accept. Without these
+        // the standalone Glide fetch can fail and the row falls back to the
+        // generated domain thumbnail.
+        LazyHeaders.Builder headers = new LazyHeaders.Builder()
                 .addHeader(BrowserHeaders.USER_AGENT, BrowserHeaders.getDefaultUserAgentString())
                 .addHeader(BrowserHeaders.ACCEPT_LANGUAGE, "en-US,en;q=0.5")
-                .build());
+                .addHeader(BrowserHeaders.ACCEPT,
+                        "image/avif,image/webp,image/png,image/svg+xml,image/*,*/*;q=0.8");
+        if (!TextUtils.isEmpty(url)) {
+            headers.addHeader(BrowserHeaders.REFERER, url);
+        }
+        GlideUrl glideUrl = new GlideUrl(icon, headers.build());
 
         Glide.with(image).load(glideUrl)
                 .listener(listener)

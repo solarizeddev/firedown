@@ -458,8 +458,19 @@ public class GeckoRuntimeHelper {
                 if (icons == null)
                     return;
 
-                JSONObject largestIcon = null;
-                int maxPixels = -1;
+                // Prefer the STANDARD favicon (rel=icon / shortcut icon) over the
+                // apple-touch-icon. The apple-touch-icon is often a content-hashed
+                // build asset on a hotlink-gated path (e.g. x.com's
+                // responsive-web/client-web/icon-ios.<hash>.png) — it fails to
+                // fetch standalone, so the row falls back to the generated icon —
+                // whereas the standard favicon (abs.twimg.com/favicons/twitter.3.ico)
+                // is the stable, always-hotlinkable one. apple-touch-icon is the
+                // fallback ONLY when there is no standard icon. Within each kind we
+                // still take the largest.
+                JSONObject bestStandard = null;
+                int bestStandardPixels = -1;
+                JSONObject bestApple = null;
+                int bestApplePixels = -1;
 
                 for (int i = 0; i < icons.length(); i++) {
                     JSONObject icon = icons.getJSONObject(i);
@@ -477,21 +488,31 @@ public class GeckoRuntimeHelper {
                                 currentPixels = Integer.parseInt(parts[0]) * Integer.parseInt(parts[1]);
                             }
                         } else {
-                            // If sizes is empty (like your .ico example), assign a base value
+                            // If sizes is empty (like a bare .ico), assign a base value
                             currentPixels = 16 * 16;
                         }
 
-                        // 2. Track the largest
-                        if (currentPixels > maxPixels) {
-                            maxPixels = currentPixels;
-                            largestIcon = icon;
+                        // 2. Track the largest of each kind (standard vs apple-touch)
+                        if (type.contains("apple")) {
+                            if (currentPixels > bestApplePixels) {
+                                bestApplePixels = currentPixels;
+                                bestApple = icon;
+                            }
+                        } else {
+                            if (currentPixels > bestStandardPixels) {
+                                bestStandardPixels = currentPixels;
+                                bestStandard = icon;
+                            }
                         }
                     }
                 }
 
-                if (largestIcon != null) {
-                    String bestHref = largestIcon.getString("href");
-                    setIcon(url, bestHref, maxPixels);
+                JSONObject chosenIcon = bestStandard != null ? bestStandard : bestApple;
+                int chosenPixels = bestStandard != null ? bestStandardPixels : bestApplePixels;
+
+                if (chosenIcon != null) {
+                    String bestHref = chosenIcon.getString("href");
+                    setIcon(url, bestHref, chosenPixels);
                 }
             } catch (JSONException e) {
                 Log.w(TAG, "handleIconsMessage", e);
