@@ -458,76 +458,83 @@ public class GeckoRuntimeHelper {
                 if (icons == null)
                     return;
 
-                // Prefer the STANDARD favicon (rel=icon / shortcut icon) over the
-                // apple-touch-icon. The apple-touch-icon is often a content-hashed
-                // build asset on a hotlink-gated path (e.g. x.com's
-                // responsive-web/client-web/icon-ios.<hash>.png) — it fails to
-                // fetch standalone, so the row falls back to the generated icon —
-                // whereas the standard favicon (abs.twimg.com/favicons/twitter.3.ico)
-                // is the stable, always-hotlinkable one. apple-touch-icon is the
-                // fallback ONLY when there is no standard icon. Within each kind we
-                // still take the largest.
-                JSONObject bestStandard = null;
-                int bestStandardPixels = -1;
-                JSONObject bestApple = null;
-                int bestApplePixels = -1;
-
+                // Pick the single best declared icon by a sortable score
+                // (iconScore): a STANDARD favicon (rel=icon / shortcut icon)
+                // always outranks an apple-touch-icon, and within a tier the
+                // larger pixel area wins. Non-icon entries (og:image /
+                // twitter:image — share banners, not favicons) score
+                // Long.MIN_VALUE and are never selected.
+                JSONObject bestIcon = null;
+                long bestScore = Long.MIN_VALUE;
                 for (int i = 0; i < icons.length(); i++) {
                     JSONObject icon = icons.getJSONObject(i);
-                    String type = icon.optString("type", "");
-
-                    // 1. Check if type contains "icon"
-                    if (type.contains("icon")) {
-                        JSONArray sizes = icon.getJSONArray("sizes");
-                        int currentPixels = 0;
-
-                        if (sizes.length() > 0) {
-                            // Parse "96x96" -> 96 * 96
-                            String[] parts = sizes.getString(0).split("x");
-                            if (parts.length == 2) {
-                                currentPixels = Integer.parseInt(parts[0]) * Integer.parseInt(parts[1]);
-                            }
-                        } else {
-                            // If sizes is empty (like a bare .ico), assign a base value
-                            currentPixels = 16 * 16;
-                        }
-
-                        // 2. Track the largest of each kind (standard vs apple-touch)
-                        if (type.contains("apple")) {
-                            if (currentPixels > bestApplePixels) {
-                                bestApplePixels = currentPixels;
-                                bestApple = icon;
-                            }
-                        } else {
-                            if (currentPixels > bestStandardPixels) {
-                                bestStandardPixels = currentPixels;
-                                bestStandard = icon;
-                            }
-                        }
+                    long score = iconScore(icon);
+                    if (score > bestScore) {
+                        bestScore = score;
+                        bestIcon = icon;
                     }
                 }
 
-                JSONObject chosenIcon = bestStandard != null ? bestStandard : bestApple;
-                int chosenPixels = bestStandard != null ? bestStandardPixels : bestApplePixels;
+                if (bestIcon != null) {
+                    setIcon(url, bestIcon.getString("href"), iconPixels(bestIcon));
+                    return;
+                }
 
-                if (chosenIcon != null) {
-                    String bestHref = chosenIcon.getString("href");
-                    setIcon(url, bestHref, chosenPixels);
-                } else {
-                    // No declared <link rel=icon>/apple-touch-icon at all (a Next.js
-                    // SPA like redbull.tv ships none — only og:image/twitter:image,
-                    // which are share banners, not favicons). Fall back to the
-                    // browser convention: <origin>/favicon.ico. Pass resolution 0 so
-                    // IconsRepository HEAD-probes and estimates the real size.
-                    String fallback = defaultFaviconFor(url);
-                    if (fallback != null) {
-                        setIcon(url, fallback, 0);
-                    }
+                // No <link> icon declared at all (a Next.js SPA like redbull.tv
+                // ships none). Fall back to the browser convention:
+                // <origin>/favicon.ico, resolution 0 so IconsRepository
+                // HEAD-probes and estimates the real size.
+                String fallback = defaultFaviconFor(url);
+                if (fallback != null) {
+                    setIcon(url, fallback, 0);
                 }
             } catch (JSONException e) {
                 Log.w(TAG, "handleIconsMessage", e);
             }
 
+        }
+
+        /**
+         * A sortable rank for a declared icon, tier-major then size: a STANDARD
+         * favicon (rel=icon / shortcut icon) always outranks an apple-touch-icon,
+         * and within a tier the larger pixel area wins. Standard is preferred
+         * because the apple-touch-icon is often a content-hashed, hotlink-gated
+         * build asset (e.g. x.com's icon-ios.<hash>.png) that 403s a standalone
+         * fetch, whereas the standard favicon (e.g. twitter.3.ico) is the stable,
+         * always-hotlinkable one. A non-icon entry (og:image / twitter:image)
+         * returns Long.MIN_VALUE so it is never selected.
+         */
+        private long iconScore(JSONObject icon) {
+            String type = icon.optString("type", "");
+            if (!type.contains("icon")) {
+                return Long.MIN_VALUE;
+            }
+            long tier = type.contains("apple") ? 0L : 1L;
+            // Tier weight exceeds any plausible pixel area, so tier dominates.
+            return tier * (1L << 32) + iconPixels(icon);
+        }
+
+        /**
+         * Pixel area from an icon's first declared size ("96x96" -> 9216), or a
+         * base 16x16 when no usable size is present (a bare .ico, sizes="any",
+         * or a malformed value). Hardened so a non-numeric size can't throw.
+         */
+        private int iconPixels(JSONObject icon) {
+            JSONArray sizes = icon.optJSONArray("sizes");
+            if (sizes == null || sizes.length() == 0) {
+                return 16 * 16;
+            }
+            String[] parts = sizes.optString(0, "").split("x");
+            if (parts.length != 2) {
+                return 16 * 16;
+            }
+            try {
+                int w = Integer.parseInt(parts[0].trim());
+                int h = Integer.parseInt(parts[1].trim());
+                return w * h;
+            } catch (NumberFormatException e) {
+                return 16 * 16;
+            }
         }
 
         /**
