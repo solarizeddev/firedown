@@ -513,11 +513,46 @@ public class GeckoRuntimeHelper {
                 if (chosenIcon != null) {
                     String bestHref = chosenIcon.getString("href");
                     setIcon(url, bestHref, chosenPixels);
+                } else {
+                    // No declared <link rel=icon>/apple-touch-icon at all (a Next.js
+                    // SPA like redbull.tv ships none — only og:image/twitter:image,
+                    // which are share banners, not favicons). Fall back to the
+                    // browser convention: <origin>/favicon.ico. Pass resolution 0 so
+                    // IconsRepository HEAD-probes and estimates the real size.
+                    String fallback = defaultFaviconFor(url);
+                    if (fallback != null) {
+                        setIcon(url, fallback, 0);
+                    }
                 }
             } catch (JSONException e) {
                 Log.w(TAG, "handleIconsMessage", e);
             }
 
+        }
+
+        /**
+         * The conventional <origin>/favicon.ico for a page URL, or null when the
+         * URL has no http(s) origin (about:, data:, …). Browsers probe this path
+         * whenever a page declares no icon link; we mirror that so SPAs that ship
+         * no <link rel=icon> still get a favicon.
+         */
+        private String defaultFaviconFor(String pageUrl) {
+            if (TextUtils.isEmpty(pageUrl)) {
+                return null;
+            }
+            Uri uri = Uri.parse(pageUrl);
+            String scheme = uri.getScheme();
+            if (scheme == null) {
+                return null;
+            }
+            if (!scheme.equals("http") && !scheme.equals("https")) {
+                return null;
+            }
+            String authority = uri.getAuthority();
+            if (TextUtils.isEmpty(authority)) {
+                return null;
+            }
+            return scheme + "://" + authority + "/favicon.ico";
         }
 
         private void setIcon(String originUrl, String icon, int resolution) {
