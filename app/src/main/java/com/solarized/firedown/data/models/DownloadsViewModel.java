@@ -29,6 +29,7 @@ import com.solarized.firedown.utils.DownloadAggregator;
 import com.solarized.firedown.utils.DownloadSortOrganizer;
 import com.solarized.firedown.utils.GroupAggregate;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -169,13 +170,13 @@ public class DownloadsViewModel extends ViewModel {
         // serialises all heavy paging-side work onto one background
         // thread instead of fragmenting it across the main looper.
         mDownloadAggregates = Transformations.switchMap(mStateTrigger, state ->
-                aggregatesOffMain(mRepository.getAllRegularLive(), state.sortType));
+                aggregatesOffMain(mRepository.getAllRegularLive(), state.sortType, state.chipId));
         mSafeAggregates = Transformations.switchMap(mStateTrigger, state ->
-                aggregatesOffMain(mRepository.getAllSafeLive(), state.sortType));
+                aggregatesOffMain(mRepository.getAllSafeLive(), state.sortType, R.id.chip_all));
     }
 
     private LiveData<Map<Integer, GroupAggregate>> aggregatesOffMain(
-            LiveData<List<DownloadEntity>> source, int sortType) {
+            LiveData<List<DownloadEntity>> source, int sortType, int chipId) {
         MediatorLiveData<Map<Integer, GroupAggregate>> mediator = new MediatorLiveData<>();
         mediator.addSource(source, list -> {
             if (list == null) {
@@ -185,10 +186,36 @@ public class DownloadsViewModel extends ViewModel {
             // Dispatch off the main looper; postValue routes the result
             // back to observers on the main thread, which is what
             // Transformations.map would normally provide.
+            //
+            // Filter by the active chip FIRST, using the SAME predicate the
+            // paging list filters with (Sorting.getPredicateDownloads) — the
+            // section headers ("Today · N files · X MB") sum getFileSize over
+            // these aggregates, so without the chip filter they'd report the
+            // unfiltered totals even while the list below shows only the
+            // filtered subset (e.g. filtering to Images still showed all 3
+            // files / 1.3 GB). chip_all short-circuits to no filtering (the
+            // vault has no chip rail, so it always passes chip_all).
             mExecutor.execute(() ->
-                    mediator.postValue(DownloadAggregator.aggregate(list, sortType)));
+                    mediator.postValue(DownloadAggregator.aggregate(
+                            filterByChip(list, chipId), sortType)));
         });
         return mediator;
+    }
+
+    /** Applies the active downloads chip predicate to the full list before
+     *  aggregation. Returns the list unchanged for the no-filter sentinel
+     *  (chip_all) so the common unfiltered case allocates nothing. */
+    private List<DownloadEntity> filterByChip(List<DownloadEntity> list, int chipId) {
+        if (chipId == R.id.chip_all) {
+            return list;
+        }
+        List<DownloadEntity> filtered = new ArrayList<>(list.size());
+        for (DownloadEntity entity : list) {
+            if (mSorting.getPredicateDownloads(entity, chipId)) {
+                filtered.add(entity);
+            }
+        }
+        return filtered;
     }
 
     @Override
