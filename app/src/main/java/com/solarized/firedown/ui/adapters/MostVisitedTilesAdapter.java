@@ -16,6 +16,7 @@ import com.bumptech.glide.request.RequestOptions;
 import com.solarized.firedown.GlideHelper;
 import com.solarized.firedown.R;
 import com.solarized.firedown.data.entity.AutoCompleteEntity;
+import com.solarized.firedown.utils.UrlStringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +27,8 @@ import java.util.function.Consumer;
  * Horizontal "top sites" strip for the empty-focus state — its OWN RecyclerView,
  * deliberately separate from the suggestion list so switching empty&harr;typed is a
  * pure visibility flip (no shared {@code ListAdapter} diff, no blink). Each tile
- * is a favicon-in-a-badge + the short site label; a tap opens the entity's URL.
+ * is a favicon-in-a-badge + the page title (falling back to the short site
+ * label when untitled); a tap opens the entity's URL.
  *
  * <p>The set is small and bounded (capped in {@code AutoCompleteSearch}) and is
  * populated while the strip can be hidden, so a plain {@code notifyDataSetChanged}
@@ -73,7 +75,14 @@ public class MostVisitedTilesAdapter extends RecyclerView.Adapter<MostVisitedTil
     public void onBindViewHolder(@NonNull TileViewHolder holder, int position) {
         AutoCompleteEntity item = mItems.get(position);
         holder.url = item.getSubText();
-        holder.label.setText(siteLabel(item.getSubText()));
+        // Prefer the page title (like Chrome/Brave top-sites tiles), fall back to
+        // the short site label when the row has no usable title. mostVisited()
+        // already skips blank-title rows, so the title is normally present; the
+        // fallback just covers any caller that supplies an untitled entity.
+        String title = item.getTitle();
+        holder.label.setText(UrlStringUtils.isBlankTitle(title)
+                ? siteLabel(item.getSubText())
+                : title);
         GlideHelper.load(item.getIcon(), item.getSubText(), holder.favicon, mRequestOptions);
     }
 

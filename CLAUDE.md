@@ -1175,11 +1175,14 @@ product choice; this lives only in the focused panel.
   debounce trick fully closed. The fix was architectural: split it into a second
   view. **Do not** re-merge most-visited into the suggestion adapter.
 - **Tile:** favicon in a 52dp rounded badge (the same `bg_incognito_chip` /
-  surfaceContainerHigh treatment as the clipboard icon) + a short site label
+  surfaceContainerHigh treatment as the clipboard icon) + the **page title**
+  (like Chrome/Brave top-sites tiles), falling back to the short site label
   (`siteLabel` = the registrable domain's main label, e.g. `m.youtube.com` →
-  "youtube"). Tap → `OnMostVisitedClickListener` → the host opens the entity's
-  subtext URL (same as a history-suggestion tap). The strip has a small "MOST
-  VISITED" label above it.
+  "youtube") only when the row has no usable title. `mostVisited()` already skips
+  blank-title rows, so the title is normally present; the fallback just covers an
+  untitled entity. The label is single-line + ellipsized. Tap →
+  `OnMostVisitedClickListener` → the host opens the entity's subtext URL (same as
+  a history-suggestion tap). The strip has a small "MOST VISITED" label above it.
 - **Removal = HIDE via a blocklist, NOT a history delete (Chromium/Brave "Top
   Sites" model).** Long-press a tile → confirm dialog (owned by `AutoCompleteView`,
   it has the context) → the site's **host** is added to a standalone
