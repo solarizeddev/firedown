@@ -452,6 +452,8 @@ public class SettingsFragment extends BasePreferenceFragment
 
         switch (key) {
             case Preferences.SETTINGS_RESTORE_DOWNLOADS -> showRestoreDownloadsDialog();
+            case Preferences.SETTINGS_SYNC ->
+                    NavigationUtils.navigateSafe(mNavController, R.id.action_settings_to_sync);
             case Preferences.SETTINGS_CLEAR_DATA ->
                     NavigationUtils.navigateSafe(mNavController, R.id.dialog_delete_browsing);
             case Preferences.SETTINGS_ABOUT ->

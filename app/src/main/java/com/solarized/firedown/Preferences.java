@@ -68,6 +68,13 @@ public class Preferences {
     public static final String SYNC_LAST_SYNCED_AT = "com.solarized.firedown.preferences.sync.last.synced.at";
     /** Last server document version observed (status display). */
     public static final String SYNC_LAST_VERSION = "com.solarized.firedown.preferences.sync.last.version";
+    /** Settings entry that opens the bookmarks-sync screen. */
+    public static final String SETTINGS_SYNC = "com.solarized.firedown.preferences.settings.sync";
+    /** Sync screen actions (clickable preferences). */
+    public static final String SETTINGS_SYNC_SHOW_CODE = "com.solarized.firedown.preferences.sync.show.code";
+    public static final String SETTINGS_SYNC_RESTORE = "com.solarized.firedown.preferences.sync.restore";
+    public static final String SETTINGS_SYNC_NOW = "com.solarized.firedown.preferences.sync.now";
+    public static final String SETTINGS_SYNC_SIGN_OUT = "com.solarized.firedown.preferences.sync.sign.out";
 
     /**
      * Bookmarks-list sort order toggle: false (default) = recency

@@ -83,6 +83,13 @@
             app:exitAnim="@anim/slide_out_left"
             app:popEnterAnim="@anim/slide_in_left"
             app:popExitAnim="@anim/slide_out_right" />
+        <action
+            android:id="@+id/action_settings_to_sync"
+            app:destination="@id/settings_sync"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
     </fragment>
     <fragment
         android:id="@+id/settings_wasm"
@@ -140,4 +147,7 @@
     <fragment
         android:id="@+id/settings_quit"
         android:name="com.solarized.firedown.settings.QuitFragment" />
+    <fragment
+        android:id="@+id/settings_sync"
+        android:name="com.solarized.firedown.settings.SyncSettingsFragment" />
 </navigation>

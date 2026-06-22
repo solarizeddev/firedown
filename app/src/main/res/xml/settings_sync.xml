@@ -1,0 +1,40 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <SwitchPreferenceCompat
+        android:key="com.solarized.firedown.preferences.sync.enabled"
+        android:title="@string/settings_sync_title"
+        android:summary="@string/settings_sync_switch_summary"
+        app:singleLineTitle="false"
+        app:icon="@drawable/ic_bookmarks_24" />
+
+    <Preference
+        android:key="com.solarized.firedown.preferences.sync.show.code"
+        android:title="@string/settings_sync_show_code_title"
+        android:summary="@string/settings_sync_show_code_summary"
+        app:singleLineTitle="false"
+        app:icon="@drawable/ic_key_24" />
+
+    <Preference
+        android:key="com.solarized.firedown.preferences.sync.now"
+        android:title="@string/settings_sync_now_title"
+        app:singleLineTitle="false"
+        app:icon="@drawable/settings_backup_restore_24" />
+
+    <EditTextPreference
+        android:key="com.solarized.firedown.preferences.sync.backend.url"
+        android:title="@string/settings_sync_backend_title"
+        android:summary="@string/settings_sync_backend_summary"
+        android:dialogTitle="@string/settings_sync_backend_title"
+        app:singleLineTitle="false"
+        app:useSimpleSummaryProvider="true"
+        app:icon="@drawable/dns_24" />
+
+    <Preference
+        android:key="com.solarized.firedown.preferences.sync.sign.out"
+        android:title="@string/settings_sync_sign_out_title"
+        android:summary="@string/settings_sync_sign_out_summary"
+        app:singleLineTitle="false"
+        app:icon="@drawable/ic_logout_24" />
+
+</PreferenceScreen>

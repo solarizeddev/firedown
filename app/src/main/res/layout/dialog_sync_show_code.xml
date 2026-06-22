@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Recovery-code display for bookmark sync (SyncSettingsFragment, both the
+    just-generated and the show-again paths). The grouped code is shown big
+    and selectable in a tonal card; there is NO server-side recovery, so the
+    warning copy is the point. Copy-to-clipboard is the dialog's action.
+-->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingHorizontal="24dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:text="@string/settings_sync_code_warning"
+            android:textAppearance="?attr/textAppearanceBodyMedium" />
+
+        <TextView
+            android:id="@+id/sync_code_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_incognito_chip"
+            android:fontFamily="monospace"
+            android:padding="16dp"
+            android:textIsSelectable="true"
+            android:textAppearance="?attr/textAppearanceTitleMedium"
+            tools:text="ABCD-EFGH-JKMN-PQRS-TVWX-YZ23" />
+
+    </LinearLayout>
+
+</ScrollView>
