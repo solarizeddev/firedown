@@ -15,16 +15,22 @@ import java.util.List;
 @Dao
 public interface WebBookmarkDao {
 
-    @Query("SELECT * FROM webbookmark")
+    // All read/list/count queries filter `deleted = 0` so tombstones (sync
+    // deletions pending propagation, webbookmark v3) never surface in the UI,
+    // export, autocomplete, or the present-set. The sync engine gets its own
+    // deleted-inclusive queries when it lands; the hard-delete mutators below
+    // stay for the repository re-key path and the tombstone GC.
+
+    @Query("SELECT * FROM webbookmark WHERE deleted = 0")
     List<WebBookmarkEntity> getAllRaw();
 
-    @Query("SELECT uid FROM webbookmark")
+    @Query("SELECT uid FROM webbookmark WHERE deleted = 0")
     List<Integer> getAllIds();
 
-    @Query("SELECT * FROM webbookmark WHERE uid LIKE :id")
+    @Query("SELECT * FROM webbookmark WHERE uid LIKE :id AND deleted = 0")
     WebBookmarkEntity getId(int id);
 
-    @Query("SELECT * FROM webbookmark ORDER BY file_date DESC")
+    @Query("SELECT * FROM webbookmark WHERE deleted = 0 ORDER BY file_date DESC")
     PagingSource<Integer, WebBookmarkEntity> getBookmarks();
 
     /**
@@ -34,16 +40,16 @@ public interface WebBookmarkDao {
      * default; {@link #search(String)} deliberately stays
      * recency-ordered — the toggle governs only the unfiltered list.
      */
-    @Query("SELECT * FROM webbookmark ORDER BY file_title COLLATE NOCASE ASC")
+    @Query("SELECT * FROM webbookmark WHERE deleted = 0 ORDER BY file_title COLLATE NOCASE ASC")
     PagingSource<Integer, WebBookmarkEntity> getBookmarksAlphabetical();
 
-    @Query("SELECT * FROM webbookmark ORDER BY file_date DESC LIMIT :limit")
+    @Query("SELECT * FROM webbookmark WHERE deleted = 0 ORDER BY file_date DESC LIMIT :limit")
     LiveData<List<WebBookmarkEntity>> getBookmark(int limit);
 
-    @Query("SELECT * FROM webbookmark WHERE file_url LIKE :search or file_title LIKE :search ORDER BY file_date DESC")
+    @Query("SELECT * FROM webbookmark WHERE deleted = 0 AND (file_url LIKE :search or file_title LIKE :search) ORDER BY file_date DESC")
     PagingSource<Integer, WebBookmarkEntity> search(String search);
 
-    @Query("SELECT * FROM webbookmark WHERE file_url LIKE :search OR file_title LIKE :search ORDER BY file_date DESC LIMIT 3")
+    @Query("SELECT * FROM webbookmark WHERE deleted = 0 AND (file_url LIKE :search OR file_title LIKE :search) ORDER BY file_date DESC LIMIT 3")
     List<WebBookmarkEntity> getAutoCompleteSearch(String search);
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -90,7 +96,7 @@ public interface WebBookmarkDao {
     @Query("DELETE FROM webbookmark")
     Integer deleteAll();
 
-    @Query("SELECT COUNT(file_url) FROM webbookmark")
+    @Query("SELECT COUNT(file_url) FROM webbookmark WHERE deleted = 0")
     Integer getRowCount();
 
 }

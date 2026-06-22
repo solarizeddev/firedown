@@ -89,13 +89,15 @@ public class DatabaseModule {
     @OptIn(markerClass = ExperimentalRoomApi.class)
     public WebBookmarkDatabase provideWebBookmarkDatabase(@ApplicationContext Context context) {
         return Room.databaseBuilder(context, WebBookmarkDatabase.class, WebBookmarkDatabase.DATABASE_NAME)
-                .addMigrations(WebBookmarkDatabase.MIGRATION_1_2)
-                // The shortcuts feature briefly bumped this DB to v3 (pinned /
-                // pin_order) on a dev branch; the feature + its migration were
-                // reverted, so the schema is back at v2. A dev device that ran the
-                // v3 build has a higher on-disk version than the code now requests
-                // — allow that downgrade to rebuild the bookmark table rather than
-                // crash (dev-only; main never saw v3). Normal upgrades unaffected.
+                .addMigrations(WebBookmarkDatabase.MIGRATION_1_2, WebBookmarkDatabase.MIGRATION_2_3)
+                // MIGRATION_2_3 adds the bookmarks-sync columns (additive). The
+                // earlier reverted shortcuts feature briefly used a DIFFERENT v3
+                // (pinned / pin_order) on a dev branch; main never saw it, so main
+                // users migrate v2→v3 cleanly. A maintainer dev device that ran
+                // that orphaned v3 carries a different v3 schema at the SAME version
+                // — equal-version drift isn't auto-healed, so it must clear app data
+                // once (see WebBookmarkDatabase.MIGRATION_2_3). The downgrade
+                // fallback below still covers a dev device on an even higher version.
                 .fallbackToDestructiveMigrationOnDowngrade(true)
                 .setJournalMode(RoomDatabase.JournalMode.AUTOMATIC)
                 .fallbackToDestructiveMigration(false)

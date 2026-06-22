@@ -169,6 +169,14 @@ public class WebBookmarkDataRepository {
 
     public void add(WebBookmarkEntity web) {
         if (web != null) {
+            // Stamp the sync last-modified (webbookmark v3) and clear any
+            // tombstone — re-adding a previously-deleted URL revives it, since the
+            // REPLACE insert overwrites the tombstone row by uid.
+            if (web.getUpdatedAt() == 0) {
+                web.setUpdatedAt(System.currentTimeMillis());
+            }
+            web.setDeleted(false);
+            web.setDeletedAt(0);
             mSyncEntities.add(web.getId());
             mDiskExecutor.execute(() -> mWebBookmarkDao.insert(web));
 
@@ -296,6 +304,11 @@ public class WebBookmarkDataRepository {
                     int id = bookmarkIdFor(entity.getUrl());
                     if (id == 0) continue; // empty/garbage URL
                     entity.setId(id);
+                    // Sync last-modified (webbookmark v3): prefer the imported
+                    // ADD_DATE, else now; imported rows are live, never tombstones.
+                    entity.setUpdatedAt(entity.getDate() > 0 ? entity.getDate() : System.currentTimeMillis());
+                    entity.setDeleted(false);
+                    entity.setDeletedAt(0);
                     mSyncEntities.add(id);
                     toInsert.add(entity);
                 }

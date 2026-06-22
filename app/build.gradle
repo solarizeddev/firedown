@@ -46,7 +46,7 @@ android {
         // minSdk stays 26 (same device support). Needs the android-37 platform
         // installed (sdkmanager "platforms;android-37"); current AGP/Gradle support it.
         compileSdk = 37
-        versionCode 1179
+        versionCode 1180
         versionName "1.1.79"
 
         ndk {

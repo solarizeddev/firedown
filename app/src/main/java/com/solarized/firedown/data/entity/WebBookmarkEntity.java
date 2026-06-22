@@ -27,6 +27,28 @@ public class WebBookmarkEntity implements WebBookmark {
     @ColumnInfo(name = "file_preview")
     public String filePreview;
 
+    // ---- bookmarks sync (webbookmark v3) ----
+    // Identity for sync is the URL-hash uid (= bookmarkIdFor(url)), which is
+    // deterministic and cross-device-stable, so there is NO separate sync_id.
+    // These three carry the per-URL last-writer-wins + tombstone state the merge
+    // engine needs (docs/BOOKMARKS_SYNC.md). All default 0 (the annotation
+    // defaultValue must match MIGRATION_2_3's column DEFAULT or Room's schema
+    // validation fails).
+
+    /** Last-modified epoch millis; bumped on create/edit/delete. */
+    @ColumnInfo(name = "updated_at", defaultValue = "0")
+    public long updatedAt;
+
+    /** Tombstone flag (0 = live, 1 = deleted). Every list/read query filters
+     *  {@code deleted = 0}; a user delete sets this instead of removing the row
+     *  so the deletion can propagate, then a GC pass hard-deletes old tombstones. */
+    @ColumnInfo(name = "deleted", defaultValue = "0")
+    public int deleted;
+
+    /** Epoch millis the tombstone was created (0 when live). */
+    @ColumnInfo(name = "deleted_at", defaultValue = "0")
+    public long deletedAt;
+
     @Override
     public int getId() {
         return uid;
@@ -79,6 +101,30 @@ public class WebBookmarkEntity implements WebBookmark {
 
     public void setId(int id){
         uid = id;
+    }
+
+    public long getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(long updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    public boolean isDeleted() {
+        return deleted != 0;
+    }
+
+    public void setDeleted(boolean deleted) {
+        this.deleted = deleted ? 1 : 0;
+    }
+
+    public long getDeletedAt() {
+        return deletedAt;
+    }
+
+    public void setDeletedAt(long deletedAt) {
+        this.deletedAt = deletedAt;
     }
 
     public WebBookmarkEntity(WebBookmark webBookmark){
