@@ -120,13 +120,37 @@ public class DownloadDataRepository {
     }
 
 
+    /**
+     * Persist a download row. The write is deferred onto the serial
+     * {@code @DiskIO} lane, so it must capture a SNAPSHOT of the entity's
+     * fields NOW — not a live reference whose fields are read whenever the
+     * lambda eventually drains.
+     *
+     * <p><b>Why this matters:</b> {@link com.solarized.firedown.manager.DownloadTask}
+     * instances are pooled ({@code mDownloadTaskWorkQueue}) and each holds a
+     * single, reused {@link DownloadEntity}. The terminal write in
+     * {@code onRunComplete} (with the re-probed file duration from
+     * {@code refreshMetadataFromFile}) is enqueued here, then the task is
+     * recycled and a subsequent download mutates that SAME entity via
+     * {@code initialize()}/{@code resume()}. If the recycle wins the race
+     * against this still-pending insert, the lambda would read the new
+     * download's fields — writing the wrong row and leaving the finished item
+     * with its pre-refresh (capture-time / parser) duration. Snapshotting at
+     * call time makes every write reflect the state as of the call, which is
+     * the only correct contract for a fire-and-forget write of a reused
+     * object. (Same precedent as {@link #updateDownloadThumb}, which already
+     * copies before its deferred write.) The extra allocation per call —
+     * including the ~1.5s progress cadence — is negligible.
+     */
     public void add(DownloadEntity download) {
-        mDiskExecutor.execute(() -> mDatabase.downloadDao().insert(download));
+        DownloadEntity snapshot = new DownloadEntity(download);
+        mDiskExecutor.execute(() -> mDatabase.downloadDao().insert(snapshot));
 
     }
 
     public void addSync(DownloadEntity download) {
-        mDiskExecutor.execute(() -> mDatabase.downloadDao().insertSync(download));
+        DownloadEntity snapshot = new DownloadEntity(download);
+        mDiskExecutor.execute(() -> mDatabase.downloadDao().insertSync(snapshot));
 
     }
 
