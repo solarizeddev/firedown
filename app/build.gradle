@@ -214,6 +214,13 @@ dependencies {
 
     implementation 'com.caverock:androidsvg-aar:1.4'
 
+    // Pure-Java Ed25519 (RFC 8032) for bookmarks sync request signing. The JDK
+    // EdEC APIs need API 33 but minSdk is 26, and the signing key is derived from
+    // the recovery code (not an AndroidKeyStore key), so a software impl that
+    // accepts a raw 32-byte seed is required. eddsa is small, widely used, and
+    // RFC-8032-compliant (matches the server's ed25519 interop vectors).
+    implementation 'net.i2p.crypto:eddsa:0.3.0'
+
     implementation 'androidx.core:core-splashscreen:1.2.0'
 
     // androidx.core is no longer pinned here — the geckoview-default POM now declares
@@ -237,6 +244,9 @@ dependencies {
     implementation 'com.google.android.material:material:1.14.0'
 
     testImplementation 'junit:junit:4.13.2'
+    // Real org.json for JVM unit tests (Android's bundled org.json is a stub
+    // that throws in plain unit tests); runtime still uses the platform one.
+    testImplementation 'org.json:json:20240303'
     androidTestImplementation 'androidx.test.ext:junit:1.3.0'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.7.0'
 
