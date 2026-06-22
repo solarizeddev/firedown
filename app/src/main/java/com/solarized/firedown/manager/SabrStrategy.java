@@ -182,7 +182,14 @@ public class SabrStrategy implements DownloadStrategy {
             int dlPct = totalMs > 0
                     ? Math.min((int)(downloadedMs * DOWNLOAD_WEIGHT / totalMs), DOWNLOAD_WEIGHT)
                     : 0;
-            reportProgress(dlPct, downloadedMs, totalMs);
+            // SABR writes segments to a temp dir and only muxes to the output
+            // file at the end, so the generic onProgress size probe
+            // (new File(outputPath).length()) reads 0 for the whole download —
+            // the "Downloading · N files · X MB" header would sit frozen on the
+            // capture-time estimate. Feed the live accumulated temp bytes
+            // (video + audio) so the header reflects real progress, the same
+            // downloaded-so-far figure a direct-to-file download reports.
+            reportProgress(dlPct, downloadedMs, totalMs, sabrDownloadedBytes(tempDir));
         });
 
         Log.d(TAG, "Starting SABR download: video=" + request.getSabrVideoItag()
@@ -384,12 +391,36 @@ public class SabrStrategy implements DownloadStrategy {
     }
 
     private void reportProgress(int percent, long downloaded, long total) {
+        reportProgress(percent, downloaded, total, -1);
+    }
+
+    /**
+     * As {@link #reportProgress(int, long, long)}, but also publishes the
+     * current downloaded byte count ({@code bytes <= 0} = unknown, skipped).
+     * Throttled together with the progress tick so the size update rides the
+     * same ~1.5s cadence rather than firing a DB write per segment callback.
+     */
+    private void reportProgress(int percent, long downloaded, long total, long bytes) {
         if (callback == null) return;
         long now = System.currentTimeMillis();
         if (now - lastUpdated > UPDATE_RATE || percent >= 100 || percent == 0) {
             lastUpdated = now;
+            if (bytes > 0) callback.onFileSizeKnown(bytes);
             callback.onProgress(Math.min(percent, 100), downloaded, total);
         }
+    }
+
+    /** Sum of the SABR temp segment files currently on disk (video + audio) —
+     *  the downloaded-so-far byte count while the output file doesn't yet
+     *  exist. File names mirror {@code SabrDownloader.download}. */
+    private static long sabrDownloadedBytes(File tempDir) {
+        if (tempDir == null) return 0;
+        long bytes = 0;
+        File video = new File(tempDir, "video_sabr.mp4");
+        if (video.exists()) bytes += video.length();
+        File audio = new File(tempDir, "audio_sabr.m4a");
+        if (audio.exists()) bytes += audio.length();
+        return bytes;
     }
 
     private static long parseLongSafe(String value) {
