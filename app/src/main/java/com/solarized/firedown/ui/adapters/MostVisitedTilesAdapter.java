@@ -80,9 +80,13 @@ public class MostVisitedTilesAdapter extends RecyclerView.Adapter<MostVisitedTil
         // already skips blank-title rows, so the title is normally present; the
         // fallback just covers any caller that supplies an untitled entity.
         String title = item.getTitle();
-        holder.label.setText(UrlStringUtils.isBlankTitle(title)
+        String shown = UrlStringUtils.isBlankTitle(title)
                 ? siteLabel(item.getSubText())
-                : title);
+                : title;
+        holder.label.setText(shown);
+        // The tile is a link; announce it as one so TalkBack reads "<site>, link"
+        // rather than just the bare label text.
+        holder.itemView.setContentDescription(shown);
         GlideHelper.load(item.getIcon(), item.getSubText(), holder.favicon, mRequestOptions);
     }
 

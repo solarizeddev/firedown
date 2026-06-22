@@ -1180,9 +1180,16 @@ product choice; this lives only in the focused panel.
   (`siteLabel` = the registrable domain's main label, e.g. `m.youtube.com` →
   "youtube") only when the row has no usable title. `mostVisited()` already skips
   blank-title rows, so the title is normally present; the fallback just covers an
-  untitled entity. The label is single-line + ellipsized. Tap →
-  `OnMostVisitedClickListener` → the host opens the entity's subtext URL (same as
-  a history-suggestion tap). The strip has a small "MOST VISITED" label above it.
+  untitled entity. The label is single-line + ellipsized. The favicon is 34dp in
+  the 52dp badge. Tap → `OnMostVisitedClickListener` → the host opens the entity's
+  subtext URL (same as a history-suggestion tap). The strip has a small "MOST
+  VISITED" label above it. **Strip layout cues:** the `most_visited_view`
+  RecyclerView is `wrap_content` width + `center_horizontal` so a few tiles centre
+  (no left-hugging dead space on a fresh profile) while an overflowing set caps at
+  the parent width and scrolls; `requiresFadingEdge="horizontal"` draws a
+  self-hiding right-edge fade as the "more →" scroll cue (native, no overlay view
+  or scroll listener). The tile root carries a `contentDescription` (the shown
+  label) so TalkBack announces it as a link.
 - **Removal = HIDE via a blocklist, NOT a history delete (Chromium/Brave "Top
   Sites" model).** Long-press a tile → confirm dialog (owned by `AutoCompleteView`,
   it has the context) → the site's **host** is added to a standalone

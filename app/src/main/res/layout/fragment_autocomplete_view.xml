@@ -57,12 +57,24 @@
                 android:textStyle="bold"
                 android:letterSpacing="0.08" />
 
+            <!--
+                width=wrap_content + center_horizontal: when there are few tiles
+                the strip shrinks to its content and centres (no left-hugging dead
+                space on a fresh profile); when the tiles overflow, RecyclerView
+                caps at the parent width (AT_MOST) and scrolls. requiresFadingEdge
+                draws a right-edge fade ONLY while there is more to scroll to — the
+                "more →" cue, native and self-hiding (no overlay view / scroll
+                listener). clipToPadding=false keeps the fade over the padded edge.
+            -->
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/most_visited_view"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
                 android:clipToPadding="false"
                 android:overScrollMode="never"
+                android:requiresFadingEdge="horizontal"
+                android:fadingEdgeLength="28dp"
                 android:paddingStart="12dp"
                 android:paddingEnd="12dp"
                 android:paddingTop="2dp"
