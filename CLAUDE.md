@@ -1030,6 +1030,53 @@ restore-aware — keep these three properties if you touch it:**
   irreversible action, and the record of what was downloaded is user data;
   removal is the user's call on the visible error entry.
 
+**Deleting a RESTORED (foreign-owned) file — SAF, with a write-grant
+re-prompt.** A restored entry's public file is foreign-owned on Android 11+, so
+`File.delete()` can't remove it. `RestoredFileAccess` deletes via the persisted
+SAF tree grant; if that grant is READ-only (an older restore took READ only),
+the delete surfaces a **"Grant access"** snackbar → folder picker re-takes the
+tree READ+**WRITE** → retries. The current restore flow takes READ+WRITE
+up-front, so the delete is silent (no prompt) — which is correct, not a missed
+prompt.
+
+**Restore SKIPS rows whose file the user already deleted.** Without this, a
+reinstall+restore resurrects deleted entries as dead rows: `restoreFromTree`
+reads and SUMS *every* `.fdbk` in the folder (to survive an empty-newest
+mirror), so a stale mirror written before the delete keeps bringing them back,
+and the mirror is only refreshed on app-background anyway.
+`importMirrorDatabase` skips a row when `RestoredFileAccess.isRestoredFileMissing`
+proves the file is gone — gated on the SAF grant (restoreFromTree holds it),
+never on the grantless `App.onCreate` auto-restore (a foreign file's absence is
+untrustworthy there — same caveat as the missing-file sweep). **Gotcha that ate
+a round:** probe existence by **opening** the document, not querying its
+metadata — `ExternalStorageProvider.queryDocument` returns a row built from the
+doc-id PATH without confirming the file is on disk (a deleted file looks
+present). And the deleted-file signal is **not** a top-level
+`FileNotFoundException`: the provider verifies the tree-child relationship first
+and rethrows it wrapped in an `IllegalArgumentException` ("Failed to determine
+if X is child of Y: java.io.FileNotFoundException: Missing file …"), so
+`isRestoredFileMissing` scans the whole cause chain/message for the missing-file
+signal (those are AOSP-internal English constants, stable).
+
+**Stale mirrors are PRUNED after a decryptable restore.** A `.fdbk` that
+decrypted but imported **zero** rows (every entry a deleted file, or a duplicate
+covered by a kept mirror) can never restore anything again and only causes the
+recurring "0 restored". `restoreFromTree` collects those during the read loop
+and `DocumentsContract.deleteDocument`s them after (best-effort, under the WRITE
+grant). A mirror that DID restore rows is never touched — it stays the live
+backup until the next background re-write. Note this prune does **not** run on
+`RESTORE_WRONG_DEVICE` (the method returns before it — those mirrors can't be
+decrypted, so we can't know they're stale).
+
+**The empty-state Restore button retires after an ATTEMPT, not just success.**
+It's shown whenever the unfiltered list is empty, so after a restore that brings
+nothing back (0 / wrong device / no backup) it would re-offer the same futile
+tap forever. A `restore_attempted` flag (set at the top of `restoreFromTree`, so
+it covers both doors and every outcome) hides it once set. The flag lives in
+`backup_local.xml` — **excluded from backup** — so a genuine reinstall offers
+restore afresh while a within-install re-tap is not re-offered; Settings →
+"Restore previous downloads" stays as the deliberate retry door.
+
 ## "Send to browser" — LAN share (`lanshare/`)
 
 The Downloads options sheet's quick-action row has a **Send** button
