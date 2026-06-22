@@ -1,0 +1,122 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="640" viewBox="0 0 1120 640" font-family="Inter, 'Segoe UI', system-ui, sans-serif">
+  <defs>
+    <clipPath id="cA1"><rect x="192" y="96" width="266" height="132" rx="12"/></clipPath>
+    <clipPath id="cB1"><rect x="502" y="96" width="266" height="132" rx="12"/></clipPath>
+    <clipPath id="cC1"><rect x="812" y="96" width="266" height="132" rx="12"/></clipPath>
+    <clipPath id="cA2"><rect x="192" y="272" width="266" height="132" rx="12"/></clipPath>
+    <clipPath id="cB2"><rect x="502" y="272" width="266" height="132" rx="12"/></clipPath>
+    <clipPath id="cC2"><rect x="812" y="272" width="266" height="132" rx="12"/></clipPath>
+    <clipPath id="cA3"><rect x="192" y="448" width="266" height="132" rx="12"/></clipPath>
+    <clipPath id="cB3"><rect x="502" y="448" width="266" height="132" rx="12"/></clipPath>
+    <clipPath id="cC3"><rect x="812" y="448" width="266" height="132" rx="12"/></clipPath>
+  </defs>
+
+  <rect width="1120" height="640" fill="#C7C2CE"/>
+  <text x="32" y="36" font-size="21" font-weight="700" fill="#1b1b1f">Home stat line — layout × numbers, as values grow &amp; locales get verbose</text>
+  <text x="32" y="58" font-size="12.5" fill="#46434c">Each box ≈ a phone width. Text past the rounded edge is CLIPPED (the real bug). ✓ = my pick.</text>
+
+  <!-- column headers -->
+  <text x="325" y="84" font-size="12.5" font-weight="700" fill="#3a3742" text-anchor="middle">One line · full numbers (today)</text>
+  <text x="635" y="84" font-size="12.5" font-weight="700" fill="#3a3742" text-anchor="middle">Stacked · full numbers</text>
+  <text x="945" y="84" font-size="12.5" font-weight="700" fill="#1f6b35" text-anchor="middle">Stacked · compact  ✓ rec.</text>
+
+  <!-- row labels -->
+  <text x="20" y="160" font-size="12" font-weight="700" fill="#3a3742">Today</text>
+  <text x="20" y="176" font-size="10.5" fill="#5c5866">small numbers</text>
+  <text x="20" y="336" font-size="12" font-weight="700" fill="#3a3742">Heavy use</text>
+  <text x="20" y="352" font-size="10.5" fill="#5c5866">7-digit count</text>
+  <text x="20" y="512" font-size="12" font-weight="700" fill="#3a3742">Verbose</text>
+  <text x="20" y="528" font-size="10.5" fill="#5c5866">locale (de)</text>
+
+  <!-- ============ ROW 1: today ============ -->
+  <!-- A1 one line full -->
+  <rect x="192" y="96" width="266" height="132" rx="12" fill="#141218" stroke="#2b2930"/>
+  <g clip-path="url(#cA1)">
+    <path d="M295 116 L304 116 L299.5 128 Z" fill="#ee5a86"/>
+    <text x="310" y="127" font-size="13" font-weight="700" fill="#ECE6F0">Firedown</text>
+    <text x="325" y="170" font-size="11" fill="#c7c2d0" text-anchor="middle">10,501 trackers blocked · 9.2 GB downloaded</text>
+  </g>
+  <text x="448" y="112" font-size="10" fill="#caa23a" text-anchor="end">at the limit</text>
+
+  <!-- B1 stacked full -->
+  <rect x="502" y="96" width="266" height="132" rx="12" fill="#141218" stroke="#2b2930"/>
+  <g clip-path="url(#cB1)">
+    <path d="M605 116 L614 116 L609.5 128 Z" fill="#ee5a86"/>
+    <text x="620" y="127" font-size="13" font-weight="700" fill="#ECE6F0">Firedown</text>
+    <text x="635" y="166" font-size="11" fill="#c7c2d0" text-anchor="middle">10,501 trackers blocked</text>
+    <text x="635" y="186" font-size="11" fill="#c7c2d0" text-anchor="middle">9.2 GB downloaded</text>
+  </g>
+  <text x="758" y="112" font-size="11" fill="#2f9e54" text-anchor="end">✓</text>
+
+  <!-- C1 stacked compact -->
+  <rect x="812" y="96" width="266" height="132" rx="12" fill="#141218" stroke="#2b2930"/>
+  <g clip-path="url(#cC1)">
+    <path d="M915 116 L924 116 L919.5 128 Z" fill="#ee5a86"/>
+    <text x="930" y="127" font-size="13" font-weight="700" fill="#ECE6F0">Firedown</text>
+    <text x="945" y="166" font-size="11" fill="#c7c2d0" text-anchor="middle">10.5K trackers blocked</text>
+    <text x="945" y="186" font-size="11" fill="#c7c2d0" text-anchor="middle">9.2 GB downloaded</text>
+  </g>
+  <text x="1068" y="112" font-size="10" fill="#2f9e54" text-anchor="end">✓ tidy</text>
+
+  <!-- ============ ROW 2: heavy use ============ -->
+  <!-- A2 one line full — CLIPS -->
+  <rect x="192" y="272" width="266" height="132" rx="12" fill="#141218" stroke="#2b2930"/>
+  <g clip-path="url(#cA2)">
+    <path d="M295 292 L304 292 L299.5 304 Z" fill="#ee5a86"/>
+    <text x="310" y="303" font-size="13" font-weight="700" fill="#ECE6F0">Firedown</text>
+    <text x="325" y="346" font-size="11" fill="#c7c2d0" text-anchor="middle">1,452,310 trackers blocked · 812 GB downloaded</text>
+  </g>
+  <text x="448" y="288" font-size="10" fill="#d23b3b" text-anchor="end">✗ clips</text>
+
+  <!-- B2 stacked full -->
+  <rect x="502" y="272" width="266" height="132" rx="12" fill="#141218" stroke="#2b2930"/>
+  <g clip-path="url(#cB2)">
+    <path d="M605 292 L614 292 L609.5 304 Z" fill="#ee5a86"/>
+    <text x="620" y="303" font-size="13" font-weight="700" fill="#ECE6F0">Firedown</text>
+    <text x="635" y="342" font-size="11" fill="#c7c2d0" text-anchor="middle">1,452,310 trackers blocked</text>
+    <text x="635" y="362" font-size="11" fill="#c7c2d0" text-anchor="middle">812 GB downloaded</text>
+  </g>
+  <text x="758" y="288" font-size="10" fill="#2f9e54" text-anchor="end">✓ (long #)</text>
+
+  <!-- C2 stacked compact -->
+  <rect x="812" y="272" width="266" height="132" rx="12" fill="#141218" stroke="#2b2930"/>
+  <g clip-path="url(#cC2)">
+    <path d="M915 292 L924 292 L919.5 304 Z" fill="#ee5a86"/>
+    <text x="930" y="303" font-size="13" font-weight="700" fill="#ECE6F0">Firedown</text>
+    <text x="945" y="342" font-size="11" fill="#c7c2d0" text-anchor="middle">1.4M trackers blocked</text>
+    <text x="945" y="362" font-size="11" fill="#c7c2d0" text-anchor="middle">812 GB downloaded</text>
+  </g>
+  <text x="1068" y="288" font-size="10" fill="#2f9e54" text-anchor="end">✓ tidy</text>
+
+  <!-- ============ ROW 3: verbose locale ============ -->
+  <!-- A3 one line full — CLIPS HARD -->
+  <rect x="192" y="448" width="266" height="132" rx="12" fill="#141218" stroke="#2b2930"/>
+  <g clip-path="url(#cA3)">
+    <path d="M295 468 L304 468 L299.5 480 Z" fill="#ee5a86"/>
+    <text x="310" y="479" font-size="13" font-weight="700" fill="#ECE6F0">Firedown</text>
+    <text x="325" y="522" font-size="11" fill="#c7c2d0" text-anchor="middle">1.452.310 Tracker blockiert · 812 GB heruntergeladen</text>
+  </g>
+  <text x="448" y="464" font-size="10" fill="#d23b3b" text-anchor="end">✗ clips hard</text>
+
+  <!-- B3 stacked full -->
+  <rect x="502" y="448" width="266" height="132" rx="12" fill="#141218" stroke="#2b2930"/>
+  <g clip-path="url(#cB3)">
+    <path d="M605 468 L614 468 L609.5 480 Z" fill="#ee5a86"/>
+    <text x="620" y="479" font-size="13" font-weight="700" fill="#ECE6F0">Firedown</text>
+    <text x="635" y="518" font-size="11" fill="#c7c2d0" text-anchor="middle">1.452.310 Tracker blockiert</text>
+    <text x="635" y="538" font-size="11" fill="#c7c2d0" text-anchor="middle">812 GB heruntergeladen</text>
+  </g>
+  <text x="758" y="464" font-size="11" fill="#2f9e54" text-anchor="end">✓</text>
+
+  <!-- C3 stacked compact -->
+  <rect x="812" y="448" width="266" height="132" rx="12" fill="#141218" stroke="#2b2930"/>
+  <g clip-path="url(#cC3)">
+    <path d="M915 468 L924 468 L919.5 480 Z" fill="#ee5a86"/>
+    <text x="930" y="479" font-size="13" font-weight="700" fill="#ECE6F0">Firedown</text>
+    <text x="945" y="518" font-size="11" fill="#c7c2d0" text-anchor="middle">1,4 Mio. Tracker blockiert</text>
+    <text x="945" y="538" font-size="11" fill="#c7c2d0" text-anchor="middle">812 GB heruntergeladen</text>
+  </g>
+  <text x="1068" y="464" font-size="10" fill="#2f9e54" text-anchor="end">✓ tidy</text>
+
+  <text x="32" y="616" font-size="11" fill="#46434c">Takeaway: STACKING (col B) is the load-bearing fix — it never clips, even with full 7-digit numbers or German. COMPACT (col C) is polish on top: shorter, more readable counts. (Icons omitted here; real chips add a shield / ⬇ and stay tappable.)</text>
+</svg>

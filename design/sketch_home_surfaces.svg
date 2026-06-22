@@ -1,0 +1,136 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="812" viewBox="0 0 1120 812" font-family="Inter, 'Segoe UI', system-ui, sans-serif">
+  <defs>
+    <symbol id="sh" viewBox="0 0 24 24">
+      <path d="M12 1.8 L20.2 5 V11 C20.2 16.4 16.5 20.6 12 22.2 C7.5 20.6 3.8 16.4 3.8 11 V5 Z"/>
+    </symbol>
+  </defs>
+
+  <rect width="1120" height="812" fill="#C7C2CE"/>
+  <text x="32" y="40" font-size="22" font-weight="700" fill="#1b1b1f">Selected tab + Home privacy card — option sketch</text>
+  <text x="32" y="64" font-size="13" fill="#46434c">Firedown tokens &#183; ✓ = my pick &#183; ✗ = avoid</text>
+
+  <!-- ===================== LIGHT PANEL ===================== -->
+  <rect x="32" y="84" width="520" height="700" rx="22" fill="#FBF8FD" stroke="#E2DEE7"/>
+  <text x="56" y="116" font-size="12" font-weight="700" letter-spacing="1.5" fill="#6b6772">LIGHT</text>
+
+  <!-- Section 1: selected tab -->
+  <text x="56" y="150" font-size="12" font-weight="700" letter-spacing="1" fill="#6b6772">SELECTED TAB &#183; /tabs grid</text>
+
+  <!-- card 1 resting -->
+  <rect x="56" y="164" width="144" height="176" rx="10" fill="#F0EAF4"/>
+  <circle cx="74" cy="184" r="6" fill="#B9B2C2"/>
+  <rect x="86" y="179" width="74" height="9" rx="4" fill="#C9C2D0"/>
+  <text x="186" y="189" font-size="14" fill="#8a8690" text-anchor="middle">×</text>
+  <rect x="64" y="200" width="128" height="132" rx="6" fill="#E3DCE8"/>
+  <!-- card 2 selected (pick) -->
+  <rect x="220" y="164" width="144" height="176" rx="10" fill="#F7DED7" stroke="#E8553B" stroke-width="2"/>
+  <circle cx="238" cy="184" r="6" fill="#E0A08D"/>
+  <rect x="250" y="179" width="74" height="9" rx="4" fill="#E6B4A4"/>
+  <text x="350" y="189" font-size="14" fill="#c47a64" text-anchor="middle">×</text>
+  <rect x="228" y="200" width="128" height="132" rx="6" fill="#F1DDD6"/>
+  <!-- card 3 dashed (reject) -->
+  <rect x="384" y="164" width="144" height="176" rx="10" fill="#FBF8FD" stroke="#E8553B" stroke-width="2" stroke-dasharray="5 4"/>
+  <circle cx="402" cy="184" r="6" fill="#B9B2C2"/>
+  <rect x="414" y="179" width="74" height="9" rx="4" fill="#C9C2D0"/>
+  <text x="514" y="189" font-size="14" fill="#8a8690" text-anchor="middle">×</text>
+  <rect x="392" y="200" width="128" height="132" rx="6" fill="#E3DCE8"/>
+
+  <text x="128" y="356" font-size="11" fill="#46434c" text-anchor="middle">Resting</text>
+  <text x="292" y="356" font-size="11" fill="#b1432a" text-anchor="middle" font-weight="600">✓ Selected — keep</text>
+  <text x="456" y="356" font-size="11" fill="#8a8690" text-anchor="middle">✗ Dashed</text>
+  <text x="56" y="378" font-size="10.5" fill="#6b6772">Already = 2dp coral stroke + 20% coral wash over surfaceContainer.</text>
+  <text x="56" y="392" font-size="10.5" fill="#6b6772">Findable, not loud. Dashed reads as empty/placeholder — avoid.</text>
+
+  <!-- Section 2: privacy card -->
+  <text x="56" y="424" font-size="12" font-weight="700" letter-spacing="1" fill="#6b6772">HOME PRIVACY CARD &#183; background</text>
+
+  <!-- a plain -->
+  <rect x="56" y="436" width="472" height="44" rx="14" fill="#FBF8FD"/>
+  <use href="#sh" x="74" y="448" width="20" height="20" fill="#E8553B"/>
+  <text x="104" y="463" font-size="13" fill="#49454F">10,500 trackers blocked &#183; ~500.7 MB saved</text>
+  <text x="520" y="463" font-size="10.5" fill="#8a8690" text-anchor="end">plain (current)</text>
+  <!-- b hairline pick -->
+  <rect x="56" y="488" width="472" height="44" rx="14" fill="#FBF8FD" stroke="#CAC4D0" stroke-width="1"/>
+  <use href="#sh" x="74" y="500" width="20" height="20" fill="#E8553B"/>
+  <text x="104" y="515" font-size="13" fill="#49454F">10,500 trackers blocked &#183; ~500.7 MB saved</text>
+  <text x="520" y="515" font-size="10.5" fill="#b1432a" text-anchor="end" font-weight="600">✓ 1dp outlineVariant</text>
+  <!-- c subtle fill -->
+  <rect x="56" y="540" width="472" height="44" rx="14" fill="#F0EAF4"/>
+  <use href="#sh" x="74" y="552" width="20" height="20" fill="#E8553B"/>
+  <text x="104" y="567" font-size="13" fill="#49454F">10,500 trackers blocked &#183; ~500.7 MB saved</text>
+  <text x="520" y="567" font-size="10.5" fill="#8a8690" text-anchor="end">surfaceContainer</text>
+  <!-- d heavy -->
+  <rect x="56" y="592" width="472" height="44" rx="14" fill="#EAE3EF"/>
+  <use href="#sh" x="74" y="604" width="20" height="20" fill="#E8553B"/>
+  <text x="104" y="619" font-size="13" fill="#49454F">10,500 trackers blocked &#183; ~500.7 MB saved</text>
+  <text x="520" y="619" font-size="10.5" fill="#8a8690" text-anchor="end">surfaceContainerHigh (heavy)</text>
+
+  <!-- Section 3: text style -->
+  <text x="56" y="668" font-size="12" font-weight="700" letter-spacing="1" fill="#6b6772">STAT TEXT STYLE</text>
+  <text x="56" y="694" font-size="13" fill="#49454F">10,500 trackers blocked &#183; ~500.7 MB saved</text>
+  <text x="520" y="694" font-size="10.5" fill="#8a8690" text-anchor="end">Sans (current)</text>
+  <text x="56" y="724" font-size="13" fill="#49454F"><tspan font-family="ui-monospace,'Roboto Mono',monospace">10,500</tspan> trackers blocked &#183; <tspan font-family="ui-monospace,'Roboto Mono',monospace">~500.7 MB</tspan> saved</text>
+  <text x="520" y="724" font-size="10.5" fill="#b1432a" text-anchor="end" font-weight="600">✓ Mono figures only</text>
+  <text x="56" y="754" font-size="13" fill="#49454F" font-family="ui-monospace,'Roboto Mono',monospace">10,500 trackers blocked &#183; ~500.7 MB saved</text>
+  <text x="520" y="754" font-size="10.5" fill="#8a8690" text-anchor="end">✗ Full mono (prose cramped)</text>
+
+  <!-- ===================== DARK PANEL ===================== -->
+  <rect x="568" y="84" width="520" height="700" rx="22" fill="#141218"/>
+  <text x="592" y="116" font-size="12" font-weight="700" letter-spacing="1.5" fill="#9a96a1">DARK</text>
+
+  <text x="592" y="150" font-size="12" font-weight="700" letter-spacing="1" fill="#9a96a1">SELECTED TAB &#183; /tabs grid</text>
+
+  <rect x="592" y="164" width="144" height="176" rx="10" fill="#211F26"/>
+  <circle cx="610" cy="184" r="6" fill="#4a4654"/>
+  <rect x="622" y="179" width="74" height="9" rx="4" fill="#4f4b59"/>
+  <text x="722" y="189" font-size="14" fill="#7a7682" text-anchor="middle">×</text>
+  <rect x="600" y="200" width="128" height="132" rx="6" fill="#2F2C36"/>
+
+  <rect x="756" y="164" width="144" height="176" rx="10" fill="#33231E" stroke="#FF8A6E" stroke-width="2"/>
+  <circle cx="774" cy="184" r="6" fill="#7a4a3c"/>
+  <rect x="786" y="179" width="74" height="9" rx="4" fill="#8a5446"/>
+  <text x="886" y="189" font-size="14" fill="#c98570" text-anchor="middle">×</text>
+  <rect x="764" y="200" width="128" height="132" rx="6" fill="#3a2a25"/>
+
+  <rect x="920" y="164" width="144" height="176" rx="10" fill="#141218" stroke="#FF8A6E" stroke-width="2" stroke-dasharray="5 4"/>
+  <circle cx="938" cy="184" r="6" fill="#4a4654"/>
+  <rect x="950" y="179" width="74" height="9" rx="4" fill="#4f4b59"/>
+  <text x="1050" y="189" font-size="14" fill="#7a7682" text-anchor="middle">×</text>
+  <rect x="928" y="200" width="128" height="132" rx="6" fill="#2F2C36"/>
+
+  <text x="664" y="356" font-size="11" fill="#cac4d0" text-anchor="middle">Resting</text>
+  <text x="828" y="356" font-size="11" fill="#ff9c82" text-anchor="middle" font-weight="600">✓ Selected — keep</text>
+  <text x="992" y="356" font-size="11" fill="#7a7682" text-anchor="middle">✗ Dashed</text>
+  <text x="592" y="378" font-size="10.5" fill="#9a96a1">Already = 2dp coral stroke + 20% coral wash over surfaceContainer.</text>
+  <text x="592" y="392" font-size="10.5" fill="#9a96a1">Findable, not loud. Dashed reads as empty/placeholder — avoid.</text>
+
+  <text x="592" y="424" font-size="12" font-weight="700" letter-spacing="1" fill="#9a96a1">HOME PRIVACY CARD &#183; background</text>
+
+  <rect x="592" y="436" width="472" height="44" rx="14" fill="#141218"/>
+  <use href="#sh" x="610" y="448" width="20" height="20" fill="#FF8A6E"/>
+  <text x="640" y="463" font-size="13" fill="#CAC4D0">10,500 trackers blocked &#183; ~500.7 MB saved</text>
+  <text x="1056" y="463" font-size="10.5" fill="#7a7682" text-anchor="end">plain (current)</text>
+
+  <rect x="592" y="488" width="472" height="44" rx="14" fill="#141218" stroke="#49454F" stroke-width="1"/>
+  <use href="#sh" x="610" y="500" width="20" height="20" fill="#FF8A6E"/>
+  <text x="640" y="515" font-size="13" fill="#CAC4D0">10,500 trackers blocked &#183; ~500.7 MB saved</text>
+  <text x="1056" y="515" font-size="10.5" fill="#ff9c82" text-anchor="end" font-weight="600">✓ 1dp outlineVariant</text>
+
+  <rect x="592" y="540" width="472" height="44" rx="14" fill="#211F26"/>
+  <use href="#sh" x="610" y="552" width="20" height="20" fill="#FF8A6E"/>
+  <text x="640" y="567" font-size="13" fill="#CAC4D0">10,500 trackers blocked &#183; ~500.7 MB saved</text>
+  <text x="1056" y="567" font-size="10.5" fill="#7a7682" text-anchor="end">surfaceContainer</text>
+
+  <rect x="592" y="592" width="472" height="44" rx="14" fill="#2B2930"/>
+  <use href="#sh" x="610" y="604" width="20" height="20" fill="#FF8A6E"/>
+  <text x="640" y="619" font-size="13" fill="#CAC4D0">10,500 trackers blocked &#183; ~500.7 MB saved</text>
+  <text x="1056" y="619" font-size="10.5" fill="#7a7682" text-anchor="end">surfaceContainerHigh (heavy)</text>
+
+  <text x="592" y="668" font-size="12" font-weight="700" letter-spacing="1" fill="#9a96a1">STAT TEXT STYLE</text>
+  <text x="592" y="694" font-size="13" fill="#CAC4D0">10,500 trackers blocked &#183; ~500.7 MB saved</text>
+  <text x="1056" y="694" font-size="10.5" fill="#7a7682" text-anchor="end">Sans (current)</text>
+  <text x="592" y="724" font-size="13" fill="#CAC4D0"><tspan font-family="ui-monospace,'Roboto Mono',monospace">10,500</tspan> trackers blocked &#183; <tspan font-family="ui-monospace,'Roboto Mono',monospace">~500.7 MB</tspan> saved</text>
+  <text x="1056" y="724" font-size="10.5" fill="#ff9c82" text-anchor="end" font-weight="600">✓ Mono figures only</text>
+  <text x="592" y="754" font-size="13" fill="#CAC4D0" font-family="ui-monospace,'Roboto Mono',monospace">10,500 trackers blocked &#183; ~500.7 MB saved</text>
+  <text x="1056" y="754" font-size="10.5" fill="#7a7682" text-anchor="end">✗ Full mono (prose cramped)</text>
+</svg>

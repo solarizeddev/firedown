@@ -126,7 +126,7 @@ public class MostVisitedTilesAdapter extends RecyclerView.Adapter<MostVisitedTil
         return host;
     }
 
-    static class TileViewHolder extends RecyclerView.ViewHolder {
+    public static class TileViewHolder extends RecyclerView.ViewHolder {
         final AppCompatImageView favicon;
         final TextView label;
         String url;

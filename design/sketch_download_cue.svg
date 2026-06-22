@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="560" viewBox="0 0 720 560" font-family="Inter, system-ui, sans-serif">
+  <rect width="720" height="560" fill="#C7C2CE"/>
+  <text x="24" y="34" font-size="20" font-weight="700" fill="#1b1b1f">Active download on the home — placement options</text>
+  <text x="24" y="56" font-size="12.5" fill="#46434c">The cue for "a download is running" — where should it live? ✓ = my pick.</text>
+
+  <!-- ============ PHONE A: NOW (misplaced) ============ -->
+  <g>
+    <rect x="20" y="76" width="210" height="450" rx="20" fill="#141218" stroke="#39343d"/>
+    <!-- search -->
+    <rect x="34" y="92" width="182" height="26" rx="13" fill="#2b2930"/>
+    <text x="48" y="109" font-size="10" fill="#8a8690">Search or Type URL</text>
+    <!-- banner ABOVE brand -->
+    <rect x="34" y="128" width="182" height="46" rx="10" fill="#2c2420" stroke="#5a4038"/>
+    <path d="M44 140 L52 140 L48 152 Z" fill="#ee5a86"/>
+    <rect x="60" y="138" width="120" height="6" rx="3" fill="#6b6772"/>
+    <rect x="60" y="150" width="100" height="6" rx="3" fill="#9a96a1"/>
+    <rect x="60" y="162" width="148" height="4" rx="2" fill="#3a3640"/>
+    <rect x="60" y="162" width="26" height="4" rx="2" fill="#ee5a86"/>
+    <text x="208" y="139" font-size="9" fill="#8a8690" text-anchor="end">✕</text>
+    <!-- brand pushed DOWN -->
+    <path d="M104 196 L113 196 L108.5 210 Z" fill="#ee5a86"/>
+    <text x="119" y="208" font-size="13" font-weight="700" fill="#ECE6F0">Firedown</text>
+    <text x="125" y="230" font-size="9" fill="#9a96a1" text-anchor="middle">🛡 10.6K · ⬇ 9.2 GB</text>
+    <!-- continue -->
+    <rect x="34" y="452" width="182" height="36" rx="10" fill="#211f26"/>
+    <rect x="44" y="461" width="18" height="18" rx="4" fill="#c0392b"/>
+    <rect x="70" y="464" width="90" height="5" rx="2" fill="#cac4d0"/>
+    <rect x="70" y="474" width="120" height="4" rx="2" fill="#6b6772"/>
+    <!-- bottom bar -->
+    <line x1="34" y1="500" x2="216" y2="500" stroke="#2b2930"/>
+    <g fill="#9a96a1"><circle cx="56" cy="512" r="3"/><circle cx="96" cy="512" r="3"/><circle cx="136" cy="512" r="3"/><circle cx="176" cy="512" r="3"/></g>
+    <circle cx="176" cy="512" r="5" fill="none" stroke="#9a96a1" stroke-width="1.5"/>
+    <circle cx="181" cy="507" r="2.5" fill="#ee5a86"/>
+  </g>
+  <text x="125" y="544" font-size="11" fill="#b1432a" text-anchor="middle" font-weight="600">✗ Now: chrome above identity, shoves brand down</text>
+
+  <!-- ============ PHONE B: DELETE (recommended) ============ -->
+  <g>
+    <rect x="250" y="76" width="210" height="450" rx="20" fill="#141218" stroke="#39343d"/>
+    <rect x="264" y="92" width="182" height="26" rx="13" fill="#2b2930"/>
+    <text x="278" y="109" font-size="10" fill="#8a8690">Search or Type URL</text>
+    <!-- brand at top, no banner -->
+    <path d="M334 150 L343 150 L338.5 164 Z" fill="#ee5a86"/>
+    <text x="349" y="162" font-size="13" font-weight="700" fill="#ECE6F0">Firedown</text>
+    <text x="355" y="184" font-size="9" fill="#9a96a1" text-anchor="middle">🛡 10.6K trackers · ⬇ 9.2 GB saved</text>
+    <rect x="264" y="452" width="182" height="36" rx="10" fill="#211f26"/>
+    <rect x="274" y="461" width="18" height="18" rx="4" fill="#c0392b"/>
+    <rect x="300" y="464" width="90" height="5" rx="2" fill="#cac4d0"/>
+    <rect x="300" y="474" width="120" height="4" rx="2" fill="#6b6772"/>
+    <line x1="264" y1="500" x2="446" y2="500" stroke="#2b2930"/>
+    <g fill="#9a96a1"><circle cx="286" cy="512" r="3"/><circle cx="326" cy="512" r="3"/><circle cx="366" cy="512" r="3"/><circle cx="406" cy="512" r="3"/></g>
+    <!-- download button with badge dot -->
+    <circle cx="406" cy="512" r="5" fill="none" stroke="#9a96a1" stroke-width="1.5"/>
+    <circle cx="411" cy="507" r="3" fill="#ee5a86"/>
+  </g>
+  <text x="355" y="544" font-size="11" fill="#1f6b35" text-anchor="middle" font-weight="600">✓ Delete: cue = bottom badge + notification</text>
+
+  <!-- ============ PHONE C: progress on the download button ============ -->
+  <g>
+    <rect x="480" y="76" width="210" height="450" rx="20" fill="#141218" stroke="#39343d"/>
+    <rect x="494" y="92" width="182" height="26" rx="13" fill="#2b2930"/>
+    <text x="508" y="109" font-size="10" fill="#8a8690">Search or Type URL</text>
+    <path d="M564 150 L573 150 L568.5 164 Z" fill="#ee5a86"/>
+    <text x="579" y="162" font-size="13" font-weight="700" fill="#ECE6F0">Firedown</text>
+    <text x="585" y="184" font-size="9" fill="#9a96a1" text-anchor="middle">🛡 10.6K trackers · ⬇ 9.2 GB saved</text>
+    <rect x="494" y="452" width="182" height="36" rx="10" fill="#211f26"/>
+    <rect x="504" y="461" width="18" height="18" rx="4" fill="#c0392b"/>
+    <rect x="530" y="464" width="90" height="5" rx="2" fill="#cac4d0"/>
+    <rect x="530" y="474" width="120" height="4" rx="2" fill="#6b6772"/>
+    <line x1="494" y1="500" x2="676" y2="500" stroke="#2b2930"/>
+    <g fill="#9a96a1"><circle cx="516" cy="512" r="3"/><circle cx="556" cy="512" r="3"/><circle cx="596" cy="512" r="3"/></g>
+    <!-- download button as a determinate progress RING -->
+    <circle cx="636" cy="512" r="9" fill="none" stroke="#3a3640" stroke-width="2.5"/>
+    <path d="M636 503 A9 9 0 0 1 644 516" fill="none" stroke="#ee5a86" stroke-width="2.5" stroke-linecap="round"/>
+    <circle cx="636" cy="512" r="3" fill="#9a96a1"/>
+  </g>
+  <text x="585" y="538" font-size="11" fill="#3a3742" text-anchor="middle" font-weight="600">Alt: progress ring on the download button</text>
+  <text x="585" y="552" font-size="10" fill="#5c5866" text-anchor="middle">at-a-glance %, no banner, no layout shift</text>
+</svg>
