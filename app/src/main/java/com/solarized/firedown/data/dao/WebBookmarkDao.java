@@ -99,4 +99,25 @@ public interface WebBookmarkDao {
     @Query("SELECT COUNT(file_url) FROM webbookmark WHERE deleted = 0")
     Integer getRowCount();
 
+    // ---- bookmarks sync (webbookmark v3) ----
+
+    /** ALL rows including tombstones — the sync engine reads the full set to
+     *  merge (the only query that does NOT filter deleted = 0). */
+    @Query("SELECT * FROM webbookmark")
+    List<WebBookmarkEntity> getAllForSync();
+
+    /** Tombstones a bookmark in place (the sync-enabled delete path), so the
+     *  deletion propagates to other devices before the GC drops it. */
+    @Query("UPDATE webbookmark SET deleted = 1, deleted_at = :deletedAt, updated_at = :updatedAt WHERE uid = :id")
+    int softDelete(int id, long deletedAt, long updatedAt);
+
+    /** Tombstones every live bookmark (sync-enabled "delete all"). */
+    @Query("UPDATE webbookmark SET deleted = 1, deleted_at = :t, updated_at = :t WHERE deleted = 0")
+    int softDeleteAll(long t);
+
+    /** Hard-deletes tombstones older than the cutoff (GC after the propagation
+     *  TTL). Live rows are never touched. */
+    @Query("DELETE FROM webbookmark WHERE deleted = 1 AND deleted_at < :cutoff")
+    int gcTombstones(long cutoff);
+
 }

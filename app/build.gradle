@@ -214,12 +214,13 @@ dependencies {
 
     implementation 'com.caverock:androidsvg-aar:1.4'
 
-    // Pure-Java Ed25519 (RFC 8032) for bookmarks sync request signing. The JDK
-    // EdEC APIs need API 33 but minSdk is 26, and the signing key is derived from
-    // the recovery code (not an AndroidKeyStore key), so a software impl that
-    // accepts a raw 32-byte seed is required. eddsa is small, widely used, and
+    // Google Tink for bookmarks-sync Ed25519 request signing. The platform
+    // java.security EdEC APIs need API 33 but minSdk is 26, and the signing key is
+    // derived from the recovery-code seed (not an AndroidKeyStore key), so we need
+    // a Google-maintained impl that accepts a raw 32-byte seed on every API level:
+    // Tink's subtle Ed25519Sign.KeyPair.newKeyPair(seed) does exactly that, and is
     // RFC-8032-compliant (matches the server's ed25519 interop vectors).
-    implementation 'net.i2p.crypto:eddsa:0.3.0'
+    implementation 'com.google.crypto.tink:tink-android:1.15.0'
 
     implementation 'androidx.core:core-splashscreen:1.2.0'
 

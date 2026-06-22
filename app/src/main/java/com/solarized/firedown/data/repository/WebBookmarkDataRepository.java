@@ -51,6 +51,33 @@ public class WebBookmarkDataRepository {
 
     private final Executor mMainExecutor;
 
+    // ---- bookmarks sync (webbookmark v3) ----
+    // When sync is enabled, user deletes become tombstones (so the deletion
+    // propagates) and local changes notify the sync trigger (debounced push,
+    // wired by SyncManager). When OFF, behaviour is unchanged: hard delete, no
+    // tombstone growth. Both volatile — set on the main thread, read on the disk
+    // executor.
+    private volatile boolean mSyncEnabled = false;
+    private volatile Runnable mSyncChangeTrigger;
+
+    /** Enables/disables sync-aware delete semantics (called by SyncManager). */
+    public void setSyncEnabled(boolean enabled) {
+        mSyncEnabled = enabled;
+    }
+
+    /** Registers the debounced "local bookmarks changed, schedule a push"
+     *  callback (called by SyncManager); cleared with null on sign-out. */
+    public void setSyncChangeTrigger(Runnable trigger) {
+        mSyncChangeTrigger = trigger;
+    }
+
+    private void onLocalChange() {
+        Runnable trigger = mSyncChangeTrigger;
+        if (mSyncEnabled && trigger != null) {
+            trigger.run();
+        }
+    }
+
     @Inject
     public WebBookmarkDataRepository(WebBookmarkDao webBookmarkDao, @Qualifiers.DiskIO Executor diskExecutor, @Qualifiers.MainThread Executor mainExecutor) {
         this.mWebBookmarkDao = webBookmarkDao;
@@ -102,6 +129,15 @@ public class WebBookmarkDataRepository {
      */
     public static int bookmarkIdFor(String url) {
         return normalize(url).hashCode();
+    }
+
+    /**
+     * The normalized URL used as the cross-device sync identity (same basis as
+     * {@link #bookmarkIdFor}). Two devices that bookmarked the same page resolve
+     * to an identical string here, so the merge collapses them to one item.
+     */
+    public static String canonicalUrl(String url) {
+        return normalize(url);
     }
 
     private static String normalize(String url) {
@@ -179,25 +215,70 @@ public class WebBookmarkDataRepository {
             web.setDeletedAt(0);
             mSyncEntities.add(web.getId());
             mDiskExecutor.execute(() -> mWebBookmarkDao.insert(web));
-
+            onLocalChange();
         }
     }
 
     public void delete(WebBookmarkEntity web) {
         if (web != null) {
-            mSyncEntities.remove(web.getId());
-            mDiskExecutor.execute(() -> mWebBookmarkDao.delete(web));
+            delete(web.getId());
         }
     }
 
     public void delete(int id) {
         mSyncEntities.remove(id);
-        mDiskExecutor.execute(() -> mWebBookmarkDao.deleteById(id));
+        final boolean tombstone = mSyncEnabled;
+        mDiskExecutor.execute(() -> {
+            if (tombstone) {
+                // Sync on: tombstone in place so the deletion propagates.
+                long now = System.currentTimeMillis();
+                mWebBookmarkDao.softDelete(id, now, now);
+            } else {
+                mWebBookmarkDao.deleteById(id);
+            }
+        });
+        onLocalChange();
     }
 
     public void deleteAll() {
         mSyncEntities.clear();
-        mDiskExecutor.execute(mWebBookmarkDao::deleteAll);
+        final boolean tombstone = mSyncEnabled;
+        mDiskExecutor.execute(() -> {
+            if (tombstone) {
+                mWebBookmarkDao.softDeleteAll(System.currentTimeMillis());
+            } else {
+                mWebBookmarkDao.deleteAll();
+            }
+        });
+        onLocalChange();
+    }
+
+    // ---- sync engine support ----
+
+    /** Snapshot of ALL rows incl. tombstones, for a merge. Disk-thread call. */
+    public List<WebBookmarkEntity> getAllForSync() {
+        return mWebBookmarkDao.getAllForSync();
+    }
+
+    /** Applies a merged set (live rows + tombstones) in one REPLACE batch and
+     *  refreshes the in-memory present-set. Disk-thread call. */
+    public void applyMerged(List<WebBookmarkEntity> merged) {
+        if (merged == null || merged.isEmpty()) {
+            return;
+        }
+        mWebBookmarkDao.insertAll(merged);
+        for (WebBookmarkEntity e : merged) {
+            if (e.isDeleted()) {
+                mSyncEntities.remove(e.getId());
+            } else {
+                mSyncEntities.add(e.getId());
+            }
+        }
+    }
+
+    /** Hard-deletes tombstones older than the cutoff. Disk-thread call. */
+    public int gcTombstones(long cutoff) {
+        return mWebBookmarkDao.gcTombstones(cutoff);
     }
 
     /**

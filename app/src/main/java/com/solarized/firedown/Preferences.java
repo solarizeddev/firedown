@@ -57,6 +57,18 @@ public class Preferences {
 
     public static final String SORT_VAULT_LIST = "com.solarized.firedown.preferences.sort.vault.list";
 
+    // ---- bookmarks sync (docs/BOOKMARKS_SYNC.md) ----
+    /** Whether bookmark sync is enabled (off by default; user opts in). */
+    public static final String SYNC_ENABLED = "com.solarized.firedown.preferences.sync.enabled";
+    /** Backend base URL — Firedown's hosted server by default, or a BYO URL. */
+    public static final String SYNC_BACKEND_URL = "com.solarized.firedown.preferences.sync.backend.url";
+    /** Default (hosted) backend base URL. */
+    public static final String SYNC_DEFAULT_BACKEND = "https://api.firedown.app";
+    /** Epoch millis of the last successful sync (0 = never). */
+    public static final String SYNC_LAST_SYNCED_AT = "com.solarized.firedown.preferences.sync.last.synced.at";
+    /** Last server document version observed (status display). */
+    public static final String SYNC_LAST_VERSION = "com.solarized.firedown.preferences.sync.last.version";
+
     /**
      * Bookmarks-list sort order toggle: false (default) = recency
      * (file_date DESC, the historical order), true = A–Z by title.

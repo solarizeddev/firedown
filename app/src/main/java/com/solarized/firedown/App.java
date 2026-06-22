@@ -30,6 +30,7 @@ import com.solarized.firedown.data.LegacyShortcutsMigrator;
 import com.solarized.firedown.data.di.Qualifiers;
 import com.solarized.firedown.data.repository.WebHistoryDataRepository;
 import com.solarized.firedown.phone.BrowserActivity;
+import com.solarized.firedown.sync.SyncManager;
 
 
 import java.util.List;
@@ -63,6 +64,8 @@ public class App extends Application implements Configuration.Provider{
     HiltWorkerFactory workerFactory;
     @Inject
     UpdateScheduler updateScheduler;
+    @Inject
+    SyncManager mSyncManager;
     @Inject
     @Qualifiers.DiskIO
     Executor mDiskExecutor;
@@ -122,6 +125,9 @@ public class App extends Application implements Configuration.Provider{
         createUpdateNotificationChannel(mAppContext);
         updateScheduler.schedulePeriodicUpdateCheck();
         updateScheduler.setupOneTimeCheck();
+        // Wire bookmark-sync repository semantics + periodic job from saved state
+        // (no-op when sync is off; tombstone-on-delete needs this at boot).
+        mSyncManager.init();
 
         // One-time migration: lift legacy 'shortcuts' rows into the
         // bookmarks table as pinned entries, then drop the legacy
