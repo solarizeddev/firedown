@@ -262,11 +262,13 @@ public class SabrStrategy implements DownloadStrategy {
         // ====================================================================
 
         // Bytes are all in; the FFmpeg mux is a second pass. Rather than freeze
-        // the bar near the top (the confusing "stuck at 95%" the mux used to
-        // show), flip the row into an indeterminate "Finishing…" state for the
-        // duration of the mux. Sealed (user-finished) downloads skip this —
-        // onProgress no-ops once sealed and they're about to flip to FINISHED.
-        callback.onProgress(Download.PROCESSING_PROGRESS, 0, 0);
+        // the bar near the top (the confusing "stuck" the mux used to show),
+        // flip the row into an indeterminate "Finishing…" state for the duration
+        // of the mux. onProcessing() is honoured even when sealed, so this also
+        // covers the user-finish path (which seals to FINISHED, then muxes the
+        // partial data — often the LONGEST mux, and the one most in need of a
+        // clear signal).
+        callback.onProcessing();
         long finishingShownAt = System.currentTimeMillis();
 
         FFmpegDownloader ffmpegDownloader = new FFmpegDownloader();
@@ -325,17 +327,16 @@ public class SabrStrategy implements DownloadStrategy {
             return;
         }
 
-        // The mux for SABR is a stream copy of already-fMP4 segments, so it can
-        // complete in well under a second — fast enough that the "Finishing…"
-        // state would be written and then overwritten by FINISHED within one
-        // frame, and the Paging differ coalesces the two so the user never sees
-        // it. Hold the state on screen for a short minimum so the transition is
-        // always perceptible. Skipped when sealed (user finish never set it).
-        if (!stopped) {
-            long shownFor = System.currentTimeMillis() - finishingShownAt;
-            if (shownFor < MIN_FINISHING_VISIBLE_MS) {
-                sleep(MIN_FINISHING_VISIBLE_MS - shownFor);
-            }
+        // The mux for SABR is a stream copy of already-fMP4 segments, so for a
+        // small clip it can complete in well under a second — fast enough that
+        // the "Finishing…" state would be written and then overwritten by
+        // FINISHED within one frame, and the Paging differ coalesces the two so
+        // the user never sees it. Hold the state on screen for a short minimum
+        // so the transition is always perceptible. Applies to the user-finish
+        // path too (a tiny partial muxes just as fast).
+        long shownFor = System.currentTimeMillis() - finishingShownAt;
+        if (shownFor < MIN_FINISHING_VISIBLE_MS) {
+            sleep(MIN_FINISHING_VISIBLE_MS - shownFor);
         }
 
         // ====================================================================
