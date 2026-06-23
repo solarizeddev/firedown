@@ -152,6 +152,9 @@
          %1$s is the plural (home_downloads_file_count), %2$s is the
          size string (Utils.readableFileSize). -->
     <string name="download_finished">Download finished</string>
+    <!-- Shown on a download row during the post-download mux/finishing pass
+         (e.g. YouTube/SABR), in place of a frozen progress percent. -->
+    <string name="download_finishing">Finishing…</string>
     <string name="download_ongoing_notification">Firedown</string>
     <string name="download_quality">Download quality</string>
     <string name="download_queued">Pending…</string>

@@ -41,6 +41,18 @@ public interface Download {
     int PROGRESS_GRID_DENSE = 13;
 
 
+    /**
+     * Sentinel {@code fileProgress} value (the status stays {@link #PROGRESS})
+     * meaning the bytes are fully downloaded and a post-download mux /
+     * "finishing" pass is running — SABR's separate FFmpeg mux step. The row
+     * renders an indeterminate "Finishing…" state instead of a frozen percent,
+     * so the user isn't left staring at a bar stuck near the top while ffmpeg
+     * works. 101 is outside the valid 0–100 percent range, so it can never
+     * collide with a real progress value.
+     */
+    int PROCESSING_PROGRESS = 101;
+
+
     int getId();
     int getParentId();
     String getFileName();

@@ -37,8 +37,10 @@ public class SabrStrategy implements DownloadStrategy {
     private static final String TAG = SabrStrategy.class.getSimpleName();
     private static final long UPDATE_RATE = 1500;
 
-    private static final int DOWNLOAD_WEIGHT = 95;
-    private static final int MUX_WEIGHT = 5;
+    // The download phase fills the whole 0–100% bar; the subsequent FFmpeg
+    // mux is shown as an indeterminate "Finishing…" state, not a determinate
+    // slice, so it no longer needs a reserved weight.
+    private static final int DOWNLOAD_WEIGHT = 100;
 
     private SabrDownloader sabrDownloader;
     private DownloadCallback callback;
@@ -254,7 +256,13 @@ public class SabrStrategy implements DownloadStrategy {
         // Always mux — even on stop (finish). User gets a playable partial file.
         // ====================================================================
 
-        reportProgress(DOWNLOAD_WEIGHT, 0, 0);
+        // Bytes are all in; the FFmpeg mux is a second pass that can take a few
+        // seconds on a large file. Rather than freeze the bar near the top (the
+        // confusing "stuck at 95%" the mux used to show), flip the row into an
+        // indeterminate "Finishing…" state for the duration of the mux. Sealed
+        // (user-finished) downloads skip this — onProgress no-ops once sealed
+        // and they're about to flip to FINISHED anyway.
+        callback.onProgress(Download.PROCESSING_PROGRESS, 0, 0);
 
         FFmpegDownloader ffmpegDownloader = new FFmpegDownloader();
         ffmpegDownloader.addListener(new FFmpegListener() {
@@ -263,10 +271,10 @@ public class SabrStrategy implements DownloadStrategy {
 
             @Override
             public void onProgress(long downloaded, long total) {
-                if (isDeleted() || total <= 0) return;
-                int muxPct = DOWNLOAD_WEIGHT
-                        + (int) Math.min(downloaded * MUX_WEIGHT / total, MUX_WEIGHT);
-                reportProgress(muxPct, downloaded, total);
+                // No per-tick progress during the mux — the row stays in the
+                // indeterminate "Finishing…" state set above. (Reporting a
+                // determinate mux percent here is exactly what produced the
+                // jarring "stuck near 100%" the intermediate state replaces.)
             }
 
             @Override
