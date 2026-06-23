@@ -87,7 +87,18 @@ public class SabrDownloader {
         void onProgress(long downloadedMs, long totalMs, int videoSegments, int audioSegments);
     }
 
+    /**
+     * Optional sink that receives every completed segment as it lands, used to
+     * interleave video+audio into a single fragmented MP4 during the download
+     * (see {@link Fmp4Muxer}). Independent of the temp-file writes, which always
+     * happen — the sink is best-effort and the caller falls back to those temps.
+     */
+    public interface SegmentSink {
+        void onSegment(boolean isAudio, boolean isInit, byte[] data);
+    }
+
     private ProgressListener progressListener;
+    private SegmentSink muxSink;
 
     public SabrDownloader(OkHttpClient client) {
         this.client = client.newBuilder()
@@ -117,6 +128,7 @@ public class SabrDownloader {
         this.clientVersion = clientVersion;
     }
     public void setProgressListener(ProgressListener l) { this.progressListener = l; }
+    public void setMuxSink(SegmentSink sink) { this.muxSink = sink; }
     public void abort() { this.aborted = true; }
 
     // --- Download result ---
@@ -237,6 +249,12 @@ public class SabrDownloader {
                     } else {
                         videoOut.write(seg.data);
                         totalVideoSegments++;
+                    }
+                    // Feed the optional inline muxer (best-effort: it self-fails
+                    // on anything unexpected and the caller falls back to the
+                    // temp files just written above).
+                    if (muxSink != null) {
+                        muxSink.onSegment(seg.isAudio, seg.segmentNumber == 0, seg.data);
                     }
                     newSegments++;
                 }
