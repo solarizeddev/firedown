@@ -42,6 +42,11 @@ public class SabrStrategy implements DownloadStrategy {
     // slice, so it no longer needs a reserved weight.
     private static final int DOWNLOAD_WEIGHT = 100;
 
+    /** Minimum time the "Finishing…" state is held on screen. The mux can be
+     *  sub-second (stream copy), too fast for the UI to ever render the state
+     *  before FINISHED replaces it; this guarantees it's perceptible. */
+    private static final long MIN_FINISHING_VISIBLE_MS = 700;
+
     private SabrDownloader sabrDownloader;
     private DownloadCallback callback;
     private DownloadContext context;
@@ -256,13 +261,13 @@ public class SabrStrategy implements DownloadStrategy {
         // Always mux — even on stop (finish). User gets a playable partial file.
         // ====================================================================
 
-        // Bytes are all in; the FFmpeg mux is a second pass that can take a few
-        // seconds on a large file. Rather than freeze the bar near the top (the
-        // confusing "stuck at 95%" the mux used to show), flip the row into an
-        // indeterminate "Finishing…" state for the duration of the mux. Sealed
-        // (user-finished) downloads skip this — onProgress no-ops once sealed
-        // and they're about to flip to FINISHED anyway.
+        // Bytes are all in; the FFmpeg mux is a second pass. Rather than freeze
+        // the bar near the top (the confusing "stuck at 95%" the mux used to
+        // show), flip the row into an indeterminate "Finishing…" state for the
+        // duration of the mux. Sealed (user-finished) downloads skip this —
+        // onProgress no-ops once sealed and they're about to flip to FINISHED.
         callback.onProgress(Download.PROCESSING_PROGRESS, 0, 0);
+        long finishingShownAt = System.currentTimeMillis();
 
         FFmpegDownloader ffmpegDownloader = new FFmpegDownloader();
         ffmpegDownloader.addListener(new FFmpegListener() {
@@ -318,6 +323,19 @@ public class SabrStrategy implements DownloadStrategy {
                 callback.onError(MessageHelper.IOEXCEPTION);
             }
             return;
+        }
+
+        // The mux for SABR is a stream copy of already-fMP4 segments, so it can
+        // complete in well under a second — fast enough that the "Finishing…"
+        // state would be written and then overwritten by FINISHED within one
+        // frame, and the Paging differ coalesces the two so the user never sees
+        // it. Hold the state on screen for a short minimum so the transition is
+        // always perceptible. Skipped when sealed (user finish never set it).
+        if (!stopped) {
+            long shownFor = System.currentTimeMillis() - finishingShownAt;
+            if (shownFor < MIN_FINISHING_VISIBLE_MS) {
+                sleep(MIN_FINISHING_VISIBLE_MS - shownFor);
+            }
         }
 
         // ====================================================================
@@ -396,6 +414,17 @@ public class SabrStrategy implements DownloadStrategy {
             Log.w(TAG, "Native mint failed after " + dt + "ms: " + e.getMessage());
         }
         return null;
+    }
+
+    /** Interruptible sleep — re-flags the thread interrupt on wake so the
+     *  download thread's cancellation path still sees it. */
+    private static void sleep(long ms) {
+        if (ms <= 0) return;
+        try {
+            Thread.sleep(ms);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
     }
 
     private void reportProgress(int percent, long downloaded, long total) {
