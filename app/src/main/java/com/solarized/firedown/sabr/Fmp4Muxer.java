@@ -4,12 +4,10 @@ import android.util.Log;
 
 import com.solarized.firedown.BuildConfig;
 
-import java.io.BufferedOutputStream;
 import java.io.Closeable;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
+import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,14 +31,24 @@ import java.util.List;
  * (codec-agnostic: avc1/av01 video + mp4a audio all just ride their copied
  * {@code stsd}).
  *
+ * <p><b>Duration.</b> YouTube's init {@code moov} declares the FULL clip length,
+ * but we may write only a PREFIX of the fragments (the user finished early), so
+ * a verbatim duration would make the player and our probe report the whole
+ * length for a partial file. We can't know the written length up front (the
+ * {@code moov} is at the file's head), so the header durations are written as
+ * placeholders and PATCHED at {@link #close()} with the real downloaded
+ * duration — accumulated from the per-segment durations SABR already computes —
+ * via {@link RandomAccessFile} seek-back. (mehd, which also carries the total,
+ * is dropped: the rebuilt {@code mvex} contains only the two {@code trex}.)
+ *
  * <p><b>Safety / fallback:</b> this code is deliberately conservative. Anything
  * it doesn't understand — a non-ISO-BMFF init, encryption boxes, more than one
  * {@code trak} per init, a 64-bit box size, a parse anomaly, or an IO error —
- * flips {@link #isFailed()} and it stops writing. The caller
- * ({@code SabrStrategy}) keeps the raw temp streams and, after the download,
- * <b>probe-validates the muxed output</b>; on failure (or {@link #isFailed()})
- * it falls back to the proven FFmpeg remux of those temps. So a muxer bug can
- * never ship a broken download — at worst it degrades to the previous behavior.
+ * flips {@link #isFailed()} and it stops. The caller ({@code SabrStrategy})
+ * keeps the raw temp streams and, after the download, <b>probe-validates the
+ * muxed output</b>; on failure (or {@link #isFailed()}) it falls back to the
+ * proven FFmpeg remux of those temps. So a muxer bug can never ship a broken
+ * download — at worst it degrades to the previous behavior.
  *
  * <p>Not thread-safe: only ever called from the single SABR download thread.
  */
@@ -57,7 +65,7 @@ public final class Fmp4Muxer implements SabrDownloader.SegmentSink, Closeable {
     private static final int MAX_PENDING_FRAGMENTS = 16;
 
     private final File output;
-    private OutputStream out;
+    private RandomAccessFile raf;
 
     private byte[] videoInit;
     private byte[] audioInit;
@@ -66,6 +74,22 @@ public final class Fmp4Muxer implements SabrDownloader.SegmentSink, Closeable {
 
     private final List<byte[]> pendingVideo = new ArrayList<>();
     private final List<byte[]> pendingAudio = new ArrayList<>();
+
+    // Accumulated real (downloaded) duration per track, milliseconds.
+    private long videoDurationMs;
+    private long audioDurationMs;
+
+    // Located at writeHeader: absolute file offsets of the duration fields to
+    // patch at close(), their widths (4/8 bytes), and the timescales needed to
+    // convert ms → ticks. 0 offset = not located (skipped).
+    private long movieTimescale;
+    private long videoMediaTimescale;
+    private long audioMediaTimescale;
+    private long mvhdDurOff;   private int mvhdDurW;
+    private long vTkhdDurOff;  private int vTkhdDurW;
+    private long aTkhdDurOff;  private int aTkhdDurW;
+    private long vMdhdDurOff;  private int vMdhdDurW;
+    private long aMdhdDurOff;  private int aMdhdDurW;
 
     public Fmp4Muxer(File output) {
         this.output = output;
@@ -86,7 +110,7 @@ public final class Fmp4Muxer implements SabrDownloader.SegmentSink, Closeable {
     // ---- SegmentSink ----
 
     @Override
-    public void onSegment(boolean isAudio, boolean isInit, byte[] data) {
+    public void onSegment(boolean isAudio, boolean isInit, long durationMs, byte[] data) {
         if (failed || data == null || data.length == 0) {
             return;
         }
@@ -94,6 +118,10 @@ public final class Fmp4Muxer implements SabrDownloader.SegmentSink, Closeable {
             if (isInit) {
                 onInit(isAudio, data);
             } else {
+                if (durationMs > 0) {
+                    if (isAudio) audioDurationMs += durationMs;
+                    else videoDurationMs += durationMs;
+                }
                 onMedia(isAudio, data);
             }
         } catch (Throwable t) {
@@ -173,9 +201,15 @@ public final class Fmp4Muxer implements SabrDownloader.SegmentSink, Closeable {
         byte[] mvex = box("mvex", concat(videoTrex, audioTrex));
         byte[] moov = box("moov", concat(mvhd, videoTrak, audioTrak, mvex));
 
-        out = new BufferedOutputStream(new FileOutputStream(output), 1 << 16);
-        out.write(ftyp);
-        out.write(moov);
+        // The moov is written immediately after the ftyp, so a field at offset
+        // `rel` within the moov byte[] sits at file offset ftyp.length + rel.
+        // Locate the duration fields (patched at close) before we write.
+        locateDurationFields(moov, ftyp.length);
+
+        raf = new RandomAccessFile(output, "rw");
+        raf.setLength(0);
+        raf.write(ftyp);
+        raf.write(moov);
         headerWritten = true;
         if (BuildConfig.DEBUG) {
             Log.d(TAG, "Header written (ftyp=" + ftyp.length + " moov=" + moov.length + ")");
@@ -217,22 +251,59 @@ public final class Fmp4Muxer implements SabrDownloader.SegmentSink, Closeable {
             if ("moof".equals(type)) {
                 setMoofTrackId(seg, p, boxEnd, trackId);
             }
-            out.write(seg, p, boxEnd - p);
+            raf.write(seg, p, boxEnd - p);
             p = boxEnd;
         }
     }
 
     @Override
     public void close() {
-        if (out != null) {
-            try {
-                out.flush();
-                out.close();
-            } catch (IOException e) {
-                fail("close", e);
-            }
-            out = null;
+        if (raf == null) {
+            return;
         }
+        try {
+            if (headerWritten && !failed) {
+                patchDurations();
+            }
+            raf.close();
+        } catch (IOException e) {
+            fail("close", e);
+        }
+        raf = null;
+    }
+
+    /** Patch the placeholder header durations with the real downloaded length. */
+    private void patchDurations() throws IOException {
+        long maxMs = Math.max(videoDurationMs, audioDurationMs);
+        patch(mvhdDurOff, mvhdDurW, scale(maxMs, movieTimescale));
+        patch(vTkhdDurOff, vTkhdDurW, scale(videoDurationMs, movieTimescale));
+        patch(aTkhdDurOff, aTkhdDurW, scale(audioDurationMs, movieTimescale));
+        patch(vMdhdDurOff, vMdhdDurW, scale(videoDurationMs, videoMediaTimescale));
+        patch(aMdhdDurOff, aMdhdDurW, scale(audioDurationMs, audioMediaTimescale));
+        if (BuildConfig.DEBUG) {
+            Log.d(TAG, "Patched durations: video=" + videoDurationMs
+                    + "ms audio=" + audioDurationMs + "ms");
+        }
+    }
+
+    private void patch(long offset, int width, long ticks) throws IOException {
+        if (offset <= 0 || ticks < 0) {
+            return;
+        }
+        raf.seek(offset);
+        if (width == 8) {
+            raf.writeLong(ticks);
+        } else {
+            raf.writeInt((int) ticks);
+        }
+    }
+
+    private static long scale(long ms, long timescale) {
+        if (ms <= 0 || timescale <= 0) {
+            return 0;
+        }
+        // ms * timescale / 1000, rounded.
+        return Math.round((double) ms * (double) timescale / 1000.0);
     }
 
     private void fail(String why, Throwable t) {
@@ -240,6 +311,57 @@ public final class Fmp4Muxer implements SabrDownloader.SegmentSink, Closeable {
             failed = true;
             if (BuildConfig.DEBUG) {
                 Log.w(TAG, "fMP4 mux giving up (" + why + "), will fall back to FFmpeg", t);
+            }
+        }
+    }
+
+    // ====================================================================
+    // Duration-field location (offsets relative to the file)
+    // ====================================================================
+
+    private void locateDurationFields(byte[] moov, int moovFileStart) {
+        int mvhd = childOffsetWithin(moov, 8, moov.length, "mvhd");
+        if (mvhd >= 0) {
+            int v = moov[mvhd + 8] & 0xFF;
+            movieTimescale = u32(moov, mvhd + (v == 1 ? 28 : 20));
+            mvhdDurW = (v == 1) ? 8 : 4;
+            mvhdDurOff = moovFileStart + mvhd + (v == 1 ? 32 : 24);
+        }
+
+        int videoTrak = childOffsetWithin(moov, 8, moov.length, "trak");
+        if (videoTrak >= 0) {
+            int end = videoTrak + (int) u32(moov, videoTrak);
+            locateTrakDurations(moov, moovFileStart, videoTrak, end, true);
+
+            int audioTrak = childOffsetWithin(moov, end, moov.length, "trak");
+            if (audioTrak >= 0) {
+                int aEnd = audioTrak + (int) u32(moov, audioTrak);
+                locateTrakDurations(moov, moovFileStart, audioTrak, aEnd, false);
+            }
+        }
+    }
+
+    private void locateTrakDurations(byte[] moov, int moovFileStart,
+                                     int trakStart, int trakEnd, boolean video) {
+        int tkhd = childOffsetWithin(moov, trakStart + 8, trakEnd, "tkhd");
+        if (tkhd >= 0) {
+            int v = moov[tkhd + 8] & 0xFF;
+            int w = (v == 1) ? 8 : 4;
+            long off = moovFileStart + tkhd + (v == 1 ? 36 : 28);
+            if (video) { vTkhdDurOff = off; vTkhdDurW = w; }
+            else { aTkhdDurOff = off; aTkhdDurW = w; }
+        }
+        int mdia = childOffsetWithin(moov, trakStart + 8, trakEnd, "mdia");
+        if (mdia >= 0) {
+            int mdiaEnd = mdia + (int) u32(moov, mdia);
+            int mdhd = childOffsetWithin(moov, mdia + 8, mdiaEnd, "mdhd");
+            if (mdhd >= 0) {
+                int v = moov[mdhd + 8] & 0xFF;
+                int w = (v == 1) ? 8 : 4;
+                long ts = u32(moov, mdhd + (v == 1 ? 28 : 20));
+                long off = moovFileStart + mdhd + (v == 1 ? 32 : 24);
+                if (video) { vMdhdDurOff = off; vMdhdDurW = w; videoMediaTimescale = ts; }
+                else { aMdhdDurOff = off; aMdhdDurW = w; audioMediaTimescale = ts; }
             }
         }
     }
@@ -268,18 +390,9 @@ public final class Fmp4Muxer implements SabrDownloader.SegmentSink, Closeable {
 
     /** First child box of a container box (skips the 8-byte container header). */
     private byte[] findChild(byte[] container, String wanted) {
-        int p = 8;
-        while (p + 8 <= container.length) {
-            long size = u32(container, p);
-            if (size < 8) return null;
-            int end = p + (int) size;
-            if (end > container.length || end <= p) return null;
-            if (type(container, p + 4).equals(wanted)) {
-                return slice(container, p, end);
-            }
-            p = end;
-        }
-        return null;
+        int off = childOffsetWithin(container, 8, container.length, wanted);
+        if (off < 0) return null;
+        return slice(container, off, off + (int) u32(container, off));
     }
 
     private boolean hasSecondChild(byte[] container, String wanted) {
@@ -306,8 +419,6 @@ public final class Fmp4Muxer implements SabrDownloader.SegmentSink, Closeable {
     }
 
     private boolean containsAny(byte[] data, String[] types) {
-        // Shallow scan of the init's box tree (top level + one container level)
-        // is enough for the encryption guard — these boxes sit in stsd/moov.
         for (String t : types) {
             if (containsTypeDeep(data, 0, data.length, t, 0)) return true;
         }
@@ -348,8 +459,6 @@ public final class Fmp4Muxer implements SabrDownloader.SegmentSink, Closeable {
         if (tkhd < 0) { fail("no tkhd", null); return; }
         int payload = tkhd + 8;
         int version = trak[payload] & 0xFF;
-        // fullbox: version(1)+flags(3); then creation/modification by version,
-        // then track_ID.
         int trackIdOff = (version == 1) ? payload + 4 + 16 : payload + 4 + 8;
         putU32(trak, trackIdOff, id);
     }

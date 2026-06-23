@@ -94,7 +94,7 @@ public class SabrDownloader {
      * happen — the sink is best-effort and the caller falls back to those temps.
      */
     public interface SegmentSink {
-        void onSegment(boolean isAudio, boolean isInit, byte[] data);
+        void onSegment(boolean isAudio, boolean isInit, long durationMs, byte[] data);
     }
 
     private ProgressListener progressListener;
@@ -254,7 +254,8 @@ public class SabrDownloader {
                     // on anything unexpected and the caller falls back to the
                     // temp files just written above).
                     if (muxSink != null) {
-                        muxSink.onSegment(seg.isAudio, seg.segmentNumber == 0, seg.data);
+                        muxSink.onSegment(seg.isAudio, seg.segmentNumber == 0,
+                                seg.durationMs, seg.data);
                     }
                     newSegments++;
                 }
@@ -410,6 +411,7 @@ public class SabrDownloader {
         byte[] data;
         boolean isAudio;
         int segmentNumber;
+        long durationMs;
     }
 
     private SegmentResult fetchWithRetry(long playerTimeMs) throws IOException, SabrException {
@@ -787,6 +789,7 @@ public class SabrDownloader {
         seg.data = segmentData;
         seg.isAudio = partial.formatKey.equals(audioFormatKey) || partial.header.isAudio();
         seg.segmentNumber = segNum;
+        seg.durationMs = segDurationMs;
         result.segments.add(seg);
 
         // Update format state
