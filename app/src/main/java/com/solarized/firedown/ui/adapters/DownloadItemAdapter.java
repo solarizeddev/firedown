@@ -690,15 +690,29 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
     private void bindProgressInner(DownloadViewHolder holder, DownloadEntity entity, boolean isGrid) {
         // "Finishing…": the bytes are fully downloaded and a post-download mux
         // pass is running (SABR). Rendered like the indeterminate 'retrieving'
-        // state — a spinner, never a frozen percent — but with its own label in
-        // the list. Grid needs no special text (the ring just spins).
+        // state — a spinner, never a frozen percent — plus an explicit
+        // "Finishing…" label so a muxing row reads as more than a generic
+        // spinner (the list shows it in the progress row; the grid surfaces it
+        // in the otherwise-hidden bottom caption).
         boolean processing = entity.getFileProgress() == Download.PROCESSING_PROGRESS;
         boolean retrieving = entity.getFileIsLive() || processing;
 
         if(isGrid){
-            // No thumbnail — the progress overlay is the entire visual, so
-            // suppress the title/mime block for a clean downloading state.
-            setVisible(holder.bottomBlock, false);
+            // Normally the title/mime block is hidden during a download so the
+            // progress overlay owns the tile. For the "Finishing…" phase we
+            // bring the bottom caption back — with name/mime hidden — so the
+            // spinning ring is paired with an explicit label.
+            if (processing && holder.statusText != null) {
+                setVisible(holder.bottomBlock, true);
+                setVisible(holder.fileName, false);
+                setVisible(holder.mimeText, false);
+                setVisible(holder.mimeDuration, false);
+                holder.statusText.setText(R.string.download_finishing);
+                holder.statusText.setTextColor(mDefaultPrimary);
+                setVisible(holder.statusText, true);
+            } else {
+                setVisible(holder.bottomBlock, false);
+            }
             if (holder.imageProgress != null) {
                 holder.imageProgress.setVisibility(View.VISIBLE);
                 holder.imageProgress.setIndeterminate(retrieving);
