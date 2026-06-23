@@ -688,7 +688,12 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
     }
 
     private void bindProgressInner(DownloadViewHolder holder, DownloadEntity entity, boolean isGrid) {
-        boolean retrieving = entity.getFileIsLive();
+        // "Finishing…": the bytes are fully downloaded and a post-download mux
+        // pass is running (SABR). Rendered like the indeterminate 'retrieving'
+        // state — a spinner, never a frozen percent — but with its own label in
+        // the list. Grid needs no special text (the ring just spins).
+        boolean processing = entity.getFileProgress() == Download.PROCESSING_PROGRESS;
+        boolean retrieving = entity.getFileIsLive() || processing;
 
         if(isGrid){
             // No thumbnail — the progress overlay is the entire visual, so
@@ -718,8 +723,9 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
                 holder.progressBar.setTrackColor(mDefaultPrimaryAlpha);
             }
             if(holder.progressText != null){
-                holder.progressText.setText(retrieving
-                        ? Utils.readableFileSize(entity.getFileSize())
+                holder.progressText.setText(
+                        processing ? holder.itemView.getContext().getString(R.string.download_finishing)
+                        : retrieving ? Utils.readableFileSize(entity.getFileSize())
                         : String.format(Locale.US, "%d%%", entity.getFileProgress()));
             }
             if(holder.progressBar != null){
