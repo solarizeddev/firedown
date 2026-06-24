@@ -56,6 +56,10 @@ public class TabCountDrawable extends Drawable {
     private static final float CORNER_DP = 5f;
     private static final float TEXT_DP   = 9.5f;
     private static final float SIZE_DP   = 20f;
+    /** Letter-spacing (em) between digits — a touch of air so a two-digit
+     *  count doesn't read jammed. Small enough that the CENTER-align
+     *  trailing-gap offset stays sub-pixel. */
+    private static final float TEXT_SPACING_EM = 0.06f;
 
     private final Paint mRectPaint;
     private final Paint mTextPaint;
@@ -81,7 +85,12 @@ public class TabCountDrawable extends Drawable {
         mTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mTextPaint.setTextAlign(Paint.Align.CENTER);
         // Regular weight (no fake-bold): slim digits read lighter and less
-        // crowded inside the box than the old thickened ones.
+        // crowded inside the box than the old thickened ones. A small
+        // letter-spacing adds air between a two-digit count ("1 8") so the
+        // digits don't jam together. (CENTER align measures the spaced
+        // advance, so the box centering still holds; the trailing-gap
+        // offset is sub-pixel at this spacing.)
+        mTextPaint.setLetterSpacing(TEXT_SPACING_EM);
         mTextPaint.setTextSize(TypedValue.applyDimension(
                 TypedValue.COMPLEX_UNIT_DIP, TEXT_DP, resources.getDisplayMetrics()));
     }
