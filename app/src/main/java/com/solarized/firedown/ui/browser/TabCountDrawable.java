@@ -59,7 +59,7 @@ public class TabCountDrawable extends Drawable {
     /** Letter-spacing (em) between digits — a touch of air so a two-digit
      *  count doesn't read jammed. Small enough that the CENTER-align
      *  trailing-gap offset stays sub-pixel. */
-    private static final float TEXT_SPACING_EM = 0.06f;
+    private static final float TEXT_SPACING_EM = 0.03f;
 
     private final Paint mRectPaint;
     private final Paint mTextPaint;
