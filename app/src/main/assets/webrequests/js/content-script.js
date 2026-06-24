@@ -176,6 +176,154 @@ if (window === window.top) {
     return '';
   }
 
+  // --- Audio role discrimination -----------------------------------------
+  // The generic catcher suppresses the page-title override for standalone
+  // AUDIO files because most are incidental (a notification ding, UI sfx,
+  // background music) and would otherwise inherit the page headline
+  // (series.ly /audio/notification.mp3 → "The Breadwinner"). But a real
+  // main-content audio clip (an interview/podcast embedded in a news article)
+  // SHOULD inherit the page metadata. We can only tell the two apart by the
+  // audio's ROLE on the page, not its URL — so when the background asks about
+  // a specific media URL we compute that role here, in the page context.
+  //   'content'    — the page presents this URL as main content (declared as an
+  //                  AudioObject/og:audio, or bound to a user-facing
+  //                  <audio>/<video controls>) → enrich it.
+  //   'incidental' — bound to a hidden/chrome-less element → keep the filename.
+  //   'unknown'    — no element and no declaration (e.g. a `new Audio()` sound,
+  //                  which has no DOM node) → conservative default (suppress).
+  // Top-frame only, like the rest of this responder; an audio element inside a
+  // cross-origin iframe is not inspected (rare for article audio).
+  const absUrl = (u) => {
+    try { return new URL(u, location.href).href; } catch (_) { return ''; }
+  };
+  // Compare two URLs ignoring the #fragment (signed URLs differ only there).
+  const sameUrl = (a, b) => {
+    const x = absUrl(a);
+    const y = absUrl(b);
+    if (!x || !y) return false;
+    return x.split('#')[0] === y.split('#')[0];
+  };
+
+  // Generic depth/breadth-bounded JSON-LD tree walk: calls visit(node) on every
+  // object node and returns the first truthy result (shares the caps the video
+  // walk above uses; budget is per-call). Used by the audio reader below.
+  const eachJsonLdNode = (visit) => {
+    const scripts = document.querySelectorAll('script[type="application/ld+json"]');
+    let budget = MAX_LD_NODES;
+    const walk = (root) => {
+      const stack = [{ node: root, depth: 0 }];
+      const seen = new Set();
+      while (stack.length) {
+        if (budget-- <= 0) break;
+        const { node, depth } = stack.pop();
+        if (!node || typeof node !== 'object' || depth > MAX_LD_DEPTH) continue;
+        if (seen.has(node)) continue;
+        seen.add(node);
+        const hit = visit(node);
+        if (hit) return hit;
+        if (Array.isArray(node)) {
+          for (const item of node) {
+            if (item && typeof item === 'object') stack.push({ node: item, depth: depth + 1 });
+          }
+        } else {
+          for (const key in node) {
+            if (key === '@type') continue;
+            const val = node[key];
+            if (val && typeof val === 'object') stack.push({ node: val, depth: depth + 1 });
+          }
+        }
+      }
+      return null;
+    };
+    for (const s of scripts) {
+      let data;
+      try {
+        data = JSON.parse(s.textContent);
+      } catch (_) {
+        continue;
+      }
+      const hit = walk(data);
+      if (hit) return hit;
+    }
+    return null;
+  };
+
+  const isAudioType = (t) =>
+    t === 'AudioObject' || (Array.isArray(t) && t.includes('AudioObject'));
+
+  // A schema.org AudioObject whose contentUrl (or url) IS the captured media —
+  // the page declaring "this URL is the audio content". Returns its
+  // {name, description, thumbnail} so the consumer can prefer it over the
+  // generic page title; null if no AudioObject points at this URL.
+  const readAudioJsonLd = (mediaUrl) => eachJsonLdNode((node) => {
+    if (!isAudioType(node['@type'])) return null;
+    const contentUrl = ldString(node.contentUrl) || ldString(node.url);
+    if (!contentUrl || !sameUrl(contentUrl, mediaUrl)) return null;
+    return {
+      name: ldString(node.name),
+      description: ldString(node.description),
+      thumbnail: ldImage(node.thumbnailUrl) || ldImage(node.thumbnail),
+    };
+  });
+
+  // og:audio / og:audio:url / og:audio:secure_url pointing at the captured URL.
+  const ogAudioMatches = (mediaUrl) => {
+    const props = ['og:audio', 'og:audio:url', 'og:audio:secure_url'];
+    for (const p of props) {
+      const el = document.querySelector(`meta[property="${p}"]`)
+        || document.querySelector(`meta[name="${p}"]`);
+      const c = el && el.getAttribute('content');
+      if (c && sameUrl(c, mediaUrl)) return true;
+    }
+    return false;
+  };
+
+  // Is this media element one the user is meant to play? `controls` is the
+  // strongest tell; otherwise a laid-out element of real size. A hidden /
+  // zero-size / chrome-less element is the incidental case.
+  const isUserFacingMedia = (el) => {
+    if (!el) return false;
+    if (el.controls) return true;
+    let r = null;
+    try { r = el.getBoundingClientRect(); } catch (_) { r = null; }
+    return !!(r && el.offsetParent !== null && r.width >= 100 && r.height >= 20);
+  };
+
+  // The <audio>/<video> element whose src/currentSrc/<source> resolves to the
+  // captured URL, or null (the URL was played without a DOM element).
+  const findBoundMedia = (mediaUrl) => {
+    const els = document.querySelectorAll('audio, video');
+    for (let i = 0; i < els.length; i++) {
+      const el = els[i];
+      if (sameUrl(el.currentSrc, mediaUrl) || sameUrl(el.src, mediaUrl)) return el;
+      const sources = el.querySelectorAll ? el.querySelectorAll('source') : [];
+      for (let j = 0; j < sources.length; j++) {
+        if (sameUrl(sources[j].src, mediaUrl)) return el;
+      }
+    }
+    return null;
+  };
+
+  // Decide the role of a captured audio URL on this page (see the block above).
+  const resolveAudioContent = (mediaUrl) => {
+    if (!mediaUrl) return { role: 'unknown' };
+    // Declared content wins and carries its own metadata.
+    const audioLd = readAudioJsonLd(mediaUrl);
+    if (audioLd) {
+      return {
+        role: 'content',
+        name: audioLd.name,
+        description: audioLd.description,
+        thumbnail: audioLd.thumbnail,
+      };
+    }
+    if (ogAudioMatches(mediaUrl)) return { role: 'content' };
+    // Otherwise classify by the element it's bound to.
+    const el = findBoundMedia(mediaUrl);
+    if (el) return { role: isUserFacingMedia(el) ? 'content' : 'incidental' };
+    return { role: 'unknown' };
+  };
+
   browser.runtime.onMessage.addListener((msg, sender) => {
     if (!msg || msg.kind !== 'get-page-metadata') return;
     const meta = (selector, attr) => {
@@ -196,9 +344,18 @@ if (window === window.top) {
     // captured clip's poster. og:image / JSON-LD thumbnailUrl are the fallbacks.
     const videoEl = document.querySelector('video[poster]');
     const poster = (videoEl && videoEl.poster ? videoEl.poster : '') || posterFromPlayerBg();
+    // When the background passes the captured media URL, classify whether a
+    // standalone audio file is the page's main content (enrich) or incidental
+    // (keep the filename) — see resolveAudioContent. Non-audio captures ignore
+    // these fields.
+    const audio = msg.mediaUrl ? resolveAudioContent(msg.mediaUrl) : { role: 'unknown' };
     return Promise.resolve({
       url: location.href,
       title: document.title || '',
+      audioRole: audio.role,
+      audioLdName: audio.name || '',
+      audioLdDescription: audio.description || '',
+      audioLdThumbnail: audio.thumbnail || '',
       description: ogp('description'),
       ogTitle: ogp('og:title'),
       ogDescription: ogp('og:description'),

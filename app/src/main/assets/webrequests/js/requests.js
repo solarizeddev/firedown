@@ -370,13 +370,17 @@ function getTypeFromUrl(url) {
 // (and GeckoInspectTask lets that name win over the URL filename), so such a
 // sound gets captured looking "as if it was the file we are trying to capture":
 // series.ly's /audio/notification.mp3 came out named after the movie ("The
-// Breadwinner"). Suppress the title override for standalone audio only — VIDEO
-// keeps it (an .mp4 embedded in a news article still inherits the headline), and
-// so do HLS/DASH manifests (master.m3u8 / manifest.mpd — always generic) and
-// tokenized/extensionless URLs. Trade-off: a main-content audio file on a
-// parser-less site keeps its own filename instead of the page title — acceptable,
-// and for audio the filename is usually the better label anyway. (Audio sites
-// with real metadata — Apple Podcasts — go through a parser, not this path.)
+// Breadwinner"). So the title override is gated for standalone audio: it is
+// adopted ONLY when the page presents the URL as main content (content-script
+// audioRole === 'content' — a declared AudioObject/og:audio or a user-facing
+// <audio>/<video controls> bound to it; see the emit site below), and skipped
+// otherwise so an incidental sound keeps its filename. VIDEO is always enriched
+// (an .mp4 embedded in a news article inherits the headline), and so are
+// HLS/DASH manifests (master.m3u8 / manifest.mpd — always generic) and
+// tokenized/extensionless URLs (urlIsStandaloneAudio is false for them). This
+// recovers the real-audio-content case (an interview/podcast clip in an article)
+// the old extension-only suppression could not tell from a ding. (Audio sites
+// with rich metadata — Apple Podcasts — go through a parser, not this path.)
 const AUDIO_FILE_RE = /^https?:\/\/[^/]+\/[^?#]*\.(?:mp3|m4a|aac|wav|weba|opus|flac|oga|midi?)(?:[?#]|$)/i;
 function urlIsStandaloneAudio(url) {
   return AUDIO_FILE_RE.test(url);
@@ -671,36 +675,50 @@ async function processResponse(data, listenerName, skipClassify = false) {
   // user-saveable. The query is fire-and-forget with a short timeout;
   // if the content script isn't there yet or the page blocks messaging,
   // the message just goes without the enriched fields.
-  if ((data.type === 'media' || data.type === 'object') && tabId >= 0
-      && !urlIsStandaloneAudio(data.url)) {
+  if ((data.type === 'media' || data.type === 'object') && tabId >= 0) {
     try {
+      // Pass the captured URL so the content script can classify a standalone
+      // audio file's ROLE on the page (main content vs incidental) — see below.
       const meta = await Promise.race([
-        browser.tabs.sendMessage(tabId, { kind: 'get-page-metadata' }),
+        browser.tabs.sendMessage(tabId, { kind: 'get-page-metadata', mediaUrl: data.url }),
         new Promise((resolve) => setTimeout(() => resolve(null), 300)),
       ]);
       if (meta) {
-        // Prefer video-specific sources first: on video SPAs (YouTube, etc.)
-        // the JSON-LD VideoObject / og:video:title carry the real current
-        // video name while <title>/og:title are often generic ("YouTube").
-        // Then fall back to the page-level chain.
-        //   name → videoLd > og:video:title > og:title > twitter:title > title
-        //   description → videoLd > meta description > og:description > twitter:description
-        // Native side sanitises both; we keep them as the raw page strings here.
-        const name = meta.videoLdName || meta.ogVideoTitle
-          || meta.ogTitle || meta.twitterTitle || meta.title || '';
-        const description = meta.videoLdDescription || meta.description
-          || meta.ogDescription || meta.twitterDescription || '';
-        // Thumbnail: the page's poster, ranked most-specific first. The native
-        // side stores it as the entity's thumbnail (JsonHelper "img" →
-        // setFileThumbnail), and GlideHelper then loads that image directly
-        // instead of pointing FFmpeg at the media URL to decode a frame — a
-        // plain JPEG fetch in place of a video-demux probe. The generic catcher
-        // never sets img itself, so this is the only source for it; a dedicated
-        // parser that already supplied img is not overwritten.
-        const img = meta.poster || meta.videoLdThumbnail || meta.ogImage || '';
-        if (name && !message.name) message.name = name;
-        if (description && !message.description) message.description = description;
-        if (img && !message.img) message.img = img;
+        // A standalone audio file is enriched with the page metadata ONLY when
+        // the page presents it as main content (a declared AudioObject/og:audio,
+        // or a user-facing <audio>/<video controls> bound to the URL — audioRole
+        // 'content'). Otherwise it is an incidental sound (notification ding, UI
+        // sfx, background music) that would be mislabelled by the page headline
+        // (series.ly /audio/notification.mp3 → "The Breadwinner"), so it keeps
+        // its URL filename. Video, HLS/DASH manifests and tokenized/extensionless
+        // URLs are always enriched (urlIsStandaloneAudio is false for them).
+        const incidentalAudio = urlIsStandaloneAudio(data.url) && meta.audioRole !== 'content';
+        if (!incidentalAudio) {
+          // Prefer the most specific source first: a declared AudioObject (for
+          // main-content audio), then video-specific sources — on video SPAs
+          // (YouTube, etc.) the JSON-LD VideoObject / og:video:title carry the
+          // real current name while <title>/og:title are generic ("YouTube") —
+          // then the page-level chain.
+          //   name → audioLd > videoLd > og:video:title > og:title > twitter:title > title
+          //   description → audioLd > videoLd > meta description > og:description > twitter:description
+          // Native side sanitises both; we keep them as the raw page strings here.
+          const name = meta.audioLdName || meta.videoLdName || meta.ogVideoTitle
+            || meta.ogTitle || meta.twitterTitle || meta.title || '';
+          const description = meta.audioLdDescription || meta.videoLdDescription
+            || meta.description || meta.ogDescription || meta.twitterDescription || '';
+          // Thumbnail: the page's poster, ranked most-specific first. The native
+          // side stores it as the entity's thumbnail (JsonHelper "img" →
+          // setFileThumbnail), and GlideHelper then loads that image directly
+          // instead of pointing FFmpeg at the media URL to decode a frame — a
+          // plain JPEG fetch in place of a video-demux probe. The generic catcher
+          // never sets img itself, so this is the only source for it; a dedicated
+          // parser that already supplied img is not overwritten.
+          const img = meta.poster || meta.videoLdThumbnail
+            || meta.audioLdThumbnail || meta.ogImage || '';
+          if (name && !message.name) message.name = name;
+          if (description && !message.description) message.description = description;
+          if (img && !message.img) message.img = img;
+        }
       }
     } catch (e) {
       // Content script not loaded (file://, about:, restricted) — fine, skip.
