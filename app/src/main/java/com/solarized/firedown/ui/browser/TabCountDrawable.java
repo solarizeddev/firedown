@@ -41,10 +41,17 @@ import androidx.annotation.Nullable;
  */
 public class TabCountDrawable extends Drawable {
 
-    /** Stroke width matches the bottom bar's count-rect restroke. */
-    private static final float STROKE_DP = 1.8f;
+    /** Stroke width matches the bottom bar's count-rect restroke. A
+     *  lighter stroke + smaller digits give the count room to breathe
+     *  inside the fixed 20dp box: a bold two-digit count ("18") at the
+     *  old 10dp/1.8dp nearly spanned the ~16.4dp interior and read
+     *  cramped. Box footprint (SIZE_DP) is unchanged — the hosts reference
+     *  20dp (the toggle's iconSize, the bottom bar's 20dp ImageView) — so
+     *  only the breathing room around the digits changes, in BOTH the
+     *  bottom bar and the tabs-header toggle that share this drawable. */
+    private static final float STROKE_DP = 1.5f;
     private static final float CORNER_DP = 5f;
-    private static final float TEXT_DP   = 10f;
+    private static final float TEXT_DP   = 8.5f;
     private static final float SIZE_DP   = 20f;
 
     private final Paint mRectPaint;
