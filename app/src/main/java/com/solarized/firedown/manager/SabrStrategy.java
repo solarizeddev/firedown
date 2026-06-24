@@ -9,14 +9,20 @@ import androidx.annotation.Nullable;
 import com.solarized.firedown.data.Download;
 import com.solarized.firedown.geckoview.PoTokenGenerator;
 import com.solarized.firedown.ffmpegutils.FFmpegDownloader;
+import com.solarized.firedown.ffmpegutils.FFmpegEntity;
 import com.solarized.firedown.ffmpegutils.FFmpegErrors;
 import com.solarized.firedown.ffmpegutils.FFmpegListener;
+import com.solarized.firedown.ffmpegutils.FFmpegMetaData;
+import com.solarized.firedown.ffmpegutils.FFmpegMetaDataReader;
+import com.solarized.firedown.ffmpegutils.FFmpegStreamInfo;
+import com.solarized.firedown.sabr.Fmp4Muxer;
 import com.solarized.firedown.sabr.SabrDownloader;
 import com.solarized.firedown.sabr.SabrMessages;
 import com.solarized.firedown.utils.FileUriHelper;
 import com.solarized.firedown.utils.MessageHelper;
 import com.solarized.firedown.utils.WebUtils;
 
+import java.util.ArrayList;
 import java.util.Map;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -42,11 +48,17 @@ public class SabrStrategy implements DownloadStrategy {
     // slice, so it no longer needs a reserved weight.
     private static final int DOWNLOAD_WEIGHT = 100;
 
+    /** Minimum time the "Finishing…" state is held on screen. The mux can be
+     *  sub-second (stream copy), too fast for the UI to ever render the state
+     *  before FINISHED replaces it; this guarantees it's perceptible. */
+    private static final long MIN_FINISHING_VISIBLE_MS = 700;
+
     private SabrDownloader sabrDownloader;
     private DownloadCallback callback;
     private DownloadContext context;
     private long lastUpdated;
     private volatile boolean stopped;
+    private Fmp4Muxer muxer;
 
     @Override
     public void execute(DownloadRequest request, DownloadContext context, DownloadCallback callback)
@@ -107,6 +119,12 @@ public class SabrStrategy implements DownloadStrategy {
         try {
             executeInternal(request, file, tempDir);
         } finally {
+            // Close the inline muxer's output stream on every exit path
+            // (idempotent — also called before validation). cleanupTempDir then
+            // removes the raw temp segments.
+            if (muxer != null) {
+                muxer.close();
+            }
             cleanupTempDir(tempDir);
         }
     }
@@ -194,6 +212,15 @@ public class SabrStrategy implements DownloadStrategy {
             reportProgress(dlPct, downloadedMs, totalMs, sabrDownloadedBytes(tempDir));
         });
 
+        // Inline fMP4 muxer: interleaves video+audio into `file` as segments
+        // arrive, so the playable file is ready the instant the download ends —
+        // no FFmpeg mux pass. It writes ALONGSIDE the temp files (which are kept
+        // as the fallback) and self-fails on anything it can't handle; after the
+        // download we probe-validate `file` and fall back to the FFmpeg remux of
+        // the temps if the inline result isn't usable.
+        muxer = new Fmp4Muxer(file);
+        sabrDownloader.setMuxSink(muxer);
+
         Log.d(TAG, "Starting SABR download: video=" + request.getSabrVideoItag()
                 + " audio=" + request.getSabrAudioItag()
                 + " duration=" + durationMs + "ms"
@@ -256,68 +283,96 @@ public class SabrStrategy implements DownloadStrategy {
         // Always mux — even on stop (finish). User gets a playable partial file.
         // ====================================================================
 
-        // Bytes are all in; the FFmpeg mux is a second pass that can take a few
-        // seconds on a large file. Rather than freeze the bar near the top (the
-        // confusing "stuck at 95%" the mux used to show), flip the row into an
-        // indeterminate "Finishing…" state for the duration of the mux. Sealed
-        // (user-finished) downloads skip this — onProgress no-ops once sealed
-        // and they're about to flip to FINISHED anyway.
-        callback.onProgress(Download.PROCESSING_PROGRESS, 0, 0);
+        // Bytes are all in; the FFmpeg mux is a second pass. Rather than freeze
+        // the bar near the top (the confusing "stuck" the mux used to show),
+        // flip the row into an indeterminate "Finishing…" state for the duration
+        // of the mux. onProcessing() is honoured even when sealed, so this also
+        // covers the user-finish path (which seals to FINISHED, then muxes the
+        // partial data — often the LONGEST mux, and the one most in need of a
+        // clear signal).
+        callback.onProcessing();
+        long finishingShownAt = System.currentTimeMillis();
 
-        FFmpegDownloader ffmpegDownloader = new FFmpegDownloader();
-        ffmpegDownloader.addListener(new FFmpegListener() {
-            @Override
-            public void onStarted() {}
+        // Prefer the inline-muxed file. SabrDownloader streamed video+audio into
+        // `file` as the segments arrived, so when the muxer produced a valid
+        // interleaved fragmented MP4 there is no mux pass left to run. Probe-
+        // validate it first; on any shortfall (the muxer self-failed, or the
+        // probe can't read a clean file) fall back to the proven FFmpeg
+        // stream-copy of the kept temp files.
+        muxer.close();
+        boolean inlineMuxed = muxer.isHeaderWritten()
+                && file.exists() && file.length() > 0
+                && isPlayableMux(file);
+        Log.d(TAG, "Inline fMP4 mux "
+                + (inlineMuxed ? "succeeded — skipping FFmpeg"
+                               : "unavailable — using FFmpeg"));
 
-            @Override
-            public void onProgress(long downloaded, long total) {
-                // No per-tick progress during the mux — the row stays in the
-                // indeterminate "Finishing…" state set above. (Reporting a
-                // determinate mux percent here is exactly what produced the
-                // jarring "stuck near 100%" the intermediate state replaces.)
+        if (!inlineMuxed) {
+            FFmpegDownloader ffmpegDownloader = new FFmpegDownloader();
+            ffmpegDownloader.addListener(new FFmpegListener() {
+                @Override
+                public void onStarted() {}
+
+                @Override
+                public void onProgress(long downloaded, long total) {
+                    // No per-tick progress during the mux — the row stays in the
+                    // indeterminate "Finishing…" state set above.
+                }
+
+                @Override
+                public void onFinished() {}
+            });
+
+            // Build inputs — only include audio if it has data
+            String[] inputs;
+            if (result.audioFile != null && result.audioFile.exists()
+                    && result.audioFile.length() > 0) {
+                inputs = new String[]{
+                        result.videoFile.getAbsolutePath(),
+                        result.audioFile.getAbsolutePath()
+                };
+            } else {
+                inputs = new String[]{ result.videoFile.getAbsolutePath() };
             }
 
-            @Override
-            public void onFinished() {}
-        });
+            int muxResult = ffmpegDownloader.start(
+                    inputs,
+                    (Map<String, String>) null,
+                    null,
+                    file.getAbsolutePath(),
+                    result.videoFile.length()
+                            + (result.audioFile != null ? result.audioFile.length() : 0)
+            );
 
-        // Build inputs — only include audio if it has data
-        String[] inputs;
-        if (result.audioFile != null && result.audioFile.exists()
-                && result.audioFile.length() > 0) {
-            inputs = new String[]{
-                    result.videoFile.getAbsolutePath(),
-                    result.audioFile.getAbsolutePath()
-            };
-        } else {
-            inputs = new String[]{ result.videoFile.getAbsolutePath() };
+            ffmpegDownloader.free();
+
+            if (!isDeleted() && muxResult < 0) {
+                Log.e(TAG, "FFmpeg mux failed: " + muxResult);
+                if (muxResult == FFmpegErrors.ENOENT) {
+                    callback.onError(MessageHelper.EXTERNAL_STORAGE);
+                } else {
+                    callback.onError(MessageHelper.IOEXCEPTION);
+                }
+                return;
+            }
         }
 
-        int muxResult = ffmpegDownloader.start(
-                inputs,
-                (Map<String, String>) null,
-                null,
-                file.getAbsolutePath(),
-                result.videoFile.length()
-                        + (result.audioFile != null ? result.audioFile.length() : 0)
-        );
-
-        ffmpegDownloader.free();
-
-        // Delete arrived during mux
+        // Delete arrived during mux / validation
         if (isDeleted()) {
             if (file.exists()) file.delete();
             return;
         }
 
-        if (muxResult < 0) {
-            Log.e(TAG, "FFmpeg mux failed: " + muxResult);
-            if (muxResult == FFmpegErrors.ENOENT) {
-                callback.onError(MessageHelper.EXTERNAL_STORAGE);
-            } else {
-                callback.onError(MessageHelper.IOEXCEPTION);
-            }
-            return;
+        // The mux for SABR is a stream copy of already-fMP4 segments, so for a
+        // small clip it can complete in well under a second — fast enough that
+        // the "Finishing…" state would be written and then overwritten by
+        // FINISHED within one frame, and the Paging differ coalesces the two so
+        // the user never sees it. Hold the state on screen for a short minimum
+        // so the transition is always perceptible. Applies to the user-finish
+        // path too (a tiny partial muxes just as fast).
+        long shownFor = System.currentTimeMillis() - finishingShownAt;
+        if (shownFor < MIN_FINISHING_VISIBLE_MS) {
+            sleep(MIN_FINISHING_VISIBLE_MS - shownFor);
         }
 
         // ====================================================================
@@ -398,6 +453,17 @@ public class SabrStrategy implements DownloadStrategy {
         return null;
     }
 
+    /** Interruptible sleep — re-flags the thread interrupt on wake so the
+     *  download thread's cancellation path still sees it. */
+    private static void sleep(long ms) {
+        if (ms <= 0) return;
+        try {
+            Thread.sleep(ms);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
     private void reportProgress(int percent, long downloaded, long total) {
         reportProgress(percent, downloaded, total, -1);
     }
@@ -415,6 +481,39 @@ public class SabrStrategy implements DownloadStrategy {
             lastUpdated = now;
             if (bytes > 0) callback.onFileSizeKnown(bytes);
             callback.onProgress(Math.min(percent, 100), downloaded, total);
+        }
+    }
+
+    /**
+     * Probe-validates an inline-muxed file before it's trusted over the FFmpeg
+     * fallback: it must read as a real container with a positive duration and at
+     * least one video stream. A muxer bug that produced a malformed file fails
+     * here, and the caller re-muxes the kept temp files with FFmpeg instead — so
+     * an unverified muxer can never ship a broken download.
+     */
+    private static boolean isPlayableMux(File file) {
+        FFmpegMetaDataReader reader = new FFmpegMetaDataReader();
+        try {
+            FFmpegMetaData meta = reader.getStreamInfo(file.getAbsolutePath(), null, false);
+            if (meta == null || meta.getDuration() <= 0) {
+                return false;
+            }
+            ArrayList<FFmpegEntity> streams = reader.getStreams();
+            if (streams == null) {
+                return false;
+            }
+            for (FFmpegEntity stream : streams) {
+                if (stream != null
+                        && stream.getCodecType() == FFmpegStreamInfo.CodecType.VIDEO.getValue()) {
+                    return true;
+                }
+            }
+            return false;
+        } catch (Exception e) {
+            return false;
+        } finally {
+            reader.stop();
+            reader.release();
         }
     }
 
