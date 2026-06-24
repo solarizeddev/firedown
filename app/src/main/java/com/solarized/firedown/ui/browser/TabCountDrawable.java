@@ -41,17 +41,20 @@ import androidx.annotation.Nullable;
  */
 public class TabCountDrawable extends Drawable {
 
-    /** Stroke width matches the bottom bar's count-rect restroke. A
-     *  lighter stroke + smaller digits give the count room to breathe
-     *  inside the fixed 20dp box: a bold two-digit count ("18") at the
-     *  old 10dp/1.8dp nearly spanned the ~16.4dp interior and read
-     *  cramped. Box footprint (SIZE_DP) is unchanged — the hosts reference
-     *  20dp (the toggle's iconSize, the bottom bar's 20dp ImageView) — so
-     *  only the breathing room around the digits changes, in BOTH the
-     *  bottom bar and the tabs-header toggle that share this drawable. */
+    /** Stroke width matches the bottom bar's count-rect restroke. The
+     *  count read cramped in the fixed 20dp box because the digits were
+     *  drawn FAKE-BOLD: a thickened two-digit count ("18") nearly spanned
+     *  the ~16.4dp interior. The fix is slimmer digits, not smaller ones —
+     *  regular (non-bold) weight at ~9.5dp with a lighter 1.5dp outline
+     *  stays legible while leaving margin around the number (shrinking the
+     *  text instead just read too small). Box footprint (SIZE_DP) is
+     *  unchanged — the hosts reference 20dp (the toggle's iconSize, the
+     *  bottom bar's 20dp ImageView) — so only the digit weight/room
+     *  changes, in BOTH the bottom bar and the tabs-header toggle that
+     *  share this drawable. */
     private static final float STROKE_DP = 1.5f;
     private static final float CORNER_DP = 5f;
-    private static final float TEXT_DP   = 8.5f;
+    private static final float TEXT_DP   = 9.5f;
     private static final float SIZE_DP   = 20f;
 
     private final Paint mRectPaint;
@@ -77,7 +80,8 @@ public class TabCountDrawable extends Drawable {
 
         mTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mTextPaint.setTextAlign(Paint.Align.CENTER);
-        mTextPaint.setFakeBoldText(true);
+        // Regular weight (no fake-bold): slim digits read lighter and less
+        // crowded inside the box than the old thickened ones.
         mTextPaint.setTextSize(TypedValue.applyDimension(
                 TypedValue.COMPLEX_UNIT_DIP, TEXT_DP, resources.getDisplayMetrics()));
     }
