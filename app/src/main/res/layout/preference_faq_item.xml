@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Custom row for the sync FAQ (settings_sync_help). Plain stacked title +
+  summary, no icon/widget frame (these are non-selectable info rows). The only
+  reason it's custom: the question (@android:id/title) is the brand orange — a
+  stock Preference has no title-colour attribute, and a ForegroundColorSpan set
+  in code didn't render. The answer (@android:id/summary) keeps the muted body
+  colour. The preference binder fills @android:id/title / @android:id/summary.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingStart="16dp"
+    android:paddingEnd="16dp"
+    android:paddingTop="14dp"
+    android:paddingBottom="14dp">
+
+    <TextView
+        android:id="@android:id/title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+        android:textColor="@color/brand_orange" />
+
+    <TextView
+        android:id="@android:id/summary"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="3dp"
+        android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+        android:textColor="?attr/colorOnSurfaceVariant" />
+
+</LinearLayout>

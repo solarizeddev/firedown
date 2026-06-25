@@ -2,54 +2,46 @@
   "How sync works" help screen (SyncHelpFragment) — the recovery-code /
   encryption FAQ, promoted from a dialog to a full NavController destination so
   the (growing) content scrolls naturally and handles large fonts / TalkBack.
-  Static, offline Q/A: each item is a non-selectable Preference with the
-  question as the title and the answer as the (wrapping) summary. iconSpaceReserved
-  is off so the text is flush-left as a clean FAQ rather than indented for a
-  missing icon.
+  Static, offline Q/A: each item is a non-selectable Preference using the custom
+  preference_faq_item layout, which colours the question (title) brand orange and
+  leaves the answer (summary) the muted body colour.
 -->
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
     <Preference
+        android:layout="@layout/preference_faq_item"
         android:selectable="false"
         android:title="@string/settings_sync_faq_q1"
-        android:summary="@string/settings_sync_faq_a1"
-        app:singleLineTitle="false"
-        app:iconSpaceReserved="false" />
+        android:summary="@string/settings_sync_faq_a1" />
 
     <Preference
+        android:layout="@layout/preference_faq_item"
         android:selectable="false"
         android:title="@string/settings_sync_faq_q2"
-        android:summary="@string/settings_sync_faq_a2"
-        app:singleLineTitle="false"
-        app:iconSpaceReserved="false" />
+        android:summary="@string/settings_sync_faq_a2" />
 
     <Preference
+        android:layout="@layout/preference_faq_item"
         android:selectable="false"
         android:title="@string/settings_sync_faq_q3"
-        android:summary="@string/settings_sync_faq_a3"
-        app:singleLineTitle="false"
-        app:iconSpaceReserved="false" />
+        android:summary="@string/settings_sync_faq_a3" />
 
     <Preference
+        android:layout="@layout/preference_faq_item"
         android:selectable="false"
         android:title="@string/settings_sync_faq_q4"
-        android:summary="@string/settings_sync_faq_a4"
-        app:singleLineTitle="false"
-        app:iconSpaceReserved="false" />
+        android:summary="@string/settings_sync_faq_a4" />
 
     <Preference
+        android:layout="@layout/preference_faq_item"
         android:selectable="false"
         android:title="@string/settings_sync_faq_q5"
-        android:summary="@string/settings_sync_faq_a5"
-        app:singleLineTitle="false"
-        app:iconSpaceReserved="false" />
+        android:summary="@string/settings_sync_faq_a5" />
 
     <Preference
+        android:layout="@layout/preference_faq_item"
         android:selectable="false"
         android:title="@string/settings_sync_faq_q6"
-        android:summary="@string/settings_sync_faq_a6"
-        app:singleLineTitle="false"
-        app:iconSpaceReserved="false" />
+        android:summary="@string/settings_sync_faq_a6" />
 
 </PreferenceScreen>
