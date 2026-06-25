@@ -185,12 +185,18 @@ if (window === window.top) {
   // SHOULD inherit the page metadata. We can only tell the two apart by the
   // audio's ROLE on the page, not its URL — so when the background asks about
   // a specific media URL we compute that role here, in the page context.
-  //   'content'    — the page presents this URL as main content (declared as an
-  //                  AudioObject/og:audio, or bound to a user-facing
-  //                  <audio>/<video controls>) → enrich it.
-  //   'incidental' — bound to a hidden/chrome-less element → keep the filename.
+  //   'content'    — the page presents this URL as main content: declared as an
+  //                  AudioObject/og:audio, OR bound to an <audio>/<video> DOM
+  //                  element (even a hidden, controls-less one — the standard
+  //                  custom-UI podcast player, e.g. podverse) → enrich it.
   //   'unknown'    — no element and no declaration (e.g. a `new Audio()` sound,
-  //                  which has no DOM node) → conservative default (suppress).
+  //                  which has no DOM node — every incidental UI ding/notification
+  //                  is played this way) → conservative default (suppress).
+  // We deliberately do NOT require the bound element to be "user-facing"
+  // (controls / on-screen size): real podcast & article players hide a native
+  // <audio> behind their own React/JS controls, so requiring controls misses
+  // them. The genuinely-incidental case has no DOM element at all, so the mere
+  // presence of a bound element is itself the content signal.
   // Top-frame only, like the rest of this responder; an audio element inside a
   // cross-origin iframe is not inspected (rare for article audio).
   const absUrl = (u) => {
@@ -278,17 +284,6 @@ if (window === window.top) {
     return false;
   };
 
-  // Is this media element one the user is meant to play? `controls` is the
-  // strongest tell; otherwise a laid-out element of real size. A hidden /
-  // zero-size / chrome-less element is the incidental case.
-  const isUserFacingMedia = (el) => {
-    if (!el) return false;
-    if (el.controls) return true;
-    let r = null;
-    try { r = el.getBoundingClientRect(); } catch (_) { r = null; }
-    return !!(r && el.offsetParent !== null && r.width >= 100 && r.height >= 20);
-  };
-
   // The <audio>/<video> element whose src/currentSrc/<source> resolves to the
   // captured URL, or null (the URL was played without a DOM element).
   const findBoundMedia = (mediaUrl) => {
@@ -318,9 +313,11 @@ if (window === window.top) {
       };
     }
     if (ogAudioMatches(mediaUrl)) return { role: 'content' };
-    // Otherwise classify by the element it's bound to.
-    const el = findBoundMedia(mediaUrl);
-    if (el) return { role: isUserFacingMedia(el) ? 'content' : 'incidental' };
+    // A bound <audio>/<video> DOM element ⇒ the page embedded a player for this
+    // URL ⇒ main content (hidden/controls-less custom players included). The
+    // incidental case (a `new Audio()` ding) binds no element, so it falls
+    // through to 'unknown' and stays suppressed.
+    if (findBoundMedia(mediaUrl)) return { role: 'content' };
     return { role: 'unknown' };
   };
 
