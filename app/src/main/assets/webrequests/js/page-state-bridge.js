@@ -707,8 +707,11 @@
     // (PROGRESSIVE_RE / HLS_MASTER_RE are defined above, shared with the player-API
     //  reader.)
     // Keys a player holds its source(s) under. The VALUE still has to be a media
-    // URL (or a same-origin delegate), so a broad key like `url` is safe.
-    const MEDIA_KEY_RE = /^(?:video_?url|videourl|url|uri|src|source|file|hls|hls_?url|m3u8|dash|manifest_?url|playback_?url|stream_?url|content_?url|media_?url|play_?url)$/i;
+    // URL (or a same-origin delegate), so a broad key like `url` is safe. Audio
+    // keys (audio_url/enclosure — podcast/article audio in page state, e.g.
+    // substack's __NEXT_DATA__ TTS `audio_url`) sit alongside the video ones now
+    // that classifyInto accepts audio extensions (AUDIO_RE).
+    const MEDIA_KEY_RE = /^(?:video_?url|videourl|audio_?url|audiourl|url|uri|src|source|file|hls|hls_?url|m3u8|dash|manifest_?url|playback_?url|stream_?url|content_?url|media_?url|play_?url|enclosure|enclosure_?url)$/i;
     // Keys whose value is an ARRAY of quality variants for ONE video (so the whole
     // array is grouped into a single entity, not split). Deliberately narrow —
     // a player's source/quality list, NOT a generic `videos`/`items`/`playlist`
