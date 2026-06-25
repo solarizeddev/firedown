@@ -78,6 +78,8 @@ public class Preferences {
     public static final String SETTINGS_SYNC = "com.solarized.firedown.preferences.settings.sync";
     /** Sync screen actions (clickable preferences). */
     public static final String SETTINGS_SYNC_SHOW_CODE = "com.solarized.firedown.preferences.sync.show.code";
+    /** Exports the recovery code to a user-chosen text file (SAF). */
+    public static final String SETTINGS_SYNC_EXPORT_CODE = "com.solarized.firedown.preferences.sync.export.code";
     public static final String SETTINGS_SYNC_RESTORE = "com.solarized.firedown.preferences.sync.restore";
     public static final String SETTINGS_SYNC_NOW = "com.solarized.firedown.preferences.sync.now";
     /** Opens the offline "How sync encryption works" FAQ dialog. */

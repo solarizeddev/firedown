@@ -3,14 +3,22 @@ package com.solarized.firedown.settings;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
 import android.view.View;
+import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.TextView;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.biometric.BiometricManager;
 import androidx.biometric.BiometricPrompt;
 import androidx.core.content.ContextCompat;
@@ -30,6 +38,8 @@ import com.solarized.firedown.R;
 import com.solarized.firedown.sync.SyncManager;
 import com.solarized.firedown.sync.SyncWorker;
 
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 import javax.inject.Inject;
@@ -66,9 +76,15 @@ public class SyncSettingsFragment extends BasePreferenceFragment
     private SwitchPreferenceCompat mEnableSwitch;
     private Preference mHelp;
     private Preference mShowCode;
+    private Preference mExportCode;
     private Preference mSyncNow;
     private Preference mSignOut;
     private Preference mDeleteData;
+
+    /** SAF "create document" for exporting the recovery code to a text file. */
+    private final ActivityResultLauncher<String> mExportCodePicker =
+            registerForActivityResult(new ActivityResultContracts.CreateDocument("text/plain"),
+                    this::onExportFilePicked);
 
     @Override
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
@@ -79,6 +95,7 @@ public class SyncSettingsFragment extends BasePreferenceFragment
         mEnableSwitch = findPreference(Preferences.SYNC_ENABLED);
         mHelp = findPreference(Preferences.SETTINGS_SYNC_HELP);
         mShowCode = findPreference(Preferences.SETTINGS_SYNC_SHOW_CODE);
+        mExportCode = findPreference(Preferences.SETTINGS_SYNC_EXPORT_CODE);
         mSyncNow = findPreference(Preferences.SETTINGS_SYNC_NOW);
         mSignOut = findPreference(Preferences.SETTINGS_SYNC_SIGN_OUT);
         mDeleteData = findPreference(Preferences.SETTINGS_SYNC_DELETE_DATA);
@@ -102,6 +119,9 @@ public class SyncSettingsFragment extends BasePreferenceFragment
         }
         if (mShowCode != null) {
             mShowCode.setOnPreferenceClickListener(this);
+        }
+        if (mExportCode != null) {
+            mExportCode.setOnPreferenceClickListener(this);
         }
         if (mSyncNow != null) {
             mSyncNow.setOnPreferenceClickListener(this);
@@ -130,6 +150,7 @@ public class SyncSettingsFragment extends BasePreferenceFragment
         switch (key) {
             case Preferences.SETTINGS_SYNC_HELP -> showHelpDialog();
             case Preferences.SETTINGS_SYNC_SHOW_CODE -> authThenShowCode();
+            case Preferences.SETTINGS_SYNC_EXPORT_CODE -> authThenExportCode();
             case Preferences.SETTINGS_SYNC_NOW -> startSyncNow();
             case Preferences.SETTINGS_SYNC_SIGN_OUT -> showSignOutDialog();
             case Preferences.SETTINGS_SYNC_DELETE_DATA -> showDeleteDataDialog();
@@ -145,8 +166,19 @@ public class SyncSettingsFragment extends BasePreferenceFragment
      * nothing to authenticate against, so it reveals directly.
      */
     private void authThenShowCode() {
+        authThenReveal(() -> showCodeDialog(mSyncManager.recoveryCodeForDisplay(), false));
+    }
+
+    /**
+     * Runs {@code onAuth} behind a device-auth check (biometric / PIN / pattern)
+     * when the device has a secure lock. Both revealing the recovery code and
+     * exporting it to a file expose the master key for the whole synced vault, so
+     * both gate through here. With no biometric / device credential enrolled there
+     * is nothing to authenticate against, so {@code onAuth} runs directly.
+     */
+    private void authThenReveal(Runnable onAuth) {
         if (!mAppLock.isBiometricEnabled()) {
-            showCodeDialog(mSyncManager.recoveryCodeForDisplay(), false);
+            onAuth.run();
             return;
         }
         BiometricPrompt prompt = new BiometricPrompt(this,
@@ -155,7 +187,7 @@ public class SyncSettingsFragment extends BasePreferenceFragment
                     @Override
                     public void onAuthenticationSucceeded(@NonNull BiometricPrompt.AuthenticationResult result) {
                         if (isAdded()) {
-                            showCodeDialog(mSyncManager.recoveryCodeForDisplay(), false);
+                            onAuth.run();
                         }
                     }
                 });
@@ -168,6 +200,55 @@ public class SyncSettingsFragment extends BasePreferenceFragment
                         | BiometricManager.Authenticators.DEVICE_CREDENTIAL)
                 .build();
         prompt.authenticate(info);
+    }
+
+    /** Auth-gated export of the recovery code to a user-chosen text file (SAF). */
+    private void authThenExportCode() {
+        authThenReveal(() ->
+                mExportCodePicker.launch(getString(R.string.settings_sync_export_file_name)));
+    }
+
+    /**
+     * SAF create-document result: write the recovery code (with a short "this is
+     * the only key" preamble) to the chosen file. The write runs off the main
+     * thread; the result is reported in a snackbar. The plaintext-on-disk exposure
+     * is the same as the existing Copy action and is a deliberate user action,
+     * already behind the device-auth gate above.
+     */
+    private void onExportFilePicked(@Nullable Uri uri) {
+        if (uri == null) {
+            return; // user cancelled the picker
+        }
+        String grouped = mSyncManager.recoveryCodeForDisplay();
+        if (grouped == null) {
+            snackbar(getString(R.string.settings_sync_code_unavailable));
+            return;
+        }
+        Context appContext = requireContext().getApplicationContext();
+        String body = getString(R.string.settings_sync_export_file_body, grouped);
+        Handler main = new Handler(Looper.getMainLooper());
+        new Thread(() -> {
+            boolean ok = writeTextToUri(appContext, uri, body);
+            main.post(() -> {
+                if (isAdded()) {
+                    snackbar(getString(ok
+                            ? R.string.settings_sync_export_done
+                            : R.string.settings_sync_export_failed));
+                }
+            });
+        }, "sync-code-export").start();
+    }
+
+    private static boolean writeTextToUri(Context ctx, Uri uri, String text) {
+        try (OutputStream os = ctx.getContentResolver().openOutputStream(uri, "wt")) {
+            if (os == null) {
+                return false;
+            }
+            os.write(text.getBytes(StandardCharsets.UTF_8));
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     /**
@@ -218,6 +299,9 @@ public class SyncSettingsFragment extends BasePreferenceFragment
         }
         if (mShowCode != null) {
             mShowCode.setVisible(on);
+        }
+        if (mExportCode != null) {
+            mExportCode.setVisible(on);
         }
         if (mSyncNow != null) {
             mSyncNow.setVisible(on);
@@ -311,15 +395,37 @@ public class SyncSettingsFragment extends BasePreferenceFragment
         TextView codeText = view.findViewById(R.id.sync_code_text);
         codeText.setText(grouped);
 
-        new MaterialAlertDialogBuilder(requireContext())
+        // "I've saved my recovery code" gate — only the FIRST time the code is
+        // created. There's no server-side recovery, so make the user actively
+        // acknowledge they saved the only key before they can leave the screen
+        // (the dialog is also non-cancelable then, so a stray back/outside tap
+        // can't skip it). When merely viewing the code later the account is
+        // already set up, so the checkbox is hidden and Done is always enabled.
+        CheckBox savedCheck = view.findViewById(R.id.sync_code_saved_check);
+        savedCheck.setVisibility(justCreated ? View.VISIBLE : View.GONE);
+
+        AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
                 .setTitle(justCreated
                         ? R.string.settings_sync_code_created_title
                         : R.string.settings_sync_show_code_title)
                 .setView(view)
-                .setPositiveButton(R.string.settings_sync_code_copy,
-                        (dialog, which) -> copyToClipboard(grouped))
-                .setNegativeButton(R.string.settings_sync_code_done, null)
-                .show();
+                // Copy is the NEUTRAL action so it copies WITHOUT closing the
+                // dialog (its click listener is overridden below to suppress the
+                // default dismiss) — the user can copy, then tick the box.
+                .setNeutralButton(R.string.settings_sync_code_copy, null)
+                .setPositiveButton(R.string.settings_sync_code_done, null)
+                .setCancelable(!justCreated)
+                .create();
+        dialog.show();
+
+        dialog.getButton(AlertDialog.BUTTON_NEUTRAL)
+                .setOnClickListener(v -> copyToClipboard(grouped));
+
+        if (justCreated) {
+            Button done = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+            done.setEnabled(false);
+            savedCheck.setOnCheckedChangeListener((b, checked) -> done.setEnabled(checked));
+        }
     }
 
     /**

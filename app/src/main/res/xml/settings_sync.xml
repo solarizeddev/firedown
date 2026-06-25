@@ -26,6 +26,13 @@
         app:icon="@drawable/ic_key_24" />
 
     <Preference
+        android:key="com.solarized.firedown.preferences.sync.export.code"
+        android:title="@string/settings_sync_export_title"
+        android:summary="@string/settings_sync_export_summary"
+        app:singleLineTitle="false"
+        app:icon="@drawable/ic_baseline_insert_drive_file_24" />
+
+    <Preference
         android:key="com.solarized.firedown.preferences.sync.now"
         android:title="@string/settings_sync_now_title"
         app:singleLineTitle="false"
