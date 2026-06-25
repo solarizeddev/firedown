@@ -31,7 +31,7 @@ public final class UpdateInstaller {
     @SuppressLint("RequestInstallPackagesPolicy")
     public static void install(Context context, String updateName) {
         try {
-            File updateFile = new File(context.getFilesDir(), Preferences.UPDATE_APK);
+            File updateFile = Preferences.getUpdateApkFile(context);
 
             if (!updateFile.exists()) {
                 Log.e(TAG, "Update APK not found");

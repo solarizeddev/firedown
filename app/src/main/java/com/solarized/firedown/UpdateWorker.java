@@ -1,27 +1,25 @@
 package com.solarized.firedown;
 
+import android.app.DownloadManager;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
-import android.content.pm.Signature;
-import android.content.pm.SigningInfo;
+import android.net.Uri;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.hilt.work.HiltWorker;
+import androidx.preference.PreferenceManager;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
 
 import com.solarized.firedown.data.di.Qualifiers;
 import com.solarized.firedown.utils.BrowserHeaders;
-import com.solarized.firedown.utils.BuildUtils;
 
-import org.apache.commons.codec.digest.DigestUtils;
 import org.json.JSONObject;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 
 import dagger.assisted.Assisted;
@@ -29,8 +27,6 @@ import dagger.assisted.AssistedInject;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
-import okio.BufferedSink;
-import okio.Okio;
 
 @HiltWorker
 public class UpdateWorker extends Worker {
@@ -53,7 +49,7 @@ public class UpdateWorker extends Worker {
         this.mContext = context;
         this.okHttpClient = okHttpClient;
         this.mCurrentVersion = currentVersion;
-        this.updateFile = new File(context.getFilesDir(), Preferences.UPDATE_APK);
+        this.updateFile = Preferences.getUpdateApkFile(context);
     }
 
     @NonNull
@@ -81,7 +77,12 @@ public class UpdateWorker extends Worker {
                 if (isUpdateAlreadyDownloaded(remoteVersion)) {
                     UpdateNotification.showInstallPrompt(mContext, versionName);
                 } else {
-                    return downloadApk(updateUrl, remoteSha, versionName);
+                    // Hand the actual APK download to the system DownloadManager
+                    // and return — UpdateDownloadReceiver verifies it and posts
+                    // the install prompt when the broadcast arrives (which can
+                    // cold-start the app, so the download surviving a process
+                    // eviction still ends in a notification).
+                    enqueueDownload(updateUrl, remoteSha, versionName, remoteVersion);
                 }
             }
             return Result.success();
@@ -137,99 +138,60 @@ public class UpdateWorker extends Worker {
         return null;
     }
 
-    private Result downloadApk(String url, String remoteSha, String name) throws IOException {
-        // Same browser UA as the status fetch — the APK download hits the
-        // same Cloudflare front (or the GitHub fallback) and should look
-        // like the same client.
-        Request downloadRequest = new Request.Builder()
-                .url(url)
-                .addHeader(BrowserHeaders.USER_AGENT, BrowserHeaders.getDefaultUserAgentString())
-                .build();
-
-        try (Response response = okHttpClient.newCall(downloadRequest).execute()) {
-            if (!response.isSuccessful() || response.body() == null) return Result.retry();
-
-            // Write to disk using Okio
-            try (BufferedSink sink = Okio.buffer(Okio.sink(updateFile))) {
-                sink.writeAll(response.body().source());
-            }
-
-            // Verify SHA256
-            String localSha;
-            try (FileInputStream fis = new FileInputStream(updateFile)) {
-                localSha = DigestUtils.sha256Hex(fis);
-            }
-            if (!localSha.equalsIgnoreCase(remoteSha)) {
-                updateFile.delete();
-                return Result.retry();
-            }
-
-            // Verify the downloaded APK is signed by the same key as the installed app.
-            // SHA256 alone trusts the manifest; signature check anchors trust to the device.
-            if (!verifyApkSignature(updateFile)) {
-                updateFile.delete();
-                return Result.retry();
-            }
-
-            UpdateNotification.showInstallPrompt(mContext, name);
-            return Result.success();
+    /**
+     * Enqueues the APK download with the system DownloadManager and records the
+     * metadata UpdateDownloadReceiver needs to verify the finished file. The
+     * download then proceeds independently of this worker (and of the app
+     * process), and completion is handled by the manifest-declared receiver.
+     *
+     * Note this is the APK *file* download only — the status.json check
+     * (fetchStatusJson, the MAU-bearing request with its custom headers) stays
+     * on OkHttp and is untouched.
+     */
+    private void enqueueDownload(String url, String remoteSha, String name, int remoteVersion) {
+        DownloadManager dm = (DownloadManager) mContext.getSystemService(Context.DOWNLOAD_SERVICE);
+        // DownloadManager can be disabled by the user, and it needs an external
+        // files dir to write to. If either is unavailable, skip quietly — the
+        // next periodic check tries again.
+        if (dm == null || mContext.getExternalFilesDir(null) == null) {
+            Log.w("UpdateWorker", "DownloadManager/external storage unavailable; skipping");
+            return;
         }
-    }
 
-    private boolean verifyApkSignature(File apk) {
-        try {
-            PackageManager pm = mContext.getPackageManager();
-            String installedPackage = mContext.getPackageName();
-            Signature[] downloaded;
-            Signature[] installed;
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
 
-            if (BuildUtils.hasAndroidP()) {
-                PackageInfo dl = pm.getPackageArchiveInfo(apk.getAbsolutePath(),
-                        PackageManager.GET_SIGNING_CERTIFICATES);
-                PackageInfo cur = pm.getPackageInfo(installedPackage,
-                        PackageManager.GET_SIGNING_CERTIFICATES);
-                if (dl == null || dl.signingInfo == null || cur.signingInfo == null) return false;
-
-                SigningInfo dlInfo = dl.signingInfo;
-                SigningInfo curInfo = cur.signingInfo;
-                downloaded = dlInfo.hasMultipleSigners()
-                        ? dlInfo.getApkContentsSigners()
-                        : dlInfo.getSigningCertificateHistory();
-                installed = curInfo.hasMultipleSigners()
-                        ? curInfo.getApkContentsSigners()
-                        : curInfo.getSigningCertificateHistory();
-            } else {
-                @SuppressWarnings("deprecation")
-                PackageInfo dl = pm.getPackageArchiveInfo(apk.getAbsolutePath(),
-                        PackageManager.GET_SIGNATURES);
-                @SuppressWarnings("deprecation")
-                PackageInfo cur = pm.getPackageInfo(installedPackage,
-                        PackageManager.GET_SIGNATURES);
-                if (dl == null) return false;
-                downloaded = dl.signatures;
-                installed = cur.signatures;
-            }
-
-            if (downloaded == null || installed == null
-                    || downloaded.length == 0 || installed.length == 0) {
-                return false;
-            }
-
-            for (Signature d : downloaded) {
-                boolean matched = false;
-                for (Signature i : installed) {
-                    if (d.equals(i)) {
-                        matched = true;
-                        break;
-                    }
-                }
-                if (!matched) return false;
-            }
-            return true;
-        } catch (Exception e) {
-            Log.e("UpdateWorker", "Signature verification failed", e);
-            return false;
+        // Drop any previous in-flight/queued download and stale file so a
+        // changed manifest can't leave two downloads racing for the same path.
+        long previousId = prefs.getLong(Keys.UPDATE_DOWNLOAD_ID, -1);
+        if (previousId != -1) {
+            dm.remove(previousId);
         }
+        if (updateFile.exists()) {
+            updateFile.delete();
+        }
+
+        DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
+        // Same browser UA as the status fetch so the Cloudflare front (or the
+        // GitHub fallback) sees a consistent client. Deliberately NOT the
+        // X-App-Version header — that is the MAU signal and belongs only on the
+        // status.json call.
+        request.addRequestHeader(BrowserHeaders.USER_AGENT, BrowserHeaders.getDefaultUserAgentString());
+        request.setDestinationInExternalFilesDir(mContext, null, Preferences.UPDATE_APK);
+        // No download-progress notification — the only notification we want is
+        // the install prompt after verification (needs DOWNLOAD_WITHOUT_NOTIFICATION,
+        // already held). Allow metered/cellular to match the previous OkHttp
+        // path's behaviour (it downloaded over any connection); not roaming.
+        request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_HIDDEN);
+        request.setAllowedOverMetered(true);
+        request.setAllowedOverRoaming(false);
+
+        long downloadId = dm.enqueue(request);
+        prefs.edit()
+                .putLong(Keys.UPDATE_DOWNLOAD_ID, downloadId)
+                .putString(Keys.UPDATE_DOWNLOAD_SHA, remoteSha)
+                .putString(Keys.UPDATE_DOWNLOAD_NAME, name == null ? "" : name)
+                .putInt(Keys.UPDATE_DOWNLOAD_VERSION_CODE, remoteVersion)
+                .apply();
     }
 
     private boolean isUpdateAlreadyDownloaded(int remoteVersion) {

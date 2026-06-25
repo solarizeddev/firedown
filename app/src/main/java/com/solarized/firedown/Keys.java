@@ -23,6 +23,13 @@ public class Keys {
     public static final String INTENT_ACTION = "com.solarized.firedown.INTENT_ACTION";
     public static final String UPDATE_META = "com.solarized.firedown.UDPATE_META";
     public static final String UPDATE_NAME = "com.solarized.firedown.UPDATE_NAME";
+    // DownloadManager hand-off: the worker enqueues the APK download and
+    // records the enqueue id + the metadata UpdateDownloadReceiver needs to
+    // verify the finished file (the broadcast only carries the download id).
+    public static final String UPDATE_DOWNLOAD_ID = "com.solarized.firedown.UPDATE_DOWNLOAD_ID";
+    public static final String UPDATE_DOWNLOAD_SHA = "com.solarized.firedown.UPDATE_DOWNLOAD_SHA";
+    public static final String UPDATE_DOWNLOAD_NAME = "com.solarized.firedown.UPDATE_DOWNLOAD_NAME";
+    public static final String UPDATE_DOWNLOAD_VERSION_CODE = "com.solarized.firedown.UPDATE_DOWNLOAD_VERSION_CODE";
 
     public static final String GIF_START_MS = "com.solarized.firedown.GIF_START_MS";
     public static final String GIF_END_MS = "com.solarized.firedown.GIF_END_MS";

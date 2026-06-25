@@ -52,7 +52,7 @@ public class UpdateInstallReceiver extends BroadcastReceiver {
         }
 
         // Clean up the downloaded APK
-        File updateFile = new File(context.getFilesDir(), Preferences.UPDATE_APK);
+        File updateFile = Preferences.getUpdateApkFile(context);
         if (updateFile.exists()) {
             updateFile.delete();
         }
