@@ -15,8 +15,8 @@ import dagger.hilt.android.AndroidEntryPoint;
  * paid storage are explained) scrolls naturally and handles large fonts and
  * TalkBack better than a modal. Static Q/A from string resources; no network.
  *
- * <p>The orange question titles come from the custom {@code preference_faq_item}
- * row layout (a plain Preference has no title-colour attribute), not from code.</p>
+ * <p>The orange question titles come from {@link FaqPreference} (which paints the
+ * title in onBindViewHolder); a plain Preference has no title-colour attribute.</p>
  *
  * <p>{@code @AndroidEntryPoint} is required because {@link BasePreferenceFragment}
  * declares an {@code @Inject} field — Hilt members-injection runs through the
