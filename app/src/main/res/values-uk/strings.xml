@@ -367,4 +367,15 @@
     <string name="most_visited">Найвідвідуваніші</string>
     <string name="most_visited_remove_title">Вилучити з найвідвідуваніших?</string>
     <string name="most_visited_remove">Вилучити</string>
+    <!-- Bookmark sync: announce banner + server-delete + backend validation -->
+    <string name="sync_banner_title">Синхронізуйте закладки між пристроями</string>
+    <string name="sync_banner_subtitle">Наскрізне шифрування — прочитати їх може лише ваш код відновлення. Без облікового запису та пошти.</string>
+    <string name="settings_sync_backend_invalid">Введіть коректну адресу https:// або залиште порожнім для сервера за умовчанням</string>
+    <string name="settings_sync_delete_title">Видалити дані із сервера</string>
+    <string name="settings_sync_delete_summary">Назавжди стирає ваші зашифровані закладки із сервера</string>
+    <string name="settings_sync_delete_message">Це назавжди зітре ваші зашифровані закладки із сервера й вимкне синхронізацію на цьому пристрої. Закладки на цьому пристрої збережуться. Дію не можна скасувати — інші пристрої більше не зможуть відновити дані із сервера.</string>
+    <string name="settings_sync_delete_action">Видалити</string>
+    <string name="settings_sync_delete_started">Видалення ваших даних із сервера…</string>
+    <string name="settings_sync_delete_done">Ваші дані видалено із сервера</string>
+    <string name="settings_sync_delete_failed">Не вдалося видалити — перевірте підключення та повторіть спробу</string>
 </resources>

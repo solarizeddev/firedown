@@ -357,4 +357,15 @@
     <string name="most_visited">सबसे ज़्यादा देखे गए</string>
     <string name="most_visited_remove_title">सबसे ज़्यादा देखे गए से हटाएँ?</string>
     <string name="most_visited_remove">हटाएँ</string>
+    <!-- Bookmark sync: announce banner + server-delete + backend validation -->
+    <string name="sync_banner_title">अपने बुकमार्क डिवाइसों के बीच सिंक करें</string>
+    <string name="sync_banner_subtitle">एंड-टू-एंड एन्क्रिप्टेड — इन्हें केवल आपका रिकवरी कोड ही पढ़ सकता है। कोई खाता नहीं, कोई ईमेल नहीं।</string>
+    <string name="settings_sync_backend_invalid">मान्य https:// पता दर्ज करें, या डिफ़ॉल्ट सर्वर के लिए खाली छोड़ें</string>
+    <string name="settings_sync_delete_title">सर्वर से डेटा हटाएँ</string>
+    <string name="settings_sync_delete_summary">आपके एन्क्रिप्टेड बुकमार्क सर्वर से स्थायी रूप से मिटा देता है</string>
+    <string name="settings_sync_delete_message">यह आपके एन्क्रिप्टेड बुकमार्क सर्वर से स्थायी रूप से मिटा देता है और इस डिवाइस पर सिंक बंद कर देता है। इस डिवाइस के बुकमार्क बने रहते हैं। इसे पूर्ववत नहीं किया जा सकता — अन्य डिवाइस अब सर्वर से पुनर्स्थापित नहीं कर पाएँगे।</string>
+    <string name="settings_sync_delete_action">हटाएँ</string>
+    <string name="settings_sync_delete_started">सर्वर से आपका डेटा हटाया जा रहा है…</string>
+    <string name="settings_sync_delete_done">आपका डेटा सर्वर से हटा दिया गया</string>
+    <string name="settings_sync_delete_failed">हटाया नहीं जा सका — अपना कनेक्शन जाँचें और फिर से प्रयास करें</string>
 </resources>

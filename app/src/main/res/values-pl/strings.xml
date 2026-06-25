@@ -449,4 +449,15 @@
     <string name="most_visited">Najczęściej odwiedzane</string>
     <string name="most_visited_remove_title">Usunąć z najczęściej odwiedzanych?</string>
     <string name="most_visited_remove">Usuń</string>
+    <!-- Bookmark sync: announce banner + server-delete + backend validation -->
+    <string name="sync_banner_title">Synchronizuj zakładki między urządzeniami</string>
+    <string name="sync_banner_subtitle">Szyfrowane end-to-end — odczytać je może tylko Twój kod odzyskiwania. Bez konta, bez e-maila.</string>
+    <string name="settings_sync_backend_invalid">Wprowadź prawidłowy adres https:// lub pozostaw puste, aby użyć domyślnego serwera</string>
+    <string name="settings_sync_delete_title">Usuń dane z serwera</string>
+    <string name="settings_sync_delete_summary">Trwale usuwa Twoje zaszyfrowane zakładki z serwera</string>
+    <string name="settings_sync_delete_message">Spowoduje to trwałe usunięcie Twoich zaszyfrowanych zakładek z serwera i wyłączenie synchronizacji na tym urządzeniu. Zakładki na tym urządzeniu zostaną zachowane. Tej operacji nie można cofnąć — inne urządzenia nie będą już mogły przywrócić danych z serwera.</string>
+    <string name="settings_sync_delete_action">Usuń</string>
+    <string name="settings_sync_delete_started">Usuwanie Twoich danych z serwera…</string>
+    <string name="settings_sync_delete_done">Twoje dane zostały usunięte z serwera</string>
+    <string name="settings_sync_delete_failed">Nie udało się usunąć — sprawdź połączenie i spróbuj ponownie</string>
 </resources>

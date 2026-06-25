@@ -583,4 +583,15 @@
     <string name="most_visited">Les plus visités</string>
     <string name="most_visited_remove_title">Retirer des plus visités ?</string>
     <string name="most_visited_remove">Supprimer</string>
+    <!-- Bookmark sync: announce banner + server-delete + backend validation -->
+    <string name="sync_banner_title">Synchronisez vos marque-pages entre appareils</string>
+    <string name="sync_banner_subtitle">Chiffré de bout en bout — seul votre code de récupération peut les lire. Sans compte, sans e-mail.</string>
+    <string name="settings_sync_backend_invalid">Saisissez une adresse https:// valide ou laissez vide pour le serveur par défaut</string>
+    <string name="settings_sync_delete_title">Supprimer les données du serveur</string>
+    <string name="settings_sync_delete_summary">Efface définitivement vos marque-pages chiffrés du serveur</string>
+    <string name="settings_sync_delete_message">Cette action efface définitivement vos marque-pages chiffrés du serveur et désactive la synchronisation sur cet appareil. Les marque-pages de cet appareil sont conservés. C\'est irréversible — les autres appareils ne pourront plus restaurer depuis le serveur.</string>
+    <string name="settings_sync_delete_action">Supprimer</string>
+    <string name="settings_sync_delete_started">Suppression de vos données du serveur…</string>
+    <string name="settings_sync_delete_done">Vos données ont été supprimées du serveur</string>
+    <string name="settings_sync_delete_failed">Échec de la suppression — vérifiez votre connexion et réessayez</string>
 </resources>

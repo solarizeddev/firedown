@@ -583,4 +583,15 @@
     <string name="most_visited">Meistbesucht</string>
     <string name="most_visited_remove_title">Aus „Meistbesucht“ entfernen?</string>
     <string name="most_visited_remove">Entfernen</string>
+    <!-- Bookmark sync: announce banner + server-delete + backend validation -->
+    <string name="sync_banner_title">Lesezeichen geräteübergreifend synchronisieren</string>
+    <string name="sync_banner_subtitle">Ende-zu-Ende-verschlüsselt — nur dein Wiederherstellungscode kann sie lesen. Kein Konto, keine E-Mail.</string>
+    <string name="settings_sync_backend_invalid">Gib eine gültige https://-Adresse ein oder lass das Feld für den Standardserver leer</string>
+    <string name="settings_sync_delete_title">Daten vom Server löschen</string>
+    <string name="settings_sync_delete_summary">Deine verschlüsselten Lesezeichen dauerhaft vom Server löschen</string>
+    <string name="settings_sync_delete_message">Dadurch werden deine verschlüsselten Lesezeichen dauerhaft vom Server gelöscht und die Synchronisierung auf diesem Gerät deaktiviert. Die Lesezeichen auf diesem Gerät bleiben erhalten. Dies kann nicht rückgängig gemacht werden — andere Geräte können dann nicht mehr vom Server wiederherstellen.</string>
+    <string name="settings_sync_delete_action">Löschen</string>
+    <string name="settings_sync_delete_started">Deine Daten werden vom Server gelöscht…</string>
+    <string name="settings_sync_delete_done">Deine Daten wurden vom Server gelöscht</string>
+    <string name="settings_sync_delete_failed">Löschen fehlgeschlagen — prüfe deine Verbindung und versuche es erneut</string>
 </resources>

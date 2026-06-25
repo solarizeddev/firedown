@@ -391,4 +391,15 @@
     <string name="most_visited">Useimmin vieraillut</string>
     <string name="most_visited_remove_title">Poistetaanko useimmin vierailluista?</string>
     <string name="most_visited_remove">Poista</string>
+    <!-- Bookmark sync: announce banner + server-delete + backend validation -->
+    <string name="sync_banner_title">Synkronoi kirjanmerkit laitteiden välillä</string>
+    <string name="sync_banner_subtitle">Päästä päähän -salattu — vain palautuskoodisi voi lukea ne. Ei tiliä, ei sähköpostia.</string>
+    <string name="settings_sync_backend_invalid">Anna kelvollinen https://-osoite tai jätä tyhjäksi käyttääksesi oletuspalvelinta</string>
+    <string name="settings_sync_delete_title">Poista tiedot palvelimelta</string>
+    <string name="settings_sync_delete_summary">Poistaa salatut kirjanmerkkisi palvelimelta pysyvästi</string>
+    <string name="settings_sync_delete_message">Tämä poistaa salatut kirjanmerkkisi palvelimelta pysyvästi ja poistaa synkronoinnin käytöstä tällä laitteella. Tämän laitteen kirjanmerkit säilyvät. Toimintoa ei voi peruuttaa — muut laitteet eivät voi enää palauttaa tietoja palvelimelta.</string>
+    <string name="settings_sync_delete_action">Poista</string>
+    <string name="settings_sync_delete_started">Poistetaan tietojasi palvelimelta…</string>
+    <string name="settings_sync_delete_done">Tietosi poistettiin palvelimelta</string>
+    <string name="settings_sync_delete_failed">Poistaminen epäonnistui — tarkista yhteytesi ja yritä uudelleen</string>
 </resources>
