@@ -2243,17 +2243,26 @@ head frame.
   plugin, annotating both a subclass and its annotated superclass is the
   supported shape. Symptom to recognize: an NPE on an `@Inject` field used
   only on a rare path, in a class whose base is annotated.
-- **Java: never use fully-qualified class names inline in code — add an
-  `import` and use the simple name.** Not
+- **Java: NEVER write a fully-qualified class name inline in code — always add
+  an `import` and use the simple name.** Not
   `com.solarized.firedown.phone.dialogs.LanShareDialogFragment f = …` or
   `android.net.Uri.encode(…)`; import the class and write
   `LanShareDialogFragment f = …` / `Uri.encode(…)`. Applies to types,
   static calls, constants (`KeyEvent.KEYCODE_BACK`, `Snackbar.LENGTH_LONG`),
-  and generics (`ActivityResultLauncher<Uri>`). The one legitimate exception
-  is a genuine same-simple-name collision in one file (e.g.
-  `android.provider.Settings` vs a local `Settings`) — qualify only the
-  loser, and only at its use sites. Javadoc `{@link}` targets may stay
-  fully qualified.
+  and generics (`ActivityResultLauncher<Uri>`). An inline FQN like
+  `new org.bouncycastle.crypto.signers.Ed25519Signer()` is a defect — fix it,
+  don't ship it. Javadoc `{@link}` targets may stay fully qualified.
+  - **Same-simple-name collision is NOT a license to inline-qualify — RENAME
+    your own symbol so the import works.** When a class you need collides with a
+    local one (e.g. BC's `Ed25519Signer` vs our former wrapper of the same
+    name), the fix is to rename the symbol YOU own — our wrapper became
+    `Ed25519Identity` so `org.bouncycastle.crypto.signers.Ed25519Signer` imports
+    by its simple name. Inline-qualifying is the **last resort**, reserved ONLY
+    for a collision where you control neither name (two third-party types with
+    the same simple name, or a platform type vs a third-party type you can't
+    rename) — and even then, qualify only the loser, only at its use sites
+    (e.g. `android.provider.Settings` vs a local `Settings`). Reach for the
+    rename first.
 - **C style (all native sources under `app/src/main/cpp/`): write standard,
   explicit, readable C.** This is a general rule for every `.c`/`.h` here, not
   about any one line. In particular:
