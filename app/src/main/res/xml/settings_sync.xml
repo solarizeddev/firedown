@@ -8,6 +8,16 @@
         app:singleLineTitle="false"
         app:icon="@drawable/cloud_outline_24" />
 
+    <!-- Always visible (not gated on sync being on): the FAQ helps the
+         decision to enable, and lets an existing user re-read the
+         recovery-code stakes. Offline dialog, no web link. -->
+    <Preference
+        android:key="com.solarized.firedown.preferences.sync.help"
+        android:title="@string/settings_sync_help_title"
+        android:summary="@string/settings_sync_help_summary"
+        app:singleLineTitle="false"
+        app:icon="@drawable/encryption_24" />
+
     <Preference
         android:key="com.solarized.firedown.preferences.sync.show.code"
         android:title="@string/settings_sync_show_code_title"

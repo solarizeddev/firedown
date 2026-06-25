@@ -64,6 +64,7 @@ public class SyncSettingsFragment extends BasePreferenceFragment
     AppLock mAppLock;
 
     private SwitchPreferenceCompat mEnableSwitch;
+    private Preference mHelp;
     private Preference mShowCode;
     private Preference mSyncNow;
     private Preference mSignOut;
@@ -76,6 +77,7 @@ public class SyncSettingsFragment extends BasePreferenceFragment
         setPreferencesFromResource(R.xml.settings_sync, rootKey);
 
         mEnableSwitch = findPreference(Preferences.SYNC_ENABLED);
+        mHelp = findPreference(Preferences.SETTINGS_SYNC_HELP);
         mShowCode = findPreference(Preferences.SETTINGS_SYNC_SHOW_CODE);
         mSyncNow = findPreference(Preferences.SETTINGS_SYNC_NOW);
         mSignOut = findPreference(Preferences.SETTINGS_SYNC_SIGN_OUT);
@@ -95,6 +97,9 @@ public class SyncSettingsFragment extends BasePreferenceFragment
             });
         }
 
+        if (mHelp != null) {
+            mHelp.setOnPreferenceClickListener(this);
+        }
         if (mShowCode != null) {
             mShowCode.setOnPreferenceClickListener(this);
         }
@@ -123,6 +128,7 @@ public class SyncSettingsFragment extends BasePreferenceFragment
     public boolean onPreferenceClick(Preference preference) {
         String key = preference.getKey();
         switch (key) {
+            case Preferences.SETTINGS_SYNC_HELP -> showHelpDialog();
             case Preferences.SETTINGS_SYNC_SHOW_CODE -> authThenShowCode();
             case Preferences.SETTINGS_SYNC_NOW -> startSyncNow();
             case Preferences.SETTINGS_SYNC_SIGN_OUT -> showSignOutDialog();
@@ -232,6 +238,22 @@ public class SyncSettingsFragment extends BasePreferenceFragment
         CharSequence rel = DateUtils.getRelativeTimeSpanString(
                 at, System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS);
         return getString(R.string.settings_sync_last_synced, rel);
+    }
+
+    /**
+     * Offline "How sync encryption works" FAQ — a scrollable static Q/A dialog
+     * (no network, no web link). The catastrophic "lose the code = lose it"
+     * warning still fires at the point of action (setup + save-code dialogs);
+     * this is the browsable explainer for the pre-enable decision and for an
+     * existing user who wants to re-read the stakes.
+     */
+    private void showHelpDialog() {
+        View view = getLayoutInflater().inflate(R.layout.dialog_sync_faq, null);
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.settings_sync_help_title)
+                .setView(view)
+                .setPositiveButton(R.string.settings_sync_help_close, null)
+                .show();
     }
 
     /** First-run chooser: start a brand-new identity, or restore from a code. */

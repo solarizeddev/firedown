@@ -80,6 +80,8 @@ public class Preferences {
     public static final String SETTINGS_SYNC_SHOW_CODE = "com.solarized.firedown.preferences.sync.show.code";
     public static final String SETTINGS_SYNC_RESTORE = "com.solarized.firedown.preferences.sync.restore";
     public static final String SETTINGS_SYNC_NOW = "com.solarized.firedown.preferences.sync.now";
+    /** Opens the offline "How sync encryption works" FAQ dialog. */
+    public static final String SETTINGS_SYNC_HELP = "com.solarized.firedown.preferences.sync.help";
     public static final String SETTINGS_SYNC_SIGN_OUT = "com.solarized.firedown.preferences.sync.sign.out";
     /** Right-to-erasure: delete the encrypted document from the server. */
     public static final String SETTINGS_SYNC_DELETE_DATA = "com.solarized.firedown.preferences.sync.delete.data";
