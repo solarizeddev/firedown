@@ -8,7 +8,9 @@
   Style matches the Downloads incognito-in-progress banner
   (item_incognito_in_progress_header): paddingStart=16 + a NEUTRAL 24dp leading
   icon tinted colorOnSurface (the cloud here, the lock there), same wash + dismiss
-  IconButton.
+  IconButton. The cloud is the OUTLINED contour (cloud_outline_24, "cloud_queue"),
+  NOT the filled cloud_24 — a banner accent reads better as an outline and the
+  filled glyph is reserved for the toolbar sync-state indicator.
 
   NO layout_marginHorizontal: the banner is a 1-span ConcatAdapter header, so
   EqualSpacingItemDecoration already gives it an 8dp left/right gutter — the SAME
@@ -48,7 +50,7 @@
             android:layout_width="24dp"
             android:layout_height="24dp"
             android:contentDescription="@null"
-            android:src="@drawable/cloud_24"
+            android:src="@drawable/cloud_outline_24"
             app:tint="?attr/colorOnSurface"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
