@@ -6,19 +6,23 @@
   One-time: dismiss flag + enabling sync both retire it (SYNC_BANNER_DISMISSED).
 
   Style matches the Downloads incognito-in-progress banner
-  (item_incognito_in_progress_header) — same inset card (marginHorizontal),
-  paddingStart=16, and a NEUTRAL 24dp leading icon tinted colorOnSurface (the
-  cloud here, the lock there). The adapter overrides the card colour with the
-  same SelectionStyling brand wash. ONE deliberate deviation: marginBottom=0
-  (NOT the -12dp incognito_banner_margin_bottom), because this banner sits above
-  populated bookmark rows — the -12dp pulled the first row up and read cramped.
+  (item_incognito_in_progress_header) — paddingStart=16 + a NEUTRAL 24dp leading
+  icon tinted colorOnSurface (the cloud here, the lock there), same wash + dismiss
+  IconButton. TWO deliberate deviations, both because this banner lives in the
+  BOOKMARK list rather than the downloads one:
+  - NO layout_marginHorizontal. The bookmark row paints its selection wash on the
+    card ROOT (decoration-inset 8dp from the screen); the downloads row paints it
+    on an INNER 16dp layer, which is why that banner adds marginHorizontal to
+    reach 16dp. Here the row's visible edge is at 8dp, so the banner takes only
+    the row decoration's 8dp (no extra margin) to sit flush with the rows.
+  - marginBottom=0 (NOT the incognito banner's -12dp, which pulled the first row
+    up and read cramped above populated rows).
 -->
 <com.google.android.material.card.MaterialCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginHorizontal="@dimen/list_spacing"
     android:layout_marginTop="@dimen/list_spacing"
     android:layout_marginBottom="0dp"
     app:cardCornerRadius="12dp"
