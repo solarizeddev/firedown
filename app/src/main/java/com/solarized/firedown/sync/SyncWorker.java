@@ -74,8 +74,9 @@ public class SyncWorker extends Worker {
             SyncSecrets.wipe(code);
         }
 
-        String base = mPrefs.getString(Preferences.SYNC_BACKEND_URL, Preferences.SYNC_DEFAULT_BACKEND);
-        SyncApiClient api = new SyncApiClient(mClient, base);
+        // Bookmark sync is pinned to the hosted server (no BYO backend — see
+        // SyncManager#backendUrl). A configurable backend is a vault concern.
+        SyncApiClient api = new SyncApiClient(mClient, Preferences.SYNC_DEFAULT_BACKEND);
         SyncEngine.Result r = new SyncEngine(mRepo, api, identity).run();
 
         if (r.ok) {

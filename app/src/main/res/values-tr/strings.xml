@@ -454,7 +454,6 @@
     <!-- Bookmark sync: announce banner + server-delete + backend validation -->
     <string name="sync_banner_title">Yer imlerinizi cihazlar arasında eşitleyin</string>
     <string name="sync_banner_subtitle">Uçtan uca şifreli — bunları yalnızca kurtarma kodunuz okuyabilir. Hesap yok, e-posta yok.</string>
-    <string name="settings_sync_backend_invalid">Geçerli bir https:// adresi girin veya varsayılan sunucu için boş bırakın</string>
     <string name="settings_sync_delete_title">Verileri sunucudan sil</string>
     <string name="settings_sync_delete_summary">Şifrelenmiş yer imlerinizi sunucudan kalıcı olarak siler</string>
     <string name="settings_sync_delete_message">Bu işlem, şifrelenmiş yer imlerinizi sunucudan kalıcı olarak siler ve bu cihazda eşitlemeyi kapatır. Bu cihazdaki yer imleri korunur. Geri alınamaz — diğer cihazlar artık sunucudan geri yükleme yapamaz.</string>

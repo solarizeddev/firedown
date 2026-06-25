@@ -324,7 +324,6 @@
     <!-- Bookmark sync: announce banner + server-delete + backend validation -->
     <string name="sync_banner_title">Sünkrooni järjehoidjad seadmete vahel</string>
     <string name="sync_banner_subtitle">Otspunktkrüpteeritud — neid saab lugeda ainult sinu taastekood. Kontot ega e-posti pole vaja.</string>
-    <string name="settings_sync_backend_invalid">Sisesta kehtiv https:// aadress või jäta vaikeserveri kasutamiseks tühjaks</string>
     <string name="settings_sync_delete_title">Kustuta andmed serverist</string>
     <string name="settings_sync_delete_summary">Kustutab sinu krüpteeritud järjehoidjad serverist jäädavalt</string>
     <string name="settings_sync_delete_message">See kustutab sinu krüpteeritud järjehoidjad serverist jäädavalt ja lülitab selles seadmes sünkroonimise välja. Selle seadme järjehoidjad jäävad alles. Toimingut ei saa tagasi võtta — teised seadmed ei saa enam serverist taastada.</string>

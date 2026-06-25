@@ -60,9 +60,9 @@ public class Preferences {
     // ---- bookmarks sync (docs/BOOKMARKS_SYNC.md) ----
     /** Whether bookmark sync is enabled (off by default; user opts in). */
     public static final String SYNC_ENABLED = "com.solarized.firedown.preferences.sync.enabled";
-    /** Backend base URL — Firedown's hosted server by default, or a BYO URL. */
-    public static final String SYNC_BACKEND_URL = "com.solarized.firedown.preferences.sync.backend.url";
-    /** Default (hosted) backend base URL. */
+    /** The hosted backend base URL. Bookmark sync is pinned to this — there is no
+     *  BYO-backend picker (a configurable/self-hosted backend is a downloads-vault
+     *  concern, not a free-bookmarks one). See {@code SyncManager#backendUrl}. */
     public static final String SYNC_DEFAULT_BACKEND = "https://api.firedown.app";
     /** Epoch millis of the last successful sync (0 = never). */
     public static final String SYNC_LAST_SYNCED_AT = "com.solarized.firedown.preferences.sync.last.synced.at";
@@ -80,8 +80,6 @@ public class Preferences {
     public static final String SETTINGS_SYNC_SHOW_CODE = "com.solarized.firedown.preferences.sync.show.code";
     public static final String SETTINGS_SYNC_RESTORE = "com.solarized.firedown.preferences.sync.restore";
     public static final String SETTINGS_SYNC_NOW = "com.solarized.firedown.preferences.sync.now";
-    /** Pings the configured backend's /v1/health to confirm it's a reachable Firedown server. */
-    public static final String SETTINGS_SYNC_TEST = "com.solarized.firedown.preferences.sync.test";
     public static final String SETTINGS_SYNC_SIGN_OUT = "com.solarized.firedown.preferences.sync.sign.out";
     /** Right-to-erasure: delete the encrypted document from the server. */
     public static final String SETTINGS_SYNC_DELETE_DATA = "com.solarized.firedown.preferences.sync.delete.data";

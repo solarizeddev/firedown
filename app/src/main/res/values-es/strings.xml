@@ -586,7 +586,6 @@
     <!-- Bookmark sync: announce banner + server-delete + backend validation -->
     <string name="sync_banner_title">Sincroniza tus marcadores entre dispositivos</string>
     <string name="sync_banner_subtitle">Cifrado de extremo a extremo: solo tu código de recuperación puede leerlos. Sin cuenta, sin correo.</string>
-    <string name="settings_sync_backend_invalid">Introduce una dirección https:// válida o déjalo en blanco para el servidor predeterminado</string>
     <string name="settings_sync_delete_title">Eliminar datos del servidor</string>
     <string name="settings_sync_delete_summary">Borra permanentemente tus marcadores cifrados del servidor</string>
     <string name="settings_sync_delete_message">Esto borra permanentemente tus marcadores cifrados del servidor y desactiva la sincronización en este dispositivo. Los marcadores de este dispositivo se conservan. Esta acción no se puede deshacer: los demás dispositivos ya no podrán restaurar desde el servidor.</string>

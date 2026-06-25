@@ -455,7 +455,6 @@
     <!-- Bookmark sync: announce banner + server-delete + backend validation -->
     <string name="sync_banner_title">Синхронизируйте закладки между устройствами</string>
     <string name="sync_banner_subtitle">Сквозное шифрование — прочитать их может только ваш код восстановления. Без аккаунта и почты.</string>
-    <string name="settings_sync_backend_invalid">Введите корректный адрес https:// или оставьте пустым для сервера по умолчанию</string>
     <string name="settings_sync_delete_title">Удалить данные с сервера</string>
     <string name="settings_sync_delete_summary">Безвозвратно удаляет ваши зашифрованные закладки с сервера</string>
     <string name="settings_sync_delete_message">Это безвозвратно удалит ваши зашифрованные закладки с сервера и отключит синхронизацию на этом устройстве. Закладки на этом устройстве сохранятся. Действие необратимо — другие устройства больше не смогут восстановить данные с сервера.</string>

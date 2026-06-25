@@ -28,7 +28,6 @@ public final class SyncApiClient {
     private static final MediaType OCTET = MediaType.parse("application/octet-stream");
     private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
 
-    private static final String PATH_HEALTH = "/v1/health";
     private static final String PATH_CHALLENGE = "/v1/register/challenge";
     private static final String PATH_REGISTER = "/v1/account/register";
     private static final String PATH_BOOKMARKS = "/v1/sync/bookmarks";
@@ -82,50 +81,6 @@ public final class SyncApiClient {
             this.ok = ok;
             this.version = version;
             this.serverVersion = serverVersion;
-        }
-    }
-
-    /** Result of an unauthenticated GET /v1/health connection test. */
-    public static final class Health {
-        /** True only when the host answered 200 with the Firedown {@code {status:"ok"}} shape. */
-        public final boolean firedown;
-        /** Server-reported version string when present (may be empty). */
-        public final String version;
-        Health(boolean firedown, String version) {
-            this.firedown = firedown;
-            this.version = version;
-        }
-    }
-
-    /**
-     * Unauthenticated reachability + identity probe for the BYO-backend "Test
-     * connection" action. GETs {@code /v1/health} and confirms the response is
-     * the Firedown shape ({@code {"status":"ok",…}}). A 200 from an unrelated
-     * HTTPS host or a captive portal does NOT pass — this answers "is a Firedown
-     * sync server", not merely "answered something". Throws {@link IOException}
-     * when the host is unreachable / times out; returns {@code firedown=false}
-     * when it answered but isn't a Firedown API.
-     */
-    public Health health() throws IOException {
-        Request req = new Request.Builder()
-                .url(baseUrl + PATH_HEALTH)
-                .get()
-                .build();
-        try (Response resp = client.newCall(req).execute()) {
-            if (resp.code() != 200) {
-                return new Health(false, "");
-            }
-            String body = bodyString(resp);
-            if (body == null || !body.startsWith("{")) {
-                return new Health(false, "");
-            }
-            try {
-                JSONObject obj = new JSONObject(body);
-                boolean ok = "ok".equals(obj.optString("status", ""));
-                return new Health(ok, obj.optString("version", ""));
-            } catch (org.json.JSONException e) {
-                return new Health(false, "");
-            }
         }
     }
 

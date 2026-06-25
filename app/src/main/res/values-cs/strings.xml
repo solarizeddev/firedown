@@ -408,7 +408,6 @@
     <!-- Bookmark sync: announce banner + server-delete + backend validation -->
     <string name="sync_banner_title">Synchronizujte záložky mezi zařízeními</string>
     <string name="sync_banner_subtitle">Šifrováno end-to-end — přečíst je může jen váš obnovovací kód. Bez účtu, bez e-mailu.</string>
-    <string name="settings_sync_backend_invalid">Zadejte platnou adresu https:// nebo nechte prázdné pro výchozí server</string>
     <string name="settings_sync_delete_title">Smazat data ze serveru</string>
     <string name="settings_sync_delete_summary">Trvale vymaže vaše šifrované záložky ze serveru</string>
     <string name="settings_sync_delete_message">Tímto trvale vymažete své šifrované záložky ze serveru a vypnete synchronizaci na tomto zařízení. Záložky v tomto zařízení zůstanou. Akci nelze vrátit — ostatní zařízení už nebudou moci obnovit data ze serveru.</string>
