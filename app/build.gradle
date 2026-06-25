@@ -220,7 +220,7 @@ dependencies {
     // a Google-maintained impl that accepts a raw 32-byte seed on every API level:
     // Tink's subtle Ed25519Sign.KeyPair.newKeyPair(seed) does exactly that, and is
     // RFC-8032-compliant (matches the server's ed25519 interop vectors).
-    implementation 'com.google.crypto.tink:tink-android:1.15.0'
+    implementation 'com.google.crypto.tink:tink-android:1.22.0'
 
     implementation 'androidx.core:core-splashscreen:1.2.0'
 
