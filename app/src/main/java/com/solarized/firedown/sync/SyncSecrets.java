@@ -46,10 +46,14 @@ public final class SyncSecrets {
     /** Persists the recovery-code bytes (keystore-wrapped). */
     public void store(byte[] code) {
         try {
-            byte[] iv = new byte[IV_BYTES];
-            new java.security.SecureRandom().nextBytes(iv);
             Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
-            cipher.init(Cipher.ENCRYPT_MODE, getOrCreateKey(), new GCMParameterSpec(TAG_BITS, iv));
+            // AndroidKeyStore GCM keys mandate a RANDOMIZED IV the keystore picks
+            // itself (setRandomizedEncryptionRequired defaults true) — passing a
+            // caller-supplied IV throws "Caller-provided IV not permitted". So
+            // init WITHOUT a spec and read the generated IV back (12 bytes for
+            // GCM, matching IV_BYTES); only DECRYPT supplies the stored IV.
+            cipher.init(Cipher.ENCRYPT_MODE, getOrCreateKey());
+            byte[] iv = cipher.getIV();
             byte[] ct = cipher.doFinal(code);
             byte[] blob = new byte[iv.length + ct.length];
             System.arraycopy(iv, 0, blob, 0, iv.length);
