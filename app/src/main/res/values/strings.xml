@@ -183,7 +183,7 @@
     <string name="restore_downloads_wrong_device">This backup belongs to a different device</string>
     <!-- Bookmark sync (docs/BOOKMARKS_SYNC.md) -->
     <string name="sync_banner_title">Sync your bookmarks across devices</string>
-    <string name="sync_banner_subtitle">End-to-end encrypted. No account, no email — just a recovery code.</string>
+    <string name="sync_banner_subtitle">End-to-end encrypted — only your recovery code can read it. No account, no email.</string>
     <string name="settings_sync_title">Sync bookmarks</string>
     <string name="settings_sync_summary">End-to-end encrypted bookmark sync across your devices</string>
     <string name="settings_sync_switch_summary">Off — your bookmarks stay on this device</string>
