@@ -27,6 +27,7 @@
         android:summary="@string/settings_sync_backend_summary"
         android:dialogTitle="@string/settings_sync_backend_title"
         android:dialogMessage="@string/settings_sync_backend_dialog_message"
+        android:dialogLayout="@layout/preference_dialog_sync_backend"
         app:singleLineTitle="false"
         app:icon="@drawable/dns_24" />
 

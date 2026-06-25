@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Custom dialog body for the Sync-server EditTextPreference. Mirrors the
+  androidx default (preference_dialog_edittext) so the preference framework
+  still wires it: it keeps @android:id/message (populated from the
+  preference's android:dialogMessage by PreferenceDialogFragmentCompat) and
+  @android:id/edit (bound by EditTextPreferenceDialogFragmentCompat +
+  setOnBindEditTextListener). We override it ONLY to fix spacing: the default
+  layout rendered the message flush against the dialog title and left a large
+  gap before the field. Here a small marginTop separates message from title
+  and a measured marginBottom separates message from the input. Horizontal
+  inset = dialogPreferredPadding so message + field align with the title.
+-->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingStart="?android:attr/dialogPreferredPadding"
+        android:paddingEnd="?android:attr/dialogPreferredPadding">
+
+        <TextView
+            android:id="@android:id/message"
+            style="@style/TextAppearance.Material3.BodyMedium"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="20dp"
+            android:textColor="?attr/colorOnSurfaceVariant" />
+
+        <EditText
+            android:id="@android:id/edit"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:importantForAutofill="no"
+            android:inputType="textUri"
+            android:singleLine="true" />
+
+    </LinearLayout>
+
+</ScrollView>
