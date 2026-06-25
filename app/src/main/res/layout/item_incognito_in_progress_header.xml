@@ -8,7 +8,16 @@
 
   Lock icon + trailing chevron: the card taps into the Vault, so the
   lock maps to the destination and the chevron marks it as forward
-  navigation rather than a passive info row. No progress bar — this
+  navigation rather than a passive info row.
+
+  NO layout_marginHorizontal: as a 1-span ConcatAdapter header it already
+  gets EqualSpacingItemDecoration's 8dp left/right gutter — the same gutter
+  every (margin-less) list-row card gets, so the banner edge sits flush with
+  the item borders at 8dp. Adding a marginHorizontal would double it to 16dp
+  and float the banner inside the rows; the decoration is the single source
+  of truth for horizontal spacing (see its own comment).
+
+  No progress bar — this
   adapter only has a count (TaskViewModel#getSafeCount), not per-download
   progress, so a determinate bar is impossible and an averaged one would
   mislead. The cardBackgroundColor below is a fallback; the adapter
@@ -20,7 +29,6 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginHorizontal="@dimen/list_spacing"
     android:layout_marginTop="@dimen/list_spacing"
     android:layout_marginBottom="@dimen/incognito_banner_margin_bottom"
     app:cardCornerRadius="12dp"

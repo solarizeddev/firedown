@@ -6,14 +6,20 @@
   One-time: dismiss flag + enabling sync both retire it (SYNC_BANNER_DISMISSED).
 
   Style matches the Downloads incognito-in-progress banner
-  (item_incognito_in_progress_header): layout_marginHorizontal=list_spacing +
-  paddingStart=16 + a NEUTRAL 24dp leading icon tinted colorOnSurface (the cloud
-  here, the lock there), same wash + dismiss IconButton. So the banner card's
-  edge lands at 16dp from the screen — the same column as the row favicons/section
-  headers (decoration 8dp + the row's inner 8dp margin). All three list rows
-  (download/bookmark/history) are structurally identical and paint their selection
-  wash on the card ROOT (8dp), so that wash reads as a slightly wider pill behind
-  the content on every screen — consistent, nothing per-surface to special-case.
+  (item_incognito_in_progress_header): paddingStart=16 + a NEUTRAL 24dp leading
+  icon tinted colorOnSurface (the cloud here, the lock there), same wash + dismiss
+  IconButton.
+
+  NO layout_marginHorizontal: the banner is a 1-span ConcatAdapter header, so
+  EqualSpacingItemDecoration already gives it an 8dp left/right gutter — the SAME
+  gutter every list row gets. The row cards carry no horizontal margin either, so
+  the banner card edge and the row card BORDERS both land at 8dp from the screen,
+  flush. (An explicit marginHorizontal here would double the inset to 16dp and
+  float the banner 8dp inside the item borders — which is exactly what it looked
+  like before; the decoration is the single source of truth for horizontal
+  spacing, per its own comment.) All three list rows (download/bookmark/history)
+  are structurally identical and paint their selection wash on the card ROOT (8dp),
+  so the banner card and the selection pills share that 8dp column.
   ONE deliberate deviation: marginBottom=0 (NOT the incognito banner's -12dp,
   which pulled the first row up and read cramped above populated bookmark rows).
 -->
@@ -22,7 +28,6 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginHorizontal="@dimen/list_spacing"
     android:layout_marginTop="@dimen/list_spacing"
     android:layout_marginBottom="0dp"
     app:cardCornerRadius="12dp"
