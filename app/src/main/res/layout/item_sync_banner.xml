@@ -70,15 +70,18 @@
             app:layout_constraintEnd_toStartOf="@id/sync_banner_close"
             app:layout_constraintTop_toBottomOf="@id/sync_banner_title" />
 
-        <!-- Dismiss is its own touch target; the rest of the card opens sync. -->
-        <androidx.appcompat.widget.AppCompatImageButton
+        <!-- Dismiss is its own touch target; the rest of the card opens sync.
+             Material3 IconButton, 36dp / 18dp icon — same as the capture-help
+             and incognito banners. -->
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/sync_banner_close"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
+            style="@style/Widget.Material3.Button.IconButton"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
             android:contentDescription="@string/task_dismiss"
-            android:src="@drawable/ic_baseline_close_24"
-            app:tint="?attr/colorOnSurfaceVariant"
+            app:icon="@drawable/ic_baseline_close_24"
+            app:iconSize="18dp"
+            app:iconTint="?attr/colorOnSurface"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent" />
