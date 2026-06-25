@@ -209,8 +209,11 @@
     <string name="settings_sync_export_title">Save recovery code to file</string>
     <string name="settings_sync_export_summary">Export the code as a text file you can store</string>
     <string name="settings_sync_export_file_name">firedown-recovery-code.txt</string>
+    <!-- Point-of-action caveat shown before the file picker. -->
+    <string name="settings_sync_export_caveat_message">This file is saved unencrypted — anyone who can read it can read your bookmarks. Import the code into your password manager (or another safe place), then delete the file. A password manager keeps it encrypted; a loose file does not.</string>
+    <string name="settings_sync_export_continue">Continue</string>
     <!-- %1$s is the grouped recovery code. -->
-    <string name="settings_sync_export_file_body">Firedown — bookmark sync recovery code\n\n%1$s\n\nThis code is the only key to your synced bookmarks. Anyone who has it can read them, and it can\'t be recovered if lost. Keep this file somewhere safe — ideally in a password manager.</string>
+    <string name="settings_sync_export_file_body">Firedown — bookmark sync recovery code\n\n%1$s\n\nThis code is the only key to your synced bookmarks — anyone who has it can read them, and it can\'t be recovered if lost.\n\nThis file is NOT encrypted. Import the code into your password manager (or another safe place), then delete this file.</string>
     <string name="settings_sync_export_done">Recovery code saved</string>
     <string name="settings_sync_export_failed">Couldn\'t save the file</string>
     <string name="settings_sync_code_copied">Recovery code copied</string>

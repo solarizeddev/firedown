@@ -150,7 +150,7 @@ public class SyncSettingsFragment extends BasePreferenceFragment
         switch (key) {
             case Preferences.SETTINGS_SYNC_HELP -> showHelpDialog();
             case Preferences.SETTINGS_SYNC_SHOW_CODE -> authThenShowCode();
-            case Preferences.SETTINGS_SYNC_EXPORT_CODE -> authThenExportCode();
+            case Preferences.SETTINGS_SYNC_EXPORT_CODE -> showExportCaveatDialog();
             case Preferences.SETTINGS_SYNC_NOW -> startSyncNow();
             case Preferences.SETTINGS_SYNC_SIGN_OUT -> showSignOutDialog();
             case Preferences.SETTINGS_SYNC_DELETE_DATA -> showDeleteDataDialog();
@@ -200,6 +200,22 @@ public class SyncSettingsFragment extends BasePreferenceFragment
                         | BiometricManager.Authenticators.DEVICE_CREDENTIAL)
                 .build();
         prompt.authenticate(info);
+    }
+
+    /**
+     * Point-of-action caveat before exporting: the file is plaintext, so it's a
+     * transport to the user's password manager, not a vault. Explained BEFORE the
+     * file lands (the in-file caveat is only read afterwards). On Continue →
+     * device-auth → SAF picker.
+     */
+    private void showExportCaveatDialog() {
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.settings_sync_export_title)
+                .setMessage(R.string.settings_sync_export_caveat_message)
+                .setPositiveButton(R.string.settings_sync_export_continue,
+                        (dialog, which) -> authThenExportCode())
+                .setNegativeButton(R.string.cancel, null)
+                .show();
     }
 
     /** Auth-gated export of the recovery code to a user-chosen text file (SAF). */
