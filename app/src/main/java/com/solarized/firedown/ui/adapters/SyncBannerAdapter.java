@@ -8,7 +8,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.card.MaterialCardView;
 import com.solarized.firedown.R;
+import com.solarized.firedown.utils.SelectionStyling;
 
 /**
  * Single-card header for WebBookmarkFragment's RecyclerView: "Sync your
@@ -57,6 +59,13 @@ public class SyncBannerAdapter extends RecyclerView.Adapter<SyncBannerAdapter.Ba
     public BannerViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View v = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.item_sync_banner, parent, false);
+        // Same soft brand wash as RestoreBannerAdapter (composed in code — the
+        // tone is derived from colorPrimaryContainer over the surface, not a
+        // flat resource color), so the two banners read identically.
+        if (v instanceof MaterialCardView card) {
+            card.setCardBackgroundColor(SelectionStyling.selectedCardWashOver(
+                    parent.getContext(), com.google.android.material.R.attr.colorSurface));
+        }
         return new BannerViewHolder(v);
     }
 

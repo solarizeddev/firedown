@@ -24,8 +24,8 @@
         android:layout_height="wrap_content"
         android:paddingStart="16dp"
         android:paddingEnd="8dp"
-        android:paddingTop="14dp"
-        android:paddingBottom="14dp">
+        android:paddingTop="16dp"
+        android:paddingBottom="16dp">
 
         <androidx.appcompat.widget.AppCompatImageView
             android:id="@+id/sync_banner_icon"
