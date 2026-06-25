@@ -56,6 +56,11 @@ public class DownloadTask implements DownloadCallback {
     /** Set when onError sends MSG_ERROR — prevents onRunComplete from sending duplicate MSG_FINISH. */
     private final AtomicBoolean terminalMessageSent = new AtomicBoolean(false);
 
+    /** Terminal status that {@link #onProcessing()} temporarily overrode to show
+     *  the "Finishing…" state (user-finish seals to FINISHED before its mux);
+     *  {@link #onRunComplete()} restores it. {@link Integer#MIN_VALUE} = unset. */
+    private int mStatusBeforeFinishing = Integer.MIN_VALUE;
+
     private DownloadRunnable runnable;
     private DownloadContext context;
 
@@ -80,6 +85,7 @@ public class DownloadTask implements DownloadCallback {
         synchronized (runnableManager) {
             sealed.set(false);
             terminalMessageSent.set(false);
+            mStatusBeforeFinishing = Integer.MIN_VALUE;
 
             entity.setId(id);
             entity.setFileType(request.getFileType());
@@ -135,6 +141,7 @@ public class DownloadTask implements DownloadCallback {
     public void resume(DownloadEntity existing) {
         sealed.set(false);
         terminalMessageSent.set(false);
+        mStatusBeforeFinishing = Integer.MIN_VALUE;
         entity.parseDownload(existing);
 
         DownloadRequest request = new DownloadRequest.Builder(existing.getFileUrl())
@@ -170,6 +177,13 @@ public class DownloadTask implements DownloadCallback {
         if (ctx != null && ctx.isDeleted()) {
             repository.deleteDownload(entity);
         } else {
+            // Restore a terminal status that onProcessing temporarily overrode
+            // to PROGRESS for the transient "Finishing…" display (user-finish
+            // seals to FINISHED before its partial-data mux runs).
+            if (mStatusBeforeFinishing != Integer.MIN_VALUE) {
+                entity.setFileStatus(mStatusBeforeFinishing);
+                mStatusBeforeFinishing = Integer.MIN_VALUE;
+            }
             // Always write — entity has the correct status (FINISHED from
             // sealWithStatus, or ERROR from onError). For SABR/FFmpeg finish,
             // onFileSizeKnown already updated the size before we get here.
@@ -248,6 +262,22 @@ public class DownloadTask implements DownloadCallback {
                 entity.setFileSize(fileLen);
             }
         }
+        repository.add(entity);
+    }
+
+    @Override
+    public void onProcessing() {
+        // Honoured even when sealed (unlike onProgress): a user-finished
+        // download is sealed to FINISHED before its partial-data mux, but we
+        // still want a transient "Finishing…" row while the mux runs. The
+        // sealed terminal status is saved so onRunComplete can restore it once
+        // the mux is done. Render state = PROGRESS + PROCESSING_PROGRESS, which
+        // the adapter shows as an indeterminate "Finishing…".
+        if (entity.getFileStatus() != Download.PROGRESS) {
+            mStatusBeforeFinishing = entity.getFileStatus();
+        }
+        entity.setFileStatus(Download.PROGRESS);
+        entity.setFileProgress(Download.PROCESSING_PROGRESS);
         repository.add(entity);
     }
 

@@ -312,6 +312,15 @@
     // Media URL shapes, shared by the player-API reader (here) and the generic
     // page-state reader (further down): a progressive file vs an HLS master.
     const PROGRESSIVE_RE = /^https?:\/\/[^\s"']+\.(?:mp4|m4v|webm)(?:[?#]|$)/i;
+    // Standalone progressive AUDIO file (podcast/article audio held in page state,
+    // e.g. podverse.fm's __NEXT_DATA__.mediaUrl → a substack .mp3). Treated like a
+    // progressive variant (no resolution). The incidental-sound concern that gates
+    // the generic catcher's audio (urlIsStandaloneAudio) does NOT apply here: this
+    // only fires for a url under a media-ish KEY in page-world STATE (NEXT_DATA/
+    // Redux/config), which holds the page's CONTENT — UI dings live in code as
+    // `new Audio('…')`, not in a state object under url/src/mediaUrl. Same
+    // key-proximity precision as the video case.
+    const AUDIO_RE = /^https?:\/\/[^\s"']+\.(?:mp3|m4a|aac|ogg|oga|opus|flac|wav|weba)(?:[?#]|$)/i;
     const HLS_MASTER_RE = /^https?:\/\/[^\s"']+\.m3u8(?:[?#]|$)/i;
 
     // Classify a PLAYER-FED media URL (a JWPlayer/Video.js source, or a DOM
@@ -685,6 +694,8 @@
     // share/canonical/next links never carry a media extension). Three outcomes:
     //   - .m3u8            → HLS master  (postHlsMaster → Java enumerates, no probe)
     //   - .mp4/.m4v/.webm  → progressive variant (page-state-progressive)
+    //   - .mp3/.m4a/.aac/… → progressive AUDIO variant (podcast/article audio in
+    //                        page state, e.g. podverse) — same emit, no resolution
     //   - a SAME-ORIGIN non-media url beside a format/quality/segmentFormats hint
     //     → a tokenized media-list DELEGATE (e.g. a player whose source is
     //     …/media/mp4/?s=… returning [{quality, videoUrl:…mp4}]); resolved with a
@@ -696,8 +707,11 @@
     // (PROGRESSIVE_RE / HLS_MASTER_RE are defined above, shared with the player-API
     //  reader.)
     // Keys a player holds its source(s) under. The VALUE still has to be a media
-    // URL (or a same-origin delegate), so a broad key like `url` is safe.
-    const MEDIA_KEY_RE = /^(?:video_?url|videourl|url|uri|src|source|file|hls|hls_?url|m3u8|dash|manifest_?url|playback_?url|stream_?url|content_?url|media_?url|play_?url)$/i;
+    // URL (or a same-origin delegate), so a broad key like `url` is safe. Audio
+    // keys (audio_url/enclosure — podcast/article audio in page state, e.g.
+    // substack's __NEXT_DATA__ TTS `audio_url`) sit alongside the video ones now
+    // that classifyInto accepts audio extensions (AUDIO_RE).
+    const MEDIA_KEY_RE = /^(?:video_?url|videourl|audio_?url|audiourl|url|uri|src|source|file|hls|hls_?url|m3u8|dash|manifest_?url|playback_?url|stream_?url|content_?url|media_?url|play_?url|enclosure|enclosure_?url)$/i;
     // Keys whose value is an ARRAY of quality variants for ONE video (so the whole
     // array is grouped into a single entity, not split). Deliberately narrow —
     // a player's source/quality list, NOT a generic `videos`/`items`/`playlist`
@@ -782,7 +796,9 @@
         // Categorise one media-key URL into a group (variant / hls / delegate).
         function classifyInto(g, url, qualityHint, owner, ownerKeys) {
             if (HLS_MASTER_RE.test(url)) { g.hls.push(url); return; }
-            if (PROGRESSIVE_RE.test(url)) {
+            if (PROGRESSIVE_RE.test(url) || AUDIO_RE.test(url)) {
+                // Audio has no resolution → heightFrom returns 0, which the emit
+                // renders as a no-resolution variant (JsonHelper shows no "WxH").
                 g.variants.push({ url, height: heightFrom(qualityHint, url) });
                 return;
             }
@@ -1025,7 +1041,7 @@
                     const list = await fetchMediaList(d.url);
                     for (const item of list) {
                         if (HLS_MASTER_RE.test(item.url)) hlsSet.add(item.url);
-                        else if (PROGRESSIVE_RE.test(item.url)) progressive.push(item);
+                        else if (PROGRESSIVE_RE.test(item.url) || AUDIO_RE.test(item.url)) progressive.push(item);
                     }
                 }
             }

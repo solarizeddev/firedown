@@ -54,10 +54,12 @@ import com.solarized.firedown.ui.OnItemClickListener;
 import com.solarized.firedown.ui.diffs.DownloadDiffCallback;
 import com.solarized.firedown.IntentActions;
 import com.solarized.firedown.Keys;
+import com.solarized.firedown.utils.GroupAggregate;
 import com.solarized.firedown.utils.NavigationUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executor;
 
 import javax.inject.Inject;
@@ -135,6 +137,19 @@ public class DownloadFragment extends BaseDownloadFragment implements
     /** Set on a filter-chip change; consumed by the load-state listener
      *  once the new generation is presented — see applyPendingPresentation. */
     private boolean mPendingPresentation = false;
+
+    /** Section-header aggregates (per-group count + total bytes) held back
+     *  while a filter-chip change is in flight (mPendingPresentation). The
+     *  aggregates stream and the paging stream are separate LiveData that
+     *  land on independent frames, so applying new (e.g. all-types) counts
+     *  the moment they arrive rebinds the headers over the OLD, still-filtered
+     *  generation — the recording's glitch frame: "Last 7 days · 25 files"
+     *  shown above the old image mosaic with "Today" not yet inserted. Stash
+     *  the latest map here and apply it atomically with the new generation in
+     *  applyPendingPresentation (mirrors the mime-suppression/density flip).
+     *  Null when nothing is deferred — emits with no chip change in flight
+     *  (ordinary table mutations) apply immediately, keeping live counts. */
+    private Map<Integer, GroupAggregate> mPendingAggregates = null;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -407,7 +422,7 @@ public class DownloadFragment extends BaseDownloadFragment implements
         // can fill section-header subtitles. Re-fires whenever the
         // download table changes or the sort mode changes.
         mDownloadsViewModel.getDownloadAggregates().observe(getViewLifecycleOwner(),
-                aggregates -> { if (aggregates != null) mAdapter.setAggregates(aggregates); });
+                this::applyAggregates);
 
         // Scroll the list back to the top whenever a new (distinct) query is dispatched.
         // distinctUntilChanged on the VM side suppresses the spurious initial emission
@@ -725,9 +740,39 @@ public class DownloadFragment extends BaseDownloadFragment implements
             return;
         }
         mPendingPresentation = false;
+        // Apply the header aggregates held back during the requery FIRST, in
+        // the same main-thread dispatch as the presentation flip, so the new
+        // generation and its section-header counts land on the same frame —
+        // no transient where the new totals sit above the old grouping.
+        if (mPendingAggregates != null) {
+            mAdapter.setAggregates(mPendingAggregates);
+            mPendingAggregates = null;
+        }
         int chipId = mChipGroup != null ? mChipGroup.getCheckedChipId() : View.NO_ID;
         mAdapter.setMimeSuppressed(chipId != View.NO_ID);
         refreshGridDensityIfChanged();
+    }
+
+    /**
+     * Routes a section-header aggregates emission to the adapter, deferring it
+     * while a filter-chip change is in flight. The aggregates LiveData and the
+     * paging LiveData are independent streams that settle on separate frames;
+     * applying new (e.g. all-types) counts the instant they arrive rebinds the
+     * headers over the OLD, still-filtered generation (the recording's glitch
+     * frame). When mPendingPresentation is set, stash the latest map and let
+     * applyPendingPresentation flush it atomically with the new generation;
+     * otherwise (ordinary table mutations, no chip change) apply immediately so
+     * the counts stay live.
+     */
+    private void applyAggregates(@Nullable Map<Integer, GroupAggregate> aggregates) {
+        if (aggregates == null || mAdapter == null) {
+            return;
+        }
+        if (mPendingPresentation) {
+            mPendingAggregates = aggregates;
+            return;
+        }
+        mAdapter.setAggregates(aggregates);
     }
 
     /**

@@ -1,3 +1,10 @@
+## [1.1.80] - 2026-06-24
+
+- YouTube downloads now finish ready to play — correct length with working seek/scrub, and no extra processing step after the download
+- Updated the GeckoView browser engine to 152.0.20260621191700
+- Updated FFmpeg to 8.1.2
+- Minor bugfixes and improvements
+
 ## [1.1.79] - 2026-06-18
 
 - Fixed video capture on X / Twitter — single posts and the home feed reliably detect videos again, and capture now keeps working through X's frequent layout changes
