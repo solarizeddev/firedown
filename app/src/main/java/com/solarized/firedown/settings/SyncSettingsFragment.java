@@ -37,6 +37,7 @@ import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
 import com.solarized.firedown.sync.SyncManager;
 import com.solarized.firedown.sync.SyncWorker;
+import com.solarized.firedown.utils.NavigationUtils;
 
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
@@ -149,7 +150,8 @@ public class SyncSettingsFragment extends BasePreferenceFragment
     public boolean onPreferenceClick(Preference preference) {
         String key = preference.getKey();
         switch (key) {
-            case Preferences.SETTINGS_SYNC_HELP -> showHelpDialog();
+            case Preferences.SETTINGS_SYNC_HELP ->
+                    NavigationUtils.navigateSafe(mNavController, R.id.action_sync_to_help);
             case Preferences.SETTINGS_SYNC_SHOW_CODE -> authThenShowCode();
             case Preferences.SETTINGS_SYNC_EXPORT_CODE -> showExportCaveatDialog();
             case Preferences.SETTINGS_SYNC_NOW -> startSyncNow();
@@ -344,22 +346,6 @@ public class SyncSettingsFragment extends BasePreferenceFragment
         CharSequence rel = DateUtils.getRelativeTimeSpanString(
                 at, System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS);
         return getString(R.string.settings_sync_last_synced, rel);
-    }
-
-    /**
-     * Offline "How sync encryption works" FAQ — a scrollable static Q/A dialog
-     * (no network, no web link). The catastrophic "lose the code = lose it"
-     * warning still fires at the point of action (setup + save-code dialogs);
-     * this is the browsable explainer for the pre-enable decision and for an
-     * existing user who wants to re-read the stakes.
-     */
-    private void showHelpDialog() {
-        View view = getLayoutInflater().inflate(R.layout.dialog_sync_faq, null);
-        new MaterialAlertDialogBuilder(requireContext())
-                .setTitle(R.string.settings_sync_help_title)
-                .setView(view)
-                .setPositiveButton(R.string.settings_sync_help_close, null)
-                .show();
     }
 
     /** First-run chooser: start a brand-new identity, or restore from a code. */

@@ -91,6 +91,8 @@ public class SettingsActivity extends BaseActivity {
                 mToolbar.setTitle(R.string.settings_lock_title);
             else if(id == R.id.settings_sync)
                 mToolbar.setTitle(R.string.settings_sync_title);
+            else if(id == R.id.settings_sync_help)
+                mToolbar.setTitle(R.string.settings_sync_help_title);
         });
 
         ViewCompat.setOnApplyWindowInsetsListener(mToolbar, (v, windowInsets) -> {
