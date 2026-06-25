@@ -347,15 +347,15 @@ public class WebBookmarkFragment extends BaseFocusFragment implements OnItemClic
         switch (mSyncState) {
             case SyncManager.STATE_SYNCING:
                 drawable = R.drawable.cloud_24;
-                colorAttr = com.google.android.material.R.attr.colorPrimary;
+                colorAttr = androidx.appcompat.R.attr.colorPrimary;
                 break;
             case SyncManager.STATE_SYNCED:
                 drawable = R.drawable.cloud_done_24;
-                colorAttr = com.google.android.material.R.attr.colorPrimary;
+                colorAttr = androidx.appcompat.R.attr.colorPrimary;
                 break;
             case SyncManager.STATE_ERROR:
                 drawable = R.drawable.cloud_off_24;
-                colorAttr = com.google.android.material.R.attr.colorError;
+                colorAttr = androidx.appcompat.R.attr.colorError;
                 break;
             case SyncManager.STATE_OFF:
             default:
