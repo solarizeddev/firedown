@@ -2189,6 +2189,43 @@ back to English (MissingTranslation isn't build-fatal here).
   density. The Downloads grid meta row reads `[chip] duration · size`
   (`joinWithSize`) — size is the one list-line fact with no other home in the
   grid; date stays out because the sort headers carry it.
+- **A ViewHolder wrapped in a `ConcatAdapter` MUST report
+  `getBindingAdapterPosition()`, NEVER `getAbsoluteAdapterPosition()`, in its
+  click/long-click handlers.** When a list adapter is one child of a
+  `ConcatAdapter` (a banner/header prepended at index 0 — the Bookmarks sync
+  banner `SyncBannerAdapter`, the Downloads incognito/restore banners), the
+  *absolute* position is the index in the WHOLE concat (offset by the header),
+  while the listener feeds that value straight into the row adapter's OWN 0-based
+  list (`setSelected(pos)`, `snapshot().get(pos)`). The two diverge by the header
+  count, so every row selects/opens its neighbour and the LAST row runs off the
+  end (IndexOutOfBounds swallowed → the gesture looks completely dead). This
+  shipped as a dead long-click in `WebBookmarkFragment` the moment the sync
+  banner was added — fixed by switching `WebBookmarkAdapter` to
+  `getBindingAdapterPosition()` (the binding position is relative to the row
+  adapter, immune to the header offset) + a `NO_POSITION` guard. `DownloadItemAdapter`
+  already does this (it's banner-wrapped). `WebHistoryAdapter` and
+  `BrowserOptionAdapter` still use `getAbsoluteAdapterPosition()` — that's only
+  safe because their fragments set the adapter DIRECTLY (no `ConcatAdapter`); if
+  you ever wrap one in a banner, switch it to the binding position FIRST.
+- **List-row selection chrome is shared across Downloads / Bookmarks / History /
+  Captured — keep all four identical.** The pattern (Files-by-Google): the
+  `MaterialCardView` is the row ROOT (no outer `LinearLayout`, no external
+  checkmark), the selection check overlays the more/action-button's OWN slot
+  (the adapter swaps them on the action-mode toggle — button `INVISIBLE`, check
+  `VISIBLE` — so the slot width holds and the row never reflows), and the
+  selected state paints a tonal WASH on the card via
+  `SelectionStyling.selectedCardWashOver(...)` (primaryContainer @ 20%), NOT a
+  stroke border. Captured (`fragment_browser_options_item_list` +
+  `BrowserOptionAdapter`) originally diverged — an external left checkmark inside
+  a wrapping `LinearLayout` that shifted the whole row, plus a 2dp stroke instead
+  of a wash — which read as a completely different selection UI; it was brought
+  in line. The ONE deliberate difference Captured keeps is its resting card
+  background (`colorSurfaceContainerLow`, for contrast on the non-lifting bottom
+  sheet, vs Downloads' transparent card), so its wash layers over
+  surfaceContainerLow. Grid/dense tiles legitimately keep a corner check + stroke
+  (no more-button slot to borrow, and a full-tile wash fights the thumbnail) —
+  the shared pattern is for the LIST rows. Don't reintroduce an external
+  checkmark or a stroke-only selection on any list row.
 
 ## Thumbnails (native `thumbnailer.c`)
 
