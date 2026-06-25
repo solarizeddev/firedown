@@ -88,6 +88,10 @@ public class UpdateNotification {
         NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(context, App.UPDATES_NOTIFICATION_ID);
         mBuilder.setSmallIcon(R.drawable.ic_firedown_notification);
         mBuilder.setOnlyAlertOnce(true);
+        // Pre-O has no channels, so importance is driven by the builder
+        // priority — set HIGH so the install prompt heads-up there too,
+        // matching the IMPORTANCE_HIGH channel used on O+.
+        mBuilder.setPriority(NotificationCompat.PRIORITY_HIGH);
         mBuilder.setAutoCancel(true);
         mBuilder.setWhen(System.currentTimeMillis());
         mBuilder.setContentTitle(context.getText(R.string.update_prompt_install_title));
