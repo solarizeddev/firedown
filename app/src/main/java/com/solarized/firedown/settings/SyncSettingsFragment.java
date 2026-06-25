@@ -63,6 +63,7 @@ public class SyncSettingsFragment extends BasePreferenceFragment
     private Preference mShowCode;
     private Preference mSyncNow;
     private EditTextPreference mBackend;
+    private Preference mTest;
     private Preference mSignOut;
     private Preference mDeleteData;
 
@@ -76,6 +77,7 @@ public class SyncSettingsFragment extends BasePreferenceFragment
         mShowCode = findPreference(Preferences.SETTINGS_SYNC_SHOW_CODE);
         mSyncNow = findPreference(Preferences.SETTINGS_SYNC_NOW);
         mBackend = findPreference(Preferences.SYNC_BACKEND_URL);
+        mTest = findPreference(Preferences.SETTINGS_SYNC_TEST);
         mSignOut = findPreference(Preferences.SETTINGS_SYNC_SIGN_OUT);
         mDeleteData = findPreference(Preferences.SETTINGS_SYNC_DELETE_DATA);
 
@@ -101,18 +103,33 @@ public class SyncSettingsFragment extends BasePreferenceFragment
                 editText.setHint(Preferences.SYNC_DEFAULT_BACKEND);
             });
             mBackend.setOnPreferenceChangeListener((pref, newValue) -> {
-                String entered = newValue == null ? "" : newValue.toString().trim();
+                // Normalize first (trim, strip path/trailing slash, lowercase
+                // scheme+host) so a pasted '.../v1/health' or a trailing slash
+                // doesn't read as invalid or double-up the path.
+                String normalized = SyncManager.normalizeBackendUrl(
+                        newValue == null ? "" : newValue.toString());
                 // Blank is allowed (resets to the hosted default); a non-blank
                 // value must be a valid https URL or we reject it and keep the old.
-                if (!entered.isEmpty() && !SyncManager.isValidBackendUrl(entered)) {
-                    snackbar(getString(R.string.settings_sync_backend_invalid));
+                if (!normalized.isEmpty() && !SyncManager.isValidBackendUrl(normalized)) {
+                    // Distinguish the common "typed http://" mistake from generic junk
+                    // so the message is actionable (https is mandatory — see SyncManager).
+                    boolean httpScheme = normalized.regionMatches(true, 0, "http://", 0, 7);
+                    snackbar(getString(httpScheme
+                            ? R.string.settings_sync_backend_not_https
+                            : R.string.settings_sync_backend_invalid));
                     return false;
                 }
-                mSyncManager.setBackendUrl(entered);
-                // Reflect the resolved value (blank falls back to the default).
+                mSyncManager.setBackendUrl(normalized);
+                // Reflect the resolved value (blank falls back to the default) in
+                // both the dialog field and the row summary.
                 mBackend.setText(mSyncManager.backendUrl());
+                mBackend.setSummary(backendSummary());
                 return false;
             });
+        }
+
+        if (mTest != null) {
+            mTest.setOnPreferenceClickListener(this);
         }
 
         if (mShowCode != null) {
@@ -145,6 +162,7 @@ public class SyncSettingsFragment extends BasePreferenceFragment
         switch (key) {
             case Preferences.SETTINGS_SYNC_SHOW_CODE -> authThenShowCode();
             case Preferences.SETTINGS_SYNC_NOW -> startSyncNow();
+            case Preferences.SETTINGS_SYNC_TEST -> runConnectionTest();
             case Preferences.SETTINGS_SYNC_SIGN_OUT -> showSignOutDialog();
             case Preferences.SETTINGS_SYNC_DELETE_DATA -> showDeleteDataDialog();
         }
@@ -221,6 +239,48 @@ public class SyncSettingsFragment extends BasePreferenceFragment
         });
     }
 
+    /**
+     * Row summary for the backend: the active server host, tagged as the hosted
+     * Default or a Custom BYO server — so the current server is visible at a
+     * glance without opening the dialog.
+     */
+    private String backendSummary() {
+        String host = mSyncManager.backendHost();
+        return getString(mSyncManager.isDefaultBackend()
+                ? R.string.settings_sync_backend_value_default
+                : R.string.settings_sync_backend_value_custom, host);
+    }
+
+    /**
+     * Pings the configured backend's /v1/health and reports whether it's a
+     * reachable Firedown sync server. The probe is unauthenticated, so it
+     * validates the ADDRESS independently of the account/key flow. The row's
+     * summary shows a transient "testing…" line; the terminal result lands in a
+     * snackbar (and the summary is restored on resume / next state refresh).
+     */
+    private void runConnectionTest() {
+        if (mTest != null) {
+            mTest.setSummary(getString(R.string.settings_sync_test_running));
+        }
+        mSyncManager.testBackend(result -> {
+            if (!isAdded()) {
+                return;
+            }
+            String message;
+            switch (result.status) {
+                case OK -> message = TextUtils.isEmpty(result.version)
+                        ? getString(R.string.settings_sync_test_ok_no_version)
+                        : getString(R.string.settings_sync_test_ok, result.version);
+                case NOT_FIREDOWN -> message = getString(R.string.settings_sync_test_not_server);
+                default -> message = getString(R.string.settings_sync_test_unreachable);
+            }
+            snackbar(message);
+            if (mTest != null) {
+                mTest.setSummary(getString(R.string.settings_sync_test_summary));
+            }
+        });
+    }
+
     /** Reflects persisted state into the switch + dependent-row visibility. */
     private void updateState() {
         boolean on = mSyncManager.isEnabled();
@@ -238,6 +298,10 @@ public class SyncSettingsFragment extends BasePreferenceFragment
         }
         if (mBackend != null) {
             mBackend.setVisible(on);
+            mBackend.setSummary(backendSummary());
+        }
+        if (mTest != null) {
+            mTest.setVisible(on);
         }
         if (mSignOut != null) {
             mSignOut.setVisible(on);

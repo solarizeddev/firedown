@@ -17,6 +17,7 @@ import com.solarized.firedown.data.repository.WebBookmarkDataRepository;
 import com.solarized.firedown.sync.crypto.SyncIdentity;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
@@ -96,15 +97,112 @@ public class SyncManager {
      * warns, this is the model-layer guardrail so garbage never reaches the wire.
      */
     public void setBackendUrl(String url) {
-        String trimmed = url == null ? "" : url.trim();
-        if (TextUtils.isEmpty(trimmed)) {
+        String normalized = normalizeBackendUrl(url);
+        if (TextUtils.isEmpty(normalized)) {
             prefs.edit().putString(Preferences.SYNC_BACKEND_URL, Preferences.SYNC_DEFAULT_BACKEND).apply();
             return;
         }
-        if (isValidBackendUrl(trimmed)) {
-            prefs.edit().putString(Preferences.SYNC_BACKEND_URL, trimmed).apply();
+        if (isValidBackendUrl(normalized)) {
+            prefs.edit().putString(Preferences.SYNC_BACKEND_URL, normalized).apply();
         }
         // else: invalid — keep the existing value (the UI surfaces the error).
+    }
+
+    /**
+     * Canonicalises a user-entered backend URL to a bare {@code scheme://host[:port]}
+     * base: trims, lowercases scheme+host, and drops any path/query/fragment and
+     * trailing slash (the API client appends {@code /v1/...} itself, so a pasted
+     * {@code https://host/v1/health} or a trailing slash would otherwise double up).
+     * Returns "" for blank input (→ reset to default). A value the parser can't
+     * split into scheme+host is returned trimmed-but-unchanged so {@link
+     * #isValidBackendUrl} can reject it with a message.
+     */
+    public static String normalizeBackendUrl(String url) {
+        if (url == null) {
+            return "";
+        }
+        String trimmed = url.trim();
+        if (trimmed.isEmpty()) {
+            return "";
+        }
+        Uri uri = Uri.parse(trimmed);
+        String scheme = uri.getScheme();
+        String host = uri.getHost();
+        if (scheme == null || host == null || host.isEmpty()) {
+            return trimmed;
+        }
+        StringBuilder sb = new StringBuilder()
+                .append(scheme.toLowerCase(Locale.ROOT))
+                .append("://")
+                .append(host.toLowerCase(Locale.ROOT));
+        int port = uri.getPort();
+        if (port > 0) {
+            sb.append(':').append(port);
+        }
+        return sb.toString();
+    }
+
+    /** True when the active backend is Firedown's hosted default (not a BYO server). */
+    public boolean isDefaultBackend() {
+        return Preferences.SYNC_DEFAULT_BACKEND.equals(backendUrl());
+    }
+
+    /** The host of the active backend, for the settings summary (falls back to the raw URL). */
+    public String backendHost() {
+        String host = Uri.parse(backendUrl()).getHost();
+        return TextUtils.isEmpty(host) ? backendUrl() : host;
+    }
+
+    /** Outcome of a {@link #testBackend} probe. */
+    public enum BackendTest {
+        /** Reachable AND answered with the Firedown {@code /v1/health} shape. */
+        OK,
+        /** Reachable, but the response wasn't a Firedown sync server. */
+        NOT_FIREDOWN,
+        /** Couldn't reach the host (DNS / TLS / timeout / network down). */
+        UNREACHABLE
+    }
+
+    /** Result + (when OK) the server-reported version, delivered to the UI. */
+    public static final class BackendTestResult {
+        public final BackendTest status;
+        public final String version;
+        BackendTestResult(BackendTest status, String version) {
+            this.status = status;
+            this.version = version;
+        }
+    }
+
+    /**
+     * Probes the CURRENT backend's {@code /v1/health} on the disk executor and
+     * posts the outcome to the main thread. Unauthenticated — works regardless of
+     * sync setup state — so it's a pure "is this address a reachable Firedown
+     * server" check, independent of the account/key flow.
+     */
+    public void testBackend(Consumer<BackendTestResult> onResult) {
+        final String url = backendUrl();
+        diskExecutor.execute(() -> {
+            BackendTest status;
+            String version = "";
+            try {
+                SyncApiClient api = new SyncApiClient(httpClient, url);
+                SyncApiClient.Health health = api.health();
+                if (health.firedown) {
+                    status = BackendTest.OK;
+                    version = health.version;
+                } else {
+                    status = BackendTest.NOT_FIREDOWN;
+                }
+            } catch (Exception e) {
+                status = BackendTest.UNREACHABLE;
+            }
+            final BackendTestResult result = new BackendTestResult(status, version);
+            main.post(() -> {
+                if (onResult != null) {
+                    onResult.accept(result);
+                }
+            });
+        });
     }
 
     /**

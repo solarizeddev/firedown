@@ -26,9 +26,16 @@
         android:title="@string/settings_sync_backend_title"
         android:summary="@string/settings_sync_backend_summary"
         android:dialogTitle="@string/settings_sync_backend_title"
+        android:dialogMessage="@string/settings_sync_backend_dialog_message"
         app:singleLineTitle="false"
-        app:useSimpleSummaryProvider="true"
         app:icon="@drawable/dns_24" />
+
+    <Preference
+        android:key="com.solarized.firedown.preferences.sync.test"
+        android:title="@string/settings_sync_test_title"
+        android:summary="@string/settings_sync_test_summary"
+        app:singleLineTitle="false"
+        app:icon="@drawable/cloud_done_24" />
 
     <Preference
         android:key="com.solarized.firedown.preferences.sync.sign.out"

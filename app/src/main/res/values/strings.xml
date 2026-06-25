@@ -217,7 +217,20 @@
     <string name="settings_sync_auth_subtitle">Verify it\'s you to reveal the recovery code</string>
     <string name="settings_sync_backend_title">Sync server</string>
     <string name="settings_sync_backend_summary">Leave blank to use the default Firedown server</string>
+    <string name="settings_sync_backend_dialog_message">Where your encrypted bookmarks are stored. The default is Firedown\'s own server. Leave blank to use it, or enter your own https:// server running the Firedown sync API. Either way your bookmarks are end-to-end encrypted before they leave this device — the server never sees them.</string>
     <string name="settings_sync_backend_invalid">Enter a valid https:// address, or leave blank for the default</string>
+    <string name="settings_sync_backend_not_https">The address must start with https:// — your sync sign-in can\'t cross the network unencrypted</string>
+    <!-- Row summary: %1$s is the server host. One marks the hosted default, the other a user-entered server. -->
+    <string name="settings_sync_backend_value_default">Default · %1$s</string>
+    <string name="settings_sync_backend_value_custom">Custom · %1$s</string>
+    <string name="settings_sync_test_title">Test connection</string>
+    <string name="settings_sync_test_summary">Check the sync server is reachable</string>
+    <string name="settings_sync_test_running">Testing connection…</string>
+    <!-- %1$s is the server-reported version string. -->
+    <string name="settings_sync_test_ok">Connected — Firedown sync server (v%1$s)</string>
+    <string name="settings_sync_test_ok_no_version">Connected — Firedown sync server</string>
+    <string name="settings_sync_test_not_server">Reachable, but it isn\'t a Firedown sync server</string>
+    <string name="settings_sync_test_unreachable">Couldn\'t reach the server — check the address and your connection</string>
     <string name="settings_sync_delete_title">Delete data from server</string>
     <string name="settings_sync_delete_summary">Permanently erase your encrypted bookmarks from the server</string>
     <string name="settings_sync_delete_message">This permanently erases your encrypted bookmarks from the server and turns off sync on this device. The bookmarks on this device are kept. This can\'t be undone — other devices will no longer be able to restore from the server.</string>
