@@ -120,15 +120,15 @@ public class CryptoTest {
         for (int i = 0; i < 32; i++) {
             seed[i] = (byte) i;
         }
-        Ed25519Signer signer = new Ed25519Signer(seed);
+        Ed25519Identity signer = new Ed25519Identity(seed);
         byte[] msg = "firedown".getBytes(java.nio.charset.StandardCharsets.UTF_8);
         byte[] sig = signer.sign(msg);
         assertEquals(64, sig.length);
         assertEquals(32, signer.publicKey().length);
-        assertTrue(Ed25519Signer.verify(signer.publicKey(), msg, sig));
+        assertTrue(Ed25519Identity.verify(signer.publicKey(), msg, sig));
         byte[] tampered = msg.clone();
         tampered[0] ^= 1;
-        assertFalse(Ed25519Signer.verify(signer.publicKey(), tampered, sig));
+        assertFalse(Ed25519Identity.verify(signer.publicKey(), tampered, sig));
     }
 
     @Test
@@ -150,7 +150,7 @@ public class CryptoTest {
 
         // A signature from the identity verifies against its own pubkey.
         byte[] canonical = Canonical.build(a.accountId(), "GET", "/v1/quota", "", 1L, null);
-        assertTrue(Ed25519Signer.verify(a.authPublicKey(), canonical, a.sign(canonical)));
+        assertTrue(Ed25519Identity.verify(a.authPublicKey(), canonical, a.sign(canonical)));
     }
 
     @Test

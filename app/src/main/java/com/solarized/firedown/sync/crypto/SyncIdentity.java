@@ -37,7 +37,7 @@ public final class SyncIdentity {
     private final String accountBase32;
     private final byte[] masterEnc;   // 32 bytes
     private final byte[] fileKey;     // 32 bytes — AES-256-GCM blob key
-    private final Ed25519Signer signer;
+    private final Ed25519Identity signer;
 
     private SyncIdentity(byte[] code) {
         byte[] prk = Hkdf.extract(ROOT_SALT, code);
@@ -48,7 +48,7 @@ public final class SyncIdentity {
                 INFO_FILE, 32); // file_key = HKDF(master_enc, "firedown/bookmarks/v1")
         Arrays.fill(prk, (byte) 0);
 
-        this.signer = new Ed25519Signer(authSeed);
+        this.signer = new Ed25519Identity(authSeed);
         Arrays.fill(authSeed, (byte) 0);
         this.accountBase32 = Crockford.encode(accountId);
     }
