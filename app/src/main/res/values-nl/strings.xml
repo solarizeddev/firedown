@@ -486,4 +486,6 @@
     <string name="settings_sync_export_done">Herstelcode opgeslagen</string>
     <string name="settings_sync_export_failed">Kon het bestand niet opslaan</string>
     <string name="settings_sync_code_warning">Deze herstelcode is de enige sleutel tot je gesynchroniseerde bladwijzers. Bewaar hem in je wachtwoordmanager — of op een andere veilige plek. Hij kan niet worden hersteld als hij verloren gaat.</string>
+    <string name="settings_sync_cat_code">Herstelcode</string>
+    <string name="settings_sync_cat_manage">Synchronisatie beheren</string>
 </resources>

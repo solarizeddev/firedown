@@ -379,4 +379,6 @@
     <string name="settings_sync_export_done">Кодът за възстановяване е запазен</string>
     <string name="settings_sync_export_failed">Файлът не можа да бъде запазен</string>
     <string name="settings_sync_code_warning">Този код за възстановяване е единственият ключ към синхронизираните ви отметки. Запазете го в мениджъра си на пароли — или на друго сигурно място. Той не може да бъде възстановен, ако се загуби.</string>
+    <string name="settings_sync_cat_code">Код за възстановяване</string>
+    <string name="settings_sync_cat_manage">Управление на синхронизацията</string>
 </resources>

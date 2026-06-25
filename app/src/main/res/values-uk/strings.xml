@@ -401,4 +401,6 @@
     <string name="settings_sync_export_done">Код відновлення збережено</string>
     <string name="settings_sync_export_failed">Не вдалося зберегти файл</string>
     <string name="settings_sync_code_warning">Цей код відновлення — єдиний ключ до ваших синхронізованих закладок. Збережіть його у своєму менеджері паролів — або іншому безпечному місці. Його неможливо відновити, якщо втрачено.</string>
+    <string name="settings_sync_cat_code">Код відновлення</string>
+    <string name="settings_sync_cat_manage">Керування синхронізацією</string>
 </resources>

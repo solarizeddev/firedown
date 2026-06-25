@@ -78,8 +78,11 @@ public class SyncSettingsFragment extends BasePreferenceFragment
     private Preference mShowCode;
     private Preference mExportCode;
     private Preference mSyncNow;
-    private Preference mSignOut;
     private Preference mDeleteData;
+    // Section headers — hidden while sync is off so the off-state screen is just
+    // the switch + FAQ. Turn-off lives on the master switch (no separate row).
+    private Preference mCatCode;
+    private Preference mCatManage;
 
     /** SAF "create document" for exporting the recovery code to a text file. */
     private final ActivityResultLauncher<String> mExportCodePicker =
@@ -97,8 +100,9 @@ public class SyncSettingsFragment extends BasePreferenceFragment
         mShowCode = findPreference(Preferences.SETTINGS_SYNC_SHOW_CODE);
         mExportCode = findPreference(Preferences.SETTINGS_SYNC_EXPORT_CODE);
         mSyncNow = findPreference(Preferences.SETTINGS_SYNC_NOW);
-        mSignOut = findPreference(Preferences.SETTINGS_SYNC_SIGN_OUT);
         mDeleteData = findPreference(Preferences.SETTINGS_SYNC_DELETE_DATA);
+        mCatCode = findPreference(Preferences.SETTINGS_SYNC_CAT_CODE);
+        mCatManage = findPreference(Preferences.SETTINGS_SYNC_CAT_MANAGE);
 
         if (mEnableSwitch != null) {
             // Never let the switch self-persist — we drive SYNC_ENABLED through
@@ -126,9 +130,6 @@ public class SyncSettingsFragment extends BasePreferenceFragment
         if (mSyncNow != null) {
             mSyncNow.setOnPreferenceClickListener(this);
         }
-        if (mSignOut != null) {
-            mSignOut.setOnPreferenceClickListener(this);
-        }
         if (mDeleteData != null) {
             mDeleteData.setOnPreferenceClickListener(this);
         }
@@ -152,7 +153,6 @@ public class SyncSettingsFragment extends BasePreferenceFragment
             case Preferences.SETTINGS_SYNC_SHOW_CODE -> authThenShowCode();
             case Preferences.SETTINGS_SYNC_EXPORT_CODE -> showExportCaveatDialog();
             case Preferences.SETTINGS_SYNC_NOW -> startSyncNow();
-            case Preferences.SETTINGS_SYNC_SIGN_OUT -> showSignOutDialog();
             case Preferences.SETTINGS_SYNC_DELETE_DATA -> showDeleteDataDialog();
         }
         return true;
@@ -313,6 +313,15 @@ public class SyncSettingsFragment extends BasePreferenceFragment
                     ? lastSyncedSummary()
                     : getString(R.string.settings_sync_switch_summary));
         }
+        // The whole Recovery-code + Manage-sync sections appear only once sync is
+        // set up; off-state = switch + FAQ only. Hiding the category headers (and,
+        // belt-and-suspenders, their rows) keeps an empty header from showing.
+        if (mCatCode != null) {
+            mCatCode.setVisible(on);
+        }
+        if (mCatManage != null) {
+            mCatManage.setVisible(on);
+        }
         if (mShowCode != null) {
             mShowCode.setVisible(on);
         }
@@ -321,9 +330,6 @@ public class SyncSettingsFragment extends BasePreferenceFragment
         }
         if (mSyncNow != null) {
             mSyncNow.setVisible(on);
-        }
-        if (mSignOut != null) {
-            mSignOut.setVisible(on);
         }
         if (mDeleteData != null) {
             mDeleteData.setVisible(on);

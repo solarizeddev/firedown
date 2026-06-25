@@ -617,4 +617,6 @@
     <string name="settings_sync_export_done">Wiederherstellungscode gespeichert</string>
     <string name="settings_sync_export_failed">Datei konnte nicht gespeichert werden</string>
     <string name="settings_sync_code_warning">Dieser Wiederherstellungscode ist der einzige Schlüssel zu deinen synchronisierten Lesezeichen. Speichere ihn in deinem Passwort-Manager — oder an einem anderen sicheren Ort. Er kann bei Verlust nicht wiederhergestellt werden.</string>
+    <string name="settings_sync_cat_code">Wiederherstellungscode</string>
+    <string name="settings_sync_cat_manage">Synchronisierung verwalten</string>
 </resources>

@@ -84,9 +84,11 @@ public class Preferences {
     public static final String SETTINGS_SYNC_NOW = "com.solarized.firedown.preferences.sync.now";
     /** Opens the offline "How sync encryption works" FAQ dialog. */
     public static final String SETTINGS_SYNC_HELP = "com.solarized.firedown.preferences.sync.help";
-    public static final String SETTINGS_SYNC_SIGN_OUT = "com.solarized.firedown.preferences.sync.sign.out";
     /** Right-to-erasure: delete the encrypted document from the server. */
     public static final String SETTINGS_SYNC_DELETE_DATA = "com.solarized.firedown.preferences.sync.delete.data";
+    /** Section headers on the sync screen (toggled visible only when sync is on). */
+    public static final String SETTINGS_SYNC_CAT_CODE = "com.solarized.firedown.preferences.sync.cat.code";
+    public static final String SETTINGS_SYNC_CAT_MANAGE = "com.solarized.firedown.preferences.sync.cat.manage";
 
     /**
      * Bookmarks-list sort order toggle: false (default) = recency

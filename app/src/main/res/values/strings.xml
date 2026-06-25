@@ -226,6 +226,9 @@
         <item quantity="other">Synced — %d bookmarks</item>
     </plurals>
     <string name="settings_sync_auth_subtitle">Verify it\'s you to reveal the recovery code</string>
+    <!-- Sync settings section headers. -->
+    <string name="settings_sync_cat_code">Recovery code</string>
+    <string name="settings_sync_cat_manage">Manage sync</string>
     <!-- Offline "How sync encryption works" help (dialog). -->
     <string name="settings_sync_help_title">How sync encryption works</string>
     <string name="settings_sync_help_summary">What\'s encrypted, and why your recovery code matters</string>

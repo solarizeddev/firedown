@@ -391,4 +391,6 @@
     <string name="settings_sync_export_done">रिकवरी कोड सहेजा गया</string>
     <string name="settings_sync_export_failed">फ़ाइल सहेजी नहीं जा सकी</string>
     <string name="settings_sync_code_warning">यह रिकवरी कोड आपके सिंक किए गए बुकमार्क की एकमात्र कुंजी है। इसे अपने पासवर्ड मैनेजर — या किसी अन्य सुरक्षित जगह — में सहेजें। खोने पर इसे रिकवर नहीं किया जा सकता।</string>
+    <string name="settings_sync_cat_code">रिकवरी कोड</string>
+    <string name="settings_sync_cat_manage">सिंक प्रबंधित करें</string>
 </resources>

@@ -485,4 +485,6 @@
     <string name="settings_sync_export_done">Kurtarma kodu kaydedildi</string>
     <string name="settings_sync_export_failed">Dosya kaydedilemedi</string>
     <string name="settings_sync_code_warning">Bu kurtarma kodu, eşitlenen yer imlerinizin tek anahtarıdır. Onu parola yöneticinize — veya başka bir güvenli yere — kaydedin. Kaybedilirse kurtarılamaz.</string>
+    <string name="settings_sync_cat_code">Kurtarma kodu</string>
+    <string name="settings_sync_cat_manage">Eşitlemeyi yönet</string>
 </resources>

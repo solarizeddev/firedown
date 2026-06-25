@@ -617,4 +617,6 @@
     <string name="settings_sync_export_done">Code de récupération enregistré</string>
     <string name="settings_sync_export_failed">Impossible d\'enregistrer le fichier</string>
     <string name="settings_sync_code_warning">Ce code de récupération est la seule clé de vos favoris synchronisés. Enregistrez-le dans votre gestionnaire de mots de passe — ou un autre endroit sûr. Il ne peut pas être récupéré s\'il est perdu.</string>
+    <string name="settings_sync_cat_code">Code de récupération</string>
+    <string name="settings_sync_cat_manage">Gérer la synchronisation</string>
 </resources>

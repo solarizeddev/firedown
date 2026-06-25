@@ -615,4 +615,6 @@
     <string name="settings_sync_export_done">復元コードを保存しました</string>
     <string name="settings_sync_export_failed">ファイルを保存できませんでした</string>
     <string name="settings_sync_code_warning">この復元コードは同期されたブックマークへの唯一の鍵です。パスワードマネージャー、または別の安全な場所に保存してください。なくすと復元できません。</string>
+    <string name="settings_sync_cat_code">リカバリーコード</string>
+    <string name="settings_sync_cat_manage">同期の管理</string>
 </resources>

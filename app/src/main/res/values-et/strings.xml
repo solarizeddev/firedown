@@ -355,4 +355,6 @@
     <string name="settings_sync_export_done">Taastekood salvestatud</string>
     <string name="settings_sync_export_failed">Faili ei õnnestunud salvestada</string>
     <string name="settings_sync_code_warning">See taastekood on ainus võti su sünkroonitud järjehoidjatele. Salvesta see oma paroolihaldurisse — või muusse turvalisse kohta. Seda ei saa kaotamise korral taastada.</string>
+    <string name="settings_sync_cat_code">Taastekood</string>
+    <string name="settings_sync_cat_manage">Sünkroonimise haldus</string>
 </resources>
