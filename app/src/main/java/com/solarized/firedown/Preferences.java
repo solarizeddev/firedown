@@ -68,6 +68,12 @@ public class Preferences {
     public static final String SYNC_LAST_SYNCED_AT = "com.solarized.firedown.preferences.sync.last.synced.at";
     /** Last server document version observed (status display). */
     public static final String SYNC_LAST_VERSION = "com.solarized.firedown.preferences.sync.last.version";
+    /** True when the last terminal sync was a (non-transient) failure — drives
+     *  the toolbar indicator's error state. Cleared on the next success. */
+    public static final String SYNC_LAST_ERROR = "com.solarized.firedown.preferences.sync.last.error";
+    /** True once the Bookmarks "sync is available" announce banner has been
+     *  dismissed (or sync was enabled) — retires it permanently. */
+    public static final String SYNC_BANNER_DISMISSED = "com.solarized.firedown.preferences.sync.banner.dismissed";
     /** Settings entry that opens the bookmarks-sync screen. */
     public static final String SETTINGS_SYNC = "com.solarized.firedown.preferences.settings.sync";
     /** Sync screen actions (clickable preferences). */

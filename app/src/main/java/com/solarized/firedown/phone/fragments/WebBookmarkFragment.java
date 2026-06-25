@@ -2,6 +2,9 @@ package com.solarized.firedown.phone.fragments;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.DocumentsContract;
@@ -19,24 +22,30 @@ import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
+import androidx.core.view.MenuItemCompat;
 import androidx.core.view.MenuProvider;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavOptions;
 import androidx.paging.LoadState;
+import androidx.recyclerview.widget.ConcatAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.color.MaterialColors;
 import com.google.android.material.snackbar.Snackbar;
 import com.solarized.firedown.IntentActions;
+import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
 import com.solarized.firedown.data.entity.GeckoStateEntity;
 import com.solarized.firedown.data.entity.WebBookmarkEntity;
 import com.solarized.firedown.data.models.BrowserURIViewModel;
 import com.solarized.firedown.data.models.WebBookmarkViewModel;
 import com.solarized.firedown.phone.SettingsActivity;
+import com.solarized.firedown.sync.SyncManager;
 import com.solarized.firedown.ui.EqualSpacingItemDecoration;
 import com.solarized.firedown.ui.OnItemClickListener;
 import com.solarized.firedown.ui.diffs.WebBookmarkDiffCallback;
+import com.solarized.firedown.ui.adapters.SyncBannerAdapter;
 import com.solarized.firedown.ui.adapters.WebBookmarkAdapter;
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.StoragePaths;
@@ -46,8 +55,13 @@ import java.io.File;
 import java.io.InputStream;
 import java.util.HashSet;
 
+import javax.inject.Inject;
 
-public class WebBookmarkFragment extends BaseFocusFragment implements OnItemClickListener {
+import dagger.hilt.android.AndroidEntryPoint;
+
+@AndroidEntryPoint
+public class WebBookmarkFragment extends BaseFocusFragment implements OnItemClickListener,
+        SyncBannerAdapter.OnBannerListener {
 
     private static final String TAG = WebBookmarkFragment.class.getName();
 
@@ -57,11 +71,23 @@ public class WebBookmarkFragment extends BaseFocusFragment implements OnItemClic
     private static final String EXPORT_FILE_NAME = "firedown_bookmarks.html";
     private static final String BACKUP_DIR_NAME = "backup";
 
+    @Inject
+    SyncManager mSyncManager;
+
+    @Inject
+    SharedPreferences mSyncPrefs;
+
     private WebBookmarkAdapter mAdapter;
     private WebBookmarkViewModel mWebBookmarkViewModel;
     private BrowserURIViewModel mBrowserURIViewModel;
     private boolean mPendingScrollToTop = false;
     private boolean mIncognito;
+
+    // Sync discoverability (non-incognito only): the toolbar cloud reflects sync
+    // state, and a one-time announce banner heads the list while sync is off.
+    private SyncBannerAdapter mSyncBannerAdapter;
+    private MenuItem mSyncMenuItem;
+    private int mSyncState = SyncManager.STATE_OFF;
 
     // Export writes directly into the public Download/Firedown/backup folder
     // (no picker) — it survives uninstall like the download mirror, so the
@@ -201,7 +227,20 @@ public class WebBookmarkFragment extends BaseFocusFragment implements OnItemClic
         // Same decoration the downloads list now uses.
         mRecyclerView.addItemDecoration(new EqualSpacingItemDecoration(mActivity, R.dimen.list_spacing));
         mAdapter = new WebBookmarkAdapter(mActivity, new WebBookmarkDiffCallback(), this, mIncognito);
-        mRecyclerView.setAdapter(mAdapter);
+
+        // Sync discoverability is non-incognito only. ConcatAdapter prepends the
+        // announce banner; the toolbar cloud + banner react to sync state.
+        if (!mIncognito) {
+            mSyncBannerAdapter = new SyncBannerAdapter(this);
+            mRecyclerView.setAdapter(new ConcatAdapter(mSyncBannerAdapter, mAdapter));
+            mSyncManager.observeState().observe(getViewLifecycleOwner(), state -> {
+                mSyncState = state == null ? SyncManager.STATE_OFF : state;
+                applySyncIcon();
+                updateSyncBannerVisibility();
+            });
+        } else {
+            mRecyclerView.setAdapter(mAdapter);
+        }
 
         mWebBookmarkViewModel.getWebBookmark().observe(getViewLifecycleOwner(), mObservableDownloads ->
                 mAdapter.submitData(getLifecycle(), mObservableDownloads));
@@ -225,11 +264,15 @@ public class WebBookmarkFragment extends BaseFocusFragment implements OnItemClic
             public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater menuInflater) {
                 if(mActionModeEnabled){
                     menuInflater.inflate(R.menu.menu_action, menu);
+                    mSyncMenuItem = null; // action menu has no sync item
                 }else{
                     // Bookmarks-specific menu (search + sort + delete).
                     // NOT menu_web_options — that one is shared with
                     // WebHistoryFragment, which has no sort toggle.
                     menuInflater.inflate(R.menu.menu_web_bookmark_options, menu);
+                    // The cloud item reflects sync state (and hides in incognito).
+                    mSyncMenuItem = menu.findItem(R.id.action_sync);
+                    applySyncIcon();
                     if (isSearchActive()) {
                         // Search field owns the toolbar row — hide every icon.
                         for (int i = 0; i < menu.size(); i++) menu.getItem(i).setVisible(false);
@@ -287,6 +330,82 @@ public class WebBookmarkFragment extends BaseFocusFragment implements OnItemClic
                 return false;
             }
         }, getViewLifecycleOwner(), Lifecycle.State.RESUMED);
+    }
+
+    /** Sets the toolbar cloud icon + tint for the current sync state (and hides
+     *  it entirely in incognito). No-op until the menu item exists. */
+    private void applySyncIcon() {
+        if (mSyncMenuItem == null) {
+            return;
+        }
+        if (mIncognito) {
+            mSyncMenuItem.setVisible(false);
+            return;
+        }
+        int drawable;
+        int colorAttr;
+        switch (mSyncState) {
+            case SyncManager.STATE_SYNCING:
+                drawable = R.drawable.cloud_24;
+                colorAttr = com.google.android.material.R.attr.colorPrimary;
+                break;
+            case SyncManager.STATE_SYNCED:
+                drawable = R.drawable.cloud_done_24;
+                colorAttr = com.google.android.material.R.attr.colorPrimary;
+                break;
+            case SyncManager.STATE_ERROR:
+                drawable = R.drawable.cloud_off_24;
+                colorAttr = com.google.android.material.R.attr.colorError;
+                break;
+            case SyncManager.STATE_OFF:
+            default:
+                drawable = R.drawable.cloud_24;
+                colorAttr = com.google.android.material.R.attr.colorOnSurface;
+                break;
+        }
+        mSyncMenuItem.setVisible(true);
+        mSyncMenuItem.setIcon(drawable);
+        int color = MaterialColors.getColor(mToolbar, colorAttr, Color.GRAY);
+        MenuItemCompat.setIconTintList(mSyncMenuItem, ColorStateList.valueOf(color));
+    }
+
+    /** Shows the one-time announce banner while sync is off and not yet retired
+     *  (dismissed or enabled). Retires permanently once sync is enabled. */
+    private void updateSyncBannerVisibility() {
+        if (mSyncBannerAdapter == null) {
+            return; // incognito: no banner
+        }
+        if (mSyncManager.isEnabled()) {
+            if (!isSyncBannerDismissed()) {
+                setSyncBannerDismissed(true); // retire once sync is on
+            }
+            mSyncBannerAdapter.setVisible(false);
+            return;
+        }
+        mSyncBannerAdapter.setVisible(!isSyncBannerDismissed());
+    }
+
+    private boolean isSyncBannerDismissed() {
+        return mSyncPrefs.getBoolean(Preferences.SYNC_BANNER_DISMISSED, false);
+    }
+
+    private void setSyncBannerDismissed(boolean dismissed) {
+        mSyncPrefs.edit().putBoolean(Preferences.SYNC_BANNER_DISMISSED, dismissed).apply();
+    }
+
+    @Override
+    public void onSyncBannerClicked() {
+        Intent syncIntent = new Intent(requireContext(), SettingsActivity.class);
+        syncIntent.putExtra(SettingsActivity.EXTRA_OPEN_SYNC, true);
+        startActivity(syncIntent);
+    }
+
+    @Override
+    public void onSyncBannerDismissed() {
+        setSyncBannerDismissed(true);
+        if (mSyncBannerAdapter != null) {
+            mSyncBannerAdapter.setVisible(false);
+        }
     }
 
     /** Export all bookmarks (Netscape HTML) directly into the public
@@ -352,6 +471,8 @@ public class WebBookmarkFragment extends BaseFocusFragment implements OnItemClic
         super.onDestroyView();
         mToolbar = null;
         mAdapter = null;
+        mSyncBannerAdapter = null;
+        mSyncMenuItem = null;
     }
 
     @Override

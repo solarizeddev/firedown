@@ -6,11 +6,16 @@ import android.os.Handler;
 import android.os.Looper;
 import android.text.TextUtils;
 
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MediatorLiveData;
+import androidx.work.WorkInfo;
+
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.data.di.Qualifiers;
 import com.solarized.firedown.data.repository.WebBookmarkDataRepository;
 import com.solarized.firedown.sync.crypto.SyncIdentity;
 
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
@@ -29,6 +34,12 @@ import dagger.hilt.android.qualifiers.ApplicationContext;
  */
 @Singleton
 public class SyncManager {
+
+    /** Sync states for the Bookmarks toolbar indicator. */
+    public static final int STATE_OFF = 0;     // disabled — tap to set up
+    public static final int STATE_SYNCED = 1;  // enabled, idle, last run ok
+    public static final int STATE_SYNCING = 2; // a sync is running now
+    public static final int STATE_ERROR = 3;   // last terminal run failed
 
     /** Debounce window so a burst of bookmark edits coalesces into one push. */
     private static final long DEBOUNCE_MILLIS = 8000;
@@ -164,6 +175,35 @@ public class SyncManager {
             return scheduler.syncNow();
         }
         return null;
+    }
+
+    /**
+     * Observable sync state for the Bookmarks toolbar indicator (one of the
+     * {@code STATE_*} codes). Recomputed whenever the sync work changes — a
+     * running job → SYNCING; otherwise OFF when disabled, ERROR when the last
+     * terminal run failed, else SYNCED.
+     */
+    public LiveData<Integer> observeState() {
+        MediatorLiveData<Integer> out = new MediatorLiveData<>();
+        out.addSource(scheduler.observeWork(), infos -> out.setValue(computeState(infos)));
+        return out;
+    }
+
+    private int computeState(List<WorkInfo> infos) {
+        if (!isEnabled()) {
+            return STATE_OFF;
+        }
+        if (infos != null) {
+            for (WorkInfo wi : infos) {
+                if (wi.getState() == WorkInfo.State.RUNNING) {
+                    return STATE_SYNCING;
+                }
+            }
+        }
+        if (prefs.getBoolean(Preferences.SYNC_LAST_ERROR, false)) {
+            return STATE_ERROR;
+        }
+        return STATE_SYNCED;
     }
 
     private void turnOn() {

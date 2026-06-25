@@ -2,14 +2,17 @@ package com.solarized.firedown.sync;
 
 import android.content.Context;
 
+import androidx.lifecycle.LiveData;
 import androidx.work.Constraints;
 import androidx.work.ExistingPeriodicWorkPolicy;
 import androidx.work.ExistingWorkPolicy;
 import androidx.work.NetworkType;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.PeriodicWorkRequest;
+import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -26,6 +29,9 @@ public class SyncScheduler {
 
     private static final String PERIODIC = "bookmarks_sync_periodic";
     private static final String ONESHOT = "bookmarks_sync_oneshot";
+    /** Shared tag on BOTH the periodic and one-shot work, so the UI can observe
+     *  "is a sync running right now?" across either via one tag query. */
+    private static final String SYNC_TAG = "bookmarks_sync";
 
     private final Context context;
 
@@ -46,6 +52,7 @@ public class SyncScheduler {
                 SyncWorker.class, 6, TimeUnit.HOURS)
                 .setConstraints(networkConstraint())
                 .addTag(PERIODIC)
+                .addTag(SYNC_TAG)
                 .build();
         WorkManager.getInstance(context).enqueueUniquePeriodicWork(
                 PERIODIC, ExistingPeriodicWorkPolicy.KEEP, req);
@@ -59,10 +66,17 @@ public class SyncScheduler {
         OneTimeWorkRequest req = new OneTimeWorkRequest.Builder(SyncWorker.class)
                 .setConstraints(networkConstraint())
                 .addTag(ONESHOT)
+                .addTag(SYNC_TAG)
                 .build();
         WorkManager.getInstance(context).enqueueUniqueWork(
                 ONESHOT, ExistingWorkPolicy.REPLACE, req);
         return req.getId();
+    }
+
+    /** LiveData of all sync work (periodic + one-shot) by the shared tag — used
+     *  by the toolbar indicator to detect a running sync. */
+    public LiveData<List<WorkInfo>> observeWork() {
+        return WorkManager.getInstance(context).getWorkInfosByTagLiveData(SYNC_TAG);
     }
 
     /** Cancels all sync work (sign-out / disable). */

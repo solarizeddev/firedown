@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Header for WebBookmarkFragment's RecyclerView, shown via SyncBannerAdapter when
+  bookmark sync is OFF and the announce banner hasn't been dismissed (and not in
+  incognito). Card tap opens the sync screen; the X retires it permanently.
+  One-time: dismiss flag + enabling sync both retire it (SYNC_BANNER_DISMISSED).
+  Same self-hiding ConcatAdapter-header pattern as RestoreBannerAdapter.
+-->
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="@dimen/list_spacing"
+    android:layout_marginTop="@dimen/list_spacing"
+    android:layout_marginBottom="@dimen/incognito_banner_margin_bottom"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="0dp"
+    app:strokeWidth="0dp"
+    app:cardBackgroundColor="?attr/colorSurfaceContainerHighest">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="16dp"
+        android:paddingEnd="8dp"
+        android:paddingTop="14dp"
+        android:paddingBottom="14dp">
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/sync_banner_icon"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:contentDescription="@null"
+            android:src="@drawable/cloud_24"
+            app:tint="?attr/colorPrimary"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent" />
+
+        <TextView
+            android:id="@+id/sync_banner_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:text="@string/sync_banner_title"
+            android:textAppearance="?attr/textAppearanceTitleSmall"
+            android:textColor="?attr/colorOnSurface"
+            app:layout_constraintStart_toEndOf="@id/sync_banner_icon"
+            app:layout_constraintEnd_toStartOf="@id/sync_banner_close"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_marginTop="2dp"
+            android:text="@string/sync_banner_subtitle"
+            android:textAppearance="?attr/textAppearanceBodySmall"
+            android:textColor="?attr/colorOnSurface"
+            android:alpha="0.8"
+            app:layout_constraintStart_toEndOf="@id/sync_banner_icon"
+            app:layout_constraintEnd_toStartOf="@id/sync_banner_close"
+            app:layout_constraintTop_toBottomOf="@id/sync_banner_title" />
+
+        <!-- Dismiss is its own touch target; the rest of the card opens sync. -->
+        <androidx.appcompat.widget.AppCompatImageButton
+            android:id="@+id/sync_banner_close"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/task_dismiss"
+            android:src="@drawable/ic_baseline_close_24"
+            app:tint="?attr/colorOnSurfaceVariant"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</com.google.android.material.card.MaterialCardView>

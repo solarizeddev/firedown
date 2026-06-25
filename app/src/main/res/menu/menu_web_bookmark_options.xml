@@ -38,10 +38,13 @@
         android:id="@+id/action_export"
         app:showAsAction="never"
         android:title="@string/bookmark_export"/>
-    <!-- Bookmark sync lives here (next to import/export) as well as in Settings;
-         opens SyncSettingsFragment via SettingsActivity (EXTRA_OPEN_SYNC). -->
+    <!-- Cloud = bookmark-sync status + entry (WebBookmarkFragment swaps the icon
+         and tint per state: off / syncing / synced / error). Visible when there's
+         room, else falls to the overflow as a text row. Opens the sync screen via
+         SettingsActivity (EXTRA_OPEN_SYNC). -->
     <item
         android:id="@+id/action_sync"
-        app:showAsAction="never"
+        android:icon="@drawable/cloud_24"
+        app:showAsAction="ifRoom"
         android:title="@string/settings_sync_title"/>
 </menu>

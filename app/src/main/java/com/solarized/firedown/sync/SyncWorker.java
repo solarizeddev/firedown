@@ -82,6 +82,7 @@ public class SyncWorker extends Worker {
             mPrefs.edit()
                     .putLong(Preferences.SYNC_LAST_SYNCED_AT, System.currentTimeMillis())
                     .putLong(Preferences.SYNC_LAST_VERSION, r.version)
+                    .putBoolean(Preferences.SYNC_LAST_ERROR, false)
                     .apply();
             return Result.success(new Data.Builder()
                     .putString(KEY_STATUS, STATUS_OK)
@@ -100,6 +101,7 @@ public class SyncWorker extends Worker {
         if (BuildConfig.DEBUG) {
             Log.d(TAG, "sync did not complete (non-retryable)");
         }
+        mPrefs.edit().putBoolean(Preferences.SYNC_LAST_ERROR, true).apply();
         return Result.success(new Data.Builder()
                 .putString(KEY_STATUS, STATUS_ERROR)
                 .build());
