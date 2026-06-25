@@ -220,7 +220,15 @@ dependencies {
     // a Google-maintained impl that accepts a raw 32-byte seed on every API level:
     // Tink's subtle Ed25519Sign.KeyPair.newKeyPair(seed) does exactly that, and is
     // RFC-8032-compliant (matches the server's ed25519 interop vectors).
-    implementation 'com.google.crypto.tink:tink-android:1.22.0'
+    // Bouncy Castle's RFC-8032 Ed25519 for the sync auth keypair. We need a
+    // DETERMINISTIC keypair from the HKDF-derived 32-byte seed (the recovery
+    // code), on minSdk 26. The platform java.security EdEC needs API 33, and
+    // Tink's subtle Ed25519 only exposes a RANDOM newKeyPair() publicly (its
+    // seed-based newKeyPair(secretSeed) is package-private — uncallable from app
+    // code). BC's lightweight crypto API builds a keypair from a raw seed on
+    // every API level; used directly (no JCE provider registration), so it does
+    // not clash with Android's repackaged bundled BouncyCastle.
+    implementation 'org.bouncycastle:bcprov-jdk18on:1.78.1'
 
     implementation 'androidx.core:core-splashscreen:1.2.0'
 

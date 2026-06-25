@@ -1,21 +1,26 @@
 package com.solarized.firedown.sync.crypto;
 
-import com.google.crypto.tink.subtle.Ed25519Sign;
-import com.google.crypto.tink.subtle.Ed25519Verify;
-
-import java.security.GeneralSecurityException;
+import org.bouncycastle.crypto.params.Ed25519PrivateKeyParameters;
+import org.bouncycastle.crypto.params.Ed25519PublicKeyParameters;
 
 /**
- * Ed25519 signing for the sync request canonical, over Google Tink's subtle
- * Ed25519. The platform java.security EdEC APIs need API 33 but minSdk is 26, and
- * the signing key is derived from the recovery-code seed (not an AndroidKeyStore
- * key), so we use a Google-maintained impl that accepts a raw 32-byte seed on
- * every API level. RFC-8032-compliant, so the signatures match the server's
- * ed25519 interop vectors.
+ * Ed25519 signing for the sync request canonical, over Bouncy Castle's RFC-8032
+ * lightweight Ed25519.
+ *
+ * <p>The signing key is DERIVED from the recovery-code seed (the HKDF-derived
+ * {@code auth_seed}, a raw 32-byte value — not an AndroidKeyStore key), so we
+ * need to build a keypair from that seed deterministically on minSdk 26. The
+ * platform {@code java.security} EdEC APIs need API 33, and Tink's subtle
+ * Ed25519 only exposes a RANDOM {@code newKeyPair()} publicly (its seed-based
+ * {@code newKeyPair(secretSeed)} is package-private, uncallable from here). BC's
+ * lightweight {@code org.bouncycastle.crypto.*} API takes a raw seed on every
+ * API level and is RFC-8032-compliant, so the signatures match the server's
+ * ed25519 interop vectors. Used directly (no JCE provider registration), so it
+ * does not conflict with Android's repackaged bundled BouncyCastle.
  */
 public final class Ed25519Signer {
 
-    private final Ed25519Sign signer;
+    private final Ed25519PrivateKeyParameters privateKey;
     private final byte[] publicKey;
 
     /** Builds a signer from a 32-byte Ed25519 seed (the HKDF-derived auth_seed). */
@@ -23,13 +28,8 @@ public final class Ed25519Signer {
         if (seed == null || seed.length != 32) {
             throw new IllegalArgumentException("ed25519 seed must be 32 bytes");
         }
-        try {
-            Ed25519Sign.KeyPair kp = Ed25519Sign.KeyPair.newKeyPair(seed);
-            this.publicKey = kp.getPublicKey().clone();
-            this.signer = new Ed25519Sign(kp.getPrivateKey());
-        } catch (GeneralSecurityException e) {
-            throw new IllegalStateException("ed25519 keypair from seed failed", e);
-        }
+        this.privateKey = new Ed25519PrivateKeyParameters(seed, 0);
+        this.publicKey = this.privateKey.generatePublicKey().getEncoded();
     }
 
     /** The 32-byte raw Ed25519 public key (what the server stores as auth_pubkey). */
@@ -39,20 +39,21 @@ public final class Ed25519Signer {
 
     /** Signs {@code message}, returning the 64-byte signature. */
     public byte[] sign(byte[] message) {
-        try {
-            return signer.sign(message);
-        } catch (GeneralSecurityException e) {
-            throw new IllegalStateException("ed25519 sign failed", e);
-        }
+        // BC's signer shares this class's simple name; fully-qualify it here (the
+        // sanctioned same-simple-name carve-out) rather than shadow our type.
+        org.bouncycastle.crypto.signers.Ed25519Signer s =
+                new org.bouncycastle.crypto.signers.Ed25519Signer();
+        s.init(true, privateKey);
+        s.update(message, 0, message.length);
+        return s.generateSignature();
     }
 
     /** Verifies a 64-byte signature against a 32-byte public key (used in tests). */
     public static boolean verify(byte[] publicKey, byte[] message, byte[] sig) {
-        try {
-            new Ed25519Verify(publicKey).verify(sig, message);
-            return true;
-        } catch (GeneralSecurityException e) {
-            return false;
-        }
+        org.bouncycastle.crypto.signers.Ed25519Signer v =
+                new org.bouncycastle.crypto.signers.Ed25519Signer();
+        v.init(false, new Ed25519PublicKeyParameters(publicKey, 0));
+        v.update(message, 0, message.length);
+        return v.verifySignature(sig);
     }
 }
