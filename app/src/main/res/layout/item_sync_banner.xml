@@ -22,8 +22,14 @@
   spacing, per its own comment.) All three list rows (download/bookmark/history)
   are structurally identical and paint their selection wash on the card ROOT (8dp),
   so the banner card and the selection pills share that 8dp column.
-  ONE deliberate deviation: marginBottom=0 (NOT the incognito banner's -12dp,
-  which pulled the first row up and read cramped above populated bookmark rows).
+  Vertical margins are SYMMETRIC (marginTop = marginBottom = list_spacing) so the
+  banner sits an equal distance from the toolbar above and the first bookmark row
+  below. With the decoration: toolbar->banner = decoration top-edge inset (8dp) +
+  marginTop (8dp) = 16dp; banner->first row = banner decoration bottom (4dp) +
+  marginBottom (8dp) + first row decoration top (4dp) = 16dp. (This is NOT the
+  incognito banner's negative -12dp marginBottom, which pulls the first row UP —
+  that read cramped above populated bookmark rows; here we want the two gaps to
+  match, not to tuck the list under the banner.)
 -->
 <com.google.android.material.card.MaterialCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
@@ -31,7 +37,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginTop="@dimen/list_spacing"
-    android:layout_marginBottom="0dp"
+    android:layout_marginBottom="@dimen/list_spacing"
     app:cardCornerRadius="12dp"
     app:cardElevation="0dp"
     app:strokeWidth="0dp"
