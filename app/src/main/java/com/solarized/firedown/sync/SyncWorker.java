@@ -6,6 +6,7 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.hilt.work.HiltWorker;
+import androidx.work.Data;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
@@ -27,6 +28,12 @@ import okhttp3.OkHttpClient;
 public class SyncWorker extends Worker {
 
     private static final String TAG = "SyncWorker";
+
+    /** Output-data keys read by SyncSettingsFragment to report a "Sync now" result. */
+    public static final String KEY_STATUS = "status";
+    public static final String KEY_COUNT = "count";
+    public static final String STATUS_OK = "ok";
+    public static final String STATUS_ERROR = "error";
 
     private final Context mContext;
     private final WebBookmarkDataRepository mRepo;
@@ -76,17 +83,25 @@ public class SyncWorker extends Worker {
                     .putLong(Preferences.SYNC_LAST_SYNCED_AT, System.currentTimeMillis())
                     .putLong(Preferences.SYNC_LAST_VERSION, r.version)
                     .apply();
-            return Result.success();
+            return Result.success(new Data.Builder()
+                    .putString(KEY_STATUS, STATUS_OK)
+                    .putInt(KEY_COUNT, r.count)
+                    .build());
         }
         if (r.error != null && r.error.startsWith("transient")) {
-            // Network / 429 / 503 / 5xx — let WorkManager retry with backoff.
+            // Network / 429 / 503 / 5xx — let WorkManager retry with backoff. No
+            // output data: a retry isn't a terminal "Sync now" result.
             return Result.retry();
         }
         // A permanent error (e.g. account-taken, bad-request). Don't spin; the
         // next change/periodic run retries. Detail is never logged on release.
+        // Terminal SUCCEEDED (so it doesn't retry) but tagged error so the UI
+        // reports a failure rather than a false "synced".
         if (BuildConfig.DEBUG) {
             Log.d(TAG, "sync did not complete (non-retryable)");
         }
-        return Result.success();
+        return Result.success(new Data.Builder()
+                .putString(KEY_STATUS, STATUS_ERROR)
+                .build());
     }
 }

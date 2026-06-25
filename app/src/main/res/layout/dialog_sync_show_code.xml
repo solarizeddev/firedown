@@ -23,17 +23,20 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
             android:text="@string/settings_sync_code_warning"
-            android:textAppearance="?attr/textAppearanceBodyMedium" />
+            android:textAppearance="?attr/textAppearanceBodyMedium"
+            android:textColor="?attr/colorOnSurfaceVariant" />
 
         <TextView
             android:id="@+id/sync_code_text"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@drawable/bg_incognito_chip"
+            android:background="@drawable/bg_sync_code"
             android:fontFamily="monospace"
+            android:gravity="center"
             android:padding="16dp"
             android:textIsSelectable="true"
             android:textAppearance="?attr/textAppearanceTitleMedium"
+            android:textColor="?attr/colorOnSecondaryContainer"
             tools:text="ABCD-EFGH-JKMN-PQRS-TVWX-YZ23" />
 
     </LinearLayout>

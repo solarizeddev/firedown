@@ -10,6 +10,7 @@ import androidx.work.OneTimeWorkRequest;
 import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkManager;
 
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
@@ -54,13 +55,14 @@ public class SyncScheduler {
      * Runs a sync as soon as the network allows. REPLACE so a newer change
      * supersedes an already-queued (debounced) push rather than stacking.
      */
-    public void syncNow() {
+    public UUID syncNow() {
         OneTimeWorkRequest req = new OneTimeWorkRequest.Builder(SyncWorker.class)
                 .setConstraints(networkConstraint())
                 .addTag(ONESHOT)
                 .build();
         WorkManager.getInstance(context).enqueueUniqueWork(
                 ONESHOT, ExistingWorkPolicy.REPLACE, req);
+        return req.getId();
     }
 
     /** Cancels all sync work (sign-out / disable). */

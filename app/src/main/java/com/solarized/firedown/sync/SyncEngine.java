@@ -42,11 +42,24 @@ public final class SyncEngine {
         public final boolean ok;
         public final long version;
         public final String error; // null on success
-        Result(boolean ok, long version, String error) {
+        public final int count;    // live (non-tombstone) bookmarks after the sync
+        Result(boolean ok, long version, String error, int count) {
             this.ok = ok;
             this.version = version;
             this.error = error;
+            this.count = count;
         }
+    }
+
+    /** Live (non-deleted) bookmark count in a merged set — for "Sync now" UI feedback. */
+    private static int liveCount(List<SyncItem> items) {
+        int n = 0;
+        for (SyncItem s : items) {
+            if (!s.deleted) {
+                n++;
+            }
+        }
+        return n;
     }
 
     /**
@@ -57,9 +70,9 @@ public final class SyncEngine {
         try {
             return runOnce(true);
         } catch (SyncApiClient.TransientException te) {
-            return new Result(false, 0, "transient:" + te.getMessage());
+            return new Result(false, 0, "transient:" + te.getMessage(), 0);
         } catch (Exception e) {
-            return new Result(false, 0, e.getMessage());
+            return new Result(false, 0, e.getMessage(), 0);
         }
     }
 
@@ -104,7 +117,7 @@ public final class SyncEngine {
 
         // Skip the push when the server is already current (no local-only change).
         if (sameAsRemote(merged, remote)) {
-            return new Result(true, remoteVersion, null);
+            return new Result(true, remoteVersion, null, liveCount(merged));
         }
 
         byte[] blob = BookmarkBlob.encrypt(BookmarkDoc.toJson(merged, now), fileKey);
@@ -120,12 +133,12 @@ public final class SyncEngine {
         }
 
         if (put.ok) {
-            return new Result(true, put.version, null);
+            return new Result(true, put.version, null, liveCount(merged));
         }
 
         // 409: someone wrote between pull and push — re-pull, re-merge, retry.
         if (attempt >= MAX_CONFLICT_RETRIES) {
-            return new Result(false, put.serverVersion, "version-conflict (gave up)");
+            return new Result(false, put.serverVersion, "version-conflict (gave up)", liveCount(merged));
         }
         SyncApiClient.Pull again = api.pull(identity);
         List<SyncItem> freshRemote = new ArrayList<>();

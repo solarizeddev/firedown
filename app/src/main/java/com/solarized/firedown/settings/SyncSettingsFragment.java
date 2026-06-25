@@ -9,17 +9,29 @@ import android.text.format.DateUtils;
 import android.view.View;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.biometric.BiometricManager;
+import androidx.biometric.BiometricPrompt;
+import androidx.core.content.ContextCompat;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.Observer;
 import androidx.preference.EditTextPreference;
 import androidx.preference.Preference;
 import androidx.preference.SwitchPreferenceCompat;
+import androidx.work.WorkInfo;
+import androidx.work.WorkManager;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
+import com.solarized.firedown.AppLock;
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
 import com.solarized.firedown.sync.SyncManager;
+import com.solarized.firedown.sync.SyncWorker;
+
+import java.util.UUID;
 
 import javax.inject.Inject;
 
@@ -42,6 +54,9 @@ public class SyncSettingsFragment extends BasePreferenceFragment
 
     @Inject
     SyncManager mSyncManager;
+
+    @Inject
+    AppLock mAppLock;
 
     private SwitchPreferenceCompat mEnableSwitch;
     private Preference mShowCode;
@@ -110,15 +125,81 @@ public class SyncSettingsFragment extends BasePreferenceFragment
     public boolean onPreferenceClick(Preference preference) {
         String key = preference.getKey();
         switch (key) {
-            case Preferences.SETTINGS_SYNC_SHOW_CODE -> showCodeDialog(
-                    mSyncManager.recoveryCodeForDisplay(), false);
-            case Preferences.SETTINGS_SYNC_NOW -> {
-                mSyncManager.syncNow();
-                snackbar(getString(R.string.settings_sync_now_started));
-            }
+            case Preferences.SETTINGS_SYNC_SHOW_CODE -> authThenShowCode();
+            case Preferences.SETTINGS_SYNC_NOW -> startSyncNow();
             case Preferences.SETTINGS_SYNC_SIGN_OUT -> showSignOutDialog();
         }
         return true;
+    }
+
+    /**
+     * Reveals the recovery code behind a device-auth check (biometric / PIN /
+     * pattern) when the device has a secure lock — the code is the master secret
+     * for the whole synced vault, so a borrowed/unlocked phone shouldn't surface
+     * it from a tap. When no biometric or device credential is enrolled there is
+     * nothing to authenticate against, so it reveals directly.
+     */
+    private void authThenShowCode() {
+        if (!mAppLock.isBiometricEnabled()) {
+            showCodeDialog(mSyncManager.recoveryCodeForDisplay(), false);
+            return;
+        }
+        BiometricPrompt prompt = new BiometricPrompt(this,
+                ContextCompat.getMainExecutor(requireContext()),
+                new BiometricPrompt.AuthenticationCallback() {
+                    @Override
+                    public void onAuthenticationSucceeded(@NonNull BiometricPrompt.AuthenticationResult result) {
+                        if (isAdded()) {
+                            showCodeDialog(mSyncManager.recoveryCodeForDisplay(), false);
+                        }
+                    }
+                });
+        // DEVICE_CREDENTIAL is allowed (PIN/pattern fallback); with it set, no
+        // negative button may be configured (the API rejects it) — mirror LockActivity.
+        BiometricPrompt.PromptInfo info = new BiometricPrompt.PromptInfo.Builder()
+                .setTitle(getString(R.string.settings_sync_show_code_title))
+                .setSubtitle(getString(R.string.settings_sync_auth_subtitle))
+                .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG
+                        | BiometricManager.Authenticators.DEVICE_CREDENTIAL)
+                .build();
+        prompt.authenticate(info);
+    }
+
+    /**
+     * Runs "Sync now" and reports the terminal result — synced-count or failure —
+     * by observing the one-shot work, instead of leaving the user with only the
+     * "syncing…" hint. A transient (network) failure stays in WorkManager's retry
+     * backoff and simply doesn't reach a terminal state here, which is fine.
+     */
+    private void startSyncNow() {
+        UUID id = mSyncManager.syncNow();
+        if (id == null) {
+            return; // disabled (row is hidden in that state) — guard anyway
+        }
+        snackbar(getString(R.string.settings_sync_now_started));
+        WorkManager wm = WorkManager.getInstance(requireContext().getApplicationContext());
+        final LiveData<WorkInfo> live = wm.getWorkInfoByIdLiveData(id);
+        live.observe(getViewLifecycleOwner(), new Observer<WorkInfo>() {
+            @Override
+            public void onChanged(WorkInfo info) {
+                if (info == null || !info.getState().isFinished()) {
+                    return;
+                }
+                live.removeObserver(this);
+                if (!isAdded()) {
+                    return;
+                }
+                String status = info.getOutputData().getString(SyncWorker.KEY_STATUS);
+                if (SyncWorker.STATUS_OK.equals(status)) {
+                    int count = info.getOutputData().getInt(SyncWorker.KEY_COUNT, 0);
+                    snackbar(getResources().getQuantityString(
+                            R.plurals.settings_sync_now_done, count, count));
+                    updateState(); // refresh the "last synced" summary
+                } else {
+                    snackbar(getString(R.string.settings_sync_now_failed));
+                }
+            }
+        });
     }
 
     /** Reflects persisted state into the switch + dependent-row visibility. */

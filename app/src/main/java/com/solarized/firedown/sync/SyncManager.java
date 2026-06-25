@@ -11,6 +11,7 @@ import com.solarized.firedown.data.di.Qualifiers;
 import com.solarized.firedown.data.repository.WebBookmarkDataRepository;
 import com.solarized.firedown.sync.crypto.SyncIdentity;
 
+import java.util.UUID;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 
@@ -153,11 +154,16 @@ public class SyncManager {
         return grouped;
     }
 
-    /** Enqueues an immediate sync (e.g. "Sync now" / app foreground). */
-    public void syncNow() {
+    /**
+     * Enqueues an immediate sync (e.g. "Sync now" / app foreground). Returns the
+     * WorkManager request id so the caller can observe the result, or null when
+     * sync is disabled (no work enqueued).
+     */
+    public UUID syncNow() {
         if (isEnabled()) {
-            scheduler.syncNow();
+            return scheduler.syncNow();
         }
+        return null;
     }
 
     private void turnOn() {

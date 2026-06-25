@@ -33,6 +33,7 @@ import com.solarized.firedown.data.entity.GeckoStateEntity;
 import com.solarized.firedown.data.entity.WebBookmarkEntity;
 import com.solarized.firedown.data.models.BrowserURIViewModel;
 import com.solarized.firedown.data.models.WebBookmarkViewModel;
+import com.solarized.firedown.phone.SettingsActivity;
 import com.solarized.firedown.ui.EqualSpacingItemDecoration;
 import com.solarized.firedown.ui.OnItemClickListener;
 import com.solarized.firedown.ui.diffs.WebBookmarkDiffCallback;
@@ -271,6 +272,13 @@ public class WebBookmarkFragment extends BaseFocusFragment implements OnItemClic
                     // The contract override forces a single text/html type, so
                     // the input array is unused (kept for the launcher signature).
                     mImportLauncher.launch(new String[0]);
+                    return true;
+                } else if (id == R.id.action_sync) {
+                    // Opens the bookmark-sync screen directly (Settings is a
+                    // separate activity); EXTRA_OPEN_SYNC deep-links to it.
+                    Intent syncIntent = new Intent(requireContext(), SettingsActivity.class);
+                    syncIntent.putExtra(SettingsActivity.EXTRA_OPEN_SYNC, true);
+                    startActivity(syncIntent);
                     return true;
                 } else if (id == android.R.id.home) {
                     mNavController.popBackStack();

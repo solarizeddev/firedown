@@ -8,13 +8,17 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.navigation.NavController;
-import androidx.navigation.NavDestination;
+import androidx.navigation.NavOptions;
 import androidx.navigation.fragment.NavHostFragment;
 
 import com.solarized.firedown.BaseActivity;
 import com.solarized.firedown.R;
 
 public class SettingsActivity extends BaseActivity {
+
+    /** Intent boolean extra: open straight to the bookmark-sync screen (the
+     *  bookmarks-list overflow uses this to deep-link past the settings list). */
+    public static final String EXTRA_OPEN_SYNC = "com.solarized.firedown.extra.OPEN_SYNC";
 
 
     @Override
@@ -42,17 +46,24 @@ public class SettingsActivity extends BaseActivity {
             actionBar.setDisplayShowHomeEnabled(true);
         }
 
+        // Up: pop a sub-screen, or finish the activity at the root (also handles
+        // the deep-linked sync screen below, whose back stack is popped to empty).
         mToolbar.setNavigationOnClickListener(v1 -> {
-            NavDestination navDestination = navController.getCurrentDestination();
-            int id = navDestination != null ? navDestination.getId() :  R.id.settings;
-            if(id == R.id.settings){
+            if (!navController.popBackStack()) {
                 finish();
-            }else{
-                navController.popBackStack();
             }
         });
 
         navController.setGraph(R.navigation.nav_graph_settings, getIntent().getExtras());
+
+        // Deep-link straight to the bookmark-sync screen, replacing the settings
+        // list on the back stack so Back returns to the caller (e.g. bookmarks).
+        if (getIntent().getBooleanExtra(EXTRA_OPEN_SYNC, false)) {
+            NavOptions opts = new NavOptions.Builder()
+                    .setPopUpTo(R.id.settings, true)
+                    .build();
+            navController.navigate(R.id.settings_sync, null, opts);
+        }
 
         navController.addOnDestinationChangedListener((navController1, navDestination, bundle) -> {
             int id = navDestination.getId();
@@ -78,6 +89,8 @@ public class SettingsActivity extends BaseActivity {
                 mToolbar.setTitle(R.string.donate_title);
             else if(id == R.id.settings_lock)
                 mToolbar.setTitle(R.string.settings_lock_title);
+            else if(id == R.id.settings_sync)
+                mToolbar.setTitle(R.string.settings_sync_title);
         });
 
         ViewCompat.setOnApplyWindowInsetsListener(mToolbar, (v, windowInsets) -> {
