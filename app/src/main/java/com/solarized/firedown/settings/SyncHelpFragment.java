@@ -1,16 +1,15 @@
 package com.solarized.firedown.settings;
 
-import android.graphics.Color;
 import android.os.Bundle;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.style.ForegroundColorSpan;
 
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceScreen;
 
-import com.google.android.material.color.MaterialColors;
 import com.solarized.firedown.R;
 
 import dagger.hilt.android.AndroidEntryPoint;
@@ -38,17 +37,17 @@ public class SyncHelpFragment extends BasePreferenceFragment {
 
     /**
      * Tints each FAQ question (the preference titles) with the brand colour
-     * ({@code colorPrimary}); the answers (summaries) stay the muted secondary
-     * colour, so the screen reads as Q (brand) / A (body). Done in code because
-     * a plain {@link Preference} has no title-colour attribute.
+     * (brand_orange, the same #f0716c that colorPrimary resolves to on the
+     * settings theme); the answers (summaries) stay the muted secondary colour,
+     * so the screen reads as Q (brand) / A (body). Done in code because a plain
+     * {@link Preference} has no title-colour attribute.
      */
     private void colorQuestionTitles() {
         PreferenceScreen screen = getPreferenceScreen();
         if (screen == null) {
             return;
         }
-        int brand = MaterialColors.getColor(requireContext(),
-                com.google.android.material.R.attr.colorPrimary, Color.RED);
+        int brand = ContextCompat.getColor(requireContext(), R.color.brand_orange);
         for (int i = 0; i < screen.getPreferenceCount(); i++) {
             Preference preference = screen.getPreference(i);
             CharSequence title = preference.getTitle();
