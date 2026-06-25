@@ -4,6 +4,7 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.os.Bundle;
+import android.text.InputType;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
 import android.view.View;
@@ -63,6 +64,7 @@ public class SyncSettingsFragment extends BasePreferenceFragment
     private Preference mSyncNow;
     private EditTextPreference mBackend;
     private Preference mSignOut;
+    private Preference mDeleteData;
 
     @Override
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
@@ -75,6 +77,7 @@ public class SyncSettingsFragment extends BasePreferenceFragment
         mSyncNow = findPreference(Preferences.SETTINGS_SYNC_NOW);
         mBackend = findPreference(Preferences.SYNC_BACKEND_URL);
         mSignOut = findPreference(Preferences.SETTINGS_SYNC_SIGN_OUT);
+        mDeleteData = findPreference(Preferences.SETTINGS_SYNC_DELETE_DATA);
 
         if (mEnableSwitch != null) {
             // Never let the switch self-persist — we drive SYNC_ENABLED through
@@ -92,8 +95,20 @@ public class SyncSettingsFragment extends BasePreferenceFragment
 
         if (mBackend != null) {
             mBackend.setText(mSyncManager.backendUrl());
+            // URI keyboard + a default hint so the field reads as a URL.
+            mBackend.setOnBindEditTextListener(editText -> {
+                editText.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI);
+                editText.setHint(Preferences.SYNC_DEFAULT_BACKEND);
+            });
             mBackend.setOnPreferenceChangeListener((pref, newValue) -> {
-                mSyncManager.setBackendUrl(newValue == null ? null : newValue.toString());
+                String entered = newValue == null ? "" : newValue.toString().trim();
+                // Blank is allowed (resets to the hosted default); a non-blank
+                // value must be a valid https URL or we reject it and keep the old.
+                if (!entered.isEmpty() && !SyncManager.isValidBackendUrl(entered)) {
+                    snackbar(getString(R.string.settings_sync_backend_invalid));
+                    return false;
+                }
+                mSyncManager.setBackendUrl(entered);
                 // Reflect the resolved value (blank falls back to the default).
                 mBackend.setText(mSyncManager.backendUrl());
                 return false;
@@ -108,6 +123,9 @@ public class SyncSettingsFragment extends BasePreferenceFragment
         }
         if (mSignOut != null) {
             mSignOut.setOnPreferenceClickListener(this);
+        }
+        if (mDeleteData != null) {
+            mDeleteData.setOnPreferenceClickListener(this);
         }
 
         tintIcons();
@@ -128,6 +146,7 @@ public class SyncSettingsFragment extends BasePreferenceFragment
             case Preferences.SETTINGS_SYNC_SHOW_CODE -> authThenShowCode();
             case Preferences.SETTINGS_SYNC_NOW -> startSyncNow();
             case Preferences.SETTINGS_SYNC_SIGN_OUT -> showSignOutDialog();
+            case Preferences.SETTINGS_SYNC_DELETE_DATA -> showDeleteDataDialog();
         }
         return true;
     }
@@ -223,6 +242,9 @@ public class SyncSettingsFragment extends BasePreferenceFragment
         if (mSignOut != null) {
             mSignOut.setVisible(on);
         }
+        if (mDeleteData != null) {
+            mDeleteData.setVisible(on);
+        }
     }
 
     private String lastSyncedSummary() {
@@ -298,6 +320,31 @@ public class SyncSettingsFragment extends BasePreferenceFragment
                 .setPositiveButton(R.string.settings_sync_code_copy,
                         (dialog, which) -> copyToClipboard(grouped))
                 .setNegativeButton(R.string.settings_sync_code_done, null)
+                .show();
+    }
+
+    /**
+     * Confirms and runs the server-side erasure. Distinct from "Turn off sync":
+     * this deletes the encrypted document from the server (right-to-erasure) and,
+     * on success, also turns sync off locally — see {@link SyncManager#deleteServerData}.
+     */
+    private void showDeleteDataDialog() {
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.settings_sync_delete_title)
+                .setMessage(R.string.settings_sync_delete_message)
+                .setPositiveButton(R.string.settings_sync_delete_action, (dialog, which) -> {
+                    snackbar(getString(R.string.settings_sync_delete_started));
+                    mSyncManager.deleteServerData(ok -> {
+                        if (!isAdded()) {
+                            return;
+                        }
+                        updateState();
+                        snackbar(getString(ok
+                                ? R.string.settings_sync_delete_done
+                                : R.string.settings_sync_delete_failed));
+                    });
+                })
+                .setNegativeButton(R.string.cancel, null)
                 .show();
     }
 

@@ -37,4 +37,11 @@
         app:singleLineTitle="false"
         app:icon="@drawable/ic_logout_24" />
 
+    <Preference
+        android:key="com.solarized.firedown.preferences.sync.delete.data"
+        android:title="@string/settings_sync_delete_title"
+        android:summary="@string/settings_sync_delete_summary"
+        app:singleLineTitle="false"
+        app:icon="@drawable/ic_baseline_delete_24" />
+
 </PreferenceScreen>

@@ -102,6 +102,10 @@ device yields the same identity).
 ## 3. Server wire contract (the live `cloud-sync-spec-api.md`)
 
 - **Base URL**: `https://api.firedown.app` (+ a user-supplied URL for BYO mode).
+  The BYO field is validated (`SyncManager.isValidBackendUrl`): a non-blank value
+  must be an absolute `https://host` URL or it's rejected (blank → hosted default).
+  http/other schemes are refused — the body is E2E-encrypted but the account id +
+  auth headers must not cross the wire in plaintext.
 - **Conventions**: HTTPS; unix **seconds**; random bytes on the wire are
   **base64url no-pad**; `account_id` is **Crockford base32** (26 chars);
   bookmark bodies are **raw `application/octet-stream`** (not base64-in-JSON);
@@ -127,6 +131,7 @@ Endpoints used by the client:
 | `POST` | `/v1/account/register` | signed (body pubkey); body `{account_id, auth_pubkey, challenge, pow_nonce}`; **201** registered / **200** already-registered / **409** account-taken |
 | `GET` | `/v1/sync/bookmarks` | signed; **200** octet-stream + `X-Firedown-Version` / `X-Firedown-Updated-At`, or **404** not-found (= empty, version 0) |
 | `PUT` | `/v1/sync/bookmarks` | signed; header `X-Firedown-Prev-Version` (0 first push); octet-stream body; **200** `{version,updated_at}` / **409** `{server_version}` / **413** / **503** / **429** |
+| `DELETE` | `/v1/sync/bookmarks` | signed (no body, signs like GET); **204** No Content; idempotent (204 even with no doc). Right-to-erasure — removes only the ciphertext doc, not the account (the bare account row is left for the dormancy GC). NOT an admin endpoint. |
 | `GET` | `/v1/quota` | signed; `{bytes_used, bytes_limit, tier:"free", expires_at:null}` |
 
 - **Registration**: explicit, hashcash-PoW. `H = SHA-256("firedown/register/v1\n"

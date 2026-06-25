@@ -2,6 +2,7 @@ package com.solarized.firedown.sync;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.TextUtils;
@@ -24,6 +25,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import dagger.hilt.android.qualifiers.ApplicationContext;
+import okhttp3.OkHttpClient;
 
 /**
  * The bookmarks-sync facade the UI talks to: enable/disable, show/restore the
@@ -49,6 +51,7 @@ public class SyncManager {
     private final SharedPreferences prefs;
     private final SyncScheduler scheduler;
     private final Executor diskExecutor;
+    private final OkHttpClient httpClient;
     private final Handler main = new Handler(Looper.getMainLooper());
     private final Runnable debounced = this::syncNow;
 
@@ -57,12 +60,14 @@ public class SyncManager {
                        WebBookmarkDataRepository repo,
                        SharedPreferences prefs,
                        SyncScheduler scheduler,
-                       @Qualifiers.DiskIO Executor diskExecutor) {
+                       @Qualifiers.DiskIO Executor diskExecutor,
+                       OkHttpClient httpClient) {
         this.context = context;
         this.repo = repo;
         this.prefs = prefs;
         this.scheduler = scheduler;
         this.diskExecutor = diskExecutor;
+        this.httpClient = httpClient;
     }
 
     /** Wires repository semantics + scheduling from persisted state. Call at boot. */
@@ -83,10 +88,41 @@ public class SyncManager {
         return prefs.getString(Preferences.SYNC_BACKEND_URL, Preferences.SYNC_DEFAULT_BACKEND);
     }
 
-    /** Sets the backend URL (hosted default or a BYO URL). Falls back to default if blank. */
+    /**
+     * Sets the backend URL (hosted default or a BYO URL). A blank value resets to
+     * the hosted default; a non-blank value is persisted ONLY if it's a valid
+     * {@code https://host} URL (see {@link #isValidBackendUrl}). An invalid value
+     * is rejected (the stored URL is left unchanged) — the UI validates first and
+     * warns, this is the model-layer guardrail so garbage never reaches the wire.
+     */
     public void setBackendUrl(String url) {
-        String value = TextUtils.isEmpty(url) ? Preferences.SYNC_DEFAULT_BACKEND : url.trim();
-        prefs.edit().putString(Preferences.SYNC_BACKEND_URL, value).apply();
+        String trimmed = url == null ? "" : url.trim();
+        if (TextUtils.isEmpty(trimmed)) {
+            prefs.edit().putString(Preferences.SYNC_BACKEND_URL, Preferences.SYNC_DEFAULT_BACKEND).apply();
+            return;
+        }
+        if (isValidBackendUrl(trimmed)) {
+            prefs.edit().putString(Preferences.SYNC_BACKEND_URL, trimmed).apply();
+        }
+        // else: invalid — keep the existing value (the UI surfaces the error).
+    }
+
+    /**
+     * A backend URL is acceptable only when it's an absolute {@code https://}
+     * URL with a host. http/other schemes are rejected: the bookmark body is
+     * E2E-encrypted, but the account id + Ed25519 auth headers must not cross the
+     * wire in plaintext, and a stray scheme/typo would just fail every sync with
+     * no useful diagnostic. This is the "oversight" on an otherwise free-text BYO
+     * field — keep it strict.
+     */
+    public static boolean isValidBackendUrl(String url) {
+        if (TextUtils.isEmpty(url)) {
+            return false;
+        }
+        Uri uri = Uri.parse(url.trim());
+        String host = uri.getHost();
+        return "https".equalsIgnoreCase(uri.getScheme())
+                && host != null && !host.isEmpty();
     }
 
     public long lastSyncedAt() {
@@ -152,6 +188,49 @@ public class SyncManager {
         repo.setSyncChangeTrigger(null);
         scheduler.cancel();
         new SyncSecrets(context).clear();
+    }
+
+    /**
+     * Erases the encrypted document from the server (right-to-erasure), then —
+     * only on success — tears down sync locally (disable + wipe key). Runs on the
+     * disk executor; {@code onResult} is posted to the main thread.
+     *
+     * <p>On a network/server failure NOTHING local changes: the user keeps their
+     * recovery key and can retry, so we never strand them "off locally but data
+     * still on the server with no key left to delete it". register() is called
+     * first (idempotent) so the signed DELETE authenticates even if this device
+     * never pushed.
+     */
+    public void deleteServerData(Consumer<Boolean> onResult) {
+        diskExecutor.execute(() -> {
+            boolean ok;
+            byte[] code = new SyncSecrets(context).load();
+            if (code == null) {
+                // No key here — nothing to delete server-side; just clean up locally.
+                ok = true;
+            } else {
+                try {
+                    SyncIdentity identity = SyncIdentity.fromCode(code);
+                    SyncApiClient api = new SyncApiClient(httpClient, backendUrl());
+                    api.register(identity); // idempotent — makes the signed DELETE resolvable
+                    api.delete(identity);
+                    ok = true;
+                } catch (Exception e) {
+                    ok = false;
+                } finally {
+                    SyncSecrets.wipe(code);
+                }
+            }
+            final boolean success = ok;
+            main.post(() -> {
+                if (success) {
+                    disable(); // safe now: server data gone → wipe local key + turn off
+                }
+                if (onResult != null) {
+                    onResult.accept(success);
+                }
+            });
+        });
     }
 
     /** Returns the grouped recovery code for display, or null if not set up. */

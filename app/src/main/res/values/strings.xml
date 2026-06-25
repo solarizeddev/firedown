@@ -217,6 +217,14 @@
     <string name="settings_sync_auth_subtitle">Verify it\'s you to reveal the recovery code</string>
     <string name="settings_sync_backend_title">Sync server</string>
     <string name="settings_sync_backend_summary">Leave blank to use the default Firedown server</string>
+    <string name="settings_sync_backend_invalid">Enter a valid https:// address, or leave blank for the default</string>
+    <string name="settings_sync_delete_title">Delete data from server</string>
+    <string name="settings_sync_delete_summary">Permanently erase your encrypted bookmarks from the server</string>
+    <string name="settings_sync_delete_message">This permanently erases your encrypted bookmarks from the server and turns off sync on this device. The bookmarks on this device are kept. This can\'t be undone — other devices will no longer be able to restore from the server.</string>
+    <string name="settings_sync_delete_action">Delete</string>
+    <string name="settings_sync_delete_started">Deleting your data from the server…</string>
+    <string name="settings_sync_delete_done">Your data was deleted from the server</string>
+    <string name="settings_sync_delete_failed">Couldn\'t delete — check your connection and try again</string>
     <string name="settings_sync_sign_out_title">Turn off sync</string>
     <string name="settings_sync_sign_out_summary">Stop syncing and remove the keys from this device</string>
     <string name="settings_sync_sign_out_message">Bookmark sync will be turned off and the recovery code removed from this device. Your bookmarks stay here. Make sure you have saved your recovery code if you want to sync again later.</string>

@@ -177,6 +177,21 @@ public final class SyncApiClient {
         }
     }
 
+    /**
+     * Deletes the encrypted document for this identity (right-to-erasure,
+     * DELETE /v1/sync/bookmarks). 404 means the server already has nothing —
+     * treated as success. Signs like a GET (no body).
+     */
+    public void delete(SyncIdentity id) throws IOException {
+        Request req = signed(id, "DELETE", PATH_BOOKMARKS, "", null).delete().build();
+        try (Response resp = client.newCall(req).execute()) {
+            if (resp.code() == 404) {
+                return; // nothing to delete
+            }
+            throwForStatus(resp, "delete");
+        }
+    }
+
     // ---- signing + helpers ----
 
     private Request.Builder signed(SyncIdentity id, String method, String path, String query, byte[] body) {
