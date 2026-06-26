@@ -677,9 +677,9 @@
     <!-- In-app update-available bottom sheet (UpdateAvailableSheet). %1$s is the
          new version name, e.g. "Firedown 1.1.81". -->
     <string name="update_available_sheet_title">Update available</string>
-    <string name="update_available_sheet_body">%1$s is ready to install.</string>
     <!-- %1$s is the currently-installed version name. -->
     <string name="update_available_sheet_current">Current version %1$s</string>
+    <string name="update_available_sheet_whats_new">What\'s new</string>
     <string name="update_available_sheet_install">Install</string>
     <string name="vault_decrypting">Decrypting file, please wait…</string>
     <string name="vault_encrypting">Encrypting file, please wait…</string>

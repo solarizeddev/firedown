@@ -128,22 +128,25 @@ public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
         String shown = (name == null || name.isEmpty())
                 ? getString(R.string.app_name) : name;
 
-        TextView body = view.findViewById(R.id.update_sheet_body);
-        body.setText(getString(R.string.update_available_sheet_body, shown));
+        // The version being installed — prominent.
+        TextView version = view.findViewById(R.id.update_sheet_version);
+        version.setText(shown);
 
-        // Version information: the currently-installed version (the new one is in
-        // the body line above).
+        // ...and the version it replaces.
         TextView current = view.findViewById(R.id.update_sheet_current);
         current.setText(getString(R.string.update_available_sheet_current, App.getVersionName()));
 
-        // Release notes — hidden entirely when status.json carries none.
+        // "What's new" header + release notes — both shown only when status.json
+        // carries a changelog for this version.
+        TextView whatsNew = view.findViewById(R.id.update_sheet_whats_new);
         TextView changelogView = view.findViewById(R.id.update_sheet_changelog);
-        if (changelog != null && !changelog.trim().isEmpty()) {
+        boolean hasChangelog = changelog != null && !changelog.trim().isEmpty();
+        if (hasChangelog) {
             changelogView.setText(changelog.trim());
-            changelogView.setVisibility(View.VISIBLE);
-        } else {
-            changelogView.setVisibility(View.GONE);
         }
+        int changelogVisibility = hasChangelog ? View.VISIBLE : View.GONE;
+        whatsNew.setVisibility(changelogVisibility);
+        changelogView.setVisibility(changelogVisibility);
 
         MaterialButton install = view.findViewById(R.id.update_sheet_install);
         // In preview there's no real APK on disk, so Install just closes.
