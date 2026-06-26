@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Header for WebBookmarkFragment's RecyclerView, shown via SyncBannerAdapter when
+  bookmark sync is OFF and the announce banner hasn't been dismissed (and not in
+  incognito). Card tap opens the sync screen; the X retires it permanently.
+  One-time: dismiss flag + enabling sync both retire it (SYNC_BANNER_DISMISSED).
+
+  Style matches the Downloads incognito-in-progress banner
+  (item_incognito_in_progress_header): paddingStart=16 + a NEUTRAL 24dp leading
+  icon tinted colorOnSurface (the cloud here, the lock there), same wash + dismiss
+  IconButton. The cloud is the OUTLINED contour (cloud_outline_24, "cloud_queue"),
+  NOT the filled cloud_24 — a banner accent reads better as an outline and the
+  filled glyph is reserved for the toolbar sync-state indicator.
+
+  NO layout_marginHorizontal: the banner is a 1-span ConcatAdapter header, so
+  EqualSpacingItemDecoration already gives it an 8dp left/right gutter — the SAME
+  gutter every list row gets. The row cards carry no horizontal margin either, so
+  the banner card edge and the row card BORDERS both land at 8dp from the screen,
+  flush. (An explicit marginHorizontal here would double the inset to 16dp and
+  float the banner 8dp inside the item borders — which is exactly what it looked
+  like before; the decoration is the single source of truth for horizontal
+  spacing, per its own comment.) All three list rows (download/bookmark/history)
+  are structurally identical and paint their selection wash on the card ROOT (8dp),
+  so the banner card and the selection pills share that 8dp column.
+  Vertical margins are SYMMETRIC (marginTop = marginBottom = list_spacing) so the
+  banner sits an equal distance from the toolbar above and the first bookmark row
+  below. With the decoration: toolbar->banner = decoration top-edge inset (8dp) +
+  marginTop (8dp) = 16dp; banner->first row = banner decoration bottom (4dp) +
+  marginBottom (8dp) + first row decoration top (4dp) = 16dp. (This is NOT the
+  incognito banner's negative -12dp marginBottom, which pulls the first row UP —
+  that read cramped above populated bookmark rows; here we want the two gaps to
+  match, not to tuck the list under the banner.)
+-->
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="@dimen/list_spacing"
+    android:layout_marginBottom="@dimen/list_spacing"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="0dp"
+    app:strokeWidth="0dp"
+    app:cardBackgroundColor="?attr/colorSurfaceContainerHighest">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="16dp"
+        android:paddingEnd="8dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="12dp">
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/sync_banner_icon"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:contentDescription="@null"
+            android:src="@drawable/cloud_outline_24"
+            app:tint="?attr/colorOnSurface"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent" />
+
+        <TextView
+            android:id="@+id/sync_banner_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:text="@string/sync_banner_title"
+            android:textAppearance="?attr/textAppearanceTitleSmall"
+            android:textColor="?attr/colorOnSurface"
+            app:layout_constraintStart_toEndOf="@id/sync_banner_icon"
+            app:layout_constraintEnd_toStartOf="@id/sync_banner_close"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_marginTop="2dp"
+            android:text="@string/sync_banner_subtitle"
+            android:textAppearance="?attr/textAppearanceBodySmall"
+            android:textColor="?attr/colorOnSurface"
+            android:alpha="0.8"
+            app:layout_constraintStart_toEndOf="@id/sync_banner_icon"
+            app:layout_constraintEnd_toStartOf="@id/sync_banner_close"
+            app:layout_constraintTop_toBottomOf="@id/sync_banner_title" />
+
+        <!-- Dismiss is its own touch target; the rest of the card opens sync.
+             Material3 IconButton, 36dp / 18dp icon — same as the capture-help
+             and incognito banners. -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/sync_banner_close"
+            style="@style/Widget.Material3.Button.IconButton"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:contentDescription="@string/task_dismiss"
+            app:icon="@drawable/ic_baseline_close_24"
+            app:iconSize="18dp"
+            app:iconTint="?attr/colorOnSurface"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</com.google.android.material.card.MaterialCardView>

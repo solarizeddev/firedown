@@ -181,6 +181,82 @@
     <string name="restore_downloads_done">Restored downloads: %1$d</string>
     <string name="restore_downloads_none">No backup found in this folder</string>
     <string name="restore_downloads_wrong_device">This backup belongs to a different device</string>
+    <!-- Bookmark sync (docs/BOOKMARKS_SYNC.md) -->
+    <string name="sync_banner_title">Sync your bookmarks across devices</string>
+    <string name="sync_banner_subtitle">End-to-end encrypted — only your recovery code can read it. No account, no email.</string>
+    <string name="settings_sync_title">Sync bookmarks</string>
+    <string name="settings_sync_summary">End-to-end encrypted bookmark sync across your devices</string>
+    <string name="settings_sync_switch_summary">Off — your bookmarks stay on this device</string>
+    <string name="settings_sync_never_synced">On — not synced yet</string>
+    <string name="settings_sync_last_synced">On — last synced %1$s</string>
+    <string name="settings_sync_setup_title">Set up bookmark sync</string>
+    <string name="settings_sync_setup_message">Your bookmarks are encrypted on this device before they leave it — the server never sees them. You get a recovery code that is the only key; keep it safe, there is no way to recover it if lost.</string>
+    <string name="settings_sync_setup_create">Create new</string>
+    <string name="settings_sync_setup_restore">I have a code</string>
+    <string name="settings_sync_restore_title">Restore bookmark sync</string>
+    <string name="settings_sync_restore_message">Enter the recovery code from your other device to merge its bookmarks onto this one.</string>
+    <string name="settings_sync_restore_action">Restore</string>
+    <string name="settings_sync_restore_ok">Bookmark sync restored</string>
+    <string name="settings_sync_restore_bad">That recovery code doesn\'t look right</string>
+    <string name="settings_sync_code_hint">Recovery code</string>
+    <string name="settings_sync_code_warning">This recovery code is the only key to your synced bookmarks. Save it in your password manager — or another safe place. It can\'t be recovered if lost.</string>
+    <string name="settings_sync_code_saved_check">I\'ve saved my recovery code</string>
+    <string name="settings_sync_code_created_title">Save your recovery code</string>
+    <string name="settings_sync_show_code_title">Show recovery code</string>
+    <string name="settings_sync_show_code_summary">Reveal the code that unlocks your synced bookmarks</string>
+    <string name="settings_sync_code_copy">Copy</string>
+    <string name="settings_sync_code_done">Done</string>
+    <string name="settings_sync_export_title">Save recovery code to file</string>
+    <string name="settings_sync_export_summary">Export the code as a text file you can store</string>
+    <string name="settings_sync_export_file_name">firedown-recovery-code.txt</string>
+    <!-- Point-of-action caveat shown before the file picker. -->
+    <string name="settings_sync_export_caveat_message">This file is saved unencrypted — anyone who can read it can read your bookmarks. Import the code into your password manager (or another safe place), then delete the file. A password manager keeps it encrypted; a loose file does not.</string>
+    <string name="settings_sync_export_continue">Continue</string>
+    <!-- %1$s is the grouped recovery code. -->
+    <string name="settings_sync_export_file_body">Firedown — bookmark sync recovery code\n\n%1$s\n\nThis code is the only key to your synced bookmarks — anyone who has it can read them, and it can\'t be recovered if lost.\n\nThis file is NOT encrypted. Import the code into your password manager (or another safe place), then delete this file.</string>
+    <string name="settings_sync_export_done">Recovery code saved</string>
+    <string name="settings_sync_export_failed">Couldn\'t save the file</string>
+    <string name="settings_sync_code_copied">Recovery code copied</string>
+    <string name="settings_sync_code_unavailable">Recovery code unavailable</string>
+    <string name="settings_sync_now_title">Sync now</string>
+    <string name="settings_sync_now_started">Syncing bookmarks…</string>
+    <string name="settings_sync_now_failed">Couldn\'t sync bookmarks — check your connection and try again</string>
+    <plurals name="settings_sync_now_done">
+        <item quantity="one">Synced — %d bookmark</item>
+        <item quantity="other">Synced — %d bookmarks</item>
+    </plurals>
+    <string name="settings_sync_auth_subtitle">Verify it\'s you to reveal the recovery code</string>
+    <!-- Sync settings section headers. -->
+    <string name="settings_sync_cat_code">Recovery code</string>
+    <string name="settings_sync_cat_manage">Manage sync</string>
+    <!-- Offline "How sync encryption works" help (dialog). -->
+    <string name="settings_sync_help_title">How sync encryption works</string>
+    <string name="settings_sync_help_summary">What\'s encrypted, and why your recovery code matters</string>
+    <string name="settings_sync_help_close">Got it</string>
+    <string name="settings_sync_faq_q1">Are my bookmarks encrypted?</string>
+    <string name="settings_sync_faq_a1">Yes. Each bookmark is encrypted on this device before it\'s uploaded. The server only ever stores scrambled data it can\'t read.</string>
+    <string name="settings_sync_faq_q2">Can Firedown or anyone else read them?</string>
+    <string name="settings_sync_faq_a2">No. Only your recovery code can unlock your bookmarks. They\'re encrypted end-to-end, nothing personal is attached, and the server never sees the unscrambled data.</string>
+    <string name="settings_sync_faq_q3">What is the recovery code?</string>
+    <string name="settings_sync_faq_a3">A key generated on your device when you turn on sync. It\'s the one and only thing that can decrypt your bookmarks — on this device or a new one.</string>
+    <string name="settings_sync_faq_q4">What if I lose my recovery code?</string>
+    <string name="settings_sync_faq_a4">Your synced bookmarks can\'t be recovered — not by you, and not by us, because we never had the key. There is no password reset. Save the code somewhere safe; a password manager is ideal.</string>
+    <string name="settings_sync_faq_q5">Do I need an account or email?</string>
+    <string name="settings_sync_faq_a5">No. There\'s no sign-up, email, or phone number — just the recovery code. Nothing personal is tied to your bookmarks.</string>
+    <string name="settings_sync_faq_q6">What if I don\'t want to use sync?</string>
+    <string name="settings_sync_faq_a6">Sync is optional and off by default. You can always export your bookmarks to a file and import them later, with no server involved.</string>
+    <string name="settings_sync_delete_title">Delete data from server</string>
+    <string name="settings_sync_delete_summary">Permanently erase your encrypted bookmarks from the server</string>
+    <string name="settings_sync_delete_message">This permanently erases your encrypted bookmarks from the server and turns off sync on this device. The bookmarks on this device are kept. This can\'t be undone — other devices will no longer be able to restore from the server.</string>
+    <string name="settings_sync_delete_action">Delete</string>
+    <string name="settings_sync_delete_started">Deleting your data from the server…</string>
+    <string name="settings_sync_delete_done">Your data was deleted from the server</string>
+    <string name="settings_sync_delete_failed">Couldn\'t delete — check your connection and try again</string>
+    <string name="settings_sync_sign_out_title">Turn off sync</string>
+    <string name="settings_sync_sign_out_summary">Stop syncing and remove the keys from this device</string>
+    <string name="settings_sync_sign_out_message">Bookmark sync will be turned off and the recovery code removed from this device. Your bookmarks stay here. Make sure you have saved your recovery code if you want to sync again later.</string>
+    <string name="settings_sync_sign_out_action">Turn off</string>
+    <string name="settings_sync_signed_out">Bookmark sync turned off</string>
     <string name="delete_needs_grant">Storage access is needed to delete restored files</string>
     <string name="delete_grant_action">Grant access</string>
     <string name="empty_list">Your downloads will appear here.</string>
@@ -595,7 +671,16 @@
     <string name="update_failed_general_body">We will try again later.</string>
     <string name="update_failed_general_title">Firedown failed to update</string>
     <string name="update_prompt_install_body">A new version of Firedown is available. Tap to update.</string>
+    <!-- Versioned notification body; %1$s is the new version name. -->
+    <string name="update_prompt_install_body_versioned">%1$s is ready to install. Tap to update.</string>
     <string name="update_prompt_install_title">Firedown update</string>
+    <!-- In-app update-available bottom sheet (UpdateAvailableSheet). %1$s is the
+         new version name, e.g. "Firedown 1.1.81". -->
+    <string name="update_available_sheet_title">Update available</string>
+    <!-- %1$s is the currently-installed version name. -->
+    <string name="update_available_sheet_current">Current version %1$s</string>
+    <string name="update_available_sheet_whats_new">What\'s new</string>
+    <string name="update_available_sheet_install">Install</string>
     <string name="vault_decrypting">Decrypting file, please wait…</string>
     <string name="vault_encrypting">Encrypting file, please wait…</string>
     <string name="vault_unsupported">Can\'t open this file. To open, move it out of Safe Folder and try again.</string>

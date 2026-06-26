@@ -27,6 +27,7 @@ import com.solarized.firedown.data.entity.BrowserDownloadEntity;
 import com.solarized.firedown.data.entity.FFmpegTagEntity;
 import com.solarized.firedown.ui.OnItemClickListener;
 import com.solarized.firedown.utils.FileUriHelper;
+import com.solarized.firedown.utils.SelectionStyling;
 import com.solarized.firedown.utils.Utils;
 import com.solarized.firedown.utils.WebUtils;
 
@@ -143,10 +144,29 @@ public class BrowserOptionAdapter extends GridListBaseAdapter<BrowserDownloadEnt
         boolean hasVariants = entity.getHasVariants();
 
         // ── Selection state ──────────────────────────────────────────────
+        // List mirrors Downloads/Bookmarks/History: a tonal WASH on the card
+        // root (no stroke, no row reflow) plus the check overlaid in the
+        // more-button's slot (swapped for the button in action mode — see the
+        // more-button handling below). Grid/dense keep their corner check +
+        // 2dp stroke: their tiles have no more-button slot to borrow and a
+        // full-tile wash would fight the thumbnail.
         int colorSelected = MaterialColors.getColor(context,
                 com.google.android.material.R.attr.colorPrimaryContainer, Color.TRANSPARENT);
+        boolean washSelected = mActionMode && selected;
 
-        holder.item.setStrokeColor(mActionMode && selected ? colorSelected : Color.TRANSPARENT);
+        if (holder.isList) {
+            // Wash layered over surfaceContainerLow (this row's resting bg,
+            // unlike Downloads' transparent card) so the selected tint reads
+            // the same against the bottom sheet.
+            holder.item.setCardBackgroundColor(washSelected
+                    ? SelectionStyling.selectedCardWashOver(context,
+                            com.google.android.material.R.attr.colorSurfaceContainerLow)
+                    : MaterialColors.getColor(context,
+                            com.google.android.material.R.attr.colorSurfaceContainerLow,
+                            Color.TRANSPARENT));
+        } else {
+            holder.item.setStrokeColor(washSelected ? colorSelected : Color.TRANSPARENT);
+        }
         holder.checkedView.setVisibility(mActionMode ? View.VISIBLE : View.GONE);
 
         if (mActionMode) {
@@ -206,7 +226,14 @@ public class BrowserOptionAdapter extends GridListBaseAdapter<BrowserDownloadEnt
         if (holder.isList) {
             holder.setTextOrHide(holder.fileUrl, domain);
             if (holder.more != null) {
-                holder.more.setVisibility(hasVariants ? View.VISIBLE : View.GONE);
+                // In action mode the check overlays the more-button slot, so
+                // keep the button present-but-INVISIBLE: it holds the slot
+                // width so the check lands in place and the row doesn't
+                // reflow (mirrors fragment_download_item's action-button swap).
+                // Outside action mode it shows only when the entity has
+                // selectable variants.
+                holder.more.setVisibility(mActionMode ? View.INVISIBLE
+                        : (hasVariants ? View.VISIBLE : View.GONE));
             }
         } else if (holder.more != null) {
             int variantVisibility = !mActionMode && hasVariants ? View.VISIBLE : View.GONE;

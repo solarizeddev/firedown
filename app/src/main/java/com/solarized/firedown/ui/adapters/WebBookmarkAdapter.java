@@ -228,16 +228,23 @@ public class WebBookmarkAdapter extends PagingDataAdapter<WebBookmarkEntity, Rec
 
         @Override
         public void onClick(View v) {
-            int position = getAbsoluteAdapterPosition();
-            if (mOnItemClickListener != null) {
+            // BINDING position, NOT absolute: the fragment wraps this adapter in
+            // a ConcatAdapter (the sync banner is a header at index 0), so
+            // getAbsoluteAdapterPosition() is offset by the banner. The listener
+            // indexes setSelected()/snapshot().get() into THIS adapter's own
+            // 0-based list, so it needs the binding position — otherwise every
+            // row selects/opens its neighbour and the last row runs off the end
+            // (long-click looked dead).
+            int position = getBindingAdapterPosition();
+            if (mOnItemClickListener != null && position != RecyclerView.NO_POSITION) {
                 mOnItemClickListener.onItemClick(position, v.getId());
             }
         }
 
         @Override
         public boolean onLongClick(View v) {
-            int position = getAbsoluteAdapterPosition();
-            if (mOnItemClickListener != null) {
+            int position = getBindingAdapterPosition();
+            if (mOnItemClickListener != null && position != RecyclerView.NO_POSITION) {
                 mOnItemClickListener.onLongClick(position, v.getId());
                 return true;
             }

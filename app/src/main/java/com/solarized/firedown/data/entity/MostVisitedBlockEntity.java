@@ -25,8 +25,6 @@ public class MostVisitedBlockEntity {
     @ColumnInfo(name = "date")
     public long date;
 
-    public MostVisitedBlockEntity() {
-    }
 
     public MostVisitedBlockEntity(@NonNull String host, long date) {
         this.host = host;

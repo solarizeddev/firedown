@@ -30,6 +30,7 @@ import com.solarized.firedown.data.LegacyShortcutsMigrator;
 import com.solarized.firedown.data.di.Qualifiers;
 import com.solarized.firedown.data.repository.WebHistoryDataRepository;
 import com.solarized.firedown.phone.BrowserActivity;
+import com.solarized.firedown.sync.SyncManager;
 
 
 import java.util.List;
@@ -47,7 +48,18 @@ public class App extends Application implements Configuration.Provider{
 
     public static final String DOWNLOADS_NOTIFICATION_ID = "firedown_notifications_downloads";
 
-    public static final String UPDATES_NOTIFICATION_ID = "firedown_notifications_updates";
+    // The update channel is IMPORTANCE_LOW: present in the shade / lock screen
+    // but SILENT (no sound, no heads-up) — an update notice should be quietly
+    // available, not disturbing. The in-app UpdateAvailableSheet is the
+    // prominent surface while the app is in use. A channel's importance can't be
+    // changed after creation, so reaching LOW needs a fresh id; the old ids are
+    // deleted (v1 was DEFAULT+muted, v2 was a brief HIGH+sound experiment).
+    public static final String UPDATES_NOTIFICATION_ID = "firedown_notifications_updates_v3";
+
+    private static final String[] UPDATES_NOTIFICATION_IDS_OLD = {
+            "firedown_notifications_updates",
+            "firedown_notifications_updates_v2",
+    };
 
     private static Context mAppContext;
 
@@ -63,6 +75,8 @@ public class App extends Application implements Configuration.Provider{
     HiltWorkerFactory workerFactory;
     @Inject
     UpdateScheduler updateScheduler;
+    @Inject
+    SyncManager mSyncManager;
     @Inject
     @Qualifiers.DiskIO
     Executor mDiskExecutor;
@@ -122,6 +136,9 @@ public class App extends Application implements Configuration.Provider{
         createUpdateNotificationChannel(mAppContext);
         updateScheduler.schedulePeriodicUpdateCheck();
         updateScheduler.setupOneTimeCheck();
+        // Wire bookmark-sync repository semantics + periodic job from saved state
+        // (no-op when sync is off; tombstone-on-delete needs this at boot).
+        mSyncManager.init();
 
         // One-time migration: lift legacy 'shortcuts' rows into the
         // bookmarks table as pinned entries, then drop the legacy
@@ -353,10 +370,16 @@ public class App extends Application implements Configuration.Provider{
     private void createUpdateNotificationChannel(Context context) {
         NotificationManager notificationManager = (NotificationManager) context.getSystemService(NOTIFICATION_SERVICE);
         if (notificationManager != null) {
+            // Clean up the earlier channel ids so a migrated user isn't left with
+            // stale "Updates" channels (incl. the loud v2) in system settings.
+            for (String oldId : UPDATES_NOTIFICATION_IDS_OLD) {
+                notificationManager.deleteNotificationChannel(oldId);
+            }
+            // IMPORTANCE_LOW = silent + no heads-up. Quietly available, not
+            // disturbing; the in-app sheet is the prominent in-use surface.
             NotificationChannel channel = new NotificationChannel(UPDATES_NOTIFICATION_ID,
                     context.getString(R.string.notifications_udpate_channel),
-                    NotificationManager.IMPORTANCE_DEFAULT);
-            channel.setSound(null, null);
+                    NotificationManager.IMPORTANCE_LOW);
             notificationManager.createNotificationChannel(channel);
         }
     }

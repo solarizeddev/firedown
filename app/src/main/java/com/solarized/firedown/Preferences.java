@@ -1,9 +1,12 @@
 package com.solarized.firedown;
 
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.util.Log;
 
 import org.mozilla.geckoview.ContentBlocking;
+
+import java.io.File;
 
 
 public class Preferences {
@@ -11,6 +14,26 @@ public class Preferences {
     private static final String TAG = Preferences.class.getSimpleName();
 
     public static final String UPDATE_APK = "firedown.apk";
+
+    /**
+     * Single source of truth for the downloaded-update APK location. It lives
+     * in app-specific EXTERNAL files (getExternalFilesDir) — not getFilesDir —
+     * because DownloadManager cannot write to internal app storage, and the
+     * APK download now goes through DownloadManager (so it survives the app
+     * process being evicted mid-download). App-specific external storage needs
+     * no runtime permission. Falls back to internal storage only on the rare
+     * device with no external volume mounted (DownloadManager is skipped
+     * there — see UpdateWorker). The path matches
+     * DownloadManager.Request.setDestinationInExternalFilesDir(ctx, null,
+     * UPDATE_APK) so the receiver reads exactly what was written.
+     */
+    public static File getUpdateApkFile(Context context) {
+        File dir = context.getExternalFilesDir(null);
+        if (dir == null) {
+            dir = context.getFilesDir();
+        }
+        return new File(dir, UPDATE_APK);
+    }
 
     /**
      * Primary update-check endpoint. Sits behind Cloudflare. UpdateWorker
@@ -56,6 +79,39 @@ public class Preferences {
     public static final String SORT_DOWNLOADS_LIST = "com.solarized.firedown.preferences.sort.downloads.list";
 
     public static final String SORT_VAULT_LIST = "com.solarized.firedown.preferences.sort.vault.list";
+
+    // ---- bookmarks sync (docs/BOOKMARKS_SYNC.md) ----
+    /** Whether bookmark sync is enabled (off by default; user opts in). */
+    public static final String SYNC_ENABLED = "com.solarized.firedown.preferences.sync.enabled";
+    /** The hosted backend base URL. Bookmark sync is pinned to this — there is no
+     *  BYO-backend picker (a configurable/self-hosted backend is a downloads-vault
+     *  concern, not a free-bookmarks one). See {@code SyncManager#backendUrl}. */
+    public static final String SYNC_DEFAULT_BACKEND = "https://api.firedown.app";
+    /** Epoch millis of the last successful sync (0 = never). */
+    public static final String SYNC_LAST_SYNCED_AT = "com.solarized.firedown.preferences.sync.last.synced.at";
+    /** Last server document version observed (status display). */
+    public static final String SYNC_LAST_VERSION = "com.solarized.firedown.preferences.sync.last.version";
+    /** True when the last terminal sync was a (non-transient) failure — drives
+     *  the toolbar indicator's error state. Cleared on the next success. */
+    public static final String SYNC_LAST_ERROR = "com.solarized.firedown.preferences.sync.last.error";
+    /** True once the Bookmarks "sync is available" announce banner has been
+     *  dismissed (or sync was enabled) — retires it permanently. */
+    public static final String SYNC_BANNER_DISMISSED = "com.solarized.firedown.preferences.sync.banner.dismissed";
+    /** Settings entry that opens the bookmarks-sync screen. */
+    public static final String SETTINGS_SYNC = "com.solarized.firedown.preferences.settings.sync";
+    /** Sync screen actions (clickable preferences). */
+    public static final String SETTINGS_SYNC_SHOW_CODE = "com.solarized.firedown.preferences.sync.show.code";
+    /** Exports the recovery code to a user-chosen text file (SAF). */
+    public static final String SETTINGS_SYNC_EXPORT_CODE = "com.solarized.firedown.preferences.sync.export.code";
+    public static final String SETTINGS_SYNC_RESTORE = "com.solarized.firedown.preferences.sync.restore";
+    public static final String SETTINGS_SYNC_NOW = "com.solarized.firedown.preferences.sync.now";
+    /** Opens the offline "How sync encryption works" FAQ dialog. */
+    public static final String SETTINGS_SYNC_HELP = "com.solarized.firedown.preferences.sync.help";
+    /** Right-to-erasure: delete the encrypted document from the server. */
+    public static final String SETTINGS_SYNC_DELETE_DATA = "com.solarized.firedown.preferences.sync.delete.data";
+    /** Section headers on the sync screen (toggled visible only when sync is on). */
+    public static final String SETTINGS_SYNC_CAT_CODE = "com.solarized.firedown.preferences.sync.cat.code";
+    public static final String SETTINGS_SYNC_CAT_MANAGE = "com.solarized.firedown.preferences.sync.cat.manage";
 
     /**
      * Bookmarks-list sort order toggle: false (default) = recency

@@ -23,6 +23,43 @@ public class Keys {
     public static final String INTENT_ACTION = "com.solarized.firedown.INTENT_ACTION";
     public static final String UPDATE_META = "com.solarized.firedown.UDPATE_META";
     public static final String UPDATE_NAME = "com.solarized.firedown.UPDATE_NAME";
+    // DownloadManager hand-off: the worker enqueues the APK download and
+    // records the enqueue id + the metadata UpdateDownloadReceiver needs to
+    // verify the finished file (the broadcast only carries the download id).
+    public static final String UPDATE_DOWNLOAD_ID = "com.solarized.firedown.UPDATE_DOWNLOAD_ID";
+    public static final String UPDATE_DOWNLOAD_SHA = "com.solarized.firedown.UPDATE_DOWNLOAD_SHA";
+    public static final String UPDATE_DOWNLOAD_NAME = "com.solarized.firedown.UPDATE_DOWNLOAD_NAME";
+    public static final String UPDATE_DOWNLOAD_VERSION_CODE = "com.solarized.firedown.UPDATE_DOWNLOAD_VERSION_CODE";
+    // The mirror candidate list + the index currently being tried, so a failed
+    // download can fail over to the next mirror without waiting for the next
+    // check (covers the Cloudflare/LaLiga-blocked-host case).
+    public static final String UPDATE_DOWNLOAD_URLS = "com.solarized.firedown.UPDATE_DOWNLOAD_URLS";
+    public static final String UPDATE_DOWNLOAD_URL_INDEX = "com.solarized.firedown.UPDATE_DOWNLOAD_URL_INDEX";
+    // The "ready" record: an APK that has PASSED SHA-256 + signature verification
+    // and is safe to offer for install (notification + in-app sheet). Distinct
+    // from the download record above so the install shortcut never trusts an
+    // unverified file (e.g. one whose completion broadcast was missed).
+    public static final String UPDATE_READY = "com.solarized.firedown.UPDATE_READY";
+    public static final String UPDATE_READY_VERSION_CODE = "com.solarized.firedown.UPDATE_READY_VERSION_CODE";
+    public static final String UPDATE_READY_NAME = "com.solarized.firedown.UPDATE_READY_NAME";
+    // Per-version "Later" suppression for the in-app update sheet (a newer
+    // version resets it, since the value is the dismissed versionCode).
+    public static final String UPDATE_PROMPT_DISMISSED_VERSION = "com.solarized.firedown.UPDATE_PROMPT_DISMISSED_VERSION";
+    // Exponential-backoff bookkeeping for a failing download: the version, how
+    // many full (all-mirrors) rounds have failed so far (the backoff exponent),
+    // and the earliest wall-clock time the next retry may run. The app NEVER
+    // gives up — the delay just grows (15m, 30m, 1h, 2h, 4h … capped at 6h) so a
+    // failing download keeps retrying without hammering. A newer version or a
+    // success resets all three.
+    public static final String UPDATE_FAILED_VERSION_CODE = "com.solarized.firedown.UPDATE_FAILED_VERSION_CODE";
+    public static final String UPDATE_FAILED_COUNT = "com.solarized.firedown.UPDATE_FAILED_COUNT";
+    public static final String UPDATE_NEXT_RETRY_AT = "com.solarized.firedown.UPDATE_NEXT_RETRY_AT";
+    // Changelog for a version (from status.json), remembered by the worker at
+    // check time so the in-app sheet can show it later — the sheet has no access
+    // to the manifest at display time. Single slot, matched by versionCode.
+    public static final String UPDATE_CHANGELOG_VERSION_CODE = "com.solarized.firedown.UPDATE_CHANGELOG_VERSION_CODE";
+    public static final String UPDATE_CHANGELOG_TEXT = "com.solarized.firedown.UPDATE_CHANGELOG_TEXT";
+    public static final String UPDATE_CHANGELOG_NAME = "com.solarized.firedown.UPDATE_CHANGELOG_NAME";
 
     public static final String GIF_START_MS = "com.solarized.firedown.GIF_START_MS";
     public static final String GIF_END_MS = "com.solarized.firedown.GIF_END_MS";

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Recovery-code entry for restoring bookmark sync on a new device
+    (SyncSettingsFragment.showRestoreDialog). A single bare
+    LoginPanelTextInputLayout, same form idiom as the custom-search-engine
+    and bookmark-edit dialogs; a bad code surfaces its error on the layout.
+-->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingHorizontal="24dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp">
+
+        <com.solarized.firedown.ui.LoginPanelTextInputLayout
+            android:id="@+id/sync_code_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/sync_code"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/settings_sync_code_hint"
+                android:imeOptions="actionDone"
+                android:inputType="textVisiblePassword"
+                android:singleLine="true"
+                android:textSize="16sp" />
+        </com.solarized.firedown.ui.LoginPanelTextInputLayout>
+
+    </LinearLayout>
+
+</ScrollView>

@@ -1,0 +1,81 @@
+<!--
+  Bookmark-sync settings. Structure (kept deliberately shallow so adding
+  Downloads sync later is a clean extension, not a rewrite):
+
+    Sync bookmarks            [master switch]   (off = sign out; see note)
+    How encryption works                        (FAQ, always visible)
+    ── Recovery code ──       (category, on only)
+       Show recovery code
+       Save recovery code to file
+    ── Manage sync ──         (category, on only)
+       Sync now
+       Delete data from server
+
+  There is intentionally NO separate "Turn off sync" row — the master switch
+  already does it (toggling it off runs the sign-out confirm). When Downloads
+  sync arrives, the plan is: the master switch becomes account-level "Sync", a
+  new "── What to sync ──" category holds Bookmarks + Downloads toggles, and the
+  Recovery-code + Manage-sync categories stay shared (one recovery code, one
+  account). The two categories are hidden while sync is off (SyncSettingsFragment
+  toggles their visibility) so the off-state screen is just the switch + FAQ.
+-->
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <SwitchPreferenceCompat
+        android:key="com.solarized.firedown.preferences.sync.enabled"
+        android:title="@string/settings_sync_title"
+        android:summary="@string/settings_sync_switch_summary"
+        app:singleLineTitle="false"
+        app:icon="@drawable/cloud_outline_24" />
+
+    <!-- Always visible (not gated on sync being on): the FAQ helps the
+         decision to enable, and lets an existing user re-read the
+         recovery-code stakes. Offline dialog, no web link. -->
+    <Preference
+        android:key="com.solarized.firedown.preferences.sync.help"
+        android:title="@string/settings_sync_help_title"
+        android:summary="@string/settings_sync_help_summary"
+        app:singleLineTitle="false"
+        app:icon="@drawable/encryption_24" />
+
+    <PreferenceCategory
+        android:key="com.solarized.firedown.preferences.sync.cat.code"
+        android:title="@string/settings_sync_cat_code">
+
+        <Preference
+            android:key="com.solarized.firedown.preferences.sync.show.code"
+            android:title="@string/settings_sync_show_code_title"
+            android:summary="@string/settings_sync_show_code_summary"
+            app:singleLineTitle="false"
+            app:icon="@drawable/ic_key_24" />
+
+        <Preference
+            android:key="com.solarized.firedown.preferences.sync.export.code"
+            android:title="@string/settings_sync_export_title"
+            android:summary="@string/settings_sync_export_summary"
+            app:singleLineTitle="false"
+            app:icon="@drawable/ic_baseline_insert_drive_file_24" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:key="com.solarized.firedown.preferences.sync.cat.manage"
+        android:title="@string/settings_sync_cat_manage">
+
+        <Preference
+            android:key="com.solarized.firedown.preferences.sync.now"
+            android:title="@string/settings_sync_now_title"
+            app:singleLineTitle="false"
+            app:icon="@drawable/settings_backup_restore_24" />
+
+        <Preference
+            android:key="com.solarized.firedown.preferences.sync.delete.data"
+            android:title="@string/settings_sync_delete_title"
+            android:summary="@string/settings_sync_delete_summary"
+            app:singleLineTitle="false"
+            app:icon="@drawable/ic_baseline_delete_24" />
+
+    </PreferenceCategory>
+
+</PreferenceScreen>

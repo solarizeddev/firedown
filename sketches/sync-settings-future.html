@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<!--
+  SKETCH (not live): future unified Sync settings once Downloads (encrypted
+  file backup, pay-per-storage) joins Bookmarks under one account / one
+  recovery code. Mockup only — illustrates IA + flows, not final copy.
+  Companion to docs/cloud-storage-spec.md + cloud-mint-spec.md.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Firedown — future Sync settings (sketch)</title>
+<style>
+  :root{
+    --bg:#13111c; --surface:#1c1930; --container:#272138; --container-hi:#322a45;
+    --on:#ece6f0; --on-var:#c6bfd6; --muted:#8d85a0;
+    --accent:#ff6b4a;          /* Firedown coral */
+    --accent-dim:#ff6b4a33;
+    --green:#5cc98c; --line:#322a45;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#0c0a14;color:var(--on);
+       font-family:Roboto,-apple-system,Segoe UI,system-ui,sans-serif;
+       padding:32px 18px 64px}
+  h1{font-size:22px;font-weight:600;margin:0 0 4px;text-align:center}
+  .sub{text-align:center;color:var(--muted);font-size:13px;margin:0 0 28px}
+  .row-wrap{display:flex;gap:28px;justify-content:center;flex-wrap:wrap;align-items:flex-start}
+  .col{width:330px;max-width:92vw}
+  .cap{color:var(--on-var);font-size:12.5px;margin:10px 4px 0;line-height:1.5}
+  .cap b{color:var(--accent)}
+  /* phone */
+  .phone{background:var(--bg);border-radius:30px;padding:10px;
+         box-shadow:0 0 0 2px #2a2440,0 20px 50px #0008}
+  .screen{background:var(--bg);border-radius:22px;overflow:hidden}
+  .bar{display:flex;align-items:center;gap:14px;padding:18px 16px 14px;font-size:19px;font-weight:600}
+  .bar .back{color:var(--on-var);font-size:22px;font-weight:400}
+  /* status hero */
+  .hero{margin:4px 12px 14px;padding:16px;border-radius:16px;
+        background:linear-gradient(135deg,#2a1f33,#241d36);border:1px solid var(--line)}
+  .hero .t{font-size:15px;font-weight:600;display:flex;align-items:center;gap:8px}
+  .hero .d{color:var(--on-var);font-size:12.5px;margin-top:5px}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block}
+  /* category */
+  .cat{color:var(--accent);font-size:12px;font-weight:600;letter-spacing:.4px;
+       text-transform:uppercase;padding:16px 18px 6px}
+  /* row */
+  .r{display:flex;align-items:center;gap:14px;padding:13px 16px}
+  .r .ic{width:38px;height:38px;border-radius:50%;background:var(--container);
+         display:flex;align-items:center;justify-content:center;font-size:18px;flex:0 0 auto}
+  .r .tx{flex:1;min-width:0}
+  .r .tt{font-size:15px}
+  .r .ss{color:var(--muted);font-size:12.5px;margin-top:2px;line-height:1.4}
+  .chev{color:var(--muted);font-size:18px}
+  .free{color:var(--green)}
+  /* toggle */
+  .sw{width:42px;height:24px;border-radius:14px;background:#4a4360;position:relative;flex:0 0 auto}
+  .sw.on{background:var(--accent)}
+  .sw::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:.2s}
+  .sw.on::after{left:21px}
+  /* usage bar */
+  .bar2{height:6px;border-radius:4px;background:var(--container-hi);margin-top:7px;overflow:hidden}
+  .bar2 i{display:block;height:100%;width:46%;background:var(--accent);border-radius:4px}
+  .danger{color:#ff7a7a}
+  .pill{display:inline-block;font-size:11px;padding:2px 8px;border-radius:10px;background:var(--accent-dim);color:var(--accent);margin-left:6px;vertical-align:middle}
+  /* billing buttons */
+  .btns{display:flex;gap:10px;padding:6px 16px 4px}
+  .btn{flex:1;text-align:center;padding:11px;border-radius:12px;font-size:13.5px;font-weight:600}
+  .btn.p{background:var(--accent);color:#1a0e0a}
+  .btn.o{background:var(--container);color:var(--on);border:1px solid var(--line)}
+  .note{margin:8px 16px 14px;padding:11px 13px;border-radius:12px;background:#1a2a22;
+        border:1px solid #2c4a3a;color:#aee3c4;font-size:12px;line-height:1.5}
+  .faq q{display:block;font-size:14.5px;font-weight:600;margin:16px 16px 4px}
+  .faq p{margin:0 16px 4px;color:var(--on-var);font-size:13px;line-height:1.55}
+  .divsoft{height:1px;background:var(--line);margin:6px 16px}
+</style>
+</head>
+<body>
+  <h1>Future Sync settings — sketch</h1>
+  <p class="sub">One account · one recovery code · Bookmarks (free) + Downloads (encrypted backup, pay-per-storage)</p>
+
+  <div class="row-wrap">
+
+    <!-- ============ PANEL 1: main Sync screen ============ -->
+    <div class="col">
+      <div class="phone"><div class="screen">
+        <div class="bar"><span class="back">‹</span> Sync</div>
+
+        <div class="hero">
+          <div class="t"><span class="dot"></span> Encrypted &amp; on</div>
+          <div class="d">Last synced 2 min ago · nobody but you can read it</div>
+        </div>
+
+        <div class="cat">What to sync</div>
+        <div class="r">
+          <div class="ic">🔖</div>
+          <div class="tx"><div class="tt">Bookmarks</div>
+            <div class="ss">End-to-end encrypted · <span class="free">Free</span></div></div>
+          <div class="sw on"></div>
+        </div>
+        <div class="r">
+          <div class="ic">⬇️</div>
+          <div class="tx"><div class="tt">Downloads <span class="pill">Pay as you go</span></div>
+            <div class="ss">Encrypted backup · 2.3 GB of 50 GB used</div>
+            <div class="bar2"><i></i></div></div>
+          <div class="sw on"></div>
+        </div>
+
+        <div class="cat">Recovery code</div>
+        <div class="r">
+          <div class="ic">🛡️</div>
+          <div class="tx"><div class="tt">How sync &amp; encryption work</div>
+            <div class="ss">What's encrypted · why the code matters</div></div>
+          <div class="chev">›</div>
+        </div>
+        <div class="r">
+          <div class="ic">🔑</div>
+          <div class="tx"><div class="tt">Show recovery code</div></div>
+        </div>
+        <div class="r">
+          <div class="ic">📄</div>
+          <div class="tx"><div class="tt">Save recovery code to file</div></div>
+        </div>
+
+        <div class="cat">Manage</div>
+        <div class="r">
+          <div class="ic">🔄</div>
+          <div class="tx"><div class="tt">Sync now</div></div>
+        </div>
+        <div class="r">
+          <div class="ic">🗄️</div>
+          <div class="tx"><div class="tt">Storage &amp; billing</div>
+            <div class="ss">Usage, top up, payment</div></div>
+          <div class="chev">›</div>
+        </div>
+        <div class="r">
+          <div class="ic">🗑️</div>
+          <div class="tx"><div class="tt">Delete synced data</div>
+            <div class="ss">Erase from the server</div></div>
+        </div>
+        <div class="r">
+          <div class="ic">⏻</div>
+          <div class="tx"><div class="tt">Turn off sync</div>
+            <div class="ss">Remove the account &amp; keys from this device</div></div>
+        </div>
+      </div></div>
+      <p class="cap">The master switch is gone. <b>Two per-type toggles</b> (Bookmarks free, Downloads paid) replace it — turning one off stops syncing that type. <b>"Turn off sync" returns</b> as the distinct account-teardown (remove keys), now that a type-toggle ≠ removing the account. Recovery-code + Manage stay <b>shared</b> across both.</p>
+    </div>
+
+    <!-- ============ PANEL 2: Storage & billing ============ -->
+    <div class="col">
+      <div class="phone"><div class="screen">
+        <div class="bar"><span class="back">‹</span> Storage &amp; billing</div>
+
+        <div class="hero">
+          <div class="t">2.3 GB <span style="color:var(--muted);font-weight:400">of 50 GB</span></div>
+          <div class="bar2" style="margin-top:10px"><i></i></div>
+          <div class="d">Pay as you go · ~38 days left at current usage</div>
+        </div>
+
+        <div class="cat">Add storage</div>
+        <div class="btns">
+          <div class="btn p">⚡ Lightning</div>
+          <div class="btn o">💳 Card</div>
+        </div>
+        <div class="note">🔒 Payments are <b>not linked to your files</b>. You buy anonymous storage credits; the storage server never sees who paid.</div>
+
+        <div class="cat">Backup</div>
+        <div class="r">
+          <div class="ic">📶</div>
+          <div class="tx"><div class="tt">Back up on Wi-Fi only</div></div>
+          <div class="sw on"></div>
+        </div>
+        <div class="r">
+          <div class="ic">🎚️</div>
+          <div class="tx"><div class="tt">What gets backed up</div>
+            <div class="ss">All finished downloads</div></div>
+          <div class="chev">›</div>
+        </div>
+        <div class="r">
+          <div class="ic">🧾</div>
+          <div class="tx"><div class="tt">Credit history</div>
+            <div class="ss">Top-ups &amp; usage</div></div>
+          <div class="chev">›</div>
+        </div>
+      </div></div>
+      <p class="cap">Downloads-only sub-screen. The paid bits (<b>quota, top-up, anonymity note</b>) live here, <b>out of the main screen</b> so bookmark-only users never see billing. Lightning = fully anonymous; Card = unlinkable-to-files (the honest ceiling from the mint spec).</p>
+    </div>
+
+    <!-- ============ PANEL 3: How it works (promoted to a screen) ============ -->
+    <div class="col">
+      <div class="phone"><div class="screen faq">
+        <div class="bar"><span class="back">‹</span> How sync works</div>
+        <q>Is everything encrypted?</q>
+        <p>Yes — bookmarks <b>and</b> backed-up files are encrypted on this device before they leave it. The server only ever stores scrambled data it can't read.</p>
+        <div class="divsoft"></div>
+        <q>What is the recovery code?</q>
+        <p>One key, generated on your device, that unlocks <b>both</b> your bookmarks and your file backups. It's the only thing that can decrypt them.</p>
+        <div class="divsoft"></div>
+        <q>What if I lose it?</q>
+        <p>Your synced data can't be recovered — not by you, not by us. There's no password reset, because we never had the key.</p>
+        <div class="divsoft"></div>
+        <q>Do I need an account or email?</q>
+        <p>No. Just the recovery code. Even paid storage stays anonymous — payment isn't linked to your files.</p>
+        <div class="divsoft"></div>
+        <q>What does "pay as you go" mean?</q>
+        <p>Bookmarks are free. Backing up files uses real storage, so you buy anonymous credits for what you use. Stop any time.</p>
+      </div></div>
+      <p class="cap"><b>The FAQ promoted from a dialog to a full screen.</b> The content ~doubles once files + paid storage are in scope — too much for a modal. As a NavController destination it scrolls naturally, handles large fonts / TalkBack, and is linkable.</p>
+    </div>
+
+  </div>
+</body>
+</html>

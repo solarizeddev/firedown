@@ -222,6 +222,19 @@
             </intent-filter>
         </receiver>
 
+        <!-- DownloadManager completion for the update APK. exported="true" is
+             required: this is a system broadcast from a different uid, and a
+             manifest receiver is what lets the OS cold-start us to post the
+             install prompt after a download that outlived the app process.
+             Safe despite being exported — UpdateDownloadReceiver acts only on
+             the download id we recorded and re-verifies SHA-256 + signature, so
+             a spoofed broadcast does nothing. -->
+        <receiver android:name="com.solarized.firedown.UpdateDownloadReceiver" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.DOWNLOAD_COMPLETE" />
+            </intent-filter>
+        </receiver>
+
 
         <provider
             android:name="androidx.startup.InitializationProvider"

@@ -15,16 +15,22 @@ import java.util.List;
 @Dao
 public interface WebBookmarkDao {
 
-    @Query("SELECT * FROM webbookmark")
+    // All read/list/count queries filter `deleted = 0` so tombstones (sync
+    // deletions pending propagation, webbookmark v3) never surface in the UI,
+    // export, autocomplete, or the present-set. The sync engine gets its own
+    // deleted-inclusive queries when it lands; the hard-delete mutators below
+    // stay for the repository re-key path and the tombstone GC.
+
+    @Query("SELECT * FROM webbookmark WHERE deleted = 0")
     List<WebBookmarkEntity> getAllRaw();
 
-    @Query("SELECT uid FROM webbookmark")
+    @Query("SELECT uid FROM webbookmark WHERE deleted = 0")
     List<Integer> getAllIds();
 
-    @Query("SELECT * FROM webbookmark WHERE uid LIKE :id")
+    @Query("SELECT * FROM webbookmark WHERE uid LIKE :id AND deleted = 0")
     WebBookmarkEntity getId(int id);
 
-    @Query("SELECT * FROM webbookmark ORDER BY file_date DESC")
+    @Query("SELECT * FROM webbookmark WHERE deleted = 0 ORDER BY file_date DESC")
     PagingSource<Integer, WebBookmarkEntity> getBookmarks();
 
     /**
@@ -34,16 +40,16 @@ public interface WebBookmarkDao {
      * default; {@link #search(String)} deliberately stays
      * recency-ordered — the toggle governs only the unfiltered list.
      */
-    @Query("SELECT * FROM webbookmark ORDER BY file_title COLLATE NOCASE ASC")
+    @Query("SELECT * FROM webbookmark WHERE deleted = 0 ORDER BY file_title COLLATE NOCASE ASC")
     PagingSource<Integer, WebBookmarkEntity> getBookmarksAlphabetical();
 
-    @Query("SELECT * FROM webbookmark ORDER BY file_date DESC LIMIT :limit")
+    @Query("SELECT * FROM webbookmark WHERE deleted = 0 ORDER BY file_date DESC LIMIT :limit")
     LiveData<List<WebBookmarkEntity>> getBookmark(int limit);
 
-    @Query("SELECT * FROM webbookmark WHERE file_url LIKE :search or file_title LIKE :search ORDER BY file_date DESC")
+    @Query("SELECT * FROM webbookmark WHERE deleted = 0 AND (file_url LIKE :search or file_title LIKE :search) ORDER BY file_date DESC")
     PagingSource<Integer, WebBookmarkEntity> search(String search);
 
-    @Query("SELECT * FROM webbookmark WHERE file_url LIKE :search OR file_title LIKE :search ORDER BY file_date DESC LIMIT 3")
+    @Query("SELECT * FROM webbookmark WHERE deleted = 0 AND (file_url LIKE :search OR file_title LIKE :search) ORDER BY file_date DESC LIMIT 3")
     List<WebBookmarkEntity> getAutoCompleteSearch(String search);
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -90,7 +96,28 @@ public interface WebBookmarkDao {
     @Query("DELETE FROM webbookmark")
     Integer deleteAll();
 
-    @Query("SELECT COUNT(file_url) FROM webbookmark")
+    @Query("SELECT COUNT(file_url) FROM webbookmark WHERE deleted = 0")
     Integer getRowCount();
+
+    // ---- bookmarks sync (webbookmark v3) ----
+
+    /** ALL rows including tombstones — the sync engine reads the full set to
+     *  merge (the only query that does NOT filter deleted = 0). */
+    @Query("SELECT * FROM webbookmark")
+    List<WebBookmarkEntity> getAllForSync();
+
+    /** Tombstones a bookmark in place (the sync-enabled delete path), so the
+     *  deletion propagates to other devices before the GC drops it. */
+    @Query("UPDATE webbookmark SET deleted = 1, deleted_at = :deletedAt, updated_at = :updatedAt WHERE uid = :id")
+    int softDelete(int id, long deletedAt, long updatedAt);
+
+    /** Tombstones every live bookmark (sync-enabled "delete all"). */
+    @Query("UPDATE webbookmark SET deleted = 1, deleted_at = :t, updated_at = :t WHERE deleted = 0")
+    int softDeleteAll(long t);
+
+    /** Hard-deletes tombstones older than the cutoff (GC after the propagation
+     *  TTL). Live rows are never touched. */
+    @Query("DELETE FROM webbookmark WHERE deleted = 1 AND deleted_at < :cutoff")
+    int gcTombstones(long cutoff);
 
 }

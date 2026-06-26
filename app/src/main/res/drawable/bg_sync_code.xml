@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Tonal card behind the bookmark-sync recovery code (dialog_sync_show_code).
+    Uses the M3 secondary-container theme attr (NOT a hardcoded colour) so it
+    flips correctly light/dark; paired with ?attr/colorOnSecondaryContainer text
+    for guaranteed contrast in both themes. Do not reuse bg_incognito_chip here —
+    that one is solid white (for the brand-tinted incognito home) and renders the
+    code invisible on a dark dialog.
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="?attr/colorSecondaryContainer" />
+    <corners android:radius="12dp" />
+</shape>

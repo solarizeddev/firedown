@@ -46,8 +46,8 @@ android {
         // minSdk stays 26 (same device support). Needs the android-37 platform
         // installed (sdkmanager "platforms;android-37"); current AGP/Gradle support it.
         compileSdk = 37
-        versionCode 1180
-        versionName "1.1.80"
+        versionCode 1181
+        versionName "1.1.81"
 
         ndk {
             abiFilters  "arm64-v8a"
@@ -64,6 +64,13 @@ android {
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
+    }
+    testOptions {
+        // Let JVM unit tests run against the stubbed android.jar without each
+        // unmocked framework call (e.g. android.util.Log in a verifier's error
+        // path) throwing "not mocked". Tests still avoid the framework where
+        // they can; this only covers incidental calls on error branches.
+        unitTests.returnDefaultValues = true
     }
     compileOptions {
         // Flag to enable support for the new language APIs
@@ -214,6 +221,22 @@ dependencies {
 
     implementation 'com.caverock:androidsvg-aar:1.4'
 
+    // Google Tink for bookmarks-sync Ed25519 request signing. The platform
+    // java.security EdEC APIs need API 33 but minSdk is 26, and the signing key is
+    // derived from the recovery-code seed (not an AndroidKeyStore key), so we need
+    // a Google-maintained impl that accepts a raw 32-byte seed on every API level:
+    // Tink's subtle Ed25519Sign.KeyPair.newKeyPair(seed) does exactly that, and is
+    // RFC-8032-compliant (matches the server's ed25519 interop vectors).
+    // Bouncy Castle's RFC-8032 Ed25519 for the sync auth keypair. We need a
+    // DETERMINISTIC keypair from the HKDF-derived 32-byte seed (the recovery
+    // code), on minSdk 26. The platform java.security EdEC needs API 33, and
+    // Tink's subtle Ed25519 only exposes a RANDOM newKeyPair() publicly (its
+    // seed-based newKeyPair(secretSeed) is package-private — uncallable from app
+    // code). BC's lightweight crypto API builds a keypair from a raw seed on
+    // every API level; used directly (no JCE provider registration), so it does
+    // not clash with Android's repackaged bundled BouncyCastle.
+    implementation 'org.bouncycastle:bcprov-jdk18on:1.84'
+
     implementation 'androidx.core:core-splashscreen:1.2.0'
 
     // androidx.core is no longer pinned here — the geckoview-default POM now declares
@@ -237,6 +260,9 @@ dependencies {
     implementation 'com.google.android.material:material:1.14.0'
 
     testImplementation 'junit:junit:4.13.2'
+    // Real org.json for JVM unit tests (Android's bundled org.json is a stub
+    // that throws in plain unit tests); runtime still uses the platform one.
+    testImplementation 'org.json:json:20260522'
     androidTestImplementation 'androidx.test.ext:junit:1.3.0'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.7.0'
 
