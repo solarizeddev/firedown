@@ -23,7 +23,7 @@
         android:layout_marginTop="4dp"
         android:layout_marginBottom="12dp"
         android:importantForAccessibility="no"
-        app:srcCompat="@drawable/ill_baloons" />
+        app:srcCompat="@drawable/ill_presents" />
 
     <TextView
         android:layout_width="match_parent"
