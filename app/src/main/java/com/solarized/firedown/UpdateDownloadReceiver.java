@@ -98,15 +98,12 @@ public class UpdateDownloadReceiver extends BroadcastReceiver {
         }
 
         // Verified — promote to "ready" (clears the download record) and surface
-        // it. The in-app sheet (UpdateAvailableSheet) reads the same ready record
-        // on resume, so the update is reachable even if notifications are denied.
+        // it. The (silent) notification is ALWAYS posted, so the update is
+        // reachable whether or not the app is open; the in-app sheet
+        // (UpdateAvailableSheet, shown on resume) is the additional prominent
+        // surface while the app is in use.
         UpdateDownloader.markReady(context, versionCode, versionName);
-        // Surface split: while the app is in use, the in-app sheet is the surface
-        // — only post the (silent) notification when the app is NOT foreground,
-        // so there's no shade clutter during use.
-        if (!App.isForeground()) {
-            UpdateNotification.showInstallPrompt(context, versionName);
-        }
+        UpdateNotification.showInstallPrompt(context, versionName);
     }
 
     private boolean isDownloadSuccessful(Context context, long downloadId) {

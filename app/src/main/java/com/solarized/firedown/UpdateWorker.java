@@ -68,12 +68,10 @@ public class UpdateWorker extends Worker {
         try {
             if (manifest.isNewerThan(mCurrentVersion)) {
                 if (UpdateDownloader.isVerifiedReady(mContext, manifest.versionCode)) {
-                    // Already downloaded AND verified on a previous cycle. Only
-                    // (silently) notify when the app isn't in use — the in-app
-                    // sheet (shown on resume) covers the in-use case.
-                    if (!App.isForeground()) {
-                        UpdateNotification.showInstallPrompt(mContext, manifest.versionName);
-                    }
+                    // Already downloaded AND verified on a previous cycle —
+                    // re-surface the (silent) install prompt. The in-app sheet
+                    // additionally shows on resume while the app is in use.
+                    UpdateNotification.showInstallPrompt(mContext, manifest.versionName);
                 } else {
                     // Hand the APK download to the system DownloadManager and
                     // return — UpdateDownloadReceiver verifies it and posts the
