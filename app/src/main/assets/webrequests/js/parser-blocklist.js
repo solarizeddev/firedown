@@ -174,6 +174,21 @@ const PARSER_BLOCKLIST = {
   telegram: [
     '(cdn-telegram\\.org|telesco\\.pe)\\/file\\/.*\\.mp4',
   ],
+
+  // Telegram WEB APP (web.telegram.org/k & /a) — its media URLs are
+  // ServiceWorker-virtual /stream/ paths backed by MTProto bytes decrypted
+  // in-page (see js/telegram-web.js). They are NOT re-fetchable by the native
+  // downloader (no SW, no MTProto), so a generic-catcher capture of one is a
+  // HARMFUL entry that fails on every download attempt. Block it — telegram-web.js
+  // handles this surface by downloading the bytes in-page and saving a blob,
+  // entirely outside the capture pipeline, so there is nothing here to pair with;
+  // this entry exists only to suppress the broken catcher capture (same
+  // "block a harmful capture" rationale as Mega's undecryptable bytes, not the
+  // ordinary cardinal-rule dedup). Matches /k/stream/, /a/stream/, /z/stream/ and
+  // a bare /stream/ on the web(k|z).telegram.org hosts.
+  'telegram-web': [
+    'web(?:k|z)?\\.telegram\\.org\\/(?:[kaz]\\/)?stream\\/',
+  ],
 };
 
 // Flatten every parser's patterns into one compiled RegExp — same approach and

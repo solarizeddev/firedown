@@ -344,6 +344,56 @@ cardinal rule as any parser.
   body-sniff stays in JS `filterResponseData` because the classifier drops it and
   only the page ever reads it — see "Obfuscated manifests" below.)
 
+### Telegram WEB APP — in-page blob download, NOT the capture pipeline
+
+There are TWO Telegram surfaces, and they are handled in completely different
+ways. **Public `t.me/<channel>/<id>` posts** → `js/parsers/telegram.js`, a normal
+parser: the post HTML carries a real, re-fetchable `cdn-telegram.org` `.mp4`, so
+it flows through the standard capture→native-redownload pipeline (block-listed
+under `telegram`). **The LOGGED-IN web app (`web.telegram.org/k` & `/a`,
+including restricted/"download disabled" channels)** → `js/telegram-web.js`, and
+it does **not** use the capture pipeline at all.
+
+Why it can't: a web-app media element's URL is a **ServiceWorker-virtual**
+`…/k/stream/<json>` (or `/a/stream/…`) path the SW serves from **MTProto chunks
+decrypted in page JS**. There is no plain native-reachable URL and no small key
+to hand native (unlike Mega, where the page hands native a key and native
+fetches+decrypts a real CDN URL) — a native OkHttp re-fetch can't route through
+the SW or speak MTProto. The bytes exist only inside the page.
+
+So `telegram-web.js` does what a userscript would (technique from the GPL'd
+Neet-Nestor/Telegram-Media-Downloader, reimplemented): inject a Download button
+into the media viewer and, on click, **fetch the `/stream/` URL with Range
+requests IN THE PAGE WORLD, assemble a Blob, and trigger `<a download
+href="blob:…">`**. Firedown's existing download interception
+(`GeckoComponents.onExternalResponse` → `BrowserFragment.onDownload` →
+`GeckoStreamStrategy` streams `response.body` to disk) catches the blob — **no
+Java changes**. Load-bearing details, do not "simplify":
+
+- **Page world is mandatory** (not the content-script's isolated world): (1) the
+  `/stream/` fetch must be intercepted by the page's SW and carry the session —
+  the SW only intercepts its CLIENT (the page), so a content-script-context fetch
+  bypasses it; (2) the blob `<a download>` must mint a URL the docshell can
+  navigate to reach `onExternalResponse`. The engine is run via
+  **`window.wrappedJSObject.eval(...)`** — the SAME confirmed mechanism
+  `youtube/content.js` uses for PoToken, and the reason it works where a
+  `<script>`/web-accessible-resource inject would hit Telegram's CSP (privileged
+  content-script eval is exempt). The engine is authored as a normal function and
+  injected via `.toString()` so it stays readable; it touches only standard
+  browser globals, never extension APIs.
+- **No pipeline emit, but a block-list entry exists** (`'telegram-web'` in
+  `parser-blocklist.js`). It is NOT cardinal-rule dedup (there's no pipeline
+  capture to pair with); it suppresses a **HARMFUL** generic-catcher capture — a
+  non-re-fetchable `/stream/` URL that fails on every download attempt. Same
+  "block a harmful capture" rationale as Mega/Bilibili, not the ordinary dedup.
+- **Whole file held in memory as one Blob** (the userscript's accepted cost) —
+  GeckoView then streams it to disk; large videos are memory-heavy. A future
+  improvement would stream chunks to native instead, but that needs new plumbing.
+- **Selectors track Telegram's markup** (mirror the userscript): K
+  `.media-viewer-whole` / `.media-viewer-buttons`, A `#MediaViewer
+  .MediaViewerActions`. If the button stops appearing, the DOM changed — update
+  `K_*`/`A_*` in `telegram-web.js`. Logs under `[TG-WEB]`, DEBUG-gated.
+
 ### HLS-master sites — Java enumeration, no ffmpeg probe
 
 niconico, Twitch, Kick and Bluesky emit `type:"hls-master"` from the parser

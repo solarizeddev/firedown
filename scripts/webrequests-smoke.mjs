@@ -349,6 +349,18 @@ expect(matchInParserBlocklist("https://cdn4.telesco.pe/file/two.mp4"),
 expect(!matchInParserBlocklist("https://cdn4.cdn-telegram.org/file/poster.jpg"),
   "tg: poster .jpg is NOT block-listed");
 
+// Telegram WEB APP: the SW-virtual /stream/ URLs are non-re-fetchable, so they
+// must be block-listed (telegram-web.js downloads them in-page instead). A
+// public t.me CDN URL must still NOT be caught by this web-app rule.
+expect(matchInParserBlocklist("https://web.telegram.org/k/stream/%7B%22dcId%22%3A2%7D"),
+  "tg-web: /k/stream/ is block-listed");
+expect(matchInParserBlocklist("https://webk.telegram.org/stream/abc"),
+  "tg-web: webk host /stream/ is block-listed");
+expect(matchInParserBlocklist("https://web.telegram.org/a/stream/xyz"),
+  "tg-web: /a/stream/ is block-listed");
+expect(!matchInParserBlocklist("https://web.telegram.org/k/"),
+  "tg-web: non-stream web app URL is NOT block-listed");
+
 if (failures) {
   console.error(`\n${failures} failure(s)`);
   process.exit(1);
