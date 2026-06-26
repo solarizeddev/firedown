@@ -6,6 +6,14 @@
   available" + the NEW version, prominent + the current version), then a left-
   aligned "What's new" + changelog block (hidden when status.json has no
   changelog), then a single centred Install. Dismiss = swipe / back / outside.
+
+  Everything below the drag handle is wrapped in a NestedScrollView so the
+  content scrolls within the sheet bounds — without it the bottom (Install) was
+  clipped in landscape / on short screens, where the sheet can't grow tall
+  enough to show it all. Short content still wraps (no scroll, no empty gap);
+  tall content / landscape scrolls. The base (BaseBottomSheetDialogFragment)
+  expands the sheet and uncaps its height in landscape (values-land
+  bottom_sheet_max_height = 0 → NO_MAX_SIZE).
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -17,93 +25,105 @@
 
     <include layout="@layout/dialog_drag_handle" />
 
-    <androidx.appcompat.widget.AppCompatImageView
-        android:layout_width="132dp"
-        android:layout_height="132dp"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginTop="4dp"
-        android:layout_marginBottom="12dp"
-        android:importantForAccessibility="no"
-        app:srcCompat="@drawable/ill_presents" />
-
-    <TextView
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginHorizontal="24dp"
-        android:gravity="center"
-        android:text="@string/update_available_sheet_title"
-        android:textAppearance="?attr/textAppearanceHeadlineSmall"
-        android:textColor="?attr/colorOnSurface" />
+        android:scrollbars="vertical">
 
-    <!-- The version being installed — prominent. -->
-    <TextView
-        android:id="@+id/update_sheet_version"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginHorizontal="24dp"
-        android:layout_marginTop="6dp"
-        android:gravity="center"
-        android:textAppearance="?attr/textAppearanceTitleMedium"
-        android:textColor="?attr/colorPrimary"
-        tools:text="Firedown 1.1.90" />
-
-    <TextView
-        android:id="@+id/update_sheet_current"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginHorizontal="24dp"
-        android:layout_marginTop="2dp"
-        android:gravity="center"
-        android:textAppearance="?attr/textAppearanceBodySmall"
-        android:textColor="?attr/colorOnSurfaceVariant"
-        tools:text="Current version 1.1.81" />
-
-    <!-- "What's new" + release notes. Both hidden when there's no changelog. -->
-    <TextView
-        android:id="@+id/update_sheet_whats_new"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginHorizontal="24dp"
-        android:layout_marginTop="20dp"
-        android:gravity="start"
-        android:text="@string/update_available_sheet_whats_new"
-        android:textAppearance="?attr/textAppearanceTitleSmall"
-        android:textColor="?attr/colorOnSurface"
-        android:visibility="gone"
-        tools:visibility="visible" />
-
-    <TextView
-        android:id="@+id/update_sheet_changelog"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginHorizontal="24dp"
-        android:layout_marginTop="6dp"
-        android:ellipsize="end"
-        android:gravity="start"
-        android:lineSpacingMultiplier="1.3"
-        android:maxLines="12"
-        android:textAppearance="?attr/textAppearanceBodyMedium"
-        android:textColor="?attr/colorOnSurfaceVariant"
-        android:visibility="gone"
-        tools:text="• Faster, more reliable updates&#10;• Fixed video capture on some sites&#10;• Smaller download size"
-        tools:visibility="visible" />
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:orientation="horizontal"
-        android:paddingHorizontal="24dp"
-        android:paddingTop="24dp"
-        android:paddingBottom="16dp">
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/update_sheet_install"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:minWidth="200dp"
-            android:text="@string/update_available_sheet_install" />
+            android:orientation="vertical">
 
-    </LinearLayout>
+            <androidx.appcompat.widget.AppCompatImageView
+                android:layout_width="132dp"
+                android:layout_height="132dp"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="12dp"
+                android:importantForAccessibility="no"
+                app:srcCompat="@drawable/ill_presents" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="24dp"
+                android:gravity="center"
+                android:text="@string/update_available_sheet_title"
+                android:textAppearance="?attr/textAppearanceHeadlineSmall"
+                android:textColor="?attr/colorOnSurface" />
+
+            <!-- The version being installed — prominent. -->
+            <TextView
+                android:id="@+id/update_sheet_version"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="24dp"
+                android:layout_marginTop="6dp"
+                android:gravity="center"
+                android:textAppearance="?attr/textAppearanceTitleMedium"
+                android:textColor="?attr/colorPrimary"
+                tools:text="Firedown 1.1.90" />
+
+            <TextView
+                android:id="@+id/update_sheet_current"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="24dp"
+                android:layout_marginTop="2dp"
+                android:gravity="center"
+                android:textAppearance="?attr/textAppearanceBodySmall"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                tools:text="Current version 1.1.81" />
+
+            <!-- "What's new" + release notes. Both hidden when there's no changelog. -->
+            <TextView
+                android:id="@+id/update_sheet_whats_new"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="24dp"
+                android:layout_marginTop="20dp"
+                android:gravity="start"
+                android:text="@string/update_available_sheet_whats_new"
+                android:textAppearance="?attr/textAppearanceTitleSmall"
+                android:textColor="?attr/colorOnSurface"
+                android:visibility="gone"
+                tools:visibility="visible" />
+
+            <TextView
+                android:id="@+id/update_sheet_changelog"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="24dp"
+                android:layout_marginTop="6dp"
+                android:gravity="start"
+                android:lineSpacingMultiplier="1.3"
+                android:textAppearance="?attr/textAppearanceBodyMedium"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:visibility="gone"
+                tools:text="• Faster, more reliable updates&#10;• Fixed video capture on some sites&#10;• Smaller download size"
+                tools:visibility="visible" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:paddingHorizontal="24dp"
+                android:paddingTop="24dp"
+                android:paddingBottom="16dp">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/update_sheet_install"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:minWidth="200dp"
+                    android:text="@string/update_available_sheet_install" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
 
 </LinearLayout>
