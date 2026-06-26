@@ -35,6 +35,15 @@ public final class UpdateDownloader {
     /** Serializes the whole enqueue/transition critical section in-process. */
     private static final Object LOCK = new Object();
 
+    /**
+     * After this many full (all-mirrors-tried) failed rounds for one version,
+     * stop re-downloading it. Each round happens on a separate check (app open /
+     * periodic), so without this a permanently-failing download (404, always-bad
+     * digest) would be re-fetched on EVERY app open forever. A newer version
+     * resets the counter; a successful download clears it.
+     */
+    private static final int MAX_DOWNLOAD_ATTEMPTS = 3;
+
     private UpdateDownloader() {}
 
     private static SharedPreferences prefs(Context context) {
@@ -50,6 +59,14 @@ public final class UpdateDownloader {
             return;
         }
         synchronized (LOCK) {
+            if (hasExhaustedRetries(context, versionCode)) {
+                // Already failed MAX_DOWNLOAD_ATTEMPTS times for this version —
+                // don't re-download it on this (or any further) check. A newer
+                // version won't match the stored versionCode, so it still tries.
+                Log.w(TAG, "giving up on version " + versionCode + " after "
+                        + MAX_DOWNLOAD_ATTEMPTS + " failed attempts");
+                return;
+            }
             enqueueAt(context, urls, 0, sha, name, versionCode);
         }
     }
@@ -74,10 +91,37 @@ public final class UpdateDownloader {
                 Log.w(TAG, "download attempt failed; failing over to mirror " + (index + 1));
                 enqueueAt(context, urls, index + 1, sha, name, versionCode);
             } else {
-                Log.w(TAG, "download attempt failed; mirrors exhausted, clearing pending");
+                // All mirrors for this version failed this round. Count it (so a
+                // permanently-failing download stops after MAX_DOWNLOAD_ATTEMPTS
+                // rather than re-fetching on every check) and clear the pending
+                // record. NO re-enqueue here — the next app-open/periodic check
+                // re-tries from the top until the cap is hit.
+                Log.w(TAG, "download attempt failed; mirrors exhausted");
+                recordFailedRound(context, versionCode);
                 clearPending(context);
             }
         }
+    }
+
+    /** Must be called under LOCK. Bumps the per-version failed-round counter. */
+    private static void recordFailedRound(Context context, int versionCode) {
+        if (versionCode <= 0) {
+            return;
+        }
+        SharedPreferences p = prefs(context);
+        int failedVersion = p.getInt(Keys.UPDATE_FAILED_VERSION_CODE, -1);
+        int count = (failedVersion == versionCode) ? p.getInt(Keys.UPDATE_FAILED_COUNT, 0) : 0;
+        p.edit()
+                .putInt(Keys.UPDATE_FAILED_VERSION_CODE, versionCode)
+                .putInt(Keys.UPDATE_FAILED_COUNT, count + 1)
+                .apply();
+    }
+
+    /** True once a version has failed MAX_DOWNLOAD_ATTEMPTS full rounds. */
+    public static boolean hasExhaustedRetries(Context context, int versionCode) {
+        SharedPreferences p = prefs(context);
+        return p.getInt(Keys.UPDATE_FAILED_VERSION_CODE, -1) == versionCode
+                && p.getInt(Keys.UPDATE_FAILED_COUNT, 0) >= MAX_DOWNLOAD_ATTEMPTS;
     }
 
     /** Must be called under LOCK. */
@@ -100,7 +144,13 @@ public final class UpdateDownloader {
         long previousId = p.getLong(Keys.UPDATE_DOWNLOAD_ID, -1);
         if (previousId != -1) {
             int status = queryStatus(dm, previousId);
-            if (status == DownloadManager.STATUS_PENDING || status == DownloadManager.STATUS_RUNNING) {
+            // PENDING/RUNNING = in flight; PAUSED = DownloadManager is doing its
+            // OWN transient-failure retry/wait — in all three, leave it alone so
+            // we neither double-enqueue (the concurrent one-time + periodic case)
+            // nor cancel a retry DownloadManager is about to resume.
+            if (status == DownloadManager.STATUS_PENDING
+                    || status == DownloadManager.STATUS_RUNNING
+                    || status == DownloadManager.STATUS_PAUSED) {
                 Log.d(TAG, "a download is already in flight; not enqueuing again");
                 return;
             }
@@ -166,6 +216,10 @@ public final class UpdateDownloader {
                     .remove(Keys.UPDATE_DOWNLOAD_SHA)
                     .remove(Keys.UPDATE_DOWNLOAD_NAME)
                     .remove(Keys.UPDATE_DOWNLOAD_VERSION_CODE)
+                    // Success — drop the failed-round counter so it can't carry
+                    // over to a later version.
+                    .remove(Keys.UPDATE_FAILED_VERSION_CODE)
+                    .remove(Keys.UPDATE_FAILED_COUNT)
                     .apply();
         }
     }

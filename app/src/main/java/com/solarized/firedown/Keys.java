@@ -45,6 +45,12 @@ public class Keys {
     // Per-version "Later" suppression for the in-app update sheet (a newer
     // version resets it, since the value is the dismissed versionCode).
     public static final String UPDATE_PROMPT_DISMISSED_VERSION = "com.solarized.firedown.UPDATE_PROMPT_DISMISSED_VERSION";
+    // Bounded-retry bookkeeping: how many full (all-mirrors) download rounds have
+    // failed for UPDATE_FAILED_VERSION_CODE. Once it hits the cap the downloader
+    // stops re-fetching that version on every check (a newer version resets it),
+    // so a permanently-failing download can't loop forever.
+    public static final String UPDATE_FAILED_VERSION_CODE = "com.solarized.firedown.UPDATE_FAILED_VERSION_CODE";
+    public static final String UPDATE_FAILED_COUNT = "com.solarized.firedown.UPDATE_FAILED_COUNT";
 
     public static final String GIF_START_MS = "com.solarized.firedown.GIF_START_MS";
     public static final String GIF_END_MS = "com.solarized.firedown.GIF_END_MS";
