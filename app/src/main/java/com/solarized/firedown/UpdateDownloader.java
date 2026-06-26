@@ -8,12 +8,18 @@ import android.net.Uri;
 import android.util.Log;
 
 import androidx.preference.PreferenceManager;
+import androidx.work.Constraints;
+import androidx.work.ExistingWorkPolicy;
+import androidx.work.NetworkType;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkManager;
 
 import com.solarized.firedown.utils.BrowserHeaders;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Owns the update-APK download lifecycle on top of the system DownloadManager:
@@ -36,13 +42,16 @@ public final class UpdateDownloader {
     private static final Object LOCK = new Object();
 
     /**
-     * After this many full (all-mirrors-tried) failed rounds for one version,
-     * stop re-downloading it. Each round happens on a separate check (app open /
-     * periodic), so without this a permanently-failing download (404, always-bad
-     * digest) would be re-fetched on EVERY app open forever. A newer version
-     * resets the counter; a successful download clears it.
+     * Exponential backoff for a failing download. Each failed (all-mirrors)
+     * round grows the delay BACKOFF_BASE_MS * 2^(round-1), capped at
+     * BACKOFF_MAX_MS — so retries go 15m, 30m, 1h, 2h, 4h, 6h, 6h, … The app
+     * never gives up; the cap just keeps a permanently-failing download from
+     * being re-fetched more than ~once every 6h. A newer version or a success
+     * resets it. The growing delay (not a hard attempt cap) is what prevents the
+     * every-app-open re-download loop without abandoning the update.
      */
-    private static final int MAX_DOWNLOAD_ATTEMPTS = 3;
+    private static final long BACKOFF_BASE_MS = 15L * 60L * 1000L;      // 15 min
+    private static final long BACKOFF_MAX_MS = 6L * 60L * 60L * 1000L;  // 6 h
 
     private UpdateDownloader() {}
 
@@ -59,12 +68,11 @@ public final class UpdateDownloader {
             return;
         }
         synchronized (LOCK) {
-            if (hasExhaustedRetries(context, versionCode)) {
-                // Already failed MAX_DOWNLOAD_ATTEMPTS times for this version —
-                // don't re-download it on this (or any further) check. A newer
-                // version won't match the stored versionCode, so it still tries.
-                Log.w(TAG, "giving up on version " + versionCode + " after "
-                        + MAX_DOWNLOAD_ATTEMPTS + " failed attempts");
+            if (isBackingOff(context, versionCode)) {
+                // Inside the backoff window for this version — let the scheduled
+                // retry worker fire instead of re-downloading on this check (so
+                // an app open during backoff doesn't restart the download).
+                Log.d(TAG, "within backoff window for version " + versionCode + "; skipping");
                 return;
             }
             enqueueAt(context, urls, 0, sha, name, versionCode);
@@ -91,37 +99,72 @@ public final class UpdateDownloader {
                 Log.w(TAG, "download attempt failed; failing over to mirror " + (index + 1));
                 enqueueAt(context, urls, index + 1, sha, name, versionCode);
             } else {
-                // All mirrors for this version failed this round. Count it (so a
-                // permanently-failing download stops after MAX_DOWNLOAD_ATTEMPTS
-                // rather than re-fetching on every check) and clear the pending
-                // record. NO re-enqueue here — the next app-open/periodic check
-                // re-tries from the top until the cap is hit.
-                Log.w(TAG, "download attempt failed; mirrors exhausted");
-                recordFailedRound(context, versionCode);
+                // All mirrors for this version failed this round. Schedule the
+                // next retry with exponential backoff (never gives up) and clear
+                // the pending record. NO immediate re-enqueue here.
+                Log.w(TAG, "download attempt failed; mirrors exhausted, backing off");
+                // Remove the failed DownloadManager row (and any partial file)
+                // so they don't accumulate across backoff rounds. Safe here —
+                // it's a FAILED download; we never remove a SUCCESSFUL one
+                // (DownloadManager.remove would delete the APK we need).
+                removeDownload(context, p.getLong(Keys.UPDATE_DOWNLOAD_ID, -1));
+                scheduleBackoff(context, versionCode);
                 clearPending(context);
             }
         }
     }
 
-    /** Must be called under LOCK. Bumps the per-version failed-round counter. */
-    private static void recordFailedRound(Context context, int versionCode) {
+    /**
+     * Must be called under LOCK. Grows the per-version backoff and schedules the
+     * next retry. Delay = BACKOFF_BASE_MS * 2^(round-1), capped at BACKOFF_MAX_MS.
+     */
+    private static void scheduleBackoff(Context context, int versionCode) {
         if (versionCode <= 0) {
             return;
         }
         SharedPreferences p = prefs(context);
         int failedVersion = p.getInt(Keys.UPDATE_FAILED_VERSION_CODE, -1);
-        int count = (failedVersion == versionCode) ? p.getInt(Keys.UPDATE_FAILED_COUNT, 0) : 0;
+        int round = ((failedVersion == versionCode) ? p.getInt(Keys.UPDATE_FAILED_COUNT, 0) : 0) + 1;
+
+        int exponent = Math.min(round - 1, 20); // guard the shift against overflow
+        long delay = Math.min(BACKOFF_BASE_MS * (1L << exponent), BACKOFF_MAX_MS);
+
         p.edit()
                 .putInt(Keys.UPDATE_FAILED_VERSION_CODE, versionCode)
-                .putInt(Keys.UPDATE_FAILED_COUNT, count + 1)
+                .putInt(Keys.UPDATE_FAILED_COUNT, round)
+                .putLong(Keys.UPDATE_NEXT_RETRY_AT, System.currentTimeMillis() + delay)
                 .apply();
+
+        scheduleRetry(context, delay);
+        Log.w(TAG, "retry #" + round + " for version " + versionCode
+                + " in ~" + (delay / 60000L) + " min");
     }
 
-    /** True once a version has failed MAX_DOWNLOAD_ATTEMPTS full rounds. */
-    public static boolean hasExhaustedRetries(Context context, int versionCode) {
+    /** True while inside the backoff window for this version. */
+    public static boolean isBackingOff(Context context, int versionCode) {
         SharedPreferences p = prefs(context);
-        return p.getInt(Keys.UPDATE_FAILED_VERSION_CODE, -1) == versionCode
-                && p.getInt(Keys.UPDATE_FAILED_COUNT, 0) >= MAX_DOWNLOAD_ATTEMPTS;
+        if (p.getInt(Keys.UPDATE_FAILED_VERSION_CODE, -1) != versionCode) {
+            return false;
+        }
+        return System.currentTimeMillis() < p.getLong(Keys.UPDATE_NEXT_RETRY_AT, 0L);
+    }
+
+    /**
+     * Schedule a one-shot UpdateWorker after {@code delayMs}. REPLACE so the
+     * newest backoff (longest delay) supersedes any pending retry; CONNECTED so
+     * it waits for network. This is what makes the retry happen without the user
+     * opening the app — and what keeps it bounded (one pending retry at a time).
+     */
+    private static void scheduleRetry(Context context, long delayMs) {
+        Constraints constraints = new Constraints.Builder()
+                .setRequiredNetworkType(NetworkType.CONNECTED)
+                .build();
+        OneTimeWorkRequest retry = new OneTimeWorkRequest.Builder(UpdateWorker.class)
+                .setConstraints(constraints)
+                .setInitialDelay(delayMs, TimeUnit.MILLISECONDS)
+                .build();
+        WorkManager.getInstance(context).enqueueUniqueWork(
+                "update_retry", ExistingWorkPolicy.REPLACE, retry);
     }
 
     /** Must be called under LOCK. */
@@ -216,10 +259,11 @@ public final class UpdateDownloader {
                     .remove(Keys.UPDATE_DOWNLOAD_SHA)
                     .remove(Keys.UPDATE_DOWNLOAD_NAME)
                     .remove(Keys.UPDATE_DOWNLOAD_VERSION_CODE)
-                    // Success — drop the failed-round counter so it can't carry
-                    // over to a later version.
+                    // Success — drop the backoff state so it can't carry over to
+                    // a later version.
                     .remove(Keys.UPDATE_FAILED_VERSION_CODE)
                     .remove(Keys.UPDATE_FAILED_COUNT)
+                    .remove(Keys.UPDATE_NEXT_RETRY_AT)
                     .apply();
         }
     }
@@ -298,6 +342,17 @@ public final class UpdateDownloader {
             if (apk != null && apk.exists()) {
                 apk.delete();
             }
+        }
+    }
+
+    /** Remove a DownloadManager row (and its file) by id; no-op for -1. */
+    private static void removeDownload(Context context, long id) {
+        if (id == -1) {
+            return;
+        }
+        DownloadManager dm = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
+        if (dm != null) {
+            dm.remove(id);
         }
     }
 

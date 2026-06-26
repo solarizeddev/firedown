@@ -45,12 +45,15 @@ public class Keys {
     // Per-version "Later" suppression for the in-app update sheet (a newer
     // version resets it, since the value is the dismissed versionCode).
     public static final String UPDATE_PROMPT_DISMISSED_VERSION = "com.solarized.firedown.UPDATE_PROMPT_DISMISSED_VERSION";
-    // Bounded-retry bookkeeping: how many full (all-mirrors) download rounds have
-    // failed for UPDATE_FAILED_VERSION_CODE. Once it hits the cap the downloader
-    // stops re-fetching that version on every check (a newer version resets it),
-    // so a permanently-failing download can't loop forever.
+    // Exponential-backoff bookkeeping for a failing download: the version, how
+    // many full (all-mirrors) rounds have failed so far (the backoff exponent),
+    // and the earliest wall-clock time the next retry may run. The app NEVER
+    // gives up — the delay just grows (15m, 30m, 1h, 2h, 4h … capped at 6h) so a
+    // failing download keeps retrying without hammering. A newer version or a
+    // success resets all three.
     public static final String UPDATE_FAILED_VERSION_CODE = "com.solarized.firedown.UPDATE_FAILED_VERSION_CODE";
     public static final String UPDATE_FAILED_COUNT = "com.solarized.firedown.UPDATE_FAILED_COUNT";
+    public static final String UPDATE_NEXT_RETRY_AT = "com.solarized.firedown.UPDATE_NEXT_RETRY_AT";
     // Changelog for a version (from status.json), remembered by the worker at
     // check time so the in-app sheet can show it later — the sheet has no access
     // to the manifest at display time. Single slot, matched by versionCode.
