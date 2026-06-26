@@ -46,8 +46,8 @@ android {
         // minSdk stays 26 (same device support). Needs the android-37 platform
         // installed (sdkmanager "platforms;android-37"); current AGP/Gradle support it.
         compileSdk = 37
-        versionCode 1180
-        versionName "1.1.80"
+        versionCode 1181
+        versionName "1.1.81"
 
         ndk {
             abiFilters  "arm64-v8a"
@@ -228,7 +228,7 @@ dependencies {
     // code). BC's lightweight crypto API builds a keypair from a raw seed on
     // every API level; used directly (no JCE provider registration), so it does
     // not clash with Android's repackaged bundled BouncyCastle.
-    implementation 'org.bouncycastle:bcprov-jdk18on:1.78.1'
+    implementation 'org.bouncycastle:bcprov-jdk18on:1.84'
 
     implementation 'androidx.core:core-splashscreen:1.2.0'
 
