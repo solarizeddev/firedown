@@ -173,11 +173,11 @@ public class UpdateWorker extends Worker {
         }
 
         DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
-        // Same browser UA as the status fetch so the Cloudflare front (or the
-        // GitHub fallback) sees a consistent client. Deliberately NOT the
-        // X-App-Version header — that is the MAU signal and belongs only on the
-        // status.json call.
+        // Same browser UA + X-App-Version as the status fetch so the Cloudflare
+        // front (or the GitHub fallback) sees a consistent client across both
+        // the check and the download.
         request.addRequestHeader(BrowserHeaders.USER_AGENT, BrowserHeaders.getDefaultUserAgentString());
+        request.addRequestHeader(BrowserHeaders.X_APP_VERSION, App.getVersionName());
         request.setDestinationInExternalFilesDir(mContext, null, Preferences.UPDATE_APK);
         // No download-progress notification — the only notification we want is
         // the install prompt after verification (needs DOWNLOAD_WITHOUT_NOTIFICATION,
