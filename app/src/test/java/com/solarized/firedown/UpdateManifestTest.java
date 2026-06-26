@@ -29,8 +29,44 @@ public class UpdateManifestTest {
         assertNotNull(m);
         assertEquals(1200, m.versionCode);
         assertEquals("3.4.0", m.versionName);
-        assertEquals("https://www.firedown.app/firedown.apk", m.updateUrl);
+        assertEquals(1, m.downloadUrls.size());
+        assertEquals("https://www.firedown.app/firedown.apk", m.downloadUrls.get(0));
         assertEquals("abc123", m.sha256);
+    }
+
+    @Test
+    public void parsesFallbackMirrorsInOrder() {
+        String json = "{\"versionCode\":1200,\"versionName\":\"v\","
+                + "\"updateUrl\":\"https://primary/app.apk\","
+                + "\"updateUrlFallbacks\":[\"https://mirror1/app.apk\",\"https://mirror2/app.apk\"],"
+                + "\"sha256\":\"a\"}";
+        UpdateManifest m = UpdateManifest.parse(json);
+        assertNotNull(m);
+        assertEquals(3, m.downloadUrls.size());
+        assertEquals("https://primary/app.apk", m.downloadUrls.get(0));
+        assertEquals("https://mirror1/app.apk", m.downloadUrls.get(1));
+        assertEquals("https://mirror2/app.apk", m.downloadUrls.get(2));
+    }
+
+    @Test
+    public void fallbackListSkipsBlanksAndDuplicatePrimary() {
+        String json = "{\"versionCode\":1,\"versionName\":\"v\","
+                + "\"updateUrl\":\"https://primary/app.apk\","
+                + "\"updateUrlFallbacks\":[\"\",\"https://primary/app.apk\",\"https://mirror/app.apk\"],"
+                + "\"sha256\":\"a\"}";
+        UpdateManifest m = UpdateManifest.parse(json);
+        assertNotNull(m);
+        // blank skipped, duplicate-of-primary skipped -> primary + mirror only
+        assertEquals(2, m.downloadUrls.size());
+        assertEquals("https://primary/app.apk", m.downloadUrls.get(0));
+        assertEquals("https://mirror/app.apk", m.downloadUrls.get(1));
+    }
+
+    @Test
+    public void missingFallbacksJustHasPrimary() {
+        UpdateManifest m = UpdateManifest.parse(VALID);
+        assertNotNull(m);
+        assertEquals(1, m.downloadUrls.size());
     }
 
     @Test

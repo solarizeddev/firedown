@@ -1,15 +1,10 @@
 package com.solarized.firedown;
 
-import android.app.DownloadManager;
 import android.content.Context;
-import android.content.SharedPreferences;
-import android.content.pm.PackageInfo;
-import android.net.Uri;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.hilt.work.HiltWorker;
-import androidx.preference.PreferenceManager;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
@@ -17,7 +12,6 @@ import androidx.work.WorkerParameters;
 import com.solarized.firedown.data.di.Qualifiers;
 import com.solarized.firedown.utils.BrowserHeaders;
 
-import java.io.File;
 import java.io.IOException;
 
 import dagger.assisted.Assisted;
@@ -30,7 +24,6 @@ import okhttp3.Response;
 public class UpdateWorker extends Worker {
 
     private final OkHttpClient okHttpClient;
-    private final File updateFile;
 
     private final int mCurrentVersion;
 
@@ -47,7 +40,6 @@ public class UpdateWorker extends Worker {
         this.mContext = context;
         this.okHttpClient = okHttpClient;
         this.mCurrentVersion = currentVersion;
-        this.updateFile = Preferences.getUpdateApkFile(context);
     }
 
     @NonNull
@@ -75,15 +67,18 @@ public class UpdateWorker extends Worker {
 
         try {
             if (manifest.isNewerThan(mCurrentVersion)) {
-                if (isUpdateAlreadyDownloaded(manifest.versionCode)) {
+                if (UpdateDownloader.isVerifiedReady(mContext, manifest.versionCode)) {
+                    // Already downloaded AND verified on a previous cycle — just
+                    // re-surface the prompt (the in-app sheet handles the
+                    // notifications-denied case on next app resume).
                     UpdateNotification.showInstallPrompt(mContext, manifest.versionName);
                 } else {
-                    // Hand the actual APK download to the system DownloadManager
-                    // and return — UpdateDownloadReceiver verifies it and posts
-                    // the install prompt when the broadcast arrives (which can
-                    // cold-start the app, so the download surviving a process
+                    // Hand the APK download to the system DownloadManager and
+                    // return — UpdateDownloadReceiver verifies it and posts the
+                    // install prompt when the broadcast arrives (which can
+                    // cold-start the app, so a download surviving a process
                     // eviction still ends in a notification).
-                    enqueueDownload(manifest.updateUrl, manifest.sha256,
+                    UpdateDownloader.start(mContext, manifest.downloadUrls, manifest.sha256,
                             manifest.versionName, manifest.versionCode);
                 }
             }
@@ -139,68 +134,4 @@ public class UpdateWorker extends Worker {
         }
         return null;
     }
-
-    /**
-     * Enqueues the APK download with the system DownloadManager and records the
-     * metadata UpdateDownloadReceiver needs to verify the finished file. The
-     * download then proceeds independently of this worker (and of the app
-     * process), and completion is handled by the manifest-declared receiver.
-     *
-     * Note this is the APK *file* download only — the status.json check
-     * (fetchStatusJson, the MAU-bearing request with its custom headers) stays
-     * on OkHttp and is untouched.
-     */
-    private void enqueueDownload(String url, String remoteSha, String name, int remoteVersion) {
-        DownloadManager dm = (DownloadManager) mContext.getSystemService(Context.DOWNLOAD_SERVICE);
-        // DownloadManager can be disabled by the user, and it needs an external
-        // files dir to write to. If either is unavailable, skip quietly — the
-        // next periodic check tries again.
-        if (dm == null || mContext.getExternalFilesDir(null) == null) {
-            Log.w("UpdateWorker", "DownloadManager/external storage unavailable; skipping");
-            return;
-        }
-
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
-
-        // Drop any previous in-flight/queued download and stale file so a
-        // changed manifest can't leave two downloads racing for the same path.
-        long previousId = prefs.getLong(Keys.UPDATE_DOWNLOAD_ID, -1);
-        if (previousId != -1) {
-            dm.remove(previousId);
-        }
-        if (updateFile.exists()) {
-            updateFile.delete();
-        }
-
-        DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
-        // Same browser UA + X-App-Version as the status fetch so the Cloudflare
-        // front (or the GitHub fallback) sees a consistent client across both
-        // the check and the download.
-        request.addRequestHeader(BrowserHeaders.USER_AGENT, BrowserHeaders.getDefaultUserAgentString());
-        request.addRequestHeader(BrowserHeaders.X_APP_VERSION, App.getVersionName());
-        request.setDestinationInExternalFilesDir(mContext, null, Preferences.UPDATE_APK);
-        // No download-progress notification — the only notification we want is
-        // the install prompt after verification (needs DOWNLOAD_WITHOUT_NOTIFICATION,
-        // already held). Allow metered/cellular to match the previous OkHttp
-        // path's behaviour (it downloaded over any connection); not roaming.
-        request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_HIDDEN);
-        request.setAllowedOverMetered(true);
-        request.setAllowedOverRoaming(false);
-
-        long downloadId = dm.enqueue(request);
-        prefs.edit()
-                .putLong(Keys.UPDATE_DOWNLOAD_ID, downloadId)
-                .putString(Keys.UPDATE_DOWNLOAD_SHA, remoteSha)
-                .putString(Keys.UPDATE_DOWNLOAD_NAME, name == null ? "" : name)
-                .putInt(Keys.UPDATE_DOWNLOAD_VERSION_CODE, remoteVersion)
-                .apply();
-    }
-
-    private boolean isUpdateAlreadyDownloaded(int remoteVersion) {
-        if (!updateFile.exists()) return false;
-        PackageInfo pi = mContext.getPackageManager()
-                .getPackageArchiveInfo(updateFile.getAbsolutePath(), 0);
-        return pi != null && pi.versionCode >= remoteVersion;
-    }
-
 }

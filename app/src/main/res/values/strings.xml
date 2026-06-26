@@ -672,6 +672,12 @@
     <string name="update_failed_general_title">Firedown failed to update</string>
     <string name="update_prompt_install_body">A new version of Firedown is available. Tap to update.</string>
     <string name="update_prompt_install_title">Firedown update</string>
+    <!-- In-app update-available bottom sheet (UpdateAvailableSheet). %1$s is the
+         new version name, e.g. "Firedown 1.1.81". -->
+    <string name="update_available_sheet_title">Update available</string>
+    <string name="update_available_sheet_body">%1$s is ready to install.</string>
+    <string name="update_available_sheet_install">Install</string>
+    <string name="update_available_sheet_later">Later</string>
     <string name="vault_decrypting">Decrypting file, please wait…</string>
     <string name="vault_encrypting">Encrypting file, please wait…</string>
     <string name="vault_unsupported">Can\'t open this file. To open, move it out of Safe Folder and try again.</string>

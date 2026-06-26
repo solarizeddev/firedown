@@ -27,7 +27,7 @@ import java.io.File;
  * different uid. That's safe here because the receiver is inert against a
  * spoofed broadcast: it acts only on the download id WE recorded, re-queries
  * DownloadManager (which only returns our own downloads), and then re-verifies
- * SHA-256 + signing certificate before posting anything.
+ * SHA-256 + signing certificate before promoting anything to "ready".
  */
 public class UpdateDownloadReceiver extends BroadcastReceiver {
 
@@ -43,22 +43,17 @@ public class UpdateDownloadReceiver extends BroadcastReceiver {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         long expectedId = prefs.getLong(Keys.UPDATE_DOWNLOAD_ID, -1);
 
-        // Not our download (or a stale/duplicate broadcast) — ignore.
+        // Not our download (or a stale/duplicate broadcast for a completed one) —
+        // ignore. We do NOT clear the record here: the transition (markReady /
+        // onAttemptFailed) owns clearing it, so the mirror list survives for a
+        // failover.
         if (completedId == -1 || completedId != expectedId) {
             return;
         }
 
         String expectedSha = prefs.getString(Keys.UPDATE_DOWNLOAD_SHA, null);
         String versionName = prefs.getString(Keys.UPDATE_DOWNLOAD_NAME, "");
-
-        // Clear the tracking id up front so a repeated broadcast can't
-        // re-enter; the verified APK file itself remains for the installer.
-        prefs.edit()
-                .remove(Keys.UPDATE_DOWNLOAD_ID)
-                .remove(Keys.UPDATE_DOWNLOAD_SHA)
-                .remove(Keys.UPDATE_DOWNLOAD_NAME)
-                .remove(Keys.UPDATE_DOWNLOAD_VERSION_CODE)
-                .apply();
+        int versionCode = prefs.getInt(Keys.UPDATE_DOWNLOAD_VERSION_CODE, -1);
 
         // Hashing + signature checks read the whole APK from disk — keep the
         // process alive while a worker thread does it (onReceive must not
@@ -66,41 +61,47 @@ public class UpdateDownloadReceiver extends BroadcastReceiver {
         PendingResult pendingResult = goAsync();
         new Thread(() -> {
             try {
-                process(context, completedId, expectedSha, versionName);
+                process(context, completedId, expectedSha, versionName, versionCode);
             } finally {
                 pendingResult.finish();
             }
         }).start();
     }
 
-    private void process(Context context, long downloadId, String expectedSha, String versionName) {
+    private void process(Context context, long downloadId, String expectedSha,
+                         String versionName, int versionCode) {
         if (!isDownloadSuccessful(context, downloadId)) {
             Log.w(TAG, "Update download did not complete successfully");
-            // Silent: the next periodic check re-enqueues. No "failed" nag for
-            // a background download the user never asked for.
-            cleanup(context);
+            UpdateDownloader.onAttemptFailed(context);
             return;
         }
 
         File apk = Preferences.getUpdateApkFile(context);
         if (apk == null || !apk.exists()) {
             Log.w(TAG, "Update download reported complete but file is missing");
-            cleanup(context);
+            UpdateDownloader.onAttemptFailed(context);
             return;
         }
 
         if (!UpdateApkVerifier.verifySha256(apk, expectedSha)) {
             Log.e(TAG, "Update APK digest mismatch — discarding");
-            cleanup(context);
+            if (apk.exists()) apk.delete();
+            UpdateDownloader.onAttemptFailed(context);
             return;
         }
 
         if (!UpdateApkVerifier.verifySignature(context, apk)) {
             Log.e(TAG, "Update APK signature mismatch — discarding");
-            cleanup(context);
+            if (apk.exists()) apk.delete();
+            UpdateDownloader.onAttemptFailed(context);
             return;
         }
 
+        // Verified — promote to "ready" (clears the download record) and surface
+        // it. The in-app sheet (UpdateAvailableSheet) reads the same ready record
+        // on next resume, so the update is reachable even if notifications are
+        // denied.
+        UpdateDownloader.markReady(context, versionCode, versionName);
         UpdateNotification.showInstallPrompt(context, versionName);
     }
 
@@ -121,12 +122,5 @@ public class UpdateDownloadReceiver extends BroadcastReceiver {
             }
         }
         return false;
-    }
-
-    private void cleanup(Context context) {
-        File apk = Preferences.getUpdateApkFile(context);
-        if (apk != null && apk.exists()) {
-            apk.delete();
-        }
     }
 }

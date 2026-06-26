@@ -13,8 +13,6 @@ import androidx.preference.PreferenceManager;
 import com.solarized.firedown.utils.BuildUtils;
 import com.solarized.firedown.utils.Utils;
 
-import java.io.File;
-
 public class UpdateInstallReceiver extends BroadcastReceiver {
 
     private static final String ACTION_CONFIRM_INSTALL = "android.content.pm.action.CONFIRM_INSTALL";
@@ -51,11 +49,11 @@ public class UpdateInstallReceiver extends BroadcastReceiver {
             UpdateNotification.showNotificationSuccess(context, updateName);
         }
 
-        // Clean up the downloaded APK
-        File updateFile = Preferences.getUpdateApkFile(context);
-        if (updateFile.exists()) {
-            updateFile.delete();
-        }
+        // The update is installed — drop the verified "ready" record (and the
+        // downloaded APK it points at) plus any leftover pending-download record,
+        // so the in-app sheet / notification don't re-offer an installed version.
+        UpdateDownloader.clearReady(context);
+        UpdateDownloader.clearPending(context);
     }
 
     // ── Notification tap: user chose to install ──────────────────────────────

@@ -30,6 +30,21 @@ public class Keys {
     public static final String UPDATE_DOWNLOAD_SHA = "com.solarized.firedown.UPDATE_DOWNLOAD_SHA";
     public static final String UPDATE_DOWNLOAD_NAME = "com.solarized.firedown.UPDATE_DOWNLOAD_NAME";
     public static final String UPDATE_DOWNLOAD_VERSION_CODE = "com.solarized.firedown.UPDATE_DOWNLOAD_VERSION_CODE";
+    // The mirror candidate list + the index currently being tried, so a failed
+    // download can fail over to the next mirror without waiting for the next
+    // check (covers the Cloudflare/LaLiga-blocked-host case).
+    public static final String UPDATE_DOWNLOAD_URLS = "com.solarized.firedown.UPDATE_DOWNLOAD_URLS";
+    public static final String UPDATE_DOWNLOAD_URL_INDEX = "com.solarized.firedown.UPDATE_DOWNLOAD_URL_INDEX";
+    // The "ready" record: an APK that has PASSED SHA-256 + signature verification
+    // and is safe to offer for install (notification + in-app sheet). Distinct
+    // from the download record above so the install shortcut never trusts an
+    // unverified file (e.g. one whose completion broadcast was missed).
+    public static final String UPDATE_READY = "com.solarized.firedown.UPDATE_READY";
+    public static final String UPDATE_READY_VERSION_CODE = "com.solarized.firedown.UPDATE_READY_VERSION_CODE";
+    public static final String UPDATE_READY_NAME = "com.solarized.firedown.UPDATE_READY_NAME";
+    // Per-version "Later" suppression for the in-app update sheet (a newer
+    // version resets it, since the value is the dismissed versionCode).
+    public static final String UPDATE_PROMPT_DISMISSED_VERSION = "com.solarized.firedown.UPDATE_PROMPT_DISMISSED_VERSION";
 
     public static final String GIF_START_MS = "com.solarized.firedown.GIF_START_MS";
     public static final String GIF_END_MS = "com.solarized.firedown.GIF_END_MS";

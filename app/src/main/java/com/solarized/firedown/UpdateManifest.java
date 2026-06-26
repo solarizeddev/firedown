@@ -2,8 +2,13 @@ package com.solarized.firedown;
 
 import androidx.annotation.Nullable;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Parsed, validated view of the update status.json descriptor.
@@ -18,13 +23,20 @@ public final class UpdateManifest {
 
     public final int versionCode;
     public final String versionName;
-    public final String updateUrl;
+    /**
+     * Download candidates in priority order: the required {@code updateUrl}
+     * first, then any {@code updateUrlFallbacks}. The downloader tries them in
+     * turn, so a host blocked for some users (e.g. a Cloudflare-fronted URL
+     * behind the LaLiga IP blocks) can fail over to a mirror — mirroring the
+     * fallback chain the status.json FETCH already has. Always non-empty.
+     */
+    public final List<String> downloadUrls;
     public final String sha256;
 
-    private UpdateManifest(int versionCode, String versionName, String updateUrl, String sha256) {
+    private UpdateManifest(int versionCode, String versionName, List<String> downloadUrls, String sha256) {
         this.versionCode = versionCode;
         this.versionName = versionName;
-        this.updateUrl = updateUrl;
+        this.downloadUrls = Collections.unmodifiableList(downloadUrls);
         this.sha256 = sha256;
     }
 
@@ -50,7 +62,23 @@ public final class UpdateManifest {
             if (updateUrl.isEmpty() || sha256.isEmpty()) {
                 return null;
             }
-            return new UpdateManifest(versionCode, versionName, updateUrl, sha256);
+
+            List<String> urls = new ArrayList<>();
+            urls.add(updateUrl);
+            // Optional mirror list. Absent/!array/empty is fine — we just have
+            // the one primary URL. A non-string or blank entry is skipped, and
+            // a duplicate of the primary is ignored.
+            JSONArray fallbacks = json.optJSONArray("updateUrlFallbacks");
+            if (fallbacks != null) {
+                for (int i = 0; i < fallbacks.length(); i++) {
+                    String u = fallbacks.optString(i, "");
+                    if (!u.isEmpty() && !urls.contains(u)) {
+                        urls.add(u);
+                    }
+                }
+            }
+
+            return new UpdateManifest(versionCode, versionName, urls, sha256);
         } catch (JSONException e) {
             return null;
         }
