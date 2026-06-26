@@ -19,6 +19,7 @@ import com.solarized.firedown.utils.BrowserHeaders;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -127,7 +128,12 @@ public final class UpdateDownloader {
         int round = ((failedVersion == versionCode) ? p.getInt(Keys.UPDATE_FAILED_COUNT, 0) : 0) + 1;
 
         int exponent = Math.min(round - 1, 20); // guard the shift against overflow
-        long delay = Math.min(BACKOFF_BASE_MS * (1L << exponent), BACKOFF_MAX_MS);
+        long target = Math.min(BACKOFF_BASE_MS * (1L << exponent), BACKOFF_MAX_MS);
+        // ±15% jitter so a cohort that failed together — e.g. GitHub goes down
+        // and many clients fail over to firedown.app at once — doesn't retry in
+        // lock-step and re-saturate the fallback host.
+        double jitter = 0.85 + (ThreadLocalRandom.current().nextDouble() * 0.30); // [0.85, 1.15)
+        long delay = (long) (target * jitter);
 
         p.edit()
                 .putInt(Keys.UPDATE_FAILED_VERSION_CODE, versionCode)
