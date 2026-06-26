@@ -114,11 +114,16 @@ public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
         }
 
         String name;
+        String changelog;
         if (preview) {
             name = getString(R.string.app_name) + " (preview)";
+            changelog = "• Faster, more reliable updates\n"
+                    + "• Fixed video capture on some sites\n"
+                    + "• Smaller download size";
         } else {
             mReadyVersionCode = UpdateDownloader.readyVersionCode(context);
             name = UpdateDownloader.readyVersionName(context);
+            changelog = UpdateDownloader.getChangelogFor(context, mReadyVersionCode);
         }
         String shown = (name == null || name.isEmpty())
                 ? getString(R.string.app_name) : name;
@@ -126,8 +131,21 @@ public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
         TextView body = view.findViewById(R.id.update_sheet_body);
         body.setText(getString(R.string.update_available_sheet_body, shown));
 
+        // Version information: the currently-installed version (the new one is in
+        // the body line above).
+        TextView current = view.findViewById(R.id.update_sheet_current);
+        current.setText(getString(R.string.update_available_sheet_current, App.getVersionName()));
+
+        // Release notes — hidden entirely when status.json carries none.
+        TextView changelogView = view.findViewById(R.id.update_sheet_changelog);
+        if (changelog != null && !changelog.trim().isEmpty()) {
+            changelogView.setText(changelog.trim());
+            changelogView.setVisibility(View.VISIBLE);
+        } else {
+            changelogView.setVisibility(View.GONE);
+        }
+
         MaterialButton install = view.findViewById(R.id.update_sheet_install);
-        MaterialButton later = view.findViewById(R.id.update_sheet_later);
         // In preview there's no real APK on disk, so Install just closes.
         install.setOnClickListener(v -> {
             if (preview) {
@@ -136,7 +154,6 @@ public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
                 onInstall(name);
             }
         });
-        later.setOnClickListener(v -> dismissAllowingStateLoss());
     }
 
     private void onInstall(String name) {

@@ -65,6 +65,10 @@ public class UpdateWorker extends Worker {
             return Result.retry();
         }
 
+        // Remember this version's changelog so the in-app sheet can show it
+        // later (the sheet can't reach the manifest at display time).
+        UpdateDownloader.setChangelog(mContext, manifest.versionCode, manifest.changelog);
+
         try {
             if (manifest.isNewerThan(mCurrentVersion)) {
                 if (UpdateDownloader.isVerifiedReady(mContext, manifest.versionCode)) {

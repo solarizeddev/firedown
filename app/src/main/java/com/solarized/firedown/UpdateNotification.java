@@ -91,7 +91,11 @@ public class UpdateNotification {
         mBuilder.setAutoCancel(true);
         mBuilder.setWhen(System.currentTimeMillis());
         mBuilder.setContentTitle(context.getText(R.string.update_prompt_install_title));
-        mBuilder.setContentText(context.getText(R.string.update_prompt_install_body));
+        // Show the version when we have it, generic text otherwise.
+        CharSequence body = TextUtils.isEmpty(versionName)
+                ? context.getText(R.string.update_prompt_install_body)
+                : context.getString(R.string.update_prompt_install_body_versioned, versionName);
+        mBuilder.setContentText(body);
         mBuilder.setContentIntent(contentIntent);
         mBuilder.setOngoing(false);
         if (ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {

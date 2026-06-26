@@ -247,6 +247,27 @@ public final class UpdateDownloader {
         return prefs(context).getInt(Keys.UPDATE_READY_VERSION_CODE, -1);
     }
 
+    /**
+     * Remember a version's changelog (from status.json) so the in-app sheet can
+     * show it later — the sheet has no access to the manifest at display time.
+     * Single slot keyed by versionCode; the worker refreshes it on every check.
+     */
+    public static void setChangelog(Context context, int versionCode, String changelog) {
+        prefs(context).edit()
+                .putInt(Keys.UPDATE_CHANGELOG_VERSION_CODE, versionCode)
+                .putString(Keys.UPDATE_CHANGELOG_TEXT, changelog == null ? "" : changelog)
+                .apply();
+    }
+
+    /** The stored changelog for {@code versionCode}, or "" if none matches. */
+    public static String getChangelogFor(Context context, int versionCode) {
+        SharedPreferences p = prefs(context);
+        if (p.getInt(Keys.UPDATE_CHANGELOG_VERSION_CODE, -1) != versionCode) {
+            return "";
+        }
+        return p.getString(Keys.UPDATE_CHANGELOG_TEXT, "");
+    }
+
     public static String readyVersionName(Context context) {
         return prefs(context).getString(Keys.UPDATE_READY_NAME, "");
     }

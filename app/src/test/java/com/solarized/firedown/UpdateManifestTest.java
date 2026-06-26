@@ -32,6 +32,17 @@ public class UpdateManifestTest {
         assertEquals(1, m.downloadUrls.size());
         assertEquals("https://www.firedown.app/firedown.apk", m.downloadUrls.get(0));
         assertEquals("abc123", m.sha256);
+        assertEquals("", m.changelog); // absent -> empty, never null
+    }
+
+    @Test
+    public void parsesChangelogWhenPresent() {
+        String json = "{\"versionCode\":1,\"versionName\":\"v\","
+                + "\"updateUrl\":\"https://x/y.apk\",\"sha256\":\"a\","
+                + "\"changelog\":\"line one\\nline two\"}";
+        UpdateManifest m = UpdateManifest.parse(json);
+        assertNotNull(m);
+        assertEquals("line one\nline two", m.changelog);
     }
 
     @Test

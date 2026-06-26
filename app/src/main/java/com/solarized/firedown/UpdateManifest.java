@@ -32,12 +32,16 @@ public final class UpdateManifest {
      */
     public final List<String> downloadUrls;
     public final String sha256;
+    /** Optional release notes for the in-app sheet; "" when not provided. */
+    public final String changelog;
 
-    private UpdateManifest(int versionCode, String versionName, List<String> downloadUrls, String sha256) {
+    private UpdateManifest(int versionCode, String versionName, List<String> downloadUrls,
+                           String sha256, String changelog) {
         this.versionCode = versionCode;
         this.versionName = versionName;
         this.downloadUrls = Collections.unmodifiableList(downloadUrls);
         this.sha256 = sha256;
+        this.changelog = changelog;
     }
 
     /**
@@ -78,7 +82,9 @@ public final class UpdateManifest {
                 }
             }
 
-            return new UpdateManifest(versionCode, versionName, urls, sha256);
+            String changelog = json.optString("changelog", "");
+
+            return new UpdateManifest(versionCode, versionName, urls, sha256, changelog);
         } catch (JSONException e) {
             return null;
         }

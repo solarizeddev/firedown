@@ -51,6 +51,11 @@ public class Keys {
     // so a permanently-failing download can't loop forever.
     public static final String UPDATE_FAILED_VERSION_CODE = "com.solarized.firedown.UPDATE_FAILED_VERSION_CODE";
     public static final String UPDATE_FAILED_COUNT = "com.solarized.firedown.UPDATE_FAILED_COUNT";
+    // Changelog for a version (from status.json), remembered by the worker at
+    // check time so the in-app sheet can show it later — the sheet has no access
+    // to the manifest at display time. Single slot, matched by versionCode.
+    public static final String UPDATE_CHANGELOG_VERSION_CODE = "com.solarized.firedown.UPDATE_CHANGELOG_VERSION_CODE";
+    public static final String UPDATE_CHANGELOG_TEXT = "com.solarized.firedown.UPDATE_CHANGELOG_TEXT";
 
     public static final String GIF_START_MS = "com.solarized.firedown.GIF_START_MS";
     public static final String GIF_END_MS = "com.solarized.firedown.GIF_END_MS";

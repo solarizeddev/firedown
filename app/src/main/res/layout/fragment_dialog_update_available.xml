@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   In-app "update available" sheet (UpdateAvailableSheet). Shown on resume when a
-  SHA+signature verified update APK is ready to install — the fallback surface
-  for when POST_NOTIFICATIONS is denied and the install-prompt notification would
-  never be seen. Celebratory centred layout: balloons illustration + version line
-  + Later / Install. Height is wrap_content (short sheet).
+  SHA+signature verified update APK is ready to install — also the surface for
+  when POST_NOTIFICATIONS is denied. Celebratory centred layout: balloons +
+  version line + current-version + optional changelog + a single centred Install.
+  Dismiss is by swipe / back / tap-outside (no Later button). Height wraps.
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -17,11 +17,11 @@
     <include layout="@layout/dialog_drag_handle" />
 
     <androidx.appcompat.widget.AppCompatImageView
-        android:layout_width="160dp"
-        android:layout_height="160dp"
+        android:layout_width="150dp"
+        android:layout_height="150dp"
         android:layout_gravity="center_horizontal"
-        android:layout_marginTop="8dp"
-        android:layout_marginBottom="16dp"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="12dp"
         android:importantForAccessibility="no"
         app:srcCompat="@drawable/ill_baloons" />
 
@@ -45,27 +45,49 @@
         android:textColor="?attr/colorOnSurfaceVariant"
         tools:text="Firedown 1.1.81 is ready to install." />
 
+    <TextView
+        android:id="@+id/update_sheet_current"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="24dp"
+        android:layout_marginTop="2dp"
+        android:gravity="center"
+        android:textAppearance="?attr/textAppearanceBodySmall"
+        android:textColor="?attr/colorOnSurfaceVariant"
+        tools:text="Current version 1.1.80" />
+
+    <!-- Optional release notes. GONE when status.json has no changelog for this
+         version; capped so a long list can't blow up the sheet. -->
+    <TextView
+        android:id="@+id/update_sheet_changelog"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="24dp"
+        android:layout_marginTop="16dp"
+        android:ellipsize="end"
+        android:gravity="start"
+        android:lineSpacingMultiplier="1.15"
+        android:maxLines="10"
+        android:textAppearance="?attr/textAppearanceBodySmall"
+        android:textColor="?attr/colorOnSurfaceVariant"
+        android:visibility="gone"
+        tools:text="• Faster, more reliable updates&#10;• Fixed video capture on some sites&#10;• Smaller download size"
+        tools:visibility="visible" />
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="end"
+        android:gravity="center"
         android:orientation="horizontal"
-        android:paddingHorizontal="16dp"
+        android:paddingHorizontal="24dp"
         android:paddingTop="24dp"
         android:paddingBottom="16dp">
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/update_sheet_later"
-            style="?attr/materialButtonOutlinedStyle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/update_available_sheet_later" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/update_sheet_install"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
+            android:minWidth="200dp"
             android:text="@string/update_available_sheet_install" />
 
     </LinearLayout>
