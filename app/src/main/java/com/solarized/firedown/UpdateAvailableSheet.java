@@ -40,6 +40,7 @@ public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
     // CrashReportSheet's own tag (private there) — the crash sheet is also shown
     // from BaseActivity.onResume and takes priority over this one.
     private static final String CRASH_SHEET_TAG = "CrashReportSheet";
+    private static final String ARG_PREVIEW = "preview";
 
     private int mReadyVersionCode;
 
@@ -67,6 +68,24 @@ public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
         new UpdateAvailableSheet().show(fm, TAG);
     }
 
+    /**
+     * DEBUG-only: force-show the sheet with a fabricated version, BYPASSING the
+     * verified-ready gate, so the layout can be previewed without a real
+     * download. No-op in release builds. To try it, temporarily add to an
+     * activity's onResume (e.g. BaseActivity):
+     *   UpdateAvailableSheet.showPreview(getSupportFragmentManager());
+     * In preview, "Install" just dismisses (there is no real APK on disk).
+     */
+    public static void showPreview(@NonNull FragmentManager fm) {
+        if (!BuildConfig.DEBUG) return;
+        if (fm.isStateSaved() || fm.findFragmentByTag(TAG) != null) return;
+        UpdateAvailableSheet sheet = new UpdateAvailableSheet();
+        Bundle args = new Bundle();
+        args.putBoolean(ARG_PREVIEW, true);
+        sheet.setArguments(args);
+        sheet.show(fm, TAG);
+    }
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -84,15 +103,23 @@ public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
         super.onViewCreated(view, savedInstanceState);
         Context context = requireContext();
 
-        // Process death between show() and here, or a just-installed update,
-        // can leave nothing ready — bail rather than show an empty sheet.
-        if (!UpdateDownloader.isVerifiedReady(context, App.getVersionCode() + 1)) {
+        boolean preview = getArguments() != null && getArguments().getBoolean(ARG_PREVIEW, false);
+
+        // Process death between show() and here, or a just-installed update, can
+        // leave nothing ready — bail rather than show an empty sheet. Skipped in
+        // preview mode, which fabricates a name purely for layout testing.
+        if (!preview && !UpdateDownloader.isVerifiedReady(context, App.getVersionCode() + 1)) {
             dismissAllowingStateLoss();
             return;
         }
 
-        mReadyVersionCode = UpdateDownloader.readyVersionCode(context);
-        String name = UpdateDownloader.readyVersionName(context);
+        String name;
+        if (preview) {
+            name = getString(R.string.app_name) + " (preview)";
+        } else {
+            mReadyVersionCode = UpdateDownloader.readyVersionCode(context);
+            name = UpdateDownloader.readyVersionName(context);
+        }
         String shown = (name == null || name.isEmpty())
                 ? getString(R.string.app_name) : name;
 
@@ -101,7 +128,14 @@ public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
 
         MaterialButton install = view.findViewById(R.id.update_sheet_install);
         MaterialButton later = view.findViewById(R.id.update_sheet_later);
-        install.setOnClickListener(v -> onInstall(name));
+        // In preview there's no real APK on disk, so Install just closes.
+        install.setOnClickListener(v -> {
+            if (preview) {
+                dismissAllowingStateLoss();
+            } else {
+                onInstall(name);
+            }
+        });
         later.setOnClickListener(v -> dismissAllowingStateLoss());
     }
 
