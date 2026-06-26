@@ -699,13 +699,17 @@ async function processResponse(data, listenerName, skipClassify = false) {
           // (YouTube, etc.) the JSON-LD VideoObject / og:video:title carry the
           // real current name while <title>/og:title are generic ("YouTube") —
           // then the page-level chain.
-          //   name → audioLd > videoLd > og:video:title > og:title > twitter:title > title
-          //   description → audioLd > videoLd > meta description > og:description > twitter:description
+          //   name → audioLd > videoLd(by-url) > videoLd(page) > og:video:title > og:title > twitter:title > title
+          //   description → audioLd > videoLd(by-url) > videoLd(page) > meta description > og:description > twitter:description
+          // videoLdMatch* is a VideoObject whose contentUrl IS this captured URL
+          // (clip-specific), so it outranks the page-level videoLd/og — this is
+          // what gives each clip on a multi-video page its own title.
           // Native side sanitises both; we keep them as the raw page strings here.
-          const name = meta.audioLdName || meta.videoLdName || meta.ogVideoTitle
-            || meta.ogTitle || meta.twitterTitle || meta.title || '';
-          const description = meta.audioLdDescription || meta.videoLdDescription
-            || meta.description || meta.ogDescription || meta.twitterDescription || '';
+          const name = meta.audioLdName || meta.videoLdMatchName || meta.videoLdName
+            || meta.ogVideoTitle || meta.ogTitle || meta.twitterTitle || meta.title || '';
+          const description = meta.audioLdDescription || meta.videoLdMatchDescription
+            || meta.videoLdDescription || meta.description || meta.ogDescription
+            || meta.twitterDescription || '';
           // Thumbnail: the page's poster, ranked most-specific first. The native
           // side stores it as the entity's thumbnail (JsonHelper "img" →
           // setFileThumbnail), and GlideHelper then loads that image directly
@@ -713,7 +717,10 @@ async function processResponse(data, listenerName, skipClassify = false) {
           // plain JPEG fetch in place of a video-demux probe. The generic catcher
           // never sets img itself, so this is the only source for it; a dedicated
           // parser that already supplied img is not overwritten.
-          const img = meta.poster || meta.videoLdThumbnail
+          // A per-URL VideoObject thumbnail (clip-specific) outranks even the
+          // page poster — on a multi-video page the single <video poster> /
+          // og:image would otherwise stamp every clip with the same image.
+          const img = meta.videoLdMatchThumbnail || meta.poster || meta.videoLdThumbnail
             || meta.audioLdThumbnail || meta.ogImage || '';
           if (name && !message.name) message.name = name;
           if (description && !message.description) message.description = description;

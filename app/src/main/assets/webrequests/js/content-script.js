@@ -254,6 +254,31 @@ if (window === window.top) {
     return null;
   };
 
+  // A schema.org VideoObject whose contentUrl (or url) IS the captured media —
+  // the page declaring "this URL is the video content". Mirrors readAudioJsonLd
+  // (below) for video, and is the per-URL counterpart to the page-level
+  // readVideoJsonLd above: that one returns the FIRST VideoObject for EVERY
+  // capture, so a page with several clips (a gallery, a showcase of demo
+  // videos) collapses to one shared title/thumbnail. Matching contentUrl to the
+  // captured URL instead gives each clip its OWN name + thumbnail. Returns
+  // {name, description, thumbnail} or null if no VideoObject points at this URL.
+  // Top-frame only like the rest of this responder — but that still covers a
+  // clip captured from a same-origin iframe, because the background passes the
+  // captured media URL and the top frame's JSON-LD can declare it.
+  const readVideoJsonLdByUrl = (mediaUrl) => {
+    if (!mediaUrl) return null;
+    return eachJsonLdNode((node) => {
+      if (!isVideoType(node['@type'])) return null;
+      const contentUrl = ldString(node.contentUrl) || ldString(node.url);
+      if (!contentUrl || !sameUrl(contentUrl, mediaUrl)) return null;
+      return {
+        name: ldString(node.name),
+        description: ldString(node.description),
+        thumbnail: ldImage(node.thumbnailUrl) || ldImage(node.thumbnail),
+      };
+    });
+  };
+
   const isAudioType = (t) =>
     t === 'AudioObject' || (Array.isArray(t) && t.includes('AudioObject'));
 
@@ -346,6 +371,11 @@ if (window === window.top) {
     // (keep the filename) — see resolveAudioContent. Non-audio captures ignore
     // these fields.
     const audio = msg.mediaUrl ? resolveAudioContent(msg.mediaUrl) : { role: 'unknown' };
+    // Per-URL VideoObject match (a clip whose contentUrl IS the captured URL) —
+    // the most specific metadata possible, so it outranks the page-level poster
+    // and og:title in the consumer. Gives each clip on a multi-video page its
+    // own title + thumbnail instead of the shared page card.
+    const videoMatch = msg.mediaUrl ? readVideoJsonLdByUrl(msg.mediaUrl) : null;
     return Promise.resolve({
       url: location.href,
       title: document.title || '',
@@ -365,6 +395,11 @@ if (window === window.top) {
       ogVideoTitle: ogp('og:video:title'),
       videoLdName: videoLd ? videoLd.name : '',
       videoLdDescription: videoLd ? videoLd.description : '',
+      // Per-URL VideoObject match — clip-specific, ranked above the page-level
+      // fields in the consumer (requests.js).
+      videoLdMatchName: videoMatch ? videoMatch.name : '',
+      videoLdMatchDescription: videoMatch ? videoMatch.description : '',
+      videoLdMatchThumbnail: videoMatch ? videoMatch.thumbnail : '',
       // Thumbnail sources, most-specific first (consumer ranks poster highest).
       poster,
       ogImage: ogp('og:image:secure_url') || ogp('og:image'),
