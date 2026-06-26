@@ -4,6 +4,9 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.text.style.LeadingMarginSpan;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -154,7 +157,7 @@ public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
         TextView changelogView = view.findViewById(R.id.update_sheet_changelog);
         boolean hasChangelog = changelog != null && !changelog.trim().isEmpty();
         if (hasChangelog) {
-            changelogView.setText(changelog.trim());
+            changelogView.setText(formatChangelog(changelog.trim()));
         }
         int changelogVisibility = hasChangelog ? View.VISIBLE : View.GONE;
         whatsNew.setVisibility(changelogVisibility);
@@ -178,6 +181,35 @@ public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
         Context app = requireContext().getApplicationContext();
         new Thread(() -> UpdateInstaller.install(app, name)).start();
         dismissAllowingStateLoss();
+    }
+
+    /**
+     * Renders the "• "-prefixed changelog with a per-bullet hanging indent, so a
+     * wrapped line aligns under the text instead of under the bullet. Without it
+     * a long, multi-line bullet reads as a cramped block and you can't tell where
+     * one item ends and the next begins.
+     */
+    private CharSequence formatChangelog(String raw) {
+        int hang = Math.round(16 * getResources().getDisplayMetrics().density);
+        SpannableStringBuilder sb = new SpannableStringBuilder();
+        boolean first = true;
+        for (String line : raw.split("\n")) {
+            String item = line.trim();
+            if (item.isEmpty()) {
+                continue;
+            }
+            if (!first) {
+                sb.append("\n");
+            }
+            first = false;
+            int start = sb.length();
+            sb.append(item);
+            // first-line indent 0 (bullet sits at the margin), wrapped lines
+            // indented to align under the text after "• ".
+            sb.setSpan(new LeadingMarginSpan.Standard(0, hang), start, sb.length(),
+                    Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+        }
+        return sb;
     }
 
     /**
