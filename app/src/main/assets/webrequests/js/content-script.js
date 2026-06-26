@@ -254,6 +254,70 @@ if (window === window.top) {
     return null;
   };
 
+  // A schema.org VideoObject whose contentUrl (or url) IS the captured media —
+  // the page declaring "this URL is the video content". Mirrors readAudioJsonLd
+  // (below) for video, and is the per-URL counterpart to the page-level
+  // readVideoJsonLd above: that one returns the FIRST VideoObject for EVERY
+  // capture, so a page with several clips (a gallery, a showcase of demo
+  // videos) collapses to one shared title/thumbnail. Matching contentUrl to the
+  // captured URL instead gives each clip its OWN name + thumbnail. Returns
+  // {name, description, thumbnail} or null if no VideoObject points at this URL.
+  // Top-frame only like the rest of this responder — but that still covers a
+  // clip captured from a same-origin iframe, because the background passes the
+  // captured media URL and the top frame's JSON-LD can declare it.
+  const readVideoJsonLdByUrl = (mediaUrl) => {
+    if (!mediaUrl) return null;
+    return eachJsonLdNode((node) => {
+      if (!isVideoType(node['@type'])) return null;
+      const contentUrl = ldString(node.contentUrl) || ldString(node.url);
+      if (!contentUrl || !sameUrl(contentUrl, mediaUrl)) return null;
+      return {
+        name: ldString(node.name),
+        description: ldString(node.description),
+        thumbnail: ldImage(node.thumbnailUrl) || ldImage(node.thumbnail),
+      };
+    });
+  };
+
+  // Per-URL clip metadata a page declares in a Firedown-specific JSON block
+  // (`<script type="application/firedown+json">` — a list of
+  // {contentUrl, name, thumbnail, description?}). This is the counterpart to the
+  // ld+json VideoObject reader above, for pages that show SEVERAL clips and must
+  // NOT use schema.org for it: a real ld+json VideoObject list is read
+  // page-level by older builds (readVideoJsonLd returns ONE for every capture)
+  // and is crawler-visible (a gallery's demo clips become indexable site video).
+  // The custom MIME is inert to both — invisible to search engines and to the
+  // page-level reader — while we read it here by contentUrl, so each clip on a
+  // multi-clip page (firedown.app's own /demo showcase) gets its own title +
+  // thumbnail. Top-frame only like the rest of this responder, which still
+  // covers a clip captured from a same-origin iframe (the background passes the
+  // captured URL and the top frame declares it). Returns {name, description,
+  // thumbnail} or null.
+  const readDeclaredMediaByUrl = (mediaUrl) => {
+    if (!mediaUrl) return null;
+    let list;
+    try {
+      const el = document.querySelector('script[type="application/firedown+json"]');
+      if (!el) return null;
+      list = JSON.parse(el.textContent);
+    } catch (_) {
+      return null;
+    }
+    if (!Array.isArray(list)) return null;
+    for (let i = 0; i < list.length; i++) {
+      const item = list[i];
+      if (!item || typeof item !== 'object') continue;
+      const contentUrl = ldString(item.contentUrl) || ldString(item.url);
+      if (!contentUrl || !sameUrl(contentUrl, mediaUrl)) continue;
+      return {
+        name: ldString(item.name),
+        description: ldString(item.description),
+        thumbnail: ldImage(item.thumbnail) || ldImage(item.thumbnailUrl),
+      };
+    }
+    return null;
+  };
+
   const isAudioType = (t) =>
     t === 'AudioObject' || (Array.isArray(t) && t.includes('AudioObject'));
 
@@ -346,6 +410,15 @@ if (window === window.top) {
     // (keep the filename) — see resolveAudioContent. Non-audio captures ignore
     // these fields.
     const audio = msg.mediaUrl ? resolveAudioContent(msg.mediaUrl) : { role: 'unknown' };
+    // Per-URL clip match (a clip whose declared contentUrl IS the captured URL) —
+    // the most specific metadata possible, so it outranks the page-level poster
+    // and og:title in the consumer. Gives each clip on a multi-clip page its own
+    // title + thumbnail instead of the shared page card. Prefer the Firedown JSON
+    // block (multi-clip pages use it so older builds / crawlers aren't tripped),
+    // then fall back to a schema.org VideoObject for ordinary single-video sites.
+    const videoMatch = msg.mediaUrl
+      ? (readDeclaredMediaByUrl(msg.mediaUrl) || readVideoJsonLdByUrl(msg.mediaUrl))
+      : null;
     return Promise.resolve({
       url: location.href,
       title: document.title || '',
@@ -365,6 +438,11 @@ if (window === window.top) {
       ogVideoTitle: ogp('og:video:title'),
       videoLdName: videoLd ? videoLd.name : '',
       videoLdDescription: videoLd ? videoLd.description : '',
+      // Per-URL VideoObject match — clip-specific, ranked above the page-level
+      // fields in the consumer (requests.js).
+      videoLdMatchName: videoMatch ? videoMatch.name : '',
+      videoLdMatchDescription: videoMatch ? videoMatch.description : '',
+      videoLdMatchThumbnail: videoMatch ? videoMatch.thumbnail : '',
       // Thumbnail sources, most-specific first (consumer ranks poster highest).
       poster,
       ogImage: ogp('og:image:secure_url') || ogp('og:image'),
