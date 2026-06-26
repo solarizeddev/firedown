@@ -90,19 +90,17 @@
                 android:visibility="gone"
                 tools:visibility="visible" />
 
-            <TextView
+            <!-- Bullets are added as rows (item_update_changelog_bullet) with a
+                 real margin between them — line spacing can't be used because the
+                 Material3 textAppearance's lineHeight overrides it. -->
+            <LinearLayout
                 android:id="@+id/update_sheet_changelog"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="24dp"
                 android:layout_marginTop="10dp"
-                android:gravity="start"
-                android:lineSpacingExtra="8dp"
-                android:lineSpacingMultiplier="1.4"
-                android:textAppearance="?attr/textAppearanceBodyMedium"
-                android:textColor="?attr/colorOnSurfaceVariant"
+                android:orientation="vertical"
                 android:visibility="gone"
-                tools:text="• Faster, more reliable updates&#10;• Fixed video capture on some sites&#10;• Smaller download size"
                 tools:visibility="visible" />
 
             <LinearLayout

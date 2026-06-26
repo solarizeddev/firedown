@@ -4,12 +4,13 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.text.SpannableStringBuilder;
+import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.style.LeadingMarginSpan;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -154,14 +155,14 @@ public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
         // "What's new" header + release notes — both shown only when status.json
         // carries a changelog for this version.
         TextView whatsNew = view.findViewById(R.id.update_sheet_whats_new);
-        TextView changelogView = view.findViewById(R.id.update_sheet_changelog);
+        LinearLayout changelogContainer = view.findViewById(R.id.update_sheet_changelog);
         boolean hasChangelog = changelog != null && !changelog.trim().isEmpty();
         if (hasChangelog) {
-            changelogView.setText(formatChangelog(changelog.trim()));
+            fillChangelog(changelogContainer, changelog.trim());
         }
         int changelogVisibility = hasChangelog ? View.VISIBLE : View.GONE;
         whatsNew.setVisibility(changelogVisibility);
-        changelogView.setVisibility(changelogVisibility);
+        changelogContainer.setVisibility(changelogVisibility);
 
         MaterialButton install = view.findViewById(R.id.update_sheet_install);
         // In preview there's no real APK on disk, so Install just closes.
@@ -184,32 +185,37 @@ public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
     }
 
     /**
-     * Renders the "• "-prefixed changelog with a per-bullet hanging indent, so a
-     * wrapped line aligns under the text instead of under the bullet. Without it
-     * a long, multi-line bullet reads as a cramped block and you can't tell where
-     * one item ends and the next begins.
+     * Populates the changelog container with one row per "• " bullet, separated
+     * by a real top margin. Spacing is a view margin (not line spacing) because
+     * the Material3 textAppearance's lineHeight overrides lineSpacingExtra/
+     * Multiplier — so those have no effect, but margins always work. Each row
+     * also gets a hanging indent so a wrapped bullet aligns under its text.
      */
-    private CharSequence formatChangelog(String raw) {
+    private void fillChangelog(LinearLayout container, String raw) {
+        container.removeAllViews();
+        LayoutInflater inflater = LayoutInflater.from(container.getContext());
         int hang = Math.round(16 * getResources().getDisplayMetrics().density);
-        SpannableStringBuilder sb = new SpannableStringBuilder();
+        int gap = Math.round(12 * getResources().getDisplayMetrics().density);
         boolean first = true;
         for (String line : raw.split("\n")) {
             String item = line.trim();
             if (item.isEmpty()) {
                 continue;
             }
-            if (!first) {
-                sb.append("\n");
-            }
-            first = false;
-            int start = sb.length();
-            sb.append(item);
-            // first-line indent 0 (bullet sits at the margin), wrapped lines
-            // indented to align under the text after "• ".
-            sb.setSpan(new LeadingMarginSpan.Standard(0, hang), start, sb.length(),
+            TextView row = (TextView) inflater.inflate(
+                    R.layout.item_update_changelog_bullet, container, false);
+            SpannableString text = new SpannableString(item);
+            text.setSpan(new LeadingMarginSpan.Standard(0, hang), 0, item.length(),
                     Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+            row.setText(text);
+            if (!first) {
+                ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) row.getLayoutParams();
+                lp.topMargin = gap;
+                row.setLayoutParams(lp);
+            }
+            container.addView(row);
+            first = false;
         }
-        return sb;
     }
 
     /**
