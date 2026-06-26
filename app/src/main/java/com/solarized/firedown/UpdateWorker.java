@@ -17,8 +17,6 @@ import androidx.work.WorkerParameters;
 import com.solarized.firedown.data.di.Qualifiers;
 import com.solarized.firedown.utils.BrowserHeaders;
 
-import org.json.JSONObject;
-
 import java.io.File;
 import java.io.IOException;
 
@@ -66,29 +64,33 @@ public class UpdateWorker extends Worker {
             return Result.retry();
         }
 
-        try {
-            JSONObject json = new JSONObject(body);
-            int remoteVersion = json.getInt("versionCode");
-            String updateUrl = json.getString("updateUrl");
-            String remoteSha = json.getString("sha256");
-            String versionName = json.getString("versionName");
+        UpdateManifest manifest = UpdateManifest.parse(body);
+        if (manifest == null) {
+            // A fetched-but-unparseable descriptor (malformed JSON, missing
+            // field) is treated like a failed fetch — retry rather than act on
+            // half-parsed data.
+            Log.e("UpdateWorker", "Update check failed: unparseable status descriptor");
+            return Result.retry();
+        }
 
-            if (remoteVersion > mCurrentVersion) {
-                if (isUpdateAlreadyDownloaded(remoteVersion)) {
-                    UpdateNotification.showInstallPrompt(mContext, versionName);
+        try {
+            if (manifest.isNewerThan(mCurrentVersion)) {
+                if (isUpdateAlreadyDownloaded(manifest.versionCode)) {
+                    UpdateNotification.showInstallPrompt(mContext, manifest.versionName);
                 } else {
                     // Hand the actual APK download to the system DownloadManager
                     // and return — UpdateDownloadReceiver verifies it and posts
                     // the install prompt when the broadcast arrives (which can
                     // cold-start the app, so the download surviving a process
                     // eviction still ends in a notification).
-                    enqueueDownload(updateUrl, remoteSha, versionName, remoteVersion);
+                    enqueueDownload(manifest.updateUrl, manifest.sha256,
+                            manifest.versionName, manifest.versionCode);
                 }
             }
             return Result.success();
 
         } catch (Exception e) {
-            Log.e("UpdateWorker", "Update check failed (parse)", e);
+            Log.e("UpdateWorker", "Update check failed", e);
             return Result.retry();
         }
     }

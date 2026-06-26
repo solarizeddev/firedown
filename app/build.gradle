@@ -65,6 +65,13 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+    testOptions {
+        // Let JVM unit tests run against the stubbed android.jar without each
+        // unmocked framework call (e.g. android.util.Log in a verifier's error
+        // path) throwing "not mocked". Tests still avoid the framework where
+        // they can; this only covers incidental calls on error branches.
+        unitTests.returnDefaultValues = true
+    }
     compileOptions {
         // Flag to enable support for the new language APIs
 
