@@ -298,13 +298,16 @@ public final class UpdateDownloader {
     }
 
     /**
-     * Remember a version's changelog (from status.json) so the in-app sheet can
-     * show it later — the sheet has no access to the manifest at display time.
-     * Single slot keyed by versionCode; the worker refreshes it on every check.
+     * Remember a version's changelog + name (from status.json) so the in-app
+     * sheet can show it later — the sheet has no access to the manifest at
+     * display time. Single slot keyed by versionCode; the worker refreshes it on
+     * every check (even when the version isn't newer), which is also what lets
+     * the DEBUG preview show the real notes.
      */
-    public static void setChangelog(Context context, int versionCode, String changelog) {
+    public static void setChangelog(Context context, int versionCode, String versionName, String changelog) {
         prefs(context).edit()
                 .putInt(Keys.UPDATE_CHANGELOG_VERSION_CODE, versionCode)
+                .putString(Keys.UPDATE_CHANGELOG_NAME, versionName == null ? "" : versionName)
                 .putString(Keys.UPDATE_CHANGELOG_TEXT, changelog == null ? "" : changelog)
                 .apply();
     }
@@ -316,6 +319,16 @@ public final class UpdateDownloader {
             return "";
         }
         return p.getString(Keys.UPDATE_CHANGELOG_TEXT, "");
+    }
+
+    /** Last-seen changelog text (any version), for the DEBUG preview; "" if none. */
+    public static String getLastChangelog(Context context) {
+        return prefs(context).getString(Keys.UPDATE_CHANGELOG_TEXT, "");
+    }
+
+    /** Last-seen version name (any version), for the DEBUG preview; "" if none. */
+    public static String getLastChangelogName(Context context) {
+        return prefs(context).getString(Keys.UPDATE_CHANGELOG_NAME, "");
     }
 
     public static String readyVersionName(Context context) {

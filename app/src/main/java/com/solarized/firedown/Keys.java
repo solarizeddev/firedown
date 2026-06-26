@@ -59,6 +59,7 @@ public class Keys {
     // to the manifest at display time. Single slot, matched by versionCode.
     public static final String UPDATE_CHANGELOG_VERSION_CODE = "com.solarized.firedown.UPDATE_CHANGELOG_VERSION_CODE";
     public static final String UPDATE_CHANGELOG_TEXT = "com.solarized.firedown.UPDATE_CHANGELOG_TEXT";
+    public static final String UPDATE_CHANGELOG_NAME = "com.solarized.firedown.UPDATE_CHANGELOG_NAME";
 
     public static final String GIF_START_MS = "com.solarized.firedown.GIF_START_MS";
     public static final String GIF_END_MS = "com.solarized.firedown.GIF_END_MS";

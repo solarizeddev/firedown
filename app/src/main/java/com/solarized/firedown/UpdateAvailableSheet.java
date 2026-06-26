@@ -116,10 +116,22 @@ public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
         String name;
         String changelog;
         if (preview) {
-            name = getString(R.string.app_name) + " (preview)";
-            changelog = "• Faster, more reliable updates\n"
-                    + "• Fixed video capture on some sites\n"
-                    + "• Smaller download size";
+            // Prefer the REAL changelog/version the worker last stored from
+            // status.json; fall back to a fabricated sample only on a fresh
+            // install before any check has run (or a status.json with no
+            // changelog field).
+            String storedChangelog = UpdateDownloader.getLastChangelog(context);
+            String storedName = UpdateDownloader.getLastChangelogName(context);
+            if (!storedChangelog.isEmpty()) {
+                name = storedName.isEmpty()
+                        ? getString(R.string.app_name) + " (preview)" : storedName;
+                changelog = storedChangelog;
+            } else {
+                name = getString(R.string.app_name) + " (preview)";
+                changelog = "• Faster, more reliable updates\n"
+                        + "• Fixed video capture on some sites\n"
+                        + "• Smaller download size";
+            }
         } else {
             mReadyVersionCode = UpdateDownloader.readyVersionCode(context);
             name = UpdateDownloader.readyVersionName(context);
