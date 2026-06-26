@@ -2,7 +2,7 @@
 <!--
   In-app "update available" sheet (UpdateAvailableSheet). Shown on resume when a
   SHA+signature verified update APK is ready to install — also the surface for
-  when POST_NOTIFICATIONS is denied. Centred header (balloons + "Update
+  when POST_NOTIFICATIONS is denied. Centred header (illustration + "Update
   available" + the NEW version, prominent + the current version), then a left-
   aligned "What's new" + changelog block (hidden when status.json has no
   changelog), then a single centred Install. Dismiss = swipe / back / outside.
@@ -24,7 +24,7 @@
         android:layout_marginTop="4dp"
         android:layout_marginBottom="12dp"
         android:importantForAccessibility="no"
-        app:srcCompat="@drawable/ill_baloons" />
+        app:srcCompat="@drawable/ill_presents" />
 
     <TextView
         android:layout_width="match_parent"
