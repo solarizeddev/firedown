@@ -54,7 +54,7 @@ public class TabCountDrawable extends Drawable {
      *  share this drawable. */
     private static final float STROKE_DP = 1.5f;
     private static final float CORNER_DP = 5f;
-    private static final float TEXT_DP   = 9.5f;
+    private static final float TEXT_DP   = 10.5f;
     private static final float SIZE_DP   = 21f;
     /** Letter-spacing (em) between digits — a touch of air so a two-digit
      *  count doesn't read jammed. Small enough that the CENTER-align
