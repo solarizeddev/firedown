@@ -174,6 +174,18 @@ const PARSER_BLOCKLIST = {
   telegram: [
     '(cdn-telegram\\.org|telesco\\.pe)\\/file\\/.*\\.mp4',
   ],
+
+  // News Over Audio (NOA) — the "listen to this article" embed used across many
+  // publishers (IEEE Spectrum, …). The parser reads api.newsoveraudio.com's
+  // player JSON and emits the signed article narration .mp3 from NOA's audio CDN
+  // (audios.newsoveraudio.com). Block that .mp3 so the generic catcher doesn't
+  // grab a second, bare, metadata-less copy when the cross-origin embed player
+  // fetches the same URL on play (the embed lives in an iframe whose <audio>
+  // binding the top-frame metadata responder can't see — so the bare copy would
+  // also land untitled).
+  newsoveraudio: [
+    'audios\\.newsoveraudio\\.com\\/.*\\.mp3',
+  ],
 };
 
 // Flatten every parser's patterns into one compiled RegExp — same approach and
