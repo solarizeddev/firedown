@@ -47,15 +47,15 @@ public class TabCountDrawable extends Drawable {
      *  the ~16.4dp interior. The fix is slimmer digits, not smaller ones —
      *  regular (non-bold) weight at ~9.5dp with a lighter 1.5dp outline
      *  stays legible while leaving margin around the number (shrinking the
-     *  text instead just read too small). Box footprint (SIZE_DP) is
-     *  unchanged — the hosts reference 20dp (the toggle's iconSize, the
-     *  bottom bar's 20dp ImageView) — so only the digit weight/room
-     *  changes, in BOTH the bottom bar and the tabs-header toggle that
+     *  text instead just read too small). Box footprint (SIZE_DP) is 24dp —
+     *  the hosts reference 24dp to match (the toggle's iconSize, the bottom
+     *  bar's 24dp ImageView) — so the box and the digit weight/room stay in
+     *  lockstep across BOTH the bottom bar and the tabs-header toggle that
      *  share this drawable. */
     private static final float STROKE_DP = 1.5f;
     private static final float CORNER_DP = 5f;
     private static final float TEXT_DP   = 9.5f;
-    private static final float SIZE_DP   = 20f;
+    private static final float SIZE_DP   = 24f;
     /** Letter-spacing (em) between digits — a touch of air so a two-digit
      *  count doesn't read jammed. Small enough that the CENTER-align
      *  trailing-gap offset stays sub-pixel. */
