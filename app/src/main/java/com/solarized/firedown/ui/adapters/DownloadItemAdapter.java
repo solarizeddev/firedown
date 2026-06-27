@@ -698,10 +698,9 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         boolean retrieving = entity.getFileIsLive() || processing;
 
         if(isGrid){
-            // Normally the title/mime block is hidden during a download so the
-            // progress overlay owns the tile. For the "Finishing…" phase we
-            // bring the bottom caption back — with name/mime hidden — so the
-            // spinning ring is paired with an explicit label.
+            // For the "Finishing…" phase we bring the bottom caption back —
+            // with name/mime hidden — so the spinning ring is paired with an
+            // explicit label.
             if (processing && holder.statusText != null) {
                 setVisible(holder.bottomBlock, true);
                 setVisible(holder.fileName, false);
@@ -711,7 +710,24 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
                 holder.statusText.setTextColor(mDefaultPrimary);
                 setVisible(holder.statusText, true);
             } else {
-                setVisible(holder.bottomBlock, false);
+                // Keep the title visible during an active download so two
+                // concurrent grid downloads are distinguishable (the previous
+                // behaviour hid the whole block and left two identical tiles
+                // with just a progress ring). The ring sits in the tile centre
+                // and the title rides the bottom scrim, so they don't collide;
+                // mime/duration/status stay hidden — the ring is the live
+                // signal, the title is only identity. Image types keep the tile
+                // bare (their thumbnail identifies them, and there's none
+                // mid-download anyway), matching the grid title rule — the name
+                // was already set/hidden accordingly in the common bind above.
+                boolean showName = holder.fileName != null
+                        && !FileUriHelper.isImage(entity.getFileMimeType())
+                        && !TextUtils.isEmpty(entity.getFileName());
+                setVisible(holder.bottomBlock, showName);
+                setVisible(holder.fileName, showName);
+                setVisible(holder.mimeText, false);
+                setVisible(holder.mimeDuration, false);
+                setVisible(holder.statusText, false);
             }
             if (holder.imageProgress != null) {
                 holder.imageProgress.setVisibility(View.VISIBLE);
