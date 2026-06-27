@@ -63,14 +63,17 @@ public class TabCountDrawable extends Drawable {
      *  <li><b>Glyph-bounds vertical centering</b> — Chromium centers the
      *      measured text BOUNDS (the visible ink), not the font line, so the
      *      digits sit optically centered in the box. See {@link #draw}.</li>
-     *  <li><b>The box is an INSET rounded-square</b>, not full-bleed: Chromium
-     *      draws the {@code btn_tabswitcher_modern} vector — a rounded square
-     *      with an internal margin — inside the 24dp toolbar-icon canvas
-     *      ({@code toolbar_icon_height} = 24dp). So we keep the 24dp FOOTPRINT
-     *      (level with the sibling 24dp bottom-bar icons / the toggle iconSize)
-     *      but inset the stroked rect by {@link #BOX_INSET_DP}, giving the same
-     *      ~18dp visible box Chromium/Brave show. (The exact vector pathData
-     *      wasn't fetchable; the inset/corner reproduce its proportions.)</li>
+     *  <li><b>The box is a softly-rounded square just inside the footprint</b>:
+     *      Chromium draws the {@code btn_tabswitcher_modern} vector — a rounded
+     *      square with a small internal margin — inside the 24dp toolbar-icon
+     *      canvas ({@code toolbar_icon_height} = 24dp). We keep the 24dp
+     *      FOOTPRINT (level with the sibling 24dp bottom-bar icons / the toggle
+     *      iconSize) and inset the stroked rect only slightly
+     *      ({@link #BOX_INSET_DP} = 1dp → ~22dp visible) with a 5dp corner, to
+     *      match Brave's on-device rendering — a near-full, clearly-rounded box,
+     *      NOT the small/sharp square a larger inset produced. (The exact vector
+     *      pathData wasn't fetchable, so inset/corner are matched visually to
+     *      Brave rather than copied byte-for-byte.)</li>
      *  </ol>
      *
      *  Hosts reference 24dp so box + digit stay in lockstep across BOTH the
@@ -78,10 +81,10 @@ public class TabCountDrawable extends Drawable {
      *  already scales per density — the device-to-device drift was the
      *  digit-count adaptivity + condensed font, not the unit.) */
     private static final float STROKE_DP = 2f;
-    private static final float CORNER_DP = 3f;
-    private static final float BOX_INSET_DP = 3f;
-    private static final float TEXT_1_DIGIT_DP = 12f;
-    private static final float TEXT_2_DIGIT_DP = 10f;
+    private static final float CORNER_DP = 5f;
+    private static final float BOX_INSET_DP = 1f;
+    private static final float TEXT_1_DIGIT_DP = 13f;
+    private static final float TEXT_2_DIGIT_DP = 11f;
     private static final float SIZE_DP   = 24f;
 
     private final Paint mRectPaint;
