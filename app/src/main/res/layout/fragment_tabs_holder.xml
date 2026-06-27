@@ -65,7 +65,7 @@
                     app:icon="@drawable/ic_tabs_24"
                     app:iconGravity="textStart"
                     app:iconPadding="0dp"
-                    app:iconSize="24dp"
+                    app:iconSize="21dp"
                     app:strokeWidth="0dp" />
 
                 <com.google.android.material.button.MaterialButton
@@ -78,7 +78,7 @@
                     app:icon="@drawable/ic_tabs_private_24"
                     app:iconGravity="textStart"
                     app:iconPadding="0dp"
-                    app:iconSize="24dp"
+                    app:iconSize="21dp"
                     app:strokeWidth="0dp" />
 
             </com.google.android.material.button.MaterialButtonToggleGroup>

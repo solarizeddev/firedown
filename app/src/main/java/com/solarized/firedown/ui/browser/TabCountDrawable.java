@@ -8,6 +8,7 @@ import android.graphics.Paint;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.graphics.Typeface;
 import android.util.TypedValue;
 
 import android.content.res.Resources;
@@ -41,21 +42,23 @@ import androidx.annotation.Nullable;
  */
 public class TabCountDrawable extends Drawable {
 
-    /** Stroke width matches the bottom bar's count-rect restroke. The
-     *  count read cramped in the fixed 20dp box because the digits were
-     *  drawn FAKE-BOLD: a thickened two-digit count ("18") nearly spanned
-     *  the ~16.4dp interior. The fix is slimmer digits, not smaller ones —
-     *  regular (non-bold) weight at ~9.5dp with a lighter 1.5dp outline
-     *  stays legible while leaving margin around the number (shrinking the
-     *  text instead just read too small). Box footprint (SIZE_DP) is 24dp —
-     *  the hosts reference 24dp to match (the toggle's iconSize, the bottom
-     *  bar's 24dp ImageView) — so the box and the digit weight/room stay in
-     *  lockstep across BOTH the bottom bar and the tabs-header toggle that
-     *  share this drawable. */
+    /** Stroke width matches the bottom bar's count-rect restroke. The look
+     *  is tuned to read like Brave's tab counter: a BOLD digit that fills
+     *  the box with a small margin, on a softly-rounded square. History to
+     *  respect: the digit used to be drawn FAKE-BOLD in a fixed 20dp box and
+     *  a two-digit count ("18") nearly spanned the ~16.4dp interior, so it
+     *  was dropped to regular weight. The box has since grown to 21dp and the
+     *  digit to 10.5dp, leaving room to go bold again — real {@link
+     *  Typeface#DEFAULT_BOLD}, not fake-bold (cleaner glyphs), with the
+     *  letter-spacing kept so a two-digit count still gets air. Box footprint
+     *  (SIZE_DP) is 21dp — the hosts reference 21dp to match (the toggle's
+     *  iconSize, the bottom bar's 21dp ImageView) — so the box and the digit
+     *  weight/room stay in lockstep across BOTH the bottom bar and the
+     *  tabs-header toggle that share this drawable. */
     private static final float STROKE_DP = 1.5f;
-    private static final float CORNER_DP = 5f;
-    private static final float TEXT_DP   = 9.5f;
-    private static final float SIZE_DP   = 24f;
+    private static final float CORNER_DP = 6f;
+    private static final float TEXT_DP   = 10.5f;
+    private static final float SIZE_DP   = 21f;
     /** Letter-spacing (em) between digits — a touch of air so a two-digit
      *  count doesn't read jammed. Small enough that the CENTER-align
      *  trailing-gap offset stays sub-pixel. */
@@ -84,12 +87,13 @@ public class TabCountDrawable extends Drawable {
 
         mTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mTextPaint.setTextAlign(Paint.Align.CENTER);
-        // Regular weight (no fake-bold): slim digits read lighter and less
-        // crowded inside the box than the old thickened ones. A small
-        // letter-spacing adds air between a two-digit count ("1 8") so the
-        // digits don't jam together. (CENTER align measures the spaced
-        // advance, so the box centering still holds; the trailing-gap
-        // offset is sub-pixel at this spacing.)
+        // Bold weight to match Brave's tab counter — a REAL bold typeface
+        // (cleaner glyphs than the old fake-bold), legible now that the box
+        // is 21dp with a 10.5dp digit. A small letter-spacing keeps air
+        // between a two-digit count ("1 8") so the digits don't jam together.
+        // (CENTER align measures the spaced advance, so the box centering
+        // still holds; the trailing-gap offset is sub-pixel at this spacing.)
+        mTextPaint.setTypeface(Typeface.DEFAULT_BOLD);
         mTextPaint.setLetterSpacing(TEXT_SPACING_EM);
         mTextPaint.setTextSize(TypedValue.applyDimension(
                 TypedValue.COMPLEX_UNIT_DIP, TEXT_DP, resources.getDisplayMetrics()));
