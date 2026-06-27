@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Hosts the shared TabCountDrawable (set in TabsBrowserButton). 22dp matches
+<!-- Hosts the shared TabCountDrawable (set in TabsBrowserButton). 21dp matches
      the drawable's intrinsic size and the tabs-header toggle, so the two tab
      counters render identically. -->
 <androidx.appcompat.widget.AppCompatImageView xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/button"
-    android:layout_width="22dp"
-    android:layout_height="22dp"
+    android:layout_width="21dp"
+    android:layout_height="21dp"
     android:layout_gravity="center"
     android:contentDescription="@null"
     android:scaleType="fitCenter" />
