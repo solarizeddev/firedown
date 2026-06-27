@@ -126,6 +126,56 @@
 
                 </LinearLayout>
 
+                <!-- PROGRESS: a slim coral bar + percent under the title, on
+                     the bottom scrim (no centered ring — see
+                     ProgressOverlayView / DownloadItemAdapter.bindProgressInner).
+                     Keeping the title visible with the bar lets two concurrent
+                     downloads be told apart; the bar hugs the bottom so it
+                     doesn't crowd the title. Shares the progress_row /
+                     progress_bar / progress_text ids with the list layout, so
+                     the adapter binds them the same way (only the colours
+                     differ, set by the adapter). -->
+                <LinearLayout
+                    android:id="@+id/progress_row"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="5dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:visibility="gone">
+
+                    <com.google.android.material.progressindicator.LinearProgressIndicator
+                        android:id="@+id/progress_bar"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:indeterminate="true"
+                        android:max="100"
+                        android:progress="0"
+                        app:indicatorTrackGapSize="0dp"
+                        app:trackCornerRadius="2dp"
+                        app:trackStopIndicatorSize="0dp"
+                        app:trackThickness="4dp" />
+
+                    <TextView
+                        android:id="@+id/progress_text"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:minWidth="32dp"
+                        android:gravity="end"
+                        android:singleLine="true"
+                        android:textColor="@android:color/white"
+                        android:textSize="11sp"
+                        android:textStyle="bold"
+                        android:shadowColor="#80000000"
+                        android:shadowDx="0"
+                        android:shadowDy="1"
+                        android:shadowRadius="2"
+                        tools:text="35%" />
+
+                </LinearLayout>
+
                 <!-- ERROR / QUEUED status. FINISHED's "size · date" label is
                      list-only; the grid leans on title + mime instead. -->
                 <TextView

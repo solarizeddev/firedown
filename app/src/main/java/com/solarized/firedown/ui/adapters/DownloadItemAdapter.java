@@ -698,48 +698,79 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         boolean retrieving = entity.getFileIsLive() || processing;
 
         if(isGrid){
-            // For the "Finishing…" phase we bring the bottom caption back —
-            // with name/mime hidden — so the spinning ring is paired with an
-            // explicit label.
-            if (processing && holder.statusText != null) {
+            if (holder.denseTile) {
+                // Dense (images-filter) tile is a bare square with no room for
+                // a title or a bottom bar — keep the centered ring overlay it
+                // has always used. (Its layout carries no progress_row.)
+                if (holder.imageProgress != null) {
+                    holder.imageProgress.setVisibility(View.VISIBLE);
+                    holder.imageProgress.setIndeterminate(retrieving);
+                    if (!retrieving) {
+                        holder.imageProgress.setProgress(entity.getFileProgress());
+                    }
+                }
+                // Cancel any in-flight load so a late completion can't paint over the null.
+                GlideHelper.clearSafe(holder.image);
+                holder.image.setImageDrawable(null);
+                holder.image.setTag(null);
+            } else {
+                // Option A: progress lives in a slim coral bar + percent under
+                // the title on the bottom scrim — no centered ring. Keeping the
+                // title visible alongside the bar lets two concurrent downloads
+                // be told apart (the old ring-only tile left them
+                // indistinguishable), and the bar hugging the bottom edge means
+                // it never crowds the title.
+                if (holder.imageProgress != null) {
+                    holder.imageProgress.setVisibility(View.GONE);
+                    holder.imageProgress.setIndeterminate(false);
+                }
                 setVisible(holder.bottomBlock, true);
-                setVisible(holder.fileName, false);
                 setVisible(holder.mimeText, false);
                 setVisible(holder.mimeDuration, false);
-                holder.statusText.setText(R.string.download_finishing);
-                holder.statusText.setTextColor(mDefaultPrimary);
-                setVisible(holder.statusText, true);
-            } else {
-                // Keep the title visible during an active download so two
-                // concurrent grid downloads are distinguishable (the previous
-                // behaviour hid the whole block and left two identical tiles
-                // with just a progress ring). The ring sits in the tile centre
-                // and the title rides the bottom scrim, so they don't collide;
-                // mime/duration/status stay hidden — the ring is the live
-                // signal, the title is only identity. Image types keep the tile
-                // bare (their thumbnail identifies them, and there's none
-                // mid-download anyway), matching the grid title rule — the name
-                // was already set/hidden accordingly in the common bind above.
+
+                // Title for non-image types (image tiles identify themselves and
+                // carry no mid-download thumbnail), matching the grid title rule
+                // — the name was already set on holder.fileName in the common
+                // bind above.
                 boolean showName = holder.fileName != null
                         && !FileUriHelper.isImage(entity.getFileMimeType())
                         && !TextUtils.isEmpty(entity.getFileName());
-                setVisible(holder.bottomBlock, showName);
                 setVisible(holder.fileName, showName);
-                setVisible(holder.mimeText, false);
-                setVisible(holder.mimeDuration, false);
-                setVisible(holder.statusText, false);
-            }
-            if (holder.imageProgress != null) {
-                holder.imageProgress.setVisibility(View.VISIBLE);
-                holder.imageProgress.setIndeterminate(retrieving);
-                if (!retrieving) {
-                    holder.imageProgress.setProgress(entity.getFileProgress());
+
+                // "Finishing…" (post-download mux) gets the explicit label; an
+                // ordinary download leans on the bar + percent instead.
+                if (processing && holder.statusText != null) {
+                    holder.statusText.setText(R.string.download_finishing);
+                    holder.statusText.setTextColor(mDefaultPrimary);
+                    setVisible(holder.statusText, true);
+                } else {
+                    setVisible(holder.statusText, false);
                 }
+
+                setVisible(holder.progressRow, true);
+                if (holder.progressBar != null) {
+                    holder.progressBar.setIndicatorColor(mDefaultPrimary);
+                    holder.progressBar.setTrackColor(mDefaultPrimaryAlpha);
+                    holder.progressBar.setIndeterminate(retrieving);
+                    if (!retrieving) holder.progressBar.setProgress(entity.getFileProgress());
+                }
+                if (holder.progressText != null) {
+                    // No determinate percent while retrieving/live or finishing —
+                    // the indeterminate bar (and the Finishing… label) carry the
+                    // state instead.
+                    if (retrieving) {
+                        setVisible(holder.progressText, false);
+                    } else {
+                        holder.progressText.setText(String.format(Locale.US, "%d%%", entity.getFileProgress()));
+                        setVisible(holder.progressText, true);
+                    }
+                }
+
+                // Mid-download there's no real thumbnail; show the mime-type
+                // placeholder behind the scrim (consistent with queued/error)
+                // rather than a blank tile.
+                GlideHelper.loadFallback(entity, holder.image);
             }
-            // Cancel any in-flight load so a late completion can't paint over the null.
-            GlideHelper.clearSafe(holder.image);
-            holder.image.setImageDrawable(null);
-            holder.image.setTag(null);
         }else {
             setVisible(holder.progressRow, true);
             // Bar tints: indicator in brand coral (the 'live' signal)
