@@ -692,7 +692,21 @@ async function processResponse(data, listenerName, skipClassify = false) {
         // (series.ly /audio/notification.mp3 → "The Breadwinner"), so it keeps
         // its URL filename. Video, HLS/DASH manifests and tokenized/extensionless
         // URLs are always enriched (urlIsStandaloneAudio is false for them).
-        const incidentalAudio = urlIsStandaloneAudio(data.url) && meta.audioRole !== 'content';
+        //
+        // EMBEDDED-PLAYER EXCEPTION: a media-element request (type media/object)
+        // from a SUBFRAME (frameId > 0) is an embedded audio player — e.g. a
+        // cross-origin "listen to this article"/podcast iframe. Its <audio>
+        // binding lives in the iframe, which the TOP-frame metadata responder
+        // (window === window.top only) cannot see, so audioRole comes back
+        // 'unknown' even though the audio is plainly content. Treat a subframe
+        // media-element audio as content and let it inherit the top-frame
+        // og:title (the page the embed sits on). A top-page incidental ding is
+        // frameId 0 (played via `new Audio()` in the main document), so it is
+        // NOT upgraded — the series.ly case is preserved. (NOA itself is now
+        // parser-owned + block-listed; this covers the other embed providers.)
+        const embeddedSubframeAudio = typeof data.frameId === 'number' && data.frameId > 0;
+        const incidentalAudio = urlIsStandaloneAudio(data.url)
+          && meta.audioRole !== 'content' && !embeddedSubframeAudio;
         if (!incidentalAudio) {
           // Prefer the most specific source first: a declared AudioObject (for
           // main-content audio), then video-specific sources — on video SPAs
