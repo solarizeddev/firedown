@@ -661,6 +661,10 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
 
         // ── Reset all status views ──────────────────────────────────
         setVisible(holder.progressRow, false);
+        // progress_text lives in the grid's always-visible title row (it
+        // rides beside the title), so hiding the progress_row no longer
+        // hides it — reset it explicitly. The progress binders re-show it.
+        setVisible(holder.progressText, false);
         setVisible(holder.statusText, false);
         setVisible(holder.imageProgress, false);
         setVisible(holder.topScrim, false);
@@ -714,12 +718,13 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
                 holder.image.setImageDrawable(null);
                 holder.image.setTag(null);
             } else {
-                // Option A: progress lives in a slim coral bar + percent under
-                // the title on the bottom scrim — no centered ring. Keeping the
-                // title visible alongside the bar lets two concurrent downloads
-                // be told apart (the old ring-only tile left them
-                // indistinguishable), and the bar hugging the bottom edge means
-                // it never crowds the title.
+                // Option A: progress lives in a slim coral bar flush under the
+                // title, with the percent riding up beside the title (row_title)
+                // — no centered ring. Keeping the title visible alongside the bar
+                // lets two concurrent downloads be told apart (the old ring-only
+                // tile left them indistinguishable); putting the percent on the
+                // title line lets the bar sit flush under the title instead of
+                // centred in a text-tall row, which left a gap above it.
                 if (holder.imageProgress != null) {
                     holder.imageProgress.setVisibility(View.GONE);
                     holder.imageProgress.setIndeterminate(false);
@@ -788,6 +793,9 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
                         processing ? holder.itemView.getContext().getString(R.string.download_finishing)
                         : retrieving ? Utils.readableFileSize(entity.getFileSize())
                         : String.format(Locale.US, "%d%%", entity.getFileProgress()));
+                // Re-show: the common reset now hides progress_text (it lives in
+                // the grid title row); the list keeps it in the progress row.
+                setVisible(holder.progressText, true);
             }
             if(holder.progressBar != null){
                 holder.progressBar.setIndeterminate(retrieving);

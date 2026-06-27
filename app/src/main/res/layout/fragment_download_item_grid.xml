@@ -74,20 +74,54 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent">
 
-                <TextView
-                    android:id="@+id/file_name"
+                <!-- Title + (PROGRESS only) percent on one line. The percent
+                     rides up beside the title so the progress bar below can sit
+                     flush under the title instead of being centred in a
+                     text-tall row (which left a visible gap above the bar).
+                     progress_text is GONE except during a determinate download;
+                     when hidden the title takes the full width via its weight. -->
+                <LinearLayout
+                    android:id="@+id/row_title"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:ellipsize="end"
-                    android:maxLines="1"
-                    android:textColor="@android:color/white"
-                    android:textSize="12sp"
-                    android:textStyle="bold"
-                    android:shadowColor="#80000000"
-                    android:shadowDx="0"
-                    android:shadowDy="1"
-                    android:shadowRadius="2"
-                    tools:text="Latorre, sobre Zapatero: Todo era una fantasía…" />
+                    android:baselineAligned="true"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/file_name"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:ellipsize="end"
+                        android:includeFontPadding="false"
+                        android:maxLines="1"
+                        android:textColor="@android:color/white"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:shadowColor="#80000000"
+                        android:shadowDx="0"
+                        android:shadowDy="1"
+                        android:shadowRadius="2"
+                        tools:text="Latorre, sobre Zapatero: Todo era una fantasía…" />
+
+                    <TextView
+                        android:id="@+id/progress_text"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:includeFontPadding="false"
+                        android:singleLine="true"
+                        android:textColor="@android:color/white"
+                        android:textSize="11sp"
+                        android:textStyle="bold"
+                        android:shadowColor="#80000000"
+                        android:shadowDx="0"
+                        android:shadowDy="1"
+                        android:shadowRadius="2"
+                        android:visibility="gone"
+                        tools:text="35%" />
+
+                </LinearLayout>
 
                 <!-- Metadata row: a decorated mime CHIP (identity) followed by
                      subtle scrim TEXT for the duration — only mime carries a
@@ -126,29 +160,24 @@
 
                 </LinearLayout>
 
-                <!-- PROGRESS: a slim coral bar + percent under the title, on
-                     the bottom scrim (no centered ring — see
-                     ProgressOverlayView / DownloadItemAdapter.bindProgressInner).
-                     Keeping the title visible with the bar lets two concurrent
-                     downloads be told apart; the bar hugs the bottom so it
-                     doesn't crowd the title. Shares the progress_row /
-                     progress_bar / progress_text ids with the list layout, so
-                     the adapter binds them the same way (only the colours
-                     differ, set by the adapter). -->
+                <!-- PROGRESS: a slim coral bar, full-width and flush under the
+                     title (the percent rides up in row_title). No centered ring
+                     — see ProgressOverlayView / DownloadItemAdapter
+                     .bindProgressInner. Shares progress_row / progress_bar ids
+                     with the list layout, so the adapter binds them the same way
+                     (only the colours differ, set by the adapter). -->
                 <LinearLayout
                     android:id="@+id/progress_row"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="1dp"
-                    android:gravity="center_vertical"
+                    android:layout_marginTop="3dp"
                     android:orientation="horizontal"
                     android:visibility="gone">
 
                     <com.google.android.material.progressindicator.LinearProgressIndicator
                         android:id="@+id/progress_bar"
-                        android:layout_width="0dp"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
                         android:indeterminate="true"
                         android:max="100"
                         android:progress="0"
@@ -156,23 +185,6 @@
                         app:trackCornerRadius="2dp"
                         app:trackStopIndicatorSize="0dp"
                         app:trackThickness="4dp" />
-
-                    <TextView
-                        android:id="@+id/progress_text"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"
-                        android:minWidth="32dp"
-                        android:gravity="end"
-                        android:singleLine="true"
-                        android:textColor="@android:color/white"
-                        android:textSize="11sp"
-                        android:textStyle="bold"
-                        android:shadowColor="#80000000"
-                        android:shadowDx="0"
-                        android:shadowDy="1"
-                        android:shadowRadius="2"
-                        tools:text="35%" />
 
                 </LinearLayout>
 
