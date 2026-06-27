@@ -43,22 +43,26 @@ import androidx.annotation.Nullable;
 public class TabCountDrawable extends Drawable {
 
     /** Stroke width matches the bottom bar's count-rect restroke. The look
-     *  is tuned to read like Brave's tab counter: a BOLD digit that fills
-     *  the box with a small margin, on a softly-rounded square. History to
-     *  respect: the digit used to be drawn FAKE-BOLD in a fixed 20dp box and
-     *  a two-digit count ("18") nearly spanned the ~16.4dp interior, so it
-     *  was dropped to regular weight. The box has since grown to 21dp and the
-     *  digit to 10.5dp, leaving room to go bold again — real {@link
-     *  Typeface#DEFAULT_BOLD}, not fake-bold (cleaner glyphs), with the
-     *  letter-spacing kept so a two-digit count still gets air. Box footprint
-     *  (SIZE_DP) is 21dp — the hosts reference 21dp to match (the toggle's
-     *  iconSize, the bottom bar's 21dp ImageView) — so the box and the digit
-     *  weight/room stay in lockstep across BOTH the bottom bar and the
-     *  tabs-header toggle that share this drawable. */
+     *  is tuned to read like Brave's tab counter: a BOLD digit that FILLS the
+     *  box with only a small margin, on a softly-rounded square sized to
+     *  match the sibling 24dp bottom-bar icons. Two tunings move together —
+     *  the box AND the digit-fill — because they were the two ways ours
+     *  drifted from Brave: a smaller (21dp) box that sat below its neighbours,
+     *  and a digit too small for it (a 24dp box with a small digit reads as an
+     *  oversized EMPTY frame — that's why an earlier 24dp/small-digit pass
+     *  looked "too big"). History to respect: the digit used to be FAKE-BOLD
+     *  in a 20dp box and a two-digit count ("18") nearly spanned the interior,
+     *  so it was dropped to regular weight; now the box is 24dp the digit goes
+     *  back to real {@link Typeface#DEFAULT_BOLD} (cleaner glyphs than
+     *  fake-bold) at 12.5dp, with the letter-spacing kept so a two-digit count
+     *  still gets air. Box footprint (SIZE_DP) is 24dp — the hosts reference
+     *  24dp to match (the toggle's iconSize, the bottom bar's 24dp ImageView)
+     *  — so the box and the digit weight/room stay in lockstep across BOTH the
+     *  bottom bar and the tabs-header toggle that share this drawable. */
     private static final float STROKE_DP = 1.5f;
     private static final float CORNER_DP = 6f;
-    private static final float TEXT_DP   = 10.5f;
-    private static final float SIZE_DP   = 21f;
+    private static final float TEXT_DP   = 12.5f;
+    private static final float SIZE_DP   = 24f;
     /** Letter-spacing (em) between digits — a touch of air so a two-digit
      *  count doesn't read jammed. Small enough that the CENTER-align
      *  trailing-gap offset stays sub-pixel. */
