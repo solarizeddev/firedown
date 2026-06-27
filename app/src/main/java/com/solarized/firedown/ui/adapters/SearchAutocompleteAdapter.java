@@ -73,7 +73,7 @@ public class SearchAutocompleteAdapter extends ListAdapter<AutoCompleteEntity, R
         }
         tabDrawable = ContextCompat.getDrawable(context, R.drawable.ic_tabs_24);
         if (tabDrawable != null) {
-            int size = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 22, context.getResources().getDisplayMetrics());
+            int size = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 26, context.getResources().getDisplayMetrics());
             tabDrawable.setBounds(0, 0, size, size);
         }
         bookmarkDrawable = ContextCompat.getDrawable(context, R.drawable.ic_bookmark_24);
