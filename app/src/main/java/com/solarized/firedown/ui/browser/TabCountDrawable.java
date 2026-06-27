@@ -42,46 +42,54 @@ import androidx.annotation.Nullable;
  */
 public class TabCountDrawable extends Drawable {
 
-    /** Modeled on Chromium/Brave's {@code TabSwitcherDrawable}, because a
-     *  single hardcoded digit size never matched it across devices. The two
-     *  things Chromium does that a fixed size can't:
+    /** A direct port of Chromium/Brave's {@code TabSwitcherDrawable} strategy
+     *  (verified against the Chromium source), because a single hardcoded
+     *  digit size never matched it across devices. Everything below mirrors
+     *  what Chromium does:
      *
      *  <ol>
-     *  <li><b>The digit size adapts to the digit COUNT.</b> Chromium keeps two
-     *      dimens — {@code toolbar_tab_count_text_size_1_digit} and
-     *      {@code ..._2_digit} — and a single digit is drawn LARGER (it fills
-     *      the box) while two digits use a smaller size (so "18"/"22" still
-     *      fit). A lone fixed size has to leave room for two digits, so a
-     *      single digit never fills the box — which is exactly why ours read
-     *      small next to Brave's "2". Mirrored here as
-     *      {@link #TEXT_1_DIGIT_DP} / {@link #TEXT_2_DIGIT_DP}, picked by
-     *      {@code mText}'s code-point count in {@link #draw}.</li>
-     *  <li><b>The digits are CONDENSED bold</b> ({@code sans-serif-condensed},
-     *      {@link Typeface#BOLD}) — tall and narrow, so they read big and bold
-     *      yet two of them still fit. Plain {@link Typeface#DEFAULT_BOLD} (what
-     *      we had) is wider and shorter, so it both looked less bold and forced
-     *      a smaller size to fit two digits. Condensed removes the need for the
-     *      old letter-spacing hack.</li>
+     *  <li><b>The digit size adapts to the digit COUNT</b>, with Chromium's
+     *      EXACT dimens: {@code toolbar_tab_count_text_size_1_digit} = 12dp,
+     *      {@code ..._2_digit} = 10dp. A single digit is drawn larger (it fills
+     *      the box); two digits shrink to fit. A lone fixed size has to leave
+     *      room for two digits, so a single digit never fills the box — exactly
+     *      why ours read small next to Brave's "2". Picked per {@link #draw} by
+     *      {@code mText}'s code-point count.</li>
+     *  <li><b>Condensed bold digits</b> — {@code Typeface.create(
+     *      "sans-serif-condensed", BOLD)}, verbatim from Chromium: tall, narrow
+     *      glyphs that read big and bold yet still fit two. (Plain
+     *      {@link Typeface#DEFAULT_BOLD} is wider/shorter — less bold-looking,
+     *      and forces a smaller size to fit two digits.)</li>
+     *  <li><b>Glyph-bounds vertical centering</b> — Chromium centers the
+     *      measured text BOUNDS (the visible ink), not the font line, so the
+     *      digits sit optically centered in the box. See {@link #draw}.</li>
+     *  <li><b>The box is an INSET rounded-square</b>, not full-bleed: Chromium
+     *      draws the {@code btn_tabswitcher_modern} vector — a rounded square
+     *      with an internal margin — inside the 24dp toolbar-icon canvas
+     *      ({@code toolbar_icon_height} = 24dp). So we keep the 24dp FOOTPRINT
+     *      (level with the sibling 24dp bottom-bar icons / the toggle iconSize)
+     *      but inset the stroked rect by {@link #BOX_INSET_DP}, giving the same
+     *      ~18dp visible box Chromium/Brave show. (The exact vector pathData
+     *      wasn't fetchable; the inset/corner reproduce its proportions.)</li>
      *  </ol>
      *
-     *  Box footprint ({@link #SIZE_DP}) is 24dp to sit level with the sibling
-     *  24dp bottom-bar icons; the hosts reference 24dp to match (the toggle's
-     *  iconSize, the bottom bar's 24dp ImageView), so box + digit stay in
-     *  lockstep across BOTH the bottom bar and the tabs-header toggle that
-     *  share this drawable. STROKE/CORNER tuned to Brave's softly-rounded,
-     *  ~2dp outline. (Note dp already scales per density — the device-to-device
-     *  drift was the digit-count adaptivity + condensed font above, not the
-     *  unit.) */
+     *  Hosts reference 24dp so box + digit stay in lockstep across BOTH the
+     *  bottom bar and the tabs-header toggle that share this drawable. (dp
+     *  already scales per density — the device-to-device drift was the
+     *  digit-count adaptivity + condensed font, not the unit.) */
     private static final float STROKE_DP = 2f;
-    private static final float CORNER_DP = 6f;
-    private static final float TEXT_1_DIGIT_DP = 14f;
-    private static final float TEXT_2_DIGIT_DP = 11f;
+    private static final float CORNER_DP = 3f;
+    private static final float BOX_INSET_DP = 3f;
+    private static final float TEXT_1_DIGIT_DP = 12f;
+    private static final float TEXT_2_DIGIT_DP = 10f;
     private static final float SIZE_DP   = 24f;
 
     private final Paint mRectPaint;
     private final Paint mTextPaint;
+    private final Rect  mTextBounds = new Rect();
     private final float mCorner;
     private final float mStrokeHalf;
+    private final float mBoxInset;
     private final int   mIntrinsicSize;
     private final float mText1DigitSize;
     private final float mText2DigitSize;
@@ -95,6 +103,7 @@ public class TabCountDrawable extends Drawable {
         float stroke = STROKE_DP * density;
         mCorner = CORNER_DP * density;
         mStrokeHalf = stroke / 2f;
+        mBoxInset = BOX_INSET_DP * density;
         mIntrinsicSize = Math.round(SIZE_DP * density);
 
         mRectPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -133,24 +142,29 @@ public class TabCountDrawable extends Drawable {
         mRectPaint.setColor(mColor);
         mTextPaint.setColor(mColor);
 
+        // Inset rounded-square box (Chromium's btn_tabswitcher_modern has an
+        // internal margin inside the 24dp icon canvas — not full-bleed).
+        float inset = mStrokeHalf + mBoxInset;
         RectF rect = new RectF(
-                bounds.left + mStrokeHalf,
-                bounds.top + mStrokeHalf,
-                bounds.right - mStrokeHalf,
-                bounds.bottom - mStrokeHalf);
+                bounds.left + inset,
+                bounds.top + inset,
+                bounds.right - inset,
+                bounds.bottom - inset);
         canvas.drawRoundRect(rect, mCorner, mCorner, mRectPaint);
 
-        // Digit size adapts to the digit count (Chromium TabSwitcherDrawable
-        // pattern): a single digit fills the box; two+ digits (incl. the 🔥
-        // glyph, a surrogate pair) shrink to fit. Counted by code points so a
-        // surrogate-pair glyph isn't mistaken for two characters.
+        // Digit size adapts to the digit count (Chromium): a single digit
+        // fills the box; two+ digits (incl. the 🔥 glyph, a surrogate pair)
+        // shrink to fit. Counted by code points so a surrogate-pair glyph
+        // isn't mistaken for two characters.
         int displayLen = mText.codePointCount(0, mText.length());
         mTextPaint.setTextSize(displayLen > 1 ? mText2DigitSize : mText1DigitSize);
 
-        // Vertical centering from the font metrics — a bare drawText at
-        // centerY sits the BASELINE there and the digits ride high.
-        Paint.FontMetrics fm = mTextPaint.getFontMetrics();
-        float baseline = bounds.exactCenterY() - (fm.ascent + fm.descent) / 2f;
+        // Glyph-bounds vertical centering, verbatim from Chromium's draw():
+        // center the measured text BOUNDS (visible ink), not the font line, so
+        // the digits sit optically centered rather than riding high/low.
+        mTextPaint.getTextBounds(mText, 0, mText.length(), mTextBounds);
+        float baseline = bounds.exactCenterY()
+                + (mTextBounds.bottom - mTextBounds.top) / 2f - mTextBounds.bottom;
         canvas.drawText(mText, bounds.exactCenterX(), baseline, mTextPaint);
     }
 
