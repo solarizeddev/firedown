@@ -1074,6 +1074,19 @@ public class BrowserFragment extends BaseBrowserFragment
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+        // This fragment is now the visible browser surface; register it as the
+        // viewport screenshot source for the "Save snapshot" canvas fallback
+        // (a JS/WebGL-rendered background the serializer can't read). The
+        // most-recently-resumed BrowserFragment wins, so the source always
+        // tracks the foreground tab/mode. The null-guard keeps a stale
+        // registration (after this view is torn down) harmless.
+        mGeckoRuntimeHelper.setViewportCapturer(
+                () -> mGeckoView != null ? mGeckoView.capturePixels() : null);
+    }
+
+    @Override
     public void onDestroyView() {
         super.onDestroyView();
         Log.d(TAG, "onDestroyView: releasing GeckoView session");

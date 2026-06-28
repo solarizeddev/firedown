@@ -171,6 +171,16 @@ if (window.top === window.self) {
     const clone = document.documentElement.cloneNode(true);
     syncDynamicState(document.documentElement, clone);
 
+    // 1b) Canvases. A same-origin canvas serializes to a frozen PNG frame. A
+    //     canvas tainted by cross-origin textures (e.g. midjourney.com/home's
+    //     image-wall canvas drawing cdn.midjourney.com tiles) throws on
+    //     toDataURL — page JS can't read a single pixel. For a LARGE such
+    //     canvas (a background/hero) we fall back to a native compositor
+    //     screenshot (immune to canvas taint) and replace it with a static
+    //     <img>. Motion is lost (the animating JS is stripped) but the
+    //     appearance is preserved. Small unreadable canvases are left as-is.
+    await inlineCanvases(clone);
+
     // 2) Strip the machinery: scripts (we keep the rendered result, not the
     //    re-runnable app) and offline-useless resource hints.
     clone.querySelectorAll('script').forEach((n) => n.remove());
@@ -316,19 +326,9 @@ if (window.top === window.self) {
       const opts = clone.querySelectorAll('option');
       opts.forEach((o) => o.removeAttribute('selected'));
       if (i >= 0 && opts[i]) opts[i].setAttribute('selected', '');
-    } else if (tag === 'CANVAS') {
-      // Same-origin canvases serialize to a PNG; a tainted (cross-origin)
-      // canvas throws on toDataURL — leave it as an empty canvas in that case.
-      try {
-        const d = live.toDataURL();
-        const img = clone.ownerDocument.createElement('img');
-        img.setAttribute('src', d);
-        if (live.width) img.setAttribute('width', String(live.width));
-        if (live.height) img.setAttribute('height', String(live.height));
-        clone.replaceWith(img);
-        return; // children are irrelevant once replaced
-      } catch { /* tainted — skip */ }
     }
+    // <canvas> is handled in a dedicated async pass (inlineCanvases) — it may
+    // need to await a native screenshot for an unreadable (tainted/WebGL) one.
 
     const lc = live.children;
     const cc = clone.children;
@@ -336,6 +336,71 @@ if (window.top === window.self) {
       const n = Math.min(lc.length, cc.length);
       for (let i = 0; i < n; i++) syncDynamicState(lc[i], cc[i]);
     }
+  }
+
+  // Replace each <canvas> in the clone with a static <img>. A readable
+  // (same-origin) canvas yields a frozen PNG of its current frame; an
+  // unreadable one (tainted by cross-origin textures, like midjourney's) that
+  // covers most of the viewport is replaced with a native compositor
+  // screenshot. Small unreadable canvases (charts/widgets) are left untouched.
+  async function inlineCanvases(clone) {
+    const live = [...document.querySelectorAll('canvas')];
+    const cloned = [...clone.querySelectorAll('canvas')];
+    let viewportShot; // undefined = not tried, null = tried & failed, string = data URI
+    const n = Math.min(live.length, cloned.length);
+    for (let i = 0; i < n; i++) {
+      const lc = live[i];
+      const cc = cloned[i];
+
+      // Same-origin frozen frame, if the canvas isn't tainted.
+      let frame = null;
+      try { frame = lc.toDataURL('image/png'); } catch { frame = null; }
+      if (frame && frame.length > 64) {
+        replaceCanvasWithImg(clone, cc, frame, lc, false);
+        continue;
+      }
+
+      // Unreadable. Only worth a screenshot if it's a background/hero canvas.
+      let rect = null;
+      try { rect = lc.getBoundingClientRect(); } catch { rect = null; }
+      if (!rect) continue;
+      const coversMost = rect.width * rect.height >=
+        0.5 * (window.innerWidth || 1) * (window.innerHeight || 1);
+      if (!coversMost) continue;
+
+      if (viewportShot === undefined) viewportShot = await requestViewportShot();
+      if (viewportShot) replaceCanvasWithImg(clone, cc, viewportShot, lc, true);
+    }
+  }
+
+  function replaceCanvasWithImg(clone, canvasClone, dataUri, liveCanvas, isScreenshot) {
+    const img = clone.ownerDocument.createElement('img');
+    img.setAttribute('src', dataUri);
+    let css = canvasClone.getAttribute('style') || '';
+    if (isScreenshot) {
+      // The screenshot is the whole viewport and the canvas fills its
+      // full-bleed container, so cover it rather than letting it stretch.
+      if (css && !css.trim().endsWith(';')) css += ';';
+      css += 'object-fit:cover;';
+    }
+    if (css) img.setAttribute('style', css);
+    const cls = canvasClone.getAttribute('class');
+    if (cls) img.setAttribute('class', cls);
+    if (liveCanvas.width) img.setAttribute('width', String(liveCanvas.width));
+    if (liveCanvas.height) img.setAttribute('height', String(liveCanvas.height));
+    canvasClone.replaceWith(img);
+  }
+
+  // Ask native for a JPEG data: URI screenshot of the foreground viewport
+  // (via background → GeckoView.capturePixels). null on failure.
+  async function requestViewportShot() {
+    try {
+      const r = await browser.runtime.sendMessage({ kind: 'snapshot-screenshot' });
+      if (r && r.ok && r.dataUri) return r.dataUri;
+    } catch (e) {
+      slog('viewport screenshot failed', e?.message);
+    }
+    return null;
   }
 
   // First candidate URL out of a srcset string ("a.jpg 1x, b.jpg 2x" → "a.jpg").
