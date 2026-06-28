@@ -125,7 +125,12 @@ public class ProgressOverlayView extends View {
 
         float cx = w / 2f;
         float cy = h / 2f;
-        float radius = Math.min(w, h) * 0.22f;
+        // 0.28 of the shorter side: the ring is the download tile's focal point
+        // (it owns the picture zone now that the placeholder glyph is gone), so
+        // it wants to read as the hero, not a small overlay. Only grid/dense
+        // download tiles show this view — the list uses the inline bar — so the
+        // bump doesn't touch list rows.
+        float radius = Math.min(w, h) * 0.28f;
         float strokeWidth = radius * 0.25f;
 
         trackPaint.setStrokeWidth(strokeWidth);
