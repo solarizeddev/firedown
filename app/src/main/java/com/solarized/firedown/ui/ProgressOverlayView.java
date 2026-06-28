@@ -12,10 +12,12 @@ import androidx.annotation.Nullable;
 
 public class ProgressOverlayView extends View {
 
-    /** Target ring radius in dp (~54dp outer). Fixed so the download ring
-     *  matches the size of the centered mime glyph shown for non-progress
-     *  tiles; clamped to the view in onDraw so it never overflows. */
-    private static final float RING_RADIUS_DP = 24f;
+    /** Target ring radius in dp. Chosen so the ring's OUTER diameter
+     *  (2*radius + stroke, and stroke = radius*0.25 → 2.25*radius) equals the
+     *  50dp centered mime glyph shown for non-progress tiles, so the two
+     *  states' focal elements are the same size. 50 / 2.25 ≈ 22.2.
+     *  Clamped to the view in onDraw so it never overflows. */
+    private static final float RING_RADIUS_DP = 22.2f;
 
     private final Paint trackPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint arcPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
