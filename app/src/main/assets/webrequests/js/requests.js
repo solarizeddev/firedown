@@ -1125,16 +1125,6 @@ browser.runtime.onMessage.addListener(async (msg, sender) => {
     return handleSnapshotFetch(msg);
   }
 
-  // snapshot.js hit a canvas it can't read (tainted/WebGL) and wants a
-  // compositor screenshot of the viewport. Only native can take it
-  // (capturePixels), so relay to Java and pass the JPEG data: URI back.
-  if (msg?.kind === 'snapshot-screenshot') {
-    return browser.runtime.sendNativeMessage('browser', { kind: 'snapshot-screenshot' })
-      .then((dataUri) =>
-        (typeof dataUri === 'string' && dataUri) ? { ok: true, dataUri } : { ok: false })
-      .catch(() => ({ ok: false }));
-  }
-
   // Content script told us a page tried to use WebAssembly while it's
   // disabled. Forward to native so BrowserFragment can surface the
   // "Enable for {host}?" snackbar scoped to the right tab.
