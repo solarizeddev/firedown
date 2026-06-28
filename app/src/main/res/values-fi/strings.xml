@@ -427,4 +427,6 @@
     <string name="settings_sync_code_warning">Tämä palautuskoodi on ainoa avain synkronoituihin kirjanmerkkeihisi. Tallenna se salasanojen hallintaasi — tai muuhun turvalliseen paikkaan. Sitä ei voi palauttaa, jos se hukataan.</string>
     <string name="settings_sync_cat_code">Palautuskoodi</string>
     <string name="settings_sync_cat_manage">Synkronoinnin hallinta</string>
+    <string name="browser_menu_save_snapshot">Tallenna tilannevedos</string>
+    <string name="browser_snapshot_saving">Tallennetaan sivun tilannevedosta…</string>
 </resources>

@@ -393,4 +393,6 @@
     <string name="settings_sync_code_warning">यह रिकवरी कोड आपके सिंक किए गए बुकमार्क की एकमात्र कुंजी है। इसे अपने पासवर्ड मैनेजर — या किसी अन्य सुरक्षित जगह — में सहेजें। खोने पर इसे रिकवर नहीं किया जा सकता।</string>
     <string name="settings_sync_cat_code">रिकवरी कोड</string>
     <string name="settings_sync_cat_manage">सिंक प्रबंधित करें</string>
+    <string name="browser_menu_save_snapshot">स्नैपशॉट सहेजें</string>
+    <string name="browser_snapshot_saving">पेज स्नैपशॉट सहेजा जा रहा है…</string>
 </resources>

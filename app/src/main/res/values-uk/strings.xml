@@ -403,4 +403,6 @@
     <string name="settings_sync_code_warning">Цей код відновлення — єдиний ключ до ваших синхронізованих закладок. Збережіть його у своєму менеджері паролів — або іншому безпечному місці. Його неможливо відновити, якщо втрачено.</string>
     <string name="settings_sync_cat_code">Код відновлення</string>
     <string name="settings_sync_cat_manage">Керування синхронізацією</string>
+    <string name="browser_menu_save_snapshot">Зберегти знімок</string>
+    <string name="browser_snapshot_saving">Збереження знімка сторінки…</string>
 </resources>

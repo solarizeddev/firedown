@@ -619,4 +619,6 @@
     <string name="settings_sync_code_warning">Este código de recuperación es la única clave de tus marcadores sincronizados. Guárdalo en tu gestor de contraseñas, o en otro lugar seguro. No se puede recuperar si se pierde.</string>
     <string name="settings_sync_cat_code">Código de recuperación</string>
     <string name="settings_sync_cat_manage">Gestionar sincronización</string>
+    <string name="browser_menu_save_snapshot">Guardar instantánea</string>
+    <string name="browser_snapshot_saving">Guardando instantánea de la página…</string>
 </resources>

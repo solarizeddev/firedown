@@ -488,4 +488,6 @@
     <string name="settings_sync_code_warning">Este código de recuperação é a única chave dos seus favoritos sincronizados. Salve-o no seu gerenciador de senhas — ou em outro lugar seguro. Ele não pode ser recuperado se for perdido.</string>
     <string name="settings_sync_cat_code">Código de recuperação</string>
     <string name="settings_sync_cat_manage">Gerir sincronização</string>
+    <string name="browser_menu_save_snapshot">Salvar instantâneo</string>
+    <string name="browser_snapshot_saving">Salvando instantâneo da página…</string>
 </resources>
