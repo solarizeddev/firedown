@@ -639,6 +639,7 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
             // real thumbnail). The list always shows the name. (Captured is a
             // preview/decision surface and keeps the title always — handled in
             // BrowserOptionAdapter, unchanged.)
+            holder.fileName.setMaxLines(1);
             if (isGrid && FileUriHelper.isImage(mimeType)) {
                 setVisible(holder.fileName, false);
             } else {
@@ -732,6 +733,7 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
                 setVisible(holder.mimeText, false);
                 setVisible(holder.mimeDuration, false);
                 if (holder.fileName != null) {
+                    holder.fileName.setMaxLines(2);
                     String name = entity.getFileName();
                     holder.fileName.setText(name);
                     setVisible(holder.fileName, !TextUtils.isEmpty(name));
