@@ -441,4 +441,6 @@
     <string name="settings_sync_code_warning">Tento kód pro obnovení je jediným klíčem k vašim synchronizovaným záložkám. Uložte jej do svého správce hesel — nebo na jiné bezpečné místo. Po ztrátě jej nelze obnovit.</string>
     <string name="settings_sync_cat_code">Kód pro obnovení</string>
     <string name="settings_sync_cat_manage">Správa synchronizace</string>
+    <string name="browser_menu_save_snapshot">Uložit snímek</string>
+    <string name="browser_snapshot_saving">Ukládání snímku stránky…</string>
 </resources>

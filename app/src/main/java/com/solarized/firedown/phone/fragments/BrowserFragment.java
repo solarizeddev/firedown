@@ -711,6 +711,17 @@ public class BrowserFragment extends BaseBrowserFragment
                         .startChooser();
             } else if (id == R.id.popup_find) {
                 enterSearch();
+            } else if (id == R.id.popup_save_snapshot) {
+                // Archive the current page to a self-contained .html. The
+                // serializer runs in the downloader@ extension's snapshot.js
+                // content script and delivers the file through GeckoView's
+                // normal download funnel (onExternalResponse); we just kick it
+                // off and confirm. A page must be loaded for there to be a DOM
+                // to capture.
+                GeckoState geckoState = peekCurrentGeckoState();
+                if (geckoState == null) return;
+                mGeckoRuntimeHelper.captureSnapshot();
+                makeAnchoredSnackbar(R.string.browser_snapshot_saving).show();
             } else if (id == R.id.popup_go_forward) {
                 GeckoState geckoState = peekCurrentGeckoState();
                 if (geckoState == null) return;

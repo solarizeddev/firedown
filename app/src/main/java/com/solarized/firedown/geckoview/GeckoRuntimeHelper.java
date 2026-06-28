@@ -971,6 +971,31 @@ public class GeckoRuntimeHelper {
         }
     }
 
+    /**
+     * Trigger a "Save snapshot" of the foreground page (the browser-popup
+     * action). The serializer lives in the downloader@ extension's snapshot.js
+     * content script — only it can read the live, post-JS page DOM — so we just
+     * poke the existing "browser" native port and let requests.js relay the
+     * capture request to the active tab's content script. The snapshot is then
+     * delivered back through GeckoView's normal download funnel
+     * (onExternalResponse → the browser download pipeline), so nothing else is
+     * needed on the Java side.
+     *
+     * <p>{@code mTabId} is the extension's currently-active tab id (tracked from
+     * the port's onActivated events); the JS side falls back to an active-tab
+     * query if it's unknown.
+     */
+    public void captureSnapshot() {
+        try {
+            JSONObject msg = new JSONObject();
+            msg.put("type", "capture-snapshot");
+            msg.put("tabId", mTabId);
+            sendPortMessage("browser", msg);
+        } catch (JSONException e) {
+            Log.e(TAG, "captureSnapshot error", e);
+        }
+    }
+
     private void sendPortMessage(String portName, JSONObject message) {
         WebExtension.Port port = mPorts.get(portName);
         if (port != null) {

@@ -1042,6 +1042,26 @@ nativePort.onMessage.addListener(async (msg) => {
     if (result) {
       nativePort.postMessage(result);
     }
+  } else if (msg.type === 'capture-snapshot') {
+    // The popup's "Save snapshot" row → GeckoRuntimeHelper.captureSnapshot()
+    // arrives here. The serializer lives in the snapshot.js CONTENT script
+    // (only it can read the page DOM), so relay the trigger to the foreground
+    // tab. Java sends its tracked active tab id (mTabId); fall back to an
+    // active-tab query if it's unknown (-1). tabs.sendMessage delivers to the
+    // tab's content scripts — snapshot.js's onMessage picks it up (top frame).
+    try {
+      const tabId = typeof msg.tabId === 'number' ? msg.tabId : -1;
+      if (tabId >= 0) {
+        browser.tabs.sendMessage(tabId, { kind: 'snapshot-capture' });
+      } else {
+        const tabs = await browser.tabs.query({ active: true, lastFocusedWindow: true });
+        if (tabs && tabs[0]) {
+          browser.tabs.sendMessage(tabs[0].id, { kind: 'snapshot-capture' });
+        }
+      }
+    } catch (e) {
+      if (DEBUG) console.warn('[req] snapshot trigger failed:', e?.message);
+    }
   }
 });
 
@@ -1050,7 +1070,56 @@ nativePort.onMessage.addListener(async (msg) => {
 // Catches images loaded from service-worker cache (invisible to webRequest)
 // ---------------------------------------------------------------------------
 
+// Per-resource ceiling for the snapshot archiver's privileged fetch — a
+// single absurd resource (a 100 MB font/video) must not be inlined. The
+// content-script side enforces the count + total-size budget; this is the
+// per-item backstop.
+const SNAPSHOT_MAX_RESOURCE_BYTES = 12 * 1024 * 1024;
+
+// Encode a Blob as a data: URI without buffering a giant base64 string by hand
+// — FileReader.readAsDataURL does it natively.
+function blobToDataUri(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(blob);
+  });
+}
+
+// Privileged fetch for the snapshot archiver (see snapshot.js header). Reads a
+// sub-resource cross-origin (background has <all_urls>, so no CORS) and returns
+// it as a data: URI, or as text for CSS (as:'text'). Credentialed + cache-first
+// so an already-loaded resource is served from the HTTP cache, not re-pulled.
+async function handleSnapshotFetch(msg) {
+  try {
+    const resp = await fetch(msg.url, { credentials: 'include', cache: 'force-cache' });
+    if (!resp.ok) return { ok: false };
+    if (msg.as === 'text') {
+      const text = await resp.text();
+      if (text.length > SNAPSHOT_MAX_RESOURCE_BYTES) return { ok: false, tooBig: true };
+      return { ok: true, text };
+    }
+    const blob = await resp.blob();
+    if (blob.size > SNAPSHOT_MAX_RESOURCE_BYTES) return { ok: false, tooBig: true };
+    const dataUri = await blobToDataUri(blob);
+    return { ok: true, dataUri };
+  } catch (e) {
+    if (DEBUG) console.warn('[req] snapshot-fetch failed:', msg?.url, e?.message);
+    return { ok: false };
+  }
+}
+
 browser.runtime.onMessage.addListener(async (msg, sender) => {
+  // snapshot.js asks us to fetch a sub-resource it can't read itself: a
+  // content-script fetch is CORS-bound, but this background page holds
+  // <all_urls>, so its fetch reads cross-origin bytes directly. Returning the
+  // promise makes this listener the responder (the parser router is
+  // fire-and-forget and won't answer). See snapshot.js header.
+  if (msg?.kind === 'snapshot-fetch') {
+    return handleSnapshotFetch(msg);
+  }
+
   // Content script told us a page tried to use WebAssembly while it's
   // disabled. Forward to native so BrowserFragment can surface the
   // "Enable for {host}?" snackbar scoped to the right tab.
