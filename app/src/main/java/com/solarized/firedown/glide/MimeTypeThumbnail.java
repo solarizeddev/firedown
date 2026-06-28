@@ -58,6 +58,19 @@ public class MimeTypeThumbnail {
     @NonNull
     public static Drawable generateDrawable(@NonNull Context context, @NonNull String mimeType,
                                             boolean fillBounds) {
+        return generateDrawable(context, mimeType, fillBounds, 0);
+    }
+
+    /**
+     * @param captionReservePx px reserved at the bottom of the slot for an
+     *   overlaid caption (a grid tile's title/progress band). The icon then
+     *   centers in the thumbnail zone ABOVE that band instead of the whole
+     *   tile, so it doesn't crowd the title; the tint still fills the slot.
+     *   0 = center in the full slot (list rows, the player letterbox).
+     */
+    @NonNull
+    public static Drawable generateDrawable(@NonNull Context context, @NonNull String mimeType,
+                                            boolean fillBounds, int captionReservePx) {
         int color = getColorForMimeType(mimeType);
         Drawable icon = ContextCompat.getDrawable(context, FileUriHelper.getMimeTypeIcon(mimeType));
         if (icon != null) {
@@ -70,7 +83,7 @@ public class MimeTypeThumbnail {
         int maxIconPx = fillBounds
                 ? Math.round(MAX_FILL_ICON_DP * context.getResources().getDisplayMetrics().density)
                 : Integer.MAX_VALUE;
-        return new MimeTypeFallbackDrawable(color, icon, fillBounds, maxIconPx);
+        return new MimeTypeFallbackDrawable(color, icon, fillBounds, maxIconPx, captionReservePx);
     }
 
     private static int getColorForMimeType(@NonNull String mimeType) {
@@ -85,14 +98,17 @@ public class MimeTypeThumbnail {
         private final Drawable mIcon;
         private final boolean mFillBounds;
         private final int mMaxIconPx;
+        private final int mCaptionReservePx;
 
-        MimeTypeFallbackDrawable(int color, @Nullable Drawable icon, boolean fillBounds, int maxIconPx) {
+        MimeTypeFallbackDrawable(int color, @Nullable Drawable icon, boolean fillBounds,
+                                 int maxIconPx, int captionReservePx) {
             mBgPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
             mBgPaint.setColor(color);
             mBgPaint.setAlpha(30);
             mIcon = icon;
             mFillBounds = fillBounds;
             mMaxIconPx = maxIconPx;
+            mCaptionReservePx = captionReservePx;
         }
 
         /** 16:10, matching DownloadFragment's grid cell card. */
@@ -131,7 +147,15 @@ public class MimeTypeThumbnail {
             // large grid tile doesn't get an oversized glyph — see MAX_FILL_ICON_DP.
             int iconSize = Math.min((int) (Math.min(cardWidth, cardHeight) * 0.5f), mMaxIconPx);
             int iconLeft = cardLeft + (cardWidth - iconSize) / 2;
-            int iconTop = cardTop + (cardHeight - iconSize) / 2;
+            // Center the icon in the thumbnail zone ABOVE any reserved caption
+            // band (grid title/progress), not the whole tile — so it doesn't
+            // crowd the title. Reserve 0 (list/player) centers in the full slot.
+            // Guard a slot too short to hold both (fall back to full-height center).
+            int iconAreaH = cardHeight - mCaptionReservePx;
+            if (iconAreaH < iconSize) {
+                iconAreaH = cardHeight;
+            }
+            int iconTop = cardTop + (iconAreaH - iconSize) / 2;
             mIcon.setBounds(iconLeft, iconTop, iconLeft + iconSize, iconTop + iconSize);
             mIcon.draw(canvas);
         }

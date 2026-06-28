@@ -44,6 +44,10 @@
     <dimen name="list_download_image_width">78dp</dimen>
     <dimen name="list_download_image_height">64dp</dimen>
     <dimen name="list_download_image_height_grid">110dp</dimen>
+    <!-- Bottom band a grid tile's title+progress caption occupies; a generated
+         mime glyph reserves this so it centers in the thumbnail zone above the
+         title (matches the grid bottom_block: ~14 pad + title + bar + 7 pad). -->
+    <dimen name="grid_thumb_caption_reserve">48dp</dimen>
     <dimen name="list_margin">8dp</dimen>
     <dimen name="list_web_image_height">28dp</dimen>
     <dimen name="list_web_empty_height">37dp</dimen>
