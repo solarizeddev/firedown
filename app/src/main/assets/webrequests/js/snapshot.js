@@ -63,6 +63,7 @@ if (window.top === window.self) {
   const MAX_RESOURCES = 400;             // distinct sub-resources inlined
   const MAX_TOTAL_DATAURI_CHARS = 80 * 1024 * 1024; // ~60 MB of binary
   const CSS_IMPORT_DEPTH = 4;            // @import nesting we follow
+  const FETCH_CONCURRENCY = 8;           // parallel sub-resource fetches
 
   let capturing = false;
 
@@ -102,6 +103,25 @@ if (window.top === window.self) {
     return null;
   }
 
+  // Run fn over items with at most `limit` in flight at once — a bounded worker
+  // pool. This is what parallelizes resource inlining: instead of awaiting each
+  // fetch serially (hundreds of round-trips back to back), up to FETCH_CONCURRENCY
+  // run concurrently. The per-capture resource caps still apply because workers
+  // advance incrementally (they observe the growing cache/byte budget), so the
+  // bounding isn't bypassed the way a single Promise.all over everything would.
+  async function mapLimit(items, limit, fn) {
+    const arr = [...items];
+    let cursor = 0;
+    async function worker() {
+      while (cursor < arr.length) {
+        const idx = cursor++;
+        await fn(arr[idx], idx);
+      }
+    }
+    const workers = Math.max(1, Math.min(limit, arr.length));
+    await Promise.all(Array.from({ length: workers }, worker));
+  }
+
   // ---------------------------------------------------------------------------
   // Capture
   // ---------------------------------------------------------------------------
@@ -119,9 +139,12 @@ if (window.top === window.self) {
     };
 
     // Inline one resource URL to a data: URI, honouring caches + budget.
-    async function inlineUrl(raw, base) {
+    // Returns a PROMISE (not async) and caches that promise keyed by URL, so two
+    // parallel workers asking for the same URL share ONE fetch (in-flight dedup)
+    // — important now that the inlining passes run concurrently via mapLimit.
+    function inlineUrl(raw, base) {
       const url = abs(raw, base);
-      if (!url || !/^https?:/i.test(url)) return null;
+      if (!url || !/^https?:/i.test(url)) return Promise.resolve(null);
       // NEVER inline an adaptive-streaming manifest (HLS .m3u8 / DASH .mpd /
       // Smooth .ism). It only references external segments, so a manifest baked
       // into a data: URI makes the player resolve those segment URIs against
@@ -130,16 +153,20 @@ if (window.top === window.self) {
       // DefaultHlsPlaylistTracker.onLoadError → Uri.getQueryParameter) when the
       // saved snapshot is reopened. Leaving the original https manifest URL is
       // safe: it plays online and never produces a data: manifest.
-      if (/\.(m3u8|m3u|mpd|ism|f4m)(?:[?#]|$)/i.test(url)) return null;
-      if (cache.has(url)) return cache.get(url);
+      if (/\.(m3u8|m3u|mpd|ism|f4m)(?:[?#]|$)/i.test(url)) return Promise.resolve(null);
+      const cached = cache.get(url);
+      if (cached !== undefined) return cached;
       if (cache.size >= MAX_RESOURCES || budget.chars >= MAX_TOTAL_DATAURI_CHARS) {
-        cache.set(url, null);
-        return null;
+        const capped = Promise.resolve(null);
+        cache.set(url, capped);
+        return capped;
       }
-      const dataUri = await fetchDataUri(url);
-      if (dataUri) budget.chars += dataUri.length;
-      cache.set(url, dataUri);
-      return dataUri;
+      const promise = fetchDataUri(url).then((dataUri) => {
+        if (dataUri) budget.chars += dataUri.length;
+        return dataUri;
+      });
+      cache.set(url, promise);
+      return promise;
     }
 
     // Rewrite a CSS body: follow @import (bounded depth) and inline url(...)
@@ -163,13 +190,18 @@ if (window.top === window.self) {
         }
       }
 
+      // Inline every url() in parallel, then apply the substitutions. A big
+      // stylesheet (icon fonts, sprite backgrounds) is the heaviest case, so
+      // fetching its refs concurrently is the main speed win.
       const urls = [...cssText.matchAll(/url\(\s*["']?([^"')]+)["']?\s*\)/gi)];
-      for (const m of urls) {
+      const replacements = [];
+      await mapLimit(urls, FETCH_CONCURRENCY, async (m) => {
         const raw = m[1];
-        if (/^data:/i.test(raw) || raw.startsWith('#')) continue; // data:/SVG-frag
+        if (/^data:/i.test(raw) || raw.startsWith('#')) return; // data:/SVG-frag
         const dataUri = await inlineUrl(raw, baseUrl);
-        if (dataUri) cssText = cssText.split(m[0]).join(`url("${dataUri}")`);
-      }
+        if (dataUri) replacements.push([m[0], `url("${dataUri}")`]);
+      });
+      for (const [from, to] of replacements) cssText = cssText.split(from).join(to);
       return cssText;
     }
 
@@ -210,22 +242,24 @@ if (window.top === window.self) {
     }
 
     // 4) Inline the favicon(s) so the archived tab still has its icon.
-    for (const link of [...clone.querySelectorAll('link[rel~="icon" i][href],link[rel~="apple-touch-icon" i][href]')]) {
-      const dataUri = await inlineUrl(link.getAttribute('href'), pageUrl);
-      if (dataUri) link.setAttribute('href', dataUri);
-    }
+    await mapLimit(
+      [...clone.querySelectorAll('link[rel~="icon" i][href],link[rel~="apple-touch-icon" i][href]')],
+      FETCH_CONCURRENCY, async (link) => {
+        const dataUri = await inlineUrl(link.getAttribute('href'), pageUrl);
+        if (dataUri) link.setAttribute('href', dataUri);
+      });
 
     // 5) Inline images. syncDynamicState stamped the *displayed* source on each
     //    <img> as data-fd-src (currentSrc resolves srcset/<picture>); inline it,
     //    then drop srcset/<source> so the browser can't re-pick a non-inlined
     //    candidate offline.
-    for (const img of [...clone.querySelectorAll('img[data-fd-src]')]) {
+    await mapLimit([...clone.querySelectorAll('img[data-fd-src]')], FETCH_CONCURRENCY, async (img) => {
       const dataUri = await inlineUrl(img.getAttribute('data-fd-src'), pageUrl);
       if (dataUri) img.setAttribute('src', dataUri);
       img.removeAttribute('srcset');
       img.removeAttribute('data-fd-src');
       img.removeAttribute('loading');
-    }
+    });
     clone.querySelectorAll('picture source, img + source, source[srcset]').forEach((n) => {
       if (n.tagName === 'SOURCE') n.remove();
     });
@@ -236,30 +270,31 @@ if (window.top === window.self) {
     //     element uses our embedded src. A source over the per-resource byte
     //     cap stays a URL (works online, not offline) — background videos can
     //     be large; we don't blow the file up to embed a huge one.
-    for (const media of [...clone.querySelectorAll('video[data-fd-media],audio[data-fd-media]')]) {
-      // inlineUrl returns null for a manifest (.m3u8/.mpd — see the crash note
-      // there), a blob:/MSE source, or an over-budget file; in those cases we
-      // leave the element's original src/sources untouched (safe, no data:
-      // manifest). Only a self-contained progressive file gets embedded.
-      const dataUri = await inlineUrl(media.getAttribute('data-fd-media'), pageUrl);
-      if (dataUri) {
-        media.setAttribute('src', dataUri);
-        media.querySelectorAll('source').forEach((s) => s.remove());
-        media.removeAttribute('preload');
-      }
-      media.removeAttribute('data-fd-media');
-    }
-    for (const video of [...clone.querySelectorAll('video[data-fd-poster]')]) {
+    await mapLimit([...clone.querySelectorAll('video[data-fd-media],audio[data-fd-media]')],
+      FETCH_CONCURRENCY, async (media) => {
+        // inlineUrl returns null for a manifest (.m3u8/.mpd — see the crash note
+        // there), a blob:/MSE source, or an over-budget file; in those cases we
+        // leave the element's original src/sources untouched (safe, no data:
+        // manifest). Only a self-contained progressive file gets embedded.
+        const dataUri = await inlineUrl(media.getAttribute('data-fd-media'), pageUrl);
+        if (dataUri) {
+          media.setAttribute('src', dataUri);
+          media.querySelectorAll('source').forEach((s) => s.remove());
+          media.removeAttribute('preload');
+        }
+        media.removeAttribute('data-fd-media');
+      });
+    await mapLimit([...clone.querySelectorAll('video[data-fd-poster]')], FETCH_CONCURRENCY, async (video) => {
       const dataUri = await inlineUrl(video.getAttribute('data-fd-poster'), pageUrl);
       if (dataUri) video.setAttribute('poster', dataUri);
       video.removeAttribute('data-fd-poster');
-    }
+    });
     // <svg><image href> and bare <image> elements.
-    for (const im of [...clone.querySelectorAll('image[href],image[*|href]')]) {
+    await mapLimit([...clone.querySelectorAll('image[href],image[*|href]')], FETCH_CONCURRENCY, async (im) => {
       const href = im.getAttribute('href') || im.getAttributeNS('http://www.w3.org/1999/xlink', 'href');
       const dataUri = await inlineUrl(href, pageUrl);
       if (dataUri) im.setAttribute('href', dataUri);
-    }
+    });
 
     // 6) Inline url(...) inside inline style="" attributes (background images).
     for (const el of [...clone.querySelectorAll('[style*="url(" i]')]) {

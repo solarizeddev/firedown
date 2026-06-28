@@ -721,7 +721,12 @@ public class BrowserFragment extends BaseBrowserFragment
                 GeckoState geckoState = peekCurrentGeckoState();
                 if (geckoState == null) return;
                 mGeckoRuntimeHelper.captureSnapshot();
-                makeAnchoredSnackbar(R.string.browser_snapshot_saving).show();
+                // Hold the "Saving…" hint a beat longer so it clearly spans the
+                // serialization and stays up until the download dialog (the
+                // completion signal) appears.
+                Snackbar saving = makeAnchoredSnackbar(R.string.browser_snapshot_saving);
+                saving.setDuration(Snackbar.LENGTH_LONG);
+                saving.show();
             } else if (id == R.id.popup_go_forward) {
                 GeckoState geckoState = peekCurrentGeckoState();
                 if (geckoState == null) return;
