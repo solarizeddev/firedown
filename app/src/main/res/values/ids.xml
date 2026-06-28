@@ -62,4 +62,9 @@
     <item name="start_download" type="id" />
     <item name="start_multiple_download" type="id" />
     <item name="stop_button" type="id" />
+    <!-- View tag (keyed) on a thumbnail ImageView: px to reserve at the
+         bottom for an overlaid caption, so a generated mime glyph centers in
+         the thumbnail zone ABOVE the title instead of the whole tile. Set per
+         bind by DownloadItemAdapter; 0/absent = center in the full slot. -->
+    <item name="tag_thumb_caption_reserve" type="id" />
 </resources>

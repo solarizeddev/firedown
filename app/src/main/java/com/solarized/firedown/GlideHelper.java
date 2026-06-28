@@ -28,6 +28,7 @@ import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.Target;
 import com.bumptech.glide.signature.ObjectKey;
+import com.solarized.firedown.R;
 import com.solarized.firedown.data.Download;
 import com.solarized.firedown.data.RestoredFileAccess;
 import com.solarized.firedown.data.entity.BrowserDownloadEntity;
@@ -132,7 +133,15 @@ public class GlideHelper {
         // fills the whole rounded thumbnail slot (the list slot is ~1:1,
         // 78×64; a centred 16:10 card would float with transparent bands
         // top/bottom and never reach the rounded corners).
-        return MimeTypeThumbnail.generateDrawable(image.getContext(), mimeType, true);
+        //
+        // A grid tile overlays its title/progress on the bottom of the same
+        // slot; the adapter tags the px to reserve there (R.id
+        // .tag_thumb_caption_reserve) so the glyph centers in the thumbnail
+        // zone above the title instead of crowding it. Absent/0 on list rows
+        // and the player → center in the full slot.
+        Object reserveTag = image.getTag(R.id.tag_thumb_caption_reserve);
+        int captionReservePx = (reserveTag instanceof Integer) ? (Integer) reserveTag : 0;
+        return MimeTypeThumbnail.generateDrawable(image.getContext(), mimeType, true, captionReservePx);
     }
 
     private static <T> RequestListener<T> fallbackListener(@NonNull String mimeType,

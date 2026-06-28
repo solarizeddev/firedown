@@ -659,6 +659,18 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
                     status == Download.QUEUED ? R.drawable.ic_clear_24 : R.drawable.ic_baseline_more_vert_24);
         }
 
+        // Tag the thumbnail with the caption band to reserve, so a generated
+        // mime glyph (download placeholder / art-less audio) centers in the
+        // thumbnail zone ABOVE the title instead of the whole tile and stops
+        // crowding it. Grid non-dense only — list rows put text beside the
+        // thumbnail (no overlay) and dense tiles have no caption. Set before
+        // the status binders, which kick the Glide loads that read it
+        // (GlideHelper.generateThumbnail).
+        holder.image.setTag(R.id.tag_thumb_caption_reserve,
+                (isGrid && !holder.denseTile)
+                        ? mContext.getResources().getDimensionPixelSize(R.dimen.grid_thumb_caption_reserve)
+                        : 0);
+
         // ── Reset all status views ──────────────────────────────────
         setVisible(holder.progressRow, false);
         // progress_text lives in the grid's always-visible title row (it
