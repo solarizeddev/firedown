@@ -672,11 +672,10 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
                         : 0);
 
         // ── Reset all status views ──────────────────────────────────
+        // The grid has no progress_row/progress_text (the download ring is the
+        // readout); the list keeps them inside progress_row, whose visibility
+        // drives its children — so resetting the row is enough.
         setVisible(holder.progressRow, false);
-        // progress_text lives in the grid's always-visible title row (it
-        // rides beside the title), so hiding the progress_row no longer
-        // hides it — reset it explicitly. The progress binders re-show it.
-        setVisible(holder.progressText, false);
         setVisible(holder.statusText, false);
         setVisible(holder.imageProgress, false);
         setVisible(holder.topScrim, false);
@@ -714,48 +713,43 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         boolean retrieving = entity.getFileIsLive() || processing;
 
         if(isGrid){
-            if (holder.denseTile) {
-                // Dense (images-filter) tile is a bare square with no room for
-                // a title or a bottom bar — keep the centered ring overlay it
-                // has always used. (Its layout carries no progress_row.)
-                if (holder.imageProgress != null) {
-                    holder.imageProgress.setVisibility(View.VISIBLE);
-                    holder.imageProgress.setIndeterminate(retrieving);
-                    if (!retrieving) {
-                        holder.imageProgress.setProgress(entity.getFileProgress());
-                    }
+            // Progress IS the artwork. During a download there's no thumbnail,
+            // so a placeholder mime glyph carries nothing the progress + title
+            // don't — drop it and let the ring own the picture zone. The ring is
+            // constrained in the layout to the area above the title caption
+            // (dense tiles, a bare square, fill the whole tile), so it never
+            // overlaps the title. No bottom bar / inline percent — the ring's
+            // own percent is the readout. (progress_row/progress_text don't
+            // exist in the grid layout any more; null-safe either way.)
+            if (holder.imageProgress != null) {
+                holder.imageProgress.setVisibility(View.VISIBLE);
+                holder.imageProgress.setIndeterminate(retrieving);
+                if (!retrieving) {
+                    holder.imageProgress.setProgress(entity.getFileProgress());
                 }
-                // Cancel any in-flight load so a late completion can't paint over the null.
-                GlideHelper.clearSafe(holder.image);
-                holder.image.setImageDrawable(null);
-                holder.image.setTag(null);
-            } else {
-                // Option A: progress lives in a slim coral bar flush under the
-                // title, with the percent riding up beside the title (row_title)
-                // — no centered ring. Keeping the title visible alongside the bar
-                // lets two concurrent downloads be told apart (the old ring-only
-                // tile left them indistinguishable); putting the percent on the
-                // title line lets the bar sit flush under the title instead of
-                // centred in a text-tall row, which left a gap above it.
-                if (holder.imageProgress != null) {
-                    holder.imageProgress.setVisibility(View.GONE);
-                    holder.imageProgress.setIndeterminate(false);
-                }
+            }
+            // No placeholder glyph: clear the image so the ring sits on the bare
+            // card. clearSafe cancels any in-flight load that could paint over it.
+            GlideHelper.clearSafe(holder.image);
+            holder.image.setImageDrawable(null);
+            holder.image.setTag(null);
+
+            if (!holder.denseTile) {
+                // Normal tile keeps the title in its caption below the ring
+                // (dense is a bare square with no caption). With no thumbnail to
+                // identify it, the title is the only identifier — so show it for
+                // EVERY type, overriding the image-hide rule (which assumes a
+                // real thumbnail exists).
                 setVisible(holder.bottomBlock, true);
                 setVisible(holder.mimeText, false);
                 setVisible(holder.mimeDuration, false);
-
-                // Title for non-image types (image tiles identify themselves and
-                // carry no mid-download thumbnail), matching the grid title rule
-                // — the name was already set on holder.fileName in the common
-                // bind above.
-                boolean showName = holder.fileName != null
-                        && !FileUriHelper.isImage(entity.getFileMimeType())
-                        && !TextUtils.isEmpty(entity.getFileName());
-                setVisible(holder.fileName, showName);
-
-                // "Finishing…" (post-download mux) gets the explicit label; an
-                // ordinary download leans on the bar + percent instead.
+                if (holder.fileName != null) {
+                    String name = entity.getFileName();
+                    holder.fileName.setText(name);
+                    setVisible(holder.fileName, !TextUtils.isEmpty(name));
+                }
+                // "Finishing…" (post-download mux) gets an explicit caption line
+                // under the title; an ordinary download leans on the ring alone.
                 if (processing && holder.statusText != null) {
                     holder.statusText.setText(R.string.download_finishing);
                     holder.statusText.setTextColor(mDefaultPrimary);
@@ -763,30 +757,6 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
                 } else {
                     setVisible(holder.statusText, false);
                 }
-
-                setVisible(holder.progressRow, true);
-                if (holder.progressBar != null) {
-                    holder.progressBar.setIndicatorColor(mDefaultPrimary);
-                    holder.progressBar.setTrackColor(mDefaultPrimaryAlpha);
-                    holder.progressBar.setIndeterminate(retrieving);
-                    if (!retrieving) holder.progressBar.setProgress(entity.getFileProgress());
-                }
-                if (holder.progressText != null) {
-                    // No determinate percent while retrieving/live or finishing —
-                    // the indeterminate bar (and the Finishing… label) carry the
-                    // state instead.
-                    if (retrieving) {
-                        setVisible(holder.progressText, false);
-                    } else {
-                        holder.progressText.setText(String.format(Locale.US, "%d%%", entity.getFileProgress()));
-                        setVisible(holder.progressText, true);
-                    }
-                }
-
-                // Mid-download there's no real thumbnail; show the mime-type
-                // placeholder behind the scrim (consistent with queued/error)
-                // rather than a blank tile.
-                GlideHelper.loadFallback(entity, holder.image);
             }
         }else {
             setVisible(holder.progressRow, true);
@@ -805,9 +775,6 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
                         processing ? holder.itemView.getContext().getString(R.string.download_finishing)
                         : retrieving ? Utils.readableFileSize(entity.getFileSize())
                         : String.format(Locale.US, "%d%%", entity.getFileProgress()));
-                // Re-show: the common reset now hides progress_text (it lives in
-                // the grid title row); the list keeps it in the progress row.
-                setVisible(holder.progressText, true);
             }
             if(holder.progressBar != null){
                 holder.progressBar.setIndeterminate(retrieving);
