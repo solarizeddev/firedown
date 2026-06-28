@@ -45,20 +45,18 @@
                 android:outlineProvider="background"
                 android:scaleType="centerCrop" />
 
-            <!-- Progress ring (PROGRESS only). During a download there is no
-                 thumbnail, so the progress IS the artwork: the ring + percent
-                 own the picture zone (top of the tile down to the title
-                 caption), and the title sits in the bottom_block below — never
-                 overlapping. Constrained to bottom_block's TOP (not parent) so
-                 it's optically centred in the picture area, not the whole tile.
-                 The placeholder mime glyph is dropped for this state (it carried
-                 no information the progress + title don't). -->
+            <!-- Progress ring (PROGRESS only). Centered in the WHOLE tile —
+                 the in-progress counterpart of the centered mime glyph shown
+                 for non-progress tiles, so both states put their focal element
+                 in the same place at the same size (the ring is fixed-size, see
+                 ProgressOverlayView). The title sits in the bottom_block caption
+                 below, on its scrim. No placeholder glyph during a download. -->
             <com.solarized.firedown.ui.ProgressOverlayView
                 android:id="@+id/image_progress"
-                android:layout_width="0dp"
-                android:layout_height="0dp"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
                 android:visibility="gone"
-                app:layout_constraintBottom_toTopOf="@id/bottom_block"
+                app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
