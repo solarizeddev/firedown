@@ -18,6 +18,8 @@
     <string name="bookmark_action_open">Open in browser</string>
     <string name="bookmark_url_invalid">Enter a valid URL</string>
     <string name="browser_menu_find_in_page">Find in page</string>
+    <string name="browser_menu_save_snapshot">Save snapshot</string>
+    <string name="browser_snapshot_saving">Saving page snapshot…</string>
     <string name="browser_menu_forward">Forward</string>
     <string name="browser_menu_refresh">Refresh</string>
     <string name="browser_menu_settings">Settings</string>

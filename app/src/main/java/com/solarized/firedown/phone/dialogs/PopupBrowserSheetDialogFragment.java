@@ -246,6 +246,7 @@ public class PopupBrowserSheetDialogFragment extends BaseBottomSheetDialogFragme
     private void bindRows() {
         mView.findViewById(R.id.popup_bookmarks).setOnClickListener(this);
         mView.findViewById(R.id.popup_find).setOnClickListener(this);
+        mView.findViewById(R.id.popup_save_snapshot).setOnClickListener(this);
         mView.findViewById(R.id.popup_desktop).setOnClickListener(this);
         mView.findViewById(R.id.popup_history).setOnClickListener(this);
         mView.findViewById(R.id.popup_settings).setOnClickListener(this);
