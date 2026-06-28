@@ -122,6 +122,15 @@ if (window.top === window.self) {
     async function inlineUrl(raw, base) {
       const url = abs(raw, base);
       if (!url || !/^https?:/i.test(url)) return null;
+      // NEVER inline an adaptive-streaming manifest (HLS .m3u8 / DASH .mpd /
+      // Smooth .ism). It only references external segments, so a manifest baked
+      // into a data: URI makes the player resolve those segment URIs against
+      // the data: URI — a non-hierarchical URI that crashes GeckoView's media3
+      // HLS tracker (UnsupportedOperationException in
+      // DefaultHlsPlaylistTracker.onLoadError → Uri.getQueryParameter) when the
+      // saved snapshot is reopened. Leaving the original https manifest URL is
+      // safe: it plays online and never produces a data: manifest.
+      if (/\.(m3u8|m3u|mpd|ism|f4m)(?:[?#]|$)/i.test(url)) return null;
       if (cache.has(url)) return cache.get(url);
       if (cache.size >= MAX_RESOURCES || budget.chars >= MAX_TOTAL_DATAURI_CHARS) {
         cache.set(url, null);
@@ -230,13 +239,17 @@ if (window.top === window.self) {
     //     cap stays a URL (works online, not offline) — background videos can
     //     be large; we don't blow the file up to embed a huge one.
     for (const media of [...clone.querySelectorAll('video[data-fd-media],audio[data-fd-media]')]) {
+      // inlineUrl returns null for a manifest (.m3u8/.mpd — see the crash note
+      // there), a blob:/MSE source, or an over-budget file; in those cases we
+      // leave the element's original src/sources untouched (safe, no data:
+      // manifest). Only a self-contained progressive file gets embedded.
       const dataUri = await inlineUrl(media.getAttribute('data-fd-media'), pageUrl);
       if (dataUri) {
         media.setAttribute('src', dataUri);
         media.querySelectorAll('source').forEach((s) => s.remove());
+        media.removeAttribute('preload');
       }
       media.removeAttribute('data-fd-media');
-      media.removeAttribute('preload');
     }
     for (const video of [...clone.querySelectorAll('video[data-fd-poster]')]) {
       const dataUri = await inlineUrl(video.getAttribute('data-fd-poster'), pageUrl);
