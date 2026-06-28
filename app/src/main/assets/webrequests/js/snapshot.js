@@ -212,6 +212,27 @@ if (window.top === window.self) {
     clone.querySelectorAll('picture source, img + source, source[srcset]').forEach((n) => {
       if (n.tagName === 'SOURCE') n.remove();
     });
+
+    // 5b) Inline <video>/<audio> sources + poster. syncDynamicState stamped the
+    //     chosen source on the element (data-fd-media) and the poster
+    //     (data-fd-poster); inline both, then drop child <source>s so the
+    //     element uses our embedded src. A source over the per-resource byte
+    //     cap stays a URL (works online, not offline) — background videos can
+    //     be large; we don't blow the file up to embed a huge one.
+    for (const media of [...clone.querySelectorAll('video[data-fd-media],audio[data-fd-media]')]) {
+      const dataUri = await inlineUrl(media.getAttribute('data-fd-media'), pageUrl);
+      if (dataUri) {
+        media.setAttribute('src', dataUri);
+        media.querySelectorAll('source').forEach((s) => s.remove());
+      }
+      media.removeAttribute('data-fd-media');
+      media.removeAttribute('preload');
+    }
+    for (const video of [...clone.querySelectorAll('video[data-fd-poster]')]) {
+      const dataUri = await inlineUrl(video.getAttribute('data-fd-poster'), pageUrl);
+      if (dataUri) video.setAttribute('poster', dataUri);
+      video.removeAttribute('data-fd-poster');
+    }
     // <svg><image href> and bare <image> elements.
     for (const im of [...clone.querySelectorAll('image[href],image[*|href]')]) {
       const href = im.getAttribute('href') || im.getAttributeNS('http://www.w3.org/1999/xlink', 'href');
@@ -260,8 +281,26 @@ if (window.top === window.self) {
     const tag = live.nodeName;
 
     if (tag === 'IMG') {
-      const cur = live.currentSrc || live.src || '';
+      // currentSrc is the source the browser actually chose (srcset/<picture>).
+      // For a lazy <img> not yet fetched it's empty — fall back to the common
+      // lazy-load attributes so the placeholder isn't all we capture.
+      let cur = live.currentSrc || live.getAttribute('src') || '';
+      if (!cur || /^data:image\/(gif|svg)/i.test(cur)) {
+        cur = live.getAttribute('data-src') || live.getAttribute('data-lazy-src')
+          || live.getAttribute('data-original') || firstSrcsetUrl(live.getAttribute('data-srcset'))
+          || firstSrcsetUrl(live.getAttribute('srcset')) || cur;
+      }
       if (cur) clone.setAttribute('data-fd-src', cur);
+    } else if (tag === 'VIDEO' || tag === 'AUDIO') {
+      // Inline the playing source so a background/inline video survives offline.
+      // currentSrc resolves a <source> list to the chosen URL. autoplay/loop/
+      // muted/playsinline are copied by cloneNode, so an inlined autoplaying
+      // background video keeps animating in the saved file (the closest a
+      // script-free archive can get to a "live" background — a JS/WebGL canvas
+      // animation can't be preserved as motion, only a frozen frame).
+      const cur = live.currentSrc || live.getAttribute('src') || '';
+      if (cur) clone.setAttribute('data-fd-media', cur);
+      if (tag === 'VIDEO' && live.poster) clone.setAttribute('data-fd-poster', live.poster);
     } else if (tag === 'INPUT') {
       const type = (live.type || '').toLowerCase();
       if (type === 'checkbox' || type === 'radio') {
@@ -297,6 +336,14 @@ if (window.top === window.self) {
       const n = Math.min(lc.length, cc.length);
       for (let i = 0; i < n; i++) syncDynamicState(lc[i], cc[i]);
     }
+  }
+
+  // First candidate URL out of a srcset string ("a.jpg 1x, b.jpg 2x" → "a.jpg").
+  // Used as a lazy-image fallback when currentSrc hasn't resolved yet.
+  function firstSrcsetUrl(srcset) {
+    if (!srcset) return '';
+    const first = srcset.split(',')[0]?.trim();
+    return first ? first.split(/\s+/)[0] : '';
   }
 
   // Derive a safe, readable .html filename from the page title (hostname
