@@ -1102,6 +1102,11 @@ async function handleSnapshotFetch(msg) {
     }
     const blob = await resp.blob();
     if (blob.size > SNAPSHOT_MAX_RESOURCE_BYTES) return { ok: false, tooBig: true };
+    // Backstop for an extensionless/tokenized manifest the URL regex can't see:
+    // refuse to inline an HLS/DASH/Smooth playlist by MIME. Baking a manifest
+    // into a data: URI crashes the reopened snapshot's HLS player (see
+    // snapshot.js inlineUrl). Leaving the original URL is safe.
+    if (/mpegurl|dash\+xml|f4m|vnd\.ms-sstr/i.test(blob.type || '')) return { ok: false };
     const dataUri = await blobToDataUri(blob);
     return { ok: true, dataUri };
   } catch (e) {
