@@ -721,7 +721,12 @@ public class BrowserFragment extends BaseBrowserFragment
                 GeckoState geckoState = peekCurrentGeckoState();
                 if (geckoState == null) return;
                 mGeckoRuntimeHelper.captureSnapshot();
-                makeAnchoredSnackbar(R.string.browser_snapshot_saving).show();
+                // Hold the "Saving…" hint a beat longer so it clearly spans the
+                // serialization and stays up until the download dialog (the
+                // completion signal) appears.
+                Snackbar saving = makeAnchoredSnackbar(R.string.browser_snapshot_saving);
+                saving.setDuration(Snackbar.LENGTH_LONG);
+                saving.show();
             } else if (id == R.id.popup_go_forward) {
                 GeckoState geckoState = peekCurrentGeckoState();
                 if (geckoState == null) return;
@@ -1071,19 +1076,6 @@ public class BrowserFragment extends BaseBrowserFragment
         // Pair with the onCreate restore — keeps incognito mode pinned
         // across config changes and process death.
         outState.putBoolean(Keys.IS_INCOGNITO, mIsIncognitoThemed);
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        // This fragment is now the visible browser surface; register it as the
-        // viewport screenshot source for the "Save snapshot" canvas fallback
-        // (a JS/WebGL-rendered background the serializer can't read). The
-        // most-recently-resumed BrowserFragment wins, so the source always
-        // tracks the foreground tab/mode. The null-guard keeps a stale
-        // registration (after this view is torn down) harmless.
-        mGeckoRuntimeHelper.setViewportCapturer(
-                () -> mGeckoView != null ? mGeckoView.capturePixels() : null);
     }
 
     @Override
