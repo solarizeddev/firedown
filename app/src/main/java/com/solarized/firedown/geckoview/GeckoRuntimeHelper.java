@@ -30,6 +30,11 @@ import org.json.JSONObject;
 import org.mozilla.geckoview.ContentBlocking;
 import org.mozilla.geckoview.ExperimentalGeckoViewApi;
 import org.mozilla.geckoview.GeckoPreferenceController;
+import android.graphics.Bitmap;
+import android.util.Base64;
+
+import java.io.ByteArrayOutputStream;
+
 import org.mozilla.geckoview.GeckoResult;
 import org.mozilla.geckoview.GeckoRuntime;
 import org.mozilla.geckoview.GeckoRuntimeSettings;
@@ -384,6 +389,16 @@ public class GeckoRuntimeHelper {
                 // MessageDelegate.onMessage with "Invalid event data
                 // for callback". Primitives serialize cleanly.
                 return GeckoResult.fromValue(BuildConfig.DEBUG);
+            }
+            // "Save snapshot" fallback for a page whose background is a
+            // JS-animated <canvas> the serializer can't read (tainted by
+            // cross-origin textures, or WebGL with no preserveDrawingBuffer —
+            // e.g. midjourney.com/home). The content script can't extract a
+            // single pixel from such a canvas, so it asks for a compositor
+            // screenshot, which capturePixels() reads from the rendered output
+            // (immune to canvas taint) and we hand back as a JPEG data: URI.
+            if ("snapshot-screenshot".equals(jsonObject.optString("kind", null))) {
+                return handleSnapshotScreenshot();
             }
             Log.d(TAG, "onMessage: " + jsonObject);
             try {
@@ -993,6 +1008,101 @@ public class GeckoRuntimeHelper {
             sendPortMessage("browser", msg);
         } catch (JSONException e) {
             Log.e(TAG, "captureSnapshot error", e);
+        }
+    }
+
+    /**
+     * Supplies a compositor screenshot of the foreground browser viewport for
+     * the snapshot canvas fallback. Implemented by {@link
+     * com.solarized.firedown.phone.fragments.BrowserFragment} over its
+     * {@code GeckoView.capturePixels()}; the most-recently-resumed (visible)
+     * BrowserFragment registers itself, so this always reflects the foreground
+     * tab. Returns {@code null} when no view is available.
+     */
+    public interface ViewportCapturer {
+        @Nullable
+        GeckoResult<Bitmap> capture();
+    }
+
+    private volatile ViewportCapturer mViewportCapturer;
+
+    public void setViewportCapturer(@Nullable ViewportCapturer capturer) {
+        mViewportCapturer = capturer;
+    }
+
+    /**
+     * Captures the foreground viewport via the registered {@link
+     * ViewportCapturer}, downscales it, and resolves to a JPEG {@code data:}
+     * URI string the snapshot content script embeds in place of an unreadable
+     * canvas. Resolves to {@code null} on any failure (no capturer, no view,
+     * encode error) — the content script then leaves the canvas blank.
+     *
+     * <p>capturePixels must run on the UI thread; the JPEG encode (compress +
+     * base64 of a full-viewport bitmap) is moved off it.
+     */
+    private GeckoResult<Object> handleSnapshotScreenshot() {
+        ViewportCapturer capturer = mViewportCapturer;
+        if (capturer == null) {
+            return GeckoResult.fromValue(null);
+        }
+        GeckoResult<Object> out = new GeckoResult<>();
+        mMainExecutor.execute(() -> {
+            GeckoResult<Bitmap> bitmapResult;
+            try {
+                bitmapResult = capturer.capture();
+            } catch (Exception e) {
+                Log.e(TAG, "snapshot screenshot capture failed", e);
+                out.complete(null);
+                return;
+            }
+            if (bitmapResult == null) {
+                out.complete(null);
+                return;
+            }
+            bitmapResult.accept(bitmap -> {
+                if (bitmap == null) {
+                    out.complete(null);
+                    return;
+                }
+                mNetworkExecutor.execute(() -> out.complete(encodeJpegDataUri(bitmap)));
+            }, e -> {
+                Log.e(TAG, "snapshot screenshot capturePixels failed", e);
+                out.complete(null);
+            });
+        });
+        return out;
+    }
+
+    /**
+     * Encodes a bitmap as a JPEG {@code data:} URI, downscaled so the longest
+     * side is at most {@code SNAPSHOT_SHOT_MAX_DIM}px — a background screenshot
+     * doesn't need full device resolution, and a smaller string keeps the
+     * message back to JS modest. Returns {@code null} on failure.
+     */
+    private static final int SNAPSHOT_SHOT_MAX_DIM = 1600;
+
+    private static String encodeJpegDataUri(Bitmap bitmap) {
+        try {
+            int w = bitmap.getWidth();
+            int h = bitmap.getHeight();
+            int max = Math.max(w, h);
+            Bitmap scaled = bitmap;
+            if (max > SNAPSHOT_SHOT_MAX_DIM) {
+                float ratio = (float) SNAPSHOT_SHOT_MAX_DIM / max;
+                scaled = Bitmap.createScaledBitmap(
+                        bitmap, Math.round(w * ratio), Math.round(h * ratio), true);
+            }
+            try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+                scaled.compress(Bitmap.CompressFormat.JPEG, 85, baos);
+                if (scaled != bitmap) {
+                    scaled.recycle();
+                }
+                String b64 = Base64.encodeToString(baos.toByteArray(), Base64.NO_WRAP);
+                return "data:image/jpeg;base64," + b64;
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "encodeJpegDataUri failed", e);
+            return null;
         }
     }
 
