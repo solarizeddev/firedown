@@ -12,6 +12,11 @@ import androidx.annotation.Nullable;
 
 public class ProgressOverlayView extends View {
 
+    /** Target ring radius in dp (~54dp outer). Fixed so the download ring
+     *  matches the size of the centered mime glyph shown for non-progress
+     *  tiles; clamped to the view in onDraw so it never overflows. */
+    private static final float RING_RADIUS_DP = 24f;
+
     private final Paint trackPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint arcPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -125,12 +130,18 @@ public class ProgressOverlayView extends View {
 
         float cx = w / 2f;
         float cy = h / 2f;
-        // 0.28 of the shorter side: the ring is the download tile's focal point
-        // (it owns the picture zone now that the placeholder glyph is gone), so
-        // it wants to read as the hero, not a small overlay. Only grid/dense
-        // download tiles show this view — the list uses the inline bar — so the
-        // bump doesn't touch list rows.
-        float radius = Math.min(w, h) * 0.28f;
+        // Fixed target size (~54dp ring), clamped to fit the view. The progress
+        // ring is the in-progress counterpart of the centered mime glyph shown
+        // for non-progress tiles, so it must read at the SAME size and sit
+        // centered the same way. Sizing off the shorter side alone made the
+        // ring tiny in the grid's wide-but-short picture zone (the ring shrank
+        // to the zone height while the glyph kept its fixed size) — which left
+        // it looking small and lost. A fixed target keeps the two consistent.
+        // The 0.42 clamp only kicks in for a view too small to hold the target.
+        // Only grid/dense download tiles show this view (the list uses the
+        // inline bar), so this never touches list rows.
+        float density = getResources().getDisplayMetrics().density;
+        float radius = Math.min(Math.min(w, h) * 0.42f, RING_RADIUS_DP * density);
         float strokeWidth = radius * 0.25f;
 
         trackPaint.setStrokeWidth(strokeWidth);
