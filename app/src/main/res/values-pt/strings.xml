@@ -490,4 +490,5 @@
     <string name="settings_sync_cat_manage">Gerir sincronização</string>
     <string name="browser_menu_save_snapshot">Salvar instantâneo</string>
     <string name="browser_snapshot_saving">Salvando instantâneo da página…</string>
+    <string name="browser_snapshot_saved">Instantâneo salvo</string>
 </resources>

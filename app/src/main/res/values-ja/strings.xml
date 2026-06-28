@@ -619,4 +619,5 @@
     <string name="settings_sync_cat_manage">同期の管理</string>
     <string name="browser_menu_save_snapshot">スナップショットを保存</string>
     <string name="browser_snapshot_saving">ページのスナップショットを保存しています…</string>
+    <string name="browser_snapshot_saved">スナップショットを保存しました</string>
 </resources>

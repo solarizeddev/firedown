@@ -489,4 +489,5 @@
     <string name="settings_sync_cat_manage">Eşitlemeyi yönet</string>
     <string name="browser_menu_save_snapshot">Anlık görüntüyü kaydet</string>
     <string name="browser_snapshot_saving">Sayfa anlık görüntüsü kaydediliyor…</string>
+    <string name="browser_snapshot_saved">Anlık görüntü kaydedildi</string>
 </resources>

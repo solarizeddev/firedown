@@ -429,4 +429,5 @@
     <string name="settings_sync_cat_manage">Synkronoinnin hallinta</string>
     <string name="browser_menu_save_snapshot">Tallenna tilannevedos</string>
     <string name="browser_snapshot_saving">Tallennetaan sivun tilannevedosta…</string>
+    <string name="browser_snapshot_saved">Tilannevedos tallennettu</string>
 </resources>

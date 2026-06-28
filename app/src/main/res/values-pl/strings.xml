@@ -487,4 +487,5 @@
     <string name="settings_sync_cat_manage">Zarządzaj synchronizacją</string>
     <string name="browser_menu_save_snapshot">Zapisz migawkę</string>
     <string name="browser_snapshot_saving">Zapisywanie migawki strony…</string>
+    <string name="browser_snapshot_saved">Zapisano migawkę</string>
 </resources>

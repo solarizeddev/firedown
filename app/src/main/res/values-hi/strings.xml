@@ -395,4 +395,5 @@
     <string name="settings_sync_cat_manage">सिंक प्रबंधित करें</string>
     <string name="browser_menu_save_snapshot">स्नैपशॉट सहेजें</string>
     <string name="browser_snapshot_saving">पेज स्नैपशॉट सहेजा जा रहा है…</string>
+    <string name="browser_snapshot_saved">स्नैपशॉट सहेजा गया</string>
 </resources>

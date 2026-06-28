@@ -60,7 +60,10 @@ import com.solarized.firedown.geckoview.NestedGeckoViewBehavior;
 import com.solarized.firedown.geckoview.media.GeckoMediaPlaybackService;
 import com.solarized.firedown.geckoview.media.GeckoMetaData;
 import com.solarized.firedown.geckoview.toolbar.BottomNavigationBar;
+import com.solarized.firedown.data.entity.BrowserDownloadEntity;
 import com.solarized.firedown.manager.DownloadRequest;
+import com.solarized.firedown.manager.RunnableManager;
+import com.solarized.firedown.utils.BrowserHeaders;
 import com.solarized.firedown.phone.DownloadsActivity;
 import com.solarized.firedown.phone.dialogs.BrowserAppDialogFragment;
 import com.solarized.firedown.phone.SettingsActivity;
@@ -170,6 +173,14 @@ public class BrowserFragment extends BaseBrowserFragment
     private BottomNavigationBar mBottomNavigationBar;
     private GeckoSwipeRefreshLayout mSwipeRefreshLayout;
     private AutoCompleteEditText mAutoCompleteEditText;
+
+    // ── Save snapshot ───────────────────────────────────────────────────────────────────────────────
+    // The in-progress "Saving snapshot…" snackbar (flipped to "Snapshot saved ·
+    // View" on completion), and a flag marking THIS fragment as the snapshot's
+    // initiator so the (fan-out) download callback only acts once.
+    private Snackbar mSnapshotSnackbar;
+    private boolean mSnapshotPending;
+    private static final long SNAPSHOT_SAVE_TIMEOUT_MS = 90_000L;
 
     // ── ViewModels ────────────────────────────────────────────────────────────────────────────────
 
@@ -721,12 +732,13 @@ public class BrowserFragment extends BaseBrowserFragment
                 GeckoState geckoState = peekCurrentGeckoState();
                 if (geckoState == null) return;
                 mGeckoRuntimeHelper.captureSnapshot();
-                // Hold the "Saving…" hint a beat longer so it clearly spans the
-                // serialization and stays up until the download dialog (the
-                // completion signal) appears.
-                Snackbar saving = makeAnchoredSnackbar(R.string.browser_snapshot_saving);
-                saving.setDuration(Snackbar.LENGTH_LONG);
-                saving.show();
+                // Mark this fragment as the one that started the snapshot (the
+                // download callback fans out to both regular + incognito
+                // fragments — only the initiator should act) and show the
+                // in-progress snackbar; it flips to "Snapshot saved · View" in
+                // onDownload, with no confirm dialog in between.
+                mSnapshotPending = true;
+                showSnapshotSavingSnackbar();
             } else if (id == R.id.popup_go_forward) {
                 GeckoState geckoState = peekCurrentGeckoState();
                 if (geckoState == null) return;
@@ -1082,6 +1094,7 @@ public class BrowserFragment extends BaseBrowserFragment
     public void onDestroyView() {
         super.onDestroyView();
         Log.d(TAG, "onDestroyView: releasing GeckoView session");
+        dismissSnapshotSnackbar();
         if (mSwipeRefreshLayout != null) {
             mSwipeRefreshLayout.setOnRefreshListener(null);
             mSwipeRefreshLayout.setOnChildScrollUpCallback(null);
@@ -1728,10 +1741,101 @@ public class BrowserFragment extends BaseBrowserFragment
         if (geckoState == null)
             return;
         geckoState.setWebResponse(response);
+
+        // "Save snapshot" produces a local blob (text/html). The user already
+        // chose to save it from the overflow menu, so the generic "save / cancel"
+        // download dialog is redundant friction — download it directly and flip
+        // the in-progress snackbar to "Snapshot saved · View". Gated on
+        // mSnapshotPending (set only on the initiating fragment) so: (a) only
+        // that fragment acts — the callback fans out to both regular + incognito
+        // fragments, so without the gate the service would start twice; and
+        // (b) a genuine, unrelated text/html FILE download (no snapshot in
+        // flight) still falls through to the normal dialog below instead of
+        // being swallowed.
+        if (mSnapshotPending && isSnapshotResponse(response)) {
+            mSnapshotPending = false;
+            downloadSnapshotDirect(geckoState);
+            return;
+        }
+
         Bundle bundle = new Bundle();
         bundle.putInt(Keys.ITEM_ID, geckoState.getEntityId());
         bundle.putBoolean(Keys.IS_INCOGNITO, mIsIncognitoThemed);
         NavigationUtils.navigateSafe(mNavController, R.id.dialog_browser_download, R.id.browser, bundle);
+    }
+
+    /**
+     * A snapshot download is a locally-produced {@code blob:} {@code text/html}
+     * — the only such download the app makes (captured media is always an http
+     * URL). Detect it so it skips the confirm dialog and gets the "saved"
+     * (not "Downloading…") snackbar.
+     */
+    private boolean isSnapshotResponse(WebResponse response) {
+        if (response == null) return false;
+        if (response.uri != null && response.uri.startsWith("blob:")) return true;
+        String contentType = response.headers != null
+                ? response.headers.get(BrowserHeaders.CONTENT_TYPE) : null;
+        return contentType != null && contentType.toLowerCase(Locale.ROOT).startsWith("text/html");
+    }
+
+    /**
+     * Starts the snapshot download without the confirm dialog and flips the
+     * in-progress snackbar to "Snapshot saved · View". Mirrors the service
+     * dispatch {@code startDownload} does, minus the dialog and the generic
+     * "Downloading…" snackbar.
+     */
+    private void downloadSnapshotDirect(GeckoState geckoState) {
+        BrowserDownloadEntity entity = new BrowserDownloadEntity(geckoState);
+        entity.setIncognito(mIsIncognitoThemed);
+        DownloadRequest request = DownloadRequest.from(entity);
+
+        Intent intent = new Intent(mActivity, RunnableManager.class);
+        intent.setAction(IntentActions.DOWNLOAD_START);
+        intent.putExtra(Keys.DOWNLOAD_REQUEST, request);
+        mActivity.startService(intent);
+
+        showSnapshotSavedSnackbar(request.isSaveToVault());
+    }
+
+    /**
+     * In-progress snackbar for a snapshot save: indefinite "Saving snapshot…"
+     * that {@link #onDownload} replaces with the "saved" snackbar once the page
+     * has serialized. A timeout clears it if no download is ever produced (the
+     * page errored), so an indefinite snackbar can't get stuck on screen.
+     */
+    private void showSnapshotSavingSnackbar() {
+        dismissSnapshotSnackbar();
+        Snackbar snackbar = makeAnchoredSnackbar(R.string.browser_snapshot_saving);
+        snackbar.setDuration(Snackbar.LENGTH_INDEFINITE);
+        final Snackbar shown = snackbar;
+        snackbar.getView().postDelayed(() -> {
+            if (mSnapshotSnackbar == shown) {
+                mSnapshotPending = false;
+                dismissSnapshotSnackbar();
+            }
+        }, SNAPSHOT_SAVE_TIMEOUT_MS);
+        mSnapshotSnackbar = snackbar;
+        snackbar.show();
+    }
+
+    /** Replaces the in-progress snackbar with "Snapshot saved" + a View action. */
+    private void showSnapshotSavedSnackbar(boolean saveToVault) {
+        dismissSnapshotSnackbar();
+        Snackbar snackbar = makeAnchoredSnackbar(R.string.browser_snapshot_saved);
+        snackbar.setDuration(Snackbar.LENGTH_LONG);
+        snackbar.setAction(R.string.file_view, v -> {
+            Intent intent = new Intent(mActivity, saveToVault ? VaultActivity.class : DownloadsActivity.class);
+            mStartForResult.launch(intent);
+        });
+        mSnapshotSnackbar = snackbar;
+        snackbar.show();
+    }
+
+    private void dismissSnapshotSnackbar() {
+        if (mSnapshotSnackbar != null) {
+            mSnapshotSnackbar.dismiss();
+            mSnapshotSnackbar = null;
+        }
     }
 
     @Override
