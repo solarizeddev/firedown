@@ -130,22 +130,13 @@ public class PopupBrowserSheetDialogFragment extends BaseBottomSheetDialogFragme
         sizePopupContent();
     }
 
-    // The Captured holder's content_frame carries layout_marginTop="10dp" (to
-    // clear the drag handle that overlaps it in its FrameLayout). That margin is
-    // OUTSIDE the sized height, so the holder's sheet is actually
-    // (visibleRect - mActionBarSize) + 10dp tall. Our drag handle lives INSIDE
-    // popup_content, so it adds nothing — match the holder by adding the same
-    // 10dp here. (This is the exact ~8dp the popup was short.)
-    private static final int HOLDER_CONTENT_MARGIN_TOP_DP = 10;
-
     /**
-     * Size the {@code popup_content} child so the popup's TOTAL sheet height
-     * equals the Captured holder's. The holder sizes its {@code content_frame}
-     * to {@code visibleRect.height() - mActionBarSize} and adds a 10dp top margin
-     * (outside that height); we fold the 10dp into our content height because our
-     * drag handle is inside the sized child rather than overlapping it. The
-     * FrameLayout root wraps this child, so the sheet follows it; the base's
-     * onStart expands it and the weighted NestedScrollView fills + scrolls.
+     * Size the {@code popup_content} child to {@code visibleRect.height() -
+     * mActionBarSize} so the sheet sits flush just under the toolbar (no
+     * overlap), matching the Captured holder. The FrameLayout root wraps this
+     * child, so the sheet follows it; the base's onStart expands it and the
+     * weighted NestedScrollView fills the space below the pinned header and
+     * scrolls.
      */
     private void sizePopupContent() {
         if (mView == null || mActivity == null) return;
@@ -155,9 +146,7 @@ public class PopupBrowserSheetDialogFragment extends BaseBottomSheetDialogFragme
         if (params == null) return;
         Rect visibleRect = new Rect();
         mActivity.getWindow().getDecorView().getWindowVisibleDisplayFrame(visibleRect);
-        int holderMarginPx = Math.round(
-                HOLDER_CONTENT_MARGIN_TOP_DP * getResources().getDisplayMetrics().density);
-        int height = visibleRect.height() - mActionBarSize + holderMarginPx;
+        int height = visibleRect.height() - mActionBarSize;
         if (height > 0) {
             params.height = height;
             content.setLayoutParams(params);
