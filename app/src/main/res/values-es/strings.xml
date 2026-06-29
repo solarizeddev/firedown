@@ -621,4 +621,5 @@
     <string name="settings_sync_cat_manage">Gestionar sincronización</string>
     <string name="browser_menu_save_snapshot">Guardar instantánea</string>
     <string name="browser_snapshot_saving">Guardando instantánea de la página…</string>
+    <string name="browser_snapshot_saved">Instantánea guardada</string>
 </resources>

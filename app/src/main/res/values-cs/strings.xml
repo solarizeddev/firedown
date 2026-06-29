@@ -443,4 +443,5 @@
     <string name="settings_sync_cat_manage">Správa synchronizace</string>
     <string name="browser_menu_save_snapshot">Uložit snímek</string>
     <string name="browser_snapshot_saving">Ukládání snímku stránky…</string>
+    <string name="browser_snapshot_saved">Snímek uložen</string>
 </resources>

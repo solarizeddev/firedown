@@ -383,4 +383,5 @@
     <string name="settings_sync_cat_manage">Управление на синхронизацията</string>
     <string name="browser_menu_save_snapshot">Запазване на снимка</string>
     <string name="browser_snapshot_saving">Запазване на снимка на страницата…</string>
+    <string name="browser_snapshot_saved">Снимката е запазена</string>
 </resources>

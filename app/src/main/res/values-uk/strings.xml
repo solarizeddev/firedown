@@ -405,4 +405,5 @@
     <string name="settings_sync_cat_manage">Керування синхронізацією</string>
     <string name="browser_menu_save_snapshot">Зберегти знімок</string>
     <string name="browser_snapshot_saving">Збереження знімка сторінки…</string>
+    <string name="browser_snapshot_saved">Знімок збережено</string>
 </resources>
