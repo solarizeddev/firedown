@@ -219,9 +219,81 @@
     <string name="trackers_info_categories">Izsekotāji · Reklāmas · Pirkstu nospiedumi · Sīkfaili</string>
     <string name="trackers_info_action">Pārvaldīt aizsardzību</string>
     <string name="trackers_info_today">%1$s šodien bloķēts</string>
-
-
-
-
-
+    <string name="bookmark_export">Eksportēt grāmatzīmes</string>
+    <string name="bookmark_export_done">Eksportētas %1$d grāmatzīmes uz Download/Firedown/backup</string>
+    <string name="bookmark_import">Importēt grāmatzīmes</string>
+    <string name="bookmark_import_done">Importētas %1$d grāmatzīmes</string>
+    <string name="bookmark_io_error">Neizdevās nolasīt grāmatzīmju failu</string>
+    <string name="bookmark_name">Nosaukums</string>
+    <string name="settings_sync_auth_subtitle">Apstipriniet savu identitāti, lai atklātu atkopšanas kodu</string>
+    <string name="settings_sync_cat_code">Atkopšanas kods</string>
+    <string name="settings_sync_cat_manage">Pārvaldīt sinhronizāciju</string>
+    <string name="settings_sync_code_copied">Atkopšanas kods nokopēts</string>
+    <string name="settings_sync_code_copy">Kopēt</string>
+    <string name="settings_sync_code_created_title">Saglabājiet savu atkopšanas kodu</string>
+    <string name="settings_sync_code_done">Gatavs</string>
+    <string name="settings_sync_code_hint">Atkopšanas kods</string>
+    <string name="settings_sync_code_saved_check">Esmu saglabājis savu atkopšanas kodu</string>
+    <string name="settings_sync_code_unavailable">Atkopšanas kods nav pieejams</string>
+    <string name="settings_sync_code_warning">Šis atkopšanas kods ir vienīgā atslēga jūsu sinhronizētajām grāmatzīmēm. Saglabājiet to paroļu pārvaldniekā — vai citā drošā vietā. Ja to pazaudēsiet, to nevar atjaunot.</string>
+    <string name="settings_sync_delete_action">Dzēst</string>
+    <string name="settings_sync_delete_done">Jūsu dati tika dzēsti no servera</string>
+    <string name="settings_sync_delete_failed">Neizdevās dzēst — pārbaudiet savienojumu un mēģiniet vēlreiz</string>
+    <string name="settings_sync_delete_message">Tas neatgriezeniski izdzēš jūsu šifrētās grāmatzīmes no servera un izslēdz sinhronizāciju šajā ierīcē. Grāmatzīmes šajā ierīcē tiek saglabātas. To nevar atsaukt — citas ierīces vairs nevarēs atjaunot no servera.</string>
+    <string name="settings_sync_delete_started">Dzēš jūsu datus no servera…</string>
+    <string name="settings_sync_delete_summary">Neatgriezeniski izdzēst jūsu šifrētās grāmatzīmes no servera</string>
+    <string name="settings_sync_delete_title">Dzēst datus no servera</string>
+    <string name="settings_sync_export_caveat_message">Šis fails ir saglabāts nešifrēts — ikviens, kas to var izlasīt, var izlasīt jūsu grāmatzīmes. Importējiet kodu paroļu pārvaldniekā (vai citā drošā vietā), pēc tam izdzēsiet failu. Paroļu pārvaldnieks to saglabā šifrētu; brīvs fails — ne.</string>
+    <string name="settings_sync_export_continue">Turpināt</string>
+    <string name="settings_sync_export_done">Atkopšanas kods saglabāts</string>
+    <string name="settings_sync_export_failed">Neizdevās saglabāt failu</string>
+    <string name="settings_sync_export_file_body">Firedown — grāmatzīmju sinhronizācijas atkopšanas kods\n\n%1$s\n\nŠis kods ir vienīgā atslēga jūsu sinhronizētajām grāmatzīmēm — ikviens, kuram tas ir, var tās izlasīt, un, ja to pazaudēsiet, to nevar atjaunot.\n\nŠis fails NAV šifrēts. Importējiet kodu paroļu pārvaldniekā (vai citā drošā vietā), pēc tam izdzēsiet šo failu.</string>
+    <string name="settings_sync_export_summary">Eksportēt kodu kā teksta failu, ko varat glabāt</string>
+    <string name="settings_sync_export_title">Saglabāt atkopšanas kodu failā</string>
+    <string name="settings_sync_faq_a1">Jā. Katra grāmatzīme tiek šifrēta šajā ierīcē, pirms tā tiek augšupielādēta. Serveris vienmēr glabā tikai sajauktus datus, kurus nevar izlasīt.</string>
+    <string name="settings_sync_faq_a2">Nē. Tikai jūsu atkopšanas kods var atbloķēt jūsu grāmatzīmes. Tās ir šifrētas pilnībā, nekas personisks nav pievienots, un serveris nekad neredz nešifrētus datus.</string>
+    <string name="settings_sync_faq_a3">Atslēga, kas ģenerēta jūsu ierīcē, kad ieslēdzat sinhronizāciju. Tā ir vienīgā lieta, kas var atšifrēt jūsu grāmatzīmes — šajā ierīcē vai jaunā.</string>
+    <string name="settings_sync_faq_a4">Jūsu sinhronizētās grāmatzīmes nevar atjaunot — ne jūs, ne mēs, jo mums nekad nebija atslēgas. Paroles atiestatīšanas nav. Saglabājiet kodu drošā vietā; paroļu pārvaldnieks ir ideāls.</string>
+    <string name="settings_sync_faq_a5">Nē. Nav reģistrācijas, e-pasta vai tālruņa numura — tikai atkopšanas kods. Pie jūsu grāmatzīmēm nav piesaistīts nekas personisks.</string>
+    <string name="settings_sync_faq_a6">Sinhronizācija ir izvēles iespēja un pēc noklusējuma izslēgta. Jūs vienmēr varat eksportēt savas grāmatzīmes failā un vēlāk tās importēt bez jebkāda servera.</string>
+    <string name="settings_sync_faq_q1">Vai manas grāmatzīmes ir šifrētas?</string>
+    <string name="settings_sync_faq_q2">Vai Firedown vai kāds cits var tās izlasīt?</string>
+    <string name="settings_sync_faq_q3">Kas ir atkopšanas kods?</string>
+    <string name="settings_sync_faq_q4">Kas notiek, ja pazaudēju savu atkopšanas kodu?</string>
+    <string name="settings_sync_faq_q5">Vai man ir nepieciešams konts vai e-pasts?</string>
+    <string name="settings_sync_faq_q6">Kas notiek, ja nevēlos izmantot sinhronizāciju?</string>
+    <string name="settings_sync_help_close">Sapratu</string>
+    <string name="settings_sync_help_summary">Kas ir šifrēts un kāpēc jūsu atkopšanas kods ir svarīgs</string>
+    <string name="settings_sync_help_title">Kā darbojas sinhronizācijas šifrēšana</string>
+    <string name="settings_sync_last_synced">Ieslēgts — pēdējoreiz sinhronizēts %1$s</string>
+    <string name="settings_sync_never_synced">Ieslēgts — vēl nav sinhronizēts</string>
+    <plurals name="settings_sync_now_done">
+        <item quantity="zero">Sinhronizēts — %d grāmatzīmju</item>
+        <item quantity="one">Sinhronizēta — %d grāmatzīme</item>
+        <item quantity="other">Sinhronizētas — %d grāmatzīmes</item>
+    </plurals>
+    <string name="settings_sync_now_failed">Neizdevās sinhronizēt grāmatzīmes — pārbaudiet savienojumu un mēģiniet vēlreiz</string>
+    <string name="settings_sync_now_started">Sinhronizē grāmatzīmes…</string>
+    <string name="settings_sync_now_title">Sinhronizēt tagad</string>
+    <string name="settings_sync_restore_action">Atjaunot</string>
+    <string name="settings_sync_restore_bad">Šis atkopšanas kods neizskatās pareizs</string>
+    <string name="settings_sync_restore_message">Ievadiet atkopšanas kodu no savas citas ierīces, lai apvienotu tās grāmatzīmes ar šo.</string>
+    <string name="settings_sync_restore_ok">Grāmatzīmju sinhronizācija atjaunota</string>
+    <string name="settings_sync_restore_title">Atjaunot grāmatzīmju sinhronizāciju</string>
+    <string name="settings_sync_setup_create">Izveidot jaunu</string>
+    <string name="settings_sync_setup_message">Jūsu grāmatzīmes tiek šifrētas šajā ierīcē, pirms tās to atstāj — serveris tās nekad neredz. Jūs saņemat atkopšanas kodu, kas ir vienīgā atslēga; glabājiet to drošībā, jo to nevar atjaunot, ja to pazaudēsiet.</string>
+    <string name="settings_sync_setup_restore">Man ir kods</string>
+    <string name="settings_sync_setup_title">Iestatīt grāmatzīmju sinhronizāciju</string>
+    <string name="settings_sync_show_code_summary">Atklāt kodu, kas atbloķē jūsu sinhronizētās grāmatzīmes</string>
+    <string name="settings_sync_show_code_title">Rādīt atkopšanas kodu</string>
+    <string name="settings_sync_sign_out_action">Izslēgt</string>
+    <string name="settings_sync_sign_out_message">Grāmatzīmju sinhronizācija tiks izslēgta, un atkopšanas kods tiks noņemts no šīs ierīces. Jūsu grāmatzīmes paliek šeit. Ja vēlaties vēlāk atkal sinhronizēt, pārliecinieties, ka esat saglabājis savu atkopšanas kodu.</string>
+    <string name="settings_sync_sign_out_summary">Pārtraukt sinhronizāciju un noņemt atslēgas no šīs ierīces</string>
+    <string name="settings_sync_sign_out_title">Izslēgt sinhronizāciju</string>
+    <string name="settings_sync_signed_out">Grāmatzīmju sinhronizācija izslēgta</string>
+    <string name="settings_sync_summary">Pilnībā šifrēta grāmatzīmju sinhronizācija starp jūsu ierīcēm</string>
+    <string name="settings_sync_switch_summary">Izslēgts — jūsu grāmatzīmes paliek šajā ierīcē</string>
+    <string name="settings_sync_title">Sinhronizēt grāmatzīmes</string>
+    <string name="sync_banner_subtitle">Pilnībā šifrēts — to var izlasīt tikai jūsu atkopšanas kods. Bez konta, bez e-pasta.</string>
+    <string name="sync_banner_title">Sinhronizējiet savas grāmatzīmes starp ierīcēm</string>
 </resources>

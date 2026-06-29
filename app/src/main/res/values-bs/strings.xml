@@ -279,9 +279,80 @@
     <string name="trackers_info_stat_saved">Ušteđeni podaci</string>
     <string name="trackers_info_action">Upravljanje zaštitom</string>
     <string name="trackers_info_today">%1$s blokirano danas</string>
-
-
-
-
-
+    <string name="bookmark_export">Izvezi zabilješke</string>
+    <string name="bookmark_export_done">Izvezeno %1$d zabilješki u Download/Firedown/backup</string>
+    <string name="bookmark_import">Uvezi zabilješke</string>
+    <string name="bookmark_import_done">Uvezeno %1$d zabilješki</string>
+    <string name="bookmark_io_error">Nije moguće pročitati datoteku zabilješki</string>
+    <string name="settings_sync_auth_subtitle">Potvrdite svoj identitet da otkrijete kôd za oporavak</string>
+    <string name="settings_sync_cat_code">Kôd za oporavak</string>
+    <string name="settings_sync_cat_manage">Upravljaj sinhronizacijom</string>
+    <string name="settings_sync_code_copied">Kôd za oporavak kopiran</string>
+    <string name="settings_sync_code_copy">Kopiraj</string>
+    <string name="settings_sync_code_created_title">Sačuvajte svoj kôd za oporavak</string>
+    <string name="settings_sync_code_done">Gotovo</string>
+    <string name="settings_sync_code_hint">Kôd za oporavak</string>
+    <string name="settings_sync_code_saved_check">Sačuvao sam svoj kôd za oporavak</string>
+    <string name="settings_sync_code_unavailable">Kôd za oporavak nije dostupan</string>
+    <string name="settings_sync_code_warning">Ovaj kôd za oporavak jedini je ključ za vaše sinhronizirane zabilješke. Sačuvajte ga u upravitelju lozinki — ili na drugom sigurnom mjestu. Ako ga izgubite, ne može se oporaviti.</string>
+    <string name="settings_sync_delete_action">Izbriši</string>
+    <string name="settings_sync_delete_done">Vaši podaci su izbrisani sa servera</string>
+    <string name="settings_sync_delete_failed">Brisanje nije uspjelo — provjerite vezu i pokušajte ponovo</string>
+    <string name="settings_sync_delete_message">Ovo trajno briše vaše šifrirane zabilješke sa servera i isključuje sinhronizaciju na ovom uređaju. Zabilješke na ovom uređaju ostaju. Ovo se ne može poništiti — drugi uređaji više neće moći vraćati podatke sa servera.</string>
+    <string name="settings_sync_delete_started">Brisanje vaših podataka sa servera…</string>
+    <string name="settings_sync_delete_summary">Trajno izbriši svoje šifrirane zabilješke sa servera</string>
+    <string name="settings_sync_delete_title">Izbriši podatke sa servera</string>
+    <string name="settings_sync_export_caveat_message">Ova datoteka je sačuvana nešifrirana — svako ko je može pročitati može pročitati vaše zabilješke. Uvezite kôd u upravitelj lozinki (ili na drugo sigurno mjesto), zatim izbrišite datoteku. Upravitelj lozinki je čuva šifriranom; slobodna datoteka ne.</string>
+    <string name="settings_sync_export_continue">Nastavi</string>
+    <string name="settings_sync_export_done">Kôd za oporavak sačuvan</string>
+    <string name="settings_sync_export_failed">Datoteku nije moguće sačuvati</string>
+    <string name="settings_sync_export_file_body">Firedown — kôd za oporavak sinhronizacije zabilješki\n\n%1$s\n\nOvaj kôd je jedini ključ za vaše sinhronizirane zabilješke — svako ko ga ima može ih pročitati, a ako ga izgubite, ne može se oporaviti.\n\nOva datoteka NIJE šifrirana. Uvezite kôd u upravitelj lozinki (ili na drugo sigurno mjesto), zatim izbrišite ovu datoteku.</string>
+    <string name="settings_sync_export_summary">Izvezite kôd kao tekstualnu datoteku koju možete pohraniti</string>
+    <string name="settings_sync_export_title">Sačuvaj kôd za oporavak u datoteku</string>
+    <string name="settings_sync_faq_a1">Da. Svaka zabilješka se šifrira na ovom uređaju prije nego što se prenese. Server uvijek pohranjuje samo nečitljive podatke koje ne može pročitati.</string>
+    <string name="settings_sync_faq_a2">Ne. Samo vaš kôd za oporavak može otključati vaše zabilješke. Šifrirane su od kraja do kraja, ništa lično nije priloženo, a server nikada ne vidi nešifrirane podatke.</string>
+    <string name="settings_sync_faq_a3">Ključ generiran na vašem uređaju kada uključite sinhronizaciju. To je jedina stvar koja može dešifrirati vaše zabilješke — na ovom uređaju ili na novom.</string>
+    <string name="settings_sync_faq_a4">Vaše sinhronizirane zabilješke ne mogu se oporaviti — ni vi, ni mi, jer nikada nismo imali ključ. Nema resetiranja lozinke. Sačuvajte kôd na sigurno mjesto; upravitelj lozinki je idealan.</string>
+    <string name="settings_sync_faq_a5">Ne. Nema registracije, e-pošte ni broja telefona — samo kôd za oporavak. Uz vaše zabilješke nije vezano ništa lično.</string>
+    <string name="settings_sync_faq_a6">Sinhronizacija je opcionalna i podrazumijevano isključena. Svoje zabilješke uvijek možete izvesti u datoteku i kasnije ih uvesti, bez ikakvog servera.</string>
+    <string name="settings_sync_faq_q1">Jesu li moje zabilješke šifrirane?</string>
+    <string name="settings_sync_faq_q2">Mogu li ih Firedown ili neko drugi pročitati?</string>
+    <string name="settings_sync_faq_q3">Šta je kôd za oporavak?</string>
+    <string name="settings_sync_faq_q4">Šta ako izgubim svoj kôd za oporavak?</string>
+    <string name="settings_sync_faq_q5">Trebam li nalog ili e-poštu?</string>
+    <string name="settings_sync_faq_q6">Šta ako ne želim koristiti sinhronizaciju?</string>
+    <string name="settings_sync_help_close">Razumijem</string>
+    <string name="settings_sync_help_summary">Šta je šifrirano i zašto je vaš kôd za oporavak važan</string>
+    <string name="settings_sync_help_title">Kako funkcionira šifriranje sinhronizacije</string>
+    <string name="settings_sync_last_synced">Uključeno — zadnja sinhronizacija %1$s</string>
+    <string name="settings_sync_never_synced">Uključeno — još nije sinhronizirano</string>
+    <plurals name="settings_sync_now_done">
+        <item quantity="one">Sinhronizirano — %d zabilješka</item>
+        <item quantity="few">Sinhronizirano — %d zabilješke</item>
+        <item quantity="other">Sinhronizirano — %d zabilješki</item>
+    </plurals>
+    <string name="settings_sync_now_failed">Zabilješke nije moguće sinhronizirati — provjerite vezu i pokušajte ponovo</string>
+    <string name="settings_sync_now_started">Sinhronizacija zabilješki…</string>
+    <string name="settings_sync_now_title">Sinhroniziraj sada</string>
+    <string name="settings_sync_restore_action">Vrati</string>
+    <string name="settings_sync_restore_bad">Taj kôd za oporavak ne izgleda ispravno</string>
+    <string name="settings_sync_restore_message">Unesite kôd za oporavak s drugog uređaja da njegove zabilješke spojite s ovim uređajem.</string>
+    <string name="settings_sync_restore_ok">Sinhronizacija zabilješki vraćena</string>
+    <string name="settings_sync_restore_title">Vrati sinhronizaciju zabilješki</string>
+    <string name="settings_sync_setup_create">Kreiraj novi</string>
+    <string name="settings_sync_setup_message">Vaše zabilješke se šifriraju na ovom uređaju prije nego što ga napuste — server ih nikada ne vidi. Dobivate kôd za oporavak koji je jedini ključ; čuvajte ga na sigurnom, jer se ne može oporaviti ako ga izgubite.</string>
+    <string name="settings_sync_setup_restore">Imam kôd</string>
+    <string name="settings_sync_setup_title">Postavi sinhronizaciju zabilješki</string>
+    <string name="settings_sync_show_code_summary">Otkrijte kôd koji otključava vaše sinhronizirane zabilješke</string>
+    <string name="settings_sync_show_code_title">Prikaži kôd za oporavak</string>
+    <string name="settings_sync_sign_out_action">Isključi</string>
+    <string name="settings_sync_sign_out_message">Sinhronizacija zabilješki bit će isključena, a kôd za oporavak uklonjen s ovog uređaja. Vaše zabilješke ostaju ovdje. Ako želite kasnije ponovo sinhronizirati, provjerite jeste li sačuvali svoj kôd za oporavak.</string>
+    <string name="settings_sync_sign_out_summary">Zaustavi sinhronizaciju i ukloni ključeve s ovog uređaja</string>
+    <string name="settings_sync_sign_out_title">Isključi sinhronizaciju</string>
+    <string name="settings_sync_signed_out">Sinhronizacija zabilješki isključena</string>
+    <string name="settings_sync_summary">Sinhronizacija zabilješki šifrirana od kraja do kraja na svim vašim uređajima</string>
+    <string name="settings_sync_switch_summary">Isključeno — vaše zabilješke ostaju na ovom uređaju</string>
+    <string name="settings_sync_title">Sinhroniziraj zabilješke</string>
+    <string name="sync_banner_subtitle">Šifrirano od kraja do kraja — samo vaš kôd za oporavak može ga pročitati. Bez naloga, bez e-pošte.</string>
+    <string name="sync_banner_title">Sinhronizirajte svoje zabilješke na svim uređajima</string>
 </resources>

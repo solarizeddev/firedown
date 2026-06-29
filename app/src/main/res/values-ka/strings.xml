@@ -279,9 +279,79 @@
     <string name="trackers_info_stat_saved">შენახული მონაცემები</string>
     <string name="trackers_info_action">დაცვის მართვა</string>
     <string name="trackers_info_today">%1$s დღეს დაბლოკილია</string>
-
-
-
-
-
+    <string name="bookmark_export">სანიშნეების ექსპორტი</string>
+    <string name="bookmark_export_done">%1$d სანიშნე ექსპორტირდა საქაღალდეში Download/Firedown/backup</string>
+    <string name="bookmark_import">სანიშნეების იმპორტი</string>
+    <string name="bookmark_import_done">%1$d სანიშნე იმპორტირდა</string>
+    <string name="bookmark_io_error">სანიშნეების ფაილის წაკითხვა ვერ მოხერხდა</string>
+    <string name="settings_sync_auth_subtitle">დაადასტურეთ, რომ ეს თქვენ ხართ, აღდგენის კოდის სანახავად</string>
+    <string name="settings_sync_cat_code">აღდგენის კოდი</string>
+    <string name="settings_sync_cat_manage">სინქრონიზაციის მართვა</string>
+    <string name="settings_sync_code_copied">აღდგენის კოდი დაკოპირდა</string>
+    <string name="settings_sync_code_copy">კოპირება</string>
+    <string name="settings_sync_code_created_title">შეინახეთ თქვენი აღდგენის კოდი</string>
+    <string name="settings_sync_code_done">მზადაა</string>
+    <string name="settings_sync_code_hint">აღდგენის კოდი</string>
+    <string name="settings_sync_code_saved_check">შევინახე ჩემი აღდგენის კოდი</string>
+    <string name="settings_sync_code_unavailable">აღდგენის კოდი მიუწვდომელია</string>
+    <string name="settings_sync_code_warning">ეს აღდგენის კოდი თქვენი სინქრონიზებული სანიშნეების ერთადერთი გასაღებია. შეინახეთ იგი თქვენს პაროლების მმართველში — ან სხვა უსაფრთხო ადგილას. დაკარგვის შემთხვევაში მისი აღდგენა შეუძლებელია.</string>
+    <string name="settings_sync_delete_action">წაშლა</string>
+    <string name="settings_sync_delete_done">თქვენი მონაცემები წაიშალა სერვერიდან</string>
+    <string name="settings_sync_delete_failed">წაშლა ვერ მოხერხდა — შეამოწმეთ კავშირი და სცადეთ ხელახლა</string>
+    <string name="settings_sync_delete_message">ეს სამუდამოდ შლის თქვენს დაშიფრულ სანიშნეებს სერვერიდან და გამორთავს სინქრონიზაციას ამ მოწყობილობაზე. ამ მოწყობილობის სანიშნეები რჩება. ამის გაუქმება შეუძლებელია — სხვა მოწყობილობები ვეღარ შეძლებენ სერვერიდან აღდგენას.</string>
+    <string name="settings_sync_delete_started">თქვენი მონაცემები იშლება სერვერიდან…</string>
+    <string name="settings_sync_delete_summary">სამუდამოდ წაშალეთ თქვენი დაშიფრული სანიშნეები სერვერიდან</string>
+    <string name="settings_sync_delete_title">მონაცემების წაშლა სერვერიდან</string>
+    <string name="settings_sync_export_caveat_message">ეს ფაილი ინახება დაუშიფრავად — ვისაც შეუძლია მისი წაკითხვა, შეუძლია თქვენი სანიშნეების წაკითხვა. დააიმპორტეთ კოდი თქვენს პაროლების მმართველში (ან სხვა უსაფრთხო ადგილას), შემდეგ კი წაშალეთ ფაილი. პაროლების მმართველი მას დაშიფრულად ინახავს; ცალკე ფაილი — არა.</string>
+    <string name="settings_sync_export_continue">გაგრძელება</string>
+    <string name="settings_sync_export_done">აღდგენის კოდი შენახულია</string>
+    <string name="settings_sync_export_failed">ფაილის შენახვა ვერ მოხერხდა</string>
+    <string name="settings_sync_export_file_body">Firedown — სანიშნეების სინქრონიზაციის აღდგენის კოდი\n\n%1$s\n\nეს კოდი თქვენი სინქრონიზებული სანიშნეების ერთადერთი გასაღებია — ვისაც აქვს იგი, შეუძლია მათი წაკითხვა, და დაკარგვის შემთხვევაში მისი აღდგენა შეუძლებელია.\n\nეს ფაილი დაშიფრული არ არის. დააიმპორტეთ კოდი თქვენს პაროლების მმართველში (ან სხვა უსაფრთხო ადგილას), შემდეგ კი წაშალეთ ეს ფაილი.</string>
+    <string name="settings_sync_export_summary">ექსპორტი გაუკეთეთ კოდს ტექსტურ ფაილად, რომელიც შეგიძლიათ შეინახოთ</string>
+    <string name="settings_sync_export_title">აღდგენის კოდის ფაილში შენახვა</string>
+    <string name="settings_sync_faq_a1">დიახ. თითოეული სანიშნე იშიფრება ამ მოწყობილობაზე ატვირთვამდე. სერვერი ინახავს მხოლოდ არეულ მონაცემებს, რომელთა წაკითხვაც მას არ შეუძლია.</string>
+    <string name="settings_sync_faq_a2">არა. მხოლოდ თქვენს აღდგენის კოდს შეუძლია თქვენი სანიშნეების გახსნა. ისინი ბოლომდე დაშიფრულია, არაფერი პირადი არ არის მიბმული, და სერვერი არასოდეს ხედავს ამოშიფრულ მონაცემებს.</string>
+    <string name="settings_sync_faq_a3">გასაღები, რომელიც იქმნება თქვენს მოწყობილობაზე, როცა ჩართავთ სინქრონიზაციას. ეს ერთადერთი რამეა, რასაც შეუძლია თქვენი სანიშნეების გაშიფვრა — ამ მოწყობილობაზე თუ ახალზე.</string>
+    <string name="settings_sync_faq_a4">თქვენი სინქრონიზებული სანიშნეების აღდგენა შეუძლებელია — ვერც თქვენ და ვერც ჩვენ, რადგან გასაღები არასოდეს გვქონია. პაროლის აღდგენა არ არსებობს. შეინახეთ კოდი უსაფრთხო ადგილას; პაროლების მმართველი იდეალურია.</string>
+    <string name="settings_sync_faq_a5">არა. არ არის რეგისტრაცია, ელფოსტა ან ტელეფონის ნომერი — მხოლოდ აღდგენის კოდი. არაფერი პირადი არ არის მიბმული თქვენს სანიშნეებზე.</string>
+    <string name="settings_sync_faq_a6">სინქრონიზაცია არჩევითია და ნაგულისხმევად გამორთულია. ყოველთვის შეგიძლიათ თქვენი სანიშნეების ფაილში ექსპორტი და მოგვიანებით იმპორტი, ყოველგვარი სერვერის გარეშე.</string>
+    <string name="settings_sync_faq_q1">ჩემი სანიშნეები დაშიფრულია?</string>
+    <string name="settings_sync_faq_q2">შეუძლია Firedown-ს ან ვინმე სხვას მათი წაკითხვა?</string>
+    <string name="settings_sync_faq_q3">რა არის აღდგენის კოდი?</string>
+    <string name="settings_sync_faq_q4">რა მოხდება, თუ აღდგენის კოდს დავკარგავ?</string>
+    <string name="settings_sync_faq_q5">მჭირდება ანგარიში ან ელფოსტა?</string>
+    <string name="settings_sync_faq_q6">რა მოხდება, თუ სინქრონიზაციის გამოყენება არ მინდა?</string>
+    <string name="settings_sync_help_close">გასაგებია</string>
+    <string name="settings_sync_help_summary">რა იშიფრება და რატომ არის მნიშვნელოვანი თქვენი აღდგენის კოდი</string>
+    <string name="settings_sync_help_title">როგორ მუშაობს სინქრონიზაციის დაშიფვრა</string>
+    <string name="settings_sync_last_synced">ჩართულია — ბოლო სინქრონიზაცია %1$s</string>
+    <string name="settings_sync_never_synced">ჩართულია — ჯერ არ სინქრონიზებულა</string>
+    <plurals name="settings_sync_now_done">
+        <item quantity="one">სინქრონიზებულია — %d სანიშნე</item>
+        <item quantity="other">სინქრონიზებულია — %d სანიშნე</item>
+    </plurals>
+    <string name="settings_sync_now_failed">სანიშნეების სინქრონიზაცია ვერ მოხერხდა — შეამოწმეთ კავშირი და სცადეთ ხელახლა</string>
+    <string name="settings_sync_now_started">სანიშნეები სინქრონიზდება…</string>
+    <string name="settings_sync_now_title">ახლავე სინქრონიზაცია</string>
+    <string name="settings_sync_restore_action">აღდგენა</string>
+    <string name="settings_sync_restore_bad">ეს აღდგენის კოდი არასწორად გამოიყურება</string>
+    <string name="settings_sync_restore_message">შეიყვანეთ აღდგენის კოდი თქვენი მეორე მოწყობილობიდან, რათა მისი სანიშნეები ამ მოწყობილობას შეუერთდეს.</string>
+    <string name="settings_sync_restore_ok">სანიშნეების სინქრონიზაცია აღდგა</string>
+    <string name="settings_sync_restore_title">სანიშნეების სინქრონიზაციის აღდგენა</string>
+    <string name="settings_sync_setup_create">ახლის შექმნა</string>
+    <string name="settings_sync_setup_message">თქვენი სანიშნეები იშიფრება ამ მოწყობილობაზე, სანამ მას დატოვებენ — სერვერი მათ არასოდეს ხედავს. თქვენ მიიღებთ აღდგენის კოდს, რომელიც ერთადერთი გასაღებია; შეინახეთ უსაფრთხოდ, დაკარგვის შემთხვევაში მისი აღდგენა შეუძლებელია.</string>
+    <string name="settings_sync_setup_restore">მაქვს კოდი</string>
+    <string name="settings_sync_setup_title">სანიშნეების სინქრონიზაციის დაყენება</string>
+    <string name="settings_sync_show_code_summary">აჩვენეთ კოდი, რომელიც ხსნის თქვენს სინქრონიზებულ სანიშნეებს</string>
+    <string name="settings_sync_show_code_title">აღდგენის კოდის ჩვენება</string>
+    <string name="settings_sync_sign_out_action">გამორთვა</string>
+    <string name="settings_sync_sign_out_message">სანიშნეების სინქრონიზაცია გამოირთვება და აღდგენის კოდი ამ მოწყობილობიდან წაიშლება. თქვენი სანიშნეები აქ რჩება. დარწმუნდით, რომ შეინახეთ თქვენი აღდგენის კოდი, თუ მოგვიანებით ხელახლა გსურთ სინქრონიზაცია.</string>
+    <string name="settings_sync_sign_out_summary">სინქრონიზაციის შეჩერება და გასაღებების წაშლა ამ მოწყობილობიდან</string>
+    <string name="settings_sync_sign_out_title">სინქრონიზაციის გამორთვა</string>
+    <string name="settings_sync_signed_out">სანიშნეების სინქრონიზაცია გამოირთო</string>
+    <string name="settings_sync_summary">ბოლომდე დაშიფრული სანიშნეების სინქრონიზაცია თქვენს მოწყობილობებს შორის</string>
+    <string name="settings_sync_switch_summary">გამორთული — თქვენი სანიშნეები ამ მოწყობილობაზე რჩება</string>
+    <string name="settings_sync_title">სანიშნეების სინქრონიზაცია</string>
+    <string name="sync_banner_subtitle">ბოლომდე დაშიფრული — მხოლოდ თქვენს აღდგენის კოდს შეუძლია მისი წაკითხვა. ანგარიშის გარეშე, ელფოსტის გარეშე.</string>
+    <string name="sync_banner_title">სინქრონიზაცია გაუკეთეთ თქვენს სანიშნეებს მოწყობილობებს შორის</string>
 </resources>
