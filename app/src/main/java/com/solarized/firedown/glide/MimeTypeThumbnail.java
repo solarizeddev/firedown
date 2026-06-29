@@ -20,6 +20,15 @@ public class MimeTypeThumbnail {
     private static final int COLOR_BRAND_ORANGE    = 0xFFf0716c;
 
     /**
+     * Dark duotone ground for the list/grid fallback tiles (the {@code
+     * fillBounds} path). The brand-tinted glyph pops on it, and an overlaid
+     * white title + the ⋮ button read on their own — so the grid tile no longer
+     * needs heavy gradient scrims fighting the old light brand wash. The
+     * media-viewer letterbox ({@code fillBounds=false}) keeps that light wash.
+     */
+    private static final int COLOR_FALLBACK_BG_DARK = 0xFF2A2422;
+
+    /**
      * Upper bound (dp) on the mime icon for the {@code fillBounds} (list /
      * grid) path. The icon is normally half the cell's shorter side, which on
      * a ~124dp-tall grid tile is a ~62dp glyph that dominates the tile and
@@ -88,8 +97,15 @@ public class MimeTypeThumbnail {
 
         MimeTypeFallbackDrawable(int color, @Nullable Drawable icon, boolean fillBounds, int maxIconPx) {
             mBgPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-            mBgPaint.setColor(color);
-            mBgPaint.setAlpha(30);
+            if (fillBounds) {
+                // List / grid thumbnail slot: opaque dark duotone ground so
+                // overlaid white text + the ⋮ button read without the scrims.
+                mBgPaint.setColor(COLOR_FALLBACK_BG_DARK);
+            } else {
+                // Media-viewer letterbox: keep the light brand wash.
+                mBgPaint.setColor(color);
+                mBgPaint.setAlpha(30);
+            }
             mIcon = icon;
             mFillBounds = fillBounds;
             mMaxIconPx = maxIconPx;

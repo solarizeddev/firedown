@@ -774,6 +774,19 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         }
     }
 
+    /**
+     * Whether a tile renders real artwork (an image/video frame/PDF page/…)
+     * rather than the generated {@link com.solarized.firedown.glide.MimeTypeThumbnail}
+     * fallback. Mirrors GlideHelper's branches. Audio counts as real because it
+     * may carry album art (the dark fallback covers the art-less case visually).
+     */
+    private static boolean hasRealThumbnail(String mimeType) {
+        return FileUriHelper.isImage(mimeType) || FileUriHelper.isSVG(mimeType)
+                || FileUriHelper.isPdf(mimeType) || FileUriHelper.isGIF(mimeType)
+                || FileUriHelper.isWEP(mimeType) || FileUriHelper.isVideo(mimeType)
+                || FileUriHelper.isAudio(mimeType);
+    }
+
     private void bindFinished(DownloadViewHolder holder, DownloadEntity entity, boolean isGrid) {
         Tracing.begin(isGrid ? "bind:finished(grid)" : "bind:finished(list)");
         try {
@@ -789,7 +802,10 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         String secondary = secondaryMetaLabel(entity, mimeType);
 
         if (isGrid) {
-            setVisible(holder.topScrim, true);
+            // Generated-fallback tiles (no real artwork) now use a dark
+            // MimeTypeThumbnail ground, so the ⋮ button reads without the top
+            // gradient scrim — drop it there; real-thumbnail tiles keep it.
+            setVisible(holder.topScrim, hasRealThumbnail(mimeType));
             // Grid meta row reads "[chip] duration · size" (or
             // "resolution · size" for images): size is the one list-line
             // fact with no other home in the grid — date is carried by the
