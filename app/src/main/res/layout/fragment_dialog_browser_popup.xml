@@ -52,12 +52,24 @@
         uses colorPrimary text + tint so the destructive treatment
         matches Downloads' / Bookmarks' Delete row.
 -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!--
+    Root mirrors BrowserOptionHolderSheetDialogFragment: a FrameLayout whose
+    single child (popup_content) is sized in code to visibleRect.height() -
+    mActionBarSize, so the sheet wraps to the SAME height as the Captured sheet
+    (sits just under the toolbar). The inner NestedScrollView is weighted, so
+    the pinned header stays put and the rows scroll.
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:id="@+id/popup_content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
 
     <include
         layout="@layout/dialog_drag_handle" />
@@ -518,4 +530,6 @@
 
     </androidx.core.widget.NestedScrollView>
 
-</LinearLayout>
+    </LinearLayout>
+
+</FrameLayout>
