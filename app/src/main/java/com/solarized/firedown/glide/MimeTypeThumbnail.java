@@ -26,7 +26,7 @@ public class MimeTypeThumbnail {
      * needs heavy gradient scrims fighting the old light brand wash. The
      * media-viewer letterbox ({@code fillBounds=false}) keeps that light wash.
      */
-    private static final int COLOR_FALLBACK_BG_DARK = 0xFF524A44;
+    private static final int COLOR_FALLBACK_BG_DARK = 0xFF3E3733;
 
     /**
      * Upper bound (dp) on the mime icon for the {@code fillBounds} (list /
