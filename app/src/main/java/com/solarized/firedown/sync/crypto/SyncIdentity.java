@@ -29,6 +29,7 @@ public final class SyncIdentity {
     private static final String INFO_AUTH = "firedown/sync/auth-ed25519/v1";
     private static final String INFO_MASTER = "firedown/sync/master-enc/v1";
     private static final String INFO_FILE = "firedown/bookmarks/v1";
+    private static final String INFO_STORAGE = "firedown/storage/v1";
 
     /** Length of the recovery code in bytes (256-bit). */
     public static final int RECOVERY_CODE_BYTES = 32;
@@ -36,7 +37,8 @@ public final class SyncIdentity {
     private final byte[] accountId;   // 16 bytes
     private final String accountBase32;
     private final byte[] masterEnc;   // 32 bytes
-    private final byte[] fileKey;     // 32 bytes — AES-256-GCM blob key
+    private final byte[] fileKey;     // 32 bytes — AES-256-GCM bookmark-blob key
+    private final byte[] storageKey;  // 32 bytes — storage master key (wraps per-file DEKs)
     private final Ed25519Identity signer;
 
     private SyncIdentity(byte[] code) {
@@ -46,6 +48,8 @@ public final class SyncIdentity {
         this.masterEnc = Hkdf.expand(prk, INFO_MASTER.getBytes(StandardCharsets.US_ASCII), 32);
         this.fileKey = Hkdf.derive(masterEnc, new byte[0],
                 INFO_FILE, 32); // file_key = HKDF(master_enc, "firedown/bookmarks/v1")
+        this.storageKey = Hkdf.derive(masterEnc, new byte[0],
+                INFO_STORAGE, 32); // storage_key = HKDF(master_enc, "firedown/storage/v1")
         Arrays.fill(prk, (byte) 0);
 
         this.signer = new Ed25519Identity(authSeed);
@@ -114,6 +118,15 @@ public final class SyncIdentity {
 
     public byte[] fileKey() {
         return fileKey.clone();
+    }
+
+    /**
+     * The storage master key (distinct from {@link #fileKey()} via a separate
+     * HKDF info string, so the bookmark and storage content keys never coincide).
+     * Per-file data keys (DEKs) are wrapped under this; the server never sees it.
+     */
+    public byte[] storageMasterKey() {
+        return storageKey.clone();
     }
 
     /** Signs the canonical bytes for an authenticated request. */
