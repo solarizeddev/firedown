@@ -15,6 +15,7 @@ public class OptionsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
 
     private static final int TYPE_ITEM = 0;
     private static final int TYPE_FINAL = 1;
+    private static final int TYPE_SEPARATOR = 2;
 
     private final List<OptionItem> mItems;
     private final OnItemClickListener mListener;
@@ -69,6 +70,8 @@ public class OptionsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
 
     @Override
     public int getItemViewType(int position) {
+        OptionItem item = mItems.get(position);
+        if (item != null && item.isSeparator()) return TYPE_SEPARATOR;
         if (mHasFinalItem && position == mItems.size() - 1) return TYPE_FINAL;
         return TYPE_ITEM;
     }
@@ -77,6 +80,10 @@ public class OptionsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
+        if (viewType == TYPE_SEPARATOR) {
+            View view = inflater.inflate(R.layout.fragment_dialog_options_separator, parent, false);
+            return new SeparatorViewHolder(view);
+        }
         int layout = (viewType == TYPE_FINAL) ? mFinalLayout : mItemLayout;
         View view = inflater.inflate(layout, parent, false);
         return new BaseViewHolder(view, mListener);
@@ -92,6 +99,13 @@ public class OptionsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     @Override
     public int getItemCount() {
         return mItems != null ? mItems.size() : 0;
+    }
+
+    /** Non-interactive divider row (no text, no click). */
+    static class SeparatorViewHolder extends RecyclerView.ViewHolder {
+        SeparatorViewHolder(View view) {
+            super(view);
+        }
     }
 
     static class BaseViewHolder extends RecyclerView.ViewHolder {
