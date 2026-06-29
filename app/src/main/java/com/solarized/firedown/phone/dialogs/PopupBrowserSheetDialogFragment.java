@@ -19,6 +19,7 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.materialswitch.MaterialSwitch;
 import com.solarized.firedown.GlideHelper;
 import com.solarized.firedown.Keys;
@@ -126,16 +127,24 @@ public class PopupBrowserSheetDialogFragment extends BaseBottomSheetDialogFragme
     @Override
     public void onStart() {
         super.onStart();
-        if (mView == null || mActivity == null) return;
-        ViewGroup.LayoutParams params = mView.getLayoutParams();
-        if (params == null) return;
+        if (getDialog() == null || mActivity == null) return;
+        // Size the ACTUAL bottom-sheet container (design_bottom_sheet), not the
+        // content view — a BottomSheetDialog drives the sheet height from this
+        // FrameLayout, so setting the content's height had no effect. Height =
+        // visible viewport minus the toolbar, the same as the Captured holder,
+        // so the popup matches its height. The content root is match_parent and
+        // the inner NestedScrollView is weighted, so it fills and scrolls.
+        View sheet = getDialog().findViewById(
+                com.google.android.material.R.id.design_bottom_sheet);
+        if (sheet == null) return;
         Rect visibleRect = new Rect();
         mActivity.getWindow().getDecorView().getWindowVisibleDisplayFrame(visibleRect);
         int height = visibleRect.height() - mActionBarSize;
-        if (height > 0) {
-            params.height = height;
-            mView.setLayoutParams(params);
-        }
+        if (height <= 0) return;
+        ViewGroup.LayoutParams params = sheet.getLayoutParams();
+        params.height = height;
+        sheet.setLayoutParams(params);
+        BottomSheetBehavior.from(sheet).setState(BottomSheetBehavior.STATE_EXPANDED);
     }
 
     @Nullable
