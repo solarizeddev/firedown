@@ -104,33 +104,38 @@ public class PopupBrowserSheetDialogFragment extends BaseBottomSheetDialogFragme
 
 
     /**
-     * Cap the popup's height like the Captured-content holder: instead of the
-     * fixed 640dp dimen (too short — it clamped mid-screen) or no cap at all
-     * (covers the whole height on a tall list / small screen), cap to the
-     * viewport minus the toolbar (see {@link #getMaxSheetHeightPx()}). The
-     * sheet then stops just under the chrome; short content still hugs
-     * (wrap_content under the cap) and a tall list scrolls in the inner
-     * NestedScrollView.
+     * No dimen cap — the popup FILLS to just under the toolbar, the same sizing
+     * the Captured-content holder uses, so the two sheets match height instead
+     * of the popup hugging its rows (which left it shorter than Capture). The
+     * fixed height is applied in {@link #onStart()}; the inner NestedScrollView
+     * (weight 1) scrolls when the rows exceed the viewport.
      */
     @Override
     protected boolean isMaxHeightCapped() {
-        return true;
+        return false;
     }
 
     /**
-     * Max height = visible viewport minus the toolbar, so the popup sits below
-     * the chrome rather than covering the full height — same sizing the
-     * Captured-content holder uses (it applies it as a fixed inner height; the
-     * popup applies it as a BottomSheet max so short content still hugs).
-     * Falls back to the default dimen cap if the viewport can't be read.
+     * Size the sheet to the visible viewport minus the toolbar (mirrors
+     * {@code BrowserOptionHolderSheetDialogFragment}), so the popup stops just
+     * under the chrome and matches the Captured sheet's height. The pinned
+     * header keeps its natural height and the weighted NestedScrollView fills
+     * the rest. Run after super.onStart() (which clears the dimen cap and
+     * expands the sheet).
      */
     @Override
-    protected int getMaxSheetHeightPx() {
-        if (mActivity == null) return super.getMaxSheetHeightPx();
+    public void onStart() {
+        super.onStart();
+        if (mView == null || mActivity == null) return;
+        ViewGroup.LayoutParams params = mView.getLayoutParams();
+        if (params == null) return;
         Rect visibleRect = new Rect();
         mActivity.getWindow().getDecorView().getWindowVisibleDisplayFrame(visibleRect);
         int height = visibleRect.height() - mActionBarSize;
-        return height > 0 ? height : super.getMaxSheetHeightPx();
+        if (height > 0) {
+            params.height = height;
+            mView.setLayoutParams(params);
+        }
     }
 
     @Nullable
