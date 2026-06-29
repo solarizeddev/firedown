@@ -281,6 +281,10 @@ public abstract class BaseActivity extends AppCompatActivity implements IntentHa
             if (mPaused || isFinishing() || isDestroyed()) return;
             CrashReportSheet.showIfPending(
                     this, getSupportFragmentManager());
+            // In-app fallback for a ready update when notifications are denied;
+            // self-bails if the crash sheet above claimed the slot.
+            UpdateAvailableSheet.showIfReady(
+                    this, getSupportFragmentManager());
         });
     }
 

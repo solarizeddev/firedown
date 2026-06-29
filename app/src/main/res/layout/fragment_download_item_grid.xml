@@ -45,11 +45,16 @@
                 android:outlineProvider="background"
                 android:scaleType="centerCrop" />
 
-            <!-- Progress overlay on thumbnail (PROGRESS only) -->
+            <!-- Progress ring (PROGRESS only). Centered in the WHOLE tile —
+                 the in-progress counterpart of the centered mime glyph shown
+                 for non-progress tiles, so both states put their focal element
+                 in the same place at the same size (the ring is fixed-size, see
+                 ProgressOverlayView). The title sits in the bottom_block caption
+                 below, on its scrim. No placeholder glyph during a download. -->
             <com.solarized.firedown.ui.ProgressOverlayView
                 android:id="@+id/image_progress"
-                android:layout_width="0dp"
-                android:layout_height="0dp"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
                 android:visibility="gone"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
@@ -74,11 +79,16 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent">
 
+                <!-- Title. Full-width, left-aligned — same slot across every
+                     state (downloading / finished / queued / error), so titles
+                     line up down a mixed grid column. During a download the
+                     percent lives in the ring above, not here. -->
                 <TextView
                     android:id="@+id/file_name"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:ellipsize="end"
+                    android:includeFontPadding="false"
                     android:maxLines="1"
                     android:textColor="@android:color/white"
                     android:textSize="12sp"
@@ -126,8 +136,9 @@
 
                 </LinearLayout>
 
-                <!-- ERROR / QUEUED status. FINISHED's "size · date" label is
-                     list-only; the grid leans on title + mime instead. -->
+                <!-- ERROR / QUEUED / "Finishing…" status. FINISHED's "size ·
+                     date" label is list-only; the grid leans on title + mime
+                     instead. (Download progress shows in the ring, not here.) -->
                 <TextView
                     android:id="@+id/status_text"
                     style="@style/TextAppearance.Material3.BodySmall"

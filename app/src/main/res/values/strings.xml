@@ -18,6 +18,9 @@
     <string name="bookmark_action_open">Open in browser</string>
     <string name="bookmark_url_invalid">Enter a valid URL</string>
     <string name="browser_menu_find_in_page">Find in page</string>
+    <string name="browser_menu_save_snapshot">Save snapshot</string>
+    <string name="browser_snapshot_saving">Saving snapshot…</string>
+    <string name="browser_snapshot_saved">Snapshot saved</string>
     <string name="browser_menu_forward">Forward</string>
     <string name="browser_menu_refresh">Refresh</string>
     <string name="browser_menu_settings">Settings</string>
@@ -671,7 +674,16 @@
     <string name="update_failed_general_body">We will try again later.</string>
     <string name="update_failed_general_title">Firedown failed to update</string>
     <string name="update_prompt_install_body">A new version of Firedown is available. Tap to update.</string>
+    <!-- Versioned notification body; %1$s is the new version name. -->
+    <string name="update_prompt_install_body_versioned">%1$s is ready to install. Tap to update.</string>
     <string name="update_prompt_install_title">Firedown update</string>
+    <!-- In-app update-available bottom sheet (UpdateAvailableSheet). %1$s is the
+         new version name, e.g. "Firedown 1.1.81". -->
+    <string name="update_available_sheet_title">Update available</string>
+    <!-- %1$s is the currently-installed version name. -->
+    <string name="update_available_sheet_current">Current version %1$s</string>
+    <string name="update_available_sheet_whats_new">What\'s new</string>
+    <string name="update_available_sheet_install">Install</string>
     <string name="vault_decrypting">Decrypting file, please wait…</string>
     <string name="vault_encrypting">Encrypting file, please wait…</string>
     <string name="vault_unsupported">Can\'t open this file. To open, move it out of Safe Folder and try again.</string>

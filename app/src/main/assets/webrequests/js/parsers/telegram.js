@@ -96,11 +96,17 @@ function listenerTelegramPage(details) {
         const img = metaContent(html, "og:image");
 
         // <video src> first (covers album posts); fall back to og:video for a
-        // poster-only page that hasn't materialised the <video> element.
+        // poster-only page that hasn't materialised the <video> element. Open
+        // Graph spec defines og:video (legacy plain URL), og:video:url, and
+        // og:video:secure_url (https) — Telegram has used og:video historically,
+        // but check the spec'd siblings too so a markup change to the canonical
+        // og:video:url/secure_url form still captures the poster-only case.
         let srcs = collectVideoSrcs(html);
         let widthFromMeta = 0, heightFromMeta = 0;
         if (srcs.length === 0) {
-            const ogVideo = metaContent(html, "og:video");
+            const ogVideo = metaContent(html, "og:video")
+                || metaContent(html, "og:video:secure_url")
+                || metaContent(html, "og:video:url");
             if (ogVideo && /\.mp4(?:[?#]|$)/i.test(ogVideo)) {
                 srcs = [ogVideo];
                 widthFromMeta = parseInt(metaContent(html, "og:video:width"), 10) || 0;
@@ -109,6 +115,15 @@ function listenerTelegramPage(details) {
         }
 
         const durations = collectDurations(html);
+        // Durations are paired with videos BY DOCUMENT ORDER (index), which is
+        // only sound when every video contributed exactly one duration <time>.
+        // A mixed/partial post breaks that 1:1 alignment — e.g. a photo+video
+        // album (a photo has no message_video_duration) or a clip that hasn't
+        // rendered its <time> yet — and a misaligned index would stamp clip N
+        // with clip N+1's length. So trust the per-index pairing ONLY when the
+        // counts match; otherwise pass 0 and let sendVariants' ffmpeg probe read
+        // the real duration (correctness over skipping the probe).
+        const durationsAligned = durations.length === srcs.length;
         log("TELEGRAM", `doc filter: ${bytes} bytes, ${srcs.length} video(s)`, { origin });
         if (srcs.length === 0) return;
 
@@ -124,7 +139,7 @@ function listenerTelegramPage(details) {
                 name,
                 description,
                 img,
-                duration: durations[i] || 0,
+                duration: durationsAligned ? (durations[i] || 0) : 0,
                 dedupKey: multi ? url : undefined,
             });
         }

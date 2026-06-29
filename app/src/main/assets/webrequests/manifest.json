@@ -7,7 +7,7 @@
     }
   },
   "name": "webRequest-downloads",
-  "version": "2.34",
+  "version": "2.46",
   "permissions": [
     "nativeMessaging",
     "nativeMessagingFromContent",
@@ -45,6 +45,11 @@
       "js": ["js/page-state-bridge.js"],
       "run_at": "document_start",
       "all_frames": true
+    },
+    {
+      "matches": ["<all_urls>"],
+      "js": ["js/snapshot.js"],
+      "run_at": "document_idle"
     }
   ],
 

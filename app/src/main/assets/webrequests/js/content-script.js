@@ -23,10 +23,15 @@ clog('[cs] loaded', location.href);
 // settings-feature code stay separate.
 
 
-// Top-frame metadata responder. We only answer in the top frame so the
-// background's tabs.sendMessage (which broadcasts to all frames in a tab
-// by default) doesn't return an iframe's title instead of the page's.
-if (window === window.top) {
+// Per-frame metadata responder. Runs in EVERY frame (a bare block, NOT gated to
+// window.top) because an embedded media player lives in its own iframe with its
+// own document, mediaSession and <audio> binding. The background targets the
+// query to the frame that OWNS the captured media (browser.tabs.sendMessage
+// frameId = the request's frameId), so each frame answers for its OWN audio —
+// giving every clip its own title/thumbnail instead of one shared page card.
+// Targeting by frameId is what makes this safe (no cross-frame contamination);
+// the old top-frame-only gate existed only because the query used to broadcast.
+{
   // Walk the page's JSON-LD blocks for a VideoObject (schema.org). On video
   // SPAs (YouTube, etc.) the <title>/og: tags are often generic or stale
   // ("YouTube") while the JSON-LD VideoObject carries the real, current
@@ -254,6 +259,70 @@ if (window === window.top) {
     return null;
   };
 
+  // A schema.org VideoObject whose contentUrl (or url) IS the captured media —
+  // the page declaring "this URL is the video content". Mirrors readAudioJsonLd
+  // (below) for video, and is the per-URL counterpart to the page-level
+  // readVideoJsonLd above: that one returns the FIRST VideoObject for EVERY
+  // capture, so a page with several clips (a gallery, a showcase of demo
+  // videos) collapses to one shared title/thumbnail. Matching contentUrl to the
+  // captured URL instead gives each clip its OWN name + thumbnail. Returns
+  // {name, description, thumbnail} or null if no VideoObject points at this URL.
+  // Top-frame only like the rest of this responder — but that still covers a
+  // clip captured from a same-origin iframe, because the background passes the
+  // captured media URL and the top frame's JSON-LD can declare it.
+  const readVideoJsonLdByUrl = (mediaUrl) => {
+    if (!mediaUrl) return null;
+    return eachJsonLdNode((node) => {
+      if (!isVideoType(node['@type'])) return null;
+      const contentUrl = ldString(node.contentUrl) || ldString(node.url);
+      if (!contentUrl || !sameUrl(contentUrl, mediaUrl)) return null;
+      return {
+        name: ldString(node.name),
+        description: ldString(node.description),
+        thumbnail: ldImage(node.thumbnailUrl) || ldImage(node.thumbnail),
+      };
+    });
+  };
+
+  // Per-URL clip metadata a page declares in a Firedown-specific JSON block
+  // (`<script type="application/firedown+json">` — a list of
+  // {contentUrl, name, thumbnail, description?}). This is the counterpart to the
+  // ld+json VideoObject reader above, for pages that show SEVERAL clips and must
+  // NOT use schema.org for it: a real ld+json VideoObject list is read
+  // page-level by older builds (readVideoJsonLd returns ONE for every capture)
+  // and is crawler-visible (a gallery's demo clips become indexable site video).
+  // The custom MIME is inert to both — invisible to search engines and to the
+  // page-level reader — while we read it here by contentUrl, so each clip on a
+  // multi-clip page (firedown.app's own /demo showcase) gets its own title +
+  // thumbnail. Top-frame only like the rest of this responder, which still
+  // covers a clip captured from a same-origin iframe (the background passes the
+  // captured URL and the top frame declares it). Returns {name, description,
+  // thumbnail} or null.
+  const readDeclaredMediaByUrl = (mediaUrl) => {
+    if (!mediaUrl) return null;
+    let list;
+    try {
+      const el = document.querySelector('script[type="application/firedown+json"]');
+      if (!el) return null;
+      list = JSON.parse(el.textContent);
+    } catch (_) {
+      return null;
+    }
+    if (!Array.isArray(list)) return null;
+    for (let i = 0; i < list.length; i++) {
+      const item = list[i];
+      if (!item || typeof item !== 'object') continue;
+      const contentUrl = ldString(item.contentUrl) || ldString(item.url);
+      if (!contentUrl || !sameUrl(contentUrl, mediaUrl)) continue;
+      return {
+        name: ldString(item.name),
+        description: ldString(item.description),
+        thumbnail: ldImage(item.thumbnail) || ldImage(item.thumbnailUrl),
+      };
+    }
+    return null;
+  };
+
   const isAudioType = (t) =>
     t === 'AudioObject' || (Array.isArray(t) && t.includes('AudioObject'));
 
@@ -321,6 +390,38 @@ if (window === window.top) {
     return { role: 'unknown' };
   };
 
+  // The MediaSession the page published for whatever is playing RIGHT NOW —
+  // the per-track title + artwork a player exposes to the OS / lock screen
+  // (navigator.mediaSession.metadata). This is the precise per-item source: an
+  // embedded player updates it as the user moves between clips, so a page with
+  // several audios gives each its own title/thumbnail. Read defensively (the
+  // whole API and each field may be absent) and pick the largest artwork.
+  const readMediaSession = () => {
+    let m = null;
+    try { m = navigator.mediaSession && navigator.mediaSession.metadata; } catch (_) { m = null; }
+    if (!m) return { title: '', artist: '', artwork: '' };
+    let title = '';
+    let artist = '';
+    try { title = (m.title || '').trim(); } catch (_) {}
+    try { artist = (m.artist || '').trim(); } catch (_) {}
+    let artwork = '';
+    try {
+      const list = m.artwork || [];
+      let bestArea = -1;
+      for (let i = 0; i < list.length; i++) {
+        const a = list[i];
+        if (!a || !a.src) continue;
+        // sizes is "WxH" (largest wins; "any"/missing → 0, so a sized entry
+        // beats it but an only-"any" icon is still taken as a last resort).
+        let area = 0;
+        const wh = /^(\d+)x(\d+)$/i.exec((a.sizes || '').split(' ')[0]);
+        if (wh) area = (+wh[1]) * (+wh[2]);
+        if (area >= bestArea) { bestArea = area; artwork = a.src; }
+      }
+    } catch (_) {}
+    return { title, artist, artwork: absUrl(artwork) || artwork };
+  };
+
   browser.runtime.onMessage.addListener((msg, sender) => {
     if (!msg || msg.kind !== 'get-page-metadata') return;
     const meta = (selector, attr) => {
@@ -345,14 +446,33 @@ if (window === window.top) {
     // standalone audio file is the page's main content (enrich) or incidental
     // (keep the filename) — see resolveAudioContent. Non-audio captures ignore
     // these fields.
+    const ms = readMediaSession();
     const audio = msg.mediaUrl ? resolveAudioContent(msg.mediaUrl) : { role: 'unknown' };
+    // A player that published a now-playing MediaSession title is actively
+    // presenting real content, so it counts as 'content' even when the URL has
+    // no findable <audio> element in this frame (a `new Audio()`-driven embed).
+    // An incidental UI ding never sets mediaSession, so this can't mislabel one.
+    const audioRole = (audio.role === 'content' || ms.title) ? 'content' : audio.role;
+    // Per-URL clip match (a clip whose declared contentUrl IS the captured URL) —
+    // the most specific metadata possible, so it outranks the page-level poster
+    // and og:title in the consumer. Gives each clip on a multi-clip page its own
+    // title + thumbnail instead of the shared page card. Prefer the Firedown JSON
+    // block (multi-clip pages use it so older builds / crawlers aren't tripped),
+    // then fall back to a schema.org VideoObject for ordinary single-video sites.
+    const videoMatch = msg.mediaUrl
+      ? (readDeclaredMediaByUrl(msg.mediaUrl) || readVideoJsonLdByUrl(msg.mediaUrl))
+      : null;
     return Promise.resolve({
       url: location.href,
       title: document.title || '',
-      audioRole: audio.role,
+      audioRole: audioRole,
       audioLdName: audio.name || '',
       audioLdDescription: audio.description || '',
       audioLdThumbnail: audio.thumbnail || '',
+      // Per-item now-playing metadata (most specific for an embedded player).
+      mediaSessionTitle: ms.title,
+      mediaSessionArtist: ms.artist,
+      mediaSessionArtwork: ms.artwork,
       description: ogp('description'),
       ogTitle: ogp('og:title'),
       ogDescription: ogp('og:description'),
@@ -365,6 +485,11 @@ if (window === window.top) {
       ogVideoTitle: ogp('og:video:title'),
       videoLdName: videoLd ? videoLd.name : '',
       videoLdDescription: videoLd ? videoLd.description : '',
+      // Per-URL VideoObject match — clip-specific, ranked above the page-level
+      // fields in the consumer (requests.js).
+      videoLdMatchName: videoMatch ? videoMatch.name : '',
+      videoLdMatchDescription: videoMatch ? videoMatch.description : '',
+      videoLdMatchThumbnail: videoMatch ? videoMatch.thumbnail : '',
       // Thumbnail sources, most-specific first (consumer ranks poster highest).
       poster,
       ogImage: ogp('og:image:secure_url') || ogp('og:image'),

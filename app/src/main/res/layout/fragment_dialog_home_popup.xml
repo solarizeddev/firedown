@@ -22,6 +22,71 @@
         layout="@layout/dialog_drag_handle" />
 
 
+    <!-- New tab — always opens a REGULAR tab. Fixed meaning in both modes,
+         mirroring the Browser popup's new-tab rows. -->
+    <LinearLayout
+        android:id="@+id/popup_new_tab"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:background="?attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="16dp">
+
+        <TextView
+            style="@style/TextAppearance.Material3.TitleMedium"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:drawablePadding="16dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:text="@string/popup_tabs_new"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:textSize="16sp"
+            app:drawableStartCompat="@drawable/ic_tabs_new_24"
+            app:drawableTint="?attr/colorOnSurfaceVariant" />
+
+    </LinearLayout>
+
+
+    <!-- New private tab — always opens an INCOGNITO tab. -->
+    <LinearLayout
+        android:id="@+id/popup_new_incognito_tab"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:background="?attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="16dp">
+
+        <TextView
+            style="@style/TextAppearance.Material3.TitleMedium"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:drawablePadding="16dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:text="@string/open_new_private_tab_2"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:textSize="16sp"
+            app:drawableStartCompat="@drawable/ic_incognito_24"
+            app:drawableTint="?attr/colorOnSurfaceVariant" />
+
+    </LinearLayout>
+
+
+    <!-- Separates the new-tab group from the library/app rows (same divider
+         the Browser popup uses between its groups). -->
+    <View
+        style="@style/Firedown.Divider.InCard"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp" />
+
+
     <!-- Row order is Downloads → Safe Folder → History so each mode reads
          consistently with History last, above Settings:
            regular  : Safe Folder, History   (Downloads GONE)

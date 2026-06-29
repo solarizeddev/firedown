@@ -7,6 +7,7 @@
 import './common.js';
 import './vimeo.js';
 import './apple-podcasts.js';
+import './newsoveraudio.js';
 import './tiktok.js';
 import './twitter.js';
 import './bluesky.js';

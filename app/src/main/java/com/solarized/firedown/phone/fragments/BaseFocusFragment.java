@@ -664,6 +664,18 @@ public class BaseFocusFragment extends Fragment {
                 mActivity, mActivity.getPackageName() + ".fileprovider", file);
     }
 
+    /**
+     * Whether a finished download is an HTML page (a "Save snapshot" archive or
+     * any saved .html). Matched on mime first, with an extension fallback in
+     * case the stored mime is missing — so it renders in-app instead of opening
+     * an external browser.
+     */
+    private boolean isHtmlDownload(String mimeType, String filePath) {
+        if (mimeType != null && FileUriHelper.isHtml(mimeType)) return true;
+        String ext = FilenameUtils.getExtension(filePath);
+        return "html".equalsIgnoreCase(ext) || "htm".equalsIgnoreCase(ext);
+    }
+
     protected void openItemWith(DownloadEntity downloadEntity){
         if(downloadEntity == null){
             Snackbar snackbar = Snackbar.make(mActivity.getSnackAnchorView(),  R.string.error_general, Snackbar.LENGTH_LONG);
@@ -733,6 +745,18 @@ public class BaseFocusFragment extends Fragment {
                 }else{
                     startPlayerActivity(downloadEntity);
                 }
+            } else if (isHtmlDownload(mimeType, filePath)) {
+                // A saved HTML page (e.g. a "Save snapshot" archive). Render it
+                // in the built-in WebView viewer rather than bouncing to an
+                // external browser (Chrome/Brave). GeckoView can't load a local
+                // content:// file, but WebView can — and the viewer's JS-off /
+                // network-blocked settings are exactly right for a snapshot
+                // (scripts stripped, resources inlined). MIMETYPE_HTML tells
+                // HtmlViewerActivity to render rather than show the source.
+                Intent htmlIntent = new Intent(getContext(), HtmlViewerActivity.class);
+                htmlIntent.setDataAndType(uri, FileUriHelper.MIMETYPE_HTML);
+                htmlIntent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                startActivity(htmlIntent);
             } else if(FileUriHelper.isText(mimeType) || FileUriHelper.isSubtitle(mimeType)){
                 Intent textIntent = new Intent(getContext(), HtmlViewerActivity.class);
                 textIntent.setDataAndType(uri, FileUriHelper.MIMETYPE_TXT);

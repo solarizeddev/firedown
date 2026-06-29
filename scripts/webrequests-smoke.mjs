@@ -94,7 +94,7 @@ const count = (path) => (registrations[path] ?? []).length;
 // Inventory of listener registrations across the background module graph
 // (js/parsers/* + requests.js + cookies.js + debug.js). Update deliberately
 // when adding/removing a listener — that's the point of the check.
-expect(count("webRequest.onBeforeRequest") === 30, `webRequest.onBeforeRequest registrations == 30 (got ${count("webRequest.onBeforeRequest")})`);
+expect(count("webRequest.onBeforeRequest") === 31, `webRequest.onBeforeRequest registrations == 31 (got ${count("webRequest.onBeforeRequest")})`);
 expect(count("webRequest.onSendHeaders") === 2, `webRequest.onSendHeaders registrations == 2 (got ${count("webRequest.onSendHeaders")})`);
 expect(count("webRequest.onHeadersReceived") === 2, `webRequest.onHeadersReceived registrations == 2 (got ${count("webRequest.onHeadersReceived")})`);
 expect(count("webRequest.onResponseStarted") === 1, `webRequest.onResponseStarted registrations == 1 (got ${count("webRequest.onResponseStarted")})`);
@@ -315,6 +315,30 @@ expect(collectVideoSrcs(tgPosterOnly).length === 0, "tg: poster-only has no <vid
 expect(metaContent(tgPosterOnly, "og:video") === "https://cdn4.cdn-telegram.org/file/v.mp4", "tg: og:video fallback");
 expect(parseInt(metaContent(tgPosterOnly, "og:video:height"), 10) === 720, "tg: og:video:height");
 expect(parseClock("not-a-time") === 0 && parseClock("") === 0, "tg: bad clock -> 0");
+
+// og:video:secure_url / og:video:url are spec'd siblings of og:video; the
+// poster-only path falls back to them when the legacy og:video is absent.
+const tgPosterSecure = `<meta property="og:video:secure_url" content="https://cdn4.telesco.pe/file/sec.mp4">`;
+expect(!metaContent(tgPosterSecure, "og:video"), "tg: no legacy og:video on secure-only page");
+expect(metaContent(tgPosterSecure, "og:video:secure_url") === "https://cdn4.telesco.pe/file/sec.mp4",
+  "tg: og:video:secure_url fallback");
+const tgPosterUrl = `<meta content="https://cdn4.telesco.pe/file/u.mp4" property="og:video:url">`;
+expect(metaContent(tgPosterUrl, "og:video:url") === "https://cdn4.telesco.pe/file/u.mp4",
+  "tg: og:video:url fallback (content-then-property order)");
+
+// Duration↔video pairing is index-based and trusted ONLY when the counts match
+// (the listener's `durationsAligned` guard). A photo+video album yields fewer
+// duration <time>s than the page has media wraps but exactly one per VIDEO, so a
+// post with N <video src> and M message_video_duration <time>s only pairs when
+// N === M; a mismatch must fall back to 0 (probe) rather than mispair.
+const tgMixed = `<video src="https://cdn4.telesco.pe/file/clip.mp4"></video>`
+  + `<time class="message_video_duration">0:30</time>`
+  + `<time class="message_video_duration">0:09</time>`; // stray extra <time>
+const mixedSrcs = collectVideoSrcs(tgMixed);
+const mixedDurs = collectDurations(tgMixed);
+expect(mixedSrcs.length === 1 && mixedDurs.length === 2, `tg: mixed counts (got ${mixedSrcs.length}/${mixedDurs.length})`);
+expect((mixedDurs.length === mixedSrcs.length) === false, "tg: mismatched counts are NOT treated as aligned");
+expect((albumSrcs.length === albumDurs.length) === true, "tg: matched album counts ARE aligned");
 
 // The emitted .mp4 must be parser-block-listed (cardinal rule) so the generic
 // catcher can't double-capture; the poster .jpg must NOT be blocked.

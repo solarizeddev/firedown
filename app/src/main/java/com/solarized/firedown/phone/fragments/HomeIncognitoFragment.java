@@ -264,6 +264,16 @@ public class HomeIncognitoFragment extends BaseBrowserFragment implements
                 }
             } else if(id == R.id.action_delete_clipboard){
                 mAutoCompleteView.hideClipboard();
+            } else if (id == R.id.new_tab) {
+                // New tab from incognito home → open a REGULAR tab and leave
+                // private browsing for the regular home (mirrors HomeFragment's
+                // new_incognito_tab in reverse).
+                GeckoState geckoState = new GeckoState(new GeckoStateEntity(true));
+                mGeckoStateViewModel.setGeckoState(geckoState, true);
+                NavigationUtils.navigateSafe(mNavController, R.id.action_home_incognito_to_home);
+            } else if (id == R.id.new_incognito_tab) {
+                flashNewTab(mNewTabView);
+                addNewIncognitoTab();
             } else if (id == R.id.popup_downloads) {
                 Intent downloadsIntent = new Intent(mActivity, DownloadsActivity.class);
                 mStartForResult.launch(downloadsIntent);

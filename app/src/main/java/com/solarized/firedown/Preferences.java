@@ -1,9 +1,12 @@
 package com.solarized.firedown;
 
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.util.Log;
 
 import org.mozilla.geckoview.ContentBlocking;
+
+import java.io.File;
 
 
 public class Preferences {
@@ -11,6 +14,26 @@ public class Preferences {
     private static final String TAG = Preferences.class.getSimpleName();
 
     public static final String UPDATE_APK = "firedown.apk";
+
+    /**
+     * Single source of truth for the downloaded-update APK location. It lives
+     * in app-specific EXTERNAL files (getExternalFilesDir) — not getFilesDir —
+     * because DownloadManager cannot write to internal app storage, and the
+     * APK download now goes through DownloadManager (so it survives the app
+     * process being evicted mid-download). App-specific external storage needs
+     * no runtime permission. Falls back to internal storage only on the rare
+     * device with no external volume mounted (DownloadManager is skipped
+     * there — see UpdateWorker). The path matches
+     * DownloadManager.Request.setDestinationInExternalFilesDir(ctx, null,
+     * UPDATE_APK) so the receiver reads exactly what was written.
+     */
+    public static File getUpdateApkFile(Context context) {
+        File dir = context.getExternalFilesDir(null);
+        if (dir == null) {
+            dir = context.getFilesDir();
+        }
+        return new File(dir, UPDATE_APK);
+    }
 
     /**
      * Primary update-check endpoint. Sits behind Cloudflare. UpdateWorker

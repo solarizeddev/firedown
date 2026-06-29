@@ -187,6 +187,7 @@ public class DownloadsOptionDialogFragment extends BaseBottomSheetDialogFragment
     private void showTools() {
         List<OptionItem> tools = new ArrayList<>();
         tools.add(new OptionItem(getString(R.string.media_tools), R.drawable.ic_arrow_back_24));
+        tools.add(OptionItem.separator());
         tools.addAll(loadOptionItems(R.array.download_options_tools_type,
                 R.array.download_options_tools_icon));
         mRecyclerView.setAdapter(new OptionsAdapter(tools, this, false));
