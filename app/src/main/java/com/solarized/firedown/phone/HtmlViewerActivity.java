@@ -92,14 +92,24 @@ public class HtmlViewerActivity extends BaseActivity {
 
         toolbar.setTitle(FilenameUtils.getName(uri.getPath()));
 
-        try (InputStream is = getContentResolver().openInputStream(uri)) {
-            if (is != null) {
-                String sb = Utils.readInputStream(is);
-                mWebView.loadData(sb, FileUriHelper.MIMETYPE_TXT, "UTF-8");
-                //mWebView.loadUrl("file:///android_asset/renderer/index.html");
+        // text/html → RENDER the page (a saved "Save snapshot" / web archive).
+        // Load the content:// directly so a tens-of-MB self-contained file isn't
+        // buffered into a String first, and so the inlined data: resources
+        // render. WebView allows content access by default; JS stays disabled
+        // and network blocked, which is exactly right for a snapshot (scripts
+        // stripped, every resource inlined). Anything else → show the raw text
+        // (subtitles, .txt) as before.
+        if (FileUriHelper.MIMETYPE_HTML.equalsIgnoreCase(intent.getType())) {
+            mWebView.loadUrl(uri.toString());
+        } else {
+            try (InputStream is = getContentResolver().openInputStream(uri)) {
+                if (is != null) {
+                    String sb = Utils.readInputStream(is);
+                    mWebView.loadData(sb, FileUriHelper.MIMETYPE_TXT, "UTF-8");
+                }
+            } catch (IOException e) {
+                Log.e(TAG, "Load File Error", e);
             }
-        } catch (IOException e) {
-            Log.e(TAG, "Load File Error", e);
         }
 
 
