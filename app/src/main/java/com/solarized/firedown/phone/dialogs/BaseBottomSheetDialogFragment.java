@@ -152,9 +152,20 @@ public class BaseBottomSheetDialogFragment extends BottomSheetDialogFragment {
             ((View) mView.getParent()).requestLayout();
             return;
         }
-        int maxHeightPx = getResources().getDimensionPixelSize(R.dimen.bottom_sheet_max_height);
+        int maxHeightPx = getMaxSheetHeightPx();
         behavior.setMaxHeight(maxHeightPx > 0 ? maxHeightPx : -1);
         ((View) mView.getParent()).requestLayout();
+    }
+
+    /**
+     * The max-height cap (px) applied to a capped sheet. Defaults to the
+     * {@code R.dimen.bottom_sheet_max_height} value. Subclasses may override —
+     * e.g. the browser popup caps to the viewport minus the toolbar so it
+     * stops under the chrome and scrolls, instead of the fixed dimen or
+     * covering the whole height.
+     */
+    protected int getMaxSheetHeightPx() {
+        return getResources().getDimensionPixelSize(R.dimen.bottom_sheet_max_height);
     }
 
     /**

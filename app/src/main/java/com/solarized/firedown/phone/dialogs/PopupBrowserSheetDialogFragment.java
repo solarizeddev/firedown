@@ -3,6 +3,7 @@ package com.solarized.firedown.phone.dialogs;
 
 import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
+import android.graphics.Rect;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -103,18 +104,33 @@ public class PopupBrowserSheetDialogFragment extends BaseBottomSheetDialogFragme
 
 
     /**
-     * Opt out of the 640dp bottom_sheet_max_height cap. The popup is a
-     * fixed, bounded menu (identity header + quick-action row + a handful of
-     * list rows), not unbounded long content — its natural height lands right
-     * around the cap, so the cap was clamping it mid-screen and forcing the
-     * inner list to scroll with empty space left above. With the cap off and
-     * the layout sized wrap_content, the sheet grows to its content and is
-     * still screen-bounded by BottomSheetBehavior (scrolls only if a screen
-     * genuinely can't fit it). Mirrors BrowserOptionHolderSheetDialogFragment.
+     * Cap the popup's height like the Captured-content holder: instead of the
+     * fixed 640dp dimen (too short — it clamped mid-screen) or no cap at all
+     * (covers the whole height on a tall list / small screen), cap to the
+     * viewport minus the toolbar (see {@link #getMaxSheetHeightPx()}). The
+     * sheet then stops just under the chrome; short content still hugs
+     * (wrap_content under the cap) and a tall list scrolls in the inner
+     * NestedScrollView.
      */
     @Override
     protected boolean isMaxHeightCapped() {
-        return false;
+        return true;
+    }
+
+    /**
+     * Max height = visible viewport minus the toolbar, so the popup sits below
+     * the chrome rather than covering the full height — same sizing the
+     * Captured-content holder uses (it applies it as a fixed inner height; the
+     * popup applies it as a BottomSheet max so short content still hugs).
+     * Falls back to the default dimen cap if the viewport can't be read.
+     */
+    @Override
+    protected int getMaxSheetHeightPx() {
+        if (mActivity == null) return super.getMaxSheetHeightPx();
+        Rect visibleRect = new Rect();
+        mActivity.getWindow().getDecorView().getWindowVisibleDisplayFrame(visibleRect);
+        int height = visibleRect.height() - mActionBarSize;
+        return height > 0 ? height : super.getMaxSheetHeightPx();
     }
 
     @Nullable
