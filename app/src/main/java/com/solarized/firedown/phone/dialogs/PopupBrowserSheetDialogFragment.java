@@ -3,6 +3,7 @@ package com.solarized.firedown.phone.dialogs;
 
 import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
+import android.content.res.Configuration;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -19,7 +20,6 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
-import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.materialswitch.MaterialSwitch;
 import com.solarized.firedown.GlideHelper;
 import com.solarized.firedown.Keys;
@@ -125,26 +125,34 @@ public class PopupBrowserSheetDialogFragment extends BaseBottomSheetDialogFragme
      * expands the sheet).
      */
     @Override
-    public void onStart() {
-        super.onStart();
-        if (getDialog() == null || mActivity == null) return;
-        // Size the ACTUAL bottom-sheet container (design_bottom_sheet), not the
-        // content view — a BottomSheetDialog drives the sheet height from this
-        // FrameLayout, so setting the content's height had no effect. Height =
-        // visible viewport minus the toolbar, the same as the Captured holder,
-        // so the popup matches its height. The content root is match_parent and
-        // the inner NestedScrollView is weighted, so it fills and scrolls.
-        View sheet = getDialog().findViewById(
-                com.google.android.material.R.id.design_bottom_sheet);
-        if (sheet == null) return;
+    public void onConfigurationChanged(@NonNull Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        sizePopupContent();
+    }
+
+    /**
+     * Size the {@code popup_content} child to the visible viewport minus the
+     * toolbar — the EXACT sizing {@code BrowserOptionHolderSheetDialogFragment}
+     * applies to its {@code content_frame}. The FrameLayout root wraps this
+     * child, so the sheet ends up the same height as the Captured sheet (sits
+     * just under the toolbar). The base's onStart expands it; the inner
+     * NestedScrollView (weight 1) fills the space below the pinned header and
+     * scrolls. Sizing the content child (as the holder does) is what works —
+     * sizing the content root or the sheet container did not.
+     */
+    private void sizePopupContent() {
+        if (mView == null || mActivity == null) return;
+        View content = mView.findViewById(R.id.popup_content);
+        if (content == null) return;
+        ViewGroup.LayoutParams params = content.getLayoutParams();
+        if (params == null) return;
         Rect visibleRect = new Rect();
         mActivity.getWindow().getDecorView().getWindowVisibleDisplayFrame(visibleRect);
         int height = visibleRect.height() - mActionBarSize;
-        if (height <= 0) return;
-        ViewGroup.LayoutParams params = sheet.getLayoutParams();
-        params.height = height;
-        sheet.setLayoutParams(params);
-        BottomSheetBehavior.from(sheet).setState(BottomSheetBehavior.STATE_EXPANDED);
+        if (height > 0) {
+            params.height = height;
+            content.setLayoutParams(params);
+        }
     }
 
     @Nullable
@@ -153,6 +161,7 @@ public class PopupBrowserSheetDialogFragment extends BaseBottomSheetDialogFragme
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
         mView = inflater.inflate(R.layout.fragment_dialog_browser_popup, container, false);
+        sizePopupContent();
 
         // Guard: peekCurrentGeckoState can return null if the popup was
         // opened in an inconsistent state (process restoration, tab
