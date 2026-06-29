@@ -181,6 +181,7 @@ public class BrowserFragment extends BaseBrowserFragment
     private Snackbar mSnapshotSnackbar;
     private boolean mSnapshotPending;
     private static final long SNAPSHOT_SAVE_TIMEOUT_MS = 90_000L;
+    private static final long SNAPSHOT_SAVED_LINGER_MS = 5_000L;
 
     // ── ViewModels ────────────────────────────────────────────────────────────────────────────────
 
@@ -1818,17 +1819,32 @@ public class BrowserFragment extends BaseBrowserFragment
         snackbar.show();
     }
 
-    /** Replaces the in-progress snackbar with "Snapshot saved" + a View action. */
+    /**
+     * Turns the in-progress snackbar INTO the result, in place — the SAME
+     * snackbar, text "Saving snapshot…" → "Snapshot saved" plus a View action —
+     * so it reads as one continuous progress→done transition rather than one
+     * snackbar sliding out and another sliding in. If the saving snackbar
+     * already timed out, a fresh one is shown. Indefinite snackbars don't
+     * self-dismiss, so it's hidden after a short linger.
+     */
     private void showSnapshotSavedSnackbar(boolean saveToVault) {
-        dismissSnapshotSnackbar();
-        Snackbar snackbar = makeAnchoredSnackbar(R.string.browser_snapshot_saved);
-        snackbar.setDuration(Snackbar.LENGTH_LONG);
+        Snackbar snackbar = mSnapshotSnackbar;
+        if (snackbar == null) {
+            snackbar = makeAnchoredSnackbar(R.string.browser_snapshot_saved);
+            snackbar.setDuration(Snackbar.LENGTH_INDEFINITE);
+            mSnapshotSnackbar = snackbar;
+            snackbar.show();
+        } else {
+            snackbar.setText(R.string.browser_snapshot_saved);
+        }
         snackbar.setAction(R.string.file_view, v -> {
             Intent intent = new Intent(mActivity, saveToVault ? VaultActivity.class : DownloadsActivity.class);
             mStartForResult.launch(intent);
         });
-        mSnapshotSnackbar = snackbar;
-        snackbar.show();
+        final Snackbar shown = snackbar;
+        shown.getView().postDelayed(() -> {
+            if (mSnapshotSnackbar == shown) dismissSnapshotSnackbar();
+        }, SNAPSHOT_SAVED_LINGER_MS);
     }
 
     private void dismissSnapshotSnackbar() {
