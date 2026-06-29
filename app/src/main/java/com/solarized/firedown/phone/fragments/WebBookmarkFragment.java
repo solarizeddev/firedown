@@ -234,7 +234,15 @@ public class WebBookmarkFragment extends BaseFocusFragment implements OnItemClic
             mSyncBannerAdapter = new SyncBannerAdapter(this);
             mRecyclerView.setAdapter(new ConcatAdapter(mSyncBannerAdapter, mAdapter));
             mSyncManager.observeState().observe(getViewLifecycleOwner(), state -> {
-                mSyncState = state == null ? SyncManager.STATE_OFF : state;
+                int next = state == null ? SyncManager.STATE_OFF : state;
+                // Active feedback on a FRESH failure (a sync we watched run:
+                // SYNCING -> ERROR), on top of the cloud-off toolbar icon. Gating
+                // on the transition means opening the screen with a pre-existing
+                // error shows only the icon — never a nagging snackbar.
+                if (next == SyncManager.STATE_ERROR && mSyncState == SyncManager.STATE_SYNCING) {
+                    showSnack(getString(R.string.settings_sync_now_failed));
+                }
+                mSyncState = next;
                 applySyncIcon();
                 updateSyncBannerVisibility();
             });
