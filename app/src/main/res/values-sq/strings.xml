@@ -278,9 +278,79 @@
     <string name="trackers_info_stat_saved">Të dhëna të kursyera</string>
     <string name="trackers_info_action">Menaxho mbrojtjen</string>
     <string name="trackers_info_today">%1$s të bllokuara sot</string>
-
-
-
-
-
+    <string name="bookmark_export">Eksporto faqeshënuesit</string>
+    <string name="bookmark_export_done">U eksportuan %1$d faqeshënues te Download/Firedown/backup</string>
+    <string name="bookmark_import">Importo faqeshënuesit</string>
+    <string name="bookmark_import_done">U importuan %1$d faqeshënues</string>
+    <string name="bookmark_io_error">Skedari i faqeshënuesve nuk u lexua dot</string>
+    <string name="settings_sync_auth_subtitle">Verifiko se je ti për të shfaqur kodin e rikuperimit</string>
+    <string name="settings_sync_cat_code">Kodi i rikuperimit</string>
+    <string name="settings_sync_cat_manage">Menaxho sinkronizimin</string>
+    <string name="settings_sync_code_copied">Kodi i rikuperimit u kopjua</string>
+    <string name="settings_sync_code_copy">Kopjo</string>
+    <string name="settings_sync_code_created_title">Ruaj kodin tënd të rikuperimit</string>
+    <string name="settings_sync_code_done">U krye</string>
+    <string name="settings_sync_code_hint">Kodi i rikuperimit</string>
+    <string name="settings_sync_code_saved_check">E kam ruajtur kodin tim të rikuperimit</string>
+    <string name="settings_sync_code_unavailable">Kodi i rikuperimit nuk është i disponueshëm</string>
+    <string name="settings_sync_code_warning">Ky kod rikuperimi është çelësi i vetëm i faqeshënuesve të tu të sinkronizuar. Ruaje në menaxherin tënd të fjalëkalimeve — ose në një vend tjetër të sigurt. Nuk mund të rikuperohet nëse humbet.</string>
+    <string name="settings_sync_delete_action">Fshi</string>
+    <string name="settings_sync_delete_done">Të dhënat e tua u fshinë nga serveri</string>
+    <string name="settings_sync_delete_failed">Fshirja nuk u krye dot — kontrollo lidhjen dhe provo përsëri</string>
+    <string name="settings_sync_delete_message">Kjo fshin përgjithmonë faqeshënuesit e tu të enkriptuar nga serveri dhe çaktivizon sinkronizimin në këtë pajisje. Faqeshënuesit në këtë pajisje ruhen. Kjo nuk mund të zhbëhet — pajisjet e tjera nuk do të mund të rikuperojnë më nga serveri.</string>
+    <string name="settings_sync_delete_started">Po fshihen të dhënat e tua nga serveri…</string>
+    <string name="settings_sync_delete_summary">Fshi përgjithmonë faqeshënuesit e tu të enkriptuar nga serveri</string>
+    <string name="settings_sync_delete_title">Fshi të dhënat nga serveri</string>
+    <string name="settings_sync_export_caveat_message">Ky skedar ruhet i paenkriptuar — kushdo që mund ta lexojë mund të lexojë faqeshënuesit e tu. Importo kodin në menaxherin tënd të fjalëkalimeve (ose në një vend tjetër të sigurt), pastaj fshi skedarin. Një menaxher fjalëkalimesh e mban të enkriptuar; një skedar i lirë jo.</string>
+    <string name="settings_sync_export_continue">Vazhdo</string>
+    <string name="settings_sync_export_done">Kodi i rikuperimit u ruajt</string>
+    <string name="settings_sync_export_failed">Skedari nuk u ruajt dot</string>
+    <string name="settings_sync_export_file_body">Firedown — kodi i rikuperimit të sinkronizimit të faqeshënuesve\n\n%1$s\n\nKy kod është çelësi i vetëm i faqeshënuesve të tu të sinkronizuar — kushdo që e ka mund t\'i lexojë, dhe nuk mund të rikuperohet nëse humbet.\n\nKy skedar NUK është i enkriptuar. Importo kodin në menaxherin tënd të fjalëkalimeve (ose në një vend tjetër të sigurt), pastaj fshi këtë skedar.</string>
+    <string name="settings_sync_export_summary">Eksporto kodin si një skedar teksti që mund ta ruash</string>
+    <string name="settings_sync_export_title">Ruaj kodin e rikuperimit në skedar</string>
+    <string name="settings_sync_faq_a1">Po. Çdo faqeshënues enkriptohet në këtë pajisje përpara se të ngarkohet. Serveri ruan vetëm të dhëna të ngatërruara që nuk i lexon dot.</string>
+    <string name="settings_sync_faq_a2">Jo. Vetëm kodi yt i rikuperimit mund t\'i çkyçë faqeshënuesit e tu. Ata janë të enkriptuar fund-e-fund, asgjë personale nuk është bashkëngjitur, dhe serveri nuk i sheh kurrë të dhënat e pangatërruara.</string>
+    <string name="settings_sync_faq_a3">Një çelës i gjeneruar në pajisjen tënde kur aktivizon sinkronizimin. Është e vetmja gjë që mund t\'i deshifrojë faqeshënuesit e tu — në këtë pajisje ose në një të re.</string>
+    <string name="settings_sync_faq_a4">Faqeshënuesit e tu të sinkronizuar nuk mund të rikuperohen — as nga ti, as nga ne, sepse ne nuk e kemi pasur kurrë çelësin. Nuk ka rivendosje fjalëkalimi. Ruaje kodin diku të sigurt; një menaxher fjalëkalimesh është ideal.</string>
+    <string name="settings_sync_faq_a5">Jo. Nuk ka regjistrim, email, ose numër telefoni — vetëm kodin e rikuperimit. Asgjë personale nuk është e lidhur me faqeshënuesit e tu.</string>
+    <string name="settings_sync_faq_a6">Sinkronizimi është opsional dhe i çaktivizuar si parazgjedhje. Gjithmonë mund t\'i eksportosh faqeshënuesit e tu në një skedar dhe t\'i importosh më vonë, pa përfshirë asnjë server.</string>
+    <string name="settings_sync_faq_q1">A janë të enkriptuar faqeshënuesit e mi?</string>
+    <string name="settings_sync_faq_q2">A mund t\'i lexojë Firedown ose dikush tjetër?</string>
+    <string name="settings_sync_faq_q3">Çfarë është kodi i rikuperimit?</string>
+    <string name="settings_sync_faq_q4">Po nëse e humbas kodin tim të rikuperimit?</string>
+    <string name="settings_sync_faq_q5">A më duhet një llogari ose email?</string>
+    <string name="settings_sync_faq_q6">Po nëse nuk dua të përdor sinkronizimin?</string>
+    <string name="settings_sync_help_close">E kuptova</string>
+    <string name="settings_sync_help_summary">Çfarë është e enkriptuar, dhe pse kodi yt i rikuperimit ka rëndësi</string>
+    <string name="settings_sync_help_title">Si funksionon enkriptimi i sinkronizimit</string>
+    <string name="settings_sync_last_synced">Aktiv — sinkronizuar së fundi %1$s</string>
+    <string name="settings_sync_never_synced">Aktiv — ende i pasinkronizuar</string>
+    <plurals name="settings_sync_now_done">
+        <item quantity="one">Sinkronizuar — %d faqeshënues</item>
+        <item quantity="other">Sinkronizuar — %d faqeshënues</item>
+    </plurals>
+    <string name="settings_sync_now_failed">Faqeshënuesit nuk u sinkronizuan dot — kontrollo lidhjen dhe provo përsëri</string>
+    <string name="settings_sync_now_started">Po sinkronizohen faqeshënuesit…</string>
+    <string name="settings_sync_now_title">Sinkronizo tani</string>
+    <string name="settings_sync_restore_action">Rikupero</string>
+    <string name="settings_sync_restore_bad">Ai kod rikuperimi nuk duket i saktë</string>
+    <string name="settings_sync_restore_message">Fut kodin e rikuperimit nga pajisja jote tjetër për të bashkuar faqeshënuesit e saj me këtë.</string>
+    <string name="settings_sync_restore_ok">Sinkronizimi i faqeshënuesve u rikuperua</string>
+    <string name="settings_sync_restore_title">Rikupero sinkronizimin e faqeshënuesve</string>
+    <string name="settings_sync_setup_create">Krijo të ri</string>
+    <string name="settings_sync_setup_message">Faqeshënuesit e tu enkriptohen në këtë pajisje përpara se ta lënë atë — serveri nuk i sheh kurrë. Merr një kod rikuperimi që është çelësi i vetëm; mbaje të sigurt, nuk ka asnjë mënyrë për ta rikuperuar nëse humbet.</string>
+    <string name="settings_sync_setup_restore">Kam një kod</string>
+    <string name="settings_sync_setup_title">Konfiguro sinkronizimin e faqeshënuesve</string>
+    <string name="settings_sync_show_code_summary">Shfaq kodin që çkyç faqeshënuesit e tu të sinkronizuar</string>
+    <string name="settings_sync_show_code_title">Shfaq kodin e rikuperimit</string>
+    <string name="settings_sync_sign_out_action">Çaktivizo</string>
+    <string name="settings_sync_sign_out_message">Sinkronizimi i faqeshënuesve do të çaktivizohet dhe kodi i rikuperimit do të hiqet nga kjo pajisje. Faqeshënuesit e tu mbeten këtu. Sigurohu që e ke ruajtur kodin tënd të rikuperimit nëse dëshiron të sinkronizosh përsëri më vonë.</string>
+    <string name="settings_sync_sign_out_summary">Ndalo sinkronizimin dhe hiq çelësat nga kjo pajisje</string>
+    <string name="settings_sync_sign_out_title">Çaktivizo sinkronizimin</string>
+    <string name="settings_sync_signed_out">Sinkronizimi i faqeshënuesve u çaktivizua</string>
+    <string name="settings_sync_summary">Sinkronizim faqeshënuesish i enkriptuar fund-e-fund nëpër pajisjet e tua</string>
+    <string name="settings_sync_switch_summary">Joaktiv — faqeshënuesit e tu mbeten në këtë pajisje</string>
+    <string name="settings_sync_title">Sinkronizo faqeshënuesit</string>
+    <string name="sync_banner_subtitle">I enkriptuar fund-e-fund — vetëm kodi yt i rikuperimit mund ta lexojë. Pa llogari, pa email.</string>
+    <string name="sync_banner_title">Sinkronizo faqeshënuesit e tu nëpër pajisje</string>
 </resources>

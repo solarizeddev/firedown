@@ -279,9 +279,79 @@
     <string name="trackers_info_stat_saved">የተቀመጠ ዳታ</string>
     <string name="trackers_info_action">ጥበቃ አስተዳድር</string>
     <string name="trackers_info_today">%1$s ዛሬ ተዘግተዋል</string>
-
-
-
-
-
+    <string name="bookmark_export">ዕልባቶችን ላክ</string>
+    <string name="bookmark_export_done">%1$d ዕልባቶች ወደ Download/Firedown/backup ተልከዋል</string>
+    <string name="bookmark_import">ዕልባቶችን አስገባ</string>
+    <string name="bookmark_import_done">%1$d ዕልባቶች ገብተዋል</string>
+    <string name="bookmark_io_error">የዕልባቶች ፋይል ማንበብ አልተቻለም</string>
+    <string name="settings_sync_auth_subtitle">የመልሶ ማግኛ ኮዱን ለማሳየት እርስዎ መሆንዎን ያረጋግጡ</string>
+    <string name="settings_sync_cat_code">የመልሶ ማግኛ ኮድ</string>
+    <string name="settings_sync_cat_manage">ማመሳሰልን አስተዳድር</string>
+    <string name="settings_sync_code_copied">የመልሶ ማግኛ ኮድ ተቀድቷል</string>
+    <string name="settings_sync_code_copy">ቅዳ</string>
+    <string name="settings_sync_code_created_title">የመልሶ ማግኛ ኮድዎን ያስቀምጡ</string>
+    <string name="settings_sync_code_done">ተጠናቅቋል</string>
+    <string name="settings_sync_code_hint">የመልሶ ማግኛ ኮድ</string>
+    <string name="settings_sync_code_saved_check">የመልሶ ማግኛ ኮዴን አስቀምጫለሁ</string>
+    <string name="settings_sync_code_unavailable">የመልሶ ማግኛ ኮድ አይገኝም</string>
+    <string name="settings_sync_code_warning">ይህ የመልሶ ማግኛ ኮድ ወደ የተመሳሰሉ ዕልባቶችዎ ብቸኛው ቁልፍ ነው። በይለፍ ቃል አስተዳዳሪዎ — ወይም በሌላ ደህንነቱ በተጠበቀ ቦታ ያስቀምጡት። ከጠፋ መልሶ ማግኘት አይቻልም።</string>
+    <string name="settings_sync_delete_action">ሰርዝ</string>
+    <string name="settings_sync_delete_done">ውሂብዎ ከአገልጋዩ ተሰርዟል</string>
+    <string name="settings_sync_delete_failed">መሰረዝ አልተቻለም — ግንኙነትዎን ያረጋግጡ እና እንደገና ይሞክሩ</string>
+    <string name="settings_sync_delete_message">ይህ የተመሰጠሩ ዕልባቶችዎን ከአገልጋዩ ለዘላለም ያጠፋል እና በዚህ መሳሪያ ላይ ማመሳሰልን ያጠፋል። በዚህ መሳሪያ ላይ ያሉ ዕልባቶች ይቀመጣሉ። ይህ መቀልበስ አይቻልም — ሌሎች መሳሪያዎች ከአገልጋዩ መልሰው ማግኘት አይችሉም።</string>
+    <string name="settings_sync_delete_started">ውሂብዎን ከአገልጋዩ በመሰረዝ ላይ…</string>
+    <string name="settings_sync_delete_summary">የተመሰጠሩ ዕልባቶችዎን ከአገልጋዩ ለዘላለም ያጥፉ</string>
+    <string name="settings_sync_delete_title">ውሂብ ከአገልጋዩ ሰርዝ</string>
+    <string name="settings_sync_export_caveat_message">ይህ ፋይል ሳይመሰጠር ተቀምጧል — ሊያነበው የሚችል ማንኛውም ሰው ዕልባቶችዎን ማንበብ ይችላል። ኮዱን ወደ ይለፍ ቃል አስተዳዳሪዎ (ወይም ሌላ ደህንነቱ የተጠበቀ ቦታ) አስገብተው ከዚያ ፋይሉን ይሰርዙ። የይለፍ ቃል አስተዳዳሪ ተመስጥሮ ይይዘዋል፤ የተበተነ ፋይል ግን አይይዘውም።</string>
+    <string name="settings_sync_export_continue">ቀጥል</string>
+    <string name="settings_sync_export_done">የመልሶ ማግኛ ኮድ ተቀምጧል</string>
+    <string name="settings_sync_export_failed">ፋይሉን ማስቀመጥ አልተቻለም</string>
+    <string name="settings_sync_export_file_body">Firedown — የዕልባት ማመሳሰል መልሶ ማግኛ ኮድ\n\n%1$s\n\nይህ ኮድ ወደ የተመሳሰሉ ዕልባቶችዎ ብቸኛው ቁልፍ ነው — ያለው ማንኛውም ሰው ሊያነባቸው ይችላል፣ ከጠፋም መልሶ ማግኘት አይቻልም።\n\nይህ ፋይል አልተመሰጠረም። ኮዱን ወደ ይለፍ ቃል አስተዳዳሪዎ (ወይም ሌላ ደህንነቱ የተጠበቀ ቦታ) አስገብተው ከዚያ ይህን ፋይል ይሰርዙ።</string>
+    <string name="settings_sync_export_summary">ኮዱን ሊያከማቹት እንደሚችሉት የጽሑፍ ፋይል ላክ</string>
+    <string name="settings_sync_export_title">የመልሶ ማግኛ ኮድ ወደ ፋይል አስቀምጥ</string>
+    <string name="settings_sync_faq_a1">አዎ። እያንዳንዱ ዕልባት ከመጫኑ በፊት በዚህ መሳሪያ ላይ ይመሰጠራል። አገልጋዩ ሊያነበው የማይችለውን የተበጣጠሰ ውሂብ ብቻ ነው የሚያከማቸው።</string>
+    <string name="settings_sync_faq_a2">አይ። የመልሶ ማግኛ ኮድዎ ብቻ ዕልባቶችዎን ሊከፍት ይችላል። ከጫፍ እስከ ጫፍ የተመሰጠሩ ናቸው፣ ምንም የግል ነገር አልተያያዘም፣ እና አገልጋዩ ያልተበጣጠሰ ውሂብ ፈጽሞ አያይም።</string>
+    <string name="settings_sync_faq_a3">ማመሳሰልን ሲያበሩ በመሳሪያዎ ላይ የሚፈጠር ቁልፍ። ዕልባቶችዎን ሊፈታ የሚችለው ብቸኛው ነገር ነው — በዚህ መሳሪያ ላይም ሆነ በአዲስ መሳሪያ።</string>
+    <string name="settings_sync_faq_a4">የተመሳሰሉ ዕልባቶችዎ መልሰው ሊገኙ አይችሉም — በእርስዎም ሆነ በእኛ፣ ምክንያቱም ቁልፉ ፈጽሞ አልነበረንም። የይለፍ ቃል ዳግም ማስጀመር የለም። ኮዱን ደህንነቱ በተጠበቀ ቦታ ያስቀምጡ፤ የይለፍ ቃል አስተዳዳሪ ተስማሚ ነው።</string>
+    <string name="settings_sync_faq_a5">አይ። ምዝገባ፣ ኢሜይል ወይም ስልክ ቁጥር የለም — የመልሶ ማግኛ ኮድ ብቻ ነው። ምንም የግል ነገር ከዕልባቶችዎ ጋር አልተሳሰረም።</string>
+    <string name="settings_sync_faq_a6">ማመሳሰል አማራጭ ነው እና በነባሪ ጠፍቷል። ዕልባቶችዎን ወደ ፋይል ሁልጊዜ ላክተው ቆይተው ምንም አገልጋይ ሳይኖር ማስገባት ይችላሉ።</string>
+    <string name="settings_sync_faq_q1">ዕልባቶቼ ተመስጥረዋል?</string>
+    <string name="settings_sync_faq_q2">Firedown ወይም ሌላ ማንም ሊያነባቸው ይችላል?</string>
+    <string name="settings_sync_faq_q3">የመልሶ ማግኛ ኮድ ምንድን ነው?</string>
+    <string name="settings_sync_faq_q4">የመልሶ ማግኛ ኮዴን ብታጣ?</string>
+    <string name="settings_sync_faq_q5">መለያ ወይም ኢሜይል እፈልጋለሁ?</string>
+    <string name="settings_sync_faq_q6">ማመሳሰል መጠቀም ካልፈለግሁ?</string>
+    <string name="settings_sync_help_close">ገባኝ</string>
+    <string name="settings_sync_help_summary">ምን እንደተመሰጠረ፣ እና የመልሶ ማግኛ ኮድዎ ለምን አስፈላጊ እንደሆነ</string>
+    <string name="settings_sync_help_title">የማመሳሰል ምስጠራ እንዴት እንደሚሰራ</string>
+    <string name="settings_sync_last_synced">በርቷል — መጨረሻ የተመሳሰለው %1$s</string>
+    <string name="settings_sync_never_synced">በርቷል — እስካሁን አልተመሳሰለም</string>
+    <plurals name="settings_sync_now_done">
+        <item quantity="one">ተመሳስሏል — %d ዕልባት</item>
+        <item quantity="other">ተመሳስሏል — %d ዕልባቶች</item>
+    </plurals>
+    <string name="settings_sync_now_failed">ዕልባቶችን ማመሳሰል አልተቻለም — ግንኙነትዎን ያረጋግጡ እና እንደገና ይሞክሩ</string>
+    <string name="settings_sync_now_started">ዕልባቶችን በማመሳሰል ላይ…</string>
+    <string name="settings_sync_now_title">አሁን አመሳስል</string>
+    <string name="settings_sync_restore_action">መልስ</string>
+    <string name="settings_sync_restore_bad">ያ የመልሶ ማግኛ ኮድ ትክክል አይመስልም</string>
+    <string name="settings_sync_restore_message">ዕልባቶቹን ወደዚህ ለማዋሃድ ከሌላ መሳሪያዎ የመልሶ ማግኛ ኮዱን ያስገቡ።</string>
+    <string name="settings_sync_restore_ok">የዕልባት ማመሳሰል ተመልሷል</string>
+    <string name="settings_sync_restore_title">የዕልባት ማመሳሰልን መልስ</string>
+    <string name="settings_sync_setup_create">አዲስ ፍጠር</string>
+    <string name="settings_sync_setup_message">ዕልባቶችዎ ከመሳሪያው ከመውጣታቸው በፊት በዚህ መሳሪያ ላይ ይመሰጠራሉ — አገልጋዩ ፈጽሞ አያያቸውም። ብቸኛው ቁልፍ የሆነ የመልሶ ማግኛ ኮድ ያገኛሉ፤ ደህንነቱን ይጠብቁ፣ ከጠፋ መልሶ ለማግኘት መንገድ የለም።</string>
+    <string name="settings_sync_setup_restore">ኮድ አለኝ</string>
+    <string name="settings_sync_setup_title">የዕልባት ማመሳሰል አዘጋጅ</string>
+    <string name="settings_sync_show_code_summary">የተመሳሰሉ ዕልባቶችዎን የሚከፍተውን ኮድ አሳይ</string>
+    <string name="settings_sync_show_code_title">የመልሶ ማግኛ ኮድ አሳይ</string>
+    <string name="settings_sync_sign_out_action">አጥፋ</string>
+    <string name="settings_sync_sign_out_message">የዕልባት ማመሳሰል ይጠፋል እና የመልሶ ማግኛ ኮዱ ከዚህ መሳሪያ ይወገዳል። ዕልባቶችዎ እዚህ ይቆያሉ። በኋላ እንደገና ማመሳሰል ከፈለጉ የመልሶ ማግኛ ኮድዎን ማስቀመጥዎን ያረጋግጡ።</string>
+    <string name="settings_sync_sign_out_summary">ማመሳሰልን አቁም እና ቁልፎቹን ከዚህ መሳሪያ አስወግድ</string>
+    <string name="settings_sync_sign_out_title">ማመሳሰልን አጥፋ</string>
+    <string name="settings_sync_signed_out">የዕልባት ማመሳሰል ጠፍቷል</string>
+    <string name="settings_sync_summary">በመሳሪያዎች መካከል ከጫፍ እስከ ጫፍ የተመሰጠረ የዕልባት ማመሳሰል</string>
+    <string name="settings_sync_switch_summary">ጠፍቷል — ዕልባቶችዎ በዚህ መሳሪያ ላይ ይቆያሉ</string>
+    <string name="settings_sync_title">ዕልባቶችን አመሳስል</string>
+    <string name="sync_banner_subtitle">ከጫፍ እስከ ጫፍ የተመሰጠረ — የመልሶ ማግኛ ኮድዎ ብቻ ሊያነበው ይችላል። መለያ የለም፣ ኢሜይል የለም።</string>
+    <string name="sync_banner_title">ዕልባቶችዎን በመሳሪያዎች መካከል አመሳስሉ</string>
 </resources>

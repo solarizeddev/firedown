@@ -279,9 +279,79 @@
     <string name="trackers_info_stat_saved">Сақталған деректер</string>
     <string name="trackers_info_action">Қорғанысты басқару</string>
     <string name="trackers_info_today">%1$s бүгін бұғатталды</string>
-
-
-
-
-
+    <string name="bookmark_export">Бетбелгілерді экспорттау</string>
+    <string name="bookmark_export_done">%1$d бетбелгі Download/Firedown/backup ішіне экспортталды</string>
+    <string name="bookmark_import">Бетбелгілерді импорттау</string>
+    <string name="bookmark_import_done">%1$d бетбелгі импортталды</string>
+    <string name="bookmark_io_error">Бетбелгілер файлын оқу мүмкін болмады</string>
+    <string name="settings_sync_auth_subtitle">Қалпына келтіру кодын көрсету үшін бұл сіз екеніңізді растаңыз</string>
+    <string name="settings_sync_cat_code">Қалпына келтіру коды</string>
+    <string name="settings_sync_cat_manage">Синхрондауды басқару</string>
+    <string name="settings_sync_code_copied">Қалпына келтіру коды көшірілді</string>
+    <string name="settings_sync_code_copy">Көшіру</string>
+    <string name="settings_sync_code_created_title">Қалпына келтіру кодыңызды сақтаңыз</string>
+    <string name="settings_sync_code_done">Дайын</string>
+    <string name="settings_sync_code_hint">Қалпына келтіру коды</string>
+    <string name="settings_sync_code_saved_check">Қалпына келтіру кодымды сақтадым</string>
+    <string name="settings_sync_code_unavailable">Қалпына келтіру коды қолжетімді емес</string>
+    <string name="settings_sync_code_warning">Бұл қалпына келтіру коды — синхрондалған бетбелгілеріңіздің жалғыз кілті. Оны құпиясөз менеджеріңізде — немесе басқа қауіпсіз жерде сақтаңыз. Жоғалса, оны қалпына келтіру мүмкін емес.</string>
+    <string name="settings_sync_delete_action">Жою</string>
+    <string name="settings_sync_delete_done">Деректеріңіз серверден жойылды</string>
+    <string name="settings_sync_delete_failed">Жою мүмкін болмады — байланысыңызды тексеріп, қайталап көріңіз</string>
+    <string name="settings_sync_delete_message">Бұл шифрланған бетбелгілеріңізді серверден біржола өшіреді және осы құрылғыда синхрондауды өшіреді. Осы құрылғыдағы бетбелгілер сақталады. Мұны қайтару мүмкін емес — басқа құрылғылар енді серверден қалпына келтіре алмайды.</string>
+    <string name="settings_sync_delete_started">Деректеріңіз серверден жойылуда…</string>
+    <string name="settings_sync_delete_summary">Шифрланған бетбелгілеріңізді серверден біржола өшіру</string>
+    <string name="settings_sync_delete_title">Деректерді серверден жою</string>
+    <string name="settings_sync_export_caveat_message">Бұл файл шифрланбай сақталады — оны оқи алатын кез келген адам бетбелгілеріңізді оқи алады. Кодты құпиясөз менеджеріңізге (немесе басқа қауіпсіз жерге) импорттап, содан кейін файлды жойыңыз. Құпиясөз менеджері оны шифрланған күйде сақтайды; бос файл олай етпейді.</string>
+    <string name="settings_sync_export_continue">Жалғастыру</string>
+    <string name="settings_sync_export_done">Қалпына келтіру коды сақталды</string>
+    <string name="settings_sync_export_failed">Файлды сақтау мүмкін болмады</string>
+    <string name="settings_sync_export_file_body">Firedown — бетбелгі синхрондауының қалпына келтіру коды\n\n%1$s\n\nБұл код — синхрондалған бетбелгілеріңіздің жалғыз кілті — оны иеленген кез келген адам оларды оқи алады, ал жоғалса оны қалпына келтіру мүмкін емес.\n\nБұл файл шифрланБАҒАН. Кодты құпиясөз менеджеріңізге (немесе басқа қауіпсіз жерге) импорттап, содан кейін осы файлды жойыңыз.</string>
+    <string name="settings_sync_export_summary">Кодты сақтай алатын мәтіндік файл ретінде экспорттау</string>
+    <string name="settings_sync_export_title">Қалпына келтіру кодын файлға сақтау</string>
+    <string name="settings_sync_faq_a1">Иә. Әрбір бетбелгі жүктелмес бұрын осы құрылғыда шифрланады. Сервер тек өзі оқи алмайтын шатастырылған деректерді ғана сақтайды.</string>
+    <string name="settings_sync_faq_a2">Жоқ. Бетбелгілеріңізді тек қалпына келтіру кодыңыз аша алады. Олар ұштан-ұшқа шифрланған, ешқандай жеке деректер тіркелмеген, әрі сервер шатастырылмаған деректерді ешқашан көрмейді.</string>
+    <string name="settings_sync_faq_a3">Синхрондауды қосқанда құрылғыңызда жасалатын кілт. Ол — бетбелгілеріңізді шешіп аша алатын жалғыз нәрсе — осы құрылғыда да, жаңа құрылғыда да.</string>
+    <string name="settings_sync_faq_a4">Синхрондалған бетбелгілеріңізді қалпына келтіру мүмкін емес — сіз де, біз де, өйткені бізде кілт ешқашан болмаған. Құпиясөзді қалпына келтіру жоқ. Кодты қауіпсіз жерде сақтаңыз; құпиясөз менеджері ең қолайлы.</string>
+    <string name="settings_sync_faq_a5">Жоқ. Тіркелу, электрондық пошта немесе телефон нөмірі қажет емес — тек қалпына келтіру коды. Бетбелгілеріңізбен ешқандай жеке дерек байланыстырылмаған.</string>
+    <string name="settings_sync_faq_a6">Синхрондау міндетті емес және әдепкіде өшірулі. Бетбелгілеріңізді кез келген уақытта файлға экспорттап, кейін серверсіз импорттай аласыз.</string>
+    <string name="settings_sync_faq_q1">Бетбелгілерім шифрланған ба?</string>
+    <string name="settings_sync_faq_q2">Firedown немесе басқа біреу оларды оқи ала ма?</string>
+    <string name="settings_sync_faq_q3">Қалпына келтіру коды дегеніміз не?</string>
+    <string name="settings_sync_faq_q4">Қалпына келтіру кодымды жоғалтсам ше?</string>
+    <string name="settings_sync_faq_q5">Маған тіркелгі немесе электрондық пошта қажет пе?</string>
+    <string name="settings_sync_faq_q6">Синхрондауды пайдаланғым келмесе ше?</string>
+    <string name="settings_sync_help_close">Түсінікті</string>
+    <string name="settings_sync_help_summary">Не шифрланған және қалпына келтіру кодыңыз неге маңызды</string>
+    <string name="settings_sync_help_title">Синхрондау шифрлауы қалай жұмыс істейді</string>
+    <string name="settings_sync_last_synced">Қосулы — соңғы синхрондалғаны %1$s</string>
+    <string name="settings_sync_never_synced">Қосулы — әлі синхрондалмаған</string>
+    <plurals name="settings_sync_now_done">
+        <item quantity="one">Синхрондалды — %d бетбелгі</item>
+        <item quantity="other">Синхрондалды — %d бетбелгі</item>
+    </plurals>
+    <string name="settings_sync_now_failed">Бетбелгілерді синхрондау мүмкін болмады — байланысыңызды тексеріп, қайталап көріңіз</string>
+    <string name="settings_sync_now_started">Бетбелгілер синхрондалуда…</string>
+    <string name="settings_sync_now_title">Қазір синхрондау</string>
+    <string name="settings_sync_restore_action">Қалпына келтіру</string>
+    <string name="settings_sync_restore_bad">Бұл қалпына келтіру коды дұрыс емес сияқты</string>
+    <string name="settings_sync_restore_message">Басқа құрылғыңыздың бетбелгілерін осыған біріктіру үшін одан қалпына келтіру кодын енгізіңіз.</string>
+    <string name="settings_sync_restore_ok">Бетбелгі синхрондауы қалпына келтірілді</string>
+    <string name="settings_sync_restore_title">Бетбелгі синхрондауын қалпына келтіру</string>
+    <string name="settings_sync_setup_create">Жаңасын жасау</string>
+    <string name="settings_sync_setup_message">Бетбелгілеріңіз құрылғыдан шықпас бұрын осы құрылғыда шифрланады — сервер оларды ешқашан көрмейді. Сіз жалғыз кілт болып табылатын қалпына келтіру кодын аласыз; оны қауіпсіз сақтаңыз, жоғалса оны қалпына келтірудің жолы жоқ.</string>
+    <string name="settings_sync_setup_restore">Менде код бар</string>
+    <string name="settings_sync_setup_title">Бетбелгі синхрондауын орнату</string>
+    <string name="settings_sync_show_code_summary">Синхрондалған бетбелгілеріңізді ашатын кодты көрсету</string>
+    <string name="settings_sync_show_code_title">Қалпына келтіру кодын көрсету</string>
+    <string name="settings_sync_sign_out_action">Өшіру</string>
+    <string name="settings_sync_sign_out_message">Бетбелгі синхрондауы өшіріледі және қалпына келтіру коды осы құрылғыдан жойылады. Бетбелгілеріңіз осында қалады. Кейін қайта синхрондағыңыз келсе, қалпына келтіру кодыңызды сақтап қойғаныңызға көз жеткізіңіз.</string>
+    <string name="settings_sync_sign_out_summary">Синхрондауды тоқтатып, кілттерді осы құрылғыдан жою</string>
+    <string name="settings_sync_sign_out_title">Синхрондауды өшіру</string>
+    <string name="settings_sync_signed_out">Бетбелгі синхрондауы өшірілді</string>
+    <string name="settings_sync_summary">Құрылғыларыңыз арасында ұштан-ұшқа шифрланған бетбелгі синхрондауы</string>
+    <string name="settings_sync_switch_summary">Өшірулі — бетбелгілеріңіз осы құрылғыда қалады</string>
+    <string name="settings_sync_title">Бетбелгілерді синхрондау</string>
+    <string name="sync_banner_subtitle">Ұштан-ұшқа шифрланған — оны тек қалпына келтіру кодыңыз оқи алады. Тіркелгі жоқ, электрондық пошта жоқ.</string>
+    <string name="sync_banner_title">Бетбелгілеріңізді құрылғылар арасында синхрондаңыз</string>
 </resources>
