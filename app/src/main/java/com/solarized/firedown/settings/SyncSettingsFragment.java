@@ -85,10 +85,31 @@ public class SyncSettingsFragment extends BasePreferenceFragment
     private Preference mCatCode;
     private Preference mCatManage;
 
+    /** Last sync state seen, so the failure snackbar fires only on a fresh
+     *  SYNCING -> ERROR transition (not on every entry with a stale error). */
+    private int mSyncState = SyncManager.STATE_OFF;
+
     /** SAF "create document" for exporting the recovery code to a text file. */
     private final ActivityResultLauncher<String> mExportCodePicker =
             registerForActivityResult(new ActivityResultContracts.CreateDocument("text/plain"),
                     this::onExportFilePicked);
+
+    @Override
+    public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        // Mirror the bookmarks screen: a sync that fails while this screen is open
+        // (manual "Sync now" OR a background/automatic run) surfaces a snackbar,
+        // gated on the SYNCING -> ERROR transition so a stale error on entry shows
+        // nothing. This is now the single source of the failure snackbar — the
+        // manual "Sync now" handler no longer fires its own (it would double here).
+        mSyncManager.observeState().observe(getViewLifecycleOwner(), state -> {
+            int next = state == null ? SyncManager.STATE_OFF : state;
+            if (next == SyncManager.STATE_ERROR && mSyncState == SyncManager.STATE_SYNCING) {
+                snackbar(getString(R.string.settings_sync_now_failed));
+            }
+            mSyncState = next;
+        });
+    }
 
     @Override
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
@@ -299,9 +320,10 @@ public class SyncSettingsFragment extends BasePreferenceFragment
                     snackbar(getResources().getQuantityString(
                             R.plurals.settings_sync_now_done, count, count));
                     updateState(); // refresh the "last synced" summary
-                } else {
-                    snackbar(getString(R.string.settings_sync_now_failed));
                 }
+                // A terminal FAILURE surfaces via the SYNCING -> ERROR snackbar in
+                // the onViewCreated state observer (shared with the bookmarks
+                // screen), so it is not duplicated here.
             }
         });
     }
