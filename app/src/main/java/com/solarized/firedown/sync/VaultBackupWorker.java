@@ -1,0 +1,149 @@
+package com.solarized.firedown.sync;
+
+import android.app.Notification;
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.content.pm.ServiceInfo;
+import android.os.Build;
+
+import androidx.annotation.NonNull;
+import androidx.core.app.NotificationCompat;
+import androidx.hilt.work.HiltWorker;
+import androidx.work.Data;
+import androidx.work.ForegroundInfo;
+import androidx.work.Worker;
+import androidx.work.WorkerParameters;
+
+import com.solarized.firedown.App;
+import com.solarized.firedown.Preferences;
+import com.solarized.firedown.R;
+import com.solarized.firedown.sync.crypto.SyncIdentity;
+
+import java.io.File;
+
+import dagger.assisted.Assisted;
+import dagger.assisted.AssistedInject;
+import okhttp3.OkHttpClient;
+
+/**
+ * Backs one finished download up to Cloud Backup (encrypted → presigned PUT to
+ * R2 → manifest). Runs as a foreground worker so a larger upload isn't killed
+ * when the app is backgrounded — the app already declares the {@code dataSync}
+ * foreground-service type its downloads use.
+ *
+ * <p>The actual encrypt/chunk/upload/manifest work is {@link VaultEngine}; this
+ * worker only loads the shared recovery-code identity, drives the engine, and
+ * reports a terminal status the UI observes (mirrors {@link SyncWorker}). No
+ * key/credential data is ever logged.
+ */
+@HiltWorker
+public class VaultBackupWorker extends Worker {
+
+    /** Input-data keys (set by the enqueuing fragment). */
+    public static final String KEY_PATH = "path";
+    public static final String KEY_MIME = "mime";
+    public static final String KEY_NAME = "name";
+
+    /** Output-data keys read by the Downloads fragment to report a result. */
+    public static final String KEY_STATUS = "status";
+    public static final String STATUS_OK = "ok";
+    public static final String STATUS_ERROR = "error";
+
+    /** A fixed notification id for the in-progress foreground notification. */
+    private static final int NOTIFICATION_ID = 0x6242; // "Bb"
+
+    private final Context mContext;
+    private final OkHttpClient mClient;
+    private final SharedPreferences mPrefs;
+
+    @AssistedInject
+    public VaultBackupWorker(
+            @Assisted @NonNull Context context,
+            @Assisted @NonNull WorkerParameters params,
+            OkHttpClient client,
+            SharedPreferences prefs) {
+        super(context, params);
+        this.mContext = context;
+        this.mClient = client;
+        this.mPrefs = prefs;
+    }
+
+    @NonNull
+    @Override
+    public Result doWork() {
+        String path = getInputData().getString(KEY_PATH);
+        String mime = getInputData().getString(KEY_MIME);
+        String name = getInputData().getString(KEY_NAME);
+        if (path == null) {
+            return failure();
+        }
+        File file = new File(path);
+        if (!file.exists()) {
+            return failure();
+        }
+
+        // Promote to foreground for the upload (dataSync). Best-effort: if the OS
+        // refuses (rare), the work still runs in the background.
+        try {
+            setForegroundAsync(foregroundInfo(name)).get();
+        } catch (Exception ignored) {
+            // Couldn't go foreground — proceed in the background.
+        }
+
+        byte[] code = new SyncSecrets(mContext).load();
+        if (code == null) {
+            return failure(); // not set up (e.g. signed out between enqueue and run)
+        }
+        SyncIdentity identity;
+        try {
+            identity = SyncIdentity.fromCode(code);
+        } finally {
+            SyncSecrets.wipe(code);
+        }
+
+        StorageApiClient api = new StorageApiClient(mClient, Preferences.STORAGE_DEFAULT_BACKEND);
+        VaultEngine engine = new VaultEngine(api, identity);
+        try {
+            engine.backupFile(file, mime);
+        } catch (StorageApiClient.TransientException e) {
+            // Network / 429 / 5xx — let WorkManager retry with backoff.
+            return Result.retry();
+        } catch (Exception e) {
+            return failure();
+        }
+
+        // First successful backup marks Cloud Backup as in use, so the shared
+        // recovery code survives a bookmark-sync sign-out (see SyncManager).
+        mPrefs.edit().putBoolean(Preferences.CLOUD_BACKUP_ENABLED, true).apply();
+        return Result.success(new Data.Builder()
+                .putString(KEY_STATUS, STATUS_OK)
+                .build());
+    }
+
+    private Result failure() {
+        return Result.failure(new Data.Builder()
+                .putString(KEY_STATUS, STATUS_ERROR)
+                .build());
+    }
+
+    private ForegroundInfo foregroundInfo(String name) {
+        String title = mContext.getString(R.string.cloud_backup_notification_title);
+        String text = name != null
+                ? mContext.getString(R.string.cloud_backup_notification_text, name)
+                : title;
+        Notification notification = new NotificationCompat.Builder(
+                mContext, App.DOWNLOADS_NOTIFICATION_ID)
+                .setSmallIcon(R.drawable.ic_cloud_upload_24)
+                .setContentTitle(title)
+                .setContentText(text)
+                .setOngoing(true)
+                .setProgress(0, 0, true) // indeterminate
+                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .build();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            return new ForegroundInfo(NOTIFICATION_ID, notification,
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC);
+        }
+        return new ForegroundInfo(NOTIFICATION_ID, notification);
+    }
+}

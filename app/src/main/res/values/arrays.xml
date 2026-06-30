@@ -202,6 +202,7 @@
         <item>@string/media_tools</item>
         <item>@string/compress</item>
         <item>@string/lock_cipher</item>
+        <item>@string/cloud_backup_action</item>
         <item>@string/details</item>
         <item>@string/delete</item>
     </integer-array>
@@ -212,6 +213,7 @@
         <item>@drawable/ic_movie_24</item>
         <item>@drawable/ic_baseline_archive_24</item>
         <item>@drawable/ic_lock_24</item>
+        <item>@drawable/ic_cloud_upload_24</item>
         <item>@drawable/ic_info_24</item>
         <item>@drawable/ic_baseline_delete_24</item>
     </integer-array>
@@ -241,6 +243,7 @@
         <item>@string/open_origin</item>
         <item>@string/compress</item>
         <item>@string/lock_cipher</item>
+        <item>@string/cloud_backup_action</item>
         <item>@string/details</item>
         <item>@string/delete</item>
     </integer-array>
@@ -250,6 +253,7 @@
         <item>@drawable/ic_travel_explore_24</item>
         <item>@drawable/ic_baseline_archive_24</item>
         <item>@drawable/ic_lock_24</item>
+        <item>@drawable/ic_cloud_upload_24</item>
         <item>@drawable/ic_info_24</item>
         <item>@drawable/ic_baseline_delete_24</item>
     </integer-array>
@@ -260,6 +264,7 @@
         <item>@string/open_origin</item>
         <item>@string/extract</item>
         <item>@string/lock_cipher</item>
+        <item>@string/cloud_backup_action</item>
         <item>@string/details</item>
         <item>@string/delete</item>
     </integer-array>
@@ -268,6 +273,7 @@
         <item>@drawable/ic_travel_explore_24</item>
         <item>@drawable/ic_baseline_unarchive_24</item>
         <item>@drawable/ic_lock_24</item>
+        <item>@drawable/ic_cloud_upload_24</item>
         <item>@drawable/ic_info_24</item>
         <item>@drawable/ic_baseline_delete_24</item>
     </integer-array>

@@ -1,6 +1,9 @@
 package com.solarized.firedown.phone.fragments;
 
 
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
@@ -13,16 +16,28 @@ import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.TextView;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleEventObserver;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.Observer;
 import androidx.lifecycle.SavedStateHandle;
 import androidx.navigation.NavBackStackEntry;
 import androidx.navigation.NavDestination;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.work.Constraints;
+import androidx.work.Data;
+import androidx.work.NetworkType;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkInfo;
+import androidx.work.WorkManager;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.ListPreloader;
@@ -31,6 +46,7 @@ import com.bumptech.glide.RequestManager;
 import com.bumptech.glide.integration.recyclerview.RecyclerViewPreloader;
 import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.util.FixedPreloadSizeProvider;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
 import com.solarized.firedown.GlideHelper;
 import com.solarized.firedown.IntentActions;
@@ -46,6 +62,8 @@ import com.solarized.firedown.manager.tasks.TaskManager;
 import com.solarized.firedown.phone.DownloadsActivity;
 import com.solarized.firedown.phone.SettingsActivity;
 import com.solarized.firedown.phone.VaultActivity;
+import com.solarized.firedown.sync.CloudBackupManager;
+import com.solarized.firedown.sync.VaultBackupWorker;
 import com.solarized.firedown.ui.EqualSpacingItemDecoration;
 import com.solarized.firedown.ui.adapters.DownloadItemAdapter;
 import com.solarized.firedown.utils.NavigationUtils;
@@ -64,8 +82,14 @@ import dagger.hilt.android.AndroidEntryPoint;
 public abstract class BaseDownloadFragment extends BaseFocusFragment {
 
 
+    /** Tag on all one-off Cloud Backup upload work (for observation/cancel). */
+    private static final String CLOUD_BACKUP_WORK_TAG = "cloud_backup_upload";
+
     @Inject
     protected SharedPreferences mSharedPreferences;
+
+    @Inject
+    protected CloudBackupManager mCloudBackup;
 
     protected DownloadsViewModel mDownloadsViewModel;
 
@@ -263,6 +287,11 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
             // pattern as gif_maker/frame_grabber). The share server's
             // lifetime is the fragment's view lifetime.
             NavigationUtils.navigateSafe(mNavController, R.id.lan_share, bundle);
+        } else if (iconId == R.drawable.ic_cloud_upload_24) {
+            // "Back up to cloud" — encrypt + upload this finished download to
+            // Cloud Backup. Action-driven: sets up the (shared) recovery code on
+            // demand if the user has none yet.
+            startCloudBackup(entity);
         } else if (iconId == R.drawable.ic_edit_24) {
             NavigationUtils.navigateSafe(mNavController, R.id.dialog_rename, bundle);
         } else if (iconId == R.id.action_delete || iconId == R.drawable.ic_baseline_delete_24) {
@@ -302,6 +331,126 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
             String action = IntentActions.DOWNLOAD_RESTART;
             handleItemAction(action, entity);
         }
+    }
+
+    /**
+     * Backs a finished download up to Cloud Backup. Reuses the shared recovery
+     * code when one exists (bookmark sync or a prior backup); otherwise runs a
+     * one-time setup that mints and shows the code first ("it's the only key").
+     */
+    private void startCloudBackup(DownloadEntity entity) {
+        if (entity == null || entity.getFilePath() == null) {
+            return;
+        }
+        if (mCloudBackup.hasAccount()) {
+            enqueueCloudBackup(entity);
+        } else {
+            showCloudBackupSetupDialog(entity);
+        }
+    }
+
+    /** First-time setup confirm before minting the recovery code. */
+    private void showCloudBackupSetupDialog(DownloadEntity entity) {
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.cloud_backup_setup_title)
+                .setMessage(R.string.cloud_backup_setup_message)
+                .setPositiveButton(R.string.cloud_backup_setup_create, (dialog, which) -> {
+                    String grouped = mCloudBackup.createNewCode();
+                    showCloudBackupCodeDialog(grouped, entity);
+                })
+                .setNegativeButton(R.string.cancel, null)
+                .show();
+    }
+
+    /**
+     * Shows the freshly-minted recovery code with a "save this, no recovery" gate
+     * (reuses the bookmark-sync show-code layout), then starts the backup. The
+     * code is the only key to the cloud backup, so the user must acknowledge they
+     * saved it before the upload begins.
+     */
+    private void showCloudBackupCodeDialog(String grouped, DownloadEntity entity) {
+        if (grouped == null) {
+            showErrorSnackbar(R.string.settings_cloud_backup_code_unavailable);
+            return;
+        }
+        View view = getLayoutInflater().inflate(R.layout.dialog_sync_show_code, null);
+        TextView codeText = view.findViewById(R.id.sync_code_text);
+        codeText.setText(grouped);
+        CheckBox savedCheck = view.findViewById(R.id.sync_code_saved_check);
+        savedCheck.setVisibility(View.VISIBLE);
+
+        AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.settings_sync_code_created_title)
+                .setView(view)
+                .setNeutralButton(R.string.settings_sync_code_copy, null)
+                .setPositiveButton(R.string.settings_sync_code_done, null)
+                .setCancelable(false)
+                .create();
+        dialog.show();
+        dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener(v ->
+                copyRecoveryCode(grouped));
+        Button done = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+        done.setEnabled(false);
+        savedCheck.setOnCheckedChangeListener((b, checked) -> done.setEnabled(checked));
+        done.setOnClickListener(v -> {
+            dialog.dismiss();
+            enqueueCloudBackup(entity);
+        });
+    }
+
+    private void copyRecoveryCode(String grouped) {
+        // A clipboard write is a binder call into system_server; never let a
+        // dying clipboard service crash the app (see AutoCompleteView hardening).
+        try {
+            ClipboardManager cm = (ClipboardManager)
+                    requireContext().getSystemService(Context.CLIPBOARD_SERVICE);
+            if (cm != null) {
+                cm.setPrimaryClip(ClipData.newPlainText(
+                        getString(R.string.settings_cloud_backup_title), grouped));
+                showErrorSnackbar(R.string.settings_sync_code_copied);
+            }
+        } catch (RuntimeException ignored) {
+            // Clipboard unavailable — the code is still shown for manual copy.
+        }
+    }
+
+    /** Enqueues the foreground backup worker for this download and reports the
+     *  terminal result with a snackbar. */
+    private void enqueueCloudBackup(DownloadEntity entity) {
+        Data input = new Data.Builder()
+                .putString(VaultBackupWorker.KEY_PATH, entity.getFilePath())
+                .putString(VaultBackupWorker.KEY_MIME, entity.getFileMimeType())
+                .putString(VaultBackupWorker.KEY_NAME, entity.getFileName())
+                .build();
+        Constraints constraints = new Constraints.Builder()
+                .setRequiredNetworkType(NetworkType.CONNECTED)
+                .build();
+        OneTimeWorkRequest request = new OneTimeWorkRequest.Builder(VaultBackupWorker.class)
+                .setInputData(input)
+                .setConstraints(constraints)
+                .addTag(CLOUD_BACKUP_WORK_TAG)
+                .build();
+        WorkManager wm = WorkManager.getInstance(requireContext().getApplicationContext());
+        wm.enqueue(request);
+        showErrorSnackbar(R.string.cloud_backup_started);
+
+        final LiveData<WorkInfo> live = wm.getWorkInfoByIdLiveData(request.getId());
+        live.observe(getViewLifecycleOwner(), new Observer<WorkInfo>() {
+            @Override
+            public void onChanged(WorkInfo info) {
+                if (info == null || !info.getState().isFinished()) {
+                    return;
+                }
+                live.removeObserver(this);
+                if (!isAdded()) {
+                    return;
+                }
+                boolean ok = info.getState() == WorkInfo.State.SUCCEEDED;
+                showErrorSnackbar(ok
+                        ? R.string.cloud_backup_done
+                        : R.string.cloud_backup_failed);
+            }
+        });
     }
 
     protected boolean handleMenuAction(MenuItem item) {

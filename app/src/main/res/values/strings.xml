@@ -287,6 +287,17 @@
     <string name="settings_cloud_backup_help_summary">What\'s encrypted, and why your recovery code matters</string>
     <string name="settings_cloud_backup_help_message">Each download you back up is encrypted on this device before it leaves it — the server only ever stores scrambled bytes it can\'t read. Cloud Backup uses the same recovery code as bookmark sync: it\'s the only key, on this device or a new one, and it can\'t be recovered if lost.\n\nThere\'s no account, email, or sign-up. Your local Safe Folder is unrelated and never leaves this device.</string>
     <string name="settings_cloud_backup_help_close">Got it</string>
+    <!-- The "Back up to cloud" download action + its first-run setup and result. -->
+    <string name="cloud_backup_action">Back up to cloud</string>
+    <string name="cloud_backup_setup_title">Set up Cloud Backup</string>
+    <string name="cloud_backup_setup_message">Your downloads are encrypted on this device before they leave it — the server never sees them. You\'ll get a recovery code that is the only key; keep it safe, there is no way to recover it if lost. Cloud Backup shares this code with bookmark sync.</string>
+    <string name="cloud_backup_setup_create">Create key</string>
+    <string name="cloud_backup_started">Backing up to cloud…</string>
+    <string name="cloud_backup_done">Backed up to cloud</string>
+    <string name="cloud_backup_failed">Couldn\'t back up — check your connection and try again</string>
+    <string name="cloud_backup_notification_title">Backing up to cloud</string>
+    <!-- %1$s = file name -->
+    <string name="cloud_backup_notification_text">Encrypting and uploading %1$s</string>
     <string name="settings_sync_sign_out_title">Turn off sync</string>
     <string name="settings_sync_sign_out_summary">Stop syncing and remove the keys from this device</string>
     <string name="settings_sync_sign_out_message">Bookmark sync will be turned off and the recovery code removed from this device. Your bookmarks stay here. Make sure you have saved your recovery code if you want to sync again later.</string>

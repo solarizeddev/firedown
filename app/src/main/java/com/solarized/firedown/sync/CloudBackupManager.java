@@ -80,6 +80,30 @@ public class CloudBackupManager {
         prefs.edit().putBoolean(Preferences.CLOUD_BACKUP_ENABLED, true).apply();
     }
 
+    /**
+     * Whether a recovery code exists on this device at all — set up by bookmark
+     * sync OR a prior Cloud Backup. When true, a backup can reuse it directly; when
+     * false, the first backup must mint one ({@link #createNewCode()}).
+     */
+    public boolean hasAccount() {
+        return new SyncSecrets(context).hasCode();
+    }
+
+    /**
+     * First-time setup: generates and stores a fresh recovery code and marks Cloud
+     * Backup in use, returning the grouped code for the "save this — it's the only
+     * key" dialog. OVERWRITES any existing code, so callers MUST guard on
+     * {@link #hasAccount()} first (an existing account is reused, never replaced).
+     */
+    public String createNewCode() {
+        byte[] code = SyncIdentity.generateRecoveryCode();
+        new SyncSecrets(context).store(code);
+        String grouped = SyncIdentity.grouped(SyncIdentity.encodeRecoveryCode(code));
+        SyncSecrets.wipe(code);
+        markEnabled();
+        return grouped;
+    }
+
     /** Current backed-up usage (file count + total original bytes). */
     public static final class Usage {
         public final boolean setUp;
