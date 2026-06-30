@@ -202,7 +202,7 @@ public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
     private void fillChangelog(LinearLayout container, String raw) {
         container.removeAllViews();
         LayoutInflater inflater = LayoutInflater.from(container.getContext());
-        int gap = Math.round(8 * getResources().getDisplayMetrics().density);
+        int gap = Math.round(12 * getResources().getDisplayMetrics().density);
         boolean first = true;
         for (String line : raw.split("\n")) {
             String item = line.trim();
