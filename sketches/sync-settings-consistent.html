@@ -1,0 +1,123 @@
+<!doctype html>
+<!--
+  SKETCH (not live): the CONSISTENT unified Sync settings + Cloud Backup
+  notification, replacing the mixed-up first cut. Principle: group by FEATURE so
+  no row is ambiguous about whether it touches bookmarks or downloads.
+
+    Sync (account)
+      ── Bookmarks ──          bookmark verbs live here, clearly scoped
+         Bookmarks [toggle]
+         Sync now                     (when on)
+         Delete bookmarks from server (when on)
+      ── Downloads backup ──   one row → its own management screen
+         Manage downloads backup ›  (live status summary)
+      ── Recovery code ──      SHARED, shown once the account exists
+         Show recovery code
+         Save recovery code to file
+      ── About ──
+         How sync & encryption work   (covers BOTH now)
+
+    Downloads backup (sub-screen)
+      [status hero — live: "Backing up 1 file…" / "3 files · 14 MB"]
+      Backed-up files ›
+      Delete all cloud data
+      (debug) Test storage vault     (debug builds only — moved off the main screen)
+
+    Notification (in-progress upload)
+      brand large icon + upload glyph · short text (filename) · tap → Downloads backup screen
+-->
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Firedown — consistent Sync settings (sketch)</title>
+<style>
+  :root{
+    --bg:#0c0a14; --surf:#161422; --surf2:#1e1b2e; --on:#e9e6f2; --mut:#9a96ad;
+    --coral:#f0655f; --coralDeep:#c0436b; --line:#2a2740; --good:#34c98a;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--on);font:15px/1.5 system-ui,Segoe UI,Roboto,sans-serif;
+    display:flex;flex-wrap:wrap;gap:28px;justify-content:center;padding:28px}
+  h1{flex-basis:100%;text-align:center;font-size:21px;margin:4px 0 0}
+  .sub{flex-basis:100%;text-align:center;color:var(--mut);margin:0 0 8px;font-size:13px}
+  .phone{width:330px;background:var(--bg);border:1px solid var(--line);border-radius:26px;overflow:hidden;
+    box-shadow:0 18px 50px rgba(0,0,0,.5)}
+  .bar{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--line);font-weight:600}
+  .bar .back{color:var(--mut)}
+  .cap{padding:14px 16px 4px;color:var(--coral);font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+  .row{display:flex;align-items:center;gap:14px;padding:13px 16px}
+  .row .ic{width:24px;text-align:center;color:var(--mut);font-size:18px;flex:none}
+  .row .tx{flex:1;min-width:0}
+  .row .tt{font-size:15px}
+  .row .ss{font-size:12.5px;color:var(--mut);margin-top:1px}
+  .row .chev{color:var(--mut)}
+  .toggle{width:42px;height:25px;border-radius:99px;background:var(--coral);position:relative;flex:none}
+  .toggle::after{content:"";position:absolute;width:19px;height:19px;border-radius:99px;background:#fff;top:3px;right:3px}
+  .hero{margin:14px 16px 4px;padding:14px;background:var(--surf2);border:1px solid var(--line);border-radius:14px;
+    display:flex;align-items:center;gap:12px}
+  .hero .dot{width:9px;height:9px;border-radius:99px;background:var(--good);flex:none}
+  .hero .live{color:var(--coral)}
+  .div{height:1px;background:var(--line);margin:6px 0}
+  .note{width:330px;color:var(--mut);font-size:12.5px}
+  .note b{color:var(--on)}
+  /* notification */
+  .notif{background:#101018;border:1px solid var(--line);border-radius:16px;padding:12px 14px;display:flex;gap:12px;align-items:flex-start;width:330px}
+  .notif .big{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,#f0655f,#c0436b);flex:none;display:flex;align-items:center;justify-content:center;font-size:16px}
+  .notif .small{position:absolute;margin:-6px 0 0 -10px;font-size:12px}
+  .notif .body{flex:1;min-width:0}
+  .notif .nt{font-weight:600;font-size:14px}
+  .notif .nx{color:var(--mut);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .notif .bar2{height:3px;border-radius:3px;background:#2a2740;margin-top:8px;overflow:hidden}
+  .notif .bar2::after{content:"";display:block;height:100%;width:34%;background:var(--coral)}
+  .tag{display:inline-block;font-size:11px;color:var(--mut);border:1px solid var(--line);border-radius:99px;padding:1px 7px;margin-left:6px}
+</style></head><body>
+
+<h1>Consistent Sync settings + Cloud Backup notification</h1>
+<p class="sub">Group by feature — every row clearly belongs to Bookmarks, Downloads, or the shared account</p>
+
+<!-- 1. Unified Sync screen -->
+<div class="phone">
+  <div class="bar"><span class="back">‹</span> Sync</div>
+  <div class="hero"><span class="dot"></span><div><div>Encrypted &amp; on</div><div class="ss">One recovery code · nobody but you can read it</div></div></div>
+
+  <div class="cap">Bookmarks</div>
+  <div class="row"><div class="ic">🔖</div><div class="tx"><div class="tt">Bookmarks</div><div class="ss">On — synced 2 min ago</div></div><div class="toggle"></div></div>
+  <div class="row"><div class="ic">🔄</div><div class="tx"><div class="tt">Sync now</div></div></div>
+  <div class="row"><div class="ic">🗑️</div><div class="tx"><div class="tt">Delete bookmarks from server</div><div class="ss">Erase your encrypted bookmarks</div></div></div>
+
+  <div class="cap">Downloads backup</div>
+  <div class="row"><div class="ic">⬇️</div><div class="tx"><div class="tt">Manage downloads backup</div><div class="ss">3 files · 14.2 MB backed up</div></div><div class="chev">›</div></div>
+
+  <div class="cap">Recovery code</div>
+  <div class="row"><div class="ic">🔑</div><div class="tx"><div class="tt">Show recovery code</div><div class="ss">The one key for bookmarks &amp; backups</div></div></div>
+  <div class="row"><div class="ic">📄</div><div class="tx"><div class="tt">Save recovery code to file</div></div></div>
+
+  <div class="cap">About</div>
+  <div class="row"><div class="ic">🛡️</div><div class="tx"><div class="tt">How sync &amp; encryption work</div><div class="ss">What's encrypted — bookmarks and files</div></div><div class="chev">›</div></div>
+</div>
+
+<!-- 2. Downloads backup sub-screen -->
+<div class="phone">
+  <div class="bar"><span class="back">‹</span> Downloads backup</div>
+  <div class="hero"><span class="dot" style="background:var(--coral)"></span><div><div class="live">Backing up 1 file…</div><div class="ss">3 files · 14.2 MB backed up</div></div></div>
+  <div class="cap">Manage</div>
+  <div class="row"><div class="ic">📁</div><div class="tx"><div class="tt">Backed-up files</div><div class="ss">View and restore what you've backed up</div></div><div class="chev">›</div></div>
+  <div class="row"><div class="ic">🗑️</div><div class="tx"><div class="tt">Delete all cloud data</div><div class="ss">Permanently erase your backed-up files</div></div></div>
+  <div class="div"></div>
+  <div class="row"><div class="ic">🐞</div><div class="tx"><div class="tt">Test storage vault <span class="tag">debug only</span></div><div class="ss">Round-trip a file through storage.firedown.app</div></div></div>
+</div>
+
+<!-- 3. Notification -->
+<div style="display:flex;flex-direction:column;gap:14px;align-items:flex-start">
+  <div class="note" style="margin-bottom:-4px"><b>In-progress notification</b> — short, branded, tappable</div>
+  <div class="notif">
+    <div class="big">🔥<span class="small">⬆️</span></div>
+    <div class="body">
+      <div class="nt">Backing up to cloud</div>
+      <div class="nx">Relaxing Celtic Fantasy Music…The Path Into the Quiet Forest.mp4</div>
+      <div class="bar2"></div>
+    </div>
+  </div>
+  <div class="note">Title is the action; body is just the file name (ellipsized) — not the old two-line sentence. Large icon is the Firedown brand mark (discoverability, like the download notification); the small status-bar glyph is an upload arrow. <b>Tap → Downloads backup screen</b> (the live status hero above), the way a download notification opens the Downloads list.</div>
+  <div class="note"><b>Why these splits:</b> "Sync now" and "Delete <i>bookmarks</i> from server" are bookmark-only, so they sit under Bookmarks — not a generic "Manage sync." Downloads is one entry to its own screen. Recovery code + the FAQ are the only genuinely shared things, and the FAQ is rewritten to cover files too. Paid "Storage &amp; billing" arrives with the payments mint (Phase 1b).</div>
+</div>
+
+</body></html>

@@ -24,8 +24,9 @@ import androidx.biometric.BiometricPrompt;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Observer;
+import android.text.format.Formatter;
+
 import androidx.preference.Preference;
-import androidx.preference.PreferenceScreen;
 import androidx.preference.SwitchPreferenceCompat;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
@@ -34,12 +35,11 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
 import com.solarized.firedown.AppLock;
-import com.solarized.firedown.BuildConfig;
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
+import com.solarized.firedown.sync.CloudBackupManager;
 import com.solarized.firedown.sync.SyncManager;
 import com.solarized.firedown.sync.SyncWorker;
-import com.solarized.firedown.sync.VaultSmokeTest;
 import com.solarized.firedown.utils.NavigationUtils;
 
 import java.io.OutputStream;
@@ -49,7 +49,6 @@ import java.util.UUID;
 import javax.inject.Inject;
 
 import dagger.hilt.android.AndroidEntryPoint;
-import okhttp3.OkHttpClient;
 
 /**
  * Bookmark-sync settings sub-screen: enable/disable, show the recovery code,
@@ -78,9 +77,8 @@ public class SyncSettingsFragment extends BasePreferenceFragment
     @Inject
     AppLock mAppLock;
 
-    /** Shared OkHttp client — used only by the debug vault smoke test below. */
     @Inject
-    OkHttpClient mHttpClient;
+    CloudBackupManager mCloudBackup;
 
     private SwitchPreferenceCompat mEnableSwitch;
     private Preference mDownloadsBackup;
@@ -89,10 +87,9 @@ public class SyncSettingsFragment extends BasePreferenceFragment
     private Preference mExportCode;
     private Preference mSyncNow;
     private Preference mDeleteData;
-    // Section headers — hidden while sync is off so the off-state screen is just
-    // the switch + FAQ. Turn-off lives on the master switch (no separate row).
+    // The Recovery-code category is SHARED (bookmarks + downloads) and shown once
+    // the account exists — bookmarks on OR a download has been backed up.
     private Preference mCatCode;
-    private Preference mCatManage;
 
     /** Last sync state seen, so the failure snackbar fires only on a fresh
      *  SYNCING -> ERROR transition (not on every entry with a stale error). */
@@ -118,6 +115,23 @@ public class SyncSettingsFragment extends BasePreferenceFragment
             }
             mSyncState = next;
         });
+        // Live "Downloads backup" row status: reflect a running upload/restore so
+        // the row reads "Backing up your downloads…" while a transfer is active.
+        WorkManager.getInstance(requireContext().getApplicationContext())
+                .getWorkInfosByTagLiveData(CloudBackupManager.WORK_TAG)
+                .observe(getViewLifecycleOwner(), infos -> {
+                    boolean active = false;
+                    if (infos != null) {
+                        for (WorkInfo wi : infos) {
+                            WorkInfo.State s = wi.getState();
+                            if (s == WorkInfo.State.RUNNING || s == WorkInfo.State.ENQUEUED) {
+                                active = true;
+                                break;
+                            }
+                        }
+                    }
+                    updateDownloadsSummary(active);
+                });
     }
 
     @Override
@@ -134,7 +148,6 @@ public class SyncSettingsFragment extends BasePreferenceFragment
         mSyncNow = findPreference(Preferences.SETTINGS_SYNC_NOW);
         mDeleteData = findPreference(Preferences.SETTINGS_SYNC_DELETE_DATA);
         mCatCode = findPreference(Preferences.SETTINGS_SYNC_CAT_CODE);
-        mCatManage = findPreference(Preferences.SETTINGS_SYNC_CAT_MANAGE);
 
         if (mEnableSwitch != null) {
             // Never let the switch self-persist — we drive SYNC_ENABLED through
@@ -171,54 +184,6 @@ public class SyncSettingsFragment extends BasePreferenceFragment
 
         tintIcons();
         updateState();
-        addVaultSmokeTestRow();
-    }
-
-    /**
-     * Debug-only row that runs the encrypted-storage vault round-trip against the
-     * live {@code storage.firedown.app} server, reusing the SAME recovery code the
-     * bookmark sync stores (so the vault account is the same identity). Never added
-     * in a release build. There is no real vault UI yet; this is the on-device
-     * smoke test for the storage client before that exists.
-     */
-    private void addVaultSmokeTestRow() {
-        if (!BuildConfig.DEBUG) {
-            return;
-        }
-        PreferenceScreen screen = getPreferenceScreen();
-        if (screen == null) {
-            return;
-        }
-        Preference row = new Preference(requireContext());
-        row.setKey("debug.vault.smoke");
-        row.setPersistent(false);
-        row.setTitle("Debug: test storage vault");
-        row.setSummary("Round-trip a file through storage.firedown.app");
-        row.setOnPreferenceClickListener(pref -> {
-            runVaultSmokeTest(pref);
-            return true;
-        });
-        screen.addPreference(row);
-    }
-
-    private void runVaultSmokeTest(Preference row) {
-        row.setEnabled(false);
-        row.setSummary("Running…");
-        snackbar("Vault smoke test started…");
-        Context appContext = requireContext().getApplicationContext();
-        Handler main = new Handler(Looper.getMainLooper());
-        new Thread(() -> {
-            VaultSmokeTest.Result result = VaultSmokeTest.run(
-                    appContext, mHttpClient, Preferences.STORAGE_DEFAULT_BACKEND);
-            main.post(() -> {
-                if (!isAdded()) {
-                    return;
-                }
-                row.setEnabled(true);
-                row.setSummary(result.message);
-                snackbar(result.message);
-            });
-        }, "vault-smoke-test").start();
     }
 
     @Override
@@ -391,36 +356,71 @@ public class SyncSettingsFragment extends BasePreferenceFragment
         });
     }
 
-    /** Reflects persisted state into the switch + dependent-row visibility. */
+    /** Reflects persisted state into the switch + per-feature row visibility. */
     private void updateState() {
         boolean on = mSyncManager.isEnabled();
+        // The account exists once EITHER feature is set up — bookmarks on, or a
+        // download has been backed up. The shared Recovery-code section keys off
+        // this, not bookmarks alone (a downloads-only user still needs the code).
+        boolean accountExists = on || mCloudBackup.isSetUp();
         if (mEnableSwitch != null) {
             mEnableSwitch.setChecked(on);
             mEnableSwitch.setSummary(on
                     ? lastSyncedSummary()
                     : getString(R.string.settings_sync_switch_summary));
         }
-        // The whole Recovery-code + Manage-sync sections appear only once sync is
-        // set up; off-state = switch + FAQ only. Hiding the category headers (and,
-        // belt-and-suspenders, their rows) keeps an empty header from showing.
-        if (mCatCode != null) {
-            mCatCode.setVisible(on);
-        }
-        if (mCatManage != null) {
-            mCatManage.setVisible(on);
-        }
-        if (mShowCode != null) {
-            mShowCode.setVisible(on);
-        }
-        if (mExportCode != null) {
-            mExportCode.setVisible(on);
-        }
+        // Sync now + Delete bookmarks are BOOKMARK-only actions → shown only when
+        // bookmark sync is on, under the Bookmarks section.
         if (mSyncNow != null) {
             mSyncNow.setVisible(on);
         }
         if (mDeleteData != null) {
             mDeleteData.setVisible(on);
         }
+        // Recovery code is SHARED → shown once the account exists.
+        if (mCatCode != null) {
+            mCatCode.setVisible(accountExists);
+        }
+        if (mShowCode != null) {
+            mShowCode.setVisible(accountExists);
+        }
+        if (mExportCode != null) {
+            mExportCode.setVisible(accountExists);
+        }
+        updateDownloadsSummary(false);
+    }
+
+    /**
+     * Updates the "Downloads backup" row summary: a live "Backing up…" while a
+     * transfer runs, else the backed-up usage ("N files · X MB") once set up, else
+     * the generic invitation. The usage read is async (network), guarded against
+     * the view going away.
+     */
+    private void updateDownloadsSummary(boolean active) {
+        if (mDownloadsBackup == null) {
+            return;
+        }
+        if (active) {
+            mDownloadsBackup.setSummary(getString(R.string.settings_sync_downloads_active));
+            return;
+        }
+        if (!mCloudBackup.isSetUp()) {
+            mDownloadsBackup.setSummary(getString(R.string.settings_sync_downloads_summary));
+            return;
+        }
+        mCloudBackup.loadUsage(usage -> {
+            if (!isAdded() || mDownloadsBackup == null) {
+                return;
+            }
+            if (!usage.setUp || usage.fileCount < 0 || usage.totalBytes < 0) {
+                mDownloadsBackup.setSummary(getString(R.string.settings_sync_downloads_summary));
+                return;
+            }
+            String files = getResources().getQuantityString(
+                    R.plurals.settings_cloud_backup_file_count, usage.fileCount, usage.fileCount);
+            String size = Formatter.formatShortFileSize(requireContext(), usage.totalBytes);
+            mDownloadsBackup.setSummary(getString(R.string.settings_cloud_backup_usage, files, size));
+        });
     }
 
     private String lastSyncedSummary() {

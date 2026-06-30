@@ -195,8 +195,16 @@
     <string name="settings_account_summary">Bookmarks and encrypted download backup, one recovery code</string>
     <string name="settings_sync_cat_what">What to sync</string>
     <string name="settings_sync_bookmarks_title">Bookmarks</string>
-    <string name="settings_sync_downloads_title">Downloads backup</string>
+    <string name="settings_sync_downloads_title">Manage downloads backup</string>
     <string name="settings_sync_downloads_summary">Encrypted backup of your downloads</string>
+    <!-- Unified Sync screen section headers (grouped by feature). -->
+    <string name="settings_sync_cat_bookmarks">Bookmarks</string>
+    <string name="settings_sync_cat_downloads">Downloads backup</string>
+    <string name="settings_sync_cat_about">About</string>
+    <!-- The recovery code now unlocks BOTH bookmarks and backups. -->
+    <string name="settings_sync_show_code_shared_summary">The one key for your bookmarks and backups</string>
+    <!-- Downloads-backup row summary while an upload/restore is running. -->
+    <string name="settings_sync_downloads_active">Backing up your downloads…</string>
     <string name="settings_sync_switch_summary">Off — your bookmarks stay on this device</string>
     <string name="settings_sync_never_synced">On — not synced yet</string>
     <string name="settings_sync_last_synced">On — last synced %1$s</string>
@@ -241,8 +249,8 @@
     <string name="settings_sync_cat_code">Recovery code</string>
     <string name="settings_sync_cat_manage">Manage sync</string>
     <!-- Offline "How sync encryption works" help (dialog). -->
-    <string name="settings_sync_help_title">How sync encryption works</string>
-    <string name="settings_sync_help_summary">What\'s encrypted, and why your recovery code matters</string>
+    <string name="settings_sync_help_title">How sync &amp; encryption work</string>
+    <string name="settings_sync_help_summary">What\'s encrypted — your bookmarks and backed-up files</string>
     <string name="settings_sync_help_close">Got it</string>
     <string name="settings_sync_faq_q1">Are my bookmarks encrypted?</string>
     <string name="settings_sync_faq_a1">Yes. Each bookmark is encrypted on this device before it\'s uploaded. The server only ever stores scrambled data it can\'t read.</string>
@@ -256,7 +264,7 @@
     <string name="settings_sync_faq_a5">No. There\'s no sign-up, email, or phone number — just the recovery code. Nothing personal is tied to your bookmarks.</string>
     <string name="settings_sync_faq_q6">What if I don\'t want to use sync?</string>
     <string name="settings_sync_faq_a6">Sync is optional and off by default. You can always export your bookmarks to a file and import them later, with no server involved.</string>
-    <string name="settings_sync_delete_title">Delete data from server</string>
+    <string name="settings_sync_delete_title">Delete bookmarks from server</string>
     <string name="settings_sync_delete_summary">Permanently erase your encrypted bookmarks from the server</string>
     <string name="settings_sync_delete_message">This permanently erases your encrypted bookmarks from the server and turns off sync on this device. The bookmarks on this device are kept. This can\'t be undone — other devices will no longer be able to restore from the server.</string>
     <string name="settings_sync_delete_action">Delete</string>
@@ -277,6 +285,7 @@
         <item quantity="other">%d files</item>
     </plurals>
     <string name="settings_cloud_backup_usage_unavailable">Backed up — usage unavailable offline</string>
+    <string name="settings_cloud_backup_active">Transfer in progress…</string>
     <string name="settings_cloud_backup_cat_manage">Manage backup</string>
     <string name="settings_cloud_backup_files_title">Backed-up files</string>
     <string name="settings_cloud_backup_files_summary">View and restore what you\'ve backed up</string>

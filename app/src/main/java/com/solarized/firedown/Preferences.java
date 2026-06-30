@@ -114,9 +114,12 @@ public class Preferences {
     public static final String SETTINGS_SYNC_HELP = "com.solarized.firedown.preferences.sync.help";
     /** Right-to-erasure: delete the encrypted document from the server. */
     public static final String SETTINGS_SYNC_DELETE_DATA = "com.solarized.firedown.preferences.sync.delete.data";
-    /** Section headers on the sync screen (toggled visible only when sync is on). */
+    /** Section headers on the unified Sync screen. Bookmarks / Downloads / About
+     *  are always visible; Recovery code is shown once the account exists. */
     public static final String SETTINGS_SYNC_CAT_CODE = "com.solarized.firedown.preferences.sync.cat.code";
-    public static final String SETTINGS_SYNC_CAT_MANAGE = "com.solarized.firedown.preferences.sync.cat.manage";
+    public static final String SETTINGS_SYNC_CAT_BOOKMARKS = "com.solarized.firedown.preferences.sync.cat.bookmarks";
+    public static final String SETTINGS_SYNC_CAT_DOWNLOADS = "com.solarized.firedown.preferences.sync.cat.downloads";
+    public static final String SETTINGS_SYNC_CAT_ABOUT = "com.solarized.firedown.preferences.sync.cat.about";
 
     // ---- Cloud Backup (encrypted downloads → storage.firedown.app) ----
     // A SEPARATE feature from the local "Safe Folder" (file_safe / files/safe/),

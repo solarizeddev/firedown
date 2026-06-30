@@ -1,45 +1,44 @@
 package com.solarized.firedown.settings;
 
-import android.content.ClipData;
-import android.content.ClipboardManager;
 import android.content.Context;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.format.Formatter;
 import android.view.View;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
-import androidx.biometric.BiometricManager;
-import androidx.biometric.BiometricPrompt;
-import androidx.core.content.ContextCompat;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceCategory;
+import androidx.preference.PreferenceScreen;
+import androidx.work.WorkInfo;
+import androidx.work.WorkManager;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
-import com.solarized.firedown.AppLock;
+import com.solarized.firedown.BuildConfig;
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
 import com.solarized.firedown.sync.CloudBackupManager;
+import com.solarized.firedown.sync.VaultSmokeTest;
 import com.solarized.firedown.utils.NavigationUtils;
 
 import javax.inject.Inject;
 
 import dagger.hilt.android.AndroidEntryPoint;
+import okhttp3.OkHttpClient;
 
 /**
- * Cloud Backup settings sub-screen: status, show the recovery code, delete all
- * cloud data. The encrypted backup of finished downloads (to
- * {@code storage.firedown.app}) is a SEPARATE feature from the local "Safe
- * Folder" ({@code file_safe}); copy here never says "vault".
+ * Downloads-backup (Cloud Backup) management sub-screen, reached from the unified
+ * Sync screen's "Downloads backup" row. PURELY downloads management — status, the
+ * backed-up files list, and right-to-erasure. The recovery code + FAQ are shared
+ * and live on the parent Sync screen, not here.
  *
- * <p>There is intentionally NO enable switch — Cloud Backup is action-driven (a
- * finished download's options sheet has a "Back up" action that sets it up on
- * demand, reusing the bookmark-sync recovery code). This screen is the manager.
- * The Manage category is hidden until Cloud Backup is set up, so the not-set-up
- * screen is just the status line + the FAQ.
+ * <p>The encrypted cloud backup of finished downloads (to
+ * {@code storage.firedown.app}) is a SEPARATE feature from the local "Safe
+ * Folder" ({@code file_safe}); copy here never says "vault". It's action-driven
+ * (a download's options sheet backs it up on demand), so there is no on/off
+ * switch — the Manage category is hidden until it's set up.
  */
 @AndroidEntryPoint
 public class CloudBackupSettingsFragment extends BasePreferenceFragment
@@ -48,15 +47,18 @@ public class CloudBackupSettingsFragment extends BasePreferenceFragment
     @Inject
     CloudBackupManager mCloudBackup;
 
+    /** Shared OkHttp client — used only by the debug smoke-test row below. */
     @Inject
-    AppLock mAppLock;
+    OkHttpClient mHttpClient;
 
     private Preference mStatus;
-    private Preference mHelp;
     private Preference mFiles;
-    private Preference mShowCode;
     private Preference mDeleteData;
     private PreferenceCategory mCatManage;
+
+    /** True while a transfer is running, so a usage refresh doesn't clobber the
+     *  live "Transfer in progress…" status. */
+    private boolean mTransferActive;
 
     @Override
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
@@ -65,20 +67,12 @@ public class CloudBackupSettingsFragment extends BasePreferenceFragment
         setPreferencesFromResource(R.xml.settings_cloud_backup, rootKey);
 
         mStatus = findPreference(Preferences.SETTINGS_CLOUD_BACKUP_STATUS);
-        mHelp = findPreference(Preferences.SETTINGS_CLOUD_BACKUP_HELP);
         mFiles = findPreference(Preferences.SETTINGS_CLOUD_BACKUP_FILES);
-        mShowCode = findPreference(Preferences.SETTINGS_CLOUD_BACKUP_SHOW_CODE);
         mDeleteData = findPreference(Preferences.SETTINGS_CLOUD_BACKUP_DELETE_DATA);
         mCatManage = findPreference(Preferences.SETTINGS_CLOUD_BACKUP_CAT_MANAGE);
 
-        if (mHelp != null) {
-            mHelp.setOnPreferenceClickListener(this);
-        }
         if (mFiles != null) {
             mFiles.setOnPreferenceClickListener(this);
-        }
-        if (mShowCode != null) {
-            mShowCode.setOnPreferenceClickListener(this);
         }
         if (mDeleteData != null) {
             mDeleteData.setOnPreferenceClickListener(this);
@@ -86,6 +80,30 @@ public class CloudBackupSettingsFragment extends BasePreferenceFragment
 
         tintIcons();
         updateState();
+        addDebugSmokeTestRow();
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        // Live status: while an upload/restore runs, the status line reads
+        // "Transfer in progress…" instead of the static usage.
+        WorkManager.getInstance(requireContext().getApplicationContext())
+                .getWorkInfosByTagLiveData(CloudBackupManager.WORK_TAG)
+                .observe(getViewLifecycleOwner(), infos -> {
+                    boolean active = false;
+                    if (infos != null) {
+                        for (WorkInfo wi : infos) {
+                            WorkInfo.State s = wi.getState();
+                            if (s == WorkInfo.State.RUNNING || s == WorkInfo.State.ENQUEUED) {
+                                active = true;
+                                break;
+                            }
+                        }
+                    }
+                    mTransferActive = active;
+                    updateState();
+                });
     }
 
     @Override
@@ -99,10 +117,8 @@ public class CloudBackupSettingsFragment extends BasePreferenceFragment
     public boolean onPreferenceClick(Preference preference) {
         String key = preference.getKey();
         switch (key) {
-            case Preferences.SETTINGS_CLOUD_BACKUP_HELP -> showHelpDialog();
             case Preferences.SETTINGS_CLOUD_BACKUP_FILES ->
                     NavigationUtils.navigateSafe(mNavController, R.id.action_cloud_backup_to_files);
-            case Preferences.SETTINGS_CLOUD_BACKUP_SHOW_CODE -> authThenShowCode();
             case Preferences.SETTINGS_CLOUD_BACKUP_DELETE_DATA -> showDeleteDataDialog();
         }
         return true;
@@ -117,14 +133,16 @@ public class CloudBackupSettingsFragment extends BasePreferenceFragment
         if (mStatus == null) {
             return;
         }
+        if (mTransferActive) {
+            mStatus.setSummary(getString(R.string.settings_cloud_backup_active));
+            return;
+        }
         if (!setUp) {
             mStatus.setSummary(getString(R.string.settings_cloud_backup_not_set_up));
             return;
         }
-        // Set up — fill in usage asynchronously (network), guarding against the
-        // view going away before the disk-executor callback returns.
         mCloudBackup.loadUsage(usage -> {
-            if (!isAdded() || mStatus == null) {
+            if (!isAdded() || mStatus == null || mTransferActive) {
                 return;
             }
             if (usage.fileCount < 0 || usage.totalBytes < 0) {
@@ -136,76 +154,6 @@ public class CloudBackupSettingsFragment extends BasePreferenceFragment
             String size = Formatter.formatShortFileSize(requireContext(), usage.totalBytes);
             mStatus.setSummary(getString(R.string.settings_cloud_backup_usage, files, size));
         });
-    }
-
-    private void showHelpDialog() {
-        new MaterialAlertDialogBuilder(requireContext())
-                .setTitle(R.string.settings_cloud_backup_help_title)
-                .setMessage(R.string.settings_cloud_backup_help_message)
-                .setPositiveButton(R.string.settings_cloud_backup_help_close, null)
-                .show();
-    }
-
-    /**
-     * Reveals the shared recovery code behind a device-auth check (biometric / PIN
-     * / pattern) when the device has a secure lock — the code is the master key for
-     * both bookmark sync and Cloud Backup, so a borrowed/unlocked phone shouldn't
-     * surface it from a tap. With nothing enrolled there's nothing to authenticate
-     * against, so it reveals directly.
-     */
-    private void authThenShowCode() {
-        authThenReveal(() -> showCodeDialog(mCloudBackup.recoveryCodeForDisplay()));
-    }
-
-    private void authThenReveal(Runnable onAuth) {
-        if (!mAppLock.isBiometricEnabled()) {
-            onAuth.run();
-            return;
-        }
-        BiometricPrompt prompt = new BiometricPrompt(this,
-                ContextCompat.getMainExecutor(requireContext()),
-                new BiometricPrompt.AuthenticationCallback() {
-                    @Override
-                    public void onAuthenticationSucceeded(@NonNull BiometricPrompt.AuthenticationResult result) {
-                        if (isAdded()) {
-                            onAuth.run();
-                        }
-                    }
-                });
-        // DEVICE_CREDENTIAL is allowed (PIN/pattern fallback); with it set, no
-        // negative button may be configured (the API rejects it) — mirror LockActivity.
-        BiometricPrompt.PromptInfo info = new BiometricPrompt.PromptInfo.Builder()
-                .setTitle(getString(R.string.settings_cloud_backup_show_code_title))
-                .setSubtitle(getString(R.string.settings_cloud_backup_auth_subtitle))
-                .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG
-                        | BiometricManager.Authenticators.DEVICE_CREDENTIAL)
-                .build();
-        prompt.authenticate(info);
-    }
-
-    /** Shows the grouped recovery code with a copy action (shared show-code layout). */
-    private void showCodeDialog(@Nullable String grouped) {
-        if (grouped == null) {
-            snackbar(getString(R.string.settings_cloud_backup_code_unavailable));
-            return;
-        }
-        View view = getLayoutInflater().inflate(R.layout.dialog_sync_show_code, null);
-        TextView codeText = view.findViewById(R.id.sync_code_text);
-        codeText.setText(grouped);
-        // The "I've saved my code" gate is only for first-create (bookmark sync's
-        // flow); here the account already exists, so it's hidden and Done is free.
-        view.findViewById(R.id.sync_code_saved_check).setVisibility(View.GONE);
-
-        AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
-                .setTitle(R.string.settings_cloud_backup_show_code_title)
-                .setView(view)
-                .setNeutralButton(R.string.settings_sync_code_copy, null)
-                .setPositiveButton(R.string.settings_sync_code_done, null)
-                .create();
-        dialog.show();
-        // Copy without closing the dialog (suppress the default dismiss).
-        dialog.getButton(AlertDialog.BUTTON_NEUTRAL)
-                .setOnClickListener(v -> copyToClipboard(grouped));
     }
 
     private void showDeleteDataDialog() {
@@ -228,20 +176,50 @@ public class CloudBackupSettingsFragment extends BasePreferenceFragment
                 .show();
     }
 
-    private void copyToClipboard(String text) {
-        // A clipboard write is a binder call into system_server; never let a dying
-        // clipboard service crash the app (see AutoCompleteView hardening).
-        try {
-            ClipboardManager cm = (ClipboardManager)
-                    requireContext().getSystemService(Context.CLIPBOARD_SERVICE);
-            if (cm != null) {
-                cm.setPrimaryClip(ClipData.newPlainText(
-                        getString(R.string.settings_cloud_backup_title), text));
-                snackbar(getString(R.string.settings_sync_code_copied));
-            }
-        } catch (RuntimeException e) {
-            // Clipboard unavailable — the code is still shown for manual copy.
+    /**
+     * Debug-only row that round-trips a file through the live storage server,
+     * reusing the shared recovery code. Never added in a release build. This is
+     * the on-device smoke test for the storage client; it lives on the downloads
+     * sub-screen (not the main Sync screen) so it stays out of the way.
+     */
+    private void addDebugSmokeTestRow() {
+        if (!BuildConfig.DEBUG) {
+            return;
         }
+        PreferenceScreen screen = getPreferenceScreen();
+        if (screen == null) {
+            return;
+        }
+        Preference row = new Preference(requireContext());
+        row.setKey("debug.vault.smoke");
+        row.setPersistent(false);
+        row.setTitle("Test storage vault (debug)");
+        row.setSummary("Round-trip a file through storage.firedown.app");
+        row.setOnPreferenceClickListener(pref -> {
+            runDebugSmokeTest(pref);
+            return true;
+        });
+        screen.addPreference(row);
+    }
+
+    private void runDebugSmokeTest(Preference row) {
+        row.setEnabled(false);
+        row.setSummary("Running…");
+        snackbar("Vault smoke test started…");
+        Context appContext = requireContext().getApplicationContext();
+        Handler main = new Handler(Looper.getMainLooper());
+        new Thread(() -> {
+            VaultSmokeTest.Result result = VaultSmokeTest.run(
+                    appContext, mHttpClient, Preferences.STORAGE_DEFAULT_BACKEND);
+            main.post(() -> {
+                if (!isAdded()) {
+                    return;
+                }
+                row.setEnabled(true);
+                row.setSummary(result.message);
+                snackbar(result.message);
+            });
+        }, "vault-smoke-test").start();
     }
 
     private void snackbar(String text) {

@@ -3,6 +3,7 @@ package com.solarized.firedown.sync;
 import android.app.Notification;
 import android.content.Context;
 import android.content.pm.ServiceInfo;
+import android.graphics.BitmapFactory;
 import android.os.Build;
 
 import androidx.annotation.NonNull;
@@ -170,14 +171,14 @@ public class VaultRestoreWorker extends Worker {
 
     private ForegroundInfo foregroundInfo(String name) {
         String title = mContext.getString(R.string.cloud_restore_notification_title);
-        String text = name != null
-                ? mContext.getString(R.string.cloud_restore_notification_text, name)
-                : title;
         Notification notification = new NotificationCompat.Builder(
                 mContext, App.DOWNLOADS_NOTIFICATION_ID)
                 .setSmallIcon(R.drawable.settings_backup_restore_24)
+                .setLargeIcon(BitmapFactory.decodeResource(
+                        mContext.getResources(), R.mipmap.ic_launcher_round))
                 .setContentTitle(title)
-                .setContentText(text)
+                .setContentText(name != null ? name : title)
+                .setContentIntent(VaultBackupWorker.cloudBackupIntent(mContext))
                 .setOngoing(true)
                 .setProgress(0, 0, true) // indeterminate
                 .setPriority(NotificationCompat.PRIORITY_LOW)

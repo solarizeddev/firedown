@@ -1,9 +1,12 @@
 package com.solarized.firedown.sync;
 
 import android.app.Notification;
+import android.app.PendingIntent;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ServiceInfo;
+import android.graphics.BitmapFactory;
 import android.os.Build;
 
 import androidx.annotation.NonNull;
@@ -17,6 +20,7 @@ import androidx.work.WorkerParameters;
 import com.solarized.firedown.App;
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
+import com.solarized.firedown.phone.SettingsActivity;
 import com.solarized.firedown.sync.crypto.SyncIdentity;
 
 import java.io.File;
@@ -127,15 +131,19 @@ public class VaultBackupWorker extends Worker {
     }
 
     private ForegroundInfo foregroundInfo(String name) {
+        // Short and branded: the action is the title, the file name is the body
+        // (ellipsized by the system) — not a two-line sentence. Tapping opens the
+        // Downloads-backup screen (the live status), like a download notification
+        // opens the Downloads list.
         String title = mContext.getString(R.string.cloud_backup_notification_title);
-        String text = name != null
-                ? mContext.getString(R.string.cloud_backup_notification_text, name)
-                : title;
         Notification notification = new NotificationCompat.Builder(
                 mContext, App.DOWNLOADS_NOTIFICATION_ID)
                 .setSmallIcon(R.drawable.ic_cloud_upload_24)
+                .setLargeIcon(BitmapFactory.decodeResource(
+                        mContext.getResources(), R.mipmap.ic_launcher_round))
                 .setContentTitle(title)
-                .setContentText(text)
+                .setContentText(name != null ? name : title)
+                .setContentIntent(cloudBackupIntent(mContext))
                 .setOngoing(true)
                 .setProgress(0, 0, true) // indeterminate
                 .setPriority(NotificationCompat.PRIORITY_LOW)
@@ -145,5 +153,14 @@ public class VaultBackupWorker extends Worker {
                     ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC);
         }
         return new ForegroundInfo(NOTIFICATION_ID, notification);
+    }
+
+    /** PendingIntent that opens the Downloads-backup status screen. */
+    static PendingIntent cloudBackupIntent(Context context) {
+        Intent intent = new Intent(context, SettingsActivity.class);
+        intent.putExtra(SettingsActivity.EXTRA_OPEN_CLOUD_BACKUP, true);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        return PendingIntent.getActivity(context, 0, intent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
     }
 }

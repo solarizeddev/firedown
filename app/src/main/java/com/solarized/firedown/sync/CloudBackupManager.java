@@ -43,6 +43,10 @@ import okhttp3.OkHttpClient;
 @Singleton
 public class CloudBackupManager {
 
+    /** Tag on every Cloud Backup transfer (upload + restore) WorkManager job, so
+     *  the UI can observe "is a transfer running right now?" across both. */
+    public static final String WORK_TAG = "cloud_backup_transfer";
+
     private final Context context;
     private final SharedPreferences prefs;
     private final Executor diskExecutor;

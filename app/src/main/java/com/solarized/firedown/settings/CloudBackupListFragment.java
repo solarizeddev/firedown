@@ -159,6 +159,7 @@ public class CloudBackupListFragment extends BasePreferenceFragment {
         OneTimeWorkRequest request = new OneTimeWorkRequest.Builder(VaultRestoreWorker.class)
                 .setInputData(input)
                 .setConstraints(constraints)
+                .addTag(CloudBackupManager.WORK_TAG)
                 .build();
         WorkManager wm = WorkManager.getInstance(requireContext().getApplicationContext());
         wm.enqueue(request);

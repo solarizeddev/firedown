@@ -20,6 +20,10 @@ public class SettingsActivity extends BaseActivity {
      *  bookmarks-list overflow uses this to deep-link past the settings list). */
     public static final String EXTRA_OPEN_SYNC = "com.solarized.firedown.extra.OPEN_SYNC";
 
+    /** Intent boolean extra: open straight to the Downloads-backup (Cloud Backup)
+     *  screen — the in-progress upload/restore notification deep-links here. */
+    public static final String EXTRA_OPEN_CLOUD_BACKUP = "com.solarized.firedown.extra.OPEN_CLOUD_BACKUP";
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -63,6 +67,12 @@ public class SettingsActivity extends BaseActivity {
                     .setPopUpTo(R.id.settings, true)
                     .build();
             navController.navigate(R.id.settings_sync, null, opts);
+        }
+
+        // Deep-link straight to the Downloads-backup screen (from the upload /
+        // restore notification). Back returns to the settings list.
+        if (getIntent().getBooleanExtra(EXTRA_OPEN_CLOUD_BACKUP, false)) {
+            navController.navigate(R.id.settings_cloud_backup);
         }
 
         navController.addOnDestinationChangedListener((navController1, navDestination, bundle) -> {

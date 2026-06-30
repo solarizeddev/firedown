@@ -82,9 +82,6 @@ import dagger.hilt.android.AndroidEntryPoint;
 public abstract class BaseDownloadFragment extends BaseFocusFragment {
 
 
-    /** Tag on all one-off Cloud Backup upload work (for observation/cancel). */
-    private static final String CLOUD_BACKUP_WORK_TAG = "cloud_backup_upload";
-
     @Inject
     protected SharedPreferences mSharedPreferences;
 
@@ -428,7 +425,7 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
         OneTimeWorkRequest request = new OneTimeWorkRequest.Builder(VaultBackupWorker.class)
                 .setInputData(input)
                 .setConstraints(constraints)
-                .addTag(CLOUD_BACKUP_WORK_TAG)
+                .addTag(CloudBackupManager.WORK_TAG)
                 .build();
         WorkManager wm = WorkManager.getInstance(requireContext().getApplicationContext());
         wm.enqueue(request);
