@@ -355,7 +355,7 @@ public class Preferences {
     // pick. Must match the first entry of @array/settings_doh_servers.
     // (DoH is gated by SETTINGS_DOH_SWITCH, off by default, so this only
     // takes effect once the user turns DoH on.)
-    public static final String DEFAULT_SETTINGS_DOH = "https://mozilla.cloudflare-dns.com/dns-query";
+    public static final String DEFAULT_SETTINGS_DOH = "https://dns.mullvad.net/dns-query";
 
     public static final String DEFAULT_SETTINGS_COOKIES = String.valueOf(ContentBlocking.CookieBehavior.ACCEPT_NON_TRACKERS);
 
