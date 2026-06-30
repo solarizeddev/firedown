@@ -158,7 +158,14 @@ public class SyncManager {
         repo.setSyncEnabled(false);
         repo.setSyncChangeTrigger(null);
         scheduler.cancel();
-        new SyncSecrets(context).clear();
+        // The recovery code is SHARED with Cloud Backup (one account across
+        // services). Only wipe it when no other feature still needs it —
+        // otherwise signing out of bookmark sync would silently lock the user
+        // out of their cloud-backed downloads. Cloud Backup wipes it symmetrically
+        // (gated on SYNC_ENABLED) in CloudBackupManager.deleteAllData.
+        if (!prefs.getBoolean(Preferences.CLOUD_BACKUP_ENABLED, false)) {
+            new SyncSecrets(context).clear();
+        }
     }
 
     /**

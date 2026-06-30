@@ -90,6 +90,13 @@
             app:exitAnim="@anim/slide_out_left"
             app:popEnterAnim="@anim/slide_in_left"
             app:popExitAnim="@anim/slide_out_right" />
+        <action
+            android:id="@+id/action_settings_to_cloud_backup"
+            app:destination="@id/settings_cloud_backup"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
     </fragment>
     <fragment
         android:id="@+id/settings_wasm"
@@ -161,4 +168,7 @@
     <fragment
         android:id="@+id/settings_sync_help"
         android:name="com.solarized.firedown.settings.SyncHelpFragment" />
+    <fragment
+        android:id="@+id/settings_cloud_backup"
+        android:name="com.solarized.firedown.settings.CloudBackupSettingsFragment" />
 </navigation>

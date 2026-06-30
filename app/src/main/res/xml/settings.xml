@@ -54,6 +54,13 @@
             app:icon="@drawable/cloud_outline_24"/>
 
         <Preference
+            android:key="com.solarized.firedown.preferences.settings.cloud.backup"
+            android:title="@string/settings_cloud_backup_title"
+            android:summary="@string/settings_cloud_backup_summary"
+            app:singleLineTitle="false"
+            app:icon="@drawable/cloud_24"/>
+
+        <Preference
             android:key="com.solarized.firedown.preferences.browser.quit"
             android:summary="@string/delete_browsing_data_quit_off"
             android:title="@string/settings_quit_title"

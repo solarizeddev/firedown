@@ -1,0 +1,53 @@
+<!--
+  Cloud Backup settings (encrypted downloads → storage.firedown.app). A SEPARATE
+  feature from the local "Safe Folder" — copy never says "vault".
+
+  There is NO on/off switch: Cloud Backup is action-driven (backing up a finished
+  download from its options sheet sets it up on demand, reusing the bookmark-sync
+  recovery code). This screen is the manager — status, the shared recovery code,
+  and right-to-erasure. The "Backed-up files" list + restore is a separate screen
+  added alongside its fragment.
+
+  Status is non-clickable (informational summary). The Manage category is hidden
+  until Cloud Backup is set up (CloudBackupSettingsFragment toggles it), so the
+  not-set-up screen is just the status line.
+-->
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <Preference
+        android:key="com.solarized.firedown.preferences.cloud.backup.status"
+        android:title="@string/settings_cloud_backup_status_title"
+        android:summary="@string/settings_cloud_backup_not_set_up"
+        android:selectable="false"
+        app:singleLineTitle="false"
+        app:icon="@drawable/cloud_24" />
+
+    <Preference
+        android:key="com.solarized.firedown.preferences.cloud.backup.help"
+        android:title="@string/settings_cloud_backup_help_title"
+        android:summary="@string/settings_cloud_backup_help_summary"
+        app:singleLineTitle="false"
+        app:icon="@drawable/encryption_24" />
+
+    <PreferenceCategory
+        android:key="com.solarized.firedown.preferences.cloud.backup.cat.manage"
+        android:title="@string/settings_cloud_backup_cat_manage">
+
+        <Preference
+            android:key="com.solarized.firedown.preferences.cloud.backup.show.code"
+            android:title="@string/settings_cloud_backup_show_code_title"
+            android:summary="@string/settings_cloud_backup_show_code_summary"
+            app:singleLineTitle="false"
+            app:icon="@drawable/ic_key_24" />
+
+        <Preference
+            android:key="com.solarized.firedown.preferences.cloud.backup.delete.data"
+            android:title="@string/settings_cloud_backup_delete_title"
+            android:summary="@string/settings_cloud_backup_delete_summary"
+            app:singleLineTitle="false"
+            app:icon="@drawable/ic_baseline_delete_24" />
+
+    </PreferenceCategory>
+
+</PreferenceScreen>

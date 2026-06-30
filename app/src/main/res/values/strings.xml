@@ -255,6 +255,38 @@
     <string name="settings_sync_delete_started">Deleting your data from the server…</string>
     <string name="settings_sync_delete_done">Your data was deleted from the server</string>
     <string name="settings_sync_delete_failed">Couldn\'t delete — check your connection and try again</string>
+
+    <!-- Cloud Backup (encrypted downloads → storage.firedown.app). A SEPARATE
+         feature from the local "Safe Folder"; copy must never call this "vault". -->
+    <string name="settings_cloud_backup_title">Cloud Backup</string>
+    <string name="settings_cloud_backup_summary">End-to-end encrypted backup of your downloads</string>
+    <string name="settings_cloud_backup_status_title">Status</string>
+    <string name="settings_cloud_backup_not_set_up">Not set up — back up a download to start</string>
+    <!-- %1$s = file count phrase, %2$s = total size (e.g. "14.2 MB"). -->
+    <string name="settings_cloud_backup_usage">%1$s · %2$s backed up</string>
+    <plurals name="settings_cloud_backup_file_count">
+        <item quantity="one">%d file</item>
+        <item quantity="other">%d files</item>
+    </plurals>
+    <string name="settings_cloud_backup_usage_unavailable">Backed up — usage unavailable offline</string>
+    <string name="settings_cloud_backup_cat_manage">Manage backup</string>
+    <string name="settings_cloud_backup_files_title">Backed-up files</string>
+    <string name="settings_cloud_backup_files_summary">View and restore what you\'ve backed up</string>
+    <string name="settings_cloud_backup_show_code_title">Show recovery code</string>
+    <string name="settings_cloud_backup_show_code_summary">Reveal the code that unlocks your cloud backup</string>
+    <string name="settings_cloud_backup_code_unavailable">Recovery code unavailable</string>
+    <string name="settings_cloud_backup_auth_subtitle">Verify it\'s you to reveal the recovery code</string>
+    <string name="settings_cloud_backup_delete_title">Delete all cloud data</string>
+    <string name="settings_cloud_backup_delete_summary">Permanently erase your backed-up files from the server</string>
+    <string name="settings_cloud_backup_delete_message">This permanently erases all your backed-up files from the server. The downloads on this device are kept. This can\'t be undone — other devices will no longer be able to restore from the server.</string>
+    <string name="settings_cloud_backup_delete_action">Delete</string>
+    <string name="settings_cloud_backup_delete_started">Deleting your backup from the server…</string>
+    <string name="settings_cloud_backup_delete_done">Your cloud backup was deleted</string>
+    <string name="settings_cloud_backup_delete_failed">Couldn\'t delete — check your connection and try again</string>
+    <string name="settings_cloud_backup_help_title">How cloud backup works</string>
+    <string name="settings_cloud_backup_help_summary">What\'s encrypted, and why your recovery code matters</string>
+    <string name="settings_cloud_backup_help_message">Each download you back up is encrypted on this device before it leaves it — the server only ever stores scrambled bytes it can\'t read. Cloud Backup uses the same recovery code as bookmark sync: it\'s the only key, on this device or a new one, and it can\'t be recovered if lost.\n\nThere\'s no account, email, or sign-up. Your local Safe Folder is unrelated and never leaves this device.</string>
+    <string name="settings_cloud_backup_help_close">Got it</string>
     <string name="settings_sync_sign_out_title">Turn off sync</string>
     <string name="settings_sync_sign_out_summary">Stop syncing and remove the keys from this device</string>
     <string name="settings_sync_sign_out_message">Bookmark sync will be turned off and the recovery code removed from this device. Your bookmarks stay here. Make sure you have saved your recovery code if you want to sync again later.</string>
