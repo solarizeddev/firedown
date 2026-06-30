@@ -197,6 +197,9 @@
         android:id="@+id/dialog_notifications_manager"
         android:name="com.solarized.firedown.ui.NotificationsManagerDialog" />
     <dialog
+        android:id="@+id/dialog_notifications_priming"
+        android:name="com.solarized.firedown.phone.dialogs.NotificationsPrimingSheetDialogFragment" />
+    <dialog
         android:id="@+id/dialog_rename"
         android:name="com.solarized.firedown.phone.dialogs.RenameFileDialog" />
     <dialog

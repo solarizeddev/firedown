@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Notifications priming sheet (NotificationsPrimingSheetDialogFragment) — the
+  in-context pre-prompt shown ONCE on first run, BEFORE the system
+  POST_NOTIFICATIONS dialog (Android 13+). It explains why downloads want
+  notifications so the user makes an informed choice on the OS prompt that
+  follows "Enable"; "Not now" dismisses without burning the one-shot system
+  prompt. Reuses the same forest illustration + copy as the post-denial
+  NotificationsManagerDialog. No new strings: body is settings_notifications_manager,
+  buttons reuse wasm_snackbar_action_enable / settings_storage_manager_button_decline
+  (all already localized).
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <include layout="@layout/dialog_drag_handle" />
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:layout_width="150dp"
+        android:layout_height="126dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="12dp"
+        android:importantForAccessibility="no"
+        app:srcCompat="@drawable/ill_forest" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="24dp"
+        android:gravity="center"
+        android:text="@string/settings_notifications_manager"
+        android:textAppearance="?attr/textAppearanceBodyLarge"
+        android:textColor="?attr/colorOnSurfaceVariant" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="end|center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="16dp"
+        android:paddingTop="20dp"
+        android:paddingBottom="16dp">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/notifications_priming_decline"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/settings_storage_manager_button_decline" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/notifications_priming_enable"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:minWidth="140dp"
+            android:text="@string/wasm_snackbar_action_enable" />
+
+    </LinearLayout>
+
+</LinearLayout>
