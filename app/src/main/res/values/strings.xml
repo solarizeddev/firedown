@@ -509,12 +509,10 @@
     <string name="settings_doh_provider_custom_dialog_error_https">URL must start with “https://”</string>
     <string name="settings_doh_provider_custom_dialog_error_invalid">Invalid URL</string>
     <string name="settings_doh_server">DNS Server</string>
-    <string name="settings_doh_server_adguard" translatable="false">Adguard</string>
     <string name="settings_doh_server_cloudflare" translatable="false">Cloudflare</string>
     <string name="settings_doh_server_custom" translatable="false">Custom</string>
     <string name="settings_doh_server_error_provider">Please verify that is a valid provider or try again later</string>
-    <string name="settings_doh_server_google" translatable="false">Google</string>
-    <string name="settings_doh_server_mozilla" translatable="false">Mozilla</string>
+    <string name="settings_doh_server_mullvad" translatable="false">Mullvad</string>
     <string name="settings_doh_server_off">Use system DNS resolver</string>
     <string name="settings_doh_server_quad9" translatable="false">Quad9</string>
     <string name="settings_doh_server_title">Use Provider</string>

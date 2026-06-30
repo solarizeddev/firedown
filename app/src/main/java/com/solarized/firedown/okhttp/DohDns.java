@@ -33,12 +33,12 @@ import okhttp3.dnsoverhttps.DnsOverHttps;
  * off the lookup is a straight pass-through to {@link Dns#SYSTEM}, so there
  * is zero added latency for users who never enabled DoH.
  *
- * <p>The server URL is resolved per-lookup from SharedPreferences using the
- * exact same logic as {@code DohFragment.resolveDohUri}: the persisted
- * SETTINGS_DOH value is itself the endpoint URL for presets, or the
- * user-entered SETTINGS_DOH_CUSTOM when the {@link
- * Preferences#SETTINGS_DOH_CUSTOM_VALUE} sentinel is selected. The built
- * {@link DnsOverHttps} instance is cached and only rebuilt when the
+ * <p>The server URL is resolved per-lookup from SharedPreferences via the
+ * shared {@link Preferences#getDohUri} helper (the same single source of
+ * truth GeckoView's TRR uses): the persisted SETTINGS_DOH value is itself
+ * the endpoint URL for presets, or the user-entered SETTINGS_DOH_CUSTOM when
+ * the {@link Preferences#SETTINGS_DOH_CUSTOM_VALUE} sentinel is selected. The
+ * built {@link DnsOverHttps} instance is cached and only rebuilt when the
  * resolved URL changes, so flipping the setting at runtime is picked up
  * without rebuilding the (immutable) OkHttpClient.
  */
@@ -92,10 +92,10 @@ public final class DohDns implements Dns {
      *         then uses the system resolver).
      */
     private DnsOverHttps currentResolver() {
-        if (!prefs.getBoolean(Preferences.SETTINGS_DOH_SWITCH, false)) {
+        if (!Preferences.getDohEnabled(prefs)) {
             return null;
         }
-        String url = resolveServerUrl();
+        String url = Preferences.getDohUri(prefs);
         if (url == null || url.isEmpty()) {
             return null;
         }
@@ -114,20 +114,5 @@ public final class DohDns implements Dns {
         cachedDoh = doh;
         cachedUrl = url;
         return doh;
-    }
-
-    /**
-     * Resolves the configured DoH endpoint URL. Mirrors
-     * {@code DohFragment.resolveDohUri}: the persisted SETTINGS_DOH value is
-     * itself the endpoint URL for presets, or the user-entered
-     * SETTINGS_DOH_CUSTOM when the custom sentinel is selected.
-     */
-    private String resolveServerUrl() {
-        String value = prefs.getString(
-                Preferences.SETTINGS_DOH, Preferences.DEFAULT_SETTINGS_DOH);
-        if (Preferences.SETTINGS_DOH_CUSTOM_VALUE.equals(value)) {
-            return prefs.getString(Preferences.SETTINGS_DOH_CUSTOM, "");
-        }
-        return value;
     }
 }
