@@ -273,6 +273,7 @@ expect(isTwitterMasterUrl("https://video.twimg.com/amplify_video/444/pl/avc1/550
 // single video, an album (two <video>s), and the og:video-only poster fallback.
 const {
   TELEGRAM_POST_RE, metaContent, collectVideoSrcs, collectDurations, parseClock,
+  extractMessageText, extractAuthor, collectThumbs, titleFromPost,
 } = await import(pathToFileURL(join(ext, "js/parsers/telegram.js")));
 const { matchInParserBlocklist } = await import(pathToFileURL(join(ext, "js/parser-blocklist.js")));
 
@@ -352,6 +353,26 @@ expect(matchInParserBlocklist("https://cdn4.telesco.pe/file/two.mp4"),
   "tg: legacy telesco.pe .mp4 is parser-block-listed");
 expect(!matchInParserBlocklist("https://cdn4.cdn-telegram.org/file/poster.jpg"),
   "tg: poster .jpg is NOT block-listed");
+
+// Embed-widget metadata extraction (the iframe carries the <video> but NO og:
+// tags, so title/author/thumb come from the tgme widget markup). Mirrors the
+// real WatcherGuru/14028 embed HTML from the user HAR.
+const tgEmbed = `<a class="tgme_widget_message_owner_name" href="https://t.me/WatcherGuru"><span dir="auto">Watcher Guru</span></a>`
+  + `<i class="tgme_widget_message_video_thumb" style="background-image:url('https://cdn4.telesco.pe/file/THUMB.jpg')"></i>`
+  + `<video src="https://cdn4.telesco.pe/file/431eee6783.mp4?token=AB" class="tgme_widget_message_video js-message_video"></video>`
+  + `<div class="tgme_widget_message_text js-message_text" dir="auto"><b>JUST IN:</b> GTA 6 pre-orders officially begin on June 25.<br/><br/><a href="https://t.me/WatcherGuru">@WatcherGuru</a></div>`
+  + `<time class="message_video_duration js-message_video_duration">0:32</time>`;
+expect(extractAuthor(tgEmbed) === "Watcher Guru", `tg: extractAuthor (got ${JSON.stringify(extractAuthor(tgEmbed))})`);
+expect(extractMessageText(tgEmbed) === "JUST IN: GTA 6 pre-orders officially begin on June 25.\n@WatcherGuru",
+  `tg: extractMessageText (got ${JSON.stringify(extractMessageText(tgEmbed))})`);
+expect(titleFromPost(extractMessageText(tgEmbed), extractAuthor(tgEmbed)) === "JUST IN: GTA 6 pre-orders officially begin on June 25.",
+  `tg: title is the post text first line (got ${JSON.stringify(titleFromPost(extractMessageText(tgEmbed), extractAuthor(tgEmbed)))})`);
+expect(collectThumbs(tgEmbed)[0] === "https://cdn4.telesco.pe/file/THUMB.jpg",
+  `tg: collectThumbs (got ${JSON.stringify(collectThumbs(tgEmbed))})`);
+expect(titleFromPost(null, "Watcher Guru") === "Watcher Guru", "tg: title falls back to author for a text-less post");
+// Duration is emitted in MILLISECONDS (parseClock gives seconds); 0:32 -> 32000.
+expect(collectDurations(tgEmbed)[0] === 32 && collectDurations(tgEmbed)[0] * 1000 === 32000,
+  "tg: duration 0:32 -> 32s -> 32000ms");
 
 // Telegram WEB APP: the SW-virtual /stream/ URLs are non-re-fetchable, so they
 // must be block-listed (telegram-web.js downloads them in-page instead). A

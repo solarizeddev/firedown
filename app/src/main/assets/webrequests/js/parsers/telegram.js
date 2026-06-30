@@ -80,6 +80,61 @@ function parseClock(s) {
     return Number.isFinite(total) ? total : 0;
 }
 
+// The embed widget iframe carries NO og: tags (those are on the landing page),
+// so when we capture from the iframe the title/author/thumbnail must come from
+// the tgme widget markup itself. The /s/ web-preview form has the SAME markup in
+// its main_frame, so these work there too; og: is kept as a fallback.
+
+// The post's own TEXT — the headline shown to the reader, used as the capture
+// title (e.g. "JUST IN: GTA 6 pre-orders officially begin on June 25."). Lives in
+// <div class="tgme_widget_message_text …">…</div>. Inline tags (<b>/<i>/<a>) are
+// dropped and <br> becomes a newline so a clean first line can be taken for the
+// title; the full text is kept for the description. decodeHtmlEntities runs later
+// at the sendVariants emit choke point.
+function extractMessageText(html) {
+    const m = html.match(/tgme_widget_message_text[^>]*>([\s\S]*?)<\/div>/i);
+    if (!m) return null;
+    const txt = m[1]
+        .replace(/<br\s*\/?>/gi, "\n")
+        .replace(/<[^>]*>/g, "")
+        .replace(/[ \t]+/g, " ")
+        .replace(/\n{2,}/g, "\n")
+        .trim();
+    return txt || null;
+}
+
+// The channel/author name from
+// <a class="tgme_widget_message_owner_name" …><span>Watcher Guru</span></a>.
+function extractAuthor(html) {
+    const m = html.match(/tgme_widget_message_owner_name[^>]*>([\s\S]*?)<\/a>/i);
+    if (!m) return null;
+    const t = m[1].replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
+    return t || null;
+}
+
+// Per-clip poster URLs from the widget's video-thumb background-image, document-
+// ordered to line up with collectVideoSrcs (used as the capture thumbnail when
+// the embed iframe has no og:image).
+function collectThumbs(html) {
+    const out = [];
+    const re = /tgme_widget_message_video_thumb[^>]*background-image:url\((['"]?)([^'")]+)\1\)/gi;
+    let m;
+    while ((m = re.exec(html)) !== null) out.push(m[2]);
+    return out;
+}
+
+// Pick a concise title from the post text: its first non-empty line, capped so a
+// long post doesn't become an unwieldy filename. Falls back to the author when
+// the post has no text (a bare video post).
+function titleFromPost(text, author) {
+    let t = text || author || null;
+    if (!t) return null;
+    const firstLine = t.split("\n").map(s => s.trim()).find(s => s.length > 0);
+    t = firstLine || t;
+    if (t.length > 140) t = t.slice(0, 139).trimEnd() + "…";
+    return t;
+}
+
 function listenerTelegramPage(details) {
     // Read BOTH the top document AND the embed widget iframe. Opening a post
     // URL directly (t.me/<channel>/<id>) serves a LANDING page as the main_frame
@@ -102,9 +157,18 @@ function listenerTelegramPage(details) {
     const origin = `https://t.me/${channel}/${id}`;
 
     readFilteredBody(details, "TELEGRAM", "doc filter", (html, bytes) => {
-        const name = metaContent(html, "og:title");
-        const description = metaContent(html, "og:description");
-        const img = metaContent(html, "og:image");
+        // Title = the POST'S OWN TEXT (the headline the reader sees), not the
+        // channel name. The embed iframe carries no og: tags, so read the widget
+        // markup (message_text / owner_name / video_thumb) with og: as a fallback
+        // for the /s/ and landing forms. name = first line of the post text
+        // (capped); description = the full post text; author/og:title is the
+        // fallback for a bare video post with no text.
+        const postText = extractMessageText(html) || metaContent(html, "og:description");
+        const author = extractAuthor(html) || metaContent(html, "og:title");
+        const name = titleFromPost(postText, author);
+        const description = postText || author;
+        const ogImg = metaContent(html, "og:image");
+        const thumbs = collectThumbs(html);
 
         // <video src> first (covers album posts); fall back to og:video for a
         // poster-only page that hasn't materialised the <video> element. Open
@@ -149,8 +213,15 @@ function listenerTelegramPage(details) {
                 origin,
                 name,
                 description,
-                img,
-                duration: durationsAligned ? (durations[i] || 0) : 0,
+                // Per-clip thumbnail: og:image (landing/​/s/) else the widget's
+                // own video-thumb, paired by index, falling back to the first.
+                img: ogImg || thumbs[i] || thumbs[0] || undefined,
+                // parseClock returns SECONDS; the native pipeline expects the
+                // message `duration` in MILLISECONDS (JsonHelper → GeckoInspectTask
+                // does ms→µs). Passing seconds made a 0:32 clip show as ~0.03s
+                // ("00:00:00:03"). Convert here, keeping collectDurations in the
+                // natural M:SS→seconds unit.
+                duration: durationsAligned && durations[i] ? durations[i] * 1000 : 0,
                 dedupKey: multi ? url : undefined,
             });
         }
@@ -167,6 +238,9 @@ browser.webRequest.onBeforeRequest.addListener(
 
 // Pure helpers exported for the smoke test's HAR-replay assertion (it runs the
 // REAL extractors against a tgme-widget fixture — no copy-pasted simulation).
-export { TELEGRAM_POST_RE, metaContent, collectVideoSrcs, collectDurations, parseClock };
+export {
+    TELEGRAM_POST_RE, metaContent, collectVideoSrcs, collectDurations, parseClock,
+    extractMessageText, extractAuthor, collectThumbs, titleFromPost,
+};
 
 // ============================================================================
