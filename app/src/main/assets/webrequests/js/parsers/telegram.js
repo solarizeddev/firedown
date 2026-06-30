@@ -30,7 +30,7 @@
 // so the parser-blocklist entry (cardinal rule) keeps the generic catcher off
 // it; see parser-blocklist.js `telegram`.
 // ============================================================================
-import { log, sendVariants, cacheTabUrl, readFilteredBody } from './common.js';
+import { log, sendVariants, cacheTabUrl, readFilteredBody, tryParseJson } from './common.js';
 
 // Match a public post: t.me/<channel>/<id> (and the /s/ web-preview variant),
 // channel = [A-Za-z0-9_]. Query tails (?embed=1 / ?single) are ignored. A bare
@@ -123,16 +123,84 @@ function collectThumbs(html) {
     return out;
 }
 
-// Pick a concise title from the post text: its first non-empty line, capped so a
-// long post doesn't become an unwieldy filename. Falls back to the author when
-// the post has no text (a bare video post).
+// Compose the capture title as "<Channel> — <post headline>", e.g.
+// "Watcher Guru — JUST IN: GTA 6 pre-orders officially begin on June 25.". The
+// headline is the post text's first non-empty line, capped so a long post
+// doesn't become an unwieldy filename. Falls back to just the channel for a
+// text-less video post, or just the headline when the channel is unknown.
 function titleFromPost(text, author) {
-    let t = text || author || null;
-    if (!t) return null;
-    const firstLine = t.split("\n").map(s => s.trim()).find(s => s.length > 0);
-    t = firstLine || t;
-    if (t.length > 140) t = t.slice(0, 139).trimEnd() + "…";
-    return t;
+    let line = null;
+    if (text) {
+        const fl = text.split("\n").map(s => s.trim()).find(s => s.length > 0);
+        line = fl || text.trim();
+        if (line.length > 120) line = line.slice(0, 119).trimEnd() + "…";
+    }
+    if (author && line) return `${author} — ${line}`;
+    return line || author || null;
+}
+
+// Shared per-post emit: extract every <video src=…mp4> from an HTML chunk (a
+// single post document/iframe, OR one message block sliced out of a /s/ feed)
+// and emit each as a variant with the post's title/thumbnail/duration. Used by
+// BOTH the single-post listener and the feed listener so the metadata logic
+// lives in one place. `allowOgVideo` enables the poster-only og:video fallback
+// (single-post pages only; feed blocks always carry a real <video src>).
+// `forceMulti` forces a per-clip dedupKey (the feed holds many clips under one
+// page origin). Returns the number of videos emitted.
+function emitVideosFromHtml(details, html, origin, { allowOgVideo, forceMulti }) {
+    let srcs = collectVideoSrcs(html);
+    let widthFromMeta = 0, heightFromMeta = 0;
+    if (srcs.length === 0 && allowOgVideo) {
+        // Open Graph spec: og:video (legacy) / og:video:url / og:video:secure_url.
+        const ogVideo = metaContent(html, "og:video")
+            || metaContent(html, "og:video:secure_url")
+            || metaContent(html, "og:video:url");
+        if (ogVideo && /\.mp4(?:[?#]|$)/i.test(ogVideo)) {
+            srcs = [ogVideo];
+            widthFromMeta = parseInt(metaContent(html, "og:video:width"), 10) || 0;
+            heightFromMeta = parseInt(metaContent(html, "og:video:height"), 10) || 0;
+        }
+    }
+    if (srcs.length === 0) return 0;
+
+    // Title = "<Channel> — <post text>". The embed iframe / feed block carry no
+    // og: tags, so read the widget markup (message_text / owner_name /
+    // video_thumb) with og: as a fallback for the landing/single-/s/ forms.
+    const postText = extractMessageText(html) || metaContent(html, "og:description");
+    const author = extractAuthor(html) || metaContent(html, "og:title");
+    const name = titleFromPost(postText, author);
+    const description = postText || author;
+    const ogImg = metaContent(html, "og:image");
+    const thumbs = collectThumbs(html);
+
+    // Durations pair with videos BY DOCUMENT ORDER; trust the per-index pairing
+    // ONLY when the counts match (a mixed/partial post would mis-stamp clip N
+    // with clip N+1's length). Otherwise pass 0 and let the ffmpeg probe read it.
+    const durations = collectDurations(html);
+    const durationsAligned = durations.length === srcs.length;
+
+    const multi = forceMulti || srcs.length > 1;
+    for (let i = 0; i < srcs.length; i++) {
+        const url = srcs[i];
+        sendVariants(details, {
+            variants: [{ url, width: widthFromMeta, height: heightFromMeta }],
+            origin,
+            name,
+            description,
+            // Per-clip thumbnail: og:image (landing/single-/s/) else the widget's
+            // own video-thumb, paired by index, falling back to the first.
+            img: ogImg || thumbs[i] || thumbs[0] || undefined,
+            // parseClock returns SECONDS; the native pipeline expects the message
+            // `duration` in MILLISECONDS (JsonHelper → GeckoInspectTask does
+            // ms→µs). Passing seconds made a 0:32 clip show as ~0.03s.
+            duration: durationsAligned && durations[i] ? durations[i] * 1000 : 0,
+            // Single video → origin dedup (collapses refreshes even if the CDN
+            // token rotates). Album / feed → per-clip dedupKey so distinct clips
+            // don't collapse to one entity.
+            dedupKey: multi ? url : undefined,
+        });
+    }
+    return srcs.length;
 }
 
 function listenerTelegramPage(details) {
@@ -157,74 +225,81 @@ function listenerTelegramPage(details) {
     const origin = `https://t.me/${channel}/${id}`;
 
     readFilteredBody(details, "TELEGRAM", "doc filter", (html, bytes) => {
-        // Title = the POST'S OWN TEXT (the headline the reader sees), not the
-        // channel name. The embed iframe carries no og: tags, so read the widget
-        // markup (message_text / owner_name / video_thumb) with og: as a fallback
-        // for the /s/ and landing forms. name = first line of the post text
-        // (capped); description = the full post text; author/og:title is the
-        // fallback for a bare video post with no text.
-        const postText = extractMessageText(html) || metaContent(html, "og:description");
-        const author = extractAuthor(html) || metaContent(html, "og:title");
-        const name = titleFromPost(postText, author);
-        const description = postText || author;
-        const ogImg = metaContent(html, "og:image");
-        const thumbs = collectThumbs(html);
+        const n = emitVideosFromHtml(details, html, origin, { allowOgVideo: true, forceMulti: false });
+        log("TELEGRAM", `doc filter: ${bytes} bytes, ${n} video(s)`, { origin });
+    });
+}
 
-        // <video src> first (covers album posts); fall back to og:video for a
-        // poster-only page that hasn't materialised the <video> element. Open
-        // Graph spec defines og:video (legacy plain URL), og:video:url, and
-        // og:video:secure_url (https) — Telegram has used og:video historically,
-        // but check the spec'd siblings too so a markup change to the canonical
-        // og:video:url/secure_url form still captures the poster-only case.
-        let srcs = collectVideoSrcs(html);
-        let widthFromMeta = 0, heightFromMeta = 0;
-        if (srcs.length === 0) {
-            const ogVideo = metaContent(html, "og:video")
-                || metaContent(html, "og:video:secure_url")
-                || metaContent(html, "og:video:url");
-            if (ogVideo && /\.mp4(?:[?#]|$)/i.test(ogVideo)) {
-                srcs = [ogVideo];
-                widthFromMeta = parseInt(metaContent(html, "og:video:width"), 10) || 0;
-                heightFromMeta = parseInt(metaContent(html, "og:video:height"), 10) || 0;
-            }
+// ----------------------------------------------------------------------------
+// Channel FEED (t.me/s/<channel>) — the web preview of a whole channel.
+// ----------------------------------------------------------------------------
+// Browsing a channel feed is a distinct surface from a single post: the URL has
+// NO post id (t.me/s/WatcherGuru), so TELEGRAM_POST_RE doesn't match it and the
+// single-post listener bails. The feed renders MANY posts, and as the user
+// scrolls it loads older batches via pagination XHRs
+// (POST t.me/s/<channel>?before=<id>) whose body is a JSON-ENCODED HTML STRING
+// (escaped slashes). Each post is a `tgme_widget_message_wrap` carrying
+// data-post="<channel>/<id>", and a post's <video src=…mp4> is present right in
+// that markup (confirmed from a HAR: the ?before= batches held the videos the
+// user couldn't capture). So: match the feed URL, read BOTH the main_frame and
+// the xmlhttprequest pagination, JSON-unwrap when needed, split into per-message
+// blocks, and run the SAME per-post emit on each block (origin = the block's own
+// data-post id, so each clip is its own entity). The emitted .mp4 stays
+// parser-block-listed, so the generic catcher can't double-capture on play.
+const TELEGRAM_FEED_RE = /^https?:\/\/t\.me\/s\/([A-Za-z0-9_]+)(?:[?#]|$)/;
+
+// The pagination body is a JSON string (or {html:…}/[html,…]); the main_frame is
+// plain HTML. Unwrap to the HTML, leaving plain HTML untouched.
+function unwrapFeedBody(raw) {
+    const t = raw.trimStart();
+    if (t[0] === '"' || t[0] === '[' || t[0] === '{') {
+        const parsed = tryParseJson(t);
+        if (typeof parsed === "string") return parsed;
+        if (parsed && typeof parsed === "object") {
+            if (typeof parsed.html === "string") return parsed.html;
+            if (Array.isArray(parsed) && typeof parsed[0] === "string") return parsed[0];
         }
+    }
+    return raw;
+}
 
-        const durations = collectDurations(html);
-        // Durations are paired with videos BY DOCUMENT ORDER (index), which is
-        // only sound when every video contributed exactly one duration <time>.
-        // A mixed/partial post breaks that 1:1 alignment — e.g. a photo+video
-        // album (a photo has no message_video_duration) or a clip that hasn't
-        // rendered its <time> yet — and a misaligned index would stamp clip N
-        // with clip N+1's length. So trust the per-index pairing ONLY when the
-        // counts match; otherwise pass 0 and let sendVariants' ffmpeg probe read
-        // the real duration (correctness over skipping the probe).
-        const durationsAligned = durations.length === srcs.length;
-        log("TELEGRAM", `doc filter: ${bytes} bytes, ${srcs.length} video(s)`, { origin });
-        if (srcs.length === 0) return;
+// Slice a feed document into per-message blocks at each tgme_widget_message_wrap
+// boundary so the per-post helpers run scoped to one post. Falls back to the
+// whole document as one block when the wrapper class isn't present.
+function splitMessages(html) {
+    const re = /tgme_widget_message_wrap/g;
+    const idx = [];
+    let m;
+    while ((m = re.exec(html)) !== null) idx.push(m.index);
+    if (idx.length === 0) return [html];
+    const blocks = [];
+    for (let i = 0; i < idx.length; i++) {
+        blocks.push(html.slice(idx[i], i + 1 < idx.length ? idx[i + 1] : html.length));
+    }
+    return blocks;
+}
 
-        const multi = srcs.length > 1;
-        for (let i = 0; i < srcs.length; i++) {
-            const url = srcs[i];
-            // Single video → origin dedup (collapses page refreshes even if the
-            // CDN token rotates). Album → per-clip dedupKey so the clips don't
-            // collapse to one entity (the bridge's multi-clip pattern).
-            sendVariants(details, {
-                variants: [{ url, width: widthFromMeta, height: heightFromMeta }],
-                origin,
-                name,
-                description,
-                // Per-clip thumbnail: og:image (landing/​/s/) else the widget's
-                // own video-thumb, paired by index, falling back to the first.
-                img: ogImg || thumbs[i] || thumbs[0] || undefined,
-                // parseClock returns SECONDS; the native pipeline expects the
-                // message `duration` in MILLISECONDS (JsonHelper → GeckoInspectTask
-                // does ms→µs). Passing seconds made a 0:32 clip show as ~0.03s
-                // ("00:00:00:03"). Convert here, keeping collectDurations in the
-                // natural M:SS→seconds unit.
-                duration: durationsAligned && durations[i] ? durations[i] * 1000 : 0,
-                dedupKey: multi ? url : undefined,
-            });
+function listenerTelegramFeed(details) {
+    // The initial feed is a main_frame; older batches arrive as XHRs.
+    if (details.type !== "main_frame" && details.type !== "xmlhttprequest") return;
+    const m = (details.url || "").match(TELEGRAM_FEED_RE);
+    if (!m) return;
+    if (details.tabId >= 0) cacheTabUrl(details.url, details.tabId);
+    const channel = m[1];
+
+    readFilteredBody(details, "TELEGRAM", "feed filter", (raw, bytes) => {
+        const html = unwrapFeedBody(raw);
+        const blocks = splitMessages(html);
+        let total = 0;
+        for (const block of blocks) {
+            // Per-post origin from data-post="<channel>/<id>"; fall back to the
+            // feed origin if a block somehow lacks it (keeps clips distinct via
+            // the per-clip dedupKey anyway).
+            const idm = block.match(/data-post="[A-Za-z0-9_]+\/(\d+)"/);
+            const origin = idm ? `https://t.me/${channel}/${idm[1]}` : `https://t.me/s/${channel}`;
+            total += emitVideosFromHtml(details, block, origin, { allowOgVideo: false, forceMulti: true });
         }
+        log("TELEGRAM", `feed filter: ${bytes} bytes, ${blocks.length} post(s), ${total} video(s)`, { channel });
     });
 }
 
@@ -236,11 +311,20 @@ browser.webRequest.onBeforeRequest.addListener(
     ["blocking"]
 );
 
+browser.webRequest.onBeforeRequest.addListener(
+    listenerTelegramFeed,
+    // The feed URL is /s/<channel> (no id, so it never reaches the post listener
+    // above); pagination is an xmlhttprequest to the same path with ?before=.
+    { urls: ["*://t.me/s/*"], types: ["main_frame", "xmlhttprequest"] },
+    ["blocking"]
+);
+
 // Pure helpers exported for the smoke test's HAR-replay assertion (it runs the
 // REAL extractors against a tgme-widget fixture — no copy-pasted simulation).
 export {
-    TELEGRAM_POST_RE, metaContent, collectVideoSrcs, collectDurations, parseClock,
+    TELEGRAM_POST_RE, TELEGRAM_FEED_RE, metaContent, collectVideoSrcs, collectDurations, parseClock,
     extractMessageText, extractAuthor, collectThumbs, titleFromPost,
+    unwrapFeedBody, splitMessages,
 };
 
 // ============================================================================

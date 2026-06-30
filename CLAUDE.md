@@ -351,12 +351,37 @@ cardinal rule as any parser.
 ### Telegram WEB APP — in-page blob download, NOT the capture pipeline
 
 There are TWO Telegram surfaces, and they are handled in completely different
-ways. **Public `t.me/<channel>/<id>` posts** → `js/parsers/telegram.js`, a normal
-parser: the post HTML carries a real, re-fetchable `cdn-telegram.org` `.mp4`, so
+ways. **Public `t.me` pages** → `js/parsers/telegram.js`, a normal parser: the
+post HTML carries a real, re-fetchable `cdn-telegram.org`/`telesco.pe` `.mp4`, so
 it flows through the standard capture→native-redownload pipeline (block-listed
 under `telegram`). **The LOGGED-IN web app (`web.telegram.org/k` & `/a`,
 including restricted/"download disabled" channels)** → `js/telegram-web.js`, and
 it does **not** use the capture pipeline at all.
+
+The public `t.me` parser covers THREE layouts, all via `filterResponseData` (the
+`<video src>` lives in different places in each — a HAR is the only reliable way
+to see which):
+- **Single post `t.me/<channel>/<id>`**: opening it serves a LANDING page
+  (main_frame) with only `og:title`/`og:image` — NO `<video>`. The real
+  `<video src>` is in the widget it embeds, `…?embed=1&mode=tme`, a **`sub_frame`**.
+  So the listener reads `main_frame` AND `sub_frame`.
+- **Channel feed `t.me/s/<channel>`** (no id, so `TELEGRAM_POST_RE` doesn't
+  match it — `TELEGRAM_FEED_RE` + `listenerTelegramFeed` own it): the feed renders
+  many posts and loads older batches via pagination XHRs
+  (`POST t.me/s/<channel>?before=<id>`) whose body is a **JSON-encoded HTML
+  string** (`unwrapFeedBody`). Split into per-post blocks at
+  `tgme_widget_message_wrap` (`splitMessages`); each block's `data-post=
+  "<channel>/<id>"` gives the per-clip origin, and `emitVideosFromHtml` runs the
+  same per-post extraction on each (read `main_frame` + `xmlhttprequest`).
+- The embed iframe / feed blocks carry **no `og:` tags**, so title/author/
+  thumbnail come from the widget markup itself (`extractMessageText` →
+  `tgme_widget_message_text`, `extractAuthor` → `tgme_widget_message_owner_name`,
+  `collectThumbs` → `tgme_widget_message_video_thumb`), with `og:` as the
+  fallback for the landing/single-`/s/` forms. The title is composed as
+  **"`<Channel> — <post text first line>`"** (`titleFromPost`). Duration: the
+  message `duration` field is **MILLISECONDS** (`parseClock` returns seconds, so
+  the emit multiplies by 1000 — passing seconds showed a 0:32 clip as
+  `00:00:00:03`).
 
 Why it can't: a web-app media element's URL is a **ServiceWorker-virtual**
 `…/k/stream/<json>` (or `/a/stream/…`) path the SW serves from **MTProto chunks
