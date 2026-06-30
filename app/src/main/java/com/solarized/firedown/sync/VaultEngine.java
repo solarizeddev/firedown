@@ -138,8 +138,22 @@ public final class VaultEngine {
             String wrappedDek = Base64.encodeToString(VaultCrypto.wrapDek(dek, storageKey), B64);
             VaultEntry entry = new VaultEntry(created.objectId, wrappedDek, file.getName(),
                     size, mime, System.currentTimeMillis(), chunkCount, thumb);
-            addToManifest(entry);
-            return entry;
+            // Dedup-checked commit (closes the concurrency window the start-time
+            // findExisting can't: two backups of the same file CONTENT at different
+            // paths have different unique-work keys, so they run concurrently and
+            // both pass the start-time check before either commits). The OCC mutate
+            // re-pulls the latest manifest; if another backup of the same name+size
+            // already committed, we keep THAT entry and drop our just-uploaded
+            // object as an orphan, so the manifest never gains a duplicate.
+            VaultEntry committed = commitDeduped(entry);
+            if (!committed.objectId.equals(entry.objectId)) {
+                try {
+                    api.deleteObject(identity, created.objectId); // free the orphan
+                } catch (Exception ignored) {
+                    // best-effort — the object is unreferenced regardless
+                }
+            }
+            return committed;
         } finally {
             Arrays.fill(dek, (byte) 0);
         }
@@ -192,6 +206,30 @@ public final class VaultEngine {
             removeById(entries, entry.objectId); // idempotent re-add
             entries.add(entry);
         });
+    }
+
+    /**
+     * Adds {@code entry} to the manifest UNLESS a different object with the same
+     * file name + size already exists (a concurrent backup of the same content
+     * that committed first) — in which case that existing entry is kept and
+     * returned, and {@code entry} is NOT added. Returns whichever entry is now in
+     * the manifest (so the caller can tell whether its object became an orphan).
+     */
+    private VaultEntry commitDeduped(VaultEntry entry) throws IOException, GeneralSecurityException {
+        VaultEntry[] result = new VaultEntry[1];
+        mutateManifest(entries -> {
+            for (VaultEntry e : entries) {
+                if (e.size == entry.size && entry.name != null && entry.name.equals(e.name)
+                        && !e.objectId.equals(entry.objectId)) {
+                    result[0] = e; // someone else won the race — keep theirs
+                    return;
+                }
+            }
+            removeById(entries, entry.objectId); // idempotent re-add
+            entries.add(entry);
+            result[0] = entry;
+        });
+        return result[0];
     }
 
     /**

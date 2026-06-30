@@ -13,9 +13,11 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.core.graphics.ColorUtils;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.card.MaterialCardView;
+import com.google.android.material.color.MaterialColors;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.solarized.firedown.R;
 import com.solarized.firedown.glide.MimeTypeThumbnail;
@@ -354,6 +356,11 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             percent = itemView.findViewById(R.id.cb_progress_text);
             bar = itemView.findViewById(R.id.cb_progress_bar);
             thumb.setClipToOutline(true);
+            // Same indicator/track colours as the Downloads in-flight row:
+            // primary indicator over a primary@20% track.
+            int primary = MaterialColors.getColor(itemView, android.R.attr.colorPrimary, Color.BLACK);
+            bar.setIndicatorColor(primary);
+            bar.setTrackColor(ColorUtils.setAlphaComponent(primary, 0x33));
             itemView.findViewById(R.id.cb_transfer_cancel).setOnClickListener(v -> {
                 if (listener != null && currentWorkId != null) {
                     listener.onCancelTransfer(currentWorkId);
@@ -367,9 +374,12 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             name.setText(t.name);
             bindMimeChip(mime, ctx, t.mime);
             state.setText(R.string.cloud_backup_transfer_uploading);
-            // Determinate once the total is known and the first chunk lands;
-            // indeterminate while we're still waiting on the first byte report.
-            if (t.total > 0 && t.done > 0) {
+            // ALWAYS determinate with a percent shown (0% before the first byte
+            // report) — exactly like the Downloads list row. Hiding the percent
+            // when done==0 shifted the bar's left margin; the percent slot is now
+            // always present so the bar starts at the same place every frame. Only
+            // a (degenerate) zero-byte total falls back to indeterminate.
+            if (t.total > 0) {
                 int pct = (int) Math.min(100, t.done * 100 / t.total);
                 bar.setIndeterminate(false);
                 bar.setProgress(pct);

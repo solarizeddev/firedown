@@ -1439,15 +1439,21 @@ opaque chunks + an opaque manifest blob.
   re-upload, no OCC churn); the preview persists only once the file is backed up
   again. Files no longer on disk keep the mime glyph.
 
-- **No duplicate backups.** Two quick "Back up to cloud" taps used to spawn two
-  concurrent `VaultBackupWorker`s that both saw an empty manifest (the engine's
-  `findExisting` name+size dedup runs against a *pulled snapshot*), so each
-  created its own object → a duplicate entry. The enqueue is
+- **No duplicate backups — two layers.** (1) The enqueue is
   **`enqueueUniqueWork(KEEP)` keyed by the file path** (`BaseDownloadFragment`):
-  the 2nd tap is a no-op while the 1st runs; a later tap re-runs and the engine's
-  dedup collapses it. `VaultEngine.backupFile` also **backfills a missing `thumb`
-  into the existing entry** (cheap manifest re-write, no re-upload) when re-backing
-  up a file that predates previews.
+  two quick taps on the SAME download don't spawn concurrent workers. (2) Because
+  the start-time `findExisting` name+size check runs against a *pulled snapshot*
+  (and KEEP only covers the same path — the same file CONTENT at two different
+  paths has two different unique-work keys and runs concurrently), the COMMIT is
+  **dedup-checked under the OCC mutate** (`VaultEngine.commitDeduped`): after
+  upload it re-pulls the latest manifest and, if another object with the same
+  name+size already committed, keeps THAT entry and drops its own just-uploaded
+  object as an orphan (`deleteObject`, best-effort) — so the manifest can never
+  gain a duplicate even when two uploads race. Don't rely on KEEP or the
+  start-time check alone; the commit-time dedup is the guarantee.
+  `VaultEngine.backupFile` also **backfills a missing `thumb` into the existing
+  entry** (cheap manifest re-write, no re-upload) when re-backing up a file that
+  predates previews.
 
 - **Restore skips a file already in Downloads.** `VaultRestoreWorker` probes
   `findByNameSize` (honoured only when the local file still **exists** on disk)
@@ -1489,7 +1495,11 @@ opaque chunks + an opaque manifest blob.
   progress isn't in the manifest yet, so it renders as its own row at the TOP of
   the list (`CloudBackupFileAdapter` TYPE_TRANSFER, `item_cloud_backup_transfer.xml`)
   with a **determinate** `LinearProgressIndicator` + percent + a cancel button —
-  the same shape as an in-flight Downloads row. Determinate because the bytes are
+  the same shape as an in-flight Downloads row (incl. the indicator=primary /
+  track=primary@0x33 colours). The row is **always determinate with the percent
+  shown** (0% before the first byte report) — NOT indeterminate-until-first-chunk:
+  hiding the percent when `done==0` shifted the bar's left margin frame-to-frame.
+  Determinate because the bytes are
   reported end-to-end: `VaultEngine.backupFile(..., ProgressListener)` fires
   per-chunk → `VaultBackupWorker` republishes them via `setProgressAsync`
   (`KEY_NAME`/`KEY_MIME`/`KEY_PROGRESS_DONE`/`_TOTAL`) →
