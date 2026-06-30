@@ -45,6 +45,21 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
+        <!-- Multi-select check, overlaying the thumbnail's top-left corner; GONE
+             outside action mode. The card also takes a tonal wash when selected
+             (set in the adapter), the primary selection signal. -->
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/cb_selected"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:layout_margin="3dp"
+            android:contentDescription="@null"
+            android:visibility="gone"
+            app:layout_constraintStart_toStartOf="@id/cb_thumb"
+            app:layout_constraintTop_toTopOf="@id/cb_thumb"
+            app:srcCompat="@drawable/ic_baseline_check_circle_24"
+            app:tint="?attr/colorPrimary" />
+
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"

@@ -1504,6 +1504,18 @@ opaque chunks + an opaque manifest blob.
   `notifyItemRangeChanged(0, n)`), so committed rows below don't re-decode their
   thumbnails every byte update. On the active→idle transition the fragment
   `load()`s the manifest so the finished file appears as a committed row.
+- **List gutter + multi-select parity.** The recycler uses the same
+  `EqualSpacingItemDecoration(list_spacing)` as the Downloads/Bookmarks/History
+  lists (the rows already carry the matching 8dp card margins, so the thumbnail
+  lands 16dp from the edge like Downloads — don't drop the decoration or the
+  margins won't match). Long-pressing a committed file row enters a **contextual
+  `ActionMode`** (`startSupportActionMode`): the CAB shows "N selected"
+  (`action_mode_selected`) + a delete action (`menu_action`), a tap toggles
+  selection (corner check on the thumbnail + the `SelectionStyling` primary-
+  container wash on the card, same as the shared list selection chrome), and
+  delete shows a confirmation dialog then optimistically removes the selected
+  entries (`deleteEntry` per id, `load()` resync on any failure). In-progress
+  transfer rows are not selectable; the action bar is finished in `onDestroyView`.
 - **"Backing up…" snackbar has a View action, no success snackbar.** Tapping
   "Back up to cloud" (`BaseDownloadFragment`) shows a "Backing up…" snackbar whose
   **View** action deep-links to the backed-up-files list (where the live per-item

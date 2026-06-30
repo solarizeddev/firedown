@@ -2,12 +2,16 @@ package com.solarized.firedown.settings;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.view.ActionMode;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -25,12 +29,14 @@ import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
 import com.solarized.firedown.R;
 import com.solarized.firedown.sync.CloudBackupManager;
 import com.solarized.firedown.sync.VaultBackupWorker;
 import com.solarized.firedown.sync.VaultRestoreWorker;
 import com.solarized.firedown.sync.model.VaultEntry;
+import com.solarized.firedown.ui.EqualSpacingItemDecoration;
 import com.solarized.firedown.utils.NavigationUtils;
 
 import java.util.ArrayList;
@@ -70,6 +76,8 @@ public class CloudBackupListFragment extends Fragment
     private boolean mLoading = true;
     /** True while any backup/restore transfer is running. */
     private boolean mTransferActive;
+    /** Non-null while multi-select (the contextual action bar) is active. */
+    private ActionMode mActionMode;
 
     @Nullable
     @Override
@@ -88,6 +96,10 @@ public class CloudBackupListFragment extends Fragment
         mEmpty = view.findViewById(R.id.cb_empty);
         mAdapter = new CloudBackupFileAdapter(this);
         mRecycler.setAdapter(mAdapter);
+        // Same gutter as the Downloads list (and Bookmarks/History/Captured):
+        // EqualSpacingItemDecoration at list_spacing.
+        mRecycler.addItemDecoration(
+                new EqualSpacingItemDecoration(requireContext(), R.dimen.list_spacing));
 
         // Same inset treatment as the preference screens: list scrolls under the
         // nav bar but the last row clears it.
@@ -103,6 +115,15 @@ public class CloudBackupListFragment extends Fragment
         observeSheetResult();
         observeTransfers();
         load();
+    }
+
+    @Override
+    public void onDestroyView() {
+        // Don't leave the contextual action bar up if the screen is torn down.
+        if (mActionMode != null) {
+            mActionMode.finish();
+        }
+        super.onDestroyView();
     }
 
     /**
@@ -239,11 +260,122 @@ public class CloudBackupListFragment extends Fragment
 
     @Override
     public void onItemClick(VaultEntry entry) {
+        // In multi-select a tap toggles selection instead of opening the sheet.
+        if (mActionMode != null) {
+            mAdapter.toggleSelected(entry.objectId);
+            refreshActionMode();
+            return;
+        }
         Bundle args = new Bundle();
         args.putString(CloudBackupItemSheetDialogFragment.ARG_OBJECT_ID, entry.objectId);
         args.putString(CloudBackupItemSheetDialogFragment.ARG_NAME, entry.name);
         NavigationUtils.navigateSafe(mNavController,
                 R.id.action_cloud_backup_files_to_item_sheet, args);
+    }
+
+    @Override
+    public void onItemLongClick(VaultEntry entry) {
+        if (mActionMode == null) {
+            mActionMode = ((AppCompatActivity) requireActivity())
+                    .startSupportActionMode(mActionModeCallback);
+            mAdapter.setActionMode(true);
+        }
+        mAdapter.toggleSelected(entry.objectId);
+        refreshActionMode();
+    }
+
+    /** Updates the "N selected" title, or finishes action mode when the last
+     *  selection is cleared. */
+    private void refreshActionMode() {
+        if (mActionMode == null) {
+            return;
+        }
+        int n = mAdapter.getSelectedCount();
+        if (n == 0) {
+            mActionMode.finish();
+            return;
+        }
+        mActionMode.setTitle(getString(R.string.action_mode_selected, n));
+    }
+
+    private final ActionMode.Callback mActionModeCallback = new ActionMode.Callback() {
+        @Override
+        public boolean onCreateActionMode(ActionMode mode, Menu menu) {
+            mode.getMenuInflater().inflate(R.menu.menu_action, menu);
+            return true;
+        }
+
+        @Override
+        public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
+            return false;
+        }
+
+        @Override
+        public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
+            if (item.getItemId() == R.id.action_delete) {
+                confirmDeleteSelected();
+                return true;
+            }
+            return false;
+        }
+
+        @Override
+        public void onDestroyActionMode(ActionMode mode) {
+            mActionMode = null;
+            mAdapter.setActionMode(false);
+        }
+    };
+
+    /** Confirms then removes every selected file from the cloud (optimistically). */
+    private void confirmDeleteSelected() {
+        int n = mAdapter.getSelectedCount();
+        if (n == 0) {
+            return;
+        }
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.cloud_backup_delete_title)
+                .setMessage(R.string.cloud_backup_delete_message)
+                .setPositiveButton(R.string.delete, (d, w) -> deleteSelected())
+                .setNegativeButton(R.string.cancel, null)
+                .show();
+    }
+
+    private void deleteSelected() {
+        List<String> ids = mAdapter.getSelectedIds();
+        List<VaultEntry> targets = new ArrayList<>();
+        for (String id : ids) {
+            VaultEntry e = findEntry(id);
+            if (e != null) {
+                targets.add(e);
+            }
+        }
+        if (mActionMode != null) {
+            mActionMode.finish();
+        }
+        if (targets.isEmpty()) {
+            return;
+        }
+        // Optimistic: drop the rows now; the slow server deletes run in the
+        // background and a failure resyncs the truth via load().
+        for (VaultEntry e : targets) {
+            mAdapter.removeByObjectId(e.objectId);
+            mEntries.remove(e);
+        }
+        render();
+        snackbar(getString(R.string.cloud_backup_remove_done));
+        final int[] remaining = {targets.size()};
+        final boolean[] anyFailed = {false};
+        for (VaultEntry e : targets) {
+            mCloudBackup.deleteEntry(e, ok -> {
+                if (!ok) {
+                    anyFailed[0] = true;
+                }
+                if (--remaining[0] == 0 && anyFailed[0] && isAdded()) {
+                    snackbar(getString(R.string.cloud_backup_remove_failed));
+                    load(); // resync with the server truth
+                }
+            });
+        }
     }
 
     /** Observes the per-item bottom sheet's result (Restore / Remove). */

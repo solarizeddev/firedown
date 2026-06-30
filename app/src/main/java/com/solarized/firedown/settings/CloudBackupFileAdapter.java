@@ -2,6 +2,7 @@ package com.solarized.firedown.settings;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
 import android.text.format.Formatter;
@@ -14,18 +15,22 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.solarized.firedown.R;
 import com.solarized.firedown.glide.MimeTypeThumbnail;
 import com.solarized.firedown.sync.VaultThumbnail;
 import com.solarized.firedown.sync.model.VaultEntry;
 import com.solarized.firedown.utils.FileUriHelper;
+import com.solarized.firedown.utils.SelectionStyling;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Backed-up files list, styled to match the Downloads list. Two row types:
@@ -46,6 +51,9 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
 
     public interface OnItemClickListener {
         void onItemClick(VaultEntry entry);
+
+        /** Long-press a committed file row — enters/extends multi-select. */
+        void onItemLongClick(VaultEntry entry);
 
         /** Cancel the in-progress transfer with this WorkManager id. */
         void onCancelTransfer(String workId);
@@ -72,10 +80,54 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     private final List<VaultEntry> mItems = new ArrayList<>();
     /** objectId → base64 preview backfilled from the local file (display only). */
     private final Map<String, String> mResolvedThumbs = new HashMap<>();
+    /** Selected committed entries (by objectId) while in multi-select. */
+    private final Set<String> mSelected = new HashSet<>();
+    private boolean mActionMode;
     private final OnItemClickListener mListener;
 
     public CloudBackupFileAdapter(OnItemClickListener listener) {
         this.mListener = listener;
+    }
+
+    // ---- multi-select ----
+
+    public void setActionMode(boolean on) {
+        if (mActionMode == on) {
+            return;
+        }
+        mActionMode = on;
+        if (!on) {
+            mSelected.clear();
+        }
+        notifyDataSetChanged(); // show/hide the check + wash on every row
+    }
+
+    public boolean isActionMode() {
+        return mActionMode;
+    }
+
+    /** Toggles selection of a committed entry and refreshes only its row. */
+    public void toggleSelected(String objectId) {
+        if (objectId == null) {
+            return;
+        }
+        if (!mSelected.remove(objectId)) {
+            mSelected.add(objectId);
+        }
+        for (int i = 0; i < mItems.size(); i++) {
+            if (objectId.equals(mItems.get(i).objectId)) {
+                notifyItemChanged(mTransfers.size() + i);
+                return;
+            }
+        }
+    }
+
+    public int getSelectedCount() {
+        return mSelected.size();
+    }
+
+    public List<String> getSelectedIds() {
+        return new ArrayList<>(mSelected);
     }
 
     public void submit(List<VaultEntry> items) {
@@ -177,7 +229,8 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             ((TransferVH) holder).bind(mTransfers.get(position));
         } else {
             VaultEntry entry = mItems.get(position - mTransfers.size());
-            ((FileVH) holder).bind(entry, mResolvedThumbs.get(entry.objectId));
+            ((FileVH) holder).bind(entry, mResolvedThumbs.get(entry.objectId),
+                    mActionMode, mSelected.contains(entry.objectId));
         }
     }
 
@@ -209,7 +262,9 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     }
 
     static class FileVH extends RecyclerView.ViewHolder {
+        private final MaterialCardView card;
         private final ImageView thumb;
+        private final ImageView check;
         private final TextView name;
         private final TextView mime;
         private final TextView size;
@@ -218,7 +273,9 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
 
         FileVH(@NonNull View itemView, OnItemClickListener listener) {
             super(itemView);
+            card = (MaterialCardView) itemView;
             thumb = itemView.findViewById(R.id.cb_thumb);
+            check = itemView.findViewById(R.id.cb_selected);
             name = itemView.findViewById(R.id.cb_name);
             mime = itemView.findViewById(R.id.cb_mime);
             size = itemView.findViewById(R.id.cb_size);
@@ -229,9 +286,16 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                     listener.onItemClick(current);
                 }
             });
+            itemView.setOnLongClickListener(v -> {
+                if (listener != null && current != null) {
+                    listener.onItemLongClick(current);
+                    return true;
+                }
+                return false;
+            });
         }
 
-        void bind(VaultEntry entry, String resolvedThumb) {
+        void bind(VaultEntry entry, String resolvedThumb, boolean actionMode, boolean selected) {
             current = entry;
             Context ctx = itemView.getContext();
             name.setText(entry.name);
@@ -245,6 +309,23 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                 date.setVisibility(View.GONE);
             }
             bindThumb(thumb, ctx, entry.thumb != null ? entry.thumb : resolvedThumb, entry.mime);
+
+            // Selection chrome: a corner check on the thumbnail + a tonal wash on
+            // the card (the same primaryContainer@20% wash the Downloads/History
+            // rows use — SelectionStyling).
+            if (actionMode) {
+                check.setVisibility(View.VISIBLE);
+                check.setImageResource(selected
+                        ? R.drawable.ic_baseline_check_circle_24
+                        : R.drawable.radio_button_unchecked_24);
+                card.setCardBackgroundColor(selected
+                        ? SelectionStyling.selectedCardWashOver(
+                                ctx, com.google.android.material.R.attr.colorSurface)
+                        : Color.TRANSPARENT);
+            } else {
+                check.setVisibility(View.GONE);
+                card.setCardBackgroundColor(Color.TRANSPARENT);
+            }
         }
     }
 
