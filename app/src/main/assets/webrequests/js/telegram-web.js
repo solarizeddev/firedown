@@ -132,6 +132,23 @@
             return Math.abs(hashCode(String(s))).toString(36);
         }
 
+        // The K /stream/ (and /download/) URL encodes a JSON describing the file:
+        // {dcId, location, size, mimeType, fileName}. Pull the REAL fileName +
+        // mimeType so the saved file keeps its original name/type ("IMG_7728.MP4")
+        // instead of a hash. Returns null for a non-/stream/ URL (e.g. a blob:
+        // image), where the caller falls back to a hash name.
+        function streamMeta(url) {
+            try {
+                const marker = url.indexOf("/stream/") >= 0 ? "/stream/"
+                    : (url.indexOf("/download/") >= 0 ? "/download/" : null);
+                if (!marker) return null;
+                const j = JSON.parse(decodeURIComponent(url.slice(url.indexOf(marker) + marker.length)));
+                return { fileName: (j && j.fileName) || null, mimeType: (j && j.mimeType) || null, size: (j && j.size) || 0 };
+            } catch (e) {
+                return null;
+            }
+        }
+
         // Locate the open media viewer and the media it shows. Returns null when
         // no viewer is open or it holds nothing downloadable.
         //   { kind: "video"|"image", url, actionBar, fileName }
@@ -145,12 +162,22 @@
                     const video = aspecter.querySelector("video");
                     const vurl = video && (video.currentSrc || video.src);
                     if (vurl) {
-                        return { kind: "video", url: vurl, actionBar: buttons, fileName: "Telegram_" + shortId(vurl) + ".mp4" };
+                        const meta = streamMeta(vurl);
+                        return {
+                            kind: "video", url: vurl, actionBar: buttons,
+                            fileName: (meta && meta.fileName) || ("Telegram_" + shortId(vurl) + ".mp4"),
+                            blobType: (meta && meta.mimeType) || "video/mp4",
+                        };
                     }
                     const img = aspecter.querySelector("img.thumbnail");
                     const iurl = img && img.src;
                     if (iurl) {
-                        return { kind: "image", url: iurl, actionBar: buttons, fileName: "Telegram_" + shortId(iurl) + ".jpeg" };
+                        const meta = streamMeta(iurl);
+                        return {
+                            kind: "image", url: iurl, actionBar: buttons,
+                            fileName: (meta && meta.fileName) || ("Telegram_" + shortId(iurl) + ".jpeg"),
+                            blobType: (meta && meta.mimeType) || "image/jpeg",
+                        };
                     }
                 }
             }
@@ -162,12 +189,22 @@
                 const video = videoPlayer && videoPlayer.querySelector("video");
                 const vurl = video && (video.currentSrc || video.src);
                 if (vurl) {
-                    return { kind: "video", url: vurl, actionBar: aActions, fileName: "Telegram_" + shortId(vurl) + ".mp4" };
+                    const meta = streamMeta(vurl);
+                    return {
+                        kind: "video", url: vurl, actionBar: aActions,
+                        fileName: (meta && meta.fileName) || ("Telegram_" + shortId(vurl) + ".mp4"),
+                        blobType: (meta && meta.mimeType) || "video/mp4",
+                    };
                 }
                 const img = aSlide.querySelector(".MediaViewerContent > div > img");
                 const iurl = img && img.src;
                 if (iurl) {
-                    return { kind: "image", url: iurl, actionBar: aActions, fileName: "Telegram_" + shortId(iurl) + ".jpeg" };
+                    const meta = streamMeta(iurl);
+                    return {
+                        kind: "image", url: iurl, actionBar: aActions,
+                        fileName: (meta && meta.fileName) || ("Telegram_" + shortId(iurl) + ".jpeg"),
+                        blobType: (meta && meta.mimeType) || "image/jpeg",
+                    };
                 }
             }
             return null;
@@ -306,8 +343,7 @@
             if (media.kind === "image") {
                 downloadImage(media.url, media.fileName, ui.done, ui.fail);
             } else {
-                const blobType = media.kind === "image" ? "image/jpeg" : "video/mp4";
-                downloadChunked(media.url, media.fileName, blobType, ui.set, ui.done, ui.fail);
+                downloadChunked(media.url, media.fileName, media.blobType || "video/mp4", ui.set, ui.done, ui.fail);
             }
         }
 
