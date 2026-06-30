@@ -355,7 +355,7 @@ public class Preferences {
     // pick. Must match the first entry of @array/settings_doh_servers.
     // (DoH is gated by SETTINGS_DOH_SWITCH, off by default, so this only
     // takes effect once the user turns DoH on.)
-    public static final String DEFAULT_SETTINGS_DOH = "https://mozilla.cloudflare-dns.com/dns-query";
+    public static final String DEFAULT_SETTINGS_DOH = "https://dns.mullvad.net/dns-query";
 
     public static final String DEFAULT_SETTINGS_COOKIES = String.valueOf(ContentBlocking.CookieBehavior.ACCEPT_NON_TRACKERS);
 
@@ -502,6 +502,26 @@ public class Preferences {
 
     public static boolean getSaveToGallery(SharedPreferences sharedPreferences){
         return sharedPreferences.getBoolean(SETTINGS_GALLERY, false);
+    }
+
+    /** Whether DNS-over-HTTPS is enabled (the master toggle). */
+    public static boolean getDohEnabled(SharedPreferences sharedPreferences){
+        return sharedPreferences.getBoolean(SETTINGS_DOH_SWITCH, false);
+    }
+
+    /**
+     * The configured DoH endpoint URL: the persisted {@link #SETTINGS_DOH}
+     * value is itself the URL for presets, or the user-entered
+     * {@link #SETTINGS_DOH_CUSTOM} when the {@link #SETTINGS_DOH_CUSTOM_VALUE}
+     * sentinel is selected. Single source of truth for every DoH consumer
+     * (GeckoView TRR at boot/change, and the OkHttp resolver).
+     */
+    public static String getDohUri(SharedPreferences sharedPreferences){
+        String value = sharedPreferences.getString(SETTINGS_DOH, DEFAULT_SETTINGS_DOH);
+        if (SETTINGS_DOH_CUSTOM_VALUE.equals(value)) {
+            return sharedPreferences.getString(SETTINGS_DOH_CUSTOM, "");
+        }
+        return value;
     }
 
     public static int getAntiTrackingCategories(SharedPreferences sharedPreferences){

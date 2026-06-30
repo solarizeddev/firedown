@@ -169,11 +169,25 @@ public class App extends Application implements Configuration.Provider{
         } catch (NumberFormatException e) {
             return;
         }
-        // servers[0..4] are URLs, servers[5] is the "custom" sentinel, so a
-        // single in-range lookup covers both presets and custom.
-        String[] servers = getResources().getStringArray(R.array.settings_doh_servers);
-        String mapped = (index >= 0 && index < servers.length)
-                ? servers[index]
+        // The legacy scheme stored a positional index into the ORIGINAL
+        // six-entry server list. Map it from a fixed historical table here,
+        // NOT from the live @array/settings_doh_servers — that array has
+        // since been trimmed/reordered, so reading it would remap an old
+        // index onto the wrong endpoint (or the "custom" sentinel). The
+        // three endpoints later dropped from the picker (Mozilla/Google/
+        // AdGuard) still resolve fine as the persisted URL; they simply show
+        // as an unlisted selection. legacy[0..4] are URLs, legacy[5] is the
+        // "custom" sentinel, so one in-range lookup covers both.
+        final String[] legacy = {
+                "https://mozilla.cloudflare-dns.com/dns-query", // 0 Mozilla
+                "https://cloudflare-dns.com/dns-query",         // 1 Cloudflare
+                "https://dns.google/dns-query",                 // 2 Google
+                "https://dns.quad9.net/dns-query",              // 3 Quad9
+                "https://dns.adguard-dns.com/dns-query",        // 4 AdGuard
+                Preferences.SETTINGS_DOH_CUSTOM_VALUE,          // 5 custom
+        };
+        String mapped = (index >= 0 && index < legacy.length)
+                ? legacy[index]
                 : Preferences.DEFAULT_SETTINGS_DOH;
         prefs.edit().putString(Preferences.SETTINGS_DOH, mapped).apply();
     }
