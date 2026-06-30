@@ -130,6 +130,9 @@ public class CloudBackupSettingsFragment extends BasePreferenceFragment
         if (mCatManage != null) {
             mCatManage.setVisible(setUp);
         }
+        if (mStatus instanceof TransferStatusPreference) {
+            ((TransferStatusPreference) mStatus).setActive(mTransferActive);
+        }
         if (mStatus == null) {
             return;
         }

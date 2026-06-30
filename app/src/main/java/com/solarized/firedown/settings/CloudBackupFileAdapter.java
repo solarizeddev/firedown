@@ -2,6 +2,7 @@ package com.solarized.firedown.settings;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.text.TextUtils;
 import android.text.format.DateUtils;
 import android.text.format.Formatter;
 import android.view.LayoutInflater;
@@ -17,15 +18,23 @@ import com.solarized.firedown.R;
 import com.solarized.firedown.glide.MimeTypeThumbnail;
 import com.solarized.firedown.sync.VaultThumbnail;
 import com.solarized.firedown.sync.model.VaultEntry;
+import com.solarized.firedown.utils.FileUriHelper;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
- * Backed-up files list. One row per manifest entry: the stored preview (decoded
- * from the entry's base64 thumb, or a mime-type fallback) + name + "size · date".
- * Tapping a row fires {@link OnItemClickListener} (the fragment opens the per-item
- * bottom sheet).
+ * Backed-up files list, styled to match the Downloads list row
+ * (item_cloud_backup_file.xml ≡ fragment_download_item.xml): the stored preview
+ * (decoded from the entry's base64 thumb) or the app's mime-type fallback, a
+ * TitleSmall name, and a 'MIME · size · date' meta line. Tapping a row fires
+ * {@link OnItemClickListener} (the fragment opens the per-item bottom sheet).
+ *
+ * <p>Entries backed up before previews existed carry no {@code thumb}. The
+ * fragment backfills those for DISPLAY from the local file (when still present)
+ * via {@link #setResolvedThumb}; until then the mime glyph fills the slot.
  */
 public class CloudBackupFileAdapter extends RecyclerView.Adapter<CloudBackupFileAdapter.VH> {
 
@@ -34,6 +43,8 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<CloudBackupFile
     }
 
     private final List<VaultEntry> mItems = new ArrayList<>();
+    /** objectId → base64 preview backfilled from the local file (display only). */
+    private final Map<String, String> mResolvedThumbs = new HashMap<>();
     private final OnItemClickListener mListener;
 
     public CloudBackupFileAdapter(OnItemClickListener listener) {
@@ -42,6 +53,7 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<CloudBackupFile
 
     public void submit(List<VaultEntry> items) {
         mItems.clear();
+        mResolvedThumbs.clear();
         if (items != null) {
             mItems.addAll(items);
         }
@@ -67,6 +79,23 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<CloudBackupFile
         notifyItemInserted(p);
     }
 
+    /**
+     * Records a preview backfilled from the local file (for an entry that had no
+     * stored thumb) and refreshes its row so the thumbnail appears.
+     */
+    public void setResolvedThumb(String objectId, String thumb) {
+        if (objectId == null || thumb == null) {
+            return;
+        }
+        mResolvedThumbs.put(objectId, thumb);
+        for (int i = 0; i < mItems.size(); i++) {
+            if (objectId.equals(mItems.get(i).objectId)) {
+                notifyItemChanged(i);
+                return;
+            }
+        }
+    }
+
     public int size() {
         return mItems.size();
     }
@@ -81,7 +110,7 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<CloudBackupFile
 
     @Override
     public void onBindViewHolder(@NonNull VH holder, int position) {
-        holder.bind(mItems.get(position));
+        holder.bind(mItems.get(position), mResolvedThumbs.get(mItems.get(position).objectId));
     }
 
     @Override
@@ -92,6 +121,7 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<CloudBackupFile
     static class VH extends RecyclerView.ViewHolder {
         private final ImageView thumb;
         private final TextView name;
+        private final TextView mime;
         private final TextView meta;
         private VaultEntry current;
 
@@ -99,7 +129,10 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<CloudBackupFile
             super(itemView);
             thumb = itemView.findViewById(R.id.cb_thumb);
             name = itemView.findViewById(R.id.cb_name);
+            mime = itemView.findViewById(R.id.cb_mime);
             meta = itemView.findViewById(R.id.cb_meta);
+            // Clip the thumbnail to the rounded mask, same as the Downloads row.
+            thumb.setClipToOutline(true);
             itemView.setOnClickListener(v -> {
                 if (listener != null && current != null) {
                     listener.onItemClick(current);
@@ -107,20 +140,31 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<CloudBackupFile
             });
         }
 
-        void bind(VaultEntry entry) {
+        void bind(VaultEntry entry, String resolvedThumb) {
             current = entry;
             Context ctx = itemView.getContext();
             name.setText(entry.name);
+
+            // Mime chip ("VÍDEO · ") — same label + trailing separator as Downloads.
+            String mimeLabel = entry.mime != null
+                    ? FileUriHelper.getLongMimeText(ctx, entry.mime) : null;
+            if (TextUtils.isEmpty(mimeLabel)) {
+                mime.setVisibility(View.GONE);
+            } else {
+                mime.setVisibility(View.VISIBLE);
+                mime.setText(mimeLabel + " · ");
+            }
             meta.setText(metaFor(ctx, entry));
 
-            Bitmap bmp = VaultThumbnail.decode(entry.thumb);
+            // Stored preview first, then a display-only backfill from the local
+            // file, then the app's mime-type fallback card.
+            String thumbData = entry.thumb != null ? entry.thumb : resolvedThumb;
+            Bitmap bmp = VaultThumbnail.decode(thumbData);
             if (bmp != null) {
                 thumb.setImageBitmap(bmp);
             } else {
-                // No stored preview (e.g. backed up before previews, or audio/doc
-                // with no art) — the app's mime-type fallback fills the slot.
-                String mime = entry.mime != null ? entry.mime : "application/octet-stream";
-                thumb.setImageDrawable(MimeTypeThumbnail.generateDrawable(ctx, mime, true));
+                String mimeType = entry.mime != null ? entry.mime : "application/octet-stream";
+                thumb.setImageDrawable(MimeTypeThumbnail.generateDrawable(ctx, mimeType, true));
             }
         }
 

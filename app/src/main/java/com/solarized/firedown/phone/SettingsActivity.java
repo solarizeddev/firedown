@@ -79,12 +79,15 @@ public class SettingsActivity extends BaseActivity {
             navController.navigate(R.id.settings_cloud_backup);
         }
 
-        // Deep-link straight to the backed-up-files list (Downloads overflow),
-        // building the stack through the Cloud Backup screen so Back steps back
-        // through it to the settings list.
+        // Deep-link straight to the backed-up-files list (Downloads overflow).
+        // Replace the settings list on the back stack with ONLY the files screen,
+        // so Back (toolbar or system) finishes this activity and returns to
+        // Downloads — the caller — instead of stepping into the settings tree.
         if (getIntent().getBooleanExtra(EXTRA_OPEN_CLOUD_BACKUP_FILES, false)) {
-            navController.navigate(R.id.settings_cloud_backup);
-            navController.navigate(R.id.action_cloud_backup_to_files);
+            NavOptions opts = new NavOptions.Builder()
+                    .setPopUpTo(R.id.settings, true)
+                    .build();
+            navController.navigate(R.id.settings_cloud_backup_files, null, opts);
         }
 
         navController.addOnDestinationChangedListener((navController1, navDestination, bundle) -> {

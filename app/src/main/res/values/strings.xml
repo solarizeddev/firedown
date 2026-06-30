@@ -332,6 +332,7 @@
     <string name="cloud_backup_remove_failed">Couldn\'t remove — check your connection and try again</string>
     <string name="cloud_restore_started">Restoring from cloud…</string>
     <string name="cloud_restore_done">Restored to Downloads</string>
+    <string name="cloud_restore_already_present">Already in your downloads</string>
     <string name="cloud_restore_failed">Couldn\'t restore — check your connection and try again</string>
     <string name="cloud_restore_notification_title">Restoring from cloud</string>
     <!-- %1$s = file name -->

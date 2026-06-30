@@ -7,9 +7,12 @@ import android.os.Looper;
 
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.data.di.Qualifiers;
+import com.solarized.firedown.data.entity.DownloadEntity;
+import com.solarized.firedown.data.repository.DownloadDataRepository;
 import com.solarized.firedown.sync.crypto.SyncIdentity;
 import com.solarized.firedown.sync.model.VaultEntry;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executor;
@@ -50,18 +53,24 @@ public class CloudBackupManager {
     private final Context context;
     private final SharedPreferences prefs;
     private final Executor diskExecutor;
+    private final Executor heavyExecutor;
     private final OkHttpClient httpClient;
+    private final DownloadDataRepository downloads;
     private final Handler main = new Handler(Looper.getMainLooper());
 
     @Inject
     public CloudBackupManager(@ApplicationContext Context context,
                               SharedPreferences prefs,
                               @Qualifiers.DiskIO Executor diskExecutor,
-                              OkHttpClient httpClient) {
+                              @Qualifiers.HeavyIO Executor heavyExecutor,
+                              OkHttpClient httpClient,
+                              DownloadDataRepository downloads) {
         this.context = context;
         this.prefs = prefs;
         this.diskExecutor = diskExecutor;
+        this.heavyExecutor = heavyExecutor;
         this.httpClient = httpClient;
+        this.downloads = downloads;
     }
 
     /** The storage backend base URL (paid vault — a BYO picker may come later). */
@@ -210,6 +219,31 @@ public class CloudBackupManager {
             }
             final boolean success = ok;
             main.post(() -> onResult.accept(success));
+        });
+    }
+
+    /**
+     * Best-effort backfill of a missing preview for an entry backed up before
+     * thumbnails existed: locates the local copy (name + size) and generates a
+     * preview from it on the heavy executor, posting the base64 result (or null
+     * if no local copy / not previewable) to the main thread. Display-only — it
+     * is NOT written back to the manifest (no re-upload, no OCC churn); the
+     * preview persists once the file is backed up again.
+     */
+    public void resolveLocalThumb(VaultEntry entry, Consumer<String> onThumb) {
+        heavyExecutor.execute(() -> {
+            String thumb = null;
+            try {
+                DownloadEntity local = downloads.findByNameSize(entry.name, entry.size);
+                if (local != null && local.getFilePath() != null
+                        && new File(local.getFilePath()).exists()) {
+                    thumb = VaultThumbnail.generate(local.getFilePath(), entry.mime);
+                }
+            } catch (Exception ignored) {
+                // Best-effort — fall through to the mime glyph.
+            }
+            final String out = thumb;
+            main.post(() -> onThumb.accept(out));
         });
     }
 

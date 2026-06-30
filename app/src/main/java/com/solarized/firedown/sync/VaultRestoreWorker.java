@@ -58,6 +58,9 @@ public class VaultRestoreWorker extends Worker {
     public static final String KEY_STATUS = "status";
     public static final String STATUS_OK = "ok";
     public static final String STATUS_ERROR = "error";
+    /** True when the restore was skipped because the file is already in Downloads
+     *  (a no-op success — the fragment shows "Already in your downloads"). */
+    public static final String KEY_ALREADY_PRESENT = "already_present";
 
     private static final int NOTIFICATION_ID = 0x6272; // "Br"
 
@@ -89,6 +92,19 @@ public class VaultRestoreWorker extends Worker {
         int chunkCount = getInputData().getInt(KEY_CHUNK_COUNT, 1);
         if (objectId == null || wrappedDek == null || name == null) {
             return failure();
+        }
+
+        // Already in Downloads? Skip the restore (don't duplicate the file). The
+        // match is by name + byte-size and is only honoured when the local file
+        // still exists on disk — a stale row pointing at a deleted file falls
+        // through to a real restore.
+        DownloadEntity present = mRepo.findByNameSize(name, size);
+        if (present != null && present.getFilePath() != null
+                && new File(present.getFilePath()).exists()) {
+            return Result.success(new Data.Builder()
+                    .putString(KEY_STATUS, STATUS_OK)
+                    .putBoolean(KEY_ALREADY_PRESENT, true)
+                    .build());
         }
 
         try {

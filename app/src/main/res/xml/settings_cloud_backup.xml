@@ -15,7 +15,7 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <Preference
+    <com.solarized.firedown.settings.TransferStatusPreference
         android:key="com.solarized.firedown.preferences.cloud.backup.status"
         android:title="@string/settings_cloud_backup_status_title"
         android:summary="@string/settings_cloud_backup_not_set_up"

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Widget for TransferStatusPreference: a small indeterminate progress bar shown
+  in the preference's right-hand widget slot while a Cloud Backup transfer
+  (upload/restore) is running. GONE by default; the preference toggles it.
+-->
+<com.google.android.material.progressindicator.LinearProgressIndicator
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/transfer_progress"
+    android:layout_width="56dp"
+    android:layout_height="wrap_content"
+    android:layout_gravity="center_vertical"
+    android:indeterminate="true"
+    android:visibility="gone"
+    app:indicatorTrackGapSize="0dp"
+    app:trackCornerRadius="3dp"
+    app:trackThickness="4dp" />

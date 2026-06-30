@@ -108,6 +108,7 @@ public class CloudBackupListFragment extends Fragment
             mEntries.addAll(entries);
             mAdapter.submit(mEntries);
             render();
+            backfillThumbnails();
         }, () -> {
             if (!isAdded()) {
                 return;
@@ -116,6 +117,24 @@ public class CloudBackupListFragment extends Fragment
             render();
             snackbar(getString(R.string.cloud_backup_list_error));
         });
+    }
+
+    /**
+     * For entries with no stored preview (backed up before thumbnails existed),
+     * regenerate one from the local copy if it's still present and slot it into
+     * the row. Display-only — the manifest isn't touched.
+     */
+    private void backfillThumbnails() {
+        for (VaultEntry entry : mEntries) {
+            if (entry.thumb != null || entry.name == null) {
+                continue;
+            }
+            mCloudBackup.resolveLocalThumb(entry, thumb -> {
+                if (isAdded() && thumb != null) {
+                    mAdapter.setResolvedThumb(entry.objectId, thumb);
+                }
+            });
+        }
     }
 
     /** Shows the list, or the loading/empty placeholder. */
@@ -236,6 +255,11 @@ public class CloudBackupListFragment extends Fragment
                     return;
                 }
                 boolean ok = info.getState() == WorkInfo.State.SUCCEEDED;
+                if (ok && info.getOutputData().getBoolean(
+                        VaultRestoreWorker.KEY_ALREADY_PRESENT, false)) {
+                    snackbar(getString(R.string.cloud_restore_already_present));
+                    return;
+                }
                 snackbar(getString(ok
                         ? R.string.cloud_restore_done
                         : R.string.cloud_restore_failed));

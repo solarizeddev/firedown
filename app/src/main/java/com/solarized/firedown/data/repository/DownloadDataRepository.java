@@ -119,6 +119,16 @@ public class DownloadDataRepository {
         return mDatabase.downloadDao().findByFilePath(filePath);
     }
 
+    /**
+     * Synchronous "is this file already in Downloads?" lookup (name + byte-size).
+     * Runs the query on the caller's thread — callers MUST be off the main thread
+     * (e.g. a worker thread or a background executor). Used by Cloud Backup to skip
+     * a duplicate restore and to locate a local copy for a preview backfill.
+     */
+    public DownloadEntity findByNameSize(String name, long size) {
+        return mDatabase.downloadDao().findByNameSize(name, size);
+    }
+
 
     /**
      * Persist a download row. The write is deferred onto the serial

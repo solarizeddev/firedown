@@ -1,57 +1,103 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  One backed-up file row (CloudBackupFileAdapter). Mirrors the Downloads list
-  row's thumbnail treatment (78x64dp, mask_image_rounded, centerCrop) + a
-  TitleSmall name and a single meta line. Tapping the row opens the per-item
-  bottom sheet (Restore / Remove).
+  One backed-up file row (CloudBackupFileAdapter). Faithfully mirrors the
+  Downloads list row (fragment_download_item.xml): a MaterialCardView root with
+  no stroke / no elevation, an 8dp-inset ConstraintLayout, the same
+  list_download_image thumbnail (mask_image_rounded, centerCrop) on the left, and
+  a vertical text column — filename (TitleSmall) + a 'MIME · size · date' meta
+  line (the mime chip uses MimePrimaryLabel and carries its own trailing ' · ',
+  exactly like Downloads). There is no action button: the whole row is clickable
+  and opens the per-item bottom sheet (Restore / Remove).
 -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/cb_item"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="?attr/selectableItemBackground"
     android:clickable="true"
     android:focusable="true"
-    android:gravity="center_vertical"
-    android:minHeight="72dp"
-    android:orientation="horizontal"
-    android:paddingHorizontal="16dp"
-    android:paddingVertical="8dp">
+    app:cardBackgroundColor="@android:color/transparent"
+    app:cardCornerRadius="8dp"
+    app:cardElevation="0dp"
+    app:strokeWidth="0dp">
 
-    <androidx.appcompat.widget.AppCompatImageView
-        android:id="@+id/cb_thumb"
-        android:layout_width="@dimen/list_download_image_width"
-        android:layout_height="@dimen/list_download_image_height"
-        android:background="@drawable/mask_image_rounded"
-        android:contentDescription="@null"
-        android:outlineProvider="background"
-        android:scaleType="centerCrop" />
-
-    <LinearLayout
-        android:layout_width="0dp"
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_weight="1"
-        android:orientation="vertical">
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
+        android:minHeight="@dimen/list_download_image_height">
 
-        <TextView
-            android:id="@+id/cb_name"
-            style="@style/TextAppearance.Material3.TitleSmall"
-            android:layout_width="match_parent"
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/cb_thumb"
+            android:layout_width="@dimen/list_download_image_width"
+            android:layout_height="@dimen/list_download_image_height"
+            android:background="@drawable/mask_image_rounded"
+            android:contentDescription="@null"
+            android:duplicateParentState="true"
+            android:outlineProvider="background"
+            android:scaleType="centerCrop"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <LinearLayout
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:textColor="?attr/colorOnSurface" />
+            android:orientation="vertical"
+            android:paddingStart="@dimen/list_margin"
+            android:paddingEnd="0dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/cb_thumb"
+            app:layout_constraintTop_toTopOf="parent">
 
-        <TextView
-            android:id="@+id/cb_meta"
-            style="@style/TextAppearance.Material3.BodySmall"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:textColor="?attr/colorOnSurfaceVariant" />
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/cb_name"
+                style="@style/TextAppearance.Material3.TitleSmall"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:singleLine="true"
+                android:textColor="?attr/colorOnSurface"
+                tools:text="The Knight Who Chose the Dawn" />
 
-    </LinearLayout>
+            <!-- Meta line: mime label · size · date. The mime label carries its
+                 own trailing ' · ' (appended by the adapter), so it doubles as
+                 the separator — same pattern as the Downloads row. -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
 
-</LinearLayout>
+                <TextView
+                    android:id="@+id/cb_mime"
+                    style="@style/MimePrimaryLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    tools:text="VÍDEO · " />
+
+                <TextView
+                    android:id="@+id/cb_meta"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ellipsize="end"
+                    android:singleLine="true"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:textSize="11sp"
+                    tools:text="11.6 MB · 20 may 2026" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</com.google.android.material.card.MaterialCardView>

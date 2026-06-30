@@ -87,6 +87,15 @@ public interface DownloadDao {
     @Query("SELECT * FROM download WHERE file_path = :path LIMIT 1")
     DownloadEntity findByFilePath(String path);
 
+    /**
+     * First download whose name and byte-size both match — the "is this file
+     * already in Downloads?" probe used by Cloud Backup (skip a restore that
+     * would duplicate an existing file, and locate a local copy to backfill a
+     * missing preview thumbnail from).
+     */
+    @Query("SELECT * FROM download WHERE file_name = :name AND file_size = :size LIMIT 1")
+    DownloadEntity findByNameSize(String name, long size);
+
     @Query("SELECT * FROM download WHERE uid = :id LIMIT 1")
     DownloadEntity findById(int id);
 
