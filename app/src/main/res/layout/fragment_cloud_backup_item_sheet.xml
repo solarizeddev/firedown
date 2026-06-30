@@ -2,8 +2,10 @@
 <!--
   Per-item bottom sheet for a backed-up file. Drag handle + a rich header (the
   file's preview thumbnail + name + 'MIME · size · date', mirroring the list row)
-  + a divider + two M3 56dp option rows. "Remove from cloud" is error-tinted
-  (destructive), unlike the neutral "Restore".
+  + a divider + two M3 56dp option rows. "Remove from cloud" uses the
+  DialogOption.Final (destructive) style — colorPrimary text + tint, the same
+  treatment the popup/option sheets give their destructive row — unlike the
+  neutral "Restore".
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -77,10 +79,8 @@
 
     <TextView
         android:id="@+id/cb_sheet_remove"
-        style="@style/Firedown.Widget.DialogOption"
+        style="@style/Firedown.Widget.DialogOption.Final"
         android:text="@string/cloud_backup_item_remove"
-        android:textColor="?attr/colorError"
-        app:drawableStartCompat="@drawable/ic_baseline_delete_24"
-        app:drawableTint="?attr/colorError" />
+        app:drawableStartCompat="@drawable/ic_baseline_delete_24" />
 
 </LinearLayout>

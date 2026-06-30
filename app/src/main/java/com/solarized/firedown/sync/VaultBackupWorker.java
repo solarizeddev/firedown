@@ -17,6 +17,7 @@ import androidx.work.ForegroundInfo;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import com.solarized.firedown.App;
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
@@ -67,6 +68,8 @@ public class VaultBackupWorker extends Worker {
     private final Context mContext;
     private final OkHttpClient mClient;
     private final SharedPreferences mPrefs;
+    /** The most recent setProgressAsync future, drained before returning a Result. */
+    private ListenableFuture<Void> mLastProgress;
 
     @AssistedInject
     public VaultBackupWorker(
@@ -129,11 +132,18 @@ public class VaultBackupWorker extends Worker {
                     (done, total) -> publishProgress(fName, fMime, done, total));
         } catch (StorageApiClient.TransientException e) {
             // Network / 429 / 5xx — let WorkManager retry with backoff.
+            awaitLastProgress();
             return Result.retry();
         } catch (Exception e) {
+            awaitLastProgress();
             return failure();
         }
 
+        // A pending setProgressAsync MUST complete before we return a Result, or
+        // WorkManager throws "Calls to setProgressAsync() must complete before a
+        // ListenableWorker signals completion" (the last per-chunk update races
+        // the return).
+        awaitLastProgress();
         // First successful backup marks Cloud Backup as in use, so the shared
         // recovery code survives a bookmark-sync sign-out (see SyncManager).
         mPrefs.edit().putBoolean(Preferences.CLOUD_BACKUP_ENABLED, true).apply();
@@ -148,7 +158,9 @@ public class VaultBackupWorker extends Worker {
                 .build());
     }
 
-    /** Publishes the in-flight file's identity + byte progress (fire-and-forget). */
+    /** Publishes the in-flight file's identity + byte progress. The returned
+     *  future is tracked so {@link #awaitLastProgress()} can drain it before the
+     *  worker returns a Result. */
     private void publishProgress(String name, String mime, long done, long total) {
         Data.Builder b = new Data.Builder()
                 .putLong(KEY_PROGRESS_DONE, done)
@@ -159,7 +171,23 @@ public class VaultBackupWorker extends Worker {
         if (mime != null) {
             b.putString(KEY_MIME, mime);
         }
-        setProgressAsync(b.build());
+        mLastProgress = setProgressAsync(b.build());
+    }
+
+    /** Blocks until the most recent progress update has been persisted — required
+     *  before returning a Result (see the doWork comment). Best-effort. */
+    private void awaitLastProgress() {
+        ListenableFuture<Void> f = mLastProgress;
+        if (f == null) {
+            return;
+        }
+        mLastProgress = null;
+        try {
+            f.get();
+        } catch (Exception ignored) {
+            // interrupted / already-completing — nothing we can do, and the
+            // worker is about to finish anyway.
+        }
     }
 
     private ForegroundInfo foregroundInfo(String name) {

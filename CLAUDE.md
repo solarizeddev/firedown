@@ -1494,7 +1494,11 @@ opaque chunks + an opaque manifest blob.
   per-chunk → `VaultBackupWorker` republishes them via `setProgressAsync`
   (`KEY_NAME`/`KEY_MIME`/`KEY_PROGRESS_DONE`/`_TOTAL`) →
   `CloudBackupListFragment.observeTransfers` reads `WorkInfo.getProgress()` and
-  builds a `Transfer` row. **Don't revert to an indeterminate banner** — the bar
+  builds a `Transfer` row. **The worker MUST drain the last `setProgressAsync`
+  future before returning a `Result`** (`awaitLastProgress()` — keep the future,
+  `.get()` it before every return) or WorkManager throws "Calls to
+  setProgressAsync() must complete before a ListenableWorker signals completion"
+  (the final per-chunk update races the return). **Don't revert to an indeterminate banner** — the bar
   was indeterminate only because nothing reported bytes. Only uploads of NEW files
   get a row: a transfer whose name is already a committed entry (`isCommitted` — a
   re-backup or a restore) keeps its existing row, no duplicate progress row.
@@ -1525,7 +1529,10 @@ opaque chunks + an opaque manifest blob.
 - **Per-item sheet has a rich header.** `CloudBackupItemSheetDialogFragment` shows
   the file's preview thumbnail + name + `MIME · size · date` (the list-row facts,
   passed as sheet args) over the Restore / Remove rows; "Remove from cloud" is
-  error-tinted (destructive). Don't revert it to a bare title + two rows.
+  styled with `Firedown.Widget.DialogOption.Final` (the app's option-sheet
+  destructive treatment — colorPrimary text + tint, NOT colorError). Don't revert
+  it to a bare title + two rows, and don't use colorError (the popup/option sheets
+  mark destructive rows with `.Final`/colorPrimary, not red).
 - **"Backing up…" snackbar has a View action, no success snackbar.** Tapping
   "Back up to cloud" (`BaseDownloadFragment`) shows a "Backing up…" snackbar whose
   **View** action deep-links to the backed-up-files list (where the live per-item

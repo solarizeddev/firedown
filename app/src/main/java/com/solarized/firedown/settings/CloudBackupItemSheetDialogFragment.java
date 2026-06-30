@@ -26,8 +26,9 @@ import dagger.hilt.android.AndroidEntryPoint;
 /**
  * Per-item bottom sheet for a backed-up file: Restore to Downloads / Remove from
  * cloud. A rich header (preview thumbnail + name + {@code MIME · size · date},
- * mirroring the list row) over two Firedown.Widget.DialogOption rows; "Remove" is
- * error-tinted (destructive). The choice is returned to
+ * mirroring the list row) over two Firedown.Widget.DialogOption rows; "Remove"
+ * uses the .Final (destructive) variant — colorPrimary, the app's option-sheet
+ * destructive treatment. The choice is returned to
  * {@link CloudBackupListFragment} via the NavBackStackEntry saved-state handle.
  */
 @AndroidEntryPoint
