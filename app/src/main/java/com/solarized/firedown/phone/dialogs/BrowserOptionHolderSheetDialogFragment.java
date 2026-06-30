@@ -82,10 +82,13 @@ public class BrowserOptionHolderSheetDialogFragment extends BaseBottomSheetDialo
 
         FrameLayout.LayoutParams layoutParams = (FrameLayout.LayoutParams) mFrameHolder.getLayoutParams();
 
+        // Subtract content_frame's own top margin (drag-handle clearance) so the
+        // margin doesn't add to the sheet's total height — keeps the sheet flush
+        // just under the toolbar instead of overlapping it.
         if (isLandscape) {
-            layoutParams.height = mFrameDecorWidth - mActionBarSize;
+            layoutParams.height = mFrameDecorWidth - mActionBarSize - layoutParams.topMargin;
         } else {
-            layoutParams.height = mFrameDecorHeight - mActionBarSize;
+            layoutParams.height = mFrameDecorHeight - mActionBarSize - layoutParams.topMargin;
         }
 
         // setLayoutParams already schedules a layout pass — the explicit
@@ -165,7 +168,10 @@ public class BrowserOptionHolderSheetDialogFragment extends BaseBottomSheetDialo
         mFrameDecorHeight = visibleRect.height();
         mFrameDecorWidth = visibleRect.width();
 
-        layoutParams.height = visibleRect.height() - mActionBarSize;
+        // Subtract content_frame's own top margin (drag-handle clearance) so the
+        // margin doesn't add to the sheet's total height — keeps the sheet flush
+        // just under the toolbar instead of overlapping it.
+        layoutParams.height = visibleRect.height() - mActionBarSize - layoutParams.topMargin;
         // setLayoutParams already schedules a layout pass — the explicit
         // requestLayout() forced a redundant measure-and-layout cycle.
         mFrameHolder.setLayoutParams(layoutParams);

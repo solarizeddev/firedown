@@ -204,30 +204,29 @@ public class SettingsFragment extends BasePreferenceFragment
         if (dohPreference != null) {
             boolean enabled = mSharedPreferences.getBoolean(Preferences.SETTINGS_DOH_SWITCH, false);
             if (enabled) {
+                // The persisted SETTINGS_DOH value IS the endpoint URL (or the
+                // "custom" sentinel) — never a positional index. Resolve the
+                // display label from the URL; an unknown/legacy endpoint (e.g.
+                // a provider dropped from the list) shows verbatim.
                 String dohValue = mSharedPreferences.getString(
                         Preferences.SETTINGS_DOH, Preferences.DEFAULT_SETTINGS_DOH);
-                switch (dohValue) {
-                    case "0":
-                        dohPreference.setSummary(R.string.settings_doh_server_mozilla);
-                        break;
-                    case "1":
-                        dohPreference.setSummary(R.string.settings_doh_server_cloudflare);
-                        break;
-                    case "2":
-                        dohPreference.setSummary(R.string.settings_doh_server_google);
-                        break;
-                    case "3":
-                        dohPreference.setSummary(R.string.settings_doh_server_quad9);
-                        break;
-                    case "4":
-                        dohPreference.setSummary(R.string.settings_doh_server_adguard);
-                        break;
-                    case "5":
-                        dohPreference.setSummary(R.string.settings_doh_server_custom);
-                        break;
-                    default:
-                        dohPreference.setSummary(R.string.settings_doh_server_off);
-                        break;
+                if (Preferences.SETTINGS_DOH_CUSTOM_VALUE.equals(dohValue)) {
+                    dohPreference.setSummary(R.string.settings_doh_server_custom);
+                } else {
+                    switch (dohValue) {
+                        case "https://dns.mullvad.net/dns-query":
+                            dohPreference.setSummary(R.string.settings_doh_server_mullvad);
+                            break;
+                        case "https://dns.quad9.net/dns-query":
+                            dohPreference.setSummary(R.string.settings_doh_server_quad9);
+                            break;
+                        case "https://cloudflare-dns.com/dns-query":
+                            dohPreference.setSummary(R.string.settings_doh_server_cloudflare);
+                            break;
+                        default:
+                            dohPreference.setSummary(dohValue);
+                            break;
+                    }
                 }
             } else {
                 dohPreference.setSummary(R.string.settings_doh_server_off);

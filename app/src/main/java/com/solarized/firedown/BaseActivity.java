@@ -62,6 +62,11 @@ public abstract class BaseActivity extends AppCompatActivity implements IntentHa
 
     private static final String TAG = BaseActivity.class.getSimpleName();
 
+    /** Install-local prefs file, EXCLUDED from Auto Backup (see DownloadBackupMirror). */
+    private static final String LOCAL_PREFS = "backup_local";
+    /** Set once the notifications priming sheet has been shown on this install. */
+    private static final String KEY_NOTIFICATION_PRIME_SHOWN = "notification_prime_shown";
+
     protected boolean mPaused = false;
 
     protected FragmentContainerView mActivityContentFrame;
@@ -491,14 +496,46 @@ public abstract class BaseActivity extends AppCompatActivity implements IntentHa
     // ── Permissions ──────────────────────────────────────────────────────────
 
     public void requestNotificationPermission(){
-        if(BuildUtils.hasAndroidTiramisu() && (ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED)){
-            String[] permission = new String[]{android.Manifest.permission.POST_NOTIFICATIONS};
-            if(shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS)){
-                NavigationUtils.navigateSafe(getNavController(), R.id.dialog_notifications_manager);
-            }else{
-                ActivityCompat.requestPermissions(this, permission, NotificationID.PERMISSIONS);
-            }
-        }
+        if (!BuildUtils.hasAndroidTiramisu()) return;
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                == PackageManager.PERMISSION_GRANTED) return;
+
+        // Prime ONCE, before the system prompt. On a fresh install
+        // shouldShowRequestPermissionRationale is false, so firing the OS dialog
+        // here would ask with no context and leave the explanation for the
+        // post-denial path — too late, since a denied POST_NOTIFICATIONS is
+        // sticky and the OS won't re-prompt. Instead show the onboarding sheet
+        // (which explains why, then launches the OS prompt on "Enable"); never
+        // nag on later launches.
+        if (notificationPrimeShown()) return;
+
+        // Called from onCreate: only commit (mark + navigate) once the
+        // NavHostFragment's graph is live, so a not-yet-ready controller doesn't
+        // burn the one-shot flag without ever showing the sheet — it simply
+        // retries on the next launch.
+        NavController navController = getNavController();
+        if (navController == null || navController.getCurrentDestination() == null) return;
+        markNotificationPrimeShown();
+        NavigationUtils.navigateSafe(navController, R.id.dialog_notifications_priming);
+    }
+
+    /**
+     * Whether the notifications priming sheet has already been shown on this
+     * install. Stored in {@code backup_local.xml} — EXCLUDED from Auto Backup
+     * — so a genuine reinstall (which resets the OS permission grant) primes
+     * again, rather than reading a backed-up "already shown" flag and never
+     * asking. Same install-local-state pattern as the restore sentinels.
+     */
+    private boolean notificationPrimeShown() {
+        return getSharedPreferences(LOCAL_PREFS, MODE_PRIVATE)
+                .getBoolean(KEY_NOTIFICATION_PRIME_SHOWN, false);
+    }
+
+    private void markNotificationPrimeShown() {
+        getSharedPreferences(LOCAL_PREFS, MODE_PRIVATE)
+                .edit()
+                .putBoolean(KEY_NOTIFICATION_PRIME_SHOWN, true)
+                .apply();
     }
 
 

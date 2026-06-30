@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Non-interactive divider row for OptionsAdapter (e.g. between a sub-sheet's
+     header and its options). The Firedown.Divider.InCard style supplies the
+     match_parent width, 1dp height, 16dp side insets and the hairline colour;
+     the vertical margins give the row its breathing room. -->
+<View xmlns:android="http://schemas.android.com/apk/res/android"
+    style="@style/Firedown.Divider.InCard"
+    android:layout_marginTop="8dp"
+    android:layout_marginBottom="8dp" />

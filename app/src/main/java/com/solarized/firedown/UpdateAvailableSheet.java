@@ -4,9 +4,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.text.SpannableString;
-import android.text.Spanned;
-import android.text.style.LeadingMarginSpan;
+import android.text.format.Formatter;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,6 +18,8 @@ import androidx.preference.PreferenceManager;
 
 import com.google.android.material.button.MaterialButton;
 import com.solarized.firedown.phone.dialogs.BaseBottomSheetDialogFragment;
+
+import java.io.File;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
@@ -148,9 +148,17 @@ public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
         TextView version = view.findViewById(R.id.update_sheet_version);
         version.setText(shown);
 
-        // ...and the version it replaces.
+        // ...and the version it replaces, plus the downloaded APK size when it's
+        // on disk (skipped in preview, where there's no real file).
         TextView current = view.findViewById(R.id.update_sheet_current);
-        current.setText(getString(R.string.update_available_sheet_current, App.getVersionName()));
+        File apk = Preferences.getUpdateApkFile(context);
+        long bytes = (apk != null && apk.exists()) ? apk.length() : 0L;
+        if (bytes > 0) {
+            current.setText(getString(R.string.update_available_sheet_current_size,
+                    App.getVersionName(), Formatter.formatShortFileSize(context, bytes)));
+        } else {
+            current.setText(getString(R.string.update_available_sheet_current, App.getVersionName()));
+        }
 
         // "What's new" header + release notes — both shown only when status.json
         // carries a changelog for this version.
@@ -194,7 +202,6 @@ public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
     private void fillChangelog(LinearLayout container, String raw) {
         container.removeAllViews();
         LayoutInflater inflater = LayoutInflater.from(container.getContext());
-        int hang = Math.round(16 * getResources().getDisplayMetrics().density);
         int gap = Math.round(12 * getResources().getDisplayMetrics().density);
         boolean first = true;
         for (String line : raw.split("\n")) {
@@ -204,10 +211,9 @@ public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
             }
             TextView row = (TextView) inflater.inflate(
                     R.layout.item_update_changelog_bullet, container, false);
-            SpannableString text = new SpannableString(item);
-            text.setSpan(new LeadingMarginSpan.Standard(0, hang), 0, item.length(),
-                    Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
-            row.setText(text);
+            // Flush-left bullets — wrapped lines return to the margin (no hanging
+            // indent), matching the Mercurygram changelog style.
+            row.setText(item);
             if (!first) {
                 ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) row.getLayoutParams();
                 lp.topMargin = gap;

@@ -34,7 +34,7 @@ expose the real media URL after the page's own JS runs (often on play). So:
 
 | dir           | id                       | role |
 |---------------|--------------------------|------|
-| `webrequests/`| `downloader@solarized.dev` | **ALL capture** — the former `parser@` extension was MERGED into this one. Two halves in one extension: (1) the per-site **parsers** (`js/parsers/` — one ES module per site: Twitter/X, Instagram, Threads, Facebook, Vimeo, Rumble, Bilibili.tv, Niconico, Kick, Twitch, Dailymotion, Apple Podcasts, TikTok, Bluesky; emits entries **with metadata** — title, author, thumbnail, duration, quality variants) plus the page-state bridge (`js/page-state-bridge.js`); (2) the **generic catch-all** (`js/requests.js` + `js/content-script.js` — any media URL seen on the wire, no rich metadata). Also hosts `js/wasm-watch.js` (+ `js/wasm-probe.js`), the WASM-disabled detector — a settings feature, not capture. |
+| `webrequests/`| `downloader@solarized.dev` | **ALL capture** — the former `parser@` extension was MERGED into this one. Two halves in one extension: (1) the per-site **parsers** (`js/parsers/` — one ES module per site: Twitter/X, Instagram, Threads, Facebook, Vimeo, Rumble, Bilibili.tv, Niconico, Kick, Twitch, Dailymotion, Apple Podcasts, News Over Audio, TikTok, Bluesky; emits entries **with metadata** — title, author, thumbnail, duration, quality variants) plus the page-state bridge (`js/page-state-bridge.js`); (2) the **generic catch-all** (`js/requests.js` + `js/content-script.js` — any media URL seen on the wire, no rich metadata). Also hosts `js/wasm-watch.js` (+ `js/wasm-probe.js`), the WASM-disabled detector — a settings feature, not capture. |
 | `youtube/`    | `youtube@solarized.dev`  | YouTube (separate; uses `PoTokenGenerator` on the Java side). |
 | `ublock/`     | uBlock Origin            | Ad blocking. |
 | `icons/`, `search/`, `db/`, `error/` | — | Support. |
@@ -221,7 +221,11 @@ see the HLS-master path below), covers every such site:
   (this key-proximity is what keeps it off the page's countless non-media URLs —
   share/canonical/next links carry no media extension). Three outcomes per hit:
   `.m3u8` → HLS master (`postHlsMaster` → `page-state-hls` — Java enumerates, no
-  probe); `.mp4`/`.m4v`/`.webm` → progressive variant; a
+  probe); `.mp4`/`.m4v`/`.webm` → progressive variant; **`.mp3`/`.m4a`/`.aac`/
+  `.ogg`/`.opus`/`.flac`/`.wav`/`.weba`** (`AUDIO_RE`) → progressive AUDIO variant
+  (no resolution) — podcast/article audio inlined in page state (e.g. podverse's
+  `__NEXT_DATA__.mediaUrl`, a substack TTS `audio_url`); `MEDIA_KEY_RE` therefore
+  carries `audio_?url`/`enclosure` keys alongside the video ones; a
   **SAME-ORIGIN non-media URL beside a `format`/`quality`/`segmentFormats` hint**
   → a tokenized **media-list DELEGATE** (e.g. a player whose source is
   `…/media/mp4/?s=<token>` returning `[{quality, videoUrl:…mp4}]`), resolved with
@@ -393,6 +397,61 @@ Java changes**. Load-bearing details, do not "simplify":
   `.media-viewer-whole` / `.media-viewer-buttons`, A `#MediaViewer
   .MediaViewerActions`. If the button stops appearing, the DOM changed — update
   `K_*`/`A_*` in `telegram-web.js`. Logs under `[TG-WEB]`, DEBUG-gated.
+
+### Audio title/thumbnail enrichment — gating, MediaSession, embedded players
+
+The generic catcher enriches a captured media URL's filename with page metadata
+(title/description/thumbnail) by querying the content script
+(`requests.js` `get-page-metadata`). For **standalone audio files**
+(`urlIsStandaloneAudio` — `.mp3/.m4a/.aac/.wav/.weba/.opus/.flac/.oga/.mid`) this
+is **GATED**, because most incidental sounds (notification dings, UI sfx,
+background music) would otherwise inherit the page headline (the bug: series.ly's
+`/audio/notification.mp3` came out named after a movie). Video, HLS/DASH
+manifests and tokenized/extensionless URLs are **always** enriched
+(`urlIsStandaloneAudio` is false for them).
+
+- **The gate is `audioRole`**, computed in the content script for the captured
+  URL: `'content'` (enrich) when the page **declares** it (a JSON-LD
+  `AudioObject.contentUrl`/`og:audio` matching the URL), OR a `<audio>`/`<video>`
+  DOM element is **bound** to it (hidden/controls-less custom players included —
+  the test is the bound element's existence, NOT `controls`/visibility, because
+  podcast players hide a native `<audio>` behind their own UI), OR the player
+  published a **now-playing MediaSession title**. Otherwise `'unknown'` →
+  suppressed. The genuinely-incidental case (`new Audio(url)` ding) binds no
+  element and sets no MediaSession, so it stays suppressed — series.ly preserved.
+- **Per-item metadata via `navigator.mediaSession.metadata`** — title + artist +
+  artwork the player exposes for the OS/lock screen, the most precise per-clip
+  source. `mediaSessionTitle` ranks just below a URL-matched declaration and
+  ABOVE the page-level og/title in the consumer, so a page with several clips
+  gives each its own title/thumbnail instead of one shared page card.
+- **The responder runs in EVERY frame** (`content-script.js`, `all_frames`; the
+  old `window===window.top` gate is gone) and the query is **frame-targeted**
+  (`tabs.sendMessage(tabId, …, {frameId: data.frameId})`, `0` = top). So an
+  **embedded player in a cross-origin iframe** (a "listen to this article" /
+  podcast embed) answers for ITS OWN audio — its MediaSession, its `<audio>`
+  binding, its og — which the top-frame responder could never see. `data.frameId`
+  is the real webRequest frame on the wire path and `0` on the synthetic
+  content-script path. Frame-targeting is what makes the all-frames responder
+  safe (no cross-frame title contamination). Do **not** re-add a "subframe audio
+  inherits the TOP page's og:title" heuristic — it stamped every clip on a page
+  with one shared title (the thing this replaced).
+- **News Over Audio** (`js/parsers/newsoveraudio.js`) is the dedicated case: a
+  syndicated "listen to this article" widget embedded across publishers (IEEE
+  Spectrum, …). Its audio + title live ONLY in `api.newsoveraudio.com/v1/player/
+  article`'s `application/json` (which the catcher rejects) and play from a
+  cross-origin iframe, so neither the wire, the DOM, nor MediaSession-without-a-
+  parser fully cover it. `filterResponseData` on that JSON emits the signed
+  full-length `.mp3` with `name`/`audioLength`(→ms)/publisher image (`skipProbe`);
+  `audios.newsoveraudio.com/*.mp3` is block-listed (cardinal rule). The MediaSession
+  path above covers the OTHER embed providers generically.
+- **Spotify — DECIDED AGAINST a parser** (don't re-litigate from a HAR). Logged
+  out, the only thing that plays is a ~30s `p.scdn.co/mp3-preview/<hash>` clip
+  (and even that often 304s from cache on an extensionless URL → unclassifiable);
+  the full track/episode is auth-gated **DRM** (encrypted CDN). The preview's
+  name/thumbnail DO sit in the `api-partner.spotify.com/pathfinder` GraphQL JSON,
+  but capturing a 30s teaser via a per-site GraphQL parser isn't worth the
+  maintenance treadmill. The realistic capture path for a Spotify-published
+  podcast is its **YouTube** embed (existing `youtube@` parser).
 
 ### HLS-master sites — Java enumeration, no ffmpeg probe
 
@@ -767,7 +826,8 @@ This section exists because a Threads bug took ~8 rounds that should have taken
 
 2. **Read the logs by category.** `adb logcat -s GeckoConsole:*` then grep the
    prefix: `TWITTER`, `INSTAGRAM`, `THREADS`, `THREADS-CS`, `FB-*`, `IG-*`,
-   `RUMBLE`, `TWITCH`, `KICK`, `VIMEO`, `DAILYMOTION`, `TIKTOK`, `VARIANTS`,
+   `RUMBLE`, `TWITCH`, `KICK`, `VIMEO`, `DAILYMOTION`, `TIKTOK`, `NOA`,
+   `PAGE-STATE`, `VARIANTS`,
    `DEDUP`, `NATIVE`. The generic catcher logs under `[req]` (gated on its own
    `DEBUG`). Java-side variant probing is `VariantProcessor`.
 

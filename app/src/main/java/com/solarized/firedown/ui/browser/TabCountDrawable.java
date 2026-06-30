@@ -8,6 +8,7 @@ import android.graphics.Paint;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.graphics.Typeface;
 import android.util.TypedValue;
 
 import android.content.res.Resources;
@@ -41,31 +42,60 @@ import androidx.annotation.Nullable;
  */
 public class TabCountDrawable extends Drawable {
 
-    /** Stroke width matches the bottom bar's count-rect restroke. The
-     *  count read cramped in the fixed 20dp box because the digits were
-     *  drawn FAKE-BOLD: a thickened two-digit count ("18") nearly spanned
-     *  the ~16.4dp interior. The fix is slimmer digits, not smaller ones —
-     *  regular (non-bold) weight at ~9.5dp with a lighter 1.5dp outline
-     *  stays legible while leaving margin around the number (shrinking the
-     *  text instead just read too small). Box footprint (SIZE_DP) is
-     *  unchanged — the hosts reference 20dp (the toggle's iconSize, the
-     *  bottom bar's 20dp ImageView) — so only the digit weight/room
-     *  changes, in BOTH the bottom bar and the tabs-header toggle that
-     *  share this drawable. */
-    private static final float STROKE_DP = 1.5f;
+    /** A direct port of Chromium/Brave's {@code TabSwitcherDrawable} strategy
+     *  (verified against the Chromium source), because a single hardcoded
+     *  digit size never matched it across devices. Everything below mirrors
+     *  what Chromium does:
+     *
+     *  <ol>
+     *  <li><b>The digit size adapts to the digit COUNT</b>, with Chromium's
+     *      EXACT dimens: {@code toolbar_tab_count_text_size_1_digit} = 12dp,
+     *      {@code ..._2_digit} = 10dp. A single digit is drawn larger (it fills
+     *      the box); two digits shrink to fit. A lone fixed size has to leave
+     *      room for two digits, so a single digit never fills the box — exactly
+     *      why ours read small next to Brave's "2". Picked per {@link #draw} by
+     *      {@code mText}'s code-point count.</li>
+     *  <li><b>Condensed bold digits</b> — {@code Typeface.create(
+     *      "sans-serif-condensed", BOLD)}, verbatim from Chromium: tall, narrow
+     *      glyphs that read big and bold yet still fit two. (Plain
+     *      {@link Typeface#DEFAULT_BOLD} is wider/shorter — less bold-looking,
+     *      and forces a smaller size to fit two digits.)</li>
+     *  <li><b>Glyph-bounds vertical centering</b> — Chromium centers the
+     *      measured text BOUNDS (the visible ink), not the font line, so the
+     *      digits sit optically centered in the box. See {@link #draw}.</li>
+     *  <li><b>The box is a softly-rounded square just inside the footprint</b>:
+     *      Chromium draws the {@code btn_tabswitcher_modern} vector — a rounded
+     *      square with a small internal margin — inside the 24dp toolbar-icon
+     *      canvas ({@code toolbar_icon_height} = 24dp). We keep the 24dp
+     *      FOOTPRINT (level with the sibling 24dp bottom-bar icons / the toggle
+     *      iconSize) and inset the stroked rect only slightly
+     *      ({@link #BOX_INSET_DP} = 1dp → ~22dp visible) with a 5dp corner, to
+     *      match Brave's on-device rendering — a near-full, clearly-rounded box,
+     *      NOT the small/sharp square a larger inset produced. (The exact vector
+     *      pathData wasn't fetchable, so inset/corner are matched visually to
+     *      Brave rather than copied byte-for-byte.)</li>
+     *  </ol>
+     *
+     *  Hosts reference 24dp so box + digit stay in lockstep across BOTH the
+     *  bottom bar and the tabs-header toggle that share this drawable. (dp
+     *  already scales per density — the device-to-device drift was the
+     *  digit-count adaptivity + condensed font, not the unit.) */
+    private static final float STROKE_DP = 2f;
     private static final float CORNER_DP = 5f;
-    private static final float TEXT_DP   = 9.5f;
-    private static final float SIZE_DP   = 20f;
-    /** Letter-spacing (em) between digits — a touch of air so a two-digit
-     *  count doesn't read jammed. Small enough that the CENTER-align
-     *  trailing-gap offset stays sub-pixel. */
-    private static final float TEXT_SPACING_EM = 0.03f;
+    private static final float BOX_INSET_DP = 1f;
+    private static final float TEXT_1_DIGIT_DP = 13f;
+    private static final float TEXT_2_DIGIT_DP = 11f;
+    private static final float SIZE_DP   = 24f;
 
     private final Paint mRectPaint;
     private final Paint mTextPaint;
+    private final Rect  mTextBounds = new Rect();
     private final float mCorner;
     private final float mStrokeHalf;
+    private final float mBoxInset;
     private final int   mIntrinsicSize;
+    private final float mText1DigitSize;
+    private final float mText2DigitSize;
 
     private String mText = "0";
     @Nullable private ColorStateList mTint;
@@ -76,23 +106,25 @@ public class TabCountDrawable extends Drawable {
         float stroke = STROKE_DP * density;
         mCorner = CORNER_DP * density;
         mStrokeHalf = stroke / 2f;
+        mBoxInset = BOX_INSET_DP * density;
         mIntrinsicSize = Math.round(SIZE_DP * density);
 
         mRectPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mRectPaint.setStyle(Paint.Style.STROKE);
         mRectPaint.setStrokeWidth(stroke);
 
+        mText1DigitSize = TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP, TEXT_1_DIGIT_DP, resources.getDisplayMetrics());
+        mText2DigitSize = TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP, TEXT_2_DIGIT_DP, resources.getDisplayMetrics());
+
         mTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mTextPaint.setTextAlign(Paint.Align.CENTER);
-        // Regular weight (no fake-bold): slim digits read lighter and less
-        // crowded inside the box than the old thickened ones. A small
-        // letter-spacing adds air between a two-digit count ("1 8") so the
-        // digits don't jam together. (CENTER align measures the spaced
-        // advance, so the box centering still holds; the trailing-gap
-        // offset is sub-pixel at this spacing.)
-        mTextPaint.setLetterSpacing(TEXT_SPACING_EM);
-        mTextPaint.setTextSize(TypedValue.applyDimension(
-                TypedValue.COMPLEX_UNIT_DIP, TEXT_DP, resources.getDisplayMetrics()));
+        // Condensed bold, as Chromium's TabSwitcherDrawable uses: tall, narrow
+        // digits that read big and bold yet still fit two of them — no
+        // letter-spacing needed. The actual size is chosen per draw() by the
+        // digit count (see class doc), so it's set there, not here.
+        mTextPaint.setTypeface(Typeface.create("sans-serif-condensed", Typeface.BOLD));
     }
 
     /** Updates the rendered count (shared formatter, incl. the 🔥 cap). */
@@ -113,17 +145,29 @@ public class TabCountDrawable extends Drawable {
         mRectPaint.setColor(mColor);
         mTextPaint.setColor(mColor);
 
+        // Inset rounded-square box (Chromium's btn_tabswitcher_modern has an
+        // internal margin inside the 24dp icon canvas — not full-bleed).
+        float inset = mStrokeHalf + mBoxInset;
         RectF rect = new RectF(
-                bounds.left + mStrokeHalf,
-                bounds.top + mStrokeHalf,
-                bounds.right - mStrokeHalf,
-                bounds.bottom - mStrokeHalf);
+                bounds.left + inset,
+                bounds.top + inset,
+                bounds.right - inset,
+                bounds.bottom - inset);
         canvas.drawRoundRect(rect, mCorner, mCorner, mRectPaint);
 
-        // Vertical centering from the font metrics — a bare drawText at
-        // centerY sits the BASELINE there and the digits ride high.
-        Paint.FontMetrics fm = mTextPaint.getFontMetrics();
-        float baseline = bounds.exactCenterY() - (fm.ascent + fm.descent) / 2f;
+        // Digit size adapts to the digit count (Chromium): a single digit
+        // fills the box; two+ digits (incl. the 🔥 glyph, a surrogate pair)
+        // shrink to fit. Counted by code points so a surrogate-pair glyph
+        // isn't mistaken for two characters.
+        int displayLen = mText.codePointCount(0, mText.length());
+        mTextPaint.setTextSize(displayLen > 1 ? mText2DigitSize : mText1DigitSize);
+
+        // Glyph-bounds vertical centering, verbatim from Chromium's draw():
+        // center the measured text BOUNDS (visible ink), not the font line, so
+        // the digits sit optically centered rather than riding high/low.
+        mTextPaint.getTextBounds(mText, 0, mText.length(), mTextBounds);
+        float baseline = bounds.exactCenterY()
+                + (mTextBounds.bottom - mTextBounds.top) / 2f - mTextBounds.bottom;
         canvas.drawText(mText, bounds.exactCenterX(), baseline, mTextPaint);
     }
 

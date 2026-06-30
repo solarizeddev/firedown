@@ -12,6 +12,13 @@ import androidx.annotation.Nullable;
 
 public class ProgressOverlayView extends View {
 
+    /** Target ring radius in dp. Chosen so the ring's OUTER diameter
+     *  (2*radius + stroke, and stroke = radius*0.25 → 2.25*radius) equals the
+     *  50dp centered mime glyph shown for non-progress tiles, so the two
+     *  states' focal elements are the same size. 50 / 2.25 ≈ 22.2.
+     *  Clamped to the view in onDraw so it never overflows. */
+    private static final float RING_RADIUS_DP = 22.2f;
+
     private final Paint trackPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint arcPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -125,7 +132,18 @@ public class ProgressOverlayView extends View {
 
         float cx = w / 2f;
         float cy = h / 2f;
-        float radius = Math.min(w, h) * 0.22f;
+        // Fixed target size (~54dp ring), clamped to fit the view. The progress
+        // ring is the in-progress counterpart of the centered mime glyph shown
+        // for non-progress tiles, so it must read at the SAME size and sit
+        // centered the same way. Sizing off the shorter side alone made the
+        // ring tiny in the grid's wide-but-short picture zone (the ring shrank
+        // to the zone height while the glyph kept its fixed size) — which left
+        // it looking small and lost. A fixed target keeps the two consistent.
+        // The 0.42 clamp only kicks in for a view too small to hold the target.
+        // Only grid/dense download tiles show this view (the list uses the
+        // inline bar), so this never touches list rows.
+        float density = getResources().getDisplayMetrics().density;
+        float radius = Math.min(Math.min(w, h) * 0.42f, RING_RADIUS_DP * density);
         float strokeWidth = radius * 0.25f;
 
         trackPaint.setStrokeWidth(strokeWidth);

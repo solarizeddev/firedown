@@ -35,11 +35,9 @@
 
 
     <string-array name="settings_doh">
-        <item>@string/settings_doh_server_mozilla</item>
-        <item>@string/settings_doh_server_cloudflare</item>
-        <item>@string/settings_doh_server_google</item>
+        <item>@string/settings_doh_server_mullvad</item>
         <item>@string/settings_doh_server_quad9</item>
-        <item>@string/settings_doh_server_adguard</item>
+        <item>@string/settings_doh_server_cloudflare</item>
         <item>@string/settings_doh_server_custom</item>
     </string-array>
 
@@ -54,11 +52,9 @@
       special-case.
     -->
     <string-array name="settings_doh_servers">
-        <item>https://mozilla.cloudflare-dns.com/dns-query</item>
-        <item>https://cloudflare-dns.com/dns-query</item>
-        <item>https://dns.google/dns-query</item>
+        <item>https://dns.mullvad.net/dns-query</item>
         <item>https://dns.quad9.net/dns-query</item>
-        <item>https://dns.adguard-dns.com/dns-query</item>
+        <item>https://cloudflare-dns.com/dns-query</item>
         <item>custom</item>
     </string-array>
 

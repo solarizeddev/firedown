@@ -13,12 +13,15 @@ public class OptionItem {
      *  opens a sub-list. 0 = none. */
     @DrawableRes
     private final int trailingIconRes;
+    /** A non-interactive divider row (see {@link #separator()}). */
+    private final boolean separator;
 
     public OptionItem(String label, @DrawableRes int iconRes, @StringRes int labelRes) {
         this.label = label;
         this.iconRes = iconRes;
         this.labelRes = labelRes;
         this.trailingIconRes = 0;
+        this.separator = false;
     }
 
 
@@ -27,6 +30,7 @@ public class OptionItem {
         this.iconRes = iconRes;
         this.labelRes = 0;
         this.trailingIconRes = 0;
+        this.separator = false;
     }
 
     /** Row with a leading icon and a trailing icon (e.g. a "Media tools ›"
@@ -37,6 +41,7 @@ public class OptionItem {
         this.iconRes = iconRes;
         this.labelRes = labelRes;
         this.trailingIconRes = trailingIconRes;
+        this.separator = false;
     }
 
     public OptionItem(String label) {
@@ -44,6 +49,28 @@ public class OptionItem {
         this.iconRes = 0;
         this.labelRes = 0;
         this.trailingIconRes = 0;
+        this.separator = false;
+    }
+
+    private OptionItem(boolean separator) {
+        this.label = null;
+        this.iconRes = 0;
+        this.labelRes = 0;
+        this.trailingIconRes = 0;
+        this.separator = separator;
+    }
+
+    /**
+     * A non-interactive divider row, rendered by {@link
+     * com.solarized.firedown.ui.adapters.OptionsAdapter} as a hairline (never
+     * clickable). Used e.g. to split a sub-sheet's header from its options.
+     */
+    public static OptionItem separator() {
+        return new OptionItem(true);
+    }
+
+    public boolean isSeparator() {
+        return separator;
     }
 
     public String getLabel() {

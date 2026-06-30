@@ -189,6 +189,31 @@ const PARSER_BLOCKLIST = {
   'telegram-web': [
     'web(?:k|z)?\\.telegram\\.org\\/(?:[kaz]\\/)?stream\\/',
   ],
+
+  // News Over Audio (NOA) — the "listen to this article" embed used across many
+  // publishers (IEEE Spectrum, …). The parser reads api.newsoveraudio.com's
+  // player JSON and emits the signed article narration .mp3 from NOA's audio CDN
+  // (audios.newsoveraudio.com). Block that .mp3 so the generic catcher doesn't
+  // grab a second, bare, metadata-less copy when the cross-origin embed player
+  // fetches the same URL on play (the embed lives in an iframe whose <audio>
+  // binding the top-frame metadata responder can't see — so the bare copy would
+  // also land untitled).
+  newsoveraudio: [
+    'audios\\.newsoveraudio\\.com\\/.*\\.mp3',
+  ],
+
+  // Videee (videee.com) — the videee@ parser reads the Supabase /rest/v1/videos
+  // JSON (each row carries title + thumbnail_url + a direct video_url) and emits
+  // the progressive .mp4 served from Cloudflare-fronted media.videee.com, under
+  // an owner-UUID path segment. Block that .mp4 so the generic catcher doesn't
+  // grab a second, bare, metadata-less copy when the player fetches the same URL
+  // on play (which it would otherwise enrich with the SITE og:title/og:image —
+  // identical for every clip, the bug this parser fixes). Scoped to the 36-char
+  // UUID path + .mp4 so the thumbnails this same host serves
+  // (media.videee.com/thumbnails/<owner>/<n>.jpg) are untouched.
+  videee: [
+    'media\\.videee\\.com\\/[0-9a-f-]{36}\\/[^?#]+\\.mp4',
+  ],
 };
 
 // Flatten every parser's patterns into one compiled RegExp — same approach and

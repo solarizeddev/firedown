@@ -131,7 +131,8 @@ public class GlideHelper {
         // raster scaled into a larger cell. fillBounds=true so the tint
         // fills the whole rounded thumbnail slot (the list slot is ~1:1,
         // 78×64; a centred 16:10 card would float with transparent bands
-        // top/bottom and never reach the rounded corners).
+        // top/bottom and never reach the rounded corners). The icon is
+        // centered in the slot (grid tiles overlay their caption on a scrim).
         return MimeTypeThumbnail.generateDrawable(image.getContext(), mimeType, true);
     }
 

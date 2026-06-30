@@ -23,10 +23,15 @@ clog('[cs] loaded', location.href);
 // settings-feature code stay separate.
 
 
-// Top-frame metadata responder. We only answer in the top frame so the
-// background's tabs.sendMessage (which broadcasts to all frames in a tab
-// by default) doesn't return an iframe's title instead of the page's.
-if (window === window.top) {
+// Per-frame metadata responder. Runs in EVERY frame (a bare block, NOT gated to
+// window.top) because an embedded media player lives in its own iframe with its
+// own document, mediaSession and <audio> binding. The background targets the
+// query to the frame that OWNS the captured media (browser.tabs.sendMessage
+// frameId = the request's frameId), so each frame answers for its OWN audio —
+// giving every clip its own title/thumbnail instead of one shared page card.
+// Targeting by frameId is what makes this safe (no cross-frame contamination);
+// the old top-frame-only gate existed only because the query used to broadcast.
+{
   // Walk the page's JSON-LD blocks for a VideoObject (schema.org). On video
   // SPAs (YouTube, etc.) the <title>/og: tags are often generic or stale
   // ("YouTube") while the JSON-LD VideoObject carries the real, current
@@ -385,6 +390,38 @@ if (window === window.top) {
     return { role: 'unknown' };
   };
 
+  // The MediaSession the page published for whatever is playing RIGHT NOW —
+  // the per-track title + artwork a player exposes to the OS / lock screen
+  // (navigator.mediaSession.metadata). This is the precise per-item source: an
+  // embedded player updates it as the user moves between clips, so a page with
+  // several audios gives each its own title/thumbnail. Read defensively (the
+  // whole API and each field may be absent) and pick the largest artwork.
+  const readMediaSession = () => {
+    let m = null;
+    try { m = navigator.mediaSession && navigator.mediaSession.metadata; } catch (_) { m = null; }
+    if (!m) return { title: '', artist: '', artwork: '' };
+    let title = '';
+    let artist = '';
+    try { title = (m.title || '').trim(); } catch (_) {}
+    try { artist = (m.artist || '').trim(); } catch (_) {}
+    let artwork = '';
+    try {
+      const list = m.artwork || [];
+      let bestArea = -1;
+      for (let i = 0; i < list.length; i++) {
+        const a = list[i];
+        if (!a || !a.src) continue;
+        // sizes is "WxH" (largest wins; "any"/missing → 0, so a sized entry
+        // beats it but an only-"any" icon is still taken as a last resort).
+        let area = 0;
+        const wh = /^(\d+)x(\d+)$/i.exec((a.sizes || '').split(' ')[0]);
+        if (wh) area = (+wh[1]) * (+wh[2]);
+        if (area >= bestArea) { bestArea = area; artwork = a.src; }
+      }
+    } catch (_) {}
+    return { title, artist, artwork: absUrl(artwork) || artwork };
+  };
+
   browser.runtime.onMessage.addListener((msg, sender) => {
     if (!msg || msg.kind !== 'get-page-metadata') return;
     const meta = (selector, attr) => {
@@ -409,7 +446,13 @@ if (window === window.top) {
     // standalone audio file is the page's main content (enrich) or incidental
     // (keep the filename) — see resolveAudioContent. Non-audio captures ignore
     // these fields.
+    const ms = readMediaSession();
     const audio = msg.mediaUrl ? resolveAudioContent(msg.mediaUrl) : { role: 'unknown' };
+    // A player that published a now-playing MediaSession title is actively
+    // presenting real content, so it counts as 'content' even when the URL has
+    // no findable <audio> element in this frame (a `new Audio()`-driven embed).
+    // An incidental UI ding never sets mediaSession, so this can't mislabel one.
+    const audioRole = (audio.role === 'content' || ms.title) ? 'content' : audio.role;
     // Per-URL clip match (a clip whose declared contentUrl IS the captured URL) —
     // the most specific metadata possible, so it outranks the page-level poster
     // and og:title in the consumer. Gives each clip on a multi-clip page its own
@@ -422,10 +465,14 @@ if (window === window.top) {
     return Promise.resolve({
       url: location.href,
       title: document.title || '',
-      audioRole: audio.role,
+      audioRole: audioRole,
       audioLdName: audio.name || '',
       audioLdDescription: audio.description || '',
       audioLdThumbnail: audio.thumbnail || '',
+      // Per-item now-playing metadata (most specific for an embedded player).
+      mediaSessionTitle: ms.title,
+      mediaSessionArtist: ms.artist,
+      mediaSessionArtwork: ms.artwork,
       description: ogp('description'),
       ogTitle: ogp('og:title'),
       ogDescription: ogp('og:description'),

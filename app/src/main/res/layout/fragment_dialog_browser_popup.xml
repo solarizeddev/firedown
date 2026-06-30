@@ -52,12 +52,24 @@
         uses colorPrimary text + tint so the destructive treatment
         matches Downloads' / Bookmarks' Delete row.
 -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!--
+    Root mirrors BrowserOptionHolderSheetDialogFragment: a FrameLayout whose
+    single child (popup_content) is sized in code to visibleRect.height() -
+    mActionBarSize, so the sheet wraps to the SAME height as the Captured sheet
+    (sits just under the toolbar). The inner NestedScrollView is weighted, so
+    the pinned header stays put and the rows scroll.
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="vertical">
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:id="@+id/popup_content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
 
     <include
         layout="@layout/dialog_drag_handle" />
@@ -143,7 +155,8 @@
          pinned (it's outside this scroller). -->
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         android:overScrollMode="never">
 
         <LinearLayout
@@ -325,6 +338,37 @@
             </LinearLayout>
 
 
+            <!-- Save snapshot — archives the live, post-JS page as one
+                 self-contained .html (CSS/images inlined, scripts stripped)
+                 through the downloader@ extension's snapshot.js. A page
+                 action, grouped with the other "act on this page" rows. -->
+            <LinearLayout
+                android:id="@+id/popup_save_snapshot"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="16dp">
+
+                <TextView
+                    style="@style/TextAppearance.Material3.TitleMedium"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:drawablePadding="16dp"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:text="@string/browser_menu_save_snapshot"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:textSize="16sp"
+                    app:drawableStartCompat="@drawable/ic_baseline_archive_24"
+                    app:drawableTint="?attr/colorOnSurfaceVariant" />
+
+            </LinearLayout>
+
+
             <View
                 style="@style/Firedown.Divider.InCard"
                 android:layout_marginTop="8dp"
@@ -486,4 +530,6 @@
 
     </androidx.core.widget.NestedScrollView>
 
-</LinearLayout>
+    </LinearLayout>
+
+</FrameLayout>

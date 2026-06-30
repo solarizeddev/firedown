@@ -285,9 +285,80 @@
     <string name="trackers_info_stat_saved">Ušteđeni podaci</string>
     <string name="trackers_info_action">Upravljanje zaštitom</string>
     <string name="trackers_info_today">%1$s blokirano danas</string>
-
-
-
-
-
+    <string name="bookmark_export">Izvezi knjižne oznake</string>
+    <string name="bookmark_export_done">Izvezeno %1$d knjižnih oznaka u Download/Firedown/backup</string>
+    <string name="bookmark_import">Uvezi knjižne oznake</string>
+    <string name="bookmark_import_done">Uvezeno %1$d knjižnih oznaka</string>
+    <string name="bookmark_io_error">Nije moguće pročitati datoteku knjižnih oznaka</string>
+    <string name="settings_sync_auth_subtitle">Potvrdite svoj identitet kako biste otkrili kôd za oporavak</string>
+    <string name="settings_sync_cat_code">Kôd za oporavak</string>
+    <string name="settings_sync_cat_manage">Upravljaj sinkronizacijom</string>
+    <string name="settings_sync_code_copied">Kôd za oporavak kopiran</string>
+    <string name="settings_sync_code_copy">Kopiraj</string>
+    <string name="settings_sync_code_created_title">Spremite svoj kôd za oporavak</string>
+    <string name="settings_sync_code_done">Gotovo</string>
+    <string name="settings_sync_code_hint">Kôd za oporavak</string>
+    <string name="settings_sync_code_saved_check">Spremio sam svoj kôd za oporavak</string>
+    <string name="settings_sync_code_unavailable">Kôd za oporavak nije dostupan</string>
+    <string name="settings_sync_code_warning">Ovaj kôd za oporavak jedini je ključ za vaše sinkronizirane knjižne oznake. Spremite ga u upravitelj lozinki — ili na drugo sigurno mjesto. Ako ga izgubite, ne može se oporaviti.</string>
+    <string name="settings_sync_delete_action">Izbriši</string>
+    <string name="settings_sync_delete_done">Vaši su podaci izbrisani s poslužitelja</string>
+    <string name="settings_sync_delete_failed">Brisanje nije uspjelo — provjerite vezu i pokušajte ponovno</string>
+    <string name="settings_sync_delete_message">Ovo trajno briše vaše šifrirane knjižne oznake s poslužitelja i isključuje sinkronizaciju na ovom uređaju. Knjižne oznake na ovom uređaju ostaju. Ovo se ne može poništiti — drugi uređaji više neće moći vraćati podatke s poslužitelja.</string>
+    <string name="settings_sync_delete_started">Brisanje vaših podataka s poslužitelja…</string>
+    <string name="settings_sync_delete_summary">Trajno izbriši svoje šifrirane knjižne oznake s poslužitelja</string>
+    <string name="settings_sync_delete_title">Izbriši podatke s poslužitelja</string>
+    <string name="settings_sync_export_caveat_message">Ova je datoteka spremljena nešifrirana — svatko tko je može pročitati može pročitati vaše knjižne oznake. Uvezite kôd u upravitelj lozinki (ili na drugo sigurno mjesto), zatim izbrišite datoteku. Upravitelj lozinki čuva ga šifriranim; slobodna datoteka ne.</string>
+    <string name="settings_sync_export_continue">Nastavi</string>
+    <string name="settings_sync_export_done">Kôd za oporavak spremljen</string>
+    <string name="settings_sync_export_failed">Datoteku nije moguće spremiti</string>
+    <string name="settings_sync_export_file_body">Firedown — kôd za oporavak sinkronizacije knjižnih oznaka\n\n%1$s\n\nOvaj je kôd jedini ključ za vaše sinkronizirane knjižne oznake — svatko tko ga ima može ih pročitati, a ako ga izgubite, ne može se oporaviti.\n\nOva datoteka NIJE šifrirana. Uvezite kôd u upravitelj lozinki (ili na drugo sigurno mjesto), zatim izbrišite ovu datoteku.</string>
+    <string name="settings_sync_export_summary">Izvezite kôd kao tekstualnu datoteku koju možete pohraniti</string>
+    <string name="settings_sync_export_title">Spremi kôd za oporavak u datoteku</string>
+    <string name="settings_sync_faq_a1">Da. Svaka je knjižna oznaka šifrirana na ovom uređaju prije nego što se prenese. Poslužitelj uvijek pohranjuje samo neraspoznatljive podatke koje ne može pročitati.</string>
+    <string name="settings_sync_faq_a2">Ne. Samo vaš kôd za oporavak može otključati vaše knjižne oznake. Šifrirane su od kraja do kraja, ništa osobno nije priloženo, a poslužitelj nikada ne vidi nešifrirane podatke.</string>
+    <string name="settings_sync_faq_a3">Ključ generiran na vašem uređaju kad uključite sinkronizaciju. To je jedino što može dešifrirati vaše knjižne oznake — na ovom uređaju ili na novom.</string>
+    <string name="settings_sync_faq_a4">Vaše sinkronizirane knjižne oznake ne mogu se oporaviti — ni vi, ni mi, jer nikada nismo imali ključ. Nema ponovnog postavljanja lozinke. Spremite kôd na sigurno mjesto; upravitelj lozinki je idealan.</string>
+    <string name="settings_sync_faq_a5">Ne. Nema registracije, e-pošte ni telefonskog broja — samo kôd za oporavak. Uz vaše knjižne oznake nije vezano ništa osobno.</string>
+    <string name="settings_sync_faq_a6">Sinkronizacija je neobavezna i zadano isključena. Svoje knjižne oznake uvijek možete izvesti u datoteku i kasnije ih uvesti, bez ikakvog poslužitelja.</string>
+    <string name="settings_sync_faq_q1">Jesu li moje knjižne oznake šifrirane?</string>
+    <string name="settings_sync_faq_q2">Mogu li ih Firedown ili netko drugi pročitati?</string>
+    <string name="settings_sync_faq_q3">Što je kôd za oporavak?</string>
+    <string name="settings_sync_faq_q4">Što ako izgubim svoj kôd za oporavak?</string>
+    <string name="settings_sync_faq_q5">Trebam li račun ili e-poštu?</string>
+    <string name="settings_sync_faq_q6">Što ako ne želim koristiti sinkronizaciju?</string>
+    <string name="settings_sync_help_close">Razumijem</string>
+    <string name="settings_sync_help_summary">Što je šifrirano i zašto je vaš kôd za oporavak važan</string>
+    <string name="settings_sync_help_title">Kako funkcionira šifriranje sinkronizacije</string>
+    <string name="settings_sync_last_synced">Uključeno — zadnja sinkronizacija %1$s</string>
+    <string name="settings_sync_never_synced">Uključeno — još nije sinkronizirano</string>
+    <plurals name="settings_sync_now_done">
+        <item quantity="one">Sinkronizirano — %d knjižna oznaka</item>
+        <item quantity="few">Sinkronizirano — %d knjižne oznake</item>
+        <item quantity="other">Sinkronizirano — %d knjižnih oznaka</item>
+    </plurals>
+    <string name="settings_sync_now_failed">Knjižne oznake nije moguće sinkronizirati — provjerite vezu i pokušajte ponovno</string>
+    <string name="settings_sync_now_started">Sinkronizacija knjižnih oznaka…</string>
+    <string name="settings_sync_now_title">Sinkroniziraj sada</string>
+    <string name="settings_sync_restore_action">Vrati</string>
+    <string name="settings_sync_restore_bad">Taj kôd za oporavak ne izgleda ispravno</string>
+    <string name="settings_sync_restore_message">Unesite kôd za oporavak s drugog uređaja kako biste njegove knjižne oznake spojili s ovim uređajem.</string>
+    <string name="settings_sync_restore_ok">Sinkronizacija knjižnih oznaka vraćena</string>
+    <string name="settings_sync_restore_title">Vrati sinkronizaciju knjižnih oznaka</string>
+    <string name="settings_sync_setup_create">Stvori novi</string>
+    <string name="settings_sync_setup_message">Vaše su knjižne oznake šifrirane na ovom uređaju prije nego što ga napuste — poslužitelj ih nikada ne vidi. Dobivate kôd za oporavak koji je jedini ključ; čuvajte ga na sigurnom, jer se ne može oporaviti ako ga izgubite.</string>
+    <string name="settings_sync_setup_restore">Imam kôd</string>
+    <string name="settings_sync_setup_title">Postavi sinkronizaciju knjižnih oznaka</string>
+    <string name="settings_sync_show_code_summary">Otkrijte kôd koji otključava vaše sinkronizirane knjižne oznake</string>
+    <string name="settings_sync_show_code_title">Prikaži kôd za oporavak</string>
+    <string name="settings_sync_sign_out_action">Isključi</string>
+    <string name="settings_sync_sign_out_message">Sinkronizacija knjižnih oznaka bit će isključena, a kôd za oporavak uklonjen s ovog uređaja. Vaše knjižne oznake ostaju ovdje. Ako želite kasnije ponovno sinkronizirati, provjerite jeste li spremili svoj kôd za oporavak.</string>
+    <string name="settings_sync_sign_out_summary">Zaustavi sinkronizaciju i ukloni ključeve s ovog uređaja</string>
+    <string name="settings_sync_sign_out_title">Isključi sinkronizaciju</string>
+    <string name="settings_sync_signed_out">Sinkronizacija knjižnih oznaka isključena</string>
+    <string name="settings_sync_summary">Sinkronizacija knjižnih oznaka šifrirana od kraja do kraja na svim vašim uređajima</string>
+    <string name="settings_sync_switch_summary">Isključeno — vaše knjižne oznake ostaju na ovom uređaju</string>
+    <string name="settings_sync_title">Sinkroniziraj knjižne oznake</string>
+    <string name="sync_banner_subtitle">Šifrirano od kraja do kraja — samo vaš kôd za oporavak može ga pročitati. Bez računa, bez e-pošte.</string>
+    <string name="sync_banner_title">Sinkronizirajte svoje knjižne oznake na svim uređajima</string>
 </resources>

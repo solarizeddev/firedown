@@ -3,6 +3,8 @@ package com.solarized.firedown.phone.dialogs;
 
 import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
+import android.content.res.Configuration;
+import android.graphics.Rect;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -103,18 +105,52 @@ public class PopupBrowserSheetDialogFragment extends BaseBottomSheetDialogFragme
 
 
     /**
-     * Opt out of the 640dp bottom_sheet_max_height cap. The popup is a
-     * fixed, bounded menu (identity header + quick-action row + a handful of
-     * list rows), not unbounded long content — its natural height lands right
-     * around the cap, so the cap was clamping it mid-screen and forcing the
-     * inner list to scroll with empty space left above. With the cap off and
-     * the layout sized wrap_content, the sheet grows to its content and is
-     * still screen-bounded by BottomSheetBehavior (scrolls only if a screen
-     * genuinely can't fit it). Mirrors BrowserOptionHolderSheetDialogFragment.
+     * No dimen cap — the popup FILLS to just under the toolbar, the same sizing
+     * the Captured-content holder uses, so the two sheets match height instead
+     * of the popup hugging its rows (which left it shorter than Capture). The
+     * fixed height is applied in {@link #onStart()}; the inner NestedScrollView
+     * (weight 1) scrolls when the rows exceed the viewport.
      */
     @Override
     protected boolean isMaxHeightCapped() {
         return false;
+    }
+
+    /**
+     * Size the sheet to the visible viewport minus the toolbar (mirrors
+     * {@code BrowserOptionHolderSheetDialogFragment}), so the popup stops just
+     * under the chrome and matches the Captured sheet's height. The pinned
+     * header keeps its natural height and the weighted NestedScrollView fills
+     * the rest. Run after super.onStart() (which clears the dimen cap and
+     * expands the sheet).
+     */
+    @Override
+    public void onConfigurationChanged(@NonNull Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        sizePopupContent();
+    }
+
+    /**
+     * Size the {@code popup_content} child to {@code visibleRect.height() -
+     * mActionBarSize} so the sheet sits flush just under the toolbar (no
+     * overlap), matching the Captured holder. The FrameLayout root wraps this
+     * child, so the sheet follows it; the base's onStart expands it and the
+     * weighted NestedScrollView fills the space below the pinned header and
+     * scrolls.
+     */
+    private void sizePopupContent() {
+        if (mView == null || mActivity == null) return;
+        View content = mView.findViewById(R.id.popup_content);
+        if (content == null) return;
+        ViewGroup.LayoutParams params = content.getLayoutParams();
+        if (params == null) return;
+        Rect visibleRect = new Rect();
+        mActivity.getWindow().getDecorView().getWindowVisibleDisplayFrame(visibleRect);
+        int height = visibleRect.height() - mActionBarSize;
+        if (height > 0) {
+            params.height = height;
+            content.setLayoutParams(params);
+        }
     }
 
     @Nullable
@@ -123,6 +159,7 @@ public class PopupBrowserSheetDialogFragment extends BaseBottomSheetDialogFragme
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
         mView = inflater.inflate(R.layout.fragment_dialog_browser_popup, container, false);
+        sizePopupContent();
 
         // Guard: peekCurrentGeckoState can return null if the popup was
         // opened in an inconsistent state (process restoration, tab
@@ -246,6 +283,7 @@ public class PopupBrowserSheetDialogFragment extends BaseBottomSheetDialogFragme
     private void bindRows() {
         mView.findViewById(R.id.popup_bookmarks).setOnClickListener(this);
         mView.findViewById(R.id.popup_find).setOnClickListener(this);
+        mView.findViewById(R.id.popup_save_snapshot).setOnClickListener(this);
         mView.findViewById(R.id.popup_desktop).setOnClickListener(this);
         mView.findViewById(R.id.popup_history).setOnClickListener(this);
         mView.findViewById(R.id.popup_settings).setOnClickListener(this);
