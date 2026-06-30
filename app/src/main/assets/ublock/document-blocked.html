@@ -10,153 +10,164 @@
     traffic.js `onBeforeRootFrameRequest` cancels the request and calls
     `vAPI.tabs.replace(tabId, 'document-blocked.html?details=...')`. With this
     page missing, that navigation landed on a non-existent moz-extension URL
-    and the tab rendered blank (about:blank). Restoring the page makes the
-    familiar "uBlock Origin has prevented the following page from loading"
-    interstitial show, with working Go back / Proceed.
+    and the tab rendered blank (about:blank). Restoring the page makes a
+    Firedown-styled interstitial show, with working Go back / Proceed.
 
-    Self-contained on purpose (the stripped build has no css/i18n/dom stack):
-    inline styles + one external script. Page JS is external because the
-    default WebExtension page CSP (`script-src 'self'`) forbids inline scripts;
-    inline <style> is allowed. The only uBlock deps are vapi.js + vapi-client.js
-    for `vAPI.messaging.send`, which talks to the still-present background
-    listeners: `documentBlocked` (temporarilyWhitelistDocument / closeThisTab)
-    and `popupPanel` (toggleHostnameSwitch → no-strict-blocking).
+    Styling mirrors Firedown's native error pages (assets/error/): the same
+    periwinkle palette, thin type, matchstick brand illustration, and button
+    semantics (dark = recommended action, muted = "bypass a protection",
+    orange = active accent). Self-contained on purpose (the stripped build has
+    no css/i18n stack): inline styles + the reused matchstick SVG + one
+    external script. Page JS is external because the default WebExtension page
+    CSP (`script-src 'self'`) forbids inline scripts; inline <style> is fine.
+    The only uBlock deps are vapi.js + vapi-client.js for `vAPI.messaging.send`,
+    which talks to the still-present background listeners: `documentBlocked`
+    (temporarilyWhitelistDocument / closeThisTab) and `popupPanel`
+    (toggleHostnameSwitch -> no-strict-blocking).
 -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
 <title>Page blocked</title>
 <style>
-  :root {
-    --bg: #f5f6f9;
-    --card: #ffffff;
-    --fg: #2b3142;
-    --muted: #5a6072;
-    --code-bg: #eceef4;
-    --accent: #ff716c;       /* Firedown brand orange */
-    --accent-press: #f0716c;
-    --secondary: #e4e7ef;
-    --secondary-fg: #333949;
-    --border: #d8dbe6;
+  /* Palette + conventions lifted from assets/error/error_style.css so this
+     reads as part of the Firedown family, not a recoloured uBlock page. */
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    --spacing: 14px;
   }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #1b1d24;
-      --card: #23262f;
-      --fg: #e7e9f0;
-      --muted: #a9adba;
-      --code-bg: #2c2f3a;
-      --secondary: #343845;
-      --secondary-fg: #e7e9f0;
-      --border: #3a3e4b;
-    }
-  }
-  * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; height: 100%; }
   body {
-    background-color: var(--bg);
-    color: var(--fg);
-    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-    font-size: 16px;
+    background-color: #d3d6e5;
+    color: #333949;
+    padding: 0 20px;
+    font-family: sans-serif;
+    font-weight: 300;
+    font-size: 15px;
     line-height: 1.5;
     -moz-text-size-adjust: none;
   }
-  .wrap {
-    max-width: 640px;
+  #container {
+    max-width: 550px;
     margin: 0 auto;
-    padding: 28px 20px 40px;
+    padding: 40px 0 24px;
+    min-height: calc(100% - 64px);
+    display: flex;
+    flex-direction: column;
   }
-  .icon {
-    width: 72px;
-    height: 72px;
-    margin: 8px 0 20px;
+  #illustration {
+    width: 190px;
+    max-width: 60%;
+    align-self: center;
+    margin-bottom: 8px;
   }
-  p { margin: 18px 0; }
-  .prompt { color: var(--fg); }
+  h1 {
+    margin: 0;
+    color: #455267;
+    font-weight: 300;
+    font-size: 1.9em;
+    text-align: center;
+  }
+  h2 {
+    margin: var(--spacing) 0 0;
+    color: #455267;
+    font-weight: 300;
+    font-size: 1.2em;
+    text-align: center;
+  }
+  p { margin: var(--spacing) 0 4px; }
+  .label { color: #455267; }
   code {
     display: block;
-    background: var(--code-bg);
-    color: var(--fg);
-    border-radius: 8px;
-    padding: 14px 16px;
-    margin: 10px 0;
+    background-color: #eef0f6;
+    color: #333949;
+    border: 1px solid #c4c8db;
+    border-radius: 6px;
+    padding: 12px 14px;
+    margin: 6px 0;
     font-family: ui-monospace, Menlo, Consolas, monospace;
-    font-size: 15px;
+    font-weight: 400;
+    font-size: 0.95em;
     line-height: 1.45;
     word-break: break-all;
     white-space: pre-wrap;
   }
-  .muted { color: var(--muted); }
   #foundInRow { display: none; }
-  .warn {
+  #foundInRow .name { color: #333949; }
+  #redirectWarn {
     display: none;
-    border-left: 4px solid var(--accent);
-    background: var(--code-bg);
-    border-radius: 0 8px 8px 0;
-    padding: 12px 16px;
+    border-left: 3px solid #ff716c;
+    background-color: #eef0f6;
+    border-radius: 0 6px 6px 0;
+    padding: 10px 14px;
+    margin-top: var(--spacing);
   }
   label.checkbox {
     display: flex;
     align-items: center;
     gap: 12px;
-    margin: 24px 0 8px;
+    margin: 24px 0 4px;
     cursor: pointer;
+    -webkit-user-select: none;
     user-select: none;
+    color: #455267;
   }
-  label.checkbox input { width: 20px; height: 20px; }
-  .buttons { margin-top: 22px; }
+  label.checkbox input { width: 20px; height: 20px; accent-color: #ff716c; }
+  #buttons { margin-top: auto; padding-top: 20px; }
   button {
     display: block;
     width: 100%;
     border: none;
-    border-radius: 10px;
-    padding: 16px;
-    margin: 12px 0 0;
-    font-family: inherit;
-    font-size: 16px;
-    font-weight: 600;
+    border-radius: 4px;
+    padding: 1rem;
+    margin: var(--spacing) 0 0;
+    font-family: sans-serif;
+    font-weight: 300;
+    font-size: 1em;
+    color: #ffffff;
     cursor: pointer;
   }
-  #back {
-    background: var(--secondary);
-    color: var(--secondary-fg);
-  }
-  #proceed {
-    background: var(--accent);
-    color: #ffffff;
-  }
-  #proceed:active { background: var(--accent-press); }
-  button:disabled { opacity: 0.5; cursor: default; }
+  /* Recommended/safe action: same dark primary as the error page's
+     "Try again", and the same orange active state. */
+  #back { background-color: #455267; }
+  #back:active { background-color: #ff716c; }
+  /* Risky action: muted secondary, exactly like the error page's
+     "Continue to HTTP site" (also a bypass-a-protection action). */
+  #proceed { background-color: #333949; }
+  #proceed:active { background-color: #ff716c; }
+  button:disabled { opacity: 0.55; cursor: default; }
 </style>
 </head>
-<body>
-<div class="wrap">
-  <svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-    <path fill="#ff716c" d="M12 2 1 21h22L12 2z"/>
-    <rect x="11" y="9" width="2" height="6" rx="1" fill="#ffffff"/>
-    <rect x="11" y="17" width="2" height="2" rx="1" fill="#ffffff"/>
-  </svg>
+<body dir="auto">
+<div id="container">
 
-  <p class="prompt">uBlock Origin has prevented the following page from loading:</p>
+  <img id="illustration" src="img/ill_matchstick.svg" alt="" aria-hidden="true">
+
+  <h1>Page blocked</h1>
+  <h2>Firedown's content blocker stopped this page from loading.</h2>
+
+  <p class="label">The blocked address:</p>
   <code id="theURL"></code>
 
-  <p class="prompt">This happened because of the following filter:</p>
+  <p class="label">Triggered by this filter:</p>
   <code id="theFilter"></code>
 
-  <p id="foundInRow" class="muted">Found in: <span id="theReason"></span></p>
+  <p id="foundInRow" class="label">Listed in: <span class="name" id="theReason"></span></p>
 
-  <p id="redirectWarn" class="warn"></p>
+  <p id="redirectWarn"></p>
 
   <label class="checkbox" for="dontWarn">
     <input type="checkbox" id="dontWarn">
     <span>Don't warn me again about this site</span>
   </label>
 
-  <div class="buttons">
+  <div id="buttons">
     <button id="back" type="button">Go back</button>
-    <button id="proceed" type="button">Proceed</button>
+    <button id="proceed" type="button">Proceed anyway</button>
   </div>
+
 </div>
 
 <script src="js/vapi.js"></script>
