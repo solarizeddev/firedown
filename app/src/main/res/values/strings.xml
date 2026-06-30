@@ -287,7 +287,7 @@
     <string name="settings_cloud_backup_usage_unavailable">Backed up — usage unavailable offline</string>
     <string name="settings_cloud_backup_active">Transfer in progress…</string>
     <string name="settings_cloud_backup_cat_manage">Manage backup</string>
-    <string name="settings_cloud_backup_files_title">Backed-up files</string>
+    <string name="settings_cloud_backup_files_title">Backups</string>
     <string name="settings_cloud_backup_files_summary">View and restore what you\'ve backed up</string>
     <string name="settings_cloud_backup_show_code_title">Show recovery code</string>
     <string name="settings_cloud_backup_show_code_summary">Reveal the code that unlocks your cloud backup</string>
@@ -316,10 +316,10 @@
     <string name="cloud_backup_notification_title">Backing up to cloud</string>
     <!-- %1$s = file name -->
     <string name="cloud_backup_notification_text">Encrypting and uploading %1$s</string>
-    <!-- Backed-up files list + per-item restore/remove. -->
-    <string name="cloud_backup_files_title">Backed-up files</string>
+    <!-- Backups list (backed-up files) + per-item restore/remove. -->
+    <string name="cloud_backup_files_title">Backups</string>
     <string name="cloud_backup_list_loading">Loading…</string>
-    <string name="cloud_backup_list_empty">No backed-up files yet</string>
+    <string name="cloud_backup_list_empty">No backups yet</string>
     <string name="cloud_backup_list_error">Couldn\'t load your backup — check your connection</string>
     <!-- %1$s = size, %2$s = relative date -->
     <string name="cloud_backup_item_summary">%1$s · %2$s</string>
