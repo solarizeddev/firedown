@@ -207,6 +207,17 @@
             android:foregroundServiceType="mediaPlayback"
             android:exported="false" />
 
+        <!-- WorkManager's own foreground service ships WITHOUT a
+             foregroundServiceType, so a worker that calls setForeground with
+             TYPE_DATA_SYNC (the Cloud Backup up/download workers) crashes on
+             Android 14+ with "foregroundServiceType 0x1 is not a subset of
+             0x0". Merge the dataSync type onto WorkManager's service so the
+             type the worker requests is declared. -->
+        <service
+            android:name="androidx.work.impl.foreground.SystemForegroundService"
+            android:foregroundServiceType="dataSync"
+            tools:node="merge" />
+
         <receiver
             android:name=".geckoview.IncognitoCloseReceiver"
             android:exported="false">
