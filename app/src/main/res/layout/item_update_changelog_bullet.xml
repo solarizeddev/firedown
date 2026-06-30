@@ -11,6 +11,6 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:gravity="start"
-    android:textAppearance="?attr/textAppearanceBodyLarge"
+    android:textAppearance="?attr/textAppearanceBodyMedium"
     android:textColor="?attr/colorOnSurfaceVariant"
     tools:text="• YouTube downloads now finish ready to play." />
