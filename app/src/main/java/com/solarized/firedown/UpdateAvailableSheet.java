@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.text.format.Formatter;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.style.LeadingMarginSpan;
@@ -20,6 +21,8 @@ import androidx.preference.PreferenceManager;
 
 import com.google.android.material.button.MaterialButton;
 import com.solarized.firedown.phone.dialogs.BaseBottomSheetDialogFragment;
+
+import java.io.File;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
@@ -148,9 +151,17 @@ public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
         TextView version = view.findViewById(R.id.update_sheet_version);
         version.setText(shown);
 
-        // ...and the version it replaces.
+        // ...and the version it replaces, plus the downloaded APK size when it's
+        // on disk (skipped in preview, where there's no real file).
         TextView current = view.findViewById(R.id.update_sheet_current);
-        current.setText(getString(R.string.update_available_sheet_current, App.getVersionName()));
+        File apk = Preferences.getUpdateApkFile(context);
+        long bytes = (apk != null && apk.exists()) ? apk.length() : 0L;
+        if (bytes > 0) {
+            current.setText(getString(R.string.update_available_sheet_current_size,
+                    App.getVersionName(), Formatter.formatShortFileSize(context, bytes)));
+        } else {
+            current.setText(getString(R.string.update_available_sheet_current, App.getVersionName()));
+        }
 
         // "What's new" header + release notes — both shown only when status.json
         // carries a changelog for this version.

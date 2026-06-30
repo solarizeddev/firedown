@@ -114,9 +114,8 @@
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/update_sheet_install"
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:minWidth="200dp"
                     android:text="@string/update_available_sheet_install" />
 
             </LinearLayout>
