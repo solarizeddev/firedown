@@ -26,6 +26,12 @@
         app:showAsAction="ifRoom"
         android:title="@string/lock_cipher"/>
     <item
+        android:id="@+id/action_cloud_backup_selected"
+        android:icon="@drawable/ic_cloud_upload_24"
+        app:iconTint="?attr/colorOnSurface"
+        app:showAsAction="ifRoom"
+        android:title="@string/cloud_backup_action"/>
+    <item
         android:id="@+id/action_select_all"
         android:icon="@drawable/select_all_24"
         app:iconTint="?attr/colorOnSurface"

@@ -340,21 +340,39 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
         if (entity == null || entity.getFilePath() == null) {
             return;
         }
+        startCloudBackup(Collections.singletonList(entity));
+    }
+
+    /**
+     * Backs up one OR MORE finished downloads (the multi-select path passes the
+     * selected set). The shared recovery code is minted on first use with ONE
+     * setup dialog for the whole batch — not one per file.
+     */
+    private void startCloudBackup(List<DownloadEntity> entities) {
+        List<DownloadEntity> targets = new ArrayList<>();
+        for (DownloadEntity e : entities) {
+            if (e != null && e.getFilePath() != null) {
+                targets.add(e);
+            }
+        }
+        if (targets.isEmpty()) {
+            return;
+        }
         if (mCloudBackup.hasAccount()) {
-            enqueueCloudBackup(entity);
+            enqueueCloudBackup(targets);
         } else {
-            showCloudBackupSetupDialog(entity);
+            showCloudBackupSetupDialog(targets);
         }
     }
 
     /** First-time setup confirm before minting the recovery code. */
-    private void showCloudBackupSetupDialog(DownloadEntity entity) {
+    private void showCloudBackupSetupDialog(List<DownloadEntity> targets) {
         new MaterialAlertDialogBuilder(requireContext())
                 .setTitle(R.string.cloud_backup_setup_title)
                 .setMessage(R.string.cloud_backup_setup_message)
                 .setPositiveButton(R.string.cloud_backup_setup_create, (dialog, which) -> {
                     String grouped = mCloudBackup.createNewCode();
-                    showCloudBackupCodeDialog(grouped, entity);
+                    showCloudBackupCodeDialog(grouped, targets);
                 })
                 .setNegativeButton(R.string.cancel, null)
                 .show();
@@ -366,7 +384,7 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
      * code is the only key to the cloud backup, so the user must acknowledge they
      * saved it before the upload begins.
      */
-    private void showCloudBackupCodeDialog(String grouped, DownloadEntity entity) {
+    private void showCloudBackupCodeDialog(String grouped, List<DownloadEntity> targets) {
         if (grouped == null) {
             showErrorSnackbar(R.string.settings_cloud_backup_code_unavailable);
             return;
@@ -392,7 +410,7 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
         savedCheck.setOnCheckedChangeListener((b, checked) -> done.setEnabled(checked));
         done.setOnClickListener(v -> {
             dialog.dismiss();
-            enqueueCloudBackup(entity);
+            enqueueCloudBackup(targets);
         });
     }
 
@@ -412,9 +430,23 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
         }
     }
 
-    /** Enqueues the foreground backup worker for this download and reports the
-     *  terminal result with a snackbar. */
-    private void enqueueCloudBackup(DownloadEntity entity) {
+    /** Enqueues a backup worker for each target and shows ONE "Backing up…"
+     *  snackbar for the whole batch (per-file dedup is handled by the unique
+     *  content key, so a re-tapped file never double-uploads). */
+    private void enqueueCloudBackup(List<DownloadEntity> targets) {
+        WorkManager wm = WorkManager.getInstance(requireContext().getApplicationContext());
+        for (DownloadEntity entity : targets) {
+            enqueueOneBackup(wm, entity);
+        }
+        // "Backing up…" with a View action → the backed-up files list (live
+        // per-item progress shows there). No success snackbar — the list is the
+        // confirmation; only a failure is surfaced per file below.
+        showBackupStartedSnackbar();
+    }
+
+    /** Enqueues the foreground backup worker for one download and reports a
+     *  terminal FAILURE with a snackbar (the batch caller owns the started one). */
+    private void enqueueOneBackup(WorkManager wm, DownloadEntity entity) {
         Data input = new Data.Builder()
                 .putString(VaultBackupWorker.KEY_PATH, entity.getFilePath())
                 .putString(VaultBackupWorker.KEY_MIME, entity.getFileMimeType())
@@ -431,7 +463,6 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
                 .setConstraints(constraints)
                 .addTag(CloudBackupManager.WORK_TAG)
                 .build();
-        WorkManager wm = WorkManager.getInstance(requireContext().getApplicationContext());
         // UNIQUE per file CONTENT (name + size), KEEP. Keyed on content — NOT the
         // path — because the SAME video downloaded twice lands at two different
         // paths with the same name+size; a path key let both run concurrently
@@ -444,10 +475,6 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
         // accepted rare collision — same trade-off the engine dedup already makes.)
         String uniqueName = "cloud_backup:" + entity.getFileName() + ":" + entity.getFileSize();
         wm.enqueueUniqueWork(uniqueName, ExistingWorkPolicy.KEEP, request);
-        // "Backing up…" with a View action that opens the backed-up files list
-        // (where the live per-item progress shows). No success snackbar — the list
-        // is the confirmation; only a failure is surfaced below.
-        showBackupStartedSnackbar();
 
         final LiveData<WorkInfo> live = wm.getWorkInfoByIdLiveData(request.getId());
         live.observe(getViewLifecycleOwner(), new Observer<WorkInfo>() {
@@ -523,6 +550,25 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
                 }
             }
             shareItems(paths);
+        } else if (id == R.id.action_cloud_backup_selected) {
+            // Back up the selected finished, non-vault downloads to Cloud Backup.
+            // Mirror the per-item gating (no error, not in-progress, not safe, has
+            // a file) so an in-progress / errored selection is skipped, not sent.
+            List<DownloadEntity> eligible = new ArrayList<>();
+            for (DownloadEntity e : mAdapter.getSelectedEntities()) {
+                if (e.getFileErrorType() == Download.PROGRESS
+                        && e.getFileStatus() != Download.PROGRESS
+                        && !e.isFileSafe()
+                        && e.getFilePath() != null) {
+                    eligible.add(e);
+                }
+            }
+            if (eligible.isEmpty()) {
+                showErrorSnackbar(R.string.cloud_backup_none_eligible);
+            } else {
+                startCloudBackup(eligible);
+            }
+            stopActionMode();
         } else if (id == R.id.action_select_all) {
             mAdapter.selectAll();
             setActionModeTitle(mAdapter.getSelectedSize());

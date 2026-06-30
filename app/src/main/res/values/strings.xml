@@ -310,6 +310,7 @@
     <string name="cloud_backup_setup_message">Your downloads are encrypted on this device before they leave it — the server never sees them. You\'ll get a recovery code that is the only key; keep it safe, there is no way to recover it if lost. Cloud Backup shares this code with bookmark sync.</string>
     <string name="cloud_backup_setup_create">Create key</string>
     <string name="cloud_backup_started">Backing up to cloud…</string>
+    <string name="cloud_backup_none_eligible">Select finished files to back up</string>
     <string name="cloud_backup_done">Backed up to cloud</string>
     <string name="cloud_backup_failed">Couldn\'t back up — check your connection and try again</string>
     <string name="cloud_backup_notification_title">Backing up to cloud</string>
