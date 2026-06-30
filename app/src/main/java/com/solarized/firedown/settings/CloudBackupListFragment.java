@@ -147,9 +147,9 @@ public class CloudBackupListFragment extends Fragment
         if (entry == null) {
             return;
         }
-        entry.getSavedStateHandle()
-                .getLiveData(CloudBackupItemSheetDialogFragment.RESULT)
-                .observe(getViewLifecycleOwner(), new Observer<Bundle>() {
+        LiveData<Bundle> live = entry.getSavedStateHandle()
+                .getLiveData(CloudBackupItemSheetDialogFragment.RESULT);
+        live.observe(getViewLifecycleOwner(), new Observer<Bundle>() {
                     @Override
                     public void onChanged(Bundle result) {
                         if (result == null) {
