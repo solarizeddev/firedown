@@ -425,7 +425,7 @@
     <string name="settings_sync_switch_summary">Изключено — отметките ви остават на това устройство</string>
     <string name="settings_sync_title">Синхронизиране на отметки</string>
     <!-- Cloud Backup / Sync -->
-    <string name="settings_account_title">Синхронизация</string>
+    <string name="settings_account_title">Облак</string>
     <string name="settings_account_summary">Отметки и шифровано архивиране на изтегляния, един код за възстановяване</string>
     <string name="settings_sync_cat_what">Какво да се синхронизира</string>
     <string name="settings_sync_bookmarks_title">Отметки</string>

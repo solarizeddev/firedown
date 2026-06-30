@@ -531,7 +531,7 @@
     <string name="settings_sync_switch_summary">Wył. — Twoje zakładki pozostają na tym urządzeniu</string>
     <string name="settings_sync_title">Synchronizuj zakładki</string>
     <!-- Cloud Backup / Sync -->
-    <string name="settings_account_title">Synchronizacja</string>
+    <string name="settings_account_title">Cloud</string>
     <string name="settings_account_summary">Zakładki i szyfrowana kopia zapasowa pobrań, jeden kod odzyskiwania</string>
     <string name="settings_sync_cat_what">Co synchronizować</string>
     <string name="settings_sync_bookmarks_title">Zakładki</string>

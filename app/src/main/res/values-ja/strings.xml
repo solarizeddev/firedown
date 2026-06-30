@@ -660,7 +660,7 @@
     <string name="settings_sync_switch_summary">オフ — ブックマークはこのデバイスに残ります</string>
     <string name="settings_sync_title">ブックマークを同期</string>
     <!-- Cloud Backup / Sync -->
-    <string name="settings_account_title">同期</string>
+    <string name="settings_account_title">クラウド</string>
     <string name="settings_account_summary">ブックマークと暗号化されたダウンロードのバックアップを、1 つの復元コードで</string>
     <string name="settings_sync_cat_what">同期する対象</string>
     <string name="settings_sync_bookmarks_title">ブックマーク</string>

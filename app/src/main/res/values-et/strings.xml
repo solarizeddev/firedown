@@ -401,7 +401,7 @@
     <string name="settings_sync_switch_summary">Väljas — sinu järjehoidjad jäävad sellesse seadmesse</string>
     <string name="settings_sync_title">Sünkrooni järjehoidjad</string>
     <!-- Cloud Backup / Sync -->
-    <string name="settings_account_title">Sünkroonimine</string>
+    <string name="settings_account_title">Pilv</string>
     <string name="settings_account_summary">Järjehoidjad ja krüptitud allalaadimiste varundus, üks taastekood</string>
     <string name="settings_sync_cat_what">Mida sünkroonida</string>
     <string name="settings_sync_bookmarks_title">Järjehoidjad</string>

@@ -664,7 +664,7 @@
     <string name="settings_sync_switch_summary">Désactivé — vos marque-pages restent sur cet appareil</string>
     <string name="settings_sync_title">Synchroniser les marque-pages</string>
     <!-- Cloud Backup / Sync -->
-    <string name="settings_account_title">Synchronisation</string>
+    <string name="settings_account_title">Cloud</string>
     <string name="settings_account_summary">Marque-pages et sauvegarde chiffrée des téléchargements, un seul code de récupération</string>
     <string name="settings_sync_cat_what">Quoi synchroniser</string>
     <string name="settings_sync_bookmarks_title">Marque-pages</string>

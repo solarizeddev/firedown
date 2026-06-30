@@ -487,7 +487,7 @@
     <string name="settings_sync_switch_summary">Vypnuto — vaše záložky zůstávají na tomto zařízení</string>
     <string name="settings_sync_title">Synchronizovat záložky</string>
     <!-- Cloud Backup / Sync -->
-    <string name="settings_account_title">Synchronizace</string>
+    <string name="settings_account_title">Cloud</string>
     <string name="settings_account_summary">Záložky a šifrovaná záloha stažených souborů, jeden obnovovací kód</string>
     <string name="settings_sync_cat_what">Co synchronizovat</string>
     <string name="settings_sync_bookmarks_title">Záložky</string>

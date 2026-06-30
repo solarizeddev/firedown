@@ -531,7 +531,7 @@
     <string name="settings_sync_switch_summary">Kapalı — yer imleriniz bu cihazda kalır</string>
     <string name="settings_sync_title">Yer imlerini eşitle</string>
     <!-- Cloud Backup / Sync -->
-    <string name="settings_account_title">Eşitleme</string>
+    <string name="settings_account_title">Cloud</string>
     <string name="settings_account_summary">Yer imleri ve şifreli indirme yedeği, tek kurtarma kodu</string>
     <string name="settings_sync_cat_what">Neler eşitlenecek</string>
     <string name="settings_sync_bookmarks_title">Yer imleri</string>

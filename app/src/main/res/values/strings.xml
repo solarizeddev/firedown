@@ -191,7 +191,7 @@
     <string name="settings_sync_summary">End-to-end encrypted bookmark sync across your devices</string>
     <!-- Unified Sync (account) settings entry — one account / one recovery code
          covering bookmarks (free) + encrypted download backup. -->
-    <string name="settings_account_title">Sync</string>
+    <string name="settings_account_title">Cloud</string>
     <string name="settings_account_summary">Bookmarks and encrypted download backup, one recovery code</string>
     <string name="settings_sync_cat_what">What to sync</string>
     <string name="settings_sync_bookmarks_title">Bookmarks</string>

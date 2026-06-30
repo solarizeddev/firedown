@@ -532,7 +532,7 @@
     <string name="settings_sync_switch_summary">Desativado — seus favoritos permanecem neste dispositivo</string>
     <string name="settings_sync_title">Sincronizar favoritos</string>
     <!-- Cloud Backup / Sync -->
-    <string name="settings_account_title">Sync</string>
+    <string name="settings_account_title">Cloud</string>
     <string name="settings_account_summary">Favoritos e backup de downloads criptografado, um só código de recuperação</string>
     <string name="settings_sync_cat_what">O que sincronizar</string>
     <string name="settings_sync_bookmarks_title">Favoritos</string>

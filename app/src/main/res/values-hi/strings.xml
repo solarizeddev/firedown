@@ -438,7 +438,7 @@
     <string name="settings_sync_switch_summary">बंद — आपके बुकमार्क इसी डिवाइस पर रहते हैं</string>
     <string name="settings_sync_title">बुकमार्क सिंक करें</string>
     <!-- Cloud Backup / Sync -->
-    <string name="settings_account_title">सिंक</string>
+    <string name="settings_account_title">क्लाउड</string>
     <string name="settings_account_summary">बुकमार्क और एन्क्रिप्टेड डाउनलोड बैकअप, एक रिकवरी कोड</string>
     <string name="settings_sync_cat_what">क्या सिंक करना है</string>
     <string name="settings_sync_bookmarks_title">बुकमार्क</string>
