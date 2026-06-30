@@ -181,5 +181,12 @@
     </fragment>
     <fragment
         android:id="@+id/settings_cloud_backup_files"
-        android:name="com.solarized.firedown.settings.CloudBackupListFragment" />
+        android:name="com.solarized.firedown.settings.CloudBackupListFragment">
+        <action
+            android:id="@+id/action_cloud_backup_files_to_item_sheet"
+            app:destination="@id/dialog_cloud_backup_item" />
+    </fragment>
+    <dialog
+        android:id="@+id/dialog_cloud_backup_item"
+        android:name="com.solarized.firedown.settings.CloudBackupItemSheetDialogFragment" />
 </navigation>

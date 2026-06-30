@@ -75,7 +75,17 @@ public final class VaultEngine {
         long size = file.length();
         VaultEntry existing = findExisting(file.getName(), size);
         if (existing != null) {
-            return existing; // already backed up — don't duplicate the object
+            // Already backed up — don't duplicate the object. But if it was backed
+            // up before previews existed (no thumb) and we have one now, backfill it
+            // into the manifest (cheap, no re-upload) so the list can show it.
+            if (existing.thumb == null && thumb != null) {
+                VaultEntry withThumb = new VaultEntry(existing.objectId, existing.wrappedDek,
+                        existing.name, existing.size, existing.mime, existing.downloadedAt,
+                        existing.chunkCount, thumb);
+                addToManifest(withThumb); // replaces (removeById + add) — same objectId
+                return withThumb;
+            }
+            return existing;
         }
         int chunkCount = (int) ((size + CHUNK_SIZE - 1) / CHUNK_SIZE);
         if (chunkCount == 0) {
