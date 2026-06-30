@@ -1,63 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
+<!--
+  Backed-up files list. Uses the app-standard LCEERecyclerView (loading spinner /
+  content / empty-illustration states, and it disables RecyclerView change
+  animations so per-item progress ticks don't blink) — same as the
+  Downloads/Bookmarks/History lists.
+-->
+<com.solarized.firedown.ui.LCEERecyclerView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/cb_lcee"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
-
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/cb_recycler"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:clipToPadding="false"
-        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
-
-    <!-- Empty state — identical structure + styling to the Downloads empty view
-         (recycler_empty_layout.xml): illustration whose bottom sits at the vertical
-         centre, message below in sans-serif-medium / colorOnSurface. The fragment
-         toggles this group's visibility, hides the illustration during the brief
-         load, and sets the message text. -->
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/cb_empty_view"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:visibility="gone"
-        tools:visibility="visible">
-
-        <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/cb_empty_image"
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/empty_image_height_big"
-            android:contentDescription="@string/empty_list"
-            app:layout_constraintBottom_toTopOf="@id/cb_empty_divider"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:srcCompat="@drawable/ill_baloons" />
-
-        <View
-            android:id="@+id/cb_empty_divider"
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <TextView
-            android:id="@+id/cb_empty"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/list_spacing"
-            android:fontFamily="sans-serif-medium"
-            android:gravity="center"
-            android:paddingStart="@dimen/empty_text_padding"
-            android:paddingEnd="@dimen/empty_text_padding"
-            android:textColor="?attr/colorOnSurface"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/cb_empty_divider"
-            tools:text="@string/cloud_backup_list_empty" />
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
-
-</FrameLayout>
+    android:layout_height="match_parent" />

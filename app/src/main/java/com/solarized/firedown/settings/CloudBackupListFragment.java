@@ -7,7 +7,6 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
@@ -39,6 +38,7 @@ import com.solarized.firedown.sync.VaultBackupWorker;
 import com.solarized.firedown.sync.VaultRestoreWorker;
 import com.solarized.firedown.sync.model.VaultEntry;
 import com.solarized.firedown.ui.EqualSpacingItemDecoration;
+import com.solarized.firedown.ui.LCEERecyclerView;
 import com.solarized.firedown.utils.NavigationUtils;
 
 import java.util.ArrayList;
@@ -68,10 +68,8 @@ public class CloudBackupListFragment extends Fragment
     CloudBackupManager mCloudBackup;
 
     private NavController mNavController;
+    private LCEERecyclerView mLcee;
     private RecyclerView mRecycler;
-    private View mEmptyView;
-    private View mEmptyImage;
-    private TextView mEmpty;
     private CloudBackupFileAdapter mAdapter;
 
     private final List<VaultEntry> mEntries = new ArrayList<>();
@@ -94,16 +92,17 @@ public class CloudBackupListFragment extends Fragment
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         mNavController = NavHostFragment.findNavController(this);
-        mRecycler = view.findViewById(R.id.cb_recycler);
-        mEmptyView = view.findViewById(R.id.cb_empty_view);
-        mEmptyImage = view.findViewById(R.id.cb_empty_image);
-        mEmpty = view.findViewById(R.id.cb_empty);
+        mLcee = view.findViewById(R.id.cb_lcee);
+        mRecycler = mLcee.getRecyclerView();
         mAdapter = new CloudBackupFileAdapter(this);
         mRecycler.setAdapter(mAdapter);
         // Same gutter as the Downloads list (and Bookmarks/History/Captured):
         // EqualSpacingItemDecoration at list_spacing.
         mRecycler.addItemDecoration(
                 new EqualSpacingItemDecoration(requireContext(), R.dimen.list_spacing));
+        // Empty state (LCEE) — the Downloads balloons illustration + message.
+        mLcee.setEmptyImageView(R.drawable.ill_baloons);
+        mLcee.setEmptyText(R.string.cloud_backup_list_empty);
 
         // Same inset treatment as the preference screens: list scrolls under the
         // nav bar but the last row clears it.
@@ -271,25 +270,17 @@ public class CloudBackupListFragment extends Fragment
         }
     }
 
-    /** Shows the list, or the loading/empty placeholder. */
+    /** Drives the LCEE state: content (rows or an in-progress transfer), the
+     *  loading spinner (initial fetch only), or the empty illustration. */
     private void render() {
-        // Any row — a committed file OR an in-progress transfer — counts as content.
         boolean hasRows = mAdapter != null && mAdapter.getItemCount() > 0;
-        mRecycler.setVisibility(hasRows ? View.VISIBLE : View.GONE);
-        // While a transfer runs an in-progress row carries the state — don't paint
-        // the "nothing backed up yet" illustration (e.g. during the first upload,
-        // when the manifest is still empty and the row is only just being built).
         if (hasRows || mTransferActive) {
-            mEmptyView.setVisibility(View.GONE);
-            return;
+            mLcee.hideAll();          // show the list (rows carry the state)
+        } else if (mLoading) {
+            mLcee.showLoading();      // spinner on the first fetch only
+        } else {
+            mLcee.showEmpty();        // balloons + "nothing backed up yet"
         }
-        mEmptyView.setVisibility(View.VISIBLE);
-        // The illustration is the "nothing backed up yet" state; while loading,
-        // show just the text (no balloons under a transient spinner-less wait).
-        mEmptyImage.setVisibility(mLoading ? View.GONE : View.VISIBLE);
-        mEmpty.setText(mLoading
-                ? R.string.cloud_backup_list_loading
-                : R.string.cloud_backup_list_empty);
     }
 
     @Override

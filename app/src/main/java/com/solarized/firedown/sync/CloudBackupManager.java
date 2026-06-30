@@ -17,6 +17,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 
 import javax.inject.Inject;
@@ -53,7 +55,13 @@ public class CloudBackupManager {
 
     private final Context context;
     private final SharedPreferences prefs;
-    private final Executor diskExecutor;
+    /** A small pool — NOT the DiskIO/HeavyIO single-thread lanes — for the cloud
+     *  ops that hit the network (manifest pull/push, object delete). Those are
+     *  slow and must run CONCURRENTLY: on a serial lane a list load queued behind
+     *  two big-file deletes waited for both deletes' round-trips (the "dead slow
+     *  Loading…" after deleting). Cached pool → 0 idle threads for a rarely-used
+     *  feature, threads spun up on demand. */
+    private final ExecutorService netExecutor = Executors.newCachedThreadPool();
     private final Executor heavyExecutor;
     private final OkHttpClient httpClient;
     private final DownloadDataRepository downloads;
@@ -62,13 +70,11 @@ public class CloudBackupManager {
     @Inject
     public CloudBackupManager(@ApplicationContext Context context,
                               SharedPreferences prefs,
-                              @Qualifiers.DiskIO Executor diskExecutor,
                               @Qualifiers.HeavyIO Executor heavyExecutor,
                               OkHttpClient httpClient,
                               DownloadDataRepository downloads) {
         this.context = context;
         this.prefs = prefs;
-        this.diskExecutor = diskExecutor;
         this.heavyExecutor = heavyExecutor;
         this.httpClient = httpClient;
         this.downloads = downloads;
@@ -138,7 +144,7 @@ public class CloudBackupManager {
      * than throwing — this drives a settings summary, not a critical path.
      */
     public void loadUsage(Consumer<Usage> onResult) {
-        diskExecutor.execute(() -> {
+        netExecutor.execute(() -> {
             Usage usage;
             byte[] code = new SyncSecrets(context).load();
             if (code == null || !isSetUp()) {
@@ -174,7 +180,7 @@ public class CloudBackupManager {
      * failure so the UI can show an error state rather than an empty list.
      */
     public void loadEntries(Consumer<List<VaultEntry>> onResult, Runnable onError) {
-        diskExecutor.execute(() -> {
+        netExecutor.execute(() -> {
             byte[] code = new SyncSecrets(context).load();
             if (code == null) {
                 main.post(() -> onResult.accept(new ArrayList<>()));
@@ -200,7 +206,7 @@ public class CloudBackupManager {
      * main thread.
      */
     public void deleteEntry(VaultEntry entry, Consumer<Boolean> onResult) {
-        diskExecutor.execute(() -> {
+        netExecutor.execute(() -> {
             boolean ok;
             byte[] code = new SyncSecrets(context).load();
             if (code == null) {
@@ -269,7 +275,7 @@ public class CloudBackupManager {
      * {@code onResult} is posted to the main thread.
      */
     public void deleteAllData(Consumer<Boolean> onResult) {
-        diskExecutor.execute(() -> {
+        netExecutor.execute(() -> {
             boolean ok;
             byte[] code = new SyncSecrets(context).load();
             if (code == null) {

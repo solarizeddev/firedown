@@ -1518,6 +1518,21 @@ opaque chunks + an opaque manifest blob.
   `notifyItemRangeChanged(0, n)`), so committed rows below don't re-decode their
   thumbnails every byte update. On the active→idle transition the fragment
   `load()`s the manifest so the finished file appears as a committed row.
+- **`LCEERecyclerView` + a non-serial network executor.** The screen uses the
+  app-standard `LCEERecyclerView` (`fragment_cloud_backup_files.xml` is just that
+  view) for the loading spinner / content / empty-illustration states — same as
+  Downloads/Bookmarks/History — which ALSO `disableChangeAnimations()` in its
+  ctor, so per-item progress `notifyItemRangeChanged` ticks DON'T blink (don't
+  hand-roll a recycler + TextView empty state again; the no-blink came free with
+  LCEE). `render()` maps to `showLoading()` (initial fetch only — a refresh with
+  rows present keeps the list, no spinner flash) / `hideAll()` (rows or an active
+  transfer) / `showEmpty()`. Crucially, `CloudBackupManager`'s network ops
+  (manifest pull/push, object delete) run on a **dedicated cached `netExecutor`,
+  NOT `@Qualifiers.DiskIO`/`HeavyIO`** (both single-thread serial lanes): on a
+  serial lane a list load queued behind two big-file deletes waited for both
+  deletes' round-trips (the "dead slow Loading…" after deleting), and it also
+  wrongly blocked the app's DB-write lane. The pool lets loads and deletes run
+  concurrently (OCC handles any manifest-mutation conflict).
 - **List gutter + multi-select parity.** The recycler uses the same
   `EqualSpacingItemDecoration(list_spacing)` as the Downloads/Bookmarks/History
   lists (the rows already carry the matching 8dp card margins, so the thumbnail
