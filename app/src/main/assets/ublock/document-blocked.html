@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<!--
+    uBlock Origin's "page blocked" interstitial, restored for Firedown.
+
+    Why this file exists:
+    Firedown ships a UI-stripped uBlock build (only the background blocking
+    engine + content scripts are kept; the popup/dashboard/logger HTML was
+    removed because Firedown surfaces blocking through its own native UI).
+    But the engine still fires the STRICT-BLOCK path for `$document` filters:
+    traffic.js `onBeforeRootFrameRequest` cancels the request and calls
+    `vAPI.tabs.replace(tabId, 'document-blocked.html?details=...')`. With this
+    page missing, that navigation landed on a non-existent moz-extension URL
+    and the tab rendered blank (about:blank). Restoring the page makes the
+    familiar "uBlock Origin has prevented the following page from loading"
+    interstitial show, with working Go back / Proceed.
+
+    Self-contained on purpose (the stripped build has no css/i18n/dom stack):
+    inline styles + one external script. Page JS is external because the
+    default WebExtension page CSP (`script-src 'self'`) forbids inline scripts;
+    inline <style> is allowed. The only uBlock deps are vapi.js + vapi-client.js
+    for `vAPI.messaging.send`, which talks to the still-present background
+    listeners: `documentBlocked` (temporarilyWhitelistDocument / closeThisTab)
+    and `popupPanel` (toggleHostnameSwitch → no-strict-blocking).
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Page blocked</title>
+<style>
+  :root {
+    --bg: #f5f6f9;
+    --card: #ffffff;
+    --fg: #2b3142;
+    --muted: #5a6072;
+    --code-bg: #eceef4;
+    --accent: #ff716c;       /* Firedown brand orange */
+    --accent-press: #f0716c;
+    --secondary: #e4e7ef;
+    --secondary-fg: #333949;
+    --border: #d8dbe6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1b1d24;
+      --card: #23262f;
+      --fg: #e7e9f0;
+      --muted: #a9adba;
+      --code-bg: #2c2f3a;
+      --secondary: #343845;
+      --secondary-fg: #e7e9f0;
+      --border: #3a3e4b;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; }
+  body {
+    background-color: var(--bg);
+    color: var(--fg);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    -moz-text-size-adjust: none;
+  }
+  .wrap {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 28px 20px 40px;
+  }
+  .icon {
+    width: 72px;
+    height: 72px;
+    margin: 8px 0 20px;
+  }
+  p { margin: 18px 0; }
+  .prompt { color: var(--fg); }
+  code {
+    display: block;
+    background: var(--code-bg);
+    color: var(--fg);
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin: 10px 0;
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: 15px;
+    line-height: 1.45;
+    word-break: break-all;
+    white-space: pre-wrap;
+  }
+  .muted { color: var(--muted); }
+  #foundInRow { display: none; }
+  .warn {
+    display: none;
+    border-left: 4px solid var(--accent);
+    background: var(--code-bg);
+    border-radius: 0 8px 8px 0;
+    padding: 12px 16px;
+  }
+  label.checkbox {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 24px 0 8px;
+    cursor: pointer;
+    user-select: none;
+  }
+  label.checkbox input { width: 20px; height: 20px; }
+  .buttons { margin-top: 22px; }
+  button {
+    display: block;
+    width: 100%;
+    border: none;
+    border-radius: 10px;
+    padding: 16px;
+    margin: 12px 0 0;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  #back {
+    background: var(--secondary);
+    color: var(--secondary-fg);
+  }
+  #proceed {
+    background: var(--accent);
+    color: #ffffff;
+  }
+  #proceed:active { background: var(--accent-press); }
+  button:disabled { opacity: 0.5; cursor: default; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <path fill="#ff716c" d="M12 2 1 21h22L12 2z"/>
+    <rect x="11" y="9" width="2" height="6" rx="1" fill="#ffffff"/>
+    <rect x="11" y="17" width="2" height="2" rx="1" fill="#ffffff"/>
+  </svg>
+
+  <p class="prompt">uBlock Origin has prevented the following page from loading:</p>
+  <code id="theURL"></code>
+
+  <p class="prompt">This happened because of the following filter:</p>
+  <code id="theFilter"></code>
+
+  <p id="foundInRow" class="muted">Found in: <span id="theReason"></span></p>
+
+  <p id="redirectWarn" class="warn"></p>
+
+  <label class="checkbox" for="dontWarn">
+    <input type="checkbox" id="dontWarn">
+    <span>Don't warn me again about this site</span>
+  </label>
+
+  <div class="buttons">
+    <button id="back" type="button">Go back</button>
+    <button id="proceed" type="button">Proceed</button>
+  </div>
+</div>
+
+<script src="js/vapi.js"></script>
+<script src="js/vapi-client.js"></script>
+<script src="js/document-blocked.js"></script>
+</body>
+</html>
