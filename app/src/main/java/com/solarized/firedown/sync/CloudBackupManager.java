@@ -10,6 +10,7 @@ import com.solarized.firedown.data.di.Qualifiers;
 import com.solarized.firedown.sync.crypto.SyncIdentity;
 import com.solarized.firedown.sync.model.VaultEntry;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
@@ -150,6 +151,61 @@ public class CloudBackupManager {
             }
             final Usage out = usage;
             main.post(() -> onResult.accept(out));
+        });
+    }
+
+    /**
+     * Loads the backed-up file list (manifest entries) off the disk executor and
+     * posts it to the main thread. {@code onError} is invoked (main thread) on any
+     * failure so the UI can show an error state rather than an empty list.
+     */
+    public void loadEntries(Consumer<List<VaultEntry>> onResult, Runnable onError) {
+        diskExecutor.execute(() -> {
+            byte[] code = new SyncSecrets(context).load();
+            if (code == null) {
+                main.post(() -> onResult.accept(new ArrayList<>()));
+                return;
+            }
+            try {
+                SyncIdentity identity = SyncIdentity.fromCode(code);
+                StorageApiClient api = new StorageApiClient(httpClient, backendUrl());
+                VaultEngine engine = new VaultEngine(api, identity);
+                List<VaultEntry> entries = engine.loadManifest();
+                main.post(() -> onResult.accept(entries));
+            } catch (Exception e) {
+                main.post(onError);
+            } finally {
+                SyncSecrets.wipe(code);
+            }
+        });
+    }
+
+    /**
+     * Removes one backed-up file from the cloud (deletes the object and drops it
+     * from the manifest) off the disk executor. {@code onResult} is posted to the
+     * main thread.
+     */
+    public void deleteEntry(VaultEntry entry, Consumer<Boolean> onResult) {
+        diskExecutor.execute(() -> {
+            boolean ok;
+            byte[] code = new SyncSecrets(context).load();
+            if (code == null) {
+                ok = false;
+            } else {
+                try {
+                    SyncIdentity identity = SyncIdentity.fromCode(code);
+                    StorageApiClient api = new StorageApiClient(httpClient, backendUrl());
+                    VaultEngine engine = new VaultEngine(api, identity);
+                    engine.deleteEntry(entry);
+                    ok = true;
+                } catch (Exception e) {
+                    ok = false;
+                } finally {
+                    SyncSecrets.wipe(code);
+                }
+            }
+            final boolean success = ok;
+            main.post(() -> onResult.accept(success));
         });
     }
 
