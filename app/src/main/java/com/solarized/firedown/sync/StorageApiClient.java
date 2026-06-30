@@ -4,6 +4,7 @@ import android.util.Base64;
 
 import androidx.annotation.NonNull;
 
+import com.solarized.firedown.okhttp.RateLimitInterceptor;
 import com.solarized.firedown.sync.crypto.Canonical;
 import com.solarized.firedown.sync.crypto.Pow;
 import com.solarized.firedown.sync.crypto.SyncIdentity;
@@ -16,6 +17,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
+import okhttp3.Call;
 import okhttp3.Interceptor;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -56,12 +58,52 @@ public final class StorageApiClient {
     private final OkHttpClient client;
     private final String baseUrl; // no trailing slash
 
+    // Cancellation: a backup/restore worker runs synchronously and WorkManager
+    // does NOT interrupt its thread on cancel, so a stacked rate-limit retry loop
+    // would otherwise sleep through the cancel and keep hammering the (already
+    // rate-limited) register endpoint. The worker calls cancel() from onStopped();
+    // we cancel the in-flight Call (its retry loop's next chain.proceed throws
+    // "Canceled") and refuse further calls.
+    private volatile boolean cancelled = false;
+    private volatile Call currentCall;
+
     public StorageApiClient(OkHttpClient client, String baseUrl) {
-        // Derive from the shared client (same connection pool / dispatcher) but add
-        // the rate-limit retry ONLY for storage calls — never mutate the global
-        // client (it serves downloads/captures too).
-        this.client = client.newBuilder().addInterceptor(new RetryInterceptor()).build();
+        // Derive from the shared client (same connection pool / dispatcher) but give
+        // storage its OWN retry interceptor — never mutate the global client (it
+        // serves downloads/captures too). Drop the shared client's global
+        // RateLimitInterceptor here: storage's RetryInterceptor already covers 429
+        // (and 503), so inheriting the global one too would NEST two retry loops and
+        // multiply requests against the per-IP limit — the opposite of what we want.
+        OkHttpClient.Builder b = client.newBuilder();
+        b.interceptors().removeIf(i -> i instanceof RateLimitInterceptor);
+        b.addInterceptor(new RetryInterceptor());
+        this.client = b.build();
         this.baseUrl = stripTrailingSlash(baseUrl);
+    }
+
+    /** Creates a call and registers it as the in-flight one so {@link #cancel()}
+     *  can abort it. If already cancelled, the returned call is pre-cancelled so
+     *  {@code execute()} fails fast instead of issuing a request. */
+    private Call beginCall(Request req) {
+        Call call = client.newCall(req);
+        currentCall = call;
+        if (cancelled) {
+            call.cancel();
+        }
+        return call;
+    }
+
+    /**
+     * Cancels the in-flight request (if any) and refuses further ones. Called from
+     * a worker's {@code onStopped()} when the user cancels the transfer, so the
+     * rate-limit retry loops unwind at once instead of running to exhaustion.
+     */
+    public void cancel() {
+        cancelled = true;
+        Call call = currentCall;
+        if (call != null) {
+            call.cancel();
+        }
     }
 
     /**
@@ -81,6 +123,12 @@ public final class StorageApiClient {
             while ((resp.code() == 429 || resp.code() == 503) && attempt < MAX_RETRIES) {
                 int retryAfter = parseInt(resp.header("Retry-After"), 0);
                 resp.close();
+                // A cancelled call (worker stopped) must not sleep through the
+                // backoff and retry — bail immediately. (A cancel that lands DURING
+                // the sleep is caught by the next chain.proceed throwing "Canceled".)
+                if (chain.call().isCanceled()) {
+                    throw new IOException("cancelled during rate-limit backoff");
+                }
                 long exp = Math.min(BACKOFF_CAP_MS, BACKOFF_BASE_MS << attempt);
                 long delay = Math.min(BACKOFF_CAP_MS,
                         Math.max(exp, (long) Math.max(0, retryAfter) * 1000L));
@@ -176,7 +224,7 @@ public final class StorageApiClient {
                 .build();
         byte[] challenge;
         int powBits;
-        try (Response resp = client.newCall(chReq).execute()) {
+        try (Response resp = beginCall(chReq).execute()) {
             throwForStatus(resp, "challenge");
             JSONObject obj = new JSONObject(bodyString(resp));
             challenge = b64urlDecode(obj.getString("challenge"));
@@ -200,7 +248,7 @@ public final class StorageApiClient {
         Request req = signed(id, "POST", PATH_REGISTER, "", bodyBytes)
                 .post(RequestBody.create(bodyBytes, JSON))
                 .build();
-        try (Response resp = client.newCall(req).execute()) {
+        try (Response resp = beginCall(req).execute()) {
             if (resp.code() == 200 || resp.code() == 201) {
                 return;
             }
@@ -213,7 +261,7 @@ public final class StorageApiClient {
     /** GET the encrypted manifest (404 -&gt; notFound = empty/version 0). */
     public ManifestPull pullManifest(SyncIdentity id) throws IOException {
         Request req = signed(id, "GET", PATH_MANIFEST, "", null).get().build();
-        try (Response resp = client.newCall(req).execute()) {
+        try (Response resp = beginCall(req).execute()) {
             if (resp.code() == 404) {
                 return new ManifestPull(null, 0, true);
             }
@@ -230,7 +278,7 @@ public final class StorageApiClient {
                 .header("X-Firedown-Prev-Version", Long.toString(prevVersion))
                 .put(RequestBody.create(ciphertext, OCTET))
                 .build();
-        try (Response resp = client.newCall(req).execute()) {
+        try (Response resp = beginCall(req).execute()) {
             int code = resp.code();
             if (code == 200) {
                 try {
@@ -269,7 +317,7 @@ public final class StorageApiClient {
         Request req = signed(id, "POST", PATH_OBJECTS, "", bodyBytes)
                 .post(RequestBody.create(bodyBytes, JSON))
                 .build();
-        try (Response resp = client.newCall(req).execute()) {
+        try (Response resp = beginCall(req).execute()) {
             throwForStatus(resp, "create object");
             try {
                 JSONObject obj = new JSONObject(bodyString(resp));
@@ -287,7 +335,7 @@ public final class StorageApiClient {
                 .url(uploadUrl)
                 .put(RequestBody.create(encryptedChunk, OCTET))
                 .build();
-        try (Response resp = client.newCall(req).execute()) {
+        try (Response resp = beginCall(req).execute()) {
             if (!resp.isSuccessful()) {
                 throw new TransientException("chunk PUT: " + resp.code(), 0);
             }
@@ -300,7 +348,7 @@ public final class StorageApiClient {
         Request req = signed(id, "POST", path, "", new byte[0])
                 .post(RequestBody.create(new byte[0], JSON))
                 .build();
-        try (Response resp = client.newCall(req).execute()) {
+        try (Response resp = beginCall(req).execute()) {
             throwForStatus(resp, "complete object");
             try {
                 return new JSONObject(bodyString(resp)).optLong("committed_size", 0);
@@ -314,7 +362,7 @@ public final class StorageApiClient {
     public ObjectInfo getObject(SyncIdentity id, String objectIdHex) throws IOException {
         String path = PATH_OBJECTS + "/" + objectIdHex;
         Request req = signed(id, "GET", path, "", null).get().build();
-        try (Response resp = client.newCall(req).execute()) {
+        try (Response resp = beginCall(req).execute()) {
             throwForStatus(resp, "get object");
             try {
                 JSONObject obj = new JSONObject(bodyString(resp));
@@ -329,7 +377,7 @@ public final class StorageApiClient {
     /** Download one encrypted chunk from its presigned R2 URL. */
     public byte[] getChunk(String downloadUrl) throws IOException {
         Request req = new Request.Builder().url(downloadUrl).get().build();
-        try (Response resp = client.newCall(req).execute()) {
+        try (Response resp = beginCall(req).execute()) {
             if (!resp.isSuccessful()) {
                 throw new TransientException("chunk GET: " + resp.code(), 0);
             }
@@ -340,7 +388,7 @@ public final class StorageApiClient {
     /** Delete an object (frees quota); 204/404 both succeed. */
     public void deleteObject(SyncIdentity id, String objectIdHex) throws IOException {
         Request req = signed(id, "DELETE", PATH_OBJECTS + "/" + objectIdHex, "", null).delete().build();
-        try (Response resp = client.newCall(req).execute()) {
+        try (Response resp = beginCall(req).execute()) {
             if (resp.code() == 404) {
                 return;
             }
@@ -351,7 +399,7 @@ public final class StorageApiClient {
     /** Purge all of this account's storage data (right-to-erasure). */
     public void deleteAccount(SyncIdentity id) throws IOException {
         Request req = signed(id, "DELETE", PATH_ACCOUNT, "", null).delete().build();
-        try (Response resp = client.newCall(req).execute()) {
+        try (Response resp = beginCall(req).execute()) {
             if (resp.code() == 404) {
                 return;
             }

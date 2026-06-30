@@ -72,6 +72,11 @@ public class VaultBackupWorker extends Worker {
     private ListenableFuture<Void> mLastProgress;
     /** Last published whole-percent, to throttle per-chunk progress writes. */
     private int mLastPct = -1;
+    /** The in-flight storage client, so {@link #onStopped()} can cancel its
+     *  network calls. {@code Worker} threads are NOT interrupted on cancel, so a
+     *  rate-limit retry loop would otherwise run to exhaustion after the user
+     *  cancels. Volatile: onStopped runs on a different thread than doWork. */
+    private volatile StorageApiClient mApi;
 
     @AssistedInject
     public VaultBackupWorker(
@@ -120,6 +125,12 @@ public class VaultBackupWorker extends Worker {
         }
 
         StorageApiClient api = new StorageApiClient(mClient, Preferences.STORAGE_DEFAULT_BACKEND);
+        mApi = api;
+        // A cancel that landed before the client was built (the worker was stopped
+        // while going foreground / loading the code) still applies — refuse calls.
+        if (isStopped()) {
+            api.cancel();
+        }
         VaultEngine engine = new VaultEngine(api, identity);
         // A tiny preview, stored in the encrypted manifest so the list shows a
         // thumbnail offline even after the local copy is deleted.
@@ -155,6 +166,20 @@ public class VaultBackupWorker extends Worker {
         return Result.success(new Data.Builder()
                 .putString(KEY_STATUS, STATUS_OK)
                 .build());
+    }
+
+    @Override
+    public void onStopped() {
+        // WorkManager does NOT interrupt a Worker's thread on cancel, so cancel the
+        // storage client's in-flight call here — otherwise its rate-limit retry
+        // loop keeps hammering the (already throttled) register endpoint after the
+        // user cancelled. Cancelling makes the loop's next chain.proceed throw
+        // "Canceled", and the pre-sleep isCanceled() check bails out immediately.
+        StorageApiClient api = mApi;
+        if (api != null) {
+            api.cancel();
+        }
+        super.onStopped();
     }
 
     private Result failure() {

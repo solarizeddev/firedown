@@ -67,6 +67,10 @@ public class VaultRestoreWorker extends Worker {
     private final Context mContext;
     private final OkHttpClient mClient;
     private final DownloadDataRepository mRepo;
+    /** In-flight storage client, cancelled by {@link #onStopped()} (Worker threads
+     *  aren't interrupted on cancel, so a rate-limit retry loop would otherwise run
+     *  to exhaustion). Volatile: onStopped runs off the doWork thread. */
+    private volatile StorageApiClient mApi;
 
     @AssistedInject
     public VaultRestoreWorker(
@@ -129,6 +133,10 @@ public class VaultRestoreWorker extends Worker {
                 + File.separator + name);
 
         StorageApiClient api = new StorageApiClient(mClient, Preferences.STORAGE_DEFAULT_BACKEND);
+        mApi = api;
+        if (isStopped()) {
+            api.cancel();
+        }
         VaultEngine engine = new VaultEngine(api, identity);
         VaultEntry entry = new VaultEntry(objectId, wrappedDek, name, size, mime,
                 downloadedAt, chunkCount, null); // thumb unused on restore
@@ -177,6 +185,17 @@ public class VaultRestoreWorker extends Worker {
             //noinspection ResultOfMethodCallIgnored
             file.delete();
         }
+    }
+
+    @Override
+    public void onStopped() {
+        // See VaultBackupWorker.onStopped — cancel the storage client so its
+        // rate-limit retry loop unwinds at once instead of running to exhaustion.
+        StorageApiClient api = mApi;
+        if (api != null) {
+            api.cancel();
+        }
+        super.onStopped();
     }
 
     private Result failure() {

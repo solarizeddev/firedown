@@ -42,6 +42,14 @@ public class RateLimitInterceptor implements Interceptor {
             // underlying connection can return to the pool.
             response.close();
 
+            // A cancelled call (e.g. a stopped backup worker) must not sleep
+            // through the backoff and keep retrying — bail at once. A cancel
+            // landing DURING the sleep is still caught by the next chain.proceed
+            // throwing "Canceled".
+            if (chain.call().isCanceled()) {
+                throw new IOException("Cancelled while waiting for rate-limit backoff");
+            }
+
             try {
                 Thread.sleep(delay);
             } catch (InterruptedException e) {
