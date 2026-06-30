@@ -364,6 +364,10 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
                 NavigationUtils.navigateSafe(mNavController, R.id.action_home_to_history);
             } else if (id == R.id.popup_vault) {
                 mStartForResult.launch(new Intent(mActivity, VaultActivity.class));
+            } else if (id == R.id.popup_sync) {
+                Intent syncIntent = new Intent(mActivity, SettingsActivity.class);
+                syncIntent.putExtra(SettingsActivity.EXTRA_OPEN_SYNC, true);
+                mStartForResult.launch(syncIntent);
             } else if (id == R.id.popup_settings) {
                 Intent settingsIntent = new Intent(mActivity, SettingsActivity.class);
                 mStartForResult.launch(settingsIntent);

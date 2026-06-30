@@ -20,6 +20,7 @@
     <item name="popup_print" type="id" />
     <item name="popup_help" type="id" />
     <item name="popup_vault" type="id" />
+    <item name="popup_sync" type="id" />
     <item name="popup_settings" type="id" />
     <item name="popup_share" type="id" />
     <item name="popup_quit" type="id" />

@@ -500,6 +500,10 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
         } else if (id == R.id.action_safe) {
             Intent intent = new Intent(mActivity, VaultActivity.class);
             startActivity(intent);
+        } else if (id == R.id.action_cloud_backup) {
+            Intent intent = new Intent(mActivity, SettingsActivity.class);
+            intent.putExtra(SettingsActivity.EXTRA_OPEN_CLOUD_BACKUP_FILES, true);
+            startActivity(intent);
         } else if (id == R.id.action_settings) {
             Intent intent = new Intent(mActivity, SettingsActivity.class);
             startActivity(intent);

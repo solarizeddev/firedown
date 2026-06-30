@@ -711,6 +711,10 @@ public class BrowserFragment extends BaseBrowserFragment
                 Bundle args = new Bundle();
                 args.putBoolean(Keys.IS_INCOGNITO, mIsIncognitoThemed);
                 NavigationUtils.navigateSafe(mNavController, R.id.action_browser_to_history, args);
+            } else if (id == R.id.popup_sync) {
+                Intent syncIntent = new Intent(mActivity, SettingsActivity.class);
+                syncIntent.putExtra(SettingsActivity.EXTRA_OPEN_SYNC, true);
+                mStartForResult.launch(syncIntent);
             } else if (id == R.id.popup_settings) {
                 mStartForResult.launch(new Intent(mActivity, SettingsActivity.class));
             } else if (id == R.id.popup_share) {

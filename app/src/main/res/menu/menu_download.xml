@@ -31,6 +31,15 @@
         app:showAsAction="ifRoom"
         android:title="@string/navigation_vault"/>
 
+    <!-- Overflow: the cloud Backed-up files list (a downloads-related surface,
+         so it lives here in addition to Settings → Sync → Downloads backup). -->
+    <item
+        android:id="@+id/action_cloud_backup"
+        android:icon="@drawable/cloud_done_24"
+        app:iconTint="?attr/colorOnSurface"
+        app:showAsAction="never"
+        android:title="@string/cloud_backup_files_title"/>
+
     <item
         android:id="@+id/action_settings"
         android:icon="@drawable/ic_settings_24"

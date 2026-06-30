@@ -186,6 +186,34 @@
     </LinearLayout>
 
 
+    <!-- Sync — bookmarks + encrypted download backup (one account). -->
+    <LinearLayout
+        android:id="@+id/popup_sync"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:background="?attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="16dp">
+
+        <TextView
+            style="@style/TextAppearance.Material3.TitleMedium"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:drawablePadding="16dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:text="@string/settings_account_title"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:textSize="16sp"
+            app:drawableStartCompat="@drawable/cloud_outline_24"
+            app:drawableTint="?attr/colorOnSurfaceVariant" />
+
+    </LinearLayout>
+
+
     <!-- Settings. -->
     <LinearLayout
         android:id="@+id/popup_settings"

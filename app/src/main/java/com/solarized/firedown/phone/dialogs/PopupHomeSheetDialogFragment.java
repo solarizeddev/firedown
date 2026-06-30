@@ -71,6 +71,7 @@ public class PopupHomeSheetDialogFragment extends BaseBottomSheetDialogFragment
      * fragments listen for, so they all share {@link #onClick(View)}.
      */
     private void bindRows() {
+        mView.findViewById(R.id.popup_sync).setOnClickListener(this);
         mView.findViewById(R.id.popup_settings).setOnClickListener(this);
         mView.findViewById(R.id.popup_quit).setOnClickListener(this);
         mView.findViewById(R.id.popup_history).setOnClickListener(this);

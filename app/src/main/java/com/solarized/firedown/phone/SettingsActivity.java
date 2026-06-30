@@ -24,6 +24,10 @@ public class SettingsActivity extends BaseActivity {
      *  screen — the in-progress upload/restore notification deep-links here. */
     public static final String EXTRA_OPEN_CLOUD_BACKUP = "com.solarized.firedown.extra.OPEN_CLOUD_BACKUP";
 
+    /** Intent boolean extra: open straight to the backed-up-files list (the
+     *  Downloads toolbar overflow deep-links here). */
+    public static final String EXTRA_OPEN_CLOUD_BACKUP_FILES = "com.solarized.firedown.extra.OPEN_CLOUD_BACKUP_FILES";
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -73,6 +77,14 @@ public class SettingsActivity extends BaseActivity {
         // restore notification). Back returns to the settings list.
         if (getIntent().getBooleanExtra(EXTRA_OPEN_CLOUD_BACKUP, false)) {
             navController.navigate(R.id.settings_cloud_backup);
+        }
+
+        // Deep-link straight to the backed-up-files list (Downloads overflow),
+        // building the stack through the Cloud Backup screen so Back steps back
+        // through it to the settings list.
+        if (getIntent().getBooleanExtra(EXTRA_OPEN_CLOUD_BACKUP_FILES, false)) {
+            navController.navigate(R.id.settings_cloud_backup);
+            navController.navigate(R.id.action_cloud_backup_to_files);
         }
 
         navController.addOnDestinationChangedListener((navController1, navDestination, bundle) -> {
