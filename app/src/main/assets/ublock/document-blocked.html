@@ -15,12 +15,13 @@
 
     Styling mirrors Firedown's native error pages (assets/error/): the same
     periwinkle palette, thin type, and button semantics (dark = recommended
-    action, muted = "bypass a protection", orange = active accent). No hero
-    illustration by design — the error illustrations carry an "error/sad" tone
-    that misreads on a "blocked for your protection" page. Self-contained on
-    purpose (the stripped build has no css/i18n stack): inline styles + one
-    external script. Page JS is external because the default WebExtension page
-    CSP (`script-src 'self'`) forbids inline scripts; inline <style> is fine.
+    action, muted = "bypass a protection", orange = active accent). The hero is
+    the crossed-out shield from the native Security sheet (inlined from
+    res/drawable/ic_shield_bad_24.xml) — a "blocked for your protection" tone,
+    deliberately not the error pages' matchstick. Self-contained on purpose
+    (the stripped build has no css/i18n stack): inline styles + one external
+    script. Page JS is external because the default WebExtension page CSP
+    (`script-src 'self'`) forbids inline scripts; inline <style> is fine.
     The only uBlock deps are vapi.js + vapi-client.js for `vAPI.messaging.send`,
     which talks to the still-present background listeners: `documentBlocked`
     (temporarilyWhitelistDocument / closeThisTab) and `popupPanel`
@@ -57,6 +58,12 @@
     min-height: calc(100% - 64px);
     display: flex;
     flex-direction: column;
+  }
+  #illustration {
+    width: 104px;
+    height: 104px;
+    align-self: center;
+    margin-bottom: 12px;
   }
   h1 {
     margin: 0;
@@ -137,6 +144,14 @@
 </head>
 <body dir="auto">
 <div id="container">
+
+  <!-- Crossed-out shield, inlined from res/drawable/ic_shield_bad_24.xml — the
+       same "blocking" glyph Firedown's native Security sheet uses, so the
+       interstitial ties to that feature. Android pathData is SVG-compatible
+       path syntax. -->
+  <svg id="illustration" viewBox="0 0 960 960" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <path fill="#ff716c" d="M737.84,630.46L692.46,583.85Q705.23,551.85 712.62,515.62Q720,479.38 720,444L720,255L480,165.38L330.15,221.54L283.54,174.92L480,101.54L780,213.85L780,444Q780,490 769.84,536.54Q759.69,583.08 737.84,630.46ZM792,876.31L661.23,745.54Q624.38,786.46 577.69,815.65Q531,844.84 480,859.23Q347.54,823.08 263.77,704.92Q180,586.77 180,444L180,264.31L85.23,169.54L127.39,127.39L834.15,834.15L792,876.31ZM480,796Q518.85,783.85 556.04,758.27Q593.23,732.69 619.08,703.38L240,324.31L240,444Q240,565 308,664Q376,763 480,796Z"/>
+  </svg>
 
   <h1>Page blocked</h1>
   <h2>Firedown's content blocker stopped this page from loading.</h2>
