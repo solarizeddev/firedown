@@ -14,6 +14,7 @@ import com.solarized.firedown.sync.crypto.SyncIdentity;
 import com.solarized.firedown.sync.model.VaultEntry;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -94,6 +95,39 @@ public class CloudBackupManager {
     /** The storage backend base URL (paid vault — a BYO picker may come later). */
     public String backendUrl() {
         return Preferences.STORAGE_DEFAULT_BACKEND;
+    }
+
+    /** Marks which account has been registered on this install (account base32). */
+    private static final String KEY_REGISTERED_ACCOUNT = "storage.registered.account";
+    private static final Object REGISTER_LOCK = new Object();
+
+    /**
+     * Registers the account at most ONCE per install, instead of on every backup.
+     * Registration is idempotent, but Cloudflare rate-limits the register/challenge
+     * endpoints (per IP), so re-registering on every upload bursts them and trips a
+     * 429 — and an existing account never needs re-registering for the signed
+     * storage calls to resolve. The static lock serializes concurrent first-time
+     * backups so they don't all register at once (the flag isn't set until the
+     * first completes). After the marker is set, this is a cheap prefs read.
+     */
+    public static void ensureRegistered(SharedPreferences prefs, StorageApiClient api,
+                                        SyncIdentity identity) throws IOException {
+        String account = identity.accountBase32();
+        synchronized (REGISTER_LOCK) {
+            if (account.equals(prefs.getString(KEY_REGISTERED_ACCOUNT, null))) {
+                return;
+            }
+            api.register(identity); // idempotent
+            prefs.edit().putString(KEY_REGISTERED_ACCOUNT, account).apply();
+        }
+    }
+
+    /** Forgets the registered-account marker (after erasing all data, so the next
+     *  backup re-creates the account). */
+    public static void clearRegistered(SharedPreferences prefs) {
+        synchronized (REGISTER_LOCK) {
+            prefs.edit().remove(KEY_REGISTERED_ACCOUNT).apply();
+        }
     }
 
     /**
@@ -304,8 +338,9 @@ public class CloudBackupManager {
                 try {
                     SyncIdentity identity = SyncIdentity.fromCode(code);
                     StorageApiClient api = new StorageApiClient(httpClient, backendUrl());
-                    api.register(identity); // idempotent — makes the signed DELETE resolvable
+                    ensureRegistered(prefs, api, identity); // makes the signed DELETE resolvable
                     api.deleteAccount(identity);
+                    clearRegistered(prefs); // account gone — next backup re-registers
                     ok = true;
                 } catch (Exception e) {
                     ok = false;

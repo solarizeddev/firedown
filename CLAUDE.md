@@ -1407,6 +1407,22 @@ opaque chunks + an opaque manifest blob.
   other (symmetric wipes in `SyncManager.disable`/`CloudBackupManager
   .deleteAllData`).
 
+- **Register ONCE per install, not per backup (Cloudflare rate limit).** The CF
+  edge rate-limits ONLY the `/v1/account/register` + `/v1/register/challenge`
+  endpoints (per-IP, anti-Sybil — see `firedown-api`). `VaultEngine.backupFile`
+  used to call `api.register` on EVERY upload (2 requests to those exact endpoints
+  each), so backing up several files burst them → **429**. Registration is now
+  gated by `CloudBackupManager.ensureRegistered` — a per-account prefs marker under
+  a **static lock** (so concurrent first-time backups serialize to ONE register,
+  not N) — called by `VaultBackupWorker` before upload and by `deleteAllData`
+  (which `clearRegistered`s after erasing). `backupFile` no longer registers; the
+  manifest/object calls are signed and resolve against the already-created account.
+  Don't re-add a per-op `api.register`. Defense in depth: `StorageApiClient` wraps
+  a **derived** OkHttp client (`newBuilder().addInterceptor` — never the global
+  client) with a small retry interceptor that backs off on 429/503 honouring
+  `Retry-After` (OkHttp has NO built-in 429 handling — `retryOnConnectionFailure`
+  is network-errors only). Keep the CF rule as-is; the fix is the client not
+  over-calling register, not weakening the anti-Sybil limit.
 - **The encrypted manifest is the file index** (`VaultManifest`, OCC-versioned,
   16 MiB server cap). One `VaultEntry` per backed-up file: objectId, wrapped DEK,
   name/mime/size/downloadedAt/chunkCount, **plus a tiny base64 JPEG `thumb`**.

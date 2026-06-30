@@ -130,6 +130,9 @@ public class VaultBackupWorker extends Worker {
         final String fMime = mime;
         publishProgress(fName, fMime, 0, file.length());
         try {
+            // Register ONCE per install (not per backup) — Cloudflare rate-limits
+            // the register endpoints, so re-registering on every upload bursts them.
+            CloudBackupManager.ensureRegistered(mPrefs, api, identity);
             engine.backupFile(file, mime, thumb,
                     (done, total) -> publishProgress(fName, fMime, done, total));
         } catch (StorageApiClient.TransientException e) {

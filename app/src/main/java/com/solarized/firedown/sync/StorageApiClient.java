@@ -2,6 +2,8 @@ package com.solarized.firedown.sync;
 
 import android.util.Base64;
 
+import androidx.annotation.NonNull;
+
 import com.solarized.firedown.sync.crypto.Canonical;
 import com.solarized.firedown.sync.crypto.Pow;
 import com.solarized.firedown.sync.crypto.SyncIdentity;
@@ -14,6 +16,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
+import okhttp3.Interceptor;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -41,12 +44,57 @@ public final class StorageApiClient {
     private static final String PATH_OBJECTS = "/v1/storage/objects";
     private static final String PATH_ACCOUNT = "/v1/storage/account";
 
+    /** Cloudflare returns 429 (its "Block" rate-limit action) on a per-IP burst.
+     *  OkHttp has NO built-in 429 handling (`retryOnConnectionFailure` only covers
+     *  network/connection errors, not HTTP status), so this client adds a small
+     *  retry interceptor. Bounded + SHORT backoff so a cancelled worker unwinds
+     *  fast and a signed request's timestamp doesn't go stale. */
+    private static final int MAX_RETRIES = 3;
+    private static final long BACKOFF_BASE_MS = 600L;
+    private static final long BACKOFF_CAP_MS = 8_000L;
+
     private final OkHttpClient client;
     private final String baseUrl; // no trailing slash
 
     public StorageApiClient(OkHttpClient client, String baseUrl) {
-        this.client = client;
+        // Derive from the shared client (same connection pool / dispatcher) but add
+        // the rate-limit retry ONLY for storage calls — never mutate the global
+        // client (it serves downloads/captures too).
+        this.client = client.newBuilder().addInterceptor(new RetryInterceptor()).build();
         this.baseUrl = stripTrailingSlash(baseUrl);
+    }
+
+    /**
+     * Retries 429/503 (edge throttle / temporarily unavailable — the request was
+     * rejected at the edge BEFORE the origin ran it, so re-sending even a
+     * non-idempotent POST is safe) with bounded backoff honouring Retry-After.
+     * A generic 5xx is NOT retried (the origin may have executed it). Applies to
+     * every call through this client, including the presigned R2 chunk PUT/GET.
+     */
+    private static final class RetryInterceptor implements Interceptor {
+        @NonNull
+        @Override
+        public Response intercept(@NonNull Chain chain) throws IOException {
+            Request req = chain.request();
+            Response resp = chain.proceed(req);
+            int attempt = 0;
+            while ((resp.code() == 429 || resp.code() == 503) && attempt < MAX_RETRIES) {
+                int retryAfter = parseInt(resp.header("Retry-After"), 0);
+                resp.close();
+                long exp = Math.min(BACKOFF_CAP_MS, BACKOFF_BASE_MS << attempt);
+                long delay = Math.min(BACKOFF_CAP_MS,
+                        Math.max(exp, (long) Math.max(0, retryAfter) * 1000L));
+                try {
+                    Thread.sleep(delay);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new IOException("interrupted during rate-limit backoff", e);
+                }
+                attempt++;
+                resp = chain.proceed(req);
+            }
+            return resp;
+        }
     }
 
     // ---- error types (mirror SyncApiClient) ----

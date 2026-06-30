@@ -86,8 +86,9 @@ public final class VaultEngine {
      *  progress to {@code progress} (may be null). */
     public VaultEntry backupFile(File file, String mime, String thumb, ProgressListener progress)
             throws IOException, GeneralSecurityException {
-        api.register(identity); // idempotent — makes the signed requests resolvable
-
+        // NOTE: the account must already be registered (the worker calls
+        // CloudBackupManager.ensureRegistered first). Registration is NOT done here
+        // per-backup — that bursts Cloudflare's rate-limited register endpoints.
         long size = file.length();
         VaultEntry existing = findExisting(file.getName(), size);
         if (existing != null) {
