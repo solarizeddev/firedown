@@ -279,6 +279,10 @@ const { matchInParserBlocklist } = await import(pathToFileURL(join(ext, "js/pars
 expect(TELEGRAM_POST_RE.test("https://t.me/WatcherGuru/14028"), "tg: post URL matches");
 expect(TELEGRAM_POST_RE.test("https://t.me/s/WatcherGuru/14028?embed=1"), "tg: /s/ + query matches");
 expect(!TELEGRAM_POST_RE.test("https://t.me/WatcherGuru"), "tg: bare channel feed does not match");
+// The embed widget iframe (a sub_frame) carries the <video> when the landing
+// main_frame does not — its URL must match so the listener processes it.
+expect(TELEGRAM_POST_RE.test("https://t.me/WatcherGuru/14028?embed=1&mode=tme"),
+  "tg: ?embed=1&mode=tme widget URL matches (sub_frame capture path)");
 const tgm = "https://t.me/WatcherGuru/14028".match(TELEGRAM_POST_RE);
 expect(tgm[1] === "WatcherGuru" && tgm[2] === "14028", `tg: channel+id captured (got ${tgm[1]}/${tgm[2]})`);
 

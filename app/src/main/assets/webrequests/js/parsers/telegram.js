@@ -81,7 +81,18 @@ function parseClock(s) {
 }
 
 function listenerTelegramPage(details) {
-    if (details.type !== "main_frame") return;
+    // Read BOTH the top document AND the embed widget iframe. Opening a post
+    // URL directly (t.me/<channel>/<id>) serves a LANDING page as the main_frame
+    // that carries only og:title + og:image (the poster) — NO <video>/og:video,
+    // so the video is invisible there (confirmed from a HAR: WatcherGuru/14028's
+    // main_frame had zero <video>). The actual <video src=…mp4> lives in the
+    // widget the landing page embeds, t.me/<channel>/<id>?embed=1&mode=tme, which
+    // loads as a SUB_FRAME. Gating on main_frame alone (the old behaviour) missed
+    // every such post. The /s/<channel>/<id> web-preview form does carry the
+    // video in its main_frame, so accepting both frame types covers both layouts;
+    // the landing main_frame simply finds nothing and returns (no duplicate, and
+    // the emitted .mp4 is parser-block-listed against the generic catcher anyway).
+    if (details.type !== "main_frame" && details.type !== "sub_frame") return;
     const post = (details.url || "").match(TELEGRAM_POST_RE);
     if (!post) return;
     if (details.tabId >= 0) cacheTabUrl(details.url, details.tabId);
@@ -148,7 +159,9 @@ function listenerTelegramPage(details) {
 
 browser.webRequest.onBeforeRequest.addListener(
     listenerTelegramPage,
-    { urls: ["*://t.me/*"], types: ["main_frame"] },
+    // sub_frame too: the post's <video> lives in the embedded ?embed=1 widget
+    // iframe, not the landing main_frame (see listenerTelegramPage's note).
+    { urls: ["*://t.me/*"], types: ["main_frame", "sub_frame"] },
     ["blocking"]
 );
 
