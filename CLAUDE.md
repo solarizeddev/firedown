@@ -1508,14 +1508,24 @@ opaque chunks + an opaque manifest blob.
   `EqualSpacingItemDecoration(list_spacing)` as the Downloads/Bookmarks/History
   lists (the rows already carry the matching 8dp card margins, so the thumbnail
   lands 16dp from the edge like Downloads — don't drop the decoration or the
-  margins won't match). Long-pressing a committed file row enters a **contextual
-  `ActionMode`** (`startSupportActionMode`): the CAB shows "N selected"
-  (`action_mode_selected`) + a delete action (`menu_action`), a tap toggles
-  selection (corner check on the thumbnail + the `SelectionStyling` primary-
-  container wash on the card, same as the shared list selection chrome), and
-  delete shows a confirmation dialog then optimistically removes the selected
-  entries (`deleteEntry` per id, `load()` resync on any failure). In-progress
-  transfer rows are not selectable; the action bar is finished in `onDestroyView`.
+  margins won't match). Multi-select uses the **same strategy as Downloads — the
+  screen's existing toolbar, NOT a contextual `ActionMode`** (the app deliberately
+  doesn't use `startSupportActionMode`). `CloudBackupListFragment` grabs the
+  SettingsActivity toolbar (`R.id.toolbar`), and while selecting: a `MenuProvider`
+  contributes the delete action (`menu_action`), the title shows "N selected"
+  (`action_mode_selected`), and the toolbar Up button + an `OnBackPressedCallback`
+  exit selection (restoring the activity's pop/finish Up behaviour on exit). The
+  per-row tick lives in the **action-button slot** like the Downloads row: the row
+  has a ⋮ `cb_action` button (opens the sheet) and the adapter swaps it for the
+  check IN THE SAME SLOT (button INVISIBLE → no reflow) + the `SelectionStyling`
+  primaryContainer wash on the card. Delete shows a confirmation dialog then
+  optimistically removes the selected entries (`deleteEntry` per id, `load()`
+  resync on any failure). In-progress transfer rows aren't selectable; selection
+  is torn down in `onDestroyView`.
+- **Per-item sheet has a rich header.** `CloudBackupItemSheetDialogFragment` shows
+  the file's preview thumbnail + name + `MIME · size · date` (the list-row facts,
+  passed as sheet args) over the Restore / Remove rows; "Remove from cloud" is
+  error-tinted (destructive). Don't revert it to a bare title + two rows.
 - **"Backing up…" snackbar has a View action, no success snackbar.** Tapping
   "Back up to cloud" (`BaseDownloadFragment`) shows a "Backing up…" snackbar whose
   **View** action deep-links to the backed-up-files list (where the live per-item

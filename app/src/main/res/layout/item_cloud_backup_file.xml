@@ -6,8 +6,10 @@
   list_download_image thumbnail (mask_image_rounded, centerCrop) on the left, and
   a vertical text column — filename (TitleSmall) + a 'MIME · size · date' meta
   line (the mime chip uses MimePrimaryLabel and carries its own trailing ' · ',
-  exactly like Downloads). There is no action button: the whole row is clickable
-  and opens the per-item bottom sheet (Restore / Remove).
+  exactly like Downloads). The right edge holds a ⋮ action button that opens the
+  per-item bottom sheet (Restore / Remove); in multi-select the adapter swaps it
+  for the selection check IN THE SAME SLOT (button INVISIBLE, check VISIBLE) so the
+  row never reflows — identical to the Downloads list selection chrome.
 -->
 <com.google.android.material.card.MaterialCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
@@ -45,18 +47,30 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <!-- Multi-select check, overlaying the thumbnail's top-left corner; GONE
-             outside action mode. The card also takes a tonal wash when selected
-             (set in the adapter), the primary selection signal. -->
+        <!-- Action button (⋮): opens the per-item sheet; the adapter swaps it for
+             the selection check in multi-select. -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/cb_action"
+            style="@style/Theme.FireDown.More.Button"
+            app:icon="@drawable/ic_baseline_more_vert_24"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <!-- Selection check — sits in the SAME slot as the action button (the
+             adapter flips them on the multi-select toggle), so the row geometry is
+             stable. GONE outside selection; the card also takes a tonal wash when
+             selected (set in the adapter). -->
         <androidx.appcompat.widget.AppCompatImageView
             android:id="@+id/cb_selected"
-            android:layout_width="22dp"
-            android:layout_height="22dp"
-            android:layout_margin="3dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:contentDescription="@null"
             android:visibility="gone"
-            app:layout_constraintStart_toStartOf="@id/cb_thumb"
-            app:layout_constraintTop_toTopOf="@id/cb_thumb"
+            app:layout_constraintBottom_toBottomOf="@id/cb_action"
+            app:layout_constraintEnd_toEndOf="@id/cb_action"
+            app:layout_constraintStart_toStartOf="@id/cb_action"
+            app:layout_constraintTop_toTopOf="@id/cb_action"
             app:srcCompat="@drawable/ic_baseline_check_circle_24"
             app:tint="?attr/colorPrimary" />
 
@@ -67,7 +81,7 @@
             android:paddingStart="@dimen/list_margin"
             android:paddingEnd="0dp"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/cb_action"
             app:layout_constraintStart_toEndOf="@id/cb_thumb"
             app:layout_constraintTop_toTopOf="parent">
 

@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Per-item bottom sheet for a backed-up file (Restore / Remove). Drag handle +
-  the file name header + two M3 56dp option rows, matching the Downloads options
-  sheet styling (Firedown.Widget.DialogOption).
+  Per-item bottom sheet for a backed-up file. Drag handle + a rich header (the
+  file's preview thumbnail + name + 'MIME · size · date', mirroring the list row)
+  + a divider + two M3 56dp option rows. "Remove from cloud" is error-tinted
+  (destructive), unlike the neutral "Restore".
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
@@ -12,30 +14,73 @@
 
     <include layout="@layout/dialog_drag_handle" />
 
-    <TextView
-        android:id="@+id/cb_sheet_title"
-        style="@style/TextAppearance.Material3.TitleMedium"
+    <!-- Header: thumbnail + name + meta, like a list row. -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:ellipsize="end"
-        android:maxLines="1"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
         android:paddingHorizontal="16dp"
         android:paddingTop="14dp"
-        android:paddingBottom="6dp"
-        android:textColor="?attr/colorOnSurface" />
+        android:paddingBottom="14dp">
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/cb_sheet_thumb"
+            android:layout_width="@dimen/list_download_image_width"
+            android:layout_height="@dimen/list_download_image_height"
+            android:background="@drawable/mask_image_rounded"
+            android:contentDescription="@null"
+            android:outlineProvider="background"
+            android:scaleType="centerCrop" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/cb_sheet_title"
+                style="@style/TextAppearance.Material3.TitleMedium"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="?attr/colorOnSurface" />
+
+            <TextView
+                android:id="@+id/cb_sheet_meta"
+                style="@style/TextAppearance.Material3.BodySmall"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="?attr/colorOnSurfaceVariant" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginBottom="4dp"
+        android:background="?attr/colorOutlineVariant" />
 
     <TextView
         android:id="@+id/cb_sheet_restore"
         style="@style/Firedown.Widget.DialogOption"
         android:text="@string/cloud_backup_item_restore"
-        app:drawableStartCompat="@drawable/settings_backup_restore_24"
-        xmlns:app="http://schemas.android.com/apk/res-auto" />
+        app:drawableStartCompat="@drawable/settings_backup_restore_24" />
 
     <TextView
         android:id="@+id/cb_sheet_remove"
         style="@style/Firedown.Widget.DialogOption"
         android:text="@string/cloud_backup_item_remove"
+        android:textColor="?attr/colorError"
         app:drawableStartCompat="@drawable/ic_baseline_delete_24"
-        xmlns:app="http://schemas.android.com/apk/res-auto" />
+        app:drawableTint="?attr/colorError" />
 
 </LinearLayout>

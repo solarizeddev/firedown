@@ -3,16 +3,18 @@ package com.solarized.firedown.settings;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.view.ActionMode;
+import androidx.appcompat.widget.Toolbar;
 import androidx.core.graphics.Insets;
+import androidx.core.view.MenuProvider;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
@@ -76,8 +78,10 @@ public class CloudBackupListFragment extends Fragment
     private boolean mLoading = true;
     /** True while any backup/restore transfer is running. */
     private boolean mTransferActive;
-    /** Non-null while multi-select (the contextual action bar) is active. */
-    private ActionMode mActionMode;
+    /** True while multi-select is active (drives the toolbar title/menu). */
+    private boolean mSelectionMode;
+    private Toolbar mToolbar;
+    private OnBackPressedCallback mBackCallback;
 
     @Nullable
     @Override
@@ -112,6 +116,38 @@ public class CloudBackupListFragment extends Fragment
             return WindowInsetsCompat.CONSUMED;
         });
 
+        // The screen's toolbar drives the selection chrome (Downloads strategy).
+        mToolbar = requireActivity().findViewById(R.id.toolbar);
+
+        // Delete action, contributed to the toolbar only while selecting.
+        requireActivity().addMenuProvider(new MenuProvider() {
+            @Override
+            public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
+                if (mSelectionMode) {
+                    inflater.inflate(R.menu.menu_action, menu);
+                }
+            }
+
+            @Override
+            public boolean onMenuItemSelected(@NonNull MenuItem item) {
+                if (mSelectionMode && item.getItemId() == R.id.action_delete) {
+                    confirmDeleteSelected();
+                    return true;
+                }
+                return false;
+            }
+        }, getViewLifecycleOwner());
+
+        // System Back exits selection first (disabled until selecting).
+        mBackCallback = new OnBackPressedCallback(false) {
+            @Override
+            public void handleOnBackPressed() {
+                exitSelection();
+            }
+        };
+        requireActivity().getOnBackPressedDispatcher()
+                .addCallback(getViewLifecycleOwner(), mBackCallback);
+
         observeSheetResult();
         observeTransfers();
         load();
@@ -119,10 +155,8 @@ public class CloudBackupListFragment extends Fragment
 
     @Override
     public void onDestroyView() {
-        // Don't leave the contextual action bar up if the screen is torn down.
-        if (mActionMode != null) {
-            mActionMode.finish();
-        }
+        // Restore the toolbar (title + Up behaviour) if we leave mid-selection.
+        exitSelection();
         super.onDestroyView();
     }
 
@@ -261,70 +295,80 @@ public class CloudBackupListFragment extends Fragment
     @Override
     public void onItemClick(VaultEntry entry) {
         // In multi-select a tap toggles selection instead of opening the sheet.
-        if (mActionMode != null) {
+        if (mSelectionMode) {
             mAdapter.toggleSelected(entry.objectId);
-            refreshActionMode();
+            refreshSelection();
             return;
         }
         Bundle args = new Bundle();
         args.putString(CloudBackupItemSheetDialogFragment.ARG_OBJECT_ID, entry.objectId);
         args.putString(CloudBackupItemSheetDialogFragment.ARG_NAME, entry.name);
+        args.putString(CloudBackupItemSheetDialogFragment.ARG_MIME, entry.mime);
+        args.putLong(CloudBackupItemSheetDialogFragment.ARG_SIZE, entry.size);
+        args.putLong(CloudBackupItemSheetDialogFragment.ARG_DOWNLOADED_AT, entry.downloadedAt);
+        args.putString(CloudBackupItemSheetDialogFragment.ARG_THUMB, entry.thumb);
         NavigationUtils.navigateSafe(mNavController,
                 R.id.action_cloud_backup_files_to_item_sheet, args);
     }
 
     @Override
     public void onItemLongClick(VaultEntry entry) {
-        if (mActionMode == null) {
-            mActionMode = ((AppCompatActivity) requireActivity())
-                    .startSupportActionMode(mActionModeCallback);
-            mAdapter.setActionMode(true);
+        if (!mSelectionMode) {
+            enterSelection();
         }
         mAdapter.toggleSelected(entry.objectId);
-        refreshActionMode();
+        refreshSelection();
     }
 
-    /** Updates the "N selected" title, or finishes action mode when the last
-     *  selection is cleared. */
-    private void refreshActionMode() {
-        if (mActionMode == null) {
+    // ---- multi-select via the existing toolbar (the Downloads strategy, NOT a
+    //      contextual ActionMode): the screen toolbar shows "N selected" + a
+    //      delete action while selecting, and its Up button / system Back exit
+    //      selection instead of leaving the screen. ----
+
+    private void enterSelection() {
+        mSelectionMode = true;
+        mAdapter.setActionMode(true);
+        if (mBackCallback != null) {
+            mBackCallback.setEnabled(true);
+        }
+        if (mToolbar != null) {
+            mToolbar.setNavigationOnClickListener(v -> exitSelection());
+        }
+        requireActivity().invalidateOptionsMenu(); // surface the delete action
+    }
+
+    private void exitSelection() {
+        if (!mSelectionMode) {
             return;
         }
+        mSelectionMode = false;
+        mAdapter.setActionMode(false);
+        if (mBackCallback != null) {
+            mBackCallback.setEnabled(false);
+        }
+        if (mToolbar != null) {
+            mToolbar.setTitle(R.string.cloud_backup_files_title);
+            // Restore the activity's Up behaviour (pop, or finish at the root).
+            mToolbar.setNavigationOnClickListener(v -> {
+                if (!mNavController.popBackStack()) {
+                    requireActivity().finish();
+                }
+            });
+        }
+        requireActivity().invalidateOptionsMenu();
+    }
+
+    /** Updates the "N selected" title, or exits selection when none remain. */
+    private void refreshSelection() {
         int n = mAdapter.getSelectedCount();
         if (n == 0) {
-            mActionMode.finish();
+            exitSelection();
             return;
         }
-        mActionMode.setTitle(getString(R.string.action_mode_selected, n));
+        if (mToolbar != null) {
+            mToolbar.setTitle(getString(R.string.action_mode_selected, n));
+        }
     }
-
-    private final ActionMode.Callback mActionModeCallback = new ActionMode.Callback() {
-        @Override
-        public boolean onCreateActionMode(ActionMode mode, Menu menu) {
-            mode.getMenuInflater().inflate(R.menu.menu_action, menu);
-            return true;
-        }
-
-        @Override
-        public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
-            return false;
-        }
-
-        @Override
-        public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
-            if (item.getItemId() == R.id.action_delete) {
-                confirmDeleteSelected();
-                return true;
-            }
-            return false;
-        }
-
-        @Override
-        public void onDestroyActionMode(ActionMode mode) {
-            mActionMode = null;
-            mAdapter.setActionMode(false);
-        }
-    };
 
     /** Confirms then removes every selected file from the cloud (optimistically). */
     private void confirmDeleteSelected() {
@@ -349,9 +393,7 @@ public class CloudBackupListFragment extends Fragment
                 targets.add(e);
             }
         }
-        if (mActionMode != null) {
-            mActionMode.finish();
-        }
+        exitSelection();
         if (targets.isEmpty()) {
             return;
         }

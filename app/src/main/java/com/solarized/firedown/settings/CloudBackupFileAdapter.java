@@ -265,6 +265,7 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         private final MaterialCardView card;
         private final ImageView thumb;
         private final ImageView check;
+        private final View action;
         private final TextView name;
         private final TextView mime;
         private final TextView size;
@@ -276,16 +277,19 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             card = (MaterialCardView) itemView;
             thumb = itemView.findViewById(R.id.cb_thumb);
             check = itemView.findViewById(R.id.cb_selected);
+            action = itemView.findViewById(R.id.cb_action);
             name = itemView.findViewById(R.id.cb_name);
             mime = itemView.findViewById(R.id.cb_mime);
             size = itemView.findViewById(R.id.cb_size);
             date = itemView.findViewById(R.id.cb_date);
             thumb.setClipToOutline(true);
-            itemView.setOnClickListener(v -> {
+            View.OnClickListener open = v -> {
                 if (listener != null && current != null) {
                     listener.onItemClick(current);
                 }
-            });
+            };
+            itemView.setOnClickListener(open);
+            action.setOnClickListener(open); // the ⋮ opens the same sheet
             itemView.setOnLongClickListener(v -> {
                 if (listener != null && current != null) {
                     listener.onItemLongClick(current);
@@ -310,10 +314,12 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             }
             bindThumb(thumb, ctx, entry.thumb != null ? entry.thumb : resolvedThumb, entry.mime);
 
-            // Selection chrome: a corner check on the thumbnail + a tonal wash on
-            // the card (the same primaryContainer@20% wash the Downloads/History
-            // rows use — SelectionStyling).
+            // Selection chrome (Downloads parity): the check replaces the ⋮ action
+            // button IN THE SAME SLOT (button INVISIBLE so the slot width holds and
+            // the row never reflows) + the SelectionStyling primaryContainer@20%
+            // wash on the card.
             if (actionMode) {
+                action.setVisibility(View.INVISIBLE);
                 check.setVisibility(View.VISIBLE);
                 check.setImageResource(selected
                         ? R.drawable.ic_baseline_check_circle_24
@@ -323,6 +329,7 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                                 ctx, com.google.android.material.R.attr.colorSurface)
                         : Color.TRANSPARENT);
             } else {
+                action.setVisibility(View.VISIBLE);
                 check.setVisibility(View.GONE);
                 card.setCardBackgroundColor(Color.TRANSPARENT);
             }
