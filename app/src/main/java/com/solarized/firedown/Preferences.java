@@ -87,6 +87,11 @@ public class Preferences {
      *  BYO-backend picker (a configurable/self-hosted backend is a downloads-vault
      *  concern, not a free-bookmarks one). See {@code SyncManager#backendUrl}. */
     public static final String SYNC_DEFAULT_BACKEND = "https://api.firedown.app";
+    /** The hosted storage (encrypted downloads-vault) backend base URL. Distinct
+     *  service from bookmark sync, same recovery-code-derived identity. Unlike
+     *  bookmarks this IS a paid/vault concern, so a BYO-backend picker is allowed
+     *  here later; this is just the default. */
+    public static final String STORAGE_DEFAULT_BACKEND = "https://storage.firedown.app";
     /** Epoch millis of the last successful sync (0 = never). */
     public static final String SYNC_LAST_SYNCED_AT = "com.solarized.firedown.preferences.sync.last.synced.at";
     /** Last server document version observed (status display). */

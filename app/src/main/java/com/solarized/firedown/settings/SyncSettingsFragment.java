@@ -25,6 +25,7 @@ import androidx.core.content.ContextCompat;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Observer;
 import androidx.preference.Preference;
+import androidx.preference.PreferenceScreen;
 import androidx.preference.SwitchPreferenceCompat;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
@@ -33,10 +34,12 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
 import com.solarized.firedown.AppLock;
+import com.solarized.firedown.BuildConfig;
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
 import com.solarized.firedown.sync.SyncManager;
 import com.solarized.firedown.sync.SyncWorker;
+import com.solarized.firedown.sync.VaultSmokeTest;
 import com.solarized.firedown.utils.NavigationUtils;
 
 import java.io.OutputStream;
@@ -46,6 +49,7 @@ import java.util.UUID;
 import javax.inject.Inject;
 
 import dagger.hilt.android.AndroidEntryPoint;
+import okhttp3.OkHttpClient;
 
 /**
  * Bookmark-sync settings sub-screen: enable/disable, show the recovery code,
@@ -73,6 +77,10 @@ public class SyncSettingsFragment extends BasePreferenceFragment
 
     @Inject
     AppLock mAppLock;
+
+    /** Shared OkHttp client — used only by the debug vault smoke test below. */
+    @Inject
+    OkHttpClient mHttpClient;
 
     private SwitchPreferenceCompat mEnableSwitch;
     private Preference mHelp;
@@ -158,6 +166,54 @@ public class SyncSettingsFragment extends BasePreferenceFragment
 
         tintIcons();
         updateState();
+        addVaultSmokeTestRow();
+    }
+
+    /**
+     * Debug-only row that runs the encrypted-storage vault round-trip against the
+     * live {@code storage.firedown.app} server, reusing the SAME recovery code the
+     * bookmark sync stores (so the vault account is the same identity). Never added
+     * in a release build. There is no real vault UI yet; this is the on-device
+     * smoke test for the storage client before that exists.
+     */
+    private void addVaultSmokeTestRow() {
+        if (!BuildConfig.DEBUG) {
+            return;
+        }
+        PreferenceScreen screen = getPreferenceScreen();
+        if (screen == null) {
+            return;
+        }
+        Preference row = new Preference(requireContext());
+        row.setKey("debug.vault.smoke");
+        row.setPersistent(false);
+        row.setTitle("Debug: test storage vault");
+        row.setSummary("Round-trip a file through storage.firedown.app");
+        row.setOnPreferenceClickListener(pref -> {
+            runVaultSmokeTest(pref);
+            return true;
+        });
+        screen.addPreference(row);
+    }
+
+    private void runVaultSmokeTest(Preference row) {
+        row.setEnabled(false);
+        row.setSummary("Running…");
+        snackbar("Vault smoke test started…");
+        Context appContext = requireContext().getApplicationContext();
+        Handler main = new Handler(Looper.getMainLooper());
+        new Thread(() -> {
+            VaultSmokeTest.Result result = VaultSmokeTest.run(
+                    appContext, mHttpClient, Preferences.STORAGE_DEFAULT_BACKEND);
+            main.post(() -> {
+                if (!isAdded()) {
+                    return;
+                }
+                row.setEnabled(true);
+                row.setSummary(result.message);
+                snackbar(result.message);
+            });
+        }, "vault-smoke-test").start();
     }
 
     @Override
