@@ -107,8 +107,11 @@ public class VaultBackupWorker extends Worker {
 
         StorageApiClient api = new StorageApiClient(mClient, Preferences.STORAGE_DEFAULT_BACKEND);
         VaultEngine engine = new VaultEngine(api, identity);
+        // A tiny preview, stored in the encrypted manifest so the list shows a
+        // thumbnail offline even after the local copy is deleted.
+        String thumb = VaultThumbnail.generate(path, mime);
         try {
-            engine.backupFile(file, mime);
+            engine.backupFile(file, mime, thumb);
         } catch (StorageApiClient.TransientException e) {
             // Network / 429 / 5xx — let WorkManager retry with backoff.
             return Result.retry();

@@ -77,7 +77,7 @@ public final class VaultSmokeTest {
                 os.write(payload);
             }
 
-            entry = engine.backupFile(temp, "application/octet-stream");
+            entry = engine.backupFile(temp, "application/octet-stream", null);
 
             // Pull the manifest back fresh and confirm our entry is present (proves
             // the OCC manifest push landed, not just the object upload).

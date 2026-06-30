@@ -115,7 +115,7 @@ public class VaultRestoreWorker extends Worker {
         StorageApiClient api = new StorageApiClient(mClient, Preferences.STORAGE_DEFAULT_BACKEND);
         VaultEngine engine = new VaultEngine(api, identity);
         VaultEntry entry = new VaultEntry(objectId, wrappedDek, name, size, mime,
-                downloadedAt, chunkCount);
+                downloadedAt, chunkCount, null); // thumb unused on restore
         try {
             engine.restoreFile(entry, dest);
         } catch (StorageApiClient.TransientException e) {

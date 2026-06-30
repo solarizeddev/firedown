@@ -60,13 +60,23 @@ public final class VaultEngine {
 
     /**
      * Encrypts {@code file} and uploads it as a new vault object, then records it
-     * in the manifest. Registers the account on demand (idempotent). Returns the
-     * created {@link VaultEntry}.
+     * in the manifest. Registers the account on demand (idempotent). {@code thumb}
+     * is a tiny base64 preview stored in the (encrypted) manifest, or null.
+     *
+     * <p><b>Dedup:</b> if this file is ALREADY backed up (same name + size), no new
+     * object is created — the existing entry is returned. So tapping "Back up to
+     * cloud" again on the same download is a no-op, not a duplicate that re-uploads
+     * and re-consumes quota.
      */
-    public VaultEntry backupFile(File file, String mime) throws IOException, GeneralSecurityException {
+    public VaultEntry backupFile(File file, String mime, String thumb)
+            throws IOException, GeneralSecurityException {
         api.register(identity); // idempotent — makes the signed requests resolvable
 
         long size = file.length();
+        VaultEntry existing = findExisting(file.getName(), size);
+        if (existing != null) {
+            return existing; // already backed up — don't duplicate the object
+        }
         int chunkCount = (int) ((size + CHUNK_SIZE - 1) / CHUNK_SIZE);
         if (chunkCount == 0) {
             chunkCount = 1; // an empty file still uploads one (empty) chunk
@@ -96,12 +106,22 @@ public final class VaultEngine {
 
             String wrappedDek = Base64.encodeToString(VaultCrypto.wrapDek(dek, storageKey), B64);
             VaultEntry entry = new VaultEntry(created.objectId, wrappedDek, file.getName(),
-                    size, mime, System.currentTimeMillis(), chunkCount);
+                    size, mime, System.currentTimeMillis(), chunkCount, thumb);
             addToManifest(entry);
             return entry;
         } finally {
             Arrays.fill(dek, (byte) 0);
         }
+    }
+
+    /** The existing manifest entry for a file (matched by name + size), or null. */
+    private VaultEntry findExisting(String name, long size) throws IOException, GeneralSecurityException {
+        for (VaultEntry e : loadManifest()) {
+            if (size == e.size && name != null && name.equals(e.name)) {
+                return e;
+            }
+        }
+        return null;
     }
 
     /**

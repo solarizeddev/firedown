@@ -1,11 +1,14 @@
 package com.solarized.firedown.settings;
 
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.text.format.DateUtils;
 import android.text.format.Formatter;
 import android.view.View;
 
 import androidx.annotation.NonNull;
+import androidx.core.graphics.drawable.RoundedBitmapDrawable;
+import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Observer;
 import androidx.preference.Preference;
@@ -22,6 +25,7 @@ import com.google.android.material.snackbar.Snackbar;
 import com.solarized.firedown.R;
 import com.solarized.firedown.sync.CloudBackupManager;
 import com.solarized.firedown.sync.VaultRestoreWorker;
+import com.solarized.firedown.sync.VaultThumbnail;
 import com.solarized.firedown.sync.model.VaultEntry;
 
 import java.util.ArrayList;
@@ -92,10 +96,11 @@ public class CloudBackupListFragment extends BasePreferenceFragment {
             screen.addPreference(placeholder(getString(R.string.cloud_backup_list_empty)));
             return;
         }
+        List<Preference> rows = new ArrayList<>(mEntries.size());
         for (VaultEntry entry : mEntries) {
             Preference row = new Preference(requireContext());
             row.setPersistent(false);
-            row.setIcon(R.drawable.cloud_done_24);
+            row.setIcon(R.drawable.cloud_done_24); // fallback glyph (tinted below)
             row.setTitle(entry.name);
             row.setSummary(summaryFor(entry));
             row.setOnPreferenceClickListener(p -> {
@@ -103,8 +108,19 @@ public class CloudBackupListFragment extends BasePreferenceFragment {
                 return true;
             });
             screen.addPreference(row);
+            rows.add(row);
         }
+        // Tint the fallback glyphs FIRST, then overlay the real thumbnails so the
+        // theme tint never colorizes a photo (tintIcons mutates the icon drawable).
         tintIcons();
+        for (int i = 0; i < mEntries.size(); i++) {
+            Bitmap bmp = VaultThumbnail.decode(mEntries.get(i).thumb);
+            if (bmp != null) {
+                RoundedBitmapDrawable d = RoundedBitmapDrawableFactory.create(getResources(), bmp);
+                d.setCornerRadius(bmp.getWidth() * 0.12f);
+                rows.get(i).setIcon(d);
+            }
+        }
     }
 
     private Preference placeholder(String text) {

@@ -14,6 +14,10 @@ package com.solarized.firedown.sync.model;
  *   <li>{@code name}/{@code mime}/{@code size}/{@code downloadedAt} — the local
  *       file's metadata, for the restore UI.</li>
  *   <li>{@code chunkCount} — how many encrypted chunks the object holds.</li>
+ *   <li>{@code thumb} — a tiny base64 JPEG preview (nullable), generated at backup
+ *       time and kept INSIDE the encrypted manifest so the list can show a
+ *       thumbnail offline, even after the local copy is deleted. The server never
+ *       sees it (the manifest is E2E-encrypted); kept small by design (~128px).</li>
  * </ul>
  */
 public final class VaultEntry {
@@ -25,9 +29,10 @@ public final class VaultEntry {
     public final String mime;
     public final long downloadedAt;
     public final int chunkCount;
+    public final String thumb;
 
     public VaultEntry(String objectId, String wrappedDek, String name, long size,
-                      String mime, long downloadedAt, int chunkCount) {
+                      String mime, long downloadedAt, int chunkCount, String thumb) {
         this.objectId = objectId;
         this.wrappedDek = wrappedDek;
         this.name = name;
@@ -35,5 +40,6 @@ public final class VaultEntry {
         this.mime = mime;
         this.downloadedAt = downloadedAt;
         this.chunkCount = chunkCount;
+        this.thumb = thumb;
     }
 }

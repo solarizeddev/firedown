@@ -40,6 +40,9 @@ public final class VaultManifest {
                 o.put("mime", e.mime == null ? JSONObject.NULL : e.mime);
                 o.put("downloadedAt", e.downloadedAt);
                 o.put("chunkCount", e.chunkCount);
+                if (e.thumb != null) {
+                    o.put("thumb", e.thumb);
+                }
                 files.put(o);
             }
             root.put("files", files);
@@ -70,7 +73,8 @@ public final class VaultManifest {
                             o.optLong("size", 0),
                             optStringOrNull(o, "mime"),
                             o.optLong("downloadedAt", 0),
-                            o.optInt("chunkCount", 1)));
+                            o.optInt("chunkCount", 1),
+                            optStringOrNull(o, "thumb")));
                 }
             }
         } catch (JSONException e) {
