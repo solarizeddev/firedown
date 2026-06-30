@@ -34,6 +34,7 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.work.Constraints;
 import androidx.work.Data;
+import androidx.work.ExistingWorkPolicy;
 import androidx.work.NetworkType;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkInfo;
@@ -428,7 +429,14 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
                 .addTag(CloudBackupManager.WORK_TAG)
                 .build();
         WorkManager wm = WorkManager.getInstance(requireContext().getApplicationContext());
-        wm.enqueue(request);
+        // UNIQUE per file (KEEP): tapping "Back up to cloud" twice in quick
+        // succession used to spawn two concurrent workers that both saw an empty
+        // manifest (the engine's name+size dedup runs against a snapshot), so both
+        // created an object → a duplicate entry. KEEP makes the second tap a no-op
+        // while the first is still running; once it finishes, a later tap re-runs
+        // and the engine's dedup collapses it to the existing entry.
+        String uniqueName = "cloud_backup:" + entity.getFilePath();
+        wm.enqueueUniqueWork(uniqueName, ExistingWorkPolicy.KEEP, request);
         showErrorSnackbar(R.string.cloud_backup_started);
 
         final LiveData<WorkInfo> live = wm.getWorkInfoByIdLiveData(request.getId());

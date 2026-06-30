@@ -59,6 +59,8 @@ public class CloudBackupListFragment extends Fragment
 
     private NavController mNavController;
     private RecyclerView mRecycler;
+    private View mEmptyView;
+    private View mEmptyImage;
     private TextView mEmpty;
     private CloudBackupFileAdapter mAdapter;
 
@@ -77,6 +79,8 @@ public class CloudBackupListFragment extends Fragment
         super.onViewCreated(view, savedInstanceState);
         mNavController = NavHostFragment.findNavController(this);
         mRecycler = view.findViewById(R.id.cb_recycler);
+        mEmptyView = view.findViewById(R.id.cb_empty_view);
+        mEmptyImage = view.findViewById(R.id.cb_empty_image);
         mEmpty = view.findViewById(R.id.cb_empty);
         mAdapter = new CloudBackupFileAdapter(this);
         mRecycler.setAdapter(mAdapter);
@@ -142,10 +146,13 @@ public class CloudBackupListFragment extends Fragment
         boolean hasItems = mAdapter != null && mAdapter.size() > 0;
         mRecycler.setVisibility(hasItems ? View.VISIBLE : View.GONE);
         if (hasItems) {
-            mEmpty.setVisibility(View.GONE);
+            mEmptyView.setVisibility(View.GONE);
             return;
         }
-        mEmpty.setVisibility(View.VISIBLE);
+        mEmptyView.setVisibility(View.VISIBLE);
+        // The illustration is the "nothing backed up yet" state; while loading,
+        // show just the text (no balloons under a transient spinner-less wait).
+        mEmptyImage.setVisibility(mLoading ? View.GONE : View.VISIBLE);
         mEmpty.setText(mLoading
                 ? R.string.cloud_backup_list_loading
                 : R.string.cloud_backup_list_empty);
@@ -172,8 +179,13 @@ public class CloudBackupListFragment extends Fragment
             if (result == null) {
                 return;
             }
+            // Consume by setting null, NOT remove(): SavedStateHandle.remove()
+            // DETACHES the cached LiveData, so this observer would stop receiving
+            // every subsequent result — the second remove/restore would silently
+            // do nothing. set(null) reuses the same LiveData and the guard above
+            // ignores the null tick.
             entry.getSavedStateHandle()
-                    .remove(CloudBackupItemSheetDialogFragment.RESULT);
+                    .set(CloudBackupItemSheetDialogFragment.RESULT, null);
             int action = result.getInt(CloudBackupItemSheetDialogFragment.RESULT_ACTION);
             String objectId = result.getString(
                     CloudBackupItemSheetDialogFragment.RESULT_OBJECT_ID);

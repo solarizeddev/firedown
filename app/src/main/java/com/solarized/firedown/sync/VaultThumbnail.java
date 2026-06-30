@@ -76,18 +76,46 @@ public final class VaultThumbnail {
         MediaMetadataRetriever mmr = new MediaMetadataRetriever();
         try {
             mmr.setDataSource(path);
-            // ~1s in, pre-scaled where the API allows, to skip a black opening frame.
+            // NEXT_SYNC at an offset = the first keyframe AT/AFTER that point, so
+            // the black opening keyframe (t=0) is skipped — CLOSEST_SYNC would snap
+            // back to it on a sparse GOP, which is what produced black previews.
+            // Same approach the list thumbnailer (GlideHelper) uses.
+            long offsetUs = videoFrameOffsetUs(mmr);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
-                Bitmap scaled = mmr.getScaledFrameAtTime(1_000_000,
-                        MediaMetadataRetriever.OPTION_CLOSEST_SYNC, MAX_DIM, MAX_DIM);
+                Bitmap scaled = mmr.getScaledFrameAtTime(offsetUs,
+                        MediaMetadataRetriever.OPTION_NEXT_SYNC, MAX_DIM, MAX_DIM);
                 if (scaled != null) {
                     return scaled;
                 }
             }
-            return mmr.getFrameAtTime(1_000_000, MediaMetadataRetriever.OPTION_CLOSEST_SYNC);
+            Bitmap frame = mmr.getFrameAtTime(offsetUs, MediaMetadataRetriever.OPTION_NEXT_SYNC);
+            if (frame != null) {
+                return frame;
+            }
+            // A short clip with no keyframe past the offset — take the head frame.
+            return mmr.getFrameAtTime(0, MediaMetadataRetriever.OPTION_CLOSEST_SYNC);
         } finally {
             releaseQuietly(mmr);
         }
+    }
+
+    /** ~3s in, but never past the clip's midpoint, so a short clip still resolves
+     *  a keyframe (and never seeks beyond the end). */
+    private static long videoFrameOffsetUs(MediaMetadataRetriever mmr) {
+        long durationMs = 0;
+        try {
+            String d = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
+            if (d != null) {
+                durationMs = Long.parseLong(d);
+            }
+        } catch (NumberFormatException ignored) {
+            // unknown duration — use the default offset
+        }
+        long defaultUs = 3_000_000L;
+        if (durationMs <= 0) {
+            return defaultUs;
+        }
+        return Math.min(defaultUs, durationMs * 1000L / 2L);
     }
 
     private static Bitmap decodeAudioArt(String path) {

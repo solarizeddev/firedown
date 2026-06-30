@@ -12,16 +12,37 @@
         android:clipToPadding="false"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
 
-    <TextView
-        android:id="@+id/cb_empty"
-        style="@style/TextAppearance.Material3.BodyLarge"
-        android:layout_width="wrap_content"
+    <!-- Empty state: illustration + message, mirroring the Downloads empty view
+         (recycler_empty_layout). The fragment toggles this group's visibility and
+         sets the message text. -->
+    <LinearLayout
+        android:id="@+id/cb_empty_view"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:gravity="center"
-        android:paddingHorizontal="32dp"
-        android:textColor="?attr/colorOnSurfaceVariant"
+        android:orientation="vertical"
         android:visibility="gone"
-        tools:text="@string/cloud_backup_list_empty" />
+        tools:visibility="visible">
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/cb_empty_image"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/empty_image_height_big"
+            android:contentDescription="@string/empty_list"
+            app:srcCompat="@drawable/ill_baloons" />
+
+        <TextView
+            android:id="@+id/cb_empty"
+            style="@style/TextAppearance.Material3.BodyLarge"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/list_spacing"
+            android:gravity="center"
+            android:paddingHorizontal="@dimen/empty_text_padding"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            tools:text="@string/cloud_backup_list_empty" />
+
+    </LinearLayout>
 
 </FrameLayout>
