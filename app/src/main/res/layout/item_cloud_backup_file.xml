@@ -66,9 +66,9 @@
                 android:textColor="?attr/colorOnSurface"
                 tools:text="The Knight Who Chose the Dawn" />
 
-            <!-- Meta line: mime label · size · date. The mime label carries its
-                 own trailing ' · ' (appended by the adapter), so it doubles as
-                 the separator — same pattern as the Downloads row. -->
+            <!-- Meta line: mime label · size. The mime label carries its own
+                 trailing ' · ' (appended by the adapter), so it doubles as the
+                 separator — same pattern as the Downloads row's mime · domain. -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -84,7 +84,7 @@
                     tools:text="VÍDEO · " />
 
                 <TextView
-                    android:id="@+id/cb_meta"
+                    android:id="@+id/cb_size"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
@@ -92,9 +92,23 @@
                     android:singleLine="true"
                     android:textColor="?attr/colorOnSurfaceVariant"
                     android:textSize="11sp"
-                    tools:text="11.6 MB · 20 may 2026" />
+                    tools:text="56 MB" />
 
             </LinearLayout>
+
+            <!-- Third line: the backed-up date — mirrors the Downloads row's
+                 status line, so a 64dp thumbnail row reads as three balanced
+                 lines instead of two centred ones with dead space. -->
+            <TextView
+                android:id="@+id/cb_date"
+                style="@style/TextAppearance.Material3.BodySmall"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:ellipsize="end"
+                android:singleLine="true"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                tools:text="2 minutes ago" />
 
         </LinearLayout>
 

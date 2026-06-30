@@ -122,7 +122,8 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<CloudBackupFile
         private final ImageView thumb;
         private final TextView name;
         private final TextView mime;
-        private final TextView meta;
+        private final TextView size;
+        private final TextView date;
         private VaultEntry current;
 
         VH(@NonNull View itemView, OnItemClickListener listener) {
@@ -130,7 +131,8 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<CloudBackupFile
             thumb = itemView.findViewById(R.id.cb_thumb);
             name = itemView.findViewById(R.id.cb_name);
             mime = itemView.findViewById(R.id.cb_mime);
-            meta = itemView.findViewById(R.id.cb_meta);
+            size = itemView.findViewById(R.id.cb_size);
+            date = itemView.findViewById(R.id.cb_date);
             // Clip the thumbnail to the rounded mask, same as the Downloads row.
             thumb.setClipToOutline(true);
             itemView.setOnClickListener(v -> {
@@ -145,7 +147,8 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<CloudBackupFile
             Context ctx = itemView.getContext();
             name.setText(entry.name);
 
-            // Mime chip ("VÍDEO · ") — same label + trailing separator as Downloads.
+            // Line 2: mime chip ("VÍDEO · ") + size — same label + trailing
+            // separator convention as the Downloads row's mime · domain.
             String mimeLabel = entry.mime != null
                     ? FileUriHelper.getLongMimeText(ctx, entry.mime) : null;
             if (TextUtils.isEmpty(mimeLabel)) {
@@ -154,7 +157,16 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<CloudBackupFile
                 mime.setVisibility(View.VISIBLE);
                 mime.setText(mimeLabel + " · ");
             }
-            meta.setText(metaFor(ctx, entry));
+            size.setText(Formatter.formatShortFileSize(ctx, entry.size));
+
+            // Line 3: the backed-up date (relative), or hidden when unknown.
+            if (entry.downloadedAt > 0) {
+                date.setVisibility(View.VISIBLE);
+                date.setText(DateUtils.getRelativeTimeSpanString(entry.downloadedAt,
+                        System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS));
+            } else {
+                date.setVisibility(View.GONE);
+            }
 
             // Stored preview first, then a display-only backfill from the local
             // file, then the app's mime-type fallback card.
@@ -166,16 +178,6 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<CloudBackupFile
                 String mimeType = entry.mime != null ? entry.mime : "application/octet-stream";
                 thumb.setImageDrawable(MimeTypeThumbnail.generateDrawable(ctx, mimeType, true));
             }
-        }
-
-        private static String metaFor(Context ctx, VaultEntry entry) {
-            String size = Formatter.formatShortFileSize(ctx, entry.size);
-            if (entry.downloadedAt <= 0) {
-                return size;
-            }
-            CharSequence date = DateUtils.getRelativeTimeSpanString(
-                    entry.downloadedAt, System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS);
-            return ctx.getString(R.string.cloud_backup_item_summary, size, date);
         }
     }
 }

@@ -62,10 +62,13 @@ public class CloudBackupListFragment extends Fragment
     private View mEmptyView;
     private View mEmptyImage;
     private TextView mEmpty;
+    private View mProgressBanner;
     private CloudBackupFileAdapter mAdapter;
 
     private final List<VaultEntry> mEntries = new ArrayList<>();
     private boolean mLoading = true;
+    /** True while a backup/restore transfer is running (drives the banner). */
+    private boolean mTransferActive;
 
     @Nullable
     @Override
@@ -82,6 +85,7 @@ public class CloudBackupListFragment extends Fragment
         mEmptyView = view.findViewById(R.id.cb_empty_view);
         mEmptyImage = view.findViewById(R.id.cb_empty_image);
         mEmpty = view.findViewById(R.id.cb_empty);
+        mProgressBanner = view.findViewById(R.id.cb_progress_banner);
         mAdapter = new CloudBackupFileAdapter(this);
         mRecycler.setAdapter(mAdapter);
 
@@ -97,7 +101,40 @@ public class CloudBackupListFragment extends Fragment
         });
 
         observeSheetResult();
+        observeTransfers();
         load();
+    }
+
+    /**
+     * Reflects a running backup/restore: shows the in-progress banner (a file
+     * isn't in the manifest until its upload finishes, so the list would otherwise
+     * look idle mid-upload) and reloads the list when a transfer COMPLETES so the
+     * newly-backed-up file appears without re-entering the screen.
+     */
+    private void observeTransfers() {
+        WorkManager.getInstance(requireContext().getApplicationContext())
+                .getWorkInfosByTagLiveData(CloudBackupManager.WORK_TAG)
+                .observe(getViewLifecycleOwner(), infos -> {
+                    boolean active = false;
+                    if (infos != null) {
+                        for (WorkInfo wi : infos) {
+                            WorkInfo.State s = wi.getState();
+                            if (s == WorkInfo.State.RUNNING || s == WorkInfo.State.ENQUEUED) {
+                                active = true;
+                                break;
+                            }
+                        }
+                    }
+                    boolean justFinished = mTransferActive && !active;
+                    mTransferActive = active;
+                    if (mProgressBanner != null) {
+                        mProgressBanner.setVisibility(active ? View.VISIBLE : View.GONE);
+                    }
+                    render();
+                    if (justFinished) {
+                        load(); // a transfer completed — pull in the new entry
+                    }
+                });
     }
 
     private void load() {
@@ -145,7 +182,10 @@ public class CloudBackupListFragment extends Fragment
     private void render() {
         boolean hasItems = mAdapter != null && mAdapter.size() > 0;
         mRecycler.setVisibility(hasItems ? View.VISIBLE : View.GONE);
-        if (hasItems) {
+        // While a transfer runs the banner carries the state — don't also paint the
+        // "nothing backed up yet" illustration over it (e.g. during the first
+        // upload, when the manifest is still empty).
+        if (hasItems || mTransferActive) {
             mEmptyView.setVisibility(View.GONE);
             return;
         }

@@ -1475,13 +1475,25 @@ opaque chunks + an opaque manifest blob.
   `fragment_download_item.xml`: `MaterialCardView` root (transparent until
   pressed, no stroke/elevation), 8dp-inset `ConstraintLayout`, the same
   `list_download_image` thumbnail (`mask_image_rounded` + `centerCrop` +
-  `setClipToOutline(true)`) and a `MIME · size · date` meta line (mime chip =
-  `MimePrimaryLabel` via `FileUriHelper.getLongMimeText`, carrying its own
-  trailing `· `). The **empty state mirrors `recycler_empty_layout` exactly** —
-  same centered ConstraintLayout (illustration `ill_baloons` bottom at the
-  vertical centre, message below) and same text styling (`sans-serif-medium`,
-  `colorOnSurface`); don't substitute a `TextAppearance` style /
-  `colorOnSurfaceVariant`.
+  `setClipToOutline(true)`) and **three** text lines — name / `MIME · size` /
+  relative date (mime chip = `MimePrimaryLabel` via `FileUriHelper.getLongMimeText`,
+  carrying its own trailing `· `). Three lines on purpose: two lines next to the
+  64dp thumbnail leave dead space above/below the centred text — the third (date)
+  line fills the row like the Downloads status line does. The **empty state
+  mirrors `recycler_empty_layout` exactly** — same centered ConstraintLayout
+  (illustration `ill_baloons` bottom at the vertical centre, message below) and
+  same text styling (`sans-serif-medium`, `colorOnSurface`); don't substitute a
+  `TextAppearance` style / `colorOnSurfaceVariant`.
+
+- **In-progress banner + auto-refresh.** A file isn't in the manifest until its
+  upload completes, so the list would look idle mid-upload. `CloudBackupListFragment`
+  observes `WorkManager.getWorkInfosByTagLiveData(WORK_TAG)`: while a transfer
+  RUNNING/ENQUEUED it shows a top banner (`cb_progress_banner`, an indeterminate
+  `LinearProgressIndicator` + "Transfer in progress…"), and on the active→idle
+  transition it `load()`s the manifest again so the just-uploaded file appears
+  without re-entering the screen. `render()` suppresses the empty illustration
+  while a transfer is active (the banner carries the state, e.g. during the first
+  upload when the manifest is still empty).
 
 - **Status shows a progress bar.** `TransferStatusPreference` reveals an
   indeterminate `LinearProgressIndicator` in its widget slot while a transfer runs
