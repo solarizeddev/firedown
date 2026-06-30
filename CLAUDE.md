@@ -1383,6 +1383,129 @@ chip shown when the address bar gains focus) — both from one on-device episode
   history/suggestion path. A deliberate long-press paste still works — the cap
   only stops the app from *offering* the blob.
 
+## Cloud Backup — encrypted per-file backup to `storage.firedown.app`
+
+The optional **Cloud Backup** feature backs a finished download up to the
+encrypted-storage service (`storage.firedown.app`, the `firedown-api`
+`storage-api` binary). It is a SEPARATE feature from the local **Safe Folder**
+(`file_safe`, which never leaves the device): user-facing copy always says
+"Cloud Backup", internal classes keep the `Vault*` names
+(`VaultEngine`/`VaultBackupWorker`/`VaultRestoreWorker`/`VaultThumbnail`/
+`VaultManifest`/`VaultEntry`, facade `CloudBackupManager`). **The server NEVER
+sees plaintext** — same cardinal rule as the bookmark sync: bytes are
+client-encrypted (`VaultCrypto`, per-file AES-256-GCM DEK wrapped under the
+storage master key) and uploaded phone↔R2 via presigned URLs; the server stores
+opaque chunks + an opaque manifest blob.
+
+- **Shared identity, no on/off switch.** Cloud Backup reuses the bookmark-sync
+  **recovery code** (`SyncSecrets` → `SyncIdentity`) — one code derives the same
+  account on every service, with a distinct storage content key (HKDF
+  `firedown/storage/v1`). It is **action-driven**: a finished download's options
+  sheet ("Back up to cloud") sets it up on demand (minting + showing the code
+  first if none exists). `Preferences.CLOUD_BACKUP_ENABLED` only tracks "has
+  data, keep the shared code" so signing out of one feature can't strand the
+  other (symmetric wipes in `SyncManager.disable`/`CloudBackupManager
+  .deleteAllData`).
+
+- **The encrypted manifest is the file index** (`VaultManifest`, OCC-versioned,
+  16 MiB server cap). One `VaultEntry` per backed-up file: objectId, wrapped DEK,
+  name/mime/size/downloadedAt/chunkCount, **plus a tiny base64 JPEG `thumb`**.
+  The manifest is gzip+GCM-encrypted (`BookmarkBlob`) before upload, so **the
+  thumbnails DO travel to `storage.firedown.app` but only inside the E2E-encrypted
+  blob — the server can't read them.** Kept small by design (`VaultThumbnail`:
+  ≤160px longest side, JPEG q60) so a manifest of many files stays under the cap
+  (~a few KB each → thousands of files fit). This is why a preview can show
+  **offline, even after the local copy is deleted** (the whole point of backing
+  up). `bookmarks-cipher.json`-style encryption details are client-only; the
+  server implements none of it.
+
+- **Thumbnails reuse the Downloads list's EXACT frame.** `VaultThumbnail.generate`
+  takes a `frameUs` and grabs that video frame with `OPTION_NEXT_SYNC` (first
+  keyframe at/after the offset — skips the black `t=0` keyframe that
+  `CLOSEST_SYNC` snaps back to). The frame is `GlideHelper.thumbnailFrameUs(entity)`
+  — the SAME user-chosen/black-skipping position (µs) the list renders — fed
+  through `VaultBackupWorker.KEY_FRAME_US` on the backup path and read straight
+  from the entity on the display backfill. So the stored preview matches the list
+  thumbnail precisely; don't revert to a guessed fixed offset (that's the
+  fallback when no entity frame is available). Image → decoded bitmap, audio →
+  embedded cover art, else null → the row shows the `MimeTypeThumbnail` fallback.
+
+- **Display-time thumbnail backfill** (`CloudBackupManager.resolveLocalThumb`).
+  Entries backed up before previews existed carry no `thumb`. The list fragment
+  asks the manager to regenerate one from the **local copy if still present**
+  (`DownloadDao.findByNameSize(name, size)` → file path → `VaultThumbnail`), on
+  the heavy executor, and slots it into the row (`CloudBackupFileAdapter
+  .setResolvedThumb`). **Display-only — the manifest is NOT re-written** (no
+  re-upload, no OCC churn); the preview persists only once the file is backed up
+  again. Files no longer on disk keep the mime glyph.
+
+- **No duplicate backups.** Two quick "Back up to cloud" taps used to spawn two
+  concurrent `VaultBackupWorker`s that both saw an empty manifest (the engine's
+  `findExisting` name+size dedup runs against a *pulled snapshot*), so each
+  created its own object → a duplicate entry. The enqueue is
+  **`enqueueUniqueWork(KEEP)` keyed by the file path** (`BaseDownloadFragment`):
+  the 2nd tap is a no-op while the 1st runs; a later tap re-runs and the engine's
+  dedup collapses it. `VaultEngine.backupFile` also **backfills a missing `thumb`
+  into the existing entry** (cheap manifest re-write, no re-upload) when re-backing
+  up a file that predates previews.
+
+- **Restore skips a file already in Downloads.** `VaultRestoreWorker` probes
+  `findByNameSize` (honoured only when the local file still **exists** on disk)
+  and returns a no-op success with `KEY_ALREADY_PRESENT` instead of writing a
+  uniquely-named duplicate; the list shows "Already in your downloads". Otherwise
+  it restores into `Download/Firedown` (unique destination) and inserts a FINISHED
+  `DownloadEntity` via the same repository every download uses.
+
+- **`SavedStateHandle.remove(key)` DETACHES the cached LiveData — consume with
+  `set(key, null)` instead.** The per-item sheet (`CloudBackupItemSheetDialogFragment`)
+  returns Restore/Remove through the `NavBackStackEntry` saved-state handle. The
+  list fragment's observer **must not** consume the result with `remove(RESULT)`:
+  that detaches the `MutableLiveData` the handle caches for that key, so the
+  observer stops receiving EVERY subsequent result (symptom: the 2nd remove/restore
+  silently does nothing). Consume with `getSavedStateHandle().set(RESULT, null)`
+  and guard the null tick — the same LiveData stays attached.
+
+- **Optimistic remove** (`CloudBackupListFragment.removeOptimistic`): the row
+  disappears immediately; the slow server delete runs in the background and only
+  the failure path re-inserts the row (error snackbar). Closes the ~10s "nothing
+  happens then a snackbar" gap.
+
+- **UI parity with Downloads.** The backed-up-files row
+  (`item_cloud_backup_file.xml` + `CloudBackupFileAdapter`) faithfully mirrors
+  `fragment_download_item.xml`: `MaterialCardView` root (transparent until
+  pressed, no stroke/elevation), 8dp-inset `ConstraintLayout`, the same
+  `list_download_image` thumbnail (`mask_image_rounded` + `centerCrop` +
+  `setClipToOutline(true)`) and a `MIME · size · date` meta line (mime chip =
+  `MimePrimaryLabel` via `FileUriHelper.getLongMimeText`, carrying its own
+  trailing `· `). The **empty state mirrors `recycler_empty_layout` exactly** —
+  same centered ConstraintLayout (illustration `ill_baloons` bottom at the
+  vertical centre, message below) and same text styling (`sans-serif-medium`,
+  `colorOnSurface`); don't substitute a `TextAppearance` style /
+  `colorOnSurfaceVariant`.
+
+- **Status shows a progress bar.** `TransferStatusPreference` (the Cloud Backup
+  status row) reveals an indeterminate `LinearProgressIndicator` in its widget
+  slot while a transfer runs (transfers are indeterminate — the workers post an
+  indeterminate notification), driven by the existing `CloudBackupManager.WORK_TAG`
+  WorkManager observer.
+
+- **Deep-links + back-nav.** The upload/restore notification opens the Cloud
+  Backup status screen (`SettingsActivity.EXTRA_OPEN_CLOUD_BACKUP`, Back → settings
+  list). The **Downloads toolbar overflow** opens the backed-up-files list
+  (`EXTRA_OPEN_CLOUD_BACKUP_FILES`) and replaces the settings list on the back
+  stack (`popUpTo settings inclusive`), so Back returns to **Downloads** (the
+  caller), not into the settings tree. A "Sync" row in the home + browser popups
+  opens the unified Sync screen (`EXTRA_OPEN_SYNC`).
+
+- **FGS type.** Both workers run as `dataSync` foreground workers; the app's
+  manifest merges `foregroundServiceType="dataSync"` onto WorkManager's
+  `SystemForegroundService` (without it, `setForegroundAsync` crashes with
+  "foregroundServiceType 0x… is not a subset of 0x0").
+
+Back-end contract + server internals live in the `firedown-api` repo
+(`docs/cloud-storage-spec.md`, `internal/storage/*`); don't add server/deploy
+files to this Android repo.
+
 ## Browser chrome, pull-to-refresh & session recovery (Fenix-parity invariants)
 
 The dynamic top/bottom bars, pull-to-refresh, and crash/kill recovery were
