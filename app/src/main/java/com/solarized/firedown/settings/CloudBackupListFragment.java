@@ -42,7 +42,9 @@ import com.solarized.firedown.ui.LCEERecyclerView;
 import com.solarized.firedown.utils.NavigationUtils;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import javax.inject.Inject;
@@ -174,6 +176,7 @@ public class CloudBackupListFragment extends Fragment
                 .observe(getViewLifecycleOwner(), infos -> {
                     List<CloudBackupFileAdapter.Transfer> transfers = new ArrayList<>();
                     boolean active = false;
+                    Set<String> seenNames = new HashSet<>();
                     if (infos != null) {
                         for (WorkInfo wi : infos) {
                             WorkInfo.State s = wi.getState();
@@ -189,6 +192,11 @@ public class CloudBackupListFragment extends Fragment
                             // publish) — no row; a restore already has its committed
                             // row, and a re-backup of an existing file likewise.
                             if (name == null || isCommitted(name)) {
+                                continue;
+                            }
+                            // One row per file name — collapse any transient
+                            // multi-worker state into a single transfer row.
+                            if (!seenNames.add(name)) {
                                 continue;
                             }
                             transfers.add(new CloudBackupFileAdapter.Transfer(

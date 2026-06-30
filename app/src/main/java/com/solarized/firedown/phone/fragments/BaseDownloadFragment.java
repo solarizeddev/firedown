@@ -432,13 +432,17 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
                 .addTag(CloudBackupManager.WORK_TAG)
                 .build();
         WorkManager wm = WorkManager.getInstance(requireContext().getApplicationContext());
-        // UNIQUE per file (KEEP): tapping "Back up to cloud" twice in quick
-        // succession used to spawn two concurrent workers that both saw an empty
-        // manifest (the engine's name+size dedup runs against a snapshot), so both
-        // created an object → a duplicate entry. KEEP makes the second tap a no-op
-        // while the first is still running; once it finishes, a later tap re-runs
-        // and the engine's dedup collapses it to the existing entry.
-        String uniqueName = "cloud_backup:" + entity.getFilePath();
+        // UNIQUE per file CONTENT (name + size), KEEP. Keyed on content — NOT the
+        // path — because the SAME video downloaded twice lands at two different
+        // paths with the same name+size; a path key let both run concurrently
+        // (4 workers all uploading the same 665 MB file were seen on-device,
+        // spamming "setProgressAsync must complete before Result" and making cancel
+        // useless). name+size matches the engine's own dedup key, so KEEP collapses
+        // every backup of the same content to ONE worker; a later tap after it
+        // finishes re-runs and the engine's commit-time dedup returns the existing
+        // entry. (Two genuinely different files with an identical name+size is the
+        // accepted rare collision — same trade-off the engine dedup already makes.)
+        String uniqueName = "cloud_backup:" + entity.getFileName() + ":" + entity.getFileSize();
         wm.enqueueUniqueWork(uniqueName, ExistingWorkPolicy.KEEP, request);
         // "Backing up…" with a View action that opens the backed-up files list
         // (where the live per-item progress shows). No success snackbar — the list

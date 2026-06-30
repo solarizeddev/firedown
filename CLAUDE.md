@@ -1440,17 +1440,24 @@ opaque chunks + an opaque manifest blob.
   again. Files no longer on disk keep the mime glyph.
 
 - **No duplicate backups — two layers.** (1) The enqueue is
-  **`enqueueUniqueWork(KEEP)` keyed by the file path** (`BaseDownloadFragment`):
-  two quick taps on the SAME download don't spawn concurrent workers. (2) Because
-  the start-time `findExisting` name+size check runs against a *pulled snapshot*
-  (and KEEP only covers the same path — the same file CONTENT at two different
-  paths has two different unique-work keys and runs concurrently), the COMMIT is
+  **`enqueueUniqueWork(KEEP)` keyed by file NAME+SIZE (content), NOT the path**
+  (`BaseDownloadFragment`): the same video downloaded twice lands at two different
+  paths with the same name+size, so a PATH key let both back up concurrently —
+  on-device that meant **4 workers all uploading the same 665 MB file**, spamming
+  "setProgressAsync must complete before Result" and making cancel useless. The
+  content key matches the engine's own dedup key, so KEEP collapses every backup
+  of the same content to ONE worker. (2) Because the start-time `findExisting`
+  name+size check still runs against a *pulled snapshot*, the COMMIT is also
   **dedup-checked under the OCC mutate** (`VaultEngine.commitDeduped`): after
   upload it re-pulls the latest manifest and, if another object with the same
   name+size already committed, keeps THAT entry and drops its own just-uploaded
   object as an orphan (`deleteObject`, best-effort) — so the manifest can never
-  gain a duplicate even when two uploads race. Don't rely on KEEP or the
-  start-time check alone; the commit-time dedup is the guarantee.
+  gain a duplicate even if two uploads still race. Don't rely on KEEP or the
+  start-time check alone; the commit-time dedup is the guarantee. **Belt-and-braces:**
+  `VaultBackupWorker.publishProgress` skips when `isStopped()` (a cancelled
+  worker's WorkSpec is being torn down — a late `setProgressAsync` logs the error
+  above) and throttles to whole-percent steps; `observeTransfers` also collapses
+  transfer rows by name so a transient multi-worker state shows ONE row.
   `VaultEngine.backupFile` also **backfills a missing `thumb` into the existing
   entry** (cheap manifest re-write, no re-upload) when re-backing up a file that
   predates previews.

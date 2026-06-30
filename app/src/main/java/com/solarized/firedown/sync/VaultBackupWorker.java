@@ -70,6 +70,8 @@ public class VaultBackupWorker extends Worker {
     private final SharedPreferences mPrefs;
     /** The most recent setProgressAsync future, drained before returning a Result. */
     private ListenableFuture<Void> mLastProgress;
+    /** Last published whole-percent, to throttle per-chunk progress writes. */
+    private int mLastPct = -1;
 
     @AssistedInject
     public VaultBackupWorker(
@@ -162,6 +164,19 @@ public class VaultBackupWorker extends Worker {
      *  future is tracked so {@link #awaitLastProgress()} can drain it before the
      *  worker returns a Result. */
     private void publishProgress(String name, String mime, long done, long total) {
+        // A cancelled/stopped worker's WorkSpec is being torn down — a late
+        // setProgressAsync then logs "must complete before Result"/"not RUNNING".
+        // Skip it once stopped.
+        if (isStopped()) {
+            return;
+        }
+        // Throttle to whole-percent steps (always emit the first and last) so a
+        // large file doesn't hammer the WorkManager DB with a write per chunk.
+        int pct = total > 0 ? (int) Math.min(100, done * 100 / total) : 0;
+        if (done != 0 && done != total && pct == mLastPct) {
+            return;
+        }
+        mLastPct = pct;
         Data.Builder b = new Data.Builder()
                 .putLong(KEY_PROGRESS_DONE, done)
                 .putLong(KEY_PROGRESS_TOTAL, total);
