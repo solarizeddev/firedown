@@ -192,6 +192,34 @@ public class MediaViewerFragment extends Fragment {
         // onCreateView time (getWidth/getHeight are still 0 here).
         mFallbackDrawable = MimeTypeThumbnail.generateDrawable(mActivity, fileMime);
 
+        if (!mAvoidTransition) {
+            // Match the downloads grid cell: 16:10 centred card with
+            // centerCrop. Same shape + same scaleType as the source
+            // ImageView means the shared element transition has no
+            // matrix interpolation to do — eliminates the "fill the
+            // screen, then snap to letterbox" flash that ChangeImage-
+            // Transform produces when source (centerCrop in 16:10)
+            // and destination (fitCenter, full screen) disagree.
+            //
+            // This applies to VIDEO as well as audio. The default
+            // (full-screen + fitCenter) poster only looked fine for
+            // portrait / near-square videos, where fitCenter already
+            // fills most of a portrait screen so the centerCrop→fitCenter
+            // interpolation is imperceptible. A LANDSCAPE video (e.g.
+            // 498×334) letterboxes to a thin band under fitCenter, so the
+            // same interpolation visibly blows the first frame up to fill
+            // the whole screen before snapping back to the band — the bug
+            // reported as "one video fills the screen during the
+            // transition". Bounding photo_view to a 16:10 centerCrop card
+            // (the AspectRatioImageView constrains its own bounds, so the
+            // shared-element target is captured at measure time) makes the
+            // transform a clean bounds-grow for every aspect. The poster
+            // is only shown until onRenderedFirstFrame swaps in the real
+            // (correctly letterboxed) video frame.
+            mPhotoView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            mPhotoView.setAspectRatio(16f / 10f);
+        }
+
         if (FileUriHelper.isAudio(fileMime)) {
             // Single artwork layer: mPhotoView owns the visible album
             // art for audio (steady state, not just transition). Turn
@@ -203,15 +231,6 @@ public class MediaViewerFragment extends Fragment {
             // extraction fails.
             mPlayerView.setUseArtwork(false);
             mPhotoView.setImageDrawable(mFallbackDrawable);
-            // Match the downloads grid cell: 16:10 centred card with
-            // centerCrop. Same shape + same scaleType as the source
-            // ImageView means the shared element transition has no
-            // matrix interpolation to do — eliminates the "fill the
-            // screen, then snap to letterbox" flash that ChangeImage-
-            // Transform produces when source (centerCrop in 16:10)
-            // and destination (fitCenter, full screen) disagree.
-            mPhotoView.setScaleType(ImageView.ScaleType.CENTER_CROP);
-            mPhotoView.setAspectRatio(16f / 10f);
         }
 
         // PlayerView / controller behaviour. autoShow is deliberately
