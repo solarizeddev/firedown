@@ -298,6 +298,27 @@
     <string name="cloud_backup_notification_title">Backing up to cloud</string>
     <!-- %1$s = file name -->
     <string name="cloud_backup_notification_text">Encrypting and uploading %1$s</string>
+    <!-- Backed-up files list + per-item restore/remove. -->
+    <string name="cloud_backup_files_title">Backed-up files</string>
+    <string name="cloud_backup_list_loading">Loading…</string>
+    <string name="cloud_backup_list_empty">No backed-up files yet</string>
+    <string name="cloud_backup_list_error">Couldn\'t load your backup — check your connection</string>
+    <!-- %1$s = size, %2$s = relative date -->
+    <string name="cloud_backup_item_summary">%1$s · %2$s</string>
+    <string name="cloud_backup_item_restore">Restore to Downloads</string>
+    <string name="cloud_backup_item_remove">Remove from cloud</string>
+    <string name="cloud_backup_remove_title">Remove from cloud?</string>
+    <!-- %1$s = file name -->
+    <string name="cloud_backup_remove_message">This deletes \"%1$s\" from the server. The copy on this device, if any, is kept. This can\'t be undone.</string>
+    <string name="cloud_backup_remove_action">Remove</string>
+    <string name="cloud_backup_remove_done">Removed from cloud</string>
+    <string name="cloud_backup_remove_failed">Couldn\'t remove — check your connection and try again</string>
+    <string name="cloud_restore_started">Restoring from cloud…</string>
+    <string name="cloud_restore_done">Restored to Downloads</string>
+    <string name="cloud_restore_failed">Couldn\'t restore — check your connection and try again</string>
+    <string name="cloud_restore_notification_title">Restoring from cloud</string>
+    <!-- %1$s = file name -->
+    <string name="cloud_restore_notification_text">Downloading and decrypting %1$s</string>
     <string name="settings_sync_sign_out_title">Turn off sync</string>
     <string name="settings_sync_sign_out_summary">Stop syncing and remove the keys from this device</string>
     <string name="settings_sync_sign_out_message">Bookmark sync will be turned off and the recovery code removed from this device. Your bookmarks stay here. Make sure you have saved your recovery code if you want to sync again later.</string>

@@ -35,6 +35,13 @@
         android:title="@string/settings_cloud_backup_cat_manage">
 
         <Preference
+            android:key="com.solarized.firedown.preferences.cloud.backup.files"
+            android:title="@string/cloud_backup_files_title"
+            android:summary="@string/settings_cloud_backup_files_summary"
+            app:singleLineTitle="false"
+            app:icon="@drawable/cloud_done_24" />
+
+        <Preference
             android:key="com.solarized.firedown.preferences.cloud.backup.show.code"
             android:title="@string/settings_cloud_backup_show_code_title"
             android:summary="@string/settings_cloud_backup_show_code_summary"

@@ -23,6 +23,7 @@ import com.solarized.firedown.AppLock;
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
 import com.solarized.firedown.sync.CloudBackupManager;
+import com.solarized.firedown.utils.NavigationUtils;
 
 import javax.inject.Inject;
 
@@ -52,6 +53,7 @@ public class CloudBackupSettingsFragment extends BasePreferenceFragment
 
     private Preference mStatus;
     private Preference mHelp;
+    private Preference mFiles;
     private Preference mShowCode;
     private Preference mDeleteData;
     private PreferenceCategory mCatManage;
@@ -64,12 +66,16 @@ public class CloudBackupSettingsFragment extends BasePreferenceFragment
 
         mStatus = findPreference(Preferences.SETTINGS_CLOUD_BACKUP_STATUS);
         mHelp = findPreference(Preferences.SETTINGS_CLOUD_BACKUP_HELP);
+        mFiles = findPreference(Preferences.SETTINGS_CLOUD_BACKUP_FILES);
         mShowCode = findPreference(Preferences.SETTINGS_CLOUD_BACKUP_SHOW_CODE);
         mDeleteData = findPreference(Preferences.SETTINGS_CLOUD_BACKUP_DELETE_DATA);
         mCatManage = findPreference(Preferences.SETTINGS_CLOUD_BACKUP_CAT_MANAGE);
 
         if (mHelp != null) {
             mHelp.setOnPreferenceClickListener(this);
+        }
+        if (mFiles != null) {
+            mFiles.setOnPreferenceClickListener(this);
         }
         if (mShowCode != null) {
             mShowCode.setOnPreferenceClickListener(this);
@@ -94,6 +100,8 @@ public class CloudBackupSettingsFragment extends BasePreferenceFragment
         String key = preference.getKey();
         switch (key) {
             case Preferences.SETTINGS_CLOUD_BACKUP_HELP -> showHelpDialog();
+            case Preferences.SETTINGS_CLOUD_BACKUP_FILES ->
+                    NavigationUtils.navigateSafe(mNavController, R.id.action_cloud_backup_to_files);
             case Preferences.SETTINGS_CLOUD_BACKUP_SHOW_CODE -> authThenShowCode();
             case Preferences.SETTINGS_CLOUD_BACKUP_DELETE_DATA -> showDeleteDataDialog();
         }

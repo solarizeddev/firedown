@@ -170,5 +170,16 @@
         android:name="com.solarized.firedown.settings.SyncHelpFragment" />
     <fragment
         android:id="@+id/settings_cloud_backup"
-        android:name="com.solarized.firedown.settings.CloudBackupSettingsFragment" />
+        android:name="com.solarized.firedown.settings.CloudBackupSettingsFragment">
+        <action
+            android:id="@+id/action_cloud_backup_to_files"
+            app:destination="@id/settings_cloud_backup_files"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
+    </fragment>
+    <fragment
+        android:id="@+id/settings_cloud_backup_files"
+        android:name="com.solarized.firedown.settings.CloudBackupListFragment" />
 </navigation>
