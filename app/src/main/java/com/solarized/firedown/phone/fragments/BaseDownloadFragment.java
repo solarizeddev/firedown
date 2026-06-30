@@ -419,6 +419,9 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
                 .putString(VaultBackupWorker.KEY_PATH, entity.getFilePath())
                 .putString(VaultBackupWorker.KEY_MIME, entity.getFileMimeType())
                 .putString(VaultBackupWorker.KEY_NAME, entity.getFileName())
+                // Reuse the exact frame the Downloads list renders, so the stored
+                // preview is the same (precise) frame, not a guessed offset.
+                .putLong(VaultBackupWorker.KEY_FRAME_US, GlideHelper.thumbnailFrameUs(entity))
                 .build();
         Constraints constraints = new Constraints.Builder()
                 .setRequiredNetworkType(NetworkType.CONNECTED)

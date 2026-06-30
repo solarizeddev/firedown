@@ -33,6 +33,17 @@ public final class VaultThumbnail {
 
     /** A base64 JPEG preview for {@code path}, or null if none applies / on error. */
     public static String generate(String path, String mime) {
+        return generate(path, mime, 0L);
+    }
+
+    /**
+     * A base64 JPEG preview for {@code path}, or null if none applies / on error.
+     * {@code frameUs} is the exact video frame position (µs) to grab — pass the
+     * value {@link com.solarized.firedown.GlideHelper#thumbnailFrameUs} gives for
+     * the same download so the stored preview matches the Downloads list thumbnail
+     * precisely; pass {@code <= 0} to let it pick a duration-aware offset.
+     */
+    public static String generate(String path, String mime, long frameUs) {
         if (path == null || mime == null) {
             return null;
         }
@@ -41,7 +52,7 @@ public final class VaultThumbnail {
             if (mime.startsWith("image/")) {
                 bmp = decodeImage(path);
             } else if (mime.startsWith("video/")) {
-                bmp = decodeVideoFrame(path);
+                bmp = decodeVideoFrame(path, frameUs);
             } else if (mime.startsWith("audio/")) {
                 bmp = decodeAudioArt(path);
             }
@@ -72,15 +83,18 @@ public final class VaultThumbnail {
         return BitmapFactory.decodeFile(path, opts);
     }
 
-    private static Bitmap decodeVideoFrame(String path) {
+    private static Bitmap decodeVideoFrame(String path, long frameUs) {
         MediaMetadataRetriever mmr = new MediaMetadataRetriever();
         try {
             mmr.setDataSource(path);
-            // NEXT_SYNC at an offset = the first keyframe AT/AFTER that point, so
-            // the black opening keyframe (t=0) is skipped — CLOSEST_SYNC would snap
-            // back to it on a sparse GOP, which is what produced black previews.
-            // Same approach the list thumbnailer (GlideHelper) uses.
-            long offsetUs = videoFrameOffsetUs(mmr);
+            // Prefer the exact frame the Downloads list uses (passed in µs); else
+            // fall back to a duration-aware offset. NEXT_SYNC = the first keyframe
+            // AT/AFTER that point, so the black opening keyframe (t=0) is skipped —
+            // CLOSEST_SYNC would snap back to it on a sparse GOP, which is what
+            // produced black previews. Same option the list thumbnailer
+            // (GlideHelper, VideoDecoder.FRAME_OPTION = OPTION_NEXT_SYNC) uses, so
+            // the stored preview matches the list frame.
+            long offsetUs = frameUs > 0 ? frameUs : videoFrameOffsetUs(mmr);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
                 Bitmap scaled = mmr.getScaledFrameAtTime(offsetUs,
                         MediaMetadataRetriever.OPTION_NEXT_SYNC, MAX_DIM, MAX_DIM);

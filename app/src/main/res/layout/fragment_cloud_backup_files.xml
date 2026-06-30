@@ -12,16 +12,15 @@
         android:clipToPadding="false"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
 
-    <!-- Empty state: illustration + message, mirroring the Downloads empty view
-         (recycler_empty_layout). The fragment toggles this group's visibility and
-         sets the message text. -->
-    <LinearLayout
+    <!-- Empty state — identical structure + styling to the Downloads empty view
+         (recycler_empty_layout.xml): illustration whose bottom sits at the vertical
+         centre, message below in sans-serif-medium / colorOnSurface. The fragment
+         toggles this group's visibility, hides the illustration during the brief
+         load, and sets the message text. -->
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/cb_empty_view"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:gravity="center"
-        android:orientation="vertical"
+        android:layout_height="match_parent"
         android:visibility="gone"
         tools:visibility="visible">
 
@@ -30,19 +29,35 @@
             android:layout_width="match_parent"
             android:layout_height="@dimen/empty_image_height_big"
             android:contentDescription="@string/empty_list"
+            app:layout_constraintBottom_toTopOf="@id/cb_empty_divider"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
             app:srcCompat="@drawable/ill_baloons" />
+
+        <View
+            android:id="@+id/cb_empty_divider"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
             android:id="@+id/cb_empty"
-            style="@style/TextAppearance.Material3.BodyLarge"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/list_spacing"
+            android:fontFamily="sans-serif-medium"
             android:gravity="center"
-            android:paddingHorizontal="@dimen/empty_text_padding"
-            android:textColor="?attr/colorOnSurfaceVariant"
+            android:paddingStart="@dimen/empty_text_padding"
+            android:paddingEnd="@dimen/empty_text_padding"
+            android:textColor="?attr/colorOnSurface"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/cb_empty_divider"
             tools:text="@string/cloud_backup_list_empty" />
 
-    </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 </FrameLayout>

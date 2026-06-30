@@ -82,6 +82,16 @@ public class GlideHelper {
      * and {@link #preloadDownload} so the {@code .frame()} value AND the cache
      * signature stay identical between the two paths.
      */
+    /**
+     * Public view of {@link #effectiveThumbnailFrame}: the exact frame position
+     * (µs) the Downloads list renders for this entity. Cloud Backup reuses it so a
+     * backed-up file's stored preview is the SAME frame as the list thumbnail
+     * (precise + never the black opening frame), instead of guessing an offset.
+     */
+    public static long thumbnailFrameUs(DownloadEntity entity) {
+        return effectiveThumbnailFrame(entity);
+    }
+
     private static long effectiveThumbnailFrame(DownloadEntity entity) {
         long interval = entity.getThumbnailDuration();
         if (interval > 0) {

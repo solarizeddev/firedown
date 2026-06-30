@@ -47,6 +47,9 @@ public class VaultBackupWorker extends Worker {
     public static final String KEY_PATH = "path";
     public static final String KEY_MIME = "mime";
     public static final String KEY_NAME = "name";
+    /** The exact thumbnail frame position (µs) the Downloads list uses for this
+     *  download (GlideHelper.thumbnailFrameUs), so the stored preview matches. */
+    public static final String KEY_FRAME_US = "frame_us";
 
     /** Output-data keys read by the Downloads fragment to report a result. */
     public static final String KEY_STATUS = "status";
@@ -78,6 +81,7 @@ public class VaultBackupWorker extends Worker {
         String path = getInputData().getString(KEY_PATH);
         String mime = getInputData().getString(KEY_MIME);
         String name = getInputData().getString(KEY_NAME);
+        long frameUs = getInputData().getLong(KEY_FRAME_US, 0L);
         if (path == null) {
             return failure();
         }
@@ -109,7 +113,7 @@ public class VaultBackupWorker extends Worker {
         VaultEngine engine = new VaultEngine(api, identity);
         // A tiny preview, stored in the encrypted manifest so the list shows a
         // thumbnail offline even after the local copy is deleted.
-        String thumb = VaultThumbnail.generate(path, mime);
+        String thumb = VaultThumbnail.generate(path, mime, frameUs);
         try {
             engine.backupFile(file, mime, thumb);
         } catch (StorageApiClient.TransientException e) {

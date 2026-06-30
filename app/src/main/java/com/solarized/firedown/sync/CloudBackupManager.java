@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.Looper;
 
+import com.solarized.firedown.GlideHelper;
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.data.di.Qualifiers;
 import com.solarized.firedown.data.entity.DownloadEntity;
@@ -237,7 +238,9 @@ public class CloudBackupManager {
                 DownloadEntity local = downloads.findByNameSize(entry.name, entry.size);
                 if (local != null && local.getFilePath() != null
                         && new File(local.getFilePath()).exists()) {
-                    thumb = VaultThumbnail.generate(local.getFilePath(), entry.mime);
+                    // Same exact frame the Downloads list renders for this file.
+                    thumb = VaultThumbnail.generate(local.getFilePath(), entry.mime,
+                            GlideHelper.thumbnailFrameUs(local));
                 }
             } catch (Exception ignored) {
                 // Best-effort — fall through to the mime glyph.
