@@ -677,10 +677,16 @@ async function processResponse(data, listenerName, skipClassify = false) {
   // the message just goes without the enriched fields.
   if ((data.type === 'media' || data.type === 'object') && tabId >= 0) {
     try {
-      // Pass the captured URL so the content script can classify a standalone
-      // audio file's ROLE on the page (main content vs incidental) — see below.
+      // Target the FRAME that owns the media (data.frameId), not a broadcast, so
+      // an embedded player in an iframe answers for ITS OWN audio — its
+      // mediaSession (now-playing title + artwork), its <audio> binding, its og.
+      // That gives each clip its own title/thumbnail instead of one shared page
+      // card, and lets audioRole see an element bound inside the iframe. frameId
+      // is the real webRequest frame on the wire path and 0 on the synthetic
+      // content-script path (so this targets the top frame there, as before).
+      const frameId = (typeof data.frameId === 'number') ? data.frameId : 0;
       const meta = await Promise.race([
-        browser.tabs.sendMessage(tabId, { kind: 'get-page-metadata', mediaUrl: data.url }),
+        browser.tabs.sendMessage(tabId, { kind: 'get-page-metadata', mediaUrl: data.url }, { frameId }),
         new Promise((resolve) => setTimeout(() => resolve(null), 300)),
       ]);
       if (meta) {
@@ -692,6 +698,11 @@ async function processResponse(data, listenerName, skipClassify = false) {
         // (series.ly /audio/notification.mp3 → "The Breadwinner"), so it keeps
         // its URL filename. Video, HLS/DASH manifests and tokenized/extensionless
         // URLs are always enriched (urlIsStandaloneAudio is false for them).
+        // Because the query now targets the media's OWN frame, audioRole is
+        // computed there — so an embedded player's <audio> binding (or its
+        // published mediaSession) is seen and the audio is correctly 'content'
+        // without inheriting a shared page title. A top-page incidental ding is
+        // still 'unknown' (no element, no mediaSession) → suppressed.
         const incidentalAudio = urlIsStandaloneAudio(data.url) && meta.audioRole !== 'content';
         if (!incidentalAudio) {
           // Prefer the most specific source first: a declared AudioObject (for
@@ -705,11 +716,16 @@ async function processResponse(data, listenerName, skipClassify = false) {
           // (clip-specific), so it outranks the page-level videoLd/og — this is
           // what gives each clip on a multi-video page its own title.
           // Native side sanitises both; we keep them as the raw page strings here.
-          const name = meta.audioLdName || meta.videoLdMatchName || meta.videoLdName
-            || meta.ogVideoTitle || meta.ogTitle || meta.twitterTitle || meta.title || '';
+          // mediaSessionTitle is the player's NOW-PLAYING item — per-clip and
+          // read from the media's own frame — so it ranks just below a URL-matched
+          // declaration (audioLd / videoLdMatch) and ABOVE the page-level fields,
+          // which would otherwise stamp every clip on the page with one title.
+          const name = meta.audioLdName || meta.videoLdMatchName || meta.mediaSessionTitle
+            || meta.videoLdName || meta.ogVideoTitle || meta.ogTitle || meta.twitterTitle
+            || meta.title || '';
           const description = meta.audioLdDescription || meta.videoLdMatchDescription
             || meta.videoLdDescription || meta.description || meta.ogDescription
-            || meta.twitterDescription || '';
+            || meta.twitterDescription || meta.mediaSessionArtist || '';
           // Thumbnail: the page's poster, ranked most-specific first. The native
           // side stores it as the entity's thumbnail (JsonHelper "img" →
           // setFileThumbnail), and GlideHelper then loads that image directly
@@ -721,7 +737,7 @@ async function processResponse(data, listenerName, skipClassify = false) {
           // page poster — on a multi-video page the single <video poster> /
           // og:image would otherwise stamp every clip with the same image.
           const img = meta.videoLdMatchThumbnail || meta.poster || meta.videoLdThumbnail
-            || meta.audioLdThumbnail || meta.ogImage || '';
+            || meta.audioLdThumbnail || meta.mediaSessionArtwork || meta.ogImage || '';
           if (name && !message.name) message.name = name;
           if (description && !message.description) message.description = description;
           if (img && !message.img) message.img = img;
@@ -1026,6 +1042,26 @@ nativePort.onMessage.addListener(async (msg) => {
     if (result) {
       nativePort.postMessage(result);
     }
+  } else if (msg.type === 'capture-snapshot') {
+    // The popup's "Save snapshot" row → GeckoRuntimeHelper.captureSnapshot()
+    // arrives here. The serializer lives in the snapshot.js CONTENT script
+    // (only it can read the page DOM), so relay the trigger to the foreground
+    // tab. Java sends its tracked active tab id (mTabId); fall back to an
+    // active-tab query if it's unknown (-1). tabs.sendMessage delivers to the
+    // tab's content scripts — snapshot.js's onMessage picks it up (top frame).
+    try {
+      const tabId = typeof msg.tabId === 'number' ? msg.tabId : -1;
+      if (tabId >= 0) {
+        browser.tabs.sendMessage(tabId, { kind: 'snapshot-capture' });
+      } else {
+        const tabs = await browser.tabs.query({ active: true, lastFocusedWindow: true });
+        if (tabs && tabs[0]) {
+          browser.tabs.sendMessage(tabs[0].id, { kind: 'snapshot-capture' });
+        }
+      }
+    } catch (e) {
+      if (DEBUG) console.warn('[req] snapshot trigger failed:', e?.message);
+    }
   }
 });
 
@@ -1034,7 +1070,61 @@ nativePort.onMessage.addListener(async (msg) => {
 // Catches images loaded from service-worker cache (invisible to webRequest)
 // ---------------------------------------------------------------------------
 
+// Per-resource ceiling for the snapshot archiver's privileged fetch — a
+// single absurd resource (a 100 MB font/video) must not be inlined. The
+// content-script side enforces the count + total-size budget; this is the
+// per-item backstop.
+const SNAPSHOT_MAX_RESOURCE_BYTES = 12 * 1024 * 1024;
+
+// Encode a Blob as a data: URI without buffering a giant base64 string by hand
+// — FileReader.readAsDataURL does it natively.
+function blobToDataUri(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(blob);
+  });
+}
+
+// Privileged fetch for the snapshot archiver (see snapshot.js header). Reads a
+// sub-resource cross-origin (background has <all_urls>, so no CORS) and returns
+// it as a data: URI, or as text for CSS (as:'text'). Credentialed + cache-first
+// so an already-loaded resource is served from the HTTP cache, not re-pulled.
+async function handleSnapshotFetch(msg) {
+  try {
+    const resp = await fetch(msg.url, { credentials: 'include', cache: 'force-cache' });
+    if (!resp.ok) return { ok: false };
+    if (msg.as === 'text') {
+      const text = await resp.text();
+      if (text.length > SNAPSHOT_MAX_RESOURCE_BYTES) return { ok: false, tooBig: true };
+      return { ok: true, text };
+    }
+    const blob = await resp.blob();
+    if (blob.size > SNAPSHOT_MAX_RESOURCE_BYTES) return { ok: false, tooBig: true };
+    // Backstop for an extensionless/tokenized manifest the URL regex can't see:
+    // refuse to inline an HLS/DASH/Smooth playlist by MIME. Baking a manifest
+    // into a data: URI crashes the reopened snapshot's HLS player (see
+    // snapshot.js inlineUrl). Leaving the original URL is safe.
+    if (/mpegurl|dash\+xml|f4m|vnd\.ms-sstr/i.test(blob.type || '')) return { ok: false };
+    const dataUri = await blobToDataUri(blob);
+    return { ok: true, dataUri };
+  } catch (e) {
+    if (DEBUG) console.warn('[req] snapshot-fetch failed:', msg?.url, e?.message);
+    return { ok: false };
+  }
+}
+
 browser.runtime.onMessage.addListener(async (msg, sender) => {
+  // snapshot.js asks us to fetch a sub-resource it can't read itself: a
+  // content-script fetch is CORS-bound, but this background page holds
+  // <all_urls>, so its fetch reads cross-origin bytes directly. Returning the
+  // promise makes this listener the responder (the parser router is
+  // fire-and-forget and won't answer). See snapshot.js header.
+  if (msg?.kind === 'snapshot-fetch') {
+    return handleSnapshotFetch(msg);
+  }
+
   // Content script told us a page tried to use WebAssembly while it's
   // disabled. Forward to native so BrowserFragment can surface the
   // "Enable for {host}?" snackbar scoped to the right tab.

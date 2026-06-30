@@ -279,9 +279,79 @@
     <string name="trackers_info_stat_saved">Datos aforrados</string>
     <string name="trackers_info_action">Xestionar protección</string>
     <string name="trackers_info_today">%1$s bloqueados hoxe</string>
-
-
-
-
-
+    <string name="bookmark_export">Exportar marcadores</string>
+    <string name="bookmark_export_done">Exportáronse %1$d marcadores a Download/Firedown/backup</string>
+    <string name="bookmark_import">Importar marcadores</string>
+    <string name="bookmark_import_done">Importáronse %1$d marcadores</string>
+    <string name="bookmark_io_error">Non foi posible ler o ficheiro de marcadores</string>
+    <string name="settings_sync_auth_subtitle">Verifica que es ti para amosar o código de recuperación</string>
+    <string name="settings_sync_cat_code">Código de recuperación</string>
+    <string name="settings_sync_cat_manage">Xestionar a sincronización</string>
+    <string name="settings_sync_code_copied">Código de recuperación copiado</string>
+    <string name="settings_sync_code_copy">Copiar</string>
+    <string name="settings_sync_code_created_title">Garda o teu código de recuperación</string>
+    <string name="settings_sync_code_done">Feito</string>
+    <string name="settings_sync_code_hint">Código de recuperación</string>
+    <string name="settings_sync_code_saved_check">Gardei o meu código de recuperación</string>
+    <string name="settings_sync_code_unavailable">Código de recuperación non dispoñible</string>
+    <string name="settings_sync_code_warning">Este código de recuperación é a única chave dos teus marcadores sincronizados. Gárdao no teu xestor de contrasinais — ou noutro lugar seguro. Non se pode recuperar se o perdes.</string>
+    <string name="settings_sync_delete_action">Eliminar</string>
+    <string name="settings_sync_delete_done">Os teus datos elimináronse do servidor</string>
+    <string name="settings_sync_delete_failed">Non foi posible eliminar — comproba a conexión e téntao de novo</string>
+    <string name="settings_sync_delete_message">Isto borra permanentemente os teus marcadores cifrados do servidor e desactiva a sincronización neste dispositivo. Os marcadores deste dispositivo consérvanse. Isto non se pode desfacer — outros dispositivos xa non poderán restaurar desde o servidor.</string>
+    <string name="settings_sync_delete_started">Eliminando os teus datos do servidor…</string>
+    <string name="settings_sync_delete_summary">Borra permanentemente os teus marcadores cifrados do servidor</string>
+    <string name="settings_sync_delete_title">Eliminar datos do servidor</string>
+    <string name="settings_sync_export_caveat_message">Este ficheiro gárdase sen cifrar — calquera que poida lelo pode ler os teus marcadores. Importa o código no teu xestor de contrasinais (ou noutro lugar seguro) e despois elimina o ficheiro. Un xestor de contrasinais manténo cifrado; un ficheiro solto, non.</string>
+    <string name="settings_sync_export_continue">Continuar</string>
+    <string name="settings_sync_export_done">Código de recuperación gardado</string>
+    <string name="settings_sync_export_failed">Non foi posible gardar o ficheiro</string>
+    <string name="settings_sync_export_file_body">Firedown — código de recuperación da sincronización de marcadores\n\n%1$s\n\nEste código é a única chave dos teus marcadores sincronizados — calquera que o teña pode lelos, e non se pode recuperar se o perdes.\n\nEste ficheiro NON está cifrado. Importa o código no teu xestor de contrasinais (ou noutro lugar seguro) e despois elimina este ficheiro.</string>
+    <string name="settings_sync_export_summary">Exporta o código como un ficheiro de texto que poidas gardar</string>
+    <string name="settings_sync_export_title">Gardar o código de recuperación nun ficheiro</string>
+    <string name="settings_sync_faq_a1">Si. Cada marcador cífrase neste dispositivo antes de subirse. O servidor só almacena datos cifrados que non pode ler.</string>
+    <string name="settings_sync_faq_a2">Non. Só o teu código de recuperación pode desbloquear os teus marcadores. Están cifrados de extremo a extremo, non se anexa nada persoal e o servidor nunca ve os datos sen cifrar.</string>
+    <string name="settings_sync_faq_a3">Unha chave xerada no teu dispositivo cando activas a sincronización. É o único que pode descifrar os teus marcadores — neste dispositivo ou nun novo.</string>
+    <string name="settings_sync_faq_a4">Os teus marcadores sincronizados non se poden recuperar — nin por ti nin por nós, porque nunca tivemos a chave. Non hai restablecemento de contrasinal. Garda o código nun lugar seguro; un xestor de contrasinais é ideal.</string>
+    <string name="settings_sync_faq_a5">Non. Non hai rexistro, correo electrónico nin número de teléfono — só o código de recuperación. Nada persoal queda vinculado aos teus marcadores.</string>
+    <string name="settings_sync_faq_a6">A sincronización é opcional e está desactivada de maneira predeterminada. Sempre podes exportar os teus marcadores a un ficheiro e importalos máis tarde, sen ningún servidor polo medio.</string>
+    <string name="settings_sync_faq_q1">Están cifrados os meus marcadores?</string>
+    <string name="settings_sync_faq_q2">Pode lelos Firedown ou outra persoa?</string>
+    <string name="settings_sync_faq_q3">Que é o código de recuperación?</string>
+    <string name="settings_sync_faq_q4">Que pasa se perdo o meu código de recuperación?</string>
+    <string name="settings_sync_faq_q5">Necesito unha conta ou un correo electrónico?</string>
+    <string name="settings_sync_faq_q6">Que pasa se non quero usar a sincronización?</string>
+    <string name="settings_sync_help_close">Entendido</string>
+    <string name="settings_sync_help_summary">Que se cifra, e por que importa o teu código de recuperación</string>
+    <string name="settings_sync_help_title">Como funciona o cifrado da sincronización</string>
+    <string name="settings_sync_last_synced">Activado — última sincronización %1$s</string>
+    <string name="settings_sync_never_synced">Activado — aínda sen sincronizar</string>
+    <plurals name="settings_sync_now_done">
+        <item quantity="one">Sincronizado — %d marcador</item>
+        <item quantity="other">Sincronizado — %d marcadores</item>
+    </plurals>
+    <string name="settings_sync_now_failed">Non foi posible sincronizar os marcadores — comproba a conexión e téntao de novo</string>
+    <string name="settings_sync_now_started">Sincronizando marcadores…</string>
+    <string name="settings_sync_now_title">Sincronizar agora</string>
+    <string name="settings_sync_restore_action">Restaurar</string>
+    <string name="settings_sync_restore_bad">Ese código de recuperación non parece correcto</string>
+    <string name="settings_sync_restore_message">Introduce o código de recuperación do teu outro dispositivo para combinar os seus marcadores con este.</string>
+    <string name="settings_sync_restore_ok">Restaurouse a sincronización de marcadores</string>
+    <string name="settings_sync_restore_title">Restaurar a sincronización de marcadores</string>
+    <string name="settings_sync_setup_create">Crear un novo</string>
+    <string name="settings_sync_setup_message">Os teus marcadores cífranse neste dispositivo antes de saír del — o servidor nunca os ve. Obtés un código de recuperación que é a única chave; gárdao ben, non hai forma de recuperalo se o perdes.</string>
+    <string name="settings_sync_setup_restore">Teño un código</string>
+    <string name="settings_sync_setup_title">Configurar a sincronización de marcadores</string>
+    <string name="settings_sync_show_code_summary">Amosa o código que desbloquea os teus marcadores sincronizados</string>
+    <string name="settings_sync_show_code_title">Amosar o código de recuperación</string>
+    <string name="settings_sync_sign_out_action">Desactivar</string>
+    <string name="settings_sync_sign_out_message">A sincronización de marcadores desactivarase e o código de recuperación eliminarase deste dispositivo. Os teus marcadores quedan aquí. Asegúrate de gardar o teu código de recuperación se queres volver sincronizar máis adiante.</string>
+    <string name="settings_sync_sign_out_summary">Deixa de sincronizar e elimina as chaves deste dispositivo</string>
+    <string name="settings_sync_sign_out_title">Desactivar a sincronización</string>
+    <string name="settings_sync_signed_out">Sincronización de marcadores desactivada</string>
+    <string name="settings_sync_summary">Sincronización de marcadores cifrada de extremo a extremo entre os teus dispositivos</string>
+    <string name="settings_sync_switch_summary">Desactivado — os teus marcadores quedan neste dispositivo</string>
+    <string name="settings_sync_title">Sincronizar marcadores</string>
+    <string name="sync_banner_subtitle">Cifrado de extremo a extremo — só o teu código de recuperación pode lelo. Sen conta, sen correo electrónico.</string>
+    <string name="sync_banner_title">Sincroniza os teus marcadores entre dispositivos</string>
 </resources>

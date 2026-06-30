@@ -216,9 +216,80 @@
     <string name="trackers_info_categories">Abalandeli · Izikhangiso · Izigxivizo zeminwe · Amakhukhi</string>
     <string name="trackers_info_action">Phatha ukuvikela</string>
     <string name="trackers_info_today">%1$s evinjelwe namuhla</string>
-
-
-
-
-
+    <string name="bookmark_export">Thumbela amabhukumaka</string>
+    <string name="bookmark_export_done">Kuthunyelwe amabhukumaka angu-%1$d ku-Download/Firedown/backup</string>
+    <string name="bookmark_import">Ngenisa amabhukumaka</string>
+    <string name="bookmark_import_done">Kungeniswe amabhukumaka angu-%1$d</string>
+    <string name="bookmark_io_error">Ayikwazanga ukufunda ifayela lamabhukumaka</string>
+    <string name="bookmark_name">Igama</string>
+    <string name="settings_sync_auth_subtitle">Qinisekisa ukuthi nguwe ukuze uveze ikhodi yokubuyisela</string>
+    <string name="settings_sync_cat_code">Ikhodi yokubuyisela</string>
+    <string name="settings_sync_cat_manage">Phatha ukuvumelanisa</string>
+    <string name="settings_sync_code_copied">Ikhodi yokubuyisela ikopishiwe</string>
+    <string name="settings_sync_code_copy">Kopisha</string>
+    <string name="settings_sync_code_created_title">Londoloza ikhodi yakho yokubuyisela</string>
+    <string name="settings_sync_code_done">Kwenziwe</string>
+    <string name="settings_sync_code_hint">Ikhodi yokubuyisela</string>
+    <string name="settings_sync_code_saved_check">Ngiyilondolozile ikhodi yami yokubuyisela</string>
+    <string name="settings_sync_code_unavailable">Ikhodi yokubuyisela ayitholakali</string>
+    <string name="settings_sync_code_warning">Le khodi yokubuyisela iwukuphela kokhiye wamabhukumaka akho avumelanisiwe. Yilondoloze kumphathi wakho wamaphasiwedi — noma kwenye indawo ephephile. Ngeke ibuyiselwe uma ilahleka.</string>
+    <string name="settings_sync_delete_action">Susa</string>
+    <string name="settings_sync_delete_done">Idatha yakho isusiwe kuseva</string>
+    <string name="settings_sync_delete_failed">Ayikwazanga ukususa — hlola uxhumano lwakho bese uzama futhi</string>
+    <string name="settings_sync_delete_message">Lokhu kususa unomphela amabhukumaka akho abethelwe kuseva futhi kuvale ukuvumelanisa kule divayisi. Amabhukumaka kule divayisi agcinwa. Lokhu ngeke kuhlehliswe — ezinye izidivayisi ngeke zisakwazi ukubuyisela kuseva.</string>
+    <string name="settings_sync_delete_started">Isusa idatha yakho kuseva…</string>
+    <string name="settings_sync_delete_summary">Susa unomphela amabhukumaka akho abethelwe kuseva</string>
+    <string name="settings_sync_delete_title">Susa idatha kuseva</string>
+    <string name="settings_sync_export_caveat_message">Leli fayela lilondolozwe lingabethelwe — noma ngubani ongalifunda angafunda amabhukumaka akho. Ngenisa ikhodi kumphathi wakho wamaphasiwedi (noma kwenye indawo ephephile), bese ususa ifayela. Umphathi wamaphasiwedi uyligcina libethelwe; ifayela elixegayo alikwenzi lokho.</string>
+    <string name="settings_sync_export_continue">Qhubeka</string>
+    <string name="settings_sync_export_done">Ikhodi yokubuyisela ilondoloziwe</string>
+    <string name="settings_sync_export_failed">Ayikwazanga ukulondoloza ifayela</string>
+    <string name="settings_sync_export_file_body">Firedown — ikhodi yokubuyisela ukuvumelanisa amabhukumaka\n\n%1$s\n\nLe khodi iwukuphela kokhiye wamabhukumaka akho avumelanisiwe — noma ngubani onayo angawafunda, futhi ngeke ibuyiselwe uma ilahleka.\n\nLeli fayela ALIBETHELWANGA. Ngenisa ikhodi kumphathi wakho wamaphasiwedi (noma kwenye indawo ephephile), bese ususa leli fayela.</string>
+    <string name="settings_sync_export_summary">Thumbela ikhodi njengefayela lombhalo ongaligcina</string>
+    <string name="settings_sync_export_title">Londoloza ikhodi yokubuyisela kufayela</string>
+    <string name="settings_sync_faq_a1">Yebo. Ibhukumaka ngalinye libethelwa kule divayisi ngaphambi kokuba lilayishwe. Iseva igcina kuphela idatha edidekile engakwazi ukuyifunda.</string>
+    <string name="settings_sync_faq_a2">Cha. Ikhodi yakho yokubuyisela kuphela engavula amabhukumaka akho. Abethelwe ukusuka ekuqaleni kuya ekugcineni, akukho lutho lomuntu siqu olunamathiselwe, futhi iseva ayiyiboni neze idatha engadidekile.</string>
+    <string name="settings_sync_faq_a3">Ukhiye okhiqizwa kudivayisi yakho lapho uvula ukuvumelanisa. Yiyona kuphela into engavula amabhukumaka akho — kule divayisi noma kweyentsha.</string>
+    <string name="settings_sync_faq_a4">Amabhukumaka akho avumelanisiwe ngeke abuyiselwe — hhayi nguwe, futhi hhayi yithi, ngoba asikaze sibe nokhiye. Akukho ukusetha kabusha kwephasiwedi. Londoloza ikhodi endaweni ephephile; umphathi wamaphasiwedi ungcono.</string>
+    <string name="settings_sync_faq_a5">Cha. Akukho ukubhalisa, i-imeyili, noma inombolo yefoni — ikhodi yokubuyisela kuphela. Akukho lutho lomuntu siqu oluboshelwe emabhukumakeni akho.</string>
+    <string name="settings_sync_faq_a6">Ukuvumelanisa kuyazikhethela futhi kuvaliwe ngokuzenzakalela. Ungalokhu uthumbela amabhukumaka akho kufayela bese uwangenisa kamuva, ngaphandle kweseva.</string>
+    <string name="settings_sync_faq_q1">Ngabe amabhukumaka ami abethelwe?</string>
+    <string name="settings_sync_faq_q2">Ngabe i-Firedown noma omunye umuntu angawafunda?</string>
+    <string name="settings_sync_faq_q3">Iyini ikhodi yokubuyisela?</string>
+    <string name="settings_sync_faq_q4">Kuthiwani uma ngilahlekelwa ikhodi yami yokubuyisela?</string>
+    <string name="settings_sync_faq_q5">Ngabe ngidinga i-akhawunti noma i-imeyili?</string>
+    <string name="settings_sync_faq_q6">Kuthiwani uma ngingafuni ukusebenzisa ukuvumelanisa?</string>
+    <string name="settings_sync_help_close">Ngiyezwa</string>
+    <string name="settings_sync_help_summary">Yini ebethelwe, nokuthi kungani ikhodi yakho yokubuyisela ibalulekile</string>
+    <string name="settings_sync_help_title">Ukuthi ukubethela kokuvumelanisa kusebenza kanjani</string>
+    <string name="settings_sync_last_synced">Kuvuliwe — kuvumelaniswe okokugcina %1$s</string>
+    <string name="settings_sync_never_synced">Kuvuliwe — akukavumelaniswa okwamanje</string>
+    <plurals name="settings_sync_now_done">
+        <item quantity="one">Kuvumelanisiwe — ibhukumaka elingu-%d</item>
+        <item quantity="other">Kuvumelanisiwe — amabhukumaka angu-%d</item>
+    </plurals>
+    <string name="settings_sync_now_failed">Ayikwazanga ukuvumelanisa amabhukumaka — hlola uxhumano lwakho bese uzama futhi</string>
+    <string name="settings_sync_now_started">Ivumelanisa amabhukumaka…</string>
+    <string name="settings_sync_now_title">Vumelanisa manje</string>
+    <string name="settings_sync_restore_action">Buyisela</string>
+    <string name="settings_sync_restore_bad">Leyo khodi yokubuyisela ayibukeki ilungile</string>
+    <string name="settings_sync_restore_message">Faka ikhodi yokubuyisela evela kwenye idivayisi yakho ukuze uhlanganise amabhukumaka ayo nalena.</string>
+    <string name="settings_sync_restore_ok">Ukuvumelanisa kwamabhukumaka kubuyiselwe</string>
+    <string name="settings_sync_restore_title">Buyisela ukuvumelanisa kwamabhukumaka</string>
+    <string name="settings_sync_setup_create">Dala okusha</string>
+    <string name="settings_sync_setup_message">Amabhukumaka akho abethelwa kule divayisi ngaphambi kokuba aphume kuyo — iseva ayiwaboni neze. Uthola ikhodi yokubuyisela eyiyona kuphela ukhiye; yigcine iphephile, ayikho indlela yokuyibuyisela uma ilahleka.</string>
+    <string name="settings_sync_setup_restore">Nginekhodi</string>
+    <string name="settings_sync_setup_title">Setha ukuvumelanisa kwamabhukumaka</string>
+    <string name="settings_sync_show_code_summary">Veza ikhodi evula amabhukumaka akho avumelanisiwe</string>
+    <string name="settings_sync_show_code_title">Bonisa ikhodi yokubuyisela</string>
+    <string name="settings_sync_sign_out_action">Vala</string>
+    <string name="settings_sync_sign_out_message">Ukuvumelanisa kwamabhukumaka kuzovalwa futhi ikhodi yokubuyisela isuswe kule divayisi. Amabhukumaka akho ahlala lapha. Qiniseka ukuthi uyilondolozile ikhodi yakho yokubuyisela uma ufuna ukuvumelanisa futhi kamuva.</string>
+    <string name="settings_sync_sign_out_summary">Yeka ukuvumelanisa bese ususa okhiye kule divayisi</string>
+    <string name="settings_sync_sign_out_title">Vala ukuvumelanisa</string>
+    <string name="settings_sync_signed_out">Ukuvumelanisa kwamabhukumaka kuvaliwe</string>
+    <string name="settings_sync_summary">Ukuvumelanisa kwamabhukumaka okubethelwe ukusuka ekuqaleni kuya ekugcineni kuwo wonke amadivayisi akho</string>
+    <string name="settings_sync_switch_summary">Kuvaliwe — amabhukumaka akho ahlala kule divayisi</string>
+    <string name="settings_sync_title">Vumelanisa amabhukumaka</string>
+    <string name="sync_banner_subtitle">Kubethelwe ukusuka ekuqaleni kuya ekugcineni — ikhodi yakho yokubuyisela kuphela engayifunda. Akukho akhawunti, akukho i-imeyili.</string>
+    <string name="sync_banner_title">Vumelanisa amabhukumaka akho kuwo wonke amadivayisi</string>
 </resources>

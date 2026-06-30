@@ -660,6 +660,9 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         }
 
         // ── Reset all status views ──────────────────────────────────
+        // The grid has no progress_row/progress_text (the download ring is the
+        // readout); the list keeps them inside progress_row, whose visibility
+        // drives its children — so resetting the row is enough.
         setVisible(holder.progressRow, false);
         setVisible(holder.statusText, false);
         setVisible(holder.imageProgress, false);
@@ -698,21 +701,14 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         boolean retrieving = entity.getFileIsLive() || processing;
 
         if(isGrid){
-            // Normally the title/mime block is hidden during a download so the
-            // progress overlay owns the tile. For the "Finishing…" phase we
-            // bring the bottom caption back — with name/mime hidden — so the
-            // spinning ring is paired with an explicit label.
-            if (processing && holder.statusText != null) {
-                setVisible(holder.bottomBlock, true);
-                setVisible(holder.fileName, false);
-                setVisible(holder.mimeText, false);
-                setVisible(holder.mimeDuration, false);
-                holder.statusText.setText(R.string.download_finishing);
-                holder.statusText.setTextColor(mDefaultPrimary);
-                setVisible(holder.statusText, true);
-            } else {
-                setVisible(holder.bottomBlock, false);
-            }
+            // Progress IS the artwork. During a download there's no thumbnail,
+            // so a placeholder mime glyph carries nothing the progress + title
+            // don't — drop it and let the ring own the picture zone. The ring is
+            // constrained in the layout to the area above the title caption
+            // (dense tiles, a bare square, fill the whole tile), so it never
+            // overlaps the title. No bottom bar / inline percent — the ring's
+            // own percent is the readout. (progress_row/progress_text don't
+            // exist in the grid layout any more; null-safe either way.)
             if (holder.imageProgress != null) {
                 holder.imageProgress.setVisibility(View.VISIBLE);
                 holder.imageProgress.setIndeterminate(retrieving);
@@ -720,10 +716,36 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
                     holder.imageProgress.setProgress(entity.getFileProgress());
                 }
             }
-            // Cancel any in-flight load so a late completion can't paint over the null.
+            // No placeholder glyph: clear the image so the ring sits on the bare
+            // card. clearSafe cancels any in-flight load that could paint over it.
             GlideHelper.clearSafe(holder.image);
             holder.image.setImageDrawable(null);
             holder.image.setTag(null);
+
+            if (!holder.denseTile) {
+                // Normal tile keeps the title in its caption below the ring
+                // (dense is a bare square with no caption). With no thumbnail to
+                // identify it, the title is the only identifier — so show it for
+                // EVERY type, overriding the image-hide rule (which assumes a
+                // real thumbnail exists).
+                setVisible(holder.bottomBlock, true);
+                setVisible(holder.mimeText, false);
+                setVisible(holder.mimeDuration, false);
+                if (holder.fileName != null) {
+                    String name = entity.getFileName();
+                    holder.fileName.setText(name);
+                    setVisible(holder.fileName, !TextUtils.isEmpty(name));
+                }
+                // "Finishing…" (post-download mux) gets an explicit caption line
+                // under the title; an ordinary download leans on the ring alone.
+                if (processing && holder.statusText != null) {
+                    holder.statusText.setText(R.string.download_finishing);
+                    holder.statusText.setTextColor(mDefaultPrimary);
+                    setVisible(holder.statusText, true);
+                } else {
+                    setVisible(holder.statusText, false);
+                }
+            }
         }else {
             setVisible(holder.progressRow, true);
             // Bar tints: indicator in brand coral (the 'live' signal)
@@ -752,6 +774,19 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         }
     }
 
+    /**
+     * Whether a tile renders real artwork (an image/video frame/PDF page/…)
+     * rather than the generated {@link com.solarized.firedown.glide.MimeTypeThumbnail}
+     * fallback. Mirrors GlideHelper's branches. Audio counts as real because it
+     * may carry album art (the dark fallback covers the art-less case visually).
+     */
+    private static boolean hasRealThumbnail(String mimeType) {
+        return FileUriHelper.isImage(mimeType) || FileUriHelper.isSVG(mimeType)
+                || FileUriHelper.isPdf(mimeType) || FileUriHelper.isGIF(mimeType)
+                || FileUriHelper.isWEP(mimeType) || FileUriHelper.isVideo(mimeType)
+                || FileUriHelper.isAudio(mimeType);
+    }
+
     private void bindFinished(DownloadViewHolder holder, DownloadEntity entity, boolean isGrid) {
         Tracing.begin(isGrid ? "bind:finished(grid)" : "bind:finished(list)");
         try {
@@ -767,7 +802,10 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         String secondary = secondaryMetaLabel(entity, mimeType);
 
         if (isGrid) {
-            setVisible(holder.topScrim, true);
+            // Generated-fallback tiles (no real artwork) now use a dark
+            // MimeTypeThumbnail ground, so the ⋮ button reads without the top
+            // gradient scrim — drop it there; real-thumbnail tiles keep it.
+            setVisible(holder.topScrim, hasRealThumbnail(mimeType));
             // Grid meta row reads "[chip] duration · size" (or
             // "resolution · size" for images): size is the one list-line
             // fact with no other home in the grid — date is carried by the

@@ -1,3 +1,9 @@
+## [1.1.81] - 2026-06-29
+
+- Save snapshot — archive a web page as a single self-contained HTML file you can reopen offline, in-app
+- Sync your bookmarks across devices — end-to-end encrypted, no account needed
+- Minor bugfixes and improvements
+
 ## [1.1.80] - 2026-06-24
 
 - YouTube downloads now finish ready to play — correct length with working seek/scrub, and no extra processing step after the download

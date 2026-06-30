@@ -201,6 +201,11 @@ public class GeckoRuntimeHelper {
                 Preferences.SETTINGS_DISABLE_DISK_CACHE, Preferences.DEFAULT_DISABLE_DISK_CACHE));
         setSafeBrowsing(!sharedPreferences.getBoolean(
                 Preferences.SETTINGS_DISABLE_SAFE_BROWSING, Preferences.DEFAULT_DISABLE_SAFE_BROWSING));
+        // DoH is a per-process runtime setting (TRR mode defaults to OFF on
+        // every GeckoRuntime.create) — apply it at boot, or an enabled DoH
+        // toggle would only take effect after the user re-opens the DoH
+        // settings screen (the only other place that sets it).
+        applyDoh(sharedPreferences);
         // These have no UI toggle — the privacy gain is high enough and the
         // breakage low enough that it's not a meaningful choice to expose.
         applyHardeningPrefs();
@@ -971,6 +976,31 @@ public class GeckoRuntimeHelper {
         }
     }
 
+    /**
+     * Trigger a "Save snapshot" of the foreground page (the browser-popup
+     * action). The serializer lives in the downloader@ extension's snapshot.js
+     * content script — only it can read the live, post-JS page DOM — so we just
+     * poke the existing "browser" native port and let requests.js relay the
+     * capture request to the active tab's content script. The snapshot is then
+     * delivered back through GeckoView's normal download funnel
+     * (onExternalResponse → the browser download pipeline), so nothing else is
+     * needed on the Java side.
+     *
+     * <p>{@code mTabId} is the extension's currently-active tab id (tracked from
+     * the port's onActivated events); the JS side falls back to an active-tab
+     * query if it's unknown.
+     */
+    public void captureSnapshot() {
+        try {
+            JSONObject msg = new JSONObject();
+            msg.put("type", "capture-snapshot");
+            msg.put("tabId", mTabId);
+            sendPortMessage("browser", msg);
+        } catch (JSONException e) {
+            Log.e(TAG, "captureSnapshot error", e);
+        }
+    }
+
     private void sendPortMessage(String portName, JSONObject message) {
         WebExtension.Port port = mPorts.get(portName);
         if (port != null) {
@@ -1355,6 +1385,28 @@ public class GeckoRuntimeHelper {
         result.accept(
                 map -> Log.d(TAG, "setHttpsOnly: " + enable),
                 throwable -> Log.w(TAG, "setHttpsOnly failed", throwable));
+    }
+
+    /**
+     * Apply the DNS-over-HTTPS setting to GeckoView's Trusted Recursive
+     * Resolver. Mirrors {@code DohFragment.applyDohToGecko} — kept in lockstep
+     * via the shared {@link Preferences#getDohEnabled}/{@link
+     * Preferences#getDohUri} helpers — so DoH is in effect from boot, not only
+     * after the DoH settings screen is visited. {@code TRR_MODE_FIRST} tries
+     * DoH and falls back to the system resolver, matching {@code DohDns}.
+     */
+    public void applyDoh(SharedPreferences sharedPreferences) {
+        boolean enabled = Preferences.getDohEnabled(sharedPreferences);
+        GeckoRuntimeSettings settings = sGeckoRuntime.getSettings();
+        settings.setTrustedRecursiveResolverMode(enabled
+                ? GeckoRuntimeSettings.TRR_MODE_FIRST
+                : GeckoRuntimeSettings.TRR_MODE_OFF);
+        if (enabled) {
+            String uri = Preferences.getDohUri(sharedPreferences);
+            if (uri != null && !uri.isEmpty()) {
+                settings.setTrustedRecursiveResolverUri(uri);
+            }
+        }
     }
 
 

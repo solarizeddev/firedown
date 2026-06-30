@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Hosts the shared TabCountDrawable (set in TabsBrowserButton). 20dp matches
-     the drawable's intrinsic size and the tabs-header toggle, so the two tab
-     counters render identically. -->
+<!-- Hosts the shared TabCountDrawable (set in TabsBrowserButton). 24dp matches
+     the drawable's intrinsic size, the tabs-header toggle, and the sibling
+     bottom-bar icons, so the tab counter renders consistently. -->
 <androidx.appcompat.widget.AppCompatImageView xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/button"
-    android:layout_width="20dp"
-    android:layout_height="20dp"
+    android:layout_width="24dp"
+    android:layout_height="24dp"
     android:layout_gravity="center"
     android:contentDescription="@null"
     android:scaleType="fitCenter" />

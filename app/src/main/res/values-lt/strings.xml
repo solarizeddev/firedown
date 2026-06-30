@@ -259,9 +259,81 @@
     <string name="trackers_info_categories">Sekikliai · Reklamos · Pirštų atspaudai · Slapukai</string>
     <string name="trackers_info_action">Valdyti apsaugą</string>
     <string name="trackers_info_today">%1$s šiandien užblokuota</string>
-
-
-
-
-
+    <string name="bookmark_export">Eksportuoti žymes</string>
+    <string name="bookmark_export_done">Eksportuota %1$d žymių į Download/Firedown/backup</string>
+    <string name="bookmark_import">Importuoti žymes</string>
+    <string name="bookmark_import_done">Importuota %1$d žymių</string>
+    <string name="bookmark_io_error">Nepavyko nuskaityti žymių failo</string>
+    <string name="bookmark_name">Pavadinimas</string>
+    <string name="settings_sync_auth_subtitle">Patvirtinkite savo tapatybę, kad atskleistumėte atkūrimo kodą</string>
+    <string name="settings_sync_cat_code">Atkūrimo kodas</string>
+    <string name="settings_sync_cat_manage">Tvarkyti sinchronizavimą</string>
+    <string name="settings_sync_code_copied">Atkūrimo kodas nukopijuotas</string>
+    <string name="settings_sync_code_copy">Kopijuoti</string>
+    <string name="settings_sync_code_created_title">Išsaugokite savo atkūrimo kodą</string>
+    <string name="settings_sync_code_done">Atlikta</string>
+    <string name="settings_sync_code_hint">Atkūrimo kodas</string>
+    <string name="settings_sync_code_saved_check">Išsaugojau savo atkūrimo kodą</string>
+    <string name="settings_sync_code_unavailable">Atkūrimo kodas nepasiekiamas</string>
+    <string name="settings_sync_code_warning">Šis atkūrimo kodas yra vienintelis raktas į jūsų sinchronizuotas žymes. Išsaugokite jį slaptažodžių tvarkyklėje — arba kitoje saugioje vietoje. Praradus jo atkurti neįmanoma.</string>
+    <string name="settings_sync_delete_action">Ištrinti</string>
+    <string name="settings_sync_delete_done">Jūsų duomenys ištrinti iš serverio</string>
+    <string name="settings_sync_delete_failed">Nepavyko ištrinti — patikrinkite ryšį ir bandykite dar kartą</string>
+    <string name="settings_sync_delete_message">Tai visam laikui ištrina jūsų užšifruotas žymes iš serverio ir išjungia sinchronizavimą šiame įrenginyje. Žymės šiame įrenginyje išsaugomos. Šio veiksmo atšaukti negalima — kiti įrenginiai nebegalės atkurti iš serverio.</string>
+    <string name="settings_sync_delete_started">Trinami jūsų duomenys iš serverio…</string>
+    <string name="settings_sync_delete_summary">Visam laikui ištrinti savo užšifruotas žymes iš serverio</string>
+    <string name="settings_sync_delete_title">Ištrinti duomenis iš serverio</string>
+    <string name="settings_sync_export_caveat_message">Šis failas išsaugotas neužšifruotas — kiekvienas, kuris gali jį perskaityti, gali perskaityti jūsų žymes. Importuokite kodą į slaptažodžių tvarkyklę (ar kitą saugią vietą), tada ištrinkite failą. Slaptažodžių tvarkyklė laiko jį užšifruotą; laisvas failas — ne.</string>
+    <string name="settings_sync_export_continue">Tęsti</string>
+    <string name="settings_sync_export_done">Atkūrimo kodas išsaugotas</string>
+    <string name="settings_sync_export_failed">Nepavyko išsaugoti failo</string>
+    <string name="settings_sync_export_file_body">Firedown — žymių sinchronizavimo atkūrimo kodas\n\n%1$s\n\nŠis kodas yra vienintelis raktas į jūsų sinchronizuotas žymes — kiekvienas, kuris jį turi, gali jas perskaityti, o praradus jo atkurti neįmanoma.\n\nŠis failas NĖRA užšifruotas. Importuokite kodą į slaptažodžių tvarkyklę (ar kitą saugią vietą), tada ištrinkite šį failą.</string>
+    <string name="settings_sync_export_summary">Eksportuoti kodą kaip tekstinį failą, kurį galite saugoti</string>
+    <string name="settings_sync_export_title">Išsaugoti atkūrimo kodą į failą</string>
+    <string name="settings_sync_faq_a1">Taip. Kiekviena žymė užšifruojama šiame įrenginyje prieš įkeliant. Serveris visada saugo tik nesuprantamus duomenis, kurių negali perskaityti.</string>
+    <string name="settings_sync_faq_a2">Ne. Tik jūsų atkūrimo kodas gali atrakinti jūsų žymes. Jos užšifruotos visapusiškai, niekas asmeniško nepridėta, o serveris niekada nemato nešifruotų duomenų.</string>
+    <string name="settings_sync_faq_a3">Raktas, sukurtas jūsų įrenginyje, kai įjungiate sinchronizavimą. Tai vienintelis dalykas, galintis iššifruoti jūsų žymes — šiame įrenginyje ar naujame.</string>
+    <string name="settings_sync_faq_a4">Jūsų sinchronizuotų žymių atkurti negalima — nei jums, nei mums, nes niekada neturėjome rakto. Slaptažodžio atstatymo nėra. Išsaugokite kodą saugioje vietoje; slaptažodžių tvarkyklė yra ideali.</string>
+    <string name="settings_sync_faq_a5">Ne. Jokios registracijos, el. pašto ar telefono numerio — tik atkūrimo kodas. Prie jūsų žymių nesusietas joks asmeninis duomuo.</string>
+    <string name="settings_sync_faq_a6">Sinchronizavimas yra neprivalomas ir pagal numatytuosius nustatymus išjungtas. Visada galite eksportuoti savo žymes į failą ir vėliau jas importuoti be jokio serverio.</string>
+    <string name="settings_sync_faq_q1">Ar mano žymės užšifruotos?</string>
+    <string name="settings_sync_faq_q2">Ar Firedown ar kas nors kitas gali jas perskaityti?</string>
+    <string name="settings_sync_faq_q3">Kas yra atkūrimo kodas?</string>
+    <string name="settings_sync_faq_q4">Kas, jei prarasiu savo atkūrimo kodą?</string>
+    <string name="settings_sync_faq_q5">Ar man reikia paskyros ar el. pašto?</string>
+    <string name="settings_sync_faq_q6">Kas, jei nenoriu naudoti sinchronizavimo?</string>
+    <string name="settings_sync_help_close">Supratau</string>
+    <string name="settings_sync_help_summary">Kas užšifruota ir kodėl jūsų atkūrimo kodas yra svarbus</string>
+    <string name="settings_sync_help_title">Kaip veikia sinchronizavimo šifravimas</string>
+    <string name="settings_sync_last_synced">Įjungta — paskutinį kartą sinchronizuota %1$s</string>
+    <string name="settings_sync_never_synced">Įjungta — dar nesinchronizuota</string>
+    <plurals name="settings_sync_now_done">
+        <item quantity="one">Sinchronizuota — %d žymė</item>
+        <item quantity="few">Sinchronizuota — %d žymės</item>
+        <item quantity="other">Sinchronizuota — %d žymių</item>
+    </plurals>
+    <string name="settings_sync_now_failed">Nepavyko sinchronizuoti žymių — patikrinkite ryšį ir bandykite dar kartą</string>
+    <string name="settings_sync_now_started">Sinchronizuojamos žymės…</string>
+    <string name="settings_sync_now_title">Sinchronizuoti dabar</string>
+    <string name="settings_sync_restore_action">Atkurti</string>
+    <string name="settings_sync_restore_bad">Šis atkūrimo kodas atrodo neteisingas</string>
+    <string name="settings_sync_restore_message">Įveskite atkūrimo kodą iš kito įrenginio, kad jo žymes sujungtumėte su šiuo.</string>
+    <string name="settings_sync_restore_ok">Žymių sinchronizavimas atkurtas</string>
+    <string name="settings_sync_restore_title">Atkurti žymių sinchronizavimą</string>
+    <string name="settings_sync_setup_create">Sukurti naują</string>
+    <string name="settings_sync_setup_message">Jūsų žymės užšifruojamos šiame įrenginyje prieš jam paliekant — serveris jų niekada nemato. Gaunate atkūrimo kodą, kuris yra vienintelis raktas; saugokite jį, nes praradus jo atkurti neįmanoma.</string>
+    <string name="settings_sync_setup_restore">Turiu kodą</string>
+    <string name="settings_sync_setup_title">Nustatyti žymių sinchronizavimą</string>
+    <string name="settings_sync_show_code_summary">Atskleisti kodą, kuris atrakina jūsų sinchronizuotas žymes</string>
+    <string name="settings_sync_show_code_title">Rodyti atkūrimo kodą</string>
+    <string name="settings_sync_sign_out_action">Išjungti</string>
+    <string name="settings_sync_sign_out_message">Žymių sinchronizavimas bus išjungtas, o atkūrimo kodas pašalintas iš šio įrenginio. Jūsų žymės lieka čia. Jei norėsite vėliau vėl sinchronizuoti, įsitikinkite, kad išsaugojote savo atkūrimo kodą.</string>
+    <string name="settings_sync_sign_out_summary">Sustabdyti sinchronizavimą ir pašalinti raktus iš šio įrenginio</string>
+    <string name="settings_sync_sign_out_title">Išjungti sinchronizavimą</string>
+    <string name="settings_sync_signed_out">Žymių sinchronizavimas išjungtas</string>
+    <string name="settings_sync_summary">Visapusiškai užšifruotas žymių sinchronizavimas tarp jūsų įrenginių</string>
+    <string name="settings_sync_switch_summary">Išjungta — jūsų žymės lieka šiame įrenginyje</string>
+    <string name="settings_sync_title">Sinchronizuoti žymes</string>
+    <string name="sync_banner_subtitle">Visapusiškai užšifruota — perskaityti gali tik jūsų atkūrimo kodas. Jokios paskyros, jokio el. pašto.</string>
+    <string name="sync_banner_title">Sinchronizuokite savo žymes tarp įrenginių</string>
 </resources>
