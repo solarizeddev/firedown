@@ -1618,7 +1618,25 @@ opaque chunks + an opaque manifest blob.
   (`EXTRA_OPEN_CLOUD_BACKUP_FILES`) and replaces the settings list on the back
   stack (`popUpTo settings inclusive`), so Back returns to **Downloads** (the
   caller), not into the settings tree. A "Sync" row in the home + browser popups
-  opens the unified Sync screen (`EXTRA_OPEN_SYNC`).
+  opens the Sync hub (`EXTRA_OPEN_SYNC`).
+
+- **Sync IA — a THIN hub + per-feature screens (don't re-merge them).** The
+  Settings → Sync screen (`SyncSettingsFragment` / `settings_sync.xml`) is an
+  account HUB only: a **Bookmarks** nav row (→ `BookmarksSyncFragment`, summary =
+  on?last-synced:off), a **Downloads backup** nav row (→ `CloudBackupSettingsFragment`,
+  live usage / "backing up…" summary), the **shared recovery code** (show/export,
+  device-auth gated, shown once the account exists = bookmarks on OR a download
+  backed up), and the encryption FAQ. The bookmark-only *actions* — the master
+  **toggle**, **Sync now**, **Delete bookmarks from server** — live on the focused
+  `BookmarksSyncFragment` (`settings_bookmarks_sync.xml`), NOT the hub; that
+  declutter is the whole point. The **bookmarks-list overflow + sync banner**
+  deep-link straight to that focused screen (`EXTRA_OPEN_BOOKMARKS_SYNC`, past both
+  the settings list and the hub), so the overflow and the hub's Bookmarks row land
+  in the SAME place. Bookmarks sync is free, downloads backup is pay-per-use, but
+  pricing is kept **implicit** in the copy (no badge). Don't pull the toggle /
+  Sync-now / Delete back onto the hub, and don't route the bookmarks overflow at
+  the hub (`EXTRA_OPEN_SYNC`) — that was the "too many options / confusing"
+  state this replaced.
 
 - **FGS type.** Both workers run as `dataSync` foreground workers; the app's
   manifest merges `foregroundServiceType="dataSync"` onto WorkManager's

@@ -1,70 +1,42 @@
 <!--
-  Unified Sync (account) settings — one account / one recovery code covering
-  bookmarks (free) AND encrypted download backup (cloud-storage-spec.md;
-  sketches/sync-settings-consistent.html). Grouped BY FEATURE so no row is
-  ambiguous about what it touches:
+  Sync hub — a THIN account page. One account / one recovery code covers
+  bookmarks (free) AND encrypted download backup (cloud-storage-spec.md). The hub
+  only routes to each feature's own screen and holds the SHARED recovery code; the
+  per-feature actions (the bookmark toggle, Sync now, Delete-from-server) live on
+  the focused Bookmarks screen ({@link BookmarksSyncFragment}), NOT here — that
+  declutter is the whole point of the hub.
 
-    ── Bookmarks ──            (always visible)
-       Bookmarks              [toggle]   (off = bookmark sign-out)
-       Sync now                          (shown when bookmarks on)
-       Delete bookmarks from server      (shown when bookmarks on)
-    ── Downloads backup ──     (always visible)
+    ── (feature links) ──
+       Bookmarks        › BookmarksSyncFragment  (summary = on?last-synced:off)
        Manage downloads backup › Cloud Backup sub-screen (status/files/delete)
-    ── Recovery code ──        (shared; shown once the account exists — bookmarks
-       Show recovery code       on OR a download has been backed up)
+    ── Recovery code ──  (shared; shown once the account exists — bookmarks on OR a
+       Show recovery code   download has been backed up)
        Save recovery code to file
-    ── About ──                (always visible)
-       How sync & encryption work        (covers bookmarks AND files)
+    ── About ──
+       How sync & encryption work  (covers bookmarks AND files)
 
-  The Bookmarks toggle IS the old master switch (SyncSettingsFragment still owns
-  SYNC_ENABLED through it). "Sync now" and "Delete bookmarks from server" are
-  bookmark-only, so they live under Bookmarks — NOT a generic "Manage sync".
-  Downloads backup is action-driven (a download's options sheet backs it up on
-  demand); this is just the entry to its management screen. Paid "Storage &amp;
-  billing" lands with the payments mint (Phase 1b). The debug smoke test lives on
-  the Downloads sub-screen, not here.
+  The bookmarks row deep-links to the focused screen so the bookmarks-list overflow
+  and the hub land on the SAME place. Downloads backup is action-driven (a
+  download's options sheet backs it up on demand); this is just the entry to its
+  management screen. Paid "Storage & billing" lands with the payments mint (Phase
+  1b). Pricing (free vs pay-per-use) is kept implicit in the copy, not a badge.
 -->
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <PreferenceCategory
-        android:key="com.solarized.firedown.preferences.sync.cat.bookmarks"
-        android:title="@string/settings_sync_cat_bookmarks">
+    <Preference
+        android:key="com.solarized.firedown.preferences.sync.bookmarks.link"
+        android:title="@string/settings_sync_bookmarks_title"
+        android:summary="@string/settings_sync_switch_summary"
+        app:singleLineTitle="false"
+        app:icon="@drawable/ic_bookmarks_24" />
 
-        <SwitchPreferenceCompat
-            android:key="com.solarized.firedown.preferences.sync.enabled"
-            android:title="@string/settings_sync_bookmarks_title"
-            android:summary="@string/settings_sync_switch_summary"
-            app:singleLineTitle="false"
-            app:icon="@drawable/ic_bookmarks_24" />
-
-        <Preference
-            android:key="com.solarized.firedown.preferences.sync.now"
-            android:title="@string/settings_sync_now_title"
-            app:singleLineTitle="false"
-            app:icon="@drawable/settings_backup_restore_24" />
-
-        <Preference
-            android:key="com.solarized.firedown.preferences.sync.delete.data"
-            android:title="@string/settings_sync_delete_title"
-            android:summary="@string/settings_sync_delete_summary"
-            app:singleLineTitle="false"
-            app:icon="@drawable/ic_baseline_delete_24" />
-
-    </PreferenceCategory>
-
-    <PreferenceCategory
-        android:key="com.solarized.firedown.preferences.sync.cat.downloads"
-        android:title="@string/settings_sync_cat_downloads">
-
-        <Preference
-            android:key="com.solarized.firedown.preferences.settings.cloud.backup"
-            android:title="@string/settings_sync_downloads_title"
-            android:summary="@string/settings_sync_downloads_summary"
-            app:singleLineTitle="false"
-            app:icon="@drawable/download_24" />
-
-    </PreferenceCategory>
+    <Preference
+        android:key="com.solarized.firedown.preferences.settings.cloud.backup"
+        android:title="@string/settings_sync_downloads_title"
+        android:summary="@string/settings_sync_downloads_summary"
+        app:singleLineTitle="false"
+        app:icon="@drawable/download_24" />
 
     <PreferenceCategory
         android:key="com.solarized.firedown.preferences.sync.cat.code"

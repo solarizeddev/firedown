@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sync &amp; Backup — simplified</title>
+<style>
+  :root{
+    --bg:#121013; --surface:#1c191d; --surface2:#262229; --line:#2e2a31;
+    --text:#ece8ee; --dim:#9b939f; --coral:#f0716c; --coral-dim:#c25b57;
+    --green:#5fbf8a; --gold:#e0b341;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#0c0a0d;color:var(--text);
+    font-family:Roboto,-apple-system,Segoe UI,sans-serif;padding:28px 16px 60px}
+  h1{font-size:20px;font-weight:600;margin:0 0 4px}
+  .lead{color:var(--dim);font-size:13px;margin:0 0 26px;max-width:760px;line-height:1.5}
+  .lead b{color:var(--text)}
+  .wrap{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start}
+  .phone{width:300px;background:var(--bg);border:1px solid var(--line);
+    border-radius:26px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+  .bar{display:flex;align-items:center;gap:14px;padding:16px 16px 12px;font-size:18px;font-weight:600}
+  .bar .back{color:var(--dim);font-size:20px}
+  .cap{color:var(--coral);font-size:12px;font-weight:700;letter-spacing:.04em;
+    text-transform:uppercase;padding:14px 18px 6px}
+  .row{display:flex;align-items:center;gap:16px;padding:13px 18px;border:0;background:none;
+    width:100%;text-align:left;color:inherit}
+  .row .ic{width:24px;height:24px;flex:0 0 24px;color:var(--dim);
+    display:flex;align-items:center;justify-content:center}
+  .row .tx{flex:1;min-width:0}
+  .row .t{font-size:15.5px}
+  .row .s{font-size:12px;color:var(--dim);margin-top:2px;line-height:1.35}
+  .row .chev{color:var(--dim);font-size:18px}
+  .pill{font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:9px;display:inline-block;
+    vertical-align:middle;margin-left:7px}
+  .pill.free{background:rgba(95,191,138,.16);color:var(--green)}
+  .pill.paid{background:rgba(224,179,65,.16);color:var(--gold)}
+  .sep{height:1px;background:var(--line);margin:6px 18px}
+  .tog{width:40px;height:24px;border-radius:12px;background:var(--coral);position:relative;flex:0 0 40px}
+  .tog::after{content:"";position:absolute;width:18px;height:18px;border-radius:50%;
+    background:#fff;top:3px;right:3px}
+  .danger{color:var(--coral)}
+  .thumb{width:46px;height:38px;border-radius:7px;flex:0 0 46px;
+    background:linear-gradient(135deg,#3a2f3a,#231d24)}
+  .note{width:300px;font-size:12.5px;color:var(--dim);line-height:1.55}
+  .note h3{color:var(--text);font-size:13px;margin:0 0 8px}
+  .note .k{color:var(--coral);font-weight:600}
+  .flow{background:var(--surface);border:1px solid var(--line);border-radius:12px;
+    padding:12px 14px;margin-bottom:12px}
+  .flow b{color:var(--text)}
+  .arrow{color:var(--coral)}
+  del{color:var(--coral-dim)}
+  .label{font-size:11px;color:var(--dim);text-align:center;margin:8px 0 0;letter-spacing:.03em}
+</style>
+</head>
+<body>
+  <h1>Sync &amp; Backup — a simpler split</h1>
+  <p class="lead">
+    Two features, one recovery code, but <b>different shapes</b>: bookmarks
+    <b>sync</b> (free, automatic, a toggle) vs. downloads <b>backup</b> (pay-as-you-go,
+    on-demand, a list of files). Forcing them into one parallel settings screen is what
+    reads as clutter. The fix: <b>each overflow opens its own feature screen</b>, and
+    Settings&nbsp;→&nbsp;Sync shrinks to a thin <b>account hub</b> (recovery code + two links).
+  </p>
+
+  <div class="wrap">
+
+    <!-- HUB -->
+    <div>
+    <div class="phone">
+      <div class="bar"><span class="back">←</span> Sync</div>
+      <div class="cap">Your account</div>
+      <div class="row">
+        <div class="ic">🔖</div>
+        <div class="tx"><div class="t">Bookmarks sync <span class="pill free">FREE</span></div>
+          <div class="s">On · synced 5h ago</div></div>
+        <div class="chev">›</div>
+      </div>
+      <div class="row">
+        <div class="ic">☁︎</div>
+        <div class="tx"><div class="t">Cloud backup <span class="pill paid">PAY AS YOU GO</span></div>
+          <div class="s">2 files · 720 MB backed up</div></div>
+        <div class="chev">›</div>
+      </div>
+      <div class="sep"></div>
+      <div class="cap">Recovery code</div>
+      <div class="row">
+        <div class="ic">🗝</div>
+        <div class="tx"><div class="t">Show recovery code</div>
+          <div class="s">The one key for everything</div></div>
+      </div>
+      <div class="row">
+        <div class="ic">📄</div>
+        <div class="tx"><div class="t">Save code to file</div></div>
+      </div>
+      <div class="sep"></div>
+      <div class="row">
+        <div class="ic">🔒</div>
+        <div class="tx"><div class="t">How it works</div></div>
+      </div>
+    </div>
+    <p class="label">Settings → Sync · the thin hub (was 8+ rows → 5)</p>
+    </div>
+
+    <!-- BOOKMARKS SYNC -->
+    <div>
+    <div class="phone">
+      <div class="bar"><span class="back">←</span> Bookmarks sync</div>
+      <div class="row">
+        <div class="ic">🔖</div>
+        <div class="tx"><div class="t">Sync bookmarks</div>
+          <div class="s">Free · last synced 5h ago</div></div>
+        <div class="tog"></div>
+      </div>
+      <div class="row">
+        <div class="ic">↻</div>
+        <div class="tx"><div class="t">Sync now</div></div>
+      </div>
+      <div class="row">
+        <div class="ic danger">🗑</div>
+        <div class="tx"><div class="t danger">Delete from server</div>
+          <div class="s">Erase your encrypted bookmarks</div></div>
+      </div>
+      <div class="sep"></div>
+      <div class="row">
+        <div class="ic">🗝</div>
+        <div class="tx"><div class="t">Recovery code</div></div>
+        <div class="chev">›</div>
+      </div>
+    </div>
+    <p class="label">Bookmarks ⋮ “Sync bookmarks” → here<br>(toggle + sync now + delete live HERE, not the hub)</p>
+    </div>
+
+    <!-- CLOUD BACKUP -->
+    <div>
+    <div class="phone">
+      <div class="bar"><span class="back">←</span> Cloud backup</div>
+      <div class="row" style="padding-bottom:6px">
+        <div class="tx"><div class="t">2 files · 720 MB</div>
+          <div class="s">Pay as you go · encrypted end-to-end</div></div>
+      </div>
+      <div class="sep"></div>
+      <div class="row">
+        <div class="thumb"></div>
+        <div class="tx"><div class="t">Midjourney Medical.mp4</div>
+          <div class="s"><span style="color:var(--coral)">VIDEO</span> · 53 MB · 2 days ago</div></div>
+        <div class="chev">⋮</div>
+      </div>
+      <div class="row">
+        <div class="thumb"></div>
+        <div class="tx"><div class="t">Relaxing Celtic Fantasy…mp4</div>
+          <div class="s"><span style="color:var(--coral)">VIDEO</span> · 665 MB · 2 days ago</div></div>
+        <div class="chev">⋮</div>
+      </div>
+    </div>
+    <p class="label">Downloads ⋮ “Cloud backup” → here<br>(the files list = the management screen)</p>
+    </div>
+
+    <!-- NOTES -->
+    <div class="note">
+      <h3>What changes</h3>
+      <div class="flow">
+        Downloads&nbsp;⋮ <span class="arrow">→</span> <b>Cloud backup</b> (the files list)<br>
+        <span style="font-size:11px">was “Backed-up files” — renamed to the feature</span>
+      </div>
+      <div class="flow">
+        Bookmarks&nbsp;⋮ <span class="arrow">→</span> <b>Bookmarks sync</b> screen<br>
+        <span style="font-size:11px">was → the big unified Sync screen</span>
+      </div>
+      <div class="flow">
+        Settings&nbsp;→&nbsp;<b>Sync</b> = thin account hub<br>
+        <span style="font-size:11px">recovery code + 2 feature links + how-it-works</span>
+      </div>
+      <p>
+        <span class="k">Consistent rule:</span> an overflow always opens <b>that feature’s own
+        screen</b> — never a settings tree. Each feature screen owns its own actions
+        (bookmarks: toggle / sync now / delete · backup: the file list / restore / remove).
+      </p>
+      <p>
+        <span class="k">Declutters the hub:</span> the confusing
+        <del>Sync now</del> + <del>Delete bookmarks from server</del> move OFF the hub onto
+        the Bookmarks-sync screen where they’re unambiguous.
+      </p>
+      <p>
+        <span class="k">Free vs paid is explicit:</span> a green <b>FREE</b> pill on bookmarks,
+        a gold <b>PAY AS YOU GO</b> pill on cloud backup — set once on the hub.
+      </p>
+      <p>
+        <span class="k">Recovery code lives in one place</span> (the hub), with a small link
+        from each feature screen — no more duplicated key rows.
+      </p>
+    </div>
+
+  </div>
+</body>
+</html>

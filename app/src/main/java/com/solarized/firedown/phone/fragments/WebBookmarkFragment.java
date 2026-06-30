@@ -325,10 +325,11 @@ public class WebBookmarkFragment extends BaseFocusFragment implements OnItemClic
                     mImportLauncher.launch(new String[0]);
                     return true;
                 } else if (id == R.id.action_sync) {
-                    // Opens the bookmark-sync screen directly (Settings is a
-                    // separate activity); EXTRA_OPEN_SYNC deep-links to it.
+                    // Opens the focused Bookmarks-sync screen directly (Settings is
+                    // a separate activity); EXTRA_OPEN_BOOKMARKS_SYNC deep-links
+                    // past both the settings list and the account hub.
                     Intent syncIntent = new Intent(requireContext(), SettingsActivity.class);
-                    syncIntent.putExtra(SettingsActivity.EXTRA_OPEN_SYNC, true);
+                    syncIntent.putExtra(SettingsActivity.EXTRA_OPEN_BOOKMARKS_SYNC, true);
                     startActivity(syncIntent);
                     return true;
                 } else if (id == android.R.id.home) {
@@ -403,8 +404,10 @@ public class WebBookmarkFragment extends BaseFocusFragment implements OnItemClic
 
     @Override
     public void onSyncBannerClicked() {
+        // The banner is a bookmarks-specific CTA → land on the focused
+        // Bookmarks-sync screen, not the account hub.
         Intent syncIntent = new Intent(requireContext(), SettingsActivity.class);
-        syncIntent.putExtra(SettingsActivity.EXTRA_OPEN_SYNC, true);
+        syncIntent.putExtra(SettingsActivity.EXTRA_OPEN_BOOKMARKS_SYNC, true);
         startActivity(syncIntent);
     }
 

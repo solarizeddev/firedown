@@ -164,7 +164,17 @@
             app:exitAnim="@anim/slide_out_left"
             app:popEnterAnim="@anim/slide_in_left"
             app:popExitAnim="@anim/slide_out_right" />
+        <action
+            android:id="@+id/action_sync_to_bookmarks_sync"
+            app:destination="@id/settings_bookmarks_sync"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
     </fragment>
+    <fragment
+        android:id="@+id/settings_bookmarks_sync"
+        android:name="com.solarized.firedown.settings.BookmarksSyncFragment" />
     <fragment
         android:id="@+id/settings_sync_help"
         android:name="com.solarized.firedown.settings.SyncHelpFragment" />

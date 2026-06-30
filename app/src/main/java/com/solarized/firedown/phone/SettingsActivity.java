@@ -16,9 +16,14 @@ import com.solarized.firedown.R;
 
 public class SettingsActivity extends BaseActivity {
 
-    /** Intent boolean extra: open straight to the bookmark-sync screen (the
-     *  bookmarks-list overflow uses this to deep-link past the settings list). */
+    /** Intent boolean extra: open straight to the Sync hub (account page). Used by
+     *  the home / browser "Sync" popup row. */
     public static final String EXTRA_OPEN_SYNC = "com.solarized.firedown.extra.OPEN_SYNC";
+
+    /** Intent boolean extra: open straight to the focused Bookmarks-sync screen
+     *  (the bookmarks-list overflow + sync banner deep-link here, past both the
+     *  settings list AND the account hub). */
+    public static final String EXTRA_OPEN_BOOKMARKS_SYNC = "com.solarized.firedown.extra.OPEN_BOOKMARKS_SYNC";
 
     /** Intent boolean extra: open straight to the Downloads-backup (Cloud Backup)
      *  screen — the in-progress upload/restore notification deep-links here. */
@@ -64,13 +69,23 @@ public class SettingsActivity extends BaseActivity {
 
         navController.setGraph(R.navigation.nav_graph_settings, getIntent().getExtras());
 
-        // Deep-link straight to the bookmark-sync screen, replacing the settings
-        // list on the back stack so Back returns to the caller (e.g. bookmarks).
+        // Deep-link straight to the Sync hub, replacing the settings list on the
+        // back stack so Back returns to the caller (e.g. the browser popup).
         if (getIntent().getBooleanExtra(EXTRA_OPEN_SYNC, false)) {
             NavOptions opts = new NavOptions.Builder()
                     .setPopUpTo(R.id.settings, true)
                     .build();
             navController.navigate(R.id.settings_sync, null, opts);
+        }
+
+        // Deep-link straight to the focused Bookmarks-sync screen (bookmarks-list
+        // overflow + sync banner). Replace the settings list on the back stack so
+        // Back returns to the caller (bookmarks), not into the settings tree.
+        if (getIntent().getBooleanExtra(EXTRA_OPEN_BOOKMARKS_SYNC, false)) {
+            NavOptions opts = new NavOptions.Builder()
+                    .setPopUpTo(R.id.settings, true)
+                    .build();
+            navController.navigate(R.id.settings_bookmarks_sync, null, opts);
         }
 
         // Deep-link straight to the Downloads-backup screen (from the upload /
@@ -116,6 +131,8 @@ public class SettingsActivity extends BaseActivity {
                 mToolbar.setTitle(R.string.settings_lock_title);
             else if(id == R.id.settings_sync)
                 mToolbar.setTitle(R.string.settings_account_title);
+            else if(id == R.id.settings_bookmarks_sync)
+                mToolbar.setTitle(R.string.settings_sync_title);
             else if(id == R.id.settings_sync_help)
                 mToolbar.setTitle(R.string.settings_sync_help_title);
             else if(id == R.id.settings_cloud_backup)

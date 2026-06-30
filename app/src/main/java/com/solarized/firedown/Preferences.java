@@ -120,6 +120,10 @@ public class Preferences {
     public static final String SETTINGS_SYNC_CAT_BOOKMARKS = "com.solarized.firedown.preferences.sync.cat.bookmarks";
     public static final String SETTINGS_SYNC_CAT_DOWNLOADS = "com.solarized.firedown.preferences.sync.cat.downloads";
     public static final String SETTINGS_SYNC_CAT_ABOUT = "com.solarized.firedown.preferences.sync.cat.about";
+    /** Hub nav row that opens the focused Bookmarks-sync screen
+     *  ({@code BookmarksSyncFragment}) — same destination as the bookmarks-list
+     *  overflow, so the two land in the same place. */
+    public static final String SETTINGS_SYNC_BOOKMARKS_LINK = "com.solarized.firedown.preferences.sync.bookmarks.link";
 
     // ---- Cloud Backup (encrypted downloads → storage.firedown.app) ----
     // A SEPARATE feature from the local "Safe Folder" (file_safe / files/safe/),
