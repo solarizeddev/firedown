@@ -57,7 +57,7 @@
         android:key="com.solarized.firedown.preferences.sync.cat.downloads"
         android:title="@string/settings_sync_cat_downloads">
 
-        <com.solarized.firedown.settings.TransferStatusPreference
+        <Preference
             android:key="com.solarized.firedown.preferences.settings.cloud.backup"
             android:title="@string/settings_sync_downloads_title"
             android:summary="@string/settings_sync_downloads_summary"

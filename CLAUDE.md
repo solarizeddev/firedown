@@ -1486,10 +1486,11 @@ opaque chunks + an opaque manifest blob.
 - **Status shows a progress bar.** `TransferStatusPreference` reveals an
   indeterminate `LinearProgressIndicator` in its widget slot while a transfer runs
   (transfers are indeterminate — the workers post an indeterminate notification),
-  driven by the `CloudBackupManager.WORK_TAG` WorkManager observer. Used on BOTH
-  the Cloud Backup status row (`CloudBackupSettingsFragment`) AND the unified Sync
-  screen's "Downloads backup" row (`SyncSettingsFragment`) — keep them in parity:
-  each `setActive(active)` from its own `WORK_TAG` observer.
+  driven by the `CloudBackupManager.WORK_TAG` WorkManager observer. It is ONLY on
+  the Cloud Backup status row (`CloudBackupSettingsFragment`, `setActive(active)`
+  from the `WORK_TAG` observer) — the unified Sync screen's "Downloads backup" row
+  deliberately shows just the live summary text ("Backing up your downloads…"), no
+  bar.
 
 - **Deep-links + back-nav.** The upload/restore notification opens the Cloud
   Backup status screen (`SettingsActivity.EXTRA_OPEN_CLOUD_BACKUP`, Back → settings

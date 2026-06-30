@@ -81,7 +81,7 @@ public class SyncSettingsFragment extends BasePreferenceFragment
     CloudBackupManager mCloudBackup;
 
     private SwitchPreferenceCompat mEnableSwitch;
-    private TransferStatusPreference mDownloadsBackup;
+    private Preference mDownloadsBackup;
     private Preference mHelp;
     private Preference mShowCode;
     private Preference mExportCode;
@@ -400,9 +400,6 @@ public class SyncSettingsFragment extends BasePreferenceFragment
         if (mDownloadsBackup == null) {
             return;
         }
-        // Progress bar in the row's widget slot while a transfer runs (parity with
-        // the Cloud Backup status row).
-        mDownloadsBackup.setActive(active);
         if (active) {
             mDownloadsBackup.setSummary(getString(R.string.settings_sync_downloads_active));
             return;
