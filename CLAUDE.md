@@ -1485,15 +1485,31 @@ opaque chunks + an opaque manifest blob.
   same text styling (`sans-serif-medium`, `colorOnSurface`); don't substitute a
   `TextAppearance` style / `colorOnSurfaceVariant`.
 
-- **In-progress banner + auto-refresh.** A file isn't in the manifest until its
-  upload completes, so the list would look idle mid-upload. `CloudBackupListFragment`
-  observes `WorkManager.getWorkInfosByTagLiveData(WORK_TAG)`: while a transfer
-  RUNNING/ENQUEUED it shows a top banner (`cb_progress_banner`, an indeterminate
-  `LinearProgressIndicator` + "Transfer in progress…"), and on the active→idle
-  transition it `load()`s the manifest again so the just-uploaded file appears
-  without re-entering the screen. `render()` suppresses the empty illustration
-  while a transfer is active (the banner carries the state, e.g. during the first
-  upload when the manifest is still empty).
+- **Per-item upload progress (like the Downloads list) + cancel.** An upload in
+  progress isn't in the manifest yet, so it renders as its own row at the TOP of
+  the list (`CloudBackupFileAdapter` TYPE_TRANSFER, `item_cloud_backup_transfer.xml`)
+  with a **determinate** `LinearProgressIndicator` + percent + a cancel button —
+  the same shape as an in-flight Downloads row. Determinate because the bytes are
+  reported end-to-end: `VaultEngine.backupFile(..., ProgressListener)` fires
+  per-chunk → `VaultBackupWorker` republishes them via `setProgressAsync`
+  (`KEY_NAME`/`KEY_MIME`/`KEY_PROGRESS_DONE`/`_TOTAL`) →
+  `CloudBackupListFragment.observeTransfers` reads `WorkInfo.getProgress()` and
+  builds a `Transfer` row. **Don't revert to an indeterminate banner** — the bar
+  was indeterminate only because nothing reported bytes. Only uploads of NEW files
+  get a row: a transfer whose name is already a committed entry (`isCommitted` — a
+  re-backup or a restore) keeps its existing row, no duplicate progress row.
+  Cancel = `WorkManager.cancelWorkById` (the partial server object is orphaned but
+  harmless — `completeObject`/the manifest write never ran). `setTransfers`
+  rebinds ONLY the transfer rows on a progress tick (count unchanged →
+  `notifyItemRangeChanged(0, n)`), so committed rows below don't re-decode their
+  thumbnails every byte update. On the active→idle transition the fragment
+  `load()`s the manifest so the finished file appears as a committed row.
+- **"Backing up…" snackbar has a View action, no success snackbar.** Tapping
+  "Back up to cloud" (`BaseDownloadFragment`) shows a "Backing up…" snackbar whose
+  **View** action deep-links to the backed-up-files list (where the live per-item
+  progress shows); there is deliberately NO terminal success snackbar (the list is
+  the confirmation) — only a `FAILED` transfer surfaces an error snackbar
+  (`CANCELLED` stays silent).
 
 - **Status shows a progress bar.** `TransferStatusPreference` reveals an
   indeterminate `LinearProgressIndicator` in its widget slot while a transfer runs

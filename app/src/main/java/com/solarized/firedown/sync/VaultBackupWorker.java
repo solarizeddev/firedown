@@ -56,6 +56,11 @@ public class VaultBackupWorker extends Worker {
     public static final String STATUS_OK = "ok";
     public static final String STATUS_ERROR = "error";
 
+    /** Progress-data keys the backed-up-files list reads to render a per-item
+     *  determinate bar (KEY_NAME/KEY_MIME above identify the file). */
+    public static final String KEY_PROGRESS_DONE = "progress_done";
+    public static final String KEY_PROGRESS_TOTAL = "progress_total";
+
     /** A fixed notification id for the in-progress foreground notification. */
     private static final int NOTIFICATION_ID = 0x6242; // "Bb"
 
@@ -114,8 +119,14 @@ public class VaultBackupWorker extends Worker {
         // A tiny preview, stored in the encrypted manifest so the list shows a
         // thumbnail offline even after the local copy is deleted.
         String thumb = VaultThumbnail.generate(path, mime, frameUs);
+        // Publish the file's identity + a determinate per-chunk progress so the
+        // backed-up-files list can show a per-item bar (like the Downloads list).
+        final String fName = name;
+        final String fMime = mime;
+        publishProgress(fName, fMime, 0, file.length());
         try {
-            engine.backupFile(file, mime, thumb);
+            engine.backupFile(file, mime, thumb,
+                    (done, total) -> publishProgress(fName, fMime, done, total));
         } catch (StorageApiClient.TransientException e) {
             // Network / 429 / 5xx — let WorkManager retry with backoff.
             return Result.retry();
@@ -135,6 +146,20 @@ public class VaultBackupWorker extends Worker {
         return Result.failure(new Data.Builder()
                 .putString(KEY_STATUS, STATUS_ERROR)
                 .build());
+    }
+
+    /** Publishes the in-flight file's identity + byte progress (fire-and-forget). */
+    private void publishProgress(String name, String mime, long done, long total) {
+        Data.Builder b = new Data.Builder()
+                .putLong(KEY_PROGRESS_DONE, done)
+                .putLong(KEY_PROGRESS_TOTAL, total);
+        if (name != null) {
+            b.putString(KEY_NAME, name);
+        }
+        if (mime != null) {
+            b.putString(KEY_MIME, mime);
+        }
+        setProgressAsync(b.build());
     }
 
     private ForegroundInfo foregroundInfo(String name) {

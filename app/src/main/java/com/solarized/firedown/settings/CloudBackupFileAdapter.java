@@ -14,6 +14,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.solarized.firedown.R;
 import com.solarized.firedown.glide.MimeTypeThumbnail;
 import com.solarized.firedown.sync.VaultThumbnail;
@@ -23,25 +24,51 @@ import com.solarized.firedown.utils.FileUriHelper;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
- * Backed-up files list, styled to match the Downloads list row
- * (item_cloud_backup_file.xml ≡ fragment_download_item.xml): the stored preview
- * (decoded from the entry's base64 thumb) or the app's mime-type fallback, a
- * TitleSmall name, and a 'MIME · size · date' meta line. Tapping a row fires
- * {@link OnItemClickListener} (the fragment opens the per-item bottom sheet).
- *
- * <p>Entries backed up before previews existed carry no {@code thumb}. The
- * fragment backfills those for DISPLAY from the local file (when still present)
- * via {@link #setResolvedThumb}; until then the mime glyph fills the slot.
+ * Backed-up files list, styled to match the Downloads list. Two row types:
+ * <ul>
+ *   <li><b>TYPE_TRANSFER</b> — an upload in progress (not in the manifest yet):
+ *       its own row with a determinate per-item progress bar and a cancel button,
+ *       shown at the top (like an in-flight download in the Downloads list).</li>
+ *   <li><b>TYPE_FILE</b> — a committed manifest entry (the stored preview / mime
+ *       fallback, a TitleSmall name, and a {@code MIME · size} / date.</li>
+ * </ul>
+ * Tapping a file row fires {@link OnItemClickListener#onItemClick}; the cancel
+ * button fires {@link OnItemClickListener#onCancelTransfer}.
  */
-public class CloudBackupFileAdapter extends RecyclerView.Adapter<CloudBackupFileAdapter.VH> {
+public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+
+    private static final int TYPE_TRANSFER = 0;
+    private static final int TYPE_FILE = 1;
 
     public interface OnItemClickListener {
         void onItemClick(VaultEntry entry);
+
+        /** Cancel the in-progress transfer with this WorkManager id. */
+        void onCancelTransfer(String workId);
     }
 
+    /** One in-progress upload row (not yet a manifest entry). */
+    public static final class Transfer {
+        public final String workId;
+        public final String name;
+        public final String mime;
+        public final long done;
+        public final long total;
+
+        public Transfer(String workId, String name, String mime, long done, long total) {
+            this.workId = workId;
+            this.name = name;
+            this.mime = mime;
+            this.done = done;
+            this.total = total;
+        }
+    }
+
+    private final List<Transfer> mTransfers = new ArrayList<>();
     private final List<VaultEntry> mItems = new ArrayList<>();
     /** objectId → base64 preview backfilled from the local file (display only). */
     private final Map<String, String> mResolvedThumbs = new HashMap<>();
@@ -60,23 +87,49 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<CloudBackupFile
         notifyDataSetChanged();
     }
 
-    /** Removes one entry (by objectId) in place; returns its former position or -1. */
+    /** Replaces the in-progress transfer rows (shown above the committed files). */
+    public void setTransfers(List<Transfer> transfers) {
+        int oldCount = mTransfers.size();
+        mTransfers.clear();
+        if (transfers != null) {
+            mTransfers.addAll(transfers);
+        }
+        int newCount = mTransfers.size();
+        // Progress ticks keep the count stable — rebind ONLY the transfer rows
+        // (positions 0..newCount-1) so committed file rows below don't re-decode
+        // their thumbnails on every byte update. A count change (a transfer
+        // started/finished) reshuffles positions → full rebind.
+        if (oldCount == newCount) {
+            if (newCount > 0) {
+                notifyItemRangeChanged(0, newCount);
+            }
+        } else {
+            notifyDataSetChanged();
+        }
+    }
+
+    public boolean hasTransfers() {
+        return !mTransfers.isEmpty();
+    }
+
+    /** Removes one committed entry (by objectId) in place; returns its former
+     *  index within the FILES (not counting transfer rows), or -1. */
     public int removeByObjectId(String objectId) {
         for (int i = 0; i < mItems.size(); i++) {
             if (mItems.get(i).objectId.equals(objectId)) {
                 mItems.remove(i);
-                notifyItemRemoved(i);
+                notifyItemRemoved(mTransfers.size() + i);
                 return i;
             }
         }
         return -1;
     }
 
-    /** Re-inserts an entry at a position (undo of an optimistic remove). */
+    /** Re-inserts a committed entry at a files-index (undo of an optimistic remove). */
     public void insertAt(int position, VaultEntry entry) {
         int p = Math.max(0, Math.min(position, mItems.size()));
         mItems.add(p, entry);
-        notifyItemInserted(p);
+        notifyItemInserted(mTransfers.size() + p);
     }
 
     /**
@@ -90,35 +143,72 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<CloudBackupFile
         mResolvedThumbs.put(objectId, thumb);
         for (int i = 0; i < mItems.size(); i++) {
             if (objectId.equals(mItems.get(i).objectId)) {
-                notifyItemChanged(i);
+                notifyItemChanged(mTransfers.size() + i);
                 return;
             }
         }
     }
 
+    /** Number of committed file rows (excludes in-progress transfers). */
     public int size() {
         return mItems.size();
     }
 
+    @Override
+    public int getItemViewType(int position) {
+        return position < mTransfers.size() ? TYPE_TRANSFER : TYPE_FILE;
+    }
+
     @NonNull
     @Override
-    public VH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View v = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_cloud_backup_file, parent, false);
-        return new VH(v, mListener);
+    public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        LayoutInflater inflater = LayoutInflater.from(parent.getContext());
+        if (viewType == TYPE_TRANSFER) {
+            View v = inflater.inflate(R.layout.item_cloud_backup_transfer, parent, false);
+            return new TransferVH(v, mListener);
+        }
+        View v = inflater.inflate(R.layout.item_cloud_backup_file, parent, false);
+        return new FileVH(v, mListener);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull VH holder, int position) {
-        holder.bind(mItems.get(position), mResolvedThumbs.get(mItems.get(position).objectId));
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+        if (holder instanceof TransferVH) {
+            ((TransferVH) holder).bind(mTransfers.get(position));
+        } else {
+            VaultEntry entry = mItems.get(position - mTransfers.size());
+            ((FileVH) holder).bind(entry, mResolvedThumbs.get(entry.objectId));
+        }
     }
 
     @Override
     public int getItemCount() {
-        return mItems.size();
+        return mTransfers.size() + mItems.size();
     }
 
-    static class VH extends RecyclerView.ViewHolder {
+    /** Mime chip ("VÍDEO · ") shared by both row types. */
+    private static void bindMimeChip(TextView mime, Context ctx, String mimeType) {
+        String label = mimeType != null ? FileUriHelper.getLongMimeText(ctx, mimeType) : null;
+        if (TextUtils.isEmpty(label)) {
+            mime.setVisibility(View.GONE);
+        } else {
+            mime.setVisibility(View.VISIBLE);
+            mime.setText(label + " · ");
+        }
+    }
+
+    /** Stored preview → display-only backfill → mime-type fallback card. */
+    private static void bindThumb(ImageView thumb, Context ctx, String thumbData, String mimeType) {
+        Bitmap bmp = VaultThumbnail.decode(thumbData);
+        if (bmp != null) {
+            thumb.setImageBitmap(bmp);
+        } else {
+            String mt = mimeType != null ? mimeType : "application/octet-stream";
+            thumb.setImageDrawable(MimeTypeThumbnail.generateDrawable(ctx, mt, true));
+        }
+    }
+
+    static class FileVH extends RecyclerView.ViewHolder {
         private final ImageView thumb;
         private final TextView name;
         private final TextView mime;
@@ -126,14 +216,13 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<CloudBackupFile
         private final TextView date;
         private VaultEntry current;
 
-        VH(@NonNull View itemView, OnItemClickListener listener) {
+        FileVH(@NonNull View itemView, OnItemClickListener listener) {
             super(itemView);
             thumb = itemView.findViewById(R.id.cb_thumb);
             name = itemView.findViewById(R.id.cb_name);
             mime = itemView.findViewById(R.id.cb_mime);
             size = itemView.findViewById(R.id.cb_size);
             date = itemView.findViewById(R.id.cb_date);
-            // Clip the thumbnail to the rounded mask, same as the Downloads row.
             thumb.setClipToOutline(true);
             itemView.setOnClickListener(v -> {
                 if (listener != null && current != null) {
@@ -146,20 +235,8 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<CloudBackupFile
             current = entry;
             Context ctx = itemView.getContext();
             name.setText(entry.name);
-
-            // Line 2: mime chip ("VÍDEO · ") + size — same label + trailing
-            // separator convention as the Downloads row's mime · domain.
-            String mimeLabel = entry.mime != null
-                    ? FileUriHelper.getLongMimeText(ctx, entry.mime) : null;
-            if (TextUtils.isEmpty(mimeLabel)) {
-                mime.setVisibility(View.GONE);
-            } else {
-                mime.setVisibility(View.VISIBLE);
-                mime.setText(mimeLabel + " · ");
-            }
+            bindMimeChip(mime, ctx, entry.mime);
             size.setText(Formatter.formatShortFileSize(ctx, entry.size));
-
-            // Line 3: the backed-up date (relative), or hidden when unknown.
             if (entry.downloadedAt > 0) {
                 date.setVisibility(View.VISIBLE);
                 date.setText(DateUtils.getRelativeTimeSpanString(entry.downloadedAt,
@@ -167,17 +244,54 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<CloudBackupFile
             } else {
                 date.setVisibility(View.GONE);
             }
+            bindThumb(thumb, ctx, entry.thumb != null ? entry.thumb : resolvedThumb, entry.mime);
+        }
+    }
 
-            // Stored preview first, then a display-only backfill from the local
-            // file, then the app's mime-type fallback card.
-            String thumbData = entry.thumb != null ? entry.thumb : resolvedThumb;
-            Bitmap bmp = VaultThumbnail.decode(thumbData);
-            if (bmp != null) {
-                thumb.setImageBitmap(bmp);
+    static class TransferVH extends RecyclerView.ViewHolder {
+        private final ImageView thumb;
+        private final TextView name;
+        private final TextView mime;
+        private final TextView state;
+        private final TextView percent;
+        private final LinearProgressIndicator bar;
+        private String currentWorkId;
+
+        TransferVH(@NonNull View itemView, OnItemClickListener listener) {
+            super(itemView);
+            thumb = itemView.findViewById(R.id.cb_thumb);
+            name = itemView.findViewById(R.id.cb_name);
+            mime = itemView.findViewById(R.id.cb_mime);
+            state = itemView.findViewById(R.id.cb_transfer_state);
+            percent = itemView.findViewById(R.id.cb_progress_text);
+            bar = itemView.findViewById(R.id.cb_progress_bar);
+            thumb.setClipToOutline(true);
+            itemView.findViewById(R.id.cb_transfer_cancel).setOnClickListener(v -> {
+                if (listener != null && currentWorkId != null) {
+                    listener.onCancelTransfer(currentWorkId);
+                }
+            });
+        }
+
+        void bind(Transfer t) {
+            currentWorkId = t.workId;
+            Context ctx = itemView.getContext();
+            name.setText(t.name);
+            bindMimeChip(mime, ctx, t.mime);
+            state.setText(R.string.cloud_backup_transfer_uploading);
+            // Determinate once the total is known and the first chunk lands;
+            // indeterminate while we're still waiting on the first byte report.
+            if (t.total > 0 && t.done > 0) {
+                int pct = (int) Math.min(100, t.done * 100 / t.total);
+                bar.setIndeterminate(false);
+                bar.setProgress(pct);
+                percent.setVisibility(View.VISIBLE);
+                percent.setText(String.format(Locale.US, "%d%%", pct));
             } else {
-                String mimeType = entry.mime != null ? entry.mime : "application/octet-stream";
-                thumb.setImageDrawable(MimeTypeThumbnail.generateDrawable(ctx, mimeType, true));
+                bar.setIndeterminate(true);
+                percent.setVisibility(View.GONE);
             }
+            bindThumb(thumb, ctx, null, t.mime);
         }
     }
 }

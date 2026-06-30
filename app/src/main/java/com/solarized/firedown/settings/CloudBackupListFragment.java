@@ -28,12 +28,14 @@ import androidx.work.WorkManager;
 import com.google.android.material.snackbar.Snackbar;
 import com.solarized.firedown.R;
 import com.solarized.firedown.sync.CloudBackupManager;
+import com.solarized.firedown.sync.VaultBackupWorker;
 import com.solarized.firedown.sync.VaultRestoreWorker;
 import com.solarized.firedown.sync.model.VaultEntry;
 import com.solarized.firedown.utils.NavigationUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import javax.inject.Inject;
 
@@ -62,12 +64,11 @@ public class CloudBackupListFragment extends Fragment
     private View mEmptyView;
     private View mEmptyImage;
     private TextView mEmpty;
-    private View mProgressBanner;
     private CloudBackupFileAdapter mAdapter;
 
     private final List<VaultEntry> mEntries = new ArrayList<>();
     private boolean mLoading = true;
-    /** True while a backup/restore transfer is running (drives the banner). */
+    /** True while any backup/restore transfer is running. */
     private boolean mTransferActive;
 
     @Nullable
@@ -85,7 +86,6 @@ public class CloudBackupListFragment extends Fragment
         mEmptyView = view.findViewById(R.id.cb_empty_view);
         mEmptyImage = view.findViewById(R.id.cb_empty_image);
         mEmpty = view.findViewById(R.id.cb_empty);
-        mProgressBanner = view.findViewById(R.id.cb_progress_banner);
         mAdapter = new CloudBackupFileAdapter(this);
         mRecycler.setAdapter(mAdapter);
 
@@ -106,35 +106,73 @@ public class CloudBackupListFragment extends Fragment
     }
 
     /**
-     * Reflects a running backup/restore: shows the in-progress banner (a file
-     * isn't in the manifest until its upload finishes, so the list would otherwise
-     * look idle mid-upload) and reloads the list when a transfer COMPLETES so the
-     * newly-backed-up file appears without re-entering the screen.
+     * Builds an in-progress upload ROW (with a determinate per-item bar + cancel)
+     * for each running backup, shown above the committed files — a file isn't in
+     * the manifest until its upload finishes, so the list would otherwise look idle
+     * mid-upload. Reloads the manifest when a transfer COMPLETES so the new entry
+     * appears without re-entering. Only uploads of NEW files render a row: a
+     * transfer whose name is already a committed entry (a re-backup or a restore)
+     * keeps its existing row, no duplicate progress row.
      */
     private void observeTransfers() {
         WorkManager.getInstance(requireContext().getApplicationContext())
                 .getWorkInfosByTagLiveData(CloudBackupManager.WORK_TAG)
                 .observe(getViewLifecycleOwner(), infos -> {
+                    List<CloudBackupFileAdapter.Transfer> transfers = new ArrayList<>();
                     boolean active = false;
                     if (infos != null) {
                         for (WorkInfo wi : infos) {
                             WorkInfo.State s = wi.getState();
-                            if (s == WorkInfo.State.RUNNING || s == WorkInfo.State.ENQUEUED) {
-                                active = true;
-                                break;
+                            boolean running = s == WorkInfo.State.RUNNING
+                                    || s == WorkInfo.State.ENQUEUED;
+                            if (!running) {
+                                continue;
                             }
+                            active = true;
+                            Data p = wi.getProgress();
+                            String name = p.getString(VaultBackupWorker.KEY_NAME);
+                            // Nameless (not-yet-started, or a restore that doesn't
+                            // publish) — no row; a restore already has its committed
+                            // row, and a re-backup of an existing file likewise.
+                            if (name == null || isCommitted(name)) {
+                                continue;
+                            }
+                            transfers.add(new CloudBackupFileAdapter.Transfer(
+                                    wi.getId().toString(), name,
+                                    p.getString(VaultBackupWorker.KEY_MIME),
+                                    p.getLong(VaultBackupWorker.KEY_PROGRESS_DONE, 0),
+                                    p.getLong(VaultBackupWorker.KEY_PROGRESS_TOTAL, 0)));
                         }
                     }
                     boolean justFinished = mTransferActive && !active;
                     mTransferActive = active;
-                    if (mProgressBanner != null) {
-                        mProgressBanner.setVisibility(active ? View.VISIBLE : View.GONE);
-                    }
+                    mAdapter.setTransfers(transfers);
                     render();
                     if (justFinished) {
                         load(); // a transfer completed — pull in the new entry
                     }
                 });
+    }
+
+    /** Whether a committed manifest entry already has this file name. */
+    private boolean isCommitted(String name) {
+        for (VaultEntry e : mEntries) {
+            if (name.equals(e.name)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public void onCancelTransfer(String workId) {
+        try {
+            WorkManager.getInstance(requireContext().getApplicationContext())
+                    .cancelWorkById(UUID.fromString(workId));
+            snackbar(getString(R.string.cloud_backup_transfer_cancelled));
+        } catch (IllegalArgumentException ignored) {
+            // malformed id — nothing to cancel
+        }
     }
 
     private void load() {
@@ -180,12 +218,13 @@ public class CloudBackupListFragment extends Fragment
 
     /** Shows the list, or the loading/empty placeholder. */
     private void render() {
-        boolean hasItems = mAdapter != null && mAdapter.size() > 0;
-        mRecycler.setVisibility(hasItems ? View.VISIBLE : View.GONE);
-        // While a transfer runs the banner carries the state — don't also paint the
-        // "nothing backed up yet" illustration over it (e.g. during the first
-        // upload, when the manifest is still empty).
-        if (hasItems || mTransferActive) {
+        // Any row — a committed file OR an in-progress transfer — counts as content.
+        boolean hasRows = mAdapter != null && mAdapter.getItemCount() > 0;
+        mRecycler.setVisibility(hasRows ? View.VISIBLE : View.GONE);
+        // While a transfer runs an in-progress row carries the state — don't paint
+        // the "nothing backed up yet" illustration (e.g. during the first upload,
+        // when the manifest is still empty and the row is only just being built).
+        if (hasRows || mTransferActive) {
             mEmptyView.setVisibility(View.GONE);
             return;
         }

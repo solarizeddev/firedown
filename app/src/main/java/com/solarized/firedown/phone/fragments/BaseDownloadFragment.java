@@ -440,7 +440,10 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
         // and the engine's dedup collapses it to the existing entry.
         String uniqueName = "cloud_backup:" + entity.getFilePath();
         wm.enqueueUniqueWork(uniqueName, ExistingWorkPolicy.KEEP, request);
-        showErrorSnackbar(R.string.cloud_backup_started);
+        // "Backing up…" with a View action that opens the backed-up files list
+        // (where the live per-item progress shows). No success snackbar — the list
+        // is the confirmation; only a failure is surfaced below.
+        showBackupStartedSnackbar();
 
         final LiveData<WorkInfo> live = wm.getWorkInfoByIdLiveData(request.getId());
         live.observe(getViewLifecycleOwner(), new Observer<WorkInfo>() {
@@ -453,12 +456,26 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
                 if (!isAdded()) {
                     return;
                 }
-                boolean ok = info.getState() == WorkInfo.State.SUCCEEDED;
-                showErrorSnackbar(ok
-                        ? R.string.cloud_backup_done
-                        : R.string.cloud_backup_failed);
+                if (info.getState() == WorkInfo.State.FAILED) {
+                    showErrorSnackbar(R.string.cloud_backup_failed);
+                }
             }
         });
+    }
+
+    /** "Backing up…" snackbar with a View action → the backed-up-files list. */
+    private void showBackupStartedSnackbar() {
+        if (mActivity == null) {
+            return;
+        }
+        Snackbar bar = makeSnackbar(mActivity.getSnackAnchorView(),
+                R.string.cloud_backup_started, mCurrentDestinationId == R.id.vault);
+        bar.setAction(R.string.cloud_backup_view, v -> {
+            Intent intent = new Intent(mActivity, SettingsActivity.class);
+            intent.putExtra(SettingsActivity.EXTRA_OPEN_CLOUD_BACKUP_FILES, true);
+            startActivity(intent);
+        });
+        bar.show();
     }
 
     protected boolean handleMenuAction(MenuItem item) {

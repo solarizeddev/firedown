@@ -39,6 +39,12 @@ public final class VaultEngine {
     private static final int MAX_CONFLICT_RETRIES = 5;
     private static final int B64 = Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP;
 
+    /** Per-chunk upload progress (plaintext bytes), so the UI can show a
+     *  determinate per-item bar like the Downloads list. */
+    public interface ProgressListener {
+        void onProgress(long bytesDone, long bytesTotal);
+    }
+
     private final StorageApiClient api;
     private final SyncIdentity identity;
     private final byte[] storageKey;
@@ -69,6 +75,13 @@ public final class VaultEngine {
      * and re-consumes quota.
      */
     public VaultEntry backupFile(File file, String mime, String thumb)
+            throws IOException, GeneralSecurityException {
+        return backupFile(file, mime, thumb, null);
+    }
+
+    /** As {@link #backupFile(File, String, String)}, reporting per-chunk upload
+     *  progress to {@code progress} (may be null). */
+    public VaultEntry backupFile(File file, String mime, String thumb, ProgressListener progress)
             throws IOException, GeneralSecurityException {
         api.register(identity); // idempotent — makes the signed requests resolvable
 
@@ -105,11 +118,19 @@ public final class VaultEngine {
 
             try (InputStream in = new FileInputStream(file)) {
                 byte[] buf = new byte[CHUNK_SIZE];
+                long uploaded = 0;
+                if (progress != null) {
+                    progress.onProgress(0, size); // 0% up front (determinate)
+                }
                 for (int i = 0; i < chunkCount; i++) {
                     int n = readFully(in, buf);
                     byte[] plain = (n == buf.length) ? buf : Arrays.copyOf(buf, n);
                     byte[] enc = VaultCrypto.encryptChunk(plain, dek);
                     api.putChunk(created.uploadUrls.get(i), enc);
+                    uploaded += n;
+                    if (progress != null) {
+                        progress.onProgress(uploaded, size);
+                    }
                 }
             }
             api.completeObject(identity, created.objectId);
