@@ -14,8 +14,6 @@ import com.solarized.firedown.data.models.EditPreferenceViewModel;
 import com.solarized.firedown.settings.ui.DohEditPreference;
 import com.solarized.firedown.utils.Utils;
 
-import org.mozilla.geckoview.GeckoRuntimeSettings;
-
 import dagger.hilt.android.AndroidEntryPoint;
 
 @AndroidEntryPoint
@@ -102,28 +100,10 @@ public class DohFragment extends BasePreferenceFragment implements SharedPrefere
     }
 
     private void applyDohToGecko() {
-        boolean enabled = mSharedPreferences.getBoolean(Preferences.SETTINGS_DOH_SWITCH, false);
-        GeckoRuntimeSettings settings = mGeckoRuntimeHelper.getGeckoRuntime().getSettings();
-
-        settings.setTrustedRecursiveResolverMode(enabled ?
-                GeckoRuntimeSettings.TRR_MODE_FIRST : GeckoRuntimeSettings.TRR_MODE_OFF);
-
-        if (enabled) {
-            settings.setTrustedRecursiveResolverUri(resolveDohUri());
-        }
-    }
-
-    /**
-     * The configured DoH endpoint URL: the persisted SETTINGS_DOH value is
-     * itself the URL for presets, or the user-entered SETTINGS_DOH_CUSTOM
-     * when the custom sentinel is selected.
-     */
-    private String resolveDohUri() {
-        String value = mSharedPreferences.getString(Preferences.SETTINGS_DOH, Preferences.DEFAULT_SETTINGS_DOH);
-        if (Preferences.SETTINGS_DOH_CUSTOM_VALUE.equals(value)) {
-            return mSharedPreferences.getString(Preferences.SETTINGS_DOH_CUSTOM, "");
-        }
-        return value;
+        // Delegate to the shared helper so the boot-time application
+        // (GeckoRuntimeHelper.applyDoh) and this on-change application can
+        // never diverge.
+        mGeckoRuntimeHelper.applyDoh(mSharedPreferences);
     }
 
     @Override

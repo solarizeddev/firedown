@@ -201,6 +201,11 @@ public class GeckoRuntimeHelper {
                 Preferences.SETTINGS_DISABLE_DISK_CACHE, Preferences.DEFAULT_DISABLE_DISK_CACHE));
         setSafeBrowsing(!sharedPreferences.getBoolean(
                 Preferences.SETTINGS_DISABLE_SAFE_BROWSING, Preferences.DEFAULT_DISABLE_SAFE_BROWSING));
+        // DoH is a per-process runtime setting (TRR mode defaults to OFF on
+        // every GeckoRuntime.create) — apply it at boot, or an enabled DoH
+        // toggle would only take effect after the user re-opens the DoH
+        // settings screen (the only other place that sets it).
+        applyDoh(sharedPreferences);
         // These have no UI toggle — the privacy gain is high enough and the
         // breakage low enough that it's not a meaningful choice to expose.
         applyHardeningPrefs();
@@ -1380,6 +1385,28 @@ public class GeckoRuntimeHelper {
         result.accept(
                 map -> Log.d(TAG, "setHttpsOnly: " + enable),
                 throwable -> Log.w(TAG, "setHttpsOnly failed", throwable));
+    }
+
+    /**
+     * Apply the DNS-over-HTTPS setting to GeckoView's Trusted Recursive
+     * Resolver. Mirrors {@code DohFragment.applyDohToGecko} — kept in lockstep
+     * via the shared {@link Preferences#getDohEnabled}/{@link
+     * Preferences#getDohUri} helpers — so DoH is in effect from boot, not only
+     * after the DoH settings screen is visited. {@code TRR_MODE_FIRST} tries
+     * DoH and falls back to the system resolver, matching {@code DohDns}.
+     */
+    public void applyDoh(SharedPreferences sharedPreferences) {
+        boolean enabled = Preferences.getDohEnabled(sharedPreferences);
+        GeckoRuntimeSettings settings = sGeckoRuntime.getSettings();
+        settings.setTrustedRecursiveResolverMode(enabled
+                ? GeckoRuntimeSettings.TRR_MODE_FIRST
+                : GeckoRuntimeSettings.TRR_MODE_OFF);
+        if (enabled) {
+            String uri = Preferences.getDohUri(sharedPreferences);
+            if (uri != null && !uri.isEmpty()) {
+                settings.setTrustedRecursiveResolverUri(uri);
+            }
+        }
     }
 
 
