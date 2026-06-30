@@ -1539,7 +1539,22 @@ opaque chunks + an opaque manifest blob.
   serial lane a list load queued behind two big-file deletes waited for both
   deletes' round-trips (the "dead slow Loading…" after deleting), and it also
   wrongly blocked the app's DB-write lane. The pool lets loads and deletes run
-  concurrently (OCC handles any manifest-mutation conflict).
+  concurrently (OCC handles any manifest-mutation conflict). It is **BOUNDED at 3
+  threads** (`allowCoreThreadTimeOut`, 0 idle) — an unbounded cached pool let a big
+  multi-select spawn a thread per delete and hammer the manifest with concurrent
+  OCC mutations. **Concurrency invariants for this screen (each fixed a real bug):**
+  - **`load()` is generation-guarded** (`mLoadGen`): two concurrent loads (a
+    post-delete resync + a transfer-finished reload) complete in *network* order,
+    not call order, so a stale earlier pull would otherwise overwrite a newer list
+    (deleted entries reappear). The callback drops a result whose `gen != mLoadGen`.
+  - **Batch delete = ONE manifest mutation** (`VaultEngine.deleteEntries` /
+    `CloudBackupManager.deleteEntries`): a multi-select delete must NOT fire N
+    concurrent `mutateManifest` calls — they contend on the manifest version and
+    some exhaust the retries. `MAX_CONFLICT_RETRIES` is 8 (writers now run
+    concurrently: a net-pool delete can race a worker-thread backup commit).
+  - **Delete is unreference-FIRST**: remove from the manifest, THEN free the object
+    (best-effort). The reverse risks a GHOST entry pointing at a deleted object;
+    a failed object delete just leaks quota (server GC).
 - **List gutter + multi-select parity.** The recycler uses the same
   `EqualSpacingItemDecoration(list_spacing)` as the Downloads/Bookmarks/History
   lists (the rows already carry the matching 8dp card margins, so the thumbnail

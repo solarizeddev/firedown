@@ -36,7 +36,10 @@ public final class VaultEngine {
     private static final int CHUNK_SIZE = 8 * 1024 * 1024;
     /** Per-chunk ciphertext overhead: 5 magic + 1 ver + 12 IV + 16 GCM tag. */
     private static final int CHUNK_OVERHEAD = 34;
-    private static final int MAX_CONFLICT_RETRIES = 5;
+    // Headroom for OCC contention: manifest writers now run concurrently (a
+    // user delete on the net pool can race a backup's commit on a worker thread),
+    // so allow a few more re-pull/re-push rounds before giving up.
+    private static final int MAX_CONFLICT_RETRIES = 8;
     private static final int B64 = Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP;
 
     /** Per-chunk upload progress (plaintext bytes), so the UI can show a
@@ -189,10 +192,41 @@ public final class VaultEngine {
         }
     }
 
-    /** Deletes a vault object (frees quota) and drops it from the manifest. */
+    /** Drops a vault entry from the manifest, then frees its object. */
     public void deleteEntry(VaultEntry entry) throws IOException, GeneralSecurityException {
-        api.deleteObject(identity, entry.objectId); // 204/404 both succeed
+        // Unreference FIRST (manifest), then free the object. If the object delete
+        // fails we leak quota (harmless, server GC); the reverse order risks a
+        // GHOST entry that points at a deleted object and can't be restored.
         mutateManifest(entries -> removeById(entries, entry.objectId));
+        try {
+            api.deleteObject(identity, entry.objectId); // 204/404 both succeed
+        } catch (Exception ignored) {
+            // best-effort — the entry is already gone from the manifest
+        }
+    }
+
+    /**
+     * Batch delete: removes ALL given entries from the manifest in ONE OCC mutation
+     * (so N deletes don't fire N concurrent manifest mutations that contend on the
+     * version), then frees each object best-effort. Same unreference-first ordering
+     * as {@link #deleteEntry}.
+     */
+    public void deleteEntries(List<VaultEntry> toDelete) throws IOException, GeneralSecurityException {
+        if (toDelete == null || toDelete.isEmpty()) {
+            return;
+        }
+        mutateManifest(entries -> {
+            for (VaultEntry e : toDelete) {
+                removeById(entries, e.objectId);
+            }
+        });
+        for (VaultEntry e : toDelete) {
+            try {
+                api.deleteObject(identity, e.objectId);
+            } catch (Exception ignored) {
+                // best-effort — already unreferenced
+            }
+        }
     }
 
     // ---- manifest mutation under OCC ----

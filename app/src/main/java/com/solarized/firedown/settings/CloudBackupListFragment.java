@@ -76,6 +76,9 @@ public class CloudBackupListFragment extends Fragment
 
     private final List<VaultEntry> mEntries = new ArrayList<>();
     private boolean mLoading = true;
+    /** Bumped on every load() so a slower earlier network pull can't overwrite a
+     *  newer one (two concurrent loads complete in network order, not call order). */
+    private int mLoadGen;
     /** True while any backup/restore transfer is running. */
     private boolean mTransferActive;
     /** True while multi-select is active (drives the toolbar title/menu). */
@@ -238,10 +241,12 @@ public class CloudBackupListFragment extends Fragment
     }
 
     private void load() {
+        final int gen = ++mLoadGen;
         mLoading = true;
         render();
         mCloudBackup.loadEntries(entries -> {
-            if (!isAdded()) {
+            // Ignore a stale pull whose result lost the race to a newer load().
+            if (!isAdded() || gen != mLoadGen) {
                 return;
             }
             mLoading = false;
@@ -251,7 +256,7 @@ public class CloudBackupListFragment extends Fragment
             render();
             backfillThumbnails();
         }, () -> {
-            if (!isAdded()) {
+            if (!isAdded() || gen != mLoadGen) {
                 return;
             }
             mLoading = false;
@@ -396,7 +401,7 @@ public class CloudBackupListFragment extends Fragment
         if (targets.isEmpty()) {
             return;
         }
-        // Optimistic: drop the rows now; the slow server deletes run in the
+        // Optimistic: drop the rows now; the slow server delete runs in the
         // background and a failure resyncs the truth via load().
         for (VaultEntry e : targets) {
             mAdapter.removeByObjectId(e.objectId);
@@ -404,19 +409,15 @@ public class CloudBackupListFragment extends Fragment
         }
         render();
         snackbar(getString(R.string.cloud_backup_remove_done));
-        final int[] remaining = {targets.size()};
-        final boolean[] anyFailed = {false};
-        for (VaultEntry e : targets) {
-            mCloudBackup.deleteEntry(e, ok -> {
-                if (!ok) {
-                    anyFailed[0] = true;
-                }
-                if (--remaining[0] == 0 && anyFailed[0] && isAdded()) {
-                    snackbar(getString(R.string.cloud_backup_remove_failed));
-                    load(); // resync with the server truth
-                }
-            });
-        }
+        // ONE batched delete — a single manifest mutation removes them all, so N
+        // deletes don't fire N concurrent OCC mutations that contend on the
+        // manifest version (which spuriously exhausted retries on a big batch).
+        mCloudBackup.deleteEntries(targets, ok -> {
+            if (isAdded() && !ok) {
+                snackbar(getString(R.string.cloud_backup_remove_failed));
+                load(); // resync with the server truth
+            }
+        });
     }
 
     /** Observes the per-item bottom sheet's result (Restore / Remove). */

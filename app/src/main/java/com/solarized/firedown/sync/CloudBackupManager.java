@@ -15,10 +15,13 @@ import com.solarized.firedown.sync.model.VaultEntry;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import javax.inject.Inject;
@@ -55,13 +58,21 @@ public class CloudBackupManager {
 
     private final Context context;
     private final SharedPreferences prefs;
-    /** A small pool — NOT the DiskIO/HeavyIO single-thread lanes — for the cloud
-     *  ops that hit the network (manifest pull/push, object delete). Those are
-     *  slow and must run CONCURRENTLY: on a serial lane a list load queued behind
-     *  two big-file deletes waited for both deletes' round-trips (the "dead slow
-     *  Loading…" after deleting). Cached pool → 0 idle threads for a rarely-used
-     *  feature, threads spun up on demand. */
-    private final ExecutorService netExecutor = Executors.newCachedThreadPool();
+    /** A small BOUNDED pool — NOT the DiskIO/HeavyIO single-thread lanes — for the
+     *  cloud ops that hit the network (manifest pull/push, object delete). Those
+     *  are slow and must run CONCURRENTLY (a list load must not queue behind a
+     *  delete's round-trips — the "dead slow Loading…" symptom), but the pool is
+     *  CAPPED at 3 so a big multi-select can't spawn a thread per delete and
+     *  hammer the manifest with concurrent OCC mutations. Threads idle out
+     *  (`allowCoreThreadTimeOut`) so a rarely-used feature keeps none alive. */
+    private final ExecutorService netExecutor = newNetExecutor();
+
+    private static ExecutorService newNetExecutor() {
+        ThreadPoolExecutor pool = new ThreadPoolExecutor(
+                3, 3, 60L, TimeUnit.SECONDS, new LinkedBlockingQueue<>());
+        pool.allowCoreThreadTimeOut(true);
+        return pool;
+    }
     private final Executor heavyExecutor;
     private final OkHttpClient httpClient;
     private final DownloadDataRepository downloads;
@@ -206,6 +217,15 @@ public class CloudBackupManager {
      * main thread.
      */
     public void deleteEntry(VaultEntry entry, Consumer<Boolean> onResult) {
+        deleteEntries(Collections.singletonList(entry), onResult);
+    }
+
+    /**
+     * Removes several backed-up files from the cloud in ONE manifest mutation
+     * (then frees each object), off the net executor; {@code onResult} is posted to
+     * the main thread. Batching avoids N concurrent OCC manifest mutations.
+     */
+    public void deleteEntries(List<VaultEntry> entries, Consumer<Boolean> onResult) {
         netExecutor.execute(() -> {
             boolean ok;
             byte[] code = new SyncSecrets(context).load();
@@ -216,7 +236,7 @@ public class CloudBackupManager {
                     SyncIdentity identity = SyncIdentity.fromCode(code);
                     StorageApiClient api = new StorageApiClient(httpClient, backendUrl());
                     VaultEngine engine = new VaultEngine(api, identity);
-                    engine.deleteEntry(entry);
+                    engine.deleteEntries(entries);
                     ok = true;
                 } catch (Exception e) {
                     ok = false;
