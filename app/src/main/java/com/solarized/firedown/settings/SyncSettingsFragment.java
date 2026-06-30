@@ -83,6 +83,7 @@ public class SyncSettingsFragment extends BasePreferenceFragment
     OkHttpClient mHttpClient;
 
     private SwitchPreferenceCompat mEnableSwitch;
+    private Preference mDownloadsBackup;
     private Preference mHelp;
     private Preference mShowCode;
     private Preference mExportCode;
@@ -126,6 +127,7 @@ public class SyncSettingsFragment extends BasePreferenceFragment
         setPreferencesFromResource(R.xml.settings_sync, rootKey);
 
         mEnableSwitch = findPreference(Preferences.SYNC_ENABLED);
+        mDownloadsBackup = findPreference(Preferences.SETTINGS_CLOUD_BACKUP);
         mHelp = findPreference(Preferences.SETTINGS_SYNC_HELP);
         mShowCode = findPreference(Preferences.SETTINGS_SYNC_SHOW_CODE);
         mExportCode = findPreference(Preferences.SETTINGS_SYNC_EXPORT_CODE);
@@ -148,6 +150,9 @@ public class SyncSettingsFragment extends BasePreferenceFragment
             });
         }
 
+        if (mDownloadsBackup != null) {
+            mDownloadsBackup.setOnPreferenceClickListener(this);
+        }
         if (mHelp != null) {
             mHelp.setOnPreferenceClickListener(this);
         }
@@ -227,6 +232,8 @@ public class SyncSettingsFragment extends BasePreferenceFragment
     public boolean onPreferenceClick(Preference preference) {
         String key = preference.getKey();
         switch (key) {
+            case Preferences.SETTINGS_CLOUD_BACKUP ->
+                    NavigationUtils.navigateSafe(mNavController, R.id.action_sync_to_cloud_backup);
             case Preferences.SETTINGS_SYNC_HELP ->
                     NavigationUtils.navigateSafe(mNavController, R.id.action_sync_to_help);
             case Preferences.SETTINGS_SYNC_SHOW_CODE -> authThenShowCode();

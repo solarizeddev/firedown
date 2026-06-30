@@ -189,6 +189,14 @@
     <string name="sync_banner_subtitle">End-to-end encrypted — only your recovery code can read it. No account, no email.</string>
     <string name="settings_sync_title">Sync bookmarks</string>
     <string name="settings_sync_summary">End-to-end encrypted bookmark sync across your devices</string>
+    <!-- Unified Sync (account) settings entry — one account / one recovery code
+         covering bookmarks (free) + encrypted download backup. -->
+    <string name="settings_account_title">Sync</string>
+    <string name="settings_account_summary">Bookmarks and encrypted download backup, one recovery code</string>
+    <string name="settings_sync_cat_what">What to sync</string>
+    <string name="settings_sync_bookmarks_title">Bookmarks</string>
+    <string name="settings_sync_downloads_title">Downloads backup</string>
+    <string name="settings_sync_downloads_summary">Encrypted backup of your downloads</string>
     <string name="settings_sync_switch_summary">Off — your bookmarks stay on this device</string>
     <string name="settings_sync_never_synced">On — not synced yet</string>
     <string name="settings_sync_last_synced">On — last synced %1$s</string>

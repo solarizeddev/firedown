@@ -1,33 +1,50 @@
 <!--
-  Bookmark-sync settings. Structure (kept deliberately shallow so adding
-  Downloads sync later is a clean extension, not a rewrite):
+  Unified Sync (account) settings — one account / one recovery code covering
+  bookmarks (free) AND encrypted download backup (cloud-storage-spec.md;
+  sketch: sketches/sync-settings-future.html). IA:
 
-    Sync bookmarks            [master switch]   (off = sign out; see note)
+    ── What to sync ──        (always visible)
+       Bookmarks              [toggle]          (off = bookmark sign-out)
+       Downloads backup       › Cloud Backup sub-screen (action-driven)
     How encryption works                        (FAQ, always visible)
-    ── Recovery code ──       (category, on only)
+    ── Recovery code ──       (category, shown once set up)
        Show recovery code
        Save recovery code to file
-    ── Manage sync ──         (category, on only)
+    ── Manage sync ──         (category, shown once set up)
        Sync now
        Delete data from server
 
-  There is intentionally NO separate "Turn off sync" row — the master switch
-  already does it (toggling it off runs the sign-out confirm). When Downloads
-  sync arrives, the plan is: the master switch becomes account-level "Sync", a
-  new "── What to sync ──" category holds Bookmarks + Downloads toggles, and the
-  Recovery-code + Manage-sync categories stay shared (one recovery code, one
-  account). The two categories are hidden while sync is off (SyncSettingsFragment
-  toggles their visibility) so the off-state screen is just the switch + FAQ.
+  The Bookmarks toggle IS the old master switch (SyncSettingsFragment still
+  owns SYNC_ENABLED through it; toggling off runs the bookmark sign-out
+  confirm). The Downloads row is NOT a toggle — Cloud Backup is action-driven
+  (a download's options sheet backs it up on demand) and its own management
+  screen handles status/files/delete. The Recovery-code + Manage categories
+  are shared and gated on the account being set up. Billing / "Storage &amp;
+  billing" (the paid-storage sketch bits) land with the payments mint
+  (Phase 1b) — not here yet.
 -->
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <SwitchPreferenceCompat
-        android:key="com.solarized.firedown.preferences.sync.enabled"
-        android:title="@string/settings_sync_title"
-        android:summary="@string/settings_sync_switch_summary"
-        app:singleLineTitle="false"
-        app:icon="@drawable/cloud_outline_24" />
+    <PreferenceCategory
+        android:key="com.solarized.firedown.preferences.sync.cat.what"
+        android:title="@string/settings_sync_cat_what">
+
+        <SwitchPreferenceCompat
+            android:key="com.solarized.firedown.preferences.sync.enabled"
+            android:title="@string/settings_sync_bookmarks_title"
+            android:summary="@string/settings_sync_switch_summary"
+            app:singleLineTitle="false"
+            app:icon="@drawable/ic_bookmarks_24" />
+
+        <Preference
+            android:key="com.solarized.firedown.preferences.settings.cloud.backup"
+            android:title="@string/settings_sync_downloads_title"
+            android:summary="@string/settings_sync_downloads_summary"
+            app:singleLineTitle="false"
+            app:icon="@drawable/download_24" />
+
+    </PreferenceCategory>
 
     <!-- Always visible (not gated on sync being on): the FAQ helps the
          decision to enable, and lets an existing user re-read the

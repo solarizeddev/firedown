@@ -46,19 +46,15 @@
             android:title="@string/settings_lock_title"
             app:icon="@drawable/ic_lock_24" />
 
+        <!-- Unified account: bookmarks + encrypted download backup, one
+             recovery code. The Downloads-backup management lives INSIDE this
+             screen (a "What to sync" row), not as a separate top-level entry. -->
         <Preference
             android:key="com.solarized.firedown.preferences.settings.sync"
-            android:title="@string/settings_sync_title"
-            android:summary="@string/settings_sync_summary"
+            android:title="@string/settings_account_title"
+            android:summary="@string/settings_account_summary"
             app:singleLineTitle="false"
             app:icon="@drawable/cloud_outline_24"/>
-
-        <Preference
-            android:key="com.solarized.firedown.preferences.settings.cloud.backup"
-            android:title="@string/settings_cloud_backup_title"
-            android:summary="@string/settings_cloud_backup_summary"
-            app:singleLineTitle="false"
-            app:icon="@drawable/cloud_24"/>
 
         <Preference
             android:key="com.solarized.firedown.preferences.browser.quit"

@@ -90,9 +90,13 @@ public class SettingsActivity extends BaseActivity {
             else if(id == R.id.settings_lock)
                 mToolbar.setTitle(R.string.settings_lock_title);
             else if(id == R.id.settings_sync)
-                mToolbar.setTitle(R.string.settings_sync_title);
+                mToolbar.setTitle(R.string.settings_account_title);
             else if(id == R.id.settings_sync_help)
                 mToolbar.setTitle(R.string.settings_sync_help_title);
+            else if(id == R.id.settings_cloud_backup)
+                mToolbar.setTitle(R.string.settings_cloud_backup_title);
+            else if(id == R.id.settings_cloud_backup_files)
+                mToolbar.setTitle(R.string.cloud_backup_files_title);
         });
 
         ViewCompat.setOnApplyWindowInsetsListener(mToolbar, (v, windowInsets) -> {
