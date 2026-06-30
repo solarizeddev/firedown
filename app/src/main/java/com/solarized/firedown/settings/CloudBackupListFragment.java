@@ -149,28 +149,25 @@ public class CloudBackupListFragment extends Fragment
         }
         LiveData<Bundle> live = entry.getSavedStateHandle()
                 .getLiveData(CloudBackupItemSheetDialogFragment.RESULT);
-        live.observe(getViewLifecycleOwner(), new Observer<Bundle>() {
-                    @Override
-                    public void onChanged(Bundle result) {
-                        if (result == null) {
-                            return;
-                        }
-                        entry.getSavedStateHandle()
-                                .remove(CloudBackupItemSheetDialogFragment.RESULT);
-                        int action = result.getInt(CloudBackupItemSheetDialogFragment.RESULT_ACTION);
-                        String objectId = result.getString(
-                                CloudBackupItemSheetDialogFragment.RESULT_OBJECT_ID);
-                        VaultEntry target = findEntry(objectId);
-                        if (target == null) {
-                            return;
-                        }
-                        if (action == CloudBackupItemSheetDialogFragment.ACTION_RESTORE) {
-                            restore(target);
-                        } else {
-                            removeOptimistic(target);
-                        }
-                    }
-                });
+        live.observe(getViewLifecycleOwner(), result -> {
+            if (result == null) {
+                return;
+            }
+            entry.getSavedStateHandle()
+                    .remove(CloudBackupItemSheetDialogFragment.RESULT);
+            int action = result.getInt(CloudBackupItemSheetDialogFragment.RESULT_ACTION);
+            String objectId = result.getString(
+                    CloudBackupItemSheetDialogFragment.RESULT_OBJECT_ID);
+            VaultEntry target = findEntry(objectId);
+            if (target == null) {
+                return;
+            }
+            if (action == CloudBackupItemSheetDialogFragment.ACTION_RESTORE) {
+                restore(target);
+            } else {
+                removeOptimistic(target);
+            }
+        });
     }
 
     private VaultEntry findEntry(String objectId) {
