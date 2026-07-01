@@ -1,0 +1,26 @@
+{
+  "docblockedTitle": {
+    "message": "Stránka byla zablokována"
+  },
+  "docblockedPrompt2": {
+    "message": "Kvůli následujícímu filtru:"
+  },
+  "docblockedFoundIn": {
+    "message": "Filtr byl nalezen v:"
+  },
+  "docblockedDontWarn": {
+    "message": "Příště na tuto stránku neupozorňovat"
+  },
+  "docblockedDisable": {
+    "message": "Pokračovat"
+  },
+  "docblockedBack": {
+    "message": "Jít zpět"
+  },
+  "docblockedRedirectPrompt": {
+    "message": "Zablokovaná stránka Vás chce přesměrovat na jiný web. Pokud se rozhodnete pokračovat, přejdete přímo na: {{url}}"
+  },
+  "docblockedSubtitle": {
+    "message": "Blokování obsahu Firedown zabránilo načtení této stránky."
+  }
+}

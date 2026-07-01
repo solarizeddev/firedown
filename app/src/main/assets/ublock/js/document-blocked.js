@@ -24,8 +24,9 @@
     header of document-blocked.html for why this lives in the UI-stripped
     uBlock build. It is deliberately dependency-light: it only relies on
     `vAPI.messaging.send` (from vapi-client.js) to reach the background's
-    still-present listeners. Strings are inline English — this build ships
-    only the `en` locale, so there is no i18n stack to localize against.
+    still-present listeners. Static UI text is localized via browser.i18n from
+    the extension's _locales (uBlock's own translated docblocked* strings plus a
+    Firedown-added docblockedSubtitle key); the HTML keeps English fallbacks.
 
 *******************************************************************************/
 
@@ -48,6 +49,34 @@ const details = (( ) => {
     } catch {
     }
     return out;
+})();
+
+/******************************************************************************/
+
+// Localize the static UI. Every element with a data-i18n attribute keeps an
+// English fallback in the HTML; browser.i18n.getMessage resolves the key to the
+// browser-locale string from _locales/<lang>/messages.json (uBlock's own
+// translations, plus the one Firedown-added docblockedSubtitle key). Missing
+// locales/keys fall back to the default (en), and the English text already in
+// the DOM covers the case where the i18n API is somehow unavailable.
+
+const i18n = key => {
+    try {
+        return (typeof browser !== 'undefined' && browser.i18n)
+            ? browser.i18n.getMessage(key) : '';
+    } catch {
+        return '';
+    }
+};
+
+(function applyI18n() {
+    const els = document.querySelectorAll('[data-i18n]');
+    for ( let i = 0; i < els.length; i++ ) {
+        const msg = i18n(els[i].getAttribute('data-i18n'));
+        if ( msg ) { els[i].textContent = msg; }
+    }
+    const title = i18n('docblockedTitle');
+    if ( title ) { document.title = title; }
 })();
 
 /******************************************************************************/
@@ -75,9 +104,10 @@ if ( details.reason ) {
 if ( details.to ) {
     const warn = document.getElementById('redirectWarn');
     if ( warn !== null ) {
-        warn.textContent =
+        const tmpl = i18n('docblockedRedirectPrompt') ||
             'The blocked page wants to redirect to another site. ' +
-            'If you proceed, you will navigate directly to: ' + details.to;
+            'If you choose to proceed, you will navigate directly to: {{url}}';
+        warn.textContent = tmpl.replace('{{url}}', details.to);
         warn.style.display = '';
     }
 }

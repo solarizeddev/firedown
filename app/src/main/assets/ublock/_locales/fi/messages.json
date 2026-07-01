@@ -1,0 +1,26 @@
+{
+  "docblockedTitle": {
+    "message": "Sivu estetty"
+  },
+  "docblockedPrompt2": {
+    "message": "Seuraavan suodattimen vuoksi:"
+  },
+  "docblockedFoundIn": {
+    "message": "Sisältyy listoihin:"
+  },
+  "docblockedDontWarn": {
+    "message": "Älä varoita tästä sivustosta uudelleen"
+  },
+  "docblockedDisable": {
+    "message": "Jatka"
+  },
+  "docblockedBack": {
+    "message": "Palaa takaisin"
+  },
+  "docblockedRedirectPrompt": {
+    "message": "Estetty sivu ohjautuu eri sivustolle. Jos jatkat, siirryt suoraan osoitteeseen {{url}}"
+  },
+  "docblockedSubtitle": {
+    "message": "Firedownin sisällönestäjä esti tämän sivun latautumisen."
+  }
+}

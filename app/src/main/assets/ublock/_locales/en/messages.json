@@ -1149,6 +1149,10 @@
     "message": "Page blocked",
     "description": "Used as a title for the document-blocked page"
   },
+  "docblockedSubtitle": {
+    "message": "Firedown's content blocker stopped this page from loading.",
+    "description": "Firedown-added subtitle for the document-blocked page"
+  },
   "docblockedPrompt1": {
     "message": "uBlock Origin has prevented the following page from loading:",
     "description": "Used in the strict-blocking page"
