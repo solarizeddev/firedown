@@ -195,29 +195,22 @@ public class MediaViewerFragment extends Fragment {
         mFallbackDrawable = MimeTypeThumbnail.generateDrawable(mActivity, fileMime);
 
         if (!mAvoidTransition) {
-            // Match the downloads grid cell: 16:10 centred card with
-            // centerCrop. Same shape + same scaleType as the source
-            // ImageView means the shared element transition has no
-            // matrix interpolation to do — eliminates the "fill the
-            // screen, then snap to letterbox" flash that ChangeImage-
-            // Transform produces when source (centerCrop in 16:10)
-            // and destination (fitCenter, full screen) disagree.
+            // Bound photo_view to a centred centerCrop card instead of a
+            // full-screen fitCenter ImageView. The AspectRatioImageView
+            // constrains its own bounds, so the shared-element transition
+            // target is a card (a clean bounds-grow from the source cell),
+            // never the whole screen.
             //
-            // This applies to VIDEO as well as audio. The default
-            // (full-screen + fitCenter) poster only looked fine for
-            // portrait / near-square videos, where fitCenter already
-            // fills most of a portrait screen so the centerCrop→fitCenter
-            // interpolation is imperceptible. A LANDSCAPE video (e.g.
-            // 498×334) letterboxes to a thin band under fitCenter, so the
-            // same interpolation visibly blows the first frame up to fill
-            // the whole screen before snapping back to the band — the bug
-            // reported as "one video fills the screen during the
-            // transition". Bounding photo_view to a 16:10 centerCrop card
-            // (the AspectRatioImageView constrains its own bounds, so the
-            // shared-element target is captured at measure time) makes the
-            // transform a clean bounds-grow for every aspect. The poster
-            // is only shown until onRenderedFirstFrame swaps in the real
-            // (correctly letterboxed) video frame.
+            // 16:10 here is only a FALLBACK aspect. For VIDEO,
+            // presetVideoAspectRatio() overrides it in onViewCreated with
+            // the file's real aspect ratio, so the poster coincides
+            // exactly with the player's letterbox and nothing peeks around
+            // the frame (a hardcoded 16:10 card is TALLER than a wide
+            // 2.35:1 clip and its top/bottom edges showed behind the
+            // video). AUDIO keeps the 16:10 card — its art isn't a video
+            // frame, and 16:10 matches the downloads grid cell. The poster
+            // shows through the transparent shutter until
+            // onRenderedFirstFrame swaps in the real video frame.
             mPhotoView.setScaleType(ImageView.ScaleType.CENTER_CROP);
             mPhotoView.setAspectRatio(16f / 10f);
         }
@@ -797,10 +790,8 @@ public class MediaViewerFragment extends Fragment {
     @OptIn(markerClass = UnstableApi.class)
     private void presetVideoAspectRatio(Uri uri) {
         if (uri == null || mPlayerView == null || mActivity == null) return;
-        View contentFrame = mPlayerView.findViewById(androidx.media3.ui.R.id.exo_content_frame);
-        if (!(contentFrame instanceof AspectRatioFrameLayout)) return;
 
-        // {width, height, rotation}, already adjusted for rotation below.
+        // {width, height, rotation}, adjusted for rotation below.
         int[] dims = readVideoDimensions(uri);
         if (dims == null) return;
         int w = dims[0];
@@ -812,7 +803,29 @@ public class MediaViewerFragment extends Fragment {
             int tmp = w; w = h; h = tmp;
         }
         if (w <= 0 || h <= 0) return;
-        ((AspectRatioFrameLayout) contentFrame).setAspectRatio((float) w / (float) h);
+        float aspect = (float) w / (float) h;
+
+        View contentFrame = mPlayerView.findViewById(androidx.media3.ui.R.id.exo_content_frame);
+        if (contentFrame instanceof AspectRatioFrameLayout) {
+            ((AspectRatioFrameLayout) contentFrame).setAspectRatio(aspect);
+        }
+
+        // Match the transition poster to the SAME aspect as the video.
+        // photo_view sits BEHIND the player and shows through the
+        // transparent shutter until the first frame renders; if its shape
+        // differs from the video's letterbox it peeks out above/below the
+        // frame (the 16:10 card set in onCreateView did exactly that on a
+        // wide 2.35:1 clip). The 16:10 there is only a pre-metadata
+        // fallback — override it with the real video aspect here, which
+        // runs in onViewCreated BEFORE the postponed shared-element
+        // transition captures photo_view's end bounds. For a video-frame
+        // thumbnail this makes centerCrop a no-op crop, so the poster
+        // coincides exactly with where the player will draw — nothing
+        // peeks, and there is no full-screen fill (the poster stays a
+        // band, not the whole screen).
+        if (mPhotoView != null && !mAvoidTransition) {
+            mPhotoView.setAspectRatio(aspect);
+        }
     }
 
     /**
