@@ -5,10 +5,20 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <!--
+      layout_height is wrap_content (NOT match_parent) on purpose: the
+      AspectRatioImageView computes its height from its width and the ratio
+      set in code, and wrap_content lets that computed band BE the view's
+      size. With match_parent the parent forced an EXACTLY full-height spec
+      that the view under-reported, and the shared-element activity
+      transition composited it at full height anyway — centerCrop then
+      filled the whole screen (the "maximized image in background"). See
+      MediaViewerFragment.onCreateView.
+    -->
     <com.solarized.firedown.ui.AspectRatioImageView
         android:id="@+id/photo_view"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:layout_gravity="center" />
 
     <androidx.media3.ui.PlayerView
