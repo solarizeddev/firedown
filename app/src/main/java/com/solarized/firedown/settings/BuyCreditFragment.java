@@ -39,6 +39,9 @@ import com.solarized.firedown.R;
 import com.solarized.firedown.data.models.BuyCreditViewModel;
 
 import java.text.NumberFormat;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
 
 import dagger.hilt.android.AndroidEntryPoint;
@@ -70,7 +73,20 @@ public class BuyCreditFragment extends Fragment {
     private ViewGroup mDenomContainer;
     private MaterialButtonToggleGroup mRailGroup;
     private MaterialButton mContinue;
-    private int mSelectedDenom = -1;
+    // Plan-grid views (hidden in the legacy flat-list mode).
+    private View mDurationSection;
+    private MaterialButtonToggleGroup mDurationToggle;
+    private TextView mDurationSave;
+    private TextView mSizeLabel;
+    private View mGbmExplainer;
+    private View mSoftcapNote;
+    /** The chosen tile/denomination (an Option), or null until one is selected. */
+    private BuyCreditViewModel.Option mSelectedOption;
+    /** In the grid, the size the user last picked, so switching duration keeps the
+     *  same size row selected (only the price changes) instead of snapping back. */
+    private int mPreferredSizeGb = -1;
+    /** The current plan options, so a duration change can rebuild the size tiles. */
+    private List<BuyCreditViewModel.Option> mPlanOptions = Collections.emptyList();
     private String mSelectedRail = BuyCreditViewModel.RAIL_LIGHTNING;
 
     // Lightning / Stripe pay state.
@@ -107,6 +123,24 @@ public class BuyCreditFragment extends Fragment {
         mDenomContainer = view.findViewById(R.id.buy_denom_container);
         mRailGroup = view.findViewById(R.id.buy_rail_group);
         mContinue = view.findViewById(R.id.buy_continue);
+        mDurationSection = view.findViewById(R.id.buy_duration_section);
+        mDurationToggle = view.findViewById(R.id.buy_duration_toggle);
+        mDurationSave = view.findViewById(R.id.buy_duration_save);
+        mSizeLabel = view.findViewById(R.id.buy_size_label);
+        mGbmExplainer = view.findViewById(R.id.buy_gbm_explainer);
+        mSoftcapNote = view.findViewById(R.id.buy_softcap_note);
+
+        // Changing the duration rebuilds the size tiles for that coverage (each
+        // duration is priced by its own keysets). The button's tag is its months.
+        mDurationToggle.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
+            if (!isChecked) {
+                return;
+            }
+            View btn = group.findViewById(checkedId);
+            if (btn != null && btn.getTag() instanceof Integer) {
+                buildSizeTiles((Integer) btn.getTag());
+            }
+        });
 
         // List scrolls under the nav bar; the last element clears it (same inset
         // treatment as the other settings sub-screens).
@@ -127,9 +161,9 @@ public class BuyCreditFragment extends Fragment {
         });
 
         mContinue.setOnClickListener(v -> {
-            if (mSelectedDenom > 0) {
+            if (mSelectedOption != null) {
                 mCheckoutOpened = false;
-                mViewModel.startPurchase(mSelectedDenom, mSelectedRail);
+                mViewModel.startPurchase(mSelectedOption, mSelectedRail);
             }
         });
 
@@ -190,11 +224,157 @@ public class BuyCreditFragment extends Fragment {
     // ---- pick ----
 
     private void bindPick(BuyCreditViewModel.UiState s) {
-        // Rebuild the denomination cards from the server's active keysets.
-        mDenomContainer.removeAllViews();
-        mSelectedDenom = -1;
+        mSelectedOption = null;
+        mContinue.setEnabled(false);
+        // Plan-grid mode when the server advertises (size × duration) tiles; else
+        // the legacy flat denomination list (BuyCreditViewModel already returns
+        // only one kind at a time).
+        boolean anyPlan = false;
+        for (BuyCreditViewModel.Option o : s.options) {
+            if (o.isPlan()) {
+                anyPlan = true;
+                break;
+            }
+        }
+        if (anyPlan) {
+            bindPickGrid(s.options);
+        } else {
+            bindPickLegacy(s.options);
+        }
+    }
+
+    // ---- plan grid (duration toggle × size tiles) ----
+
+    private void bindPickGrid(List<BuyCreditViewModel.Option> options) {
+        mPlanOptions = options;
+        mSizeLabel.setText(R.string.buy_credit_plan_size_label);
+        mGbmExplainer.setVisibility(View.GONE);
+        mSoftcapNote.setVisibility(View.VISIBLE);
+
+        // Distinct durations, in the ascending order the options already carry.
+        List<Integer> durations = new ArrayList<>();
+        for (BuyCreditViewModel.Option o : options) {
+            if (!durations.contains(o.durationMonths)) {
+                durations.add(o.durationMonths);
+            }
+        }
+
+        // Build the "Keep my backups for" toggle (hidden when only one duration is
+        // for sale — the tiles still say "for <duration>").
         LayoutInflater inflater = LayoutInflater.from(requireContext());
-        for (BuyCreditViewModel.Option opt : s.options) {
+        mDurationToggle.removeAllViews();
+        List<Integer> buttonIds = new ArrayList<>();
+        for (int months : durations) {
+            MaterialButton btn = (MaterialButton) inflater.inflate(
+                    R.layout.item_buy_duration_button, mDurationToggle, false);
+            int id = View.generateViewId();
+            btn.setId(id);
+            btn.setTag(months);
+            btn.setText(formatDuration(months));
+            mDurationToggle.addView(btn);
+            buttonIds.add(id);
+        }
+        mDurationSection.setVisibility(durations.size() > 1 ? View.VISIBLE : View.GONE);
+        showSaveNudge(durations);
+
+        // Default to the middle duration (e.g. 1 year of 1 mo / 1 yr / 2 yr) —
+        // checking it fires the listener, which builds that duration's size tiles.
+        int defaultDuration = durations.size() >= 3 ? 1 : 0;
+        mDurationToggle.check(buttonIds.get(defaultDuration));
+    }
+
+    /** (Re)builds the size tiles for the chosen coverage. Keeps the previously
+     *  picked size selected across a duration switch when that size still exists. */
+    private void buildSizeTiles(int durationMonths) {
+        mDenomContainer.removeAllViews();
+        mSelectedOption = null;
+        mContinue.setEnabled(false);
+        LayoutInflater inflater = LayoutInflater.from(requireContext());
+        int count = 0;
+        MaterialCardView preferred = null;
+        BuyCreditViewModel.Option preferredOpt = null;
+        List<MaterialCardView> cards = new ArrayList<>();
+        List<BuyCreditViewModel.Option> tileOpts = new ArrayList<>();
+        for (BuyCreditViewModel.Option opt : mPlanOptions) {
+            if (opt.durationMonths != durationMonths) {
+                continue;
+            }
+            MaterialCardView card = (MaterialCardView) inflater.inflate(
+                    R.layout.item_buy_credit_plan, mDenomContainer, false);
+            ((TextView) card.findViewById(R.id.buy_plan_size))
+                    .setText(getString(R.string.buy_credit_plan_size, opt.sizeGb));
+            ((TextView) card.findViewById(R.id.buy_plan_for))
+                    .setText(getString(R.string.buy_credit_plan_for, formatDuration(durationMonths)));
+            ((TextView) card.findViewById(R.id.buy_plan_price)).setText(formatUsd(opt.priceCents));
+            card.setTag(opt);
+            card.setOnClickListener(v -> selectCard(card, opt));
+            mDenomContainer.addView(card);
+            cards.add(card);
+            tileOpts.add(opt);
+            if (opt.sizeGb == mPreferredSizeGb) {
+                preferred = card;
+                preferredOpt = opt;
+            }
+            count++;
+        }
+        if (count == 0) {
+            return;
+        }
+        if (preferred != null) {
+            selectCard(preferred, preferredOpt);
+        } else {
+            int idx = count >= 3 ? 1 : 0; // middle size by default
+            selectCard(cards.get(idx), tileOpts.get(idx));
+        }
+    }
+
+    /** Shows the bulk-discount nudge iff a longer plan is genuinely cheaper per
+     *  GB-month than the shortest, and reports by how much. Data-driven — no
+     *  hardcoded "SAVE"; if every duration is the same rate, nothing shows. */
+    private void showSaveNudge(List<Integer> durations) {
+        mDurationSave.setVisibility(View.GONE);
+        if (durations.size() < 2) {
+            return;
+        }
+        int shortest = durations.get(0);
+        int longest = durations.get(durations.size() - 1);
+        double shortRate = bestRateForDuration(shortest);
+        double longRate = bestRateForDuration(longest);
+        if (shortRate <= 0 || longRate <= 0 || longRate >= shortRate) {
+            return;
+        }
+        int pct = (int) Math.round((1.0 - longRate / shortRate) * 100.0);
+        if (pct <= 0) {
+            return;
+        }
+        mDurationSave.setText(getString(R.string.buy_credit_save_nudge, pct));
+        mDurationSave.setVisibility(View.VISIBLE);
+    }
+
+    /** The lowest price-per-GB-month across the tiles of a given duration. */
+    private double bestRateForDuration(int durationMonths) {
+        double best = -1;
+        for (BuyCreditViewModel.Option o : mPlanOptions) {
+            if (o.durationMonths == durationMonths && o.denomGbMonths > 0) {
+                double rate = (double) o.priceCents / o.denomGbMonths;
+                if (best < 0 || rate < best) {
+                    best = rate;
+                }
+            }
+        }
+        return best;
+    }
+
+    // ---- legacy flat denomination list ----
+
+    private void bindPickLegacy(List<BuyCreditViewModel.Option> options) {
+        mDurationSection.setVisibility(View.GONE);
+        mSoftcapNote.setVisibility(View.GONE);
+        mSizeLabel.setText(R.string.buy_credit_pick_how_much);
+        mGbmExplainer.setVisibility(View.VISIBLE);
+        mDenomContainer.removeAllViews();
+        LayoutInflater inflater = LayoutInflater.from(requireContext());
+        for (BuyCreditViewModel.Option opt : options) {
             MaterialCardView card = (MaterialCardView) inflater.inflate(
                     R.layout.item_buy_credit_denom, mDenomContainer, false);
             TextView amt = card.findViewById(R.id.buy_denom_amt);
@@ -204,20 +384,23 @@ public class BuyCreditFragment extends Fragment {
             price.setText(formatUsd(opt.priceCents));
             rate.setText(getString(R.string.buy_credit_denom_rate, formatPerGbMonth(opt)));
             card.setTag(opt);
-            card.setOnClickListener(v -> selectDenom(card, opt));
+            card.setOnClickListener(v -> selectCard(card, opt));
             mDenomContainer.addView(card);
         }
-        // Default to the middle tier when there are several (a sensible mid-price
-        // starting point), else the only/first one — no promotional framing.
-        int defaultIndex = s.options.size() >= 3 ? 1 : 0;
+        int defaultIndex = options.size() >= 3 ? 1 : 0;
         if (mDenomContainer.getChildCount() > defaultIndex) {
             MaterialCardView def = (MaterialCardView) mDenomContainer.getChildAt(defaultIndex);
-            selectDenom(def, (BuyCreditViewModel.Option) def.getTag());
+            selectCard(def, (BuyCreditViewModel.Option) def.getTag());
         }
     }
 
-    private void selectDenom(MaterialCardView selected, BuyCreditViewModel.Option opt) {
-        mSelectedDenom = opt.denomGbMonths;
+    /** Highlights the chosen card (brand 2dp stroke) and enables Continue. Shared
+     *  by the plan tiles and the legacy denomination cards. */
+    private void selectCard(MaterialCardView selected, BuyCreditViewModel.Option opt) {
+        mSelectedOption = opt;
+        if (opt.isPlan()) {
+            mPreferredSizeGb = opt.sizeGb;
+        }
         int brand = ContextCompat.getColor(requireContext(), R.color.brand_orange);
         int outline = MaterialColors.getColor(selected, com.google.android.material.R.attr.colorOutlineVariant);
         int stroke = Math.round(getResources().getDisplayMetrics().density);
@@ -236,8 +419,7 @@ public class BuyCreditFragment extends Fragment {
     private void bindLightning(BuyCreditViewModel.UiState s) {
         setPayBackEnabled(true);
         mPayRequest = s.payRequest;
-        ((TextView) requireView().findViewById(R.id.buy_ln_amount))
-                .setText(getString(R.string.buy_credit_pay_amount, formatUsd(s.amountCents), s.denomGbMonths));
+        ((TextView) requireView().findViewById(R.id.buy_ln_amount)).setText(payAmountText(s));
         TextView invoice = requireView().findViewById(R.id.buy_ln_invoice);
         invoice.setText(s.payRequest);
         ImageView qr = requireView().findViewById(R.id.buy_ln_qr);
@@ -268,8 +450,7 @@ public class BuyCreditFragment extends Fragment {
     private void bindStripe(BuyCreditViewModel.UiState s) {
         setPayBackEnabled(true);
         mCheckoutUrl = s.checkoutUrl;
-        ((TextView) requireView().findViewById(R.id.buy_stripe_amount))
-                .setText(getString(R.string.buy_credit_pay_amount, formatUsd(s.amountCents), s.denomGbMonths));
+        ((TextView) requireView().findViewById(R.id.buy_stripe_amount)).setText(payAmountText(s));
         if (!mCheckoutOpened && mCheckoutUrl != null) {
             mCheckoutOpened = true;
             openCheckout();
@@ -310,8 +491,10 @@ public class BuyCreditFragment extends Fragment {
 
     private void bindSuccess(BuyCreditViewModel.UiState s) {
         setPayBackEnabled(false);
-        ((TextView) requireView().findViewById(R.id.buy_success_title))
-                .setText(getString(R.string.buy_credit_success_title, s.redeemedGbMonths));
+        String title = s.sizeGb > 0 && s.durationMonths > 0
+                ? getString(R.string.buy_credit_success_title_plan, s.sizeGb, formatDuration(s.durationMonths))
+                : getString(R.string.buy_credit_success_title, s.redeemedGbMonths);
+        ((TextView) requireView().findViewById(R.id.buy_success_title)).setText(title);
         ((TextView) requireView().findViewById(R.id.buy_success_balance))
                 .setText(getString(R.string.buy_credit_success_balance, formatGbMonths(s.balanceGbMonths)));
 
@@ -363,6 +546,26 @@ public class BuyCreditFragment extends Fragment {
         if (view != null) {
             Snackbar.make(view, text, Snackbar.LENGTH_LONG).show();
         }
+    }
+
+    /** The pay-screen headline: "$30 · up to 50 GB for 1 year" (plan) or
+     *  "$18 · 500 GB-months" (legacy). */
+    private String payAmountText(BuyCreditViewModel.UiState s) {
+        if (s.sizeGb > 0 && s.durationMonths > 0) {
+            return getString(R.string.buy_credit_pay_amount_plan,
+                    formatUsd(s.amountCents), s.sizeGb, formatDuration(s.durationMonths));
+        }
+        return getString(R.string.buy_credit_pay_amount, formatUsd(s.amountCents), s.denomGbMonths);
+    }
+
+    /** Localized coverage: whole years ("1 year" / "2 years") when a multiple of
+     *  12, else months ("3 months") — via plurals across every locale. */
+    private String formatDuration(int months) {
+        if (months > 0 && months % 12 == 0) {
+            int years = months / 12;
+            return getResources().getQuantityString(R.plurals.buy_credit_years, years, years);
+        }
+        return getResources().getQuantityString(R.plurals.buy_credit_months, months, months);
     }
 
     /** cents → "$5" / "$18.50" (2 decimals only when not a whole dollar). */

@@ -648,6 +648,28 @@
     <string name="buy_credit_gb_month_explainer">Один GB-month — это 1 ГБ, хранящийся в резервной копии в течение месяца — так что 500 может быть 50 ГБ на 10 месяцев или 100 ГБ на 5.</string>
     <string name="buy_credit_denom_rate">%1$s / GB-month</string>
     <string name="buy_credit_error_busy">Слишком много запросов прямо сейчас. Подождите минуту и повторите попытку.</string>
+    <!-- ── сетка планов (плитки в стиле Google Диска «До X GB за Y») ── -->
+    <string name="buy_credit_plan_duration_label">Хранить резервные копии</string>
+    <string name="buy_credit_plan_size_label">Сколько места</string>
+    <string name="buy_credit_plan_size">До %1$d GB</string>
+    <string name="buy_credit_plan_for">за %1$s</string>
+    <string name="buy_credit_soft_cap">Вы платите только за то, что реально храните — сохраняйте меньше лимита, и кредита хватит дольше. При превышении ничего не удаляется, просто он закончится раньше.</string>
+    <string name="buy_credit_one_off">Разовый платёж — без автопродления. Пополняйте в любой момент.</string>
+    <string name="buy_credit_save_nudge">Экономьте до %1$d%% на более длинном плане</string>
+    <string name="buy_credit_pay_amount_plan">%1$s · до %2$d GB за %3$s</string>
+    <string name="buy_credit_success_title_plan">Добавлено: до %1$d GB за %2$s</string>
+    <plurals name="buy_credit_years">
+        <item quantity="one">%1$d год</item>
+        <item quantity="few">%1$d года</item>
+        <item quantity="many">%1$d лет</item>
+        <item quantity="other">%1$d года</item>
+    </plurals>
+    <plurals name="buy_credit_months">
+        <item quantity="one">%1$d месяц</item>
+        <item quantity="few">%1$d месяца</item>
+        <item quantity="many">%1$d месяцев</item>
+        <item quantity="other">%1$d месяца</item>
+    </plurals>
     <string name="cloud_status_gb_label">GB-months</string>
     <string name="cloud_status_oneoff">Разовый кредит · без автопродления</string>
     <string name="cloud_status_free_beta">Во время бета-версии резервные копии бесплатны</string>

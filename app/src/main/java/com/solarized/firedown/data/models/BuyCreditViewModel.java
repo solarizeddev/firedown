@@ -16,6 +16,7 @@ import com.solarized.firedown.sync.CreditPurchase;
 import com.solarized.firedown.sync.MintClient;
 import com.solarized.firedown.sync.StorageApiClient;
 import com.solarized.firedown.sync.SyncSecrets;
+import com.solarized.firedown.sync.crypto.Hex;
 import com.solarized.firedown.sync.crypto.SyncIdentity;
 
 import java.util.ArrayList;
@@ -68,15 +69,29 @@ public class BuyCreditViewModel extends ViewModel {
     public static final String RAIL_LIGHTNING = "lightning";
     public static final String RAIL_STRIPE = "stripe";
 
-    /** A purchasable denomination, straight from {@code /v1/mint/keys} (the server
-     *  is the source of truth for denominations + prices, so nothing is hardcoded). */
+    /** A purchasable keyset, straight from {@code /v1/mint/keys} (the server is the
+     *  source of truth for denominations, prices AND the plan-grid tiles, so
+     *  nothing is hardcoded — the operator sets sizes/prices via {@code --genkey}).
+     *  {@code sizeGb}/{@code durationMonths} are the "Up to X GB for Y" tile, both
+     *  0 for a legacy denomination-only keyset (the client then shows a flat list). */
     public static final class Option {
+        public final String keysetIdHex;   // the exact keyset this tile buys
         public final int denomGbMonths;
         public final long priceCents;
+        public final int sizeGb;
+        public final int durationMonths;
 
-        Option(int denomGbMonths, long priceCents) {
+        Option(String keysetIdHex, int denomGbMonths, long priceCents, int sizeGb, int durationMonths) {
+            this.keysetIdHex = keysetIdHex;
             this.denomGbMonths = denomGbMonths;
             this.priceCents = priceCents;
+            this.sizeGb = sizeGb;
+            this.durationMonths = durationMonths;
+        }
+
+        /** True when this option is a plan-grid tile (size × duration). */
+        public boolean isPlan() {
+            return sizeGb > 0 && durationMonths > 0;
         }
     }
 
@@ -86,6 +101,8 @@ public class BuyCreditViewModel extends ViewModel {
         public final List<Option> options;      // PICK
         public final long amountCents;          // PAY_* / SUCCESS
         public final int denomGbMonths;         // PAY_* / SUCCESS
+        public final int sizeGb;                // PAY_* / SUCCESS — plan tile (0 if legacy)
+        public final int durationMonths;        // PAY_* / SUCCESS — plan tile (0 if legacy)
         public final String payRequest;         // PAY_LIGHTNING (BOLT11)
         public final String checkoutUrl;        // PAY_STRIPE (hosted Checkout URL)
         public final int redeemedGbMonths;      // SUCCESS
@@ -94,12 +111,15 @@ public class BuyCreditViewModel extends ViewModel {
         public final String errorMessage;       // ERROR
 
         private UiState(Phase phase, List<Option> options, long amountCents, int denomGbMonths,
-                        String payRequest, String checkoutUrl, int redeemedGbMonths,
-                        double balanceGbMonths, String mintedRecoveryCode, String errorMessage) {
+                        int sizeGb, int durationMonths, String payRequest, String checkoutUrl,
+                        int redeemedGbMonths, double balanceGbMonths, String mintedRecoveryCode,
+                        String errorMessage) {
             this.phase = phase;
             this.options = options;
             this.amountCents = amountCents;
             this.denomGbMonths = denomGbMonths;
+            this.sizeGb = sizeGb;
+            this.durationMonths = durationMonths;
             this.payRequest = payRequest;
             this.checkoutUrl = checkoutUrl;
             this.redeemedGbMonths = redeemedGbMonths;
@@ -109,30 +129,31 @@ public class BuyCreditViewModel extends ViewModel {
         }
 
         static UiState loading() {
-            return new UiState(Phase.LOADING_OPTIONS, Collections.emptyList(), 0, 0, null, null, 0, 0, null, null);
+            return new UiState(Phase.LOADING_OPTIONS, Collections.emptyList(), 0, 0, 0, 0, null, null, 0, 0, null, null);
         }
 
         static UiState pick(List<Option> options) {
-            return new UiState(Phase.PICK, options, 0, 0, null, null, 0, 0, null, null);
+            return new UiState(Phase.PICK, options, 0, 0, 0, 0, null, null, 0, 0, null, null);
         }
 
         static UiState starting() {
-            return new UiState(Phase.STARTING, Collections.emptyList(), 0, 0, null, null, 0, 0, null, null);
+            return new UiState(Phase.STARTING, Collections.emptyList(), 0, 0, 0, 0, null, null, 0, 0, null, null);
         }
 
-        static UiState pay(Phase phase, long amountCents, int denomGbMonths, String payRequest, String checkoutUrl) {
-            return new UiState(phase, Collections.emptyList(), amountCents, denomGbMonths,
+        static UiState pay(Phase phase, long amountCents, int denomGbMonths, int sizeGb, int durationMonths,
+                           String payRequest, String checkoutUrl) {
+            return new UiState(phase, Collections.emptyList(), amountCents, denomGbMonths, sizeGb, durationMonths,
                     payRequest, checkoutUrl, 0, 0, null, null);
         }
 
         static UiState success(int redeemedGbMonths, double balanceGbMonths, int denomGbMonths,
-                               long amountCents, String mintedRecoveryCode) {
-            return new UiState(Phase.SUCCESS, Collections.emptyList(), amountCents, denomGbMonths,
+                               int sizeGb, int durationMonths, long amountCents, String mintedRecoveryCode) {
+            return new UiState(Phase.SUCCESS, Collections.emptyList(), amountCents, denomGbMonths, sizeGb, durationMonths,
                     null, null, redeemedGbMonths, balanceGbMonths, mintedRecoveryCode, null);
         }
 
         static UiState error(String message) {
-            return new UiState(Phase.ERROR, Collections.emptyList(), 0, 0, null, null, 0, 0, null, message);
+            return new UiState(Phase.ERROR, Collections.emptyList(), 0, 0, 0, 0, null, null, 0, 0, null, message);
         }
     }
 
@@ -197,13 +218,32 @@ public class BuyCreditViewModel extends ViewModel {
         executor.execute(() -> {
             try {
                 MintClient mint = new MintClient(http, Preferences.MINT_DEFAULT_BACKEND);
-                List<Option> options = new ArrayList<>();
+                List<Option> all = new ArrayList<>();
+                boolean anyPlan = false;
                 for (MintClient.Keyset k : mint.fetchKeys()) {
                     if (k.active) {
-                        options.add(new Option(k.denomGbMonths, k.priceCents));
+                        all.add(new Option(Hex.encode(k.id), k.denomGbMonths, k.priceCents,
+                                k.sizeGb, k.durationMonths));
+                        anyPlan |= k.isPlan();
                     }
                 }
-                Collections.sort(options, Comparator.comparingInt(o -> o.denomGbMonths));
+                // If ANY plan-grid tile exists, show ONLY the plan tiles (the grid),
+                // ignoring any legacy denom-only keysets still active — a clean
+                // migration. With no plan tiles, fall back to the flat denom list.
+                List<Option> options = new ArrayList<>();
+                for (Option o : all) {
+                    if (!anyPlan || o.isPlan()) {
+                        options.add(o);
+                    }
+                }
+                if (anyPlan) {
+                    // Grid order: by duration (the toggle), then size (the tiles).
+                    Collections.sort(options, Comparator
+                            .comparingInt((Option o) -> o.durationMonths)
+                            .thenComparingInt(o -> o.sizeGb));
+                } else {
+                    Collections.sort(options, Comparator.comparingInt(o -> o.denomGbMonths));
+                }
                 if (options.isEmpty()) {
                     post(gen, UiState.error(appContext.getString(
                             R.string.buy_credit_error_no_options)));
@@ -218,11 +258,15 @@ public class BuyCreditViewModel extends ViewModel {
     }
 
     /**
-     * Opens a quote for {@code denomGbMonths} on {@code method}, blinds a fresh
-     * secret, transitions to the pay screen, then polls issue until the payment
-     * settles — unblinding and redeeming the credit into the account's balance.
+     * Opens a quote for the chosen {@code opt} (a plan tile / denomination) on
+     * {@code method}, blinds a fresh secret, transitions to the pay screen, then
+     * polls issue until the payment settles — unblinding and redeeming the credit
+     * into the account's balance. Always quotes by the option's exact keyset id.
      */
-    public void startPurchase(int denomGbMonths, String method) {
+    public void startPurchase(Option opt, String method) {
+        final int sizeGb = opt.sizeGb;
+        final int durationMonths = opt.durationMonths;
+        final String keysetIdHex = opt.keysetIdHex;
         state.setValue(UiState.starting());
         final int gen = ++flowGen;
         executor.execute(() -> {
@@ -250,11 +294,11 @@ public class BuyCreditViewModel extends ViewModel {
                 CloudBackupManager.ensureRegistered(prefs, storage, id);
 
                 CreditPurchase purchase = new CreditPurchase(mint, storage);
-                CreditPurchase.Session session = purchase.start(denomGbMonths, method);
+                CreditPurchase.Session session = purchase.startByKeyset(keysetIdHex, method);
 
                 Phase payPhase = RAIL_STRIPE.equals(method) ? Phase.PAY_STRIPE : Phase.PAY_LIGHTNING;
                 post(gen, UiState.pay(payPhase, session.quote.amountCents, session.quote.denomGbMonths,
-                        session.quote.payRequest, session.quote.checkoutUrl));
+                        sizeGb, durationMonths, session.quote.payRequest, session.quote.checkoutUrl));
 
                 if (payPhase == Phase.PAY_STRIPE && session.quote.checkoutUrl == null) {
                     // The mint accepted the rail but returned no Checkout URL (card
@@ -282,7 +326,8 @@ public class BuyCreditViewModel extends ViewModel {
                     }
                     if (r != null) {
                         post(gen, UiState.success(r.redeemedGbMonths, r.balanceGbMonths,
-                                session.quote.denomGbMonths, session.quote.amountCents, finalMintedCode));
+                                session.quote.denomGbMonths, sizeGb, durationMonths,
+                                session.quote.amountCents, finalMintedCode));
                         return;
                     }
                     Thread.sleep(POLL_DELAY_MS);

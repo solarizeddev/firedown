@@ -35,7 +35,7 @@
                 android:layout_height="wrap_content" />
         </LinearLayout>
 
-        <!-- ── 1 · pick denomination + rail ── -->
+        <!-- ── 1 · pick plan/denomination + rail ── -->
         <LinearLayout
             android:id="@+id/buy_step_pick"
             android:layout_width="match_parent"
@@ -44,7 +44,54 @@
             android:visibility="gone"
             tools:visibility="visible">
 
+            <!-- Duration toggle section (plan-grid mode; hidden for a legacy flat
+                 list or when only one duration is for sale). "Keep my backups for". -->
+            <LinearLayout
+                android:id="@+id/buy_duration_section"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/buy_credit_plan_duration_label"
+                    android:textAllCaps="true"
+                    android:textSize="12sp"
+                    android:letterSpacing="0.04"
+                    android:textColor="?android:attr/textColorSecondary"
+                    android:layout_marginBottom="10dp" />
+
+                <com.google.android.material.button.MaterialButtonToggleGroup
+                    android:id="@+id/buy_duration_toggle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:singleSelection="true"
+                    app:selectionRequired="true" />
+
+                <!-- Auto-computed bulk-discount nudge (shown only when a longer
+                     plan is genuinely cheaper per GB-month). -->
+                <TextView
+                    android:id="@+id/buy_duration_save"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:layout_marginTop="8dp"
+                    android:textColor="@color/brand_orange"
+                    android:visibility="gone"
+                    tools:text="Save up to 30% with a longer plan"
+                    tools:visibility="visible" />
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="16dp" />
+            </LinearLayout>
+
             <TextView
+                android:id="@+id/buy_size_label"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/buy_credit_pick_how_much"
@@ -54,8 +101,10 @@
                 android:textColor="?android:attr/textColorSecondary"
                 android:layout_marginBottom="10dp" />
 
-            <!-- Plain-language explainer for the "GB-months" unit. -->
+            <!-- Plain-language explainer for the "GB-months" unit (legacy flat
+                 list only — the plan grid uses the soft-cap note instead). -->
             <TextView
+                android:id="@+id/buy_gbm_explainer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/buy_credit_gb_month_explainer"
@@ -66,12 +115,46 @@
                 android:background="@drawable/bg_sync_code"
                 android:textColor="?attr/colorOnSecondaryContainer" />
 
-            <!-- Denomination cards inflated here at runtime. -->
+            <!-- Plan (size) tiles OR legacy denomination cards inflated here. -->
             <LinearLayout
                 android:id="@+id/buy_denom_container"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical" />
+
+            <!-- Soft-cap note (plan-grid mode only): the size is a cap, not a
+                 hard rental — metered underneath, so a light user gets more. -->
+            <LinearLayout
+                android:id="@+id/buy_softcap_note"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/buy_credit_soft_cap"
+                    android:textSize="12.5sp"
+                    android:lineSpacingMultiplier="1.35"
+                    android:padding="12dp"
+                    android:layout_marginTop="2dp"
+                    android:background="@drawable/bg_sync_code"
+                    android:textColor="?attr/colorOnSecondaryContainer" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/buy_credit_one_off"
+                    android:textSize="12sp"
+                    android:layout_marginTop="10dp"
+                    android:drawablePadding="7dp"
+                    app:drawableStartCompat="@drawable/ic_lock_24"
+                    app:drawableTint="?android:attr/textColorSecondary"
+                    android:gravity="center_vertical"
+                    android:textColor="?android:attr/textColorSecondary" />
+            </LinearLayout>
 
             <TextView
                 android:layout_width="match_parent"

@@ -63,7 +63,24 @@ public final class CreditPurchase {
     public Session start(int denomGbMonths, String method) throws IOException {
         List<MintClient.Keyset> keys = mint.fetchKeys();
         MintClient.Quote quote = mint.createQuote(denomGbMonths, method);
+        return blindFor(keys, quote);
+    }
 
+    /**
+     * Opens a quote for a SPECIFIC keyset (the plan-grid path — the client picked
+     * an exact "Up to X GB for Y" tile) on {@code method}, then blinds a fresh
+     * secret against that keyset. Unambiguous even when two tiles share a
+     * GB-months value. Blocking — call off the main thread.
+     */
+    public Session startByKeyset(String keysetIdHex, String method) throws IOException {
+        List<MintClient.Keyset> keys = mint.fetchKeys();
+        MintClient.Quote quote = mint.createQuoteByKeyset(keysetIdHex, method);
+        return blindFor(keys, quote);
+    }
+
+    /** Finds the quote's keyset (refetching once on a mid-flight rotation) and
+     *  blinds a fresh 32-byte secret against it. */
+    private Session blindFor(List<MintClient.Keyset> keys, MintClient.Quote quote) throws IOException {
         MintClient.Keyset keyset = findById(keys, quote.keysetId);
         if (keyset == null) {
             // The quote references a keyset our earlier fetch didn't have (a rotation

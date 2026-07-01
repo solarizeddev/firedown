@@ -358,6 +358,30 @@
     <string name="buy_credit_error_slug">Something went wrong (%1$s). Please try again.</string>
     <string name="buy_credit_error_network">Couldn\'t reach the payments server. Check your connection and try again.</string>
     <string name="buy_credit_error_busy">Too many requests just now. Wait a minute and try again.</string>
+    <!-- ── plan grid (Google-Drive-style "Up to X GB for Y" tiles) ── -->
+    <string name="buy_credit_plan_duration_label">Keep my backups for</string>
+    <string name="buy_credit_plan_size_label">How much space</string>
+    <!-- %1$d = size cap in GB -->
+    <string name="buy_credit_plan_size">Up to %1$d GB</string>
+    <!-- %1$s = a coverage length, e.g. "1 year" -->
+    <string name="buy_credit_plan_for">for %1$s</string>
+    <string name="buy_credit_soft_cap">You only pay for what you actually store — back up less than the cap and it lasts longer. Nothing is deleted if you go over; it just finishes sooner.</string>
+    <string name="buy_credit_one_off">One-time — no auto-renew. Top up anytime.</string>
+    <!-- %1$d = percent saved on a longer plan -->
+    <string name="buy_credit_save_nudge">Save up to %1$d%% with a longer plan</string>
+    <!-- %1$s = price, %2$d = size cap in GB, %3$s = coverage length -->
+    <string name="buy_credit_pay_amount_plan">%1$s · up to %2$d GB for %3$s</string>
+    <!-- %1$d = size cap in GB, %2$s = coverage length -->
+    <string name="buy_credit_success_title_plan">Up to %1$d GB for %2$s added</string>
+    <!-- %1$d = number of years / months -->
+    <plurals name="buy_credit_years">
+        <item quantity="one">%1$d year</item>
+        <item quantity="other">%1$d years</item>
+    </plurals>
+    <plurals name="buy_credit_months">
+        <item quantity="one">%1$d month</item>
+        <item quantity="other">%1$d months</item>
+    </plurals>
     <string name="settings_cloud_backup_show_code_title">Show recovery code</string>
     <string name="settings_cloud_backup_show_code_summary">Reveal the code that unlocks your cloud backup</string>
     <string name="settings_cloud_backup_code_unavailable">Recovery code unavailable</string>

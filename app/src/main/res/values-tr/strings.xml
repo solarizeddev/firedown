@@ -643,6 +643,24 @@
     <string name="buy_credit_gb_month_explainer">Bir GB-month, bir ay boyunca yedekte tutulan 1 GB demektir — yani 500, 10 ay için 50 GB ya da 5 ay için 100 GB olabilir.</string>
     <string name="buy_credit_denom_rate">%1$s / GB-month</string>
     <string name="buy_credit_error_busy">Şu anda çok fazla istek var. Bir dakika bekleyip tekrar deneyin.</string>
+    <!-- ── plan grid (Google-Drive-style "Up to X GB for Y" tiles) ── -->
+    <string name="buy_credit_plan_duration_label">Yedeklerimi ne kadar tutayım</string>
+    <string name="buy_credit_plan_size_label">Ne kadar alan</string>
+    <string name="buy_credit_plan_size">En fazla %1$d GB</string>
+    <string name="buy_credit_plan_for">%1$s karşılığında</string>
+    <string name="buy_credit_soft_cap">Yalnızca gerçekten depoladığınız kadar ödersiniz — sınırdan az yedekleyin, daha uzun süre yeter. Sınırı aşarsanız hiçbir şey silinmez; kredi yalnızca daha erken biter.</string>
+    <string name="buy_credit_one_off">Tek seferlik — otomatik yenileme yok. İstediğiniz zaman yükleyin.</string>
+    <string name="buy_credit_save_nudge">Daha uzun bir planla %%%1$d\'e varan tasarruf</string>
+    <string name="buy_credit_pay_amount_plan">%1$s · %3$s karşılığında en fazla %2$d GB</string>
+    <string name="buy_credit_success_title_plan">%2$s karşılığında en fazla %1$d GB eklendi</string>
+    <plurals name="buy_credit_years">
+        <item quantity="one">%1$d yıl</item>
+        <item quantity="other">%1$d yıl</item>
+    </plurals>
+    <plurals name="buy_credit_months">
+        <item quantity="one">%1$d ay</item>
+        <item quantity="other">%1$d ay</item>
+    </plurals>
     <string name="cloud_status_gb_label">GB-months</string>
     <string name="cloud_status_oneoff">Tek seferlik kredi · otomatik yenileme yok</string>
     <string name="cloud_status_free_beta">Yedeklemeler beta süresince ücretsizdir</string>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  One duration segment ("1 month" / "1 year" / "2 years") in the plan-grid
+  "Keep my backups for" toggle, inflated per distinct duration by
+  BuyCreditFragment into a MaterialButtonToggleGroup. Outlined + checkable; the
+  toggle draws the selected fill. Equal weight so the segments split the width.
+  NOTE: this is a bare <merge>-free single MaterialButton so it can be added
+  straight into the toggle group (the group styles the checked state).
+-->
+<com.google.android.material.button.MaterialButton xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    style="?attr/materialButtonOutlinedStyle"
+    android:layout_width="0dp"
+    android:layout_height="wrap_content"
+    android:layout_weight="1"
+    android:insetTop="0dp"
+    android:insetBottom="0dp"
+    app:cornerRadius="12dp"
+    tools:ignore="Suspicious0dp"
+    xmlns:tools="http://schemas.android.com/tools" />

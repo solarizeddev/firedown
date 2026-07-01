@@ -775,6 +775,24 @@
     <string name="buy_credit_gb_month_explainer">Un GB-month es 1 GB mantenido con copia de seguridad durante un mes — así que 500 podrían ser 50 GB durante 10 meses, o 100 GB durante 5.</string>
     <string name="buy_credit_denom_rate">%1$s / GB-month</string>
     <string name="buy_credit_error_busy">Demasiadas solicitudes en este momento. Espera un minuto e inténtalo de nuevo.</string>
+    <!-- ── cuadrícula de planes (mosaicos estilo Google Drive «Hasta X GB por Y») ── -->
+    <string name="buy_credit_plan_duration_label">Conservar mis copias durante</string>
+    <string name="buy_credit_plan_size_label">Cuánto espacio</string>
+    <string name="buy_credit_plan_size">Hasta %1$d GB</string>
+    <string name="buy_credit_plan_for">por %1$s</string>
+    <string name="buy_credit_soft_cap">Solo pagas por lo que almacenas de verdad: si respaldas menos del límite, te dura más. Nada se elimina si te pasas; simplemente se acaba antes.</string>
+    <string name="buy_credit_one_off">Pago único, sin renovación automática. Recarga cuando quieras.</string>
+    <string name="buy_credit_save_nudge">Ahorra hasta un %1$d%% con un plan más largo</string>
+    <string name="buy_credit_pay_amount_plan">%1$s · hasta %2$d GB por %3$s</string>
+    <string name="buy_credit_success_title_plan">Se añadieron hasta %1$d GB por %2$s</string>
+    <plurals name="buy_credit_years">
+        <item quantity="one">%1$d año</item>
+        <item quantity="other">%1$d años</item>
+    </plurals>
+    <plurals name="buy_credit_months">
+        <item quantity="one">%1$d mes</item>
+        <item quantity="other">%1$d meses</item>
+    </plurals>
     <string name="cloud_status_gb_label">GB-months</string>
     <string name="cloud_status_oneoff">Crédito único · sin renovación automática</string>
     <string name="cloud_status_free_beta">Las copias de seguridad son gratuitas durante la beta</string>

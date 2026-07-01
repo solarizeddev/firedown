@@ -645,6 +645,28 @@
     <string name="buy_credit_gb_month_explainer">Jeden GB-month to 1 GB przechowywany w kopii zapasowej przez miesiąc — więc 500 może oznaczać 50 GB przez 10 miesięcy lub 100 GB przez 5.</string>
     <string name="buy_credit_denom_rate">%1$s / GB-month</string>
     <string name="buy_credit_error_busy">Zbyt wiele żądań w tej chwili. Odczekaj minutę i spróbuj ponownie.</string>
+    <!-- ── siatka planów (kafelki „do X GB za Y” w stylu Dysku Google) ── -->
+    <string name="buy_credit_plan_duration_label">Przechowuj moje kopie przez</string>
+    <string name="buy_credit_plan_size_label">Ile miejsca</string>
+    <string name="buy_credit_plan_size">Do %1$d GB</string>
+    <string name="buy_credit_plan_for">za %1$s</string>
+    <string name="buy_credit_soft_cap">Płacisz tylko za to, co faktycznie przechowujesz — zrób kopię mniejszą niż limit, a wystarczy na dłużej. Nic nie jest usuwane po przekroczeniu; po prostu skończy się wcześniej.</string>
+    <string name="buy_credit_one_off">Jednorazowo — bez automatycznego odnawiania. Doładuj w dowolnej chwili.</string>
+    <string name="buy_credit_save_nudge">Oszczędź do %1$d%% z dłuższym planem</string>
+    <string name="buy_credit_pay_amount_plan">%1$s · do %2$d GB za %3$s</string>
+    <string name="buy_credit_success_title_plan">Dodano do %1$d GB za %2$s</string>
+    <plurals name="buy_credit_years">
+        <item quantity="one">%1$d rok</item>
+        <item quantity="few">%1$d lata</item>
+        <item quantity="many">%1$d lat</item>
+        <item quantity="other">%1$d roku</item>
+    </plurals>
+    <plurals name="buy_credit_months">
+        <item quantity="one">%1$d miesiąc</item>
+        <item quantity="few">%1$d miesiące</item>
+        <item quantity="many">%1$d miesięcy</item>
+        <item quantity="other">%1$d miesiąca</item>
+    </plurals>
     <string name="cloud_status_gb_label">GB-months</string>
     <string name="cloud_status_oneoff">Kredyt jednorazowy · bez automatycznego odnawiania</string>
     <string name="cloud_status_free_beta">Kopie zapasowe są bezpłatne w okresie beta</string>

@@ -644,6 +644,24 @@
     <string name="buy_credit_gb_month_explainer">Een GB-month is 1 GB dat een maand lang geback-upt blijft — dus 500 kan 50 GB voor 10 maanden zijn, of 100 GB voor 5.</string>
     <string name="buy_credit_denom_rate">%1$s / GB-month</string>
     <string name="buy_credit_error_busy">Te veel verzoeken op dit moment. Wacht een minuut en probeer het opnieuw.</string>
+    <!-- ── abonnementsraster (Google Drive-achtige "Tot X GB voor Y"-tegels) ── -->
+    <string name="buy_credit_plan_duration_label">Bewaar mijn back-ups gedurende</string>
+    <string name="buy_credit_plan_size_label">Hoeveel ruimte</string>
+    <string name="buy_credit_plan_size">Tot %1$d GB</string>
+    <string name="buy_credit_plan_for">voor %1$s</string>
+    <string name="buy_credit_soft_cap">Je betaalt alleen voor wat je daadwerkelijk opslaat — back-up minder dan de limiet en het gaat langer mee. Er wordt niets verwijderd als je erover gaat; het is alleen eerder op.</string>
+    <string name="buy_credit_one_off">Eenmalig — geen automatische verlenging. Vul aan wanneer je wilt.</string>
+    <string name="buy_credit_save_nudge">Bespaar tot %1$d%% met een langer abonnement</string>
+    <string name="buy_credit_pay_amount_plan">%1$s · tot %2$d GB voor %3$s</string>
+    <string name="buy_credit_success_title_plan">Tot %1$d GB voor %2$s toegevoegd</string>
+    <plurals name="buy_credit_years">
+        <item quantity="one">%1$d jaar</item>
+        <item quantity="other">%1$d jaar</item>
+    </plurals>
+    <plurals name="buy_credit_months">
+        <item quantity="one">%1$d maand</item>
+        <item quantity="other">%1$d maanden</item>
+    </plurals>
     <string name="cloud_status_gb_label">GB-months</string>
     <string name="cloud_status_oneoff">Eenmalig tegoed · geen automatische verlenging</string>
     <string name="cloud_status_free_beta">Back-ups zijn gratis tijdens de bèta</string>

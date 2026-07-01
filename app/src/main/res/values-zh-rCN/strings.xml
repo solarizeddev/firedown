@@ -771,6 +771,22 @@
     <string name="buy_credit_gb_month_explainer">一个 GB-month 是指将 1 GB 备份保留一个月 — 所以 500 可以是 50 GB 保留 10 个月，或 100 GB 保留 5 个月。</string>
     <string name="buy_credit_denom_rate">%1$s / GB-month</string>
     <string name="buy_credit_error_busy">当前请求过多。请稍等一分钟后重试。</string>
+    <!-- ── 套餐网格（类似 Google Drive 的“最多 X GB，Y 价格”样式） ── -->
+    <string name="buy_credit_plan_duration_label">备份保留时长</string>
+    <string name="buy_credit_plan_size_label">存储空间大小</string>
+    <string name="buy_credit_plan_size">最多 %1$d GB</string>
+    <string name="buy_credit_plan_for">价格 %1$s</string>
+    <string name="buy_credit_soft_cap">按实际使用量付费——备份数据少于上限时可用更久。超出上限也不会删除任何内容，只是会更早用完。</string>
+    <string name="buy_credit_one_off">一次性付费——不自动续订。可随时充值。</string>
+    <string name="buy_credit_save_nudge">选择更长的套餐，最高可省 %1$d%%</string>
+    <string name="buy_credit_pay_amount_plan">%1$s · 最多 %2$d GB，价格 %3$s</string>
+    <string name="buy_credit_success_title_plan">已添加最多 %1$d GB，价格 %2$s</string>
+    <plurals name="buy_credit_years">
+        <item quantity="other">%1$d 年</item>
+    </plurals>
+    <plurals name="buy_credit_months">
+        <item quantity="other">%1$d 个月</item>
+    </plurals>
     <string name="cloud_status_gb_label">GB-months</string>
     <string name="cloud_status_oneoff">一次性额度 · 不自动续订</string>
     <string name="cloud_status_free_beta">测试期间备份免费</string>

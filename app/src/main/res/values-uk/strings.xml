@@ -563,6 +563,28 @@
     <string name="buy_credit_gb_month_explainer">Один GB-month — це 1 ГБ, який зберігається в резервній копії протягом місяця — тож 500 може бути 50 ГБ на 10 місяців або 100 ГБ на 5.</string>
     <string name="buy_credit_denom_rate">%1$s / GB-month</string>
     <string name="buy_credit_error_busy">Наразі забагато запитів. Зачекайте хвилину і спробуйте знову.</string>
+    <!-- ── сітка планів (плитки у стилі Google Drive «До X ГБ за Y») ── -->
+    <string name="buy_credit_plan_duration_label">Зберігати мої резервні копії</string>
+    <string name="buy_credit_plan_size_label">Скільки місця</string>
+    <string name="buy_credit_plan_size">До %1$d ГБ</string>
+    <string name="buy_credit_plan_for">на %1$s</string>
+    <string name="buy_credit_soft_cap">Ви платите лише за те, що справді зберігаєте — резервуйте менше за ліміт, і кредиту вистачить надовше. Нічого не видаляється, якщо ви перевищите ліміт; він просто закінчиться раніше.</string>
+    <string name="buy_credit_one_off">Разово — без автопродовження. Поповнюйте будь-коли.</string>
+    <string name="buy_credit_save_nudge">Заощаджуйте до %1$d%% з довшим планом</string>
+    <string name="buy_credit_pay_amount_plan">%1$s · до %2$d ГБ на %3$s</string>
+    <string name="buy_credit_success_title_plan">Додано до %1$d ГБ на %2$s</string>
+    <plurals name="buy_credit_years">
+        <item quantity="one">%1$d рік</item>
+        <item quantity="few">%1$d роки</item>
+        <item quantity="many">%1$d років</item>
+        <item quantity="other">%1$d року</item>
+    </plurals>
+    <plurals name="buy_credit_months">
+        <item quantity="one">%1$d місяць</item>
+        <item quantity="few">%1$d місяці</item>
+        <item quantity="many">%1$d місяців</item>
+        <item quantity="other">%1$d місяця</item>
+    </plurals>
     <string name="cloud_status_gb_label">GB-months</string>
     <string name="cloud_status_oneoff">Разовий кредит · без автопродовження</string>
     <string name="cloud_status_free_beta">Під час бета-версії резервні копії безкоштовні</string>

@@ -513,6 +513,24 @@
     <string name="buy_credit_gb_month_explainer">Üks GB-month on 1 GB, mida hoitakse varundatuna ühe kuu jooksul — nii et 500 võib olla 50 GB 10 kuuks või 100 GB 5 kuuks.</string>
     <string name="buy_credit_denom_rate">%1$s / GB-month</string>
     <string name="buy_credit_error_busy">Praegu on liiga palju päringuid. Oodake minut ja proovige uuesti.</string>
+    <!-- ── plaanivalik (Google Drive'i stiilis „Kuni X GB hinnaga Y" paanid) ── -->
+    <string name="buy_credit_plan_duration_label">Hoia mu varukoopiaid</string>
+    <string name="buy_credit_plan_size_label">Kui palju ruumi</string>
+    <string name="buy_credit_plan_size">Kuni %1$d GB</string>
+    <string name="buy_credit_plan_for">%1$s eest</string>
+    <string name="buy_credit_soft_cap">Maksad ainult selle eest, mida tegelikult salvestad — kui varundad piirmäärast vähem, kestab see kauem. Kui ületad piiri, ei kustutata midagi; lihtsalt lõpeb varem.</string>
+    <string name="buy_credit_one_off">Ühekordne — ei uuene automaatselt. Täienda igal ajal.</string>
+    <string name="buy_credit_save_nudge">Säästa pikema plaaniga kuni %1$d%%</string>
+    <string name="buy_credit_pay_amount_plan">%1$s · kuni %2$d GB hinnaga %3$s</string>
+    <string name="buy_credit_success_title_plan">Kuni %1$d GB hinnaga %2$s lisatud</string>
+    <plurals name="buy_credit_years">
+        <item quantity="one">%1$d aasta</item>
+        <item quantity="other">%1$d aastat</item>
+    </plurals>
+    <plurals name="buy_credit_months">
+        <item quantity="one">%1$d kuu</item>
+        <item quantity="other">%1$d kuud</item>
+    </plurals>
     <string name="cloud_status_gb_label">GB-months</string>
     <string name="cloud_status_oneoff">Ühekordne krediit · ei uuene automaatselt</string>
     <string name="cloud_status_free_beta">Varukoopiad on beetaperioodil tasuta</string>

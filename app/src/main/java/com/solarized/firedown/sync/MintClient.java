@@ -86,21 +86,33 @@ public final class MintClient {
 
     // ---- result shapes ----
 
-    /** A mint keyset (a denomination's verification key). */
+    /** A mint keyset (a denomination's verification key). {@code sizeGb} +
+     *  {@code durationMonths} are the plan-grid tile ("Up to X GB for Y") — both
+     *  0 for a legacy denomination-only keyset (see cloud-mint-spec.md §6a). */
     public static final class Keyset {
         public final byte[] id;           // 8 bytes
         public final int denomGbMonths;
         public final long priceCents;
+        public final int sizeGb;          // plan tile size, 0 if legacy denom-only
+        public final int durationMonths;  // plan tile coverage, 0 if legacy denom-only
         public final BigInteger n;
         public final int e;
         public final boolean active;
-        Keyset(byte[] id, int denomGbMonths, long priceCents, BigInteger n, int e, boolean active) {
+        Keyset(byte[] id, int denomGbMonths, long priceCents, int sizeGb, int durationMonths,
+               BigInteger n, int e, boolean active) {
             this.id = id;
             this.denomGbMonths = denomGbMonths;
             this.priceCents = priceCents;
+            this.sizeGb = sizeGb;
+            this.durationMonths = durationMonths;
             this.n = n;
             this.e = e;
             this.active = active;
+        }
+
+        /** True when this keyset carries plan-grid tile metadata (size × duration). */
+        public boolean isPlan() {
+            return sizeGb > 0 && durationMonths > 0;
         }
 
         /** The blind-signature verifier for this keyset. */
@@ -115,17 +127,22 @@ public final class MintClient {
         public final String method;        // "stripe" | "lightning" | "test"
         public final long amountCents;
         public final int denomGbMonths;
+        public final int sizeGb;           // plan tile size (0 if legacy denom-only)
+        public final int durationMonths;   // plan tile coverage (0 if legacy denom-only)
         public final byte[] keysetId;      // 8 bytes
         public final String payRequest;    // Lightning BOLT11 (null otherwise)
         public final String checkoutUrl;   // Stripe hosted Checkout (null otherwise)
         public final boolean autoSettled;  // test rail — already paid
         public final String expiresAt;     // RFC3339
-        Quote(byte[] quoteId, String method, long amountCents, int denomGbMonths, byte[] keysetId,
+        Quote(byte[] quoteId, String method, long amountCents, int denomGbMonths,
+              int sizeGb, int durationMonths, byte[] keysetId,
               String payRequest, String checkoutUrl, boolean autoSettled, String expiresAt) {
             this.quoteId = quoteId;
             this.method = method;
             this.amountCents = amountCents;
             this.denomGbMonths = denomGbMonths;
+            this.sizeGb = sizeGb;
+            this.durationMonths = durationMonths;
             this.keysetId = keysetId;
             this.payRequest = payRequest;
             this.checkoutUrl = checkoutUrl;
@@ -161,6 +178,8 @@ public final class MintClient {
                             Hex.decode(k.getString("id")),
                             k.getInt("denomination_gb_months"),
                             k.optLong("price_cents", 0),
+                            k.optInt("size_gb", 0),
+                            k.optInt("duration_months", 0),
                             new BigInteger(k.getString("n"), 16),
                             k.getInt("e"),
                             k.optBoolean("active", false)));
@@ -172,7 +191,8 @@ public final class MintClient {
         }
     }
 
-    /** POST a quote for a denomination on the given rail ("stripe"|"lightning"|"test"). */
+    /** POST a quote for a denomination on the given rail ("stripe"|"lightning"|"test").
+     *  Legacy path — resolves the ACTIVE keyset for the denomination server-side. */
     public Quote createQuote(int denomGbMonths, String method) throws IOException {
         JSONObject body = new JSONObject();
         try {
@@ -181,6 +201,24 @@ public final class MintClient {
         } catch (org.json.JSONException e) {
             throw new IOException("quote body", e);
         }
+        return postQuote(body, method, denomGbMonths);
+    }
+
+    /** POST a quote for a SPECIFIC active keyset (the plan-grid path). The client
+     *  names the exact tile it picked from {@link #fetchKeys()} — unambiguous even
+     *  when two tiles share a GB-months value (cloud-mint-spec.md §6a). */
+    public Quote createQuoteByKeyset(String keysetIdHex, String method) throws IOException {
+        JSONObject body = new JSONObject();
+        try {
+            body.put("keyset_id", keysetIdHex);
+            body.put("method", method);
+        } catch (org.json.JSONException e) {
+            throw new IOException("quote body", e);
+        }
+        return postQuote(body, method, 0);
+    }
+
+    private Quote postQuote(JSONObject body, String method, int denomFallback) throws IOException {
         byte[] bodyBytes = body.toString().getBytes(StandardCharsets.UTF_8);
         Request req = new Request.Builder()
                 .url(baseUrl + PATH_QUOTE)
@@ -192,9 +230,11 @@ public final class MintClient {
                 JSONObject o = new JSONObject(bodyString(resp));
                 return new Quote(
                         Hex.decode(o.getString("quote_id")),
-                        o.getString("method"),
+                        o.optString("method", method),
                         o.optLong("amount_cents", 0),
-                        o.optInt("denomination_gb_months", denomGbMonths),
+                        o.optInt("denomination_gb_months", denomFallback),
+                        o.optInt("size_gb", 0),
+                        o.optInt("duration_months", 0),
                         Hex.decode(o.getString("keyset_id")),
                         o.optString("pay_request", null),
                         o.optString("checkout_url", null),

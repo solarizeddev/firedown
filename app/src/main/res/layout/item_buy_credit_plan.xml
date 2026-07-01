@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  One plan-grid SIZE tile ("Up to X GB · for Y · $Z"), inflated per active plan
+  keyset of the selected duration by BuyCreditFragment. Reads like a Drive plan,
+  but each (size × duration) tile is a fixed keyset shared by all its buyers, so
+  the blind-signature anonymity set holds (cloud-mint-spec.md §6a). Left: the size
+  cap + the coverage. Right: the one-time price. Selection is a brand 2dp stroke,
+  drawn by the fragment. NO promotional badge on the tile itself (the "SAVE" nudge,
+  if any, is a caption under the duration toggle).
+-->
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="11dp"
+    android:clickable="true"
+    android:focusable="true"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="0dp"
+    app:strokeWidth="1dp"
+    app:strokeColor="?attr/colorOutlineVariant">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="15dp">
+
+        <TextView
+            android:id="@+id/buy_plan_size"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="?attr/colorOnSurface"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/buy_plan_price"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:text="Up to 50 GB" />
+
+        <TextView
+            android:id="@+id/buy_plan_for"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:textSize="12sp"
+            android:layout_marginTop="2dp"
+            android:textColor="?android:attr/textColorSecondary"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/buy_plan_price"
+            app:layout_constraintTop_toBottomOf="@id/buy_plan_size"
+            tools:text="for 1 year" />
+
+        <TextView
+            android:id="@+id/buy_plan_price"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="19sp"
+            android:textStyle="bold"
+            android:textColor="?attr/colorOnSurface"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            tools:text="$30" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</com.google.android.material.card.MaterialCardView>

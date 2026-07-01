@@ -601,6 +601,26 @@
     <string name="buy_credit_gb_month_explainer">GB-month je 1 GB uchovávaný v záloze po dobu jednoho měsíce — takže 500 může být 50 GB na 10 měsíců nebo 100 GB na 5.</string>
     <string name="buy_credit_denom_rate">%1$s / GB-month</string>
     <string name="buy_credit_error_busy">Právě teď je příliš mnoho požadavků. Počkejte minutu a zkuste to znovu.</string>
+    <!-- ── mřížka plánů (dlaždice ve stylu Google Disku „Až X GB za Y“) ── -->
+    <string name="buy_credit_plan_duration_label">Uchovávat zálohy po dobu</string>
+    <string name="buy_credit_plan_size_label">Kolik místa</string>
+    <string name="buy_credit_plan_size">Až %1$d GB</string>
+    <string name="buy_credit_plan_for">za %1$s</string>
+    <string name="buy_credit_soft_cap">Platíte jen za to, co skutečně uložíte — když zálohujete méně, než je limit, kredit vydrží déle. Při překročení se nic nemaže; jen dojde dříve.</string>
+    <string name="buy_credit_one_off">Jednorázově — bez automatického obnovení. Kredit můžete kdykoli doplnit.</string>
+    <string name="buy_credit_save_nudge">S delším plánem ušetříte až %1$d%%</string>
+    <string name="buy_credit_pay_amount_plan">%1$s · až %2$d GB za %3$s</string>
+    <string name="buy_credit_success_title_plan">Přidáno až %1$d GB za %2$s</string>
+    <plurals name="buy_credit_years">
+        <item quantity="one">%1$d rok</item>
+        <item quantity="few">%1$d roky</item>
+        <item quantity="other">%1$d let</item>
+    </plurals>
+    <plurals name="buy_credit_months">
+        <item quantity="one">%1$d měsíc</item>
+        <item quantity="few">%1$d měsíce</item>
+        <item quantity="other">%1$d měsíců</item>
+    </plurals>
     <string name="cloud_status_gb_label">GB-months</string>
     <string name="cloud_status_oneoff">Jednorázový kredit · bez automatického obnovení</string>
     <string name="cloud_status_free_beta">Zálohy jsou během beta verze zdarma</string>
