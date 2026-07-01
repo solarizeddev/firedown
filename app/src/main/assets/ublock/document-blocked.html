@@ -63,10 +63,11 @@
     padding: 40px 0 96px;
   }
   #illustration {
+    display: block;
     width: 104px;
     height: 104px;
-    align-self: center;
-    margin-bottom: 12px;
+    /* margin auto (not flex align-self) — #container is no longer a flex column */
+    margin: 0 auto 12px;
   }
   h1 {
     margin: 0;
