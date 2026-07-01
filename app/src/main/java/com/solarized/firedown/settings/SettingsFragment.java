@@ -595,12 +595,8 @@ public class SettingsFragment extends BasePreferenceFragment
                     return;
                 }
                 String text;
-                if (result > 0) {
+                if (result >= 0) {
                     text = getString(R.string.restore_downloads_done, result);
-                } else if (result == 0) {
-                    // Nothing new imported — the rows were already present and
-                    // are now openable via the SAF grant just taken.
-                    text = getString(R.string.restore_downloads_access);
                 } else if (result == DownloadBackupMirror.RESTORE_NO_BACKUP) {
                     text = getString(R.string.restore_downloads_none);
                 } else {

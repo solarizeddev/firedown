@@ -6,7 +6,6 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
-import android.os.Build;
 import android.provider.DocumentsContract;
 import android.provider.Settings;
 import android.text.TextUtils;
@@ -291,12 +290,8 @@ public final class DownloadBackupMirror {
     private static final String KEY_RESTORE_TREE = "restore_tree_uri";
 
     public static void rememberRestoreTree(@NonNull Context context, @NonNull Uri treeUri) {
-        // Taking any tree grant (restore flow or delete-grant flow) makes the
-        // foreign-owned restored files readable via RestoredFileAccess, so the
-        // persistent grant-needed banner has served its purpose — clear it.
         context.getSharedPreferences(LOCAL_PREFS, Context.MODE_PRIVATE)
-                .edit().putString(KEY_RESTORE_TREE, treeUri.toString())
-                .putBoolean(KEY_RESTORE_GRANT_NEEDED, false).apply();
+                .edit().putString(KEY_RESTORE_TREE, treeUri.toString()).apply();
     }
 
     /** The persisted SAF tree grant from the last restore (the
@@ -409,9 +404,10 @@ public final class DownloadBackupMirror {
             }
         }
         Log.i(TAG, "restoreFromTree: restored " + totalRestored + " entries from SAF mirror");
-        // Any completed restore retires the reinstall banner, whichever door
-        // (empty state / Settings / banner) launched the flow.
-        clearRestoreBanner(context);
+        // A completed restore consumes the one-shot reinstall prompt too, so it
+        // won't re-fire (e.g. a restore run from Settings before the Downloads
+        // screen showed the proactive prompt).
+        consumeRestorePrompt(context);
         return totalRestored;
     }
 
@@ -506,75 +502,48 @@ public final class DownloadBackupMirror {
     }
 
     /**
-     * One-shot restore of mirrored rows into an empty download table. Call on
-     * a background thread at app startup. No-op unless ALL of: the
-     * install-local marker is absent (fresh install — the marker file is
-     * excluded from backup), the live table has no non-safe rows (a fresh
-     * database, not an in-place update), and a mirror file exists (i.e. a
-     * backup restore actually delivered one).
+     * At app startup on a background thread, decide whether to OFFER a restore
+     * after a detected reinstall. Prompt-first by design: it deliberately does
+     * NOT auto-import the backup mirror.
+     *
+     * <p>Rationale: on Android 11+ the download files that survive uninstall in
+     * the public {@code Download/Firedown} folder are foreign-owned after a
+     * reinstall (scoped storage), and this startup path can't take a SAF folder
+     * grant — so a silent import would drop the user into a list of unopenable,
+     * thumbnail-less entries. Instead, on a detected reinstall we arm a one-shot
+     * prompt flag; the Downloads screen offers the restore, and the user grants
+     * the folder once — which imports the list AND makes every file openable in
+     * a single deliberate step (see {@link #restoreFromTree}). If they decline,
+     * Downloads stays cleanly empty (the empty-state button and Settings keep
+     * the restore reachable).
+     *
+     * <p>No-op on an in-place update (the live table already has non-safe rows)
+     * and when no reinstall is detected.
      */
     public static void restoreIfPending(@NonNull Context context, @NonNull DownloadDatabase database) {
         SharedPreferences prefs = context.getSharedPreferences(LOCAL_PREFS, Context.MODE_PRIVATE);
         if (prefs.getBoolean(KEY_RESTORE_DONE, false)) {
             return;
         }
-        // Whatever happens below, never attempt again on this install — a
-        // failed half-restore retried against a now-populated table would
-        // duplicate rows.
+        // Detection runs once per install; re-pairs the sentinels either way.
         prefs.edit().putBoolean(KEY_RESTORE_DONE, true).apply();
 
+        // An in-place update (populated table) is not a restore — never prompt.
+        SupportSQLiteDatabase db = database.getOpenHelper().getWritableDatabase();
+        boolean populated = false;
+        try (Cursor count = db.query("SELECT COUNT(*) FROM " + TABLE + " WHERE file_safe = 0")) {
+            populated = count.moveToFirst() && count.getInt(0) > 0;
+        }
+
         boolean reinstall = detectReinstall(context, prefs);
-
-        int restored = 0;
-        File mirror = mirrorFile(context);
-        if (mirror.exists()) {
-            SupportSQLiteDatabase db = database.getOpenHelper().getWritableDatabase();
-            boolean populated = false;
-            try (Cursor count = db.query("SELECT COUNT(*) FROM " + TABLE + " WHERE file_safe = 0")) {
-                populated = count.moveToFirst() && count.getInt(0) > 0;
-            }
-            if (populated) {
-                if (BuildConfig.DEBUG) {
-                    Log.d(TAG, "restoreIfPending: table populated — in-place update, skipping");
-                }
-                return;
-            }
-            restored = importMirrorDatabase(context, database, mirror);
-            Log.i(TAG, "restoreIfPending: restored " + restored + " download entries from backup mirror");
+        if (populated) {
+            return;
         }
-
-        // Detected reinstall whose automatic restore brought nothing back
-        // (no mirror in the backup, quota, partial restore): the encrypted
-        // public mirror may still be sitting in Download/Firedown, so arm the
-        // Downloads-screen banner pointing at the SAF restore. A reinstall
-        // the auto-restore DID handle needs no re-import banner — BUT on
-        // Android 11+ the rows it restored point at PUBLIC files this reinstall
-        // no longer owns (scoped storage), and the grantless App.onCreate
-        // restore can't take a SAF grant, so those files are unreadable:
-        // no thumbnails, and open/play fails (RestoredFileAccess has no tree to
-        // fall back to). Arm the SAME banner in "grant" mode so the user can
-        // grant the Download/Firedown tree once and make the whole list usable.
-        if (reinstall && restored == 0) {
-            prefs.edit().putBoolean(KEY_RESTORE_BANNER, true).apply();
-            Log.i(TAG, "restoreIfPending: reinstall detected, auto-restore empty — banner armed");
-        } else if (reinstall && restored > 0 && needsRestoreGrant(context)) {
-            // Persistent — the live grant banner shows every launch until the
-            // grant is taken (isRestoreGrantNeeded re-checks the tree), not a
-            // dismissible one-shot.
-            prefs.edit().putBoolean(KEY_RESTORE_GRANT_NEEDED, true).apply();
-            Log.i(TAG, "restoreIfPending: reinstall restored " + restored
-                    + " rows but no SAF grant — grant needed");
+        if (reinstall) {
+            // Offer restore; do NOT silently import (see the method note).
+            prefs.edit().putBoolean(KEY_RESTORE_PROMPT_PENDING, true).apply();
+            Log.i(TAG, "restoreIfPending: reinstall detected — restore prompt armed (no silent import)");
         }
-    }
-
-    /** Whether restored public files need a user-granted SAF tree to be
-     *  readable. True on Android 11+ (scoped storage — a reinstalled app
-     *  doesn't own the public files it restored) while no restore-tree grant is
-     *  held yet. Below 11 the files are readable by path (with
-     *  READ_EXTERNAL_STORAGE), so no grant banner is offered. */
-    private static boolean needsRestoreGrant(@NonNull Context context) {
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
-                && getRestoreTree(context) == null;
     }
 
     // ------------------------------------------------------------------
@@ -598,18 +567,12 @@ public final class DownloadBackupMirror {
     /** Lives in the DEFAULT shared prefs — deliberately backed up. */
     private static final String KEY_SENTINEL_BACKED_UP =
             "com.solarized.firedown.preferences.backup.install.sentinel";
-    private static final String KEY_RESTORE_BANNER = "restore_banner_pending";
-    /** Persistent flag: this install's auto-restore brought download rows back
-     *  whose PUBLIC files it doesn't own (Android 11+), so they need a SAF tree
-     *  grant to be readable. Unlike {@link #KEY_RESTORE_BANNER} this is NOT a
-     *  dismissible one-shot — the grant banner it drives is derived LIVE
-     *  ({@link #isRestoreGrantNeeded}: this flag AND no tree grant yet) and
-     *  re-shown every launch until a grant is actually taken (via the restore
-     *  OR the delete-grant flow — both persist a tree), because otherwise the
-     *  user is left with a list of unopenable, thumbnail-less entries and no
-     *  prompt. Lives in {@code backup_local.xml} (excluded) so it resets on the
-     *  next reinstall. */
-    private static final String KEY_RESTORE_GRANT_NEEDED = "restore_grant_needed";
+    /** One-shot: a reinstall was detected and restore hasn't been offered yet.
+     *  The Downloads screen consumes this to proactively show the restore
+     *  prompt exactly once ({@link #consumeRestorePrompt}); afterwards the
+     *  empty-state button and Settings keep restore reachable. Lives in
+     *  {@code backup_local.xml} (excluded) so it re-arms on the next reinstall. */
+    private static final String KEY_RESTORE_PROMPT_PENDING = "restore_prompt_pending";
     private static final String KEY_RESTORE_ATTEMPTED = "restore_attempted";
 
     private static boolean detectReinstall(@NonNull Context context, @NonNull SharedPreferences localPrefs) {
@@ -627,30 +590,17 @@ public final class DownloadBackupMirror {
         return reinstall;
     }
 
-    /** Whether the Downloads screen should show the "restore your previous
-     *  downloads" banner (reinstall detected, automatic restore came back
-     *  empty, user hasn't dismissed or completed a restore yet). */
-    public static boolean isRestoreBannerPending(@NonNull Context context) {
-        return context.getSharedPreferences(LOCAL_PREFS, Context.MODE_PRIVATE)
-                .getBoolean(KEY_RESTORE_BANNER, false);
-    }
-
-    /** Whether the persistent grant-access banner should show: this install's
-     *  auto-restore brought foreign-owned rows back AND no SAF tree grant has
-     *  been taken yet. Re-checks the tree so ANY grant (restore or delete flow)
-     *  resolves it; the flag itself resets on the next reinstall. */
-    public static boolean isRestoreGrantNeeded(@NonNull Context context) {
-        return context.getSharedPreferences(LOCAL_PREFS, Context.MODE_PRIVATE)
-                .getBoolean(KEY_RESTORE_GRANT_NEEDED, false)
-                && getRestoreTree(context) == null;
-    }
-
-    /** Permanently retire the re-import banner: user dismissed it, or a restore
-     *  ran. Does NOT touch the grant-needed flag — that persistent state clears
-     *  only when a tree grant is actually taken (see {@link #rememberRestoreTree}). */
-    public static void clearRestoreBanner(@NonNull Context context) {
-        context.getSharedPreferences(LOCAL_PREFS, Context.MODE_PRIVATE)
-                .edit().putBoolean(KEY_RESTORE_BANNER, false).apply();
+    /** Consume the one-shot reinstall restore prompt: returns true (and clears
+     *  the flag) the FIRST time the Downloads screen checks after a detected
+     *  reinstall, so it proactively offers restore exactly once. Subsequent
+     *  calls return false — the empty-state button and Settings remain. */
+    public static boolean consumeRestorePrompt(@NonNull Context context) {
+        SharedPreferences prefs = context.getSharedPreferences(LOCAL_PREFS, Context.MODE_PRIVATE);
+        if (!prefs.getBoolean(KEY_RESTORE_PROMPT_PENDING, false)) {
+            return false;
+        }
+        prefs.edit().putBoolean(KEY_RESTORE_PROMPT_PENDING, false).apply();
+        return true;
     }
 
     /** Set once the user has run a SAF restore on THIS install (any outcome).

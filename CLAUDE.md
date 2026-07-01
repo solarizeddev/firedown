@@ -1057,13 +1057,24 @@ and Auto Backup is file-granular, so backing up the DB would ship vault
 metadata to the cloud. `DownloadBackupMirror` re-writes
 `filesDir/backup/downloads-mirror.db` (non-safe + FINISHED rows only, via
 `ATTACH … CREATE TABLE AS SELECT`) every time the app backgrounds
-(`ApplicationLifeCycleHandler.onTrimMemory`), and `App.onCreate` restores it
-**once per install** (`restoreIfPending`, guarded by: a marker in
-`backup_local.xml` — a prefs file *excluded* from backup so it can't follow a
-restore; an empty-table check so an in-place update never re-imports; and
-column-name-intersection row copy so a schema-version skew degrades per-row
-instead of failing). `file_safe` is forced to 0 on restore — a tampered
-mirror can't inject vault entries.
+(`ApplicationLifeCycleHandler.onTrimMemory`). **Restore is PROMPT-FIRST — it
+does NOT silently auto-import.** On Android 11+ the restored public files are
+foreign-owned (see the scoped-storage caveat below), so a silent import would
+drop the user into a list of unopenable, thumbnail-less entries. So
+`App.onCreate → restoreIfPending` (once per install: a marker in
+`backup_local.xml` — excluded from backup so it can't follow a restore; an
+in-place-update check via the non-safe row count) only **detects a reinstall
+and arms a one-shot prompt** (`KEY_RESTORE_PROMPT_PENDING` /
+`consumeRestorePrompt`); it never imports `downloads-mirror.db` itself. The
+actual import happens through the user-driven SAF flow below (`restoreFromTree`,
+which takes the folder grant AND imports in one step, so the files are openable
+the moment they appear). The Downloads screen offers restore proactively once
+(and via the always-available empty-state button / Settings). `file_safe` is
+forced to 0 on import — a tampered mirror can't inject vault entries. (The
+`downloads-mirror.db` file is still written + Auto-Backed-up, but on 11+ it's
+effectively vestigial for restore since the SAF `.fdbk` flow reconstructs the
+same list; the Google-transport DB import path was removed to kill the silent
+broken-list state.)
 
 The backup surface is an **include-list** in BOTH rule files —
 `backup_rules.xml` (API ≤ 30) and `data_extraction.xml` (API 31+, cloud +
@@ -1129,26 +1140,30 @@ scoped-storage caveat above) → `restoreFromTree` → snackbar with the count /
 twice or restoring on a non-empty list never duplicates rows. Strings are
 translated across the same 16 locales as the JIT toggle.
 
-**A third door, the detected-reinstall banner** (`RestoreBannerAdapter`, a
-self-hiding ConcatAdapter header like the incognito in-flight hint): shown
-only when a reinstall is *detected* and the automatic restore came back
-empty — never speculatively to fresh installs (a no-transport reinstall is
-bit-identical to a fresh install, and scoped storage forbids peeking at the
-public folder to check for a `.fdbk`; those users rely on the empty-state
-button, which shows at exactly that moment). Detection is a **sentinel
-pair** (`detectReinstall`): a random UUID lives in BOTH the default prefs
-(backed up) and `backup_local.xml` (excluded); present-but-mismatched after
-a restore-at-install = reinstall. A bare "are default prefs non-empty" check
-does NOT work — `App.onCreate` writes boot keys (history-purge timestamp)
-before detection runs, so a fresh install's prefs are never empty. **Banner
-policy: at most ONE informational banner at a time** — the restore banner
-yields to the incognito header (`updateRestoreBannerVisibility`,
-re-evaluated on every `getSafeCount` change), and both report into
-`getLeadingHeaderCount` for the grid SpanSizeLookup. Banner state lives in
-`backup_local.xml` on purpose: a dismissal must never ride a backup into
-the next reinstall — which is exactly when the banner is needed again.
-Retired permanently on dismiss or any completed restore (cleared at the
-data layer in `restoreFromTree`, so the Settings door retires it too).
+**A third door, the proactive reinstall prompt.** On a *detected* reinstall,
+`restoreIfPending` arms `KEY_RESTORE_PROMPT_PENDING`, and the Downloads screen
+`consumeRestorePrompt`s it **once** (in the empty load-state branch, gated to
+the resumed + unfiltered empty view) to show the restore dialog proactively —
+so the user is offered restore up-front instead of discovering an empty list.
+It's a one-shot: after it fires (or any completed `restoreFromTree`, which also
+consumes it) the empty-state button + Settings remain the standing doors.
+Detection is a **sentinel pair** (`detectReinstall`): a random UUID lives in
+BOTH the default prefs (backed up) and `backup_local.xml` (excluded);
+present-but-mismatched after a restore-at-install = reinstall. A bare "are
+default prefs non-empty" check does NOT work — `App.onCreate` writes boot keys
+(history-purge timestamp) before detection runs, so a fresh install's prefs are
+never empty. The prompt-pending flag lives in `backup_local.xml` on purpose:
+excluded from backup, so it re-arms on the next genuine reinstall.
+
+**History — there was a `RestoreBannerAdapter` (removed).** An earlier design
+auto-imported at boot and then tried to *recover* the resulting broken
+(unopenable, thumbnail-less) list with a self-hiding ConcatAdapter banner —
+first a dismissible "restore your downloads" variant, then a persistent
+"grant access" variant. It was replaced wholesale by the prompt-first model
+above (never enter the broken state rather than recover from it), so the
+banner adapter, its layout, and the `KEY_RESTORE_BANNER` /
+`KEY_RESTORE_GRANT_NEEDED` prefs are gone. Don't reintroduce a boot-time
+auto-import.
 
 **Downloads chip-rail gotcha: there is NO "All" chip.** Unfiltered means no
 chip is checked — `ChipGroup.getCheckedChipId()` returns `View.NO_ID`.

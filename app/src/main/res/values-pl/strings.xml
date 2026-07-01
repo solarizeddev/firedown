@@ -85,8 +85,6 @@
     <string name="empty_learn_more">Więcej informacji</string>
     <string name="restore_downloads_button">Przywróć poprzednie pobrania</string>
     <string name="restore_downloads_settings_summary">Odzyskaj listę pobrań po ponownej instalacji aplikacji</string>
-    <string name="restore_banner_title">Ponownie zainstalowano Firedown?</string>
-    <string name="restore_banner_subtitle">Poprzednie pobrania mogą być do odzyskania — dotknij, aby przywrócić</string>
     <string name="restore_downloads_message">Jeśli ponownie zainstalowano Firedown, pobrane pliki mogą nadal znajdować się w folderze Download/Firedown. Wybierz ten folder, a Firedown przywróci listę pobrań.</string>
     <string name="restore_downloads_choose">Wybierz folder</string>
     <string name="restore_downloads_progress">Przywracanie pobranych plików…</string>
