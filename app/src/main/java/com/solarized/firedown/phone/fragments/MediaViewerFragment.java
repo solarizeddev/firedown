@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 
 import android.content.res.Resources;
+import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.media.MediaExtractor;
@@ -211,9 +212,9 @@ public class MediaViewerFragment extends Fragment {
             // the file's real aspect ratio, so the card coincides exactly
             // with the player's letterbox (nothing peeks around a wide
             // clip). AUDIO keeps 16:10 — its art isn't a video frame, and
-            // 16:10 matches the downloads grid cell. The poster shows
-            // through the transparent shutter until onRenderedFirstFrame
-            // swaps in the real video frame.
+            // 16:10 matches the downloads grid cell. The poster is shown
+            // until onRenderedFirstFrame swaps in the real video frame
+            // (for video it sits above an opaque shutter — see below).
             mPhotoView.setScaleType(ImageView.ScaleType.CENTER_CROP);
             mPhotoView.setAspectRatio(16f / 10f);
         }
@@ -229,6 +230,38 @@ public class MediaViewerFragment extends Fragment {
             // extraction fails.
             mPlayerView.setUseArtwork(false);
             mPhotoView.setImageDrawable(mFallbackDrawable);
+        } else {
+            // VIDEO: re-enable media3's shutter (its default is opaque
+            // black; fragment_media_viewer.xml overrides it transparent).
+            //
+            // Why this is THE fix for the "maximized/stretched frame in
+            // the background": PlayerView.setPlayer() calls updateAspect-
+            // Ratio() with the fresh player's still-UNKNOWN video size,
+            // which resets the inner exo_content_frame to aspect 0 (=
+            // MATCH_PARENT). Until onVideoSizeChanged fires (around first-
+            // frame decode) the content frame is full-screen, so a frame
+            // that decodes early — the 498x334, 1.4s, audio-less BINGO
+            // clip decodes instantly, mid shared-element transition —
+            // paints STRETCHED (fitXY) to the whole screen. media3's guard
+            // is the shutter, hidden only in onRenderedFirstFrame, which
+            // fires AFTER onVideoSizeChanged has resized the frame; an
+            // opaque shutter covers the surface through exactly that
+            // stretched window. Making it transparent (to reveal the
+            // poster) is what exposed the stretch. Confirmed against
+            // media3 1.10.1 PlayerView source.
+            //
+            // Keep the poster visible by drawing photo_view ABOVE the
+            // shutter (bringToFront): the poster band sits on top, the
+            // black shutter fills the letterbox area around it, so there
+            // is no stretch AND no black-instead-of-poster. photo_view is
+            // hidden in onRenderedFirstFrame, uncovering the (now
+            // correctly letterboxed) video. Audio is untouched: it has no
+            // video surface to stretch, and its artwork photo_view must
+            // keep showing through the transparent shutter.
+            mPlayerView.setShutterBackgroundColor(Color.BLACK);
+            if (!mAvoidTransition) {
+                mPhotoView.bringToFront();
+            }
         }
 
         // PlayerView / controller behaviour. autoShow is deliberately
