@@ -23,6 +23,7 @@ import androidx.navigation.NavDestination;
 import androidx.paging.LoadState;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.solarized.firedown.BuildConfig;
 import com.solarized.firedown.R;
 import com.solarized.firedown.data.entity.GeckoStateEntity;
 import com.solarized.firedown.data.entity.TabStateArchivedEntity;
@@ -218,15 +219,26 @@ public class TabsArchiveFragment extends BaseFocusFragment implements OnItemClic
     }
 
     private void setupLoadStateListener() {
-        // Empty/loaded UI only — the enter-transition release is handled
-        // separately by releaseEnterTransitionWhenReady, so a load that
-        // errors or never reaches NotLoading can't keep the screen frozen.
+        // Drives ONLY the empty/loaded/error UI — the enter-transition
+        // release is handled separately by releaseEnterTransitionWhenReady,
+        // so a load that errors or never reaches NotLoading can't freeze the
+        // screen. The spinner (LCEE default) is dismissed on EITHER terminal
+        // refresh state so a failed load can't leave it spinning forever.
         mAdapter.addLoadStateListener(loadStates -> {
             if (mAdapter == null || mLCEERecyclerView == null) return null;
 
-            if (loadStates.getRefresh() instanceof LoadState.NotLoading) {
+            LoadState refresh = loadStates.getRefresh();
+            if (refresh instanceof LoadState.NotLoading) {
                 if (mAdapter.getItemCount() == 0) mLCEERecyclerView.showEmpty();
                 else mLCEERecyclerView.hideAll();
+            } else if (refresh instanceof LoadState.Error error) {
+                // Don't strand the user on the spinner if the paging refresh
+                // fails — surface the empty state instead, and log the cause
+                // (debug builds only) so the failure is diagnosable.
+                if (BuildConfig.DEBUG) {
+                    Log.e(TAG, "archive paging refresh error", error.getError());
+                }
+                mLCEERecyclerView.showEmpty();
             }
             return null;
         });
