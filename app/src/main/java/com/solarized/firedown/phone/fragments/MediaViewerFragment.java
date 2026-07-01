@@ -195,22 +195,25 @@ public class MediaViewerFragment extends Fragment {
         mFallbackDrawable = MimeTypeThumbnail.generateDrawable(mActivity, fileMime);
 
         if (!mAvoidTransition) {
-            // Bound photo_view to a centred centerCrop card instead of a
-            // full-screen fitCenter ImageView. The AspectRatioImageView
-            // constrains its own bounds, so the shared-element transition
-            // target is a card (a clean bounds-grow from the source cell),
-            // never the whole screen.
+            // Bound photo_view to a centred centerCrop card. The
+            // AspectRatioImageView computes its height from its width and
+            // the ratio, and photo_view is declared layout_height=
+            // "wrap_content" (NOT match_parent) precisely so that computed
+            // band IS the view's size — there is no EXACTLY match_parent
+            // height spec being violated for the shared-element activity
+            // transition to trip over. (With match_parent the view
+            // reported a 450px band but the transition composited it at
+            // the full match_parent height, so centerCrop filled the whole
+            // screen — the "maximized image in the background".)
             //
-            // 16:10 here is only a FALLBACK aspect. For VIDEO,
+            // 16:10 here is only a FALLBACK ratio. For VIDEO,
             // presetVideoAspectRatio() overrides it in onViewCreated with
-            // the file's real aspect ratio, so the poster coincides
-            // exactly with the player's letterbox and nothing peeks around
-            // the frame (a hardcoded 16:10 card is TALLER than a wide
-            // 2.35:1 clip and its top/bottom edges showed behind the
-            // video). AUDIO keeps the 16:10 card — its art isn't a video
-            // frame, and 16:10 matches the downloads grid cell. The poster
-            // shows through the transparent shutter until
-            // onRenderedFirstFrame swaps in the real video frame.
+            // the file's real aspect ratio, so the card coincides exactly
+            // with the player's letterbox (nothing peeks around a wide
+            // clip). AUDIO keeps 16:10 — its art isn't a video frame, and
+            // 16:10 matches the downloads grid cell. The poster shows
+            // through the transparent shutter until onRenderedFirstFrame
+            // swaps in the real video frame.
             mPhotoView.setScaleType(ImageView.ScaleType.CENTER_CROP);
             mPhotoView.setAspectRatio(16f / 10f);
         }
