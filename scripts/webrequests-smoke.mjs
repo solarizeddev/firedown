@@ -94,7 +94,7 @@ const count = (path) => (registrations[path] ?? []).length;
 // Inventory of listener registrations across the background module graph
 // (js/parsers/* + requests.js + cookies.js + debug.js). Update deliberately
 // when adding/removing a listener — that's the point of the check.
-expect(count("webRequest.onBeforeRequest") === 34, `webRequest.onBeforeRequest registrations == 34 (got ${count("webRequest.onBeforeRequest")})`);
+expect(count("webRequest.onBeforeRequest") === 35, `webRequest.onBeforeRequest registrations == 35 (got ${count("webRequest.onBeforeRequest")})`);
 expect(count("webRequest.onSendHeaders") === 2, `webRequest.onSendHeaders registrations == 2 (got ${count("webRequest.onSendHeaders")})`);
 expect(count("webRequest.onHeadersReceived") === 2, `webRequest.onHeadersReceived registrations == 2 (got ${count("webRequest.onHeadersReceived")})`);
 expect(count("webRequest.onResponseStarted") === 1, `webRequest.onResponseStarted registrations == 1 (got ${count("webRequest.onResponseStarted")})`);
@@ -408,6 +408,63 @@ expect(matchInParserBlocklist("https://web.telegram.org/a/stream/xyz"),
   "tg-web: /a/stream/ is block-listed");
 expect(!matchInParserBlocklist("https://web.telegram.org/k/"),
   "tg-web: non-stream web app URL is NOT block-listed");
+
+// Spotify embed extractor — runs the REAL extractSpotifyEmbedTracks against a
+// fixture mirroring the open.spotify.com/embed/* __NEXT_DATA__ shape (the
+// HAR-replay guard per CLAUDE.md). Covers a multi-track playlist entity, a
+// DRM-only track with no audioPreview (skipped), and entity-level cover art
+// fallback; plus a single-entity (track) embed with audioPreview on the entity.
+const { extractSpotifyEmbedTracks } = await import(pathToFileURL(join(ext, "js/parsers/spotify.js")));
+
+function spotifyEmbedHtml(entity) {
+  return `<html><body><script id="__NEXT_DATA__" type="application/json">`
+    + JSON.stringify({ props: { pageProps: { state: { data: { entity } } } } })
+    + `</script></body></html>`;
+}
+
+const spPlaylist = spotifyEmbedHtml({
+  type: "playlist", name: "Top 100 Música actual", uri: "spotify:playlist:7GVCWJ3kvSXQKpeaRyNaqc",
+  coverArt: { sources: [{ width: 640, height: 640, url: "https://image-cdn-ak.spotifycdn.com/image/cover640" }] },
+  trackList: [
+    { uri: "spotify:track:4LfCY65LvojKjWEnU7fNN4", title: "stupid song", subtitle: "Olivia Rodrigo",
+      duration: 209680, audioPreview: { format: "MP3_96", url: "https://p.scdn.co/mp3-preview/894b272aa0422aeebe856825b55e5c736a9bc5ee" } },
+    { uri: "spotify:track:aaaa", title: "PrRrr", subtitle: "judith",
+      duration: 93787, audioPreview: { format: "MP3_96", url: "https://p.scdn.co/mp3-preview/35dc98219155c840243490c6d09d7c75e289d789" } },
+    { uri: "spotify:track:bbbb", title: "DRM only", subtitle: "nobody", duration: 100000 }, // no audioPreview -> skipped
+  ],
+});
+const spTracks = extractSpotifyEmbedTracks(spPlaylist).tracks;
+expect(spTracks.length === 2, `spotify: DRM-only track skipped, 2 previewable (got ${spTracks.length})`);
+expect(spTracks[0].url === "https://p.scdn.co/mp3-preview/894b272aa0422aeebe856825b55e5c736a9bc5ee",
+  "spotify: preview URL from audioPreview");
+expect(spTracks[0].title === "stupid song" && spTracks[0].artist === "Olivia Rodrigo",
+  `spotify: per-track title/artist (got ${spTracks[0].title}/${spTracks[0].artist})`);
+expect(spTracks[0].origin === "https://open.spotify.com/track/4LfCY65LvojKjWEnU7fNN4",
+  `spotify: per-track origin from uri (got ${spTracks[0].origin})`);
+expect(spTracks[0].cover === "https://image-cdn-ak.spotifycdn.com/image/cover640",
+  "spotify: entity cover used as per-track fallback");
+
+// Single-entity (track) embed: audioPreview lives on the entity, no trackList.
+const spTrack = spotifyEmbedHtml({
+  type: "track", name: "Solo Song", uri: "spotify:track:cccc", title: "Solo Song", subtitle: "Artist X",
+  coverArt: { sources: [{ width: 300, url: "https://image-cdn-ak.spotifycdn.com/image/albumart" }] },
+  duration: 180000, audioPreview: { format: "MP3_96", url: "https://p.scdn.co/mp3-preview/soloclip" },
+});
+const spOne = extractSpotifyEmbedTracks(spTrack).tracks;
+expect(spOne.length === 1 && spOne[0].url === "https://p.scdn.co/mp3-preview/soloclip",
+  `spotify: single-entity embed yields one track (got ${spOne.length})`);
+expect(spOne[0].cover === "https://image-cdn-ak.spotifycdn.com/image/albumart", "spotify: single-track album art");
+
+// A body with no __NEXT_DATA__ yields nothing (not a throw).
+expect(extractSpotifyEmbedTracks("<html><body>no data</body></html>").tracks.length === 0,
+  "spotify: missing __NEXT_DATA__ -> empty");
+
+// Cardinal rule: the emitted preview host is parser-block-listed so the generic
+// catcher can't double-capture the same clip on play.
+expect(matchInParserBlocklist("https://p.scdn.co/mp3-preview/894b272aa0422aeebe856825b55e5c736a9bc5ee"),
+  "spotify: mp3-preview is parser-block-listed");
+expect(!matchInParserBlocklist("https://i.scdn.co/image/ab67616d0000b273cover.jpg"),
+  "spotify: scdn image is NOT block-listed");
 
 if (failures) {
   console.error(`\n${failures} failure(s)`);
