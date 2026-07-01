@@ -45,6 +45,7 @@ public final class StorageApiClient {
     private static final String PATH_MANIFEST = "/v1/storage/manifest";
     private static final String PATH_OBJECTS = "/v1/storage/objects";
     private static final String PATH_ACCOUNT = "/v1/storage/account";
+    private static final String PATH_REDEEM = "/v1/storage/credits/redeem";
 
     /** Cloudflare returns 429 (its "Block" rate-limit action) on a per-IP burst.
      *  OkHttp has NO built-in 429 handling (`retryOnConnectionFailure` only covers
@@ -198,6 +199,18 @@ public final class StorageApiClient {
         CreatedObject(String objectId, List<String> uploadUrls) {
             this.objectId = objectId;
             this.uploadUrls = uploadUrls;
+        }
+    }
+
+    /** Result of a POST /v1/storage/credits/redeem — the new metered balance. */
+    public static final class RedeemResult {
+        public final int redeemedGbMonths;
+        public final double balanceGbMonths;
+        public final long balanceMicroGbMonths;
+        RedeemResult(int redeemedGbMonths, double balanceGbMonths, long balanceMicroGbMonths) {
+            this.redeemedGbMonths = redeemedGbMonths;
+            this.balanceGbMonths = balanceGbMonths;
+            this.balanceMicroGbMonths = balanceMicroGbMonths;
         }
     }
 
@@ -404,6 +417,40 @@ public final class StorageApiClient {
                 return;
             }
             throwForStatus(resp, "delete account");
+        }
+    }
+
+    /**
+     * Redeems a blind-signed mint credit (keyset id / secret / signature, all hex)
+     * into the account's metered balance. Returns the new balance. A {@code
+     * credit-spent} 409 (or any 4xx) surfaces as {@link FatalException} with the
+     * slug so the caller can distinguish already-redeemed from a bad credit.
+     */
+    public RedeemResult redeemCredit(SyncIdentity id, String keysetIdHex, String secretHex, String signatureHex)
+            throws IOException {
+        JSONObject body = new JSONObject();
+        try {
+            body.put("keyset_id", keysetIdHex);
+            body.put("secret", secretHex);
+            body.put("signature", signatureHex);
+        } catch (org.json.JSONException e) {
+            throw new IOException("redeem body", e);
+        }
+        byte[] bodyBytes = body.toString().getBytes(StandardCharsets.UTF_8);
+        Request req = signed(id, "POST", PATH_REDEEM, "", bodyBytes)
+                .post(RequestBody.create(bodyBytes, JSON))
+                .build();
+        try (Response resp = beginCall(req).execute()) {
+            throwForStatus(resp, "redeem");
+            try {
+                JSONObject obj = new JSONObject(bodyString(resp));
+                return new RedeemResult(
+                        obj.optInt("redeemed_gb_months", 0),
+                        obj.optDouble("balance_gb_months", 0),
+                        obj.optLong("balance_micro_gb_months", 0));
+            } catch (org.json.JSONException e) {
+                throw new IOException("malformed redeem response", e);
+            }
         }
     }
 
