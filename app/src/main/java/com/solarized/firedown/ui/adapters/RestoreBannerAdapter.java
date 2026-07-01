@@ -114,13 +114,19 @@ public class RestoreBannerAdapter extends RecyclerView.Adapter<RestoreBannerAdap
                         ? R.string.restore_banner_grant_subtitle
                         : R.string.restore_banner_subtitle);
             }
+            // Grant mode is non-dismissible: the restored files are unopenable
+            // until a grant is taken, so hiding the X keeps the one-tap fix in
+            // front of the user instead of letting a dismiss strand them with a
+            // list of dead entries. The re-import variant keeps its dismiss.
+            mClose.setVisibility(grantMode ? View.GONE : View.VISIBLE);
             if (listener == null) {
                 itemView.setOnClickListener(null);
                 mClose.setOnClickListener(null);
                 return;
             }
             itemView.setOnClickListener(v -> listener.onRestoreBannerClicked());
-            mClose.setOnClickListener(v -> listener.onRestoreBannerDismissed());
+            mClose.setOnClickListener(grantMode ? null
+                    : v -> listener.onRestoreBannerDismissed());
         }
     }
 }

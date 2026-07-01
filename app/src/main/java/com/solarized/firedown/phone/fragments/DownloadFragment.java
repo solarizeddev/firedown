@@ -492,7 +492,7 @@ public class DownloadFragment extends BaseDownloadFragment implements
         // Grant-access variant (the list is already restored but its
         // foreign-owned files can't be opened) gets a message that matches;
         // otherwise the re-import-from-mirror wording.
-        int message = DownloadBackupMirror.isRestoreGrantMode(requireContext())
+        int message = DownloadBackupMirror.isRestoreGrantNeeded(requireContext())
                 ? R.string.restore_downloads_grant_message
                 : R.string.restore_downloads_message;
         new MaterialAlertDialogBuilder(requireContext())
@@ -670,12 +670,18 @@ public class DownloadFragment extends BaseDownloadFragment implements
         if (mRestoreBannerAdapter == null) {
             return;
         }
+        // Two variants share the one banner slot. Grant-access (restored files
+        // need a SAF grant to open) is PERSISTENT and non-dismissible — derived
+        // live from DownloadBackupMirror so it re-shows every launch until a
+        // grant is taken; the user can't get permanently stuck with unopenable
+        // entries. Re-import (auto-restore empty) is the dismissible one-shot.
+        // Both still yield to the transient incognito in-flight header
+        // (mSafeCount != 0) — the grant banner simply returns when it clears,
+        // since it's persistent, so it's never lost to that collision.
+        boolean grantNeeded = DownloadBackupMirror.isRestoreGrantNeeded(requireContext());
         boolean show = mSafeCount == 0
-                && DownloadBackupMirror.isRestoreBannerPending(requireContext());
-        // Pick the subtitle variant before showing: grant-access (the restored
-        // files need a SAF grant to open) vs. re-import (auto-restore empty).
-        mRestoreBannerAdapter.setGrantMode(
-                DownloadBackupMirror.isRestoreGrantMode(requireContext()));
+                && (grantNeeded || DownloadBackupMirror.isRestoreBannerPending(requireContext()));
+        mRestoreBannerAdapter.setGrantMode(grantNeeded);
         mRestoreBannerAdapter.setVisible(show);
     }
 

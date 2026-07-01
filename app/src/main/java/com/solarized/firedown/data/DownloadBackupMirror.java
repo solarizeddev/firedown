@@ -291,8 +291,12 @@ public final class DownloadBackupMirror {
     private static final String KEY_RESTORE_TREE = "restore_tree_uri";
 
     public static void rememberRestoreTree(@NonNull Context context, @NonNull Uri treeUri) {
+        // Taking any tree grant (restore flow or delete-grant flow) makes the
+        // foreign-owned restored files readable via RestoredFileAccess, so the
+        // persistent grant-needed banner has served its purpose — clear it.
         context.getSharedPreferences(LOCAL_PREFS, Context.MODE_PRIVATE)
-                .edit().putString(KEY_RESTORE_TREE, treeUri.toString()).apply();
+                .edit().putString(KEY_RESTORE_TREE, treeUri.toString())
+                .putBoolean(KEY_RESTORE_GRANT_NEEDED, false).apply();
     }
 
     /** The persisted SAF tree grant from the last restore (the
@@ -551,14 +555,15 @@ public final class DownloadBackupMirror {
         // fall back to). Arm the SAME banner in "grant" mode so the user can
         // grant the Download/Firedown tree once and make the whole list usable.
         if (reinstall && restored == 0) {
-            prefs.edit().putBoolean(KEY_RESTORE_BANNER, true)
-                    .putBoolean(KEY_RESTORE_GRANT_MODE, false).apply();
+            prefs.edit().putBoolean(KEY_RESTORE_BANNER, true).apply();
             Log.i(TAG, "restoreIfPending: reinstall detected, auto-restore empty — banner armed");
         } else if (reinstall && restored > 0 && needsRestoreGrant(context)) {
-            prefs.edit().putBoolean(KEY_RESTORE_BANNER, true)
-                    .putBoolean(KEY_RESTORE_GRANT_MODE, true).apply();
+            // Persistent — the live grant banner shows every launch until the
+            // grant is taken (isRestoreGrantNeeded re-checks the tree), not a
+            // dismissible one-shot.
+            prefs.edit().putBoolean(KEY_RESTORE_GRANT_NEEDED, true).apply();
             Log.i(TAG, "restoreIfPending: reinstall restored " + restored
-                    + " rows but no SAF grant — grant banner armed");
+                    + " rows but no SAF grant — grant needed");
         }
     }
 
@@ -594,10 +599,17 @@ public final class DownloadBackupMirror {
     private static final String KEY_SENTINEL_BACKED_UP =
             "com.solarized.firedown.preferences.backup.install.sentinel";
     private static final String KEY_RESTORE_BANNER = "restore_banner_pending";
-    /** When the banner is pending, whether it's the "grant access to the files
-     *  the auto-restore brought back" variant (true) vs. the "re-import the
-     *  download list from the public mirror" variant (false). */
-    private static final String KEY_RESTORE_GRANT_MODE = "restore_banner_grant_mode";
+    /** Persistent flag: this install's auto-restore brought download rows back
+     *  whose PUBLIC files it doesn't own (Android 11+), so they need a SAF tree
+     *  grant to be readable. Unlike {@link #KEY_RESTORE_BANNER} this is NOT a
+     *  dismissible one-shot — the grant banner it drives is derived LIVE
+     *  ({@link #isRestoreGrantNeeded}: this flag AND no tree grant yet) and
+     *  re-shown every launch until a grant is actually taken (via the restore
+     *  OR the delete-grant flow — both persist a tree), because otherwise the
+     *  user is left with a list of unopenable, thumbnail-less entries and no
+     *  prompt. Lives in {@code backup_local.xml} (excluded) so it resets on the
+     *  next reinstall. */
+    private static final String KEY_RESTORE_GRANT_NEEDED = "restore_grant_needed";
     private static final String KEY_RESTORE_ATTEMPTED = "restore_attempted";
 
     private static boolean detectReinstall(@NonNull Context context, @NonNull SharedPreferences localPrefs) {
@@ -623,19 +635,22 @@ public final class DownloadBackupMirror {
                 .getBoolean(KEY_RESTORE_BANNER, false);
     }
 
-    /** Whether the pending banner is the grant-access variant (auto-restore
-     *  brought the list back but its foreign-owned files need a SAF grant to
-     *  open) rather than the re-import-from-mirror variant. */
-    public static boolean isRestoreGrantMode(@NonNull Context context) {
+    /** Whether the persistent grant-access banner should show: this install's
+     *  auto-restore brought foreign-owned rows back AND no SAF tree grant has
+     *  been taken yet. Re-checks the tree so ANY grant (restore or delete flow)
+     *  resolves it; the flag itself resets on the next reinstall. */
+    public static boolean isRestoreGrantNeeded(@NonNull Context context) {
         return context.getSharedPreferences(LOCAL_PREFS, Context.MODE_PRIVATE)
-                .getBoolean(KEY_RESTORE_GRANT_MODE, false);
+                .getBoolean(KEY_RESTORE_GRANT_NEEDED, false)
+                && getRestoreTree(context) == null;
     }
 
-    /** Permanently retire the banner: user dismissed it, or a restore ran. */
+    /** Permanently retire the re-import banner: user dismissed it, or a restore
+     *  ran. Does NOT touch the grant-needed flag — that persistent state clears
+     *  only when a tree grant is actually taken (see {@link #rememberRestoreTree}). */
     public static void clearRestoreBanner(@NonNull Context context) {
         context.getSharedPreferences(LOCAL_PREFS, Context.MODE_PRIVATE)
-                .edit().putBoolean(KEY_RESTORE_BANNER, false)
-                .putBoolean(KEY_RESTORE_GRANT_MODE, false).apply();
+                .edit().putBoolean(KEY_RESTORE_BANNER, false).apply();
     }
 
     /** Set once the user has run a SAF restore on THIS install (any outcome).
