@@ -325,6 +325,11 @@ public class BuyCreditViewModel extends ViewModel {
     }
 
     private String errorText(Exception e) {
+        // A 429/503 (the mint's per-IP quote limiter, or a CF edge throttle) is
+        // transient — tell the user to wait rather than showing a generic failure.
+        if (e instanceof MintClient.TransientException || e instanceof StorageApiClient.TransientException) {
+            return appContext.getString(R.string.buy_credit_error_busy);
+        }
         if (e instanceof MintClient.FatalException) {
             String slug = ((MintClient.FatalException) e).slug;
             if (slug != null && !slug.isEmpty()) {

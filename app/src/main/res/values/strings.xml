@@ -333,6 +333,7 @@
     <!-- %1$s = server error slug -->
     <string name="buy_credit_error_slug">Something went wrong (%1$s). Please try again.</string>
     <string name="buy_credit_error_network">Couldn\'t reach the payments server. Check your connection and try again.</string>
+    <string name="buy_credit_error_busy">Too many requests just now. Wait a minute and try again.</string>
     <string name="settings_cloud_backup_show_code_title">Show recovery code</string>
     <string name="settings_cloud_backup_show_code_summary">Reveal the code that unlocks your cloud backup</string>
     <string name="settings_cloud_backup_code_unavailable">Recovery code unavailable</string>

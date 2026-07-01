@@ -278,14 +278,27 @@ public class BuyCreditFragment extends Fragment {
         if (mCheckoutUrl == null) {
             return;
         }
-        // Open the mint's hosted Checkout in a browser tab. Deliberately NOT the
-        // Settings→browser result-handshake (which would finish this activity and
-        // kill the poll loop) — a plain ACTION_VIEW keeps this screen alive polling
-        // while the user pays in the browser, then returns.
-        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(mCheckoutUrl))
+        Uri uri = Uri.parse(mCheckoutUrl);
+        // Open the hosted Checkout IN Firedown (it IS a browser) rather than handing
+        // the user off to whatever the OS default browser is — leaving the app is bad
+        // UX for a browser. setPackage pins the ACTION_VIEW to our own app; NEW_TASK
+        // opens it as a separate task so THIS settings screen stays alive and keeps
+        // polling for the payment (deliberately NOT the Settings→browser
+        // result-handshake, which finishes the activity and would kill the poll).
+        Intent inApp = new Intent(Intent.ACTION_VIEW, uri)
+                .setPackage(requireContext().getPackageName())
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         try {
-            startActivity(intent);
+            startActivity(inApp);
+            return;
+        } catch (ActivityNotFoundException ignored) {
+            // Our own browser activity didn't resolve for this URL — fall through
+            // to the system default so the user can still complete payment.
+        }
+        Intent external = new Intent(Intent.ACTION_VIEW, uri)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        try {
+            startActivity(external);
         } catch (ActivityNotFoundException e) {
             snackbar(getString(R.string.buy_credit_no_browser));
         }

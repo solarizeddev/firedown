@@ -109,7 +109,7 @@
                 android:padding="14dp"
                 android:layout_marginTop="14dp"
                 android:background="@drawable/bg_sync_code"
-                android:textColor="?android:attr/textColorSecondary" />
+                android:textColor="?attr/colorOnSecondaryContainer" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/buy_continue"
@@ -185,7 +185,7 @@
                 android:fontFamily="monospace"
                 android:textSize="11.5sp"
                 android:background="@drawable/bg_sync_code"
-                android:textColor="?android:attr/textColorSecondary"
+                android:textColor="?attr/colorOnSecondaryContainer"
                 tools:text="lnbc183u1p4y2n4adpjge5hy…q9yysgqcqzp2" />
 
             <LinearLayout
@@ -378,7 +378,7 @@
                         android:textSize="14sp"
                         android:letterSpacing="0.05"
                         android:background="@drawable/bg_sync_code"
-                        android:textColor="?attr/colorOnSurface"
+                        android:textColor="?attr/colorOnSecondaryContainer"
                         tools:text="ABCD EFGH JKMN PQRS TVWX YZ23 4567" />
 
                     <com.google.android.material.button.MaterialButton

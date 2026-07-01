@@ -2,6 +2,7 @@ package com.solarized.firedown.sync;
 
 import androidx.annotation.NonNull;
 
+import com.solarized.firedown.okhttp.RateLimitInterceptor;
 import com.solarized.firedown.sync.crypto.BlindSignature;
 import com.solarized.firedown.sync.crypto.Hex;
 
@@ -49,7 +50,15 @@ public final class MintClient {
     private final String baseUrl; // no trailing slash
 
     public MintClient(OkHttpClient client, String baseUrl) {
+        // Derive from the shared client but DROP the global RateLimitInterceptor
+        // (same as StorageApiClient). The mint has its OWN bounded RetryInterceptor
+        // for 429/503; keeping the global one too NESTS two client-side retry loops,
+        // which on a mint 429 (the per-IP quote limiter: burst 20, then 60/hour)
+        // fires up to ~9 requests for a single tap — draining the limiter further
+        // AND stacking both backoffs into a multi-minute hang (the "empty spinner"
+        // on Continue). One request per call; a persistent 429 fails fast instead.
         OkHttpClient.Builder b = client.newBuilder();
+        b.interceptors().removeIf(i -> i instanceof RateLimitInterceptor);
         b.addInterceptor(new RetryInterceptor());
         this.client = b.build();
         this.baseUrl = stripTrailingSlash(baseUrl);
