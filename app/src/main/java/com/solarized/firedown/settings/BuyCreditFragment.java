@@ -278,10 +278,10 @@ public class BuyCreditFragment extends Fragment {
             buttonIds.add(id);
         }
         mDurationSection.setVisibility(durations.size() > 1 ? View.VISIBLE : View.GONE);
-        showSaveNudge(durations);
 
         // Default to the middle duration (e.g. 1 year of 1 mo / 1 yr / 2 yr) —
-        // checking it fires the listener, which builds that duration's size tiles.
+        // checking it fires the listener, which builds that duration's size tiles
+        // AND updates the save nudge for the selected duration.
         int defaultDuration = durations.size() >= 3 ? 1 : 0;
         mDurationToggle.check(buttonIds.get(defaultDuration));
     }
@@ -337,24 +337,33 @@ public class BuyCreditFragment extends Fragment {
             int idx = count >= 3 ? 1 : 0; // middle size by default
             selectCard(cards.get(idx), tileOpts.get(idx));
         }
+        updateSaveNudge(durationMonths);
     }
 
-    /** Shows the bulk-discount nudge iff a longer plan is genuinely cheaper per
-     *  GB-month than the shortest, and reports by how much. Data-driven — no
-     *  hardcoded "SAVE"; if every duration is the same rate, nothing shows. */
-    private void showSaveNudge(List<Integer> durations) {
+    /** Contextual bulk-discount nudge: shows the saving of the cheapest-per-
+     *  GB-month LONGER plan than the one currently selected, and hides entirely
+     *  once the longest (best-value) duration is selected — so it never tells the
+     *  user to "pick a longer plan" when there isn't one. Data-driven, no
+     *  hardcoded percent. */
+    private void updateSaveNudge(int selectedMonths) {
         mDurationSave.setVisibility(View.GONE);
-        if (durations.size() < 2) {
+        double selectedRate = bestRateForDuration(selectedMonths);
+        if (selectedRate <= 0) {
             return;
         }
-        int shortest = durations.get(0);
-        int longest = durations.get(durations.size() - 1);
-        double shortRate = bestRateForDuration(shortest);
-        double longRate = bestRateForDuration(longest);
-        if (shortRate <= 0 || longRate <= 0 || longRate >= shortRate) {
-            return;
+        double bestLongerRate = -1;
+        for (BuyCreditViewModel.Option o : mPlanOptions) {
+            if (o.durationMonths > selectedMonths && o.denomGbMonths > 0) {
+                double rate = (double) o.priceCents / o.denomGbMonths;
+                if (bestLongerRate < 0 || rate < bestLongerRate) {
+                    bestLongerRate = rate;
+                }
+            }
         }
-        int pct = (int) Math.round((1.0 - longRate / shortRate) * 100.0);
+        if (bestLongerRate <= 0 || bestLongerRate >= selectedRate) {
+            return; // no longer plan, or it isn't actually cheaper
+        }
+        int pct = (int) Math.round((1.0 - bestLongerRate / selectedRate) * 100.0);
         if (pct <= 0) {
             return;
         }
