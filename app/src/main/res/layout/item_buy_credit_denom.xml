@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  One purchasable denomination card, inflated per active mint keyset by
-  BuyCreditFragment (the server is the source of truth for denominations + prices).
+  One purchasable denomination, inflated per active mint keyset by
+  BuyCreditFragment (the server is the source of truth for denominations + prices,
+  so nothing is hardcoded). Left: the amount. Right: price + the per-GB-month rate
+  so tiers are comparable. NO promotional tag/badge — plain, honest cards.
   Selection is drawn by the fragment as a brand-coloured 2dp stroke.
 -->
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
@@ -9,7 +11,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="12dp"
+    android:layout_marginBottom="11dp"
     android:clickable="true"
     android:focusable="true"
     app:cardCornerRadius="16dp"
@@ -20,31 +22,41 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="16dp">
+        android:padding="15dp">
 
         <TextView
             android:id="@+id/buy_denom_amt"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:textSize="20sp"
+            android:textSize="17sp"
             android:textStyle="bold"
             android:textColor="?attr/colorOnSurface"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toStartOf="@id/buy_denom_price"
             app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
             tools:text="500 GB-months" />
 
         <TextView
             android:id="@+id/buy_denom_price"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="19sp"
+            android:textSize="18sp"
             android:textStyle="bold"
             android:textColor="?attr/colorOnSurface"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="@id/buy_denom_amt"
             tools:text="$18" />
+
+        <TextView
+            android:id="@+id/buy_denom_rate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="11.5sp"
+            android:textColor="?android:attr/textColorSecondary"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/buy_denom_price"
+            tools:text="3.6¢ / GB-month" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

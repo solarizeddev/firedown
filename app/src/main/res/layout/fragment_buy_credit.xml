@@ -54,6 +54,18 @@
                 android:textColor="?android:attr/textColorSecondary"
                 android:layout_marginBottom="10dp" />
 
+            <!-- Plain-language explainer for the "GB-months" unit. -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/buy_credit_gb_month_explainer"
+                android:textSize="12.5sp"
+                android:lineSpacingMultiplier="1.35"
+                android:padding="12dp"
+                android:layout_marginBottom="12dp"
+                android:background="@drawable/bg_sync_code"
+                android:textColor="?attr/colorOnSecondaryContainer" />
+
             <!-- Denomination cards inflated here at runtime. -->
             <LinearLayout
                 android:id="@+id/buy_denom_container"

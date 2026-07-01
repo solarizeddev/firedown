@@ -199,14 +199,16 @@ public class BuyCreditFragment extends Fragment {
                     R.layout.item_buy_credit_denom, mDenomContainer, false);
             TextView amt = card.findViewById(R.id.buy_denom_amt);
             TextView price = card.findViewById(R.id.buy_denom_price);
+            TextView rate = card.findViewById(R.id.buy_denom_rate);
             amt.setText(getString(R.string.buy_credit_denom_amount, opt.denomGbMonths));
             price.setText(formatUsd(opt.priceCents));
+            rate.setText(getString(R.string.buy_credit_denom_rate, formatPerGbMonth(opt)));
             card.setTag(opt);
             card.setOnClickListener(v -> selectDenom(card, opt));
             mDenomContainer.addView(card);
         }
-        // Default to the middle option (the "most picked" tier in the sketch), else
-        // the only/first one.
+        // Default to the middle tier when there are several (a sensible mid-price
+        // starting point), else the only/first one — no promotional framing.
         int defaultIndex = s.options.size() >= 3 ? 1 : 0;
         if (mDenomContainer.getChildCount() > defaultIndex) {
             MaterialCardView def = (MaterialCardView) mDenomContainer.getChildAt(defaultIndex);
@@ -370,6 +372,13 @@ public class BuyCreditFragment extends Fragment {
             nf.setMaximumFractionDigits(0);
         }
         return nf.format(cents / 100.0);
+    }
+
+    /** Per-unit price so tiers are comparable, e.g. "3.6¢" (US cents per
+     *  GB-month). USD throughout — the mint prices in USD cents. */
+    private static String formatPerGbMonth(BuyCreditViewModel.Option opt) {
+        double centsPer = opt.denomGbMonths > 0 ? (double) opt.priceCents / opt.denomGbMonths : 0;
+        return String.format(Locale.US, "%.1f¢", centsPer);
     }
 
     /** A GB-months balance, trimming a trailing ".0" (100.0 → "100"). */

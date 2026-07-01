@@ -217,11 +217,11 @@
     <string name="settings_sync_restore_ok">Bookmark sync restored</string>
     <string name="settings_sync_restore_bad">That recovery code doesn\'t look right</string>
     <string name="settings_sync_code_hint">Recovery code</string>
-    <string name="settings_sync_code_warning">This recovery code is the only key to your synced bookmarks. Save it in your password manager — or another safe place. It can\'t be recovered if lost.</string>
+    <string name="settings_sync_code_warning">This recovery code is the only key to your bookmarks, downloads backup, and storage credit. Save it in your password manager — or another safe place. It can\'t be recovered if lost.</string>
     <string name="settings_sync_code_saved_check">I\'ve saved my recovery code</string>
     <string name="settings_sync_code_created_title">Save your recovery code</string>
     <string name="settings_sync_show_code_title">Show recovery code</string>
-    <string name="settings_sync_show_code_summary">Reveal the code that unlocks your synced bookmarks</string>
+    <string name="settings_sync_show_code_summary">Reveal the code that unlocks your bookmarks and backups</string>
     <string name="settings_sync_code_copy">Copy</string>
     <string name="settings_sync_code_done">Done</string>
     <string name="settings_sync_export_title">Save recovery code to file</string>
@@ -231,7 +231,7 @@
     <string name="settings_sync_export_caveat_message">This file is saved unencrypted — anyone who can read it can read your bookmarks. Import the code into your password manager (or another safe place), then delete the file. A password manager keeps it encrypted; a loose file does not.</string>
     <string name="settings_sync_export_continue">Continue</string>
     <!-- %1$s is the grouped recovery code. -->
-    <string name="settings_sync_export_file_body">Firedown — bookmark sync recovery code\n\n%1$s\n\nThis code is the only key to your synced bookmarks — anyone who has it can read them, and it can\'t be recovered if lost.\n\nThis file is NOT encrypted. Import the code into your password manager (or another safe place), then delete this file.</string>
+    <string name="settings_sync_export_file_body">Firedown — recovery code\n\n%1$s\n\nThis code is the only key to your bookmarks, downloads backup, and storage credit — anyone who has it can read them, and it can\'t be recovered if lost.\n\nThis file is NOT encrypted. Import the code into your password manager (or another safe place), then delete this file.</string>
     <string name="settings_sync_export_done">Recovery code saved</string>
     <string name="settings_sync_export_failed">Couldn\'t save the file</string>
     <string name="settings_sync_code_copied">Recovery code copied</string>
@@ -258,7 +258,7 @@
     <string name="settings_sync_faq_q3">What is the recovery code?</string>
     <string name="settings_sync_faq_a3">A key generated on your device when you turn on sync. It\'s the one and only thing that can decrypt your bookmarks — on this device or a new one.</string>
     <string name="settings_sync_faq_q4">What if I lose my recovery code?</string>
-    <string name="settings_sync_faq_a4">Your synced bookmarks can\'t be recovered — not by you, and not by us, because we never had the key. There is no password reset. Save the code somewhere safe; a password manager is ideal.</string>
+    <string name="settings_sync_faq_a4">Your synced data can\'t be recovered — not by you, and not by us, because we never had the key. There is no password reset. Save the code somewhere safe; a password manager is ideal.</string>
     <string name="settings_sync_faq_q5">Do I need an account or email?</string>
     <string name="settings_sync_faq_a5">No. There\'s no sign-up, email, or phone number — just the recovery code. Nothing personal is tied to your bookmarks.</string>
     <string name="settings_sync_faq_q6">What if I don\'t want to use sync?</string>
@@ -298,6 +298,9 @@
     <string name="buy_credit_rail_card">Card</string>
     <!-- %1$d = denomination in GB-months -->
     <string name="buy_credit_denom_amount">%1$d GB-months</string>
+    <string name="buy_credit_gb_month_explainer">A GB-month is 1 GB kept backed up for one month — so 500 could be 50 GB for 10 months, or 100 GB for 5.</string>
+    <!-- %1$s = per-unit price, e.g. 3.6¢ -->
+    <string name="buy_credit_denom_rate">%1$s / GB-month</string>
     <string name="buy_credit_privacy_note">Private by design. Your payment can\'t be linked to your account or files — the mint signs a blinded token that neither server can trace back to you.</string>
     <string name="buy_credit_continue_default">Continue</string>
     <!-- %1$s = formatted price, e.g. $18 -->
