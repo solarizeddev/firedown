@@ -348,6 +348,68 @@ cardinal rule as any parser.
   body-sniff stays in JS `filterResponseData` because the classifier drops it and
   only the page ever reads it — see "Obfuscated manifests" below.)
 
+### Telegram — public `t.me` parser (the logged-in web app is NOT a download surface)
+
+There are TWO Telegram surfaces. **Public `t.me` pages** → `js/parsers/telegram.js`,
+a normal parser: the post HTML carries a real, re-fetchable
+`cdn-telegram.org`/`telesco.pe` `.mp4`, so it flows through the standard
+capture→native-redownload pipeline (block-listed under `telegram`). **The
+LOGGED-IN web app (`web.telegram.org/k` & `/a`)** is **NOT supported** — see the
+"Why the web app isn't supported" note below (an in-page-download attempt was
+built and removed).
+
+The public `t.me` parser covers THREE layouts, all via `filterResponseData` (the
+`<video src>` lives in different places in each — a HAR is the only reliable way
+to see which):
+- **Single post `t.me/<channel>/<id>`**: opening it serves a LANDING page
+  (main_frame) with only `og:title`/`og:image` — NO `<video>`. The real
+  `<video src>` is in the widget it embeds, `…?embed=1&mode=tme`, a **`sub_frame`**.
+  So the listener reads `main_frame` AND `sub_frame`.
+- **Channel feed `t.me/s/<channel>`** (no id, so `TELEGRAM_POST_RE` doesn't
+  match it — `TELEGRAM_FEED_RE` + `listenerTelegramFeed` own it): the feed renders
+  many posts and loads older batches via pagination XHRs
+  (`POST t.me/s/<channel>?before=<id>`) whose body is a **JSON-encoded HTML
+  string** (`unwrapFeedBody`). Split into per-post blocks at
+  `tgme_widget_message_wrap` (`splitMessages`); each block's `data-post=
+  "<channel>/<id>"` gives the per-clip origin, and `emitVideosFromHtml` runs the
+  same per-post extraction on each (read `main_frame` + `xmlhttprequest`).
+- The embed iframe / feed blocks carry **no `og:` tags**, so title/author/
+  thumbnail come from the widget markup itself (`extractMessageText` →
+  `tgme_widget_message_text`, `extractAuthor` → `tgme_widget_message_owner_name`,
+  `collectThumbs` → `tgme_widget_message_video_thumb`), with `og:` as the
+  fallback for the landing/single-`/s/` forms. The title is composed as
+  **"`<Channel> — <post text first line>`"** (`titleFromPost`). Duration: the
+  message `duration` field is **MILLISECONDS** (`parseClock` returns seconds, so
+  the emit multiplies by 1000 — passing seconds showed a 0:32 clip as
+  `00:00:00:03`).
+
+**Why the web app isn't supported (and don't re-attempt it naively).** A web-app
+media element's URL is a **ServiceWorker-virtual** `…/k/stream/<json>` (or
+`/a/stream/…`) path the SW serves from **MTProto chunks decrypted in page JS**.
+There is no plain native-reachable URL and no small key to hand native (unlike
+Mega, where the page hands native a key and native fetches+decrypts a real CDN
+URL) — a native OkHttp re-fetch can't route through the SW or speak MTProto. The
+bytes exist **only inside the live page**. Consequences:
+
+- **It can't go in the Captured sheet.** That sheet is capture-URL-now,
+  native-download-later; a `/stream/` entry would be an always-broken download.
+  The `/stream/` requests DO cross the wire (206 video/mp4), so `parser-blocklist.js`
+  keeps a `'telegram-web'` rule to block them out of the sheet — purely to prevent
+  broken captures (same "block a harmful capture" rationale as Mega, not dedup).
+- **The only technically-possible path is downloading IN THE PAGE** (fetch the
+  `/stream/` Range chunks in page world so they hit the SW + session, assemble a
+  Blob, `<a download href="blob:…">` → caught by
+  `GeckoComponents.onExternalResponse` → `GeckoStreamStrategy`). This was built
+  (`js/telegram-web.js`, page-world engine via `window.wrappedJSObject.eval`, the
+  `youtube/content.js` PoToken mechanism) and **REMOVED** at the maintainer's
+  request: the only reliably-visible affordance on mobile Web-K was a **floating
+  overlay button** (Telegram collapses its own action icons into the ⋮ overflow
+  menu, hiding an injected button), and the overlay was unwanted UX. A native-
+  looking menu-item inject was considered but is fragile (depends on the ⋮ menu
+  DOM). If reviving: the technique (page-world `eval` + Range fetch + blob
+  download) worked end-to-end; the blocker was purely the button's look/placement.
+  Note the whole file is held as one in-memory Blob (large-video memory cost).
+
 ### Audio title/thumbnail enrichment — gating, MediaSession, embedded players
 
 The generic catcher enriches a captured media URL's filename with page metadata

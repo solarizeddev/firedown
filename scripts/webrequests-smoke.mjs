@@ -94,7 +94,7 @@ const count = (path) => (registrations[path] ?? []).length;
 // Inventory of listener registrations across the background module graph
 // (js/parsers/* + requests.js + cookies.js + debug.js). Update deliberately
 // when adding/removing a listener — that's the point of the check.
-expect(count("webRequest.onBeforeRequest") === 33, `webRequest.onBeforeRequest registrations == 33 (got ${count("webRequest.onBeforeRequest")})`);
+expect(count("webRequest.onBeforeRequest") === 34, `webRequest.onBeforeRequest registrations == 34 (got ${count("webRequest.onBeforeRequest")})`);
 expect(count("webRequest.onSendHeaders") === 2, `webRequest.onSendHeaders registrations == 2 (got ${count("webRequest.onSendHeaders")})`);
 expect(count("webRequest.onHeadersReceived") === 2, `webRequest.onHeadersReceived registrations == 2 (got ${count("webRequest.onHeadersReceived")})`);
 expect(count("webRequest.onResponseStarted") === 1, `webRequest.onResponseStarted registrations == 1 (got ${count("webRequest.onResponseStarted")})`);
@@ -272,13 +272,19 @@ expect(isTwitterMasterUrl("https://video.twimg.com/amplify_video/444/pl/avc1/550
 // <time message_video_duration>), the HAR-replay guard per CLAUDE.md. Covers a
 // single video, an album (two <video>s), and the og:video-only poster fallback.
 const {
-  TELEGRAM_POST_RE, metaContent, collectVideoSrcs, collectDurations, parseClock,
+  TELEGRAM_POST_RE, TELEGRAM_FEED_RE, metaContent, collectVideoSrcs, collectDurations, parseClock,
+  extractMessageText, extractAuthor, collectThumbs, titleFromPost,
+  unwrapFeedBody, splitMessages,
 } = await import(pathToFileURL(join(ext, "js/parsers/telegram.js")));
 const { matchInParserBlocklist } = await import(pathToFileURL(join(ext, "js/parser-blocklist.js")));
 
 expect(TELEGRAM_POST_RE.test("https://t.me/WatcherGuru/14028"), "tg: post URL matches");
 expect(TELEGRAM_POST_RE.test("https://t.me/s/WatcherGuru/14028?embed=1"), "tg: /s/ + query matches");
 expect(!TELEGRAM_POST_RE.test("https://t.me/WatcherGuru"), "tg: bare channel feed does not match");
+// The embed widget iframe (a sub_frame) carries the <video> when the landing
+// main_frame does not — its URL must match so the listener processes it.
+expect(TELEGRAM_POST_RE.test("https://t.me/WatcherGuru/14028?embed=1&mode=tme"),
+  "tg: ?embed=1&mode=tme widget URL matches (sub_frame capture path)");
 const tgm = "https://t.me/WatcherGuru/14028".match(TELEGRAM_POST_RE);
 expect(tgm[1] === "WatcherGuru" && tgm[2] === "14028", `tg: channel+id captured (got ${tgm[1]}/${tgm[2]})`);
 
@@ -348,6 +354,60 @@ expect(matchInParserBlocklist("https://cdn4.telesco.pe/file/two.mp4"),
   "tg: legacy telesco.pe .mp4 is parser-block-listed");
 expect(!matchInParserBlocklist("https://cdn4.cdn-telegram.org/file/poster.jpg"),
   "tg: poster .jpg is NOT block-listed");
+
+// Embed-widget metadata extraction (the iframe carries the <video> but NO og:
+// tags, so title/author/thumb come from the tgme widget markup). Mirrors the
+// real WatcherGuru/14028 embed HTML from the user HAR.
+const tgEmbed = `<a class="tgme_widget_message_owner_name" href="https://t.me/WatcherGuru"><span dir="auto">Watcher Guru</span></a>`
+  + `<i class="tgme_widget_message_video_thumb" style="background-image:url('https://cdn4.telesco.pe/file/THUMB.jpg')"></i>`
+  + `<video src="https://cdn4.telesco.pe/file/431eee6783.mp4?token=AB" class="tgme_widget_message_video js-message_video"></video>`
+  + `<div class="tgme_widget_message_text js-message_text" dir="auto"><b>JUST IN:</b> GTA 6 pre-orders officially begin on June 25.<br/><br/><a href="https://t.me/WatcherGuru">@WatcherGuru</a></div>`
+  + `<time class="message_video_duration js-message_video_duration">0:32</time>`;
+expect(extractAuthor(tgEmbed) === "Watcher Guru", `tg: extractAuthor (got ${JSON.stringify(extractAuthor(tgEmbed))})`);
+expect(extractMessageText(tgEmbed) === "JUST IN: GTA 6 pre-orders officially begin on June 25.\n@WatcherGuru",
+  `tg: extractMessageText (got ${JSON.stringify(extractMessageText(tgEmbed))})`);
+// Title composes "<Channel> — <post text first line>".
+expect(titleFromPost(extractMessageText(tgEmbed), extractAuthor(tgEmbed)) === "Watcher Guru — JUST IN: GTA 6 pre-orders officially begin on June 25.",
+  `tg: title is "Channel — post text" (got ${JSON.stringify(titleFromPost(extractMessageText(tgEmbed), extractAuthor(tgEmbed)))})`);
+expect(collectThumbs(tgEmbed)[0] === "https://cdn4.telesco.pe/file/THUMB.jpg",
+  `tg: collectThumbs (got ${JSON.stringify(collectThumbs(tgEmbed))})`);
+expect(titleFromPost(null, "Watcher Guru") === "Watcher Guru", "tg: title falls back to author for a text-less post");
+expect(titleFromPost("Hello world", null) === "Hello world", "tg: title is just the text when author is unknown");
+// Duration is emitted in MILLISECONDS (parseClock gives seconds); 0:32 -> 32000.
+expect(collectDurations(tgEmbed)[0] === 32 && collectDurations(tgEmbed)[0] * 1000 === 32000,
+  "tg: duration 0:32 -> 32s -> 32000ms");
+
+// Channel FEED (t.me/s/<channel>): URL match, JSON-wrapped pagination unwrap,
+// per-message split. Mirrors the /s/WatcherGuru?before= batches from the HAR.
+expect(TELEGRAM_FEED_RE.test("https://t.me/s/WatcherGuru"), "tg-feed: bare feed URL matches");
+expect(TELEGRAM_FEED_RE.test("https://t.me/s/WatcherGuru?before=14078"), "tg-feed: pagination URL matches");
+expect(!TELEGRAM_FEED_RE.test("https://t.me/s/WatcherGuru/14028"), "tg-feed: single /s/ post does NOT match (post listener owns it)");
+expect("https://t.me/s/WatcherGuru?before=14078".match(TELEGRAM_FEED_RE)[1] === "WatcherGuru", "tg-feed: channel captured");
+// Pagination body is a JSON-encoded HTML string (escaped slashes); unwrap it.
+const tgFeedJson = JSON.stringify(`<div class="tgme_widget_message_wrap"><div class="tgme_widget_message" data-post="WatcherGuru/14065"><a class="tgme_widget_message_owner_name"><span>Watcher Guru</span></a><a class="tgme_widget_message_video_player" href="https://t.me/WatcherGuru/14065"><i class="tgme_widget_message_video_thumb" style="background-image:url('https://cdn4.telesco.pe/file/T.jpg')"></i></a><video src="https://cdn4.telesco.pe/file/94db93594c.mp4?token=AB" class="tgme_widget_message_video"></video><div class="tgme_widget_message_text">JUST IN: Strait of Hormuz traffic.</div><time class="message_video_duration">0:15</time></div></div>`);
+const tgFeedHtml = unwrapFeedBody(tgFeedJson);
+expect(tgFeedHtml.includes("<video src=") && !tgFeedHtml.includes("\\/"), "tg-feed: JSON body unwrapped to real HTML");
+const tgBlocks = splitMessages(tgFeedHtml);
+expect(tgBlocks.length === 1, `tg-feed: one message block (got ${tgBlocks.length})`);
+const fb = tgBlocks[0];
+expect(collectVideoSrcs(fb)[0] === "https://cdn4.telesco.pe/file/94db93594c.mp4?token=AB", "tg-feed: block video src");
+expect((fb.match(/data-post="[A-Za-z0-9_]+\/(\d+)"/) || [])[1] === "14065", "tg-feed: block post id");
+expect(titleFromPost(extractMessageText(fb), extractAuthor(fb)) === "Watcher Guru — JUST IN: Strait of Hormuz traffic.",
+  `tg-feed: block title (got ${JSON.stringify(titleFromPost(extractMessageText(fb), extractAuthor(fb)))})`);
+expect(collectDurations(fb)[0] === 15, "tg-feed: block duration 0:15 -> 15s");
+expect(unwrapFeedBody("<div>plain html</div>") === "<div>plain html</div>", "tg-feed: plain HTML passes through unwrap");
+
+// Telegram WEB APP: the SW-virtual /stream/ URLs are non-re-fetchable, so they
+// must be block-listed to keep broken (undownloadable) entries out of the
+// Captured sheet. A public t.me CDN URL must still NOT be caught by this rule.
+expect(matchInParserBlocklist("https://web.telegram.org/k/stream/%7B%22dcId%22%3A2%7D"),
+  "tg-web: /k/stream/ is block-listed");
+expect(matchInParserBlocklist("https://webk.telegram.org/stream/abc"),
+  "tg-web: webk host /stream/ is block-listed");
+expect(matchInParserBlocklist("https://web.telegram.org/a/stream/xyz"),
+  "tg-web: /a/stream/ is block-listed");
+expect(!matchInParserBlocklist("https://web.telegram.org/k/"),
+  "tg-web: non-stream web app URL is NOT block-listed");
 
 if (failures) {
   console.error(`\n${failures} failure(s)`);
