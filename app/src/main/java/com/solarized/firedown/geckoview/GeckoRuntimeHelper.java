@@ -23,10 +23,12 @@ import com.solarized.firedown.data.repository.WasmAllowlistRepository;
 import com.solarized.firedown.manager.UrlParser;
 import com.solarized.firedown.manager.UrlType;
 import com.solarized.firedown.utils.JsonHelper;
+import com.solarized.firedown.utils.UrlStringUtils;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.mozilla.geckoview.AllowOrDeny;
 import org.mozilla.geckoview.ContentBlocking;
 import org.mozilla.geckoview.ExperimentalGeckoViewApi;
 import org.mozilla.geckoview.GeckoPreferenceController;
@@ -329,6 +331,42 @@ public class GeckoRuntimeHelper {
         }
     };
 
+    /**
+     * Session-level tab delegate — handles {@code browser.tabs.update(tabId, {url})}.
+     *
+     * <p>uBlock's strict-block path (assets/ublock/js/traffic.js
+     * {@code onBeforeRootFrameRequest}) cancels the blocked navigation and calls
+     * {@code vAPI.tabs.replace} → {@code browser.tabs.update} to swap in its
+     * {@code moz-extension://<uuid>/document-blocked.html} interstitial. GeckoView
+     * routes that to {@link WebExtension.SessionTabDelegate#onUpdateTab} on the
+     * blocked tab's OWN session. With no delegate the update is dropped and the tab
+     * is left blank (the original request was already cancelled) — this is exactly
+     * the "$document block shows about:blank" bug. Loading the URL here is the
+     * app-renders-the-page equivalent of {@link GeckoError}'s error pages, but it
+     * keeps the extension origin so the interstitial's Proceed / "don't warn again"
+     * buttons can still message the uBlock background.
+     *
+     * <p>Unlike {@link #mTabDelegate}'s {@code onNewTab} (refused — it would leak an
+     * untracked session), {@code onUpdateTab} navigates the EXISTING, Firedown-tracked
+     * {@code session} argument, so it is safe to honor. Scoped to {@code moz-extension://}
+     * targets so a loaded extension can only redirect a tab to one of its OWN packaged
+     * pages (the interstitial), never hijack navigation to an arbitrary web URL.
+     */
+    private final WebExtension.SessionTabDelegate mSessionTabDelegate =
+            new WebExtension.SessionTabDelegate() {
+        @Override
+        public GeckoResult<AllowOrDeny> onUpdateTab(@NonNull WebExtension source,
+                                                    @NonNull GeckoSession session,
+                                                    @NonNull WebExtension.UpdateTabDetails details) {
+            String url = details.url;
+            if (url != null && UrlStringUtils.isMozExtensionLike(url)) {
+                session.loadUri(url);
+                return GeckoResult.allow();
+            }
+            return GeckoResult.deny();
+        }
+    };
+
 
     @UiThread
     public void registerSession(GeckoSession geckoSession) {
@@ -336,6 +374,10 @@ public class GeckoRuntimeHelper {
             for (Map.Entry<String, WebExtension> entry : mLoadedExtensions.entrySet()) {
                 geckoSession.getWebExtensionController().setMessageDelegate(entry.getValue(), mMessageDelegate, entry.getKey());
                 geckoSession.getWebExtensionController().setActionDelegate(entry.getValue(), mBrowserSessionActionDelegate);
+                // Honor browser.tabs.update({url}) so uBlock's $document strict-block
+                // can swap in its moz-extension document-blocked.html interstitial
+                // (see mSessionTabDelegate). Without this the tab is left blank.
+                geckoSession.getWebExtensionController().setTabDelegate(entry.getValue(), mSessionTabDelegate);
                 // Mirror the global setMessageDelegate hookup for the
                 // PoTokenGenerator port name so connectNative('youtube_potoken')
                 // from content.js reaches Java on per-session controllers too.
