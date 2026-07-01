@@ -53,8 +53,6 @@
     <string name="empty_learn_more">&gt;ज़्यादा जानें</string>
     <string name="restore_downloads_button">पिछले डाउनलोड बहाल करें</string>
     <string name="restore_downloads_settings_summary">ऐप फिर से इंस्टॉल करने के बाद अपनी डाउनलोड सूची वापस पाएँ</string>
-    <string name="restore_banner_title">Firedown फिर से इंस्टॉल किया?</string>
-    <string name="restore_banner_subtitle">आपके पिछले डाउनलोड वापस मिल सकते हैं — बहाल करने के लिए टैप करें</string>
     <string name="restore_downloads_message">अगर आपने Firedown फिर से इंस्टॉल किया है, तो आपके डाउनलोड अब भी Download/Firedown फ़ोल्डर में हो सकते हैं। वह फ़ोल्डर चुनें और Firedown आपकी डाउनलोड सूची बहाल कर देगा।</string>
     <string name="restore_downloads_choose">फ़ोल्डर चुनें</string>
     <string name="restore_downloads_progress">डाउनलोड पुनर्स्थापित किए जा रहे हैं…</string>

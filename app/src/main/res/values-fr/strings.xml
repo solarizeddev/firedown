@@ -143,8 +143,6 @@
     <string name="empty_learn_more">En savoir plus</string>
     <string name="restore_downloads_button">Restaurer les téléchargements précédents</string>
     <string name="restore_downloads_settings_summary">Récupérez votre liste de téléchargements après une réinstallation</string>
-    <string name="restore_banner_title">Firedown réinstallé ?</string>
-    <string name="restore_banner_subtitle">Vos téléchargements précédents sont peut-être récupérables — touchez pour restaurer</string>
     <string name="restore_downloads_message">Si vous avez réinstallé Firedown, vos téléchargements se trouvent peut-être encore dans le dossier Download/Firedown. Choisissez ce dossier et Firedown restaurera votre liste de téléchargements.</string>
     <string name="restore_downloads_choose">Choisir le dossier</string>
     <string name="restore_downloads_progress">Restauration des téléchargements…</string>

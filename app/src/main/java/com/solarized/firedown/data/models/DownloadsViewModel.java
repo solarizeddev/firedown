@@ -1,5 +1,7 @@
 package com.solarized.firedown.data.models;
 
+import android.content.Context;
+import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.TextUtils;
@@ -23,6 +25,8 @@ import com.solarized.firedown.BuildConfig;
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
 import com.solarized.firedown.Sorting;
+import com.solarized.firedown.data.DownloadBackupMirror;
+import com.solarized.firedown.data.DownloadDatabase;
 import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.data.repository.DownloadDataRepository;
 import com.solarized.firedown.utils.DownloadAggregator;
@@ -58,6 +62,15 @@ public class DownloadsViewModel extends ViewModel {
 
     private final Handler mDebounceHandler = new Handler(Looper.getMainLooper());
     private Runnable mPendingDebounce;
+
+    // SAF restore state lives in the ViewModel (not the fragment) so it survives
+    // the view being destroyed and recreated — leaving Downloads and coming back
+    // mid-restore must not lose the progress bar or drop the completion (list
+    // refresh + result snackbar). mRestoreInFlight drives the progress bar;
+    // mRestoreResult is a single-shot event consumed by whatever view is current
+    // when the restore finishes (or on the next re-entry if it finished away).
+    private final MutableLiveData<Boolean> mRestoreInFlight = new MutableLiveData<>(false);
+    private final MutableLiveData<RestoreEvent> mRestoreResult = new MutableLiveData<>();
 
     // Changed from PagingData<DownloadEntity> to PagingData<Object> to support separators
     private LiveData<PagingData<Object>> mDownloadData;
@@ -343,6 +356,40 @@ public class DownloadsViewModel extends ViewModel {
         mRepository.updateDownloadThumb(download);
     }
 
+    /** True while a SAF restore is running. Observe to show/hide the restore
+     *  progress bar; replays the latest value to a fresh observer, so a view
+     *  recreated mid-restore re-shows progress. */
+    public LiveData<Boolean> getRestoreInFlight() {
+        return mRestoreInFlight;
+    }
+
+    /** Single-shot restore result. {@link RestoreEvent#consume()} returns the
+     *  code once (then null), so a config change / re-entry after the snackbar
+     *  fired doesn't re-fire it — but a restore that finished while the view was
+     *  gone is still delivered to the first observer that comes back. */
+    public LiveData<RestoreEvent> getRestoreResult() {
+        return mRestoreResult;
+    }
+
+    /**
+     * Run a SAF folder restore off the main thread. Progress + result flow
+     * through {@link #getRestoreInFlight()} / {@link #getRestoreResult()} rather
+     * than a fragment callback, so the work is decoupled from the view's
+     * lifetime. A second call while one is in flight is ignored (the empty-state
+     * button is also hidden while running, so this is just belt-and-suspenders).
+     */
+    public void runRestore(Context appContext, DownloadDatabase database, Uri treeUri) {
+        if (Boolean.TRUE.equals(mRestoreInFlight.getValue())) {
+            return;
+        }
+        mRestoreInFlight.setValue(true);
+        mExecutor.execute(() -> {
+            int result = DownloadBackupMirror.restoreFromTree(appContext, database, treeUri);
+            mRestoreResult.postValue(new RestoreEvent(result));
+            mRestoreInFlight.postValue(false);
+        });
+    }
+
     public int getCurrentSorting() {
         return mSorting.getCurrentSortLocal();
     }
@@ -353,6 +400,29 @@ public class DownloadsViewModel extends ViewModel {
 
     private interface StateUpdater {
         DownloadsState update(DownloadsState current);
+    }
+
+    /** Single-shot wrapper for a restore result code (a row count, or one of the
+     *  {@code RESTORE_*} sentinels). {@link #consume()} yields the code exactly
+     *  once so re-observing on a config change / re-entry doesn't re-show the
+     *  snackbar; a result posted while no observer was attached is still
+     *  delivered to the first one that comes back. */
+    public static final class RestoreEvent {
+        private final int result;
+        private boolean handled;
+
+        RestoreEvent(int result) {
+            this.result = result;
+        }
+
+        @Nullable
+        public Integer consume() {
+            if (handled) {
+                return null;
+            }
+            handled = true;
+            return result;
+        }
     }
 
     /**
