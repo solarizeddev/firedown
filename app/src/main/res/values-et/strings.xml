@@ -339,7 +339,7 @@
     <string name="settings_sync_faq_q3">Mis on taastekood?</string>
     <string name="settings_sync_faq_a3">Võti, mis luuakse su seadmes, kui sünkroonimise sisse lülitad. See on ainus asi, mis saab su järjehoidjaid dekrüptida — selles seadmes või uues.</string>
     <string name="settings_sync_faq_q4">Mis siis, kui kaotan oma taastekoodi?</string>
-    <string name="settings_sync_faq_a4">Su sünkroonitud järjehoidjaid ei saa taastada — ei sina ega meie, sest meil pole kunagi võtit olnud. Parooli lähtestamist pole. Salvesta kood turvalisse kohta; paroolihaldur on ideaalne.</string>
+    <string name="settings_sync_faq_a4">Teie sünkroonitud andmeid ei saa taastada — ei teie ega meie poolt, sest võti pole kunagi meie käes olnud. Parooli lähtestamist ei ole. Salvestage kood turvalisse kohta; paroolihaldur on ideaalne.</string>
     <string name="settings_sync_faq_q5">Kas mul on vaja kontot või e-posti?</string>
     <string name="settings_sync_faq_a5">Ei. Pole registreerimist, e-posti ega telefoninumbrit — ainult taastekood. Su järjehoidjatega pole seotud midagi isiklikku.</string>
     <string name="settings_sync_faq_q6">Mis siis, kui ma ei taha sünkroonimist kasutada?</string>
@@ -349,10 +349,10 @@
     <string name="settings_sync_export_summary">Ekspordi kood tekstifailina, mida saad hoiustada</string>
     <string name="settings_sync_export_caveat_message">See fail salvestatakse krüptimata — igaüks, kes seda lugeda saab, saab lugeda su järjehoidjaid. Impordi kood oma paroolihaldurisse (või muusse turvalisse kohta) ja kustuta seejärel fail. Paroolihaldur hoiab seda krüptituna; lahtine fail mitte.</string>
     <string name="settings_sync_export_continue">Jätka</string>
-    <string name="settings_sync_export_file_body">Firedown — järjehoidjate sünkroonimise taastekood\n\n%1$s\n\nSee kood on ainus võti su sünkroonitud järjehoidjatele — igaüks, kellel see on, saab neid lugeda, ja seda ei saa kaotamise korral taastada.\n\nSee fail EI OLE krüptitud. Impordi kood oma paroolihaldurisse (või muusse turvalisse kohta) ja kustuta seejärel see fail.</string>
+    <string name="settings_sync_export_file_body">Firedown — taastekood\n\n%1$s\n\nSee kood on ainus võti teie järjehoidjate, allalaadimiste varukoopia ja salvestusruumi krediidi juurde — igaüks, kellel see on, saab neid lugeda, ja kaotamise korral ei saa seda taastada.\n\nSee fail EI OLE krüpteeritud. Importige kood oma paroolihaldurisse (või mõnda teise turvalisse kohta) ja seejärel kustutage see fail.</string>
     <string name="settings_sync_export_done">Taastekood salvestatud</string>
     <string name="settings_sync_export_failed">Faili ei õnnestunud salvestada</string>
-    <string name="settings_sync_code_warning">See taastekood on ainus võti su sünkroonitud järjehoidjatele. Salvesta see oma paroolihaldurisse — või muusse turvalisse kohta. Seda ei saa kaotamise korral taastada.</string>
+    <string name="settings_sync_code_warning">See taastekood on ainus võti teie järjehoidjate, allalaadimiste varukoopia ja salvestusruumi krediidi juurde. Salvestage see oma paroolihaldurisse — või mõnda teise turvalisse kohta. Kaotamise korral ei saa seda taastada.</string>
     <string name="settings_sync_cat_code">Taastekood</string>
     <string name="settings_sync_cat_manage">Sünkroonimise haldus</string>
     <string name="browser_menu_save_snapshot">Salvesta hetktõmmis</string>
@@ -388,7 +388,7 @@
     <string name="settings_sync_setup_message">Sinu järjehoidjad krüptitakse selles seadmes enne nende lahkumist — server ei näe neid kunagi. Saad taastekoodi, mis on ainus võti; hoia seda turvaliselt, kaotamisel pole seda võimalik taastada.</string>
     <string name="settings_sync_setup_restore">Mul on kood</string>
     <string name="settings_sync_setup_title">Seadista järjehoidjate sünkroonimine</string>
-    <string name="settings_sync_show_code_summary">Kuva kood, mis avab sinu sünkroonitud järjehoidjad</string>
+    <string name="settings_sync_show_code_summary">Kuva kood, mis avab teie järjehoidjad ja varukoopiad</string>
     <string name="settings_sync_show_code_title">Näita taastekoodi</string>
     <string name="settings_sync_sign_out_action">Lülita välja</string>
     <string name="settings_sync_sign_out_message">Järjehoidjate sünkroonimine lülitatakse välja ja taastekood eemaldatakse sellest seadmest. Sinu järjehoidjad jäävad siia. Veendu, et oled oma taastekoodi salvestanud, kui soovid hiljem uuesti sünkroonida.</string>
@@ -510,4 +510,7 @@
     <string name="buy_credit_error_timed_out">Makset ei saabunud õigeaegselt. Tasu ei võetud; võid uuesti proovida.</string>
     <string name="buy_credit_error_slug">Midagi läks valesti (%1$s). Palun proovi uuesti.</string>
     <string name="buy_credit_error_network">Makseserverini ei õnnestunud jõuda. Kontrolli ühendust ja proovi uuesti.</string>
+    <string name="buy_credit_gb_month_explainer">Üks GB-month on 1 GB, mida hoitakse varundatuna ühe kuu jooksul — nii et 500 võib olla 50 GB 10 kuuks või 100 GB 5 kuuks.</string>
+    <string name="buy_credit_denom_rate">%1$s / GB-month</string>
+    <string name="buy_credit_error_busy">Praegu on liiga palju päringuid. Oodake minut ja proovige uuesti.</string>
 </resources>

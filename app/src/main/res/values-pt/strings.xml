@@ -470,7 +470,7 @@
     <string name="settings_sync_faq_q3">O que é o código de recuperação?</string>
     <string name="settings_sync_faq_a3">Uma chave gerada no seu dispositivo quando você ativa a sincronização. É a única coisa capaz de descriptografar seus favoritos — neste dispositivo ou em um novo.</string>
     <string name="settings_sync_faq_q4">E se eu perder meu código de recuperação?</string>
-    <string name="settings_sync_faq_a4">Seus favoritos sincronizados não poderão ser recuperados — nem por você, nem por nós, porque nunca tivemos a chave. Não há redefinição de senha. Guarde o código em um lugar seguro; um gerenciador de senhas é o ideal.</string>
+    <string name="settings_sync_faq_a4">Seus dados sincronizados não podem ser recuperados — nem por você, nem por nós, porque nunca tivemos a chave. Não há redefinição de senha. Salve o código em um local seguro; um gerenciador de senhas é o ideal.</string>
     <string name="settings_sync_faq_q5">Preciso de uma conta ou de um e-mail?</string>
     <string name="settings_sync_faq_a5">Não. Não há cadastro, e-mail nem número de telefone — apenas o código de recuperação. Nada pessoal é vinculado aos seus favoritos.</string>
     <string name="settings_sync_faq_q6">E se eu não quiser usar a sincronização?</string>
@@ -480,10 +480,10 @@
     <string name="settings_sync_export_summary">Exporte o código como um arquivo de texto que você pode guardar</string>
     <string name="settings_sync_export_caveat_message">Este arquivo é salvo sem criptografia — qualquer pessoa que possa lê-lo pode ler seus favoritos. Importe o código para o seu gerenciador de senhas (ou outro lugar seguro) e depois exclua o arquivo. Um gerenciador de senhas o mantém criptografado; um arquivo solto não.</string>
     <string name="settings_sync_export_continue">Continuar</string>
-    <string name="settings_sync_export_file_body">Firedown — código de recuperação da sincronização de favoritos\n\n%1$s\n\nEste código é a única chave dos seus favoritos sincronizados — qualquer pessoa que o tenha pode lê-los, e ele não pode ser recuperado se for perdido.\n\nEste arquivo NÃO está criptografado. Importe o código para o seu gerenciador de senhas (ou outro lugar seguro) e depois exclua este arquivo.</string>
+    <string name="settings_sync_export_file_body">Firedown — código de recuperação\n\n%1$s\n\nEste código é a única chave para seus favoritos, backup de downloads e crédito de armazenamento — qualquer pessoa que o tenha pode lê-los, e não é possível recuperá-lo se for perdido.\n\nEste arquivo NÃO está criptografado. Importe o código para o seu gerenciador de senhas (ou outro local seguro) e depois exclua este arquivo.</string>
     <string name="settings_sync_export_done">Código de recuperação salvo</string>
     <string name="settings_sync_export_failed">Não foi possível salvar o arquivo</string>
-    <string name="settings_sync_code_warning">Este código de recuperação é a única chave dos seus favoritos sincronizados. Salve-o no seu gerenciador de senhas — ou em outro lugar seguro. Ele não pode ser recuperado se for perdido.</string>
+    <string name="settings_sync_code_warning">Este código de recuperação é a única chave para seus favoritos, backup de downloads e crédito de armazenamento. Salve-o no seu gerenciador de senhas — ou em outro local seguro. Não é possível recuperá-lo se for perdido.</string>
     <string name="settings_sync_cat_code">Código de recuperação</string>
     <string name="settings_sync_cat_manage">Gerir sincronização</string>
     <string name="browser_menu_save_snapshot">Salvar instantâneo</string>
@@ -519,7 +519,7 @@
     <string name="settings_sync_setup_message">Seus favoritos são criptografados neste dispositivo antes de saírem dele — o servidor nunca os vê. Você recebe um código de recuperação que é a única chave; guarde-o bem, não há como recuperá-lo se for perdido.</string>
     <string name="settings_sync_setup_restore">Tenho um código</string>
     <string name="settings_sync_setup_title">Configurar sincronização de favoritos</string>
-    <string name="settings_sync_show_code_summary">Revele o código que desbloqueia seus favoritos sincronizados</string>
+    <string name="settings_sync_show_code_summary">Mostrar o código que desbloqueia seus favoritos e backups</string>
     <string name="settings_sync_show_code_title">Mostrar código de recuperação</string>
     <string name="settings_sync_sign_out_action">Desativar</string>
     <string name="settings_sync_sign_out_message">A sincronização de favoritos será desativada e o código de recuperação removido deste dispositivo. Seus favoritos permanecem aqui. Certifique-se de ter salvo seu código de recuperação caso queira sincronizar novamente mais tarde.</string>
@@ -641,4 +641,7 @@
     <string name="buy_credit_error_timed_out">O pagamento não foi recebido a tempo. Não foi feita nenhuma cobrança; pode tentar novamente.</string>
     <string name="buy_credit_error_slug">Ocorreu um erro (%1$s). Tente novamente.</string>
     <string name="buy_credit_error_network">Não foi possível contactar o servidor de pagamentos. Verifique a sua ligação e tente novamente.</string>
+    <string name="buy_credit_gb_month_explainer">Um GB-month é 1 GB mantido em backup por um mês — então 500 poderiam ser 50 GB por 10 meses, ou 100 GB por 5.</string>
+    <string name="buy_credit_denom_rate">%1$s / GB-month</string>
+    <string name="buy_credit_error_busy">Muitas solicitações neste momento. Aguarde um minuto e tente novamente.</string>
 </resources>

@@ -423,7 +423,7 @@
     <string name="settings_sync_faq_q3">Co je kód pro obnovení?</string>
     <string name="settings_sync_faq_a3">Je to klíč vygenerovaný na vašem zařízení při zapnutí synchronizace. Je to jediná věc, která dokáže dešifrovat vaše záložky — na tomto zařízení i na novém.</string>
     <string name="settings_sync_faq_q4">Co když svůj kód pro obnovení ztratím?</string>
-    <string name="settings_sync_faq_a4">Vaše synchronizované záložky nelze obnovit — ani vámi, ani námi, protože jsme klíč nikdy neměli. Neexistuje žádné obnovení hesla. Uložte kód na bezpečné místo; ideální je správce hesel.</string>
+    <string name="settings_sync_faq_a4">Vaše synchronizovaná data nelze obnovit — ani vámi, ani námi, protože jsme klíč nikdy neměli. Neexistuje žádné obnovení hesla. Uložte kód na bezpečné místo; správce hesel je ideální.</string>
     <string name="settings_sync_faq_q5">Potřebuji účet nebo e-mail?</string>
     <string name="settings_sync_faq_a5">Ne. Žádná registrace, e-mail ani telefonní číslo — jen kód pro obnovení. K vašim záložkám nejsou vázány žádné osobní údaje.</string>
     <string name="settings_sync_faq_q6">Co když synchronizaci používat nechci?</string>
@@ -433,10 +433,10 @@
     <string name="settings_sync_export_summary">Exportovat kód jako textový soubor, který si můžete uložit</string>
     <string name="settings_sync_export_caveat_message">Tento soubor se ukládá nešifrovaný — kdokoli, kdo jej dokáže přečíst, dokáže přečíst vaše záložky. Naimportujte kód do svého správce hesel (nebo na jiné bezpečné místo) a poté soubor smažte. Správce hesel jej udržuje zašifrovaný; volný soubor nikoli.</string>
     <string name="settings_sync_export_continue">Pokračovat</string>
-    <string name="settings_sync_export_file_body">Firedown — kód pro obnovení synchronizace záložek\n\n%1$s\n\nTento kód je jediným klíčem k vašim synchronizovaným záložkám — kdokoli jej má, může je přečíst, a po ztrátě jej nelze obnovit.\n\nTento soubor NENÍ šifrovaný. Naimportujte kód do svého správce hesel (nebo na jiné bezpečné místo) a poté tento soubor smažte.</string>
+    <string name="settings_sync_export_file_body">Firedown — kód pro obnovení\n\n%1$s\n\nTento kód je jediným klíčem k vašim záložkám, záloze stažených souborů a kreditu úložiště — kdokoli, kdo jej má, si je může přečíst, a pokud jej ztratíte, nelze jej obnovit.\n\nTento soubor NENÍ šifrovaný. Naimportujte kód do svého správce hesel (nebo na jiné bezpečné místo) a poté tento soubor smažte.</string>
     <string name="settings_sync_export_done">Kód pro obnovení uložen</string>
     <string name="settings_sync_export_failed">Soubor se nepodařilo uložit</string>
-    <string name="settings_sync_code_warning">Tento kód pro obnovení je jediným klíčem k vašim synchronizovaným záložkám. Uložte jej do svého správce hesel — nebo na jiné bezpečné místo. Po ztrátě jej nelze obnovit.</string>
+    <string name="settings_sync_code_warning">Tento kód pro obnovení je jediným klíčem k vašim záložkám, záloze stažených souborů a kreditu úložiště. Uložte jej do svého správce hesel — nebo na jiné bezpečné místo. Pokud jej ztratíte, nelze jej obnovit.</string>
     <string name="settings_sync_cat_code">Kód pro obnovení</string>
     <string name="settings_sync_cat_manage">Správa synchronizace</string>
     <string name="browser_menu_save_snapshot">Uložit snímek</string>
@@ -474,7 +474,7 @@
     <string name="settings_sync_setup_message">Vaše záložky jsou na tomto zařízení zašifrovány dříve, než je opustí — server je nikdy nevidí. Získáte kód pro obnovení, který je jediným klíčem; uchovejte jej v bezpečí, při ztrátě jej nelze obnovit.</string>
     <string name="settings_sync_setup_restore">Mám kód</string>
     <string name="settings_sync_setup_title">Nastavit synchronizaci záložek</string>
-    <string name="settings_sync_show_code_summary">Zobrazte kód, který odemyká vaše synchronizované záložky</string>
+    <string name="settings_sync_show_code_summary">Zobrazit kód, který odemyká vaše záložky a zálohy</string>
     <string name="settings_sync_show_code_title">Zobrazit kód pro obnovení</string>
     <string name="settings_sync_sign_out_action">Vypnout</string>
     <string name="settings_sync_sign_out_message">Synchronizace záložek bude vypnuta a kód pro obnovení odstraněn z tohoto zařízení. Vaše záložky zde zůstanou. Pokud budete chtít později znovu synchronizovat, ujistěte se, že máte kód pro obnovení uložený.</string>
@@ -598,4 +598,7 @@
     <string name="buy_credit_error_timed_out">Platba nebyla přijata včas. Nebyla stržena žádná částka; můžete to zkusit znovu.</string>
     <string name="buy_credit_error_slug">Něco se pokazilo (%1$s). Zkuste to prosím znovu.</string>
     <string name="buy_credit_error_network">Nepodařilo se spojit s platebním serverem. Zkontrolujte připojení a zkuste to znovu.</string>
+    <string name="buy_credit_gb_month_explainer">GB-month je 1 GB uchovávaný v záloze po dobu jednoho měsíce — takže 500 může být 50 GB na 10 měsíců nebo 100 GB na 5.</string>
+    <string name="buy_credit_denom_rate">%1$s / GB-month</string>
+    <string name="buy_credit_error_busy">Právě teď je příliš mnoho požadavků. Počkejte minutu a zkuste to znovu.</string>
 </resources>

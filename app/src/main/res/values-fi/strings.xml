@@ -409,7 +409,7 @@
     <string name="settings_sync_faq_q3">Mikä palautuskoodi on?</string>
     <string name="settings_sync_faq_a3">Avain, joka luodaan laitteellasi, kun otat synkronoinnin käyttöön. Se on ainoa asia, joka voi purkaa kirjanmerkkiesi salauksen — tällä laitteella tai uudella.</string>
     <string name="settings_sync_faq_q4">Entä jos hukkaan palautuskoodini?</string>
-    <string name="settings_sync_faq_a4">Synkronoituja kirjanmerkkejäsi ei voi palauttaa — et sinä etkä me, koska meillä ei koskaan ollut avainta. Salasanan nollausta ei ole. Tallenna koodi turvalliseen paikkaan; salasanojen hallinta on ihanteellinen.</string>
+    <string name="settings_sync_faq_a4">Synkronoituja tietojasi ei voi palauttaa — et sinä etkä me, koska meillä ei koskaan ollut avainta. Salasanan palautusta ei ole. Tallenna koodi turvalliseen paikkaan; salasanojen hallinta on ihanteellinen.</string>
     <string name="settings_sync_faq_q5">Tarvitsenko tilin tai sähköpostin?</string>
     <string name="settings_sync_faq_a5">Et. Ei rekisteröitymistä, sähköpostia tai puhelinnumeroa — vain palautuskoodi. Mitään henkilökohtaista ei ole sidottu kirjanmerkkeihisi.</string>
     <string name="settings_sync_faq_q6">Entä jos en halua käyttää synkronointia?</string>
@@ -419,10 +419,10 @@
     <string name="settings_sync_export_summary">Vie koodi tekstitiedostona, jonka voit tallentaa</string>
     <string name="settings_sync_export_caveat_message">Tämä tiedosto tallennetaan salaamattomana — kuka tahansa, joka voi lukea sen, voi lukea kirjanmerkkisi. Tuo koodi salasanojen hallintaasi (tai muuhun turvalliseen paikkaan) ja poista sitten tiedosto. Salasanojen hallinta pitää sen salattuna; irrallinen tiedosto ei.</string>
     <string name="settings_sync_export_continue">Jatka</string>
-    <string name="settings_sync_export_file_body">Firedown — kirjanmerkkien synkronoinnin palautuskoodi\n\n%1$s\n\nTämä koodi on ainoa avain synkronoituihin kirjanmerkkeihisi — kuka tahansa, jolla se on, voi lukea ne, eikä sitä voi palauttaa, jos se hukataan.\n\nTätä tiedostoa EI ole salattu. Tuo koodi salasanojen hallintaasi (tai muuhun turvalliseen paikkaan) ja poista sitten tämä tiedosto.</string>
+    <string name="settings_sync_export_file_body">Firedown — palautuskoodi\n\n%1$s\n\nTämä koodi on ainoa avain kirjanmerkkeihisi, latausten varmuuskopioon ja tallennustilan saldoon — kuka tahansa, jolla se on, voi lukea ne, eikä sitä voi palauttaa, jos se katoaa.\n\nTätä tiedostoa EI ole salattu. Tuo koodi salasanojen hallintaan (tai muuhun turvalliseen paikkaan) ja poista sitten tämä tiedosto.</string>
     <string name="settings_sync_export_done">Palautuskoodi tallennettu</string>
     <string name="settings_sync_export_failed">Tiedostoa ei voitu tallentaa</string>
-    <string name="settings_sync_code_warning">Tämä palautuskoodi on ainoa avain synkronoituihin kirjanmerkkeihisi. Tallenna se salasanojen hallintaasi — tai muuhun turvalliseen paikkaan. Sitä ei voi palauttaa, jos se hukataan.</string>
+    <string name="settings_sync_code_warning">Tämä palautuskoodi on ainoa avain kirjanmerkkeihisi, latausten varmuuskopioon ja tallennustilan saldoon. Tallenna se salasanojen hallintaan — tai muuhun turvalliseen paikkaan. Sitä ei voi palauttaa, jos se katoaa.</string>
     <string name="settings_sync_cat_code">Palautuskoodi</string>
     <string name="settings_sync_cat_manage">Synkronoinnin hallinta</string>
     <string name="browser_menu_save_snapshot">Tallenna tilannevedos</string>
@@ -458,7 +458,7 @@
     <string name="settings_sync_setup_message">Kirjanmerkkisi salataan tällä laitteella ennen kuin ne lähtevät siitä — palvelin ei koskaan näe niitä. Saat palautuskoodin, joka on ainoa avain; säilytä se turvassa, sitä ei voi palauttaa, jos se katoaa.</string>
     <string name="settings_sync_setup_restore">Minulla on koodi</string>
     <string name="settings_sync_setup_title">Ota kirjanmerkkien synkronointi käyttöön</string>
-    <string name="settings_sync_show_code_summary">Paljasta koodi, joka avaa synkronoidut kirjanmerkkisi</string>
+    <string name="settings_sync_show_code_summary">Näytä koodi, joka avaa kirjanmerkkisi ja varmuuskopiosi</string>
     <string name="settings_sync_show_code_title">Näytä palautuskoodi</string>
     <string name="settings_sync_sign_out_action">Poista käytöstä</string>
     <string name="settings_sync_sign_out_message">Kirjanmerkkien synkronointi poistetaan käytöstä ja palautuskoodi poistetaan tältä laitteelta. Kirjanmerkkisi pysyvät täällä. Varmista, että olet tallentanut palautuskoodisi, jos haluat synkronoida uudelleen myöhemmin.</string>
@@ -580,4 +580,7 @@
     <string name="buy_credit_error_timed_out">Maksua ei vastaanotettu ajoissa. Veloitusta ei tehty; voit yrittää uudelleen.</string>
     <string name="buy_credit_error_slug">Jokin meni pieleen (%1$s). Yritä uudelleen.</string>
     <string name="buy_credit_error_network">Maksupalvelimeen ei saatu yhteyttä. Tarkista yhteytesi ja yritä uudelleen.</string>
+    <string name="buy_credit_gb_month_explainer">Yksi GB-month on 1 GB pidettynä varmuuskopioituna yhden kuukauden ajan — joten 500 voisi olla 50 GB 10 kuukaudeksi tai 100 GB 5 kuukaudeksi.</string>
+    <string name="buy_credit_denom_rate">%1$s / GB-month</string>
+    <string name="buy_credit_error_busy">Liian monta pyyntöä juuri nyt. Odota hetki ja yritä uudelleen.</string>
 </resources>

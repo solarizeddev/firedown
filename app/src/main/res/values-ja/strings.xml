@@ -599,7 +599,7 @@
     <string name="settings_sync_faq_q3">復元コードとは何ですか？</string>
     <string name="settings_sync_faq_a3">同期を有効にしたときに端末上で生成される鍵です。これが、この端末でも新しい端末でも、ブックマークを復号できる唯一のものです。</string>
     <string name="settings_sync_faq_q4">復元コードをなくしたらどうなりますか？</string>
-    <string name="settings_sync_faq_a4">同期されたブックマークは復元できません。あなたにも私たちにもできません。私たちが鍵を持つことが一度もないからです。パスワードのリセットはありません。コードは安全な場所に保存してください。パスワードマネージャーが理想的です。</string>
+    <string name="settings_sync_faq_a4">同期されたデータは復元できません — あなたにも、私たちにも。キーを一度も保持していないためです。パスワードのリセットはありません。コードを安全な場所に保存してください。パスワードマネージャーが最適です。</string>
     <string name="settings_sync_faq_q5">アカウントやメールは必要ですか？</string>
     <string name="settings_sync_faq_a5">いいえ。登録、メール、電話番号は不要で、復元コードだけです。個人情報はブックマークに一切紐付けられません。</string>
     <string name="settings_sync_faq_q6">同期を使いたくない場合はどうなりますか？</string>
@@ -609,10 +609,10 @@
     <string name="settings_sync_export_summary">コードを保存できるテキストファイルとしてエクスポート</string>
     <string name="settings_sync_export_caveat_message">このファイルは暗号化されずに保存されます。読み取れる人は誰でもあなたのブックマークを読めます。コードをパスワードマネージャー（または別の安全な場所）にインポートし、その後ファイルを削除してください。パスワードマネージャーはコードを暗号化して保持しますが、むき出しのファイルはそうではありません。</string>
     <string name="settings_sync_export_continue">続行</string>
-    <string name="settings_sync_export_file_body">Firedown — ブックマーク同期の復元コード\n\n%1$s\n\nこのコードは同期されたブックマークへの唯一の鍵です。これを持つ人は誰でもブックマークを読めますし、なくすと復元できません。\n\nこのファイルは暗号化されていません。コードをパスワードマネージャー（または別の安全な場所）にインポートし、その後このファイルを削除してください。</string>
+    <string name="settings_sync_export_file_body">Firedown — 復元コード\n\n%1$s\n\nこのコードは、ブックマーク、ダウンロードのバックアップ、ストレージクレジットにアクセスできる唯一のキーです — これを持っている人は誰でもそれらを読むことができ、失うと復元できません。\n\nこのファイルは暗号化されていません。コードをパスワードマネージャー（または別の安全な場所）にインポートしてから、このファイルを削除してください。</string>
     <string name="settings_sync_export_done">復元コードを保存しました</string>
     <string name="settings_sync_export_failed">ファイルを保存できませんでした</string>
-    <string name="settings_sync_code_warning">この復元コードは同期されたブックマークへの唯一の鍵です。パスワードマネージャー、または別の安全な場所に保存してください。なくすと復元できません。</string>
+    <string name="settings_sync_code_warning">この復元コードは、ブックマーク、ダウンロードのバックアップ、ストレージクレジットにアクセスできる唯一のキーです。パスワードマネージャー — または別の安全な場所に保存してください。失うと復元できません。</string>
     <string name="settings_sync_cat_code">リカバリーコード</string>
     <string name="settings_sync_cat_manage">同期の管理</string>
     <string name="browser_menu_save_snapshot">スナップショットを保存</string>
@@ -647,7 +647,7 @@
     <string name="settings_sync_setup_message">ブックマークはこのデバイスを離れる前に暗号化されます — サーバーが内容を見ることはありません。唯一の鍵となるリカバリーコードが発行されます。大切に保管してください。紛失すると復元する方法はありません。</string>
     <string name="settings_sync_setup_restore">コードを持っています</string>
     <string name="settings_sync_setup_title">ブックマーク同期を設定</string>
-    <string name="settings_sync_show_code_summary">同期したブックマークのロックを解除するコードを表示します</string>
+    <string name="settings_sync_show_code_summary">ブックマークとバックアップのロックを解除するコードを表示</string>
     <string name="settings_sync_show_code_title">リカバリーコードを表示</string>
     <string name="settings_sync_sign_out_action">オフにする</string>
     <string name="settings_sync_sign_out_message">ブックマーク同期がオフになり、リカバリーコードがこのデバイスから削除されます。ブックマークはこのデバイスに残ります。後でまた同期したい場合は、リカバリーコードを保存しておいてください。</string>
@@ -768,4 +768,7 @@
     <string name="buy_credit_error_timed_out">支払いが期限内に受信されませんでした。請求は発生していません。もう一度お試しいただけます。</string>
     <string name="buy_credit_error_slug">問題が発生しました (%1$s)。もう一度お試しください。</string>
     <string name="buy_credit_error_network">決済サーバーに接続できませんでした。接続を確認してもう一度お試しください。</string>
+    <string name="buy_credit_gb_month_explainer">1 GB-month は、1 GB を1か月間バックアップし続けることを意味します — つまり 500 は 10 か月間の 50 GB、または 5 か月間の 100 GB になります。</string>
+    <string name="buy_credit_denom_rate">%1$s / GB-month</string>
+    <string name="buy_credit_error_busy">現在リクエストが多すぎます。1分待ってからもう一度お試しください。</string>
 </resources>

@@ -601,7 +601,7 @@
     <string name="settings_sync_faq_q3">Was ist der Wiederherstellungscode?</string>
     <string name="settings_sync_faq_a3">Ein Schlüssel, der auf deinem Gerät erzeugt wird, wenn du die Synchronisierung aktivierst. Er ist das Einzige, womit deine Lesezeichen entschlüsselt werden können — auf diesem oder einem neuen Gerät.</string>
     <string name="settings_sync_faq_q4">Was passiert, wenn ich meinen Wiederherstellungscode verliere?</string>
-    <string name="settings_sync_faq_a4">Deine synchronisierten Lesezeichen können nicht wiederhergestellt werden — weder von dir noch von uns, denn wir hatten den Schlüssel nie. Es gibt kein Zurücksetzen des Passworts. Bewahre den Code an einem sicheren Ort auf; ein Passwort-Manager ist ideal.</string>
+    <string name="settings_sync_faq_a4">Ihre synchronisierten Daten können nicht wiederhergestellt werden — weder von Ihnen noch von uns, denn wir hatten den Schlüssel nie. Es gibt kein Zurücksetzen des Passworts. Speichern Sie den Code an einem sicheren Ort; ein Passwort-Manager ist ideal.</string>
     <string name="settings_sync_faq_q5">Brauche ich ein Konto oder eine E-Mail-Adresse?</string>
     <string name="settings_sync_faq_a5">Nein. Es gibt keine Registrierung, keine E-Mail und keine Telefonnummer — nur den Wiederherstellungscode. Nichts Persönliches ist mit deinen Lesezeichen verknüpft.</string>
     <string name="settings_sync_faq_q6">Was ist, wenn ich die Synchronisierung nicht nutzen möchte?</string>
@@ -611,10 +611,10 @@
     <string name="settings_sync_export_summary">Exportiere den Code als Textdatei, die du aufbewahren kannst</string>
     <string name="settings_sync_export_caveat_message">Diese Datei wird unverschlüsselt gespeichert — wer sie lesen kann, kann deine Lesezeichen lesen. Importiere den Code in deinen Passwort-Manager (oder an einen anderen sicheren Ort) und lösche die Datei dann. Ein Passwort-Manager hält ihn verschlüsselt; eine lose Datei nicht.</string>
     <string name="settings_sync_export_continue">Weiter</string>
-    <string name="settings_sync_export_file_body">Firedown — Wiederherstellungscode für die Lesezeichen-Synchronisierung\n\n%1$s\n\nDieser Code ist der einzige Schlüssel zu deinen synchronisierten Lesezeichen — wer ihn hat, kann sie lesen, und er kann bei Verlust nicht wiederhergestellt werden.\n\nDiese Datei ist NICHT verschlüsselt. Importiere den Code in deinen Passwort-Manager (oder an einen anderen sicheren Ort) und lösche dann diese Datei.</string>
+    <string name="settings_sync_export_file_body">Firedown — Wiederherstellungscode\n\n%1$s\n\nDieser Code ist der einzige Schlüssel zu Ihren Lesezeichen, Ihrer Download-Sicherung und Ihrem Speicherguthaben — jeder, der ihn besitzt, kann sie lesen, und er kann nicht wiederhergestellt werden, wenn er verloren geht.\n\nDiese Datei ist NICHT verschlüsselt. Importieren Sie den Code in Ihren Passwort-Manager (oder an einen anderen sicheren Ort) und löschen Sie dann diese Datei.</string>
     <string name="settings_sync_export_done">Wiederherstellungscode gespeichert</string>
     <string name="settings_sync_export_failed">Datei konnte nicht gespeichert werden</string>
-    <string name="settings_sync_code_warning">Dieser Wiederherstellungscode ist der einzige Schlüssel zu deinen synchronisierten Lesezeichen. Speichere ihn in deinem Passwort-Manager — oder an einem anderen sicheren Ort. Er kann bei Verlust nicht wiederhergestellt werden.</string>
+    <string name="settings_sync_code_warning">Dieser Wiederherstellungscode ist der einzige Schlüssel zu Ihren Lesezeichen, Ihrer Download-Sicherung und Ihrem Speicherguthaben. Speichern Sie ihn in Ihrem Passwort-Manager — oder an einem anderen sicheren Ort. Er kann nicht wiederhergestellt werden, wenn er verloren geht.</string>
     <string name="settings_sync_cat_code">Wiederherstellungscode</string>
     <string name="settings_sync_cat_manage">Synchronisierung verwalten</string>
     <string name="browser_menu_save_snapshot">Snapshot speichern</string>
@@ -650,7 +650,7 @@
     <string name="settings_sync_setup_message">Deine Lesezeichen werden auf diesem Gerät verschlüsselt, bevor sie es verlassen — der Server sieht sie nie. Du erhältst einen Wiederherstellungscode, der der einzige Schlüssel ist; bewahre ihn sicher auf, denn es gibt keine Möglichkeit, ihn wiederherzustellen, wenn er verloren geht.</string>
     <string name="settings_sync_setup_restore">Ich habe einen Code</string>
     <string name="settings_sync_setup_title">Lesezeichen-Synchronisierung einrichten</string>
-    <string name="settings_sync_show_code_summary">Den Code anzeigen, der deine synchronisierten Lesezeichen entsperrt</string>
+    <string name="settings_sync_show_code_summary">Den Code anzeigen, der Ihre Lesezeichen und Sicherungen entsperrt</string>
     <string name="settings_sync_show_code_title">Wiederherstellungscode anzeigen</string>
     <string name="settings_sync_sign_out_action">Ausschalten</string>
     <string name="settings_sync_sign_out_message">Die Lesezeichen-Synchronisierung wird ausgeschaltet und der Wiederherstellungscode von diesem Gerät entfernt. Deine Lesezeichen bleiben hier. Stelle sicher, dass du deinen Wiederherstellungscode gespeichert hast, falls du später erneut synchronisieren möchtest.</string>
@@ -772,4 +772,7 @@
     <string name="buy_credit_error_timed_out">Die Zahlung ist nicht rechtzeitig eingegangen. Es wurde nichts berechnet; du kannst es erneut versuchen.</string>
     <string name="buy_credit_error_slug">Etwas ist schiefgelaufen (%1$s). Bitte versuche es erneut.</string>
     <string name="buy_credit_error_network">Der Zahlungsserver war nicht erreichbar. Prüfe deine Verbindung und versuche es erneut.</string>
+    <string name="buy_credit_gb_month_explainer">Ein GB-month ist 1 GB, das einen Monat lang gesichert bleibt — 500 könnten also 50 GB für 10 Monate oder 100 GB für 5 sein.</string>
+    <string name="buy_credit_denom_rate">%1$s / GB-month</string>
+    <string name="buy_credit_error_busy">Gerade zu viele Anfragen. Warten Sie eine Minute und versuchen Sie es erneut.</string>
 </resources>

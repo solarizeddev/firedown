@@ -601,7 +601,7 @@
     <string name="settings_sync_faq_q3">¿Qué es el código de recuperación?</string>
     <string name="settings_sync_faq_a3">Una clave generada en tu dispositivo cuando activas la sincronización. Es lo único que puede descifrar tus marcadores, en este dispositivo o en uno nuevo.</string>
     <string name="settings_sync_faq_q4">¿Qué pasa si pierdo mi código de recuperación?</string>
-    <string name="settings_sync_faq_a4">Tus marcadores sincronizados no se podrán recuperar, ni por ti ni por nosotros, porque nunca tuvimos la clave. No hay restablecimiento de contraseña. Guarda el código en un lugar seguro; un gestor de contraseñas es lo ideal.</string>
+    <string name="settings_sync_faq_a4">Tus datos sincronizados no se pueden recuperar — ni por ti ni por nosotros, porque nunca tuvimos la clave. No hay restablecimiento de contraseña. Guarda el código en un lugar seguro; un gestor de contraseñas es lo ideal.</string>
     <string name="settings_sync_faq_q5">¿Necesito una cuenta o un correo electrónico?</string>
     <string name="settings_sync_faq_a5">No. No hay registro, correo electrónico ni número de teléfono, solo el código de recuperación. Nada personal está vinculado a tus marcadores.</string>
     <string name="settings_sync_faq_q6">¿Y si no quiero usar la sincronización?</string>
@@ -611,10 +611,10 @@
     <string name="settings_sync_export_summary">Exporta el código como un archivo de texto que puedas guardar</string>
     <string name="settings_sync_export_caveat_message">Este archivo se guarda sin cifrar: cualquiera que pueda leerlo puede leer tus marcadores. Importa el código en tu gestor de contraseñas (u otro lugar seguro) y luego elimina el archivo. Un gestor de contraseñas lo mantiene cifrado; un archivo suelto no.</string>
     <string name="settings_sync_export_continue">Continuar</string>
-    <string name="settings_sync_export_file_body">Firedown — código de recuperación de la sincronización de marcadores\n\n%1$s\n\nEste código es la única clave de tus marcadores sincronizados: cualquiera que lo tenga puede leerlos y no se puede recuperar si se pierde.\n\nEste archivo NO está cifrado. Importa el código en tu gestor de contraseñas (u otro lugar seguro) y luego elimina este archivo.</string>
+    <string name="settings_sync_export_file_body">Firedown — código de recuperación\n\n%1$s\n\nEste código es la única clave para tus marcadores, la copia de seguridad de descargas y el crédito de almacenamiento — cualquiera que lo tenga puede leerlos, y no se puede recuperar si se pierde.\n\nEste archivo NO está cifrado. Importa el código a tu gestor de contraseñas (o a otro lugar seguro) y luego elimina este archivo.</string>
     <string name="settings_sync_export_done">Código de recuperación guardado</string>
     <string name="settings_sync_export_failed">No se pudo guardar el archivo</string>
-    <string name="settings_sync_code_warning">Este código de recuperación es la única clave de tus marcadores sincronizados. Guárdalo en tu gestor de contraseñas, o en otro lugar seguro. No se puede recuperar si se pierde.</string>
+    <string name="settings_sync_code_warning">Este código de recuperación es la única clave para tus marcadores, la copia de seguridad de descargas y el crédito de almacenamiento. Guárdalo en tu gestor de contraseñas — o en otro lugar seguro. No se puede recuperar si se pierde.</string>
     <string name="settings_sync_cat_code">Código de recuperación</string>
     <string name="settings_sync_cat_manage">Gestionar sincronización</string>
     <string name="browser_menu_save_snapshot">Guardar instantánea</string>
@@ -650,7 +650,7 @@
     <string name="settings_sync_setup_message">Tus marcadores se cifran en este dispositivo antes de salir de él — el servidor nunca los ve. Obtienes un código de recuperación que es la única clave; guárdalo bien, no hay forma de recuperarlo si lo pierdes.</string>
     <string name="settings_sync_setup_restore">Tengo un código</string>
     <string name="settings_sync_setup_title">Configurar sincronización de marcadores</string>
-    <string name="settings_sync_show_code_summary">Muestra el código que desbloquea tus marcadores sincronizados</string>
+    <string name="settings_sync_show_code_summary">Mostrar el código que desbloquea tus marcadores y copias de seguridad</string>
     <string name="settings_sync_show_code_title">Mostrar código de recuperación</string>
     <string name="settings_sync_sign_out_action">Desactivar</string>
     <string name="settings_sync_sign_out_message">La sincronización de marcadores se desactivará y el código de recuperación se eliminará de este dispositivo. Tus marcadores permanecen aquí. Asegúrate de haber guardado tu código de recuperación si quieres volver a sincronizar más adelante.</string>
@@ -772,4 +772,7 @@
     <string name="buy_credit_error_timed_out">El pago no se recibió a tiempo. No se realizó ningún cargo; puedes intentarlo de nuevo.</string>
     <string name="buy_credit_error_slug">Algo salió mal (%1$s). Inténtalo de nuevo.</string>
     <string name="buy_credit_error_network">No se pudo conectar con el servidor de pagos. Comprueba tu conexión e inténtalo de nuevo.</string>
+    <string name="buy_credit_gb_month_explainer">Un GB-month es 1 GB mantenido con copia de seguridad durante un mes — así que 500 podrían ser 50 GB durante 10 meses, o 100 GB durante 5.</string>
+    <string name="buy_credit_denom_rate">%1$s / GB-month</string>
+    <string name="buy_credit_error_busy">Demasiadas solicitudes en este momento. Espera un minuto e inténtalo de nuevo.</string>
 </resources>

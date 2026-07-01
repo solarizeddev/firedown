@@ -470,7 +470,7 @@
     <string name="settings_sync_faq_q3">Wat is de herstelcode?</string>
     <string name="settings_sync_faq_a3">Een sleutel die op je apparaat wordt gegenereerd wanneer je synchronisatie inschakelt. Het is het enige waarmee je bladwijzers kunnen worden ontsleuteld — op dit apparaat of op een nieuw apparaat.</string>
     <string name="settings_sync_faq_q4">Wat als ik mijn herstelcode kwijtraak?</string>
-    <string name="settings_sync_faq_a4">Je gesynchroniseerde bladwijzers kunnen niet worden hersteld — niet door jou en niet door ons, omdat wij de sleutel nooit hebben gehad. Er is geen wachtwoordherstel. Bewaar de code op een veilige plek; een wachtwoordmanager is ideaal.</string>
+    <string name="settings_sync_faq_a4">Je gesynchroniseerde gegevens kunnen niet worden hersteld — niet door jou en niet door ons, omdat wij de sleutel nooit hebben gehad. Er is geen wachtwoordherstel. Bewaar de code op een veilige plek; een wachtwoordmanager is ideaal.</string>
     <string name="settings_sync_faq_q5">Heb ik een account of e-mailadres nodig?</string>
     <string name="settings_sync_faq_a5">Nee. Er is geen registratie, e-mailadres of telefoonnummer — alleen de herstelcode. Er is niets persoonlijks aan je bladwijzers gekoppeld.</string>
     <string name="settings_sync_faq_q6">Wat als ik synchronisatie niet wil gebruiken?</string>
@@ -480,10 +480,10 @@
     <string name="settings_sync_export_summary">Exporteer de code als een tekstbestand dat je kunt bewaren</string>
     <string name="settings_sync_export_caveat_message">Dit bestand wordt onversleuteld opgeslagen — iedereen die het kan lezen, kan je bladwijzers lezen. Importeer de code in je wachtwoordmanager (of een andere veilige plek) en verwijder daarna het bestand. Een wachtwoordmanager houdt het versleuteld; een los bestand niet.</string>
     <string name="settings_sync_export_continue">Doorgaan</string>
-    <string name="settings_sync_export_file_body">Firedown — herstelcode voor bladwijzersynchronisatie\n\n%1$s\n\nDeze code is de enige sleutel tot je gesynchroniseerde bladwijzers — iedereen die hem heeft, kan ze lezen, en hij kan niet worden hersteld als hij verloren gaat.\n\nDit bestand is NIET versleuteld. Importeer de code in je wachtwoordmanager (of een andere veilige plek) en verwijder daarna dit bestand.</string>
+    <string name="settings_sync_export_file_body">Firedown — herstelcode\n\n%1$s\n\nDeze code is de enige sleutel tot je bladwijzers, downloadback-up en opslagtegoed — iedereen die hem heeft, kan ze lezen, en hij kan niet worden hersteld als je hem kwijtraakt.\n\nDit bestand is NIET versleuteld. Importeer de code in je wachtwoordmanager (of op een andere veilige plek) en verwijder dit bestand daarna.</string>
     <string name="settings_sync_export_done">Herstelcode opgeslagen</string>
     <string name="settings_sync_export_failed">Kon het bestand niet opslaan</string>
-    <string name="settings_sync_code_warning">Deze herstelcode is de enige sleutel tot je gesynchroniseerde bladwijzers. Bewaar hem in je wachtwoordmanager — of op een andere veilige plek. Hij kan niet worden hersteld als hij verloren gaat.</string>
+    <string name="settings_sync_code_warning">Deze herstelcode is de enige sleutel tot je bladwijzers, downloadback-up en opslagtegoed. Bewaar hem in je wachtwoordmanager — of op een andere veilige plek. Hij kan niet worden hersteld als je hem kwijtraakt.</string>
     <string name="settings_sync_cat_code">Herstelcode</string>
     <string name="settings_sync_cat_manage">Synchronisatie beheren</string>
     <string name="browser_menu_save_snapshot">Momentopname opslaan</string>
@@ -519,7 +519,7 @@
     <string name="settings_sync_setup_message">Je bladwijzers worden op dit apparaat versleuteld voordat ze het verlaten — de server ziet ze nooit. Je krijgt een herstelcode die de enige sleutel is; bewaar hem veilig, want er is geen manier om hem te herstellen als hij verloren gaat.</string>
     <string name="settings_sync_setup_restore">Ik heb een code</string>
     <string name="settings_sync_setup_title">Bladwijzersynchronisatie instellen</string>
-    <string name="settings_sync_show_code_summary">Toon de code die je gesynchroniseerde bladwijzers ontgrendelt</string>
+    <string name="settings_sync_show_code_summary">Toon de code die je bladwijzers en back-ups ontgrendelt</string>
     <string name="settings_sync_show_code_title">Herstelcode tonen</string>
     <string name="settings_sync_sign_out_action">Uitschakelen</string>
     <string name="settings_sync_sign_out_message">Bladwijzersynchronisatie wordt uitgeschakeld en de herstelcode wordt van dit apparaat verwijderd. Je bladwijzers blijven hier. Zorg dat je je herstelcode hebt bewaard als je later opnieuw wilt synchroniseren.</string>
@@ -641,4 +641,7 @@
     <string name="buy_credit_error_timed_out">Betaling is niet op tijd ontvangen. Er is niets in rekening gebracht; je kunt het opnieuw proberen.</string>
     <string name="buy_credit_error_slug">Er is iets misgegaan (%1$s). Probeer het opnieuw.</string>
     <string name="buy_credit_error_network">Kon de betaalserver niet bereiken. Controleer je verbinding en probeer het opnieuw.</string>
+    <string name="buy_credit_gb_month_explainer">Een GB-month is 1 GB dat een maand lang geback-upt blijft — dus 500 kan 50 GB voor 10 maanden zijn, of 100 GB voor 5.</string>
+    <string name="buy_credit_denom_rate">%1$s / GB-month</string>
+    <string name="buy_credit_error_busy">Te veel verzoeken op dit moment. Wacht een minuut en probeer het opnieuw.</string>
 </resources>

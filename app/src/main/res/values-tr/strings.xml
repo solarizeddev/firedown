@@ -469,7 +469,7 @@
     <string name="settings_sync_faq_q3">Kurtarma kodu nedir?</string>
     <string name="settings_sync_faq_a3">Eşitlemeyi açtığınızda cihazınızda oluşturulan bir anahtar. Yer imlerinizin şifresini çözebilecek tek şeydir — bu cihazda ya da yeni bir cihazda.</string>
     <string name="settings_sync_faq_q4">Kurtarma kodumu kaybedersem ne olur?</string>
-    <string name="settings_sync_faq_a4">Eşitlenen yer imleriniz kurtarılamaz — ne sizin tarafınızdan ne de bizim tarafımızdan, çünkü anahtar hiçbir zaman bizde olmadı. Parola sıfırlama yoktur. Kodu güvenli bir yerde saklayın; bir parola yöneticisi idealdir.</string>
+    <string name="settings_sync_faq_a4">Senkronize edilmiş verileriniz kurtarılamaz — ne sizin tarafınızdan ne de bizim tarafımızdan, çünkü anahtar hiçbir zaman bizde olmadı. Parola sıfırlama yoktur. Kodu güvenli bir yere kaydedin; parola yöneticisi idealdir.</string>
     <string name="settings_sync_faq_q5">Bir hesaba veya e-postaya ihtiyacım var mı?</string>
     <string name="settings_sync_faq_a5">Hayır. Kayıt, e-posta ya da telefon numarası yok — yalnızca kurtarma kodu. Yer imlerinize kişisel hiçbir şey bağlı değildir.</string>
     <string name="settings_sync_faq_q6">Eşitlemeyi kullanmak istemezsem ne olur?</string>
@@ -479,10 +479,10 @@
     <string name="settings_sync_export_summary">Kodu saklayabileceğiniz bir metin dosyası olarak dışa aktarın</string>
     <string name="settings_sync_export_caveat_message">Bu dosya şifrelenmemiş olarak kaydedilir — onu okuyabilen herkes yer imlerinizi okuyabilir. Kodu parola yöneticinize (veya başka bir güvenli yere) aktarın, ardından dosyayı silin. Bir parola yöneticisi onu şifreli tutar; başıboş bir dosya tutmaz.</string>
     <string name="settings_sync_export_continue">Devam et</string>
-    <string name="settings_sync_export_file_body">Firedown — yer imi eşitleme kurtarma kodu\n\n%1$s\n\nBu kod, eşitlenen yer imlerinizin tek anahtarıdır — ona sahip olan herkes onları okuyabilir ve kaybedilirse kurtarılamaz.\n\nBu dosya şifrelenmemiştir. Kodu parola yöneticinize (veya başka bir güvenli yere) aktarın, ardından bu dosyayı silin.</string>
+    <string name="settings_sync_export_file_body">Firedown — kurtarma kodu\n\n%1$s\n\nBu kod; yer imlerinize, indirme yedeğinize ve depolama kredinize erişimin tek anahtarıdır — ona sahip olan herkes bunları okuyabilir ve kaybedilirse kurtarılamaz.\n\nBu dosya şifrelenmemiştir. Kodu parola yöneticinize (ya da başka güvenli bir yere) aktarın, ardından bu dosyayı silin.</string>
     <string name="settings_sync_export_done">Kurtarma kodu kaydedildi</string>
     <string name="settings_sync_export_failed">Dosya kaydedilemedi</string>
-    <string name="settings_sync_code_warning">Bu kurtarma kodu, eşitlenen yer imlerinizin tek anahtarıdır. Onu parola yöneticinize — veya başka bir güvenli yere — kaydedin. Kaybedilirse kurtarılamaz.</string>
+    <string name="settings_sync_code_warning">Bu kurtarma kodu; yer imlerinize, indirme yedeğinize ve depolama kredinize erişimin tek anahtarıdır. Onu parola yöneticinize — ya da başka güvenli bir yere kaydedin. Kaybedilirse kurtarılamaz.</string>
     <string name="settings_sync_cat_code">Kurtarma kodu</string>
     <string name="settings_sync_cat_manage">Eşitlemeyi yönet</string>
     <string name="browser_menu_save_snapshot">Anlık görüntüyü kaydet</string>
@@ -518,7 +518,7 @@
     <string name="settings_sync_setup_message">Yer imleriniz cihazdan ayrılmadan önce bu cihazda şifrelenir — sunucu onları asla görmez. Tek anahtar olan bir kurtarma kodu alırsınız; güvenli bir yerde saklayın, kaybolursa kurtarmanın yolu yoktur.</string>
     <string name="settings_sync_setup_restore">Kodum var</string>
     <string name="settings_sync_setup_title">Yer imi eşitlemesini kur</string>
-    <string name="settings_sync_show_code_summary">Eşitlenmiş yer imlerinizin kilidini açan kodu gösterin</string>
+    <string name="settings_sync_show_code_summary">Yer imlerinizin ve yedeklerinizin kilidini açan kodu göster</string>
     <string name="settings_sync_show_code_title">Kurtarma kodunu göster</string>
     <string name="settings_sync_sign_out_action">Kapat</string>
     <string name="settings_sync_sign_out_message">Yer imi eşitlemesi kapatılacak ve kurtarma kodu bu cihazdan kaldırılacaktır. Yer imleriniz burada kalır. Daha sonra tekrar eşitlemek istiyorsanız kurtarma kodunuzu kaydettiğinizden emin olun.</string>
@@ -640,4 +640,7 @@
     <string name="buy_credit_error_timed_out">Ödeme zamanında alınmadı. Ücret alınmadı; tekrar deneyebilirsiniz.</string>
     <string name="buy_credit_error_slug">Bir şeyler ters gitti (%1$s). Lütfen tekrar deneyin.</string>
     <string name="buy_credit_error_network">Ödeme sunucusuna ulaşılamadı. Bağlantınızı kontrol edip tekrar deneyin.</string>
+    <string name="buy_credit_gb_month_explainer">Bir GB-month, bir ay boyunca yedekte tutulan 1 GB demektir — yani 500, 10 ay için 50 GB ya da 5 ay için 100 GB olabilir.</string>
+    <string name="buy_credit_denom_rate">%1$s / GB-month</string>
+    <string name="buy_credit_error_busy">Şu anda çok fazla istek var. Bir dakika bekleyip tekrar deneyin.</string>
 </resources>

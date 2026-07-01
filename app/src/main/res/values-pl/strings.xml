@@ -467,7 +467,7 @@
     <string name="settings_sync_faq_q3">Czym jest kod odzyskiwania?</string>
     <string name="settings_sync_faq_a3">To klucz generowany na Twoim urządzeniu podczas włączania synchronizacji. Jest jedyną rzeczą, która może odszyfrować Twoje zakładki — na tym urządzeniu lub na nowym.</string>
     <string name="settings_sync_faq_q4">Co jeśli zgubię kod odzyskiwania?</string>
-    <string name="settings_sync_faq_a4">Twoich zsynchronizowanych zakładek nie da się odzyskać — ani Tobie, ani nam, ponieważ nigdy nie mieliśmy klucza. Nie ma resetowania hasła. Zapisz kod w bezpiecznym miejscu; menedżer haseł jest idealny.</string>
+    <string name="settings_sync_faq_a4">Twoich zsynchronizowanych danych nie można odzyskać — ani przez Ciebie, ani przez nas, ponieważ nigdy nie mieliśmy klucza. Nie ma resetowania hasła. Zapisz kod w bezpiecznym miejscu; menedżer haseł jest idealny.</string>
     <string name="settings_sync_faq_q5">Czy potrzebuję konta lub adresu e-mail?</string>
     <string name="settings_sync_faq_a5">Nie. Nie ma rejestracji, adresu e-mail ani numeru telefonu — tylko kod odzyskiwania. Z Twoimi zakładkami nie są powiązane żadne dane osobowe.</string>
     <string name="settings_sync_faq_q6">Co jeśli nie chcę korzystać z synchronizacji?</string>
@@ -477,10 +477,10 @@
     <string name="settings_sync_export_summary">Wyeksportuj kod jako plik tekstowy, który możesz przechować</string>
     <string name="settings_sync_export_caveat_message">Ten plik jest zapisywany bez szyfrowania — każdy, kto może go odczytać, może odczytać Twoje zakładki. Zaimportuj kod do menedżera haseł (lub innego bezpiecznego miejsca), a następnie usuń plik. Menedżer haseł przechowuje go w postaci zaszyfrowanej; luźny plik nie.</string>
     <string name="settings_sync_export_continue">Kontynuuj</string>
-    <string name="settings_sync_export_file_body">Firedown — kod odzyskiwania synchronizacji zakładek\n\n%1$s\n\nTen kod to jedyny klucz do Twoich zsynchronizowanych zakładek — każdy, kto go posiada, może je odczytać, a po jego utracie nie da się go odzyskać.\n\nTen plik NIE jest zaszyfrowany. Zaimportuj kod do menedżera haseł (lub innego bezpiecznego miejsca), a następnie usuń ten plik.</string>
+    <string name="settings_sync_export_file_body">Firedown — kod odzyskiwania\n\n%1$s\n\nTen kod jest jedynym kluczem do Twoich zakładek, kopii zapasowej pobrań i środków na przechowywanie — każdy, kto go ma, może je odczytać, a w razie utraty nie można go odzyskać.\n\nTen plik NIE jest zaszyfrowany. Zaimportuj kod do menedżera haseł (lub innego bezpiecznego miejsca), a następnie usuń ten plik.</string>
     <string name="settings_sync_export_done">Kod odzyskiwania zapisany</string>
     <string name="settings_sync_export_failed">Nie udało się zapisać pliku</string>
-    <string name="settings_sync_code_warning">Ten kod odzyskiwania to jedyny klucz do Twoich zsynchronizowanych zakładek. Zapisz go w menedżerze haseł — lub innym bezpiecznym miejscu. Po jego utracie nie da się go odzyskać.</string>
+    <string name="settings_sync_code_warning">Ten kod odzyskiwania jest jedynym kluczem do Twoich zakładek, kopii zapasowej pobrań i środków na przechowywanie. Zapisz go w menedżerze haseł — lub w innym bezpiecznym miejscu. W razie utraty nie można go odzyskać.</string>
     <string name="settings_sync_cat_code">Kod odzyskiwania</string>
     <string name="settings_sync_cat_manage">Zarządzaj synchronizacją</string>
     <string name="browser_menu_save_snapshot">Zapisz migawkę</string>
@@ -518,7 +518,7 @@
     <string name="settings_sync_setup_message">Twoje zakładki są szyfrowane na tym urządzeniu, zanim je opuszczą — serwer nigdy ich nie widzi. Otrzymujesz kod odzyskiwania, który jest jedynym kluczem; przechowuj go bezpiecznie, bo w razie utraty nie ma sposobu na jego odzyskanie.</string>
     <string name="settings_sync_setup_restore">Mam kod</string>
     <string name="settings_sync_setup_title">Skonfiguruj synchronizację zakładek</string>
-    <string name="settings_sync_show_code_summary">Wyświetl kod, który odblokowuje zsynchronizowane zakładki</string>
+    <string name="settings_sync_show_code_summary">Pokaż kod, który odblokowuje Twoje zakładki i kopie zapasowe</string>
     <string name="settings_sync_show_code_title">Pokaż kod odzyskiwania</string>
     <string name="settings_sync_sign_out_action">Wyłącz</string>
     <string name="settings_sync_sign_out_message">Synchronizacja zakładek zostanie wyłączona, a kod odzyskiwania usunięty z tego urządzenia. Twoje zakładki tu pozostaną. Upewnij się, że zapisałeś swój kod odzyskiwania, jeśli chcesz później ponownie synchronizować.</string>
@@ -642,4 +642,7 @@
     <string name="buy_credit_error_timed_out">Nie otrzymano płatności na czas. Nie pobrano opłaty; możesz spróbować ponownie.</string>
     <string name="buy_credit_error_slug">Coś poszło nie tak (%1$s). Spróbuj ponownie.</string>
     <string name="buy_credit_error_network">Nie można połączyć się z serwerem płatności. Sprawdź połączenie i spróbuj ponownie.</string>
+    <string name="buy_credit_gb_month_explainer">Jeden GB-month to 1 GB przechowywany w kopii zapasowej przez miesiąc — więc 500 może oznaczać 50 GB przez 10 miesięcy lub 100 GB przez 5.</string>
+    <string name="buy_credit_denom_rate">%1$s / GB-month</string>
+    <string name="buy_credit_error_busy">Zbyt wiele żądań w tej chwili. Odczekaj minutę i spróbuj ponownie.</string>
 </resources>
