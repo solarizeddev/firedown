@@ -4,7 +4,6 @@ import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.text.format.Formatter;
 import android.view.View;
 
 import androidx.annotation.NonNull;
@@ -51,7 +50,7 @@ public class CloudBackupSettingsFragment extends BasePreferenceFragment
     @Inject
     OkHttpClient mHttpClient;
 
-    private Preference mStatus;
+    private CloudStatusPreference mStatus;
     private Preference mBuy;
     private Preference mFiles;
     private Preference mDeleteData;
@@ -131,38 +130,35 @@ public class CloudBackupSettingsFragment extends BasePreferenceFragment
         return true;
     }
 
-    /** Reflects set-up state + usage into the status line and section visibility. */
+    /** Reflects set-up state, usage + metered balance into the status hero and
+     *  section visibility. */
     private void updateState() {
         boolean setUp = mCloudBackup.isSetUp();
         if (mCatManage != null) {
             mCatManage.setVisible(setUp);
         }
-        if (mStatus instanceof TransferStatusPreference) {
-            ((TransferStatusPreference) mStatus).setActive(mTransferActive);
-        }
         if (mStatus == null) {
             return;
         }
-        if (mTransferActive) {
-            mStatus.setSummary(getString(R.string.settings_cloud_backup_active));
-            return;
-        }
+        mStatus.setSetUp(setUp);
+        mStatus.setActive(mTransferActive);
         if (!setUp) {
-            mStatus.setSummary(getString(R.string.settings_cloud_backup_not_set_up));
+            mStatus.setUsage(-1, -1);
+            mStatus.setQuota(null);
             return;
         }
+        // Backed-up usage (manifest) — the "N files · X" facts line.
         mCloudBackup.loadUsage(usage -> {
-            if (!isAdded() || mStatus == null || mTransferActive) {
-                return;
+            if (isAdded() && mStatus != null) {
+                mStatus.setUsage(usage.fileCount, usage.totalBytes);
             }
-            if (usage.fileCount < 0 || usage.totalBytes < 0) {
-                mStatus.setSummary(getString(R.string.settings_cloud_backup_usage_unavailable));
-                return;
+        });
+        // Metered balance + projected runout (null in the current unmetered phase
+        // or offline — the hero degrades to the facts + a free-beta note).
+        mCloudBackup.loadQuota(quota -> {
+            if (isAdded() && mStatus != null) {
+                mStatus.setQuota(quota);
             }
-            String files = getResources().getQuantityString(
-                    R.plurals.settings_cloud_backup_file_count, usage.fileCount, usage.fileCount);
-            String size = Formatter.formatShortFileSize(requireContext(), usage.totalBytes);
-            mStatus.setSummary(getString(R.string.settings_cloud_backup_usage, files, size));
         });
     }
 

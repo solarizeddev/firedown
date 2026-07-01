@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The Cloud Backup status hero (custom Preference layout, bound by
+  CloudStatusPreference). Replaces the plain status row: a big balance, a
+  one-time-credit note, a live status line (covered-until / grace / backing-up /
+  not-set-up), and a facts line (N files · size). Honest — no usage meter,
+  because the balance is what's LEFT, not a fraction of a known total.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingHorizontal="16dp"
+    android:paddingTop="14dp"
+    android:paddingBottom="16dp">
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:baselineAligned="true"
+        android:gravity="bottom">
+
+        <TextView
+            android:id="@+id/cb_balance"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="34sp"
+            android:textStyle="bold"
+            android:letterSpacing="-0.02"
+            android:textColor="?attr/colorOnSurface"
+            tools:text="600" />
+
+        <TextView
+            android:id="@+id/cb_balance_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="7dp"
+            android:layout_marginBottom="4dp"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="?android:attr/textColorSecondary"
+            tools:text="GB-months" />
+
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/cb_note"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:textSize="12sp"
+        android:textColor="?android:attr/textColorSecondary"
+        tools:text="One-time credit · no auto-renew" />
+
+    <TextView
+        android:id="@+id/cb_until"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:textSize="13.5sp"
+        android:lineSpacingMultiplier="1.35"
+        android:textColor="?attr/colorOnSurface"
+        tools:text="Covered until ~ Mar 2027 at your current usage." />
+
+    <TextView
+        android:id="@+id/cb_facts"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:textSize="12.5sp"
+        android:textColor="?android:attr/textColorSecondary"
+        tools:text="12 files · 6.2 GB backed up" />
+
+</LinearLayout>

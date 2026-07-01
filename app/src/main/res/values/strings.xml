@@ -293,6 +293,19 @@
     </plurals>
     <string name="settings_cloud_backup_usage_unavailable">Backed up — usage unavailable offline</string>
     <string name="settings_cloud_backup_active">Transfer in progress…</string>
+    <!-- Cloud Backup status hero (CloudStatusPreference) -->
+    <string name="cloud_status_gb_label">GB-months</string>
+    <string name="cloud_status_oneoff">One-time credit · no auto-renew</string>
+    <string name="cloud_status_free_beta">Backups are free during the beta</string>
+    <!-- %1$s = "12 files", %2$s = "6.2 GB" -->
+    <string name="cloud_status_facts">%1$s · %2$s backed up</string>
+    <!-- %1$s = a month + year, e.g. "Mar 2027" -->
+    <string name="cloud_status_covered_until">Covered until ~ %1$s at your current usage.</string>
+    <string name="cloud_status_covered_ongoing">Your backups are covered.</string>
+    <!-- %1$s = a month + year -->
+    <string name="cloud_status_grace">Read-only — top up to keep backing up. Your files are kept until ~ %1$s.</string>
+    <string name="cloud_status_grace_nodate">Read-only — top up to keep backing up. Your files are kept for now.</string>
+    <string name="cloud_status_backups_on">Your downloads are backed up and encrypted.</string>
     <string name="settings_cloud_backup_cat_manage">Manage backup</string>
     <string name="settings_cloud_backup_files_title">Backups</string>
     <string name="settings_cloud_backup_files_summary">View and restore what you\'ve backed up</string>

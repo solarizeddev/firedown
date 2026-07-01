@@ -15,13 +15,12 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <com.solarized.firedown.settings.TransferStatusPreference
+    <!-- The status HERO (big balance / covered-until / grace / backing-up),
+         bound by CloudBackupSettingsFragment. Custom layout — no title/icon. -->
+    <com.solarized.firedown.settings.CloudStatusPreference
         android:key="com.solarized.firedown.preferences.cloud.backup.status"
-        android:title="@string/settings_cloud_backup_status_title"
-        android:summary="@string/settings_cloud_backup_not_set_up"
         android:selectable="false"
-        app:singleLineTitle="false"
-        app:icon="@drawable/cloud_24" />
+        android:persistent="false" />
 
     <!-- Top-level (not under Manage): a metered user buys credit BEFORE their
          first backup, so this must be reachable before Cloud Backup is set up. -->
