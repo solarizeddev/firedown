@@ -34,7 +34,7 @@ expose the real media URL after the page's own JS runs (often on play). So:
 
 | dir           | id                       | role |
 |---------------|--------------------------|------|
-| `webrequests/`| `downloader@solarized.dev` | **ALL capture** — the former `parser@` extension was MERGED into this one. Two halves in one extension: (1) the per-site **parsers** (`js/parsers/` — one ES module per site: Twitter/X, Instagram, Threads, Facebook, Vimeo, Rumble, Bilibili.tv, Niconico, Kick, Twitch, Dailymotion, Apple Podcasts, News Over Audio, TikTok, Bluesky; emits entries **with metadata** — title, author, thumbnail, duration, quality variants) plus the page-state bridge (`js/page-state-bridge.js`); (2) the **generic catch-all** (`js/requests.js` + `js/content-script.js` — any media URL seen on the wire, no rich metadata). Also hosts `js/wasm-watch.js` (+ `js/wasm-probe.js`), the WASM-disabled detector — a settings feature, not capture. |
+| `webrequests/`| `downloader@solarized.dev` | **ALL capture** — the former `parser@` extension was MERGED into this one. Two halves in one extension: (1) the per-site **parsers** (`js/parsers/` — one ES module per site: Twitter/X, Instagram, Threads, Facebook, Vimeo, Rumble, Bilibili.tv, Niconico, Kick, Twitch, Dailymotion, Apple Podcasts, News Over Audio, TikTok, Bluesky, Telegram, Videee, Spotify; emits entries **with metadata** — title, author, thumbnail, duration, quality variants) plus the page-state bridge (`js/page-state-bridge.js`); (2) the **generic catch-all** (`js/requests.js` + `js/content-script.js` — any media URL seen on the wire, no rich metadata). Also hosts `js/wasm-watch.js` (+ `js/wasm-probe.js`), the WASM-disabled detector — a settings feature, not capture. |
 | `youtube/`    | `youtube@solarized.dev`  | YouTube (separate; uses `PoTokenGenerator` on the Java side). |
 | `ublock/`     | uBlock Origin            | Ad blocking. |
 | `icons/`, `search/`, `db/`, `error/` | — | Support. |
@@ -456,14 +456,42 @@ manifests and tokenized/extensionless URLs are **always** enriched
   full-length `.mp3` with `name`/`audioLength`(→ms)/publisher image (`skipProbe`);
   `audios.newsoveraudio.com/*.mp3` is block-listed (cardinal rule). The MediaSession
   path above covers the OTHER embed providers generically.
-- **Spotify — DECIDED AGAINST a parser** (don't re-litigate from a HAR). Logged
-  out, the only thing that plays is a ~30s `p.scdn.co/mp3-preview/<hash>` clip
-  (and even that often 304s from cache on an extensionless URL → unclassifiable);
-  the full track/episode is auth-gated **DRM** (encrypted CDN). The preview's
-  name/thumbnail DO sit in the `api-partner.spotify.com/pathfinder` GraphQL JSON,
-  but capturing a 30s teaser via a per-site GraphQL parser isn't worth the
-  maintenance treadmill. The realistic capture path for a Spotify-published
-  podcast is its **YouTube** embed (existing `youtube@` parser).
+- **Spotify — EMBED parser (`js/parsers/spotify.js`).** What a Spotify widget
+  plays — logged out, and even logged in, because embeds are preview-only by
+  Spotify's design — is a ~30s, **non-DRM** MP3_96 clip per track from
+  `p.scdn.co/mp3-preview/<hash>`. The full track/episode is auth-gated **DRM**
+  (encrypted CDN) and never appears as a plain file; the preview is the only
+  capturable audio. (This was previously DECIDED AGAINST via the
+  `api-partner.spotify.com/pathfinder` GraphQL path — "not worth the maintenance
+  treadmill for a 30s teaser". The **embed** `__NEXT_DATA__` path is cleaner —
+  no GraphQL, no auth — and the "the generic catcher grabs a preview but can't
+  NAME it" gap was real, so the decision was revisited.) Why a parser and not
+  the catcher: the catcher DOES grab the preview on play (the wire sees the
+  `p.scdn.co` 206), but the embed sets `navigator.mediaSession.metadata` only on
+  `state_changed` (AFTER the MP3 is fetched) keyed by track URI, so the catcher's
+  one-shot capture-time metadata query lands before the per-track title exists
+  and falls back to the iframe's page-level `og:title` = the shared PLAYLIST
+  name. The correct per-track mapping (`previewUrl → {title, artist, cover}`) is
+  inlined pre-play in the embed HTML's `__NEXT_DATA__`
+  (`props.pageProps.state.data.entity.trackList[]` — a `<script
+  type="application/json">` the HTML parser keeps as raw text; Next.js
+  unicode-escapes, no entities to decode). `listenerSpotifyEmbed`
+  `filterResponseData`s the embed document (write-through, byte-exact — the
+  Threads doc-filter pattern; the embed loads as `sub_frame`, also `main_frame`
+  if opened directly) and emits **one titled audio entry per previewable track**
+  (a "Top 100" playlist → 100 entries, capped at `MAX_SPOTIFY_TRACKS`=200; a
+  single-track embed carries `audioPreview` on the entity itself). Emit is
+  `type:"media"` with **NO duration and NO skipProbe** — the `trackList.duration`
+  is the FULL track length (mislabels a 30s clip) and the preview URL is
+  extensionless (so `processMediaSkipProbe` would fall back to the probe anyway),
+  so let the native probe confirm audio + read the true ~30s. Each track emits
+  under its own `open.spotify.com/<type>/<id>` origin (own entity); the
+  repository dedups by URL so a re-read (refresh/SPA) can't duplicate.
+  `p.scdn.co/mp3-preview` is block-listed (`parser-blocklist.js` `spotify`, the
+  cardinal rule) so the catcher doesn't ALSO grab a bare untitled copy on play.
+  The realistic capture path for a Spotify-published **podcast** in full is still
+  its **YouTube** embed (existing `youtube@` parser) — Spotify only ever exposes
+  the 30s clip here. Ceiling: the emitted entries are 30s previews, not the song.
 
 ### HLS-master sites — Java enumeration, no ffmpeg probe
 
@@ -839,7 +867,7 @@ This section exists because a Threads bug took ~8 rounds that should have taken
 2. **Read the logs by category.** `adb logcat -s GeckoConsole:*` then grep the
    prefix: `TWITTER`, `INSTAGRAM`, `THREADS`, `THREADS-CS`, `FB-*`, `IG-*`,
    `RUMBLE`, `TWITCH`, `KICK`, `VIMEO`, `DAILYMOTION`, `TIKTOK`, `NOA`,
-   `PAGE-STATE`, `VARIANTS`,
+   `SPOTIFY`, `PAGE-STATE`, `VARIANTS`,
    `DEDUP`, `NATIVE`. The generic catcher logs under `[req]` (gated on its own
    `DEBUG`). Java-side variant probing is `VariantProcessor`.
 

@@ -22,4 +22,5 @@ import './niconico.js';
 import './facebook.js';
 import './telegram.js';
 import './videee.js';
+import './spotify.js';
 import './boot.js';
