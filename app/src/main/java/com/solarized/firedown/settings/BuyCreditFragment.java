@@ -19,8 +19,10 @@ import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.graphics.Insets;
+import androidx.core.view.AccessibilityDelegateCompat;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.accessibility.AccessibilityNodeInfoCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
@@ -316,7 +318,18 @@ public class BuyCreditFragment extends Fragment {
                 forLabel.setVisibility(View.GONE);
             }
             ((TextView) card.findViewById(R.id.buy_plan_price)).setText(formatUsd(opt.priceCents));
+            // Per-month equivalent under the one-time price so tiers are
+            // comparable without mental math (and the save nudge verifiable).
+            // Hidden on 1-month plans, where it would just repeat the price.
+            TextView perMonth = card.findViewById(R.id.buy_plan_permonth);
+            if (durationMonths > 1) {
+                perMonth.setText(getString(R.string.buy_credit_per_month,
+                        formatUsd(Math.round((double) opt.priceCents / durationMonths))));
+            } else {
+                perMonth.setVisibility(View.GONE);
+            }
             card.setTag(opt);
+            announceCheckable(card);
             card.setOnClickListener(v -> selectCard(card, opt));
             mDenomContainer.addView(card);
             cards.add(card);
@@ -404,6 +417,7 @@ public class BuyCreditFragment extends Fragment {
             price.setText(formatUsd(opt.priceCents));
             rate.setText(getString(R.string.buy_credit_denom_rate, formatPerGbMonth(opt)));
             card.setTag(opt);
+            announceCheckable(card);
             card.setOnClickListener(v -> selectCard(card, opt));
             mDenomContainer.addView(card);
         }
@@ -414,27 +428,47 @@ public class BuyCreditFragment extends Fragment {
         }
     }
 
-    /** Highlights the chosen card (brand 2dp stroke) and enables Continue. Shared
-     *  by the plan tiles and the legacy denomination cards. */
+    /** Marks the chosen card checked (the neutral buy_tile_bg tonal fill follows
+     *  the state) with a strong onSurface stroke, and enables Continue. Shared by
+     *  the plan tiles and the legacy denomination cards. */
     private void selectCard(MaterialCardView selected, BuyCreditViewModel.Option opt) {
         mSelectedOption = opt;
         if (opt.isPlan()) {
             mPreferredSizeGb = opt.sizeGb;
         }
-        // Selection is a strong NEUTRAL outline, not coral — the only coral on
-        // this screen is the Continue button. onSurface reads clearly in both
-        // themes (near-white in dark, near-black in light).
+        // Selection is a NEUTRAL tonal fill + strong outline, not coral — the only
+        // coral on this screen is the Continue button. The fill mirrors the checked
+        // segment of the duration/rail toggles, so the whole screen shares one
+        // "selected = grey tonal" language; onSurface reads clearly in both themes.
         int selectedColor = MaterialColors.getColor(selected, com.google.android.material.R.attr.colorOnSurface);
         int outline = MaterialColors.getColor(selected, com.google.android.material.R.attr.colorOutlineVariant);
         int stroke = Math.round(getResources().getDisplayMetrics().density);
         for (int i = 0; i < mDenomContainer.getChildCount(); i++) {
             MaterialCardView card = (MaterialCardView) mDenomContainer.getChildAt(i);
             boolean on = card == selected;
+            card.setChecked(on);
             card.setStrokeColor(on ? selectedColor : outline);
             card.setStrokeWidth(on ? stroke * 2 : stroke);
         }
         mContinue.setText(getString(R.string.buy_credit_continue, formatUsd(opt.priceCents)));
         mContinue.setEnabled(true);
+    }
+
+    /** Exposes a tile's checked state to accessibility services. MaterialCardView
+     *  implements Checkable but does NOT announce it on its own (the Material docs
+     *  themselves prescribe an explicit delegate), so without this TalkBack reads
+     *  every tile identically and the selection is invisible to a non-sighted
+     *  user — Continue's price is the only tell. */
+    private static void announceCheckable(MaterialCardView card) {
+        ViewCompat.setAccessibilityDelegate(card, new AccessibilityDelegateCompat() {
+            @Override
+            public void onInitializeAccessibilityNodeInfo(@NonNull View host,
+                    @NonNull AccessibilityNodeInfoCompat info) {
+                super.onInitializeAccessibilityNodeInfo(host, info);
+                info.setCheckable(true);
+                info.setChecked(((MaterialCardView) host).isChecked());
+            }
+        });
     }
 
     // ---- lightning ----

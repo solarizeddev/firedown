@@ -558,6 +558,7 @@
     <string name="buy_credit_soft_cap">आप केवल उतने के लिए भुगतान करते हैं जितना वास्तव में स्टोर करते हैं — सीमा से कम बैकअप करें तो यह अधिक समय तक चलता है. सीमा पार करने पर कुछ भी डिलीट नहीं होता; बस यह जल्दी खत्म हो जाता है.</string>
     <string name="buy_credit_one_off">एक बार — कोई ऑटो-रिन्यूअल नहीं. कभी भी टॉप-अप करें.</string>
     <string name="buy_credit_save_nudge">लंबे प्लान के साथ %1$d%% तक बचाएं</string>
+    <string name="buy_credit_per_month">%1$s / माह</string>
     <string name="buy_credit_pay_amount_plan">%1$s · %3$s के लिए %2$d GB तक</string>
     <string name="buy_credit_success_title_plan">%2$s के लिए %1$d GB तक जोड़े गए</string>
     <plurals name="buy_credit_years">

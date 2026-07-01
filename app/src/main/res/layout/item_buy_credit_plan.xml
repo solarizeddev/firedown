@@ -4,9 +4,16 @@
   keyset of the selected duration by BuyCreditFragment. Reads like a Drive plan,
   but each (size × duration) tile is a fixed keyset shared by all its buyers, so
   the blind-signature anonymity set holds (cloud-mint-spec.md §6a). Left: the size
-  cap + the coverage. Right: the one-time price. Selection is a brand 2dp stroke,
-  drawn by the fragment. NO promotional badge on the tile itself (the "SAVE" nudge,
-  if any, is a caption under the duration toggle).
+  cap + the coverage. Right: the one-time price, with the per-month equivalent
+  under it on multi-month plans so tiers are comparable at a glance (the same
+  small-rate-line pattern as the legacy denom card) — the big number stays the
+  one-time price, so it can't read as a subscription. Selection = state_checked:
+  a neutral tonal fill (buy_tile_bg, the SAME selected language as the segmented
+  toggles) + a 2dp onSurface stroke drawn by the fragment; checkedIcon is nulled
+  (no coral check overlay — Continue is the only coral) and the ripple pinned
+  neutral (a checkable card's default ripple is primary-tinted). NO promotional
+  badge on the tile itself (the "SAVE" nudge, if any, is a caption under the
+  duration toggle).
 -->
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -16,6 +23,10 @@
     android:layout_marginBottom="11dp"
     android:clickable="true"
     android:focusable="true"
+    android:checkable="true"
+    app:checkedIcon="@null"
+    app:rippleColor="?attr/colorControlHighlight"
+    app:cardBackgroundColor="@color/buy_tile_bg"
     app:cardCornerRadius="16dp"
     app:cardElevation="0dp"
     app:strokeWidth="1dp"
@@ -37,8 +48,9 @@
             android:textSize="18sp"
             android:textStyle="bold"
             android:textColor="?attr/colorOnSurface"
+            android:layout_marginEnd="12dp"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/buy_plan_price"
+            app:layout_constraintEnd_toStartOf="@id/buy_plan_price_start"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toTopOf="@id/buy_plan_for"
             app:layout_constraintVertical_chainStyle="packed"
@@ -50,13 +62,17 @@
             android:layout_height="wrap_content"
             android:textSize="12sp"
             android:layout_marginTop="2dp"
+            android:layout_marginEnd="12dp"
             android:textColor="?android:attr/textColorSecondary"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/buy_plan_price"
+            app:layout_constraintEnd_toStartOf="@id/buy_plan_price_start"
             app:layout_constraintTop_toBottomOf="@id/buy_plan_size"
             app:layout_constraintBottom_toBottomOf="parent"
             tools:text="for 1 year" />
 
+        <!-- price + per-month are their own packed chain: when per-month is GONE
+             (a 1-month plan — "$8 / month" under an $8 price would be noise) the
+             price centres itself, same trick as the left column. -->
         <TextView
             android:id="@+id/buy_plan_price"
             android:layout_width="wrap_content"
@@ -66,8 +82,31 @@
             android:textColor="?attr/colorOnSurface"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintBottom_toTopOf="@id/buy_plan_permonth"
+            app:layout_constraintVertical_chainStyle="packed"
             tools:text="$30" />
+
+        <TextView
+            android:id="@+id/buy_plan_permonth"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="11.5sp"
+            android:layout_marginTop="1dp"
+            android:textColor="?android:attr/textColorSecondary"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/buy_plan_price"
+            app:layout_constraintBottom_toBottomOf="parent"
+            tools:text="$2.50 / month" />
+
+        <!-- The left column ends at whichever right-column line is widest (the
+             per-month line usually outgrows the price), so long size text can
+             never underlap the price block. -->
+        <androidx.constraintlayout.widget.Barrier
+            android:id="@+id/buy_plan_price_start"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:barrierDirection="start"
+            app:constraint_referenced_ids="buy_plan_price,buy_plan_permonth" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

@@ -783,6 +783,7 @@
     <string name="buy_credit_soft_cap">Du zahlst nur für das, was du tatsächlich speicherst — sicherst du weniger als das Limit, reicht es länger. Bei Überschreitung wird nichts gelöscht; es ist nur früher aufgebraucht.</string>
     <string name="buy_credit_one_off">Einmalig — keine automatische Verlängerung. Jederzeit aufladbar.</string>
     <string name="buy_credit_save_nudge">Spare bis zu %1$d%% mit einem längeren Tarif</string>
+    <string name="buy_credit_per_month">%1$s / Monat</string>
     <string name="buy_credit_pay_amount_plan">%1$s · bis zu %2$d GB für %3$s</string>
     <string name="buy_credit_success_title_plan">Bis zu %1$d GB für %2$s hinzugefügt</string>
     <plurals name="buy_credit_years">

@@ -783,6 +783,7 @@
     <string name="buy_credit_soft_cap">Solo pagas por lo que almacenas de verdad: si respaldas menos del límite, te dura más. Nada se elimina si te pasas; simplemente se acaba antes.</string>
     <string name="buy_credit_one_off">Pago único, sin renovación automática. Recarga cuando quieras.</string>
     <string name="buy_credit_save_nudge">Ahorra hasta un %1$d%% con un plan más largo</string>
+    <string name="buy_credit_per_month">%1$s / mes</string>
     <string name="buy_credit_pay_amount_plan">%1$s · hasta %2$d GB por %3$s</string>
     <string name="buy_credit_success_title_plan">Se añadieron hasta %1$d GB por %2$s</string>
     <plurals name="buy_credit_years">

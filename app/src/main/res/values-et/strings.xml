@@ -521,6 +521,7 @@
     <string name="buy_credit_soft_cap">Maksad ainult selle eest, mida tegelikult salvestad — kui varundad piirmäärast vähem, kestab see kauem. Kui ületad piiri, ei kustutata midagi; lihtsalt lõpeb varem.</string>
     <string name="buy_credit_one_off">Ühekordne — ei uuene automaatselt. Täienda igal ajal.</string>
     <string name="buy_credit_save_nudge">Säästa pikema plaaniga kuni %1$d%%</string>
+    <string name="buy_credit_per_month">%1$s / kuu</string>
     <string name="buy_credit_pay_amount_plan">%1$s · kuni %2$d GB hinnaga %3$s</string>
     <string name="buy_credit_success_title_plan">Kuni %1$d GB hinnaga %2$s lisatud</string>
     <plurals name="buy_credit_years">

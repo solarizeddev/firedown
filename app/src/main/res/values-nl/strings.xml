@@ -652,6 +652,7 @@
     <string name="buy_credit_soft_cap">Je betaalt alleen voor wat je daadwerkelijk opslaat — back-up minder dan de limiet en het gaat langer mee. Er wordt niets verwijderd als je erover gaat; het is alleen eerder op.</string>
     <string name="buy_credit_one_off">Eenmalig — geen automatische verlenging. Vul aan wanneer je wilt.</string>
     <string name="buy_credit_save_nudge">Bespaar tot %1$d%% met een langer abonnement</string>
+    <string name="buy_credit_per_month">%1$s / maand</string>
     <string name="buy_credit_pay_amount_plan">%1$s · tot %2$d GB voor %3$s</string>
     <string name="buy_credit_success_title_plan">Tot %1$d GB voor %2$s toegevoegd</string>
     <plurals name="buy_credit_years">

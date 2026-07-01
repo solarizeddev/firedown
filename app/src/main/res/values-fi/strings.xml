@@ -591,6 +591,7 @@
     <string name="buy_credit_soft_cap">Maksat vain siitä, mitä oikeasti tallennat — jos varmuuskopioit rajaa vähemmän, tila riittää pidempään. Mitään ei poisteta, jos ylität rajan; tila vain loppuu aiemmin.</string>
     <string name="buy_credit_one_off">Kertamaksu — ei automaattista uusintaa. Voit lisätä tilaa milloin tahansa.</string>
     <string name="buy_credit_save_nudge">Säästä jopa %1$d %% pidemmällä paketilla</string>
+    <string name="buy_credit_per_month">%1$s / kk</string>
     <string name="buy_credit_pay_amount_plan">%1$s · enintään %2$d GB hintaan %3$s</string>
     <string name="buy_credit_success_title_plan">Enintään %1$d GB hintaan %2$s lisätty</string>
     <plurals name="buy_credit_years">

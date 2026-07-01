@@ -571,6 +571,7 @@
     <string name="buy_credit_soft_cap">Ви платите лише за те, що справді зберігаєте — резервуйте менше за ліміт, і кредиту вистачить надовше. Нічого не видаляється, якщо ви перевищите ліміт; він просто закінчиться раніше.</string>
     <string name="buy_credit_one_off">Разово — без автопродовження. Поповнюйте будь-коли.</string>
     <string name="buy_credit_save_nudge">Заощаджуйте до %1$d%% з довшим планом</string>
+    <string name="buy_credit_per_month">%1$s / місяць</string>
     <string name="buy_credit_pay_amount_plan">%1$s · до %2$d ГБ на %3$s</string>
     <string name="buy_credit_success_title_plan">Додано до %1$d ГБ на %2$s</string>
     <plurals name="buy_credit_years">
