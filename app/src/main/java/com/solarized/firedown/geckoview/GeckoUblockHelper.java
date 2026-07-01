@@ -9,7 +9,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
-import androidx.preference.PreferenceManager;
 
 import dagger.hilt.android.qualifiers.ApplicationContext;
 
@@ -122,14 +121,30 @@ public class GeckoUblockHelper {
      *  initialised (which only happens when a tab opens, not when
      *  the user lands on Home). The card shows the cached value
      *  immediately; the live value overrides it the moment the
-     *  extension pushes a fresh number. */
+     *  extension pushes a fresh number.
+     *
+     *  <p>Stored in {@code backup_local.xml} — the install-local prefs
+     *  file EXCLUDED from Auto Backup — NOT the default prefs. This
+     *  cache is a mirror of uBlock's {@code µb.requestStats}, which
+     *  lives in the app-private Gecko profile and is itself NOT backed
+     *  up. If the cache rode a backup while its source didn't, a
+     *  reinstall-with-restore would show the pre-uninstall count (e.g.
+     *  "2.1K") from the restored pref, then the freshly-reinstalled
+     *  uBlock (requestStats reset to 0) would push {@code
+     *  cumulativeBlocked:0} and {@link #onCumulativeBlocked} would
+     *  relay it, making the number vanish a moment after launch. Keeping
+     *  the cache install-local means a reinstall starts both sides at 0
+     *  and the card fills back in as uBlock re-counts — no stale figure,
+     *  no disappearing act. On a same-install cold start the file is
+     *  intact, so the cold-start optimisation above still works. */
+    private static final String LOCAL_PREFS = "backup_local";
     private static final String KEY_CUMULATIVE_BLOCKED = "ublock.cumulative.blocked";
     private static final String KEY_DAY_BASELINE_DATE  = "ublock.day.baseline.date";
     private static final String KEY_DAY_BASELINE_COUNT = "ublock.day.baseline.count";
 
     @Inject
     public GeckoUblockHelper(@ApplicationContext Context context) {
-        mPrefs = PreferenceManager.getDefaultSharedPreferences(context);
+        mPrefs = context.getSharedPreferences(LOCAL_PREFS, Context.MODE_PRIVATE);
         long cachedBlocked = mPrefs.getLong(KEY_CUMULATIVE_BLOCKED, 0L);
         if (cachedBlocked > 0L) mCumulativeBlockedLive.postValue(cachedBlocked);
         // Seed today's count from the cached baseline so the sheet
