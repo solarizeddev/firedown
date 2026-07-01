@@ -111,15 +111,13 @@
         const CONTENT_RANGE_RE = /^bytes (\d+)-(\d+)\/(\d+)$/;
         const BTN_CLASS = "fd-tg-dl-btn";
 
-        // --- selectors (track Telegram Web; mirror the userscript) -----------
-        // Only the VIEWER CONTAINER and the media element are needed — the button
-        // is a floating overlay (see below), so Telegram's own action-button row
-        // (which collapses into the ⋮ overflow menu on mobile) is irrelevant.
-        // Web K (web.telegram.org/k/, webk.telegram.org)
+        // --- viewer-container selectors (K / A) ------------------------------
+        // Used ONLY as a hint that a fullscreen viewer is open. Detection of the
+        // media itself does NOT depend on Telegram's inner class names (they vary
+        // by build/platform — the reason a class-based button was invisible): we
+        // scan for the largest visible <video>/<img> with a downloadable src.
         const K_VIEWER = ".media-viewer-whole";
-        const K_ASPECTER = ".media-viewer-movers .media-viewer-aspecter";
-        // Web A / Z (web.telegram.org/a/, webz.telegram.org)
-        const A_SLIDE = "#MediaViewer .MediaViewerSlide--active";
+        const A_VIEWER = "#MediaViewer";
 
         function hashCode(s) {
             let h = 0;
@@ -150,60 +148,82 @@
             }
         }
 
-        // Locate the open media viewer and the media it shows. Returns null when
-        // no viewer is open or it holds nothing downloadable.
-        //   { kind: "video"|"image", url, fileName, blobType }
-        // NOTE: we deliberately do NOT depend on Telegram's action-button row —
-        // on mobile Web-K those icons collapse into the ⋮ overflow menu, so a
-        // button injected there is invisible. The floating button below only
-        // needs the viewer to be open and a media element present.
-        function detect() {
-            // --- Web K ---
-            const kViewer = document.querySelector(K_VIEWER);
-            if (kViewer && kViewer.offsetParent !== null) {
-                const aspecter = kViewer.querySelector(K_ASPECTER) || kViewer;
-                const video = aspecter.querySelector("video");
-                const vurl = video && (video.currentSrc || video.src);
-                if (vurl) {
-                    const meta = streamMeta(vurl);
-                    return {
-                        kind: "video", url: vurl,
-                        fileName: (meta && meta.fileName) || ("Telegram_" + shortId(vurl) + ".mp4"),
-                        blobType: (meta && meta.mimeType) || "video/mp4",
-                    };
-                }
-                const img = aspecter.querySelector("img.thumbnail");
-                const iurl = img && img.src;
-                if (iurl) {
-                    const meta = streamMeta(iurl);
-                    return {
-                        kind: "image", url: iurl,
-                        fileName: (meta && meta.fileName) || ("Telegram_" + shortId(iurl) + ".jpeg"),
-                        blobType: (meta && meta.mimeType) || "image/jpeg",
-                    };
-                }
+        // A media URL we can actually download in-page: a SW /stream/ or
+        // /download/ path, or a blob: (already-decrypted bytes).
+        function isDownloadableSrc(u) {
+            return !!u && (u.indexOf("/stream/") >= 0 || u.indexOf("/download/") >= 0 || u.indexOf("blob:") === 0);
+        }
+
+        // How much of an element is actually on screen (clipped to the viewport).
+        function viewportArea(el) {
+            try {
+                const r = el.getBoundingClientRect();
+                const w = Math.min(r.right, window.innerWidth) - Math.max(r.left, 0);
+                const h = Math.min(r.bottom, window.innerHeight) - Math.max(r.top, 0);
+                return (w < 40 || h < 40) ? 0 : w * h;
+            } catch (e) {
+                return 0;
             }
-            // --- Web A / Z ---
-            const aSlide = document.querySelector(A_SLIDE);
-            if (aSlide && aSlide.offsetParent !== null) {
-                const videoPlayer = aSlide.querySelector(".MediaViewerContent > .VideoPlayer") || aSlide;
-                const video = videoPlayer && videoPlayer.querySelector("video");
-                const vurl = video && (video.currentSrc || video.src);
-                if (vurl) {
-                    const meta = streamMeta(vurl);
-                    return {
-                        kind: "video", url: vurl,
-                        fileName: (meta && meta.fileName) || ("Telegram_" + shortId(vurl) + ".mp4"),
-                        blobType: (meta && meta.mimeType) || "video/mp4",
-                    };
+        }
+
+        function viewerOpen() {
+            const k = document.querySelector(K_VIEWER);
+            if (k && k.offsetParent !== null) return true;
+            const a = document.querySelector(A_VIEWER);
+            if (a && a.offsetParent !== null) return true;
+            return false;
+        }
+
+        // Find the media to offer for download: the most-prominent (largest
+        // on-screen) <video> whose src we can fetch — whether that's the
+        // fullscreen viewer OR a video autoplaying INLINE in the chat, so the
+        // button also appears as an overlay in a normal chat (per user request).
+        // Class-name independent (Telegram's inner markup varies by build). Falls
+        // back to the fullscreen image when a viewer is open. Returns null when
+        // nothing downloadable is on screen (e.g. a poster-only video that hasn't
+        // been opened yet — its /stream/ URL doesn't exist until it plays).
+        function detect() {
+            const vp = (window.innerWidth || 1) * (window.innerHeight || 1);
+            const inViewer = viewerOpen();
+
+            let bestUrl = null, bestArea = 0;
+            const vids = document.querySelectorAll("video");
+            for (let i = 0; i < vids.length; i++) {
+                const u = vids[i].currentSrc || vids[i].src;
+                if (!isDownloadableSrc(u)) continue;
+                const a = viewportArea(vids[i]);
+                if (a > bestArea) { bestArea = a; bestUrl = u; }
+            }
+            // Show for the fullscreen viewer, or for an inline video occupying a
+            // meaningful slice of the screen (≥15%) — enough to exclude tiny
+            // previews but include a normal chat video bubble.
+            if (bestUrl && (inViewer || bestArea >= vp * 0.15)) {
+                const meta = streamMeta(bestUrl);
+                return {
+                    kind: "video", url: bestUrl,
+                    fileName: (meta && meta.fileName) || ("Telegram_" + shortId(bestUrl) + ".mp4"),
+                    blobType: (meta && meta.mimeType) || "video/mp4",
+                };
+            }
+
+            // Images: only inside the fullscreen viewer (an inline <img> is far
+            // too common to gate a download button on). Prefer a downloadable src.
+            if (inViewer) {
+                let imgUrl = null, imgScore = 0;
+                const imgs = document.querySelectorAll("img");
+                for (let i = 0; i < imgs.length; i++) {
+                    const u = imgs[i].src;
+                    if (!u) continue;
+                    const a = viewportArea(imgs[i]);
+                    if (a < vp * 0.2) continue;
+                    const s = (isDownloadableSrc(u) ? 1e12 : 0) + a;
+                    if (s > imgScore) { imgScore = s; imgUrl = u; }
                 }
-                const img = aSlide.querySelector(".MediaViewerContent > div > img");
-                const iurl = img && img.src;
-                if (iurl) {
-                    const meta = streamMeta(iurl);
+                if (imgUrl) {
+                    const meta = streamMeta(imgUrl);
                     return {
-                        kind: "image", url: iurl,
-                        fileName: (meta && meta.fileName) || ("Telegram_" + shortId(iurl) + ".jpeg"),
+                        kind: "image", url: imgUrl,
+                        fileName: (meta && meta.fileName) || ("Telegram_" + shortId(imgUrl) + ".jpeg"),
                         blobType: (meta && meta.mimeType) || "image/jpeg",
                     };
                 }
@@ -365,21 +385,22 @@
             return btn;
         }
 
-        // A single FLOATING download button, overlaid on the fullscreen viewer.
-        // Injecting into Telegram's own button row is unreliable on mobile Web-K
-        // (the icons collapse into the ⋮ overflow menu, hiding the button) — a
-        // fixed-position overlay is both robust (no dependency on Telegram's
-        // toolbar DOM) and discoverable (a clear, always-visible affordance). It
-        // shows only while a viewer with downloadable media is open.
+        // A single FLOATING download button (fixed-position FAB). We overlay our
+        // OWN button rather than injecting into Telegram's action row — on mobile
+        // Web-K those icons collapse into the ⋮ overflow menu, hiding an injected
+        // button. It appears whenever a downloadable video is prominent on screen
+        // (fullscreen viewer OR an autoplaying inline chat video) and while a
+        // fullscreen image viewer is open; it targets the most-prominent media.
         let floatBtn = null;
         let currentMedia = null;
+        let lastSig = "";
 
         function makeFloatingButton() {
             const btn = makeButton();
-            // Prominent circular FAB, top-right under the status bar, above the
-            // viewer chrome. Fixed so the overflow menu can't hide it.
+            // Prominent circular FAB, top-right below the header. Fixed so the
+            // overflow menu / chat chrome can't hide it.
             btn.setAttribute("style",
-                "position:fixed;top:64px;right:14px;z-index:2147483647;" +
+                "position:fixed;top:72px;right:14px;z-index:2147483647;" +
                 "width:48px;height:48px;border:0;border-radius:50%;cursor:pointer;" +
                 "display:flex;align-items:center;justify-content:center;" +
                 "background:#3390ec;color:#fff;font-size:24px;line-height:1;" +
@@ -387,9 +408,12 @@
             btn.addEventListener("click", function (ev) {
                 ev.preventDefault();
                 ev.stopPropagation();
-                if (!currentMedia) { log("click: nothing to download"); return; }
-                log("download click", currentMedia.kind, currentMedia.url.slice(0, 80));
-                startDownload(currentMedia);
+                // Re-detect at click time — the prominent media may have changed
+                // (swipe/scroll) since the last scan.
+                const media = detect() || currentMedia;
+                if (!media) { log("click: nothing to download"); return; }
+                log("download click", media.kind, media.url.slice(0, 80));
+                startDownload(media);
             }, true);
             return btn;
         }
@@ -401,11 +425,26 @@
                 if (!floatBtn) {
                     floatBtn = makeFloatingButton();
                     document.body.appendChild(floatBtn);
-                    log("floating button shown", media.kind);
                 }
                 floatBtn.style.display = "flex";
             } else if (floatBtn) {
                 floatBtn.style.display = "none";
+            }
+            // Diagnostic (state-change throttled): reports whether we show the
+            // button and what downloadable media the scan saw — so a missed case
+            // can be fixed from a logcat line instead of guessing selectors.
+            if (DEBUG) {
+                const vids = document.querySelectorAll("video");
+                let firstSrc = "";
+                for (let i = 0; i < vids.length; i++) {
+                    const u = vids[i].currentSrc || vids[i].src;
+                    if (u) { firstSrc = u.slice(0, 64); break; }
+                }
+                const sig = (media ? "show:" + media.kind : "hide") + "|videos=" + vids.length + "|" + firstSrc;
+                if (sig !== lastSig) {
+                    lastSig = sig;
+                    log("scan", sig);
+                }
             }
         }
 
