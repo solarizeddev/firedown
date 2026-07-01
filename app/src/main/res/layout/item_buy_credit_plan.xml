@@ -26,6 +26,9 @@
         android:layout_height="wrap_content"
         android:padding="15dp">
 
+        <!-- size + "for" are a packed vertical chain, so when "for" is GONE (the
+             common case — the duration toggle already states it) the size text
+             centres itself against the price instead of sticking to the top. -->
         <TextView
             android:id="@+id/buy_plan_size"
             android:layout_width="0dp"
@@ -36,6 +39,8 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toStartOf="@id/buy_plan_price"
             app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toTopOf="@id/buy_plan_for"
+            app:layout_constraintVertical_chainStyle="packed"
             tools:text="Up to 50 GB" />
 
         <TextView
@@ -48,6 +53,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toStartOf="@id/buy_plan_price"
             app:layout_constraintTop_toBottomOf="@id/buy_plan_size"
+            app:layout_constraintBottom_toBottomOf="parent"
             tools:text="for 1 year" />
 
         <TextView

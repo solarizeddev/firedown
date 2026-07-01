@@ -290,6 +290,10 @@ public class BuyCreditFragment extends Fragment {
         mSelectedOption = null;
         mContinue.setEnabled(false);
         LayoutInflater inflater = LayoutInflater.from(requireContext());
+        // "for <duration>" on a tile is redundant when the duration toggle is
+        // visible (it already says it) — show it only in the single-duration case
+        // where the toggle is hidden, so the coverage is still stated somewhere.
+        boolean showFor = mDurationSection.getVisibility() != View.VISIBLE;
         int count = 0;
         MaterialCardView preferred = null;
         BuyCreditViewModel.Option preferredOpt = null;
@@ -303,8 +307,12 @@ public class BuyCreditFragment extends Fragment {
                     R.layout.item_buy_credit_plan, mDenomContainer, false);
             ((TextView) card.findViewById(R.id.buy_plan_size))
                     .setText(getString(R.string.buy_credit_plan_size, opt.sizeGb));
-            ((TextView) card.findViewById(R.id.buy_plan_for))
-                    .setText(getString(R.string.buy_credit_plan_for, formatDuration(durationMonths)));
+            TextView forLabel = card.findViewById(R.id.buy_plan_for);
+            if (showFor) {
+                forLabel.setText(getString(R.string.buy_credit_plan_for, formatDuration(durationMonths)));
+            } else {
+                forLabel.setVisibility(View.GONE);
+            }
             ((TextView) card.findViewById(R.id.buy_plan_price)).setText(formatUsd(opt.priceCents));
             card.setTag(opt);
             card.setOnClickListener(v -> selectCard(card, opt));
