@@ -680,6 +680,8 @@
     <string name="update_available_sheet_title">Update available</string>
     <!-- %1$s is the currently-installed version name. -->
     <string name="update_available_sheet_current">Current version %1$s</string>
+    <!-- %1$s = currently-installed version name, %2$s = download size (e.g. "48 MB"). -->
+    <string name="update_available_sheet_current_size">Current version %1$s · %2$s</string>
     <string name="update_available_sheet_whats_new">What\'s new</string>
     <string name="update_available_sheet_install">Install</string>
     <string name="vault_decrypting">Decrypting file, please wait…</string>

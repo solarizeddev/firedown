@@ -7,8 +7,10 @@
   follows "Enable"; "Not now" dismisses without burning the one-shot system
   prompt. Reuses the same forest illustration + copy as the post-denial
   NotificationsManagerDialog. No new strings: body is settings_notifications_manager,
-  buttons reuse wasm_snackbar_action_enable / settings_storage_manager_button_decline
-  (all already localized).
+  buttons reuse settings_sync_export_continue / settings_storage_manager_button_decline
+  (all fully localized across every locale file — wasm_snackbar_action_enable was
+  deliberately NOT used: it ships in only ~19 locales and would fall back to
+  English for the "Enable" label elsewhere).
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -58,7 +60,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
             android:minWidth="140dp"
-            android:text="@string/wasm_snackbar_action_enable" />
+            android:text="@string/settings_sync_export_continue" />
 
     </LinearLayout>
 

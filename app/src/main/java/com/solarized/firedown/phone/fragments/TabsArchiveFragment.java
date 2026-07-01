@@ -1,6 +1,8 @@
 package com.solarized.firedown.phone.fragments;
 
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -156,10 +158,57 @@ public class TabsArchiveFragment extends BaseFocusFragment implements OnItemClic
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         postponeEnterTransition();
-        setupLoadStateListener((ViewGroup) view.getParent());
+        releaseEnterTransitionWhenReady(view);
+        setupLoadStateListener();
         observeViewModel();
         setupNavigationObservers();
     }
+
+    /**
+     * Release the postponed enter transition once the view is ready to
+     * draw, DECOUPLED from the paging load state.
+     *
+     * <p>The previous version started the transition only inside the
+     * {@link LoadState.NotLoading} branch of the load-state listener. If
+     * that first paging load errored or stalled (never reaching
+     * NotLoading), {@code startPostponedEnterTransition} was never called
+     * and the screen froze: the new fragment stayed postponed (invisible)
+     * over the still-shown previous fragment, so opening "recently closed
+     * tabs" looked like "nothing happened" with the prior screen frozen,
+     * and a back press — which cancels the pending FragmentManager
+     * transaction — was the only way out.</p>
+     *
+     * <p>Mirrors {@link BaseDownloadFragment#handleTransitionTiming()}:
+     * an onPreDraw release for the normal path (so the populated list is
+     * shown rather than a blank window) plus a hard timeout so a slow /
+     * failed upstream can never wedge the transition.
+     * {@code startPostponedEnterTransition} is idempotent, so racing the
+     * two paths is safe.</p>
+     */
+    private void releaseEnterTransitionWhenReady(View view) {
+        final ViewGroup parent = (ViewGroup) view.getParent();
+        if (parent == null) {
+            startPostponedEnterTransition();
+            return;
+        }
+        parent.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
+            @Override
+            public boolean onPreDraw() {
+                parent.getViewTreeObserver().removeOnPreDrawListener(this);
+                startPostponedEnterTransition();
+                return true;
+            }
+        });
+        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+            if (isAdded()) startPostponedEnterTransition();
+        }, TRANSITION_RELEASE_TIMEOUT_MS);
+    }
+
+    /** Upper bound on how long the enter transition stays postponed while
+     *  waiting for the first paging page. Matches BaseDownloadFragment's
+     *  budget — comfortably past a fast query / slow cold DB open without
+     *  leaving the user on a blank window if something upstream wedges. */
+    private static final long TRANSITION_RELEASE_TIMEOUT_MS = 350L;
 
     private void observeViewModel() {
         // ViewModel now handles all transformation logic internally
@@ -168,22 +217,16 @@ public class TabsArchiveFragment extends BaseFocusFragment implements OnItemClic
         });
     }
 
-    private void setupLoadStateListener(ViewGroup parentView) {
+    private void setupLoadStateListener() {
+        // Empty/loaded UI only — the enter-transition release is handled
+        // separately by releaseEnterTransitionWhenReady, so a load that
+        // errors or never reaches NotLoading can't keep the screen frozen.
         mAdapter.addLoadStateListener(loadStates -> {
             if (mAdapter == null || mLCEERecyclerView == null) return null;
 
             if (loadStates.getRefresh() instanceof LoadState.NotLoading) {
                 if (mAdapter.getItemCount() == 0) mLCEERecyclerView.showEmpty();
                 else mLCEERecyclerView.hideAll();
-
-                parentView.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
-                    @Override
-                    public boolean onPreDraw() {
-                        parentView.getViewTreeObserver().removeOnPreDrawListener(this);
-                        startPostponedEnterTransition();
-                        return true;
-                    }
-                });
             }
             return null;
         });

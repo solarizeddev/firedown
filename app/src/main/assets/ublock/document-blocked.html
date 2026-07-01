@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<!--
+    uBlock Origin's "page blocked" interstitial, restored for Firedown.
+
+    Why this file exists:
+    Firedown ships a UI-stripped uBlock build (only the background blocking
+    engine + content scripts are kept; the popup/dashboard/logger HTML was
+    removed because Firedown surfaces blocking through its own native UI).
+    But the engine still fires the STRICT-BLOCK path for `$document` filters:
+    traffic.js `onBeforeRootFrameRequest` cancels the request and calls
+    `vAPI.tabs.replace(tabId, 'document-blocked.html?details=...')`. With this
+    page missing, that navigation landed on a non-existent moz-extension URL
+    and the tab rendered blank (about:blank). Restoring the page makes a
+    Firedown-styled interstitial show, with working Go back / Proceed.
+
+    Styling mirrors Firedown's native error pages (assets/error/): the same
+    periwinkle palette, thin type, and button semantics (dark = recommended
+    action, muted = "bypass a protection", orange = active accent). The hero is
+    the crossed-out shield from the native Security sheet (inlined from
+    res/drawable/ic_shield_bad_24.xml) — a "blocked for your protection" tone,
+    deliberately not the error pages' matchstick. Self-contained on purpose
+    (the stripped build has no css/i18n stack): inline styles + one external
+    script. Page JS is external because the default WebExtension page CSP
+    (`script-src 'self'`) forbids inline scripts; inline <style> is fine.
+    The only uBlock deps are vapi.js + vapi-client.js for `vAPI.messaging.send`,
+    which talks to the still-present background listeners: `documentBlocked`
+    (temporarilyWhitelistDocument / closeThisTab) and `popupPanel`
+    (toggleHostnameSwitch -> no-strict-blocking).
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>Page blocked</title>
+<style>
+  /* Palette + conventions lifted from assets/error/error_style.css so this
+     reads as part of the Firedown family, not a recoloured uBlock page. */
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    --spacing: 14px;
+  }
+  body {
+    background-color: #d3d6e5;
+    color: #333949;
+    padding: 0 20px;
+    font-family: sans-serif;
+    font-weight: 300;
+    font-size: 15px;
+    line-height: 1.5;
+    -moz-text-size-adjust: none;
+  }
+  #container {
+    max-width: 550px;
+    margin: 0 auto;
+    padding: 40px 0 24px;
+    min-height: calc(100% - 64px);
+    display: flex;
+    flex-direction: column;
+  }
+  #illustration {
+    width: 104px;
+    height: 104px;
+    align-self: center;
+    margin-bottom: 12px;
+  }
+  h1 {
+    margin: 0;
+    color: #455267;
+    font-weight: 300;
+    font-size: 1.9em;
+    text-align: center;
+  }
+  h2 {
+    margin: var(--spacing) 0 0;
+    color: #455267;
+    font-weight: 300;
+    font-size: 1.2em;
+    text-align: center;
+  }
+  p { margin: var(--spacing) 0 4px; }
+  .label { color: #455267; }
+  code {
+    display: block;
+    background-color: #eef0f6;
+    color: #333949;
+    border: 1px solid #c4c8db;
+    border-radius: 6px;
+    padding: 12px 14px;
+    margin: 6px 0;
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-weight: 400;
+    font-size: 0.95em;
+    line-height: 1.45;
+    word-break: break-all;
+    white-space: pre-wrap;
+  }
+  #foundInRow { display: none; }
+  #foundInRow .name { color: #333949; }
+  #redirectWarn {
+    display: none;
+    border-left: 3px solid #ff716c;
+    background-color: #eef0f6;
+    border-radius: 0 6px 6px 0;
+    padding: 10px 14px;
+    margin-top: var(--spacing);
+  }
+  label.checkbox {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 24px 0 4px;
+    cursor: pointer;
+    -webkit-user-select: none;
+    user-select: none;
+    color: #455267;
+  }
+  label.checkbox input { width: 20px; height: 20px; accent-color: #ff716c; }
+  #buttons { margin-top: auto; padding-top: 20px; }
+  button {
+    display: block;
+    width: 100%;
+    border: none;
+    border-radius: 4px;
+    padding: 1rem;
+    margin: var(--spacing) 0 0;
+    font-family: sans-serif;
+    font-weight: 300;
+    font-size: 1em;
+    color: #ffffff;
+    cursor: pointer;
+  }
+  /* Recommended/safe action: same dark primary as the error page's
+     "Try again", and the same orange active state. */
+  #back { background-color: #455267; }
+  #back:active { background-color: #ff716c; }
+  /* Risky action: muted secondary, exactly like the error page's
+     "Continue to HTTP site" (also a bypass-a-protection action). */
+  #proceed { background-color: #333949; }
+  #proceed:active { background-color: #ff716c; }
+  button:disabled { opacity: 0.55; cursor: default; }
+</style>
+</head>
+<body dir="auto">
+<div id="container">
+
+  <!-- Crossed-out shield, inlined from res/drawable/ic_shield_bad_24.xml — the
+       same "blocking" glyph Firedown's native Security sheet uses, so the
+       interstitial ties to that feature. Android pathData is SVG-compatible
+       path syntax. -->
+  <svg id="illustration" viewBox="0 0 960 960" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <path fill="#455267" d="M737.84,630.46L692.46,583.85Q705.23,551.85 712.62,515.62Q720,479.38 720,444L720,255L480,165.38L330.15,221.54L283.54,174.92L480,101.54L780,213.85L780,444Q780,490 769.84,536.54Q759.69,583.08 737.84,630.46ZM792,876.31L661.23,745.54Q624.38,786.46 577.69,815.65Q531,844.84 480,859.23Q347.54,823.08 263.77,704.92Q180,586.77 180,444L180,264.31L85.23,169.54L127.39,127.39L834.15,834.15L792,876.31ZM480,796Q518.85,783.85 556.04,758.27Q593.23,732.69 619.08,703.38L240,324.31L240,444Q240,565 308,664Q376,763 480,796Z"/>
+  </svg>
+
+  <h1>Page blocked</h1>
+  <h2>Firedown's content blocker stopped this page from loading.</h2>
+
+  <p class="label">The blocked address:</p>
+  <code id="theURL"></code>
+
+  <p class="label">Triggered by this filter:</p>
+  <code id="theFilter"></code>
+
+  <p id="foundInRow" class="label">Listed in: <span class="name" id="theReason"></span></p>
+
+  <p id="redirectWarn"></p>
+
+  <label class="checkbox" for="dontWarn">
+    <input type="checkbox" id="dontWarn">
+    <span>Don't warn me again about this site</span>
+  </label>
+
+  <div id="buttons">
+    <button id="back" type="button">Go back</button>
+    <button id="proceed" type="button">Proceed anyway</button>
+  </div>
+
+</div>
+
+<script src="js/vapi.js"></script>
+<script src="js/vapi-client.js"></script>
+<script src="js/document-blocked.js"></script>
+</body>
+</html>

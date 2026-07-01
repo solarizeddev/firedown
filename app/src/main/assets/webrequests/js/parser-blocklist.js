@@ -175,6 +175,23 @@ const PARSER_BLOCKLIST = {
     '(cdn-telegram\\.org|telesco\\.pe)\\/file\\/.*\\.mp4',
   ],
 
+  // Telegram WEB APP (web.telegram.org/k & /a) — its media URLs are
+  // ServiceWorker-virtual /stream/ paths backed by MTProto bytes decrypted
+  // in-page. They are NOT re-fetchable by the native downloader (no SW, no
+  // MTProto), so a generic-catcher capture of one is a HARMFUL entry that fails
+  // on every download attempt (the /stream/ requests DO cross the wire as 206
+  // video/mp4, so without this block the catcher would grab them). Block it to
+  // keep those broken entries out of the Captured sheet — same "block a harmful
+  // capture" rationale as Mega's undecryptable bytes, not the ordinary
+  // cardinal-rule dedup. (An in-page-download button for this surface was tried
+  // and removed — see the "Telegram WEB APP" note in CLAUDE.md; the web app is
+  // not a supported download surface, this block just prevents broken captures.)
+  // Matches /k/stream/, /a/stream/, /z/stream/ and a bare /stream/ on the
+  // web(k|z).telegram.org hosts.
+  'telegram-web': [
+    'web(?:k|z)?\\.telegram\\.org\\/(?:[kaz]\\/)?stream\\/',
+  ],
+
   // News Over Audio (NOA) — the "listen to this article" embed used across many
   // publishers (IEEE Spectrum, …). The parser reads api.newsoveraudio.com's
   // player JSON and emits the signed article narration .mp3 from NOA's audio CDN
@@ -185,6 +202,19 @@ const PARSER_BLOCKLIST = {
   // also land untitled).
   newsoveraudio: [
     'audios\\.newsoveraudio\\.com\\/.*\\.mp3',
+  ],
+
+  // Videee (videee.com) — the videee@ parser reads the Supabase /rest/v1/videos
+  // JSON (each row carries title + thumbnail_url + a direct video_url) and emits
+  // the progressive .mp4 served from Cloudflare-fronted media.videee.com, under
+  // an owner-UUID path segment. Block that .mp4 so the generic catcher doesn't
+  // grab a second, bare, metadata-less copy when the player fetches the same URL
+  // on play (which it would otherwise enrich with the SITE og:title/og:image —
+  // identical for every clip, the bug this parser fixes). Scoped to the 36-char
+  // UUID path + .mp4 so the thumbnails this same host serves
+  // (media.videee.com/thumbnails/<owner>/<n>.jpg) are untouched.
+  videee: [
+    'media\\.videee\\.com\\/[0-9a-f-]{36}\\/[^?#]+\\.mp4',
   ],
 };
 
