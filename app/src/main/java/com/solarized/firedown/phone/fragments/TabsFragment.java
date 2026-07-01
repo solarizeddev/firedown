@@ -59,7 +59,7 @@ public class TabsFragment extends BaseTabsFragment {
      * at the call site so R8 strips it from release. Flip back to false
      * (or remove) once testing is done.
      */
-    private static final boolean FORCE_ARCHIVE_1H_FOR_DEBUG = true;
+    private static final boolean FORCE_ARCHIVE_1H_FOR_DEBUG = false;
 
     private Snackbar mActiveSnackbar;
 
