@@ -1,0 +1,26 @@
+{
+  "docblockedTitle": {
+    "message": "Pagina geblokkeerd"
+  },
+  "docblockedPrompt2": {
+    "message": "Dit is gebeurd vanwege het volgende filter:"
+  },
+  "docblockedFoundIn": {
+    "message": "Het filter is gevonden in:"
+  },
+  "docblockedDontWarn": {
+    "message": "Mij niet meer waarschuwen over deze website"
+  },
+  "docblockedDisable": {
+    "message": "Doorgaan"
+  },
+  "docblockedBack": {
+    "message": "Teruggaan"
+  },
+  "docblockedRedirectPrompt": {
+    "message": "De geblokkeerde pagina wil u omleiden naar een andere website. Als u doorgaat, navigeert u rechtstreeks naar: {{url}}"
+  },
+  "docblockedSubtitle": {
+    "message": "De inhoudsblokkering van Firedown heeft het laden van deze pagina geblokkeerd."
+  }
+}

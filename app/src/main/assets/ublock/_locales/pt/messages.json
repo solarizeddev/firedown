@@ -1,0 +1,26 @@
+{
+  "docblockedTitle": {
+    "message": "Página bloqueada"
+  },
+  "docblockedPrompt2": {
+    "message": "Por causa do seguinte filtro:"
+  },
+  "docblockedFoundIn": {
+    "message": "Achado em:"
+  },
+  "docblockedDontWarn": {
+    "message": "Não me avisar de novo sobre este site"
+  },
+  "docblockedDisable": {
+    "message": "Prosseguir"
+  },
+  "docblockedBack": {
+    "message": "Voltar"
+  },
+  "docblockedRedirectPrompt": {
+    "message": "A página bloqueada deseja redirecionar para outro site. Se você escolher continuar, você navegará diretamente para: {{url}}"
+  },
+  "docblockedSubtitle": {
+    "message": "O bloqueador de conteúdo do Firedown impediu o carregamento desta página."
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "docblockedTitle": {
+    "message": "页面已被屏蔽"
+  },
+  "docblockedPrompt2": {
+    "message": "因为下列过滤规则："
+  },
+  "docblockedFoundIn": {
+    "message": "被包含于："
+  },
+  "docblockedDontWarn": {
+    "message": "不再针对此网站作出警告"
+  },
+  "docblockedDisable": {
+    "message": "继续加载"
+  },
+  "docblockedBack": {
+    "message": "返回"
+  },
+  "docblockedRedirectPrompt": {
+    "message": "被屏蔽的网页想重定向到另一个网站。如果您选择继续，将直接导航到：{{url}}"
+  },
+  "docblockedSubtitle": {
+    "message": "Firedown 内容拦截器已阻止此页面加载。"
+  }
+}

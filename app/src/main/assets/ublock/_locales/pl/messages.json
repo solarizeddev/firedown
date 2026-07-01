@@ -1,0 +1,26 @@
+{
+  "docblockedTitle": {
+    "message": "Strona zablokowana"
+  },
+  "docblockedPrompt2": {
+    "message": "Powodem zablokowania jest filtr"
+  },
+  "docblockedFoundIn": {
+    "message": "Filtr znajduje się na liście:"
+  },
+  "docblockedDontWarn": {
+    "message": "Nie ostrzegaj mnie ponownie o tej stronie"
+  },
+  "docblockedDisable": {
+    "message": "Kontynuuj"
+  },
+  "docblockedBack": {
+    "message": "Wstecz"
+  },
+  "docblockedRedirectPrompt": {
+    "message": "Zablokowana strona chce przekierować na inną witrynę. Jeśli zdecydujesz się kontynuować, przejdziesz bezpośrednio do: {{url}}"
+  },
+  "docblockedSubtitle": {
+    "message": "Bloker treści Firedown zablokował ładowanie tej strony."
+  }
+}

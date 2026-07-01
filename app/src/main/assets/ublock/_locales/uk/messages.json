@@ -1,0 +1,26 @@
+{
+  "docblockedTitle": {
+    "message": "Сторінка заблокована"
+  },
+  "docblockedPrompt2": {
+    "message": "Через наступний фільтр"
+  },
+  "docblockedFoundIn": {
+    "message": "Знайдено в:"
+  },
+  "docblockedDontWarn": {
+    "message": "Не нагадуйте мені про цей сайт"
+  },
+  "docblockedDisable": {
+    "message": "Продовжити"
+  },
+  "docblockedBack": {
+    "message": "Повернутись назад"
+  },
+  "docblockedRedirectPrompt": {
+    "message": "Заблокована сторінка хоче переадресувати на інший сайт. Якщо ви вирішите продовжити, ви перейдете безпосередньо на: {{url}}"
+  },
+  "docblockedSubtitle": {
+    "message": "Блокувальник вмісту Firedown зупинив завантаження цієї сторінки."
+  }
+}

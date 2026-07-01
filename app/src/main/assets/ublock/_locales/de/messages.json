@@ -1,0 +1,26 @@
+{
+  "docblockedTitle": {
+    "message": "Seite blockiert"
+  },
+  "docblockedPrompt2": {
+    "message": "Aufgrund des folgenden Filters:"
+  },
+  "docblockedFoundIn": {
+    "message": "Gefunden in:"
+  },
+  "docblockedDontWarn": {
+    "message": "Nicht erneut vor dieser Seite warnen"
+  },
+  "docblockedDisable": {
+    "message": "Fortfahren"
+  },
+  "docblockedBack": {
+    "message": "Zurück"
+  },
+  "docblockedRedirectPrompt": {
+    "message": "Die blockierte Seite möchte zu einer anderen Website weiterleiten. Beim Fortfahren wird folgende Seite aufgerufen: {{url}}"
+  },
+  "docblockedSubtitle": {
+    "message": "Firedowns Inhaltsblocker hat das Laden dieser Seite verhindert."
+  }
+}
