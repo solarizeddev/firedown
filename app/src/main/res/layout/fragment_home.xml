@@ -187,6 +187,38 @@
 
                 </LinearLayout>
 
+                <!-- Cloud Backup status — a second quiet line under the stats,
+                     shown ONLY when Cloud Backup is set up (bound in HomeFragment;
+                     never on a fresh install, never in incognito — this is the
+                     regular home). Same transparent-chip treatment as the subtitle
+                     halves; tap → the Downloads-backup screen. Neutral normally,
+                     coloured only when it needs attention (paused). -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/home_cloud"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:visibility="gone"
+                    app:cardBackgroundColor="@color/transparent"
+                    app:strokeWidth="0dp"
+                    app:cardCornerRadius="14dp"
+                    app:cardElevation="0dp"
+                    tools:visibility="visible">
+
+                    <TextView
+                        android:id="@+id/home_cloud_text"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:paddingHorizontal="12dp"
+                        android:paddingVertical="8dp"
+                        android:textColor="?attr/colorOnSurfaceVariant"
+                        android:textSize="13sp"
+                        tools:text="Backups on · 12 files" />
+
+                </com.google.android.material.card.MaterialCardView>
+
             </LinearLayout>
 
 

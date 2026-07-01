@@ -866,6 +866,14 @@
          "10.5K" / a readable size like "9.5 GB"). -->
     <string name="home_subtitle_blocked">%1$s blocked</string>
     <string name="home_subtitle_saved">%1$s saved</string>
+    <!-- Home Cloud Backup status line (shown only when backups are set up) -->
+    <string name="home_cloud_backing_up">Backing up…</string>
+    <!-- %1$s = a month + year, e.g. "Mar 2027" -->
+    <string name="home_cloud_covered">Covered to ~ %1$s</string>
+    <string name="home_cloud_paused">Backups paused — top up</string>
+    <string name="home_cloud_on">Backups on</string>
+    <!-- %1$s = "12 files" -->
+    <string name="home_cloud_on_files">Backups on · %1$s</string>
     <!-- Subtitle shown on the Home Safe Folder card when the vault
          is empty. Populated state uses the home_vault_item_count
          plural ('12 items saved') instead. Keeps the card on two

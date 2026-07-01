@@ -47,6 +47,14 @@ import com.solarized.firedown.manager.DownloadRequest;
 
 import com.solarized.firedown.phone.DownloadsActivity;
 import com.solarized.firedown.phone.SettingsActivity;
+import com.solarized.firedown.sync.CloudBackupManager;
+import com.solarized.firedown.sync.StorageApiClient;
+
+import androidx.core.content.ContextCompat;
+import androidx.work.WorkInfo;
+import androidx.work.WorkManager;
+
+import java.text.DateFormatSymbols;
 import com.solarized.firedown.phone.VaultActivity;
 import com.solarized.firedown.autocomplete.AutoCompleteEditText;
 import com.solarized.firedown.autocomplete.AutoCompleteView;
@@ -99,6 +107,14 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     private View mSubtitleSep;
     private View mSubtitleSaved;
     private TextView mSubtitleSavedText;
+    // Cloud Backup status line — a second quiet line under the stats, shown only
+    // when Cloud Backup is set up. Composed from the latest of these three inputs.
+    private View mHomeCloud;
+    private TextView mHomeCloudText;
+    private int mHomeCloudDefaultColor;
+    private boolean mCloudActive;
+    private int mCloudFiles = -1;
+    private StorageApiClient.Quota mCloudQuota;
     // The brand flame doubles as the live "a download is running" indicator:
     // a soft ember glow that breathes behind the logo while the active+queued
     // count (the same signal as the bottom-bar badge) is > 0, and is GONE
@@ -109,6 +125,8 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     private Animator mBrandGlowAnimator;
     @Inject
     GeckoUblockHelper mGeckoUblockHelper;
+    @Inject
+    CloudBackupManager mCloudBackup;
 
 
     @Override
@@ -146,6 +164,9 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         if (mGeckoStateViewModel != null) {
             mGeckoStateViewModel.ensureHomeTabIfEmpty();
         }
+        // Cloud Backup status can change while away (a backup finishes, credit is
+        // added, or it's set up for the first time) — recompute the home line.
+        refreshCloudStatus();
     }
 
     /**
@@ -200,6 +221,39 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
             mSubtitleSaved.setOnClickListener(view ->
                     mStartForResult.launch(new Intent(mActivity, DownloadsActivity.class)));
         }
+
+        // Cloud Backup status line — tap opens the Downloads-backup screen; live
+        // "Backing up…" while a transfer runs; otherwise the quota/usage summary.
+        mHomeCloud = v.findViewById(R.id.home_cloud);
+        mHomeCloudText = v.findViewById(R.id.home_cloud_text);
+        if (mHomeCloudText != null) {
+            // The layout's resting colour (colorOnSurfaceVariant) — restored when
+            // the line is neutral, after an attention state overrode it.
+            mHomeCloudDefaultColor = mHomeCloudText.getCurrentTextColor();
+        }
+        if (mHomeCloud != null) {
+            mHomeCloud.setOnClickListener(view -> {
+                Intent intent = new Intent(mActivity, SettingsActivity.class);
+                intent.putExtra(SettingsActivity.EXTRA_OPEN_CLOUD_BACKUP, true);
+                startActivity(intent);
+            });
+        }
+        WorkManager.getInstance(mActivity.getApplicationContext())
+                .getWorkInfosByTagLiveData(CloudBackupManager.WORK_TAG)
+                .observe(getViewLifecycleOwner(), infos -> {
+                    boolean active = false;
+                    if (infos != null) {
+                        for (WorkInfo wi : infos) {
+                            WorkInfo.State s = wi.getState();
+                            if (s == WorkInfo.State.RUNNING || s == WorkInfo.State.ENQUEUED) {
+                                active = true;
+                                break;
+                            }
+                        }
+                    }
+                    mCloudActive = active;
+                    applyCloudStatus();
+                });
 
         mBottomNavigationBar.setListener(this);
 
@@ -557,6 +611,91 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
             mSubtitleSep.setVisibility(blocked && saved ? View.VISIBLE : View.GONE);
         }
         mSubtitle.setVisibility(blocked || saved ? View.VISIBLE : View.GONE);
+    }
+
+    /**
+     * Loads the Cloud Backup status inputs (usage + quota) when set up, then
+     * composes the home status line. Called on resume; the transfer-active state
+     * comes from the WorkManager observer wired in onViewCreated.
+     */
+    private void refreshCloudStatus() {
+        if (mHomeCloud == null) {
+            return;
+        }
+        if (!mCloudBackup.isSetUp()) {
+            mCloudFiles = -1;
+            mCloudQuota = null;
+            applyCloudStatus();
+            return;
+        }
+        applyCloudStatus(); // show promptly with whatever we already have
+        mCloudBackup.loadUsage(usage -> {
+            if (isAdded() && mHomeCloud != null) {
+                mCloudFiles = usage.fileCount;
+                applyCloudStatus();
+            }
+        });
+        mCloudBackup.loadQuota(quota -> {
+            if (isAdded() && mHomeCloud != null) {
+                mCloudQuota = quota;
+                applyCloudStatus();
+            }
+        });
+    }
+
+    /** Composes the home Cloud Backup line from the latest transfer/quota/usage
+     *  state. Hidden unless set up; neutral normally, coloured only when paused. */
+    private void applyCloudStatus() {
+        if (mHomeCloud == null || mHomeCloudText == null) {
+            return;
+        }
+        if (!mCloudBackup.isSetUp()) {
+            mHomeCloud.setVisibility(View.GONE);
+            return;
+        }
+        mHomeCloud.setVisibility(View.VISIBLE);
+        boolean attention = false;
+        String text;
+        if (mCloudActive) {
+            text = getString(R.string.home_cloud_backing_up);
+        } else if (mCloudQuota != null && mCloudQuota.metered) {
+            if (mCloudQuota.readOnly) {
+                text = getString(R.string.home_cloud_paused);
+                attention = true;
+            } else {
+                String when = monthYear(mCloudQuota.projectedRunoutAt);
+                text = when != null
+                        ? getString(R.string.home_cloud_covered, when)
+                        : getString(R.string.home_cloud_on);
+            }
+        } else if (mCloudFiles > 0) {
+            String files = getResources().getQuantityString(
+                    R.plurals.settings_cloud_backup_file_count, mCloudFiles, mCloudFiles);
+            text = getString(R.string.home_cloud_on_files, files);
+        } else {
+            text = getString(R.string.home_cloud_on);
+        }
+        mHomeCloudText.setText(text);
+        mHomeCloudText.setTextColor(attention
+                ? ContextCompat.getColor(mActivity, R.color.brand_orange)
+                : mHomeCloudDefaultColor);
+    }
+
+    /** RFC3339 prefix (e.g. "2027-03-15T…") → localized "Mar 2027", null on fail. */
+    private static String monthYear(String rfc3339) {
+        if (rfc3339 == null || rfc3339.length() < 7) {
+            return null;
+        }
+        try {
+            int year = Integer.parseInt(rfc3339.substring(0, 4));
+            int month = Integer.parseInt(rfc3339.substring(5, 7));
+            if (month < 1 || month > 12) {
+                return null;
+            }
+            return new DateFormatSymbols().getShortMonths()[month - 1] + " " + year;
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     @Override
