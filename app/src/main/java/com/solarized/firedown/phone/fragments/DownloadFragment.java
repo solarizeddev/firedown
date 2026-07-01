@@ -40,7 +40,6 @@ import com.solarized.firedown.R;
 import com.solarized.firedown.data.Download;
 import com.solarized.firedown.data.DownloadBackupMirror;
 import com.solarized.firedown.data.DownloadDatabase;
-import com.solarized.firedown.data.di.Qualifiers;
 import com.solarized.firedown.data.TaskEvent;
 import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.data.models.DownloadsViewModel;
@@ -59,7 +58,6 @@ import com.solarized.firedown.utils.NavigationUtils;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Executor;
 
 import javax.inject.Inject;
 
@@ -68,8 +66,9 @@ import dagger.hilt.android.AndroidEntryPoint;
 /* @AndroidEntryPoint must be on THIS class, not only on BaseDownloadFragment:
  * Hilt members-injection only covers fields declared on the annotated class
  * (and its supers) — an unannotated subclass's own @Inject fields are left
- * null. mDiskExecutor/mDownloadDatabase live here, so without the annotation
- * the SAF restore callback NPE'd the moment the folder picker returned. */
+ * null. mDownloadDatabase lives here (handed to the ViewModel's restore), so
+ * without the annotation the SAF restore callback NPE'd the moment the folder
+ * picker returned. */
 @AndroidEntryPoint
 public class DownloadFragment extends BaseDownloadFragment implements
         EditText.OnEditorActionListener,
@@ -88,9 +87,6 @@ public class DownloadFragment extends BaseDownloadFragment implements
 
     @Inject
     DownloadDatabase mDownloadDatabase;
-    @Inject
-    @Qualifiers.DiskIO
-    Executor mDiskExecutor;
 
     /** SAF folder picker for the empty-state "Restore previous downloads"
      *  flow — the transport-free recovery path (see DownloadBackupMirror).
@@ -376,6 +372,46 @@ public class DownloadFragment extends BaseDownloadFragment implements
             }
         });
 
+        // Restore progress/result live in the ViewModel so they survive view
+        // recreation (leave Downloads and return mid-restore): a fresh observer
+        // replays the latest in-flight value → the bar re-appears; the result is
+        // a single-shot event → the refresh + snackbar fire on whatever view is
+        // current, even if the restore finished while the view was gone.
+        mDownloadsViewModel.getRestoreInFlight().observe(getViewLifecycleOwner(), inFlight -> {
+            if (Boolean.TRUE.equals(inFlight)) {
+                showRestoreProgress();
+            }
+            // Deliberately NOT hiding on false here: the initial/false value
+            // would stomp a legitimately-running task progress bar. The hide is
+            // done in the result observer, which only fires for an actual restore
+            // completion.
+        });
+        mDownloadsViewModel.getRestoreResult().observe(getViewLifecycleOwner(), event -> {
+            Integer result = event == null ? null : event.consume();
+            if (result == null) {
+                return; // already handled (config change / re-entry after snackbar)
+            }
+            hideRestoreProgress();
+            // Reload the Paging source: the import writes through
+            // getOpenHelper() (raw SQLite), bypassing Room's InvalidationTracker,
+            // so the list wouldn't otherwise update; on an empty/failed result it
+            // re-runs the load-state listener, re-showing the empty-state button.
+            if (mAdapter != null) {
+                mAdapter.refresh();
+            }
+            if (!isAdded() || mActivity == null) {
+                return;
+            }
+            if (result >= 0) {
+                makeSnackbar(mActivity.getSnackAnchorView(),
+                        getString(R.string.restore_downloads_done, result), false).show();
+            } else if (result == DownloadBackupMirror.RESTORE_NO_BACKUP) {
+                showErrorSnackbar(R.string.restore_downloads_none);
+            } else {
+                showErrorSnackbar(R.string.restore_downloads_wrong_device);
+            }
+        });
+
         mDownloadsViewModel.getDownloads().observe(getViewLifecycleOwner(), data -> {
             // Diagnostic checkpoint (pairs with DownloadsViewModel's
             // "new paging generation" log): a generation that was emitted
@@ -548,41 +584,15 @@ public class DownloadFragment extends BaseDownloadFragment implements
             // Non-persistable grant — the one-shot read below still works.
         }
         Context appContext = requireContext().getApplicationContext();
-        // The scan + AES-GCM decrypt + DB import below run off the main thread and
-        // can take a few seconds; show the bottom progress bar (indeterminate)
-        // so the gap between the folder pick and the result snackbar isn't dead
-        // air, and hide the empty-state restore button while it runs.
+        // The scan + AES-GCM decrypt + DB import run off the main thread and can
+        // take a few seconds. Hand the work to the ViewModel: it drives the
+        // progress bar and the result snackbar through LiveData, so the restore
+        // is decoupled from this fragment's view — leaving Downloads and coming
+        // back mid-restore keeps the progress bar and still delivers the result
+        // (see the getRestoreInFlight/getRestoreResult observers). Hide the
+        // empty-state button now so a second tap can't launch a concurrent run.
         showRestoreProgress();
-        mDiskExecutor.execute(() -> {
-            int result = DownloadBackupMirror.restoreFromTree(appContext, mDownloadDatabase, treeUri);
-            View view = getView();
-            if (view == null) {
-                return; // fragment view gone — the progress bar went with it
-            }
-            view.post(() -> {
-                hideRestoreProgress();
-                if (!isAdded() || mActivity == null) {
-                    return;
-                }
-                // Always reload the Paging source. On success it surfaces the
-                // restored rows — the import writes through getOpenHelper() (raw
-                // SQLite), bypassing Room's InvalidationTracker, so the list
-                // wouldn't otherwise update. On an empty/failed result it re-runs
-                // the load-state listener, which re-shows the empty-state restore
-                // button hidden by showRestoreProgress(). Cheap when empty.
-                if (mAdapter != null) {
-                    mAdapter.refresh();
-                }
-                if (result >= 0) {
-                    makeSnackbar(mActivity.getSnackAnchorView(),
-                            getString(R.string.restore_downloads_done, result), false).show();
-                } else if (result == DownloadBackupMirror.RESTORE_NO_BACKUP) {
-                    showErrorSnackbar(R.string.restore_downloads_none);
-                } else {
-                    showErrorSnackbar(R.string.restore_downloads_wrong_device);
-                }
-            });
-        });
+        mDownloadsViewModel.runRestore(appContext, mDownloadDatabase, treeUri);
     }
 
     /** Bottom-bar progress for the in-flight restore. Indeterminate (the work

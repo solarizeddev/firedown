@@ -1136,6 +1136,25 @@ scoped-storage caveat above) → `restoreFromTree` → snackbar with the count /
 twice or restoring on a non-empty list never duplicates rows. Strings are
 translated across the same 16 locales as the JIT toggle.
 
+**Restore progress/result live in the ViewModel, NOT the fragment.**
+`DownloadsViewModel.runRestore(...)` runs the SAF scan/decrypt/import on its own
+executor and surfaces state through `getRestoreInFlight()` (LiveData<Boolean>,
+drives the bottom indeterminate progress bar) + `getRestoreResult()` (a
+single-shot `RestoreEvent`, drives the refresh + result snackbar). This is
+load-bearing for the "leave Downloads and come back mid-restore" case: the work
+is decoupled from the view, so a recreated view **replays** the in-flight value
+(the bar re-appears) and **consumes** the pending result event (refresh + snackbar
+fire on whatever view is current, even if the restore finished while the view was
+gone). The previous design ran it on a disk executor and posted completion to
+`getView()` — a null view (fragment left) silently dropped the refresh + snackbar
+AND lost the progress bar. Two subtleties to keep: the in-flight observer shows on
+`true` but does **not** hide on `false` (the initial/false replay would stomp a
+legitimately-running task progress bar — the hide is done in the result observer,
+which only fires on an actual restore completion); and `RestoreEvent.consume()`
+yields the code exactly once (so a config change / re-entry after the snackbar
+doesn't re-fire it, but a result posted with no observer attached is still
+delivered to the first one that comes back).
+
 Those **two doors are the whole story** — the empty-state button is presented
 proactively on the (empty) post-reinstall list, so no extra prompt is needed.
 **Don't add a second concurrent affordance**: an auto-popping restore *dialog*
@@ -1193,12 +1212,29 @@ tree READ+**WRITE** → retries. The current restore flow takes READ+WRITE
 up-front, so the delete is silent (no prompt) — which is correct, not a missed
 prompt.
 
+**Restore imports the NEWEST decryptable snapshot only — not a sum of every
+`.fdbk`.** Every published mirror is a FULL snapshot of the finished, non-safe
+rows (`writeMirror` gates out empty ones — `mirrorRows > 0`, so an empty
+reinstall never publishes one), so a newer mirror supersets any older; there is
+nothing an older candidate could add. `restoreFromTree` sorts candidates
+newest-first and imports the **first one it can decrypt, then breaks**. This is
+deliberately NOT the old "decrypt + import + SUM every candidate" loop: after a
+reinstall the fixed-name `.fdbk` is foreign-owned, so each app-background dropped
+a fresh **timestamped** mirror into the folder, and importing all of them
+re-scanned the whole download table + probed every row's file over SAF once per
+file — a folder full of accumulated mirrors made restore run for many seconds and
+look like it **never ended** ("restoring is on a loop"). Bounding it to the
+single newest snapshot fixes that regardless of how many stale files linger.
+`writeMirror` ALSO prunes its own old timestamped mirrors (`pruneOwnedMirrors` —
+File-API delete of every `*.fdbk` it owns except the one just written) so the
+pile can't grow in the first place; only files the File API can see (our own) are
+touched, so a foreign fixed-name file from a previous install is left as a single
+harmless extra the newest-first pick skips.
+
 **Restore SKIPS rows whose file the user already deleted.** Without this, a
-reinstall+restore resurrects deleted entries as dead rows: `restoreFromTree`
-reads and SUMS *every* `.fdbk` in the folder (to survive an empty-newest
-mirror), so a stale mirror written before the delete keeps bringing them back,
-and the mirror is only refreshed on app-background anyway.
-`importMirrorDatabase` skips a row when `RestoredFileAccess.isRestoredFileMissing`
+reinstall+restore resurrects deleted entries as dead rows: a stale snapshot
+written before the delete would bring them back (the mirror is only refreshed on
+app-background). `importMirrorDatabase` skips a row when `RestoredFileAccess.isRestoredFileMissing`
 proves the file is gone — gated on the SAF grant (restoreFromTree holds it),
 never on the grantless `App.onCreate` auto-restore (a foreign file's absence is
 untrustworthy there — same caveat as the missing-file sweep). **Gotcha that ate
@@ -1212,15 +1248,17 @@ if X is child of Y: java.io.FileNotFoundException: Missing file …"), so
 `isRestoredFileMissing` scans the whole cause chain/message for the missing-file
 signal (those are AOSP-internal English constants, stable).
 
-**Stale mirrors are PRUNED after a decryptable restore.** A `.fdbk` that
-decrypted but imported **zero** rows (every entry a deleted file, or a duplicate
-covered by a kept mirror) can never restore anything again and only causes the
-recurring "0 restored". `restoreFromTree` collects those during the read loop
-and `DocumentsContract.deleteDocument`s them after (best-effort, under the WRITE
-grant). A mirror that DID restore rows is never touched — it stays the live
-backup until the next background re-write. Note this prune does **not** run on
-`RESTORE_WRONG_DEVICE` (the method returns before it — those mirrors can't be
-decrypted, so we can't know they're stale).
+**Accumulation is pruned at the WRITE side, not the restore side.** The old
+approach pruned zero-row mirrors *after* a restore (`restoreFromTree` collecting
+0-import candidates and `DocumentsContract.deleteDocument`-ing them). That was
+removed with the sum-every-candidate loop — it conflated "empty mirror" with
+"all rows already live" (an idempotent re-restore imports 0 rows from a perfectly
+valid newest snapshot), so it could delete the live backup. The pile is now kept
+small at the source instead: `writeEncryptedPublicMirror` calls
+`pruneOwnedMirrors` on every background write, so at most one owned `.fdbk`
+exists. Don't reintroduce a "prune mirrors that imported 0 rows" pass in restore
+— 0 imported is a legitimate, common result (everything already present), not a
+signal the mirror is worthless.
 
 **The empty-state Restore button retires after an ATTEMPT, not just success.**
 It's shown whenever the unfiltered list is empty, so after a restore that brings
