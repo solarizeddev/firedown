@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Background tint for the buy-credit segmented toggles. The default outlined
+  MaterialButton fills a CHECKED segment with a colorPrimary (coral) overlay,
+  which made the selected segment a loud coral block. Replace it with a neutral
+  tonal fill so selection is shown calmly in grey — the coral is reserved for the
+  selected plan tile + the Continue CTA. Unselected = transparent.
+-->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_checked="true" android:color="?attr/colorSurfaceVariant" />
+    <item android:color="@android:color/transparent" />
+</selector>

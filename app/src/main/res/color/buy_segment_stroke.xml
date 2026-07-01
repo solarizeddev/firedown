@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Stroke for the buy-credit segmented toggles. A checked outlined MaterialButton
+  otherwise draws a colorPrimary (coral) stroke; keep it a subtle neutral outline
+  in every state so no coral leaks into the toggle. Selection is shown by the
+  tonal fill (buy_segment_bg), not colour.
+-->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:color="?attr/colorOutlineVariant" />
+</selector>

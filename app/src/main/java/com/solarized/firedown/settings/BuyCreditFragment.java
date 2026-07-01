@@ -18,7 +18,6 @@ import android.widget.TextView;
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -422,13 +421,16 @@ public class BuyCreditFragment extends Fragment {
         if (opt.isPlan()) {
             mPreferredSizeGb = opt.sizeGb;
         }
-        int brand = ContextCompat.getColor(requireContext(), R.color.brand_orange);
+        // Selection is a strong NEUTRAL outline, not coral — the only coral on
+        // this screen is the Continue button. onSurface reads clearly in both
+        // themes (near-white in dark, near-black in light).
+        int selectedColor = MaterialColors.getColor(selected, com.google.android.material.R.attr.colorOnSurface);
         int outline = MaterialColors.getColor(selected, com.google.android.material.R.attr.colorOutlineVariant);
         int stroke = Math.round(getResources().getDisplayMetrics().density);
         for (int i = 0; i < mDenomContainer.getChildCount(); i++) {
             MaterialCardView card = (MaterialCardView) mDenomContainer.getChildAt(i);
             boolean on = card == selected;
-            card.setStrokeColor(on ? brand : outline);
+            card.setStrokeColor(on ? selectedColor : outline);
             card.setStrokeWidth(on ? stroke * 2 : stroke);
         }
         mContinue.setText(getString(R.string.buy_credit_continue, formatUsd(opt.priceCents)));

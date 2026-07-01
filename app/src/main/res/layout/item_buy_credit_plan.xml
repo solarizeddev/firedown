@@ -24,7 +24,8 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="15dp">
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="13dp">
 
         <!-- size + "for" are a packed vertical chain, so when "for" is GONE (the
              common case — the duration toggle already states it) the size text
