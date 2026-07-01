@@ -112,13 +112,14 @@
         const BTN_CLASS = "fd-tg-dl-btn";
 
         // --- selectors (track Telegram Web; mirror the userscript) -----------
+        // Only the VIEWER CONTAINER and the media element are needed — the button
+        // is a floating overlay (see below), so Telegram's own action-button row
+        // (which collapses into the ⋮ overflow menu on mobile) is irrelevant.
         // Web K (web.telegram.org/k/, webk.telegram.org)
         const K_VIEWER = ".media-viewer-whole";
         const K_ASPECTER = ".media-viewer-movers .media-viewer-aspecter";
-        const K_BUTTONS = ".media-viewer-topbar .media-viewer-buttons";
         // Web A / Z (web.telegram.org/a/, webz.telegram.org)
         const A_SLIDE = "#MediaViewer .MediaViewerSlide--active";
-        const A_ACTIONS = "#MediaViewer .MediaViewerActions";
 
         function hashCode(s) {
             let h = 0;
@@ -151,47 +152,47 @@
 
         // Locate the open media viewer and the media it shows. Returns null when
         // no viewer is open or it holds nothing downloadable.
-        //   { kind: "video"|"image", url, actionBar, fileName }
+        //   { kind: "video"|"image", url, fileName, blobType }
+        // NOTE: we deliberately do NOT depend on Telegram's action-button row —
+        // on mobile Web-K those icons collapse into the ⋮ overflow menu, so a
+        // button injected there is invisible. The floating button below only
+        // needs the viewer to be open and a media element present.
         function detect() {
             // --- Web K ---
             const kViewer = document.querySelector(K_VIEWER);
             if (kViewer && kViewer.offsetParent !== null) {
-                const aspecter = kViewer.querySelector(K_ASPECTER);
-                const buttons = kViewer.querySelector(K_BUTTONS);
-                if (aspecter && buttons) {
-                    const video = aspecter.querySelector("video");
-                    const vurl = video && (video.currentSrc || video.src);
-                    if (vurl) {
-                        const meta = streamMeta(vurl);
-                        return {
-                            kind: "video", url: vurl, actionBar: buttons,
-                            fileName: (meta && meta.fileName) || ("Telegram_" + shortId(vurl) + ".mp4"),
-                            blobType: (meta && meta.mimeType) || "video/mp4",
-                        };
-                    }
-                    const img = aspecter.querySelector("img.thumbnail");
-                    const iurl = img && img.src;
-                    if (iurl) {
-                        const meta = streamMeta(iurl);
-                        return {
-                            kind: "image", url: iurl, actionBar: buttons,
-                            fileName: (meta && meta.fileName) || ("Telegram_" + shortId(iurl) + ".jpeg"),
-                            blobType: (meta && meta.mimeType) || "image/jpeg",
-                        };
-                    }
+                const aspecter = kViewer.querySelector(K_ASPECTER) || kViewer;
+                const video = aspecter.querySelector("video");
+                const vurl = video && (video.currentSrc || video.src);
+                if (vurl) {
+                    const meta = streamMeta(vurl);
+                    return {
+                        kind: "video", url: vurl,
+                        fileName: (meta && meta.fileName) || ("Telegram_" + shortId(vurl) + ".mp4"),
+                        blobType: (meta && meta.mimeType) || "video/mp4",
+                    };
+                }
+                const img = aspecter.querySelector("img.thumbnail");
+                const iurl = img && img.src;
+                if (iurl) {
+                    const meta = streamMeta(iurl);
+                    return {
+                        kind: "image", url: iurl,
+                        fileName: (meta && meta.fileName) || ("Telegram_" + shortId(iurl) + ".jpeg"),
+                        blobType: (meta && meta.mimeType) || "image/jpeg",
+                    };
                 }
             }
             // --- Web A / Z ---
             const aSlide = document.querySelector(A_SLIDE);
-            const aActions = document.querySelector(A_ACTIONS);
-            if (aSlide && aActions) {
-                const videoPlayer = aSlide.querySelector(".MediaViewerContent > .VideoPlayer");
+            if (aSlide && aSlide.offsetParent !== null) {
+                const videoPlayer = aSlide.querySelector(".MediaViewerContent > .VideoPlayer") || aSlide;
                 const video = videoPlayer && videoPlayer.querySelector("video");
                 const vurl = video && (video.currentSrc || video.src);
                 if (vurl) {
                     const meta = streamMeta(vurl);
                     return {
-                        kind: "video", url: vurl, actionBar: aActions,
+                        kind: "video", url: vurl,
                         fileName: (meta && meta.fileName) || ("Telegram_" + shortId(vurl) + ".mp4"),
                         blobType: (meta && meta.mimeType) || "video/mp4",
                     };
@@ -201,7 +202,7 @@
                 if (iurl) {
                     const meta = streamMeta(iurl);
                     return {
-                        kind: "image", url: iurl, actionBar: aActions,
+                        kind: "image", url: iurl,
                         fileName: (meta && meta.fileName) || ("Telegram_" + shortId(iurl) + ".jpeg"),
                         blobType: (meta && meta.mimeType) || "image/jpeg",
                     };
@@ -361,41 +362,63 @@
                 "width:40px;height:40px;margin:0 2px;border:0;background:transparent;" +
                 "color:currentColor;cursor:pointer;border-radius:50%;font-size:20px;line-height:1;");
             btn.textContent = "⤓"; // ⤓ downwards arrow to bar
+            return btn;
+        }
+
+        // A single FLOATING download button, overlaid on the fullscreen viewer.
+        // Injecting into Telegram's own button row is unreliable on mobile Web-K
+        // (the icons collapse into the ⋮ overflow menu, hiding the button) — a
+        // fixed-position overlay is both robust (no dependency on Telegram's
+        // toolbar DOM) and discoverable (a clear, always-visible affordance). It
+        // shows only while a viewer with downloadable media is open.
+        let floatBtn = null;
+        let currentMedia = null;
+
+        function makeFloatingButton() {
+            const btn = makeButton();
+            // Prominent circular FAB, top-right under the status bar, above the
+            // viewer chrome. Fixed so the overflow menu can't hide it.
+            btn.setAttribute("style",
+                "position:fixed;top:64px;right:14px;z-index:2147483647;" +
+                "width:48px;height:48px;border:0;border-radius:50%;cursor:pointer;" +
+                "display:flex;align-items:center;justify-content:center;" +
+                "background:#3390ec;color:#fff;font-size:24px;line-height:1;" +
+                "box-shadow:0 2px 10px rgba(0,0,0,.5);");
             btn.addEventListener("click", function (ev) {
                 ev.preventDefault();
                 ev.stopPropagation();
-                // Re-detect at click time — the viewer may have swiped to a new
-                // item since the button was injected.
-                const media = detect();
-                if (!media) { log("click: nothing to download"); return; }
-                log("download click", media.kind, media.url.slice(0, 80));
-                startDownload(media);
+                if (!currentMedia) { log("click: nothing to download"); return; }
+                log("download click", currentMedia.kind, currentMedia.url.slice(0, 80));
+                startDownload(currentMedia);
             }, true);
             return btn;
         }
 
-        function ensureButton() {
+        function updateButton() {
             const media = detect();
-            if (!media) return;
-            if (media.actionBar.querySelector("." + BTN_CLASS)) return; // already there
-            try {
-                media.actionBar.prepend(makeButton());
-                log("button injected", media.kind);
-            } catch (e) {
-                log("button inject failed:", e && e.message);
+            currentMedia = media;
+            if (media) {
+                if (!floatBtn) {
+                    floatBtn = makeFloatingButton();
+                    document.body.appendChild(floatBtn);
+                    log("floating button shown", media.kind);
+                }
+                floatBtn.style.display = "flex";
+            } else if (floatBtn) {
+                floatBtn.style.display = "none";
             }
         }
 
-        // The viewer opens/closes/swipes by DOM mutation; observe and (re)inject.
+        // The viewer opens/closes/swipes by DOM mutation; observe and re-evaluate.
         // Debounced so a burst of mutations does one check.
         let pending = false;
         const observer = new MutationObserver(function () {
             if (pending) return;
             pending = true;
-            setTimeout(function () { pending = false; ensureButton(); }, 150);
+            setTimeout(function () { pending = false; updateButton(); }, 150);
         });
         observer.observe(document.body, { childList: true, subtree: true });
         // Initial pass in case a viewer is already open at inject time.
-        ensureButton();
+        updateButton();
     }
 })();
