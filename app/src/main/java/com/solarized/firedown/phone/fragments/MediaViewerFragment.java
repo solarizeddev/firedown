@@ -416,21 +416,36 @@ public class MediaViewerFragment extends Fragment {
 
         mExoPlayer.setMediaSource(videoSource);
 
+        mExoPlayer.prepare();
+
+        mPlayerView.setPlayer(mExoPlayer);
+
         // Pre-set PlayerView's inner AspectRatioFrameLayout from the
-        // file's own video dimensions, BEFORE prepare(). Without
-        // this, the content frame stays at MATCH_PARENT until
-        // Player.Listener.onVideoSizeChanged fires — which can land
-        // AFTER the first frame has painted to the TextureView at
-        // full-screen dimensions, producing a brief stretched-frame
-        // flash. See androidx/media#536 (closed as "question", no
-        // upstream fix in 1.10.0).
+        // file's own video dimensions so the content frame is already the
+        // right shape when the FIRST frame paints — otherwise it stays at
+        // MATCH_PARENT until Player.Listener.onVideoSizeChanged fires,
+        // which can land AFTER the first frame has painted to the
+        // TextureView at full-screen dimensions: the frame is drawn
+        // STRETCHED (fitXY) to the whole screen and only snaps to the
+        // letterbox when the async size event arrives. On a tiny clip
+        // (the 498x334, 1.4s, audio-less BINGO case) the first frame
+        // decodes instantly, mid shared-element transition, so that
+        // stretched frame is exactly the "maximized image in the
+        // background" — while a larger clip with audio reaches its first
+        // frame only after the transition, hiding the flash. See
+        // androidx/media#536 (closed as "question", no upstream fix).
+        //
+        // CRUCIAL ordering: this MUST run AFTER setPlayer(). setPlayer()
+        // attaches the fresh player whose video size is still UNKNOWN
+        // (0x0), and PlayerView reacts by resetting its content frame to
+        // aspect 0 (= MATCH_PARENT). Running the preset before setPlayer
+        // (as it used to) had it silently undone, so the frame stretched
+        // anyway. setPlayWhenReady() below hasn't started decoding yet, so
+        // the aspect we set here is in place before the first frame.
         if (!FileUriHelper.isAudio(mimeType)) {
             presetVideoAspectRatio(playUri);
         }
 
-        mExoPlayer.prepare();
-
-        mPlayerView.setPlayer(mExoPlayer);
         mExoPlayer.setPlayWhenReady(true);
 
         if(!mAvoidTransition){
