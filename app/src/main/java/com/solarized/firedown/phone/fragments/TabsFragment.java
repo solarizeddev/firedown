@@ -48,6 +48,19 @@ public class TabsFragment extends BaseTabsFragment {
      */
     private static final boolean FORCE_BANNER_FOR_DEBUG = false;
 
+    /**
+     * TEST HARNESS (debug only). When true, every time the tabs screen
+     * opens we force-archive any inactive (non-active, non-home,
+     * non-incognito) tab whose last access is older than ONE HOUR,
+     * bypassing BOTH the user's auto-archive interval (default one week)
+     * AND the 6h run debounce. This exists purely to populate the
+     * "recently closed tabs" archive on demand so its list can be
+     * verified without waiting a week. Wrapped in {@code BuildConfig.DEBUG}
+     * at the call site so R8 strips it from release. Flip back to false
+     * (or remove) once testing is done.
+     */
+    private static final boolean FORCE_ARCHIVE_1H_FOR_DEBUG = true;
+
     private Snackbar mActiveSnackbar;
 
     /**
@@ -282,6 +295,15 @@ public class TabsFragment extends BaseTabsFragment {
                     // path above may have already opened it.
                     signalBannerReady();
                 });
+
+        // TEST: force-archive 1h-inactive tabs on every open (debug only),
+        // bypassing the interval + debounce so the archive can be populated
+        // on demand to verify the "recently closed tabs" list. Returns
+        // early so it doesn't also run the normal debounced path below.
+        if (BuildConfig.DEBUG && FORCE_ARCHIVE_1H_FOR_DEBUG) {
+            mGeckoStateViewModel.archiveInactiveTabs(TimeUnit.HOURS.toMillis(1));
+            return;
+        }
 
         // Debounced auto-archive trigger
         boolean autoArchiveEnabled = mSharedPreferences.getBoolean(
