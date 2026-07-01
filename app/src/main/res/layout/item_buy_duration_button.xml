@@ -15,6 +15,7 @@
     android:layout_weight="1"
     android:insetTop="0dp"
     android:insetBottom="0dp"
+    android:textColor="@color/buy_segment_text"
     app:cornerRadius="12dp"
     tools:ignore="Suspicious0dp"
     xmlns:tools="http://schemas.android.com/tools" />

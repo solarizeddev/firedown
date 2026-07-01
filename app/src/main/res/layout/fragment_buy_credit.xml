@@ -58,10 +58,9 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/buy_credit_plan_duration_label"
-                    android:textAllCaps="true"
-                    android:textSize="12sp"
-                    android:letterSpacing="0.04"
-                    android:textColor="?android:attr/textColorSecondary"
+                    android:textSize="13sp"
+                    android:fontFamily="sans-serif-medium"
+                    android:textColor="?attr/colorOnSurfaceVariant"
                     android:layout_marginBottom="10dp" />
 
                 <com.google.android.material.button.MaterialButtonToggleGroup
@@ -77,9 +76,8 @@
                     android:id="@+id/buy_duration_save"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:textSize="12sp"
-                    android:textStyle="bold"
-                    android:layout_marginTop="8dp"
+                    android:textSize="11.5sp"
+                    android:layout_marginTop="9dp"
                     android:textColor="@color/brand_orange"
                     android:visibility="gone"
                     tools:text="Save up to 30% with a longer plan"
@@ -95,10 +93,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/buy_credit_pick_how_much"
-                android:textAllCaps="true"
-                android:textSize="12sp"
-                android:letterSpacing="0.04"
-                android:textColor="?android:attr/textColorSecondary"
+                android:textSize="13sp"
+                android:fontFamily="sans-serif-medium"
+                android:textColor="?attr/colorOnSurfaceVariant"
                 android:layout_marginBottom="10dp" />
 
             <!-- Plain-language explainer for the "GB-months" unit (legacy flat
@@ -143,10 +140,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/buy_credit_pay_with"
-                android:textAllCaps="true"
-                android:textSize="12sp"
-                android:letterSpacing="0.04"
-                android:textColor="?android:attr/textColorSecondary"
+                android:textSize="13sp"
+                android:fontFamily="sans-serif-medium"
+                android:textColor="?attr/colorOnSurfaceVariant"
                 android:layout_marginTop="24dp"
                 android:layout_marginBottom="10dp" />
 
@@ -164,6 +160,8 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="@string/buy_credit_rail_lightning"
+                    android:textColor="@color/buy_segment_text"
+                    app:iconTint="@color/buy_segment_text"
                     app:icon="@drawable/ic_lightning_24"
                     app:iconGravity="textStart"
                     app:iconSize="18dp" />
@@ -174,6 +172,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
+                    android:textColor="@color/buy_segment_text"
                     android:text="@string/buy_credit_rail_card" />
             </com.google.android.material.button.MaterialButtonToggleGroup>
 
