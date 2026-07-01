@@ -6,6 +6,7 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
+import android.os.Build;
 import android.provider.DocumentsContract;
 import android.provider.Settings;
 import android.text.TextUtils;
@@ -542,11 +543,33 @@ public final class DownloadBackupMirror {
         // (no mirror in the backup, quota, partial restore): the encrypted
         // public mirror may still be sitting in Download/Firedown, so arm the
         // Downloads-screen banner pointing at the SAF restore. A reinstall
-        // the auto-restore DID handle needs no banner.
+        // the auto-restore DID handle needs no re-import banner — BUT on
+        // Android 11+ the rows it restored point at PUBLIC files this reinstall
+        // no longer owns (scoped storage), and the grantless App.onCreate
+        // restore can't take a SAF grant, so those files are unreadable:
+        // no thumbnails, and open/play fails (RestoredFileAccess has no tree to
+        // fall back to). Arm the SAME banner in "grant" mode so the user can
+        // grant the Download/Firedown tree once and make the whole list usable.
         if (reinstall && restored == 0) {
-            prefs.edit().putBoolean(KEY_RESTORE_BANNER, true).apply();
+            prefs.edit().putBoolean(KEY_RESTORE_BANNER, true)
+                    .putBoolean(KEY_RESTORE_GRANT_MODE, false).apply();
             Log.i(TAG, "restoreIfPending: reinstall detected, auto-restore empty — banner armed");
+        } else if (reinstall && restored > 0 && needsRestoreGrant(context)) {
+            prefs.edit().putBoolean(KEY_RESTORE_BANNER, true)
+                    .putBoolean(KEY_RESTORE_GRANT_MODE, true).apply();
+            Log.i(TAG, "restoreIfPending: reinstall restored " + restored
+                    + " rows but no SAF grant — grant banner armed");
         }
+    }
+
+    /** Whether restored public files need a user-granted SAF tree to be
+     *  readable. True on Android 11+ (scoped storage — a reinstalled app
+     *  doesn't own the public files it restored) while no restore-tree grant is
+     *  held yet. Below 11 the files are readable by path (with
+     *  READ_EXTERNAL_STORAGE), so no grant banner is offered. */
+    private static boolean needsRestoreGrant(@NonNull Context context) {
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
+                && getRestoreTree(context) == null;
     }
 
     // ------------------------------------------------------------------
@@ -571,6 +594,10 @@ public final class DownloadBackupMirror {
     private static final String KEY_SENTINEL_BACKED_UP =
             "com.solarized.firedown.preferences.backup.install.sentinel";
     private static final String KEY_RESTORE_BANNER = "restore_banner_pending";
+    /** When the banner is pending, whether it's the "grant access to the files
+     *  the auto-restore brought back" variant (true) vs. the "re-import the
+     *  download list from the public mirror" variant (false). */
+    private static final String KEY_RESTORE_GRANT_MODE = "restore_banner_grant_mode";
     private static final String KEY_RESTORE_ATTEMPTED = "restore_attempted";
 
     private static boolean detectReinstall(@NonNull Context context, @NonNull SharedPreferences localPrefs) {
@@ -596,10 +623,19 @@ public final class DownloadBackupMirror {
                 .getBoolean(KEY_RESTORE_BANNER, false);
     }
 
+    /** Whether the pending banner is the grant-access variant (auto-restore
+     *  brought the list back but its foreign-owned files need a SAF grant to
+     *  open) rather than the re-import-from-mirror variant. */
+    public static boolean isRestoreGrantMode(@NonNull Context context) {
+        return context.getSharedPreferences(LOCAL_PREFS, Context.MODE_PRIVATE)
+                .getBoolean(KEY_RESTORE_GRANT_MODE, false);
+    }
+
     /** Permanently retire the banner: user dismissed it, or a restore ran. */
     public static void clearRestoreBanner(@NonNull Context context) {
         context.getSharedPreferences(LOCAL_PREFS, Context.MODE_PRIVATE)
-                .edit().putBoolean(KEY_RESTORE_BANNER, false).apply();
+                .edit().putBoolean(KEY_RESTORE_BANNER, false)
+                .putBoolean(KEY_RESTORE_GRANT_MODE, false).apply();
     }
 
     /** Set once the user has run a SAF restore on THIS install (any outcome).

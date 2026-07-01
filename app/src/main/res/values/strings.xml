@@ -185,6 +185,13 @@
     <string name="restore_downloads_done">Restored downloads: %1$d</string>
     <string name="restore_downloads_none">No backup found in this folder</string>
     <string name="restore_downloads_wrong_device">This backup belongs to a different device</string>
+    <!-- Grant-access variant of the banner: shown after a reinstall whose
+         auto-restore DID bring the download list back, but the files are
+         foreign-owned (Android 11+) and can't be opened until the user grants
+         a folder. Same tap target/flow as the restore banner. -->
+    <string name="restore_banner_grant_subtitle">Tap to grant access so your restored downloads open</string>
+    <string name="restore_downloads_grant_message">Your downloads were restored, but this reinstall can\'t open the files in Download/Firedown yet. Choose that folder to grant access.</string>
+    <string name="restore_downloads_access">Your restored downloads are now accessible</string>
     <!-- Bookmark sync (docs/BOOKMARKS_SYNC.md) -->
     <string name="sync_banner_title">Sync your bookmarks across devices</string>
     <string name="sync_banner_subtitle">End-to-end encrypted — only your recovery code can read it. No account, no email.</string>

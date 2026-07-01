@@ -3,6 +3,7 @@ package com.solarized.firedown.ui.adapters;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -34,6 +35,12 @@ public class RestoreBannerAdapter extends RecyclerView.Adapter<RestoreBannerAdap
     }
 
     private boolean mVisible = false;
+    // When true the banner is the "grant access to already-restored files"
+    // variant (reinstall auto-restore brought the list back, but the
+    // foreign-owned public files need a SAF grant to open) rather than the
+    // "restore your previous downloads" variant (auto-restore empty). Same tap
+    // target and flow — only the subtitle copy differs.
+    private boolean mGrantMode = false;
     @Nullable
     private final OnBannerListener mListener;
 
@@ -51,6 +58,18 @@ public class RestoreBannerAdapter extends RecyclerView.Adapter<RestoreBannerAdap
             notifyItemInserted(0);
         } else {
             notifyItemRemoved(0);
+        }
+    }
+
+    /** Select the grant-access subtitle variant. Call before/while visible; a
+     *  change while shown re-binds the card. */
+    public void setGrantMode(boolean grantMode) {
+        if (grantMode == mGrantMode) {
+            return;
+        }
+        mGrantMode = grantMode;
+        if (mVisible) {
+            notifyItemChanged(0);
         }
     }
 
@@ -75,19 +94,26 @@ public class RestoreBannerAdapter extends RecyclerView.Adapter<RestoreBannerAdap
 
     @Override
     public void onBindViewHolder(@NonNull BannerViewHolder holder, int position) {
-        holder.bind(mListener);
+        holder.bind(mListener, mGrantMode);
     }
 
     public static class BannerViewHolder extends RecyclerView.ViewHolder {
 
         private final View mClose;
+        private final TextView mSubtitle;
 
         BannerViewHolder(@NonNull View itemView) {
             super(itemView);
             mClose = itemView.findViewById(R.id.restore_banner_close);
+            mSubtitle = itemView.findViewById(R.id.restore_banner_subtitle);
         }
 
-        void bind(@Nullable OnBannerListener listener) {
+        void bind(@Nullable OnBannerListener listener, boolean grantMode) {
+            if (mSubtitle != null) {
+                mSubtitle.setText(grantMode
+                        ? R.string.restore_banner_grant_subtitle
+                        : R.string.restore_banner_subtitle);
+            }
             if (listener == null) {
                 itemView.setOnClickListener(null);
                 mClose.setOnClickListener(null);

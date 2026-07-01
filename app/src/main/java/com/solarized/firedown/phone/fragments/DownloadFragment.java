@@ -489,9 +489,15 @@ public class DownloadFragment extends BaseDownloadFragment implements
     // download list. See DownloadBackupMirror for the data side.
 
     private void showRestoreDownloadsDialog() {
+        // Grant-access variant (the list is already restored but its
+        // foreign-owned files can't be opened) gets a message that matches;
+        // otherwise the re-import-from-mirror wording.
+        int message = DownloadBackupMirror.isRestoreGrantMode(requireContext())
+                ? R.string.restore_downloads_grant_message
+                : R.string.restore_downloads_message;
         new MaterialAlertDialogBuilder(requireContext())
                 .setTitle(R.string.restore_downloads_button)
-                .setMessage(R.string.restore_downloads_message)
+                .setMessage(message)
                 .setPositiveButton(R.string.restore_downloads_choose, (dialog, which) -> launchRestoreFolderPicker())
                 .setNegativeButton(R.string.cancel, null)
                 .show();
@@ -608,9 +614,16 @@ public class DownloadFragment extends BaseDownloadFragment implements
                 if (mAdapter != null) {
                     mAdapter.refresh();
                 }
-                if (result >= 0) {
+                if (result > 0) {
                     makeSnackbar(mActivity.getSnackAnchorView(),
                             getString(R.string.restore_downloads_done, result), false).show();
+                } else if (result == 0) {
+                    // A decryptable mirror imported nothing new — every row was
+                    // already present. That's the grant-access outcome: the
+                    // rows the auto-restore brought back are now openable via
+                    // the SAF grant just taken. "Restored: 0" would misread.
+                    makeSnackbar(mActivity.getSnackAnchorView(),
+                            getString(R.string.restore_downloads_access), false).show();
                 } else if (result == DownloadBackupMirror.RESTORE_NO_BACKUP) {
                     showErrorSnackbar(R.string.restore_downloads_none);
                 } else {
@@ -659,6 +672,10 @@ public class DownloadFragment extends BaseDownloadFragment implements
         }
         boolean show = mSafeCount == 0
                 && DownloadBackupMirror.isRestoreBannerPending(requireContext());
+        // Pick the subtitle variant before showing: grant-access (the restored
+        // files need a SAF grant to open) vs. re-import (auto-restore empty).
+        mRestoreBannerAdapter.setGrantMode(
+                DownloadBackupMirror.isRestoreGrantMode(requireContext()));
         mRestoreBannerAdapter.setVisible(show);
     }
 
