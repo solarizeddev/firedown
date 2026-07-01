@@ -732,6 +732,16 @@ public class BrowserFragment extends BaseBrowserFragment
                 // to capture.
                 GeckoState geckoState = peekCurrentGeckoState();
                 if (geckoState == null) return;
+                // Safeguard: the serializer is the downloader@ snapshot.js
+                // CONTENT script, which never runs on moz-extension (e.g. the
+                // uBlock page-blocked interstitial), about:, resource: or data:
+                // pages. On those the capture message reaches no listener, so no
+                // download fires and the "Saving snapshot…" snackbar would hang
+                // until it times out. Refuse up front instead.
+                if (!UrlStringUtils.isSnapshotSupported(geckoState.getEntityUri())) {
+                    makeAnchoredSnackbar(R.string.browser_snapshot_unsupported).show();
+                    return;
+                }
                 mGeckoRuntimeHelper.captureSnapshot();
                 // Mark this fragment as the one that started the snapshot (the
                 // download callback fans out to both regular + incognito
