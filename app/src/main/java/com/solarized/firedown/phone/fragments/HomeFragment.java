@@ -629,15 +629,13 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
             return;
         }
         applyCloudStatus(); // show promptly with whatever we already have
-        mCloudBackup.loadUsage(usage -> {
+        // One combined load with the guarded auto-clear: if it retires Cloud
+        // Backup (reconciled-empty account), isSetUp() flips false and the
+        // follow-up applyCloudStatus() hides the line.
+        mCloudBackup.loadStatus(status -> {
             if (isAdded() && mHomeCloud != null) {
-                mCloudFiles = usage.fileCount;
-                applyCloudStatus();
-            }
-        });
-        mCloudBackup.loadQuota(quota -> {
-            if (isAdded() && mHomeCloud != null) {
-                mCloudQuota = quota;
+                mCloudFiles = status.fileCount;
+                mCloudQuota = status.quota;
                 applyCloudStatus();
             }
         });

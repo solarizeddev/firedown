@@ -147,18 +147,20 @@ public class CloudBackupSettingsFragment extends BasePreferenceFragment
             mStatus.setQuota(null);
             return;
         }
-        // Backed-up usage (manifest) — the "N files · X" facts line.
-        mCloudBackup.loadUsage(usage -> {
-            if (isAdded() && mStatus != null) {
-                mStatus.setUsage(usage.fileCount, usage.totalBytes);
+        // Usage + metered balance in one load, with the guarded auto-clear: a
+        // reconciled-empty account (metered, spent, zero files) retires Cloud
+        // Backup, so reflect status.setUp (hide the Manage section + show the
+        // not-set-up hero). Offline leaves everything as-is.
+        mCloudBackup.loadStatus(status -> {
+            if (!isAdded() || mStatus == null) {
+                return;
             }
-        });
-        // Metered balance + projected runout (null in the current unmetered phase
-        // or offline — the hero degrades to the facts + a free-beta note).
-        mCloudBackup.loadQuota(quota -> {
-            if (isAdded() && mStatus != null) {
-                mStatus.setQuota(quota);
+            if (mCatManage != null) {
+                mCatManage.setVisible(status.setUp);
             }
+            mStatus.setSetUp(status.setUp);
+            mStatus.setUsage(status.fileCount, status.totalBytes);
+            mStatus.setQuota(status.quota);
         });
     }
 

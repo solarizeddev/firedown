@@ -248,6 +248,79 @@ public class CloudBackupManager {
         });
     }
 
+    /** Combined status snapshot for the status hero + home line: reconciled
+     *  set-up state, backed-up usage, and the metered quota, in one load. */
+    public static final class Status {
+        public final boolean setUp;   // reconciled (false if auto-cleared as empty)
+        public final int fileCount;   // -1 = unavailable (offline / not loaded)
+        public final long totalBytes; // -1 = unavailable
+        public final StorageApiClient.Quota quota; // null = unavailable / not loaded
+
+        Status(boolean setUp, int fileCount, long totalBytes, StorageApiClient.Quota quota) {
+            this.setUp = setUp;
+            this.fileCount = fileCount;
+            this.totalBytes = totalBytes;
+            this.quota = quota;
+        }
+    }
+
+    /**
+     * Loads usage (manifest) + quota together off the net executor and posts a
+     * {@link Status} to the main thread. Centralizes a GUARDED auto-clear: when
+     * BOTH loads succeed and reveal a genuinely dead account — metered, spent
+     * (balance ≤ 0), and zero files backed up — Cloud Backup is no longer in use
+     * (e.g. reaped server-side after runout), so the local {@code
+     * CLOUD_BACKUP_ENABLED} flag is cleared and {@code setUp} comes back false so
+     * the UI (status hero + home line) hides itself.
+     *
+     * <p>The guard is on a SUCCESSFUL response: an offline / transient failure
+     * yields unknown values and leaves the flag untouched, so a network blip can
+     * never wrongly retire Cloud Backup. An account with files, or with credit, or
+     * in the unmetered phase (no balance concept) is never auto-cleared — a
+     * grace-period user with files still keeps the "top up" prompt. The shared
+     * recovery code is left in place (bookmark sync may still need it).
+     */
+    public void loadStatus(Consumer<Status> onResult) {
+        netExecutor.execute(() -> {
+            boolean setUp = isSetUp();
+            int files = -1;
+            long bytes = -1;
+            StorageApiClient.Quota quota = null;
+            byte[] code = new SyncSecrets(context).load();
+            if (code != null && setUp) {
+                try {
+                    SyncIdentity identity = SyncIdentity.fromCode(code);
+                    StorageApiClient api = new StorageApiClient(httpClient, backendUrl());
+                    VaultEngine engine = new VaultEngine(api, identity);
+                    List<VaultEntry> entries = engine.loadManifest(); // must succeed
+                    files = entries.size();
+                    long total = 0;
+                    for (VaultEntry e : entries) {
+                        total += e.size;
+                    }
+                    bytes = total;
+                    quota = api.quota(identity); // must succeed
+                    if (quota.metered && quota.balanceMicroGbMonths <= 0 && files == 0) {
+                        prefs.edit().putBoolean(Preferences.CLOUD_BACKUP_ENABLED, false).apply();
+                        setUp = false;
+                    }
+                } catch (Exception e) {
+                    // Offline / transient — leave the flag alone, values unknown.
+                    files = -1;
+                    bytes = -1;
+                    quota = null;
+                } finally {
+                    SyncSecrets.wipe(code);
+                }
+            } else {
+                SyncSecrets.wipe(code);
+                setUp = false;
+            }
+            final Status out = new Status(setUp, files, bytes, quota);
+            main.post(() -> onResult.accept(out));
+        });
+    }
+
     /**
      * Loads the backed-up file list (manifest entries) off the disk executor and
      * posts it to the main thread. {@code onError} is invoked (main thread) on any
