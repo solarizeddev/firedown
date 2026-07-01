@@ -87,7 +87,7 @@
 
                 <View
                     android:layout_width="match_parent"
-                    android:layout_height="16dp" />
+                    android:layout_height="22dp" />
             </LinearLayout>
 
             <TextView
@@ -120,40 +120,24 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical" />
 
-            <!-- Soft-cap note (plan-grid mode only): the size is a cap, not a
-                 hard rental — metered underneath, so a light user gets more. -->
-            <LinearLayout
+            <!-- Soft-cap note (plan-grid mode only): the size is a cap, not a hard
+                 rental — the ONE contextual note kept in the decision flow because
+                 it explains "up to". The rest (one-time, privacy) is fine print
+                 below Continue. -->
+            <TextView
                 android:id="@+id/buy_softcap_note"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
+                android:text="@string/buy_credit_soft_cap"
+                android:textSize="11.5sp"
+                android:lineSpacingMultiplier="1.3"
+                android:layout_marginTop="16dp"
+                android:drawablePadding="8dp"
+                app:drawableStartCompat="@drawable/ic_info_24"
+                app:drawableTint="?android:attr/textColorSecondary"
+                android:textColor="?android:attr/textColorSecondary"
                 android:visibility="gone"
-                tools:visibility="visible">
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/buy_credit_soft_cap"
-                    android:textSize="11.5sp"
-                    android:lineSpacingMultiplier="1.3"
-                    android:layout_marginTop="12dp"
-                    android:drawablePadding="8dp"
-                    app:drawableStartCompat="@drawable/ic_info_24"
-                    app:drawableTint="?android:attr/textColorSecondary"
-                    android:textColor="?android:attr/textColorSecondary" />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/buy_credit_one_off"
-                    android:textSize="11.5sp"
-                    android:layout_marginTop="8dp"
-                    android:drawablePadding="8dp"
-                    app:drawableStartCompat="@drawable/ic_lock_24"
-                    app:drawableTint="?android:attr/textColorSecondary"
-                    android:gravity="center_vertical"
-                    android:textColor="?android:attr/textColorSecondary" />
-            </LinearLayout>
+                tools:visibility="visible" />
 
             <TextView
                 android:layout_width="match_parent"
@@ -163,7 +147,7 @@
                 android:textSize="12sp"
                 android:letterSpacing="0.04"
                 android:textColor="?android:attr/textColorSecondary"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="24dp"
                 android:layout_marginBottom="10dp" />
 
             <com.google.android.material.button.MaterialButtonToggleGroup
@@ -193,31 +177,45 @@
                     android:text="@string/buy_credit_rail_card" />
             </com.google.android.material.button.MaterialButtonToggleGroup>
 
-            <!-- Privacy note — a quiet footnote, not a filled slab, so it doesn't
-                 compete with the tiles + Continue (the actual task is choosing +
-                 buying). Muted, small, shield-marked. -->
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/buy_credit_privacy_note"
-                android:textSize="11.5sp"
-                android:lineSpacingMultiplier="1.3"
-                android:layout_marginTop="16dp"
-                android:drawablePadding="8dp"
-                app:drawableStartCompat="@drawable/ic_shield_24"
-                app:drawableTint="?android:attr/textColorSecondary"
-                android:textColor="?android:attr/textColorSecondary" />
-
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/buy_continue"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="18dp"
+                android:layout_marginTop="24dp"
                 android:enabled="false"
                 android:text="@string/buy_credit_continue_default"
                 app:cornerRadius="14dp"
                 app:icon="@drawable/ic_arrow_forward_24"
                 app:iconGravity="textEnd" />
+
+            <!-- Fine print BELOW the CTA — reassurance stays available but out of
+                 the decision path (Continue is the last thing above it). One-time
+                 is plan-grid only; privacy shows in both modes. Centered + tiny. -->
+            <TextView
+                android:id="@+id/buy_oneoff_note"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:text="@string/buy_credit_one_off"
+                android:textSize="11sp"
+                android:layout_marginTop="16dp"
+                android:drawablePadding="6dp"
+                app:drawableStartCompat="@drawable/ic_lock_24"
+                app:drawableTint="?android:attr/textColorSecondary"
+                android:gravity="center_vertical"
+                android:textColor="?android:attr/textColorSecondary"
+                android:visibility="gone"
+                tools:visibility="visible" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/buy_credit_privacy_note"
+                android:textSize="11sp"
+                android:gravity="center"
+                android:lineSpacingMultiplier="1.3"
+                android:layout_marginTop="12dp"
+                android:textColor="?android:attr/textColorSecondary" />
         </LinearLayout>
 
         <!-- ── 2a · pay with Lightning ── -->

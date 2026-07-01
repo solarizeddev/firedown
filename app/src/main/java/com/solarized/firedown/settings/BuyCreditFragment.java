@@ -80,6 +80,7 @@ public class BuyCreditFragment extends Fragment {
     private TextView mSizeLabel;
     private View mGbmExplainer;
     private View mSoftcapNote;
+    private View mOneOffNote;
     /** The chosen tile/denomination (an Option), or null until one is selected. */
     private BuyCreditViewModel.Option mSelectedOption;
     /** In the grid, the size the user last picked, so switching duration keeps the
@@ -129,6 +130,7 @@ public class BuyCreditFragment extends Fragment {
         mSizeLabel = view.findViewById(R.id.buy_size_label);
         mGbmExplainer = view.findViewById(R.id.buy_gbm_explainer);
         mSoftcapNote = view.findViewById(R.id.buy_softcap_note);
+        mOneOffNote = view.findViewById(R.id.buy_oneoff_note);
 
         // Changing the duration rebuilds the size tiles for that coverage (each
         // duration is priced by its own keysets). The button's tag is its months.
@@ -250,6 +252,7 @@ public class BuyCreditFragment extends Fragment {
         mSizeLabel.setText(R.string.buy_credit_plan_size_label);
         mGbmExplainer.setVisibility(View.GONE);
         mSoftcapNote.setVisibility(View.VISIBLE);
+        mOneOffNote.setVisibility(View.VISIBLE);
 
         // Distinct durations, in the ascending order the options already carry.
         List<Integer> durations = new ArrayList<>();
@@ -378,6 +381,7 @@ public class BuyCreditFragment extends Fragment {
     private void bindPickLegacy(List<BuyCreditViewModel.Option> options) {
         mDurationSection.setVisibility(View.GONE);
         mSoftcapNote.setVisibility(View.GONE);
+        mOneOffNote.setVisibility(View.GONE);
         mSizeLabel.setText(R.string.buy_credit_pick_how_much);
         mGbmExplainer.setVisibility(View.VISIBLE);
         mDenomContainer.removeAllViews();
