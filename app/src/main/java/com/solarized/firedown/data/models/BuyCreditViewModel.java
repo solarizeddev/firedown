@@ -140,9 +140,11 @@ public class BuyCreditViewModel extends ViewModel {
     // Lightning waits for a manual wallet payment (~5 min), Stripe for the hosted
     // Checkout to complete (~10 min). Delay is short enough to feel responsive,
     // long enough not to hammer the mint's per-IP rate limit.
-    private static final long POLL_DELAY_MS = 2_000L;
-    private static final int POLL_MAX_LIGHTNING = 150; // ~5 min
-    private static final int POLL_MAX_STRIPE = 300;    // ~10 min
+    // A gentle cadence: enough to feel responsive, slow enough to stay well under
+    // the mint's per-IP limits + the Cloudflare edge rule while polling for minutes.
+    private static final long POLL_DELAY_MS = 3_000L;
+    private static final int POLL_MAX_LIGHTNING = 100; // ~5 min at 3s
+    private static final int POLL_MAX_STRIPE = 200;    // ~10 min at 3s
 
     private final Context appContext;
     private final SharedPreferences prefs;
@@ -269,7 +271,15 @@ public class BuyCreditViewModel extends ViewModel {
                     if (gen != flowGen) {
                         return; // user left the pay screen — stop polling
                     }
-                    StorageApiClient.RedeemResult r = purchase.tryComplete(id, session);
+                    StorageApiClient.RedeemResult r;
+                    try {
+                        r = purchase.tryComplete(id, session);
+                    } catch (MintClient.TransientException | StorageApiClient.TransientException te) {
+                        // A 429 (rate limit) / 503 during polling is NOT terminal —
+                        // the payment may still be settling. Swallow it and keep
+                        // waiting; only a fatal error or the timeout ends the flow.
+                        r = null;
+                    }
                     if (r != null) {
                         post(gen, UiState.success(r.redeemedGbMonths, r.balanceGbMonths,
                                 session.quote.denomGbMonths, session.quote.amountCents, finalMintedCode));
