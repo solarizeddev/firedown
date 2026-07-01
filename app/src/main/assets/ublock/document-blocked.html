@@ -38,10 +38,13 @@
   html, body {
     margin: 0;
     padding: 0;
-    height: 100%;
     --spacing: 14px;
   }
   body {
+    /* min-height (not height:100%) so the document grows with its content and
+       the page scrolls on short viewports instead of clipping — the fixed 100%
+       height + push-to-bottom buttons hid them behind the browser's bottom bar. */
+    min-height: 100%;
     background-color: #d3d6e5;
     color: #333949;
     padding: 0 20px;
@@ -54,10 +57,10 @@
   #container {
     max-width: 550px;
     margin: 0 auto;
-    padding: 40px 0 24px;
-    min-height: calc(100% - 64px);
-    display: flex;
-    flex-direction: column;
+    /* Content flows top-down (buttons sit right after the checkbox, not pinned to
+       the bottom). Large bottom padding keeps the last button clear of the
+       browser's overlaying bottom toolbar and adds scroll room. */
+    padding: 40px 0 96px;
   }
   #illustration {
     width: 104px;
@@ -117,7 +120,7 @@
     color: #455267;
   }
   label.checkbox input { width: 20px; height: 20px; accent-color: #ff716c; }
-  #buttons { margin-top: auto; padding-top: 20px; }
+  #buttons { margin-top: 28px; }
   button {
     display: block;
     width: 100%;
