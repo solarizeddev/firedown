@@ -69,18 +69,22 @@
     /* margin auto (not flex align-self) — #container is no longer a flex column */
     margin: 0 auto 12px;
   }
+  /* Title + subtitle mirror the native error pages (assets/error/error_style.css):
+     a thin, larger h1 (like "The Fire is Gone") over a BOLD, slightly smaller h2
+     (like "Address Not Found"). Same #455267 ink; the weight contrast is what
+     makes them read as the same family. */
   h1 {
     margin: 0;
     color: #455267;
     font-weight: 300;
-    font-size: 1.9em;
+    font-size: 2em;
     text-align: center;
   }
   h2 {
-    margin: var(--spacing) 0 0;
+    margin: 10px 0 0;
     color: #455267;
-    font-weight: 300;
-    font-size: 1.2em;
+    font-weight: 700;
+    font-size: 1.575em;
     text-align: center;
   }
   p { margin: var(--spacing) 0 4px; }
