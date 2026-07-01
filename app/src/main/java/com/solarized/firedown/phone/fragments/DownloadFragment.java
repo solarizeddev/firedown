@@ -285,17 +285,6 @@ public class DownloadFragment extends BaseDownloadFragment implements
                         } else {
                             mLCEERecyclerView.setEmptyButtonVisibility(View.GONE);
                         }
-                        // Prompt-first restore: right after a detected reinstall,
-                        // proactively OFFER the restore once on the (now empty)
-                        // Downloads screen — we never silently import a list of
-                        // unopenable, foreign-owned files. One-shot; afterwards
-                        // the empty-state button above and Settings keep restore
-                        // reachable. Gated to the resumed, unfiltered empty view
-                        // so the dialog can't pop over a filtered/search result.
-                        if (unfiltered && isResumed()
-                                && DownloadBackupMirror.consumeRestorePrompt(requireContext())) {
-                            showRestoreDownloadsDialog();
-                        }
                     }
                     mLCEERecyclerView.showEmpty();
                 } else {

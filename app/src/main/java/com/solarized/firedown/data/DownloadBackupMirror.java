@@ -20,8 +20,6 @@ import com.solarized.firedown.BuildConfig;
 import com.solarized.firedown.StoragePaths;
 
 import java.io.File;
-import androidx.preference.PreferenceManager;
-import java.util.UUID;
 import java.io.IOException;
 import java.io.FileOutputStream;
 import java.io.FileInputStream;
@@ -51,23 +49,19 @@ import javax.crypto.spec.SecretKeySpec;
  * ({@code backup_rules.xml} / {@code data_extraction.xml}) include exactly
  * that one file — never the real database, never the vault.
  *
- * <p><b>Restore:</b> on a fresh install restored from backup, the mirror file
- * reappears while the real database starts empty. {@link #restoreIfPending}
- * copies the mirror rows back into the live table — once per install, guarded
- * three ways: a marker in {@code backup_local.xml} (a prefs file EXCLUDED
- * from backup, so it never travels with a restore), an empty-table check (an
- * in-place update keeps its rows and must never re-import), and the mirror's
- * existence. Rows are copied by column-name intersection so a schema a
- * version ahead/behind degrades gracefully instead of failing the whole
- * restore; {@code uid} is dropped (autoincrement re-assigns) and
- * {@code file_safe} is forced to 0 defensively.
- *
- * <p>The restored entries point at the surviving public
- * {@code Download/Firedown} files. Note the scoped-storage caveat: on
- * Android 13+ a reinstalled app no longer OWNS those files, so playback may
- * need a permission grant even though the entries are listed — the metadata
- * (origin, title, duration) is preserved regardless, which the files alone
- * could never give back.
+ * <p><b>Restore is PROMPT-FIRST — there is no boot-time auto-import.</b> On
+ * Android 11+ a reinstalled app no longer OWNS the surviving public
+ * {@code Download/Firedown} files (scoped storage), so a silent import would
+ * list entries whose files can't be opened (no thumbnail, no playback). The
+ * user restores deliberately from the Downloads empty-state button / Settings,
+ * which takes a SAF folder grant AND imports in one step ({@link
+ * #restoreFromTree} → {@link #importMirrorDatabase}), so the files are openable
+ * the moment they appear. Rows are copied by column-name intersection so a
+ * schema a version ahead/behind degrades gracefully instead of failing the
+ * whole restore; {@code uid} is dropped (autoincrement re-assigns) and
+ * {@code file_safe} is forced to 0 defensively. The metadata (origin, title,
+ * duration) is preserved regardless, which the files alone could never give
+ * back.
  */
 public final class DownloadBackupMirror {
 
@@ -79,7 +73,6 @@ public final class DownloadBackupMirror {
 
     /** Prefs file EXCLUDED from backup — install-local state only. */
     private static final String LOCAL_PREFS = "backup_local";
-    private static final String KEY_RESTORE_DONE = "mirror_restore_done";
 
     private static final String TABLE = "download";
 
@@ -404,10 +397,6 @@ public final class DownloadBackupMirror {
             }
         }
         Log.i(TAG, "restoreFromTree: restored " + totalRestored + " entries from SAF mirror");
-        // A completed restore consumes the one-shot reinstall prompt too, so it
-        // won't re-fire (e.g. a restore run from Settings before the Downloads
-        // screen showed the proactive prompt).
-        consumeRestorePrompt(context);
         return totalRestored;
     }
 
@@ -501,107 +490,7 @@ public final class DownloadBackupMirror {
         }
     }
 
-    /**
-     * At app startup on a background thread, decide whether to OFFER a restore
-     * after a detected reinstall. Prompt-first by design: it deliberately does
-     * NOT auto-import the backup mirror.
-     *
-     * <p>Rationale: on Android 11+ the download files that survive uninstall in
-     * the public {@code Download/Firedown} folder are foreign-owned after a
-     * reinstall (scoped storage), and this startup path can't take a SAF folder
-     * grant — so a silent import would drop the user into a list of unopenable,
-     * thumbnail-less entries. Instead, on a detected reinstall we arm a one-shot
-     * prompt flag; the Downloads screen offers the restore, and the user grants
-     * the folder once — which imports the list AND makes every file openable in
-     * a single deliberate step (see {@link #restoreFromTree}). If they decline,
-     * Downloads stays cleanly empty (the empty-state button and Settings keep
-     * the restore reachable).
-     *
-     * <p>No-op on an in-place update (the live table already has non-safe rows)
-     * and when no reinstall is detected.
-     */
-    public static void restoreIfPending(@NonNull Context context, @NonNull DownloadDatabase database) {
-        SharedPreferences prefs = context.getSharedPreferences(LOCAL_PREFS, Context.MODE_PRIVATE);
-        if (prefs.getBoolean(KEY_RESTORE_DONE, false)) {
-            return;
-        }
-        // Detection runs once per install; re-pairs the sentinels either way.
-        prefs.edit().putBoolean(KEY_RESTORE_DONE, true).apply();
-
-        // An in-place update (populated table) is not a restore — never prompt.
-        SupportSQLiteDatabase db = database.getOpenHelper().getWritableDatabase();
-        boolean populated = false;
-        try (Cursor count = db.query("SELECT COUNT(*) FROM " + TABLE + " WHERE file_safe = 0")) {
-            populated = count.moveToFirst() && count.getInt(0) > 0;
-        }
-
-        boolean reinstall = detectReinstall(context, prefs);
-        if (populated) {
-            return;
-        }
-        if (reinstall) {
-            // Offer restore; do NOT silently import (see the method note).
-            prefs.edit().putBoolean(KEY_RESTORE_PROMPT_PENDING, true).apply();
-            Log.i(TAG, "restoreIfPending: reinstall detected — restore prompt armed (no silent import)");
-        }
-    }
-
-    // ------------------------------------------------------------------
-    // Reinstall detection — the sentinel pair
-    // ------------------------------------------------------------------
-    //
-    // "Did this install's shared prefs come back from a backup?" can't be
-    // answered by "are the default prefs non-empty" — App.onCreate writes
-    // boot-keys (e.g. the history-purge timestamp) before this runs, so a
-    // fresh install is never empty. Instead a random sentinel UUID is kept
-    // in BOTH prefs files: the DEFAULT prefs (which Auto Backup backs up)
-    // and backup_local.xml (which is excluded). On a same-install launch the
-    // two match. After a reinstall-with-restore the default-prefs sentinel
-    // survives the trip through the backup while the local one died with the
-    // install → present-but-mismatched = reinstall. Boot-written keys can't
-    // fake that, and an in-place update keeps both files so it never trips.
-    // (A backup written by a pre-sentinel app version has no sentinel →
-    // undetected → no banner; acceptable roll-out behavior.)
-
-    private static final String KEY_SENTINEL_LOCAL = "install_sentinel";
-    /** Lives in the DEFAULT shared prefs — deliberately backed up. */
-    private static final String KEY_SENTINEL_BACKED_UP =
-            "com.solarized.firedown.preferences.backup.install.sentinel";
-    /** One-shot: a reinstall was detected and restore hasn't been offered yet.
-     *  The Downloads screen consumes this to proactively show the restore
-     *  prompt exactly once ({@link #consumeRestorePrompt}); afterwards the
-     *  empty-state button and Settings keep restore reachable. Lives in
-     *  {@code backup_local.xml} (excluded) so it re-arms on the next reinstall. */
-    private static final String KEY_RESTORE_PROMPT_PENDING = "restore_prompt_pending";
     private static final String KEY_RESTORE_ATTEMPTED = "restore_attempted";
-
-    private static boolean detectReinstall(@NonNull Context context, @NonNull SharedPreferences localPrefs) {
-        SharedPreferences defaultPrefs =
-                PreferenceManager.getDefaultSharedPreferences(context);
-        String backedUp = defaultPrefs.getString(KEY_SENTINEL_BACKED_UP, null);
-        String local = localPrefs.getString(KEY_SENTINEL_LOCAL, null);
-
-        boolean reinstall = backedUp != null && !backedUp.equals(local);
-
-        // (Re)pair the sentinels for this install either way.
-        String sentinel = UUID.randomUUID().toString();
-        defaultPrefs.edit().putString(KEY_SENTINEL_BACKED_UP, sentinel).apply();
-        localPrefs.edit().putString(KEY_SENTINEL_LOCAL, sentinel).apply();
-        return reinstall;
-    }
-
-    /** Consume the one-shot reinstall restore prompt: returns true (and clears
-     *  the flag) the FIRST time the Downloads screen checks after a detected
-     *  reinstall, so it proactively offers restore exactly once. Subsequent
-     *  calls return false — the empty-state button and Settings remain. */
-    public static boolean consumeRestorePrompt(@NonNull Context context) {
-        SharedPreferences prefs = context.getSharedPreferences(LOCAL_PREFS, Context.MODE_PRIVATE);
-        if (!prefs.getBoolean(KEY_RESTORE_PROMPT_PENDING, false)) {
-            return false;
-        }
-        prefs.edit().putBoolean(KEY_RESTORE_PROMPT_PENDING, false).apply();
-        return true;
-    }
 
     /** Set once the user has run a SAF restore on THIS install (any outcome).
      *  Lives in {@code backup_local.xml} — EXCLUDED from backup — so it RESETS

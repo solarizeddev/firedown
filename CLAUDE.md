@@ -1057,23 +1057,19 @@ and Auto Backup is file-granular, so backing up the DB would ship vault
 metadata to the cloud. `DownloadBackupMirror` re-writes
 `filesDir/backup/downloads-mirror.db` (non-safe + FINISHED rows only, via
 `ATTACH … CREATE TABLE AS SELECT`) every time the app backgrounds
-(`ApplicationLifeCycleHandler.onTrimMemory`). **Restore is PROMPT-FIRST — it
-does NOT silently auto-import.** On Android 11+ the restored public files are
-foreign-owned (see the scoped-storage caveat below), so a silent import would
-drop the user into a list of unopenable, thumbnail-less entries. So
-`App.onCreate → restoreIfPending` (once per install: a marker in
-`backup_local.xml` — excluded from backup so it can't follow a restore; an
-in-place-update check via the non-safe row count) only **detects a reinstall
-and arms a one-shot prompt** (`KEY_RESTORE_PROMPT_PENDING` /
-`consumeRestorePrompt`); it never imports `downloads-mirror.db` itself. The
-actual import happens through the user-driven SAF flow below (`restoreFromTree`,
-which takes the folder grant AND imports in one step, so the files are openable
-the moment they appear). The Downloads screen offers restore proactively once
-(and via the always-available empty-state button / Settings). `file_safe` is
-forced to 0 on import — a tampered mirror can't inject vault entries. (The
-`downloads-mirror.db` file is still written + Auto-Backed-up, but on 11+ it's
-effectively vestigial for restore since the SAF `.fdbk` flow reconstructs the
-same list; the Google-transport DB import path was removed to kill the silent
+(`ApplicationLifeCycleHandler.onTrimMemory`). **Restore is PROMPT-FIRST — there
+is NO boot-time auto-import at all** (there is no `restoreIfPending` /
+`App.onCreate` import path anymore, and no reinstall-detection sentinel). On
+Android 11+ the restored public files are foreign-owned (see the scoped-storage
+caveat below), so a silent import would drop the user into a list of unopenable,
+thumbnail-less entries. Instead the user restores DELIBERATELY from the
+**Downloads empty-state button** or **Settings**, and that one flow
+(`restoreFromTree`) takes the SAF folder grant AND imports in a single step, so
+the files are openable the moment they appear. `file_safe` is forced to 0 on
+import — a tampered mirror can't inject vault entries. (The
+`downloads-mirror.db` file is still written + Auto-Backed-up, but nothing
+imports it at boot; the SAF `.fdbk` flow reconstructs the same list with the
+grant, so the Google-transport DB import path was removed to kill the silent
 broken-list state.)
 
 The backup surface is an **include-list** in BOTH rule files —
@@ -1120,8 +1116,8 @@ factory reset orphans old mirrors — `decryptPublicMirror` just rejects what
 GCM can't authenticate). After a reinstall the file is foreign-owned
 (invisible to File API), so the planned restore path is a one-tap **SAF
 folder grant** (`ACTION_OPEN_DOCUMENT_TREE` on `Download/Firedown`) →
-`decryptPublicMirror` → `importMirrorDatabase` (the same column-intersection
-importer the Auto Backup restore uses; `file_safe` forced 0). The write side
+`decryptPublicMirror` → `importMirrorDatabase` (column-intersection importer;
+`file_safe` forced 0). The write side
 handles the name collision a reinstall causes (foreign-owned old file at the
 fixed name → fall back to a timestamped `.fdbk`; restore scans for all of
 them and takes the newest it can decrypt). The SAF restore UI has **two
@@ -1140,30 +1136,23 @@ scoped-storage caveat above) → `restoreFromTree` → snackbar with the count /
 twice or restoring on a non-empty list never duplicates rows. Strings are
 translated across the same 16 locales as the JIT toggle.
 
-**A third door, the proactive reinstall prompt.** On a *detected* reinstall,
-`restoreIfPending` arms `KEY_RESTORE_PROMPT_PENDING`, and the Downloads screen
-`consumeRestorePrompt`s it **once** (in the empty load-state branch, gated to
-the resumed + unfiltered empty view) to show the restore dialog proactively —
-so the user is offered restore up-front instead of discovering an empty list.
-It's a one-shot: after it fires (or any completed `restoreFromTree`, which also
-consumes it) the empty-state button + Settings remain the standing doors.
-Detection is a **sentinel pair** (`detectReinstall`): a random UUID lives in
-BOTH the default prefs (backed up) and `backup_local.xml` (excluded);
-present-but-mismatched after a restore-at-install = reinstall. A bare "are
-default prefs non-empty" check does NOT work — `App.onCreate` writes boot keys
-(history-purge timestamp) before detection runs, so a fresh install's prefs are
-never empty. The prompt-pending flag lives in `backup_local.xml` on purpose:
-excluded from backup, so it re-arms on the next genuine reinstall.
+Those **two doors are the whole story** — the empty-state button is presented
+proactively on the (empty) post-reinstall list, so no extra prompt is needed.
+**Don't add a second concurrent affordance**: an auto-popping restore *dialog*
+plus the empty-state button showing the *same* message at once is redundant
+UX. One affordance; the dialog appears only on an explicit tap of the button
+(or the Settings row) to pick the folder.
 
-**History — there was a `RestoreBannerAdapter` (removed).** An earlier design
-auto-imported at boot and then tried to *recover* the resulting broken
-(unopenable, thumbnail-less) list with a self-hiding ConcatAdapter banner —
-first a dismissible "restore your downloads" variant, then a persistent
-"grant access" variant. It was replaced wholesale by the prompt-first model
-above (never enter the broken state rather than recover from it), so the
-banner adapter, its layout, and the `KEY_RESTORE_BANNER` /
-`KEY_RESTORE_GRANT_NEEDED` prefs are gone. Don't reintroduce a boot-time
-auto-import.
+**History — removed, don't reintroduce.** Earlier iterations auto-imported the
+mirror at boot (`restoreIfPending` + a `detectReinstall` sentinel pair) and then
+tried to *recover* the resulting broken (unopenable, thumbnail-less) list — first
+with a `RestoreBannerAdapter` banner (dismissible "restore", then a persistent
+"grant access" variant), then with a one-shot proactive dialog
+(`KEY_RESTORE_PROMPT_PENDING` / `consumeRestorePrompt`). All of it is gone: the
+banner adapter + layout, the reinstall-detection sentinels, the boot-time import,
+and those prefs. The lesson that stuck: **never enter the broken state** (no
+boot-time auto-import) rather than recover from it, and **one restore
+affordance**, not two.
 
 **Downloads chip-rail gotcha: there is NO "All" chip.** Unfiltered means no
 chip is checked — `ChipGroup.getCheckedChipId()` returns `View.NO_ID`.
