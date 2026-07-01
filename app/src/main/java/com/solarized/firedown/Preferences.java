@@ -117,6 +117,9 @@ public class Preferences {
     public static final String SETTINGS_SYNC_NOW = "com.solarized.firedown.preferences.sync.now";
     /** Opens the offline "How sync encryption works" FAQ dialog. */
     public static final String SETTINGS_SYNC_HELP = "com.solarized.firedown.preferences.sync.help";
+    /** "I have a recovery code" — link this device to an existing account (restore
+     *  downloads backup + storage credit). Shown only when no code exists yet. */
+    public static final String SETTINGS_SYNC_LINK_CODE = "com.solarized.firedown.preferences.sync.link.code";
     /** Right-to-erasure: delete the encrypted document from the server. */
     public static final String SETTINGS_SYNC_DELETE_DATA = "com.solarized.firedown.preferences.sync.delete.data";
     /** Section headers on the unified Sync screen. Bookmarks / Downloads / About

@@ -9,6 +9,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.text.format.DateUtils;
 import android.text.format.Formatter;
+import android.text.TextUtils;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.TextView;
@@ -26,6 +27,7 @@ import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.snackbar.Snackbar;
 import com.solarized.firedown.AppLock;
 import com.solarized.firedown.Preferences;
@@ -78,6 +80,7 @@ public class SyncSettingsFragment extends BasePreferenceFragment
     private Preference mHelp;
     private Preference mShowCode;
     private Preference mExportCode;
+    private Preference mLinkCode;
     // The Recovery-code category is SHARED (bookmarks + downloads) and shown once
     // the account exists — bookmarks on OR a download has been backed up.
     private Preference mCatCode;
@@ -120,6 +123,7 @@ public class SyncSettingsFragment extends BasePreferenceFragment
         mHelp = findPreference(Preferences.SETTINGS_SYNC_HELP);
         mShowCode = findPreference(Preferences.SETTINGS_SYNC_SHOW_CODE);
         mExportCode = findPreference(Preferences.SETTINGS_SYNC_EXPORT_CODE);
+        mLinkCode = findPreference(Preferences.SETTINGS_SYNC_LINK_CODE);
         mCatCode = findPreference(Preferences.SETTINGS_SYNC_CAT_CODE);
 
         if (mBookmarks != null) {
@@ -136,6 +140,9 @@ public class SyncSettingsFragment extends BasePreferenceFragment
         }
         if (mExportCode != null) {
             mExportCode.setOnPreferenceClickListener(this);
+        }
+        if (mLinkCode != null) {
+            mLinkCode.setOnPreferenceClickListener(this);
         }
 
         tintIcons();
@@ -162,6 +169,7 @@ public class SyncSettingsFragment extends BasePreferenceFragment
                     NavigationUtils.navigateSafe(mNavController, R.id.action_sync_to_help);
             case Preferences.SETTINGS_SYNC_SHOW_CODE -> authThenShowCode();
             case Preferences.SETTINGS_SYNC_EXPORT_CODE -> showExportCaveatDialog();
+            case Preferences.SETTINGS_SYNC_LINK_CODE -> showLinkDialog();
         }
         return true;
     }
@@ -277,6 +285,38 @@ public class SyncSettingsFragment extends BasePreferenceFragment
 
     /** Reflects persisted state into the per-feature row summaries + the shared
      *  recovery-code visibility. */
+    /**
+     * "I have a recovery code" — links this device to an existing account (restore
+     * downloads backup + storage credit) via {@link SyncManager#linkWithCode},
+     * which stores the code WITHOUT enabling bookmark sync. Reuses the code-input
+     * dialog layout.
+     */
+    private void showLinkDialog() {
+        View view = getLayoutInflater().inflate(R.layout.dialog_sync_restore, null);
+        TextInputEditText input = view.findViewById(R.id.sync_code);
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.settings_sync_link_dialog_title)
+                .setMessage(R.string.settings_sync_link_dialog_message)
+                .setView(view)
+                .setPositiveButton(R.string.settings_sync_link_action, (dialog, which) -> {
+                    String code = input.getText() == null ? "" : input.getText().toString().trim();
+                    if (TextUtils.isEmpty(code)) {
+                        return;
+                    }
+                    mSyncManager.linkWithCode(code, ok -> {
+                        if (!isAdded()) {
+                            return;
+                        }
+                        updateState();
+                        snackbar(getString(ok
+                                ? R.string.settings_sync_link_ok
+                                : R.string.settings_sync_link_bad));
+                    });
+                })
+                .setNegativeButton(R.string.cancel, null)
+                .show();
+    }
+
     private void updateState() {
         boolean on = mSyncManager.isEnabled();
         // The account exists once EITHER feature is set up — bookmarks on, or a
@@ -299,6 +339,11 @@ public class SyncSettingsFragment extends BasePreferenceFragment
         }
         if (mExportCode != null) {
             mExportCode.setVisible(accountExists);
+        }
+        // The complement of the recovery-code section: offer "I have a recovery
+        // code" only when this device has NO code yet (fresh install / new device).
+        if (mLinkCode != null) {
+            mLinkCode.setVisible(!mCloudBackup.hasAccount());
         }
         updateDownloadsSummary(false);
     }

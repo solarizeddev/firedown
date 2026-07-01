@@ -216,6 +216,14 @@
     <string name="settings_sync_restore_action">Restore</string>
     <string name="settings_sync_restore_ok">Bookmark sync restored</string>
     <string name="settings_sync_restore_bad">That recovery code doesn\'t look right</string>
+    <!-- Account-level "I have a recovery code" link entry (Cloud hub, no-code state) -->
+    <string name="settings_sync_link_title">I have a recovery code</string>
+    <string name="settings_sync_link_summary">Restore your backups and storage credit on this device</string>
+    <string name="settings_sync_link_dialog_title">Enter your recovery code</string>
+    <string name="settings_sync_link_dialog_message">Paste the recovery code from your other device to restore your downloads backup and storage credit here. This won\'t turn on bookmark sync.</string>
+    <string name="settings_sync_link_action">Restore</string>
+    <string name="settings_sync_link_ok">Account linked — your backups and credit are back</string>
+    <string name="settings_sync_link_bad">That recovery code doesn\'t look right</string>
     <string name="settings_sync_code_hint">Recovery code</string>
     <string name="settings_sync_code_warning">This recovery code is the only key to your bookmarks, downloads backup, and storage credit. Save it in your password manager — or another safe place. It can\'t be recovered if lost.</string>
     <string name="settings_sync_code_saved_check">I\'ve saved my recovery code</string>

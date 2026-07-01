@@ -152,6 +152,38 @@ public class SyncManager {
         });
     }
 
+    /**
+     * Links this device to an existing account from its recovery code — the
+     * account-level restore for a fresh install / new device. Stores the code
+     * (which re-derives the shared account, so downloads backup + storage credit
+     * come back) and marks Cloud Backup in use so its screen reflects the restored
+     * data. Deliberately does NOT enable bookmark sync (that stays a separate
+     * opt-in — unlike {@link #restoreWithCode}, the bookmark-sync path): the code
+     * is simply now available for it too. {@code onResult} reports success/failure
+     * on the main thread.
+     */
+    public void linkWithCode(String enteredCode, Consumer<Boolean> onResult) {
+        diskExecutor.execute(() -> {
+            boolean ok;
+            try {
+                byte[] code = SyncIdentity.decodeRecoveryCode(enteredCode);
+                SyncIdentity.fromCode(code); // validates shape
+                new SyncSecrets(context).store(code);
+                SyncSecrets.wipe(code);
+                prefs.edit().putBoolean(Preferences.CLOUD_BACKUP_ENABLED, true).apply();
+                ok = true;
+            } catch (Exception e) {
+                ok = false;
+            }
+            final boolean success = ok;
+            main.post(() -> {
+                if (onResult != null) {
+                    onResult.accept(success);
+                }
+            });
+        });
+    }
+
     /** Disables sync and wipes the local keys (the public bookmarks stay). */
     public void disable() {
         prefs.edit().putBoolean(Preferences.SYNC_ENABLED, false).apply();

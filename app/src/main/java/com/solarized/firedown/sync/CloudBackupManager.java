@@ -220,6 +220,35 @@ public class CloudBackupManager {
     }
 
     /**
+     * Loads the metered quota/balance off the net executor and posts it to the
+     * main thread (null when offline / not set up / no server account yet). Drives
+     * the Cloud Backup status hero and the home status line. Deliberately does NOT
+     * force registration (like {@link #loadUsage}): a signed GET against an
+     * un-created account just fails and yields null, which reads as "not set up".
+     */
+    public void loadQuota(Consumer<StorageApiClient.Quota> onResult) {
+        netExecutor.execute(() -> {
+            StorageApiClient.Quota quota = null;
+            byte[] code = new SyncSecrets(context).load();
+            if (code != null && isSetUp()) {
+                try {
+                    SyncIdentity identity = SyncIdentity.fromCode(code);
+                    StorageApiClient api = new StorageApiClient(httpClient, backendUrl());
+                    quota = api.quota(identity);
+                } catch (Exception e) {
+                    quota = null; // offline / not yet on the server — keep it graceful
+                } finally {
+                    SyncSecrets.wipe(code);
+                }
+            } else {
+                SyncSecrets.wipe(code);
+            }
+            final StorageApiClient.Quota out = quota;
+            main.post(() -> onResult.accept(out));
+        });
+    }
+
+    /**
      * Loads the backed-up file list (manifest entries) off the disk executor and
      * posts it to the main thread. {@code onError} is invoked (main thread) on any
      * failure so the UI can show an error state rather than an empty list.

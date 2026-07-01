@@ -46,6 +46,7 @@ public final class StorageApiClient {
     private static final String PATH_OBJECTS = "/v1/storage/objects";
     private static final String PATH_ACCOUNT = "/v1/storage/account";
     private static final String PATH_REDEEM = "/v1/storage/credits/redeem";
+    private static final String PATH_QUOTA = "/v1/storage/quota";
 
     /** Cloudflare returns 429 (its "Block" rate-limit action) on a per-IP burst.
      *  OkHttp has NO built-in 429 handling (`retryOnConnectionFailure` only covers
@@ -211,6 +212,35 @@ public final class StorageApiClient {
             this.redeemedGbMonths = redeemedGbMonths;
             this.balanceGbMonths = balanceGbMonths;
             this.balanceMicroGbMonths = balanceMicroGbMonths;
+        }
+    }
+
+    /**
+     * Result of a GET /v1/storage/quota. In the current UNMETERED phase the server
+     * reports a flat {@code bytes_limit}; once metering is on it reports the
+     * GB-months balance + a projected runout (or, in grace, the stamped runout +
+     * grace window). {@link #metered} says which shape you got.
+     */
+    public static final class Quota {
+        public final boolean metered;
+        public final double balanceGbMonths;   // metered
+        public final long balanceMicroGbMonths;// metered (exact)
+        public final boolean readOnly;         // balance ran out (grace) — read-only
+        public final String projectedRunoutAt; // RFC3339, metered + funded (nullable)
+        public final String runoutAt;          // RFC3339, stamped once in grace (nullable)
+        public final String graceUntil;        // RFC3339, end of read-only grace (nullable)
+        public final long bytesLimit;          // unmetered
+
+        Quota(boolean metered, double balanceGbMonths, long balanceMicroGbMonths, boolean readOnly,
+              String projectedRunoutAt, String runoutAt, String graceUntil, long bytesLimit) {
+            this.metered = metered;
+            this.balanceGbMonths = balanceGbMonths;
+            this.balanceMicroGbMonths = balanceMicroGbMonths;
+            this.readOnly = readOnly;
+            this.projectedRunoutAt = projectedRunoutAt;
+            this.runoutAt = runoutAt;
+            this.graceUntil = graceUntil;
+            this.bytesLimit = bytesLimit;
         }
     }
 
@@ -450,6 +480,34 @@ public final class StorageApiClient {
                         obj.optLong("balance_micro_gb_months", 0));
             } catch (org.json.JSONException e) {
                 throw new IOException("malformed redeem response", e);
+            }
+        }
+    }
+
+    /**
+     * GET the account's quota/balance. Metered vs unmetered is detected from the
+     * response shape ({@code balance_gb_months} present ⇒ metered). Used by the
+     * Cloud Backup status screen + the home status line to show the balance and
+     * projected runout.
+     */
+    public Quota quota(SyncIdentity id) throws IOException {
+        Request req = signed(id, "GET", PATH_QUOTA, "", null).get().build();
+        try (Response resp = beginCall(req).execute()) {
+            throwForStatus(resp, "quota");
+            try {
+                JSONObject o = new JSONObject(bodyString(resp));
+                boolean metered = o.has("balance_gb_months");
+                return new Quota(
+                        metered,
+                        o.optDouble("balance_gb_months", 0),
+                        o.optLong("balance_micro_gb_months", 0),
+                        o.optBoolean("read_only", false),
+                        o.optString("projected_runout_at", null),
+                        o.optString("runout_at", null),
+                        o.optString("grace_until", null),
+                        o.optLong("bytes_limit", 0));
+            } catch (org.json.JSONException e) {
+                throw new IOException("malformed quota response", e);
             }
         }
     }

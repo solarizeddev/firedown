@@ -38,6 +38,16 @@
         app:singleLineTitle="false"
         app:icon="@drawable/download_24" />
 
+    <!-- Shown ONLY when this device has no recovery code yet (fresh install / new
+         device): link to an existing account to bring back downloads backup +
+         storage credit. Visibility toggled in SyncSettingsFragment. -->
+    <Preference
+        android:key="com.solarized.firedown.preferences.sync.link.code"
+        android:title="@string/settings_sync_link_title"
+        android:summary="@string/settings_sync_link_summary"
+        app:singleLineTitle="false"
+        app:icon="@drawable/ic_key_24" />
+
     <PreferenceCategory
         android:key="com.solarized.firedown.preferences.sync.cat.code"
         android:title="@string/settings_sync_cat_code">
