@@ -348,15 +348,15 @@ cardinal rule as any parser.
   body-sniff stays in JS `filterResponseData` because the classifier drops it and
   only the page ever reads it — see "Obfuscated manifests" below.)
 
-### Telegram WEB APP — in-page blob download, NOT the capture pipeline
+### Telegram — public `t.me` parser (the logged-in web app is NOT a download surface)
 
-There are TWO Telegram surfaces, and they are handled in completely different
-ways. **Public `t.me` pages** → `js/parsers/telegram.js`, a normal parser: the
-post HTML carries a real, re-fetchable `cdn-telegram.org`/`telesco.pe` `.mp4`, so
-it flows through the standard capture→native-redownload pipeline (block-listed
-under `telegram`). **The LOGGED-IN web app (`web.telegram.org/k` & `/a`,
-including restricted/"download disabled" channels)** → `js/telegram-web.js`, and
-it does **not** use the capture pipeline at all.
+There are TWO Telegram surfaces. **Public `t.me` pages** → `js/parsers/telegram.js`,
+a normal parser: the post HTML carries a real, re-fetchable
+`cdn-telegram.org`/`telesco.pe` `.mp4`, so it flows through the standard
+capture→native-redownload pipeline (block-listed under `telegram`). **The
+LOGGED-IN web app (`web.telegram.org/k` & `/a`)** is **NOT supported** — see the
+"Why the web app isn't supported" note below (an in-page-download attempt was
+built and removed).
 
 The public `t.me` parser covers THREE layouts, all via `filterResponseData` (the
 `<video src>` lives in different places in each — a HAR is the only reliable way
@@ -383,45 +383,32 @@ to see which):
   the emit multiplies by 1000 — passing seconds showed a 0:32 clip as
   `00:00:00:03`).
 
-Why it can't: a web-app media element's URL is a **ServiceWorker-virtual**
-`…/k/stream/<json>` (or `/a/stream/…`) path the SW serves from **MTProto chunks
-decrypted in page JS**. There is no plain native-reachable URL and no small key
-to hand native (unlike Mega, where the page hands native a key and native
-fetches+decrypts a real CDN URL) — a native OkHttp re-fetch can't route through
-the SW or speak MTProto. The bytes exist only inside the page.
+**Why the web app isn't supported (and don't re-attempt it naively).** A web-app
+media element's URL is a **ServiceWorker-virtual** `…/k/stream/<json>` (or
+`/a/stream/…`) path the SW serves from **MTProto chunks decrypted in page JS**.
+There is no plain native-reachable URL and no small key to hand native (unlike
+Mega, where the page hands native a key and native fetches+decrypts a real CDN
+URL) — a native OkHttp re-fetch can't route through the SW or speak MTProto. The
+bytes exist **only inside the live page**. Consequences:
 
-So `telegram-web.js` does what a userscript would (technique from the GPL'd
-Neet-Nestor/Telegram-Media-Downloader, reimplemented): inject a Download button
-into the media viewer and, on click, **fetch the `/stream/` URL with Range
-requests IN THE PAGE WORLD, assemble a Blob, and trigger `<a download
-href="blob:…">`**. Firedown's existing download interception
-(`GeckoComponents.onExternalResponse` → `BrowserFragment.onDownload` →
-`GeckoStreamStrategy` streams `response.body` to disk) catches the blob — **no
-Java changes**. Load-bearing details, do not "simplify":
-
-- **Page world is mandatory** (not the content-script's isolated world): (1) the
-  `/stream/` fetch must be intercepted by the page's SW and carry the session —
-  the SW only intercepts its CLIENT (the page), so a content-script-context fetch
-  bypasses it; (2) the blob `<a download>` must mint a URL the docshell can
-  navigate to reach `onExternalResponse`. The engine is run via
-  **`window.wrappedJSObject.eval(...)`** — the SAME confirmed mechanism
-  `youtube/content.js` uses for PoToken, and the reason it works where a
-  `<script>`/web-accessible-resource inject would hit Telegram's CSP (privileged
-  content-script eval is exempt). The engine is authored as a normal function and
-  injected via `.toString()` so it stays readable; it touches only standard
-  browser globals, never extension APIs.
-- **No pipeline emit, but a block-list entry exists** (`'telegram-web'` in
-  `parser-blocklist.js`). It is NOT cardinal-rule dedup (there's no pipeline
-  capture to pair with); it suppresses a **HARMFUL** generic-catcher capture — a
-  non-re-fetchable `/stream/` URL that fails on every download attempt. Same
-  "block a harmful capture" rationale as Mega/Bilibili, not the ordinary dedup.
-- **Whole file held in memory as one Blob** (the userscript's accepted cost) —
-  GeckoView then streams it to disk; large videos are memory-heavy. A future
-  improvement would stream chunks to native instead, but that needs new plumbing.
-- **Selectors track Telegram's markup** (mirror the userscript): K
-  `.media-viewer-whole` / `.media-viewer-buttons`, A `#MediaViewer
-  .MediaViewerActions`. If the button stops appearing, the DOM changed — update
-  `K_*`/`A_*` in `telegram-web.js`. Logs under `[TG-WEB]`, DEBUG-gated.
+- **It can't go in the Captured sheet.** That sheet is capture-URL-now,
+  native-download-later; a `/stream/` entry would be an always-broken download.
+  The `/stream/` requests DO cross the wire (206 video/mp4), so `parser-blocklist.js`
+  keeps a `'telegram-web'` rule to block them out of the sheet — purely to prevent
+  broken captures (same "block a harmful capture" rationale as Mega, not dedup).
+- **The only technically-possible path is downloading IN THE PAGE** (fetch the
+  `/stream/` Range chunks in page world so they hit the SW + session, assemble a
+  Blob, `<a download href="blob:…">` → caught by
+  `GeckoComponents.onExternalResponse` → `GeckoStreamStrategy`). This was built
+  (`js/telegram-web.js`, page-world engine via `window.wrappedJSObject.eval`, the
+  `youtube/content.js` PoToken mechanism) and **REMOVED** at the maintainer's
+  request: the only reliably-visible affordance on mobile Web-K was a **floating
+  overlay button** (Telegram collapses its own action icons into the ⋮ overflow
+  menu, hiding an injected button), and the overlay was unwanted UX. A native-
+  looking menu-item inject was considered but is fragile (depends on the ⋮ menu
+  DOM). If reviving: the technique (page-world `eval` + Range fetch + blob
+  download) worked end-to-end; the blocker was purely the button's look/placement.
+  Note the whole file is held as one in-memory Blob (large-video memory cost).
 
 ### Audio title/thumbnail enrichment — gating, MediaSession, embedded players
 

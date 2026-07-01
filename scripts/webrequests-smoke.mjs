@@ -398,8 +398,8 @@ expect(collectDurations(fb)[0] === 15, "tg-feed: block duration 0:15 -> 15s");
 expect(unwrapFeedBody("<div>plain html</div>") === "<div>plain html</div>", "tg-feed: plain HTML passes through unwrap");
 
 // Telegram WEB APP: the SW-virtual /stream/ URLs are non-re-fetchable, so they
-// must be block-listed (telegram-web.js downloads them in-page instead). A
-// public t.me CDN URL must still NOT be caught by this web-app rule.
+// must be block-listed to keep broken (undownloadable) entries out of the
+// Captured sheet. A public t.me CDN URL must still NOT be caught by this rule.
 expect(matchInParserBlocklist("https://web.telegram.org/k/stream/%7B%22dcId%22%3A2%7D"),
   "tg-web: /k/stream/ is block-listed");
 expect(matchInParserBlocklist("https://webk.telegram.org/stream/abc"),

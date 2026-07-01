@@ -177,15 +177,17 @@ const PARSER_BLOCKLIST = {
 
   // Telegram WEB APP (web.telegram.org/k & /a) — its media URLs are
   // ServiceWorker-virtual /stream/ paths backed by MTProto bytes decrypted
-  // in-page (see js/telegram-web.js). They are NOT re-fetchable by the native
-  // downloader (no SW, no MTProto), so a generic-catcher capture of one is a
-  // HARMFUL entry that fails on every download attempt. Block it — telegram-web.js
-  // handles this surface by downloading the bytes in-page and saving a blob,
-  // entirely outside the capture pipeline, so there is nothing here to pair with;
-  // this entry exists only to suppress the broken catcher capture (same
-  // "block a harmful capture" rationale as Mega's undecryptable bytes, not the
-  // ordinary cardinal-rule dedup). Matches /k/stream/, /a/stream/, /z/stream/ and
-  // a bare /stream/ on the web(k|z).telegram.org hosts.
+  // in-page. They are NOT re-fetchable by the native downloader (no SW, no
+  // MTProto), so a generic-catcher capture of one is a HARMFUL entry that fails
+  // on every download attempt (the /stream/ requests DO cross the wire as 206
+  // video/mp4, so without this block the catcher would grab them). Block it to
+  // keep those broken entries out of the Captured sheet — same "block a harmful
+  // capture" rationale as Mega's undecryptable bytes, not the ordinary
+  // cardinal-rule dedup. (An in-page-download button for this surface was tried
+  // and removed — see the "Telegram WEB APP" note in CLAUDE.md; the web app is
+  // not a supported download surface, this block just prevents broken captures.)
+  // Matches /k/stream/, /a/stream/, /z/stream/ and a bare /stream/ on the
+  // web(k|z).telegram.org hosts.
   'telegram-web': [
     'web(?:k|z)?\\.telegram\\.org\\/(?:[kaz]\\/)?stream\\/',
   ],

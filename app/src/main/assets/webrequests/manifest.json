@@ -7,7 +7,7 @@
     }
   },
   "name": "webRequest-downloads",
-  "version": "2.54",
+  "version": "2.55",
   "permissions": [
     "nativeMessaging",
     "nativeMessagingFromContent",
@@ -50,12 +50,6 @@
       "matches": ["<all_urls>"],
       "js": ["js/snapshot.js"],
       "run_at": "document_idle"
-    },
-    {
-      "matches": ["*://web.telegram.org/*", "*://webk.telegram.org/*", "*://webz.telegram.org/*"],
-      "js": ["js/telegram-web.js"],
-      "run_at": "document_idle",
-      "all_frames": false
     }
   ],
 
