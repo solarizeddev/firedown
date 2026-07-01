@@ -1,0 +1,455 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  "Add storage credit" wizard. One scrolling page whose step containers are shown
+  one at a time by BuyCreditFragment, driven by BuyCreditViewModel.UiState:
+  loading → pick (denomination + rail) → pay (Lightning QR / Stripe Checkout tab)
+  → success / error. Card path uses Stripe's HOSTED Checkout (opened in a browser
+  tab) — no Stripe SDK.
+-->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:scrollbars="none">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="16dp"
+        android:paddingTop="20dp"
+        android:paddingBottom="32dp">
+
+        <!-- ── loading / starting ── -->
+        <LinearLayout
+            android:id="@+id/buy_step_loading"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:minHeight="320dp">
+
+            <ProgressBar
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+
+        <!-- ── 1 · pick denomination + rail ── -->
+        <LinearLayout
+            android:id="@+id/buy_step_pick"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone"
+            tools:visibility="visible">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/buy_credit_pick_how_much"
+                android:textAllCaps="true"
+                android:textSize="12sp"
+                android:letterSpacing="0.04"
+                android:textColor="?android:attr/textColorSecondary"
+                android:layout_marginBottom="10dp" />
+
+            <!-- Denomination cards inflated here at runtime. -->
+            <LinearLayout
+                android:id="@+id/buy_denom_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/buy_credit_pay_with"
+                android:textAllCaps="true"
+                android:textSize="12sp"
+                android:letterSpacing="0.04"
+                android:textColor="?android:attr/textColorSecondary"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="10dp" />
+
+            <com.google.android.material.button.MaterialButtonToggleGroup
+                android:id="@+id/buy_rail_group"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:singleSelection="true"
+                app:selectionRequired="true">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/buy_rail_lightning"
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/buy_credit_rail_lightning"
+                    app:icon="@drawable/ic_lightning_24"
+                    app:iconGravity="textStart"
+                    app:iconSize="18dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/buy_rail_card"
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/buy_credit_rail_card" />
+            </com.google.android.material.button.MaterialButtonToggleGroup>
+
+            <!-- Privacy note — the unlinkability the blind signature buys. -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/buy_credit_privacy_note"
+                android:textSize="12.5sp"
+                android:lineSpacingMultiplier="1.35"
+                android:padding="14dp"
+                android:layout_marginTop="14dp"
+                android:background="@drawable/bg_sync_code"
+                android:textColor="?android:attr/textColorSecondary" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/buy_continue"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="18dp"
+                android:enabled="false"
+                android:text="@string/buy_credit_continue_default"
+                app:cornerRadius="14dp"
+                app:icon="@drawable/ic_arrow_forward_24"
+                app:iconGravity="textEnd" />
+        </LinearLayout>
+
+        <!-- ── 2a · pay with Lightning ── -->
+        <LinearLayout
+            android:id="@+id/buy_step_lightning"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone"
+            tools:visibility="gone">
+
+            <TextView
+                android:id="@+id/buy_ln_amount"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:textColor="?attr/colorOnSurface"
+                android:layout_marginTop="4dp"
+                tools:text="$18.00 · 500 GB-months" />
+
+            <ImageView
+                android:id="@+id/buy_ln_qr"
+                android:layout_width="220dp"
+                android:layout_height="220dp"
+                android:layout_gravity="center"
+                android:layout_marginTop="16dp"
+                android:padding="8dp"
+                android:background="@drawable/bg_lan_share_qr"
+                android:contentDescription="@string/buy_credit_ln_qr_desc" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginTop="16dp">
+
+                <ProgressBar
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:layout_marginEnd="10dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/buy_credit_waiting"
+                    android:textSize="13sp"
+                    android:textColor="?android:attr/textColorSecondary" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/buy_ln_invoice"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:padding="12dp"
+                android:maxLines="1"
+                android:ellipsize="middle"
+                android:fontFamily="monospace"
+                android:textSize="11.5sp"
+                android:background="@drawable/bg_sync_code"
+                android:textColor="?android:attr/textColorSecondary"
+                tools:text="lnbc183u1p4y2n4adpjge5hy…q9yysgqcqzp2" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="12dp">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/buy_ln_open_wallet"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="6dp"
+                    android:text="@string/buy_credit_open_wallet"
+                    app:icon="@drawable/ic_wallet_24"
+                    app:iconSize="16dp"
+                    app:cornerRadius="14dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/buy_ln_copy"
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="6dp"
+                    android:text="@string/buy_credit_copy_invoice"
+                    app:icon="@drawable/ic_copy_24"
+                    app:iconSize="16dp"
+                    app:cornerRadius="14dp" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:gravity="center"
+                android:textSize="12.5sp"
+                android:lineSpacingMultiplier="1.3"
+                android:text="@string/buy_credit_ln_hint"
+                android:textColor="?android:attr/textColorSecondary" />
+        </LinearLayout>
+
+        <!-- ── 2b · pay with card (Stripe hosted Checkout in a tab) ── -->
+        <LinearLayout
+            android:id="@+id/buy_step_stripe"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            android:visibility="gone"
+            tools:visibility="gone">
+
+            <TextView
+                android:id="@+id/buy_stripe_amount"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:textColor="?attr/colorOnSurface"
+                android:layout_marginTop="24dp"
+                tools:text="$18.00 · 500 GB-months" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginTop="24dp">
+
+                <ProgressBar
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:layout_marginEnd="10dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/buy_credit_waiting"
+                    android:textSize="13sp"
+                    android:textColor="?android:attr/textColorSecondary" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="18dp"
+                android:gravity="center"
+                android:textSize="12.5sp"
+                android:lineSpacingMultiplier="1.3"
+                android:text="@string/buy_credit_stripe_hint"
+                android:textColor="?android:attr/textColorSecondary" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/buy_stripe_reopen"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="18dp"
+                android:text="@string/buy_credit_reopen_checkout"
+                app:icon="@drawable/ic_open_in_new_24"
+                app:iconSize="16dp"
+                app:cornerRadius="14dp" />
+        </LinearLayout>
+
+        <!-- ── 3 · success ── -->
+        <LinearLayout
+            android:id="@+id/buy_step_success"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            android:visibility="gone"
+            android:paddingTop="24dp"
+            tools:visibility="gone">
+
+            <ImageView
+                android:layout_width="76dp"
+                android:layout_height="76dp"
+                android:src="@drawable/ic_baseline_check_circle_24"
+                app:tint="@color/brand_orange"
+                android:contentDescription="@null" />
+
+            <TextView
+                android:id="@+id/buy_success_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:textSize="21sp"
+                android:textStyle="bold"
+                android:textColor="?attr/colorOnSurface"
+                android:layout_marginTop="18dp"
+                tools:text="500 GB-months added" />
+
+            <TextView
+                android:id="@+id/buy_success_balance"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:textSize="14sp"
+                android:lineSpacingMultiplier="1.4"
+                android:layout_marginTop="6dp"
+                android:textColor="?android:attr/textColorSecondary"
+                tools:text="Your balance is now 600 GB-months." />
+
+            <!-- Recovery-code card — shown only when a fresh account was minted here. -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/buy_success_code_card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="22dp"
+                android:visibility="gone"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="1dp"
+                app:strokeColor="?attr/colorOutlineVariant"
+                tools:visibility="visible">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/buy_credit_recovery_code_title"
+                        android:textStyle="bold"
+                        android:textSize="15sp"
+                        android:textColor="?attr/colorOnSurface" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/buy_credit_recovery_code_body"
+                        android:textSize="12.5sp"
+                        android:lineSpacingMultiplier="1.35"
+                        android:layout_marginTop="4dp"
+                        android:textColor="?android:attr/textColorSecondary" />
+
+                    <TextView
+                        android:id="@+id/buy_success_code"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:padding="12dp"
+                        android:fontFamily="monospace"
+                        android:textSize="14sp"
+                        android:letterSpacing="0.05"
+                        android:background="@drawable/bg_sync_code"
+                        android:textColor="?attr/colorOnSurface"
+                        tools:text="ABCD EFGH JKMN PQRS TVWX YZ23 4567" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/buy_success_copy_code"
+                        style="?attr/materialButtonOutlinedStyle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:text="@string/buy_credit_copy_code"
+                        app:icon="@drawable/ic_copy_24"
+                        app:iconSize="16dp"
+                        app:cornerRadius="14dp" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/buy_done"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="@string/buy_credit_done"
+                app:cornerRadius="14dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/buy_backup_more"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="@string/buy_credit_backup_more"
+                app:cornerRadius="14dp" />
+        </LinearLayout>
+
+        <!-- ── error ── -->
+        <LinearLayout
+            android:id="@+id/buy_step_error"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:minHeight="320dp"
+            android:visibility="gone"
+            tools:visibility="gone">
+
+            <ImageView
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:src="@drawable/cloud_off_24"
+                app:tint="?android:attr/textColorSecondary"
+                android:contentDescription="@null" />
+
+            <TextView
+                android:id="@+id/buy_error_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:layout_marginTop="16dp"
+                android:textSize="14sp"
+                android:lineSpacingMultiplier="1.35"
+                android:textColor="?android:attr/textColorSecondary"
+                tools:text="Couldn’t reach the payments server." />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/buy_error_retry"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="18dp"
+                android:text="@string/buy_credit_retry"
+                app:cornerRadius="14dp" />
+        </LinearLayout>
+
+    </FrameLayout>
+</ScrollView>

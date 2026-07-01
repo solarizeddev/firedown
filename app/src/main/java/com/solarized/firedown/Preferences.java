@@ -92,6 +92,11 @@ public class Preferences {
      *  bookmarks this IS a paid/vault concern, so a BYO-backend picker is allowed
      *  here later; this is just the default. */
     public static final String STORAGE_DEFAULT_BACKEND = "https://storage.firedown.app";
+    /** The payments-mint backend base URL (mint.firedown.app). Issues blind-signed
+     *  storage credits; UNAUTHENTICATED (the mint never sees the account — that
+     *  unlinkability is the point). Same default-constant shape as
+     *  {@link #STORAGE_DEFAULT_BACKEND}. */
+    public static final String MINT_DEFAULT_BACKEND = "https://mint.firedown.app";
     /** Epoch millis of the last successful sync (0 = never). */
     public static final String SYNC_LAST_SYNCED_AT = "com.solarized.firedown.preferences.sync.last.synced.at";
     /** Last server document version observed (status display). */
@@ -142,6 +147,8 @@ public class Preferences {
     /** Cloud Backup screen actions (clickable preferences). */
     public static final String SETTINGS_CLOUD_BACKUP_STATUS = "com.solarized.firedown.preferences.cloud.backup.status";
     public static final String SETTINGS_CLOUD_BACKUP_FILES = "com.solarized.firedown.preferences.cloud.backup.files";
+    /** Opens the "Add storage credit" purchase flow (metered-balance top-up). */
+    public static final String SETTINGS_CLOUD_BACKUP_BUY = "com.solarized.firedown.preferences.cloud.backup.buy";
     public static final String SETTINGS_CLOUD_BACKUP_SHOW_CODE = "com.solarized.firedown.preferences.cloud.backup.show.code";
     public static final String SETTINGS_CLOUD_BACKUP_DELETE_DATA = "com.solarized.firedown.preferences.cloud.backup.delete.data";
     public static final String SETTINGS_CLOUD_BACKUP_HELP = "com.solarized.firedown.preferences.cloud.backup.help";

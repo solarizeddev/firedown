@@ -23,6 +23,15 @@
         app:singleLineTitle="false"
         app:icon="@drawable/cloud_24" />
 
+    <!-- Top-level (not under Manage): a metered user buys credit BEFORE their
+         first backup, so this must be reachable before Cloud Backup is set up. -->
+    <Preference
+        android:key="com.solarized.firedown.preferences.cloud.backup.buy"
+        android:title="@string/buy_credit_title"
+        android:summary="@string/settings_cloud_backup_buy_summary"
+        app:singleLineTitle="false"
+        app:icon="@drawable/add_24" />
+
     <PreferenceCategory
         android:key="com.solarized.firedown.preferences.cloud.backup.cat.manage"
         android:title="@string/settings_cloud_backup_cat_manage">

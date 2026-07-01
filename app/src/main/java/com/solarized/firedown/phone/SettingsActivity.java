@@ -139,6 +139,8 @@ public class SettingsActivity extends BaseActivity {
                 mToolbar.setTitle(R.string.settings_cloud_backup_title);
             else if(id == R.id.settings_cloud_backup_files)
                 mToolbar.setTitle(R.string.cloud_backup_files_title);
+            else if(id == R.id.settings_cloud_backup_buy)
+                mToolbar.setTitle(R.string.buy_credit_title);
         });
 
         ViewCompat.setOnApplyWindowInsetsListener(mToolbar, (v, windowInsets) -> {

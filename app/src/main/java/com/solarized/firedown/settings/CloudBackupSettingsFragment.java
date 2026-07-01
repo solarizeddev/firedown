@@ -52,6 +52,7 @@ public class CloudBackupSettingsFragment extends BasePreferenceFragment
     OkHttpClient mHttpClient;
 
     private Preference mStatus;
+    private Preference mBuy;
     private Preference mFiles;
     private Preference mDeleteData;
     private PreferenceCategory mCatManage;
@@ -67,10 +68,14 @@ public class CloudBackupSettingsFragment extends BasePreferenceFragment
         setPreferencesFromResource(R.xml.settings_cloud_backup, rootKey);
 
         mStatus = findPreference(Preferences.SETTINGS_CLOUD_BACKUP_STATUS);
+        mBuy = findPreference(Preferences.SETTINGS_CLOUD_BACKUP_BUY);
         mFiles = findPreference(Preferences.SETTINGS_CLOUD_BACKUP_FILES);
         mDeleteData = findPreference(Preferences.SETTINGS_CLOUD_BACKUP_DELETE_DATA);
         mCatManage = findPreference(Preferences.SETTINGS_CLOUD_BACKUP_CAT_MANAGE);
 
+        if (mBuy != null) {
+            mBuy.setOnPreferenceClickListener(this);
+        }
         if (mFiles != null) {
             mFiles.setOnPreferenceClickListener(this);
         }
@@ -117,6 +122,8 @@ public class CloudBackupSettingsFragment extends BasePreferenceFragment
     public boolean onPreferenceClick(Preference preference) {
         String key = preference.getKey();
         switch (key) {
+            case Preferences.SETTINGS_CLOUD_BACKUP_BUY ->
+                    NavigationUtils.navigateSafe(mNavController, R.id.action_cloud_backup_to_buy);
             case Preferences.SETTINGS_CLOUD_BACKUP_FILES ->
                     NavigationUtils.navigateSafe(mNavController, R.id.action_cloud_backup_to_files);
             case Preferences.SETTINGS_CLOUD_BACKUP_DELETE_DATA -> showDeleteDataDialog();
