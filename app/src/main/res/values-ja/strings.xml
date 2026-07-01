@@ -771,4 +771,25 @@
     <string name="buy_credit_gb_month_explainer">1 GB-month は、1 GB を1か月間バックアップし続けることを意味します — つまり 500 は 10 か月間の 50 GB、または 5 か月間の 100 GB になります。</string>
     <string name="buy_credit_denom_rate">%1$s / GB-month</string>
     <string name="buy_credit_error_busy">現在リクエストが多すぎます。1分待ってからもう一度お試しください。</string>
+    <string name="cloud_status_gb_label">GB-months</string>
+    <string name="cloud_status_oneoff">一回限りのクレジット · 自動更新なし</string>
+    <string name="cloud_status_free_beta">ベータ期間中はバックアップが無料です</string>
+    <string name="cloud_status_facts">%1$s · %2$s をバックアップ済み</string>
+    <string name="cloud_status_covered_until">現在の使用量では ~ %1$s まで対応済みです。</string>
+    <string name="cloud_status_covered_ongoing">バックアップは対応済みです。</string>
+    <string name="cloud_status_grace">読み取り専用 — バックアップを続けるにはチャージしてください。ファイルは ~ %1$s まで保持されます。</string>
+    <string name="cloud_status_grace_nodate">読み取り専用 — バックアップを続けるにはチャージしてください。ファイルは当面保持されます。</string>
+    <string name="cloud_status_backups_on">ダウンロードはバックアップされ、暗号化されています。</string>
+    <string name="settings_sync_link_title">リカバリーコードを持っています</string>
+    <string name="settings_sync_link_summary">このデバイスでバックアップとストレージクレジットを復元します</string>
+    <string name="settings_sync_link_dialog_title">リカバリーコードを入力してください</string>
+    <string name="settings_sync_link_dialog_message">別のデバイスのリカバリーコードを貼り付けて、ダウンロードのバックアップとストレージクレジットをここに復元します。これによりブックマーク同期は有効になりません。</string>
+    <string name="settings_sync_link_action">復元</string>
+    <string name="settings_sync_link_ok">アカウントを連携しました — バックアップとクレジットが戻りました</string>
+    <string name="settings_sync_link_bad">そのリカバリーコードは正しくないようです</string>
+    <string name="home_cloud_backing_up">バックアップ中…</string>
+    <string name="home_cloud_covered">~ %1$s まで対応済み</string>
+    <string name="home_cloud_paused">バックアップ一時停止 — チャージしてください</string>
+    <string name="home_cloud_on">バックアップ オン</string>
+    <string name="home_cloud_on_files">バックアップ オン · %1$s</string>
 </resources>

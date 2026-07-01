@@ -537,4 +537,25 @@
     <string name="buy_credit_gb_month_explainer">Един GB-month е 1 GB, поддържан в резервно копие за един месец — така че 500 могат да бъдат 50 GB за 10 месеца или 100 GB за 5.</string>
     <string name="buy_credit_denom_rate">%1$s / GB-month</string>
     <string name="buy_credit_error_busy">Твърде много заявки в момента. Изчакайте минута и опитайте отново.</string>
+    <string name="cloud_status_gb_label">GB-months</string>
+    <string name="cloud_status_oneoff">Еднократен кредит · без автоматично подновяване</string>
+    <string name="cloud_status_free_beta">Резервните копия са безплатни по време на бета версията</string>
+    <string name="cloud_status_facts">%1$s · %2$s архивирани</string>
+    <string name="cloud_status_covered_until">Покрито до ~ %1$s при текущото ви потребление.</string>
+    <string name="cloud_status_covered_ongoing">Резервните ви копия са покрити.</string>
+    <string name="cloud_status_grace">Само за четене — заредете, за да продължите архивирането. Файловете ви се пазят до ~ %1$s.</string>
+    <string name="cloud_status_grace_nodate">Само за четене — заредете, за да продължите архивирането. Файловете ви се пазят засега.</string>
+    <string name="cloud_status_backups_on">Изтеглянията ви са архивирани и криптирани.</string>
+    <string name="settings_sync_link_title">Имам код за възстановяване</string>
+    <string name="settings_sync_link_summary">Възстановете резервните си копия и кредита за съхранение на това устройство</string>
+    <string name="settings_sync_link_dialog_title">Въведете кода си за възстановяване</string>
+    <string name="settings_sync_link_dialog_message">Поставете кода за възстановяване от другото си устройство, за да възстановите тук резервното копие на изтеглянията и кредита за съхранение. Това няма да включи синхронизирането на отметки.</string>
+    <string name="settings_sync_link_action">Възстановяване</string>
+    <string name="settings_sync_link_ok">Акаунтът е свързан — резервните ви копия и кредитът се върнаха</string>
+    <string name="settings_sync_link_bad">Този код за възстановяване не изглежда правилен</string>
+    <string name="home_cloud_backing_up">Архивиране…</string>
+    <string name="home_cloud_covered">Покрито до ~ %1$s</string>
+    <string name="home_cloud_paused">Резервните копия са на пауза — заредете</string>
+    <string name="home_cloud_on">Резервните копия са включени</string>
+    <string name="home_cloud_on_files">Резервните копия са включени · %1$s</string>
 </resources>

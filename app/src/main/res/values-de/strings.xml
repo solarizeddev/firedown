@@ -775,4 +775,25 @@
     <string name="buy_credit_gb_month_explainer">Ein GB-month ist 1 GB, das einen Monat lang gesichert bleibt — 500 könnten also 50 GB für 10 Monate oder 100 GB für 5 sein.</string>
     <string name="buy_credit_denom_rate">%1$s / GB-month</string>
     <string name="buy_credit_error_busy">Gerade zu viele Anfragen. Warten Sie eine Minute und versuchen Sie es erneut.</string>
+    <string name="cloud_status_gb_label">GB-months</string>
+    <string name="cloud_status_oneoff">Einmaliges Guthaben · keine automatische Verlängerung</string>
+    <string name="cloud_status_free_beta">Backups sind während der Beta kostenlos</string>
+    <string name="cloud_status_facts">%1$s · %2$s gesichert</string>
+    <string name="cloud_status_covered_until">Abgedeckt bis ~ %1$s bei deiner aktuellen Nutzung.</string>
+    <string name="cloud_status_covered_ongoing">Deine Backups sind abgedeckt.</string>
+    <string name="cloud_status_grace">Schreibgeschützt — lade Guthaben auf, um weiter zu sichern. Deine Dateien werden bis ~ %1$s aufbewahrt.</string>
+    <string name="cloud_status_grace_nodate">Schreibgeschützt — lade Guthaben auf, um weiter zu sichern. Deine Dateien werden vorerst aufbewahrt.</string>
+    <string name="cloud_status_backups_on">Deine Downloads sind gesichert und verschlüsselt.</string>
+    <string name="settings_sync_link_title">Ich habe einen Wiederherstellungscode</string>
+    <string name="settings_sync_link_summary">Stelle deine Backups und dein Speicherguthaben auf diesem Gerät wieder her</string>
+    <string name="settings_sync_link_dialog_title">Gib deinen Wiederherstellungscode ein</string>
+    <string name="settings_sync_link_dialog_message">Füge den Wiederherstellungscode von deinem anderen Gerät ein, um hier dein Downloads-Backup und dein Speicherguthaben wiederherzustellen. Dadurch wird die Lesezeichen-Synchronisierung nicht aktiviert.</string>
+    <string name="settings_sync_link_action">Wiederherstellen</string>
+    <string name="settings_sync_link_ok">Konto verknüpft — deine Backups und dein Guthaben sind zurück</string>
+    <string name="settings_sync_link_bad">Dieser Wiederherstellungscode sieht nicht richtig aus</string>
+    <string name="home_cloud_backing_up">Wird gesichert…</string>
+    <string name="home_cloud_covered">Abgedeckt bis ~ %1$s</string>
+    <string name="home_cloud_paused">Backups pausiert — Guthaben aufladen</string>
+    <string name="home_cloud_on">Backups aktiv</string>
+    <string name="home_cloud_on_files">Backups aktiv · %1$s</string>
 </resources>

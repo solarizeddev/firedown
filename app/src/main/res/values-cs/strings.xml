@@ -601,4 +601,25 @@
     <string name="buy_credit_gb_month_explainer">GB-month je 1 GB uchovávaný v záloze po dobu jednoho měsíce — takže 500 může být 50 GB na 10 měsíců nebo 100 GB na 5.</string>
     <string name="buy_credit_denom_rate">%1$s / GB-month</string>
     <string name="buy_credit_error_busy">Právě teď je příliš mnoho požadavků. Počkejte minutu a zkuste to znovu.</string>
+    <string name="cloud_status_gb_label">GB-months</string>
+    <string name="cloud_status_oneoff">Jednorázový kredit · bez automatického obnovení</string>
+    <string name="cloud_status_free_beta">Zálohy jsou během beta verze zdarma</string>
+    <string name="cloud_status_facts">%1$s · zálohováno %2$s</string>
+    <string name="cloud_status_covered_until">Pokryto do ~ %1$s při vašem aktuálním využití.</string>
+    <string name="cloud_status_covered_ongoing">Vaše zálohy jsou pokryty.</string>
+    <string name="cloud_status_grace">Pouze pro čtení — dobijte kredit, abyste mohli dál zálohovat. Vaše soubory jsou uchovány do ~ %1$s.</string>
+    <string name="cloud_status_grace_nodate">Pouze pro čtení — dobijte kredit, abyste mohli dál zálohovat. Vaše soubory jsou prozatím uchovány.</string>
+    <string name="cloud_status_backups_on">Vaše stažené soubory jsou zálohovány a zašifrovány.</string>
+    <string name="settings_sync_link_title">Mám kód pro obnovení</string>
+    <string name="settings_sync_link_summary">Obnovte své zálohy a kredit úložiště na tomto zařízení</string>
+    <string name="settings_sync_link_dialog_title">Zadejte svůj kód pro obnovení</string>
+    <string name="settings_sync_link_dialog_message">Vložte kód pro obnovení z druhého zařízení a obnovte zde zálohu stažených souborů a kredit úložiště. Tímto se nezapne synchronizace záložek.</string>
+    <string name="settings_sync_link_action">Obnovit</string>
+    <string name="settings_sync_link_ok">Účet propojen — vaše zálohy a kredit jsou zpět</string>
+    <string name="settings_sync_link_bad">Tento kód pro obnovení nevypadá správně</string>
+    <string name="home_cloud_backing_up">Zálohování…</string>
+    <string name="home_cloud_covered">Pokryto do ~ %1$s</string>
+    <string name="home_cloud_paused">Zálohy pozastaveny — dobijte kredit</string>
+    <string name="home_cloud_on">Zálohy zapnuty</string>
+    <string name="home_cloud_on_files">Zálohy zapnuty · %1$s</string>
 </resources>

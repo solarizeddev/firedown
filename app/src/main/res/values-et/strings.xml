@@ -513,4 +513,25 @@
     <string name="buy_credit_gb_month_explainer">Üks GB-month on 1 GB, mida hoitakse varundatuna ühe kuu jooksul — nii et 500 võib olla 50 GB 10 kuuks või 100 GB 5 kuuks.</string>
     <string name="buy_credit_denom_rate">%1$s / GB-month</string>
     <string name="buy_credit_error_busy">Praegu on liiga palju päringuid. Oodake minut ja proovige uuesti.</string>
+    <string name="cloud_status_gb_label">GB-months</string>
+    <string name="cloud_status_oneoff">Ühekordne krediit · ei uuene automaatselt</string>
+    <string name="cloud_status_free_beta">Varukoopiad on beetaperioodil tasuta</string>
+    <string name="cloud_status_facts">%1$s · %2$s varundatud</string>
+    <string name="cloud_status_covered_until">Kaetud kuni ~ %1$s praeguse kasutuse juures.</string>
+    <string name="cloud_status_covered_ongoing">Sinu varukoopiad on kaetud.</string>
+    <string name="cloud_status_grace">Ainult lugemiseks — laadi krediiti, et jätkata varundamist. Sinu failid säilitatakse kuni ~ %1$s.</string>
+    <string name="cloud_status_grace_nodate">Ainult lugemiseks — laadi krediiti, et jätkata varundamist. Sinu failid säilitatakse esialgu.</string>
+    <string name="cloud_status_backups_on">Sinu allalaadimised on varundatud ja krüpteeritud.</string>
+    <string name="settings_sync_link_title">Mul on taastekood</string>
+    <string name="settings_sync_link_summary">Taasta oma varukoopiad ja salvestuskrediit sellel seadmel</string>
+    <string name="settings_sync_link_dialog_title">Sisesta oma taastekood</string>
+    <string name="settings_sync_link_dialog_message">Kleebi teisest seadmest pärit taastekood, et taastada siin oma allalaadimiste varukoopia ja salvestuskrediit. See ei lülita sisse järjehoidjate sünkroonimist.</string>
+    <string name="settings_sync_link_action">Taasta</string>
+    <string name="settings_sync_link_ok">Konto ühendatud — sinu varukoopiad ja krediit on tagasi</string>
+    <string name="settings_sync_link_bad">See taastekood ei tundu õige olevat</string>
+    <string name="home_cloud_backing_up">Varundamine…</string>
+    <string name="home_cloud_covered">Kaetud kuni ~ %1$s</string>
+    <string name="home_cloud_paused">Varundamine peatatud — laadi krediiti</string>
+    <string name="home_cloud_on">Varundamine sees</string>
+    <string name="home_cloud_on_files">Varundamine sees · %1$s</string>
 </resources>

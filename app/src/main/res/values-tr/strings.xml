@@ -643,4 +643,25 @@
     <string name="buy_credit_gb_month_explainer">Bir GB-month, bir ay boyunca yedekte tutulan 1 GB demektir — yani 500, 10 ay için 50 GB ya da 5 ay için 100 GB olabilir.</string>
     <string name="buy_credit_denom_rate">%1$s / GB-month</string>
     <string name="buy_credit_error_busy">Şu anda çok fazla istek var. Bir dakika bekleyip tekrar deneyin.</string>
+    <string name="cloud_status_gb_label">GB-months</string>
+    <string name="cloud_status_oneoff">Tek seferlik kredi · otomatik yenileme yok</string>
+    <string name="cloud_status_free_beta">Yedeklemeler beta süresince ücretsizdir</string>
+    <string name="cloud_status_facts">%1$s · %2$s yedeklendi</string>
+    <string name="cloud_status_covered_until">Mevcut kullanımınızla ~ %1$s tarihine kadar kapsanıyor.</string>
+    <string name="cloud_status_covered_ongoing">Yedeklemeleriniz kapsanıyor.</string>
+    <string name="cloud_status_grace">Salt okunur — yedeklemeye devam etmek için kredi yükleyin. Dosyalarınız ~ %1$s tarihine kadar saklanır.</string>
+    <string name="cloud_status_grace_nodate">Salt okunur — yedeklemeye devam etmek için kredi yükleyin. Dosyalarınız şimdilik saklanır.</string>
+    <string name="cloud_status_backups_on">İndirmeleriniz yedeklendi ve şifrelendi.</string>
+    <string name="settings_sync_link_title">Kurtarma kodum var</string>
+    <string name="settings_sync_link_summary">Yedeklemelerinizi ve depolama kredinizi bu cihaza geri yükleyin</string>
+    <string name="settings_sync_link_dialog_title">Kurtarma kodunuzu girin</string>
+    <string name="settings_sync_link_dialog_message">İndirme yedeğinizi ve depolama kredinizi buraya geri yüklemek için diğer cihazınızdaki kurtarma kodunu yapıştırın. Bu, yer imi eşitlemesini açmaz.</string>
+    <string name="settings_sync_link_action">Geri yükle</string>
+    <string name="settings_sync_link_ok">Hesap bağlandı — yedeklemeleriniz ve krediniz geri geldi</string>
+    <string name="settings_sync_link_bad">Bu kurtarma kodu doğru görünmüyor</string>
+    <string name="home_cloud_backing_up">Yedekleniyor…</string>
+    <string name="home_cloud_covered">~ %1$s tarihine kadar kapsanıyor</string>
+    <string name="home_cloud_paused">Yedeklemeler duraklatıldı — kredi yükleyin</string>
+    <string name="home_cloud_on">Yedeklemeler açık</string>
+    <string name="home_cloud_on_files">Yedeklemeler açık · %1$s</string>
 </resources>

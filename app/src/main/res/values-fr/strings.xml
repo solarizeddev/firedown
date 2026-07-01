@@ -776,4 +776,25 @@
     <string name="buy_credit_gb_month_explainer">Un GB-month correspond à 1 Go sauvegardé pendant un mois — donc 500 pourraient représenter 50 Go pendant 10 mois, ou 100 Go pendant 5.</string>
     <string name="buy_credit_denom_rate">%1$s / GB-month</string>
     <string name="buy_credit_error_busy">Trop de requêtes en ce moment. Attendez une minute et réessayez.</string>
+    <string name="cloud_status_gb_label">GB-months</string>
+    <string name="cloud_status_oneoff">Crédit unique · sans renouvellement automatique</string>
+    <string name="cloud_status_free_beta">Les sauvegardes sont gratuites pendant la bêta</string>
+    <string name="cloud_status_facts">%1$s · %2$s sauvegardés</string>
+    <string name="cloud_status_covered_until">Couvert jusqu\'au ~ %1$s selon votre utilisation actuelle.</string>
+    <string name="cloud_status_covered_ongoing">Vos sauvegardes sont couvertes.</string>
+    <string name="cloud_status_grace">Lecture seule — rechargez pour continuer à sauvegarder. Vos fichiers sont conservés jusqu\'au ~ %1$s.</string>
+    <string name="cloud_status_grace_nodate">Lecture seule — rechargez pour continuer à sauvegarder. Vos fichiers sont conservés pour l\'instant.</string>
+    <string name="cloud_status_backups_on">Vos téléchargements sont sauvegardés et chiffrés.</string>
+    <string name="settings_sync_link_title">J\'ai un code de récupération</string>
+    <string name="settings_sync_link_summary">Restaurez vos sauvegardes et votre crédit de stockage sur cet appareil</string>
+    <string name="settings_sync_link_dialog_title">Saisissez votre code de récupération</string>
+    <string name="settings_sync_link_dialog_message">Collez le code de récupération de votre autre appareil pour restaurer ici la sauvegarde de vos téléchargements et votre crédit de stockage. Cela n\'activera pas la synchronisation des favoris.</string>
+    <string name="settings_sync_link_action">Restaurer</string>
+    <string name="settings_sync_link_ok">Compte lié — vos sauvegardes et votre crédit sont de retour</string>
+    <string name="settings_sync_link_bad">Ce code de récupération ne semble pas correct</string>
+    <string name="home_cloud_backing_up">Sauvegarde…</string>
+    <string name="home_cloud_covered">Couvert jusqu\'au ~ %1$s</string>
+    <string name="home_cloud_paused">Sauvegardes en pause — rechargez</string>
+    <string name="home_cloud_on">Sauvegardes activées</string>
+    <string name="home_cloud_on_files">Sauvegardes activées · %1$s</string>
 </resources>

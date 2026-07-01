@@ -583,4 +583,25 @@
     <string name="buy_credit_gb_month_explainer">Yksi GB-month on 1 GB pidettynä varmuuskopioituna yhden kuukauden ajan — joten 500 voisi olla 50 GB 10 kuukaudeksi tai 100 GB 5 kuukaudeksi.</string>
     <string name="buy_credit_denom_rate">%1$s / GB-month</string>
     <string name="buy_credit_error_busy">Liian monta pyyntöä juuri nyt. Odota hetki ja yritä uudelleen.</string>
+    <string name="cloud_status_gb_label">GB-months</string>
+    <string name="cloud_status_oneoff">Kertaluontoinen krediitti · ei automaattista uusintaa</string>
+    <string name="cloud_status_free_beta">Varmuuskopiot ovat ilmaisia beetavaiheen aikana</string>
+    <string name="cloud_status_facts">%1$s · %2$s varmuuskopioitu</string>
+    <string name="cloud_status_covered_until">Katettu ~ %1$s asti nykyisellä käytölläsi.</string>
+    <string name="cloud_status_covered_ongoing">Varmuuskopiosi ovat katettuja.</string>
+    <string name="cloud_status_grace">Vain luku — lisää krediittiä jatkaaksesi varmuuskopiointia. Tiedostosi säilytetään ~ %1$s asti.</string>
+    <string name="cloud_status_grace_nodate">Vain luku — lisää krediittiä jatkaaksesi varmuuskopiointia. Tiedostosi säilytetään toistaiseksi.</string>
+    <string name="cloud_status_backups_on">Lataamasi tiedostot on varmuuskopioitu ja salattu.</string>
+    <string name="settings_sync_link_title">Minulla on palautuskoodi</string>
+    <string name="settings_sync_link_summary">Palauta varmuuskopiosi ja tallennuskrediittisi tälle laitteelle</string>
+    <string name="settings_sync_link_dialog_title">Anna palautuskoodisi</string>
+    <string name="settings_sync_link_dialog_message">Liitä palautuskoodi toiselta laitteeltasi palauttaaksesi latauksiesi varmuuskopion ja tallennuskrediittisi tänne. Tämä ei ota käyttöön kirjanmerkkien synkronointia.</string>
+    <string name="settings_sync_link_action">Palauta</string>
+    <string name="settings_sync_link_ok">Tili linkitetty — varmuuskopiosi ja krediittisi ovat palanneet</string>
+    <string name="settings_sync_link_bad">Tuo palautuskoodi ei näytä oikealta</string>
+    <string name="home_cloud_backing_up">Varmuuskopioidaan…</string>
+    <string name="home_cloud_covered">Katettu ~ %1$s asti</string>
+    <string name="home_cloud_paused">Varmuuskopiointi keskeytetty — lisää krediittiä</string>
+    <string name="home_cloud_on">Varmuuskopiointi käytössä</string>
+    <string name="home_cloud_on_files">Varmuuskopiointi käytössä · %1$s</string>
 </resources>

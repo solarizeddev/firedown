@@ -644,4 +644,25 @@
     <string name="buy_credit_gb_month_explainer">Een GB-month is 1 GB dat een maand lang geback-upt blijft — dus 500 kan 50 GB voor 10 maanden zijn, of 100 GB voor 5.</string>
     <string name="buy_credit_denom_rate">%1$s / GB-month</string>
     <string name="buy_credit_error_busy">Te veel verzoeken op dit moment. Wacht een minuut en probeer het opnieuw.</string>
+    <string name="cloud_status_gb_label">GB-months</string>
+    <string name="cloud_status_oneoff">Eenmalig tegoed · geen automatische verlenging</string>
+    <string name="cloud_status_free_beta">Back-ups zijn gratis tijdens de bèta</string>
+    <string name="cloud_status_facts">%1$s · %2$s geback-upt</string>
+    <string name="cloud_status_covered_until">Gedekt tot ~ %1$s bij je huidige gebruik.</string>
+    <string name="cloud_status_covered_ongoing">Je back-ups zijn gedekt.</string>
+    <string name="cloud_status_grace">Alleen-lezen — vul aan om te blijven back-uppen. Je bestanden worden bewaard tot ~ %1$s.</string>
+    <string name="cloud_status_grace_nodate">Alleen-lezen — vul aan om te blijven back-uppen. Je bestanden worden voorlopig bewaard.</string>
+    <string name="cloud_status_backups_on">Je downloads zijn geback-upt en versleuteld.</string>
+    <string name="settings_sync_link_title">Ik heb een herstelcode</string>
+    <string name="settings_sync_link_summary">Herstel je back-ups en opslagtegoed op dit apparaat</string>
+    <string name="settings_sync_link_dialog_title">Voer je herstelcode in</string>
+    <string name="settings_sync_link_dialog_message">Plak de herstelcode van je andere apparaat om hier de back-up van je downloads en je opslagtegoed te herstellen. Dit schakelt de bladwijzersynchronisatie niet in.</string>
+    <string name="settings_sync_link_action">Herstellen</string>
+    <string name="settings_sync_link_ok">Account gekoppeld — je back-ups en tegoed zijn terug</string>
+    <string name="settings_sync_link_bad">Die herstelcode ziet er niet juist uit</string>
+    <string name="home_cloud_backing_up">Back-up maken…</string>
+    <string name="home_cloud_covered">Gedekt tot ~ %1$s</string>
+    <string name="home_cloud_paused">Back-ups gepauzeerd — aanvullen</string>
+    <string name="home_cloud_on">Back-ups aan</string>
+    <string name="home_cloud_on_files">Back-ups aan · %1$s</string>
 </resources>

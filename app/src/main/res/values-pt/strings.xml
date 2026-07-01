@@ -644,4 +644,25 @@
     <string name="buy_credit_gb_month_explainer">Um GB-month é 1 GB mantido em backup por um mês — então 500 poderiam ser 50 GB por 10 meses, ou 100 GB por 5.</string>
     <string name="buy_credit_denom_rate">%1$s / GB-month</string>
     <string name="buy_credit_error_busy">Muitas solicitações neste momento. Aguarde um minuto e tente novamente.</string>
+    <string name="cloud_status_gb_label">GB-months</string>
+    <string name="cloud_status_oneoff">Crédito único · sem renovação automática</string>
+    <string name="cloud_status_free_beta">As cópias de segurança são gratuitas durante a beta</string>
+    <string name="cloud_status_facts">%1$s · %2$s com cópia de segurança</string>
+    <string name="cloud_status_covered_until">Coberto até ~ %1$s com o seu uso atual.</string>
+    <string name="cloud_status_covered_ongoing">As suas cópias de segurança estão cobertas.</string>
+    <string name="cloud_status_grace">Somente leitura — recarregue para continuar as cópias. Os seus ficheiros são mantidos até ~ %1$s.</string>
+    <string name="cloud_status_grace_nodate">Somente leitura — recarregue para continuar as cópias. Os seus ficheiros são mantidos por enquanto.</string>
+    <string name="cloud_status_backups_on">As suas transferências têm cópia de segurança e estão encriptadas.</string>
+    <string name="settings_sync_link_title">Tenho um código de recuperação</string>
+    <string name="settings_sync_link_summary">Restaure as suas cópias de segurança e o crédito de armazenamento neste dispositivo</string>
+    <string name="settings_sync_link_dialog_title">Introduza o seu código de recuperação</string>
+    <string name="settings_sync_link_dialog_message">Cole o código de recuperação do seu outro dispositivo para restaurar aqui a cópia das suas transferências e o crédito de armazenamento. Isto não ativará a sincronização de marcadores.</string>
+    <string name="settings_sync_link_action">Restaurar</string>
+    <string name="settings_sync_link_ok">Conta ligada — as suas cópias de segurança e o crédito voltaram</string>
+    <string name="settings_sync_link_bad">Esse código de recuperação não parece correto</string>
+    <string name="home_cloud_backing_up">A fazer cópia de segurança…</string>
+    <string name="home_cloud_covered">Coberto até ~ %1$s</string>
+    <string name="home_cloud_paused">Cópias em pausa — recarregue</string>
+    <string name="home_cloud_on">Cópias ativadas</string>
+    <string name="home_cloud_on_files">Cópias ativadas · %1$s</string>
 </resources>

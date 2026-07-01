@@ -563,4 +563,25 @@
     <string name="buy_credit_gb_month_explainer">Один GB-month — це 1 ГБ, який зберігається в резервній копії протягом місяця — тож 500 може бути 50 ГБ на 10 місяців або 100 ГБ на 5.</string>
     <string name="buy_credit_denom_rate">%1$s / GB-month</string>
     <string name="buy_credit_error_busy">Наразі забагато запитів. Зачекайте хвилину і спробуйте знову.</string>
+    <string name="cloud_status_gb_label">GB-months</string>
+    <string name="cloud_status_oneoff">Разовий кредит · без автопродовження</string>
+    <string name="cloud_status_free_beta">Під час бета-версії резервні копії безкоштовні</string>
+    <string name="cloud_status_facts">%1$s · %2$s у резервній копії</string>
+    <string name="cloud_status_covered_until">Покрито до ~ %1$s за вашого поточного використання.</string>
+    <string name="cloud_status_covered_ongoing">Ваші резервні копії покриті.</string>
+    <string name="cloud_status_grace">Лише для читання — поповніть, щоб продовжити резервне копіювання. Ваші файли зберігаються до ~ %1$s.</string>
+    <string name="cloud_status_grace_nodate">Лише для читання — поповніть, щоб продовжити резервне копіювання. Ваші файли поки що зберігаються.</string>
+    <string name="cloud_status_backups_on">Ваші завантаження зарезервовані та зашифровані.</string>
+    <string name="settings_sync_link_title">У мене є код відновлення</string>
+    <string name="settings_sync_link_summary">Відновіть резервні копії та кредит сховища на цьому пристрої</string>
+    <string name="settings_sync_link_dialog_title">Введіть код відновлення</string>
+    <string name="settings_sync_link_dialog_message">Вставте код відновлення з іншого пристрою, щоб відновити тут резервну копію завантажень і кредит сховища. Це не увімкне синхронізацію закладок.</string>
+    <string name="settings_sync_link_action">Відновити</string>
+    <string name="settings_sync_link_ok">Обліковий запис пов\'язано — ваші резервні копії та кредит повернулися</string>
+    <string name="settings_sync_link_bad">Цей код відновлення виглядає неправильним</string>
+    <string name="home_cloud_backing_up">Резервне копіювання…</string>
+    <string name="home_cloud_covered">Покрито до ~ %1$s</string>
+    <string name="home_cloud_paused">Резервне копіювання призупинено — поповніть</string>
+    <string name="home_cloud_on">Резервне копіювання увімкнено</string>
+    <string name="home_cloud_on_files">Резервне копіювання увімкнено · %1$s</string>
 </resources>

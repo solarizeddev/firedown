@@ -550,4 +550,25 @@
     <string name="buy_credit_gb_month_explainer">एक GB-month का अर्थ है 1 GB को एक महीने तक बैकअप में रखा जाना — तो 500 का मतलब 10 महीने के लिए 50 GB, या 5 महीने के लिए 100 GB हो सकता है।</string>
     <string name="buy_credit_denom_rate">%1$s / GB-month</string>
     <string name="buy_credit_error_busy">अभी बहुत सारे अनुरोध हैं। एक मिनट प्रतीक्षा करें और फिर से प्रयास करें।</string>
+    <string name="cloud_status_gb_label">GB-months</string>
+    <string name="cloud_status_oneoff">एकबारगी क्रेडिट · कोई ऑटो-नवीनीकरण नहीं</string>
+    <string name="cloud_status_free_beta">बीटा के दौरान बैकअप मुफ़्त हैं</string>
+    <string name="cloud_status_facts">%1$s · %2$s का बैकअप लिया गया</string>
+    <string name="cloud_status_covered_until">आपके मौजूदा उपयोग पर ~ %1$s तक कवर किया गया।</string>
+    <string name="cloud_status_covered_ongoing">आपके बैकअप कवर हैं।</string>
+    <string name="cloud_status_grace">केवल पढ़ने योग्य — बैकअप जारी रखने के लिए टॉप अप करें। आपकी फ़ाइलें ~ %1$s तक रखी जाती हैं।</string>
+    <string name="cloud_status_grace_nodate">केवल पढ़ने योग्य — बैकअप जारी रखने के लिए टॉप अप करें। आपकी फ़ाइलें फ़िलहाल रखी जाती हैं।</string>
+    <string name="cloud_status_backups_on">आपके डाउनलोड का बैकअप लिया गया और एन्क्रिप्ट किया गया है।</string>
+    <string name="settings_sync_link_title">मेरे पास एक रिकवरी कोड है</string>
+    <string name="settings_sync_link_summary">इस डिवाइस पर अपने बैकअप और स्टोरेज क्रेडिट को पुनर्स्थापित करें</string>
+    <string name="settings_sync_link_dialog_title">अपना रिकवरी कोड दर्ज करें</string>
+    <string name="settings_sync_link_dialog_message">अपने डाउनलोड बैकअप और स्टोरेज क्रेडिट को यहाँ पुनर्स्थापित करने के लिए अपने दूसरे डिवाइस का रिकवरी कोड पेस्ट करें। इससे बुकमार्क सिंक चालू नहीं होगा।</string>
+    <string name="settings_sync_link_action">पुनर्स्थापित करें</string>
+    <string name="settings_sync_link_ok">खाता लिंक हो गया — आपके बैकअप और क्रेडिट वापस आ गए हैं</string>
+    <string name="settings_sync_link_bad">वह रिकवरी कोड सही नहीं लगता</string>
+    <string name="home_cloud_backing_up">बैकअप लिया जा रहा है…</string>
+    <string name="home_cloud_covered">~ %1$s तक कवर किया गया</string>
+    <string name="home_cloud_paused">बैकअप रोके गए — टॉप अप करें</string>
+    <string name="home_cloud_on">बैकअप चालू</string>
+    <string name="home_cloud_on_files">बैकअप चालू · %1$s</string>
 </resources>

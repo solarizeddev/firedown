@@ -645,4 +645,25 @@
     <string name="buy_credit_gb_month_explainer">Jeden GB-month to 1 GB przechowywany w kopii zapasowej przez miesiąc — więc 500 może oznaczać 50 GB przez 10 miesięcy lub 100 GB przez 5.</string>
     <string name="buy_credit_denom_rate">%1$s / GB-month</string>
     <string name="buy_credit_error_busy">Zbyt wiele żądań w tej chwili. Odczekaj minutę i spróbuj ponownie.</string>
+    <string name="cloud_status_gb_label">GB-months</string>
+    <string name="cloud_status_oneoff">Kredyt jednorazowy · bez automatycznego odnawiania</string>
+    <string name="cloud_status_free_beta">Kopie zapasowe są bezpłatne w okresie beta</string>
+    <string name="cloud_status_facts">%1$s · %2$s w kopii zapasowej</string>
+    <string name="cloud_status_covered_until">Pokryte do ~ %1$s przy bieżącym zużyciu.</string>
+    <string name="cloud_status_covered_ongoing">Twoje kopie zapasowe są pokryte.</string>
+    <string name="cloud_status_grace">Tylko do odczytu — doładuj, aby dalej tworzyć kopie. Twoje pliki są przechowywane do ~ %1$s.</string>
+    <string name="cloud_status_grace_nodate">Tylko do odczytu — doładuj, aby dalej tworzyć kopie. Twoje pliki są na razie przechowywane.</string>
+    <string name="cloud_status_backups_on">Twoje pobrane pliki są zarchiwizowane i zaszyfrowane.</string>
+    <string name="settings_sync_link_title">Mam kod odzyskiwania</string>
+    <string name="settings_sync_link_summary">Przywróć swoje kopie zapasowe i kredyt na pamięć na tym urządzeniu</string>
+    <string name="settings_sync_link_dialog_title">Wprowadź swój kod odzyskiwania</string>
+    <string name="settings_sync_link_dialog_message">Wklej kod odzyskiwania z drugiego urządzenia, aby przywrócić tutaj kopię zapasową pobranych plików i kredyt na pamięć. To nie włączy synchronizacji zakładek.</string>
+    <string name="settings_sync_link_action">Przywróć</string>
+    <string name="settings_sync_link_ok">Konto połączone — Twoje kopie zapasowe i kredyt wróciły</string>
+    <string name="settings_sync_link_bad">Ten kod odzyskiwania nie wygląda poprawnie</string>
+    <string name="home_cloud_backing_up">Tworzenie kopii zapasowej…</string>
+    <string name="home_cloud_covered">Pokryte do ~ %1$s</string>
+    <string name="home_cloud_paused">Kopie zapasowe wstrzymane — doładuj</string>
+    <string name="home_cloud_on">Kopie zapasowe włączone</string>
+    <string name="home_cloud_on_files">Kopie zapasowe włączone · %1$s</string>
 </resources>

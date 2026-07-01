@@ -648,4 +648,25 @@
     <string name="buy_credit_gb_month_explainer">Один GB-month — это 1 ГБ, хранящийся в резервной копии в течение месяца — так что 500 может быть 50 ГБ на 10 месяцев или 100 ГБ на 5.</string>
     <string name="buy_credit_denom_rate">%1$s / GB-month</string>
     <string name="buy_credit_error_busy">Слишком много запросов прямо сейчас. Подождите минуту и повторите попытку.</string>
+    <string name="cloud_status_gb_label">GB-months</string>
+    <string name="cloud_status_oneoff">Разовый кредит · без автопродления</string>
+    <string name="cloud_status_free_beta">Во время бета-версии резервные копии бесплатны</string>
+    <string name="cloud_status_facts">%1$s · %2$s в резервной копии</string>
+    <string name="cloud_status_covered_until">Покрыто до ~ %1$s при вашем текущем использовании.</string>
+    <string name="cloud_status_covered_ongoing">Ваши резервные копии покрыты.</string>
+    <string name="cloud_status_grace">Только чтение — пополните, чтобы продолжить резервное копирование. Ваши файлы хранятся до ~ %1$s.</string>
+    <string name="cloud_status_grace_nodate">Только чтение — пополните, чтобы продолжить резервное копирование. Ваши файлы пока хранятся.</string>
+    <string name="cloud_status_backups_on">Ваши загрузки зарезервированы и зашифрованы.</string>
+    <string name="settings_sync_link_title">У меня есть код восстановления</string>
+    <string name="settings_sync_link_summary">Восстановите резервные копии и кредит хранилища на этом устройстве</string>
+    <string name="settings_sync_link_dialog_title">Введите код восстановления</string>
+    <string name="settings_sync_link_dialog_message">Вставьте код восстановления с другого устройства, чтобы восстановить здесь резервную копию загрузок и кредит хранилища. Это не включит синхронизацию закладок.</string>
+    <string name="settings_sync_link_action">Восстановить</string>
+    <string name="settings_sync_link_ok">Аккаунт связан — ваши резервные копии и кредит вернулись</string>
+    <string name="settings_sync_link_bad">Этот код восстановления выглядит неверным</string>
+    <string name="home_cloud_backing_up">Резервное копирование…</string>
+    <string name="home_cloud_covered">Покрыто до ~ %1$s</string>
+    <string name="home_cloud_paused">Резервные копии приостановлены — пополните</string>
+    <string name="home_cloud_on">Резервные копии включены</string>
+    <string name="home_cloud_on_files">Резервные копии включены · %1$s</string>
 </resources>
