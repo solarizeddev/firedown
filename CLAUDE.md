@@ -1667,20 +1667,31 @@ opaque chunks + an opaque manifest blob.
     before the server delete's OCC push commits, so a `load()` that lands in that
     window (a transfer-finished reload, or re-entering the screen) pulls a manifest
     that STILL contains the entry and would re-add it — a ghost row for a file
-    that's actually being deleted. So `removeOptimistic`/`deleteSelected` add the
-    objectId(s) to `mPendingRemovals`, `load()` filters those out of its result,
-    and the delete callback clears them (on success they're gone; on failure the
-    row is restored). `mLoadGen` only orders load-vs-load; this orders
-    load-vs-delete. Main-thread only (all `CloudBackupManager` callbacks
-    `main.post`), so the `Set` needs no synchronization.
-  - **Batch delete restores rows DIRECTLY on failure, not via `load()`.** The
-    single-item path always re-inserted the row on failure; the batch path used to
-    `load()` to "resync" — but OFFLINE (the common failure) that `load()` ALSO
-    fails and leaves the rows optimistically-pruned = wrongly gone from the UI
-    while the server still has them. `deleteSelected` now snapshots the pre-delete
-    list and, on failure, restores it directly (and clears `mPendingRemovals`).
-    Keep the two delete paths symmetric — never rely on a network `load()` to undo
-    an optimistic removal.
+    that's actually being deleted. `removeOptimistic`/`deleteSelected` add the
+    objectId(s) to `mPendingRemovals`; `load()` filters them out of its result.
+    `mLoadGen` only orders load-vs-load; this orders load-vs-delete. Main-thread
+    only (all `CloudBackupManager` callbacks `main.post`), so the `Set` needs no
+    synchronization.
+  - **Clear the guard on delete-FAILURE, but let `load()` reconcile a delete-
+    SUCCESS — never clear it eagerly in the success callback.** Eagerly clearing on
+    success reopens the same ghost by the REVERSE ordering: a `load()` whose pull
+    PRE-dated the delete can run *after* the success callback cleared the guard and
+    re-add the (stale-pull) row. So the success path leaves the id in the set, and
+    `load()` reconciles it with `mPendingRemovals.retainAll(pulledIds)` — an id the
+    fresh pull no longer lists is confirmed gone and dropped; a still-listed id (a
+    stale pull, or a failed delete that never committed) stays guarded. Object ids
+    are server-random per create, so a cleared id can never wrongly match a future
+    entry, and a lingering guarded id (no load since the delete) is a harmless
+    no-op filter. Only delete-FAILURE clears the id directly (+ restores the row).
+  - **Batch delete restores rows ADDITIVELY on failure, never via `load()` or a
+    snapshot-clobber.** The batch path used to `load()` to "resync" — but OFFLINE
+    (the common failure) that `load()` also fails and leaves the rows wrongly
+    pruned; a snapshot-restore (`mEntries.clear(); addAll(snapshot)`) instead
+    CLOBBERS a concurrent `load()`/finished-transfer that changed the list
+    meanwhile. `deleteSelected` re-adds only the targets actually missing
+    (`findEntry == null`) and clears their guards. Keep the two delete paths
+    symmetric — never rely on a network `load()` to undo an optimistic removal, and
+    never clobber the live list.
 
 - **UI parity with Downloads.** The backed-up-files row
   (`item_cloud_backup_file.xml` + `CloudBackupFileAdapter`) faithfully mirrors
