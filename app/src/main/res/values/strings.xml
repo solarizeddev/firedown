@@ -383,6 +383,8 @@
     <string name="buy_credit_one_off">One-time — no auto-renew. Top up anytime.</string>
     <!-- %1$d = percent saved on a longer plan -->
     <string name="buy_credit_save_nudge">Save up to %1$d%% with a longer plan</string>
+    <!-- %1$d = percent saved vs the shortest plan (shown once the best duration is selected) -->
+    <string name="buy_credit_saving_confirm">You\'re saving %1$d%%</string>
     <!-- %1$s = per-month equivalent of a multi-month plan's one-time price, e.g. $2.50 -->
     <string name="buy_credit_per_month">%1$s / month</string>
     <!-- %1$s = price, %2$d = size cap in GB, %3$s = coverage length -->

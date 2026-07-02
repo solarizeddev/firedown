@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Text colour for the segmented toggles (duration + pay rail) in the buy-credit
-  screen. The default outlined-button text is colorPrimary (brand coral), which
-  put coral on every UNSELECTED segment and made the screen feel loud / the
-  unselected options read as active. Here the accent is spent only on the primary
-  action + selected states, so segments are neutral: dark when selected (on the
-  tonal fill), muted grey when not.
+  Text (and icon) colour for the segmented toggles (duration + pay rail) in the
+  buy-credit screen. The default outlined-button text is colorPrimary (brand
+  coral), which put coral on every UNSELECTED segment and made the screen feel
+  loud / the unselected options read as active. Here the accent is spent only on
+  the primary action + selected states: onSecondaryContainer on the checked
+  segment (pairs with buy_segment_bg's secondaryContainer fill), muted grey when
+  not.
 -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:state_checked="true" android:color="?attr/colorOnSurface" />
+    <item android:state_checked="true" android:color="?attr/colorOnSecondaryContainer" />
     <item android:color="?attr/colorOnSurfaceVariant" />
 </selector>

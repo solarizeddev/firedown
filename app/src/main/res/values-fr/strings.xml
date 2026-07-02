@@ -783,6 +783,7 @@
     <string name="buy_credit_soft_cap">Vous ne payez que ce que vous stockez réellement — sauvegardez moins que le plafond et cela dure plus longtemps. Rien n\'est supprimé si vous le dépassez ; cela se termine simplement plus tôt.</string>
     <string name="buy_credit_one_off">Paiement unique — sans renouvellement automatique. Rechargez à tout moment.</string>
     <string name="buy_credit_save_nudge">Économisez jusqu\'à %1$d %% avec un forfait plus long</string>
+    <string name="buy_credit_saving_confirm">Vous économisez %1$d %%</string>
     <string name="buy_credit_per_month">%1$s / mois</string>
     <string name="buy_credit_pay_amount_plan">%1$s · jusqu\'à %2$d Go pour %3$s</string>
     <string name="buy_credit_success_title_plan">Jusqu\'à %1$d Go pour %2$s ajouté</string>

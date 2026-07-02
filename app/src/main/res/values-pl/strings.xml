@@ -652,6 +652,7 @@
     <string name="buy_credit_soft_cap">Płacisz tylko za to, co faktycznie przechowujesz — zrób kopię mniejszą niż limit, a wystarczy na dłużej. Nic nie jest usuwane po przekroczeniu; po prostu skończy się wcześniej.</string>
     <string name="buy_credit_one_off">Jednorazowo — bez automatycznego odnawiania. Doładuj w dowolnej chwili.</string>
     <string name="buy_credit_save_nudge">Oszczędź do %1$d%% z dłuższym planem</string>
+    <string name="buy_credit_saving_confirm">Oszczędzasz %1$d%%</string>
     <string name="buy_credit_per_month">%1$s / mies.</string>
     <string name="buy_credit_pay_amount_plan">%1$s · do %2$d GB za %3$s</string>
     <string name="buy_credit_success_title_plan">Dodano do %1$d GB za %2$s</string>

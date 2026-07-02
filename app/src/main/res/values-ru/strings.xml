@@ -655,6 +655,7 @@
     <string name="buy_credit_soft_cap">Вы платите только за то, что реально храните — сохраняйте меньше лимита, и кредита хватит дольше. При превышении ничего не удаляется, просто он закончится раньше.</string>
     <string name="buy_credit_one_off">Разовый платёж — без автопродления. Пополняйте в любой момент.</string>
     <string name="buy_credit_save_nudge">Экономьте до %1$d%% на более длинном плане</string>
+    <string name="buy_credit_saving_confirm">Вы экономите %1$d%%</string>
     <string name="buy_credit_per_month">%1$s / месяц</string>
     <string name="buy_credit_pay_amount_plan">%1$s · до %2$d GB за %3$s</string>
     <string name="buy_credit_success_title_plan">Добавлено: до %1$d GB за %2$s</string>

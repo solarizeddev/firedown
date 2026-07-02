@@ -608,6 +608,7 @@
     <string name="buy_credit_soft_cap">Platíte jen za to, co skutečně uložíte — když zálohujete méně, než je limit, kredit vydrží déle. Při překročení se nic nemaže; jen dojde dříve.</string>
     <string name="buy_credit_one_off">Jednorázově — bez automatického obnovení. Kredit můžete kdykoli doplnit.</string>
     <string name="buy_credit_save_nudge">S delším plánem ušetříte až %1$d%%</string>
+    <string name="buy_credit_saving_confirm">Ušetříte %1$d%%</string>
     <string name="buy_credit_per_month">%1$s / měsíc</string>
     <string name="buy_credit_pay_amount_plan">%1$s · až %2$d GB za %3$s</string>
     <string name="buy_credit_success_title_plan">Přidáno až %1$d GB za %2$s</string>

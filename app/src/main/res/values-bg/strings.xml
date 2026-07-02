@@ -544,6 +544,7 @@
     <string name="buy_credit_soft_cap">Плащате само за това, което реално съхранявате — архивирайте по-малко от лимита и то ще стигне за по-дълго. Нищо не се изтрива, ако го надхвърлите; просто свършва по-рано.</string>
     <string name="buy_credit_one_off">Еднократно — без автоматично подновяване. Допълвайте по всяко време.</string>
     <string name="buy_credit_save_nudge">Спестете до %1$d%% с по-дълъг план</string>
+    <string name="buy_credit_saving_confirm">Спестявате %1$d%%</string>
     <string name="buy_credit_per_month">%1$s / месец</string>
     <string name="buy_credit_pay_amount_plan">%1$s · до %2$d GB за %3$s</string>
     <string name="buy_credit_success_title_plan">Добавени са до %1$d GB за %2$s</string>

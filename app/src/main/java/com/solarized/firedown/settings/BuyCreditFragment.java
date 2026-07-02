@@ -411,7 +411,24 @@ public class BuyCreditFragment extends Fragment {
             }
         }
         if (bestLongerRate <= 0 || bestLongerRate >= selectedRate) {
-            return; // no longer plan, or it isn't actually cheaper
+            // No cheaper longer plan — the user already holds the best rate. Flip
+            // the nudge to a CONFIRMATION ("You're saving X%" vs the shortest
+            // duration's rate) instead of going blank: on "2 years" the line used
+            // to just vanish, which read as the discount disappearing the moment
+            // it was earned. Same data-driven percent, no hardcoding; still
+            // INVISIBLE when there's no shorter (pricier) plan to compare against
+            // (single-duration catalogs).
+            double shortestRate = bestRateForShortestDuration(selectedMonths);
+            if (shortestRate <= 0 || shortestRate <= selectedRate) {
+                return;
+            }
+            int savedPct = (int) Math.round((1.0 - selectedRate / shortestRate) * 100.0);
+            if (savedPct <= 0) {
+                return;
+            }
+            mDurationSave.setText(getString(R.string.buy_credit_saving_confirm, savedPct));
+            mDurationSave.setVisibility(View.VISIBLE);
+            return;
         }
         int pct = (int) Math.round((1.0 - bestLongerRate / selectedRate) * 100.0);
         if (pct <= 0) {
@@ -419,6 +436,20 @@ public class BuyCreditFragment extends Fragment {
         }
         mDurationSave.setText(getString(R.string.buy_credit_save_nudge, pct));
         mDurationSave.setVisibility(View.VISIBLE);
+    }
+
+    /** The lowest price-per-GB-month of the SHORTEST duration below the given one
+     *  — the baseline the confirmation compares against ("saving X% vs the
+     *  shortest plan"). -1 when no shorter duration exists. */
+    private double bestRateForShortestDuration(int belowMonths) {
+        int shortest = -1;
+        for (BuyCreditViewModel.Option o : mPlanOptions) {
+            if (o.durationMonths < belowMonths && o.denomGbMonths > 0
+                    && (shortest < 0 || o.durationMonths < shortest)) {
+                shortest = o.durationMonths;
+            }
+        }
+        return shortest < 0 ? -1 : bestRateForDuration(shortest);
     }
 
     /** The lowest price-per-GB-month across the tiles of a given duration. */
@@ -473,14 +504,14 @@ public class BuyCreditFragment extends Fragment {
         if (opt.isPlan()) {
             mPreferredSizeGb = opt.sizeGb;
         }
-        // Selection is a strong NEUTRAL outline, not coral — the only coral on
-        // this screen is the Continue button. onSurface reads clearly in both
-        // themes (near-white in dark, near-black in light). STROKE ONLY: do NOT
+        // Selection is a PRIMARY (coral) stroke — it ties the chosen plan to the
+        // "Continue · $X" button visually (maintainer's call, reversing the
+        // earlier neutral-outline stance). STROKE ONLY still stands: do NOT
         // switch this to MaterialCardView's checkable/checked state — its checked
-        // foreground layer tints with colorPrimary and painted the selected tile
+        // foreground layer tints the whole tile with colorPrimary and painted it
         // a muddy pink in both themes (rejected on-device). The plain
         // view-selected flag below carries the state for TalkBack instead.
-        int selectedColor = MaterialColors.getColor(selected, com.google.android.material.R.attr.colorOnSurface);
+        int selectedColor = MaterialColors.getColor(selected, com.google.android.material.R.attr.colorPrimary);
         int outline = MaterialColors.getColor(selected, com.google.android.material.R.attr.colorOutlineVariant);
         int stroke = Math.round(getResources().getDisplayMetrics().density);
         for (int i = 0; i < mDenomContainer.getChildCount(); i++) {
