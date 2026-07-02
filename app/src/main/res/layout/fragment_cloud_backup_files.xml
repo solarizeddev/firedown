@@ -5,46 +5,68 @@
   states) over the app-standard LCEERecyclerView (loading spinner / content /
   empty-illustration states, change animations disabled so per-item progress
   ticks don't blink) — same list treatment as Downloads/Bookmarks/History.
+
+  The header is PINNED and LIFTS on scroll (elevation toggled by the fragment's
+  scroll listener, the same read as Downloads' AppBarLayout liftOnScroll) — it
+  needs the opaque colorBackground for the shadow to render and so rows don't
+  ghost through it. The bottom navigation_scrim is the DownloadFragment
+  pattern: an overlay whose height tracks the system-bar bottom inset, with
+  matching recycler bottom padding (clipToPadding=false in the LCEE) so the
+  last row scrolls clear of the gesture bar.
 -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:layout_height="match_parent">
 
     <LinearLayout
-        android:id="@+id/cb_header"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:paddingStart="16dp"
-        android:paddingTop="8dp"
-        android:paddingEnd="16dp"
-        android:paddingBottom="12dp"
-        android:visibility="gone"
-        tools:visibility="visible">
+        android:layout_height="match_parent"
+        android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/cb_header_line1"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:id="@+id/cb_header"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textAppearance="?attr/textAppearanceTitleMedium"
-            android:textColor="?attr/colorOnSurface"
-            tools:text="12 files · 51 MB" />
+            android:orientation="vertical"
+            android:background="?android:attr/colorBackground"
+            android:paddingStart="16dp"
+            android:paddingTop="8dp"
+            android:paddingEnd="16dp"
+            android:paddingBottom="12dp"
+            android:visibility="gone"
+            tools:visibility="visible">
 
-        <TextView
-            android:id="@+id/cb_header_line2"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:textColor="?attr/colorOnSurfaceVariant"
-            android:textSize="13sp"
-            tools:text="of 11 GB included · encrypted end-to-end" />
+            <TextView
+                android:id="@+id/cb_header_line1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?attr/textAppearanceTitleMedium"
+                android:textColor="?attr/colorOnSurface"
+                tools:text="12 files · 51 MB" />
+
+            <TextView
+                android:id="@+id/cb_header_line2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:textSize="13sp"
+                tools:text="of 11 GB included · encrypted end-to-end" />
+        </LinearLayout>
+
+        <com.solarized.firedown.ui.LCEERecyclerView
+            android:id="@+id/cb_lcee"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
     </LinearLayout>
 
-    <com.solarized.firedown.ui.LCEERecyclerView
-        android:id="@+id/cb_lcee"
+    <View
+        android:id="@+id/navigation_scrim"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1" />
-</LinearLayout>
+        android:layout_gravity="bottom"
+        android:background="?android:attr/colorBackground" />
+
+</FrameLayout>

@@ -155,15 +155,37 @@ public class CloudBackupListFragment extends Fragment
         mLcee.setEmptyImageView(R.drawable.ill_baloons);
         mLcee.setEmptyText(R.string.cloud_backup_list_empty);
 
-        // Same inset treatment as the preference screens: list scrolls under the
-        // nav bar but the last row clears it.
+        // Same inset treatment as DownloadFragment: the list scrolls under the
+        // nav bar, the last row clears it (recycler bottom padding,
+        // clipToPadding=false), and the opaque navigation_scrim overlay covers
+        // the gesture area so rows don't ghost through it.
+        View navScrim = view.findViewById(R.id.navigation_scrim);
         ViewCompat.setOnApplyWindowInsetsListener(view, (v, windowInsets) -> {
             Insets insets = windowInsets.getInsets(
                     WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout());
             v.setPadding(insets.left, 0, insets.right, 0);
             mRecycler.setPadding(mRecycler.getPaddingLeft(), mRecycler.getPaddingTop(),
                     mRecycler.getPaddingRight(), insets.bottom);
+            if (navScrim != null) {
+                navScrim.getLayoutParams().height = insets.bottom;
+                navScrim.requestLayout();
+            }
             return WindowInsetsCompat.CONSUMED;
+        });
+
+        // The pinned header LIFTS on scroll (Downloads' AppBarLayout
+        // liftOnScroll read, done by hand — this header is a plain view):
+        // flat while the list is at the top, elevated the moment rows pass
+        // under it, so scrolled content reads as sliding beneath a bar
+        // instead of vanishing mid-row.
+        float lift = 4f * getResources().getDisplayMetrics().density;
+        mRecycler.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(@NonNull RecyclerView rv, int dx, int dy) {
+                if (mHeader != null) {
+                    mHeader.setElevation(rv.canScrollVertically(-1) ? lift : 0f);
+                }
+            }
         });
 
         // The screen's toolbar drives the selection chrome (Downloads strategy).
