@@ -511,7 +511,10 @@ public class BuyCreditFragment extends Fragment {
         // foreground layer tints the whole tile with colorPrimary and painted it
         // a muddy pink in both themes (rejected on-device). The plain
         // view-selected flag below carries the state for TalkBack instead.
-        int selectedColor = MaterialColors.getColor(selected, com.google.android.material.R.attr.colorPrimary);
+        // colorPrimary lives in appcompat's R (the material R only holds the
+        // M3-specific attrs like colorOutlineVariant below) — same attr XML's
+        // ?attr/colorPrimary resolves.
+        int selectedColor = MaterialColors.getColor(selected, androidx.appcompat.R.attr.colorPrimary);
         int outline = MaterialColors.getColor(selected, com.google.android.material.R.attr.colorOutlineVariant);
         int stroke = Math.round(getResources().getDisplayMetrics().density);
         for (int i = 0; i < mDenomContainer.getChildCount(); i++) {
