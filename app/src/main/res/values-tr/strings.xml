@@ -649,6 +649,7 @@
     <string name="buy_credit_plan_size">En fazla %1$d GB</string>
     <string name="buy_credit_plan_for">%1$s karşılığında</string>
     <string name="buy_credit_soft_cap">Yalnızca gerçekten depoladığınız kadar ödersiniz — sınırdan az yedekleyin, daha uzun süre yeter. Sınırı aşarsanız hiçbir şey silinmez; kredi yalnızca daha erken biter.</string>
+    <string name="buy_credit_footprint_note">Şu anda %1$s depoluyorsunuz — bu boyutta kredi yaklaşık %2$s yeter.</string>
     <string name="buy_credit_one_off">Tek seferlik — otomatik yenileme yok. İstediğiniz zaman yükleyin.</string>
     <string name="buy_credit_save_nudge">Daha uzun bir planla %%%1$d\'e varan tasarruf</string>
     <string name="buy_credit_saving_confirm">%%%1$d tasarruf ediyorsunuz</string>

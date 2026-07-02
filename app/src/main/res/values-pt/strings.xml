@@ -650,6 +650,7 @@
     <string name="buy_credit_plan_size">Até %1$d GB</string>
     <string name="buy_credit_plan_for">por %1$s</string>
     <string name="buy_credit_soft_cap">Só paga pelo que realmente armazenar — faça cópia de menos do que o limite e dura mais tempo. Nada é eliminado se ultrapassar; apenas termina mais cedo.</string>
+    <string name="buy_credit_footprint_note">Você armazena atualmente %1$s — nesse volume o crédito dura cerca de %2$s.</string>
     <string name="buy_credit_one_off">Pagamento único — sem renovação automática. Carregue quando quiser.</string>
     <string name="buy_credit_save_nudge">Poupe até %1$d%% com um plano mais longo</string>
     <string name="buy_credit_saving_confirm">Está a poupar %1$d%%</string>

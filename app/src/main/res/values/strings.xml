@@ -383,6 +383,7 @@
     <!-- %1$s = a coverage length, e.g. "1 year" -->
     <string name="buy_credit_plan_for">for %1$s</string>
     <string name="buy_credit_soft_cap">You only pay for what you actually store — back up less than the cap and it lasts longer. Nothing is deleted if you go over; it just finishes sooner.</string>
+    <string name="buy_credit_footprint_note">You currently store %1$s — at that size this credit lasts about %2$s.</string>
     <string name="buy_credit_one_off">One-time — no auto-renew. Top up anytime.</string>
     <!-- %1$d = percent saved on a longer plan -->
     <string name="buy_credit_save_nudge">Save up to %1$d%% with a longer plan</string>

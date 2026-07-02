@@ -777,6 +777,7 @@
     <string name="buy_credit_plan_size">最多 %1$d GB</string>
     <string name="buy_credit_plan_for">价格 %1$s</string>
     <string name="buy_credit_soft_cap">按实际使用量付费——备份数据少于上限时可用更久。超出上限也不会删除任何内容，只是会更早用完。</string>
+    <string name="buy_credit_footprint_note">您当前存储了 %1$s——按此容量，该额度大约可用 %2$s。</string>
     <string name="buy_credit_one_off">一次性付费——不自动续订。可随时充值。</string>
     <string name="buy_credit_save_nudge">选择更长的套餐，最高可省 %1$d%%</string>
     <string name="buy_credit_saving_confirm">您正在节省 %1$d%%</string>

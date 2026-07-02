@@ -777,6 +777,7 @@
     <string name="buy_credit_plan_size">最大 %1$d GB</string>
     <string name="buy_credit_plan_for">%1$s で</string>
     <string name="buy_credit_soft_cap">実際に保存した分だけお支払いいただきます — 上限より少なくバックアップすれば、その分だけ長く使えます。上限を超えても削除されることはなく、単に早く使い切るだけです。</string>
+    <string name="buy_credit_footprint_note">現在 %1$s を保存しています — このサイズではクレジットは約 %2$s 持続します。</string>
     <string name="buy_credit_one_off">1 回限り — 自動更新なし。いつでもチャージできます。</string>
     <string name="buy_credit_save_nudge">長期プランで最大 %1$d%% お得</string>
     <string name="buy_credit_saving_confirm">%1$d%%お得になっています</string>

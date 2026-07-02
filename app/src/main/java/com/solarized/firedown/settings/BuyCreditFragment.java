@@ -41,7 +41,9 @@ import com.google.android.material.snackbar.Snackbar;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
+import android.text.format.Formatter;
 import com.solarized.firedown.R;
+import com.solarized.firedown.sync.CloudBackupManager;
 import com.solarized.firedown.data.models.BuyCreditViewModel;
 
 import java.text.NumberFormat;
@@ -49,6 +51,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+
+import javax.inject.Inject;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
@@ -63,6 +67,10 @@ import dagger.hilt.android.AndroidEntryPoint;
  */
 @AndroidEntryPoint
 public class BuyCreditFragment extends Fragment {
+
+    /** For the current backed-up footprint behind the over-cap honesty line. */
+    @Inject
+    CloudBackupManager mCloudBackup;
 
     private BuyCreditViewModel mViewModel;
     private NavController mNavController;
@@ -86,7 +94,11 @@ public class BuyCreditFragment extends Fragment {
     private TextView mSizeLabel;
     private View mGbmExplainer;
     private View mSoftcapNote;
+    private TextView mFootprintNote;
     private View mOneOffNote;
+    /** Backed-up bytes on the account (-1 = unknown), feeding the over-cap
+     *  honesty line: seeded from the status cache, refreshed by loadStatus. */
+    private long mFootprintBytes = -1;
     /** The chosen tile/denomination (an Option), or null until one is selected. */
     private BuyCreditViewModel.Option mSelectedOption;
     /** In the grid, the size the user last picked, so switching duration keeps the
@@ -144,7 +156,25 @@ public class BuyCreditFragment extends Fragment {
         mSizeLabel = view.findViewById(R.id.buy_size_label);
         mGbmExplainer = view.findViewById(R.id.buy_gbm_explainer);
         mSoftcapNote = view.findViewById(R.id.buy_softcap_note);
+        mFootprintNote = view.findViewById(R.id.buy_footprint_note);
         mOneOffNote = view.findViewById(R.id.buy_oneoff_note);
+
+        // Current footprint for the over-cap honesty line: paint from the
+        // status cache immediately, then refresh (a stale footprint only
+        // mis-sizes an advisory line, never the purchase itself).
+        CloudBackupManager.Status cached = mCloudBackup.lastStatus();
+        if (cached != null && cached.totalBytes >= 0) {
+            mFootprintBytes = cached.totalBytes;
+        }
+        mCloudBackup.loadStatus(status -> {
+            if (!isAdded()) {
+                return;
+            }
+            if (status.totalBytes >= 0) {
+                mFootprintBytes = status.totalBytes;
+            }
+            updateFootprintNote(mSelectedOption);
+        });
 
         // Changing the duration rebuilds the size tiles for that coverage (each
         // duration is priced by its own keysets). The button's tag is its months.
@@ -526,6 +556,47 @@ public class BuyCreditFragment extends Fragment {
         }
         mContinue.setText(getString(R.string.buy_credit_continue, formatUsd(opt.priceCents)));
         mContinue.setEnabled(true);
+        updateFootprintNote(opt);
+    }
+
+    /**
+     * The over-cap honesty line: when the account already stores MORE than the
+     * selected tile's cap, the tile's duration label is a lie for THIS user
+     * (600 GB-months at a 200 GB footprint is ~3 months, not "1 year"), so
+     * state what the credit really buys: "You currently store X — at that size
+     * this credit lasts about N months". Visibility three-ways: GONE while no
+     * tile of the catalog is below the footprint (the common under-cap user
+     * pays no dead space), INVISIBLE for an under-cap tile once any over-cap
+     * tile exists (holds the space so toggling tiles doesn't jump the layout —
+     * the save-nudge lesson), VISIBLE with the numbers otherwise.
+     */
+    private void updateFootprintNote(BuyCreditViewModel.Option opt) {
+        if (mFootprintNote == null) {
+            return;
+        }
+        double storedGb = mFootprintBytes > 0 ? mFootprintBytes / 1_000_000_000.0 : -1;
+        boolean anyOverCap = false;
+        if (storedGb > 0) {
+            for (BuyCreditViewModel.Option o : mPlanOptions) {
+                if (o.isPlan() && storedGb > o.sizeGb) {
+                    anyOverCap = true;
+                    break;
+                }
+            }
+        }
+        if (!anyOverCap) {
+            mFootprintNote.setVisibility(View.GONE);
+            return;
+        }
+        if (opt == null || !opt.isPlan() || storedGb <= opt.sizeGb || opt.denomGbMonths <= 0) {
+            mFootprintNote.setVisibility(View.INVISIBLE);
+            return;
+        }
+        int months = (int) Math.max(1, Math.round(opt.denomGbMonths / storedGb));
+        mFootprintNote.setText(getString(R.string.buy_credit_footprint_note,
+                Formatter.formatShortFileSize(requireContext(), mFootprintBytes),
+                formatDuration(months)));
+        mFootprintNote.setVisibility(View.VISIBLE);
     }
 
     /** Exposes a tile's selected state to accessibility services — without this

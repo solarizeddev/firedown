@@ -781,6 +781,7 @@
     <string name="buy_credit_plan_size">Bis zu %1$d GB</string>
     <string name="buy_credit_plan_for">für %1$s</string>
     <string name="buy_credit_soft_cap">Du zahlst nur für das, was du tatsächlich speicherst — sicherst du weniger als das Limit, reicht es länger. Bei Überschreitung wird nichts gelöscht; es ist nur früher aufgebraucht.</string>
+    <string name="buy_credit_footprint_note">Du sicherst derzeit %1$s — bei dieser Größe reicht das Guthaben etwa %2$s.</string>
     <string name="buy_credit_one_off">Einmalig — keine automatische Verlängerung. Jederzeit aufladbar.</string>
     <string name="buy_credit_save_nudge">Spare bis zu %1$d%% mit einem längeren Tarif</string>
     <string name="buy_credit_saving_confirm">Du sparst %1$d%%</string>
