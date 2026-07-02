@@ -148,7 +148,7 @@ public class Preferences {
      *  bookmark sync there is no on/off switch (it is action-driven — backing up a
      *  download sets it up on demand); this flag exists so disabling bookmark sync
      *  does NOT wipe the shared recovery code while Cloud Backup still needs it
-     *  (and vice-versa). Cleared by "Delete all cloud data". */
+     *  (and vice-versa). Cleared by "Delete backed-up files". */
     public static final String CLOUD_BACKUP_ENABLED = "com.solarized.firedown.preferences.cloud.backup.enabled";
     /** The ACCUMULATED purchased storage plan (size cap in GB × coverage months),
      *  stored CLIENT-side and MERGED at each redeem success (BuyCreditViewModel:
@@ -158,7 +158,7 @@ public class Preferences {
      *  learn "Up to 50 GB · 1 year" and size its month-tick runway. 0 = unknown
      *  (legacy denomination purchase, or a recovery-code restore on a new device)
      *  → the hero falls back to the raw balance + a tickless covered-until line.
-     *  Wiped by "Delete all cloud data". */
+     *  Wiped by "Delete backed-up files". */
     public static final String CLOUD_PLAN_SIZE_GB = "com.solarized.firedown.preferences.cloud.plan.size.gb";
     public static final String CLOUD_PLAN_DURATION_MONTHS = "com.solarized.firedown.preferences.cloud.plan.duration.months";
     /** Settings entry that opens the Cloud Backup screen. */
