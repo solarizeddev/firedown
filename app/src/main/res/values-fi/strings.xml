@@ -609,6 +609,8 @@
     <string name="cloud_status_chip_beta">Ilmainen betan ajan</string>
     <string name="cloud_status_chip_readonly">Vain luku</string>
     <string name="cloud_status_caption_beta">%1$s · sisältyy %2$s · päästä päähän salattu</string>
+    <string name="cloud_backup_header_beta">sisältyy %1$s · päästä päähän salattu</string>
+    <string name="cloud_backup_header_encrypted">päästä päähän salattu</string>
     <string name="cloud_status_caption_plan">%1$s · %2$d %% paketistasi</string>
     <string name="cloud_status_runway_covered">Katettu ~%1$s asti</string>
     <string name="cloud_status_runway_left">≈ %1$d/%2$d kuukautta jäljellä</string>

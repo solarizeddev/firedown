@@ -290,7 +290,8 @@ public class CloudStatusPreference extends Preference {
     }
 
     /** A GB-months balance, trimming a trailing ".0" (100.0 → "100"). */
-    private static String formatGbMonths(double v) {
+    /** Package-visible: the Backups-list header reuses the exact same formatting. */
+    static String formatGbMonths(double v) {
         if (v == Math.rint(v)) {
             return Long.toString(Math.round(v));
         }

@@ -539,6 +539,8 @@
     <string name="cloud_status_chip_beta">Beeta ajal tasuta</string>
     <string name="cloud_status_chip_readonly">Kirjutuskaitstud</string>
     <string name="cloud_status_caption_beta">%1$s · %2$s sisaldub · läbivalt krüpteeritud</string>
+    <string name="cloud_backup_header_beta">%1$s sisaldub · läbivalt krüpteeritud</string>
+    <string name="cloud_backup_header_encrypted">läbivalt krüpteeritud</string>
     <string name="cloud_status_caption_plan">%1$s · %2$d%% sinu paketist</string>
     <string name="cloud_status_runway_covered">Kaetud kuni ~%1$s</string>
     <string name="cloud_status_runway_left">≈ alles %1$d kuud %2$d-st</string>

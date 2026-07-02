@@ -801,6 +801,8 @@
     <string name="cloud_status_chip_beta">Während der Beta kostenlos</string>
     <string name="cloud_status_chip_readonly">Schreibgeschützt</string>
     <string name="cloud_status_caption_beta">%1$s · von %2$s inklusive · Ende-zu-Ende-verschlüsselt</string>
+    <string name="cloud_backup_header_beta">von %1$s inklusive · Ende-zu-Ende-verschlüsselt</string>
+    <string name="cloud_backup_header_encrypted">Ende-zu-Ende-verschlüsselt</string>
     <string name="cloud_status_caption_plan">%1$s · %2$d%% deines Tarifs</string>
     <string name="cloud_status_runway_covered">Abgedeckt bis ~%1$s</string>
     <string name="cloud_status_runway_left">≈ %1$d von %2$d Monaten übrig</string>

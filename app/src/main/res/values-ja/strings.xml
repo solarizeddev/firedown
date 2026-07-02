@@ -795,6 +795,8 @@
     <string name="cloud_status_chip_beta">ベータ期間中は無料</string>
     <string name="cloud_status_chip_readonly">読み取り専用</string>
     <string name="cloud_status_caption_beta">%1$s · %2$s まで利用可 · エンドツーエンド暗号化</string>
+    <string name="cloud_backup_header_beta">%1$s まで利用可 · エンドツーエンド暗号化</string>
+    <string name="cloud_backup_header_encrypted">エンドツーエンド暗号化</string>
     <string name="cloud_status_caption_plan">%1$s · プランの %2$d%%</string>
     <string name="cloud_status_runway_covered">〜%1$s まで有効</string>
     <string name="cloud_status_runway_left">≈ 残り %1$d/%2$d か月</string>

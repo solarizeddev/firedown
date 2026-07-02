@@ -593,6 +593,8 @@
     <string name="cloud_status_chip_beta">Безкоштовно під час бети</string>
     <string name="cloud_status_chip_readonly">Лише читання</string>
     <string name="cloud_status_caption_beta">%1$s · із включених %2$s · наскрізне шифрування</string>
+    <string name="cloud_backup_header_beta">із включених %1$s · наскрізне шифрування</string>
+    <string name="cloud_backup_header_encrypted">наскрізне шифрування</string>
     <string name="cloud_status_caption_plan">%1$s · %2$d%% вашого плану</string>
     <string name="cloud_status_runway_covered">Покриття до ~%1$s</string>
     <string name="cloud_status_runway_left">≈ залишилося %1$d із %2$d місяців</string>

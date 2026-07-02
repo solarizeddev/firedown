@@ -670,6 +670,8 @@
     <string name="cloud_status_chip_beta">Gratis tijdens de bèta</string>
     <string name="cloud_status_chip_readonly">Alleen-lezen</string>
     <string name="cloud_status_caption_beta">%1$s · van %2$s inbegrepen · end-to-end versleuteld</string>
+    <string name="cloud_backup_header_beta">van %1$s inbegrepen · end-to-end versleuteld</string>
+    <string name="cloud_backup_header_encrypted">end-to-end versleuteld</string>
     <string name="cloud_status_caption_plan">%1$s · %2$d%% van je plan</string>
     <string name="cloud_status_runway_covered">Gedekt tot ~%1$s</string>
     <string name="cloud_status_runway_left">≈ %1$d van %2$d maanden over</string>

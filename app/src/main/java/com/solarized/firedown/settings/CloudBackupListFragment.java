@@ -1,6 +1,8 @@
 package com.solarized.firedown.settings;
 
 import android.os.Bundle;
+import android.text.format.Formatter;
+import android.widget.TextView;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -35,6 +37,7 @@ import com.google.android.material.snackbar.Snackbar;
 import com.solarized.firedown.R;
 import com.solarized.firedown.sync.CloudBackupManager;
 import com.solarized.firedown.sync.PendingRemovals;
+import com.solarized.firedown.sync.StorageApiClient;
 import com.solarized.firedown.sync.VaultBackupWorker;
 import com.solarized.firedown.sync.VaultRestoreWorker;
 import com.solarized.firedown.sync.model.VaultEntry;
@@ -72,6 +75,14 @@ public class CloudBackupListFragment extends Fragment
 
     private NavController mNavController;
     private LCEERecyclerView mLcee;
+    /** Text-only header: inventory (count · size) + quota/trust context. Hidden
+     *  while there are no committed rows — the LCEE illustrations own the
+     *  empty/loading/error states, a header over them would just restate them. */
+    private View mHeader;
+    private TextView mHeaderLine1;
+    private TextView mHeaderLine2;
+    /** Latest quota (for the header's context line); null until loaded/offline. */
+    private CloudBackupManager.Status mStatusInfo;
     private RecyclerView mRecycler;
     private CloudBackupFileAdapter mAdapter;
 
@@ -105,6 +116,9 @@ public class CloudBackupListFragment extends Fragment
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         mNavController = NavHostFragment.findNavController(this);
+        mHeader = view.findViewById(R.id.cb_header);
+        mHeaderLine1 = view.findViewById(R.id.cb_header_line1);
+        mHeaderLine2 = view.findViewById(R.id.cb_header_line2);
         mLcee = view.findViewById(R.id.cb_lcee);
         mRecycler = mLcee.getRecyclerView();
         mAdapter = new CloudBackupFileAdapter(this);
@@ -163,6 +177,15 @@ public class CloudBackupListFragment extends Fragment
         observeSheetResult();
         observeTransfers();
         load();
+        // Quota for the header's context line ("of X GB included" / GB-months).
+        // Piggybacks the reconcile-heal; the header renders without it (trust
+        // line only) until it arrives, and never shows a stale number offline.
+        mCloudBackup.loadStatus(status -> {
+            if (isAdded()) {
+                mStatusInfo = status;
+                updateHeader();
+            }
+        });
     }
 
     @Override
@@ -378,6 +401,49 @@ public class CloudBackupListFragment extends Fragment
         } else {
             mLcee.showEmpty();        // balloons + "nothing backed up yet"
         }
+        updateHeader();
+    }
+
+    /** The text-only header over the list: line 1 = inventory ("12 files ·
+     *  51 MB", led by "Backing up…" while a transfer runs), line 2 = quota
+     *  context + trust ("of 11 GB included · encrypted end-to-end" unmetered,
+     *  the GB-months balance metered, just the trust line when the quota is
+     *  unknown/offline — never a stale number). Facts come from the LOADED
+     *  entries (instant, no network), so it updates with every delete/commit;
+     *  hidden without committed rows (the illustrations own those states). */
+    private void updateHeader() {
+        if (mHeader == null || !isAdded()) {
+            return;
+        }
+        if (mEntries.isEmpty()) {
+            mHeader.setVisibility(View.GONE);
+            return;
+        }
+        long totalBytes = 0;
+        for (VaultEntry e : mEntries) {
+            totalBytes += e.size;
+        }
+        String line1 = getResources().getQuantityString(
+                R.plurals.settings_cloud_backup_file_count, mEntries.size(), mEntries.size())
+                + " · " + Formatter.formatShortFileSize(requireContext(), totalBytes);
+        if (mTransferActive) {
+            line1 = getString(R.string.home_cloud_backing_up) + " · " + line1;
+        }
+        mHeaderLine1.setText(line1);
+        String line2;
+        StorageApiClient.Quota quota = mStatusInfo != null ? mStatusInfo.quota : null;
+        if (quota != null && quota.metered) {
+            line2 = CloudStatusPreference.formatGbMonths(quota.balanceGbMonths)
+                    + " " + getString(R.string.cloud_status_gb_label)
+                    + " · " + getString(R.string.cloud_backup_header_encrypted);
+        } else if (quota != null && quota.bytesLimit > 0) {
+            line2 = getString(R.string.cloud_backup_header_beta,
+                    Formatter.formatShortFileSize(requireContext(), quota.bytesLimit));
+        } else {
+            line2 = getString(R.string.cloud_backup_header_encrypted);
+        }
+        mHeaderLine2.setText(line2);
+        mHeader.setVisibility(View.VISIBLE);
     }
 
     @Override

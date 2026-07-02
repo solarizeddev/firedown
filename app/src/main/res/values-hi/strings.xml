@@ -576,6 +576,8 @@
     <string name="cloud_status_chip_beta">बीटा के दौरान मुफ़्त</string>
     <string name="cloud_status_chip_readonly">केवल पढ़ने के लिए</string>
     <string name="cloud_status_caption_beta">%1$s · %2$s शामिल में से · एंड-टू-एंड एन्क्रिप्टेड</string>
+    <string name="cloud_backup_header_beta">%1$s शामिल में से · एंड-टू-एंड एन्क्रिप्टेड</string>
+    <string name="cloud_backup_header_encrypted">एंड-टू-एंड एन्क्रिप्टेड</string>
     <string name="cloud_status_caption_plan">%1$s · आपके प्लान का %2$d%%</string>
     <string name="cloud_status_runway_covered">~%1$s तक कवर</string>
     <string name="cloud_status_runway_left">≈ %2$d में से %1$d महीने बाकी</string>

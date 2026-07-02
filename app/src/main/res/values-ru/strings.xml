@@ -678,6 +678,8 @@
     <string name="cloud_status_chip_beta">Бесплатно во время беты</string>
     <string name="cloud_status_chip_readonly">Только чтение</string>
     <string name="cloud_status_caption_beta">%1$s · из включённых %2$s · сквозное шифрование</string>
+    <string name="cloud_backup_header_beta">из включённых %1$s · сквозное шифрование</string>
+    <string name="cloud_backup_header_encrypted">сквозное шифрование</string>
     <string name="cloud_status_caption_plan">%1$s · %2$d%% вашего плана</string>
     <string name="cloud_status_runway_covered">Покрытие до ~%1$s</string>
     <string name="cloud_status_runway_left">≈ осталось %1$d из %2$d месяцев</string>
