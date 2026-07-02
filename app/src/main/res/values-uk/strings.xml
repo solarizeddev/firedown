@@ -606,8 +606,11 @@
     <string name="settings_sync_link_ok">Обліковий запис пов\'язано — ваші резервні копії та кредит повернулися</string>
     <string name="settings_sync_link_bad">Цей код відновлення виглядає неправильним</string>
     <string name="home_cloud_backing_up">Резервне копіювання…</string>
-    <string name="home_cloud_covered">Покрито до ~ %1$s</string>
-    <string name="home_cloud_paused">Резервне копіювання призупинено — поповніть</string>
-    <string name="home_cloud_on">Резервне копіювання увімкнено</string>
-    <string name="home_cloud_on_files">Резервне копіювання увімкнено · %1$s</string>
+    <plurals name="home_cloud_backed_up">
+        <item quantity="one">%d у хмарі</item>
+        <item quantity="few">%d у хмарі</item>
+        <item quantity="many">%d у хмарі</item>
+        <item quantity="other">%d у хмарі</item>
+    </plurals>
+    <string name="home_cloud_paused">Призупинено</string>
 </resources>

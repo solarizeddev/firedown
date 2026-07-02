@@ -682,8 +682,9 @@
     <string name="settings_sync_link_ok">Hesap bağlandı — yedeklemeleriniz ve krediniz geri geldi</string>
     <string name="settings_sync_link_bad">Bu kurtarma kodu doğru görünmüyor</string>
     <string name="home_cloud_backing_up">Yedekleniyor…</string>
-    <string name="home_cloud_covered">~ %1$s tarihine kadar kapsanıyor</string>
-    <string name="home_cloud_paused">Yedeklemeler duraklatıldı — kredi yükleyin</string>
-    <string name="home_cloud_on">Yedeklemeler açık</string>
-    <string name="home_cloud_on_files">Yedeklemeler açık · %1$s</string>
+    <plurals name="home_cloud_backed_up">
+        <item quantity="one">%d yedeklendi</item>
+        <item quantity="other">%d yedeklendi</item>
+    </plurals>
+    <string name="home_cloud_paused">Duraklatıldı</string>
 </resources>

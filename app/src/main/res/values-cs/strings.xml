@@ -642,8 +642,11 @@
     <string name="settings_sync_link_ok">Účet propojen — vaše zálohy a kredit jsou zpět</string>
     <string name="settings_sync_link_bad">Tento kód pro obnovení nevypadá správně</string>
     <string name="home_cloud_backing_up">Zálohování…</string>
-    <string name="home_cloud_covered">Pokryto do ~ %1$s</string>
-    <string name="home_cloud_paused">Zálohy pozastaveny — dobijte kredit</string>
-    <string name="home_cloud_on">Zálohy zapnuty</string>
-    <string name="home_cloud_on_files">Zálohy zapnuty · %1$s</string>
+    <plurals name="home_cloud_backed_up">
+        <item quantity="one">%d zálohováno</item>
+        <item quantity="few">%d zálohováno</item>
+        <item quantity="many">%d zálohováno</item>
+        <item quantity="other">%d zálohováno</item>
+    </plurals>
+    <string name="home_cloud_paused">Pozastaveno</string>
 </resources>

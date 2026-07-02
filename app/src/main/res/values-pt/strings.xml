@@ -683,8 +683,9 @@
     <string name="settings_sync_link_ok">Conta ligada — as suas cópias de segurança e o crédito voltaram</string>
     <string name="settings_sync_link_bad">Esse código de recuperação não parece correto</string>
     <string name="home_cloud_backing_up">A fazer cópia de segurança…</string>
-    <string name="home_cloud_covered">Coberto até ~ %1$s</string>
-    <string name="home_cloud_paused">Cópias em pausa — recarregue</string>
-    <string name="home_cloud_on">Cópias ativadas</string>
-    <string name="home_cloud_on_files">Cópias ativadas · %1$s</string>
+    <plurals name="home_cloud_backed_up">
+        <item quantity="one">%d em backup</item>
+        <item quantity="other">%d em backup</item>
+    </plurals>
+    <string name="home_cloud_paused">Pausado</string>
 </resources>

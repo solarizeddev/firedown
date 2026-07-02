@@ -814,8 +814,9 @@
     <string name="settings_sync_link_ok">Cuenta vinculada — tus copias de seguridad y tu crédito han vuelto</string>
     <string name="settings_sync_link_bad">Ese código de recuperación no parece correcto</string>
     <string name="home_cloud_backing_up">Creando copia de seguridad…</string>
-    <string name="home_cloud_covered">Cubierto hasta ~ %1$s</string>
-    <string name="home_cloud_paused">Copias en pausa — recarga</string>
-    <string name="home_cloud_on">Copias activadas</string>
-    <string name="home_cloud_on_files">Copias activadas · %1$s</string>
+    <plurals name="home_cloud_backed_up">
+        <item quantity="one">%d respaldado</item>
+        <item quantity="other">%d respaldados</item>
+    </plurals>
+    <string name="home_cloud_paused">En pausa</string>
 </resources>

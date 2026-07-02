@@ -815,8 +815,9 @@
     <string name="settings_sync_link_ok">Compte lié — vos sauvegardes et votre crédit sont de retour</string>
     <string name="settings_sync_link_bad">Ce code de récupération ne semble pas correct</string>
     <string name="home_cloud_backing_up">Sauvegarde…</string>
-    <string name="home_cloud_covered">Couvert jusqu\'au ~ %1$s</string>
-    <string name="home_cloud_paused">Sauvegardes en pause — rechargez</string>
-    <string name="home_cloud_on">Sauvegardes activées</string>
-    <string name="home_cloud_on_files">Sauvegardes activées · %1$s</string>
+    <plurals name="home_cloud_backed_up">
+        <item quantity="one">%d sauvegardé</item>
+        <item quantity="other">%d sauvegardés</item>
+    </plurals>
+    <string name="home_cloud_paused">En pause</string>
 </resources>

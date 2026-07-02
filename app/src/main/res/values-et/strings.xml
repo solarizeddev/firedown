@@ -552,8 +552,9 @@
     <string name="settings_sync_link_ok">Konto ühendatud — sinu varukoopiad ja krediit on tagasi</string>
     <string name="settings_sync_link_bad">See taastekood ei tundu õige olevat</string>
     <string name="home_cloud_backing_up">Varundamine…</string>
-    <string name="home_cloud_covered">Kaetud kuni ~ %1$s</string>
-    <string name="home_cloud_paused">Varundamine peatatud — laadi krediiti</string>
-    <string name="home_cloud_on">Varundamine sees</string>
-    <string name="home_cloud_on_files">Varundamine sees · %1$s</string>
+    <plurals name="home_cloud_backed_up">
+        <item quantity="one">%d varundatud</item>
+        <item quantity="other">%d varundatud</item>
+    </plurals>
+    <string name="home_cloud_paused">Peatatud</string>
 </resources>

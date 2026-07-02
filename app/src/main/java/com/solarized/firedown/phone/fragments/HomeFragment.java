@@ -54,7 +54,6 @@ import androidx.core.content.ContextCompat;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 
-import java.text.DateFormatSymbols;
 import com.solarized.firedown.phone.VaultActivity;
 import com.solarized.firedown.autocomplete.AutoCompleteEditText;
 import com.solarized.firedown.autocomplete.AutoCompleteView;
@@ -107,8 +106,11 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     private View mSubtitleSep;
     private View mSubtitleSaved;
     private TextView mSubtitleSavedText;
-    // Cloud Backup status line — a second quiet line under the stats, shown only
-    // when Cloud Backup is set up. Composed from the latest of these three inputs.
+    private View mSubtitleSep2;
+    // Cloud Backup — the subtitle line's THIRD counter ("12 backed up", same
+    // figure+predicate grammar as blocked/saved; "Backing up…" while a transfer
+    // runs, amber "Paused" on credit runout). Shown only when Cloud Backup is
+    // set up; composed from the latest of these three inputs.
     private View mHomeCloud;
     private TextView mHomeCloudText;
     private int mHomeCloudDefaultColor;
@@ -213,6 +215,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mSubtitleSep = v.findViewById(R.id.home_subtitle_sep);
         mSubtitleSaved = v.findViewById(R.id.home_subtitle_saved);
         mSubtitleSavedText = v.findViewById(R.id.home_subtitle_saved_text);
+        mSubtitleSep2 = v.findViewById(R.id.home_subtitle_sep2);
         if (mSubtitleBlocked != null) {
             mSubtitleBlocked.setOnClickListener(view ->
                     TrackersInfoSheet.show(getChildFragmentManager()));
@@ -222,8 +225,8 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
                     mStartForResult.launch(new Intent(mActivity, DownloadsActivity.class)));
         }
 
-        // Cloud Backup status line — tap opens the Downloads-backup screen; live
-        // "Backing up…" while a transfer runs; otherwise the quota/usage summary.
+        // Cloud Backup counter (the subtitle's third segment) — tap opens the
+        // Downloads-backup screen; "Backing up…" while a transfer runs.
         mHomeCloud = v.findViewById(R.id.home_cloud);
         mHomeCloudText = v.findViewById(R.id.home_cloud_text);
         if (mHomeCloudText != null) {
@@ -595,22 +598,30 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mSubtitleSep = null;
         mSubtitleSaved = null;
         mSubtitleSavedText = null;
+        mSubtitleSep2 = null;
+        mHomeCloud = null;
+        mHomeCloudText = null;
     }
 
     /**
-     * Shows the subtitle row only when at least one half has a value, and the
-     * middle-dot divider only when BOTH do. So a fresh install (both 0) shows
-     * just the wordmark; one figure shows that figure alone; both show
-     * "10.5K blocked · 9.5 GB saved".
+     * Shows the subtitle row only when at least one counter has a value, and
+     * each middle-dot divider only between visible neighbours. So a fresh
+     * install shows just the wordmark; any subset composes cleanly:
+     * "10.5K blocked · 9.5 GB saved · 12 backed up". Called by all three
+     * counters' bindings (they update on independent cadences).
      */
     private void updateSubtitleVisibility() {
         if (mSubtitle == null) return;
         boolean blocked = mSubtitleBlocked != null && mSubtitleBlocked.getVisibility() == View.VISIBLE;
         boolean saved = mSubtitleSaved != null && mSubtitleSaved.getVisibility() == View.VISIBLE;
+        boolean cloud = mHomeCloud != null && mHomeCloud.getVisibility() == View.VISIBLE;
         if (mSubtitleSep != null) {
             mSubtitleSep.setVisibility(blocked && saved ? View.VISIBLE : View.GONE);
         }
-        mSubtitle.setVisibility(blocked || saved ? View.VISIBLE : View.GONE);
+        if (mSubtitleSep2 != null) {
+            mSubtitleSep2.setVisibility(cloud && (blocked || saved) ? View.VISIBLE : View.GONE);
+        }
+        mSubtitle.setVisibility(blocked || saved || cloud ? View.VISIBLE : View.GONE);
     }
 
     /**
@@ -641,59 +652,43 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         });
     }
 
-    /** Composes the home Cloud Backup line from the latest transfer/quota/usage
-     *  state. Hidden unless set up; neutral normally, coloured only when paused. */
+    /** Composes the subtitle line's Cloud Backup counter from the latest
+     *  transfer/quota/usage state. It speaks the line's grammar — a figure + a
+     *  short predicate ("12 backed up") — with words only when there's news:
+     *  "Backing up…" while a transfer runs, amber "Paused" when credit ran out
+     *  (amber = attention, coral stays the brand's). Hidden unless set up, and
+     *  hidden at 0 files like its blocked/saved siblings; every detail beyond
+     *  that ("covered until", plan, %) belongs to the Cloud Backup status hero
+     *  one tap away, never to home. */
     private void applyCloudStatus() {
         if (mHomeCloud == null || mHomeCloudText == null) {
             return;
         }
-        if (!mCloudBackup.isSetUp()) {
-            mHomeCloud.setVisibility(View.GONE);
-            return;
-        }
-        mHomeCloud.setVisibility(View.VISIBLE);
+        String text = null;
         boolean attention = false;
-        String text;
-        if (mCloudActive) {
-            text = getString(R.string.home_cloud_backing_up);
-        } else if (mCloudQuota != null && mCloudQuota.metered) {
-            if (mCloudQuota.readOnly) {
+        if (mCloudBackup.isSetUp()) {
+            if (mCloudActive) {
+                text = getString(R.string.home_cloud_backing_up);
+            } else if (mCloudQuota != null && mCloudQuota.metered && mCloudQuota.readOnly) {
                 text = getString(R.string.home_cloud_paused);
                 attention = true;
-            } else {
-                String when = monthYear(mCloudQuota.projectedRunoutAt);
-                text = when != null
-                        ? getString(R.string.home_cloud_covered, when)
-                        : getString(R.string.home_cloud_on);
+            } else if (mCloudFiles > 0) {
+                text = getResources().getQuantityString(
+                        R.plurals.home_cloud_backed_up, mCloudFiles, mCloudFiles);
             }
-        } else if (mCloudFiles > 0) {
-            String files = getResources().getQuantityString(
-                    R.plurals.settings_cloud_backup_file_count, mCloudFiles, mCloudFiles);
-            text = getString(R.string.home_cloud_on_files, files);
+            // else: set up but nothing backed up (or usage unknown offline) —
+            // stay hidden, the same hide-when-zero rule as the other counters.
+        }
+        if (text == null) {
+            mHomeCloud.setVisibility(View.GONE);
         } else {
-            text = getString(R.string.home_cloud_on);
+            mHomeCloudText.setText(text);
+            mHomeCloudText.setTextColor(attention
+                    ? ContextCompat.getColor(mActivity, R.color.backup_warning)
+                    : mHomeCloudDefaultColor);
+            mHomeCloud.setVisibility(View.VISIBLE);
         }
-        mHomeCloudText.setText(text);
-        mHomeCloudText.setTextColor(attention
-                ? ContextCompat.getColor(mActivity, R.color.brand_orange)
-                : mHomeCloudDefaultColor);
-    }
-
-    /** RFC3339 prefix (e.g. "2027-03-15T…") → localized "Mar 2027", null on fail. */
-    private static String monthYear(String rfc3339) {
-        if (rfc3339 == null || rfc3339.length() < 7) {
-            return null;
-        }
-        try {
-            int year = Integer.parseInt(rfc3339.substring(0, 4));
-            int month = Integer.parseInt(rfc3339.substring(5, 7));
-            if (month < 1 || month > 12) {
-                return null;
-            }
-            return new DateFormatSymbols().getShortMonths()[month - 1] + " " + year;
-        } catch (NumberFormatException e) {
-            return null;
-        }
+        updateSubtitleVisibility();
     }
 
     @Override

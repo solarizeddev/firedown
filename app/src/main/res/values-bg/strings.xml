@@ -576,8 +576,9 @@
     <string name="settings_sync_link_ok">Акаунтът е свързан — резервните ви копия и кредитът се върнаха</string>
     <string name="settings_sync_link_bad">Този код за възстановяване не изглежда правилен</string>
     <string name="home_cloud_backing_up">Архивиране…</string>
-    <string name="home_cloud_covered">Покрито до ~ %1$s</string>
-    <string name="home_cloud_paused">Резервните копия са на пауза — заредете</string>
-    <string name="home_cloud_on">Резервните копия са включени</string>
-    <string name="home_cloud_on_files">Резервните копия са включени · %1$s</string>
+    <plurals name="home_cloud_backed_up">
+        <item quantity="one">%d архивиран</item>
+        <item quantity="other">%d архивирани</item>
+    </plurals>
+    <string name="home_cloud_paused">На пауза</string>
 </resources>

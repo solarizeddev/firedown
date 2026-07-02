@@ -589,8 +589,9 @@
     <string name="settings_sync_link_ok">खाता लिंक हो गया — आपके बैकअप और क्रेडिट वापस आ गए हैं</string>
     <string name="settings_sync_link_bad">वह रिकवरी कोड सही नहीं लगता</string>
     <string name="home_cloud_backing_up">बैकअप लिया जा रहा है…</string>
-    <string name="home_cloud_covered">~ %1$s तक कवर किया गया</string>
-    <string name="home_cloud_paused">बैकअप रोके गए — टॉप अप करें</string>
-    <string name="home_cloud_on">बैकअप चालू</string>
-    <string name="home_cloud_on_files">बैकअप चालू · %1$s</string>
+    <plurals name="home_cloud_backed_up">
+        <item quantity="one">%d बैकअप किया गया</item>
+        <item quantity="other">%d बैकअप किए गए</item>
+    </plurals>
+    <string name="home_cloud_paused">रोका गया</string>
 </resources>

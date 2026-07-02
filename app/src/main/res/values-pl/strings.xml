@@ -688,8 +688,11 @@
     <string name="settings_sync_link_ok">Konto połączone — Twoje kopie zapasowe i kredyt wróciły</string>
     <string name="settings_sync_link_bad">Ten kod odzyskiwania nie wygląda poprawnie</string>
     <string name="home_cloud_backing_up">Tworzenie kopii zapasowej…</string>
-    <string name="home_cloud_covered">Pokryte do ~ %1$s</string>
-    <string name="home_cloud_paused">Kopie zapasowe wstrzymane — doładuj</string>
-    <string name="home_cloud_on">Kopie zapasowe włączone</string>
-    <string name="home_cloud_on_files">Kopie zapasowe włączone · %1$s</string>
+    <plurals name="home_cloud_backed_up">
+        <item quantity="one">%d w chmurze</item>
+        <item quantity="few">%d w chmurze</item>
+        <item quantity="many">%d w chmurze</item>
+        <item quantity="other">%d w chmurze</item>
+    </plurals>
+    <string name="home_cloud_paused">Wstrzymane</string>
 </resources>
