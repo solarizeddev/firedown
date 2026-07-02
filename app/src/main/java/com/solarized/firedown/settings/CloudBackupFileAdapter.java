@@ -267,6 +267,19 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         }
     }
 
+    /**
+     * Drops the stored-thumb decode cache. Called on memory-trim signals (the
+     * host fragment's registered {@code ComponentCallbacks2}) — safe because the
+     * cache is purely re-derivable: it refills lazily per bind from
+     * {@code entry.thumb}. Backfilled previews ({@link #mResolvedThumbs}) are
+     * deliberately KEPT — recreating those needs a full resolve pass (DB lookup
+     * + decode), and losing them would leave permanent mime glyphs until the
+     * next manifest load.
+     */
+    public void trimThumbCache() {
+        mDecodedThumbs.evictAll();
+    }
+
     /** Stored preview (decoded once, then served from {@link #mDecodedThumbs})
      *  → display-only backfill → null (the bind renders the mime glyph). */
     private Bitmap thumbBitmapFor(VaultEntry entry) {

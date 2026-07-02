@@ -1,5 +1,7 @@
 package com.solarized.firedown.settings;
 
+import android.content.ComponentCallbacks2;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.text.format.Formatter;
 import android.widget.TextView;
@@ -105,6 +107,39 @@ public class CloudBackupListFragment extends Fragment
     private Toolbar mToolbar;
     private OnBackPressedCallback mBackCallback;
 
+    /**
+     * Memory-trim hook for the adapter's decoded-thumb cache. Fragments never
+     * receive {@code onTrimMemory} (only Activities/Application implement
+     * {@code ComponentCallbacks2}), so this is registered on the app context for
+     * exactly the VIEW lifetime (onViewCreated → onDestroyView). Outside that
+     * window no registration is needed: leaving the screen makes the adapter —
+     * and its cache — unreachable, and plain GC reclaims it.
+     */
+    private final ComponentCallbacks2 mTrimCallback = new ComponentCallbacks2() {
+        @Override
+        public void onTrimMemory(int level) {
+            // UI_HIDDEN and beyond = the app left the foreground (dropping the
+            // cache costs only a lazy re-decode on return); RUNNING_CRITICAL =
+            // pressure while still foreground (pre-API-34 signal).
+            if (mAdapter != null && (level >= TRIM_MEMORY_UI_HIDDEN
+                    || level == TRIM_MEMORY_RUNNING_CRITICAL)) {
+                mAdapter.trimThumbCache();
+            }
+        }
+
+        @Override
+        public void onConfigurationChanged(@NonNull Configuration newConfig) {
+            // Not a memory signal — nothing to trim.
+        }
+
+        @Override
+        public void onLowMemory() {
+            if (mAdapter != null) {
+                mAdapter.trimThumbCache();
+            }
+        }
+    };
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
@@ -123,6 +158,9 @@ public class CloudBackupListFragment extends Fragment
         mRecycler = mLcee.getRecyclerView();
         mAdapter = new CloudBackupFileAdapter(this);
         mRecycler.setAdapter(mAdapter);
+        // Trim the adapter's decoded-thumb cache under memory pressure while
+        // this screen exists (see mTrimCallback); unregistered in onDestroyView.
+        requireContext().getApplicationContext().registerComponentCallbacks(mTrimCallback);
         // Same gutter as the Downloads list (and Bookmarks/History/Captured):
         // EqualSpacingItemDecoration at list_spacing.
         mRecycler.addItemDecoration(
@@ -200,6 +238,7 @@ public class CloudBackupListFragment extends Fragment
 
     @Override
     public void onDestroyView() {
+        requireContext().getApplicationContext().unregisterComponentCallbacks(mTrimCallback);
         // Restore the toolbar (title + Up behaviour) if we leave mid-selection.
         exitSelection();
         super.onDestroyView();
