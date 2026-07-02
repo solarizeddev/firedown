@@ -427,9 +427,33 @@ public class BuyCreditViewModel extends ViewModel {
             // record, done. Plan is written even on a gen mismatch (the purchase
             // DID settle); the success post is gen-gated.
             if (sizeGb > 0 && durationMonths > 0) {
+                // ACCUMULATE with any previously stored plan instead of
+                // overwriting: the server-side balance SUMS across purchases
+                // (AddCredit is a += upsert), so an overwrite made a stacking
+                // buyer's hero under-report what they paid for (second purchase
+                // replaced the shown plan). The merge mirrors how the metered
+                // server actually drains the balance (bytes × time): the size
+                // cap is the LARGEST size bought (the most the user may fill —
+                // it feeds the usage bar's denominator), and the duration is
+                // the combined GB-month total re-expressed at that size (it
+                // feeds the runway tick count). 50 GB×12mo bought twice →
+                // 50 GB×24mo; 50 GB×12mo + 20 GB×3mo = 660 GB-months →
+                // 50 GB×13mo. A first purchase (nothing stored) reduces to the
+                // plain write. deleteAllData still clears both keys.
+                int mergedSize = sizeGb;
+                int mergedMonths = durationMonths;
+                int oldSize = prefs.getInt(Preferences.CLOUD_PLAN_SIZE_GB, 0);
+                int oldMonths = prefs.getInt(Preferences.CLOUD_PLAN_DURATION_MONTHS, 0);
+                if (oldSize > 0 && oldMonths > 0) {
+                    long totalGbMonths = (long) oldSize * oldMonths
+                            + (long) sizeGb * durationMonths;
+                    mergedSize = Math.max(oldSize, sizeGb);
+                    mergedMonths = (int) Math.max(1,
+                            Math.round((double) totalGbMonths / mergedSize));
+                }
                 prefs.edit()
-                        .putInt(Preferences.CLOUD_PLAN_SIZE_GB, sizeGb)
-                        .putInt(Preferences.CLOUD_PLAN_DURATION_MONTHS, durationMonths)
+                        .putInt(Preferences.CLOUD_PLAN_SIZE_GB, mergedSize)
+                        .putInt(Preferences.CLOUD_PLAN_DURATION_MONTHS, mergedMonths)
                         .apply();
             }
             // A redeemed credit means Cloud Backup is IN USE, even before the
