@@ -284,7 +284,6 @@
     <string name="settings_cloud_backup_title">Cloud Backup</string>
     <string name="settings_cloud_backup_summary">End-to-end encrypted backup of your downloads</string>
     <string name="settings_cloud_backup_status_title">Status</string>
-    <string name="settings_cloud_backup_not_set_up">Not set up — back up a download to start</string>
     <!-- %1$s = file count phrase, %2$s = total size (e.g. "14.2 MB"). -->
     <string name="settings_cloud_backup_usage">%1$s · %2$s backed up</string>
     <plurals name="settings_cloud_backup_file_count">
@@ -293,19 +292,29 @@
     </plurals>
     <string name="settings_cloud_backup_usage_unavailable">Backed up — usage unavailable offline</string>
     <string name="settings_cloud_backup_active">Transfer in progress…</string>
-    <!-- Cloud Backup status hero (CloudStatusPreference) -->
+    <!-- Cloud Backup status hero (CloudStatusPreference): big backed-up size +
+         context chip + usage bar + month-tick runway / grace alert / dashed
+         empty state. -->
     <string name="cloud_status_gb_label">GB-months</string>
-    <string name="cloud_status_oneoff">One-time credit · no auto-renew</string>
-    <string name="cloud_status_free_beta">Backups are free during the beta</string>
     <!-- %1$s = "12 files", %2$s = "6.2 GB" -->
     <string name="cloud_status_facts">%1$s · %2$s backed up</string>
+    <!-- unit label beside the big size, e.g. "1.2 GB  backed up" -->
+    <string name="cloud_status_backed_up">backed up</string>
+    <string name="cloud_status_chip_beta">Free during the beta</string>
+    <string name="cloud_status_chip_readonly">Read-only</string>
+    <!-- %1$s = "23 files", %2$s = the included cap, e.g. "50 GB" -->
+    <string name="cloud_status_caption_beta">%1$s · of %2$s included · encrypted end-to-end</string>
+    <!-- %1$s = "41 files", %2$d = percent of the plan's size cap -->
+    <string name="cloud_status_caption_plan">%1$s · %2$d%% of your plan</string>
     <!-- %1$s = a month + year, e.g. "Mar 2027" -->
-    <string name="cloud_status_covered_until">Covered until ~ %1$s at your current usage.</string>
-    <string name="cloud_status_covered_ongoing">Your backups are covered.</string>
-    <!-- %1$s = a month + year -->
-    <string name="cloud_status_grace">Read-only — top up to keep backing up. Your files are kept until ~ %1$s.</string>
+    <string name="cloud_status_runway_covered">Covered until ~%1$s</string>
+    <!-- %1$d = months of coverage left, %2$d = the plan's total months -->
+    <string name="cloud_status_runway_left">≈ %1$d of %2$d months left</string>
+    <!-- %1$s = a full date, e.g. "Aug 30, 2026" -->
+    <string name="cloud_status_grace_alert">Your credit ran out. Top up by %1$s — your files stay restorable until then, but nothing new is backed up.</string>
     <string name="cloud_status_grace_nodate">Read-only — top up to keep backing up. Your files are kept for now.</string>
-    <string name="cloud_status_backups_on">Your downloads are backed up and encrypted.</string>
+    <string name="cloud_status_empty_title">Nothing backed up yet</string>
+    <string name="cloud_status_empty_body">Back up any finished download from its ⋮ menu. Files are encrypted before they leave your phone.</string>
     <string name="settings_cloud_backup_cat_manage">Manage backup</string>
     <string name="settings_cloud_backup_files_title">Backups</string>
     <string name="settings_cloud_backup_files_summary">View and restore what you\'ve backed up</string>

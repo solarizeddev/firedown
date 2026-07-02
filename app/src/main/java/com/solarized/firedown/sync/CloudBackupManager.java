@@ -453,7 +453,14 @@ public class CloudBackupManager {
             final boolean success = ok;
             main.post(() -> {
                 if (success) {
-                    prefs.edit().putBoolean(Preferences.CLOUD_BACKUP_ENABLED, false).apply();
+                    prefs.edit()
+                            .putBoolean(Preferences.CLOUD_BACKUP_ENABLED, false)
+                            // The account is gone; a stale plan shape would feed
+                            // the status hero a runway for a balance that no
+                            // longer exists.
+                            .remove(Preferences.CLOUD_PLAN_SIZE_GB)
+                            .remove(Preferences.CLOUD_PLAN_DURATION_MONTHS)
+                            .apply();
                     if (!prefs.getBoolean(Preferences.SYNC_ENABLED, false)) {
                         new SyncSecrets(context).clear();
                     }

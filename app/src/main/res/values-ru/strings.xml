@@ -546,7 +546,6 @@
     <string name="settings_cloud_backup_title">Cloud Backup</string>
     <string name="settings_cloud_backup_summary">Сквозное шифрование резервной копии ваших загрузок</string>
     <string name="settings_cloud_backup_status_title">Статус</string>
-    <string name="settings_cloud_backup_not_set_up">Не настроено — создайте копию загрузки, чтобы начать</string>
     <string name="settings_cloud_backup_usage">%1$s · %2$s в копии</string>
     <plurals name="settings_cloud_backup_file_count">
         <item quantity="one">%d файл</item>
@@ -672,14 +671,18 @@
         <item quantity="other">%1$d месяца</item>
     </plurals>
     <string name="cloud_status_gb_label">GB-months</string>
-    <string name="cloud_status_oneoff">Разовый кредит · без автопродления</string>
-    <string name="cloud_status_free_beta">Во время бета-версии резервные копии бесплатны</string>
     <string name="cloud_status_facts">%1$s · %2$s в резервной копии</string>
-    <string name="cloud_status_covered_until">Покрыто до ~ %1$s при вашем текущем использовании.</string>
-    <string name="cloud_status_covered_ongoing">Ваши резервные копии покрыты.</string>
-    <string name="cloud_status_grace">Только чтение — пополните, чтобы продолжить резервное копирование. Ваши файлы хранятся до ~ %1$s.</string>
+    <string name="cloud_status_backed_up">в резервной копии</string>
+    <string name="cloud_status_chip_beta">Бесплатно во время беты</string>
+    <string name="cloud_status_chip_readonly">Только чтение</string>
+    <string name="cloud_status_caption_beta">%1$s · из включённых %2$s · сквозное шифрование</string>
+    <string name="cloud_status_caption_plan">%1$s · %2$d%% вашего плана</string>
+    <string name="cloud_status_runway_covered">Покрытие до ~%1$s</string>
+    <string name="cloud_status_runway_left">≈ осталось %1$d из %2$d месяцев</string>
+    <string name="cloud_status_grace_alert">Ваш кредит закончился. Пополните до %1$s — до этого файлы можно восстановить, но новое не сохраняется.</string>
+    <string name="cloud_status_empty_title">Пока ничего не сохранено</string>
+    <string name="cloud_status_empty_body">Создайте резервную копию любой завершённой загрузки через её меню ⋮. Файлы шифруются до того, как покинут телефон.</string>
     <string name="cloud_status_grace_nodate">Только чтение — пополните, чтобы продолжить резервное копирование. Ваши файлы пока хранятся.</string>
-    <string name="cloud_status_backups_on">Ваши загрузки зарезервированы и зашифрованы.</string>
     <string name="settings_sync_link_title">У меня есть код восстановления</string>
     <string name="settings_sync_link_summary">Восстановите резервные копии и кредит хранилища на этом устройстве</string>
     <string name="settings_sync_link_dialog_title">Введите код восстановления</string>

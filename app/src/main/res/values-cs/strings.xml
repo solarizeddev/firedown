@@ -499,7 +499,6 @@
     <string name="settings_cloud_backup_title">Cloud Backup</string>
     <string name="settings_cloud_backup_summary">Koncově šifrovaná záloha vašich stažených souborů</string>
     <string name="settings_cloud_backup_status_title">Stav</string>
-    <string name="settings_cloud_backup_not_set_up">Nenastaveno — začněte zálohováním staženého souboru</string>
     <string name="settings_cloud_backup_usage">%1$s · %2$s zálohováno</string>
     <plurals name="settings_cloud_backup_file_count">
         <item quantity="one">%d soubor</item>
@@ -623,14 +622,18 @@
         <item quantity="other">%1$d měsíců</item>
     </plurals>
     <string name="cloud_status_gb_label">GB-months</string>
-    <string name="cloud_status_oneoff">Jednorázový kredit · bez automatického obnovení</string>
-    <string name="cloud_status_free_beta">Zálohy jsou během beta verze zdarma</string>
     <string name="cloud_status_facts">%1$s · zálohováno %2$s</string>
-    <string name="cloud_status_covered_until">Pokryto do ~ %1$s při vašem aktuálním využití.</string>
-    <string name="cloud_status_covered_ongoing">Vaše zálohy jsou pokryty.</string>
-    <string name="cloud_status_grace">Pouze pro čtení — dobijte kredit, abyste mohli dál zálohovat. Vaše soubory jsou uchovány do ~ %1$s.</string>
+    <string name="cloud_status_backed_up">zálohováno</string>
+    <string name="cloud_status_chip_beta">Během beta verze zdarma</string>
+    <string name="cloud_status_chip_readonly">Jen pro čtení</string>
+    <string name="cloud_status_caption_beta">%1$s · z %2$s v ceně · šifrováno end-to-end</string>
+    <string name="cloud_status_caption_plan">%1$s · %2$d%% vašeho plánu</string>
+    <string name="cloud_status_runway_covered">Pokrytí do ~%1$s</string>
+    <string name="cloud_status_runway_left">≈ zbývá %1$d z %2$d měsíců</string>
+    <string name="cloud_status_grace_alert">Kredit vám došel. Dobijte do %1$s — vaše soubory zůstanou do té doby obnovitelné, ale nic nového se nezálohuje.</string>
+    <string name="cloud_status_empty_title">Zatím nic nezálohováno</string>
+    <string name="cloud_status_empty_body">Zálohujte kterékoli dokončené stažení z jeho nabídky ⋮. Soubory se šifrují dřív, než opustí váš telefon.</string>
     <string name="cloud_status_grace_nodate">Pouze pro čtení — dobijte kredit, abyste mohli dál zálohovat. Vaše soubory jsou prozatím uchovány.</string>
-    <string name="cloud_status_backups_on">Vaše stažené soubory jsou zálohovány a zašifrovány.</string>
     <string name="settings_sync_link_title">Mám kód pro obnovení</string>
     <string name="settings_sync_link_summary">Obnovte své zálohy a kredit úložiště na tomto zařízení</string>
     <string name="settings_sync_link_dialog_title">Zadejte svůj kód pro obnovení</string>

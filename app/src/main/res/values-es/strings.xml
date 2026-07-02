@@ -675,7 +675,6 @@
     <string name="settings_cloud_backup_title">Copia en la nube</string>
     <string name="settings_cloud_backup_summary">Copia de seguridad de tus descargas cifrada de extremo a extremo</string>
     <string name="settings_cloud_backup_status_title">Estado</string>
-    <string name="settings_cloud_backup_not_set_up">Sin configurar: haz una copia de una descarga para empezar</string>
     <string name="settings_cloud_backup_usage">%1$s · %2$s en la copia</string>
     <plurals name="settings_cloud_backup_file_count">
         <item quantity="one">%d archivo</item>
@@ -795,14 +794,18 @@
         <item quantity="other">%1$d meses</item>
     </plurals>
     <string name="cloud_status_gb_label">GB-months</string>
-    <string name="cloud_status_oneoff">Crédito único · sin renovación automática</string>
-    <string name="cloud_status_free_beta">Las copias de seguridad son gratuitas durante la beta</string>
     <string name="cloud_status_facts">%1$s · %2$s con copia de seguridad</string>
-    <string name="cloud_status_covered_until">Cubierto hasta ~ %1$s con tu uso actual.</string>
-    <string name="cloud_status_covered_ongoing">Tus copias de seguridad están cubiertas.</string>
-    <string name="cloud_status_grace">Solo lectura — recarga para seguir haciendo copias. Tus archivos se conservan hasta ~ %1$s.</string>
+    <string name="cloud_status_backed_up">respaldado</string>
+    <string name="cloud_status_chip_beta">Gratis durante la beta</string>
+    <string name="cloud_status_chip_readonly">Solo lectura</string>
+    <string name="cloud_status_caption_beta">%1$s · de %2$s incluidos · cifrado de extremo a extremo</string>
+    <string name="cloud_status_caption_plan">%1$s · %2$d%% de tu plan</string>
+    <string name="cloud_status_runway_covered">Cubierto hasta ~%1$s</string>
+    <string name="cloud_status_runway_left">≈ quedan %1$d de %2$d meses</string>
+    <string name="cloud_status_grace_alert">Tu crédito se agotó. Recarga antes del %1$s — tus archivos seguirán siendo restaurables hasta entonces, pero no se respalda nada nuevo.</string>
+    <string name="cloud_status_empty_title">Aún no hay nada respaldado</string>
+    <string name="cloud_status_empty_body">Respalda cualquier descarga terminada desde su menú ⋮. Los archivos se cifran antes de salir de tu teléfono.</string>
     <string name="cloud_status_grace_nodate">Solo lectura — recarga para seguir haciendo copias. Tus archivos se conservan por ahora.</string>
-    <string name="cloud_status_backups_on">Tus descargas están respaldadas y cifradas.</string>
     <string name="settings_sync_link_title">Tengo un código de recuperación</string>
     <string name="settings_sync_link_summary">Restaura tus copias de seguridad y tu crédito de almacenamiento en este dispositivo</string>
     <string name="settings_sync_link_dialog_title">Introduce tu código de recuperación</string>

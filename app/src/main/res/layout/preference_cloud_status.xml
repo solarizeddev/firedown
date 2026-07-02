@@ -1,12 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   The Cloud Backup status hero (custom Preference layout, bound by
-  CloudStatusPreference). Replaces the plain status row: a big balance, a
-  one-time-credit note, a live status line (covered-until / grace / backing-up /
-  not-set-up), and a facts line (N files · size). Honest — no usage meter,
-  because the balance is what's LEFT, not a fraction of a known total.
+  CloudStatusPreference). One card, four states:
+
+    A · unmetered beta   — big backed-up size + usage bar vs the included cap
+    B · metered, funded  — usage bar vs the purchased plan's size cap + a
+                           month-tick time runway to the projected runout
+    C · grace/read-only  — amber data ink + the top-up-by deadline
+    D · not set up       — dashed empty state pointing at the ⋮ backup action
+
+  The bars are the only accent ink (coral; amber in grace) — chrome stays
+  neutral. The runway's tick count needs the purchased plan shape, which only
+  the CLIENT knows (Preferences.CLOUD_PLAN_*, stored at purchase); without it
+  the runway degrades to the covered-until line alone.
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -15,62 +24,186 @@
     android:paddingTop="14dp"
     android:paddingBottom="16dp">
 
+    <!-- ── set-up hero ── -->
     <LinearLayout
-        android:layout_width="wrap_content"
+        android:id="@+id/cb_hero"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:baselineAligned="true"
-        android:gravity="bottom">
+        android:orientation="vertical"
+        tools:visibility="visible">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <!-- baselineAligned keeps the small unit label sitting on the big
+                 number's baseline. -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="horizontal"
+                android:baselineAligned="true">
+
+                <TextView
+                    android:id="@+id/cb_big"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="30sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="-0.02"
+                    android:textColor="?attr/colorOnSurface"
+                    tools:text="1.2 GB" />
+
+                <TextView
+                    android:id="@+id/cb_big_unit"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="7dp"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:textColor="?android:attr/textColorSecondary"
+                    tools:text="backed up" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/cb_chip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_marginTop="3dp"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="4dp"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:background="@drawable/bg_cloud_chip"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                tools:text="Free during the beta" />
+        </LinearLayout>
+
+        <com.google.android.material.progressindicator.LinearProgressIndicator
+            android:id="@+id/cb_bar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="13dp"
+            app:trackThickness="8dp"
+            app:trackCornerRadius="4dp"
+            tools:progress="12" />
 
         <TextView
-            android:id="@+id/cb_balance"
-            android:layout_width="wrap_content"
+            android:id="@+id/cb_caption"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="34sp"
-            android:textStyle="bold"
-            android:letterSpacing="-0.02"
-            android:textColor="?attr/colorOnSurface"
-            tools:text="600" />
-
-        <TextView
-            android:id="@+id/cb_balance_label"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="7dp"
-            android:layout_marginBottom="4dp"
-            android:textSize="14sp"
-            android:textStyle="bold"
+            android:layout_marginTop="10dp"
+            android:textSize="12sp"
             android:textColor="?android:attr/textColorSecondary"
-            tools:text="GB-months" />
+            tools:text="23 files · of 50 GB included · encrypted end-to-end" />
 
+        <!-- grace only: the read-only + top-up-by line, amber deadline drawn by
+             the caption colour staying neutral and the runway/bar going amber. -->
+        <TextView
+            android:id="@+id/cb_alert"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:textSize="12.5sp"
+            android:lineSpacingMultiplier="1.35"
+            android:textColor="?attr/colorOnSurface"
+            android:visibility="gone"
+            tools:visibility="visible"
+            tools:text="Your credit ran out. Top up by Aug 30, 2026 — your files stay restorable until then, but nothing new is backed up." />
+
+        <!-- metered only: the time runway. -->
+        <LinearLayout
+            android:id="@+id/cb_runway"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:orientation="vertical"
+            android:visibility="gone"
+            tools:visibility="visible">
+
+            <LinearLayout
+                android:id="@+id/cb_runway_labels"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:baselineAligned="true">
+
+                <TextView
+                    android:id="@+id/cb_runway_covered"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textSize="12.5sp"
+                    android:textStyle="bold"
+                    android:textColor="?attr/colorOnSurface"
+                    tools:text="Covered until ~Mar 2027" />
+
+                <TextView
+                    android:id="@+id/cb_runway_left"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:textSize="11.5sp"
+                    android:textColor="?android:attr/textColorSecondary"
+                    tools:text="≈ 9 of 12 months left" />
+            </LinearLayout>
+
+            <com.solarized.firedown.settings.CloudRunwayView
+                android:id="@+id/cb_ticks"
+                android:layout_width="match_parent"
+                android:layout_height="6dp"
+                android:layout_marginTop="7dp"
+                android:visibility="gone"
+                tools:visibility="visible" />
+        </LinearLayout>
     </LinearLayout>
 
-    <TextView
-        android:id="@+id/cb_note"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
-        android:textSize="12sp"
-        android:textColor="?android:attr/textColorSecondary"
-        tools:text="One-time credit · no auto-renew" />
-
-    <TextView
-        android:id="@+id/cb_until"
+    <!-- ── D · not set up ── -->
+    <LinearLayout
+        android:id="@+id/cb_empty"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:textSize="13.5sp"
-        android:lineSpacingMultiplier="1.35"
-        android:textColor="?attr/colorOnSurface"
-        tools:text="Covered until ~ Mar 2027 at your current usage." />
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:padding="16dp"
+        android:background="@drawable/bg_cloud_empty_dashed"
+        android:visibility="gone"
+        tools:visibility="gone">
 
-    <TextView
-        android:id="@+id/cb_facts"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:textSize="12.5sp"
-        android:textColor="?android:attr/textColorSecondary"
-        tools:text="12 files · 6.2 GB backed up" />
+        <ImageView
+            android:layout_width="34dp"
+            android:layout_height="34dp"
+            android:src="@drawable/ic_cloud_upload_24"
+            android:alpha="0.55"
+            app:tint="?attr/colorOnSurfaceVariant"
+            android:contentDescription="@null" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="13dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/cloud_status_empty_title"
+                android:textSize="13.5sp"
+                android:textStyle="bold"
+                android:textColor="?attr/colorOnSurface" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:text="@string/cloud_status_empty_body"
+                android:textSize="12sp"
+                android:lineSpacingMultiplier="1.35"
+                android:textColor="?android:attr/textColorSecondary" />
+        </LinearLayout>
+    </LinearLayout>
 
 </LinearLayout>

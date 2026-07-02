@@ -676,7 +676,6 @@
     <string name="settings_cloud_backup_title">Sauvegarde cloud</string>
     <string name="settings_cloud_backup_summary">Sauvegarde chiffrée de bout en bout de vos téléchargements</string>
     <string name="settings_cloud_backup_status_title">État</string>
-    <string name="settings_cloud_backup_not_set_up">Non configurée — sauvegardez un téléchargement pour commencer</string>
     <string name="settings_cloud_backup_usage">%1$s · %2$s sauvegardés</string>
     <plurals name="settings_cloud_backup_file_count">
         <item quantity="one">%d fichier</item>
@@ -796,14 +795,18 @@
         <item quantity="other">%1$d mois</item>
     </plurals>
     <string name="cloud_status_gb_label">GB-months</string>
-    <string name="cloud_status_oneoff">Crédit unique · sans renouvellement automatique</string>
-    <string name="cloud_status_free_beta">Les sauvegardes sont gratuites pendant la bêta</string>
     <string name="cloud_status_facts">%1$s · %2$s sauvegardés</string>
-    <string name="cloud_status_covered_until">Couvert jusqu\'au ~ %1$s selon votre utilisation actuelle.</string>
-    <string name="cloud_status_covered_ongoing">Vos sauvegardes sont couvertes.</string>
-    <string name="cloud_status_grace">Lecture seule — rechargez pour continuer à sauvegarder. Vos fichiers sont conservés jusqu\'au ~ %1$s.</string>
+    <string name="cloud_status_backed_up">sauvegardé</string>
+    <string name="cloud_status_chip_beta">Gratuit pendant la bêta</string>
+    <string name="cloud_status_chip_readonly">Lecture seule</string>
+    <string name="cloud_status_caption_beta">%1$s · sur %2$s inclus · chiffré de bout en bout</string>
+    <string name="cloud_status_caption_plan">%1$s · %2$d %% de votre forfait</string>
+    <string name="cloud_status_runway_covered">Couvert jusqu\'à ~%1$s</string>
+    <string name="cloud_status_runway_left">≈ %1$d mois restants sur %2$d</string>
+    <string name="cloud_status_grace_alert">Votre crédit est épuisé. Rechargez avant le %1$s — vos fichiers restent restaurables jusque-là, mais rien de nouveau n\'est sauvegardé.</string>
+    <string name="cloud_status_empty_title">Rien de sauvegardé pour l\'instant</string>
+    <string name="cloud_status_empty_body">Sauvegardez n\'importe quel téléchargement terminé depuis son menu ⋮. Les fichiers sont chiffrés avant de quitter votre téléphone.</string>
     <string name="cloud_status_grace_nodate">Lecture seule — rechargez pour continuer à sauvegarder. Vos fichiers sont conservés pour l\'instant.</string>
-    <string name="cloud_status_backups_on">Vos téléchargements sont sauvegardés et chiffrés.</string>
     <string name="settings_sync_link_title">J\'ai un code de récupération</string>
     <string name="settings_sync_link_summary">Restaurez vos sauvegardes et votre crédit de stockage sur cet appareil</string>
     <string name="settings_sync_link_dialog_title">Saisissez votre code de récupération</string>

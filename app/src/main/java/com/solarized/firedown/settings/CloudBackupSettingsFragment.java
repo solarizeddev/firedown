@@ -136,6 +136,12 @@ public class CloudBackupSettingsFragment extends BasePreferenceFragment
         if (mStatus == null) {
             return;
         }
+        // The purchased plan shape ("Up to X GB · 1 year") is client-side only —
+        // stored by BuyCreditViewModel at purchase; the server just holds the
+        // anonymous balance. 0/0 = unknown → the hero degrades gracefully.
+        mStatus.setPlan(
+                mSharedPreferences.getInt(Preferences.CLOUD_PLAN_SIZE_GB, 0),
+                mSharedPreferences.getInt(Preferences.CLOUD_PLAN_DURATION_MONTHS, 0));
         mStatus.setSetUp(setUp);
         mStatus.setActive(mTransferActive);
         if (!setUp) {

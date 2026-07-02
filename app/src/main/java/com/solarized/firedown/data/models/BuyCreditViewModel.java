@@ -325,6 +325,18 @@ public class BuyCreditViewModel extends ViewModel {
                         r = null;
                     }
                     if (r != null) {
+                        // Remember the purchased plan shape for the Cloud Backup
+                        // status hero ("Up to X GB · 1 year" + the month runway) —
+                        // the server only ever sees the anonymous GB-month
+                        // balance, so the client is the only holder of this.
+                        // Written even if the user already left the screen (gen
+                        // mismatch): the purchase DID settle.
+                        if (sizeGb > 0 && durationMonths > 0) {
+                            prefs.edit()
+                                    .putInt(Preferences.CLOUD_PLAN_SIZE_GB, sizeGb)
+                                    .putInt(Preferences.CLOUD_PLAN_DURATION_MONTHS, durationMonths)
+                                    .apply();
+                        }
                         post(gen, UiState.success(r.redeemedGbMonths, r.balanceGbMonths,
                                 session.quote.denomGbMonths, sizeGb, durationMonths,
                                 session.quote.amountCents, finalMintedCode));

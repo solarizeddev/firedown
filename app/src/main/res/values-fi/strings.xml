@@ -483,7 +483,6 @@
     <string name="settings_cloud_backup_title">Cloud Backup</string>
     <string name="settings_cloud_backup_summary">Päästä päähän -salattu varmuuskopio latauksistasi</string>
     <string name="settings_cloud_backup_status_title">Tila</string>
-    <string name="settings_cloud_backup_not_set_up">Ei käytössä — aloita varmuuskopioimalla lataus</string>
     <string name="settings_cloud_backup_usage">%1$s · %2$s varmuuskopioitu</string>
     <plurals name="settings_cloud_backup_file_count">
         <item quantity="one">%d tiedosto</item>
@@ -603,14 +602,18 @@
         <item quantity="other">%1$d kuukautta</item>
     </plurals>
     <string name="cloud_status_gb_label">GB-months</string>
-    <string name="cloud_status_oneoff">Kertaluontoinen krediitti · ei automaattista uusintaa</string>
-    <string name="cloud_status_free_beta">Varmuuskopiot ovat ilmaisia beetavaiheen aikana</string>
     <string name="cloud_status_facts">%1$s · %2$s varmuuskopioitu</string>
-    <string name="cloud_status_covered_until">Katettu ~ %1$s asti nykyisellä käytölläsi.</string>
-    <string name="cloud_status_covered_ongoing">Varmuuskopiosi ovat katettuja.</string>
-    <string name="cloud_status_grace">Vain luku — lisää krediittiä jatkaaksesi varmuuskopiointia. Tiedostosi säilytetään ~ %1$s asti.</string>
+    <string name="cloud_status_backed_up">varmuuskopioitu</string>
+    <string name="cloud_status_chip_beta">Ilmainen betan ajan</string>
+    <string name="cloud_status_chip_readonly">Vain luku</string>
+    <string name="cloud_status_caption_beta">%1$s · sisältyy %2$s · päästä päähän salattu</string>
+    <string name="cloud_status_caption_plan">%1$s · %2$d %% paketistasi</string>
+    <string name="cloud_status_runway_covered">Katettu ~%1$s asti</string>
+    <string name="cloud_status_runway_left">≈ %1$d/%2$d kuukautta jäljellä</string>
+    <string name="cloud_status_grace_alert">Saldosi loppui. Lataa lisää %1$s mennessä — tiedostosi ovat palautettavissa siihen asti, mutta uutta ei varmuuskopioida.</string>
+    <string name="cloud_status_empty_title">Ei vielä varmuuskopioita</string>
+    <string name="cloud_status_empty_body">Varmuuskopioi mikä tahansa valmis lataus sen ⋮-valikosta. Tiedostot salataan ennen kuin ne lähtevät puhelimestasi.</string>
     <string name="cloud_status_grace_nodate">Vain luku — lisää krediittiä jatkaaksesi varmuuskopiointia. Tiedostosi säilytetään toistaiseksi.</string>
-    <string name="cloud_status_backups_on">Lataamasi tiedostot on varmuuskopioitu ja salattu.</string>
     <string name="settings_sync_link_title">Minulla on palautuskoodi</string>
     <string name="settings_sync_link_summary">Palauta varmuuskopiosi ja tallennuskrediittisi tälle laitteelle</string>
     <string name="settings_sync_link_dialog_title">Anna palautuskoodisi</string>

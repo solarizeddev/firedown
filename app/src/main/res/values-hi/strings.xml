@@ -450,7 +450,6 @@
     <string name="settings_cloud_backup_title">क्लाउड बैकअप</string>
     <string name="settings_cloud_backup_summary">आपके डाउनलोड का एंड-टू-एंड एन्क्रिप्टेड बैकअप</string>
     <string name="settings_cloud_backup_status_title">स्थिति</string>
-    <string name="settings_cloud_backup_not_set_up">सेट अप नहीं — शुरू करने के लिए किसी डाउनलोड का बैकअप लें</string>
     <string name="settings_cloud_backup_usage">%1$s · %2$s का बैकअप लिया गया</string>
     <plurals name="settings_cloud_backup_file_count">
         <item quantity="one">%d फ़ाइल</item>
@@ -570,14 +569,18 @@
         <item quantity="other">%1$d महीने</item>
     </plurals>
     <string name="cloud_status_gb_label">GB-months</string>
-    <string name="cloud_status_oneoff">एकबारगी क्रेडिट · कोई ऑटो-नवीनीकरण नहीं</string>
-    <string name="cloud_status_free_beta">बीटा के दौरान बैकअप मुफ़्त हैं</string>
     <string name="cloud_status_facts">%1$s · %2$s का बैकअप लिया गया</string>
-    <string name="cloud_status_covered_until">आपके मौजूदा उपयोग पर ~ %1$s तक कवर किया गया।</string>
-    <string name="cloud_status_covered_ongoing">आपके बैकअप कवर हैं।</string>
-    <string name="cloud_status_grace">केवल पढ़ने योग्य — बैकअप जारी रखने के लिए टॉप अप करें। आपकी फ़ाइलें ~ %1$s तक रखी जाती हैं।</string>
+    <string name="cloud_status_backed_up">बैकअप हुआ</string>
+    <string name="cloud_status_chip_beta">बीटा के दौरान मुफ़्त</string>
+    <string name="cloud_status_chip_readonly">केवल पढ़ने के लिए</string>
+    <string name="cloud_status_caption_beta">%1$s · %2$s शामिल में से · एंड-टू-एंड एन्क्रिप्टेड</string>
+    <string name="cloud_status_caption_plan">%1$s · आपके प्लान का %2$d%%</string>
+    <string name="cloud_status_runway_covered">~%1$s तक कवर</string>
+    <string name="cloud_status_runway_left">≈ %2$d में से %1$d महीने बाकी</string>
+    <string name="cloud_status_grace_alert">आपका क्रेडिट खत्म हो गया। %1$s तक टॉप-अप करें — तब तक आपकी फ़ाइलें बहाल की जा सकती हैं, लेकिन कुछ नया बैकअप नहीं होगा।</string>
+    <string name="cloud_status_empty_title">अभी तक कुछ बैकअप नहीं हुआ</string>
+    <string name="cloud_status_empty_body">किसी भी पूर्ण डाउनलोड को उसके ⋮ मेनू से बैकअप करें। फ़ाइलें आपके फ़ोन से निकलने से पहले एन्क्रिप्ट की जाती हैं।</string>
     <string name="cloud_status_grace_nodate">केवल पढ़ने योग्य — बैकअप जारी रखने के लिए टॉप अप करें। आपकी फ़ाइलें फ़िलहाल रखी जाती हैं।</string>
-    <string name="cloud_status_backups_on">आपके डाउनलोड का बैकअप लिया गया और एन्क्रिप्ट किया गया है।</string>
     <string name="settings_sync_link_title">मेरे पास एक रिकवरी कोड है</string>
     <string name="settings_sync_link_summary">इस डिवाइस पर अपने बैकअप और स्टोरेज क्रेडिट को पुनर्स्थापित करें</string>
     <string name="settings_sync_link_dialog_title">अपना रिकवरी कोड दर्ज करें</string>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Pill background for the status hero's context chip ("Free during the beta" /
+  "Up to 50 GB · 1 year" / "Read-only"). Neutral by default; the grace state
+  tints it amber via backgroundTintList in CloudStatusPreference.
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="?attr/colorSurfaceContainerHigh" />
+    <corners android:radius="999dp" />
+</shape>

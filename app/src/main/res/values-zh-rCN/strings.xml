@@ -672,7 +672,6 @@
     <string name="settings_cloud_backup_title">云备份</string>
     <string name="settings_cloud_backup_summary">下载内容的端到端加密备份</string>
     <string name="settings_cloud_backup_status_title">状态</string>
-    <string name="settings_cloud_backup_not_set_up">尚未设置 — 备份一个下载即可开始</string>
     <string name="settings_cloud_backup_usage">已备份 %1$s · %2$s</string>
     <plurals name="settings_cloud_backup_file_count">
         <item quantity="other">%d 个文件</item>
@@ -789,14 +788,18 @@
         <item quantity="other">%1$d 个月</item>
     </plurals>
     <string name="cloud_status_gb_label">GB-months</string>
-    <string name="cloud_status_oneoff">一次性额度 · 不自动续订</string>
-    <string name="cloud_status_free_beta">测试期间备份免费</string>
     <string name="cloud_status_facts">%1$s · 已备份 %2$s</string>
-    <string name="cloud_status_covered_until">按当前用量可覆盖至 ~ %1$s。</string>
-    <string name="cloud_status_covered_ongoing">您的备份已覆盖。</string>
-    <string name="cloud_status_grace">只读 — 充值以继续备份。您的文件将保留至 ~ %1$s。</string>
+    <string name="cloud_status_backed_up">已备份</string>
+    <string name="cloud_status_chip_beta">测试期间免费</string>
+    <string name="cloud_status_chip_readonly">只读</string>
+    <string name="cloud_status_caption_beta">%1$s · 共含 %2$s · 端到端加密</string>
+    <string name="cloud_status_caption_plan">%1$s · 已用套餐的 %2$d%%</string>
+    <string name="cloud_status_runway_covered">有效期至 ~%1$s</string>
+    <string name="cloud_status_runway_left">≈ 剩余 %1$d/%2$d 个月</string>
+    <string name="cloud_status_grace_alert">您的额度已用完。请在 %1$s 前充值 — 在此之前文件仍可恢复，但不会备份新内容。</string>
+    <string name="cloud_status_empty_title">还没有任何备份</string>
+    <string name="cloud_status_empty_body">在任意已完成下载的 ⋮ 菜单中即可备份。文件在离开手机前就已加密。</string>
     <string name="cloud_status_grace_nodate">只读 — 充值以继续备份。您的文件暂时保留。</string>
-    <string name="cloud_status_backups_on">您的下载已备份并加密。</string>
     <string name="settings_sync_link_title">我有恢复码</string>
     <string name="settings_sync_link_summary">在此设备上恢复您的备份和存储额度</string>
     <string name="settings_sync_link_dialog_title">输入您的恢复码</string>

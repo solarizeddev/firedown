@@ -413,7 +413,6 @@
     <string name="settings_cloud_backup_title">Pilvevarundus</string>
     <string name="settings_cloud_backup_summary">Sinu allalaadimiste otspunktist otspunkti krüptitud varundus</string>
     <string name="settings_cloud_backup_status_title">Olek</string>
-    <string name="settings_cloud_backup_not_set_up">Seadistamata — alustamiseks varunda mõni allalaadimine</string>
     <string name="settings_cloud_backup_usage">%1$s · %2$s varundatud</string>
     <plurals name="settings_cloud_backup_file_count">
         <item quantity="one">%d fail</item>
@@ -533,14 +532,18 @@
         <item quantity="other">%1$d kuud</item>
     </plurals>
     <string name="cloud_status_gb_label">GB-months</string>
-    <string name="cloud_status_oneoff">Ühekordne krediit · ei uuene automaatselt</string>
-    <string name="cloud_status_free_beta">Varukoopiad on beetaperioodil tasuta</string>
     <string name="cloud_status_facts">%1$s · %2$s varundatud</string>
-    <string name="cloud_status_covered_until">Kaetud kuni ~ %1$s praeguse kasutuse juures.</string>
-    <string name="cloud_status_covered_ongoing">Sinu varukoopiad on kaetud.</string>
-    <string name="cloud_status_grace">Ainult lugemiseks — laadi krediiti, et jätkata varundamist. Sinu failid säilitatakse kuni ~ %1$s.</string>
+    <string name="cloud_status_backed_up">varundatud</string>
+    <string name="cloud_status_chip_beta">Beeta ajal tasuta</string>
+    <string name="cloud_status_chip_readonly">Kirjutuskaitstud</string>
+    <string name="cloud_status_caption_beta">%1$s · %2$s sisaldub · läbivalt krüpteeritud</string>
+    <string name="cloud_status_caption_plan">%1$s · %2$d%% sinu paketist</string>
+    <string name="cloud_status_runway_covered">Kaetud kuni ~%1$s</string>
+    <string name="cloud_status_runway_left">≈ alles %1$d kuud %2$d-st</string>
+    <string name="cloud_status_grace_alert">Sinu krediit sai otsa. Lae uuesti hiljemalt %1$s — failid on seni taastatavad, kuid midagi uut ei varundata.</string>
+    <string name="cloud_status_empty_title">Midagi pole veel varundatud</string>
+    <string name="cloud_status_empty_body">Varunda mis tahes lõpetatud allalaadimine selle ⋮ menüüst. Failid krüpteeritakse enne telefonist lahkumist.</string>
     <string name="cloud_status_grace_nodate">Ainult lugemiseks — laadi krediiti, et jätkata varundamist. Sinu failid säilitatakse esialgu.</string>
-    <string name="cloud_status_backups_on">Sinu allalaadimised on varundatud ja krüpteeritud.</string>
     <string name="settings_sync_link_title">Mul on taastekood</string>
     <string name="settings_sync_link_summary">Taasta oma varukoopiad ja salvestuskrediit sellel seadmel</string>
     <string name="settings_sync_link_dialog_title">Sisesta oma taastekood</string>

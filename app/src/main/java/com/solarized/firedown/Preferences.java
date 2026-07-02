@@ -145,6 +145,15 @@ public class Preferences {
      *  does NOT wipe the shared recovery code while Cloud Backup still needs it
      *  (and vice-versa). Cleared by "Delete all cloud data". */
     public static final String CLOUD_BACKUP_ENABLED = "com.solarized.firedown.preferences.cloud.backup.enabled";
+    /** The LAST purchased storage plan (size cap in GB × coverage months), stored
+     *  CLIENT-side at purchase time — the server deliberately only knows the
+     *  anonymous GB-month balance, so this is the only place the status hero can
+     *  learn "Up to 50 GB · 1 year" and size its month-tick runway. 0 = unknown
+     *  (legacy denomination purchase, or a recovery-code restore on a new device)
+     *  → the hero falls back to the raw balance + a tickless covered-until line.
+     *  Wiped by "Delete all cloud data". */
+    public static final String CLOUD_PLAN_SIZE_GB = "com.solarized.firedown.preferences.cloud.plan.size.gb";
+    public static final String CLOUD_PLAN_DURATION_MONTHS = "com.solarized.firedown.preferences.cloud.plan.duration.months";
     /** Settings entry that opens the Cloud Backup screen. */
     public static final String SETTINGS_CLOUD_BACKUP = "com.solarized.firedown.preferences.settings.cloud.backup";
     /** Cloud Backup screen actions (clickable preferences). */

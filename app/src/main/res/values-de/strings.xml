@@ -675,7 +675,6 @@
     <string name="settings_cloud_backup_title">Cloud Backup</string>
     <string name="settings_cloud_backup_summary">Ende-zu-Ende-verschlüsseltes Backup deiner Downloads</string>
     <string name="settings_cloud_backup_status_title">Status</string>
-    <string name="settings_cloud_backup_not_set_up">Nicht eingerichtet — sichere einen Download zum Starten</string>
     <string name="settings_cloud_backup_usage">%1$s · %2$s gesichert</string>
     <plurals name="settings_cloud_backup_file_count">
         <item quantity="one">%d Datei</item>
@@ -795,14 +794,18 @@
         <item quantity="other">%1$d Monate</item>
     </plurals>
     <string name="cloud_status_gb_label">GB-months</string>
-    <string name="cloud_status_oneoff">Einmaliges Guthaben · keine automatische Verlängerung</string>
-    <string name="cloud_status_free_beta">Backups sind während der Beta kostenlos</string>
     <string name="cloud_status_facts">%1$s · %2$s gesichert</string>
-    <string name="cloud_status_covered_until">Abgedeckt bis ~ %1$s bei deiner aktuellen Nutzung.</string>
-    <string name="cloud_status_covered_ongoing">Deine Backups sind abgedeckt.</string>
-    <string name="cloud_status_grace">Schreibgeschützt — lade Guthaben auf, um weiter zu sichern. Deine Dateien werden bis ~ %1$s aufbewahrt.</string>
+    <string name="cloud_status_backed_up">gesichert</string>
+    <string name="cloud_status_chip_beta">Während der Beta kostenlos</string>
+    <string name="cloud_status_chip_readonly">Schreibgeschützt</string>
+    <string name="cloud_status_caption_beta">%1$s · von %2$s inklusive · Ende-zu-Ende-verschlüsselt</string>
+    <string name="cloud_status_caption_plan">%1$s · %2$d%% deines Tarifs</string>
+    <string name="cloud_status_runway_covered">Abgedeckt bis ~%1$s</string>
+    <string name="cloud_status_runway_left">≈ %1$d von %2$d Monaten übrig</string>
+    <string name="cloud_status_grace_alert">Dein Guthaben ist aufgebraucht. Lade bis %1$s auf — deine Dateien bleiben bis dahin wiederherstellbar, aber nichts Neues wird gesichert.</string>
+    <string name="cloud_status_empty_title">Noch nichts gesichert</string>
+    <string name="cloud_status_empty_body">Sichere jeden fertigen Download über sein ⋮-Menü. Dateien werden verschlüsselt, bevor sie dein Handy verlassen.</string>
     <string name="cloud_status_grace_nodate">Schreibgeschützt — lade Guthaben auf, um weiter zu sichern. Deine Dateien werden vorerst aufbewahrt.</string>
-    <string name="cloud_status_backups_on">Deine Downloads sind gesichert und verschlüsselt.</string>
     <string name="settings_sync_link_title">Ich habe einen Wiederherstellungscode</string>
     <string name="settings_sync_link_summary">Stelle deine Backups und dein Speicherguthaben auf diesem Gerät wieder her</string>
     <string name="settings_sync_link_dialog_title">Gib deinen Wiederherstellungscode ein</string>

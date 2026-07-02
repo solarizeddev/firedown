@@ -2,6 +2,10 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <color name="ic_launcher_background">@color/md_theme_background</color>
     <color name="brand_orange">#f0716c</color>
+    <!-- Attention/amber for the Cloud Backup grace (read-only) state — the app's
+         convention marks attention UI with warm tones, never colorError red.
+         Reads on both themes. -->
+    <color name="backup_warning">#e8a13d</color>
     <color name="incognito">#FF391D5B</color>
     <color name="white">#FFFFFFFF</color>
     <color name="transparent">#00FFFFFF</color>

@@ -544,7 +544,6 @@
     <string name="settings_cloud_backup_title">Cloud Backup</string>
     <string name="settings_cloud_backup_summary">End-to-end versleutelde back-up van je downloads</string>
     <string name="settings_cloud_backup_status_title">Status</string>
-    <string name="settings_cloud_backup_not_set_up">Niet ingesteld — back-up een download om te beginnen</string>
     <string name="settings_cloud_backup_usage">%1$s · %2$s geback-upt</string>
     <plurals name="settings_cloud_backup_file_count">
         <item quantity="one">%d bestand</item>
@@ -664,14 +663,18 @@
         <item quantity="other">%1$d maanden</item>
     </plurals>
     <string name="cloud_status_gb_label">GB-months</string>
-    <string name="cloud_status_oneoff">Eenmalig tegoed · geen automatische verlenging</string>
-    <string name="cloud_status_free_beta">Back-ups zijn gratis tijdens de bèta</string>
     <string name="cloud_status_facts">%1$s · %2$s geback-upt</string>
-    <string name="cloud_status_covered_until">Gedekt tot ~ %1$s bij je huidige gebruik.</string>
-    <string name="cloud_status_covered_ongoing">Je back-ups zijn gedekt.</string>
-    <string name="cloud_status_grace">Alleen-lezen — vul aan om te blijven back-uppen. Je bestanden worden bewaard tot ~ %1$s.</string>
+    <string name="cloud_status_backed_up">geback-upt</string>
+    <string name="cloud_status_chip_beta">Gratis tijdens de bèta</string>
+    <string name="cloud_status_chip_readonly">Alleen-lezen</string>
+    <string name="cloud_status_caption_beta">%1$s · van %2$s inbegrepen · end-to-end versleuteld</string>
+    <string name="cloud_status_caption_plan">%1$s · %2$d%% van je plan</string>
+    <string name="cloud_status_runway_covered">Gedekt tot ~%1$s</string>
+    <string name="cloud_status_runway_left">≈ %1$d van %2$d maanden over</string>
+    <string name="cloud_status_grace_alert">Je tegoed is op. Waardeer bij vóór %1$s — je bestanden blijven tot die tijd herstelbaar, maar er wordt niets nieuws geback-upt.</string>
+    <string name="cloud_status_empty_title">Nog niets geback-upt</string>
+    <string name="cloud_status_empty_body">Back-up elke voltooide download via het ⋮-menu. Bestanden worden versleuteld voordat ze je telefoon verlaten.</string>
     <string name="cloud_status_grace_nodate">Alleen-lezen — vul aan om te blijven back-uppen. Je bestanden worden voorlopig bewaard.</string>
-    <string name="cloud_status_backups_on">Je downloads zijn geback-upt en versleuteld.</string>
     <string name="settings_sync_link_title">Ik heb een herstelcode</string>
     <string name="settings_sync_link_summary">Herstel je back-ups en opslagtegoed op dit apparaat</string>
     <string name="settings_sync_link_dialog_title">Voer je herstelcode in</string>

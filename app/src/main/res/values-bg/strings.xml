@@ -437,7 +437,6 @@
     <string name="settings_cloud_backup_title">Облачно архивиране</string>
     <string name="settings_cloud_backup_summary">Шифровано от край до край архивиране на вашите изтегляния</string>
     <string name="settings_cloud_backup_status_title">Състояние</string>
-    <string name="settings_cloud_backup_not_set_up">Не е настроено — архивирайте изтегляне, за да започнете</string>
     <string name="settings_cloud_backup_usage">%1$s · %2$s архивирани</string>
     <plurals name="settings_cloud_backup_file_count">
         <item quantity="one">%d файл</item>
@@ -557,14 +556,18 @@
         <item quantity="other">%1$d месеца</item>
     </plurals>
     <string name="cloud_status_gb_label">GB-months</string>
-    <string name="cloud_status_oneoff">Еднократен кредит · без автоматично подновяване</string>
-    <string name="cloud_status_free_beta">Резервните копия са безплатни по време на бета версията</string>
     <string name="cloud_status_facts">%1$s · %2$s архивирани</string>
-    <string name="cloud_status_covered_until">Покрито до ~ %1$s при текущото ви потребление.</string>
-    <string name="cloud_status_covered_ongoing">Резервните ви копия са покрити.</string>
-    <string name="cloud_status_grace">Само за четене — заредете, за да продължите архивирането. Файловете ви се пазят до ~ %1$s.</string>
+    <string name="cloud_status_backed_up">архивирано</string>
+    <string name="cloud_status_chip_beta">Безплатно по време на бета версията</string>
+    <string name="cloud_status_chip_readonly">Само за четене</string>
+    <string name="cloud_status_caption_beta">%1$s · от включени %2$s · шифровано от край до край</string>
+    <string name="cloud_status_caption_plan">%1$s · %2$d%% от плана ви</string>
+    <string name="cloud_status_runway_covered">Покритие до ~%1$s</string>
+    <string name="cloud_status_runway_left">≈ остават %1$d от %2$d месеца</string>
+    <string name="cloud_status_grace_alert">Кредитът ви свърши. Заредете до %1$s — файловете ви остават възстановими дотогава, но нищо ново не се архивира.</string>
+    <string name="cloud_status_empty_title">Все още няма архивирани файлове</string>
+    <string name="cloud_status_empty_body">Архивирайте което и да е завършено изтегляне от менюто му ⋮. Файловете се шифроват, преди да напуснат телефона ви.</string>
     <string name="cloud_status_grace_nodate">Само за четене — заредете, за да продължите архивирането. Файловете ви се пазят засега.</string>
-    <string name="cloud_status_backups_on">Изтеглянията ви са архивирани и криптирани.</string>
     <string name="settings_sync_link_title">Имам код за възстановяване</string>
     <string name="settings_sync_link_summary">Възстановете резервните си копия и кредита за съхранение на това устройство</string>
     <string name="settings_sync_link_dialog_title">Въведете кода си за възстановяване</string>

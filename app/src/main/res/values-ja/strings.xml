@@ -672,7 +672,6 @@
     <string name="settings_cloud_backup_title">クラウドバックアップ</string>
     <string name="settings_cloud_backup_summary">ダウンロードのエンドツーエンド暗号化バックアップ</string>
     <string name="settings_cloud_backup_status_title">状態</string>
-    <string name="settings_cloud_backup_not_set_up">未設定 — ダウンロードをバックアップして開始</string>
     <string name="settings_cloud_backup_usage">%1$s · %2$s をバックアップ済み</string>
     <plurals name="settings_cloud_backup_file_count">
         <item quantity="other">%d 件のファイル</item>
@@ -789,14 +788,18 @@
         <item quantity="other">%1$dか月</item>
     </plurals>
     <string name="cloud_status_gb_label">GB-months</string>
-    <string name="cloud_status_oneoff">一回限りのクレジット · 自動更新なし</string>
-    <string name="cloud_status_free_beta">ベータ期間中はバックアップが無料です</string>
     <string name="cloud_status_facts">%1$s · %2$s をバックアップ済み</string>
-    <string name="cloud_status_covered_until">現在の使用量では ~ %1$s まで対応済みです。</string>
-    <string name="cloud_status_covered_ongoing">バックアップは対応済みです。</string>
-    <string name="cloud_status_grace">読み取り専用 — バックアップを続けるにはチャージしてください。ファイルは ~ %1$s まで保持されます。</string>
+    <string name="cloud_status_backed_up">バックアップ済み</string>
+    <string name="cloud_status_chip_beta">ベータ期間中は無料</string>
+    <string name="cloud_status_chip_readonly">読み取り専用</string>
+    <string name="cloud_status_caption_beta">%1$s · %2$s まで利用可 · エンドツーエンド暗号化</string>
+    <string name="cloud_status_caption_plan">%1$s · プランの %2$d%%</string>
+    <string name="cloud_status_runway_covered">〜%1$s まで有効</string>
+    <string name="cloud_status_runway_left">≈ 残り %1$d/%2$d か月</string>
+    <string name="cloud_status_grace_alert">クレジットがなくなりました。%1$s までにチャージしてください — それまでファイルは復元できますが、新しいバックアップは行われません。</string>
+    <string name="cloud_status_empty_title">まだ何もバックアップされていません</string>
+    <string name="cloud_status_empty_body">完了したダウンロードの ⋮ メニューからバックアップできます。ファイルは端末を出る前に暗号化されます。</string>
     <string name="cloud_status_grace_nodate">読み取り専用 — バックアップを続けるにはチャージしてください。ファイルは当面保持されます。</string>
-    <string name="cloud_status_backups_on">ダウンロードはバックアップされ、暗号化されています。</string>
     <string name="settings_sync_link_title">リカバリーコードを持っています</string>
     <string name="settings_sync_link_summary">このデバイスでバックアップとストレージクレジットを復元します</string>
     <string name="settings_sync_link_dialog_title">リカバリーコードを入力してください</string>

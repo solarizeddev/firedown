@@ -544,7 +544,6 @@
     <string name="settings_cloud_backup_title">Cloud Backup</string>
     <string name="settings_cloud_backup_summary">Backup criptografado de ponta a ponta dos seus downloads</string>
     <string name="settings_cloud_backup_status_title">Status</string>
-    <string name="settings_cloud_backup_not_set_up">Não configurado — faça backup de um download para começar</string>
     <string name="settings_cloud_backup_usage">%1$s · %2$s em backup</string>
     <plurals name="settings_cloud_backup_file_count">
         <item quantity="one">%d arquivo</item>
@@ -664,14 +663,18 @@
         <item quantity="other">%1$d meses</item>
     </plurals>
     <string name="cloud_status_gb_label">GB-months</string>
-    <string name="cloud_status_oneoff">Crédito único · sem renovação automática</string>
-    <string name="cloud_status_free_beta">As cópias de segurança são gratuitas durante a beta</string>
     <string name="cloud_status_facts">%1$s · %2$s com cópia de segurança</string>
-    <string name="cloud_status_covered_until">Coberto até ~ %1$s com o seu uso atual.</string>
-    <string name="cloud_status_covered_ongoing">As suas cópias de segurança estão cobertas.</string>
-    <string name="cloud_status_grace">Somente leitura — recarregue para continuar as cópias. Os seus ficheiros são mantidos até ~ %1$s.</string>
+    <string name="cloud_status_backed_up">em backup</string>
+    <string name="cloud_status_chip_beta">Grátis durante o beta</string>
+    <string name="cloud_status_chip_readonly">Somente leitura</string>
+    <string name="cloud_status_caption_beta">%1$s · de %2$s incluídos · criptografado de ponta a ponta</string>
+    <string name="cloud_status_caption_plan">%1$s · %2$d%% do seu plano</string>
+    <string name="cloud_status_runway_covered">Coberto até ~%1$s</string>
+    <string name="cloud_status_runway_left">≈ restam %1$d de %2$d meses</string>
+    <string name="cloud_status_grace_alert">Seu crédito acabou. Recarregue até %1$s — seus arquivos continuam restauráveis até lá, mas nada novo é salvo em backup.</string>
+    <string name="cloud_status_empty_title">Nada em backup ainda</string>
+    <string name="cloud_status_empty_body">Faça backup de qualquer download concluído pelo menu ⋮ dele. Os arquivos são criptografados antes de sair do seu telefone.</string>
     <string name="cloud_status_grace_nodate">Somente leitura — recarregue para continuar as cópias. Os seus ficheiros são mantidos por enquanto.</string>
-    <string name="cloud_status_backups_on">As suas transferências têm cópia de segurança e estão encriptadas.</string>
     <string name="settings_sync_link_title">Tenho um código de recuperação</string>
     <string name="settings_sync_link_summary">Restaure as suas cópias de segurança e o crédito de armazenamento neste dispositivo</string>
     <string name="settings_sync_link_dialog_title">Introduza o seu código de recuperação</string>

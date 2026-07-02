@@ -543,7 +543,6 @@
     <string name="settings_cloud_backup_title">Cloud Backup</string>
     <string name="settings_cloud_backup_summary">İndirmelerinizin uçtan uca şifreli yedeği</string>
     <string name="settings_cloud_backup_status_title">Durum</string>
-    <string name="settings_cloud_backup_not_set_up">Kurulmadı — başlamak için bir indirmeyi yedekleyin</string>
     <string name="settings_cloud_backup_usage">%1$s · %2$s yedeklendi</string>
     <plurals name="settings_cloud_backup_file_count">
         <item quantity="one">%d dosya</item>
@@ -663,14 +662,18 @@
         <item quantity="other">%1$d ay</item>
     </plurals>
     <string name="cloud_status_gb_label">GB-months</string>
-    <string name="cloud_status_oneoff">Tek seferlik kredi · otomatik yenileme yok</string>
-    <string name="cloud_status_free_beta">Yedeklemeler beta süresince ücretsizdir</string>
     <string name="cloud_status_facts">%1$s · %2$s yedeklendi</string>
-    <string name="cloud_status_covered_until">Mevcut kullanımınızla ~ %1$s tarihine kadar kapsanıyor.</string>
-    <string name="cloud_status_covered_ongoing">Yedeklemeleriniz kapsanıyor.</string>
-    <string name="cloud_status_grace">Salt okunur — yedeklemeye devam etmek için kredi yükleyin. Dosyalarınız ~ %1$s tarihine kadar saklanır.</string>
+    <string name="cloud_status_backed_up">yedeklendi</string>
+    <string name="cloud_status_chip_beta">Beta süresince ücretsiz</string>
+    <string name="cloud_status_chip_readonly">Salt okunur</string>
+    <string name="cloud_status_caption_beta">%1$s · dahil %2$s içinden · uçtan uca şifreli</string>
+    <string name="cloud_status_caption_plan">%1$s · plan doluluğu: %%%2$d</string>
+    <string name="cloud_status_runway_covered">~%1$s tarihine kadar geçerli</string>
+    <string name="cloud_status_runway_left">≈ %2$d aydan %1$d ay kaldı</string>
+    <string name="cloud_status_grace_alert">Krediniz bitti. %1$s tarihine kadar bakiye yükleyin — dosyalarınız o zamana dek geri yüklenebilir kalır, ancak yeni bir şey yedeklenmez.</string>
+    <string name="cloud_status_empty_title">Henüz yedeklenen bir şey yok</string>
+    <string name="cloud_status_empty_body">Tamamlanmış herhangi bir indirmeyi ⋮ menüsünden yedekleyin. Dosyalar telefonunuzdan çıkmadan önce şifrelenir.</string>
     <string name="cloud_status_grace_nodate">Salt okunur — yedeklemeye devam etmek için kredi yükleyin. Dosyalarınız şimdilik saklanır.</string>
-    <string name="cloud_status_backups_on">İndirmeleriniz yedeklendi ve şifrelendi.</string>
     <string name="settings_sync_link_title">Kurtarma kodum var</string>
     <string name="settings_sync_link_summary">Yedeklemelerinizi ve depolama kredinizi bu cihaza geri yükleyin</string>
     <string name="settings_sync_link_dialog_title">Kurtarma kodunuzu girin</string>

@@ -543,7 +543,6 @@
     <string name="settings_cloud_backup_title">Cloud Backup</string>
     <string name="settings_cloud_backup_summary">Szyfrowana end-to-end kopia zapasowa Twoich pobrań</string>
     <string name="settings_cloud_backup_status_title">Stan</string>
-    <string name="settings_cloud_backup_not_set_up">Nie skonfigurowano — utwórz kopię zapasową pobrania, aby zacząć</string>
     <string name="settings_cloud_backup_usage">%1$s · %2$s w kopii zapasowej</string>
     <plurals name="settings_cloud_backup_file_count">
         <item quantity="one">%d plik</item>
@@ -669,14 +668,18 @@
         <item quantity="other">%1$d miesiąca</item>
     </plurals>
     <string name="cloud_status_gb_label">GB-months</string>
-    <string name="cloud_status_oneoff">Kredyt jednorazowy · bez automatycznego odnawiania</string>
-    <string name="cloud_status_free_beta">Kopie zapasowe są bezpłatne w okresie beta</string>
     <string name="cloud_status_facts">%1$s · %2$s w kopii zapasowej</string>
-    <string name="cloud_status_covered_until">Pokryte do ~ %1$s przy bieżącym zużyciu.</string>
-    <string name="cloud_status_covered_ongoing">Twoje kopie zapasowe są pokryte.</string>
-    <string name="cloud_status_grace">Tylko do odczytu — doładuj, aby dalej tworzyć kopie. Twoje pliki są przechowywane do ~ %1$s.</string>
+    <string name="cloud_status_backed_up">w kopii zapasowej</string>
+    <string name="cloud_status_chip_beta">Za darmo w czasie bety</string>
+    <string name="cloud_status_chip_readonly">Tylko do odczytu</string>
+    <string name="cloud_status_caption_beta">%1$s · z %2$s w pakiecie · szyfrowane end-to-end</string>
+    <string name="cloud_status_caption_plan">%1$s · %2$d%% twojego planu</string>
+    <string name="cloud_status_runway_covered">Pokrycie do ~%1$s</string>
+    <string name="cloud_status_runway_left">≈ zostało %1$d z %2$d miesięcy</string>
+    <string name="cloud_status_grace_alert">Twój kredyt się wyczerpał. Doładuj do %1$s — do tego czasu pliki można przywracać, ale nic nowego nie jest zapisywane.</string>
+    <string name="cloud_status_empty_title">Nie ma jeszcze kopii zapasowych</string>
+    <string name="cloud_status_empty_body">Utwórz kopię dowolnego ukończonego pobrania z jego menu ⋮. Pliki są szyfrowane, zanim opuszczą telefon.</string>
     <string name="cloud_status_grace_nodate">Tylko do odczytu — doładuj, aby dalej tworzyć kopie. Twoje pliki są na razie przechowywane.</string>
-    <string name="cloud_status_backups_on">Twoje pobrane pliki są zarchiwizowane i zaszyfrowane.</string>
     <string name="settings_sync_link_title">Mam kod odzyskiwania</string>
     <string name="settings_sync_link_summary">Przywróć swoje kopie zapasowe i kredyt na pamięć na tym urządzeniu</string>
     <string name="settings_sync_link_dialog_title">Wprowadź swój kod odzyskiwania</string>
