@@ -227,8 +227,17 @@ public class CloudStatusPreference extends Preference {
             return;
         }
         boolean codeDone = mHasKey;
-        boolean creditDone = (mPlanSizeGb > 0)
-                || (mQuota != null && mQuota.metered && mQuota.balanceGbMonths > 0);
+        // Step ② — SERVER truth wins when the quota is loaded: a metered
+        // account whose balance ran out (and was reaped back to this empty
+        // state) must show "Add storage credit" as the CURRENT step again, but
+        // the stale local plan prefs from the old purchase would keep it
+        // wrongly checked. The prefs only back the offline/quota-unknown render.
+        boolean creditDone;
+        if (mQuota != null && mQuota.metered) {
+            creditDone = mQuota.balanceGbMonths > 0;
+        } else {
+            creditDone = mPlanSizeGb > 0;
+        }
         bindStep(ctx, stepCode, 1, ctx.getString(R.string.settings_sync_create_title),
                 codeDone, !codeDone);
         bindStep(ctx, stepCredit, 2, ctx.getString(R.string.buy_credit_title),

@@ -1851,9 +1851,15 @@ opaque chunks + an opaque manifest blob.
   - **The not-set-up hero is the onboarding ROADMAP**: ① Create your recovery
     code → ② Add storage credit → ③ back up from the download sheet ⋮, bound by
     `CloudStatusPreference.bindOnboardingSteps` (done = "✓" + muted ink, the
-    next pending step keeps bold full-contrast ink; step ② checks off on a known
-    plan/metered balance). The steps reuse existing strings — no new
-    translations. The morphing CTA always shows the NEXT step.
+    next pending step keeps bold full-contrast ink; step ② checks off on the
+    SERVER's metered balance when the quota is loaded — stale local plan prefs
+    must not keep it checked for an expired/reaped account — with the prefs as
+    the offline fallback). The steps reuse existing strings — no new
+    translations. The morphing CTA always shows the NEXT step. The expiry
+    lifecycle this completes: runout → 30 days of amber grace (hero alert +
+    home "Paused" pill, both already built) → the server reap deletes objects
+    AND manifest → the client's 0-files reconcile auto-retires the flag → this
+    roadmap returns with step ② bold, pointing at top-up.
   - **Two scoped erasure rows, never one "delete all cloud data"**: "Delete
     bookmarks from server" (shown while sync is on) and "Delete backed-up files"
     (set-up gated). A combined row misled (the old title never touched
