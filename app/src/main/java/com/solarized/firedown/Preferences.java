@@ -120,6 +120,11 @@ public class Preferences {
     /** "I have a recovery code" — link this device to an existing account (restore
      *  downloads backup + storage credit). Shown only when no code exists yet. */
     public static final String SETTINGS_SYNC_LINK_CODE = "com.solarized.firedown.preferences.sync.link.code";
+    /** "Create recovery code" — mint a fresh key on this device (the account
+     *  gateway). Shown only when no code exists yet; the mirror of LINK_CODE. A key
+     *  is the prerequisite for bookmarks sync AND cloud backup, so both feature
+     *  rows stay disabled until one exists. */
+    public static final String SETTINGS_SYNC_CREATE_CODE = "com.solarized.firedown.preferences.sync.create.code";
     /** Right-to-erasure: delete the encrypted document from the server. */
     public static final String SETTINGS_SYNC_DELETE_DATA = "com.solarized.firedown.preferences.sync.delete.data";
     /** Section headers on the unified Sync screen. Bookmarks / Downloads / About

@@ -46,12 +46,15 @@ import okhttp3.OkHttpClient;
  * the finished credit (never the payment). See {@link CreditPurchase}.
  *
  * <p><b>Identity.</b> A credit is redeemed into the shared recovery-code account
- * ({@link SyncIdentity}). If none exists yet (a brand-new user buying credit
- * before ever backing up), one is minted on demand via
- * {@link CloudBackupManager#createNewCode()} — the grouped code is surfaced on the
- * success screen so the user can save it (it is also always viewable from
- * Settings → Sync). The account is {@link CloudBackupManager#ensureRegistered
- * registered} once before the redeem so the signed call resolves.
+ * ({@link SyncIdentity}), which MUST already exist: the Cloud hub gates the whole
+ * downloads-backup surface (this buy flow included) on a key, so the user has
+ * created or recovered one — and saved it — before reaching here. This flow does
+ * NOT mint a key on demand. The old code did ({@code createNewCode} at flow
+ * start), which created + enabled an account the instant Continue was tapped, so
+ * backing out of the Stripe WebView left a ghost account with an UNSAVED key and
+ * made paying-before-saving-the-key possible; requiring the key up front removes
+ * both. The account is {@link CloudBackupManager#ensureRegistered registered}
+ * once before the redeem so the signed call resolves.
  */
 @HiltViewModel
 public class BuyCreditViewModel extends ViewModel {
@@ -109,13 +112,15 @@ public class BuyCreditViewModel extends ViewModel {
         public final String checkoutUrl;        // PAY_STRIPE (hosted Checkout URL)
         public final int redeemedGbMonths;      // SUCCESS
         public final double balanceGbMonths;    // SUCCESS
-        public final String mintedRecoveryCode; // SUCCESS, non-null iff a new account was created here
         public final String errorMessage;       // ERROR
+
+        // NOTE: there is no "minted recovery code" on SUCCESS anymore. The buy flow
+        // no longer creates an account (the Cloud hub gates it on an existing key),
+        // so the code is always created + saved BEFORE the user ever reaches here.
 
         private UiState(Phase phase, List<Option> options, long amountCents, int denomGbMonths,
                         int sizeGb, int durationMonths, String payRequest, String checkoutUrl,
-                        int redeemedGbMonths, double balanceGbMonths, String mintedRecoveryCode,
-                        String errorMessage) {
+                        int redeemedGbMonths, double balanceGbMonths, String errorMessage) {
             this.phase = phase;
             this.options = options;
             this.amountCents = amountCents;
@@ -126,36 +131,35 @@ public class BuyCreditViewModel extends ViewModel {
             this.checkoutUrl = checkoutUrl;
             this.redeemedGbMonths = redeemedGbMonths;
             this.balanceGbMonths = balanceGbMonths;
-            this.mintedRecoveryCode = mintedRecoveryCode;
             this.errorMessage = errorMessage;
         }
 
         static UiState loading() {
-            return new UiState(Phase.LOADING_OPTIONS, Collections.emptyList(), 0, 0, 0, 0, null, null, 0, 0, null, null);
+            return new UiState(Phase.LOADING_OPTIONS, Collections.emptyList(), 0, 0, 0, 0, null, null, 0, 0, null);
         }
 
         static UiState pick(List<Option> options) {
-            return new UiState(Phase.PICK, options, 0, 0, 0, 0, null, null, 0, 0, null, null);
+            return new UiState(Phase.PICK, options, 0, 0, 0, 0, null, null, 0, 0, null);
         }
 
         static UiState starting() {
-            return new UiState(Phase.STARTING, Collections.emptyList(), 0, 0, 0, 0, null, null, 0, 0, null, null);
+            return new UiState(Phase.STARTING, Collections.emptyList(), 0, 0, 0, 0, null, null, 0, 0, null);
         }
 
         static UiState pay(Phase phase, long amountCents, int denomGbMonths, int sizeGb, int durationMonths,
                            String payRequest, String checkoutUrl) {
             return new UiState(phase, Collections.emptyList(), amountCents, denomGbMonths, sizeGb, durationMonths,
-                    payRequest, checkoutUrl, 0, 0, null, null);
+                    payRequest, checkoutUrl, 0, 0, null);
         }
 
         static UiState success(int redeemedGbMonths, double balanceGbMonths, int denomGbMonths,
-                               int sizeGb, int durationMonths, long amountCents, String mintedRecoveryCode) {
+                               int sizeGb, int durationMonths, long amountCents) {
             return new UiState(Phase.SUCCESS, Collections.emptyList(), amountCents, denomGbMonths, sizeGb, durationMonths,
-                    null, null, redeemedGbMonths, balanceGbMonths, mintedRecoveryCode, null);
+                    null, null, redeemedGbMonths, balanceGbMonths, null);
         }
 
         static UiState error(String message) {
-            return new UiState(Phase.ERROR, Collections.emptyList(), 0, 0, 0, 0, null, null, 0, 0, null, message);
+            return new UiState(Phase.ERROR, Collections.emptyList(), 0, 0, 0, 0, null, null, 0, 0, message);
         }
     }
 
@@ -278,15 +282,17 @@ public class BuyCreditViewModel extends ViewModel {
         state.setValue(UiState.starting());
         final int gen = ++flowGen;
         executor.execute(() -> {
-            String mintedCode = null;
             byte[] code = null;
             try {
-                // A credit needs an account to redeem into. Mint one on demand if
-                // this device has no recovery code yet (first purchase before any
-                // backup) — surfaced on success so the user can save it.
-                if (!cloud.hasAccount()) {
-                    mintedCode = cloud.createNewCode();
-                }
+                // A key must ALREADY exist — the Cloud hub gates the whole
+                // downloads-backup surface (incl. this buy flow) on hasAccount(),
+                // so the user has created or recovered a code before they can get
+                // here. We deliberately do NOT mint one on demand: the old code
+                // did (createNewCode at flow start), which created + enabled an
+                // account the instant Continue was tapped — so backing out of the
+                // Stripe WebView left a ghost account ("11 GB included") with an
+                // UNSAVED key, and paid-before-saved-key was possible. Require the
+                // key instead; if it's somehow absent, fail cleanly.
                 code = new SyncSecrets(appContext).load();
                 if (code == null) {
                     post(gen, UiState.error(appContext.getString(
@@ -327,7 +333,7 @@ public class BuyCreditViewModel extends ViewModel {
                 }
 
                 completePurchase(gen, purchase, session, id, sizeGb, durationMonths,
-                        method, mintedCode, pending);
+                        method, pending);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt(); // cancelled — no state change
             } catch (Exception e) {
@@ -361,7 +367,7 @@ public class BuyCreditViewModel extends ViewModel {
      */
     private void completePurchase(int gen, CreditPurchase purchase, CreditPurchase.Session session,
                                   SyncIdentity id, int sizeGb, int durationMonths, String method,
-                                  String mintedCode, PendingPurchase pending)
+                                  PendingPurchase pending)
             throws InterruptedException {
         int maxPolls = RAIL_STRIPE.equals(method) ? POLL_MAX_STRIPE : POLL_MAX_LIGHTNING;
         for (int i = 0; i < maxPolls; i++) {
@@ -429,7 +435,7 @@ public class BuyCreditViewModel extends ViewModel {
             PendingPurchase.clear(appContext);
             post(gen, UiState.success(r.redeemedGbMonths, r.balanceGbMonths,
                     session.quote.denomGbMonths, sizeGb, durationMonths,
-                    session.quote.amountCents, mintedCode));
+                    session.quote.amountCents));
             return;
         }
         // Timed out — KEEP the record (payment may still settle; resume picks it up).
@@ -478,7 +484,7 @@ public class BuyCreditViewModel extends ViewModel {
                             pending.sizeGb, pending.durationMonths, pending.payRequest, pending.checkoutUrl));
                 }
                 completePurchase(gen, purchase, session, id, pending.sizeGb, pending.durationMonths,
-                        pending.method, null, pending);
+                        pending.method, pending);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             } catch (Exception e) {

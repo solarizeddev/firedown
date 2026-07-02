@@ -11,6 +11,7 @@ import android.text.format.DateUtils;
 import android.text.format.Formatter;
 import android.text.TextUtils;
 import android.view.View;
+import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.TextView;
 
@@ -81,6 +82,7 @@ public class SyncSettingsFragment extends BasePreferenceFragment
     private Preference mShowCode;
     private Preference mExportCode;
     private Preference mLinkCode;
+    private Preference mCreateCode;
     // The Recovery-code category is SHARED (bookmarks + downloads) and shown once
     // the account exists — bookmarks on OR a download has been backed up.
     private Preference mCatCode;
@@ -124,6 +126,7 @@ public class SyncSettingsFragment extends BasePreferenceFragment
         mShowCode = findPreference(Preferences.SETTINGS_SYNC_SHOW_CODE);
         mExportCode = findPreference(Preferences.SETTINGS_SYNC_EXPORT_CODE);
         mLinkCode = findPreference(Preferences.SETTINGS_SYNC_LINK_CODE);
+        mCreateCode = findPreference(Preferences.SETTINGS_SYNC_CREATE_CODE);
         mCatCode = findPreference(Preferences.SETTINGS_SYNC_CAT_CODE);
 
         if (mBookmarks != null) {
@@ -143,6 +146,9 @@ public class SyncSettingsFragment extends BasePreferenceFragment
         }
         if (mLinkCode != null) {
             mLinkCode.setOnPreferenceClickListener(this);
+        }
+        if (mCreateCode != null) {
+            mCreateCode.setOnPreferenceClickListener(this);
         }
 
         tintIcons();
@@ -170,6 +176,7 @@ public class SyncSettingsFragment extends BasePreferenceFragment
             case Preferences.SETTINGS_SYNC_SHOW_CODE -> authThenShowCode();
             case Preferences.SETTINGS_SYNC_EXPORT_CODE -> showExportCaveatDialog();
             case Preferences.SETTINGS_SYNC_LINK_CODE -> showLinkDialog();
+            case Preferences.SETTINGS_SYNC_CREATE_CODE -> createCode();
         }
         return true;
     }
@@ -182,7 +189,30 @@ public class SyncSettingsFragment extends BasePreferenceFragment
      * nothing to authenticate against, so it reveals directly.
      */
     private void authThenShowCode() {
-        authThenReveal(() -> showCodeDialog(mSyncManager.recoveryCodeForDisplay()));
+        authThenReveal(() -> showCodeDialog(mSyncManager.recoveryCodeForDisplay(), false));
+    }
+
+    /**
+     * "Create recovery code" — the fresh-install account gateway (the mirror of
+     * "I have a recovery code"). Mints the shared key WITHOUT enabling any feature
+     * ({@link SyncManager#createRecoveryCode}), then shows it behind the MANDATORY
+     * saved-gate: the dialog's Done stays disabled until the user checks "I've
+     * saved it", so a key can't be created and forgotten. On dismiss the rows
+     * re-evaluate ({@link #updateState}) — bookmarks + downloads backup enable now
+     * that a key exists. Guarded on {@link SyncManager#hasCode()} so a stray tap
+     * can never overwrite an existing key.
+     */
+    private void createCode() {
+        if (mSyncManager.hasCode()) {
+            updateState();
+            return;
+        }
+        mSyncManager.createRecoveryCode(grouped -> {
+            if (isAdded()) {
+                showCodeDialog(grouped, true);
+                updateState();
+            }
+        });
     }
 
     /**
@@ -319,33 +349,51 @@ public class SyncSettingsFragment extends BasePreferenceFragment
 
     private void updateState() {
         boolean on = mSyncManager.isEnabled();
-        // The account exists once EITHER feature is set up — bookmarks on, or a
-        // download has been backed up. The shared Recovery-code section keys off
-        // this, not bookmarks alone (a downloads-only user still needs the code).
-        boolean accountExists = on || mCloudBackup.isSetUp();
-        // Bookmarks row reads its on/off state inline (the toggle itself lives on
-        // the focused screen this row opens).
+        // The KEY is the account gateway: a recovery code must exist before EITHER
+        // feature can be used. So the whole hub keys off hasKey (not "a feature is
+        // already on") — the feature rows are DISABLED until a key exists, and the
+        // Create / "I have a recovery code" pair is the only thing offered until
+        // then. This is what stops a keyless purchase (the buy flow used to mint a
+        // code silently mid-checkout — see BuyCreditViewModel).
+        boolean hasKey = mCloudBackup.hasAccount();
+        // Bookmarks row: disabled without a key; once enabled, reads its on/off
+        // state inline (the toggle itself lives on the focused screen it opens).
         if (mBookmarks != null) {
-            mBookmarks.setSummary(on
-                    ? lastSyncedSummary()
-                    : getString(R.string.settings_sync_switch_summary));
+            mBookmarks.setEnabled(hasKey);
+            mBookmarks.setSummary(!hasKey
+                    ? getString(R.string.settings_sync_needs_key)
+                    : on ? lastSyncedSummary()
+                         : getString(R.string.settings_sync_switch_summary));
         }
-        // Recovery code is SHARED → shown once the account exists.
+        // Downloads-backup row: same key gate; its live usage/active summary is
+        // filled by updateDownloadsSummary when a key exists.
+        if (mDownloadsBackup != null) {
+            mDownloadsBackup.setEnabled(hasKey);
+            if (!hasKey) {
+                mDownloadsBackup.setSummary(getString(R.string.settings_sync_needs_key));
+            }
+        }
+        // Recovery-code section is SHARED → shown once a key exists.
         if (mCatCode != null) {
-            mCatCode.setVisible(accountExists);
+            mCatCode.setVisible(hasKey);
         }
         if (mShowCode != null) {
-            mShowCode.setVisible(accountExists);
+            mShowCode.setVisible(hasKey);
         }
         if (mExportCode != null) {
-            mExportCode.setVisible(accountExists);
+            mExportCode.setVisible(hasKey);
         }
-        // The complement of the recovery-code section: offer "I have a recovery
-        // code" only when this device has NO code yet (fresh install / new device).
+        // The Create / Recover pair: the only actions offered pre-key, hidden once
+        // a key exists (there's nothing to create or adopt then).
+        if (mCreateCode != null) {
+            mCreateCode.setVisible(!hasKey);
+        }
         if (mLinkCode != null) {
-            mLinkCode.setVisible(!mCloudBackup.hasAccount());
+            mLinkCode.setVisible(!hasKey);
         }
-        updateDownloadsSummary(false);
+        if (hasKey) {
+            updateDownloadsSummary(false);
+        }
     }
 
     /**
@@ -356,6 +404,14 @@ public class SyncSettingsFragment extends BasePreferenceFragment
      */
     private void updateDownloadsSummary(boolean active) {
         if (mDownloadsBackup == null) {
+            return;
+        }
+        // No key → the row is a disabled "create or enter a code first" (the
+        // WorkManager observer also reaches here, so keep it consistent with
+        // updateState instead of falling through to the generic invitation).
+        if (!mCloudBackup.hasAccount()) {
+            mDownloadsBackup.setEnabled(false);
+            mDownloadsBackup.setSummary(getString(R.string.settings_sync_needs_key));
             return;
         }
         if (active) {
@@ -391,11 +447,16 @@ public class SyncSettingsFragment extends BasePreferenceFragment
         return getString(R.string.settings_sync_last_synced, rel);
     }
 
-    /** Shows the grouped recovery code with a copy action and the no-recovery
-     *  warning. The hub only ever VIEWS an existing code (behind the device-auth
-     *  gate); the just-created reveal is owned by the setup flow on the focused
-     *  Bookmarks screen, so there is no "just created" checkbox path here. */
-    private void showCodeDialog(@Nullable String grouped) {
+    /**
+     * Shows the grouped recovery code with a copy action and the no-recovery
+     * warning. Two modes via {@code requireSaved}: VIEWING an existing code
+     * (account already set up, behind the device-auth gate) hides the checkbox and
+     * Done is always enabled; CREATING a fresh key ({@link #createCode}) shows the
+     * "I've saved it" checkbox and gates Done on it — the key is the only copy, so
+     * it must not be created and dismissed unsaved. The dialog is non-cancelable in
+     * the create mode so Done (post-check) is the only exit, not a stray outside-tap.
+     */
+    private void showCodeDialog(@Nullable String grouped, boolean requireSaved) {
         if (grouped == null) {
             snackbar(getString(R.string.settings_sync_code_unavailable));
             return;
@@ -404,13 +465,14 @@ public class SyncSettingsFragment extends BasePreferenceFragment
         TextView codeText = view.findViewById(R.id.sync_code_text);
         codeText.setText(grouped);
 
-        // Viewing an existing code (account already set up), so the "I've saved it"
-        // gate is hidden and Done is always enabled.
         CheckBox savedCheck = view.findViewById(R.id.sync_code_saved_check);
-        savedCheck.setVisibility(View.GONE);
+        savedCheck.setVisibility(requireSaved ? View.VISIBLE : View.GONE);
 
         AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
-                .setTitle(R.string.settings_sync_show_code_title)
+                .setCancelable(!requireSaved)
+                .setTitle(requireSaved
+                        ? R.string.settings_sync_code_created_title   // "Save your recovery code"
+                        : R.string.settings_sync_show_code_title)
                 .setView(view)
                 // Copy is the NEUTRAL action so it copies WITHOUT closing the
                 // dialog (its click listener is overridden below to suppress the
@@ -422,6 +484,14 @@ public class SyncSettingsFragment extends BasePreferenceFragment
 
         dialog.getButton(AlertDialog.BUTTON_NEUTRAL)
                 .setOnClickListener(v -> copyToClipboard(grouped));
+
+        // Create mode: Done stays disabled until the user acknowledges they saved
+        // the only key (the "check step").
+        if (requireSaved) {
+            android.widget.Button done = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+            done.setEnabled(false);
+            savedCheck.setOnCheckedChangeListener((b, checked) -> done.setEnabled(checked));
+        }
     }
 
     private void copyToClipboard(String text) {

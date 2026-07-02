@@ -85,7 +85,7 @@
 
                 <View
                     android:layout_width="match_parent"
-                    android:layout_height="22dp" />
+                    android:layout_height="24dp" />
             </LinearLayout>
 
             <TextView
@@ -452,67 +452,9 @@
                 android:textColor="?android:attr/textColorSecondary"
                 tools:text="Your balance is now 600 GB-months." />
 
-            <!-- Recovery-code card — shown only when a fresh account was minted here. -->
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/buy_success_code_card"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="22dp"
-                android:visibility="gone"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="0dp"
-                app:strokeWidth="1dp"
-                app:strokeColor="?attr/colorOutlineVariant"
-                tools:visibility="visible">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="16dp">
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/buy_credit_recovery_code_title"
-                        android:textStyle="bold"
-                        android:textSize="15sp"
-                        android:textColor="?attr/colorOnSurface" />
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/buy_credit_recovery_code_body"
-                        android:textSize="12.5sp"
-                        android:lineSpacingMultiplier="1.35"
-                        android:layout_marginTop="4dp"
-                        android:textColor="?android:attr/textColorSecondary" />
-
-                    <TextView
-                        android:id="@+id/buy_success_code"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
-                        android:padding="12dp"
-                        android:fontFamily="monospace"
-                        android:textSize="14sp"
-                        android:letterSpacing="0.05"
-                        android:background="@drawable/bg_sync_code"
-                        android:textColor="?attr/colorOnSecondaryContainer"
-                        tools:text="ABCD EFGH JKMN PQRS TVWX YZ23 4567" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/buy_success_copy_code"
-                        style="?attr/materialButtonOutlinedStyle"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
-                        android:text="@string/buy_credit_copy_code"
-                        app:icon="@drawable/ic_copy_24"
-                        app:iconSize="16dp"
-                        app:cornerRadius="14dp" />
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
+            <!-- (No recovery-code card here: the account + saved key always exist
+                 before this flow — the Cloud hub gates buying on a key and forces
+                 the save step at creation, so nothing is minted at purchase.) -->
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/buy_done"

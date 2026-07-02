@@ -9,11 +9,23 @@
     ── (feature links) ──
        Bookmarks        › BookmarksSyncFragment  (summary = on?last-synced:off)
        Manage downloads backup › Cloud Backup sub-screen (status/files/delete)
-    ── Recovery code ──  (shared; shown once the account exists — bookmarks on OR a
-       Show recovery code   download has been backed up)
+    ── (no-key gateway) ──  (shown ONLY until a recovery code exists)
+       Create recovery code    › mint a fresh key here (no feature enabled yet)
+       I have a recovery code   › adopt an existing account's key
+    ── Recovery code ──  (shared; shown once a key exists)
+       Show recovery code
        Save recovery code to file
     ── About ──
        How sync & encryption work  (covers bookmarks AND files)
+
+  KEY-FIRST GATE: a recovery code is the account gateway. Until one exists, the
+  Bookmarks + Manage-downloads-backup rows are DISABLED (SyncSettingsFragment gates
+  them on hasCode()) and only Create / "I have a recovery code" are offered. This
+  is what stops a keyless purchase — the buy flow used to mint a code silently
+  mid-checkout, which left a ghost account with an unsaved key when the user backed
+  out of Stripe (see BuyCreditViewModel). Creating a key from here forces the
+  "I've saved it" step before it counts; the per-download "Back up to cloud" action
+  mints+saves inline the same way.
 
   The bookmarks row deep-links to the focused screen so the bookmarks-list overflow
   and the hub land on the SAME place. Downloads backup is action-driven (a
@@ -39,14 +51,23 @@
         app:icon="@drawable/download_24" />
 
     <!-- Shown ONLY when this device has no recovery code yet (fresh install / new
-         device): link to an existing account to bring back downloads backup +
-         storage credit. Visibility toggled in SyncSettingsFragment. -->
+         device). The key is the account GATEWAY: bookmarks + downloads-backup rows
+         above stay DISABLED until one exists (SyncSettingsFragment gates them on
+         hasCode()). Create = mint a fresh key here; "I have a recovery code" =
+         adopt an existing one. Both hidden once a key exists. -->
+    <Preference
+        android:key="com.solarized.firedown.preferences.sync.create.code"
+        android:title="@string/settings_sync_create_title"
+        android:summary="@string/settings_sync_create_summary"
+        app:singleLineTitle="false"
+        app:icon="@drawable/ic_key_24" />
+
     <Preference
         android:key="com.solarized.firedown.preferences.sync.link.code"
         android:title="@string/settings_sync_link_title"
         android:summary="@string/settings_sync_link_summary"
         app:singleLineTitle="false"
-        app:icon="@drawable/ic_key_24" />
+        app:icon="@drawable/ic_baseline_insert_drive_file_24" />
 
     <PreferenceCategory
         android:key="com.solarized.firedown.preferences.sync.cat.code"

@@ -707,20 +707,10 @@ public class BuyCreditFragment extends Fragment {
         ((TextView) requireView().findViewById(R.id.buy_success_title)).setText(title);
         ((TextView) requireView().findViewById(R.id.buy_success_balance))
                 .setText(getString(R.string.buy_credit_success_balance, formatGbMonths(s.balanceGbMonths)));
-
-        // If a brand-new account was minted for this purchase, surface its recovery
-        // code so the user can save it (it's the only key to their backups).
-        View codeCard = requireView().findViewById(R.id.buy_success_code_card);
-        if (s.mintedRecoveryCode != null) {
-            codeCard.setVisibility(View.VISIBLE);
-            TextView code = requireView().findViewById(R.id.buy_success_code);
-            code.setText(s.mintedRecoveryCode);
-            requireView().findViewById(R.id.buy_success_copy_code).setOnClickListener(v ->
-                    copyToClipboard(getString(R.string.buy_credit_recovery_code_title),
-                            s.mintedRecoveryCode, getString(R.string.buy_credit_code_copied)));
-        } else {
-            codeCard.setVisibility(View.GONE);
-        }
+        // No recovery-code card on success anymore: the account (and its saved key)
+        // always exists BEFORE this flow — the Cloud hub gates buying on a key, and
+        // creating one there forces the "I've saved it" step. So there's never a
+        // freshly-minted, unsaved code to surface here.
     }
 
     // ---- error ----

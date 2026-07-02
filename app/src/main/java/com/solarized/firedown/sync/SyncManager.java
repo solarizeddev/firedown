@@ -123,6 +123,33 @@ public class SyncManager {
     }
 
     /**
+     * Creates the shared account key on this device WITHOUT enabling any feature.
+     * The key is the gateway: it must exist before bookmarks sync or cloud backup
+     * can be turned on (the Cloud hub disables those rows until it does). Unlike
+     * {@link #enableWithNewCode} this does NOT turn on bookmark sync, and unlike
+     * {@link CloudBackupManager#createNewCode} it does NOT mark cloud backup in use
+     * — creating a key commits the user to nothing but holding the key. The grouped
+     * code is delivered to {@code onCode} (caller shows the "save this — it's the
+     * only key" dialog with the mandatory saved-gate). No-op-safe if a key already
+     * exists is the CALLER's responsibility (guard on {@link #hasCode()}); this
+     * always overwrites, matching the other minting paths.
+     */
+    public void createRecoveryCode(Consumer<String> onCode) {
+        byte[] code = SyncIdentity.generateRecoveryCode();
+        new SyncSecrets(context).store(code);
+        String grouped = SyncIdentity.grouped(SyncIdentity.encodeRecoveryCode(code));
+        SyncSecrets.wipe(code);
+        if (onCode != null) {
+            onCode.accept(grouped);
+        }
+    }
+
+    /** Whether a recovery code exists on this device (the account gateway). */
+    public boolean hasCode() {
+        return new SyncSecrets(context).hasCode();
+    }
+
+    /**
      * Enables sync by restoring from an existing recovery code (new device). The
      * code is validated by deriving the identity; {@code onResult} reports
      * success/failure on the main thread. On success a pull+merge runs.

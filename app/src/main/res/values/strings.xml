@@ -216,7 +216,12 @@
     <string name="settings_sync_restore_action">Restore</string>
     <string name="settings_sync_restore_ok">Bookmark sync restored</string>
     <string name="settings_sync_restore_bad">That recovery code doesn\'t look right</string>
-    <!-- Account-level "I have a recovery code" link entry (Cloud hub, no-code state) -->
+    <!-- Account-level Create / "I have a recovery code" pair (Cloud hub, no-key state).
+         The key is the gateway: bookmarks + downloads backup stay disabled until one exists. -->
+    <string name="settings_sync_create_title">Create recovery code</string>
+    <string name="settings_sync_create_summary">Set up encryption with a new key on this device</string>
+    <!-- Disabled-row summary shown on Bookmarks + Downloads backup until a key exists. -->
+    <string name="settings_sync_needs_key">Create or enter a recovery code first</string>
     <string name="settings_sync_link_title">I have a recovery code</string>
     <string name="settings_sync_link_summary">Restore your backups and storage credit on this device</string>
     <string name="settings_sync_link_dialog_title">Enter your recovery code</string>
