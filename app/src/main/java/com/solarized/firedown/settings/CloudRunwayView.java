@@ -50,6 +50,13 @@ public class CloudRunwayView extends View {
      *  @param filled lit ticks (months left), clamped to [0, total]
      *  @param onColor the data-ink colour (coral normally, amber in grace) */
     public void setTicks(int total, int filled, int onColor) {
+        if (total > MAX_TICKS) {
+            // An accumulated balance can cover far more months than fit as ticks
+            // (e.g. 54); keep the FRACTION honest when collapsing to MAX_TICKS —
+            // a bare min() clamp would light every tick even at 74% left.
+            filled = (int) Math.round(filled * (double) MAX_TICKS / total);
+            total = MAX_TICKS;
+        }
         mTotal = Math.max(1, Math.min(total, MAX_TICKS));
         mFilled = Math.max(0, Math.min(filled, mTotal));
         mOnColor = onColor;

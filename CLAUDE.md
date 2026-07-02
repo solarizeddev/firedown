@@ -1870,11 +1870,20 @@ opaque chunks + an opaque manifest blob.
     flag reconcile only ever runs on a successful load, so the cache can't mask
     it), and `deleteAllData` clears it. Don't bind the hero straight to a fresh
     network load again.
-  - **Covered-until is CLAMPED to the purchased plan.** The server's
+  - **Coverage months are BALANCE-derived, not the stored plan shape.**
+    Purchases ACCUMULATE into one server balance, so after a top-up the local
+    `CLOUD_PLAN_*` "size × months" understates what the account holds (on-device:
+    chip read "Up to 100 GB · 5 months" against a 5410 GB-month balance ≈ 54
+    months at that cap). `CloudStatusPreference.coverageMonths` = server
+    `balance ÷ plan size` when the quota is known (stored months = offline
+    fallback) and feeds the chip duration, the "≈ N of M months left" line, the
+    tick runway (`CloudRunwayView` scales the filled FRACTION when collapsing
+    >36 ticks), and the covered-until clamp below.
+  - **Covered-until is CLAMPED to the coverage months.** The server's
     `projected_runout_at` is balance ÷ current footprint — with ~nothing backed
-    up it runs absurd ("~Feb 2086" at 0% usage, on-device). When the plan shape
-    is known, `CloudStatusPreference.bindRunway` clamps the displayed date to
-    now + plan months (matching the "≈ N of M months left" cap).
+    up it runs absurd ("~Feb 2086" at 0% usage, on-device).
+    `CloudStatusPreference.bindRunway` clamps the displayed date to now +
+    coverageMonths (matching the "≈ N of M months left" cap).
 
 - **FGS type.** Both workers run as `dataSync` foreground workers; the app's
   manifest merges `foregroundServiceType="dataSync"` onto WorkManager's

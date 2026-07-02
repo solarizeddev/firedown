@@ -181,6 +181,23 @@ public class CloudStatusPreference extends Preference {
                 metered, grace, planKnown, ink);
     }
 
+    /**
+     * Coverage months behind the chip/runway: the SERVER's remaining balance ÷
+     * the plan's size cap when both are known, else the locally-stored plan
+     * months. Purchases ACCUMULATE server-side (every redeem adds GB-months to
+     * one balance), so after a top-up the stored "size × months" shape
+     * understates what the account actually holds — on-device the chip read
+     * "Up to 100 GB · 5 months" against a 5410 GB-month balance (~54 months at
+     * that cap). The balance is ground truth; the stored months only cover the
+     * offline/quota-unknown render.
+     */
+    private int coverageMonths(boolean metered) {
+        if (metered && mPlanSizeGb > 0 && mQuota.balanceGbMonths > 0) {
+            return (int) Math.max(1, Math.round(mQuota.balanceGbMonths / mPlanSizeGb));
+        }
+        return mPlanMonths;
+    }
+
     /** The context chip: read-only (grace) / the purchased plan / raw balance /
      *  the free beta. Warn styling is amber text over amber-at-18%; the neutral
      *  styling is re-applied explicitly because rows recycle. */
@@ -192,7 +209,7 @@ public class CloudStatusPreference extends Preference {
         } else if (metered) {
             if (planKnown) {
                 text = ctx.getString(R.string.buy_credit_plan_size, mPlanSizeGb)
-                        + " · " + formatDuration(ctx, mPlanMonths);
+                        + " · " + formatDuration(ctx, coverageMonths(true));
             } else {
                 text = formatGbMonths(mQuota.balanceGbMonths) + " "
                         + ctx.getString(R.string.cloud_status_gb_label);
@@ -265,14 +282,16 @@ public class CloudStatusPreference extends Preference {
         }
         // The server's projection is balance ÷ CURRENT footprint — with almost
         // nothing backed up yet the denominator is tiny and the date runs absurd
-        // ("Covered until ~Feb 2086" at 0% usage, seen on-device). The plan the
-        // user actually bought is the honest ceiling, so when its shape is known
-        // the displayed date is clamped to now + plan months (matching the
-        // "≈ N of M months left" line, which already caps at M).
+        // ("Covered until ~Feb 2086" at 0% usage, seen on-device). The honest
+        // ceiling is the account's real coverage at full cap — balance ÷ plan
+        // size (coverageMonths, balance-derived so accumulated top-ups count) —
+        // so the displayed date is clamped to now + that (matching the
+        // "≈ N of M months left" line, which caps at the same M).
+        int coverage = coverageMonths(true);
         Instant projected = parseInstant(mQuota.projectedRunoutAt);
-        if (projected != null && planKnown) {
+        if (projected != null && planKnown && coverage > 0) {
             Instant planEnd = Instant.now().plusSeconds(
-                    Math.round(mPlanMonths * DAYS_PER_MONTH * 86400.0));
+                    Math.round(coverage * DAYS_PER_MONTH * 86400.0));
             if (projected.isAfter(planEnd)) {
                 projected = planEnd;
             }
@@ -288,19 +307,19 @@ public class CloudStatusPreference extends Preference {
         runway.setVisibility(View.VISIBLE);
         runwayLabels.setVisibility(View.VISIBLE);
         runwayCovered.setText(ctx.getString(R.string.cloud_status_runway_covered, month));
-        if (!planKnown) {
+        if (!planKnown || coverage <= 0) {
             return;
         }
         int monthsLeft = monthsUntil(mQuota.projectedRunoutAt);
         if (monthsLeft < 0) {
             return;
         }
-        monthsLeft = Math.min(monthsLeft, mPlanMonths);
+        monthsLeft = Math.min(monthsLeft, coverage);
         runwayLeft.setText(ctx.getString(
-                R.string.cloud_status_runway_left, monthsLeft, mPlanMonths));
+                R.string.cloud_status_runway_left, monthsLeft, coverage));
         runwayLeft.setVisibility(View.VISIBLE);
         ticks.setVisibility(View.VISIBLE);
-        ticks.setTicks(mPlanMonths, monthsLeft, ink);
+        ticks.setTicks(coverage, monthsLeft, ink);
     }
 
     /** Localized coverage ("1 year" / "3 months") — same plurals the buy wizard
