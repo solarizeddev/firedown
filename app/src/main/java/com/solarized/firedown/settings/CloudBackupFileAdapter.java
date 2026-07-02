@@ -6,6 +6,7 @@ import android.graphics.Color;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
 import android.text.format.Formatter;
+import android.util.LruCache;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -90,8 +91,25 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
 
     private final List<Transfer> mTransfers = new ArrayList<>();
     private final List<VaultEntry> mItems = new ArrayList<>();
-    /** objectId → base64 preview backfilled from the local file (display only). */
-    private final Map<String, String> mResolvedThumbs = new HashMap<>();
+    /** objectId → preview bitmap backfilled from the local file (display only). */
+    private final Map<String, Bitmap> mResolvedThumbs = new HashMap<>();
+    /**
+     * objectId → decoded STORED preview ({@code entry.thumb}). The bind used to
+     * base64+JPEG-decode the manifest thumb on EVERY bind — every scroll-back,
+     * every selection tick, every {@code notifyItemChanged} re-paid it on the
+     * main thread. Stored thumbs are ≤160px JPEGs (≤~100 KB decoded), so a small
+     * byte-bounded cache covers far more than the visible list; an evicted entry
+     * just re-decodes on its next bind. Kept across {@link #submit} on purpose —
+     * objectIds are server-random per object and a stored thumb is immutable, so
+     * a stale key can never show the wrong image, only idle until evicted.
+     */
+    private static final int THUMB_CACHE_BYTES = 2 * 1024 * 1024;
+    private final LruCache<String, Bitmap> mDecodedThumbs = new LruCache<>(THUMB_CACHE_BYTES) {
+        @Override
+        protected int sizeOf(@NonNull String key, @NonNull Bitmap value) {
+            return value.getByteCount();
+        }
+    };
     /** Selected committed entries (by objectId) while in multi-select. */
     private final Set<String> mSelected = new HashSet<>();
     private boolean mActionMode;
@@ -198,9 +216,12 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
 
     /**
      * Records a preview backfilled from the local file (for an entry that had no
-     * stored thumb) and refreshes its row so the thumbnail appears.
+     * stored thumb) and refreshes its row so the thumbnail appears. Already a
+     * decoded bitmap (the backfill decodes off the main thread — via Glide's
+     * cache or MediaMetadataRetriever); the old base64-string contract made the
+     * row bind re-decode on the main thread what the backfill had just encoded.
      */
-    public void setResolvedThumb(String objectId, String thumb) {
+    public void setResolvedThumb(String objectId, Bitmap thumb) {
         if (objectId == null || thumb == null) {
             return;
         }
@@ -241,9 +262,26 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             ((TransferVH) holder).bind(mTransfers.get(position));
         } else {
             VaultEntry entry = mItems.get(position - mTransfers.size());
-            ((FileVH) holder).bind(entry, mResolvedThumbs.get(entry.objectId),
+            ((FileVH) holder).bind(entry, thumbBitmapFor(entry),
                     mActionMode, mSelected.contains(entry.objectId));
         }
+    }
+
+    /** Stored preview (decoded once, then served from {@link #mDecodedThumbs})
+     *  → display-only backfill → null (the bind renders the mime glyph). */
+    private Bitmap thumbBitmapFor(VaultEntry entry) {
+        if (entry.thumb == null) {
+            return mResolvedThumbs.get(entry.objectId);
+        }
+        Bitmap cached = entry.objectId != null ? mDecodedThumbs.get(entry.objectId) : null;
+        if (cached != null) {
+            return cached;
+        }
+        Bitmap decoded = VaultThumbnail.decode(entry.thumb);
+        if (decoded != null && entry.objectId != null) {
+            mDecodedThumbs.put(entry.objectId, decoded);
+        }
+        return decoded;
     }
 
     @Override
@@ -262,9 +300,9 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         }
     }
 
-    /** Stored preview → display-only backfill → mime-type fallback card. */
-    private static void bindThumb(ImageView thumb, Context ctx, String thumbData, String mimeType) {
-        Bitmap bmp = VaultThumbnail.decode(thumbData);
+    /** Decoded preview bitmap when present, else the mime-type fallback card.
+     *  Decoding/caching lives in {@link #thumbBitmapFor} — this only paints. */
+    private static void bindThumb(ImageView thumb, Context ctx, Bitmap bmp, String mimeType) {
         if (bmp != null) {
             thumb.setImageBitmap(bmp);
         } else {
@@ -311,7 +349,7 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             });
         }
 
-        void bind(VaultEntry entry, String resolvedThumb, boolean actionMode, boolean selected) {
+        void bind(VaultEntry entry, Bitmap thumbBitmap, boolean actionMode, boolean selected) {
             current = entry;
             Context ctx = itemView.getContext();
             name.setText(entry.name);
@@ -324,7 +362,7 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             } else {
                 date.setVisibility(View.GONE);
             }
-            bindThumb(thumb, ctx, entry.thumb != null ? entry.thumb : resolvedThumb, entry.mime);
+            bindThumb(thumb, ctx, thumbBitmap, entry.mime);
 
             // Selection chrome (Downloads parity): the check replaces the ⋮ action
             // button IN THE SAME SLOT (button INVISIBLE so the slot width holds and

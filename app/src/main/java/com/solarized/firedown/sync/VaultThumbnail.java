@@ -28,8 +28,10 @@ import java.io.IOException;
  */
 public final class VaultThumbnail {
 
-    /** Longest side of the stored preview, in pixels. */
-    private static final int MAX_DIM = 160;
+    /** Longest side of the stored preview, in pixels. Package-visible so the
+     *  display-time backfill ({@code CloudBackupManager.resolveLocalThumb}) can
+     *  size its Glide-decoded bitmaps to the same footprint. */
+    static final int MAX_DIM = 160;
     private static final int JPEG_QUALITY = 60;
     /** Base64 flags — must match the list decoder. No newlines (it rides in JSON). */
     private static final int B64 = Base64.NO_WRAP;
@@ -63,6 +65,26 @@ public final class VaultThumbnail {
      * be null (direct-path behaviour only).
      */
     public static String generate(Context context, String path, String mime, long frameUs) {
+        Bitmap scaled = generateBitmap(context, path, mime, frameUs);
+        if (scaled == null) {
+            return null;
+        }
+        try {
+            return encode(scaled);
+        } finally {
+            scaled.recycle();
+        }
+    }
+
+    /**
+     * The decoded (≤{@link #MAX_DIM}px longest side) preview bitmap for
+     * {@code path}, or null if none applies / on error. The caller OWNS the
+     * returned bitmap. Split out of {@link #generate(Context, String, String,
+     * long)} so the display-time backfill can hand the list adapter a bitmap
+     * directly instead of encoding to base64 JPEG only for the row bind to
+     * decode it straight back.
+     */
+    public static Bitmap generateBitmap(Context context, String path, String mime, long frameUs) {
         if (path == null || mime == null) {
             return null;
         }
@@ -79,17 +101,15 @@ public final class VaultThumbnail {
                 return null;
             }
             Bitmap scaled = scaleDown(bmp);
-            String b64 = encode(scaled);
             if (scaled != bmp) {
-                scaled.recycle();
+                bmp.recycle();
             }
-            return b64;
+            return scaled;
         } catch (Exception e) {
-            return null;
-        } finally {
             if (bmp != null) {
                 bmp.recycle();
             }
+            return null;
         }
     }
 

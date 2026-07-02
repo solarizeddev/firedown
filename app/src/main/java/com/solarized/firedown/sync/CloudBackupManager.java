@@ -2,6 +2,7 @@ package com.solarized.firedown.sync;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -428,30 +429,44 @@ public class CloudBackupManager {
 
     /**
      * Best-effort backfill of a missing preview for an entry backed up before
-     * thumbnails existed: locates the local copy (name + size) and generates a
-     * preview from it on the heavy executor, posting the base64 result (or null
-     * if no local copy / not previewable) to the main thread. Display-only — it
-     * is NOT written back to the manifest (no re-upload, no OCC churn); the
-     * preview persists once the file is backed up again.
+     * thumbnails existed: locates the local copy (name + size) and decodes a
+     * preview from it on the heavy executor, posting the bitmap (or null if no
+     * local copy / not previewable) to the main thread.
+     *
+     * <p>The decode goes through the Downloads list's OWN Glide pipeline first
+     * ({@link GlideHelper#downloadThumbSync} — identical cache keys), so a file
+     * ever rendered in Downloads is served from Glide's warm memory/disk cache
+     * instead of re-extracting a video frame on every visit to this screen, and
+     * a cold miss warms that cache for the list. {@link VaultThumbnail} stays as
+     * the fallback for what that pipeline can't hand back as a bitmap (GIF/SVG
+     * drawables, or a Glide decode failure where MediaMetadataRetriever still
+     * succeeds). Display-only — the manifest is NOT written back (no re-upload,
+     * no OCC churn); the preview persists once the file is backed up again.
      */
-    public void resolveLocalThumb(VaultEntry entry, Consumer<String> onThumb) {
+    public void resolveLocalThumb(VaultEntry entry, Consumer<Bitmap> onThumb) {
         heavyExecutor.execute(() -> {
-            String thumb = null;
+            Bitmap thumb = null;
             try {
                 DownloadEntity local = downloads.findByNameSize(entry.name, entry.size);
                 if (local != null && local.getFilePath() != null) {
                     // No File.exists() gate: exists() is FALSE for a restored
                     // foreign-owned file that IS readable via the SAF grant —
-                    // generate() resolves access itself (direct path, then grant)
-                    // and returns null when neither works. Same exact frame the
-                    // Downloads list renders for this file.
-                    thumb = VaultThumbnail.generate(context, local.getFilePath(), entry.mime,
-                            GlideHelper.thumbnailFrameUs(local));
+                    // both decode paths resolve access themselves (the Glide
+                    // DownloadEntity loaders and VaultThumbnail each try the
+                    // direct path, then the grant) and yield null when neither
+                    // works.
+                    thumb = GlideHelper.downloadThumbSync(context, local, VaultThumbnail.MAX_DIM);
+                    if (thumb == null) {
+                        // Same exact frame the Downloads list renders for this
+                        // file.
+                        thumb = VaultThumbnail.generateBitmap(context, local.getFilePath(),
+                                entry.mime, GlideHelper.thumbnailFrameUs(local));
+                    }
                 }
             } catch (Exception ignored) {
                 // Best-effort — fall through to the mime glyph.
             }
-            final String out = thumb;
+            final Bitmap out = thumb;
             main.post(() -> onThumb.accept(out));
         });
     }

@@ -1,6 +1,7 @@
 package com.solarized.firedown;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.media.MediaMetadataRetriever;
@@ -24,6 +25,7 @@ import java.io.FileNotFoundException;
 import com.bumptech.glide.load.model.GlideUrl;
 import com.bumptech.glide.load.model.LazyHeaders;
 import com.bumptech.glide.load.resource.bitmap.VideoDecoder;
+import com.bumptech.glide.request.FutureTarget;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.Target;
@@ -46,6 +48,7 @@ import dagger.hilt.android.EntryPointAccessors;
 import dagger.hilt.components.SingletonComponent;
 
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 public class GlideHelper {
 
@@ -535,6 +538,82 @@ public class GlideHelper {
         return null;
     }
 
+
+    /** Bound on {@link #downloadThumbSync}'s blocking wait — a wedged
+     *  MediaMetadataRetriever/FFmpeg decode must not pin the caller's executor
+     *  lane forever; the finally-clear cancels the load on timeout. */
+    private static final long SYNC_THUMB_TIMEOUT_SECONDS = 20;
+
+    /**
+     * Synchronously decodes the SAME thumbnail the Downloads list renders for
+     * this entity, through the SAME Glide pipeline and cache keys as
+     * {@link #load(DownloadEntity, RequestOptions, AppCompatImageView)} — the
+     * request is built by {@link #preloadDownload} with the adapter's bare
+     * {@code RequestOptions}, so signature + options + override match the list
+     * byte-for-byte. A file ever shown in Downloads is therefore served straight
+     * from Glide's memory/disk cache instead of re-extracting a video frame, and
+     * a cold miss populates that cache FOR the list. Background threads only
+     * ({@code FutureTarget.get()} blocks).
+     *
+     * <p>The returned bitmap is scaled/copied to at most {@code maxDim} longest
+     * side and is OWNED by the caller. The copy is mandatory, not an
+     * optimisation: the Glide resource is released back to the bitmap pool in
+     * the finally-clear, and a pooled bitmap's pixels can be reused under
+     * anyone still holding it.
+     *
+     * <p>Null when the load path yields no bitmap — a mime with no thumbnail, a
+     * negative-cached entity ({@code preloadDownload} returns null), a decode
+     * failure, or a non-bitmap drawable (GIF/SVG); callers fall back to their
+     * own decoder / the mime glyph.
+     */
+    @Nullable
+    public static Bitmap downloadThumbSync(@NonNull Context context,
+                                           @NonNull DownloadEntity entity,
+                                           int maxDim) {
+        RequestManager glide = Glide.with(context.getApplicationContext());
+        FutureTarget<?> future = null;
+        try {
+            RequestBuilder<?> builder = preloadDownload(glide, entity, new RequestOptions());
+            if (builder == null) {
+                return null;
+            }
+            future = builder.submit();
+            Object resource = future.get(SYNC_THUMB_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            if (!(resource instanceof BitmapDrawable)) {
+                return null;
+            }
+            Bitmap pooled = ((BitmapDrawable) resource).getBitmap();
+            if (pooled == null || pooled.isRecycled()) {
+                return null;
+            }
+            return copyScaled(pooled, maxDim);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return null;
+        } catch (Exception e) {
+            return null;
+        } finally {
+            if (future != null) {
+                // Releases the resource back to Glide (pool + cache). Documented
+                // as safe from background threads for a FutureTarget.
+                glide.clear(future);
+            }
+        }
+    }
+
+    /** A pool-detached copy of {@code src}, downscaled so its longest side is at
+     *  most {@code maxDim} (createScaledBitmap/copy both allocate fresh pixels). */
+    private static Bitmap copyScaled(@NonNull Bitmap src, int maxDim) {
+        int longest = Math.max(src.getWidth(), src.getHeight());
+        if (longest > maxDim) {
+            float ratio = (float) maxDim / longest;
+            int nw = Math.max(1, Math.round(src.getWidth() * ratio));
+            int nh = Math.max(1, Math.round(src.getHeight() * ratio));
+            return Bitmap.createScaledBitmap(src, nw, nh, true);
+        }
+        Bitmap.Config config = src.getConfig() != null ? src.getConfig() : Bitmap.Config.ARGB_8888;
+        return src.copy(config, false);
+    }
 
     public static int downloadThumbWidth() {
         return THUMB_WIDTH;
