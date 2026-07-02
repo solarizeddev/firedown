@@ -199,9 +199,31 @@ public class CloudBackupListFragment extends Fragment
                             active = true;
                             Data p = wi.getProgress();
                             String name = p.getString(VaultBackupWorker.KEY_NAME);
-                            // Nameless (not-yet-started, or a restore that doesn't
-                            // publish) — no row; a restore already has its committed
-                            // row, and a re-backup of an existing file likewise.
+                            String mime = p.getString(VaultBackupWorker.KEY_MIME);
+                            long done = p.getLong(VaultBackupWorker.KEY_PROGRESS_DONE, 0);
+                            long total = p.getLong(VaultBackupWorker.KEY_PROGRESS_TOTAL, 0);
+                            if (name == null) {
+                                // No progress yet (ENQUEUED / just-started worker,
+                                // pre-first-publish) — read the identity off the
+                                // request TAGS the backup enqueue stamps, so the
+                                // batch shows rows IMMEDIATELY (the snackbar's
+                                // View lands here seconds after enqueue, which
+                                // used to render a fully empty screen). A restore
+                                // carries no identity tags, so it stays row-less
+                                // (it already has its committed row).
+                                name = tagValue(wi, VaultBackupWorker.TAG_NAME);
+                                mime = tagValue(wi, VaultBackupWorker.TAG_MIME);
+                                String size = tagValue(wi, VaultBackupWorker.TAG_SIZE);
+                                if (size != null) {
+                                    try {
+                                        total = Long.parseLong(size);
+                                    } catch (NumberFormatException ignored) {
+                                        // display-only — 0 total renders as 0%
+                                    }
+                                }
+                            }
+                            // Still nameless (a restore) or already committed (a
+                            // re-backup keeps its existing row) — no transfer row.
                             if (name == null || isCommitted(name)) {
                                 continue;
                             }
@@ -211,10 +233,7 @@ public class CloudBackupListFragment extends Fragment
                                 continue;
                             }
                             transfers.add(new CloudBackupFileAdapter.Transfer(
-                                    wi.getId().toString(), name,
-                                    p.getString(VaultBackupWorker.KEY_MIME),
-                                    p.getLong(VaultBackupWorker.KEY_PROGRESS_DONE, 0),
-                                    p.getLong(VaultBackupWorker.KEY_PROGRESS_TOTAL, 0)));
+                                    wi.getId().toString(), name, mime, done, total));
                         }
                     }
                     boolean justFinished = mTransferActive && !active;
@@ -225,6 +244,17 @@ public class CloudBackupListFragment extends Fragment
                         load(); // a transfer completed — pull in the new entry
                     }
                 });
+    }
+
+    /** Reads a prefixed identity tag off a WorkInfo (null when absent — e.g. a
+     *  restore worker, which carries only the shared WORK_TAG). */
+    private static String tagValue(WorkInfo wi, String prefix) {
+        for (String tag : wi.getTags()) {
+            if (tag.startsWith(prefix)) {
+                return tag.substring(prefix.length());
+            }
+        }
+        return null;
     }
 
     /** Whether a committed manifest entry already has this file name. */

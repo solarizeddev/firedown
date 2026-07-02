@@ -444,6 +444,15 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
         showBackupStartedSnackbar();
     }
 
+    /** Caps a tag payload (a null value becomes ""; a huge filename is trimmed —
+     *  the tag identifies a transfer row, so display fidelity is enough). */
+    private static String truncateTag(String value) {
+        if (value == null) {
+            return "";
+        }
+        return value.length() <= 120 ? value : value.substring(0, 120);
+    }
+
     /** Enqueues the foreground backup worker for one download and reports a
      *  terminal FAILURE with a snackbar (the batch caller owns the started one). */
     private void enqueueOneBackup(WorkManager wm, DownloadEntity entity) {
@@ -462,6 +471,15 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
                 .setInputData(input)
                 .setConstraints(constraints)
                 .addTag(CloudBackupManager.WORK_TAG)
+                // Identity tags so the backed-up-files list can render a transfer
+                // row while the worker is still ENQUEUED — WorkInfo exposes tags
+                // but NOT input data, and progress is empty until the worker
+                // starts, which made the list look EMPTY right after "Back up to
+                // cloud" (the moment the snackbar's View opens it). Name payload
+                // capped (tags are DB rows, filenames can be huge; display-only).
+                .addTag(VaultBackupWorker.TAG_NAME + truncateTag(entity.getFileName()))
+                .addTag(VaultBackupWorker.TAG_MIME + truncateTag(entity.getFileMimeType()))
+                .addTag(VaultBackupWorker.TAG_SIZE + entity.getFileSize())
                 .build();
         // UNIQUE per file CONTENT (name + size), KEEP. Keyed on content — NOT the
         // path — because the SAME video downloaded twice lands at two different

@@ -287,7 +287,17 @@ public class CloudBackupManager {
             long bytes = -1;
             StorageApiClient.Quota quota = null;
             byte[] code = new SyncSecrets(context).load();
-            if (code != null && setUp) {
+            // Load whenever a CODE exists — not only when already marked set up.
+            // The server is the ground truth: a FUNDED account (credit bought, no
+            // file backed up yet) has a real balance the flag doesn't know about
+            // (the flag was historically only set by the first successful backup,
+            // which made a paid plan invisible everywhere — the status hero showed
+            // "nothing backed up yet" with no balance, the files row hid, and a
+            // bookmark-sync sign-out would even have WIPED the code of a paid
+            // account, see SyncManager.disable). For a code that's genuinely
+            // bookmarks-only the account isn't registered on storage, so the loads
+            // fail and fall through to unknown — same outcome as before.
+            if (code != null) {
                 try {
                     SyncIdentity identity = SyncIdentity.fromCode(code);
                     StorageApiClient api = new StorageApiClient(httpClient, backendUrl());
@@ -303,6 +313,18 @@ public class CloudBackupManager {
                     if (quota.metered && quota.balanceMicroGbMonths <= 0 && files == 0) {
                         prefs.edit().putBoolean(Preferences.CLOUD_BACKUP_ENABLED, false).apply();
                         setUp = false;
+                    } else if (!setUp
+                            && (files > 0 || (quota.metered && quota.balanceMicroGbMonths > 0))) {
+                        // The mirror of the auto-clear: the server reveals a LIVE
+                        // account (files backed up, or a paid balance) the local
+                        // flag missed — e.g. credit bought before markEnabled-at-
+                        // purchase existed, or prefs lost while the server kept the
+                        // data. Heal the flag so the status hero, home line,
+                        // Downloads-overflow routing and the sign-out code-wipe
+                        // guard all see the account. Same success-only guard as the
+                        // clear: an offline blip can never wrongly flip it.
+                        markEnabled();
+                        setUp = true;
                     }
                 } catch (Exception e) {
                     // Offline / transient — leave the flag alone, values unknown.
@@ -313,7 +335,6 @@ public class CloudBackupManager {
                     SyncSecrets.wipe(code);
                 }
             } else {
-                SyncSecrets.wipe(code);
                 setUp = false;
             }
             final Status out = new Status(setUp, files, bytes, quota);

@@ -160,12 +160,20 @@ public class CloudBackupSettingsFragment extends BasePreferenceFragment
         if (!setUp) {
             mStatus.setUsage(-1, -1);
             mStatus.setQuota(null);
-            return;
+            // Not marked set up locally, but a CODE may still front a FUNDED
+            // account (credit bought, nothing backed up yet) — fall through to
+            // loadStatus, whose reconcile-heal flips the flag from the server
+            // truth and the callback below re-renders with the real plan/balance.
+            // Only a code-less device has nothing to ask the server about.
+            if (!mCloudBackup.hasAccount()) {
+                return;
+            }
         }
-        // Usage + metered balance in one load, with the guarded auto-clear: a
-        // reconciled-empty account (metered, spent, zero files) retires Cloud
-        // Backup, so reflect status.setUp (hide the Manage section + show the
-        // not-set-up hero). Offline leaves everything as-is.
+        // Usage + metered balance in one load, with the guarded reconciliation
+        // BOTH ways: a reconciled-empty account (metered, spent, zero files)
+        // retires Cloud Backup; a reconciled-LIVE one (files or balance) heals the
+        // flag (see loadStatus). Reflect status.setUp either way (Manage section +
+        // hero). Offline leaves everything as-is.
         mCloudBackup.loadStatus(status -> {
             if (!isAdded() || mStatus == null) {
                 return;

@@ -432,6 +432,14 @@ public class BuyCreditViewModel extends ViewModel {
                         .putInt(Preferences.CLOUD_PLAN_DURATION_MONTHS, durationMonths)
                         .apply();
             }
+            // A redeemed credit means Cloud Backup is IN USE, even before the
+            // first file is backed up. Without this the flag stayed false until a
+            // successful backup, so a paid plan was invisible (status hero showed
+            // "nothing backed up yet" with no balance, home line hidden, Downloads
+            // overflow routed to setup) AND a bookmark-sync sign-out would wipe
+            // the shared code — the only key to the paid balance. Like the plan
+            // write, unconditional on gen (the money landed regardless).
+            cloud.markEnabled();
             PendingPurchase.clear(appContext);
             post(gen, UiState.success(r.redeemedGbMonths, r.balanceGbMonths,
                     session.quote.denomGbMonths, sizeGb, durationMonths,

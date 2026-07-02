@@ -8,6 +8,7 @@ import android.content.SharedPreferences;
 import android.content.pm.ServiceInfo;
 import android.graphics.BitmapFactory;
 import android.os.Build;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
@@ -19,6 +20,7 @@ import androidx.work.WorkerParameters;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import com.solarized.firedown.App;
+import com.solarized.firedown.BuildConfig;
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
 import com.solarized.firedown.phone.SettingsActivity;
@@ -45,10 +47,25 @@ import okhttp3.OkHttpClient;
 @HiltWorker
 public class VaultBackupWorker extends Worker {
 
+    private static final String TAG = VaultBackupWorker.class.getSimpleName();
+
     /** Input-data keys (set by the enqueuing fragment). */
     public static final String KEY_PATH = "path";
     public static final String KEY_MIME = "mime";
     public static final String KEY_NAME = "name";
+
+    /**
+     * Tag prefixes the enqueuing fragment stamps on the BACKUP request so the
+     * backed-up-files list can render a transfer row for an ENQUEUED worker.
+     * {@code WorkInfo} exposes tags but NOT input data, and progress is empty
+     * until the worker actually starts (FGS spin-up + code load) — so without
+     * these, the list looked completely EMPTY right after "Back up to cloud"
+     * (the exact moment the snackbar's View lands the user there). Restores
+     * deliberately carry none, so they stay row-less as before.
+     */
+    public static final String TAG_NAME = "bname:";
+    public static final String TAG_MIME = "bmime:";
+    public static final String TAG_SIZE = "bsize:";
     /** The exact thumbnail frame position (µs) the Downloads list uses for this
      *  download (GlideHelper.thumbnailFrameUs), so the stored preview matches. */
     public static final String KEY_FRAME_US = "frame_us";
@@ -108,10 +125,16 @@ public class VaultBackupWorker extends Worker {
         String name = getInputData().getString(KEY_NAME);
         long frameUs = getInputData().getLong(KEY_FRAME_US, 0L);
         if (path == null) {
+            if (BuildConfig.DEBUG) {
+                Log.e(TAG, "backup failed: no path in input data");
+            }
             return failure();
         }
         File file = new File(path);
         if (!file.exists()) {
+            if (BuildConfig.DEBUG) {
+                Log.e(TAG, "backup failed: file missing: " + path);
+            }
             return failure();
         }
 
@@ -125,6 +148,9 @@ public class VaultBackupWorker extends Worker {
 
         byte[] code = new SyncSecrets(mContext).load();
         if (code == null) {
+            if (BuildConfig.DEBUG) {
+                Log.e(TAG, "backup failed: no recovery code (signed out between enqueue and run?)");
+            }
             return failure(); // not set up (e.g. signed out between enqueue and run)
         }
         SyncIdentity identity;
@@ -160,6 +186,9 @@ public class VaultBackupWorker extends Worker {
             // A 4xx with a slug (bad request / unknown keyset / …) won't fix itself
             // — terminal. Checked BEFORE the bare-IOException branch because
             // FatalException IS an IOException.
+            if (BuildConfig.DEBUG) {
+                Log.e(TAG, "backup failed (fatal server error)", e);
+            }
             awaitLastProgress();
             return failure();
         } catch (IOException e) {
@@ -169,6 +198,9 @@ public class VaultBackupWorker extends Worker {
             // exhaustion. On a flaky mobile link these are the common case — retry
             // with WorkManager's backoff instead of failing the backup permanently
             // and orphaning the uploaded object.
+            if (BuildConfig.DEBUG) {
+                Log.e(TAG, "backup attempt " + getRunAttemptCount() + " failed (transient)", e);
+            }
             awaitLastProgress();
             if (getRunAttemptCount() >= MAX_RUN_ATTEMPTS) {
                 // Persistently failing (e.g. a large file whose per-chunk presign
@@ -180,6 +212,9 @@ public class VaultBackupWorker extends Worker {
             }
             return Result.retry();
         } catch (Exception e) {
+            if (BuildConfig.DEBUG) {
+                Log.e(TAG, "backup failed (unexpected)", e);
+            }
             awaitLastProgress();
             return failure();
         }
