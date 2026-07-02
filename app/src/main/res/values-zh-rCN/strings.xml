@@ -797,7 +797,7 @@
     <string name="cloud_status_caption_beta">%1$s · 共含 %2$s · 端到端加密</string>
     <string name="cloud_backup_header_beta">共含 %1$s · 端到端加密</string>
     <string name="cloud_backup_header_encrypted">端到端加密</string>
-    <string name="cloud_status_caption_plan">%1$s · 已用套餐的 %2$d%%</string>
+    <string name="cloud_status_caption_plan">%1$s · 已用套餐的 %2$s%%</string>
     <string name="cloud_status_runway_covered">有效期至 ~%1$s</string>
     <string name="cloud_status_runway_left">≈ 剩余 %1$d/%2$d 个月</string>
     <string name="cloud_status_grace_alert">您的额度已用完。请在 %1$s 前充值 — 在此之前文件仍可恢复，但不会备份新内容。</string>

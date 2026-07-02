@@ -228,7 +228,11 @@ public class CloudStatusPreference extends Preference {
                     Formatter.formatShortFileSize(ctx, capBytes));
         }
         if (metered && planKnown && percent >= 0) {
-            return ctx.getString(R.string.cloud_status_caption_plan, files, percent);
+            // A small real usage (721 MB of 200 GB) rounds to 0 — "0% of your
+            // plan" next to "3 files" reads as broken, so show "<1" instead.
+            // The placeholder is %2$s in every locale for exactly this.
+            String pct = (percent == 0 && mTotalBytes > 0) ? "<1" : String.valueOf(percent);
+            return ctx.getString(R.string.cloud_status_caption_plan, files, pct);
         }
         return ctx.getString(R.string.cloud_status_facts, files,
                 Formatter.formatShortFileSize(ctx, mTotalBytes));

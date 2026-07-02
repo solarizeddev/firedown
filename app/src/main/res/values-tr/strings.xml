@@ -671,7 +671,7 @@
     <string name="cloud_status_caption_beta">%1$s · dahil %2$s içinden · uçtan uca şifreli</string>
     <string name="cloud_backup_header_beta">dahil %1$s içinden · uçtan uca şifreli</string>
     <string name="cloud_backup_header_encrypted">uçtan uca şifreli</string>
-    <string name="cloud_status_caption_plan">%1$s · plan doluluğu: %%%2$d</string>
+    <string name="cloud_status_caption_plan">%1$s · plan doluluğu: %%%2$s</string>
     <string name="cloud_status_runway_covered">~%1$s tarihine kadar geçerli</string>
     <string name="cloud_status_runway_left">≈ %2$d aydan %1$d ay kaldı</string>
     <string name="cloud_status_grace_alert">Krediniz bitti. %1$s tarihine kadar bakiye yükleyin — dosyalarınız o zamana dek geri yüklenebilir kalır, ancak yeni bir şey yedeklenmez.</string>

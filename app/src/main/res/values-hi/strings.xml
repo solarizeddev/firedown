@@ -578,7 +578,7 @@
     <string name="cloud_status_caption_beta">%1$s · %2$s शामिल में से · एंड-टू-एंड एन्क्रिप्टेड</string>
     <string name="cloud_backup_header_beta">%1$s शामिल में से · एंड-टू-एंड एन्क्रिप्टेड</string>
     <string name="cloud_backup_header_encrypted">एंड-टू-एंड एन्क्रिप्टेड</string>
-    <string name="cloud_status_caption_plan">%1$s · आपके प्लान का %2$d%%</string>
+    <string name="cloud_status_caption_plan">%1$s · आपके प्लान का %2$s%%</string>
     <string name="cloud_status_runway_covered">~%1$s तक कवर</string>
     <string name="cloud_status_runway_left">≈ %2$d में से %1$d महीने बाकी</string>
     <string name="cloud_status_grace_alert">आपका क्रेडिट खत्म हो गया। %1$s तक टॉप-अप करें — तब तक आपकी फ़ाइलें बहाल की जा सकती हैं, लेकिन कुछ नया बैकअप नहीं होगा।</string>

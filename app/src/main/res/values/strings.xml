@@ -313,7 +313,7 @@
     <string name="cloud_backup_header_beta">of %1$s included · encrypted end-to-end</string>
     <string name="cloud_backup_header_encrypted">encrypted end-to-end</string>
     <!-- %1$s = "41 files", %2$d = percent of the plan's size cap -->
-    <string name="cloud_status_caption_plan">%1$s · %2$d%% of your plan</string>
+    <string name="cloud_status_caption_plan">%1$s · %2$s%% of your plan</string>
     <!-- %1$s = a month + year, e.g. "Mar 2027" -->
     <string name="cloud_status_runway_covered">Covered until ~%1$s</string>
     <!-- %1$d = months of coverage left, %2$d = the plan's total months -->

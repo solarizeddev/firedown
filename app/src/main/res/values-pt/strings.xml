@@ -672,7 +672,7 @@
     <string name="cloud_status_caption_beta">%1$s · de %2$s incluídos · criptografado de ponta a ponta</string>
     <string name="cloud_backup_header_beta">de %1$s incluídos · criptografado de ponta a ponta</string>
     <string name="cloud_backup_header_encrypted">criptografado de ponta a ponta</string>
-    <string name="cloud_status_caption_plan">%1$s · %2$d%% do seu plano</string>
+    <string name="cloud_status_caption_plan">%1$s · %2$s%% do seu plano</string>
     <string name="cloud_status_runway_covered">Coberto até ~%1$s</string>
     <string name="cloud_status_runway_left">≈ restam %1$d de %2$d meses</string>
     <string name="cloud_status_grace_alert">Seu crédito acabou. Recarregue até %1$s — seus arquivos continuam restauráveis até lá, mas nada novo é salvo em backup.</string>

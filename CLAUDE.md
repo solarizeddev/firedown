@@ -1839,9 +1839,11 @@ opaque chunks + an opaque manifest blob.
   **"Add storage credit"** CTA directly under it (`preference_cloud_buy_button.xml`
   — the button inside is non-clickable/`duplicateParentState`, the Preference row
   owns the click), the pre-key **Create / "I have a recovery code"** gateway, the
-  **Manage backup** category (Backups list, right-to-erasure — shown once set
-  up), ONE secondary **Bookmarks** nav row, the shared **recovery code**
-  (show/export, device-auth gated), and the FAQ. The KEY-FIRST GATE survives the
+  **Manage backup** category (Backups list — shown once set up), ONE secondary
+  **Bookmarks** nav row, the shared **recovery code** (show/export, device-auth
+  gated), the FAQ, and LAST the right-to-erasure row ("Delete all cloud data" —
+  sunk to the bottom by danger, not taxonomy; it shares the Manage rows'
+  set-up gate). The KEY-FIRST GATE survives the
   merge: pre-key the buy CTA + Manage rows are hidden, Bookmarks is disabled, and
   only Create/adopt are offered (stops the keyless-purchase ghost account). The
   bookmark-only *actions* — the master **toggle**, **Sync now**, **Delete

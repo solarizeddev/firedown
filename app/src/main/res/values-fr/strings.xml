@@ -804,7 +804,7 @@
     <string name="cloud_status_caption_beta">%1$s · sur %2$s inclus · chiffré de bout en bout</string>
     <string name="cloud_backup_header_beta">sur %1$s inclus · chiffré de bout en bout</string>
     <string name="cloud_backup_header_encrypted">chiffré de bout en bout</string>
-    <string name="cloud_status_caption_plan">%1$s · %2$d %% de votre forfait</string>
+    <string name="cloud_status_caption_plan">%1$s · %2$s %% de votre forfait</string>
     <string name="cloud_status_runway_covered">Couvert jusqu\'à ~%1$s</string>
     <string name="cloud_status_runway_left">≈ %1$d mois restants sur %2$d</string>
     <string name="cloud_status_grace_alert">Votre crédit est épuisé. Rechargez avant le %1$s — vos fichiers restent restaurables jusque-là, mais rien de nouveau n\'est sauvegardé.</string>

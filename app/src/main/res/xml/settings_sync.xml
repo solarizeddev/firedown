@@ -16,7 +16,6 @@
        I have a recovery code  › adopt an existing account's key
     ── Manage backup ──  (shown once Cloud Backup is set up)
        Backups                 › the backed-up-files list
-       Delete data from cloud    right-to-erasure
     ── Bookmarks ──  (secondary by design)
        Sync bookmarks          › BookmarksSyncFragment (toggle / Sync now /
                                  Delete-from-server live THERE, not here)
@@ -25,6 +24,8 @@
        Save recovery code to file
     ── About ──
        How sync & encryption work  (covers bookmarks AND files)
+    ── (last, unheaded) ──
+       Delete all cloud data     right-to-erasure — LAST by danger, not taxonomy
 
   KEY-FIRST GATE (unchanged): a recovery code is the account gateway. Until one
   exists, the buy CTA + Manage rows are hidden, the Bookmarks row is DISABLED,
@@ -86,13 +87,6 @@
             app:singleLineTitle="false"
             app:icon="@drawable/cloud_done_24" />
 
-        <Preference
-            android:key="com.solarized.firedown.preferences.cloud.backup.delete.data"
-            android:title="@string/settings_cloud_backup_delete_title"
-            android:summary="@string/settings_cloud_backup_delete_summary"
-            app:singleLineTitle="false"
-            app:icon="@drawable/ic_baseline_delete_24" />
-
     </PreferenceCategory>
 
     <!-- Bookmarks are deliberately SECONDARY on this screen: one nav row to the
@@ -142,5 +136,16 @@
             app:icon="@drawable/encryption_24" />
 
     </PreferenceCategory>
+
+    <!-- The most destructive action on the screen sits LAST — placement by
+         danger, not taxonomy (it used to be the second actionable row, right
+         under Backups, prime real estate for an accident). Same set-up gate as
+         the Manage category (SyncSettingsFragment.applyManageVisibility). -->
+    <Preference
+        android:key="com.solarized.firedown.preferences.cloud.backup.delete.data"
+        android:title="@string/settings_cloud_backup_delete_title"
+        android:summary="@string/settings_cloud_backup_delete_summary"
+        app:singleLineTitle="false"
+        app:icon="@drawable/ic_baseline_delete_24" />
 
 </PreferenceScreen>
