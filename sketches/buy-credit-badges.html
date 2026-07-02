@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Buy credit — duration badges + footprint note (sketch)</title>
+<style>
+  :root{
+    --bg:#111214; --card:#1c1d20; --card2:#232428;
+    --ink:#ececec; --ink2:#9a9da3; --ink3:#6f7278;
+    --coral:#f0716c; --peach:#f2a98d; --peach-ink:#3a1512;
+    --amber:#e0a63c; --outline:#3a3c41;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#0a0a0b;color:var(--ink);font-family:system-ui,Roboto,sans-serif;
+       display:flex;flex-wrap:wrap;gap:40px;justify-content:center;padding:36px 16px 60px}
+  h1{width:100%;text-align:center;font-size:17px;font-weight:600;color:var(--ink2);margin-bottom:4px}
+  .col{width:360px}
+  .caption{font-size:12.5px;color:var(--ink2);line-height:1.5;margin:14px 6px 0}
+  .caption b{color:var(--ink)}
+  .phone{background:var(--bg);border:1px solid #26272b;border-radius:28px;padding:22px 18px 26px;
+         box-shadow:0 18px 50px rgba(0,0,0,.55)}
+  .appbar{display:flex;align-items:center;gap:14px;margin-bottom:20px}
+  .appbar .back{color:var(--ink);font-size:18px}
+  .appbar .title{font-size:19px;font-weight:600}
+  .label{font-size:12.5px;font-weight:600;color:var(--ink2);margin:0 0 10px}
+  .seg{display:flex;border:1px solid var(--outline);border-radius:24px;overflow:hidden;margin-bottom:24px}
+  .seg .s{flex:1;text-align:center;padding:12px 4px;font-size:14.5px;color:var(--ink2);
+          border-right:1px solid var(--outline)}
+  .seg .s:last-child{border-right:none}
+  .seg .s.on{background:var(--peach);color:var(--peach-ink);font-weight:600}
+  .badge{font-size:11.5px;font-weight:800;color:var(--coral);margin-left:6px;white-space:nowrap}
+  .s.on .badge{color:#8f2b22}
+  .tile{border:1px solid var(--outline);border-radius:14px;padding:16px;display:flex;
+        justify-content:space-between;align-items:center;margin-bottom:12px;background:var(--card)}
+  .tile.sel{border:2px solid var(--coral);padding:15px}
+  .tile .size{font-size:16.5px;font-weight:700}
+  .tile .right{text-align:right}
+  .tile .price{font-size:18px;font-weight:700}
+  .tile .pm{font-size:11.5px;color:var(--ink2);margin-top:2px}
+  .note{font-size:11.5px;color:var(--ink2);line-height:1.45;margin:14px 2px 0}
+  .warn{font-size:11.5px;font-weight:700;color:var(--amber);line-height:1.45;margin:8px 2px 0}
+  .pay{font-size:12.5px;font-weight:600;color:var(--ink2);margin:22px 0 10px}
+  .rails{display:flex;border:1px solid var(--outline);border-radius:24px;overflow:hidden;margin-bottom:22px}
+  .rails .r{flex:1;text-align:center;padding:12px;font-size:14px;color:var(--ink2)}
+  .rails .r.on{background:var(--peach);color:var(--peach-ink);font-weight:600}
+  .cta{background:var(--coral);color:#4a100d;border-radius:14px;text-align:center;
+       padding:15px;font-size:15px;font-weight:600;margin-bottom:14px}
+  .fine{font-size:10.5px;color:var(--ink3);text-align:center;line-height:1.5}
+  .tag{display:inline-block;background:#26272b;border:1px solid var(--outline);border-radius:20px;
+       padding:3px 10px;font-size:10.5px;color:var(--ink2);margin-bottom:10px}
+</style>
+</head>
+<body>
+
+<h1>Buy credit · pick step — badges on the duration segments, savings line retired</h1>
+
+<!-- ── A: normal (under-cap) user ─────────────────────────────────── -->
+<div class="col">
+  <span class="tag">A · normal user (footprint under every cap)</span>
+  <div class="phone">
+    <div class="appbar"><span class="back">←</span><span class="title">Add storage credit</span></div>
+
+    <p class="label">Keep my backups for</p>
+    <div class="seg">
+      <div class="s">3 months</div>
+      <div class="s on">1 year<span class="badge">−25%</span></div>
+    </div>
+
+    <p class="label">How much space</p>
+    <div class="tile sel">
+      <div class="size">Up to 50 GB</div>
+      <div class="right"><div class="price">$18</div><div class="pm">$1.50 / month</div></div>
+    </div>
+    <div class="tile">
+      <div class="size">Up to 200 GB</div>
+      <div class="right"><div class="price">$60</div><div class="pm">$5 / month</div></div>
+    </div>
+
+    <p class="note">You only pay for what you actually store — back up less than the
+    cap and it lasts longer. Nothing is deleted if you go over; it just finishes sooner.</p>
+
+    <p class="pay">Pay with</p>
+    <div class="rails"><div class="r on">⚡ Lightning</div><div class="r">💳 Card</div></div>
+
+    <div class="cta">Continue · $18</div>
+    <p class="fine">One-time — no auto-renew. Top up anytime.<br>
+    Private by design. Your payment can’t be linked to your account or files.</p>
+  </div>
+  <p class="caption"><b>① The badge lives ON the segment</b> (“1 year&nbsp;−25%”), computed
+  vs the shortest duration’s best ¢/GB-month — visible before any tap, on both
+  checked and unchecked states. <b>② The old savings sentence below the toggle is
+  GONE</b> — it only existed after a selection, which is why it kept vanishing/jumping.
+  Everything else (tiles, soft-cap note, rails, CTA, fine print) is unchanged.</p>
+</div>
+
+<!-- ── B: over-cap renewal ────────────────────────────────────────── -->
+<div class="col">
+  <span class="tag">B · renewal while storing 200 GB (over the selected cap)</span>
+  <div class="phone">
+    <div class="appbar"><span class="back">←</span><span class="title">Add storage credit</span></div>
+
+    <p class="label">Keep my backups for</p>
+    <div class="seg">
+      <div class="s">3 months</div>
+      <div class="s on">1 year<span class="badge">−25%</span></div>
+    </div>
+
+    <p class="label">How much space</p>
+    <div class="tile sel">
+      <div class="size">Up to 50 GB</div>
+      <div class="right"><div class="price">$18</div><div class="pm">$1.50 / month</div></div>
+    </div>
+    <div class="tile">
+      <div class="size">Up to 200 GB</div>
+      <div class="right"><div class="price">$60</div><div class="pm">$5 / month</div></div>
+    </div>
+
+    <p class="note">You only pay for what you actually store — back up less than the
+    cap and it lasts longer. Nothing is deleted if you go over; it just finishes sooner.</p>
+    <p class="warn">You currently store 200 GB — at that size this credit lasts about 3 months.</p>
+
+    <p class="pay">Pay with</p>
+    <div class="rails"><div class="r on">⚡ Lightning</div><div class="r">💳 Card</div></div>
+
+    <div class="cta">Continue · $18</div>
+    <p class="fine">One-time — no auto-renew. Top up anytime.<br>
+    Private by design. Your payment can’t be linked to your account or files.</p>
+  </div>
+  <p class="caption"><b>③ The amber footprint line</b> appears only when the selected
+  tile’s cap is below what the account already stores (here: 200 GB stored, 50 GB tile
+  → 600 GB-months ÷ 200 GB ≈ 3 months). Picking the 200 GB tile holds the space
+  (INVISIBLE) instead of collapsing, so toggling tiles never jumps the layout.
+  <b>④ Badge ink on the checked segment</b>: coral-on-peach is low contrast, so the
+  sketch darkens it there (deep red) — on-device this is the one thing to eyeball;
+  the code currently uses colorPrimary in both states.</p>
+</div>
+
+</body>
+</html>
