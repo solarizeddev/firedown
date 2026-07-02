@@ -258,6 +258,13 @@ public class BuyCreditFragment extends Fragment {
     private void bindPick(BuyCreditViewModel.UiState s) {
         mSelectedOption = null;
         mContinue.setEnabled(false);
+        // The picker's Back must LEAVE the wizard. The pay screens enable
+        // mPayBack (Back → backToPick); returning to PICK from a pay screen
+        // re-runs bindPick, so it must disable it again — otherwise Back on the
+        // picker just calls backToPick() while already on PICK and does nothing
+        // (the "back from plan does nothing / stuck" bug). Only the pay screens
+        // enable it; every other phase disables it.
+        setPayBackEnabled(false);
         // Plan-grid mode when the server advertises (size × duration) tiles; else
         // the legacy flat denomination list (BuyCreditViewModel already returns
         // only one kind at a time).
