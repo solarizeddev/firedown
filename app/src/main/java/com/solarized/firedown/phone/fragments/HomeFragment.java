@@ -5,6 +5,8 @@ import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.content.Intent;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.icu.text.CompactDecimalFormat;
 import android.os.Bundle;
 import android.view.animation.AccelerateDecelerateInterpolator;
@@ -16,6 +18,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.activity.OnBackPressedCallback;
@@ -28,6 +31,8 @@ import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleEventObserver;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.android.material.color.MaterialColors;
 
 import com.solarized.firedown.ui.IncognitoColors;
 import com.solarized.firedown.Keys;
@@ -48,6 +53,7 @@ import com.solarized.firedown.manager.DownloadRequest;
 import com.solarized.firedown.phone.DownloadsActivity;
 import com.solarized.firedown.phone.SettingsActivity;
 import com.solarized.firedown.sync.CloudBackupManager;
+import com.solarized.firedown.sync.VaultBackupWorker;
 import com.solarized.firedown.sync.StorageApiClient;
 
 import androidx.core.content.ContextCompat;
@@ -106,16 +112,18 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     private View mSubtitleSep;
     private View mSubtitleSaved;
     private TextView mSubtitleSavedText;
-    private View mSubtitleSep2;
+
     // Cloud Backup — the subtitle line's THIRD counter ("12 backed up", same
     // figure+predicate grammar as blocked/saved; "Backing up…" while a transfer
     // runs, amber "Paused" on credit runout). Shown only when Cloud Backup is
     // set up; composed from the latest of these three inputs.
-    private View mHomeCloud;
-    private TextView mHomeCloudText;
-    private int mHomeCloudDefaultColor;
+    // Cloud Backup activity pill (home v3): transient backup STATE lives in a
+    // pill above the bottom bar, not in the hero subtitle — the hero keeps only
+    // the two lifetime stats (blocked · saved).
+    private View mBackupPill;
+    private TextView mBackupPillText;
+    private ImageView mBackupPillIcon;
     private boolean mCloudActive;
-    private int mCloudFiles = -1;
     private StorageApiClient.Quota mCloudQuota;
     // The brand flame doubles as the live "a download is running" indicator:
     // a soft ember glow that breathes behind the logo while the active+queued
@@ -215,7 +223,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mSubtitleSep = v.findViewById(R.id.home_subtitle_sep);
         mSubtitleSaved = v.findViewById(R.id.home_subtitle_saved);
         mSubtitleSavedText = v.findViewById(R.id.home_subtitle_saved_text);
-        mSubtitleSep2 = v.findViewById(R.id.home_subtitle_sep2);
         // Within-segment graceful wrap, the level the Flow can't cover: a SINGLE
         // translated segment (es "Creando copia de seguridad…") plus font scale
         // 2.0 on a narrow screen can be wider than the whole line by itself — the
@@ -231,7 +238,6 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
                         if (cap > 0) {
                             applyTextWidthCap(mSubtitleBlockedText, cap);
                             applyTextWidthCap(mSubtitleSavedText, cap);
-                            applyTextWidthCap(mHomeCloudText, cap);
                         }
                     });
         }
@@ -244,19 +250,20 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
                     mStartForResult.launch(new Intent(mActivity, DownloadsActivity.class)));
         }
 
-        // Cloud Backup counter (the subtitle's third segment) — tap opens the
-        // Downloads-backup screen; "Backing up…" while a transfer runs.
-        mHomeCloud = v.findViewById(R.id.home_cloud);
-        mHomeCloudText = v.findViewById(R.id.home_cloud_text);
-        if (mHomeCloudText != null) {
-            // The layout's resting colour (colorOnSurfaceVariant) — restored when
-            // the line is neutral, after an attention state overrode it.
-            mHomeCloudDefaultColor = mHomeCloudText.getCurrentTextColor();
-        }
-        if (mHomeCloud != null) {
-            mHomeCloud.setOnClickListener(view -> {
+        // Cloud Backup activity pill — shown ONLY while a backup transfer runs
+        // ("Backing up… · View" → the Backups list) or when metered credit ran
+        // out (amber "Paused" → the Cloud Backup status screen). Tap routes by
+        // the state it currently shows.
+        mBackupPill = v.findViewById(R.id.home_backup_pill);
+        mBackupPillText = v.findViewById(R.id.home_backup_pill_text);
+        mBackupPillIcon = v.findViewById(R.id.home_backup_pill_icon);
+        if (mBackupPill != null) {
+            mBackupPill.setOnClickListener(view -> {
                 Intent intent = new Intent(mActivity, SettingsActivity.class);
-                intent.putExtra(SettingsActivity.EXTRA_OPEN_CLOUD_BACKUP, true);
+                intent.putExtra(mCloudActive
+                                ? SettingsActivity.EXTRA_OPEN_CLOUD_BACKUP_FILES
+                                : SettingsActivity.EXTRA_OPEN_CLOUD_BACKUP,
+                        true);
                 startActivity(intent);
             });
         }
@@ -266,15 +273,21 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
                     boolean active = false;
                     if (infos != null) {
                         for (WorkInfo wi : infos) {
-                            WorkInfo.State s = wi.getState();
-                            if (s == WorkInfo.State.RUNNING || s == WorkInfo.State.ENQUEUED) {
+                            WorkInfo.State st = wi.getState();
+                            boolean running = st == WorkInfo.State.RUNNING
+                                    || st == WorkInfo.State.ENQUEUED;
+                            // Only IDENTIFIED backup workers count: restores and
+                            // legacy pre-tag WorkSpecs render no row anywhere, so
+                            // they must not raise a "Backing up…" pill pointing at
+                            // an empty list (the on-device ghost state).
+                            if (running && hasBackupTag(wi)) {
                                 active = true;
                                 break;
                             }
                         }
                     }
                     mCloudActive = active;
-                    applyCloudStatus();
+                    applyBackupPill();
                 });
 
         mBottomNavigationBar.setListener(this);
@@ -617,9 +630,9 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mSubtitleSep = null;
         mSubtitleSaved = null;
         mSubtitleSavedText = null;
-        mSubtitleSep2 = null;
-        mHomeCloud = null;
-        mHomeCloudText = null;
+        mBackupPill = null;
+        mBackupPillText = null;
+        mBackupPillIcon = null;
     }
 
     /** Guarded setter — setMaxWidth always requestLayout()s, so an unguarded
@@ -641,81 +654,81 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         if (mSubtitle == null) return;
         boolean blocked = mSubtitleBlocked != null && mSubtitleBlocked.getVisibility() == View.VISIBLE;
         boolean saved = mSubtitleSaved != null && mSubtitleSaved.getVisibility() == View.VISIBLE;
-        boolean cloud = mHomeCloud != null && mHomeCloud.getVisibility() == View.VISIBLE;
         if (mSubtitleSep != null) {
             mSubtitleSep.setVisibility(blocked && saved ? View.VISIBLE : View.GONE);
         }
-        if (mSubtitleSep2 != null) {
-            mSubtitleSep2.setVisibility(cloud && (blocked || saved) ? View.VISIBLE : View.GONE);
-        }
-        mSubtitle.setVisibility(blocked || saved || cloud ? View.VISIBLE : View.GONE);
+        mSubtitle.setVisibility(blocked || saved ? View.VISIBLE : View.GONE);
     }
 
     /**
-     * Loads the Cloud Backup status inputs (usage + quota) when set up, then
-     * composes the home status line. Called on resume; the transfer-active state
-     * comes from the WorkManager observer wired in onViewCreated.
+     * Loads the quota when set up (the pill's "Paused" input), then re-renders
+     * the pill. Called on resume; the transfer-active state comes from the
+     * WorkManager observer wired in onViewCreated.
      */
     private void refreshCloudStatus() {
-        if (mHomeCloud == null) {
+        if (mBackupPill == null) {
             return;
         }
         if (!mCloudBackup.isSetUp()) {
-            mCloudFiles = -1;
             mCloudQuota = null;
-            applyCloudStatus();
+            applyBackupPill();
             return;
         }
-        applyCloudStatus(); // show promptly with whatever we already have
-        // One combined load with the guarded auto-clear: if it retires Cloud
-        // Backup (reconciled-empty account), isSetUp() flips false and the
-        // follow-up applyCloudStatus() hides the line.
+        applyBackupPill(); // show promptly with whatever we already have
+        // One combined load with the guarded reconciliation: retiring flips
+        // isSetUp() false (pill hides); a heal makes the paused check reachable.
         mCloudBackup.loadStatus(status -> {
-            if (isAdded() && mHomeCloud != null) {
-                mCloudFiles = status.fileCount;
+            if (isAdded() && mBackupPill != null) {
                 mCloudQuota = status.quota;
-                applyCloudStatus();
+                applyBackupPill();
             }
         });
     }
 
-    /** Composes the subtitle line's Cloud Backup counter from the latest
-     *  transfer/quota/usage state. It speaks the line's grammar — a figure + a
-     *  short predicate ("12 backed up") — with words only when there's news:
-     *  "Backing up…" while a transfer runs, amber "Paused" when credit ran out
-     *  (amber = attention, coral stays the brand's). Hidden unless set up, and
-     *  hidden at 0 files like its blocked/saved siblings; every detail beyond
-     *  that ("covered until", plan, %) belongs to the Cloud Backup status hero
-     *  one tap away, never to home. */
-    private void applyCloudStatus() {
-        if (mHomeCloud == null || mHomeCloudText == null) {
+    /** Whether a WorkInfo carries the backup identity tags stamped at enqueue
+     *  (restores and legacy pre-tag WorkSpecs don't). */
+    private static boolean hasBackupTag(WorkInfo wi) {
+        for (String tag : wi.getTags()) {
+            if (tag.startsWith(VaultBackupWorker.TAG_NAME)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Renders the bottom backup pill from the latest transfer/quota state.
+     *  STATE only, never stats (those live in the hero subtitle / the Cloud
+     *  Backup status hero): "Backing up…" while an identified backup transfer
+     *  runs (tap → the Backups list), amber "Paused" when metered credit ran
+     *  out (tap → the status screen; amber = attention, coral stays the
+     *  brand's). GONE when idle — the calm home is the default. */
+    private void applyBackupPill() {
+        if (mBackupPill == null || mBackupPillText == null) {
             return;
         }
         String text = null;
         boolean attention = false;
-        if (mCloudBackup.isSetUp()) {
-            if (mCloudActive) {
-                text = getString(R.string.home_cloud_backing_up);
-            } else if (mCloudQuota != null && mCloudQuota.metered && mCloudQuota.readOnly) {
-                text = getString(R.string.home_cloud_paused);
-                attention = true;
-            } else if (mCloudFiles > 0) {
-                text = getResources().getQuantityString(
-                        R.plurals.home_cloud_backed_up, mCloudFiles, mCloudFiles);
-            }
-            // else: set up but nothing backed up (or usage unknown offline) —
-            // stay hidden, the same hide-when-zero rule as the other counters.
+        if (mCloudActive) {
+            text = getString(R.string.home_cloud_backing_up);
+        } else if (mCloudBackup.isSetUp()
+                && mCloudQuota != null && mCloudQuota.metered && mCloudQuota.readOnly) {
+            text = getString(R.string.home_cloud_paused);
+            attention = true;
         }
         if (text == null) {
-            mHomeCloud.setVisibility(View.GONE);
-        } else {
-            mHomeCloudText.setText(text);
-            mHomeCloudText.setTextColor(attention
-                    ? ContextCompat.getColor(mActivity, R.color.backup_warning)
-                    : mHomeCloudDefaultColor);
-            mHomeCloud.setVisibility(View.VISIBLE);
+            mBackupPill.setVisibility(View.GONE);
+            return;
         }
-        updateSubtitleVisibility();
+        int ink = attention
+                ? ContextCompat.getColor(mActivity, R.color.backup_warning)
+                : MaterialColors.getColor(mBackupPill,
+                        com.google.android.material.R.attr.colorOnSecondaryContainer, Color.BLACK);
+        mBackupPillText.setText(text);
+        mBackupPillText.setTextColor(ink);
+        if (mBackupPillIcon != null) {
+            mBackupPillIcon.setImageTintList(ColorStateList.valueOf(ink));
+        }
+        mBackupPill.setVisibility(View.VISIBLE);
     }
 
     @Override

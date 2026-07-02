@@ -141,7 +141,7 @@
                     <androidx.constraintlayout.helper.widget.Flow
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        app:constraint_referenced_ids="home_subtitle_blocked,home_subtitle_sep,home_subtitle_saved,home_subtitle_sep2,home_cloud"
+                        app:constraint_referenced_ids="home_subtitle_blocked,home_subtitle_sep,home_subtitle_saved"
                         app:flow_horizontalGap="0dp"
                         app:flow_horizontalStyle="packed"
                         app:flow_verticalGap="0dp"
@@ -212,43 +212,6 @@
 
                     </com.google.android.material.card.MaterialCardView>
 
-                    <TextView
-                        android:id="@+id/home_subtitle_sep2"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:paddingHorizontal="5dp"
-                        android:text="·"
-                        android:textColor="?attr/colorOnSurfaceVariant"
-                        android:textSize="13sp"
-                        android:visibility="gone"
-                        tools:ignore="HardcodedText" />
-
-                    <com.google.android.material.card.MaterialCardView
-                        android:id="@+id/home_cloud"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:visibility="gone"
-                        app:cardBackgroundColor="@color/transparent"
-                        app:strokeWidth="0dp"
-                        app:cardCornerRadius="14dp"
-                        app:cardElevation="0dp"
-                        tools:visibility="visible">
-
-                        <TextView
-                            android:id="@+id/home_cloud_text"
-                            android:layout_width="wrap_content"
-                            android:gravity="center_horizontal"
-                            android:layout_height="wrap_content"
-                            android:paddingHorizontal="12dp"
-                            android:paddingVertical="8dp"
-                            android:textColor="?attr/colorOnSurfaceVariant"
-                            android:textSize="13sp"
-                            tools:text="12 backed up" />
-
-                    </com.google.android.material.card.MaterialCardView>
-
                 </androidx.constraintlayout.widget.ConstraintLayout>
 
             </LinearLayout>
@@ -285,6 +248,68 @@
         centre slot is the bookmarks-list entry. (The former hero
         Bookmarks FAB was removed.)
     -->
+    <!-- Cloud Backup activity pill (home v3, "Option A"): transient backup
+         STATE lives here above the actions, not in the hero subtitle — the hero
+         keeps only the two lifetime stats (blocked · saved). Shown ONLY while a
+         backup transfer runs ("Backing up… · VIEW" → the Backups list) or when
+         metered credit ran out (amber "Paused" → the Cloud Backup status
+         screen); GONE when idle so the home stays calm. The whole pill is ONE
+         tap target. marginBottom clears the 64dp bottom bar. -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/home_backup_pill"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginBottom="76dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:visibility="gone"
+        app:cardBackgroundColor="?attr/colorSecondaryContainer"
+        app:cardCornerRadius="20dp"
+        app:cardElevation="0dp"
+        app:strokeWidth="0dp"
+        tools:visibility="visible">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="14dp"
+            android:paddingTop="10dp"
+            android:paddingEnd="16dp"
+            android:paddingBottom="10dp">
+
+            <ImageView
+                android:id="@+id/home_backup_pill_icon"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:importantForAccessibility="no"
+                android:src="@drawable/ic_cloud_upload_24"
+                app:tint="?attr/colorOnSecondaryContainer" />
+
+            <TextView
+                android:id="@+id/home_backup_pill_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:textColor="?attr/colorOnSecondaryContainer"
+                android:textSize="13sp"
+                tools:text="Backing up…" />
+
+            <TextView
+                android:id="@+id/home_backup_pill_action"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:text="@string/cloud_backup_view"
+                android:textAllCaps="true"
+                android:textColor="?attr/colorPrimary"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
     <com.solarized.firedown.geckoview.toolbar.BottomNavigationBar
         android:id="@+id/bottom_app_bar"
         android:layout_width="match_parent"
