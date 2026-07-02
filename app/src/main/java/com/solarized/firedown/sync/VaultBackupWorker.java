@@ -25,6 +25,7 @@ import com.solarized.firedown.phone.SettingsActivity;
 import com.solarized.firedown.sync.crypto.SyncIdentity;
 
 import java.io.File;
+import java.io.IOException;
 
 import dagger.assisted.Assisted;
 import dagger.assisted.AssistedInject;
@@ -146,8 +147,19 @@ public class VaultBackupWorker extends Worker {
             CloudBackupManager.ensureRegistered(mPrefs, api, identity);
             engine.backupFile(file, mime, thumb,
                     (done, total) -> publishProgress(fName, fMime, done, total));
-        } catch (StorageApiClient.TransientException e) {
-            // Network / 429 / 5xx — let WorkManager retry with backoff.
+        } catch (StorageApiClient.FatalException e) {
+            // A 4xx with a slug (bad request / unknown keyset / …) won't fix itself
+            // — terminal. Checked BEFORE the bare-IOException branch because
+            // FatalException IS an IOException.
+            awaitLastProgress();
+            return failure();
+        } catch (IOException e) {
+            // Everything retryable: a 429/5xx (TransientException) AND a bare
+            // socket drop / read timeout mid-upload (a plain IOException OkHttp
+            // throws, which is NOT a TransientException) AND manifest OCC
+            // exhaustion. On a flaky mobile link these are the common case — retry
+            // with WorkManager's backoff instead of failing the backup permanently
+            // and orphaning the uploaded object.
             awaitLastProgress();
             return Result.retry();
         } catch (Exception e) {

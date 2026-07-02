@@ -285,9 +285,31 @@ public final class VaultEngine {
             if (put.ok) {
                 return;
             }
-            // 409 version-conflict → loop and re-pull/re-apply on the new version.
+            // 409 version-conflict → back off with jitter, then re-pull/re-apply on
+            // the new version. Without the backoff, several backup workers finishing
+            // together (each commits its own entry) re-pull in lockstep and keep
+            // colliding — a thundering herd that can exhaust the retries. Exponential
+            // (~50·2^n ms) + up to 50 ms random jitter de-syncs them.
+            sleepBackoff(attempt);
         }
+        // Exhausted: throw an IOException (NOT a terminal failure at the worker) so
+        // WorkManager retries the whole backup later rather than dropping it and
+        // orphaning the uploaded object — see the worker's IOException→retry branch.
         throw new IOException("vault manifest push conflict after " + MAX_CONFLICT_RETRIES + " retries");
+    }
+
+    /** Exponential backoff with jitter between OCC attempts. Interrupt-aware:
+     *  restores the interrupt flag and surfaces it as an IOException so a
+     *  cancelled worker unwinds promptly. */
+    private static void sleepBackoff(int attempt) throws IOException {
+        long base = 50L << Math.min(attempt, 5);      // 50,100,…,1600 ms, capped
+        long jitter = (long) (Math.random() * 50);    // de-sync concurrent writers
+        try {
+            Thread.sleep(base + jitter);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IOException("interrupted during manifest backoff", e);
+        }
     }
 
     private static void removeById(List<VaultEntry> entries, String objectId) {

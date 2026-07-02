@@ -26,6 +26,7 @@ import com.solarized.firedown.sync.crypto.SyncIdentity;
 import com.solarized.firedown.sync.model.VaultEntry;
 
 import java.io.File;
+import java.io.IOException;
 
 import dagger.assisted.Assisted;
 import dagger.assisted.AssistedInject;
@@ -142,8 +143,16 @@ public class VaultRestoreWorker extends Worker {
                 downloadedAt, chunkCount, null); // thumb unused on restore
         try {
             engine.restoreFile(entry, dest);
-        } catch (StorageApiClient.TransientException e) {
-            deleteQuietly(dest); // drop the partial; WorkManager retries clean
+        } catch (StorageApiClient.FatalException e) {
+            // A 4xx (e.g. the object was reaped) won't fix itself — terminal.
+            // Checked before the bare-IOException branch (FatalException IS one).
+            deleteQuietly(dest);
+            return failure();
+        } catch (IOException e) {
+            // 429/5xx (TransientException) OR a bare socket drop / read timeout
+            // mid-download — retryable; drop the partial and let WorkManager retry
+            // clean rather than failing the restore on a flaky link.
+            deleteQuietly(dest);
             return Result.retry();
         } catch (Exception e) {
             deleteQuietly(dest);
