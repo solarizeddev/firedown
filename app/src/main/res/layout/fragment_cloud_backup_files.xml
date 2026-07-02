@@ -6,30 +6,37 @@
   empty-illustration states, change animations disabled so per-item progress
   ticks don't blink) — same list treatment as Downloads/Bookmarks/History.
 
-  The header is PINNED and LIFTS on scroll (elevation toggled by the fragment's
-  scroll listener, the same read as Downloads' AppBarLayout liftOnScroll) — it
-  needs the opaque colorBackground for the shadow to render and so rows don't
-  ghost through it. The bottom navigation_scrim is the DownloadFragment
-  pattern: an overlay whose height tracks the system-bar bottom inset, with
-  matching recycler bottom padding (clipToPadding=false in the LCEE) so the
-  last row scrolls clear of the gesture bar.
+  The lift-on-scroll is the SAME machinery as fragment_download.xml: the
+  header sits transparent inside an AppBarLayout with liftOnScroll targeting
+  the LCEE's inner @id/recycler_view (CoordinatorLayout + ScrollingViewBehavior
+  drive the lifted state), so MDC animates the surface tone + shadow itself —
+  no hand-rolled scroll listener. The bottom navigation_scrim is the
+  DownloadFragment pattern too: an overlay whose height tracks the system-bar
+  bottom inset, with matching recycler bottom padding (clipToPadding=false in
+  the LCEE) so the last row scrolls clear of the gesture bar.
 -->
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <LinearLayout
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/cb_appbar"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:layout_height="wrap_content"
+        app:liftOnScroll="true"
+        app:liftOnScrollTargetViewId="@id/recycler_view">
 
+        <!-- No scrollFlags: the header stays pinned (the inventory/balance
+             context is useful mid-list); the AppBarLayout paints the lift, so
+             the header itself stays transparent. -->
         <LinearLayout
             android:id="@+id/cb_header"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:background="?android:attr/colorBackground"
             android:paddingStart="16dp"
             android:paddingTop="8dp"
             android:paddingEnd="16dp"
@@ -54,13 +61,13 @@
                 android:textSize="13sp"
                 tools:text="of 11 GB included · encrypted end-to-end" />
         </LinearLayout>
+    </com.google.android.material.appbar.AppBarLayout>
 
-        <com.solarized.firedown.ui.LCEERecyclerView
-            android:id="@+id/cb_lcee"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1" />
-    </LinearLayout>
+    <com.solarized.firedown.ui.LCEERecyclerView
+        android:id="@+id/cb_lcee"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior" />
 
     <View
         android:id="@+id/navigation_scrim"
@@ -69,4 +76,4 @@
         android:layout_gravity="bottom"
         android:background="?android:attr/colorBackground" />
 
-</FrameLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
