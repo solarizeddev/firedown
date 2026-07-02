@@ -1643,6 +1643,17 @@ opaque chunks + an opaque manifest blob.
   (200; a refresh covers a whole TTL of chunks, so a real upload needs a handful —
   this is headroom, not a per-chunk cost). A non-403 (`TransientException`) still
   propagates → WorkManager retry, as before.
+- **`putChunk` sends `If-None-Match: *` and treats 412 as success (write-once
+  chunks).** The server can SIGN `If-None-Match: *` into the chunk PUT presign
+  (its `FIREDOWN_STORAGE_WRITE_ONCE_CHUNKS` flag) so R2 rejects a second write to a
+  chunk key with 412 and a modified client can't drop the header to overwrite a
+  committed chunk. The client sends the header **unconditionally**: harmless when
+  the server didn't sign it / R2 ignores it (a normal overwrite), and required
+  verbatim once signed (or the signature fails). A **412** means the chunk is
+  already uploaded — a retry after a lost 200, or a refresh URL for a chunk we
+  already wrote — so it's treated as success, not an error. This is the client half
+  of retiring the server's `ReconcileCommitted` sweep; the server flag stays off
+  until R2's honoring of a presigned conditional PUT is verified live.
 - **Backup worker still has a retry ceiling** (`VaultBackupWorker.MAX_RUN_ATTEMPTS`,
   10, gated on `getRunAttemptCount()`) as the backstop for a backup that keeps
   failing for OTHER reasons (persistent network loss, a wedged manifest, or a chunk

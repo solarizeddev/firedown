@@ -404,14 +404,26 @@ public final class StorageApiClient {
     public void putChunk(String uploadUrl, byte[] encryptedChunk) throws IOException {
         Request req = new Request.Builder()
                 .url(uploadUrl)
+                // Write-once guard: R2 rejects a second write to the same chunk key
+                // with 412 when this is present. Sent UNCONDITIONALLY — harmless if
+                // the server didn't sign it or R2 ignores it (a normal overwrite),
+                // and REQUIRED verbatim once the server signs If-None-Match (its
+                // FIREDOWN_STORAGE_WRITE_ONCE_CHUNKS flag), or the signature fails.
+                .header("If-None-Match", "*")
                 .put(RequestBody.create(encryptedChunk, OCTET))
                 .build();
         try (Response resp = beginCall(req).execute()) {
-            if (resp.code() == 403) {
+            int code = resp.code();
+            if (code == 412) {
+                // The chunk is already uploaded — a retry after a lost 200, or a
+                // refresh URL for a chunk we already wrote. Treat as success.
+                return;
+            }
+            if (code == 403) {
                 throw new PresignExpiredException("chunk PUT: 403 (presign expired)");
             }
             if (!resp.isSuccessful()) {
-                throw new TransientException("chunk PUT: " + resp.code(), 0);
+                throw new TransientException("chunk PUT: " + code, 0);
             }
         }
     }
