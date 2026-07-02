@@ -1,7 +1,6 @@
 package com.solarized.firedown.sync;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import android.util.Log;
@@ -79,18 +78,20 @@ public class CreditPurchaseLiveTest {
             Log.i(TAG, "PAY THIS BOLT11 within ~5 min:\n" + session.quote.payRequest);
         }
 
-        // Poll issue until paid, then unblind + redeem. Test rail settles at once;
+        // Poll ISSUE until paid (unblinds + verifies onto the session), then REDEEM
+        // — the two-step split of the old tryComplete, so a lost redeem retries
+        // redeem-only (the mint refuses a re-issue). Test rail settles at once;
         // Lightning waits for the manual payment (~5 min budget).
         int maxPolls = "lightning".equals(rail) ? 300 : 12;
-        long delayMs = 1000;
-        StorageApiClient.RedeemResult r = null;
-        for (int i = 0; i < maxPolls && r == null; i++) {
-            r = purchase.tryComplete(id, session);
-            if (r == null) {
-                Thread.sleep(delayMs);
+        boolean paid = false;
+        for (int i = 0; i < maxPolls && !paid; i++) {
+            paid = purchase.issueAndUnblind(session);
+            if (!paid) {
+                Thread.sleep(1000);
             }
         }
-        assertNotNull("issue never settled (test rail off, or the invoice went unpaid)", r);
+        assertTrue("issue never settled (test rail off, or the invoice went unpaid)", paid);
+        StorageApiClient.RedeemResult r = purchase.redeem(id, session);
         Log.i(TAG, "redeemed=" + r.redeemedGbMonths + " balance=" + r.balanceGbMonths + " GB-months");
         assertEquals("redeemed the requested denomination", DENOM, r.redeemedGbMonths);
         assertTrue("balance reflects the credit", r.balanceGbMonths >= DENOM);
