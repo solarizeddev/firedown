@@ -7,6 +7,8 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
+import androidx.work.WorkManager;
+
 import com.solarized.firedown.BuildConfig;
 
 import com.solarized.firedown.GlideHelper;
@@ -518,6 +520,18 @@ public class CloudBackupManager {
      * {@code onResult} is posted to the main thread.
      */
     public void deleteAllData(Consumer<Boolean> onResult) {
+        // Cancel every in-flight/queued transfer FIRST (backups AND restores —
+        // both carry WORK_TAG). Without this, a RUNNING upload kept feeding the
+        // presigned URLs and then failed its complete (row already deleted),
+        // surfacing a spurious "couldn't back up" error and orphaning its
+        // just-uploaded chunks; worse, a QUEUED backup ran AFTER the wipe,
+        // re-registered, and quietly re-created a manifest — resurrecting cloud
+        // data seconds after the user erased everything. Cancelling on the
+        // failure path too is fine: the user asked for erasure, not uploads.
+        // (A chunk PUT completing inside the cancel-propagation window can
+        // still orphan bytes in R2 — same accepted best-effort class as the
+        // server's detached chunk free.)
+        WorkManager.getInstance(context).cancelAllWorkByTag(WORK_TAG);
         netExecutor.execute(() -> {
             boolean ok;
             byte[] code = new SyncSecrets(context).load();

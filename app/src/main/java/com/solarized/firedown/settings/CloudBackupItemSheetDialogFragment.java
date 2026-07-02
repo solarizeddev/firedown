@@ -100,7 +100,8 @@ public class CloudBackupItemSheetDialogFragment extends BaseBottomSheetDialogFra
             thumb.setImageBitmap(bmp);
         } else {
             String mt = mime != null ? mime : "application/octet-stream";
-            thumb.setImageDrawable(MimeTypeThumbnail.generateDrawable(requireContext(), mt, true));
+            // Sheet header thumb: no overlay → soft wash, matching the list row.
+            thumb.setImageDrawable(MimeTypeThumbnail.generateListDrawable(requireContext(), mt));
         }
     }
 

@@ -1848,7 +1848,12 @@ opaque chunks + an opaque manifest blob.
   on the focused Bookmarks screen — an earlier "Delete all cloud data" title
   implied it wiped bookmarks too (it never did). Per-feature erasure rows get
   per-feature names; don't reintroduce an "all cloud data" label unless the
-  action genuinely erases both services. The KEY-FIRST GATE survives the
+  action genuinely erases both services. `deleteAllData` also CANCELS every
+  in-flight/queued transfer first (`cancelAllWorkByTag(WORK_TAG)` — backups AND
+  restores carry it): without that, a running upload failed its complete
+  against the wiped rows (spurious error + orphaned chunks) and a QUEUED backup
+  ran after the wipe, re-registered, and quietly re-created a manifest —
+  resurrecting cloud data seconds after the user erased everything. The KEY-FIRST GATE survives the
   merge: pre-key the buy CTA + Manage rows are hidden, Bookmarks is disabled, and
   only Create/adopt are offered (stops the keyless-purchase ghost account). The
   bookmark-only *actions* — the master **toggle**, **Sync now**, **Delete

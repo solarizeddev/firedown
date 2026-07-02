@@ -20,15 +20,16 @@ public class MimeTypeThumbnail {
     private static final int COLOR_BRAND_ORANGE    = 0xFFf0716c;
 
     /**
-     * Dark duotone ground for the list/grid fallback tiles (the {@code
-     * fillBounds} path). The brand-tinted glyph pops on it, and an overlaid
-     * white title + the ⋮ button read on their own — so the grid tile no longer
-     * needs heavy gradient scrims fighting the old light brand wash. The
-     * media-viewer letterbox ({@code fillBounds=false}) keeps that light wash.
-     * Lightened one step from the original 0xFF3E3733 — the near-black tile
-     * read as a hole in a light-theme LIST row (the Backups list, where the
-     * mime tile is the common case) — while staying dark enough that the grid
-     * tiles' overlaid white title keeps ~9:1 contrast.
+     * Dark duotone ground for the GRID fallback tiles (the {@code fillBounds}
+     * path without {@code softGround}). The brand-tinted glyph pops on it, and
+     * an overlaid white title + the ⋮ button read on their own — so the grid
+     * tile no longer needs heavy gradient scrims fighting the old light brand
+     * wash. That overlay is the ONLY reason this is dark: list rows (which
+     * overlay nothing) use {@link #generateListDrawable}'s soft brand wash
+     * instead, and the media-viewer letterbox ({@code fillBounds=false}) keeps
+     * the same light wash. Already lightened once from 0xFF3E3733 for the
+     * light-theme list case before the list mode split off; must stay dark
+     * enough that the grid tiles' overlaid white title keeps ~9:1 contrast.
      */
     private static final int COLOR_FALLBACK_BG_DARK = 0xFF544B45;
 
@@ -52,6 +53,31 @@ public class MimeTypeThumbnail {
     @NonNull
     public static Drawable generateDrawable(@NonNull Context context, @NonNull String mimeType) {
         return generateDrawable(context, mimeType, false);
+    }
+
+    /**
+     * LIST-row fallback — fills the slot like the grid variant but on a SOFT
+     * brand wash (the letterbox path's low-alpha tint) instead of the dark
+     * duotone. The dark ground exists solely so the GRID tiles' overlaid white
+     * title + ⋮ read without scrims; a list row overlays nothing on its
+     * thumbnail, so the dark tile was pure weight — in a light theme it read
+     * as a dark hole in the row (the Backups list, where the mime tile is the
+     * common case, was the on-device complaint — twice: it was first lightened
+     * from 0xFF3E3733, still too heavy). Use this for any thumbnail slot with
+     * NO text drawn over it; keep {@code generateDrawable(ctx, mime, true)}
+     * for tiles that overlay text.
+     */
+    @NonNull
+    public static Drawable generateListDrawable(@NonNull Context context, @NonNull String mimeType) {
+        int color = getColorForMimeType(mimeType);
+        Drawable icon = ContextCompat.getDrawable(context, FileUriHelper.getMimeTypeIcon(mimeType));
+        if (icon != null) {
+            icon = icon.mutate();
+            icon.setTint(color);
+        }
+        int maxIconPx = Math.round(MAX_FILL_ICON_DP
+                * context.getResources().getDisplayMetrics().density);
+        return new MimeTypeFallbackDrawable(color, icon, true, /* softGround= */ true, maxIconPx);
     }
 
     /**
@@ -83,7 +109,7 @@ public class MimeTypeThumbnail {
         int maxIconPx = fillBounds
                 ? Math.round(MAX_FILL_ICON_DP * context.getResources().getDisplayMetrics().density)
                 : Integer.MAX_VALUE;
-        return new MimeTypeFallbackDrawable(color, icon, fillBounds, maxIconPx);
+        return new MimeTypeFallbackDrawable(color, icon, fillBounds, /* softGround= */ false, maxIconPx);
     }
 
     private static int getColorForMimeType(@NonNull String mimeType) {
@@ -99,14 +125,17 @@ public class MimeTypeThumbnail {
         private final boolean mFillBounds;
         private final int mMaxIconPx;
 
-        MimeTypeFallbackDrawable(int color, @Nullable Drawable icon, boolean fillBounds, int maxIconPx) {
+        MimeTypeFallbackDrawable(int color, @Nullable Drawable icon, boolean fillBounds,
+                                 boolean softGround, int maxIconPx) {
             mBgPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-            if (fillBounds) {
-                // List / grid thumbnail slot: opaque dark duotone ground so
-                // overlaid white text + the ⋮ button read without the scrims.
+            if (fillBounds && !softGround) {
+                // GRID thumbnail slot: opaque dark duotone ground so the
+                // overlaid white title + the ⋮ button read without scrims.
                 mBgPaint.setColor(COLOR_FALLBACK_BG_DARK);
             } else {
-                // Media-viewer letterbox: keep the light brand wash.
+                // Media-viewer letterbox AND list rows (softGround): the light
+                // brand wash — nothing is overlaid on these, so the ground
+                // follows the surrounding surface instead of going dark.
                 mBgPaint.setColor(color);
                 mBgPaint.setAlpha(30);
             }
