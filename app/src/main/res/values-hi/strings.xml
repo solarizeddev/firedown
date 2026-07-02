@@ -503,6 +503,7 @@
     <string name="cloud_restore_failed">पुनर्स्थापित नहीं किया जा सका — अपना कनेक्शन जाँचें और फिर से प्रयास करें</string>
     <string name="cloud_restore_notification_title">क्लाउड से पुनर्स्थापित किया जा रहा है</string>
     <string name="cloud_backup_transfer_uploading">बैकअप लिया जा रहा है…</string>
+    <string name="cloud_backup_transfer_failed">बैकअप विफल रहा</string>
     <string name="cloud_backup_transfer_cancelled">बैकअप रद्द किया गया</string>
     <string name="cloud_backup_view">देखें</string>
     <string name="cloud_backup_delete_title">क्लाउड से हटाएँ?</string>

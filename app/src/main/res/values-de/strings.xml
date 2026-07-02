@@ -728,6 +728,7 @@
     <string name="cloud_restore_failed">Wiederherstellung fehlgeschlagen — prüfe deine Verbindung und versuche es erneut</string>
     <string name="cloud_restore_notification_title">Wird aus Cloud wiederhergestellt</string>
     <string name="cloud_backup_transfer_uploading">Wird gesichert…</string>
+    <string name="cloud_backup_transfer_failed">Sicherung fehlgeschlagen</string>
     <string name="cloud_backup_transfer_cancelled">Backup abgebrochen</string>
     <string name="cloud_backup_view">Ansehen</string>
     <string name="cloud_backup_delete_title">Aus Cloud entfernen?</string>

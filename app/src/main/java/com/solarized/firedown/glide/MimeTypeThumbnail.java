@@ -25,8 +25,12 @@ public class MimeTypeThumbnail {
      * white title + the ⋮ button read on their own — so the grid tile no longer
      * needs heavy gradient scrims fighting the old light brand wash. The
      * media-viewer letterbox ({@code fillBounds=false}) keeps that light wash.
+     * Lightened one step from the original 0xFF3E3733 — the near-black tile
+     * read as a hole in a light-theme LIST row (the Backups list, where the
+     * mime tile is the common case) — while staying dark enough that the grid
+     * tiles' overlaid white title keeps ~9:1 contrast.
      */
-    private static final int COLOR_FALLBACK_BG_DARK = 0xFF3E3733;
+    private static final int COLOR_FALLBACK_BG_DARK = 0xFF544B45;
 
     /**
      * Upper bound (dp) on the mime icon for the {@code fillBounds} (list /

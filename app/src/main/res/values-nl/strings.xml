@@ -597,6 +597,7 @@
     <string name="cloud_restore_failed">Herstellen mislukt — controleer je verbinding en probeer het opnieuw</string>
     <string name="cloud_restore_notification_title">Herstellen vanuit cloud</string>
     <string name="cloud_backup_transfer_uploading">Back-up bezig…</string>
+    <string name="cloud_backup_transfer_failed">Back-up mislukt</string>
     <string name="cloud_backup_transfer_cancelled">Back-up geannuleerd</string>
     <string name="cloud_backup_view">Bekijken</string>
     <string name="cloud_backup_delete_title">Uit cloud verwijderen?</string>

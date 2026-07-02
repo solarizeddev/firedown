@@ -490,6 +490,7 @@
     <string name="cloud_restore_failed">Възстановяването е неуспешно — проверете връзката и опитайте отново</string>
     <string name="cloud_restore_notification_title">Възстановяване от облака</string>
     <string name="cloud_backup_transfer_uploading">Архивиране…</string>
+    <string name="cloud_backup_transfer_failed">Неуспешно архивиране</string>
     <string name="cloud_backup_transfer_cancelled">Архивирането е отменено</string>
     <string name="cloud_backup_view">Преглед</string>
     <string name="cloud_backup_delete_title">Премахване от облака?</string>

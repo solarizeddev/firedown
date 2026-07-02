@@ -601,6 +601,7 @@
     <string name="cloud_restore_failed">Не удалось восстановить — проверьте подключение и повторите попытку</string>
     <string name="cloud_restore_notification_title">Восстановление из облака</string>
     <string name="cloud_backup_transfer_uploading">Сохранение…</string>
+    <string name="cloud_backup_transfer_failed">Сбой резервного копирования</string>
     <string name="cloud_backup_transfer_cancelled">Копирование отменено</string>
     <string name="cloud_backup_view">Просмотр</string>
     <string name="cloud_backup_delete_title">Удалить из облака?</string>

@@ -93,11 +93,32 @@ public final class VaultEngine {
      *  progress to {@code progress} (may be null). */
     public VaultEntry backupFile(File file, String mime, String thumb, ProgressListener progress)
             throws IOException, GeneralSecurityException {
+        return backupStream(file.getName(), file.length(),
+                () -> new FileInputStream(file), mime, thumb, progress);
+    }
+
+    /**
+     * Opens the plaintext of the file being backed up. A plain FileInputStream for
+     * an owned file (the {@link #backupFile(File, String, String, ProgressListener)}
+     * delegate); the worker passes a SAF-grant stream for a RESTORED foreign-owned
+     * file — on Android 11+ a reinstalled app doesn't own its old public files, so
+     * a direct File open EACCES-es (see {@code RestoredFileAccess}). Opened exactly
+     * once per attempt; the upload reads it sequentially (chunk retries re-PUT the
+     * in-memory ciphertext, never re-read the source).
+     */
+    public interface StreamSource {
+        InputStream open() throws IOException;
+    }
+
+    /** The access-agnostic backup core: {@code name}/{@code size} identify the
+     *  content (the dedup key), {@code source} supplies the plaintext bytes. */
+    public VaultEntry backupStream(String name, long size, StreamSource source,
+                                   String mime, String thumb, ProgressListener progress)
+            throws IOException, GeneralSecurityException {
         // NOTE: the account must already be registered (the worker calls
         // CloudBackupManager.ensureRegistered first). Registration is NOT done here
         // per-backup — that bursts Cloudflare's rate-limited register endpoints.
-        long size = file.length();
-        VaultEntry existing = findExisting(file.getName(), size);
+        VaultEntry existing = findExisting(name, size);
         if (existing != null) {
             // Already backed up — don't duplicate the object. But if it was backed
             // up before previews existed (no thumb) and we have one now, backfill it
@@ -131,7 +152,7 @@ public final class VaultEngine {
             // (a large file on a slow link outlives the create-time UploadPresignTTL).
             List<String> uploadUrls = new ArrayList<>(created.uploadUrls);
             int refreshes = 0;
-            try (InputStream in = new FileInputStream(file)) {
+            try (InputStream in = source.open()) {
                 byte[] buf = new byte[CHUNK_SIZE];
                 long uploaded = 0;
                 if (progress != null) {
@@ -172,7 +193,7 @@ public final class VaultEngine {
             api.completeObject(identity, created.objectId);
 
             String wrappedDek = Base64.encodeToString(VaultCrypto.wrapDek(dek, storageKey), B64);
-            VaultEntry entry = new VaultEntry(created.objectId, wrappedDek, file.getName(),
+            VaultEntry entry = new VaultEntry(created.objectId, wrappedDek, name,
                     size, mime, System.currentTimeMillis(), chunkCount, thumb);
             // Dedup-checked commit (closes the concurrency window the start-time
             // findExisting can't: TWO DEVICES backing up the same file content race —

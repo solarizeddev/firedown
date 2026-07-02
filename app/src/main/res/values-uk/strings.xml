@@ -516,6 +516,7 @@
     <string name="cloud_restore_failed">Не вдалося відновити — перевірте підключення та повторіть спробу</string>
     <string name="cloud_restore_notification_title">Відновлення з хмари</string>
     <string name="cloud_backup_transfer_uploading">Збереження…</string>
+    <string name="cloud_backup_transfer_failed">Не вдалося створити резервну копію</string>
     <string name="cloud_backup_transfer_cancelled">Резервне копіювання скасовано</string>
     <string name="cloud_backup_view">Переглянути</string>
     <string name="cloud_backup_delete_title">Видалити з хмари?</string>

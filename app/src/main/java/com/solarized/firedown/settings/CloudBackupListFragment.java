@@ -193,10 +193,19 @@ public class CloudBackupListFragment extends Fragment
                             WorkInfo.State s = wi.getState();
                             boolean running = s == WorkInfo.State.RUNNING
                                     || s == WorkInfo.State.ENQUEUED;
-                            if (!running) {
+                            // Terminally-FAILED backups render as an ERROR row —
+                            // a background failure used to leave NO trace here
+                            // (the failure snackbar only shows while the Downloads
+                            // fragment is alive). Identity comes from the request
+                            // tags (a finished worker's progress is cleared); ✕
+                            // dismisses via pruneWork. Doesn't count as active.
+                            boolean failed = s == WorkInfo.State.FAILED;
+                            if (!running && !failed) {
                                 continue;
                             }
-                            active = true;
+                            if (running) {
+                                active = true;
+                            }
                             Data p = wi.getProgress();
                             String name = p.getString(VaultBackupWorker.KEY_NAME);
                             String mime = p.getString(VaultBackupWorker.KEY_MIME);
@@ -233,7 +242,7 @@ public class CloudBackupListFragment extends Fragment
                                 continue;
                             }
                             transfers.add(new CloudBackupFileAdapter.Transfer(
-                                    wi.getId().toString(), name, mime, done, total));
+                                    wi.getId().toString(), name, mime, done, total, failed));
                         }
                     }
                     boolean justFinished = mTransferActive && !active;
@@ -270,8 +279,13 @@ public class CloudBackupListFragment extends Fragment
     @Override
     public void onCancelTransfer(String workId) {
         try {
-            WorkManager.getInstance(requireContext().getApplicationContext())
-                    .cancelWorkById(UUID.fromString(workId));
+            WorkManager wm = WorkManager.getInstance(requireContext().getApplicationContext());
+            wm.cancelWorkById(UUID.fromString(workId));
+            // Also DISMISS a terminally-failed row: cancel is a no-op on finished
+            // work, and the FAILED record (which drives the error row) lingers
+            // until pruned. pruneWork only removes FINISHED work, so an active
+            // upload's cancel is unaffected.
+            wm.pruneWork();
             snackbar(getString(R.string.cloud_backup_transfer_cancelled));
         } catch (IllegalArgumentException ignored) {
             // malformed id — nothing to cancel

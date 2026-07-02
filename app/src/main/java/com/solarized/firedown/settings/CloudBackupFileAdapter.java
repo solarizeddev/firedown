@@ -68,13 +68,23 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         public final String mime;
         public final long done;
         public final long total;
+        /** A terminally-FAILED backup (worker gave up) — rendered as an error row
+         *  instead of a progress bar, so a background failure isn't silent. The ✕
+         *  dismisses it (the fragment prunes the finished work record). */
+        public final boolean failed;
 
         public Transfer(String workId, String name, String mime, long done, long total) {
+            this(workId, name, mime, done, total, false);
+        }
+
+        public Transfer(String workId, String name, String mime, long done, long total,
+                        boolean failed) {
             this.workId = workId;
             this.name = name;
             this.mime = mime;
             this.done = done;
             this.total = total;
+            this.failed = failed;
         }
     }
 
@@ -373,7 +383,23 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             Context ctx = itemView.getContext();
             name.setText(t.name);
             bindMimeChip(mime, ctx, t.mime);
+            if (t.failed) {
+                // Terminal failure — say so instead of a forever-0% bar (a
+                // background failure used to be completely silent here). The ✕
+                // dismisses the row. Error colour on the state line only; both
+                // branches set the colour because the holder is recycled.
+                state.setText(R.string.cloud_backup_transfer_failed);
+                state.setTextColor(MaterialColors.getColor(itemView,
+                        androidx.appcompat.R.attr.colorError, Color.RED));
+                bar.setVisibility(View.GONE);
+                percent.setVisibility(View.GONE);
+                bindThumb(thumb, ctx, null, t.mime);
+                return;
+            }
             state.setText(R.string.cloud_backup_transfer_uploading);
+            state.setTextColor(MaterialColors.getColor(itemView,
+                    com.google.android.material.R.attr.colorOnSurfaceVariant, Color.GRAY));
+            bar.setVisibility(View.VISIBLE);
             // ALWAYS determinate with a percent shown (0% before the first byte
             // report) — exactly like the Downloads list row. Hiding the percent
             // when done==0 shifted the bar's left margin; the percent slot is now

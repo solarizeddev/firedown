@@ -536,6 +536,7 @@
     <string name="cloud_restore_failed">Palautus epäonnistui — tarkista yhteytesi ja yritä uudelleen</string>
     <string name="cloud_restore_notification_title">Palautetaan pilvestä</string>
     <string name="cloud_backup_transfer_uploading">Varmuuskopioidaan…</string>
+    <string name="cloud_backup_transfer_failed">Varmuuskopiointi epäonnistui</string>
     <string name="cloud_backup_transfer_cancelled">Varmuuskopiointi peruutettu</string>
     <string name="cloud_backup_view">Näytä</string>
     <string name="cloud_backup_delete_title">Poistetaanko pilvestä?</string>

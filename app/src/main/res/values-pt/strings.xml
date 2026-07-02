@@ -597,6 +597,7 @@
     <string name="cloud_restore_failed">Não foi possível restaurar — verifique sua conexão e tente novamente</string>
     <string name="cloud_restore_notification_title">Restaurando da nuvem</string>
     <string name="cloud_backup_transfer_uploading">Fazendo backup…</string>
+    <string name="cloud_backup_transfer_failed">Falha na cópia de segurança</string>
     <string name="cloud_backup_transfer_cancelled">Backup cancelado</string>
     <string name="cloud_backup_view">Ver</string>
     <string name="cloud_backup_delete_title">Remover da nuvem?</string>

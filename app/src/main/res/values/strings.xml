@@ -448,6 +448,7 @@
     <string name="cloud_restore_failed">Couldn\'t restore — check your connection and try again</string>
     <string name="cloud_restore_notification_title">Restoring from cloud</string>
     <string name="cloud_backup_transfer_uploading">Backing up…</string>
+    <string name="cloud_backup_transfer_failed">Backup failed</string>
     <string name="cloud_backup_transfer_cancelled">Backup canceled</string>
     <string name="cloud_backup_view">View</string>
     <string name="cloud_backup_delete_title">Remove from cloud?</string>

@@ -596,6 +596,7 @@
     <string name="cloud_restore_failed">Geri yüklenemedi — bağlantınızı kontrol edip yeniden deneyin</string>
     <string name="cloud_restore_notification_title">Buluttan geri yükleniyor</string>
     <string name="cloud_backup_transfer_uploading">Yedekleniyor…</string>
+    <string name="cloud_backup_transfer_failed">Yedekleme başarısız oldu</string>
     <string name="cloud_backup_transfer_cancelled">Yedekleme iptal edildi</string>
     <string name="cloud_backup_view">Görüntüle</string>
     <string name="cloud_backup_delete_title">Buluttan kaldırılsın mı?</string>

@@ -8,6 +8,7 @@ import android.content.SharedPreferences;
 import android.content.pm.ServiceInfo;
 import android.graphics.BitmapFactory;
 import android.os.Build;
+import android.os.ParcelFileDescriptor;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -21,12 +22,14 @@ import androidx.work.WorkerParameters;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.solarized.firedown.App;
 import com.solarized.firedown.BuildConfig;
+import com.solarized.firedown.data.RestoredFileAccess;
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
 import com.solarized.firedown.phone.SettingsActivity;
 import com.solarized.firedown.sync.crypto.SyncIdentity;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import dagger.assisted.Assisted;
@@ -131,11 +134,34 @@ public class VaultBackupWorker extends Worker {
             return failure();
         }
         File file = new File(path);
-        if (!file.exists()) {
-            if (BuildConfig.DEBUG) {
-                Log.e(TAG, "backup failed: file missing: " + path);
+        // exists()/canRead() false ALSO means "present but unreadable" — the state
+        // of a RESTORED foreign-owned file (Android 11+: a reinstalled app doesn't
+        // own its old public files; a direct File open EACCES-es). Resolve access
+        // the way every other read path does (RestoredFileAccess): the owned file
+        // first, then the persisted SAF grant. Without this, the raw open's
+        // FileNotFoundException fell into the transient-IOException branch and the
+        // worker silently RETRIED for hours — the on-device "stuck at Backing up…
+        // 0%" on a restored file. Only when NEITHER path opens is the file
+        // genuinely inaccessible — a PERMANENT condition, failed terminally
+        // (a retry can't grow a grant).
+        final boolean direct = file.exists() && file.canRead();
+        long size = direct ? file.length() : RestoredFileAccess.length(mContext, path);
+        if (!direct) {
+            ParcelFileDescriptor probe = RestoredFileAccess.openReadOnly(mContext, path);
+            boolean readable = probe != null && size > 0;
+            if (probe != null) {
+                try {
+                    probe.close();
+                } catch (IOException ignored) {
+                    // probe only
+                }
             }
-            return failure();
+            if (!readable) {
+                if (BuildConfig.DEBUG) {
+                    Log.e(TAG, "backup failed: file missing/unreadable (no SAF grant?): " + path);
+                }
+                return failure();
+            }
         }
 
         // Promote to foreground for the upload (dataSync). Best-effort: if the OS
@@ -175,19 +201,41 @@ public class VaultBackupWorker extends Worker {
         // backed-up-files list can show a per-item bar (like the Downloads list).
         final String fName = name;
         final String fMime = mime;
-        publishProgress(fName, fMime, 0, file.length());
+        publishProgress(fName, fMime, 0, size);
         try {
             // Register ONCE per install (not per backup) — Cloudflare rate-limits
             // the register endpoints, so re-registering on every upload bursts them.
             CloudBackupManager.ensureRegistered(mPrefs, api, identity);
-            engine.backupFile(file, mime, thumb,
-                    (done, total) -> publishProgress(fName, fMime, done, total));
+            if (direct) {
+                engine.backupFile(file, mime, thumb,
+                        (done, total) -> publishProgress(fName, fMime, done, total));
+            } else {
+                // Restored foreign-owned file: stream via the SAF grant. The engine
+                // opens the source exactly once per attempt and reads sequentially.
+                engine.backupStream(file.getName(), size, () -> {
+                    ParcelFileDescriptor pfd = RestoredFileAccess.openReadOnly(mContext, path);
+                    if (pfd == null) {
+                        throw new FileNotFoundException("restored file not readable: " + path);
+                    }
+                    return new ParcelFileDescriptor.AutoCloseInputStream(pfd);
+                }, mime, thumb, (done, total) -> publishProgress(fName, fMime, done, total));
+            }
         } catch (StorageApiClient.FatalException e) {
             // A 4xx with a slug (bad request / unknown keyset / …) won't fix itself
             // — terminal. Checked BEFORE the bare-IOException branch because
             // FatalException IS an IOException.
             if (BuildConfig.DEBUG) {
                 Log.e(TAG, "backup failed (fatal server error)", e);
+            }
+            awaitLastProgress();
+            return failure();
+        } catch (FileNotFoundException e) {
+            // The file itself can't be opened (deleted mid-flight, or a foreign-
+            // owned file whose grant vanished). PERMANENT — retrying re-fails
+            // identically forever; must be caught BEFORE the bare-IOException
+            // retry branch (FileNotFoundException IS an IOException).
+            if (BuildConfig.DEBUG) {
+                Log.e(TAG, "backup failed: file unreadable", e);
             }
             awaitLastProgress();
             return failure();

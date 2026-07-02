@@ -466,6 +466,7 @@
     <string name="cloud_restore_failed">Taastamine ebaõnnestus — kontrolli ühendust ja proovi uuesti</string>
     <string name="cloud_restore_notification_title">Pilvest taastamine</string>
     <string name="cloud_backup_transfer_uploading">Varundamine…</string>
+    <string name="cloud_backup_transfer_failed">Varundamine ebaõnnestus</string>
     <string name="cloud_backup_transfer_cancelled">Varundamine tühistatud</string>
     <string name="cloud_backup_view">Vaata</string>
     <string name="cloud_backup_delete_title">Kas eemaldada pilvest?</string>

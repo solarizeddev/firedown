@@ -729,6 +729,7 @@
     <string name="cloud_restore_failed">Échec de la restauration — vérifiez votre connexion et réessayez</string>
     <string name="cloud_restore_notification_title">Restauration depuis le cloud</string>
     <string name="cloud_backup_transfer_uploading">Sauvegarde…</string>
+    <string name="cloud_backup_transfer_failed">Échec de la sauvegarde</string>
     <string name="cloud_backup_transfer_cancelled">Sauvegarde annulée</string>
     <string name="cloud_backup_view">Voir</string>
     <string name="cloud_backup_delete_title">Retirer du cloud ?</string>

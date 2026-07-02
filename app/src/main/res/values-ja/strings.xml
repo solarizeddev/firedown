@@ -724,6 +724,7 @@
     <string name="cloud_restore_failed">復元できませんでした — 接続を確認してもう一度お試しください</string>
     <string name="cloud_restore_notification_title">クラウドから復元中</string>
     <string name="cloud_backup_transfer_uploading">バックアップ中…</string>
+    <string name="cloud_backup_transfer_failed">バックアップに失敗しました</string>
     <string name="cloud_backup_transfer_cancelled">バックアップをキャンセルしました</string>
     <string name="cloud_backup_view">表示</string>
     <string name="cloud_backup_delete_title">クラウドから削除しますか？</string>

@@ -310,11 +310,20 @@ public class CloudBackupManager {
                     }
                     bytes = total;
                     quota = api.quota(identity); // must succeed
+                    // A completed purchase on THIS install leaves the plan shape in
+                    // prefs (BuyCreditViewModel writes it at redeem success). It's
+                    // the paid signal the SERVER can't give on an unmetered
+                    // deployment — there quota.metered is false and the redeemed
+                    // balance is never reported, so a funded-but-empty account
+                    // would otherwise look identical to a never-paid one.
+                    boolean hasLocalPlan = prefs.getInt(Preferences.CLOUD_PLAN_SIZE_GB, 0) > 0;
                     if (quota.metered && quota.balanceMicroGbMonths <= 0 && files == 0) {
                         prefs.edit().putBoolean(Preferences.CLOUD_BACKUP_ENABLED, false).apply();
                         setUp = false;
                     } else if (!setUp
-                            && (files > 0 || (quota.metered && quota.balanceMicroGbMonths > 0))) {
+                            && (files > 0
+                            || (quota.metered && quota.balanceMicroGbMonths > 0)
+                            || hasLocalPlan)) {
                         // The mirror of the auto-clear: the server reveals a LIVE
                         // account (files backed up, or a paid balance) the local
                         // flag missed — e.g. credit bought before markEnabled-at-

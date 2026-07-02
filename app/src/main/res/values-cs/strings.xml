@@ -554,6 +554,7 @@
     <string name="cloud_restore_failed">Obnovení se nezdařilo — zkontrolujte připojení a zkuste to znovu</string>
     <string name="cloud_restore_notification_title">Obnovování z cloudu</string>
     <string name="cloud_backup_transfer_uploading">Zálohování…</string>
+    <string name="cloud_backup_transfer_failed">Zálohování selhalo</string>
     <string name="cloud_backup_transfer_cancelled">Zálohování zrušeno</string>
     <string name="cloud_backup_view">Zobrazit</string>
     <string name="cloud_backup_delete_title">Odebrat z cloudu?</string>

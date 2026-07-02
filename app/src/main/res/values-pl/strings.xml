@@ -598,6 +598,7 @@
     <string name="cloud_restore_failed">Nie udało się przywrócić — sprawdź połączenie i spróbuj ponownie</string>
     <string name="cloud_restore_notification_title">Przywracanie z chmury</string>
     <string name="cloud_backup_transfer_uploading">Tworzenie kopii zapasowej…</string>
+    <string name="cloud_backup_transfer_failed">Kopia zapasowa nie powiodła się</string>
     <string name="cloud_backup_transfer_cancelled">Anulowano tworzenie kopii zapasowej</string>
     <string name="cloud_backup_view">Wyświetl</string>
     <string name="cloud_backup_delete_title">Usunąć z chmury?</string>

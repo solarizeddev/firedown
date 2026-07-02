@@ -724,6 +724,7 @@
     <string name="cloud_restore_failed">恢复失败 — 请检查网络连接后重试</string>
     <string name="cloud_restore_notification_title">正在从云端恢复</string>
     <string name="cloud_backup_transfer_uploading">正在备份…</string>
+    <string name="cloud_backup_transfer_failed">备份失败</string>
     <string name="cloud_backup_transfer_cancelled">已取消备份</string>
     <string name="cloud_backup_view">查看</string>
     <string name="cloud_backup_delete_title">从云端移除？</string>
