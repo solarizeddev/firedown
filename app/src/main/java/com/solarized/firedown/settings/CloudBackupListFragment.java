@@ -34,6 +34,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
 import com.solarized.firedown.R;
 import com.solarized.firedown.sync.CloudBackupManager;
+import com.solarized.firedown.sync.PendingRemovals;
 import com.solarized.firedown.sync.VaultBackupWorker;
 import com.solarized.firedown.sync.VaultRestoreWorker;
 import com.solarized.firedown.sync.model.VaultEntry;
@@ -82,10 +83,10 @@ public class CloudBackupListFragment extends Fragment
     /** Object ids whose server delete is IN FLIGHT (optimistically removed from the
      *  UI, not yet confirmed gone). A load() that lands before the delete's OCC push
      *  commits would otherwise RESURRECT the row (it's still in the pulled manifest);
-     *  load() filters these out. Cleared on delete success; on failure the row is
-     *  re-inserted. Main-thread only (all manager callbacks post to main), so no
-     *  synchronization. */
-    private final Set<String> mPendingRemovals = new HashSet<>();
+     *  load() filters these out. The ordering semantics (why delete-SUCCESS does NOT
+     *  clear an id — only a fresh pull or a delete-FAILURE does) live in
+     *  {@link PendingRemovals}, where they're unit-tested. */
+    private final PendingRemovals mPendingRemovals = new PendingRemovals();
     /** True while any backup/restore transfer is running. */
     private boolean mTransferActive;
     /** True while multi-select is active (drives the toolbar title/menu). */
@@ -258,25 +259,11 @@ public class CloudBackupListFragment extends Fragment
             }
             mLoading = false;
             mEntries.clear();
-            Set<String> pulledIds = new HashSet<>();
-            for (VaultEntry e : entries) {
-                pulledIds.add(e.objectId);
-                // Skip a row whose delete is still in flight — the manifest pull can
-                // pre-date the delete's OCC commit, and re-adding it here would make
-                // the just-removed row flicker back (a ghost for a file that IS being
-                // deleted).
-                if (!mPendingRemovals.contains(e.objectId)) {
-                    mEntries.add(e);
-                }
-            }
-            // Reconcile the in-flight-delete set against THIS fresh pull: an id the
-            // server no longer lists is confirmed gone, so stop guarding it. This is
-            // why a delete-SUCCESS callback does NOT clear the id itself — a load()
-            // whose pull PRE-dated the delete could otherwise run after that clear and
-            // resurrect the row (the reverse-order race). A still-listed id (a stale
-            // pull, or a failed delete) stays guarded. Object ids are server-random
-            // per create, so a cleared id can never wrongly match a future entry.
-            mPendingRemovals.retainAll(pulledIds);
+            // Skip rows whose delete is still in flight (the manifest pull can
+            // pre-date the delete's OCC commit — re-adding one would flicker a ghost
+            // back) and reconcile the guard set against this fresh pull. The full
+            // ordering rationale lives in PendingRemovals.
+            mEntries.addAll(mPendingRemovals.filterAndReconcile(entries));
             mAdapter.submit(mEntries);
             render();
             backfillThumbnails();
@@ -450,7 +437,7 @@ public class CloudBackupListFragment extends Fragment
             // changed the list meanwhile isn't lost. Stop guarding them.
             boolean changed = false;
             for (VaultEntry e : targets) {
-                mPendingRemovals.remove(e.objectId);
+                mPendingRemovals.clear(e.objectId);
                 if (findEntry(e.objectId) == null) {
                     mEntries.add(e);
                     changed = true;
@@ -527,7 +514,7 @@ public class CloudBackupListFragment extends Fragment
                 return;
             }
             // Failed — the entry is still on the server; stop guarding + put it back.
-            mPendingRemovals.remove(entry.objectId);
+            mPendingRemovals.clear(entry.objectId);
             int p = pos < 0 ? mEntries.size() : Math.min(pos, mEntries.size());
             mEntries.add(p, entry);
             mAdapter.insertAt(p, entry);
