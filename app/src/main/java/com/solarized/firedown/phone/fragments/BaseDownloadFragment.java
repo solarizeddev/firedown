@@ -580,7 +580,15 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
             startActivity(intent);
         } else if (id == R.id.action_cloud_backup) {
             Intent intent = new Intent(mActivity, SettingsActivity.class);
-            intent.putExtra(SettingsActivity.EXTRA_OPEN_CLOUD_BACKUP_FILES, true);
+            // Route by whether anything is actually backed up. When Cloud Backup is
+            // in use, the backed-up-files list is useful; when it ISN'T, that list
+            // is just empty — send the user to the Cloud Backup status screen
+            // instead (the setup hero + "Add storage credit" door), which funnels
+            // them toward configuring a backup rather than a dead-end empty list.
+            intent.putExtra(mCloudBackup.isSetUp()
+                            ? SettingsActivity.EXTRA_OPEN_CLOUD_BACKUP_FILES
+                            : SettingsActivity.EXTRA_OPEN_CLOUD_BACKUP,
+                    true);
             startActivity(intent);
         } else if (id == R.id.action_settings) {
             Intent intent = new Intent(mActivity, SettingsActivity.class);
