@@ -214,6 +214,16 @@ public class DownloadDataRepository {
             newEntity.setFileDuration(duration);
             newEntity.setFileDurationFormatted(FFmpegUtils.getFileDuration(duration));
             newEntity.setFileThumbnailDuration(randomThumbPos);
+            // Regenerate is an EXPLICIT "try this thumbnail again" request, so
+            // clear the persistent negative-cache flag. Otherwise GlideHelper
+            // .load() short-circuits to the mime glyph BEFORE attempting any
+            // decode (see isFileThumbnailUnavailable()) — the copy-ctor carried
+            // the poison flag forward, so regenerate re-inserted a still-poisoned
+            // row and visibly did nothing. Clearing it lets the Glide chain run
+            // again, which for a file poisoned before the FFmpegPfdDecoder
+            // fallback existed (MMR + skia had failed) now gets that fallback's
+            // shot; a genuine re-failure just re-sets the flag.
+            newEntity.setFileThumbnailUnavailable(false);
 
             mDiskExecutor.execute(() -> {
                 // Row gone (deleted while the probe ran) — drop the result
