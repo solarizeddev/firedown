@@ -69,23 +69,28 @@ public class FFmpegPfdDecoder implements ResourceDecoder<ParcelFileDescriptor, B
     public Resource<Bitmap> decode(@NonNull ParcelFileDescriptor source, int outWidth, int outHeight,
                                    @NonNull Options options) {
         String filePath = options.get(GlideRequestOptions.FILEPATH);
-        Long length = options.get(GlideRequestOptions.LENGTH);
         DownsampleStrategy downSampleStrategy = options.get(DownsampleStrategy.OPTION);
-        // -1 = let native auto-seek a few seconds in (skips the black opening frame),
-        // matching FFmpegUriDecoder. A provided LENGTH is honoured as a mandate.
-        if (length == null) {
-            length = -1L;
-        }
         if (downSampleStrategy == null) {
             downSampleStrategy = DownsampleStrategy.NONE;
         }
 
+        // Seek position = the SAME frame the list/MMR path uses: GlideRequestOptions
+        // .FRAME (= GlideHelper.effectiveThumbnailFrame — the ~2s black-skip offset,
+        // OR the user-chosen / "Regenerate thumbnail" random position). Reading it
+        // is what makes regenerate actually MOVE the frame here instead of always
+        // decoding the same one. NOT the LENGTH option: it defaults to 0 (never
+        // null), which would pass streamPos 0 = the black t=0 head frame every time.
+        // FRAME <= 0 (a short clip, or unset) → -1 so native auto-seeks past the
+        // black intro and falls back to the head for a genuinely short clip.
+        Long frame = options.get(GlideRequestOptions.FRAME);
+        long streamPos = (frame != null && frame > 0) ? frame : -1L;
+
         // Prefer the real path (owned local files — the common case). Fall back to
         // the open fd for a restored/foreign file whose absolute path FFmpeg can't
         // open directly but whose content-URI PFD is readable.
-        Bitmap bitmap = decodeByPath(filePath, length, outWidth, outHeight);
+        Bitmap bitmap = decodeByPath(filePath, streamPos, outWidth, outHeight);
         if (bitmap == null && source.getFileDescriptor() != null) {
-            bitmap = decodeByFd(source.getFileDescriptor(), length, outWidth, outHeight);
+            bitmap = decodeByFd(source.getFileDescriptor(), streamPos, outWidth, outHeight);
         }
         if (bitmap == null) {
             return null; // both open targets failed → Glide falls to the mime glyph
