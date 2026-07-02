@@ -184,9 +184,15 @@ public class WebBookmarkFragment extends BaseFocusFragment implements OnItemClic
             if (loadStates.getRefresh() instanceof LoadState.NotLoading) {
                 if (mAdapter.getItemCount() == 0) {
                     if (isSearchActive() && mSearchEdit != null && mSearchEdit.getText().length() > 0) {
+                        // "No results" is a search outcome, not "nothing
+                        // bookmarked" — pair it with the search illustration (and
+                        // restore the default below, since the image is set once
+                        // in setupViews and would otherwise stick).
                         mLCEERecyclerView.setEmptyText(R.string.empty_list_query);
+                        mLCEERecyclerView.setEmptyImageView(R.drawable.ill_small_search);
                     } else {
                         mLCEERecyclerView.setEmptyText(R.string.empty_list_bookmarks);
+                        mLCEERecyclerView.setEmptyImageView(R.drawable.ill_bookmark);
                     }
                     mLCEERecyclerView.showEmpty();
                 } else {

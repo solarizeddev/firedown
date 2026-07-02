@@ -253,9 +253,10 @@ public class DownloadFragment extends BaseDownloadFragment implements
                         // Live search with no matches — NOT the post-reinstall
                         // empty state (search clears the chip, so the unfiltered
                         // test below would otherwise offer the restore button on
-                        // every no-result query).
-                        mLCEERecyclerView.setEmptyText(R.string.empty_list_type);
-                        mLCEERecyclerView.setEmptyImageView(R.drawable.ill_baloons);
+                        // every no-result query). "No results" + the search
+                        // illustration, same as the History/Bookmarks search-empty.
+                        mLCEERecyclerView.setEmptyText(R.string.empty_list_query);
+                        mLCEERecyclerView.setEmptyImageView(R.drawable.ill_small_search);
                         mLCEERecyclerView.setEmptyButtonVisibility(View.GONE);
                     } else {
                         mLCEERecyclerView.setEmptyText(unfiltered ? R.string.empty_list : R.string.empty_list_type);
