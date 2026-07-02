@@ -149,6 +149,11 @@ public final class StorageApiClient {
 
     // ---- error types (mirror SyncApiClient) ----
 
+    /** Redeem 409 slug: the credit's secret was already burned. On a retry after a
+     *  lost response this means the credit WAS applied — the caller treats it as
+     *  success, not failure (see {@link RedeemResult#applied}). */
+    public static final String SLUG_CREDIT_SPENT = "credit-spent";
+
     /** A transient failure the caller should retry after {@code retryAfterSeconds}. */
     public static final class TransientException extends IOException {
         public final int retryAfterSeconds;
@@ -212,6 +217,15 @@ public final class StorageApiClient {
             this.redeemedGbMonths = redeemedGbMonths;
             this.balanceGbMonths = balanceGbMonths;
             this.balanceMicroGbMonths = balanceMicroGbMonths;
+        }
+
+        /** Synthesizes a result for the credit-spent RECOVERY path — a redeem that
+         *  returned 409 credit-spent because an earlier redeem (whose response was
+         *  lost) already applied this credit. The exact post-balance isn't in the
+         *  409, so it's reported as the redeemed denomination (a floor); the status
+         *  hero re-reads the true balance from the quota endpoint. */
+        public static RedeemResult applied(int gbMonths) {
+            return new RedeemResult(gbMonths, gbMonths, 0);
         }
     }
 

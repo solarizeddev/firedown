@@ -90,6 +90,57 @@ public final class SyncSecrets {
         prefs.edit().remove(KEY_RECOVERY).apply();
     }
 
+    // ---- generic keystore-wrapped blobs (same wrap key + backup-excluded file) ----
+    //
+    // Used for the pending-purchase record: an in-flight bearer credit that must
+    // survive process death (so a paid-but-not-yet-redeemed credit isn't lost) but
+    // must NEVER be backed up. Same at-rest protection as the recovery code; a
+    // distinct prefs key per name. Inlined rather than refactoring store()/load()
+    // so the recovery-code path is untouched.
+
+    private static final String BLOB_PREFIX = "firedown.blob.";
+
+    /** Stores an arbitrary named blob, keystore-wrapped. */
+    public void putBlob(String name, byte[] value) {
+        try {
+            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+            cipher.init(Cipher.ENCRYPT_MODE, getOrCreateKey());
+            byte[] iv = cipher.getIV();
+            byte[] ct = cipher.doFinal(value);
+            byte[] blob = new byte[iv.length + ct.length];
+            System.arraycopy(iv, 0, blob, 0, iv.length);
+            System.arraycopy(ct, 0, blob, iv.length, ct.length);
+            prefs.edit().putString(BLOB_PREFIX + name, Base64.encodeToString(blob, Base64.NO_WRAP)).apply();
+        } catch (Exception e) {
+            throw new IllegalStateException("store blob failed", e);
+        }
+    }
+
+    /** Returns a named blob's bytes, or null if none stored / unreadable. */
+    public byte[] getBlob(String name) {
+        String stored = prefs.getString(BLOB_PREFIX + name, null);
+        if (stored == null) {
+            return null;
+        }
+        try {
+            byte[] blob = Base64.decode(stored, Base64.NO_WRAP);
+            if (blob.length <= IV_BYTES) {
+                return null;
+            }
+            GCMParameterSpec spec = new GCMParameterSpec(TAG_BITS, blob, 0, IV_BYTES);
+            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+            cipher.init(Cipher.DECRYPT_MODE, getKey(), spec);
+            return cipher.doFinal(blob, IV_BYTES, blob.length - IV_BYTES);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /** Removes a named blob. */
+    public void removeBlob(String name) {
+        prefs.edit().remove(BLOB_PREFIX + name).apply();
+    }
+
     private SecretKey getOrCreateKey() throws Exception {
         SecretKey existing = getKey();
         if (existing != null) {

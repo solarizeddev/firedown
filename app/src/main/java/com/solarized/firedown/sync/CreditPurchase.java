@@ -20,9 +20,12 @@ import java.util.List;
  * <ol>
  *   <li>{@link #start} opens the quote and blinds a fresh secret (blocking, run on
  *       a background thread). The UI then shows the pay UI from {@code session.quote}.
- *   <li>{@link #tryComplete} is polled: it asks the mint to issue; while unpaid it
- *       returns {@code null}; once paid it unblinds the credit and redeems it at
- *       storage, returning the new balance.
+ *   <li>{@link #issueAndUnblind} is polled: it asks the mint to issue; while
+ *       unpaid it returns {@code false}; once paid it unblinds + verifies the
+ *       credit onto the session. Then {@link #redeem} burns it at storage for the
+ *       balance. Split so a lost redeem retries redeem-only (the mint refuses a
+ *       re-issue) — and the whole thing is persistable ({@link PendingPurchase} +
+ *       {@link #restore}) so a paid credit survives process death.
  * </ol>
  *
  * <p>The mint only ever sees the BLINDED message, so it cannot link the credit to
@@ -39,18 +42,47 @@ public final class CreditPurchase {
         this.storage = storage;
     }
 
-    /** A prepared purchase — the quote (for the pay UI) + the client-side blind state. */
+    /** A prepared purchase — the quote (for the pay UI) + the client-side blind
+     *  state. All of it is persistable (see {@link PendingPurchase}) so a paid
+     *  credit survives process death: {@code sig} is the unblinded signature,
+     *  null until issue succeeds, then carried so a lost redeem retries
+     *  redeem-only (never re-issue, which the mint refuses). */
     public static final class Session {
         public final MintClient.Quote quote;
         private final BlindSignature keyset;
         private final byte[] secret;
         private final BlindSignature.Blinded blinded;
+        private BigInteger sig; // unblinded signature; null until issued
 
         Session(MintClient.Quote quote, BlindSignature keyset, byte[] secret, BlindSignature.Blinded blinded) {
             this.quote = quote;
             this.keyset = keyset;
             this.secret = secret;
             this.blinded = blinded;
+        }
+
+        // Accessors so PendingPurchase can persist the blind state, and the
+        // ViewModel can tell a fresh session (needs issue) from a resumed,
+        // already-issued one (redeem-only).
+        byte[] secret() {
+            return secret;
+        }
+
+        BigInteger blindingR() {
+            return blinded.r;
+        }
+
+        BigInteger blindedValue() {
+            return blinded.blinded;
+        }
+
+        String keysetIdHex() {
+            return Hex.encode(keyset.keysetId());
+        }
+
+        /** The unblinded signature once issued (null before). */
+        public BigInteger sig() {
+            return sig;
         }
     }
 
@@ -99,24 +131,69 @@ public final class CreditPurchase {
     }
 
     /**
-     * One issue attempt. Returns {@code null} while the payment hasn't settled (the
-     * caller polls again after a delay). Once paid, unblinds the credit, verifies it
-     * locally, and redeems it at storage — returning the new metered balance.
-     * Blocking — call off the main thread.
+     * ISSUE step (idempotent-once at the mint). Returns {@code false} while the
+     * payment hasn't settled (the caller polls again). Once paid, unblinds +
+     * locally verifies the credit and stores it on the session ({@link
+     * Session#sig()}). Split from {@link #redeem} on purpose: the mint mints one
+     * credit per quote and REFUSES a re-issue with a different blinded message, so
+     * once this succeeds the caller must persist the sig and only ever retry
+     * REDEEM — never re-issue. Blocking — call off the main thread.
      */
-    public StorageApiClient.RedeemResult tryComplete(SyncIdentity id, Session s) throws IOException {
+    public boolean issueAndUnblind(Session s) throws IOException {
+        if (s.sig != null) {
+            return true; // already issued (resumed) — go straight to redeem
+        }
         MintClient.IssueOutcome out = mint.issue(s.quote.quoteId, s.blinded.blinded);
         if (!out.paid) {
-            return null;
+            return false;
         }
         BigInteger sig = s.keyset.unblind(out.blindSignature, s.blinded.r);
-        // Verify locally before spending a redeem round-trip — a bad credit would
-        // just 400 at storage anyway, but this pins the failure to the mint.
+        // Verify locally before spending a redeem round-trip. A bad credit is
+        // TERMINAL (a mint bug — retrying won't help), so throw a FatalException,
+        // not a bare IOException: the poll loop treats a bare IOException as
+        // "keep waiting" but a FatalException as "stop", which is what we want.
         if (!s.keyset.verify(s.secret, sig)) {
-            throw new IOException("mint returned an invalid credit");
+            throw new MintClient.FatalException("mint returned an invalid credit", "invalid-credit");
         }
-        String keysetIdHex = Hex.encode(s.keyset.keysetId());
-        return storage.redeemCredit(id, keysetIdHex, Hex.encode(s.secret), sig.toString(16));
+        s.sig = sig;
+        return true;
+    }
+
+    /**
+     * REDEEM step — burns the (already-issued) credit at storage for balance.
+     * Idempotent server-side: storage burns {@code sha256(secret)}, so a redeem
+     * whose response was lost can be safely retried; the retry returns {@code
+     * credit-spent} (a {@link StorageApiClient.FatalException}), which the caller
+     * treats as success — the credit WAS applied. Call only after {@link
+     * #issueAndUnblind} returned true. Blocking — call off the main thread.
+     */
+    public StorageApiClient.RedeemResult redeem(SyncIdentity id, Session s) throws IOException {
+        if (s.sig == null) {
+            throw new IllegalStateException("redeem before issue");
+        }
+        return storage.redeemCredit(id, s.keysetIdHex(), Hex.encode(s.secret), s.sig.toString(16));
+    }
+
+    /**
+     * Rebuilds a session from a persisted {@link PendingPurchase} (after process
+     * death). Refetches the keyset (by id) to rebuild the verification key, then
+     * pairs the stored (blinded, r, secret[, sig]) back onto a session so the
+     * caller can resume at issue (unpaid) or redeem (already issued). Blocking.
+     */
+    public Session restore(PendingPurchase p) throws IOException {
+        MintClient.Keyset keyset = findByHex(mint.fetchKeys(), p.keysetIdHex);
+        if (keyset == null) {
+            throw new IOException("pending purchase references an unknown keyset");
+        }
+        BlindSignature bs = keyset.blindSignature();
+        BlindSignature.Blinded blinded = BlindSignature.blindedFrom(
+                new BigInteger(p.blindedHex, 16), new BigInteger(p.rHex, 16));
+        MintClient.Quote quote = p.toQuote();
+        Session s = new Session(quote, bs, Hex.decode(p.secretHex), blinded);
+        if (p.sigHex != null && !p.sigHex.isEmpty()) {
+            s.sig = new BigInteger(p.sigHex, 16);
+        }
+        return s;
     }
 
     private static MintClient.Keyset findById(List<MintClient.Keyset> keys, byte[] id) {
@@ -126,5 +203,17 @@ public final class CreditPurchase {
             }
         }
         return null;
+    }
+
+    private static MintClient.Keyset findByHex(List<MintClient.Keyset> keys, String idHex) {
+        return findById(keys, Hex.decode(idHex));
+    }
+
+    /** Builds a persistable record from a freshly-started (pre-pay) session, so a
+     *  paid credit survives process death. Captures the quote + the full blind
+     *  state; {@code sig} is filled in later once issue succeeds
+     *  ({@link PendingPurchase#withSig}). */
+    public static PendingPurchase toPending(Session s) {
+        return PendingPurchase.fromSession(s);
     }
 }

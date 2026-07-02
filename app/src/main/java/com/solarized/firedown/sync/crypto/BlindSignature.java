@@ -96,6 +96,16 @@ public final class BlindSignature {
     }
 
     /**
+     * Rebuild a {@link Blinded} from a previously-produced (blinded value, r)
+     * pair — for RESUMING a pending purchase after process death, where the
+     * blinded message + blinding factor were persisted and must be paired back up
+     * without re-randomizing. No recompute: the caller stored both halves.
+     */
+    public static Blinded blindedFrom(BigInteger blinded, BigInteger r) {
+        return new Blinded(blinded, r);
+    }
+
+    /**
      * Blind with a caller-supplied r — deterministic, so the interop test can
      * reproduce the vectors. Package-private on purpose.
      */

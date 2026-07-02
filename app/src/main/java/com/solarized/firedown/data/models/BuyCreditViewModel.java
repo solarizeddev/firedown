@@ -14,11 +14,13 @@ import com.solarized.firedown.R;
 import com.solarized.firedown.sync.CloudBackupManager;
 import com.solarized.firedown.sync.CreditPurchase;
 import com.solarized.firedown.sync.MintClient;
+import com.solarized.firedown.sync.PendingPurchase;
 import com.solarized.firedown.sync.StorageApiClient;
 import com.solarized.firedown.sync.SyncSecrets;
 import com.solarized.firedown.sync.crypto.Hex;
 import com.solarized.firedown.sync.crypto.SyncIdentity;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -209,6 +211,12 @@ public class BuyCreditViewModel extends ViewModel {
         if (current != null && current.phase != Phase.ERROR) {
             return; // already loaded / in-flight — don't re-fetch on re-observe
         }
+        // A credit paid-but-not-yet-redeemed from a previous run (process death /
+        // left the wizard) is resumed here before showing the picker — so the money
+        // isn't lost. Only on a FRESH entry (guard above), never on re-observe.
+        if (resumePendingIfAny()) {
+            return;
+        }
         fetchOptions();
     }
 
@@ -296,6 +304,14 @@ public class BuyCreditViewModel extends ViewModel {
                 CreditPurchase purchase = new CreditPurchase(mint, storage);
                 CreditPurchase.Session session = purchase.startByKeyset(keysetIdHex, method);
 
+                // Persist the pending purchase BEFORE showing the pay UI — the
+                // blinding secret + quote now survive process death / the user
+                // leaving to a wallet or 3-D-Secure app, so a paid-but-not-yet-
+                // redeemed credit is recoverable (resumePendingIfAny) instead of
+                // lost money.
+                PendingPurchase pending = CreditPurchase.toPending(session);
+                pending.save(appContext);
+
                 Phase payPhase = RAIL_STRIPE.equals(method) ? Phase.PAY_STRIPE : Phase.PAY_LIGHTNING;
                 post(gen, UiState.pay(payPhase, session.quote.amountCents, session.quote.denomGbMonths,
                         sizeGb, durationMonths, session.quote.payRequest, session.quote.checkoutUrl));
@@ -304,48 +320,14 @@ public class BuyCreditViewModel extends ViewModel {
                     // The mint accepted the rail but returned no Checkout URL (card
                     // rail not configured on the server yet) — fail gracefully
                     // rather than spin on a quote that can never settle here.
+                    PendingPurchase.clear(appContext);
                     post(gen, UiState.error(appContext.getString(
                             R.string.buy_credit_error_card_unavailable)));
                     return;
                 }
 
-                int maxPolls = RAIL_STRIPE.equals(method) ? POLL_MAX_STRIPE : POLL_MAX_LIGHTNING;
-                final String finalMintedCode = mintedCode;
-                for (int i = 0; i < maxPolls; i++) {
-                    if (gen != flowGen) {
-                        return; // user left the pay screen — stop polling
-                    }
-                    StorageApiClient.RedeemResult r;
-                    try {
-                        r = purchase.tryComplete(id, session);
-                    } catch (MintClient.TransientException | StorageApiClient.TransientException te) {
-                        // A 429 (rate limit) / 503 during polling is NOT terminal —
-                        // the payment may still be settling. Swallow it and keep
-                        // waiting; only a fatal error or the timeout ends the flow.
-                        r = null;
-                    }
-                    if (r != null) {
-                        // Remember the purchased plan shape for the Cloud Backup
-                        // status hero ("Up to X GB · 1 year" + the month runway) —
-                        // the server only ever sees the anonymous GB-month
-                        // balance, so the client is the only holder of this.
-                        // Written even if the user already left the screen (gen
-                        // mismatch): the purchase DID settle.
-                        if (sizeGb > 0 && durationMonths > 0) {
-                            prefs.edit()
-                                    .putInt(Preferences.CLOUD_PLAN_SIZE_GB, sizeGb)
-                                    .putInt(Preferences.CLOUD_PLAN_DURATION_MONTHS, durationMonths)
-                                    .apply();
-                        }
-                        post(gen, UiState.success(r.redeemedGbMonths, r.balanceGbMonths,
-                                session.quote.denomGbMonths, sizeGb, durationMonths,
-                                session.quote.amountCents, finalMintedCode));
-                        return;
-                    }
-                    Thread.sleep(POLL_DELAY_MS);
-                }
-                post(gen, UiState.error(appContext.getString(
-                        R.string.buy_credit_error_timed_out)));
+                completePurchase(gen, purchase, session, id, sizeGb, durationMonths,
+                        method, mintedCode, pending);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt(); // cancelled — no state change
             } catch (Exception e) {
@@ -354,6 +336,158 @@ public class BuyCreditViewModel extends ViewModel {
                 SyncSecrets.wipe(code);
             }
         });
+    }
+
+    /**
+     * The poll-to-completion loop, shared by a fresh purchase and a resumed one.
+     * ISSUE and REDEEM are split so their retry granularity differs — the mint
+     * mints one credit per quote and refuses a re-issue, so once issue succeeds we
+     * persist the signature and ONLY ever retry redeem:
+     *
+     * <ul>
+     *   <li>issue: transient (429/503) → keep polling; not-paid-yet → keep polling;
+     *       a fatal (e.g. 410 quote-expired) → clear the record + end (no charge on
+     *       an unpaid expired quote).</li>
+     *   <li>once paid: persist the unblinded sig, so a crash mid-redeem resumes at
+     *       redeem-only.</li>
+     *   <li>redeem: a bare IOException / transient → RETRY REDEEM (never re-issue),
+     *       so a lost response doesn't fail a purchase whose money was taken; a
+     *       {@code credit-spent} 409 means an earlier redeem already applied it →
+     *       SUCCESS; any other fatal → error.</li>
+     * </ul>
+     *
+     * On success/credit-spent the record is cleared. On timeout it is deliberately
+     * KEPT — the payment may still settle, and the next entry resumes it.
+     */
+    private void completePurchase(int gen, CreditPurchase purchase, CreditPurchase.Session session,
+                                  SyncIdentity id, int sizeGb, int durationMonths, String method,
+                                  String mintedCode, PendingPurchase pending)
+            throws InterruptedException {
+        int maxPolls = RAIL_STRIPE.equals(method) ? POLL_MAX_STRIPE : POLL_MAX_LIGHTNING;
+        for (int i = 0; i < maxPolls; i++) {
+            if (gen != flowGen) {
+                return; // user left the pay screen — stop polling (record kept for resume)
+            }
+            boolean issued;
+            try {
+                issued = purchase.issueAndUnblind(session);
+            } catch (MintClient.FatalException fe) {
+                // 410 quote-expired or a genuine issue failure (incl. an invalid
+                // credit): the credit can't be minted for this quote. An UNPAID
+                // expired quote was never charged, so drop the record rather than
+                // resume a dead quote forever. FatalException is more specific than
+                // IOException, so it MUST be caught first.
+                PendingPurchase.clear(appContext);
+                post(gen, UiState.error(errorText(fe)));
+                return;
+            } catch (IOException io) {
+                // TransientException (429/503) OR a bare network drop during issue.
+                // The quote isn't dead and nothing was minted yet, so keep polling —
+                // the payment may still settle and issue is safe to retry (the mint
+                // is idempotent-once per quote on the same blinded message).
+                issued = false;
+            }
+            if (!issued) {
+                Thread.sleep(POLL_DELAY_MS);
+                continue;
+            }
+
+            // Paid + issued: persist the sig so a crash before/at redeem resumes
+            // redeem-only (never re-issue, which the mint refuses).
+            pending = pending.withSig(session.sig());
+            pending.save(appContext);
+
+            StorageApiClient.RedeemResult r;
+            try {
+                r = purchase.redeem(id, session);
+            } catch (StorageApiClient.FatalException fe) {
+                if (StorageApiClient.SLUG_CREDIT_SPENT.equals(fe.slug)) {
+                    // An earlier redeem (whose response we lost) already applied it.
+                    r = StorageApiClient.RedeemResult.applied(session.quote.denomGbMonths);
+                } else {
+                    PendingPurchase.clear(appContext);
+                    post(gen, UiState.error(errorText(fe)));
+                    return;
+                }
+            } catch (IOException io) {
+                // Transient (429/503) OR a bare socket drop with the credit maybe
+                // burned server-side — RETRY REDEEM ONLY. The sig is persisted, so
+                // even a crash here resumes safely; storage's burn is idempotent.
+                Thread.sleep(POLL_DELAY_MS);
+                continue;
+            }
+
+            // Success — remember the plan shape for the status hero, clear the
+            // record, done. Plan is written even on a gen mismatch (the purchase
+            // DID settle); the success post is gen-gated.
+            if (sizeGb > 0 && durationMonths > 0) {
+                prefs.edit()
+                        .putInt(Preferences.CLOUD_PLAN_SIZE_GB, sizeGb)
+                        .putInt(Preferences.CLOUD_PLAN_DURATION_MONTHS, durationMonths)
+                        .apply();
+            }
+            PendingPurchase.clear(appContext);
+            post(gen, UiState.success(r.redeemedGbMonths, r.balanceGbMonths,
+                    session.quote.denomGbMonths, sizeGb, durationMonths,
+                    session.quote.amountCents, mintedCode));
+            return;
+        }
+        // Timed out — KEEP the record (payment may still settle; resume picks it up).
+        post(gen, UiState.error(appContext.getString(R.string.buy_credit_error_timed_out)));
+    }
+
+    /**
+     * If a purchase was interrupted (process death / left the wizard) after paying
+     * but before redeeming, resume it: rebuild the session from the persisted
+     * record and run the completion loop. Re-shows the pay UI when still unpaid (so
+     * the user can finish paying); goes straight through when the credit was
+     * already issued. Called from {@link #loadOptions} on entry, before the picker.
+     */
+    private boolean resumePendingIfAny() {
+        final PendingPurchase pending = PendingPurchase.load(appContext);
+        if (pending == null) {
+            return false;
+        }
+        state.setValue(UiState.starting());
+        final int gen = ++flowGen;
+        executor.execute(() -> {
+            byte[] code = null;
+            try {
+                code = new SyncSecrets(appContext).load();
+                if (code == null) {
+                    // No account key to redeem into (shouldn't happen once a purchase
+                    // started) — drop the orphaned record and fall back to the picker.
+                    PendingPurchase.clear(appContext);
+                    fetchOptions();
+                    return;
+                }
+                SyncIdentity id = SyncIdentity.fromCode(code);
+                MintClient mint = new MintClient(http, Preferences.MINT_DEFAULT_BACKEND);
+                StorageApiClient storage = new StorageApiClient(http, cloud.backendUrl());
+                CloudBackupManager.ensureRegistered(prefs, storage, id);
+                CreditPurchase purchase = new CreditPurchase(mint, storage);
+                CreditPurchase.Session session = purchase.restore(pending);
+
+                // Not yet issued → re-show the pay affordance so the user can still
+                // pay (the poll also settles it if they already did). Already issued
+                // → stay on the brief "starting" spinner and go straight to redeem.
+                if (pending.sigHex == null || pending.sigHex.isEmpty()) {
+                    Phase payPhase = RAIL_STRIPE.equals(pending.method)
+                            ? Phase.PAY_STRIPE : Phase.PAY_LIGHTNING;
+                    post(gen, UiState.pay(payPhase, pending.amountCents, pending.denomGbMonths,
+                            pending.sizeGb, pending.durationMonths, pending.payRequest, pending.checkoutUrl));
+                }
+                completePurchase(gen, purchase, session, id, pending.sizeGb, pending.durationMonths,
+                        pending.method, null, pending);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            } catch (Exception e) {
+                post(gen, UiState.error(errorText(e)));
+            } finally {
+                SyncSecrets.wipe(code);
+            }
+        });
+        return true;
     }
 
     /** Abandons the current pay/poll and returns to the denomination picker. The
