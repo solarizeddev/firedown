@@ -1,12 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Custom layout for the "Add storage credit" Preference on the merged Cloud
-  screen — the ONE prominent action, a filled CTA directly under the status
-  hero (pay-per-use storage is the screen's primary job; plain rows read as
-  secondary). The BUTTON is deliberately non-clickable/non-focusable: the
-  Preference row owns the click (SyncSettingsFragment routes it to the buy
-  flow), the button is purely the visual; duplicateParentState keeps its
-  pressed ripple in step with the row.
+  Custom layout for the MORPHING CTA Preference on the merged Cloud screen —
+  the ONE prominent action, a filled button directly under the status hero.
+  Its label is the Preference TITLE (the button carries @android:id/title —
+  MaterialButton IS a TextView, so the standard Preference title binding
+  drives it): SyncSettingsFragment sets "Create recovery code" pre-key and
+  "Add storage credit" once a key exists, so the button always shows the
+  next onboarding step. The BUTTON is deliberately non-clickable/
+  non-focusable: the Preference row owns the click; duplicateParentState
+  keeps its pressed ripple in step with the row.
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -18,9 +20,9 @@
     android:paddingBottom="10dp">
 
     <com.google.android.material.button.MaterialButton
+        android:id="@android:id/title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/buy_credit_title"
         android:clickable="false"
         android:focusable="false"
         android:duplicateParentState="true"

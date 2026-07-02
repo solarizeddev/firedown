@@ -2,6 +2,7 @@ package com.solarized.firedown.settings;
 
 import android.content.Context;
 import android.content.res.ColorStateList;
+import android.graphics.Typeface;
 import android.text.format.Formatter;
 import android.util.AttributeSet;
 import android.view.View;
@@ -62,6 +63,9 @@ public class CloudStatusPreference extends Preference {
 
     private boolean mSetUp;
     private boolean mActive;
+    /** Whether a recovery code exists on this device — drives the onboarding
+     *  steps' check-offs in the not-set-up empty state. */
+    private boolean mHasKey;
     private StorageApiClient.Quota mQuota; // null = unknown / offline / not set up
     private int mFileCount = -1;
     private long mTotalBytes = -1;
@@ -77,6 +81,14 @@ public class CloudStatusPreference extends Preference {
     public void setSetUp(boolean setUp) {
         if (mSetUp != setUp) {
             mSetUp = setUp;
+            notifyChanged();
+        }
+    }
+
+    /** A recovery code exists — checks off onboarding step ① in the empty state. */
+    public void setHasKey(boolean hasKey) {
+        if (mHasKey != hasKey) {
+            mHasKey = hasKey;
             notifyChanged();
         }
     }
@@ -122,6 +134,7 @@ public class CloudStatusPreference extends Preference {
         if (!mSetUp) {
             hero.setVisibility(View.GONE);
             empty.setVisibility(View.VISIBLE);
+            bindOnboardingSteps(ctx, holder);
             return;
         }
         hero.setVisibility(View.VISIBLE);
@@ -196,6 +209,47 @@ public class CloudStatusPreference extends Preference {
             return (int) Math.max(1, Math.round(mQuota.balanceGbMonths / mPlanSizeGb));
         }
         return mPlanMonths;
+    }
+
+    /**
+     * The not-set-up empty state is the onboarding ROADMAP: ① recovery code →
+     * ② storage credit → ③ first backup. A DONE step gets a "✓" prefix and
+     * muted ink; the next pending step keeps full-contrast ink so it reads as
+     * "you are here". Step ② counts as done once a purchase is known (local
+     * plan shape or a metered balance); ③ is by definition pending while the
+     * empty state shows (a committed file flips the whole card to the hero).
+     */
+    private void bindOnboardingSteps(Context ctx, PreferenceViewHolder holder) {
+        TextView stepCode = (TextView) holder.findViewById(R.id.cb_step_code);
+        TextView stepCredit = (TextView) holder.findViewById(R.id.cb_step_credit);
+        TextView stepBackup = (TextView) holder.findViewById(R.id.cb_step_backup);
+        if (stepCode == null || stepCredit == null || stepBackup == null) {
+            return;
+        }
+        boolean codeDone = mHasKey;
+        boolean creditDone = (mPlanSizeGb > 0)
+                || (mQuota != null && mQuota.metered && mQuota.balanceGbMonths > 0);
+        bindStep(ctx, stepCode, 1, ctx.getString(R.string.settings_sync_create_title),
+                codeDone, !codeDone);
+        bindStep(ctx, stepCredit, 2, ctx.getString(R.string.buy_credit_title),
+                creditDone, codeDone && !creditDone);
+        bindStep(ctx, stepBackup, 3, ctx.getString(R.string.cloud_status_empty_body),
+                false, codeDone && creditDone);
+    }
+
+    /** One roadmap line: "✓ text" muted when done, "N · text" full-contrast
+     *  when it's the current step, "N · text" muted when still ahead. */
+    private static void bindStep(Context ctx, TextView view, int number, String text,
+                                 boolean done, boolean current) {
+        String prefix = done ? "✓  " : number + " ·  ";
+        view.setText(prefix + text);
+        int ink = current
+                ? MaterialColors.getColor(view,
+                        com.google.android.material.R.attr.colorOnSurface)
+                : MaterialColors.getColor(view,
+                        com.google.android.material.R.attr.colorOnSurfaceVariant);
+        view.setTextColor(ink);
+        view.setTypeface(null, current ? Typeface.BOLD : Typeface.NORMAL);
     }
 
     /** The context chip: read-only (grace) / the purchased plan / raw balance /

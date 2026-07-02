@@ -24,6 +24,7 @@ import androidx.biometric.BiometricPrompt;
 import androidx.core.content.ContextCompat;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceScreen;
+import androidx.preference.SwitchPreferenceCompat;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 
@@ -56,14 +57,15 @@ import okhttp3.OkHttpClient;
  * the thing a paying user cares about (the plan, the buy door, the files) was one
  * level deeper than the free bookmarks toggle.
  *
- * <p>Top to bottom: the {@link CloudStatusPreference} status hero, the prominent
- * "Add storage credit" CTA, the no-key gateway (Create / "I have a recovery
- * code"), the Manage-backup rows (Backups list, right-to-erasure), one secondary
- * Bookmarks nav row (the toggle / Sync now / Delete-from-server stay on the
- * focused {@link BookmarksSyncFragment} — that separation survives the merge on
- * purpose), the shared recovery code behind a device-auth gate, and the offline
- * encryption FAQ. All network/crypto work lives in {@link SyncManager} /
- * {@link CloudBackupManager}.
+ * <p>Top to bottom: the {@link CloudStatusPreference} status hero (whose
+ * not-set-up state is the three-step onboarding roadmap), the MORPHING filled
+ * CTA ("Create recovery code" pre-key, "Add storage credit" after), the
+ * adopt-a-code door, the Manage-backup Backups row, one secondary inline
+ * Bookmarks switch (the focused BookmarksSyncFragment was retired — sync runs
+ * automatically once on, so its "Sync now" went with it), the shared recovery
+ * code behind a device-auth gate, the offline encryption FAQ, and LAST the two
+ * SCOPED erasure rows (bookmarks-from-server / backed-up-files). All
+ * network/crypto work lives in {@link SyncManager} / {@link CloudBackupManager}.
  *
  * <p>The hero binds {@link CloudBackupManager#lastStatus()} synchronously on
  * entry (the singleton's last good snapshot) and the async
@@ -98,12 +100,12 @@ public class SyncSettingsFragment extends BasePreferenceFragment
     private Preference mFiles;
     private Preference mDeleteData;
     private Preference mCatManage;
-    private Preference mBookmarks;
+    private SwitchPreferenceCompat mBookmarksSwitch;
+    private Preference mDeleteBookmarks;
     private Preference mHelp;
     private Preference mShowCode;
     private Preference mExportCode;
     private Preference mLinkCode;
-    private Preference mCreateCode;
     // The Recovery-code category is SHARED (bookmarks + downloads) and shown once
     // the account exists — a recovery code has been created or adopted.
     private Preference mCatCode;
@@ -111,6 +113,11 @@ public class SyncSettingsFragment extends BasePreferenceFragment
     /** True while a transfer is running, so a usage refresh doesn't clobber the
      *  live "Transfer in progress…" status. */
     private boolean mTransferActive;
+
+    /** Last bookmark-sync state seen, so the failure snackbar fires only on a
+     *  fresh SYNCING -> ERROR transition (not on every entry with a stale
+     *  error). Ported from the retired focused Bookmarks screen. */
+    private int mSyncState = SyncManager.STATE_OFF;
 
     /** SAF "create document" for exporting the recovery code to a text file. */
     private final ActivityResultLauncher<String> mExportCodePicker =
@@ -152,6 +159,20 @@ public class SyncSettingsFragment extends BasePreferenceFragment
                         updateState();
                     }
                 });
+        // A bookmark sync that fails while this screen is open (a toggle-on run
+        // OR a background run) surfaces a snackbar, gated on SYNCING -> ERROR so
+        // a stale error on entry shows nothing (ported from the retired
+        // BookmarksSyncFragment).
+        mSyncManager.observeState().observe(getViewLifecycleOwner(), state -> {
+            int next = state == null ? SyncManager.STATE_OFF : state;
+            if (next == SyncManager.STATE_ERROR && mSyncState == SyncManager.STATE_SYNCING) {
+                snackbar(getString(R.string.settings_sync_now_failed));
+            }
+            if (next != mSyncState) {
+                mSyncState = next;
+                updateState(); // reflect a finished sync in the last-synced summary
+            }
+        });
     }
 
     @Override
@@ -165,12 +186,12 @@ public class SyncSettingsFragment extends BasePreferenceFragment
         mFiles = findPreference(Preferences.SETTINGS_CLOUD_BACKUP_FILES);
         mDeleteData = findPreference(Preferences.SETTINGS_CLOUD_BACKUP_DELETE_DATA);
         mCatManage = findPreference(Preferences.SETTINGS_CLOUD_BACKUP_CAT_MANAGE);
-        mBookmarks = findPreference(Preferences.SETTINGS_SYNC_BOOKMARKS_LINK);
+        mBookmarksSwitch = findPreference(Preferences.SYNC_ENABLED);
+        mDeleteBookmarks = findPreference(Preferences.SETTINGS_SYNC_DELETE_DATA);
         mHelp = findPreference(Preferences.SETTINGS_SYNC_HELP);
         mShowCode = findPreference(Preferences.SETTINGS_SYNC_SHOW_CODE);
         mExportCode = findPreference(Preferences.SETTINGS_SYNC_EXPORT_CODE);
         mLinkCode = findPreference(Preferences.SETTINGS_SYNC_LINK_CODE);
-        mCreateCode = findPreference(Preferences.SETTINGS_SYNC_CREATE_CODE);
         mCatCode = findPreference(Preferences.SETTINGS_SYNC_CAT_CODE);
 
         if (mBuy != null) {
@@ -182,8 +203,27 @@ public class SyncSettingsFragment extends BasePreferenceFragment
         if (mDeleteData != null) {
             mDeleteData.setOnPreferenceClickListener(this);
         }
-        if (mBookmarks != null) {
-            mBookmarks.setOnPreferenceClickListener(this);
+        if (mBookmarksSwitch != null) {
+            // Never let the switch self-persist — SyncManager owns SYNC_ENABLED
+            // and the switch is re-synced from isEnabled() in updateState().
+            mBookmarksSwitch.setOnPreferenceChangeListener((pref, newValue) -> {
+                boolean want = Boolean.TRUE.equals(newValue);
+                if (want && !mSyncManager.isEnabled()) {
+                    // The switch is disabled pre-key (key-first gate), so a code
+                    // always exists here — enable with it directly; no setup
+                    // chooser (one code, both features, by design).
+                    if (mSyncManager.hasCode()) {
+                        mSyncManager.enableWithExistingCode();
+                        updateState();
+                    }
+                } else if (!want && mSyncManager.isEnabled()) {
+                    showSignOutDialog();
+                }
+                return false;
+            });
+        }
+        if (mDeleteBookmarks != null) {
+            mDeleteBookmarks.setOnPreferenceClickListener(this);
         }
         if (mHelp != null) {
             mHelp.setOnPreferenceClickListener(this);
@@ -196,9 +236,6 @@ public class SyncSettingsFragment extends BasePreferenceFragment
         }
         if (mLinkCode != null) {
             mLinkCode.setOnPreferenceClickListener(this);
-        }
-        if (mCreateCode != null) {
-            mCreateCode.setOnPreferenceClickListener(this);
         }
 
         tintIcons();
@@ -220,26 +257,24 @@ public class SyncSettingsFragment extends BasePreferenceFragment
         String key = preference.getKey();
         switch (key) {
             case Preferences.SETTINGS_CLOUD_BACKUP_BUY -> {
-                // The CTA is hidden until a key exists (key-first gate), so this
-                // guard only catches a stale row: re-evaluate instead of dropping
-                // a keyless user onto the buy flow's no-account error.
+                // The MORPHING CTA: the next onboarding step. Pre-key it reads
+                // "Create recovery code" and runs the create flow (mandatory
+                // "I've saved it" gate); with a key it opens the buy flow.
                 if (mCloudBackup.hasAccount()) {
                     NavigationUtils.navigateSafe(mNavController, R.id.action_sync_to_buy);
                 } else {
-                    updateState();
+                    createCode();
                 }
             }
             case Preferences.SETTINGS_CLOUD_BACKUP_FILES ->
                     NavigationUtils.navigateSafe(mNavController, R.id.action_sync_to_files);
             case Preferences.SETTINGS_CLOUD_BACKUP_DELETE_DATA -> showDeleteDataDialog();
-            case Preferences.SETTINGS_SYNC_BOOKMARKS_LINK ->
-                    NavigationUtils.navigateSafe(mNavController, R.id.action_sync_to_bookmarks_sync);
+            case Preferences.SETTINGS_SYNC_DELETE_DATA -> showDeleteBookmarksDialog();
             case Preferences.SETTINGS_SYNC_HELP ->
                     NavigationUtils.navigateSafe(mNavController, R.id.action_sync_to_help);
             case Preferences.SETTINGS_SYNC_SHOW_CODE -> authThenShowCode();
             case Preferences.SETTINGS_SYNC_EXPORT_CODE -> showExportCaveatDialog();
             case Preferences.SETTINGS_SYNC_LINK_CODE -> showLinkDialog();
-            case Preferences.SETTINGS_SYNC_CREATE_CODE -> createCode();
         }
         return true;
     }
@@ -247,37 +282,42 @@ public class SyncSettingsFragment extends BasePreferenceFragment
     /**
      * Reflects persisted state into every section. The KEY is the account
      * gateway: a recovery code must exist before EITHER feature can be used, so
-     * pre-key only the Create / "I have a recovery code" pair is offered — the
-     * buy CTA and Manage rows are hidden and the Bookmarks row is disabled. This
-     * is what stops a keyless purchase (the buy flow used to mint a code silently
-     * mid-checkout — see BuyCreditViewModel).
+     * pre-key the CTA morphs to "Create recovery code", the Manage rows are
+     * hidden and the Bookmarks switch is disabled. This is what stops a keyless
+     * purchase (the buy flow used to mint a code silently mid-checkout — see
+     * BuyCreditViewModel).
      */
     private void updateState() {
         boolean hasKey = mCloudBackup.hasAccount();
         boolean setUp = mCloudBackup.isSetUp();
         boolean on = mSyncManager.isEnabled();
 
-        // The Create / Recover pair: the only actions offered pre-key, hidden
-        // once a key exists (there's nothing to create or adopt then).
-        if (mCreateCode != null) {
-            mCreateCode.setVisible(!hasKey);
+        // The MORPHING CTA always shows the next step: "Create recovery code"
+        // until a key exists, then "Add storage credit" (the layout binds the
+        // title into the filled button).
+        if (mBuy != null) {
+            mBuy.setTitle(hasKey
+                    ? R.string.buy_credit_title
+                    : R.string.settings_sync_create_title);
         }
+        // The adopt-an-existing-account door: only offered pre-key.
         if (mLinkCode != null) {
             mLinkCode.setVisible(!hasKey);
         }
-        // The prominent buy CTA: needs a key to redeem a credit into.
-        if (mBuy != null) {
-            mBuy.setVisible(hasKey);
-        }
         applyManageVisibility(hasKey && setUp);
-        // Bookmarks row: disabled without a key; once enabled, reads its on/off
-        // state inline (the toggle itself lives on the focused screen it opens).
-        if (mBookmarks != null) {
-            mBookmarks.setEnabled(hasKey);
-            mBookmarks.setSummary(!hasKey
+        // Bookmarks switch: disabled without a key (key-first gate); checked
+        // state mirrors SyncManager (the switch never self-persists).
+        if (mBookmarksSwitch != null) {
+            mBookmarksSwitch.setEnabled(hasKey);
+            mBookmarksSwitch.setChecked(on);
+            mBookmarksSwitch.setSummary(!hasKey
                     ? getString(R.string.settings_sync_needs_key)
                     : on ? lastSyncedSummary()
                          : getString(R.string.settings_sync_switch_summary));
+        }
+        // Bookmark erasure is meaningful only while sync is on.
+        if (mDeleteBookmarks != null) {
+            mDeleteBookmarks.setVisible(on);
         }
         // Recovery-code section is SHARED → shown once a key exists.
         if (mCatCode != null) {
@@ -313,6 +353,7 @@ public class SyncSettingsFragment extends BasePreferenceFragment
                 mSharedPreferences.getInt(Preferences.CLOUD_PLAN_SIZE_GB, 0),
                 mSharedPreferences.getInt(Preferences.CLOUD_PLAN_DURATION_MONTHS, 0));
         mStatus.setActive(mTransferActive);
+        mStatus.setHasKey(hasKey); // onboarding step ① check-off
         CloudBackupManager.Status cached = mCloudBackup.lastStatus();
         if (cached != null) {
             mStatus.setSetUp(cached.setUp);
@@ -440,6 +481,47 @@ public class SyncSettingsFragment extends BasePreferenceFragment
                         | BiometricManager.Authenticators.DEVICE_CREDENTIAL)
                 .build();
         prompt.authenticate(info);
+    }
+
+    /** Turning the bookmarks switch OFF = sign out of bookmark sync (the doc
+     *  stays on the server; the shared code is wiped only if Cloud Backup no
+     *  longer needs it — see SyncManager.disable). */
+    private void showSignOutDialog() {
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.settings_sync_sign_out_title)
+                .setMessage(R.string.settings_sync_sign_out_message)
+                .setPositiveButton(R.string.settings_sync_sign_out_action, (dialog, which) -> {
+                    mSyncManager.disable();
+                    updateState();
+                    snackbar(getString(R.string.settings_sync_signed_out));
+                })
+                .setNegativeButton(R.string.cancel, null)
+                .show();
+    }
+
+    /**
+     * Confirms and runs the bookmark server-side erasure (right-to-erasure) —
+     * distinct from turning sync off; on success it also turns sync off locally.
+     * SCOPED: bookmarks only, the sibling of "Delete backed-up files" below it.
+     */
+    private void showDeleteBookmarksDialog() {
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.settings_sync_delete_title)
+                .setMessage(R.string.settings_sync_delete_message)
+                .setPositiveButton(R.string.settings_sync_delete_action, (dialog, which) -> {
+                    snackbar(getString(R.string.settings_sync_delete_started));
+                    mSyncManager.deleteServerData(ok -> {
+                        if (!isAdded()) {
+                            return;
+                        }
+                        updateState();
+                        snackbar(getString(ok
+                                ? R.string.settings_sync_delete_done
+                                : R.string.settings_sync_delete_failed));
+                    });
+                })
+                .setNegativeButton(R.string.cancel, null)
+                .show();
     }
 
     /**

@@ -554,18 +554,16 @@ public class CloudBackupManager {
             final boolean success = ok;
             main.post(() -> {
                 if (success) {
-                    mLastStatus = null; // the account is gone — drop the snapshot
-                    prefs.edit()
-                            .putBoolean(Preferences.CLOUD_BACKUP_ENABLED, false)
-                            // The account is gone; a stale plan shape would feed
-                            // the status hero a runway for a balance that no
-                            // longer exists.
-                            .remove(Preferences.CLOUD_PLAN_SIZE_GB)
-                            .remove(Preferences.CLOUD_PLAN_DURATION_MONTHS)
-                            .apply();
-                    if (!prefs.getBoolean(Preferences.SYNC_ENABLED, false)) {
-                        new SyncSecrets(context).clear();
-                    }
+                    // "Delete backed-up files" is SCOPED: the server erases
+                    // objects + manifest but KEEPS the quota row, so a paid
+                    // GB-month balance survives. Deliberately do NOT wipe the
+                    // plan prefs or the recovery code here — the old full-wipe
+                    // cleanup (flag off, plan removed, code cleared when
+                    // bookmarks were off) STRANDED that surviving balance: the
+                    // code is the only key to it. The loadStatus reconcile owns
+                    // the flag from the server truth (a metered spent+empty
+                    // account still auto-retires; a funded one stays visible).
+                    mLastStatus = null; // usage changed — drop the stale snapshot
                 }
                 onResult.accept(success);
             });

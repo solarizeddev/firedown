@@ -20,9 +20,11 @@ public class SettingsActivity extends BaseActivity {
      *  the home / browser "Sync" popup row. */
     public static final String EXTRA_OPEN_SYNC = "com.solarized.firedown.extra.OPEN_SYNC";
 
-    /** Intent boolean extra: open straight to the focused Bookmarks-sync screen
-     *  (the bookmarks-list overflow + sync banner deep-link here, past both the
-     *  settings list AND the account hub). */
+    /** Intent boolean extra: bookmarks-sync deep link (bookmarks-list overflow +
+     *  sync banner). Lands on the merged Cloud screen, which hosts the inline
+     *  bookmarks switch since the focused Bookmarks screen was retired; kept as
+     *  its own extra because callers express a different intent than
+     *  {@link #EXTRA_OPEN_SYNC}. */
     public static final String EXTRA_OPEN_BOOKMARKS_SYNC = "com.solarized.firedown.extra.OPEN_BOOKMARKS_SYNC";
 
     /** Intent boolean extra: open the Cloud screen — the in-progress
@@ -81,14 +83,15 @@ public class SettingsActivity extends BaseActivity {
             navController.navigate(R.id.settings_sync, null, opts);
         }
 
-        // Deep-link straight to the focused Bookmarks-sync screen (bookmarks-list
-        // overflow + sync banner). Replace the settings list on the back stack so
-        // Back returns to the caller (bookmarks), not into the settings tree.
+        // Deep-link for the bookmarks-list overflow + sync banner: the merged
+        // Cloud screen (it hosts the inline bookmarks switch). Replace the
+        // settings list on the back stack so Back returns to the caller
+        // (bookmarks), not into the settings tree.
         if (getIntent().getBooleanExtra(EXTRA_OPEN_BOOKMARKS_SYNC, false)) {
             NavOptions opts = new NavOptions.Builder()
                     .setPopUpTo(R.id.settings, true)
                     .build();
-            navController.navigate(R.id.settings_bookmarks_sync, null, opts);
+            navController.navigate(R.id.settings_sync, null, opts);
         }
 
         // Deep-link straight to the merged Cloud screen (home status line + the
@@ -142,8 +145,6 @@ public class SettingsActivity extends BaseActivity {
                 mToolbar.setTitle(R.string.settings_lock_title);
             else if(id == R.id.settings_sync)
                 mToolbar.setTitle(R.string.settings_account_title);
-            else if(id == R.id.settings_bookmarks_sync)
-                mToolbar.setTitle(R.string.settings_sync_title);
             else if(id == R.id.settings_sync_help)
                 mToolbar.setTitle(R.string.settings_sync_help_title);
             else if(id == R.id.settings_cloud_backup_files)

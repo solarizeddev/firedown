@@ -12,41 +12,38 @@
        Add storage credit      FILLED CTA directly under the hero (custom
                                layout preference_cloud_buy_button.xml)
     ── (no-key gateway) ──  (shown ONLY until a recovery code exists)
-       Create recovery code    › mint a fresh key here (no feature enabled yet)
+       [the CTA above morphs to "Create recovery code" pre-key]
        I have a recovery code  › adopt an existing account's key
     ── Manage backup ──  (shown once Cloud Backup is set up)
        Backups                 › the backed-up-files list
     ── Bookmarks ──  (secondary by design)
-       Sync bookmarks          › BookmarksSyncFragment (toggle / Sync now /
-                                 Delete-from-server live THERE, not here)
+       Sync bookmarks          INLINE switch (the focused BookmarksSyncFragment
+                               was retired with the merge; "Sync now" dropped —
+                               sync is automatic, the summary shows last-synced)
     ── Recovery code ──  (shared; shown once a key exists)
        Show recovery code
        Save recovery code to file
     ── About ──
        How sync & encryption work  (covers bookmarks AND files)
     ── (last, unheaded) ──
-       Delete backed-up files    right-to-erasure for the STORAGE account only —
-                                 LAST by danger, not taxonomy. Deliberately
-                                 scoped + named so: bookmarks have their OWN
-                                 "Delete bookmarks from server" on the focused
-                                 Bookmarks screen, and a single "delete all
-                                 cloud data" row here misled (it never touched
-                                 bookmarks). Per-feature erasure, per-feature
-                                 naming.
+       Delete bookmarks from server   (shown while sync is on)
+       Delete backed-up files         (shown once set up)
+       TWO SCOPED erasure rows, LAST by danger. Never a single "delete all
+       cloud data" row — it misled (never touched bookmarks) and would couple
+       wiping free bookmarks to destroying paid backups + their balance.
 
-  KEY-FIRST GATE (unchanged): a recovery code is the account gateway. Until one
-  exists, the buy CTA + Manage rows are hidden, the Bookmarks row is DISABLED,
-  and only Create / "I have a recovery code" are offered. This is what stops a
+  KEY-FIRST GATE (unchanged in spirit): a recovery code is the account gateway.
+  Until one exists the CTA reads "Create recovery code" (not buy), the Manage
+  rows are hidden, and the Bookmarks switch is DISABLED. This is what stops a
   keyless purchase — the buy flow used to mint a code silently mid-checkout,
   which left a ghost account with an unsaved key when the user backed out of
-  Stripe (see BuyCreditViewModel). Creating a key from here forces the "I've
-  saved it" step before it counts.
+  Stripe (see BuyCreditViewModel). Creating a key forces the "I've saved it"
+  step before it counts.
 
-  The bookmarks row deep-links to the focused screen so the bookmarks-list
-  overflow and this screen land in the SAME place. Cloud Backup stays
-  action-driven (a download's options sheet backs it up on demand). The debug
-  smoke-test row (debug builds only) is appended programmatically by
-  SyncSettingsFragment.
+  The bookmarks-list overflow + sync banner deep-links (EXTRA_OPEN_BOOKMARKS_SYNC)
+  land HERE now. Cloud Backup stays action-driven (a download's options sheet
+  backs it up on demand). The debug smoke-test row (debug builds only) is
+  appended programmatically by SyncSettingsFragment.
 -->
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
@@ -58,23 +55,20 @@
         android:selectable="false"
         android:persistent="false" />
 
-    <!-- The one PROMINENT action (filled CTA). Hidden until a key exists —
-         a credit needs a saved key to redeem into (key-first gate). -->
+    <!-- The one PROMINENT action — a MORPHING filled CTA whose label is the
+         Preference title (the layout binds it into the button): pre-key it
+         reads "Create recovery code" (onboarding step ①), post-key "Add
+         storage credit" (step ②/top-up). SyncSettingsFragment swaps title +
+         click routing in updateState. -->
     <Preference
         android:key="com.solarized.firedown.preferences.cloud.backup.buy"
+        android:title="@string/buy_credit_title"
         android:layout="@layout/preference_cloud_buy_button"
         android:persistent="false" />
 
-    <!-- Shown ONLY when this device has no recovery code yet (fresh install /
-         new device). Create = mint a fresh key; "I have a recovery code" =
-         adopt an existing one. Both hidden once a key exists. -->
-    <Preference
-        android:key="com.solarized.firedown.preferences.sync.create.code"
-        android:title="@string/settings_sync_create_title"
-        android:summary="@string/settings_sync_create_summary"
-        app:singleLineTitle="false"
-        app:icon="@drawable/ic_key_24" />
-
+    <!-- Shown ONLY when this device has no recovery code yet: the adopt-an-
+         existing-account door (the CTA above covers Create). Hidden once a
+         key exists. -->
     <Preference
         android:key="com.solarized.firedown.preferences.sync.link.code"
         android:title="@string/settings_sync_link_title"
@@ -96,14 +90,18 @@
 
     </PreferenceCategory>
 
-    <!-- Bookmarks are deliberately SECONDARY on this screen: one nav row to the
-         focused screen that owns the toggle / Sync now / Delete-from-server. -->
+    <!-- Bookmarks are deliberately SECONDARY on this screen: ONE inline switch
+         (sync is automatic once on — change-triggered + on-toggle — so the old
+         focused screen's "Sync now" row was reassurance theater and is gone;
+         the last-synced summary carries the same signal). The switch never
+         self-persists: SyncManager owns SYNC_ENABLED, the fragment re-syncs
+         checked state from isEnabled(). -->
     <PreferenceCategory
         android:key="com.solarized.firedown.preferences.sync.cat.bookmarks"
         android:title="@string/settings_sync_bookmarks_title">
 
-        <Preference
-            android:key="com.solarized.firedown.preferences.sync.bookmarks.link"
+        <SwitchPreferenceCompat
+            android:key="com.solarized.firedown.preferences.sync.enabled"
             android:title="@string/settings_sync_title"
             android:summary="@string/settings_sync_switch_summary"
             app:singleLineTitle="false"
@@ -144,13 +142,19 @@
 
     </PreferenceCategory>
 
-    <!-- The most destructive action on the screen sits LAST — placement by
-         danger, not taxonomy (it used to be the second actionable row, right
-         under Backups, prime real estate for an accident). Same set-up gate as
-         the Manage category (SyncSettingsFragment.applyManageVisibility).
-         Title is SCOPED ("Delete backed-up files", never "all cloud data"):
-         it erases only the storage account; bookmark erasure lives on the
-         focused Bookmarks screen. -->
+    <!-- The destructive actions sit LAST — placement by danger, not taxonomy.
+         TWO SCOPED erasure rows, never one "delete all cloud data" (which
+         would couple wiping free bookmarks to destroying paid backups):
+         bookmarks-from-server shows while sync is on; backed-up-files shares
+         the Manage rows' set-up gate. Deleting files does NOT touch the
+         credit balance (the server keeps the quota row). -->
+    <Preference
+        android:key="com.solarized.firedown.preferences.sync.delete.data"
+        android:title="@string/settings_sync_delete_title"
+        android:summary="@string/settings_sync_delete_summary"
+        app:singleLineTitle="false"
+        app:icon="@drawable/ic_baseline_delete_24" />
+
     <Preference
         android:key="com.solarized.firedown.preferences.cloud.backup.delete.data"
         android:title="@string/settings_cloud_backup_delete_title"

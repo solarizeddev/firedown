@@ -114,17 +114,11 @@ public class Preferences {
     /** Exports the recovery code to a user-chosen text file (SAF). */
     public static final String SETTINGS_SYNC_EXPORT_CODE = "com.solarized.firedown.preferences.sync.export.code";
     public static final String SETTINGS_SYNC_RESTORE = "com.solarized.firedown.preferences.sync.restore";
-    public static final String SETTINGS_SYNC_NOW = "com.solarized.firedown.preferences.sync.now";
     /** Opens the offline "How sync encryption works" FAQ dialog. */
     public static final String SETTINGS_SYNC_HELP = "com.solarized.firedown.preferences.sync.help";
     /** "I have a recovery code" — link this device to an existing account (restore
      *  downloads backup + storage credit). Shown only when no code exists yet. */
     public static final String SETTINGS_SYNC_LINK_CODE = "com.solarized.firedown.preferences.sync.link.code";
-    /** "Create recovery code" — mint a fresh key on this device (the account
-     *  gateway). Shown only when no code exists yet; the mirror of LINK_CODE. A key
-     *  is the prerequisite for bookmarks sync AND cloud backup, so both feature
-     *  rows stay disabled until one exists. */
-    public static final String SETTINGS_SYNC_CREATE_CODE = "com.solarized.firedown.preferences.sync.create.code";
     /** Right-to-erasure: delete the encrypted document from the server. */
     public static final String SETTINGS_SYNC_DELETE_DATA = "com.solarized.firedown.preferences.sync.delete.data";
     /** Section headers on the unified Sync screen. Bookmarks / Downloads / About
@@ -133,10 +127,6 @@ public class Preferences {
     public static final String SETTINGS_SYNC_CAT_BOOKMARKS = "com.solarized.firedown.preferences.sync.cat.bookmarks";
     public static final String SETTINGS_SYNC_CAT_DOWNLOADS = "com.solarized.firedown.preferences.sync.cat.downloads";
     public static final String SETTINGS_SYNC_CAT_ABOUT = "com.solarized.firedown.preferences.sync.cat.about";
-    /** Hub nav row that opens the focused Bookmarks-sync screen
-     *  ({@code BookmarksSyncFragment}) — same destination as the bookmarks-list
-     *  overflow, so the two land in the same place. */
-    public static final String SETTINGS_SYNC_BOOKMARKS_LINK = "com.solarized.firedown.preferences.sync.bookmarks.link";
 
     // ---- Cloud Backup (encrypted downloads → storage.firedown.app) ----
     // A SEPARATE feature from the local "Safe Folder" (file_safe / files/safe/),
@@ -148,7 +138,7 @@ public class Preferences {
      *  bookmark sync there is no on/off switch (it is action-driven — backing up a
      *  download sets it up on demand); this flag exists so disabling bookmark sync
      *  does NOT wipe the shared recovery code while Cloud Backup still needs it
-     *  (and vice-versa). Cleared by "Delete backed-up files". */
+     *  (and vice-versa). Cleared by the loadStatus reconcile when the server shows a dead account. */
     public static final String CLOUD_BACKUP_ENABLED = "com.solarized.firedown.preferences.cloud.backup.enabled";
     /** The ACCUMULATED purchased storage plan (size cap in GB × coverage months),
      *  stored CLIENT-side and MERGED at each redeem success (BuyCreditViewModel:
@@ -158,7 +148,7 @@ public class Preferences {
      *  learn "Up to 50 GB · 1 year" and size its month-tick runway. 0 = unknown
      *  (legacy denomination purchase, or a recovery-code restore on a new device)
      *  → the hero falls back to the raw balance + a tickless covered-until line.
-     *  Wiped by "Delete backed-up files". */
+     *  Survives "Delete backed-up files" (the balance does too). */
     public static final String CLOUD_PLAN_SIZE_GB = "com.solarized.firedown.preferences.cloud.plan.size.gb";
     public static final String CLOUD_PLAN_DURATION_MONTHS = "com.solarized.firedown.preferences.cloud.plan.duration.months";
     /** Settings entry that opens the Cloud Backup screen. */

@@ -1829,43 +1829,55 @@ opaque chunks + an opaque manifest blob.
   caller), not into the settings tree. A "Cloud" row in the home + browser popups
   opens the same merged screen (`EXTRA_OPEN_SYNC`).
 
-- **Cloud IA — ONE backup-first Cloud screen + the focused Bookmarks screen.**
+- **Cloud IA — ONE backup-first Cloud screen; everything Cloud lives on it.**
   The Settings → Cloud screen (`SyncSettingsFragment` / `settings_sync.xml`,
-  toolbar title "Cloud") is the MERGED home of the paid downloads backup — the
-  old thin-hub-plus-`CloudBackupSettingsFragment` two-level IA was retired
-  (maintainer call: reaching the plan/files took 4 taps from home and buried the
-  paid feature under the free one; don't resurrect the sub-screen). Order on the
-  screen = priority: the `CloudStatusPreference` **status hero**, the FILLED
-  **"Add storage credit"** CTA directly under it (`preference_cloud_buy_button.xml`
-  — the button inside is non-clickable/`duplicateParentState`, the Preference row
-  owns the click), the pre-key **Create / "I have a recovery code"** gateway, the
-  **Manage backup** category (Backups list — shown once set up), ONE secondary
-  **Bookmarks** nav row, the shared **recovery code** (show/export, device-auth
-  gated), the FAQ, and LAST the right-to-erasure row ("Delete backed-up files"
-  — sunk to the bottom by danger, not taxonomy; it shares the Manage rows'
-  set-up gate). That row's title is deliberately SCOPED: it erases only the
-  storage account, and bookmarks have their own "Delete bookmarks from server"
-  on the focused Bookmarks screen — an earlier "Delete all cloud data" title
-  implied it wiped bookmarks too (it never did). Per-feature erasure rows get
-  per-feature names; don't reintroduce an "all cloud data" label unless the
-  action genuinely erases both services. `deleteAllData` also CANCELS every
-  in-flight/queued transfer first (`cancelAllWorkByTag(WORK_TAG)` — backups AND
-  restores carry it): without that, a running upload failed its complete
-  against the wiped rows (spurious error + orphaned chunks) and a QUEUED backup
-  ran after the wipe, re-registered, and quietly re-created a manifest —
-  resurrecting cloud data seconds after the user erased everything. The KEY-FIRST GATE survives the
-  merge: pre-key the buy CTA + Manage rows are hidden, Bookmarks is disabled, and
-  only Create/adopt are offered (stops the keyless-purchase ghost account). The
-  bookmark-only *actions* — the master **toggle**, **Sync now**, **Delete
-  bookmarks from server** — STILL live on the focused `BookmarksSyncFragment`
-  (`settings_bookmarks_sync.xml`), never on the Cloud screen; that lesson from the
-  old hub stands. The **bookmarks-list overflow + sync banner** deep-link straight
-  to that focused screen (`EXTRA_OPEN_BOOKMARKS_SYNC`); `EXTRA_OPEN_SYNC` and
-  `EXTRA_OPEN_CLOUD_BACKUP` both land on the merged Cloud screen (kept as two
-  extras — callers express different intents); the Downloads toolbar routes
-  two-way (`isSetUp` → the files list, else → the Cloud screen, which handles
-  keyed-but-empty AND keyless itself). Bookmarks sync is free, downloads backup is
-  pay-per-use, but pricing is kept **implicit** in the copy (no badge).
+  toolbar title "Cloud") is the MERGED home of the paid downloads backup AND the
+  bookmarks toggle — both the old thin-hub-plus-`CloudBackupSettingsFragment`
+  two-level IA and the focused `BookmarksSyncFragment` were retired (maintainer
+  calls: reaching the plan/files took 4 taps from home; a whole sub-screen for
+  one switch was a tap tax). Order on the screen = priority: the
+  `CloudStatusPreference` **status hero**, the **MORPHING filled CTA** directly
+  under it (`preference_cloud_buy_button.xml` — the MaterialButton carries
+  `@android:id/title` so the Preference TITLE drives its label: "Create recovery
+  code" pre-key, "Add storage credit" after; the button is
+  non-clickable/`duplicateParentState`, the row owns the click), the pre-key
+  **"I have a recovery code"** adopt door, the **Manage backup** category
+  (Backups list — shown once set up), ONE secondary inline **Bookmarks
+  SwitchPreferenceCompat** (key `SYNC_ENABLED`, never self-persists — the change
+  listener returns false and `SyncManager` owns the pref; there is NO "Sync now"
+  row anymore — sync is change-triggered + runs on toggle-on, the last-synced
+  summary carries the signal), the shared **recovery code** (show/export,
+  device-auth gated), the FAQ, and LAST the TWO SCOPED erasure rows.
+  - **The not-set-up hero is the onboarding ROADMAP**: ① Create your recovery
+    code → ② Add storage credit → ③ back up from the download sheet ⋮, bound by
+    `CloudStatusPreference.bindOnboardingSteps` (done = "✓" + muted ink, the
+    next pending step keeps bold full-contrast ink; step ② checks off on a known
+    plan/metered balance). The steps reuse existing strings — no new
+    translations. The morphing CTA always shows the NEXT step.
+  - **Two scoped erasure rows, never one "delete all cloud data"**: "Delete
+    bookmarks from server" (shown while sync is on) and "Delete backed-up files"
+    (set-up gated). A combined row misled (the old title never touched
+    bookmarks) and would couple wiping free bookmarks to destroying paid
+    backups. **"Delete backed-up files" keeps the balance**: the server's
+    `DeleteAccountData` deletes objects + manifest but KEEPS the quota row, and
+    the client deliberately does NOT wipe the plan prefs / recovery code / the
+    enabled flag on success (the old full-wipe cleanup stranded the surviving
+    balance — the code is its only key; `loadStatus`'s reconcile owns the flag
+    from server truth). `deleteAllData` also CANCELS every in-flight/queued
+    transfer first (`cancelAllWorkByTag(WORK_TAG)` — backups AND restores carry
+    it): without that, a running upload failed its complete against the wiped
+    rows (spurious error + orphaned chunks) and a QUEUED backup ran after the
+    wipe and quietly re-created a manifest.
+  - The KEY-FIRST GATE survives: pre-key the CTA reads "Create recovery code"
+    (with the mandatory "I've saved it" dialog), Manage rows are hidden, the
+    Bookmarks switch is disabled (stops the keyless-purchase ghost account).
+  - Deep links: `EXTRA_OPEN_SYNC`, `EXTRA_OPEN_CLOUD_BACKUP` AND
+    `EXTRA_OPEN_BOOKMARKS_SYNC` (bookmarks-list overflow + sync banner) all land
+    on the merged Cloud screen — kept as three extras because callers express
+    different intents; the Downloads toolbar routes two-way (`isSetUp` → the
+    files list, else → the Cloud screen). Bookmarks sync is free, downloads
+    backup is pay-per-use, but pricing is kept **implicit** in the copy (no
+    badge).
   - **The status hero binds the CACHED snapshot first.**
     `CloudBackupManager.lastStatus()` keeps the last *successful* `Status` for the
     singleton's lifetime; the screen paints it synchronously on entry and the
