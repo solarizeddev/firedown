@@ -25,8 +25,11 @@ public class SettingsActivity extends BaseActivity {
      *  settings list AND the account hub). */
     public static final String EXTRA_OPEN_BOOKMARKS_SYNC = "com.solarized.firedown.extra.OPEN_BOOKMARKS_SYNC";
 
-    /** Intent boolean extra: open straight to the Downloads-backup (Cloud Backup)
-     *  screen — the in-progress upload/restore notification deep-links here. */
+    /** Intent boolean extra: open the Cloud screen — the in-progress
+     *  upload/restore notification and the home status line deep-link here. Since
+     *  the Cloud Backup sub-screen merged into the Cloud screen this lands on the
+     *  same destination as {@link #EXTRA_OPEN_SYNC}; both extras are kept because
+     *  callers express different intents (backup status vs account). */
     public static final String EXTRA_OPEN_CLOUD_BACKUP = "com.solarized.firedown.extra.OPEN_CLOUD_BACKUP";
 
     /** Intent boolean extra: open straight to the backed-up-files list (the
@@ -88,8 +91,8 @@ public class SettingsActivity extends BaseActivity {
             navController.navigate(R.id.settings_bookmarks_sync, null, opts);
         }
 
-        // Deep-link straight to the Downloads-backup screen (home status line +
-        // the upload/restore notification). Replace the settings list on the back
+        // Deep-link straight to the merged Cloud screen (home status line + the
+        // upload/restore notification). Replace the settings list on the back
         // stack so Back finishes this activity and returns to the CALLER (home /
         // whatever was behind the notification) instead of stepping into the
         // settings tree — same contract as the files deep-link below (a user
@@ -99,7 +102,7 @@ public class SettingsActivity extends BaseActivity {
             NavOptions opts = new NavOptions.Builder()
                     .setPopUpTo(R.id.settings, true)
                     .build();
-            navController.navigate(R.id.settings_cloud_backup, null, opts);
+            navController.navigate(R.id.settings_sync, null, opts);
         }
 
         // Deep-link straight to the backed-up-files list (Downloads overflow).
@@ -143,8 +146,6 @@ public class SettingsActivity extends BaseActivity {
                 mToolbar.setTitle(R.string.settings_sync_title);
             else if(id == R.id.settings_sync_help)
                 mToolbar.setTitle(R.string.settings_sync_help_title);
-            else if(id == R.id.settings_cloud_backup)
-                mToolbar.setTitle(R.string.settings_cloud_backup_title);
             else if(id == R.id.settings_cloud_backup_files)
                 mToolbar.setTitle(R.string.cloud_backup_files_title);
             else if(id == R.id.settings_cloud_backup_buy)

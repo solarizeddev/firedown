@@ -604,23 +604,15 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
             startActivity(intent);
         } else if (id == R.id.action_cloud_backup) {
             Intent intent = new Intent(mActivity, SettingsActivity.class);
-            // Key-first routing, three ways:
-            //  - in use (has backups)      → the backed-up-files list (useful);
-            //  - has a key, no backups yet → the Cloud Backup status screen (the
-            //    setup hero + "Add storage credit" door — they CAN buy/back up);
-            //  - NO key                    → the Sync hub, which offers Create /
-            //    "I have a recovery code". Never drop a keyless user onto the
-            //    "Add storage credit" screen: a credit needs a saved key first, so
-            //    that would dead-end at the buy flow's no-account error. Funnel to
-            //    key creation instead (matches the hub's key-first gating).
-            String extra;
-            if (mCloudBackup.isSetUp()) {
-                extra = SettingsActivity.EXTRA_OPEN_CLOUD_BACKUP_FILES;
-            } else if (mCloudBackup.hasAccount()) {
-                extra = SettingsActivity.EXTRA_OPEN_CLOUD_BACKUP;
-            } else {
-                extra = SettingsActivity.EXTRA_OPEN_SYNC;
-            }
+            // Routing, two ways:
+            //  - in use (has backups) → the backed-up-files list (useful);
+            //  - everything else      → the merged Cloud screen, which handles
+            //    both remaining states itself: a keyed-but-empty account gets the
+            //    status hero + "Add storage credit" CTA, a keyless user gets the
+            //    Create / "I have a recovery code" gateway (key-first gate).
+            String extra = mCloudBackup.isSetUp()
+                    ? SettingsActivity.EXTRA_OPEN_CLOUD_BACKUP_FILES
+                    : SettingsActivity.EXTRA_OPEN_CLOUD_BACKUP;
             intent.putExtra(extra, true);
             startActivity(intent);
         } else if (id == R.id.action_settings) {

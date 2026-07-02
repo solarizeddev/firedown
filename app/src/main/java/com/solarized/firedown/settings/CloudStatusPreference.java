@@ -22,6 +22,8 @@ import java.text.DateFormatSymbols;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.Locale;
@@ -257,7 +259,25 @@ public class CloudStatusPreference extends Preference {
         if (!metered) {
             return;
         }
-        String month = monthYear(mQuota.projectedRunoutAt);
+        // The server's projection is balance ÷ CURRENT footprint — with almost
+        // nothing backed up yet the denominator is tiny and the date runs absurd
+        // ("Covered until ~Feb 2086" at 0% usage, seen on-device). The plan the
+        // user actually bought is the honest ceiling, so when its shape is known
+        // the displayed date is clamped to now + plan months (matching the
+        // "≈ N of M months left" line, which already caps at M).
+        Instant projected = parseInstant(mQuota.projectedRunoutAt);
+        if (projected != null && planKnown) {
+            Instant planEnd = Instant.now().plusSeconds(
+                    Math.round(mPlanMonths * DAYS_PER_MONTH * 86400.0));
+            if (projected.isAfter(planEnd)) {
+                projected = planEnd;
+            }
+        }
+        // Unparseable by the strict parser → fall back to the lenient (uncapped)
+        // string slice rather than dropping the runway entirely.
+        String month = projected != null
+                ? monthYear(projected)
+                : monthYear(mQuota.projectedRunoutAt);
         if (month == null) {
             return;
         }
@@ -315,6 +335,27 @@ public class CloudStatusPreference extends Preference {
             String[] months = new DateFormatSymbols().getShortMonths();
             return months[month - 1] + " " + year;
         } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    /** An {@link Instant} → the same localized "Mar 2027" as
+     *  {@link #monthYear(String)}, for the plan-clamped covered-until date. */
+    private static String monthYear(Instant instant) {
+        ZonedDateTime z = instant.atZone(ZoneId.systemDefault());
+        String[] months = new DateFormatSymbols().getShortMonths();
+        return months[z.getMonthValue() - 1] + " " + z.getYear();
+    }
+
+    /** Strict RFC3339 parse (same flavour {@link #mediumDate} accepts), or null
+     *  so the caller can fall back to the lenient string slice. */
+    private static Instant parseInstant(String rfc3339) {
+        if (rfc3339 == null) {
+            return null;
+        }
+        try {
+            return OffsetDateTime.parse(rfc3339).toInstant();
+        } catch (RuntimeException e) {
             return null;
         }
     }

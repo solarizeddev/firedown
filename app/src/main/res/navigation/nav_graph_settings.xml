@@ -158,8 +158,15 @@
             app:popEnterAnim="@anim/slide_in_left"
             app:popExitAnim="@anim/slide_out_right" />
         <action
-            android:id="@+id/action_sync_to_cloud_backup"
-            app:destination="@id/settings_cloud_backup"
+            android:id="@+id/action_sync_to_buy"
+            app:destination="@id/settings_cloud_backup_buy"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
+        <action
+            android:id="@+id/action_sync_to_files"
+            app:destination="@id/settings_cloud_backup_files"
             app:enterAnim="@anim/slide_in_right"
             app:exitAnim="@anim/slide_out_left"
             app:popEnterAnim="@anim/slide_in_left"
@@ -178,24 +185,6 @@
     <fragment
         android:id="@+id/settings_sync_help"
         android:name="com.solarized.firedown.settings.SyncHelpFragment" />
-    <fragment
-        android:id="@+id/settings_cloud_backup"
-        android:name="com.solarized.firedown.settings.CloudBackupSettingsFragment">
-        <action
-            android:id="@+id/action_cloud_backup_to_files"
-            app:destination="@id/settings_cloud_backup_files"
-            app:enterAnim="@anim/slide_in_right"
-            app:exitAnim="@anim/slide_out_left"
-            app:popEnterAnim="@anim/slide_in_left"
-            app:popExitAnim="@anim/slide_out_right" />
-        <action
-            android:id="@+id/action_cloud_backup_to_buy"
-            app:destination="@id/settings_cloud_backup_buy"
-            app:enterAnim="@anim/slide_in_right"
-            app:exitAnim="@anim/slide_out_left"
-            app:popEnterAnim="@anim/slide_in_left"
-            app:popExitAnim="@anim/slide_out_right" />
-    </fragment>
     <fragment
         android:id="@+id/settings_cloud_backup_buy"
         android:name="com.solarized.firedown.settings.BuyCreditFragment" />

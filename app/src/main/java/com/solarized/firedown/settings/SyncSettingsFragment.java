@@ -8,7 +8,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.format.DateUtils;
-import android.text.format.Formatter;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.Button;
@@ -24,6 +23,7 @@ import androidx.biometric.BiometricManager;
 import androidx.biometric.BiometricPrompt;
 import androidx.core.content.ContextCompat;
 import androidx.preference.Preference;
+import androidx.preference.PreferenceScreen;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 
@@ -31,10 +31,13 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.snackbar.Snackbar;
 import com.solarized.firedown.AppLock;
+import com.solarized.firedown.BuildConfig;
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
 import com.solarized.firedown.sync.CloudBackupManager;
 import com.solarized.firedown.sync.SyncManager;
+import com.solarized.firedown.sync.VaultBackupWorker;
+import com.solarized.firedown.sync.VaultSmokeTest;
 import com.solarized.firedown.utils.NavigationUtils;
 
 import java.io.OutputStream;
@@ -43,20 +46,30 @@ import java.nio.charset.StandardCharsets;
 import javax.inject.Inject;
 
 import dagger.hilt.android.AndroidEntryPoint;
+import okhttp3.OkHttpClient;
 
 /**
- * Sync hub — a THIN account page. It routes to each feature's own screen and owns
- * the SHARED recovery code (one code derives both bookmark sync and the encrypted
- * downloads backup). The per-feature bookmark actions — the master toggle, Sync
- * now, Delete-from-server — deliberately do NOT live here; they moved to the
- * focused {@link BookmarksSyncFragment} so the hub stays uncluttered (the
- * bookmarks-list overflow and this hub's Bookmarks row land on that same screen).
+ * The MERGED Cloud screen (toolbar title "Cloud") — pay-per-use downloads backup
+ * front and center, bookmarks + account plumbing secondary. This absorbed the old
+ * {@code CloudBackupSettingsFragment} sub-screen: the hub-then-sub-screen IA made
+ * the plan/status card and the backed-up-files list a four-tap trek from home, and
+ * the thing a paying user cares about (the plan, the buy door, the files) was one
+ * level deeper than the free bookmarks toggle.
  *
- * <p>What the hub keeps: a Bookmarks nav row (with a live on/off summary), a
- * Downloads-backup nav row (with a live usage / "backing up…" summary), the shared
- * recovery-code reveal/export behind a device-auth gate, and the offline
+ * <p>Top to bottom: the {@link CloudStatusPreference} status hero, the prominent
+ * "Add storage credit" CTA, the no-key gateway (Create / "I have a recovery
+ * code"), the Manage-backup rows (Backups list, right-to-erasure), one secondary
+ * Bookmarks nav row (the toggle / Sync now / Delete-from-server stay on the
+ * focused {@link BookmarksSyncFragment} — that separation survives the merge on
+ * purpose), the shared recovery code behind a device-auth gate, and the offline
  * encryption FAQ. All network/crypto work lives in {@link SyncManager} /
  * {@link CloudBackupManager}.
+ *
+ * <p>The hero binds {@link CloudBackupManager#lastStatus()} synchronously on
+ * entry (the singleton's last good snapshot) and the async
+ * {@link CloudBackupManager#loadStatus} result then updates it in place — so
+ * re-entering the screen never flashes the empty state while the network
+ * round-trip is in flight.
  *
  * <p>There is intentionally NO backend-server picker here: bookmark sync is a
  * free, end-to-end-encrypted feature pinned to the hosted server. A configurable /
@@ -76,16 +89,28 @@ public class SyncSettingsFragment extends BasePreferenceFragment
     @Inject
     CloudBackupManager mCloudBackup;
 
+    /** Shared OkHttp client — used only by the debug smoke-test row below. */
+    @Inject
+    OkHttpClient mHttpClient;
+
+    private CloudStatusPreference mStatus;
+    private Preference mBuy;
+    private Preference mFiles;
+    private Preference mDeleteData;
+    private Preference mCatManage;
     private Preference mBookmarks;
-    private Preference mDownloadsBackup;
     private Preference mHelp;
     private Preference mShowCode;
     private Preference mExportCode;
     private Preference mLinkCode;
     private Preference mCreateCode;
     // The Recovery-code category is SHARED (bookmarks + downloads) and shown once
-    // the account exists — bookmarks on OR a download has been backed up.
+    // the account exists — a recovery code has been created or adopted.
     private Preference mCatCode;
+
+    /** True while a transfer is running, so a usage refresh doesn't clobber the
+     *  live "Transfer in progress…" status. */
+    private boolean mTransferActive;
 
     /** SAF "create document" for exporting the recovery code to a text file. */
     private final ActivityResultLauncher<String> mExportCodePicker =
@@ -95,8 +120,8 @@ public class SyncSettingsFragment extends BasePreferenceFragment
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        // Live "Downloads backup" row status: reflect a running upload/restore so
-        // the row reads "Backing up your downloads…" while a transfer is active.
+        // Live status: while an upload/restore runs, the hero caption reads
+        // "Transfer in progress…" instead of the static usage.
         WorkManager.getInstance(requireContext().getApplicationContext())
                 .getWorkInfosByTagLiveData(CloudBackupManager.WORK_TAG)
                 .observe(getViewLifecycleOwner(), infos -> {
@@ -104,13 +129,28 @@ public class SyncSettingsFragment extends BasePreferenceFragment
                     if (infos != null) {
                         for (WorkInfo wi : infos) {
                             WorkInfo.State s = wi.getState();
-                            if (s == WorkInfo.State.RUNNING || s == WorkInfo.State.ENQUEUED) {
+                            // RUNNING always counts (backup or restore, both are
+                            // transfers). ENQUEUED counts only for IDENTIFIED
+                            // backups: a legacy pre-tag WorkSpec parked in retry
+                            // backoff is not transferring anything — it held
+                            // "Transfer in progress…" on this screen for hours
+                            // with no actual transfer (on-device ghost).
+                            if (s == WorkInfo.State.RUNNING
+                                    || (s == WorkInfo.State.ENQUEUED && hasBackupTag(wi))) {
                                 active = true;
                                 break;
                             }
                         }
                     }
-                    updateDownloadsSummary(active);
+                    // Only react to a TRANSITION: this LiveData also emits on
+                    // every worker progress tick, and an unconditional
+                    // updateState() here re-fired the network loadStatus per
+                    // percent — the idle→active and active→idle edges are the
+                    // only ones that change what this screen shows.
+                    if (active != mTransferActive) {
+                        mTransferActive = active;
+                        updateState();
+                    }
                 });
     }
 
@@ -120,8 +160,12 @@ public class SyncSettingsFragment extends BasePreferenceFragment
 
         setPreferencesFromResource(R.xml.settings_sync, rootKey);
 
+        mStatus = findPreference(Preferences.SETTINGS_CLOUD_BACKUP_STATUS);
+        mBuy = findPreference(Preferences.SETTINGS_CLOUD_BACKUP_BUY);
+        mFiles = findPreference(Preferences.SETTINGS_CLOUD_BACKUP_FILES);
+        mDeleteData = findPreference(Preferences.SETTINGS_CLOUD_BACKUP_DELETE_DATA);
+        mCatManage = findPreference(Preferences.SETTINGS_CLOUD_BACKUP_CAT_MANAGE);
         mBookmarks = findPreference(Preferences.SETTINGS_SYNC_BOOKMARKS_LINK);
-        mDownloadsBackup = findPreference(Preferences.SETTINGS_CLOUD_BACKUP);
         mHelp = findPreference(Preferences.SETTINGS_SYNC_HELP);
         mShowCode = findPreference(Preferences.SETTINGS_SYNC_SHOW_CODE);
         mExportCode = findPreference(Preferences.SETTINGS_SYNC_EXPORT_CODE);
@@ -129,11 +173,17 @@ public class SyncSettingsFragment extends BasePreferenceFragment
         mCreateCode = findPreference(Preferences.SETTINGS_SYNC_CREATE_CODE);
         mCatCode = findPreference(Preferences.SETTINGS_SYNC_CAT_CODE);
 
+        if (mBuy != null) {
+            mBuy.setOnPreferenceClickListener(this);
+        }
+        if (mFiles != null) {
+            mFiles.setOnPreferenceClickListener(this);
+        }
+        if (mDeleteData != null) {
+            mDeleteData.setOnPreferenceClickListener(this);
+        }
         if (mBookmarks != null) {
             mBookmarks.setOnPreferenceClickListener(this);
-        }
-        if (mDownloadsBackup != null) {
-            mDownloadsBackup.setOnPreferenceClickListener(this);
         }
         if (mHelp != null) {
             mHelp.setOnPreferenceClickListener(this);
@@ -153,13 +203,15 @@ public class SyncSettingsFragment extends BasePreferenceFragment
 
         tintIcons();
         updateState();
+        addDebugSmokeTestRow();
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        // Bookmark sync can be turned on/off (and run) from the focused screen we
-        // navigate to, so refresh the row summaries + code visibility on return.
+        // Bookmark sync can be toggled on its focused screen, a purchase can land
+        // from the buy flow, and a backup/restore/delete elsewhere can change
+        // usage — refresh rows + hero on every return.
         updateState();
     }
 
@@ -167,10 +219,21 @@ public class SyncSettingsFragment extends BasePreferenceFragment
     public boolean onPreferenceClick(Preference preference) {
         String key = preference.getKey();
         switch (key) {
+            case Preferences.SETTINGS_CLOUD_BACKUP_BUY -> {
+                // The CTA is hidden until a key exists (key-first gate), so this
+                // guard only catches a stale row: re-evaluate instead of dropping
+                // a keyless user onto the buy flow's no-account error.
+                if (mCloudBackup.hasAccount()) {
+                    NavigationUtils.navigateSafe(mNavController, R.id.action_sync_to_buy);
+                } else {
+                    updateState();
+                }
+            }
+            case Preferences.SETTINGS_CLOUD_BACKUP_FILES ->
+                    NavigationUtils.navigateSafe(mNavController, R.id.action_sync_to_files);
+            case Preferences.SETTINGS_CLOUD_BACKUP_DELETE_DATA -> showDeleteDataDialog();
             case Preferences.SETTINGS_SYNC_BOOKMARKS_LINK ->
                     NavigationUtils.navigateSafe(mNavController, R.id.action_sync_to_bookmarks_sync);
-            case Preferences.SETTINGS_CLOUD_BACKUP ->
-                    NavigationUtils.navigateSafe(mNavController, R.id.action_sync_to_cloud_backup);
             case Preferences.SETTINGS_SYNC_HELP ->
                     NavigationUtils.navigateSafe(mNavController, R.id.action_sync_to_help);
             case Preferences.SETTINGS_SYNC_SHOW_CODE -> authThenShowCode();
@@ -179,6 +242,137 @@ public class SyncSettingsFragment extends BasePreferenceFragment
             case Preferences.SETTINGS_SYNC_CREATE_CODE -> createCode();
         }
         return true;
+    }
+
+    /**
+     * Reflects persisted state into every section. The KEY is the account
+     * gateway: a recovery code must exist before EITHER feature can be used, so
+     * pre-key only the Create / "I have a recovery code" pair is offered — the
+     * buy CTA and Manage rows are hidden and the Bookmarks row is disabled. This
+     * is what stops a keyless purchase (the buy flow used to mint a code silently
+     * mid-checkout — see BuyCreditViewModel).
+     */
+    private void updateState() {
+        boolean hasKey = mCloudBackup.hasAccount();
+        boolean setUp = mCloudBackup.isSetUp();
+        boolean on = mSyncManager.isEnabled();
+
+        // The Create / Recover pair: the only actions offered pre-key, hidden
+        // once a key exists (there's nothing to create or adopt then).
+        if (mCreateCode != null) {
+            mCreateCode.setVisible(!hasKey);
+        }
+        if (mLinkCode != null) {
+            mLinkCode.setVisible(!hasKey);
+        }
+        // The prominent buy CTA: needs a key to redeem a credit into.
+        if (mBuy != null) {
+            mBuy.setVisible(hasKey);
+        }
+        applyManageVisibility(hasKey && setUp);
+        // Bookmarks row: disabled without a key; once enabled, reads its on/off
+        // state inline (the toggle itself lives on the focused screen it opens).
+        if (mBookmarks != null) {
+            mBookmarks.setEnabled(hasKey);
+            mBookmarks.setSummary(!hasKey
+                    ? getString(R.string.settings_sync_needs_key)
+                    : on ? lastSyncedSummary()
+                         : getString(R.string.settings_sync_switch_summary));
+        }
+        // Recovery-code section is SHARED → shown once a key exists.
+        if (mCatCode != null) {
+            mCatCode.setVisible(hasKey);
+        }
+        if (mShowCode != null) {
+            mShowCode.setVisible(hasKey);
+        }
+        if (mExportCode != null) {
+            mExportCode.setVisible(hasKey);
+        }
+
+        updateStatusHero(hasKey, setUp);
+    }
+
+    /**
+     * Binds the status hero: last cached snapshot FIRST (synchronous — no flash
+     * of the empty state on re-entry), then the fresh {@link
+     * CloudBackupManager#loadStatus} result updates it in place. The load also
+     * carries the guarded reconcile BOTH ways: a reconciled-empty account
+     * (metered, spent, zero files) retires Cloud Backup; a reconciled-LIVE one
+     * (files or balance) heals the local flag. Offline serves the cached
+     * snapshot, so nothing blanks out on a network blip.
+     */
+    private void updateStatusHero(boolean hasKey, boolean setUp) {
+        if (mStatus == null) {
+            return;
+        }
+        // The purchased plan shape ("Up to X GB · 1 year") is client-side only —
+        // stored by BuyCreditViewModel at purchase; the server just holds the
+        // anonymous balance. 0/0 = unknown → the hero degrades gracefully.
+        mStatus.setPlan(
+                mSharedPreferences.getInt(Preferences.CLOUD_PLAN_SIZE_GB, 0),
+                mSharedPreferences.getInt(Preferences.CLOUD_PLAN_DURATION_MONTHS, 0));
+        mStatus.setActive(mTransferActive);
+        CloudBackupManager.Status cached = mCloudBackup.lastStatus();
+        if (cached != null) {
+            mStatus.setSetUp(cached.setUp);
+            mStatus.setUsage(cached.fileCount, cached.totalBytes);
+            mStatus.setQuota(cached.quota);
+        } else {
+            mStatus.setSetUp(setUp);
+            mStatus.setUsage(-1, -1);
+            mStatus.setQuota(null);
+        }
+        // Only a code-less device has nothing to ask the server about. A code
+        // that's not marked set up may still front a FUNDED account (credit
+        // bought, nothing backed up yet) — loadStatus reconciles that.
+        if (!hasKey) {
+            return;
+        }
+        mCloudBackup.loadStatus(status -> {
+            if (!isAdded() || mStatus == null) {
+                return;
+            }
+            applyManageVisibility(mCloudBackup.hasAccount() && status.setUp);
+            mStatus.setSetUp(status.setUp);
+            mStatus.setUsage(status.fileCount, status.totalBytes);
+            mStatus.setQuota(status.quota);
+        });
+    }
+
+    /** The Manage-backup category (Backups list + right-to-erasure) waits for
+     *  set-up; the buy CTA above it is governed by the key gate alone (a metered
+     *  user buys credit BEFORE their first backup). */
+    private void applyManageVisibility(boolean show) {
+        if (mCatManage != null) {
+            mCatManage.setVisible(show);
+        }
+        if (mFiles != null) {
+            mFiles.setVisible(show);
+        }
+        if (mDeleteData != null) {
+            mDeleteData.setVisible(show);
+        }
+    }
+
+    private void showDeleteDataDialog() {
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.settings_cloud_backup_delete_title)
+                .setMessage(R.string.settings_cloud_backup_delete_message)
+                .setPositiveButton(R.string.settings_cloud_backup_delete_action, (dialog, which) -> {
+                    snackbar(getString(R.string.settings_cloud_backup_delete_started));
+                    mCloudBackup.deleteAllData(ok -> {
+                        if (!isAdded()) {
+                            return;
+                        }
+                        updateState();
+                        snackbar(getString(ok
+                                ? R.string.settings_cloud_backup_delete_done
+                                : R.string.settings_cloud_backup_delete_failed));
+                    });
+                })
+                .setNegativeButton(R.string.cancel, null)
+                .show();
     }
 
     /**
@@ -198,7 +392,7 @@ public class SyncSettingsFragment extends BasePreferenceFragment
      * ({@link SyncManager#createRecoveryCode}), then shows it behind the MANDATORY
      * saved-gate: the dialog's Done stays disabled until the user checks "I've
      * saved it", so a key can't be created and forgotten. On dismiss the rows
-     * re-evaluate ({@link #updateState}) — bookmarks + downloads backup enable now
+     * re-evaluate ({@link #updateState}) — the buy CTA and bookmarks enable now
      * that a key exists. Guarded on {@link SyncManager#hasCode()} so a stray tap
      * can never overwrite an existing key.
      */
@@ -313,8 +507,6 @@ public class SyncSettingsFragment extends BasePreferenceFragment
         }
     }
 
-    /** Reflects persisted state into the per-feature row summaries + the shared
-     *  recovery-code visibility. */
     /**
      * "I have a recovery code" — links this device to an existing account (restore
      * downloads backup + storage credit) via {@link SyncManager#linkWithCode},
@@ -345,96 +537,6 @@ public class SyncSettingsFragment extends BasePreferenceFragment
                 })
                 .setNegativeButton(R.string.cancel, null)
                 .show();
-    }
-
-    private void updateState() {
-        boolean on = mSyncManager.isEnabled();
-        // The KEY is the account gateway: a recovery code must exist before EITHER
-        // feature can be used. So the whole hub keys off hasKey (not "a feature is
-        // already on") — the feature rows are DISABLED until a key exists, and the
-        // Create / "I have a recovery code" pair is the only thing offered until
-        // then. This is what stops a keyless purchase (the buy flow used to mint a
-        // code silently mid-checkout — see BuyCreditViewModel).
-        boolean hasKey = mCloudBackup.hasAccount();
-        // Bookmarks row: disabled without a key; once enabled, reads its on/off
-        // state inline (the toggle itself lives on the focused screen it opens).
-        if (mBookmarks != null) {
-            mBookmarks.setEnabled(hasKey);
-            mBookmarks.setSummary(!hasKey
-                    ? getString(R.string.settings_sync_needs_key)
-                    : on ? lastSyncedSummary()
-                         : getString(R.string.settings_sync_switch_summary));
-        }
-        // Downloads-backup row: same key gate; its live usage/active summary is
-        // filled by updateDownloadsSummary when a key exists.
-        if (mDownloadsBackup != null) {
-            mDownloadsBackup.setEnabled(hasKey);
-            if (!hasKey) {
-                mDownloadsBackup.setSummary(getString(R.string.settings_sync_needs_key));
-            }
-        }
-        // Recovery-code section is SHARED → shown once a key exists.
-        if (mCatCode != null) {
-            mCatCode.setVisible(hasKey);
-        }
-        if (mShowCode != null) {
-            mShowCode.setVisible(hasKey);
-        }
-        if (mExportCode != null) {
-            mExportCode.setVisible(hasKey);
-        }
-        // The Create / Recover pair: the only actions offered pre-key, hidden once
-        // a key exists (there's nothing to create or adopt then).
-        if (mCreateCode != null) {
-            mCreateCode.setVisible(!hasKey);
-        }
-        if (mLinkCode != null) {
-            mLinkCode.setVisible(!hasKey);
-        }
-        if (hasKey) {
-            updateDownloadsSummary(false);
-        }
-    }
-
-    /**
-     * Updates the "Downloads backup" row summary: a live "Backing up…" while a
-     * transfer runs, else the backed-up usage ("N files · X MB") once set up, else
-     * the generic invitation. The usage read is async (network), guarded against
-     * the view going away.
-     */
-    private void updateDownloadsSummary(boolean active) {
-        if (mDownloadsBackup == null) {
-            return;
-        }
-        // No key → the row is a disabled "create or enter a code first" (the
-        // WorkManager observer also reaches here, so keep it consistent with
-        // updateState instead of falling through to the generic invitation).
-        if (!mCloudBackup.hasAccount()) {
-            mDownloadsBackup.setEnabled(false);
-            mDownloadsBackup.setSummary(getString(R.string.settings_sync_needs_key));
-            return;
-        }
-        if (active) {
-            mDownloadsBackup.setSummary(getString(R.string.settings_sync_downloads_active));
-            return;
-        }
-        if (!mCloudBackup.isSetUp()) {
-            mDownloadsBackup.setSummary(getString(R.string.settings_sync_downloads_summary));
-            return;
-        }
-        mCloudBackup.loadUsage(usage -> {
-            if (!isAdded() || mDownloadsBackup == null) {
-                return;
-            }
-            if (!usage.setUp || usage.fileCount < 0 || usage.totalBytes < 0) {
-                mDownloadsBackup.setSummary(getString(R.string.settings_sync_downloads_summary));
-                return;
-            }
-            String files = getResources().getQuantityString(
-                    R.plurals.settings_cloud_backup_file_count, usage.fileCount, usage.fileCount);
-            String size = Formatter.formatShortFileSize(requireContext(), usage.totalBytes);
-            mDownloadsBackup.setSummary(getString(R.string.settings_cloud_backup_usage, files, size));
-        });
     }
 
     private String lastSyncedSummary() {
@@ -488,7 +590,7 @@ public class SyncSettingsFragment extends BasePreferenceFragment
         // Create mode: Done stays disabled until the user acknowledges they saved
         // the only key (the "check step").
         if (requireSaved) {
-            android.widget.Button done = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+            Button done = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
             done.setEnabled(false);
             savedCheck.setOnCheckedChangeListener((b, checked) -> done.setEnabled(checked));
         }
@@ -508,6 +610,63 @@ public class SyncSettingsFragment extends BasePreferenceFragment
         } catch (RuntimeException e) {
             // Clipboard unavailable — the code is still shown for manual copy.
         }
+    }
+
+    /**
+     * Debug-only row that round-trips a file through the live storage server,
+     * reusing the shared recovery code. Never added in a release build. This is
+     * the on-device smoke test for the storage client; it lands at the very
+     * bottom of the screen, out of the way.
+     */
+    private void addDebugSmokeTestRow() {
+        if (!BuildConfig.DEBUG) {
+            return;
+        }
+        PreferenceScreen screen = getPreferenceScreen();
+        if (screen == null) {
+            return;
+        }
+        Preference row = new Preference(requireContext());
+        row.setKey("debug.vault.smoke");
+        row.setPersistent(false);
+        row.setTitle("Test storage vault (debug)");
+        row.setSummary("Round-trip a file through storage.firedown.app");
+        row.setOnPreferenceClickListener(pref -> {
+            runDebugSmokeTest(pref);
+            return true;
+        });
+        screen.addPreference(row);
+    }
+
+    private void runDebugSmokeTest(Preference row) {
+        row.setEnabled(false);
+        row.setSummary("Running…");
+        snackbar("Vault smoke test started…");
+        Context appContext = requireContext().getApplicationContext();
+        Handler main = new Handler(Looper.getMainLooper());
+        new Thread(() -> {
+            VaultSmokeTest.Result result = VaultSmokeTest.run(
+                    appContext, mHttpClient, Preferences.STORAGE_DEFAULT_BACKEND);
+            main.post(() -> {
+                if (!isAdded()) {
+                    return;
+                }
+                row.setEnabled(true);
+                row.setSummary(result.message);
+                snackbar(result.message);
+            });
+        }, "vault-smoke-test").start();
+    }
+
+    /** Whether a WorkInfo carries the backup identity tags stamped at enqueue
+     *  (restores and legacy pre-tag WorkSpecs don't). */
+    private static boolean hasBackupTag(WorkInfo wi) {
+        for (String tag : wi.getTags()) {
+            if (tag.startsWith(VaultBackupWorker.TAG_NAME)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void snackbar(String text) {

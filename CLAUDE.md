@@ -1819,42 +1819,55 @@ opaque chunks + an opaque manifest blob.
   the confirmation) — only a `FAILED` transfer surfaces an error snackbar
   (`CANCELLED` stays silent).
 
-- **Status shows a progress bar.** `TransferStatusPreference` reveals an
-  indeterminate `LinearProgressIndicator` in its widget slot while a transfer runs
-  (transfers are indeterminate — the workers post an indeterminate notification),
-  driven by the `CloudBackupManager.WORK_TAG` WorkManager observer. It is ONLY on
-  the Cloud Backup status row (`CloudBackupSettingsFragment`, `setActive(active)`
-  from the `WORK_TAG` observer) — the unified Sync screen's "Downloads backup" row
-  deliberately shows just the live summary text ("Backing up your downloads…"), no
-  bar.
-
 - **Deep-links + back-nav.** The upload/restore notification AND the home
-  status line open the Cloud Backup status screen
+  status line open the merged Cloud screen
   (`SettingsActivity.EXTRA_OPEN_CLOUD_BACKUP`) with `popUpTo settings inclusive`,
   so Back returns to the CALLER (home), never into the settings tree. The
   **Downloads toolbar overflow** opens the backed-up-files list
   (`EXTRA_OPEN_CLOUD_BACKUP_FILES`) and replaces the settings list on the back
   stack (`popUpTo settings inclusive`), so Back returns to **Downloads** (the
-  caller), not into the settings tree. A "Sync" row in the home + browser popups
-  opens the Sync hub (`EXTRA_OPEN_SYNC`).
+  caller), not into the settings tree. A "Cloud" row in the home + browser popups
+  opens the same merged screen (`EXTRA_OPEN_SYNC`).
 
-- **Sync IA — a THIN hub + per-feature screens (don't re-merge them).** The
-  Settings → Sync screen (`SyncSettingsFragment` / `settings_sync.xml`) is an
-  account HUB only: a **Bookmarks** nav row (→ `BookmarksSyncFragment`, summary =
-  on?last-synced:off), a **Downloads backup** nav row (→ `CloudBackupSettingsFragment`,
-  live usage / "backing up…" summary), the **shared recovery code** (show/export,
-  device-auth gated, shown once the account exists = bookmarks on OR a download
-  backed up), and the encryption FAQ. The bookmark-only *actions* — the master
-  **toggle**, **Sync now**, **Delete bookmarks from server** — live on the focused
-  `BookmarksSyncFragment` (`settings_bookmarks_sync.xml`), NOT the hub; that
-  declutter is the whole point. The **bookmarks-list overflow + sync banner**
-  deep-link straight to that focused screen (`EXTRA_OPEN_BOOKMARKS_SYNC`, past both
-  the settings list and the hub), so the overflow and the hub's Bookmarks row land
-  in the SAME place. Bookmarks sync is free, downloads backup is pay-per-use, but
-  pricing is kept **implicit** in the copy (no badge). Don't pull the toggle /
-  Sync-now / Delete back onto the hub, and don't route the bookmarks overflow at
-  the hub (`EXTRA_OPEN_SYNC`) — that was the "too many options / confusing"
-  state this replaced.
+- **Cloud IA — ONE backup-first Cloud screen + the focused Bookmarks screen.**
+  The Settings → Cloud screen (`SyncSettingsFragment` / `settings_sync.xml`,
+  toolbar title "Cloud") is the MERGED home of the paid downloads backup — the
+  old thin-hub-plus-`CloudBackupSettingsFragment` two-level IA was retired
+  (maintainer call: reaching the plan/files took 4 taps from home and buried the
+  paid feature under the free one; don't resurrect the sub-screen). Order on the
+  screen = priority: the `CloudStatusPreference` **status hero**, the FILLED
+  **"Add storage credit"** CTA directly under it (`preference_cloud_buy_button.xml`
+  — the button inside is non-clickable/`duplicateParentState`, the Preference row
+  owns the click), the pre-key **Create / "I have a recovery code"** gateway, the
+  **Manage backup** category (Backups list, right-to-erasure — shown once set
+  up), ONE secondary **Bookmarks** nav row, the shared **recovery code**
+  (show/export, device-auth gated), and the FAQ. The KEY-FIRST GATE survives the
+  merge: pre-key the buy CTA + Manage rows are hidden, Bookmarks is disabled, and
+  only Create/adopt are offered (stops the keyless-purchase ghost account). The
+  bookmark-only *actions* — the master **toggle**, **Sync now**, **Delete
+  bookmarks from server** — STILL live on the focused `BookmarksSyncFragment`
+  (`settings_bookmarks_sync.xml`), never on the Cloud screen; that lesson from the
+  old hub stands. The **bookmarks-list overflow + sync banner** deep-link straight
+  to that focused screen (`EXTRA_OPEN_BOOKMARKS_SYNC`); `EXTRA_OPEN_SYNC` and
+  `EXTRA_OPEN_CLOUD_BACKUP` both land on the merged Cloud screen (kept as two
+  extras — callers express different intents); the Downloads toolbar routes
+  two-way (`isSetUp` → the files list, else → the Cloud screen, which handles
+  keyed-but-empty AND keyless itself). Bookmarks sync is free, downloads backup is
+  pay-per-use, but pricing is kept **implicit** in the copy (no badge).
+  - **The status hero binds the CACHED snapshot first.**
+    `CloudBackupManager.lastStatus()` keeps the last *successful* `Status` for the
+    singleton's lifetime; the screen paints it synchronously on entry and the
+    async `loadStatus` result then UPDATES the hero in place — no empty-state
+    flash / layout jump per screen entry (on-device complaint). `loadStatus` also
+    serves the cache instead of unknowns on an offline/transient failure (the
+    flag reconcile only ever runs on a successful load, so the cache can't mask
+    it), and `deleteAllData` clears it. Don't bind the hero straight to a fresh
+    network load again.
+  - **Covered-until is CLAMPED to the purchased plan.** The server's
+    `projected_runout_at` is balance ÷ current footprint — with ~nothing backed
+    up it runs absurd ("~Feb 2086" at 0% usage, on-device). When the plan shape
+    is known, `CloudStatusPreference.bindRunway` clamps the displayed date to
+    now + plan months (matching the "≈ N of M months left" cap).
 
 - **FGS type.** Both workers run as `dataSync` foreground workers; the app's
   manifest merges `foregroundServiceType="dataSync"` onto WorkManager's

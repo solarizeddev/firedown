@@ -271,6 +271,22 @@ public class CloudBackupManager {
     }
 
     /**
+     * Last SUCCESSFUL {@link Status} snapshot, kept for the singleton's lifetime.
+     * The status hero re-binds on every screen entry; without this it renders the
+     * empty/unknown state for the network round-trip and visibly "jumps" once the
+     * load lands. The screen paints this snapshot synchronously and the fresh
+     * {@link #loadStatus} result then UPDATES it in place. Cleared by
+     * {@link #deleteAllData} (the account is gone — a stale snapshot would show a
+     * ghost balance).
+     */
+    private volatile Status mLastStatus;
+
+    /** The last successful status snapshot, or null before the first load. */
+    public Status lastStatus() {
+        return mLastStatus;
+    }
+
+    /**
      * Loads usage (manifest) + quota together off the net executor and posts a
      * {@link Status} to the main thread. Centralizes a GUARDED auto-clear: when
      * BOTH loads succeed and reveal a genuinely dead account — metered, spent
@@ -352,7 +368,19 @@ public class CloudBackupManager {
             } else {
                 setUp = false;
             }
-            final Status out = new Status(setUp, files, bytes, quota);
+            Status result = new Status(setUp, files, bytes, quota);
+            if (files >= 0) {
+                // Both loads succeeded — remember the snapshot so the next screen
+                // entry paints instantly instead of blanking for the round-trip.
+                mLastStatus = result;
+            } else if (code != null && mLastStatus != null) {
+                // Offline/transient with a known-good earlier snapshot: serve the
+                // snapshot rather than unknowns, so the hero never blanks out on a
+                // network blip (the flag-reconcile above only ever runs on a
+                // SUCCESSFUL load, so this can't mask an auto-clear/heal).
+                result = mLastStatus;
+            }
+            final Status out = result;
             main.post(() -> onResult.accept(out));
         });
     }
@@ -512,6 +540,7 @@ public class CloudBackupManager {
             final boolean success = ok;
             main.post(() -> {
                 if (success) {
+                    mLastStatus = null; // the account is gone — drop the snapshot
                     prefs.edit()
                             .putBoolean(Preferences.CLOUD_BACKUP_ENABLED, false)
                             // The account is gone; a stale plan shape would feed

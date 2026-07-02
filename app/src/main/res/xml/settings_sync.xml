@@ -1,59 +1,64 @@
 <!--
-  Sync hub — a THIN account page. One account / one recovery code covers
-  bookmarks (free) AND encrypted download backup (cloud-storage-spec.md). The hub
-  only routes to each feature's own screen and holds the SHARED recovery code; the
-  per-feature actions (the bookmark toggle, Sync now, Delete-from-server) live on
-  the focused Bookmarks screen ({@link BookmarksSyncFragment}), NOT here — that
-  declutter is the whole point of the hub.
+  The MERGED Cloud screen (toolbar title "Cloud") — the pay-per-use downloads
+  backup IS the screen; bookmarks and account plumbing are secondary. This
+  replaced the old two-level IA (a thin hub routing to a separate Cloud Backup
+  sub-screen): reaching the plan/status took home popup → Cloud → Manage
+  downloads backup → … (4 taps to the files list), and the hub's rows buried
+  the one thing a paying user cares about. Layout, in priority order:
 
-    ── (feature links) ──
-       Bookmarks        › BookmarksSyncFragment  (summary = on?last-synced:off)
-       Manage downloads backup › Cloud Backup sub-screen (status/files/delete)
+    ── (hero) ──
+       CloudStatusPreference   the live plan/usage/runway card (or the dashed
+                               not-set-up empty state)
+       Add storage credit      FILLED CTA directly under the hero (custom
+                               layout preference_cloud_buy_button.xml)
     ── (no-key gateway) ──  (shown ONLY until a recovery code exists)
        Create recovery code    › mint a fresh key here (no feature enabled yet)
-       I have a recovery code   › adopt an existing account's key
+       I have a recovery code  › adopt an existing account's key
+    ── Manage backup ──  (shown once Cloud Backup is set up)
+       Backups                 › the backed-up-files list
+       Delete data from cloud    right-to-erasure
+    ── Bookmarks ──  (secondary by design)
+       Sync bookmarks          › BookmarksSyncFragment (toggle / Sync now /
+                                 Delete-from-server live THERE, not here)
     ── Recovery code ──  (shared; shown once a key exists)
        Show recovery code
        Save recovery code to file
     ── About ──
        How sync & encryption work  (covers bookmarks AND files)
 
-  KEY-FIRST GATE: a recovery code is the account gateway. Until one exists, the
-  Bookmarks + Manage-downloads-backup rows are DISABLED (SyncSettingsFragment gates
-  them on hasCode()) and only Create / "I have a recovery code" are offered. This
-  is what stops a keyless purchase — the buy flow used to mint a code silently
-  mid-checkout, which left a ghost account with an unsaved key when the user backed
-  out of Stripe (see BuyCreditViewModel). Creating a key from here forces the
-  "I've saved it" step before it counts; the per-download "Back up to cloud" action
-  mints+saves inline the same way.
+  KEY-FIRST GATE (unchanged): a recovery code is the account gateway. Until one
+  exists, the buy CTA + Manage rows are hidden, the Bookmarks row is DISABLED,
+  and only Create / "I have a recovery code" are offered. This is what stops a
+  keyless purchase — the buy flow used to mint a code silently mid-checkout,
+  which left a ghost account with an unsaved key when the user backed out of
+  Stripe (see BuyCreditViewModel). Creating a key from here forces the "I've
+  saved it" step before it counts.
 
-  The bookmarks row deep-links to the focused screen so the bookmarks-list overflow
-  and the hub land on the SAME place. Downloads backup is action-driven (a
-  download's options sheet backs it up on demand); this is just the entry to its
-  management screen. Paid "Storage & billing" lands with the payments mint (Phase
-  1b). Pricing (free vs pay-per-use) is kept implicit in the copy, not a badge.
+  The bookmarks row deep-links to the focused screen so the bookmarks-list
+  overflow and this screen land in the SAME place. Cloud Backup stays
+  action-driven (a download's options sheet backs it up on demand). The debug
+  smoke-test row (debug builds only) is appended programmatically by
+  SyncSettingsFragment.
 -->
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <Preference
-        android:key="com.solarized.firedown.preferences.sync.bookmarks.link"
-        android:title="@string/settings_sync_bookmarks_title"
-        android:summary="@string/settings_sync_switch_summary"
-        app:singleLineTitle="false"
-        app:icon="@drawable/ic_bookmarks_24" />
+    <!-- The status HERO (big balance / covered-until / grace / backing-up),
+         bound by SyncSettingsFragment. Custom layout — no title/icon. -->
+    <com.solarized.firedown.settings.CloudStatusPreference
+        android:key="com.solarized.firedown.preferences.cloud.backup.status"
+        android:selectable="false"
+        android:persistent="false" />
 
+    <!-- The one PROMINENT action (filled CTA). Hidden until a key exists —
+         a credit needs a saved key to redeem into (key-first gate). -->
     <Preference
-        android:key="com.solarized.firedown.preferences.settings.cloud.backup"
-        android:title="@string/settings_sync_downloads_title"
-        android:summary="@string/settings_sync_downloads_summary"
-        app:singleLineTitle="false"
-        app:icon="@drawable/download_24" />
+        android:key="com.solarized.firedown.preferences.cloud.backup.buy"
+        android:layout="@layout/preference_cloud_buy_button"
+        android:persistent="false" />
 
-    <!-- Shown ONLY when this device has no recovery code yet (fresh install / new
-         device). The key is the account GATEWAY: bookmarks + downloads-backup rows
-         above stay DISABLED until one exists (SyncSettingsFragment gates them on
-         hasCode()). Create = mint a fresh key here; "I have a recovery code" =
+    <!-- Shown ONLY when this device has no recovery code yet (fresh install /
+         new device). Create = mint a fresh key; "I have a recovery code" =
          adopt an existing one. Both hidden once a key exists. -->
     <Preference
         android:key="com.solarized.firedown.preferences.sync.create.code"
@@ -68,6 +73,42 @@
         android:summary="@string/settings_sync_link_summary"
         app:singleLineTitle="false"
         app:icon="@drawable/ic_baseline_insert_drive_file_24" />
+
+    <!-- Visible once Cloud Backup is set up (has data / a funded account). -->
+    <PreferenceCategory
+        android:key="com.solarized.firedown.preferences.cloud.backup.cat.manage"
+        android:title="@string/settings_cloud_backup_cat_manage">
+
+        <Preference
+            android:key="com.solarized.firedown.preferences.cloud.backup.files"
+            android:title="@string/cloud_backup_files_title"
+            android:summary="@string/settings_cloud_backup_files_summary"
+            app:singleLineTitle="false"
+            app:icon="@drawable/cloud_done_24" />
+
+        <Preference
+            android:key="com.solarized.firedown.preferences.cloud.backup.delete.data"
+            android:title="@string/settings_cloud_backup_delete_title"
+            android:summary="@string/settings_cloud_backup_delete_summary"
+            app:singleLineTitle="false"
+            app:icon="@drawable/ic_baseline_delete_24" />
+
+    </PreferenceCategory>
+
+    <!-- Bookmarks are deliberately SECONDARY on this screen: one nav row to the
+         focused screen that owns the toggle / Sync now / Delete-from-server. -->
+    <PreferenceCategory
+        android:key="com.solarized.firedown.preferences.sync.cat.bookmarks"
+        android:title="@string/settings_sync_bookmarks_title">
+
+        <Preference
+            android:key="com.solarized.firedown.preferences.sync.bookmarks.link"
+            android:title="@string/settings_sync_title"
+            android:summary="@string/settings_sync_switch_summary"
+            app:singleLineTitle="false"
+            app:icon="@drawable/ic_bookmarks_24" />
+
+    </PreferenceCategory>
 
     <PreferenceCategory
         android:key="com.solarized.firedown.preferences.sync.cat.code"
