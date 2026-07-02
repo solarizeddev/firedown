@@ -481,18 +481,24 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
                 .addTag(VaultBackupWorker.TAG_MIME + truncateTag(entity.getFileMimeType()))
                 .addTag(VaultBackupWorker.TAG_SIZE + entity.getFileSize())
                 .build();
-        // UNIQUE per file CONTENT (name + size), KEEP. Keyed on content — NOT the
-        // path — because the SAME video downloaded twice lands at two different
-        // paths with the same name+size; a path key let both run concurrently
-        // (4 workers all uploading the same 665 MB file were seen on-device,
-        // spamming "setProgressAsync must complete before Result" and making cancel
-        // useless). name+size matches the engine's own dedup key, so KEEP collapses
-        // every backup of the same content to ONE worker; a later tap after it
-        // finishes re-runs and the engine's commit-time dedup returns the existing
-        // entry. (Two genuinely different files with an identical name+size is the
-        // accepted rare collision — same trade-off the engine dedup already makes.)
+        // UNIQUE per file CONTENT (name + size), REPLACE. Keyed on content — NOT
+        // the path — because the SAME video downloaded twice lands at two
+        // different paths with the same name+size; a path key let both run
+        // concurrently (4 workers all uploading the same 665 MB file were seen
+        // on-device, spamming "setProgressAsync must complete before Result" and
+        // making cancel useless). name+size matches the engine's own dedup key,
+        // so unique work still collapses every backup of the same content to ONE
+        // worker. REPLACE (was KEEP) so a re-tap means RETRY NOW: under KEEP a
+        // wedged/back-off worker made "Back up to cloud" a silent no-op — there
+        // was NO way to kick a stuck backup (on-device: legacy pre-fix workers
+        // spinning in retry backoff for hours, un-cancellable rows). REPLACE
+        // cancels the old attempt and starts fresh; rapid duplicate taps still
+        // collapse (each replaces the last, one survivor), a replaced partial
+        // upload is just a pending orphan the server's ReapPending sweeps, and a
+        // re-tap after SUCCESS re-runs into the engine's commit-time dedup which
+        // returns the existing entry (no duplicate, no re-upload of the object).
         String uniqueName = "cloud_backup:" + entity.getFileName() + ":" + entity.getFileSize();
-        wm.enqueueUniqueWork(uniqueName, ExistingWorkPolicy.KEEP, request);
+        wm.enqueueUniqueWork(uniqueName, ExistingWorkPolicy.REPLACE, request);
 
         final LiveData<WorkInfo> live = wm.getWorkInfoByIdLiveData(request.getId());
         live.observe(getViewLifecycleOwner(), new Observer<WorkInfo>() {

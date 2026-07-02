@@ -339,11 +339,17 @@ public class CloudBackupListFragment extends Fragment
         }
     }
 
-    /** Drives the LCEE state: content (rows or an in-progress transfer), the
-     *  loading spinner (initial fetch only), or the empty illustration. */
+    /** Drives the LCEE state: content (any adapter row — committed entries AND
+     *  transfer rows both count in getItemCount), the loading spinner (initial
+     *  fetch only), or the empty illustration. Deliberately NOT gated on
+     *  mTransferActive: an active worker that renders NO row (a restore, or a
+     *  legacy backup enqueued before identity tags existed) used to hold the
+     *  screen in the content state with a 0-item adapter — a completely BLANK
+     *  page (seen on-device after deleting the last entry while such a worker
+     *  lingered). mTransferActive still drives the finished→reload logic. */
     private void render() {
         boolean hasRows = mAdapter != null && mAdapter.getItemCount() > 0;
-        if (hasRows || mTransferActive) {
+        if (hasRows) {
             mLcee.hideAll();          // show the list (rows carry the state)
         } else if (mLoading) {
             mLcee.showLoading();      // spinner on the first fetch only
