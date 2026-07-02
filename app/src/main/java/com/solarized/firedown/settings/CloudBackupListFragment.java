@@ -1,5 +1,6 @@
 package com.solarized.firedown.settings;
 
+import android.animation.ObjectAnimator;
 import android.os.Bundle;
 import android.text.format.Formatter;
 import android.widget.TextView;
@@ -32,6 +33,7 @@ import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 
+import com.google.android.material.color.MaterialColors;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
 import com.solarized.firedown.ApplicationLifeCycleHandler;
@@ -88,6 +90,9 @@ public class CloudBackupListFragment extends Fragment
     private View mHeader;
     private TextView mHeaderLine1;
     private TextView mHeaderLine2;
+    /** Current lift state of the pinned header, so scroll events only animate
+     *  the flat↔lifted TRANSITION (onScrolled fires per frame). */
+    private boolean mHeaderLifted;
     /** Latest quota (for the header's context line); null until loaded/offline. */
     private CloudBackupManager.Status mStatusInfo;
     private RecyclerView mRecycler;
@@ -174,17 +179,17 @@ public class CloudBackupListFragment extends Fragment
         });
 
         // The pinned header LIFTS on scroll (Downloads' AppBarLayout
-        // liftOnScroll read, done by hand — this header is a plain view):
-        // flat while the list is at the top, elevated the moment rows pass
-        // under it, so scrolled content reads as sliding beneath a bar
-        // instead of vanishing mid-row.
-        float lift = 4f * getResources().getDisplayMetrics().density;
+        // liftOnScroll contract, done by hand — this header is a plain view):
+        // flat window background while the list is at the top; the moment rows
+        // pass under it, the background animates to colorSurfaceContainer +
+        // gains translationZ, so scrolled content reads as sliding beneath a
+        // bar. The COLOR change is the load-bearing part — a bare 4dp shadow
+        // was near-invisible in the light theme (on-device), which is exactly
+        // why M3's lift is a surface-tone swap, not a drop shadow.
         mRecycler.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrolled(@NonNull RecyclerView rv, int dx, int dy) {
-                if (mHeader != null) {
-                    mHeader.setElevation(rv.canScrollVertically(-1) ? lift : 0f);
-                }
+                applyHeaderLift(rv.canScrollVertically(-1));
             }
         });
 
@@ -491,6 +496,30 @@ public class CloudBackupListFragment extends Fragment
         }
         mHeaderLine2.setText(line2);
         mHeader.setVisibility(View.VISIBLE);
+    }
+
+    /**
+     * Applies the header's lifted/flat state ONCE per transition: animates the
+     * background between the window background (flat, seamless with the screen)
+     * and colorSurfaceContainer (lifted — the M3 surface-tone lift, the part
+     * the eye actually reads) plus a small translationZ for the shadow edge.
+     */
+    private void applyHeaderLift(boolean lifted) {
+        if (mHeader == null || mHeaderLifted == lifted) {
+            return;
+        }
+        mHeaderLifted = lifted;
+        int flat = MaterialColors.getColor(mHeader, android.R.attr.colorBackground);
+        int raised = MaterialColors.getColor(mHeader,
+                com.google.android.material.R.attr.colorSurfaceContainer);
+        ObjectAnimator.ofArgb(mHeader, "backgroundColor",
+                        lifted ? flat : raised, lifted ? raised : flat)
+                .setDuration(150)
+                .start();
+        mHeader.animate()
+                .translationZ(lifted ? 4f * getResources().getDisplayMetrics().density : 0f)
+                .setDuration(150)
+                .start();
     }
 
     @Override
