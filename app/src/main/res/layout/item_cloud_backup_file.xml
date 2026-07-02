@@ -53,6 +53,7 @@
             android:id="@+id/cb_action"
             style="@style/Theme.FireDown.More.Button"
             app:icon="@drawable/ic_baseline_more_vert_24"
+            app:iconTint="?attr/colorOnSurfaceVariant"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />

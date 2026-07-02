@@ -196,7 +196,9 @@ public class VaultBackupWorker extends Worker {
         VaultEngine engine = new VaultEngine(api, identity);
         // A tiny preview, stored in the encrypted manifest so the list shows a
         // thumbnail offline even after the local copy is deleted.
-        String thumb = VaultThumbnail.generate(path, mime, frameUs);
+        // Context-aware: reads a RESTORED foreign-owned file via the SAF grant,
+        // so restored files back up WITH a preview instead of the mime glyph.
+        String thumb = VaultThumbnail.generate(mContext, path, mime, frameUs);
         // Publish the file's identity + a determinate per-chunk progress so the
         // backed-up-files list can show a per-item bar (like the Downloads list).
         final String fName = name;

@@ -166,6 +166,16 @@ public class CloudBackupListFragment extends Fragment
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+        // Refresh on return: the manifest can change while away (a worker commits,
+        // a delete elsewhere), and a load that FAILED (offline / saturated uplink
+        // mid-upload) gets its retry here. Gen-guarded, and render() keeps the
+        // current rows while the pull runs, so this never blanks a good list.
+        load();
+    }
+
+    @Override
     public void onDestroyView() {
         // Restore the toolbar (title + Up behaviour) if we leave mid-selection.
         exitSelection();
@@ -302,6 +312,10 @@ public class CloudBackupListFragment extends Fragment
                 return;
             }
             mLoading = false;
+            // A successful pull owns the empty state again ("no backups yet") —
+            // a prior failed load may have swapped in the error art below.
+            mLcee.setEmptyImageView(R.drawable.ill_baloons);
+            mLcee.setEmptyText(R.string.cloud_backup_list_empty);
             mEntries.clear();
             // Skip rows whose delete is still in flight (the manifest pull can
             // pre-date the delete's OCC commit — re-adding one would flicker a ghost
@@ -316,6 +330,14 @@ public class CloudBackupListFragment extends Fragment
                 return;
             }
             mLoading = false;
+            // The pull FAILED. With rows on screen they stay (render keeps
+            // content); with none, the old behaviour fell through to the
+            // "No backups yet" illustration — a LIE that on-device read as
+            // "my three uploads vanished" (the pull failed on the saturated
+            // uplink right as the last one finished). Show an honest error
+            // empty-state instead; onResume + the next transfer tick retry.
+            mLcee.setEmptyImageView(R.drawable.ill_small_browser_error);
+            mLcee.setEmptyText(R.string.cloud_backup_list_error);
             render();
             snackbar(getString(R.string.cloud_backup_list_error));
         });

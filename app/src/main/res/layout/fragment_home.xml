@@ -214,6 +214,69 @@
 
                 </androidx.constraintlayout.widget.ConstraintLayout>
 
+                <!-- Cloud Backup activity pill (home v3): transient backup STATE
+                     as a BUTTON under the hero stats — it reads as an action
+                     (tap → the Backups list / status screen), so it belongs with
+                     the stats cluster, not floating at the bottom (where the
+                     bottom bar's gesture-nav inset swallowed it in portrait and
+                     snackbars fight for the space). Shown ONLY while a backup
+                     transfer runs ("Backing up… · VIEW") or when metered credit
+                     ran out (amber "Paused"); GONE when idle. ONE tap target. -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/home_backup_pill"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginTop="12dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:visibility="gone"
+                    app:cardBackgroundColor="?attr/colorSecondaryContainer"
+                    app:cardCornerRadius="20dp"
+                    app:cardElevation="0dp"
+                    app:strokeWidth="0dp"
+                    tools:visibility="visible">
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingStart="14dp"
+                        android:paddingTop="10dp"
+                        android:paddingEnd="16dp"
+                        android:paddingBottom="10dp">
+
+                        <ImageView
+                            android:id="@+id/home_backup_pill_icon"
+                            android:layout_width="18dp"
+                            android:layout_height="18dp"
+                            android:importantForAccessibility="no"
+                            android:src="@drawable/ic_cloud_upload_24"
+                            app:tint="?attr/colorOnSecondaryContainer" />
+
+                        <TextView
+                            android:id="@+id/home_backup_pill_text"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:textColor="?attr/colorOnSecondaryContainer"
+                            android:textSize="13sp"
+                            tools:text="Backing up…" />
+
+                        <TextView
+                            android:id="@+id/home_backup_pill_action"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:text="@string/cloud_backup_view"
+                            android:textAllCaps="true"
+                            android:textColor="?attr/colorPrimary"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
             </LinearLayout>
 
 
@@ -248,67 +311,6 @@
         centre slot is the bookmarks-list entry. (The former hero
         Bookmarks FAB was removed.)
     -->
-    <!-- Cloud Backup activity pill (home v3, "Option A"): transient backup
-         STATE lives here above the actions, not in the hero subtitle — the hero
-         keeps only the two lifetime stats (blocked · saved). Shown ONLY while a
-         backup transfer runs ("Backing up… · VIEW" → the Backups list) or when
-         metered credit ran out (amber "Paused" → the Cloud Backup status
-         screen); GONE when idle so the home stays calm. The whole pill is ONE
-         tap target. marginBottom clears the 64dp bottom bar. -->
-    <com.google.android.material.card.MaterialCardView
-        android:id="@+id/home_backup_pill"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|center_horizontal"
-        android:layout_marginBottom="76dp"
-        android:clickable="true"
-        android:focusable="true"
-        android:visibility="gone"
-        app:cardBackgroundColor="?attr/colorSecondaryContainer"
-        app:cardCornerRadius="20dp"
-        app:cardElevation="0dp"
-        app:strokeWidth="0dp"
-        tools:visibility="visible">
-
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:paddingStart="14dp"
-            android:paddingTop="10dp"
-            android:paddingEnd="16dp"
-            android:paddingBottom="10dp">
-
-            <ImageView
-                android:id="@+id/home_backup_pill_icon"
-                android:layout_width="18dp"
-                android:layout_height="18dp"
-                android:importantForAccessibility="no"
-                android:src="@drawable/ic_cloud_upload_24"
-                app:tint="?attr/colorOnSecondaryContainer" />
-
-            <TextView
-                android:id="@+id/home_backup_pill_text"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:textColor="?attr/colorOnSecondaryContainer"
-                android:textSize="13sp"
-                tools:text="Backing up…" />
-
-            <TextView
-                android:id="@+id/home_backup_pill_action"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
-                android:text="@string/cloud_backup_view"
-                android:textAllCaps="true"
-                android:textColor="?attr/colorPrimary"
-                android:textSize="13sp"
-                android:textStyle="bold" />
-        </LinearLayout>
-    </com.google.android.material.card.MaterialCardView>
 
     <com.solarized.firedown.geckoview.toolbar.BottomNavigationBar
         android:id="@+id/bottom_app_bar"

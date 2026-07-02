@@ -4,6 +4,9 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
+
+import com.solarized.firedown.BuildConfig;
 
 import com.solarized.firedown.GlideHelper;
 import com.solarized.firedown.Preferences;
@@ -52,6 +55,8 @@ import okhttp3.OkHttpClient;
  */
 @Singleton
 public class CloudBackupManager {
+
+    private static final String TAG_LOG = CloudBackupManager.class.getSimpleName();
 
     /** Tag on every Cloud Backup transfer (upload + restore) WorkManager job, so
      *  the UI can observe "is a transfer running right now?" across both. */
@@ -370,6 +375,12 @@ public class CloudBackupManager {
                 List<VaultEntry> entries = engine.loadManifest();
                 main.post(() -> onResult.accept(entries));
             } catch (Exception e) {
+                // Was swallowed silently — on-device the Backups list ended on
+                // "No backups yet" right after three successful uploads because
+                // this pull failed (saturated uplink) with no trace anywhere.
+                if (BuildConfig.DEBUG) {
+                    Log.e(TAG_LOG, "loadEntries failed", e);
+                }
                 main.post(onError);
             } finally {
                 SyncSecrets.wipe(code);
@@ -428,10 +439,13 @@ public class CloudBackupManager {
             String thumb = null;
             try {
                 DownloadEntity local = downloads.findByNameSize(entry.name, entry.size);
-                if (local != null && local.getFilePath() != null
-                        && new File(local.getFilePath()).exists()) {
-                    // Same exact frame the Downloads list renders for this file.
-                    thumb = VaultThumbnail.generate(local.getFilePath(), entry.mime,
+                if (local != null && local.getFilePath() != null) {
+                    // No File.exists() gate: exists() is FALSE for a restored
+                    // foreign-owned file that IS readable via the SAF grant —
+                    // generate() resolves access itself (direct path, then grant)
+                    // and returns null when neither works. Same exact frame the
+                    // Downloads list renders for this file.
+                    thumb = VaultThumbnail.generate(context, local.getFilePath(), entry.mime,
                             GlideHelper.thumbnailFrameUs(local));
                 }
             } catch (Exception ignored) {

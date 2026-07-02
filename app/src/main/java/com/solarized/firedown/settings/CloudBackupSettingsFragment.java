@@ -20,6 +20,7 @@ import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
 import com.solarized.firedown.phone.SettingsActivity;
 import com.solarized.firedown.sync.CloudBackupManager;
+import com.solarized.firedown.sync.VaultBackupWorker;
 import com.solarized.firedown.sync.VaultSmokeTest;
 import com.solarized.firedown.utils.NavigationUtils;
 
@@ -99,7 +100,14 @@ public class CloudBackupSettingsFragment extends BasePreferenceFragment
                     if (infos != null) {
                         for (WorkInfo wi : infos) {
                             WorkInfo.State s = wi.getState();
-                            if (s == WorkInfo.State.RUNNING || s == WorkInfo.State.ENQUEUED) {
+                            // RUNNING always counts (backup or restore, both are
+                            // transfers). ENQUEUED counts only for IDENTIFIED
+                            // backups: a legacy pre-tag WorkSpec parked in retry
+                            // backoff is not transferring anything — it held
+                            // "Transfer in progress…" on this screen for hours
+                            // with no actual transfer (on-device ghost).
+                            if (s == WorkInfo.State.RUNNING
+                                    || (s == WorkInfo.State.ENQUEUED && hasBackupTag(wi))) {
                                 active = true;
                                 break;
                             }
@@ -262,6 +270,17 @@ public class CloudBackupSettingsFragment extends BasePreferenceFragment
                 snackbar(result.message);
             });
         }, "vault-smoke-test").start();
+    }
+
+    /** Whether a WorkInfo carries the backup identity tags stamped at enqueue
+     *  (restores and legacy pre-tag WorkSpecs don't). */
+    private static boolean hasBackupTag(WorkInfo wi) {
+        for (String tag : wi.getTags()) {
+            if (tag.startsWith(VaultBackupWorker.TAG_NAME)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void snackbar(String text) {

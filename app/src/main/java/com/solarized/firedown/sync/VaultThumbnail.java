@@ -1,12 +1,18 @@
 package com.solarized.firedown.sync;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.MediaMetadataRetriever;
 import android.os.Build;
+import android.os.ParcelFileDescriptor;
 import android.util.Base64;
 
+import com.solarized.firedown.data.RestoredFileAccess;
+
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
 
 /**
  * Generates a tiny base64 JPEG preview for a local file, stored inside the
@@ -33,7 +39,7 @@ public final class VaultThumbnail {
 
     /** A base64 JPEG preview for {@code path}, or null if none applies / on error. */
     public static String generate(String path, String mime) {
-        return generate(path, mime, 0L);
+        return generate(null, path, mime, 0L);
     }
 
     /**
@@ -44,17 +50,30 @@ public final class VaultThumbnail {
      * precisely; pass {@code <= 0} to let it pick a duration-aware offset.
      */
     public static String generate(String path, String mime, long frameUs) {
+        return generate(null, path, mime, frameUs);
+    }
+
+    /**
+     * As {@link #generate(String, String, long)}, but able to read a RESTORED
+     * foreign-owned file through the persisted SAF grant ({@code
+     * RestoredFileAccess}) when the direct path isn't readable — on Android 11+ a
+     * reinstalled app doesn't own its old public files, so every path-based
+     * decode here silently failed and restored files backed up with NO preview
+     * (and the display backfill couldn't heal them either). {@code context} may
+     * be null (direct-path behaviour only).
+     */
+    public static String generate(Context context, String path, String mime, long frameUs) {
         if (path == null || mime == null) {
             return null;
         }
         Bitmap bmp = null;
         try {
             if (mime.startsWith("image/")) {
-                bmp = decodeImage(path);
+                bmp = decodeImage(context, path);
             } else if (mime.startsWith("video/")) {
-                bmp = decodeVideoFrame(path, frameUs);
+                bmp = decodeVideoFrame(context, path, frameUs);
             } else if (mime.startsWith("audio/")) {
-                bmp = decodeAudioArt(path);
+                bmp = decodeAudioArt(context, path);
             }
             if (bmp == null) {
                 return null;
@@ -74,19 +93,69 @@ public final class VaultThumbnail {
         }
     }
 
-    private static Bitmap decodeImage(String path) {
+    private static Bitmap decodeImage(Context context, String path) {
+        if (new File(path).canRead()) {
+            BitmapFactory.Options bounds = new BitmapFactory.Options();
+            bounds.inJustDecodeBounds = true;
+            BitmapFactory.decodeFile(path, bounds);
+            BitmapFactory.Options opts = new BitmapFactory.Options();
+            opts.inSampleSize = sampleSize(bounds.outWidth, bounds.outHeight);
+            return BitmapFactory.decodeFile(path, opts);
+        }
+        if (context == null) {
+            return null;
+        }
+        // Restored foreign-owned image — the fd isn't rewindable across the two
+        // decode passes, so open the SAF grant once per pass.
         BitmapFactory.Options bounds = new BitmapFactory.Options();
         bounds.inJustDecodeBounds = true;
-        BitmapFactory.decodeFile(path, bounds);
+        try (ParcelFileDescriptor pfd = RestoredFileAccess.openReadOnly(context, path)) {
+            if (pfd == null) {
+                return null;
+            }
+            BitmapFactory.decodeFileDescriptor(pfd.getFileDescriptor(), null, bounds);
+        } catch (IOException e) {
+            return null;
+        }
         BitmapFactory.Options opts = new BitmapFactory.Options();
         opts.inSampleSize = sampleSize(bounds.outWidth, bounds.outHeight);
-        return BitmapFactory.decodeFile(path, opts);
+        try (ParcelFileDescriptor pfd = RestoredFileAccess.openReadOnly(context, path)) {
+            if (pfd == null) {
+                return null;
+            }
+            return BitmapFactory.decodeFileDescriptor(pfd.getFileDescriptor(), null, opts);
+        } catch (IOException e) {
+            return null;
+        }
     }
 
-    private static Bitmap decodeVideoFrame(String path, long frameUs) {
-        MediaMetadataRetriever mmr = new MediaMetadataRetriever();
-        try {
+    /**
+     * Binds the retriever to the file: the direct path when readable, else the
+     * persisted SAF grant (restored foreign-owned file). Returns the descriptor
+     * the caller must close AFTER releasing the retriever, or null when the
+     * direct path was used.
+     */
+    private static ParcelFileDescriptor bindSource(MediaMetadataRetriever mmr,
+                                                   Context context, String path) throws IOException {
+        if (new File(path).canRead()) {
             mmr.setDataSource(path);
+            return null;
+        }
+        ParcelFileDescriptor pfd =
+                context != null ? RestoredFileAccess.openReadOnly(context, path) : null;
+        if (pfd == null) {
+            throw new IOException("unreadable: " + path);
+        }
+        mmr.setDataSource(pfd.getFileDescriptor());
+        return pfd;
+    }
+
+    private static Bitmap decodeVideoFrame(Context context, String path, long frameUs)
+            throws IOException {
+        MediaMetadataRetriever mmr = new MediaMetadataRetriever();
+        ParcelFileDescriptor pfd = null;
+        try {
+            pfd = bindSource(mmr, context, path);
             // Prefer the exact frame the Downloads list uses (passed in µs); else
             // fall back to a duration-aware offset. NEXT_SYNC = the first keyframe
             // AT/AFTER that point, so the black opening keyframe (t=0) is skipped —
@@ -110,6 +179,7 @@ public final class VaultThumbnail {
             return mmr.getFrameAtTime(0, MediaMetadataRetriever.OPTION_CLOSEST_SYNC);
         } finally {
             releaseQuietly(mmr);
+            closeQuietly(pfd);
         }
     }
 
@@ -132,10 +202,11 @@ public final class VaultThumbnail {
         return Math.min(defaultUs, durationMs * 1000L / 2L);
     }
 
-    private static Bitmap decodeAudioArt(String path) {
+    private static Bitmap decodeAudioArt(Context context, String path) throws IOException {
         MediaMetadataRetriever mmr = new MediaMetadataRetriever();
+        ParcelFileDescriptor pfd = null;
         try {
-            mmr.setDataSource(path);
+            pfd = bindSource(mmr, context, path);
             byte[] art = mmr.getEmbeddedPicture();
             if (art == null) {
                 return null;
@@ -148,6 +219,7 @@ public final class VaultThumbnail {
             return BitmapFactory.decodeByteArray(art, 0, art.length, opts);
         } finally {
             releaseQuietly(mmr);
+            closeQuietly(pfd);
         }
     }
 
@@ -198,6 +270,18 @@ public final class VaultThumbnail {
         try {
             mmr.release();
         } catch (Exception ignored) {
+            // best-effort
+        }
+    }
+
+    /** Closes the SAF descriptor backing a retriever, after release. */
+    private static void closeQuietly(ParcelFileDescriptor pfd) {
+        if (pfd == null) {
+            return;
+        }
+        try {
+            pfd.close();
+        } catch (IOException ignored) {
             // best-effort
         }
     }

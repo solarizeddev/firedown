@@ -127,6 +127,7 @@
             style="@style/Theme.FireDown.More.Button"
             android:contentDescription="@string/cancel"
             app:icon="@drawable/ic_baseline_close_24"
+            app:iconTint="?attr/colorOnSurfaceVariant"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
