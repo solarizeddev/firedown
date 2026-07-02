@@ -105,13 +105,46 @@ public class SyncManager {
     }
 
     /**
+     * Enables sync reusing the EXISTING shared recovery code. The account is
+     * shared with Cloud Backup (one code derives the same account on every
+     * service), so a device that already holds a key — Cloud Backup set up
+     * first, or a key created on the hub — must never be walked through the
+     * create/restore setup again. Registration + first push happen in the
+     * worker, same as the new-code path. Callers guard on {@link #hasCode()}.
+     */
+    public void enableWithExistingCode() {
+        turnOn();
+        syncNow();
+    }
+
+    /**
      * Enables sync with a freshly generated recovery code. The grouped code is
      * delivered to {@code onCode} (main thread) for the "save this, no recovery"
      * screen; registration + first push happen in the worker.
+     *
+     * <p>MONEY-LOSS BACKSTOP: this never mints over an existing shared code.
+     * The code is the ONLY key to the shared account — for a user with a paid
+     * Cloud Backup plan, overwriting it silently bricks the balance and every
+     * encrypted backup (unless they saved the old code; this exact hole shipped
+     * as the bookmarks toggle offering "start new" to an already-paid user).
+     * Callers should route through {@link #enableWithExistingCode} when
+     * {@link #hasCode()}; if one slips through, the existing code is reused and
+     * delivered to {@code onCode} so the "save this" dialog shows the REAL key.
      */
     public void enableWithNewCode(Consumer<String> onCode) {
-        byte[] code = SyncIdentity.generateRecoveryCode();
         SyncSecrets secrets = new SyncSecrets(context);
+        byte[] existing = secrets.load();
+        if (existing != null) {
+            String grouped = SyncIdentity.grouped(SyncIdentity.encodeRecoveryCode(existing));
+            SyncSecrets.wipe(existing);
+            turnOn();
+            if (onCode != null) {
+                onCode.accept(grouped);
+            }
+            syncNow();
+            return;
+        }
+        byte[] code = SyncIdentity.generateRecoveryCode();
         secrets.store(code);
         String grouped = SyncIdentity.grouped(SyncIdentity.encodeRecoveryCode(code));
         SyncSecrets.wipe(code);

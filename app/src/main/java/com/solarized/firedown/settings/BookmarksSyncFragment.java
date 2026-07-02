@@ -88,7 +88,20 @@ public class BookmarksSyncFragment extends BasePreferenceFragment
             mEnableSwitch.setOnPreferenceChangeListener((pref, newValue) -> {
                 boolean want = Boolean.TRUE.equals(newValue);
                 if (want && !mSyncManager.isEnabled()) {
-                    showSetupDialog();
+                    if (mSyncManager.hasCode()) {
+                        // The shared account key already exists (Cloud Backup
+                        // set up first, or a key created on the hub) — enable
+                        // with it directly, no dialog. The setup chooser here
+                        // offered "start new" over a key that may front a PAID
+                        // storage balance; minting would have overwritten the
+                        // only key to it (SyncManager.enableWithNewCode now
+                        // also backstops this, but this path shouldn't ask at
+                        // all — one code, both features, by design).
+                        mSyncManager.enableWithExistingCode();
+                        updateState();
+                    } else {
+                        showSetupDialog();
+                    }
                 } else if (!want && mSyncManager.isEnabled()) {
                     showSignOutDialog();
                 }
