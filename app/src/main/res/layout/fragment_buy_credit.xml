@@ -150,6 +150,10 @@
                 app:singleSelection="true"
                 app:selectionRequired="true">
 
+                <!-- Both segments carry their method's glyph (bolt / card),
+                     SYMMETRICALLY — never just one, which unbalances the pair.
+                     Icons tint with the text state list so they mute/darken with
+                     selection like the label. -->
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/buy_rail_lightning"
                     style="?attr/materialButtonOutlinedStyle"
@@ -158,6 +162,10 @@
                     android:layout_weight="1"
                     android:text="@string/buy_credit_rail_lightning"
                     android:textColor="@color/buy_segment_text"
+                    app:icon="@drawable/ic_lightning_24"
+                    app:iconSize="17dp"
+                    app:iconGravity="textStart"
+                    app:iconTint="@color/buy_segment_text"
                     app:backgroundTint="@color/buy_segment_bg"
                     app:strokeColor="@color/buy_segment_stroke" />
 
@@ -168,6 +176,10 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:textColor="@color/buy_segment_text"
+                    app:icon="@drawable/ic_credit_card_24"
+                    app:iconSize="17dp"
+                    app:iconGravity="textStart"
+                    app:iconTint="@color/buy_segment_text"
                     app:backgroundTint="@color/buy_segment_bg"
                     app:strokeColor="@color/buy_segment_stroke"
                     android:text="@string/buy_credit_rail_card" />
@@ -314,13 +326,20 @@
                 android:textColor="?android:attr/textColorSecondary" />
         </LinearLayout>
 
-        <!-- ── 2b · pay with card (Stripe hosted Checkout in a tab) ── -->
+        <!-- ── 2b · pay with card (Stripe hosted Checkout, EMBEDDED in-flow) ──
+             The Checkout page loads in a WebView that fills the step (created
+             PROGRAMMATICALLY into buy_stripe_web_container by BuyCreditFragment,
+             never in XML — a device without a WebView provider, plausible on the
+             de-Googled devices this browser targets, would otherwise crash the
+             whole wizard at inflate; there it falls back to the old browser-tab
+             flow and shows buy_stripe_hint). match_parent + the weight-1
+             container so the ScrollView's fillViewport hands the step the whole
+             viewport. -->
         <LinearLayout
             android:id="@+id/buy_step_stripe"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:orientation="vertical"
-            android:gravity="center_horizontal"
             android:visibility="gone"
             tools:visibility="gone">
 
@@ -332,30 +351,13 @@
                 android:textSize="20sp"
                 android:textStyle="bold"
                 android:textColor="?attr/colorOnSurface"
-                android:layout_marginTop="24dp"
+                android:layout_marginTop="4dp"
                 tools:text="$18.00 · 500 GB-months" />
 
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:layout_marginTop="24dp">
-
-                <ProgressBar
-                    android:layout_width="18dp"
-                    android:layout_height="18dp"
-                    android:layout_marginEnd="10dp" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/buy_credit_waiting"
-                    android:textSize="13sp"
-                    android:textColor="?android:attr/textColorSecondary" />
-            </LinearLayout>
-
+            <!-- Browser-tab fallback copy — GONE while the embedded Checkout
+                 shows, VISIBLE only when no WebView is available. -->
             <TextView
+                android:id="@+id/buy_stripe_hint"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="18dp"
@@ -363,18 +365,51 @@
                 android:textSize="12.5sp"
                 android:lineSpacingMultiplier="1.3"
                 android:text="@string/buy_credit_stripe_hint"
-                android:textColor="?android:attr/textColorSecondary" />
+                android:textColor="?android:attr/textColorSecondary"
+                android:visibility="gone" />
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/buy_stripe_reopen"
-                style="?attr/materialButtonOutlinedStyle"
-                android:layout_width="wrap_content"
+            <FrameLayout
+                android:id="@+id/buy_stripe_web_container"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:layout_marginTop="12dp" />
+
+            <!-- Compact status strip under the Checkout: the poll spinner on the
+                 left, the open-in-browser escape on the right (always available —
+                 Stripe treats WebViews as second-class, so the user can bail to a
+                 real tab at any point without losing the poll, which lives in the
+                 ViewModel). -->
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="18dp"
-                android:text="@string/buy_credit_reopen_checkout"
-                app:icon="@drawable/ic_open_in_new_24"
-                app:iconSize="16dp"
-                app:cornerRadius="14dp" />
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginTop="10dp">
+
+                <ProgressBar
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:layout_marginEnd="10dp" />
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/buy_credit_waiting"
+                    android:textSize="13sp"
+                    android:textColor="?android:attr/textColorSecondary" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/buy_stripe_reopen"
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/buy_credit_reopen_checkout"
+                    app:icon="@drawable/ic_open_in_new_24"
+                    app:iconSize="16dp"
+                    app:cornerRadius="14dp" />
+            </LinearLayout>
         </LinearLayout>
 
         <!-- ── 3 · success ── -->

@@ -8,7 +8,6 @@ import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.preference.Preference;
-import androidx.preference.PreferenceCategory;
 import androidx.preference.PreferenceScreen;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
@@ -37,7 +36,8 @@ import okhttp3.OkHttpClient;
  * {@code storage.firedown.app}) is a SEPARATE feature from the local "Safe
  * Folder" ({@code file_safe}); copy here never says "vault". It's action-driven
  * (a download's options sheet backs it up on demand), so there is no on/off
- * switch — the Manage category is hidden until it's set up.
+ * switch — the Manage category's files/delete rows are hidden until it's set up
+ * ("Add storage credit" leads the category and is always reachable).
  */
 @AndroidEntryPoint
 public class CloudBackupSettingsFragment extends BasePreferenceFragment
@@ -54,7 +54,6 @@ public class CloudBackupSettingsFragment extends BasePreferenceFragment
     private Preference mBuy;
     private Preference mFiles;
     private Preference mDeleteData;
-    private PreferenceCategory mCatManage;
 
     /** True while a transfer is running, so a usage refresh doesn't clobber the
      *  live "Transfer in progress…" status. */
@@ -70,7 +69,6 @@ public class CloudBackupSettingsFragment extends BasePreferenceFragment
         mBuy = findPreference(Preferences.SETTINGS_CLOUD_BACKUP_BUY);
         mFiles = findPreference(Preferences.SETTINGS_CLOUD_BACKUP_FILES);
         mDeleteData = findPreference(Preferences.SETTINGS_CLOUD_BACKUP_DELETE_DATA);
-        mCatManage = findPreference(Preferences.SETTINGS_CLOUD_BACKUP_CAT_MANAGE);
 
         if (mBuy != null) {
             mBuy.setOnPreferenceClickListener(this);
@@ -134,9 +132,7 @@ public class CloudBackupSettingsFragment extends BasePreferenceFragment
      *  section visibility. */
     private void updateState() {
         boolean setUp = mCloudBackup.isSetUp();
-        if (mCatManage != null) {
-            mCatManage.setVisible(setUp);
-        }
+        applyManageVisibility(setUp);
         if (mStatus == null) {
             return;
         }
@@ -155,13 +151,24 @@ public class CloudBackupSettingsFragment extends BasePreferenceFragment
             if (!isAdded() || mStatus == null) {
                 return;
             }
-            if (mCatManage != null) {
-                mCatManage.setVisible(status.setUp);
-            }
+            applyManageVisibility(status.setUp);
             mStatus.setSetUp(status.setUp);
             mStatus.setUsage(status.fileCount, status.totalBytes);
             mStatus.setQuota(status.quota);
         });
+    }
+
+    /** "Add storage credit" leads the Manage category and is ALWAYS visible (a
+     *  metered user buys credit before their first backup); only the files +
+     *  delete rows wait for set-up. Never hide the whole category — that would
+     *  take the buy door with it. */
+    private void applyManageVisibility(boolean setUp) {
+        if (mFiles != null) {
+            mFiles.setVisible(setUp);
+        }
+        if (mDeleteData != null) {
+            mDeleteData.setVisible(setUp);
+        }
     }
 
     private void showDeleteDataDialog() {

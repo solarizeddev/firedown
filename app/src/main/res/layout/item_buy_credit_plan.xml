@@ -7,13 +7,15 @@
   cap + the coverage. Right: the one-time price, with the per-month equivalent
   under it on multi-month plans so tiers are comparable at a glance (the same
   small-rate-line pattern as the legacy denom card) — the big number stays the
-  one-time price, so it can't read as a subscription. Selection = state_checked:
-  a neutral tonal fill (buy_tile_bg, the SAME selected language as the segmented
-  toggles) + a 2dp onSurface stroke drawn by the fragment; checkedIcon is nulled
-  (no coral check overlay — Continue is the only coral) and the ripple pinned
-  neutral (a checkable card's default ripple is primary-tinted). NO promotional
-  badge on the tile itself (the "SAVE" nudge, if any, is a caption under the
-  duration toggle).
+  one-time price, so it can't read as a subscription. Selection is a strong
+  NEUTRAL 2dp onSurface stroke drawn by the fragment — stroke ONLY. Do NOT make
+  the card checkable / give the selected tile a fill: MaterialCardView's
+  state_checked paints a colorPrimary-tinted foreground layer over the card
+  (rejected on-device as a muddy pink wash in both themes), and any tonal fill
+  reads off against the theme's warm neutrals. TalkBack gets the selected state
+  from the plain view-selected flag via the fragment's accessibility delegate,
+  no Material checked machinery. NO promotional badge on the tile itself (the
+  "SAVE" nudge, if any, is a caption under the duration toggle).
 -->
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -23,10 +25,6 @@
     android:layout_marginBottom="11dp"
     android:clickable="true"
     android:focusable="true"
-    android:checkable="true"
-    app:checkedIcon="@null"
-    app:rippleColor="?attr/colorControlHighlight"
-    app:cardBackgroundColor="@color/buy_tile_bg"
     app:cardCornerRadius="16dp"
     app:cardElevation="0dp"
     app:strokeWidth="1dp"

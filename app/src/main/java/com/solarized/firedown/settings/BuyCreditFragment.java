@@ -1,5 +1,6 @@
 package com.solarized.firedown.settings;
 
+import android.annotation.SuppressLint;
 import android.content.ActivityNotFoundException;
 import android.content.ClipData;
 import android.content.ClipboardManager;
@@ -12,6 +13,10 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -94,9 +99,17 @@ public class BuyCreditFragment extends Fragment {
     // Lightning / Stripe pay state.
     private String mPayRequest;
     private String mCheckoutUrl;
-    /** So entering the Stripe step doesn't re-launch the browser on every re-render
+    /** So entering the Stripe step doesn't re-load Checkout on every re-render
      *  (config change, poll tick). */
     private boolean mCheckoutOpened;
+    /** The embedded hosted-Checkout WebView, created lazily into
+     *  {@code buy_stripe_web_container} — NEVER inflated from XML, so a device
+     *  with no WebView provider (possible on the de-Googled devices this browser
+     *  targets) falls back to the browser-tab flow instead of crashing the whole
+     *  wizard. Null until the Stripe step is first shown, or permanently when
+     *  creation failed ({@link #mStripeWebFailed}). */
+    private WebView mStripeWeb;
+    private boolean mStripeWebFailed;
 
     /** Intercepts Back on a pay screen to return to the picker (stops polling);
      *  enabled only while a pay screen is shown. */
@@ -202,6 +215,17 @@ public class BuyCreditFragment extends Fragment {
         mViewModel.loadOptions();
     }
 
+    @Override
+    public void onDestroyView() {
+        // The embedded Checkout WebView is view-scoped — destroy it with the view
+        // or it leaks its window callbacks and keeps its renderer alive.
+        if (mStripeWeb != null) {
+            mStripeWeb.destroy();
+            mStripeWeb = null;
+        }
+        super.onDestroyView();
+    }
+
     private void render(BuyCreditViewModel.UiState s) {
         showStep(s.phase);
         switch (s.phase) {
@@ -222,6 +246,11 @@ public class BuyCreditFragment extends Fragment {
         mStepStripe.setVisibility(phase == BuyCreditViewModel.Phase.PAY_STRIPE ? View.VISIBLE : View.GONE);
         mStepSuccess.setVisibility(phase == BuyCreditViewModel.Phase.SUCCESS ? View.VISIBLE : View.GONE);
         mStepError.setVisibility(phase == BuyCreditViewModel.Phase.ERROR ? View.VISIBLE : View.GONE);
+        if (phase != BuyCreditViewModel.Phase.PAY_STRIPE) {
+            // Leaving the card step (back to picker, success, error): drop the
+            // Checkout page so a hidden WebView isn't left running the session.
+            hideStripeWeb();
+        }
     }
 
     // ---- pick ----
@@ -353,12 +382,14 @@ public class BuyCreditFragment extends Fragment {
     }
 
     /** Contextual bulk-discount nudge: shows the saving of the cheapest-per-
-     *  GB-month LONGER plan than the one currently selected, and hides entirely
+     *  GB-month LONGER plan than the one currently selected, and hides
      *  once the longest (best-value) duration is selected — so it never tells the
      *  user to "pick a longer plan" when there isn't one. Data-driven, no
-     *  hardcoded percent. */
+     *  hardcoded percent. Hidden = INVISIBLE, not GONE: the line must hold its
+     *  space, or picking the longest duration collapses it and the whole layout
+     *  below jumps up (reported on-device on "2 years"). */
     private void updateSaveNudge(int selectedMonths) {
-        mDurationSave.setVisibility(View.GONE);
+        mDurationSave.setVisibility(View.INVISIBLE);
         double selectedRate = bestRateForDuration(selectedMonths);
         if (selectedRate <= 0) {
             return;
@@ -428,25 +459,27 @@ public class BuyCreditFragment extends Fragment {
         }
     }
 
-    /** Marks the chosen card checked (the neutral buy_tile_bg tonal fill follows
-     *  the state) with a strong onSurface stroke, and enables Continue. Shared by
-     *  the plan tiles and the legacy denomination cards. */
+    /** Highlights the chosen card and enables Continue. Shared by the plan tiles
+     *  and the legacy denomination cards. */
     private void selectCard(MaterialCardView selected, BuyCreditViewModel.Option opt) {
         mSelectedOption = opt;
         if (opt.isPlan()) {
             mPreferredSizeGb = opt.sizeGb;
         }
-        // Selection is a NEUTRAL tonal fill + strong outline, not coral — the only
-        // coral on this screen is the Continue button. The fill mirrors the checked
-        // segment of the duration/rail toggles, so the whole screen shares one
-        // "selected = grey tonal" language; onSurface reads clearly in both themes.
+        // Selection is a strong NEUTRAL outline, not coral — the only coral on
+        // this screen is the Continue button. onSurface reads clearly in both
+        // themes (near-white in dark, near-black in light). STROKE ONLY: do NOT
+        // switch this to MaterialCardView's checkable/checked state — its checked
+        // foreground layer tints with colorPrimary and painted the selected tile
+        // a muddy pink in both themes (rejected on-device). The plain
+        // view-selected flag below carries the state for TalkBack instead.
         int selectedColor = MaterialColors.getColor(selected, com.google.android.material.R.attr.colorOnSurface);
         int outline = MaterialColors.getColor(selected, com.google.android.material.R.attr.colorOutlineVariant);
         int stroke = Math.round(getResources().getDisplayMetrics().density);
         for (int i = 0; i < mDenomContainer.getChildCount(); i++) {
             MaterialCardView card = (MaterialCardView) mDenomContainer.getChildAt(i);
             boolean on = card == selected;
-            card.setChecked(on);
+            card.setSelected(on);
             card.setStrokeColor(on ? selectedColor : outline);
             card.setStrokeWidth(on ? stroke * 2 : stroke);
         }
@@ -454,11 +487,12 @@ public class BuyCreditFragment extends Fragment {
         mContinue.setEnabled(true);
     }
 
-    /** Exposes a tile's checked state to accessibility services. MaterialCardView
-     *  implements Checkable but does NOT announce it on its own (the Material docs
-     *  themselves prescribe an explicit delegate), so without this TalkBack reads
-     *  every tile identically and the selection is invisible to a non-sighted
-     *  user — Continue's price is the only tell. */
+    /** Exposes a tile's selected state to accessibility services — without this
+     *  TalkBack reads every tile identically and the selection is invisible to a
+     *  non-sighted user (Continue's price is the only tell). Reads the plain
+     *  view-selected flag, NOT MaterialCardView's Checkable state — the card is
+     *  deliberately not checkable (its checked foreground layer is
+     *  colorPrimary-tinted, the rejected pink wash). */
     private static void announceCheckable(MaterialCardView card) {
         ViewCompat.setAccessibilityDelegate(card, new AccessibilityDelegateCompat() {
             @Override
@@ -466,7 +500,7 @@ public class BuyCreditFragment extends Fragment {
                     @NonNull AccessibilityNodeInfoCompat info) {
                 super.onInitializeAccessibilityNodeInfo(host, info);
                 info.setCheckable(true);
-                info.setChecked(((MaterialCardView) host).isChecked());
+                info.setChecked(host.isSelected());
             }
         });
     }
@@ -502,18 +536,137 @@ public class BuyCreditFragment extends Fragment {
         }
     }
 
-    // ---- stripe (hosted Checkout) ----
+    // ---- stripe (hosted Checkout, embedded) ----
 
     private void bindStripe(BuyCreditViewModel.UiState s) {
         setPayBackEnabled(true);
         mCheckoutUrl = s.checkoutUrl;
         ((TextView) requireView().findViewById(R.id.buy_stripe_amount)).setText(payAmountText(s));
-        if (!mCheckoutOpened && mCheckoutUrl != null) {
-            mCheckoutOpened = true;
-            openCheckout();
+        if (mCheckoutOpened || mCheckoutUrl == null) {
+            return;
+        }
+        mCheckoutOpened = true;
+        // Checkout stays IN the flow: the hosted page loads in an embedded
+        // WebView, so paying never leaves this screen (the old flow bounced to a
+        // browser tab and stranded the user there while this screen polled
+        // underneath). The success/cancel redirects are intercepted below; the
+        // ViewModel's poll is what actually completes the purchase either way.
+        WebView web = ensureStripeWebView();
+        if (web != null) {
+            web.setVisibility(View.VISIBLE);
+            web.loadUrl(mCheckoutUrl);
+            return;
+        }
+        // No WebView on this device — the old browser-tab flow, with its
+        // explanatory copy.
+        View hint = requireView().findViewById(R.id.buy_stripe_hint);
+        if (hint != null) {
+            hint.setVisibility(View.VISIBLE);
+        }
+        openCheckout();
+    }
+
+    /** Lazily creates + configures the embedded Checkout WebView. Returns null
+     *  (permanently, {@link #mStripeWebFailed}) when the platform can't provide
+     *  one — the caller falls back to the browser tab. */
+    @SuppressLint({"SetJavaScriptEnabled", "ClickableViewAccessibility"})
+    private WebView ensureStripeWebView() {
+        if (mStripeWeb != null) {
+            return mStripeWeb;
+        }
+        if (mStripeWebFailed) {
+            return null;
+        }
+        View root = getView();
+        if (root == null) {
+            return null;
+        }
+        FrameLayout container = root.findViewById(R.id.buy_stripe_web_container);
+        if (container == null) {
+            return null;
+        }
+        WebView web;
+        try {
+            web = new WebView(requireContext());
+        } catch (RuntimeException e) {
+            // Missing/updating WebView provider — possible on de-Googled devices.
+            mStripeWebFailed = true;
+            return null;
+        }
+        // Hosted Checkout is a JS app and keeps state in DOM storage.
+        web.getSettings().setJavaScriptEnabled(true);
+        web.getSettings().setDomStorageEnabled(true);
+        web.setWebViewClient(new WebViewClient() {
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                return handleCheckoutNavigation(request.getUrl());
+            }
+        });
+        // The whole wizard scrolls in a ScrollView; hand vertical drags over the
+        // Checkout to the WebView or the outer ScrollView steals them and the
+        // payment form can't scroll.
+        web.setOnTouchListener((v, event) -> {
+            v.getParent().requestDisallowInterceptTouchEvent(true);
+            return false;
+        });
+        container.addView(web, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        mStripeWeb = web;
+        return web;
+    }
+
+    /** Routes the embedded Checkout's navigations: the mint's success/cancel
+     *  redirect URLs end the embed (the poll owns actual completion — success is
+     *  confirmed by {@code /v1/mint/issue}, never by reaching a URL); an
+     *  app-scheme URL (a bank's 3-D Secure app) goes to the system; everything
+     *  else (stripe.com, 3DS web challenges) stays in the WebView. */
+    private boolean handleCheckoutNavigation(Uri uri) {
+        if (uri == null) {
+            return false;
+        }
+        String scheme = uri.getScheme();
+        if (!"http".equals(scheme) && !"https".equals(scheme)) {
+            // A payment/bank app deeplink out of 3-D Secure — let the system
+            // handle it; the Checkout page continues when the user returns.
+            try {
+                startActivity(new Intent(Intent.ACTION_VIEW, uri)
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+            } catch (ActivityNotFoundException ignored) {
+                // No handler — swallow; staying on the page beats crashing out.
+            }
+            return true;
+        }
+        String host = uri.getHost();
+        String path = uri.getPath();
+        boolean isRedirectTarget = host != null && path != null
+                && (host.equals("firedown.app") || host.endsWith(".firedown.app"))
+                && path.startsWith("/pay/");
+        if (!isRedirectTarget) {
+            return false;
+        }
+        if (path.contains("cancel")) {
+            // The user backed out on Stripe's page — return to the picker (also
+            // stops the poll via the flow-generation bump).
+            mViewModel.backToPick();
+        } else {
+            // Payment submitted — drop the embed and let the waiting strip show;
+            // the poll flips the wizard to SUCCESS the moment the mint settles.
+            hideStripeWeb();
+        }
+        return true;
+    }
+
+    /** Collapses the embedded Checkout (payment submitted / step left). */
+    private void hideStripeWeb() {
+        if (mStripeWeb != null) {
+            mStripeWeb.loadUrl("about:blank");
+            mStripeWeb.setVisibility(View.GONE);
         }
     }
 
+    /** The browser-tab escape (the strip's open-in-browser button, and the whole
+     *  flow when no WebView exists). The poll lives in the ViewModel, so paying
+     *  in a tab still completes this screen. */
     private void openCheckout() {
         if (mCheckoutUrl == null) {
             return;

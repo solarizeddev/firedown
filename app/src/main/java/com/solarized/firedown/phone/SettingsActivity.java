@@ -88,10 +88,18 @@ public class SettingsActivity extends BaseActivity {
             navController.navigate(R.id.settings_bookmarks_sync, null, opts);
         }
 
-        // Deep-link straight to the Downloads-backup screen (from the upload /
-        // restore notification). Back returns to the settings list.
+        // Deep-link straight to the Downloads-backup screen (home status line +
+        // the upload/restore notification). Replace the settings list on the back
+        // stack so Back finishes this activity and returns to the CALLER (home /
+        // whatever was behind the notification) instead of stepping into the
+        // settings tree — same contract as the files deep-link below (a user
+        // coming from home who pressed Back landed on Settings, reported
+        // on-device).
         if (getIntent().getBooleanExtra(EXTRA_OPEN_CLOUD_BACKUP, false)) {
-            navController.navigate(R.id.settings_cloud_backup);
+            NavOptions opts = new NavOptions.Builder()
+                    .setPopUpTo(R.id.settings, true)
+                    .build();
+            navController.navigate(R.id.settings_cloud_backup, null, opts);
         }
 
         // Deep-link straight to the backed-up-files list (Downloads overflow).

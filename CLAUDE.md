@@ -1744,9 +1744,11 @@ opaque chunks + an opaque manifest blob.
   deliberately shows just the live summary text ("Backing up your downloads…"), no
   bar.
 
-- **Deep-links + back-nav.** The upload/restore notification opens the Cloud
-  Backup status screen (`SettingsActivity.EXTRA_OPEN_CLOUD_BACKUP`, Back → settings
-  list). The **Downloads toolbar overflow** opens the backed-up-files list
+- **Deep-links + back-nav.** The upload/restore notification AND the home
+  status line open the Cloud Backup status screen
+  (`SettingsActivity.EXTRA_OPEN_CLOUD_BACKUP`) with `popUpTo settings inclusive`,
+  so Back returns to the CALLER (home), never into the settings tree. The
+  **Downloads toolbar overflow** opens the backed-up-files list
   (`EXTRA_OPEN_CLOUD_BACKUP_FILES`) and replaces the settings list on the back
   stack (`popUpTo settings inclusive`), so Back returns to **Downloads** (the
   caller), not into the settings tree. A "Sync" row in the home + browser popups

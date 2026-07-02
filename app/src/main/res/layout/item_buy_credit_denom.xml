@@ -4,9 +4,9 @@
   BuyCreditFragment (the server is the source of truth for denominations + prices,
   so nothing is hardcoded). Left: the amount. Right: price + the per-GB-month rate
   so tiers are comparable. NO promotional tag/badge — plain, honest cards.
-  Selection = state_checked: the neutral buy_tile_bg tonal fill + a 2dp onSurface
-  stroke drawn by the fragment (same treatment as the plan tiles — see
-  item_buy_credit_plan.xml for the rationale).
+  Selection is a neutral 2dp onSurface stroke drawn by the fragment — stroke
+  ONLY, never a checkable-card fill (see item_buy_credit_plan.xml for the
+  rejected-pink rationale).
 -->
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -16,10 +16,6 @@
     android:layout_marginBottom="11dp"
     android:clickable="true"
     android:focusable="true"
-    android:checkable="true"
-    app:checkedIcon="@null"
-    app:rippleColor="?attr/colorControlHighlight"
-    app:cardBackgroundColor="@color/buy_tile_bg"
     app:cardCornerRadius="16dp"
     app:cardElevation="0dp"
     app:strokeWidth="1dp"
