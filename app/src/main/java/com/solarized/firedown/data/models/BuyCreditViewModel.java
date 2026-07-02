@@ -517,7 +517,25 @@ public class BuyCreditViewModel extends ViewModel {
     @Override
     protected void onCleared() {
         flowGen++; // signal any running loop to stop
-        executor.shutdownNow();
+        // Leaving the wizard (system back, toolbar Up, or the activity finishing —
+        // but NOT a config change or process death, neither of which calls
+        // onCleared) ABANDONS an unpaid attempt: drop the persisted pending so the
+        // NEXT entry starts at the picker instead of resumePendingIfAny() jumping
+        // straight back into the abandoned Stripe checkout (the "every re-entry
+        // goes to the webview" bug). NEVER drop a sig-bearing record — that is a
+        // paid-but-unredeemed credit (real money) and must still be redeemed on the
+        // next entry; an INVOLUNTARY interruption (process death) keeps it too,
+        // since onCleared isn't called then. Queued on the single-thread executor
+        // so it runs AFTER the running poll bails on the flowGen bump — race-free
+        // against the poll's own sig-persist — and shutdown() (NOT shutdownNow)
+        // lets that queued clear run instead of being discarded as never-started.
+        executor.execute(() -> {
+            PendingPurchase pending = PendingPurchase.load(appContext);
+            if (pending != null && (pending.sigHex == null || pending.sigHex.isEmpty())) {
+                PendingPurchase.clear(appContext);
+            }
+        });
+        executor.shutdown();
         super.onCleared();
     }
 
