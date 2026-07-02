@@ -30,6 +30,8 @@ import com.solarized.firedown.phone.LockActivity;
 import com.solarized.firedown.phone.VaultActivity;
 import com.solarized.firedown.data.workers.MediaListenerWorker;
 
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.Executor;
 
 import javax.inject.Inject;
@@ -54,6 +56,31 @@ public class ApplicationLifeCycleHandler implements Application.ActivityLifecycl
     private final DownloadDatabase mDownloadDatabase;
     // Observer for incognito tab count → notification
     private final Observer<Integer> mIncognitoCountObserver = this::onIncognitoCountChanged;
+
+    /**
+     * A holder of RE-DERIVABLE memory caches (decoded bitmaps etc.) that should
+     * be dropped under memory pressure. Screens register for exactly their view
+     * lifetime; this handler is the app's ONE registered
+     * {@link ComponentCallbacks2}, so the drop policy (which trim levels count)
+     * lives here instead of being re-implemented per screen — fragments never
+     * receive {@code onTrimMemory} themselves. Dropping must always be safe:
+     * a listener's caches refill lazily.
+     */
+    public interface TrimMemoryListener {
+        void onTrimMemory();
+    }
+
+    /** All callbacks run on the main thread today; CopyOnWrite so a listener
+     *  that unregisters itself mid-dispatch can never throw a CME. */
+    private final Set<TrimMemoryListener> mTrimListeners = new CopyOnWriteArraySet<>();
+
+    public void addTrimListener(TrimMemoryListener listener) {
+        mTrimListeners.add(listener);
+    }
+
+    public void removeTrimListener(TrimMemoryListener listener) {
+        mTrimListeners.remove(listener);
+    }
 
     private void onIncognitoCountChanged(Integer count) {
         if (count != null && count > 0) {
@@ -152,6 +179,19 @@ public class ApplicationLifeCycleHandler implements Application.ActivityLifecycl
 
     @Override
     public void onTrimMemory(int level) {
+        // Cache-drop fan-out: UI_HIDDEN and beyond = the app left the
+        // foreground (a re-derivable cache costs only a lazy refill on
+        // return); RUNNING_CRITICAL = pressure while still foreground (the
+        // pre-API-34 signal, below UI_HIDDEN numerically so it needs its own
+        // test). Deliberately broader than the exact-UI_HIDDEN gate below —
+        // the mirror/lock work is a backgrounding TRANSITION action, cache
+        // dropping is a pressure response.
+        if (level >= ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN
+                || level == ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL) {
+            for (TrimMemoryListener listener : mTrimListeners) {
+                listener.onTrimMemory();
+            }
+        }
         if (level == ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN) {
             Log.d(TAG, "App went to background - Securing session");
 
@@ -179,7 +219,12 @@ public class ApplicationLifeCycleHandler implements Application.ActivityLifecycl
     public void onConfigurationChanged(@NonNull Configuration newConfig) { }
 
     @Override
-    public void onLowMemory() { }
+    public void onLowMemory() {
+        // Pre-ICS equivalent of TRIM_MEMORY_COMPLETE — drop every cache.
+        for (TrimMemoryListener listener : mTrimListeners) {
+            listener.onTrimMemory();
+        }
+    }
 
 
     private void updateWindowSecureMode(Activity activity) {
