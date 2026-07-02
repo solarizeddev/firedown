@@ -163,6 +163,17 @@ public final class StorageApiClient {
         }
     }
 
+    /** A presigned chunk PUT was rejected as expired/invalid (R2 403) — the URL
+     *  outlived its TTL mid-upload (a large file on a slow link). The caller should
+     *  re-mint fresh URLs ({@link #refreshUploadUrls}) and retry the SAME chunk,
+     *  rather than fail the whole upload. Distinct from TransientException so the
+     *  engine refreshes instead of blindly re-running from chunk 0. */
+    public static final class PresignExpiredException extends IOException {
+        PresignExpiredException(String msg) {
+            super(msg);
+        }
+    }
+
     /** A permanent failure (bad request, quota-exhausted, object-not-found, …). */
     public static final class FatalException extends IOException {
         public final String slug;
@@ -386,15 +397,41 @@ public final class StorageApiClient {
         }
     }
 
-    /** Upload one encrypted chunk to its presigned R2 URL (no auth — the URL is the capability). */
+    /** Upload one encrypted chunk to its presigned R2 URL (no auth — the URL is the
+     *  capability). A 403 means the presigned URL expired (outlived UploadPresignTTL
+     *  mid-upload) → PresignExpiredException so the engine can refresh + retry the
+     *  chunk; any other non-2xx is transient (retry the whole upload). */
     public void putChunk(String uploadUrl, byte[] encryptedChunk) throws IOException {
         Request req = new Request.Builder()
                 .url(uploadUrl)
                 .put(RequestBody.create(encryptedChunk, OCTET))
                 .build();
         try (Response resp = beginCall(req).execute()) {
+            if (resp.code() == 403) {
+                throw new PresignExpiredException("chunk PUT: 403 (presign expired)");
+            }
             if (!resp.isSuccessful()) {
                 throw new TransientException("chunk PUT: " + resp.code(), 0);
+            }
+        }
+    }
+
+    /** Re-mint fresh presigned PUT URLs for a still-PENDING object whose create-time
+     *  URLs expired mid-upload, so a slow/large upload can resume without
+     *  re-creating the object (and re-uploading from chunk 0). The server refuses
+     *  (409) once the object is committed. Returns the fresh URL per chunk, in
+     *  order. */
+    public List<String> refreshUploadUrls(SyncIdentity id, String objectIdHex) throws IOException {
+        String path = PATH_OBJECTS + "/" + objectIdHex + "/upload-urls";
+        Request req = signed(id, "POST", path, "", new byte[0])
+                .post(RequestBody.create(new byte[0], JSON))
+                .build();
+        try (Response resp = beginCall(req).execute()) {
+            throwForStatus(resp, "refresh upload urls");
+            try {
+                return toStringList(new JSONObject(bodyString(resp)).getJSONArray("upload_urls"));
+            } catch (org.json.JSONException e) {
+                throw new IOException("malformed refresh response", e);
             }
         }
     }

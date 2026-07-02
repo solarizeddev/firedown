@@ -1631,16 +1631,27 @@ opaque chunks + an opaque manifest blob.
   a future "list my objects" reconcile could close it). Don't widen the catch to
   bare `IOException`.
 
-- **Backup worker has a retry ceiling** (`VaultBackupWorker.MAX_RUN_ATTEMPTS`, 10,
-  gated on `getRunAttemptCount()`). A backup that keeps failing — most notably a
-  LARGE file whose per-chunk presigned upload URLs (server `UploadPresignTTL`,
-  minutes) keep **expiring mid-upload** on a slow link, so every WorkManager retry
-  re-uploads the whole file from scratch and expires again — must not loop forever
-  (battery + bandwidth churn + a fresh pending object per attempt). After the
-  ceiling it fails cleanly (the user can retry deliberately). The real cure is
-  **resumable / lazy per-chunk presign** (mint each chunk URL just-in-time, or
-  refresh on 403) so a long upload isn't bounded by one TTL — a server+client
-  change, deferred; the ceiling bounds the damage until then.
+- **Large-file uploads REFRESH expired presigned URLs mid-flight (the real fix,
+  not just a bound).** `create` hands out all chunk PUT URLs under the server's
+  short `UploadPresignTTL`; a large file on a slow link outlives it and the later
+  chunks 403. `StorageApiClient.putChunk` raises `PresignExpiredException` on a 403
+  (distinct from `TransientException`), and `VaultEngine.backupFile` catches it,
+  calls `api.refreshUploadUrls(objectId)` (→ `POST /objects/{id}/upload-urls`,
+  which re-mints fresh URLs for the still-PENDING object; the server refuses once
+  committed), swaps in the fresh URLs, and **retries the SAME chunk** — so a long
+  upload resumes instead of re-running from chunk 0. Bounded by `MAX_URL_REFRESHES`
+  (200; a refresh covers a whole TTL of chunks, so a real upload needs a handful —
+  this is headroom, not a per-chunk cost). A non-403 (`TransientException`) still
+  propagates → WorkManager retry, as before.
+- **Backup worker still has a retry ceiling** (`VaultBackupWorker.MAX_RUN_ATTEMPTS`,
+  10, gated on `getRunAttemptCount()`) as the backstop for a backup that keeps
+  failing for OTHER reasons (persistent network loss, a wedged manifest, or a chunk
+  that 403s even with a fresh URL past `MAX_URL_REFRESHES`) — so it fails cleanly
+  instead of re-uploading forever (battery + bandwidth churn + a fresh pending
+  object per attempt). With URL-refresh above, the large-file case no longer relies
+  on this ceiling. The remaining ceiling-worthy cases are genuine failures. (A
+  future full per-chunk lazy-presign — mint each URL just before its PUT, tiny TTL
+  — would also shrink the server-side overwrite window to near-zero.)
 
 - **Restore skips a file already in Downloads.** `VaultRestoreWorker` probes
   `findByNameSize` (honoured only when the local file still **exists** on disk)

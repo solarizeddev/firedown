@@ -40,6 +40,13 @@ public final class VaultEngine {
     // user delete on the net pool can race a backup's commit on a worker thread),
     // so allow a few more re-pull/re-push rounds before giving up.
     private static final int MAX_CONFLICT_RETRIES = 8;
+    // Upper bound on presigned-URL re-mints during ONE upload. A refresh covers
+    // UploadPresignTTL of further chunks, so a real upload needs at most
+    // (upload_time / TTL) refreshes — a handful even for a multi-GB file on a slow
+    // link. This is generous headroom, not a per-chunk cost; tripping it means
+    // something is wrong (a chunk 403s even with a fresh URL) → surface it so the
+    // worker retries (and its run-attempt ceiling ultimately gives up cleanly).
+    private static final int MAX_URL_REFRESHES = 200;
     private static final int B64 = Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP;
 
     /** Per-chunk upload progress (plaintext bytes), so the UI can show a
@@ -120,6 +127,10 @@ public final class VaultEngine {
                         + " upload urls for " + chunkCount + " chunks");
             }
 
+            // Mutable copy so an expired-URL refresh can swap in fresh URLs mid-upload
+            // (a large file on a slow link outlives the create-time UploadPresignTTL).
+            List<String> uploadUrls = new ArrayList<>(created.uploadUrls);
+            int refreshes = 0;
             try (InputStream in = new FileInputStream(file)) {
                 byte[] buf = new byte[CHUNK_SIZE];
                 long uploaded = 0;
@@ -130,7 +141,28 @@ public final class VaultEngine {
                     int n = readFully(in, buf);
                     byte[] plain = (n == buf.length) ? buf : Arrays.copyOf(buf, n);
                     byte[] enc = VaultCrypto.encryptChunk(plain, dek);
-                    api.putChunk(created.uploadUrls.get(i), enc);
+                    while (true) {
+                        try {
+                            api.putChunk(uploadUrls.get(i), enc);
+                            break;
+                        } catch (StorageApiClient.PresignExpiredException expired) {
+                            // The presigned URLs expired mid-upload. Re-mint fresh ones
+                            // for the (still-pending) object and retry THIS chunk, rather
+                            // than fail the whole upload and re-run from chunk 0. Bounded:
+                            // a fresh batch covers UploadPresignTTL of further chunks, so
+                            // refreshes scale with (upload time / TTL), not chunk count —
+                            // MAX_URL_REFRESHES is generous headroom, not a per-chunk cost.
+                            if (refreshes++ >= MAX_URL_REFRESHES) {
+                                throw expired; // give up refreshing → worker retries
+                            }
+                            List<String> fresh = api.refreshUploadUrls(identity, created.objectId);
+                            if (fresh.size() != chunkCount) {
+                                throw new IOException("refresh returned " + fresh.size()
+                                        + " upload urls for " + chunkCount + " chunks");
+                            }
+                            uploadUrls = fresh;
+                        }
+                    }
                     uploaded += n;
                     if (progress != null) {
                         progress.onProgress(uploaded, size);
