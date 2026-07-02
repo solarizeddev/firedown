@@ -1,0 +1,159 @@
+package com.solarized.firedown.glide;
+
+import android.graphics.Bitmap;
+import android.os.ParcelFileDescriptor;
+import android.util.Log;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
+import com.bumptech.glide.load.Options;
+import com.bumptech.glide.load.ResourceDecoder;
+import com.bumptech.glide.load.engine.Resource;
+import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool;
+import com.bumptech.glide.load.resource.bitmap.BitmapResource;
+import com.bumptech.glide.load.resource.bitmap.DownsampleStrategy;
+import com.solarized.firedown.GlideRequestOptions;
+import com.solarized.firedown.ffmpegutils.FFmpegThumbnailer;
+import com.solarized.firedown.utils.BitmapUtils;
+import com.solarized.firedown.utils.FileUriHelper;
+
+import java.io.FileDescriptor;
+
+/**
+ * Native-FFmpeg video-frame fallback for the {@link ParcelFileDescriptor} decode
+ * path — the path a FINISHED download uses ({@code DownloadEntity ->
+ * ParcelFileDescriptor}, {@link DownloadEntityModelLoader}). Glide's built-in
+ * MediaMetadataRetriever/skia decoders run first on that PFD; this is APPENDED
+ * after them, so it only runs when they FAIL — e.g. a codec/container MMR + the
+ * platform image decoder can't handle (AV1, some HEVC/odd MP4s), which otherwise
+ * ends on the mime glyph. Symptom in logs: {@code skia: Failed to create image
+ * decoder ... 'unimplemented'} then a still-image {@code ExifInterface} /
+ * {@code magic number: 0} failure while decoding a video PFD, and no thumbnail.
+ *
+ * <p>The sibling {@link FFmpegUriDecoder} already does this for the Uri path, but
+ * FFmpeg is only registered there — never for the PFD path finished downloads take
+ * (see {@code GlideModule}), so MMR had no native backstop. Like FFmpegUriDecoder,
+ * the native open uses the {@link GlideRequestOptions#FILEPATH} option, not the
+ * source object; the PFD's {@link FileDescriptor} is used only as a SECOND open
+ * target when the path can't be opened directly — the restored/foreign-owned
+ * case, where only the content-URI fd is readable
+ * ({@link com.solarized.firedown.utils.RestoredFileAccess}).
+ *
+ * <p>Gated to VIDEO mimes: images decode fine on the built-in still path, audio
+ * cover art is MMR's job (FFmpeg's video-frame grab would just fail), and GIFs
+ * must stay on Glide's animating path — so this never perturbs those LoadPaths.
+ */
+public class FFmpegPfdDecoder implements ResourceDecoder<ParcelFileDescriptor, Bitmap> {
+
+    private static final String TAG = FFmpegPfdDecoder.class.getSimpleName();
+
+    private final BitmapPool mBitmapPool;
+
+    public FFmpegPfdDecoder(BitmapPool bitmapPool) {
+        mBitmapPool = bitmapPool;
+    }
+
+    @Override
+    public boolean handles(@NonNull ParcelFileDescriptor source, @NonNull Options options) {
+        // Only a last-resort VIDEO frame grab. Audio/image/GIF/PDF PFDs are handled
+        // by their own decoders (MMR cover art, the still-image path, the animating
+        // GIF path, PdfDecoder), and adding FFmpeg to those LoadPaths would only add
+        // a wasted failing attempt.
+        String mime = options.get(GlideRequestOptions.MIMETYPE);
+        return mime != null && FileUriHelper.isVideo(mime);
+    }
+
+    @Nullable
+    @Override
+    public Resource<Bitmap> decode(@NonNull ParcelFileDescriptor source, int outWidth, int outHeight,
+                                   @NonNull Options options) {
+        String filePath = options.get(GlideRequestOptions.FILEPATH);
+        Long length = options.get(GlideRequestOptions.LENGTH);
+        DownsampleStrategy downSampleStrategy = options.get(DownsampleStrategy.OPTION);
+        // -1 = let native auto-seek a few seconds in (skips the black opening frame),
+        // matching FFmpegUriDecoder. A provided LENGTH is honoured as a mandate.
+        if (length == null) {
+            length = -1L;
+        }
+        if (downSampleStrategy == null) {
+            downSampleStrategy = DownsampleStrategy.NONE;
+        }
+
+        // Prefer the real path (owned local files — the common case). Fall back to
+        // the open fd for a restored/foreign file whose absolute path FFmpeg can't
+        // open directly but whose content-URI PFD is readable.
+        Bitmap bitmap = decodeByPath(filePath, length, outWidth, outHeight);
+        if (bitmap == null && source.getFileDescriptor() != null) {
+            bitmap = decodeByFd(source.getFileDescriptor(), length, outWidth, outHeight);
+        }
+        if (bitmap == null) {
+            return null; // both open targets failed → Glide falls to the mime glyph
+        }
+        return resize(bitmap, downSampleStrategy, outWidth, outHeight);
+    }
+
+    @Nullable
+    private Bitmap decodeByPath(@Nullable String path, long streamPos, int outWidth, int outHeight) {
+        if (path == null || path.isEmpty()) {
+            return null;
+        }
+        FFmpegThumbnailer thumbnailer = new FFmpegThumbnailer();
+        try {
+            if (thumbnailer.setDataSource(path, null) < 0) {
+                return null;
+            }
+            return extract(thumbnailer, streamPos, outWidth, outHeight);
+        } catch (Exception e) {
+            Log.e(TAG, "FFmpeg PFD path decode", e);
+            return null;
+        } finally {
+            thumbnailer.release();
+        }
+    }
+
+    @Nullable
+    private Bitmap decodeByFd(@NonNull FileDescriptor fd, long streamPos, int outWidth, int outHeight) {
+        FFmpegThumbnailer thumbnailer = new FFmpegThumbnailer();
+        try {
+            if (thumbnailer.setDataSource(fd, null) < 0) {
+                return null;
+            }
+            return extract(thumbnailer, streamPos, outWidth, outHeight);
+        } catch (Exception e) {
+            Log.e(TAG, "FFmpeg PFD fd decode", e);
+            return null;
+        } finally {
+            thumbnailer.release();
+        }
+    }
+
+    /** Applies the target-size hint (native scales down during sws_scale rather
+     *  than allocating at codec resolution — same as FFmpegUriDecoder) and grabs
+     *  the frame at {@code streamPos}. */
+    @Nullable
+    private Bitmap extract(FFmpegThumbnailer thumbnailer, long streamPos, int outWidth, int outHeight) {
+        if (outWidth > 0 && outHeight > 0) {
+            thumbnailer.setTargetSizeHint(outWidth, outHeight);
+        }
+        return thumbnailer.getBitmap(streamPos);
+    }
+
+    /** Downsamples the native bitmap to the requested size (skips a no-op rescale
+     *  when native already produced it at/below target via the size hint). */
+    private Resource<Bitmap> resize(Bitmap bitmap, DownsampleStrategy strategy, int outWidth, int outHeight) {
+        if (outWidth <= 0 || outHeight <= 0) {
+            return BitmapResource.obtain(bitmap, mBitmapPool);
+        }
+        int originalWidth = bitmap.getWidth();
+        int originalHeight = bitmap.getHeight();
+        float scaleFactor = strategy.getScaleFactor(originalWidth, originalHeight, outWidth, outHeight);
+        int decodeWidth = Math.round(scaleFactor * originalWidth);
+        int decodeHeight = Math.round(scaleFactor * originalHeight);
+        if (decodeWidth == originalWidth && decodeHeight == originalHeight) {
+            return BitmapResource.obtain(bitmap, mBitmapPool);
+        }
+        Bitmap resized = BitmapUtils.getResizedBitmap(bitmap, decodeWidth, decodeHeight);
+        return BitmapResource.obtain(resized, mBitmapPool);
+    }
+}
