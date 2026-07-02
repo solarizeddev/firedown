@@ -558,7 +558,7 @@
     <string name="settings_cloud_backup_show_code_summary">Revele o código que desbloqueia o seu Cloud Backup</string>
     <string name="settings_cloud_backup_code_unavailable">Código de recuperação indisponível</string>
     <string name="settings_cloud_backup_auth_subtitle">Confirme que é você para revelar o código de recuperação</string>
-    <string name="settings_cloud_backup_delete_title">Excluir todos os dados da nuvem</string>
+    <string name="settings_cloud_backup_delete_title">Excluir os arquivos em backup</string>
     <string name="settings_cloud_backup_delete_summary">Apague permanentemente seus arquivos em backup do servidor</string>
     <string name="settings_cloud_backup_delete_message">Isso apaga permanentemente todos os seus arquivos em backup do servidor. Os downloads neste dispositivo são mantidos. Não é possível desfazer — outros dispositivos não poderão mais restaurar do servidor.</string>
     <string name="settings_cloud_backup_delete_action">Excluir</string>

@@ -689,7 +689,7 @@
     <string name="settings_cloud_backup_show_code_summary">Den Code anzeigen, der dein Cloud Backup entsperrt</string>
     <string name="settings_cloud_backup_code_unavailable">Wiederherstellungscode nicht verfügbar</string>
     <string name="settings_cloud_backup_auth_subtitle">Bestätige deine Identität, um den Wiederherstellungscode anzuzeigen</string>
-    <string name="settings_cloud_backup_delete_title">Alle Cloud-Daten löschen</string>
+    <string name="settings_cloud_backup_delete_title">Gesicherte Dateien löschen</string>
     <string name="settings_cloud_backup_delete_summary">Deine gesicherten Dateien dauerhaft vom Server löschen</string>
     <string name="settings_cloud_backup_delete_message">Dadurch werden alle deine gesicherten Dateien dauerhaft vom Server gelöscht. Die Downloads auf diesem Gerät bleiben erhalten. Dies kann nicht rückgängig gemacht werden — andere Geräte können dann nicht mehr vom Server wiederherstellen.</string>
     <string name="settings_cloud_backup_delete_action">Löschen</string>

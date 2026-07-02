@@ -451,7 +451,7 @@
     <string name="settings_cloud_backup_show_code_summary">Покажете кода, който отключва облачния ви архив</string>
     <string name="settings_cloud_backup_code_unavailable">Кодът за възстановяване не е наличен</string>
     <string name="settings_cloud_backup_auth_subtitle">Потвърдете, че сте вие, за да се покаже кодът за възстановяване</string>
-    <string name="settings_cloud_backup_delete_title">Изтриване на всички облачни данни</string>
+    <string name="settings_cloud_backup_delete_title">Изтриване на архивираните файлове</string>
     <string name="settings_cloud_backup_delete_summary">Окончателно изтриване на архивираните ви файлове от сървъра</string>
     <string name="settings_cloud_backup_delete_message">Това окончателно изтрива всички ваши архивирани файлове от сървъра. Изтеглянията на това устройство се запазват. Действието е необратимо — другите устройства вече няма да могат да възстановяват от сървъра.</string>
     <string name="settings_cloud_backup_delete_action">Изтриване</string>

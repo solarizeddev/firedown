@@ -407,7 +407,7 @@
     <string name="settings_cloud_backup_show_code_summary">Reveal the code that unlocks your cloud backup</string>
     <string name="settings_cloud_backup_code_unavailable">Recovery code unavailable</string>
     <string name="settings_cloud_backup_auth_subtitle">Verify it\'s you to reveal the recovery code</string>
-    <string name="settings_cloud_backup_delete_title">Delete all cloud data</string>
+    <string name="settings_cloud_backup_delete_title">Delete backed-up files</string>
     <string name="settings_cloud_backup_delete_summary">Permanently erase your backed-up files from the server</string>
     <string name="settings_cloud_backup_delete_message">This permanently erases all your backed-up files from the server. The downloads on this device are kept. This can\'t be undone — other devices will no longer be able to restore from the server.</string>
     <string name="settings_cloud_backup_delete_action">Delete</string>

@@ -1841,9 +1841,14 @@ opaque chunks + an opaque manifest blob.
   owns the click), the pre-key **Create / "I have a recovery code"** gateway, the
   **Manage backup** category (Backups list — shown once set up), ONE secondary
   **Bookmarks** nav row, the shared **recovery code** (show/export, device-auth
-  gated), the FAQ, and LAST the right-to-erasure row ("Delete all cloud data" —
-  sunk to the bottom by danger, not taxonomy; it shares the Manage rows'
-  set-up gate). The KEY-FIRST GATE survives the
+  gated), the FAQ, and LAST the right-to-erasure row ("Delete backed-up files"
+  — sunk to the bottom by danger, not taxonomy; it shares the Manage rows'
+  set-up gate). That row's title is deliberately SCOPED: it erases only the
+  storage account, and bookmarks have their own "Delete bookmarks from server"
+  on the focused Bookmarks screen — an earlier "Delete all cloud data" title
+  implied it wiped bookmarks too (it never did). Per-feature erasure rows get
+  per-feature names; don't reintroduce an "all cloud data" label unless the
+  action genuinely erases both services. The KEY-FIRST GATE survives the
   merge: pre-key the buy CTA + Manage rows are hidden, Bookmarks is disabled, and
   only Create/adopt are offered (stops the keyless-purchase ghost account). The
   bookmark-only *actions* — the master **toggle**, **Sync now**, **Delete

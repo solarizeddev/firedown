@@ -685,7 +685,7 @@
     <string name="settings_cloud_backup_show_code_summary">显示解锁云备份的密钥</string>
     <string name="settings_cloud_backup_code_unavailable">恢复码不可用</string>
     <string name="settings_cloud_backup_auth_subtitle">验证身份以显示恢复码</string>
-    <string name="settings_cloud_backup_delete_title">删除所有云数据</string>
+    <string name="settings_cloud_backup_delete_title">删除已备份的文件</string>
     <string name="settings_cloud_backup_delete_summary">从服务器永久删除你已备份的文件</string>
     <string name="settings_cloud_backup_delete_message">这将从服务器永久删除你所有已备份的文件。本设备上的下载会保留。此操作无法撤销 — 其他设备将无法再从服务器恢复。</string>
     <string name="settings_cloud_backup_delete_action">删除</string>

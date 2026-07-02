@@ -515,7 +515,7 @@
     <string name="settings_cloud_backup_show_code_summary">Odhalit kód, který odemyká vaši zálohu v cloudu</string>
     <string name="settings_cloud_backup_code_unavailable">Obnovovací kód není dostupný</string>
     <string name="settings_cloud_backup_auth_subtitle">Ověřte svou totožnost pro zobrazení obnovovacího kódu</string>
-    <string name="settings_cloud_backup_delete_title">Smazat všechna data v cloudu</string>
+    <string name="settings_cloud_backup_delete_title">Smazat zálohované soubory</string>
     <string name="settings_cloud_backup_delete_summary">Trvale vymaže vaše zálohované soubory ze serveru</string>
     <string name="settings_cloud_backup_delete_message">Tímto trvale vymažete všechny své zálohované soubory ze serveru. Stažené soubory v tomto zařízení zůstanou. Akci nelze vrátit — ostatní zařízení už nebudou moci obnovit data ze serveru.</string>
     <string name="settings_cloud_backup_delete_action">Smazat</string>

@@ -557,7 +557,7 @@
     <string name="settings_cloud_backup_show_code_summary">Cloud Backup\'ın kilidini açan kodu gösterin</string>
     <string name="settings_cloud_backup_code_unavailable">Kurtarma kodu kullanılamıyor</string>
     <string name="settings_cloud_backup_auth_subtitle">Kurtarma kodunu görmek için kimliğinizi doğrulayın</string>
-    <string name="settings_cloud_backup_delete_title">Tüm bulut verilerini sil</string>
+    <string name="settings_cloud_backup_delete_title">Yedeklenen dosyaları sil</string>
     <string name="settings_cloud_backup_delete_summary">Yedeklenen dosyalarınızı sunucudan kalıcı olarak silin</string>
     <string name="settings_cloud_backup_delete_message">Bu işlem, yedeklenen tüm dosyalarınızı sunucudan kalıcı olarak siler. Bu cihazdaki indirmeler korunur. Geri alınamaz — diğer cihazlar artık sunucudan geri yükleme yapamaz.</string>
     <string name="settings_cloud_backup_delete_action">Sil</string>

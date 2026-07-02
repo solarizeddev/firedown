@@ -559,7 +559,7 @@
     <string name="settings_cloud_backup_show_code_summary">Wyświetl kod, który odblokowuje Twoją kopię zapasową w chmurze</string>
     <string name="settings_cloud_backup_code_unavailable">Kod odzyskiwania niedostępny</string>
     <string name="settings_cloud_backup_auth_subtitle">Potwierdź swoją tożsamość, aby wyświetlić kod odzyskiwania</string>
-    <string name="settings_cloud_backup_delete_title">Usuń wszystkie dane z chmury</string>
+    <string name="settings_cloud_backup_delete_title">Usuń pliki z kopii zapasowej</string>
     <string name="settings_cloud_backup_delete_summary">Trwale usuń pliki z kopii zapasowej z serwera</string>
     <string name="settings_cloud_backup_delete_message">Spowoduje to trwałe usunięcie wszystkich plików z kopii zapasowej z serwera. Pobrania na tym urządzeniu zostaną zachowane. Tej operacji nie można cofnąć — inne urządzenia nie będą już mogły przywrócić danych z serwera.</string>
     <string name="settings_cloud_backup_delete_action">Usuń</string>

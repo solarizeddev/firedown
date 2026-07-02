@@ -685,7 +685,7 @@
     <string name="settings_cloud_backup_show_code_summary">クラウドバックアップのロックを解除するコードを表示します</string>
     <string name="settings_cloud_backup_code_unavailable">復元コードを利用できません</string>
     <string name="settings_cloud_backup_auth_subtitle">本人確認を行うと復元コードが表示されます</string>
-    <string name="settings_cloud_backup_delete_title">すべてのクラウドデータを削除</string>
+    <string name="settings_cloud_backup_delete_title">バックアップ済みファイルを削除</string>
     <string name="settings_cloud_backup_delete_summary">バックアップしたファイルをサーバーから完全に削除します</string>
     <string name="settings_cloud_backup_delete_message">バックアップしたファイルがすべてサーバーから完全に削除されます。この端末のダウンロードは残ります。元に戻せません — 他の端末はサーバーから復元できなくなります。</string>
     <string name="settings_cloud_backup_delete_action">削除</string>

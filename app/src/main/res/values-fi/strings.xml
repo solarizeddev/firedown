@@ -497,7 +497,7 @@
     <string name="settings_cloud_backup_show_code_summary">Paljasta koodi, joka avaa pilvivarmuuskopiosi</string>
     <string name="settings_cloud_backup_code_unavailable">Palautuskoodi ei ole saatavilla</string>
     <string name="settings_cloud_backup_auth_subtitle">Vahvista henkilöllisyytesi, niin palautuskoodi paljastetaan</string>
-    <string name="settings_cloud_backup_delete_title">Poista kaikki pilvitiedot</string>
+    <string name="settings_cloud_backup_delete_title">Poista varmuuskopioidut tiedostot</string>
     <string name="settings_cloud_backup_delete_summary">Poista varmuuskopioidut tiedostosi pysyvästi palvelimelta</string>
     <string name="settings_cloud_backup_delete_message">Tämä poistaa pysyvästi kaikki varmuuskopioidut tiedostosi palvelimelta. Tämän laitteen lataukset säilyvät. Toimintoa ei voi peruuttaa — muut laitteet eivät voi enää palauttaa tietoja palvelimelta.</string>
     <string name="settings_cloud_backup_delete_action">Poista</string>

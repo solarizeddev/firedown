@@ -562,7 +562,7 @@
     <string name="settings_cloud_backup_show_code_summary">Показать код, который открывает доступ к Cloud Backup</string>
     <string name="settings_cloud_backup_code_unavailable">Код восстановления недоступен</string>
     <string name="settings_cloud_backup_auth_subtitle">Подтвердите свою личность, чтобы показать код восстановления</string>
-    <string name="settings_cloud_backup_delete_title">Удалить все данные из облака</string>
+    <string name="settings_cloud_backup_delete_title">Удалить резервные копии файлов</string>
     <string name="settings_cloud_backup_delete_summary">Безвозвратно удалить сохранённые файлы с сервера</string>
     <string name="settings_cloud_backup_delete_message">Это безвозвратно удалит все ваши сохранённые файлы с сервера. Загрузки на этом устройстве сохранятся. Действие необратимо — другие устройства больше не смогут восстановить данные с сервера.</string>
     <string name="settings_cloud_backup_delete_action">Удалить</string>

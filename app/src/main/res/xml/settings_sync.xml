@@ -25,7 +25,14 @@
     ── About ──
        How sync & encryption work  (covers bookmarks AND files)
     ── (last, unheaded) ──
-       Delete all cloud data     right-to-erasure — LAST by danger, not taxonomy
+       Delete backed-up files    right-to-erasure for the STORAGE account only —
+                                 LAST by danger, not taxonomy. Deliberately
+                                 scoped + named so: bookmarks have their OWN
+                                 "Delete bookmarks from server" on the focused
+                                 Bookmarks screen, and a single "delete all
+                                 cloud data" row here misled (it never touched
+                                 bookmarks). Per-feature erasure, per-feature
+                                 naming.
 
   KEY-FIRST GATE (unchanged): a recovery code is the account gateway. Until one
   exists, the buy CTA + Manage rows are hidden, the Bookmarks row is DISABLED,
@@ -140,7 +147,10 @@
     <!-- The most destructive action on the screen sits LAST — placement by
          danger, not taxonomy (it used to be the second actionable row, right
          under Backups, prime real estate for an accident). Same set-up gate as
-         the Manage category (SyncSettingsFragment.applyManageVisibility). -->
+         the Manage category (SyncSettingsFragment.applyManageVisibility).
+         Title is SCOPED ("Delete backed-up files", never "all cloud data"):
+         it erases only the storage account; bookmark erasure lives on the
+         focused Bookmarks screen. -->
     <Preference
         android:key="com.solarized.firedown.preferences.cloud.backup.delete.data"
         android:title="@string/settings_cloud_backup_delete_title"

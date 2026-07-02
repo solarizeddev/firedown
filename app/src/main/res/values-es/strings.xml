@@ -689,7 +689,7 @@
     <string name="settings_cloud_backup_show_code_summary">Muestra el código que desbloquea tu copia en la nube</string>
     <string name="settings_cloud_backup_code_unavailable">Código de recuperación no disponible</string>
     <string name="settings_cloud_backup_auth_subtitle">Verifica tu identidad para mostrar el código de recuperación</string>
-    <string name="settings_cloud_backup_delete_title">Eliminar todos los datos de la nube</string>
+    <string name="settings_cloud_backup_delete_title">Eliminar los archivos respaldados</string>
     <string name="settings_cloud_backup_delete_summary">Borra permanentemente tus archivos respaldados del servidor</string>
     <string name="settings_cloud_backup_delete_message">Esto borra permanentemente todos tus archivos respaldados del servidor. Las descargas de este dispositivo se conservan. Esta acción no se puede deshacer: los demás dispositivos ya no podrán restaurar desde el servidor.</string>
     <string name="settings_cloud_backup_delete_action">Eliminar</string>

@@ -427,7 +427,7 @@
     <string name="settings_cloud_backup_show_code_summary">Kuva kood, mis avab sinu pilvevarunduse</string>
     <string name="settings_cloud_backup_code_unavailable">Taastekood pole saadaval</string>
     <string name="settings_cloud_backup_auth_subtitle">Taastekoodi kuvamiseks kinnita, et see oled sina</string>
-    <string name="settings_cloud_backup_delete_title">Kustuta kõik pilveandmed</string>
+    <string name="settings_cloud_backup_delete_title">Kustuta varundatud failid</string>
     <string name="settings_cloud_backup_delete_summary">Kustuta sinu varundatud failid serverist jäädavalt</string>
     <string name="settings_cloud_backup_delete_message">See kustutab serverist jäädavalt kõik sinu varundatud failid. Selle seadme allalaadimised jäävad alles. Toimingut ei saa tagasi võtta — teised seadmed ei saa enam serverist taastada.</string>
     <string name="settings_cloud_backup_delete_action">Kustuta</string>

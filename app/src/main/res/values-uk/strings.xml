@@ -477,7 +477,7 @@
     <string name="settings_cloud_backup_show_code_summary">Показати код, який розблоковує вашу хмарну резервну копію</string>
     <string name="settings_cloud_backup_code_unavailable">Код відновлення недоступний</string>
     <string name="settings_cloud_backup_auth_subtitle">Підтвердьте свою особу, щоб показати код відновлення</string>
-    <string name="settings_cloud_backup_delete_title">Видалити всі хмарні дані</string>
+    <string name="settings_cloud_backup_delete_title">Видалити резервні копії файлів</string>
     <string name="settings_cloud_backup_delete_summary">Назавжди стерти збережені файли із сервера</string>
     <string name="settings_cloud_backup_delete_message">Це назавжди зітре всі ваші збережені файли із сервера. Завантаження на цьому пристрої збережуться. Дію не можна скасувати — інші пристрої більше не зможуть відновити дані із сервера.</string>
     <string name="settings_cloud_backup_delete_action">Видалити</string>

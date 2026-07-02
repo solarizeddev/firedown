@@ -690,7 +690,7 @@
     <string name="settings_cloud_backup_show_code_summary">Révéler le code qui déverrouille votre sauvegarde cloud</string>
     <string name="settings_cloud_backup_code_unavailable">Code de récupération indisponible</string>
     <string name="settings_cloud_backup_auth_subtitle">Vérifiez votre identité pour révéler le code de récupération</string>
-    <string name="settings_cloud_backup_delete_title">Supprimer toutes les données cloud</string>
+    <string name="settings_cloud_backup_delete_title">Supprimer les fichiers sauvegardés</string>
     <string name="settings_cloud_backup_delete_summary">Effacer définitivement vos fichiers sauvegardés du serveur</string>
     <string name="settings_cloud_backup_delete_message">Cette action efface définitivement tous vos fichiers sauvegardés du serveur. Les téléchargements sur cet appareil sont conservés. C\'est irréversible — les autres appareils ne pourront plus restaurer depuis le serveur.</string>
     <string name="settings_cloud_backup_delete_action">Supprimer</string>

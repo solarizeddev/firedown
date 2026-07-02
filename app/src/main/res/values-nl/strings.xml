@@ -558,7 +558,7 @@
     <string name="settings_cloud_backup_show_code_summary">Toon de code die je Cloud Backup ontgrendelt</string>
     <string name="settings_cloud_backup_code_unavailable">Herstelcode niet beschikbaar</string>
     <string name="settings_cloud_backup_auth_subtitle">Verifieer dat jij het bent om de herstelcode te tonen</string>
-    <string name="settings_cloud_backup_delete_title">Alle clouddata verwijderen</string>
+    <string name="settings_cloud_backup_delete_title">Geback-upte bestanden verwijderen</string>
     <string name="settings_cloud_backup_delete_summary">Wis je geback-upte bestanden permanent van de server</string>
     <string name="settings_cloud_backup_delete_message">Hiermee worden al je geback-upte bestanden permanent van de server gewist. De downloads op dit apparaat blijven behouden. Dit kan niet ongedaan worden gemaakt — andere apparaten kunnen niet meer vanaf de server herstellen.</string>
     <string name="settings_cloud_backup_delete_action">Verwijderen</string>
