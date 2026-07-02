@@ -10,12 +10,14 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.ProgressBar;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -127,6 +129,24 @@ public class BuyCreditFragment extends Fragment {
      *  creation failed ({@link #mStripeWebFailed}). */
     private WebView mStripeWeb;
     private boolean mStripeWebFailed;
+    /** One-shot: the warm-up page (preconnects to Stripe's hosts) was loaded. */
+    private boolean mStripeWebWarmed;
+    /** Spinner overlaid on the Checkout WebView until its first real paint. */
+    private ProgressBar mStripeWebProgress;
+
+    /**
+     * Warm-up page for the embedded Checkout: creating the WebView here pays the
+     * one-off Chromium provider init while the user is still on the picker, and
+     * the preconnect hints open DNS+TLS to Stripe's hosts so the real
+     * checkout_url (which doesn't exist until the mint quotes) starts on warm
+     * connections. Loading this costs nothing user-visible — the Stripe step is
+     * hidden until the PAY_STRIPE phase.
+     */
+    private static final String STRIPE_WARMUP_HTML = "<html><head>"
+            + "<link rel=\"preconnect\" href=\"https://checkout.stripe.com\">"
+            + "<link rel=\"preconnect\" href=\"https://js.stripe.com\">"
+            + "<link rel=\"dns-prefetch\" href=\"https://m.stripe.network\">"
+            + "</head><body></body></html>";
 
     /** Intercepts Back on a pay screen to return to the picker (stops polling);
      *  enabled only while a pay screen is shown. */
@@ -208,6 +228,13 @@ public class BuyCreditFragment extends Fragment {
             }
             mSelectedRail = checkedId == R.id.buy_rail_card
                     ? BuyCreditViewModel.RAIL_STRIPE : BuyCreditViewModel.RAIL_LIGHTNING;
+            if (BuyCreditViewModel.RAIL_STRIPE.equals(mSelectedRail)) {
+                // Take the two client-side costs of "Continue" off the critical
+                // path while the user is still deciding: posted to the next
+                // frame so the segment's own check animation isn't janked by
+                // the (one-off, process-wide) Chromium provider init.
+                view.post(this::warmStripeWebView);
+            }
         });
 
         mContinue.setOnClickListener(v -> {
@@ -257,6 +284,8 @@ public class BuyCreditFragment extends Fragment {
             mStripeWeb.destroy();
             mStripeWeb = null;
         }
+        mStripeWebProgress = null;
+        mStripeWebWarmed = false;
         super.onDestroyView();
     }
 
@@ -628,6 +657,18 @@ public class BuyCreditFragment extends Fragment {
 
     // ---- stripe (hosted Checkout, embedded) ----
 
+    /** Pre-warms the embedded Checkout (WebView creation + Stripe preconnects)
+     *  so tapping Continue only pays for the quote + the page itself. Idempotent;
+     *  called when the Card rail is selected. */
+    private void warmStripeWebView() {
+        WebView web = ensureStripeWebView();
+        if (web == null || mStripeWebWarmed) {
+            return;
+        }
+        mStripeWebWarmed = true;
+        web.loadDataWithBaseURL(null, STRIPE_WARMUP_HTML, "text/html", "utf-8", null);
+    }
+
     private void bindStripe(BuyCreditViewModel.UiState s) {
         setPayBackEnabled(true);
         mCheckoutUrl = s.checkoutUrl;
@@ -644,6 +685,12 @@ public class BuyCreditFragment extends Fragment {
         WebView web = ensureStripeWebView();
         if (web != null) {
             web.setVisibility(View.VISIBLE);
+            // Spinner until Checkout's first real paint (hidden by
+            // onPageCommitVisible below) — the page is a heavy JS app and an
+            // empty container reads as a hang.
+            if (mStripeWebProgress != null) {
+                mStripeWebProgress.setVisibility(View.VISIBLE);
+            }
             web.loadUrl(mCheckoutUrl);
             return;
         }
@@ -686,10 +733,22 @@ public class BuyCreditFragment extends Fragment {
         // Hosted Checkout is a JS app and keeps state in DOM storage.
         web.getSettings().setJavaScriptEnabled(true);
         web.getSettings().setDomStorageEnabled(true);
+        // Transparent until the page paints — the default opaque white flashed
+        // hard against the dark theme while Checkout loaded.
+        web.setBackgroundColor(0);
         web.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 return handleCheckoutNavigation(request.getUrl());
+            }
+
+            @Override
+            public void onPageCommitVisible(WebView view, String url) {
+                // First real paint of the checkout — drop the spinner. Also
+                // fires for the warm-up page, where the overlay is already gone.
+                if (mStripeWebProgress != null) {
+                    mStripeWebProgress.setVisibility(View.GONE);
+                }
             }
         });
         // The whole wizard scrolls in a ScrollView; hand vertical drags over the
@@ -701,6 +760,13 @@ public class BuyCreditFragment extends Fragment {
         });
         container.addView(web, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        ProgressBar progress = new ProgressBar(requireContext());
+        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.gravity = Gravity.CENTER;
+        progress.setVisibility(View.GONE);
+        container.addView(progress, lp);
+        mStripeWebProgress = progress;
         mStripeWeb = web;
         return web;
     }
