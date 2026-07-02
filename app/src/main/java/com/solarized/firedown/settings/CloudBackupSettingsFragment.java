@@ -1,6 +1,7 @@
 package com.solarized.firedown.settings;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -17,6 +18,7 @@ import com.google.android.material.snackbar.Snackbar;
 import com.solarized.firedown.BuildConfig;
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
+import com.solarized.firedown.phone.SettingsActivity;
 import com.solarized.firedown.sync.CloudBackupManager;
 import com.solarized.firedown.sync.VaultSmokeTest;
 import com.solarized.firedown.utils.NavigationUtils;
@@ -119,8 +121,19 @@ public class CloudBackupSettingsFragment extends BasePreferenceFragment
     public boolean onPreferenceClick(Preference preference) {
         String key = preference.getKey();
         switch (key) {
-            case Preferences.SETTINGS_CLOUD_BACKUP_BUY ->
+            case Preferences.SETTINGS_CLOUD_BACKUP_BUY -> {
+                // A credit needs a saved key to redeem into. If this screen was
+                // reached without one (a deep link; the Downloads overflow already
+                // funnels keyless users to the hub), send them to create/recover a
+                // key first rather than into the buy flow's no-account error.
+                if (!mCloudBackup.hasAccount()) {
+                    Intent intent = new Intent(requireContext(), SettingsActivity.class);
+                    intent.putExtra(SettingsActivity.EXTRA_OPEN_SYNC, true);
+                    startActivity(intent);
+                } else {
                     NavigationUtils.navigateSafe(mNavController, R.id.action_cloud_backup_to_buy);
+                }
+            }
             case Preferences.SETTINGS_CLOUD_BACKUP_FILES ->
                     NavigationUtils.navigateSafe(mNavController, R.id.action_cloud_backup_to_files);
             case Preferences.SETTINGS_CLOUD_BACKUP_DELETE_DATA -> showDeleteDataDialog();

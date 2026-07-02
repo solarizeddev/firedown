@@ -580,15 +580,24 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
             startActivity(intent);
         } else if (id == R.id.action_cloud_backup) {
             Intent intent = new Intent(mActivity, SettingsActivity.class);
-            // Route by whether anything is actually backed up. When Cloud Backup is
-            // in use, the backed-up-files list is useful; when it ISN'T, that list
-            // is just empty — send the user to the Cloud Backup status screen
-            // instead (the setup hero + "Add storage credit" door), which funnels
-            // them toward configuring a backup rather than a dead-end empty list.
-            intent.putExtra(mCloudBackup.isSetUp()
-                            ? SettingsActivity.EXTRA_OPEN_CLOUD_BACKUP_FILES
-                            : SettingsActivity.EXTRA_OPEN_CLOUD_BACKUP,
-                    true);
+            // Key-first routing, three ways:
+            //  - in use (has backups)      → the backed-up-files list (useful);
+            //  - has a key, no backups yet → the Cloud Backup status screen (the
+            //    setup hero + "Add storage credit" door — they CAN buy/back up);
+            //  - NO key                    → the Sync hub, which offers Create /
+            //    "I have a recovery code". Never drop a keyless user onto the
+            //    "Add storage credit" screen: a credit needs a saved key first, so
+            //    that would dead-end at the buy flow's no-account error. Funnel to
+            //    key creation instead (matches the hub's key-first gating).
+            String extra;
+            if (mCloudBackup.isSetUp()) {
+                extra = SettingsActivity.EXTRA_OPEN_CLOUD_BACKUP_FILES;
+            } else if (mCloudBackup.hasAccount()) {
+                extra = SettingsActivity.EXTRA_OPEN_CLOUD_BACKUP;
+            } else {
+                extra = SettingsActivity.EXTRA_OPEN_SYNC;
+            }
+            intent.putExtra(extra, true);
             startActivity(intent);
         } else if (id == R.id.action_settings) {
             Intent intent = new Intent(mActivity, SettingsActivity.class);
