@@ -143,13 +143,33 @@ public final class VaultEngine {
             VaultEntry entry = new VaultEntry(created.objectId, wrappedDek, file.getName(),
                     size, mime, System.currentTimeMillis(), chunkCount, thumb);
             // Dedup-checked commit (closes the concurrency window the start-time
-            // findExisting can't: two backups of the same file CONTENT at different
-            // paths have different unique-work keys, so they run concurrently and
-            // both pass the start-time check before either commits). The OCC mutate
-            // re-pulls the latest manifest; if another backup of the same name+size
-            // already committed, we keep THAT entry and drop our just-uploaded
-            // object as an orphan, so the manifest never gains a duplicate.
-            VaultEntry committed = commitDeduped(entry);
+            // findExisting can't: TWO DEVICES backing up the same file content race —
+            // each pulls a manifest without the other's entry and both pass their
+            // start-time check before either commits; on-device the enqueueUniqueWork
+            // KEEP key is name+size, so same-device duplicates are already collapsed).
+            // The OCC mutate re-pulls the latest manifest; if another backup of the
+            // same name+size already committed, we keep THAT entry and drop our
+            // just-uploaded object as an orphan, so the manifest never gains a dup.
+            VaultEntry committed;
+            try {
+                committed = commitDeduped(entry);
+            } catch (ManifestConflictException ce) {
+                // The manifest push was cleanly rejected on every OCC attempt, so the
+                // entry DEFINITELY never committed — but completeObject above DID, so
+                // our object is now an unreferenced orphan (committed server-side,
+                // absent from the manifest, billed/quota-counted, invisible to the UI,
+                // and reaped by nothing). Free it before rethrowing, so the
+                // WorkManager retry re-uploads cleanly instead of leaking one orphan
+                // per attempt. A GENERIC IOException from the push is NOT caught here:
+                // it's ambiguous (the push may have committed with the response lost),
+                // and blind-deleting then would ghost a referenced object.
+                try {
+                    api.deleteObject(identity, created.objectId);
+                } catch (Exception ignored) {
+                    // best-effort — retrying the backup is what actually recovers
+                }
+                throw ce;
+            }
             if (!committed.objectId.equals(entry.objectId)) {
                 try {
                     api.deleteObject(identity, created.objectId); // free the orphan
@@ -292,10 +312,30 @@ public final class VaultEngine {
             // (~50·2^n ms) + up to 50 ms random jitter de-syncs them.
             sleepBackoff(attempt);
         }
-        // Exhausted: throw an IOException (NOT a terminal failure at the worker) so
-        // WorkManager retries the whole backup later rather than dropping it and
-        // orphaning the uploaded object — see the worker's IOException→retry branch.
-        throw new IOException("vault manifest push conflict after " + MAX_CONFLICT_RETRIES + " retries");
+        // Exhausted: every attempt was cleanly REJECTED (409 version-conflict), so
+        // the push DEFINITELY never committed. Throw the typed conflict exception
+        // (still an IOException → the worker's IOException→retry branch retries the
+        // whole backup) so backupFile can safely free a just-completed orphan object
+        // before the retry — a generic network IOException is ambiguous (the push
+        // may have committed with the response lost) and must NOT trigger that.
+        throw new ManifestConflictException(
+                "vault manifest push conflict after " + MAX_CONFLICT_RETRIES + " retries");
+    }
+
+    /**
+     * Thrown when {@link #mutateManifest} exhausts its OCC retries — every push was
+     * cleanly rejected with a 409 version-conflict, so the mutation DEFINITELY never
+     * committed server-side. Distinct from a generic {@link IOException} (a network
+     * drop mid-push, which is AMBIGUOUS — the push may have landed with the response
+     * lost). Callers that just completed a new object use this distinction: on a
+     * definitive conflict they free the now-unreferenced object; on an ambiguous
+     * error they leave it (blind-deleting a maybe-committed object would ghost the
+     * manifest). Still an {@link IOException} so the worker retries either way.
+     */
+    public static final class ManifestConflictException extends IOException {
+        ManifestConflictException(String message) {
+            super(message);
+        }
     }
 
     /** Exponential backoff with jitter between OCC attempts. Interrupt-aware:

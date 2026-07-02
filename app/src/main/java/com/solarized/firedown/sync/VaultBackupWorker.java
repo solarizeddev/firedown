@@ -66,6 +66,15 @@ public class VaultBackupWorker extends Worker {
     /** A fixed notification id for the in-progress foreground notification. */
     private static final int NOTIFICATION_ID = 0x6242; // "Bb"
 
+    /** Give-up ceiling for the retry branch. A backup that keeps failing — e.g. a
+     *  large file whose per-chunk presigned URLs keep expiring mid-upload on a slow
+     *  link (the whole file re-uploads from scratch each attempt), or a wedged
+     *  manifest — must not re-upload forever (battery + bandwidth churn, a fresh
+     *  pending object leaked per attempt). getRunAttemptCount() is 0 on the first
+     *  run, so this allows ~this many attempts before a clean terminal failure the
+     *  user can retry manually. */
+    private static final int MAX_RUN_ATTEMPTS = 10;
+
     private final Context mContext;
     private final OkHttpClient mClient;
     private final SharedPreferences mPrefs;
@@ -161,6 +170,14 @@ public class VaultBackupWorker extends Worker {
             // with WorkManager's backoff instead of failing the backup permanently
             // and orphaning the uploaded object.
             awaitLastProgress();
+            if (getRunAttemptCount() >= MAX_RUN_ATTEMPTS) {
+                // Persistently failing (e.g. a large file whose per-chunk presign
+                // URLs keep expiring mid-upload on a slow link — each retry restarts
+                // the whole upload). Stop re-uploading forever; fail cleanly so the
+                // user can retry deliberately. (The real cure is resumable / lazy
+                // per-chunk presign so a long upload isn't bounded by one TTL.)
+                return failure();
+            }
             return Result.retry();
         } catch (Exception e) {
             awaitLastProgress();

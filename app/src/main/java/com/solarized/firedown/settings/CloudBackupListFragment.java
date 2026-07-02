@@ -79,6 +79,13 @@ public class CloudBackupListFragment extends Fragment
     /** Bumped on every load() so a slower earlier network pull can't overwrite a
      *  newer one (two concurrent loads complete in network order, not call order). */
     private int mLoadGen;
+    /** Object ids whose server delete is IN FLIGHT (optimistically removed from the
+     *  UI, not yet confirmed gone). A load() that lands before the delete's OCC push
+     *  commits would otherwise RESURRECT the row (it's still in the pulled manifest);
+     *  load() filters these out. Cleared on delete success; on failure the row is
+     *  re-inserted. Main-thread only (all manager callbacks post to main), so no
+     *  synchronization. */
+    private final Set<String> mPendingRemovals = new HashSet<>();
     /** True while any backup/restore transfer is running. */
     private boolean mTransferActive;
     /** True while multi-select is active (drives the toolbar title/menu). */
@@ -251,7 +258,15 @@ public class CloudBackupListFragment extends Fragment
             }
             mLoading = false;
             mEntries.clear();
-            mEntries.addAll(entries);
+            for (VaultEntry e : entries) {
+                // Skip a row whose delete is still in flight — the manifest pull can
+                // pre-date the delete's OCC commit, and re-adding it here would make
+                // the just-removed row flicker back (a ghost for a file that IS being
+                // deleted). removeOptimistic/deleteSelected clear it on completion.
+                if (!mPendingRemovals.contains(e.objectId)) {
+                    mEntries.add(e);
+                }
+            }
             mAdapter.submit(mEntries);
             render();
             backfillThumbnails();
@@ -401,11 +416,15 @@ public class CloudBackupListFragment extends Fragment
         if (targets.isEmpty()) {
             return;
         }
-        // Optimistic: drop the rows now; the slow server delete runs in the
-        // background and a failure resyncs the truth via load().
+        // Snapshot the pre-delete list so a FAILURE can restore the exact rows. We
+        // must NOT rely on load() to resync on failure: offline (the common failure)
+        // load() itself fails and leaves the rows optimistically-pruned = wrongly
+        // gone from the UI though the server still has them.
+        final List<VaultEntry> snapshot = new ArrayList<>(mEntries);
         for (VaultEntry e : targets) {
             mAdapter.removeByObjectId(e.objectId);
             mEntries.remove(e);
+            mPendingRemovals.add(e.objectId); // a racing load() must not resurrect them
         }
         render();
         snackbar(getString(R.string.cloud_backup_remove_done));
@@ -413,10 +432,18 @@ public class CloudBackupListFragment extends Fragment
         // deletes don't fire N concurrent OCC mutations that contend on the
         // manifest version (which spuriously exhausted retries on a big batch).
         mCloudBackup.deleteEntries(targets, ok -> {
-            if (isAdded() && !ok) {
-                snackbar(getString(R.string.cloud_backup_remove_failed));
-                load(); // resync with the server truth
+            for (VaultEntry e : targets) {
+                mPendingRemovals.remove(e.objectId); // resolved either way
             }
+            if (!isAdded() || ok) {
+                return; // success: rows already gone
+            }
+            // Failed — restore the pre-delete rows directly (see the snapshot note).
+            mEntries.clear();
+            mEntries.addAll(snapshot);
+            mAdapter.submit(mEntries);
+            render();
+            snackbar(getString(R.string.cloud_backup_remove_failed));
         });
     }
 
@@ -471,9 +498,11 @@ public class CloudBackupListFragment extends Fragment
     private void removeOptimistic(VaultEntry entry) {
         int pos = mAdapter.removeByObjectId(entry.objectId);
         mEntries.remove(entry);
+        mPendingRemovals.add(entry.objectId); // a racing load() must not resurrect it
         render();
         snackbar(getString(R.string.cloud_backup_remove_done));
         mCloudBackup.deleteEntry(entry, ok -> {
+            mPendingRemovals.remove(entry.objectId); // resolved either way
             if (!isAdded() || ok) {
                 return; // success: the row is already gone
             }

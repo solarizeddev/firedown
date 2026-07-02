@@ -1610,6 +1610,38 @@ opaque chunks + an opaque manifest blob.
   entry** (cheap manifest re-write, no re-upload) when re-backing up a file that
   predates previews.
 
+- **Orphaned committed object on a commit-conflict — freed, not leaked.** The
+  upload order is `createObject` → chunk PUTs → `completeObject` → `commitDeduped`
+  (the manifest OCC push). If the push is **cleanly rejected on every OCC retry**
+  (`mutateManifest` throws `VaultEngine.ManifestConflictException`), the entry
+  DEFINITELY never committed — but `completeObject` already did, so the object is a
+  **committed, manifest-unreferenced orphan**: it counts against the account cap /
+  is billed, is invisible to the UI (not in the manifest), and NO reaper reclaims
+  it (`ReapPending` keys on `state='pending'`; the server can't read the E2E
+  manifest to know it's unreferenced). WorkManager's retry then re-uploads a *new*
+  object → one orphan leaked per attempt. So `backupFile` catches
+  `ManifestConflictException` specifically and best-effort `deleteObject`s the
+  just-completed object before rethrowing (the retry re-uploads cleanly).
+  **Crucially it does NOT catch a generic `IOException`** (a socket drop mid-push):
+  that's AMBIGUOUS — the push may have committed with the response lost — and
+  blind-deleting then would leave a **ghost** manifest entry pointing at a deleted
+  object. `ManifestConflictException` is the typed "definitely not committed"
+  signal (still an `IOException`, so the worker's retry branch is unchanged); the
+  ambiguous-lost-push orphan is a rare documented residual (no client-safe cure;
+  a future "list my objects" reconcile could close it). Don't widen the catch to
+  bare `IOException`.
+
+- **Backup worker has a retry ceiling** (`VaultBackupWorker.MAX_RUN_ATTEMPTS`, 10,
+  gated on `getRunAttemptCount()`). A backup that keeps failing — most notably a
+  LARGE file whose per-chunk presigned upload URLs (server `UploadPresignTTL`,
+  minutes) keep **expiring mid-upload** on a slow link, so every WorkManager retry
+  re-uploads the whole file from scratch and expires again — must not loop forever
+  (battery + bandwidth churn + a fresh pending object per attempt). After the
+  ceiling it fails cleanly (the user can retry deliberately). The real cure is
+  **resumable / lazy per-chunk presign** (mint each chunk URL just-in-time, or
+  refresh on 403) so a long upload isn't bounded by one TTL — a server+client
+  change, deferred; the ceiling bounds the damage until then.
+
 - **Restore skips a file already in Downloads.** `VaultRestoreWorker` probes
   `findByNameSize` (honoured only when the local file still **exists** on disk)
   and returns a no-op success with `KEY_ALREADY_PRESENT` instead of writing a
@@ -1630,6 +1662,25 @@ opaque chunks + an opaque manifest blob.
   disappears immediately; the slow server delete runs in the background and only
   the failure path re-inserts the row (error snackbar). Closes the ~10s "nothing
   happens then a snackbar" gap.
+  - **A delete-in-flight is tracked in `mPendingRemovals` so a racing `load()`
+    can't RESURRECT the row.** The optimistic remove drops the row from the UI
+    before the server delete's OCC push commits, so a `load()` that lands in that
+    window (a transfer-finished reload, or re-entering the screen) pulls a manifest
+    that STILL contains the entry and would re-add it — a ghost row for a file
+    that's actually being deleted. So `removeOptimistic`/`deleteSelected` add the
+    objectId(s) to `mPendingRemovals`, `load()` filters those out of its result,
+    and the delete callback clears them (on success they're gone; on failure the
+    row is restored). `mLoadGen` only orders load-vs-load; this orders
+    load-vs-delete. Main-thread only (all `CloudBackupManager` callbacks
+    `main.post`), so the `Set` needs no synchronization.
+  - **Batch delete restores rows DIRECTLY on failure, not via `load()`.** The
+    single-item path always re-inserted the row on failure; the batch path used to
+    `load()` to "resync" — but OFFLINE (the common failure) that `load()` ALSO
+    fails and leaves the rows optimistically-pruned = wrongly gone from the UI
+    while the server still has them. `deleteSelected` now snapshots the pre-delete
+    list and, on failure, restores it directly (and clears `mPendingRemovals`).
+    Keep the two delete paths symmetric — never rely on a network `load()` to undo
+    an optimistic removal.
 
 - **UI parity with Downloads.** The backed-up-files row
   (`item_cloud_backup_file.xml` + `CloudBackupFileAdapter`) faithfully mirrors
