@@ -70,19 +70,11 @@
                     app:singleSelection="true"
                     app:selectionRequired="true" />
 
-                <!-- Auto-computed bulk-discount nudge (shown only when a longer
-                     plan is genuinely cheaper per GB-month). -->
-                <TextView
-                    android:id="@+id/buy_duration_save"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:textSize="11.5sp"
-                    android:layout_marginTop="9dp"
-                    android:textColor="?attr/colorOnSurfaceVariant"
-                    android:visibility="gone"
-                    tools:text="Save up to 30% with a longer plan"
-                    tools:visibility="visible" />
-
+                <!-- The bulk discount lives ON the duration segments as a
+                     per-button "−N%" badge (durationLabelWithBadge) — the old
+                     selection-dependent savings text line that sat here needed
+                     two rounds of fixes (vanishing on the best plan, layout
+                     jumps) and was retired for the always-visible badge. -->
                 <View
                     android:layout_width="match_parent"
                     android:layout_height="24dp" />

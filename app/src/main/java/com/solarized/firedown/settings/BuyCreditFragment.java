@@ -41,7 +41,13 @@ import com.google.android.material.snackbar.Snackbar;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
+import android.graphics.Typeface;
+import android.text.SpannableString;
+import android.text.Spanned;
 import android.text.format.Formatter;
+import android.text.style.ForegroundColorSpan;
+import android.text.style.RelativeSizeSpan;
+import android.text.style.StyleSpan;
 import com.solarized.firedown.R;
 import com.solarized.firedown.sync.CloudBackupManager;
 import com.solarized.firedown.data.models.BuyCreditViewModel;
@@ -90,7 +96,6 @@ public class BuyCreditFragment extends Fragment {
     // Plan-grid views (hidden in the legacy flat-list mode).
     private View mDurationSection;
     private MaterialButtonToggleGroup mDurationToggle;
-    private TextView mDurationSave;
     private TextView mSizeLabel;
     private View mGbmExplainer;
     private View mSoftcapNote;
@@ -152,7 +157,6 @@ public class BuyCreditFragment extends Fragment {
         mContinue = view.findViewById(R.id.buy_continue);
         mDurationSection = view.findViewById(R.id.buy_duration_section);
         mDurationToggle = view.findViewById(R.id.buy_duration_toggle);
-        mDurationSave = view.findViewById(R.id.buy_duration_save);
         mSizeLabel = view.findViewById(R.id.buy_size_label);
         mGbmExplainer = view.findViewById(R.id.buy_gbm_explainer);
         mSoftcapNote = view.findViewById(R.id.buy_softcap_note);
@@ -330,17 +334,25 @@ public class BuyCreditFragment extends Fragment {
         }
 
         // Build the "Keep my backups for" toggle (hidden when only one duration is
-        // for sale — the tiles still say "for <duration>").
+        // for sale — the tiles still say "for <duration>"). Each longer duration
+        // carries its discount as a BADGE on the segment itself ("1 year  −25%"),
+        // computed against the shortest duration's best per-GB-month rate — the
+        // LNClear pattern: the saving is visible BEFORE any selection, attached
+        // to the option it applies to. This replaced the selection-dependent
+        // savings text line below the toggle, which needed two rounds of fixes
+        // (vanishing on the best plan, layout jumps) precisely because it only
+        // existed after a selection; a static per-catalog badge can't do either.
         LayoutInflater inflater = LayoutInflater.from(requireContext());
         mDurationToggle.removeAllViews();
         List<Integer> buttonIds = new ArrayList<>();
+        double baseRate = durations.isEmpty() ? -1 : bestRateForDuration(durations.get(0));
         for (int months : durations) {
             MaterialButton btn = (MaterialButton) inflater.inflate(
                     R.layout.item_buy_duration_button, mDurationToggle, false);
             int id = View.generateViewId();
             btn.setId(id);
             btn.setTag(months);
-            btn.setText(formatDuration(months));
+            btn.setText(durationLabelWithBadge(btn, months, baseRate));
             mDurationToggle.addView(btn);
             buttonIds.add(id);
         }
@@ -415,71 +427,37 @@ public class BuyCreditFragment extends Fragment {
             int idx = count >= 3 ? 1 : 0; // middle size by default
             selectCard(cards.get(idx), tileOpts.get(idx));
         }
-        updateSaveNudge(durationMonths);
     }
 
-    /** Contextual bulk-discount nudge: shows the saving of the cheapest-per-
-     *  GB-month LONGER plan than the one currently selected, and hides
-     *  once the longest (best-value) duration is selected — so it never tells the
-     *  user to "pick a longer plan" when there isn't one. Data-driven, no
-     *  hardcoded percent. Hidden = INVISIBLE, not GONE: the line must hold its
-     *  space, or picking the longest duration collapses it and the whole layout
-     *  below jumps up (reported on-device on "2 years"). */
-    private void updateSaveNudge(int selectedMonths) {
-        mDurationSave.setVisibility(View.INVISIBLE);
-        double selectedRate = bestRateForDuration(selectedMonths);
-        if (selectedRate <= 0) {
-            return;
+    /**
+     * The duration segment's label, with a "−N%" discount badge appended when
+     * this duration's best per-GB-month rate beats the SHORTEST duration's
+     * (the baseline everyone anchors on). Smaller + primary-colored + bold so
+     * it reads as a tag, not part of the label; localized via the percent
+     * formatter (Turkish prefixes the sign/percent, etc.). Badges under 5%
+     * are noise and skipped.
+     */
+    private CharSequence durationLabelWithBadge(MaterialButton btn, int months, double baseRate) {
+        String label = formatDuration(months);
+        double rate = bestRateForDuration(months);
+        if (baseRate <= 0 || rate <= 0 || rate >= baseRate) {
+            return label;
         }
-        double bestLongerRate = -1;
-        for (BuyCreditViewModel.Option o : mPlanOptions) {
-            if (o.durationMonths > selectedMonths && o.denomGbMonths > 0) {
-                double rate = (double) o.priceCents / o.denomGbMonths;
-                if (bestLongerRate < 0 || rate < bestLongerRate) {
-                    bestLongerRate = rate;
-                }
-            }
+        int pct = (int) Math.round((1.0 - rate / baseRate) * 100.0);
+        if (pct < 5) {
+            return label;
         }
-        if (bestLongerRate <= 0 || bestLongerRate >= selectedRate) {
-            // No cheaper longer plan — the user already holds the best rate. Flip
-            // the nudge to a CONFIRMATION ("You're saving X%" vs the shortest
-            // duration's rate) instead of going blank: on "2 years" the line used
-            // to just vanish, which read as the discount disappearing the moment
-            // it was earned. Same data-driven percent, no hardcoding; still
-            // INVISIBLE when there's no shorter (pricier) plan to compare against
-            // (single-duration catalogs).
-            double shortestRate = bestRateForShortestDuration(selectedMonths);
-            if (shortestRate <= 0 || shortestRate <= selectedRate) {
-                return;
-            }
-            int savedPct = (int) Math.round((1.0 - selectedRate / shortestRate) * 100.0);
-            if (savedPct <= 0) {
-                return;
-            }
-            mDurationSave.setText(getString(R.string.buy_credit_saving_confirm, savedPct));
-            mDurationSave.setVisibility(View.VISIBLE);
-            return;
-        }
-        int pct = (int) Math.round((1.0 - bestLongerRate / selectedRate) * 100.0);
-        if (pct <= 0) {
-            return;
-        }
-        mDurationSave.setText(getString(R.string.buy_credit_save_nudge, pct));
-        mDurationSave.setVisibility(View.VISIBLE);
-    }
-
-    /** The lowest price-per-GB-month of the SHORTEST duration below the given one
-     *  — the baseline the confirmation compares against ("saving X% vs the
-     *  shortest plan"). -1 when no shorter duration exists. */
-    private double bestRateForShortestDuration(int belowMonths) {
-        int shortest = -1;
-        for (BuyCreditViewModel.Option o : mPlanOptions) {
-            if (o.durationMonths < belowMonths && o.denomGbMonths > 0
-                    && (shortest < 0 || o.durationMonths < shortest)) {
-                shortest = o.durationMonths;
-            }
-        }
-        return shortest < 0 ? -1 : bestRateForDuration(shortest);
+        String badge = NumberFormat.getPercentInstance(Locale.getDefault()).format(-pct / 100.0);
+        SpannableString text = new SpannableString(label + "  " + badge);
+        int start = label.length() + 2;
+        int color = MaterialColors.getColor(btn, androidx.appcompat.R.attr.colorPrimary);
+        text.setSpan(new ForegroundColorSpan(color), start, text.length(),
+                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        text.setSpan(new RelativeSizeSpan(0.82f), start, text.length(),
+                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        text.setSpan(new StyleSpan(Typeface.BOLD), start, text.length(),
+                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        return text;
     }
 
     /** The lowest price-per-GB-month across the tiles of a given duration. */
