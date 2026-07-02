@@ -127,7 +127,10 @@
                      shifted the flame's resting position. A ConstraintLayout
                      Flow (wrapMode=chain) hosts the segments so a narrow screen
                      / large font scale WRAPS into a second centred row instead
-                     of the old LinearLayout's silent clipping. -->
+                     of the old LinearLayout's silent clipping; and each chip's
+                     text is width-capped at runtime (HomeFragment) so even a
+                     SINGLE over-wide translated segment wraps inside its chip
+                     rather than clipping at the screen edge. -->
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:id="@+id/home_subtitle"
                     android:layout_width="match_parent"
@@ -163,6 +166,7 @@
                         <TextView
                             android:id="@+id/home_subtitle_blocked_text"
                             android:layout_width="wrap_content"
+                            android:gravity="center_horizontal"
                             android:layout_height="wrap_content"
                             android:paddingHorizontal="12dp"
                             android:paddingVertical="8dp"
@@ -198,6 +202,7 @@
                         <TextView
                             android:id="@+id/home_subtitle_saved_text"
                             android:layout_width="wrap_content"
+                            android:gravity="center_horizontal"
                             android:layout_height="wrap_content"
                             android:paddingHorizontal="12dp"
                             android:paddingVertical="8dp"
@@ -234,6 +239,7 @@
                         <TextView
                             android:id="@+id/home_cloud_text"
                             android:layout_width="wrap_content"
+                            android:gravity="center_horizontal"
                             android:layout_height="wrap_content"
                             android:paddingHorizontal="12dp"
                             android:paddingVertical="8dp"

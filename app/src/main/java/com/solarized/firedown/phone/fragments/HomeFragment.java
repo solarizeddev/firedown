@@ -216,6 +216,25 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mSubtitleSaved = v.findViewById(R.id.home_subtitle_saved);
         mSubtitleSavedText = v.findViewById(R.id.home_subtitle_saved_text);
         mSubtitleSep2 = v.findViewById(R.id.home_subtitle_sep2);
+        // Within-segment graceful wrap, the level the Flow can't cover: a SINGLE
+        // translated segment (es "Creando copia de seguridad…") plus font scale
+        // 2.0 on a narrow screen can be wider than the whole line by itself — the
+        // Flow would give it its own row, but the row itself would clip at the
+        // screen edge. Cap each counter's text to the line's real width so the
+        // extreme case wraps INSIDE its chip (two centred lines) instead.
+        if (mSubtitle != null) {
+            mSubtitle.addOnLayoutChangeListener(
+                    (view, l, t, r, b, oldL, oldT, oldR, oldB) -> {
+                        int chipPadding = Math.round(
+                                24 * getResources().getDisplayMetrics().density);
+                        int cap = (r - l) - chipPadding;
+                        if (cap > 0) {
+                            applyTextWidthCap(mSubtitleBlockedText, cap);
+                            applyTextWidthCap(mSubtitleSavedText, cap);
+                            applyTextWidthCap(mHomeCloudText, cap);
+                        }
+                    });
+        }
         if (mSubtitleBlocked != null) {
             mSubtitleBlocked.setOnClickListener(view ->
                     TrackersInfoSheet.show(getChildFragmentManager()));
@@ -601,6 +620,14 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         mSubtitleSep2 = null;
         mHomeCloud = null;
         mHomeCloudText = null;
+    }
+
+    /** Guarded setter — setMaxWidth always requestLayout()s, so an unguarded
+     *  call from the layout-change listener would loop the layout pass. */
+    private static void applyTextWidthCap(TextView text, int cap) {
+        if (text != null && text.getMaxWidth() != cap) {
+            text.setMaxWidth(cap);
+        }
     }
 
     /**
