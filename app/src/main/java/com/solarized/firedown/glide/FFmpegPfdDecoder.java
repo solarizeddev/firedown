@@ -13,6 +13,7 @@ import com.bumptech.glide.load.engine.Resource;
 import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool;
 import com.bumptech.glide.load.resource.bitmap.BitmapResource;
 import com.bumptech.glide.load.resource.bitmap.DownsampleStrategy;
+import com.solarized.firedown.BuildConfig;
 import com.solarized.firedown.GlideRequestOptions;
 import com.solarized.firedown.ffmpegutils.FFmpegThumbnailer;
 import com.solarized.firedown.utils.BitmapUtils;
@@ -85,6 +86,16 @@ public class FFmpegPfdDecoder implements ResourceDecoder<ParcelFileDescriptor, B
         Long frame = options.get(GlideRequestOptions.FRAME);
         long streamPos = (frame != null && frame > 0) ? frame : -1L;
 
+        // Entry log: this decoder is only REACHED when the built-in MMR + still-
+        // image PFD decoders already failed on this video. If you see the mime
+        // glyph AND this line never prints, the fallback isn't being reached (build
+        // / registration); if it prints and the frame still doesn't show, the two
+        // decodeBy* failures below say why.
+        if (BuildConfig.DEBUG) {
+            Log.d(TAG, "reached (built-in decoders failed): filePath=" + filePath
+                    + " streamPos=" + streamPos + " out=" + outWidth + "x" + outHeight);
+        }
+
         // Prefer the real path (owned local files — the common case). Fall back to
         // the open fd for a restored/foreign file whose absolute path FFmpeg can't
         // open directly but whose content-URI PFD is readable.
@@ -110,7 +121,9 @@ public class FFmpegPfdDecoder implements ResourceDecoder<ParcelFileDescriptor, B
             }
             return extract(thumbnailer, streamPos, outWidth, outHeight);
         } catch (Exception e) {
-            Log.e(TAG, "FFmpeg PFD path decode", e);
+            if (BuildConfig.DEBUG) {
+                Log.e(TAG, "FFmpeg PFD path decode", e);
+            }
             return null;
         } finally {
             thumbnailer.release();
@@ -126,7 +139,9 @@ public class FFmpegPfdDecoder implements ResourceDecoder<ParcelFileDescriptor, B
             }
             return extract(thumbnailer, streamPos, outWidth, outHeight);
         } catch (Exception e) {
-            Log.e(TAG, "FFmpeg PFD fd decode", e);
+            if (BuildConfig.DEBUG) {
+                Log.e(TAG, "FFmpeg PFD fd decode", e);
+            }
             return null;
         } finally {
             thumbnailer.release();
