@@ -1,6 +1,7 @@
 package com.solarized.firedown;
 
 import android.content.Context;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
@@ -145,14 +146,23 @@ public class GlideHelper {
         // raster scaled into a larger cell. Both modes fill the whole
         // rounded thumbnail slot (a centred 16:10 card would float with
         // transparent bands and never reach the rounded corners); the
-        // GROUND differs by surface: grid tiles draw their white title +
-        // ⋮ directly on the tile (scrims were tried and rejected), so
-        // they need the dark duotone — list rows overlay nothing and take
-        // the soft brand wash (the dark tile read as a hole in the light
-        // theme; same split the Backups list already uses).
-        return gridTile
-                ? MimeTypeThumbnail.generateDrawable(image.getContext(), mimeType, true)
-                : MimeTypeThumbnail.generateListDrawable(image.getContext(), mimeType);
+        // GROUND differs by THEME × surface, not surface alone: grid
+        // tiles draw their white title + tags directly on the tile
+        // (scrims were tried and rejected), so they need a ground the
+        // white ink contrasts against — but the soft brand wash already
+        // provides that in a DARK theme (the low-alpha tint over a dark
+        // surface stays dark), so the opaque dark duotone is needed only
+        // in a LIGHT theme, where the wash lands light and would sink the
+        // white overlay. List rows overlay nothing and take the soft wash
+        // in both themes (the dark tile read as a hole in the light
+        // theme's list — the Backups-list complaint).
+        Context context = image.getContext();
+        boolean darkTheme = (context.getResources().getConfiguration().uiMode
+                & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
+        if (gridTile && !darkTheme) {
+            return MimeTypeThumbnail.generateDrawable(context, mimeType, true);
+        }
+        return MimeTypeThumbnail.generateListDrawable(context, mimeType);
     }
 
     private static <T> RequestListener<T> fallbackListener(@NonNull String mimeType,
@@ -391,8 +401,10 @@ public class GlideHelper {
     }
 
     /** @param gridTile true when the target is a GRID tile (white title + ⋮
-     *  drawn directly on the thumbnail → the mime fallback must stay the dark
-     *  duotone); false for list rows → the soft brand wash. */
+     *  drawn directly on the thumbnail → in a LIGHT theme the mime fallback
+     *  takes the dark duotone for overlay contrast; a dark theme's soft wash
+     *  is already dark enough, so there grid = list); false for list rows →
+     *  the soft brand wash in every theme. */
     public static void load(DownloadEntity entity, RequestOptions requestOptions,
                             AppCompatImageView image, boolean gridTile) {
 
@@ -649,7 +661,8 @@ public class GlideHelper {
     }
 
     /** @param gridTile see {@link #load(DownloadEntity, RequestOptions,
-     *  AppCompatImageView, boolean)} — grid keeps the dark mime ground. */
+     *  AppCompatImageView, boolean)} — light-theme grid keeps the dark mime
+     *  ground; dark theme uses the soft wash everywhere. */
     public static void load(BrowserDownloadEntity entity, RequestOptions requestOptions,
                             AppCompatImageView image, boolean gridTile) {
 

@@ -20,16 +20,21 @@ public class MimeTypeThumbnail {
     private static final int COLOR_BRAND_ORANGE    = 0xFFf0716c;
 
     /**
-     * Dark duotone ground for the GRID fallback tiles (the {@code fillBounds}
-     * path without {@code softGround}). The brand-tinted glyph pops on it, and
-     * an overlaid white title + the ⋮ button read on their own — so the grid
-     * tile no longer needs heavy gradient scrims fighting the old light brand
-     * wash. That overlay is the ONLY reason this is dark: list rows (which
-     * overlay nothing) use {@link #generateListDrawable}'s soft brand wash
-     * instead, and the media-viewer letterbox ({@code fillBounds=false}) keeps
-     * the same light wash. Already lightened once from 0xFF3E3733 for the
-     * light-theme list case before the list mode split off; must stay dark
-     * enough that the grid tiles' overlaid white title keeps ~9:1 contrast.
+     * Dark duotone ground for the LIGHT-THEME grid fallback tiles (the
+     * {@code fillBounds} path without {@code softGround}). The brand-tinted
+     * glyph pops on it, and an overlaid white title + the ⋮ button read on
+     * their own — so the grid tile no longer needs heavy gradient scrims
+     * fighting the old light brand wash. That overlay contrast is the ONLY
+     * reason this is dark, and it's only NEEDED in a light theme: in a dark
+     * theme the soft wash ({@link #generateListDrawable}) already lands dark
+     * (a low-alpha tint over a dark surface), so the white overlay reads on
+     * it and grid + list share one ground — {@code GlideHelper
+     * .generateThumbnail} routes grid tiles here only when the theme is
+     * light. List rows (which overlay nothing) use the soft wash in both
+     * themes, and the media-viewer letterbox ({@code fillBounds=false}) keeps
+     * the same light wash. Already lightened once from 0xFF3E3733; must stay
+     * dark enough that the grid tiles' overlaid white title keeps ~9:1
+     * contrast.
      */
     private static final int COLOR_FALLBACK_BG_DARK = 0xFF544B45;
 
@@ -56,16 +61,20 @@ public class MimeTypeThumbnail {
     }
 
     /**
-     * LIST-row fallback — fills the slot like the grid variant but on a SOFT
-     * brand wash (the letterbox path's low-alpha tint) instead of the dark
-     * duotone. The dark ground exists solely so the GRID tiles' overlaid white
-     * title + ⋮ read without scrims; a list row overlays nothing on its
+     * SOFT-wash fallback — fills the slot like the grid variant but on the
+     * soft brand wash (the letterbox path's low-alpha tint) instead of the
+     * dark duotone. The dark ground exists solely so the GRID tiles' overlaid
+     * white title + ⋮ read without scrims — and only a LIGHT theme needs it:
+     * over a dark surface this same low-alpha wash already lands dark enough
+     * for the white overlay, so dark-theme grid tiles use this too and grid +
+     * list share one ground there. A list row overlays nothing on its
      * thumbnail, so the dark tile was pure weight — in a light theme it read
      * as a dark hole in the row (the Backups list, where the mime tile is the
      * common case, was the on-device complaint — twice: it was first lightened
      * from 0xFF3E3733, still too heavy). Use this for any thumbnail slot with
-     * NO text drawn over it; keep {@code generateDrawable(ctx, mime, true)}
-     * for tiles that overlay text.
+     * NO text drawn over it (any theme) and for dark-theme grid tiles; keep
+     * {@code generateDrawable(ctx, mime, true)} for LIGHT-theme tiles that
+     * overlay text ({@code GlideHelper.generateThumbnail} owns that routing).
      */
     @NonNull
     public static Drawable generateListDrawable(@NonNull Context context, @NonNull String mimeType) {
@@ -129,13 +138,15 @@ public class MimeTypeThumbnail {
                                  boolean softGround, int maxIconPx) {
             mBgPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
             if (fillBounds && !softGround) {
-                // GRID thumbnail slot: opaque dark duotone ground so the
-                // overlaid white title + the ⋮ button read without scrims.
+                // LIGHT-theme GRID thumbnail slot: opaque dark duotone ground
+                // so the overlaid white title + the ⋮ button read without
+                // scrims. (Dark-theme grids take the soft wash below — over a
+                // dark surface it already lands dark; GlideHelper routes.)
                 mBgPaint.setColor(COLOR_FALLBACK_BG_DARK);
             } else {
-                // Media-viewer letterbox AND list rows (softGround): the light
-                // brand wash — nothing is overlaid on these, so the ground
-                // follows the surrounding surface instead of going dark.
+                // Media-viewer letterbox, list rows, and dark-theme grids
+                // (softGround): the low-alpha brand wash — the ground follows
+                // the surrounding surface instead of forcing its own.
                 mBgPaint.setColor(color);
                 mBgPaint.setAlpha(30);
             }

@@ -2723,18 +2723,24 @@ back to English (MissingTranslation isn't build-fatal here).
   in lockstep; don't reintroduce a denser 48dp, a 15sp override, or a 20/24dp
   gutter for one sheet.
 - **The generated mime fallback thumbnail (`MimeTypeThumbnail`) has THREE
-  modes, routed by SURFACE.** GRID tiles (`generateDrawable(ctx, mime, true)`)
-  keep the opaque dark duotone — their white title + ⋮ draw directly on the
-  tile (scrims were tried and rejected), the darkness is what buys that text
-  its contrast. LIST rows (`generateListDrawable`) take the soft low-alpha
-  brand wash — nothing is overlaid on a list thumbnail, and the dark tile read
-  as a hole in the light theme (found on the Backups list, then unified for
-  Downloads/Captured). The **media viewer keeps the default 16:10 letterbox**
-  (`fillBounds=false`) to match `PlayerView`'s `resize_mode="fit"` — don't
-  make the fill unconditional, it would paint the player background
-  edge-to-edge. `GlideHelper.load`/`loadFallback` carry a `gridTile` flag so
-  the adapters (which know list vs grid) pick the ground; the 3-arg `load`
-  overloads default to the LIST wash (single thumbs like LanShare).
+  modes, routed by THEME × SURFACE (not surface alone).** The opaque dark
+  duotone (`generateDrawable(ctx, mime, true)`) exists for ONE case:
+  **light-theme GRID tiles**, whose white title + ⋮ draw directly on the tile
+  (scrims were tried and rejected) and need a dark ground for contrast.
+  Everywhere else — LIST rows in both themes AND **dark-theme grid tiles** —
+  the soft low-alpha brand wash (`generateListDrawable`) is used: over a dark
+  surface the wash already lands dark enough for the white overlay, so a dark
+  theme needs no split (grid = list there), while in a light theme the dark
+  tile read as a hole in a LIST row (found on the Backups list, then unified
+  for Downloads/Captured). `GlideHelper.generateThumbnail` is the ONE routing
+  choke point — it checks `uiMode & UI_MODE_NIGHT_MASK` and picks dark only
+  for `gridTile && !nightMode`; don't re-split the decision into adapters.
+  The **media viewer keeps the default 16:10 letterbox** (`fillBounds=false`)
+  to match `PlayerView`'s `resize_mode="fit"` — don't make the fill
+  unconditional, it would paint the player background edge-to-edge.
+  `GlideHelper.load`/`loadFallback` carry a `gridTile` flag so the adapters
+  (which know list vs grid) declare the surface; the 3-arg `load` overloads
+  default to the LIST wash (single thumbs like LanShare).
 - **List-row meta line is `MIME · domain` — plain text, no domain icon.** Both
   list rows that show captured/downloaded media (`fragment_download_item.xml`
   and `fragment_browser_options_item_list.xml`, `row_meta` →
