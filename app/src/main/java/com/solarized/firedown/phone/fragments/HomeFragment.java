@@ -435,6 +435,12 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
             } else if (Lifecycle.Event.ON_RESUME.equals(event)) {
                 Log.d(TAG, "onResume");
                 mStop = false;
+            } else if (Lifecycle.Event.ON_DESTROY.equals(event)) {
+                // The registry holds STRONG references (see GeckoObserverRegistry):
+                // without this, every recreated HomeFragment leaks its predecessor
+                // (fragment + view tree) and the stale instance keeps receiving
+                // callbacks. Mirrors HomeIncognitoFragment/BrowserFragment.
+                mGeckoObserverRegistry.unregister(HomeFragment.this);
             }
         });
 
