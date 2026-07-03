@@ -1,7 +1,6 @@
 package com.solarized.firedown;
 
 import android.content.Context;
-import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
@@ -137,42 +136,28 @@ public class GlideHelper {
 
 
     private static Drawable generateThumbnail(@NonNull String mimeType,
-                                              @NonNull AppCompatImageView image,
-                                              boolean gridTile) {
+                                              @NonNull AppCompatImageView image) {
         // Vector-style drawable: paints the tinted card + centred icon
         // straight to the host's canvas at its current bounds, so the
         // result is crisp at any view size (grid / list / sw600 / sw720)
         // without per-size raster caches or first-frame blur from a
-        // raster scaled into a larger cell. Both modes fill the whole
-        // rounded thumbnail slot (a centred 16:10 card would float with
-        // transparent bands and never reach the rounded corners); the
-        // GROUND differs by THEME × surface, not surface alone: grid
-        // tiles draw their white title + tags directly on the tile
-        // (scrims were tried and rejected), so they need a ground the
-        // white ink contrasts against — but the soft brand wash already
-        // provides that in a DARK theme (the low-alpha tint over a dark
-        // surface stays dark), so the opaque dark duotone is needed only
-        // in a LIGHT theme, where the wash lands light and would sink the
-        // white overlay. List rows overlay nothing and take the soft wash
-        // in both themes (the dark tile read as a hole in the light
-        // theme's list — the Backups-list complaint).
-        Context context = image.getContext();
-        boolean darkTheme = (context.getResources().getConfiguration().uiMode
-                & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
-        if (gridTile && !darkTheme) {
-            return MimeTypeThumbnail.generateDrawable(context, mimeType, true);
-        }
-        return MimeTypeThumbnail.generateListDrawable(context, mimeType);
+        // raster scaled into a larger cell. Fills the whole rounded
+        // thumbnail slot (a centred 16:10 card would float with
+        // transparent bands and never reach the rounded corners) with ONE
+        // ground everywhere — the opaque soft brand pastel; the earlier
+        // dark-duotone grid ground and its theme/surface routing were
+        // removed at the maintainer's request (one ground, list and grid,
+        // both themes — see MimeTypeThumbnail.WASH_ALPHA).
+        return MimeTypeThumbnail.generateDrawable(image.getContext(), mimeType, true);
     }
 
     private static <T> RequestListener<T> fallbackListener(@NonNull String mimeType,
-                                                           @NonNull AppCompatImageView image,
-                                                           boolean gridTile) {
+                                                           @NonNull AppCompatImageView image) {
         return new RequestListener<>() {
             @Override
             public boolean onLoadFailed(GlideException e, Object model,
                                         @NonNull Target<T> target, boolean isFirstResource) {
-                image.setImageDrawable(generateThumbnail(mimeType, image, gridTile));
+                image.setImageDrawable(generateThumbnail(mimeType, image));
                 return true; // handled
             }
 
@@ -201,13 +186,12 @@ public class GlideHelper {
     private static <T> RequestListener<T> negativeCachingFallbackListener(
             @NonNull DownloadEntity entity,
             @NonNull String mimeType,
-            @NonNull AppCompatImageView image,
-            boolean gridTile) {
+            @NonNull AppCompatImageView image) {
         return new RequestListener<>() {
             @Override
             public boolean onLoadFailed(GlideException e, Object model,
                                         @NonNull Target<T> target, boolean isFirstResource) {
-                image.setImageDrawable(generateThumbnail(mimeType, image, gridTile));
+                image.setImageDrawable(generateThumbnail(mimeType, image));
                 // Only negative-cache a GENUINE decode failure (file opened,
                 // no extractable frame). An ACCESS failure
                 // (FileNotFoundException / EACCES) is transient — e.g. a
@@ -387,26 +371,15 @@ public class GlideHelper {
      * completion from a previous bind could paint over the fallback.
      */
     public static void loadFallback(DownloadEntity entity,
-                                    AppCompatImageView image, boolean gridTile) {
+                                    AppCompatImageView image) {
         clearSafe(image);
-        image.setImageDrawable(generateThumbnail(entity.getFileMimeType(), image, gridTile));
+        image.setImageDrawable(generateThumbnail(entity.getFileMimeType(), image));
     }
 
     // ── DownloadEntity thumbnail ────────────────────────────────────────
 
-    /** List-surface overload — soft mime fallback (single thumbs like LanShare). */
     public static void load(DownloadEntity entity, RequestOptions requestOptions,
                             AppCompatImageView image) {
-        load(entity, requestOptions, image, false);
-    }
-
-    /** @param gridTile true when the target is a GRID tile (white title + ⋮
-     *  drawn directly on the thumbnail → in a LIGHT theme the mime fallback
-     *  takes the dark duotone for overlay contrast; a dark theme's soft wash
-     *  is already dark enough, so there grid = list); false for list rows →
-     *  the soft brand wash in every theme. */
-    public static void load(DownloadEntity entity, RequestOptions requestOptions,
-                            AppCompatImageView image, boolean gridTile) {
 
         String mimeType = entity.getFileMimeType();
         long interval = effectiveThumbnailFrame(entity);
@@ -432,13 +405,13 @@ public class GlideHelper {
 
         if (FileUriHelper.isGIF(mimeType) || FileUriHelper.isWEP(mimeType) || FileUriHelper.isSVG(mimeType)) {
             Glide.with(image).load(RestoredFileAccess.openableUri(App.getAppContext(), entity.getFilePath()))
-                    .listener(fallbackListener(mimeType, image, gridTile))
+                    .listener(fallbackListener(mimeType, image))
                     .apply(options)
                     .into(image);
 
         } else if (FileUriHelper.isImage(mimeType) || FileUriHelper.isPdf(mimeType)) {
             Glide.with(image).load(entity)
-                    .listener(fallbackListener(mimeType, image, gridTile))
+                    .listener(fallbackListener(mimeType, image))
                     .apply(options)
                     .into(image);
 
@@ -458,7 +431,7 @@ public class GlideHelper {
             if (FileUriHelper.isAudio(mimeType)
                     && !FileUriHelper.canHaveEmbeddedArt(mimeType)) {
                 clearSafe(image);
-                image.setImageDrawable(generateThumbnail(mimeType, image, gridTile));
+                image.setImageDrawable(generateThumbnail(mimeType, image));
                 return;
             }
             // Persistent negative cache: the entity remembers when every
@@ -470,24 +443,24 @@ public class GlideHelper {
             // pipeline plus the GC pressure from churn.
             if (entity.isFileThumbnailUnavailable()) {
                 clearSafe(image);
-                image.setImageDrawable(generateThumbnail(mimeType, image, gridTile));
+                image.setImageDrawable(generateThumbnail(mimeType, image));
                 return;
             }
             Glide.with(image).load(entity)
                     .signature(new ObjectKey(interval + entity.getFileUrl().hashCode()))
-                    .listener(negativeCachingFallbackListener(entity, mimeType, image, gridTile))
+                    .listener(negativeCachingFallbackListener(entity, mimeType, image))
                     .apply(options)
                     .into(image);
 
         } else if (FileUriHelper.isApk(mimeType)) {
             Glide.with(image).load(RestoredFileAccess.openableUri(App.getAppContext(), entity.getFilePath()))
                     .signature(new ObjectKey(entity.getId()))
-                    .listener(fallbackListener(mimeType, image, gridTile))
+                    .listener(fallbackListener(mimeType, image))
                     .apply(options)
                     .into(image);
 
         } else {
-            image.setImageDrawable(generateThumbnail(mimeType, image, gridTile));
+            image.setImageDrawable(generateThumbnail(mimeType, image));
         }
     }
 
@@ -654,17 +627,8 @@ public class GlideHelper {
 
     // ── BrowserDownloadEntity thumbnail ─────────────────────────────────
 
-    /** List-surface overload — soft mime fallback. */
     public static void load(BrowserDownloadEntity entity, RequestOptions requestOptions,
                             AppCompatImageView image) {
-        load(entity, requestOptions, image, false);
-    }
-
-    /** @param gridTile see {@link #load(DownloadEntity, RequestOptions,
-     *  AppCompatImageView, boolean)} — light-theme grid keeps the dark mime
-     *  ground; dark theme uses the soft wash everywhere. */
-    public static void load(BrowserDownloadEntity entity, RequestOptions requestOptions,
-                            AppCompatImageView image, boolean gridTile) {
 
         String mimeType = entity.getMimeType();
         ObjectKey signature = new ObjectKey(entity.getUid());
@@ -673,7 +637,7 @@ public class GlideHelper {
             GlideUrl url = buildGlideUrl(entity);
             RequestBuilder<?> builder = Glide.with(image).load(url)
                     .signature(signature)
-                    .listener(fallbackListener(mimeType, image, gridTile));
+                    .listener(fallbackListener(mimeType, image));
             if (FileUriHelper.isSVG(mimeType)) {
                 builder.apply(requestOptions).fitCenter().into(image);
             } else {
@@ -702,7 +666,7 @@ public class GlideHelper {
                     && FileUriHelper.isAudio(mimeType)
                     && !FileUriHelper.canHaveEmbeddedArt(mimeType)) {
                 clearSafe(image);
-                image.setImageDrawable(generateThumbnail(mimeType, image, gridTile));
+                image.setImageDrawable(generateThumbnail(mimeType, image));
                 return;
             }
             // A Mega capture's URL is a synthetic, un-fetchable handle and the
@@ -712,7 +676,7 @@ public class GlideHelper {
             // doomed network fetch that just errors and falls back anyway.
             if (!hasThumbnail && entity.getType() == UrlType.MEGA.getValue()) {
                 clearSafe(image);
-                image.setImageDrawable(generateThumbnail(mimeType, image, gridTile));
+                image.setImageDrawable(generateThumbnail(mimeType, image));
                 return;
             }
             String source = hasThumbnail ? thumbnail : entity.getFileUrl();
@@ -723,12 +687,12 @@ public class GlideHelper {
                     : Glide.with(image).load(Uri.parse(source));
             request.override(THUMB_WIDTH, THUMB_HEIGHT)
                     .signature(signature)
-                    .listener(fallbackListener(mimeType, image, gridTile))
+                    .listener(fallbackListener(mimeType, image))
                     .apply(requestOptions).centerCrop()
                     .into(image);
 
         } else {
-            image.setImageDrawable(generateThumbnail(mimeType, image, gridTile));
+            image.setImageDrawable(generateThumbnail(mimeType, image));
         }
     }
 

@@ -2722,25 +2722,23 @@ back to English (MissingTranslation isn't build-fatal here).
   the old 20/24dp). Two-line rows (e.g. Download info) stay at 72dp. Keep these
   in lockstep; don't reintroduce a denser 48dp, a 15sp override, or a 20/24dp
   gutter for one sheet.
-- **The generated mime fallback thumbnail (`MimeTypeThumbnail`) has THREE
-  modes, routed by THEME × SURFACE (not surface alone).** The opaque dark
-  duotone (`generateDrawable(ctx, mime, true)`) exists for ONE case:
-  **light-theme GRID tiles**, whose white title + ⋮ draw directly on the tile
-  (scrims were tried and rejected) and need a dark ground for contrast.
-  Everywhere else — LIST rows in both themes AND **dark-theme grid tiles** —
-  the soft low-alpha brand wash (`generateListDrawable`) is used: over a dark
-  surface the wash already lands dark enough for the white overlay, so a dark
-  theme needs no split (grid = list there), while in a light theme the dark
-  tile read as a hole in a LIST row (found on the Backups list, then unified
-  for Downloads/Captured). `GlideHelper.generateThumbnail` is the ONE routing
-  choke point — it checks `uiMode & UI_MODE_NIGHT_MASK` and picks dark only
-  for `gridTile && !nightMode`; don't re-split the decision into adapters.
-  The **media viewer keeps the default 16:10 letterbox** (`fillBounds=false`)
-  to match `PlayerView`'s `resize_mode="fit"` — don't make the fill
-  unconditional, it would paint the player background edge-to-edge.
-  `GlideHelper.load`/`loadFallback` carry a `gridTile` flag so the adapters
-  (which know list vs grid) declare the surface; the 3-arg `load` overloads
-  default to the LIST wash (single thumbs like LanShare).
+- **The generated mime fallback thumbnail (`MimeTypeThumbnail`) has ONE
+  ground for every list row and grid tile — the soft brand pastel.**
+  `generateDrawable(ctx, mime, true)` fills the slot with the ~12% brand
+  wash pre-composited into an **OPAQUE** color over the theme background
+  (`ColorUtils.compositeColors` over `colorBackground`): a translucent
+  paint let whatever sat behind the tile bleed through and read as a dim
+  overlay, so the wash is flattened to a solid pastel that follows the
+  theme (dark theme → dark pastel) — keep it opaque. History, twice
+  relearned: an opaque dark duotone grid ground (for the grid's overlaid
+  white title + ⋮; scrims were tried and rejected before it) and then a
+  theme × surface split (dark duotone only on light-theme grids) were BOTH
+  removed at the maintainer's request — one ground everywhere; don't
+  reintroduce a `gridTile`/theme routing flag. The **media viewer keeps the
+  default 16:10 letterbox** (`generateDrawable(ctx, mime)`,
+  `fillBounds=false`, still translucent — it sits on the player's own
+  background) to match `PlayerView`'s `resize_mode="fit"` — don't make the
+  fill unconditional, it would paint the player background edge-to-edge.
 - **List-row meta line is `MIME · domain` — plain text, no domain icon.** Both
   list rows that show captured/downloaded media (`fragment_download_item.xml`
   and `fragment_browser_options_item_list.xml`, `row_meta` →

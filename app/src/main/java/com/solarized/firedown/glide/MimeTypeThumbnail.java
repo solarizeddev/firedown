@@ -2,6 +2,7 @@ package com.solarized.firedown.glide;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.ColorFilter;
 import android.graphics.Paint;
 import android.graphics.PixelFormat;
@@ -10,6 +11,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import android.graphics.drawable.Drawable;
 import androidx.core.content.ContextCompat;
+import androidx.core.graphics.ColorUtils;
+
+import com.google.android.material.color.MaterialColors;
 
 import com.solarized.firedown.utils.FileUriHelper;
 
@@ -20,23 +24,16 @@ public class MimeTypeThumbnail {
     private static final int COLOR_BRAND_ORANGE    = 0xFFf0716c;
 
     /**
-     * Dark duotone ground for the LIGHT-THEME grid fallback tiles (the
-     * {@code fillBounds} path without {@code softGround}). The brand-tinted
-     * glyph pops on it, and an overlaid white title + the ⋮ button read on
-     * their own — so the grid tile no longer needs heavy gradient scrims
-     * fighting the old light brand wash. That overlay contrast is the ONLY
-     * reason this is dark, and it's only NEEDED in a light theme: in a dark
-     * theme the soft wash ({@link #generateListDrawable}) already lands dark
-     * (a low-alpha tint over a dark surface), so the white overlay reads on
-     * it and grid + list share one ground — {@code GlideHelper
-     * .generateThumbnail} routes grid tiles here only when the theme is
-     * light. List rows (which overlay nothing) use the soft wash in both
-     * themes, and the media-viewer letterbox ({@code fillBounds=false}) keeps
-     * the same light wash. Already lightened once from 0xFF3E3733; must stay
-     * dark enough that the grid tiles' overlaid white title keeps ~9:1
-     * contrast.
+     * Strength of the brand wash behind the mime glyph (out of 255, ≈12%).
+     * ONE ground for every thumbnail slot — list rows AND grid tiles, both
+     * themes (maintainer's call; the earlier dark-duotone grid ground and its
+     * theme/surface routing were removed). On the fill path the wash is
+     * composited into an OPAQUE pastel over the theme background — a
+     * translucent paint let the card/pressed state bleed through and read as
+     * a dim overlay rather than a designed ground. The letterbox (media
+     * viewer) keeps the translucent form so it sits on the player background.
      */
-    private static final int COLOR_FALLBACK_BG_DARK = 0xFF544B45;
+    private static final int WASH_ALPHA = 30;
 
     /**
      * Upper bound (dp) on the mime icon for the {@code fillBounds} (list /
@@ -53,40 +50,15 @@ public class MimeTypeThumbnail {
      * Letterboxed fallback — paints a centred 16:10 card with the mime
      * icon, the same aspect real artwork takes under PlayerView's
      * {@code resize_mode="fit"}. Used by the media viewer; kept as the
-     * default so existing callers are unchanged.
+     * default so existing callers are unchanged. Translucent wash on
+     * purpose: the card floats on the player's own background.
      */
     @NonNull
     public static Drawable generateDrawable(@NonNull Context context, @NonNull String mimeType) {
-        return generateDrawable(context, mimeType, false);
-    }
-
-    /**
-     * SOFT-wash fallback — fills the slot like the grid variant but on the
-     * soft brand wash (the letterbox path's low-alpha tint) instead of the
-     * dark duotone. The dark ground exists solely so the GRID tiles' overlaid
-     * white title + ⋮ read without scrims — and only a LIGHT theme needs it:
-     * over a dark surface this same low-alpha wash already lands dark enough
-     * for the white overlay, so dark-theme grid tiles use this too and grid +
-     * list share one ground there. A list row overlays nothing on its
-     * thumbnail, so the dark tile was pure weight — in a light theme it read
-     * as a dark hole in the row (the Backups list, where the mime tile is the
-     * common case, was the on-device complaint — twice: it was first lightened
-     * from 0xFF3E3733, still too heavy). Use this for any thumbnail slot with
-     * NO text drawn over it (any theme) and for dark-theme grid tiles; keep
-     * {@code generateDrawable(ctx, mime, true)} for LIGHT-theme tiles that
-     * overlay text ({@code GlideHelper.generateThumbnail} owns that routing).
-     */
-    @NonNull
-    public static Drawable generateListDrawable(@NonNull Context context, @NonNull String mimeType) {
         int color = getColorForMimeType(mimeType);
-        Drawable icon = ContextCompat.getDrawable(context, FileUriHelper.getMimeTypeIcon(mimeType));
-        if (icon != null) {
-            icon = icon.mutate();
-            icon.setTint(color);
-        }
-        int maxIconPx = Math.round(MAX_FILL_ICON_DP
-                * context.getResources().getDisplayMetrics().density);
-        return new MimeTypeFallbackDrawable(color, icon, true, /* softGround= */ true, maxIconPx);
+        int ground = ColorUtils.setAlphaComponent(color, WASH_ALPHA);
+        return new MimeTypeFallbackDrawable(ground, tintedIcon(context, mimeType, color),
+                /* fillBounds= */ false, Integer.MAX_VALUE);
     }
 
     /**
@@ -95,30 +67,47 @@ public class MimeTypeThumbnail {
      * current bounds. No intermediate raster — the icon stays crisp at
      * any view size (grid / list / sw600 / sw720 / player full screen).
      *
-     * @param fillBounds when {@code true} the tint fills the whole view
+     * @param fillBounds when {@code true} the ground fills the whole view
      *   (so it reaches every corner of the rounded-clipped thumbnail
-     *   slot the same way centerCrop artwork does — the list/grid rows);
-     *   when {@code false} it letterboxes to a centred 16:10 card (the
-     *   media viewer, matching {@code resize_mode="fit"}). A square-ish
-     *   list slot (78×64) would otherwise leave the 16:10 card floating
-     *   with transparent bands top/bottom, never reaching the corners.
+     *   slot the same way centerCrop artwork does — the list/grid rows)
+     *   as an OPAQUE pastel (the brand wash pre-composited over the theme
+     *   background — see {@link #WASH_ALPHA}); when {@code false} it
+     *   letterboxes to a centred 16:10 card (the media viewer, matching
+     *   {@code resize_mode="fit"}). A square-ish list slot (78×64) would
+     *   otherwise leave the 16:10 card floating with transparent bands
+     *   top/bottom, never reaching the corners.
      */
     @NonNull
     public static Drawable generateDrawable(@NonNull Context context, @NonNull String mimeType,
                                             boolean fillBounds) {
+        if (!fillBounds) {
+            return generateDrawable(context, mimeType);
+        }
         int color = getColorForMimeType(mimeType);
+        // Solid pastel: the wash flattened onto the theme background, so the
+        // tile is opaque — nothing behind it (card color, ripple, a previous
+        // frame) shows through as a dimming veil. Follows the theme: over a
+        // dark background the same 12% tint lands dark, over light it lands
+        // light.
+        int surface = MaterialColors.getColor(context,
+                android.R.attr.colorBackground, Color.WHITE);
+        int ground = ColorUtils.compositeColors(
+                ColorUtils.setAlphaComponent(color, WASH_ALPHA), surface);
+        int maxIconPx = Math.round(MAX_FILL_ICON_DP
+                * context.getResources().getDisplayMetrics().density);
+        return new MimeTypeFallbackDrawable(ground, tintedIcon(context, mimeType, color),
+                /* fillBounds= */ true, maxIconPx);
+    }
+
+    @Nullable
+    private static Drawable tintedIcon(@NonNull Context context, @NonNull String mimeType,
+                                       int color) {
         Drawable icon = ContextCompat.getDrawable(context, FileUriHelper.getMimeTypeIcon(mimeType));
         if (icon != null) {
             icon = icon.mutate();
             icon.setTint(color);
         }
-        // Cap the icon only on the fill-bounds (list/grid) path; the player's
-        // letterbox path (fillBounds=false) keeps the uncapped half-side icon
-        // so the full-screen fallback isn't shrunk.
-        int maxIconPx = fillBounds
-                ? Math.round(MAX_FILL_ICON_DP * context.getResources().getDisplayMetrics().density)
-                : Integer.MAX_VALUE;
-        return new MimeTypeFallbackDrawable(color, icon, fillBounds, /* softGround= */ false, maxIconPx);
+        return icon;
     }
 
     private static int getColorForMimeType(@NonNull String mimeType) {
@@ -134,22 +123,10 @@ public class MimeTypeThumbnail {
         private final boolean mFillBounds;
         private final int mMaxIconPx;
 
-        MimeTypeFallbackDrawable(int color, @Nullable Drawable icon, boolean fillBounds,
-                                 boolean softGround, int maxIconPx) {
+        MimeTypeFallbackDrawable(int groundColor, @Nullable Drawable icon, boolean fillBounds,
+                                 int maxIconPx) {
             mBgPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-            if (fillBounds && !softGround) {
-                // LIGHT-theme GRID thumbnail slot: opaque dark duotone ground
-                // so the overlaid white title + the ⋮ button read without
-                // scrims. (Dark-theme grids take the soft wash below — over a
-                // dark surface it already lands dark; GlideHelper routes.)
-                mBgPaint.setColor(COLOR_FALLBACK_BG_DARK);
-            } else {
-                // Media-viewer letterbox, list rows, and dark-theme grids
-                // (softGround): the low-alpha brand wash — the ground follows
-                // the surrounding surface instead of forcing its own.
-                mBgPaint.setColor(color);
-                mBgPaint.setAlpha(30);
-            }
+            mBgPaint.setColor(groundColor);
             mIcon = icon;
             mFillBounds = fillBounds;
             mMaxIconPx = maxIconPx;
@@ -165,7 +142,7 @@ public class MimeTypeThumbnail {
             int cardWidth, cardHeight, cardLeft, cardTop;
             if (mFillBounds) {
                 // List / grid thumbnail slot: fill the whole view so the
-                // tint reaches every (rounded-clipped) corner, the same way
+                // ground reaches every (rounded-clipped) corner, the same way
                 // centerCrop artwork fills it. No letterbox.
                 cardWidth = b.width();
                 cardHeight = b.height();

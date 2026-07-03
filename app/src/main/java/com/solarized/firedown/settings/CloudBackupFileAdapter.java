@@ -320,9 +320,7 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             thumb.setImageBitmap(bmp);
         } else {
             String mt = mimeType != null ? mimeType : "application/octet-stream";
-            // List row, nothing overlaid on the tile → the soft brand wash,
-            // not the dark grid duotone (which read as a hole in light theme).
-            thumb.setImageDrawable(MimeTypeThumbnail.generateListDrawable(ctx, mt));
+            thumb.setImageDrawable(MimeTypeThumbnail.generateDrawable(ctx, mt, true));
         }
     }
 

@@ -769,7 +769,7 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
                 if (!retrieving) holder.progressBar.setProgress(entity.getFileProgress());
             }
             Tracing.begin("Glide.loadFallback");
-            try { GlideHelper.loadFallback(entity, holder.image, mEnableGrid); }
+            try { GlideHelper.loadFallback(entity, holder.image); }
             finally { Tracing.end(); }
         }
     }
@@ -778,7 +778,7 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
      * Whether a tile renders real artwork (an image/video frame/PDF page/…)
      * rather than the generated {@link com.solarized.firedown.glide.MimeTypeThumbnail}
      * fallback. Mirrors GlideHelper's branches. Audio counts as real because it
-     * may carry album art (the dark fallback covers the art-less case visually).
+     * may carry album art (the generated fallback covers the art-less case).
      */
     private static boolean hasRealThumbnail(String mimeType) {
         return FileUriHelper.isImage(mimeType) || FileUriHelper.isSVG(mimeType)
@@ -802,9 +802,11 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         String secondary = secondaryMetaLabel(entity, mimeType);
 
         if (isGrid) {
-            // Generated-fallback tiles (no real artwork) now use a dark
-            // MimeTypeThumbnail ground, so the ⋮ button reads without the top
-            // gradient scrim — drop it there; real-thumbnail tiles keep it.
+            // Generated-fallback tiles (no real artwork) are a flat designed
+            // MimeTypeThumbnail pastel, not unpredictable photography — a
+            // gradient scrim over it reads as a dim veil (the thing the soft
+            // ground exists to avoid), so only real-thumbnail tiles keep the
+            // top scrim behind the ⋮.
             setVisible(holder.topScrim, hasRealThumbnail(mimeType));
             // Grid meta row reads "[chip] duration · size" (or
             // "resolution · size" for images): size is the one list-line
@@ -829,7 +831,7 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         }
 
         Tracing.begin("Glide.load(finished)");
-        try { GlideHelper.load(entity, mRequestOptions, holder.image, mEnableGrid); }
+        try { GlideHelper.load(entity, mRequestOptions, holder.image); }
         finally { Tracing.end(); }
     }
 
@@ -905,7 +907,7 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
             holder.statusText.setVisibility(View.VISIBLE);
         }
         Tracing.begin("Glide.loadFallback");
-        try { GlideHelper.loadFallback(entity, holder.image, mEnableGrid); }
+        try { GlideHelper.loadFallback(entity, holder.image); }
         finally { Tracing.end(); }
     }
 
@@ -927,7 +929,7 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
             holder.statusText.setVisibility(View.VISIBLE);
         }
         Tracing.begin("Glide.loadFallback");
-        try { GlideHelper.loadFallback(entity, holder.image, mEnableGrid); }
+        try { GlideHelper.loadFallback(entity, holder.image); }
         finally { Tracing.end(); }
     }
 
