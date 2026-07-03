@@ -343,40 +343,43 @@ public class CloudStatusPreference extends Preference {
         if (!metered) {
             return;
         }
-        // The server's projection is balance ÷ CURRENT footprint — with almost
-        // nothing backed up yet the denominator is tiny and the date runs absurd
-        // ("Covered until ~Feb 2086" at 0% usage, seen on-device). The honest
-        // ceiling is the account's real coverage at full cap — balance ÷ plan
-        // size (coverageMonths, balance-derived so accumulated top-ups count) —
-        // so the displayed date is clamped to now + that (matching the
-        // "≈ N of M months left" line, which caps at the same M).
+        // The displayed covered-until is min(server projection, now + coverage)
+        // — and each input is individually untrustworthy. The projection is
+        // balance ÷ current footprint: absurdly far at low usage ("~Feb 2086"),
+        // and an old server could OVERFLOW it into the past — "Covered until
+        // ~Feb 1962" on-device, a 528-year projection wrapping int64
+        // nanoseconds (the server now reports such projections as "never
+        // runs out" and omits the date; the past-guard here stays for stale
+        // servers and clock skew). The coverage needs the plan size, which a
+        // wiped install doesn't have. Show whichever is available and sane;
+        // nothing trustworthy → no runway (silent beats wrong).
         int coverage = coverageMonths(true);
+        boolean hasCoverage = planKnown && coverage > 0;
+        Instant now = Instant.now();
         Instant projected = parseInstant(mQuota.projectedRunoutAt);
-        if (projected != null && planKnown && coverage > 0) {
-            Instant planEnd = Instant.now().plusSeconds(
+        if (projected != null && projected.isBefore(now)) {
+            projected = null; // a past covered-until is always garbage here
+        }
+        Instant display = projected;
+        if (hasCoverage) {
+            Instant planEnd = now.plusSeconds(
                     Math.round(coverage * DAYS_PER_MONTH * 86400.0));
-            if (projected.isAfter(planEnd)) {
-                projected = planEnd;
+            if (display == null || display.isAfter(planEnd)) {
+                display = planEnd;
             }
         }
-        // Unparseable by the strict parser → fall back to the lenient (uncapped)
-        // string slice rather than dropping the runway entirely.
-        String month = projected != null
-                ? monthYear(projected)
-                : monthYear(mQuota.projectedRunoutAt);
-        if (month == null) {
+        if (display == null) {
             return;
         }
         runway.setVisibility(View.VISIBLE);
         runwayLabels.setVisibility(View.VISIBLE);
-        runwayCovered.setText(ctx.getString(R.string.cloud_status_runway_covered, month));
-        if (!planKnown || coverage <= 0) {
+        runwayCovered.setText(ctx.getString(
+                R.string.cloud_status_runway_covered, monthYear(display)));
+        if (!hasCoverage) {
             return;
         }
-        int monthsLeft = monthsUntil(mQuota.projectedRunoutAt);
-        if (monthsLeft < 0) {
-            return;
-        }
+        long days = Duration.between(now, display).toDays();
+        int monthsLeft = (int) Math.max(0, Math.round(days / DAYS_PER_MONTH));
         monthsLeft = Math.min(monthsLeft, coverage);
         runwayLeft.setText(ctx.getString(
                 R.string.cloud_status_runway_left, monthsLeft, coverage));
@@ -404,29 +407,8 @@ public class CloudStatusPreference extends Preference {
         return String.format(Locale.getDefault(), "%.1f", v);
     }
 
-    /** RFC3339 (e.g. "2027-03-15T…") → a localized "Mar 2027", or null on any
-     *  parse failure (so the caller can fall back to a date-less line). String
-     *  slicing on purpose — works on any RFC3339 flavour without a strict
-     *  parser. */
-    private static String monthYear(String rfc3339) {
-        if (rfc3339 == null || rfc3339.length() < 7) {
-            return null;
-        }
-        try {
-            int year = Integer.parseInt(rfc3339.substring(0, 4));
-            int month = Integer.parseInt(rfc3339.substring(5, 7));
-            if (month < 1 || month > 12) {
-                return null;
-            }
-            String[] months = new DateFormatSymbols().getShortMonths();
-            return months[month - 1] + " " + year;
-        } catch (NumberFormatException e) {
-            return null;
-        }
-    }
-
-    /** An {@link Instant} → the same localized "Mar 2027" as
-     *  {@link #monthYear(String)}, for the plan-clamped covered-until date. */
+    /** An {@link Instant} → a localized "Mar 2027" (short month + year), for
+     *  the covered-until date. */
     private static String monthYear(Instant instant) {
         ZonedDateTime z = instant.atZone(ZoneId.systemDefault());
         String[] months = new DateFormatSymbols().getShortMonths();
@@ -460,18 +442,4 @@ public class CloudStatusPreference extends Preference {
         }
     }
 
-    /** Whole months from now to the RFC3339 instant (≈, mean-month), floored at
-     *  0; -1 when unparseable. */
-    private static int monthsUntil(String rfc3339) {
-        if (rfc3339 == null) {
-            return -1;
-        }
-        try {
-            Instant target = OffsetDateTime.parse(rfc3339).toInstant();
-            long days = Duration.between(Instant.now(), target).toDays();
-            return (int) Math.max(0, Math.round(days / DAYS_PER_MONTH));
-        } catch (RuntimeException e) {
-            return -1;
-        }
-    }
 }
