@@ -114,7 +114,14 @@
             tools:visibility="visible"
             tools:text="Your credit ran out. Top up by Aug 30, 2026 — your files stay restorable until then, but nothing new is backed up." />
 
-        <!-- metered only: the time runway. -->
+        <!-- metered only: the "time as space" runway — a gradient TIMELINE from
+             Today (solid dot) to the covered-until date (soft dot), duration
+             centred beneath. Each fact appears ONCE: the date is a place on
+             the line, the duration its length. This replaced the tick row +
+             "Covered until X / N of M months left" pair, which restated one
+             fact three times (and with balance-derived coverage "of M" was
+             degenerate — N and M derive from the same balance, so it could
+             only ever read "N of N"; on-device: "12 of 12"). -->
         <LinearLayout
             android:id="@+id/cb_runway"
             android:layout_width="match_parent"
@@ -124,40 +131,51 @@
             android:visibility="gone"
             tools:visibility="visible">
 
+            <com.solarized.firedown.settings.CloudTimelineView
+                android:id="@+id/cb_timeline"
+                android:layout_width="match_parent"
+                android:layout_height="14dp" />
+
             <LinearLayout
                 android:id="@+id/cb_runway_labels"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
                 android:orientation="horizontal"
                 android:baselineAligned="true">
 
                 <TextView
-                    android:id="@+id/cb_runway_covered"
+                    android:id="@+id/cb_runway_now"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:textSize="12.5sp"
+                    android:textSize="11.5sp"
                     android:textStyle="bold"
                     android:textColor="?attr/colorOnSurface"
-                    tools:text="Covered until ~Mar 2027" />
+                    tools:text="Today" />
 
                 <TextView
-                    android:id="@+id/cb_runway_left"
+                    android:id="@+id/cb_runway_covered"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="10dp"
                     android:textSize="11.5sp"
-                    android:textColor="?android:attr/textColorSecondary"
-                    tools:text="≈ 9 of 12 months left" />
+                    android:textStyle="bold"
+                    android:textColor="?attr/colorOnSurface"
+                    tools:text="~Mar 2027" />
             </LinearLayout>
 
-            <com.solarized.firedown.settings.CloudRunwayView
-                android:id="@+id/cb_ticks"
+            <TextView
+                android:id="@+id/cb_runway_duration"
                 android:layout_width="match_parent"
-                android:layout_height="6dp"
-                android:layout_marginTop="7dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:gravity="center_horizontal"
+                android:textSize="11.5sp"
+                android:textColor="?android:attr/textColorSecondary"
                 android:visibility="gone"
-                tools:visibility="visible" />
+                tools:visibility="visible"
+                tools:text="≈ 1 year of coverage" />
         </LinearLayout>
     </LinearLayout>
 

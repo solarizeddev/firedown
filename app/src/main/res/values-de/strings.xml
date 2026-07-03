@@ -806,6 +806,8 @@
     <string name="cloud_backup_header_encrypted">Ende-zu-Ende-verschlüsselt</string>
     <string name="cloud_status_caption_plan">%1$s · %2$s%% deines Tarifs</string>
     <string name="cloud_status_runway_covered">Abgedeckt bis ~%1$s</string>
+    <string name="cloud_status_timeline_today">Heute</string>
+    <string name="cloud_status_timeline_coverage">≈ %1$s Abdeckung</string>
     <string name="cloud_status_runway_left">≈ %1$d von %2$d Monaten übrig</string>
     <string name="cloud_status_grace_alert">Dein Guthaben ist aufgebraucht. Lade bis %1$s auf — deine Dateien bleiben bis dahin wiederherstellbar, aber nichts Neues wird gesichert.</string>
     <string name="cloud_status_empty_title">Noch nichts gesichert</string>

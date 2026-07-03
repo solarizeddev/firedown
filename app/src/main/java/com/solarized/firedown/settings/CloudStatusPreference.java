@@ -37,7 +37,8 @@ import java.util.Locale;
  *   <li><b>Unmetered beta</b> — big backed-up size, usage bar vs the included
  *       cap ({@code Quota.bytesLimit}), "Free during the beta" chip.</li>
  *   <li><b>Metered, funded</b> — usage bar vs the purchased plan's size cap +
- *       a month-tick time runway to the projected runout. The plan shape
+ *       a Today→date timeline ({@link CloudTimelineView}) to the covered-until
+ *       date, duration centred beneath. The plan shape
  *       ("Up to 50 GB · 1 year") comes from {@link #setPlan} — stored
  *       CLIENT-side at purchase, because the server deliberately only knows the
  *       anonymous GB-month balance; unknown (legacy purchase / recovery-code
@@ -147,10 +148,10 @@ public class CloudStatusPreference extends Preference {
         TextView caption = (TextView) holder.findViewById(R.id.cb_caption);
         TextView alert = (TextView) holder.findViewById(R.id.cb_alert);
         View runway = holder.findViewById(R.id.cb_runway);
-        View runwayLabels = holder.findViewById(R.id.cb_runway_labels);
+        CloudTimelineView timeline = (CloudTimelineView) holder.findViewById(R.id.cb_timeline);
+        TextView runwayNow = (TextView) holder.findViewById(R.id.cb_runway_now);
         TextView runwayCovered = (TextView) holder.findViewById(R.id.cb_runway_covered);
-        TextView runwayLeft = (TextView) holder.findViewById(R.id.cb_runway_left);
-        CloudRunwayView ticks = (CloudRunwayView) holder.findViewById(R.id.cb_ticks);
+        TextView runwayDuration = (TextView) holder.findViewById(R.id.cb_runway_duration);
 
         boolean metered = mQuota != null && mQuota.metered;
         boolean grace = metered && mQuota.readOnly;
@@ -202,7 +203,7 @@ public class CloudStatusPreference extends Preference {
 
         caption.setText(captionText(ctx, metered, planKnown, percent, capBytes));
 
-        bindRunway(ctx, alert, runway, runwayLabels, runwayCovered, runwayLeft, ticks,
+        bindRunway(ctx, alert, runway, timeline, runwayNow, runwayCovered, runwayDuration,
                 metered, grace, planKnown, coverage, ink);
     }
 
@@ -361,42 +362,51 @@ public class CloudStatusPreference extends Preference {
         return files + " · " + ctx.getString(R.string.cloud_backup_header_encrypted);
     }
 
-    /** Grace: the top-up-by alert + a runway drained to its last (amber) tick.
-     *  Funded metered: "Covered until ~Mar 2027", with "≈ N of M months left" +
-     *  month ticks only when the plan shape is known. Unmetered: no runway. */
-    private void bindRunway(Context ctx, TextView alert, View runway, View runwayLabels,
-                            TextView runwayCovered, TextView runwayLeft, CloudRunwayView ticks,
+    /**
+     * The "time as space" runway: a gradient timeline from Today (solid dot)
+     * to the covered-until date (soft dot), with the duration centred beneath
+     * — each fact appears once (the date is a place on the line, the duration
+     * its length; the old "Covered until X / ≈ N of M months left" + ticks
+     * restated one fact three times, and "of M" was degenerate under
+     * balance-derived coverage). Grace: the alert carries the copy, the
+     * timeline goes amber with the top-up DEADLINE as its endpoint.
+     * Unmetered: no runway.
+     */
+    private void bindRunway(Context ctx, TextView alert, View runway,
+                            CloudTimelineView timeline, TextView runwayNow,
+                            TextView runwayCovered, TextView runwayDuration,
                             boolean metered, boolean grace, boolean planKnown, int coverage,
                             int ink) {
         alert.setVisibility(View.GONE);
         runway.setVisibility(View.GONE);
-        runwayLabels.setVisibility(View.GONE);
-        runwayLeft.setVisibility(View.GONE);
-        ticks.setVisibility(View.GONE);
+        runwayDuration.setVisibility(View.GONE);
         if (grace) {
             String deadline = mediumDate(mQuota.graceUntil);
             alert.setText(deadline != null
                     ? ctx.getString(R.string.cloud_status_grace_alert, deadline)
                     : ctx.getString(R.string.cloud_status_grace_nodate));
             alert.setVisibility(View.VISIBLE);
-            runway.setVisibility(View.VISIBLE);
-            ticks.setVisibility(View.VISIBLE);
-            ticks.setTicks(planKnown ? mPlanMonths : 12, 1, ink);
+            if (deadline != null) {
+                runway.setVisibility(View.VISIBLE);
+                timeline.setInk(ink); // amber
+                runwayNow.setText(R.string.cloud_status_timeline_today);
+                runwayCovered.setText(deadline);
+            }
             return;
         }
         if (!metered) {
             return;
         }
-        // The displayed covered-until is min(server projection, now + coverage)
-        // — and each input is individually untrustworthy. The projection is
+        // The timeline's endpoint is min(server projection, now + coverage) —
+        // and each input is individually untrustworthy. The projection is
         // balance ÷ current footprint: absurdly far at low usage ("~Feb 2086"),
-        // and an old server could OVERFLOW it into the past — "Covered until
-        // ~Feb 1962" on-device, a 528-year projection wrapping int64
-        // nanoseconds (the server now reports such projections as "never
-        // runs out" and omits the date; the past-guard here stays for stale
-        // servers and clock skew). The coverage needs the plan size, which a
-        // wiped install doesn't have. Show whichever is available and sane;
-        // nothing trustworthy → no runway (silent beats wrong).
+        // and an old server could OVERFLOW it into the past — "~Feb 1962"
+        // on-device, a 528-year projection wrapping int64 nanoseconds (the
+        // server now reports such projections as "never runs out" and omits
+        // the date; the past-guard here stays for stale servers and clock
+        // skew). The coverage needs the plan size, which a wiped install
+        // doesn't have. Show whichever is available and sane; nothing
+        // trustworthy → no runway (silent beats wrong).
         boolean hasCoverage = planKnown && coverage > 0;
         Instant now = Instant.now();
         Instant projected = parseInstant(mQuota.projectedRunoutAt);
@@ -415,20 +425,14 @@ public class CloudStatusPreference extends Preference {
             return;
         }
         runway.setVisibility(View.VISIBLE);
-        runwayLabels.setVisibility(View.VISIBLE);
-        runwayCovered.setText(ctx.getString(
-                R.string.cloud_status_runway_covered, monthYear(display)));
-        if (!hasCoverage) {
-            return;
-        }
+        timeline.setInk(ink);
+        runwayNow.setText(R.string.cloud_status_timeline_today);
+        runwayCovered.setText("~" + monthYear(display));
         long days = Duration.between(now, display).toDays();
-        int monthsLeft = (int) Math.max(0, Math.round(days / DAYS_PER_MONTH));
-        monthsLeft = Math.min(monthsLeft, coverage);
-        runwayLeft.setText(ctx.getString(
-                R.string.cloud_status_runway_left, monthsLeft, coverage));
-        runwayLeft.setVisibility(View.VISIBLE);
-        ticks.setVisibility(View.VISIBLE);
-        ticks.setTicks(coverage, monthsLeft, ink);
+        int months = (int) Math.max(1, Math.round(days / DAYS_PER_MONTH));
+        runwayDuration.setText(ctx.getString(R.string.cloud_status_timeline_coverage,
+                formatDuration(ctx, months)));
+        runwayDuration.setVisibility(View.VISIBLE);
     }
 
     /** Localized coverage ("1 year" / "3 months") — same plurals the buy wizard

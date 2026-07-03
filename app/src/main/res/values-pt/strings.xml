@@ -675,6 +675,8 @@
     <string name="cloud_backup_header_encrypted">criptografado de ponta a ponta</string>
     <string name="cloud_status_caption_plan">%1$s · %2$s%% do seu plano</string>
     <string name="cloud_status_runway_covered">Coberto até ~%1$s</string>
+    <string name="cloud_status_timeline_today">Hoje</string>
+    <string name="cloud_status_timeline_coverage">≈ %1$s de cobertura</string>
     <string name="cloud_status_runway_left">≈ restam %1$d de %2$d meses</string>
     <string name="cloud_status_grace_alert">Seu crédito acabou. Recarregue até %1$s — seus arquivos continuam restauráveis até lá, mas nada novo é salvo em backup.</string>
     <string name="cloud_status_empty_title">Nada em backup ainda</string>

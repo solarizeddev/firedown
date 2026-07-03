@@ -614,6 +614,8 @@
     <string name="cloud_backup_header_encrypted">päästä päähän salattu</string>
     <string name="cloud_status_caption_plan">%1$s · %2$s %% paketistasi</string>
     <string name="cloud_status_runway_covered">Katettu ~%1$s asti</string>
+    <string name="cloud_status_timeline_today">Tänään</string>
+    <string name="cloud_status_timeline_coverage">≈ %1$s katetta</string>
     <string name="cloud_status_runway_left">≈ %1$d/%2$d kuukautta jäljellä</string>
     <string name="cloud_status_grace_alert">Saldosi loppui. Lataa lisää %1$s mennessä — tiedostosi ovat palautettavissa siihen asti, mutta uutta ei varmuuskopioida.</string>
     <string name="cloud_status_empty_title">Ei vielä varmuuskopioita</string>

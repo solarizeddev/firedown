@@ -675,6 +675,8 @@
     <string name="cloud_backup_header_encrypted">end-to-end versleuteld</string>
     <string name="cloud_status_caption_plan">%1$s · %2$s%% van je plan</string>
     <string name="cloud_status_runway_covered">Gedekt tot ~%1$s</string>
+    <string name="cloud_status_timeline_today">Vandaag</string>
+    <string name="cloud_status_timeline_coverage">≈ %1$s dekking</string>
     <string name="cloud_status_runway_left">≈ %1$d van %2$d maanden over</string>
     <string name="cloud_status_grace_alert">Je tegoed is op. Waardeer bij vóór %1$s — je bestanden blijven tot die tijd herstelbaar, maar er wordt niets nieuws geback-upt.</string>
     <string name="cloud_status_empty_title">Nog niets geback-upt</string>

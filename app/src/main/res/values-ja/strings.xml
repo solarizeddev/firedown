@@ -800,6 +800,8 @@
     <string name="cloud_backup_header_encrypted">エンドツーエンド暗号化</string>
     <string name="cloud_status_caption_plan">%1$s · プランの %2$s%%</string>
     <string name="cloud_status_runway_covered">〜%1$s まで有効</string>
+    <string name="cloud_status_timeline_today">今日</string>
+    <string name="cloud_status_timeline_coverage">カバー期間 約 %1$s</string>
     <string name="cloud_status_runway_left">≈ 残り %1$d/%2$d か月</string>
     <string name="cloud_status_grace_alert">クレジットがなくなりました。%1$s までにチャージしてください — それまでファイルは復元できますが、新しいバックアップは行われません。</string>
     <string name="cloud_status_empty_title">まだ何もバックアップされていません</string>

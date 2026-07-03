@@ -568,6 +568,8 @@
     <string name="cloud_backup_header_encrypted">шифровано от край до край</string>
     <string name="cloud_status_caption_plan">%1$s · %2$s%% от плана ви</string>
     <string name="cloud_status_runway_covered">Покритие до ~%1$s</string>
+    <string name="cloud_status_timeline_today">Днес</string>
+    <string name="cloud_status_timeline_coverage">≈ %1$s покритие</string>
     <string name="cloud_status_runway_left">≈ остават %1$d от %2$d месеца</string>
     <string name="cloud_status_grace_alert">Кредитът ви свърши. Заредете до %1$s — файловете ви остават възстановими дотогава, но нищо ново не се архивира.</string>
     <string name="cloud_status_empty_title">Все още няма архивирани файлове</string>

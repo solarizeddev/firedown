@@ -1899,9 +1899,13 @@ opaque chunks + an opaque manifest blob.
     chip read "Up to 100 GB · 5 months" against a 5410 GB-month balance ≈ 54
     months at that cap). `CloudStatusPreference.coverageMonths` = server
     `balance ÷ plan size` when the quota is known (stored months = offline
-    fallback) and feeds the chip duration, the "≈ N of M months left" line, the
-    tick runway (`CloudRunwayView` scales the filled FRACTION when collapsing
-    >36 ticks), and the covered-until clamp below.
+    fallback) and feeds the chip duration, the timeline's centred
+    "≈ N of coverage" duration, and the covered-until clamp below. The runway
+    itself is `CloudTimelineView` — a Today→date gradient line ("time as
+    space"; it replaced the `CloudRunwayView` month ticks + "N of M months
+    left" pair, which restated one fact three times and whose "of M" was
+    degenerate under balance-derived coverage: N and M derive from the same
+    balance, so it could only read "N of N").
   - **Covered-until is CLAMPED to the coverage months.** The server's
     `projected_runout_at` is balance ÷ current footprint — with ~nothing backed
     up it runs absurd ("~Feb 2086" at 0% usage, on-device).

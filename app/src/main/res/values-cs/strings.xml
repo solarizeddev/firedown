@@ -634,6 +634,8 @@
     <string name="cloud_backup_header_encrypted">šifrováno end-to-end</string>
     <string name="cloud_status_caption_plan">%1$s · %2$s%% vašeho plánu</string>
     <string name="cloud_status_runway_covered">Pokrytí do ~%1$s</string>
+    <string name="cloud_status_timeline_today">Dnes</string>
+    <string name="cloud_status_timeline_coverage">≈ pokrytí na %1$s</string>
     <string name="cloud_status_runway_left">≈ zbývá %1$d z %2$d měsíců</string>
     <string name="cloud_status_grace_alert">Kredit vám došel. Dobijte do %1$s — vaše soubory zůstanou do té doby obnovitelné, ale nic nového se nezálohuje.</string>
     <string name="cloud_status_empty_title">Zatím nic nezálohováno</string>

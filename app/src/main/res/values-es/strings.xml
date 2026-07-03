@@ -806,6 +806,8 @@
     <string name="cloud_backup_header_encrypted">cifrado de extremo a extremo</string>
     <string name="cloud_status_caption_plan">%1$s · %2$s%% de tu plan</string>
     <string name="cloud_status_runway_covered">Cubierto hasta ~%1$s</string>
+    <string name="cloud_status_timeline_today">Hoy</string>
+    <string name="cloud_status_timeline_coverage">≈ %1$s de cobertura</string>
     <string name="cloud_status_runway_left">≈ quedan %1$d de %2$d meses</string>
     <string name="cloud_status_grace_alert">Tu crédito se agotó. Recarga antes del %1$s — tus archivos seguirán siendo restaurables hasta entonces, pero no se respalda nada nuevo.</string>
     <string name="cloud_status_empty_title">Aún no hay nada respaldado</string>
