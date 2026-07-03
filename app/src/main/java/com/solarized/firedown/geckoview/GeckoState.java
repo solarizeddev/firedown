@@ -931,10 +931,14 @@ public class GeckoState {
     }
 
     /**
-     * Scales a bitmap down for thumbnail use. Reduces memory by ~94%
-     * (1/4 width × 1/4 height = 1/16 pixel count).
-     * Returns the scaled bitmap; the caller should recycle the original
-     * if it's no longer needed.
+     * Scales a bitmap down for thumbnail use: half width × half height
+     * = 1/4 the pixels (~75% memory saved; still ~2.5 MB ARGB_8888 at
+     * 1080p — the old "1/16" claim here was wrong, the divisor is 2).
+     * Half resolution matches the ~half-screen-width tab-grid tile, so
+     * don't shrink further for memory — bound the COUNT of retained
+     * thumbs instead (the regular repo clears non-active tabs on switch;
+     * IncognitoStateRepository.trimCachedThumbs LRU-caps its memory-only
+     * set). Recycles the original.
      */
     public static Bitmap scaleThumbnail(Bitmap source) {
         if (source == null) return null;

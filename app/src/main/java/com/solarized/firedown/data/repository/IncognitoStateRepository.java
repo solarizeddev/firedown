@@ -17,6 +17,7 @@ import org.mozilla.geckoview.GeckoSession;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -52,6 +53,11 @@ public class IncognitoStateRepository {
     // synchronized(mGeckoStates), read lock-free in peek/isCurrent. Keeps the
     // lock-free reads from seeing a stale id under weak memory ordering.
     private volatile int mCurrentId = GeckoState.NULL_SESSION_ID;
+
+    // Upper bound on in-memory tab screenshots (active tab included). Each is
+    // a half-resolution ARGB_8888 screen capture (~2.5 MB at 1080p), and
+    // incognito has no disk tier to spill to — see trimCachedThumbs.
+    private static final int MAX_CACHED_THUMBS = 8;
 
     @Inject
     public IncognitoStateRepository(GeckoMediaController geckoMediaController) {
@@ -193,9 +199,24 @@ public class IncognitoStateRepository {
                 // fix: TabsFragment-style switches fire setGeckoState twice
                 // per tap, the second call did a redundant pass.
                 mCurrentId = geckoState.getEntityId();
+                long now = System.currentTimeMillis();
                 for (GeckoState state : mGeckoStates) {
-                    state.setActive(state.getEntityId() == mCurrentId);
+                    boolean isActive = state.getEntityId() == mCurrentId;
+                    state.setActive(isActive);
+                    if (isActive) {
+                        // Stamp "most recently used" (parity with the regular
+                        // repo) — it drives the thumbnail LRU trim below.
+                        state.getGeckoStateEntity().setLastAccess(now);
+                    }
                 }
+                // Unlike the regular repo, which clears EVERY non-active tab's
+                // bitmap here (its thumbs are persisted to disk and reloaded by
+                // the tab grid), incognito thumbs live ONLY in memory — no disk
+                // by design — so clearing them all would blank the grid. Bound
+                // them instead: each cached screenshot is multi-MB, and keeping
+                // one per tab for the tab's whole lifetime exhausted the 128 MB
+                // heap on tab-heavy incognito sessions (OOM'd in the field).
+                trimCachedThumbs(mCurrentId);
                 changed = true;
             } else if (active) {
                 // Same-tab reactivate: keep the GeckoSession side in sync
@@ -205,6 +226,31 @@ public class IncognitoStateRepository {
             }
         }
         if (changed) notifyTabs();
+    }
+
+    /**
+     * Clears the oldest cached tab screenshots so at most
+     * {@link #MAX_CACHED_THUMBS} bitmaps stay in memory (the active tab's
+     * plus the most recently used others, by {@code lastAccess}).
+     *
+     * <p>A trimmed tab shows the flat surface placeholder in the tab grid
+     * until it's revisited (its next contentful paint re-captures it) —
+     * the deliberate trade for never writing incognito screenshots to
+     * disk. Must be called under {@code synchronized (mGeckoStates)}.</p>
+     */
+    private void trimCachedThumbs(int activeId) {
+        List<GeckoState> cached = new ArrayList<>();
+        for (GeckoState state : mGeckoStates) {
+            if (state.getEntityId() != activeId && state.getCachedThumb() != null) {
+                cached.add(state);
+            }
+        }
+        int excess = cached.size() - (MAX_CACHED_THUMBS - 1);
+        if (excess <= 0) return;
+        cached.sort(Comparator.comparingLong(s -> s.getGeckoStateEntity().getLastAccess()));
+        for (int i = 0; i < excess; i++) {
+            cached.get(i).clearCachedThumb();
+        }
     }
 
     public void closeGeckoState(GeckoState geckoState) {
