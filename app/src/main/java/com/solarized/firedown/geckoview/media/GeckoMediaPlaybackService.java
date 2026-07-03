@@ -43,7 +43,9 @@ import com.solarized.firedown.utils.UrlStringUtils;
 
 import org.mozilla.geckoview.MediaSession;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
@@ -560,6 +562,18 @@ public class GeckoMediaPlaybackService extends Service {
 
     // ── Artwork fetch ─────────────────────────────────────────────────────────────────────────────
 
+    // The decoded artwork is retained per media session (GeckoMetaData in
+    // GeckoMediaController.mMetaMap) for as long as the session lives, and
+    // it only ever renders at notification / lock-screen artwork size — so
+    // the decode MUST be bounded. An unsampled BitmapFactory.decode* of a
+    // page's og:image was the app's one bitmap path with no downscaling at
+    // all: a 4000-px cover art becomes a single ~64 MB ARGB_8888 bitmap,
+    // half the 128 MB heap. 512 px on the long side is the classic
+    // album-art ceiling; the byte cap bounds the download buffer for
+    // responses that declare no Content-Length.
+    private static final int ARTWORK_MAX_DIM = 512;
+    private static final int ARTWORK_MAX_BYTES = 8 * 1024 * 1024;
+
     private void fetchBitmap(GeckoMetaData meta) {
 
         Log.d(TAG, "fetchBitmap: icon=" + meta.getIcon()
@@ -577,7 +591,7 @@ public class GeckoMediaPlaybackService extends Service {
             try {
                 String base64 = iconUrl.substring(iconUrl.indexOf(",") + 1);
                 byte[] bytes = Base64.decode(base64, Base64.DEFAULT);
-                Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+                Bitmap bitmap = decodeArtwork(bytes);
                 if (bitmap != null) {
                     meta.setIconBitmap(bitmap);
                     meta.setBitmap(bitmap);
@@ -607,7 +621,8 @@ public class GeckoMediaPlaybackService extends Service {
             public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
                 try (ResponseBody body = response.body()) {
                     if (response.isSuccessful() && FileUriHelper.isImage(body.contentType())) {
-                        Bitmap bitmap = BitmapFactory.decodeStream(body.byteStream());
+                        byte[] bytes = readArtworkBytes(body);
+                        Bitmap bitmap = bytes != null ? decodeArtwork(bytes) : null;
                         if (bitmap != null) {
                             meta.setIconBitmap(bitmap);
                             meta.setBitmap(bitmap);
@@ -620,6 +635,55 @@ public class GeckoMediaPlaybackService extends Service {
                 }
             }
         });
+    }
+
+    /**
+     * Reads the artwork response body whole (the two-pass decode needs
+     * re-readable bytes; the stream can't be rewound), refusing anything
+     * over {@link #ARTWORK_MAX_BYTES} — declared or actually streamed, so
+     * a chunked response without a Content-Length is bounded too.
+     */
+    @Nullable
+    private static byte[] readArtworkBytes(ResponseBody body) throws IOException {
+        if (body.contentLength() > ARTWORK_MAX_BYTES) {
+            return null;
+        }
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        InputStream in = body.byteStream();
+        byte[] chunk = new byte[16 * 1024];
+        int read;
+        while ((read = in.read(chunk)) != -1) {
+            buffer.write(chunk, 0, read);
+            if (buffer.size() > ARTWORK_MAX_BYTES) {
+                return null;
+            }
+        }
+        return buffer.toByteArray();
+    }
+
+    /**
+     * Bounded two-pass decode: reads the dimensions first
+     * ({@code inJustDecodeBounds}), then decodes with the power-of-two
+     * {@code inSampleSize} that lands the long side in
+     * [{@link #ARTWORK_MAX_DIM}, 2×{@link #ARTWORK_MAX_DIM}) — never the
+     * image's native resolution.
+     */
+    @Nullable
+    private static Bitmap decodeArtwork(byte[] bytes) {
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inJustDecodeBounds = true;
+        BitmapFactory.decodeByteArray(bytes, 0, bytes.length, options);
+        if (options.outWidth <= 0 || options.outHeight <= 0) {
+            return null;
+        }
+        int longSide = Math.max(options.outWidth, options.outHeight);
+        int sampleSize = 1;
+        while (longSide / (sampleSize * 2) >= ARTWORK_MAX_DIM) {
+            sampleSize *= 2;
+        }
+        options.inJustDecodeBounds = false;
+        options.inSampleSize = sampleSize;
+        return BitmapFactory.decodeByteArray(bytes, 0, bytes.length, options);
     }
 
     private void setDefaultThumbnail(GeckoMetaData meta) {
