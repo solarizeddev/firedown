@@ -1,6 +1,7 @@
 package com.solarized.firedown.crash;
 
 import android.os.Build;
+import android.os.Debug;
 
 import androidx.annotation.NonNull;
 
@@ -45,9 +46,18 @@ public final class CrashReport {
     /** Stack trace text. */
     public final String trace;
 
+    // Heap state at capture time, in bytes (0 = not captured — reports
+    // written by older builds). Answers the one question an OOM trace
+    // can't: did the Java heap fill slowly (a leak/accumulation) or was
+    // it a one-off spike — and was the pressure Java-side or native.
+    public final long heapUsed;
+    public final long heapMax;
+    public final long nativeHeap;
+
     private CrashReport(long timestamp, String type, String versionName, int versionCode,
                         String device, String abi, int sdk, String installSource,
-                        String origin, String trace) {
+                        String origin, String trace,
+                        long heapUsed, long heapMax, long nativeHeap) {
         this.timestamp = timestamp;
         this.type = type;
         this.versionName = versionName;
@@ -58,11 +68,15 @@ public final class CrashReport {
         this.installSource = installSource;
         this.origin = origin;
         this.trace = trace;
+        this.heapUsed = heapUsed;
+        this.heapMax = heapMax;
+        this.nativeHeap = nativeHeap;
     }
 
     public static CrashReport fromThrowable(@NonNull Thread thread, @NonNull Throwable t) {
         StringWriter sw = new StringWriter();
         t.printStackTrace(new PrintWriter(sw));
+        Runtime runtime = Runtime.getRuntime();
         return new CrashReport(
                 System.currentTimeMillis(),
                 TYPE_JAVA,
@@ -73,7 +87,10 @@ public final class CrashReport {
                 Build.VERSION.SDK_INT,
                 safeInstallSource(),
                 thread.getName(),
-                sw.toString());
+                sw.toString(),
+                runtime.totalMemory() - runtime.freeMemory(),
+                runtime.maxMemory(),
+                Debug.getNativeHeapAllocatedSize());
     }
 
     public JSONObject toJson() throws JSONException {
@@ -88,6 +105,9 @@ public final class CrashReport {
         o.put("installSource", installSource);
         o.put("origin", origin);
         o.put("trace", trace);
+        o.put("heapUsed", heapUsed);
+        o.put("heapMax", heapMax);
+        o.put("nativeHeap", nativeHeap);
         return o;
     }
 
@@ -102,7 +122,10 @@ public final class CrashReport {
                 o.optInt("sdk", 0),
                 o.optString("installSource", ""),
                 o.optString("origin", ""),
-                o.optString("trace", ""));
+                o.optString("trace", ""),
+                o.optLong("heapUsed", 0),
+                o.optLong("heapMax", 0),
+                o.optLong("nativeHeap", 0));
     }
 
     /**
