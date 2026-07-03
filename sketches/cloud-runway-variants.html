@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cloud hero runway — consistent alternatives (sketch)</title>
+<style>
+  :root{--bg:#f6f5f4;--card:#ffffff;--ink:#1c1c1e;--ink2:#6d6f73;--ink3:#9a9da1;
+        --coral:#e8695f;--coral-soft:#f5b3ab;--track:#eceae8;--chipbg:#eceae8;--amber:#c98a1b}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#e9e7e5;font-family:system-ui,Roboto,sans-serif;color:var(--ink);
+       display:flex;flex-wrap:wrap;gap:34px;justify-content:center;padding:34px 14px 60px}
+  h1{width:100%;text-align:center;font-size:16px;font-weight:600;color:var(--ink2)}
+  .col{width:352px}
+  .tag{display:inline-block;background:#dcdad8;border-radius:20px;padding:3px 11px;
+       font-size:11px;color:#55575a;font-weight:600;margin-bottom:9px}
+  .tag.bad{background:#f3d2ce;color:#8f2b22}
+  .tag.rec{background:#dcecd9;color:#2c6b33}
+  .hero{background:var(--card);border-radius:16px;padding:18px 16px;box-shadow:0 4px 14px rgba(0,0,0,.06)}
+  .top{display:flex;justify-content:space-between;align-items:flex-start}
+  .big{font-size:27px;font-weight:800;letter-spacing:-.02em}
+  .big small{font-size:12px;font-weight:700;color:var(--ink2);margin-left:6px;letter-spacing:0}
+  .chip{background:var(--chipbg);border-radius:14px;padding:5px 10px;font-size:11px;font-weight:700;color:#55575a;white-space:nowrap}
+  .bar{height:8px;border-radius:4px;background:var(--track);margin-top:13px;position:relative;overflow:hidden}
+  .bar i{position:absolute;left:0;top:0;bottom:0;width:2.5%;background:var(--coral);border-radius:4px}
+  .cap{font-size:12px;color:var(--ink2);margin-top:9px}
+  .run{margin-top:13px}
+  .runline{display:flex;justify-content:space-between;align-items:baseline}
+  .runline .l{font-size:12.5px;font-weight:700}
+  .runline .r{font-size:11.5px;color:var(--ink2)}
+  .ticks{display:flex;gap:3px;margin-top:7px}
+  .ticks b{flex:1;height:6px;border-radius:2px;background:var(--coral)}
+  .ticks b.off{background:var(--track)}
+  .note{font-size:12.5px;color:#55575a;line-height:1.55;margin:12px 4px 0}
+  .note b{color:var(--ink)}
+  /* variant D — labeled timeline */
+  .tl{margin-top:14px}
+  .tlbar{height:8px;border-radius:4px;background:linear-gradient(90deg,var(--coral) 0%,var(--coral-soft) 100%);position:relative}
+  .tlbar .dot{position:absolute;left:-1px;top:50%;transform:translateY(-50%);width:14px;height:14px;
+              border-radius:50%;background:var(--coral);border:3px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.08)}
+  .tlbar .end{position:absolute;right:-1px;top:50%;transform:translateY(-50%);width:10px;height:10px;
+              border-radius:50%;background:var(--coral-soft);border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.08)}
+  .tllabels{display:flex;justify-content:space-between;margin-top:7px;font-size:11.5px;color:var(--ink2)}
+  .tllabels .now{font-weight:700;color:var(--ink)}
+  .tllabels .until{font-weight:700;color:var(--ink)}
+  .tlcenter{text-align:center;font-size:11.5px;color:var(--ink2);margin-top:2px}
+</style>
+</head>
+<body>
+
+<h1>Cloud hero — the time runway, deduplicated. Same card, four treatments of the same facts.</h1>
+
+<!-- ── current ── -->
+<div class="col">
+  <span class="tag bad">TODAY — confusing</span>
+  <div class="hero">
+    <div class="top"><div class="big">854 MB<small>backed up</small></div><div class="chip">Up to 450 GB · 1 year</div></div>
+    <div class="bar"><i></i></div>
+    <div class="cap">9 files · &lt;1% of your plan</div>
+    <div class="run">
+      <div class="runline"><span class="l">Covered until ~Jul 2027</span><span class="r">≈ 12 of 12 months left</span></div>
+      <div class="ticks"><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b></div>
+    </div>
+  </div>
+  <p class="note">Three restatements of ONE fact: the date, “12 of 12”, and twelve lit
+  ticks. Worse, with a balance-derived plan the “of 12” is <b>degenerate</b> — the
+  numerator and denominator come from the same balance, so it reads “12 of 12” today
+  and “8 of 8” in four months. It can never show anything else.</p>
+</div>
+
+<!-- ── A ── -->
+<div class="col">
+  <span class="tag">A · date-primary (minimal)</span>
+  <div class="hero">
+    <div class="top"><div class="big">854 MB<small>backed up</small></div><div class="chip">Up to 450 GB · 1 year</div></div>
+    <div class="bar"><i></i></div>
+    <div class="cap">9 files · &lt;1% of your plan</div>
+    <div class="run">
+      <div class="runline"><span class="l">Covered until ~Jul 2027</span></div>
+      <div class="ticks"><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b class="off"></b><b class="off"></b></div>
+    </div>
+  </div>
+  <p class="note">One line, one fact; the right-side label is deleted. Ticks become a
+  fixed <b>12-month window</b> (lit = months covered within the next year), so they
+  finally carry information the text doesn’t: here 10 of a 12-month window would be
+  lit if coverage were ~10 months. Cheapest change.</p>
+</div>
+
+<!-- ── C ── -->
+<div class="col">
+  <span class="tag">C · composite line (both units, once each)</span>
+  <div class="hero">
+    <div class="top"><div class="big">854 MB<small>backed up</small></div><div class="chip">Up to 450 GB · 1 year</div></div>
+    <div class="bar"><i></i></div>
+    <div class="cap">9 files · &lt;1% of your plan</div>
+    <div class="run">
+      <div class="runline"><span class="l">Covered until ~Jul 2027</span><span class="r">≈ 12 months</span></div>
+      <div class="ticks"><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b></div>
+    </div>
+  </div>
+  <p class="note">Keeps both units people think in — a calendar date AND a duration —
+  but each appears <b>once</b>: “≈ 12 months” replaces “12 of 12 months left”. The
+  “of M” form survives only for a real bought plan that’s partly consumed
+  (“≈ 9 of 24 months left”), where it genuinely says something.</p>
+</div>
+
+<!-- ── D ── -->
+<div class="col">
+  <span class="tag rec">D · labeled timeline (recommended)</span>
+  <div class="hero">
+    <div class="top"><div class="big">854 MB<small>backed up</small></div><div class="chip">Up to 450 GB · 1 year</div></div>
+    <div class="bar"><i></i></div>
+    <div class="cap">9 files · &lt;1% of your plan</div>
+    <div class="tl">
+      <div class="tlbar"><span class="dot"></span><span class="end"></span></div>
+      <div class="tllabels"><span class="now">Today</span><span class="until">~Jul 2027</span></div>
+      <div class="tlcenter">≈ 12 months of coverage</div>
+    </div>
+  </div>
+  <p class="note">Time rendered as <b>space</b>: a line from Today to the runout date,
+  duration centred underneath. Nothing repeats — the date is a place on the line, the
+  duration is its length. In grace it goes amber with the right label becoming the
+  top-up deadline; as balance drains, “Today” visually approaches the end. Replaces
+  the ticks (which were double-encoding the text anyway).</p>
+</div>
+
+</body>
+</html>
