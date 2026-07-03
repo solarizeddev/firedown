@@ -32,6 +32,7 @@ import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 
+import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
 import com.solarized.firedown.ApplicationLifeCycleHandler;
@@ -88,6 +89,10 @@ public class CloudBackupListFragment extends Fragment
     private View mHeader;
     private TextView mHeaderLine1;
     private TextView mHeaderLine2;
+    /** Vertical offset of the fragment's inner appbar (the scroll-away header):
+     *  0 = fully shown, negative = scrolled off — one of the two lift signals
+     *  bridged to the ACTIVITY appbar (see onViewCreated). */
+    private int mInnerAppbarOffset;
     /** Latest quota (for the header's context line); null until loaded/offline. */
     private CloudBackupManager.Status mStatusInfo;
     private RecyclerView mRecycler;
@@ -173,10 +178,33 @@ public class CloudBackupListFragment extends Fragment
             return WindowInsetsCompat.CONSUMED;
         });
 
-        // Header lift-on-scroll is DECLARATIVE — the AppBarLayout in the layout
-        // (liftOnScroll + liftOnScrollTargetViewId=@id/recycler_view, the same
-        // wiring as fragment_download.xml) animates the surface tone + shadow
-        // itself; nothing to do here.
+        // The ACTIVITY toolbar lifts on scroll here, like every other settings
+        // screen. Elsewhere that's automatic (a preference screen's RecyclerView
+        // nested-scrolls straight into the activity's CoordinatorLayout), but
+        // this fragment's own inner CoordinatorLayout — needed for the
+        // scroll-away header — is not a nested-scrolling CHILD, so scroll events
+        // stop at it and the shared toolbar stayed flat while rows slid under
+        // it. Bridge the lift state manually: lifted whenever the header has
+        // scrolled off (inner appbar offset) OR the list itself has scrolled.
+        AppBarLayout activityAppbar = requireActivity().findViewById(R.id.appbar_layout);
+        AppBarLayout innerAppbar = view.findViewById(R.id.cb_appbar);
+        if (activityAppbar != null) {
+            activityAppbar.setLiftable(true);
+            Runnable syncLift = () -> activityAppbar.setLifted(
+                    mInnerAppbarOffset < 0 || mRecycler.canScrollVertically(-1));
+            if (innerAppbar != null) {
+                innerAppbar.addOnOffsetChangedListener((bar, offset) -> {
+                    mInnerAppbarOffset = offset;
+                    syncLift.run();
+                });
+            }
+            mRecycler.addOnScrollListener(new RecyclerView.OnScrollListener() {
+                @Override
+                public void onScrolled(@NonNull RecyclerView rv, int dx, int dy) {
+                    syncLift.run();
+                }
+            });
+        }
 
         // The screen's toolbar drives the selection chrome (Downloads strategy).
         mToolbar = requireActivity().findViewById(R.id.toolbar);
@@ -236,6 +264,12 @@ public class CloudBackupListFragment extends Fragment
 
     @Override
     public void onDestroyView() {
+        // The lift state was driven manually — hand the ACTIVITY appbar back
+        // flat, or the settings screen behind us keeps a stale shadow.
+        AppBarLayout activityAppbar = requireActivity().findViewById(R.id.appbar_layout);
+        if (activityAppbar != null) {
+            activityAppbar.setLifted(false);
+        }
         mAppLifecycle.removeTrimListener(mTrimListener);
         // Restore the toolbar (title + Up behaviour) if we leave mid-selection.
         exitSelection();
