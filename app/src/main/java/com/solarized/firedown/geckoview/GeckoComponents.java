@@ -49,7 +49,8 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.Executor;
@@ -1272,11 +1273,19 @@ public class GeckoComponents {
 
     public final class HistoryDelegate implements GeckoSession.HistoryDelegate {
 
-        private final HashSet<String> mVisitedURLs;
+        // In-memory visited set for visited-link coloring (getVisited). This
+        // is a session-lifetime convenience, NOT the history store — capping
+        // it only means very old links lose their :visited tint. Uncapped it
+        // grew one String per visited URL for the whole process lifetime
+        // (GeckoComponents is a singleton) and contributed to a 128 MB-heap
+        // OOM in marathon sessions. Insertion-order (FIFO) eviction.
+        private static final int MAX_VISITED_URLS = 4096;
+
+        private final LinkedHashSet<String> mVisitedURLs;
 
 
         public HistoryDelegate() {
-            mVisitedURLs = new HashSet<>();
+            mVisitedURLs = new LinkedHashSet<>();
         }
 
         @Override
@@ -1295,6 +1304,11 @@ public class GeckoComponents {
             if (((flags & VISIT_TOP_LEVEL) == 0))
                 return GeckoResult.fromValue(false);
 
+            if (!mVisitedURLs.contains(url) && mVisitedURLs.size() >= MAX_VISITED_URLS) {
+                Iterator<String> oldest = mVisitedURLs.iterator();
+                oldest.next();
+                oldest.remove();
+            }
             mVisitedURLs.add(url);
 
             return GeckoResult.fromValue(true);
