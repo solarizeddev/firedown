@@ -2734,7 +2734,16 @@ back to English (MissingTranslation isn't build-fatal here).
   white title + ⋮; scrims were tried and rejected before it) and then a
   theme × surface split (dark duotone only on light-theme grids) were BOTH
   removed at the maintainer's request — one ground everywhere; don't
-  reintroduce a `gridTile`/theme routing flag. The **media viewer keeps the
+  reintroduce a `gridTile`/theme routing flag. **The grid's top ⋮ scrim is
+  gone too** (same request): the full-width 32dp `top_scrim` gradient both
+  grids painted behind the corner more-button (Downloads FINISHED tiles +
+  Captured variant tiles) was deleted outright — drawable, layout views,
+  the adapters' visibility wiring and the `hasRealThumbnail` gate. The ⋮
+  may wash out on rare bright artwork; that's accepted (the tile tap +
+  long-press remain the primary doors). If legibility ever needs fixing,
+  use a per-icon treatment (small circle/shadow behind the glyph), never a
+  full-width dim band. The bottom title scrim (`bottom_scrim`) stays — it
+  carries the title/meta text. The **media viewer keeps the
   default 16:10 letterbox** (`generateDrawable(ctx, mime)`,
   `fillBounds=false`, still translucent — it sits on the player's own
   background) to match `PlayerView`'s `resize_mode="fit"` — don't make the

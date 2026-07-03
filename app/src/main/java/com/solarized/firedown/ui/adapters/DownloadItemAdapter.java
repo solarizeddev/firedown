@@ -666,7 +666,6 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         setVisible(holder.progressRow, false);
         setVisible(holder.statusText, false);
         setVisible(holder.imageProgress, false);
-        setVisible(holder.topScrim, false);
         setVisible(holder.mimeDuration, false);
         // Grid info block is shown by default; PROGRESS hides it so the
         // progress overlay owns the whole tile. The dense tile is a pure
@@ -774,19 +773,6 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         }
     }
 
-    /**
-     * Whether a tile renders real artwork (an image/video frame/PDF page/…)
-     * rather than the generated {@link com.solarized.firedown.glide.MimeTypeThumbnail}
-     * fallback. Mirrors GlideHelper's branches. Audio counts as real because it
-     * may carry album art (the generated fallback covers the art-less case).
-     */
-    private static boolean hasRealThumbnail(String mimeType) {
-        return FileUriHelper.isImage(mimeType) || FileUriHelper.isSVG(mimeType)
-                || FileUriHelper.isPdf(mimeType) || FileUriHelper.isGIF(mimeType)
-                || FileUriHelper.isWEP(mimeType) || FileUriHelper.isVideo(mimeType)
-                || FileUriHelper.isAudio(mimeType);
-    }
-
     private void bindFinished(DownloadViewHolder holder, DownloadEntity entity, boolean isGrid) {
         Tracing.begin(isGrid ? "bind:finished(grid)" : "bind:finished(list)");
         try {
@@ -802,12 +788,6 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         String secondary = secondaryMetaLabel(entity, mimeType);
 
         if (isGrid) {
-            // Generated-fallback tiles (no real artwork) are a flat designed
-            // MimeTypeThumbnail pastel, not unpredictable photography — a
-            // gradient scrim over it reads as a dim veil (the thing the soft
-            // ground exists to avoid), so only real-thumbnail tiles keep the
-            // top scrim behind the ⋮.
-            setVisible(holder.topScrim, hasRealThumbnail(mimeType));
             // Grid meta row reads "[chip] duration · size" (or
             // "resolution · size" for images): size is the one list-line
             // fact with no other home in the grid — date is carried by the
@@ -1039,7 +1019,6 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         // three, and bind* methods set text + color directly.
         final @Nullable TextView statusText;
         final @Nullable TextView mimeDuration;
-        final @Nullable View topScrim;
         final @Nullable View bottomBlock;
 
         // Cache for the FINISHED row's "<size> - <date>" label. Built
@@ -1087,7 +1066,6 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
             progressBar = view.findViewById(R.id.progress_bar);
             statusText = view.findViewById(R.id.status_text);
             mimeDuration = view.findViewById(R.id.mime_duration);
-            topScrim = view.findViewById(R.id.top_scrim);
             bottomBlock = view.findViewById(R.id.bottom_block);
 
             image.setClipToOutline(true);
