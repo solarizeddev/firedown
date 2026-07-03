@@ -201,7 +201,7 @@ public class BrowserOptionAdapter extends GridListBaseAdapter<BrowserDownloadEnt
                 .set(GlideRequestOptions.FILEPATH, fileUrl)
                 .set(GlideRequestOptions.HEADERS, entity.getFileHeaders())
                 .set(GlideRequestOptions.KEY, key);
-        GlideHelper.load(entity, options, holder.image);
+        GlideHelper.load(entity, options, holder.image, !mList);
 
         // ── Tags ─────────────────────────────────────────────────────────
         bindTags(context, holder, entity);

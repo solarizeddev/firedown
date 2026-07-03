@@ -769,7 +769,7 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
                 if (!retrieving) holder.progressBar.setProgress(entity.getFileProgress());
             }
             Tracing.begin("Glide.loadFallback");
-            try { GlideHelper.loadFallback(entity, holder.image); }
+            try { GlideHelper.loadFallback(entity, holder.image, mEnableGrid); }
             finally { Tracing.end(); }
         }
     }
@@ -829,7 +829,7 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         }
 
         Tracing.begin("Glide.load(finished)");
-        try { GlideHelper.load(entity, mRequestOptions, holder.image); }
+        try { GlideHelper.load(entity, mRequestOptions, holder.image, mEnableGrid); }
         finally { Tracing.end(); }
     }
 
@@ -905,7 +905,7 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
             holder.statusText.setVisibility(View.VISIBLE);
         }
         Tracing.begin("Glide.loadFallback");
-        try { GlideHelper.loadFallback(entity, holder.image); }
+        try { GlideHelper.loadFallback(entity, holder.image, mEnableGrid); }
         finally { Tracing.end(); }
     }
 
@@ -927,7 +927,7 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
             holder.statusText.setVisibility(View.VISIBLE);
         }
         Tracing.begin("Glide.loadFallback");
-        try { GlideHelper.loadFallback(entity, holder.image); }
+        try { GlideHelper.loadFallback(entity, holder.image, mEnableGrid); }
         finally { Tracing.end(); }
     }
 
