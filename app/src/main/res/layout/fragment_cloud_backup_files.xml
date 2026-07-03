@@ -6,12 +6,14 @@
   empty-illustration states, change animations disabled so per-item progress
   ticks don't blink) — same list treatment as Downloads/Bookmarks/History.
 
-  The lift-on-scroll is the SAME machinery as fragment_download.xml: the
-  header sits transparent inside an AppBarLayout with liftOnScroll targeting
-  the LCEE's inner @id/recycler_view (CoordinatorLayout + ScrollingViewBehavior
-  drive the lifted state), so MDC animates the surface tone + shadow itself —
-  no hand-rolled scroll listener. The bottom navigation_scrim is the
-  DownloadFragment pattern too: an overlay whose height tracks the system-bar
+  The header SCROLLS AWAY with the list (scrollFlags="scroll" inside the
+  AppBarLayout, CoordinatorLayout + ScrollingViewBehavior): a pinned+lifting
+  header was tried first, but this fragment's AppBarLayout can't lift the
+  ACTIVITY toolbar above it, so the M3 lift tint rendered as a stray gray band
+  sandwiched between two flat white surfaces (on-device). Scrolling it off is
+  the clean alternative — the activity toolbar still titles the screen, and
+  the inventory line returns at top. The bottom navigation_scrim is the
+  DownloadFragment pattern: an overlay whose height tracks the system-bar
   bottom inset, with matching recycler bottom padding (clipToPadding=false in
   the LCEE) so the last row scrolls clear of the gesture bar.
 -->
@@ -26,12 +28,12 @@
         android:id="@+id/cb_appbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:liftOnScroll="true"
-        app:liftOnScrollTargetViewId="@id/recycler_view">
+        android:background="@android:color/transparent"
+        app:elevation="0dp"
+        app:liftOnScroll="false">
 
-        <!-- No scrollFlags: the header stays pinned (the inventory/balance
-             context is useful mid-list); the AppBarLayout paints the lift, so
-             the header itself stays transparent. -->
+        <!-- scroll (no enterAlways/pin): the header rides off with the content
+             and comes back only at the top — no lift, no tint band. -->
         <LinearLayout
             android:id="@+id/cb_header"
             android:layout_width="match_parent"
@@ -42,7 +44,8 @@
             android:paddingEnd="16dp"
             android:paddingBottom="12dp"
             android:visibility="gone"
-            tools:visibility="visible">
+            tools:visibility="visible"
+            app:layout_scrollFlags="scroll">
 
             <TextView
                 android:id="@+id/cb_header_line1"
