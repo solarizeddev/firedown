@@ -154,14 +154,26 @@ public class CloudStatusPreference extends Preference {
 
         boolean metered = mQuota != null && mQuota.metered;
         boolean grace = metered && mQuota.readOnly;
-        boolean planKnown = mPlanSizeGb > 0 && mPlanMonths > 0;
+        // The plan size: the stored purchase shape, or — when that's missing
+        // (wiped prefs / a recovery-code restore on a new device) but the
+        // metered balance is known — the balance NORMALIZED to a 12-month plan
+        // equivalent (5410 GB-months → "up to ~450 GB for 1 year"). Without
+        // this, the no-shape state rendered a bare card: no bar, no runway,
+        // and a caption that duplicated the headline size (on-device: "854 MB
+        // backed up" twice). The normalization is honest — it states exactly
+        // what the balance buys, on the same GB-month arithmetic the debit
+        // uses — and every widget below (chip, bar, percent caption, runway)
+        // renders through the one code path.
+        int planSizeGb = effectivePlanSizeGb(metered, grace);
+        boolean planKnown = planSizeGb > 0;
+        int coverage = coverageMonths(metered, planSizeGb);
         int ink = ContextCompat.getColor(ctx, grace ? R.color.backup_warning : R.color.brand_orange);
 
         // Headline: how much of the user's stuff is safe.
         big.setText(mTotalBytes >= 0 ? Formatter.formatShortFileSize(ctx, mTotalBytes) : "—");
         bigUnit.setText(R.string.cloud_status_backed_up);
 
-        bindChip(ctx, chip, metered, grace, planKnown);
+        bindChip(ctx, chip, metered, grace, planKnown, planSizeGb, coverage);
 
         // Usage bar — needs a denominator: the plan's size cap (metered) or the
         // included cap (unmetered). Preference rows recycle, so every state is
@@ -169,7 +181,7 @@ public class CloudStatusPreference extends Preference {
         long capBytes = -1;
         if (metered) {
             if (planKnown) {
-                capBytes = mPlanSizeGb * GB;
+                capBytes = planSizeGb * GB;
             }
         } else if (mQuota != null && mQuota.bytesLimit > 0) {
             capBytes = mQuota.bytesLimit;
@@ -191,7 +203,35 @@ public class CloudStatusPreference extends Preference {
         caption.setText(captionText(ctx, metered, planKnown, percent, capBytes));
 
         bindRunway(ctx, alert, runway, runwayLabels, runwayCovered, runwayLeft, ticks,
-                metered, grace, planKnown, ink);
+                metered, grace, planKnown, coverage, ink);
+    }
+
+    /**
+     * The plan's size cap for the render: the stored purchase shape when
+     * present, else (metered, funded, not in grace) the balance normalized to
+     * a 12-month plan equivalent, rounded to a clean number. 0 = genuinely
+     * unknown (offline with no prefs, or grace where the balance is spent) —
+     * the card then degrades to chip + caption only.
+     */
+    private int effectivePlanSizeGb(boolean metered, boolean grace) {
+        if (mPlanSizeGb > 0) {
+            return mPlanSizeGb;
+        }
+        if (metered && !grace && mQuota.balanceGbMonths > 0) {
+            return roundToNiceGb(mQuota.balanceGbMonths / 12.0);
+        }
+        return 0;
+    }
+
+    /** Rounds a derived GB cap to a display-clean step (450, not 451). */
+    private static int roundToNiceGb(double gb) {
+        if (gb >= 100) {
+            return (int) (Math.round(gb / 50.0) * 50);
+        }
+        if (gb >= 20) {
+            return (int) (Math.round(gb / 10.0) * 10);
+        }
+        return Math.max(1, (int) Math.round(gb));
     }
 
     /**
@@ -204,9 +244,9 @@ public class CloudStatusPreference extends Preference {
      * that cap). The balance is ground truth; the stored months only cover the
      * offline/quota-unknown render.
      */
-    private int coverageMonths(boolean metered) {
-        if (metered && mPlanSizeGb > 0 && mQuota.balanceGbMonths > 0) {
-            return (int) Math.max(1, Math.round(mQuota.balanceGbMonths / mPlanSizeGb));
+    private int coverageMonths(boolean metered, int planSizeGb) {
+        if (metered && planSizeGb > 0 && mQuota.balanceGbMonths > 0) {
+            return (int) Math.max(1, Math.round(mQuota.balanceGbMonths / planSizeGb));
         }
         return mPlanMonths;
     }
@@ -265,14 +305,14 @@ public class CloudStatusPreference extends Preference {
      *  the free beta. Warn styling is amber text over amber-at-18%; the neutral
      *  styling is re-applied explicitly because rows recycle. */
     private void bindChip(Context ctx, TextView chip, boolean metered, boolean grace,
-                          boolean planKnown) {
+                          boolean planKnown, int planSizeGb, int coverage) {
         String text;
         if (grace) {
             text = ctx.getString(R.string.cloud_status_chip_readonly);
         } else if (metered) {
-            if (planKnown) {
-                text = ctx.getString(R.string.buy_credit_plan_size, mPlanSizeGb)
-                        + " · " + formatDuration(ctx, coverageMonths(true));
+            if (planKnown && coverage > 0) {
+                text = ctx.getString(R.string.buy_credit_plan_size, planSizeGb)
+                        + " · " + formatDuration(ctx, coverage);
             } else {
                 text = formatGbMonths(mQuota.balanceGbMonths) + " "
                         + ctx.getString(R.string.cloud_status_gb_label);
@@ -314,8 +354,11 @@ public class CloudStatusPreference extends Preference {
             String pct = (percent == 0 && mTotalBytes > 0) ? "<1" : String.valueOf(percent);
             return ctx.getString(R.string.cloud_status_caption_plan, files, pct);
         }
-        return ctx.getString(R.string.cloud_status_facts, files,
-                Formatter.formatShortFileSize(ctx, mTotalBytes));
+        // Fallback (metered with no plan shape / no cap): the headline right
+        // above IS the backed-up size, so repeating it here read as a stutter
+        // ("854 MB backed up / 9 files · 854 MB backed up", on-device) — pair
+        // the file count with the trust line instead.
+        return files + " · " + ctx.getString(R.string.cloud_backup_header_encrypted);
     }
 
     /** Grace: the top-up-by alert + a runway drained to its last (amber) tick.
@@ -323,7 +366,8 @@ public class CloudStatusPreference extends Preference {
      *  month ticks only when the plan shape is known. Unmetered: no runway. */
     private void bindRunway(Context ctx, TextView alert, View runway, View runwayLabels,
                             TextView runwayCovered, TextView runwayLeft, CloudRunwayView ticks,
-                            boolean metered, boolean grace, boolean planKnown, int ink) {
+                            boolean metered, boolean grace, boolean planKnown, int coverage,
+                            int ink) {
         alert.setVisibility(View.GONE);
         runway.setVisibility(View.GONE);
         runwayLabels.setVisibility(View.GONE);
@@ -353,7 +397,6 @@ public class CloudStatusPreference extends Preference {
         // servers and clock skew). The coverage needs the plan size, which a
         // wiped install doesn't have. Show whichever is available and sane;
         // nothing trustworthy → no runway (silent beats wrong).
-        int coverage = coverageMonths(true);
         boolean hasCoverage = planKnown && coverage > 0;
         Instant now = Instant.now();
         Instant projected = parseInstant(mQuota.projectedRunoutAt);
