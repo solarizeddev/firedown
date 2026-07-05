@@ -529,4 +529,12 @@
     <string name="settings_sync_summary">Sincronização de favoritos com criptografia de ponta a ponta entre seus dispositivos</string>
     <string name="settings_sync_switch_summary">Desativado — seus favoritos permanecem neste dispositivo</string>
     <string name="settings_sync_title">Sincronizar favoritos</string>
+    <!-- Nostr (NIP-07) signer -->
+    <string name="nostr_permission_title">Assinador Nostr</string>
+    <string name="nostr_permission_message">%1$s quer usar o seu assinador Nostr para ler a sua chave pública e assinar em seu nome. O aplicativo de assinatura aprova cada ação separadamente.</string>
+    <string name="nostr_permission_allow">Permitir</string>
+    <string name="nostr_permission_deny">Negar</string>
+    <string name="nostr_no_signer_title">Sem assinador Nostr</string>
+    <string name="nostr_no_signer_message">Entrar com Nostr exige um aplicativo de assinatura como o Amber, que guarda as suas chaves no dispositivo. Instale um e tente novamente.</string>
+    <string name="nostr_install_amber">Instalar Amber</string>
 </resources>

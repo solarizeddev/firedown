@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
-import android.widget.Toast;
 
 import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultLauncher;
@@ -68,20 +67,30 @@ public class NostrSignerActivity extends AppCompatActivity {
             return;
         }
 
+        boolean signerInstalled = isSignerInstalled();
         Boolean permission = mBridge.getPermission(mRequest.origin);
 
         // Recreated by a config change NOT covered by the manifest's
         // configChanges list (rotation IS covered, so it won't recreate us). If
         // the signer was already launched, the ActivityResult API re-delivers
-        // its result to the re-registered launcher — we must NOT re-launch. The
-        // only thing to restore is the permission dialog, and only if the
-        // decision is still pending (permission unknown means the dialog was
-        // the thing on screen). A resolved permission means we already launched
-        // (allow) or finished (deny), so do nothing and await the launcher.
+        // its result to the re-registered launcher — we must NOT re-launch, so
+        // only restore whichever dialog was on screen. A resolved permission
+        // (with the signer present) means we already launched (allow) or
+        // finished (deny), so do nothing and await the launcher.
         if (savedInstanceState != null) {
-            if (permission == null) {
+            if (!signerInstalled) {
+                showInstallSignerDialog();
+            } else if (permission == null) {
                 showPermissionDialog();
             }
+            return;
+        }
+
+        // Check the signer is present BEFORE prompting for permission — no point
+        // asking to use a signer that isn't installed, and it keeps the
+        // empty-state clean (install prompt, not an Allow-then-fail).
+        if (!signerInstalled) {
+            showInstallSignerDialog();
             return;
         }
 
@@ -91,6 +100,61 @@ public class NostrSignerActivity extends AppCompatActivity {
             launchSigner();
         } else {
             showPermissionDialog();
+        }
+    }
+
+    /** True when a NIP-55 signer that handles the {@code nostrsigner:} scheme is
+     *  installed (scoped via the manifest {@code <queries>} entry). */
+    private boolean isSignerInstalled() {
+        Intent probe = new Intent(Intent.ACTION_VIEW, Uri.parse("nostrsigner:"));
+        probe.setPackage(NostrSignerBridge.SIGNER_PACKAGE);
+        return probe.resolveActivity(getPackageManager()) != null;
+    }
+
+    /**
+     * Shown when no signer app is installed: explains why and offers a one-tap
+     * install. The current request fails either way (there was no signer when
+     * the site asked) — the user installs, then retries — so every exit path
+     * delivers the rejection exactly once.
+     */
+    private void showInstallSignerDialog() {
+        new MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.nostr_no_signer_title)
+                .setMessage(R.string.nostr_no_signer_message)
+                .setCancelable(true)
+                .setPositiveButton(R.string.nostr_install_amber, (d, w) -> {
+                    openSignerInstall();
+                    deliverError("no signer app installed");
+                })
+                .setNegativeButton(R.string.cancel, (d, w) -> deliverError("no signer app installed"))
+                .setOnCancelListener(d -> deliverError("no signer app installed"))
+                .show();
+    }
+
+    /**
+     * Opens the signer's install page. Prefers the Play Store app
+     * ({@code market:}); on a device without Play (a common case for this app's
+     * audience) falls back to the project's web page, which resolves to a
+     * browser (Firedown itself, if it's the default).
+     */
+    private void openSignerInstall() {
+        Intent play = new Intent(Intent.ACTION_VIEW,
+                Uri.parse("market://details?id=" + NostrSignerBridge.SIGNER_PACKAGE));
+        play.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        try {
+            startActivity(play);
+            return;
+        } catch (ActivityNotFoundException ignored) {
+            // No Play Store app — fall through to the web page.
+        }
+        Intent web = new Intent(Intent.ACTION_VIEW,
+                Uri.parse("https://github.com/greenart7c3/Amber"));
+        web.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        try {
+            startActivity(web);
+        } catch (ActivityNotFoundException ignored) {
+            // Nothing can open a link either — the message already told the
+            // user what they need; the request still rejects cleanly.
         }
     }
 
@@ -125,8 +189,8 @@ public class NostrSignerActivity extends AppCompatActivity {
         try {
             mSignerLauncher.launch(intent);
         } catch (ActivityNotFoundException e) {
-            Toast.makeText(this, R.string.nostr_no_signer, Toast.LENGTH_LONG).show();
-            deliverError("no signer app installed");
+            // Race: the signer was uninstalled between the pre-check and here.
+            showInstallSignerDialog();
         }
     }
 

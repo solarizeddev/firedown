@@ -446,4 +446,12 @@
     <string name="settings_sync_summary">Наскрізне шифрування синхронізації закладок між вашими пристроями</string>
     <string name="settings_sync_switch_summary">Вимкнено — ваші закладки залишаються на цьому пристрої</string>
     <string name="settings_sync_title">Синхронізувати закладки</string>
+    <!-- Nostr (NIP-07) signer -->
+    <string name="nostr_permission_title">Підписувач Nostr</string>
+    <string name="nostr_permission_message">%1$s хоче використати ваш підписувач Nostr, щоб прочитати ваш публічний ключ і підписувати від вашого імені. Застосунок для підпису підтверджує кожну дію окремо.</string>
+    <string name="nostr_permission_allow">Дозволити</string>
+    <string name="nostr_permission_deny">Відхилити</string>
+    <string name="nostr_no_signer_title">Немає підписувача Nostr</string>
+    <string name="nostr_no_signer_message">Вхід через Nostr потребує застосунку для підпису, як-от Amber, який зберігає ваші ключі на пристрої. Установіть його та спробуйте знову.</string>
+    <string name="nostr_install_amber">Встановити Amber</string>
 </resources>

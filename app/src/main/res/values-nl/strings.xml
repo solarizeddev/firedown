@@ -529,4 +529,12 @@
     <string name="settings_sync_summary">End-to-end-versleutelde bladwijzersynchronisatie tussen je apparaten</string>
     <string name="settings_sync_switch_summary">Uit — je bladwijzers blijven op dit apparaat</string>
     <string name="settings_sync_title">Bladwijzers synchroniseren</string>
+    <!-- Nostr (NIP-07) signer -->
+    <string name="nostr_permission_title">Nostr-ondertekenaar</string>
+    <string name="nostr_permission_message">%1$s wil je Nostr-ondertekenaar gebruiken om je publieke sleutel te lezen en namens jou te ondertekenen. De ondertekenapp keurt elke actie afzonderlijk goed.</string>
+    <string name="nostr_permission_allow">Toestaan</string>
+    <string name="nostr_permission_deny">Weigeren</string>
+    <string name="nostr_no_signer_title">Geen Nostr-ondertekenaar</string>
+    <string name="nostr_no_signer_message">Aanmelden met Nostr vereist een ondertekenapp zoals Amber, die je sleutels op je apparaat bewaart. Installeer er een en probeer het opnieuw.</string>
+    <string name="nostr_install_amber">Amber installeren</string>
 </resources>

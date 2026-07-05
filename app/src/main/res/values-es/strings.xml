@@ -660,4 +660,12 @@
     <string name="settings_sync_summary">Sincronización de marcadores cifrada de extremo a extremo entre tus dispositivos</string>
     <string name="settings_sync_switch_summary">Desactivado — tus marcadores permanecen en este dispositivo</string>
     <string name="settings_sync_title">Sincronizar marcadores</string>
+    <!-- Nostr (NIP-07) signer -->
+    <string name="nostr_permission_title">Firmante de Nostr</string>
+    <string name="nostr_permission_message">%1$s quiere usar tu firmante de Nostr para leer tu clave pública y firmar en tu nombre. La app de firma aprueba cada acción por separado.</string>
+    <string name="nostr_permission_allow">Permitir</string>
+    <string name="nostr_permission_deny">Denegar</string>
+    <string name="nostr_no_signer_title">Sin firmante de Nostr</string>
+    <string name="nostr_no_signer_message">Iniciar sesión con Nostr requiere una app de firma como Amber, que guarda tus claves en el dispositivo. Instala una e inténtalo de nuevo.</string>
+    <string name="nostr_install_amber">Instalar Amber</string>
 </resources>
