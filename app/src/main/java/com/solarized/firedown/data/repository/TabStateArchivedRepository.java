@@ -10,6 +10,7 @@ import com.solarized.firedown.data.entity.GeckoStateEntity;
 import com.solarized.firedown.data.entity.TabStateArchivedEntity;
 
 import java.util.concurrent.Executor;
+import java.util.function.Consumer;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -21,21 +22,70 @@ import javax.inject.Singleton;
 @Singleton
 public class TabStateArchivedRepository {
 
+    /**
+     * Session-state read chunk, in SQLite characters. Worst case (4-byte
+     * UTF-8) that's 1 MiB of window per chunk — comfortably under the ~2 MB
+     * CursorWindow that a whole-blob single-row read can blow through.
+     */
+    private static final long SESSION_STATE_CHUNK_CHARS = 256 * 1024;
+
     private final TabStateArchivedDao mTabStateDao;
 
     private final Executor mDiskExecutor;
+    private final Executor mMainExecutor;
 
     @Inject
-    public TabStateArchivedRepository(TabStateArchivedDao tabStateDao, @Qualifiers.DiskIO Executor diskExecutor) {
+    public TabStateArchivedRepository(TabStateArchivedDao tabStateDao,
+                                      @Qualifiers.DiskIO Executor diskExecutor,
+                                      @Qualifiers.MainThread Executor mainExecutor) {
         this.mTabStateDao = tabStateDao;
         mDiskExecutor = diskExecutor;
+        mMainExecutor = mainExecutor;
     }
 
     /**
      * Returns a PagingSource for the UI to consume via a PagingData stream.
+     * The rows carry a NULL session state (the blob is excluded from the
+     * list query so an oversized one can't kill the paging load — see the
+     * DAO); fetch it on demand with {@link #getSessionState}.
      */
     public PagingSource<Integer, TabStateArchivedEntity> getTabsArchive() {
         return mTabStateDao.getArchive();
+    }
+
+    /**
+     * Fetches an archived tab's session state off-main and delivers it on
+     * the main thread. Null when the row is gone or holds no state — the
+     * caller should then fall back to a plain URI load.
+     */
+    public void getSessionState(int id, Consumer<String> mainThreadCallback) {
+        mDiskExecutor.execute(() -> {
+            String state = getSessionStateSync(id);
+            mMainExecutor.execute(() -> mainThreadCallback.accept(state));
+        });
+    }
+
+    /**
+     * Reads the session state in bounded chunks ({@code substr}) instead of
+     * one row read, so a blob past the CursorWindow limit is still fully
+     * readable. SQLite {@code length()}/{@code substr} are both
+     * character-addressed on TEXT, so the chunk boundaries line up exactly.
+     */
+    public String getSessionStateSync(int id) {
+        Long length = mTabStateDao.getSessionStateLength(id);
+        if (length == null || length <= 0) {
+            return null;
+        }
+        StringBuilder builder = new StringBuilder();
+        for (long start = 1; start <= length; start += SESSION_STATE_CHUNK_CHARS) {
+            String chunk = mTabStateDao.getSessionStateChunk(id, start, SESSION_STATE_CHUNK_CHARS);
+            if (chunk == null) {
+                // Row deleted between the length read and this chunk.
+                return null;
+            }
+            builder.append(chunk);
+        }
+        return builder.toString();
     }
 
     /**
