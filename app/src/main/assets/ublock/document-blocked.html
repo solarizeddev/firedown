@@ -30,7 +30,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Page blocked</title>
 <style>
   /* Palette + conventions lifted from assets/error/error_style.css so this
@@ -64,10 +64,16 @@
        viewport height. Children stack from the top, so the empty space (plus
        the bottom padding) lands BELOW the last button — the Proceed button is
        never pinned flush against the browser's overlaying bottom toolbar, the
-       same way "Try Again" never is on the error page. The generous
-       padding-bottom keeps the clearance when content is tall enough to scroll. */
+       same way "Try Again" never is on the error page (which also has a footer
+       illustration below its button that we don't).
+       The page renders full-height BEHIND two stacked overlays: the browser's
+       dynamic bottom toolbar AND the Android system navigation bar (~110-120px
+       together). So the bottom padding must clear both plus leave a real margin:
+       160px base covers the toolbar+nav on a typical device, and
+       env(safe-area-inset-bottom) (needs viewport-fit=cover, set above) adds the
+       extra system gesture/nav inset on devices that report one. */
     padding-top: var(--top-offset);
-    padding-bottom: 120px;
+    padding-bottom: calc(160px + env(safe-area-inset-bottom, 0px));
     min-height: calc(100% - var(--top-offset));
     box-sizing: border-box;
     display: flex;
