@@ -99,6 +99,7 @@
     <string name="empty_list_history">Uw downloadgeschiedenis is leeg.</string>
     <string name="empty_list_query">geen resultaten gevonden</string>
     <string name="empty_list_type">Er is hier niets.</string>
+    <string name="empty_list_vault">Nog niets in de beveiligde map.\n\nKies bij een download „Naar beveiligde map verplaatsen“ in het ⋮-menu om het hier te bewaren.</string>
     <string name="empty_media_help">Sommige mediabestanden moeten worden afgespeeld voordat Firedown ze kan detecteren als downloadbare bestanden.</string>
     <string name="empty_media_help_title">Speel de media af voordat u gaat downloaden</string>
     <string name="empty_media_subtitle_help">Speel de media af zoals gewoonlijk. Het zou dan moeten verschijnen bij de andere mediabestanden, nadat u op de vuurknop hebt gedrukt.</string>

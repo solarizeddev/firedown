@@ -99,6 +99,7 @@
     <string name="empty_list_history">Ваша история загрузок пуста.</string>
     <string name="empty_list_query">Результатов не найдено</string>
     <string name="empty_list_type">Здесь ничего нет.</string>
+    <string name="empty_list_vault">В безопасной папке пока ничего нет.\n\nВ любой загрузке выберите «Переместить в безопасную папку» в меню ⋮, чтобы сохранить её здесь.</string>
     <string name="empty_media_help">Некоторые медиафайлы необходимо воспроизвести, прежде чем Firedown сможет обнаружить их как загружаемые файлы.</string>
     <string name="empty_media_help_title">Воспроизведите медиа перед загрузкой</string>
     <string name="empty_media_subtitle_help">Пожалуйста, воспроизводите медиафайлы как обычно. Затем он должен появиться вместе с другими медиафайлами после нажатия кнопки «Fire».</string>

@@ -99,6 +99,7 @@
     <string name="empty_list_history">Twoja historia pobrań jest pusta.</string>
     <string name="empty_list_query">Nie znaleziono wyników</string>
     <string name="empty_list_type">Tu nic nie ma.</string>
+    <string name="empty_list_vault">W bezpiecznym folderze nie ma jeszcze nic.\n\nW dowolnym pobieraniu wybierz „Przenieś do bezpiecznego folderu“ z menu ⋮, aby zachować je tutaj.</string>
     <string name="empty_media_help">Niektóre pliki multimedialne muszą zostać odtworzone, zanim Firedown wykryje je jako pliki do pobrania.</string>
     <string name="empty_media_help_title">Przed pobraniem odtwórz multimedia</string>
     <string name="empty_media_subtitle_help">Proszę odtwarzać multimedia jak zwykle. Powinno pojawić się wraz z innymi plikami multimedialnymi po naciśnięciu przycisku Fire.</string>

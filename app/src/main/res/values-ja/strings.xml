@@ -157,6 +157,7 @@
     <string name="empty_list_history">ダウンロード履歴は空です。</string>
     <string name="empty_list_query">結果が見つかりません</string>
     <string name="empty_list_type">ここには何もありません。</string>
+    <string name="empty_list_vault">セーフフォルダにはまだ何もありません。\n\n任意のダウンロードの ⋮ メニューから「セーフフォルダに移動」を選ぶと、ここに保存されます。</string>
     <string name="empty_media_help">一部のメディア ファイルは、Firedown がダウンロード可能なファイルとして検出する前に再生する必要があります。</string>
     <string name="empty_media_help_title">ダウンロードする前にメディアを再生</string>
     <string name="empty_media_subtitle_help">通常どおりメディアを再生してください。Fire ボタンを押すと、他のメディア ファイルとともに表示されるはずです。</string>

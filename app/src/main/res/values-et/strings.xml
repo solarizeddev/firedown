@@ -86,6 +86,7 @@
     <string name="empty_list_history">Teie allalaadimiste ajalugu on tühi.</string>
     <string name="empty_list_query">Tulemusi ei leitud</string>
     <string name="empty_list_type">Siin pole midagi.</string>
+    <string name="empty_list_vault">Turvalises kaustas pole veel midagi.\n\nVali suvalise allalaadimise ⋮ menüüst „Teisalda turvalisse kausta“, et see siia salvestada.</string>
     <string name="empty_media_help">Mõnda meediumifaili tuleb esitada enne, kui Firedown suudab need allalaaditavate failidena tuvastada.</string>
     <string name="empty_media_help_title">Enne allalaadimist esitage meediat</string>
     <string name="empty_media_subtitle_help">Palun esitage meediat nagu tavaliselt. Pärast tulekahju-nupu vajutamist peaks see ilmuma koos teiste meediumifailidega.</string>

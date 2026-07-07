@@ -96,6 +96,7 @@
     <string name="empty_list_history">Vaše historie stahování je prázdná.</string>
     <string name="empty_list_query">Nebyly nalezeny žádné výsledky</string>
     <string name="empty_list_type">Tady nic není.</string>
+    <string name="empty_list_vault">V bezpečné složce zatím nic není.\n\nU libovolného stahování zvolte „Přesunout do bezpečné složky“ z nabídky ⋮ a uložte ho sem.</string>
     <string name="empty_media_help">Některé mediální soubory je třeba přehrát, než je Firedown rozpozná jako soubory ke stažení.</string>
     <string name="empty_media_help_title">Před stažením média přehrajte</string>
     <string name="empty_media_subtitle_help">Přehrávejte média jako obvykle. Poté by se měl objevit s ostatními mediálními soubory po stisknutí tlačítka Fire.</string>
