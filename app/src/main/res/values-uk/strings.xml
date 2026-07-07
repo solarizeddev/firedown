@@ -95,6 +95,7 @@
     <string name="empty_list_history">Ваша історія завантажень порожня.</string>
     <string name="empty_list_query">Нічого не знайдено</string>
     <string name="empty_list_type">Тут нічого немає.</string>
+    <string name="empty_list_vault">У захищеній папці поки нічого немає.\n\nУ будь-якому завантаженні виберіть «Перемістити в захищену папку» в меню ⋮, щоб зберегти його тут.</string>
     <string name="empty_media_help">Деякі мультимедійні файли потрібно відтворити, перш ніж Firedown зможе визначити їх як файли для завантаження.</string>
     <string name="empty_media_help_title">Перед завантаженням відтворіть мультимедійний файл</string>
     <string name="empty_media_subtitle_help">Будь ласка, відтворюйте медіа як зазвичай. Потім він має з’явитися разом з іншими мультимедійними файлами після натискання кнопки Fire.</string>

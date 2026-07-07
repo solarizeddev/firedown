@@ -157,6 +157,7 @@
     <string name="empty_list_history">您的下载历史记录为空。</string>
     <string name="empty_list_query">未找到结果</string>
     <string name="empty_list_type">这里什么都没有。</string>
+    <string name="empty_list_vault">安全文件夹中还没有内容。\n\n在任意下载项的 ⋮ 菜单中选择“移至安全文件夹”，即可将其保存在此处。</string>
     <string name="empty_media_help">有些媒体文件需要先播放，Firedown 才能将其检测为可下载文件。</string>
     <string name="empty_media_help_title">下载前播放媒体</string>
     <string name="empty_media_subtitle_help">请照常播放媒体。按下 Fire 按钮后，它应该与其他媒体文件一起出现。</string>

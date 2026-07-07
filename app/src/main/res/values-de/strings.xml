@@ -157,6 +157,7 @@
     <string name="empty_list_history">Ihr Download-Verlauf ist leer.</string>
     <string name="empty_list_query">Keine Ergebnisse gefunden</string>
     <string name="empty_list_type">Hier ist nichts.</string>
+    <string name="empty_list_vault">Noch nichts im sicheren Ordner.\n\nWähle bei einem beliebigen Download „In sicheren Ordner verschieben“ aus dem Menü ⋮, um ihn hier abzulegen.</string>
     <string name="empty_media_help">Einige Mediendateien müssen abgespielt werden, bevor Firedown sie als herunterladbare Dateien erkennen kann.</string>
     <string name="empty_media_help_title">Spielen Sie die Medien vor dem Herunterladen ab</string>
     <string name="empty_media_subtitle_help">Bitte spielen Sie die Medien wie gewohnt ab. Es sollte dann zusammen mit den anderen Mediendateien erscheinen, nachdem Sie den Feuer-Knopf gedrückt haben.</string>

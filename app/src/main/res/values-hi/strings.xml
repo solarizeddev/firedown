@@ -67,6 +67,7 @@
     <string name="empty_list_history">आपका डाउनलोड इतिहास रिक्त है.</string>
     <string name="empty_list_query">कोई परिणाम नहीं मिला</string>
     <string name="empty_list_type">यहाँ कुछ भी नहीं है.</string>
+    <string name="empty_list_vault">आपके सुरक्षित फ़ोल्डर में अभी कुछ नहीं है।\n\nकिसी भी डाउनलोड के ⋮ मेनू से “सुरक्षित फ़ोल्डर में ले जाएं” चुनें ताकि वह यहाँ रहे।</string>
     <string name="empty_media_help">Firedown  द्वारा उन्हें डाउनलोड करने योग्य फ़ाइलों के रूप में पहचानने से पहले कुछ मीडिया फ़ाइलों को चलाने की आवश्यकता होती है.</string>
     <string name="empty_media_help_title">डाउनलोड करने से पहले मीडिया चलाएं</string>
     <string name="empty_media_subtitle_help">कृपया मीडिया को हमेशा की तरह चलाएं. फ़ायर-बटन दबाने के बाद यह अन्य मीडिया फ़ाइलों के साथ दिखाई देना चाहिए.</string>
