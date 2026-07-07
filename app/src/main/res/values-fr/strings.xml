@@ -157,6 +157,7 @@
     <string name="empty_list_history">Votre historique de téléchargements est vide.</string>
     <string name="empty_list_query">Aucun résultat trouvé</string>
     <string name="empty_list_type">Il n\'y a rien ici.</string>
+    <string name="empty_list_vault">Rien dans le dossier sécurisé pour l’instant.\n\nSur n’importe quel téléchargement, choisissez « Déplacer dans le dossier sécurisé » dans le menu ⋮ pour le conserver ici.</string>
     <string name="empty_media_help">Certains fichiers multimédias doivent être lus avant que Firedown puisse les détecter en tant que fichiers téléchargeables.</string>
     <string name="empty_media_help_title">Lire le média avant de le télécharger</string>
     <string name="empty_media_subtitle_help">Veuillez lire les médias comme d\'habitude. Il devrait alors apparaître avec les autres fichiers multimédias, après avoir appuyé sur le bouton Fire.</string>

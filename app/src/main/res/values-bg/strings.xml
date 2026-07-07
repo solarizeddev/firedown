@@ -94,6 +94,7 @@
     <string name="empty_list_history">Историята ви на изтегляния е празна.</string>
     <string name="empty_list_query">Не са намерени резултати</string>
     <string name="empty_list_type">Тук няма нищо.</string>
+    <string name="empty_list_vault">Все още няма нищо в защитената папка.\n\nПри всяко изтегляне изберете „Преместване в безопасната папка“ от менюто ⋮, за да го запазите тук.</string>
     <string name="empty_media_help">Някои медийни файлове трябва се пуснат, преди Firedown да може да ги открие като файлове за изтегляне.</string>
     <string name="empty_media_help_title">Пускане на медията преди изтегляне</string>
     <string name="empty_media_subtitle_help">Моля, пуснете медията както обикновено. След натискане на бутона Fire трябва да се появи при другите медийни файлове.</string>

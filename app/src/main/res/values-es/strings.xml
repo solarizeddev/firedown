@@ -157,6 +157,7 @@
     <string name="empty_list_history">Tu historial de descargas está vacío.</string>
     <string name="empty_list_query">No se han encontrado resultados</string>
     <string name="empty_list_type">No hay nada aquí.</string>
+    <string name="empty_list_vault">Aún no hay nada en la Carpeta segura.\n\nEn cualquier descarga, elige «Mover a la Carpeta segura» en el menú ⋮ para guardarla aquí.</string>
     <string name="empty_media_help">Algunos archivos multimedia deben reproducirse antes de que Firedown pueda detectarlos como archivos descargables.</string>
     <string name="empty_media_help_title">Reproducir el contenido multimedia antes de descargarlo</string>
     <string name="empty_media_subtitle_help">Por favor, reproduce los medios como de costumbre. Luego debería aparecer con los otros archivos multimedia, después de presionar el botón de Firedown.</string>
