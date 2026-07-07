@@ -267,6 +267,7 @@
     <string name="empty_list_history">Your downloads history is empty.</string>
     <string name="empty_list_query">No results found</string>
     <string name="empty_list_type">There\'s nothing here.</string>
+    <string name="empty_list_vault">Nothing in your Safe Folder yet.\n\nOn any download, choose “Move to Safe Folder” from the ⋮ menu to keep it here.</string>
     <string name="empty_media_help">Some media files need to be played before Firedown can detect them as a downloadable files.</string>
     <string name="empty_media_help_title">Play the media before downloading</string>
     <string name="empty_media_subtitle_help">Please play the media as usual. It should then appear with the other media files, after pressing the Fire-Button.</string>
