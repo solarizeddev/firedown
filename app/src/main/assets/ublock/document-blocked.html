@@ -30,19 +30,22 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
 <title>Page blocked</title>
 <style>
   /* Palette + conventions lifted from assets/error/error_style.css so this
      reads as part of the Firedown family, not a recoloured uBlock page. */
-  /* Mirror assets/error/error_style.css so this reads as the same family:
-     same height model, base font size, and container flex-column layout. */
+  /* Palette + base font mirror assets/error/error_style.css (same periwinkle,
+     same 13px body so the h1/h2 em sizes match the error pages). */
   html, body {
     margin: 0;
     padding: 0;
-    height: 100%;
+    /* min-height (not height:100%): the document is exactly its content tall, so
+       short content fills the viewport without a scrollbar and taller content
+       grows only as much as it needs — no reserved bottom padding that would
+       push the page past the viewport and force a scroll. */
+    min-height: 100%;
     --spacing: 14px;
-    --top-offset: 36px;
   }
   body {
     background-color: #d3d6e5;
@@ -50,8 +53,6 @@
     padding: 0 20px;
     font-family: sans-serif;
     font-weight: 300;
-    /* 13px — identical to error_style.css body; h1/h2 em sizes then match the
-       error pages exactly (previously 15px made everything ~15% larger). */
     font-size: 13px;
     line-height: 1.5;
     -moz-text-size-adjust: none;
@@ -60,24 +61,9 @@
   #container {
     max-width: 550px;
     margin: 0 auto;
-    /* Ports error_style.css #errorPageContainer: a flex column that fills the
-       viewport height. Children stack from the top, so the empty space (plus
-       the bottom padding) lands BELOW the last button — the Proceed button is
-       never pinned flush against the browser's overlaying bottom toolbar, the
-       same way "Try Again" never is on the error page (which also has a footer
-       illustration below its button that we don't).
-       The page renders full-height BEHIND two stacked overlays: the browser's
-       dynamic bottom toolbar AND the Android system navigation bar (~110-120px
-       together). So the bottom padding must clear both plus leave a real margin:
-       160px base covers the toolbar+nav on a typical device, and
-       env(safe-area-inset-bottom) (needs viewport-fit=cover, set above) adds the
-       extra system gesture/nav inset on devices that report one. */
-    padding-top: var(--top-offset);
-    padding-bottom: calc(160px + env(safe-area-inset-bottom, 0px));
-    min-height: calc(100% - var(--top-offset));
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
+    /* Natural top-down flow, compact padding. No flex fill / large bottom
+       padding — those made the document taller than the viewport and scrolled. */
+    padding: 40px 0;
   }
   #illustration {
     display: block;
