@@ -1,17 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    Browser popup quick-row: page-context transient actions only —
-    Back · Forward · Share · Refresh. New-tab actions moved to the
-    body list (above Bookmark page) — they aren't page-context verbs
-    and the 5-up row was too cramped at 360dp. Bookmarking is a
-    page-state toggle and lives as the first row of the page-state
-    card below, not here.
+    Browser popup quick-row: page-context transient actions —
+    Back · Forward · Bookmark · Share · Refresh. New-tab actions live
+    in the body list (they aren't page-context verbs).
 
-    Four equal columns. All buttons share
+    The Bookmark STAR sits in position 3 of 5 — promoted here from a
+    buried "Bookmark page" list row so the single most-frequent quick
+    action is one tap away and self-identifying (outline → filled amber
+    "Saved"). The star toggles IN PLACE (it does not dismiss the sheet
+    like the other buttons) and is the only column that repaints on
+    state; its icon/label/tint + the confirmation toast (Edit/Undo) are
+    driven from PopupBrowserSheetDialogFragment.
+
+    Five equal columns. All buttons share
     Firedown.Widget.PopupQuickRowButton — zero inset + 0dp inner
     horizontal padding + 11sp text — so long localised labels
-    (e.g. de "Aktualisieren") still render in one ellipsised line
-    rather than wrapping or pushing the icon stack off-centre.
+    (e.g. de "Aktualisieren") still render in one ellipsised line.
+    Past a width/font-scale breakpoint the fragment drops the labels
+    to icon-only (QuickRowLabels.iconOnly) rather than wrapping or
+    scrolling — the icons never move, so the star never re-hides.
+    Every button carries its label as contentDescription + a
+    long-press tooltip, so icon-only stays accessible.
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -35,6 +44,17 @@
         style="@style/Firedown.Widget.PopupQuickRowButton"
         app:icon="@drawable/ic_arrow_forward_24"
         android:text="@string/browser_menu_forward" />
+
+
+    <!-- Bookmark star (position 3 of 5). Toggles in place — icon
+         (border → filled), label (Bookmark → Saved) and tint (amber
+         colorPrimary when saved) are repainted by applyStarState().
+         The XML defaults render the unsaved state. -->
+    <com.solarized.firedown.ui.browser.BookmarkBrowserButton
+        android:id="@+id/popup_bookmark_star"
+        style="@style/Firedown.Widget.PopupQuickRowButton"
+        app:icon="@drawable/ic_bookmark_border_24"
+        android:text="@string/browser_menu_bookmark_short" />
 
 
     <com.solarized.firedown.ui.browser.ShareBrowserButton

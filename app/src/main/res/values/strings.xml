@@ -5,6 +5,17 @@
     <string name="app_unlock">Unlock</string>
     <string name="archive_banner_subtitle">Tap to view or reopen</string>
     <string name="browser_bookmark_added">Bookmark Saved!</string>
+    <!-- Action-row bookmark star: short labels + toast copy. The star toggles
+         in place; the toast's Edit/Undo mirror the mockup's confirmation. -->
+    <string name="browser_menu_bookmark_short">Bookmark</string>
+    <string name="browser_menu_bookmark_saved_short">Saved</string>
+    <string name="browser_bookmark_saved_toast">Saved to bookmarks</string>
+    <string name="browser_bookmark_removed">Removed bookmark</string>
+    <string name="undo">Undo</string>
+    <!-- Popup list group labels (This page · Library) — anchor the reorganised
+         list after the bookmark row moved up to the action-row star. -->
+    <string name="popup_group_this_page">This page</string>
+    <string name="popup_group_library">Library</string>
     <string name="browser_cache_cleared">Browsing data cleared</string>
     <string name="browser_desktop">Desktop site</string>
     <string name="browser_enter_url">Search or Type URL</string>

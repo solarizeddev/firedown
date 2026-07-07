@@ -3,11 +3,13 @@
     Browser "more" popup sheet.
 
     Card removed, rows sit flat on the sheet surface, semantic groups
-    separated by hairline rules. Tried section labels (PAGE / LIBRARY
-    / APP) over the same rules, but the labels were redundant — the
-    rules already broke the groups apart and the rows speak for
-    themselves. SecuritySheet keeps labelled sections because its
-    rows (toggles vs drill-downs) carry less self-evident structure.
+    separated by hairline rules. Section labels were once dropped as
+    redundant, then reintroduced (two of them: "This page" / "Library")
+    with the bookmark-star redesign: promoting Bookmark out of the list
+    into the action-row star reorganised the list around it, and the
+    two labels re-anchor the reader over the same rules. Only these two
+    groups are labelled — the tabs group (top) and the system group
+    (Settings/Quit, bottom) stay divider-only, matching the mockup.
 
     Shape (top→bottom):
       1. Drag handle (shared include).                    [pinned]
@@ -23,11 +25,16 @@
          affordance that did the same job.
       3. Identity / quick-row divider.                    [pinned]
       4. ─── scroll boundary ───
-      5. Quick-row header: Back · Forward · Share · Refresh.
+      5. Quick-row header: Back · Forward · Bookmark★ · Share · Refresh.
       6. Quick-row / menu divider.
-      7. Page actions    — Bookmark page, Find in page, Desktop site
-      8. Library         — Bookmarks, History, Safe Folder
-      9. App + exit      — Settings, optional Quit
+      7. Tabs             — New tab, New private tab
+      8. This page        — Find in page, Desktop site, Save snapshot
+      9. Library          — Bookmarks, History, Safe Folder
+     10. System           — Settings, optional Quit
+
+    The Bookmark★ star is the promoted bookmark toggle; there is no
+    longer a "Bookmark page" list row (its add/edit both live on the
+    star now).
 
     Row anatomy:
       • 56dp tall, 16dp horizontal padding — the M3 one-line
@@ -42,9 +49,13 @@
       • Everything else has no trailing element — the ripple is enough
 
     State handling stays in the fragment:
-      • Bookmark page row flips its drawableStart icon and label
-        between outline/"Bookmark page" and filled/"Edit bookmark"
-        based on mHasBookmark; dispatched id swaps in lockstep.
+      • Bookmark STAR (in the quick-row header, not this list) flips
+        its icon/label/tint between outline·"Bookmark" and filled·amber
+        ·"Saved" based on mHasBookmark, and toggles the bookmark in
+        place (add/delete on the shared repository) with an Edit/Undo
+        confirmation toast — see applyStarState / onBookmarkStarClicked.
+      • Quick-row labels drop to icon-only past a width/font-scale
+        breakpoint (QuickRowLabels.iconOnly); icons never move.
       • Vault row swaps to Downloads in incognito (icon + label +
         dispatched id).
       • Desktop site switch mirrors the current tab's isDesktop().
@@ -240,34 +251,24 @@
             </LinearLayout>
 
 
-            <!-- Bookmark page — drawableStart + label flip in
-                 applyBookmarkState; dispatched id flips in bindRows. -->
-            <LinearLayout
-                android:id="@+id/popup_bookmark_page"
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:background="?attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingHorizontal="16dp">
+            <View
+                style="@style/Firedown.Divider.InCard"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="8dp" />
 
-                <TextView
-                    android:id="@+id/popup_bookmark_page_text"
-                    style="@style/TextAppearance.Material3.TitleMedium"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:drawablePadding="16dp"
-                    android:ellipsize="end"
-                    android:maxLines="1"
-                    android:text="@string/browser_menu_bookmark_this_page_2"
-                    android:textColor="?attr/colorOnSurfaceVariant"
-                    android:textSize="16sp"
-                    app:drawableStartCompat="@drawable/ic_bookmark_border_24"
-                    app:drawableTint="?attr/colorOnSurfaceVariant" />
 
-            </LinearLayout>
+            <!-- ── This page ──────────────────────────────────────────
+                 Group label anchoring the page-context actions. The
+                 bookmark row that used to lead this group was promoted
+                 to the action-row star above; the label gives the
+                 remaining page actions an eye-anchor now that the list
+                 was reorganised around the star. Matches the mockup
+                 (only "This page" and "Library" are labelled; the
+                 tabs / system groups stay divider-separated). -->
+            <TextView
+                android:id="@+id/popup_group_this_page"
+                style="@style/Firedown.PopupGroupLabel"
+                android:text="@string/popup_group_this_page" />
 
 
             <!-- Find in page — pure action, no trailing element. -->
@@ -373,6 +374,13 @@
                 style="@style/Firedown.Divider.InCard"
                 android:layout_marginTop="8dp"
                 android:layout_marginBottom="8dp" />
+
+
+            <!-- ── Library ────────────────────────────────────────────── -->
+            <TextView
+                android:id="@+id/popup_group_library"
+                style="@style/Firedown.PopupGroupLabel"
+                android:text="@string/popup_group_library" />
 
 
             <!-- Bookmarks. -->

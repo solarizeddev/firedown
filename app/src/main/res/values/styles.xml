@@ -436,9 +436,26 @@
         <item name="android:insetRight">0dp</item>
         <item name="android:paddingHorizontal">0dp</item>
         <item name="cornerRadius">16dp</item>
-        <item name="iconPadding">4dp</item>
+        <item name="iconPadding">@dimen/quick_row_icon_padding</item>
         <item name="iconGravity">textTop</item>
         <item name="iconTint">@color/popup_header_selector</item>
+    </style>
+
+
+    <!-- Browser popup list section label ("This page" / "Library"). Small,
+         uppercase, letter-spaced and muted so it reads as a group eyebrow over
+         the hairline rule rather than another tappable row. 16dp horizontal
+         gutter to line up with the M3 list rows; tight vertical rhythm so the
+         label hugs the group it heads. Mirrors the mockup's grouplabel. -->
+    <style name="Firedown.PopupGroupLabel" parent="TextAppearance.Material3.LabelMedium">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:paddingHorizontal">16dp</item>
+        <item name="android:paddingTop">8dp</item>
+        <item name="android:paddingBottom">4dp</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:letterSpacing">0.08</item>
+        <item name="android:textColor">?attr/colorOnSurfaceVariant</item>
     </style>
 
 
