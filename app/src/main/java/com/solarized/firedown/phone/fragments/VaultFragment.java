@@ -131,6 +131,19 @@ public class VaultFragment extends BaseDownloadFragment implements OnItemClickLi
             if (mAdapter == null || mLCEERecyclerView == null) return null;
             if (loadStates.getRefresh() instanceof LoadState.NotLoading) {
                 if (mAdapter.getItemCount() == 0) {
+                    if (isSearchActive() && mSearchEdit != null && mSearchEdit.getText().length() > 0) {
+                        // Live search with no matches — "no results", not "the
+                        // Safe Folder is empty" (same split as Downloads/History/
+                        // Bookmarks search-empty).
+                        mLCEERecyclerView.setEmptyText(R.string.empty_list_query);
+                        mLCEERecyclerView.setEmptyImageView(R.drawable.ill_small_search);
+                    } else {
+                        // The folder illustration, not the generic balloons — this
+                        // list IS a folder (previously fell through to the
+                        // recycler_empty_layout defaults).
+                        mLCEERecyclerView.setEmptyText(R.string.empty_list);
+                        mLCEERecyclerView.setEmptyImageView(R.drawable.ill_small_folder);
+                    }
                     mLCEERecyclerView.showEmpty();
                 }else{
                     mLCEERecyclerView.hideAll();
