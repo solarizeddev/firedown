@@ -138,11 +138,13 @@ public class VaultFragment extends BaseDownloadFragment implements OnItemClickLi
                         mLCEERecyclerView.setEmptyText(R.string.empty_list_query);
                         mLCEERecyclerView.setEmptyImageView(R.drawable.ill_small_search);
                     } else {
-                        // The folder illustration, not the generic balloons — this
-                        // list IS a folder (previously fell through to the
-                        // recycler_empty_layout defaults).
-                        mLCEERecyclerView.setEmptyText(R.string.empty_list);
-                        mLCEERecyclerView.setEmptyImageView(R.drawable.ill_small_folder);
+                        // Safe-Folder-specific copy + the presents illustration,
+                        // not the generic balloons / "your downloads will appear
+                        // here" (this list is the Safe Folder, not Downloads; it
+                        // previously fell through to the recycler_empty_layout
+                        // defaults).
+                        mLCEERecyclerView.setEmptyText(R.string.empty_list_vault);
+                        mLCEERecyclerView.setEmptyImageView(R.drawable.ill_presents);
                     }
                     mLCEERecyclerView.showEmpty();
                 }else{
