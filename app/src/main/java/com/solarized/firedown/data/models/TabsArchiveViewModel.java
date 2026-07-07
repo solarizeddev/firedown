@@ -20,6 +20,7 @@ import com.solarized.firedown.utils.DateOrganizer;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Consumer;
 
 import javax.inject.Inject;
 
@@ -118,6 +119,15 @@ public class TabsArchiveViewModel extends ViewModel {
 
     public LiveData<PagingData<Object>> getTabArchive() {
         return mArchiveData;
+    }
+
+    /**
+     * Loads an archived tab's session state (excluded from the list rows —
+     * see the DAO) and delivers it on the main thread. Null means no stored
+     * state; the caller falls back to loading the tab's URI fresh.
+     */
+    public void loadSessionState(int id, Consumer<String> mainThreadCallback) {
+        mTabStateArchivedRepository.getSessionState(id, mainThreadCallback);
     }
 
     public void deleteAll() {

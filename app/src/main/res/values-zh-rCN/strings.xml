@@ -819,4 +819,12 @@
         <item quantity="other">已备份 %d</item>
     </plurals>
     <string name="home_cloud_paused">已暂停</string>
+    <!-- Nostr (NIP-07) signer -->
+    <string name="nostr_permission_title">Nostr 签名器</string>
+    <string name="nostr_permission_message">%1$s 想使用你的 Nostr 签名器读取你的公钥并代表你签名。签名应用会分别批准每次操作。</string>
+    <string name="nostr_permission_allow">允许</string>
+    <string name="nostr_permission_deny">拒绝</string>
+    <string name="nostr_no_signer_title">没有 Nostr 签名器</string>
+    <string name="nostr_no_signer_message">使用 Nostr 登录需要像 Amber 这样的签名应用，它将你的密钥保存在设备上。请先安装，然后重试。</string>
+    <string name="nostr_install_amber">安装 Amber</string>
 </resources>

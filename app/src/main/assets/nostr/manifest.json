@@ -1,0 +1,29 @@
+{
+  "manifest_version": 2,
+  "version": "1.0",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "nostr@solarized.dev"
+    }
+  },
+  "name": "Nostr signer bridge",
+  "description": "Exposes window.nostr (NIP-07) to web pages, delegating signing to an external NIP-55 signer app (Amber).",
+  "permissions": [
+    "nativeMessaging",
+    "nativeMessagingFromContent",
+    "geckoViewAddons"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "http://*/*",
+        "https://*/*"
+      ],
+      "js": [
+        "nostr.js"
+      ],
+      "run_at": "document_start",
+      "all_frames": false
+    }
+  ]
+}

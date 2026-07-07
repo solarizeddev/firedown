@@ -826,4 +826,12 @@
         <item quantity="other">%d gesichert</item>
     </plurals>
     <string name="home_cloud_paused">Pausiert</string>
+    <!-- Nostr (NIP-07) signer -->
+    <string name="nostr_permission_title">Nostr-Signierer</string>
+    <string name="nostr_permission_message">%1$s möchte deinen Nostr-Signierer verwenden, um deinen öffentlichen Schlüssel zu lesen und in deinem Namen zu signieren. Die Signier-App bestätigt jede Aktion einzeln.</string>
+    <string name="nostr_permission_allow">Zulassen</string>
+    <string name="nostr_permission_deny">Ablehnen</string>
+    <string name="nostr_no_signer_title">Kein Nostr-Signierer</string>
+    <string name="nostr_no_signer_message">Für die Anmeldung mit Nostr wird eine Signier-App wie Amber benötigt, die deine Schlüssel auf dem Gerät speichert. Installiere eine und versuche es erneut.</string>
+    <string name="nostr_install_amber">Amber installieren</string>
 </resources>

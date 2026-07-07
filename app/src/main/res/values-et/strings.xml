@@ -564,4 +564,12 @@
         <item quantity="other">%d varundatud</item>
     </plurals>
     <string name="home_cloud_paused">Peatatud</string>
+    <!-- Nostr (NIP-07) signer -->
+    <string name="nostr_permission_title">Nostri allkirjastaja</string>
+    <string name="nostr_permission_message">%1$s soovib kasutada sinu Nostri allkirjastajat, et lugeda sinu avalikku võtit ja allkirjastada sinu nimel. Allkirjastamisrakendus kinnitab iga toimingu eraldi.</string>
+    <string name="nostr_permission_allow">Luba</string>
+    <string name="nostr_permission_deny">Keela</string>
+    <string name="nostr_no_signer_title">Nostri allkirjastaja puudub</string>
+    <string name="nostr_no_signer_message">Nostriga sisselogimiseks on vaja allkirjastamisrakendust nagu Amber, mis hoiab sinu võtmeid seadmes. Paigalda see ja proovi uuesti.</string>
+    <string name="nostr_install_amber">Paigalda Amber</string>
 </resources>

@@ -1003,4 +1003,13 @@
     <string name="lan_direct_password">Password</string>
     <string name="lan_direct_next">Next</string>
     <string name="lan_direct_failed">Couldn\'t start the direct connection</string>
+
+    <!-- Nostr (NIP-07) signer permission prompt. %1$s is the site host. -->
+    <string name="nostr_permission_title">Nostr signer</string>
+    <string name="nostr_permission_message">%1$s wants to use your Nostr signer to read your public key and sign on your behalf. Your signer app approves each action separately.</string>
+    <string name="nostr_permission_allow">Allow</string>
+    <string name="nostr_permission_deny">Deny</string>
+    <string name="nostr_no_signer_title">No Nostr signer</string>
+    <string name="nostr_no_signer_message">Signing in with Nostr needs a signer app such as Amber, which holds your keys on your device. Install one, then try again.</string>
+    <string name="nostr_install_amber">Install Amber</string>
 </resources>

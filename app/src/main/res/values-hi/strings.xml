@@ -601,4 +601,12 @@
         <item quantity="other">%d बैकअप किए गए</item>
     </plurals>
     <string name="home_cloud_paused">रोका गया</string>
+    <!-- Nostr (NIP-07) signer -->
+    <string name="nostr_permission_title">Nostr हस्ताक्षरकर्ता</string>
+    <string name="nostr_permission_message">%1$s आपकी सार्वजनिक कुंजी पढ़ने और आपकी ओर से हस्ताक्षर करने के लिए आपके Nostr हस्ताक्षरकर्ता का उपयोग करना चाहता है। हस्ताक्षर ऐप हर क्रिया को अलग से स्वीकृत करता है।</string>
+    <string name="nostr_permission_allow">अनुमति दें</string>
+    <string name="nostr_permission_deny">अस्वीकार करें</string>
+    <string name="nostr_no_signer_title">कोई Nostr हस्ताक्षरकर्ता नहीं</string>
+    <string name="nostr_no_signer_message">Nostr से साइन इन करने के लिए Amber जैसा हस्ताक्षर ऐप चाहिए, जो आपकी कुंजियाँ आपके डिवाइस पर रखता है। इसे इंस्टॉल करें और फिर से प्रयास करें।</string>
+    <string name="nostr_install_amber">Amber इंस्टॉल करें</string>
 </resources>

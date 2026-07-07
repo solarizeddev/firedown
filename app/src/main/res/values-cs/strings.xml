@@ -656,4 +656,12 @@
         <item quantity="other">%d zálohováno</item>
     </plurals>
     <string name="home_cloud_paused">Pozastaveno</string>
+    <!-- Nostr (NIP-07) signer -->
+    <string name="nostr_permission_title">Podepisování Nostr</string>
+    <string name="nostr_permission_message">%1$s chce použít váš podpisovač Nostr ke čtení vašeho veřejného klíče a k podepisování vaším jménem. Podpisovací aplikace schvaluje každou akci zvlášť.</string>
+    <string name="nostr_permission_allow">Povolit</string>
+    <string name="nostr_permission_deny">Odmítnout</string>
+    <string name="nostr_no_signer_title">Žádný podpisovač Nostr</string>
+    <string name="nostr_no_signer_message">Přihlášení přes Nostr vyžaduje podpisovací aplikaci, jako je Amber, která uchovává vaše klíče v zařízení. Nainstalujte ji a zkuste to znovu.</string>
+    <string name="nostr_install_amber">Nainstalovat Amber</string>
 </resources>

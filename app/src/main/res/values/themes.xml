@@ -240,6 +240,26 @@
 
 
 
+    <!--
+        Transparent host for NostrSignerActivity: no window chrome, so the
+        activity is invisible while it launches the NIP-55 signer (Amber) and
+        only surfaces the one MaterialAlertDialog (the per-origin permission
+        prompt). Parented on Theme.FireDown so the Material3 dialog styling
+        resolves; windowIsTranslucent + a transparent background keep the
+        underlying browser visible behind the dialog. backgroundDimEnabled
+        stays on so the permission dialog gets the usual scrim.
+    -->
+    <style name="Theme.FireDown.Transparent" parent="Theme.FireDown">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowAnimationStyle">@null</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
+
+
     <style name="Theme.FireDown.SplashScreen" parent="Theme.SplashScreen">
         // Set the splash screen background, animated icon, and animation duration.
         <item name="windowSplashScreenBackground">@color/md_theme_surface</item>

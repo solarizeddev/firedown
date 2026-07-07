@@ -165,12 +165,16 @@ public class TabStateArchivedEntity implements TabStateArchived, Parcelable {
 
     @Override
     public void writeToParcel(@NonNull Parcel dest, int flags) {
+        // Field order MUST mirror the Parcel constructor exactly (Parcel is
+        // positional, not self-describing). This used to write creationDate
+        // BEFORE sessionState while the constructor read sessionState first,
+        // corrupting every unparceled entity (the delete dialog's selection).
         dest.writeInt(uid);
         dest.writeString(mTitle);
         dest.writeString(mUri);
         dest.writeString(mIcon);
-        dest.writeLong(mCreationDate);
         dest.writeString(mSessionState);
+        dest.writeLong(mCreationDate);
         dest.writeLong(mArchivedAt);
     }
 

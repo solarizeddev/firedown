@@ -22,6 +22,7 @@ import com.solarized.firedown.data.repository.IconsRepository;
 import com.solarized.firedown.data.repository.WasmAllowlistRepository;
 import com.solarized.firedown.manager.UrlParser;
 import com.solarized.firedown.manager.UrlType;
+import com.solarized.firedown.nostr.NostrSignerBridge;
 import com.solarized.firedown.utils.JsonHelper;
 import com.solarized.firedown.utils.UrlStringUtils;
 
@@ -76,6 +77,7 @@ public class GeckoRuntimeHelper {
     private final PriorityTaskThreadPoolExecutor mPriorityExecutor;
     private final Executor mNetworkExecutor;
     private final OkHttpClient mOkHttpClient;
+    private final NostrSignerBridge mNostrSignerBridge;
     private final Map<String, WebExtension.Port> mPorts = new HashMap<>();
     private int mTabId = DEFAULT_TAB_ID;
 
@@ -91,9 +93,11 @@ public class GeckoRuntimeHelper {
             GeckoUblockHelper geckoUblockHelper,
             PriorityTaskThreadPoolExecutor priorityExecutor,
             OkHttpClient okHttpClient,
+            NostrSignerBridge nostrSignerBridge,
             @Qualifiers.MainThread Executor mainExecutor,
             @Qualifiers.Network Executor networkExecutor
     ) {
+        this.mNostrSignerBridge = nostrSignerBridge;
         this.mIconsRepository = iconsRepository;
         this.mBrowserDownloadRepository = browserDownloadRepository;
         this.mGeckoStateDataRepository = geckoStateDataRepository;
@@ -233,6 +237,12 @@ public class GeckoRuntimeHelper {
         registerBuiltIn("resource://android/assets/webrequests/", "downloader@solarized.dev", "browser");
         registerBuiltIn("resource://android/assets/ublock/", "uBlock0@raymondhill.net", "ublock");
         registerBuiltIn("resource://android/assets/icons/", "icons@mozac.org", "icons");
+        // window.nostr (NIP-07) provider — its content script sends signing
+        // requests over the "nostr" nativeApp name, routed in onMessage to
+        // NostrSignerBridge. The generic global + per-session delegate hookup
+        // in registerBuiltIn/registerSession covers this name (no special
+        // multi-name repeat needed, unlike youtube/parser).
+        registerBuiltIn("resource://android/assets/nostr/", "nostr@solarized.dev", "nostr");
     }
 
     /**
@@ -431,6 +441,14 @@ public class GeckoRuntimeHelper {
                 // MessageDelegate.onMessage with "Invalid event data
                 // for callback". Primitives serialize cleanly.
                 return GeckoResult.fromValue(BuildConfig.DEBUG);
+            }
+            // window.nostr (NIP-07) signing requests. Returns a PENDING result
+            // completed later with an envelope string once the Amber round-trip
+            // (via NostrSignerActivity) finishes — the JS side turns the
+            // envelope into a resolve/reject on the page's Promise.
+            if ("nostr".equals(nativeApp)) {
+                return mNostrSignerBridge.handle(
+                        jsonObject, sender != null ? sender.url : null);
             }
             Log.d(TAG, "onMessage: " + jsonObject);
             try {

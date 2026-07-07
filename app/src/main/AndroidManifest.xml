@@ -30,6 +30,19 @@
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"
         tools:ignore="PackageVisibilityPolicy,QueryAllPackagesPermission" />
 
+    <!-- NIP-55 signer (Amber) visibility for Android 11+ package filtering.
+         Firedown already holds QUERY_ALL_PACKAGES, but this scoped <queries>
+         entry is the correct mechanism and keeps the nostr signer reachable
+         (resolveActivity / startActivity) even if QUERY_ALL_PACKAGES is ever
+         dropped for Play compliance. -->
+    <queries>
+        <package android:name="com.greenart7c3.nostrsigner" />
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="nostrsigner" />
+        </intent>
+    </queries>
+
     <!-- WebAuthn via Android Credential Manager (GeckoView WebAuthnCredentialManager,
          the passkey path our source build uses instead of GMS FIDO2). A browser that
          invokes Credential Manager ON BEHALF OF a website must hold
@@ -191,6 +204,18 @@
             android:exported="true"
             android:theme="@style/Theme.FireDown">
         </activity>
+
+        <!-- NIP-07 window.nostr → NIP-55 signer proxy. Transparent, no launcher
+             entry, not exported (only started internally from
+             NostrSignerBridge). Standard launch mode on purpose: launching
+             Amber for-result from the singleTask BrowserActivity can drop the
+             result, so this dedicated activity owns the round-trip. -->
+        <activity
+            android:name="com.solarized.firedown.nostr.NostrSignerActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:configChanges="keyboardHidden|orientation|screenLayout|screenSize"
+            android:theme="@style/Theme.FireDown.Transparent" />
 
         <service
             android:name="com.solarized.firedown.manager.RunnableManager"

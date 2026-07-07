@@ -827,4 +827,12 @@
         <item quantity="other">%d sauvegardés</item>
     </plurals>
     <string name="home_cloud_paused">En pause</string>
+    <!-- Nostr (NIP-07) signer -->
+    <string name="nostr_permission_title">Signataire Nostr</string>
+    <string name="nostr_permission_message">%1$s souhaite utiliser votre signataire Nostr pour lire votre clé publique et signer en votre nom. L\'application de signature approuve chaque action séparément.</string>
+    <string name="nostr_permission_allow">Autoriser</string>
+    <string name="nostr_permission_deny">Refuser</string>
+    <string name="nostr_no_signer_title">Aucun signataire Nostr</string>
+    <string name="nostr_no_signer_message">La connexion avec Nostr nécessite une application de signature comme Amber, qui conserve vos clés sur votre appareil. Installez-en une, puis réessayez.</string>
+    <string name="nostr_install_amber">Installer Amber</string>
 </resources>

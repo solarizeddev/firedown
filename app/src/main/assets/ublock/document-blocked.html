@@ -64,10 +64,10 @@
   }
   #illustration {
     display: block;
-    width: 104px;
-    height: 104px;
+    width: 290px;
+    height: auto;
     /* margin auto (not flex align-self) — #container is no longer a flex column */
-    margin: 0 auto 12px;
+    margin: 4px auto 10px;
   }
   /* Title + subtitle mirror the native error pages (assets/error/error_style.css):
      a thin, larger h1 (like "The Fire is Gone") over a BOLD, slightly smaller h2
@@ -153,13 +153,10 @@
 <body dir="auto">
 <div id="container">
 
-  <!-- Crossed-out shield, inlined from res/drawable/ic_shield_bad_24.xml — the
-       same "blocking" glyph Firedown's native Security sheet uses, so the
-       interstitial ties to that feature. Android pathData is SVG-compatible
-       path syntax. -->
-  <svg id="illustration" viewBox="0 0 960 960" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-    <path fill="#455267" d="M737.84,630.46L692.46,583.85Q705.23,551.85 712.62,515.62Q720,479.38 720,444L720,255L480,165.38L330.15,221.54L283.54,174.92L480,101.54L780,213.85L780,444Q780,490 769.84,536.54Q759.69,583.08 737.84,630.46ZM792,876.31L661.23,745.54Q624.38,786.46 577.69,815.65Q531,844.84 480,859.23Q347.54,823.08 263.77,704.92Q180,586.77 180,444L180,264.31L85.23,169.54L127.39,127.39L834.15,834.15L792,876.31ZM480,796Q518.85,783.85 556.04,758.27Q593.23,732.69 619.08,703.38L240,324.31L240,444Q240,565 308,664Q376,763 480,796Z"/>
-  </svg>
+  <!-- Firedown's "blocked" elephant (⃠ no-entry badge), from the branding asset
+       set. Raw SVG (crisp/scalable, like the error pages' illustrations); the
+       drawable-nodpi/ PNG is the Android-native copy of the same art. -->
+  <img id="illustration" src="img/ill_forbidden.svg" alt="" aria-hidden="true">
 
   <!-- Text nodes carry English as a fallback; document-blocked.js overwrites any
        element with a data-i18n via browser.i18n.getMessage(), which resolves to

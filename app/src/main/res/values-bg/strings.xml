@@ -588,4 +588,12 @@
         <item quantity="other">%d архивирани</item>
     </plurals>
     <string name="home_cloud_paused">На пауза</string>
+    <!-- Nostr (NIP-07) signer -->
+    <string name="nostr_permission_title">Nostr подписване</string>
+    <string name="nostr_permission_message">%1$s иска да използва вашия Nostr подписвач, за да прочете публичния ви ключ и да подписва от ваше име. Приложението за подписване одобрява всяко действие поотделно.</string>
+    <string name="nostr_permission_allow">Разреши</string>
+    <string name="nostr_permission_deny">Откажи</string>
+    <string name="nostr_no_signer_title">Няма Nostr подписвач</string>
+    <string name="nostr_no_signer_message">Влизането с Nostr изисква приложение за подписване като Amber, което пази ключовете ви на устройството. Инсталирайте такова и опитайте отново.</string>
+    <string name="nostr_install_amber">Инсталирай Amber</string>
 </resources>
