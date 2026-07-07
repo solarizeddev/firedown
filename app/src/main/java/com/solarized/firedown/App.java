@@ -24,8 +24,6 @@ import androidx.preference.PreferenceManager;
 import androidx.work.Configuration;
 
 import com.solarized.firedown.crash.CrashHandler;
-import com.solarized.firedown.data.DownloadBackupMirror;
-import com.solarized.firedown.data.DownloadDatabase;
 import com.solarized.firedown.data.LegacyShortcutsMigrator;
 import com.solarized.firedown.data.di.Qualifiers;
 import com.solarized.firedown.data.repository.WebHistoryDataRepository;
@@ -80,8 +78,6 @@ public class App extends Application implements Configuration.Provider{
     @Inject
     @Qualifiers.DiskIO
     Executor mDiskExecutor;
-    @Inject
-    DownloadDatabase mDownloadDatabase;
 
     @Override
     public void onCreate() {
@@ -123,12 +119,11 @@ public class App extends Application implements Configuration.Provider{
         // because RunnableManager is a Service that died with the previous
         // process — no SABR download is in flight at this point.
         mDiskExecutor.execute(() -> StoragePaths.cleanupSabrTempDirs(mAppContext));
-        // One-shot import of the Auto Backup download mirror after a fresh
-        // install restored from backup (no-op on every other launch — see
-        // DownloadBackupMirror's three guards). Restores the PUBLIC download
-        // list only; the safe vault never enters a backup.
-        mDiskExecutor.execute(() ->
-                DownloadBackupMirror.restoreIfPending(mAppContext, mDownloadDatabase));
+        // Reinstall restore is PROMPT-FIRST — there is deliberately no boot-time
+        // auto-import (it would drop the user into a list of unopenable,
+        // foreign-owned files on Android 11+). The user restores from the
+        // Downloads empty-state button / Settings, which takes the SAF folder
+        // grant and imports in one step. See DownloadBackupMirror.
         registerActivityLifecycleCallbacks(lifeCycleHandler);
         registerComponentCallbacks(lifeCycleHandler);
         createMediaNotificationChannel(mAppContext);

@@ -82,8 +82,6 @@
     <string name="empty_learn_more">Lue lisää</string>
     <string name="restore_downloads_button">Palauta aiemmat lataukset</string>
     <string name="restore_downloads_settings_summary">Palauta latausluettelo sovelluksen uudelleenasennuksen jälkeen</string>
-    <string name="restore_banner_title">Asensitko Firedownin uudelleen?</string>
-    <string name="restore_banner_subtitle">Aiemmat lataukset voivat olla palautettavissa — palauta napauttamalla</string>
     <string name="restore_downloads_message">Jos asensit Firedownin uudelleen, latauksesi voivat yhä olla Download/Firedown-kansiossa. Valitse kyseinen kansio, niin Firedown palauttaa latausluettelosi.</string>
     <string name="restore_downloads_choose">Valitse kansio</string>
     <string name="restore_downloads_progress">Palautetaan latauksia…</string>
@@ -470,4 +468,12 @@
     <string name="settings_sync_summary">Päästä päähän salattu kirjanmerkkien synkronointi laitteidesi välillä</string>
     <string name="settings_sync_switch_summary">Pois päältä — kirjanmerkkisi pysyvät tällä laitteella</string>
     <string name="settings_sync_title">Synkronoi kirjanmerkit</string>
+    <!-- Nostr (NIP-07) signer -->
+    <string name="nostr_permission_title">Nostr-allekirjoittaja</string>
+    <string name="nostr_permission_message">%1$s haluaa käyttää Nostr-allekirjoittajaasi lukeakseen julkisen avaimesi ja allekirjoittaakseen puolestasi. Allekirjoitussovellus hyväksyy jokaisen toiminnon erikseen.</string>
+    <string name="nostr_permission_allow">Salli</string>
+    <string name="nostr_permission_deny">Estä</string>
+    <string name="nostr_no_signer_title">Ei Nostr-allekirjoittajaa</string>
+    <string name="nostr_no_signer_message">Nostr-kirjautuminen vaatii allekirjoitussovelluksen, kuten Amberin, joka säilyttää avaimesi laitteessa. Asenna sellainen ja yritä uudelleen.</string>
+    <string name="nostr_install_amber">Asenna Amber</string>
 </resources>

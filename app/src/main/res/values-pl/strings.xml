@@ -85,8 +85,6 @@
     <string name="empty_learn_more">Więcej informacji</string>
     <string name="restore_downloads_button">Przywróć poprzednie pobrania</string>
     <string name="restore_downloads_settings_summary">Odzyskaj listę pobrań po ponownej instalacji aplikacji</string>
-    <string name="restore_banner_title">Ponownie zainstalowano Firedown?</string>
-    <string name="restore_banner_subtitle">Poprzednie pobrania mogą być do odzyskania — dotknij, aby przywrócić</string>
     <string name="restore_downloads_message">Jeśli ponownie zainstalowano Firedown, pobrane pliki mogą nadal znajdować się w folderze Download/Firedown. Wybierz ten folder, a Firedown przywróci listę pobrań.</string>
     <string name="restore_downloads_choose">Wybierz folder</string>
     <string name="restore_downloads_progress">Przywracanie pobranych plików…</string>
@@ -530,4 +528,12 @@
     <string name="settings_sync_summary">Szyfrowana end-to-end synchronizacja zakładek na wszystkich urządzeniach</string>
     <string name="settings_sync_switch_summary">Wył. — Twoje zakładki pozostają na tym urządzeniu</string>
     <string name="settings_sync_title">Synchronizuj zakładki</string>
+    <!-- Nostr (NIP-07) signer -->
+    <string name="nostr_permission_title">Podpisujący Nostr</string>
+    <string name="nostr_permission_message">%1$s chce użyć Twojego podpisującego Nostr, aby odczytać Twój klucz publiczny i podpisywać w Twoim imieniu. Aplikacja podpisująca zatwierdza każdą czynność osobno.</string>
+    <string name="nostr_permission_allow">Zezwól</string>
+    <string name="nostr_permission_deny">Odmów</string>
+    <string name="nostr_no_signer_title">Brak podpisującego Nostr</string>
+    <string name="nostr_no_signer_message">Logowanie przez Nostr wymaga aplikacji podpisującej, takiej jak Amber, która przechowuje Twoje klucze na urządzeniu. Zainstaluj ją i spróbuj ponownie.</string>
+    <string name="nostr_install_amber">Zainstaluj Amber</string>
 </resources>

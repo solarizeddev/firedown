@@ -80,8 +80,6 @@
     <string name="empty_learn_more">Научете повече</string>
     <string name="restore_downloads_button">Възстановяване на предишни изтегляния</string>
     <string name="restore_downloads_settings_summary">Възстановете списъка с изтегляния след преинсталиране на приложението</string>
-    <string name="restore_banner_title">Преинсталирахте Firedown?</string>
-    <string name="restore_banner_subtitle">Предишните ви изтегляния може да са възстановими — докоснете за възстановяване</string>
     <string name="restore_downloads_message">Ако сте преинсталирали Firedown, изтеглянията ви може още да са в папката Download/Firedown. Изберете тази папка и Firedown ще възстанови списъка с изтегляния.</string>
     <string name="restore_downloads_choose">Избор на папка</string>
     <string name="restore_downloads_progress">Възстановяване на изтеглянията…</string>
@@ -424,4 +422,12 @@
     <string name="settings_sync_summary">Шифрована от край до край синхронизация на отметки между вашите устройства</string>
     <string name="settings_sync_switch_summary">Изключено — отметките ви остават на това устройство</string>
     <string name="settings_sync_title">Синхронизиране на отметки</string>
+    <!-- Nostr (NIP-07) signer -->
+    <string name="nostr_permission_title">Nostr подписване</string>
+    <string name="nostr_permission_message">%1$s иска да използва вашия Nostr подписвач, за да прочете публичния ви ключ и да подписва от ваше име. Приложението за подписване одобрява всяко действие поотделно.</string>
+    <string name="nostr_permission_allow">Разреши</string>
+    <string name="nostr_permission_deny">Откажи</string>
+    <string name="nostr_no_signer_title">Няма Nostr подписвач</string>
+    <string name="nostr_no_signer_message">Влизането с Nostr изисква приложение за подписване като Amber, което пази ключовете ви на устройството. Инсталирайте такова и опитайте отново.</string>
+    <string name="nostr_install_amber">Инсталирай Amber</string>
 </resources>

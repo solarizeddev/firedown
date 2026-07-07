@@ -1,0 +1,26 @@
+{
+  "docblockedTitle": {
+    "message": "पृष्ठ प्रतिबंधित है"
+  },
+  "docblockedPrompt2": {
+    "message": "इस फिल्टर की वजह से "
+  },
+  "docblockedFoundIn": {
+    "message": "इन में पायी है:"
+  },
+  "docblockedDontWarn": {
+    "message": "इस साइट के बारे में मुझे दोबारा चेतावनी न दें"
+  },
+  "docblockedDisable": {
+    "message": "आगे बढ़ें"
+  },
+  "docblockedBack": {
+    "message": "पीछे जाएं"
+  },
+  "docblockedRedirectPrompt": {
+    "message": "ब्लॉक किया गया पेज किसी दूसरी साइट पर ले जाना चाहता है. अगर आप आगे बढ़ना चुनते हैं, तो आप सीधे इस लिंक को खोल सकते हैं: {{url}}"
+  },
+  "docblockedSubtitle": {
+    "message": "Firedown के कंटेंट ब्लॉकर ने इस पेज को लोड होने से रोका।"
+  }
+}

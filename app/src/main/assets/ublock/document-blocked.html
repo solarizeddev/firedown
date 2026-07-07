@@ -38,10 +38,13 @@
   html, body {
     margin: 0;
     padding: 0;
-    height: 100%;
     --spacing: 14px;
   }
   body {
+    /* min-height (not height:100%) so the document grows with its content and
+       the page scrolls on short viewports instead of clipping — the fixed 100%
+       height + push-to-bottom buttons hid them behind the browser's bottom bar. */
+    min-height: 100%;
     background-color: #d3d6e5;
     color: #333949;
     padding: 0 20px;
@@ -54,29 +57,34 @@
   #container {
     max-width: 550px;
     margin: 0 auto;
-    padding: 40px 0 24px;
-    min-height: calc(100% - 64px);
-    display: flex;
-    flex-direction: column;
+    /* Content flows top-down (buttons sit right after the checkbox, not pinned to
+       the bottom). Large bottom padding keeps the last button clear of the
+       browser's overlaying bottom toolbar and adds scroll room. */
+    padding: 40px 0 96px;
   }
   #illustration {
-    width: 104px;
-    height: 104px;
-    align-self: center;
-    margin-bottom: 12px;
+    display: block;
+    width: 290px;
+    height: auto;
+    /* margin auto (not flex align-self) — #container is no longer a flex column */
+    margin: 4px auto 10px;
   }
+  /* Title + subtitle mirror the native error pages (assets/error/error_style.css):
+     a thin, larger h1 (like "The Fire is Gone") over a BOLD, slightly smaller h2
+     (like "Address Not Found"). Same #455267 ink; the weight contrast is what
+     makes them read as the same family. */
   h1 {
     margin: 0;
     color: #455267;
     font-weight: 300;
-    font-size: 1.9em;
+    font-size: 2em;
     text-align: center;
   }
   h2 {
-    margin: var(--spacing) 0 0;
+    margin: 10px 0 0;
     color: #455267;
-    font-weight: 300;
-    font-size: 1.2em;
+    font-weight: 700;
+    font-size: 1.575em;
     text-align: center;
   }
   p { margin: var(--spacing) 0 4px; }
@@ -117,7 +125,7 @@
     color: #455267;
   }
   label.checkbox input { width: 20px; height: 20px; accent-color: #ff716c; }
-  #buttons { margin-top: auto; padding-top: 20px; }
+  #buttons { margin-top: 28px; }
   button {
     display: block;
     width: 100%;
@@ -145,35 +153,36 @@
 <body dir="auto">
 <div id="container">
 
-  <!-- Crossed-out shield, inlined from res/drawable/ic_shield_bad_24.xml — the
-       same "blocking" glyph Firedown's native Security sheet uses, so the
-       interstitial ties to that feature. Android pathData is SVG-compatible
-       path syntax. -->
-  <svg id="illustration" viewBox="0 0 960 960" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-    <path fill="#455267" d="M737.84,630.46L692.46,583.85Q705.23,551.85 712.62,515.62Q720,479.38 720,444L720,255L480,165.38L330.15,221.54L283.54,174.92L480,101.54L780,213.85L780,444Q780,490 769.84,536.54Q759.69,583.08 737.84,630.46ZM792,876.31L661.23,745.54Q624.38,786.46 577.69,815.65Q531,844.84 480,859.23Q347.54,823.08 263.77,704.92Q180,586.77 180,444L180,264.31L85.23,169.54L127.39,127.39L834.15,834.15L792,876.31ZM480,796Q518.85,783.85 556.04,758.27Q593.23,732.69 619.08,703.38L240,324.31L240,444Q240,565 308,664Q376,763 480,796Z"/>
-  </svg>
+  <!-- Firedown's "blocked" elephant (⃠ no-entry badge), from the branding asset
+       set. Raw SVG (crisp/scalable, like the error pages' illustrations); the
+       drawable-nodpi/ PNG is the Android-native copy of the same art. -->
+  <img id="illustration" src="img/ill_forbidden.svg" alt="" aria-hidden="true">
 
-  <h1>Page blocked</h1>
-  <h2>Firedown's content blocker stopped this page from loading.</h2>
+  <!-- Text nodes carry English as a fallback; document-blocked.js overwrites any
+       element with a data-i18n via browser.i18n.getMessage(), which resolves to
+       the browser-locale string from _locales/<lang>/messages.json. All but the
+       subtitle are uBlock's own translated strings; docblockedSubtitle is the one
+       Firedown-added key. -->
+  <h1 data-i18n="docblockedTitle">Page blocked</h1>
+  <h2 data-i18n="docblockedSubtitle">Firedown's content blocker stopped this page from loading.</h2>
 
-  <p class="label">The blocked address:</p>
   <code id="theURL"></code>
 
-  <p class="label">Triggered by this filter:</p>
+  <p class="label" data-i18n="docblockedPrompt2">Because of the following filter:</p>
   <code id="theFilter"></code>
 
-  <p id="foundInRow" class="label">Listed in: <span class="name" id="theReason"></span></p>
+  <p id="foundInRow" class="label"><span data-i18n="docblockedFoundIn">Found in:</span> <span class="name" id="theReason"></span></p>
 
   <p id="redirectWarn"></p>
 
   <label class="checkbox" for="dontWarn">
     <input type="checkbox" id="dontWarn">
-    <span>Don't warn me again about this site</span>
+    <span data-i18n="docblockedDontWarn">Don't warn me again about this site</span>
   </label>
 
   <div id="buttons">
-    <button id="back" type="button">Go back</button>
-    <button id="proceed" type="button">Proceed anyway</button>
+    <button id="back" type="button" data-i18n="docblockedBack">Go back</button>
+    <button id="proceed" type="button" data-i18n="docblockedDisable">Proceed</button>
   </div>
 
 </div>

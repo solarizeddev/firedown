@@ -143,8 +143,6 @@
     <string name="empty_learn_more">Weitere Informationen</string>
     <string name="restore_downloads_button">Frühere Downloads wiederherstellen</string>
     <string name="restore_downloads_settings_summary">Stelle deine Download-Liste nach einer Neuinstallation wieder her</string>
-    <string name="restore_banner_title">Firedown neu installiert?</string>
-    <string name="restore_banner_subtitle">Deine früheren Downloads sind möglicherweise wiederherstellbar — zum Wiederherstellen tippen</string>
     <string name="restore_downloads_message">Wenn du Firedown neu installiert hast, befinden sich deine Downloads möglicherweise noch im Ordner Download/Firedown. Wähle diesen Ordner aus und Firedown stellt deine Download-Liste wieder her.</string>
     <string name="restore_downloads_choose">Ordner auswählen</string>
     <string name="restore_downloads_progress">Downloads werden wiederhergestellt…</string>
@@ -662,4 +660,12 @@
     <string name="settings_sync_summary">Ende-zu-Ende-verschlüsselte Lesezeichen-Synchronisierung über deine Geräte hinweg</string>
     <string name="settings_sync_switch_summary">Aus — deine Lesezeichen bleiben auf diesem Gerät</string>
     <string name="settings_sync_title">Lesezeichen synchronisieren</string>
+    <!-- Nostr (NIP-07) signer -->
+    <string name="nostr_permission_title">Nostr-Signierer</string>
+    <string name="nostr_permission_message">%1$s möchte deinen Nostr-Signierer verwenden, um deinen öffentlichen Schlüssel zu lesen und in deinem Namen zu signieren. Die Signier-App bestätigt jede Aktion einzeln.</string>
+    <string name="nostr_permission_allow">Zulassen</string>
+    <string name="nostr_permission_deny">Ablehnen</string>
+    <string name="nostr_no_signer_title">Kein Nostr-Signierer</string>
+    <string name="nostr_no_signer_message">Für die Anmeldung mit Nostr wird eine Signier-App wie Amber benötigt, die deine Schlüssel auf dem Gerät speichert. Installiere eine und versuche es erneut.</string>
+    <string name="nostr_install_amber">Amber installieren</string>
 </resources>

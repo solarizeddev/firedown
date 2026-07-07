@@ -143,8 +143,6 @@
     <string name="empty_learn_more">詳細</string>
     <string name="restore_downloads_button">以前のダウンロードを復元</string>
     <string name="restore_downloads_settings_summary">アプリ再インストール後にダウンロード一覧を復元します</string>
-    <string name="restore_banner_title">Firedown を再インストールしましたか？</string>
-    <string name="restore_banner_subtitle">以前のダウンロードを復元できる可能性があります — タップして復元</string>
     <string name="restore_downloads_message">Firedown を再インストールした場合、ダウンロードしたファイルは Download/Firedown フォルダーに残っている可能性があります。そのフォルダーを選択すると、Firedown がダウンロード一覧を復元します。</string>
     <string name="restore_downloads_choose">フォルダーを選択</string>
     <string name="restore_downloads_progress">ダウンロードを復元しています…</string>
@@ -659,4 +657,12 @@
     <string name="settings_sync_summary">デバイス間でエンドツーエンド暗号化されたブックマーク同期</string>
     <string name="settings_sync_switch_summary">オフ — ブックマークはこのデバイスに残ります</string>
     <string name="settings_sync_title">ブックマークを同期</string>
+    <!-- Nostr (NIP-07) signer -->
+    <string name="nostr_permission_title">Nostr 署名ツール</string>
+    <string name="nostr_permission_message">%1$s があなたの公開鍵を読み取り、あなたに代わって署名するために Nostr 署名ツールの使用を求めています。署名アプリは各操作を個別に承認します。</string>
+    <string name="nostr_permission_allow">許可</string>
+    <string name="nostr_permission_deny">拒否</string>
+    <string name="nostr_no_signer_title">Nostr 署名ツールがありません</string>
+    <string name="nostr_no_signer_message">Nostr でのサインインには、鍵を端末に保管する Amber などの署名アプリが必要です。インストールしてから再度お試しください。</string>
+    <string name="nostr_install_amber">Amber をインストール</string>
 </resources>

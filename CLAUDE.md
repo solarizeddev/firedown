@@ -34,7 +34,7 @@ expose the real media URL after the page's own JS runs (often on play). So:
 
 | dir           | id                       | role |
 |---------------|--------------------------|------|
-| `webrequests/`| `downloader@solarized.dev` | **ALL capture** — the former `parser@` extension was MERGED into this one. Two halves in one extension: (1) the per-site **parsers** (`js/parsers/` — one ES module per site: Twitter/X, Instagram, Threads, Facebook, Vimeo, Rumble, Bilibili.tv, Niconico, Kick, Twitch, Dailymotion, Apple Podcasts, News Over Audio, TikTok, Bluesky; emits entries **with metadata** — title, author, thumbnail, duration, quality variants) plus the page-state bridge (`js/page-state-bridge.js`); (2) the **generic catch-all** (`js/requests.js` + `js/content-script.js` — any media URL seen on the wire, no rich metadata). Also hosts `js/wasm-watch.js` (+ `js/wasm-probe.js`), the WASM-disabled detector — a settings feature, not capture. |
+| `webrequests/`| `downloader@solarized.dev` | **ALL capture** — the former `parser@` extension was MERGED into this one. Two halves in one extension: (1) the per-site **parsers** (`js/parsers/` — one ES module per site: Twitter/X, Instagram, Threads, Facebook, Vimeo, Rumble, Bilibili.tv, Niconico, Kick, Twitch, Dailymotion, Apple Podcasts, News Over Audio, TikTok, Bluesky, Telegram, Videee, Spotify; emits entries **with metadata** — title, author, thumbnail, duration, quality variants) plus the page-state bridge (`js/page-state-bridge.js`); (2) the **generic catch-all** (`js/requests.js` + `js/content-script.js` — any media URL seen on the wire, no rich metadata). Also hosts `js/wasm-watch.js` (+ `js/wasm-probe.js`), the WASM-disabled detector — a settings feature, not capture. |
 | `youtube/`    | `youtube@solarized.dev`  | YouTube (separate; uses `PoTokenGenerator` on the Java side). |
 | `ublock/`     | uBlock Origin            | Ad blocking. |
 | `icons/`, `search/`, `db/`, `error/` | — | Support. |
@@ -456,14 +456,42 @@ manifests and tokenized/extensionless URLs are **always** enriched
   full-length `.mp3` with `name`/`audioLength`(→ms)/publisher image (`skipProbe`);
   `audios.newsoveraudio.com/*.mp3` is block-listed (cardinal rule). The MediaSession
   path above covers the OTHER embed providers generically.
-- **Spotify — DECIDED AGAINST a parser** (don't re-litigate from a HAR). Logged
-  out, the only thing that plays is a ~30s `p.scdn.co/mp3-preview/<hash>` clip
-  (and even that often 304s from cache on an extensionless URL → unclassifiable);
-  the full track/episode is auth-gated **DRM** (encrypted CDN). The preview's
-  name/thumbnail DO sit in the `api-partner.spotify.com/pathfinder` GraphQL JSON,
-  but capturing a 30s teaser via a per-site GraphQL parser isn't worth the
-  maintenance treadmill. The realistic capture path for a Spotify-published
-  podcast is its **YouTube** embed (existing `youtube@` parser).
+- **Spotify — EMBED parser (`js/parsers/spotify.js`).** What a Spotify widget
+  plays — logged out, and even logged in, because embeds are preview-only by
+  Spotify's design — is a ~30s, **non-DRM** MP3_96 clip per track from
+  `p.scdn.co/mp3-preview/<hash>`. The full track/episode is auth-gated **DRM**
+  (encrypted CDN) and never appears as a plain file; the preview is the only
+  capturable audio. (This was previously DECIDED AGAINST via the
+  `api-partner.spotify.com/pathfinder` GraphQL path — "not worth the maintenance
+  treadmill for a 30s teaser". The **embed** `__NEXT_DATA__` path is cleaner —
+  no GraphQL, no auth — and the "the generic catcher grabs a preview but can't
+  NAME it" gap was real, so the decision was revisited.) Why a parser and not
+  the catcher: the catcher DOES grab the preview on play (the wire sees the
+  `p.scdn.co` 206), but the embed sets `navigator.mediaSession.metadata` only on
+  `state_changed` (AFTER the MP3 is fetched) keyed by track URI, so the catcher's
+  one-shot capture-time metadata query lands before the per-track title exists
+  and falls back to the iframe's page-level `og:title` = the shared PLAYLIST
+  name. The correct per-track mapping (`previewUrl → {title, artist, cover}`) is
+  inlined pre-play in the embed HTML's `__NEXT_DATA__`
+  (`props.pageProps.state.data.entity.trackList[]` — a `<script
+  type="application/json">` the HTML parser keeps as raw text; Next.js
+  unicode-escapes, no entities to decode). `listenerSpotifyEmbed`
+  `filterResponseData`s the embed document (write-through, byte-exact — the
+  Threads doc-filter pattern; the embed loads as `sub_frame`, also `main_frame`
+  if opened directly) and emits **one titled audio entry per previewable track**
+  (a "Top 100" playlist → 100 entries, capped at `MAX_SPOTIFY_TRACKS`=200; a
+  single-track embed carries `audioPreview` on the entity itself). Emit is
+  `type:"media"` with **NO duration and NO skipProbe** — the `trackList.duration`
+  is the FULL track length (mislabels a 30s clip) and the preview URL is
+  extensionless (so `processMediaSkipProbe` would fall back to the probe anyway),
+  so let the native probe confirm audio + read the true ~30s. Each track emits
+  under its own `open.spotify.com/<type>/<id>` origin (own entity); the
+  repository dedups by URL so a re-read (refresh/SPA) can't duplicate.
+  `p.scdn.co/mp3-preview` is block-listed (`parser-blocklist.js` `spotify`, the
+  cardinal rule) so the catcher doesn't ALSO grab a bare untitled copy on play.
+  The realistic capture path for a Spotify-published **podcast** in full is still
+  its **YouTube** embed (existing `youtube@` parser) — Spotify only ever exposes
+  the 30s clip here. Ceiling: the emitted entries are 30s previews, not the song.
 
 ### HLS-master sites — Java enumeration, no ffmpeg probe
 
@@ -839,7 +867,7 @@ This section exists because a Threads bug took ~8 rounds that should have taken
 2. **Read the logs by category.** `adb logcat -s GeckoConsole:*` then grep the
    prefix: `TWITTER`, `INSTAGRAM`, `THREADS`, `THREADS-CS`, `FB-*`, `IG-*`,
    `RUMBLE`, `TWITCH`, `KICK`, `VIMEO`, `DAILYMOTION`, `TIKTOK`, `NOA`,
-   `PAGE-STATE`, `VARIANTS`,
+   `SPOTIFY`, `PAGE-STATE`, `VARIANTS`,
    `DEDUP`, `NATIVE`. The generic catcher logs under `[req]` (gated on its own
    `DEBUG`). Java-side variant probing is `VariantProcessor`.
 
@@ -1029,13 +1057,20 @@ and Auto Backup is file-granular, so backing up the DB would ship vault
 metadata to the cloud. `DownloadBackupMirror` re-writes
 `filesDir/backup/downloads-mirror.db` (non-safe + FINISHED rows only, via
 `ATTACH … CREATE TABLE AS SELECT`) every time the app backgrounds
-(`ApplicationLifeCycleHandler.onTrimMemory`), and `App.onCreate` restores it
-**once per install** (`restoreIfPending`, guarded by: a marker in
-`backup_local.xml` — a prefs file *excluded* from backup so it can't follow a
-restore; an empty-table check so an in-place update never re-imports; and
-column-name-intersection row copy so a schema-version skew degrades per-row
-instead of failing). `file_safe` is forced to 0 on restore — a tampered
-mirror can't inject vault entries.
+(`ApplicationLifeCycleHandler.onTrimMemory`). **Restore is PROMPT-FIRST — there
+is NO boot-time auto-import at all** (there is no `restoreIfPending` /
+`App.onCreate` import path anymore, and no reinstall-detection sentinel). On
+Android 11+ the restored public files are foreign-owned (see the scoped-storage
+caveat below), so a silent import would drop the user into a list of unopenable,
+thumbnail-less entries. Instead the user restores DELIBERATELY from the
+**Downloads empty-state button** or **Settings**, and that one flow
+(`restoreFromTree`) takes the SAF folder grant AND imports in a single step, so
+the files are openable the moment they appear. `file_safe` is forced to 0 on
+import — a tampered mirror can't inject vault entries. (The
+`downloads-mirror.db` file is still written + Auto-Backed-up, but nothing
+imports it at boot; the SAF `.fdbk` flow reconstructs the same list with the
+grant, so the Google-transport DB import path was removed to kill the silent
+broken-list state.)
 
 The backup surface is an **include-list** in BOTH rule files —
 `backup_rules.xml` (API ≤ 30) and `data_extraction.xml` (API 31+, cloud +
@@ -1081,8 +1116,8 @@ factory reset orphans old mirrors — `decryptPublicMirror` just rejects what
 GCM can't authenticate). After a reinstall the file is foreign-owned
 (invisible to File API), so the planned restore path is a one-tap **SAF
 folder grant** (`ACTION_OPEN_DOCUMENT_TREE` on `Download/Firedown`) →
-`decryptPublicMirror` → `importMirrorDatabase` (the same column-intersection
-importer the Auto Backup restore uses; `file_safe` forced 0). The write side
+`decryptPublicMirror` → `importMirrorDatabase` (column-intersection importer;
+`file_safe` forced 0). The write side
 handles the name collision a reinstall causes (foreign-owned old file at the
 fixed name → fall back to a timestamped `.fdbk`; restore scans for all of
 them and takes the newest it can decrypt). The SAF restore UI has **two
@@ -1101,26 +1136,42 @@ scoped-storage caveat above) → `restoreFromTree` → snackbar with the count /
 twice or restoring on a non-empty list never duplicates rows. Strings are
 translated across the same 16 locales as the JIT toggle.
 
-**A third door, the detected-reinstall banner** (`RestoreBannerAdapter`, a
-self-hiding ConcatAdapter header like the incognito in-flight hint): shown
-only when a reinstall is *detected* and the automatic restore came back
-empty — never speculatively to fresh installs (a no-transport reinstall is
-bit-identical to a fresh install, and scoped storage forbids peeking at the
-public folder to check for a `.fdbk`; those users rely on the empty-state
-button, which shows at exactly that moment). Detection is a **sentinel
-pair** (`detectReinstall`): a random UUID lives in BOTH the default prefs
-(backed up) and `backup_local.xml` (excluded); present-but-mismatched after
-a restore-at-install = reinstall. A bare "are default prefs non-empty" check
-does NOT work — `App.onCreate` writes boot keys (history-purge timestamp)
-before detection runs, so a fresh install's prefs are never empty. **Banner
-policy: at most ONE informational banner at a time** — the restore banner
-yields to the incognito header (`updateRestoreBannerVisibility`,
-re-evaluated on every `getSafeCount` change), and both report into
-`getLeadingHeaderCount` for the grid SpanSizeLookup. Banner state lives in
-`backup_local.xml` on purpose: a dismissal must never ride a backup into
-the next reinstall — which is exactly when the banner is needed again.
-Retired permanently on dismiss or any completed restore (cleared at the
-data layer in `restoreFromTree`, so the Settings door retires it too).
+**Restore progress/result live in the ViewModel, NOT the fragment.**
+`DownloadsViewModel.runRestore(...)` runs the SAF scan/decrypt/import on its own
+executor and surfaces state through `getRestoreInFlight()` (LiveData<Boolean>,
+drives the bottom indeterminate progress bar) + `getRestoreResult()` (a
+single-shot `RestoreEvent`, drives the refresh + result snackbar). This is
+load-bearing for the "leave Downloads and come back mid-restore" case: the work
+is decoupled from the view, so a recreated view **replays** the in-flight value
+(the bar re-appears) and **consumes** the pending result event (refresh + snackbar
+fire on whatever view is current, even if the restore finished while the view was
+gone). The previous design ran it on a disk executor and posted completion to
+`getView()` — a null view (fragment left) silently dropped the refresh + snackbar
+AND lost the progress bar. Two subtleties to keep: the in-flight observer shows on
+`true` but does **not** hide on `false` (the initial/false replay would stomp a
+legitimately-running task progress bar — the hide is done in the result observer,
+which only fires on an actual restore completion); and `RestoreEvent.consume()`
+yields the code exactly once (so a config change / re-entry after the snackbar
+doesn't re-fire it, but a result posted with no observer attached is still
+delivered to the first one that comes back).
+
+Those **two doors are the whole story** — the empty-state button is presented
+proactively on the (empty) post-reinstall list, so no extra prompt is needed.
+**Don't add a second concurrent affordance**: an auto-popping restore *dialog*
+plus the empty-state button showing the *same* message at once is redundant
+UX. One affordance; the dialog appears only on an explicit tap of the button
+(or the Settings row) to pick the folder.
+
+**History — removed, don't reintroduce.** Earlier iterations auto-imported the
+mirror at boot (`restoreIfPending` + a `detectReinstall` sentinel pair) and then
+tried to *recover* the resulting broken (unopenable, thumbnail-less) list — first
+with a `RestoreBannerAdapter` banner (dismissible "restore", then a persistent
+"grant access" variant), then with a one-shot proactive dialog
+(`KEY_RESTORE_PROMPT_PENDING` / `consumeRestorePrompt`). All of it is gone: the
+banner adapter + layout, the reinstall-detection sentinels, the boot-time import,
+and those prefs. The lesson that stuck: **never enter the broken state** (no
+boot-time auto-import) rather than recover from it, and **one restore
+affordance**, not two.
 
 **Downloads chip-rail gotcha: there is NO "All" chip.** Unfiltered means no
 chip is checked — `ChipGroup.getCheckedChipId()` returns `View.NO_ID`.
@@ -1161,12 +1212,29 @@ tree READ+**WRITE** → retries. The current restore flow takes READ+WRITE
 up-front, so the delete is silent (no prompt) — which is correct, not a missed
 prompt.
 
+**Restore imports the NEWEST decryptable snapshot only — not a sum of every
+`.fdbk`.** Every published mirror is a FULL snapshot of the finished, non-safe
+rows (`writeMirror` gates out empty ones — `mirrorRows > 0`, so an empty
+reinstall never publishes one), so a newer mirror supersets any older; there is
+nothing an older candidate could add. `restoreFromTree` sorts candidates
+newest-first and imports the **first one it can decrypt, then breaks**. This is
+deliberately NOT the old "decrypt + import + SUM every candidate" loop: after a
+reinstall the fixed-name `.fdbk` is foreign-owned, so each app-background dropped
+a fresh **timestamped** mirror into the folder, and importing all of them
+re-scanned the whole download table + probed every row's file over SAF once per
+file — a folder full of accumulated mirrors made restore run for many seconds and
+look like it **never ended** ("restoring is on a loop"). Bounding it to the
+single newest snapshot fixes that regardless of how many stale files linger.
+`writeMirror` ALSO prunes its own old timestamped mirrors (`pruneOwnedMirrors` —
+File-API delete of every `*.fdbk` it owns except the one just written) so the
+pile can't grow in the first place; only files the File API can see (our own) are
+touched, so a foreign fixed-name file from a previous install is left as a single
+harmless extra the newest-first pick skips.
+
 **Restore SKIPS rows whose file the user already deleted.** Without this, a
-reinstall+restore resurrects deleted entries as dead rows: `restoreFromTree`
-reads and SUMS *every* `.fdbk` in the folder (to survive an empty-newest
-mirror), so a stale mirror written before the delete keeps bringing them back,
-and the mirror is only refreshed on app-background anyway.
-`importMirrorDatabase` skips a row when `RestoredFileAccess.isRestoredFileMissing`
+reinstall+restore resurrects deleted entries as dead rows: a stale snapshot
+written before the delete would bring them back (the mirror is only refreshed on
+app-background). `importMirrorDatabase` skips a row when `RestoredFileAccess.isRestoredFileMissing`
 proves the file is gone — gated on the SAF grant (restoreFromTree holds it),
 never on the grantless `App.onCreate` auto-restore (a foreign file's absence is
 untrustworthy there — same caveat as the missing-file sweep). **Gotcha that ate
@@ -1180,15 +1248,17 @@ if X is child of Y: java.io.FileNotFoundException: Missing file …"), so
 `isRestoredFileMissing` scans the whole cause chain/message for the missing-file
 signal (those are AOSP-internal English constants, stable).
 
-**Stale mirrors are PRUNED after a decryptable restore.** A `.fdbk` that
-decrypted but imported **zero** rows (every entry a deleted file, or a duplicate
-covered by a kept mirror) can never restore anything again and only causes the
-recurring "0 restored". `restoreFromTree` collects those during the read loop
-and `DocumentsContract.deleteDocument`s them after (best-effort, under the WRITE
-grant). A mirror that DID restore rows is never touched — it stays the live
-backup until the next background re-write. Note this prune does **not** run on
-`RESTORE_WRONG_DEVICE` (the method returns before it — those mirrors can't be
-decrypted, so we can't know they're stale).
+**Accumulation is pruned at the WRITE side, not the restore side.** The old
+approach pruned zero-row mirrors *after* a restore (`restoreFromTree` collecting
+0-import candidates and `DocumentsContract.deleteDocument`-ing them). That was
+removed with the sum-every-candidate loop — it conflated "empty mirror" with
+"all rows already live" (an idempotent re-restore imports 0 rows from a perfectly
+valid newest snapshot), so it could delete the live backup. The pile is now kept
+small at the source instead: `writeEncryptedPublicMirror` calls
+`pruneOwnedMirrors` on every background write, so at most one owned `.fdbk`
+exists. Don't reintroduce a "prune mirrors that imported 0 rows" pass in restore
+— 0 imported is a legitimate, common result (everything already present), not a
+signal the mirror is worthless.
 
 **The empty-state Restore button retires after an ATTEMPT, not just success.**
 It's shown whenever the unfiltered list is empty, so after a restore that brings

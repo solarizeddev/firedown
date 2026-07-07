@@ -67,8 +67,6 @@
     <string name="empty_learn_more">Saber mais</string>
     <string name="restore_downloads_button">Restaurar transferências anteriores</string>
     <string name="restore_downloads_settings_summary">Recupere a sua lista de transferências após reinstalar a aplicação</string>
-    <string name="restore_banner_title">Reinstalou o Firedown?</string>
-    <string name="restore_banner_subtitle">As suas transferências anteriores podem ser recuperáveis — toque para restaurar</string>
     <string name="restore_downloads_message">Se reinstalou o Firedown, as suas transferências podem ainda estar na pasta Download/Firedown. Escolha essa pasta e o Firedown restaurará a sua lista de transferências.</string>
     <string name="restore_downloads_choose">Escolher pasta</string>
     <string name="restore_downloads_progress">Restaurando downloads…</string>
@@ -531,4 +529,12 @@
     <string name="settings_sync_summary">Sincronização de favoritos com criptografia de ponta a ponta entre seus dispositivos</string>
     <string name="settings_sync_switch_summary">Desativado — seus favoritos permanecem neste dispositivo</string>
     <string name="settings_sync_title">Sincronizar favoritos</string>
+    <!-- Nostr (NIP-07) signer -->
+    <string name="nostr_permission_title">Assinador Nostr</string>
+    <string name="nostr_permission_message">%1$s quer usar o seu assinador Nostr para ler a sua chave pública e assinar em seu nome. O aplicativo de assinatura aprova cada ação separadamente.</string>
+    <string name="nostr_permission_allow">Permitir</string>
+    <string name="nostr_permission_deny">Negar</string>
+    <string name="nostr_no_signer_title">Sem assinador Nostr</string>
+    <string name="nostr_no_signer_message">Entrar com Nostr exige um aplicativo de assinatura como o Amber, que guarda as suas chaves no dispositivo. Instale um e tente novamente.</string>
+    <string name="nostr_install_amber">Instalar Amber</string>
 </resources>

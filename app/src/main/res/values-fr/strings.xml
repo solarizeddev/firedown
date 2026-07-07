@@ -143,8 +143,6 @@
     <string name="empty_learn_more">En savoir plus</string>
     <string name="restore_downloads_button">Restaurer les téléchargements précédents</string>
     <string name="restore_downloads_settings_summary">Récupérez votre liste de téléchargements après une réinstallation</string>
-    <string name="restore_banner_title">Firedown réinstallé ?</string>
-    <string name="restore_banner_subtitle">Vos téléchargements précédents sont peut-être récupérables — touchez pour restaurer</string>
     <string name="restore_downloads_message">Si vous avez réinstallé Firedown, vos téléchargements se trouvent peut-être encore dans le dossier Download/Firedown. Choisissez ce dossier et Firedown restaurera votre liste de téléchargements.</string>
     <string name="restore_downloads_choose">Choisir le dossier</string>
     <string name="restore_downloads_progress">Restauration des téléchargements…</string>
@@ -663,4 +661,12 @@
     <string name="settings_sync_summary">Synchronisation des marque-pages chiffrée de bout en bout entre vos appareils</string>
     <string name="settings_sync_switch_summary">Désactivé — vos marque-pages restent sur cet appareil</string>
     <string name="settings_sync_title">Synchroniser les marque-pages</string>
+    <!-- Nostr (NIP-07) signer -->
+    <string name="nostr_permission_title">Signataire Nostr</string>
+    <string name="nostr_permission_message">%1$s souhaite utiliser votre signataire Nostr pour lire votre clé publique et signer en votre nom. L\'application de signature approuve chaque action séparément.</string>
+    <string name="nostr_permission_allow">Autoriser</string>
+    <string name="nostr_permission_deny">Refuser</string>
+    <string name="nostr_no_signer_title">Aucun signataire Nostr</string>
+    <string name="nostr_no_signer_message">La connexion avec Nostr nécessite une application de signature comme Amber, qui conserve vos clés sur votre appareil. Installez-en une, puis réessayez.</string>
+    <string name="nostr_install_amber">Installer Amber</string>
 </resources>

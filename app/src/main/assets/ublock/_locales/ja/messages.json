@@ -1,0 +1,26 @@
+{
+  "docblockedTitle": {
+    "message": "ブロックしたページ"
+  },
+  "docblockedPrompt2": {
+    "message": "以下のフィルターと一致したためです:"
+  },
+  "docblockedFoundIn": {
+    "message": "このフィルターを含むフィルターリスト:"
+  },
+  "docblockedDontWarn": {
+    "message": "今後このサイトに関する警告を表示しない"
+  },
+  "docblockedDisable": {
+    "message": "続行する"
+  },
+  "docblockedBack": {
+    "message": "戻る"
+  },
+  "docblockedRedirectPrompt": {
+    "message": "ブロックしたページは別のサイトへリダイレクトしようとしています。続行すると次の URL へ移動します: {{url}}"
+  },
+  "docblockedSubtitle": {
+    "message": "Firedown のコンテンツブロッカーがこのページの読み込みを停止しました。"
+  }
+}

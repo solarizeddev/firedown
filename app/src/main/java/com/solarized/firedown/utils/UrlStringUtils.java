@@ -123,6 +123,20 @@ public class UrlStringUtils {
     }
 
     /**
+     * True only for pages a "Save snapshot" can actually capture — http/https/file.
+     * The serializer is the downloader@ snapshot.js CONTENT script, and content
+     * scripts do NOT run on moz-extension (e.g. the uBlock page-blocked
+     * interstitial), about:, resource: or data: pages. On those the capture
+     * message reaches no listener, no download ever fires, and the
+     * "Snapshot saving…" state would hang until it times out. Gate the action on
+     * this so those pages are refused up front instead.
+     */
+    public static boolean isSnapshotSupported(String string){
+        return string != null
+                && (string.startsWith(HTTP) || string.startsWith(HTTPS) || string.startsWith(FILE));
+    }
+
+    /**
      * True for blob: URLs (e.g. {@code blob:https://host/uuid}). These are
      * engine-generated object URLs — content the web engine produced and
      * must handle itself (rendered inline, or handed to onExternalResponse

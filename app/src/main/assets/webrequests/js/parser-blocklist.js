@@ -216,6 +216,19 @@ const PARSER_BLOCKLIST = {
   videee: [
     'media\\.videee\\.com\\/[0-9a-f-]{36}\\/[^?#]+\\.mp4',
   ],
+
+  // Spotify — the spotify@ embed parser reads open.spotify.com/embed/*'s
+  // __NEXT_DATA__ and emits each track's ~30s non-DRM preview clip from
+  // p.scdn.co/mp3-preview/<hash>, titled per track. Block that preview host so
+  // the generic catcher doesn't ALSO grab a bare, untitled copy when the widget
+  // fetches the same clip on play (the embed is a cross-origin iframe whose
+  // <audio> binding the top-frame metadata responder can't see, and its
+  // per-track title only exists post-play via MediaSession — so the bare copy
+  // would land untitled / under the shared playlist name). Scoped to the
+  // mp3-preview path; capture only — the widget's own playback is untouched.
+  spotify: [
+    'p\\.scdn\\.co\\/mp3-preview\\/',
+  ],
 };
 
 // Flatten every parser's patterns into one compiled RegExp — same approach and

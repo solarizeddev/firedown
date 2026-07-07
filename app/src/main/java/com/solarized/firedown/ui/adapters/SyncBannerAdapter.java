@@ -18,7 +18,8 @@ import com.solarized.firedown.utils.SelectionStyling;
  * banner hasn't been retired (dismissed, or sync later enabled). Card tap opens
  * the sync screen; the X retires it permanently.
  *
- * <p>Same self-hiding ConcatAdapter-header pattern as {@link RestoreBannerAdapter}.
+ * <p>Same self-hiding ConcatAdapter-header pattern as
+ * {@link IncognitoInProgressHeaderAdapter}.
  */
 public class SyncBannerAdapter extends RecyclerView.Adapter<SyncBannerAdapter.BannerViewHolder> {
 
@@ -59,7 +60,7 @@ public class SyncBannerAdapter extends RecyclerView.Adapter<SyncBannerAdapter.Ba
     public BannerViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View v = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.item_sync_banner, parent, false);
-        // Same soft brand wash as RestoreBannerAdapter (composed in code — the
+        // Same soft brand wash as the other headers (composed in code — the
         // tone is derived from colorPrimaryContainer over the surface, not a
         // flat resource color), so the two banners read identically.
         if (v instanceof MaterialCardView card) {

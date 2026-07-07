@@ -1,0 +1,26 @@
+{
+  "docblockedTitle": {
+    "message": "Страницата е блокирана"
+  },
+  "docblockedPrompt2": {
+    "message": "Блокиращ филтър"
+  },
+  "docblockedFoundIn": {
+    "message": "Намерен в:"
+  },
+  "docblockedDontWarn": {
+    "message": "Без повторно предупреждение за този сайт"
+  },
+  "docblockedDisable": {
+    "message": "Продължаване"
+  },
+  "docblockedBack": {
+    "message": "Назад"
+  },
+  "docblockedRedirectPrompt": {
+    "message": "Блокираната страница иска да Ви пренасочи към друг сайт. Ако изберете да продължите, ще отидете директно на: {{url}}"
+  },
+  "docblockedSubtitle": {
+    "message": "Блокиращият съдържание на Firedown спря зареждането на тази страница."
+  }
+}

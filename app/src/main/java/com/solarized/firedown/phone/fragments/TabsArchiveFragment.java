@@ -23,6 +23,7 @@ import androidx.navigation.NavDestination;
 import androidx.paging.LoadState;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.solarized.firedown.BuildConfig;
 import com.solarized.firedown.R;
 import com.solarized.firedown.data.entity.GeckoStateEntity;
 import com.solarized.firedown.data.entity.TabStateArchivedEntity;
@@ -218,15 +219,26 @@ public class TabsArchiveFragment extends BaseFocusFragment implements OnItemClic
     }
 
     private void setupLoadStateListener() {
-        // Empty/loaded UI only — the enter-transition release is handled
-        // separately by releaseEnterTransitionWhenReady, so a load that
-        // errors or never reaches NotLoading can't keep the screen frozen.
+        // Drives ONLY the empty/loaded/error UI — the enter-transition
+        // release is handled separately by releaseEnterTransitionWhenReady,
+        // so a load that errors or never reaches NotLoading can't freeze the
+        // screen. The spinner (LCEE default) is dismissed on EITHER terminal
+        // refresh state so a failed load can't leave it spinning forever.
         mAdapter.addLoadStateListener(loadStates -> {
             if (mAdapter == null || mLCEERecyclerView == null) return null;
 
-            if (loadStates.getRefresh() instanceof LoadState.NotLoading) {
+            LoadState refresh = loadStates.getRefresh();
+            if (refresh instanceof LoadState.NotLoading) {
                 if (mAdapter.getItemCount() == 0) mLCEERecyclerView.showEmpty();
                 else mLCEERecyclerView.hideAll();
+            } else if (refresh instanceof LoadState.Error error) {
+                // Don't strand the user on the spinner if the paging refresh
+                // fails — surface the empty state instead, and log the cause
+                // (debug builds only) so the failure is diagnosable.
+                if (BuildConfig.DEBUG) {
+                    Log.e(TAG, "archive paging refresh error", error.getError());
+                }
+                mLCEERecyclerView.showEmpty();
             }
             return null;
         });
@@ -285,30 +297,45 @@ public class TabsArchiveFragment extends BaseFocusFragment implements OnItemClic
      *
      * <p>Back stack before: {@code Home → [Browser] → Tabs → TabsArchive}<br>
      * After: lands on BrowserFragment with the archived session loaded.</p>
+     *
+     * <p>The list rows carry NO session state (the blob is excluded from the
+     * paging query so an oversized one can't fail the whole list load — see
+     * {@code TabStateArchivedDao.getArchive}), so it is fetched here on
+     * demand, chunk-read to survive states past the CursorWindow limit. A
+     * null result (row deleted meanwhile / legacy empty state) degrades to a
+     * fresh load of the tab's URI.</p>
      */
     private void openArchivedSession(TabStateArchivedEntity entity) {
-        GeckoStateEntity geckoEntity = new GeckoStateEntity(false);
-        geckoEntity.setUri(entity.getUri());
-        geckoEntity.setSessionState(entity.getSessionState());
-        geckoEntity.setIcon(entity.getIcon());
-        // Preserve the tab's ORIGINAL creation date — the archived row kept it
-        // (TabStateArchivedRepository.mapToArchivedEntity). Stamping "now" made
-        // a restored years-old tab look brand-new and mis-sorted it among the
-        // live tabs (which order by creation date).
-        geckoEntity.setCreationDate(entity.getCreationDate());
+        mTabArchiveViewModel.loadSessionState(entity.getId(), sessionState -> {
+            // The fetch is async — the user may have navigated away before
+            // it lands; a detached fragment must not drive navigation.
+            if (!isAdded()) return;
 
-        // 1. Create the GeckoState and activate it in the repository
-        GeckoState geckoState = new GeckoState(geckoEntity);
-        mGeckoStateViewModel.setGeckoState(geckoState, true);
+            GeckoStateEntity geckoEntity = new GeckoStateEntity(false);
+            geckoEntity.setUri(entity.getUri());
+            geckoEntity.setSessionState(sessionState);
+            geckoEntity.setIcon(entity.getIcon());
+            // Preserve the tab's ORIGINAL creation date — the archived row kept it
+            // (TabStateArchivedRepository.mapToArchivedEntity). Stamping "now" made
+            // a restored years-old tab look brand-new and mis-sorted it among the
+            // live tabs (which order by creation date).
+            geckoEntity.setCreationDate(entity.getCreationDate());
 
-        // 2. Fire the event so BrowserFragment wires up the session
-        mBrowserURIViewModel.onEventSelected(geckoEntity, IntentActions.OPEN_SESSION);
+            // 1. Create the GeckoState and activate it in the repository
+            GeckoState geckoState = new GeckoState(geckoEntity);
+            mGeckoStateViewModel.setGeckoState(geckoState, true);
 
-        // 3. Navigate to BrowserFragment, clearing Tabs and TabsArchive from the stack.
-        //    The action uses popUpTo="home" (inclusive=false) so the back stack
-        //    becomes Home → Browser regardless of entry path.
-        Log.d(TAG, "openArchivedSession: navigating to browser, uri=" + entity.getUri());
-        NavigationUtils.navigateSafe(mNavController, R.id.action_archive_to_browser);
+            // 2. Fire the event so BrowserFragment wires up the session
+            mBrowserURIViewModel.onEventSelected(geckoEntity, IntentActions.OPEN_SESSION);
+
+            // 3. Navigate to BrowserFragment, clearing Tabs and TabsArchive from the stack.
+            //    The action uses popUpTo="home" (inclusive=false) so the back stack
+            //    becomes Home → Browser regardless of entry path.
+            if (BuildConfig.DEBUG) {
+                Log.d(TAG, "openArchivedSession: navigating to browser, uri=" + entity.getUri());
+            }
+            NavigationUtils.navigateSafe(mNavController, R.id.action_archive_to_browser);
+        });
     }
 
     @Override

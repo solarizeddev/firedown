@@ -49,6 +49,9 @@ public final class CrashReportUrlBuilder {
         if (report.installSource != null && !report.installSource.isEmpty()) {
             sb.append("**Source:** ").append(report.installSource).append('\n');
         }
+        if (report.heapMax > 0) {
+            sb.append("**Memory:** ").append(memoryLine(report)).append('\n');
+        }
         sb.append('\n').append("```\n");
 
         // Reserve ~120 chars for the closing fence + truncation footer.
@@ -90,7 +93,30 @@ public final class CrashReportUrlBuilder {
         if (report.installSource != null && !report.installSource.isEmpty()) {
             sb.append("Source: ").append(report.installSource).append('\n');
         }
+        if (report.heapMax > 0) {
+            sb.append("Memory: ").append(memoryLine(report)).append('\n');
+        }
         sb.append('\n').append(report.trace == null ? "" : report.trace).append('\n');
         return sb.toString();
+    }
+
+    /**
+     * One-line heap snapshot, e.g. {@code java 126/128 MB · native 210 MB}.
+     * A java figure at ~max on an OOM says the heap filled with live objects
+     * (leak/accumulation); a low one says the failed allocation was a spike.
+     */
+    @NonNull
+    private static String memoryLine(@NonNull CrashReport report) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("java ").append(toMb(report.heapUsed))
+                .append('/').append(toMb(report.heapMax)).append(" MB");
+        if (report.nativeHeap > 0) {
+            sb.append(" · native ").append(toMb(report.nativeHeap)).append(" MB");
+        }
+        return sb.toString();
+    }
+
+    private static long toMb(long bytes) {
+        return bytes / (1024 * 1024);
     }
 }

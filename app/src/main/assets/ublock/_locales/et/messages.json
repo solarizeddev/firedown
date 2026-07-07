@@ -1,0 +1,26 @@
+{
+  "docblockedTitle": {
+    "message": "Leht blokeeritud"
+  },
+  "docblockedPrompt2": {
+    "message": "Järgneva filtri tõttu"
+  },
+  "docblockedFoundIn": {
+    "message": "Asub filtrites:"
+  },
+  "docblockedDontWarn": {
+    "message": "Ära selle saidi puhul enam hoiata"
+  },
+  "docblockedDisable": {
+    "message": "Jätka"
+  },
+  "docblockedBack": {
+    "message": "Mine tagasi"
+  },
+  "docblockedRedirectPrompt": {
+    "message": "Tõkestatud veebileht üritab suunata muule veebilehele. Jätkates suunatakse teid veebilehele {{url}}"
+  },
+  "docblockedSubtitle": {
+    "message": "Firedowni sisublokeerija peatas selle lehe laadimise."
+  }
+}

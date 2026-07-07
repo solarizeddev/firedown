@@ -72,8 +72,6 @@
     <string name="empty_learn_more">Lisateave</string>
     <string name="restore_downloads_button">Taasta varasemad allalaadimised</string>
     <string name="restore_downloads_settings_summary">Taasta allalaadimiste loend pärast rakenduse uuesti installimist</string>
-    <string name="restore_banner_title">Installisid Firedowni uuesti?</string>
-    <string name="restore_banner_subtitle">Su varasemad allalaadimised võivad olla taastatavad — puuduta taastamiseks</string>
     <string name="restore_downloads_message">Kui installisid Firedowni uuesti, võivad su allalaadimised endiselt olla kaustas Download/Firedown. Vali see kaust ja Firedown taastab su allalaadimiste loendi.</string>
     <string name="restore_downloads_choose">Vali kaust</string>
     <string name="restore_downloads_progress">Allalaadimiste taastamine…</string>
@@ -400,4 +398,12 @@
     <string name="settings_sync_summary">Otspunktist otspunkti krüptitud järjehoidjate sünkroonimine sinu seadmete vahel</string>
     <string name="settings_sync_switch_summary">Väljas — sinu järjehoidjad jäävad sellesse seadmesse</string>
     <string name="settings_sync_title">Sünkrooni järjehoidjad</string>
+    <!-- Nostr (NIP-07) signer -->
+    <string name="nostr_permission_title">Nostri allkirjastaja</string>
+    <string name="nostr_permission_message">%1$s soovib kasutada sinu Nostri allkirjastajat, et lugeda sinu avalikku võtit ja allkirjastada sinu nimel. Allkirjastamisrakendus kinnitab iga toimingu eraldi.</string>
+    <string name="nostr_permission_allow">Luba</string>
+    <string name="nostr_permission_deny">Keela</string>
+    <string name="nostr_no_signer_title">Nostri allkirjastaja puudub</string>
+    <string name="nostr_no_signer_message">Nostriga sisselogimiseks on vaja allkirjastamisrakendust nagu Amber, mis hoiab sinu võtmeid seadmes. Paigalda see ja proovi uuesti.</string>
+    <string name="nostr_install_amber">Paigalda Amber</string>
 </resources>

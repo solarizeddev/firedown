@@ -20,8 +20,6 @@ import com.solarized.firedown.BuildConfig;
 import com.solarized.firedown.StoragePaths;
 
 import java.io.File;
-import androidx.preference.PreferenceManager;
-import java.util.UUID;
 import java.io.IOException;
 import java.io.FileOutputStream;
 import java.io.FileInputStream;
@@ -51,23 +49,19 @@ import javax.crypto.spec.SecretKeySpec;
  * ({@code backup_rules.xml} / {@code data_extraction.xml}) include exactly
  * that one file — never the real database, never the vault.
  *
- * <p><b>Restore:</b> on a fresh install restored from backup, the mirror file
- * reappears while the real database starts empty. {@link #restoreIfPending}
- * copies the mirror rows back into the live table — once per install, guarded
- * three ways: a marker in {@code backup_local.xml} (a prefs file EXCLUDED
- * from backup, so it never travels with a restore), an empty-table check (an
- * in-place update keeps its rows and must never re-import), and the mirror's
- * existence. Rows are copied by column-name intersection so a schema a
- * version ahead/behind degrades gracefully instead of failing the whole
- * restore; {@code uid} is dropped (autoincrement re-assigns) and
- * {@code file_safe} is forced to 0 defensively.
- *
- * <p>The restored entries point at the surviving public
- * {@code Download/Firedown} files. Note the scoped-storage caveat: on
- * Android 13+ a reinstalled app no longer OWNS those files, so playback may
- * need a permission grant even though the entries are listed — the metadata
- * (origin, title, duration) is preserved regardless, which the files alone
- * could never give back.
+ * <p><b>Restore is PROMPT-FIRST — there is no boot-time auto-import.</b> On
+ * Android 11+ a reinstalled app no longer OWNS the surviving public
+ * {@code Download/Firedown} files (scoped storage), so a silent import would
+ * list entries whose files can't be opened (no thumbnail, no playback). The
+ * user restores deliberately from the Downloads empty-state button / Settings,
+ * which takes a SAF folder grant AND imports in one step ({@link
+ * #restoreFromTree} → {@link #importMirrorDatabase}), so the files are openable
+ * the moment they appear. Rows are copied by column-name intersection so a
+ * schema a version ahead/behind degrades gracefully instead of failing the
+ * whole restore; {@code uid} is dropped (autoincrement re-assigns) and
+ * {@code file_safe} is forced to 0 defensively. The metadata (origin, title,
+ * duration) is preserved regardless, which the files alone could never give
+ * back.
  */
 public final class DownloadBackupMirror {
 
@@ -79,7 +73,6 @@ public final class DownloadBackupMirror {
 
     /** Prefs file EXCLUDED from backup — install-local state only. */
     private static final String LOCAL_PREFS = "backup_local";
-    private static final String KEY_RESTORE_DONE = "mirror_restore_done";
 
     private static final String TABLE = "download";
 
@@ -245,8 +238,45 @@ public final class DownloadBackupMirror {
                 return;
             }
         }
+        // Keep exactly ONE mirror we own. When the fixed-name file is
+        // foreign-owned (a previous install left it — invisible and
+        // non-overwritable under scoped storage), every background write lands
+        // on a fresh timestamped name; left unchecked the folder accumulates a
+        // new .fdbk per background, and a later restore would decrypt + import
+        // each one (each import full-scans the download table + probes every
+        // row's file over SAF) — the "restore never ends" hang. Delete the
+        // older timestamped mirrors THIS install wrote (only our own files are
+        // visible/deletable via the File API here); a foreign fixed-name file,
+        // if any, stays — a single harmless extra the restore's newest-first
+        // pick skips.
+        pruneOwnedMirrors(dir, out);
         if (BuildConfig.DEBUG) {
             Log.d(TAG, "public mirror: wrote " + out.getName() + " (" + cipherText.length + " bytes)");
+        }
+    }
+
+    /** Delete every {@code *.fdbk} this install owns in {@code dir} except
+     *  {@code keep} (the one just written), so the public backup folder holds a
+     *  single current mirror instead of one-per-background. Best-effort; only
+     *  files the File API can see (our own) are affected — a foreign fixed-name
+     *  file from a previous install returns {@code false} from delete() and is
+     *  left untouched. */
+    private static void pruneOwnedMirrors(@NonNull File dir, @NonNull File keep) {
+        File[] existing = dir.listFiles();
+        if (existing == null) {
+            return;
+        }
+        for (File f : existing) {
+            if (f.equals(keep) || !f.isFile()) {
+                continue;
+            }
+            String name = f.getName();
+            if (!name.endsWith(".fdbk")) {
+                continue;
+            }
+            if (f.delete() && BuildConfig.DEBUG) {
+                Log.d(TAG, "public mirror: pruned old " + name);
+            }
         }
     }
 
@@ -312,11 +342,13 @@ public final class DownloadBackupMirror {
      *
      * <p>Looks for {@code *.fdbk} both directly in the picked folder and in
      * its {@code backup/} child (covering a user who picked either level), and
-     * imports EVERY one it can decrypt (not just the newest — see the loop
-     * comment for the reinstall-window empty-mirror reason), summing the rows.
-     * Returns the number of rows imported (0 is a legitimate result: everything
-     * already present), {@link #RESTORE_NO_BACKUP}, or
-     * {@link #RESTORE_WRONG_DEVICE}.
+     * imports the NEWEST one it can decrypt. Every published mirror is a full
+     * snapshot (empty ones are never written — see {@code writeMirror}'s
+     * {@code mirrorRows > 0} gate), so a newer mirror supersets any older one
+     * and there is nothing to gain from importing the rest — importing them all
+     * only re-scans the whole table per accumulated file. Returns the number of
+     * rows imported (0 is a legitimate result: everything already present),
+     * {@link #RESTORE_NO_BACKUP}, or {@link #RESTORE_WRONG_DEVICE}.
      */
     public static int restoreFromTree(@NonNull Context context,
                                       @NonNull DownloadDatabase database,
@@ -340,24 +372,21 @@ public final class DownloadBackupMirror {
         File plain = new File(context.getCacheDir(), "restore-mirror-" + System.currentTimeMillis() + ".db");
         boolean anyDecrypted = false;
         int totalRestored = 0;
-        // Mirrors that decrypted but imported ZERO rows — every entry was a
-        // file the user already deleted (the skip in importMirrorDatabase) or a
-        // duplicate already covered by another mirror. They can never restore
-        // anything again, so they only cause the recurring "0 restored" on a
-        // clean install. Collected here and pruned after the read loop (so the
-        // candidate's InputStream is closed first).
-        ArrayList<Uri> staleMirrors = new ArrayList<>();
         try {
-            // Try EVERY decryptable mirror, not just the newest. After a
-            // reinstall the app's first background re-writes a public mirror
-            // from the (still-empty) fresh database, so the NEWEST .fdbk in the
-            // folder can be an EMPTY one that decrypts fine and imports 0 rows
-            // — the real backup is an OLDER file. Bailing on the first
-            // decryptable candidate would import that empty mirror and report
-            // "0 restored" while the actual data sits one file back. So we
-            // decrypt + import all of them and SUM: importMirrorDatabase dedups
-            // by file_path against the (growing) live table, so overlapping
-            // mirrors contribute each row once and re-imports add 0.
+            // Newest-first: import the FIRST mirror that decrypts, then stop.
+            // Every published mirror is a full snapshot of the finished,
+            // non-safe rows (writeMirror gates out empty ones — mirrorRows > 0),
+            // so a newer mirror supersets any older one; there is nothing an
+            // older candidate could add. This is deliberately NOT a
+            // "decrypt + import + SUM every candidate" loop: after a reinstall
+            // the fixed-name .fdbk is foreign-owned, so each app-background used
+            // to drop a fresh timestamped mirror into the folder, and importing
+            // all of them re-scanned the whole download table (plus a per-row
+            // SAF existence probe) once per file — a folder full of accumulated
+            // mirrors made restore run for many seconds and look like it never
+            // ended. Bounding it to the single newest snapshot fixes that
+            // regardless of how many stale files linger (writeMirror also prunes
+            // its own old timestamped mirrors now, so the pile can't grow).
             for (Pair<Uri, Long> candidate : candidates) {
                 try (InputStream in = context.getContentResolver().openInputStream(candidate.first)) {
                     if (in == null) {
@@ -365,11 +394,8 @@ public final class DownloadBackupMirror {
                     }
                     if (decryptPublicMirror(context, in, plain)) {
                         anyDecrypted = true;
-                        int rows = importMirrorDatabase(context, database, plain);
-                        totalRestored += rows;
-                        if (rows == 0) {
-                            staleMirrors.add(candidate.first);
-                        }
+                        totalRestored = importMirrorDatabase(context, database, plain);
+                        break;
                     }
                 } catch (Exception e) {
                     if (BuildConfig.DEBUG) {
@@ -386,27 +412,7 @@ public final class DownloadBackupMirror {
         if (!anyDecrypted) {
             return RESTORE_WRONG_DEVICE;
         }
-        // Best-effort prune of the now-worthless mirrors (we hold the SAF WRITE
-        // grant from rememberRestoreTree). Never touches a mirror that restored
-        // rows — that one stays the live backup until the next background
-        // re-writes a fresh consolidated mirror.
-        for (Uri stale : staleMirrors) {
-            try {
-                boolean deleted = DocumentsContract.deleteDocument(
-                        context.getContentResolver(), stale);
-                if (BuildConfig.DEBUG) {
-                    Log.d(TAG, "restoreFromTree: pruned stale mirror (deleted=" + deleted + ") " + stale);
-                }
-            } catch (Exception e) {
-                if (BuildConfig.DEBUG) {
-                    Log.d(TAG, "restoreFromTree: prune failed for " + stale, e);
-                }
-            }
-        }
         Log.i(TAG, "restoreFromTree: restored " + totalRestored + " entries from SAF mirror");
-        // Any completed restore retires the reinstall banner, whichever door
-        // (empty state / Settings / banner) launched the flow.
-        clearRestoreBanner(context);
         return totalRestored;
     }
 
@@ -500,107 +506,7 @@ public final class DownloadBackupMirror {
         }
     }
 
-    /**
-     * One-shot restore of mirrored rows into an empty download table. Call on
-     * a background thread at app startup. No-op unless ALL of: the
-     * install-local marker is absent (fresh install — the marker file is
-     * excluded from backup), the live table has no non-safe rows (a fresh
-     * database, not an in-place update), and a mirror file exists (i.e. a
-     * backup restore actually delivered one).
-     */
-    public static void restoreIfPending(@NonNull Context context, @NonNull DownloadDatabase database) {
-        SharedPreferences prefs = context.getSharedPreferences(LOCAL_PREFS, Context.MODE_PRIVATE);
-        if (prefs.getBoolean(KEY_RESTORE_DONE, false)) {
-            return;
-        }
-        // Whatever happens below, never attempt again on this install — a
-        // failed half-restore retried against a now-populated table would
-        // duplicate rows.
-        prefs.edit().putBoolean(KEY_RESTORE_DONE, true).apply();
-
-        boolean reinstall = detectReinstall(context, prefs);
-
-        int restored = 0;
-        File mirror = mirrorFile(context);
-        if (mirror.exists()) {
-            SupportSQLiteDatabase db = database.getOpenHelper().getWritableDatabase();
-            boolean populated = false;
-            try (Cursor count = db.query("SELECT COUNT(*) FROM " + TABLE + " WHERE file_safe = 0")) {
-                populated = count.moveToFirst() && count.getInt(0) > 0;
-            }
-            if (populated) {
-                if (BuildConfig.DEBUG) {
-                    Log.d(TAG, "restoreIfPending: table populated — in-place update, skipping");
-                }
-                return;
-            }
-            restored = importMirrorDatabase(context, database, mirror);
-            Log.i(TAG, "restoreIfPending: restored " + restored + " download entries from backup mirror");
-        }
-
-        // Detected reinstall whose automatic restore brought nothing back
-        // (no mirror in the backup, quota, partial restore): the encrypted
-        // public mirror may still be sitting in Download/Firedown, so arm the
-        // Downloads-screen banner pointing at the SAF restore. A reinstall
-        // the auto-restore DID handle needs no banner.
-        if (reinstall && restored == 0) {
-            prefs.edit().putBoolean(KEY_RESTORE_BANNER, true).apply();
-            Log.i(TAG, "restoreIfPending: reinstall detected, auto-restore empty — banner armed");
-        }
-    }
-
-    // ------------------------------------------------------------------
-    // Reinstall detection — the sentinel pair
-    // ------------------------------------------------------------------
-    //
-    // "Did this install's shared prefs come back from a backup?" can't be
-    // answered by "are the default prefs non-empty" — App.onCreate writes
-    // boot-keys (e.g. the history-purge timestamp) before this runs, so a
-    // fresh install is never empty. Instead a random sentinel UUID is kept
-    // in BOTH prefs files: the DEFAULT prefs (which Auto Backup backs up)
-    // and backup_local.xml (which is excluded). On a same-install launch the
-    // two match. After a reinstall-with-restore the default-prefs sentinel
-    // survives the trip through the backup while the local one died with the
-    // install → present-but-mismatched = reinstall. Boot-written keys can't
-    // fake that, and an in-place update keeps both files so it never trips.
-    // (A backup written by a pre-sentinel app version has no sentinel →
-    // undetected → no banner; acceptable roll-out behavior.)
-
-    private static final String KEY_SENTINEL_LOCAL = "install_sentinel";
-    /** Lives in the DEFAULT shared prefs — deliberately backed up. */
-    private static final String KEY_SENTINEL_BACKED_UP =
-            "com.solarized.firedown.preferences.backup.install.sentinel";
-    private static final String KEY_RESTORE_BANNER = "restore_banner_pending";
     private static final String KEY_RESTORE_ATTEMPTED = "restore_attempted";
-
-    private static boolean detectReinstall(@NonNull Context context, @NonNull SharedPreferences localPrefs) {
-        SharedPreferences defaultPrefs =
-                PreferenceManager.getDefaultSharedPreferences(context);
-        String backedUp = defaultPrefs.getString(KEY_SENTINEL_BACKED_UP, null);
-        String local = localPrefs.getString(KEY_SENTINEL_LOCAL, null);
-
-        boolean reinstall = backedUp != null && !backedUp.equals(local);
-
-        // (Re)pair the sentinels for this install either way.
-        String sentinel = UUID.randomUUID().toString();
-        defaultPrefs.edit().putString(KEY_SENTINEL_BACKED_UP, sentinel).apply();
-        localPrefs.edit().putString(KEY_SENTINEL_LOCAL, sentinel).apply();
-        return reinstall;
-    }
-
-    /** Whether the Downloads screen should show the "restore your previous
-     *  downloads" banner (reinstall detected, automatic restore came back
-     *  empty, user hasn't dismissed or completed a restore yet). */
-    public static boolean isRestoreBannerPending(@NonNull Context context) {
-        return context.getSharedPreferences(LOCAL_PREFS, Context.MODE_PRIVATE)
-                .getBoolean(KEY_RESTORE_BANNER, false);
-    }
-
-    /** Permanently retire the banner: user dismissed it, or a restore ran. */
-    public static void clearRestoreBanner(@NonNull Context context) {
-        context.getSharedPreferences(LOCAL_PREFS, Context.MODE_PRIVATE)
-                .edit().putBoolean(KEY_RESTORE_BANNER, false).apply();
-    }
 
     /** Set once the user has run a SAF restore on THIS install (any outcome).
      *  Lives in {@code backup_local.xml} — EXCLUDED from backup — so it RESETS

@@ -18,6 +18,7 @@
         <exclude domain="sharedpref" path="device.xml"/>
         <exclude domain="sharedpref" path="secret_shared_prefs.xml"/>
         <exclude domain="sharedpref" path="backup_local.xml"/>
+    <exclude domain="sharedpref" path="nostr_prefs.xml"/>
         <include domain="file" path="backup/downloads-mirror.db"/>
     </cloud-backup>
     <device-transfer>
@@ -25,6 +26,7 @@
         <exclude domain="sharedpref" path="device.xml"/>
         <exclude domain="sharedpref" path="secret_shared_prefs.xml"/>
         <exclude domain="sharedpref" path="backup_local.xml"/>
+    <exclude domain="sharedpref" path="nostr_prefs.xml"/>
         <include domain="file" path="backup/downloads-mirror.db"/>
     </device-transfer>
 </data-extraction-rules>

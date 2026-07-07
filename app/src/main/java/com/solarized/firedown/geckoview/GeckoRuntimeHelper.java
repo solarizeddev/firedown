@@ -22,11 +22,14 @@ import com.solarized.firedown.data.repository.IconsRepository;
 import com.solarized.firedown.data.repository.WasmAllowlistRepository;
 import com.solarized.firedown.manager.UrlParser;
 import com.solarized.firedown.manager.UrlType;
+import com.solarized.firedown.nostr.NostrSignerBridge;
 import com.solarized.firedown.utils.JsonHelper;
+import com.solarized.firedown.utils.UrlStringUtils;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.mozilla.geckoview.AllowOrDeny;
 import org.mozilla.geckoview.ContentBlocking;
 import org.mozilla.geckoview.ExperimentalGeckoViewApi;
 import org.mozilla.geckoview.GeckoPreferenceController;
@@ -74,6 +77,7 @@ public class GeckoRuntimeHelper {
     private final PriorityTaskThreadPoolExecutor mPriorityExecutor;
     private final Executor mNetworkExecutor;
     private final OkHttpClient mOkHttpClient;
+    private final NostrSignerBridge mNostrSignerBridge;
     private final Map<String, WebExtension.Port> mPorts = new HashMap<>();
     private int mTabId = DEFAULT_TAB_ID;
 
@@ -89,9 +93,11 @@ public class GeckoRuntimeHelper {
             GeckoUblockHelper geckoUblockHelper,
             PriorityTaskThreadPoolExecutor priorityExecutor,
             OkHttpClient okHttpClient,
+            NostrSignerBridge nostrSignerBridge,
             @Qualifiers.MainThread Executor mainExecutor,
             @Qualifiers.Network Executor networkExecutor
     ) {
+        this.mNostrSignerBridge = nostrSignerBridge;
         this.mIconsRepository = iconsRepository;
         this.mBrowserDownloadRepository = browserDownloadRepository;
         this.mGeckoStateDataRepository = geckoStateDataRepository;
@@ -231,6 +237,12 @@ public class GeckoRuntimeHelper {
         registerBuiltIn("resource://android/assets/webrequests/", "downloader@solarized.dev", "browser");
         registerBuiltIn("resource://android/assets/ublock/", "uBlock0@raymondhill.net", "ublock");
         registerBuiltIn("resource://android/assets/icons/", "icons@mozac.org", "icons");
+        // window.nostr (NIP-07) provider — its content script sends signing
+        // requests over the "nostr" nativeApp name, routed in onMessage to
+        // NostrSignerBridge. The generic global + per-session delegate hookup
+        // in registerBuiltIn/registerSession covers this name (no special
+        // multi-name repeat needed, unlike youtube/parser).
+        registerBuiltIn("resource://android/assets/nostr/", "nostr@solarized.dev", "nostr");
     }
 
     /**
@@ -329,6 +341,42 @@ public class GeckoRuntimeHelper {
         }
     };
 
+    /**
+     * Session-level tab delegate — handles {@code browser.tabs.update(tabId, {url})}.
+     *
+     * <p>uBlock's strict-block path (assets/ublock/js/traffic.js
+     * {@code onBeforeRootFrameRequest}) cancels the blocked navigation and calls
+     * {@code vAPI.tabs.replace} → {@code browser.tabs.update} to swap in its
+     * {@code moz-extension://<uuid>/document-blocked.html} interstitial. GeckoView
+     * routes that to {@link WebExtension.SessionTabDelegate#onUpdateTab} on the
+     * blocked tab's OWN session. With no delegate the update is dropped and the tab
+     * is left blank (the original request was already cancelled) — this is exactly
+     * the "$document block shows about:blank" bug. Loading the URL here is the
+     * app-renders-the-page equivalent of {@link GeckoError}'s error pages, but it
+     * keeps the extension origin so the interstitial's Proceed / "don't warn again"
+     * buttons can still message the uBlock background.
+     *
+     * <p>Unlike {@link #mTabDelegate}'s {@code onNewTab} (refused — it would leak an
+     * untracked session), {@code onUpdateTab} navigates the EXISTING, Firedown-tracked
+     * {@code session} argument, so it is safe to honor. Scoped to {@code moz-extension://}
+     * targets so a loaded extension can only redirect a tab to one of its OWN packaged
+     * pages (the interstitial), never hijack navigation to an arbitrary web URL.
+     */
+    private final WebExtension.SessionTabDelegate mSessionTabDelegate =
+            new WebExtension.SessionTabDelegate() {
+        @Override
+        public GeckoResult<AllowOrDeny> onUpdateTab(@NonNull WebExtension source,
+                                                    @NonNull GeckoSession session,
+                                                    @NonNull WebExtension.UpdateTabDetails details) {
+            String url = details.url;
+            if (url != null && UrlStringUtils.isMozExtensionLike(url)) {
+                session.loadUri(url);
+                return GeckoResult.allow();
+            }
+            return GeckoResult.deny();
+        }
+    };
+
 
     @UiThread
     public void registerSession(GeckoSession geckoSession) {
@@ -336,6 +384,10 @@ public class GeckoRuntimeHelper {
             for (Map.Entry<String, WebExtension> entry : mLoadedExtensions.entrySet()) {
                 geckoSession.getWebExtensionController().setMessageDelegate(entry.getValue(), mMessageDelegate, entry.getKey());
                 geckoSession.getWebExtensionController().setActionDelegate(entry.getValue(), mBrowserSessionActionDelegate);
+                // Honor browser.tabs.update({url}) so uBlock's $document strict-block
+                // can swap in its moz-extension document-blocked.html interstitial
+                // (see mSessionTabDelegate). Without this the tab is left blank.
+                geckoSession.getWebExtensionController().setTabDelegate(entry.getValue(), mSessionTabDelegate);
                 // Mirror the global setMessageDelegate hookup for the
                 // PoTokenGenerator port name so connectNative('youtube_potoken')
                 // from content.js reaches Java on per-session controllers too.
@@ -389,6 +441,14 @@ public class GeckoRuntimeHelper {
                 // MessageDelegate.onMessage with "Invalid event data
                 // for callback". Primitives serialize cleanly.
                 return GeckoResult.fromValue(BuildConfig.DEBUG);
+            }
+            // window.nostr (NIP-07) signing requests. Returns a PENDING result
+            // completed later with an envelope string once the Amber round-trip
+            // (via NostrSignerActivity) finishes — the JS side turns the
+            // envelope into a resolve/reject on the page's Promise.
+            if ("nostr".equals(nativeApp)) {
+                return mNostrSignerBridge.handle(
+                        jsonObject, sender != null ? sender.url : null);
             }
             Log.d(TAG, "onMessage: " + jsonObject);
             try {

@@ -85,8 +85,6 @@
     <string name="empty_learn_more">Daha fazla bilgi</string>
     <string name="restore_downloads_button">Önceki indirmeleri geri yükle</string>
     <string name="restore_downloads_settings_summary">Uygulamayı yeniden yükledikten sonra indirme listenizi geri alın</string>
-    <string name="restore_banner_title">Firedown yeniden mi yüklendi?</string>
-    <string name="restore_banner_subtitle">Önceki indirmeleriniz kurtarılabilir — geri yüklemek için dokunun</string>
     <string name="restore_downloads_message">Firedown\'u yeniden yüklediyseniz indirmeleriniz hâlâ Download/Firedown klasöründe olabilir. Bu klasörü seçin, Firedown indirme listenizi geri yüklesin.</string>
     <string name="restore_downloads_choose">Klasör seç</string>
     <string name="restore_downloads_progress">İndirilenler geri yükleniyor…</string>
@@ -530,4 +528,12 @@
     <string name="settings_sync_summary">Cihazlarınız arasında uçtan uca şifreli yer imi eşitlemesi</string>
     <string name="settings_sync_switch_summary">Kapalı — yer imleriniz bu cihazda kalır</string>
     <string name="settings_sync_title">Yer imlerini eşitle</string>
+    <!-- Nostr (NIP-07) signer -->
+    <string name="nostr_permission_title">Nostr imzalayıcı</string>
+    <string name="nostr_permission_message">%1$s, genel anahtarınızı okumak ve sizin adınıza imzalamak için Nostr imzalayıcınızı kullanmak istiyor. İmzalama uygulaması her işlemi ayrı ayrı onaylar.</string>
+    <string name="nostr_permission_allow">İzin ver</string>
+    <string name="nostr_permission_deny">Reddet</string>
+    <string name="nostr_no_signer_title">Nostr imzalayıcı yok</string>
+    <string name="nostr_no_signer_message">Nostr ile oturum açmak, anahtarlarınızı cihazınızda tutan Amber gibi bir imzalama uygulaması gerektirir. Birini yükleyin ve tekrar deneyin.</string>
+    <string name="nostr_install_amber">Amber\'ı yükle</string>
 </resources>

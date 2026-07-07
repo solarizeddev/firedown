@@ -35,9 +35,41 @@ public interface TabStateArchivedDao {
      * what the user expects. file_date (original creation) is the tiebreaker
      * and the fallback for legacy pre-v2 rows (archived_at = 0), which sort
      * to the bottom among themselves by creation date.
+     *
+     * <p><b>file_state is deliberately NOT selected</b> (NULL-aliased so the
+     * row still maps onto the entity). It holds the full serialized
+     * GeckoSession state, and a single heavy tab's blob can exceed the ~2 MB
+     * SQLite CursorWindow — making that ROW unreadable
+     * ({@code SQLiteBlobTooBigException}) and failing the whole paging load.
+     * The symptom was exactly "banner says 17 tabs archived, archive screen
+     * empty": the banner's COUNT(*) never materializes the blob, while the
+     * old {@code SELECT *} here died on the first oversized row and the
+     * fragment's LoadState.Error path showed the empty state. The list never
+     * needs the blob anyway — it's fetched on tap, chunked (see
+     * {@link #getSessionStateChunk}).</p>
      */
-    @Query("SELECT * FROM tabstate ORDER BY archived_at DESC, file_date DESC")
+    @Query("SELECT uid, file_title, file_uri, file_icon, NULL AS file_state, "
+            + "file_date, archived_at FROM tabstate "
+            + "ORDER BY archived_at DESC, file_date DESC")
     PagingSource<Integer, TabStateArchivedEntity> getArchive();
+
+    /**
+     * Character length of the stored session state (SQLite {@code length()}
+     * on TEXT counts characters, matching {@code substr} semantics). Null
+     * when the row is missing or the state is NULL.
+     */
+    @Query("SELECT length(file_state) FROM tabstate WHERE uid = :id")
+    Long getSessionStateLength(int id);
+
+    /**
+     * One chunk of the session state ({@code substr} is 1-based and
+     * character-addressed). Chunked because reading the WHOLE blob in one
+     * row is what hits the CursorWindow limit — each chunk stays far below
+     * it, so even a multi-MB session state is readable. See
+     * {@code TabStateArchivedRepository.getSessionStateSync}.
+     */
+    @Query("SELECT substr(file_state, :start, :len) FROM tabstate WHERE uid = :id")
+    String getSessionStateChunk(int id, long start, long len);
 
     /**
      * Age purge: drop archived tabs whose archive time is older than

@@ -6,8 +6,6 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
-import android.media.MediaExtractor;
-import android.media.MediaFormat;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.Bundle;
@@ -61,6 +59,8 @@ import com.solarized.firedown.ui.AspectRatioImageView;
 import com.solarized.firedown.R;
 import com.solarized.firedown.data.RestoredFileAccess;
 import com.solarized.firedown.data.entity.DownloadEntity;
+import com.solarized.firedown.ffmpegutils.FFmpegMetaData;
+import com.solarized.firedown.ffmpegutils.FFmpegMetaDataReader;
 import com.solarized.firedown.utils.FileUriHelper;
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.utils.FragmentArgs;
@@ -194,34 +194,6 @@ public class MediaViewerFragment extends Fragment {
         // onCreateView time (getWidth/getHeight are still 0 here).
         mFallbackDrawable = MimeTypeThumbnail.generateDrawable(mActivity, fileMime);
 
-        if (!mAvoidTransition) {
-            // Match the downloads grid cell: 16:10 centred card with
-            // centerCrop. Same shape + same scaleType as the source
-            // ImageView means the shared element transition has no
-            // matrix interpolation to do — eliminates the "fill the
-            // screen, then snap to letterbox" flash that ChangeImage-
-            // Transform produces when source (centerCrop in 16:10)
-            // and destination (fitCenter, full screen) disagree.
-            //
-            // This applies to VIDEO as well as audio. The default
-            // (full-screen + fitCenter) poster only looked fine for
-            // portrait / near-square videos, where fitCenter already
-            // fills most of a portrait screen so the centerCrop→fitCenter
-            // interpolation is imperceptible. A LANDSCAPE video (e.g.
-            // 498×334) letterboxes to a thin band under fitCenter, so the
-            // same interpolation visibly blows the first frame up to fill
-            // the whole screen before snapping back to the band — the bug
-            // reported as "one video fills the screen during the
-            // transition". Bounding photo_view to a 16:10 centerCrop card
-            // (the AspectRatioImageView constrains its own bounds, so the
-            // shared-element target is captured at measure time) makes the
-            // transform a clean bounds-grow for every aspect. The poster
-            // is only shown until onRenderedFirstFrame swaps in the real
-            // (correctly letterboxed) video frame.
-            mPhotoView.setScaleType(ImageView.ScaleType.CENTER_CROP);
-            mPhotoView.setAspectRatio(16f / 10f);
-        }
-
         if (FileUriHelper.isAudio(fileMime)) {
             // Single artwork layer: mPhotoView owns the visible album
             // art for audio (steady state, not just transition). Turn
@@ -233,6 +205,15 @@ public class MediaViewerFragment extends Fragment {
             // extraction fails.
             mPlayerView.setUseArtwork(false);
             mPhotoView.setImageDrawable(mFallbackDrawable);
+            // Match the downloads grid cell: 16:10 centred card with
+            // centerCrop. Same shape + same scaleType as the source
+            // ImageView means the shared element transition has no
+            // matrix interpolation to do — eliminates the "fill the
+            // screen, then snap to letterbox" flash that ChangeImage-
+            // Transform produces when source (centerCrop in 16:10)
+            // and destination (fitCenter, full screen) disagree.
+            mPhotoView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            mPhotoView.setAspectRatio(16f / 10f);
         }
 
         // PlayerView / controller behaviour. autoShow is deliberately
@@ -421,20 +402,29 @@ public class MediaViewerFragment extends Fragment {
         mExoPlayer.setMediaSource(videoSource);
 
         // Pre-set PlayerView's inner AspectRatioFrameLayout from the
-        // file's own video dimensions, BEFORE prepare(). Without
-        // this, the content frame stays at MATCH_PARENT until
-        // Player.Listener.onVideoSizeChanged fires — which can land
-        // AFTER the first frame has painted to the TextureView at
-        // full-screen dimensions, producing a brief stretched-frame
-        // flash. See androidx/media#536 (closed as "question", no
-        // upstream fix in 1.10.0).
+        // file's own video dimensions so the content frame is the right
+        // shape when the FIRST frame paints. Otherwise it stays at
+        // MATCH_PARENT until Player.Listener.onVideoSizeChanged fires,
+        // which can land AFTER the first frame has painted to the
+        // TextureView at full-screen dimensions — the frame is drawn
+        // STRETCHED (fitXY) to the whole screen until the async size event
+        // arrives. See androidx/media#536.
+        //
+        // This MUST run AFTER setPlayer(). PlayerView.setPlayer() calls its
+        // own updateAspectRatio() with the fresh player's still-UNKNOWN
+        // video size, which resets exo_content_frame to aspect 0 (=
+        // MATCH_PARENT); presetting before setPlayer (as the code used to)
+        // is silently undone. setPlayWhenReady() below hasn't started
+        // decoding yet, so the aspect set here is in place for the first
+        // frame. (Verified against media3 1.10.1 PlayerView source.)
+        mExoPlayer.prepare();
+
+        mPlayerView.setPlayer(mExoPlayer);
+
         if (!FileUriHelper.isAudio(mimeType)) {
             presetVideoAspectRatio(playUri);
         }
 
-        mExoPlayer.prepare();
-
-        mPlayerView.setPlayer(mExoPlayer);
         mExoPlayer.setPlayWhenReady(true);
 
         if(!mAvoidTransition){
@@ -767,32 +757,26 @@ public class MediaViewerFragment extends Fragment {
 
     /**
      * Reach into PlayerView, find its inner exo_content_frame
-     * (an AspectRatioFrameLayout), and set the aspect ratio
-     * synchronously from the file's metadata so the layout pass
-     * with the correct dimensions runs BEFORE ExoPlayer starts
-     * decoding. Eliminates the stretched first-frame flash caused
-     * by media3 only updating the aspect from onVideoSizeChanged
-     * (which can land after the surface has already painted) — the
-     * frame paints to the still-MATCH_PARENT TextureView at full
-     * screen and only snaps to the letterbox once the async size
-     * event arrives. On a landscape clip that flash is the whole
-     * screen (a portrait phone letterboxes it to a thin band), and
-     * on a short clip the player can run to its end before the
-     * resize lands, so the stretched "still" frame just sits there
-     * until it settles — the reported "this one video fills the
-     * screen during the transition" symptom.
+     * (an AspectRatioFrameLayout), and set its aspect ratio
+     * synchronously so the layout is the right shape BEFORE the first
+     * frame paints. Without it the content frame stays MATCH_PARENT
+     * until onVideoSizeChanged and the first frame renders stretched
+     * to full screen (see the call site).
      *
-     * The preset only helps if it actually resolves the dimensions —
-     * see {@link #readVideoDimensions} for the load-bearing detail
-     * (picking the right setDataSource overload for the uri's scheme;
-     * the wrong one is why this silently no-op'd for every owned video
-     * until now). A MediaExtractor fallback additionally covers the
-     * rarer files whose container metadata MMR drops but ExoPlayer
-     * still plays.
-     *
-     * Both readers are a few-ms metadata read (no frame decode), safe
-     * on the UI thread for cold launch. If both fail we still fall
-     * through to media3's normal runtime resize.
+     * The read is on the UI thread (cold launch), so it must be a
+     * cheap metadata read, and it must be reliable — a stretched frame
+     * only appears when this fails to resolve the size. Sources, in
+     * order:
+     *   1. MediaMetadataRetriever — rotation-aware, covers most files.
+     *   2. the entity's stored capture resolution ("WxH") — instant,
+     *      no file I/O, no re-parse.
+     *   3. the app's native ffmpeg reader — parses files the platform
+     *      MediaMetadataRetriever/MediaExtractor choke on (the
+     *      498x334, audio-less, timescale-100 clip that motivated this
+     *      is one: ExoPlayer plays it and ffmpeg reads it, but MMR
+     *      returns nothing). Only reached when 1 and 2 both miss, so
+     *      the extra open cost is off the common path.
+     * If all miss we fall through to media3's runtime resize.
      */
     @OptIn(markerClass = UnstableApi.class)
     private void presetVideoAspectRatio(Uri uri) {
@@ -800,53 +784,24 @@ public class MediaViewerFragment extends Fragment {
         View contentFrame = mPlayerView.findViewById(androidx.media3.ui.R.id.exo_content_frame);
         if (!(contentFrame instanceof AspectRatioFrameLayout)) return;
 
-        // {width, height, rotation}, already adjusted for rotation below.
-        int[] dims = readVideoDimensions(uri);
-        if (dims == null) return;
-        int w = dims[0];
-        int h = dims[1];
-        int rotation = dims[2];
-        // 90 / 270 rotation means the displayed aspect is the
-        // inverse of the encoded one.
-        if (rotation == 90 || rotation == 270) {
-            int tmp = w; w = h; h = tmp;
+        float aspect = readVideoAspectRatio(uri);
+        if (aspect > 0f) {
+            ((AspectRatioFrameLayout) contentFrame).setAspectRatio(aspect);
         }
-        if (w <= 0 || h <= 0) return;
-        ((AspectRatioFrameLayout) contentFrame).setAspectRatio((float) w / (float) h);
     }
 
-    /**
-     * Resolve the video's coded {width, height, rotation} from the
-     * file. Tries MediaMetadataRetriever first, then MediaExtractor;
-     * returns null only when neither reader can read a positive size.
-     *
-     * The uri is the same source ExoPlayer plays, and its scheme
-     * decides which setDataSource overload is correct — this is the
-     * crux of the "only this file fills the screen" bug:
-     *  • Owned files arrive as {@code Uri.parse(filePath)} — a
-     *    SCHEMELESS path uri (no file://). The (Context, Uri) overload
-     *    resolves through ContentResolver and CANNOT open a bare path,
-     *    so it threw and the preset silently no-op'd for every owned
-     *    video — the content frame stayed MATCH_PARENT and the first
-     *    frame painted full-screen. It was invisible on portrait clips
-     *    (a portrait video fills a portrait screen anyway) and only
-     *    showed on a landscape clip, which letterboxes to a band. Raw
-     *    paths must go through the String overload.
-     *  • A foreign-owned RESTORED file resolves to a SAF content://
-     *    grant, which only the (Context, Uri) overload can open.
-     */
-    @Nullable
-    private int[] readVideoDimensions(@NonNull Uri uri) {
-        String scheme = uri.getScheme();
-        boolean isContent = "content".equals(scheme);
-        String path = uri.getPath();
-
+    /** Display width/height ratio for the video, or 0 if unresolved. */
+    private float readVideoAspectRatio(@NonNull Uri uri) {
+        // 1. MediaMetadataRetriever (rotation-aware). Pick the overload by
+        //    scheme: a raw path uri (owned file) needs the String overload;
+        //    a content:// SAF grant (restored file) needs (Context, Uri).
         MediaMetadataRetriever retriever = new MediaMetadataRetriever();
         try {
-            if (isContent) {
+            String scheme = uri.getScheme();
+            if ("content".equals(scheme)) {
                 retriever.setDataSource(mActivity, uri);
-            } else if (path != null) {
-                retriever.setDataSource(path);
+            } else if (uri.getPath() != null) {
+                retriever.setDataSource(uri.getPath());
             }
             String wStr = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH);
             String hStr = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT);
@@ -859,49 +814,65 @@ public class MediaViewerFragment extends Fragment {
                     if (rStr != null) {
                         try { rotation = Integer.parseInt(rStr); } catch (NumberFormatException ignored) {}
                     }
-                    return new int[]{w, h, rotation};
+                    if (rotation == 90 || rotation == 270) {
+                        int tmp = w; w = h; h = tmp;
+                    }
+                    return (float) w / (float) h;
                 }
             }
         } catch (Exception e) {
-            Log.w(TAG, "readVideoDimensions: MMR failed", e);
+            Log.w(TAG, "readVideoAspectRatio: MMR failed", e);
         } finally {
             try { retriever.release(); } catch (Exception ignored) {}
         }
 
-        // Fallback: read the track-level MediaFormat directly (recovers
-        // files whose container metadata MMR drops). Same scheme rule.
-        MediaExtractor extractor = new MediaExtractor();
-        try {
-            if (isContent) {
-                extractor.setDataSource(mActivity, uri, null);
-            } else if (path != null) {
-                extractor.setDataSource(path);
-            } else {
-                return null;
-            }
-            for (int i = 0; i < extractor.getTrackCount(); i++) {
-                MediaFormat format = extractor.getTrackFormat(i);
-                String mime = format.getString(MediaFormat.KEY_MIME);
-                if (mime == null || !mime.startsWith("video/")) continue;
-                if (!format.containsKey(MediaFormat.KEY_WIDTH)
-                        || !format.containsKey(MediaFormat.KEY_HEIGHT)) continue;
-                int w = format.getInteger(MediaFormat.KEY_WIDTH);
-                int h = format.getInteger(MediaFormat.KEY_HEIGHT);
-                if (w <= 0 || h <= 0) continue;
-                int rotation = 0;
-                // KEY_ROTATION is API 23+; guard with containsKey since
-                // not every extractor populates it.
-                if (format.containsKey(MediaFormat.KEY_ROTATION)) {
-                    rotation = format.getInteger(MediaFormat.KEY_ROTATION);
-                }
-                return new int[]{w, h, rotation};
-            }
-        } catch (Exception e) {
-            Log.w(TAG, "readVideoDimensions: MediaExtractor failed", e);
-        } finally {
-            try { extractor.release(); } catch (Exception ignored) {}
+        // 2. Stored capture resolution ("WxH"). No rotation info, but the
+        //    MMR path above already handles rotated files; this is the
+        //    fast fallback for the rare file MMR can't read.
+        float fromEntity = aspectFromResolution(mDownloadEntity.getFileResolution());
+        if (fromEntity > 0f) {
+            return fromEntity;
         }
-        return null;
+
+        // 3. Native ffmpeg — the reliable backstop for files the platform
+        //    extractors reject. Local path only (content:// is covered by
+        //    MMR above); off the UI hot path since we only get here on a
+        //    double miss.
+        String path = "content".equals(uri.getScheme()) ? null : uri.getPath();
+        if (path != null) {
+            FFmpegMetaDataReader reader = new FFmpegMetaDataReader();
+            try {
+                FFmpegMetaData meta = reader.getStreamInfo(path, null, false);
+                if (meta != null) {
+                    int w = meta.getWidth();
+                    int h = meta.getHeight();
+                    if (w > 0 && h > 0) {
+                        return (float) w / (float) h;
+                    }
+                }
+            } catch (Exception e) {
+                Log.w(TAG, "readVideoAspectRatio: ffmpeg failed", e);
+            } finally {
+                reader.stop();
+                reader.release();
+            }
+        }
+        return 0f;
+    }
+
+    /** Parse a "WxH" resolution string into a width/height ratio, or 0. */
+    private float aspectFromResolution(@Nullable String resolution) {
+        if (resolution == null) return 0f;
+        int x = resolution.indexOf('x');
+        if (x <= 0) return 0f;
+        try {
+            int w = Integer.parseInt(resolution.substring(0, x).trim());
+            int h = Integer.parseInt(resolution.substring(x + 1).trim());
+            if (w > 0 && h > 0) {
+                return (float) w / (float) h;
+            }
+        } catch (NumberFormatException ignored) {}
+        return 0f;
     }
 
     private final RequestListener<Drawable> mRequestListener = new RequestListener<>() {

@@ -21,6 +21,7 @@
     <string name="browser_menu_save_snapshot">Save snapshot</string>
     <string name="browser_snapshot_saving">Saving snapshot…</string>
     <string name="browser_snapshot_saved">Snapshot saved</string>
+    <string name="browser_snapshot_unsupported">This page can\'t be saved as a snapshot</string>
     <string name="browser_menu_forward">Forward</string>
     <string name="browser_menu_refresh">Refresh</string>
     <string name="browser_menu_settings">Settings</string>
@@ -176,8 +177,6 @@
     <string name="empty_learn_more">Learn more</string>
     <string name="restore_downloads_button">Restore previous downloads</string>
     <string name="restore_downloads_settings_summary">Recover your download list after reinstalling the app</string>
-    <string name="restore_banner_title">Reinstalled Firedown?</string>
-    <string name="restore_banner_subtitle">Your previous downloads may be recoverable — tap to restore</string>
     <string name="restore_downloads_message">If you reinstalled Firedown, your downloads may still be in the Download/Firedown folder. Choose that folder and Firedown will restore your download list.</string>
     <string name="restore_downloads_choose">Choose folder</string>
     <string name="restore_downloads_progress">Restoring downloads…</string>
@@ -783,4 +782,13 @@
     <string name="lan_direct_password">Password</string>
     <string name="lan_direct_next">Next</string>
     <string name="lan_direct_failed">Couldn\'t start the direct connection</string>
+
+    <!-- Nostr (NIP-07) signer permission prompt. %1$s is the site host. -->
+    <string name="nostr_permission_title">Nostr signer</string>
+    <string name="nostr_permission_message">%1$s wants to use your Nostr signer to read your public key and sign on your behalf. Your signer app approves each action separately.</string>
+    <string name="nostr_permission_allow">Allow</string>
+    <string name="nostr_permission_deny">Deny</string>
+    <string name="nostr_no_signer_title">No Nostr signer</string>
+    <string name="nostr_no_signer_message">Signing in with Nostr needs a signer app such as Amber, which holds your keys on your device. Install one, then try again.</string>
+    <string name="nostr_install_amber">Install Amber</string>
 </resources>
