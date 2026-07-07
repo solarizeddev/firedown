@@ -96,6 +96,7 @@
     <string name="empty_list_history">Lataushistoriasi on tyhjä.</string>
     <string name="empty_list_query">Ei tuloksia</string>
     <string name="empty_list_type">Täällä ei ole mitään.</string>
+    <string name="empty_list_vault">Turvakansiossa ei ole vielä mitään.\n\nValitse minkä tahansa latauksen ⋮-valikosta „Siirrä turvakansioon“, niin se säilyy täällä.</string>
     <string name="empty_media_help">Jotkut mediatiedostot on toistettava ennen kuin Firedown voi tunnistaa ne ladattaviksi tiedostoiksi.</string>
     <string name="empty_media_help_title">Toista media ennen lataamista</string>
     <string name="empty_media_subtitle_help">Toista mediaa tavalliseen tapaan. Sen pitäisi sitten ilmestyä muiden mediatiedostojen kanssa, kun olet painanut Fire-painiketta.</string>

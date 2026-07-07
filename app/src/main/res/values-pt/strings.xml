@@ -81,6 +81,7 @@
     <string name="empty_list_history">Seu histórico de downloads está vazio.</string>
     <string name="empty_list_query">Nenhum resultado encontrado</string>
     <string name="empty_list_type">Não há nada aqui.</string>
+    <string name="empty_list_vault">Ainda não há nada na Pasta segura.\n\nEm qualquer transferência, escolha «Mover para a Pasta segura» no menu ⋮ para a guardar aqui.</string>
     <string name="empty_media_help">Alguns arquivos de mídia precisam ser reproduzidos antes que o Firedown possa detectá-los como arquivos para download.</string>
     <string name="empty_media_help_title">Reproduza a mídia antes de baixar</string>
     <string name="empty_media_subtitle_help">Reproduza a mídia normalmente. Ele deverá então aparecer com os outros arquivos de mídia, após pressionar o botão Fire.</string>

@@ -99,6 +99,7 @@
     <string name="empty_list_history">İndirme geçmişiniz boş.</string>
     <string name="empty_list_query">Sonuç bulunamadı</string>
     <string name="empty_list_type">Burada hiçbir şey yok.</string>
+    <string name="empty_list_vault">Güvenli klasörde henüz bir şey yok.\n\nBuraya kaydetmek için herhangi bir indirmenin ⋮ menüsünden „Güvenli klasöre taşı“ seçeneğini seçin.</string>
     <string name="empty_media_help">Firedown\'ın bunları indirilebilir dosyalar olarak algılayabilmesi için bazı medya dosyalarının oynatılması gerekir.</string>
     <string name="empty_media_help_title">İndirmeden önce medyayı oynatın</string>
     <string name="empty_media_subtitle_help">Lütfen medyayı her zamanki gibi oynatın. Ateş Düğmesine bastıktan sonra diğer medya dosyalarıyla birlikte görünmelidir.</string>
