@@ -75,8 +75,9 @@ import { PageStore } from './pagestore.js';
             return;
         }
 
+        // ---- Heal 1: a corrupted / partial SELECTION ----
         // Union the current selection with EVERY default-on ("off" !== true)
-        // filters list. This heals two states, not just one:
+        // filters list. This heals two selection states:
         //   - a fully-corrupted ([]) selection (the original bug), AND
         //   - a PARTIAL selection that is missing a security-critical default
         //     such as ublock-badware. That miss is exactly why $document
@@ -97,15 +98,52 @@ import { PageStore } from './pagestore.js';
             if (asset.off === true) { continue; }
             desired.add(key);
         }
-
         // `desired` is a superset of `selected`, so an unchanged size means the
-        // selection already carries every default-on list — no-op and, crucially,
-        // do NOT recompile (loadFilterLists rebuilds ~60k rules, several seconds).
-        // Only a genuine miss triggers the recompile.
-        if (desired.size === selected.size) { return; }
+        // SELECTION already carries every default-on list.
+        const selectionChanged = desired.size !== selected.size;
 
-        console.log('[firedown-migration] adding ' + (desired.size - selected.size)
-            + ' missing default list(s) (was ' + selected.size + ')');
+        // ---- Heal 2: a stale SELFIE (selected but NOT compiled) ----
+        // A list can be in selectedFilterLists yet ABSENT from the running
+        // engine, so Heal 1 above no-ops (the selection is fine) while
+        // strict-blocking is still dead. Cause: at startup uBO loads a cached
+        // "selfie" (a serialized snapshot of the compiled engine) and sets
+        //     µb.availableFilterLists = selfie.availableFilterLists
+        // (storage.js ~line 1334) — WITHOUT re-deriving each asset's `.off`
+        // from the on-disk selection. So after a selfie load, `.off` reflects
+        // the selection AT SELFIE-CREATION TIME. A prior bug left a selfie
+        // compiled without ublock-badware while selectedFilterLists still
+        // listed it, i.e. `.off === true` for a list that IS selected. The
+        // engine then never strict-blocks even though the selection looks
+        // correct — and neither Heal 1 (selection OK) nor the already-satisfied
+        // cookie-notices toggle recompiles, so it stays broken until the user
+        // happens to toggle a filter list (which is exactly why turning the
+        // cookie-notices switch off made the block page suddenly appear:
+        // toggleCookieNotices -> loadFilterLists -> recompile from the on-disk
+        // selection -> badware finally compiled).
+        //
+        // Detect the divergence directly: any list the SELECTION claims is on
+        // but the loaded engine reports `.off === true`. A recompile
+        // (loadFilterLists) is the only cure — it rebuilds from the on-disk
+        // selection and writes a fresh, consistent selfie, so this self-heals
+        // once and healthy boots (selfie matches selection) never pay the cost.
+        let selfieStale = false;
+        for (const key of selected) {
+            const asset = µb.availableFilterLists[key];
+            if (asset !== undefined && asset.off === true) {
+                selfieStale = true;
+                break;
+            }
+        }
+
+        // Nothing to fix: selection is complete AND every selected list is
+        // actually compiled. Do NOT recompile (loadFilterLists rebuilds ~60k
+        // rules, several seconds).
+        if (selectionChanged === false && selfieStale === false) { return; }
+
+        console.log('[firedown-migration] healing:'
+            + (selectionChanged ? ' selection(+' + (desired.size - selected.size) + ')' : '')
+            + (selfieStale ? ' stale-selfie' : '')
+            + ' (was ' + selected.size + ' selected)');
 
         // applyFilterListSelection (storage.js line 481): computes new
         // selection, purges removed lists from cache, calls
@@ -114,7 +152,13 @@ import { PageStore } from './pagestore.js';
         //
         // DO NOT call saveSelectedFilterLists() without arguments afterward.
         // Its signature is (newKeys, append); a bare call sets selection to [].
-        µb.applyFilterListSelection({ toSelect: Array.from(desired) });
+        //
+        // For a pure stale-selfie (selection already correct) we skip
+        // applyFilterListSelection and just recompile — loadFilterLists reads
+        // the on-disk selection either way.
+        if (selectionChanged) {
+            µb.applyFilterListSelection({ toSelect: Array.from(desired) });
+        }
         await µb.loadFilterLists();
 
         console.log('[firedown-migration] done, ' + µb.selectedFilterLists.length + ' lists selected');
