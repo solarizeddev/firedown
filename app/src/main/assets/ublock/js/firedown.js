@@ -65,9 +65,6 @@ import { PageStore } from './pagestore.js';
         await µb.isReadyPromise;
 
         if (Object.keys(µb.availableFilterLists).length === 0) { return; }
-        if (µb.selectedFilterLists.length >= 3) { return; }
-
-        console.log('[firedown-migration] repopulating defaults (current=' + µb.selectedFilterLists.length + ')');
 
         let assetsJson;
         try {
@@ -78,15 +75,37 @@ import { PageStore } from './pagestore.js';
             return;
         }
 
-        // Preserve whatever is already selected (e.g. fanboy-cookiemonster
-        // that the user previously enabled), then add every list that ships
-        // as default-on in assets.json.
-        const defaults = new Set(µb.selectedFilterLists);
+        // Union the current selection with EVERY default-on ("off" !== true)
+        // filters list. This heals two states, not just one:
+        //   - a fully-corrupted ([]) selection (the original bug), AND
+        //   - a PARTIAL selection that is missing a security-critical default
+        //     such as ublock-badware. That miss is exactly why $document
+        //     strict-blocking never fires — the block interstitial's whole
+        //     trigger lives in the Badware-risks list, so if it isn't compiled
+        //     into the engine, no page is ever strict-blocked. (The old
+        //     `selectedFilterLists.length >= 3` guard treated any 3+ selection
+        //     as healthy and skipped, so a selection with 3 non-badware lists
+        //     stayed permanently un-healed.)
+        // We only ever ADD default-on lists, so a user's opt-in cookie-notice
+        // lists (default-off) are never touched, and there is no UI in this
+        // build to deselect a default-on list — so re-adding one can't override
+        // a deliberate choice.
+        const selected = new Set(µb.selectedFilterLists);
+        const desired = new Set(selected);
         for (const [key, asset] of Object.entries(assetsJson)) {
             if (asset.content !== 'filters') { continue; }
             if (asset.off === true) { continue; }
-            defaults.add(key);
+            desired.add(key);
         }
+
+        // `desired` is a superset of `selected`, so an unchanged size means the
+        // selection already carries every default-on list — no-op and, crucially,
+        // do NOT recompile (loadFilterLists rebuilds ~60k rules, several seconds).
+        // Only a genuine miss triggers the recompile.
+        if (desired.size === selected.size) { return; }
+
+        console.log('[firedown-migration] adding ' + (desired.size - selected.size)
+            + ' missing default list(s) (was ' + selected.size + ')');
 
         // applyFilterListSelection (storage.js line 481): computes new
         // selection, purges removed lists from cache, calls
@@ -95,7 +114,7 @@ import { PageStore } from './pagestore.js';
         //
         // DO NOT call saveSelectedFilterLists() without arguments afterward.
         // Its signature is (newKeys, append); a bare call sets selection to [].
-        µb.applyFilterListSelection({ toSelect: Array.from(defaults) });
+        µb.applyFilterListSelection({ toSelect: Array.from(desired) });
         await µb.loadFilterLists();
 
         console.log('[firedown-migration] done, ' + µb.selectedFilterLists.length + ' lists selected');
