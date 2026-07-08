@@ -1,4 +1,7 @@
 <resources>
+    <string name="browser_menu_find_short">Найти</string>
+    <string name="browser_menu_desktop_short">ПК-версия</string>
+    <string name="browser_menu_save_short">Сохранить</string>
     <string name="browser_menu_bookmark_short">Закладка</string>
     <string name="browser_menu_bookmark_saved_short">Сохранено</string>
     <string name="browser_bookmark_saved_toast">Сохранено в закладки</string>

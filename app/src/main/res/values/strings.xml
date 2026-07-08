@@ -16,6 +16,12 @@
          list after the bookmark row moved up to the action-row star. -->
     <string name="popup_group_this_page">This page</string>
     <string name="popup_group_library">Library</string>
+    <!-- Short labels for the page-actions icon row (row 2 of the quick-row).
+         The full names ride along as contentDescription for TalkBack/tooltip;
+         these compact forms are what shows under the icon. -->
+    <string name="browser_menu_find_short">Find</string>
+    <string name="browser_menu_desktop_short">Desktop</string>
+    <string name="browser_menu_save_short">Save</string>
     <string name="browser_cache_cleared">Browsing data cleared</string>
     <string name="browser_desktop">Desktop site</string>
     <string name="browser_enter_url">Search or Type URL</string>

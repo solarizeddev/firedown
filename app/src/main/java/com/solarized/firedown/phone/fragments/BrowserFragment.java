@@ -760,7 +760,7 @@ public class BrowserFragment extends BaseBrowserFragment
                 if (geckoState == null) return;
                 if (geckoState.canGoBackward()) geckoState.goBack();
                 enterBrowsing();
-            } else if (id == R.id.popup_desktop_switch || id == R.id.popup_desktop) {
+            } else if (id == R.id.popup_desktop) {
                 GeckoState geckoState = peekCurrentGeckoState();
                 if (geckoState == null) return;
                 geckoState.setEntityDesktop(!geckoState.isDesktop());

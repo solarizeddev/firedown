@@ -1,4 +1,7 @@
 <resources>
+    <string name="browser_menu_find_short">Etsi</string>
+    <string name="browser_menu_desktop_short">Työpöytä</string>
+    <string name="browser_menu_save_short">Tallenna</string>
     <string name="browser_menu_bookmark_short">Kirjanmerkki</string>
     <string name="browser_menu_bookmark_saved_short">Tallennettu</string>
     <string name="browser_bookmark_saved_toast">Tallennettu kirjanmerkkeihin</string>

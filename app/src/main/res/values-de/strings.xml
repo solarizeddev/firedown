@@ -1,4 +1,7 @@
 <resources>
+    <string name="browser_menu_find_short">Suchen</string>
+    <string name="browser_menu_desktop_short">Desktop</string>
+    <string name="browser_menu_save_short">Speichern</string>
     <string name="browser_menu_bookmark_short">Lesezeichen</string>
     <string name="browser_menu_bookmark_saved_short">Gespeichert</string>
     <string name="browser_bookmark_saved_toast">In Lesezeichen gespeichert</string>

@@ -1,4 +1,7 @@
 <resources>
+    <string name="browser_menu_find_short">Otsi</string>
+    <string name="browser_menu_desktop_short">Töölaud</string>
+    <string name="browser_menu_save_short">Salvesta</string>
     <string name="browser_menu_bookmark_short">Järjehoidja</string>
     <string name="browser_menu_bookmark_saved_short">Salvestatud</string>
     <string name="browser_bookmark_saved_toast">Salvestatud järjehoidjatesse</string>

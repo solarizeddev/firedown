@@ -1,4 +1,7 @@
 <resources>
+    <string name="browser_menu_find_short">Znajdź</string>
+    <string name="browser_menu_desktop_short">Komputer</string>
+    <string name="browser_menu_save_short">Zapisz</string>
     <string name="browser_menu_bookmark_short">Zakładka</string>
     <string name="browser_menu_bookmark_saved_short">Zapisano</string>
     <string name="browser_bookmark_saved_toast">Zapisano w zakładkach</string>

@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    Browser popup quick-row: transient chrome controls only —
-    Back · Forward · Bookmark · Refresh. New-tab actions and SHARE live
-    in the body list — Share is an action ON the page (it fires a
-    chooser), so it sits with the other "This page" verbs rather than
-    among these four constant controls; keeping the row at four (not
-    five) also stops the star's promotion from crowding it.
+    Browser popup quick-row, ROW 1 of 2: transient chrome controls —
+    Back · Forward · Bookmark · Refresh. Row 2 is the page-actions icon
+    row (Find · Desktop · Share · Save), inlined in the parent layout
+    (fragment_dialog_browser_popup) right below this include with NO
+    divider between them — the two rows read as one action block. New-tab
+    actions stay in the text list.
 
     The Bookmark STAR sits in position 3 of 4 — promoted here from a
     buried "Bookmark page" list row so the single most-frequent quick
@@ -21,14 +21,15 @@
     Firedown.Widget.PopupQuickRowButton — zero inset + 0dp inner
     horizontal padding — single line.
 
-    Long localised labels: the fragment drops the WHOLE row to
-    icon-only rather than wrapping, scrolling or truncating. The
-    decision is two-stage: a pre-layout estimate (QuickRowLabels.iconOnly,
-    from width + font scale) picks the initial mode with no flicker, then
-    a post-measure check drops to icon-only if ANY translated label would
-    still ellipsize at its real column width — so a locale with wider
-    labels than the English calibration degrades cleanly. The icons never
-    move, so the star never re-hides; every button carries its label as
+    Long localised labels: the fragment drops BOTH rows to icon-only
+    together rather than wrapping, scrolling or truncating. The decision
+    is two-stage: a pre-layout estimate (QuickRowLabels.iconOnly, from
+    width + font scale) picks the initial mode with no flicker, then a
+    post-measure check drops to icon-only if ANY translated label in
+    either row would still ellipsize at its real column width — so a
+    locale with wider labels than the English calibration degrades
+    cleanly. The icons never move, so the star never re-hides; row-2
+    buttons carry a short visible label plus the FULL name as
     contentDescription + a long-press tooltip, so icon-only stays
     accessible.
 -->

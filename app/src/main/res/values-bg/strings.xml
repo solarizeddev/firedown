@@ -1,4 +1,7 @@
 <resources>
+    <string name="browser_menu_find_short">Търси</string>
+    <string name="browser_menu_desktop_short">Компютър</string>
+    <string name="browser_menu_save_short">Запис</string>
     <string name="browser_menu_bookmark_short">Отметка</string>
     <string name="browser_menu_bookmark_saved_short">Запазено</string>
     <string name="browser_bookmark_saved_toast">Запазено в отметките</string>

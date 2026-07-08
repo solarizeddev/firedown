@@ -1,4 +1,7 @@
 <resources>
+    <string name="browser_menu_find_short">Najít</string>
+    <string name="browser_menu_desktop_short">Počítač</string>
+    <string name="browser_menu_save_short">Uložit</string>
     <string name="browser_menu_bookmark_short">Záložka</string>
     <string name="browser_menu_bookmark_saved_short">Uloženo</string>
     <string name="browser_bookmark_saved_toast">Uloženo do záložek</string>

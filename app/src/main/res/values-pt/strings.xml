@@ -1,4 +1,7 @@
 <resources>
+    <string name="browser_menu_find_short">Buscar</string>
+    <string name="browser_menu_desktop_short">Desktop</string>
+    <string name="browser_menu_save_short">Salvar</string>
     <string name="browser_menu_bookmark_short">Favorito</string>
     <string name="browser_menu_bookmark_saved_short">Salvo</string>
     <string name="browser_bookmark_saved_toast">Salvo nos favoritos</string>

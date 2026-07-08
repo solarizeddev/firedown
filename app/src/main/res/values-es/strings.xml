@@ -1,4 +1,7 @@
 <resources>
+    <string name="browser_menu_find_short">Buscar</string>
+    <string name="browser_menu_desktop_short">Escritorio</string>
+    <string name="browser_menu_save_short">Guardar</string>
     <string name="browser_menu_bookmark_short">Marcador</string>
     <string name="browser_menu_bookmark_saved_short">Guardado</string>
     <string name="browser_bookmark_saved_toast">Guardado en marcadores</string>

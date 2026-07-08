@@ -1,4 +1,7 @@
 <resources>
+    <string name="browser_menu_find_short">Zoeken</string>
+    <string name="browser_menu_desktop_short">Desktop</string>
+    <string name="browser_menu_save_short">Opslaan</string>
     <string name="browser_menu_bookmark_short">Bladwijzer</string>
     <string name="browser_menu_bookmark_saved_short">Opgeslagen</string>
     <string name="browser_bookmark_saved_toast">Opgeslagen in bladwijzers</string>

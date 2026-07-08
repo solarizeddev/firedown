@@ -4,9 +4,11 @@ package com.solarized.firedown.ui.browser;
  * Pure decision for the browser popup's quick-action row: when to drop the
  * per-button text labels and render the row icon-only.
  *
- * <p>The row is a fixed four-up ({@code Back · Forward · Bookmark · Refresh}) —
- * four 24dp icons always fit even on a 248dp screen. What overflows first is
- * the <b>labels</b>, and worse at large
+ * <p>The quick-row is two stacked four-up rows — controls ({@code Back ·
+ * Forward · Bookmark · Refresh}) and page actions ({@code Find · Desktop ·
+ * Share · Save}) — sharing one decision (both are 4 columns of the same
+ * width). Four 24dp icons always fit even on a 248dp screen. What overflows
+ * first is the <b>labels</b>, and worse at large
  * accessibility font scales. Past the breakpoint the labels are dropped
  * entirely (icons never shrink or move; TalkBack + long-press tooltips carry
  * the meaning) rather than wrapping to a second line or scrolling — either

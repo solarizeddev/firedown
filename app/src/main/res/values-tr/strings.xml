@@ -1,4 +1,7 @@
 <resources>
+    <string name="browser_menu_find_short">Bul</string>
+    <string name="browser_menu_desktop_short">Masaüstü</string>
+    <string name="browser_menu_save_short">Kaydet</string>
     <string name="browser_menu_bookmark_short">Yer imi</string>
     <string name="browser_menu_bookmark_saved_short">Kaydedildi</string>
     <string name="browser_bookmark_saved_toast">Yer imlerine kaydedildi</string>

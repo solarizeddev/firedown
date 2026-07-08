@@ -1,4 +1,7 @@
 <resources>
+    <string name="browser_menu_find_short">検索</string>
+    <string name="browser_menu_desktop_short">PC表示</string>
+    <string name="browser_menu_save_short">保存</string>
     <string name="browser_menu_bookmark_short">ブックマーク</string>
     <string name="browser_menu_bookmark_saved_short">保存済み</string>
     <string name="browser_bookmark_saved_toast">ブックマークに保存しました</string>

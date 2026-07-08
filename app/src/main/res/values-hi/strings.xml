@@ -1,4 +1,7 @@
 <resources>
+    <string name="browser_menu_find_short">खोज</string>
+    <string name="browser_menu_desktop_short">डेस्कटॉप</string>
+    <string name="browser_menu_save_short">सहेजें</string>
     <string name="browser_menu_bookmark_short">बुकमार्क</string>
     <string name="browser_menu_bookmark_saved_short">सहेजा गया</string>
     <string name="browser_bookmark_saved_toast">बुकमार्क में सहेजा गया</string>
