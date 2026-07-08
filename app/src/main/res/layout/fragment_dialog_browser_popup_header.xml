@@ -47,14 +47,14 @@
     <com.solarized.firedown.ui.browser.BackwardBrowserButton
         android:id="@+id/popup_go_backward"
         style="@style/Firedown.Widget.PopupQuickRowButton"
-        app:icon="@drawable/ic_arrow_back_24"
+        app:icon="@drawable/ic_chevron_back_24"
         android:text="@string/browser_menu_back" />
 
 
     <com.solarized.firedown.ui.browser.ForwardBrowserButton
         android:id="@+id/popup_go_forward"
         style="@style/Firedown.Widget.PopupQuickRowButton"
-        app:icon="@drawable/ic_arrow_forward_24"
+        app:icon="@drawable/ic_chevron_forward_24"
         android:text="@string/browser_menu_forward" />
 
 
