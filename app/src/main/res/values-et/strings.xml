@@ -1,4 +1,11 @@
 <resources>
+    <string name="browser_menu_bookmark_short">Järjehoidja</string>
+    <string name="browser_menu_bookmark_saved_short">Salvestatud</string>
+    <string name="browser_bookmark_saved_toast">Salvestatud järjehoidjatesse</string>
+    <string name="browser_bookmark_removed">Järjehoidja eemaldatud</string>
+    <string name="undo">Võta tagasi</string>
+    <string name="popup_group_this_page">See leht</string>
+    <string name="popup_group_library">Teek</string>
     <string name="action_mode_selected">%d valitud</string>
     <string name="app_lock">Firedowni kasutamiseks avage lukustus</string>
     <string name="app_name">Firedown</string>

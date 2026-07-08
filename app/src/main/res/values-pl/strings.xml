@@ -1,4 +1,11 @@
 <resources>
+    <string name="browser_menu_bookmark_short">Zakładka</string>
+    <string name="browser_menu_bookmark_saved_short">Zapisano</string>
+    <string name="browser_bookmark_saved_toast">Zapisano w zakładkach</string>
+    <string name="browser_bookmark_removed">Usunięto zakładkę</string>
+    <string name="undo">Cofnij</string>
+    <string name="popup_group_this_page">Ta strona</string>
+    <string name="popup_group_library">Biblioteka</string>
     <string name="settings_oled_theme">Czerń AMOLED</string>
     <string name="settings_oled_theme_summary">Czysto czarne powierzchnie — oszczędza baterię na ekranach OLED</string>
     <string name="archive_banner_subtitle">Stuknij, aby wyświetlić lub otworzyć ponownie</string>

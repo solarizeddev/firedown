@@ -1,4 +1,11 @@
 <resources>
+    <string name="browser_menu_bookmark_short">Kirjanmerkki</string>
+    <string name="browser_menu_bookmark_saved_short">Tallennettu</string>
+    <string name="browser_bookmark_saved_toast">Tallennettu kirjanmerkkeihin</string>
+    <string name="browser_bookmark_removed">Kirjanmerkki poistettu</string>
+    <string name="undo">Kumoa</string>
+    <string name="popup_group_this_page">Tämä sivu</string>
+    <string name="popup_group_library">Kirjasto</string>
     <string name="action_mode_selected">%d valittu</string>
     <string name="app_lock">Avaa lukitus käyttääksesi Firedownia</string>
     <string name="app_name">Firedown</string>

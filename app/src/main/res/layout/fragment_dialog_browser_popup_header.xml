@@ -12,15 +12,22 @@
     state; its icon/label/tint + the confirmation toast (Edit/Undo) are
     driven from PopupBrowserSheetDialogFragment.
 
-    Five equal columns. All buttons share
+    Five EVEN columns (minWidth 0 so weight fully controls the width —
+    no off-centre gaps), inset from the sheet edges by
+    quick_row_horizontal_padding. All buttons share
     Firedown.Widget.PopupQuickRowButton — zero inset + 0dp inner
-    horizontal padding + 11sp text — so long localised labels
-    (e.g. de "Aktualisieren") still render in one ellipsised line.
-    Past a width/font-scale breakpoint the fragment drops the labels
-    to icon-only (QuickRowLabels.iconOnly) rather than wrapping or
-    scrolling — the icons never move, so the star never re-hides.
-    Every button carries its label as contentDescription + a
-    long-press tooltip, so icon-only stays accessible.
+    horizontal padding — single line.
+
+    Long localised labels: the fragment drops the WHOLE row to
+    icon-only rather than wrapping, scrolling or truncating. The
+    decision is two-stage: a pre-layout estimate (QuickRowLabels.iconOnly,
+    from width + font scale) picks the initial mode with no flicker, then
+    a post-measure check drops to icon-only if ANY translated label would
+    still ellipsize at its real column width — so a locale with wider
+    labels than the English calibration degrades cleanly. The icons never
+    move, so the star never re-hides; every button carries its label as
+    contentDescription + a long-press tooltip, so icon-only stays
+    accessible.
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -29,7 +36,8 @@
     android:layout_height="wrap_content"
     android:layout_gravity="center"
     android:gravity="center"
-    android:orientation="horizontal">
+    android:orientation="horizontal"
+    android:paddingHorizontal="@dimen/quick_row_horizontal_padding">
 
 
     <com.solarized.firedown.ui.browser.BackwardBrowserButton

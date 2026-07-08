@@ -427,6 +427,10 @@
         <item name="android:layout_width">0dp</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:layout_weight">1</item>
+        <!-- Pure weight distribution: without this the IconButton's default
+             minWidth can exceed a narrow column's weighted share and make
+             the five columns uneven (an off-centre gap between buttons). -->
+        <item name="android:minWidth">0dp</item>
         <item name="android:textColor">@color/popup_header_selector</item>
         <item name="android:textSize">13sp</item>
         <item name="android:textAlignment">center</item>

@@ -1,4 +1,11 @@
 <resources>
+    <string name="browser_menu_bookmark_short">Закладка</string>
+    <string name="browser_menu_bookmark_saved_short">Сохранено</string>
+    <string name="browser_bookmark_saved_toast">Сохранено в закладки</string>
+    <string name="browser_bookmark_removed">Закладка удалена</string>
+    <string name="undo">Отменить</string>
+    <string name="popup_group_this_page">Эта страница</string>
+    <string name="popup_group_library">Библиотека</string>
     <string name="settings_oled_theme">Чёрный AMOLED</string>
     <string name="settings_oled_theme_summary">Чисто чёрный фон — экономит батарею на OLED-экранах</string>
     <string name="archive_banner_subtitle">Нажмите, чтобы просмотреть или открыть снова</string>

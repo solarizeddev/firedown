@@ -6,10 +6,12 @@ import android.content.res.ColorStateList;
 import android.content.res.Configuration;
 import android.graphics.Rect;
 import android.os.Bundle;
+import android.text.Layout;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -75,10 +77,14 @@ import dagger.hilt.android.AndroidEntryPoint;
  *       so the star reads the same source of truth as the Bookmarks
  *       library) with an Edit/Undo confirmation snackbar. Replaces the
  *       old buried "Bookmark page" list row.</li>
- *   <li><b>Quick-row labels</b> drop to icon-only past a width /
- *       font-scale breakpoint ({@link QuickRowLabels#iconOnly}); the
- *       five icons never move or shrink, so the star never re-hides.
- *       Every button keeps its label as contentDescription + tooltip.</li>
+ *   <li><b>Quick-row labels</b> drop to icon-only when they don't fit:
+ *       a pre-layout estimate ({@link QuickRowLabels#iconOnly}, width +
+ *       font scale) picks the initial mode, then a post-measure check
+ *       ({@link #scheduleQuickRowFitCheck()}) drops the whole row to
+ *       icon-only if any TRANSLATED label would still ellipsize at its
+ *       real column width. The five icons never move or shrink, so the
+ *       star never re-hides; every button keeps its label as
+ *       contentDescription + tooltip.</li>
  *   <li><b>Vault row</b> swaps to Downloads in incognito (icon +
  *       label + dispatched id) — incognito chrome lacks a Downloads
  *       card and Vault deliberately doesn't surface from private
@@ -367,17 +373,87 @@ public class PopupBrowserSheetDialogFragment extends BaseBottomSheetDialogFragme
      */
     private void applyQuickRowLabelMode() {
         Configuration config = getResources().getConfiguration();
+        // Pre-layout estimate — picks the initial mode with no flicker.
         mIconOnly = QuickRowLabels.iconOnly(config.screenWidthDp, config.fontScale);
+        applyLabelModeToButtons();
+        // If the estimate kept labels, verify they actually FIT the real
+        // (translated) column widths once laid out; a locale with wider
+        // labels than the English calibration drops the whole row to
+        // icon-only rather than truncating.
+        if (!mIconOnly) scheduleQuickRowFitCheck();
+    }
 
+
+    /**
+     * Applies the current {@link #mIconOnly} mode to the four static
+     * quick-row buttons. The star is handled by {@link #applyStarState()}
+     * (its label is state-dependent), so it's skipped here.
+     */
+    private void applyLabelModeToButtons() {
         View headerView = mView.findViewById(R.id.popup_header);
         if (headerView == null) return;
         for (int i = 0; i < ((ViewGroup) headerView).getChildCount(); i++) {
             View v = ((ViewGroup) headerView).getChildAt(i);
             if (!(v instanceof BasicBrowserButton button)) continue;
-            // Star is state-dependent; applyStarState() owns its text.
             if (button instanceof BookmarkBrowserButton) continue;
             applyButtonLabelMode(button, button.getContentDescription());
         }
+    }
+
+
+    /**
+     * After the quick-row is laid out, drops the whole row to icon-only if
+     * ANY label ellipsizes at its real (translated) column width — the
+     * pre-layout estimate is calibrated for English, so this is what makes
+     * wider locales degrade cleanly instead of showing "Actuali…". Uses a
+     * one-shot pre-draw listener and returns {@code false} on the switch so
+     * the row re-lays-out with cleared labels BEFORE the first draw (no
+     * label flicker).
+     */
+    private void scheduleQuickRowFitCheck() {
+        View header = mView.findViewById(R.id.popup_header);
+        if (header == null) return;
+        header.getViewTreeObserver().addOnPreDrawListener(
+                new ViewTreeObserver.OnPreDrawListener() {
+                    @Override
+                    public boolean onPreDraw() {
+                        View h = mView == null ? null : mView.findViewById(R.id.popup_header);
+                        if (h != null) {
+                            h.getViewTreeObserver().removeOnPreDrawListener(this);
+                        }
+                        if (mView == null || mIconOnly) return true;
+                        if (anyQuickRowLabelTruncated()) {
+                            mIconOnly = true;
+                            applyLabelModeToButtons();
+                            applyStarState();
+                            return false; // reflow before drawing
+                        }
+                        return true;
+                    }
+                });
+    }
+
+
+    /**
+     * @return true if any quick-row button's label is ellipsized at its
+     *         current width (i.e. the labels don't fit and the row should
+     *         go icon-only). Reads {@link Layout#getEllipsisCount}, so it's
+     *         only meaningful after layout.
+     */
+    private boolean anyQuickRowLabelTruncated() {
+        View headerView = mView.findViewById(R.id.popup_header);
+        if (headerView == null) return false;
+        ViewGroup group = (ViewGroup) headerView;
+        for (int i = 0; i < group.getChildCount(); i++) {
+            View v = group.getChildAt(i);
+            if (!(v instanceof BasicBrowserButton button)) continue;
+            Layout layout = button.getLayout();
+            if (layout == null) continue;
+            for (int line = 0; line < layout.getLineCount(); line++) {
+                if (layout.getEllipsisCount(line) > 0) return true;
+            }
+        }
+        return false;
     }
 
 

@@ -1,4 +1,11 @@
 <resources>
+    <string name="browser_menu_bookmark_short">Yer imi</string>
+    <string name="browser_menu_bookmark_saved_short">Kaydedildi</string>
+    <string name="browser_bookmark_saved_toast">Yer imlerine kaydedildi</string>
+    <string name="browser_bookmark_removed">Yer imi kaldırıldı</string>
+    <string name="undo">Geri al</string>
+    <string name="popup_group_this_page">Bu sayfa</string>
+    <string name="popup_group_library">Kitaplık</string>
     <string name="settings_oled_theme">AMOLED siyah</string>
     <string name="settings_oled_theme_summary">Saf siyah yüzeyler — OLED ekranlarda pil tasarrufu sağlar</string>
     <string name="archive_banner_subtitle">Görüntülemek veya yeniden açmak için dokunun</string>

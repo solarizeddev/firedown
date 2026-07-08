@@ -1,4 +1,11 @@
 <resources>
+    <string name="browser_menu_bookmark_short">Отметка</string>
+    <string name="browser_menu_bookmark_saved_short">Запазено</string>
+    <string name="browser_bookmark_saved_toast">Запазено в отметките</string>
+    <string name="browser_bookmark_removed">Отметката е премахната</string>
+    <string name="undo">Отмяна</string>
+    <string name="popup_group_this_page">Тази страница</string>
+    <string name="popup_group_library">Библиотека</string>
     <string name="action_mode_selected">%d избрани</string>
     <string name="app_lock">Отключете, за да използвате Firedown</string>
     <string name="app_name">Firedown</string>

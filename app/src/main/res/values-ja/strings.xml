@@ -1,4 +1,11 @@
 <resources>
+    <string name="browser_menu_bookmark_short">ブックマーク</string>
+    <string name="browser_menu_bookmark_saved_short">保存済み</string>
+    <string name="browser_bookmark_saved_toast">ブックマークに保存しました</string>
+    <string name="browser_bookmark_removed">ブックマークを削除しました</string>
+    <string name="undo">元に戻す</string>
+    <string name="popup_group_this_page">このページ</string>
+    <string name="popup_group_library">ライブラリ</string>
     <string name="settings_oled_theme">AMOLED ブラック</string>
     <string name="settings_oled_theme_summary">純粋な黒の背景 — OLED画面でバッテリーを節約</string>
     <string name="action_mode_selected">%d が選択されています</string>
