@@ -1,3 +1,11 @@
+## [1.1.82] - 2026-07-08
+
+- Redesigned the browser menu — one-tap bookmark star and a compact two-row action layout
+- Added Nostr (NIP-07) support via the Amber signer
+- More reliable download restore after a reinstall
+- Updated the GeckoView browser engine to 152.0.20260706120035
+- Minor bugfixes and improvements
+
 ## [1.1.81] - 2026-06-29
 
 - Save snapshot — archive a web page as a single self-contained HTML file you can reopen offline, in-app
