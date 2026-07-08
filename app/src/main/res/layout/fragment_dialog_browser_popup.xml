@@ -25,10 +25,10 @@
          affordance that did the same job.
       3. Identity / quick-row divider.                    [pinned]
       4. ─── scroll boundary ───
-      5. Quick-row header: Back · Forward · Bookmark★ · Share · Refresh.
+      5. Quick-row header: Back · Forward · Bookmark★ · Refresh.
       6. Quick-row / menu divider.
       7. Tabs             — New tab, New private tab
-      8. This page        — Find in page, Desktop site, Save snapshot
+      8. This page        — Find in page, Desktop site, Share, Save snapshot
       9. Library          — Bookmarks, History, Safe Folder
      10. System           — Settings, optional Quit
 
@@ -335,6 +335,40 @@
                     android:clickable="false"
                     android:duplicateParentState="true"
                     android:focusable="false" />
+
+            </LinearLayout>
+
+
+            <!-- Share — fires the system share chooser for the current
+                 page URL. An action ON the page (dispatches R.id.popup_share,
+                 handled in BrowserFragment), so it lives with the other
+                 "This page" verbs rather than in the quick-row; grouped next
+                 to Save snapshot since both send the page elsewhere. Moved
+                 out of the header to keep that row at four un-crowded
+                 controls after the bookmark star took a slot. -->
+            <LinearLayout
+                android:id="@+id/popup_share"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="16dp">
+
+                <TextView
+                    style="@style/TextAppearance.Material3.TitleMedium"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:drawablePadding="16dp"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:text="@string/browser_menu_share"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:textSize="16sp"
+                    app:drawableStartCompat="@drawable/ic_share_24"
+                    app:drawableTint="?attr/colorOnSurfaceVariant" />
 
             </LinearLayout>
 

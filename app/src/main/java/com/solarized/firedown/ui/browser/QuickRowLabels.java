@@ -4,9 +4,9 @@ package com.solarized.firedown.ui.browser;
  * Pure decision for the browser popup's quick-action row: when to drop the
  * per-button text labels and render the row icon-only.
  *
- * <p>The row is a fixed five-up ({@code Back · Forward · Bookmark · Share ·
- * Refresh}) — five 24dp icons always fit even on a 248dp screen (5 × ~48dp =
- * 240dp). What overflows first is the <b>labels</b>, and worse at large
+ * <p>The row is a fixed four-up ({@code Back · Forward · Bookmark · Refresh}) —
+ * four 24dp icons always fit even on a 248dp screen. What overflows first is
+ * the <b>labels</b>, and worse at large
  * accessibility font scales. Past the breakpoint the labels are dropped
  * entirely (icons never shrink or move; TalkBack + long-press tooltips carry
  * the meaning) rather than wrapping to a second line or scrolling — either
@@ -18,9 +18,10 @@ package com.solarized.firedown.ui.browser;
  * scale; drop to icon-only once the per-column room falls below that. Kept as
  * a pure, framework-free function so it is unit-testable and so the two call
  * sites (initial inflate + {@code onConfigurationChanged}) share one source of
- * truth. Longer <i>translated</i> labels still ellipsize within the
- * labels-shown state (the same graceful fallback the four-up row already
- * accepted) — icon-only is reserved for genuinely tiny widths / huge fonts.</p>
+ * truth. This is only the <b>pre-layout estimate</b> (calibrated for English,
+ * hence flicker-free): the fragment then runs a post-measure check and drops
+ * the whole row to icon-only if any <i>translated</i> label would still
+ * ellipsize at its real column width, so wider locales don't show "Actuali…".</p>
  */
 public final class QuickRowLabels {
 
@@ -29,7 +30,7 @@ public final class QuickRowLabels {
     /** Slack added to the per-label need, in dp. */
     private static final float LABEL_PAD_DP = 6f;
     /** Fixed number of buttons in the row. */
-    private static final int COLUMNS = 5;
+    private static final int COLUMNS = 4;
     /** Row horizontal padding consumed before the columns, in dp. */
     private static final float ROW_HORIZONTAL_PADDING_DP = 24f;
 

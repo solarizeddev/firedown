@@ -82,7 +82,7 @@ import dagger.hilt.android.AndroidEntryPoint;
  *       font scale) picks the initial mode, then a post-measure check
  *       ({@link #scheduleQuickRowFitCheck()}) drops the whole row to
  *       icon-only if any TRANSLATED label would still ellipsize at its
- *       real column width. The five icons never move or shrink, so the
+ *       real column width. The four icons never move or shrink, so the
  *       star never re-hides; every button keeps its label as
  *       contentDescription + tooltip.</li>
  *   <li><b>Vault row</b> swaps to Downloads in incognito (icon +
@@ -282,9 +282,8 @@ public class PopupBrowserSheetDialogFragment extends BaseBottomSheetDialogFragme
 
 
     /**
-     * Wires the top quick-row (Back / Forward / Bookmark★ / Share /
-     * Refresh). Back and Forward inherit enabled-state from the gecko
-     * session. Every button gets its label mirrored to a
+     * Wires the top quick-row (Back / Forward / Bookmark★ / Refresh).
+     * Back and Forward inherit enabled-state from the gecko session. Every button gets its label mirrored to a
      * contentDescription + long-press tooltip so the row stays
      * accessible when it drops to icon-only.
      *
@@ -341,6 +340,7 @@ public class PopupBrowserSheetDialogFragment extends BaseBottomSheetDialogFragme
     private void bindRows() {
         mView.findViewById(R.id.popup_bookmarks).setOnClickListener(this);
         mView.findViewById(R.id.popup_find).setOnClickListener(this);
+        mView.findViewById(R.id.popup_share).setOnClickListener(this);
         mView.findViewById(R.id.popup_save_snapshot).setOnClickListener(this);
         mView.findViewById(R.id.popup_desktop).setOnClickListener(this);
         mView.findViewById(R.id.popup_history).setOnClickListener(this);

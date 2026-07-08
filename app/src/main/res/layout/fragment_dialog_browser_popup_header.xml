@@ -1,10 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    Browser popup quick-row: page-context transient actions —
-    Back · Forward · Bookmark · Share · Refresh. New-tab actions live
-    in the body list (they aren't page-context verbs).
+    Browser popup quick-row: transient chrome controls only —
+    Back · Forward · Bookmark · Refresh. New-tab actions and SHARE live
+    in the body list — Share is an action ON the page (it fires a
+    chooser), so it sits with the other "This page" verbs rather than
+    among these four constant controls; keeping the row at four (not
+    five) also stops the star's promotion from crowding it.
 
-    The Bookmark STAR sits in position 3 of 5 — promoted here from a
+    The Bookmark STAR sits in position 3 of 4 — promoted here from a
     buried "Bookmark page" list row so the single most-frequent quick
     action is one tap away and self-identifying (outline → filled amber
     "Saved"). The star toggles IN PLACE (it does not dismiss the sheet
@@ -12,7 +15,7 @@
     state; its icon/label/tint + the confirmation toast (Edit/Undo) are
     driven from PopupBrowserSheetDialogFragment.
 
-    Five EVEN columns (minWidth 0 so weight fully controls the width —
+    Four EVEN columns (minWidth 0 so weight fully controls the width —
     no off-centre gaps), inset from the sheet edges by
     quick_row_horizontal_padding. All buttons share
     Firedown.Widget.PopupQuickRowButton — zero inset + 0dp inner
@@ -54,7 +57,7 @@
         android:text="@string/browser_menu_forward" />
 
 
-    <!-- Bookmark star (position 3 of 5). Toggles in place — icon
+    <!-- Bookmark star (position 3 of 4). Toggles in place — icon
          (border → filled), label (Bookmark → Saved) and tint (amber
          colorPrimary when saved) are repainted by applyStarState().
          The XML defaults render the unsaved state. -->
@@ -63,13 +66,6 @@
         style="@style/Firedown.Widget.PopupQuickRowButton"
         app:icon="@drawable/ic_bookmark_border_24"
         android:text="@string/browser_menu_bookmark_short" />
-
-
-    <com.solarized.firedown.ui.browser.ShareBrowserButton
-        android:id="@+id/popup_share"
-        style="@style/Firedown.Widget.PopupQuickRowButton"
-        app:icon="@drawable/ic_share_24"
-        android:text="@string/browser_menu_share" />
 
 
     <com.solarized.firedown.ui.browser.ReloadBrowserButton
