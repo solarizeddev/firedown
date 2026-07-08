@@ -45,42 +45,44 @@
       • TextView with drawableStartCompat icon at 16dp drawablePadding,
         TitleMedium / 16sp text (M3 list-item headline size),
         onSurfaceVariant
-      • Desktop site carries a MaterialSwitch as duplicate-parent-state
-        status (whole row is the click target)
-      • Everything else has no trailing element — the ripple is enough
+      • No trailing element on any list row — the ripple is enough
 
     State handling stays in the fragment:
-      • Bookmark STAR (in the quick-row header, not this list) flips
-        its icon/label/tint between outline·"Bookmark" and filled·amber
+      • Bookmark STAR (controls icon row, not this list) flips its
+        icon/label/tint between outline·"Bookmark" and filled·amber
         ·"Saved" based on mHasBookmark, and toggles the bookmark in
         place (add/delete on the shared repository) with an Edit/Undo
         confirmation toast — see applyStarState / onBookmarkStarClicked.
-      • Quick-row labels drop to icon-only past a width/font-scale
-        breakpoint (QuickRowLabels.iconOnly); icons never move.
+      • Both icon rows drop to icon-only together past a width/font-scale
+        breakpoint (QuickRowLabels.iconOnly + a post-measure fit check);
+        icons never move.
+      • Desktop icon (page-actions row) highlights in the accent tint
+        when the tab is in desktop mode (applyDesktopState).
       • Vault row swaps to Downloads in incognito (icon + label +
         dispatched id).
-      • Desktop site switch mirrors the current tab's isDesktop().
       • Quit row stays GONE unless SETTINGS_QUIT_PREF is on; the row
         uses colorPrimary text + tint so the destructive treatment
         matches Downloads' / Bookmarks' Delete row.
 -->
 <!--
-    Root mirrors BrowserOptionHolderSheetDialogFragment: a FrameLayout whose
-    single child (popup_content) is sized in code to visibleRect.height() -
-    mActionBarSize, so the sheet wraps to the SAME height as the Captured sheet
-    (sits just under the toolbar). The inner NestedScrollView is weighted, so
-    the pinned header stays put and the rows scroll.
+    Root: the sheet HUGS its content — it opens exactly as tall as the rows
+    need rather than being forced to fill up to the toolbar (which left dead
+    space below the short two-icon-row menu). The FrameLayout + popup_content +
+    NestedScrollView are all wrap_content; the base's max-height cap
+    (isMaxHeightCapped defaults true) bounds it, so if the content ever exceeds
+    the cap (e.g. a very large font scale with Quit shown) the pinned identity
+    header stays put and the rows below scroll.
 -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="wrap_content">
 
     <LinearLayout
         android:id="@+id/popup_content"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:orientation="vertical">
 
     <include
@@ -159,16 +161,14 @@
 
 
     <!-- wrap_content (not 0dp + weight): the sheet hugs its content so it
-         opens exactly as tall as the rows need, instead of the root
-         match_parent + weighted scroller forcing it to fill the viewport and
-         leaving the inner list scrollable even with space to spare. The
-         NestedScrollView still scrolls when content genuinely exceeds the
-         bottom_sheet_max_height cap, with the identity header above staying
-         pinned (it's outside this scroller). -->
+         opens exactly as tall as the rows need, instead of a weighted scroller
+         forcing it to fill the viewport and leaving the inner list scrollable
+         even with space to spare. The NestedScrollView still scrolls when
+         content genuinely exceeds the bottom_sheet_max_height cap, with the
+         identity header above staying pinned (it's outside this scroller). -->
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
+        android:layout_height="wrap_content"
         android:overScrollMode="never">
 
         <LinearLayout

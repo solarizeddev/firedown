@@ -4,7 +4,6 @@ package com.solarized.firedown.phone.dialogs;
 import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
 import android.content.res.Configuration;
-import android.graphics.Rect;
 import android.os.Bundle;
 import android.text.Layout;
 import android.text.TextUtils;
@@ -133,57 +132,17 @@ public class PopupBrowserSheetDialogFragment extends BaseBottomSheetDialogFragme
 
 
     /**
-     * No dimen cap — the popup FILLS to just under the toolbar, the same sizing
-     * the Captured-content holder uses, so the two sheets match height instead
-     * of the popup hugging its rows (which left it shorter than Capture). The
-     * fixed height is applied in {@link #onStart()}; the inner NestedScrollView
-     * (weight 1) scrolls when the rows exceed the viewport.
-     */
-    @Override
-    protected boolean isMaxHeightCapped() {
-        return false;
-    }
-
-    /**
-     * Size the sheet to the visible viewport minus the toolbar (mirrors
-     * {@code BrowserOptionHolderSheetDialogFragment}), so the popup stops just
-     * under the chrome and matches the Captured sheet's height. The pinned
-     * header keeps its natural height and the weighted NestedScrollView fills
-     * the rest. Run after super.onStart() (which clears the dimen cap and
-     * expands the sheet).
+     * Rotation re-decides the quick-row label mode (width / font scale may
+     * have changed) and repaints the star so its label follows the new mode.
+     * The base handles the sheet's width + max-height cap; the sheet hugs its
+     * content ({@link #isMaxHeightCapped()} defaults true), so there's no fixed
+     * height to re-apply here.
      */
     @Override
     public void onConfigurationChanged(@NonNull Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
-        sizePopupContent();
-        // Width / font-scale may have changed (rotation) — re-decide whether
-        // the quick-row shows labels or drops to icon-only, then repaint the
-        // star so its label follows the same mode.
         applyQuickRowLabelMode();
         applyStarState();
-    }
-
-    /**
-     * Size the {@code popup_content} child to {@code visibleRect.height() -
-     * mActionBarSize} so the sheet sits flush just under the toolbar (no
-     * overlap), matching the Captured holder. The FrameLayout root wraps this
-     * child, so the sheet follows it; the base's onStart expands it and the
-     * weighted NestedScrollView fills the space below the pinned header and
-     * scrolls.
-     */
-    private void sizePopupContent() {
-        if (mView == null || mActivity == null) return;
-        View content = mView.findViewById(R.id.popup_content);
-        if (content == null) return;
-        ViewGroup.LayoutParams params = content.getLayoutParams();
-        if (params == null) return;
-        Rect visibleRect = new Rect();
-        mActivity.getWindow().getDecorView().getWindowVisibleDisplayFrame(visibleRect);
-        int height = visibleRect.height() - mActionBarSize;
-        if (height > 0) {
-            params.height = height;
-            content.setLayoutParams(params);
-        }
     }
 
     @Nullable
@@ -192,7 +151,6 @@ public class PopupBrowserSheetDialogFragment extends BaseBottomSheetDialogFragme
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
         mView = inflater.inflate(R.layout.fragment_dialog_browser_popup, container, false);
-        sizePopupContent();
 
         // Guard: peekCurrentGeckoState can return null if the popup was
         // opened in an inconsistent state (process restoration, tab
