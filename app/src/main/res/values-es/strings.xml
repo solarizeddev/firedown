@@ -1,4 +1,14 @@
 <resources>
+    <string name="browser_menu_find_short">Buscar</string>
+    <string name="browser_menu_desktop_short">Escritorio</string>
+    <string name="browser_menu_save_short">Guardar</string>
+    <string name="browser_menu_bookmark_short">Marcador</string>
+    <string name="browser_menu_bookmark_saved_short">Guardado</string>
+    <string name="browser_bookmark_saved_toast">Guardado en marcadores</string>
+    <string name="browser_bookmark_removed">Marcador eliminado</string>
+    <string name="undo">Deshacer</string>
+    <string name="popup_group_this_page">Esta página</string>
+    <string name="popup_group_library">Biblioteca</string>
     <string name="settings_oled_theme">AMOLED negro</string>
     <string name="settings_oled_theme_summary">Superficies negras puras — ahorra batería en pantallas OLED</string>
     <string name="action_mode_selected">%d seleccionado</string>

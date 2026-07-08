@@ -1,4 +1,14 @@
 <resources>
+    <string name="browser_menu_find_short">Знайти</string>
+    <string name="browser_menu_desktop_short">ПК-версія</string>
+    <string name="browser_menu_save_short">Зберегти</string>
+    <string name="browser_menu_bookmark_short">Закладка</string>
+    <string name="browser_menu_bookmark_saved_short">Збережено</string>
+    <string name="browser_bookmark_saved_toast">Збережено в закладки</string>
+    <string name="browser_bookmark_removed">Закладку вилучено</string>
+    <string name="undo">Скасувати</string>
+    <string name="popup_group_this_page">Ця сторінка</string>
+    <string name="popup_group_library">Бібліотека</string>
     <string name="action_mode_selected">Вибрано %d</string>
     <string name="app_lock">Розблокуйте, щоб використовувати Firedown</string>
     <string name="app_name">Firedown</string>

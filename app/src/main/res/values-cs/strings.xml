@@ -1,4 +1,14 @@
 <resources>
+    <string name="browser_menu_find_short">Najít</string>
+    <string name="browser_menu_desktop_short">Počítač</string>
+    <string name="browser_menu_save_short">Uložit</string>
+    <string name="browser_menu_bookmark_short">Záložka</string>
+    <string name="browser_menu_bookmark_saved_short">Uloženo</string>
+    <string name="browser_bookmark_saved_toast">Uloženo do záložek</string>
+    <string name="browser_bookmark_removed">Záložka odebrána</string>
+    <string name="undo">Zpět</string>
+    <string name="popup_group_this_page">Tato stránka</string>
+    <string name="popup_group_library">Knihovna</string>
     <string name="action_mode_selected">Vybráno: %d</string>
     <string name="app_lock">Chcete-li použít Firedown, odemkněte</string>
     <string name="app_name">Firedown</string>

@@ -1,4 +1,14 @@
 <resources>
+    <string name="browser_menu_find_short">Suchen</string>
+    <string name="browser_menu_desktop_short">Desktop</string>
+    <string name="browser_menu_save_short">Speichern</string>
+    <string name="browser_menu_bookmark_short">Lesezeichen</string>
+    <string name="browser_menu_bookmark_saved_short">Gespeichert</string>
+    <string name="browser_bookmark_saved_toast">In Lesezeichen gespeichert</string>
+    <string name="browser_bookmark_removed">Lesezeichen entfernt</string>
+    <string name="undo">Rückgängig</string>
+    <string name="popup_group_this_page">Diese Seite</string>
+    <string name="popup_group_library">Bibliothek</string>
     <string name="settings_oled_theme">AMOLED-Schwarz</string>
     <string name="settings_oled_theme_summary">Pure schwarze Oberflächen — spart Akku auf OLED-Bildschirmen</string>
     <string name="action_mode_selected">%d ausgewählt</string>

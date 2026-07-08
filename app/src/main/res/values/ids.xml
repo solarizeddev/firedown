@@ -32,6 +32,10 @@
     <item name="popup_bookmark_deleted" type="id" />
     <item name="popup_select" type="id" />
     <item name="popup_stop" type="id" />
+    <!-- Tag key: stores a quick-row button's short visible label so the
+         icon-only ↔ labelled toggle can restore it (contentDescription holds
+         the full name instead). -->
+    <item name="quick_row_label" type="id" />
     <item name="popup_tabs_new" type="id" />
     <item name="popup_tabs_private_new" type="id" />
     <item name="popup_tabs_close" type="id" />

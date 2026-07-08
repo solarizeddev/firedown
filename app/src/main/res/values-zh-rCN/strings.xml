@@ -1,4 +1,14 @@
 <resources>
+    <string name="browser_menu_find_short">查找</string>
+    <string name="browser_menu_desktop_short">电脑版</string>
+    <string name="browser_menu_save_short">保存</string>
+    <string name="browser_menu_bookmark_short">书签</string>
+    <string name="browser_menu_bookmark_saved_short">已保存</string>
+    <string name="browser_bookmark_saved_toast">已保存到书签</string>
+    <string name="browser_bookmark_removed">已移除书签</string>
+    <string name="undo">撤销</string>
+    <string name="popup_group_this_page">此页面</string>
+    <string name="popup_group_library">资料库</string>
     <string name="settings_oled_theme">AMOLED 纯黑</string>
     <string name="settings_oled_theme_summary">纯黑背景 — 在 OLED 屏幕上省电</string>
     <string name="action_mode_selected">已选择 %d</string>
