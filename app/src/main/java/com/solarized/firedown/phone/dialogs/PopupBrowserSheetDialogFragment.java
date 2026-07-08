@@ -453,21 +453,21 @@ public class PopupBrowserSheetDialogFragment extends BaseBottomSheetDialogFragme
     /**
      * Applies the current label mode to one quick-row button: in
      * icon-only mode the text is cleared and the icon centres
-     * (ICON_GRAVITY_TEXT_START, no icon padding); otherwise the SHORT
-     * visible label is restored from the button's tag under the icon
-     * (ICON_GRAVITY_TEXT_TOP). The accessible name is carried by the
-     * contentDescription set in {@link #bindQuickRow()}, so clearing the
-     * visible text never removes the button's meaning.
+     * (ICON_GRAVITY_TEXT_START); otherwise the SHORT visible label is
+     * restored from the button's tag under the icon (ICON_GRAVITY_TEXT_TOP).
+     * The accessible name is carried by the contentDescription set in
+     * {@link #bindQuickRow()}, so clearing the visible text never removes
+     * the button's meaning. The icon↔label gap (style iconPadding) is left
+     * as-is in both modes — with no text, it only shifts every icon by the
+     * same ~2dp, which is invisible.
      */
     private void applyButtonLabelMode(MaterialButton button) {
         if (mIconOnly) {
             button.setText(null);
-            button.setIconPadding(0);
             button.setIconGravity(MaterialButton.ICON_GRAVITY_TEXT_START);
         } else {
             Object tag = button.getTag(R.id.quick_row_label);
             button.setText(tag instanceof CharSequence ? (CharSequence) tag : null);
-            button.setIconPadding(getResources().getDimensionPixelSize(R.dimen.quick_row_icon_padding));
             button.setIconGravity(MaterialButton.ICON_GRAVITY_TEXT_TOP);
         }
     }
