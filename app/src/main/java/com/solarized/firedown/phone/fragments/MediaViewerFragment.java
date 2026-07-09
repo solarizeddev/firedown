@@ -194,6 +194,38 @@ public class MediaViewerFragment extends Fragment {
         // onCreateView time (getWidth/getHeight are still 0 here).
         mFallbackDrawable = MimeTypeThumbnail.generateDrawable(mActivity, fileMime);
 
+        if (!mAvoidTransition) {
+            // Bound photo_view to a 16:10 centred centerCrop card. This
+            // is the SHARED ELEMENT (video_view), and the source it flies
+            // from is the list/grid R.id.image — a centerCrop thumbnail in
+            // a bounded cell. Giving photo_view the SAME scaleType
+            // (centerCrop) and a BOUNDED band — the AspectRatioImageView
+            // self-measures to the ratio, so its captured shared-element
+            // target is a band, not the full screen — leaves the
+            // ChangeImageTransform a clean bounds-grow to animate instead
+            // of interpolating a centerCrop-in-cell matrix toward a
+            // fitCenter-full-screen one. That interpolation is what
+            // briefly blows a LANDSCAPE first frame up to fill the whole
+            // screen before it snaps to the letterbox — the reported "one
+            // landscape video fills the screen during the transition".
+            //
+            // This MUST cover video as well as audio. A previous
+            // consolidation (daa1e4e) moved this into the audio-only
+            // branch, on the theory that the only visible artifact was the
+            // exo_content_frame surface drawing stretched (fixed
+            // separately by presetVideoAspectRatio() after setPlayer()).
+            // But the poster balloon is a DISTINCT layer — the shared
+            // element itself — and leaving photo_view unbounded/fitCenter
+            // for video reintroduced the flash. Both fixes are
+            // load-bearing: the preset stops the TextureView drawing
+            // stretched, this stops the poster ballooning. For video the
+            // poster is only shown until onRenderedFirstFrame swaps in the
+            // real, letterboxed frame; audio keeps it as steady-state
+            // artwork.
+            mPhotoView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            mPhotoView.setAspectRatio(16f / 10f);
+        }
+
         if (FileUriHelper.isAudio(fileMime)) {
             // Single artwork layer: mPhotoView owns the visible album
             // art for audio (steady state, not just transition). Turn
@@ -205,15 +237,6 @@ public class MediaViewerFragment extends Fragment {
             // extraction fails.
             mPlayerView.setUseArtwork(false);
             mPhotoView.setImageDrawable(mFallbackDrawable);
-            // Match the downloads grid cell: 16:10 centred card with
-            // centerCrop. Same shape + same scaleType as the source
-            // ImageView means the shared element transition has no
-            // matrix interpolation to do — eliminates the "fill the
-            // screen, then snap to letterbox" flash that ChangeImage-
-            // Transform produces when source (centerCrop in 16:10)
-            // and destination (fitCenter, full screen) disagree.
-            mPhotoView.setScaleType(ImageView.ScaleType.CENTER_CROP);
-            mPhotoView.setAspectRatio(16f / 10f);
         }
 
         // PlayerView / controller behaviour. autoShow is deliberately
