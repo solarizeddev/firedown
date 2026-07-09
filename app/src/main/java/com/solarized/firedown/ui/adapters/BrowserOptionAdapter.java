@@ -240,9 +240,6 @@ public class BrowserOptionAdapter extends GridListBaseAdapter<BrowserDownloadEnt
             holder.more.setEnabled(!mActionMode);
             holder.more.setVisibility(variantVisibility);
             holder.more.setIconTint(ColorStateList.valueOf(Color.WHITE));
-            if (holder.dimView != null) {
-                holder.dimView.setVisibility(variantVisibility);
-            }
         }
     }
 
@@ -477,10 +474,6 @@ public class BrowserOptionAdapter extends GridListBaseAdapter<BrowserDownloadEnt
         @Nullable final TextView fileName;
         @Nullable final TextView fileUrl;
 
-        // Grid-only views (null in list mode)
-        @Nullable final View dimView;
-
-
         ViewHolder(View view, OnItemClickListener onItemClickListener, boolean isList) {
             super(view);
             this.isList = isList;
@@ -501,9 +494,6 @@ public class BrowserOptionAdapter extends GridListBaseAdapter<BrowserDownloadEnt
             // List-only
             fileName = view.findViewById(R.id.file_name);
             fileUrl = view.findViewById(R.id.file_url);
-
-            // Grid-only
-            dimView = view.findViewById(R.id.dim_view);
 
             // Image clipping
             image.setClipToOutline(true);

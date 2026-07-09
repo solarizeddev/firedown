@@ -21,16 +21,6 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
-            <!-- Top scrim (FINISHED only) -->
-            <View
-                android:id="@+id/top_scrim"
-                android:layout_width="match_parent"
-                android:layout_height="32dp"
-                android:background="@drawable/top_scrim"
-                android:elevation="12dp"
-                android:visibility="gone"
-                app:layout_constraintTop_toTopOf="parent" />
-
             <!-- Thumbnail. match_parent both ways inside the 16:10
                  ratio card — adjustViewBounds is intentionally absent
                  because the dimensions are fixed; the platform would

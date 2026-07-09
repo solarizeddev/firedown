@@ -31,14 +31,6 @@
             android:duplicateParentState="true"
             android:scaleType="centerCrop" />
 
-        <!-- Top scrim for the more button's readability against bright art. -->
-        <View
-            android:id="@+id/dim_view"
-            android:layout_width="match_parent"
-            android:layout_height="32dp"
-            android:background="@drawable/top_scrim"
-            android:elevation="12dp" />
-
         <!-- Bottom info block: a gradient scrim carrying the title + a single
              metadata row. Replaces the old bottom corner chip cluster that had
              no title and overflowed in 2-column width. -->
