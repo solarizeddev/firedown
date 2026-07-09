@@ -258,21 +258,25 @@ public class MediaViewerFragment extends Fragment {
             // opaque shutter covers the surface through exactly the
             // stretched window. Making it transparent (a previous attempt,
             // to reveal the poster) is what EXPOSED the stretch through the
-            // shutter — see the recording where the stretched fullscreen
-            // frame shows behind the correctly-sized poster band.
+            // shutter — the recording showed the stretched fullscreen frame
+            // behind the correctly-sized poster band.
             //
-            // Keep the poster visible by drawing photo_view ABOVE the
-            // shutter (bringToFront): the shared-element band sits on top,
-            // the black shutter fills the letterbox area around it, so
-            // there is no stretch AND no black-instead-of-poster. photo_-
-            // view is hidden in onRenderedFirstFrame, uncovering the (now
-            // correctly letterboxed) video. mAvoidTransition (vault) has no
-            // poster, but the black shutter still correctly hides the
-            // stretched window until the first frame.
+            // Do NOT bringToFront() photo_view. photo_view is the poster
+            // and must stay BEHIND player_view (its natural child order):
+            // during the shared-element transition it is drawn on top
+            // anyway via the transition overlay, so bringing it to front
+            // buys nothing there — but it MOVES the poster above the video
+            // for steady state, so if onRenderedFirstFrame is ever slow
+            // (a large/slow decode) or never runs (the singleTask /
+            // onNewIntent reuse path fires NO transition), the poster sits
+            // OVER the player and the video plays hidden behind it — the
+            // exact "static poster on top, video in the background"
+            // regression reported. Behind the video, a poster that fails
+            // to hide is harmless (the video covers it). The tiny window
+            // between transition-end and first-frame is a brief black
+            // shutter, not a stretch — and in practice the first frame
+            // renders mid-transition, so there is no visible gap.
             mPlayerView.setShutterBackgroundColor(Color.BLACK);
-            if (!mAvoidTransition) {
-                mPhotoView.bringToFront();
-            }
         }
 
         // PlayerView / controller behaviour. autoShow is deliberately
