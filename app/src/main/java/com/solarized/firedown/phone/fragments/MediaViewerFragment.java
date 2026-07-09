@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 
 import android.content.res.Resources;
+import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.media.MediaMetadataRetriever;
@@ -209,18 +210,19 @@ public class MediaViewerFragment extends Fragment {
             // screen before it snaps to the letterbox — the reported "one
             // landscape video fills the screen during the transition".
             //
-            // This MUST cover video as well as audio. A previous
-            // consolidation (daa1e4e) moved this into the audio-only
-            // branch, on the theory that the only visible artifact was the
-            // exo_content_frame surface drawing stretched (fixed
-            // separately by presetVideoAspectRatio() after setPlayer()).
-            // But the poster balloon is a DISTINCT layer — the shared
-            // element itself — and leaving photo_view unbounded/fitCenter
-            // for video reintroduced the flash. Both fixes are
-            // load-bearing: the preset stops the TextureView drawing
-            // stretched, this stops the poster ballooning. For video the
-            // poster is only shown until onRenderedFirstFrame swaps in the
-            // real, letterboxed frame; audio keeps it as steady-state
+            // This MUST cover video as well as audio (a previous
+            // consolidation moved it into the audio-only branch, leaving
+            // photo_view unbounded/fitCenter for video — its own kind of
+            // balloon). Together with the OPAQUE video shutter below they
+            // address the two DISTINCT layers seen mid-transition in the
+            // reported recording: the shutter hides the fitXY-stretched
+            // TextureView surface, and this keeps the poster (the shared
+            // element itself) a clean bounded band instead of a fitCenter-
+            // full-screen target. 16:10 is only the fallback shape —
+            // presetVideoAspectRatio() overrides it with the video's real
+            // aspect so the band coincides with the letterbox. For video
+            // the poster is only shown until onRenderedFirstFrame swaps in
+            // the real, letterboxed frame; audio keeps it as steady-state
             // artwork.
             mPhotoView.setScaleType(ImageView.ScaleType.CENTER_CROP);
             mPhotoView.setAspectRatio(16f / 10f);
@@ -234,9 +236,43 @@ public class MediaViewerFragment extends Fragment {
             // installed immediately so the transition has something to
             // land on; Glide's load below replaces it with the
             // embedded cover when present, .error() restores it if
-            // extraction fails.
+            // extraction fails. The shutter is left transparent (XML
+            // default) so this artwork shows through — there is no video
+            // surface to stretch.
             mPlayerView.setUseArtwork(false);
             mPhotoView.setImageDrawable(mFallbackDrawable);
+        } else {
+            // VIDEO: re-enable media3's OPAQUE shutter (the XML overrides
+            // it transparent). This is THE guard for the "fullscreen
+            // portrait frame during the transition" symptom, confirmed
+            // frame-by-frame in the reported recording: PlayerView.set-
+            // Player() resets the inner exo_content_frame to aspect 0 (=
+            // MATCH_PARENT) because the fresh player's video size is still
+            // unknown, so the FIRST decoded frame paints STRETCHED (fitXY)
+            // to the whole screen until onVideoSizeChanged corrects the
+            // aspect. presetVideoAspectRatio() tries to pre-size the frame
+            // but the first frame can paint before that relayout lands, so
+            // it is not sufficient on its own. media3's own guard is the
+            // shutter — it is hidden only in onRenderedFirstFrame, which
+            // fires AFTER onVideoSizeChanged has resized the frame, so an
+            // opaque shutter covers the surface through exactly the
+            // stretched window. Making it transparent (a previous attempt,
+            // to reveal the poster) is what EXPOSED the stretch through the
+            // shutter — see the recording where the stretched fullscreen
+            // frame shows behind the correctly-sized poster band.
+            //
+            // Keep the poster visible by drawing photo_view ABOVE the
+            // shutter (bringToFront): the shared-element band sits on top,
+            // the black shutter fills the letterbox area around it, so
+            // there is no stretch AND no black-instead-of-poster. photo_-
+            // view is hidden in onRenderedFirstFrame, uncovering the (now
+            // correctly letterboxed) video. mAvoidTransition (vault) has no
+            // poster, but the black shutter still correctly hides the
+            // stretched window until the first frame.
+            mPlayerView.setShutterBackgroundColor(Color.BLACK);
+            if (!mAvoidTransition) {
+                mPhotoView.bringToFront();
+            }
         }
 
         // PlayerView / controller behaviour. autoShow is deliberately
@@ -810,6 +846,19 @@ public class MediaViewerFragment extends Fragment {
         float aspect = readVideoAspectRatio(uri);
         if (aspect > 0f) {
             ((AspectRatioFrameLayout) contentFrame).setAspectRatio(aspect);
+            // Match the poster band to the SAME aspect as the video, so
+            // the shared-element target coincides exactly with where the
+            // player will letterbox. Otherwise the 16:10 fallback band set
+            // in onCreateView differs from the real letterbox, and when
+            // photo_view hides on onRenderedFirstFrame the swap pops (and,
+            // if the poster were wider, it would peek around the frame).
+            // This runs in onViewCreated, BEFORE the postponed shared-
+            // element transition captures photo_view's end bounds, so the
+            // transition already targets the correct band. 16:10 remains
+            // the fallback when the aspect can't be resolved.
+            if (mPhotoView != null && !mAvoidTransition) {
+                mPhotoView.setAspectRatio(aspect);
+            }
         }
     }
 
