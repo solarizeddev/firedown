@@ -423,6 +423,24 @@ public class MediaViewerFragment extends Fragment {
             @Override
             public void onVideoSizeChanged(@NonNull VideoSize videoSize) {
                 if (mActivity != null) mActivity.updatePipParams();
+                // Runtime backstop for the first-frame stretch. When the
+                // synchronous preset can't resolve the size — a RESTORED
+                // content:// clip that MMR can't read and that has no stored
+                // resolution (ffmpeg can't open its foreign-owned path) — the
+                // content frame is left MATCH_PARENT and the first frame paints
+                // fitXY-stretched. The decoder ALWAYS reports the true size
+                // here (e.g. 498x334), so correct the content frame the instant
+                // it does. media3 does this itself, but doing it explicitly
+                // also fixes the POSTER band's aspect so, if the poster is still
+                // showing, it matches the letterbox exactly (no peek). Applied
+                // to the width/height as reported (already display-oriented via
+                // pixelWidthHeightRatio).
+                if (videoSize.width > 0 && videoSize.height > 0) {
+                    float par = videoSize.pixelWidthHeightRatio > 0f
+                            ? videoSize.pixelWidthHeightRatio : 1f;
+                    float aspect = (videoSize.width * par) / videoSize.height;
+                    applyVideoAspect(aspect);
+                }
             }
 
             /**
@@ -843,32 +861,59 @@ public class MediaViewerFragment extends Fragment {
      */
     @OptIn(markerClass = UnstableApi.class)
     private void presetVideoAspectRatio(Uri uri) {
-        if (uri == null || mPlayerView == null || mActivity == null) return;
-        View contentFrame = mPlayerView.findViewById(androidx.media3.ui.R.id.exo_content_frame);
-        if (!(contentFrame instanceof AspectRatioFrameLayout)) return;
-
+        if (uri == null) return;
         float aspect = readVideoAspectRatio(uri);
         if (aspect > 0f) {
+            applyVideoAspect(aspect);
+        }
+    }
+
+    /**
+     * Size the player's content frame AND the poster band to {@code aspect}.
+     * Called from the synchronous preset (onViewCreated, before the postponed
+     * shared-element transition captures photo_view's end bounds) AND from
+     * onVideoSizeChanged as the runtime backstop when the preset couldn't
+     * resolve the size up front. Sizing the content frame stops the surface
+     * painting fitXY-stretched; sizing the poster to the SAME aspect makes the
+     * shared-element target coincide with the letterbox, so the poster→video
+     * swap on onRenderedFirstFrame can't pop or peek. Both are idempotent
+     * (AspectRatioFrameLayout / AspectRatioImageView no-op an unchanged ratio).
+     */
+    @OptIn(markerClass = UnstableApi.class)
+    private void applyVideoAspect(float aspect) {
+        if (aspect <= 0f || mPlayerView == null) return;
+        View contentFrame = mPlayerView.findViewById(androidx.media3.ui.R.id.exo_content_frame);
+        if (contentFrame instanceof AspectRatioFrameLayout) {
             ((AspectRatioFrameLayout) contentFrame).setAspectRatio(aspect);
-            // Match the poster band to the SAME aspect as the video, so
-            // the shared-element target coincides exactly with where the
-            // player will letterbox. Otherwise the 16:10 fallback band set
-            // in onCreateView differs from the real letterbox, and when
-            // photo_view hides on onRenderedFirstFrame the swap pops (and,
-            // if the poster were wider, it would peek around the frame).
-            // This runs in onViewCreated, BEFORE the postponed shared-
-            // element transition captures photo_view's end bounds, so the
-            // transition already targets the correct band. 16:10 remains
-            // the fallback when the aspect can't be resolved.
-            if (mPhotoView != null && !mAvoidTransition) {
-                mPhotoView.setAspectRatio(aspect);
-            }
+        }
+        if (mPhotoView != null && !mAvoidTransition) {
+            mPhotoView.setAspectRatio(aspect);
         }
     }
 
     /** Display width/height ratio for the video, or 0 if unresolved. */
     private float readVideoAspectRatio(@NonNull Uri uri) {
-        // 1. MediaMetadataRetriever (rotation-aware). Pick the overload by
+        // 1. Stored capture resolution ("WxH"). Tried FIRST on purpose: it is
+        //    an in-memory string read — no file I/O, no main-thread jank — and
+        //    it is the ONLY reliable source for a RESTORED (content://) file
+        //    whose bytes the platform extractors can't read. The reported
+        //    failing clip (498x334, timescale-100, played via a SAF content://
+        //    grant) is exactly this case: MediaMetadataRetriever returns
+        //    nothing for it AND the native ffmpeg tier can't open the
+        //    foreign-owned path (EACCES — the same reason playback uses the
+        //    grant), so both other tiers miss and the content frame stayed
+        //    MATCH_PARENT, stretching the first frame fitXY. Doing this read
+        //    first also drops the ~400 ms of main-thread content:// disk I/O
+        //    the MMR-first order paid on every open (visible as repeated
+        //    StrictMode DiskReadViolations), which itself widened the
+        //    pre-first-frame window. No rotation info here, but tier 2 handles
+        //    rotated files; capture resolution is already display-oriented.
+        float fromEntity = aspectFromResolution(mDownloadEntity.getFileResolution());
+        if (fromEntity > 0f) {
+            return fromEntity;
+        }
+
+        // 2. MediaMetadataRetriever (rotation-aware). Pick the overload by
         //    scheme: a raw path uri (owned file) needs the String overload;
         //    a content:// SAF grant (restored file) needs (Context, Uri).
         MediaMetadataRetriever retriever = new MediaMetadataRetriever();
@@ -902,18 +947,11 @@ public class MediaViewerFragment extends Fragment {
             try { retriever.release(); } catch (Exception ignored) {}
         }
 
-        // 2. Stored capture resolution ("WxH"). No rotation info, but the
-        //    MMR path above already handles rotated files; this is the
-        //    fast fallback for the rare file MMR can't read.
-        float fromEntity = aspectFromResolution(mDownloadEntity.getFileResolution());
-        if (fromEntity > 0f) {
-            return fromEntity;
-        }
-
-        // 3. Native ffmpeg — the reliable backstop for files the platform
-        //    extractors reject. Local path only (content:// is covered by
-        //    MMR above); off the UI hot path since we only get here on a
-        //    double miss.
+        // 3. Native ffmpeg — the reliable backstop for owned files the
+        //    platform extractors reject. Local path only (a content:// SAF
+        //    grant is foreign-owned, so ffmpeg would EACCES on the path — that
+        //    case is covered by tier 1 and, at runtime, by onVideoSizeChanged);
+        //    off the UI hot path since we only get here on a double miss.
         String path = "content".equals(uri.getScheme()) ? null : uri.getPath();
         if (path != null) {
             FFmpegMetaDataReader reader = new FFmpegMetaDataReader();
