@@ -19,6 +19,7 @@ import com.solarized.firedown.glide.DataUriModelLoader;
 import com.solarized.firedown.glide.DownloadEntityModelLoaderFactory;
 import com.solarized.firedown.glide.DownloadEntityUriModelLoaderFactory;
 import com.solarized.firedown.glide.FFmpegGlideUrlDecoder;
+import com.solarized.firedown.glide.FFmpegPfdDecoder;
 import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.glide.FFmpegUriDecoder;
 import com.solarized.firedown.glide.svg.SVGEncoder;
@@ -67,6 +68,12 @@ public class GlideModule extends AppGlideModule {
         registry.append(DownloadEntity.class, ParcelFileDescriptor.class, new DownloadEntityModelLoaderFactory(context));
         registry.append(DownloadEntity.class, Uri.class, new DownloadEntityUriModelLoaderFactory(context));
         registry.append(ParcelFileDescriptor.class, Bitmap.class, new PdfDecoder(glide.getBitmapPool()));
+        // Native-FFmpeg video-frame FALLBACK for the PFD path (finished downloads).
+        // Appended AFTER Glide's built-in MMR/still-image PFD decoders, so it runs
+        // only when they fail — a codec/container MMR + skia can't handle (AV1, odd
+        // MP4/HEVC) otherwise ends on the mime glyph. FFmpeg was previously wired
+        // only for the Uri path (below), never the PFD path finished downloads use.
+        registry.append(ParcelFileDescriptor.class, Bitmap.class, new FFmpegPfdDecoder(glide.getBitmapPool()));
         registry.append(Registry.BUCKET_BITMAP, GlideUrl.class, Bitmap.class, new FFmpegGlideUrlDecoder(glide.getBitmapPool()));
         registry.append(Registry.BUCKET_BITMAP, Uri.class, Bitmap.class, new FFmpegUriDecoder(glide.getBitmapPool()));
         registry.prepend(Registry.BUCKET_BITMAP, InputStream.class, Bitmap.class, new ApkIconDecoder(context, glide.getBitmapPool()));
