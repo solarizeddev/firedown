@@ -280,12 +280,19 @@ public class GlideHelper {
             return;
         }
 
-        // Data URI — load directly as String, not as GlideUrl
+        // Data URI — load directly as String, not as GlideUrl (DataUriModelLoader
+        // decodes it — Base64 or percent-encoded). An SVG data URI (incl. the
+        // common emoji favicon "data:image/svg+xml,<url-encoded svg>") must flag
+        // an SVG mime so SvgDecoder engages — its handles() gates on the mime,
+        // and a data URI has no .svg path to sniff.
         if (icon.startsWith("data:")) {
+            RequestOptions dataOptions = icon.regionMatches(true, 0, "data:image/svg", 0, 14)
+                    ? options.clone().set(GlideRequestOptions.MIMETYPE, "image/svg+xml")
+                    : options;
             Glide.with(image).load(icon)
                     .listener(listener)
                     .diskCacheStrategy(DiskCacheStrategy.NONE)
-                    .apply(options)
+                    .apply(dataOptions)
                     .into(image);
             return;
         }
