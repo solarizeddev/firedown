@@ -33,6 +33,7 @@ import androidx.navigation.fragment.NavHostFragment;
 import androidx.preference.PreferenceManager;
 import com.google.android.material.snackbar.Snackbar;
 import com.solarized.firedown.crash.CrashReportSheet;
+import com.solarized.firedown.data.di.Qualifiers;
 import com.solarized.firedown.data.entity.BrowserDownloadEntity;
 import com.solarized.firedown.data.models.BrowserURIViewModel;
 import com.solarized.firedown.data.models.GeckoStateViewModel;
@@ -51,6 +52,7 @@ import com.solarized.firedown.utils.Utils;
 import org.mozilla.geckoview.GeckoResult;
 
 import java.util.ArrayDeque;
+import java.util.concurrent.Executor;
 
 import javax.inject.Inject;
 
@@ -82,6 +84,11 @@ public abstract class BaseActivity extends AppCompatActivity implements IntentHa
 
     @Inject
     protected GeckoStateDataRepository mGeckoStateDataRepository;
+
+    /** Background executor for the crash-sheet's disk scan (keeps it off the main thread). */
+    @Inject
+    @Qualifiers.DiskIO
+    protected Executor mDiskExecutor;
 
     /** Intent waiting to be processed until the repository finishes loading. */
     private Intent mPendingIntent;
@@ -285,7 +292,7 @@ public abstract class BaseActivity extends AppCompatActivity implements IntentHa
             // IllegalStateException from FragmentManager.
             if (mPaused || isFinishing() || isDestroyed()) return;
             CrashReportSheet.showIfPending(
-                    this, getSupportFragmentManager());
+                    this, getSupportFragmentManager(), mDiskExecutor);
             // In-app fallback for a ready update when notifications are denied;
             // self-bails if the crash sheet above claimed the slot.
             UpdateAvailableSheet.showIfReady(

@@ -7,6 +7,8 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.format.DateUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -24,8 +26,10 @@ import com.solarized.firedown.R;
 import com.solarized.firedown.phone.dialogs.BaseBottomSheetDialogFragment;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.Executor;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
@@ -58,6 +62,11 @@ public class CrashReportSheet extends BaseBottomSheetDialogFragment {
 
     private static final String TAG = "CrashReportSheet";
 
+    /** Absolute paths of the pending reports, handed to the sheet by
+     *  {@link #showIfPending} so its own view creation doesn't re-scan
+     *  the disk on the main thread. */
+    private static final String ARG_PENDING_PATHS = "pending_paths";
+
     @Nullable
     private CrashReport mReport;
     @NonNull
@@ -68,18 +77,64 @@ public class CrashReportSheet extends BaseBottomSheetDialogFragment {
      * call from {@code onResume} on every activity — idempotent via
      * the {@code findFragmentByTag} check, and after the user actions
      * the sheet the pending files are deleted so subsequent calls
-     * bail at the {@code pending.isEmpty()} guard.
+     * find nothing pending.
+     *
+     * <p>The disk scan ({@link CrashStorage#listPending}) runs on
+     * {@code diskExecutor}, NOT the main thread — this is called from
+     * every activity's {@code onResume}, and the common case (no pending
+     * crash) would otherwise touch disk on the UI thread on every resume
+     * (a StrictMode {@code DiskReadViolation}). The found paths are passed
+     * to the sheet as arguments so its {@code onCreateView} reads them
+     * instead of scanning again.</p>
      */
     public static void showIfPending(@NonNull Context context,
-                                     @NonNull FragmentManager fm) {
-        List<File> pending = CrashStorage.listPending(context);
-        Log.i(TAG, "showIfPending: pending=" + pending.size()
-                + " stateSaved=" + fm.isStateSaved()
-                + " alreadyShown=" + (fm.findFragmentByTag(TAG) != null));
-        if (pending.isEmpty()) return;
-        if (fm.findFragmentByTag(TAG) != null) return;
+                                     @NonNull FragmentManager fm,
+                                     @NonNull Executor diskExecutor) {
+        // Cheap main-thread pre-checks — bail before touching disk at all.
         if (fm.isStateSaved()) return;
-        new CrashReportSheet().show(fm, TAG);
+        if (fm.findFragmentByTag(TAG) != null) return;
+        diskExecutor.execute(() -> {
+            List<File> pending = CrashStorage.listPending(context);
+            if (pending.isEmpty()) return;
+            String[] paths = new String[pending.size()];
+            for (int i = 0; i < pending.size(); i++) {
+                paths[i] = pending.get(i).getAbsolutePath();
+            }
+            new Handler(Looper.getMainLooper()).post(() -> {
+                Log.i(TAG, "showIfPending: pending=" + paths.length
+                        + " stateSaved=" + fm.isStateSaved()
+                        + " alreadyShown=" + (fm.findFragmentByTag(TAG) != null));
+                // Re-check on the main thread: state may have changed
+                // during the async gap (activity paused / another sheet shown).
+                if (fm.isStateSaved()) return;
+                if (fm.findFragmentByTag(TAG) != null) return;
+                CrashReportSheet sheet = new CrashReportSheet();
+                Bundle args = new Bundle();
+                args.putStringArray(ARG_PENDING_PATHS, paths);
+                sheet.setArguments(args);
+                sheet.show(fm, TAG);
+            });
+        });
+    }
+
+    /**
+     * Pending reports for this sheet — from the {@link #ARG_PENDING_PATHS}
+     * arguments {@link #showIfPending} set (which survive recreation). Falls
+     * back to a fresh {@link CrashStorage#listPending} scan only if the args
+     * are somehow absent, so a rare recreation without them still works.
+     */
+    @NonNull
+    private List<File> resolvePending() {
+        Bundle args = getArguments();
+        if (args != null) {
+            String[] paths = args.getStringArray(ARG_PENDING_PATHS);
+            if (paths != null) {
+                List<File> list = new ArrayList<>(paths.length);
+                for (String p : paths) list.add(new File(p));
+                return list;
+            }
+        }
+        return CrashStorage.listPending(requireContext());
     }
 
     @Nullable
@@ -87,7 +142,7 @@ public class CrashReportSheet extends BaseBottomSheetDialogFragment {
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
-        mPending = CrashStorage.listPending(requireContext());
+        mPending = resolvePending();
         if (mPending.isEmpty()) {
             dismissAllowingStateLoss();
             return null;
