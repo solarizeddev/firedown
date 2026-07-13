@@ -193,21 +193,32 @@ function waitIceComplete(pc) {
 
 function watchConnection(s) {
   const pc = s.pc;
-  s.connectTimer = setTimeout(() => {
-    if (pc.connectionState !== "connected") {
-      fail(s, "no-path", "connect timeout");
-    }
-  }, CONNECT_TIMEOUT_MS);
+  // Do NOT arm the no-path timer here. Signaling is OFFLINE and human-paced:
+  // between showing the offer QR and the answer being applied, the receiver
+  // has to scan, preview, accept, and relay a reply QR back — easily longer
+  // than CONNECT_TIMEOUT_MS. Arming at offer-creation made the sender fail with
+  // "no-path" while it was merely WAITING to be scanned. The timer must bound
+  // only the ACTUAL ICE connectivity phase, which begins when connectionState
+  // first reaches "connecting" (both SDPs exchanged, checks underway) — so arm
+  // it there, once, and never during the wait-for-scan phase.
   pc.addEventListener("connectionstatechange", () => {
     log("connectionState:", pc.connectionState);
     if (s !== session) { return; }
     if (pc.connectionState === "connected") {
       clearTimeout(s.connectTimer);
+      s.connectTimer = null;
       post({ type: "state", state: "connected" });
     } else if (pc.connectionState === "failed") {
       fail(s, "no-path", "connection failed");
     } else if (pc.connectionState === "connecting") {
       post({ type: "state", state: "connecting" });
+      if (!s.connectTimer) {
+        s.connectTimer = setTimeout(() => {
+          if (s === session && pc.connectionState !== "connected") {
+            fail(s, "no-path", "connect timeout");
+          }
+        }, CONNECT_TIMEOUT_MS);
+      }
     }
   });
 }
