@@ -117,14 +117,25 @@
             app:singleLineTitle="false"
             app:icon="@drawable/ic_p2p_24" />
 
-        <!-- Optional TURN relay: off by default. Only needed to connect peers
-             that can't reach each other directly (both mobile data, or one on
-             a full-tunnel VPN). Editor (url + username + password) lives in
-             SettingsFragment; bytes stay E2E-encrypted through the relay. -->
+        <!-- Optional TURN relay: additive. A default relay is always included so
+             a share works out of the box (VPN/CGNAT too); this adds a second
+             relay for networks the default can't cross. Editor (url + username +
+             password) lives in SettingsFragment; bytes stay E2E-encrypted. -->
         <Preference
             android:key="com.solarized.firedown.preferences.p2p.turn.url"
             android:summary="@string/settings_p2p_turn_summary"
             android:title="@string/settings_p2p_turn"
+            app:singleLineTitle="false"
+            app:iconSpaceReserved="true" />
+
+        <!-- Optional signaling relay: off by default. Lets a shared LINK connect
+             two devices on DIFFERENT networks with no reply scan — the relay
+             brokers only the ~1 KB handshake, never the file. Same-network
+             shares never touch it. Editor (url) lives in SettingsFragment. -->
+        <Preference
+            android:key="com.solarized.firedown.preferences.p2p.signaling.url"
+            android:summary="@string/settings_p2p_signaling_summary"
+            android:title="@string/settings_p2p_signaling"
             app:singleLineTitle="false"
             app:iconSpaceReserved="true" />
 

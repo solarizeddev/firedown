@@ -37,10 +37,21 @@ public class P2pReceiveFragment extends P2pShareBaseFragment
 
     /** Nav arg: an offer code delivered by the firedown://p2p/ deep link. */
     public static final String ARG_OFFER_CODE = "p2p.offer.code";
+    /**
+     * Nav args: a signaling-relay link ({@code firedown://p2p/r/<id>?s=<base>}
+     * or {@code https://<relay>/s/<id>}) — the receiver fetches the offer from
+     * the relay instead of carrying it inline. Both must be present together.
+     */
+    public static final String ARG_SIGNALING_BASE = "p2p.sig.base";
+    public static final String ARG_SIGNALING_ID = "p2p.sig.id";
 
     private View mView;
     private String mReplyCode;
     private String mLastCode;
+    // A relay link's rendezvous coordinates, when the deep link was a relay
+    // link rather than a self-contained offer. Both null = no relay.
+    private String mSignalingBase;
+    private String mSignalingId;
     private DownloadEntity mReceived;
 
     @Nullable
@@ -81,20 +92,28 @@ public class P2pReceiveFragment extends P2pShareBaseFragment
         mView.findViewById(R.id.p2p_retry).setOnClickListener(v -> showEntry());
 
         // Arrived via the firedown://p2p/ deep link (scanned with any scanner)?
-        // Stash the offer so onEngineReady starts the receive once the WebRTC
-        // pref is applied — same replay path as a code scanned before ready.
+        // Either a self-contained offer (ARG_OFFER_CODE) or a relay link
+        // (ARG_SIGNALING_BASE/ID, offer fetched from the relay). Stash it so
+        // onEngineReady kicks off once the WebRTC pref applies — same replay
+        // path as a code scanned before ready.
         Bundle args = getArguments();
         if (args != null) {
             String offer = args.getString(ARG_OFFER_CODE);
             if (offer != null && !offer.isEmpty()) {
                 mLastCode = offer;
             }
+            String base = args.getString(ARG_SIGNALING_BASE);
+            String id = args.getString(ARG_SIGNALING_ID);
+            if (base != null && !base.isEmpty() && id != null && !id.isEmpty()) {
+                mSignalingBase = base;
+                mSignalingId = id;
+            }
         }
 
-        // A code is already in hand (deep-link arrival) → show the working
-        // state right away, NOT the scan/paste entry the user just used. A
-        // plain open with no code shows the entry so the user can scan.
-        if (mLastCode != null) {
+        // A code/relay link is already in hand (deep-link arrival) → show the
+        // working state right away, NOT the scan/paste entry. A plain open with
+        // nothing in hand shows the entry so the user can scan.
+        if (mLastCode != null || mSignalingBase != null) {
             showReading();
         } else {
             setStage(R.id.p2p_entry_group);
@@ -105,9 +124,13 @@ public class P2pReceiveFragment extends P2pShareBaseFragment
 
     @Override
     protected void onEngineReady() {
-        // Nothing to start — receive waits for a scanned/pasted offer code.
-        // A code scanned before the pref applied is replayed here.
-        if (mLastCode != null) {
+        // Nothing to start unless a code/relay link arrived — otherwise receive
+        // waits for a scanned/pasted offer. Replayed here so it runs only after
+        // the WebRTC pref applied. A relay link takes precedence: it fetches the
+        // offer from the relay, then proceeds as a normal receive.
+        if (mSignalingBase != null && mSignalingId != null) {
+            mP2pController.startReceiveFromRelay(mSignalingBase, mSignalingId, this);
+        } else if (mLastCode != null) {
             mP2pController.startReceive(mLastCode, this);
         }
     }

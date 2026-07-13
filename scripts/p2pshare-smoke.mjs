@@ -130,39 +130,24 @@ const badDecode = await vm.runInContext(
     `decodeCode(ANSWER_PREFIX, ${JSON.stringify(code)}).then(() => "decoded", (e) => e.message)`, context);
 check("wrong prefix rejected", badDecode === "bad-code");
 
-// ── iceServers: STUN always, TURN only when configured ──────────────────────
-// newPeerConnection has no RTCPeerConnection here, but its iceServers assembly
-// is pure — exercise it directly for the STUN-only and STUN+TURN shapes.
-const iceStunOnly = await vm.runInContext(`
-  (() => {
-    const c = {};
-    const servers = [];
-    const ice = { stun: "stun:stun.example:3478" };
-    if (ice.stun && /^stuns?:/i.test(ice.stun)) servers.push({ urls: ice.stun });
-    if (ice.turnUrl && /^turns?:/i.test(ice.turnUrl)) servers.push({ urls: ice.turnUrl });
-    return servers;
-  })()
-`, context);
-check("stun-only -> one ice server",
-    iceStunOnly.length === 1 && iceStunOnly[0].urls === "stun:stun.example:3478");
-
-const iceWithTurn = await vm.runInContext(`
-  (() => {
-    const servers = [];
-    const ice = { stun: "stun:s:3478", turnUrl: "turn:t:3478", turnUser: "u", turnCred: "p" };
-    if (ice.stun && /^stuns?:/i.test(ice.stun)) servers.push({ urls: ice.stun });
-    if (ice.turnUrl && /^turns?:/i.test(ice.turnUrl)) {
-      const relay = { urls: ice.turnUrl };
-      if (ice.turnUser) relay.username = ice.turnUser;
-      if (ice.turnCred) relay.credential = ice.turnCred;
-      servers.push(relay);
-    }
-    return servers;
-  })()
-`, context);
-check("stun+turn -> two ice servers with credentials",
-    iceWithTurn.length === 2 && iceWithTurn[1].urls === "turn:t:3478"
-        && iceWithTurn[1].username === "u" && iceWithTurn[1].credential === "p");
+// ── iceServers sanitizer: keep valid stun:/turn:, drop junk, preserve creds ──
+// Java hands the engine a fully-formed RTCIceServer[]; sanitizeIceServers is
+// the guard against a bad settings value breaking the ctor. Exercise it.
+const iceClean = await vm.runInContext(`sanitizeIceServers([
+  { urls: "stun:stun.cloudflare.com:3478" },
+  { urls: ["turn:openrelay.metered.ca:80","turn:openrelay.metered.ca:443"], username: "openrelayproject", credential: "openrelayproject" },
+  { urls: "https://evil.example/not-ice" },
+  { urls: "" },
+  { nope: 1 },
+  { urls: "turn:custom:3478", username: "u", credential: "p" }
+])`, context);
+check("ice sanitizer keeps only valid stun/turn entries",
+    iceClean.length === 3
+    && iceClean[0].urls[0] === "stun:stun.cloudflare.com:3478"
+    && iceClean[1].urls.length === 2 && iceClean[1].username === "openrelayproject"
+    && iceClean[2].urls[0] === "turn:custom:3478" && iceClean[2].credential === "p");
+check("ice sanitizer normalizes single url to array",
+    Array.isArray(iceClean[0].urls) && iceClean[0].urls.length === 1);
 
 // ── stop is safe with no session ────────────────────────────────────────────
 postedEvents.length = 0;

@@ -89,10 +89,17 @@ public class P2pSendFragment extends P2pShareBaseFragment
                         : size);
 
         mView.findViewById(R.id.p2p_share_code).setOnClickListener(v -> {
-            if (mOfferCode != null) {
-                // Share the deep link, not the bare code: a tap on it in a
-                // messenger opens Firedown straight into the receive preview.
-                shareCode(P2pShareController.toDeepLink(mOfferCode));
+            // Prefer the controller's share content: the https relay LINK when
+            // a relay is configured and the offer is up (works across networks,
+            // the receiver just taps it), otherwise the self-contained offer
+            // deep link. Either way, opening it in Firedown lands on the receive
+            // preview. Falls back to the offer deep link before the upload lands.
+            String content = mP2pController.getShareContent();
+            if (content == null && mOfferCode != null) {
+                content = P2pShareController.toDeepLink(mOfferCode);
+            }
+            if (content != null) {
+                shareCode(content);
             }
         });
         mView.findViewById(R.id.p2p_scan_reply).setOnClickListener(v ->

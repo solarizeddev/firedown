@@ -28,9 +28,8 @@
  *
  * Protocol (Java -> cmd):
  *   {type:"__init", debug}                             bridge handshake
- *   {type:"send-start", readUrl, name, size, mime, device, stun, answerUrl?,
- *                       turnUrl?, turnUser?, turnCred?}
- *   {type:"send-answer", code} · {type:"recv-start", code, stun, turn*?}
+ *   {type:"send-start", readUrl, name, size, mime, device, iceServers[], answerUrl?}
+ *   {type:"send-answer", code} · {type:"recv-start", code, iceServers[]}
  *   {type:"recv-accept", writeUrl} · {type:"stop"}
  * (evt -> Java):
  *   {type:"ready", rtc} · {type:"code", role, code} · {type:"offer-parsed", …}
@@ -144,36 +143,36 @@ async function decodeCode(prefix, code) {
 
 /* ── WebRTC helpers ────────────────────────────────────────────────────── */
 
-// Pull the ICE config (STUN + optional TURN relay) out of a start message.
+// The ICE server list comes fully-formed from Java (STUN + default/opt-in TURN,
+// see the controller's putIceServers) in RTCIceServer shape. Just carry it.
 function iceOf(msg) {
-  return {
-    stun: msg.stun,
-    turnUrl: msg.turnUrl,
-    turnUser: msg.turnUser,
-    turnCred: msg.turnCred,
-  };
+  return Array.isArray(msg.iceServers) ? msg.iceServers : [];
+}
+
+// Keep only well-formed stun:/turn: entries so one bad settings value can't
+// throw in the RTCPeerConnection constructor and fail the whole share.
+function sanitizeIceServers(list) {
+  const clean = [];
+  for (let i = 0; i < list.length; i++) {
+    const s = list[i];
+    if (!s || s.urls == null) { continue; }
+    const urls = Array.isArray(s.urls)
+      ? s.urls.filter((u) => typeof u === "string" && /^stuns?:|^turns?:/i.test(u))
+      : (/^stuns?:|^turns?:/i.test(s.urls) ? [s.urls] : []);
+    if (urls.length === 0) { continue; }
+    const entry = { urls: urls };
+    if (typeof s.username === "string" && s.username) { entry.username = s.username; }
+    if (typeof s.credential === "string" && s.credential) { entry.credential = s.credential; }
+    clean.push(entry);
+  }
+  return clean;
 }
 
 async function newPeerConnection(ice) {
-  // At most TWO ice servers, both from the user's own settings: ONE STUN
-  // (address echo) and, only if the user configured one, ONE TURN relay.
-  // Never a list of fallbacks — that would query every server on every share
-  // and leak the user's IP to each. A malformed url would throw in the
-  // constructor; Java validates both entries. Empty STUN = LAN-only; a TURN
-  // relay is opt-in (Settings) and only actually relays when direct fails, so
-  // the default share still contacts nothing but the STUN echo.
-  ice = ice || {};
+  // ice is the RTCIceServer[] Java built (STUN echo + default openrelay TURN,
+  // plus any custom TURN). Sanitized so a bad entry can't break the ctor.
   const config = {};
-  const servers = [];
-  if (ice.stun && /^stuns?:/i.test(ice.stun)) {
-    servers.push({ urls: ice.stun });
-  }
-  if (ice.turnUrl && /^turns?:/i.test(ice.turnUrl)) {
-    const relay = { urls: ice.turnUrl };
-    if (ice.turnUser) { relay.username = ice.turnUser; }
-    if (ice.turnCred) { relay.credential = ice.turnCred; }
-    servers.push(relay);
-  }
+  const servers = sanitizeIceServers(ice || []);
   if (servers.length > 0) {
     config.iceServers = servers;
   }

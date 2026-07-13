@@ -82,11 +82,11 @@
                     android:padding="24dp">
 
                     <ImageView
-                        android:layout_width="34dp"
-                        android:layout_height="34dp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="120dp"
+                        android:adjustViewBounds="true"
                         android:contentDescription="@null"
-                        android:src="@drawable/ic_qr_scan_24"
-                        app:tint="?attr/colorPrimary" />
+                        android:src="@drawable/ill_presents" />
 
                     <TextView
                         android:layout_width="match_parent"

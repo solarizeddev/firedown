@@ -275,6 +275,23 @@ public class Preferences {
     public static final String SETTINGS_P2P_TURN_USER = "com.solarized.firedown.preferences.p2p.turn.user";
     public static final String SETTINGS_P2P_TURN_CRED = "com.solarized.firedown.preferences.p2p.turn.cred";
 
+    /**
+     * Default TURN relay, ALWAYS included (the Amethyst model): the free public
+     * Open Relay Project (openrelay.metered.ca) with its well-known public
+     * credentials. It's the fallback that carries the (DTLS-encrypted) file
+     * when no direct path exists — VPN / CGNAT — so a share "just works" with
+     * zero setup. A user-configured TURN is ADDED to this, not a replacement.
+     * The three endpoints (80, 443, 443/tcp) cover progressively more hostile
+     * networks; they share one credential, so they're one iceServers entry.
+     */
+    public static final String[] DEFAULT_P2P_TURN_URLS = {
+            "turn:openrelay.metered.ca:80",
+            "turn:openrelay.metered.ca:443",
+            "turn:openrelay.metered.ca:443?transport=tcp",
+    };
+    public static final String DEFAULT_P2P_TURN_USER = "openrelayproject";
+    public static final String DEFAULT_P2P_TURN_CRED = "openrelayproject";
+
     /** A configured TURN relay, or {@code null} when none is set. */
     public static final class P2pTurn {
         public final String url;
@@ -286,6 +303,31 @@ public class Preferences {
             this.username = username;
             this.credential = credential;
         }
+    }
+
+    /**
+     * OPTIONAL signaling relay for the P2P share (see {@code signaling/server.js}).
+     * Default EMPTY = serverless: a shared link only completes on the same
+     * network (LAN answer return), and cross-network needs the reply code. Set
+     * to your relay origin (e.g. {@code https://sig.firedown.app}) to make a
+     * shared link work one-way on ANY network — the relay brokers only the
+     * ~1&nbsp;KB handshake, never the file. A trailing slash is trimmed.
+     */
+    public static final String SETTINGS_P2P_SIGNALING_URL =
+            "com.solarized.firedown.preferences.p2p.signaling.url";
+
+    /** The configured relay origin (no trailing slash), or empty when unset. */
+    @NonNull
+    public static String getP2pSignalingUrl(SharedPreferences sharedPreferences) {
+        String url = sharedPreferences.getString(SETTINGS_P2P_SIGNALING_URL, "");
+        if (url == null) {
+            return "";
+        }
+        url = url.trim();
+        while (url.endsWith("/")) {
+            url = url.substring(0, url.length() - 1);
+        }
+        return url;
     }
 
     @Nullable

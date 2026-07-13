@@ -24,6 +24,7 @@ import com.solarized.firedown.manager.UrlType;
 import com.solarized.firedown.utils.FileUriHelper;
 import com.solarized.firedown.utils.GalleryPublisher;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.mozilla.geckoview.GeckoRuntime;
@@ -201,6 +202,16 @@ public class P2pShareController {
     // sender's `ans` URL from the parsed offer (empty = reply-QR only).
     private P2pAnswerServer mAnswerServer;
     private String mRecvAnswerUrl;
+    // Optional signaling relay (cross-network one-link, see P2pSignalingClient).
+    // Sender: base + minted id, and the https share link once the offer is up.
+    // Receiver: base + id it opened the relay link with. Null = serverless.
+    private P2pSignalingClient mSignaling;
+    private String mSignalingBase;
+    private String mSignalingId;
+    private String mShareLink;
+    private String mOfferCode;
+    private String mRecvSignalingBase;
+    private String mRecvSignalingId;
     private String mRecvName;
     private String mRecvMime;
     private File mRecvPartFile;
@@ -212,10 +223,12 @@ public class P2pShareController {
     private DownloadEntity mReceivedEntity;
 
     // Short-deadline client for the receiver's direct answer POST: a LAN peer
-    // answers in milliseconds or not at all, and the reply-QR fallback should
-    // appear fast when it doesn't. Derived from the shared client (pool/DNS
+    // answers in milliseconds or not at all, and the relay/reply fallback should
+    // kick in fast when it doesn't. Derived from the shared client (pool/DNS
     // reused), tightened timeouts only.
     private final OkHttpClient mAnswerClient;
+    // The shared client, kept so a P2pSignalingClient can be spun up per share.
+    private final OkHttpClient mOkHttpClient;
 
     @Inject
     public P2pShareController(
@@ -229,6 +242,7 @@ public class P2pShareController {
         mSharedPreferences = sharedPreferences;
         mDownloadDataRepository = downloadDataRepository;
         mDiskExecutor = diskExecutor;
+        mOkHttpClient = okHttpClient;
         mAnswerClient = okHttpClient.newBuilder()
                 .connectTimeout(4, TimeUnit.SECONDS)
                 .readTimeout(4, TimeUnit.SECONDS)
@@ -315,11 +329,20 @@ public class P2pShareController {
         // Single-scan flow: bind the LAN answer listener so the offer carries
         // an answer-return URL and the receiver's Accept connects directly —
         // no second QR. Binding can fail (no LAN address); the flow then
-        // simply falls back to the reply QR.
+        // simply falls back to the relay or the reply QR.
         mAnswerServer = new P2pAnswerServer(code ->
                 mMainHandler.post(() -> onDirectAnswer(code)));
         if (!mAnswerServer.start()) {
             mAnswerServer = null;
+        }
+
+        // Cross-network one-link: if a relay is configured, mint a rendezvous
+        // id now; the offer is uploaded and the answer polled once the engine
+        // emits the offer code (onOfferReady). Empty = serverless.
+        mSignalingBase = Preferences.getP2pSignalingUrl(mSharedPreferences);
+        if (!mSignalingBase.isEmpty()) {
+            mSignaling = new P2pSignalingClient(mOkHttpClient);
+            mSignalingId = P2pSignalingClient.mintId();
         }
 
         JSONObject command = new JSONObject();
@@ -344,18 +367,46 @@ public class P2pShareController {
     }
 
     /**
-     * Add the STUN echo and the OPTIONAL user-configured TURN relay to a start
-     * command. Both come from Settings; TURN is absent unless the user set one
-     * (the privacy default is relay-free — see {@link Preferences#getP2pTurn}).
+     * Build the full {@code iceServers} list for a start command (the RTC
+     * shape: each entry {@code {urls, username?, credential?}}). Always
+     * included: the chosen STUN echo + the default openrelay TURN (so a share
+     * works out of the box, VPN/CGNAT included — the Amethyst model). A
+     * user-configured TURN is ADDED for restrictive networks, never a
+     * replacement.
      */
     private void putIceServers(JSONObject command) throws JSONException {
-        command.put("stun", Preferences.getP2pStunServer(mSharedPreferences));
+        JSONArray servers = new JSONArray();
+
+        String stun = Preferences.getP2pStunServer(mSharedPreferences);
+        if (stun != null && !stun.isEmpty()) {
+            servers.put(new JSONObject().put("urls", stun));
+        }
+
+        // Default TURN — always on. One entry, its three endpoints sharing a
+        // credential (urls as an array is valid RTCIceServer).
+        JSONArray defaultTurn = new JSONArray();
+        for (String u : Preferences.DEFAULT_P2P_TURN_URLS) {
+            defaultTurn.put(u);
+        }
+        servers.put(new JSONObject()
+                .put("urls", defaultTurn)
+                .put("username", Preferences.DEFAULT_P2P_TURN_USER)
+                .put("credential", Preferences.DEFAULT_P2P_TURN_CRED));
+
+        // Additive custom TURN (Settings), for networks the defaults can't cross.
         Preferences.P2pTurn turn = Preferences.getP2pTurn(mSharedPreferences);
         if (turn != null) {
-            command.put("turnUrl", turn.url);
-            command.put("turnUser", turn.username);
-            command.put("turnCred", turn.credential);
+            JSONObject entry = new JSONObject().put("urls", turn.url);
+            if (!turn.username.isEmpty()) {
+                entry.put("username", turn.username);
+            }
+            if (!turn.credential.isEmpty()) {
+                entry.put("credential", turn.credential);
+            }
+            servers.put(entry);
         }
+
+        command.put("iceServers", servers);
     }
 
     /**
@@ -371,32 +422,85 @@ public class P2pShareController {
             return;
         }
         postCommand(command);
-        // The answer is in (whichever way it arrived) — the LAN listener's
-        // job is done; don't keep a socket open through the transfer.
+        // The answer is in (whichever way it arrived) — the LAN listener and
+        // relay poll have done their job; don't keep sockets open through the
+        // transfer. (The engine ignores a second answer, so a race is benign.)
         if (mAnswerServer != null) {
             mAnswerServer.stop();
             mAnswerServer = null;
         }
+        if (mSignaling != null) {
+            mSignaling.cancel();
+        }
     }
 
     /**
-     * Sender: an answer arrived over the LAN answer listener (the single-scan
-     * return path) — validate and apply like a scanned reply. Runs on main
-     * (posted by the listener's callback).
+     * Sender: the engine minted the offer. Show it (QR) and, if a relay is
+     * configured, upload it and long-poll for the answer so a shared LINK
+     * completes across networks. The LAN answer listener runs in parallel; the
+     * first answer to arrive wins.
+     */
+    private void onOfferReady(@NonNull String code) {
+        mOfferCode = code;
+        if (mSignaling != null && mSignalingId != null && !mSignalingBase.isEmpty()) {
+            final String base = mSignalingBase;
+            final String id = mSignalingId;
+            mSignaling.uploadOffer(base, id, code, ok -> mMainHandler.post(() -> {
+                if (!"send".equals(mRole)) {
+                    return;
+                }
+                if (ok != null) {
+                    mShareLink = base + "/s/" + id;
+                    mSignaling.pollAnswer(base, id, ans ->
+                            mMainHandler.post(() -> onRelayAnswer(ans)));
+                }
+            }));
+        }
+        if (mListener != null) {
+            mListener.onCode("offer", code);
+        }
+    }
+
+    /** The content the "Send a link" action shares: the relay link when the
+     *  offer is up on a relay, otherwise the self-contained offer deep link. */
+    @Nullable
+    @UiThread
+    public String getShareContent() {
+        if (mShareLink != null) {
+            return mShareLink;
+        }
+        return mOfferCode != null ? toDeepLink(mOfferCode) : null;
+    }
+
+    /**
+     * Sender: an answer arrived over the LAN listener (same-network) or the
+     * relay poll (cross-network) — validate and apply like a scanned reply.
+     * First one wins; the engine ignores a later duplicate. Runs on main.
      */
     private void onDirectAnswer(@NonNull String raw) {
-        if (!"send".equals(mRole)) {
+        applyIncomingAnswer(raw, "LAN return");
+    }
+
+    private void onRelayAnswer(@Nullable String raw) {
+        if (raw == null) {
+            return; // poll gave up / cancelled — LAN or reply QR still stand
+        }
+        applyIncomingAnswer(raw, "relay");
+    }
+
+    private void applyIncomingAnswer(@Nullable String raw, String via) {
+        if (!"send".equals(mRole) || raw == null) {
             return;
         }
         String code = stripDeepLink(raw);
         if (!code.startsWith(ANSWER_PREFIX)) {
             if (BuildConfig.DEBUG) {
-                Log.d(TAG, "direct answer rejected (bad prefix)");
+                Log.d(TAG, "answer rejected (bad prefix) via " + via);
             }
             return;
         }
         if (BuildConfig.DEBUG) {
-            Log.d(TAG, "answer received over LAN return");
+            Log.d(TAG, "answer received via " + via);
         }
         provideAnswer(code);
     }
@@ -410,10 +514,46 @@ public class P2pShareController {
         stopSession(false);
         mListener = listener;
         mRole = "receive";
+        beginReceive(code);
+    }
 
+    /**
+     * Receiver: open a relay link — fetch the offer from the signaling relay by
+     * {@code id}, then proceed as a normal receive. On accept, the answer is
+     * posted back to the SAME relay (and/or the LAN), so a shared link needs no
+     * reply code. {@code base} is the relay origin the link was opened with.
+     */
+    @UiThread
+    public void startReceiveFromRelay(@NonNull String base, @NonNull String id,
+                                      @NonNull Listener listener) {
+        stopSession(false);
+        mListener = listener;
+        mRole = "receive";
+        mRecvSignalingBase = base;
+        mRecvSignalingId = id;
+        mSignaling = new P2pSignalingClient(mOkHttpClient);
+        mSignaling.fetchOffer(base, id, offer -> mMainHandler.post(() -> {
+            if (!"receive".equals(mRole)) {
+                return; // torn down while fetching
+            }
+            if (offer == null) {
+                // Soft: the link is expired or wrong — let the UI show "bad code"
+                // and keep the scan/paste entry usable.
+                if (mListener != null) {
+                    mListener.onError("bad-code", "link expired");
+                }
+                stopSession(false);
+                return;
+            }
+            beginReceive(offer);
+        }));
+    }
+
+    /** Shared receive kickoff: start the loopback + engine and hand it the offer. */
+    private void beginReceive(@NonNull String code) {
         // The loopback must exist now to host the engine page; the write
         // target is armed later in acceptOffer() on this same server.
-        if (!startLoopback()) {
+        if (mServer == null && !startLoopback()) {
             postError("engine", "loopback start failed");
             return;
         }
@@ -529,13 +669,10 @@ public class P2pShareController {
             case "code" -> {
                 String role = json.optString("role", "");
                 String code = json.optString("code", "");
-                // Single-scan flow: when the offer carried an answer-return
-                // URL, POST the answer straight to the sender instead of
-                // showing the reply QR; the QR appears only if that fails.
-                if ("answer".equals(role) && mRecvAnswerUrl != null && !mRecvAnswerUrl.isEmpty()) {
-                    postAnswerDirect(mRecvAnswerUrl, code);
-                } else if (mListener != null) {
-                    mListener.onCode(role, code);
+                if ("offer".equals(role)) {
+                    onOfferReady(code);
+                } else if ("answer".equals(role)) {
+                    deliverAnswer(code);
                 }
             }
             case "offer-parsed" -> {
@@ -763,12 +900,43 @@ public class P2pShareController {
     }
 
     /**
-     * Receiver: POST the answer straight to the sender's LAN answer listener
-     * (single-scan flow). On success nothing more happens here — ICE proceeds
-     * and the engine's own state events drive the UI. On failure, fall back to
-     * the reply QR by delivering the code to the listener as before.
+     * Receiver: get the answer back to the sender. Tries, in order of best UX:
+     * (1) the LAN answer listener (serverless, same-network, instant),
+     * (2) the signaling relay (cross-network, if the receiver opened a relay
+     *     link), (3) the reply QR/code (last resort — the sender scans it).
+     * Each step falls through to the next on failure.
      */
-    private void postAnswerDirect(@NonNull String answerUrl, @NonNull String code) {
+    private void deliverAnswer(@NonNull String code) {
+        if (mRecvAnswerUrl != null && !mRecvAnswerUrl.isEmpty()) {
+            postAnswerLan(mRecvAnswerUrl, code, () -> relayOrReply(code));
+        } else {
+            relayOrReply(code);
+        }
+    }
+
+    private void relayOrReply(@NonNull String code) {
+        if (mSignaling != null && mRecvSignalingId != null
+                && mRecvSignalingBase != null && !mRecvSignalingBase.isEmpty()) {
+            mSignaling.postAnswer(mRecvSignalingBase, mRecvSignalingId, code, r ->
+                    mMainHandler.post(() -> {
+                        if (r != null) {
+                            if (BuildConfig.DEBUG) {
+                                Log.d(TAG, "answer posted to relay");
+                            }
+                            // Success: sender's poll picks it up; ICE proceeds.
+                        } else {
+                            deliverReplyFallback(code);
+                        }
+                    }));
+        } else {
+            deliverReplyFallback(code);
+        }
+    }
+
+    /** POST the answer to the sender's LAN listener; run {@code onFail} (main
+     *  thread) if it doesn't land. */
+    private void postAnswerLan(@NonNull String answerUrl, @NonNull String code,
+                               @NonNull Runnable onFail) {
         Request request = new Request.Builder()
                 .url(answerUrl)
                 .post(RequestBody.create(code, MediaType.parse("text/plain; charset=utf-8")))
@@ -777,9 +945,9 @@ public class P2pShareController {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
                 if (BuildConfig.DEBUG) {
-                    Log.d(TAG, "direct answer failed: " + e.getMessage());
+                    Log.d(TAG, "LAN answer failed: " + e.getMessage());
                 }
-                deliverReplyFallback(code);
+                mMainHandler.post(onFail);
             }
 
             @Override
@@ -791,20 +959,18 @@ public class P2pShareController {
                         Log.d(TAG, "answer returned over LAN");
                     }
                 } else {
-                    deliverReplyFallback(code);
+                    mMainHandler.post(onFail);
                 }
             }
         });
     }
 
     private void deliverReplyFallback(@NonNull String code) {
-        mMainHandler.post(() -> {
-            // The session may have moved on (connected anyway, or torn down).
-            if ("receive".equals(mRole) && mListener != null) {
-                mRecvAnswerUrl = null; // don't re-attempt on a re-emit
-                mListener.onCode("answer", code);
-            }
-        });
+        // The session may have moved on (connected anyway, or torn down).
+        if ("receive".equals(mRole) && mListener != null) {
+            mRecvAnswerUrl = null; // don't re-attempt LAN on a re-emit
+            mListener.onCode("answer", code);
+        }
     }
 
     private void runPendingIfReady() {
@@ -860,6 +1026,16 @@ public class P2pShareController {
             mAnswerServer.stop();
             mAnswerServer = null;
         }
+        if (mSignaling != null) {
+            mSignaling.cancel();
+            mSignaling = null;
+        }
+        mSignalingBase = null;
+        mSignalingId = null;
+        mShareLink = null;
+        mOfferCode = null;
+        mRecvSignalingBase = null;
+        mRecvSignalingId = null;
         mRecvAnswerUrl = null;
         if (deletePartial && mRecvPartFile != null && !mRecvFinalized) {
             // Off the main thread — exists()/delete() are disk I/O (StrictMode
