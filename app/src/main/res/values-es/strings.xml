@@ -706,4 +706,12 @@
     <string name="p2p_qr_too_large">Este código es demasiado grande para mostrarlo como QR — usa “Enviar el código de otra forma”.</string>
     <string name="p2p_qr_content_desc">Tu código para compartir, como QR</string>
     <string name="settings_p2p_stun_invalid">Introduce una dirección válida, p. ej. stun:host:3478</string>
+    <string name="settings_p2p_turn">Relé TURN</string>
+    <string name="settings_p2p_turn_summary">Desactivado — configura un relé para conectar dispositivos que no pueden encontrarse directamente (ambos con datos móviles, o uno detrás de una VPN).</string>
+    <string name="settings_p2p_turn_message">Opcional. Solo se usa cuando falla una conexión directa; tus archivos permanecen cifrados de extremo a extremo a través del relé.</string>
+    <string name="settings_p2p_turn_url_hint">turn:host:3478</string>
+    <string name="settings_p2p_turn_user_hint">Nombre de usuario</string>
+    <string name="settings_p2p_turn_cred_hint">Contraseña</string>
+    <string name="settings_p2p_turn_clear">Borrar</string>
+    <string name="settings_p2p_turn_invalid">Introduce un relé válido, p. ej. turn:host:3478</string>
 </resources>

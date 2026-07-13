@@ -492,4 +492,12 @@
     <string name="p2p_qr_too_large">Цей код завеликий, щоб показати його як QR — скористайтеся “Надіслати код іншим способом”.</string>
     <string name="p2p_qr_content_desc">Ваш код обміну у вигляді QR</string>
     <string name="settings_p2p_stun_invalid">Введіть коректну адресу, напр. stun:host:3478</string>
+    <string name="settings_p2p_turn">TURN-ретранслятор</string>
+    <string name="settings_p2p_turn_summary">Вимкнено — задайте ретранслятор, щоб з\'єднати пристрої, які не можуть зв\'язатися напряму (обидва на мобільному інтернеті або один за VPN).</string>
+    <string name="settings_p2p_turn_message">Необов\'язково. Використовується лише коли пряме з\'єднання не вдається; ваші файли залишаються наскрізно зашифрованими через ретранслятор.</string>
+    <string name="settings_p2p_turn_url_hint">turn:host:3478</string>
+    <string name="settings_p2p_turn_user_hint">Ім\'я користувача</string>
+    <string name="settings_p2p_turn_cred_hint">Пароль</string>
+    <string name="settings_p2p_turn_clear">Очистити</string>
+    <string name="settings_p2p_turn_invalid">Введіть коректний ретранслятор, напр. turn:host:3478</string>
 </resources>

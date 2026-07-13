@@ -574,4 +574,12 @@
     <string name="p2p_qr_too_large">Ten kod jest za duży, aby pokazać go jako kod QR — użyj opcji “Wyślij kod w inny sposób”.</string>
     <string name="p2p_qr_content_desc">Twój kod udostępniania jako kod QR</string>
     <string name="settings_p2p_stun_invalid">Wprowadź prawidłowy adres, np. stun:host:3478</string>
+    <string name="settings_p2p_turn">Przekaźnik TURN</string>
+    <string name="settings_p2p_turn_summary">Wyłączone — ustaw przekaźnik, aby połączyć urządzenia, które nie mogą się bezpośrednio odnaleźć (oba na danych komórkowych lub jedno za VPN).</string>
+    <string name="settings_p2p_turn_message">Opcjonalne. Używany tylko wtedy, gdy połączenie bezpośrednie się nie powiedzie; Twoje pliki pozostają szyfrowane od końca do końca przez przekaźnik.</string>
+    <string name="settings_p2p_turn_url_hint">turn:host:3478</string>
+    <string name="settings_p2p_turn_user_hint">Nazwa użytkownika</string>
+    <string name="settings_p2p_turn_cred_hint">Hasło</string>
+    <string name="settings_p2p_turn_clear">Wyczyść</string>
+    <string name="settings_p2p_turn_invalid">Wprowadź prawidłowy przekaźnik, np. turn:host:3478</string>
 </resources>

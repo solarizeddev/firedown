@@ -706,4 +706,12 @@
     <string name="p2p_qr_too_large">Dieser Code ist zu groß, um als QR angezeigt zu werden — nutze “Code anders senden”.</string>
     <string name="p2p_qr_content_desc">Dein Teilen-Code als QR</string>
     <string name="settings_p2p_stun_invalid">Gib eine gültige Adresse ein, z. B. stun:host:3478</string>
+    <string name="settings_p2p_turn">TURN-Relay</string>
+    <string name="settings_p2p_turn_summary">Aus — lege ein Relay fest, um Geräte zu verbinden, die sich nicht direkt erreichen können (beide im Mobilfunknetz oder eines hinter einem VPN).</string>
+    <string name="settings_p2p_turn_message">Optional. Wird nur verwendet, wenn eine direkte Verbindung fehlschlägt; deine Dateien bleiben über das Relay Ende-zu-Ende verschlüsselt.</string>
+    <string name="settings_p2p_turn_url_hint">turn:host:3478</string>
+    <string name="settings_p2p_turn_user_hint">Benutzername</string>
+    <string name="settings_p2p_turn_cred_hint">Passwort</string>
+    <string name="settings_p2p_turn_clear">Löschen</string>
+    <string name="settings_p2p_turn_invalid">Gib ein gültiges Relay ein, z. B. turn:host:3478</string>
 </resources>

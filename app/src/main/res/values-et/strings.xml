@@ -444,4 +444,12 @@
     <string name="p2p_qr_too_large">See kood on QR-koodina näitamiseks liiga suur — kasuta valikut “Saada kood muul viisil”.</string>
     <string name="p2p_qr_content_desc">Sinu jagamiskood QR-koodina</string>
     <string name="settings_p2p_stun_invalid">Sisesta kehtiv aadress, nt stun:host:3478</string>
+    <string name="settings_p2p_turn">TURN-relee</string>
+    <string name="settings_p2p_turn_summary">Väljas — määra relee, et ühendada seadmed, mis ei saa üksteist otse leida (mõlemad mobiilsel andmesidel või üks VPN-i taga).</string>
+    <string name="settings_p2p_turn_message">Valikuline. Kasutatakse ainult siis, kui otseühendus ebaõnnestub; sinu failid jäävad relee kaudu läbivalt krüptituks.</string>
+    <string name="settings_p2p_turn_url_hint">turn:host:3478</string>
+    <string name="settings_p2p_turn_user_hint">Kasutajanimi</string>
+    <string name="settings_p2p_turn_cred_hint">Parool</string>
+    <string name="settings_p2p_turn_clear">Kustuta</string>
+    <string name="settings_p2p_turn_invalid">Sisesta kehtiv relee, nt turn:host:3478</string>
 </resources>

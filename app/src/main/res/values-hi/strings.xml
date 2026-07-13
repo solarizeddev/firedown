@@ -481,4 +481,12 @@
     <string name="p2p_qr_too_large">यह कोड QR के रूप में दिखाने के लिए बहुत बड़ा है — “कोड किसी और तरीके से भेजें” का उपयोग करें।</string>
     <string name="p2p_qr_content_desc">आपका शेयर कोड, QR के रूप में</string>
     <string name="settings_p2p_stun_invalid">मान्य पता दर्ज करें, जैसे stun:host:3478</string>
+    <string name="settings_p2p_turn">TURN रिले</string>
+    <string name="settings_p2p_turn_summary">बंद — ऐसे डिवाइस जोड़ने के लिए रिले सेट करें जो एक-दूसरे तक सीधे नहीं पहुँच सकते (दोनों मोबाइल डेटा पर, या एक VPN के पीछे)।</string>
+    <string name="settings_p2p_turn_message">वैकल्पिक। केवल तभी उपयोग होता है जब सीधा कनेक्शन विफल हो; आपकी फ़ाइलें रिले के ज़रिए एंड-टू-एंड एन्क्रिप्टेड रहती हैं।</string>
+    <string name="settings_p2p_turn_url_hint">turn:host:3478</string>
+    <string name="settings_p2p_turn_user_hint">उपयोगकर्ता नाम</string>
+    <string name="settings_p2p_turn_cred_hint">पासवर्ड</string>
+    <string name="settings_p2p_turn_clear">साफ़ करें</string>
+    <string name="settings_p2p_turn_invalid">मान्य रिले दर्ज करें, जैसे turn:host:3478</string>
 </resources>

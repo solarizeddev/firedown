@@ -703,4 +703,12 @@
     <string name="p2p_qr_too_large">此代码太大，无法显示为 QR——请使用“以其他方式发送代码”。</string>
     <string name="p2p_qr_content_desc">你的分享代码，以 QR 形式</string>
     <string name="settings_p2p_stun_invalid">请输入有效地址，例如 stun:host:3478</string>
+    <string name="settings_p2p_turn">TURN 中继</string>
+    <string name="settings_p2p_turn_summary">关闭——设置中继以连接无法直接相互访问的设备（两者都使用移动数据，或其中一个位于 VPN 之后）。</string>
+    <string name="settings_p2p_turn_message">可选。仅在直接连接失败时使用；你的文件通过中继时仍保持端到端加密。</string>
+    <string name="settings_p2p_turn_url_hint">turn:host:3478</string>
+    <string name="settings_p2p_turn_user_hint">用户名</string>
+    <string name="settings_p2p_turn_cred_hint">密码</string>
+    <string name="settings_p2p_turn_clear">清除</string>
+    <string name="settings_p2p_turn_invalid">请输入有效的中继，例如 turn:host:3478</string>
 </resources>

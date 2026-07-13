@@ -575,4 +575,12 @@
     <string name="p2p_qr_too_large">Este código é grande demais para mostrar como QR — use “Enviar código de outra forma”.</string>
     <string name="p2p_qr_content_desc">Seu código de compartilhamento, como QR</string>
     <string name="settings_p2p_stun_invalid">Insira um endereço válido, ex.: stun:host:3478</string>
+    <string name="settings_p2p_turn">Retransmissor TURN</string>
+    <string name="settings_p2p_turn_summary">Desativado — defina um retransmissor para conectar dispositivos que não conseguem se encontrar diretamente (ambos em dados móveis ou um atrás de uma VPN).</string>
+    <string name="settings_p2p_turn_message">Opcional. Usado apenas quando uma conexão direta falha; seus arquivos permanecem criptografados de ponta a ponta pelo retransmissor.</string>
+    <string name="settings_p2p_turn_url_hint">turn:host:3478</string>
+    <string name="settings_p2p_turn_user_hint">Nome de usuário</string>
+    <string name="settings_p2p_turn_cred_hint">Senha</string>
+    <string name="settings_p2p_turn_clear">Limpar</string>
+    <string name="settings_p2p_turn_invalid">Insira um retransmissor válido, ex.: turn:host:3478</string>
 </resources>

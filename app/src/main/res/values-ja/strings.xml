@@ -703,4 +703,12 @@
     <string name="p2p_qr_too_large">このコードは大きすぎて QR として表示できません。「別の方法でコードを送る」を使用してください。</string>
     <string name="p2p_qr_content_desc">共有コードの QR</string>
     <string name="settings_p2p_stun_invalid">有効なアドレスを入力してください（例: stun:host:3478）</string>
+    <string name="settings_p2p_turn">TURN リレー</string>
+    <string name="settings_p2p_turn_summary">オフ — 直接つながれない端末（両方がモバイルデータ、または一方が VPN の内側）を接続するには、リレーを設定してください。</string>
+    <string name="settings_p2p_turn_message">任意。直接接続が失敗したときにのみ使用されます。ファイルはリレーを経由してもエンドツーエンドで暗号化されたままです。</string>
+    <string name="settings_p2p_turn_url_hint">turn:host:3478</string>
+    <string name="settings_p2p_turn_user_hint">ユーザー名</string>
+    <string name="settings_p2p_turn_cred_hint">パスワード</string>
+    <string name="settings_p2p_turn_clear">消去</string>
+    <string name="settings_p2p_turn_invalid">有効なリレーを入力してください（例: turn:host:3478）</string>
 </resources>

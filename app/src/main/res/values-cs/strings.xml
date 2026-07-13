@@ -530,4 +530,12 @@
     <string name="p2p_qr_too_large">Tento kód je příliš velký na zobrazení jako QR — použijte “Poslat kód jinak”.</string>
     <string name="p2p_qr_content_desc">Váš kód pro sdílení jako QR</string>
     <string name="settings_p2p_stun_invalid">Zadejte platnou adresu, např. stun:host:3478</string>
+    <string name="settings_p2p_turn">TURN relé</string>
+    <string name="settings_p2p_turn_summary">Vypnuto — nastavte relé pro připojení zařízení, která se nemohou najít přímo (obě na mobilních datech nebo jedno za VPN).</string>
+    <string name="settings_p2p_turn_message">Volitelné. Použije se pouze při selhání přímého připojení; vaše soubory zůstávají přes relé šifrované od konce ke konci.</string>
+    <string name="settings_p2p_turn_url_hint">turn:host:3478</string>
+    <string name="settings_p2p_turn_user_hint">Uživatelské jméno</string>
+    <string name="settings_p2p_turn_cred_hint">Heslo</string>
+    <string name="settings_p2p_turn_clear">Vymazat</string>
+    <string name="settings_p2p_turn_invalid">Zadejte platné relé, např. turn:host:3478</string>
 </resources>

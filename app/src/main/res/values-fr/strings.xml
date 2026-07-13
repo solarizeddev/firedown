@@ -707,4 +707,12 @@
     <string name="p2p_qr_too_large">Ce code est trop grand pour être affiché en QR — utilisez “Envoyer le code autrement”.</string>
     <string name="p2p_qr_content_desc">Votre code de partage, en QR</string>
     <string name="settings_p2p_stun_invalid">Saisissez une adresse valide, p. ex. stun:host:3478</string>
+    <string name="settings_p2p_turn">Relais TURN</string>
+    <string name="settings_p2p_turn_summary">Désactivé — définissez un relais pour connecter des appareils qui ne peuvent pas se joindre directement (les deux en données mobiles, ou l\'un derrière un VPN).</string>
+    <string name="settings_p2p_turn_message">Facultatif. Utilisé uniquement lorsqu\'une connexion directe échoue ; vos fichiers restent chiffrés de bout en bout via le relais.</string>
+    <string name="settings_p2p_turn_url_hint">turn:host:3478</string>
+    <string name="settings_p2p_turn_user_hint">Nom d\'utilisateur</string>
+    <string name="settings_p2p_turn_cred_hint">Mot de passe</string>
+    <string name="settings_p2p_turn_clear">Effacer</string>
+    <string name="settings_p2p_turn_invalid">Saisissez un relais valide, p. ex. turn:host:3478</string>
 </resources>
