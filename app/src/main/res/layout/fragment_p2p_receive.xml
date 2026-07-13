@@ -1,0 +1,374 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- "Receive a file" — P2P share receiver (P2pReceiveFragment). Walks
+     entry (scan/paste) → preview (accept/decline) → reply QR → transfer →
+     done. Same one-column, visibility-flipped composition as the sender. -->
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appbar_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:liftOnScroll="true"
+        app:liftOnScrollTargetViewId="@+id/p2p_receive_scroll">
+
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:theme="@style/ThemeOverlay.FireDown.Toolbar"
+            app:navigationIcon="@drawable/ic_arrow_back_24"
+            app:navigationIconTint="?attr/colorOnSurface"
+            app:title="@string/p2p_receive_title" />
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior">
+
+        <androidx.core.widget.NestedScrollView
+            android:id="@+id/p2p_receive_scroll"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:fillViewport="true">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingBottom="24dp">
+
+                <TextView
+                    android:id="@+id/p2p_receive_lead"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingHorizontal="16dp"
+                    android:paddingTop="4dp"
+                    android:text="@string/p2p_receive_lead"
+                    android:textAppearance="?attr/textAppearanceBodyMedium"
+                    android:textColor="?attr/colorOnSurfaceVariant" />
+
+                <TextView
+                    android:id="@+id/p2p_rtc_note"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:alpha="0.75"
+                    android:paddingHorizontal="16dp"
+                    android:paddingTop="6dp"
+                    android:text="@string/p2p_rtc_note"
+                    android:textAppearance="?attr/textAppearanceBodySmall"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:visibility="gone"
+                    tools:visibility="visible" />
+
+                <!-- Entry: scan or paste the sender's code -->
+                <LinearLayout
+                    android:id="@+id/p2p_entry_group"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="16dp"
+                    android:layout_marginTop="16dp"
+                    android:background="@drawable/bg_p2p_card"
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical"
+                    android:padding="24dp">
+
+                    <ImageView
+                        android:layout_width="34dp"
+                        android:layout_height="34dp"
+                        android:contentDescription="@null"
+                        android:src="@drawable/ic_qr_scan_24"
+                        app:tint="?attr/colorPrimary" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:gravity="center"
+                        android:text="@string/p2p_receive_entry"
+                        android:textAppearance="?attr/textAppearanceBodyMedium"
+                        android:textColor="?attr/colorOnSurfaceVariant" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/p2p_scan_code"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="18dp"
+                        app:icon="@drawable/ic_qr_scan_24"
+                        android:text="@string/p2p_scan_code" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/p2p_paste_code"
+                        style="@style/Widget.Material3.Button.TextButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="@string/p2p_paste_code" />
+
+                </LinearLayout>
+
+                <!-- Preview: what the sender is offering -->
+                <LinearLayout
+                    android:id="@+id/p2p_preview_group"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone"
+                    tools:visibility="visible">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginHorizontal="16dp"
+                        android:layout_marginTop="16dp"
+                        android:background="@drawable/bg_p2p_filecard"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="12dp">
+
+                        <ImageView
+                            android:id="@+id/p2p_preview_icon"
+                            android:layout_width="54dp"
+                            android:layout_height="54dp"
+                            android:contentDescription="@null"
+                            android:padding="12dp"
+                            app:tint="?attr/colorPrimary"
+                            tools:src="@drawable/ic_baseline_insert_drive_file_24" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="14dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/p2p_preview_name"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:ellipsize="middle"
+                                android:maxLines="1"
+                                android:textAppearance="?attr/textAppearanceTitleSmall"
+                                android:textColor="?attr/colorOnSurface"
+                                tools:text="Robot head buddy.mp4" />
+
+                            <TextView
+                                android:id="@+id/p2p_preview_tag"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:maxLines="1"
+                                android:textAppearance="?attr/textAppearanceBodySmall"
+                                android:textColor="?attr/colorOnSurfaceVariant"
+                                tools:text="214 MB · From Pixel 7" />
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_horizontal"
+                        android:layout_marginTop="16dp"
+                        android:orientation="horizontal">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/p2p_decline"
+                            style="@style/Widget.Material3.Button.OutlinedButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/p2p_decline" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/p2p_accept"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:text="@string/p2p_accept" />
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+                <!-- Status chip -->
+                <TextView
+                    android:id="@+id/p2p_status"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginTop="14dp"
+                    android:background="@drawable/bg_p2p_step"
+                    android:paddingHorizontal="14dp"
+                    android:paddingVertical="6dp"
+                    android:text="@string/p2p_state_connecting"
+                    android:textAppearance="?attr/textAppearanceLabelMedium"
+                    android:textColor="?attr/colorOnPrimaryContainer"
+                    android:visibility="gone"
+                    tools:visibility="visible" />
+
+                <!-- Reply stage: the answer QR to show back to the sender -->
+                <LinearLayout
+                    android:id="@+id/p2p_reply_group"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone"
+                    tools:visibility="visible">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginHorizontal="16dp"
+                        android:layout_marginTop="16dp"
+                        android:background="@drawable/bg_p2p_card"
+                        android:gravity="center_horizontal"
+                        android:orientation="vertical"
+                        android:paddingHorizontal="22dp"
+                        android:paddingVertical="22dp">
+
+                        <ImageView
+                            android:id="@+id/p2p_reply_qr"
+                            android:layout_width="232dp"
+                            android:layout_height="232dp"
+                            android:background="@drawable/bg_p2p_qr"
+                            android:contentDescription="@string/p2p_code_hint_reply"
+                            android:padding="12dp" />
+
+                    </LinearLayout>
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:paddingHorizontal="32dp"
+                        android:paddingTop="12dp"
+                        android:text="@string/p2p_code_hint_reply"
+                        android:textAppearance="?attr/textAppearanceBodySmall"
+                        android:textColor="?attr/colorOnSurfaceVariant" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/p2p_share_reply"
+                        style="@style/Widget.Material3.Button.TextButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_horizontal"
+                        android:text="@string/p2p_share_code" />
+
+                </LinearLayout>
+
+                <!-- Transfer stage -->
+                <LinearLayout
+                    android:id="@+id/p2p_progress_group"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="16dp"
+                    android:layout_marginTop="16dp"
+                    android:background="@drawable/bg_p2p_card"
+                    android:orientation="vertical"
+                    android:padding="22dp"
+                    android:visibility="gone"
+                    tools:visibility="visible">
+
+                    <com.google.android.material.progressindicator.LinearProgressIndicator
+                        android:id="@+id/p2p_progress_bar"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        app:trackCornerRadius="4dp" />
+
+                    <TextView
+                        android:id="@+id/p2p_progress_text"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:gravity="center"
+                        android:textAppearance="?attr/textAppearanceBodySmall"
+                        android:textColor="?attr/colorOnSurfaceVariant"
+                        tools:text="133 MB of 214 MB · 8.4 MB/s" />
+
+                </LinearLayout>
+
+                <!-- Done stage -->
+                <LinearLayout
+                    android:id="@+id/p2p_done_group"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="16dp"
+                    android:layout_marginTop="16dp"
+                    android:background="@drawable/bg_p2p_card"
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical"
+                    android:padding="24dp"
+                    android:visibility="gone"
+                    tools:visibility="visible">
+
+                    <ImageView
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:contentDescription="@null"
+                        android:src="@drawable/ic_baseline_check_circle_24"
+                        app:tint="?attr/colorPrimary" />
+
+                    <TextView
+                        android:id="@+id/p2p_done_text"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:gravity="center"
+                        android:text="@string/p2p_done_received"
+                        android:textAppearance="?attr/textAppearanceTitleSmall"
+                        android:textColor="?attr/colorOnSurface" />
+
+                </LinearLayout>
+
+                <!-- Error stage -->
+                <TextView
+                    android:id="@+id/p2p_error"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:paddingHorizontal="32dp"
+                    android:paddingTop="16dp"
+                    android:textAppearance="?attr/textAppearanceBodyMedium"
+                    android:textColor="?attr/colorError"
+                    android:visibility="gone"
+                    tools:text="@string/p2p_error_no_path"
+                    tools:visibility="visible" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/p2p_stop"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginTop="18dp"
+                    android:text="@string/p2p_stop" />
+
+            </LinearLayout>
+
+        </androidx.core.widget.NestedScrollView>
+
+        <TextView
+            android:id="@+id/p2p_footer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="?attr/colorSurfaceContainerHigh"
+            android:gravity="center"
+            android:paddingHorizontal="16dp"
+            android:paddingTop="12dp"
+            android:paddingBottom="16dp"
+            android:text="@string/p2p_footer"
+            android:textAppearance="?attr/textAppearanceBodySmall"
+            android:textColor="?attr/colorOnSurfaceVariant" />
+
+    </LinearLayout>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

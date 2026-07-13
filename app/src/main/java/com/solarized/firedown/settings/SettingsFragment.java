@@ -11,9 +11,12 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.provider.Settings;
+import android.text.InputType;
 import android.util.Log;
 import android.view.View;
 import android.view.autofill.AutofillManager;
+import android.widget.EditText;
+import android.widget.FrameLayout;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -362,6 +365,15 @@ public class SettingsFragment extends BasePreferenceFragment
 
             mGeckoRuntimeHelper.setWebRTC(value);
 
+        } else if (Preferences.SETTINGS_P2P_STUN.equals(key)) {
+
+            // Consumed at share time (Preferences.getP2pStunServer) — nothing
+            // to push into Gecko here. "custom" opens the url dialog.
+            String value = sharedPreferences.getString(key, Preferences.DEFAULT_P2P_STUN);
+            if (Preferences.P2P_STUN_CUSTOM_VALUE.equals(value)) {
+                showCustomStunDialog(sharedPreferences);
+            }
+
         } else if (Preferences.SETTINGS_DISABLE_WASM.equals(key)) {
 
             boolean disabled = sharedPreferences.getBoolean(key, Preferences.DEFAULT_DISABLE_WASM);
@@ -538,6 +550,33 @@ public class SettingsFragment extends BasePreferenceFragment
     // reachable after the list is no longer empty. The data side is shared:
     // DownloadBackupMirror.restoreFromTree dedups by file_path, so running
     // this on a populated list never duplicates rows.
+
+    /**
+     * "Custom…" STUN choice: take the url in a plain text dialog and store it
+     * beside the list value ({@link Preferences#SETTINGS_P2P_STUN_CUSTOM}).
+     * An empty/cancelled entry is fine — getP2pStunServer falls back to the
+     * default rather than downgrading shares to host-candidates-only.
+     */
+    private void showCustomStunDialog(SharedPreferences sharedPreferences) {
+        final EditText input = new EditText(requireContext());
+        input.setInputType(InputType.TYPE_TEXT_VARIATION_URI);
+        input.setHint("stun:host:3478");
+        input.setText(sharedPreferences.getString(Preferences.SETTINGS_P2P_STUN_CUSTOM, ""));
+        int padding = getResources().getDimensionPixelSize(R.dimen.address_bar_inset);
+        FrameLayout container = new FrameLayout(requireContext());
+        container.setPadding(padding, 0, padding, 0);
+        container.addView(input);
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.settings_p2p_stun_custom_title)
+                .setView(container)
+                .setPositiveButton(android.R.string.ok, (dialog, which) ->
+                        sharedPreferences.edit()
+                                .putString(Preferences.SETTINGS_P2P_STUN_CUSTOM,
+                                        input.getText().toString().trim())
+                                .apply())
+                .setNegativeButton(R.string.cancel, null)
+                .show();
+    }
 
     private void showRestoreDownloadsDialog() {
         new MaterialAlertDialogBuilder(requireContext())

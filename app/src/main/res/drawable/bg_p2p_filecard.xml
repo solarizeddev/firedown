@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- LAN-share surface card (QR stage / intro card) -->
+<!-- P2P-share shared-file card -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
     <solid android:color="?attr/colorSurfaceContainer" />
-    <corners android:radius="24dp" />
+    <corners android:radius="16dp" />
 </shape>

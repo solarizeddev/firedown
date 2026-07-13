@@ -23,6 +23,7 @@ import com.solarized.firedown.data.repository.WasmAllowlistRepository;
 import com.solarized.firedown.manager.UrlParser;
 import com.solarized.firedown.manager.UrlType;
 import com.solarized.firedown.nostr.NostrSignerBridge;
+import com.solarized.firedown.p2pshare.P2pShareController;
 import com.solarized.firedown.utils.JsonHelper;
 import com.solarized.firedown.utils.UrlStringUtils;
 
@@ -78,6 +79,7 @@ public class GeckoRuntimeHelper {
     private final Executor mNetworkExecutor;
     private final OkHttpClient mOkHttpClient;
     private final NostrSignerBridge mNostrSignerBridge;
+    private final P2pShareController mP2pShareController;
     private final Map<String, WebExtension.Port> mPorts = new HashMap<>();
     private int mTabId = DEFAULT_TAB_ID;
 
@@ -94,10 +96,12 @@ public class GeckoRuntimeHelper {
             PriorityTaskThreadPoolExecutor priorityExecutor,
             OkHttpClient okHttpClient,
             NostrSignerBridge nostrSignerBridge,
+            P2pShareController p2pShareController,
             @Qualifiers.MainThread Executor mainExecutor,
             @Qualifiers.Network Executor networkExecutor
     ) {
         this.mNostrSignerBridge = nostrSignerBridge;
+        this.mP2pShareController = p2pShareController;
         this.mIconsRepository = iconsRepository;
         this.mBrowserDownloadRepository = browserDownloadRepository;
         this.mGeckoStateDataRepository = geckoStateDataRepository;
@@ -243,6 +247,12 @@ public class GeckoRuntimeHelper {
         // in registerBuiltIn/registerSession covers this name (no special
         // multi-name repeat needed, unlike youtube/parser).
         registerBuiltIn("resource://android/assets/nostr/", "nostr@solarized.dev", "nostr");
+        // P2P share engine — a background page owning RTCPeerConnection for
+        // the direct device-to-device file transfer. It opens ONE long-lived
+        // native port ("p2pshare") at boot which onConnect hands to
+        // P2pShareController (the PoTokenGenerator ownership pattern); file
+        // bytes ride a loopback HTTP bridge, never the messaging layer.
+        registerBuiltIn("resource://android/assets/p2pshare/", "p2pshare@solarized.dev", "p2pshare");
     }
 
     /**
@@ -805,6 +815,14 @@ public class GeckoRuntimeHelper {
             // for the general-purpose extension <-> native channels).
             if (PoTokenGenerator.PORT_NAME.equals(name)) {
                 mPoTokenGenerator.onPortConnected(port);
+                return;
+            }
+
+            // The p2pshare engine port is owned by P2pShareController (same
+            // handoff rationale as the potoken port above): it has its own
+            // delegate and must not land in mPorts.
+            if (P2pShareController.PORT_NAME.equals(name)) {
+                mP2pShareController.onPortConnected(port);
                 return;
             }
 

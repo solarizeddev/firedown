@@ -58,6 +58,23 @@
         <item>custom</item>
     </string-array>
 
+    <!-- P2P share STUN server (entries/values index-aligned; the stored value
+         is the full stun: url — like settings_doh_servers, so no index remap
+         hazard — with the "custom" sentinel routed to a text dialog in
+         SettingsFragment). ONE server is handed to the engine per share:
+         parallel fallbacks would leak the user's IP to every listed host. -->
+    <string-array name="settings_p2p_stun_entries">
+        <item>Cloudflare</item>
+        <item>Nextcloud</item>
+        <item>@string/settings_p2p_stun_custom</item>
+    </string-array>
+
+    <string-array name="settings_p2p_stun_values">
+        <item>stun:stun.cloudflare.com:3478</item>
+        <item>stun:stun.nextcloud.com:443</item>
+        <item>custom</item>
+    </string-array>
+
 
     <string-array name="settings_lock">
         <item>@string/settings_lock_immediately</item>

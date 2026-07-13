@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- LAN-share live indicator: green dot in a translucent ring -->
+<!-- P2P-share live indicator: green dot in a translucent ring -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item>
         <shape android:shape="oval">

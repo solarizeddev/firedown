@@ -306,25 +306,7 @@
 
 
     <string name="media_tools">Meediatööriistad</string>
-    <string name="lan_send">Saada</string>
-    <string name="lan_share_title">Saada brauserisse</string>
     <string name="tabs_more_options">Rohkem valikuid</string>
-    <string name="lan_share_lead">Ava teises seadmes see aadress mis tahes brauseris samas Wi-Fi võrgus</string>
-    <string name="lan_share_qr_hint">Koodi skannimine avab lehe, kus PIN on juba sisestatud</string>
-    <string name="lan_share_cert_hint">Teise seadme brauser näitab esmalt turvahoiatust — vali Täpsemalt ja seejärel Jätka. Ühendus kahe seadme vahel on siiski krüptitud.</string>
-    <string name="lan_share_pin">PIN</string>
-    <string name="lan_share_stop">Lõpeta jagamine</string>
-    <string name="lan_share_footer">Jagamine lõpeb, kui sellelt ekraanilt lahkud. Miski ei lahku sinu võrgust.</string>
-    <string name="lan_share_no_network">Jagamiseks ühendu Wi-Fi võrguga</string>
-    <string name="lan_share_vpn_warning">VPN on aktiivne — kui vastuvõtja ei saa ühendust, luba VPN-rakenduses kohtvõrgu juurdepääs või lülita VPN välja</string>
-    <string name="lan_direct_intro">See telefon saab luua ajutise kuumkoha — teine seade liitub sellega ja fail liigub otse kahe telefoni vahel. Internetti ei kasutata.</string>
-    <string name="lan_direct_start">Käivita otseühendus</string>
-    <string name="lan_direct_step">Samm 1/2 — liitu kuumkohaga</string>
-    <string name="lan_direct_switch">Kasuta hoopis otseühendust</string>
-    <string name="lan_direct_join_hint">Skanni teise seadme kaameraga, et kuumkohaga liituda, seejärel puuduta Edasi</string>
-    <string name="lan_direct_password">Parool</string>
-    <string name="lan_direct_next">Edasi</string>
-    <string name="lan_direct_failed">Otseühenduse käivitamine ebaõnnestus</string>
     <string name="home_subtitle_blocked">%1$s blokeeritud</string>
     <string name="home_subtitle_saved">%1$s salvestatud</string>
     <string name="most_visited">Enim külastatud</string>
@@ -417,4 +399,41 @@
     <string name="nostr_no_signer_title">Nostri allkirjastaja puudub</string>
     <string name="nostr_no_signer_message">Nostriga sisselogimiseks on vaja allkirjastamisrakendust nagu Amber, mis hoiab sinu võtmeid seadmes. Paigalda see ja proovi uuesti.</string>
     <string name="nostr_install_amber">Paigalda Amber</string>
+    <!-- P2P direct share (WebRTC) — sender, receiver, scanner, errors -->
+    <string name="p2p_send">Saada</string>
+    <string name="p2p_send_title">Saada otse</string>
+    <string name="p2p_receive_title">Võta fail vastu</string>
+    <string name="p2p_send_lead">Saada see fail otse teise Firedowni kasutavasse seadmesse — krüptitult, seadmest seadmesse, ilma vahepealse serverita.</string>
+    <string name="p2p_receive_lead">Võta fail vastu otse teisest Firedowni kasutavast seadmest.</string>
+    <string name="p2p_rtc_note">WebRTC on sisse lülitatud, kuni see kuva on avatud.</string>
+    <string name="p2p_code_hint_send">Ava teises seadmes Allalaadimised → Võta fail vastu ja skanni see kood — seejärel skanni sealt saadud vastus.</string>
+    <string name="p2p_code_hint_reply">Näita seda vastust saatjale või saada see tagasi samal viisil, nagu saatja kood saabus.</string>
+    <string name="p2p_share_code">Saada kood muul viisil</string>
+    <string name="p2p_scan_reply">Skanni vastus</string>
+    <string name="p2p_paste_reply">Kleebi vastus</string>
+    <string name="p2p_scan_code">Skanni kood</string>
+    <string name="p2p_paste_code">Kleebi kood</string>
+    <string name="p2p_receive_entry">Palu saatjal näidata oma jagamiskoodi, seejärel skanni või kleebi see.</string>
+    <string name="p2p_receive_from">saatjalt %1$s</string>
+    <string name="p2p_accept">Nõustu</string>
+    <string name="p2p_decline">Keeldu</string>
+    <string name="p2p_state_connecting">Ühendamine…</string>
+    <string name="p2p_state_connected">Ühendatud</string>
+    <string name="p2p_progress_of">%1$s / %2$s · %3$s/s</string>
+    <string name="p2p_done_sent">Fail saadetud</string>
+    <string name="p2p_done_sent_detail">Saadetud · %1$s</string>
+    <string name="p2p_done_received">Salvestatud kausta Allalaadimised</string>
+    <string name="p2p_stop">Peata</string>
+    <string name="p2p_done">Valmis</string>
+    <string name="p2p_error_no_path">Teise seadmega ei õnnestunud otseühendust luua. Tavaliselt juhtub see siis, kui mõlemad seadmed on mobiilses andmesides — proovi liituda sama Wi-Fi võrguga.</string>
+    <string name="p2p_error_generic">Ülekanne ebaõnnestus.</string>
+    <string name="p2p_error_bad_code">See kood ei kehti — proovi uuesti.</string>
+    <string name="p2p_clipboard_empty">Lõikelaual pole koodi.</string>
+    <string name="p2p_footer">Krüptitud ülekanne seadmest seadmesse. Fail ei läbi kunagi serverit.</string>
+    <string name="p2p_scan_hint">Suuna kaamera saatja koodile</string>
+    <string name="p2p_camera_denied">Kaamera pole saadaval — kleebi kood selle asemel.</string>
+    <string name="settings_p2p_stun">STUN-server</string>
+    <string name="settings_p2p_stun_summary">Aitab kahel seadmel otsejagamise ajal üksteist interneti kaudu leida. Sellele saadetakse ainult sinu võrguaadress.</string>
+    <string name="settings_p2p_stun_custom">Kohandatud…</string>
+    <string name="settings_p2p_stun_custom_title">Kohandatud STUN-server</string>
 </resources>

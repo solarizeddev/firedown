@@ -1,0 +1,19 @@
+{
+  "manifest_version": 2,
+  "version": "1.0",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "p2pshare@solarized.dev"
+    }
+  },
+  "name": "Firedown P2P share engine",
+  "description": "WebRTC DataChannel engine for direct device-to-device file transfer. Signaling travels as QR/share-sheet codes minted by the app; file bytes move over a loopback bridge, never through JS strings.",
+  "background": {
+    "page": "background.html"
+  },
+  "permissions": [
+    "nativeMessaging",
+    "geckoViewAddons",
+    "http://127.0.0.1/*"
+  ]
+}

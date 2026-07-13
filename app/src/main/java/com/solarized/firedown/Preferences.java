@@ -225,6 +225,39 @@ public class Preferences {
     public static final boolean DEFAULT_ENABLE_WEBRTC = false;
 
     /**
+     * STUN server used by the P2P direct-share connection (the "what's my
+     * public address" echo — the only external party a share ever contacts,
+     * and only when the two devices are on different networks). ONE url is
+     * ever handed to the engine: listing several would make ICE query them
+     * all in parallel, leaking the user's IP to every fallback on every
+     * share. The value is either a full stun: url from the settings list or
+     * {@link #P2P_STUN_CUSTOM_VALUE}, in which case the url typed by the
+     * user lives in {@link #SETTINGS_P2P_STUN_CUSTOM}. Resolve through
+     * {@link #getP2pStunServer}.
+     */
+    public static final String SETTINGS_P2P_STUN = "com.solarized.firedown.preferences.p2p.stun.server";
+
+    public static final String DEFAULT_P2P_STUN = "stun:stun.cloudflare.com:3478";
+
+    public static final String SETTINGS_P2P_STUN_CUSTOM = "com.solarized.firedown.preferences.p2p.stun.custom";
+
+    public static final String P2P_STUN_CUSTOM_VALUE = "custom";
+
+    public static String getP2pStunServer(SharedPreferences sharedPreferences) {
+        String value = sharedPreferences.getString(SETTINGS_P2P_STUN, DEFAULT_P2P_STUN);
+        if (P2P_STUN_CUSTOM_VALUE.equals(value)) {
+            String custom = sharedPreferences.getString(SETTINGS_P2P_STUN_CUSTOM, "");
+            // An empty custom entry falls back to the default rather than
+            // silently downgrading every share to host-candidates-only.
+            if (custom == null || custom.trim().isEmpty()) {
+                return DEFAULT_P2P_STUN;
+            }
+            return custom.trim();
+        }
+        return value;
+    }
+
+    /**
      * WebAssembly is ENABLED by default — disabling it globally broke sites
      * that hard-require WASM (x.com login, kick.com) with no obvious recovery.
      * This is a "Disable WebAssembly" switch (default OFF = WASM enabled),

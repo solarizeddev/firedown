@@ -38,4 +38,12 @@
         app:showAsAction="ifRoom"
         android:title="@string/navigation_settings"/>
 
+    <!-- P2P share receiver entry — overflow only, an occasional action -->
+    <item
+        android:id="@+id/action_receive"
+        android:icon="@drawable/ic_qr_scan_24"
+        app:iconTint="?attr/colorOnSurface"
+        app:showAsAction="never"
+        android:title="@string/p2p_receive_title"/>
+
 </menu>

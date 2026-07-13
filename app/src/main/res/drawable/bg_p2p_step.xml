@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- LAN-share "Step 1 of 2" progress chip -->
+<!-- P2P-share status chip (connecting / transferring) -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
     <solid android:color="?attr/colorPrimaryContainer" />
     <corners android:radius="99dp" />

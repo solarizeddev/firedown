@@ -330,25 +330,7 @@
 
 
     <string name="media_tools">Медийни инструменти</string>
-    <string name="lan_send">Изпращане</string>
-    <string name="lan_share_title">Изпращане към браузър</string>
     <string name="tabs_more_options">Още опции</string>
-    <string name="lan_share_lead">На другото устройство отворете този адрес в произволен браузър в същата Wi-Fi мрежа</string>
-    <string name="lan_share_qr_hint">Сканирането на кода отваря страницата с вече попълнен PIN</string>
-    <string name="lan_share_cert_hint">Браузърът на другото устройство първо показва предупреждение за сигурност — изберете „Разширени“, после „Продължи“. Връзката между двете устройства остава шифрована.</string>
-    <string name="lan_share_pin">PIN</string>
-    <string name="lan_share_stop">Спиране на споделянето</string>
-    <string name="lan_share_footer">Споделянето спира, когато напуснете този екран. Нищо не напуска вашата мрежа.</string>
-    <string name="lan_share_no_network">Свържете се с Wi-Fi мрежа, за да споделяте</string>
-    <string name="lan_share_vpn_warning">Активен VPN — ако получателят не може да се свърже, разрешете локалния достъп във VPN приложението или го изключете</string>
-    <string name="lan_direct_intro">Този телефон може да създаде временна точка за достъп — другото устройство се свързва към нея и файлът се прехвърля директно между двата телефона. Интернет не се използва.</string>
-    <string name="lan_direct_start">Стартиране на директна връзка</string>
-    <string name="lan_direct_step">Стъпка 1 от 2 — свържете се с точката за достъп</string>
-    <string name="lan_direct_switch">Използване на директна връзка вместо това</string>
-    <string name="lan_direct_join_hint">Сканирайте с камерата на другото устройство, за да се свържете с точката за достъп, после натиснете „Напред“</string>
-    <string name="lan_direct_password">Парола</string>
-    <string name="lan_direct_next">Напред</string>
-    <string name="lan_direct_failed">Директната връзка не можа да стартира</string>
     <string name="home_subtitle_blocked">%1$s блокирани</string>
     <string name="home_subtitle_saved">%1$s запазени</string>
     <string name="most_visited">Най-посещавани</string>
@@ -441,4 +423,41 @@
     <string name="nostr_no_signer_title">Няма Nostr подписвач</string>
     <string name="nostr_no_signer_message">Влизането с Nostr изисква приложение за подписване като Amber, което пази ключовете ви на устройството. Инсталирайте такова и опитайте отново.</string>
     <string name="nostr_install_amber">Инсталирай Amber</string>
+    <!-- P2P direct share (WebRTC) — sender, receiver, scanner, errors -->
+    <string name="p2p_send">Изпрати</string>
+    <string name="p2p_send_title">Директно изпращане</string>
+    <string name="p2p_receive_title">Получаване на файл</string>
+    <string name="p2p_send_lead">Изпратете този файл директно към друго устройство с Firedown — шифровано, от устройство до устройство, без сървър по средата.</string>
+    <string name="p2p_receive_lead">Получете файл директно от друго устройство с Firedown.</string>
+    <string name="p2p_rtc_note">WebRTC е активен, докато този екран е отворен.</string>
+    <string name="p2p_code_hint_send">На другото устройство отворете Изтегляния → Получаване на файл и сканирайте този код — след това сканирайте отговора му.</string>
+    <string name="p2p_code_hint_reply">Покажете този отговор на изпращача или го изпратете обратно по същия начин, по който пристигна кодът му.</string>
+    <string name="p2p_share_code">Изпрати кода по друг начин</string>
+    <string name="p2p_scan_reply">Сканирай отговора</string>
+    <string name="p2p_paste_reply">Постави отговора</string>
+    <string name="p2p_scan_code">Сканирай кода</string>
+    <string name="p2p_paste_code">Постави кода</string>
+    <string name="p2p_receive_entry">Помолете изпращача да покаже кода си за споделяне, след което го сканирайте или поставете.</string>
+    <string name="p2p_receive_from">от %1$s</string>
+    <string name="p2p_accept">Приеми</string>
+    <string name="p2p_decline">Откажи</string>
+    <string name="p2p_state_connecting">Свързване…</string>
+    <string name="p2p_state_connected">Свързано</string>
+    <string name="p2p_progress_of">%1$s от %2$s · %3$s/s</string>
+    <string name="p2p_done_sent">Файлът е изпратен</string>
+    <string name="p2p_done_sent_detail">Изпратено · %1$s</string>
+    <string name="p2p_done_received">Запазено в Изтегляния</string>
+    <string name="p2p_stop">Спри</string>
+    <string name="p2p_done">Готово</string>
+    <string name="p2p_error_no_path">Не е възможна директна връзка с другото устройство. Това обикновено се случва, когато и двете страни са на мобилни данни — опитайте да се свържете към една и съща Wi-Fi мрежа.</string>
+    <string name="p2p_error_generic">Прехвърлянето беше неуспешно.</string>
+    <string name="p2p_error_bad_code">Този код не е валиден — опитайте отново.</string>
+    <string name="p2p_clipboard_empty">Няма код в клипборда.</string>
+    <string name="p2p_footer">Шифровано прехвърляне от устройство до устройство. Файлът никога не преминава през сървър.</string>
+    <string name="p2p_scan_hint">Насочете камерата към кода на изпращача</string>
+    <string name="p2p_camera_denied">Камерата не е достъпна — поставете кода вместо това.</string>
+    <string name="settings_p2p_stun">STUN сървър</string>
+    <string name="settings_p2p_stun_summary">Помага на две устройства да се открият през интернет при директно споделяне. Към него се изпраща само мрежовият ви адрес.</string>
+    <string name="settings_p2p_stun_custom">Персонализиран…</string>
+    <string name="settings_p2p_stun_custom_title">Персонализиран STUN сървър</string>
 </resources>

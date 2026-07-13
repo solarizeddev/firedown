@@ -2,7 +2,6 @@
 <manifest xmlns:tools="http://schemas.android.com/tools"
     xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.NEARBY_WIFI_DEVICES" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
@@ -15,20 +14,23 @@
     <uses-permission android:name="android.permission.DOWNLOAD_WITHOUT_NOTIFICATION"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
-    <!-- LAN-share "direct connection" only: startLocalOnlyHotspot() requires
-         CHANGE_WIFI_STATE + fine location (an Android platform requirement —
-         hotspot config is considered location-revealing). Location is
-         requested at runtime exclusively from the Send sheet's direct-
-         connection flow; the browser itself never reads location. -->
-    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <!-- P2P share QR scanner only: requested at runtime exclusively from the
+         scan screen; the browser itself never gains camera access (site
+         camera prompts stay OS-gated as before). Not required so camera-less
+         devices can still install — the paste fallback covers them. -->
+    <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"
         tools:ignore="RequestInstallPackagesPolicy" />
     <uses-permission android:name="android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"/>
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"
         tools:ignore="PackageVisibilityPolicy,QueryAllPackagesPermission" />
+
+    <!-- The QR scanner is optional (paste fallback) — don't exclude
+         camera-less devices from installing. -->
+    <uses-feature
+        android:name="android.hardware.camera.any"
+        android:required="false" />
 
     <!-- NIP-55 signer (Amber) visibility for Android 11+ package filtering.
          Firedown already holds QUERY_ALL_PACKAGES, but this scoped <queries>

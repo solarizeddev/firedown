@@ -51,8 +51,8 @@
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/qa_send"
                 style="@style/Firedown.Widget.PopupQuickRowButton"
-                app:icon="@drawable/ic_send_lan_24"
-                android:text="@string/lan_send" />
+                app:icon="@drawable/ic_p2p_send_24"
+                android:text="@string/p2p_send" />
 
         </LinearLayout>
 

@@ -781,25 +781,45 @@
          zero (fresh install, no browsing). Avoids the cosmetic
          '0 · ~0 saved' that would otherwise appear. -->
     <string name="home_trackers_subtitle_idle">Protection active</string>
-    <string name="lan_send">Send</string>
-    <string name="lan_share_title">Send to browser</string>
     <string name="tabs_more_options">More options</string>
-    <string name="lan_share_lead">On the other device, open this address in any browser on the same Wi-Fi</string>
-    <string name="lan_share_qr_hint">Scanning the code opens the page with the PIN already filled in</string>
-    <string name="lan_share_cert_hint">The other device\'s browser shows a security warning first — choose Advanced, then Continue. The connection is still encrypted between the two devices.</string>
-    <string name="lan_share_pin">PIN</string>
-    <string name="lan_share_stop">Stop sharing</string>
-    <string name="lan_share_footer">Sharing ends when you leave this screen. Nothing leaves your network.</string>
-    <string name="lan_share_no_network">Connect to a Wi-Fi network to share</string>
-    <string name="lan_share_vpn_warning">VPN active — if the receiver can\'t connect, allow LAN access in the VPN app or turn it off</string>
-    <string name="lan_direct_intro">This phone can create a temporary hotspot instead — the other device joins it and the file moves directly between the two phones. The internet is not used.</string>
-    <string name="lan_direct_start">Start direct connection</string>
-    <string name="lan_direct_step">Step 1 of 2 — join the hotspot</string>
-    <string name="lan_direct_switch">Use direct connection instead</string>
-    <string name="lan_direct_join_hint">Scan with the other device\'s camera to join the hotspot, then tap Next</string>
-    <string name="lan_direct_password">Password</string>
-    <string name="lan_direct_next">Next</string>
-    <string name="lan_direct_failed">Couldn\'t start the direct connection</string>
+
+    <!-- P2P direct share (WebRTC) — sender, receiver, scanner, errors -->
+    <string name="p2p_send">Send</string>
+    <string name="p2p_send_title">Send directly</string>
+    <string name="p2p_receive_title">Receive a file</string>
+    <string name="p2p_send_lead">Send this file straight to another device running Firedown — encrypted, device to device, with no server in between.</string>
+    <string name="p2p_receive_lead">Receive a file straight from another device running Firedown.</string>
+    <string name="p2p_rtc_note">WebRTC is on while this screen is open.</string>
+    <string name="p2p_code_hint_send">On the other device, open Downloads → Receive a file and scan this code — then scan their reply.</string>
+    <string name="p2p_code_hint_reply">Show this reply to the sender, or send it back the way their code arrived.</string>
+    <string name="p2p_share_code">Send code another way</string>
+    <string name="p2p_scan_reply">Scan reply</string>
+    <string name="p2p_paste_reply">Paste reply</string>
+    <string name="p2p_scan_code">Scan code</string>
+    <string name="p2p_paste_code">Paste code</string>
+    <string name="p2p_receive_entry">Ask the sender to show their share code, then scan or paste it.</string>
+    <string name="p2p_receive_from">from %1$s</string>
+    <string name="p2p_accept">Accept</string>
+    <string name="p2p_decline">Decline</string>
+    <string name="p2p_state_connecting">Connecting…</string>
+    <string name="p2p_state_connected">Connected</string>
+    <string name="p2p_progress_of">%1$s of %2$s · %3$s/s</string>
+    <string name="p2p_done_sent">File sent</string>
+    <string name="p2p_done_sent_detail">Sent · %1$s</string>
+    <string name="p2p_done_received">Saved to Downloads</string>
+    <string name="p2p_stop">Stop</string>
+    <string name="p2p_done">Done</string>
+    <string name="p2p_error_no_path">Couldn\'t reach the other device directly. This usually happens when both sides are on mobile data — try joining the same Wi-Fi network.</string>
+    <string name="p2p_error_generic">The transfer failed.</string>
+    <string name="p2p_error_bad_code">That code isn\'t valid — try again.</string>
+    <string name="p2p_clipboard_empty">No code in the clipboard.</string>
+    <string name="p2p_footer">Encrypted device-to-device transfer. The file never touches a server.</string>
+    <string name="p2p_scan_hint">Point the camera at the sender\'s code</string>
+    <string name="p2p_camera_denied">Camera unavailable — paste the code instead.</string>
+    <string name="settings_p2p_stun">STUN server</string>
+    <string name="settings_p2p_stun_summary">Helps two devices find each other across the internet during a direct share. Only your network address is ever sent to it.</string>
+    <string name="settings_p2p_stun_custom">Custom…</string>
+    <string name="settings_p2p_stun_custom_title">Custom STUN server</string>
 
     <!-- Nostr (NIP-07) signer permission prompt. %1$s is the site host. -->
     <string name="nostr_permission_title">Nostr signer</string>

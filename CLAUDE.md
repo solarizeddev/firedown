@@ -37,6 +37,7 @@ expose the real media URL after the page's own JS runs (often on play). So:
 | `webrequests/`| `downloader@solarized.dev` | **ALL capture** — the former `parser@` extension was MERGED into this one. Two halves in one extension: (1) the per-site **parsers** (`js/parsers/` — one ES module per site: Twitter/X, Instagram, Threads, Facebook, Vimeo, Rumble, Bilibili.tv, Niconico, Kick, Twitch, Dailymotion, Apple Podcasts, News Over Audio, TikTok, Bluesky, Telegram, Videee, Spotify; emits entries **with metadata** — title, author, thumbnail, duration, quality variants) plus the page-state bridge (`js/page-state-bridge.js`); (2) the **generic catch-all** (`js/requests.js` + `js/content-script.js` — any media URL seen on the wire, no rich metadata). Also hosts `js/wasm-watch.js` (+ `js/wasm-probe.js`), the WASM-disabled detector — a settings feature, not capture. |
 | `youtube/`    | `youtube@solarized.dev`  | YouTube (separate; uses `PoTokenGenerator` on the Java side). |
 | `ublock/`     | uBlock Origin            | Ad blocking. |
+| `p2pshare/`   | `p2pshare@solarized.dev` | **Not capture** — the P2P direct-share WebRTC engine (see ""Send directly" — P2P share"). |
 | `icons/`, `search/`, `db/`, `error/` | — | Support. |
 
 There is **no separate `parser/` extension anymore** — it was merged into
@@ -1269,128 +1270,106 @@ it covers both doors and every outcome) hides it once set. The flag lives in
 restore afresh while a within-install re-tap is not re-offered; Settings →
 "Restore previous downloads" stays as the deliberate retry door.
 
-## "Send to browser" — LAN share (`lanshare/`)
+## "Send directly" — P2P share (`p2pshare/`, WebRTC)
 
 The Downloads options sheet's quick-action row has a **Send** button
 (finished, non-safe entries only — **the vault is never sendable**, same
-contract as the backup mirror). It navigates to `LanShareFragment` — a
-**full nav-graph destination** in `nav_graph_downloads` extending
-`BaseFocusFragment`, same pattern as FrameGrabber/GifMaker (it was a bottom
-sheet originally, promoted because the QR/PIN handover wants a whole page;
-toolbar back / Stop both just pop the back stack) — which
-runs `LanShareServer` — a dependency-free `ServerSocket` HTTP server whose
-**lifetime is exactly the fragment's VIEW lifetime** (started in
-onCreateView, stopped in onDestroyView, hotspot reservation closed with
-it): no background service, no discovery
-announcement, nothing listens when the sheet isn't open. Any browser on the
-LAN (PC, phone, TV — and another Firedown, which downloads it through the
-normal pipeline since Firedown *is* a browser) opens `http://<ip>:53317`
-(ephemeral fallback if the port's taken) and gets Firedown-styled pages
-(served from `assets/lanshare/` templates with `{{TOKEN}}` substitution —
-the error-pages assets+Java pattern; firedown.app's design language).
-**Served pages are localized per REQUEST from the receiver's own
-`Accept-Language` header** (`resolveLang`/`strings`/`localize` in
-`LanShareServer`; the sender's locale is irrelevant — the reader is the
-other person): all user-visible strings live as `{{T_*}}` tokens resolved
-from `assets/lanshare/i18n.json` (the app's 16 locales + English; values
-may carry the trusted `<em>/<b>` markup and `{{DEVICE}}/{{N}}`
-placeholders), with per-key English fallback. The files page's JS button
-states come via `<body data-*>` attributes, not JS string literals (an
-apostrophe in a translation would break a literal). Gotcha fixed once
-already: inside the `.steps` flex `<li>`, the step text must be ONE
-`<span>` — a bare text node + `<b>` become separate flex items and the
-bold word drifts to the far edge.
+contract as the backup mirror). It navigates to `P2pSendFragment` — a full
+nav-graph destination in `nav_graph_downloads` extending `BaseFocusFragment`
+(same pattern as FrameGrabber/GifMaker). The receiver opens **Downloads →
+overflow → "Receive a file"** (`P2pReceiveFragment`). This REPLACED the old
+LAN share (`lanshare/` — `LanShareServer`/`LanShareTls`/`assets/lanshare/`,
+all deleted): the self-signed-TLS interstitial and the VPN/AP-isolation
+failure modes were judged worse than requiring Firedown on both ends. With
+LAN share went its manifest permissions (`ACCESS_WIFI_STATE`,
+`CHANGE_WIFI_STATE`, `ACCESS_FINE_LOCATION`, `NEARBY_WIFI_DEVICES`); the P2P
+scanner added `CAMERA` (runtime-requested ONLY on the scan screen,
+`uses-feature android.hardware.camera.any required=false`, paste fallback
+covers camera-less devices).
 
-**No common LAN — the direct-connection (hotspot) path.** Two phones on
-cellular share no network, so the LAN flow can't work. When
-`getLocalIpv4()` finds nothing, the sheet doesn't dead-end: it offers
-"Start direct connection" → `WifiManager.startLocalOnlyHotspot()` (no
-internet upstream, torn down with the sheet via `reservation.close()` in
-`stopSharing`). The same flow is ALSO reachable from LAN mode via the
-"Use direct connection instead" text button (`lan_share_use_direct`) —
-the **AP-isolation escape**: guest/café Wi-Fi that blocks
-client-to-client traffic is undetectable sender-side (the sheet looks
-fine, the receiver times out). In that path the Wi-Fi STA keeps its
-address, so step 2 resolves the URL with **`getHotspotIpv4(staIp)`**, not
-`getLocalIpv4()`: preference inverted to the AP interface
-(ap*/swlan*/softap* by name, or any address differing from the
-pre-hotspot STA address for vendors that name the AP wlan1/wlan2) —
-`getLocalIpv4()` would prefer the STA address, which a hotspot client
-can't reach. Step 1 repurposes the same sheet views as the join screen
-(URL chip = SSID, PIN slot = passphrase, QR = standard `WIFI:` payload any
-camera app joins from); the **Next** button flips to the normal URL/PIN QR,
-with the server bound on the hotspot's AP address. Platform tax: fine
-location permission at runtime (an Android requirement for hotspot APIs —
-manifest carries `ACCESS_FINE_LOCATION`+`CHANGE_WIFI_STATE` for exactly
-this; the browser never reads location) and location services must be on.
-Related, in `getLocalIpv4`: interface selection is an **allowlist**
-(`wlan/ap/swlan/softap/eth`), NOT "any site-local address" — carrier-grade
-NAT gives cellular `rmnet` interfaces 10.x addresses that pass
-`isSiteLocalAddress()`, so the old open fallback showed an unreachable
-carrier IP on a 5G-only device (and `tun*` VPN addresses are equally
-unreachable). After the hotspot is up the same method returns the AP
-address, because the wlan STA has none in that state. **VPN:** a
-sender-side VPN shows a warning line (`TRANSPORT_VPN` on the active
-network — block-LAN/kill-switch configs break local sockets); a
-RECEIVER-side VPN is undetectable from the sender, the docs/warning text
-is all we can do.
+**Transport: Gecko's own WebRTC DataChannel — deliberately NO libwebrtc
+dependency** (~10 MB/ABI to duplicate what GeckoView ships). The engine is a
+built-in extension, `assets/p2pshare/` (`p2pshare@solarized.dev`), whose
+background page owns the `RTCPeerConnection`; it opens ONE long-lived native
+port (`"p2pshare"`) that `GeckoRuntimeHelper.onConnect` hands to
+**`P2pShareController`** (the PoTokenGenerator ownership pattern — the port
+never lands in `mPorts`). Java owns all UI, the byte endpoints, and the
+post-transfer bookkeeping; JS owns only WebRTC. Verify engine changes with
+`node scripts/p2pshare-smoke.mjs` (vm-loads the background script under a
+stubbed `browser`, exercises ready/ensure, the code codec, soft errors).
+Any change to `assets/p2pshare/` files needs the usual `manifest.json`
+**version bump** (the `ensureBuiltIn` cache trap).
 
-**Access control:** the bare URL only ever yields the PIN page; the 4-digit
-PIN (shown big on the sender's sheet) sets a random `HttpOnly` session
-cookie that gates the file list and bytes; **3 wrong attempts lock the
-session permanently** (un-brute-forceable). The QR encodes `?pin=` so a
-scan authenticates in one hop; the typed URL stays short.
+**Signaling is OFFLINE — there is no signaling server.** The offer/answer
+travel as compressed codes (`FDS1.`/`FDR1.` + base64url(deflate-raw(JSON)),
+~1–2 KB) shown as **QR codes** (zxing, same encoder the LAN share used) or
+sent through any messenger via the share sheet; paste is the no-camera path.
+Non-trickle ICE (gathering completes before the code is minted, 5 s cap) so
+ONE code carries everything, including the file metadata (name/size/mime/
+device) — the receiver previews and accepts **before anything connects** —
+and the DTLS fingerprint, which makes the channel **authenticated** E2E (a
+MITM can't survive a fingerprint carried out-of-band). The only external
+party is **one STUN server** (address echo, no bytes), user-chosen in
+Settings → Downloads: `settings_p2p_stun_entries/values` in `arrays.xml`
+(Cloudflare default, Nextcloud:443 for UDP-3478-hostile networks, "custom"
+sentinel → text dialog in `SettingsFragment`, stored in
+`SETTINGS_P2P_STUN_CUSTOM`; resolve via `Preferences.getP2pStunServer`).
+**Hand the engine ONE url, never a list** — parallel `iceServers` entries
+query every server on every share (IP leak to all fallbacks). Same-LAN pairs
+connect on host candidates without touching STUN at all. **No TURN relay by
+design**: a CGNAT↔CGNAT pair (both sides mobile data) cannot connect; the
+engine fails honestly after ~20 s (`no-path` → `p2p_error_no_path` suggests
+same-Wi-Fi) — don't "fix" this with a relay, that's the server-in-the-middle
+this feature exists to avoid.
 
-**Transport: self-signed TLS by default (`LanShareTls`).** A per-install EC
-P-256 identity generated by **AndroidKeyStore** (which mints the
-self-signed X.509 with the keypair — no BouncyCastle, no hand-rolled DER,
-key never leaves the keystore; per-install so the cert fingerprint is
-stable and a browser's stored "proceed" exception keeps working). What it
-buys: ECDHE forward secrecy, so a **passive sniffer gets only ciphertext**
-— the realistic capture cases are open Wi-Fi and shared-PSK WPA2 (anyone
-with the café password + your join handshake can decrypt your air);
-WPA3 and the LocalOnlyHotspot (random per-session passphrase) were already
-sniff-resistant. The **one port speaks both protocols**: the handler peeks
-the first byte (TLS ClientHello = `0x16`), wraps TLS via a `PrereadSocket`
-+ the layered `createSocket(Socket, host, port, autoClose)` overload (the
-JDK's consumed-bytes overload doesn't exist on Android), and answers plain
-HTTP with the **onboarding page** (`onboard.html`) — the receiver's
-on-ramp: typed `ip:port` and the QR both land there over http (no warning),
-it explains the upcoming interstitial with numbered steps, and Continue
-goes to `https://`. **The QR carries the PIN in the URL FRAGMENT**
-(`#p=NNNN`, never sent on the wire — nothing secret crosses the plaintext
-hop); the onboarding JS forwards it as `?pin=` to the https side, and
-without JS the receiver just types the PIN at the gate. If the keystore
-can't produce the identity, the server **falls back to serving plain
-HTTP** (degraded beats not sharing; the sheet's cert hint hides and the QR
-reverts to direct `?pin=`). The keystore key MUST whitelist
-`DIGEST_NONE` (BoringSSL signs the raw transcript digest — NONEwithECDSA;
-without it every handshake dies with 'Incompatible digest'), and the key
-managers are built explicitly (`FixedKeyManager`) — the default PKIX
-factory silently selects no AndroidKeyStore alias. Costs, accepted
-deliberately: the receiver clicks through ONE
-"connection not private" interstitial (waylaid by the onboarding page and
-explained on the **sender** sheet — `lan_share_cert_hint`), and an
-**ACTIVE MITM can still present its own self-signed
-cert** — indistinguishable to the receiver; cert-*pinned* verification is
-the LocalSend-protocol phase. **Chromium gotcha (observed on Brave): the
-download manager does NOT inherit the page's cert exception** — a native
-`<a download>` navigation fails its own TLS handshake
-(`CERTIFICATE_UNKNOWN`) before headers and dies as a 0-byte file named
-from the URL path. So `files.html` intercepts the Download click and
-fetches the bytes **in the page context** (which holds the exception) →
-`Blob` → object-URL `<a download>` save; browsers disk-back large blobs.
-On any failure it falls back to the native navigation (correct for the
-plain-HTTP mode), and the file URL carries the name as a trailing segment
-(`/f/<i>/<name>`, ignored server-side) so even that fallback names the
-file correctly. Do NOT try to fix the sniffing ceiling with
-in-page JS crypto instead: on an `http://<ip>` origin the browser disables
-`crypto.subtle` and ServiceWorkers entirely (insecure context), and
-routing GB-sized videos through JS decryption breaks the native download
-manager — TLS is the only mechanism that keeps the plain `<a download>`
-flow. File names are HTML-escaped in the served pages
-(user/site-controlled); the `Content-Disposition` carries an ASCII
-fallback + RFC 8187 UTF-8 name. QR via the existing zxing-core dependency.
+**The pref-gated-global trap (`media.peerconnection.enabled`).** The user's
+WebRTC toggle ships OFF, and `RTCPeerConnection` is Pref-gated WebIDL
+evaluated **when a page global is created** — a background page that loaded
+with the pref off has NO constructor even after the pref flips on. So:
+`P2pShareBaseFragment` enables the RUNTIME pref for the session (restores the
+STORED pref's value in `onDestroyView`; a small `p2p_rtc_note` line discloses
+it; users with WebRTC on globally see neither), and the controller's
+`ensureEngine` probes with `{type:"ensure"}` — on `ok:false` the page
+`location.reload()`s itself, reconnects the port, posts a fresh
+`{type:"ready", rtc:true}`, and the queued command runs. **Never simplify the
+ensure/reload dance into a plain port-connected check.**
+
+**Bytes never cross the native-messaging bridge** (that would be
+base64-in-JSON per chunk). `P2pLoopbackServer` (127.0.0.1, ephemeral port,
+16-byte token, lifetime = share screen, same "nothing listens when the
+screen isn't open" contract as LAN share): the sender-side engine
+`fetch()`es `GET /read` and pumps the stream into the DataChannel (64 KB
+chunks, `bufferedAmountLow` backpressure, 4 MB high-water); the
+receiver-side engine batches ~4 MB and `POST /write?off=` — offsets are
+verified server-side so ordering on disk is guaranteed. The extension
+manifest carries the `http://127.0.0.1/*` host permission for this (Firefox
+match patterns ignore ports). `RestoredFileAccess.openReadOnly` serves the
+read side so a restored (foreign-owned) download is still sendable. On-device
+watch-item: the runtime sets `setLnaBlocking(true)` — if loopback fetches
+ever get blocked by Local Network Access enforcement, the host permission is
+the intended exemption; verify on a real device.
+
+**Completion is receiver-ack'd, then the file becomes a normal download.**
+The sender's `done` fires only on the receiver's `{"t":"rcvd"}` ack (sent
+AFTER the last loopback write) — `bufferedAmount` hitting 0 proves nothing
+about the far end. The receiver writes to `<name>.part`, then
+`P2pShareController.finalizeReceivedFile` (disk executor) verifies the byte
+count, re-uniquifies + renames, inserts a `FINISHED` `DownloadEntity`
+(`file_url = "p2p://<device-slug>"` so the row's `MIME · domain` meta line
+names the transport honestly; Room invalidation refreshes the list, no poke)
+and calls `GalleryPublisher.publish`. An aborted/failed receive deletes the
+`.part`.
+
+**Scanner:** `P2pScanFragment` — CameraX (`camera-core/camera2/lifecycle/
+view`, the app's only camera use) + **zxing decode** of the Y plane
+(rowStride-compacted; NO ML Kit / Play Services — de-Googled devices stay
+first-class). Result returns via the previous back-stack entry's
+`SavedStateHandle` (`P2pScanFragment.RESULT_CODE`, the
+CancelOperationDialogFragment pattern), validated against the expected
+`FDS1.`/`FDR1.` prefix before delivery.
+
+Strings are `p2p_*`/`settings_p2p_stun*`, translated across the same 16
+locales as the JIT toggle.
 
 ### Empty-focus "most visited" — the existing list, filled (not a new widget)
 

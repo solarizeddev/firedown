@@ -121,7 +121,7 @@ public class DownloadsOptionDialogFragment extends BaseBottomSheetDialogFragment
             mView.findViewById(R.id.qa_share).setOnClickListener(v -> dispatch(R.drawable.ic_share_24));
             mView.findViewById(R.id.qa_open_with).setOnClickListener(v -> dispatch(R.drawable.ic_web_24));
             mView.findViewById(R.id.qa_rename).setOnClickListener(v -> dispatch(R.drawable.ic_edit_24));
-            mView.findViewById(R.id.qa_send).setOnClickListener(v -> dispatch(R.drawable.ic_send_lan_24));
+            mView.findViewById(R.id.qa_send).setOnClickListener(v -> dispatch(R.drawable.ic_p2p_send_24));
         }
 
         return mView;
