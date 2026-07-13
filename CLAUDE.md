@@ -1346,6 +1346,18 @@ make this actually work (each was a "no QR / first share always fails" bug):
 3. **Bounded re-ensure.** If the reloaded page still reports `rtc:false` (pref
    write not yet visible), the controller re-sends `ensure` up to
    `MAX_ENSURE_RETRIES` before the timeout gives up.
+4. **FORCE the reload for a temporarily-enabled session — a `typeof
+   RTCPeerConnection` check is too weak.** `onDestroyView` restores the pref to
+   OFF between sessions, but restoring the pref does NOT reload the page: the
+   next session finds the sticky-singleton `mEngineRtcReady == true` AND a
+   still-defined `RTCPeerConnection` constructor — but its ICE stack is dead
+   from the off→on cycle, so `createOffer` **hangs** (the "stuck on
+   Preparing…, then no-path after 20 s" bug). So the fragment calls
+   `setEngineNeedsReload(true)` whenever it had to enable the pref, and
+   `ensureEngine` then forces `{type:"ensure", force:true}` (reload regardless
+   of the `typeof` check) so the page's WebRTC stack is freshly initialised
+   with the pref on. Consumed on the next `ready{rtc:true}`. The globally-on
+   case sets it false (the boot page already has a working stack).
 **Never simplify the ensure/reload dance into a plain port-connected check,
 and never fire the first engine command before the pref GeckoResult resolves.**
 

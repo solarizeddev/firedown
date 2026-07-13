@@ -334,9 +334,13 @@ async function startSend(msg) {
     };
     watchConnection(s);
 
+    log("creating offer");
     const offer = await s.pc.createOffer();
+    log("offer created, setting local description");
     await s.pc.setLocalDescription(offer);
+    log("local description set, gathering ICE");
     await waitIceComplete(s.pc);
+    log("ICE gathering done");
     if (s !== session || s.stopped) { return; }
 
     // The code carries the metadata too — the receiver previews name/size
@@ -585,11 +589,18 @@ function handleCommand(msg) {
   log("command:", msg.type);
   switch (msg.type) {
     case "ensure": {
-      const ok = typeof RTCPeerConnection !== "undefined";
+      // `force` reloads unconditionally. Needed because a `typeof
+      // RTCPeerConnection !== "undefined"` check is too weak: after the app
+      // toggles media.peerconnection.enabled off (session end) then on again
+      // (next session), the constructor still EXISTS in this un-reloaded page
+      // but its ICE stack is dead — createOffer then hangs. Java forces the
+      // reload whenever it had to enable the pref for the session, so the
+      // page's WebRTC stack is freshly initialised with the pref on.
+      const force = msg.force === true;
+      const ok = !force && typeof RTCPeerConnection !== "undefined";
       post({ type: "ensure-result", ok: ok });
       if (!ok) {
-        // Pref-gated global (see header): reload so the new global sees the
-        // now-enabled pref. Delay a tick so the reply flushes first.
+        // Delay a tick so the reply flushes before the port drops.
         setTimeout(() => { location.reload(); }, 50);
       }
       break;

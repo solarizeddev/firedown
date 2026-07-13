@@ -111,6 +111,9 @@ public abstract class P2pShareBaseFragment extends BaseFocusFragment {
             if (note != null) {
                 note.setVisibility(View.VISIBLE);
             }
+            // We're cycling the pref off→on for this session; the engine page
+            // must be reloaded before use (see the controller field docs).
+            mP2pController.setEngineNeedsReload(true);
             mGeckoRuntimeHelper.setWebRTC(true).accept(unused ->
                     mMainHandler.post(() -> {
                         if (isAdded() && getView() != null) {
@@ -118,6 +121,8 @@ public abstract class P2pShareBaseFragment extends BaseFocusFragment {
                         }
                     }));
         } else {
+            // Globally-on: the boot page already has a working WebRTC stack.
+            mP2pController.setEngineNeedsReload(false);
             onEngineReady();
         }
     }

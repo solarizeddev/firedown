@@ -81,6 +81,21 @@ check("ensure reports not ok", posted[0].ok === false);
 await sleep(120);
 check("page reloads when RTC is pref-gated away", reloaded === true);
 
+// force:true must reload even when RTCPeerConnection IS defined (the stale-
+// ICE-stack case) — the core of the no-QR fix.
+context.RTCPeerConnection = function FakePc() {};
+reloaded = false;
+posted.length = 0;
+send({ type: "ensure" });
+check("ensure ok when RTC present + no force", posted[0] && posted[0].ok === true);
+reloaded = false;
+posted.length = 0;
+send({ type: "ensure", force: true });
+check("forced ensure is not-ok even with RTC present", posted[0] && posted[0].ok === false);
+await sleep(120);
+check("forced ensure reloads the page", reloaded === true);
+delete context.RTCPeerConnection;
+
 // ── bad-code handling (soft error, no session) ─────────────────────────────
 posted.length = 0;
 send({ type: "recv-start", code: "garbage", stun: "" });

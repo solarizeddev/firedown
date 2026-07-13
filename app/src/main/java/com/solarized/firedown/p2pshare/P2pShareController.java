@@ -132,6 +132,14 @@ public class P2pShareController {
     // times before giving up rather than dead-ending on a timing race.
     private int mEnsureRetries;
     private static final int MAX_ENSURE_RETRIES = 3;
+    // Set by the fragment when it had to TEMPORARILY enable the WebRTC pref
+    // for this session. In that case the engine page MUST be reloaded before
+    // use even though `mEngineRtcReady` is a sticky singleton true from an
+    // earlier share: restoring the pref to false at the previous session's end
+    // left the un-reloaded page with a live RTCPeerConnection constructor but a
+    // dead ICE stack (createOffer hangs). A forced reload re-initialises it
+    // while the pref is on. Consumed on the next successful ready.
+    private boolean mForceEngineReload;
 
     // Active session state. Main-thread only (all port + fragment traffic is
     // UI-thread), except the finalize step which hops to the disk executor.
@@ -159,6 +167,17 @@ public class P2pShareController {
         mSharedPreferences = sharedPreferences;
         mDownloadDataRepository = downloadDataRepository;
         mDiskExecutor = diskExecutor;
+    }
+
+    /**
+     * Called by the share fragment when it TEMPORARILY enabled the WebRTC pref
+     * for this session — forces the next engine (re)init to reload the page
+     * (see {@link #mForceEngineReload}). Must be set before the first
+     * start/accept call.
+     */
+    @UiThread
+    public void setEngineNeedsReload(boolean needsReload) {
+        mForceEngineReload = needsReload;
     }
 
     /* ── port lifecycle (called from GeckoRuntimeHelper) ────────────────── */
@@ -350,6 +369,9 @@ public class P2pShareController {
                 mAwaitingReload = false;
                 mEngineRtcReady = json.optBoolean("rtc", false);
                 if (mEngineRtcReady) {
+                    // The forced reload (if any) has happened and the page is
+                    // freshly RTC-ready — consume the flag.
+                    mForceEngineReload = false;
                     runPendingIfReady();
                 } else if (mPendingEngineAction != null && mEnsureRetries < MAX_ENSURE_RETRIES) {
                     // Reloaded but the async pref write wasn't visible to the
@@ -521,7 +543,10 @@ public class P2pShareController {
             postError("engine", "engine not connected");
             return;
         }
-        if (mEngineRtcReady) {
+        // A sticky-true mEngineRtcReady is NOT trustworthy when we had to
+        // enable the pref for this session (the page's ICE stack may be dead
+        // from a prior off→on cycle) — force a reload in that case.
+        if (mEngineRtcReady && !mForceEngineReload) {
             action.run();
             return;
         }
@@ -534,6 +559,10 @@ public class P2pShareController {
         JSONObject probe = new JSONObject();
         try {
             probe.put("type", "ensure");
+            // Force the page reload on the FIRST ensure of a temporarily-
+            // enabled session; retries drop the force (the reload already
+            // happened, we're only waiting for the pref to become visible).
+            probe.put("force", mForceEngineReload && mEnsureRetries == 0);
         } catch (JSONException e) {
             postError("engine", "command build failed");
             return;
