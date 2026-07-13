@@ -91,6 +91,15 @@ public class P2pReceiveFragment extends P2pShareBaseFragment
             }
         }
 
+        // A code is already in hand (deep-link arrival) → show the working
+        // state right away, NOT the scan/paste entry the user just used. A
+        // plain open with no code shows the entry so the user can scan.
+        if (mLastCode != null) {
+            showReading();
+        } else {
+            setStage(R.id.p2p_entry_group);
+        }
+
         return mView;
     }
 
@@ -129,8 +138,14 @@ public class P2pReceiveFragment extends P2pShareBaseFragment
         }
     }
 
+    /** Reading/decoding the scanned offer, before the preview appears. */
+    private void showReading() {
+        setStage(R.id.p2p_status_group);
+        ((TextView) mView.findViewById(R.id.p2p_status)).setText(R.string.p2p_preparing);
+    }
+
     private void setStage(int visibleId) {
-        int[] stages = {R.id.p2p_entry_group, R.id.p2p_preview_group, R.id.p2p_status,
+        int[] stages = {R.id.p2p_entry_group, R.id.p2p_preview_group, R.id.p2p_status_group,
                 R.id.p2p_reply_group, R.id.p2p_progress_group, R.id.p2p_done_group,
                 R.id.p2p_error_group};
         for (int id : stages) {
@@ -176,7 +191,7 @@ public class P2pReceiveFragment extends P2pShareBaseFragment
             return;
         }
         if ("connecting".equals(state) || "connected".equals(state)) {
-            setStage(R.id.p2p_status);
+            setStage(R.id.p2p_status_group);
             TextView status = mView.findViewById(R.id.p2p_status);
             status.setText("connected".equals(state)
                     ? R.string.p2p_state_connected : R.string.p2p_state_connecting);

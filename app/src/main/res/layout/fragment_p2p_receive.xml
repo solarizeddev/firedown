@@ -199,21 +199,42 @@
 
                 </LinearLayout>
 
-                <!-- Status chip -->
-                <TextView
-                    android:id="@+id/p2p_status"
-                    android:layout_width="wrap_content"
+                <!-- Status stage: an indeterminate spinner + a state chip.
+                     Shown while reading the scanned code (before the preview)
+                     and while connecting after Accept — so a scanned/deep-linked
+                     arrival always has visible "working" feedback instead of the
+                     scan UI it no longer needs. -->
+                <LinearLayout
+                    android:id="@+id/p2p_status_group"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="center_horizontal"
-                    android:layout_marginTop="14dp"
-                    android:background="@drawable/bg_p2p_step"
-                    android:paddingHorizontal="14dp"
-                    android:paddingVertical="6dp"
-                    android:text="@string/p2p_state_connecting"
-                    android:textAppearance="?attr/textAppearanceLabelMedium"
-                    android:textColor="?attr/colorOnPrimaryContainer"
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical"
+                    android:paddingVertical="28dp"
                     android:visibility="gone"
-                    tools:visibility="visible" />
+                    tools:visibility="visible">
+
+                    <com.google.android.material.progressindicator.CircularProgressIndicator
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:indeterminate="true"
+                        app:indicatorSize="40dp"
+                        app:trackThickness="3dp" />
+
+                    <TextView
+                        android:id="@+id/p2p_status"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_horizontal"
+                        android:layout_marginTop="18dp"
+                        android:background="@drawable/bg_p2p_step"
+                        android:paddingHorizontal="14dp"
+                        android:paddingVertical="6dp"
+                        android:text="@string/p2p_preparing"
+                        android:textAppearance="?attr/textAppearanceLabelMedium"
+                        android:textColor="?attr/colorOnPrimaryContainer" />
+
+                </LinearLayout>
 
                 <!-- Reply stage: the answer QR to show back to the sender -->
                 <LinearLayout

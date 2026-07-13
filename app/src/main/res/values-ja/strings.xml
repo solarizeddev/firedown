@@ -690,6 +690,8 @@
     <string name="p2p_footer">暗号化された端末間の転送です。ファイルがサーバーを経由することはありません。</string>
     <string name="p2p_scan_hint">カメラを送信者のコードに向けてください</string>
     <string name="p2p_camera_denied">スキャンにはカメラへのアクセスが必要です。代わりにコードを貼り付けることもできます。</string>
+    <string name="settings_p2p_category">直接共有</string>
+    <string name="settings_p2p_category_summary">端末間でファイルを送るための接続ヘルパーです。デフォルト設定は同じ Wi-Fi では機能します。異なるネットワークのときだけこれらが必要になります。</string>
     <string name="settings_p2p_stun">STUN サーバー</string>
     <string name="settings_p2p_stun_summary">直接共有の際に、2 台の端末がインターネット越しに互いを見つけるのを助けます。送信されるのはあなたのネットワークアドレスのみです。</string>
     <string name="settings_p2p_stun_custom">カスタム…</string>

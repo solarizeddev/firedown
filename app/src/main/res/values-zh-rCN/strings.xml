@@ -690,6 +690,8 @@
     <string name="p2p_footer">加密的设备间直接传输。文件绝不会经过服务器。</string>
     <string name="p2p_scan_hint">将相机对准发送方的代码</string>
     <string name="p2p_camera_denied">扫描需要相机访问权限。你也可以改为粘贴代码。</string>
+    <string name="settings_p2p_category">直接分享</string>
+    <string name="settings_p2p_category_summary">用于在设备之间发送文件的连接助手。默认设置在同一 Wi-Fi 下即可使用 — 只有在不同网络时才需要这些设置。</string>
     <string name="settings_p2p_stun">STUN 服务器</string>
     <string name="settings_p2p_stun_summary">在直接分享时帮助两台设备通过互联网找到彼此。只会向其发送你的网络地址。</string>
     <string name="settings_p2p_stun_custom">自定义…</string>

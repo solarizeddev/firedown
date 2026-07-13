@@ -479,6 +479,8 @@
     <string name="p2p_footer">Передавання з шифруванням напряму між пристроями. Файл ніколи не потрапляє на сервер.</string>
     <string name="p2p_scan_hint">Наведіть камеру на код відправника</string>
     <string name="p2p_camera_denied">Щоб сканувати, потрібен доступ до камери. Натомість можна вставити код.</string>
+    <string name="settings_p2p_category">Пряме передавання</string>
+    <string name="settings_p2p_category_summary">Помічники з\'єднання для передавання файлів між пристроями. Типові налаштування працюють в одній мережі Wi-Fi — вони потрібні лише в різних мережах.</string>
     <string name="settings_p2p_stun">STUN-сервер</string>
     <string name="settings_p2p_stun_summary">Допомагає двом пристроям знайти одне одного в інтернеті під час прямого передавання. Йому передається лише ваша мережева адреса.</string>
     <string name="settings_p2p_stun_custom">Власний…</string>

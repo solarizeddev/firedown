@@ -562,6 +562,8 @@
     <string name="p2p_footer">Versleutelde overdracht van apparaat naar apparaat. Het bestand komt nooit op een server.</string>
     <string name="p2p_scan_hint">Richt de camera op de code van de verzender</string>
     <string name="p2p_camera_denied">Cameratoegang is nodig om te scannen. Je kunt de code ook plakken.</string>
+    <string name="settings_p2p_category">Direct delen</string>
+    <string name="settings_p2p_category_summary">Verbindingshulpjes om bestanden van apparaat naar apparaat te verzenden. De standaardinstellingen werken op dezelfde Wi-Fi — je hebt deze alleen op verschillende netwerken nodig.</string>
     <string name="settings_p2p_stun">STUN-server</string>
     <string name="settings_p2p_stun_summary">Helpt twee apparaten elkaar via internet te vinden tijdens direct delen. Alleen je netwerkadres wordt ernaartoe gestuurd.</string>
     <string name="settings_p2p_stun_custom">Aangepast…</string>

@@ -561,6 +561,8 @@
     <string name="p2p_footer">Szyfrowany transfer z urządzenia na urządzenie. Plik nigdy nie trafia na serwer.</string>
     <string name="p2p_scan_hint">Skieruj aparat na kod nadawcy</string>
     <string name="p2p_camera_denied">Do skanowania potrzebny jest dostęp do aparatu. Zamiast tego możesz wkleić kod.</string>
+    <string name="settings_p2p_category">Udostępnianie bezpośrednie</string>
+    <string name="settings_p2p_category_summary">Pomocnicy połączenia do wysyłania plików między urządzeniami. Ustawienia domyślne działają w tej samej sieci Wi-Fi — potrzebujesz ich tylko w różnych sieciach.</string>
     <string name="settings_p2p_stun">Serwer STUN</string>
     <string name="settings_p2p_stun_summary">Pomaga dwóm urządzeniom odnaleźć się przez internet podczas bezpośredniego udostępniania. Wysyłany jest do niego wyłącznie Twój adres sieciowy.</string>
     <string name="settings_p2p_stun_custom">Niestandardowy…</string>

@@ -517,6 +517,8 @@
     <string name="p2p_footer">Šifrovaný přenos ze zařízení do zařízení. Soubor nikdy neprochází přes server.</string>
     <string name="p2p_scan_hint">Namiřte fotoaparát na kód odesílatele</string>
     <string name="p2p_camera_denied">Ke skenování je potřeba přístup k fotoaparátu. Místo toho můžete kód vložit.</string>
+    <string name="settings_p2p_category">Přímé sdílení</string>
+    <string name="settings_p2p_category_summary">Pomocníci připojení pro odesílání souborů mezi zařízeními. Výchozí nastavení funguje ve stejné síti Wi-Fi — potřebujete je jen v různých sítích.</string>
     <string name="settings_p2p_stun">STUN server</string>
     <string name="settings_p2p_stun_summary">Pomáhá dvěma zařízením najít se přes internet během přímého sdílení. Odesílá se na něj pouze vaše síťová adresa.</string>
     <string name="settings_p2p_stun_custom">Vlastní…</string>

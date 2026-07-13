@@ -694,6 +694,8 @@
     <string name="p2p_footer">Transfert chiffré d\'appareil à appareil. Le fichier ne passe jamais par un serveur.</string>
     <string name="p2p_scan_hint">Pointez la caméra vers le code de l\'expéditeur</string>
     <string name="p2p_camera_denied">L\'accès à la caméra est nécessaire pour scanner. Vous pouvez coller le code à la place.</string>
+    <string name="settings_p2p_category">Partage direct</string>
+    <string name="settings_p2p_category_summary">Assistants de connexion pour envoyer des fichiers d\'un appareil à l\'autre. Les réglages par défaut fonctionnent sur le même Wi-Fi — vous n\'en avez besoin que sur des réseaux différents.</string>
     <string name="settings_p2p_stun">Serveur STUN</string>
     <string name="settings_p2p_stun_summary">Aide deux appareils à se trouver via Internet pendant un partage direct. Seule votre adresse réseau lui est envoyée.</string>
     <string name="settings_p2p_stun_custom">Personnalisé…</string>

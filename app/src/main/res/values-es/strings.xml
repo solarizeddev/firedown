@@ -693,6 +693,8 @@
     <string name="p2p_footer">Transferencia cifrada de dispositivo a dispositivo. El archivo nunca pasa por un servidor.</string>
     <string name="p2p_scan_hint">Apunta con la cámara al código del remitente</string>
     <string name="p2p_camera_denied">Se necesita acceso a la cámara para escanear. Puedes pegar el código en su lugar.</string>
+    <string name="settings_p2p_category">Compartir directo</string>
+    <string name="settings_p2p_category_summary">Ayudas de conexión para enviar archivos entre dispositivos. Los valores predeterminados funcionan en la misma red Wi-Fi: solo los necesitas en redes diferentes.</string>
     <string name="settings_p2p_stun">Servidor STUN</string>
     <string name="settings_p2p_stun_summary">Ayuda a que dos dispositivos se encuentren a través de internet durante un envío directo. Solo se le envía tu dirección de red.</string>
     <string name="settings_p2p_stun_custom">Personalizado…</string>

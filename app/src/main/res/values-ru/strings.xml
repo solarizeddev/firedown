@@ -564,6 +564,8 @@
     <string name="p2p_footer">Передача с шифрованием напрямую между устройствами. Файл не попадает на сервер.</string>
     <string name="p2p_scan_hint">Наведите камеру на код отправителя</string>
     <string name="p2p_camera_denied">Для сканирования нужен доступ к камере. Вместо этого можно вставить код.</string>
+    <string name="settings_p2p_category">Прямая передача</string>
+    <string name="settings_p2p_category_summary">Помощники соединения для передачи файлов между устройствами. Настройки по умолчанию работают в одной сети Wi-Fi — они нужны только в разных сетях.</string>
     <string name="settings_p2p_stun">STUN-сервер</string>
     <string name="settings_p2p_stun_summary">Помогает двум устройствам найти друг друга в интернете при прямой передаче. Ему передаётся только ваш сетевой адрес.</string>
     <string name="settings_p2p_stun_custom">Свой…</string>

@@ -455,6 +455,8 @@
     <string name="p2p_footer">Шифровано прехвърляне от устройство до устройство. Файлът никога не преминава през сървър.</string>
     <string name="p2p_scan_hint">Насочете камерата към кода на изпращача</string>
     <string name="p2p_camera_denied">За сканиране е необходим достъп до камерата. Вместо това можете да поставите кода.</string>
+    <string name="settings_p2p_category">Директно споделяне</string>
+    <string name="settings_p2p_category_summary">Помощници за връзка при изпращане на файлове от устройство към устройство. Настройките по подразбиране работят в една и съща Wi-Fi мрежа — те са ви нужни само в различни мрежи.</string>
     <string name="settings_p2p_stun">STUN сървър</string>
     <string name="settings_p2p_stun_summary">Помага на две устройства да се открият през интернет при директно споделяне. Към него се изпраща само мрежовият ви адрес.</string>
     <string name="settings_p2p_stun_custom">Персонализиран…</string>

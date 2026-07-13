@@ -468,6 +468,8 @@
     <string name="p2p_footer">डिवाइस से डिवाइस एन्क्रिप्टेड ट्रांसफ़र। फ़ाइल कभी किसी सर्वर से नहीं गुज़रती।</string>
     <string name="p2p_scan_hint">कैमरा भेजने वाले के कोड की ओर करें</string>
     <string name="p2p_camera_denied">स्कैन करने के लिए कैमरा एक्सेस ज़रूरी है। इसके बजाय आप कोड पेस्ट कर सकते हैं।</string>
+    <string name="settings_p2p_category">सीधा शेयर</string>
+    <string name="settings_p2p_category_summary">डिवाइस-से-डिवाइस फ़ाइलें भेजने के लिए कनेक्शन सहायक। डिफ़ॉल्ट सेटिंग्स एक ही Wi-Fi पर काम करती हैं — इनकी ज़रूरत आपको केवल अलग-अलग नेटवर्क पर पड़ती है।</string>
     <string name="settings_p2p_stun">STUN सर्वर</string>
     <string name="settings_p2p_stun_summary">सीधे शेयर के दौरान दो डिवाइसों को इंटरनेट पर एक-दूसरे को खोजने में मदद करता है। इसे केवल आपका नेटवर्क पता ही भेजा जाता है।</string>
     <string name="settings_p2p_stun_custom">कस्टम…</string>
