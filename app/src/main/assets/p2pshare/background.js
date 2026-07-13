@@ -160,7 +160,7 @@ async function decodeCode(prefix, code) {
 
 /* ── WebRTC helpers ────────────────────────────────────────────────────── */
 
-function newPeerConnection(stun) {
+async function newPeerConnection(stun) {
   // A single STUN entry on purpose: listing several servers makes ICE query
   // ALL of them in parallel — every share would leak the user's IP to every
   // fallback. Java owns the sequential-fallback policy and passes ONE url.
@@ -169,6 +169,18 @@ function newPeerConnection(stun) {
   const config = {};
   if (stun && /^stuns?:/i.test(stun)) {
     config.iceServers = [{ urls: stun }];
+  }
+  // Pre-generate the DTLS certificate explicitly. createOffer otherwise
+  // generates one implicitly; if that path is what stalls in this embedding,
+  // supplying an explicit cert bypasses it — and the logging isolates cert
+  // generation (crypto) from the transport setup as the hang point.
+  try {
+    log("generating certificate");
+    const cert = await RTCPeerConnection.generateCertificate({ name: "ECDSA", namedCurve: "P-256" });
+    config.certificates = [cert];
+    log("certificate ready");
+  } catch (e) {
+    log("certificate generation failed", e);
   }
   return new RTCPeerConnection(config);
 }
@@ -309,7 +321,7 @@ async function startSend(msg) {
   };
   session = s;
   try {
-    s.pc = newPeerConnection(msg.stun);
+    s.pc = await newPeerConnection(msg.stun);
     // Reliable + ordered (defaults): the file must arrive byte-exact.
     s.dc = s.pc.createDataChannel("file");
     s.dc.binaryType = "arraybuffer";
@@ -480,7 +492,7 @@ async function acceptReceive(msg) {
   if (!s || s.role !== "receive" || !s.offer) { return; }
   s.writeUrl = msg.writeUrl;
   try {
-    s.pc = newPeerConnection(s.stun);
+    s.pc = await newPeerConnection(s.stun);
     s.pc.ondatachannel = (ev) => { bindReceiveChannel(s, ev.channel); };
     watchConnection(s);
     await s.pc.setRemoteDescription({ type: "offer", sdp: s.offer.sdp });
