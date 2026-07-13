@@ -99,12 +99,20 @@ public abstract class P2pShareBaseFragment extends BaseFocusFragment {
         }
         observeScanResult();
 
-        // Session-scoped WebRTC enable. RTCPeerConnection is a pref-gated
-        // global evaluated at page-global creation, so onEngineReady (which
-        // drives the controller to OPEN its fresh engine page) must run ONLY
-        // AFTER the pref write is applied — a page loaded before the write is
-        // visible never gains the constructor. Chain on the GeckoResult so the
-        // fresh engine session loads with the pref already on.
+        // Session-scoped WebRTC prefs. Two of them, both flipped for the
+        // lifetime of this screen and both applied BEFORE onEngineReady (which
+        // drives the controller to OPEN its fresh engine page) — a page loaded
+        // before the writes are visible sees the old values:
+        //  - media.peerconnection.enabled: RTCPeerConnection is a pref-gated
+        //    global evaluated at page-global creation. Restored to the STORED
+        //    setting in onDestroyView; the note is shown only when this was a
+        //    temporary enable.
+        //  - ice.obfuscate_host_addresses OFF: Firefox hides host candidates
+        //    behind mDNS .local names, which Android peers can't resolve (no
+        //    MulticastLock), so a same-LAN pair finds no host pair and ICE
+        //    fails outright ("add a TURN server"). Off, the QR carries the
+        //    real LAN IP — which the user is already physically handing to the
+        //    peer. Always restored to ON in onDestroyView.
         boolean webRtcEnabled = mP2pSharedPreferences.getBoolean(
                 Preferences.SETTINGS_ENABLE_WEBRTC, Preferences.DEFAULT_ENABLE_WEBRTC);
         if (!webRtcEnabled) {
@@ -113,16 +121,15 @@ public abstract class P2pShareBaseFragment extends BaseFocusFragment {
             if (note != null) {
                 note.setVisibility(View.VISIBLE);
             }
-            mGeckoRuntimeHelper.setWebRTC(true).accept(unused ->
-                    mMainHandler.post(() -> {
-                        if (isAdded() && getView() != null) {
-                            onEngineReady();
-                        }
-                    }));
-        } else {
-            // Globally-on: the pref is already applied; open the engine now.
-            onEngineReady();
         }
+        mGeckoRuntimeHelper.setWebRTC(true)
+                .then(unused -> mGeckoRuntimeHelper.setWebRtcIceObfuscation(false))
+                .accept(unused ->
+                        mMainHandler.post(() -> {
+                            if (isAdded() && getView() != null) {
+                                onEngineReady();
+                            }
+                        }));
     }
 
     /**
@@ -131,7 +138,7 @@ public abstract class P2pShareBaseFragment extends BaseFocusFragment {
      */
     protected abstract void onEngineReady();
 
-    private void confirmThenClose() {
+    protected void confirmThenClose() {
         if (mP2pController.isTransferActive()) {
             new MaterialAlertDialogBuilder(requireContext())
                     .setMessage(R.string.p2p_abandon_message)
@@ -164,6 +171,9 @@ public abstract class P2pShareBaseFragment extends BaseFocusFragment {
     @Override
     public void onDestroyView() {
         mP2pController.stop();
+        // The share-session candidate exposure ends with the screen — browsing
+        // (however the WebRTC toggle is set) keeps mDNS obfuscation.
+        mGeckoRuntimeHelper.setWebRtcIceObfuscation(true);
         if (mRtcTemporarilyEnabled) {
             // Restore the STORED preference's truth, not blindly false — the
             // user may have flipped the Settings toggle mid-share.

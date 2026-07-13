@@ -103,7 +103,8 @@ public class P2pSendFragment extends P2pShareBaseFragment
                 mP2pController.provideAnswer(code);
             }
         });
-        mView.findViewById(R.id.p2p_stop).setOnClickListener(v -> close());
+        // Mid-transfer this is "Cancel" (confirmed, like back); on done, "Done".
+        mView.findViewById(R.id.p2p_stop).setOnClickListener(v -> confirmThenClose());
         mView.findViewById(R.id.p2p_retry).setOnClickListener(v -> restart());
 
         return mView;
@@ -139,6 +140,7 @@ public class P2pSendFragment extends P2pShareBaseFragment
         setStage(R.id.p2p_status);
         TextView status = mView.findViewById(R.id.p2p_status);
         status.setText(R.string.p2p_preparing);
+        mView.findViewById(R.id.p2p_stop).setVisibility(View.GONE);
     }
 
     private void setStage(int visibleId) {
@@ -194,6 +196,12 @@ public class P2pSendFragment extends P2pShareBaseFragment
             return;
         }
         setStage(R.id.p2p_progress_group);
+        // Mid-transfer, an explicit Cancel is warranted (it goes through the
+        // same abandon confirm as back). It stays hidden on the QR stage,
+        // where back is the natural exit.
+        MaterialButton stop = mView.findViewById(R.id.p2p_stop);
+        stop.setText(R.string.cancel);
+        stop.setVisibility(View.VISIBLE);
         LinearProgressIndicator bar = mView.findViewById(R.id.p2p_progress_bar);
         if (total > 0) {
             bar.setProgress((int) (done * 100 / total));
@@ -215,7 +223,11 @@ public class P2pSendFragment extends P2pShareBaseFragment
         ((TextView) mView.findViewById(R.id.p2p_done_text)).setText(
                 getString(R.string.p2p_done_sent_detail,
                         Formatter.formatShortFileSize(requireContext(), bytes)));
-        ((MaterialButton) mView.findViewById(R.id.p2p_stop)).setText(R.string.p2p_done);
+        // The bottom button exists only for this stage (hidden in the layout):
+        // a standing Cancel would duplicate back/toolbar-up.
+        MaterialButton done = mView.findViewById(R.id.p2p_stop);
+        done.setText(R.string.p2p_done);
+        done.setVisibility(View.VISIBLE);
     }
 
     @Override
@@ -230,6 +242,7 @@ public class P2pSendFragment extends P2pShareBaseFragment
         }
         setStage(R.id.p2p_error_group);
         mView.findViewById(R.id.p2p_live_dot).setVisibility(View.GONE);
+        mView.findViewById(R.id.p2p_stop).setVisibility(View.GONE);
         ((TextView) mView.findViewById(R.id.p2p_error)).setText(errorText(code));
     }
 }

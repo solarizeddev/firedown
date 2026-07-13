@@ -28,7 +28,7 @@
  *
  * Protocol (Java -> cmd):
  *   {type:"__init", debug}                             bridge handshake
- *   {type:"send-start", readUrl, name, size, mime, device, stun}
+ *   {type:"send-start", readUrl, name, size, mime, device, stun, answerUrl?}
  *   {type:"send-answer", code} · {type:"recv-start", code, stun}
  *   {type:"recv-accept", writeUrl} · {type:"stop"}
  * (evt -> Java):
@@ -165,7 +165,16 @@ async function newPeerConnection(stun) {
   } catch (e) {
     log("certificate generation failed", e);
   }
-  return new RTCPeerConnection(config);
+  const pc = new RTCPeerConnection(config);
+  // Diagnostic (DEBUG only): the candidate mix tells the failure story —
+  // no host candidates = interface problem, .local host candidates = mDNS
+  // obfuscation still on, no srflx = STUN unreachable.
+  pc.addEventListener("icecandidate", (ev) => {
+    if (ev.candidate && ev.candidate.candidate) {
+      log("candidate:", ev.candidate.candidate);
+    }
+  });
+  return pc;
 }
 
 // Non-trickle: resolve once gathering completes so the emitted code carries
@@ -351,14 +360,21 @@ async function startSend(msg) {
 
     // The code carries the metadata too — the receiver previews name/size
     // BEFORE anything connects, and the accept happens offline.
-    const code = await encodeCode(OFFER_PREFIX, {
+    const payload = {
       v: 1,
       sdp: s.pc.localDescription.sdp,
       name: msg.name,
       size: msg.size,
       mime: msg.mime,
       dev: msg.device,
-    });
+    };
+    // Answer-return URL (single-scan flow): when Java could bind a LAN
+    // listener, the receiver POSTs its answer straight back instead of
+    // showing a reply QR. Optional — absent, the reply QR is the only path.
+    if (msg.answerUrl) {
+      payload.ans = msg.answerUrl;
+    }
+    const code = await encodeCode(OFFER_PREFIX, payload);
     if (s !== session || s.stopped) { return; }
     post({ type: "code", role: "offer", code: code });
   } catch (e) {
@@ -478,6 +494,9 @@ async function startReceive(msg) {
     size: offer.size,
     mime: String(offer.mime || ""),
     device: String(offer.dev || ""),
+    // Sender's answer-return URL (single-scan flow) — Java POSTs the answer
+    // there instead of showing the reply QR; empty = reply-QR only.
+    ans: String(offer.ans || ""),
   });
 }
 

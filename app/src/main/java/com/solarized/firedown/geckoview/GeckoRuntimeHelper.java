@@ -1098,11 +1098,30 @@ public class GeckoRuntimeHelper {
     @OptIn(markerClass = ExperimentalGeckoViewApi.class)
     public GeckoResult<Void> setWebRTC(boolean enable) {
         // Returns the GeckoResult so callers that need the pref APPLIED before
-        // acting (the P2P share, which then reloads its engine page to pick up
-        // the enabled pref) can chain on it — a fire-and-forget write races the
-        // page reload and the reloaded global still sees the old value.
+        // acting (the P2P share, which then opens its fresh engine page to pick
+        // up the enabled pref) can chain on it — a fire-and-forget write races
+        // the page load and the new global still sees the old value.
         return GeckoPreferenceController
                 .setGeckoPref("media.peerconnection.enabled", enable, GeckoPreferenceController.PREF_BRANCH_USER);
+    }
+
+    /**
+     * Session-scoped for the P2P share, like {@link #setWebRTC}: Firefox
+     * obfuscates host ICE candidates as mDNS {@code <uuid>.local} hostnames
+     * (a browsing-privacy feature — pages can't read the LAN IP). Resolving a
+     * peer's .local candidate needs multicast DNS, which on Android generally
+     * fails (receiving multicast requires a MulticastLock the app never
+     * takes), so with obfuscation on a same-LAN pair finds NO working host
+     * pair and ICE dies with "add a TURN server". The share flow flips this
+     * off while the share screen is open (the LAN IP travels only inside the
+     * QR/code the user physically hands to the peer) and restores it in
+     * onDestroyView — browsing privacy is unchanged outside a share.
+     */
+    @OptIn(markerClass = ExperimentalGeckoViewApi.class)
+    public GeckoResult<Void> setWebRtcIceObfuscation(boolean obfuscate) {
+        return GeckoPreferenceController
+                .setGeckoPref("media.peerconnection.ice.obfuscate_host_addresses", obfuscate,
+                        GeckoPreferenceController.PREF_BRANCH_USER);
     }
 
     @OptIn(markerClass = ExperimentalGeckoViewApi.class)

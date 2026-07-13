@@ -790,7 +790,7 @@
     <string name="p2p_send_lead">Send this file straight to another device running Firedown — encrypted, device to device, with no server in between.</string>
     <string name="p2p_receive_lead">Receive a file straight from another device running Firedown.</string>
     <string name="p2p_rtc_note">Direct connections are turned on just for this transfer, then off again.</string>
-    <string name="p2p_code_hint_send">On the other device, open Downloads → Receive a file and scan this code. When it shows you a reply code, scan it back.</string>
+    <string name="p2p_code_hint_send">Scan this code with the other device — in Firedown under Downloads → Receive a file, or just with its camera. On the same network the transfer continues by itself; if a reply code appears, scan it back.</string>
     <string name="p2p_code_hint_reply">Show this reply to the sender, or send it back the way their code arrived.</string>
     <string name="p2p_share_code">Send code another way</string>
     <string name="p2p_share_reply">Send reply another way</string>
@@ -813,7 +813,7 @@
     <string name="p2p_done">Done</string>
     <string name="p2p_abandon_message">Stop this transfer? It isn\'t finished yet.</string>
     <string name="p2p_abandon_confirm">Stop</string>
-    <string name="p2p_error_no_path">Couldn\'t reach the other device directly. This usually happens when both sides are on mobile data — try joining the same Wi-Fi network.</string>
+    <string name="p2p_error_no_path">Couldn\'t reach the other device directly. This happens on mobile data or behind a VPN — try the same Wi-Fi network, with any VPN turned off.</string>
     <string name="p2p_error_generic">The transfer failed.</string>
     <string name="p2p_error_bad_code">That code isn\'t valid — try again.</string>
     <string name="p2p_clipboard_empty">No code in the clipboard.</string>

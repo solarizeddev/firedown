@@ -36,12 +36,20 @@ import java.io.IOException;
 import java.security.SecureRandom;
 import java.util.Locale;
 import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import dagger.hilt.android.qualifiers.ApplicationContext;
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 
 /**
  * Java side of the P2P share engine — the bridge between the share screens
@@ -188,6 +196,11 @@ public class P2pShareController {
     private Listener mListener;
     private String mRole; // "send" | "receive" | null
     private P2pLoopbackServer mServer;
+    // Single-scan answer return. Sender: the LAN listener the offer's `ans`
+    // URL points at (null = no LAN address, reply-QR only). Receiver: the
+    // sender's `ans` URL from the parsed offer (empty = reply-QR only).
+    private P2pAnswerServer mAnswerServer;
+    private String mRecvAnswerUrl;
     private String mRecvName;
     private String mRecvMime;
     private File mRecvPartFile;
@@ -198,17 +211,29 @@ public class P2pShareController {
     // The finished download row, so the receiver's "Open" can act on it.
     private DownloadEntity mReceivedEntity;
 
+    // Short-deadline client for the receiver's direct answer POST: a LAN peer
+    // answers in milliseconds or not at all, and the reply-QR fallback should
+    // appear fast when it doesn't. Derived from the shared client (pool/DNS
+    // reused), tightened timeouts only.
+    private final OkHttpClient mAnswerClient;
+
     @Inject
     public P2pShareController(
             @ApplicationContext Context context,
             SharedPreferences sharedPreferences,
             DownloadDataRepository downloadDataRepository,
-            @Qualifiers.DiskIO Executor diskExecutor
+            @Qualifiers.DiskIO Executor diskExecutor,
+            OkHttpClient okHttpClient
     ) {
         mContext = context;
         mSharedPreferences = sharedPreferences;
         mDownloadDataRepository = downloadDataRepository;
         mDiskExecutor = diskExecutor;
+        mAnswerClient = okHttpClient.newBuilder()
+                .connectTimeout(4, TimeUnit.SECONDS)
+                .readTimeout(4, TimeUnit.SECONDS)
+                .callTimeout(8, TimeUnit.SECONDS)
+                .build();
     }
 
     /**
@@ -287,10 +312,21 @@ public class P2pShareController {
         }
         mServer.setReadFile(path);
 
+        // Single-scan flow: bind the LAN answer listener so the offer carries
+        // an answer-return URL and the receiver's Accept connects directly —
+        // no second QR. Binding can fail (no LAN address); the flow then
+        // simply falls back to the reply QR.
+        mAnswerServer = new P2pAnswerServer(code ->
+                mMainHandler.post(() -> onDirectAnswer(code)));
+        if (!mAnswerServer.start()) {
+            mAnswerServer = null;
+        }
+
         JSONObject command = new JSONObject();
         try {
             command.put("type", "send-start");
             command.put("readUrl", mServer.getReadUrl());
+            command.put("answerUrl", mAnswerServer != null ? mAnswerServer.getAnswerUrl() : "");
             command.put("name", entity.getFileName());
             command.put("size", size);
             // Derive the mime from the file's OWN extension, not the entity's
@@ -320,6 +356,34 @@ public class P2pShareController {
             return;
         }
         postCommand(command);
+        // The answer is in (whichever way it arrived) — the LAN listener's
+        // job is done; don't keep a socket open through the transfer.
+        if (mAnswerServer != null) {
+            mAnswerServer.stop();
+            mAnswerServer = null;
+        }
+    }
+
+    /**
+     * Sender: an answer arrived over the LAN answer listener (the single-scan
+     * return path) — validate and apply like a scanned reply. Runs on main
+     * (posted by the listener's callback).
+     */
+    private void onDirectAnswer(@NonNull String raw) {
+        if (!"send".equals(mRole)) {
+            return;
+        }
+        String code = stripDeepLink(raw);
+        if (!code.startsWith(ANSWER_PREFIX)) {
+            if (BuildConfig.DEBUG) {
+                Log.d(TAG, "direct answer rejected (bad prefix)");
+            }
+            return;
+        }
+        if (BuildConfig.DEBUG) {
+            Log.d(TAG, "answer received over LAN return");
+        }
+        provideAnswer(code);
     }
 
     /**
@@ -448,13 +512,21 @@ public class P2pShareController {
                 }
             }
             case "code" -> {
-                if (mListener != null) {
-                    mListener.onCode(json.optString("role", ""), json.optString("code", ""));
+                String role = json.optString("role", "");
+                String code = json.optString("code", "");
+                // Single-scan flow: when the offer carried an answer-return
+                // URL, POST the answer straight to the sender instead of
+                // showing the reply QR; the QR appears only if that fails.
+                if ("answer".equals(role) && mRecvAnswerUrl != null && !mRecvAnswerUrl.isEmpty()) {
+                    postAnswerDirect(mRecvAnswerUrl, code);
+                } else if (mListener != null) {
+                    mListener.onCode(role, code);
                 }
             }
             case "offer-parsed" -> {
                 mRecvName = json.optString("name", "");
                 mRecvMime = json.optString("mime", "");
+                mRecvAnswerUrl = json.optString("ans", "");
                 if (mListener != null) {
                     mListener.onOfferParsed(mRecvName, json.optLong("size", 0), mRecvMime,
                             json.optString("device", ""));
@@ -675,6 +747,51 @@ public class P2pShareController {
         mPort = null;
     }
 
+    /**
+     * Receiver: POST the answer straight to the sender's LAN answer listener
+     * (single-scan flow). On success nothing more happens here — ICE proceeds
+     * and the engine's own state events drive the UI. On failure, fall back to
+     * the reply QR by delivering the code to the listener as before.
+     */
+    private void postAnswerDirect(@NonNull String answerUrl, @NonNull String code) {
+        Request request = new Request.Builder()
+                .url(answerUrl)
+                .post(RequestBody.create(code, MediaType.parse("text/plain; charset=utf-8")))
+                .build();
+        mAnswerClient.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                if (BuildConfig.DEBUG) {
+                    Log.d(TAG, "direct answer failed: " + e.getMessage());
+                }
+                deliverReplyFallback(code);
+            }
+
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) {
+                boolean ok = response.isSuccessful();
+                response.close();
+                if (ok) {
+                    if (BuildConfig.DEBUG) {
+                        Log.d(TAG, "answer returned over LAN");
+                    }
+                } else {
+                    deliverReplyFallback(code);
+                }
+            }
+        });
+    }
+
+    private void deliverReplyFallback(@NonNull String code) {
+        mMainHandler.post(() -> {
+            // The session may have moved on (connected anyway, or torn down).
+            if ("receive".equals(mRole) && mListener != null) {
+                mRecvAnswerUrl = null; // don't re-attempt on a re-emit
+                mListener.onCode("answer", code);
+            }
+        });
+    }
+
     private void runPendingIfReady() {
         if (mEngineReady && mPendingEngineAction != null) {
             mMainHandler.removeCallbacks(mEngineTimeout);
@@ -724,10 +841,21 @@ public class P2pShareController {
             mServer.stop();
             mServer = null;
         }
-        if (deletePartial && mRecvPartFile != null && !mRecvFinalized && mRecvPartFile.exists()) {
-            if (!mRecvPartFile.delete()) {
-                Log.e(TAG, "partial delete failed");
-            }
+        if (mAnswerServer != null) {
+            mAnswerServer.stop();
+            mAnswerServer = null;
+        }
+        mRecvAnswerUrl = null;
+        if (deletePartial && mRecvPartFile != null && !mRecvFinalized) {
+            // Off the main thread — exists()/delete() are disk I/O (StrictMode
+            // flagged them on the error path). The loopback is already stopped
+            // and the write target closed above, so nothing re-creates it.
+            final File partFile = mRecvPartFile;
+            mDiskExecutor.execute(() -> {
+                if (partFile.exists() && !partFile.delete()) {
+                    Log.e(TAG, "partial delete failed");
+                }
+            });
         }
         mRecvPartFile = null;
         mRecvName = null;

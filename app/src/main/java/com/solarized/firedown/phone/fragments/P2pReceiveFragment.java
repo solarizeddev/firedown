@@ -76,7 +76,8 @@ public class P2pReceiveFragment extends P2pShareBaseFragment
             }
         });
         mView.findViewById(R.id.p2p_open).setOnClickListener(v -> openReceived());
-        mView.findViewById(R.id.p2p_stop).setOnClickListener(v -> close());
+        // Mid-transfer this is "Cancel" (confirmed, like back); on done, "Done".
+        mView.findViewById(R.id.p2p_stop).setOnClickListener(v -> confirmThenClose());
         mView.findViewById(R.id.p2p_retry).setOnClickListener(v -> showEntry());
 
         // Arrived via the firedown://p2p/ deep link (scanned with any scanner)?
@@ -117,6 +118,7 @@ public class P2pReceiveFragment extends P2pShareBaseFragment
         setStage(R.id.p2p_entry_group);
         mView.findViewById(R.id.p2p_accept).setEnabled(true);
         mView.findViewById(R.id.p2p_decline).setEnabled(true);
+        mView.findViewById(R.id.p2p_stop).setVisibility(View.GONE);
     }
 
     private void openReceived() {
@@ -187,6 +189,11 @@ public class P2pReceiveFragment extends P2pShareBaseFragment
             return;
         }
         setStage(R.id.p2p_progress_group);
+        // Mid-transfer, an explicit Cancel is warranted (it goes through the
+        // same abandon confirm as back). Hidden on the scan/reply stages.
+        MaterialButton stop = mView.findViewById(R.id.p2p_stop);
+        stop.setText(R.string.cancel);
+        stop.setVisibility(View.VISIBLE);
         LinearProgressIndicator bar = mView.findViewById(R.id.p2p_progress_bar);
         if (total > 0) {
             bar.setProgress((int) (done * 100 / total));
@@ -207,7 +214,11 @@ public class P2pReceiveFragment extends P2pShareBaseFragment
         mReceived = mP2pController.getReceivedEntity();
         // Open is only useful if we actually have the entity handle.
         mView.findViewById(R.id.p2p_open).setVisibility(mReceived != null ? View.VISIBLE : View.GONE);
-        ((MaterialButton) mView.findViewById(R.id.p2p_stop)).setText(R.string.p2p_done);
+        // The bottom button exists only for this stage (hidden in the layout):
+        // a standing Cancel would duplicate back/toolbar-up.
+        MaterialButton done = mView.findViewById(R.id.p2p_stop);
+        done.setText(R.string.p2p_done);
+        done.setVisibility(View.VISIBLE);
     }
 
     @Override
@@ -222,6 +233,7 @@ public class P2pReceiveFragment extends P2pShareBaseFragment
             return;
         }
         setStage(R.id.p2p_error_group);
+        mView.findViewById(R.id.p2p_stop).setVisibility(View.GONE);
         ((TextView) mView.findViewById(R.id.p2p_error)).setText(errorText(code));
     }
 }

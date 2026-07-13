@@ -347,10 +347,11 @@ public class P2pLoopbackServer {
 
     /**
      * Minimal HTTP request-head parser — request line + headers, query split.
-     * The only clients are our own extension fetch() calls, so this stays
-     * deliberately small (no chunked bodies, no keep-alive).
+     * The only clients are our own extension fetch() calls (and the peer's
+     * answer POST — see P2pAnswerServer, which shares this parser), so this
+     * stays deliberately small (no chunked bodies, no keep-alive).
      */
-    private static RequestHead readHead(InputStream in) throws IOException {
+    static RequestHead readHead(InputStream in) throws IOException {
         BufferedReader reader = new BufferedReader(
                 new InputStreamReader(new HeadLimitedStream(in), StandardCharsets.US_ASCII));
         String requestLine = reader.readLine();
@@ -388,7 +389,7 @@ public class P2pLoopbackServer {
         return head;
     }
 
-    private static void sendStatus(OutputStream out, int code, String reason) throws IOException {
+    static void sendStatus(OutputStream out, int code, String reason) throws IOException {
         String response = "HTTP/1.1 " + code + " " + reason + "\r\n"
                 + "Content-Length: 0\r\n"
                 + "Connection: close\r\n\r\n";
@@ -403,7 +404,7 @@ public class P2pLoopbackServer {
         }
     }
 
-    private static final class RequestHead {
+    static final class RequestHead {
         String method;
         String path;
         final HashMap<String, String> query = new HashMap<>();

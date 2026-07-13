@@ -86,6 +86,33 @@ await sleep(50);
 check("bad offer code -> bad-code error",
     postedEvents.length === 1 && postedEvents[0].type === "error" && postedEvents[0].code === "bad-code");
 
+// ── offer-parsed carries the answer-return URL (single-scan flow) ──────────
+postedEvents.length = 0;
+const offerWithAns = await vm.runInContext(`
+  encodeCode(OFFER_PREFIX, { v: 1, sdp: "v=0\\r\\n", name: "a.bin", size: 5,
+      mime: "application/octet-stream", dev: "Test",
+      ans: "http://192.168.1.2:40000/answer?t=aa" })
+`, context);
+sendCommand({ type: "recv-start", code: offerWithAns, stun: "" });
+await sleep(50);
+check("offer-parsed surfaces ans",
+    postedEvents.length === 1 && postedEvents[0].type === "offer-parsed"
+        && postedEvents[0].ans === "http://192.168.1.2:40000/answer?t=aa"
+        && postedEvents[0].name === "a.bin");
+// A pre-single-scan offer (no ans field) must surface an EMPTY ans, not fail.
+postedEvents.length = 0;
+const offerNoAns = await vm.runInContext(`
+  encodeCode(OFFER_PREFIX, { v: 1, sdp: "v=0\\r\\n", name: "b.bin", size: 5,
+      mime: "application/octet-stream", dev: "Test" })
+`, context);
+sendCommand({ type: "recv-start", code: offerNoAns, stun: "" });
+await sleep(50);
+check("offer without ans -> empty ans",
+    postedEvents.length === 1 && postedEvents[0].type === "offer-parsed"
+        && postedEvents[0].ans === "");
+sendCommand({ type: "stop" });
+await sleep(20);
+
 // ── code codec round-trip ───────────────────────────────────────────────────
 const codecProbe = `
   (async () => {

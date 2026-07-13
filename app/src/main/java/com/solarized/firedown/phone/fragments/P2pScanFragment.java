@@ -22,6 +22,9 @@ import androidx.camera.core.Preview;
 import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.camera.view.PreviewView;
 import androidx.core.content.ContextCompat;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.DialogFragment;
 import androidx.navigation.NavBackStackEntry;
 import androidx.navigation.NavController;
@@ -128,6 +131,25 @@ public class P2pScanFragment extends DialogFragment {
         boolean reply = getArguments() != null && getArguments().getBoolean(ARG_REPLY, false);
         toolbar.setTitle(reply ? R.string.p2p_scan_reply : R.string.p2p_scan_code);
         toolbar.setNavigationOnClickListener(v -> dismiss());
+
+        // Edge-to-edge insets (enforced on 15+, where the dialog theme's
+        // statusBarColor/navigationBarColor are ignored): keep the toolbar
+        // below the status bar and the paste panel above the nav bar — the
+        // same manual pattern P2pShareBaseFragment uses for its footer.
+        View appbar = mView.findViewById(R.id.appbar_layout);
+        ViewCompat.setOnApplyWindowInsetsListener(appbar, (v, windowInsets) -> {
+            Insets bars = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(v.getPaddingLeft(), bars.top, v.getPaddingRight(), v.getPaddingBottom());
+            return windowInsets;
+        });
+        View footer = mView.findViewById(R.id.p2p_scan_footer);
+        int basePadding = footer.getPaddingBottom();
+        ViewCompat.setOnApplyWindowInsetsListener(footer, (v, windowInsets) -> {
+            Insets bars = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(v.getPaddingLeft(), v.getPaddingTop(), v.getPaddingRight(),
+                    basePadding + bars.bottom);
+            return windowInsets;
+        });
 
         mView.findViewById(R.id.p2p_scan_paste).setOnClickListener(v -> pasteCode());
         return mView;
