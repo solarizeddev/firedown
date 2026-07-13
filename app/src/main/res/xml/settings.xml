@@ -93,10 +93,23 @@
             app:singleLineTitle="false"
             app:icon="@drawable/settings_backup_restore_24"/>
 
-        <!-- P2P direct share: the address-discovery helper. A click-row (not a
-             ListPreference) so "Custom…" stays re-editable — a ListPreference
-             fires no change event when you re-pick the already-selected custom
-             entry. The chooser + URL editor live in SettingsFragment. -->
+    </PreferenceCategory>
+
+    <!-- Direct share (WebRTC P2P) networking. Its own category, out of the
+         everyday Downloads list: these are advanced connection-helper settings
+         that most users never touch (the defaults just work on the same
+         Wi-Fi). The category summary explains the feature; each row's summary
+         explains that helper. -->
+    <PreferenceCategory
+        android:title="@string/settings_p2p_category"
+        android:summary="@string/settings_p2p_category_summary"
+        app:iconSpaceReserved="false"
+        app:singleLineTitle="false">
+
+        <!-- Address-discovery helper (STUN). A click-row (not a ListPreference)
+             so "Custom…" stays re-editable — a ListPreference fires no change
+             event when you re-pick the already-selected custom entry. The
+             chooser + URL editor live in SettingsFragment. -->
         <Preference
             android:key="com.solarized.firedown.preferences.p2p.stun.server"
             android:summary="@string/settings_p2p_stun_summary"

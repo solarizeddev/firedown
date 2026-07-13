@@ -416,10 +416,14 @@ async function acceptAnswer(msg) {
     return;
   }
   let payload;
+  const raw = String(msg.code || "");
+  log("send-answer code len=" + raw.length + " head=" + raw.slice(0, 14));
   try {
     payload = await decodeCode(ANSWER_PREFIX, msg.code);
   } catch (e) {
     // Any unreadable code is soft — the offer QR is still valid, re-scan.
+    log("answer decode threw: " + (e && e.message) + " (len=" + raw.length
+        + " head=" + raw.slice(0, 14) + ")");
     softError("answer code unreadable");
     return;
   }
@@ -498,16 +502,21 @@ async function startReceive(msg) {
   };
   session = s;
   let offer;
+  const raw = String(msg.code || "");
+  log("recv-start code len=" + raw.length + " head=" + raw.slice(0, 14));
   try {
     offer = await decodeCode(OFFER_PREFIX, msg.code);
   } catch (e) {
     // Nothing valid to hold, but SOFT: the receive screen stays on its
     // scan/paste step and the user retries with a better code.
+    log("offer decode threw: " + (e && e.message) + " (len=" + raw.length
+        + " head=" + raw.slice(0, 14) + ")");
     session = null;
     softError("offer code unreadable");
     return;
   }
   if (!offer.sdp || !(offer.size >= 0)) {
+    log("offer missing fields: sdp=" + (!!offer.sdp) + " size=" + offer.size);
     session = null;
     softError("offer code unreadable");
     return;

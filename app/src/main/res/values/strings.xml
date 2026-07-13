@@ -822,6 +822,8 @@
     <string name="p2p_footer">Encrypted device-to-device transfer. The file never touches a server.</string>
     <string name="p2p_scan_hint">Point the camera at the sender\'s code</string>
     <string name="p2p_camera_denied">Camera access is needed to scan. You can paste the code instead.</string>
+    <string name="settings_p2p_category">Direct share</string>
+    <string name="settings_p2p_category_summary">Connection helpers for sending files device-to-device. The defaults work on the same Wi-Fi — you only need these on different networks.</string>
     <string name="settings_p2p_stun">STUN server</string>
     <string name="settings_p2p_stun_summary">Helps two devices find each other across the internet during a direct share. Only your network address is ever sent to it.</string>
     <string name="settings_p2p_stun_custom">Custom…</string>
