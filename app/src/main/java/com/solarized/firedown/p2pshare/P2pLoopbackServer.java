@@ -7,13 +7,11 @@ import android.util.Log;
 import com.solarized.firedown.BuildConfig;
 import com.solarized.firedown.data.RestoredFileAccess;
 
-import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.net.InetAddress;
@@ -345,20 +343,56 @@ public class P2pLoopbackServer {
         sendStatus(out, 204, "No Content");
     }
 
+    /** Cap the request head so a malformed client can't grow it unbounded. */
+    private static final int MAX_HEAD_BYTES = 16 * 1024;
+
     /**
      * Minimal HTTP request-head parser — request line + headers, query split.
      * The only clients are our own extension fetch() calls (and the peer's
      * answer POST — see P2pAnswerServer, which shares this parser), so this
      * stays deliberately small (no chunked bodies, no keep-alive).
+     *
+     * <p><b>Reads raw bytes up to and INCLUDING the terminating {@code \r\n\r\n},
+     * and no further</b>, so {@code in} is left positioned EXACTLY at the first
+     * body byte. This is load-bearing: a {@code BufferedReader}/{@code readLine}
+     * approach leaves the blank line's final {@code \n} unconsumed (readLine
+     * consumes the {@code \r}, sets an internal {@code skipLF}, and returns
+     * before eating the {@code \n}), so a subsequent raw body read starts one
+     * byte early — it takes the stray {@code \n} as {@code body[0]} and DROPS
+     * the last real byte. For a deflate-compressed answer/chunk that one lost
+     * byte corrupts the whole stream ("operation aborted" on decode). Parsing
+     * the head as bytes and stopping at the exact terminator avoids it.
      */
     static RequestHead readHead(InputStream in) throws IOException {
-        BufferedReader reader = new BufferedReader(
-                new InputStreamReader(new HeadLimitedStream(in), StandardCharsets.US_ASCII));
-        String requestLine = reader.readLine();
-        if (requestLine == null || requestLine.isEmpty()) {
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        // Match the CRLFCRLF terminator; `match` is the index into it.
+        final byte[] term = {'\r', '\n', '\r', '\n'};
+        int match = 0;
+        int b;
+        while ((b = in.read()) >= 0) {
+            buffer.write(b);
+            if (b == term[match]) {
+                match++;
+                if (match == term.length) {
+                    break;
+                }
+            } else {
+                // A stray '\r' can still begin a fresh terminator.
+                match = (b == '\r') ? 1 : 0;
+            }
+            if (buffer.size() > MAX_HEAD_BYTES) {
+                return null;
+            }
+        }
+        if (buffer.size() == 0) {
             return null;
         }
-        String[] parts = requestLine.split(" ");
+        String[] lines = new String(buffer.toByteArray(), StandardCharsets.US_ASCII)
+                .split("\r\n");
+        if (lines.length == 0 || lines[0].isEmpty()) {
+            return null;
+        }
+        String[] parts = lines[0].split(" ");
         if (parts.length < 2) {
             return null;
         }
@@ -377,8 +411,11 @@ public class P2pLoopbackServer {
         } else {
             head.path = target;
         }
-        String line;
-        while ((line = reader.readLine()) != null && !line.isEmpty()) {
+        for (int i = 1; i < lines.length; i++) {
+            String line = lines[i];
+            if (line.isEmpty()) {
+                continue;
+            }
             int colon = line.indexOf(':');
             if (colon > 0) {
                 head.headers.put(
@@ -409,43 +446,5 @@ public class P2pLoopbackServer {
         String path;
         final HashMap<String, String> query = new HashMap<>();
         final HashMap<String, String> headers = new HashMap<>();
-    }
-
-    /**
-     * BufferedReader over the raw stream would gulp body bytes into its
-     * buffer past the blank line — the body would then be missing from the
-     * InputStream handleWrite reads. This wrapper feeds the reader ONE byte
-     * at a time (single-byte reads, no readahead), so after the head is
-     * consumed the underlying stream sits exactly at the body start. Head
-     * parsing is a few hundred bytes; per-byte reads there cost nothing next
-     * to the 64 KiB buffered body copies.
-     */
-    private static final class HeadLimitedStream extends InputStream {
-        private final InputStream mWrapped;
-
-        HeadLimitedStream(InputStream wrapped) {
-            mWrapped = wrapped;
-        }
-
-        @Override
-        public int read() throws IOException {
-            return mWrapped.read();
-        }
-
-        @Override
-        public int read(byte[] buffer, int off, int len) throws IOException {
-            // Force single-byte semantics even for bulk requests: read one
-            // byte so the caller (BufferedReader) never consumes past what
-            // it has actually parsed.
-            if (len <= 0) {
-                return 0;
-            }
-            int b = mWrapped.read();
-            if (b < 0) {
-                return -1;
-            }
-            buffer[off] = (byte) b;
-            return 1;
-        }
     }
 }
