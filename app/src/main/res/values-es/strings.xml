@@ -668,7 +668,7 @@
     <string name="p2p_send_lead">Envía este archivo directamente a otro dispositivo con Firedown — cifrado, de dispositivo a dispositivo, sin ningún servidor de por medio.</string>
     <string name="p2p_receive_lead">Recibe un archivo directamente desde otro dispositivo con Firedown.</string>
     <string name="p2p_rtc_note">Las conexiones directas se activan solo para esta transferencia y luego se desactivan de nuevo.</string>
-    <string name="p2p_code_hint_send">En el otro dispositivo, abre Descargas → Recibir un archivo y escanea este código. Cuando te muestre un código de respuesta, escanéalo de vuelta.</string>
+    <string name="p2p_code_hint_send">Escanea este código con el otro dispositivo — en Firedown, en Descargas → Recibir un archivo, o simplemente con su cámara. En la misma red, la transferencia continúa por sí sola; si aparece un código de respuesta, escanéalo de vuelta.</string>
     <string name="p2p_code_hint_reply">Muestra esta respuesta al remitente, o envíasela de vuelta por el mismo medio por el que llegó su código.</string>
     <string name="p2p_share_code">Enviar el código de otra forma</string>
     <string name="p2p_scan_reply">Escanear respuesta</string>
@@ -686,7 +686,7 @@
     <string name="p2p_done_received">Guardado en Descargas</string>
     <string name="p2p_stop">Detener</string>
     <string name="p2p_done">Listo</string>
-    <string name="p2p_error_no_path">No se pudo conectar directamente con el otro dispositivo. Esto suele ocurrir cuando ambos lados usan datos móviles — prueba a conectarte a la misma red Wi-Fi.</string>
+    <string name="p2p_error_no_path">No se pudo conectar directamente con el otro dispositivo. Esto ocurre con datos móviles o detrás de una VPN — prueba la misma red Wi-Fi, con cualquier VPN desactivada.</string>
     <string name="p2p_error_generic">La transferencia ha fallado.</string>
     <string name="p2p_error_bad_code">Ese código no es válido — inténtalo de nuevo.</string>
     <string name="p2p_clipboard_empty">No hay ningún código en el portapapeles.</string>

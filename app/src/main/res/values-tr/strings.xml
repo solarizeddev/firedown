@@ -536,7 +536,7 @@
     <string name="p2p_send_lead">Bu dosyayı Firedown çalıştıran başka bir cihaza doğrudan gönderin — şifreli, cihazdan cihaza, arada sunucu olmadan.</string>
     <string name="p2p_receive_lead">Firedown çalıştıran başka bir cihazdan doğrudan dosya alın.</string>
     <string name="p2p_rtc_note">Doğrudan bağlantılar yalnızca bu aktarım için açılır, sonra tekrar kapatılır.</string>
-    <string name="p2p_code_hint_send">Diğer cihazda İndirilenler → Dosya al bölümünü açın ve bu kodu tarayın. Size bir yanıt kodu gösterildiğinde onu geri tarayın.</string>
+    <string name="p2p_code_hint_send">Bu kodu diğer cihazla tarayın — Firedown\'da İndirilenler → Dosya al bölümünden ya da doğrudan cihazın kamerasıyla. Aynı ağda aktarım kendiliğinden devam eder; bir yanıt kodu görünürse onu geri tarayın.</string>
     <string name="p2p_code_hint_reply">Bu yanıtı gönderene gösterin veya kodun geldiği yoldan geri gönderin.</string>
     <string name="p2p_share_code">Kodu başka bir yolla gönder</string>
     <string name="p2p_scan_reply">Yanıtı tara</string>
@@ -554,7 +554,7 @@
     <string name="p2p_done_received">İndirilenler\'e kaydedildi</string>
     <string name="p2p_stop">Durdur</string>
     <string name="p2p_done">Bitti</string>
-    <string name="p2p_error_no_path">Diğer cihaza doğrudan ulaşılamadı. Bu genellikle her iki taraf da mobil veri kullanırken olur — aynı Wi-Fi ağına bağlanmayı deneyin.</string>
+    <string name="p2p_error_no_path">Diğer cihaza doğrudan ulaşılamadı. Bu, mobil veride veya VPN arkasında olur — varsa VPN\'i kapatarak aynı Wi-Fi ağını deneyin.</string>
     <string name="p2p_error_generic">Aktarım başarısız oldu.</string>
     <string name="p2p_error_bad_code">Bu kod geçerli değil — tekrar deneyin.</string>
     <string name="p2p_clipboard_empty">Panoda kod yok.</string>

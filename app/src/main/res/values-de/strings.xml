@@ -668,7 +668,7 @@
     <string name="p2p_send_lead">Sende diese Datei direkt an ein anderes Gerät mit Firedown — verschlüsselt, von Gerät zu Gerät, ohne Server dazwischen.</string>
     <string name="p2p_receive_lead">Empfange eine Datei direkt von einem anderen Gerät mit Firedown.</string>
     <string name="p2p_rtc_note">Direktverbindungen werden nur für diese Übertragung aktiviert und danach wieder deaktiviert.</string>
-    <string name="p2p_code_hint_send">Öffne auf dem anderen Gerät Downloads → Datei empfangen und scanne diesen Code. Wenn ein Antwortcode angezeigt wird, scanne ihn zurück.</string>
+    <string name="p2p_code_hint_send">Scanne diesen Code mit dem anderen Gerät — in Firedown unter Downloads → Datei empfangen oder einfach mit dessen Kamera. Im selben Netzwerk läuft die Übertragung von selbst weiter; falls ein Antwortcode erscheint, scanne ihn zurück.</string>
     <string name="p2p_code_hint_reply">Zeige diese Antwort dem Absender oder sende sie auf demselben Weg zurück, auf dem sein Code angekommen ist.</string>
     <string name="p2p_share_code">Code anders senden</string>
     <string name="p2p_scan_reply">Antwort scannen</string>
@@ -686,7 +686,7 @@
     <string name="p2p_done_received">In Downloads gespeichert</string>
     <string name="p2p_stop">Stopp</string>
     <string name="p2p_done">Fertig</string>
-    <string name="p2p_error_no_path">Das andere Gerät konnte nicht direkt erreicht werden. Das passiert meist, wenn beide Seiten mobile Daten nutzen — versuche, dasselbe Wi-Fi-Netzwerk zu verwenden.</string>
+    <string name="p2p_error_no_path">Das andere Gerät konnte nicht direkt erreicht werden. Das passiert bei mobilen Daten oder hinter einem VPN — versuche dasselbe Wi-Fi-Netzwerk, mit ausgeschaltetem VPN.</string>
     <string name="p2p_error_generic">Die Übertragung ist fehlgeschlagen.</string>
     <string name="p2p_error_bad_code">Dieser Code ist ungültig — versuche es erneut.</string>
     <string name="p2p_clipboard_empty">Kein Code in der Zwischenablage.</string>

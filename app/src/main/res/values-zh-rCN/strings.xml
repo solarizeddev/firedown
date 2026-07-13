@@ -665,7 +665,7 @@
     <string name="p2p_send_lead">将此文件直接发送到另一台运行 Firedown 的设备——加密传输，设备直连，中间不经过任何服务器。</string>
     <string name="p2p_receive_lead">直接从另一台运行 Firedown 的设备接收文件。</string>
     <string name="p2p_rtc_note">直接连接仅在本次传输期间开启，之后再次关闭。</string>
-    <string name="p2p_code_hint_send">在另一台设备上打开下载 → 接收文件并扫描此代码。当它向你显示回复代码时，再扫描回来。</string>
+    <string name="p2p_code_hint_send">用另一台设备扫描此代码——在 Firedown 的下载 → 接收文件中，或直接用它的相机扫描。在同一网络中，传输会自动继续；如果出现回复代码，再扫描回来。</string>
     <string name="p2p_code_hint_reply">将此回复出示给发送方，或按对方代码送达的方式发回。</string>
     <string name="p2p_share_code">以其他方式发送代码</string>
     <string name="p2p_scan_reply">扫描回复</string>
@@ -683,7 +683,7 @@
     <string name="p2p_done_received">已保存到下载</string>
     <string name="p2p_stop">停止</string>
     <string name="p2p_done">完成</string>
-    <string name="p2p_error_no_path">无法直接连接到另一台设备。这通常发生在双方都使用移动数据时——请尝试连接到同一个 Wi-Fi 网络。</string>
+    <string name="p2p_error_no_path">无法直接连接到另一台设备。这会在使用移动数据或经过 VPN 时发生——请关闭所有 VPN，并尝试连接到同一个 Wi-Fi 网络。</string>
     <string name="p2p_error_generic">传输失败。</string>
     <string name="p2p_error_bad_code">该代码无效——请重试。</string>
     <string name="p2p_clipboard_empty">剪贴板中没有代码。</string>

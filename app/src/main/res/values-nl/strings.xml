@@ -537,7 +537,7 @@
     <string name="p2p_send_lead">Verstuur dit bestand rechtstreeks naar een ander apparaat met Firedown — versleuteld, van apparaat naar apparaat, zonder server ertussen.</string>
     <string name="p2p_receive_lead">Ontvang een bestand rechtstreeks van een ander apparaat met Firedown.</string>
     <string name="p2p_rtc_note">Directe verbindingen worden alleen voor deze overdracht ingeschakeld en daarna weer uitgeschakeld.</string>
-    <string name="p2p_code_hint_send">Open op het andere apparaat Downloads → Een bestand ontvangen en scan deze code. Zodra er een antwoordcode verschijnt, scan die terug.</string>
+    <string name="p2p_code_hint_send">Scan deze code met het andere apparaat — in Firedown onder Downloads → Een bestand ontvangen, of gewoon met de camera ervan. Op hetzelfde netwerk gaat de overdracht vanzelf verder; als er een antwoordcode verschijnt, scan die dan terug.</string>
     <string name="p2p_code_hint_reply">Toon dit antwoord aan de verzender, of stuur het terug op dezelfde manier waarop hun code binnenkwam.</string>
     <string name="p2p_share_code">Code op een andere manier verzenden</string>
     <string name="p2p_scan_reply">Antwoord scannen</string>
@@ -555,7 +555,7 @@
     <string name="p2p_done_received">Opgeslagen in Downloads</string>
     <string name="p2p_stop">Stoppen</string>
     <string name="p2p_done">Klaar</string>
-    <string name="p2p_error_no_path">Kon het andere apparaat niet rechtstreeks bereiken. Dit gebeurt meestal wanneer beide kanten mobiele data gebruiken — probeer met hetzelfde Wi-Fi-netwerk te verbinden.</string>
+    <string name="p2p_error_no_path">Kon het andere apparaat niet rechtstreeks bereiken. Dit gebeurt op mobiele data of achter een VPN — probeer hetzelfde Wi-Fi-netwerk, met een eventuele VPN uitgeschakeld.</string>
     <string name="p2p_error_generic">De overdracht is mislukt.</string>
     <string name="p2p_error_bad_code">Die code is niet geldig — probeer het opnieuw.</string>
     <string name="p2p_clipboard_empty">Geen code op het klembord.</string>

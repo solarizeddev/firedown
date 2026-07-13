@@ -537,7 +537,7 @@
     <string name="p2p_send_lead">Envie este arquivo direto para outro dispositivo com o Firedown — criptografado, de dispositivo a dispositivo, sem nenhum servidor no meio.</string>
     <string name="p2p_receive_lead">Receba um arquivo direto de outro dispositivo com o Firedown.</string>
     <string name="p2p_rtc_note">As conexões diretas são ativadas apenas para esta transferência e depois desativadas novamente.</string>
-    <string name="p2p_code_hint_send">No outro dispositivo, abra Transferências → Receber um arquivo e escaneie este código. Quando aparecer um código de resposta, escaneie-o de volta.</string>
+    <string name="p2p_code_hint_send">Escaneie este código com o outro dispositivo — no Firedown, em Transferências → Receber um arquivo, ou simplesmente com a câmera dele. Na mesma rede, a transferência continua sozinha; se aparecer um código de resposta, escaneie-o de volta.</string>
     <string name="p2p_code_hint_reply">Mostre esta resposta ao remetente, ou envie-a de volta pelo mesmo caminho por onde o código dele chegou.</string>
     <string name="p2p_share_code">Enviar código de outra forma</string>
     <string name="p2p_scan_reply">Escanear resposta</string>
@@ -555,7 +555,7 @@
     <string name="p2p_done_received">Salvo em Transferências</string>
     <string name="p2p_stop">Parar</string>
     <string name="p2p_done">Concluído</string>
-    <string name="p2p_error_no_path">Não foi possível alcançar o outro dispositivo diretamente. Isso costuma acontecer quando os dois lados estão em dados móveis — tente conectar os dois à mesma rede Wi-Fi.</string>
+    <string name="p2p_error_no_path">Não foi possível alcançar o outro dispositivo diretamente. Isso acontece em dados móveis ou atrás de uma VPN — tente a mesma rede Wi-Fi, com qualquer VPN desativada.</string>
     <string name="p2p_error_generic">A transferência falhou.</string>
     <string name="p2p_error_bad_code">Esse código não é válido — tente novamente.</string>
     <string name="p2p_clipboard_empty">Nenhum código na área de transferência.</string>

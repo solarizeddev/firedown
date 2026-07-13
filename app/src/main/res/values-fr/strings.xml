@@ -669,7 +669,7 @@
     <string name="p2p_send_lead">Envoyez ce fichier directement à un autre appareil utilisant Firedown — chiffré, d\'appareil à appareil, sans serveur intermédiaire.</string>
     <string name="p2p_receive_lead">Recevez un fichier directement depuis un autre appareil utilisant Firedown.</string>
     <string name="p2p_rtc_note">Les connexions directes sont activées uniquement pour ce transfert, puis désactivées.</string>
-    <string name="p2p_code_hint_send">Sur l\'autre appareil, ouvrez Téléchargements → Recevoir un fichier et scannez ce code. Lorsqu\'un code de réponse s\'affiche, scannez-le en retour.</string>
+    <string name="p2p_code_hint_send">Scannez ce code avec l\'autre appareil — dans Firedown, sous Téléchargements → Recevoir un fichier, ou simplement avec son appareil photo. Sur le même réseau, le transfert continue tout seul ; si un code de réponse s\'affiche, scannez-le en retour.</string>
     <string name="p2p_code_hint_reply">Montrez cette réponse à l\'expéditeur, ou renvoyez-la par le même moyen que son code est arrivé.</string>
     <string name="p2p_share_code">Envoyer le code autrement</string>
     <string name="p2p_scan_reply">Scanner la réponse</string>
@@ -687,7 +687,7 @@
     <string name="p2p_done_received">Enregistré dans Téléchargements</string>
     <string name="p2p_stop">Arrêter</string>
     <string name="p2p_done">Terminé</string>
-    <string name="p2p_error_no_path">Impossible de joindre l\'autre appareil directement. Cela arrive généralement quand les deux appareils sont en données mobiles — essayez de rejoindre le même réseau Wi-Fi.</string>
+    <string name="p2p_error_no_path">Impossible de joindre l\'autre appareil directement. Cela arrive en données mobiles ou derrière un VPN — essayez le même réseau Wi-Fi, avec tout VPN désactivé.</string>
     <string name="p2p_error_generic">Le transfert a échoué.</string>
     <string name="p2p_error_bad_code">Ce code n\'est pas valide — réessayez.</string>
     <string name="p2p_clipboard_empty">Aucun code dans le presse-papiers.</string>

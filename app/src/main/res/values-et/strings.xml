@@ -406,7 +406,7 @@
     <string name="p2p_send_lead">Saada see fail otse teise Firedowni kasutavasse seadmesse — krüptitult, seadmest seadmesse, ilma vahepealse serverita.</string>
     <string name="p2p_receive_lead">Võta fail vastu otse teisest Firedowni kasutavast seadmest.</string>
     <string name="p2p_rtc_note">Otseühendused lülitatakse sisse ainult selleks ülekandeks ja seejärel jälle välja.</string>
-    <string name="p2p_code_hint_send">Ava teises seadmes Allalaadimised → Võta fail vastu ja skanni see kood. Kui kuvatakse vastuskood, skanni see tagasi.</string>
+    <string name="p2p_code_hint_send">Skanni see kood teise seadmega — Firedownis jaotises Allalaadimised → Võta fail vastu või lihtsalt selle kaameraga. Samas võrgus jätkub ülekanne iseenesest; kui kuvatakse vastuskood, skanni see tagasi.</string>
     <string name="p2p_code_hint_reply">Näita seda vastust saatjale või saada see tagasi samal viisil, nagu saatja kood saabus.</string>
     <string name="p2p_share_code">Saada kood muul viisil</string>
     <string name="p2p_scan_reply">Skanni vastus</string>
@@ -424,7 +424,7 @@
     <string name="p2p_done_received">Salvestatud kausta Allalaadimised</string>
     <string name="p2p_stop">Peata</string>
     <string name="p2p_done">Valmis</string>
-    <string name="p2p_error_no_path">Teise seadmega ei õnnestunud otseühendust luua. Tavaliselt juhtub see siis, kui mõlemad seadmed on mobiilses andmesides — proovi liituda sama Wi-Fi võrguga.</string>
+    <string name="p2p_error_no_path">Teise seadmega ei õnnestunud otseühendust luua. See juhtub mobiilses andmesides või VPN-i taga — proovi sama Wi-Fi võrku ja lülita VPN välja.</string>
     <string name="p2p_error_generic">Ülekanne ebaõnnestus.</string>
     <string name="p2p_error_bad_code">See kood ei kehti — proovi uuesti.</string>
     <string name="p2p_clipboard_empty">Lõikelaual pole koodi.</string>

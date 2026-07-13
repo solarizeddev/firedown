@@ -492,7 +492,7 @@
     <string name="p2p_send_lead">Odešlete tento soubor přímo do jiného zařízení s aplikací Firedown — šifrovaně, ze zařízení do zařízení, bez serveru mezi nimi.</string>
     <string name="p2p_receive_lead">Přijměte soubor přímo z jiného zařízení s aplikací Firedown.</string>
     <string name="p2p_rtc_note">Přímá spojení se zapnou jen pro tento přenos a poté se zase vypnou.</string>
-    <string name="p2p_code_hint_send">Na druhém zařízení otevřete Stahování → Přijmout soubor a naskenujte tento kód. Až se zobrazí kód odpovědi, naskenujte jej zpět.</string>
+    <string name="p2p_code_hint_send">Naskenujte tento kód druhým zařízením — ve Firedownu v části Stahování → Přijmout soubor, nebo prostě jeho fotoaparátem. Ve stejné síti přenos pokračuje sám; pokud se zobrazí kód odpovědi, naskenujte jej zpět.</string>
     <string name="p2p_code_hint_reply">Ukažte tuto odpověď odesílateli, nebo ji pošlete zpět stejnou cestou, jakou dorazil jeho kód.</string>
     <string name="p2p_share_code">Poslat kód jinak</string>
     <string name="p2p_scan_reply">Naskenovat odpověď</string>
@@ -510,7 +510,7 @@
     <string name="p2p_done_received">Uloženo do Stahování</string>
     <string name="p2p_stop">Zastavit</string>
     <string name="p2p_done">Hotovo</string>
-    <string name="p2p_error_no_path">Druhé zařízení se nepodařilo přímo kontaktovat. K tomu obvykle dochází, když jsou obě strany na mobilních datech — zkuste se připojit ke stejné Wi-Fi síti.</string>
+    <string name="p2p_error_no_path">Druhé zařízení se nepodařilo přímo kontaktovat. To se stává na mobilních datech nebo za VPN — zkuste stejnou Wi-Fi síť s vypnutou VPN.</string>
     <string name="p2p_error_generic">Přenos se nezdařil.</string>
     <string name="p2p_error_bad_code">Tento kód není platný — zkuste to znovu.</string>
     <string name="p2p_clipboard_empty">Ve schránce není žádný kód.</string>

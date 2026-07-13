@@ -476,7 +476,7 @@
     <string name="p2p_send_lead">Lähetä tämä tiedosto suoraan toiseen Firedownia käyttävään laitteeseen — salattuna, laitteesta laitteeseen, ilman välissä olevaa palvelinta.</string>
     <string name="p2p_receive_lead">Vastaanota tiedosto suoraan toisesta Firedownia käyttävästä laitteesta.</string>
     <string name="p2p_rtc_note">Suorat yhteydet otetaan käyttöön vain tätä siirtoa varten ja sammutetaan sitten taas.</string>
-    <string name="p2p_code_hint_send">Avaa toisella laitteella Lataukset → Vastaanota tiedosto ja skannaa tämä koodi. Kun näkyviin tulee vastauskoodi, skannaa se takaisin.</string>
+    <string name="p2p_code_hint_send">Skannaa tämä koodi toisella laitteella — Firedownissa kohdassa Lataukset → Vastaanota tiedosto tai vain sen kameralla. Samassa verkossa siirto jatkuu itsestään; jos vastauskoodi tulee näkyviin, skannaa se takaisin.</string>
     <string name="p2p_code_hint_reply">Näytä tämä vastaus lähettäjälle tai lähetä se takaisin samaa reittiä, jota pitkin lähettäjän koodi saapui.</string>
     <string name="p2p_share_code">Lähetä koodi muulla tavalla</string>
     <string name="p2p_scan_reply">Skannaa vastaus</string>
@@ -494,7 +494,7 @@
     <string name="p2p_done_received">Tallennettu Lataukset-kansioon</string>
     <string name="p2p_stop">Pysäytä</string>
     <string name="p2p_done">Valmis</string>
-    <string name="p2p_error_no_path">Toiseen laitteeseen ei saatu suoraa yhteyttä. Näin käy yleensä, kun molemmat laitteet ovat mobiilidatan varassa — kokeile liittyä samaan Wi-Fi-verkkoon.</string>
+    <string name="p2p_error_no_path">Toiseen laitteeseen ei saatu suoraa yhteyttä. Näin käy mobiilidatalla tai VPN:n takana — kokeile samaa Wi-Fi-verkkoa ja kytke VPN pois päältä.</string>
     <string name="p2p_error_generic">Siirto epäonnistui.</string>
     <string name="p2p_error_bad_code">Koodi ei kelpaa — yritä uudelleen.</string>
     <string name="p2p_clipboard_empty">Leikepöydällä ei ole koodia.</string>

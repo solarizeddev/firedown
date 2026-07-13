@@ -536,7 +536,7 @@
     <string name="p2p_send_lead">Wyślij ten plik prosto na inne urządzenie z Firedown — z szyfrowaniem, z urządzenia na urządzenie, bez pośredniczącego serwera.</string>
     <string name="p2p_receive_lead">Odbierz plik prosto z innego urządzenia z Firedown.</string>
     <string name="p2p_rtc_note">Połączenia bezpośrednie są włączane tylko na czas tego przesyłania, a potem znów wyłączane.</string>
-    <string name="p2p_code_hint_send">Na drugim urządzeniu otwórz Pliki do pobrania → Odbierz plik i zeskanuj ten kod. Gdy pojawi się kod odpowiedzi, zeskanuj go z powrotem.</string>
+    <string name="p2p_code_hint_send">Zeskanuj ten kod drugim urządzeniem — w Firedown w sekcji Pliki do pobrania → Odbierz plik albo po prostu jego aparatem. W tej samej sieci przesyłanie jest kontynuowane samo; jeśli pojawi się kod odpowiedzi, zeskanuj go z powrotem.</string>
     <string name="p2p_code_hint_reply">Pokaż tę odpowiedź nadawcy albo odeślij ją tą samą drogą, którą dotarł jego kod.</string>
     <string name="p2p_share_code">Wyślij kod w inny sposób</string>
     <string name="p2p_scan_reply">Skanuj odpowiedź</string>
@@ -554,7 +554,7 @@
     <string name="p2p_done_received">Zapisano w Plikach do pobrania</string>
     <string name="p2p_stop">Zatrzymaj</string>
     <string name="p2p_done">Gotowe</string>
-    <string name="p2p_error_no_path">Nie udało się połączyć bezpośrednio z drugim urządzeniem. Zwykle dzieje się tak, gdy oba urządzenia korzystają z danych mobilnych — spróbuj połączyć się z tą samą siecią Wi-Fi.</string>
+    <string name="p2p_error_no_path">Nie udało się połączyć bezpośrednio z drugim urządzeniem. Zdarza się to na danych mobilnych lub za VPN — spróbuj tej samej sieci Wi-Fi, z wyłączonym VPN.</string>
     <string name="p2p_error_generic">Przesyłanie nie powiodło się.</string>
     <string name="p2p_error_bad_code">Ten kod jest nieprawidłowy — spróbuj ponownie.</string>
     <string name="p2p_clipboard_empty">Brak kodu w schowku.</string>
