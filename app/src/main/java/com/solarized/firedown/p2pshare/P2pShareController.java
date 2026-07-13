@@ -194,6 +194,9 @@ public class P2pShareController {
 
     @UiThread
     public void onPortConnected(@NonNull WebExtension.Port port) {
+        if (BuildConfig.DEBUG) {
+            Log.d(TAG, "engine port connected");
+        }
         mPort = port;
         port.setDelegate(new WebExtension.PortDelegate() {
             @Override

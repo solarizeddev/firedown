@@ -92,8 +92,17 @@ public class P2pLoopbackServer {
     }
 
     public void start() throws IOException {
-        // Ephemeral port on loopback only — never a LAN interface.
-        mServerSocket = new ServerSocket(0, 4, InetAddress.getLoopbackAddress());
+        // Ephemeral port on the IPv4 loopback only — never a LAN interface.
+        //
+        // MUST bind to 127.0.0.1 explicitly, NOT InetAddress.getLoopbackAddress():
+        // on Android the latter returns the IPv6 loopback ::1 (AOSP's
+        // loopbackAddresses() is {Inet6Address.LOOPBACK, Inet4Address.LOOPBACK}
+        // and getLoopbackAddress() takes [0]). The engine URL (baseUrl()) is the
+        // IPv4 literal http://127.0.0.1:<port>, so binding to ::1 left nothing
+        // listening on IPv4 and the GeckoView content process's page load was
+        // refused with NS_ERROR_CONNECTION_REFUSED (0x804B000D). Bind and connect
+        // must be the same family.
+        mServerSocket = new ServerSocket(0, 4, InetAddress.getByName("127.0.0.1"));
         mHandlerPool = Executors.newFixedThreadPool(2);
         mRunning = true;
         mAcceptThread = new Thread(this::acceptLoop, "P2pLoopback");
