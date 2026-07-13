@@ -324,30 +324,48 @@ public class P2pShareController {
         if (!"receive".equals(mRole) || mRecvName == null || mServer == null) {
             return;
         }
-        try {
-            StoragePaths.ensureDownloadPath(mContext);
-            File target = buildTargetFile(mRecvName, mRecvMime);
-            mRecvPartFile = new File(target.getParentFile(), target.getName() + ".part");
-            if (mRecvPartFile.exists() && !mRecvPartFile.delete()) {
-                throw new IOException("stale part file");
+        // The target-file work (buildTargetFile → findByFilePath) hits Room,
+        // which fatally rejects a main-thread query, plus disk I/O — so it MUST
+        // run off the UI thread (same disk executor finalizeReceivedFile uses).
+        // Snapshot the fields the disk task needs; the recv-accept command is
+        // posted back on the main thread once the write side is armed.
+        final String name = mRecvName;
+        final String mime = mRecvMime;
+        final P2pLoopbackServer server = mServer;
+        mDiskExecutor.execute(() -> {
+            final File partFile;
+            try {
+                StoragePaths.ensureDownloadPath(mContext);
+                File target = buildTargetFile(name, mime);
+                partFile = new File(target.getParentFile(), target.getName() + ".part");
+                if (partFile.exists() && !partFile.delete()) {
+                    throw new IOException("stale part file");
+                }
+                // Arm the write side on the SAME loopback that hosts the engine
+                // page (started in startReceive) — no second server.
+                server.setWriteTarget(partFile);
+            } catch (IOException e) {
+                mMainHandler.post(() -> postError("file", "cannot create target file"));
+                return;
             }
-            // Arm the write side on the SAME loopback that hosts the engine
-            // page (started in startReceive) — no second server.
-            mServer.setWriteTarget(mRecvPartFile);
-        } catch (IOException e) {
-            postError("file", "cannot create target file");
-            return;
-        }
-
-        JSONObject command = new JSONObject();
-        try {
-            command.put("type", "recv-accept");
-            command.put("writeUrl", mServer.getWriteUrl());
-        } catch (JSONException e) {
-            postError("engine", "command build failed");
-            return;
-        }
-        postCommand(command);
+            mMainHandler.post(() -> {
+                // The session may have been torn down while we hopped threads
+                // (Decline / back-press) — don't resurrect a dead one.
+                if (!"receive".equals(mRole) || mServer != server) {
+                    return;
+                }
+                mRecvPartFile = partFile;
+                JSONObject command = new JSONObject();
+                try {
+                    command.put("type", "recv-accept");
+                    command.put("writeUrl", server.getWriteUrl());
+                } catch (JSONException e) {
+                    postError("engine", "command build failed");
+                    return;
+                }
+                postCommand(command);
+            });
+        });
     }
 
     /**
