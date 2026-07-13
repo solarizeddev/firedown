@@ -176,6 +176,13 @@ public class GeckoRuntimeHelper {
         // have to know about mLoadedExtensions.
         mPoTokenGenerator = new PoTokenGenerator(sGeckoRuntime, this::registerSession);
 
+        // P2pShareController owns a hidden GeckoSession hosting the page-world
+        // WebRTC engine (createOffer hangs in an extension background page).
+        // It can't take the runtime via @Inject (GeckoRuntimeHelper depends on
+        // the controller, so the reverse is a Hilt cycle) — hand it over here,
+        // same registerSession registrar the PoTokenGenerator gets.
+        mP2pShareController.attachRuntime(sGeckoRuntime, this::registerSession);
+
         mBrowserSessionActionDelegate = new BrowserSessionActionDelegate();
 
         setupWebExtensions();
@@ -247,11 +254,13 @@ public class GeckoRuntimeHelper {
         // in registerBuiltIn/registerSession covers this name (no special
         // multi-name repeat needed, unlike youtube/parser).
         registerBuiltIn("resource://android/assets/nostr/", "nostr@solarized.dev", "nostr");
-        // P2P share engine — a background page owning RTCPeerConnection for
-        // the direct device-to-device file transfer. It opens ONE long-lived
-        // native port ("p2pshare") at boot which onConnect hands to
-        // P2pShareController (the PoTokenGenerator ownership pattern); file
-        // bytes ride a loopback HTTP bridge, never the messaging layer.
+        // P2P share engine — a bridge content script (content.js) that binds
+        // to the hidden engine GeckoSession P2pShareController opens on the
+        // loopback /engine page (the page-world WebRTC engine needs a real
+        // docShell; createOffer hangs in an extension background page). The
+        // content script opens the native port ("p2pshare") which onConnect
+        // hands to P2pShareController (the PoTokenGenerator ownership pattern);
+        // file bytes ride a loopback HTTP bridge, never the messaging layer.
         registerBuiltIn("resource://android/assets/p2pshare/", "p2pshare@solarized.dev", "p2pshare");
     }
 

@@ -26,6 +26,9 @@ import com.solarized.firedown.utils.GalleryPublisher;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.mozilla.geckoview.GeckoRuntime;
+import org.mozilla.geckoview.GeckoSession;
+import org.mozilla.geckoview.GeckoSessionSettings;
 import org.mozilla.geckoview.WebExtension;
 
 import java.io.File;
@@ -33,6 +36,7 @@ import java.io.IOException;
 import java.security.SecureRandom;
 import java.util.Locale;
 import java.util.concurrent.Executor;
+import java.util.function.Consumer;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -41,27 +45,37 @@ import dagger.hilt.android.qualifiers.ApplicationContext;
 
 /**
  * Java side of the P2P share engine — the bridge between the share screens
- * (P2pSendFragment / P2pReceiveFragment) and the WebRTC engine running in the
- * p2pshare extension's background page.
+ * (P2pSendFragment / P2pReceiveFragment) and the WebRTC engine.
+ *
+ * <p><b>Why a hidden GeckoSession, not a background page.</b>
+ * {@code RTCPeerConnection.createOffer()} HANGS FOREVER in a WebExtension
+ * background page (it has no docShell / browsing context) but works exactly
+ * like a normal tab in a real content document — proven on-device. So the
+ * engine ({@code assets/p2pshare/engine-page.js}) runs as a page-world script
+ * in a hidden {@link GeckoSession} that loads {@code http://127.0.0.1:<port>/engine},
+ * served by this session's own {@link P2pLoopbackServer}. A thin bridge content
+ * script ({@code content.js}) opens the native port and relays page↔Java. This
+ * mirrors {@link PoTokenGenerator}'s hidden-session pattern.
  *
  * <p>Ownership split (mirrors PoTokenGenerator): this controller owns the
- * long-lived native {@link WebExtension.Port} (handed over by
- * GeckoRuntimeHelper's onConnect), the loopback byte server, and the
- * post-transfer bookkeeping (verify + rename the received file, insert the
- * FINISHED download row). The extension owns RTCPeerConnection/DataChannel.
- * The fragments own all UI and the session-scoped WebRTC pref flip.
+ * hidden engine {@link GeckoSession}, the native {@link WebExtension.Port}
+ * (handed over by GeckoRuntimeHelper's onConnect once content.js connects),
+ * the loopback byte server, and the post-transfer bookkeeping (verify + rename
+ * the received file, insert the FINISHED download row). The page owns
+ * RTCPeerConnection/DataChannel. The fragments own all UI and the
+ * session-scoped WebRTC pref flip.
  *
  * <p>One session at a time by design — the share screens are modal
  * full-screen destinations, and the engine mirrors that with a single
- * `session` slot. Starting a new session tears down the previous one.
+ * session slot. Starting a new session tears down the previous one.
  *
- * <p>The engine-readiness dance ("ensure"): RTCPeerConnection is pref-gated
- * WebIDL evaluated at page-global creation, so a background page that loaded
- * while the user's WebRTC toggle was off has NO constructor even after the
- * fragment enables the pref. ensureEngine() probes with {type:"ensure"}; on
- * ok:false the page reloads itself, reconnects the port, and posts a fresh
- * {type:"ready", rtc:true}, at which point the queued action runs. Don't
- * simplify this into a plain "is the port connected" check.
+ * <p><b>Readiness ordering.</b> RTCPeerConnection is pref-gated WebIDL
+ * evaluated at page-global creation, so the fragment enables the WebRTC pref
+ * and waits for it to APPLY before calling start. This controller then opens a
+ * FRESH engine session, whose page therefore loads with the pref already on —
+ * no reload dance needed (a fresh page-global sees the enabled pref). The
+ * engine posts {@code {type:"ready", rtc:true}} once the page script is live;
+ * the queued action runs on that event.
  */
 @Singleton
 public class P2pShareController {
@@ -70,13 +84,13 @@ public class P2pShareController {
 
     /**
      * Native port name — must match connectNative() in
-     * assets/p2pshare/background.js. Port names reject hyphens.
+     * assets/p2pshare/content.js. Port names reject hyphens.
      */
     public static final String PORT_NAME = "p2pshare";
 
     /**
      * Code prefixes — must match OFFER_PREFIX/ANSWER_PREFIX in
-     * assets/p2pshare/background.js. The UI uses them to validate a
+     * assets/p2pshare/engine-page.js. The UI uses them to validate a
      * scan/paste before handing it to the engine.
      */
     public static final String OFFER_PREFIX = "FDS1.";
@@ -117,29 +131,21 @@ public class P2pShareController {
     private final Executor mDiskExecutor;
     private final Handler mMainHandler = new Handler(Looper.getMainLooper());
 
+    // Runtime + session registrar, wired by GeckoRuntimeHelper after runtime
+    // creation (can't be @Inject'd — GeckoRuntimeHelper depends on this
+    // controller, so the reverse would be a cycle; same setter pattern the
+    // PoTokenGenerator uses via its constructor).
+    private GeckoRuntime mRuntime;
+    private Consumer<GeckoSession> mSessionRegistrar;
+
+    // The hidden GeckoSession hosting the page-world WebRTC engine. Its
+    // lifetime is one share session — recreated fresh each start so the page
+    // loads with the just-enabled WebRTC pref (see the readiness note above).
+    private GeckoSession mEngineSession;
     private WebExtension.Port mPort;
-    private boolean mEngineRtcReady;
+    private boolean mEngineReady;
     private Runnable mPendingEngineAction;
     private final Runnable mEngineTimeout = this::onEngineTimeout;
-    // The engine deliberately reloads its page to pick up the freshly-enabled
-    // WebRTC pref (see the ensure/reload dance). That reload disconnects the
-    // port and reconnects — NOT a fatal transport loss. This flag lets
-    // onDisconnect tell the expected reload apart from a real crash so it
-    // doesn't tear down the session that is WAITING for the reload.
-    private boolean mAwaitingReload;
-    // Bounded re-ensure: the reloaded page may still land before the async
-    // pref write is visible to its new global (rtc:false again); retry a few
-    // times before giving up rather than dead-ending on a timing race.
-    private int mEnsureRetries;
-    private static final int MAX_ENSURE_RETRIES = 3;
-    // Set by the fragment when it had to TEMPORARILY enable the WebRTC pref
-    // for this session. In that case the engine page MUST be reloaded before
-    // use even though `mEngineRtcReady` is a sticky singleton true from an
-    // earlier share: restoring the pref to false at the previous session's end
-    // left the un-reloaded page with a live RTCPeerConnection constructor but a
-    // dead ICE stack (createOffer hangs). A forced reload re-initialises it
-    // while the pref is on. Consumed on the next successful ready.
-    private boolean mForceEngineReload;
 
     // Active session state. Main-thread only (all port + fragment traffic is
     // UI-thread), except the finalize step which hops to the disk executor.
@@ -170,14 +176,18 @@ public class P2pShareController {
     }
 
     /**
-     * Called by the share fragment when it TEMPORARILY enabled the WebRTC pref
-     * for this session — forces the next engine (re)init to reload the page
-     * (see {@link #mForceEngineReload}). Must be set before the first
-     * start/accept call.
+     * Wire the GeckoRuntime + session registrar. Called once by
+     * GeckoRuntimeHelper right after the runtime is created (a setter, not
+     * constructor injection, to avoid the Hilt dependency cycle — see the
+     * field comment). {@code registrar} is {@code GeckoRuntimeHelper::registerSession},
+     * which attaches the loaded WebExtensions' delegates to a session so the
+     * p2pshare content script + native port bind to it.
      */
     @UiThread
-    public void setEngineNeedsReload(boolean needsReload) {
-        mForceEngineReload = needsReload;
+    public void attachRuntime(@NonNull GeckoRuntime runtime,
+                              @NonNull Consumer<GeckoSession> registrar) {
+        mRuntime = runtime;
+        mSessionRegistrar = registrar;
     }
 
     /* ── port lifecycle (called from GeckoRuntimeHelper) ────────────────── */
@@ -197,13 +207,12 @@ public class P2pShareController {
             public void onDisconnect(@NonNull WebExtension.Port p) {
                 if (mPort == p) {
                     mPort = null;
-                    mEngineRtcReady = false;
-                    // The engine reconnects on its own (background.js retries);
-                    // an ACTIVE transfer cannot survive the page going away —
-                    // EXCEPT the deliberate ensure/reload, where the reconnect
-                    // is expected and the pending action is released on the
-                    // fresh "ready". Don't fail a session that's mid-reload.
-                    if (mRole != null && mListener != null && !mAwaitingReload) {
+                    mEngineReady = false;
+                    // The page went away. If WE closed the session (stopSession
+                    // ran first, nulling mListener/mRole) this is the expected
+                    // teardown and the guard below no-ops; otherwise the engine
+                    // page crashed mid-share and the transfer can't survive it.
+                    if (mRole != null && mListener != null) {
                         postError("engine", "engine disconnected");
                     }
                 }
@@ -233,14 +242,11 @@ public class P2pShareController {
             postError("file", "file unreadable");
             return;
         }
-        try {
-            mServer = new P2pLoopbackServer(mContext);
-            mServer.start();
-            mServer.setReadFile(path);
-        } catch (IOException e) {
+        if (!startLoopback()) {
             postError("engine", "loopback start failed");
             return;
         }
+        mServer.setReadFile(path);
 
         JSONObject command = new JSONObject();
         try {
@@ -259,7 +265,7 @@ public class P2pShareController {
             postError("engine", "command build failed");
             return;
         }
-        ensureEngine(() -> postCommand(command));
+        ensureEngineSession(() -> postCommand(command));
     }
 
     /**
@@ -287,6 +293,13 @@ public class P2pShareController {
         mListener = listener;
         mRole = "receive";
 
+        // The loopback must exist now to host the engine page; the write
+        // target is armed later in acceptOffer() on this same server.
+        if (!startLoopback()) {
+            postError("engine", "loopback start failed");
+            return;
+        }
+
         JSONObject command = new JSONObject();
         try {
             command.put("type", "recv-start");
@@ -296,7 +309,7 @@ public class P2pShareController {
             postError("engine", "command build failed");
             return;
         }
-        ensureEngine(() -> postCommand(command));
+        ensureEngineSession(() -> postCommand(command));
     }
 
     /**
@@ -305,7 +318,7 @@ public class P2pShareController {
      */
     @UiThread
     public void acceptOffer() {
-        if (!"receive".equals(mRole) || mRecvName == null) {
+        if (!"receive".equals(mRole) || mRecvName == null || mServer == null) {
             return;
         }
         try {
@@ -315,8 +328,8 @@ public class P2pShareController {
             if (mRecvPartFile.exists() && !mRecvPartFile.delete()) {
                 throw new IOException("stale part file");
             }
-            mServer = new P2pLoopbackServer(mContext);
-            mServer.start();
+            // Arm the write side on the SAME loopback that hosts the engine
+            // page (started in startReceive) — no second server.
             mServer.setWriteTarget(mRecvPartFile);
         } catch (IOException e) {
             postError("file", "cannot create target file");
@@ -366,32 +379,15 @@ public class P2pShareController {
         }
         switch (type) {
             case "ready" -> {
-                mAwaitingReload = false;
-                mEngineRtcReady = json.optBoolean("rtc", false);
-                if (mEngineRtcReady) {
-                    // The forced reload (if any) has happened and the page is
-                    // freshly RTC-ready — consume the flag.
-                    mForceEngineReload = false;
-                    runPendingIfReady();
-                } else if (mPendingEngineAction != null && mEnsureRetries < MAX_ENSURE_RETRIES) {
-                    // Reloaded but the async pref write wasn't visible to the
-                    // new global yet — re-ensure (another reload) a bounded
-                    // number of times rather than dead-ending at the timeout.
-                    mEnsureRetries++;
-                    sendEnsure();
-                }
-            }
-            case "ensure-result" -> {
-                if (json.optBoolean("ok", false)) {
-                    mEngineRtcReady = true;
-                    mAwaitingReload = false;
+                mEngineReady = json.optBoolean("rtc", false);
+                if (mEngineReady) {
                     runPendingIfReady();
                 } else {
-                    // ok:false → the page is about to reload; expect the port
-                    // to drop and come back (guard onDisconnect). The fresh
-                    // "ready" releases the pending action (or a retry / the
-                    // timeout resolves it).
-                    mAwaitingReload = true;
+                    // The page has a real docShell but no RTCPeerConnection —
+                    // the WebRTC pref didn't apply before the page loaded.
+                    // Nothing to retry (the fragment owns the pref); fail so the
+                    // UI shows an error instead of hanging on "preparing".
+                    postError("engine", "webrtc unavailable");
                 }
             }
             case "code" -> {
@@ -538,44 +534,92 @@ public class P2pShareController {
 
     /* ── internals ──────────────────────────────────────────────────────── */
 
-    private void ensureEngine(Runnable action) {
-        if (mPort == null) {
-            postError("engine", "engine not connected");
+    /**
+     * Start this session's loopback server (serves the engine page + read/write
+     * byte endpoints). Called synchronously at session start so the engine-page
+     * URL is available before the hidden GeckoSession is opened.
+     */
+    private boolean startLoopback() {
+        try {
+            mServer = new P2pLoopbackServer(mContext);
+            mServer.start();
+            return true;
+        } catch (IOException e) {
+            if (BuildConfig.DEBUG) {
+                Log.d(TAG, "loopback start failed: " + e.getMessage());
+            }
+            return false;
+        }
+    }
+
+    /**
+     * Ensure the hidden engine session is open and RTC-ready, then run
+     * {@code action}. The session hosts the page-world WebRTC engine (see the
+     * class doc); it's opened fresh per share so the page picks up the
+     * just-enabled WebRTC pref. {@code action} runs once the engine posts a
+     * {@code ready} event with {@code rtc:true}; a timeout backstops a page
+     * that never comes up.
+     */
+    private void ensureEngineSession(Runnable action) {
+        if (mRuntime == null || mSessionRegistrar == null) {
+            postError("engine", "engine unavailable");
             return;
         }
-        // A sticky-true mEngineRtcReady is NOT trustworthy when we had to
-        // enable the pref for this session (the page's ICE stack may be dead
-        // from a prior off→on cycle) — force a reload in that case.
-        if (mEngineRtcReady && !mForceEngineReload) {
+        if (mServer == null) {
+            postError("engine", "loopback not started");
+            return;
+        }
+        if (mEngineReady && mPort != null) {
             action.run();
             return;
         }
         mPendingEngineAction = action;
-        mEnsureRetries = 0;
-        sendEnsure();
-    }
-
-    private void sendEnsure() {
-        JSONObject probe = new JSONObject();
-        try {
-            probe.put("type", "ensure");
-            // Force the page reload on the FIRST ensure of a temporarily-
-            // enabled session; retries drop the force (the reload already
-            // happened, we're only waiting for the pref to become visible).
-            probe.put("force", mForceEngineReload && mEnsureRetries == 0);
-        } catch (JSONException e) {
-            postError("engine", "command build failed");
-            return;
+        if (mEngineSession == null) {
+            openEngineSession();
         }
-        postCommand(probe);
-        // The timeout is the backstop if the reload/retry never yields an
-        // RTC-ready page; re-armed on each ensure so retries get their time.
         mMainHandler.removeCallbacks(mEngineTimeout);
         mMainHandler.postDelayed(mEngineTimeout, ENGINE_READY_TIMEOUT_MS);
     }
 
+    /**
+     * Open the hidden GeckoSession on the loopback engine page. Order mirrors
+     * PoTokenGenerator: registerSession (attach the WebExtension delegates)
+     * MUST run before open() so the p2pshare content script + native port bind
+     * to this session when GeckoView's WebExtension subsystem wires it up.
+     */
+    private void openEngineSession() {
+        GeckoSessionSettings settings = new GeckoSessionSettings.Builder()
+                .usePrivateMode(false)
+                .allowJavascript(true)
+                .build();
+        GeckoSession session = new GeckoSession(settings);
+        mEngineSession = session;
+        mSessionRegistrar.accept(session);
+        session.open(mRuntime);
+        // Mark active so GeckoView treats it as a live tab for content-script
+        // injection and doesn't background-throttle the engine's timers.
+        session.setActive(true);
+        session.loadUri(mServer.getEnginePageUrl());
+    }
+
+    private void closeEngineSession() {
+        if (mEngineSession != null) {
+            GeckoSession session = mEngineSession;
+            mEngineSession = null;
+            try {
+                session.setActive(false);
+                session.close();
+            } catch (RuntimeException e) {
+                if (BuildConfig.DEBUG) {
+                    Log.d(TAG, "engine session close: " + e.getMessage());
+                }
+            }
+        }
+        mPort = null;
+    }
+
     private void runPendingIfReady() {
-        if (mEngineRtcReady && mPendingEngineAction != null) {
+        if (mEngineReady && mPendingEngineAction != null) {
             mMainHandler.removeCallbacks(mEngineTimeout);
             Runnable action = mPendingEngineAction;
             mPendingEngineAction = null;
@@ -612,10 +656,13 @@ public class P2pShareController {
     private void stopSession(boolean deletePartial) {
         mMainHandler.removeCallbacks(mEngineTimeout);
         mPendingEngineAction = null;
-        mAwaitingReload = false;
-        mEnsureRetries = 0;
+        mEngineReady = false;
+        // Null the listener/role BEFORE closing the session so the port's
+        // onDisconnect (fired by close()) sees a torn-down session and doesn't
+        // post a spurious "engine disconnected" error.
         mListener = null;
         mRole = null;
+        closeEngineSession();
         if (mServer != null) {
             mServer.stop();
             mServer = null;

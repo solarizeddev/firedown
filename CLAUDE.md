@@ -1288,17 +1288,32 @@ scanner added `CAMERA` (runtime-requested ONLY on the scan screen,
 covers camera-less devices).
 
 **Transport: Gecko's own WebRTC DataChannel — deliberately NO libwebrtc
-dependency** (~10 MB/ABI to duplicate what GeckoView ships). The engine is a
-built-in extension, `assets/p2pshare/` (`p2pshare@solarized.dev`), whose
-background page owns the `RTCPeerConnection`; it opens ONE long-lived native
-port (`"p2pshare"`) that `GeckoRuntimeHelper.onConnect` hands to
-**`P2pShareController`** (the PoTokenGenerator ownership pattern — the port
-never lands in `mPorts`). Java owns all UI, the byte endpoints, and the
-post-transfer bookkeeping; JS owns only WebRTC. Verify engine changes with
-`node scripts/p2pshare-smoke.mjs` (vm-loads the background script under a
-stubbed `browser`, exercises ready/ensure, the code codec, soft errors).
-Any change to `assets/p2pshare/` files needs the usual `manifest.json`
-**version bump** (the `ensureBuiltIn` cache trap).
+dependency** (~10 MB/ABI to duplicate what GeckoView ships).
+
+**The WebRTC engine runs in a HIDDEN `GeckoSession`, NOT an extension
+background page — load-bearing, do not move it back.** `RTCPeerConnection.
+createOffer()` **HANGS FOREVER** in a WebExtension background page (it has no
+docShell / browsing context) but works exactly like a normal tab in a real
+content document — **proven on-device** (a datachannel sample works in a tab,
+not in the background page). So the engine (`assets/p2pshare/engine-page.js`)
+is a **page-world `<script>`** of the loopback page `http://127.0.0.1:<port>/engine`
+(`engine.html`, served by `P2pLoopbackServer`), loaded in a hidden
+`GeckoSession` that `P2pShareController` opens per share (mirrors
+`PoTokenGenerator`'s hidden-session pattern — `attachRuntime` hands the
+controller the runtime + `registerSession` registrar; `registerSession` runs
+**before** `session.open()` so the content script + native port bind). A page
+script has no `browser.runtime`, so a thin bridge **content script**
+(`content.js`, matched on `http://127.0.0.1/*`, gated to `/engine`) opens ONE
+native port (`"p2pshare"`) and relays page↔Java over `window.postMessage`
+(events out = `{p2p:"evt"}`, commands in = `{p2p:"cmd"}`). `GeckoRuntimeHelper.
+onConnect` hands that port to **`P2pShareController`** (the PoTokenGenerator
+ownership pattern — the port never lands in `mPorts`). Java owns all UI, the
+byte endpoints, the hidden session's lifecycle, and the post-transfer
+bookkeeping; the page owns only WebRTC. Verify engine changes with
+`node scripts/p2pshare-smoke.mjs` (vm-loads `engine-page.js` under a stubbed
+`window`, exercises the `__init`/`ready` handshake, the code codec, soft
+errors). Any change to `assets/p2pshare/` files needs the usual
+`manifest.json` **version bump** (the `ensureBuiltIn` cache trap).
 
 **Signaling is OFFLINE — there is no signaling server.** The offer/answer
 travel as compressed codes (`FDS1.`/`FDR1.` + base64url(deflate-raw(JSON)),
@@ -1322,44 +1337,34 @@ engine fails honestly after ~20 s (`no-path` → `p2p_error_no_path` suggests
 same-Wi-Fi) — don't "fix" this with a relay, that's the server-in-the-middle
 this feature exists to avoid.
 
-**The pref-gated-global trap (`media.peerconnection.enabled`) — three
-interlocking fixes, don't remove any.** The user's WebRTC toggle ships OFF,
-and `RTCPeerConnection` is Pref-gated WebIDL evaluated **when a page global is
-created** — a background page that loaded with the pref off has NO constructor
-even after the pref flips on. `P2pShareBaseFragment` enables the RUNTIME pref
-for the session (restores the STORED pref's value in `onDestroyView`; a small
-`p2p_rtc_note` line discloses it; users with WebRTC on globally see neither),
-and the controller's `ensureEngine` probes with `{type:"ensure"}` — on
-`ok:false` the page `location.reload()`s itself, reconnects the port, posts a
-fresh `{type:"ready", rtc:true}`, and the queued command runs. Three things
-make this actually work (each was a "no QR / first share always fails" bug):
-1. **Start the engine only AFTER the pref write is applied.** `setWebRTC`
-   returns the `GeckoResult`; the fragment chains `onEngineReady()` on
-   `.accept(...)`. Firing `startSend` synchronously after `setWebRTC` races
-   the async write, so the reload lands before the new value is visible and
-   the reloaded global still has no constructor.
-2. **The reload's port disconnect is NOT fatal.** The engine's
-   `location.reload()` drops and re-opens the native port; the controller's
-   `onDisconnect` must NOT `postError` while `mAwaitingReload` is set (armed on
-   `ensure-result ok:false`, cleared on the next `ready`). Without the guard
-   the reload tears down the very session it was preparing.
-3. **Bounded re-ensure.** If the reloaded page still reports `rtc:false` (pref
-   write not yet visible), the controller re-sends `ensure` up to
-   `MAX_ENSURE_RETRIES` before the timeout gives up.
-4. **FORCE the reload for a temporarily-enabled session — a `typeof
-   RTCPeerConnection` check is too weak.** `onDestroyView` restores the pref to
-   OFF between sessions, but restoring the pref does NOT reload the page: the
-   next session finds the sticky-singleton `mEngineRtcReady == true` AND a
-   still-defined `RTCPeerConnection` constructor — but its ICE stack is dead
-   from the off→on cycle, so `createOffer` **hangs** (the "stuck on
-   Preparing…, then no-path after 20 s" bug). So the fragment calls
-   `setEngineNeedsReload(true)` whenever it had to enable the pref, and
-   `ensureEngine` then forces `{type:"ensure", force:true}` (reload regardless
-   of the `typeof` check) so the page's WebRTC stack is freshly initialised
-   with the pref on. Consumed on the next `ready{rtc:true}`. The globally-on
-   case sets it false (the boot page already has a working stack).
-**Never simplify the ensure/reload dance into a plain port-connected check,
-and never fire the first engine command before the pref GeckoResult resolves.**
+**The pref-gated-global trap (`media.peerconnection.enabled`) — a
+fresh-page-per-share, not an in-page reload dance.** The user's WebRTC toggle
+ships OFF, and `RTCPeerConnection` is Pref-gated WebIDL evaluated **when a page
+global is created** — a page that loaded with the pref off has NO constructor
+even after the pref flips on. The hidden-GeckoSession architecture makes this
+simple: the controller opens a **FRESH** engine session per share, so as long
+as the pref is applied **before** that session's page loads, the page-global
+sees the enabled pref and `createOffer` works. Two things make it work:
+1. **Start the engine only AFTER the pref write is applied.** `P2pShareBaseFragment`
+   enables the RUNTIME pref for the session (restores the STORED pref's value
+   in `onDestroyView`; a small `p2p_rtc_note` line discloses it; users with
+   WebRTC on globally see neither). `setWebRTC` returns the `GeckoResult`; the
+   fragment chains `onEngineReady()` on `.accept(...)`, and `onEngineReady`
+   drives the controller to `openEngineSession()`. Firing that synchronously
+   after `setWebRTC` would race the async write and load the page before the
+   value is visible.
+2. **A fresh session per share, torn down in `stopSession`.** `startSend`/
+   `startReceive` call `stopSession` first (closing any prior engine session),
+   then `ensureEngineSession` opens a new one loading `getEnginePageUrl()`. The
+   page reports `{type:"ready", rtc:true}` once its script is live (via the
+   `__init` bridge handshake); the queued command runs on that event, an
+   `ENGINE_READY_TIMEOUT_MS` backstops a page that never comes up. Because the
+   session is fresh each time, there is **no sticky-`rtc`-ready / dead-ICE-stack
+   problem** (the old off→on cycle bug that needed a forced reload) — the whole
+   `ensure`/`reload`/`mForceEngineReload`/`mAwaitingReload` dance is **gone**.
+**Never fire the first engine command before the pref `GeckoResult` resolves,
+and never move the engine back into a background page** (createOffer hangs
+there — see the transport note above).
 
 **Bytes never cross the native-messaging bridge** (that would be
 base64-in-JSON per chunk). `P2pLoopbackServer` (127.0.0.1, ephemeral port,

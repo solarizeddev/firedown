@@ -1,15 +1,12 @@
-// Smoke test for the p2pshare engine background script — run with:
+// Smoke test for the p2pshare engine page script — run with:
 //   node scripts/p2pshare-smoke.mjs
 //
-// Loads assets/p2pshare/background.js in a vm context under a stubbed
-// `browser` (catches syntax errors, a broken port hookup, a dead command
-// route) and exercises the pure pieces that don't need a real
-// RTCPeerConnection: the ready/ensure handshake (including the
-// location.reload() path for the pref-gated-global case) and the
-// FDS1./FDR1. code codec round-trip (deflate + base64url).
-//
-// The WebRTC/DataChannel halves can only be proven on-device — this guards
-// the protocol plumbing around them.
+// Loads assets/p2pshare/engine-page.js in a vm context under a stubbed
+// `window` (the engine is now a PAGE-WORLD script that talks to the bridge
+// content script via window.postMessage, not a native port). Exercises the
+// __init handshake, the soft bad-code path, the FDS1./FDR1. code codec, and
+// the stop teardown. The WebRTC/DataChannel halves can only be proven
+// on-device — this guards the protocol plumbing around them.
 
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -17,7 +14,7 @@ import { dirname, join } from "node:path";
 import vm from "node:vm";
 
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
-const source = readFileSync(join(root, "app/src/main/assets/p2pshare/background.js"), "utf8");
+const source = readFileSync(join(root, "app/src/main/assets/p2pshare/engine-page.js"), "utf8");
 
 let failures = 0;
 function check(name, ok, detail) {
@@ -32,24 +29,27 @@ function check(name, ok, detail) {
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // ── stubs ──────────────────────────────────────────────────────────────────
-const posted = [];
-const portListeners = [];
-let reloaded = false;
+const messageListeners = [];
+const postedEvents = []; // engine "evt" payloads (what the bridge would relay)
+let helloSeen = false;
 
-const port = {
-  postMessage: (message) => posted.push(message),
-  onMessage: { addListener: (fn) => portListeners.push(fn) },
-  onDisconnect: { addListener: () => {} },
+const location = { origin: "http://127.0.0.1:53535", pathname: "/engine" };
+
+const windowStub = {
+  location,
+  addEventListener: (type, fn) => {
+    if (type === "message") { messageListeners.push(fn); }
+  },
+  postMessage: (msg) => {
+    if (!msg) { return; }
+    if (msg.p2p === "hello") { helloSeen = true; }
+    else if (msg.p2p === "evt") { postedEvents.push(msg.data); }
+  },
 };
 
 const context = vm.createContext({
-  browser: {
-    runtime: {
-      sendNativeMessage: async () => false, // get-debug-flag → release mode
-      connectNative: () => port,
-    },
-  },
-  location: { reload: () => { reloaded = true; } },
+  window: windowStub,
+  location,
   console,
   setTimeout,
   clearTimeout,
@@ -61,49 +61,32 @@ const context = vm.createContext({
   DecompressionStream,
   btoa: (text) => Buffer.from(text, "binary").toString("base64"),
   atob: (text) => Buffer.from(text, "base64").toString("binary"),
-  // RTCPeerConnection deliberately ABSENT — mirrors a background page that
-  // loaded while media.peerconnection.enabled was off.
+  // RTCPeerConnection deliberately ABSENT — the plumbing paths under test
+  // don't construct one; the real thing only works on-device.
 });
 
-vm.runInContext(source, context, { filename: "background.js" });
+vm.runInContext(source, context, { filename: "engine-page.js" });
 
-const send = (message) => portListeners.forEach((fn) => fn(message));
+// Deliver a Java->page command exactly as the bridge would.
+const sendCommand = (cmd) =>
+  messageListeners.forEach((fn) => fn({ source: windowStub, data: { p2p: "cmd", data: cmd } }));
 
-// ── ready / ensure handshake ───────────────────────────────────────────────
-check("port connected at load", portListeners.length === 1);
-check("ready posted at load", posted.length === 1 && posted[0].type === "ready");
-check("ready reports rtc unavailable", posted[0].rtc === false);
+// ── load + __init handshake ─────────────────────────────────────────────────
+check("engine says hello on load", helloSeen === true);
+check("engine registered a message listener", messageListeners.length === 1);
+check("no events before init", postedEvents.length === 0);
 
-posted.length = 0;
-send({ type: "ensure" });
-check("ensure answered", posted.length === 1 && posted[0].type === "ensure-result");
-check("ensure reports not ok", posted[0].ok === false);
-await sleep(120);
-check("page reloads when RTC is pref-gated away", reloaded === true);
+sendCommand({ type: "__init", debug: false });
+check("__init triggers ready", postedEvents.length === 1 && postedEvents[0].type === "ready");
 
-// force:true must reload even when RTCPeerConnection IS defined (the stale-
-// ICE-stack case) — the core of the no-QR fix.
-context.RTCPeerConnection = function FakePc() {};
-reloaded = false;
-posted.length = 0;
-send({ type: "ensure" });
-check("ensure ok when RTC present + no force", posted[0] && posted[0].ok === true);
-reloaded = false;
-posted.length = 0;
-send({ type: "ensure", force: true });
-check("forced ensure is not-ok even with RTC present", posted[0] && posted[0].ok === false);
-await sleep(120);
-check("forced ensure reloads the page", reloaded === true);
-delete context.RTCPeerConnection;
-
-// ── bad-code handling (soft error, no session) ─────────────────────────────
-posted.length = 0;
-send({ type: "recv-start", code: "garbage", stun: "" });
+// ── bad-code handling (soft error, no session) ──────────────────────────────
+postedEvents.length = 0;
+sendCommand({ type: "recv-start", code: "garbage", stun: "" });
 await sleep(50);
-check("bad offer code → bad-code error",
-    posted.length === 1 && posted[0].type === "error" && posted[0].code === "bad-code");
+check("bad offer code -> bad-code error",
+    postedEvents.length === 1 && postedEvents[0].type === "error" && postedEvents[0].code === "bad-code");
 
-// ── code codec round-trip ──────────────────────────────────────────────────
+// ── code codec round-trip ───────────────────────────────────────────────────
 const codecProbe = `
   (async () => {
     const payload = { v: 1, sdp: "v=0\\r\\n" + "a=candidate".repeat(40), name: "clip.mp4", size: 12345, mime: "video/mp4", dev: "Pixel" };
@@ -120,9 +103,10 @@ const badDecode = await vm.runInContext(
     `decodeCode(ANSWER_PREFIX, ${JSON.stringify(code)}).then(() => "decoded", (e) => e.message)`, context);
 check("wrong prefix rejected", badDecode === "bad-code");
 
-// ── stop is safe with no session ───────────────────────────────────────────
-posted.length = 0;
-send({ type: "stop" });
-check("stop answers closed", posted.length === 1 && posted[0].type === "state" && posted[0].state === "closed");
+// ── stop is safe with no session ────────────────────────────────────────────
+postedEvents.length = 0;
+sendCommand({ type: "stop" });
+check("stop answers closed",
+    postedEvents.length === 1 && postedEvents[0].type === "state" && postedEvents[0].state === "closed");
 
 process.exit(failures === 0 ? 0 : 1);

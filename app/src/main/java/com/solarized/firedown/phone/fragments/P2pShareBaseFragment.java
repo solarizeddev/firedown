@@ -100,9 +100,11 @@ public abstract class P2pShareBaseFragment extends BaseFocusFragment {
         observeScanResult();
 
         // Session-scoped WebRTC enable. RTCPeerConnection is a pref-gated
-        // global, so the engine must be started ONLY AFTER the pref write is
-        // applied — otherwise the engine's reload lands before the write is
-        // visible and never gains the constructor. Chain on the GeckoResult.
+        // global evaluated at page-global creation, so onEngineReady (which
+        // drives the controller to OPEN its fresh engine page) must run ONLY
+        // AFTER the pref write is applied — a page loaded before the write is
+        // visible never gains the constructor. Chain on the GeckoResult so the
+        // fresh engine session loads with the pref already on.
         boolean webRtcEnabled = mP2pSharedPreferences.getBoolean(
                 Preferences.SETTINGS_ENABLE_WEBRTC, Preferences.DEFAULT_ENABLE_WEBRTC);
         if (!webRtcEnabled) {
@@ -111,9 +113,6 @@ public abstract class P2pShareBaseFragment extends BaseFocusFragment {
             if (note != null) {
                 note.setVisibility(View.VISIBLE);
             }
-            // We're cycling the pref off→on for this session; the engine page
-            // must be reloaded before use (see the controller field docs).
-            mP2pController.setEngineNeedsReload(true);
             mGeckoRuntimeHelper.setWebRTC(true).accept(unused ->
                     mMainHandler.post(() -> {
                         if (isAdded() && getView() != null) {
@@ -121,8 +120,7 @@ public abstract class P2pShareBaseFragment extends BaseFocusFragment {
                         }
                     }));
         } else {
-            // Globally-on: the boot page already has a working WebRTC stack.
-            mP2pController.setEngineNeedsReload(false);
+            // Globally-on: the pref is already applied; open the engine now.
             onEngineReady();
         }
     }

@@ -1,62 +1,47 @@
 /* Firedown P2P share engine — WebRTC DataChannel transfer, driven by Java.
  *
- * Architecture (why it looks like this):
- * - This background page owns the RTCPeerConnection + DataChannel. Java owns
- *   ALL UI and the byte endpoints. The two talk over ONE long-lived native
- *   port ("p2pshare", connectNative below) — the PoTokenGenerator pattern:
- *   Java initiates commands, we reply with events. Nothing here runs until a
- *   share screen sends a command; at boot the page just connects the port and
- *   sits idle.
- * - File bytes NEVER cross the native-messaging bridge (that would mean
- *   base64-in-JSON for every chunk). Instead Java runs a loopback HTTP server
- *   (P2pLoopbackServer, 127.0.0.1, token-gated): the SENDER side fetch()es
- *   the file from it and pumps the stream into the DataChannel; the RECEIVER
- *   side POSTs arriving chunks back to it, which writes them to disk.
- * - Signaling is OFFLINE: the offer/answer are compressed into short codes
- *   (FDS1./FDR1. + base64url(deflate-raw(JSON))) that travel as QR scans or
- *   through any messenger via the share sheet. There is no signaling server;
- *   the only external party is the STUN server Java passes in (user-chosen,
- *   Settings), and none at all when both peers share a LAN. Non-trickle ICE:
- *   we wait for gathering to complete so ONE code carries everything.
+ * WHERE THIS RUNS (load-bearing): this is a PAGE-WORLD script, loaded as a
+ * same-origin <script> of the loopback page http://127.0.0.1:<port>/engine
+ * inside a HIDDEN GeckoSession created by P2pShareController. It does NOT run
+ * in the extension background page — WebRTC's createOffer() HANGS FOREVER
+ * there because a background page has no real browsing context (docShell).
+ * A real content document (this page, exactly like a normal tab) is the only
+ * context where GeckoView's WebRTC actually completes. Proven on-device: a
+ * datachannel sample works in a tab but not in the background page. Don't
+ * move this back into a background page or a content-script sandbox.
  *
- * RTCPeerConnection is Pref-gated WebIDL ("media.peerconnection.enabled"),
- * and the gate is evaluated when a page GLOBAL is created — so if this page
- * loaded while the user's WebRTC toggle was off (the default), flipping the
- * pref later does NOT make the constructor appear here. Java handles that:
- * it enables the pref for the share session, sends {type:"ensure"}, and when
- * we answer ok:false we location.reload() — the reloaded page re-creates its
- * global with the pref now on, reconnects the port, and posts a fresh
- * {type:"ready", rtc:true}. Never remove the ensure/reload dance. (Java's
- * side tolerates the reload's port disconnect — see P2pShareController.)
+ * Because it's a page script it has NO browser.runtime — it talks to Java via
+ * window.postMessage to the bridge CONTENT SCRIPT (content.js) that shares
+ * this document, which relays to/from the native "p2pshare" port. Transport:
+ * events out = window.postMessage({p2p:"evt", data}); commands in = a window
+ * "message" of {p2p:"cmd", data}. The bridge sends {type:"__init", debug}
+ * once its port is up; we then post the first {type:"ready"}.
  *
- * Port protocol (Java -> JS commands):
- *   {type:"ensure"}                                    probe/repair RTC availability
+ * The rest (loopback byte bridge, offline QR/share-sheet signaling, non-trickle
+ * ICE) is unchanged:
+ * - File bytes NEVER cross messaging: the SENDER fetch()es the file from the
+ *   same loopback (GET /read) and pumps it into the DataChannel; the RECEIVER
+ *   POSTs chunks back (/write), which Java writes to disk.
+ * - Signaling is OFFLINE: offer/answer are FDS1./FDR1. codes shown as QR or
+ *   sent via the share sheet. The only external party is the user's STUN
+ *   server, and none at all on a shared LAN.
+ *
+ * Protocol (Java -> cmd):
+ *   {type:"__init", debug}                             bridge handshake
  *   {type:"send-start", readUrl, name, size, mime, device, stun}
- *   {type:"send-answer", code}                         the scanned FDR1. reply
- *   {type:"recv-start", code, stun}                    the scanned FDS1. offer
- *   {type:"recv-accept", writeUrl}                     user accepted the preview
- *   {type:"stop"}                                      tear everything down
- * (JS -> Java events):
- *   {type:"ready", rtc}                                port (re)connected
- *   {type:"ensure-result", ok}
- *   {type:"code", role:"offer"|"answer", code}
- *   {type:"offer-parsed", name, size, mime, device}    receiver preview data
- *   {type:"state", state}                              connecting|connected|closed|failed
- *   {type:"progress", done, total, rate}               throttled, bytes + bytes/s
- *   {type:"done", role:"send"|"receive", bytes}
- *   {type:"error", code, detail}                       "bad-code" is soft (session survives)
+ *   {type:"send-answer", code} · {type:"recv-start", code, stun}
+ *   {type:"recv-accept", writeUrl} · {type:"stop"}
+ * (evt -> Java):
+ *   {type:"ready", rtc} · {type:"code", role, code} · {type:"offer-parsed", …}
+ *   {type:"state", state} · {type:"progress", …} · {type:"done", role, bytes}
+ *   {type:"error", code, detail}   ("bad-code" is soft — session survives)
  */
 
 "use strict";
 
-const PORT_NAME = "p2pshare";
-
-// Debug flag, resolved from BuildConfig.DEBUG at boot (get-debug-flag is
-// answered before the nativeApp switch in GeckoRuntimeHelper, so any name
-// works). Release builds log nothing — logging discipline.
+// Resolved from the bridge's __init handshake (BuildConfig.DEBUG). Release
+// builds log nothing — logging discipline.
 let DEBUG = false;
-browser.runtime.sendNativeMessage(PORT_NAME, { kind: "get-debug-flag" })
-  .then((r) => { DEBUG = (r === true); }, () => {});
 
 function log(...args) {
   if (!DEBUG) { return; }
@@ -91,8 +76,6 @@ const OVERRUN_SLACK = 1024 * 1024;
 
 const OFFER_PREFIX = "FDS1.";
 const ANSWER_PREFIX = "FDR1.";
-
-let port = null;
 
 // The single active session (send OR receive) — the share screens are modal,
 // one transfer at a time by design.
@@ -585,12 +568,14 @@ function scheduleFlush(s, isFinal) {
   });
 }
 
-/* ── native port ───────────────────────────────────────────────────────── */
+/* ── transport: window.postMessage to the bridge content script ──────────── */
 
+// Post an event out to the bridge (content.js), which relays it to the native
+// port and on to Java. Same-origin target — this page and the bridge share
+// the loopback origin.
 function post(message) {
-  if (!port) { return; }
   try {
-    port.postMessage(message);
+    window.postMessage({ p2p: "evt", data: message }, location.origin);
   } catch (e) {
     log("post failed", e);
   }
@@ -600,23 +585,15 @@ function handleCommand(msg) {
   if (!msg || typeof msg.type !== "string") { return; }
   log("command:", msg.type);
   switch (msg.type) {
-    case "ensure": {
-      // `force` reloads unconditionally. Needed because a `typeof
-      // RTCPeerConnection !== "undefined"` check is too weak: after the app
-      // toggles media.peerconnection.enabled off (session end) then on again
-      // (next session), the constructor still EXISTS in this un-reloaded page
-      // but its ICE stack is dead — createOffer then hangs. Java forces the
-      // reload whenever it had to enable the pref for the session, so the
-      // page's WebRTC stack is freshly initialised with the pref on.
-      const force = msg.force === true;
-      const ok = !force && typeof RTCPeerConnection !== "undefined";
-      post({ type: "ensure-result", ok: ok });
-      if (!ok) {
-        // Delay a tick so the reply flushes before the port drops.
-        setTimeout(() => { location.reload(); }, 50);
-      }
+    case "__init":
+      // Bridge handshake: it has connected the native port and resolved the
+      // debug flag. Apply it, then announce readiness. In this REAL page
+      // context RTCPeerConnection is always present and functional (WebRTC
+      // works exactly as in a normal tab), so rtc is always true — the old
+      // pref-gated-global reload dance is gone.
+      DEBUG = msg.debug === true;
+      post({ type: "ready", rtc: typeof RTCPeerConnection !== "undefined" });
       break;
-    }
     case "send-start":
       startSend(msg);
       break;
@@ -638,15 +615,11 @@ function handleCommand(msg) {
   }
 }
 
-function connectPort() {
-  port = browser.runtime.connectNative(PORT_NAME);
-  port.onMessage.addListener(handleCommand);
-  port.onDisconnect.addListener(() => {
-    log("port disconnected, reconnecting");
-    closeSession(session);
-    setTimeout(connectPort, 1000);
-  });
-  post({ type: "ready", rtc: typeof RTCPeerConnection !== "undefined" });
-}
+window.addEventListener("message", (ev) => {
+  // Only our own bridge's command messages (same window, same origin).
+  if (ev.source !== window || !ev.data || ev.data.p2p !== "cmd") { return; }
+  handleCommand(ev.data.data);
+});
 
-connectPort();
+// Tell the bridge we're loaded and listening; it replies with __init.
+window.postMessage({ p2p: "hello" }, location.origin);

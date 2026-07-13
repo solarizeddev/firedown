@@ -8,6 +8,7 @@ import com.solarized.firedown.BuildConfig;
 import com.solarized.firedown.data.RestoredFileAccess;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -26,11 +27,12 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * Loopback byte bridge between the p2pshare WebRTC engine (a WebExtension
- * background page) and the filesystem. File bytes must NOT cross the
- * native-messaging bridge — every chunk would be base64-in-JSON through the
- * EventDispatcher — so instead the engine speaks plain HTTP to this server on
- * 127.0.0.1:
+ * Loopback byte bridge between the p2pshare WebRTC engine (a page script in a
+ * hidden GeckoSession — createOffer() hangs in a WebExtension background page,
+ * so the engine runs in a real content document served from /engine here) and
+ * the filesystem. File bytes must NOT cross the native-messaging bridge — every
+ * chunk would be base64-in-JSON through the EventDispatcher — so instead the
+ * engine speaks plain HTTP to this server on 127.0.0.1:
  *
  * <ul>
  *   <li>SEND: {@code GET /read?t=<token>} streams the shared file; the engine
@@ -159,6 +161,11 @@ public class P2pLoopbackServer {
         return baseUrl() + "/write?t=" + mToken;
     }
 
+    /** The URL the hidden GeckoSession loads to host the WebRTC engine. */
+    public String getEnginePageUrl() {
+        return baseUrl() + "/engine";
+    }
+
     private String baseUrl() {
         return "http://127.0.0.1:" + mServerSocket.getLocalPort();
     }
@@ -209,13 +216,17 @@ public class P2pLoopbackServer {
                 sendStatus(out, 400, "Bad Request");
                 return;
             }
-            String token = head.query.get("t");
-            if (!mToken.equals(token)) {
-                sendStatus(out, 403, "Forbidden");
-                return;
-            }
 
-            if ("GET".equals(head.method) && "/read".equals(head.path)) {
+            // The engine page + its script are served UNGATED (they're just the
+            // bundled engine code, not sensitive) so the hidden GeckoSession can
+            // load them; the file endpoints stay token-gated.
+            if ("GET".equals(head.method) && "/engine".equals(head.path)) {
+                sendAsset(out, "engine.html", "text/html; charset=utf-8");
+            } else if ("GET".equals(head.method) && "/engine-page.js".equals(head.path)) {
+                sendAsset(out, "engine-page.js", "application/javascript; charset=utf-8");
+            } else if (!mToken.equals(head.query.get("t"))) {
+                sendStatus(out, 403, "Forbidden");
+            } else if ("GET".equals(head.method) && "/read".equals(head.path)) {
                 handleRead(out);
             } else if ("POST".equals(head.method) && "/write".equals(head.path)) {
                 handleWrite(head, in, out);
@@ -230,6 +241,25 @@ public class P2pLoopbackServer {
         } finally {
             closeQuietly(client);
         }
+    }
+
+    private void sendAsset(OutputStream out, String assetName, String contentType) throws IOException {
+        byte[] body;
+        try (InputStream asset = mContext.getAssets().open("p2pshare/" + assetName)) {
+            ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+            byte[] chunk = new byte[STREAM_BUFFER];
+            int read;
+            while ((read = asset.read(chunk)) >= 0) {
+                buffer.write(chunk, 0, read);
+            }
+            body = buffer.toByteArray();
+        }
+        String header = "HTTP/1.1 200 OK\r\n"
+                + "Content-Type: " + contentType + "\r\n"
+                + "Content-Length: " + body.length + "\r\n"
+                + "Connection: close\r\n\r\n";
+        out.write(header.getBytes(StandardCharsets.US_ASCII));
+        out.write(body);
     }
 
     private void handleRead(OutputStream out) throws IOException {
