@@ -165,14 +165,6 @@ public class GeckoRuntimeHelper {
         // BaseActivity but Gecko only invokes it when this backend is enabled).
         applyWebAuthnPrefs();
 
-        // Run WebRTC's media transport IN-PROCESS. The default routes DTLS/ICE
-        // transport through a separate socket/media-transport child process
-        // that isn't wired up in this GeckoView embedding — so the P2P share's
-        // RTCPeerConnection.createOffer() hangs forever waiting on IPC that
-        // never completes. Set once at boot (inert unless WebRTC is used) so
-        // it's in effect before any peer connection is created.
-        applyWebRtcTransportPrefs();
-
         mMessageDelegate = new MessageDelegate();
 
         // PoTokenGenerator owns its own GeckoSession (created outside
@@ -1092,24 +1084,6 @@ public class GeckoRuntimeHelper {
         if (port != null) {
             port.postMessage(message);
         }
-    }
-
-    /**
-     * Force WebRTC's media transport in-process (see the boot call site). Both
-     * prefs push the transport out of a child process that this embedding does
-     * not spawn; without them createOffer/ICE setup hangs.
-     */
-    @OptIn(markerClass = ExperimentalGeckoViewApi.class)
-    private void applyWebRtcTransportPrefs() {
-        List<GeckoPreferenceController.SetGeckoPreference<?>> prefs = new ArrayList<>();
-        prefs.add(GeckoPreferenceController.SetGeckoPreference
-                .setBoolPref("media.peerconnection.mtransport_process", false,
-                        GeckoPreferenceController.PREF_BRANCH_USER));
-        prefs.add(GeckoPreferenceController.SetGeckoPreference
-                .setBoolPref("network.process.enabled", false,
-                        GeckoPreferenceController.PREF_BRANCH_USER));
-        GeckoResult<Map<String, Boolean>> result = GeckoPreferenceController.setGeckoPrefs(prefs);
-        result.accept(map -> Log.d(TAG, "applyWebRtcTransportPrefs: " + map));
     }
 
     @OptIn(markerClass = ExperimentalGeckoViewApi.class)
