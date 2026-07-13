@@ -7,6 +7,8 @@ import android.os.Bundle;
 import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 
+import java.util.List;
+
 import com.solarized.firedown.BaseActivity;
 import com.solarized.firedown.R;
 import com.solarized.firedown.Keys;
@@ -104,7 +106,7 @@ public class DownloadsActivity extends BaseActivity {
             if (!P2pShareController.DEEP_LINK_HOST.equals(data.getHost())) {
                 return;
             }
-            java.util.List<String> segs = data.getPathSegments();
+            List<String> segs = data.getPathSegments();
             if (segs.size() >= 2 && "r".equals(segs.get(0))) {
                 // firedown://p2p/r/<id>?s=<relay>
                 String base = data.getQueryParameter("s");
@@ -123,7 +125,7 @@ public class DownloadsActivity extends BaseActivity {
             }
         } else {
             // https://<relay>/s/<id> — relay origin is the link's own origin.
-            java.util.List<String> segs = data.getPathSegments();
+            List<String> segs = data.getPathSegments();
             if (segs.size() < 2 || !"s".equals(segs.get(0))) {
                 return;
             }
