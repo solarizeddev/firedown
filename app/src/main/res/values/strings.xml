@@ -827,6 +827,14 @@
     <string name="settings_p2p_stun_custom">Custom…</string>
     <string name="settings_p2p_stun_custom_title">Custom STUN server</string>
     <string name="settings_p2p_stun_invalid">Enter a valid address, e.g. stun:host:3478</string>
+    <string name="settings_p2p_turn">TURN relay</string>
+    <string name="settings_p2p_turn_summary">Off — set a relay to connect devices that can\'t reach each other directly (both on mobile data, or one behind a VPN).</string>
+    <string name="settings_p2p_turn_message">Optional. Only used when a direct connection fails; your files stay encrypted end-to-end through the relay.</string>
+    <string name="settings_p2p_turn_url_hint">turn:host:3478</string>
+    <string name="settings_p2p_turn_user_hint">Username</string>
+    <string name="settings_p2p_turn_cred_hint">Password</string>
+    <string name="settings_p2p_turn_clear">Clear</string>
+    <string name="settings_p2p_turn_invalid">Enter a valid relay, e.g. turn:host:3478</string>
 
     <!-- Nostr (NIP-07) signer permission prompt. %1$s is the site host. -->
     <string name="nostr_permission_title">Nostr signer</string>

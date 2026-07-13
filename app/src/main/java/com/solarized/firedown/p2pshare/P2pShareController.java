@@ -335,12 +335,27 @@ public class P2pShareController {
             // mis-bucket the received download's type/icon/viewer.
             command.put("mime", FileUriHelper.getMimeTypeFromFile(new File(path).getName()));
             command.put("device", Build.MODEL);
-            command.put("stun", Preferences.getP2pStunServer(mSharedPreferences));
+            putIceServers(command);
         } catch (JSONException e) {
             postError("engine", "command build failed");
             return;
         }
         ensureEngineSession(() -> postCommand(command));
+    }
+
+    /**
+     * Add the STUN echo and the OPTIONAL user-configured TURN relay to a start
+     * command. Both come from Settings; TURN is absent unless the user set one
+     * (the privacy default is relay-free — see {@link Preferences#getP2pTurn}).
+     */
+    private void putIceServers(JSONObject command) throws JSONException {
+        command.put("stun", Preferences.getP2pStunServer(mSharedPreferences));
+        Preferences.P2pTurn turn = Preferences.getP2pTurn(mSharedPreferences);
+        if (turn != null) {
+            command.put("turnUrl", turn.url);
+            command.put("turnUser", turn.username);
+            command.put("turnCred", turn.credential);
+        }
     }
 
     /**
@@ -407,7 +422,7 @@ public class P2pShareController {
         try {
             command.put("type", "recv-start");
             command.put("code", code);
-            command.put("stun", Preferences.getP2pStunServer(mSharedPreferences));
+            putIceServers(command);
         } catch (JSONException e) {
             postError("engine", "command build failed");
             return;

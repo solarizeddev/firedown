@@ -28,8 +28,9 @@
  *
  * Protocol (Java -> cmd):
  *   {type:"__init", debug}                             bridge handshake
- *   {type:"send-start", readUrl, name, size, mime, device, stun, answerUrl?}
- *   {type:"send-answer", code} · {type:"recv-start", code, stun}
+ *   {type:"send-start", readUrl, name, size, mime, device, stun, answerUrl?,
+ *                       turnUrl?, turnUser?, turnCred?}
+ *   {type:"send-answer", code} · {type:"recv-start", code, stun, turn*?}
  *   {type:"recv-accept", writeUrl} · {type:"stop"}
  * (evt -> Java):
  *   {type:"ready", rtc} · {type:"code", role, code} · {type:"offer-parsed", …}
@@ -143,15 +144,38 @@ async function decodeCode(prefix, code) {
 
 /* ── WebRTC helpers ────────────────────────────────────────────────────── */
 
-async function newPeerConnection(stun) {
-  // A single STUN entry on purpose: listing several servers makes ICE query
-  // ALL of them in parallel — every share would leak the user's IP to every
-  // fallback. Java owns the sequential-fallback policy and passes ONE url.
-  // A malformed url would throw in the constructor; Java validates the
-  // custom entry, and an empty/blank value means "no STUN" (LAN-only).
+// Pull the ICE config (STUN + optional TURN relay) out of a start message.
+function iceOf(msg) {
+  return {
+    stun: msg.stun,
+    turnUrl: msg.turnUrl,
+    turnUser: msg.turnUser,
+    turnCred: msg.turnCred,
+  };
+}
+
+async function newPeerConnection(ice) {
+  // At most TWO ice servers, both from the user's own settings: ONE STUN
+  // (address echo) and, only if the user configured one, ONE TURN relay.
+  // Never a list of fallbacks — that would query every server on every share
+  // and leak the user's IP to each. A malformed url would throw in the
+  // constructor; Java validates both entries. Empty STUN = LAN-only; a TURN
+  // relay is opt-in (Settings) and only actually relays when direct fails, so
+  // the default share still contacts nothing but the STUN echo.
+  ice = ice || {};
   const config = {};
-  if (stun && /^stuns?:/i.test(stun)) {
-    config.iceServers = [{ urls: stun }];
+  const servers = [];
+  if (ice.stun && /^stuns?:/i.test(ice.stun)) {
+    servers.push({ urls: ice.stun });
+  }
+  if (ice.turnUrl && /^turns?:/i.test(ice.turnUrl)) {
+    const relay = { urls: ice.turnUrl };
+    if (ice.turnUser) { relay.username = ice.turnUser; }
+    if (ice.turnCred) { relay.credential = ice.turnCred; }
+    servers.push(relay);
+  }
+  if (servers.length > 0) {
+    config.iceServers = servers;
   }
   // Pre-generate the DTLS certificate explicitly. createOffer otherwise
   // generates one implicitly; if that path is what stalls in this embedding,
@@ -324,7 +348,7 @@ async function startSend(msg) {
   };
   session = s;
   try {
-    s.pc = await newPeerConnection(msg.stun);
+    s.pc = await newPeerConnection(iceOf(msg));
     // Reliable + ordered (defaults): the file must arrive byte-exact.
     s.dc = s.pc.createDataChannel("file");
     s.dc.binaryType = "arraybuffer";
@@ -467,7 +491,9 @@ async function startReceive(msg) {
   closeSession(session);
   const s = {
     role: "receive",
-    stun: msg.stun,
+    // Held until acceptReceive builds the peer connection (the receiver only
+    // connects on Accept, after the offer preview).
+    ice: iceOf(msg),
     stopped: false,
   };
   session = s;
@@ -505,7 +531,7 @@ async function acceptReceive(msg) {
   if (!s || s.role !== "receive" || !s.offer) { return; }
   s.writeUrl = msg.writeUrl;
   try {
-    s.pc = await newPeerConnection(s.stun);
+    s.pc = await newPeerConnection(s.ice);
     s.pc.ondatachannel = (ev) => { bindReceiveChannel(s, ev.channel); };
     watchConnection(s);
     await s.pc.setRemoteDescription({ type: "offer", sdp: s.offer.sdp });

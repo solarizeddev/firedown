@@ -4,6 +4,8 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.util.Log;
 
+import androidx.annotation.Nullable;
+
 import org.mozilla.geckoview.ContentBlocking;
 
 import java.io.File;
@@ -255,6 +257,47 @@ public class Preferences {
             return custom.trim();
         }
         return value;
+    }
+
+    /**
+     * OPTIONAL TURN relay for the P2P share — the ONLY way two peers that
+     * can't reach each other directly (both on mobile data / CGNAT, or one
+     * behind a full-tunnel VPN) can connect: the relay forwards the (still
+     * E2E-encrypted) DataChannel. Default is EMPTY = no relay (the privacy
+     * default — a share then contacts nothing but the STUN echo, and a
+     * truly-unreachable pair fails honestly). When set, ICE only actually
+     * relays through it if a direct path fails. Unlike STUN there is no shipped
+     * list: TURN needs credentials, so it's a user-entered url + username +
+     * credential (typically the user's own coturn). {@code turn:}/{@code turns:}
+     * scheme is validated in the settings editor.
+     */
+    public static final String SETTINGS_P2P_TURN_URL = "com.solarized.firedown.preferences.p2p.turn.url";
+    public static final String SETTINGS_P2P_TURN_USER = "com.solarized.firedown.preferences.p2p.turn.user";
+    public static final String SETTINGS_P2P_TURN_CRED = "com.solarized.firedown.preferences.p2p.turn.cred";
+
+    /** A configured TURN relay, or {@code null} when none is set. */
+    public static final class P2pTurn {
+        public final String url;
+        public final String username;
+        public final String credential;
+
+        public P2pTurn(String url, String username, String credential) {
+            this.url = url;
+            this.username = username;
+            this.credential = credential;
+        }
+    }
+
+    @Nullable
+    public static P2pTurn getP2pTurn(SharedPreferences sharedPreferences) {
+        String url = sharedPreferences.getString(SETTINGS_P2P_TURN_URL, "");
+        if (url == null || url.trim().isEmpty()) {
+            return null;
+        }
+        return new P2pTurn(
+                url.trim(),
+                sharedPreferences.getString(SETTINGS_P2P_TURN_USER, "").trim(),
+                sharedPreferences.getString(SETTINGS_P2P_TURN_CRED, "").trim());
     }
 
     /**

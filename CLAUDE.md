@@ -1336,14 +1336,26 @@ user-chosen in Settings → Downloads: `settings_p2p_stun_entries/values` in
 `arrays.xml` (Cloudflare default, Nextcloud:443 for UDP-3478-hostile
 networks, "custom" sentinel → text dialog in `SettingsFragment`, stored in
 `SETTINGS_P2P_STUN_CUSTOM`; resolve via `Preferences.getP2pStunServer`).
-**Hand the engine ONE url, never a list** — parallel `iceServers` entries
-query every server on every share (IP leak to all fallbacks). Same-LAN pairs
-connect on host candidates without touching STUN at all. **No TURN relay by
-design**: a CGNAT↔CGNAT pair (both sides mobile data), or a peer behind a
-VPN (its traffic is tunneled; nothing can reach it directly), cannot
-connect; the engine fails honestly (`no-path` → `p2p_error_no_path` suggests
-same-Wi-Fi, VPN off) — don't "fix" this with a relay, that's the
-server-in-the-middle this feature exists to avoid.
+**At most TWO `iceServers`, both from the user's own settings — never a
+fallback list** (parallel entries query every server on every share = IP leak
+to all of them). Same-LAN pairs connect on host candidates without touching
+either. Entry one is the STUN echo (above). Entry two is an **OPTIONAL,
+OPT-IN TURN relay**, default OFF: `SETTINGS_P2P_TURN_URL`/`_USER`/`_CRED`
+(url+username+credential, since TURN needs auth — no shipped list; typically
+the user's own coturn), edited via `SettingsFragment.showTurnDialog`, resolved
+by `Preferences.getP2pTurn` (returns `null` when unset), threaded into the
+start command by `putIceServers`, and assembled into `iceServers` by the
+engine's `newPeerConnection(ice)` (`iceOf` pulls `stun`/`turn*` off the start
+message). **Relay-free stays the default and the privacy story**: with no TURN
+set, a share contacts nothing but the STUN echo, and a genuinely-unreachable
+pair — CGNAT↔CGNAT (both on mobile data) or a peer behind a full-tunnel VPN
+(its traffic is tunneled; nothing reaches it directly) — fails honestly
+(`no-path` → `p2p_error_no_path` suggests same-Wi-Fi, VPN off). TURN is the
+ONLY thing that connects such a pair (a relay both sides can reach forwards the
+still-E2E-encrypted DataChannel), and ICE only actually relays through it when
+a direct path fails — but it IS a server-in-the-middle, so it's the user's
+explicit choice, never a default. Don't ship a default/baked-in relay, and
+don't reintroduce a multi-STUN fallback list.
 
 **Single-scan flow — the answer returns over the LAN, the reply QR is the
 FALLBACK.** WebRTC needs an answer back (the receiver's candidates/DTLS

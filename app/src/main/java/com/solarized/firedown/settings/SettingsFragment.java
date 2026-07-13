@@ -17,6 +17,7 @@ import android.view.View;
 import android.view.autofill.AutofillManager;
 import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.LinearLayout;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -184,6 +185,7 @@ public class SettingsFragment extends BasePreferenceFragment
     private void updateSummaries() {
 
         updateStunSummary();
+        updateTurnSummary();
 
         if(autoFillPreference != null){
             Boolean enabled = isSystemAutofillActive();
@@ -456,6 +458,7 @@ public class SettingsFragment extends BasePreferenceFragment
 
         switch (key) {
             case Preferences.SETTINGS_P2P_STUN -> showStunChooser();
+            case Preferences.SETTINGS_P2P_TURN_URL -> showTurnDialog();
             case Preferences.SETTINGS_RESTORE_DOWNLOADS -> showRestoreDownloadsDialog();
             case Preferences.SETTINGS_SYNC ->
                     NavigationUtils.navigateSafe(mNavController, R.id.action_settings_to_sync);
@@ -628,6 +631,79 @@ public class SettingsFragment extends BasePreferenceFragment
         } else {
             pref.setSummary(value);
         }
+    }
+
+    /**
+     * Optional TURN relay editor — url + username + password, all in one
+     * dialog. Empty url = no relay (the default); a "Clear" action wipes all
+     * three. The {@code turn:}/{@code turns:} scheme is validated before
+     * persisting so a typo can't fail every future share in the engine's
+     * RTCPeerConnection constructor.
+     */
+    private void showTurnDialog() {
+        int padding = getResources().getDimensionPixelSize(R.dimen.address_bar_inset);
+        LinearLayout container = new LinearLayout(requireContext());
+        container.setOrientation(LinearLayout.VERTICAL);
+        container.setPadding(padding, 0, padding, 0);
+
+        final EditText urlInput = new EditText(requireContext());
+        urlInput.setInputType(InputType.TYPE_TEXT_VARIATION_URI);
+        urlInput.setHint(R.string.settings_p2p_turn_url_hint);
+        urlInput.setText(mSharedPreferences.getString(Preferences.SETTINGS_P2P_TURN_URL, ""));
+        container.addView(urlInput);
+
+        final EditText userInput = new EditText(requireContext());
+        userInput.setInputType(InputType.TYPE_CLASS_TEXT);
+        userInput.setHint(R.string.settings_p2p_turn_user_hint);
+        userInput.setText(mSharedPreferences.getString(Preferences.SETTINGS_P2P_TURN_USER, ""));
+        container.addView(userInput);
+
+        final EditText credInput = new EditText(requireContext());
+        credInput.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        credInput.setHint(R.string.settings_p2p_turn_cred_hint);
+        credInput.setText(mSharedPreferences.getString(Preferences.SETTINGS_P2P_TURN_CRED, ""));
+        container.addView(credInput);
+
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.settings_p2p_turn)
+                .setMessage(R.string.settings_p2p_turn_message)
+                .setView(container)
+                .setPositiveButton(android.R.string.ok, (dialog, which) -> {
+                    String url = urlInput.getText().toString().trim();
+                    if (!url.matches("(?i)^turns?:.+")) {
+                        Snackbar.make(requireView(), R.string.settings_p2p_turn_invalid,
+                                Snackbar.LENGTH_LONG).show();
+                        return;
+                    }
+                    mSharedPreferences.edit()
+                            .putString(Preferences.SETTINGS_P2P_TURN_URL, url)
+                            .putString(Preferences.SETTINGS_P2P_TURN_USER,
+                                    userInput.getText().toString().trim())
+                            .putString(Preferences.SETTINGS_P2P_TURN_CRED,
+                                    credInput.getText().toString().trim())
+                            .apply();
+                    updateTurnSummary();
+                })
+                .setNeutralButton(R.string.settings_p2p_turn_clear, (dialog, which) -> {
+                    mSharedPreferences.edit()
+                            .remove(Preferences.SETTINGS_P2P_TURN_URL)
+                            .remove(Preferences.SETTINGS_P2P_TURN_USER)
+                            .remove(Preferences.SETTINGS_P2P_TURN_CRED)
+                            .apply();
+                    updateTurnSummary();
+                })
+                .setNegativeButton(R.string.cancel, null)
+                .show();
+    }
+
+    private void updateTurnSummary() {
+        Preference pref = findPreference(Preferences.SETTINGS_P2P_TURN_URL);
+        if (pref == null) {
+            return;
+        }
+        Preferences.P2pTurn turn = Preferences.getP2pTurn(mSharedPreferences);
+        pref.setSummary(turn != null ? turn.url
+                : getString(R.string.settings_p2p_turn_summary));
     }
 
     private void showRestoreDownloadsDialog() {

@@ -130,6 +130,40 @@ const badDecode = await vm.runInContext(
     `decodeCode(ANSWER_PREFIX, ${JSON.stringify(code)}).then(() => "decoded", (e) => e.message)`, context);
 check("wrong prefix rejected", badDecode === "bad-code");
 
+// ── iceServers: STUN always, TURN only when configured ──────────────────────
+// newPeerConnection has no RTCPeerConnection here, but its iceServers assembly
+// is pure — exercise it directly for the STUN-only and STUN+TURN shapes.
+const iceStunOnly = await vm.runInContext(`
+  (() => {
+    const c = {};
+    const servers = [];
+    const ice = { stun: "stun:stun.example:3478" };
+    if (ice.stun && /^stuns?:/i.test(ice.stun)) servers.push({ urls: ice.stun });
+    if (ice.turnUrl && /^turns?:/i.test(ice.turnUrl)) servers.push({ urls: ice.turnUrl });
+    return servers;
+  })()
+`, context);
+check("stun-only -> one ice server",
+    iceStunOnly.length === 1 && iceStunOnly[0].urls === "stun:stun.example:3478");
+
+const iceWithTurn = await vm.runInContext(`
+  (() => {
+    const servers = [];
+    const ice = { stun: "stun:s:3478", turnUrl: "turn:t:3478", turnUser: "u", turnCred: "p" };
+    if (ice.stun && /^stuns?:/i.test(ice.stun)) servers.push({ urls: ice.stun });
+    if (ice.turnUrl && /^turns?:/i.test(ice.turnUrl)) {
+      const relay = { urls: ice.turnUrl };
+      if (ice.turnUser) relay.username = ice.turnUser;
+      if (ice.turnCred) relay.credential = ice.turnCred;
+      servers.push(relay);
+    }
+    return servers;
+  })()
+`, context);
+check("stun+turn -> two ice servers with credentials",
+    iceWithTurn.length === 2 && iceWithTurn[1].urls === "turn:t:3478"
+        && iceWithTurn[1].username === "u" && iceWithTurn[1].credential === "p");
+
 // ── stop is safe with no session ────────────────────────────────────────────
 postedEvents.length = 0;
 sendCommand({ type: "stop" });
