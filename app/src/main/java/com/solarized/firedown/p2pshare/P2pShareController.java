@@ -96,6 +96,42 @@ public class P2pShareController {
     public static final String OFFER_PREFIX = "FDS1.";
     public static final String ANSWER_PREFIX = "FDR1.";
 
+    /**
+     * Deep-link wrapper for the OFFER code so a scan with ANY scanner (the
+     * phone's system camera included) offers "open in Firedown" and jumps
+     * straight into the receive flow — a bare {@code FDS1.…} code is just text
+     * to a generic scanner. The scheme+host are registered on DownloadsActivity
+     * (AndroidManifest) and routed to {@code p2p_receive}. Only the offer is
+     * wrapped: the ANSWER is fed back into the sender's already-open, LIVE
+     * session (in-app scan / paste), so a deep link there would just relaunch
+     * the app with no session to hand it to. {@link #stripDeepLink} makes the
+     * in-app scanner + paste accept both the wrapped and bare forms.
+     */
+    public static final String DEEP_LINK_SCHEME = "firedown";
+    public static final String DEEP_LINK_HOST = "p2p";
+    public static final String DEEP_LINK_PREFIX =
+            DEEP_LINK_SCHEME + "://" + DEEP_LINK_HOST + "/";
+
+    /** Wrap a signaling code as a {@code firedown://p2p/<code>} deep link. */
+    @NonNull
+    public static String toDeepLink(@NonNull String code) {
+        return DEEP_LINK_PREFIX + code;
+    }
+
+    /**
+     * Return the bare {@code FDS1.}/{@code FDR1.} code from a scanned/pasted
+     * value, stripping the {@code firedown://p2p/} deep-link wrapper if present.
+     * Bare codes (the answer, or a pre-deep-link offer) pass through unchanged.
+     */
+    @NonNull
+    public static String stripDeepLink(@NonNull String raw) {
+        String trimmed = raw.trim();
+        if (trimmed.startsWith(DEEP_LINK_PREFIX)) {
+            return trimmed.substring(DEEP_LINK_PREFIX.length());
+        }
+        return trimmed;
+    }
+
     private static final long ENGINE_READY_TIMEOUT_MS = 8000;
 
     private static final SecureRandom ID_RANDOM = new SecureRandom();

@@ -246,7 +246,9 @@ public abstract class P2pShareBaseFragment extends BaseFocusFragment {
      */
     @Nullable
     protected String readCodeFromClipboard(@NonNull String expectedPrefix) {
-        String code = ClipboardHelper.readTrimmedText(getContext());
+        // Accept both a bare code and a firedown://p2p/<code> deep link (a user
+        // may copy either the code or the share-sheet link).
+        String code = P2pShareController.stripDeepLink(ClipboardHelper.readTrimmedText(getContext()));
         if (code.isEmpty()) {
             makeSnack(R.string.p2p_clipboard_empty);
             return null;

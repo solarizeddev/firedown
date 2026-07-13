@@ -197,6 +197,15 @@
             android:configChanges="keyboardHidden|orientation|screenLayout|screenSize"
             android:exported="true"
             android:theme="@style/Theme.FireDown">
+            <!-- P2P share offer deep link: scanning a sender's QR (firedown://p2p/<code>)
+                 with any scanner opens the receive flow. Handled in
+                 DownloadsActivity.handleP2pDeepLink; only an FDS1 offer code acts. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="firedown" android:host="p2p" />
+            </intent-filter>
         </activity>
 
         <activity

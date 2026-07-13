@@ -35,6 +35,9 @@ import dagger.hilt.android.AndroidEntryPoint;
 public class P2pReceiveFragment extends P2pShareBaseFragment
         implements P2pShareController.Listener {
 
+    /** Nav arg: an offer code delivered by the firedown://p2p/ deep link. */
+    public static final String ARG_OFFER_CODE = "p2p.offer.code";
+
     private View mView;
     private String mReplyCode;
     private String mLastCode;
@@ -75,6 +78,17 @@ public class P2pReceiveFragment extends P2pShareBaseFragment
         mView.findViewById(R.id.p2p_open).setOnClickListener(v -> openReceived());
         mView.findViewById(R.id.p2p_stop).setOnClickListener(v -> close());
         mView.findViewById(R.id.p2p_retry).setOnClickListener(v -> showEntry());
+
+        // Arrived via the firedown://p2p/ deep link (scanned with any scanner)?
+        // Stash the offer so onEngineReady starts the receive once the WebRTC
+        // pref is applied — same replay path as a code scanned before ready.
+        Bundle args = getArguments();
+        if (args != null) {
+            String offer = args.getString(ARG_OFFER_CODE);
+            if (offer != null && !offer.isEmpty()) {
+                mLastCode = offer;
+            }
+        }
 
         return mView;
     }

@@ -37,6 +37,7 @@ import com.google.zxing.common.HybridBinarizer;
 import com.solarized.firedown.BaseActivity;
 import com.solarized.firedown.BuildConfig;
 import com.solarized.firedown.R;
+import com.solarized.firedown.p2pshare.P2pShareController;
 import com.solarized.firedown.utils.ClipboardHelper;
 
 import java.nio.ByteBuffer;
@@ -264,7 +265,9 @@ public class P2pScanFragment extends DialogFragment {
         if (text == null) {
             return;
         }
-        String code = text.trim();
+        // A deep-linked offer QR reads as firedown://p2p/FDS1.… — unwrap it so
+        // the FDS1./FDR1. prefix check below matches (bare codes pass through).
+        String code = P2pShareController.stripDeepLink(text);
         if (!code.startsWith(mExpectedPrefix)) {
             return;
         }
@@ -279,7 +282,7 @@ public class P2pScanFragment extends DialogFragment {
     }
 
     private void pasteCode() {
-        String code = ClipboardHelper.readTrimmedText(getContext());
+        String code = P2pShareController.stripDeepLink(ClipboardHelper.readTrimmedText(getContext()));
         if (code.isEmpty()) {
             snack(R.string.p2p_clipboard_empty);
             return;

@@ -90,7 +90,9 @@ public class P2pSendFragment extends P2pShareBaseFragment
 
         mView.findViewById(R.id.p2p_share_code).setOnClickListener(v -> {
             if (mOfferCode != null) {
-                shareCode(mOfferCode);
+                // Share the deep link, not the bare code: a tap on it in a
+                // messenger opens Firedown straight into the receive preview.
+                shareCode(P2pShareController.toDeepLink(mOfferCode));
             }
         });
         mView.findViewById(R.id.p2p_scan_reply).setOnClickListener(v ->
@@ -157,7 +159,10 @@ public class P2pSendFragment extends P2pShareBaseFragment
         }
         mOfferCode = code;
         setStage(R.id.p2p_code_group);
-        boolean rendered = setQr(mView.findViewById(R.id.p2p_qr), code);
+        // Encode the deep link (not the bare code) so a scan with the phone's
+        // own camera offers "open in Firedown"; the in-app scanner unwraps it.
+        boolean rendered = setQr(mView.findViewById(R.id.p2p_qr),
+                P2pShareController.toDeepLink(code));
         // If the code is too large to fit a QR, don't leave a blank white box
         // — hide the QR card and steer the user to the share-sheet path.
         mView.findViewById(R.id.p2p_qr_card).setVisibility(rendered ? View.VISIBLE : View.GONE);
