@@ -63,8 +63,8 @@ public class P2pLoopbackServer {
     private final Context mContext;
     private final String mToken;
 
-    private ServerSocket mServerSocket;
-    private ExecutorService mHandlerPool;
+    private volatile ServerSocket mServerSocket;
+    private volatile ExecutorService mHandlerPool;
     private Thread mAcceptThread;
     private volatile boolean mRunning;
 
@@ -148,12 +148,6 @@ public class P2pLoopbackServer {
         }
     }
 
-    public long getWrittenBytes() {
-        synchronized (mWriteLock) {
-            return mWritten;
-        }
-    }
-
     public String getReadUrl() {
         return baseUrl() + "/read?t=" + mToken;
     }
@@ -171,11 +165,19 @@ public class P2pLoopbackServer {
 
     private void acceptLoop() {
         while (mRunning) {
+            // stop() (main thread) can null the socket/pool the instant after
+            // the mRunning check; snapshot into locals and catch EVERYTHING so
+            // a teardown race (NPE on a nulled socket, RejectedExecution on a
+            // shut-down pool) can never kill this bare thread → crash the app.
             Socket client;
             try {
-                client = mServerSocket.accept();
-            } catch (IOException e) {
-                // Socket closed by stop(), or a transient accept error.
+                ServerSocket socket = mServerSocket;
+                if (socket == null) {
+                    return;
+                }
+                client = socket.accept();
+            } catch (Exception e) {
+                // Socket closed by stop(), or a transient/teardown error.
                 if (mRunning && BuildConfig.DEBUG) {
                     Log.d(TAG, "accept ended: " + e.getMessage());
                 }
@@ -186,7 +188,13 @@ public class P2pLoopbackServer {
                 closeQuietly(client);
                 return;
             }
-            pool.execute(() -> handleConnection(client));
+            try {
+                pool.execute(() -> handleConnection(client));
+            } catch (RuntimeException e) {
+                // Pool shut down between the null check and execute().
+                closeQuietly(client);
+                return;
+            }
         }
     }
 

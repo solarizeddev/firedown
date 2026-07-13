@@ -536,8 +536,8 @@
     <string name="p2p_receive_title">Een bestand ontvangen</string>
     <string name="p2p_send_lead">Verstuur dit bestand rechtstreeks naar een ander apparaat met Firedown — versleuteld, van apparaat naar apparaat, zonder server ertussen.</string>
     <string name="p2p_receive_lead">Ontvang een bestand rechtstreeks van een ander apparaat met Firedown.</string>
-    <string name="p2p_rtc_note">WebRTC staat aan zolang dit scherm open is.</string>
-    <string name="p2p_code_hint_send">Open op het andere apparaat Downloads → Een bestand ontvangen en scan deze code — scan daarna hun antwoord.</string>
+    <string name="p2p_rtc_note">Directe verbindingen worden alleen voor deze overdracht ingeschakeld en daarna weer uitgeschakeld.</string>
+    <string name="p2p_code_hint_send">Open op het andere apparaat Downloads → Een bestand ontvangen en scan deze code. Zodra er een antwoordcode verschijnt, scan die terug.</string>
     <string name="p2p_code_hint_reply">Toon dit antwoord aan de verzender, of stuur het terug op dezelfde manier waarop hun code binnenkwam.</string>
     <string name="p2p_share_code">Code op een andere manier verzenden</string>
     <string name="p2p_scan_reply">Antwoord scannen</string>
@@ -551,7 +551,6 @@
     <string name="p2p_state_connecting">Verbinden…</string>
     <string name="p2p_state_connected">Verbonden</string>
     <string name="p2p_progress_of">%1$s van %2$s · %3$s/s</string>
-    <string name="p2p_done_sent">Bestand verzonden</string>
     <string name="p2p_done_sent_detail">Verzonden · %1$s</string>
     <string name="p2p_done_received">Opgeslagen in Downloads</string>
     <string name="p2p_stop">Stoppen</string>
@@ -562,9 +561,18 @@
     <string name="p2p_clipboard_empty">Geen code op het klembord.</string>
     <string name="p2p_footer">Versleutelde overdracht van apparaat naar apparaat. Het bestand komt nooit op een server.</string>
     <string name="p2p_scan_hint">Richt de camera op de code van de verzender</string>
-    <string name="p2p_camera_denied">Camera niet beschikbaar — plak de code in plaats daarvan.</string>
+    <string name="p2p_camera_denied">Cameratoegang is nodig om te scannen. Je kunt de code ook plakken.</string>
     <string name="settings_p2p_stun">STUN-server</string>
     <string name="settings_p2p_stun_summary">Helpt twee apparaten elkaar via internet te vinden tijdens direct delen. Alleen je netwerkadres wordt ernaartoe gestuurd.</string>
     <string name="settings_p2p_stun_custom">Aangepast…</string>
     <string name="settings_p2p_stun_custom_title">Aangepaste STUN-server</string>
+    <string name="p2p_share_reply">Antwoord op een andere manier verzenden</string>
+    <string name="p2p_preparing">Voorbereiden…</string>
+    <string name="p2p_open">Openen</string>
+    <string name="p2p_try_again">Opnieuw proberen</string>
+    <string name="p2p_abandon_message">Deze overdracht stoppen? Ze is nog niet klaar.</string>
+    <string name="p2p_abandon_confirm">Stoppen</string>
+    <string name="p2p_qr_too_large">Deze code is te groot om als QR te tonen — gebruik “Code op een andere manier verzenden”.</string>
+    <string name="p2p_qr_content_desc">Je deelcode, als QR</string>
+    <string name="settings_p2p_stun_invalid">Voer een geldig adres in, bijv. stun:host:3478</string>
 </resources>

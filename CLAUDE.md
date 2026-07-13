@@ -1322,17 +1322,32 @@ engine fails honestly after ~20 s (`no-path` → `p2p_error_no_path` suggests
 same-Wi-Fi) — don't "fix" this with a relay, that's the server-in-the-middle
 this feature exists to avoid.
 
-**The pref-gated-global trap (`media.peerconnection.enabled`).** The user's
-WebRTC toggle ships OFF, and `RTCPeerConnection` is Pref-gated WebIDL
-evaluated **when a page global is created** — a background page that loaded
-with the pref off has NO constructor even after the pref flips on. So:
-`P2pShareBaseFragment` enables the RUNTIME pref for the session (restores the
-STORED pref's value in `onDestroyView`; a small `p2p_rtc_note` line discloses
-it; users with WebRTC on globally see neither), and the controller's
-`ensureEngine` probes with `{type:"ensure"}` — on `ok:false` the page
-`location.reload()`s itself, reconnects the port, posts a fresh
-`{type:"ready", rtc:true}`, and the queued command runs. **Never simplify the
-ensure/reload dance into a plain port-connected check.**
+**The pref-gated-global trap (`media.peerconnection.enabled`) — three
+interlocking fixes, don't remove any.** The user's WebRTC toggle ships OFF,
+and `RTCPeerConnection` is Pref-gated WebIDL evaluated **when a page global is
+created** — a background page that loaded with the pref off has NO constructor
+even after the pref flips on. `P2pShareBaseFragment` enables the RUNTIME pref
+for the session (restores the STORED pref's value in `onDestroyView`; a small
+`p2p_rtc_note` line discloses it; users with WebRTC on globally see neither),
+and the controller's `ensureEngine` probes with `{type:"ensure"}` — on
+`ok:false` the page `location.reload()`s itself, reconnects the port, posts a
+fresh `{type:"ready", rtc:true}`, and the queued command runs. Three things
+make this actually work (each was a "no QR / first share always fails" bug):
+1. **Start the engine only AFTER the pref write is applied.** `setWebRTC`
+   returns the `GeckoResult`; the fragment chains `onEngineReady()` on
+   `.accept(...)`. Firing `startSend` synchronously after `setWebRTC` races
+   the async write, so the reload lands before the new value is visible and
+   the reloaded global still has no constructor.
+2. **The reload's port disconnect is NOT fatal.** The engine's
+   `location.reload()` drops and re-opens the native port; the controller's
+   `onDisconnect` must NOT `postError` while `mAwaitingReload` is set (armed on
+   `ensure-result ok:false`, cleared on the next `ready`). Without the guard
+   the reload tears down the very session it was preparing.
+3. **Bounded re-ensure.** If the reloaded page still reports `rtc:false` (pref
+   write not yet visible), the controller re-sends `ensure` up to
+   `MAX_ENSURE_RETRIES` before the timeout gives up.
+**Never simplify the ensure/reload dance into a plain port-connected check,
+and never fire the first engine command before the pref GeckoResult resolves.**
 
 **Bytes never cross the native-messaging bridge** (that would be
 base64-in-JSON per chunk). `P2pLoopbackServer` (127.0.0.1, ephemeral port,
@@ -1352,21 +1367,55 @@ the intended exemption; verify on a real device.
 **Completion is receiver-ack'd, then the file becomes a normal download.**
 The sender's `done` fires only on the receiver's `{"t":"rcvd"}` ack (sent
 AFTER the last loopback write) — `bufferedAmount` hitting 0 proves nothing
-about the far end. The receiver writes to `<name>.part`, then
+about the far end. The receiver must **`waitBufferedDrain(dc)` before
+`pc.close()`** — `pc.close()` aborts SCTP immediately and would drop a
+still-buffered ack, hanging the sender; the sender also arms an
+`ACK_TIMEOUT_MS` after eof so a genuinely lost ack fails honestly instead of
+spinning forever. The receiver enforces the **accepted size**
+(`offer.size + OVERRUN_SLACK`): a modified sender that advertised "2 MB" can't
+stream tens of GB to fill the disk. The receiver writes to `<name>.part`, then
 `P2pShareController.finalizeReceivedFile` (disk executor) verifies the byte
-count, re-uniquifies + renames, inserts a `FINISHED` `DownloadEntity`
-(`file_url = "p2p://<device-slug>"` so the row's `MIME · domain` meta line
-names the transport honestly; Room invalidation refreshes the list, no poke)
-and calls `GalleryPublisher.publish`. An aborted/failed receive deletes the
-`.part`.
+count, re-uniquifies (against disk AND the download table via `findByFilePath`
+— a path free on disk can be owned by a queued/errored row) + renames, inserts
+a `FINISHED` `DownloadEntity` (`file_url = "p2p://<device-slug>"` so the row's
+`MIME · domain` meta line names the transport honestly; mime is derived from
+the FILE, not the entity's stored label; Room invalidation refreshes the list,
+no poke) and calls `GalleryPublisher.publish`. An aborted/failed receive
+deletes the `.part`. **A bad scanned/pasted answer is SOFT** (`bad-code`): the
+engine keys softness on `signalingState` and treats every decode/apply failure
+before connect as recoverable (the offer QR stays valid) — never `fail()` the
+session on a mangled paste.
 
-**Scanner:** `P2pScanFragment` — CameraX (`camera-core/camera2/lifecycle/
-view`, the app's only camera use) + **zxing decode** of the Y plane
-(rowStride-compacted; NO ML Kit / Play Services — de-Googled devices stay
+**Scanner is a full-screen `DialogFragment` (`<dialog>` destination), NOT a
+`<fragment>` — load-bearing.** A `<fragment>` scanner destination would
+destroy the send/receive fragment's view on navigate →
+`P2pShareBaseFragment.onDestroyView` → `controller.stop()`, killing the live
+WebRTC session mid-handshake; the returning fragment mints a fresh offer the
+scanned answer can never match (the QR-reply path would ALWAYS fail, only paste
+worked). A dialog shows on top, leaving the caller's view — and its session —
+intact. `P2pScanFragment` uses CameraX (`camera-core/camera2/lifecycle/view`,
+the app's only camera use) + **zxing decode** of the Y plane (rowStride-
+compacted into a REUSED buffer — a fresh ~1-2 MB array per frame at 15-30 fps
+is needless GC churn; NO ML Kit / Play Services — de-Googled devices stay
 first-class). Result returns via the previous back-stack entry's
 `SavedStateHandle` (`P2pScanFragment.RESULT_CODE`, the
 CancelOperationDialogFragment pattern), validated against the expected
-`FDS1.`/`FDR1.` prefix before delivery.
+`FDS1.`/`FDR1.` prefix before delivery. **Don't turn it back into a
+`<fragment>`.**
+
+**Session lifetime = view lifetime, but a back-press mid-transfer confirms
+first** (`P2pShareBaseFragment` `OnBackPressedCallback` + toolbar nav both go
+through `confirmThenClose`, gated on `controller.isTransferActive()` — set on
+the first `progress` event) so an accidental swipe-back doesn't silently
+discard an in-flight transfer. Clipboard paste goes through the shared
+`ClipboardHelper.readTrimmedText` (single `getPrimaryClip` + `coerceToText` —
+NOT a multi-call `getText` chain, which fires the Android-13 paste toast per
+call and reads empty for `text/uri-list` clips from Chromium browsers). The
+STUN setting is a **click-row chooser**, not a `ListPreference` (the latter
+fires no change event when you re-pick the already-selected "Custom…", so the
+URL became uneditable); the custom URL is scheme-validated (`stun:`/`turn:`)
+before persisting so a typo can't fail every future share in the
+`RTCPeerConnection` constructor.
 
 Strings are `p2p_*`/`settings_p2p_stun*`, translated across the same 16
 locales as the JIT toggle.

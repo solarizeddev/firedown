@@ -535,8 +535,8 @@
     <string name="p2p_receive_title">Dosya al</string>
     <string name="p2p_send_lead">Bu dosyayı Firedown çalıştıran başka bir cihaza doğrudan gönderin — şifreli, cihazdan cihaza, arada sunucu olmadan.</string>
     <string name="p2p_receive_lead">Firedown çalıştıran başka bir cihazdan doğrudan dosya alın.</string>
-    <string name="p2p_rtc_note">Bu ekran açıkken WebRTC etkindir.</string>
-    <string name="p2p_code_hint_send">Diğer cihazda İndirilenler → Dosya al bölümünü açın ve bu kodu tarayın — ardından yanıt kodunu tarayın.</string>
+    <string name="p2p_rtc_note">Doğrudan bağlantılar yalnızca bu aktarım için açılır, sonra tekrar kapatılır.</string>
+    <string name="p2p_code_hint_send">Diğer cihazda İndirilenler → Dosya al bölümünü açın ve bu kodu tarayın. Size bir yanıt kodu gösterildiğinde onu geri tarayın.</string>
     <string name="p2p_code_hint_reply">Bu yanıtı gönderene gösterin veya kodun geldiği yoldan geri gönderin.</string>
     <string name="p2p_share_code">Kodu başka bir yolla gönder</string>
     <string name="p2p_scan_reply">Yanıtı tara</string>
@@ -550,7 +550,6 @@
     <string name="p2p_state_connecting">Bağlanıyor…</string>
     <string name="p2p_state_connected">Bağlandı</string>
     <string name="p2p_progress_of">%1$s / %2$s · %3$s/s</string>
-    <string name="p2p_done_sent">Dosya gönderildi</string>
     <string name="p2p_done_sent_detail">Gönderildi · %1$s</string>
     <string name="p2p_done_received">İndirilenler\'e kaydedildi</string>
     <string name="p2p_stop">Durdur</string>
@@ -561,9 +560,18 @@
     <string name="p2p_clipboard_empty">Panoda kod yok.</string>
     <string name="p2p_footer">Şifreli, cihazdan cihaza aktarım. Dosya hiçbir zaman bir sunucuya uğramaz.</string>
     <string name="p2p_scan_hint">Kamerayı gönderenin koduna doğrultun</string>
-    <string name="p2p_camera_denied">Kamera kullanılamıyor — bunun yerine kodu yapıştırın.</string>
+    <string name="p2p_camera_denied">Taramak için kamera erişimi gerekir. Bunun yerine kodu yapıştırabilirsiniz.</string>
     <string name="settings_p2p_stun">STUN sunucusu</string>
     <string name="settings_p2p_stun_summary">Doğrudan paylaşım sırasında iki cihazın internet üzerinden birbirini bulmasına yardımcı olur. Ona yalnızca ağ adresiniz gönderilir.</string>
     <string name="settings_p2p_stun_custom">Özel…</string>
     <string name="settings_p2p_stun_custom_title">Özel STUN sunucusu</string>
+    <string name="p2p_share_reply">Yanıtı başka bir yolla gönder</string>
+    <string name="p2p_preparing">Hazırlanıyor…</string>
+    <string name="p2p_open">Aç</string>
+    <string name="p2p_try_again">Tekrar dene</string>
+    <string name="p2p_abandon_message">Bu aktarım durdurulsun mu? Henüz tamamlanmadı.</string>
+    <string name="p2p_abandon_confirm">Durdur</string>
+    <string name="p2p_qr_too_large">Bu kod QR olarak gösterilemeyecek kadar büyük — “Kodu başka bir yolla gönder” seçeneğini kullanın.</string>
+    <string name="p2p_qr_content_desc">Paylaşım kodunuz, QR olarak</string>
+    <string name="settings_p2p_stun_invalid">Geçerli bir adres girin, örn. stun:host:3478</string>
 </resources>

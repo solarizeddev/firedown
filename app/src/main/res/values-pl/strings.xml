@@ -535,8 +535,8 @@
     <string name="p2p_receive_title">Odbierz plik</string>
     <string name="p2p_send_lead">Wyślij ten plik prosto na inne urządzenie z Firedown — z szyfrowaniem, z urządzenia na urządzenie, bez pośredniczącego serwera.</string>
     <string name="p2p_receive_lead">Odbierz plik prosto z innego urządzenia z Firedown.</string>
-    <string name="p2p_rtc_note">WebRTC jest włączone, dopóki ten ekran jest otwarty.</string>
-    <string name="p2p_code_hint_send">Na drugim urządzeniu otwórz Pliki do pobrania → Odbierz plik i zeskanuj ten kod — a potem zeskanuj kod odpowiedzi.</string>
+    <string name="p2p_rtc_note">Połączenia bezpośrednie są włączane tylko na czas tego przesyłania, a potem znów wyłączane.</string>
+    <string name="p2p_code_hint_send">Na drugim urządzeniu otwórz Pliki do pobrania → Odbierz plik i zeskanuj ten kod. Gdy pojawi się kod odpowiedzi, zeskanuj go z powrotem.</string>
     <string name="p2p_code_hint_reply">Pokaż tę odpowiedź nadawcy albo odeślij ją tą samą drogą, którą dotarł jego kod.</string>
     <string name="p2p_share_code">Wyślij kod w inny sposób</string>
     <string name="p2p_scan_reply">Skanuj odpowiedź</string>
@@ -550,7 +550,6 @@
     <string name="p2p_state_connecting">Łączenie…</string>
     <string name="p2p_state_connected">Połączono</string>
     <string name="p2p_progress_of">%1$s z %2$s · %3$s/s</string>
-    <string name="p2p_done_sent">Plik wysłany</string>
     <string name="p2p_done_sent_detail">Wysłano · %1$s</string>
     <string name="p2p_done_received">Zapisano w Plikach do pobrania</string>
     <string name="p2p_stop">Zatrzymaj</string>
@@ -561,9 +560,18 @@
     <string name="p2p_clipboard_empty">Brak kodu w schowku.</string>
     <string name="p2p_footer">Szyfrowany transfer z urządzenia na urządzenie. Plik nigdy nie trafia na serwer.</string>
     <string name="p2p_scan_hint">Skieruj aparat na kod nadawcy</string>
-    <string name="p2p_camera_denied">Aparat niedostępny — zamiast tego wklej kod.</string>
+    <string name="p2p_camera_denied">Do skanowania potrzebny jest dostęp do aparatu. Zamiast tego możesz wkleić kod.</string>
     <string name="settings_p2p_stun">Serwer STUN</string>
     <string name="settings_p2p_stun_summary">Pomaga dwóm urządzeniom odnaleźć się przez internet podczas bezpośredniego udostępniania. Wysyłany jest do niego wyłącznie Twój adres sieciowy.</string>
     <string name="settings_p2p_stun_custom">Niestandardowy…</string>
     <string name="settings_p2p_stun_custom_title">Niestandardowy serwer STUN</string>
+    <string name="p2p_share_reply">Wyślij odpowiedź w inny sposób</string>
+    <string name="p2p_preparing">Przygotowywanie…</string>
+    <string name="p2p_open">Otwórz</string>
+    <string name="p2p_try_again">Spróbuj ponownie</string>
+    <string name="p2p_abandon_message">Zatrzymać to przesyłanie? Nie zostało jeszcze ukończone.</string>
+    <string name="p2p_abandon_confirm">Zatrzymaj</string>
+    <string name="p2p_qr_too_large">Ten kod jest za duży, aby pokazać go jako kod QR — użyj opcji “Wyślij kod w inny sposób”.</string>
+    <string name="p2p_qr_content_desc">Twój kod udostępniania jako kod QR</string>
+    <string name="settings_p2p_stun_invalid">Wprowadź prawidłowy adres, np. stun:host:3478</string>
 </resources>

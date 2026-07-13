@@ -442,8 +442,8 @@
     <string name="p2p_receive_title">फ़ाइल प्राप्त करें</string>
     <string name="p2p_send_lead">यह फ़ाइल सीधे Firedown चलाने वाले दूसरे डिवाइस पर भेजें — एन्क्रिप्टेड, डिवाइस से डिवाइस, बीच में कोई सर्वर नहीं।</string>
     <string name="p2p_receive_lead">Firedown चलाने वाले दूसरे डिवाइस से सीधे फ़ाइल प्राप्त करें।</string>
-    <string name="p2p_rtc_note">यह स्क्रीन खुली रहने तक WebRTC चालू रहता है।</string>
-    <string name="p2p_code_hint_send">दूसरे डिवाइस पर डाउनलोड → फ़ाइल प्राप्त करें खोलें और यह कोड स्कैन करें — फिर उनका जवाब स्कैन करें।</string>
+    <string name="p2p_rtc_note">सीधे कनेक्शन केवल इस ट्रांसफ़र के लिए चालू किए जाते हैं, फिर बंद हो जाते हैं।</string>
+    <string name="p2p_code_hint_send">दूसरे डिवाइस पर डाउनलोड → फ़ाइल प्राप्त करें खोलें और यह कोड स्कैन करें। जब जवाब कोड दिखे, तो उसे वापस स्कैन करें।</string>
     <string name="p2p_code_hint_reply">यह जवाब भेजने वाले को दिखाएँ, या इसे उसी तरीके से वापस भेजें जिस तरह उनका कोड आया था।</string>
     <string name="p2p_share_code">कोड किसी और तरीके से भेजें</string>
     <string name="p2p_scan_reply">जवाब स्कैन करें</string>
@@ -457,7 +457,6 @@
     <string name="p2p_state_connecting">कनेक्ट हो रहा है…</string>
     <string name="p2p_state_connected">कनेक्ट हो गया</string>
     <string name="p2p_progress_of">%2$s में से %1$s · %3$s/s</string>
-    <string name="p2p_done_sent">फ़ाइल भेजी गई</string>
     <string name="p2p_done_sent_detail">भेजा गया · %1$s</string>
     <string name="p2p_done_received">डाउनलोड में सहेजा गया</string>
     <string name="p2p_stop">रोकें</string>
@@ -468,9 +467,18 @@
     <string name="p2p_clipboard_empty">क्लिपबोर्ड में कोई कोड नहीं है।</string>
     <string name="p2p_footer">डिवाइस से डिवाइस एन्क्रिप्टेड ट्रांसफ़र। फ़ाइल कभी किसी सर्वर से नहीं गुज़रती।</string>
     <string name="p2p_scan_hint">कैमरा भेजने वाले के कोड की ओर करें</string>
-    <string name="p2p_camera_denied">कैमरा उपलब्ध नहीं है — इसके बजाय कोड पेस्ट करें।</string>
+    <string name="p2p_camera_denied">स्कैन करने के लिए कैमरा एक्सेस ज़रूरी है। इसके बजाय आप कोड पेस्ट कर सकते हैं।</string>
     <string name="settings_p2p_stun">STUN सर्वर</string>
     <string name="settings_p2p_stun_summary">सीधे शेयर के दौरान दो डिवाइसों को इंटरनेट पर एक-दूसरे को खोजने में मदद करता है। इसे केवल आपका नेटवर्क पता ही भेजा जाता है।</string>
     <string name="settings_p2p_stun_custom">कस्टम…</string>
     <string name="settings_p2p_stun_custom_title">कस्टम STUN सर्वर</string>
+    <string name="p2p_share_reply">जवाब किसी और तरीके से भेजें</string>
+    <string name="p2p_preparing">तैयार किया जा रहा है…</string>
+    <string name="p2p_open">खोलें</string>
+    <string name="p2p_try_again">फिर से प्रयास करें</string>
+    <string name="p2p_abandon_message">यह ट्रांसफ़र रोकें? यह अभी पूरा नहीं हुआ है।</string>
+    <string name="p2p_abandon_confirm">रोकें</string>
+    <string name="p2p_qr_too_large">यह कोड QR के रूप में दिखाने के लिए बहुत बड़ा है — “कोड किसी और तरीके से भेजें” का उपयोग करें।</string>
+    <string name="p2p_qr_content_desc">आपका शेयर कोड, QR के रूप में</string>
+    <string name="settings_p2p_stun_invalid">मान्य पता दर्ज करें, जैसे stun:host:3478</string>
 </resources>

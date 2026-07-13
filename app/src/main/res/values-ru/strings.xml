@@ -538,8 +538,8 @@
     <string name="p2p_receive_title">Получить файл</string>
     <string name="p2p_send_lead">Отправьте этот файл прямо на другое устройство с Firedown — с шифрованием, с устройства на устройство, без сервера-посредника.</string>
     <string name="p2p_receive_lead">Получите файл прямо с другого устройства с Firedown.</string>
-    <string name="p2p_rtc_note">Пока этот экран открыт, WebRTC включён.</string>
-    <string name="p2p_code_hint_send">На другом устройстве откройте Загрузки → Получить файл и отсканируйте этот код, а затем отсканируйте ответный код.</string>
+    <string name="p2p_rtc_note">Прямые подключения включаются только на время этой передачи, а затем выключаются.</string>
+    <string name="p2p_code_hint_send">На другом устройстве откройте Загрузки → Получить файл и отсканируйте этот код. Когда появится ответный код, отсканируйте его в ответ.</string>
     <string name="p2p_code_hint_reply">Покажите этот ответ отправителю или отправьте его тем же способом, каким пришёл его код.</string>
     <string name="p2p_share_code">Отправить код другим способом</string>
     <string name="p2p_scan_reply">Сканировать ответ</string>
@@ -553,7 +553,6 @@
     <string name="p2p_state_connecting">Подключение…</string>
     <string name="p2p_state_connected">Подключено</string>
     <string name="p2p_progress_of">%1$s из %2$s · %3$s/s</string>
-    <string name="p2p_done_sent">Файл отправлен</string>
     <string name="p2p_done_sent_detail">Отправлено · %1$s</string>
     <string name="p2p_done_received">Сохранено в «Загрузки»</string>
     <string name="p2p_stop">Остановить</string>
@@ -564,9 +563,18 @@
     <string name="p2p_clipboard_empty">В буфере обмена нет кода.</string>
     <string name="p2p_footer">Передача с шифрованием напрямую между устройствами. Файл не попадает на сервер.</string>
     <string name="p2p_scan_hint">Наведите камеру на код отправителя</string>
-    <string name="p2p_camera_denied">Камера недоступна — вставьте код вручную.</string>
+    <string name="p2p_camera_denied">Для сканирования нужен доступ к камере. Вместо этого можно вставить код.</string>
     <string name="settings_p2p_stun">STUN-сервер</string>
     <string name="settings_p2p_stun_summary">Помогает двум устройствам найти друг друга в интернете при прямой передаче. Ему передаётся только ваш сетевой адрес.</string>
     <string name="settings_p2p_stun_custom">Свой…</string>
     <string name="settings_p2p_stun_custom_title">Свой STUN-сервер</string>
+    <string name="p2p_share_reply">Отправить ответ другим способом</string>
+    <string name="p2p_preparing">Подготовка…</string>
+    <string name="p2p_open">Открыть</string>
+    <string name="p2p_try_again">Попробовать ещё раз</string>
+    <string name="p2p_abandon_message">Остановить эту передачу? Она ещё не завершена.</string>
+    <string name="p2p_abandon_confirm">Остановить</string>
+    <string name="p2p_qr_too_large">Этот код слишком велик, чтобы показать его как QR — используйте “Отправить код другим способом”.</string>
+    <string name="p2p_qr_content_desc">Ваш код обмена в виде QR</string>
+    <string name="settings_p2p_stun_invalid">Введите корректный адрес, например stun:host:3478</string>
 </resources>

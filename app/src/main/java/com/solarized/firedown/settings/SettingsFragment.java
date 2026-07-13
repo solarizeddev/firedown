@@ -183,6 +183,8 @@ public class SettingsFragment extends BasePreferenceFragment
 
     private void updateSummaries() {
 
+        updateStunSummary();
+
         if(autoFillPreference != null){
             Boolean enabled = isSystemAutofillActive();
             if (enabled == null) {
@@ -365,15 +367,6 @@ public class SettingsFragment extends BasePreferenceFragment
 
             mGeckoRuntimeHelper.setWebRTC(value);
 
-        } else if (Preferences.SETTINGS_P2P_STUN.equals(key)) {
-
-            // Consumed at share time (Preferences.getP2pStunServer) — nothing
-            // to push into Gecko here. "custom" opens the url dialog.
-            String value = sharedPreferences.getString(key, Preferences.DEFAULT_P2P_STUN);
-            if (Preferences.P2P_STUN_CUSTOM_VALUE.equals(value)) {
-                showCustomStunDialog(sharedPreferences);
-            }
-
         } else if (Preferences.SETTINGS_DISABLE_WASM.equals(key)) {
 
             boolean disabled = sharedPreferences.getBoolean(key, Preferences.DEFAULT_DISABLE_WASM);
@@ -462,6 +455,7 @@ public class SettingsFragment extends BasePreferenceFragment
         final String key = preference.getKey();
 
         switch (key) {
+            case Preferences.SETTINGS_P2P_STUN -> showStunChooser();
             case Preferences.SETTINGS_RESTORE_DOWNLOADS -> showRestoreDownloadsDialog();
             case Preferences.SETTINGS_SYNC ->
                     NavigationUtils.navigateSafe(mNavController, R.id.action_settings_to_sync);
@@ -552,16 +546,51 @@ public class SettingsFragment extends BasePreferenceFragment
     // this on a populated list never duplicates rows.
 
     /**
-     * "Custom…" STUN choice: take the url in a plain text dialog and store it
-     * beside the list value ({@link Preferences#SETTINGS_P2P_STUN_CUSTOM}).
-     * An empty/cancelled entry is fine — getP2pStunServer falls back to the
-     * default rather than downgrading shares to host-candidates-only.
+     * P2P STUN chooser — a single-choice dialog over the shipped servers plus
+     * "Custom…". A click-row (not a ListPreference) so re-picking the
+     * already-selected "Custom…" still reopens the URL editor.
      */
-    private void showCustomStunDialog(SharedPreferences sharedPreferences) {
+    private void showStunChooser() {
+        String[] labels = getResources().getStringArray(R.array.settings_p2p_stun_entries);
+        String[] values = getResources().getStringArray(R.array.settings_p2p_stun_values);
+        String current = mSharedPreferences.getString(
+                Preferences.SETTINGS_P2P_STUN, Preferences.DEFAULT_P2P_STUN);
+        int checked = 0;
+        for (int i = 0; i < values.length; i++) {
+            boolean isCustom = Preferences.P2P_STUN_CUSTOM_VALUE.equals(values[i]);
+            if ((isCustom && Preferences.P2P_STUN_CUSTOM_VALUE.equals(current))
+                    || values[i].equals(current)) {
+                checked = i;
+            }
+        }
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.settings_p2p_stun)
+                .setSingleChoiceItems(labels, checked, (dialog, which) -> {
+                    dialog.dismiss();
+                    if (Preferences.P2P_STUN_CUSTOM_VALUE.equals(values[which])) {
+                        showCustomStunDialog();
+                    } else {
+                        mSharedPreferences.edit()
+                                .putString(Preferences.SETTINGS_P2P_STUN, values[which])
+                                .apply();
+                        updateStunSummary();
+                    }
+                })
+                .setNegativeButton(R.string.cancel, null)
+                .show();
+    }
+
+    /**
+     * "Custom…" STUN URL editor. Validates the {@code stun:}/{@code turn:}
+     * scheme before persisting — an invalid value would throw in the engine's
+     * RTCPeerConnection constructor and fail every share with a generic error.
+     * An empty/cancelled entry leaves the previous choice untouched.
+     */
+    private void showCustomStunDialog() {
         final EditText input = new EditText(requireContext());
         input.setInputType(InputType.TYPE_TEXT_VARIATION_URI);
         input.setHint("stun:host:3478");
-        input.setText(sharedPreferences.getString(Preferences.SETTINGS_P2P_STUN_CUSTOM, ""));
+        input.setText(mSharedPreferences.getString(Preferences.SETTINGS_P2P_STUN_CUSTOM, ""));
         int padding = getResources().getDimensionPixelSize(R.dimen.address_bar_inset);
         FrameLayout container = new FrameLayout(requireContext());
         container.setPadding(padding, 0, padding, 0);
@@ -569,13 +598,36 @@ public class SettingsFragment extends BasePreferenceFragment
         new MaterialAlertDialogBuilder(requireContext())
                 .setTitle(R.string.settings_p2p_stun_custom_title)
                 .setView(container)
-                .setPositiveButton(android.R.string.ok, (dialog, which) ->
-                        sharedPreferences.edit()
-                                .putString(Preferences.SETTINGS_P2P_STUN_CUSTOM,
-                                        input.getText().toString().trim())
-                                .apply())
+                .setPositiveButton(android.R.string.ok, (dialog, which) -> {
+                    String url = input.getText().toString().trim();
+                    if (!url.matches("(?i)^(stun|turn)s?:.+")) {
+                        Snackbar.make(requireView(), R.string.settings_p2p_stun_invalid,
+                                Snackbar.LENGTH_LONG).show();
+                        return;
+                    }
+                    mSharedPreferences.edit()
+                            .putString(Preferences.SETTINGS_P2P_STUN_CUSTOM, url)
+                            .putString(Preferences.SETTINGS_P2P_STUN,
+                                    Preferences.P2P_STUN_CUSTOM_VALUE)
+                            .apply();
+                    updateStunSummary();
+                })
                 .setNegativeButton(R.string.cancel, null)
                 .show();
+    }
+
+    private void updateStunSummary() {
+        Preference pref = findPreference(Preferences.SETTINGS_P2P_STUN);
+        if (pref == null) {
+            return;
+        }
+        String value = mSharedPreferences.getString(
+                Preferences.SETTINGS_P2P_STUN, Preferences.DEFAULT_P2P_STUN);
+        if (Preferences.P2P_STUN_CUSTOM_VALUE.equals(value)) {
+            pref.setSummary(Preferences.getP2pStunServer(mSharedPreferences));
+        } else {
+            pref.setSummary(value);
+        }
     }
 
     private void showRestoreDownloadsDialog() {

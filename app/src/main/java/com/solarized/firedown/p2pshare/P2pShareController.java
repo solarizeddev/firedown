@@ -121,6 +121,17 @@ public class P2pShareController {
     private boolean mEngineRtcReady;
     private Runnable mPendingEngineAction;
     private final Runnable mEngineTimeout = this::onEngineTimeout;
+    // The engine deliberately reloads its page to pick up the freshly-enabled
+    // WebRTC pref (see the ensure/reload dance). That reload disconnects the
+    // port and reconnects — NOT a fatal transport loss. This flag lets
+    // onDisconnect tell the expected reload apart from a real crash so it
+    // doesn't tear down the session that is WAITING for the reload.
+    private boolean mAwaitingReload;
+    // Bounded re-ensure: the reloaded page may still land before the async
+    // pref write is visible to its new global (rtc:false again); retry a few
+    // times before giving up rather than dead-ending on a timing race.
+    private int mEnsureRetries;
+    private static final int MAX_ENSURE_RETRIES = 3;
 
     // Active session state. Main-thread only (all port + fragment traffic is
     // UI-thread), except the finalize step which hops to the disk executor.
@@ -128,10 +139,14 @@ public class P2pShareController {
     private String mRole; // "send" | "receive" | null
     private P2pLoopbackServer mServer;
     private String mRecvName;
-    private long mRecvSize;
     private String mRecvMime;
     private File mRecvPartFile;
     private boolean mRecvFinalized;
+    // Set once bytes are actually moving (first progress event), cleared on
+    // done/teardown — drives the "abandon transfer?" back-press confirm.
+    private boolean mTransferring;
+    // The finished download row, so the receiver's "Open" can act on it.
+    private DownloadEntity mReceivedEntity;
 
     @Inject
     public P2pShareController(
@@ -165,8 +180,11 @@ public class P2pShareController {
                     mPort = null;
                     mEngineRtcReady = false;
                     // The engine reconnects on its own (background.js retries);
-                    // an ACTIVE transfer cannot survive the page going away.
-                    if (mRole != null && mListener != null) {
+                    // an ACTIVE transfer cannot survive the page going away —
+                    // EXCEPT the deliberate ensure/reload, where the reconnect
+                    // is expected and the pending action is released on the
+                    // fresh "ready". Don't fail a session that's mid-reload.
+                    if (mRole != null && mListener != null && !mAwaitingReload) {
                         postError("engine", "engine disconnected");
                     }
                 }
@@ -211,7 +229,11 @@ public class P2pShareController {
             command.put("readUrl", mServer.getReadUrl());
             command.put("name", entity.getFileName());
             command.put("size", size);
-            command.put("mime", entity.getFileMimeType());
+            // Derive the mime from the file's OWN extension, not the entity's
+            // stored label — that label is Firedown's internal/UI value (an
+            // HLS capture muxed to .mp4 can carry a manifest mime) and would
+            // mis-bucket the received download's type/icon/viewer.
+            command.put("mime", FileUriHelper.getMimeTypeFromFile(new File(path).getName()));
             command.put("device", Build.MODEL);
             command.put("stun", Preferences.getP2pStunServer(mSharedPreferences));
         } catch (JSONException e) {
@@ -250,7 +272,6 @@ public class P2pShareController {
         try {
             command.put("type", "recv-start");
             command.put("code", code);
-            command.put("device", Build.MODEL);
             command.put("stun", Preferences.getP2pStunServer(mSharedPreferences));
         } catch (JSONException e) {
             postError("engine", "command build failed");
@@ -301,12 +322,18 @@ public class P2pShareController {
      */
     @UiThread
     public void stop() {
-        JSONObject command = new JSONObject();
-        try {
-            command.put("type", "stop");
-            postCommand(command);
-        } catch (JSONException e) {
-            // Teardown proceeds regardless.
+        // Best-effort tell the engine to close; NEVER route through postCommand
+        // (its no-port path posts a fatal onError back into a fragment that is
+        // being torn down — e.g. Decline during the reload window flashed the
+        // error card). Teardown proceeds regardless of the port state.
+        if (mPort != null) {
+            try {
+                JSONObject command = new JSONObject();
+                command.put("type", "stop");
+                mPort.postMessage(command);
+            } catch (JSONException e) {
+                // Teardown proceeds regardless.
+            }
         }
         stopSession(true);
     }
@@ -320,16 +347,30 @@ public class P2pShareController {
         }
         switch (type) {
             case "ready" -> {
+                mAwaitingReload = false;
                 mEngineRtcReady = json.optBoolean("rtc", false);
-                runPendingIfReady();
+                if (mEngineRtcReady) {
+                    runPendingIfReady();
+                } else if (mPendingEngineAction != null && mEnsureRetries < MAX_ENSURE_RETRIES) {
+                    // Reloaded but the async pref write wasn't visible to the
+                    // new global yet — re-ensure (another reload) a bounded
+                    // number of times rather than dead-ending at the timeout.
+                    mEnsureRetries++;
+                    sendEnsure();
+                }
             }
             case "ensure-result" -> {
                 if (json.optBoolean("ok", false)) {
                     mEngineRtcReady = true;
+                    mAwaitingReload = false;
                     runPendingIfReady();
+                } else {
+                    // ok:false → the page is about to reload; expect the port
+                    // to drop and come back (guard onDisconnect). The fresh
+                    // "ready" releases the pending action (or a retry / the
+                    // timeout resolves it).
+                    mAwaitingReload = true;
                 }
-                // ok:false → the page is reloading; the fresh "ready" event
-                // releases the pending action (or the timeout errors out).
             }
             case "code" -> {
                 if (mListener != null) {
@@ -338,10 +379,10 @@ public class P2pShareController {
             }
             case "offer-parsed" -> {
                 mRecvName = json.optString("name", "");
-                mRecvSize = json.optLong("size", 0);
                 mRecvMime = json.optString("mime", "");
                 if (mListener != null) {
-                    mListener.onOfferParsed(mRecvName, mRecvSize, mRecvMime, json.optString("device", ""));
+                    mListener.onOfferParsed(mRecvName, json.optLong("size", 0), mRecvMime,
+                            json.optString("device", ""));
                 }
             }
             case "state" -> {
@@ -350,6 +391,7 @@ public class P2pShareController {
                 }
             }
             case "progress" -> {
+                mTransferring = true;
                 if (mListener != null) {
                     mListener.onProgress(json.optLong("done", 0), json.optLong("total", 0), json.optLong("rate", 0));
                 }
@@ -377,6 +419,7 @@ public class P2pShareController {
     private void handleDone(JSONObject json) {
         String role = json.optString("role", "");
         long bytes = json.optLong("bytes", 0);
+        mTransferring = false; // completed — no "abandon?" confirm past here
         if ("send".equals(role)) {
             if (mListener != null) {
                 mListener.onDone(role, bytes);
@@ -397,6 +440,7 @@ public class P2pShareController {
         mDiskExecutor.execute(() -> {
             DownloadEntity entity = finalizeReceivedFile(partFile, name, mime, bytes);
             mMainHandler.post(() -> {
+                mReceivedEntity = entity;
                 if (entity == null) {
                     if (listener != null) {
                         listener.onError("file", "finalize failed");
@@ -448,10 +492,17 @@ public class P2pShareController {
     }
 
     private File buildTargetFile(String name, String mime) {
-        String safeName = FileUriHelper.sanitizeFileName(name);
+        // Mirror the download pipeline's naming (decode → sanitize → ensure
+        // extension) so a P2P-received file is named identically to the same
+        // file downloaded.
+        String safeName = FileUriHelper.sanitizeFileName(FileUriHelper.decodeName(name));
         safeName = FileUriHelper.checkFileExtension(safeName, mime);
         File target = new File(StoragePaths.getDownloadPath(mContext), safeName);
-        while (target.exists()) {
+        // Uniquify against BOTH disk AND the download table: a path free on
+        // disk can still be owned by a queued/errored download row, and
+        // colliding would let deleting that row destroy this file.
+        while (target.exists()
+                || mDownloadDataRepository.findByFilePath(target.getAbsolutePath()) != null) {
             target = new File(UrlParser.parseFilePath(target.getAbsolutePath()));
         }
         return target;
@@ -475,6 +526,11 @@ public class P2pShareController {
             return;
         }
         mPendingEngineAction = action;
+        mEnsureRetries = 0;
+        sendEnsure();
+    }
+
+    private void sendEnsure() {
         JSONObject probe = new JSONObject();
         try {
             probe.put("type", "ensure");
@@ -483,6 +539,8 @@ public class P2pShareController {
             return;
         }
         postCommand(probe);
+        // The timeout is the backstop if the reload/retry never yields an
+        // RTC-ready page; re-armed on each ensure so retries get their time.
         mMainHandler.removeCallbacks(mEngineTimeout);
         mMainHandler.postDelayed(mEngineTimeout, ENGINE_READY_TIMEOUT_MS);
     }
@@ -525,6 +583,8 @@ public class P2pShareController {
     private void stopSession(boolean deletePartial) {
         mMainHandler.removeCallbacks(mEngineTimeout);
         mPendingEngineAction = null;
+        mAwaitingReload = false;
+        mEnsureRetries = 0;
         mListener = null;
         mRole = null;
         if (mServer != null) {
@@ -539,7 +599,25 @@ public class P2pShareController {
         mRecvPartFile = null;
         mRecvName = null;
         mRecvMime = null;
-        mRecvSize = 0;
         mRecvFinalized = false;
+        mTransferring = false;
+        mReceivedEntity = null;
+    }
+
+    /**
+     * True while bytes are actively moving (a progress event has fired and the
+     * transfer hasn't completed) — used to confirm before a back-press
+     * abandons an in-flight transfer.
+     */
+    @UiThread
+    public boolean isTransferActive() {
+        return mTransferring;
+    }
+
+    /** The finished download row from the last completed receive, or null. */
+    @Nullable
+    @UiThread
+    public DownloadEntity getReceivedEntity() {
+        return mReceivedEntity;
     }
 }

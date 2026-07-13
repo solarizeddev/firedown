@@ -1,19 +1,20 @@
 package com.solarized.firedown.phone.fragments;
 
 import android.Manifest;
-import android.content.ClipboardManager;
-import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.widget.Toolbar;
 import androidx.camera.core.CameraSelector;
 import androidx.camera.core.ImageAnalysis;
 import androidx.camera.core.ImageProxy;
@@ -21,7 +22,9 @@ import androidx.camera.core.Preview;
 import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.camera.view.PreviewView;
 import androidx.core.content.ContextCompat;
+import androidx.fragment.app.DialogFragment;
 import androidx.navigation.NavBackStackEntry;
+import androidx.navigation.NavController;
 
 import com.google.android.material.snackbar.Snackbar;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -31,43 +34,56 @@ import com.google.zxing.NotFoundException;
 import com.google.zxing.PlanarYUVLuminanceSource;
 import com.google.zxing.Result;
 import com.google.zxing.common.HybridBinarizer;
+import com.solarized.firedown.BaseActivity;
+import com.solarized.firedown.BuildConfig;
 import com.solarized.firedown.R;
-import com.solarized.firedown.utils.NavigationUtils;
+import com.solarized.firedown.utils.ClipboardHelper;
 
 import java.nio.ByteBuffer;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import dagger.hilt.android.AndroidEntryPoint;
-
 /**
  * QR scanner for the P2P share codes — CameraX preview + a zxing decode on
  * the analysis stream, with a clipboard-paste fallback so the flow works
- * without granting the camera permission at all (a code that arrived over a
- * messenger is pasted, not scanned).
+ * without granting the camera permission at all.
+ *
+ * <p><b>It is a full-screen {@link DialogFragment}, NOT a plain fragment</b>
+ * (a {@code <dialog>} nav destination). This is load-bearing: navigating to a
+ * sibling {@code <fragment>} destination would destroy the send/receive
+ * fragment's view → {@code P2pShareBaseFragment.onDestroyView} →
+ * {@code controller.stop()}, killing the live WebRTC session the scan is part
+ * of, and the returning fragment would mint a fresh offer that the scanned
+ * answer can never match. A dialog shows on top, leaving the caller's view —
+ * and its session — intact. Don't turn this back into a {@code <fragment>}.
  *
  * <p>The camera permission is requested lazily, only here — this screen is
- * the app's ONLY camera use, and the browser itself never gains the
- * permission implicitly (site permission prompts stay OS-gated as before).
+ * the app's ONLY camera use.
  *
  * <p>Result contract: the accepted code (validated against the expected
- * FDS1./FDR1. prefix passed in {@link #ARG_PREFIX}) is set on the PREVIOUS
+ * FDS1./FDR1. prefix in {@link #ARG_PREFIX}) is set on the PREVIOUS
  * back-stack entry's SavedStateHandle under {@link #RESULT_CODE}, then the
- * screen pops — the CancelOperationDialogFragment pattern.
+ * dialog pops — the CancelOperationDialogFragment pattern.
  */
-@AndroidEntryPoint
-public class P2pScanFragment extends BaseFocusFragment {
+public class P2pScanFragment extends DialogFragment {
 
     private static final String TAG = P2pScanFragment.class.getSimpleName();
 
     public static final String ARG_PREFIX = "p2p.scan.prefix";
+    /** Optional title-resource-name toggle: true = "Scan reply". */
+    public static final String ARG_REPLY = "p2p.scan.reply";
     public static final String RESULT_CODE = "p2p.scan.result";
 
     private View mView;
+    private NavController mNavController;
     private String mExpectedPrefix = "";
     private ExecutorService mAnalysisExecutor;
     private ProcessCameraProvider mCameraProvider;
     private final MultiFormatReader mReader = new MultiFormatReader();
+    // Reused across frames — a fresh ~1-2 MB byte[] per analyzed frame at
+    // 15-30 fps is needless GC churn on the analysis thread. Re-allocated
+    // only when the frame size changes (constant per camera bind).
+    private byte[] mLuminance;
     /**
      * Set once a code is delivered — the analyzer keeps receiving frames
      * until unbind, and a double pop would corrupt the back stack.
@@ -84,11 +100,13 @@ public class P2pScanFragment extends BaseFocusFragment {
                         }
                     });
 
-    @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater,
-                             @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setStyle(STYLE_NORMAL, R.style.Firedown_FullScreenDialog);
+        if (requireActivity() instanceof BaseActivity activity) {
+            mNavController = activity.getNavController();
+        }
         Bundle args = getArguments();
         if (args != null) {
             String prefix = args.getString(ARG_PREFIX);
@@ -96,21 +114,33 @@ public class P2pScanFragment extends BaseFocusFragment {
                 mExpectedPrefix = prefix;
             }
         }
+    }
 
+    @Nullable
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater,
+                             @Nullable ViewGroup container,
+                             @Nullable Bundle savedInstanceState) {
         mView = inflater.inflate(R.layout.fragment_p2p_scan, container, false);
-        mToolbar = mView.findViewById(R.id.toolbar);
+
+        Toolbar toolbar = mView.findViewById(R.id.toolbar);
+        boolean reply = getArguments() != null && getArguments().getBoolean(ARG_REPLY, false);
+        toolbar.setTitle(reply ? R.string.p2p_scan_reply : R.string.p2p_scan_code);
+        toolbar.setNavigationOnClickListener(v -> dismiss());
 
         mView.findViewById(R.id.p2p_scan_paste).setOnClickListener(v -> pasteCode());
-
         return mView;
     }
 
     @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-        if (mToolbar != null) {
-            mToolbar.setNavigationOnClickListener(v ->
-                    NavigationUtils.popBackStackSafe(mNavController, R.id.p2p_scan));
+    public void onStart() {
+        super.onStart();
+        // Fill the screen (windowIsFloating=false + explicit match_parent) so
+        // the camera preview isn't a small floating card.
+        if (getDialog() != null && getDialog().getWindow() != null) {
+            Window window = getDialog().getWindow();
+            window.setLayout(WindowManager.LayoutParams.MATCH_PARENT,
+                    WindowManager.LayoutParams.MATCH_PARENT);
         }
         if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA)
                 == PackageManager.PERMISSION_GRANTED) {
@@ -144,7 +174,9 @@ public class P2pScanFragment extends BaseFocusFragment {
             try {
                 mCameraProvider = future.get();
             } catch (Exception e) {
-                Log.e(TAG, "camera provider", e);
+                if (BuildConfig.DEBUG) {
+                    Log.e(TAG, "camera provider", e);
+                }
                 showCameraUnavailable();
                 return;
             }
@@ -170,7 +202,9 @@ public class P2pScanFragment extends BaseFocusFragment {
             mCameraProvider.bindToLifecycle(
                     getViewLifecycleOwner(), CameraSelector.DEFAULT_BACK_CAMERA, preview, analysis);
         } catch (Exception e) {
-            Log.e(TAG, "camera bind", e);
+            if (BuildConfig.DEBUG) {
+                Log.e(TAG, "camera bind", e);
+            }
             showCameraUnavailable();
         }
     }
@@ -182,18 +216,16 @@ public class P2pScanFragment extends BaseFocusFragment {
             }
             // zxing wants a flat luminance plane. Plane 0 of YUV_420_888 is
             // exactly that, but its rows may be padded (rowStride > width) —
-            // compact row-by-row when they are.
+            // compact row-by-row when they are, into a reused buffer.
             ImageProxy.PlaneProxy plane = image.getPlanes()[0];
             ByteBuffer buffer = plane.getBuffer();
             int width = image.getWidth();
             int height = image.getHeight();
             int rowStride = plane.getRowStride();
-            byte[] luminance;
+            byte[] luminance = ensureLuminance(width * height);
             if (rowStride == width) {
-                luminance = new byte[buffer.remaining()];
-                buffer.get(luminance);
+                buffer.get(luminance, 0, Math.min(luminance.length, buffer.remaining()));
             } else {
-                luminance = new byte[width * height];
                 for (int row = 0; row < height; row++) {
                     buffer.position(row * rowStride);
                     buffer.get(luminance, row * width, width);
@@ -213,10 +245,19 @@ public class P2pScanFragment extends BaseFocusFragment {
             handleDecoded(result.getText());
         } catch (Exception e) {
             // A single bad frame must not kill the analyzer thread.
-            Log.e(TAG, "analyze", e);
+            if (BuildConfig.DEBUG) {
+                Log.e(TAG, "analyze", e);
+            }
         } finally {
             image.close();
         }
+    }
+
+    private byte[] ensureLuminance(int size) {
+        if (mLuminance == null || mLuminance.length != size) {
+            mLuminance = new byte[size];
+        }
+        return mLuminance;
     }
 
     private void handleDecoded(@Nullable String text) {
@@ -238,39 +279,29 @@ public class P2pScanFragment extends BaseFocusFragment {
     }
 
     private void pasteCode() {
-        try {
-            ClipboardManager clipboard = (ClipboardManager)
-                    requireContext().getSystemService(Context.CLIPBOARD_SERVICE);
-            if (clipboard != null && clipboard.hasPrimaryClip()
-                    && clipboard.getPrimaryClip() != null
-                    && clipboard.getPrimaryClip().getItemCount() > 0) {
-                CharSequence text = clipboard.getPrimaryClip().getItemAt(0).getText();
-                if (text != null && text.toString().trim().startsWith(mExpectedPrefix)) {
-                    if (!mDelivered) {
-                        mDelivered = true;
-                        deliver(text.toString().trim());
-                    }
-                    return;
-                }
-                snack(R.string.p2p_error_bad_code);
-                return;
-            }
-        } catch (RuntimeException e) {
-            // Clipboard is a binder call — never fatal (AutoCompleteView lesson).
-            Log.e(TAG, "clipboard read failed", e);
+        String code = ClipboardHelper.readTrimmedText(getContext());
+        if (code.isEmpty()) {
+            snack(R.string.p2p_clipboard_empty);
+            return;
         }
-        snack(R.string.p2p_clipboard_empty);
+        if (!code.startsWith(mExpectedPrefix)) {
+            snack(R.string.p2p_error_bad_code);
+            return;
+        }
+        if (!mDelivered) {
+            mDelivered = true;
+            deliver(code);
+        }
     }
 
     private void deliver(@NonNull String code) {
-        if (mNavController == null) {
-            return;
+        if (mNavController != null) {
+            NavBackStackEntry previous = mNavController.getPreviousBackStackEntry();
+            if (previous != null) {
+                previous.getSavedStateHandle().set(RESULT_CODE, code);
+            }
         }
-        NavBackStackEntry previous = mNavController.getPreviousBackStackEntry();
-        if (previous != null) {
-            previous.getSavedStateHandle().set(RESULT_CODE, code);
-        }
-        NavigationUtils.popBackStackSafe(mNavController, R.id.p2p_scan);
+        dismiss();
     }
 
     private void showCameraUnavailable() {

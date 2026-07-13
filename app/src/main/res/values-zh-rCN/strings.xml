@@ -664,8 +664,8 @@
     <string name="p2p_receive_title">接收文件</string>
     <string name="p2p_send_lead">将此文件直接发送到另一台运行 Firedown 的设备——加密传输，设备直连，中间不经过任何服务器。</string>
     <string name="p2p_receive_lead">直接从另一台运行 Firedown 的设备接收文件。</string>
-    <string name="p2p_rtc_note">此屏幕打开期间 WebRTC 处于开启状态。</string>
-    <string name="p2p_code_hint_send">在另一台设备上打开下载 → 接收文件并扫描此代码，然后再扫描对方的回复。</string>
+    <string name="p2p_rtc_note">直接连接仅在本次传输期间开启，之后再次关闭。</string>
+    <string name="p2p_code_hint_send">在另一台设备上打开下载 → 接收文件并扫描此代码。当它向你显示回复代码时，再扫描回来。</string>
     <string name="p2p_code_hint_reply">将此回复出示给发送方，或按对方代码送达的方式发回。</string>
     <string name="p2p_share_code">以其他方式发送代码</string>
     <string name="p2p_scan_reply">扫描回复</string>
@@ -679,7 +679,6 @@
     <string name="p2p_state_connecting">正在连接…</string>
     <string name="p2p_state_connected">已连接</string>
     <string name="p2p_progress_of">%1$s / %2$s · %3$s/s</string>
-    <string name="p2p_done_sent">文件已发送</string>
     <string name="p2p_done_sent_detail">已发送 · %1$s</string>
     <string name="p2p_done_received">已保存到下载</string>
     <string name="p2p_stop">停止</string>
@@ -690,9 +689,18 @@
     <string name="p2p_clipboard_empty">剪贴板中没有代码。</string>
     <string name="p2p_footer">加密的设备间直接传输。文件绝不会经过服务器。</string>
     <string name="p2p_scan_hint">将相机对准发送方的代码</string>
-    <string name="p2p_camera_denied">相机不可用——请改为粘贴代码。</string>
+    <string name="p2p_camera_denied">扫描需要相机访问权限。你也可以改为粘贴代码。</string>
     <string name="settings_p2p_stun">STUN 服务器</string>
     <string name="settings_p2p_stun_summary">在直接分享时帮助两台设备通过互联网找到彼此。只会向其发送你的网络地址。</string>
     <string name="settings_p2p_stun_custom">自定义…</string>
     <string name="settings_p2p_stun_custom_title">自定义 STUN 服务器</string>
+    <string name="p2p_share_reply">以其他方式发送回复</string>
+    <string name="p2p_preparing">正在准备…</string>
+    <string name="p2p_open">打开</string>
+    <string name="p2p_try_again">重试</string>
+    <string name="p2p_abandon_message">要停止此传输吗？尚未完成。</string>
+    <string name="p2p_abandon_confirm">停止</string>
+    <string name="p2p_qr_too_large">此代码太大，无法显示为 QR——请使用“以其他方式发送代码”。</string>
+    <string name="p2p_qr_content_desc">你的分享代码，以 QR 形式</string>
+    <string name="settings_p2p_stun_invalid">请输入有效地址，例如 stun:host:3478</string>
 </resources>

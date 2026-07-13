@@ -664,8 +664,8 @@
     <string name="p2p_receive_title">ファイルを受信</string>
     <string name="p2p_send_lead">このファイルを、Firedown を実行している別の端末へ直接送信します。暗号化された端末間の転送で、途中にサーバーを介しません。</string>
     <string name="p2p_receive_lead">Firedown を実行している別の端末からファイルを直接受信します。</string>
-    <string name="p2p_rtc_note">この画面を開いている間は WebRTC が有効になります。</string>
-    <string name="p2p_code_hint_send">相手の端末で「ダウンロード」→「ファイルを受信」を開いてこのコードをスキャンし、その後に相手の返信コードをスキャンしてください。</string>
+    <string name="p2p_rtc_note">直接接続はこの転送の間だけ有効になり、その後は無効に戻ります。</string>
+    <string name="p2p_code_hint_send">相手の端末で「ダウンロード」→「ファイルを受信」を開いてこのコードをスキャンしてください。返信コードが表示されたら、それをスキャンし返してください。</string>
     <string name="p2p_code_hint_reply">この返信コードを送信者に見せるか、相手のコードが届いたのと同じ方法で送り返してください。</string>
     <string name="p2p_share_code">別の方法でコードを送る</string>
     <string name="p2p_scan_reply">返信をスキャン</string>
@@ -679,7 +679,6 @@
     <string name="p2p_state_connecting">接続中…</string>
     <string name="p2p_state_connected">接続済み</string>
     <string name="p2p_progress_of">%2$s 中 %1$s · %3$s/s</string>
-    <string name="p2p_done_sent">ファイルを送信しました</string>
     <string name="p2p_done_sent_detail">送信済み · %1$s</string>
     <string name="p2p_done_received">ダウンロードに保存しました</string>
     <string name="p2p_stop">停止</string>
@@ -690,9 +689,18 @@
     <string name="p2p_clipboard_empty">クリップボードにコードがありません。</string>
     <string name="p2p_footer">暗号化された端末間の転送です。ファイルがサーバーを経由することはありません。</string>
     <string name="p2p_scan_hint">カメラを送信者のコードに向けてください</string>
-    <string name="p2p_camera_denied">カメラを使用できません。代わりにコードを貼り付けてください。</string>
+    <string name="p2p_camera_denied">スキャンにはカメラへのアクセスが必要です。代わりにコードを貼り付けることもできます。</string>
     <string name="settings_p2p_stun">STUN サーバー</string>
     <string name="settings_p2p_stun_summary">直接共有の際に、2 台の端末がインターネット越しに互いを見つけるのを助けます。送信されるのはあなたのネットワークアドレスのみです。</string>
     <string name="settings_p2p_stun_custom">カスタム…</string>
     <string name="settings_p2p_stun_custom_title">カスタム STUN サーバー</string>
+    <string name="p2p_share_reply">別の方法で返信を送る</string>
+    <string name="p2p_preparing">準備中…</string>
+    <string name="p2p_open">開く</string>
+    <string name="p2p_try_again">もう一度試す</string>
+    <string name="p2p_abandon_message">この転送を停止しますか？まだ完了していません。</string>
+    <string name="p2p_abandon_confirm">停止</string>
+    <string name="p2p_qr_too_large">このコードは大きすぎて QR として表示できません。「別の方法でコードを送る」を使用してください。</string>
+    <string name="p2p_qr_content_desc">共有コードの QR</string>
+    <string name="settings_p2p_stun_invalid">有効なアドレスを入力してください（例: stun:host:3478）</string>
 </resources>

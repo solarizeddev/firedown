@@ -35,13 +35,9 @@ import dagger.hilt.android.AndroidEntryPoint;
  * messenger via the share sheet); the receiver's reply comes back the same
  * two ways; then the file streams device-to-device over the DataChannel.
  *
- * <p>Screen walk: CODE (offer QR + share/scan-reply/paste-reply) →
- * CONNECTING (status chip) → TRANSFER (progress card) → DONE / ERROR. The
- * engine session dies with the view (P2pShareBaseFragment).
- *
- * <p>Reached from the Downloads options sheet's quick-action row, which only
- * exists for finished, non-safe entries — the vault can never get here (and
- * a defensive check below enforces that).
+ * <p>Screen walk: PREPARING (spinner) → CODE (offer QR + step-2 "scan reply")
+ * → CONNECTING → TRANSFER → DONE / ERROR (with "Try again"). The engine
+ * session dies with the view (P2pShareBaseFragment).
  */
 @AndroidEntryPoint
 public class P2pSendFragment extends P2pShareBaseFragment
@@ -50,7 +46,6 @@ public class P2pSendFragment extends P2pShareBaseFragment
     private DownloadEntity mDownloadEntity;
     private View mView;
     private String mOfferCode;
-    private long mTotalBytes;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -67,13 +62,12 @@ public class P2pSendFragment extends P2pShareBaseFragment
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
 
-        // Defensive: vault entries must never be shareable, and a restored
-        // screen without its entity has nothing to share.
+        // Defensive: vault entries must never be shareable.
         if (mDownloadEntity == null || mDownloadEntity.isFileSafe()
                 || mDownloadEntity.getFilePath() == null) {
-            return null;
-        }
-        if (RestoredFileAccess.openableUri(requireContext(), mDownloadEntity.getFilePath()) == null) {
+            if (mNavController != null) {
+                mNavController.popBackStack();
+            }
             return null;
         }
 
@@ -100,7 +94,7 @@ public class P2pSendFragment extends P2pShareBaseFragment
             }
         });
         mView.findViewById(R.id.p2p_scan_reply).setOnClickListener(v ->
-                navigateToScanner(P2pShareController.ANSWER_PREFIX));
+                navigateToScanner(P2pShareController.ANSWER_PREFIX, true));
         mView.findViewById(R.id.p2p_paste_reply).setOnClickListener(v -> {
             String code = readCodeFromClipboard(P2pShareController.ANSWER_PREFIX);
             if (code != null) {
@@ -108,15 +102,16 @@ public class P2pSendFragment extends P2pShareBaseFragment
             }
         });
         mView.findViewById(R.id.p2p_stop).setOnClickListener(v -> close());
+        mView.findViewById(R.id.p2p_retry).setOnClickListener(v -> restart());
 
         return mView;
     }
 
     @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-        // Start the session AFTER the base flipped the WebRTC pref on — the
-        // engine's ensure/reload handshake needs the pref already enabled.
+    protected void onEngineReady() {
+        // Start AFTER the base applied the WebRTC pref (the ordering that fixes
+        // the pref-gated-global race).
+        showPreparing();
         mP2pController.startSend(mDownloadEntity, this);
     }
 
@@ -130,6 +125,29 @@ public class P2pSendFragment extends P2pShareBaseFragment
         mP2pController.provideAnswer(code);
     }
 
+    private void restart() {
+        mOfferCode = null;
+        showPreparing();
+        mP2pController.startSend(mDownloadEntity, this);
+    }
+
+    /* ── stage visibility ───────────────────────────────────────────────── */
+
+    private void showPreparing() {
+        setStage(R.id.p2p_status);
+        TextView status = mView.findViewById(R.id.p2p_status);
+        status.setText(R.string.p2p_preparing);
+    }
+
+    private void setStage(int visibleId) {
+        int[] stages = {R.id.p2p_status, R.id.p2p_code_group, R.id.p2p_progress_group,
+                R.id.p2p_done_group, R.id.p2p_error_group};
+        for (int id : stages) {
+            View v = mView.findViewById(id);
+            v.setVisibility(id == visibleId ? View.VISIBLE : View.GONE);
+        }
+    }
+
     /* ── engine events (main thread) ────────────────────────────────────── */
 
     @Override
@@ -138,7 +156,13 @@ public class P2pSendFragment extends P2pShareBaseFragment
             return;
         }
         mOfferCode = code;
-        setQr(mView.findViewById(R.id.p2p_qr), code);
+        setStage(R.id.p2p_code_group);
+        boolean rendered = setQr(mView.findViewById(R.id.p2p_qr), code);
+        // If the code is too large to fit a QR, don't leave a blank white box
+        // — hide the QR card and steer the user to the share-sheet path.
+        mView.findViewById(R.id.p2p_qr_card).setVisibility(rendered ? View.VISIBLE : View.GONE);
+        ((TextView) mView.findViewById(R.id.p2p_send_hint)).setText(
+                rendered ? R.string.p2p_code_hint_send : R.string.p2p_qr_too_large);
     }
 
     @Override
@@ -152,9 +176,8 @@ public class P2pSendFragment extends P2pShareBaseFragment
             return;
         }
         if ("connecting".equals(state) || "connected".equals(state)) {
-            mView.findViewById(R.id.p2p_code_group).setVisibility(View.GONE);
+            setStage(R.id.p2p_status);
             TextView status = mView.findViewById(R.id.p2p_status);
-            status.setVisibility(View.VISIBLE);
             status.setText("connected".equals(state)
                     ? R.string.p2p_state_connected : R.string.p2p_state_connecting);
         }
@@ -165,8 +188,7 @@ public class P2pSendFragment extends P2pShareBaseFragment
         if (mView == null) {
             return;
         }
-        mTotalBytes = total;
-        mView.findViewById(R.id.p2p_progress_group).setVisibility(View.VISIBLE);
+        setStage(R.id.p2p_progress_group);
         LinearProgressIndicator bar = mView.findViewById(R.id.p2p_progress_bar);
         if (total > 0) {
             bar.setProgress((int) (done * 100 / total));
@@ -183,9 +205,7 @@ public class P2pSendFragment extends P2pShareBaseFragment
         if (mView == null) {
             return;
         }
-        mView.findViewById(R.id.p2p_status).setVisibility(View.GONE);
-        mView.findViewById(R.id.p2p_progress_group).setVisibility(View.GONE);
-        mView.findViewById(R.id.p2p_done_group).setVisibility(View.VISIBLE);
+        setStage(R.id.p2p_done_group);
         mView.findViewById(R.id.p2p_live_dot).setVisibility(View.GONE);
         ((TextView) mView.findViewById(R.id.p2p_done_text)).setText(
                 getString(R.string.p2p_done_sent_detail,
@@ -203,12 +223,8 @@ public class P2pSendFragment extends P2pShareBaseFragment
             makeSnack(R.string.p2p_error_bad_code);
             return;
         }
-        mView.findViewById(R.id.p2p_code_group).setVisibility(View.GONE);
-        mView.findViewById(R.id.p2p_status).setVisibility(View.GONE);
-        mView.findViewById(R.id.p2p_progress_group).setVisibility(View.GONE);
+        setStage(R.id.p2p_error_group);
         mView.findViewById(R.id.p2p_live_dot).setVisibility(View.GONE);
-        TextView error = mView.findViewById(R.id.p2p_error);
-        error.setVisibility(View.VISIBLE);
-        error.setText(errorText(code));
+        ((TextView) mView.findViewById(R.id.p2p_error)).setText(errorText(code));
     }
 }

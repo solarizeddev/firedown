@@ -1,13 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- "Send directly" — P2P share sender (P2pSendFragment, a downloads
-     nav-graph destination like FrameGrabber/GifMaker). The WebRTC engine
-     session's lifetime is this screen's lifetime — leaving it stops the
-     transfer and restores the WebRTC pref.
-
-     Composition: shared-file card (real Glide thumbnail + live dot), the
-     offer QR on a surface card, a status chip that walks
-     connecting → transferring, then a progress card and a done state. One
-     linear flow, visibility-flipped per state in the fragment. -->
+<!-- "Send directly" — P2P share sender (P2pSendFragment). The engine session's
+     lifetime is this screen's lifetime. One column, stage groups toggled by
+     the fragment: status chip (preparing/connecting) · code (offer QR) ·
+     progress · done · error. The file card, stop button and footer are
+     always present. -->
 <androidx.coordinatorlayout.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -53,7 +49,6 @@
                 android:paddingBottom="24dp">
 
                 <TextView
-                    android:id="@+id/p2p_send_lead"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:paddingHorizontal="16dp"
@@ -62,7 +57,6 @@
                     android:textAppearance="?attr/textAppearanceBodyMedium"
                     android:textColor="?attr/colorOnSurfaceVariant" />
 
-                <!-- Shown only when the screen temporarily enabled WebRTC -->
                 <TextView
                     android:id="@+id/p2p_rtc_note"
                     android:layout_width="match_parent"
@@ -78,7 +72,6 @@
 
                 <!-- Shared file: real thumbnail + name + mime/size + live dot -->
                 <LinearLayout
-                    android:id="@+id/p2p_file_card"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginHorizontal="16dp"
@@ -133,7 +126,7 @@
 
                 </LinearLayout>
 
-                <!-- Status chip: connecting / transferring / failed -->
+                <!-- Status chip: preparing / connecting / connected -->
                 <TextView
                     android:id="@+id/p2p_status"
                     android:layout_width="wrap_content"
@@ -143,20 +136,23 @@
                     android:background="@drawable/bg_p2p_step"
                     android:paddingHorizontal="14dp"
                     android:paddingVertical="6dp"
-                    android:text="@string/p2p_state_connecting"
+                    android:text="@string/p2p_preparing"
                     android:textAppearance="?attr/textAppearanceLabelMedium"
                     android:textColor="?attr/colorOnPrimaryContainer"
                     android:visibility="gone"
                     tools:visibility="visible" />
 
-                <!-- Code stage: the offer QR -->
+                <!-- Code stage: the offer QR + step-2 reply actions -->
                 <LinearLayout
                     android:id="@+id/p2p_code_group"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical">
+                    android:orientation="vertical"
+                    android:visibility="gone"
+                    tools:visibility="visible">
 
                     <LinearLayout
+                        android:id="@+id/p2p_qr_card"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginHorizontal="16dp"
@@ -172,7 +168,7 @@
                             android:layout_width="232dp"
                             android:layout_height="232dp"
                             android:background="@drawable/bg_p2p_qr"
-                            android:contentDescription="@string/p2p_code_hint_send"
+                            android:contentDescription="@string/p2p_qr_content_desc"
                             android:padding="12dp" />
 
                     </LinearLayout>
@@ -280,40 +276,55 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="10dp"
                         android:gravity="center"
-                        android:text="@string/p2p_done_sent"
                         android:textAppearance="?attr/textAppearanceTitleSmall"
-                        android:textColor="?attr/colorOnSurface" />
+                        android:textColor="?attr/colorOnSurface"
+                        tools:text="Sent · 214 MB" />
 
                 </LinearLayout>
 
-                <!-- Error stage -->
-                <TextView
-                    android:id="@+id/p2p_error"
+                <!-- Error stage: message + Try again -->
+                <LinearLayout
+                    android:id="@+id/p2p_error_group"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:paddingHorizontal="32dp"
-                    android:paddingTop="16dp"
-                    android:textAppearance="?attr/textAppearanceBodyMedium"
-                    android:textColor="?attr/colorError"
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical"
                     android:visibility="gone"
-                    tools:text="@string/p2p_error_no_path"
-                    tools:visibility="visible" />
+                    tools:visibility="visible">
+
+                    <TextView
+                        android:id="@+id/p2p_error"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:paddingHorizontal="32dp"
+                        android:paddingTop="16dp"
+                        android:textAppearance="?attr/textAppearanceBodyMedium"
+                        android:textColor="?attr/colorError"
+                        tools:text="@string/p2p_error_no_path" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/p2p_retry"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="14dp"
+                        android:text="@string/p2p_try_again" />
+
+                </LinearLayout>
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/p2p_stop"
-                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    style="@style/Widget.Material3.Button.TextButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center_horizontal"
-                    android:layout_marginTop="18dp"
-                    android:text="@string/p2p_stop" />
+                    android:layout_marginTop="10dp"
+                    android:text="@string/cancel" />
 
             </LinearLayout>
 
         </androidx.core.widget.NestedScrollView>
 
-        <!-- Pinned footer bar: tonal surface, same as the app's other tools -->
         <TextView
             android:id="@+id/p2p_footer"
             android:layout_width="match_parent"

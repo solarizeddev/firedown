@@ -475,8 +475,8 @@
     <string name="p2p_receive_title">Vastaanota tiedosto</string>
     <string name="p2p_send_lead">Lähetä tämä tiedosto suoraan toiseen Firedownia käyttävään laitteeseen — salattuna, laitteesta laitteeseen, ilman välissä olevaa palvelinta.</string>
     <string name="p2p_receive_lead">Vastaanota tiedosto suoraan toisesta Firedownia käyttävästä laitteesta.</string>
-    <string name="p2p_rtc_note">WebRTC on käytössä, kun tämä näkymä on auki.</string>
-    <string name="p2p_code_hint_send">Avaa toisella laitteella Lataukset → Vastaanota tiedosto ja skannaa tämä koodi — skannaa sitten sieltä saatu vastaus.</string>
+    <string name="p2p_rtc_note">Suorat yhteydet otetaan käyttöön vain tätä siirtoa varten ja sammutetaan sitten taas.</string>
+    <string name="p2p_code_hint_send">Avaa toisella laitteella Lataukset → Vastaanota tiedosto ja skannaa tämä koodi. Kun näkyviin tulee vastauskoodi, skannaa se takaisin.</string>
     <string name="p2p_code_hint_reply">Näytä tämä vastaus lähettäjälle tai lähetä se takaisin samaa reittiä, jota pitkin lähettäjän koodi saapui.</string>
     <string name="p2p_share_code">Lähetä koodi muulla tavalla</string>
     <string name="p2p_scan_reply">Skannaa vastaus</string>
@@ -490,7 +490,6 @@
     <string name="p2p_state_connecting">Yhdistetään…</string>
     <string name="p2p_state_connected">Yhdistetty</string>
     <string name="p2p_progress_of">%1$s / %2$s · %3$s/s</string>
-    <string name="p2p_done_sent">Tiedosto lähetetty</string>
     <string name="p2p_done_sent_detail">Lähetetty · %1$s</string>
     <string name="p2p_done_received">Tallennettu Lataukset-kansioon</string>
     <string name="p2p_stop">Pysäytä</string>
@@ -501,9 +500,18 @@
     <string name="p2p_clipboard_empty">Leikepöydällä ei ole koodia.</string>
     <string name="p2p_footer">Salattu siirto laitteesta laitteeseen. Tiedosto ei koskaan kulje palvelimen kautta.</string>
     <string name="p2p_scan_hint">Osoita kameralla lähettäjän koodia</string>
-    <string name="p2p_camera_denied">Kamera ei ole käytettävissä — liitä koodi sen sijaan.</string>
+    <string name="p2p_camera_denied">Skannaus vaatii kameran käyttöoikeuden. Voit liittää koodin sen sijaan.</string>
     <string name="settings_p2p_stun">STUN-palvelin</string>
     <string name="settings_p2p_stun_summary">Auttaa kahta laitetta löytämään toisensa internetin yli suoran jaon aikana. Sille lähetetään vain verkko-osoitteesi.</string>
     <string name="settings_p2p_stun_custom">Mukautettu…</string>
     <string name="settings_p2p_stun_custom_title">Mukautettu STUN-palvelin</string>
+    <string name="p2p_share_reply">Lähetä vastaus muulla tavalla</string>
+    <string name="p2p_preparing">Valmistellaan…</string>
+    <string name="p2p_open">Avaa</string>
+    <string name="p2p_try_again">Yritä uudelleen</string>
+    <string name="p2p_abandon_message">Pysäytetäänkö tämä siirto? Sitä ei ole vielä saatu valmiiksi.</string>
+    <string name="p2p_abandon_confirm">Pysäytä</string>
+    <string name="p2p_qr_too_large">Tämä koodi on liian suuri näytettäväksi QR-koodina — käytä valintaa “Lähetä koodi muulla tavalla”.</string>
+    <string name="p2p_qr_content_desc">Jakokoodisi QR-koodina</string>
+    <string name="settings_p2p_stun_invalid">Anna kelvollinen osoite, esim. stun:host:3478</string>
 </resources>

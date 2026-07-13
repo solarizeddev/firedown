@@ -405,8 +405,8 @@
     <string name="p2p_receive_title">Võta fail vastu</string>
     <string name="p2p_send_lead">Saada see fail otse teise Firedowni kasutavasse seadmesse — krüptitult, seadmest seadmesse, ilma vahepealse serverita.</string>
     <string name="p2p_receive_lead">Võta fail vastu otse teisest Firedowni kasutavast seadmest.</string>
-    <string name="p2p_rtc_note">WebRTC on sisse lülitatud, kuni see kuva on avatud.</string>
-    <string name="p2p_code_hint_send">Ava teises seadmes Allalaadimised → Võta fail vastu ja skanni see kood — seejärel skanni sealt saadud vastus.</string>
+    <string name="p2p_rtc_note">Otseühendused lülitatakse sisse ainult selleks ülekandeks ja seejärel jälle välja.</string>
+    <string name="p2p_code_hint_send">Ava teises seadmes Allalaadimised → Võta fail vastu ja skanni see kood. Kui kuvatakse vastuskood, skanni see tagasi.</string>
     <string name="p2p_code_hint_reply">Näita seda vastust saatjale või saada see tagasi samal viisil, nagu saatja kood saabus.</string>
     <string name="p2p_share_code">Saada kood muul viisil</string>
     <string name="p2p_scan_reply">Skanni vastus</string>
@@ -420,7 +420,6 @@
     <string name="p2p_state_connecting">Ühendamine…</string>
     <string name="p2p_state_connected">Ühendatud</string>
     <string name="p2p_progress_of">%1$s / %2$s · %3$s/s</string>
-    <string name="p2p_done_sent">Fail saadetud</string>
     <string name="p2p_done_sent_detail">Saadetud · %1$s</string>
     <string name="p2p_done_received">Salvestatud kausta Allalaadimised</string>
     <string name="p2p_stop">Peata</string>
@@ -431,9 +430,18 @@
     <string name="p2p_clipboard_empty">Lõikelaual pole koodi.</string>
     <string name="p2p_footer">Krüptitud ülekanne seadmest seadmesse. Fail ei läbi kunagi serverit.</string>
     <string name="p2p_scan_hint">Suuna kaamera saatja koodile</string>
-    <string name="p2p_camera_denied">Kaamera pole saadaval — kleebi kood selle asemel.</string>
+    <string name="p2p_camera_denied">Skannimiseks on vaja kaameraluba. Selle asemel võid koodi kleepida.</string>
     <string name="settings_p2p_stun">STUN-server</string>
     <string name="settings_p2p_stun_summary">Aitab kahel seadmel otsejagamise ajal üksteist interneti kaudu leida. Sellele saadetakse ainult sinu võrguaadress.</string>
     <string name="settings_p2p_stun_custom">Kohandatud…</string>
     <string name="settings_p2p_stun_custom_title">Kohandatud STUN-server</string>
+    <string name="p2p_share_reply">Saada vastus muul viisil</string>
+    <string name="p2p_preparing">Ettevalmistamine…</string>
+    <string name="p2p_open">Ava</string>
+    <string name="p2p_try_again">Proovi uuesti</string>
+    <string name="p2p_abandon_message">Kas peatada see ülekanne? See pole veel lõppenud.</string>
+    <string name="p2p_abandon_confirm">Peata</string>
+    <string name="p2p_qr_too_large">See kood on QR-koodina näitamiseks liiga suur — kasuta valikut “Saada kood muul viisil”.</string>
+    <string name="p2p_qr_content_desc">Sinu jagamiskood QR-koodina</string>
+    <string name="settings_p2p_stun_invalid">Sisesta kehtiv aadress, nt stun:host:3478</string>
 </resources>

@@ -11,10 +11,7 @@
  *   base64-in-JSON for every chunk). Instead Java runs a loopback HTTP server
  *   (P2pLoopbackServer, 127.0.0.1, token-gated): the SENDER side fetch()es
  *   the file from it and pumps the stream into the DataChannel; the RECEIVER
- *   side POSTs arriving chunks back to it, which writes them to disk. The
- *   manifest carries the "http://127.0.0.1/*" host permission for exactly
- *   this (Firefox match patterns ignore ports, so the ephemeral port is
- *   covered).
+ *   side POSTs arriving chunks back to it, which writes them to disk.
  * - Signaling is OFFLINE: the offer/answer are compressed into short codes
  *   (FDS1./FDR1. + base64url(deflate-raw(JSON))) that travel as QR scans or
  *   through any messenger via the share sheet. There is no signaling server;
@@ -29,13 +26,14 @@
  * it enables the pref for the share session, sends {type:"ensure"}, and when
  * we answer ok:false we location.reload() — the reloaded page re-creates its
  * global with the pref now on, reconnects the port, and posts a fresh
- * {type:"ready", rtc:true}. Never remove the ensure/reload dance.
+ * {type:"ready", rtc:true}. Never remove the ensure/reload dance. (Java's
+ * side tolerates the reload's port disconnect — see P2pShareController.)
  *
  * Port protocol (Java -> JS commands):
  *   {type:"ensure"}                                    probe/repair RTC availability
  *   {type:"send-start", readUrl, name, size, mime, device, stun}
  *   {type:"send-answer", code}                         the scanned FDR1. reply
- *   {type:"recv-start", code, device, stun}            the scanned FDS1. offer
+ *   {type:"recv-start", code, stun}                    the scanned FDS1. offer
  *   {type:"recv-accept", writeUrl}                     user accepted the preview
  *   {type:"stop"}                                      tear everything down
  * (JS -> Java events):
@@ -46,7 +44,7 @@
  *   {type:"state", state}                              connecting|connected|closed|failed
  *   {type:"progress", done, total, rate}               throttled, bytes + bytes/s
  *   {type:"done", role:"send"|"receive", bytes}
- *   {type:"error", code, detail}
+ *   {type:"error", code, detail}                       "bad-code" is soft (session survives)
  */
 
 "use strict";
@@ -74,7 +72,12 @@ function log(...args) {
  * disk writes aren't per-chunk; posts are strictly sequential (the write
  * endpoint verifies the offset) so ordering on disk is guaranteed.
  * CONNECT_TIMEOUT: with no TURN relay by design, a CGNAT<->CGNAT pair will
- * never connect — fail honestly instead of spinning. */
+ * never connect — fail honestly instead of spinning.
+ * ACK_TIMEOUT: after the sender sends eof it waits for the receiver's disk-
+ * write ack; bound the wait so a dropped ack can't hang the sender forever.
+ * OVERRUN_SLACK: the receiver refuses to write materially more than the size
+ * the user accepted (a malicious sender can't fill the disk past the preview).
+ */
 const CHUNK = 64 * 1024;
 const BUFFER_HIGH = 4 * 1024 * 1024;
 const BUFFER_LOW = 512 * 1024;
@@ -82,6 +85,9 @@ const FLUSH_BYTES = 4 * 1024 * 1024;
 const CONNECT_TIMEOUT_MS = 20000;
 const GATHER_TIMEOUT_MS = 5000;
 const PROGRESS_INTERVAL_MS = 400;
+const ACK_TIMEOUT_MS = 30000;
+const DRAIN_TIMEOUT_MS = 5000;
+const OVERRUN_SLACK = 1024 * 1024;
 
 const OFFER_PREFIX = "FDS1.";
 const ANSWER_PREFIX = "FDR1.";
@@ -130,10 +136,14 @@ async function encodeCode(prefix, payload) {
   return prefix + "d" + bytesToBase64Url(packed);
 }
 
+// Throws on ANY malformed code (bad prefix/mode, bad base64 via atob's
+// DOMException, corrupt deflate via the stream's TypeError, non-JSON body).
+// Callers treat every throw here as a SOFT "bad-code" — the session's own
+// QR is still valid, the user just re-scans/re-pastes.
 async function decodeCode(prefix, code) {
   const trimmed = code.trim();
   if (!trimmed.startsWith(prefix)) {
-    throw new Error("bad-prefix");
+    throw new Error("bad-code");
   }
   const mode = trimmed.charAt(prefix.length);
   const body = base64UrlToBytes(trimmed.slice(prefix.length + 1));
@@ -143,7 +153,7 @@ async function decodeCode(prefix, code) {
   } else if (mode === "n") {
     plain = body;
   } else {
-    throw new Error("bad-mode");
+    throw new Error("bad-code");
   }
   return JSON.parse(new TextDecoder().decode(plain));
 }
@@ -154,8 +164,10 @@ function newPeerConnection(stun) {
   // A single STUN entry on purpose: listing several servers makes ICE query
   // ALL of them in parallel — every share would leak the user's IP to every
   // fallback. Java owns the sequential-fallback policy and passes ONE url.
+  // A malformed url would throw in the constructor; Java validates the
+  // custom entry, and an empty/blank value means "no STUN" (LAN-only).
   const config = {};
-  if (stun) {
+  if (stun && /^stuns?:/i.test(stun)) {
     config.iceServers = [{ urls: stun }];
   }
   return new RTCPeerConnection(config);
@@ -205,6 +217,29 @@ function watchConnection(s) {
   });
 }
 
+// Resolve once the channel's outgoing buffer has drained (the peer's SCTP
+// has acked it), so a tiny control message (the receiver's "rcvd" ack) is
+// actually on the wire before we tear the transport down. Bounded so a
+// wedged channel can't hang teardown.
+function waitBufferedDrain(dc) {
+  return new Promise((resolve) => {
+    if (dc.bufferedAmount === 0) {
+      resolve();
+      return;
+    }
+    const timer = setTimeout(resolve, DRAIN_TIMEOUT_MS);
+    const prev = dc.bufferedAmountLowThreshold;
+    dc.bufferedAmountLowThreshold = 0;
+    dc.addEventListener("bufferedamountlow", () => {
+      if (dc.bufferedAmount === 0) {
+        clearTimeout(timer);
+        dc.bufferedAmountLowThreshold = prev;
+        resolve();
+      }
+    });
+  });
+}
+
 /* ── progress ──────────────────────────────────────────────────────────── */
 
 function makeProgress(total) {
@@ -229,6 +264,7 @@ function closeSession(s) {
   if (!s) { return; }
   s.stopped = true;
   clearTimeout(s.connectTimer);
+  clearTimeout(s.ackTimer);
   if (s.reader) {
     try { s.reader.cancel(); } catch (e) { /* already done */ }
     s.reader = null;
@@ -253,6 +289,12 @@ function fail(s, code, detail) {
   post({ type: "error", code: code, detail: String(detail || "") });
 }
 
+// Soft error: report but keep the session (and its still-valid QR) alive.
+function softError(detail) {
+  log("soft error:", detail);
+  post({ type: "error", code: "bad-code", detail: String(detail || "") });
+}
+
 /* ── sender ────────────────────────────────────────────────────────────── */
 
 async function startSend(msg) {
@@ -263,6 +305,7 @@ async function startSend(msg) {
     size: msg.size,
     progress: makeProgress(msg.size),
     stopped: false,
+    acked: false,
   };
   session = s;
   try {
@@ -280,6 +323,8 @@ async function startSend(msg) {
         let ack = null;
         try { ack = JSON.parse(ev.data); } catch (e) { /* ignore junk */ }
         if (ack && ack.t === "rcvd" && s === session) {
+          s.acked = true;
+          clearTimeout(s.ackTimer);
           s.progress.done = s.size;
           postProgress(s, true);
           post({ type: "done", role: "send", bytes: s.size });
@@ -313,19 +358,29 @@ async function startSend(msg) {
 
 async function acceptAnswer(msg) {
   const s = session;
-  if (!s || s.role !== "send") { return; }
+  if (!s || s.role !== "send" || !s.pc) { return; }
+  // Only meaningful in have-local-offer; a duplicate paste (the button stays
+  // live until "connecting" hides it) is a harmless no-op, NOT an error.
+  if (s.pc.signalingState !== "have-local-offer") {
+    log("ignoring answer in state", s.pc.signalingState);
+    return;
+  }
+  let payload;
   try {
-    const payload = await decodeCode(ANSWER_PREFIX, msg.code);
+    payload = await decodeCode(ANSWER_PREFIX, msg.code);
+  } catch (e) {
+    // Any unreadable code is soft — the offer QR is still valid, re-scan.
+    softError("answer code unreadable");
+    return;
+  }
+  if (s !== session || s.stopped) { return; }
+  try {
     await s.pc.setRemoteDescription({ type: "answer", sdp: payload.sdp });
     post({ type: "state", state: "connecting" });
   } catch (e) {
-    // A bad scan/paste must not kill the session — the offer QR is still
-    // valid, the user just re-scans. Report and keep waiting.
-    if (e && (e.message === "bad-prefix" || e.message === "bad-mode" || e instanceof SyntaxError)) {
-      post({ type: "error", code: "bad-code", detail: "answer code unreadable" });
-    } else {
-      fail(s, "engine", e);
-    }
+    // A decodable-but-unapplicable answer (mismatched/corrupt SDP) before we
+    // ever connect is still recoverable: the offer stands, treat as soft.
+    softError("answer not applicable");
   }
 }
 
@@ -337,45 +392,39 @@ async function pumpFile(s) {
       throw new Error("loopback read " + response.status);
     }
     s.reader = response.body.getReader();
-    let pending = new Uint8Array(0);
     for (;;) {
       if (s !== session || s.stopped) { return; }
       const { value, done } = await s.reader.read();
       if (done) { break; }
-      // Concatenate then slice to CHUNK-sized sends — reader chunks arrive
-      // at arbitrary sizes and SCTP wants bounded messages.
-      if (pending.length === 0) {
-        pending = value;
-      } else {
-        const merged = new Uint8Array(pending.length + value.length);
-        merged.set(pending, 0);
-        merged.set(value, pending.length);
-        pending = merged;
-      }
-      while (pending.length >= CHUNK) {
-        await sendChunk(s, pending.subarray(0, CHUNK));
+      // Slice each incoming buffer into <=CHUNK messages and send directly.
+      // No accumulation/merge (SCTP only needs a message-size CAP, not exact
+      // 64 KB) and no per-chunk copy: dc.send() copies into the SCTP queue
+      // synchronously, so the source buffer is free to be recycled after.
+      let offset = 0;
+      while (offset < value.length) {
         if (s !== session || s.stopped) { return; }
-        pending = pending.subarray(CHUNK);
+        const end = Math.min(offset + CHUNK, value.length);
+        await sendChunk(s, value.subarray(offset, end));
+        offset = end;
       }
-    }
-    if (pending.length > 0) {
-      await sendChunk(s, pending);
     }
     if (s !== session || s.stopped) { return; }
     s.dc.send(JSON.stringify({ t: "eof", bytes: s.progress.done }));
     postProgress(s, true);
     log("eof sent, awaiting receiver ack");
+    // Bound the wait for the disk-write ack so a dropped ack can't hang.
+    s.ackTimer = setTimeout(() => {
+      if (s === session && !s.acked) {
+        fail(s, "transfer", "no delivery confirmation");
+      }
+    }, ACK_TIMEOUT_MS);
   } catch (e) {
     fail(s, "transfer", e);
   }
 }
 
 function sendChunk(s, view) {
-  // subarray shares the backing buffer — copy so the DataChannel owns stable
-  // bytes (the next reader.read() may recycle the buffer).
-  const copy = new Uint8Array(view.length);
-  copy.set(view);
-  s.dc.send(copy.buffer);
+  s.dc.send(view);
   s.progress.done += view.length;
   postProgress(s, false);
   if (s.dc.bufferedAmount <= BUFFER_HIGH) {
@@ -392,30 +441,34 @@ async function startReceive(msg) {
   closeSession(session);
   const s = {
     role: "receive",
-    device: msg.device,
     stun: msg.stun,
     stopped: false,
   };
   session = s;
+  let offer;
   try {
-    s.offer = await decodeCode(OFFER_PREFIX, msg.code);
-    if (!s.offer.sdp || !(s.offer.size >= 0)) {
-      throw new Error("bad-mode");
-    }
-    s.progress = makeProgress(s.offer.size);
-    post({
-      type: "offer-parsed",
-      name: String(s.offer.name || ""),
-      size: s.offer.size,
-      mime: String(s.offer.mime || ""),
-      device: String(s.offer.dev || ""),
-    });
+    offer = await decodeCode(OFFER_PREFIX, msg.code);
   } catch (e) {
-    // Session dies (nothing valid to hold), but as a soft error: the UI
-    // stays on the scan step and the user retries with a better code.
-    closeSession(s);
-    post({ type: "error", code: "bad-code", detail: "offer code unreadable" });
+    // Nothing valid to hold, but SOFT: the receive screen stays on its
+    // scan/paste step and the user retries with a better code.
+    session = null;
+    softError("offer code unreadable");
+    return;
   }
+  if (!offer.sdp || !(offer.size >= 0)) {
+    session = null;
+    softError("offer code unreadable");
+    return;
+  }
+  s.offer = offer;
+  s.progress = makeProgress(offer.size);
+  post({
+    type: "offer-parsed",
+    name: String(offer.name || ""),
+    size: offer.size,
+    mime: String(offer.mime || ""),
+    device: String(offer.dev || ""),
+  });
 }
 
 async function acceptReceive(msg) {
@@ -445,8 +498,12 @@ function bindReceiveChannel(s, dc) {
   s.queue = [];
   s.queuedBytes = 0;
   s.written = 0;
+  s.received = 0;
   s.flushing = Promise.resolve();
   s.eofBytes = -1;
+  // The size the user accepted — refuse to write materially more (a modified
+  // sender that advertised "2 MB" can't stream tens of GB to fill the disk).
+  s.cap = (s.offer && s.offer.size >= 0) ? s.offer.size + OVERRUN_SLACK : Infinity;
   s.dc.onmessage = (ev) => {
     if (s !== session || s.stopped) { return; }
     if (typeof ev.data === "string") {
@@ -456,6 +513,11 @@ function bindReceiveChannel(s, dc) {
         s.eofBytes = ctrl.bytes;
         scheduleFlush(s, true);
       }
+      return;
+    }
+    s.received += ev.data.byteLength;
+    if (s.received > s.cap) {
+      fail(s, "transfer", "declared size exceeded");
       return;
     }
     s.queue.push(ev.data);
@@ -490,8 +552,14 @@ function scheduleFlush(s, isFinal) {
       if (s.eofBytes !== s.written) {
         throw new Error("short transfer: " + s.written + "/" + s.eofBytes);
       }
-      // Ack AFTER the last byte hit the loopback (disk), then report done.
-      try { s.dc.send(JSON.stringify({ t: "rcvd" })); } catch (e) { /* peer gone */ }
+      // Ack AFTER the last byte hit the loopback (disk), then WAIT for the
+      // ack to actually leave before tearing the transport down — pc.close()
+      // aborts SCTP immediately and would otherwise drop a still-buffered ack,
+      // hanging the sender.
+      try {
+        s.dc.send(JSON.stringify({ t: "rcvd" }));
+        await waitBufferedDrain(s.dc);
+      } catch (e) { /* peer gone */ }
       postProgress(s, true);
       post({ type: "done", role: "receive", bytes: s.written });
       closeSession(s);

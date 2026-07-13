@@ -93,12 +93,11 @@
             app:singleLineTitle="false"
             app:icon="@drawable/settings_backup_restore_24"/>
 
-        <!-- P2P direct share: the address-discovery helper. "custom" routes
-             to a text dialog in SettingsFragment (the DoH custom pattern). -->
-        <ListPreference
-            android:defaultValue="stun:stun.cloudflare.com:3478"
-            android:entries="@array/settings_p2p_stun_entries"
-            android:entryValues="@array/settings_p2p_stun_values"
+        <!-- P2P direct share: the address-discovery helper. A click-row (not a
+             ListPreference) so "Custom…" stays re-editable — a ListPreference
+             fires no change event when you re-pick the already-selected custom
+             entry. The chooser + URL editor live in SettingsFragment. -->
+        <Preference
             android:key="com.solarized.firedown.preferences.p2p.stun.server"
             android:summary="@string/settings_p2p_stun_summary"
             android:title="@string/settings_p2p_stun"

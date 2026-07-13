@@ -30,7 +30,10 @@
         android:name="com.solarized.firedown.phone.fragments.P2pReceiveFragment"
         android:label="fragment_p2p_receive"
         tools:layout="@layout/fragment_p2p_receive" />
-    <fragment
+    <!-- A <dialog>, NOT a <fragment>: opening the scanner must not destroy the
+         send/receive fragment's view (which would stop the live WebRTC
+         session). See P2pScanFragment's class doc. -->
+    <dialog
         android:id="@+id/p2p_scan"
         android:name="com.solarized.firedown.phone.fragments.P2pScanFragment"
         android:label="fragment_p2p_scan"

@@ -1,5 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Full-screen dialog used by the P2P QR scanner: a <dialog> nav
+         destination (so it does NOT destroy the send/receive fragment's view
+         and kill the live WebRTC session), but filling the screen for the
+         camera preview. windowIsFloating=false = fill, not a floating card. -->
+    <style name="Firedown.FullScreenDialog" parent="Theme.Material3.DayNight.Dialog">
+        <item name="android:windowIsFloating">false</item>
+        <item name="android:windowBackground">?attr/colorSurface</item>
+        <item name="android:statusBarColor">?attr/colorSurface</item>
+        <item name="android:navigationBarColor">?attr/colorSurface</item>
+    </style>
+
     <style name="Theme.FireDown.BottomSheetDialogTheme" parent="Theme.Material3.DayNight.BottomSheetDialog">
         <item name="colorPrimary">@color/md_theme_primary</item>
         <item name="colorOnPrimary">@color/md_theme_onPrimary</item>

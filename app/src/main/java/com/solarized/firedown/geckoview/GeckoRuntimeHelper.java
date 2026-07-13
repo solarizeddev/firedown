@@ -1087,13 +1087,13 @@ public class GeckoRuntimeHelper {
     }
 
     @OptIn(markerClass = ExperimentalGeckoViewApi.class)
-    public void setWebRTC(boolean enable) {
-        GeckoResult<Void> geckoResult = GeckoPreferenceController
+    public GeckoResult<Void> setWebRTC(boolean enable) {
+        // Returns the GeckoResult so callers that need the pref APPLIED before
+        // acting (the P2P share, which then reloads its engine page to pick up
+        // the enabled pref) can chain on it — a fire-and-forget write races the
+        // page reload and the reloaded global still sees the old value.
+        return GeckoPreferenceController
                 .setGeckoPref("media.peerconnection.enabled", enable, GeckoPreferenceController.PREF_BRANCH_USER);
-
-        geckoResult.accept(unused -> {
-            Log.d(TAG, "setWebRTC: " + unused);
-        });
     }
 
     @OptIn(markerClass = ExperimentalGeckoViewApi.class)

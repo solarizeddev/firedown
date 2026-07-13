@@ -14,6 +14,7 @@ import androidx.annotation.Nullable;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.solarized.firedown.R;
+import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.p2pshare.P2pShareController;
 import com.solarized.firedown.utils.FileUriHelper;
 
@@ -23,16 +24,12 @@ import dagger.hilt.android.AndroidEntryPoint;
 
 /**
  * "Receive a file" — the receiver side of the P2P share. Scans (or pastes)
- * the sender's offer code, previews what is being offered BEFORE anything
- * connects (the metadata rides inside the code), and on Accept shows the
- * reply code the sender scans back; then the file streams in and lands as a
- * normal FINISHED entry in Downloads.
+ * the sender's offer code, previews what's offered BEFORE anything connects,
+ * and on Accept shows the reply code the sender scans back; then the file
+ * streams in and lands as a normal FINISHED entry in Downloads.
  *
  * <p>Screen walk: ENTRY (scan/paste) → PREVIEW (accept/decline) → REPLY
- * (answer QR) → CONNECTING → TRANSFER → DONE / ERROR. Session dies with the
- * view (P2pShareBaseFragment).
- *
- * <p>Reached from the Downloads toolbar overflow ("Receive a file").
+ * (answer QR) → CONNECTING → TRANSFER → DONE (Open) / ERROR (Try again).
  */
 @AndroidEntryPoint
 public class P2pReceiveFragment extends P2pShareBaseFragment
@@ -40,6 +37,8 @@ public class P2pReceiveFragment extends P2pShareBaseFragment
 
     private View mView;
     private String mReplyCode;
+    private String mLastCode;
+    private DownloadEntity mReceived;
 
     @Nullable
     @Override
@@ -51,22 +50,20 @@ public class P2pReceiveFragment extends P2pShareBaseFragment
         mToolbar = mView.findViewById(R.id.toolbar);
 
         mView.findViewById(R.id.p2p_scan_code).setOnClickListener(v ->
-                navigateToScanner(P2pShareController.OFFER_PREFIX));
+                navigateToScanner(P2pShareController.OFFER_PREFIX, false));
         mView.findViewById(R.id.p2p_paste_code).setOnClickListener(v -> {
             String code = readCodeFromClipboard(P2pShareController.OFFER_PREFIX);
             if (code != null) {
+                mLastCode = code;
                 mP2pController.startReceive(code, this);
             }
         });
         mView.findViewById(R.id.p2p_accept).setOnClickListener(v -> {
             mP2pController.acceptOffer();
-            // Disable both so a double-tap can't fire acceptOffer twice while
-            // the engine builds the answer.
             v.setEnabled(false);
             mView.findViewById(R.id.p2p_decline).setEnabled(false);
         });
         mView.findViewById(R.id.p2p_decline).setOnClickListener(v -> {
-            // Back to square one: kill the parsed session, re-show entry.
             mP2pController.stop();
             showEntry();
         });
@@ -75,9 +72,20 @@ public class P2pReceiveFragment extends P2pShareBaseFragment
                 shareCode(mReplyCode);
             }
         });
+        mView.findViewById(R.id.p2p_open).setOnClickListener(v -> openReceived());
         mView.findViewById(R.id.p2p_stop).setOnClickListener(v -> close());
+        mView.findViewById(R.id.p2p_retry).setOnClickListener(v -> showEntry());
 
         return mView;
+    }
+
+    @Override
+    protected void onEngineReady() {
+        // Nothing to start — receive waits for a scanned/pasted offer code.
+        // A code scanned before the pref applied is replayed here.
+        if (mLastCode != null) {
+            mP2pController.startReceive(mLastCode, this);
+        }
     }
 
     @Override
@@ -87,16 +95,31 @@ public class P2pReceiveFragment extends P2pShareBaseFragment
 
     @Override
     protected void onCodeScanned(@NonNull String code) {
+        mLastCode = code;
         mP2pController.startReceive(code, this);
     }
 
     private void showEntry() {
-        mView.findViewById(R.id.p2p_entry_group).setVisibility(View.VISIBLE);
-        mView.findViewById(R.id.p2p_preview_group).setVisibility(View.GONE);
-        mView.findViewById(R.id.p2p_reply_group).setVisibility(View.GONE);
-        mView.findViewById(R.id.p2p_status).setVisibility(View.GONE);
+        setStage(R.id.p2p_entry_group);
         mView.findViewById(R.id.p2p_accept).setEnabled(true);
         mView.findViewById(R.id.p2p_decline).setEnabled(true);
+    }
+
+    private void openReceived() {
+        if (mReceived != null) {
+            // BaseFocusFragment's shared "open with" path — same as the
+            // Downloads options sheet's Open action.
+            openItemWith(mReceived);
+        }
+    }
+
+    private void setStage(int visibleId) {
+        int[] stages = {R.id.p2p_entry_group, R.id.p2p_preview_group, R.id.p2p_status,
+                R.id.p2p_reply_group, R.id.p2p_progress_group, R.id.p2p_done_group,
+                R.id.p2p_error_group};
+        for (int id : stages) {
+            mView.findViewById(id).setVisibility(id == visibleId ? View.VISIBLE : View.GONE);
+        }
     }
 
     /* ── engine events (main thread) ────────────────────────────────────── */
@@ -107,9 +130,11 @@ public class P2pReceiveFragment extends P2pShareBaseFragment
             return;
         }
         mReplyCode = code;
-        mView.findViewById(R.id.p2p_preview_group).setVisibility(View.GONE);
-        mView.findViewById(R.id.p2p_reply_group).setVisibility(View.VISIBLE);
-        setQr(mView.findViewById(R.id.p2p_reply_qr), code);
+        setStage(R.id.p2p_reply_group);
+        boolean rendered = setQr(mView.findViewById(R.id.p2p_reply_qr), code);
+        mView.findViewById(R.id.p2p_reply_qr_card).setVisibility(rendered ? View.VISIBLE : View.GONE);
+        ((TextView) mView.findViewById(R.id.p2p_reply_hint)).setText(
+                rendered ? R.string.p2p_code_hint_reply : R.string.p2p_qr_too_large);
     }
 
     @Override
@@ -117,8 +142,7 @@ public class P2pReceiveFragment extends P2pShareBaseFragment
         if (mView == null) {
             return;
         }
-        mView.findViewById(R.id.p2p_entry_group).setVisibility(View.GONE);
-        mView.findViewById(R.id.p2p_preview_group).setVisibility(View.VISIBLE);
+        setStage(R.id.p2p_preview_group);
         ((TextView) mView.findViewById(R.id.p2p_preview_name)).setText(name);
         String sizeText = Formatter.formatShortFileSize(requireContext(), size);
         String tag = device.isEmpty()
@@ -136,14 +160,10 @@ public class P2pReceiveFragment extends P2pShareBaseFragment
             return;
         }
         if ("connecting".equals(state) || "connected".equals(state)) {
+            setStage(R.id.p2p_status);
             TextView status = mView.findViewById(R.id.p2p_status);
-            status.setVisibility(View.VISIBLE);
             status.setText("connected".equals(state)
                     ? R.string.p2p_state_connected : R.string.p2p_state_connecting);
-            if ("connected".equals(state)) {
-                // The sender scanned the reply — the QR's job is done.
-                mView.findViewById(R.id.p2p_reply_group).setVisibility(View.GONE);
-            }
         }
     }
 
@@ -152,8 +172,7 @@ public class P2pReceiveFragment extends P2pShareBaseFragment
         if (mView == null) {
             return;
         }
-        mView.findViewById(R.id.p2p_reply_group).setVisibility(View.GONE);
-        mView.findViewById(R.id.p2p_progress_group).setVisibility(View.VISIBLE);
+        setStage(R.id.p2p_progress_group);
         LinearProgressIndicator bar = mView.findViewById(R.id.p2p_progress_bar);
         if (total > 0) {
             bar.setProgress((int) (done * 100 / total));
@@ -170,10 +189,10 @@ public class P2pReceiveFragment extends P2pShareBaseFragment
         if (mView == null) {
             return;
         }
-        mView.findViewById(R.id.p2p_status).setVisibility(View.GONE);
-        mView.findViewById(R.id.p2p_progress_group).setVisibility(View.GONE);
-        mView.findViewById(R.id.p2p_done_group).setVisibility(View.VISIBLE);
-        ((TextView) mView.findViewById(R.id.p2p_done_text)).setText(R.string.p2p_done_received);
+        setStage(R.id.p2p_done_group);
+        mReceived = mP2pController.getReceivedEntity();
+        // Open is only useful if we actually have the entity handle.
+        mView.findViewById(R.id.p2p_open).setVisibility(mReceived != null ? View.VISIBLE : View.GONE);
         ((MaterialButton) mView.findViewById(R.id.p2p_stop)).setText(R.string.p2p_done);
     }
 
@@ -183,19 +202,12 @@ public class P2pReceiveFragment extends P2pShareBaseFragment
             return;
         }
         if ("bad-code".equals(code)) {
-            // Soft: stay wherever the user is (entry keeps its buttons), let
-            // them retry with a better scan/paste.
+            // Soft: stay on entry, let the user retry the scan/paste.
             makeSnack(R.string.p2p_error_bad_code);
             showEntry();
             return;
         }
-        mView.findViewById(R.id.p2p_entry_group).setVisibility(View.GONE);
-        mView.findViewById(R.id.p2p_preview_group).setVisibility(View.GONE);
-        mView.findViewById(R.id.p2p_reply_group).setVisibility(View.GONE);
-        mView.findViewById(R.id.p2p_status).setVisibility(View.GONE);
-        mView.findViewById(R.id.p2p_progress_group).setVisibility(View.GONE);
-        TextView error = mView.findViewById(R.id.p2p_error);
-        error.setVisibility(View.VISIBLE);
-        error.setText(errorText(code));
+        setStage(R.id.p2p_error_group);
+        ((TextView) mView.findViewById(R.id.p2p_error)).setText(errorText(code));
     }
 }

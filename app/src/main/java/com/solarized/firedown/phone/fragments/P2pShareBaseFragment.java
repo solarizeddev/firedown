@@ -1,18 +1,18 @@
 package com.solarized.firedown.phone.fragments;
 
-import android.content.ClipData;
-import android.content.ClipboardManager;
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageView;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.graphics.Insets;
@@ -20,6 +20,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.navigation.NavBackStackEntry;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.common.BitMatrix;
@@ -28,6 +29,7 @@ import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
 import com.solarized.firedown.geckoview.GeckoRuntimeHelper;
 import com.solarized.firedown.p2pshare.P2pShareController;
+import com.solarized.firedown.utils.ClipboardHelper;
 import com.solarized.firedown.utils.NavigationUtils;
 
 import javax.inject.Inject;
@@ -67,24 +69,23 @@ public abstract class P2pShareBaseFragment extends BaseFocusFragment {
     protected SharedPreferences mP2pSharedPreferences;
 
     private boolean mRtcTemporarilyEnabled;
+    private final Handler mMainHandler = new Handler(Looper.getMainLooper());
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         if (mToolbar != null) {
-            mToolbar.setNavigationOnClickListener(v -> close());
+            mToolbar.setNavigationOnClickListener(v -> confirmThenClose());
         }
-        // Session-scoped WebRTC enable (see class doc).
-        boolean webRtcEnabled = mP2pSharedPreferences.getBoolean(
-                Preferences.SETTINGS_ENABLE_WEBRTC, Preferences.DEFAULT_ENABLE_WEBRTC);
-        if (!webRtcEnabled) {
-            mGeckoRuntimeHelper.setWebRTC(true);
-            mRtcTemporarilyEnabled = true;
-            View note = view.findViewById(R.id.p2p_rtc_note);
-            if (note != null) {
-                note.setVisibility(View.VISIBLE);
-            }
-        }
+        // Back-press confirms only while a transfer is actually moving bytes,
+        // so an accidental swipe-back mid-transfer doesn't silently discard it.
+        requireActivity().getOnBackPressedDispatcher().addCallback(
+                getViewLifecycleOwner(), new OnBackPressedCallback(true) {
+                    @Override
+                    public void handleOnBackPressed() {
+                        confirmThenClose();
+                    }
+                });
         // The footer sits below the scroll area — pad it clear of the nav bar.
         View footer = view.findViewById(R.id.p2p_footer);
         if (footer != null) {
@@ -97,6 +98,46 @@ public abstract class P2pShareBaseFragment extends BaseFocusFragment {
             });
         }
         observeScanResult();
+
+        // Session-scoped WebRTC enable. RTCPeerConnection is a pref-gated
+        // global, so the engine must be started ONLY AFTER the pref write is
+        // applied — otherwise the engine's reload lands before the write is
+        // visible and never gains the constructor. Chain on the GeckoResult.
+        boolean webRtcEnabled = mP2pSharedPreferences.getBoolean(
+                Preferences.SETTINGS_ENABLE_WEBRTC, Preferences.DEFAULT_ENABLE_WEBRTC);
+        if (!webRtcEnabled) {
+            mRtcTemporarilyEnabled = true;
+            View note = view.findViewById(R.id.p2p_rtc_note);
+            if (note != null) {
+                note.setVisibility(View.VISIBLE);
+            }
+            mGeckoRuntimeHelper.setWebRTC(true).accept(unused ->
+                    mMainHandler.post(() -> {
+                        if (isAdded() && getView() != null) {
+                            onEngineReady();
+                        }
+                    }));
+        } else {
+            onEngineReady();
+        }
+    }
+
+    /**
+     * Called once the WebRTC pref is applied and it's safe to drive the
+     * engine. Send starts its offer here; receive waits for a scanned code.
+     */
+    protected abstract void onEngineReady();
+
+    private void confirmThenClose() {
+        if (mP2pController.isTransferActive()) {
+            new MaterialAlertDialogBuilder(requireContext())
+                    .setMessage(R.string.p2p_abandon_message)
+                    .setPositiveButton(R.string.p2p_abandon_confirm, (d, w) -> close())
+                    .setNegativeButton(R.string.cancel, null)
+                    .show();
+        } else {
+            close();
+        }
     }
 
     @Override
@@ -164,20 +205,28 @@ public abstract class P2pShareBaseFragment extends BaseFocusFragment {
                 });
     }
 
-    protected void navigateToScanner(@NonNull String expectedPrefix) {
+    protected void navigateToScanner(@NonNull String expectedPrefix, boolean reply) {
         Bundle bundle = new Bundle();
         bundle.putString(P2pScanFragment.ARG_PREFIX, expectedPrefix);
+        bundle.putBoolean(P2pScanFragment.ARG_REPLY, reply);
         NavigationUtils.navigateSafe(mNavController, R.id.p2p_scan, bundle);
     }
 
-    protected void setQr(@Nullable ImageView imageView, @NonNull String content) {
+    /**
+     * @return true if the QR rendered; false if the content was too large to
+     * encode (the caller should fall back to "send code another way" rather
+     * than leave a blank white box).
+     */
+    protected boolean setQr(@Nullable ImageView imageView, @NonNull String content) {
         if (imageView == null) {
-            return;
+            return false;
         }
         Bitmap code = encodeQr(content);
         if (code != null) {
             imageView.setImageBitmap(code);
+            return true;
         }
+        return false;
     }
 
     /** Offer the code through the share sheet (messenger, email, …). */
@@ -194,30 +243,16 @@ public abstract class P2pShareBaseFragment extends BaseFocusFragment {
      */
     @Nullable
     protected String readCodeFromClipboard(@NonNull String expectedPrefix) {
-        try {
-            ClipboardManager clipboard = (ClipboardManager)
-                    requireContext().getSystemService(Context.CLIPBOARD_SERVICE);
-            if (clipboard != null && clipboard.hasPrimaryClip()
-                    && clipboard.getPrimaryClip() != null
-                    && clipboard.getPrimaryClip().getItemCount() > 0) {
-                CharSequence text = clipboard.getPrimaryClip().getItemAt(0).getText();
-                if (text != null) {
-                    String code = text.toString().trim();
-                    if (code.startsWith(expectedPrefix)) {
-                        return code;
-                    }
-                    makeSnack(R.string.p2p_error_bad_code);
-                    return null;
-                }
-            }
-        } catch (RuntimeException e) {
-            // Clipboard reads are binder calls into system_server — never let
-            // a dying clipboard service crash the app (the AutoCompleteView
-            // lesson). Fall through to the empty-clipboard message.
-            Log.e(TAG, "clipboard read failed", e);
+        String code = ClipboardHelper.readTrimmedText(getContext());
+        if (code.isEmpty()) {
+            makeSnack(R.string.p2p_clipboard_empty);
+            return null;
         }
-        makeSnack(R.string.p2p_clipboard_empty);
-        return null;
+        if (!code.startsWith(expectedPrefix)) {
+            makeSnack(R.string.p2p_error_bad_code);
+            return null;
+        }
+        return code;
     }
 
     protected void makeSnack(int textResId) {

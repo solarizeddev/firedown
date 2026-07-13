@@ -83,7 +83,7 @@ check("page reloads when RTC is pref-gated away", reloaded === true);
 
 // ── bad-code handling (soft error, no session) ─────────────────────────────
 posted.length = 0;
-send({ type: "recv-start", code: "garbage", device: "test", stun: "" });
+send({ type: "recv-start", code: "garbage", stun: "" });
 await sleep(50);
 check("bad offer code → bad-code error",
     posted.length === 1 && posted[0].type === "error" && posted[0].code === "bad-code");
@@ -103,7 +103,7 @@ check("code is QR-sized", code.length < 2500, `length ${code.length}`);
 check("codec round-trips", JSON.stringify(back).includes('"clip.mp4"') && back.size === 12345);
 const badDecode = await vm.runInContext(
     `decodeCode(ANSWER_PREFIX, ${JSON.stringify(code)}).then(() => "decoded", (e) => e.message)`, context);
-check("wrong prefix rejected", badDecode === "bad-prefix");
+check("wrong prefix rejected", badDecode === "bad-code");
 
 // ── stop is safe with no session ───────────────────────────────────────────
 posted.length = 0;

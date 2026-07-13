@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- "Receive a file" — P2P share receiver (P2pReceiveFragment). Walks
-     entry (scan/paste) → preview (accept/decline) → reply QR → transfer →
-     done. Same one-column, visibility-flipped composition as the sender. -->
+<!-- "Receive a file" — P2P share receiver (P2pReceiveFragment). Stage groups
+     toggled by the fragment: entry (scan/paste) · preview (accept/decline) ·
+     status chip · reply (answer QR) · progress · done (Open) · error (Try
+     again). Stop button + footer always present. -->
 <androidx.coordinatorlayout.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -47,7 +48,6 @@
                 android:paddingBottom="24dp">
 
                 <TextView
-                    android:id="@+id/p2p_receive_lead"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:paddingHorizontal="16dp"
@@ -168,7 +168,7 @@
                                 android:maxLines="1"
                                 android:textAppearance="?attr/textAppearanceBodySmall"
                                 android:textColor="?attr/colorOnSurfaceVariant"
-                                tools:text="214 MB · From Pixel 7" />
+                                tools:text="214 MB · from Pixel 7" />
 
                         </LinearLayout>
 
@@ -225,6 +225,7 @@
                     tools:visibility="visible">
 
                     <LinearLayout
+                        android:id="@+id/p2p_reply_qr_card"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginHorizontal="16dp"
@@ -240,12 +241,13 @@
                             android:layout_width="232dp"
                             android:layout_height="232dp"
                             android:background="@drawable/bg_p2p_qr"
-                            android:contentDescription="@string/p2p_code_hint_reply"
+                            android:contentDescription="@string/p2p_qr_content_desc"
                             android:padding="12dp" />
 
                     </LinearLayout>
 
                     <TextView
+                        android:id="@+id/p2p_reply_hint"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:gravity="center"
@@ -261,7 +263,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="center_horizontal"
-                        android:text="@string/p2p_share_code" />
+                        android:text="@string/p2p_share_reply" />
 
                 </LinearLayout>
 
@@ -318,7 +320,6 @@
                         app:tint="?attr/colorPrimary" />
 
                     <TextView
-                        android:id="@+id/p2p_done_text"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="10dp"
@@ -327,30 +328,53 @@
                         android:textAppearance="?attr/textAppearanceTitleSmall"
                         android:textColor="?attr/colorOnSurface" />
 
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/p2p_open"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="14dp"
+                        android:text="@string/p2p_open" />
+
                 </LinearLayout>
 
-                <!-- Error stage -->
-                <TextView
-                    android:id="@+id/p2p_error"
+                <!-- Error stage: message + Try again -->
+                <LinearLayout
+                    android:id="@+id/p2p_error_group"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:paddingHorizontal="32dp"
-                    android:paddingTop="16dp"
-                    android:textAppearance="?attr/textAppearanceBodyMedium"
-                    android:textColor="?attr/colorError"
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical"
                     android:visibility="gone"
-                    tools:text="@string/p2p_error_no_path"
-                    tools:visibility="visible" />
+                    tools:visibility="visible">
+
+                    <TextView
+                        android:id="@+id/p2p_error"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:paddingHorizontal="32dp"
+                        android:paddingTop="16dp"
+                        android:textAppearance="?attr/textAppearanceBodyMedium"
+                        android:textColor="?attr/colorError"
+                        tools:text="@string/p2p_error_no_path" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/p2p_retry"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="14dp"
+                        android:text="@string/p2p_try_again" />
+
+                </LinearLayout>
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/p2p_stop"
-                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    style="@style/Widget.Material3.Button.TextButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center_horizontal"
-                    android:layout_marginTop="18dp"
-                    android:text="@string/p2p_stop" />
+                    android:layout_marginTop="10dp"
+                    android:text="@string/cancel" />
 
             </LinearLayout>
 
