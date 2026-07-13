@@ -184,37 +184,41 @@
                         android:textAppearance="?attr/textAppearanceBodySmall"
                         android:textColor="?attr/colorOnSurfaceVariant" />
 
+                    <!-- Primary next step for the sender: scan the reply the
+                         receiver shows back. Secondary paths (paste it, or send
+                         the offer through a messenger) sit below as text
+                         buttons so they don't compete with the primary. -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/p2p_scan_reply"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_horizontal"
+                        android:layout_marginTop="18dp"
+                        app:icon="@drawable/ic_qr_scan_24"
+                        android:text="@string/p2p_scan_reply" />
+
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="center_horizontal"
-                        android:layout_marginTop="16dp"
+                        android:layout_marginTop="2dp"
                         android:orientation="horizontal">
 
                         <com.google.android.material.button.MaterialButton
+                            android:id="@+id/p2p_paste_reply"
+                            style="@style/Widget.Material3.Button.TextButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/p2p_paste_reply" />
+
+                        <com.google.android.material.button.MaterialButton
                             android:id="@+id/p2p_share_code"
-                            style="@style/Widget.Material3.Button.OutlinedButton"
+                            style="@style/Widget.Material3.Button.TextButton"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/p2p_share_code" />
 
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/p2p_scan_reply"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="12dp"
-                            app:icon="@drawable/ic_qr_scan_24"
-                            android:text="@string/p2p_scan_reply" />
-
                     </LinearLayout>
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/p2p_paste_reply"
-                        style="@style/Widget.Material3.Button.TextButton"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center_horizontal"
-                        android:text="@string/p2p_paste_reply" />
 
                 </LinearLayout>
 
