@@ -33,9 +33,13 @@ function evt(path) {
   };
 }
 
+// Native emits (sendNative → runtime.sendNativeMessage) recorded so a dispatch
+// test can assert what actually reaches the Java side.
+const nativeSent = [];
+
 globalThis.browser = {
   runtime: {
-    sendNativeMessage: async () => false,
+    sendNativeMessage: async (app, msg) => { nativeSent.push({ app, msg }); return false; },
     onMessage: evt("runtime.onMessage"),
     connectNative: () => ({ onMessage: evt("port.onMessage"), onDisconnect: evt("port.onDisconnect"), postMessage() {} }),
   },
@@ -154,6 +158,39 @@ for (const url of spaUrls) {
   }
 }
 expect(!spaThrew, "SPA handlers run for all five registered sites");
+
+// ---------------------------------------------------------------------------
+// page-state-progressive AUDIO group (the podverse.fm case): a declared-audio
+// variant (audioOnly — the bridge's AUDIO_RE hit, e.g. __NEXT_DATA__.mediaUrl)
+// must ride through handlePageStateProgressive with audioOnly intact (Java's
+// skip-probe branch keys the entity's audio typing off it — a video/mp4-stamped
+// podcast mp3 was the bug), the state duration auto-setting skipProbe, and the
+// <audio>-element header shape (Sec-Fetch-Dest: audio) instead of the video one.
+// ---------------------------------------------------------------------------
+nativeSent.length = 0;
+for (const listener of registrations["runtime.onMessage"]) {
+  listener({
+    kind: "page-state-progressive",
+    payload: {
+      variants: [{ url: "https://api.example.com/feed/podcast/1/abc.mp3", width: 0, height: 0, audioOnly: true }],
+      origin: "https://podcast.example.com/episode/xyz",
+      title: "Episode title",
+      durationMs: 903000,
+      ua: "UA-string",
+      lang: "en-US",
+    },
+  }, { tab: { id: 3, url: "https://podcast.example.com/episode/xyz" } });
+}
+await new Promise((r) => setTimeout(r, 30));
+const audioMsg = nativeSent.map((n) => n.msg)
+  .find((m) => m && m.type === "variants" && /abc\.mp3/.test(m.url ?? ""));
+expect(!!audioMsg, "page-state audio: native variants message emitted");
+expect(audioMsg?.variants?.[0]?.audioOnly === true, "page-state audio: variant keeps audioOnly");
+expect(audioMsg?.skipProbe === true, "page-state audio: state duration auto-sets skipProbe");
+const audioHdrs = Object.fromEntries((audioMsg?.requestHeaders ?? []).map((h) => [h.name, h.value]));
+expect(audioHdrs["Sec-Fetch-Dest"] === "audio",
+  `page-state audio: <audio>-element Sec-Fetch-Dest (got ${audioHdrs["Sec-Fetch-Dest"]})`);
+expect((audioHdrs["Accept"] ?? "").startsWith("audio/"), "page-state audio: <audio>-element Accept");
 
 // ---------------------------------------------------------------------------
 // Pure-function checks — the point of the module split: extraction logic is

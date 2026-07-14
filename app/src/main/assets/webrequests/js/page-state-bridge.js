@@ -324,28 +324,35 @@
     const HLS_MASTER_RE = /^https?:\/\/[^\s"']+\.m3u8(?:[?#]|$)/i;
 
     // Classify a PLAYER-FED media URL (a JWPlayer/Video.js source, or a DOM
-    // <video>/<source> the player drives) as "hls" | "progressive". The url IS
-    // media by definition — the player was told to play it — so we DELIBERATELY DO
-    // NOT gate on the file extension: these embeds keep serving the manifest at an
-    // obfuscated / rotating extension (series.ly/vibuxer's HLS master is at
-    // /master.txt, and that will keep changing). We decide the emit path from the
-    // player's DECLARED type — its stable, structural signal (JWPlayer "hls", a
-    // video/audio MIME, application/x-mpegurl, dash) — then a .m3u8/.mpd hint, and
-    // finally DEFAULT TO HLS: an unknown source on these players is an obfuscated
-    // master, and the HLS path sends the full anti-bot header set AND native
-    // reroutes a non-manifest body to ffmpeg, whereas the progressive path sends no
-    // headers and would 403 a header-gated master. Only a non-http (blob:/data:/
-    // mediasource:) MSE handle returns null — that real manifest is read from the
-    // player API. (The broad page-state walk does NOT use this — it stays
-    // extension-strict so it can't grab a non-media URL that merely sits under a
-    // media-ish key.)
+    // <video>/<source> the player drives) as "hls" | "progressive" | "audio".
+    // The url IS media by definition — the player was told to play it — so we
+    // DELIBERATELY DO NOT gate on the file extension: these embeds keep serving
+    // the manifest at an obfuscated / rotating extension (series.ly/vibuxer's HLS
+    // master is at /master.txt, and that will keep changing). We decide the emit
+    // path from the player's DECLARED type — its stable, structural signal
+    // (JWPlayer "hls", a video/audio MIME, application/x-mpegurl, dash) — then a
+    // .m3u8/.mpd hint, then a progressive/audio file extension, and finally
+    // DEFAULT TO HLS: an unknown source on these players is an obfuscated master,
+    // and the HLS path sends the full anti-bot header set AND native reroutes a
+    // non-manifest body to ffmpeg, whereas the progressive path sends no headers
+    // and would 403 a header-gated master. "audio" (an audio/* MIME or an
+    // explicit audio file extension) rides the progressive emit but keeps its
+    // kind, so the variant is marked audioOnly and Java types the entity as
+    // audio, not video/mp4 — and an .mp3 never falls into the HLS default (Java's
+    // master fetch can't enumerate a progressive file). Only a non-http
+    // (blob:/data:/mediasource:) MSE handle returns null — that real manifest is
+    // read from the player API. (The broad page-state walk does NOT use this — it
+    // stays extension-strict so it can't grab a non-media URL that merely sits
+    // under a media-ish key.)
     function mediaKindOf(url, type) {
         if (typeof url !== "string" || !/^https?:\/\//i.test(url)) return null;
         const ty = (typeof type === "string") ? type.toLowerCase().trim() : "";
         if (/mpegurl|m3u8|^hls$|^dash$|dash\+xml|mpd/.test(ty)) return "hls";
-        if (/^(?:video|audio)\//.test(ty) || /^(?:mp4|m4v|webm|mov|ogv|ogg|aac|mp3)$/.test(ty)) return "progressive";
+        if (/^audio\//.test(ty) || /^(?:aac|mp3|m4a|ogg|oga|opus|flac|wav|weba)$/.test(ty)) return "audio";
+        if (/^video\//.test(ty) || /^(?:mp4|m4v|webm|mov|ogv)$/.test(ty)) return "progressive";
         if (HLS_MASTER_RE.test(url) || /\.mpd(?:[?#]|$)/i.test(url)) return "hls";
         if (PROGRESSIVE_RE.test(url)) return "progressive";
+        if (AUDIO_RE.test(url)) return "audio";
         return "hls";
     }
 
@@ -365,6 +372,9 @@
             url = absolutize(url);
             const kind = mediaKindOf(url, type);
             if (kind === "hls") hls.push(url);
+            // Audio has no resolution (height 0); the mark rides to Java as the
+            // variant's audioOnly so the entity types/downloads as audio.
+            else if (kind === "audio") variants.push({ url, height: 0, audio: true });
             else if (kind === "progressive") variants.push({ url, height: heightFrom(label, url) });
         };
         // The item's own resolved `file`, then each entry of `sources` (qualities).
@@ -491,6 +501,11 @@
         const groups = [];
         for (let i = 0; i < n; i++) {
             const el = els[i];
+            // An <audio> ELEMENT declares its sources audio regardless of the
+            // file extension (a tokenized/.mp4-container src on <audio> is still
+            // audio — m4a) — the element is the site's own statement of kind.
+            let audioEl = false;
+            try { audioEl = /^audio$/i.test(el.tagName || ""); } catch (_) { audioEl = false; }
             // Collect (url -> {type,label}) for THIS element, deduped, preferring an
             // EXPLICIT type over none. A <video> with a <source type="video/mp4">
             // ALSO exposes the SAME url via currentSrc with NO type — without this
@@ -536,6 +551,9 @@
                 const info = entry[1];
                 const kind = mediaKindOf(url, info.type);
                 if (kind === "hls") hls.push(url);
+                else if (kind === "audio" || (kind === "progressive" && audioEl)) {
+                    variants.push({ url, height: 0, audio: true });
+                }
                 else if (kind === "progressive") variants.push({ url, height: heightFrom(info.label, url) });
             }
             if (variants.length || hls.length) {
@@ -610,6 +628,7 @@
                 url = absolutize(url);
                 const kind = mediaKindOf(url, type);
                 if (kind === "hls") hls.push(url);
+                else if (kind === "audio") variants.push({ url, height: 0, audio: true });
                 else if (kind === "progressive") variants.push({ url, height: heightFrom(label, url) });
             };
             let srcs;
@@ -796,9 +815,16 @@
         // Categorise one media-key URL into a group (variant / hls / delegate).
         function classifyInto(g, url, qualityHint, owner, ownerKeys) {
             if (HLS_MASTER_RE.test(url)) { g.hls.push(url); return; }
-            if (PROGRESSIVE_RE.test(url) || AUDIO_RE.test(url)) {
-                // Audio has no resolution → heightFrom returns 0, which the emit
-                // renders as a no-resolution variant (JsonHelper shows no "WxH").
+            if (AUDIO_RE.test(url)) {
+                // Audio: no resolution (height 0 — JsonHelper renders no "WxH"),
+                // and the mark rides to Java as the variant's audioOnly so the
+                // entity types/downloads as AUDIO. Without it the skip-probe
+                // variant path stamped video/mp4 on the entity (podverse's
+                // __NEXT_DATA__ mp3 showed up as a video).
+                g.variants.push({ url, height: 0, audio: true });
+                return;
+            }
+            if (PROGRESSIVE_RE.test(url)) {
                 g.variants.push({ url, height: heightFrom(qualityHint, url) });
                 return;
             }
@@ -931,6 +957,10 @@
                 || (typeof it.src === "string" && it.src)
                 || (typeof it.file === "string" && it.file);
             if (typeof u !== "string" || !/^https?:\/\//i.test(u)) continue;
+            if (AUDIO_RE.test(u)) {
+                out.push({ url: u, height: 0, audio: true });
+                continue;
+            }
             const h = heightFrom(it.quality || it.height || it.label || it.res, u);
             out.push({ url: u, height: h });
         }
@@ -1058,7 +1088,15 @@
             for (const v of progressive) { if (!byUrl.has(v.url)) byUrl.set(v.url, v); }
             const variants = Array.from(byUrl.values())
                 .sort((a, b) => (b.height || 0) - (a.height || 0))
-                .map(v => ({ url: v.url, width: 0, height: v.height || 0 }));
+                .map(v => {
+                    const out = { url: v.url, width: 0, height: v.height || 0 };
+                    // Declared audio (AUDIO_RE / <audio> element / audio MIME):
+                    // JsonHelper.parseVariants reads audioOnly and the skip-probe
+                    // variant path keeps the entity audio-typed (raw mp3 via
+                    // HttpDownloadStrategy) instead of stamping video/mp4.
+                    if (v.audio) out.audioOnly = true;
+                    return out;
+                });
             if (variants.length && !sentKeys.has(variants[0].url)) {
                 sentKeys.add(variants[0].url);
                 // Navigator hints so the native download can replicate the
