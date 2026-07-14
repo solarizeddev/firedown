@@ -1,0 +1,15 @@
+<!-- Material Symbols "host" (fonts.google.com/icons, outlined 24px) for the
+     Settings TURN-relay row — two server towers, the relay host itself.
+     Symbols use a 0..-960 viewBox, hence the translate group. Untinted:
+     BasePreferenceFragment.tintIcons() colors it like its siblings. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="960"
+    android:viewportHeight="960">
+  <group android:translateY="960">
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M160,-120q-33,0 -56.5,-23.5T80,-200v-560q0,-33 23.5,-56.5T160,-840h200q33,0 56.5,23.5T440,-760v560q0,33 -23.5,56.5T360,-120L160,-120ZM600,-120q-33,0 -56.5,-23.5T520,-200v-560q0,-33 23.5,-56.5T600,-840h200q33,0 56.5,23.5T880,-760v560q0,33 -23.5,56.5T800,-120L600,-120ZM160,-200h200v-560L160,-760v560ZM600,-200h200v-560L600,-760v560ZM200,-360h120v-80L200,-440v80ZM640,-360h120v-80L640,-440v80ZM200,-480h120v-80L200,-560v80ZM640,-480h120v-80L640,-560v80ZM200,-600h120v-80L200,-680v80ZM640,-600h120v-80L640,-680v80Z"/>
+  </group>
+</vector>
