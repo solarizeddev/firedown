@@ -321,7 +321,8 @@ public class SettingsFragment extends BasePreferenceFragment
 
         } else if (Preferences.SETTINGS_BLOCK_COOKIE_NOTICES.equals(key)) {
 
-            boolean value = sharedPreferences.getBoolean(key, false);
+            boolean value = sharedPreferences.getBoolean(key,
+                    Preferences.DEFAULT_BLOCK_COOKIE_NOTICES);
 
             mGeckoRuntimeHelper.setCookies(value);
 

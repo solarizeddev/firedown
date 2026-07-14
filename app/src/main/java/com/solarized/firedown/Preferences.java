@@ -571,7 +571,12 @@ public class Preferences {
     public static final String SETTINGS_TABS_ARCHIVE_BANNER_LAST_INTERVAL = "com.solarized.firedown.preferences.tabs.archive.banner.last.interval";
 
     public static final String SETTINGS_BLOCK_COOKIE_NOTICES = "com.solarized.firedown.preferences.ublock.block.cookie.notices";
-    public static final boolean DEFAULT_BLOCK_COOKIE_NOTICES = false;
+    /** Default ON: consent banners are the web's biggest annoyance and hiding
+     *  one never GRANTS consent (no stored answer = GDPR's no). Flipping the
+     *  default needed no new key — no semantic inversion (true still means
+     *  "block") and defaults are never persisted, same as the app-redirects
+     *  flip. The toggle stays for the rare consent-gated site. */
+    public static final boolean DEFAULT_BLOCK_COOKIE_NOTICES = true;
 
     public static final String DEFAULT_SEARCH_ENGINE = "DuckDuckGo";
 

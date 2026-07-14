@@ -95,42 +95,6 @@
 
     </PreferenceCategory>
 
-    <!-- Direct share (WebRTC P2P) networking. Deliberately just TWO rows — the
-         defaults work everywhere (STUN + the built-in Firedown relay fetched
-         per share), so this category only carries the overrides. No category
-         summary and no niche extras: a "Link relay" signaling row was removed
-         (unnecessary complexity — the built-in relay covers the hard networks,
-         and the plumbing stays a config-flip away in Preferences). -->
-    <PreferenceCategory
-        android:title="@string/settings_p2p_category"
-        app:iconSpaceReserved="false"
-        app:singleLineTitle="false">
-
-        <!-- Address-discovery helper (STUN). A click-row (not a ListPreference)
-             so "Custom…" stays re-editable — a ListPreference fires no change
-             event when you re-pick the already-selected custom entry. The
-             chooser + URL editor live in SettingsFragment. -->
-        <Preference
-            android:key="com.solarized.firedown.preferences.p2p.stun.server"
-            android:summary="@string/settings_p2p_stun_summary"
-            android:title="@string/settings_p2p_stun"
-            app:singleLineTitle="false"
-            app:icon="@drawable/ic_p2p_24" />
-
-        <!-- Custom TURN relay, ADDITIVE: the built-in Firedown relay is always
-             on (ephemeral creds fetched per share — see P2pShareController),
-             so this only adds the user's own relay for networks the built-in
-             can't cross. Editor (url + username + password) lives in
-             SettingsFragment; bytes stay E2E-encrypted through any relay. -->
-        <Preference
-            android:key="com.solarized.firedown.preferences.p2p.turn.url"
-            android:summary="@string/settings_p2p_turn_summary"
-            android:title="@string/settings_p2p_turn"
-            app:singleLineTitle="false"
-            app:icon="@drawable/host_24" />
-
-    </PreferenceCategory>
-
     <PreferenceCategory
         android:title="@string/settings_privacy"
         app:iconSpaceReserved="false">
@@ -152,23 +116,7 @@
 
 
         <SwitchPreferenceCompat
-            android:defaultValue="false"
-            app:singleLineTitle="false"
-            android:key="com.solarized.firedown.preferences.browser.enable.resist.fingerprinting"
-            android:summary="@string/spoof_timezone_summary"
-            android:title="@string/fingerprint_protection"
-            app:icon="@drawable/fingerprint_24" />
-
-        <SwitchPreferenceCompat
-            android:defaultValue="false"
-            app:singleLineTitle="false"
-            android:key="com.solarized.firedown.preferences.browser.spoof.timezone"
-            android:summary="@string/settings_utc_timezone_summary"
-            android:title="@string/settings_utc_timezone"
-            app:icon="@drawable/schedule_24" />
-
-        <SwitchPreferenceCompat
-            android:defaultValue="false"
+            android:defaultValue="true"
             app:singleLineTitle="false"
             android:key="com.solarized.firedown.preferences.ublock.block.cookie.notices"
             android:summary="@string/settings_block_cookie_notices_summary"
@@ -210,6 +158,22 @@
             android:summary="@string/settings_disk_cache_disabled_summary"
             android:title="@string/settings_disk_cache_disabled"
             app:icon="@drawable/ic_memory_24" />
+
+        <SwitchPreferenceCompat
+            android:defaultValue="false"
+            app:singleLineTitle="false"
+            android:key="com.solarized.firedown.preferences.browser.enable.resist.fingerprinting"
+            android:summary="@string/spoof_timezone_summary"
+            android:title="@string/fingerprint_protection"
+            app:icon="@drawable/fingerprint_24" />
+
+        <SwitchPreferenceCompat
+            android:defaultValue="false"
+            app:singleLineTitle="false"
+            android:key="com.solarized.firedown.preferences.browser.spoof.timezone"
+            android:summary="@string/settings_utc_timezone_summary"
+            android:title="@string/settings_utc_timezone"
+            app:icon="@drawable/schedule_24" />
 
 
         <SwitchPreferenceCompat
@@ -297,6 +261,42 @@
 
         </Preference>
 
+
+    </PreferenceCategory>
+
+    <!-- Direct share (WebRTC P2P) networking. Deliberately just TWO rows — the
+         defaults work everywhere (STUN + the built-in Firedown relay fetched
+         per share), so this category only carries the overrides. No category
+         summary and no niche extras: a "Link relay" signaling row was removed
+         (unnecessary complexity — the built-in relay covers the hard networks,
+         and the plumbing stays a config-flip away in Preferences). -->
+    <PreferenceCategory
+        android:title="@string/settings_p2p_category"
+        app:iconSpaceReserved="false"
+        app:singleLineTitle="false">
+
+        <!-- Address-discovery helper (STUN). A click-row (not a ListPreference)
+             so "Custom…" stays re-editable — a ListPreference fires no change
+             event when you re-pick the already-selected custom entry. The
+             chooser + URL editor live in SettingsFragment. -->
+        <Preference
+            android:key="com.solarized.firedown.preferences.p2p.stun.server"
+            android:summary="@string/settings_p2p_stun_summary"
+            android:title="@string/settings_p2p_stun"
+            app:singleLineTitle="false"
+            app:icon="@drawable/ic_p2p_24" />
+
+        <!-- Custom TURN relay, ADDITIVE: the built-in Firedown relay is always
+             on (ephemeral creds fetched per share — see P2pShareController),
+             so this only adds the user's own relay for networks the built-in
+             can't cross. Editor (url + username + password) lives in
+             SettingsFragment; bytes stay E2E-encrypted through any relay. -->
+        <Preference
+            android:key="com.solarized.firedown.preferences.p2p.turn.url"
+            android:summary="@string/settings_p2p_turn_summary"
+            android:title="@string/settings_p2p_turn"
+            app:singleLineTitle="false"
+            app:icon="@drawable/host_24" />
 
     </PreferenceCategory>
 
