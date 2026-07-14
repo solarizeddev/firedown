@@ -5,6 +5,7 @@ import android.text.format.Formatter;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -54,6 +55,17 @@ public class P2pSendFragment extends P2pShareBaseFragment
     private boolean mLinkShared;
     private String mLastClipTried;
     private boolean mNearbyExpanded;
+
+    /** Clipboard auto-pickup runs on WINDOW FOCUS gain, not onResume: since
+     *  API 29 getPrimaryClip() returns null unless the app currently holds
+     *  input focus, which is granted AFTER onResume — an onResume read comes
+     *  back empty on modern devices and the pickup would silently never fire. */
+    private final ViewTreeObserver.OnWindowFocusChangeListener mFocusListener =
+            hasFocus -> {
+                if (hasFocus) {
+                    maybePickupReplyFromClipboard();
+                }
+            };
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -128,7 +140,18 @@ public class P2pSendFragment extends P2pShareBaseFragment
         mView.findViewById(R.id.p2p_stop).setOnClickListener(v -> confirmThenClose());
         mView.findViewById(R.id.p2p_retry).setOnClickListener(v -> restart());
 
+        mView.getViewTreeObserver().addOnWindowFocusChangeListener(mFocusListener);
+
         return mView;
+    }
+
+    @Override
+    public void onDestroyView() {
+        if (mView != null) {
+            mView.getViewTreeObserver().removeOnWindowFocusChangeListener(mFocusListener);
+        }
+        mView = null;
+        super.onDestroyView();
     }
 
     @Override
@@ -157,15 +180,16 @@ public class P2pSendFragment extends P2pShareBaseFragment
         mP2pController.startSend(mDownloadEntity, this);
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        // Auto-pickup: a sender who copied the receiver's reply in a messenger
-        // and switched back shouldn't have to find a paste button. Only while
-        // WAITING (offer out, link shared), silent when the clipboard has no
-        // reply, and each clip value is tried once — a soft bad-code snack
-        // must not re-fire on every resume. Android's paste toast makes the
-        // read visible to the user; that's honest, not a bug.
+    /**
+     * Auto-pickup: a sender who copied the receiver's reply in a messenger and
+     * switched back shouldn't have to find a paste button. Fired from
+     * {@link #mFocusListener} on window-focus gain (see its note on the API 29
+     * focus requirement). Only while WAITING (offer out, link shared), silent
+     * when the clipboard has no reply, and each clip value is tried once — a
+     * soft bad-code snack must not re-fire on every focus flip. Android's
+     * paste toast makes the read visible to the user; that's honest, not a bug.
+     */
+    private void maybePickupReplyFromClipboard() {
         if (mView == null || !mLinkShared
                 || mView.findViewById(R.id.p2p_code_group).getVisibility() != View.VISIBLE) {
             return;

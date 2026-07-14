@@ -125,6 +125,7 @@ public class P2pReceiveFragment extends P2pShareBaseFragment
             if (base != null && !base.isEmpty() && id != null && !id.isEmpty()) {
                 mSignalingBase = base;
                 mSignalingId = id;
+                mArrivedRemote = true; // a relay link is inherently remote
             }
         }
 

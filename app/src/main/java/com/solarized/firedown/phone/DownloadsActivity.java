@@ -92,8 +92,13 @@ public class DownloadsActivity extends BaseActivity {
         if (P2pShareController.DEEP_LINK_SCHEME.equals(d.getScheme())) {
             return true;
         }
-        return ("https".equals(d.getScheme()) || "http".equals(d.getScheme()))
-                && d.getPath() != null && d.getPath().startsWith("/s");
+        // Exactly /s (the share link) or /s/<id> (relay) — a bare startsWith
+        // would also swallow explicit-component VIEW intents for /settings etc.
+        String path = d.getPath();
+        if (path == null || !("https".equals(d.getScheme()) || "http".equals(d.getScheme()))) {
+            return false;
+        }
+        return "/s".equals(path) || path.startsWith("/s/");
     }
 
     /**
