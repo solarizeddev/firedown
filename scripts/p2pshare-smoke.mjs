@@ -135,7 +135,7 @@ check("wrong prefix rejected", badDecode === "bad-code");
 // the guard against a bad settings value breaking the ctor. Exercise it.
 const iceClean = await vm.runInContext(`sanitizeIceServers([
   { urls: "stun:stun.cloudflare.com:3478" },
-  { urls: ["turn:openrelay.metered.ca:80","turn:openrelay.metered.ca:443"], username: "openrelayproject", credential: "openrelayproject" },
+  { urls: ["turn:relay.example:80","turn:relay.example:443"], username: "user", credential: "pass" },
   { urls: "https://evil.example/not-ice" },
   { urls: "" },
   { nope: 1 },
@@ -144,7 +144,7 @@ const iceClean = await vm.runInContext(`sanitizeIceServers([
 check("ice sanitizer keeps only valid stun/turn entries",
     iceClean.length === 3
     && iceClean[0].urls[0] === "stun:stun.cloudflare.com:3478"
-    && iceClean[1].urls.length === 2 && iceClean[1].username === "openrelayproject"
+    && iceClean[1].urls.length === 2 && iceClean[1].username === "user"
     && iceClean[2].urls[0] === "turn:custom:3478" && iceClean[2].credential === "p");
 check("ice sanitizer normalizes single url to array",
     Array.isArray(iceClean[0].urls) && iceClean[0].urls.length === 1);

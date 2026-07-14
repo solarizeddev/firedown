@@ -169,8 +169,9 @@ function sanitizeIceServers(list) {
 }
 
 async function newPeerConnection(ice) {
-  // ice is the RTCIceServer[] Java built (STUN echo + default openrelay TURN,
-  // plus any custom TURN). Sanitized so a bad entry can't break the ctor.
+  // ice is the RTCIceServer[] Java built from the user's own settings (STUN
+  // echo + any user-configured TURN). Sanitized so a bad entry can't break
+  // the ctor.
   const config = {};
   const servers = sanitizeIceServers(ice || []);
   if (servers.length > 0) {

@@ -276,22 +276,15 @@ public class Preferences {
     public static final String SETTINGS_P2P_TURN_USER = "com.solarized.firedown.preferences.p2p.turn.user";
     public static final String SETTINGS_P2P_TURN_CRED = "com.solarized.firedown.preferences.p2p.turn.cred";
 
-    /**
-     * Default TURN relay, ALWAYS included (the Amethyst model): the free public
-     * Open Relay Project (openrelay.metered.ca) with its well-known public
-     * credentials. It's the fallback that carries the (DTLS-encrypted) file
-     * when no direct path exists — VPN / CGNAT — so a share "just works" with
-     * zero setup. A user-configured TURN is ADDED to this, not a replacement.
-     * The three endpoints (80, 443, 443/tcp) cover progressively more hostile
-     * networks; they share one credential, so they're one iceServers entry.
-     */
-    public static final String[] DEFAULT_P2P_TURN_URLS = {
-            "turn:openrelay.metered.ca:80",
-            "turn:openrelay.metered.ca:443",
-            "turn:openrelay.metered.ca:443?transport=tcp",
-    };
-    public static final String DEFAULT_P2P_TURN_USER = "openrelayproject";
-    public static final String DEFAULT_P2P_TURN_CRED = "openrelayproject";
+    // NOTE: there is deliberately NO baked-in default TURN relay. A relay
+    // shipped in the (open-source) app would carry PUBLIC credentials anyone
+    // could abuse, and a hardcoded fallback list violates the P2P invariant in
+    // CLAUDE.md ("At most TWO iceServers, both from the user's own settings —
+    // never a fallback list … Don't ship a default/baked-in relay"). The
+    // metered first-party relay (paid, unlinkable, per-use — see the cloud
+    // mint) plugs in later through a credential PROVIDER seam in
+    // P2pShareController.putIceServers, not a constant here. Until then TURN is
+    // purely user-configured (their own coturn), off by default.
 
     /** A configured TURN relay, or {@code null} when none is set. */
     public static final class P2pTurn {

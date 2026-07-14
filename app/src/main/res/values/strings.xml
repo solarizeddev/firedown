@@ -829,9 +829,9 @@
     <string name="settings_p2p_stun_custom">Custom…</string>
     <string name="settings_p2p_stun_custom_title">Custom STUN server</string>
     <string name="settings_p2p_stun_invalid">Enter a valid address, e.g. stun:host:3478</string>
-    <string name="settings_p2p_turn">Extra TURN relay</string>
-    <string name="settings_p2p_turn_summary">A default relay is always included, so sharing works even over mobile data or a VPN. Add your own here only for networks the default can\'t cross.</string>
-    <string name="settings_p2p_turn_message">Added alongside the built-in relay, not instead of it. A relay is only used when a direct connection fails; your files stay encrypted end-to-end through it.</string>
+    <string name="settings_p2p_turn">TURN relay</string>
+    <string name="settings_p2p_turn_summary">Off — set a relay to connect devices that can\'t reach each other directly (both on mobile data, or one behind a VPN).</string>
+    <string name="settings_p2p_turn_message">Optional. Only used when a direct connection fails; your files stay encrypted end-to-end through the relay.</string>
     <string name="settings_p2p_turn_url_hint">turn:host:3478</string>
     <string name="settings_p2p_turn_user_hint">Username</string>
     <string name="settings_p2p_turn_cred_hint">Password</string>

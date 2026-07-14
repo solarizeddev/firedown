@@ -367,12 +367,21 @@ public class P2pShareController {
     }
 
     /**
-     * Build the full {@code iceServers} list for a start command (the RTC
-     * shape: each entry {@code {urls, username?, credential?}}). Always
-     * included: the chosen STUN echo + the default openrelay TURN (so a share
-     * works out of the box, VPN/CGNAT included — the Amethyst model). A
-     * user-configured TURN is ADDED for restrictive networks, never a
-     * replacement.
+     * Build the {@code iceServers} list for a start command (RTC shape: each
+     * entry {@code {urls, username?, credential?}}). Per the CLAUDE.md P2P
+     * invariant these come ONLY from the user's own settings — never a
+     * baked-in fallback list: entry one is the chosen STUN echo, entry two is
+     * the OPTIONAL user-configured TURN (their own coturn), off by default. So
+     * a share with default settings contacts nothing but the STUN server, and a
+     * genuinely-unreachable pair (VPN/CGNAT) fails honestly rather than leaking
+     * to a public relay.
+     *
+     * <p><b>Relay-provider seam.</b> The first-party metered relay (paid,
+     * unlinkable, per-use via the cloud mint) will add a THIRD, credentialed
+     * entry here — short-lived coturn REST creds fetched against the account's
+     * relay-GB balance — at {@link #appendMeteredRelay(JSONArray)}. It's a
+     * no-op until that provider ships, keeping this method's contract (≤2
+     * user-settings entries) intact today.
      */
     private void putIceServers(JSONObject command) throws JSONException {
         JSONArray servers = new JSONArray();
@@ -382,18 +391,8 @@ public class P2pShareController {
             servers.put(new JSONObject().put("urls", stun));
         }
 
-        // Default TURN — always on. One entry, its three endpoints sharing a
-        // credential (urls as an array is valid RTCIceServer).
-        JSONArray defaultTurn = new JSONArray();
-        for (String u : Preferences.DEFAULT_P2P_TURN_URLS) {
-            defaultTurn.put(u);
-        }
-        servers.put(new JSONObject()
-                .put("urls", defaultTurn)
-                .put("username", Preferences.DEFAULT_P2P_TURN_USER)
-                .put("credential", Preferences.DEFAULT_P2P_TURN_CRED));
-
-        // Additive custom TURN (Settings), for networks the defaults can't cross.
+        // Optional user-configured TURN (Settings → Direct share), for peers
+        // that can't reach each other directly. Off by default.
         Preferences.P2pTurn turn = Preferences.getP2pTurn(mSharedPreferences);
         if (turn != null) {
             JSONObject entry = new JSONObject().put("urls", turn.url);
@@ -406,7 +405,21 @@ public class P2pShareController {
             servers.put(entry);
         }
 
+        appendMeteredRelay(servers);
+
         command.put("iceServers", servers);
+    }
+
+    /**
+     * Seam for the first-party metered relay (see the cloud mint / relay-GB
+     * design). When it ships, this fetches short-lived coturn REST credentials
+     * against the anonymous account's relay-GB balance and appends them as an
+     * {@code iceServers} entry — so a paying user's VPN/CGNAT share falls back
+     * to the firedown relay, per-use and unlinkable, with no config. Deliberately
+     * a no-op until then: no relay ships in the app, and nothing is contacted.
+     */
+    private void appendMeteredRelay(JSONArray servers) {
+        // Intentionally empty — the metered relay provider is not wired yet.
     }
 
     /**

@@ -117,9 +117,9 @@
             app:singleLineTitle="false"
             app:icon="@drawable/ic_p2p_24" />
 
-        <!-- Optional TURN relay: additive. A default relay is always included so
-             a share works out of the box (VPN/CGNAT too); this adds a second
-             relay for networks the default can't cross. Editor (url + username +
+        <!-- Optional TURN relay: off by default, no relay ships baked in. Only
+             needed to connect peers that can't reach each other directly (both
+             mobile data, or one on a full-tunnel VPN). Editor (url + username +
              password) lives in SettingsFragment; bytes stay E2E-encrypted. -->
         <Preference
             android:key="com.solarized.firedown.preferences.p2p.turn.url"
