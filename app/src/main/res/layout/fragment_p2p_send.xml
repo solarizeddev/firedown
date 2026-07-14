@@ -48,18 +48,6 @@
                 android:orientation="vertical"
                 android:paddingBottom="24dp">
 
-                <!-- Screen identity: the encrypted-cloud illustration frames the
-                     share as a secure, private transfer. Compact so the offer QR
-                     below stays above the fold. -->
-                <ImageView
-                    android:layout_width="wrap_content"
-                    android:layout_height="96dp"
-                    android:layout_gravity="center_horizontal"
-                    android:layout_marginTop="8dp"
-                    android:adjustViewBounds="true"
-                    android:contentDescription="@null"
-                    android:src="@drawable/ill_cloud" />
-
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -177,8 +165,8 @@
 
                         <ImageView
                             android:id="@+id/p2p_qr"
-                            android:layout_width="208dp"
-                            android:layout_height="208dp"
+                            android:layout_width="232dp"
+                            android:layout_height="232dp"
                             android:background="@drawable/bg_p2p_qr"
                             android:contentDescription="@string/p2p_qr_content_desc"
                             android:padding="12dp" />
@@ -234,7 +222,10 @@
 
                 </LinearLayout>
 
-                <!-- Transfer stage -->
+                <!-- Transfer stage. The encrypted-cloud illustration lives HERE
+                     (not as a screen header, where it read too small): the
+                     transfer screen is otherwise bare, and this is the moment
+                     the "sealed data in flight" image describes. -->
                 <LinearLayout
                     android:id="@+id/p2p_progress_group"
                     android:layout_width="match_parent"
@@ -246,6 +237,15 @@
                     android:padding="22dp"
                     android:visibility="gone"
                     tools:visibility="visible">
+
+                    <ImageView
+                        android:layout_width="wrap_content"
+                        android:layout_height="140dp"
+                        android:layout_gravity="center_horizontal"
+                        android:layout_marginBottom="16dp"
+                        android:adjustViewBounds="true"
+                        android:contentDescription="@null"
+                        android:src="@drawable/ill_cloud" />
 
                     <com.google.android.material.progressindicator.LinearProgressIndicator
                         android:id="@+id/p2p_progress_bar"

@@ -432,7 +432,6 @@
     <string name="p2p_scan_hint">Suuna kaamera saatja koodile</string>
     <string name="p2p_camera_denied">Skannimiseks on vaja kaameraluba. Selle asemel võid koodi kleepida.</string>
     <string name="settings_p2p_category">Otsejagamine</string>
-    <string name="settings_p2p_category_summary">Ühendusabilised failide saatmiseks seadmelt seadmele. Vaikeseaded töötavad samas Wi-Fi võrgus — neid on vaja ainult erinevates võrkudes.</string>
     <string name="settings_p2p_stun">STUN-server</string>
     <string name="settings_p2p_stun_summary">Aitab kahel seadmel otsejagamise ajal üksteist interneti kaudu leida. Sellele saadetakse ainult sinu võrguaadress.</string>
     <string name="settings_p2p_stun_custom">Kohandatud…</string>
@@ -447,8 +446,8 @@
     <string name="p2p_qr_content_desc">Sinu jagamiskood QR-koodina</string>
     <string name="settings_p2p_stun_invalid">Sisesta kehtiv aadress, nt stun:host:3478</string>
     <string name="settings_p2p_turn">TURN-relee</string>
-    <string name="settings_p2p_turn_summary">Väljas — määra relee, et ühendada seadmed, mis ei saa üksteist otse leida (mõlemad mobiilsel andmesidel või üks VPN-i taga).</string>
-    <string name="settings_p2p_turn_message">Valikuline. Kasutatakse ainult siis, kui otseühendus ebaõnnestub; sinu failid jäävad relee kaudu läbivalt krüptituks.</string>
+    <string name="settings_p2p_turn_summary">Sisseehitatud relee on alati sees, nii et jagamine töötab ka VPN-i ja mobiilvõrkude taga. Lisa oma relee ainult siis, kui seda vajad.</string>
+    <string name="settings_p2p_turn_message">Lisatakse sisseehitatud relee kõrvale. Releed kasutatakse ainult siis, kui otseühendus ebaõnnestub; sinu failid läbivad seda otsast otsani krüptituna.</string>
     <string name="settings_p2p_turn_url_hint">turn:host:3478</string>
     <string name="settings_p2p_turn_user_hint">Kasutajanimi</string>
     <string name="settings_p2p_turn_cred_hint">Parool</string>

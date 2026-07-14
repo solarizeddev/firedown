@@ -694,7 +694,6 @@
     <string name="p2p_scan_hint">Richte die Kamera auf den Code des Absenders</string>
     <string name="p2p_camera_denied">Zum Scannen wird Kamerazugriff benötigt. Du kannst den Code stattdessen einfügen.</string>
     <string name="settings_p2p_category">Direkt teilen</string>
-    <string name="settings_p2p_category_summary">Verbindungshelfer zum Senden von Dateien von Gerät zu Gerät. Die Standardeinstellungen funktionieren im selben Wi-Fi — du brauchst diese nur in verschiedenen Netzwerken.</string>
     <string name="settings_p2p_stun">STUN-Server</string>
     <string name="settings_p2p_stun_summary">Hilft zwei Geräten, sich beim direkten Teilen über das Internet zu finden. Es wird nur deine Netzwerkadresse an ihn gesendet.</string>
     <string name="settings_p2p_stun_custom">Benutzerdefiniert…</string>
@@ -709,8 +708,8 @@
     <string name="p2p_qr_content_desc">Dein Teilen-Code als QR</string>
     <string name="settings_p2p_stun_invalid">Gib eine gültige Adresse ein, z. B. stun:host:3478</string>
     <string name="settings_p2p_turn">TURN-Relay</string>
-    <string name="settings_p2p_turn_summary">Aus — lege ein Relay fest, um Geräte zu verbinden, die sich nicht direkt erreichen können (beide im Mobilfunknetz oder eines hinter einem VPN).</string>
-    <string name="settings_p2p_turn_message">Optional. Wird nur verwendet, wenn eine direkte Verbindung fehlschlägt; deine Dateien bleiben über das Relay Ende-zu-Ende verschlüsselt.</string>
+    <string name="settings_p2p_turn_summary">Ein eingebautes Relay ist immer aktiv — Teilen funktioniert auch hinter VPNs und in Mobilfunknetzen. Füge ein eigenes nur hinzu, wenn du es brauchst.</string>
+    <string name="settings_p2p_turn_message">Wird zusätzlich zum eingebauten Relay genutzt. Ein Relay kommt nur zum Einsatz, wenn keine direkte Verbindung möglich ist; deine Dateien bleiben dabei Ende-zu-Ende verschlüsselt.</string>
     <string name="settings_p2p_turn_url_hint">turn:host:3478</string>
     <string name="settings_p2p_turn_user_hint">Benutzername</string>
     <string name="settings_p2p_turn_cred_hint">Passwort</string>

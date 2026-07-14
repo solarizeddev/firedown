@@ -95,14 +95,14 @@
 
     </PreferenceCategory>
 
-    <!-- Direct share (WebRTC P2P) networking. Its own category, out of the
-         everyday Downloads list: these are advanced connection-helper settings
-         that most users never touch (the defaults just work on the same
-         Wi-Fi). The category summary explains the feature; each row's summary
-         explains that helper. -->
+    <!-- Direct share (WebRTC P2P) networking. Deliberately just TWO rows — the
+         defaults work everywhere (STUN + the built-in Firedown relay fetched
+         per share), so this category only carries the overrides. No category
+         summary and no niche extras: a "Link relay" signaling row was removed
+         (unnecessary complexity — the built-in relay covers the hard networks,
+         and the plumbing stays a config-flip away in Preferences). -->
     <PreferenceCategory
         android:title="@string/settings_p2p_category"
-        android:summary="@string/settings_p2p_category_summary"
         app:iconSpaceReserved="false"
         app:singleLineTitle="false">
 
@@ -117,27 +117,17 @@
             app:singleLineTitle="false"
             app:icon="@drawable/ic_p2p_24" />
 
-        <!-- Optional TURN relay: off by default, no relay ships baked in. Only
-             needed to connect peers that can't reach each other directly (both
-             mobile data, or one on a full-tunnel VPN). Editor (url + username +
-             password) lives in SettingsFragment; bytes stay E2E-encrypted. -->
+        <!-- Custom TURN relay, ADDITIVE: the built-in Firedown relay is always
+             on (ephemeral creds fetched per share — see P2pShareController),
+             so this only adds the user's own relay for networks the built-in
+             can't cross. Editor (url + username + password) lives in
+             SettingsFragment; bytes stay E2E-encrypted through any relay. -->
         <Preference
             android:key="com.solarized.firedown.preferences.p2p.turn.url"
             android:summary="@string/settings_p2p_turn_summary"
             android:title="@string/settings_p2p_turn"
             app:singleLineTitle="false"
-            app:iconSpaceReserved="true" />
-
-        <!-- Optional signaling relay: off by default. Lets a shared LINK connect
-             two devices on DIFFERENT networks with no reply scan — the relay
-             brokers only the ~1 KB handshake, never the file. Same-network
-             shares never touch it. Editor (url) lives in SettingsFragment. -->
-        <Preference
-            android:key="com.solarized.firedown.preferences.p2p.signaling.url"
-            android:summary="@string/settings_p2p_signaling_summary"
-            android:title="@string/settings_p2p_signaling"
-            app:singleLineTitle="false"
-            app:iconSpaceReserved="true" />
+            app:icon="@drawable/cloud_outline_24" />
 
     </PreferenceCategory>
 

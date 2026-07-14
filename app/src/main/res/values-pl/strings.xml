@@ -562,7 +562,6 @@
     <string name="p2p_scan_hint">Skieruj aparat na kod nadawcy</string>
     <string name="p2p_camera_denied">Do skanowania potrzebny jest dostęp do aparatu. Zamiast tego możesz wkleić kod.</string>
     <string name="settings_p2p_category">Udostępnianie bezpośrednie</string>
-    <string name="settings_p2p_category_summary">Pomocnicy połączenia do wysyłania plików między urządzeniami. Ustawienia domyślne działają w tej samej sieci Wi-Fi — potrzebujesz ich tylko w różnych sieciach.</string>
     <string name="settings_p2p_stun">Serwer STUN</string>
     <string name="settings_p2p_stun_summary">Pomaga dwóm urządzeniom odnaleźć się przez internet podczas bezpośredniego udostępniania. Wysyłany jest do niego wyłącznie Twój adres sieciowy.</string>
     <string name="settings_p2p_stun_custom">Niestandardowy…</string>
@@ -577,8 +576,8 @@
     <string name="p2p_qr_content_desc">Twój kod udostępniania jako kod QR</string>
     <string name="settings_p2p_stun_invalid">Wprowadź prawidłowy adres, np. stun:host:3478</string>
     <string name="settings_p2p_turn">Przekaźnik TURN</string>
-    <string name="settings_p2p_turn_summary">Wyłączone — ustaw przekaźnik, aby połączyć urządzenia, które nie mogą się bezpośrednio odnaleźć (oba na danych komórkowych lub jedno za VPN).</string>
-    <string name="settings_p2p_turn_message">Opcjonalne. Używany tylko wtedy, gdy połączenie bezpośrednie się nie powiedzie; Twoje pliki pozostają szyfrowane od końca do końca przez przekaźnik.</string>
+    <string name="settings_p2p_turn_summary">Wbudowany przekaźnik jest zawsze włączony, więc udostępnianie działa nawet za VPN i w sieciach komórkowych. Dodaj własny tylko wtedy, gdy go potrzebujesz.</string>
+    <string name="settings_p2p_turn_message">Dodawany obok wbudowanego przekaźnika. Przekaźnik jest używany tylko wtedy, gdy bezpośrednie połączenie zawiedzie; Twoje pliki przechodzą przez niego zaszyfrowane od końca do końca.</string>
     <string name="settings_p2p_turn_url_hint">turn:host:3478</string>
     <string name="settings_p2p_turn_user_hint">Nazwa użytkownika</string>
     <string name="settings_p2p_turn_cred_hint">Hasło</string>

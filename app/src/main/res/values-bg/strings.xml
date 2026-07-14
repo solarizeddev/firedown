@@ -456,7 +456,6 @@
     <string name="p2p_scan_hint">Насочете камерата към кода на изпращача</string>
     <string name="p2p_camera_denied">За сканиране е необходим достъп до камерата. Вместо това можете да поставите кода.</string>
     <string name="settings_p2p_category">Директно споделяне</string>
-    <string name="settings_p2p_category_summary">Помощници за връзка при изпращане на файлове от устройство към устройство. Настройките по подразбиране работят в една и съща Wi-Fi мрежа — те са ви нужни само в различни мрежи.</string>
     <string name="settings_p2p_stun">STUN сървър</string>
     <string name="settings_p2p_stun_summary">Помага на две устройства да се открият през интернет при директно споделяне. Към него се изпраща само мрежовият ви адрес.</string>
     <string name="settings_p2p_stun_custom">Персонализиран…</string>
@@ -471,8 +470,8 @@
     <string name="p2p_qr_content_desc">Вашият код за споделяне като QR</string>
     <string name="settings_p2p_stun_invalid">Въведете валиден адрес, напр. stun:host:3478</string>
     <string name="settings_p2p_turn">TURN реле</string>
-    <string name="settings_p2p_turn_summary">Изключено — задайте реле, за да свържете устройства, които не могат да се достигнат директно (и двете на мобилни данни или едно зад VPN).</string>
-    <string name="settings_p2p_turn_message">По избор. Използва се само когато директната връзка е неуспешна; файловете ви остават криптирани от край до край през релето.</string>
+    <string name="settings_p2p_turn_summary">Вграден релеен сървър е винаги включен, така че споделянето работи дори зад VPN и мобилни мрежи. Добавете свой само ако ви трябва.</string>
+    <string name="settings_p2p_turn_message">Добавя се към вградения релеен сървър. Релето се използва само когато директната връзка е невъзможна; файловете ви остават шифровани от край до край през него.</string>
     <string name="settings_p2p_turn_url_hint">turn:host:3478</string>
     <string name="settings_p2p_turn_user_hint">Потребителско име</string>
     <string name="settings_p2p_turn_cred_hint">Парола</string>

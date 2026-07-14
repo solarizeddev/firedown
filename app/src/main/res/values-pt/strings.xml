@@ -563,7 +563,6 @@
     <string name="p2p_scan_hint">Aponte a câmera para o código do remetente</string>
     <string name="p2p_camera_denied">É necessário acesso à câmera para escanear. Você pode colar o código.</string>
     <string name="settings_p2p_category">Compartilhamento direto</string>
-    <string name="settings_p2p_category_summary">Auxiliares de conexão para enviar arquivos entre dispositivos. As configurações padrão funcionam na mesma rede Wi-Fi — você só precisa delas em redes diferentes.</string>
     <string name="settings_p2p_stun">Servidor STUN</string>
     <string name="settings_p2p_stun_summary">Ajuda dois dispositivos a se encontrarem pela internet durante um compartilhamento direto. Apenas o seu endereço de rede é enviado a ele.</string>
     <string name="settings_p2p_stun_custom">Personalizado…</string>
@@ -578,8 +577,8 @@
     <string name="p2p_qr_content_desc">Seu código de compartilhamento, como QR</string>
     <string name="settings_p2p_stun_invalid">Insira um endereço válido, ex.: stun:host:3478</string>
     <string name="settings_p2p_turn">Retransmissor TURN</string>
-    <string name="settings_p2p_turn_summary">Desativado — defina um retransmissor para conectar dispositivos que não conseguem se encontrar diretamente (ambos em dados móveis ou um atrás de uma VPN).</string>
-    <string name="settings_p2p_turn_message">Opcional. Usado apenas quando uma conexão direta falha; seus arquivos permanecem criptografados de ponta a ponta pelo retransmissor.</string>
+    <string name="settings_p2p_turn_summary">Um relay integrado está sempre ativo, então o compartilhamento funciona até atrás de VPNs e em redes móveis. Adicione o seu só se precisar.</string>
+    <string name="settings_p2p_turn_message">Adicionado junto ao relay integrado. Um relay só é usado quando a conexão direta falha; seus arquivos passam por ele criptografados de ponta a ponta.</string>
     <string name="settings_p2p_turn_url_hint">turn:host:3478</string>
     <string name="settings_p2p_turn_user_hint">Nome de usuário</string>
     <string name="settings_p2p_turn_cred_hint">Senha</string>

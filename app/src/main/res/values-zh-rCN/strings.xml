@@ -691,7 +691,6 @@
     <string name="p2p_scan_hint">将相机对准发送方的代码</string>
     <string name="p2p_camera_denied">扫描需要相机访问权限。你也可以改为粘贴代码。</string>
     <string name="settings_p2p_category">直接分享</string>
-    <string name="settings_p2p_category_summary">用于在设备之间发送文件的连接助手。默认设置在同一 Wi-Fi 下即可使用 — 只有在不同网络时才需要这些设置。</string>
     <string name="settings_p2p_stun">STUN 服务器</string>
     <string name="settings_p2p_stun_summary">在直接分享时帮助两台设备通过互联网找到彼此。只会向其发送你的网络地址。</string>
     <string name="settings_p2p_stun_custom">自定义…</string>
@@ -706,8 +705,8 @@
     <string name="p2p_qr_content_desc">你的分享代码，以 QR 形式</string>
     <string name="settings_p2p_stun_invalid">请输入有效地址，例如 stun:host:3478</string>
     <string name="settings_p2p_turn">TURN 中继</string>
-    <string name="settings_p2p_turn_summary">关闭——设置中继以连接无法直接相互访问的设备（两者都使用移动数据，或其中一个位于 VPN 之后）。</string>
-    <string name="settings_p2p_turn_message">可选。仅在直接连接失败时使用；你的文件通过中继时仍保持端到端加密。</string>
+    <string name="settings_p2p_turn_summary">内置中继始终开启，即使在 VPN 或移动网络后也能分享。仅在需要时才添加你自己的中继。</string>
+    <string name="settings_p2p_turn_message">与内置中继一起使用。仅当无法直接连接时才会使用中继；你的文件经过中继时保持端到端加密。</string>
     <string name="settings_p2p_turn_url_hint">turn:host:3478</string>
     <string name="settings_p2p_turn_user_hint">用户名</string>
     <string name="settings_p2p_turn_cred_hint">密码</string>

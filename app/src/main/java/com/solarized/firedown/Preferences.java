@@ -307,28 +307,23 @@ public class Preferences {
     }
 
     /**
-     * OPTIONAL signaling relay for the P2P share (see {@code signaling/server.js}).
-     * Default EMPTY = serverless: a shared link only completes on the same
-     * network (LAN answer return), and cross-network needs the reply code. Set
-     * to your relay origin (e.g. {@code https://sig.firedown.app}) to make a
-     * shared link work one-way on ANY network — the relay brokers only the
-     * ~1&nbsp;KB handshake, never the file. A trailing slash is trimmed.
+     * Signaling relay origin for the P2P share (see {@code signaling/server.js}),
+     * a BUILD-TIME constant — deliberately NOT a settings row (a niche knob;
+     * the "Link relay" preference + editor were removed to keep Direct share
+     * settings to the two rows people actually use). EMPTY = serverless, the
+     * shipping state: a shared link completes on the same network (LAN answer
+     * return) and cross-network uses the reply code; the built-in TURN relay
+     * covers the hard NETWORKS either way (signaling and media relay are
+     * orthogonal). If a first-party relay (e.g. {@code https://sig.firedown.app})
+     * is ever deployed, set it here and the whole one-link flow — controller
+     * plumbing, deep-link routing — comes alive unchanged.
      */
-    public static final String SETTINGS_P2P_SIGNALING_URL =
-            "com.solarized.firedown.preferences.p2p.signaling.url";
+    private static final String P2P_SIGNALING_DEFAULT = "";
 
-    /** The configured relay origin (no trailing slash), or empty when unset. */
+    /** The signaling relay origin (no trailing slash), or empty = serverless. */
     @NonNull
     public static String getP2pSignalingUrl(SharedPreferences sharedPreferences) {
-        String url = sharedPreferences.getString(SETTINGS_P2P_SIGNALING_URL, "");
-        if (url == null) {
-            return "";
-        }
-        url = url.trim();
-        while (url.endsWith("/")) {
-            url = url.substring(0, url.length() - 1);
-        }
-        return url;
+        return P2P_SIGNALING_DEFAULT;
     }
 
     @Nullable

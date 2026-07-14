@@ -695,7 +695,6 @@
     <string name="p2p_scan_hint">Pointez la caméra vers le code de l\'expéditeur</string>
     <string name="p2p_camera_denied">L\'accès à la caméra est nécessaire pour scanner. Vous pouvez coller le code à la place.</string>
     <string name="settings_p2p_category">Partage direct</string>
-    <string name="settings_p2p_category_summary">Assistants de connexion pour envoyer des fichiers d\'un appareil à l\'autre. Les réglages par défaut fonctionnent sur le même Wi-Fi — vous n\'en avez besoin que sur des réseaux différents.</string>
     <string name="settings_p2p_stun">Serveur STUN</string>
     <string name="settings_p2p_stun_summary">Aide deux appareils à se trouver via Internet pendant un partage direct. Seule votre adresse réseau lui est envoyée.</string>
     <string name="settings_p2p_stun_custom">Personnalisé…</string>
@@ -710,8 +709,8 @@
     <string name="p2p_qr_content_desc">Votre code de partage, en QR</string>
     <string name="settings_p2p_stun_invalid">Saisissez une adresse valide, p. ex. stun:host:3478</string>
     <string name="settings_p2p_turn">Relais TURN</string>
-    <string name="settings_p2p_turn_summary">Désactivé — définissez un relais pour connecter des appareils qui ne peuvent pas se joindre directement (les deux en données mobiles, ou l\'un derrière un VPN).</string>
-    <string name="settings_p2p_turn_message">Facultatif. Utilisé uniquement lorsqu\'une connexion directe échoue ; vos fichiers restent chiffrés de bout en bout via le relais.</string>
+    <string name="settings_p2p_turn_summary">Un relais intégré est toujours actif : le partage fonctionne même derrière un VPN ou sur réseau mobile. N\'ajoutez le vôtre que si nécessaire.</string>
+    <string name="settings_p2p_turn_message">Ajouté en plus du relais intégré. Un relais n\'est utilisé que si la connexion directe échoue ; vos fichiers y transitent chiffrés de bout en bout.</string>
     <string name="settings_p2p_turn_url_hint">turn:host:3478</string>
     <string name="settings_p2p_turn_user_hint">Nom d\'utilisateur</string>
     <string name="settings_p2p_turn_cred_hint">Mot de passe</string>

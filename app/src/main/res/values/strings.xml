@@ -823,25 +823,19 @@
     <string name="p2p_scan_hint">Point the camera at the sender\'s code</string>
     <string name="p2p_camera_denied">Camera access is needed to scan. You can paste the code instead.</string>
     <string name="settings_p2p_category">Direct share</string>
-    <string name="settings_p2p_category_summary">Connection helpers for sending files device-to-device. The defaults work on the same Wi-Fi — you only need these on different networks.</string>
     <string name="settings_p2p_stun">STUN server</string>
     <string name="settings_p2p_stun_summary">Helps two devices find each other across the internet during a direct share. Only your network address is ever sent to it.</string>
     <string name="settings_p2p_stun_custom">Custom…</string>
     <string name="settings_p2p_stun_custom_title">Custom STUN server</string>
     <string name="settings_p2p_stun_invalid">Enter a valid address, e.g. stun:host:3478</string>
     <string name="settings_p2p_turn">TURN relay</string>
-    <string name="settings_p2p_turn_summary">Off — set a relay to connect devices that can\'t reach each other directly (both on mobile data, or one behind a VPN).</string>
-    <string name="settings_p2p_turn_message">Optional. Only used when a direct connection fails; your files stay encrypted end-to-end through the relay.</string>
+    <string name="settings_p2p_turn_summary">A built-in relay is always on, so sharing works even behind VPNs and mobile networks. Add your own relay only if you need it.</string>
+    <string name="settings_p2p_turn_message">Added alongside the built-in relay. A relay is only used when a direct connection fails; your files stay encrypted end-to-end through it.</string>
     <string name="settings_p2p_turn_url_hint">turn:host:3478</string>
     <string name="settings_p2p_turn_user_hint">Username</string>
     <string name="settings_p2p_turn_cred_hint">Password</string>
     <string name="settings_p2p_turn_clear">Clear</string>
     <string name="settings_p2p_turn_invalid">Enter a valid relay, e.g. turn:host:3478</string>
-    <string name="settings_p2p_signaling">Link relay</string>
-    <string name="settings_p2p_signaling_summary">Off — set one to let a shared link connect two devices on different networks without scanning a reply. Only the tiny handshake passes through it, never the file.</string>
-    <string name="settings_p2p_signaling_message">Optional. Lets the other device just tap your link from anywhere — the relay passes only the ~1 KB connection handshake and never sees your file. Same-Wi-Fi shares don\'t use it.</string>
-    <string name="settings_p2p_signaling_url_hint">https://your-relay.example</string>
-    <string name="settings_p2p_signaling_invalid">Enter a valid address, e.g. https://your-relay.example</string>
 
     <!-- Nostr (NIP-07) signer permission prompt. %1$s is the site host. -->
     <string name="nostr_permission_title">Nostr signer</string>

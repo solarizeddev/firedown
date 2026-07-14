@@ -691,7 +691,6 @@
     <string name="p2p_scan_hint">カメラを送信者のコードに向けてください</string>
     <string name="p2p_camera_denied">スキャンにはカメラへのアクセスが必要です。代わりにコードを貼り付けることもできます。</string>
     <string name="settings_p2p_category">直接共有</string>
-    <string name="settings_p2p_category_summary">端末間でファイルを送るための接続ヘルパーです。デフォルト設定は同じ Wi-Fi では機能します。異なるネットワークのときだけこれらが必要になります。</string>
     <string name="settings_p2p_stun">STUN サーバー</string>
     <string name="settings_p2p_stun_summary">直接共有の際に、2 台の端末がインターネット越しに互いを見つけるのを助けます。送信されるのはあなたのネットワークアドレスのみです。</string>
     <string name="settings_p2p_stun_custom">カスタム…</string>
@@ -706,8 +705,8 @@
     <string name="p2p_qr_content_desc">共有コードの QR</string>
     <string name="settings_p2p_stun_invalid">有効なアドレスを入力してください（例: stun:host:3478）</string>
     <string name="settings_p2p_turn">TURN リレー</string>
-    <string name="settings_p2p_turn_summary">オフ — 直接つながれない端末（両方がモバイルデータ、または一方が VPN の内側）を接続するには、リレーを設定してください。</string>
-    <string name="settings_p2p_turn_message">任意。直接接続が失敗したときにのみ使用されます。ファイルはリレーを経由してもエンドツーエンドで暗号化されたままです。</string>
+    <string name="settings_p2p_turn_summary">内蔵リレーが常に有効なので、VPN やモバイル回線でも共有できます。独自のリレーは必要な場合のみ追加してください。</string>
+    <string name="settings_p2p_turn_message">内蔵リレーに加えて使われます。リレーは直接接続できない場合にのみ使用され、ファイルはエンドツーエンドで暗号化されたまま通過します。</string>
     <string name="settings_p2p_turn_url_hint">turn:host:3478</string>
     <string name="settings_p2p_turn_user_hint">ユーザー名</string>
     <string name="settings_p2p_turn_cred_hint">パスワード</string>

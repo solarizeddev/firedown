@@ -186,7 +186,6 @@ public class SettingsFragment extends BasePreferenceFragment
 
         updateStunSummary();
         updateTurnSummary();
-        updateSignalingSummary();
 
         if(autoFillPreference != null){
             Boolean enabled = isSystemAutofillActive();
@@ -460,7 +459,6 @@ public class SettingsFragment extends BasePreferenceFragment
         switch (key) {
             case Preferences.SETTINGS_P2P_STUN -> showStunChooser();
             case Preferences.SETTINGS_P2P_TURN_URL -> showTurnDialog();
-            case Preferences.SETTINGS_P2P_SIGNALING_URL -> showSignalingDialog();
             case Preferences.SETTINGS_RESTORE_DOWNLOADS -> showRestoreDownloadsDialog();
             case Preferences.SETTINGS_SYNC ->
                     NavigationUtils.navigateSafe(mNavController, R.id.action_settings_to_sync);
@@ -708,55 +706,6 @@ public class SettingsFragment extends BasePreferenceFragment
                 : getString(R.string.settings_p2p_turn_summary));
     }
 
-    private void showSignalingDialog() {
-        int padding = getResources().getDimensionPixelSize(R.dimen.address_bar_inset);
-        LinearLayout container = new LinearLayout(requireContext());
-        container.setOrientation(LinearLayout.VERTICAL);
-        container.setPadding(padding, 0, padding, 0);
-
-        final EditText urlInput = new EditText(requireContext());
-        urlInput.setInputType(InputType.TYPE_TEXT_VARIATION_URI);
-        urlInput.setHint(R.string.settings_p2p_signaling_url_hint);
-        urlInput.setText(mSharedPreferences.getString(Preferences.SETTINGS_P2P_SIGNALING_URL, ""));
-        container.addView(urlInput);
-
-        new MaterialAlertDialogBuilder(requireContext())
-                .setTitle(R.string.settings_p2p_signaling)
-                .setMessage(R.string.settings_p2p_signaling_message)
-                .setView(container)
-                .setPositiveButton(android.R.string.ok, (dialog, which) -> {
-                    String url = urlInput.getText().toString().trim();
-                    // Must be an http(s) origin; a bad value would silently break
-                    // every future link share (upload/poll fail, fall back to QR).
-                    if (!url.matches("(?i)^https?://.+")) {
-                        Snackbar.make(requireView(), R.string.settings_p2p_signaling_invalid,
-                                Snackbar.LENGTH_LONG).show();
-                        return;
-                    }
-                    mSharedPreferences.edit()
-                            .putString(Preferences.SETTINGS_P2P_SIGNALING_URL, url)
-                            .apply();
-                    updateSignalingSummary();
-                })
-                .setNeutralButton(R.string.settings_p2p_turn_clear, (dialog, which) -> {
-                    mSharedPreferences.edit()
-                            .remove(Preferences.SETTINGS_P2P_SIGNALING_URL)
-                            .apply();
-                    updateSignalingSummary();
-                })
-                .setNegativeButton(R.string.cancel, null)
-                .show();
-    }
-
-    private void updateSignalingSummary() {
-        Preference pref = findPreference(Preferences.SETTINGS_P2P_SIGNALING_URL);
-        if (pref == null) {
-            return;
-        }
-        String url = Preferences.getP2pSignalingUrl(mSharedPreferences);
-        pref.setSummary(url.isEmpty()
-                ? getString(R.string.settings_p2p_signaling_summary) : url);
-    }
 
     private void showRestoreDownloadsDialog() {
         new MaterialAlertDialogBuilder(requireContext())

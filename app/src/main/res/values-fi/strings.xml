@@ -502,7 +502,6 @@
     <string name="p2p_scan_hint">Osoita kameralla lähettäjän koodia</string>
     <string name="p2p_camera_denied">Skannaus vaatii kameran käyttöoikeuden. Voit liittää koodin sen sijaan.</string>
     <string name="settings_p2p_category">Suora jakaminen</string>
-    <string name="settings_p2p_category_summary">Yhteysaputoiminnot tiedostojen lähettämiseen laitteelta laitteelle. Oletusasetukset toimivat samassa Wi-Fi-verkossa — tarvitset näitä vain eri verkoissa.</string>
     <string name="settings_p2p_stun">STUN-palvelin</string>
     <string name="settings_p2p_stun_summary">Auttaa kahta laitetta löytämään toisensa internetin yli suoran jaon aikana. Sille lähetetään vain verkko-osoitteesi.</string>
     <string name="settings_p2p_stun_custom">Mukautettu…</string>
@@ -517,8 +516,8 @@
     <string name="p2p_qr_content_desc">Jakokoodisi QR-koodina</string>
     <string name="settings_p2p_stun_invalid">Anna kelvollinen osoite, esim. stun:host:3478</string>
     <string name="settings_p2p_turn">TURN-välitin</string>
-    <string name="settings_p2p_turn_summary">Pois — aseta välitin yhdistääksesi laitteet, jotka eivät tavoita toisiaan suoraan (molemmat mobiilidatalla tai toinen VPN:n takana).</string>
-    <string name="settings_p2p_turn_message">Valinnainen. Käytetään vain, kun suora yhteys epäonnistuu; tiedostosi pysyvät välittimen kautta päästä päähän salattuina.</string>
+    <string name="settings_p2p_turn_summary">Sisäänrakennettu välityspalvelin on aina päällä, joten jakaminen toimii myös VPN:n ja mobiiliverkkojen takana. Lisää oma vain jos tarvitset sitä.</string>
+    <string name="settings_p2p_turn_message">Lisätään sisäänrakennetun välityspalvelimen rinnalle. Välitystä käytetään vain, kun suora yhteys ei onnistu; tiedostosi kulkevat sen läpi päästä päähän salattuina.</string>
     <string name="settings_p2p_turn_url_hint">turn:host:3478</string>
     <string name="settings_p2p_turn_user_hint">Käyttäjänimi</string>
     <string name="settings_p2p_turn_cred_hint">Salasana</string>

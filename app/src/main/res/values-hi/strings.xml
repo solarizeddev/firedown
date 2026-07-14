@@ -469,7 +469,6 @@
     <string name="p2p_scan_hint">कैमरा भेजने वाले के कोड की ओर करें</string>
     <string name="p2p_camera_denied">स्कैन करने के लिए कैमरा एक्सेस ज़रूरी है। इसके बजाय आप कोड पेस्ट कर सकते हैं।</string>
     <string name="settings_p2p_category">सीधा शेयर</string>
-    <string name="settings_p2p_category_summary">डिवाइस-से-डिवाइस फ़ाइलें भेजने के लिए कनेक्शन सहायक। डिफ़ॉल्ट सेटिंग्स एक ही Wi-Fi पर काम करती हैं — इनकी ज़रूरत आपको केवल अलग-अलग नेटवर्क पर पड़ती है।</string>
     <string name="settings_p2p_stun">STUN सर्वर</string>
     <string name="settings_p2p_stun_summary">सीधे शेयर के दौरान दो डिवाइसों को इंटरनेट पर एक-दूसरे को खोजने में मदद करता है। इसे केवल आपका नेटवर्क पता ही भेजा जाता है।</string>
     <string name="settings_p2p_stun_custom">कस्टम…</string>
@@ -484,8 +483,8 @@
     <string name="p2p_qr_content_desc">आपका शेयर कोड, QR के रूप में</string>
     <string name="settings_p2p_stun_invalid">मान्य पता दर्ज करें, जैसे stun:host:3478</string>
     <string name="settings_p2p_turn">TURN रिले</string>
-    <string name="settings_p2p_turn_summary">बंद — ऐसे डिवाइस जोड़ने के लिए रिले सेट करें जो एक-दूसरे तक सीधे नहीं पहुँच सकते (दोनों मोबाइल डेटा पर, या एक VPN के पीछे)।</string>
-    <string name="settings_p2p_turn_message">वैकल्पिक। केवल तभी उपयोग होता है जब सीधा कनेक्शन विफल हो; आपकी फ़ाइलें रिले के ज़रिए एंड-टू-एंड एन्क्रिप्टेड रहती हैं।</string>
+    <string name="settings_p2p_turn_summary">एक बिल्ट-इन रिले हमेशा चालू रहता है, इसलिए VPN और मोबाइल नेटवर्क के पीछे भी साझा करना काम करता है। अपना रिले तभी जोड़ें जब ज़रूरत हो।</string>
+    <string name="settings_p2p_turn_message">बिल्ट-इन रिले के साथ जोड़ा जाता है। रिले का उपयोग केवल तब होता है जब सीधा कनेक्शन विफल हो; आपकी फ़ाइलें इसके ज़रिए एंड-टू-एंड एन्क्रिप्टेड रहती हैं।</string>
     <string name="settings_p2p_turn_url_hint">turn:host:3478</string>
     <string name="settings_p2p_turn_user_hint">उपयोगकर्ता नाम</string>
     <string name="settings_p2p_turn_cred_hint">पासवर्ड</string>

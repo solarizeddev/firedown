@@ -288,7 +288,9 @@
 
                 </LinearLayout>
 
-                <!-- Transfer stage -->
+                <!-- Transfer stage. Same encrypted-cloud illustration as the
+                     sender's transfer stage (see fragment_p2p_send.xml) — the
+                     two sides of one transfer read as one screen. -->
                 <LinearLayout
                     android:id="@+id/p2p_progress_group"
                     android:layout_width="match_parent"
@@ -300,6 +302,15 @@
                     android:padding="22dp"
                     android:visibility="gone"
                     tools:visibility="visible">
+
+                    <ImageView
+                        android:layout_width="wrap_content"
+                        android:layout_height="140dp"
+                        android:layout_gravity="center_horizontal"
+                        android:layout_marginBottom="16dp"
+                        android:adjustViewBounds="true"
+                        android:contentDescription="@null"
+                        android:src="@drawable/ill_cloud" />
 
                     <com.google.android.material.progressindicator.LinearProgressIndicator
                         android:id="@+id/p2p_progress_bar"

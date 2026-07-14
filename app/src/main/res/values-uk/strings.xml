@@ -480,7 +480,6 @@
     <string name="p2p_scan_hint">Наведіть камеру на код відправника</string>
     <string name="p2p_camera_denied">Щоб сканувати, потрібен доступ до камери. Натомість можна вставити код.</string>
     <string name="settings_p2p_category">Пряме передавання</string>
-    <string name="settings_p2p_category_summary">Помічники з\'єднання для передавання файлів між пристроями. Типові налаштування працюють в одній мережі Wi-Fi — вони потрібні лише в різних мережах.</string>
     <string name="settings_p2p_stun">STUN-сервер</string>
     <string name="settings_p2p_stun_summary">Допомагає двом пристроям знайти одне одного в інтернеті під час прямого передавання. Йому передається лише ваша мережева адреса.</string>
     <string name="settings_p2p_stun_custom">Власний…</string>
@@ -495,8 +494,8 @@
     <string name="p2p_qr_content_desc">Ваш код обміну у вигляді QR</string>
     <string name="settings_p2p_stun_invalid">Введіть коректну адресу, напр. stun:host:3478</string>
     <string name="settings_p2p_turn">TURN-ретранслятор</string>
-    <string name="settings_p2p_turn_summary">Вимкнено — задайте ретранслятор, щоб з\'єднати пристрої, які не можуть зв\'язатися напряму (обидва на мобільному інтернеті або один за VPN).</string>
-    <string name="settings_p2p_turn_message">Необов\'язково. Використовується лише коли пряме з\'єднання не вдається; ваші файли залишаються наскрізно зашифрованими через ретранслятор.</string>
+    <string name="settings_p2p_turn_summary">Вбудований релейний сервер завжди увімкнений, тож передача працює навіть за VPN і в мобільних мережах. Додавайте власний, лише якщо він потрібен.</string>
+    <string name="settings_p2p_turn_message">Додається до вбудованого релейного сервера. Реле використовується, лише коли пряме з\'єднання неможливе; ваші файли проходять через нього з наскрізним шифруванням.</string>
     <string name="settings_p2p_turn_url_hint">turn:host:3478</string>
     <string name="settings_p2p_turn_user_hint">Ім\'я користувача</string>
     <string name="settings_p2p_turn_cred_hint">Пароль</string>

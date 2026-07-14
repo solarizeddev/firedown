@@ -694,7 +694,6 @@
     <string name="p2p_scan_hint">Apunta con la cámara al código del remitente</string>
     <string name="p2p_camera_denied">Se necesita acceso a la cámara para escanear. Puedes pegar el código en su lugar.</string>
     <string name="settings_p2p_category">Compartir directo</string>
-    <string name="settings_p2p_category_summary">Ayudas de conexión para enviar archivos entre dispositivos. Los valores predeterminados funcionan en la misma red Wi-Fi: solo los necesitas en redes diferentes.</string>
     <string name="settings_p2p_stun">Servidor STUN</string>
     <string name="settings_p2p_stun_summary">Ayuda a que dos dispositivos se encuentren a través de internet durante un envío directo. Solo se le envía tu dirección de red.</string>
     <string name="settings_p2p_stun_custom">Personalizado…</string>
@@ -709,8 +708,8 @@
     <string name="p2p_qr_content_desc">Tu código para compartir, como QR</string>
     <string name="settings_p2p_stun_invalid">Introduce una dirección válida, p. ej. stun:host:3478</string>
     <string name="settings_p2p_turn">Relé TURN</string>
-    <string name="settings_p2p_turn_summary">Desactivado — configura un relé para conectar dispositivos que no pueden encontrarse directamente (ambos con datos móviles, o uno detrás de una VPN).</string>
-    <string name="settings_p2p_turn_message">Opcional. Solo se usa cuando falla una conexión directa; tus archivos permanecen cifrados de extremo a extremo a través del relé.</string>
+    <string name="settings_p2p_turn_summary">Un relé integrado está siempre activo, así que compartir funciona incluso tras una VPN o en redes móviles. Añade el tuyo solo si lo necesitas.</string>
+    <string name="settings_p2p_turn_message">Se añade junto al relé integrado. Un relé solo se usa cuando falla la conexión directa; tus archivos pasan por él cifrados de extremo a extremo.</string>
     <string name="settings_p2p_turn_url_hint">turn:host:3478</string>
     <string name="settings_p2p_turn_user_hint">Nombre de usuario</string>
     <string name="settings_p2p_turn_cred_hint">Contraseña</string>

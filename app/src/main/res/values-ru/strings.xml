@@ -565,7 +565,6 @@
     <string name="p2p_scan_hint">Наведите камеру на код отправителя</string>
     <string name="p2p_camera_denied">Для сканирования нужен доступ к камере. Вместо этого можно вставить код.</string>
     <string name="settings_p2p_category">Прямая передача</string>
-    <string name="settings_p2p_category_summary">Помощники соединения для передачи файлов между устройствами. Настройки по умолчанию работают в одной сети Wi-Fi — они нужны только в разных сетях.</string>
     <string name="settings_p2p_stun">STUN-сервер</string>
     <string name="settings_p2p_stun_summary">Помогает двум устройствам найти друг друга в интернете при прямой передаче. Ему передаётся только ваш сетевой адрес.</string>
     <string name="settings_p2p_stun_custom">Свой…</string>
@@ -580,8 +579,8 @@
     <string name="p2p_qr_content_desc">Ваш код обмена в виде QR</string>
     <string name="settings_p2p_stun_invalid">Введите корректный адрес, например stun:host:3478</string>
     <string name="settings_p2p_turn">TURN-ретранслятор</string>
-    <string name="settings_p2p_turn_summary">Выключено — задайте ретранслятор, чтобы соединить устройства, которые не могут связаться напрямую (оба на мобильном интернете или одно за VPN).</string>
-    <string name="settings_p2p_turn_message">Необязательно. Используется, только когда прямое соединение не удаётся; ваши файлы остаются зашифрованными сквозным шифрованием через ретранслятор.</string>
+    <string name="settings_p2p_turn_summary">Встроенный релейный сервер всегда включён, поэтому передача работает даже за VPN и в мобильных сетях. Добавляйте свой, только если он нужен.</string>
+    <string name="settings_p2p_turn_message">Добавляется к встроенному релейному серверу. Реле используется, только когда прямое соединение невозможно; ваши файлы проходят через него со сквозным шифрованием.</string>
     <string name="settings_p2p_turn_url_hint">turn:host:3478</string>
     <string name="settings_p2p_turn_user_hint">Имя пользователя</string>
     <string name="settings_p2p_turn_cred_hint">Пароль</string>

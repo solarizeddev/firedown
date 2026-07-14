@@ -562,7 +562,6 @@
     <string name="p2p_scan_hint">Kamerayı gönderenin koduna doğrultun</string>
     <string name="p2p_camera_denied">Taramak için kamera erişimi gerekir. Bunun yerine kodu yapıştırabilirsiniz.</string>
     <string name="settings_p2p_category">Doğrudan paylaşım</string>
-    <string name="settings_p2p_category_summary">Dosyaları cihazdan cihaza göndermek için bağlantı yardımcıları. Varsayılan ayarlar aynı Wi-Fi ağında çalışır — bunlara yalnızca farklı ağlarda ihtiyaç duyarsınız.</string>
     <string name="settings_p2p_stun">STUN sunucusu</string>
     <string name="settings_p2p_stun_summary">Doğrudan paylaşım sırasında iki cihazın internet üzerinden birbirini bulmasına yardımcı olur. Ona yalnızca ağ adresiniz gönderilir.</string>
     <string name="settings_p2p_stun_custom">Özel…</string>
@@ -577,8 +576,8 @@
     <string name="p2p_qr_content_desc">Paylaşım kodunuz, QR olarak</string>
     <string name="settings_p2p_stun_invalid">Geçerli bir adres girin, örn. stun:host:3478</string>
     <string name="settings_p2p_turn">TURN aktarıcı</string>
-    <string name="settings_p2p_turn_summary">Kapalı — birbirine doğrudan ulaşamayan cihazları (ikisi de mobil veride ya da biri VPN arkasında) bağlamak için bir aktarıcı ayarlayın.</string>
-    <string name="settings_p2p_turn_message">İsteğe bağlı. Yalnızca doğrudan bağlantı başarısız olduğunda kullanılır; dosyalarınız aktarıcı üzerinden uçtan uca şifreli kalır.</string>
+    <string name="settings_p2p_turn_summary">Yerleşik bir aktarıcı her zaman açıktır; paylaşım VPN ve mobil ağların arkasında bile çalışır. Kendi aktarıcını yalnızca gerekirse ekle.</string>
+    <string name="settings_p2p_turn_message">Yerleşik aktarıcıya ek olarak kullanılır. Aktarıcı yalnızca doğrudan bağlantı kurulamadığında devreye girer; dosyaların uçtan uca şifreli olarak geçer.</string>
     <string name="settings_p2p_turn_url_hint">turn:host:3478</string>
     <string name="settings_p2p_turn_user_hint">Kullanıcı adı</string>
     <string name="settings_p2p_turn_cred_hint">Şifre</string>

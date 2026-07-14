@@ -563,7 +563,6 @@
     <string name="p2p_scan_hint">Richt de camera op de code van de verzender</string>
     <string name="p2p_camera_denied">Cameratoegang is nodig om te scannen. Je kunt de code ook plakken.</string>
     <string name="settings_p2p_category">Direct delen</string>
-    <string name="settings_p2p_category_summary">Verbindingshulpjes om bestanden van apparaat naar apparaat te verzenden. De standaardinstellingen werken op dezelfde Wi-Fi — je hebt deze alleen op verschillende netwerken nodig.</string>
     <string name="settings_p2p_stun">STUN-server</string>
     <string name="settings_p2p_stun_summary">Helpt twee apparaten elkaar via internet te vinden tijdens direct delen. Alleen je netwerkadres wordt ernaartoe gestuurd.</string>
     <string name="settings_p2p_stun_custom">Aangepast…</string>
@@ -578,8 +577,8 @@
     <string name="p2p_qr_content_desc">Je deelcode, als QR</string>
     <string name="settings_p2p_stun_invalid">Voer een geldig adres in, bijv. stun:host:3478</string>
     <string name="settings_p2p_turn">TURN-relay</string>
-    <string name="settings_p2p_turn_summary">Uit — stel een relay in om apparaten te verbinden die elkaar niet rechtstreeks kunnen bereiken (beide op mobiele data, of een achter een VPN).</string>
-    <string name="settings_p2p_turn_message">Optioneel. Wordt alleen gebruikt wanneer een directe verbinding mislukt; je bestanden blijven via de relay end-to-end versleuteld.</string>
+    <string name="settings_p2p_turn_summary">Een ingebouwde relay staat altijd aan, dus delen werkt ook achter VPN\'s en op mobiele netwerken. Voeg alleen je eigen relay toe als dat nodig is.</string>
+    <string name="settings_p2p_turn_message">Wordt naast de ingebouwde relay gebruikt. Een relay wordt alleen gebruikt als een directe verbinding mislukt; je bestanden gaan er end-to-end versleuteld doorheen.</string>
     <string name="settings_p2p_turn_url_hint">turn:host:3478</string>
     <string name="settings_p2p_turn_user_hint">Gebruikersnaam</string>
     <string name="settings_p2p_turn_cred_hint">Wachtwoord</string>
