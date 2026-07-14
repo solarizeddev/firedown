@@ -1336,26 +1336,36 @@ user-chosen in Settings → Downloads: `settings_p2p_stun_entries/values` in
 `arrays.xml` (Cloudflare default, Nextcloud:443 for UDP-3478-hostile
 networks, "custom" sentinel → text dialog in `SettingsFragment`, stored in
 `SETTINGS_P2P_STUN_CUSTOM`; resolve via `Preferences.getP2pStunServer`).
-**At most TWO `iceServers`, both from the user's own settings — never a
-fallback list** (parallel entries query every server on every share = IP leak
-to all of them). Same-LAN pairs connect on host candidates without touching
-either. Entry one is the STUN echo (above). Entry two is an **OPTIONAL,
-OPT-IN TURN relay**, default OFF: `SETTINGS_P2P_TURN_URL`/`_USER`/`_CRED`
-(url+username+credential, since TURN needs auth — no shipped list; typically
-the user's own coturn), edited via `SettingsFragment.showTurnDialog`, resolved
-by `Preferences.getP2pTurn` (returns `null` when unset), threaded into the
-start command by `putIceServers`, and assembled into `iceServers` by the
-engine's `newPeerConnection(ice)` (`iceOf` pulls `stun`/`turn*` off the start
-message). **Relay-free stays the default and the privacy story**: with no TURN
-set, a share contacts nothing but the STUN echo, and a genuinely-unreachable
-pair — CGNAT↔CGNAT (both on mobile data) or a peer behind a full-tunnel VPN
-(its traffic is tunneled; nothing reaches it directly) — fails honestly
-(`no-path` → `p2p_error_no_path` suggests same-Wi-Fi, VPN off). TURN is the
-ONLY thing that connects such a pair (a relay both sides can reach forwards the
-still-E2E-encrypted DataChannel), and ICE only actually relays through it when
-a direct path fails — but it IS a server-in-the-middle, so it's the user's
-explicit choice, never a default. Don't ship a default/baked-in relay, and
-don't reintroduce a multi-STUN fallback list.
+**`iceServers` come from exactly THREE sources — the user's STUN choice, the
+user's optional custom TURN, and the first-party Firedown relay via FETCHED
+ephemeral credentials. Never a hardcoded fallback list, never baked
+credentials.** (A multi-STUN list queries every server on every share = IP
+leak to all of them; static TURN creds in an open-source APK hand the relay
+to the whole internet as an open proxy.) Same-LAN pairs connect on host
+candidates without touching any of them. The entries:
+- **STUN echo** — user-chosen (above).
+- **Custom TURN, opt-in, default OFF**: `SETTINGS_P2P_TURN_URL`/`_USER`/`_CRED`
+  (url+username+credential; typically the user's own coturn), edited via
+  `SettingsFragment.showTurnDialog`, resolved by `Preferences.getP2pTurn`
+  (null when unset).
+- **The Firedown relay (turn.firedown.app) — free, on by default, NO baked
+  secret** (maintainer decision: the relay fallback ships working; send-file
+  is not monetized). Each share session fetches short-lived coturn REST creds
+  from `Preferences.P2P_RELAY_CREDS_URL` (`api.firedown.app/v1/relay/creds` —
+  an anonymous GET, no identifiers; server half + the coturn abuse rails live
+  in firedown-api `handler_relay.go` + `deploy/turn-provision.sh`). The fetch
+  is cached until near expiry, bounded by short timeouts, and **failure
+  degrades gracefully** — the share proceeds direct+STUN-only, which is
+  exactly the pre-relay behavior. Privacy delta, stated honestly: starting a
+  share now touches api.firedown.app once (an unauthenticated creds GET); the
+  relay itself carries only DTLS ciphertext, and ICE uses it only when no
+  direct path exists.
+All three are threaded into the start command by `putIceServers` and
+assembled by the engine's `newPeerConnection(ice)` (`sanitizeIceServers`
+guards the ctor). A genuinely-unreachable pair with the relay fetch failed —
+CGNAT↔CGNAT, full-tunnel VPN — still fails honestly (`no-path` →
+`p2p_error_no_path`). Don't reintroduce a multi-STUN fallback list, and never
+replace the fetched-ephemeral-creds design with a static credential.
 
 **Single-scan flow — the answer returns over the LAN, the reply QR is the
 FALLBACK.** WebRTC needs an answer back (the receiver's candidates/DTLS

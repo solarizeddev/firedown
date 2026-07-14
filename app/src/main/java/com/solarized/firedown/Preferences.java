@@ -276,15 +276,22 @@ public class Preferences {
     public static final String SETTINGS_P2P_TURN_USER = "com.solarized.firedown.preferences.p2p.turn.user";
     public static final String SETTINGS_P2P_TURN_CRED = "com.solarized.firedown.preferences.p2p.turn.cred";
 
-    // NOTE: there is deliberately NO baked-in default TURN relay. A relay
-    // shipped in the (open-source) app would carry PUBLIC credentials anyone
-    // could abuse, and a hardcoded fallback list violates the P2P invariant in
-    // CLAUDE.md ("At most TWO iceServers, both from the user's own settings —
-    // never a fallback list … Don't ship a default/baked-in relay"). The
-    // metered first-party relay (paid, unlinkable, per-use — see the cloud
-    // mint) plugs in later through a credential PROVIDER seam in
-    // P2pShareController.putIceServers, not a constant here. Until then TURN is
-    // purely user-configured (their own coturn), off by default.
+    // NOTE: there is deliberately NO baked-in TURN credential. A static
+    // credential shipped in the (open-source) app would hand the relay to the
+    // whole internet as an open proxy. The first-party Firedown relay is FREE
+    // and on by default, but its credentials are FETCHED per share session —
+    // short-lived coturn REST creds from the endpoint below (anonymous GET, no
+    // identifiers; server half in firedown-api handler_relay.go, coturn abuse
+    // rails in deploy/turn-provision.sh). Fetch failure degrades to
+    // direct+STUN-only. The user-configured TURN above remains as an ADDITIONAL
+    // relay for networks the default can't cross.
+
+    /** TURN credential minting endpoint for the P2P share's free relay
+     *  fallback — same host the bookmark sync uses. Returns
+     *  {@code {urls[], username, credential, ttl_seconds}} (coturn REST API);
+     *  404 while the server side isn't deployed, which the controller treats
+     *  as "no relay" and proceeds without one. */
+    public static final String P2P_RELAY_CREDS_URL = SYNC_DEFAULT_BACKEND + "/v1/relay/creds";
 
     /** A configured TURN relay, or {@code null} when none is set. */
     public static final class P2pTurn {

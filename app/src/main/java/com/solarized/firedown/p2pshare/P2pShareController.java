@@ -229,6 +229,15 @@ public class P2pShareController {
     private final OkHttpClient mAnswerClient;
     // The shared client, kept so a P2pSignalingClient can be spun up per share.
     private final OkHttpClient mOkHttpClient;
+    // Short-deadline client for the relay-creds GET: the fetch gates the start
+    // command, so its worst case (server unreachable) must stay a small, fixed
+    // delay before the share proceeds relay-less.
+    private final OkHttpClient mRelayClient;
+    // Cached /v1/relay/creds response + its validity end (wall clock). The
+    // creds are session-agnostic bearer material with an hour-scale TTL, so the
+    // cache survives stopSession on purpose — back-to-back shares reuse it.
+    private JSONObject mRelayCreds;
+    private long mRelayCredsExpiryMs;
 
     @Inject
     public P2pShareController(
@@ -247,6 +256,11 @@ public class P2pShareController {
                 .connectTimeout(4, TimeUnit.SECONDS)
                 .readTimeout(4, TimeUnit.SECONDS)
                 .callTimeout(8, TimeUnit.SECONDS)
+                .build();
+        mRelayClient = okHttpClient.newBuilder()
+                .connectTimeout(3, TimeUnit.SECONDS)
+                .readTimeout(3, TimeUnit.SECONDS)
+                .callTimeout(4, TimeUnit.SECONDS)
                 .build();
     }
 
@@ -345,7 +359,7 @@ public class P2pShareController {
             mSignalingId = P2pSignalingClient.mintId();
         }
 
-        JSONObject command = new JSONObject();
+        final JSONObject command = new JSONObject();
         try {
             command.put("type", "send-start");
             command.put("readUrl", mServer.getReadUrl());
@@ -358,32 +372,38 @@ public class P2pShareController {
             // mis-bucket the received download's type/icon/viewer.
             command.put("mime", FileUriHelper.getMimeTypeFromFile(new File(path).getName()));
             command.put("device", Build.MODEL);
-            putIceServers(command);
         } catch (JSONException e) {
             postError("engine", "command build failed");
             return;
         }
-        ensureEngineSession(() -> postCommand(command));
+        // The relay-creds fetch gates the command (iceServers are fixed at
+        // RTCPeerConnection construction); its short timeouts bound the wait
+        // and a failure just means a relay-less share — see withRelayCreds.
+        withRelayCreds(creds -> {
+            if (!"send".equals(mRole) || mServer == null) {
+                return; // torn down while fetching
+            }
+            try {
+                putIceServers(command, creds);
+            } catch (JSONException e) {
+                postError("engine", "command build failed");
+                return;
+            }
+            ensureEngineSession(() -> postCommand(command));
+        });
     }
 
     /**
      * Build the {@code iceServers} list for a start command (RTC shape: each
-     * entry {@code {urls, username?, credential?}}). Per the CLAUDE.md P2P
-     * invariant these come ONLY from the user's own settings — never a
-     * baked-in fallback list: entry one is the chosen STUN echo, entry two is
-     * the OPTIONAL user-configured TURN (their own coturn), off by default. So
-     * a share with default settings contacts nothing but the STUN server, and a
-     * genuinely-unreachable pair (VPN/CGNAT) fails honestly rather than leaking
-     * to a public relay.
-     *
-     * <p><b>Relay-provider seam.</b> The first-party metered relay (paid,
-     * unlinkable, per-use via the cloud mint) will add a THIRD, credentialed
-     * entry here — short-lived coturn REST creds fetched against the account's
-     * relay-GB balance — at {@link #appendMeteredRelay(JSONArray)}. It's a
-     * no-op until that provider ships, keeping this method's contract (≤2
-     * user-settings entries) intact today.
+     * entry {@code {urls, username?, credential?}}). Three sources, per the
+     * CLAUDE.md P2P section: the user's STUN echo, the user's OPTIONAL custom
+     * TURN (off by default), and the first-party Firedown relay via the
+     * FETCHED ephemeral {@code relayCreds} (null = fetch failed/undeployed →
+     * the share proceeds direct+STUN-only, the pre-relay behavior). Never a
+     * hardcoded fallback list, never a baked credential.
      */
-    private void putIceServers(JSONObject command) throws JSONException {
+    private void putIceServers(JSONObject command, @Nullable JSONObject relayCreds)
+            throws JSONException {
         JSONArray servers = new JSONArray();
 
         String stun = Preferences.getP2pStunServer(mSharedPreferences);
@@ -391,8 +411,8 @@ public class P2pShareController {
             servers.put(new JSONObject().put("urls", stun));
         }
 
-        // Optional user-configured TURN (Settings → Direct share), for peers
-        // that can't reach each other directly. Off by default.
+        // Optional user-configured TURN (Settings → Direct share), an
+        // ADDITIONAL relay for networks the default can't cross.
         Preferences.P2pTurn turn = Preferences.getP2pTurn(mSharedPreferences);
         if (turn != null) {
             JSONObject entry = new JSONObject().put("urls", turn.url);
@@ -405,21 +425,85 @@ public class P2pShareController {
             servers.put(entry);
         }
 
-        appendMeteredRelay(servers);
+        // The Firedown relay — free, short-lived creds fetched per session
+        // (withRelayCreds). ICE only actually relays through it when no
+        // direct path exists; the relayed bytes stay DTLS-encrypted.
+        if (relayCreds != null) {
+            servers.put(new JSONObject()
+                    .put("urls", relayCreds.optJSONArray("urls"))
+                    .put("username", relayCreds.optString("username"))
+                    .put("credential", relayCreds.optString("credential")));
+        }
 
         command.put("iceServers", servers);
     }
 
     /**
-     * Seam for the first-party metered relay (see the cloud mint / relay-GB
-     * design). When it ships, this fetches short-lived coturn REST credentials
-     * against the anonymous account's relay-GB balance and appends them as an
-     * {@code iceServers} entry — so a paying user's VPN/CGNAT share falls back
-     * to the firedown relay, per-use and unlinkable, with no config. Deliberately
-     * a no-op until then: no relay ships in the app, and nothing is contacted.
+     * Hand {@code action} the Firedown relay's ephemeral TURN creds — cached
+     * if still fresh, else fetched from {@link Preferences#P2P_RELAY_CREDS_URL}
+     * (an anonymous GET, no identifiers) — or {@code null} when unavailable
+     * (endpoint undeployed → 404, offline, timeout), which callers treat as
+     * "share without a relay". {@code action} always runs on the MAIN thread;
+     * callers re-check session state inside it (the fetch spans a teardown
+     * window). Short timeouts on {@link #mRelayClient} bound the added
+     * latency; the cache (TTL minus a safety margin) makes back-to-back
+     * shares instant.
      */
-    private void appendMeteredRelay(JSONArray servers) {
-        // Intentionally empty — the metered relay provider is not wired yet.
+    private void withRelayCreds(@NonNull Consumer<JSONObject> action) {
+        if (mRelayCreds != null && System.currentTimeMillis() < mRelayCredsExpiryMs) {
+            action.accept(mRelayCreds);
+            return;
+        }
+        Request request = new Request.Builder()
+                .url(Preferences.P2P_RELAY_CREDS_URL)
+                .get()
+                .build();
+        mRelayClient.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                if (BuildConfig.DEBUG) {
+                    Log.d(TAG, "relay creds fetch failed: " + e.getMessage());
+                }
+                deliverRelayCreds(null, action);
+            }
+
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) {
+                JSONObject creds = null;
+                try (Response r = response) {
+                    if (r.isSuccessful() && r.body() != null) {
+                        JSONObject json = new JSONObject(r.body().string());
+                        JSONArray urls = json.optJSONArray("urls");
+                        if (urls != null && urls.length() > 0
+                                && !json.optString("username").isEmpty()
+                                && !json.optString("credential").isEmpty()) {
+                            creds = json;
+                        }
+                    }
+                } catch (IOException | JSONException e) {
+                    if (BuildConfig.DEBUG) {
+                        Log.d(TAG, "relay creds parse failed: " + e.getMessage());
+                    }
+                }
+                deliverRelayCreds(creds, action);
+            }
+        });
+    }
+
+    /** Cache (on success) and deliver relay creds on the main thread. */
+    private void deliverRelayCreds(@Nullable JSONObject creds,
+                                   @NonNull Consumer<JSONObject> action) {
+        mMainHandler.post(() -> {
+            if (creds != null) {
+                mRelayCreds = creds;
+                // Refresh a minute before coturn stops honoring the credential
+                // (an expired cred also breaks allocation REFRESHES mid-share).
+                long ttlSeconds = creds.optLong("ttl_seconds", 600);
+                mRelayCredsExpiryMs = System.currentTimeMillis()
+                        + Math.max(0, ttlSeconds - 60) * 1000;
+            }
+            action.accept(creds);
+        });
     }
 
     /**
@@ -571,16 +655,28 @@ public class P2pShareController {
             return;
         }
 
-        JSONObject command = new JSONObject();
+        final JSONObject command = new JSONObject();
         try {
             command.put("type", "recv-start");
             command.put("code", code);
-            putIceServers(command);
         } catch (JSONException e) {
             postError("engine", "command build failed");
             return;
         }
-        ensureEngineSession(() -> postCommand(command));
+        // Same relay-creds gating as startSend; a failed fetch just means a
+        // relay-less receive.
+        withRelayCreds(creds -> {
+            if (!"receive".equals(mRole) || mServer == null) {
+                return; // torn down while fetching
+            }
+            try {
+                putIceServers(command, creds);
+            } catch (JSONException e) {
+                postError("engine", "command build failed");
+                return;
+            }
+            ensureEngineSession(() -> postCommand(command));
+        });
     }
 
     /**
