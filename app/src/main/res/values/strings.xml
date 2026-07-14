@@ -822,8 +822,8 @@
     <string name="p2p_send_link">Send link</string>
     <string name="p2p_send_link_again">Send link again</string>
     <string name="p2p_send_link_hint">Send it through any app. It works while this screen stays open.</string>
-    <string name="p2p_link_sent">Link sent — waiting for reply</string>
-    <string name="p2p_link_sent_body">When they accept, they\'ll send you a reply link. Tap it — the transfer starts on its own.</string>
+    <string name="p2p_link_sent">Link sent — waiting</string>
+    <string name="p2p_link_sent_body">Waiting for them to accept. The transfer starts on its own once they do.</string>
     <string name="p2p_clipboard_note">Came back with a reply copied? It\'s picked up automatically.</string>
     <string name="p2p_reply_detected">Reply found — connecting…</string>
     <string name="p2p_nearby_qr">Nearby? Show the QR</string>

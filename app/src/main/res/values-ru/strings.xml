@@ -564,8 +564,8 @@
     <string name="p2p_send_link">Отправить ссылку</string>
     <string name="p2p_send_link_again">Отправить ссылку ещё раз</string>
     <string name="p2p_send_link_hint">Отправьте её через любое приложение. Она работает, пока открыт этот экран.</string>
-    <string name="p2p_link_sent">Ссылка отправлена — ждём ответ</string>
-    <string name="p2p_link_sent_body">Когда примут, вам пришлют ответную ссылку. Коснитесь её — передача начнётся сама.</string>
+    <string name="p2p_link_sent">Ссылка отправлена — ожидание</string>
+    <string name="p2p_link_sent_body">Ожидание, пока они примут. Передача начнётся сама, как только они это сделают.</string>
     <string name="p2p_clipboard_note">Вернулись со скопированным ответом? Он распознаётся автоматически.</string>
     <string name="p2p_reply_detected">Ответ найден — подключение…</string>
     <string name="p2p_nearby_qr">Рядом? Показать QR</string>

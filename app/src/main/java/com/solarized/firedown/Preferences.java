@@ -297,6 +297,15 @@ public class Preferences {
      *  as "no relay" and proceeds without one. */
     public static final String P2P_RELAY_CREDS_URL = SYNC_DEFAULT_BACKEND + "/v1/relay/creds";
 
+    /** P2P answer-rendezvous BASE — the one-time mailbox that removes the
+     *  reply step from a cross-network share. The sender mints an id, embeds
+     *  {@code <base>/a/<id>} in the offer and long-polls {@code …?wait=1};
+     *  the receiver POSTs its answer there. Self-contained offer (never
+     *  uploaded); the LAN answer return is tried first, this second, the
+     *  reply link/QR only if this is unreachable. Server half:
+     *  firedown-api handler_rendezvous.go. */
+    public static final String P2P_RENDEZVOUS_URL = SYNC_DEFAULT_BACKEND + "/v1/p2p";
+
     /** A configured TURN relay, or {@code null} when none is set. */
     public static final class P2pTurn {
         public final String url;

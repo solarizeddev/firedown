@@ -28,7 +28,8 @@
  *
  * Protocol (Java -> cmd):
  *   {type:"__init", debug}                             bridge handshake
- *   {type:"send-start", readUrl, name, size, mime, device, iceServers[], answerUrl?}
+ *   {type:"send-start", readUrl, name, size, mime, device, iceServers[],
+ *       answerUrl?, rendezvousUrl?}
  *   {type:"send-answer", code} · {type:"recv-start", code, iceServers[]}
  *   {type:"recv-accept", writeUrl} · {type:"stop"}
  * (evt -> Java):
@@ -392,11 +393,17 @@ async function startSend(msg) {
       mime: msg.mime,
       dev: msg.device,
     };
-    // Answer-return URL (single-scan flow): when Java could bind a LAN
-    // listener, the receiver POSTs its answer straight back instead of
-    // showing a reply QR. Optional — absent, the reply QR is the only path.
+    // Answer-return URLs. Two, tried by the receiver in order; both are
+    // optional and the human-relayed reply link/QR remains the last resort:
+    //  - ans: the sender's LAN listener (same network, never leaves it).
+    //  - rvz: the one-time public rendezvous (api.firedown.app) the sender
+    //    long-polls — what makes a cross-network share complete with NO
+    //    reply step at all.
     if (msg.answerUrl) {
       payload.ans = msg.answerUrl;
+    }
+    if (msg.rendezvousUrl) {
+      payload.rvz = msg.rendezvousUrl;
     }
     const code = await encodeCode(OFFER_PREFIX, payload);
     if (s !== session || s.stopped) { return; }
@@ -529,9 +536,10 @@ async function startReceive(msg) {
     size: offer.size,
     mime: String(offer.mime || ""),
     device: String(offer.dev || ""),
-    // Sender's answer-return URL (single-scan flow) — Java POSTs the answer
-    // there instead of showing the reply QR; empty = reply-QR only.
+    // Sender's answer-return URLs — Java POSTs the answer to the LAN one,
+    // then the rendezvous; both empty = human-relayed reply only.
     ans: String(offer.ans || ""),
+    rvz: String(offer.rvz || ""),
   });
 }
 

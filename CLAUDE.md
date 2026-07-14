@@ -1388,24 +1388,36 @@ CGNAT↔CGNAT, full-tunnel VPN — still fails honestly (`no-path` →
 `p2p_error_no_path`). Don't reintroduce a multi-STUN fallback list, and never
 replace the fetched-ephemeral-creds design with a static credential.
 
-**The answer returns over the LAN when it can; the human-relayed reply is
-the FALLBACK.** WebRTC needs an answer back (the receiver's candidates/DTLS
-fingerprint don't exist until Accept), but a human-relayed reply is only
-needed when the network can't carry it. The offer embeds an answer-return
-URL (`ans`) served by **`P2pAnswerServer`** — the ONLY thing Firedown ever
-listens for on a LAN interface, and deliberately tiny: one token-gated
-`POST /answer` (16-byte token, carried only inside the offer code), 16 KB body
-cap, first-delivery-wins, lifetime = the sender's offer stage
-(`provideAnswer`/`stopSession` stop it; binding prefers a `wlan*` site-local
-IPv4 so an active VPN's tun address isn't advertised; no LAN address → no
-`ans` → human-relayed reply unchanged). The receiver's controller intercepts
-the engine's `code(answer)` event: with an `ans` URL it POSTs the answer
-directly (short-deadline OkHttp, derived from the shared client) and the
-reply stage is **only shown if that POST fails** (`deliverReplyFallback`) —
-where the reply is a share-sheet https link the sender just taps (remote
-arrival) or a QR (scan arrival); see the remote-first flow above. So
-same-LAN is share/scan → Accept → transfer; cross-network adds one
-send-reply + one tap. The connect no-path timer arms only when `connectionState` reaches
+**The answer returns automatically — the human-relayed reply is the last
+resort.** WebRTC needs an answer back (the receiver's candidates/DTLS
+fingerprint don't exist until Accept), but the OFFER is self-contained (the
+share link carries it; no server ever hosts it), so only the ANSWER needs a
+path. Three tiers, tried in order (`deliverAnswer` → `rendezvousOrReply` →
+`relayOrReply` → `deliverReplyFallback`), each falling through on failure:
+1. **LAN return (`ans`)** — served by **`P2pAnswerServer`**, the ONLY thing
+   Firedown ever listens for on a LAN interface, deliberately tiny: one
+   token-gated `POST /answer` (16-byte token, carried only inside the offer
+   code), 16 KB body cap, first-delivery-wins, lifetime = the sender's offer
+   stage (binding prefers a `wlan*` site-local IPv4 so a VPN's tun address
+   isn't advertised; no LAN address → no `ans`). Same-network, instant, never
+   leaves the LAN.
+2. **Rendezvous (`rvz`)** — the always-on api mailbox
+   (`api.firedown.app/v1/p2p/a/<id>`, `Preferences.P2P_RENDEZVOUS_URL`; server
+   half `firedown-api handler_rendezvous.go`). The sender mints a 128-bit id,
+   embeds `<base>/a/<id>` in the offer and long-polls `…?wait=1`
+   (`P2pSignalingClient.pollAnswer`); the receiver's Accept POSTs the answer
+   there. This is what removes the reply step from a CROSS-NETWORK share —
+   Accept → connect, no tapping. In-memory, 5-min TTL, single-use, nothing
+   logged/persisted; the compressed-SDP answer transits RAM only, and the
+   codes' DTLS fingerprints keep a tampering relay from MITMing.
+3. **Human-relayed reply** — only reached via `deliverReplyFallback` when BOTH
+   above fail (rendezvous down AND no LAN): a share-sheet https reply link the
+   sender taps, or a QR on scan arrival (see the remote-first flow above).
+The receiver's controller intercepts the engine's `code(answer)` event and
+runs the chain with short-deadline OkHttp POSTs; the reply stage renders only
+on the final fallback. So same-LAN AND cross-network are both
+share/scan → Accept → transfer, with zero reply step in the common case. The
+connect no-path timer arms only when `connectionState` reaches
 "connecting" — NEVER at offer creation (signaling is human-paced; the old
 at-creation timer failed senders who were merely waiting to be scanned).
 

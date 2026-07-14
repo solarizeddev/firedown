@@ -479,8 +479,8 @@
     <string name="p2p_send_link">Надіслати посилання</string>
     <string name="p2p_send_link_again">Надіслати посилання ще раз</string>
     <string name="p2p_send_link_hint">Надішліть його через будь-який застосунок. Воно працює, поки відкритий цей екран.</string>
-    <string name="p2p_link_sent">Посилання надіслано — чекаємо на відповідь</string>
-    <string name="p2p_link_sent_body">Коли приймуть, вам надішлють посилання-відповідь. Торкніться його — передача почнеться сама.</string>
+    <string name="p2p_link_sent">Посилання надіслано — очікування</string>
+    <string name="p2p_link_sent_body">Очікування, поки вони приймуть. Передача почнеться сама, щойно вони це зроблять.</string>
     <string name="p2p_clipboard_note">Повернулися зі скопійованою відповіддю? Її буде розпізнано автоматично.</string>
     <string name="p2p_reply_detected">Відповідь знайдено — з\'єднання…</string>
     <string name="p2p_nearby_qr">Поруч? Показати QR</string>

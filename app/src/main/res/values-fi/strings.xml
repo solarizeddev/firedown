@@ -501,8 +501,8 @@
     <string name="p2p_send_link">Lähetä linkki</string>
     <string name="p2p_send_link_again">Lähetä linkki uudelleen</string>
     <string name="p2p_send_link_hint">Lähetä se millä tahansa sovelluksella. Se toimii niin kauan kuin tämä näyttö on auki.</string>
-    <string name="p2p_link_sent">Linkki lähetetty — odotetaan vastausta</string>
-    <string name="p2p_link_sent_body">Kun he hyväksyvät, he lähettävät sinulle vastauslinkin. Napauta sitä — siirto alkaa itsestään.</string>
+    <string name="p2p_link_sent">Linkki lähetetty — odotetaan</string>
+    <string name="p2p_link_sent_body">Odotetaan, että he hyväksyvät. Siirto alkaa itsestään heti kun he tekevät sen.</string>
     <string name="p2p_clipboard_note">Palasitko vastaus kopioituna? Se poimitaan automaattisesti.</string>
     <string name="p2p_reply_detected">Vastaus löytyi — yhdistetään…</string>
     <string name="p2p_nearby_qr">Lähekkäin? Näytä QR</string>

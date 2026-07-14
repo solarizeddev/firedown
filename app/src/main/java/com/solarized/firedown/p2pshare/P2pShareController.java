@@ -245,6 +245,13 @@ public class P2pShareController {
     private String mOfferCode;
     private String mRecvSignalingBase;
     private String mRecvSignalingId;
+    // Answer rendezvous (always on — the first-party api mailbox that removes
+    // the reply step, see Preferences.P2P_RENDEZVOUS_URL). Sender: a poll
+    // client + minted id. Receiver: the sender's rendezvous answer URL from
+    // the parsed offer's `rvz`.
+    private P2pSignalingClient mRendezvous;
+    private String mRendezvousId;
+    private String mRecvRendezvousUrl;
     private String mRecvName;
     private String mRecvMime;
     private File mRecvPartFile;
@@ -383,9 +390,19 @@ public class P2pShareController {
             mAnswerServer = null;
         }
 
-        // Cross-network one-link: if a relay is configured, mint a rendezvous
-        // id now; the offer is uploaded and the answer polled once the engine
-        // emits the offer code (onOfferReady). Empty = serverless.
+        // Always-on answer rendezvous: mint an id and embed its mailbox URL so
+        // the receiver's Accept POSTs the answer to api.firedown.app and the
+        // sender's long-poll (started in onOfferReady) picks it up — a
+        // cross-network share with NO reply step. Self-contained offer, so if
+        // the endpoint is down the reply link/QR still stands.
+        mRendezvous = new P2pSignalingClient(mOkHttpClient);
+        mRendezvousId = P2pSignalingClient.mintId();
+        final String rendezvousUrl =
+                Preferences.P2P_RENDEZVOUS_URL + "/a/" + mRendezvousId;
+
+        // Optional signaling relay (DORMANT — Preferences.P2P_SIGNALING_DEFAULT
+        // is empty; a fuller one-link flow that also uploads the offer). The
+        // rendezvous above covers the reply-step removal without it.
         mSignalingBase = Preferences.getP2pSignalingUrl(mSharedPreferences);
         if (!mSignalingBase.isEmpty()) {
             mSignaling = new P2pSignalingClient(mOkHttpClient);
@@ -397,6 +414,7 @@ public class P2pShareController {
             command.put("type", "send-start");
             command.put("readUrl", mServer.getReadUrl());
             command.put("answerUrl", mAnswerServer != null ? mAnswerServer.getAnswerUrl() : "");
+            command.put("rendezvousUrl", rendezvousUrl);
             command.put("name", entity.getFileName());
             command.put("size", size);
             // Derive the mime from the file's OWN extension, not the entity's
@@ -559,6 +577,9 @@ public class P2pShareController {
             mAnswerServer.stop();
             mAnswerServer = null;
         }
+        if (mRendezvous != null) {
+            mRendezvous.cancel();
+        }
         if (mSignaling != null) {
             mSignaling.cancel();
         }
@@ -572,6 +593,15 @@ public class P2pShareController {
      */
     private void onOfferReady(@NonNull String code) {
         mOfferCode = code;
+        // Start the rendezvous long-poll: the receiver's answer will land in
+        // the api mailbox and this picks it up. First answer to arrive (LAN
+        // return, rendezvous, or a human-relayed reply) wins; the engine
+        // ignores a later duplicate.
+        if (mRendezvous != null && mRendezvousId != null) {
+            final String id = mRendezvousId;
+            mRendezvous.pollAnswer(Preferences.P2P_RENDEZVOUS_URL, id, ans ->
+                    mMainHandler.post(() -> onRendezvousAnswer(ans)));
+        }
         if (mSignaling != null && mSignalingId != null && !mSignalingBase.isEmpty()) {
             final String base = mSignalingBase;
             final String id = mSignalingId;
@@ -626,6 +656,13 @@ public class P2pShareController {
      */
     private void onDirectAnswer(@NonNull String raw) {
         applyIncomingAnswer(raw, "LAN return");
+    }
+
+    private void onRendezvousAnswer(@Nullable String raw) {
+        if (raw == null) {
+            return; // poll gave up / cancelled — LAN or reply still stand
+        }
+        applyIncomingAnswer(raw, "rendezvous");
     }
 
     private void onRelayAnswer(@Nullable String raw) {
@@ -838,6 +875,7 @@ public class P2pShareController {
                 mRecvName = json.optString("name", "");
                 mRecvMime = json.optString("mime", "");
                 mRecvAnswerUrl = json.optString("ans", "");
+                mRecvRendezvousUrl = json.optString("rvz", "");
                 if (mListener != null) {
                     mListener.onOfferParsed(mRecvName, json.optLong("size", 0), mRecvMime,
                             json.optString("device", ""));
@@ -1066,8 +1104,19 @@ public class P2pShareController {
      * Each step falls through to the next on failure.
      */
     private void deliverAnswer(@NonNull String code) {
+        // Try in order of best UX, each falling through on failure: LAN return
+        // (same network, instant, never leaves it) → rendezvous (api mailbox,
+        // cross-network, no reply step) → relay (dormant) / human-relayed reply.
         if (mRecvAnswerUrl != null && !mRecvAnswerUrl.isEmpty()) {
-            postAnswerLan(mRecvAnswerUrl, code, () -> relayOrReply(code));
+            postAnswerLan(mRecvAnswerUrl, code, () -> rendezvousOrReply(code));
+        } else {
+            rendezvousOrReply(code);
+        }
+    }
+
+    private void rendezvousOrReply(@NonNull String code) {
+        if (mRecvRendezvousUrl != null && !mRecvRendezvousUrl.isEmpty()) {
+            postAnswerLan(mRecvRendezvousUrl, code, () -> relayOrReply(code));
         } else {
             relayOrReply(code);
         }
@@ -1185,6 +1234,10 @@ public class P2pShareController {
             mAnswerServer.stop();
             mAnswerServer = null;
         }
+        if (mRendezvous != null) {
+            mRendezvous.cancel();
+            mRendezvous = null;
+        }
         if (mSignaling != null) {
             mSignaling.cancel();
             mSignaling = null;
@@ -1193,6 +1246,8 @@ public class P2pShareController {
         mSignalingId = null;
         mShareLink = null;
         mOfferCode = null;
+        mRendezvousId = null;
+        mRecvRendezvousUrl = null;
         mRecvSignalingBase = null;
         mRecvSignalingId = null;
         mRecvAnswerUrl = null;

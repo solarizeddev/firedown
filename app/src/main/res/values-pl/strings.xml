@@ -561,8 +561,8 @@
     <string name="p2p_send_link">Wyślij link</string>
     <string name="p2p_send_link_again">Wyślij link ponownie</string>
     <string name="p2p_send_link_hint">Wyślij go dowolną aplikacją. Działa, dopóki ten ekran jest otwarty.</string>
-    <string name="p2p_link_sent">Link wysłany — czekamy na odpowiedź</string>
-    <string name="p2p_link_sent_body">Gdy zaakceptują, odeślą Ci link z odpowiedzią. Dotknij go — przesyłanie zacznie się samo.</string>
+    <string name="p2p_link_sent">Link wysłany — oczekiwanie</string>
+    <string name="p2p_link_sent_body">Czekanie, aż zaakceptują. Przesyłanie zacznie się samo, gdy tylko to zrobią.</string>
     <string name="p2p_clipboard_note">Wracasz ze skopiowaną odpowiedzią? Zostanie wykryta automatycznie.</string>
     <string name="p2p_reply_detected">Znaleziono odpowiedź — łączenie…</string>
     <string name="p2p_nearby_qr">Jesteście obok siebie? Pokaż QR</string>

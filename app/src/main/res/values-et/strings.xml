@@ -432,8 +432,8 @@
     <string name="p2p_send_link">Saada link</string>
     <string name="p2p_send_link_again">Saada link uuesti</string>
     <string name="p2p_send_link_hint">Saada see mis tahes rakendusega. Töötab, kuni see ekraan on avatud.</string>
-    <string name="p2p_link_sent">Link saadetud — ootame vastust</string>
-    <string name="p2p_link_sent_body">Kui nad vastu võtavad, saadavad nad sulle vastuselingi. Puuduta seda — edastus algab ise.</string>
+    <string name="p2p_link_sent">Link saadetud — ootel</string>
+    <string name="p2p_link_sent_body">Oodatakse, et nad vastu võtaksid. Edastus algab ise, niipea kui nad seda teevad.</string>
     <string name="p2p_clipboard_note">Tulid tagasi kopeeritud vastusega? See leitakse automaatselt.</string>
     <string name="p2p_reply_detected">Vastus leitud — ühendamine…</string>
     <string name="p2p_nearby_qr">Lähestikku? Näita QR-koodi</string>

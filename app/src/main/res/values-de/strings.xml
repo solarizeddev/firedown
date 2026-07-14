@@ -693,8 +693,8 @@
     <string name="p2p_send_link">Link senden</string>
     <string name="p2p_send_link_again">Link erneut senden</string>
     <string name="p2p_send_link_hint">Schick ihn über eine beliebige App. Er funktioniert, solange dieser Bildschirm offen bleibt.</string>
-    <string name="p2p_link_sent">Link gesendet — warte auf Antwort</string>
-    <string name="p2p_link_sent_body">Sobald sie annehmen, schicken sie dir einen Antwort-Link. Tippe ihn an — die Übertragung startet von selbst.</string>
+    <string name="p2p_link_sent">Link gesendet — warten</string>
+    <string name="p2p_link_sent_body">Warte, dass sie annehmen. Die Übertragung startet von selbst, sobald sie das tun.</string>
     <string name="p2p_clipboard_note">Mit kopierter Antwort zurückgekommen? Sie wird automatisch erkannt.</string>
     <string name="p2p_reply_detected">Antwort gefunden — verbinde…</string>
     <string name="p2p_nearby_qr">In der Nähe? QR anzeigen</string>
