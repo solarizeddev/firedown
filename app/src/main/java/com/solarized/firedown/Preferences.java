@@ -297,6 +297,12 @@ public class Preferences {
      *  as "no relay" and proceeds without one. */
     public static final String P2P_RELAY_CREDS_URL = SYNC_DEFAULT_BACKEND + "/v1/relay/creds";
 
+    /** PoW challenge endpoint gating the relay-creds mint (anti-abuse): the
+     *  client fetches {@code {challenge, pow_bits}}, solves the hashcash, and
+     *  passes challenge+nonce to {@link #P2P_RELAY_CREDS_URL}. 404 when relay
+     *  or PoW is off → the client skips straight to a relay-less share. */
+    public static final String P2P_RELAY_CHALLENGE_URL = SYNC_DEFAULT_BACKEND + "/v1/relay/challenge";
+
     /** P2P answer-rendezvous BASE — the one-time mailbox that removes the
      *  reply step from a cross-network share. The sender mints an id, embeds
      *  {@code <base>/a/<id>} in the offer and long-polls {@code …?wait=1};

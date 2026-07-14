@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Base64;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -14,6 +15,7 @@ import androidx.annotation.UiThread;
 import com.solarized.firedown.BuildConfig;
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.StoragePaths;
+import com.solarized.firedown.sync.crypto.Pow;
 import com.solarized.firedown.data.Download;
 import com.solarized.firedown.data.RestoredFileAccess;
 import com.solarized.firedown.data.entity.DownloadEntity;
@@ -34,6 +36,7 @@ import org.mozilla.geckoview.WebExtension;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.Locale;
 import java.util.concurrent.Executor;
@@ -45,6 +48,7 @@ import javax.inject.Singleton;
 
 import dagger.hilt.android.qualifiers.ApplicationContext;
 import okhttp3.Call;
+import okhttp3.HttpUrl;
 import okhttp3.Callback;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -175,6 +179,21 @@ public class P2pShareController {
     }
 
     private static final long ENGINE_READY_TIMEOUT_MS = 8000;
+
+    /**
+     * The fixed hashcash "resource" the relay PoW is bound to — must match
+     * firedown-api's {@code relayPoWResource} ({@code []byte("relay")})
+     * byte-for-byte. {@link Pow} prepends its own register-domain prefix; the
+     * separate server-side store makes cross-domain replay impossible anyway.
+     */
+    private static final byte[] RELAY_POW_RESOURCE =
+            "relay".getBytes(StandardCharsets.US_ASCII);
+    /**
+     * Refuse to solve a PoW harder than this — the base is ~14 bits and the
+     * adaptive ceiling is base+8; a value beyond this is a spoofed/hostile
+     * response, so treat it as "no relay" rather than spin the CPU.
+     */
+    private static final int RELAY_POW_MAX_BITS = 26;
 
     private static final SecureRandom ID_RANDOM = new SecureRandom();
 
@@ -505,11 +524,73 @@ public class P2pShareController {
             action.accept(mRelayCreds);
             return;
         }
-        Request request = new Request.Builder()
-                .url(Preferences.P2P_RELAY_CREDS_URL)
+        // Step 1: fetch a PoW challenge. 404 = relay/PoW not deployed → skip
+        // straight to a relay-less share. Any other failure degrades the same.
+        Request challengeReq = new Request.Builder()
+                .url(Preferences.P2P_RELAY_CHALLENGE_URL)
                 .get()
                 .build();
-        mRelayClient.newCall(request).enqueue(new Callback() {
+        mRelayClient.newCall(challengeReq).enqueue(new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                if (BuildConfig.DEBUG) {
+                    Log.d(TAG, "relay challenge fetch failed: " + e.getMessage());
+                }
+                deliverRelayCreds(null, action);
+            }
+
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) {
+                String challengeB64 = null;
+                int bits = 0;
+                try (Response r = response) {
+                    if (r.isSuccessful() && r.body() != null) {
+                        JSONObject json = new JSONObject(r.body().string());
+                        challengeB64 = json.optString("challenge", "");
+                        bits = json.optInt("pow_bits", 0);
+                    }
+                } catch (IOException | JSONException e) {
+                    if (BuildConfig.DEBUG) {
+                        Log.d(TAG, "relay challenge parse failed: " + e.getMessage());
+                    }
+                }
+                // A hostile/spoofed difficulty must not spin the solver forever
+                // (HTTPS to api.firedown.app makes this unlikely, but cheap to
+                // bound). Above the cap, treat as "no relay".
+                if (challengeB64 == null || challengeB64.isEmpty()
+                        || bits <= 0 || bits > RELAY_POW_MAX_BITS) {
+                    deliverRelayCreds(null, action);
+                    return;
+                }
+                fetchRelayCredsWithPoW(challengeB64, bits, action);
+            }
+        });
+    }
+
+    /**
+     * Step 2 (runs on the OkHttp callback thread — off main, where the CPU
+     * solve belongs): solve the hashcash and GET the creds with
+     * challenge+nonce. The solve is a few ms at the base difficulty; the
+     * adaptive climb only bites a mass-minter, never a single share.
+     */
+    private void fetchRelayCredsWithPoW(@NonNull String challengeB64, int bits,
+                                        @NonNull Consumer<JSONObject> action) {
+        String nonceB64;
+        try {
+            byte[] challenge = Base64.decode(
+                    challengeB64, Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP);
+            byte[] nonce = Pow.solve(RELAY_POW_RESOURCE, challenge, bits);
+            nonceB64 = Base64.encodeToString(
+                    nonce, Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP);
+        } catch (IllegalArgumentException e) {
+            deliverRelayCreds(null, action); // malformed challenge
+            return;
+        }
+        HttpUrl url = HttpUrl.get(Preferences.P2P_RELAY_CREDS_URL).newBuilder()
+                .addQueryParameter("challenge", challengeB64)
+                .addQueryParameter("nonce", nonceB64)
+                .build();
+        mRelayClient.newCall(new Request.Builder().url(url).get().build()).enqueue(new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
                 if (BuildConfig.DEBUG) {
