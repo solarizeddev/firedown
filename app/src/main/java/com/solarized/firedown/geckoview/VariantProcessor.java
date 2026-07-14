@@ -130,10 +130,29 @@ public class VariantProcessor {
                     || !TextUtils.isEmpty(first.getStreamAudioUrl())
                     || isManifestUrl(first.getStreamUrl());
             boolean progressive = !stream;
-            Log.d(TAG, "skipProbe set, using parser metadata (no FFprobe), manifest=" + mManifest + " progressive=" + progressive);
-            entity.setMimeType(FileUriHelper.MIMETYPE_MP4);
+            // A DECLARED audio-only progressive variant (JsonHelper parsed the
+            // emit's `audioOnly` — the page-state bridge's AUDIO_RE / <audio>
+            // classification, e.g. podverse's __NEXT_DATA__ mp3) is AUDIO. Keep
+            // the URL-derived audio mime prepareEntity already set instead of
+            // stamping video/mp4 — that stamp made a podcast mp3 show as a
+            // VIDEO and save under a .mp4 name. Type stays FILE: the raw
+            // byte-exact HttpDownloadStrategy, the same strategy the probe path
+            // yields for a progressive audio file — no remux.
+            boolean audioOnly = progressive && first.isAudioOnly();
+            Log.d(TAG, "skipProbe set, using parser metadata (no FFprobe), manifest=" + mManifest + " progressive=" + progressive + " audioOnly=" + audioOnly);
+            if (audioOnly) {
+                if (!FileUriHelper.isAudio(entity.getMimeType())) {
+                    // Declared audio but the URL carried no recognisable audio
+                    // extension (tokenized enclosure) — default to the dominant
+                    // podcast container rather than mislabel it video.
+                    entity.setMimeType(FileUriHelper.AUDIO_MP3);
+                }
+                entity.setAudio(true);
+            } else {
+                entity.setMimeType(FileUriHelper.MIMETYPE_MP4);
+                entity.setAudio(false);
+            }
             entity.setType((progressive ? UrlType.FILE : UrlType.MEDIA).getValue());
-            entity.setAudio(false);
             entity.setStreams(variants);
             entity.setHasVariants(variants.size() > 1);
             entity.setTags(buildTags(entity, variants));

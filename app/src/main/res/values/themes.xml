@@ -261,6 +261,24 @@
 
 
     <style name="Theme.FireDown.SplashScreen" parent="Theme.SplashScreen">
+        <!--
+            Web-content text-selection color. GeckoView derives the page
+            selection highlight from the APPLICATION context's theme, not the
+            activity theme: GeckoAppShell.getSystemColors() resolves
+            android.R.attr.colorAccent against getApplicationContext(), and
+            widget/android/nsLookAndFeel.cpp paints ColorID::Highlight (the
+            ::selection background) as that accent at ~30% alpha. This theme is
+            the manifest <application> theme, and its Theme.SplashScreen parent
+            chain bottoms out in the platform DeviceDefault theme — so without
+            this item the selection color is whatever the OEM's DeviceDefault
+            accent happens to be (a near-invisible dark tone on several OEM dark
+            themes). Must be the PLATFORM android:colorAccent — GeckoView
+            queries the framework attr, so the AppCompat/Material colorAccent
+            never reaches it. Keep this in the SplashScreen theme even though
+            activities swap to postSplashScreenTheme: the application context's
+            theme never changes, and it is the only theme Gecko reads.
+        -->
+        <item name="android:colorAccent">@color/md_theme_primary</item>
         // Set the splash screen background, animated icon, and animation duration.
         <item name="windowSplashScreenBackground">@color/md_theme_surface</item>
 

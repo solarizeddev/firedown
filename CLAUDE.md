@@ -226,7 +226,16 @@ see the HLS-master path below), covers every such site:
   `.ogg`/`.opus`/`.flac`/`.wav`/`.weba`** (`AUDIO_RE`) → progressive AUDIO variant
   (no resolution) — podcast/article audio inlined in page state (e.g. podverse's
   `__NEXT_DATA__.mediaUrl`, a substack TTS `audio_url`); `MEDIA_KEY_RE` therefore
-  carries `audio_?url`/`enclosure` keys alongside the video ones; a
+  carries `audio_?url`/`enclosure` keys alongside the video ones. **The audio
+  variant is marked `audioOnly: true`** and `VariantProcessor`'s skip-probe
+  branch honors it — the entity keeps the URL-derived audio mime + `audio` flag
+  and downloads as raw FILE (`HttpDownloadStrategy`), instead of the branch's
+  video/mp4 stamp (which once made a podverse podcast mp3 show as a VIDEO and
+  save under a `.mp4` name). The same mark flows from every bridge reader:
+  `mediaKindOf` has a third `"audio"` kind (an `audio/*` MIME or `AUDIO_RE`
+  extension — so an `.mp3` also never falls into the obfuscated-master HLS
+  default), and a DOM **`<audio>` element** types its sources audio regardless
+  of extension (a `.mp4`-container m4a on `<audio>` is still audio); a
   **SAME-ORIGIN non-media URL beside a `format`/`quality`/`segmentFormats` hint**
   → a tokenized **media-list DELEGATE** (e.g. a player whose source is
   `…/media/mp4/?s=<token>` returning `[{quality, videoUrl:…mp4}]`), resolved with
@@ -257,8 +266,12 @@ see the HLS-master path below), covers every such site:
 - **Emit + metadata.** Progressive → Background `kind:"page-state-progressive"` →
   `sendVariants` (skip-probe auto-set from any page `duration`; the variant
   carries only `height`, `width:0` — `JsonHelper` renders `"720p"`, never
-  `"0x720"`). **Request headers: the `<video>`-element MEDIA-REQUEST set, but NO
-  Referer/Origin/Cookie.** These URLs are query-signed/self-authorizing (verified
+  `"0x720"`). **Request headers: the MEDIA-ELEMENT request set, but NO
+  Referer/Origin/Cookie** — the `<video>`-element shape for video groups, and for
+  a declared-audio group (primary variant `audioOnly`) the `<audio>`-element
+  shape (Firefox's audio `Accept` string + `Sec-Fetch-Dest: audio` — a
+  video-shaped header set on an mp3 is exactly the deviation a header-gating CDN
+  rejects). These URLs are query-signed/self-authorizing (verified
   in practice: the real browser fetch carries no Referer/Origin/Cookie), so those are
   omitted — but some progressive CDNs still gate on the headers a real `<video>`
   fetch *always* carries: krakencloud's `/play/video/<token>` (series.ly) **404s a
