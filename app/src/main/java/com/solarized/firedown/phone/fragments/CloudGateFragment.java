@@ -2,6 +2,8 @@ package com.solarized.firedown.phone.fragments;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -48,6 +50,7 @@ public class CloudGateFragment extends BaseFocusFragment {
     OkHttpClient mOkHttpClient;
 
     private View mView;
+    private final Handler mMainHandler = new Handler(Looper.getMainLooper());
     // One in-flight ping at a time; the button re-enables on failure.
     private boolean mSending;
 
@@ -114,18 +117,17 @@ public class CloudGateFragment extends BaseFocusFragment {
     }
 
     /** Hop to the main thread and reflect the outcome; safe after view death
-     *  (the pref write still lands so the count isn't lost on a quick exit). */
+     *  (the pref write still lands so the count isn't lost on a quick exit).
+     *  Posts via the main looper, NOT view.post — a detached view's queue
+     *  never runs, which would wedge mSending true and leave the button dead
+     *  if this instance ever got a new view. mSending resets unconditionally. */
     private void deliverResult(boolean counted) {
         if (counted) {
             mSharedPreferences.edit()
                     .putBoolean(Preferences.CLOUD_GATE_COUNTED, true)
                     .apply();
         }
-        View view = mView;
-        if (view == null) {
-            return;
-        }
-        view.post(() -> {
+        mMainHandler.post(() -> {
             mSending = false;
             if (mView == null || !isAdded()) {
                 return;
