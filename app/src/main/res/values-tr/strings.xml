@@ -561,7 +561,7 @@
     <string name="p2p_send_link">Bağlantı gönder</string>
     <string name="p2p_send_link_again">Bağlantıyı yeniden gönder</string>
     <string name="p2p_send_link_hint">Herhangi bir uygulamayla gönder. Bu ekran açık kaldığı sürece çalışır.</string>
-    <string name="p2p_link_sent">Bağlantı gönderildi — bekleniyor</string>
+    <string name="p2p_link_sent">Bağlantı gönderildi</string>
     <string name="p2p_link_sent_body">Kabul etmeleri bekleniyor. Kabul ettikleri anda aktarım kendiliğinden başlar.</string>
     <string name="p2p_clipboard_note">Yanıtı kopyalayıp mı döndün? Otomatik algılanır.</string>
     <string name="p2p_reply_detected">Yanıt bulundu — bağlanıyor…</string>

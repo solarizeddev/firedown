@@ -456,7 +456,7 @@
     <string name="p2p_send_link">Изпратете линк</string>
     <string name="p2p_send_link_again">Изпратете линка отново</string>
     <string name="p2p_send_link_hint">Изпратете го през кое да е приложение. Работи, докато този екран е отворен.</string>
-    <string name="p2p_link_sent">Линкът е изпратен — изчакване</string>
+    <string name="p2p_link_sent">Линкът е изпратен</string>
     <string name="p2p_link_sent_body">Изчаква се да приемат. Прехвърлянето започва само щом го направят.</string>
     <string name="p2p_clipboard_note">Върнахте се с копиран отговор? Той се разпознава автоматично.</string>
     <string name="p2p_reply_detected">Намерен отговор — свързване…</string>

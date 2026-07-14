@@ -108,22 +108,8 @@ public class P2pSendFragment extends P2pShareBaseFragment
                         ? String.format(Locale.ROOT, "%s · %s", mimeWord, size)
                         : size);
 
-        mView.findViewById(R.id.p2p_send_link).setOnClickListener(v -> {
-            // The https form (firedown.app/s#<code>) — the one messengers make
-            // tappable; the controller substitutes a relay link if one is ever
-            // configured. Sharing flips the screen into the WAITING sub-stage:
-            // the reply normally comes back as a tapped link or off the
-            // clipboard, so the guidance changes the moment the link is out.
-            String content = mP2pController.getShareContent();
-            if (content == null && mOfferCode != null) {
-                content = P2pShareController.toHttpsLink(mOfferCode);
-            }
-            if (content != null) {
-                shareCode(content);
-                mLinkShared = true;
-                updateCodeSubstages();
-            }
-        });
+        mView.findViewById(R.id.p2p_send_link).setOnClickListener(v -> shareOfferLink());
+        mView.findViewById(R.id.p2p_send_link_again).setOnClickListener(v -> shareOfferLink());
         mView.findViewById(R.id.p2p_nearby_toggle).setOnClickListener(v -> {
             mNearbyExpanded = !mNearbyExpanded;
             updateNearby();
@@ -181,6 +167,26 @@ public class P2pSendFragment extends P2pShareBaseFragment
     }
 
     /**
+     * Share the offer as an https link (firedown.app/s#&lt;code&gt;) — the form
+     * messengers make tappable; the controller substitutes a relay link if one
+     * is ever configured. Sharing flips the screen into the WAITING sub-stage:
+     * the reply normally comes back as a tapped link or off the clipboard, so
+     * the guidance changes the moment the link is out. Wired to both the
+     * primary Send-link button and the waiting card's "Send link again".
+     */
+    private void shareOfferLink() {
+        String content = mP2pController.getShareContent();
+        if (content == null && mOfferCode != null) {
+            content = P2pShareController.toHttpsLink(mOfferCode);
+        }
+        if (content != null) {
+            shareCode(content);
+            mLinkShared = true;
+            updateCodeSubstages();
+        }
+    }
+
+    /**
      * Auto-pickup: a sender who copied the receiver's reply in a messenger and
      * switched back shouldn't have to find a paste button. Fired from
      * {@link #mFocusListener} on window-focus gain (see its note on the API 29
@@ -207,18 +213,20 @@ public class P2pSendFragment extends P2pShareBaseFragment
 
     /* ── stage visibility ───────────────────────────────────────────────── */
 
-    /** The code stage's two sub-states: pre-share (link button + hint) and
-     *  WAITING (spinner chip + what-happens-next + paste). The link button
-     *  stays for a re-share, relabelled. */
+    /** The code stage's two sub-states: pre-share (filled link button + hint)
+     *  and WAITING (the status card, which carries the re-share and paste
+     *  fallbacks as text buttons). One primary affordance per sub-state — the
+     *  filled button hides rather than relabelling, so a static status can
+     *  never sit next to a button dressed the same way. */
     private void updateCodeSubstages() {
         mView.findViewById(R.id.p2p_waiting_group)
                 .setVisibility(mLinkShared ? View.VISIBLE : View.GONE);
+        mView.findViewById(R.id.p2p_send_link)
+                .setVisibility(mLinkShared ? View.GONE : View.VISIBLE);
         // The pre-share hint yields to the waiting copy — two stacked
         // explainers read as clutter (on-device review).
         mView.findViewById(R.id.p2p_send_link_hint)
                 .setVisibility(mLinkShared ? View.GONE : View.VISIBLE);
-        ((MaterialButton) mView.findViewById(R.id.p2p_send_link)).setText(
-                mLinkShared ? R.string.p2p_send_link_again : R.string.p2p_send_link);
     }
 
     private void updateNearby() {
@@ -229,14 +237,14 @@ public class P2pSendFragment extends P2pShareBaseFragment
     }
 
     private void showPreparing() {
-        setStage(R.id.p2p_status);
+        setStage(R.id.p2p_status_group);
         TextView status = mView.findViewById(R.id.p2p_status);
         status.setText(R.string.p2p_preparing);
         mView.findViewById(R.id.p2p_stop).setVisibility(View.GONE);
     }
 
     private void setStage(int visibleId) {
-        int[] stages = {R.id.p2p_status, R.id.p2p_code_group, R.id.p2p_progress_group,
+        int[] stages = {R.id.p2p_status_group, R.id.p2p_code_group, R.id.p2p_progress_group,
                 R.id.p2p_done_group, R.id.p2p_error_group};
         for (int id : stages) {
             View v = mView.findViewById(id);
@@ -277,7 +285,7 @@ public class P2pSendFragment extends P2pShareBaseFragment
             return;
         }
         if ("connecting".equals(state) || "connected".equals(state)) {
-            setStage(R.id.p2p_status);
+            setStage(R.id.p2p_status_group);
             TextView status = mView.findViewById(R.id.p2p_status);
             status.setText("connected".equals(state)
                     ? R.string.p2p_state_connected : R.string.p2p_state_connecting);

@@ -208,18 +208,17 @@
                         app:indicatorSize="40dp"
                         app:trackThickness="3dp" />
 
+                    <!-- Plain muted label — status is state, not a control
+                         (the old tonal pill read as a button). -->
                     <TextView
                         android:id="@+id/p2p_status"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="center_horizontal"
-                        android:layout_marginTop="18dp"
-                        android:background="@drawable/bg_p2p_step"
-                        android:paddingHorizontal="14dp"
-                        android:paddingVertical="6dp"
+                        android:layout_marginTop="14dp"
                         android:text="@string/p2p_preparing"
-                        android:textAppearance="?attr/textAppearanceLabelMedium"
-                        android:textColor="?attr/colorOnPrimaryContainer" />
+                        android:textAppearance="?attr/textAppearanceBodyMedium"
+                        android:textColor="?attr/colorOnSurfaceVariant" />
 
                 </LinearLayout>
 

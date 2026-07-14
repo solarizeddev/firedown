@@ -562,7 +562,7 @@
     <string name="p2p_send_link">Enviar link</string>
     <string name="p2p_send_link_again">Enviar link de novo</string>
     <string name="p2p_send_link_hint">Envie por qualquer app. Funciona enquanto esta tela estiver aberta.</string>
-    <string name="p2p_link_sent">Link enviado — aguardando</string>
+    <string name="p2p_link_sent">Link enviado</string>
     <string name="p2p_link_sent_body">Aguardando eles aceitarem. A transferência começa sozinha assim que aceitarem.</string>
     <string name="p2p_clipboard_note">Voltou com uma resposta copiada? Ela é detectada automaticamente.</string>
     <string name="p2p_reply_detected">Resposta encontrada — conectando…</string>

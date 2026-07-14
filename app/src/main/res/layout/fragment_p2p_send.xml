@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- "Send directly" — P2P share sender (P2pSendFragment). The engine session's
      lifetime is this screen's lifetime. One column, stage groups toggled by
-     the fragment: status chip (preparing/connecting) · code (offer QR) ·
-     progress · done · error. The file card, stop button and footer are
-     always present. -->
+     the fragment: status (spinner+label, preparing/connecting) · code (offer
+     QR + the waiting card) · progress · done · error. The file card, stop
+     button and footer are always present. -->
 <androidx.coordinatorlayout.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -113,21 +113,38 @@
 
                 </LinearLayout>
 
-                <!-- Status chip: preparing / connecting / connected -->
-                <TextView
-                    android:id="@+id/p2p_status"
-                    android:layout_width="wrap_content"
+                <!-- Status stage: preparing / connecting — a bare spinner +
+                     muted label (mirrors the receive screen). Status is STATE,
+                     never a control: the old tonal pill had the exact anatomy
+                     of a filled button and read as tappable. -->
+                <LinearLayout
+                    android:id="@+id/p2p_status_group"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="center_horizontal"
-                    android:layout_marginTop="14dp"
-                    android:background="@drawable/bg_p2p_step"
-                    android:paddingHorizontal="14dp"
-                    android:paddingVertical="6dp"
-                    android:text="@string/p2p_preparing"
-                    android:textAppearance="?attr/textAppearanceLabelMedium"
-                    android:textColor="?attr/colorOnPrimaryContainer"
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical"
+                    android:paddingVertical="28dp"
                     android:visibility="gone"
-                    tools:visibility="visible" />
+                    tools:visibility="visible">
+
+                    <com.google.android.material.progressindicator.CircularProgressIndicator
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:indeterminate="true"
+                        app:indicatorSize="40dp"
+                        app:trackThickness="3dp" />
+
+                    <TextView
+                        android:id="@+id/p2p_status"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_horizontal"
+                        android:layout_marginTop="14dp"
+                        android:text="@string/p2p_preparing"
+                        android:textAppearance="?attr/textAppearanceBodyMedium"
+                        android:textColor="?attr/colorOnSurfaceVariant" />
+
+                </LinearLayout>
 
                 <!-- Code stage, remote-first: the LINK is the hero (most pairs
                      are on different networks, sharing through a messenger);
@@ -166,40 +183,64 @@
                         android:textAppearance="?attr/textAppearanceBodySmall"
                         android:textColor="?attr/colorOnSurfaceVariant" />
 
-                    <!-- WAITING sub-stage: revealed once the link went out. -->
+                    <!-- WAITING sub-stage: revealed once the link went out — a
+                         stage CARD, the same skeleton the progress/done cards
+                         use (centered glyph over text). The indeterminate
+                         spinner is the "in progress, not tappable" signal
+                         (stacked ABOVE the title — a side-by-side pair centers
+                         as a unit and pushes the text off-axis, seen
+                         on-device). The two fallback actions (re-share, paste)
+                         live inside the card as text buttons, stacked because
+                         some locales' labels don't fit side by side; the
+                         filled Send-link button above hides while this shows,
+                         so the stage keeps one clear hierarchy. -->
                     <LinearLayout
                         android:id="@+id/p2p_waiting_group"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:layout_marginHorizontal="16dp"
+                        android:layout_marginTop="18dp"
+                        android:background="@drawable/bg_p2p_card"
+                        android:gravity="center_horizontal"
                         android:orientation="vertical"
+                        android:paddingHorizontal="22dp"
+                        android:paddingVertical="22dp"
                         android:visibility="gone"
                         tools:visibility="visible">
 
-                        <!-- Status chip, centered ALONE — a side-by-side spinner
-                             made the pair center as a unit and pushed the chip
-                             off-axis (visible on-device). Liveness is already
-                             signalled by the file card's green dot. -->
+                        <com.google.android.material.progressindicator.CircularProgressIndicator
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:indeterminate="true"
+                            app:indicatorSize="32dp"
+                            app:trackThickness="3dp" />
+
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_gravity="center_horizontal"
-                            android:layout_marginTop="18dp"
-                            android:background="@drawable/bg_p2p_step"
-                            android:paddingHorizontal="14dp"
-                            android:paddingVertical="6dp"
+                            android:layout_marginTop="12dp"
                             android:text="@string/p2p_link_sent"
-                            android:textAppearance="?attr/textAppearanceLabelMedium"
-                            android:textColor="?attr/colorOnPrimaryContainer" />
+                            android:textAppearance="?attr/textAppearanceTitleSmall"
+                            android:textColor="?attr/colorOnSurface" />
 
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
                             android:gravity="center"
-                            android:paddingHorizontal="32dp"
-                            android:paddingTop="10dp"
                             android:text="@string/p2p_link_sent_body"
                             android:textAppearance="?attr/textAppearanceBodyMedium"
-                            android:textColor="?attr/colorOnSurface" />
+                            android:textColor="?attr/colorOnSurfaceVariant" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:alpha="0.75"
+                            android:gravity="center"
+                            android:text="@string/p2p_clipboard_note"
+                            android:textAppearance="?attr/textAppearanceBodySmall"
+                            android:textColor="?attr/colorOnSurfaceVariant" />
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/p2p_paste_reply"
@@ -207,18 +248,17 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_gravity="center_horizontal"
-                            android:layout_marginTop="6dp"
+                            android:layout_marginTop="10dp"
                             android:text="@string/p2p_paste_reply" />
 
-                        <TextView
-                            android:layout_width="match_parent"
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/p2p_send_link_again"
+                            style="@style/Widget.Material3.Button.TextButton"
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:alpha="0.75"
-                            android:gravity="center"
-                            android:paddingHorizontal="32dp"
-                            android:text="@string/p2p_clipboard_note"
-                            android:textAppearance="?attr/textAppearanceBodySmall"
-                            android:textColor="?attr/colorOnSurfaceVariant" />
+                            android:layout_gravity="center_horizontal"
+                            android:layout_marginTop="-4dp"
+                            android:text="@string/p2p_send_link_again" />
 
                     </LinearLayout>
 

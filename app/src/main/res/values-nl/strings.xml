@@ -562,7 +562,7 @@
     <string name="p2p_send_link">Link versturen</string>
     <string name="p2p_send_link_again">Link opnieuw versturen</string>
     <string name="p2p_send_link_hint">Verstuur hem via elke app. Hij werkt zolang dit scherm open blijft.</string>
-    <string name="p2p_link_sent">Link verstuurd — wachten</string>
+    <string name="p2p_link_sent">Link verstuurd</string>
     <string name="p2p_link_sent_body">Wachten tot ze accepteren. De overdracht start vanzelf zodra ze dat doen.</string>
     <string name="p2p_clipboard_note">Teruggekomen met een gekopieerd antwoord? Het wordt automatisch opgepikt.</string>
     <string name="p2p_reply_detected">Antwoord gevonden — verbinden…</string>

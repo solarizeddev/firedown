@@ -690,7 +690,7 @@
     <string name="p2p_send_link">发送链接</string>
     <string name="p2p_send_link_again">再次发送链接</string>
     <string name="p2p_send_link_hint">用任何应用发送。此屏幕保持打开时有效。</string>
-    <string name="p2p_link_sent">链接已发送 — 等待中</string>
+    <string name="p2p_link_sent">链接已发送</string>
     <string name="p2p_link_sent_body">等待对方接受。对方接受后传输会自动开始。</string>
     <string name="p2p_clipboard_note">复制了回复再回来？会自动识别。</string>
     <string name="p2p_reply_detected">找到回复 — 连接中…</string>

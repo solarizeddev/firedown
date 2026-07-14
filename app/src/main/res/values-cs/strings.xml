@@ -517,7 +517,7 @@
     <string name="p2p_send_link">Poslat odkaz</string>
     <string name="p2p_send_link_again">Poslat odkaz znovu</string>
     <string name="p2p_send_link_hint">Pošlete ho jakoukoli aplikací. Funguje, dokud je tato obrazovka otevřená.</string>
-    <string name="p2p_link_sent">Odkaz odeslán — čekání</string>
+    <string name="p2p_link_sent">Odkaz odeslán</string>
     <string name="p2p_link_sent_body">Čeká se, až přijmou. Přenos se spustí sám, jakmile to udělají.</string>
     <string name="p2p_clipboard_note">Vrátili jste se se zkopírovanou odpovědí? Rozpozná se automaticky.</string>
     <string name="p2p_reply_detected">Odpověď nalezena — připojování…</string>
