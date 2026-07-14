@@ -197,14 +197,28 @@
             android:configChanges="keyboardHidden|orientation|screenLayout|screenSize"
             android:exported="true"
             android:theme="@style/Theme.FireDown">
-            <!-- P2P share offer deep link: scanning a sender's QR (firedown://p2p/<code>)
-                 with any scanner opens the receive flow. Handled in
-                 DownloadsActivity.handleP2pDeepLink; only an FDS1 offer code acts. -->
+            <!-- P2P share deep links, both handled in
+                 DownloadsActivity.handleP2pDeepLink: an FDS1 offer opens the
+                 receive flow, an FDR1 reply feeds the live send session. -->
+            <!-- QR / in-person form: firedown://p2p/<code>. -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="firedown" android:host="p2p" />
+            </intent-filter>
+            <!-- Messenger form: https://firedown.app/s#<code> — a VERIFIED App
+                 Link (assetlinks.json is live on firedown.app), so tapping a
+                 share link in a chat opens the app directly, no chooser. The
+                 code rides in the URL #fragment, which never reaches the
+                 server; unverified devices land on the static /s bouncer page
+                 instead, whose button fires the firedown:// form above. Path
+                 is EXACTLY /s so the rest of the site stays with browsers. -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="firedown.app" android:path="/s" />
             </intent-filter>
         </activity>
 

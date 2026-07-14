@@ -106,37 +106,70 @@ public class P2pShareController {
     public static final String ANSWER_PREFIX = "FDR1.";
 
     /**
-     * Deep-link wrapper for the OFFER code so a scan with ANY scanner (the
-     * phone's system camera included) offers "open in Firedown" and jumps
-     * straight into the receive flow — a bare {@code FDS1.…} code is just text
-     * to a generic scanner. The scheme+host are registered on DownloadsActivity
-     * (AndroidManifest) and routed to {@code p2p_receive}. Only the offer is
-     * wrapped: the ANSWER is fed back into the sender's already-open, LIVE
-     * session (in-app scan / paste), so a deep link there would just relaunch
-     * the app with no session to hand it to. {@link #stripDeepLink} makes the
-     * in-app scanner + paste accept both the wrapped and bare forms.
+     * Deep-link wrapper so a scan with ANY scanner (the phone's system camera
+     * included) offers "open in Firedown" and jumps straight into the receive
+     * flow — a bare {@code FDS1.…} code is just text to a generic scanner. The
+     * scheme+host are registered on DownloadsActivity (AndroidManifest) and
+     * routed by {@code handleP2pDeepLink}: an OFFER to {@code p2p_receive}, an
+     * ANSWER into the sender's LIVE session ({@link #provideExternalAnswer}).
+     * {@link #stripDeepLink} makes the in-app scanner + paste accept the
+     * wrapped, https and bare forms alike.
      */
     public static final String DEEP_LINK_SCHEME = "firedown";
     public static final String DEEP_LINK_HOST = "p2p";
     public static final String DEEP_LINK_PREFIX =
             DEEP_LINK_SCHEME + "://" + DEEP_LINK_HOST + "/";
 
-    /** Wrap a signaling code as a {@code firedown://p2p/<code>} deep link. */
+    /**
+     * The MESSENGER-facing wrapper: {@code https://firedown.app/s#<code>}.
+     * Chat apps auto-link https where a custom scheme renders as dead text, so
+     * this is what the share sheet sends (both the offer and the reply). The
+     * code rides in the {@code #fragment}, which a browser NEVER sends to the
+     * server — the page behind /s is a static "open in Firedown" bouncer, not
+     * a signaling service. With the verified App Link (assetlinks.json on
+     * firedown.app) the link opens the app directly and no page is ever
+     * loaded; without verification (some de-Googled ROMs, desktop) the bouncer
+     * fires the firedown:// scheme instead. QRs keep the firedown:// form —
+     * they're the in-person path, where "open in Firedown" is always right.
+     */
+    public static final String HTTPS_LINK_HOST = "firedown.app";
+    public static final String HTTPS_LINK_PATH = "/s";
+    public static final String HTTPS_LINK_PREFIX =
+            "https://" + HTTPS_LINK_HOST + HTTPS_LINK_PATH + "#";
+
+    /** Wrap a signaling code as a {@code firedown://p2p/<code>} deep link (QR form). */
     @NonNull
     public static String toDeepLink(@NonNull String code) {
         return DEEP_LINK_PREFIX + code;
     }
 
+    /** Wrap a signaling code as an {@code https://firedown.app/s#<code>} link
+     *  (the share-sheet form — see {@link #HTTPS_LINK_PREFIX}). */
+    @NonNull
+    public static String toHttpsLink(@NonNull String code) {
+        return HTTPS_LINK_PREFIX + code;
+    }
+
     /**
      * Return the bare {@code FDS1.}/{@code FDR1.} code from a scanned/pasted
-     * value, stripping the {@code firedown://p2p/} deep-link wrapper if present.
-     * Bare codes (the answer, or a pre-deep-link offer) pass through unchanged.
+     * value, stripping the {@code firedown://p2p/} or
+     * {@code https://firedown.app/s#} wrapper if present. Bare codes pass
+     * through unchanged.
      */
     @NonNull
     public static String stripDeepLink(@NonNull String raw) {
         String trimmed = raw.trim();
         if (trimmed.startsWith(DEEP_LINK_PREFIX)) {
             return trimmed.substring(DEEP_LINK_PREFIX.length());
+        }
+        // Accept the https form on either host spelling (a messenger may
+        // rewrite to www.) — everything after the first '#' is the code.
+        if (trimmed.startsWith("https://" + HTTPS_LINK_HOST + HTTPS_LINK_PATH)
+                || trimmed.startsWith("https://www." + HTTPS_LINK_HOST + HTTPS_LINK_PATH)) {
+            int hash = trimmed.indexOf('#');
+            if (hash >= 0 && hash + 1 < trimmed.length()) {
+                return trimmed.substring(hash + 1);
+            }
         }
         return trimmed;
     }
@@ -558,15 +591,32 @@ public class P2pShareController {
         }
     }
 
-    /** The content the "Send a link" action shares: the relay link when the
-     *  offer is up on a relay, otherwise the self-contained offer deep link. */
+    /** The content the "Send link" action shares: the relay link when the
+     *  offer is up on a relay (dormant today), otherwise the self-contained
+     *  offer as an https link — the form messengers make tappable. */
     @Nullable
     @UiThread
     public String getShareContent() {
         if (mShareLink != null) {
             return mShareLink;
         }
-        return mOfferCode != null ? toDeepLink(mOfferCode) : null;
+        return mOfferCode != null ? toHttpsLink(mOfferCode) : null;
+    }
+
+    /**
+     * Sender: an ANSWER arrived from OUTSIDE the share screen — the receiver's
+     * reply link tapped in a messenger (deep link via DownloadsActivity), on
+     * this same phone. Applied like a scanned reply when a send session is
+     * live; returns false when there is none (app relaunched, share closed) so
+     * the caller can say so honestly instead of dropping the tap.
+     */
+    @UiThread
+    public boolean provideExternalAnswer(@NonNull String raw) {
+        if (!"send".equals(mRole)) {
+            return false;
+        }
+        applyIncomingAnswer(raw, "deep link");
+        return true;
     }
 
     /**

@@ -48,6 +48,11 @@ public class P2pReceiveFragment extends P2pShareBaseFragment
     private View mView;
     private String mReplyCode;
     private String mLastCode;
+    // HOW the offer arrived decides the reply stage's shape: via link/paste
+    // (phones apart) -> "Send reply" share button primary, QR folded; via the
+    // in-app scanner (phones adjacent) -> QR expanded, remote widgets hidden.
+    private boolean mArrivedRemote;
+    private boolean mReplyNearbyExpanded;
     // A relay link's rendezvous coordinates, when the deep link was a relay
     // link rather than a self-contained offer. Both null = no relay.
     private String mSignalingBase;
@@ -69,6 +74,7 @@ public class P2pReceiveFragment extends P2pShareBaseFragment
             String code = readCodeFromClipboard(P2pShareController.OFFER_PREFIX);
             if (code != null) {
                 mLastCode = code;
+                mArrivedRemote = true; // pasted from a messenger = phones apart
                 mP2pController.startReceive(code, this);
             }
         });
@@ -83,8 +89,19 @@ public class P2pReceiveFragment extends P2pShareBaseFragment
         });
         mView.findViewById(R.id.p2p_share_reply).setOnClickListener(v -> {
             if (mReplyCode != null) {
-                shareCode(mReplyCode);
+                shareCode(P2pShareController.toHttpsLink(mReplyCode));
             }
+        });
+        mView.findViewById(R.id.p2p_send_reply).setOnClickListener(v -> {
+            // The https form — the sender just taps it in the chat and their
+            // waiting session connects (answer deep link via DownloadsActivity).
+            if (mReplyCode != null) {
+                shareCode(P2pShareController.toHttpsLink(mReplyCode));
+            }
+        });
+        mView.findViewById(R.id.p2p_reply_nearby_toggle).setOnClickListener(v -> {
+            mReplyNearbyExpanded = !mReplyNearbyExpanded;
+            updateReplyNearby();
         });
         mView.findViewById(R.id.p2p_open).setOnClickListener(v -> openReceived());
         // Mid-transfer this is "Cancel" (confirmed, like back); on done, "Done".
@@ -101,6 +118,7 @@ public class P2pReceiveFragment extends P2pShareBaseFragment
             String offer = args.getString(ARG_OFFER_CODE);
             if (offer != null && !offer.isEmpty()) {
                 mLastCode = offer;
+                mArrivedRemote = true; // tapped link = phones (likely) apart
             }
             String base = args.getString(ARG_SIGNALING_BASE);
             String id = args.getString(ARG_SIGNALING_ID);
@@ -143,6 +161,7 @@ public class P2pReceiveFragment extends P2pShareBaseFragment
     @Override
     protected void onCodeScanned(@NonNull String code) {
         mLastCode = code;
+        mArrivedRemote = false; // scanned in person = phones adjacent
         mP2pController.startReceive(code, this);
     }
 
@@ -189,6 +208,19 @@ public class P2pReceiveFragment extends P2pShareBaseFragment
         mView.findViewById(R.id.p2p_reply_qr_card).setVisibility(rendered ? View.VISIBLE : View.GONE);
         ((TextView) mView.findViewById(R.id.p2p_reply_hint)).setText(
                 rendered ? R.string.p2p_code_hint_reply : R.string.p2p_qr_too_large);
+        // Remote arrival: "Send reply" is the primary, QR folded. Scan
+        // arrival: the phones are adjacent — QR expanded, remote widgets gone.
+        mView.findViewById(R.id.p2p_reply_remote_group)
+                .setVisibility(mArrivedRemote ? View.VISIBLE : View.GONE);
+        mReplyNearbyExpanded = !mArrivedRemote;
+        updateReplyNearby();
+    }
+
+    private void updateReplyNearby() {
+        mView.findViewById(R.id.p2p_reply_nearby_group)
+                .setVisibility(mReplyNearbyExpanded ? View.VISIBLE : View.GONE);
+        ((ImageView) mView.findViewById(R.id.p2p_reply_nearby_chevron))
+                .setRotation(mReplyNearbyExpanded ? 180f : 0f);
     }
 
     @Override

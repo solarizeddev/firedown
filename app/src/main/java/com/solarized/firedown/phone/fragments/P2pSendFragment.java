@@ -5,6 +5,7 @@ import android.text.format.Formatter;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -21,6 +22,7 @@ import com.solarized.firedown.StoragePaths;
 import com.solarized.firedown.data.RestoredFileAccess;
 import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.p2pshare.P2pShareController;
+import com.solarized.firedown.utils.ClipboardHelper;
 import com.solarized.firedown.utils.FileUriHelper;
 import com.solarized.firedown.utils.FragmentArgs;
 
@@ -46,6 +48,12 @@ public class P2pSendFragment extends P2pShareBaseFragment
     private DownloadEntity mDownloadEntity;
     private View mView;
     private String mOfferCode;
+    // Remote-first state: the WAITING sub-stage appears once the link went
+    // out; the clipboard is auto-checked on return (each clip value tried
+    // once, so a soft bad-code can't loop); the QR lives behind "Nearby?".
+    private boolean mLinkShared;
+    private String mLastClipTried;
+    private boolean mNearbyExpanded;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -88,19 +96,25 @@ public class P2pSendFragment extends P2pShareBaseFragment
                         ? String.format(Locale.ROOT, "%s · %s", mimeWord, size)
                         : size);
 
-        mView.findViewById(R.id.p2p_share_code).setOnClickListener(v -> {
-            // Prefer the controller's share content: the https relay LINK when
-            // a relay is configured and the offer is up (works across networks,
-            // the receiver just taps it), otherwise the self-contained offer
-            // deep link. Either way, opening it in Firedown lands on the receive
-            // preview. Falls back to the offer deep link before the upload lands.
+        mView.findViewById(R.id.p2p_send_link).setOnClickListener(v -> {
+            // The https form (firedown.app/s#<code>) — the one messengers make
+            // tappable; the controller substitutes a relay link if one is ever
+            // configured. Sharing flips the screen into the WAITING sub-stage:
+            // the reply normally comes back as a tapped link or off the
+            // clipboard, so the guidance changes the moment the link is out.
             String content = mP2pController.getShareContent();
             if (content == null && mOfferCode != null) {
-                content = P2pShareController.toDeepLink(mOfferCode);
+                content = P2pShareController.toHttpsLink(mOfferCode);
             }
             if (content != null) {
                 shareCode(content);
+                mLinkShared = true;
+                updateCodeSubstages();
             }
+        });
+        mView.findViewById(R.id.p2p_nearby_toggle).setOnClickListener(v -> {
+            mNearbyExpanded = !mNearbyExpanded;
+            updateNearby();
         });
         mView.findViewById(R.id.p2p_scan_reply).setOnClickListener(v ->
                 navigateToScanner(P2pShareController.ANSWER_PREFIX, true));
@@ -137,11 +151,54 @@ public class P2pSendFragment extends P2pShareBaseFragment
 
     private void restart() {
         mOfferCode = null;
+        mLinkShared = false;
+        mLastClipTried = null;
         showPreparing();
         mP2pController.startSend(mDownloadEntity, this);
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        // Auto-pickup: a sender who copied the receiver's reply in a messenger
+        // and switched back shouldn't have to find a paste button. Only while
+        // WAITING (offer out, link shared), silent when the clipboard has no
+        // reply, and each clip value is tried once — a soft bad-code snack
+        // must not re-fire on every resume. Android's paste toast makes the
+        // read visible to the user; that's honest, not a bug.
+        if (mView == null || !mLinkShared
+                || mView.findViewById(R.id.p2p_code_group).getVisibility() != View.VISIBLE) {
+            return;
+        }
+        String code = P2pShareController.stripDeepLink(
+                ClipboardHelper.readTrimmedText(getContext()));
+        if (!code.startsWith(P2pShareController.ANSWER_PREFIX)
+                || code.equals(mLastClipTried)) {
+            return;
+        }
+        mLastClipTried = code;
+        makeSnack(R.string.p2p_reply_detected);
+        mP2pController.provideAnswer(code);
+    }
+
     /* ── stage visibility ───────────────────────────────────────────────── */
+
+    /** The code stage's two sub-states: pre-share (link button + hint) and
+     *  WAITING (spinner chip + what-happens-next + paste). The link button
+     *  stays for a re-share, relabelled. */
+    private void updateCodeSubstages() {
+        mView.findViewById(R.id.p2p_waiting_group)
+                .setVisibility(mLinkShared ? View.VISIBLE : View.GONE);
+        ((MaterialButton) mView.findViewById(R.id.p2p_send_link)).setText(
+                mLinkShared ? R.string.p2p_send_link_again : R.string.p2p_send_link);
+    }
+
+    private void updateNearby() {
+        mView.findViewById(R.id.p2p_nearby_group)
+                .setVisibility(mNearbyExpanded ? View.VISIBLE : View.GONE);
+        ((ImageView) mView.findViewById(R.id.p2p_nearby_chevron))
+                .setRotation(mNearbyExpanded ? 180f : 0f);
+    }
 
     private void showPreparing() {
         setStage(R.id.p2p_status);
@@ -168,6 +225,8 @@ public class P2pSendFragment extends P2pShareBaseFragment
         }
         mOfferCode = code;
         setStage(R.id.p2p_code_group);
+        updateCodeSubstages();
+        updateNearby();
         // Encode the deep link (not the bare code) so a scan with the phone's
         // own camera offers "open in Firedown"; the in-app scanner unwraps it.
         boolean rendered = setQr(mView.findViewById(R.id.p2p_qr),

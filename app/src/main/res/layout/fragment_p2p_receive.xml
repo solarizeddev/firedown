@@ -236,7 +236,11 @@
 
                 </LinearLayout>
 
-                <!-- Reply stage: the answer QR to show back to the sender -->
+                <!-- Reply stage. Remote-first when the offer arrived via a LINK
+                     or paste (the phones are apart): primary "Send reply" share
+                     button, QR folded behind "Nearby?". Scan arrival flips it
+                     (QR expanded, remote widgets hidden) — the phones are
+                     demonstrably adjacent. The fragment toggles per arrival. -->
                 <LinearLayout
                     android:id="@+id/p2p_reply_group"
                     android:layout_width="match_parent"
@@ -246,45 +250,133 @@
                     tools:visibility="visible">
 
                     <LinearLayout
-                        android:id="@+id/p2p_reply_qr_card"
+                        android:id="@+id/p2p_reply_remote_group"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginHorizontal="16dp"
-                        android:layout_marginTop="16dp"
-                        android:background="@drawable/bg_p2p_card"
-                        android:gravity="center_horizontal"
-                        android:orientation="vertical"
-                        android:paddingHorizontal="22dp"
-                        android:paddingVertical="22dp">
+                        android:orientation="vertical">
 
-                        <ImageView
-                            android:id="@+id/p2p_reply_qr"
-                            android:layout_width="232dp"
-                            android:layout_height="232dp"
-                            android:background="@drawable/bg_p2p_qr"
-                            android:contentDescription="@string/p2p_qr_content_desc"
-                            android:padding="12dp" />
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:paddingHorizontal="32dp"
+                            android:paddingTop="18dp"
+                            android:text="@string/p2p_one_step_left"
+                            android:textAppearance="?attr/textAppearanceTitleMedium"
+                            android:textColor="?attr/colorOnSurface" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:paddingHorizontal="32dp"
+                            android:paddingTop="6dp"
+                            android:text="@string/p2p_send_reply_body"
+                            android:textAppearance="?attr/textAppearanceBodyMedium"
+                            android:textColor="?attr/colorOnSurfaceVariant" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/p2p_send_reply"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center_horizontal"
+                            android:layout_marginTop="14dp"
+                            app:icon="@drawable/ic_share_24"
+                            android:text="@string/p2p_send_reply" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:alpha="0.75"
+                            android:gravity="center"
+                            android:paddingHorizontal="32dp"
+                            android:paddingTop="8dp"
+                            android:text="@string/p2p_reply_auto_note"
+                            android:textAppearance="?attr/textAppearanceBodySmall"
+                            android:textColor="?attr/colorOnSurfaceVariant" />
 
                     </LinearLayout>
 
-                    <TextView
-                        android:id="@+id/p2p_reply_hint"
+                    <LinearLayout
+                        android:id="@+id/p2p_reply_nearby_toggle"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:gravity="center"
-                        android:paddingHorizontal="32dp"
-                        android:paddingTop="12dp"
-                        android:text="@string/p2p_code_hint_reply"
-                        android:textAppearance="?attr/textAppearanceBodySmall"
-                        android:textColor="?attr/colorOnSurfaceVariant" />
+                        android:layout_marginHorizontal="16dp"
+                        android:layout_marginTop="18dp"
+                        android:background="@drawable/bg_p2p_filecard"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingHorizontal="14dp"
+                        android:paddingVertical="12dp">
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/p2p_share_reply"
-                        style="@style/Widget.Material3.Button.TextButton"
-                        android:layout_width="wrap_content"
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/p2p_nearby_qr"
+                            android:textAppearance="?attr/textAppearanceBodyMedium"
+                            android:textColor="?attr/colorOnSurfaceVariant" />
+
+                        <ImageView
+                            android:id="@+id/p2p_reply_nearby_chevron"
+                            android:layout_width="22dp"
+                            android:layout_height="22dp"
+                            android:contentDescription="@null"
+                            android:src="@drawable/ic_chevron_down_24"
+                            app:tint="?attr/colorOnSurfaceVariant" />
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/p2p_reply_nearby_group"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_gravity="center_horizontal"
-                        android:text="@string/p2p_share_reply" />
+                        android:orientation="vertical"
+                        android:visibility="gone"
+                        tools:visibility="visible">
+
+                        <LinearLayout
+                            android:id="@+id/p2p_reply_qr_card"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginHorizontal="16dp"
+                            android:layout_marginTop="12dp"
+                            android:background="@drawable/bg_p2p_card"
+                            android:gravity="center_horizontal"
+                            android:orientation="vertical"
+                            android:paddingHorizontal="22dp"
+                            android:paddingVertical="22dp">
+
+                            <ImageView
+                                android:id="@+id/p2p_reply_qr"
+                                android:layout_width="232dp"
+                                android:layout_height="232dp"
+                                android:background="@drawable/bg_p2p_qr"
+                                android:contentDescription="@string/p2p_qr_content_desc"
+                                android:padding="12dp" />
+
+                        </LinearLayout>
+
+                        <TextView
+                            android:id="@+id/p2p_reply_hint"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:paddingHorizontal="32dp"
+                            android:paddingTop="12dp"
+                            android:text="@string/p2p_code_hint_reply"
+                            android:textAppearance="?attr/textAppearanceBodySmall"
+                            android:textColor="?attr/colorOnSurfaceVariant" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/p2p_share_reply"
+                            style="@style/Widget.Material3.Button.TextButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center_horizontal"
+                            android:text="@string/p2p_share_reply" />
+
+                    </LinearLayout>
 
                 </LinearLayout>
 

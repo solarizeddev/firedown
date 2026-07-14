@@ -1323,14 +1323,35 @@ Non-trickle ICE (gathering completes before the code is minted, 5 s cap) so
 ONE code carries everything, including the file metadata (name/size/mime/
 device) — the receiver previews and accepts **before anything connects** —
 and the DTLS fingerprint, which makes the channel **authenticated** E2E (a
-MITM can't survive a fingerprint carried out-of-band). The **offer QR encodes
-a `firedown://p2p/<code>` deep link** (VIEW intent-filter on
-`DownloadsActivity` → `handleP2pDeepLink` → `p2p_receive` with
-`ARG_OFFER_CODE`), so scanning with ANY scanner — the phone's own camera
-included — opens Firedown straight into the receive preview; the in-app
-scanner and every paste path unwrap it via
-`P2pShareController.stripDeepLink` (bare codes still accepted). Only the
-OFFER is wrapped — the answer feeds the sender's already-live session. The
+MITM can't survive a fingerprint carried out-of-band).
+
+**The flow is REMOTE-FIRST — most pairs are on different networks, sharing
+through a messenger — with two wrapper forms for each code:**
+- **Messenger form: `https://firedown.app/s#<code>`** (`toHttpsLink`) — what
+  the share sheet sends, for BOTH the offer and the reply. Chat apps auto-link
+  https where a custom scheme is dead text; the code rides in the `#fragment`,
+  which never reaches any server. A VERIFIED App Link (`autoVerify` filter on
+  `DownloadsActivity`, `assetlinks.json` live on firedown.app carrying the
+  RELEASE cert fingerprint) opens the app directly; unverified devices land on
+  the static `/s` bouncer page (firedown-website `s.html`) whose button fires
+  the firedown:// form.
+- **QR / in-person form: `firedown://p2p/<code>`** (`toDeepLink`) — what the
+  QR encodes, so any scanner (system camera included) offers "open in
+  Firedown". The QR lives COLLAPSED behind a "Nearby? Show the QR" row on both
+  screens — remote is the default, in-person the shortcut.
+`handleP2pDeepLink` routes both forms by prefix: an **FDS1 offer** →
+`p2p_receive` (`ARG_OFFER_CODE`); an **FDR1 reply** → the LIVE send session
+(`provideExternalAnswer`; no session → an honest "share no longer open"
+snackbar). So the remote round trip is share link → Accept → send reply →
+sender TAPS the reply in the chat — no scanning, no pasting. The sender's
+screen flips to a WAITING sub-stage after sharing (what-happens-next copy),
+auto-picks an FDR1 reply off the CLIPBOARD on resume (each clip value tried
+once, so a soft bad-code can't loop; Android's paste toast keeps the read
+visible), and keeps Paste as the manual fallback. The receive REPLY stage is
+shaped by HOW the offer arrived (`mArrivedRemote`): link/paste → "Send reply"
+share-sheet primary + folded QR; in-app scan → QR expanded, remote widgets
+hidden. `P2pShareController.stripDeepLink` unwraps both forms and bare codes
+everywhere codes are read. The
 only external party is **one STUN server** (address echo, no bytes),
 user-chosen in Settings → Downloads: `settings_p2p_stun_entries/values` in
 `arrays.xml` (Cloudflare default, Nextcloud:443 for UDP-3478-hostile
@@ -1367,22 +1388,24 @@ CGNAT↔CGNAT, full-tunnel VPN — still fails honestly (`no-path` →
 `p2p_error_no_path`). Don't reintroduce a multi-STUN fallback list, and never
 replace the fetched-ephemeral-creds design with a static credential.
 
-**Single-scan flow — the answer returns over the LAN, the reply QR is the
-FALLBACK.** WebRTC needs an answer back (the receiver's candidates/DTLS
-fingerprint don't exist until Accept), but a second human-relayed QR is only
+**The answer returns over the LAN when it can; the human-relayed reply is
+the FALLBACK.** WebRTC needs an answer back (the receiver's candidates/DTLS
+fingerprint don't exist until Accept), but a human-relayed reply is only
 needed when the network can't carry it. The offer embeds an answer-return
 URL (`ans`) served by **`P2pAnswerServer`** — the ONLY thing Firedown ever
 listens for on a LAN interface, and deliberately tiny: one token-gated
-`POST /answer` (16-byte token, carried only inside the offer QR), 16 KB body
+`POST /answer` (16-byte token, carried only inside the offer code), 16 KB body
 cap, first-delivery-wins, lifetime = the sender's offer stage
 (`provideAnswer`/`stopSession` stop it; binding prefers a `wlan*` site-local
 IPv4 so an active VPN's tun address isn't advertised; no LAN address → no
-`ans` → reply-QR flow unchanged). The receiver's controller intercepts the
-engine's `code(answer)` event: with an `ans` URL it POSTs the answer
+`ans` → human-relayed reply unchanged). The receiver's controller intercepts
+the engine's `code(answer)` event: with an `ans` URL it POSTs the answer
 directly (short-deadline OkHttp, derived from the shared client) and the
-reply QR is **only shown if that POST fails** (`deliverReplyFallback`). So
-same-LAN is scan-once → Accept → transfer; cross-network still works via the
-reply QR. The connect no-path timer arms only when `connectionState` reaches
+reply stage is **only shown if that POST fails** (`deliverReplyFallback`) —
+where the reply is a share-sheet https link the sender just taps (remote
+arrival) or a QR (scan arrival); see the remote-first flow above. So
+same-LAN is share/scan → Accept → transfer; cross-network adds one
+send-reply + one tap. The connect no-path timer arms only when `connectionState` reaches
 "connecting" — NEVER at offer creation (signaling is human-paced; the old
 at-creation timer failed senders who were merely waiting to be scanned).
 
