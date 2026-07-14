@@ -163,7 +163,6 @@
     <string name="popup_toggle">व्यू टॉगल करें</string>
     <string name="settings_jit_disabled">जावास्क्रिप्ट JIT संकलन अक्षम करें</string>
     <string name="settings_jit_disabled_summary">JIT जावास्क्रिप्ट-भारी साइटों को तेज़ करता है लेकिन हमले की सतह बढ़ाता है। यह डिफ़ॉल्ट रूप से चालू है; ब्राउज़र को कुछ प्रदर्शन की कीमत पर सुरक्षित करने के लिए इसे चालू करें। यह परिवर्तन आपके ब्राउज़र को पुनः आरंभ करेगा</string>
-    <string name="settings_webrtc_enabled">WebRTC सक्षम करें</string>
     <string name="rename">नाम बदलें</string>
     <string name="rename_file">फ़ाइल का नाम बदलें</string>
     <string name="request_geolocation">अपने डिवाइस का स्थान &lt;b&gt;%s&lt;/b&gt; के साथ साझा करें?</string>
@@ -442,7 +441,6 @@
     <string name="p2p_receive_title">फ़ाइल प्राप्त करें</string>
     <string name="p2p_send_lead">यह फ़ाइल सीधे Firedown चलाने वाले दूसरे डिवाइस पर भेजें — एन्क्रिप्टेड, डिवाइस से डिवाइस, बीच में कोई सर्वर नहीं।</string>
     <string name="p2p_receive_lead">Firedown चलाने वाले दूसरे डिवाइस से सीधे फ़ाइल प्राप्त करें।</string>
-    <string name="p2p_rtc_note">सीधे कनेक्शन केवल इस ट्रांसफ़र के लिए चालू किए जाते हैं, फिर बंद हो जाते हैं।</string>
     <string name="p2p_code_hint_send">यह कोड दूसरे डिवाइस से स्कैन करें — Firedown में डाउनलोड → फ़ाइल प्राप्त करें में, या बस उसके कैमरे से। एक ही नेटवर्क पर ट्रांसफ़र अपने आप जारी रहता है; अगर कोई जवाब कोड दिखे, तो उसे वापस स्कैन करें।</string>
     <string name="p2p_code_hint_reply">यह जवाब भेजने वाले को दिखाएँ, या इसे उसी तरीके से वापस भेजें जिस तरह उनका कोड आया था।</string>
     <string name="p2p_share_code">कोड किसी और तरीके से भेजें</string>

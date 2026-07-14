@@ -200,7 +200,6 @@
     <string name="settings_jit_disabled">Zakázat kompilaci JIT v JavaScriptu</string>
     <string name="settings_jit_disabled_summary">JIT zrychluje stránky náročné na JavaScript, ale zvětšuje plochu pro útok. Ve výchozím nastavení je zapnutý; zapnutím této volby zpřísníte zabezpečení prohlížeče na úkor výkonu. Tato změna restartuje váš prohlížeč</string>
     <string name="settings_webgl_disabled">Zakázat WebGL</string>
-    <string name="settings_webrtc_enabled">Povolit WebRTC</string>
 <string name="protection_panel_etp_toggle_disabled_description_2">Je doporučeno zapnout ochranu proti sledování.</string>
     <string name="protection_panel_etp_toggle_enabled_description_2">Pokud se vám zdá, že je něco na této stránce nefunkční, zkuste to vypnout.</string>
     <string name="quick_settings_sheet_insecure_connection_2">Spojení není zabezpečené</string>
@@ -321,7 +320,6 @@
     <string name="pip_play">Přehrát</string>
     <string name="pip_pause">Pozastavit</string>
     <string name="home_vault_button">Bezpečná složka</string>
-    <string name="settings_webrtc_enabled_summary">Umožňuje videohovory a hlasové hovory v reálném čase. Vypnutí zmenšuje plochu pro síťové sondování.</string>
     <string name="incognito_home_warning">Anonymní prohlížení neskrývá vaši aktivitu před sítí, zaměstnavatelem ani navštívenými stránkami.</string>
     <string name="wasm_snackbar_message">%s vyžaduje WebAssembly</string>
     <string name="wasm_snackbar_action_enable">Povolit</string>
@@ -491,7 +489,6 @@
     <string name="p2p_receive_title">Přijmout soubor</string>
     <string name="p2p_send_lead">Odešlete tento soubor přímo do jiného zařízení s aplikací Firedown — šifrovaně, ze zařízení do zařízení, bez serveru mezi nimi.</string>
     <string name="p2p_receive_lead">Přijměte soubor přímo z jiného zařízení s aplikací Firedown.</string>
-    <string name="p2p_rtc_note">Přímá spojení se zapnou jen pro tento přenos a poté se zase vypnou.</string>
     <string name="p2p_code_hint_send">Naskenujte tento kód druhým zařízením — ve Firedownu v části Stahování → Přijmout soubor, nebo prostě jeho fotoaparátem. Ve stejné síti přenos pokračuje sám; pokud se zobrazí kód odpovědi, naskenujte jej zpět.</string>
     <string name="p2p_code_hint_reply">Ukažte tuto odpověď odesílateli, nebo ji pošlete zpět stejnou cestou, jakou dorazil jeho kód.</string>
     <string name="p2p_share_code">Poslat kód jinak</string>

@@ -179,7 +179,6 @@
     <string name="settings_jit_disabled_summary">O JIT acelera sites com muito JavaScript, mas aumenta a superfície de ataque. Está ativado por padrão; ative isto para reforçar o navegador à custa de algum desempenho. Esta alteração reiniciará o seu navegador</string>
     <string name="settings_drm_enabled">Ativar reprodução DRM</string>
     <string name="settings_drm_enabled_summary">Permite o Widevine em sites que exigem DRM (Netflix, Spotify, …). O Firedown ainda não pode baixar conteúdo protegido por DRM.</string>
-    <string name="settings_webrtc_enabled">Ativar WebRTC</string>
     <string name="settings_wasm_disabled">Desativar WebAssembly</string>
     <string name="settings_wasm_disabled_summary">Impede que os sites executem módulos WASM compilados. Reduz a superfície de ataque, mas quebra alguns aplicativos — os sites permitidos abaixo continuam ativados</string>
     <string name="rename">Renomear</string>
@@ -296,7 +295,6 @@
     </plurals>
     <string name="incognito_downloads_in_progress_subtitle">Toque para ver na Pasta segura</string>
     <string name="home_vault_button">Pasta segura</string>
-    <string name="settings_webrtc_enabled_summary">Permite chamadas de vídeo e voz em tempo real. Desativar reduz a superfície de sondagem de rede.</string>
     <string name="incognito_home_warning">A navegação privada não esconde a tua atividade da tua rede, do teu empregador ou dos sites que visitas.</string>
 <string name="settings_theme_app_category">Tema do aplicativo</string>
     <string name="crash_sheet_title">Falha detectada</string>
@@ -536,7 +534,6 @@
     <string name="p2p_receive_title">Receber um arquivo</string>
     <string name="p2p_send_lead">Envie este arquivo direto para outro dispositivo com o Firedown — criptografado, de dispositivo a dispositivo, sem nenhum servidor no meio.</string>
     <string name="p2p_receive_lead">Receba um arquivo direto de outro dispositivo com o Firedown.</string>
-    <string name="p2p_rtc_note">As conexões diretas são ativadas apenas para esta transferência e depois desativadas novamente.</string>
     <string name="p2p_code_hint_send">Escaneie este código com o outro dispositivo — no Firedown, em Transferências → Receber um arquivo, ou simplesmente com a câmera dele. Na mesma rede, a transferência continua sozinha; se aparecer um código de resposta, escaneie-o de volta.</string>
     <string name="p2p_code_hint_reply">Mostre esta resposta ao remetente, ou envie-a de volta pelo mesmo caminho por onde o código dele chegou.</string>
     <string name="p2p_share_code">Enviar código de outra forma</string>

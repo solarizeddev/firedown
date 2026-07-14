@@ -267,7 +267,6 @@
     <string name="pip_play">Αναπαραγωγή</string>
     <string name="pip_pause">Παύση</string>
     <string name="home_vault_button">Ασφαλής φάκελος</string>
-    <string name="settings_webrtc_enabled_summary">Επιτρέπει βιντεοκλήσεις και φωνητικές κλήσεις σε πραγματικό χρόνο. Η απενεργοποίηση μειώνει την επιφάνεια σάρωσης δικτύου.</string>
     <string name="incognito_home_warning">Η ιδιωτική περιήγηση δεν κρύβει τη δραστηριότητά σας από το δίκτυό σας, τον εργοδότη σας ή τις ιστοσελίδες που επισκέπτεστε.</string>
 <string name="settings_theme_app_category">Θέμα εφαρμογής</string>
     <string name="crash_sheet_title">Εντοπίστηκε κατάρρευση</string>

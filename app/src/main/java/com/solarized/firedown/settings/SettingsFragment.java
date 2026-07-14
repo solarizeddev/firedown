@@ -363,12 +363,6 @@ public class SettingsFragment extends BasePreferenceFragment
                         ? StoragePaths.getDownloadPath(mActivity)
                         : StoragePaths.getSDCardPath(mActivity));
 
-        } else if (Preferences.SETTINGS_ENABLE_WEBRTC.equals(key)) {
-
-            boolean value = sharedPreferences.getBoolean(key, false);
-
-            mGeckoRuntimeHelper.setWebRTC(value);
-
         } else if (Preferences.SETTINGS_DISABLE_WASM.equals(key)) {
 
             boolean disabled = sharedPreferences.getBoolean(key, Preferences.DEFAULT_DISABLE_WASM);

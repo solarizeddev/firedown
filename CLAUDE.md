@@ -1420,22 +1420,26 @@ before `onEngineReady`) and restores ON in `onDestroyView` — browsing keeps
 the privacy feature; the share QR already hands the LAN IP to the peer
 physically. Don't remove the flip or the restore.
 
-**The pref-gated-global trap (`media.peerconnection.enabled`) — a
-fresh-page-per-share, not an in-page reload dance.** The user's WebRTC toggle
-ships OFF, and `RTCPeerConnection` is Pref-gated WebIDL evaluated **when a page
-global is created** — a page that loaded with the pref off has NO constructor
-even after the pref flips on. The hidden-GeckoSession architecture makes this
-simple: the controller opens a **FRESH** engine session per share, so as long
-as the pref is applied **before** that session's page loads, the page-global
-sees the enabled pref and `createOffer` works. Two things make it work:
-1. **Start the engine only AFTER the pref write is applied.** `P2pShareBaseFragment`
-   enables the RUNTIME pref for the session (restores the STORED pref's value
-   in `onDestroyView`; a small `p2p_rtc_note` line discloses it; users with
-   WebRTC on globally see neither). `setWebRTC` returns the `GeckoResult`; the
-   fragment chains `onEngineReady()` on `.accept(...)`, and `onEngineReady`
-   drives the controller to `openEngineSession()`. Firing that synchronously
-   after `setWebRTC` would race the async write and load the page before the
-   value is visible.
+**WebRTC is ALWAYS ON — the user toggle was REMOVED** (maintainer decision):
+the off-default broke real sites (Meet/Discord/WhatsApp calls) and forced the
+share flow into a pref-flip dance, while the classic local-IP leak the toggle
+guarded against is already covered by mDNS candidate obfuscation (kept ON for
+browsing, flipped only inside a share session — see above). Boot sets
+`setWebRTC(true)` unconditionally; the `SETTINGS_ENABLE_WEBRTC` key, Settings
+row, and the `p2p_rtc_note` disclosure line are gone. If a disable-style
+switch is ever reintroduced it needs a NEW pref key (the JIT/WASM inversion
+rule). **The pref-gated-global trap still applies structurally**
+(`RTCPeerConnection` is Pref-gated WebIDL evaluated **when a page global is
+created** — a page loaded with the pref off has NO constructor even after it
+flips on), which is why the machinery below stays even though the pref never
+changes anymore:
+1. **Start the engine only AFTER the pref write is applied.**
+   `P2pShareBaseFragment` still writes `setWebRTC(true)` (idempotent
+   belt-and-braces so a share can't race a cold boot's async pref write),
+   chains the mDNS-obfuscation flip, and fires `onEngineReady()` on
+   `.accept(...)` — `onEngineReady` drives the controller to
+   `openEngineSession()`. Firing that synchronously after the writes would
+   race them and load the page before the values are visible.
 2. **A fresh session per share, torn down in `stopSession`.** `startSend`/
    `startReceive` call `stopSession` first (closing any prior engine session),
    then `ensureEngineSession` opens a new one loading `getEnginePageUrl()`. The

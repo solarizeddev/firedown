@@ -199,7 +199,6 @@
     <string name="settings_doh_provider_custom_dialog_error_invalid">Virheellinen osoite</string>
     <string name="settings_jit_disabled">Poista JavaScriptin JIT-käännös käytöstä</string>
     <string name="settings_jit_disabled_summary">JIT nopeuttaa JavaScript-raskaita sivustoja mutta laajentaa hyökkäyspinta-alaa. Se on oletuksena käytössä; ota tämä käyttöön kovettaaksesi selainta suorituskyvyn kustannuksella. Tämä muutos käynnistää selaimen uudelleen</string>
-    <string name="settings_webrtc_enabled">Ota käyttöön WebRTC</string>
 <string name="protection_panel_etp_toggle_disabled_description_2">Seurannan suojauksen ottaminen käyttöön on suositeltavaa.</string>
     <string name="protection_panel_etp_toggle_enabled_description_2">Jos jokin näyttää olevan rikki tällä sivustolla, yritä sammuttaa se.</string>
     <string name="quick_settings_sheet_insecure_connection_2">Yhteys ei ole suojattu</string>
@@ -319,7 +318,6 @@
     <string name="pip_play">Toista</string>
     <string name="pip_pause">Tauko</string>
     <string name="home_vault_button">Turvakansio</string>
-    <string name="settings_webrtc_enabled_summary">Sallii reaaliaikaiset video- ja äänipuhelut. Käytöstä poistaminen pienentää verkkokartoituksen hyökkäyspintaa.</string>
     <string name="incognito_home_warning">Yksityinen selaus ei piilota toimintaasi verkoltasi, työnantajaltasi tai vierailemiltasi sivustoilta.</string>
 <string name="settings_theme_app_category">Sovelluksen teema</string>
     <string name="crash_sheet_title">Kaatuminen havaittu</string>
@@ -475,7 +473,6 @@
     <string name="p2p_receive_title">Vastaanota tiedosto</string>
     <string name="p2p_send_lead">Lähetä tämä tiedosto suoraan toiseen Firedownia käyttävään laitteeseen — salattuna, laitteesta laitteeseen, ilman välissä olevaa palvelinta.</string>
     <string name="p2p_receive_lead">Vastaanota tiedosto suoraan toisesta Firedownia käyttävästä laitteesta.</string>
-    <string name="p2p_rtc_note">Suorat yhteydet otetaan käyttöön vain tätä siirtoa varten ja sammutetaan sitten taas.</string>
     <string name="p2p_code_hint_send">Skannaa tämä koodi toisella laitteella — Firedownissa kohdassa Lataukset → Vastaanota tiedosto tai vain sen kameralla. Samassa verkossa siirto jatkuu itsestään; jos vastauskoodi tulee näkyviin, skannaa se takaisin.</string>
     <string name="p2p_code_hint_reply">Näytä tämä vastaus lähettäjälle tai lähetä se takaisin samaa reittiä, jota pitkin lähettäjän koodi saapui.</string>
     <string name="p2p_share_code">Lähetä koodi muulla tavalla</string>

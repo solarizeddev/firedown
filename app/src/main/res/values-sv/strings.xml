@@ -224,7 +224,6 @@
     <string name="pip_play">Spela upp</string>
     <string name="pip_pause">Paus</string>
     <string name="home_vault_button">Säker mapp</string>
-    <string name="settings_webrtc_enabled_summary">Tillåter video- och röstsamtal i realtid. Inaktivering minskar nätverkssonderingsytan.</string>
     <string name="incognito_home_warning">Privat surfning döljer inte din aktivitet för ditt nätverk, din arbetsgivare eller webbplatserna du besöker.</string>
 <string name="settings_theme_app_category">Apptema</string>
     <string name="crash_sheet_title">Krasch upptäckt</string>

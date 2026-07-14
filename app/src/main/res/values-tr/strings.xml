@@ -205,7 +205,6 @@
     <string name="settings_webgl_disabled">"WebGL'i devre dışı bırak"</string>
     <string name="settings_drm_enabled">DRM oynatmayı etkinleştir</string>
     <string name="settings_drm_enabled_summary">DRM gerektiren sitelerde (Netflix, Spotify, …) Widevine oynatmasına izin verir. Firedown DRM korumalı içerikleri yine de indiremez.</string>
-    <string name="settings_webrtc_enabled">"WebRTC'yi etkinleştir"</string>
     <string name="settings_wasm_disabled">WebAssembly\'yi devre dışı bırak</string>
     <string name="settings_wasm_disabled_summary">Sitelerin derlenmiş WASM modüllerini çalıştırmasını engeller. Saldırı yüzeyini azaltır ancak bazı uygulamaları bozar — aşağıda izin verilen siteler etkin kalır</string>
 <string name="protection_panel_etp_toggle_disabled_description_2">İzlenme korumasını açmanız önerilir.</string>
@@ -368,7 +367,6 @@
     </plurals>
     <string name="incognito_downloads_in_progress_subtitle">Güvenli klasörde görüntülemek için dokunun</string>
     <string name="home_vault_button">Güvenli klasör</string>
-    <string name="settings_webrtc_enabled_summary">Gerçek zamanlı görüntülü ve sesli aramaları etkinleştirir. Devre dışı bırakmak ağ tarama yüzeyini azaltır.</string>
     <string name="incognito_home_warning">Gizli gezinti, etkinliğinizi ağınızdan, işvereninizden veya ziyaret ettiğiniz sitelerden gizlemez.</string>
     <string name="wasm_snackbar_message">%s WebAssembly gerektiriyor</string>
     <string name="wasm_snackbar_action_enable">Etkinleştir</string>
@@ -535,7 +533,6 @@
     <string name="p2p_receive_title">Dosya al</string>
     <string name="p2p_send_lead">Bu dosyayı Firedown çalıştıran başka bir cihaza doğrudan gönderin — şifreli, cihazdan cihaza, arada sunucu olmadan.</string>
     <string name="p2p_receive_lead">Firedown çalıştıran başka bir cihazdan doğrudan dosya alın.</string>
-    <string name="p2p_rtc_note">Doğrudan bağlantılar yalnızca bu aktarım için açılır, sonra tekrar kapatılır.</string>
     <string name="p2p_code_hint_send">Bu kodu diğer cihazla tarayın — Firedown\'da İndirilenler → Dosya al bölümünden ya da doğrudan cihazın kamerasıyla. Aynı ağda aktarım kendiliğinden devam eder; bir yanıt kodu görünürse onu geri tarayın.</string>
     <string name="p2p_code_hint_reply">Bu yanıtı gönderene gösterin veya kodun geldiği yoldan geri gönderin.</string>
     <string name="p2p_share_code">Kodu başka bir yolla gönder</string>

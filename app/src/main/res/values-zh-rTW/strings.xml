@@ -274,7 +274,6 @@
     </plurals>
     <string name="incognito_downloads_in_progress_subtitle">點按以在安全資料夾中檢視</string>
     <string name="home_vault_button">安全資料夾</string>
-    <string name="settings_webrtc_enabled_summary">啟用即時視訊和語音通話。停用可減少網路探測攻擊面。</string>
     <string name="incognito_home_warning">私密瀏覽不會向你的網路、雇主或造訪的網站隱藏你的活動。</string>
     <string name="wasm_snackbar_message">%s 需要 WebAssembly 才能執行</string>
     <string name="wasm_snackbar_action_enable">啟用</string>

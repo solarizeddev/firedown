@@ -205,7 +205,6 @@
     <string name="settings_webgl_disabled">WebGL uitschakelen</string>
     <string name="settings_drm_enabled">DRM-weergave inschakelen</string>
     <string name="settings_drm_enabled_summary">Staat Widevine toe op sites die DRM vereisen (Netflix, Spotify, …). Firedown kan DRM-beveiligde inhoud nog steeds niet downloaden.</string>
-    <string name="settings_webrtc_enabled">WebRTC inschakelen</string>
     <string name="settings_wasm_disabled">WebAssembly uitschakelen</string>
     <string name="settings_wasm_disabled_summary">Voorkomt dat sites gecompileerde WASM-modules uitvoeren. Verkleint het aanvalsoppervlak, maar maakt sommige apps onbruikbaar — toegestane sites hieronder blijven ingeschakeld</string>
 <string name="protection_panel_etp_toggle_disabled_description_2">Inschakelen van Bescherming tegen volgen wordt aanbevolen.</string>
@@ -369,7 +368,6 @@
     </plurals>
     <string name="incognito_downloads_in_progress_subtitle">Tik om te bekijken in Beveiligde map</string>
     <string name="home_vault_button">Beveiligde map</string>
-    <string name="settings_webrtc_enabled_summary">Maakt realtime video- en spraakoproepen mogelijk. Uitschakelen verkleint het netwerk-onderzoeksoppervlak.</string>
     <string name="incognito_home_warning">Privénavigatie verbergt je activiteit niet voor je netwerk, je werkgever of de sites die je bezoekt.</string>
     <string name="wasm_snackbar_message">%s heeft WebAssembly nodig</string>
     <string name="wasm_snackbar_action_enable">Inschakelen</string>
@@ -536,7 +534,6 @@
     <string name="p2p_receive_title">Een bestand ontvangen</string>
     <string name="p2p_send_lead">Verstuur dit bestand rechtstreeks naar een ander apparaat met Firedown — versleuteld, van apparaat naar apparaat, zonder server ertussen.</string>
     <string name="p2p_receive_lead">Ontvang een bestand rechtstreeks van een ander apparaat met Firedown.</string>
-    <string name="p2p_rtc_note">Directe verbindingen worden alleen voor deze overdracht ingeschakeld en daarna weer uitgeschakeld.</string>
     <string name="p2p_code_hint_send">Scan deze code met het andere apparaat — in Firedown onder Downloads → Een bestand ontvangen, of gewoon met de camera ervan. Op hetzelfde netwerk gaat de overdracht vanzelf verder; als er een antwoordcode verschijnt, scan die dan terug.</string>
     <string name="p2p_code_hint_reply">Toon dit antwoord aan de verzender, of stuur het terug op dezelfde manier waarop hun code binnenkwam.</string>
     <string name="p2p_share_code">Code op een andere manier verzenden</string>

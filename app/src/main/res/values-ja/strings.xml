@@ -436,8 +436,6 @@
     <string name="settings_webgl_disabled_summary">GPUフィンガープリントを防止、3Dコンテンツが動作しない場合があります</string>
     <string name="settings_drm_enabled">DRM 再生を有効にする</string>
     <string name="settings_drm_enabled_summary">DRM が必要なサイト（Netflix、Spotify など）で Widevine 再生を許可します。Firedown では DRM で保護されたコンテンツのダウンロードはできません。</string>
-    <string name="settings_webrtc_enabled">WebRTCを有効にする</string>
-    <string name="settings_webrtc_enabled_summary">リアルタイムのビデオ通話・音声通話を有効にします。無効化するとネットワーク探査の攻撃面を減らせます。</string>
     <string name="settings_wasm_disabled">WebAssemblyを無効にする</string>
     <string name="settings_wasm_disabled_summary">サイトがコンパイル済みのWASMモジュールを実行できないようにします。攻撃対象領域を減らせますが、一部のアプリが動作しなくなります。下記の許可済みサイトは有効のままです</string>
     <string name="settings_https_only_title">HTTPSのみモード</string>
@@ -664,7 +662,6 @@
     <string name="p2p_receive_title">ファイルを受信</string>
     <string name="p2p_send_lead">このファイルを、Firedown を実行している別の端末へ直接送信します。暗号化された端末間の転送で、途中にサーバーを介しません。</string>
     <string name="p2p_receive_lead">Firedown を実行している別の端末からファイルを直接受信します。</string>
-    <string name="p2p_rtc_note">直接接続はこの転送の間だけ有効になり、その後は無効に戻ります。</string>
     <string name="p2p_code_hint_send">このコードを相手の端末でスキャンしてください — Firedown の「ダウンロード」→「ファイルを受信」から、または相手の端末のカメラでそのまま読み取れます。同じネットワーク上なら転送は自動的に続行されます。返信コードが表示されたら、それをスキャンし返してください。</string>
     <string name="p2p_code_hint_reply">この返信コードを送信者に見せるか、相手のコードが届いたのと同じ方法で送り返してください。</string>
     <string name="p2p_share_code">別の方法でコードを送る</string>

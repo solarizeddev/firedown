@@ -438,8 +438,6 @@
     <string name="settings_webgl_disabled_summary">Bloque le fingerprinting GPU, peut casser les contenus 3D</string>
     <string name="settings_drm_enabled">Activer la lecture DRM</string>
     <string name="settings_drm_enabled_summary">Autorise Widevine sur les sites nécessitant le DRM (Netflix, Spotify, …). Firedown ne peut toujours pas télécharger les contenus protégés par DRM.</string>
-    <string name="settings_webrtc_enabled">Activer WebRTC</string>
-    <string name="settings_webrtc_enabled_summary">Permet les appels vidéo et audio en temps réel. La désactivation réduit la surface de sondage réseau.</string>
     <string name="settings_wasm_disabled">Désactiver WebAssembly</string>
     <string name="settings_wasm_disabled_summary">Empêche les sites d\'exécuter des modules WASM compilés. Réduit la surface d\'attaque mais casse certaines applis — les sites autorisés ci-dessous restent activés</string>
     <string name="settings_https_only_title">Mode HTTPS uniquement</string>
@@ -668,7 +666,6 @@
     <string name="p2p_receive_title">Recevoir un fichier</string>
     <string name="p2p_send_lead">Envoyez ce fichier directement à un autre appareil utilisant Firedown — chiffré, d\'appareil à appareil, sans serveur intermédiaire.</string>
     <string name="p2p_receive_lead">Recevez un fichier directement depuis un autre appareil utilisant Firedown.</string>
-    <string name="p2p_rtc_note">Les connexions directes sont activées uniquement pour ce transfert, puis désactivées.</string>
     <string name="p2p_code_hint_send">Scannez ce code avec l\'autre appareil — dans Firedown, sous Téléchargements → Recevoir un fichier, ou simplement avec son appareil photo. Sur le même réseau, le transfert continue tout seul ; si un code de réponse s\'affiche, scannez-le en retour.</string>
     <string name="p2p_code_hint_reply">Montrez cette réponse à l\'expéditeur, ou renvoyez-la par le même moyen que son code est arrivé.</string>
     <string name="p2p_share_code">Envoyer le code autrement</string>

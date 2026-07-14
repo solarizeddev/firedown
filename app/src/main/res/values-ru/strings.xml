@@ -205,7 +205,6 @@
     <string name="settings_webgl_disabled">Отключить WebGL</string>
     <string name="settings_drm_enabled">Включить воспроизведение DRM</string>
     <string name="settings_drm_enabled_summary">Разрешает Widevine на сайтах, требующих DRM (Netflix, Spotify, …). Firedown по-прежнему не может загружать контент, защищённый DRM.</string>
-    <string name="settings_webrtc_enabled">Включить WebRTC</string>
     <string name="settings_wasm_disabled">Отключить WebAssembly</string>
     <string name="settings_wasm_disabled_summary">Запрещает сайтам выполнять скомпилированные модули WASM. Уменьшает поверхность атаки, но нарушает работу некоторых приложений — разрешённые сайты ниже остаются включёнными</string>
 <string name="protection_panel_etp_toggle_disabled_description_2">Рекомендуется включить защиту от отслеживания.</string>
@@ -367,7 +366,6 @@
     <string name="pip_play">Воспроизвести</string>
     <string name="pip_pause">Пауза</string>
     <string name="home_vault_button">Безопасная папка</string>
-    <string name="settings_webrtc_enabled_summary">Включает видео- и голосовые вызовы в реальном времени. Отключение уменьшает площадь зондирования сети.</string>
     <string name="incognito_home_warning">Приватный просмотр не скрывает вашу активность от сети, работодателя или посещаемых сайтов.</string>
     <string name="wasm_snackbar_message">Для %s нужен WebAssembly</string>
     <string name="wasm_snackbar_action_enable">Включить</string>
@@ -538,7 +536,6 @@
     <string name="p2p_receive_title">Получить файл</string>
     <string name="p2p_send_lead">Отправьте этот файл прямо на другое устройство с Firedown — с шифрованием, с устройства на устройство, без сервера-посредника.</string>
     <string name="p2p_receive_lead">Получите файл прямо с другого устройства с Firedown.</string>
-    <string name="p2p_rtc_note">Прямые подключения включаются только на время этой передачи, а затем выключаются.</string>
     <string name="p2p_code_hint_send">Отсканируйте этот код другим устройством — в Firedown в разделе Загрузки → Получить файл или просто его камерой. В одной сети передача продолжится сама; если появится ответный код, отсканируйте его в ответ.</string>
     <string name="p2p_code_hint_reply">Покажите этот ответ отправителю или отправьте его тем же способом, каким пришёл его код.</string>
     <string name="p2p_share_code">Отправить код другим способом</string>

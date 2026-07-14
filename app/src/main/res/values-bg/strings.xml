@@ -187,7 +187,6 @@
     <string name="settings_jit_disabled">Изключи JIT компилацията на JavaScript</string>
     <string name="settings_jit_disabled_summary">JIT ускорява сайтовете с много JavaScript, но увеличава повърхността за атака. По подразбиране е включен; включете това, за да защитите браузъра за сметка на известна производителност. Тази промяна ще рестартира браузъра ви</string>
     <string name="settings_webgl_disabled">Деактивиране на WebGL</string>
-    <string name="settings_webrtc_enabled">Активиране на WebRTC</string>
 <string name="protection_panel_etp_toggle_disabled_description_2">Препоръчително е да включите защитата от проследяване.</string>
     <string name="protection_panel_etp_toggle_enabled_description_2">Ако нещо на този сайт изглежда повредено, опитайте да го изключите.</string>
     <string name="quick_settings_sheet_insecure_connection_2">Връзката не е защитена</string>
@@ -429,7 +428,6 @@
     <string name="p2p_receive_title">Получаване на файл</string>
     <string name="p2p_send_lead">Изпратете този файл директно към друго устройство с Firedown — шифровано, от устройство до устройство, без сървър по средата.</string>
     <string name="p2p_receive_lead">Получете файл директно от друго устройство с Firedown.</string>
-    <string name="p2p_rtc_note">Директните връзки се включват само за този трансфер и след това се изключват отново.</string>
     <string name="p2p_code_hint_send">Сканирайте този код с другото устройство — във Firedown в Изтегляния → Получаване на файл или просто с камерата му. В една и съща мрежа прехвърлянето продължава само; ако се появи код за отговор, сканирайте го обратно.</string>
     <string name="p2p_code_hint_reply">Покажете този отговор на изпращача или го изпратете обратно по същия начин, по който пристигна кодът му.</string>
     <string name="p2p_share_code">Изпрати кода по друг начин</string>

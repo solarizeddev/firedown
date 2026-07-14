@@ -1,7 +1,6 @@
 package com.solarized.firedown.phone.fragments;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -25,7 +24,6 @@ import com.google.android.material.snackbar.Snackbar;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
-import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
 import com.solarized.firedown.geckoview.GeckoRuntimeHelper;
 import com.solarized.firedown.p2pshare.P2pShareController;
@@ -65,10 +63,6 @@ public abstract class P2pShareBaseFragment extends BaseFocusFragment {
     @Inject
     protected GeckoRuntimeHelper mGeckoRuntimeHelper;
 
-    @Inject
-    protected SharedPreferences mP2pSharedPreferences;
-
-    private boolean mRtcTemporarilyEnabled;
     private final Handler mMainHandler = new Handler(Looper.getMainLooper());
 
     @Override
@@ -99,29 +93,19 @@ public abstract class P2pShareBaseFragment extends BaseFocusFragment {
         }
         observeScanResult();
 
-        // Session-scoped WebRTC prefs. Two of them, both flipped for the
-        // lifetime of this screen and both applied BEFORE onEngineReady (which
+        // Session-scoped WebRTC prefs, applied BEFORE onEngineReady (which
         // drives the controller to OPEN its fresh engine page) — a page loaded
         // before the writes are visible sees the old values:
-        //  - media.peerconnection.enabled: RTCPeerConnection is a pref-gated
-        //    global evaluated at page-global creation. Restored to the STORED
-        //    setting in onDestroyView; the note is shown only when this was a
-        //    temporary enable.
+        //  - media.peerconnection.enabled: ALWAYS on since the user toggle was
+        //    removed (boot sets it; see the Preferences note). The write here
+        //    is an idempotent belt-and-braces so a share can never race a
+        //    cold boot's async pref write.
         //  - ice.obfuscate_host_addresses OFF: Firefox hides host candidates
         //    behind mDNS .local names, which Android peers can't resolve (no
         //    MulticastLock), so a same-LAN pair finds no host pair and ICE
         //    fails outright ("add a TURN server"). Off, the QR carries the
         //    real LAN IP — which the user is already physically handing to the
         //    peer. Always restored to ON in onDestroyView.
-        boolean webRtcEnabled = mP2pSharedPreferences.getBoolean(
-                Preferences.SETTINGS_ENABLE_WEBRTC, Preferences.DEFAULT_ENABLE_WEBRTC);
-        if (!webRtcEnabled) {
-            mRtcTemporarilyEnabled = true;
-            View note = view.findViewById(R.id.p2p_rtc_note);
-            if (note != null) {
-                note.setVisibility(View.VISIBLE);
-            }
-        }
         mGeckoRuntimeHelper.setWebRTC(true)
                 .then(unused -> mGeckoRuntimeHelper.setWebRtcIceObfuscation(false))
                 .accept(unused ->
@@ -172,15 +156,9 @@ public abstract class P2pShareBaseFragment extends BaseFocusFragment {
     public void onDestroyView() {
         mP2pController.stop();
         // The share-session candidate exposure ends with the screen — browsing
-        // (however the WebRTC toggle is set) keeps mDNS obfuscation.
+        // keeps mDNS obfuscation. (WebRTC itself is always on; nothing to
+        // restore since the toggle was removed.)
         mGeckoRuntimeHelper.setWebRtcIceObfuscation(true);
-        if (mRtcTemporarilyEnabled) {
-            // Restore the STORED preference's truth, not blindly false — the
-            // user may have flipped the Settings toggle mid-share.
-            mGeckoRuntimeHelper.setWebRTC(mP2pSharedPreferences.getBoolean(
-                    Preferences.SETTINGS_ENABLE_WEBRTC, Preferences.DEFAULT_ENABLE_WEBRTC));
-            mRtcTemporarilyEnabled = false;
-        }
         super.onDestroyView();
     }
 

@@ -194,8 +194,9 @@ public class GeckoRuntimeHelper {
         // calling the underlying setter which still takes the runtime's
         // "is this feature enabled" sense.
 
-        setWebRTC(sharedPreferences.getBoolean(Preferences.SETTINGS_ENABLE_WEBRTC,
-                Preferences. DEFAULT_ENABLE_WEBRTC));
+        // WebRTC is ALWAYS on (the toggle was removed — stock-Firefox posture;
+        // mDNS obfuscation covers the local-IP leak, see Preferences note).
+        setWebRTC(true);
         setWebAssembly(!sharedPreferences.getBoolean(Preferences.SETTINGS_DISABLE_WASM,
                 Preferences.DEFAULT_DISABLE_WASM));
         setJITCompiler(!sharedPreferences.getBoolean(Preferences.SETTINGS_DISABLE_JIT,

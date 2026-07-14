@@ -188,7 +188,6 @@
     <string name="settings_jit_disabled">Вимкнути компіляцію JIT для JavaScript</string>
     <string name="settings_jit_disabled_summary">JIT прискорює сайти з великою кількістю JavaScript, але збільшує поверхню атаки. Типово увімкнено; увімкніть цей параметр, щоб посилити захист браузера ціною певної продуктивності. Ця зміна перезавантажить ваш браузер</string>
     <string name="settings_webgl_disabled">Вимкнути WebGL</string>
-    <string name="settings_webrtc_enabled">Увімкнути WebRTC</string>
 <string name="protection_panel_etp_toggle_disabled_description_2">Рекомендовано ввімкнути захист від відстеження.</string>
     <string name="protection_panel_etp_toggle_enabled_description_2">Якщо на цьому сайті щось не працює, спробуйте вимкнути захист.</string>
     <string name="quick_settings_sheet_insecure_connection_2">З’єднання не захищене</string>
@@ -306,7 +305,6 @@
     <string name="pip_play">Відтворити</string>
     <string name="pip_pause">Пауза</string>
     <string name="home_vault_button">Захищена папка</string>
-    <string name="settings_webrtc_enabled_summary">Дозволяє відео- та голосові виклики в реальному часі. Вимкнення зменшує поверхню сканування мережі.</string>
     <string name="incognito_home_warning">Приватний перегляд не приховує вашу активність від мережі, роботодавця чи відвідуваних сайтів.</string>
     <string name="wasm_snackbar_message">Для %s потрібен WebAssembly</string>
     <string name="wasm_snackbar_action_enable">Увімкнути</string>
@@ -453,7 +451,6 @@
     <string name="p2p_receive_title">Отримати файл</string>
     <string name="p2p_send_lead">Надішліть цей файл прямо на інший пристрій із Firedown — із шифруванням, з пристрою на пристрій, без сервера-посередника.</string>
     <string name="p2p_receive_lead">Отримайте файл прямо з іншого пристрою з Firedown.</string>
-    <string name="p2p_rtc_note">Прямі підключення вмикаються лише на час цієї передачі, а потім вимикаються.</string>
     <string name="p2p_code_hint_send">Відскануйте цей код іншим пристроєм — у Firedown у розділі Завантаження → Отримати файл або просто його камерою. В одній мережі передавання продовжиться саме собою; якщо з\'явиться код-відповідь, відскануйте його у відповідь.</string>
     <string name="p2p_code_hint_reply">Покажіть цю відповідь відправнику або надішліть її тим самим способом, яким надійшов його код.</string>
     <string name="p2p_share_code">Надіслати код іншим способом</string>

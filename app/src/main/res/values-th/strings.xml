@@ -263,7 +263,6 @@
     <string name="vault_unsupported">ไม่สามารถเปิดไฟล์นี้ได้ หากต้องการเปิด ให้ย้ายออกจากโฟลเดอร์ที่ปลอดภัยแล้วลองอีกครั้ง</string>
     <string name="bookmark_name">ชื่อ</string>
     <string name="home_vault_button">โฟลเดอร์ที่ปลอดภัย</string>
-    <string name="settings_webrtc_enabled_summary">อนุญาตการโทรวิดีโอและเสียงแบบเรียลไทม์ การปิดใช้งานจะลดพื้นผิวการสำรวจเครือข่าย</string>
     <string name="incognito_home_warning">การท่องเว็บแบบส่วนตัวไม่ได้ซ่อนกิจกรรมของคุณจากเครือข่าย นายจ้าง หรือเว็บไซต์ที่คุณเข้าชม</string>
 <string name="settings_theme_app_category">ธีมแอป</string>
     <string name="crash_sheet_title">ตรวจพบการขัดข้อง</string>

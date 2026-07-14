@@ -258,7 +258,6 @@
     <string name="vault_unsupported">Tidak dapat membuka file ini. Untuk membukanya, keluarkan dari Folder Aman dan coba lagi.</string>
     <string name="bookmark_name">Nama</string>
     <string name="home_vault_button">Folder Aman</string>
-    <string name="settings_webrtc_enabled_summary">Mengizinkan panggilan video dan suara realtime. Menonaktifkan mengurangi permukaan penyelidikan jaringan.</string>
     <string name="incognito_home_warning">Penjelajahan pribadi tidak menyembunyikan aktivitas Anda dari jaringan, atasan, atau situs yang Anda kunjungi.</string>
 <string name="settings_theme_app_category">Tema aplikasi</string>
     <string name="crash_sheet_title">Crash terdeteksi</string>

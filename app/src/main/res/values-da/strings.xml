@@ -282,7 +282,6 @@
     <string name="pip_play">Afspil</string>
     <string name="pip_pause">Pause</string>
     <string name="home_vault_button">Sikker mappe</string>
-    <string name="settings_webrtc_enabled_summary">Tillader video- og taleopkald i realtid. Deaktivering reducerer netværkssonderingsfladen.</string>
     <string name="incognito_home_warning">Privat browsing skjuler ikke din aktivitet for dit netværk, din arbejdsgiver eller de sider, du besøger.</string>
 <string name="settings_theme_app_category">App-tema</string>
     <string name="crash_sheet_title">Nedbrud registreret</string>

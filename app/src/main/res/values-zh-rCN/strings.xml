@@ -436,8 +436,6 @@
     <string name="settings_webgl_disabled_summary">阻止GPU指纹识别，可能影响3D内容</string>
     <string name="settings_drm_enabled">启用 DRM 播放</string>
     <string name="settings_drm_enabled_summary">允许在需要 DRM 的网站（Netflix、Spotify 等）上使用 Widevine 播放。Firedown 仍然无法下载受 DRM 保护的内容。</string>
-    <string name="settings_webrtc_enabled">启用 WebRTC</string>
-    <string name="settings_webrtc_enabled_summary">允许实时视频和语音通话。禁用可减少网络探测攻击面。</string>
     <string name="settings_wasm_disabled">禁用 WebAssembly</string>
     <string name="settings_wasm_disabled_summary">阻止站点运行已编译的 WASM 模块。可减少攻击面，但会导致部分应用无法工作——下方允许的站点仍保持启用</string>
     <string name="settings_https_only_title">仅 HTTPS 模式</string>
@@ -664,7 +662,6 @@
     <string name="p2p_receive_title">接收文件</string>
     <string name="p2p_send_lead">将此文件直接发送到另一台运行 Firedown 的设备——加密传输，设备直连，中间不经过任何服务器。</string>
     <string name="p2p_receive_lead">直接从另一台运行 Firedown 的设备接收文件。</string>
-    <string name="p2p_rtc_note">直接连接仅在本次传输期间开启，之后再次关闭。</string>
     <string name="p2p_code_hint_send">用另一台设备扫描此代码——在 Firedown 的下载 → 接收文件中，或直接用它的相机扫描。在同一网络中，传输会自动继续；如果出现回复代码，再扫描回来。</string>
     <string name="p2p_code_hint_reply">将此回复出示给发送方，或按对方代码送达的方式发回。</string>
     <string name="p2p_share_code">以其他方式发送代码</string>

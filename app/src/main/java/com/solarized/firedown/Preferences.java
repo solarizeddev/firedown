@@ -223,9 +223,13 @@ public class Preferences {
 
     public static final boolean DEFAULT_SPOOF_TIMEZONE = false;
 
-    public static final String SETTINGS_ENABLE_WEBRTC = "com.solarized.firedown.preferences.browser.enable.webrtc";
-
-    public static final boolean DEFAULT_ENABLE_WEBRTC = false;
+    // NOTE: the "Enable WebRTC" toggle (…browser.enable.webrtc, default OFF)
+    // was REMOVED — WebRTC is now always on, the stock-Firefox posture. The
+    // classic local-IP leak is already covered by mDNS candidate obfuscation
+    // (kept ON for browsing, flipped only inside a P2P share session), and the
+    // off-default broke real sites (Meet/Discord/WhatsApp calls) while the P2P
+    // share had to pref-dance around it. If a disable-style switch is ever
+    // reintroduced, it needs a NEW key (the JIT/WASM inversion rule).
 
     /**
      * STUN server used by the P2P direct-share connection (the "what's my

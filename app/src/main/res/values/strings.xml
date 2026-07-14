@@ -626,8 +626,6 @@
     <string name="settings_webgl_disabled_summary">Blocks GPU fingerprinting, may break 3D content</string>
     <string name="settings_drm_enabled">Enable DRM playback</string>
     <string name="settings_drm_enabled_summary">Allows Widevine on sites that require DRM (Netflix, Spotify, …). Firedown still cannot download DRM-protected content.</string>
-    <string name="settings_webrtc_enabled">Enable WebRTC</string>
-    <string name="settings_webrtc_enabled_summary">Allows real-time video / voice calls. Disabling reduces network-probing surface.</string>
     <string name="settings_wasm_disabled">Disable WebAssembly</string>
     <string name="settings_wasm_disabled_summary">Blocks sites from running compiled WASM modules. Reduces attack surface but breaks some apps — allowed sites below stay enabled</string>
     <string name="settings_https_only_title">HTTPS-only mode</string>
@@ -789,7 +787,6 @@
     <string name="p2p_receive_title">Receive a file</string>
     <string name="p2p_send_lead">Send this file straight to another device running Firedown — encrypted, device to device, with no server in between.</string>
     <string name="p2p_receive_lead">Receive a file straight from another device running Firedown.</string>
-    <string name="p2p_rtc_note">Direct connections are turned on just for this transfer, then off again.</string>
     <string name="p2p_code_hint_send">Scan this code with the other device — in Firedown under Downloads → Receive a file, or just with its camera. On the same network the transfer continues by itself; if a reply code appears, scan it back.</string>
     <string name="p2p_code_hint_reply">Show this reply to the sender, or send it back the way their code arrived.</string>
     <string name="p2p_share_code">Send code another way</string>

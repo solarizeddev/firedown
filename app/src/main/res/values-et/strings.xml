@@ -176,7 +176,6 @@
     <string name="settings_jit_disabled">Keela JavaScripti JIT-kompileerimine</string>
     <string name="settings_jit_disabled_summary">JIT kiirendab JavaScripti-rohkeid saite, kuid suurendab ründepinda. See on vaikimisi sees; lülita see sisse, et veebibrauserit turvalisemaks muuta jõudluse arvelt. See muudatus käivitab brauseri uuesti</string>
     <string name="settings_webgl_disabled">Lülita WebGL välja</string>
-    <string name="settings_webrtc_enabled">Kasuta WebRTC-d</string>
 <string name="quick_settings_sheet_insecure_connection_2">Ühendus pole turvaline</string>
     <string name="quick_settings_sheet_secure_connection_2">Turvaline ühendus</string>
     <string name="rename">Nimeta ümber</string>
@@ -405,7 +404,6 @@
     <string name="p2p_receive_title">Võta fail vastu</string>
     <string name="p2p_send_lead">Saada see fail otse teise Firedowni kasutavasse seadmesse — krüptitult, seadmest seadmesse, ilma vahepealse serverita.</string>
     <string name="p2p_receive_lead">Võta fail vastu otse teisest Firedowni kasutavast seadmest.</string>
-    <string name="p2p_rtc_note">Otseühendused lülitatakse sisse ainult selleks ülekandeks ja seejärel jälle välja.</string>
     <string name="p2p_code_hint_send">Skanni see kood teise seadmega — Firedownis jaotises Allalaadimised → Võta fail vastu või lihtsalt selle kaameraga. Samas võrgus jätkub ülekanne iseenesest; kui kuvatakse vastuskood, skanni see tagasi.</string>
     <string name="p2p_code_hint_reply">Näita seda vastust saatjale või saada see tagasi samal viisil, nagu saatja kood saabus.</string>
     <string name="p2p_share_code">Saada kood muul viisil</string>

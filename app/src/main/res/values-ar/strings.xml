@@ -293,7 +293,6 @@
     <string name="pip_play">تشغيل</string>
     <string name="pip_pause">إيقاف مؤقت</string>
     <string name="home_vault_button">مجلد آمن</string>
-    <string name="settings_webrtc_enabled_summary">يتيح مكالمات الفيديو والصوت في الوقت الفعلي. التعطيل يقلل مساحة استكشاف الشبكة.</string>
     <string name="incognito_home_warning">التصفح الخاص لا يخفي نشاطك عن شبكتك أو صاحب العمل أو المواقع التي تزورها.</string>
     <string name="wasm_snackbar_message">يحتاج %s إلى WebAssembly</string>
     <string name="wasm_snackbar_action_enable">تفعيل</string>

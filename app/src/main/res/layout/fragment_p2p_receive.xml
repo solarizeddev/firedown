@@ -56,19 +56,6 @@
                     android:textAppearance="?attr/textAppearanceBodyMedium"
                     android:textColor="?attr/colorOnSurfaceVariant" />
 
-                <TextView
-                    android:id="@+id/p2p_rtc_note"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:alpha="0.75"
-                    android:paddingHorizontal="16dp"
-                    android:paddingTop="6dp"
-                    android:text="@string/p2p_rtc_note"
-                    android:textAppearance="?attr/textAppearanceBodySmall"
-                    android:textColor="?attr/colorOnSurfaceVariant"
-                    android:visibility="gone"
-                    tools:visibility="visible" />
-
                 <!-- Entry: scan or paste the sender's code -->
                 <LinearLayout
                     android:id="@+id/p2p_entry_group"
