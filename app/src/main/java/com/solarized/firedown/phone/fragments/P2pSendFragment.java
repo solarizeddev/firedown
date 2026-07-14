@@ -189,6 +189,10 @@ public class P2pSendFragment extends P2pShareBaseFragment
     private void updateCodeSubstages() {
         mView.findViewById(R.id.p2p_waiting_group)
                 .setVisibility(mLinkShared ? View.VISIBLE : View.GONE);
+        // The pre-share hint yields to the waiting copy — two stacked
+        // explainers read as clutter (on-device review).
+        mView.findViewById(R.id.p2p_send_link_hint)
+                .setVisibility(mLinkShared ? View.GONE : View.VISIBLE);
         ((MaterialButton) mView.findViewById(R.id.p2p_send_link)).setText(
                 mLinkShared ? R.string.p2p_send_link_again : R.string.p2p_send_link);
     }

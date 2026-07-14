@@ -166,7 +166,10 @@
                         app:icon="@drawable/ic_share_24"
                         android:text="@string/p2p_send_link" />
 
+                    <!-- Hidden while WAITING — the chip + body below take over,
+                         and two stacked explainers read as clutter. -->
                     <TextView
+                        android:id="@+id/p2p_send_link_hint"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:gravity="center"
@@ -185,33 +188,21 @@
                         android:visibility="gone"
                         tools:visibility="visible">
 
-                        <LinearLayout
+                        <!-- Status chip, centered ALONE — a side-by-side spinner
+                             made the pair center as a unit and pushed the chip
+                             off-axis (visible on-device). Liveness is already
+                             signalled by the file card's green dot. -->
+                        <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_gravity="center_horizontal"
                             android:layout_marginTop="18dp"
-                            android:gravity="center_vertical"
-                            android:orientation="horizontal">
-
-                            <com.google.android.material.progressindicator.CircularProgressIndicator
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginEnd="10dp"
-                                android:indeterminate="true"
-                                app:indicatorSize="18dp"
-                                app:trackThickness="2dp" />
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:background="@drawable/bg_p2p_step"
-                                android:paddingHorizontal="14dp"
-                                android:paddingVertical="6dp"
-                                android:text="@string/p2p_link_sent"
-                                android:textAppearance="?attr/textAppearanceLabelMedium"
-                                android:textColor="?attr/colorOnPrimaryContainer" />
-
-                        </LinearLayout>
+                            android:background="@drawable/bg_p2p_step"
+                            android:paddingHorizontal="14dp"
+                            android:paddingVertical="6dp"
+                            android:text="@string/p2p_link_sent"
+                            android:textAppearance="?attr/textAppearanceLabelMedium"
+                            android:textColor="?attr/colorOnPrimaryContainer" />
 
                         <TextView
                             android:layout_width="match_parent"
