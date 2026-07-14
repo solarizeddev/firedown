@@ -131,13 +131,12 @@ public class PopupBrowserSheetDialogFragment extends BaseBottomSheetDialogFragme
     }
 
 
-    /**
-     * Rotation re-decides the quick-row label mode (width / font scale may
-     * have changed) and repaints the star so its label follows the new mode.
-     * The base handles the sheet's width + max-height cap; the sheet hugs its
-     * content ({@link #isMaxHeightCapped()} defaults true), so there's no fixed
-     * height to re-apply here.
-     */
+    @Override
+    protected boolean isMaxHeightCapped() {
+        return false;
+    }
+
+
     @Override
     public void onConfigurationChanged(@NonNull Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
