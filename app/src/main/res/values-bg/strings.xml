@@ -355,6 +355,21 @@
     <string name="most_visited_remove_title">Премахване от най-посещаваните?</string>
     <string name="most_visited_remove">Премахни</string>
     <!-- Bookmark sync: announce banner + server-delete + backend validation -->
+    <!-- Cloud-backup interest gate (CloudGateFragment) -->
+    <string name="cloud_gate_banner_title">Шифровано резервно копие в облака</string>
+    <string name="cloud_gate_banner_subtitle">Още не е създадено — гласувайте, ако го искате.</string>
+    <string name="cloud_gate_title">Резервно копие в облака</string>
+    <string name="cloud_gate_headline">Вашият Firedown — възстановим.</string>
+    <string name="cloud_gate_point_scope">Трезор, списък с изтегляния, отметки и настройки — възстановени на всяко устройство с един код за възстановяване.</string>
+    <string name="cloud_gate_point_crypto">Шифровано на телефона ви. Сървърът съхранява запечатани данни, които не може да чете.</string>
+    <string name="cloud_gate_point_identity">Без акаунт, без имейл.</string>
+    <string name="cloud_gate_point_price">Плащате само за това, което използвате. Без абонамент.</string>
+    <string name="cloud_gate_status">Ще го създадем, ако достатъчно хора го искат.</string>
+    <string name="cloud_gate_vote">Бих го използвал(а)</string>
+    <string name="cloud_gate_voted">Отчетено</string>
+    <string name="cloud_gate_disclosure">Бутонът изпраща една анонимна заявка: POST /v1/interest/continuity. Без идентификатори, без бисквитки. Firedown няма аналитика — това докосване е единственият сигнал, а без докосване не се изпраща нищо.</string>
+    <string name="cloud_gate_counted_note">Не можем да ви уведомим — не знаем кои сте. Напредъкът е на firedown.app/cloud.</string>
+    <string name="cloud_gate_error">Сървърът е недостъпен. Опитайте по-късно.</string>
     <string name="sync_banner_title">Синхронизирайте отметките си между устройства</string>
     <string name="sync_banner_subtitle">Шифровано от край до край — само вашият код за възстановяване може да го прочете. Без акаунт, без имейл.</string>
     <string name="settings_sync_delete_title">Изтриване на данните от сървъра</string>

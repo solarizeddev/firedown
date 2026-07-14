@@ -462,6 +462,21 @@
     <string name="most_visited_remove_title">Verwijderen uit Meest bezocht?</string>
     <string name="most_visited_remove">Verwijderen</string>
     <!-- Bookmark sync: announce banner + server-delete + backend validation -->
+    <!-- Cloud-backup interest gate (CloudGateFragment) -->
+    <string name="cloud_gate_banner_title">Versleutelde cloudback-up</string>
+    <string name="cloud_gate_banner_subtitle">Nog niet gebouwd — stem als je het wilt.</string>
+    <string name="cloud_gate_title">Cloudback-up</string>
+    <string name="cloud_gate_headline">Jouw Firedown, herstelbaar.</string>
+    <string name="cloud_gate_point_scope">Kluis, downloadlijst, bladwijzers en instellingen — hersteld op elk apparaat met één herstelcode.</string>
+    <string name="cloud_gate_point_crypto">Versleuteld op je telefoon. De server bewaart verzegelde gegevens die hij niet kan lezen.</string>
+    <string name="cloud_gate_point_identity">Geen account, geen e-mail.</string>
+    <string name="cloud_gate_point_price">Betaal alleen voor wat je gebruikt. Geen abonnement.</string>
+    <string name="cloud_gate_status">We bouwen het als genoeg mensen het willen.</string>
+    <string name="cloud_gate_vote">Dit zou ik gebruiken</string>
+    <string name="cloud_gate_voted">Geteld</string>
+    <string name="cloud_gate_disclosure">De knop stuurt één anoniem verzoek: POST /v1/interest/continuity. Geen identifiers, geen cookies. Firedown heeft geen analytics — deze tik is het enige signaal, en niet tikken stuurt niets.</string>
+    <string name="cloud_gate_counted_note">We kunnen je niet op de hoogte brengen — we weten niet wie je bent. Voortgang: firedown.app/cloud.</string>
+    <string name="cloud_gate_error">Server niet bereikbaar. Probeer het later.</string>
     <string name="sync_banner_title">Synchroniseer je bladwijzers tussen apparaten</string>
     <string name="sync_banner_subtitle">End-to-end versleuteld — alleen jouw herstelcode kan ze lezen. Geen account, geen e-mail.</string>
     <string name="settings_sync_delete_title">Gegevens van server verwijderen</string>

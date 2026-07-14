@@ -377,6 +377,21 @@
     <string name="most_visited_remove_title">Вилучити з найвідвідуваніших?</string>
     <string name="most_visited_remove">Вилучити</string>
     <!-- Bookmark sync: announce banner + server-delete + backend validation -->
+    <!-- Cloud-backup interest gate (CloudGateFragment) -->
+    <string name="cloud_gate_banner_title">Зашифрована хмарна копія</string>
+    <string name="cloud_gate_banner_subtitle">Ще не створено — проголосуйте, якщо потрібно.</string>
+    <string name="cloud_gate_title">Хмарна копія</string>
+    <string name="cloud_gate_headline">Ваш Firedown — відновлюваний.</string>
+    <string name="cloud_gate_point_scope">Сейф, список завантажень, закладки й налаштування — відновлення на будь-якому пристрої одним кодом відновлення.</string>
+    <string name="cloud_gate_point_crypto">Шифрування на вашому телефоні. Сервер зберігає запечатані дані, які не може прочитати.</string>
+    <string name="cloud_gate_point_identity">Без облікового запису та пошти.</string>
+    <string name="cloud_gate_point_price">Платите лише за те, що використовуєте. Без підписки.</string>
+    <string name="cloud_gate_status">Ми зробимо це, якщо захоче досить людей.</string>
+    <string name="cloud_gate_vote">Мені це потрібно</string>
+    <string name="cloud_gate_voted">Враховано</string>
+    <string name="cloud_gate_disclosure">Кнопка надсилає один анонімний запит: POST /v1/interest/continuity. Без ідентифікаторів і cookie. У Firedown немає аналітики — цей дотик є єдиним сигналом, а без дотику нічого не надсилається.</string>
+    <string name="cloud_gate_counted_note">Ми не можемо вас сповістити — ми не знаємо, хто ви. Прогрес на firedown.app/cloud.</string>
+    <string name="cloud_gate_error">Сервер недоступний. Спробуйте пізніше.</string>
     <string name="sync_banner_title">Синхронізуйте закладки між пристроями</string>
     <string name="sync_banner_subtitle">Наскрізне шифрування — прочитати їх може лише ваш код відновлення. Без облікового запису та пошти.</string>
     <string name="settings_sync_delete_title">Видалити дані із сервера</string>

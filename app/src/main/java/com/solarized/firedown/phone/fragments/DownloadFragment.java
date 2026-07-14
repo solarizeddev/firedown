@@ -46,6 +46,7 @@ import com.solarized.firedown.data.models.DownloadsViewModel;
 import com.solarized.firedown.data.models.TaskViewModel;
 import com.solarized.firedown.manager.ServiceActions;
 import com.solarized.firedown.phone.VaultActivity;
+import com.solarized.firedown.ui.adapters.CloudGateBannerAdapter;
 import com.solarized.firedown.ui.adapters.DownloadItemAdapter;
 import com.solarized.firedown.ui.adapters.IncognitoInProgressHeaderAdapter;
 import com.solarized.firedown.ui.OnItemClickListener;
@@ -116,6 +117,11 @@ public class DownloadFragment extends BaseDownloadFragment implements
      *  {@code TaskViewModel#getSafeCount} LiveData. */
     private IncognitoInProgressHeaderAdapter mIncognitoHeaderAdapter;
 
+    /** Cloud-backup interest-gate announce card (see CloudGateFragment) —
+     *  another self-hiding ConcatAdapter header. Shown until dismissed or
+     *  interest is counted; both flags live in the backed-up prefs. */
+    private CloudGateBannerAdapter mCloudGateBannerAdapter;
+
     /** Latest TaskViewModel#getSafeCount value — the incognito header's
      *  visibility input. */
     private int mSafeCount = 0;
@@ -182,6 +188,9 @@ public class DownloadFragment extends BaseDownloadFragment implements
         // span the full grid width and the date-divider lookup against the paged
         // adapter is shifted accordingly.
         int headers = 0;
+        if (mCloudGateBannerAdapter != null) {
+            headers += mCloudGateBannerAdapter.getItemCount();
+        }
         if (mIncognitoHeaderAdapter != null) {
             headers += mIncognitoHeaderAdapter.getItemCount();
         }
@@ -192,6 +201,7 @@ public class DownloadFragment extends BaseDownloadFragment implements
     public void onDestroyView() {
         mAdapter = null;
         mIncognitoHeaderAdapter = null;
+        mCloudGateBannerAdapter = null;
         mGridLayoutManager = null;
         mBottomProgressView = null;
         mChipGroup = null;
@@ -218,11 +228,37 @@ public class DownloadFragment extends BaseDownloadFragment implements
         mAdapter = new DownloadItemAdapter(getContext(), new DownloadDiffCallback(), this, mEnableGrid);
         mIncognitoHeaderAdapter = new IncognitoInProgressHeaderAdapter(() ->
                 startActivity(new Intent(requireContext(), VaultActivity.class)));
-        // ConcatAdapter puts the incognito in-flight hint header at the top so
-        // it scrolls with the list; it hides itself (getItemCount == 0) so
-        // positions don't shift for the paginated list when it retires.
+        mCloudGateBannerAdapter = new CloudGateBannerAdapter(
+                new CloudGateBannerAdapter.OnBannerListener() {
+                    @Override
+                    public void onCloudGateBannerClicked() {
+                        NavigationUtils.navigateSafe(
+                                mNavController, R.id.cloud_gate, R.id.downloads, null);
+                    }
+
+                    @Override
+                    public void onCloudGateBannerDismissed() {
+                        mSharedPreferences.edit()
+                                .putBoolean(Preferences.CLOUD_GATE_BANNER_DISMISSED, true)
+                                .apply();
+                        if (mCloudGateBannerAdapter != null) {
+                            mCloudGateBannerAdapter.setVisible(false);
+                        }
+                    }
+                });
+        // Shown until retired: dismissed by the X, or interest counted on the
+        // gate screen. Recomputed here on every view (re)creation, so counting
+        // on the gate screen hides the card when the user comes back.
+        mCloudGateBannerAdapter.setVisible(
+                !mSharedPreferences.getBoolean(Preferences.CLOUD_GATE_BANNER_DISMISSED, false)
+                        && !mSharedPreferences.getBoolean(Preferences.CLOUD_GATE_COUNTED, false));
+        // ConcatAdapter puts the self-hiding headers at the top so they scroll
+        // with the list (getItemCount == 0 when retired, so positions don't
+        // shift for the paginated list). The gate announce sits above the
+        // incognito in-flight hint: the hint's negative bottom margin is
+        // designed to tuck the first ROW under it, so it stays row-adjacent.
         mRecyclerView.setAdapter(new ConcatAdapter(
-                mIncognitoHeaderAdapter, mAdapter));
+                mCloudGateBannerAdapter, mIncognitoHeaderAdapter, mAdapter));
         mRecyclerView.setVerticalScrollBarEnabled(true);
 
         configureRecyclerView(mAdapter, mEnableGrid);

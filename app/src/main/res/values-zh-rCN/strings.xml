@@ -591,6 +591,21 @@
     <string name="most_visited_remove_title">从常访问中移除？</string>
     <string name="most_visited_remove">移除</string>
     <!-- Bookmark sync: announce banner + server-delete + backend validation -->
+    <!-- Cloud-backup interest gate (CloudGateFragment) -->
+    <string name="cloud_gate_banner_title">加密云备份</string>
+    <string name="cloud_gate_banner_subtitle">尚未开发 — 想要就投一票。</string>
+    <string name="cloud_gate_title">云备份</string>
+    <string name="cloud_gate_headline">你的 Firedown，可随时恢复。</string>
+    <string name="cloud_gate_point_scope">保险库、下载列表、书签和设置 — 一个恢复码即可在任何设备上恢复。</string>
+    <string name="cloud_gate_point_crypto">在你的手机上加密。服务器只保存无法读取的密封数据。</string>
+    <string name="cloud_gate_point_identity">无账号，无邮箱。</string>
+    <string name="cloud_gate_point_price">按用量付费。没有订阅。</string>
+    <string name="cloud_gate_status">想要的人足够多，我们就开发。</string>
+    <string name="cloud_gate_vote">我会用</string>
+    <string name="cloud_gate_voted">已计入</string>
+    <string name="cloud_gate_disclosure">按钮只发送一个匿名请求：POST /v1/interest/continuity。没有标识符，没有 Cookie。Firedown 没有任何分析功能 — 这次点按是唯一的信号，不点按则什么也不会发送。</string>
+    <string name="cloud_gate_counted_note">我们无法通知你 — 我们不知道你是谁。进展见 firedown.app/cloud。</string>
+    <string name="cloud_gate_error">无法连接服务器。请稍后再试。</string>
     <string name="sync_banner_title">在多设备间同步书签</string>
     <string name="sync_banner_subtitle">端到端加密 — 只有你的恢复码才能读取。无需账户，无需邮箱。</string>
     <string name="settings_sync_delete_title">从服务器删除数据</string>

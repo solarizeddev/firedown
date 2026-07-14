@@ -593,6 +593,21 @@
     <string name="most_visited_remove_title">¿Quitar de Más visitados?</string>
     <string name="most_visited_remove">Quitar</string>
     <!-- Bookmark sync: announce banner + server-delete + backend validation -->
+    <!-- Cloud-backup interest gate (CloudGateFragment) -->
+    <string name="cloud_gate_banner_title">Copia de seguridad cifrada en la nube</string>
+    <string name="cloud_gate_banner_subtitle">Aún no existe: vota si la quieres.</string>
+    <string name="cloud_gate_title">Copia en la nube</string>
+    <string name="cloud_gate_headline">Tu Firedown, recuperable.</string>
+    <string name="cloud_gate_point_scope">Bóveda, lista de descargas, marcadores y ajustes: restaurados en cualquier dispositivo con un código de recuperación.</string>
+    <string name="cloud_gate_point_crypto">Cifrado en tu teléfono. El servidor guarda datos sellados que no puede leer.</string>
+    <string name="cloud_gate_point_identity">Sin cuenta, sin correo.</string>
+    <string name="cloud_gate_point_price">Pagas solo por lo que usas. Sin suscripción.</string>
+    <string name="cloud_gate_status">Lo construiremos si lo quiere suficiente gente.</string>
+    <string name="cloud_gate_vote">Yo lo usaría</string>
+    <string name="cloud_gate_voted">Contado</string>
+    <string name="cloud_gate_disclosure">El botón envía una única solicitud anónima: POST /v1/interest/continuity. Sin identificadores, sin cookies. Firedown no tiene analítica: este toque es la única señal, y no tocar no envía nada.</string>
+    <string name="cloud_gate_counted_note">No podemos avisarte: no sabemos quién eres. El progreso está en firedown.app/cloud.</string>
+    <string name="cloud_gate_error">No se pudo conectar con el servidor. Inténtalo más tarde.</string>
     <string name="sync_banner_title">Sincroniza tus marcadores entre dispositivos</string>
     <string name="sync_banner_subtitle">Cifrado de extremo a extremo: solo tu código de recuperación puede leerlos. Sin cuenta, sin correo.</string>
     <string name="settings_sync_delete_title">Eliminar datos del servidor</string>

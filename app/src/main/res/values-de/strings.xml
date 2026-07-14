@@ -593,6 +593,21 @@
     <string name="most_visited_remove_title">Aus „Meistbesucht“ entfernen?</string>
     <string name="most_visited_remove">Entfernen</string>
     <!-- Bookmark sync: announce banner + server-delete + backend validation -->
+    <!-- Cloud-backup interest gate (CloudGateFragment) -->
+    <string name="cloud_gate_banner_title">Verschlüsseltes Cloud-Backup</string>
+    <string name="cloud_gate_banner_subtitle">Noch nicht gebaut — stimm ab, wenn du es willst.</string>
+    <string name="cloud_gate_title">Cloud-Backup</string>
+    <string name="cloud_gate_headline">Dein Firedown, wiederherstellbar.</string>
+    <string name="cloud_gate_point_scope">Tresor, Download-Liste, Lesezeichen und Einstellungen — auf jedem Gerät wiederhergestellt, mit einem Wiederherstellungscode.</string>
+    <string name="cloud_gate_point_crypto">Verschlüsselt auf deinem Telefon. Der Server speichert versiegelte Daten, die er nicht lesen kann.</string>
+    <string name="cloud_gate_point_identity">Kein Konto, keine E-Mail.</string>
+    <string name="cloud_gate_point_price">Zahle nur für das, was du nutzt. Kein Abo.</string>
+    <string name="cloud_gate_status">Wir bauen es, wenn genug Leute es wollen.</string>
+    <string name="cloud_gate_vote">Würde ich nutzen</string>
+    <string name="cloud_gate_voted">Gezählt</string>
+    <string name="cloud_gate_disclosure">Der Button sendet eine anonyme Anfrage: POST /v1/interest/continuity. Keine Kennungen, keine Cookies. Firedown hat keine Analytik — dieses Tippen ist das einzige Signal, und ohne Tippen wird nichts gesendet.</string>
+    <string name="cloud_gate_counted_note">Wir können dich nicht benachrichtigen — wir wissen nicht, wer du bist. Fortschritt: firedown.app/cloud.</string>
+    <string name="cloud_gate_error">Server nicht erreichbar. Versuch es später.</string>
     <string name="sync_banner_title">Lesezeichen geräteübergreifend synchronisieren</string>
     <string name="sync_banner_subtitle">Ende-zu-Ende-verschlüsselt — nur dein Wiederherstellungscode kann sie lesen. Kein Konto, keine E-Mail.</string>
     <string name="settings_sync_delete_title">Daten vom Server löschen</string>

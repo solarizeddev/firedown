@@ -367,6 +367,21 @@
     <string name="most_visited_remove_title">सबसे ज़्यादा देखे गए से हटाएँ?</string>
     <string name="most_visited_remove">हटाएँ</string>
     <!-- Bookmark sync: announce banner + server-delete + backend validation -->
+    <!-- Cloud-backup interest gate (CloudGateFragment) -->
+    <string name="cloud_gate_banner_title">एन्क्रिप्टेड क्लाउड बैकअप</string>
+    <string name="cloud_gate_banner_subtitle">अभी बना नहीं है — चाहिए तो वोट करें।</string>
+    <string name="cloud_gate_title">क्लाउड बैकअप</string>
+    <string name="cloud_gate_headline">आपका Firedown, पुनर्प्राप्त करने योग्य।</string>
+    <string name="cloud_gate_point_scope">वॉल्ट, डाउनलोड सूची, बुकमार्क और सेटिंग्स — एक रिकवरी कोड से किसी भी डिवाइस पर बहाल।</string>
+    <string name="cloud_gate_point_crypto">आपके फ़ोन पर एन्क्रिप्टेड। सर्वर सीलबंद डेटा रखता है जिसे वह पढ़ नहीं सकता।</string>
+    <string name="cloud_gate_point_identity">न खाता, न ईमेल।</string>
+    <string name="cloud_gate_point_price">जितना इस्तेमाल, उतना भुगतान। कोई सदस्यता नहीं।</string>
+    <string name="cloud_gate_status">पर्याप्त लोग चाहेंगे तो हम इसे बनाएँगे।</string>
+    <string name="cloud_gate_vote">मैं इसे इस्तेमाल करूँगा</string>
+    <string name="cloud_gate_voted">गिन लिया गया</string>
+    <string name="cloud_gate_disclosure">बटन एक अनाम अनुरोध भेजता है: POST /v1/interest/continuity। कोई पहचानकर्ता नहीं, कोई कुकी नहीं। Firedown में कोई एनालिटिक्स नहीं है — यही टैप एकमात्र संकेत है, और टैप न करने पर कुछ नहीं भेजा जाता।</string>
+    <string name="cloud_gate_counted_note">हम आपको सूचित नहीं कर सकते — हम नहीं जानते आप कौन हैं। प्रगति firedown.app/cloud पर है।</string>
+    <string name="cloud_gate_error">सर्वर से संपर्क नहीं हो सका। बाद में आज़माएँ।</string>
     <string name="sync_banner_title">अपने बुकमार्क डिवाइसों के बीच सिंक करें</string>
     <string name="sync_banner_subtitle">एंड-टू-एंड एन्क्रिप्टेड — इन्हें केवल आपका रिकवरी कोड ही पढ़ सकता है। कोई खाता नहीं, कोई ईमेल नहीं।</string>
     <string name="settings_sync_delete_title">सर्वर से डेटा हटाएँ</string>

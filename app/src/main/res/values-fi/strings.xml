@@ -401,6 +401,21 @@
     <string name="most_visited_remove_title">Poistetaanko useimmin vierailluista?</string>
     <string name="most_visited_remove">Poista</string>
     <!-- Bookmark sync: announce banner + server-delete + backend validation -->
+    <!-- Cloud-backup interest gate (CloudGateFragment) -->
+    <string name="cloud_gate_banner_title">Salattu pilvivarmuuskopio</string>
+    <string name="cloud_gate_banner_subtitle">Ei vielä rakennettu — äänestä, jos haluat sen.</string>
+    <string name="cloud_gate_title">Pilvivarmuuskopio</string>
+    <string name="cloud_gate_headline">Sinun Firedownisi, palautettavissa.</string>
+    <string name="cloud_gate_point_scope">Holvi, latauslista, kirjanmerkit ja asetukset — palautettavissa millä tahansa laitteella yhdellä palautuskoodilla.</string>
+    <string name="cloud_gate_point_crypto">Salattu puhelimessasi. Palvelin säilyttää sinetöityjä tietoja, joita se ei voi lukea.</string>
+    <string name="cloud_gate_point_identity">Ei tiliä, ei sähköpostia.</string>
+    <string name="cloud_gate_point_price">Maksat vain käytöstä. Ei tilausta.</string>
+    <string name="cloud_gate_status">Rakennamme sen, jos tarpeeksi moni haluaa.</string>
+    <string name="cloud_gate_vote">Käyttäisin tätä</string>
+    <string name="cloud_gate_voted">Laskettu</string>
+    <string name="cloud_gate_disclosure">Painike lähettää yhden anonyymin pyynnön: POST /v1/interest/continuity. Ei tunnisteita, ei evästeitä. Firedownissa ei ole analytiikkaa — tämä napautus on ainoa signaali, eikä napauttamatta lähetetä mitään.</string>
+    <string name="cloud_gate_counted_note">Emme voi ilmoittaa sinulle — emme tiedä, kuka olet. Edistyminen: firedown.app/cloud.</string>
+    <string name="cloud_gate_error">Palvelimeen ei saatu yhteyttä. Yritä myöhemmin.</string>
     <string name="sync_banner_title">Synkronoi kirjanmerkit laitteiden välillä</string>
     <string name="sync_banner_subtitle">Päästä päähän -salattu — vain palautuskoodisi voi lukea ne. Ei tiliä, ei sähköpostia.</string>
     <string name="settings_sync_delete_title">Poista tiedot palvelimelta</string>

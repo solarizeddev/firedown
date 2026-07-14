@@ -25,6 +25,11 @@
         android:name="com.solarized.firedown.phone.fragments.LanShareFragment"
         android:label="fragment_lan_share"
         tools:layout="@layout/fragment_lan_share" />
+    <fragment
+        android:id="@+id/cloud_gate"
+        android:name="com.solarized.firedown.phone.fragments.CloudGateFragment"
+        android:label="fragment_cloud_gate"
+        tools:layout="@layout/fragment_cloud_gate" />
     <dialog
         android:id="@+id/dialog_download_sort"
         android:name="com.solarized.firedown.phone.dialogs.DownloadsSortDialogFragment" />

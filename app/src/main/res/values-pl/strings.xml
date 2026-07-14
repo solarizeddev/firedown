@@ -459,6 +459,21 @@
     <string name="most_visited_remove_title">Usunąć z najczęściej odwiedzanych?</string>
     <string name="most_visited_remove">Usuń</string>
     <!-- Bookmark sync: announce banner + server-delete + backend validation -->
+    <!-- Cloud-backup interest gate (CloudGateFragment) -->
+    <string name="cloud_gate_banner_title">Szyfrowana kopia w chmurze</string>
+    <string name="cloud_gate_banner_subtitle">Jeszcze nie istnieje — zagłosuj, jeśli jej chcesz.</string>
+    <string name="cloud_gate_title">Kopia w chmurze</string>
+    <string name="cloud_gate_headline">Twój Firedown, do odzyskania.</string>
+    <string name="cloud_gate_point_scope">Sejf, lista pobrań, zakładki i ustawienia — przywrócone na dowolnym urządzeniu jednym kodem odzyskiwania.</string>
+    <string name="cloud_gate_point_crypto">Szyfrowanie na Twoim telefonie. Serwer przechowuje zapieczętowane dane, których nie może odczytać.</string>
+    <string name="cloud_gate_point_identity">Bez konta, bez e-maila.</string>
+    <string name="cloud_gate_point_price">Płacisz tylko za to, czego używasz. Bez subskrypcji.</string>
+    <string name="cloud_gate_status">Zbudujemy to, jeśli zechce tego dość osób.</string>
+    <string name="cloud_gate_vote">Skorzystam z tego</string>
+    <string name="cloud_gate_voted">Policzono</string>
+    <string name="cloud_gate_disclosure">Przycisk wysyła jedno anonimowe żądanie: POST /v1/interest/continuity. Bez identyfikatorów, bez plików cookie. Firedown nie ma analityki — to dotknięcie jest jedynym sygnałem, a bez dotknięcia nic nie jest wysyłane.</string>
+    <string name="cloud_gate_counted_note">Nie możemy Cię powiadomić — nie wiemy, kim jesteś. Postępy na firedown.app/cloud.</string>
+    <string name="cloud_gate_error">Nie udało się połączyć z serwerem. Spróbuj później.</string>
     <string name="sync_banner_title">Synchronizuj zakładki między urządzeniami</string>
     <string name="sync_banner_subtitle">Szyfrowane end-to-end — odczytać je może tylko Twój kod odzyskiwania. Bez konta, bez e-maila.</string>
     <string name="settings_sync_delete_title">Usuń dane z serwera</string>

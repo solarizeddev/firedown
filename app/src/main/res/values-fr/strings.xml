@@ -593,6 +593,21 @@
     <string name="most_visited_remove_title">Retirer des plus visités ?</string>
     <string name="most_visited_remove">Supprimer</string>
     <!-- Bookmark sync: announce banner + server-delete + backend validation -->
+    <!-- Cloud-backup interest gate (CloudGateFragment) -->
+    <string name="cloud_gate_banner_title">Sauvegarde chiffrée dans le cloud</string>
+    <string name="cloud_gate_banner_subtitle">Pas encore construite — votez si vous la voulez.</string>
+    <string name="cloud_gate_title">Sauvegarde cloud</string>
+    <string name="cloud_gate_headline">Votre Firedown, récupérable.</string>
+    <string name="cloud_gate_point_scope">Coffre, liste de téléchargements, marque-pages et réglages — restaurés sur n\'importe quel appareil avec un seul code de récupération.</string>
+    <string name="cloud_gate_point_crypto">Chiffré sur votre téléphone. Le serveur stocke des données scellées qu\'il ne peut pas lire.</string>
+    <string name="cloud_gate_point_identity">Sans compte, sans e-mail.</string>
+    <string name="cloud_gate_point_price">Payez seulement ce que vous utilisez. Sans abonnement.</string>
+    <string name="cloud_gate_status">Nous le construirons si assez de gens le veulent.</string>
+    <string name="cloud_gate_vote">Je l\'utiliserais</string>
+    <string name="cloud_gate_voted">Compté</string>
+    <string name="cloud_gate_disclosure">Le bouton envoie une seule requête anonyme : POST /v1/interest/continuity. Sans identifiants, sans cookies. Firedown n\'a aucune analytique — cet appui est le seul signal, et ne pas appuyer n\'envoie rien.</string>
+    <string name="cloud_gate_counted_note">Nous ne pouvons pas vous prévenir — nous ne savons pas qui vous êtes. L\'avancement est sur firedown.app/cloud.</string>
+    <string name="cloud_gate_error">Serveur injoignable. Réessayez plus tard.</string>
     <string name="sync_banner_title">Synchronisez vos marque-pages entre appareils</string>
     <string name="sync_banner_subtitle">Chiffré de bout en bout — seul votre code de récupération peut les lire. Sans compte, sans e-mail.</string>
     <string name="settings_sync_delete_title">Supprimer les données du serveur</string>

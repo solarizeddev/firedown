@@ -331,6 +331,21 @@
     <string name="most_visited_remove_title">Kas eemaldada enim külastatute hulgast?</string>
     <string name="most_visited_remove">Eemalda</string>
     <!-- Bookmark sync: announce banner + server-delete + backend validation -->
+    <!-- Cloud-backup interest gate (CloudGateFragment) -->
+    <string name="cloud_gate_banner_title">Krüptitud pilvevarundus</string>
+    <string name="cloud_gate_banner_subtitle">Pole veel valmis — hääleta, kui soovid seda.</string>
+    <string name="cloud_gate_title">Pilvevarundus</string>
+    <string name="cloud_gate_headline">Sinu Firedown, taastatav.</string>
+    <string name="cloud_gate_point_scope">Hoidla, allalaadimiste loend, järjehoidjad ja seaded — taastatavad igas seadmes ühe taastekoodiga.</string>
+    <string name="cloud_gate_point_crypto">Krüptitud sinu telefonis. Server hoiab pitseeritud andmeid, mida ta lugeda ei saa.</string>
+    <string name="cloud_gate_point_identity">Ilma konto ja e-postita.</string>
+    <string name="cloud_gate_point_price">Maksad ainult kasutatu eest. Ilma tellimuseta.</string>
+    <string name="cloud_gate_status">Ehitame selle, kui piisavalt inimesi seda soovib.</string>
+    <string name="cloud_gate_vote">Kasutaksin seda</string>
+    <string name="cloud_gate_voted">Loetud</string>
+    <string name="cloud_gate_disclosure">Nupp saadab ühe anonüümse päringu: POST /v1/interest/continuity. Ilma identifikaatorite ja küpsisteta. Firedownil pole analüütikat — see puudutus on ainus signaal ja puudutamata ei saadeta midagi.</string>
+    <string name="cloud_gate_counted_note">Me ei saa sind teavitada — me ei tea, kes sa oled. Edenemine: firedown.app/cloud.</string>
+    <string name="cloud_gate_error">Serveriga ei saadud ühendust. Proovi hiljem.</string>
     <string name="sync_banner_title">Sünkrooni järjehoidjad seadmete vahel</string>
     <string name="sync_banner_subtitle">Otspunktkrüpteeritud — neid saab lugeda ainult sinu taastekood. Kontot ega e-posti pole vaja.</string>
     <string name="settings_sync_delete_title">Kustuta andmed serverist</string>

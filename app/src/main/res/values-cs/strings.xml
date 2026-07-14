@@ -415,6 +415,21 @@
     <string name="most_visited_remove_title">Odebrat z nejnavštěvovanějších?</string>
     <string name="most_visited_remove">Odebrat</string>
     <!-- Bookmark sync: announce banner + server-delete + backend validation -->
+    <!-- Cloud-backup interest gate (CloudGateFragment) -->
+    <string name="cloud_gate_banner_title">Šifrovaná záloha v cloudu</string>
+    <string name="cloud_gate_banner_subtitle">Zatím neexistuje — hlasujte, pokud ji chcete.</string>
+    <string name="cloud_gate_title">Cloudová záloha</string>
+    <string name="cloud_gate_headline">Váš Firedown, obnovitelný.</string>
+    <string name="cloud_gate_point_scope">Trezor, seznam stahování, záložky a nastavení — obnovíte na jakémkoli zařízení jedním obnovovacím kódem.</string>
+    <string name="cloud_gate_point_crypto">Šifrováno ve vašem telefonu. Server ukládá zapečetěná data, která nedokáže přečíst.</string>
+    <string name="cloud_gate_point_identity">Bez účtu, bez e-mailu.</string>
+    <string name="cloud_gate_point_price">Platíte jen za to, co využijete. Žádné předplatné.</string>
+    <string name="cloud_gate_status">Postavíme to, pokud to bude chtít dost lidí.</string>
+    <string name="cloud_gate_vote">Použil(a) bych to</string>
+    <string name="cloud_gate_voted">Započítáno</string>
+    <string name="cloud_gate_disclosure">Tlačítko odešle jeden anonymní požadavek: POST /v1/interest/continuity. Žádné identifikátory, žádné cookies. Firedown nemá analytiku — toto klepnutí je jediný signál a bez klepnutí se neodešle nic.</string>
+    <string name="cloud_gate_counted_note">Nemůžeme vás upozornit — nevíme, kdo jste. Průběh najdete na firedown.app/cloud.</string>
+    <string name="cloud_gate_error">Server je nedostupný. Zkuste to později.</string>
     <string name="sync_banner_title">Synchronizujte záložky mezi zařízeními</string>
     <string name="sync_banner_subtitle">Šifrováno end-to-end — přečíst je může jen váš obnovovací kód. Bez účtu, bez e-mailu.</string>
     <string name="settings_sync_delete_title">Smazat data ze serveru</string>

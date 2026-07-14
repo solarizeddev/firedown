@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Header for DownloadFragment's RecyclerView, shown via CloudGateBannerAdapter
+  until retired (X, or interest counted on the gate screen). Card tap opens the
+  cloud-backup gate screen (CloudGateFragment).
+
+  Style matches item_sync_banner / item_incognito_in_progress_header: 16dp
+  start padding, a NEUTRAL 24dp leading icon tinted colorOnSurface, the wash
+  applied in code, the 36dp dismiss IconButton. NO layout_marginHorizontal —
+  as a 1-span ConcatAdapter header it already gets the EqualSpacingItemDecoration
+  8dp gutter every list-row card gets (an explicit margin would double it; see
+  item_sync_banner's comment). Vertical margins are SYMMETRIC like the sync
+  banner (not the incognito header's negative pull-up), so the card sits an
+  equal distance from the toolbar and the first download row.
+-->
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="@dimen/list_spacing"
+    android:layout_marginBottom="@dimen/list_spacing"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="0dp"
+    app:strokeWidth="0dp"
+    app:cardBackgroundColor="?attr/colorSurfaceContainerHighest">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="16dp"
+        android:paddingEnd="8dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="12dp">
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/cloud_gate_banner_icon"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:contentDescription="@null"
+            android:src="@drawable/cloud_outline_24"
+            app:tint="?attr/colorOnSurface"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent" />
+
+        <TextView
+            android:id="@+id/cloud_gate_banner_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:text="@string/cloud_gate_banner_title"
+            android:textAppearance="?attr/textAppearanceTitleSmall"
+            android:textColor="?attr/colorOnSurface"
+            app:layout_constraintStart_toEndOf="@id/cloud_gate_banner_icon"
+            app:layout_constraintEnd_toStartOf="@id/cloud_gate_banner_close"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_marginTop="2dp"
+            android:text="@string/cloud_gate_banner_subtitle"
+            android:textAppearance="?attr/textAppearanceBodySmall"
+            android:textColor="?attr/colorOnSurface"
+            android:alpha="0.8"
+            app:layout_constraintStart_toEndOf="@id/cloud_gate_banner_icon"
+            app:layout_constraintEnd_toStartOf="@id/cloud_gate_banner_close"
+            app:layout_constraintTop_toBottomOf="@id/cloud_gate_banner_title" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/cloud_gate_banner_close"
+            style="@style/Widget.Material3.Button.IconButton"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:contentDescription="@string/task_dismiss"
+            app:icon="@drawable/ic_baseline_close_24"
+            app:iconSize="18dp"
+            app:iconTint="?attr/colorOnSurface"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</com.google.android.material.card.MaterialCardView>

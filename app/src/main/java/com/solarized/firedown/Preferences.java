@@ -113,6 +113,22 @@ public class Preferences {
     public static final String SETTINGS_SYNC_CAT_CODE = "com.solarized.firedown.preferences.sync.cat.code";
     public static final String SETTINGS_SYNC_CAT_MANAGE = "com.solarized.firedown.preferences.sync.cat.manage";
 
+    // ---- cloud-backup interest gate (CloudGateFragment) ----
+    // A demand test that runs BEFORE the backup product is built: a Downloads
+    // announce card opens a one-screen pitch whose single button sends ONE
+    // anonymous, fully-disclosed request. The app ships no analytics, so the
+    // deliberate tap is the only signal that exists — viewing or dismissing
+    // the card sends nothing.
+    /** Retires the Downloads announce card permanently (X, or interest counted). */
+    public static final String CLOUD_GATE_BANNER_DISMISSED = "com.solarized.firedown.preferences.cloud.gate.banner.dismissed";
+    /** Set once the interest ping was accepted. On-device dedup only — the
+     *  server keeps no identifiers to dedupe by, on purpose. Lives in the
+     *  default (backed-up) prefs so a restore doesn't recount. */
+    public static final String CLOUD_GATE_COUNTED = "com.solarized.firedown.preferences.cloud.gate.counted";
+    /** The interest counter endpoint — same host the bookmark sync uses.
+     *  Empty POST body, no identifiers; the server increments one integer. */
+    public static final String CLOUD_GATE_INTEREST_URL = SYNC_DEFAULT_BACKEND + "/v1/interest/continuity";
+
     /**
      * Bookmarks-list sort order toggle: false (default) = recency
      * (file_date DESC, the historical order), true = A–Z by title.

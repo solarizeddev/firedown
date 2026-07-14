@@ -591,6 +591,21 @@
     <string name="most_visited_remove_title">「よく見るサイト」から削除しますか？</string>
     <string name="most_visited_remove">削除</string>
     <!-- Bookmark sync: announce banner + server-delete + backend validation -->
+    <!-- Cloud-backup interest gate (CloudGateFragment) -->
+    <string name="cloud_gate_banner_title">暗号化クラウドバックアップ</string>
+    <string name="cloud_gate_banner_subtitle">まだ未実装 — 欲しければ投票を。</string>
+    <string name="cloud_gate_title">クラウドバックアップ</string>
+    <string name="cloud_gate_headline">あなたの Firedown を、復元可能に。</string>
+    <string name="cloud_gate_point_scope">保管庫・ダウンロード一覧・ブックマーク・設定 — 1 つの復元コードでどの端末でも復元。</string>
+    <string name="cloud_gate_point_crypto">暗号化はスマホ上で。サーバーは読めない封印データだけを保管します。</string>
+    <string name="cloud_gate_point_identity">アカウント不要、メール不要。</string>
+    <string name="cloud_gate_point_price">使った分だけ支払い。サブスクなし。</string>
+    <string name="cloud_gate_status">望む人が十分いれば作ります。</string>
+    <string name="cloud_gate_vote">使いたい</string>
+    <string name="cloud_gate_voted">カウント済み</string>
+    <string name="cloud_gate_disclosure">ボタンは匿名リクエストを 1 回だけ送ります: POST /v1/interest/continuity。識別子も Cookie もなし。Firedown に解析機能はなく、このタップが唯一のシグナルです。タップしなければ何も送信されません。</string>
+    <string name="cloud_gate_counted_note">通知はできません — あなたが誰か知らないからです。進捗は firedown.app/cloud で。</string>
+    <string name="cloud_gate_error">サーバーに接続できませんでした。後でもう一度お試しください。</string>
     <string name="sync_banner_title">ブックマークをデバイス間で同期</string>
     <string name="sync_banner_subtitle">エンドツーエンドで暗号化 — 読み取れるのは復元コードを持つあなただけ。アカウントもメールも不要。</string>
     <string name="settings_sync_delete_title">サーバーからデータを削除</string>

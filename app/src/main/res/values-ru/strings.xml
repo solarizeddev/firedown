@@ -462,6 +462,21 @@
     <string name="most_visited_remove_title">Удалить из часто посещаемых?</string>
     <string name="most_visited_remove">Удалить</string>
     <!-- Bookmark sync: announce banner + server-delete + backend validation -->
+    <!-- Cloud-backup interest gate (CloudGateFragment) -->
+    <string name="cloud_gate_banner_title">Зашифрованная облачная копия</string>
+    <string name="cloud_gate_banner_subtitle">Ещё не создано — проголосуйте, если нужно.</string>
+    <string name="cloud_gate_title">Облачная копия</string>
+    <string name="cloud_gate_headline">Ваш Firedown — восстановим.</string>
+    <string name="cloud_gate_point_scope">Сейф, список загрузок, закладки и настройки — восстановление на любом устройстве одним кодом восстановления.</string>
+    <string name="cloud_gate_point_crypto">Шифрование на вашем телефоне. Сервер хранит запечатанные данные, которые не может прочитать.</string>
+    <string name="cloud_gate_point_identity">Без аккаунта и почты.</string>
+    <string name="cloud_gate_point_price">Платите только за то, что используете. Без подписки.</string>
+    <string name="cloud_gate_status">Мы сделаем это, если захочет достаточно людей.</string>
+    <string name="cloud_gate_vote">Мне это нужно</string>
+    <string name="cloud_gate_voted">Учтено</string>
+    <string name="cloud_gate_disclosure">Кнопка отправляет один анонимный запрос: POST /v1/interest/continuity. Без идентификаторов и cookie. В Firedown нет аналитики — это нажатие единственный сигнал, а без нажатия ничего не отправляется.</string>
+    <string name="cloud_gate_counted_note">Мы не можем вас уведомить — мы не знаем, кто вы. Прогресс на firedown.app/cloud.</string>
+    <string name="cloud_gate_error">Сервер недоступен. Попробуйте позже.</string>
     <string name="sync_banner_title">Синхронизируйте закладки между устройствами</string>
     <string name="sync_banner_subtitle">Сквозное шифрование — прочитать их может только ваш код восстановления. Без аккаунта и почты.</string>
     <string name="settings_sync_delete_title">Удалить данные с сервера</string>

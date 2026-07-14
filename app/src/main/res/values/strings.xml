@@ -200,6 +200,21 @@
     <string name="restore_downloads_done">Restored downloads: %1$d</string>
     <string name="restore_downloads_none">No backup found in this folder</string>
     <string name="restore_downloads_wrong_device">This backup belongs to a different device</string>
+    <!-- Cloud-backup interest gate (CloudGateFragment) -->
+    <string name="cloud_gate_banner_title">Encrypted cloud backup</string>
+    <string name="cloud_gate_banner_subtitle">Not built yet — vote if you want it.</string>
+    <string name="cloud_gate_title">Cloud backup</string>
+    <string name="cloud_gate_headline">Your Firedown, recoverable.</string>
+    <string name="cloud_gate_point_scope">Vault, download list, bookmarks and settings — restored on any device with one recovery code.</string>
+    <string name="cloud_gate_point_crypto">Encrypted on your phone. The server stores sealed data it cannot read.</string>
+    <string name="cloud_gate_point_identity">No account, no email.</string>
+    <string name="cloud_gate_point_price">Pay for what you use. No subscription.</string>
+    <string name="cloud_gate_status">We build this if enough people want it.</string>
+    <string name="cloud_gate_vote">I\'d use this</string>
+    <string name="cloud_gate_voted">Counted</string>
+    <string name="cloud_gate_disclosure">The button sends one anonymous request: POST /v1/interest/continuity. No identifiers, no cookies. Firedown has no analytics — this tap is the only signal, and not tapping sends nothing.</string>
+    <string name="cloud_gate_counted_note">We can\'t notify you — we don\'t know who you are. Progress lives at firedown.app/cloud.</string>
+    <string name="cloud_gate_error">Couldn\'t reach the server. Try again later.</string>
     <!-- Bookmark sync (docs/BOOKMARKS_SYNC.md) -->
     <string name="sync_banner_title">Sync your bookmarks across devices</string>
     <string name="sync_banner_subtitle">End-to-end encrypted — only your recovery code can read it. No account, no email.</string>

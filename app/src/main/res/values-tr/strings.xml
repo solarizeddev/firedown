@@ -461,6 +461,21 @@
     <string name="most_visited_remove_title">En çok ziyaret edilenlerden kaldırılsın mı?</string>
     <string name="most_visited_remove">Kaldır</string>
     <!-- Bookmark sync: announce banner + server-delete + backend validation -->
+    <!-- Cloud-backup interest gate (CloudGateFragment) -->
+    <string name="cloud_gate_banner_title">Şifreli bulut yedeği</string>
+    <string name="cloud_gate_banner_subtitle">Henüz yok — istiyorsan oy ver.</string>
+    <string name="cloud_gate_title">Bulut yedeği</string>
+    <string name="cloud_gate_headline">Firedown\'ın, kurtarılabilir.</string>
+    <string name="cloud_gate_point_scope">Kasa, indirme listesi, yer imleri ve ayarlar — tek kurtarma koduyla her cihazda geri gelir.</string>
+    <string name="cloud_gate_point_crypto">Telefonunda şifrelenir. Sunucu okuyamadığı mühürlü veriyi saklar.</string>
+    <string name="cloud_gate_point_identity">Hesap yok, e-posta yok.</string>
+    <string name="cloud_gate_point_price">Yalnızca kullandığın kadar öde. Abonelik yok.</string>
+    <string name="cloud_gate_status">Yeterince insan isterse yaparız.</string>
+    <string name="cloud_gate_vote">Kullanırdım</string>
+    <string name="cloud_gate_voted">Sayıldı</string>
+    <string name="cloud_gate_disclosure">Düğme tek bir anonim istek gönderir: POST /v1/interest/continuity. Tanımlayıcı yok, çerez yok. Firedown\'da analitik yok — bu dokunuş tek sinyaldir, dokunmazsan hiçbir şey gönderilmez.</string>
+    <string name="cloud_gate_counted_note">Sana haber veremeyiz — kim olduğunu bilmiyoruz. Gelişmeler: firedown.app/cloud.</string>
+    <string name="cloud_gate_error">Sunucuya ulaşılamadı. Daha sonra dene.</string>
     <string name="sync_banner_title">Yer imlerinizi cihazlar arasında eşitleyin</string>
     <string name="sync_banner_subtitle">Uçtan uca şifreli — bunları yalnızca kurtarma kodunuz okuyabilir. Hesap yok, e-posta yok.</string>
     <string name="settings_sync_delete_title">Verileri sunucudan sil</string>
