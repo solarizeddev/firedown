@@ -430,6 +430,10 @@
     <string name="p2p_scan_hint">Suuna kaamera saatja koodile</string>
     <string name="p2p_camera_denied">Skannimiseks on vaja kaameraluba. Selle asemel võid koodi kleepida.</string>
     <string name="p2p_send_link">Saada link</string>
+    <string name="p2p_send_short">Lühilink</string>
+    <string name="p2p_send_short_sub">Kompaktne — firedown.app kaudu</string>
+    <string name="p2p_send_private">Privaatne link</string>
+    <string name="p2p_send_private_sub">Ei lahku kunagi su seadmest</string>
     <string name="p2p_send_link_again">Saada link uuesti</string>
     <string name="p2p_send_link_hint">Saada see mis tahes rakendusega. Töötab, kuni see ekraan on avatud.</string>
     <string name="p2p_link_sent">Link saadetud</string>

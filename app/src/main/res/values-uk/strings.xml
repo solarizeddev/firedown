@@ -477,6 +477,10 @@
     <string name="p2p_scan_hint">Наведіть камеру на код відправника</string>
     <string name="p2p_camera_denied">Щоб сканувати, потрібен доступ до камери. Натомість можна вставити код.</string>
     <string name="p2p_send_link">Надіслати посилання</string>
+    <string name="p2p_send_short">Коротке посилання</string>
+    <string name="p2p_send_short_sub">Компактне — через firedown.app</string>
+    <string name="p2p_send_private">Приватне посилання</string>
+    <string name="p2p_send_private_sub">Ніколи не залишає ваш пристрій</string>
     <string name="p2p_send_link_again">Надіслати посилання ще раз</string>
     <string name="p2p_send_link_hint">Надішліть його через будь-який застосунок. Воно працює, поки відкритий цей екран.</string>
     <string name="p2p_link_sent">Посилання надіслано</string>

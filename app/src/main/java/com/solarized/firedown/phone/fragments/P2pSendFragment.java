@@ -53,6 +53,9 @@ public class P2pSendFragment extends P2pShareBaseFragment
     // out; the clipboard is auto-checked on return (each clip value tried
     // once, so a soft bad-code can't loop); the QR lives behind "Nearby?".
     private boolean mLinkShared;
+    // Which link mode was last shared — so the waiting card's "Send link again"
+    // re-shares the same (true = private/self-contained, false = short/brokered).
+    private boolean mLastPrivate;
     private String mLastClipTried;
     private boolean mNearbyExpanded;
 
@@ -108,8 +111,12 @@ public class P2pSendFragment extends P2pShareBaseFragment
                         ? String.format(Locale.ROOT, "%s · %s", mimeWord, size)
                         : size);
 
-        mView.findViewById(R.id.p2p_send_link).setOnClickListener(v -> shareOfferLink());
-        mView.findViewById(R.id.p2p_send_link_again).setOnClickListener(v -> shareOfferLink());
+        mView.findViewById(R.id.p2p_send_short).setOnClickListener(v -> shareOfferLink(false));
+        mView.findViewById(R.id.p2p_send_private).setOnClickListener(v -> shareOfferLink(true));
+        // "Send link again" (waiting card) re-shares whichever mode was chosen.
+        mView.findViewById(R.id.p2p_send_link_again).setOnClickListener(v -> shareOfferLink(mLastPrivate));
+        // NB shareOfferLink(false) brokers the offer lazily via the controller —
+        // a private share uploads nothing (see resolveShortLink).
         mView.findViewById(R.id.p2p_nearby_toggle).setOnClickListener(v -> {
             mNearbyExpanded = !mNearbyExpanded;
             updateNearby();
@@ -167,23 +174,41 @@ public class P2pSendFragment extends P2pShareBaseFragment
     }
 
     /**
-     * Share the offer as an https link (firedown.app/s#&lt;code&gt;) — the form
-     * messengers make tappable; the controller substitutes a relay link if one
-     * is ever configured. Sharing flips the screen into the WAITING sub-stage:
-     * the reply normally comes back as a tapped link or off the clipboard, so
-     * the guidance changes the moment the link is out. Wired to both the
-     * primary Send-link button and the waiting card's "Send link again".
+     * Share the offer as an https link (firedown.app/s#&lt;code&gt;), in one of two
+     * modes. {@code privateMode} false = the SHORT link: the controller brokers
+     * the offer lazily ({@link P2pShareController#resolveShortLink}) and hands
+     * back the compact {@code FDO1.<id>} reference (or the full link on
+     * timeout/failure). {@code privateMode} true = the PRIVATE link: the full
+     * self-contained {@code FDS1.} code, which uploads nothing to a server.
+     * Sharing flips the screen into the WAITING sub-stage; the reply comes back
+     * as a tapped link or off the clipboard. Wired to the two action rows and the
+     * waiting card's re-share.
      */
-    private void shareOfferLink() {
-        String content = mP2pController.getShareContent();
-        if (content == null && mOfferCode != null) {
-            content = P2pShareController.toHttpsLink(mOfferCode);
+    private void shareOfferLink(boolean privateMode) {
+        if (privateMode) {
+            // The whole offer rides in the link — nothing is uploaded to a server.
+            if (mOfferCode != null) {
+                completeShare(P2pShareController.toHttpsLink(mOfferCode), true);
+            }
+        } else {
+            // Short: broker the offer LAZILY (first tap uploads it), bounded so a
+            // slow network can't hang the share sheet — the controller hands back
+            // the short link or the full one on timeout/failure. Never a dead tap.
+            mP2pController.resolveShortLink(link -> completeShare(link, false));
         }
-        if (content != null) {
-            shareCode(content);
-            mLinkShared = true;
-            updateCodeSubstages();
+    }
+
+    /** Fire the OS share sheet with {@code content} and flip to the WAITING
+     *  sub-stage. Guarded for a null content and a torn-down view (the short-link
+     *  path resolves asynchronously). */
+    private void completeShare(@Nullable String content, boolean privateMode) {
+        if (mView == null || content == null) {
+            return;
         }
+        shareCode(content);
+        mLinkShared = true;
+        mLastPrivate = privateMode;
+        updateCodeSubstages();
     }
 
     /**
@@ -213,15 +238,14 @@ public class P2pSendFragment extends P2pShareBaseFragment
 
     /* ── stage visibility ───────────────────────────────────────────────── */
 
-    /** The code stage's two sub-states: pre-share (filled link button + hint)
-     *  and WAITING (the status card, which carries the re-share and paste
-     *  fallbacks as text buttons). One primary affordance per sub-state — the
-     *  filled button hides rather than relabelling, so a static status can
-     *  never sit next to a button dressed the same way. */
+    /** The code stage's two sub-states: pre-share (the two share-action rows +
+     *  hint) and WAITING (the status card, which carries the re-share and paste
+     *  fallbacks as text buttons). The action rows hide rather than relabelling,
+     *  so a static status can never sit next to a control dressed the same way. */
     private void updateCodeSubstages() {
         mView.findViewById(R.id.p2p_waiting_group)
                 .setVisibility(mLinkShared ? View.VISIBLE : View.GONE);
-        mView.findViewById(R.id.p2p_send_link)
+        mView.findViewById(R.id.p2p_send_actions)
                 .setVisibility(mLinkShared ? View.GONE : View.VISIBLE);
         // The pre-share hint yields to the waiting copy — two stacked
         // explainers read as clutter (on-device review).

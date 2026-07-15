@@ -202,6 +202,14 @@ public class P2pShareController {
     private static final long ANSWER_RENDEZVOUS_HEADSTART_MS = 700;
 
     /**
+     * Cap on how long a "Short link" tap waits for the lazy offer-broker upload
+     * before falling back to the full self-contained link, so a slow/dead
+     * network can't hang the share sheet. The upload keeps running and caches
+     * the short link for the next share if it lands after this.
+     */
+    private static final long SHORT_LINK_BROKER_TIMEOUT_MS = 2500;
+
+    /**
      * The fixed hashcash "resource" the relay PoW is bound to — must match
      * firedown-api's {@code relayPoWResource} ({@code []byte("relay")})
      * byte-for-byte. {@link Pow} prepends its own register-domain prefix; the
@@ -703,19 +711,12 @@ public class P2pShareController {
             final String id = mRendezvousId;
             mRendezvous.pollAnswer(Preferences.P2P_RENDEZVOUS_URL, id, ans ->
                     mMainHandler.post(() -> onRendezvousAnswer(ans)));
-            // Broker the FULL offer at the rendezvous offer mailbox so the shared
-            // LINK can be short (firedown.app/s#FDO1.<id>) instead of carrying the
-            // whole self-contained code. Only flip getShareContent() to the short
-            // form AFTER the upload lands — a tap before then falls back to the
-            // full self-contained link, which always works. The QR stays the full
-            // FDS1. code (in-person needs no server). A failed upload just leaves
-            // the long link — no regression.
-            mRendezvous.uploadOffer(Preferences.P2P_RENDEZVOUS_URL, id, code, ok ->
-                    mMainHandler.post(() -> {
-                        if ("send".equals(mRole) && ok != null) {
-                            mShareLink = toHttpsLink(OFFER_REF_PREFIX + id);
-                        }
-                    }));
+            // NB: the offer is NOT brokered here — that's LAZY, done only when the
+            // user picks the SHORT link (resolveShortLink). Brokering eagerly would
+            // upload the offer (which carries the file's name/size) to the server
+            // for every share, making the "Private link" choice meaningless. So a
+            // private share uploads nothing. (The answer still returns via `rvz`
+            // for both — that's the receiver's candidates, not the shared file.)
         }
         if (mSignaling != null && mSignalingId != null && !mSignalingBase.isEmpty()) {
             final String base = mSignalingBase;
@@ -736,16 +737,55 @@ public class P2pShareController {
         }
     }
 
-    /** The content the "Send link" action shares: the relay link when the
-     *  offer is up on a relay (dormant today), otherwise the self-contained
-     *  offer as an https link — the form messengers make tappable. */
-    @Nullable
+    /**
+     * Resolve the SHORT share link, brokering the offer LAZILY on first use: the
+     * offer is uploaded to the rendezvous offer mailbox now (not eagerly at
+     * mint), so the "Private link" path can genuinely upload nothing. Hands
+     * {@code cb} (main thread) the short {@code FDO1.<id>} https link once the
+     * upload lands, or the FULL self-contained link if brokering is unavailable
+     * or fails — so "Short link" is never a dead action, it just isn't shorter
+     * offline. Cached (`mShareLink`) so a re-share is instant.
+     */
     @UiThread
-    public String getShareContent() {
-        if (mShareLink != null) {
-            return mShareLink;
+    public void resolveShortLink(@NonNull Consumer<String> cb) {
+        if (!"send".equals(mRole) || mOfferCode == null) {
+            cb.accept(null);
+            return;
         }
-        return mOfferCode != null ? toHttpsLink(mOfferCode) : null;
+        if (mShareLink != null) {
+            cb.accept(mShareLink);
+            return;
+        }
+        final String full = mOfferCode;
+        if (mRendezvous == null || mRendezvousId == null) {
+            cb.accept(toHttpsLink(full)); // no mailbox → the full link still works
+            return;
+        }
+        final String id = mRendezvousId;
+        // Bound the wait: on a slow/dead network the upload must NOT hang the
+        // share sheet. Race it against a short timer — whichever fires first
+        // delivers cb exactly once; the upload keeps running and, if it lands
+        // later, caches mShareLink so the NEXT share is instantly short.
+        final boolean[] done = {false};
+        final Runnable timeout = () -> {
+            if (!done[0]) {
+                done[0] = true;
+                cb.accept(toHttpsLink(full));
+            }
+        };
+        mMainHandler.postDelayed(timeout, SHORT_LINK_BROKER_TIMEOUT_MS);
+        mRendezvous.uploadOffer(Preferences.P2P_RENDEZVOUS_URL, id, full, ok ->
+                mMainHandler.post(() -> {
+                    if (ok != null && "send".equals(mRole)) {
+                        mShareLink = toHttpsLink(OFFER_REF_PREFIX + id);
+                    }
+                    if (done[0]) {
+                        return; // the timer already answered with the full link
+                    }
+                    done[0] = true;
+                    mMainHandler.removeCallbacks(timeout);
+                    cb.accept(mShareLink != null ? mShareLink : toHttpsLink(full));
+                }));
     }
 
     /**

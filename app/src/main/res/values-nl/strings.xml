@@ -560,6 +560,10 @@
     <string name="p2p_scan_hint">Richt de camera op de code van de verzender</string>
     <string name="p2p_camera_denied">Cameratoegang is nodig om te scannen. Je kunt de code ook plakken.</string>
     <string name="p2p_send_link">Link versturen</string>
+    <string name="p2p_send_short">Korte link</string>
+    <string name="p2p_send_short_sub">Compact — via firedown.app</string>
+    <string name="p2p_send_private">Privélink</string>
+    <string name="p2p_send_private_sub">Verlaat nooit je apparaat</string>
     <string name="p2p_send_link_again">Link opnieuw versturen</string>
     <string name="p2p_send_link_hint">Verstuur hem via elke app. Hij werkt zolang dit scherm open blijft.</string>
     <string name="p2p_link_sent">Link verstuurd</string>
