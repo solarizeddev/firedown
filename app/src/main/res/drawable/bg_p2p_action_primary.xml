@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- P2P-share primary action row (the "short link" default) — coral tonal -->
-<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-    <solid android:color="?attr/colorPrimaryContainer" />
-    <corners android:radius="16dp" />
-</shape>

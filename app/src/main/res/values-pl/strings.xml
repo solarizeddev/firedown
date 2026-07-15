@@ -559,10 +559,7 @@
     <string name="p2p_scan_hint">Skieruj aparat na kod nadawcy</string>
     <string name="p2p_camera_denied">Do skanowania potrzebny jest dostęp do aparatu. Zamiast tego możesz wkleić kod.</string>
     <string name="p2p_send_link">Wyślij link</string>
-    <string name="p2p_send_short">Krótki link</string>
-    <string name="p2p_send_short_sub">Kompaktowy — przez firedown.app</string>
     <string name="p2p_send_private">Prywatny link</string>
-    <string name="p2p_send_private_sub">Nigdy nie opuszcza urządzenia</string>
     <string name="p2p_send_link_again">Wyślij link ponownie</string>
     <string name="p2p_send_link_hint">Wyślij go dowolną aplikacją. Działa, dopóki ten ekran jest otwarty.</string>
     <string name="p2p_link_sent">Link wysłany</string>

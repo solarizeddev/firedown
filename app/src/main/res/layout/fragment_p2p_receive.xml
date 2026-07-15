@@ -381,15 +381,6 @@
                     android:visibility="gone"
                     tools:visibility="visible">
 
-                    <ImageView
-                        android:layout_width="wrap_content"
-                        android:layout_height="140dp"
-                        android:layout_gravity="center_horizontal"
-                        android:layout_marginBottom="16dp"
-                        android:adjustViewBounds="true"
-                        android:contentDescription="@null"
-                        android:src="@drawable/ill_cloud" />
-
                     <com.google.android.material.progressindicator.LinearProgressIndicator
                         android:id="@+id/p2p_progress_bar"
                         android:layout_width="match_parent"

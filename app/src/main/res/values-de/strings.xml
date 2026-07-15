@@ -691,10 +691,7 @@
     <string name="p2p_scan_hint">Richte die Kamera auf den Code des Absenders</string>
     <string name="p2p_camera_denied">Zum Scannen wird Kamerazugriff benötigt. Du kannst den Code stattdessen einfügen.</string>
     <string name="p2p_send_link">Link senden</string>
-    <string name="p2p_send_short">Kurzer Link</string>
-    <string name="p2p_send_short_sub">Kompakt — über firedown.app</string>
     <string name="p2p_send_private">Privater Link</string>
-    <string name="p2p_send_private_sub">Verlässt nie dein Gerät</string>
     <string name="p2p_send_link_again">Link erneut senden</string>
     <string name="p2p_send_link_hint">Schick ihn über eine beliebige App. Er funktioniert, solange dieser Bildschirm offen bleibt.</string>
     <string name="p2p_link_sent">Link gesendet</string>

@@ -688,10 +688,7 @@
     <string name="p2p_scan_hint">将相机对准发送方的代码</string>
     <string name="p2p_camera_denied">扫描需要相机访问权限。你也可以改为粘贴代码。</string>
     <string name="p2p_send_link">发送链接</string>
-    <string name="p2p_send_short">短链接</string>
-    <string name="p2p_send_short_sub">紧凑 — 通过 firedown.app</string>
     <string name="p2p_send_private">私密链接</string>
-    <string name="p2p_send_private_sub">永不离开您的设备</string>
     <string name="p2p_send_link_again">再次发送链接</string>
     <string name="p2p_send_link_hint">用任何应用发送。此屏幕保持打开时有效。</string>
     <string name="p2p_link_sent">链接已发送</string>

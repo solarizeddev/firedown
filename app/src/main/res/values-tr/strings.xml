@@ -559,10 +559,7 @@
     <string name="p2p_scan_hint">Kamerayı gönderenin koduna doğrultun</string>
     <string name="p2p_camera_denied">Taramak için kamera erişimi gerekir. Bunun yerine kodu yapıştırabilirsiniz.</string>
     <string name="p2p_send_link">Bağlantı gönder</string>
-    <string name="p2p_send_short">Kısa bağlantı</string>
-    <string name="p2p_send_short_sub">Kompakt — firedown.app üzerinden</string>
     <string name="p2p_send_private">Özel bağlantı</string>
-    <string name="p2p_send_private_sub">Cihazınızdan asla çıkmaz</string>
     <string name="p2p_send_link_again">Bağlantıyı yeniden gönder</string>
     <string name="p2p_send_link_hint">Herhangi bir uygulamayla gönder. Bu ekran açık kaldığı sürece çalışır.</string>
     <string name="p2p_link_sent">Bağlantı gönderildi</string>

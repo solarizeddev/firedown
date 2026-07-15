@@ -161,134 +161,40 @@
                     android:visibility="gone"
                     tools:visibility="visible">
 
-                    <!-- Two labeled share actions: SHORT (default, coral) brokers
-                         the offer through the rendezvous for a compact link;
-                         PRIVATE (calm slate) sends the full self-contained code so
-                         nothing ever touches a server. Each row IS the action and
-                         self-describes — no hidden mode toggle. The QR (Nearby)
-                         stays serverless in both cases. Both rows hide while
-                         WAITING; "Send link again" in the waiting card re-shares
-                         the chosen mode. -->
+                    <!-- Primary "Send link" (brokers the offer for a compact link,
+                         transparently falling back to the full self-contained link
+                         if the broker is unreachable) + a SUBTLE "Private link"
+                         text option beneath it (coral text, no button chrome) that
+                         always sends the self-contained link and uploads nothing.
+                         The private path is the niche/resilient one, so it reads as
+                         secondary. Both hide while WAITING; "Send link again" in the
+                         waiting card re-shares the chosen mode. The QR (Nearby) is
+                         serverless either way. -->
                     <LinearLayout
                         android:id="@+id/p2p_send_actions"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginHorizontal="16dp"
-                        android:layout_marginTop="16dp"
                         android:orientation="vertical">
 
-                        <LinearLayout
+                        <com.google.android.material.button.MaterialButton
                             android:id="@+id/p2p_send_short"
-                            android:layout_width="match_parent"
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:background="@drawable/bg_p2p_action_primary"
-                            android:foreground="?attr/selectableItemBackground"
-                            android:clickable="true"
-                            android:focusable="true"
-                            android:gravity="center_vertical"
-                            android:orientation="horizontal"
-                            android:padding="14dp">
+                            android:layout_gravity="center_horizontal"
+                            android:layout_marginTop="18dp"
+                            app:icon="@drawable/ic_share_24"
+                            android:text="@string/p2p_send_link" />
 
-                            <ImageView
-                                android:layout_width="38dp"
-                                android:layout_height="38dp"
-                                android:background="@drawable/bg_p2p_badge"
-                                android:backgroundTint="?attr/colorPrimary"
-                                android:contentDescription="@null"
-                                android:padding="9dp"
-                                android:src="@drawable/ic_bolt_24"
-                                app:tint="?attr/colorOnPrimary" />
-
-                            <LinearLayout
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_marginStart="13dp"
-                                android:layout_weight="1"
-                                android:orientation="vertical">
-
-                                <TextView
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:text="@string/p2p_send_short"
-                                    android:textAppearance="?attr/textAppearanceTitleSmall"
-                                    android:textColor="?attr/colorOnPrimaryContainer" />
-
-                                <TextView
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginTop="1dp"
-                                    android:alpha="0.8"
-                                    android:text="@string/p2p_send_short_sub"
-                                    android:textAppearance="?attr/textAppearanceBodySmall"
-                                    android:textColor="?attr/colorOnPrimaryContainer" />
-
-                            </LinearLayout>
-
-                            <ImageView
-                                android:layout_width="18dp"
-                                android:layout_height="18dp"
-                                android:alpha="0.7"
-                                android:contentDescription="@null"
-                                android:src="@drawable/ic_chevron_right_24"
-                                app:tint="?attr/colorOnPrimaryContainer" />
-
-                        </LinearLayout>
-
-                        <LinearLayout
+                        <com.google.android.material.button.MaterialButton
                             android:id="@+id/p2p_send_private"
-                            android:layout_width="match_parent"
+                            style="@style/Widget.Material3.Button.TextButton"
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="10dp"
-                            android:background="@drawable/bg_p2p_filecard"
-                            android:foreground="?attr/selectableItemBackground"
-                            android:clickable="true"
-                            android:focusable="true"
-                            android:gravity="center_vertical"
-                            android:orientation="horizontal"
-                            android:padding="14dp">
-
-                            <ImageView
-                                android:layout_width="38dp"
-                                android:layout_height="38dp"
-                                android:background="@drawable/bg_p2p_badge"
-                                android:backgroundTint="?attr/colorSurfaceContainerHighest"
-                                android:contentDescription="@null"
-                                android:padding="9dp"
-                                android:src="@drawable/ic_shield_privacy_tip_24"
-                                app:tint="?attr/colorOnSurfaceVariant" />
-
-                            <LinearLayout
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_marginStart="13dp"
-                                android:layout_weight="1"
-                                android:orientation="vertical">
-
-                                <TextView
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:text="@string/p2p_send_private"
-                                    android:textAppearance="?attr/textAppearanceTitleSmall"
-                                    android:textColor="?attr/colorOnSurface" />
-
-                                <TextView
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginTop="1dp"
-                                    android:text="@string/p2p_send_private_sub"
-                                    android:textAppearance="?attr/textAppearanceBodySmall"
-                                    android:textColor="?attr/colorOnSurfaceVariant" />
-
-                            </LinearLayout>
-
-                            <ImageView
-                                android:layout_width="18dp"
-                                android:layout_height="18dp"
-                                android:contentDescription="@null"
-                                android:src="@drawable/ic_chevron_right_24"
-                                app:tint="?attr/colorOnSurfaceVariant" />
-
-                        </LinearLayout>
+                            android:layout_gravity="center_horizontal"
+                            android:layout_marginTop="2dp"
+                            app:icon="@drawable/ic_shield_privacy_tip_24"
+                            app:iconSize="18dp"
+                            android:text="@string/p2p_send_private" />
 
                     </LinearLayout>
 
@@ -486,15 +392,6 @@
                     android:padding="22dp"
                     android:visibility="gone"
                     tools:visibility="visible">
-
-                    <ImageView
-                        android:layout_width="wrap_content"
-                        android:layout_height="140dp"
-                        android:layout_gravity="center_horizontal"
-                        android:layout_marginBottom="16dp"
-                        android:adjustViewBounds="true"
-                        android:contentDescription="@null"
-                        android:src="@drawable/ill_cloud" />
 
                     <com.google.android.material.progressindicator.LinearProgressIndicator
                         android:id="@+id/p2p_progress_bar"

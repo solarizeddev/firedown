@@ -499,10 +499,7 @@
     <string name="p2p_scan_hint">Osoita kameralla lähettäjän koodia</string>
     <string name="p2p_camera_denied">Skannaus vaatii kameran käyttöoikeuden. Voit liittää koodin sen sijaan.</string>
     <string name="p2p_send_link">Lähetä linkki</string>
-    <string name="p2p_send_short">Lyhyt linkki</string>
-    <string name="p2p_send_short_sub">Kompakti — firedown.appin kautta</string>
     <string name="p2p_send_private">Yksityinen linkki</string>
-    <string name="p2p_send_private_sub">Ei poistu laitteeltasi</string>
     <string name="p2p_send_link_again">Lähetä linkki uudelleen</string>
     <string name="p2p_send_link_hint">Lähetä se millä tahansa sovelluksella. Se toimii niin kauan kuin tämä näyttö on auki.</string>
     <string name="p2p_link_sent">Linkki lähetetty</string>

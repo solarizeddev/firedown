@@ -515,10 +515,7 @@
     <string name="p2p_scan_hint">Namiřte fotoaparát na kód odesílatele</string>
     <string name="p2p_camera_denied">Ke skenování je potřeba přístup k fotoaparátu. Místo toho můžete kód vložit.</string>
     <string name="p2p_send_link">Poslat odkaz</string>
-    <string name="p2p_send_short">Krátký odkaz</string>
-    <string name="p2p_send_short_sub">Kompaktní — přes firedown.app</string>
     <string name="p2p_send_private">Soukromý odkaz</string>
-    <string name="p2p_send_private_sub">Nikdy neopustí vaše zařízení</string>
     <string name="p2p_send_link_again">Poslat odkaz znovu</string>
     <string name="p2p_send_link_hint">Pošlete ho jakoukoli aplikací. Funguje, dokud je tato obrazovka otevřená.</string>
     <string name="p2p_link_sent">Odkaz odeslán</string>
