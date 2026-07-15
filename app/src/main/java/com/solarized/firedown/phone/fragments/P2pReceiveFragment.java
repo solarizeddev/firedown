@@ -59,6 +59,9 @@ public class P2pReceiveFragment extends P2pShareBaseFragment
     // in-app scanner (phones adjacent) -> QR expanded, remote widgets hidden.
     private boolean mArrivedRemote;
     private boolean mReplyNearbyExpanded;
+    // Set once bytes start flowing; keeps the UI on the progress stage across
+    // connection blips instead of flipping to "Connected".
+    private boolean mTransferStarted;
     // A relay link's rendezvous coordinates, when the deep link was a relay
     // link rather than a self-contained offer. Both null = no relay.
     private String mSignalingBase;
@@ -183,6 +186,7 @@ public class P2pReceiveFragment extends P2pShareBaseFragment
     }
 
     private void showEntry() {
+        mTransferStarted = false;
         setStage(R.id.p2p_entry_group);
         mView.findViewById(R.id.p2p_accept).setEnabled(true);
         mView.findViewById(R.id.p2p_decline).setEnabled(true);
@@ -262,6 +266,15 @@ public class P2pReceiveFragment extends P2pShareBaseFragment
         if (mView == null) {
             return;
         }
+        // Once bytes are flowing, stay on the progress stage across the
+        // connected↔disconnected flapping of a lossy/VPN path — toggle a small
+        // "Reconnecting…" spinner instead of dropping the progress bar back to
+        // the "Connected" status card (see the send fragment for the rationale).
+        if (mTransferStarted) {
+            mView.findViewById(R.id.p2p_reconnecting)
+                    .setVisibility("connected".equals(state) ? View.GONE : View.VISIBLE);
+            return;
+        }
         if ("connecting".equals(state) || "connected".equals(state)) {
             setStage(R.id.p2p_status_group);
             TextView status = mView.findViewById(R.id.p2p_status);
@@ -275,7 +288,9 @@ public class P2pReceiveFragment extends P2pShareBaseFragment
         if (mView == null) {
             return;
         }
+        mTransferStarted = true;
         setStage(R.id.p2p_progress_group);
+        mView.findViewById(R.id.p2p_reconnecting).setVisibility(View.GONE);
         // Mid-transfer, an explicit Cancel is warranted (it goes through the
         // same abandon confirm as back). Hidden on the scan/reply stages.
         MaterialButton stop = mView.findViewById(R.id.p2p_stop);

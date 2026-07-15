@@ -698,6 +698,7 @@
     <string name="p2p_link_sent_body">相手の承認を待っています。承認されると転送が自動で始まります。</string>
     <string name="p2p_clipboard_note">返信をコピーして戻ってきた場合は自動で読み取られます。</string>
     <string name="p2p_reply_detected">返信を検出 — 接続中…</string>
+    <string name="p2p_reconnecting">再接続中…</string>
     <string name="p2p_nearby_qr">近くにいる? QR を表示</string>
     <string name="p2p_one_step_left">あと 1 ステップ。</string>
     <string name="p2p_send_reply">返信を送る</string>

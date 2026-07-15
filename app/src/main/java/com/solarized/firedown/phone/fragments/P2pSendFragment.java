@@ -53,6 +53,9 @@ public class P2pSendFragment extends P2pShareBaseFragment
     // out; the clipboard is auto-checked on return (each clip value tried
     // once, so a soft bad-code can't loop); the QR lives behind "Nearby?".
     private boolean mLinkShared;
+    // Set once bytes start flowing; keeps the UI on the progress stage across
+    // connection blips (see onConnectionState) instead of flipping to "Connected".
+    private boolean mTransferStarted;
     // Which link mode was last shared — so the waiting card's "Send link again"
     // re-shares the same (true = private/self-contained, false = short/brokered).
     private boolean mLastPrivate;
@@ -168,6 +171,7 @@ public class P2pSendFragment extends P2pShareBaseFragment
     private void restart() {
         mOfferCode = null;
         mLinkShared = false;
+        mTransferStarted = false;
         mLastClipTried = null;
         showPreparing();
         mP2pController.startSend(mDownloadEntity, this);
@@ -308,6 +312,17 @@ public class P2pSendFragment extends P2pShareBaseFragment
         if (mView == null) {
             return;
         }
+        // Once bytes are flowing, NEVER leave the progress stage on a state
+        // change — a lossy/VPN path flaps connected↔disconnected repeatedly, and
+        // reverting to the "Connected" status card each time made the progress
+        // bar vanish and reappear. Instead keep the bar (frozen) and toggle a
+        // small "Reconnecting…" spinner: shown while not connected, hidden the
+        // moment we're connected again (progress resumes and clears it too).
+        if (mTransferStarted) {
+            mView.findViewById(R.id.p2p_reconnecting)
+                    .setVisibility("connected".equals(state) ? View.GONE : View.VISIBLE);
+            return;
+        }
         if ("connecting".equals(state) || "connected".equals(state)) {
             setStage(R.id.p2p_status_group);
             TextView status = mView.findViewById(R.id.p2p_status);
@@ -321,7 +336,10 @@ public class P2pSendFragment extends P2pShareBaseFragment
         if (mView == null) {
             return;
         }
+        mTransferStarted = true;
         setStage(R.id.p2p_progress_group);
+        // Progress means the path is live again — clear any reconnecting spinner.
+        mView.findViewById(R.id.p2p_reconnecting).setVisibility(View.GONE);
         // Mid-transfer, an explicit Cancel is warranted (it goes through the
         // same abandon confirm as back). It stays hidden on the QR stage,
         // where back is the natural exit.

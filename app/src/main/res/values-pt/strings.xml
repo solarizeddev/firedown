@@ -570,6 +570,7 @@
     <string name="p2p_link_sent_body">Aguardando eles aceitarem. A transferência começa sozinha assim que aceitarem.</string>
     <string name="p2p_clipboard_note">Voltou com uma resposta copiada? Ela é detectada automaticamente.</string>
     <string name="p2p_reply_detected">Resposta encontrada — conectando…</string>
+    <string name="p2p_reconnecting">A reconectar…</string>
     <string name="p2p_nearby_qr">Estão perto? Mostrar o QR</string>
     <string name="p2p_one_step_left">Falta um passo.</string>
     <string name="p2p_send_reply">Enviar resposta</string>

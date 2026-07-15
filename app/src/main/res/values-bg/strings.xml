@@ -464,6 +464,7 @@
     <string name="p2p_link_sent_body">Изчаква се да приемат. Прехвърлянето започва само щом го направят.</string>
     <string name="p2p_clipboard_note">Върнахте се с копиран отговор? Той се разпознава автоматично.</string>
     <string name="p2p_reply_detected">Намерен отговор — свързване…</string>
+    <string name="p2p_reconnecting">Повторно свързване…</string>
     <string name="p2p_nearby_qr">Наблизо? Покажи QR кода</string>
     <string name="p2p_one_step_left">Остава една стъпка.</string>
     <string name="p2p_send_reply">Изпратете отговора</string>

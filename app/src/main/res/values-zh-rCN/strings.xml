@@ -698,6 +698,7 @@
     <string name="p2p_link_sent_body">等待对方接受。对方接受后传输会自动开始。</string>
     <string name="p2p_clipboard_note">复制了回复再回来？会自动识别。</string>
     <string name="p2p_reply_detected">找到回复 — 连接中…</string>
+    <string name="p2p_reconnecting">正在重新连接…</string>
     <string name="p2p_nearby_qr">就在附近？显示二维码</string>
     <string name="p2p_one_step_left">还差一步。</string>
     <string name="p2p_send_reply">发送回复</string>

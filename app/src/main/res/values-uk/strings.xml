@@ -487,6 +487,7 @@
     <string name="p2p_link_sent_body">Очікування, поки вони приймуть. Передача почнеться сама, щойно вони це зроблять.</string>
     <string name="p2p_clipboard_note">Повернулися зі скопійованою відповіддю? Її буде розпізнано автоматично.</string>
     <string name="p2p_reply_detected">Відповідь знайдено — з\'єднання…</string>
+    <string name="p2p_reconnecting">Повторне з’єднання…</string>
     <string name="p2p_nearby_qr">Поруч? Показати QR</string>
     <string name="p2p_one_step_left">Залишився один крок.</string>
     <string name="p2p_send_reply">Надіслати відповідь</string>

@@ -569,6 +569,7 @@
     <string name="p2p_link_sent_body">Kabul etmeleri bekleniyor. Kabul ettikleri anda aktarım kendiliğinden başlar.</string>
     <string name="p2p_clipboard_note">Yanıtı kopyalayıp mı döndün? Otomatik algılanır.</string>
     <string name="p2p_reply_detected">Yanıt bulundu — bağlanıyor…</string>
+    <string name="p2p_reconnecting">Yeniden bağlanılıyor…</string>
     <string name="p2p_nearby_qr">Yakında mısınız? QR\'ı göster</string>
     <string name="p2p_one_step_left">Bir adım kaldı.</string>
     <string name="p2p_send_reply">Yanıtı gönder</string>

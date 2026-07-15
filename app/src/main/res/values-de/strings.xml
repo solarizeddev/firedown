@@ -701,6 +701,7 @@
     <string name="p2p_link_sent_body">Warte, dass sie annehmen. Die Übertragung startet von selbst, sobald sie das tun.</string>
     <string name="p2p_clipboard_note">Mit kopierter Antwort zurückgekommen? Sie wird automatisch erkannt.</string>
     <string name="p2p_reply_detected">Antwort gefunden — verbinde…</string>
+    <string name="p2p_reconnecting">Neu verbinden…</string>
     <string name="p2p_nearby_qr">In der Nähe? QR anzeigen</string>
     <string name="p2p_one_step_left">Noch ein Schritt.</string>
     <string name="p2p_send_reply">Antwort senden</string>

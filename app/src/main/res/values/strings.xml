@@ -830,6 +830,7 @@
     <string name="p2p_link_sent_body">Waiting for them to accept. The transfer starts on its own once they do.</string>
     <string name="p2p_clipboard_note">Came back with a reply copied? It\'s picked up automatically.</string>
     <string name="p2p_reply_detected">Reply found — connecting…</string>
+    <string name="p2p_reconnecting">Reconnecting…</string>
     <string name="p2p_nearby_qr">Nearby? Show the QR</string>
     <string name="p2p_one_step_left">One step left.</string>
     <string name="p2p_send_reply">Send reply</string>

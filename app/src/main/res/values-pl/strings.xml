@@ -569,6 +569,7 @@
     <string name="p2p_link_sent_body">Czekanie, aż zaakceptują. Przesyłanie zacznie się samo, gdy tylko to zrobią.</string>
     <string name="p2p_clipboard_note">Wracasz ze skopiowaną odpowiedzią? Zostanie wykryta automatycznie.</string>
     <string name="p2p_reply_detected">Znaleziono odpowiedź — łączenie…</string>
+    <string name="p2p_reconnecting">Ponowne łączenie…</string>
     <string name="p2p_nearby_qr">Jesteście obok siebie? Pokaż QR</string>
     <string name="p2p_one_step_left">Został jeden krok.</string>
     <string name="p2p_send_reply">Wyślij odpowiedź</string>

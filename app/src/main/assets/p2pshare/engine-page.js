@@ -244,6 +244,12 @@ function watchConnection(s) {
       post({ type: "state", state: "connected" });
     } else if (pc.connectionState === "failed") {
       fail(s, "no-path", "connection failed");
+    } else if (pc.connectionState === "disconnected") {
+      // Transient (NOT terminal — "failed" is): ICE consent checks are missing
+      // on a lossy path (common when a peer is on a slow/full-tunnel VPN), and
+      // it usually recovers to "connected". Surface it so the UI can show a
+      // "reconnecting" spinner mid-transfer instead of a frozen bar.
+      post({ type: "state", state: "disconnected" });
     } else if (pc.connectionState === "connecting") {
       post({ type: "state", state: "connecting" });
       if (!s.connectTimer) {

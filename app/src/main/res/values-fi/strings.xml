@@ -509,6 +509,7 @@
     <string name="p2p_link_sent_body">Odotetaan, että he hyväksyvät. Siirto alkaa itsestään heti kun he tekevät sen.</string>
     <string name="p2p_clipboard_note">Palasitko vastaus kopioituna? Se poimitaan automaattisesti.</string>
     <string name="p2p_reply_detected">Vastaus löytyi — yhdistetään…</string>
+    <string name="p2p_reconnecting">Yhdistetään uudelleen…</string>
     <string name="p2p_nearby_qr">Lähekkäin? Näytä QR</string>
     <string name="p2p_one_step_left">Yksi vaihe jäljellä.</string>
     <string name="p2p_send_reply">Lähetä vastaus</string>

@@ -477,6 +477,7 @@
     <string name="p2p_link_sent_body">उनके स्वीकार करने का इंतज़ार। जैसे ही वे करेंगे, ट्रांसफ़र अपने आप शुरू हो जाएगा।</string>
     <string name="p2p_clipboard_note">जवाब कॉपी करके लौटे हैं? वह अपने आप पहचान लिया जाता है।</string>
     <string name="p2p_reply_detected">जवाब मिला — कनेक्ट हो रहा है…</string>
+    <string name="p2p_reconnecting">पुनः कनेक्ट हो रहा है…</string>
     <string name="p2p_nearby_qr">पास में हैं? QR दिखाएँ</string>
     <string name="p2p_one_step_left">एक कदम बाकी।</string>
     <string name="p2p_send_reply">जवाब भेजें</string>

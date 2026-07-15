@@ -570,6 +570,7 @@
     <string name="p2p_link_sent_body">Wachten tot ze accepteren. De overdracht start vanzelf zodra ze dat doen.</string>
     <string name="p2p_clipboard_note">Teruggekomen met een gekopieerd antwoord? Het wordt automatisch opgepikt.</string>
     <string name="p2p_reply_detected">Antwoord gevonden — verbinden…</string>
+    <string name="p2p_reconnecting">Opnieuw verbinden…</string>
     <string name="p2p_nearby_qr">In de buurt? Toon de QR</string>
     <string name="p2p_one_step_left">Nog één stap.</string>
     <string name="p2p_send_reply">Antwoord versturen</string>

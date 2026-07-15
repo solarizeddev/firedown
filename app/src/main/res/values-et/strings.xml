@@ -440,6 +440,7 @@
     <string name="p2p_link_sent_body">Oodatakse, et nad vastu võtaksid. Edastus algab ise, niipea kui nad seda teevad.</string>
     <string name="p2p_clipboard_note">Tulid tagasi kopeeritud vastusega? See leitakse automaatselt.</string>
     <string name="p2p_reply_detected">Vastus leitud — ühendamine…</string>
+    <string name="p2p_reconnecting">Taasühendamine…</string>
     <string name="p2p_nearby_qr">Lähestikku? Näita QR-koodi</string>
     <string name="p2p_one_step_left">Jäänud on üks samm.</string>
     <string name="p2p_send_reply">Saada vastus</string>

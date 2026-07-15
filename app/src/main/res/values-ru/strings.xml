@@ -572,6 +572,7 @@
     <string name="p2p_link_sent_body">Ожидание, пока они примут. Передача начнётся сама, как только они это сделают.</string>
     <string name="p2p_clipboard_note">Вернулись со скопированным ответом? Он распознаётся автоматически.</string>
     <string name="p2p_reply_detected">Ответ найден — подключение…</string>
+    <string name="p2p_reconnecting">Переподключение…</string>
     <string name="p2p_nearby_qr">Рядом? Показать QR</string>
     <string name="p2p_one_step_left">Остался один шаг.</string>
     <string name="p2p_send_reply">Отправить ответ</string>

@@ -525,6 +525,7 @@
     <string name="p2p_link_sent_body">Čeká se, až přijmou. Přenos se spustí sám, jakmile to udělají.</string>
     <string name="p2p_clipboard_note">Vrátili jste se se zkopírovanou odpovědí? Rozpozná se automaticky.</string>
     <string name="p2p_reply_detected">Odpověď nalezena — připojování…</string>
+    <string name="p2p_reconnecting">Opětovné připojování…</string>
     <string name="p2p_nearby_qr">Jste u sebe? Zobrazit QR</string>
     <string name="p2p_one_step_left">Zbývá jeden krok.</string>
     <string name="p2p_send_reply">Poslat odpověď</string>

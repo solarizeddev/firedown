@@ -406,6 +406,36 @@
                         android:textColor="?attr/colorOnSurfaceVariant"
                         tools:text="133 MB of 214 MB · 8.4 MB/s" />
 
+                    <!-- Reconnecting spinner during a live-connection blip; the
+                         bar stays frozen so it reads as recovering, not stuck. -->
+                    <LinearLayout
+                        android:id="@+id/p2p_reconnecting"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_horizontal"
+                        android:layout_marginTop="10dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:visibility="gone"
+                        tools:visibility="visible">
+
+                        <com.google.android.material.progressindicator.CircularProgressIndicator
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:indeterminate="true"
+                            app:indicatorSize="16dp"
+                            app:trackThickness="2dp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:text="@string/p2p_reconnecting"
+                            android:textAppearance="?attr/textAppearanceBodySmall"
+                            android:textColor="?attr/colorOnSurfaceVariant" />
+
+                    </LinearLayout>
+
                 </LinearLayout>
 
                 <!-- Done stage -->
