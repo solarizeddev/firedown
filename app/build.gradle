@@ -127,7 +127,7 @@ ext {
     // resolves the in-house patched build (0001–0006), never Mozilla's. To use
     // Mozilla's official AAR instead, switch the dep back to `:geckoview:` + an
     // official version and drop that exclusiveContent block.
-    geckoviewVersion = "152.0.20260706120035"
+    geckoviewVersion = "152.0.20260713164047"
 }
 
 
@@ -162,10 +162,10 @@ dependencies {
 
     // CameraX — only for the P2P share QR scanner (zxing decodes the frames;
     // no ML Kit / Play Services, keeping de-Googled devices first-class)
-    implementation 'androidx.camera:camera-core:1.4.2'
-    implementation 'androidx.camera:camera-camera2:1.4.2'
-    implementation 'androidx.camera:camera-lifecycle:1.4.2'
-    implementation 'androidx.camera:camera-view:1.4.2'
+    implementation 'androidx.camera:camera-core:1.6.1'
+    implementation 'androidx.camera:camera-camera2:1.6.1'
+    implementation 'androidx.camera:camera-lifecycle:1.6.1'
+    implementation 'androidx.camera:camera-view:1.6.1'
 
     // For Hilt ViewModel support
     implementation "androidx.hilt:hilt-navigation-compose:1.4.0"
@@ -174,10 +174,10 @@ dependencies {
 
     implementation "androidx.paging:paging-runtime:$paging_version"
 
-    implementation 'com.github.bumptech.glide:glide:5.0.7'
-    implementation 'com.github.bumptech.glide:recyclerview-integration:5.0.7'
+    implementation 'com.github.bumptech.glide:glide:5.0.9'
+    implementation 'com.github.bumptech.glide:recyclerview-integration:5.0.9'
     // Skip this if you don't want to use integration libraries or configure Glide.
-    annotationProcessor 'com.github.bumptech.glide:compiler:5.0.7'
+    annotationProcessor 'com.github.bumptech.glide:compiler:5.0.9'
 
     implementation "org.mozilla.geckoview:geckoview-default:${geckoviewVersion}"
 
