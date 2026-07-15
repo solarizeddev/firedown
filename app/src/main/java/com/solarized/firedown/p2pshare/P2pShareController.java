@@ -181,6 +181,16 @@ public class P2pShareController {
     private static final long ENGINE_READY_TIMEOUT_MS = 8000;
 
     /**
+     * Head-start the LAN answer return gets before the rendezvous mailbox is
+     * ALSO tried (happy-eyeballs). A real same-LAN sender's listener answers in
+     * a few ms, so the mailbox never fires and the answer stays on the LAN; a
+     * sender behind a full-tunnel VPN/proxy is unreachable on its advertised
+     * {@code ans} endpoint, so after this it falls to the mailbox in parallel
+     * instead of waiting out the LAN path's full connect timeout.
+     */
+    private static final long ANSWER_RENDEZVOUS_HEADSTART_MS = 700;
+
+    /**
      * The fixed hashcash "resource" the relay PoW is bound to — must match
      * firedown-api's {@code relayPoWResource} ({@code []byte("relay")})
      * byte-for-byte. {@link Pow} prepends its own register-domain prefix; the
@@ -1185,21 +1195,58 @@ public class P2pShareController {
      * Each step falls through to the next on failure.
      */
     private void deliverAnswer(@NonNull String code) {
-        // Try in order of best UX, each falling through on failure: LAN return
-        // (same network, instant, never leaves it) → rendezvous (api mailbox,
-        // cross-network, no reply step) → relay (dormant) / human-relayed reply.
-        if (mRecvAnswerUrl != null && !mRecvAnswerUrl.isEmpty()) {
-            postAnswerLan(mRecvAnswerUrl, code, () -> rendezvousOrReply(code));
-        } else {
-            rendezvousOrReply(code);
+        boolean hasLan = mRecvAnswerUrl != null && !mRecvAnswerUrl.isEmpty();
+        boolean hasRvz = mRecvRendezvousUrl != null && !mRecvRendezvousUrl.isEmpty();
+        if (!hasLan) {
+            // Cross-network offer (no site-local `ans`): straight to the mailbox,
+            // then the human-relayed reply if even that fails.
+            if (hasRvz) {
+                postAnswer(mRecvRendezvousUrl, code, ok -> {
+                    if (!ok) {
+                        relayOrReply(code);
+                    }
+                });
+            } else {
+                relayOrReply(code);
+            }
+            return;
         }
-    }
-
-    private void rendezvousOrReply(@NonNull String code) {
-        if (mRecvRendezvousUrl != null && !mRecvRendezvousUrl.isEmpty()) {
-            postAnswerLan(mRecvRendezvousUrl, code, () -> relayOrReply(code));
-        } else {
-            relayOrReply(code);
+        // LAN + rendezvous, HAPPY-EYEBALLS (not strictly sequential). Fire the
+        // LAN return now; if it hasn't delivered within a short head-start, ALSO
+        // fire the mailbox in parallel. First to arrive wins — the sender treats
+        // a later duplicate answer as a soft no-op (signalingState). This keeps a
+        // real same-LAN share fully on the LAN (the listener answers in a few ms,
+        // so the mailbox never fires), while a sender behind a full-tunnel
+        // VPN/proxy — unreachable on its advertised `ans` endpoint — no longer
+        // pays that path's full ~4s connect timeout BEFORE the mailbox starts.
+        // That delay was fatal: the answer landed so late the sender installed
+        // its TURN permissions after the peer's ICE had already given up (relay
+        // candidates on both sides, yet no-path).
+        final boolean[] settled = {false};      // a path delivered — suppress the rest
+        final boolean[] lanFailed = {false};
+        postAnswer(mRecvAnswerUrl, code, ok -> {
+            if (ok) {
+                settled[0] = true;
+            } else {
+                lanFailed[0] = true;
+                if (!hasRvz && !settled[0]) {
+                    relayOrReply(code);         // LAN failed, no mailbox → human reply
+                }
+            }
+        });
+        if (hasRvz) {
+            mMainHandler.postDelayed(() -> {
+                if (settled[0] || !"receive".equals(mRole)) {
+                    return;                     // LAN already won (stays local), or session gone
+                }
+                postAnswer(mRecvRendezvousUrl, code, ok -> {
+                    if (ok) {
+                        settled[0] = true;
+                    } else if (lanFailed[0] && !settled[0]) {
+                        relayOrReply(code);     // both push paths failed
+                    }
+                });
+            }, ANSWER_RENDEZVOUS_HEADSTART_MS);
         }
     }
 
@@ -1222,10 +1269,11 @@ public class P2pShareController {
         }
     }
 
-    /** POST the answer to the sender's LAN listener; run {@code onFail} (main
-     *  thread) if it doesn't land. */
-    private void postAnswerLan(@NonNull String answerUrl, @NonNull String code,
-                               @NonNull Runnable onFail) {
+    /** POST the answer to one return endpoint (the sender's LAN listener or the
+     *  rendezvous mailbox — same shape); report delivery to {@code done} on the
+     *  main thread (true = the sender got it). */
+    private void postAnswer(@NonNull String answerUrl, @NonNull String code,
+                            @NonNull Consumer<Boolean> done) {
         Request request = new Request.Builder()
                 .url(answerUrl)
                 .post(RequestBody.create(code, MediaType.parse("text/plain; charset=utf-8")))
@@ -1234,22 +1282,19 @@ public class P2pShareController {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
                 if (BuildConfig.DEBUG) {
-                    Log.d(TAG, "LAN answer failed: " + e.getMessage());
+                    Log.d(TAG, "answer push failed (" + answerUrl + "): " + e.getMessage());
                 }
-                mMainHandler.post(onFail);
+                mMainHandler.post(() -> done.accept(false));
             }
 
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) {
                 boolean ok = response.isSuccessful();
                 response.close();
-                if (ok) {
-                    if (BuildConfig.DEBUG) {
-                        Log.d(TAG, "answer returned over LAN");
-                    }
-                } else {
-                    mMainHandler.post(onFail);
+                if (BuildConfig.DEBUG && ok) {
+                    Log.d(TAG, "answer delivered: " + answerUrl);
                 }
+                mMainHandler.post(() -> done.accept(ok));
             }
         });
     }
