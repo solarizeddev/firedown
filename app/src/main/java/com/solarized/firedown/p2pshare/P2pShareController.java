@@ -386,6 +386,13 @@ public class P2pShareController {
         port.setDelegate(new WebExtension.PortDelegate() {
             @Override
             public void onPortMessage(@NonNull Object message, @NonNull WebExtension.Port p) {
+                // Ignore a message from a port that is no longer the current one
+                // (a previously-closed engine session's port delivering late) —
+                // it must not be processed against the new session's state.
+                // Mirrors the mPort == p guard in onDisconnect.
+                if (mPort != p) {
+                    return;
+                }
                 if (message instanceof JSONObject json) {
                     handleEngineEvent(json);
                 }
@@ -996,8 +1003,20 @@ public class P2pShareController {
             }
             mMainHandler.post(() -> {
                 // The session may have been torn down while we hopped threads
-                // (Decline / back-press) — don't resurrect a dead one.
+                // (Decline / back-press) — don't resurrect a dead one. We already
+                // opened the write target on the disk thread, so UNDO it here:
+                // close the RandomAccessFile (else its FD leaks — stopSession's
+                // closeWriteTarget ran before mWriteFile existed) and delete the
+                // orphaned empty .part (stopSession's deletePartial saw a null
+                // mRecvPartFile). closeWriteTarget is synchronized, safe on the
+                // stopped server; the file delete is disk I/O, off-main.
                 if (!"receive".equals(mRole) || mServer != server) {
+                    server.closeWriteTarget();
+                    mDiskExecutor.execute(() -> {
+                        if (partFile.exists() && !partFile.delete() && BuildConfig.DEBUG) {
+                            Log.e(TAG, "orphan part delete failed");
+                        }
+                    });
                     return;
                 }
                 mRecvPartFile = partFile;
