@@ -688,7 +688,7 @@
     <string name="p2p_error_bad_code">Dieser Code ist ungültig — versuche es erneut.</string>
     <string name="p2p_clipboard_empty">Kein Code in der Zwischenablage.</string>
     <string name="p2p_footer">Verschlüsselte Übertragung von Gerät zu Gerät. Die Datei berührt nie einen Server.</string>
-    <string name="p2p_footer_relayed">Ende-zu-Ende-verschlüsselt. Weitergeleitet über firedown.app, das es nicht lesen kann.</string>
+    <string name="p2p_footer_relayed">Ende-zu-Ende-verschlüsselt. Weitergeleitet über firedown.app (kein direkter Weg), das es nicht lesen kann.</string>
     <string name="p2p_scan_hint">Richte die Kamera auf den Code des Absenders</string>
     <string name="p2p_camera_denied">Zum Scannen wird Kamerazugriff benötigt. Du kannst den Code stattdessen einfügen.</string>
     <string name="p2p_send_link">Link senden</string>

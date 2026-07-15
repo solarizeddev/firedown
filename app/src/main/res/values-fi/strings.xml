@@ -496,7 +496,7 @@
     <string name="p2p_error_bad_code">Koodi ei kelpaa — yritä uudelleen.</string>
     <string name="p2p_clipboard_empty">Leikepöydällä ei ole koodia.</string>
     <string name="p2p_footer">Salattu siirto laitteesta laitteeseen. Tiedosto ei koskaan kulje palvelimen kautta.</string>
-    <string name="p2p_footer_relayed">Päästä päähän salattu. Välitetään firedown.appin kautta, joka ei voi lukea sitä.</string>
+    <string name="p2p_footer_relayed">Päästä päähän salattu. Välitetään firedown.appin kautta (ei suoraa yhteyttä), joka ei voi lukea sitä.</string>
     <string name="p2p_scan_hint">Osoita kameralla lähettäjän koodia</string>
     <string name="p2p_camera_denied">Skannaus vaatii kameran käyttöoikeuden. Voit liittää koodin sen sijaan.</string>
     <string name="p2p_send_link">Lähetä linkki</string>

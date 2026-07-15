@@ -559,7 +559,7 @@
     <string name="p2p_error_bad_code">Этот код недействителен — попробуйте ещё раз.</string>
     <string name="p2p_clipboard_empty">В буфере обмена нет кода.</string>
     <string name="p2p_footer">Передача с шифрованием напрямую между устройствами. Файл не попадает на сервер.</string>
-    <string name="p2p_footer_relayed">Сквозное шифрование. Ретранслируется через firedown.app, который не может его прочитать.</string>
+    <string name="p2p_footer_relayed">Сквозное шифрование. Ретранслируется через firedown.app (нет прямого пути), который не может его прочитать.</string>
     <string name="p2p_scan_hint">Наведите камеру на код отправителя</string>
     <string name="p2p_camera_denied">Для сканирования нужен доступ к камере. Вместо этого можно вставить код.</string>
     <string name="p2p_send_link">Отправить ссылку</string>

@@ -689,7 +689,7 @@
     <string name="p2p_error_bad_code">Ce code n\'est pas valide — réessayez.</string>
     <string name="p2p_clipboard_empty">Aucun code dans le presse-papiers.</string>
     <string name="p2p_footer">Transfert chiffré d\'appareil à appareil. Le fichier ne passe jamais par un serveur.</string>
-    <string name="p2p_footer_relayed">Chiffré de bout en bout. Relayé via firedown.app, qui ne peut pas le lire.</string>
+    <string name="p2p_footer_relayed">Chiffré de bout en bout. Relayé via firedown.app (pas de voie directe), qui ne peut pas le lire.</string>
     <string name="p2p_scan_hint">Pointez la caméra vers le code de l\'expéditeur</string>
     <string name="p2p_camera_denied">L\'accès à la caméra est nécessaire pour scanner. Vous pouvez coller le code à la place.</string>
     <string name="p2p_send_link">Envoyer le lien</string>

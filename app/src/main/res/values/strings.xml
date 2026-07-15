@@ -817,7 +817,7 @@
     <string name="p2p_qr_too_large">This code is too big to show as a QR — use “Send code another way”.</string>
     <string name="p2p_qr_content_desc">Your share code, as a QR</string>
     <string name="p2p_footer">Encrypted device-to-device transfer. The file never touches a server.</string>
-    <string name="p2p_footer_relayed">Encrypted end-to-end. Relayed through firedown.app, which can\'t read it.</string>
+    <string name="p2p_footer_relayed">Encrypted end-to-end. Relayed through firedown.app (no direct path), which can\'t read it.</string>
     <string name="p2p_scan_hint">Point the camera at the sender\'s code</string>
     <string name="p2p_camera_denied">Camera access is needed to scan. You can paste the code instead.</string>
     <string name="p2p_send_link">Send link</string>

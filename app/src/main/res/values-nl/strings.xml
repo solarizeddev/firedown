@@ -557,7 +557,7 @@
     <string name="p2p_error_bad_code">Die code is niet geldig — probeer het opnieuw.</string>
     <string name="p2p_clipboard_empty">Geen code op het klembord.</string>
     <string name="p2p_footer">Versleutelde overdracht van apparaat naar apparaat. Het bestand komt nooit op een server.</string>
-    <string name="p2p_footer_relayed">End-to-end versleuteld. Doorgestuurd via firedown.app, dat het niet kan lezen.</string>
+    <string name="p2p_footer_relayed">End-to-end versleuteld. Doorgestuurd via firedown.app (geen direct pad), dat het niet kan lezen.</string>
     <string name="p2p_scan_hint">Richt de camera op de code van de verzender</string>
     <string name="p2p_camera_denied">Cameratoegang is nodig om te scannen. Je kunt de code ook plakken.</string>
     <string name="p2p_send_link">Link versturen</string>
