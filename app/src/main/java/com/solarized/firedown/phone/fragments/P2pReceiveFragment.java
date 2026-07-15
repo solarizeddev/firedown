@@ -38,6 +38,12 @@ public class P2pReceiveFragment extends P2pShareBaseFragment
     /** Nav arg: an offer code delivered by the firedown://p2p/ deep link. */
     public static final String ARG_OFFER_CODE = "p2p.offer.code";
     /**
+     * Nav arg: a SHORT offer reference ({@code FDO1.<id>}) from a short share
+     * link — the receiver fetches the full offer from the rendezvous offer
+     * mailbox by this id before connecting. The value is the bare id.
+     */
+    public static final String ARG_OFFER_REF = "p2p.offer.ref";
+    /**
      * Nav args: a signaling-relay link ({@code firedown://p2p/r/<id>?s=<base>}
      * or {@code https://<relay>/s/<id>}) — the receiver fetches the offer from
      * the relay instead of carrying it inline. Both must be present together.
@@ -57,6 +63,9 @@ public class P2pReceiveFragment extends P2pShareBaseFragment
     // link rather than a self-contained offer. Both null = no relay.
     private String mSignalingBase;
     private String mSignalingId;
+    // A short offer link's rendezvous id ({@code FDO1.<id>}) — the receiver
+    // fetches the full offer from the offer mailbox. Null = not a short link.
+    private String mOfferRefId;
     private DownloadEntity mReceived;
 
     @Nullable
@@ -127,12 +136,17 @@ public class P2pReceiveFragment extends P2pShareBaseFragment
                 mSignalingId = id;
                 mArrivedRemote = true; // a relay link is inherently remote
             }
+            String offerRef = args.getString(ARG_OFFER_REF);
+            if (offerRef != null && !offerRef.isEmpty()) {
+                mOfferRefId = offerRef;
+                mArrivedRemote = true; // a short offer link is inherently remote
+            }
         }
 
-        // A code/relay link is already in hand (deep-link arrival) → show the
-        // working state right away, NOT the scan/paste entry. A plain open with
-        // nothing in hand shows the entry so the user can scan.
-        if (mLastCode != null || mSignalingBase != null) {
+        // A code/relay/offer link is already in hand (deep-link arrival) → show
+        // the working state right away, NOT the scan/paste entry. A plain open
+        // with nothing in hand shows the entry so the user can scan.
+        if (mLastCode != null || mSignalingBase != null || mOfferRefId != null) {
             showReading();
         } else {
             setStage(R.id.p2p_entry_group);
@@ -149,6 +163,8 @@ public class P2pReceiveFragment extends P2pShareBaseFragment
         // offer from the relay, then proceeds as a normal receive.
         if (mSignalingBase != null && mSignalingId != null) {
             mP2pController.startReceiveFromRelay(mSignalingBase, mSignalingId, this);
+        } else if (mOfferRefId != null) {
+            mP2pController.startReceiveFromOfferRef(mOfferRefId, this);
         } else if (mLastCode != null) {
             mP2pController.startReceive(mLastCode, this);
         }

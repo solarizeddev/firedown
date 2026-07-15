@@ -1403,10 +1403,7 @@ replace the fetched-ephemeral-creds design with a static credential.
 
 **The answer returns automatically — the human-relayed reply is the last
 resort.** WebRTC needs an answer back (the receiver's candidates/DTLS
-fingerprint don't exist until Accept), but the OFFER is self-contained (the
-share link carries it; no server ever hosts it), so only the ANSWER needs a
-path. Three tiers, tried in order (`deliverAnswer` → `rendezvousOrReply` →
-`relayOrReply` → `deliverReplyFallback`), each falling through on failure:
+fingerprint don't exist until Accept), and the answer has three tiers:
 1. **LAN return (`ans`)** — served by **`P2pAnswerServer`**, the ONLY thing
    Firedown ever listens for on a LAN interface, deliberately tiny: one
    token-gated `POST /answer` (16-byte token, carried only inside the offer
@@ -1424,15 +1421,55 @@ path. Three tiers, tried in order (`deliverAnswer` → `rendezvousOrReply` →
    logged/persisted; the compressed-SDP answer transits RAM only, and the
    codes' DTLS fingerprints keep a tampering relay from MITMing.
 3. **Human-relayed reply** — only reached via `deliverReplyFallback` when BOTH
-   above fail (rendezvous down AND no LAN): a share-sheet https reply link the
-   sender taps, or a QR on scan arrival (see the remote-first flow above).
-The receiver's controller intercepts the engine's `code(answer)` event and
-runs the chain with short-deadline OkHttp POSTs; the reply stage renders only
-on the final fallback. So same-LAN AND cross-network are both
-share/scan → Accept → transfer, with zero reply step in the common case. The
-connect no-path timer arms only when `connectionState` reaches
-"connecting" — NEVER at offer creation (signaling is human-paced; the old
-at-creation timer failed senders who were merely waiting to be scanned).
+   above fail: a share-sheet https reply link the sender taps, or a QR on scan
+   arrival (see the remote-first flow above).
+
+**LAN + rendezvous race with HAPPY-EYEBALLS, not a strict sequence
+(`deliverAnswer`).** The receiver fires the LAN return immediately and, if it
+hasn't delivered within `ANSWER_RENDEZVOUS_HEADSTART_MS` (700 ms), ALSO fires
+the mailbox in parallel; first to arrive wins and the sender treats a later
+duplicate answer as a soft no-op (`signalingState`). This preserves
+"same-LAN never leaves the LAN" (a real listener answers in a few ms, so the
+mailbox never fires) while a sender behind a full-tunnel VPN/proxy — unreachable
+on its advertised `ans` endpoint — no longer pays that path's full ~4 s connect
+timeout BEFORE the mailbox starts. **That delay was fatal on-device:** a proxied
+sender is symmetric-NAT (relay is its ONLY usable candidate), and the answer
+landing ~5 s late meant the sender installed its TURN permissions after the
+peer's ICE had already given up — relay candidates on both sides, yet `no-path`.
+Do NOT revert to the old sequential `deliverAnswer → rendezvousOrReply →
+relayOrReply` chain (it serialized the dead LAN timeout in front of the mailbox).
+`postAnswer` reports delivery (`Consumer<Boolean>`) so the race can tell success
+from failure; the reply fallback fires only when BOTH push paths fail. The data
+path itself needs no LAN-vs-TURN logic — ICE nominates the working pair (host↔host
+fails on the VPN, relay↔relay wins) automatically, once the answer is timely.
+
+**The OFFER can be brokered for a SHORT link (`FDO1.<id>`) — the offer mailbox.**
+The self-contained offer (`FDS1.` = whole SDP + candidates + file meta, ~1–2 KB
+base64) makes a ~1166-char link/QR. So the sender ALSO uploads the full offer to
+the rendezvous **offer mailbox** (`/v1/p2p/o/<id>`, same id as its `/a/<id>`
+answer poll; `P2pSignalingClient.uploadOffer`) and the "Send link" action shares
+a short reference `https://firedown.app/s#FDO1.<id>` (`OFFER_REF_PREFIX`,
+`getShareContent` flips to it only AFTER the upload lands — a tap before then
+falls back to the full self-contained link, no regression). The receiver's
+`DownloadsActivity.routeCode` recognizes `FDO1.` → `ARG_OFFER_REF` →
+`startReceiveFromOfferRef` fetches the real offer from the mailbox
+(`fetchOffer`), then runs the normal receive. The engine NEVER sees `FDO1.` —
+Java resolves it to `FDS1.` before `recv-start`, so no engine change / no
+manifest bump. **The QR keeps the full `FDS1.` code** (`toDeepLink`) — in-person
+sharing needs no server and works offline. Offer mailbox: non-destructive read
+(the receiver may retry; the id IS the share capability, exactly like the full
+link — the single-use ANSWER still means only one party completes), 15-min TTL,
+no long-poll (the short link is enabled only after the upload, so a tapped link's
+offer is already there; unknown/expired → 204 → "link expired"). Privacy delta,
+stated honestly: with a short link the offer now ALSO transits the api in memory
+for its TTL (the answer already did) — still nothing logged/persisted, and the
+DTLS fingerprints still block a MITM.
+
+So same-LAN AND cross-network are both share/scan → Accept → transfer, with zero
+reply step in the common case. The connect no-path timer arms only when
+`connectionState` reaches "connecting" — NEVER at offer creation (signaling is
+human-paced; the old at-creation timer failed senders who were merely waiting to
+be scanned).
 
 **The mDNS-obfuscation flip is load-bearing for same-LAN ICE.** Firefox
 hides host ICE candidates behind mDNS `.local` names

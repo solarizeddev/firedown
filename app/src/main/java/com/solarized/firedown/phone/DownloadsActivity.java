@@ -181,6 +181,13 @@ public class DownloadsActivity extends BaseActivity {
             args.putString(P2pReceiveFragment.ARG_OFFER_CODE, code);
             return true;
         }
+        if (code.startsWith(P2pShareController.OFFER_REF_PREFIX)) {
+            // Short offer link: FDO1.<id> — the receive flow fetches the real
+            // offer from the rendezvous offer mailbox before connecting.
+            args.putString(P2pReceiveFragment.ARG_OFFER_REF,
+                    code.substring(P2pShareController.OFFER_REF_PREFIX.length()));
+            return true;
+        }
         if (code.startsWith(P2pShareController.ANSWER_PREFIX)) {
             if (!mP2pShareController.provideExternalAnswer(code)) {
                 // App relaunched / share closed — the offer this replies to is

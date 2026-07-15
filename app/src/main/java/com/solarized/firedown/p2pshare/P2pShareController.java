@@ -108,6 +108,17 @@ public class P2pShareController {
      */
     public static final String OFFER_PREFIX = "FDS1.";
     public static final String ANSWER_PREFIX = "FDR1.";
+    /**
+     * Short OFFER REFERENCE prefix — {@code FDO1.<rendezvous-id>}. Not a
+     * self-contained offer (that's {@code FDS1.}) but a pointer: the sender
+     * brokered the full {@code FDS1.} code at the rendezvous offer mailbox
+     * ({@code /v1/p2p/o/<id>}) so the shared LINK can be short. The receiver
+     * fetches the real offer by id, then runs the normal receive. Java-only —
+     * the engine never sees this; the controller resolves it to an {@code FDS1.}
+     * before {@code recv-start}. The QR keeps the full {@code FDS1.} form (the
+     * in-person path needs no server).
+     */
+    public static final String OFFER_REF_PREFIX = "FDO1.";
 
     /**
      * Deep-link wrapper so a scan with ANY scanner (the phone's system camera
@@ -692,6 +703,19 @@ public class P2pShareController {
             final String id = mRendezvousId;
             mRendezvous.pollAnswer(Preferences.P2P_RENDEZVOUS_URL, id, ans ->
                     mMainHandler.post(() -> onRendezvousAnswer(ans)));
+            // Broker the FULL offer at the rendezvous offer mailbox so the shared
+            // LINK can be short (firedown.app/s#FDO1.<id>) instead of carrying the
+            // whole self-contained code. Only flip getShareContent() to the short
+            // form AFTER the upload lands — a tap before then falls back to the
+            // full self-contained link, which always works. The QR stays the full
+            // FDS1. code (in-person needs no server). A failed upload just leaves
+            // the long link — no regression.
+            mRendezvous.uploadOffer(Preferences.P2P_RENDEZVOUS_URL, id, code, ok ->
+                    mMainHandler.post(() -> {
+                        if ("send".equals(mRole) && ok != null) {
+                            mShareLink = toHttpsLink(OFFER_REF_PREFIX + id);
+                        }
+                    }));
         }
         if (mSignaling != null && mSignalingId != null && !mSignalingBase.isEmpty()) {
             final String base = mSignalingBase;
@@ -822,6 +846,38 @@ public class P2pShareController {
             }
             beginReceive(offer);
         }));
+    }
+
+    /**
+     * Receiver: open a SHORT offer link — {@code FDO1.<id>}. Fetch the full
+     * self-contained offer the sender brokered at the rendezvous offer mailbox
+     * ({@code /v1/p2p/o/<id>}), then run the normal receive. The answer still
+     * returns via the offer's own {@code ans}/{@code rvz} (deliverAnswer), so we
+     * do NOT set a signaling answer-back here — {@code mSignaling} is kept only
+     * so teardown can cancel the in-flight fetch.
+     */
+    @UiThread
+    public void startReceiveFromOfferRef(@NonNull String id, @NonNull Listener listener) {
+        stopSession(false);
+        mListener = listener;
+        mRole = "receive";
+        mSignaling = new P2pSignalingClient(mOkHttpClient);
+        mSignaling.fetchOffer(Preferences.P2P_RENDEZVOUS_URL, id, offer ->
+                mMainHandler.post(() -> {
+                    if (!"receive".equals(mRole)) {
+                        return; // torn down while fetching
+                    }
+                    if (offer == null || !offer.startsWith(OFFER_PREFIX)) {
+                        // 204/expired or a garbage body — soft, so scan/paste stays
+                        // usable and the UI says the link is no longer valid.
+                        if (mListener != null) {
+                            mListener.onError("bad-code", "link expired");
+                        }
+                        stopSession(false);
+                        return;
+                    }
+                    beginReceive(offer);
+                }));
     }
 
     /** Shared receive kickoff: start the loopback + engine and hand it the offer. */
