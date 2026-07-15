@@ -211,24 +211,26 @@
                                     android:layout_height="wrap_content"
                                     android:text="@string/p2p_send_short"
                                     android:textAppearance="?attr/textAppearanceTitleSmall"
-                                    android:textColor="?attr/colorOnSurface" />
+                                    android:textColor="?attr/colorOnPrimaryContainer" />
 
                                 <TextView
                                     android:layout_width="match_parent"
                                     android:layout_height="wrap_content"
                                     android:layout_marginTop="1dp"
+                                    android:alpha="0.8"
                                     android:text="@string/p2p_send_short_sub"
                                     android:textAppearance="?attr/textAppearanceBodySmall"
-                                    android:textColor="?attr/colorOnSurfaceVariant" />
+                                    android:textColor="?attr/colorOnPrimaryContainer" />
 
                             </LinearLayout>
 
                             <ImageView
                                 android:layout_width="18dp"
                                 android:layout_height="18dp"
+                                android:alpha="0.7"
                                 android:contentDescription="@null"
                                 android:src="@drawable/ic_chevron_right_24"
-                                app:tint="?attr/colorOnSurfaceVariant" />
+                                app:tint="?attr/colorOnPrimaryContainer" />
 
                         </LinearLayout>
 
