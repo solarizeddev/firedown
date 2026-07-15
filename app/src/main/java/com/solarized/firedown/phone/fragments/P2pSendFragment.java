@@ -269,6 +269,21 @@ public class P2pSendFragment extends P2pShareBaseFragment
         TextView status = mView.findViewById(R.id.p2p_status);
         status.setText(R.string.p2p_preparing);
         mView.findViewById(R.id.p2p_stop).setVisibility(View.GONE);
+        // Reset the footer to the optimistic default; onTransport corrects it to
+        // the relayed copy once the live path is known (if it relays).
+        ((TextView) mView.findViewById(R.id.p2p_footer)).setText(R.string.p2p_footer);
+    }
+
+    @Override
+    public void onTransport(boolean relayed) {
+        if (mView == null) {
+            return;
+        }
+        // Honest footer: the file goes THROUGH firedown.app's relay when there's
+        // no direct path (e.g. a peer on a full-tunnel VPN) — still end-to-end
+        // encrypted, but it's not "never touches a server".
+        ((TextView) mView.findViewById(R.id.p2p_footer)).setText(
+                relayed ? R.string.p2p_footer_relayed : R.string.p2p_footer);
     }
 
     private void setStage(int visibleId) {

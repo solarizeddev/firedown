@@ -512,6 +512,7 @@
     <string name="p2p_error_bad_code">Tento kód není platný — zkuste to znovu.</string>
     <string name="p2p_clipboard_empty">Ve schránce není žádný kód.</string>
     <string name="p2p_footer">Šifrovaný přenos ze zařízení do zařízení. Soubor nikdy neprochází přes server.</string>
+    <string name="p2p_footer_relayed">Šifrováno end-to-end. Přenášeno přes firedown.app, který jej nemůže číst.</string>
     <string name="p2p_scan_hint">Namiřte fotoaparát na kód odesílatele</string>
     <string name="p2p_camera_denied">Ke skenování je potřeba přístup k fotoaparátu. Místo toho můžete kód vložit.</string>
     <string name="p2p_send_link">Poslat odkaz</string>

@@ -242,6 +242,7 @@ function watchConnection(s) {
       clearTimeout(s.connectTimer);
       s.connectTimer = null;
       post({ type: "state", state: "connected" });
+      reportTransport(s, pc);
     } else if (pc.connectionState === "failed") {
       fail(s, "no-path", "connection failed");
     } else if (pc.connectionState === "disconnected") {
@@ -261,6 +262,46 @@ function watchConnection(s) {
       }
     }
   });
+}
+
+// After connecting, tell Java whether the live path RELAYS through the TURN
+// server or is DIRECT (peer-to-peer) — so the UI can be honest about whether
+// the file touches a server (it does, encrypted, when relayed). Reads the
+// selected ICE candidate pair from getStats; best-effort, so any hiccup just
+// leaves the optimistic default. Re-runs on every "connected" (incl. a
+// reconnect that may switch direct↔relay).
+function reportTransport(s, pc) {
+  if (!pc.getStats) { return; }
+  pc.getStats().then((stats) => {
+    if (s !== session) { return; }
+    let selectedPairId = null;
+    stats.forEach((r) => {
+      if (r.type === "transport" && r.selectedCandidatePairId) {
+        selectedPairId = r.selectedCandidatePairId;
+      }
+    });
+    let found = false;
+    let relayed = false;
+    stats.forEach((r) => {
+      if (r.type !== "candidate-pair") { return; }
+      // Prefer the transport's explicit pointer; fall back to Firefox's
+      // `selected` flag or the nominated+succeeded pair.
+      const isSelected = selectedPairId
+        ? r.id === selectedPairId
+        : (r.selected || (r.nominated && r.state === "succeeded"));
+      if (!isSelected) { return; }
+      found = true;
+      const local = stats.get(r.localCandidateId);
+      const remote = stats.get(r.remoteCandidateId);
+      if ((local && local.candidateType === "relay") ||
+          (remote && remote.candidateType === "relay")) {
+        relayed = true;
+      }
+    });
+    if (found) {
+      post({ type: "transport", relayed: relayed });
+    }
+  }).catch(() => {});
 }
 
 // Resolve once the channel's outgoing buffer has drained (the peer's SCTP

@@ -685,6 +685,7 @@
     <string name="p2p_error_bad_code">该代码无效——请重试。</string>
     <string name="p2p_clipboard_empty">剪贴板中没有代码。</string>
     <string name="p2p_footer">加密的设备间直接传输。文件绝不会经过服务器。</string>
+    <string name="p2p_footer_relayed">端到端加密。通过 firedown.app 中转，但它无法读取内容。</string>
     <string name="p2p_scan_hint">将相机对准发送方的代码</string>
     <string name="p2p_camera_denied">扫描需要相机访问权限。你也可以改为粘贴代码。</string>
     <string name="p2p_send_link">发送链接</string>

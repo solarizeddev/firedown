@@ -464,6 +464,7 @@
     <string name="p2p_error_bad_code">यह कोड मान्य नहीं है — फिर से प्रयास करें।</string>
     <string name="p2p_clipboard_empty">क्लिपबोर्ड में कोई कोड नहीं है।</string>
     <string name="p2p_footer">डिवाइस से डिवाइस एन्क्रिप्टेड ट्रांसफ़र। फ़ाइल कभी किसी सर्वर से नहीं गुज़रती।</string>
+    <string name="p2p_footer_relayed">एंड-टू-एंड एन्क्रिप्टेड. firedown.app के ज़रिए रिले किया गया, जो इसे पढ़ नहीं सकता.</string>
     <string name="p2p_scan_hint">कैमरा भेजने वाले के कोड की ओर करें</string>
     <string name="p2p_camera_denied">स्कैन करने के लिए कैमरा एक्सेस ज़रूरी है। इसके बजाय आप कोड पेस्ट कर सकते हैं।</string>
     <string name="p2p_send_link">लिंक भेजें</string>

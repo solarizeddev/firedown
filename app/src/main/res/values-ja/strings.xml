@@ -685,6 +685,7 @@
     <string name="p2p_error_bad_code">このコードは無効です。もう一度お試しください。</string>
     <string name="p2p_clipboard_empty">クリップボードにコードがありません。</string>
     <string name="p2p_footer">暗号化された端末間の転送です。ファイルがサーバーを経由することはありません。</string>
+    <string name="p2p_footer_relayed">エンドツーエンドで暗号化。firedown.app 経由で中継されますが、内容は読めません。</string>
     <string name="p2p_scan_hint">カメラを送信者のコードに向けてください</string>
     <string name="p2p_camera_denied">スキャンにはカメラへのアクセスが必要です。代わりにコードを貼り付けることもできます。</string>
     <string name="p2p_send_link">リンクを送る</string>

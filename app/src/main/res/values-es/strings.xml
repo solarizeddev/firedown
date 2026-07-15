@@ -688,6 +688,7 @@
     <string name="p2p_error_bad_code">Ese código no es válido — inténtalo de nuevo.</string>
     <string name="p2p_clipboard_empty">No hay ningún código en el portapapeles.</string>
     <string name="p2p_footer">Transferencia cifrada de dispositivo a dispositivo. El archivo nunca pasa por un servidor.</string>
+    <string name="p2p_footer_relayed">Cifrado de extremo a extremo. Retransmitido a través de firedown.app, que no puede leerlo.</string>
     <string name="p2p_scan_hint">Apunta con la cámara al código del remitente</string>
     <string name="p2p_camera_denied">Se necesita acceso a la cámara para escanear. Puedes pegar el código en su lugar.</string>
     <string name="p2p_send_link">Enviar enlace</string>

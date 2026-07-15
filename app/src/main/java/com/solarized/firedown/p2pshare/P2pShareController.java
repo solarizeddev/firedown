@@ -239,6 +239,14 @@ public class P2pShareController {
         /** connecting | connected | closed */
         void onConnectionState(@NonNull String state);
 
+        /**
+         * Reported once the live path is known (on every "connected"): true when
+         * it RELAYS through the TURN server (the file bytes pass through, still
+         * end-to-end encrypted), false when it's DIRECT peer-to-peer. Lets the UI
+         * say honestly whether the file touches a server.
+         */
+        void onTransport(boolean relayed);
+
         void onProgress(long done, long total, long rate);
 
         /** Transfer finished. For receive, the file row is already inserted. */
@@ -1071,6 +1079,11 @@ public class P2pShareController {
             case "state" -> {
                 if (mListener != null) {
                     mListener.onConnectionState(json.optString("state", ""));
+                }
+            }
+            case "transport" -> {
+                if (mListener != null) {
+                    mListener.onTransport(json.optBoolean("relayed", false));
                 }
             }
             case "progress" -> {

@@ -557,6 +557,7 @@
     <string name="p2p_error_bad_code">Esse código não é válido — tente novamente.</string>
     <string name="p2p_clipboard_empty">Nenhum código na área de transferência.</string>
     <string name="p2p_footer">Transferência criptografada de dispositivo a dispositivo. O arquivo nunca passa por um servidor.</string>
+    <string name="p2p_footer_relayed">Encriptado de ponta a ponta. Retransmitido através de firedown.app, que não o consegue ler.</string>
     <string name="p2p_scan_hint">Aponte a câmera para o código do remetente</string>
     <string name="p2p_camera_denied">É necessário acesso à câmera para escanear. Você pode colar o código.</string>
     <string name="p2p_send_link">Enviar link</string>

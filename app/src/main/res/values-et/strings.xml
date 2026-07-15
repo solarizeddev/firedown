@@ -427,6 +427,7 @@
     <string name="p2p_error_bad_code">See kood ei kehti — proovi uuesti.</string>
     <string name="p2p_clipboard_empty">Lõikelaual pole koodi.</string>
     <string name="p2p_footer">Krüptitud ülekanne seadmest seadmesse. Fail ei läbi kunagi serverit.</string>
+    <string name="p2p_footer_relayed">Otspunktkrüptitud. Edastatakse läbi firedown.app, mis ei saa seda lugeda.</string>
     <string name="p2p_scan_hint">Suuna kaamera saatja koodile</string>
     <string name="p2p_camera_denied">Skannimiseks on vaja kaameraluba. Selle asemel võid koodi kleepida.</string>
     <string name="p2p_send_link">Saada link</string>

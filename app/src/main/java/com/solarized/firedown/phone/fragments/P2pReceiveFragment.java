@@ -205,6 +205,19 @@ public class P2pReceiveFragment extends P2pShareBaseFragment
     private void showReading() {
         setStage(R.id.p2p_status_group);
         ((TextView) mView.findViewById(R.id.p2p_status)).setText(R.string.p2p_preparing);
+        // Optimistic footer until onTransport reports the live path.
+        ((TextView) mView.findViewById(R.id.p2p_footer)).setText(R.string.p2p_footer);
+    }
+
+    @Override
+    public void onTransport(boolean relayed) {
+        if (mView == null) {
+            return;
+        }
+        // Honest footer: relayed through firedown.app (still E2E encrypted) vs
+        // a direct peer-to-peer path that never touches a server.
+        ((TextView) mView.findViewById(R.id.p2p_footer)).setText(
+                relayed ? R.string.p2p_footer_relayed : R.string.p2p_footer);
     }
 
     private void setStage(int visibleId) {
