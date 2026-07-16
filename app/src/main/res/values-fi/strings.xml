@@ -491,11 +491,13 @@
     <string name="p2p_done_received">Tallennettu Lataukset-kansioon</string>
     <string name="p2p_done">Valmis</string>
     <string name="p2p_error_no_path">Toiseen laitteeseen ei saatu suoraa yhteyttä. Näin käy mobiilidatalla tai VPN:n takana — kokeile samaa Wi-Fi-verkkoa ja kytke VPN pois päältä.</string>
+    <string name="p2p_error_no_path_vpn">Tämän laitteen VPN estää suoran yhteyden. Sulje Firedown VPN:n ulkopuolelle — tai keskeytä VPN — ja yritä uudelleen.</string>
     <string name="p2p_error_generic">Siirto epäonnistui.</string>
     <string name="p2p_error_bad_code">Koodi ei kelpaa — yritä uudelleen.</string>
     <string name="p2p_clipboard_empty">Leikepöydällä ei ole koodia.</string>
     <string name="p2p_footer">Salattu siirto laitteesta laitteeseen. Tiedosto ei koskaan kulje palvelimen kautta.</string>
     <string name="p2p_footer_relayed">Päästä päähän salattu. Välitetään firedown.appin kautta (ei suoraa yhteyttä), joka ei voi lukea sitä.</string>
+    <string name="p2p_hint_vpn">Vinkki: Firedownin jättäminen VPN:n ulkopuolelle mahdollistaa suoran yhteyden.</string>
     <string name="p2p_scan_hint">Osoita kameralla lähettäjän koodia</string>
     <string name="p2p_camera_denied">Skannaus vaatii kameran käyttöoikeuden. Voit liittää koodin sen sijaan.</string>
     <string name="p2p_send_link">Lähetä linkki</string>

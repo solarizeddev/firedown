@@ -446,11 +446,13 @@
     <string name="p2p_done_received">Запазено в Изтегляния</string>
     <string name="p2p_done">Готово</string>
     <string name="p2p_error_no_path">Не е възможна директна връзка с другото устройство. Това се случва при мобилни данни или зад VPN — опитайте една и съща Wi-Fi мрежа, с изключен VPN.</string>
+    <string name="p2p_error_no_path_vpn">VPN на това устройство блокира директната връзка. Изключете Firedown от VPN — или го поставете на пауза — и опитайте отново.</string>
     <string name="p2p_error_generic">Прехвърлянето беше неуспешно.</string>
     <string name="p2p_error_bad_code">Този код не е валиден — опитайте отново.</string>
     <string name="p2p_clipboard_empty">Няма код в клипборда.</string>
     <string name="p2p_footer">Шифровано прехвърляне от устройство до устройство. Файлът никога не преминава през сървър.</string>
     <string name="p2p_footer_relayed">Шифровано от край до край. Препредава се през firedown.app (няма пряка връзка), който не може да го чете.</string>
+    <string name="p2p_hint_vpn">Съвет: изключването на Firedown от VPN позволява директна връзка.</string>
     <string name="p2p_scan_hint">Насочете камерата към кода на изпращача</string>
     <string name="p2p_camera_denied">За сканиране е необходим достъп до камерата. Вместо това можете да поставите кода.</string>
     <string name="p2p_send_link">Изпратете линк</string>

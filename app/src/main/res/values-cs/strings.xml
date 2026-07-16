@@ -507,11 +507,13 @@
     <string name="p2p_done_received">Uloženo do Stahování</string>
     <string name="p2p_done">Hotovo</string>
     <string name="p2p_error_no_path">Druhé zařízení se nepodařilo přímo kontaktovat. To se stává na mobilních datech nebo za VPN — zkuste stejnou Wi-Fi síť s vypnutou VPN.</string>
+    <string name="p2p_error_no_path_vpn">VPN v tomto zařízení blokuje přímé spojení. Vyjměte Firedown z VPN — nebo ji pozastavte — a zkuste to znovu.</string>
     <string name="p2p_error_generic">Přenos se nezdařil.</string>
     <string name="p2p_error_bad_code">Tento kód není platný — zkuste to znovu.</string>
     <string name="p2p_clipboard_empty">Ve schránce není žádný kód.</string>
     <string name="p2p_footer">Šifrovaný přenos ze zařízení do zařízení. Soubor nikdy neprochází přes server.</string>
     <string name="p2p_footer_relayed">Šifrováno end-to-end. Přenášeno přes firedown.app (bez přímého spojení), který jej nemůže číst.</string>
+    <string name="p2p_hint_vpn">Tip: vyjmutí Firedownu z VPN umožní přímé spojení.</string>
     <string name="p2p_scan_hint">Namiřte fotoaparát na kód odesílatele</string>
     <string name="p2p_camera_denied">Ke skenování je potřeba přístup k fotoaparátu. Místo toho můžete kód vložit.</string>
     <string name="p2p_send_link">Poslat odkaz</string>

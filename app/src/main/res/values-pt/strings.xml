@@ -552,11 +552,13 @@
     <string name="p2p_done_received">Salvo em Transferências</string>
     <string name="p2p_done">Concluído</string>
     <string name="p2p_error_no_path">Não foi possível alcançar o outro dispositivo diretamente. Isso acontece em dados móveis ou atrás de uma VPN — tente a mesma rede Wi-Fi, com qualquer VPN desativada.</string>
+    <string name="p2p_error_no_path_vpn">Uma VPN neste dispositivo está a bloquear a ligação direta. Exclua o Firedown da VPN — ou pause-a — e tente novamente.</string>
     <string name="p2p_error_generic">A transferência falhou.</string>
     <string name="p2p_error_bad_code">Esse código não é válido — tente novamente.</string>
     <string name="p2p_clipboard_empty">Nenhum código na área de transferência.</string>
     <string name="p2p_footer">Transferência criptografada de dispositivo a dispositivo. O arquivo nunca passa por um servidor.</string>
     <string name="p2p_footer_relayed">Encriptado de ponta a ponta. Retransmitido através de firedown.app (sem rota direta), que não o consegue ler.</string>
+    <string name="p2p_hint_vpn">Dica: excluir o Firedown da VPN permite ligar diretamente.</string>
     <string name="p2p_scan_hint">Aponte a câmera para o código do remetente</string>
     <string name="p2p_camera_denied">É necessário acesso à câmera para escanear. Você pode colar o código.</string>
     <string name="p2p_send_link">Enviar link</string>

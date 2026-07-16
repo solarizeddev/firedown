@@ -284,6 +284,7 @@ public class P2pSendFragment extends P2pShareBaseFragment
         // encrypted, but it's not "never touches a server".
         ((TextView) mView.findViewById(R.id.p2p_footer)).setText(
                 relayed ? R.string.p2p_footer_relayed : R.string.p2p_footer);
+        maybeHintVpnRelay(relayed);
     }
 
     private void setStage(int visibleId) {

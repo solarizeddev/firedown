@@ -459,11 +459,13 @@
     <string name="p2p_done_received">डाउनलोड में सहेजा गया</string>
     <string name="p2p_done">हो गया</string>
     <string name="p2p_error_no_path">दूसरे डिवाइस से सीधे संपर्क नहीं हो सका। ऐसा मोबाइल डेटा पर या VPN के पीछे होने पर होता है — कोई भी VPN बंद करके एक ही Wi-Fi नेटवर्क आज़माएँ।</string>
+    <string name="p2p_error_no_path_vpn">इस डिवाइस पर VPN सीधा कनेक्शन रोक रहा है। Firedown को VPN से बाहर रखें — या VPN रोकें — और फिर से कोशिश करें।</string>
     <string name="p2p_error_generic">ट्रांसफ़र विफल रहा।</string>
     <string name="p2p_error_bad_code">यह कोड मान्य नहीं है — फिर से प्रयास करें।</string>
     <string name="p2p_clipboard_empty">क्लिपबोर्ड में कोई कोड नहीं है।</string>
     <string name="p2p_footer">डिवाइस से डिवाइस एन्क्रिप्टेड ट्रांसफ़र। फ़ाइल कभी किसी सर्वर से नहीं गुज़रती।</string>
     <string name="p2p_footer_relayed">एंड-टू-एंड एन्क्रिप्टेड. firedown.app के ज़रिए रिले किया गया (कोई सीधा रास्ता नहीं), जो इसे पढ़ नहीं सकता.</string>
+    <string name="p2p_hint_vpn">सुझाव: Firedown को VPN से बाहर रखने पर सीधा कनेक्शन बनता है।</string>
     <string name="p2p_scan_hint">कैमरा भेजने वाले के कोड की ओर करें</string>
     <string name="p2p_camera_denied">स्कैन करने के लिए कैमरा एक्सेस ज़रूरी है। इसके बजाय आप कोड पेस्ट कर सकते हैं।</string>
     <string name="p2p_send_link">लिंक भेजें</string>

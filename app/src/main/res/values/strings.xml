@@ -811,6 +811,7 @@
     <string name="p2p_abandon_message">Stop this transfer? It isn\'t finished yet.</string>
     <string name="p2p_abandon_confirm">Stop</string>
     <string name="p2p_error_no_path">Couldn\'t reach the other device directly. This happens on mobile data or behind a VPN — try the same Wi-Fi network, with any VPN turned off.</string>
+    <string name="p2p_error_no_path_vpn">A VPN on this device is blocking the direct connection. Exclude Firedown from the VPN — or pause it — and try again.</string>
     <string name="p2p_error_generic">The transfer failed.</string>
     <string name="p2p_error_bad_code">That code isn\'t valid — try again.</string>
     <string name="p2p_clipboard_empty">No code in the clipboard.</string>
@@ -818,6 +819,7 @@
     <string name="p2p_qr_content_desc">Your share code, as a QR</string>
     <string name="p2p_footer">Encrypted device-to-device transfer. The file never touches a server.</string>
     <string name="p2p_footer_relayed">Encrypted end-to-end. Relayed through firedown.app (no direct path), which can\'t read it.</string>
+    <string name="p2p_hint_vpn">Tip: excluding Firedown from your VPN lets it connect directly.</string>
     <string name="p2p_scan_hint">Point the camera at the sender\'s code</string>
     <string name="p2p_camera_denied">Camera access is needed to scan. You can paste the code instead.</string>
     <string name="p2p_send_link">Send link</string>

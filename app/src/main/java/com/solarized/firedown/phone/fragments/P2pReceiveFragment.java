@@ -218,6 +218,7 @@ public class P2pReceiveFragment extends P2pShareBaseFragment
         // a direct peer-to-peer path that never touches a server.
         ((TextView) mView.findViewById(R.id.p2p_footer)).setText(
                 relayed ? R.string.p2p_footer_relayed : R.string.p2p_footer);
+        maybeHintVpnRelay(relayed);
     }
 
     private void setStage(int visibleId) {

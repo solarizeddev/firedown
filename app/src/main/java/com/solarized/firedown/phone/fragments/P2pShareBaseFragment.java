@@ -1,8 +1,12 @@
 package com.solarized.firedown.phone.fragments;
 
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkCapabilities;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -258,12 +262,61 @@ public abstract class P2pShareBaseFragment extends BaseFocusFragment {
     /** Map an engine error code onto the honest user-facing message. */
     protected int errorText(@NonNull String code) {
         if ("no-path".equals(code)) {
-            return R.string.p2p_error_no_path;
+            // When a VPN is up on THIS device it is almost certainly what killed
+            // the direct path (full-tunnel VPN = symmetric NAT the user doesn't
+            // control), and unlike CGNAT it has a user-actionable fix — say it.
+            return isVpnActive() ? R.string.p2p_error_no_path_vpn
+                    : R.string.p2p_error_no_path;
         }
         if ("bad-code".equals(code)) {
             return R.string.p2p_error_bad_code;
         }
         return R.string.p2p_error_generic;
+    }
+
+    /**
+     * True when the device's active network is a VPN. Best-effort: any failure
+     * reads as "no VPN" so the hint machinery can never break a share. Binder
+     * reads of connectivity state get the same defensive treatment as the
+     * clipboard chip (a decorative affordance never gets to crash the app).
+     */
+    protected boolean isVpnActive() {
+        try {
+            Context context = getContext();
+            if (context == null) {
+                return false;
+            }
+            ConnectivityManager manager =
+                    (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+            if (manager == null) {
+                return false;
+            }
+            Network network = manager.getActiveNetwork();
+            if (network == null) {
+                return false;
+            }
+            NetworkCapabilities caps = manager.getNetworkCapabilities(network);
+            return caps != null && caps.hasTransport(NetworkCapabilities.TRANSPORT_VPN);
+        } catch (RuntimeException e) {
+            return false;
+        }
+    }
+
+    /**
+     * One-time hint when the transfer is running but RELAYED and a VPN is up:
+     * the user can get a direct connection next time by excluding Firedown
+     * from the VPN (or pausing it). Called from both fragments' onTransport.
+     * Once per share screen — the transfer works, so one nudge is enough;
+     * repeating it on every transport event would be noise.
+     */
+    private boolean mVpnRelayHintShown;
+
+    protected void maybeHintVpnRelay(boolean relayed) {
+        if (!relayed || mVpnRelayHintShown || !isVpnActive()) {
+            return;
+        }
+        mVpnRelayHintShown = true;
+        makeSnack(R.string.p2p_hint_vpn);
     }
 
     @Nullable

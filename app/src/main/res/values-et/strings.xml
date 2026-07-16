@@ -422,11 +422,13 @@
     <string name="p2p_done_received">Salvestatud kausta Allalaadimised</string>
     <string name="p2p_done">Valmis</string>
     <string name="p2p_error_no_path">Teise seadmega ei õnnestunud otseühendust luua. See juhtub mobiilses andmesides või VPN-i taga — proovi sama Wi-Fi võrku ja lülita VPN välja.</string>
+    <string name="p2p_error_no_path_vpn">Selle seadme VPN blokeerib otseühenduse. Jäta Firedown VPN-ist välja — või peata see — ja proovi uuesti.</string>
     <string name="p2p_error_generic">Ülekanne ebaõnnestus.</string>
     <string name="p2p_error_bad_code">See kood ei kehti — proovi uuesti.</string>
     <string name="p2p_clipboard_empty">Lõikelaual pole koodi.</string>
     <string name="p2p_footer">Krüptitud ülekanne seadmest seadmesse. Fail ei läbi kunagi serverit.</string>
     <string name="p2p_footer_relayed">Otspunktkrüptitud. Edastatakse läbi firedown.app (otseühendus puudub), mis ei saa seda lugeda.</string>
+    <string name="p2p_hint_vpn">Vihje: Firedowni VPN-ist väljajätmine võimaldab otseühendust.</string>
     <string name="p2p_scan_hint">Suuna kaamera saatja koodile</string>
     <string name="p2p_camera_denied">Skannimiseks on vaja kaameraluba. Selle asemel võid koodi kleepida.</string>
     <string name="p2p_send_link">Saada link</string>

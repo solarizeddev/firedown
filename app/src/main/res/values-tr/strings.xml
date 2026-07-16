@@ -551,11 +551,13 @@
     <string name="p2p_done_received">İndirilenler\'e kaydedildi</string>
     <string name="p2p_done">Bitti</string>
     <string name="p2p_error_no_path">Diğer cihaza doğrudan ulaşılamadı. Bu, mobil veride veya VPN arkasında olur — varsa VPN\'i kapatarak aynı Wi-Fi ağını deneyin.</string>
+    <string name="p2p_error_no_path_vpn">Bu cihazdaki VPN doğrudan bağlantıyı engelliyor. Firedown\'u VPN\'den hariç tutun — veya VPN\'i duraklatın — ve yeniden deneyin.</string>
     <string name="p2p_error_generic">Aktarım başarısız oldu.</string>
     <string name="p2p_error_bad_code">Bu kod geçerli değil — tekrar deneyin.</string>
     <string name="p2p_clipboard_empty">Panoda kod yok.</string>
     <string name="p2p_footer">Şifreli, cihazdan cihaza aktarım. Dosya hiçbir zaman bir sunucuya uğramaz.</string>
     <string name="p2p_footer_relayed">Uçtan uca şifreli. Doğrudan yol olmadığından firedown.app üzerinden aktarılıyor; onu okuyamaz.</string>
+    <string name="p2p_hint_vpn">İpucu: Firedown\'u VPN\'den hariç tutmak doğrudan bağlantı sağlar.</string>
     <string name="p2p_scan_hint">Kamerayı gönderenin koduna doğrultun</string>
     <string name="p2p_camera_denied">Taramak için kamera erişimi gerekir. Bunun yerine kodu yapıştırabilirsiniz.</string>
     <string name="p2p_send_link">Bağlantı gönder</string>

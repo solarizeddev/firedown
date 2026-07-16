@@ -683,11 +683,13 @@
     <string name="p2p_done_received">In Downloads gespeichert</string>
     <string name="p2p_done">Fertig</string>
     <string name="p2p_error_no_path">Das andere Gerät konnte nicht direkt erreicht werden. Das passiert bei mobilen Daten oder hinter einem VPN — versuche dasselbe Wi-Fi-Netzwerk, mit ausgeschaltetem VPN.</string>
+    <string name="p2p_error_no_path_vpn">Ein VPN auf diesem Gerät blockiert die direkte Verbindung. Schließe Firedown vom VPN aus — oder pausiere es — und versuche es erneut.</string>
     <string name="p2p_error_generic">Die Übertragung ist fehlgeschlagen.</string>
     <string name="p2p_error_bad_code">Dieser Code ist ungültig — versuche es erneut.</string>
     <string name="p2p_clipboard_empty">Kein Code in der Zwischenablage.</string>
     <string name="p2p_footer">Verschlüsselte Übertragung von Gerät zu Gerät. Die Datei berührt nie einen Server.</string>
     <string name="p2p_footer_relayed">Ende-zu-Ende-verschlüsselt. Weitergeleitet über firedown.app (kein direkter Weg), das es nicht lesen kann.</string>
+    <string name="p2p_hint_vpn">Tipp: Wird Firedown vom VPN ausgenommen, verbindet es sich direkt.</string>
     <string name="p2p_scan_hint">Richte die Kamera auf den Code des Absenders</string>
     <string name="p2p_camera_denied">Zum Scannen wird Kamerazugriff benötigt. Du kannst den Code stattdessen einfügen.</string>
     <string name="p2p_send_link">Link senden</string>

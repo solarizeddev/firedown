@@ -680,11 +680,13 @@
     <string name="p2p_done_received">ダウンロードに保存しました</string>
     <string name="p2p_done">完了</string>
     <string name="p2p_error_no_path">相手の端末に直接接続できませんでした。モバイルデータ通信や VPN の使用中に起こります。VPN をオフにして、同じ Wi-Fi ネットワークをお試しください。</string>
+    <string name="p2p_error_no_path_vpn">この端末の VPN が直接接続をブロックしています。VPN の対象から Firedown を除外するか、VPN を一時停止して、もう一度お試しください。</string>
     <string name="p2p_error_generic">転送に失敗しました。</string>
     <string name="p2p_error_bad_code">このコードは無効です。もう一度お試しください。</string>
     <string name="p2p_clipboard_empty">クリップボードにコードがありません。</string>
     <string name="p2p_footer">暗号化された端末間の転送です。ファイルがサーバーを経由することはありません。</string>
     <string name="p2p_footer_relayed">エンドツーエンドで暗号化。firedown.app 経由で中継されます（直接経路なし）が、内容は読めません。</string>
+    <string name="p2p_hint_vpn">ヒント: VPN の対象から Firedown を除外すると直接接続できます。</string>
     <string name="p2p_scan_hint">カメラを送信者のコードに向けてください</string>
     <string name="p2p_camera_denied">スキャンにはカメラへのアクセスが必要です。代わりにコードを貼り付けることもできます。</string>
     <string name="p2p_send_link">リンクを送る</string>
