@@ -229,6 +229,22 @@ const PARSER_BLOCKLIST = {
   spotify: [
     'p\\.scdn\\.co\\/mp3-preview\\/',
   ],
+
+  // Deezer — the deezer parser (js/parsers/deezer.js) captures full tracks as a
+  // synthetic www.deezer.com/track/<SNG_ID> entity that DeezerStrategy resolves
+  // to the encrypted CDN stream (e-cdns-proxy-*.dzcdn.net) and Blowfish-decrypts.
+  // Block that CDN so the generic catcher doesn't ALSO grab it on play — NOT for
+  // dedup but because a bare catcher capture there would save UNDECRYPTABLE
+  // ciphertext (the wire only ever serves the Blowfish-striped bytes). Same
+  // "block a harmful capture" rationale as Mega/telegram-web, not the usual
+  // dup-suppression. The 30s preview lives on a DIFFERENT host
+  // (cdns-preview-*.dzcdn.net) and is deliberately NOT blocked — logged-out
+  // preview capture stays with the generic catcher.
+  deezer: [
+    // Matches e-cdns-proxy-*, cdns-proxy-*, and the legacy e-cdn-proxy-* media
+    // hosts (the optional "e-" prefix and optional trailing "s" on "cdn").
+    '(?:e-)?cdns?-proxy-.*\\.dzcdn\\.net\\/',
+  ],
 };
 
 // Flatten every parser's patterns into one compiled RegExp — same approach and

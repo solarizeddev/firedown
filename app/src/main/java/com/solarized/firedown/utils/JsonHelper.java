@@ -46,6 +46,14 @@ public class JsonHelper {
             entity.setMegaFileHandle(json.optString("fileHandle", null));
             entity.setMegaFileKey(json.optString("fileKey", null));
 
+            // Deezer — the session cookie (arl + sid) the strategy re-mints tokens
+            // with, and the best-known encrypted file size for the chosen format.
+            entity.setCookieHeader(json.optString("cookie", null));
+            long fileLength = json.optLong("size", 0);
+            if (fileLength > 0) {
+                entity.setFileLength(fileLength);
+            }
+
             // Parse variants with SABR data if available
             JSONObject sabr = json.optJSONObject("sabr");
             entity.setVariants(parseVariants(json.optJSONArray("variants"), sabr));

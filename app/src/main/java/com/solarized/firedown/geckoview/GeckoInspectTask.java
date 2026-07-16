@@ -112,6 +112,9 @@ public class GeckoInspectTask implements Runnable, ProbeRegistry {
     // Mega.nz single file / embed — public handle + 256-bit file key (base64url).
     private final String mMegaFileHandle;
     private final String mMegaFileKey;
+
+    private final String mCookieHeader;
+    private final long mFileLength;
     private FFmpegMetaDataReader mFFmpegMetaDataReader;
 
     /**
@@ -165,6 +168,8 @@ public class GeckoInspectTask implements Runnable, ProbeRegistry {
         mMegaMasterKey = geckoInspectEntity.getMegaMasterKey();
         mMegaFileHandle = geckoInspectEntity.getMegaFileHandle();
         mMegaFileKey = geckoInspectEntity.getMegaFileKey();
+        mCookieHeader = geckoInspectEntity.getCookieHeader();
+        mFileLength = geckoInspectEntity.getFileLength();
 
         Log.d(TAG, "Task Created for URL: " + mUrl + " img: " + mImg
                 + " variants: " + (mVariants != null ? mVariants.size() : 0)
@@ -247,6 +252,15 @@ public class GeckoInspectTask implements Runnable, ProbeRegistry {
         entity.setFileDescription(mDescription);
         entity.setIncognito(mIncognito);
 
+        // Deezer: the session cookie the strategy re-mints tokens with, and the
+        // capture-time encrypted file size (null/0 elsewhere — harmless).
+        if (!TextUtils.isEmpty(mCookieHeader)) {
+            entity.setCookieHeader(mCookieHeader);
+        }
+        if (mFileLength > 0) {
+            entity.setFileLength(mFileLength);
+        }
+
         // videoId + visitorData identify the video for PoToken minting and
         // are needed by BOTH the SABR stream path and the timedtext caption
         // path. They must be copied unconditionally — gating them behind the
@@ -320,6 +334,9 @@ public class GeckoInspectTask implements Runnable, ProbeRegistry {
             }
             return processMegaFile(entity);
 
+        } else if (mUrlType == UrlType.DEEZER) {
+            return processDeezer(entity);
+
         } else if (mVariants != null && !mVariants.isEmpty()) {
             new VariantProcessor(mRequestHeaders, mSkipProbe, mManifest)
                     .setProbeRegistry(this)
@@ -374,6 +391,31 @@ public class GeckoInspectTask implements Runnable, ProbeRegistry {
         }
         entity.setType(UrlType.FILE.getValue());
         entity.setAudio(true);
+        String duration = entity.getFileDuration();
+        if (!TextUtils.isEmpty(duration)) {
+            ArrayList<FFmpegTagEntity> tags = new ArrayList<>();
+            tags.add(new FFmpegTagEntity(entity.getUid(), duration, FFmpegTagEntity.TYPE_DURATION));
+            entity.setTags(tags);
+        }
+        return true;
+    }
+
+    /**
+     * Deezer full track — a decrypt-on-download capture (see {@link UrlType#DEEZER}
+     * / {@link com.solarized.firedown.manager.DeezerStrategy}). The parser already
+     * supplied title/artist/cover/duration and the session cookie, and the stream
+     * MUST NOT be probed — the wire serves Blowfish-striped ciphertext, unopenable
+     * by ffmpeg — so this only stamps the audio entity from the format declared in
+     * the synthetic URL (?fmt=). No network, no probe; the real CDN URL and the
+     * decryption happen later in DeezerStrategy.
+     */
+    private boolean processDeezer(BrowserDownloadEntity entity) {
+        boolean flac = mUrl.contains("fmt=FLAC");
+        entity.setMimeType(flac ? FileUriHelper.MIMETYPE_AUDIO_FLAC : FileUriHelper.AUDIO_MP3);
+        entity.setType(UrlType.DEEZER.getValue());
+        entity.setAudio(true);
+        // Rebuild the duration display tag the Capture view reads (prepareEntity
+        // set the raw value; the probe path would normally add this tag).
         String duration = entity.getFileDuration();
         if (!TextUtils.isEmpty(duration)) {
             ArrayList<FFmpegTagEntity> tags = new ArrayList<>();

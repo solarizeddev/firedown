@@ -98,7 +98,7 @@ const count = (path) => (registrations[path] ?? []).length;
 // Inventory of listener registrations across the background module graph
 // (js/parsers/* + requests.js + cookies.js + debug.js). Update deliberately
 // when adding/removing a listener — that's the point of the check.
-expect(count("webRequest.onBeforeRequest") === 37, `webRequest.onBeforeRequest registrations == 37 (got ${count("webRequest.onBeforeRequest")})`);
+expect(count("webRequest.onBeforeRequest") === 38, `webRequest.onBeforeRequest registrations == 38 (got ${count("webRequest.onBeforeRequest")})`);
 expect(count("webRequest.onSendHeaders") === 2, `webRequest.onSendHeaders registrations == 2 (got ${count("webRequest.onSendHeaders")})`);
 expect(count("webRequest.onHeadersReceived") === 2, `webRequest.onHeadersReceived registrations == 2 (got ${count("webRequest.onHeadersReceived")})`);
 expect(count("webRequest.onResponseStarted") === 1, `webRequest.onResponseStarted registrations == 1 (got ${count("webRequest.onResponseStarted")})`);
@@ -639,6 +639,55 @@ expect(!matchInParserBlocklist("https://i.scdn.co/image/ab67616d0000b273cover.jp
     globalThis.MutationObserver = prev.MutationObserver;
   }
 }
+
+// ---------------------------------------------------------------------------
+// Deezer — gateway song walk + format pick + cardinal-rule block (real walker)
+// ---------------------------------------------------------------------------
+const { collectSongs, pickFormat } = await import(pathToFileURL(join(ext, "js/parsers/deezer.js")));
+
+// A deezer.pageAlbum-shaped gw-light response: songs nested under
+// results.SONGS.data[], each with SNG_ID + TRACK_TOKEN + FILESIZE_* + cover md5.
+// Includes a token-less related stub that must NOT be captured.
+const dzGateway = {
+  error: [],
+  results: {
+    DATA: { ALB_TITLE: "Some Album" },
+    SONGS: {
+      data: [
+        { SNG_ID: "123456", SNG_TITLE: "First Track", ART_NAME: "An Artist",
+          ALB_PICTURE: "aabbccddeeff00112233445566778899", DURATION: "215",
+          TRACK_TOKEN: "tok-1", FILESIZE_FLAC: "0", FILESIZE_MP3_320: "8200000",
+          FILESIZE_MP3_128: "3400000" },
+        { SNG_ID: "789012", SNG_TITLE: "Lossless Track", ART_NAME: "An Artist",
+          ALB_PICTURE: "99887766554433221100ffeeddccbbaa", DURATION: "184",
+          TRACK_TOKEN: "tok-2", FILESIZE_FLAC: "27000000", FILESIZE_MP3_320: "7000000" },
+        // Related-item shell: has a title but NO token → not playable, skip.
+        { SNG_ID: "555555", SNG_TITLE: "Preview Stub" }
+      ]
+    }
+  }
+};
+const dzSongs = collectSongs(dzGateway.results);
+expect(dzSongs.length === 2, `deezer: 2 playable songs walked, stub skipped (got ${dzSongs.length})`);
+expect(dzSongs[0].SNG_ID === "123456", "deezer: first SNG_ID walked from nested SONGS.data");
+expect(pickFormat(dzSongs[0]).fmt === "MP3_320",
+  `deezer: picks best available (MP3_320, no FLAC) (got ${pickFormat(dzSongs[0]).fmt})`);
+expect(pickFormat(dzSongs[1]).fmt === "FLAC",
+  `deezer: picks FLAC when present (got ${pickFormat(dzSongs[1]).fmt})`);
+// Dedup within a walk: the same SNG_ID appearing twice yields one entry.
+expect(collectSongs({ a: dzGateway.results.SONGS.data[0], b: dzGateway.results.SONGS.data[0] }).length === 1,
+  "deezer: duplicate SNG_ID collapses within a walk");
+
+// Cardinal rule: the encrypted media CDN is block-listed (a bare capture there
+// would save undecryptable ciphertext); the 30s preview host is NOT.
+expect(matchInParserBlocklist("https://e-cdns-proxy-a.dzcdn.net/mobile/1/abcdef0123456789"),
+  "deezer: e-cdns-proxy CDN is parser-block-listed");
+expect(matchInParserBlocklist("https://cdns-proxy-b.dzcdn.net/media/1/deadbeef"),
+  "deezer: cdns-proxy CDN is parser-block-listed");
+expect(!matchInParserBlocklist("https://cdns-preview-a.dzcdn.net/stream/c-preview.mp3"),
+  "deezer: 30s preview host is NOT block-listed");
+expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/500x500.jpg"),
+  "deezer: images CDN is NOT block-listed");
 
 if (failures) {
   console.error(`\n${failures} failure(s)`);

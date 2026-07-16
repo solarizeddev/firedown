@@ -34,7 +34,7 @@ expose the real media URL after the page's own JS runs (often on play). So:
 
 | dir           | id                       | role |
 |---------------|--------------------------|------|
-| `webrequests/`| `downloader@solarized.dev` | **ALL capture** — the former `parser@` extension was MERGED into this one. Two halves in one extension: (1) the per-site **parsers** (`js/parsers/` — one ES module per site: Twitter/X, Instagram, Threads, Facebook, Vimeo, Rumble, Bilibili.tv, Niconico, Kick, Twitch, Dailymotion, Apple Podcasts, News Over Audio, TikTok, Bluesky, Telegram, Videee, Spotify; emits entries **with metadata** — title, author, thumbnail, duration, quality variants) plus the page-state bridge (`js/page-state-bridge.js`); (2) the **generic catch-all** (`js/requests.js` + `js/content-script.js` — any media URL seen on the wire, no rich metadata). Also hosts `js/wasm-watch.js` (+ `js/wasm-probe.js`), the WASM-disabled detector — a settings feature, not capture. |
+| `webrequests/`| `downloader@solarized.dev` | **ALL capture** — the former `parser@` extension was MERGED into this one. Two halves in one extension: (1) the per-site **parsers** (`js/parsers/` — one ES module per site: Twitter/X, Instagram, Threads, Facebook, Vimeo, Rumble, Bilibili.tv, Niconico, Kick, Twitch, Dailymotion, Apple Podcasts, News Over Audio, TikTok, Bluesky, Telegram, Videee, Spotify, Deezer; emits entries **with metadata** — title, author, thumbnail, duration, quality variants) plus the page-state bridge (`js/page-state-bridge.js`); (2) the **generic catch-all** (`js/requests.js` + `js/content-script.js` — any media URL seen on the wire, no rich metadata). Also hosts `js/wasm-watch.js` (+ `js/wasm-probe.js`), the WASM-disabled detector — a settings feature, not capture. |
 | `youtube/`    | `youtube@solarized.dev`  | YouTube (separate; uses `PoTokenGenerator` on the Java side). |
 | `ublock/`     | uBlock Origin            | Ad blocking. |
 | `p2pshare/`   | `p2pshare@solarized.dev` | **Not capture** — the P2P direct-share WebRTC engine (see ""Send directly" — P2P share"). |
@@ -551,6 +551,61 @@ manifests and tokenized/extensionless URLs are **always** enriched
   The realistic capture path for a Spotify-published **podcast** in full is still
   its **YouTube** embed (existing `youtube@` parser) — Spotify only ever exposes
   the 30s clip here. Ceiling: the emitted entries are 30s previews, not the song.
+
+### Deezer — full tracks via Blowfish decrypt-on-download (NOT DRM)
+
+**Deezer is decrypt-on-download, the Mega shape — not the Spotify preview
+shape.** Deezer is **not DRM** in the EME/Widevine sense: no license server, no
+per-session key. A track streams as **Blowfish-CBC ciphertext** (every THIRD
+2048-byte "stripe" enciphered, the other two-thirds plaintext — the
+`BF_CBC_STRIPE` cipher `get_url` names) whose 16-byte key is **derived offline
+and deterministically** from `MD5(SNG_ID)` XOR a hardcoded static secret. So a
+captured CDN URL alone is undownloadable (the wire serves ciphertext), but WITH
+the `SNG_ID` the bytes decrypt with nothing else — exactly Mega's model (a
+capture that carries side-channel key material + a dedicated Java strategy that
+resolves the real URL and decrypts). Modelled on `MegaStrategy`/`MegaCrypto`;
+pure JDK crypto, no ffmpeg, no native, no GeckoView patch.
+
+- **Capture (`js/parsers/deezer.js`).** `filterResponseData`s the gw-light
+  gateway (`www.deezer.com/ajax/gw-light.php` — `deezer.pageTrack` /
+  `song.getListData` / `deezer.pageAlbum` / `deezer.pagePlaylist` /
+  `search.music`), **shape-walks** it for playable song objects
+  (`isSongObject`: `SNG_ID` + `SNG_TITLE` + a `TRACK_TOKEN` — the token is what
+  separates a real playable track from a search / related-item shell), and emits
+  **one entity per track**. Deliberately does NOT bake the time-limited CDN URL
+  or track token into the capture — both expire and the download can be much
+  later; the strategy re-mints them at download time from the durable cookie +
+  `SNG_ID`, so a deferred download can't go stale.
+- **What rides on the emit** (Mega's `?fk=` trick): a **synthetic URL**
+  `https://www.deezer.com/track/<SNG_ID>?fmt=<FMT>` (`SNG_ID` = decrypt input +
+  stable dedup identity; `fmt` = the best rung the file EXISTS in per
+  `FILESIZE_*`), plus the live `www.deezer.com` **session cookie** (arl + sid —
+  read with the privileged `browser.cookies.getAll`, which returns the HttpOnly
+  `arl` page JS can't). Cookie/`size` are plumbed
+  `GeckoInspectEntity`→`JsonHelper`→`GeckoInspectTask`; the cookie reuses the
+  existing `BrowserDownloadEntity.cookieHeader` field. `type:"deezer"` →
+  `UrlParser` → `UrlType.DEEZER`; `processDeezer` stamps the audio entity with
+  **no probe** (the stream is unopenable ciphertext).
+- **Download (`DeezerStrategy` + `DeezerCrypto`).** Re-mints from the cookie +
+  `SNG_ID`: `getUserData` (→ api token + `license_token`) → `song.getData` (→
+  fresh `TRACK_TOKEN`) → `media.deezer.com/v1/get_url` (→ the encrypted CDN URL,
+  **stepping the format ladder down** when the account isn't entitled —
+  `FILESIZE` says the file exists, not that this account may fetch it), then
+  streams the body through `DeezerCrypto.decryptStream` (THE stripe loop; the
+  strategy only wires HTTP + progress + cancel into it, so the harness drives
+  the real decrypt). `DeezerCrypto` holds the key derivation and is Android-free.
+- **Cardinal rule.** The media CDN (`(e-)?cdns?-proxy-*.dzcdn.net`) is
+  block-listed (`parser-blocklist.js` `deezer`) — **not for dedup but because a
+  bare catcher capture there would save UNDECRYPTABLE ciphertext** (the "block a
+  harmful capture" rationale, same as Mega). The 30s preview host
+  (`cdns-preview-*.dzcdn.net`) and the images CDN are a DIFFERENT host and left
+  alone — logged-out preview capture stays with the generic catcher.
+- **Ceiling (stated in the parser header).** Needs a LOGGED-IN session — logged
+  out, only the 30s preview exists (the Spotify case). 320/FLAC need
+  Premium/HiFi; free = 128k. **The one liability is the static Blowfish
+  `SECRET`** in `DeezerCrypto` — stable for years, but if Deezer rotates it every
+  download decrypts to garbage; it is the FIRST suspect for a Deezer regression,
+  not the transport. Verify with the crypto harness + parser replay above.
 
 ### HLS-master sites — Java enumeration, no ffmpeg probe
 
@@ -1529,14 +1584,23 @@ still does).
   claim + bounded grace, or it emits "Dailymotion video" and suppresses the
   titled emit; shipped on-device before the grace existed).
 - **For TikTok / Bluesky / Facebook / Vimeo / Rumble / Kick / Twitch /
-  Niconico / Apple Podcasts / News Over Audio / Videee changes, ALSO run
-  `node scripts/parsers-replay.mjs`** — listener-level replays of those
+  Niconico / Apple Podcasts / News Over Audio / Videee / Deezer changes, ALSO
+  run `node scripts/parsers-replay.mjs`** — listener-level replays of those
   parsers with SYNTHETIC shape-faithful bodies (built from each parser's
   documented wire shapes; no HAR fixtures). It's a regression net — a
   refactor can't silently break an extraction path, a dedup/enrichment
   cache, or an emit field — NOT proof the shapes still match the live site
   (a "site changed its API" bug needs a fresh HAR + this section's steps).
   Teeth verified by mutation: capping TikTok's deep-walk depth fails it.
+- **For Deezer decrypt changes, ALSO run `sh scripts/deezer-harness/run.sh`**
+  — a JDK-only harness driving the REAL `DeezerCrypto` (copied from app/src,
+  same package) against Blowfish key-derivation known-answer vectors from an
+  INDEPENDENT implementation (node crypto), a full encrypt→`decryptStream`
+  round trip (every-third-stripe rule, verbatim tail), the stripe-alignment
+  invariant (a 1-byte-per-read stream must yield the identical file), and the
+  progress-hook abort. `DeezerCrypto` is deliberately Android-free so it runs
+  with no stubs. The Blowfish SECRET breaking silently is the documented
+  Deezer failure mode — this pins the derivation.
 - **"Did the SITE change?" has two nets, both live-network and NEVER in CI:**
   - **`node scripts/live-canary.mjs`** (any normal network, not the agent
     sandbox — its egress blocks these hosts): fetches TODAY'S real endpoints

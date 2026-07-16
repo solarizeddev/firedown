@@ -50,6 +50,7 @@ public final class DomainDisplayNames {
         NAMES.put("mediafire.com",    "MediaFire");
         NAMES.put("mega.nz",          "MEGA");
         NAMES.put("mega.co.nz",       "MEGA");
+        NAMES.put("deezer.com",       "Deezer");
         NAMES.put("rumble.com",       "Rumble");
         NAMES.put("bitchute.com",     "BitChute");
         NAMES.put("odysee.com",       "Odysee");
