@@ -74,7 +74,22 @@ public class BaseBottomSheetDialogFragment extends BottomSheetDialogFragment {
         ViewCompat.setOnApplyWindowInsetsListener(mView, (v, windowInsets) -> {
             Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars() |
                     WindowInsetsCompat.Type.displayCutout());
-            v.setPadding(insets.left, 0, insets.right, insets.bottom);
+            // Horizontal insets only apply when the sheet spans edge-to-edge
+            // (portrait, no width cap). When bottom_sheet_max_width > 0 the sheet
+            // is width-capped and CENTERED (landscape/tablet), so it never
+            // reaches the screen's side edges — padding it by the full-window
+            // left/right inset would shove its content inward by a cutout/gesture
+            // inset that isn't near the sheet at all. That was the spurious left
+            // margin on gesture-nav devices with a landscape display cutout
+            // (e.g. Pixel 10 XL, whose camera cutout becomes a side inset when
+            // rotated); a 3-button-nav device has left/right == 0 in landscape,
+            // which is why the bug was invisible there. The bottom inset is
+            // always kept.
+            boolean widthCapped =
+                    getResources().getDimensionPixelSize(R.dimen.bottom_sheet_max_width) > 0;
+            int left = widthCapped ? 0 : insets.left;
+            int right = widthCapped ? 0 : insets.right;
+            v.setPadding(left, 0, right, insets.bottom);
             return WindowInsetsCompat.CONSUMED;
         });
     }
