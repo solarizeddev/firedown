@@ -10,11 +10,18 @@
 // writes them as "• "-prefixed, newline-separated text (the sheet renders \n as
 // line breaks). Warns if the changelog's version doesn't match status.json's
 // versionName, so a forgotten bump is caught.
+//
+// CHANGELOG.md and status.json are resolved relative to the repo root (this
+// script's parent dir), NOT the current working directory, so the script works
+// whether it's run from the repo root or from inside scripts/.
 
 import { readFileSync, writeFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 
-const CHANGELOG = 'CHANGELOG.md';
-const STATUS = 'status.json';
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
+const CHANGELOG = join(ROOT, 'CHANGELOG.md');
+const STATUS = join(ROOT, 'status.json');
 
 const md = readFileSync(CHANGELOG, 'utf8');
 
