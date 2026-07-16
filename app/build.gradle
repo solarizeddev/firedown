@@ -242,7 +242,7 @@ dependencies {
     // code). BC's lightweight crypto API builds a keypair from a raw seed on
     // every API level; used directly (no JCE provider registration), so it does
     // not clash with Android's repackaged bundled BouncyCastle.
-    implementation 'org.bouncycastle:bcprov-jdk18on:1.84'
+    implementation 'org.bouncycastle:bcprov-jdk18on:1.85'
 
     implementation 'androidx.core:core-splashscreen:1.2.0'
 
