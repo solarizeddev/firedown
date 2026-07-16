@@ -1,6 +1,7 @@
 ## [1.1.83] - 2026-07-16
 
 - Send directly — share any finished download straight to another phone over an encrypted, device-to-device connection. No upload, no account; scan a QR or tap a link to pair
+- Updated the GeckoView browser engine to 152.0.20260713164047
 - Minor bugfixes and improvements
 
 ## [1.1.82] - 2026-07-08
