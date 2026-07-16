@@ -2497,6 +2497,59 @@ rationale). New string keys (`settings_utc_timezone*`) are translated across the
 same 16 locales the JIT toggle uses; the remaining (already-partial) locales fall
 back to English (MissingTranslation isn't build-fatal here).
 
+### GeckoRuntime hardening prefs (`applyHardeningPrefs`) — privacy vs. breakage
+
+`GeckoRuntimeHelper.applyHardeningPrefs` sets a cluster of always-on IronFox-
+derived privacy prefs at boot (distinct from the user-facing HTTPS-only / disk-
+cache / Safe-Browsing toggles, which each have visible consequences and stay
+opt-in). The selection rule is **"high privacy gain, near-zero site breakage"** —
+these run for *every* user with no off switch, so a pref that silently breaks
+real sites fails the rule even if its privacy value is real. Two lessons live
+here:
+
+- **Referer `XOriginPolicy` must be `0`, NOT `2` (the pixiv-images bug).** `2`
+  means "send a cross-site Referer **only when the base domains (eTLD+1) match**",
+  which **strips the Referer entirely** on any request to a different base domain.
+  That silently breaks every site whose media/asset CDN lives on a **separate base
+  domain behind Referer-based hotlink protection** — the CDN sees no Referer and
+  returns **403**. The reported case was **pixiv**: the page is `www.pixiv.net`
+  (base `pixiv.net`) but images load from `i.pximg.net` (base `pximg.net`), so with
+  `XOriginPolicy=2` every `i.pximg.net` request 403'd while `s.pximg.net` static
+  JS/CSS (no hotlink check) still loaded — the page **rendered but showed no
+  artwork**, which reads as a Gecko/app bug, not a privacy pref. The fix is
+  `XOriginPolicy=0` (send the Referer cross-site) **with `trimmingPolicy=2`
+  retained** (trim to **origin only** — `https://www.pixiv.net/`, no path/query),
+  which is exactly stock desktop Firefox's `strict-origin-when-cross-origin` and
+  is the smallest change that satisfies the hotlink CDN. The privacy delta of `0`
+  vs `2` is only that the bare **origin** is sent cross-site (never the path) —
+  the same thing mainstream Firefox sends by default. **Never raise this back to
+  `2`** to "harden" cross-site Referer: the origin-only trim (`trimmingPolicy=2`)
+  is where the real privacy is; stripping the origin too just breaks hotlink CDNs.
+  Diagnosed by diffing two HARs of the same page — desktop Firefox sent
+  `Referer: https://www.pixiv.net/` → 200, Firedown sent no Referer → 403; the
+  Firedown HAR carried a Referer on only 3 of 75 cross-base-domain requests vs
+  Firefox's 95 of 102, the systematic tell of a strip-not-trim policy.
+- **Weigh each pref against a mobile media browser's real use, not a desktop
+  privacy checklist.** The "Cluster C fingerprinting belt-and-braces" hard-
+  disables (`dom.battery`, `dom.gamepad`, `dom.vr`, `device.sensors`,
+  `media.webspeech.synth`) are the class most likely to trip this rule next: they
+  are **redundant with FPP/RFP when those are active**, so their only marginal
+  gain is "protection persists if the user turns RFP off", yet several remove
+  **user-visible functionality** — `media.webspeech.synth.enabled=false` kills web
+  Text-to-Speech (read-aloud / "listen to this article" / language-learning
+  pronunciation — an accessibility regression), and `device.sensors.enabled=false`
+  kills DeviceOrientation/Motion (360°/panorama/tilt/AR content, which is *more*
+  common on mobile than desktop). `network.captive-portal-service.enabled=false`
+  can suppress the hotel/airport WiFi login page (mostly mitigated by Android's
+  own OS-level captive-portal detection), and the Cluster B LNA blocking
+  (`network.lna.*`) can block legitimate local-network web apps (Home Assistant /
+  Jellyfin / router-setup pages) and **interacts with the P2P loopback server**
+  (see the `setLnaBlocking(true)` note in the P2P section — the `127.0.0.1` host
+  permission is the intended exemption, verify on-device). None of these are as
+  clearly wrong as the Referer strip was, but they are the review targets if a
+  "feature X silently does nothing" report comes in — check `applyHardeningPrefs`
+  before assuming a code bug.
+
 ## UI conventions (Material 3)
 
 - **Menu rows are M3 one-line list items: 56dp tall, 16sp text
