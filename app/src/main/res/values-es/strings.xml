@@ -681,7 +681,6 @@
     <string name="p2p_progress_of">%1$s de %2$s · %3$s/s</string>
     <string name="p2p_done_sent_detail">Enviado · %1$s</string>
     <string name="p2p_done_received">Guardado en Descargas</string>
-    <string name="p2p_stop">Detener</string>
     <string name="p2p_done">Listo</string>
     <string name="p2p_error_no_path">No se pudo conectar directamente con el otro dispositivo. Esto ocurre con datos móviles o detrás de una VPN — prueba la misma red Wi-Fi, con cualquier VPN desactivada.</string>
     <string name="p2p_error_generic">La transferencia ha fallado.</string>

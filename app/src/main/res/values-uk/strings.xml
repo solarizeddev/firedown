@@ -467,7 +467,6 @@
     <string name="p2p_progress_of">%1$s із %2$s · %3$s/s</string>
     <string name="p2p_done_sent_detail">Надіслано · %1$s</string>
     <string name="p2p_done_received">Збережено в «Завантаження»</string>
-    <string name="p2p_stop">Зупинити</string>
     <string name="p2p_done">Готово</string>
     <string name="p2p_error_no_path">Не вдалося зв\'язатися з іншим пристроєм напряму. Це трапляється на мобільному інтернеті або за VPN — спробуйте одну й ту саму мережу Wi-Fi, вимкнувши VPN.</string>
     <string name="p2p_error_generic">Передавання не вдалося.</string>

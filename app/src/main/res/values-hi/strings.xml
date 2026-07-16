@@ -457,7 +457,6 @@
     <string name="p2p_progress_of">%2$s में से %1$s · %3$s/s</string>
     <string name="p2p_done_sent_detail">भेजा गया · %1$s</string>
     <string name="p2p_done_received">डाउनलोड में सहेजा गया</string>
-    <string name="p2p_stop">रोकें</string>
     <string name="p2p_done">हो गया</string>
     <string name="p2p_error_no_path">दूसरे डिवाइस से सीधे संपर्क नहीं हो सका। ऐसा मोबाइल डेटा पर या VPN के पीछे होने पर होता है — कोई भी VPN बंद करके एक ही Wi-Fi नेटवर्क आज़माएँ।</string>
     <string name="p2p_error_generic">ट्रांसफ़र विफल रहा।</string>

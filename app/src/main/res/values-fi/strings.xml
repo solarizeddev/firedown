@@ -489,7 +489,6 @@
     <string name="p2p_progress_of">%1$s / %2$s · %3$s/s</string>
     <string name="p2p_done_sent_detail">Lähetetty · %1$s</string>
     <string name="p2p_done_received">Tallennettu Lataukset-kansioon</string>
-    <string name="p2p_stop">Pysäytä</string>
     <string name="p2p_done">Valmis</string>
     <string name="p2p_error_no_path">Toiseen laitteeseen ei saatu suoraa yhteyttä. Näin käy mobiilidatalla tai VPN:n takana — kokeile samaa Wi-Fi-verkkoa ja kytke VPN pois päältä.</string>
     <string name="p2p_error_generic">Siirto epäonnistui.</string>

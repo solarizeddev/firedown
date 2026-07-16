@@ -550,7 +550,6 @@
     <string name="p2p_progress_of">%1$s de %2$s · %3$s/s</string>
     <string name="p2p_done_sent_detail">Enviado · %1$s</string>
     <string name="p2p_done_received">Salvo em Transferências</string>
-    <string name="p2p_stop">Parar</string>
     <string name="p2p_done">Concluído</string>
     <string name="p2p_error_no_path">Não foi possível alcançar o outro dispositivo diretamente. Isso acontece em dados móveis ou atrás de uma VPN — tente a mesma rede Wi-Fi, com qualquer VPN desativada.</string>
     <string name="p2p_error_generic">A transferência falhou.</string>

@@ -678,7 +678,6 @@
     <string name="p2p_progress_of">%1$s / %2$s · %3$s/s</string>
     <string name="p2p_done_sent_detail">已发送 · %1$s</string>
     <string name="p2p_done_received">已保存到下载</string>
-    <string name="p2p_stop">停止</string>
     <string name="p2p_done">完成</string>
     <string name="p2p_error_no_path">无法直接连接到另一台设备。这会在使用移动数据或经过 VPN 时发生——请关闭所有 VPN，并尝试连接到同一个 Wi-Fi 网络。</string>
     <string name="p2p_error_generic">传输失败。</string>

@@ -550,7 +550,6 @@
     <string name="p2p_progress_of">%1$s van %2$s · %3$s/s</string>
     <string name="p2p_done_sent_detail">Verzonden · %1$s</string>
     <string name="p2p_done_received">Opgeslagen in Downloads</string>
-    <string name="p2p_stop">Stoppen</string>
     <string name="p2p_done">Klaar</string>
     <string name="p2p_error_no_path">Kon het andere apparaat niet rechtstreeks bereiken. Dit gebeurt op mobiele data of achter een VPN — probeer hetzelfde Wi-Fi-netwerk, met een eventuele VPN uitgeschakeld.</string>
     <string name="p2p_error_generic">De overdracht is mislukt.</string>

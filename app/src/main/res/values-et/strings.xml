@@ -420,7 +420,6 @@
     <string name="p2p_progress_of">%1$s / %2$s · %3$s/s</string>
     <string name="p2p_done_sent_detail">Saadetud · %1$s</string>
     <string name="p2p_done_received">Salvestatud kausta Allalaadimised</string>
-    <string name="p2p_stop">Peata</string>
     <string name="p2p_done">Valmis</string>
     <string name="p2p_error_no_path">Teise seadmega ei õnnestunud otseühendust luua. See juhtub mobiilses andmesides või VPN-i taga — proovi sama Wi-Fi võrku ja lülita VPN välja.</string>
     <string name="p2p_error_generic">Ülekanne ebaõnnestus.</string>

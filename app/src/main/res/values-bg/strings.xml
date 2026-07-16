@@ -444,7 +444,6 @@
     <string name="p2p_progress_of">%1$s от %2$s · %3$s/s</string>
     <string name="p2p_done_sent_detail">Изпратено · %1$s</string>
     <string name="p2p_done_received">Запазено в Изтегляния</string>
-    <string name="p2p_stop">Спри</string>
     <string name="p2p_done">Готово</string>
     <string name="p2p_error_no_path">Не е възможна директна връзка с другото устройство. Това се случва при мобилни данни или зад VPN — опитайте една и съща Wi-Fi мрежа, с изключен VPN.</string>
     <string name="p2p_error_generic">Прехвърлянето беше неуспешно.</string>

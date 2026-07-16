@@ -678,7 +678,6 @@
     <string name="p2p_progress_of">%2$s 中 %1$s · %3$s/s</string>
     <string name="p2p_done_sent_detail">送信済み · %1$s</string>
     <string name="p2p_done_received">ダウンロードに保存しました</string>
-    <string name="p2p_stop">停止</string>
     <string name="p2p_done">完了</string>
     <string name="p2p_error_no_path">相手の端末に直接接続できませんでした。モバイルデータ通信や VPN の使用中に起こります。VPN をオフにして、同じ Wi-Fi ネットワークをお試しください。</string>
     <string name="p2p_error_generic">転送に失敗しました。</string>
