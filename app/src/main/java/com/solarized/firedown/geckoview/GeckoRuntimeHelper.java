@@ -1438,10 +1438,20 @@ public class GeckoRuntimeHelper {
         // navigator.mozAddonManager — sites probing for installed extensions
         prefs.add(GeckoPreferenceController.SetGeckoPreference.setBoolPref(
                 "extensions.webapi.enabled", false, GeckoPreferenceController.PREF_BRANCH_USER));
-        // Referer trimming — cross-site only when base-domains match,
-        // path/query stripped on every Referer (= origin only)
+        // Referer trimming — send the Referer cross-site (like stock Firefox's
+        // strict-origin-when-cross-origin), but path/query stripped on every
+        // Referer (= origin only) so no full URL leaks cross-site.
+        //
+        // XOriginPolicy was 2 ("cross-site Referer only when base-domains
+        // match"), which stripped the Referer entirely on any request to a
+        // different base domain. That broke sites whose media CDN lives on a
+        // separate base domain behind Referer-based hotlink protection: pixiv
+        // serves images from i.pximg.net (base pximg.net) while the page is
+        // www.pixiv.net (base pixiv.net), so every image 403'd with no Referer.
+        // 0 keeps the origin-only Referer (trimmingPolicy 2) that pixiv — and
+        // any such CDN — requires, matching what desktop Firefox sends.
         prefs.add(GeckoPreferenceController.SetGeckoPreference.setIntPref(
-                "network.http.referer.XOriginPolicy", 2, GeckoPreferenceController.PREF_BRANCH_USER));
+                "network.http.referer.XOriginPolicy", 0, GeckoPreferenceController.PREF_BRANCH_USER));
         prefs.add(GeckoPreferenceController.SetGeckoPreference.setIntPref(
                 "network.http.referer.trimmingPolicy", 2, GeckoPreferenceController.PREF_BRANCH_USER));
 
