@@ -2531,24 +2531,36 @@ here:
   Firefox's 95 of 102, the systematic tell of a strip-not-trim policy.
 - **Weigh each pref against a mobile media browser's real use, not a desktop
   privacy checklist.** The "Cluster C fingerprinting belt-and-braces" hard-
-  disables (`dom.battery`, `dom.gamepad`, `dom.vr`, `device.sensors`,
-  `media.webspeech.synth`) are the class most likely to trip this rule next: they
-  are **redundant with FPP/RFP when those are active**, so their only marginal
-  gain is "protection persists if the user turns RFP off", yet several remove
-  **user-visible functionality** — `media.webspeech.synth.enabled=false` kills web
-  Text-to-Speech (read-aloud / "listen to this article" / language-learning
-  pronunciation — an accessibility regression), and `device.sensors.enabled=false`
-  kills DeviceOrientation/Motion (360°/panorama/tilt/AR content, which is *more*
-  common on mobile than desktop). `network.captive-portal-service.enabled=false`
-  can suppress the hotel/airport WiFi login page (mostly mitigated by Android's
-  own OS-level captive-portal detection), and the Cluster B LNA blocking
-  (`network.lna.*`) can block legitimate local-network web apps (Home Assistant /
-  Jellyfin / router-setup pages) and **interacts with the P2P loopback server**
-  (see the `setLnaBlocking(true)` note in the P2P section — the `127.0.0.1` host
-  permission is the intended exemption, verify on-device). None of these are as
-  clearly wrong as the Referer strip was, but they are the review targets if a
-  "feature X silently does nothing" report comes in — check `applyHardeningPrefs`
-  before assuming a code bug.
+  disables are **redundant with FPP/RFP when those are active**, so their only
+  marginal gain is "protection persists if the user turns RFP off" — which does
+  not justify removing user-visible functionality. Reviewed and split:
+  - **`device.sensors.enabled` and `media.webspeech.synth.enabled` are kept
+    ENABLED** (set `true` explicitly in `applyHardeningPrefs`, not omitted, so the
+    IronFox base build's default can't turn them off). Hard-disabling them killed
+    real features on a *mobile* browser: DeviceOrientation/Motion powers
+    360°/panorama/tilt/AR content (more common on mobile than desktop), and
+    SpeechSynthesis powers read-aloud / "listen to this article" /
+    language-learning TTS — disabling it is an **accessibility regression**. Both
+    are low-entropy vectors FPP/RFP already cover when active, so the privacy
+    trade was net-negative.
+  - **`dom.battery`, `dom.gamepad`, `dom.vr` stay DISABLED** — deprecated/niche
+    APIs with near-zero real-site value here, so the hard-disable costs nothing.
+  - **The Cluster B LNA blocking (`network.lna.*`) stays ON — do NOT disable it.**
+    It is not merely a niche home-lab protection: mobile sites (notably
+    Instagram/Facebook) have been caught opening **localhost/LNA connections from
+    the page to the site's own natively-installed app** to de-anonymize and track
+    the user across the app↔web boundary (the Meta/Yandex localhost-tracking
+    technique). LNA blocking is a direct defense against that, which outweighs the
+    rare legitimate local-network web app (Home Assistant / Jellyfin / router
+    setup). It **interacts with the P2P loopback server** (see the
+    `setLnaBlocking(true)` note in the P2P section — the `127.0.0.1` host
+    permission is the intended exemption; verify on-device), but that is an
+    exemption to arrange, not a reason to drop the protection.
+  - `network.captive-portal-service.enabled=false` (Cluster A) can suppress the
+    hotel/airport WiFi login page, mostly mitigated by Android's own OS-level
+    captive-portal detection — left as-is, noted as the remaining watch item.
+  When a "feature X silently does nothing" report comes in, check
+  `applyHardeningPrefs` before assuming a code bug.
 
 ## UI conventions (Material 3)
 

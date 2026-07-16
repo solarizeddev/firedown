@@ -1467,17 +1467,27 @@ public class GeckoRuntimeHelper {
 
         // ── Cluster C: fingerprinting belt-and-braces ──────────────────────
         // RFP already neutralises most of these, but they're hard-disables
-        // here so the protection persists if RFP is toggled off.
+        // here so the protection persists if RFP is toggled off. Kept ONLY for
+        // APIs with near-zero real-site value on a mobile media browser
+        // (deprecated / niche): Battery, Gamepad, WebVR.
         prefs.add(GeckoPreferenceController.SetGeckoPreference.setBoolPref(
                 "dom.battery.enabled", false, GeckoPreferenceController.PREF_BRANCH_USER));
         prefs.add(GeckoPreferenceController.SetGeckoPreference.setBoolPref(
                 "dom.gamepad.enabled", false, GeckoPreferenceController.PREF_BRANCH_USER));
         prefs.add(GeckoPreferenceController.SetGeckoPreference.setBoolPref(
                 "dom.vr.enabled", false, GeckoPreferenceController.PREF_BRANCH_USER));
+        // device.sensors (DeviceOrientation/Motion) and media.webspeech.synth
+        // (Text-to-Speech) are deliberately kept ENABLED: hard-disabling them
+        // removed real user-visible functionality on a mobile browser —
+        // 360°/panorama/tilt/AR content, and read-aloud / "listen to this
+        // article" / language-learning TTS (an accessibility regression) — for
+        // only a marginal fingerprint gain that FPP/RFP already cover when
+        // active. Set true explicitly (not merely omitted) so they stay on
+        // regardless of the IronFox-base build default.
         prefs.add(GeckoPreferenceController.SetGeckoPreference.setBoolPref(
-                "device.sensors.enabled", false, GeckoPreferenceController.PREF_BRANCH_USER));
+                "device.sensors.enabled", true, GeckoPreferenceController.PREF_BRANCH_USER));
         prefs.add(GeckoPreferenceController.SetGeckoPreference.setBoolPref(
-                "media.webspeech.synth.enabled", false, GeckoPreferenceController.PREF_BRANCH_USER));
+                "media.webspeech.synth.enabled", true, GeckoPreferenceController.PREF_BRANCH_USER));
 
         GeckoResult<Map<String, Boolean>> result = GeckoPreferenceController.setGeckoPrefs(prefs);
         result.accept(
