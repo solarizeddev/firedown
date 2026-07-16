@@ -1,3 +1,8 @@
+## [1.1.83] - 2026-07-16
+
+- Send directly — share any finished download straight to another phone over an encrypted, device-to-device connection. No upload, no account; scan a QR or tap a link to pair
+- Minor bugfixes and improvements
+
 ## [1.1.82] - 2026-07-08
 
 - Redesigned the browser menu — one-tap bookmark star and a compact two-row action layout
