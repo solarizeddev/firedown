@@ -68,8 +68,18 @@ const CHUNK = 64 * 1024;
 const BUFFER_HIGH = 4 * 1024 * 1024;
 const BUFFER_LOW = 512 * 1024;
 const FLUSH_BYTES = 4 * 1024 * 1024;
-const CONNECT_TIMEOUT_MS = 20000;
+const CONNECT_TIMEOUT_MS = 30000;
 const GATHER_TIMEOUT_MS = 5000;
+// When TURN is configured, hold gathering longer than the soft cap: behind a
+// full-tunnel VPN the only viable pair is relay<->relay, and the relay candidate
+// often arrives late because TURN falls back to TURN-over-TCP (3478->443), which
+// routinely takes >5s through the tunnel. Bailing at the soft cap mints an SDP
+// with NO relay candidate, so the peer can never form the relay pair -> no-path.
+const RELAY_GATHER_TIMEOUT_MS = 15000;
+// A lossy relay/VPN path flaps ICE consent freshness constantly and usually
+// recovers within ~2s; debounce "disconnected" so the reconnecting spinner
+// doesn't strobe on every blip.
+const RECONNECT_DEBOUNCE_MS = 2000;
 const PROGRESS_INTERVAL_MS = 400;
 const ACK_TIMEOUT_MS = 30000;
 const DRAIN_TIMEOUT_MS = 5000;
@@ -202,26 +212,69 @@ async function newPeerConnection(ice) {
   return pc;
 }
 
-// Non-trickle: resolve once gathering completes so the emitted code carries
-// the full candidate set. The timeout returns whatever gathered so far —
-// host candidates alone still connect same-LAN pairs even if STUN is
-// unreachable (privacy setting pointing at a dead server, offline LAN).
-function waitIceComplete(pc) {
+// True when the ICE config carries a TURN server — i.e. a relay candidate is
+// expected and (for a full-tunnel-VPN pair) REQUIRED in the minted SDP.
+function wantsRelay(servers) {
+  for (let i = 0; i < servers.length; i++) {
+    const urls = servers[i] && servers[i].urls;
+    const list = Array.isArray(urls) ? urls : [urls];
+    for (let j = 0; j < list.length; j++) {
+      if (typeof list[j] === "string" && list[j].indexOf("turn:") === 0) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+// Non-trickle: resolve once gathering completes so the emitted code carries the
+// full candidate set. The soft cap (GATHER_TIMEOUT_MS) returns whatever gathered
+// so far — host candidates alone still connect same-LAN pairs even if STUN is
+// unreachable. But when TURN is configured we must NOT mint an SDP without a
+// relay candidate (it's the only viable pair behind a VPN — see
+// RELAY_GATHER_TIMEOUT_MS): at the soft cap, if we still need a relay candidate
+// and haven't gathered one, keep waiting for it (or the hard cap) instead of
+// bailing with a relay-less set.
+function waitIceComplete(pc, wantRelay) {
   return new Promise((resolve) => {
     if (pc.iceGatheringState === "complete") {
       resolve();
       return;
     }
-    const timer = setTimeout(() => {
-      log("ice gathering timeout, using partial candidate set");
+    let sawRelay = false;
+    let softElapsed = false;
+    let finished = false;
+    const finish = (reason) => {
+      if (finished) { return; }
+      finished = true;
+      clearTimeout(softTimer);
+      clearTimeout(hardTimer);
+      log("ice gathering done:", reason);
       resolve();
-    }, GATHER_TIMEOUT_MS);
-    pc.addEventListener("icegatheringstatechange", () => {
-      if (pc.iceGatheringState === "complete") {
-        clearTimeout(timer);
-        resolve();
+    };
+    pc.addEventListener("icecandidate", (ev) => {
+      const cand = ev.candidate && ev.candidate.candidate;
+      if (cand && cand.indexOf(" typ relay") !== -1) {
+        sawRelay = true;
+        // The relay candidate we were holding for arrived after the soft cap.
+        if (softElapsed) { finish("relay candidate"); }
       }
     });
+    pc.addEventListener("icegatheringstatechange", () => {
+      if (pc.iceGatheringState === "complete") { finish("complete"); }
+    });
+    const softTimer = setTimeout(() => {
+      softElapsed = true;
+      // Host/srflx have had long enough. Resolve now UNLESS we still owe a relay
+      // candidate — then hold for it (onicecandidate above) or the hard cap.
+      if (!wantRelay || sawRelay) {
+        finish("soft cap");
+      } else {
+        log("soft cap reached, holding for relay candidate");
+      }
+    }, GATHER_TIMEOUT_MS);
+    const hardTimer = setTimeout(() => finish("hard cap"),
+        wantRelay ? RELAY_GATHER_TIMEOUT_MS : GATHER_TIMEOUT_MS);
   });
 }
 
@@ -241,6 +294,8 @@ function watchConnection(s) {
     if (pc.connectionState === "connected") {
       clearTimeout(s.connectTimer);
       s.connectTimer = null;
+      clearTimeout(s.disconnectTimer);
+      s.disconnectTimer = null;
       post({ type: "state", state: "connected" });
       reportTransport(s, pc);
     } else if (pc.connectionState === "failed") {
@@ -248,9 +303,17 @@ function watchConnection(s) {
     } else if (pc.connectionState === "disconnected") {
       // Transient (NOT terminal — "failed" is): ICE consent checks are missing
       // on a lossy path (common when a peer is on a slow/full-tunnel VPN), and
-      // it usually recovers to "connected". Surface it so the UI can show a
-      // "reconnecting" spinner mid-transfer instead of a frozen bar.
-      post({ type: "state", state: "disconnected" });
+      // it usually recovers to "connected". A relayed VPN path flaps this
+      // constantly, so DEBOUNCE — only surface "reconnecting" if it persists
+      // past RECONNECT_DEBOUNCE_MS, else the spinner strobes on every blip.
+      if (!s.disconnectTimer) {
+        s.disconnectTimer = setTimeout(() => {
+          s.disconnectTimer = null;
+          if (s === session && s.pc.connectionState === "disconnected") {
+            post({ type: "state", state: "disconnected" });
+          }
+        }, RECONNECT_DEBOUNCE_MS);
+      }
     } else if (pc.connectionState === "connecting") {
       post({ type: "state", state: "connecting" });
       if (!s.connectTimer) {
@@ -352,6 +415,7 @@ function closeSession(s) {
   s.stopped = true;
   clearTimeout(s.connectTimer);
   clearTimeout(s.ackTimer);
+  clearTimeout(s.disconnectTimer);
   if (s.reader) {
     try { s.reader.cancel(); } catch (e) { /* already done */ }
     s.reader = null;
@@ -396,7 +460,9 @@ async function startSend(msg) {
   };
   session = s;
   try {
-    s.pc = await newPeerConnection(iceOf(msg));
+    const iceServers = iceOf(msg);
+    s.pc = await newPeerConnection(iceServers);
+    s.wantRelay = wantsRelay(iceServers);
     // Reliable + ordered (defaults): the file must arrive byte-exact.
     s.dc = s.pc.createDataChannel("file");
     s.dc.binaryType = "arraybuffer";
@@ -426,7 +492,7 @@ async function startSend(msg) {
     log("offer created, setting local description");
     await s.pc.setLocalDescription(offer);
     log("local description set, gathering ICE");
-    await waitIceComplete(s.pc);
+    await waitIceComplete(s.pc, s.wantRelay);
     log("ICE gathering done");
     if (s !== session || s.stopped) { return; }
 
@@ -596,12 +662,13 @@ async function acceptReceive(msg) {
   s.writeUrl = msg.writeUrl;
   try {
     s.pc = await newPeerConnection(s.ice);
+    s.wantRelay = wantsRelay(s.ice);
     s.pc.ondatachannel = (ev) => { bindReceiveChannel(s, ev.channel); };
     watchConnection(s);
     await s.pc.setRemoteDescription({ type: "offer", sdp: s.offer.sdp });
     const answer = await s.pc.createAnswer();
     await s.pc.setLocalDescription(answer);
-    await waitIceComplete(s.pc);
+    await waitIceComplete(s.pc, s.wantRelay);
     if (s !== session || s.stopped) { return; }
     const code = await encodeCode(ANSWER_PREFIX, { v: 1, sdp: s.pc.localDescription.sdp });
     if (s !== session || s.stopped) { return; }
