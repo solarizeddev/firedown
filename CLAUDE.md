@@ -598,6 +598,23 @@ and re-stamps the secondary metadatum the Downloads UI shows:
   truncated one just fails to decode. Reuses
   `FFmpegMetaDataReader.getStreams()` so the `"WxH"` / SVG-encoded-size
   formatting matches the parser path exactly.
+- **The refresh probe is de-duplicated and watchdog-bounded — keep both.** A
+  strategy that ALREADY probed the finished output file hands the duration over
+  via `DownloadCallback.onFileDurationProbed` (sealed-exempt, like
+  `onFileSizeKnown`) and the refresh **skips its own probe** — SABR's
+  inline-mux validation (`probePlayableDuration`) is the case: without the
+  hand-off every SABR finish probed the same file twice within a second, and on
+  a user-finished (partial) download the SECOND probe was observed **wedging
+  forever on-device** — the download thread never returned from native, so
+  `onRunComplete`'s FINISHED write never landed and the row sat on "Finishing…"
+  indefinitely (logcat tell: `Inline fMP4 mux succeeded` is the last line, no
+  `recycleTask`). For probes that still run, a **watchdog** (30 s, shared
+  daemon scheduler in `DownloadTask`) calls `reader.stop()` — the non-blocking
+  native AVIO interrupt, the same unwind a user Stop / tab-close uses on
+  capture probes — with a lock ordering watchdog-stop before `release()`
+  (the GeckoInspectTask rule: never `stop()` a freed reader). This is the
+  sanctioned use of a timer per the timer-vs-count rule: an unbounded external
+  wait (native/FUSE) with a correct fallback (keep/clear the stored duration).
 
 ### HTML character references in scraped titles/descriptions
 
