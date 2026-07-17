@@ -23,6 +23,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.WeakHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Consumer;
@@ -42,6 +44,32 @@ public class DownloadDataRepository {
     private final Executor mDiskExecutor;
     private final Executor mHeavyExecutor;
 
+    /**
+     * Live PagingSources of the download table (Downloads + Vault streams),
+     * weakly held, registered by {@code DownloadsViewModel.createPagingSource}.
+     *
+     * <p><b>Why this exists:</b> Room's InvalidationTracker can drop the LAST
+     * write of a rapid burst — observed on-device (Room 2.8.4, Samsung): a
+     * user-finished SABR download writes PROGRESS+PROCESSING then FINISHED
+     * ~100 ms apart, the FINISHED row lands in the DB, but no new paging
+     * generation ever fires (the ViewModel's "new paging generation"
+     * checkpoint stays silent), so the row sits on "Finishing…" until the
+     * screen is re-entered. Intermittent — the refresh pass that serviced the
+     * first write's invalidation swallows the second's. Same lost-invalidation
+     * class as the recycled-connection saga (see CLAUDE.md "Room
+     * invalidation"), surviving persistent tracking mode.
+     *
+     * <p>The belt: after every write on the DiskIO lane the repository
+     * invalidates the registered sources DIRECTLY ({@link PagingSource#invalidate}
+     * is public, thread-safe and idempotent — a no-op when Room's tracker
+     * already invalidated the source first), so a new generation is guaranteed
+     * whether or not the tracker delivered. Registry is cleared on each poke:
+     * an invalidated source is dead, and its replacement re-registers when the
+     * Pager instantiates it.
+     */
+    private final Set<PagingSource<?, ?>> mActivePagingSources =
+            Collections.newSetFromMap(new WeakHashMap<>());
+
     @Inject
     public DownloadDataRepository(@ApplicationContext Context context,
                                   DownloadDatabase database,
@@ -51,6 +79,36 @@ public class DownloadDataRepository {
         this.mDatabase = database;
         this.mDiskExecutor = diskExecutor;
         this.mHeavyExecutor = heavyExecutor;
+    }
+
+    /** Registers a live PagingSource for the direct-invalidation belt — see
+     *  {@link #mActivePagingSources}. Called from the ViewModel's paging
+     *  factory for every source it creates. */
+    public void registerActivePagingSource(PagingSource<?, ?> source) {
+        if (source == null) {
+            return;
+        }
+        synchronized (mActivePagingSources) {
+            mActivePagingSources.add(source);
+        }
+    }
+
+    /** Invalidates (and forgets) every registered PagingSource. Called at the
+     *  end of every DiskIO write lambda so a new paging generation is
+     *  guaranteed even when Room's InvalidationTracker drops the write's
+     *  notification — see {@link #mActivePagingSources}. */
+    private void invalidateActivePagingSources() {
+        List<PagingSource<?, ?>> sources;
+        synchronized (mActivePagingSources) {
+            if (mActivePagingSources.isEmpty()) {
+                return;
+            }
+            sources = new ArrayList<>(mActivePagingSources);
+            mActivePagingSources.clear();
+        }
+        for (PagingSource<?, ?> source : sources) {
+            source.invalidate();
+        }
     }
 
     // --- Paging Queries ---
@@ -144,19 +202,25 @@ public class DownloadDataRepository {
      */
     public void add(DownloadEntity download) {
         DownloadEntity snapshot = new DownloadEntity(download);
-        mDiskExecutor.execute(() -> mDatabase.downloadDao().insert(snapshot));
-
+        mDiskExecutor.execute(() -> {
+            mDatabase.downloadDao().insert(snapshot);
+            invalidateActivePagingSources();
+        });
     }
 
     public void addSync(DownloadEntity download) {
         DownloadEntity snapshot = new DownloadEntity(download);
-        mDiskExecutor.execute(() -> mDatabase.downloadDao().insertSync(snapshot));
-
+        mDiskExecutor.execute(() -> {
+            mDatabase.downloadDao().insertSync(snapshot);
+            invalidateActivePagingSources();
+        });
     }
 
     public void insertAllSync(List<DownloadEntity> entityList) {
-        mDiskExecutor.execute(() -> mDatabase.downloadDao().insertAll(entityList));
-
+        mDiskExecutor.execute(() -> {
+            mDatabase.downloadDao().insertAll(entityList);
+            invalidateActivePagingSources();
+        });
     }
 
     /**
@@ -172,8 +236,10 @@ public class DownloadDataRepository {
      * runs on the main thread.</p>
      */
     public void setThumbnailUnavailable(int id, boolean unavailable) {
-        mDiskExecutor.execute(() ->
-                mDatabase.downloadDao().setThumbnailUnavailableSync(id, unavailable));
+        mDiskExecutor.execute(() -> {
+            mDatabase.downloadDao().setThumbnailUnavailableSync(id, unavailable);
+            invalidateActivePagingSources();
+        });
     }
 
     /**
@@ -232,6 +298,7 @@ public class DownloadDataRepository {
                     return;
                 }
                 mDatabase.downloadDao().insert(newEntity);
+                invalidateActivePagingSources();
             });
         });
     }
@@ -241,6 +308,7 @@ public class DownloadDataRepository {
         mDiskExecutor.execute(() -> {
             mDatabase.downloadDao().deleteSyncEntity(download);
             deleteFilesInternal(Collections.singletonList(download));
+            invalidateActivePagingSources();
         });
     }
 
@@ -251,6 +319,7 @@ public class DownloadDataRepository {
         mDiskExecutor.execute(() -> {
             mDatabase.downloadDao().deleteSyncEntity(download);
             deleteFilesInternal(Collections.singletonList(download));
+            invalidateActivePagingSources();
             if (onComplete != null) onComplete.run();
         });
     }
@@ -291,6 +360,7 @@ public class DownloadDataRepository {
                 Log.d(TAG, "deleteDownloads: requested=" + downloads.size()
                         + " rowsRemoved=" + removed + " needGrant=" + needGrant.size());
             }
+            invalidateActivePagingSources();
             if (onComplete != null) onComplete.accept(needGrant);
         });
     }

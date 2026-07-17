@@ -603,18 +603,20 @@ and re-stamps the secondary metadatum the Downloads UI shows:
   via `DownloadCallback.onFileDurationProbed` (sealed-exempt, like
   `onFileSizeKnown`) and the refresh **skips its own probe** — SABR's
   inline-mux validation (`probePlayableDuration`) is the case: without the
-  hand-off every SABR finish probed the same file twice within a second, and on
-  a user-finished (partial) download the SECOND probe was observed **wedging
-  forever on-device** — the download thread never returned from native, so
-  `onRunComplete`'s FINISHED write never landed and the row sat on "Finishing…"
-  indefinitely (logcat tell: `Inline fMP4 mux succeeded` is the last line, no
-  `recycleTask`). For probes that still run, a **watchdog** (30 s, shared
-  daemon scheduler in `DownloadTask`) calls `reader.stop()` — the non-blocking
-  native AVIO interrupt, the same unwind a user Stop / tab-close uses on
-  capture probes — with a lock ordering watchdog-stop before `release()`
-  (the GeckoInspectTask rule: never `stop()` a freed reader). This is the
-  sanctioned use of a timer per the timer-vs-count rule: an unbounded external
-  wait (native/FUSE) with a correct fallback (keep/clear the stored duration).
+  hand-off every SABR finish probed the same file twice within a second. For
+  probes that still run, a **watchdog** (30 s, shared daemon scheduler in
+  `DownloadTask`) calls `reader.stop()` — the non-blocking native AVIO
+  interrupt, the same unwind a user Stop / tab-close uses on capture probes —
+  with a lock ordering watchdog-stop before `release()` (the GeckoInspectTask
+  rule: never `stop()` a freed reader). This is the sanctioned use of a timer
+  per the timer-vs-count rule: an unbounded external wait (native/FUSE) with a
+  correct fallback (keep/clear the stored duration). (History: the duplicate
+  probe was first suspected of *wedging* when a user-finished download's row
+  stuck on "Finishing…" forever — boundary logs later proved the pipeline
+  completes in milliseconds and the row was stuck because the FINISHED write's
+  **Room invalidation was lost**, see "Room invalidation" → the paging
+  direct-invalidation belt. The de-dup and watchdog remain as efficiency +
+  defense-in-depth.)
 
 ### HTML character references in scraped titles/descriptions
 
@@ -1055,6 +1057,27 @@ negligible here. Related: raw writes via `getOpenHelper()` (the backup
 mirror's import) bypass Room's auto-refresh even with working tracking; the
 persistent triggers still mark the change, which the next Room-managed write
 flushes to observers.
+
+**The Downloads paging list ALSO has a direct-invalidation belt — keep it.**
+Persistent tracking mode did not close every invalidation hole: on-device
+(Room 2.8.4, Samsung) the tracker was observed **dropping the LAST write of a
+rapid burst** — a user-finished SABR download writes PROGRESS+PROCESSING then
+FINISHED ~100 ms apart, the FINISHED row lands in the DB, but no new paging
+generation ever fires, so the row sits on an indeterminate "Finishing…"
+until the screen is re-entered (intermittent; diagnosed with the checkpoint
+logs: `DownloadTask` "final write queued" present, `DownloadsViewModel`
+"downloads: new paging generation" absent — that pair is the tell for this
+class). The belt: `DownloadsViewModel.createPagingSource` registers every
+source it creates via `DownloadDataRepository.registerActivePagingSource`,
+and every repository write lambda on the DiskIO lane ends with
+`invalidateActivePagingSources()` — a **direct `PagingSource.invalidate()`**
+(public, thread-safe, idempotent; a no-op when Room's tracker already
+invalidated first), so a fresh generation is guaranteed per write regardless
+of tracker races. The registry is weak + cleared on each poke (an invalidated
+source is dead; its replacement re-registers on creation). Known limit: plain
+LiveData queries (the aggregates/section headers) have no invalidate() and
+still depend on the tracker — a dropped notification there self-heals on the
+next write; only the paging list has the belt.
 
 **Persistent mode is a ONE-WAY door — never run a pre-fix binary on a
 post-fix database.** The fixed build writes persistent triggers
