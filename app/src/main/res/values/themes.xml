@@ -267,16 +267,19 @@
             activity theme: GeckoAppShell.getSystemColors() resolves
             android.R.attr.colorAccent against getApplicationContext(), and
             widget/android/nsLookAndFeel.cpp paints ColorID::Highlight (the
-            ::selection background) as that accent at ~30% alpha. This theme is
-            the manifest <application> theme, and its Theme.SplashScreen parent
-            chain bottoms out in the platform DeviceDefault theme — so without
-            this item the selection color is whatever the OEM's DeviceDefault
-            accent happens to be (a near-invisible dark tone on several OEM dark
-            themes). Must be the PLATFORM android:colorAccent — GeckoView
-            queries the framework attr, so the AppCompat/Material colorAccent
-            never reaches it. Keep this in the SplashScreen theme even though
-            activities swap to postSplashScreenTheme: the application context's
-            theme never changes, and it is the only theme Gecko reads.
+            ::selection background) as that accent at ~30% alpha. Must be the
+            PLATFORM android:colorAccent — GeckoView queries the framework
+            attr, so the AppCompat/Material colorAccent never reaches it.
+            CRUCIAL PAIRING: declaring this theme on <application> in the
+            manifest does NOT make the application context use it — Android
+            only applies the manifest theme to Activities; a bare application
+            context falls back to the platform DeviceDefault theme
+            (ContextImpl.getTheme → Resources.selectDefaultTheme). App.onCreate
+            therefore calls setTheme(R.style.Theme_FireDown_SplashScreen) on
+            the application context; this item is only effective through that
+            call. Without the pair, selection is whatever the OEM's
+            DeviceDefault accent happens to be (a near-invisible dark tone on
+            several OEM dark themes).
         -->
         <item name="android:colorAccent">@color/md_theme_primary</item>
         // Set the splash screen background, animated icon, and animation duration.
