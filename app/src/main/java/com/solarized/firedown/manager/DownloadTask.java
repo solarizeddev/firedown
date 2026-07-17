@@ -188,6 +188,13 @@ public class DownloadTask implements DownloadCallback {
             // sealWithStatus, or ERROR from onError). For SABR/FFmpeg finish,
             // onFileSizeKnown already updated the size before we get here.
             if (entity.getFileStatus() == Download.FINISHED) {
+                // A user-finished row otherwise keeps PROCESSING_PROGRESS (101)
+                // forever: the stopped path never reports 100%, and the restore
+                // above only fixes the STATUS. Normalize so a FINISHED row never
+                // carries the transient "Finishing…" progress sentinel into the DB.
+                if (entity.getFileProgress() == Download.PROCESSING_PROGRESS) {
+                    entity.setFileProgress(100);
+                }
                 refreshMetadataFromFile();
             }
             repository.add(entity);
