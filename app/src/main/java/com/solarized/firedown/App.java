@@ -88,6 +88,7 @@ public class App extends Application implements Configuration.Provider{
         // persisted. The handler stores to filesDir/crashes/ which is
         // shared across all processes of the app.
         mAppContext = getApplicationContext();
+        CrashHandler.install(mAppContext);
         // Stamp the manifest <application> theme onto the APPLICATION CONTEXT.
         // Android never does this by itself: ContextImpl.getTheme() falls back
         // to the platform default DeviceDefault theme when nothing called
@@ -102,8 +103,12 @@ public class App extends Application implements Configuration.Provider{
         // several OEM themes. Must run before the GeckoRuntime exists (the
         // colors are cached at first query); keep it ahead of super.onCreate()
         // so no Hilt-constructed dependency can create the runtime first.
+        // Side-effect audit: nothing else reads this theme — no view is ever
+        // inflated from the app context here, and the only themed reader is
+        // Gecko's getSystemColors. Its non-accent attrs shift from the
+        // always-light platform default to the splash chain's DeviceDefault
+        // day/night variants — same OEM family, now mode-correct.
         setTheme(R.style.Theme_FireDown_SplashScreen);
-        CrashHandler.install(mAppContext);
         if (BuildConfig.DEBUG) {
             StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()
                     .detectDiskReads()
