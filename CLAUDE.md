@@ -2529,6 +2529,22 @@ here:
   `Referer: https://www.pixiv.net/` → 200, Firedown sent no Referer → 403; the
   Firedown HAR carried a Referer on only 3 of 75 cross-base-domain requests vs
   Firefox's 95 of 102, the systematic tell of a strip-not-trim policy.
+  - **The long-press "save image" download needs the SAME Referer, set
+    separately.** The XOriginPolicy fix only covers what *GeckoView* fetches
+    while rendering the page. Saving an image via the browser context menu
+    (`BrowserFragment` `contextmenu_save_image`) builds a **bare native
+    `DownloadRequest`** that goes straight to `HttpDownloadStrategy` with the
+    URL + cookies but **no Referer** — so pixiv's `i.pximg.net` 403s it (the
+    same hotlink check, now hit by OkHttp instead of Gecko). Fix: the save-image
+    branch sets `.headers(BrowserHeaders.refererOriginHeaders(pageUri))`, where
+    `pageUri` is the context element's `baseUri` (the document URL) — trimmed to
+    **origin + "/"** (`https://www.pixiv.net/`, matching the browser's
+    cross-origin Referer). It threads through `DownloadRequest.headers` →
+    `DownloadContext` → every `HttpDownloadStrategy` request; `OriginInterceptor`
+    does NOT promote it to an `Origin` (no `Sec-Fetch-Site: same-origin`), so it
+    stays a Referer-only image GET like the browser's. Any other native
+    re-fetch of a page sub-resource is exposed to the same hotlink 403 —
+    reproduce the page's Referer, don't strip it.
 - **Weigh each pref against a mobile media browser's real use, not a desktop
   privacy checklist.** The "Cluster C fingerprinting belt-and-braces" hard-
   disables are **redundant with FPP/RFP when those are active**, so their only
