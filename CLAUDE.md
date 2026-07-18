@@ -1954,11 +1954,14 @@ Mitigation shipped here: `GeckoRuntimeHelper.applySelectionVisibilityPref()`
 sets `ui.textSelectDisabledBackground` = `rgba(240,113,108,0.35)` (brand
 coral, a hair off the active 78/255 alpha so `EnsureDifferentColors` doesn't
 nudge it) — the disabled state becomes visually identical to the active one,
-which is the right UX for a single-window phone browser anyway. **Root fix
-pending in the firedown-geckoview fork**: `nsWindow::Destroy()` must re-raise
-the next visible top-level window when the destroyed window was list-top
-(mirror the `Show(false)` path), and optionally `UserActivity()` should also
-`BringToFront()` when the focus manager has no active window. Diagnostic
+which is the right UX for a single-window phone browser anyway. **Root fix:
+firedown-geckoview patch `0008-android-window-activation-wedge.sh`** (marker
+`FIREDOWN-WINDOW-ACTIVATION`): tracks the activation holder explicitly,
+`Destroy()` hands activation to the next visible top-level window (async),
+`BringToFront()`'s guard requires the holder identity (not just "some active
+window exists"), and `UserActivity()` self-heals on touch. Reaches the app
+only via a GeckoView rebuild + `GECKOVIEW_BUILD_DATE` bump. The pref
+mitigation stays even then (covers genuinely-unfocused paint). Diagnostic
 probe (about:config, no build needed): set `ui.textSelectDisabledBackground`
 to `#ff0000` — selection turning red proves the disabled-state wedge; a
 selection that follows `ui.highlight` instead means focus is fine and the
