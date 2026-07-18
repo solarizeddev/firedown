@@ -76,11 +76,18 @@ public final class GeckoStateObserver implements Observer<List<GeckoStateEntity>
         JSONObject o = new JSONObject();
         o.put(GeckoStateEntity.KEYS.DATE, e.getCreationDate());
         o.put(GeckoStateEntity.KEYS.UPDATE, e.getLastAccess());
-        o.put(GeckoStateEntity.KEYS.ICON, e.getIcon());
+        // Drop inline blobs (data: URIs / oversized strings) from ICON and
+        // PREVIEW so the sessions file can't grow without bound — the root of
+        // the OOM boot loop (issue #292). See
+        // GeckoStateDataRepository.sanitizeInlineField, the shared rule the
+        // read side applies too.
+        o.put(GeckoStateEntity.KEYS.ICON,
+                GeckoStateDataRepository.sanitizeInlineField(e.getIcon()));
         o.put(GeckoStateEntity.KEYS.ICON_RESOLUTION, e.getIconResolution());
         o.put(GeckoStateEntity.KEYS.THUMB, e.getThumb());
         o.put(GeckoStateEntity.KEYS.SESSION, e.getSessionState());
-        o.put(GeckoStateEntity.KEYS.PREVIEW, e.getPreview());
+        o.put(GeckoStateEntity.KEYS.PREVIEW,
+                GeckoStateDataRepository.sanitizeInlineField(e.getPreview()));
         o.put(GeckoStateEntity.KEYS.URI, e.getUri());
         o.put(GeckoStateEntity.KEYS.ID, e.getId());
         o.put(GeckoStateEntity.KEYS.PARENT_ID, e.getParentId());
