@@ -1911,6 +1911,59 @@ which starts/updates the service directly (the tell was that the controller alre
 *stopped* it directly via `stopService()` — only start was UI-delegated). So the
 notification follows actual playback, including a background tab that autoplays.
 
+### Text-selection highlight — the grey-selection wedge (window activation)
+
+Web-page text selection painting **opaque grey `#AAAAAA`** instead of the brand
+coral wash is NOT a color/theme bug — it's Gecko's **disabled (unfocused
+document) selection state**, and on this app it gets **permanently wedged**.
+The color chain has three layers, each fixed/mitigated separately:
+
+1. **The accent itself.** `::selection` (ColorID::Highlight) = the Android
+   theme's `android.R.attr.colorAccent` @ ~30% alpha, resolved by
+   `GeckoAppShell.getSystemColors()` against the **application context's**
+   theme. Android never applies the manifest `<application>` theme to that
+   context (only Activities get it; `ContextImpl.getTheme()` falls back to
+   platform DeviceDefault), so `App.onCreate` calls
+   `setTheme(R.style.Theme_FireDown_SplashScreen)` and that theme carries
+   `android:colorAccent = md_theme_primary`. **Both halves are required** —
+   the theme item alone is a silent no-op. Verified by the selection HANDLES
+   turning coral (they read the accent directly).
+2. **The ON/DISABLED state machine.** The accent wash is painted only while
+   the selection's document has DOM focus (`nsFrameSelection::
+   WillFocusDocument` → SELECTION_ON); a blurred/never-focused document
+   paints `TextSelectDisabledBackground` (`#AAAAAA`) — the same grey desktop
+   Firefox shows for a background window's selection. Document focus on
+   Android = `session.setFocused(true)` → chrome `browser.focus()`, driven
+   solely by the GeckoView's **Android view focus**.
+3. **The wedge (the real bug, lives in `widget/android/nsWindow.cpp`).**
+   `nsWindow::Show(true)` unconditionally `BringToFront()`s a newly shown
+   Gecko window — **every hidden GeckoSession this app opens (PoToken mint,
+   P2P engine) deactivates the visible tab's window and blurs its
+   document** — and `nsWindow::Destroy()` removes a window from
+   `gTopLevelWindows` **without re-activating the next one**. So
+   hidden-session churn leaves the tab window "list-top but not
+   focus-manager-active": `UserActivity()` no-ops (already list-top),
+   `GeckoView.requestFocus()` no-ops (already view-focused), and
+   `setFocused(true)` → `browser.focus()` dies in
+   `nsFocusManager::SetFocusInner` (`sendFocusEvent` requires
+   `isElementInActiveWindow`). **No app-side API can exit this state.**
+   Stock Fenix never trips it (no hidden-window churn), which is why the bug
+   is invisible upstream.
+
+Mitigation shipped here: `GeckoRuntimeHelper.applySelectionVisibilityPref()`
+sets `ui.textSelectDisabledBackground` = `rgba(240,113,108,0.35)` (brand
+coral, a hair off the active 78/255 alpha so `EnsureDifferentColors` doesn't
+nudge it) — the disabled state becomes visually identical to the active one,
+which is the right UX for a single-window phone browser anyway. **Root fix
+pending in the firedown-geckoview fork**: `nsWindow::Destroy()` must re-raise
+the next visible top-level window when the destroyed window was list-top
+(mirror the `Show(false)` path), and optionally `UserActivity()` should also
+`BringToFront()` when the focus manager has no active window. Diagnostic
+probe (about:config, no build needed): set `ui.textSelectDisabledBackground`
+to `#ff0000` — selection turning red proves the disabled-state wedge; a
+selection that follows `ui.highlight` instead means focus is fine and the
+accent pipeline is the suspect.
+
 ## Page titles, history, bookmarks & favicons
 
 Aligned with current Firefox for Android. The spine is one invariant:

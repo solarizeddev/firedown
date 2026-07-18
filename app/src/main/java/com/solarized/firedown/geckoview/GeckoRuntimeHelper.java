@@ -227,6 +227,56 @@ public class GeckoRuntimeHelper {
         // These have no UI toggle — the privacy gain is high enough and the
         // breakage low enough that it's not a meaningful choice to expose.
         applyHardeningPrefs();
+        applySelectionVisibilityPref();
+    }
+
+    /**
+     * Make web-page text selection visible even when Gecko paints it in the
+     * "disabled" (unfocused-document) state — the GREY #AAAAAA wash.
+     *
+     * <p>Why this exists (the full chain, traced through Gecko 152 source and
+     * confirmed on-device with the {@code ui.textSelectDisabledBackground}
+     * red-probe): a selection is painted with the accent color (ColorID::
+     * Highlight = colorAccent @ ~30% alpha) ONLY while its document's frame
+     * selection is SELECTION_ON, which requires the content document to have
+     * DOM focus ({@code nsFrameSelection::WillFocusDocument}); a blurred or
+     * never-focused document paints TextSelectDisabledBackground instead
+     * (nsTextPaintStyle's default branch). On Android, window activation —
+     * the precondition for that document focus — is owned by
+     * {@code widget/android/nsWindow}: {@code Show(true)} unconditionally
+     * BringToFront()s a newly shown Gecko window (deactivating the visible
+     * tab's window and blurring its document), and {@code Destroy()} removes
+     * a window from the top-level list WITHOUT re-activating the next one.
+     * So any hidden GeckoSession this app opens and closes (PoToken minting,
+     * the P2P share engine) leaves the visible tab's window "list-top but
+     * not focus-manager-active" — a WEDGED state no app-side API can exit:
+     * UserActivity() no-ops (already list-top), GeckoView.requestFocus()
+     * no-ops (already view-focused), and setFocused(true) → browser.focus()
+     * dies in nsFocusManager::SetFocusInner ({@code sendFocusEvent} requires
+     * {@code isElementInActiveWindow}). Stock Fenix never trips this because
+     * it doesn't churn hidden windows mid-session.
+     *
+     * <p>The ROOT fix belongs in the firedown-geckoview fork
+     * (nsWindow::Destroy must re-raise the next visible top-level window,
+     * mirroring the Show(false) path). Until that ships, this pref paints
+     * the disabled state in the same brand wash as the active state —
+     * #f0716c at 0.35 alpha, deliberately a hair off the active 78/255 so
+     * nsTextPaintStyle's EnsureDifferentColors doesn't nudge it — which is
+     * the correct look for a phone browser anyway: single-window UX has no
+     * "unfocused pane" concept worth a distinct grey.
+     */
+    @OptIn(markerClass = ExperimentalGeckoViewApi.class)
+    private void applySelectionVisibilityPref() {
+        GeckoResult<Void> geckoResult = GeckoPreferenceController.setGeckoPref(
+                "ui.textSelectDisabledBackground", "rgba(240, 113, 108, 0.35)",
+                GeckoPreferenceController.PREF_BRANCH_USER);
+        geckoResult.accept(
+                unused -> {
+                    if (BuildConfig.DEBUG) {
+                        Log.d(TAG, "applySelectionVisibilityPref: set");
+                    }
+                },
+                throwable -> Log.w(TAG, "applySelectionVisibilityPref failed", throwable));
     }
 
     private void setupWebExtensions() {
