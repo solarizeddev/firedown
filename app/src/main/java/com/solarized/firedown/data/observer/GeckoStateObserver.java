@@ -8,6 +8,7 @@ import androidx.lifecycle.Observer;
 
 import com.solarized.firedown.BuildConfig;
 import com.solarized.firedown.StoragePaths;
+import com.solarized.firedown.data.SessionStateStore;
 import com.solarized.firedown.data.TabIconStore;
 import com.solarized.firedown.data.di.Qualifiers;
 import com.solarized.firedown.data.entity.GeckoStateEntity;
@@ -109,6 +110,7 @@ public final class GeckoStateObserver implements Observer<List<GeckoStateEntity>
         File targetFile = new File(dir, GeckoStateDataRepository.FILE);
         File tempFile = new File(dir, GeckoStateDataRepository.FILE + ".tmp");
         Set<String> referencedIcons = new HashSet<>();
+        Set<String> referencedStates = new HashSet<>();
         boolean written = false;
 
         // Phase 1 — stream the document to the temp file. The failWrite
@@ -133,7 +135,25 @@ public final class GeckoStateObserver implements Observer<List<GeckoStateEntity>
                         if (TabIconStore.isStorePath(mContext, iconRef)) {
                             referencedIcons.add(iconRef);
                         }
-                        writeEntity(writer, entity, iconRef);
+                        // Session state (v3): a tab holding a LIVE string
+                        // (opened this run, or read from a v2 file) is
+                        // externalized — content-hash, so an unchanged state
+                        // re-hits its existing file and costs nothing (this is
+                        // Chromium's dirty-only save, for free). A restored,
+                        // never-opened tab holds only its ref — CARRY it
+                        // through untouched; the observer never needs to read
+                        // state bytes.
+                        String stateRef;
+                        String liveState = entity.getSessionState();
+                        if (!liveState.isEmpty()) {
+                            stateRef = SessionStateStore.externalize(mContext, liveState);
+                        } else {
+                            stateRef = entity.getSessionStateRef();
+                        }
+                        if (SessionStateStore.isStorePath(mContext, stateRef)) {
+                            referencedStates.add(stateRef);
+                        }
+                        writeEntity(writer, entity, iconRef, stateRef);
                     }
                 }
                 writer.endArray();
@@ -163,32 +183,41 @@ public final class GeckoStateObserver implements Observer<List<GeckoStateEntity>
             }
         }
 
-        // Prune only after a committed persist: the referenced set mirrors the
+        // Prune only after a committed persist: the referenced sets mirror the
         // file that is now live. Racing a concurrent Glide read of a pruned
         // icon is safe — unlink during an open read is fine on Linux, and a
         // later cache-miss load falls back to the generated domain thumbnail
-        // (GlideHelper's failure listener).
+        // (GlideHelper's failure listener). Session-state files use the
+        // GRACE-based prune (touch referenced, delete unreferenced only after
+        // RETENTION_MS) so a close-undo or any read race finds its file
+        // intact — see SessionStateStore's class doc for the Chromium lessons
+        // this encodes. The referenced set is complete because the tab ARCHIVE
+        // never holds refs (state is inlined into Room at archive time).
         TabIconStore.prune(mContext, referencedIcons);
+        SessionStateStore.prune(mContext, referencedStates);
     }
 
     /**
-     * One tab as v2 JSON. The shape here is the contract the STRICT reader
+     * One tab as v3 JSON. The shape here is the contract the STRICT reader
      * ({@code GeckoStateDataRepository.readEntityStrict}) enforces — add a key
      * in BOTH places and bump {@code SESSION_FILE_VERSION} if the change isn't
-     * backward-readable. No PREVIEW and no inline {@code data:} icon, ever
-     * (the caller already externalized the icon to {@code iconRef}). Nullable
-     * strings are written as {@code ""} so the reader needs no null handling
-     * for a writer-controlled file.
+     * backward-readable. No PREVIEW, no inline {@code data:} icon, and no
+     * inline SESSION string, ever — the caller externalized the icon to
+     * {@code iconRef} and the session state to {@code stateRef}
+     * ({@code SessionStateStore}); v3 writes only references, which is what
+     * makes the boot read O(opened tabs). Nullable strings are written as
+     * {@code ""} so the reader needs no null handling for a writer-controlled
+     * file.
      */
-    private void writeEntity(JsonWriter writer, GeckoStateEntity e, String iconRef)
-            throws IOException {
+    private void writeEntity(JsonWriter writer, GeckoStateEntity e, String iconRef,
+                             String stateRef) throws IOException {
         writer.beginObject();
         writer.name(GeckoStateEntity.KEYS.DATE).value(e.getCreationDate());
         writer.name(GeckoStateEntity.KEYS.UPDATE).value(e.getLastAccess());
         writer.name(GeckoStateEntity.KEYS.ICON).value(orEmpty(iconRef));
         writer.name(GeckoStateEntity.KEYS.ICON_RESOLUTION).value(e.getIconResolution());
         writer.name(GeckoStateEntity.KEYS.THUMB).value(orEmpty(e.getThumb()));
-        writer.name(GeckoStateEntity.KEYS.SESSION).value(orEmpty(e.getSessionState()));
+        writer.name(GeckoStateEntity.KEYS.SESSION_REF).value(orEmpty(stateRef));
         writer.name(GeckoStateEntity.KEYS.URI).value(orEmpty(e.getUri()));
         writer.name(GeckoStateEntity.KEYS.ID).value(e.getId());
         writer.name(GeckoStateEntity.KEYS.PARENT_ID).value(e.getParentId());

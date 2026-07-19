@@ -1800,7 +1800,7 @@ The invariants, each protecting against a shipped bug:
   session's deactivation through its `GeckoState` (`findGeckoStateBySession`)
   so the prompt-dismissal hook fires on the mCurrentId-drift re-attach too.
 
-## Tab persistence — the sessions file (v2, Fenix parity; issue #292 OOM)
+## Tab persistence — the sessions file (v3, Fenix + Chromium hybrid; issue #292 OOM)
 
 The tab list persists to `filesDir/com_solarized_firedown_sessions.json`,
 written by `GeckoStateObserver` and read at boot by
@@ -1815,25 +1815,21 @@ main-thread alloc). Everything below mirrors Firefox for Android
 (android-components `SessionStorage`/`BrowserStateWriter+Reader`); don't
 regress any layer independently:
 
-- **v2 versioned document, streamed both directions.** The file is
-  `{"version":2,"tabs":[…]}` streamed with `android.util.JsonWriter`/`JsonReader`
-  — never a whole-file String or parsed tree in either direction. The v2 shape
-  is **writer-controlled and read STRICTLY** (`readEntityStrict` — exact types,
-  unknown key/version THROWS → file moved aside; leniency there would only mask
-  writer bugs, Fenix's `BrowserStateReader` stance). **Forward-compat shim
-  (reader ships ahead of the writer — Chromium's format-rollout practice):
-  this build also READS v3** (`MAX_READABLE_SESSION_FILE_VERSION`), the
-  per-tab-session-state-files format that replaces the inline `session`
-  string with a `session_ref` file path — the ref is resolved INLINE at read
-  time (`readSessionStateFile`, total: missing file → `""` → that tab loads
-  by URL), so a downgrade from the v3 branch loses no tabs and the next
-  persist rewrites plain v2. Don't remove the shim before/while the v3
-  branch exists — without it a v3 file is moved aside = one-time tab reset. A legacy bare-ARRAY file
-  (pre-v2 builds) is detected by the first token and read through the LENIENT
-  per-field readers (`next*Safe` — total by design: a bad field falls to its
-  default, never nukes the file; note `JsonReader.nextLong/nextInt` throw
-  WITHOUT consuming the token, hence each catch's `skipValue()`). That lenient
-  path is one-time migration — the next persist rewrites v2. Adding a field =
+- **Versioned document, streamed both directions.** The file is
+  `{"version":3,"tabs":[…]}` streamed with `android.util.JsonWriter`/`JsonReader`
+  — never a whole-file String or parsed tree in either direction. The current
+  shape is **writer-controlled and read STRICTLY** (`readEntityStrict` — exact
+  types, unknown key/version THROWS → file moved aside; leniency there would
+  only mask writer bugs, Fenix's `BrowserStateReader` stance). The strict
+  reader accepts versions 2–3: **v2** carried each tab's session state INLINE
+  (`session`); **v3** writes only a `session_ref` file reference (see the
+  per-tab state-file bullet below) — a v2 file reads fully and the next
+  persist externalizes it to v3. A legacy bare-ARRAY file (pre-v2 builds) is
+  detected by the first token and read through the LENIENT per-field readers
+  (`next*Safe` — total by design: a bad field falls to its default, never
+  nukes the file; note `JsonReader.nextLong/nextInt` throw WITHOUT consuming
+  the token, hence each catch's `skipValue()`). That lenient path is one-time
+  migration — the next persist rewrites the current version. Adding a field =
   writer + strict reader together, bump `SESSION_FILE_VERSION` if not
   backward-readable (an APK downgrade across a bump = one-time tab reset,
   Fenix-accepted).
@@ -1880,19 +1876,54 @@ regress any layer independently:
   closes any session they had. **Never add an eager create-sessions-for-all
   loop** — one Gecko content session at cold start is the design (Fenix's
   suspended-tabs model).
-- **FUTURE IMPROVEMENT (beyond Fenix), if Σ session-state strings ever
-  becomes the OOM term:** the one remaining unbounded retention is every
-  tab's serialized session-state string held in `mGeckoStates` (real history
-  data; Fenix retains the same via `RecoverableTab.engineSessionState`, which
-  is why this is accepted parity today). The upgrade path is **per-tab
-  session-state files**: the sessions file keeps only metadata + a state-file
-  reference (exactly like thumbs/`tab_icons` now), and the state string loads
-  from disk only inside `getOrCreateGeckoSession()` — heap becomes O(opened
-  tabs) instead of O(all tabs). Requires a v3 format bump, a sidecar store
-  with the same content-hash + prune-to-referenced-set contract as
-  `TabIconStore`, and a migration read for v2. Don't build it piecemeal
-  (e.g. lazy strings without the prune contract — orphaned state files would
-  accumulate unboundedly, recreating the growth problem in a new place).
+- **Per-tab session-state files (v3) — the Chromium model, with Chromium's
+  bugs pre-fixed.** The remaining unbounded retention after v2 was every
+  tab's serialized session-state string held in `mGeckoStates` (Fenix retains
+  the same via `RecoverableTab.engineSessionState`). v3 removes it: the
+  sessions file stores only a `session_ref` (absolute path into
+  `SessionStateStore`, `filesDir/tab_states/`, content-hash-named `ss_<sha1>`
+  files) and the string loads lazily inside `getOrCreateGeckoSession()`
+  (`ensureSessionStateLoaded`) — **boot heap is O(opened tabs), not O(all
+  tabs)**. This is Chromium-on-Android's `TabStateFileManager` /
+  `TabPersistentStoreImpl` architecture (per-tab `tab<id>` files + a small
+  metadata file), adopted with the fixes their history teaches
+  (`SessionStateStore`'s class doc carries the full catalogue):
+  - **Immutable content-hash files** (tmp→rename, never rewritten): kills
+    Chromium's partial-overwrite corruption class outright, gives dirty-only
+    saves for free (unchanged state → same hash → exists() → no write —
+    their deduped save queue), and makes id-collision file clobbering
+    impossible (their `tab<id>` naming needed duplicate-id dedupe logic).
+  - **Per-file failure containment** (their `restoreTabState` → null → tab
+    loads its URL): `SessionStateStore.read` returns `""` on any failure and
+    the dangling ref is CLEARED, so `setGeckoViewSession`'s hasRestoredState
+    check falls to its plain loadUri branch. One corrupt/pruned file loses
+    one tab's history — never the tab, never the boot. The lazy read is
+    synchronous on the UI thread by design (states are small — Gecko caps
+    per-tab history ~50 entries; Chromium makes the same trade via
+    `StrictMode.allowThreadDiskReads` for its critical-path restore).
+  - **Prune consults every persisted reference domain** (their multi-window
+    cleanup re-reads ALL other instances' metadata before deleting —
+    crbug.com/40486025, "never destroy what you haven't proven
+    unreferenced"): Firedown's second domain is the tab ARCHIVE, so
+    `mapToArchivedEntity` **inlines the state string into the Room row at
+    archive time** (resolving the ref if needed) — the archive NEVER holds
+    refs, which makes the referenced set handed to `SessionStateStore.prune`
+    complete by construction. Don't add a new persisted holder of
+    `session_ref` without adding it to the referenced set.
+  - **Grace-based deferred deletion** (their `canTabStateBeDeleted` undo
+    protection): prune touches referenced files' mtime each persist and
+    deletes unreferenced ones only after `RETENTION_MS` (24 h) — a
+    close-undo finds its file intact; superseded states linger bounded
+    hours, not forever; a stray `.tmp` from process death dies once stale.
+  - **Cleanup only after a committed persist, single-flight** (their
+    `cleanUpPersistentData`-after-load + `CLEAN_UP_TASK_LOCK`): prune runs
+    only from `writeSessionFile` after the rename landed, on the single
+    FIFO DiskIO executor.
+  Entity semantics: `mSessionState` (live string) wins over
+  `mSessionStateRef` when both are set; the observer externalizes a live
+  string (re-hash → same file) and CARRIES a bare ref through without ever
+  reading state bytes. The deep-copy in `notifyTabs` copies both fields, so
+  a ref-only tab stays ref-only through persist.
 
 ## Tabs, sessions & delegate callbacks (foreground-only UI)
 

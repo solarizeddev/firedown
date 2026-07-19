@@ -91,26 +91,21 @@ public class GeckoStateDataRepository {
     // sanitized writer produces: a legacy blob-laden file under it still gets
     // every tab recovered by the streamed read instead of being thrown away.
     private static final long MAX_SESSION_FILE_BYTES = 256L * 1024 * 1024;
-    /** v2 session document shape (Fenix parity — a versioned top-level object,
-     *  like android-components' {@code Keys.VERSION_KEY}): {@code
-     *  {"version":2,"tabs":[…]}}. The bare top-level ARRAY older builds wrote
-     *  is the legacy shape, detected by the first token and read leniently as
-     *  a one-time migration — the next persist rewrites v2. Bump the version
-     *  (writer + strict reader together) for any non-backward-readable change. */
-    public static final int SESSION_FILE_VERSION = 2;
-    /** Newest version this build can READ — the forward-compat shim (readers
-     *  ship ahead of writers, Chromium's format-rollout practice): v3 (the
-     *  per-tab-session-state-files branch) externalizes each tab's session
-     *  state to a file and writes a {@code session_ref} path instead of the
-     *  inline string. This build resolves the ref INLINE at read time
-     *  ({@link #readSessionStateFile}) so a downgrade from a v3 build loses
-     *  no tabs; the next persist rewrites plain v2, and the v3 build's
-     *  grace prune cleans the then-unreferenced state files if it returns.
-     *  Without this shim a v3 file is moved aside → one-time tab reset. */
-    public static final int MAX_READABLE_SESSION_FILE_VERSION = 3;
-    /** Sanity cap when resolving a v3 {@code session_ref} file — real session
-     *  states are KBs (Gecko caps per-tab history ~50 entries). */
-    private static final int MAX_SESSION_STATE_FILE_BYTES = 16 * 1024 * 1024;
+    /** Versioned session document shape (Fenix parity — a versioned top-level
+     *  object, like android-components' {@code Keys.VERSION_KEY}): {@code
+     *  {"version":N,"tabs":[…]}}. v2 carried each tab's session state INLINE
+     *  ({@code session}); v3 (current) externalizes it to a
+     *  {@code SessionStateStore} file and writes only the reference
+     *  ({@code session_ref}) — the Chromium per-tab-state-file model, adopted
+     *  for O(opened tabs) boot heap. The strict reader accepts
+     *  [{@link #MIN_SUPPORTED_SESSION_FILE_VERSION}, this] — a v2 file reads
+     *  fully (inline strings) and the next persist externalizes it to v3. The
+     *  bare top-level ARRAY older builds wrote is the legacy shape, detected
+     *  by the first token and read leniently as a one-time migration. Bump the
+     *  version (writer + strict reader together) for any
+     *  non-backward-readable change. */
+    public static final int SESSION_FILE_VERSION = 3;
+    public static final int MIN_SUPPORTED_SESSION_FILE_VERSION = 2;
     public static final String KEY_VERSION = "version";
     public static final String KEY_TABS = "tabs";
     /** Above this length an icon/preview string is an inline blob we neither
@@ -614,14 +609,16 @@ public class GeckoStateDataRepository {
     /**
      * Loads the persisted tabs, streaming the file so the PARSE overhead is one
      * field at a time — never a whole-file String or a full parsed tree —
-     * regardless of how large the file has grown. (What is RETAINED is the
-     * entity payload itself, dominated by the per-tab session states the app
-     * must hold to restore tabs — same as Fenix's RecoverableTabs; the blob
-     * fields that used to dwarf it are skipped/externalized.) Prefers the live
-     * file, falls back to the {@code .tmp} written by the atomic-write path,
-     * and returns an empty list if neither can be read. A present-but-
-     * unreadable or oversized file is moved aside (not silently deleted) by
-     * {@link #tryReadEntities}, so it can never re-crash the next launch.
+     * regardless of how large the file has grown. What is RETAINED from a v3
+     * file is small metadata + a state-file REFERENCE per tab (the session
+     * string itself loads lazily in {@code getOrCreateGeckoSession} — boot
+     * heap O(opened tabs), the Chromium per-tab-file model); only a legacy
+     * v2/bare-array file still retains inline session strings, once, until the
+     * next persist externalizes them. Prefers the live file, falls back to the
+     * {@code .tmp} written by the atomic-write path, and returns an empty list
+     * if neither can be read. A present-but-unreadable or oversized file is
+     * moved aside (not silently deleted) by {@link #tryReadEntities}, so it
+     * can never re-crash the next launch.
      */
     private List<GeckoStateEntity> loadEntities() {
         File dir = mContext.getFilesDir();
@@ -865,8 +862,8 @@ public class GeckoStateDataRepository {
             switch (name) {
                 case KEY_VERSION:
                     version = reader.nextInt();
-                    if (version < SESSION_FILE_VERSION
-                            || version > MAX_READABLE_SESSION_FILE_VERSION) {
+                    if (version < MIN_SUPPORTED_SESSION_FILE_VERSION
+                            || version > SESSION_FILE_VERSION) {
                         throw new IOException("Unsupported session file version: " + version);
                     }
                     break;
@@ -882,7 +879,7 @@ public class GeckoStateDataRepository {
             }
         }
         reader.endObject();
-        if (version < SESSION_FILE_VERSION || version > MAX_READABLE_SESSION_FILE_VERSION) {
+        if (version < MIN_SUPPORTED_SESSION_FILE_VERSION || version > SESSION_FILE_VERSION) {
             throw new IOException("Session file missing version");
         }
         return entities;
@@ -917,16 +914,15 @@ public class GeckoStateDataRepository {
                     entity.setThumb(reader.nextString());
                     break;
                 case GeckoStateEntity.KEYS.SESSION:
+                    // v2 inline form — read fully; the next persist
+                    // externalizes it to a SessionStateStore file (v3).
                     entity.setSessionState(reader.nextString());
                     break;
                 case GeckoStateEntity.KEYS.SESSION_REF:
-                    // v3 forward-compat (see MAX_READABLE_SESSION_FILE_VERSION):
-                    // resolve the externalized state file INLINE so a downgrade
-                    // from the per-tab-files branch keeps every tab. A missing/
-                    // unreadable file degrades to "" — that one tab restores by
-                    // URL (per-file containment, Chromium's restoreTabState
-                    // contract), never the whole list.
-                    entity.setSessionState(readSessionStateFile(reader.nextString()));
+                    // v3 form — only the file reference enters the heap here;
+                    // the state string loads lazily in
+                    // GeckoState.getOrCreateGeckoSession (O(opened tabs)).
+                    entity.setSessionStateRef(reader.nextString());
                     break;
                 case GeckoStateEntity.KEYS.URI:
                     entity.setUri(reader.nextString());
@@ -967,39 +963,6 @@ public class GeckoStateDataRepository {
         }
         reader.endObject();
         return entity;
-    }
-
-    /**
-     * Resolves a v3 {@code session_ref} (absolute path of an externalized
-     * per-tab session-state file) to its content — the forward-compat half of
-     * {@link #MAX_READABLE_SESSION_FILE_VERSION}. Total: {@code ""} on an
-     * empty ref, a missing/oversized file, or any read failure.
-     */
-    private static String readSessionStateFile(String ref) {
-        if (ref == null || ref.isEmpty()) {
-            return "";
-        }
-        try {
-            File file = new File(ref);
-            long length = file.length();
-            if (length <= 0 || length > MAX_SESSION_STATE_FILE_BYTES) {
-                return "";
-            }
-            byte[] bytes = new byte[(int) length];
-            try (InputStream in = new FileInputStream(file)) {
-                int off = 0;
-                while (off < bytes.length) {
-                    int read = in.read(bytes, off, bytes.length - off);
-                    if (read < 0) {
-                        return "";
-                    }
-                    off += read;
-                }
-            }
-            return new String(bytes, StandardCharsets.UTF_8);
-        } catch (IOException | RuntimeException e) {
-            return "";
-        }
     }
 
     // LEGACY-ARRAY PATH ONLY — the v2 versioned document is read strictly
