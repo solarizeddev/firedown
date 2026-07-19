@@ -1916,14 +1916,25 @@ regress any layer independently:
     complete by construction. Don't add a new persisted holder of
     `session_ref` without adding it to the referenced set.
   - **Grace-based deferred deletion** (their `canTabStateBeDeleted` undo
-    protection): prune touches referenced files' mtime each persist and
-    deletes unreferenced ones only after `RETENTION_MS` (24 h) — a
-    close-undo finds its file intact; superseded states linger bounded
-    hours, not forever; a stray `.tmp` from process death dies once stale.
-  - **Cleanup only after a committed persist, single-flight** (their
-    `cleanUpPersistentData`-after-load + `CLEAN_UP_TASK_LOCK`): prune runs
-    only from `writeSessionFile` after the rename landed, on the single
-    FIFO DiskIO executor.
+    protection): prune touches referenced files' mtime and deletes
+    unreferenced ones only after `RETENTION_MS` (24 h) — a close-undo
+    finds its file intact; superseded states linger bounded hours, not
+    forever; a stray `.tmp` from process death dies once stale.
+  - **Cleanup only after a committed persist, single-flight, THROTTLED**
+    (their `cleanUpPersistentData` runs once after load, not per save):
+    the state prune runs from `writeSessionFile` after the rename landed,
+    on the single FIFO DiskIO executor — but only on the FIRST committed
+    persist after boot and hourly thereafter
+    (`STATE_PRUNE_INTERVAL_MS`), because its touch pass costs one utimes
+    per referenced file + a dir scan and persists fire on every tab
+    event. Safe under the grace math (referenced files are at most
+    prune-interval stale, ≪ 24 h). Don't move the prune back to
+    per-persist "for freshness" — that was pure inode churn. Cold-start
+    IO is exactly TWO file reads regardless of tab count: the metadata
+    file + the active tab's state file (more lazy than Chromium, which
+    background-batch-reads every tab file after startup via
+    `TabBatchLoader`; GeckoView needs a state only at session open, so
+    the background sweep is skipped entirely).
   Entity semantics: `mSessionState` (live string) wins over
   `mSessionStateRef` when both are set; the observer externalizes a live
   string (re-hash → same file) and CARRIES a bare ref through without ever
