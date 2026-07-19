@@ -207,6 +207,13 @@ public class TabStateArchivedRepository {
         // crbug.com/40486025 class): the archive never references store files.
         // A missing/unreadable file degrades to "" — the archived tab restores
         // by URL, same per-file containment as everywhere else.
+        // Lock context: via archiveInactiveTabsLocked this runs while the
+        // caller holds the mGeckoStates monitor — the same pre-existing
+        // IO-under-monitor pattern as the Room insertSync/thumb deletes/
+        // purgeSync in that sweep (all on the disk executor; the read here is
+        // one small immutable file per archived tab). The prune can't race
+        // this read: a tab being archived was referenced by the last persist,
+        // so its file is inside the 24h grace window.
         String state = geckoStateEntity.getSessionState();
         if (state.isEmpty()) {
             state = SessionStateStore.read(geckoStateEntity.getSessionStateRef());
