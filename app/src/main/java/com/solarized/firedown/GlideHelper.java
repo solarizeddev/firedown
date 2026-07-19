@@ -20,6 +20,7 @@ import com.bumptech.glide.load.DataSource;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.engine.GlideException;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import com.bumptech.glide.load.model.GlideUrl;
 import com.bumptech.glide.load.model.LazyHeaders;
@@ -293,6 +294,24 @@ public class GlideHelper {
                     .listener(listener)
                     .diskCacheStrategy(DiskCacheStrategy.NONE)
                     .apply(dataOptions)
+                    .into(image);
+            return;
+        }
+
+        // Externalized icon file (TabIconStore — a data: favicon persisted as a
+        // sidecar file, referenced by absolute path in the sessions file) or any
+        // other local path. Load the File directly — the network branch below
+        // would try it as a URL and fail. An .svg path needs the SVG mime flag
+        // for SvgDecoder, same as the data: branch; DiskCacheStrategy.NONE
+        // because the source already IS a local file.
+        if (icon.startsWith("/")) {
+            RequestOptions fileOptions = icon.regionMatches(true, icon.length() - 4, ".svg", 0, 4)
+                    ? options.clone().set(GlideRequestOptions.MIMETYPE, "image/svg+xml")
+                    : options;
+            Glide.with(image).load(new File(icon))
+                    .listener(listener)
+                    .diskCacheStrategy(DiskCacheStrategy.NONE)
+                    .apply(fileOptions)
                     .into(image);
             return;
         }

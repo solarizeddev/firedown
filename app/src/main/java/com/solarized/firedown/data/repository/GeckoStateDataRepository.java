@@ -70,14 +70,19 @@ public class GeckoStateDataRepository {
     // a time, no whole-file String, no full JSONArray tree), the inline blob
     // fields are dropped (see sanitizeInlineField / the PREVIEW skip below), and
     // a size + OutOfMemoryError backstop moves a pathological file aside so the
-    // app still boots. The matching write-side guard is in
-    // GeckoStateObserver.toJson, which sanitizes the same fields so the file
-    // can't re-grow. This mirrors Firefox for Android (android-components
-    // SessionStorage / BrowserStateWriter+Reader): streamed JsonWriter/JsonReader
-    // over an atomic file, and NO image data inlined in the session file at all —
-    // Fenix keeps favicons (BrowserIcons) and tab thumbnails (ThumbnailStorage)
-    // in separate disk caches keyed by url/tab-id, which is why its session file
-    // is bounded text and ours wasn't.
+    // app still boots. The write side (GeckoStateObserver) STREAMS a versioned
+    // v2 document (JsonWriter, atomic tmp→fsync→rename with failed-write
+    // cleanup), externalizes any data: favicon to a sidecar file (TabIconStore)
+    // and writes NO preview at all, so the file can't re-grow. This mirrors
+    // Firefox for Android (android-components SessionStorage /
+    // BrowserStateWriter+Reader): streamed JsonWriter/JsonReader over an atomic
+    // file, and NO image data inlined in the session file at all — Fenix keeps
+    // favicons (BrowserIcons) and tab thumbnails (ThumbnailStorage) in separate
+    // disk caches keyed by url/tab-id, which is why its session file is bounded
+    // text and ours wasn't. Like Fenix, the v2 shape is read STRICTLY
+    // (readDocumentStrict — the writer owns the shape); the lenient readers
+    // below exist only for the legacy bare-array files older builds wrote,
+    // which migrate to v2 on the next persist.
     //
     // MAX_SESSION_FILE_BYTES is NOT a memory bound anymore — the streamed read's
     // peak is one field regardless of file size (verified: a 122 MB blob file
@@ -86,6 +91,15 @@ public class GeckoStateDataRepository {
     // sanitized writer produces: a legacy blob-laden file under it still gets
     // every tab recovered by the streamed read instead of being thrown away.
     private static final long MAX_SESSION_FILE_BYTES = 256L * 1024 * 1024;
+    /** v2 session document shape (Fenix parity — a versioned top-level object,
+     *  like android-components' {@code Keys.VERSION_KEY}): {@code
+     *  {"version":2,"tabs":[…]}}. The bare top-level ARRAY older builds wrote
+     *  is the legacy shape, detected by the first token and read leniently as
+     *  a one-time migration — the next persist rewrites v2. Bump the version
+     *  (writer + strict reader together) for any non-backward-readable change. */
+    public static final int SESSION_FILE_VERSION = 2;
+    public static final String KEY_VERSION = "version";
+    public static final String KEY_TABS = "tabs";
     /** Above this length an icon/preview string is an inline blob we neither
      *  persist nor restore (it re-derives when the tab loads). Generous enough
      *  to keep real favicon/preview URLs. */
@@ -637,13 +651,22 @@ public class GeckoStateDataRepository {
         try (InputStream in = new FileInputStream(file);
              JsonReader reader = new JsonReader(
                      new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8)))) {
-            List<GeckoStateEntity> entities = new ArrayList<>();
-            reader.beginArray();
-            while (reader.hasNext()) {
-                entities.add(readEntity(reader));
+            // Shape dispatch (Fenix version model): the v2 writer produces a
+            // versioned OBJECT and is read STRICTLY — the writer fully controls
+            // that shape, so any deviation is corruption and moves the file
+            // aside. A bare ARRAY is the legacy shape from older builds, read
+            // through the LENIENT per-field readers exactly once — the next
+            // persist rewrites it as v2, after which strictness applies.
+            if (reader.peek() == JsonToken.BEGIN_ARRAY) {
+                List<GeckoStateEntity> entities = new ArrayList<>();
+                reader.beginArray();
+                while (reader.hasNext()) {
+                    entities.add(readEntity(reader));
+                }
+                reader.endArray();
+                return entities;
             }
-            reader.endArray();
-            return entities;
+            return readDocumentStrict(reader);
         } catch (OutOfMemoryError | IOException | RuntimeException e) {
             // RuntimeException covers JsonReader's IllegalStateException /
             // NumberFormatException on a malformed file; OutOfMemoryError covers
@@ -805,6 +828,123 @@ public class GeckoStateDataRepository {
         return entity;
     }
 
+    /**
+     * Strict read of the v2 versioned document ({@code {"version":2,"tabs":[…]}}).
+     * Fenix parity ({@code BrowserStateReader}): the WRITER fully controls this
+     * shape ({@code GeckoStateObserver.writeEntity} is the contract), so the
+     * reader demands exact types and THROWS on an unknown key or a version it
+     * doesn't understand — the caller's catch moves the file aside. Leniency
+     * here would only mask writer bugs; the lenient readers exist solely for
+     * the legacy bare-array files older builds wrote. Consequence to know:
+     * a future version bump followed by an APK downgrade reads as unknown →
+     * move-aside → one-time tab reset (Fenix accepts the same).
+     */
+    private List<GeckoStateEntity> readDocumentStrict(JsonReader reader) throws IOException {
+        List<GeckoStateEntity> entities = new ArrayList<>();
+        int version = -1;
+        reader.beginObject();
+        while (reader.hasNext()) {
+            String name = reader.nextName();
+            switch (name) {
+                case KEY_VERSION:
+                    version = reader.nextInt();
+                    if (version != SESSION_FILE_VERSION) {
+                        throw new IOException("Unsupported session file version: " + version);
+                    }
+                    break;
+                case KEY_TABS:
+                    reader.beginArray();
+                    while (reader.hasNext()) {
+                        entities.add(readEntityStrict(reader));
+                    }
+                    reader.endArray();
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unknown session document key: " + name);
+            }
+        }
+        reader.endObject();
+        if (version != SESSION_FILE_VERSION) {
+            throw new IOException("Session file missing version");
+        }
+        return entities;
+    }
+
+    /**
+     * One tab from a v2 document — exact-type reads, unknown key throws (see
+     * {@link #readDocumentStrict}). The writer emits {@code ""} for absent
+     * strings, so no null handling is needed; {@code sanitizeInlineField} on
+     * ICON is defense-in-depth only (the writer already externalized any
+     * {@code data:} icon to a {@code TabIconStore} path).
+     */
+    private GeckoStateEntity readEntityStrict(JsonReader reader) throws IOException {
+        GeckoStateEntity entity = new GeckoStateEntity(false);
+        reader.beginObject();
+        while (reader.hasNext()) {
+            String name = reader.nextName();
+            switch (name) {
+                case GeckoStateEntity.KEYS.DATE:
+                    entity.setCreationDate(reader.nextLong());
+                    break;
+                case GeckoStateEntity.KEYS.UPDATE:
+                    entity.setLastAccess(reader.nextLong());
+                    break;
+                case GeckoStateEntity.KEYS.ICON:
+                    entity.setIcon(sanitizeInlineField(reader.nextString()));
+                    break;
+                case GeckoStateEntity.KEYS.ICON_RESOLUTION:
+                    entity.setIconResolution(reader.nextInt());
+                    break;
+                case GeckoStateEntity.KEYS.THUMB:
+                    entity.setThumb(reader.nextString());
+                    break;
+                case GeckoStateEntity.KEYS.SESSION:
+                    entity.setSessionState(reader.nextString());
+                    break;
+                case GeckoStateEntity.KEYS.URI:
+                    entity.setUri(reader.nextString());
+                    break;
+                case GeckoStateEntity.KEYS.ID:
+                    entity.setId(reader.nextInt());
+                    break;
+                case GeckoStateEntity.KEYS.PARENT_ID:
+                    entity.setParentId(reader.nextInt());
+                    break;
+                case GeckoStateEntity.KEYS.TITLE:
+                    entity.setTitle(reader.nextString());
+                    break;
+                case GeckoStateEntity.KEYS.BACKWARD:
+                    entity.setCanGoBackward(reader.nextBoolean());
+                    break;
+                case GeckoStateEntity.KEYS.FORWARD:
+                    entity.setCanGoForward(reader.nextBoolean());
+                    break;
+                case GeckoStateEntity.KEYS.FULLSCREEN:
+                    entity.setFullScreen(reader.nextBoolean());
+                    break;
+                case GeckoStateEntity.KEYS.DESKTOP:
+                    entity.setDesktop(reader.nextBoolean());
+                    break;
+                case GeckoStateEntity.KEYS.ACTIVE:
+                    entity.setActive(reader.nextBoolean());
+                    break;
+                case GeckoStateEntity.KEYS.TRACKING_PROTECTION:
+                    entity.setUseTrackingProtection(reader.nextBoolean());
+                    break;
+                case GeckoStateEntity.KEYS.HOME:
+                    entity.setHome(reader.nextBoolean());
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unknown session key: " + name);
+            }
+        }
+        reader.endObject();
+        return entity;
+    }
+
+    // LEGACY-ARRAY PATH ONLY — the v2 versioned document is read strictly
+    // (readDocumentStrict above, Fenix parity); these lenient readers serve the
+    // bare-array files older builds wrote, until the next persist migrates them.
     // Lenient primitive reads mirroring the old opt* semantics: a value stored
     // as the "wrong" JSON type still parses where it sensibly can, and ANY
     // token these helpers can't convert — null, an object/array, a fractional
