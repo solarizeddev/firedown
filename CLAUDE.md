@@ -1800,6 +1800,92 @@ The invariants, each protecting against a shipped bug:
   session's deactivation through its `GeckoState` (`findGeckoStateBySession`)
   so the prompt-dismissal hook fires on the mCurrentId-drift re-attach too.
 
+## Tab persistence — the sessions file (v2, Fenix parity; issue #292 OOM)
+
+The tab list persists to `filesDir/com_solarized_firedown_sessions.json`,
+written by `GeckoStateObserver` and read at boot by
+`GeckoStateDataRepository`. The current design exists because the old one
+(org.json whole-file slurp + inline `data:`-URI preview/icon blobs persisted
+verbatim per tab) produced a **deterministic `OutOfMemoryError` boot loop**
+(issue #292): base64 images are unbounded *text*, the read held ~2–3× the file
+(UTF-16 String + full JSONArray tree) against the 128 MB heap (no `largeHeap`),
+and the parsed blobs then stayed resident in `mGeckoStates` forever — so the
+OOM victim could be any later allocation (the reported stack was a 32-byte
+main-thread alloc). Everything below mirrors Firefox for Android
+(android-components `SessionStorage`/`BrowserStateWriter+Reader`); don't
+regress any layer independently:
+
+- **v2 versioned document, streamed both directions.** The file is
+  `{"version":2,"tabs":[…]}` streamed with `android.util.JsonWriter`/`JsonReader`
+  — never a whole-file String or parsed tree in either direction. The v2 shape
+  is **writer-controlled and read STRICTLY** (`readEntityStrict` — exact types,
+  unknown key/version THROWS → file moved aside; leniency there would only mask
+  writer bugs, Fenix's `BrowserStateReader` stance). A legacy bare-ARRAY file
+  (pre-v2 builds) is detected by the first token and read through the LENIENT
+  per-field readers (`next*Safe` — total by design: a bad field falls to its
+  default, never nukes the file; note `JsonReader.nextLong/nextInt` throw
+  WITHOUT consuming the token, hence each catch's `skipValue()`). That lenient
+  path is one-time migration — the next persist rewrites v2. Adding a field =
+  writer + strict reader together, bump `SESSION_FILE_VERSION` if not
+  backward-readable (an APK downgrade across a bump = one-time tab reset,
+  Fenix-accepted).
+- **NO image data in the file, ever.** PREVIEW (og:image — shown nowhere in
+  the tab UI) is not written and not restored. A `data:` favicon is
+  externalized at persist time to a content-hash-named file under
+  `filesDir/tab_icons/` (`TabIconStore`) and referenced by path; the store is
+  pruned to the referenced set after every committed persist (empty list
+  clears it, like `deleteThumbnails`). `GlideHelper`'s favicon loader has a
+  local-path branch for these (with the `.svg`-mime flag). Fenix's session
+  file likewise carries no icon/thumbnail/preview keys at all.
+- **Atomic write with CORRECTLY-SCOPED failure containment.** tmp → fsync →
+  rename, in two phases: a failure while WRITING deletes the torn `.tmp`
+  (the boot read treats a present tmp as a fallback snapshot, so a torn one
+  must not survive) — but a COMPLETE, fsynced tmp is **KEPT** when the
+  rename dance fails. Landmine (shipped briefly): deleting the tmp on *any*
+  non-commit destroys the last good copy in the worst interleaving (target
+  deleted, second rename fails, process dies → neither file). That split is
+  `AtomicFile`'s actual `failWrite`/`finishWrite` semantics.
+- **Every OOM path is caught — the boot always completes.** `tryReadEntities`
+  catches `OutOfMemoryError` (+ IO/Runtime) → moves the file aside to a
+  `.corrupt` sibling (kept for post-mortem, pruned after 7 days);
+  `initializeGeckoStates` and `GeckoStateObserver.persist` also catch
+  `OutOfMemoryError` **deliberately** — an uncaught Error on the DiskIO
+  executor reaches Android's default uncaught handler and KILLS THE PROCESS,
+  which would resurrect the boot loop (Fenix's `SessionStorage.save` catches
+  OOM for the same reason). `MAX_SESSION_FILE_BYTES` (256 MB) is a parse-TIME
+  bound, not a memory bound — the streamed read's peak is one field; don't
+  lower it into the range where it fires before the reader on recoverable
+  legacy files (a 24 MB cap did exactly that).
+- **Concurrency model: one thread, deep copies.** The boot read, every
+  persist, and thumb writes all run on the single `@Qualifiers.DiskIO`
+  executor (FIFO — and the repo provider enqueues `initializeGeckoStates` at
+  DI time, so it always precedes the first persist; the tabs LiveData has no
+  initial value, so `observeForever` can't fire a pre-init empty write).
+  `notifyTabs` posts **deep-copied** entity snapshots, so persist never sees
+  a mutating list or torn fields. No lock is held across file IO.
+- **Sessions are LAZY — only entities load at boot.** `initializeGeckoStates`
+  builds `GeckoState` wrappers (the ctor stores the entity; no `GeckoSession`).
+  A live session is created only by `getOrCreateGeckoSession()`, reachable
+  solely through `BrowserFragment.openSession(oneTab)` — the current tab at
+  startup (`ensureSessionConnected`) and a tab the user taps. Auto-archive
+  (default ON, 1-week) removes stale tabs from the live list at init and
+  closes any session they had. **Never add an eager create-sessions-for-all
+  loop** — one Gecko content session at cold start is the design (Fenix's
+  suspended-tabs model).
+- **FUTURE IMPROVEMENT (beyond Fenix), if Σ session-state strings ever
+  becomes the OOM term:** the one remaining unbounded retention is every
+  tab's serialized session-state string held in `mGeckoStates` (real history
+  data; Fenix retains the same via `RecoverableTab.engineSessionState`, which
+  is why this is accepted parity today). The upgrade path is **per-tab
+  session-state files**: the sessions file keeps only metadata + a state-file
+  reference (exactly like thumbs/`tab_icons` now), and the state string loads
+  from disk only inside `getOrCreateGeckoSession()` — heap becomes O(opened
+  tabs) instead of O(all tabs). Requires a v3 format bump, a sidecar store
+  with the same content-hash + prune-to-referenced-set contract as
+  `TabIconStore`, and a migration read for v2. Don't build it piecemeal
+  (e.g. lazy strings without the prune contract — orphaned state files would
+  accumulate unboundedly, recreating the growth problem in a new place).
+
 ## Tabs, sessions & delegate callbacks (foreground-only UI)
 
 A tab is a `GeckoState` (+ its `GeckoSession`), **not** a separate fragment.
