@@ -1820,7 +1820,15 @@ regress any layer independently:
   — never a whole-file String or parsed tree in either direction. The v2 shape
   is **writer-controlled and read STRICTLY** (`readEntityStrict` — exact types,
   unknown key/version THROWS → file moved aside; leniency there would only mask
-  writer bugs, Fenix's `BrowserStateReader` stance). A legacy bare-ARRAY file
+  writer bugs, Fenix's `BrowserStateReader` stance). **Forward-compat shim
+  (reader ships ahead of the writer — Chromium's format-rollout practice):
+  this build also READS v3** (`MAX_READABLE_SESSION_FILE_VERSION`), the
+  per-tab-session-state-files format that replaces the inline `session`
+  string with a `session_ref` file path — the ref is resolved INLINE at read
+  time (`readSessionStateFile`, total: missing file → `""` → that tab loads
+  by URL), so a downgrade from the v3 branch loses no tabs and the next
+  persist rewrites plain v2. Don't remove the shim before/while the v3
+  branch exists — without it a v3 file is moved aside = one-time tab reset. A legacy bare-ARRAY file
   (pre-v2 builds) is detected by the first token and read through the LENIENT
   per-field readers (`next*Safe` — total by design: a bad field falls to its
   default, never nukes the file; note `JsonReader.nextLong/nextInt` throw

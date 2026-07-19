@@ -478,6 +478,11 @@ public class GeckoStateEntity implements TabState, Parcelable {
 
         public static final String SESSION = "session";
 
+        /** v3 (per-tab-session-state-files branch): absolute path of the tab's
+         *  externalized state file. This build only READS it (resolved inline
+         *  by the forward-compat shim); the v2 writer never emits it. */
+        public static final String SESSION_REF = "session_ref";
+
         public static final String PREVIEW = "preview";
 
         public static final String HOME = "home";
