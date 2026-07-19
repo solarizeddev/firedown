@@ -2735,6 +2735,17 @@ here:
     stays a Referer-only image GET like the browser's. Any other native
     re-fetch of a page sub-resource is exposed to the same hotlink 403 —
     reproduce the page's Referer, don't strip it.
+  - **Third surface: Captured-sheet thumbnails via Glide.** The Captured
+    sheet's remote image fetches (`GlideHelper.load(BrowserDownloadEntity…)`)
+    used to load http images via a bare `Uri.parse` model — no headers — so
+    every pixiv capture thumbnail 403'd into the broken-image fallback. Remote
+    plain-IMAGE fetches (a parser thumbnail URL, or an image capture's own
+    URL) now go through `buildGlideUrl(entity, source)`, which ships the
+    capture's cached request headers and **backfills a missing `Referer` from
+    the capture's page origin** (`BrowserHeaders.originWithSlash`). Video/audio
+    without a thumbnail keep the `Uri` model on purpose — that's the
+    `FFmpegUriDecoder` path (frame / embedded-art extraction), which reads its
+    headers from `GlideRequestOptions.HEADERS` instead.
 - **Weigh each pref against a mobile media browser's real use, not a desktop
   privacy checklist.** The "Cluster C fingerprinting belt-and-braces" hard-
   disables are **redundant with FPP/RFP when those are active**, so their only

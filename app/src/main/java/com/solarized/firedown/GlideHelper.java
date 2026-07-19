@@ -615,11 +615,28 @@ public class GlideHelper {
                 return;
             }
             String source = hasThumbnail ? thumbnail : entity.getFileUrl();
-            // A data: URI (Mega's stored thumbnail JPEG) must load via the String
-            // model so Glide's DataUrlLoader decodes it; everything else is a Uri.
-            RequestBuilder<Drawable> request = source.startsWith("data:")
-                    ? Glide.with(image).load(source)
-                    : Glide.with(image).load(Uri.parse(source));
+            // Model selection, three-way:
+            // - data: URI (Mega's stored thumbnail JPEG) must load via the
+            //   String model so Glide's DataUrlLoader decodes it.
+            // - A remote plain-IMAGE fetch — a parser-supplied thumbnail URL,
+            //   or an image capture's own URL — goes through GlideUrl so the
+            //   capture's headers + a backfilled Referer ride along
+            //   (buildGlideUrl): hotlink CDNs (pixiv's i.pximg.net) 403 a
+            //   bare Uri fetch, which rendered every pixiv capture as the
+            //   broken-image fallback.
+            // - Video/audio WITHOUT a thumbnail keeps the Uri model — that's
+            //   the FFmpegUriDecoder path (frame / embedded-art extraction),
+            //   which reads its headers from GlideRequestOptions.HEADERS.
+            boolean plainImageFetch = (hasThumbnail || FileUriHelper.isImage(mimeType))
+                    && source.startsWith("http");
+            RequestBuilder<Drawable> request;
+            if (source.startsWith("data:")) {
+                request = Glide.with(image).load(source);
+            } else if (plainImageFetch) {
+                request = Glide.with(image).load(buildGlideUrl(entity, source));
+            } else {
+                request = Glide.with(image).load(Uri.parse(source));
+            }
             request.override(THUMB_WIDTH, THUMB_HEIGHT)
                     .signature(signature)
                     .listener(fallbackListener(mimeType, image))
@@ -679,9 +696,19 @@ public class GlideHelper {
                 return null;
             }
             String source = hasThumbnail ? thumbnail : entity.getFileUrl();
-            RequestBuilder<?> request = source.startsWith("data:")
-                    ? glide.load(source)
-                    : glide.load(Uri.parse(source));
+            // Mirror load()'s three-way model selection (data: / headered
+            // GlideUrl for remote image fetches / Uri for the FFmpeg path) so
+            // the preload's cache key matches the bind exactly.
+            boolean plainImageFetch = (hasThumbnail || FileUriHelper.isImage(mimeType))
+                    && source.startsWith("http");
+            RequestBuilder<?> request;
+            if (source.startsWith("data:")) {
+                request = glide.load(source);
+            } else if (plainImageFetch) {
+                request = glide.load(buildGlideUrl(entity, source));
+            } else {
+                request = glide.load(Uri.parse(source));
+            }
             return request
                     .override(THUMB_WIDTH, THUMB_HEIGHT)
                     .signature(signature)
@@ -701,11 +728,37 @@ public class GlideHelper {
     }
 
     private static GlideUrl buildGlideUrl(@NonNull BrowserDownloadEntity entity) {
+        return buildGlideUrl(entity, entity.getFileUrl());
+    }
+
+    /**
+     * GlideUrl for an http(s) source fetched as a plain image stream, carrying
+     * the capture's cached request headers. A missing {@code Referer} is
+     * backfilled from the capture's page origin (origin-only, trailing slash —
+     * what a browser sends cross-origin): hotlink-protecting image CDNs
+     * (pixiv's {@code i.pximg.net} is the canonical case) 403 a bare fetch,
+     * the same check the page render and the save-image download already
+     * reproduce. The backfill matters for parser-supplied thumbnail URLs
+     * (never seen on the wire, so no cached headers) and captures made before
+     * headers were cached.
+     */
+    private static GlideUrl buildGlideUrl(@NonNull BrowserDownloadEntity entity,
+                                          @NonNull String source) {
         Map<String, String> headers = Utils.stringToMap(entity.getFileHeaders());
         LazyHeaders.Builder builder = new LazyHeaders.Builder();
+        boolean hasReferer = false;
         for (Map.Entry<String, String> entry : headers.entrySet()) {
             builder.addHeader(entry.getKey(), entry.getValue());
+            if (BrowserHeaders.REFERER.equalsIgnoreCase(entry.getKey())) {
+                hasReferer = true;
+            }
         }
-        return new GlideUrl(entity.getFileUrl(), builder.build());
+        if (!hasReferer) {
+            String referer = BrowserHeaders.originWithSlash(entity.getFileOrigin());
+            if (referer != null) {
+                builder.addHeader(BrowserHeaders.REFERER, referer);
+            }
+        }
+        return new GlideUrl(source, builder.build());
     }
 }
