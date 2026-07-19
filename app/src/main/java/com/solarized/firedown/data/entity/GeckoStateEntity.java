@@ -33,6 +33,17 @@ public class GeckoStateEntity implements TabState, Parcelable {
 
     private String mSessionState;
 
+    /**
+     * Absolute path of this tab's externalized session-state file in
+     * {@code SessionStateStore} (v3 sessions file, {@code session_ref} key), or
+     * null/empty when none. A RESTORED, not-yet-opened tab carries only this
+     * ref — the state string loads lazily in
+     * {@code GeckoState.getOrCreateGeckoSession()}, which is what keeps boot
+     * heap O(opened tabs). When BOTH are set, {@link #mSessionState} wins
+     * (the live string; the ref re-derives from it on the next persist).
+     */
+    private String mSessionStateRef;
+
     private int mParentId;
 
     private boolean isActive;
@@ -102,6 +113,7 @@ public class GeckoStateEntity implements TabState, Parcelable {
         iconResolution = in.readInt();
         isIncognito = in.readByte() != 0;
         mLastAccess = in.readLong();
+        mSessionStateRef = in.readString();
     }
 
     public static final Creator<GeckoStateEntity> CREATOR = new Creator<>() {
@@ -167,6 +179,17 @@ public class GeckoStateEntity implements TabState, Parcelable {
 
     public void setSessionState(String mSessionState) {
         this.mSessionState = mSessionState;
+    }
+
+    public void setSessionStateRef(String sessionStateRef) {
+        this.mSessionStateRef = sessionStateRef;
+    }
+
+    public String getSessionStateRef() {
+        if (mSessionStateRef == null) {
+            return "";
+        }
+        return mSessionStateRef;
     }
 
     public void setThumb(String mThumb) {
@@ -388,6 +411,7 @@ public class GeckoStateEntity implements TabState, Parcelable {
         this.mUri = geckoStateEntity.getUri();
         this.mCreationDate = geckoStateEntity.getCreationDate();
         this.mSessionState = geckoStateEntity.getSessionState();
+        this.mSessionStateRef = geckoStateEntity.getSessionStateRef();
         this.isActive = geckoStateEntity.isActive();
         this.mThumb = geckoStateEntity.getThumb();
         this.mId = geckoStateEntity.getId();
@@ -464,6 +488,7 @@ public class GeckoStateEntity implements TabState, Parcelable {
         dest.writeInt(iconResolution);
         dest.writeByte((byte) (isIncognito ? 1 : 0));
         dest.writeLong(mLastAccess);
+        dest.writeString(mSessionStateRef);
     }
 
     public static final class KEYS {
@@ -478,9 +503,8 @@ public class GeckoStateEntity implements TabState, Parcelable {
 
         public static final String SESSION = "session";
 
-        /** v3 (per-tab-session-state-files branch): absolute path of the tab's
-         *  externalized state file. This build only READS it (resolved inline
-         *  by the forward-compat shim); the v2 writer never emits it. */
+        /** v3: absolute path of the tab's SessionStateStore file. The v3
+         *  writer emits this INSTEAD of the inline SESSION string. */
         public static final String SESSION_REF = "session_ref";
 
         public static final String PREVIEW = "preview";
