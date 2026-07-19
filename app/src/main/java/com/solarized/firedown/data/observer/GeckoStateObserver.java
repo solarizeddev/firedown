@@ -63,6 +63,22 @@ public final class GeckoStateObserver implements Observer<List<GeckoStateEntity>
     private final Executor mDiskExecutor;
     private final Context mContext;
 
+    /**
+     * Last time the session-state store was pruned/touched, 0 = never (so the
+     * FIRST committed persist after boot always prunes — Chromium's
+     * cleanup-once-after-load). Only read/written on the single DiskIO thread.
+     */
+    private long mLastStatePruneMs;
+
+    /** State-store prune cadence. Persists fire on every tab event (title,
+     *  switch, navigation), and pruning per persist meant a directory scan +
+     *  one utimes syscall per referenced file each time — pure inode churn.
+     *  Hourly is plenty: the grace window is 24 h, so a referenced file's
+     *  clock stays comfortably fresh, and an orphan's deletion slips by at
+     *  most an hour. Chromium likewise cleans up once after load, not per
+     *  save. */
+    private static final long STATE_PRUNE_INTERVAL_MS = 60L * 60 * 1000;
+
     @Inject
     public GeckoStateObserver(
             @Qualifiers.DiskIO Executor diskExecutor,
@@ -193,8 +209,20 @@ public final class GeckoStateObserver implements Observer<List<GeckoStateEntity>
         // intact — see SessionStateStore's class doc for the Chromium lessons
         // this encodes. The referenced set is complete because the tab ARCHIVE
         // never holds refs (state is inlined into Room at archive time).
+        // The state prune is THROTTLED (first persist after boot, then
+        // hourly): its touch pass is one utimes per referenced file plus a
+        // directory scan, which per-persist was pure inode churn. Safe under
+        // the grace math — any set this prune uses mirrors a COMMITTED
+        // metadata file, and a file referenced by the current metadata is
+        // never older than the last prune's touch (≤ 1 h) + this persist,
+        // far inside the 24 h window. The icon prune stays per-persist: it
+        // has no touch pass and the store is small.
         TabIconStore.prune(mContext, referencedIcons);
-        SessionStateStore.prune(mContext, referencedStates);
+        long now = System.currentTimeMillis();
+        if (mLastStatePruneMs == 0 || now - mLastStatePruneMs >= STATE_PRUNE_INTERVAL_MS) {
+            SessionStateStore.prune(mContext, referencedStates);
+            mLastStatePruneMs = now;
+        }
     }
 
     /**
