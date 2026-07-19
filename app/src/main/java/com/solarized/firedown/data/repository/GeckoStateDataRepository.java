@@ -59,22 +59,45 @@ public class GeckoStateDataRepository {
     // was persisted verbatim per tab, and the number of tabs is uncapped, so
     // the file reached tens of MB. The old load slurped the WHOLE file into one
     // String and then built a full JSONArray from it — ~2–3× the file size
-    // resident at once — which on a 128 MB heap threw OutOfMemoryError during
-    // init. Because the file is re-read (and never shrunk) on every launch, the
-    // crash repeated forever: an unrecoverable boot loop.
+    // resident at once — and then kept the parsed preview/icon blobs resident in
+    // mGeckoStates for the whole app lifetime. On a 128 MB heap that either
+    // threw OutOfMemoryError during init or left the heap so full that any later
+    // allocation — including a tiny main-thread one, as in issue #292's reported
+    // stack — became the OOM victim. Because the file was re-read (and never
+    // shrunk) on every launch, the crash repeated: a boot loop.
     //
     // The read is now STREAMED (android.util.JsonReader — one field resident at
     // a time, no whole-file String, no full JSONArray tree), the inline blob
     // fields are dropped (see sanitizeInlineField / the PREVIEW skip below), and
-    // a hard size + OutOfMemoryError backstop moves a pathological file aside so
-    // the app still boots. The matching write-side guard is in
+    // a size + OutOfMemoryError backstop moves a pathological file aside so the
+    // app still boots. The matching write-side guard is in
     // GeckoStateObserver.toJson, which sanitizes the same fields so the file
-    // can't re-grow.
-    private static final long MAX_SESSION_FILE_BYTES = 24L * 1024 * 1024;
-    /** Above this length, or if it is a data: URI, an icon/preview string is an
-     *  inline blob we neither persist nor restore (it re-derives when the tab
-     *  loads). Generous enough to keep real favicon/preview URLs. */
+    // can't re-grow. This mirrors Firefox for Android (android-components
+    // SessionStorage / BrowserStateWriter+Reader): streamed JsonWriter/JsonReader
+    // over an atomic file, and NO image data inlined in the session file at all —
+    // Fenix keeps favicons (BrowserIcons) and tab thumbnails (ThumbnailStorage)
+    // in separate disk caches keyed by url/tab-id, which is why its session file
+    // is bounded text and ours wasn't.
+    //
+    // MAX_SESSION_FILE_BYTES is NOT a memory bound anymore — the streamed read's
+    // peak is one field regardless of file size (verified: a 122 MB blob file
+    // streams fine on a 128 MB heap). It only bounds worst-case boot PARSE TIME
+    // for a truly pathological file, so it is deliberately far above anything a
+    // sanitized writer produces: a legacy blob-laden file under it still gets
+    // every tab recovered by the streamed read instead of being thrown away.
+    private static final long MAX_SESSION_FILE_BYTES = 256L * 1024 * 1024;
+    /** Above this length an icon/preview string is an inline blob we neither
+     *  persist nor restore (it re-derives when the tab loads). Generous enough
+     *  to keep real favicon/preview URLs. */
     public static final int MAX_INLINE_FIELD_CHARS = 256 * 1024;
+    /** data: icons above this are dropped; small ones are kept — some sites ship
+     *  their favicon only as a small data: URI, and dropping those left restored
+     *  tabs iconless until reload. Bounded: even 1000 tabs × 8 KB is ~8 MB of
+     *  file, nowhere near the blob previews that caused the OOM. */
+    public static final int MAX_INLINE_DATA_URI_CHARS = 8 * 1024;
+    /** How long a moved-aside {@code .corrupt} file is kept for post-mortem
+     *  before {@link #pruneStaleCorruptFiles} deletes it on a later boot. */
+    private static final long CORRUPT_RETENTION_MS = 7L * 24 * 60 * 60 * 1000;
     private final Context mContext;
     private final List<GeckoState> mGeckoStates;
     private final MutableLiveData<Boolean> mInitialized;
@@ -540,16 +563,22 @@ public class GeckoStateDataRepository {
 
 
     /**
-     * Drops a persisted icon/preview value that is an inline blob (a data: URI
-     * or an oversized string) — the exact payload that once inflated the
-     * sessions file to the point of an OOM boot loop. Kept public so the
-     * write-side guard ({@code GeckoStateObserver.toJson}) shares one rule.
+     * Drops a persisted icon/preview value that is an oversized inline blob —
+     * the exact payload that once inflated the sessions file to the point of an
+     * OOM boot loop. A SMALL data: URI is kept: some sites ship their favicon
+     * only as one, and dropping it left the restored tab iconless until reload;
+     * the cap ({@link #MAX_INLINE_DATA_URI_CHARS}) keeps the total bounded.
+     * Kept public so the write-side guard ({@code GeckoStateObserver.toJson})
+     * shares one rule.
      */
     public static String sanitizeInlineField(String s) {
         if (s == null) {
             return "";
         }
-        if (s.length() > MAX_INLINE_FIELD_CHARS || s.startsWith("data:")) {
+        if (s.length() > MAX_INLINE_FIELD_CHARS) {
+            return "";
+        }
+        if (s.startsWith("data:") && s.length() > MAX_INLINE_DATA_URI_CHARS) {
             return "";
         }
         return s;
@@ -567,6 +596,8 @@ public class GeckoStateDataRepository {
         File dir = mContext.getFilesDir();
         File localFile = new File(dir, FILE);
         File tempFile = new File(dir, FILE + ".tmp");
+
+        pruneStaleCorruptFiles(dir);
 
         List<GeckoStateEntity> fromLocal = tryReadEntities(localFile);
         if (fromLocal != null) {
@@ -627,7 +658,10 @@ public class GeckoStateDataRepository {
     /**
      * Renames a bad session file to a fixed {@code .corrupt} sibling (kept for
      * post-mortem, overwritten each time so it can't accumulate); falls back to
-     * deleting it if the rename fails. Never throws.
+     * deleting it if the rename fails. Never throws. A kept {@code .corrupt}
+     * can be as large as the pathological file it came from, so it is not kept
+     * forever — {@link #pruneStaleCorruptFiles} deletes it on a later boot once
+     * it is older than {@link #CORRUPT_RETENTION_MS}.
      */
     private void moveAside(File file) {
         try {
@@ -638,6 +672,23 @@ public class GeckoStateDataRepository {
             }
         } catch (RuntimeException e) {
             Log.w(TAG, "moveAside failed", e);
+        }
+    }
+
+    /**
+     * Deletes moved-aside {@code .corrupt} session files once they are older
+     * than {@link #CORRUPT_RETENTION_MS} — long enough for a post-mortem, short
+     * enough that a one-time 100 MB corpse doesn't occupy app storage forever.
+     * A fresh {@code .corrupt} (this boot's, or a recent one) is left alone.
+     */
+    private void pruneStaleCorruptFiles(File dir) {
+        long cutoff = System.currentTimeMillis() - CORRUPT_RETENTION_MS;
+        String[] candidates = {FILE + ".corrupt", FILE + ".tmp.corrupt"};
+        for (String name : candidates) {
+            File corrupt = new File(dir, name);
+            if (corrupt.exists() && corrupt.lastModified() < cutoff) {
+                FileUtils.deleteQuietly(corrupt);
+            }
         }
     }
 
@@ -754,47 +805,54 @@ public class GeckoStateDataRepository {
         return entity;
     }
 
-    // Lenient primitive reads mirroring the old opt* semantics (a value stored
-    // as the "wrong" JSON type still parses, and null / any other token falls
-    // back to the default) so no legacy file shape regresses.
+    // Lenient primitive reads mirroring the old opt* semantics: a value stored
+    // as the "wrong" JSON type still parses where it sensibly can, and ANY
+    // token these helpers can't convert — null, an object/array, a fractional
+    // or out-of-range number, a garbage numeric string — is consumed and falls
+    // back to the default. Totality matters: a per-field throw would propagate
+    // to tryReadEntities' catch-all and move the WHOLE file aside (all tabs
+    // lost) over one odd field, which is exactly the wrong trade. Note
+    // android.util.JsonReader's nextLong/nextInt/nextDouble accept BOTH NUMBER
+    // and STRING tokens (parsing the string), and on a parse failure they throw
+    // WITHOUT consuming the token — hence the skipValue() in each catch.
     private static String nextStringSafe(JsonReader reader) throws IOException {
-        if (reader.peek() == JsonToken.NULL) {
-            reader.nextNull();
-            return "";
+        JsonToken token = reader.peek();
+        if (token == JsonToken.STRING || token == JsonToken.NUMBER) {
+            return reader.nextString();
         }
-        return reader.nextString();
+        if (token == JsonToken.BOOLEAN) {
+            return String.valueOf(reader.nextBoolean());
+        }
+        reader.skipValue();
+        return "";
     }
 
     private static long nextLongSafe(JsonReader reader, long def) throws IOException {
         JsonToken token = reader.peek();
-        if (token == JsonToken.NUMBER) {
+        if (token != JsonToken.NUMBER && token != JsonToken.STRING) {
+            reader.skipValue();
+            return def;
+        }
+        try {
             return reader.nextLong();
+        } catch (NumberFormatException e) {
+            reader.skipValue();
+            return def;
         }
-        if (token == JsonToken.STRING) {
-            try {
-                return Long.parseLong(reader.nextString());
-            } catch (NumberFormatException e) {
-                return def;
-            }
-        }
-        reader.skipValue();
-        return def;
     }
 
     private static int nextIntSafe(JsonReader reader, int def) throws IOException {
         JsonToken token = reader.peek();
-        if (token == JsonToken.NUMBER) {
+        if (token != JsonToken.NUMBER && token != JsonToken.STRING) {
+            reader.skipValue();
+            return def;
+        }
+        try {
             return reader.nextInt();
+        } catch (NumberFormatException e) {
+            reader.skipValue();
+            return def;
         }
-        if (token == JsonToken.STRING) {
-            try {
-                return Integer.parseInt(reader.nextString());
-            } catch (NumberFormatException e) {
-                return def;
-            }
-        }
-        reader.skipValue();
-        return def;
     }
 
     private static boolean nextBooleanSafe(JsonReader reader, boolean def) throws IOException {
@@ -806,7 +864,12 @@ public class GeckoStateDataRepository {
             return Boolean.parseBoolean(reader.nextString());
         }
         if (token == JsonToken.NUMBER) {
-            return reader.nextInt() != 0;
+            try {
+                return reader.nextDouble() != 0.0;
+            } catch (NumberFormatException e) {
+                reader.skipValue();
+                return def;
+            }
         }
         reader.skipValue();
         return def;
