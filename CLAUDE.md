@@ -1866,7 +1866,12 @@ regress any layer independently:
   DI time, so it always precedes the first persist; the tabs LiveData has no
   initial value, so `observeForever` can't fire a pre-init empty write).
   `notifyTabs` posts **deep-copied** entity snapshots, so persist never sees
-  a mutating list or torn fields. No lock is held across file IO.
+  a mutating list or torn fields. No lock is held across file IO on the
+  persist/boot-read paths; the ONE exception is the archive sweep
+  (`archiveInactiveTabsLocked`), which has always done its Room
+  insert/thumb-delete/purge IO under the `mGeckoStates` monitor on the disk
+  executor — the v3 inline-resolve read rides that pre-existing pattern
+  (one small immutable file per archived tab), it did not introduce it.
 - **Sessions are LAZY — only entities load at boot.** `initializeGeckoStates`
   builds `GeckoState` wrappers (the ctor stores the entity; no `GeckoSession`).
   A live session is created only by `getOrCreateGeckoSession()`, reachable
