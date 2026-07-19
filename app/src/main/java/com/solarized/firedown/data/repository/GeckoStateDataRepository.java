@@ -599,10 +599,14 @@ public class GeckoStateDataRepository {
     }
 
     /**
-     * Loads the persisted tabs, streaming the file so peak memory is one field
-     * — never the whole file — regardless of how large it has grown. Prefers
-     * the live file, falls back to the {@code .tmp} written by the atomic-write
-     * path, and returns an empty list if neither can be read. A present-but-
+     * Loads the persisted tabs, streaming the file so the PARSE overhead is one
+     * field at a time — never a whole-file String or a full parsed tree —
+     * regardless of how large the file has grown. (What is RETAINED is the
+     * entity payload itself, dominated by the per-tab session states the app
+     * must hold to restore tabs — same as Fenix's RecoverableTabs; the blob
+     * fields that used to dwarf it are skipped/externalized.) Prefers the live
+     * file, falls back to the {@code .tmp} written by the atomic-write path,
+     * and returns an empty list if neither can be read. A present-but-
      * unreadable or oversized file is moved aside (not silently deleted) by
      * {@link #tryReadEntities}, so it can never re-crash the next launch.
      */
@@ -1064,11 +1068,17 @@ public class GeckoStateDataRepository {
                     archiveInactiveTabsLocked(autoArchiveThresholdMillis);
                 }
             }
-        } catch (RuntimeException e) {
+        } catch (OutOfMemoryError | RuntimeException e) {
             // loadEntities() handles its own IO/parse/OOM failures (moving a bad
             // file aside and returning what it could). This is a final safety net
             // so a fault anywhere in init still leaves the app initialized rather
             // than looping — the finally block below always marks it ready.
+            // OutOfMemoryError is included deliberately: an uncaught Error on
+            // this executor thread reaches Android's default uncaught handler
+            // and kills the process, and an OOM while RETAINING a huge (legit)
+            // session set would then re-crash every boot — the boot loop this
+            // whole path exists to prevent. Catching it boots with whatever
+            // subset was built; the next persist rewrites the file from it.
             Log.e(TAG, "initializeGeckoState error", e);
         } finally {
             mInitialized.postValue(true);

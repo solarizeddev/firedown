@@ -82,7 +82,13 @@ public final class GeckoStateObserver implements Observer<List<GeckoStateEntity>
                 Log.d(TAG, "saveToDiskIO: " + (entities != null ? entities.size() : 0));
             }
             writeSessionFile(entities);
-        } catch (IOException | RuntimeException e) {
+        } catch (OutOfMemoryError | IOException | RuntimeException e) {
+            // OutOfMemoryError is caught deliberately (Fenix parity —
+            // SessionStorage.save does the same): an uncaught Error on this
+            // executor thread reaches Android's default uncaught handler and
+            // KILLS THE PROCESS, turning a skippable persist into a crash. A
+            // failed persist keeps the last committed file; the torn temp was
+            // already cleaned up by writeSessionFile.
             Log.e(TAG, "saveToDiskIO", e);
         } finally {
             if (entities == null || entities.isEmpty()) {
@@ -103,8 +109,12 @@ public final class GeckoStateObserver implements Observer<List<GeckoStateEntity>
         File targetFile = new File(dir, GeckoStateDataRepository.FILE);
         File tempFile = new File(dir, GeckoStateDataRepository.FILE + ".tmp");
         Set<String> referencedIcons = new HashSet<>();
-        boolean committed = false;
+        boolean written = false;
 
+        // Phase 1 — stream the document to the temp file. The failWrite
+        // containment is scoped to THIS phase only: a failure here leaves a
+        // TORN temp, which must not survive (the boot read treats a present
+        // .tmp as a fallback snapshot).
         try {
             try (FileOutputStream fos = new FileOutputStream(tempFile);
                  JsonWriter writer = new JsonWriter(new BufferedWriter(
@@ -131,22 +141,33 @@ public final class GeckoStateObserver implements Observer<List<GeckoStateEntity>
                 writer.flush();
                 fos.getFD().sync();
             }
-
-            if (!tempFile.renameTo(targetFile)) {
-                if (targetFile.exists() && !targetFile.delete()) {
-                    throw new IOException("Failed to delete old session file");
-                }
-                if (!tempFile.renameTo(targetFile)) {
-                    throw new IOException("Failed to rename temp session file");
-                }
-            }
-            committed = true;
+            written = true;
         } finally {
-            if (!committed) {
+            if (!written) {
                 FileUtils.deleteQuietly(tempFile);
             }
         }
 
+        // Phase 2 — publish. The temp is now COMPLETE and fsynced, so if the
+        // rename dance fails it must be KEPT, never deleted: in the worst
+        // interleaving (target deleted, second rename fails, process dies) the
+        // valid .tmp is the ONLY remaining copy of the session state, and the
+        // boot read's fallback path promotes it. Deleting it here would turn a
+        // failed rename into total tab loss.
+        if (!tempFile.renameTo(targetFile)) {
+            if (targetFile.exists() && !targetFile.delete()) {
+                throw new IOException("Failed to delete old session file");
+            }
+            if (!tempFile.renameTo(targetFile)) {
+                throw new IOException("Failed to rename temp session file");
+            }
+        }
+
+        // Prune only after a committed persist: the referenced set mirrors the
+        // file that is now live. Racing a concurrent Glide read of a pruned
+        // icon is safe — unlink during an open read is fine on Linux, and a
+        // later cache-miss load falls back to the generated domain thumbnail
+        // (GlideHelper's failure listener).
         TabIconStore.prune(mContext, referencedIcons);
     }
 
