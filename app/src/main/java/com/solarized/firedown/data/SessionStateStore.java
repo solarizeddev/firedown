@@ -12,6 +12,9 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
@@ -99,6 +102,16 @@ public final class SessionStateStore {
      *  are KBs to a few hundred KB). Prevents a corrupted/foreign file from
      *  ballooning the heap on the read path. */
     public static final int MAX_STATE_BYTES = 16 * 1024 * 1024;
+    /** Count bound on the UNREFERENCED backlog. The grace window alone is only
+     *  a TIME bound: onSessionStateChange fires for scroll/form churn too, so
+     *  a heavy browsing day can legally pile thousands of young superseded
+     *  files before any turns 24 h old — and a backward clock jump gives files
+     *  future mtimes that never look stale at all. After the age pass, prune
+     *  keeps at most this many unreferenced files (newest-by-mtime win) and
+     *  deletes the oldest beyond it. Generous on purpose: every undo/race the
+     *  grace protects needs a handful of files for minutes, not hundreds for
+     *  hours — the cap only bites pathological churn. */
+    public static final int MAX_UNREFERENCED_FILES = 512;
 
     private SessionStateStore() {
     }
@@ -208,13 +221,17 @@ public final class SessionStateStore {
         }
     }
 
-    /** See {@link #prune}; {@code nowMs} injected for testability. */
+    /** See {@link #prune}; {@code nowMs} injected for testability. Two passes:
+     *  age (grace expired) and then the {@link #MAX_UNREFERENCED_FILES} count
+     *  cap over the young survivors, oldest-mtime first — so the store is
+     *  bounded in TIME and in COUNT, whatever the churn rate or the clock. */
     public static void pruneDir(File dir, Set<String> referencedPaths, long nowMs) {
         File[] files = dir.listFiles();
         if (files == null) {
             return;
         }
         long cutoff = nowMs - RETENTION_MS;
+        List<File> unreferenced = new ArrayList<>();
         for (File file : files) {
             if (referencedPaths.contains(file.getAbsolutePath())) {
                 // Keep the grace clock fresh: "referenced as of this persist".
@@ -222,7 +239,19 @@ public final class SessionStateStore {
                 file.setLastModified(nowMs);
             } else if (file.lastModified() < cutoff) {
                 FileUtils.deleteQuietly(file);
+            } else {
+                unreferenced.add(file);
             }
+        }
+        int excess = unreferenced.size() - MAX_UNREFERENCED_FILES;
+        if (excess <= 0) {
+            return;
+        }
+        // Oldest first — future-mtime files (a backward clock jump) sort
+        // newest and are kept, but the TOTAL stays capped regardless.
+        unreferenced.sort(Comparator.comparingLong(File::lastModified));
+        for (int i = 0; i < excess; i++) {
+            FileUtils.deleteQuietly(unreferenced.get(i));
         }
     }
 

@@ -1915,11 +1915,18 @@ regress any layer independently:
     refs, which makes the referenced set handed to `SessionStateStore.prune`
     complete by construction. Don't add a new persisted holder of
     `session_ref` without adding it to the referenced set.
-  - **Grace-based deferred deletion** (their `canTabStateBeDeleted` undo
-    protection): prune touches referenced files' mtime and deletes
-    unreferenced ones only after `RETENTION_MS` (24 h) — a close-undo
-    finds its file intact; superseded states linger bounded hours, not
-    forever; a stray `.tmp` from process death dies once stale.
+  - **Grace-based deferred deletion, bounded in TIME and COUNT** (their
+    `canTabStateBeDeleted` undo protection): prune touches referenced
+    files' mtime and deletes unreferenced ones only after `RETENTION_MS`
+    (24 h) — a close-undo finds its file intact; superseded states linger
+    bounded hours, not forever; a stray `.tmp` from process death dies
+    once stale. The grace alone is only a TIME bound, so prune ALSO caps
+    the young unreferenced backlog at `MAX_UNREFERENCED_FILES` (512,
+    oldest-mtime deleted first): onSessionStateChange fires for
+    scroll/form churn too (a heavy day can pile thousands of young files
+    before any ages out), and a backward clock jump gives files future
+    mtimes that never look stale — the count cap bounds both. Don't
+    remove either bound: they cover different failure shapes.
   - **Cleanup only after a committed persist, single-flight, THROTTLED**
     (their `cleanUpPersistentData` runs once after load, not per save):
     the state prune runs from `writeSessionFile` after the rename landed,
