@@ -77,6 +77,20 @@
             app:popEnterAnim="@anim/slide_in_left"
             app:popExitAnim="@anim/slide_out_right" />
         <action
+            android:id="@+id/action_settings_to_security"
+            app:destination="@id/settings_security"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
+        <action
+            android:id="@+id/action_settings_to_direct_share"
+            app:destination="@id/settings_direct_share"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
+        <action
             android:id="@+id/action_settings_to_sync"
             app:destination="@id/settings_sync"
             app:enterAnim="@anim/slide_in_right"
@@ -87,6 +101,20 @@
     <fragment
         android:id="@+id/settings_wasm"
         android:name="com.solarized.firedown.settings.WasmFragment" />
+    <fragment
+        android:id="@+id/settings_security"
+        android:name="com.solarized.firedown.settings.SecurityFragment">
+        <action
+            android:id="@+id/action_security_to_wasm"
+            app:destination="@id/settings_wasm"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
+    </fragment>
+    <fragment
+        android:id="@+id/settings_direct_share"
+        android:name="com.solarized.firedown.settings.DirectShareFragment" />
     <fragment
         android:id="@+id/settings_tabs"
         android:name="com.solarized.firedown.settings.TabsFragment" />

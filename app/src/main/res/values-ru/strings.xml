@@ -599,5 +599,5 @@
     <string name="settings_p2p_turn_cred_hint">Пароль</string>
     <string name="settings_p2p_turn_clear">Очистить</string>
     <string name="settings_p2p_turn_invalid">Введите корректный ретранслятор, например turn:host:3478</string>
-    <string name="settings_support_firedown">Поддержать Firedown</string>
+    <string name="settings_donate">Пожертвовать</string>
 </resources>

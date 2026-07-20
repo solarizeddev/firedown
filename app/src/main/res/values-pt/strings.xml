@@ -597,5 +597,5 @@
     <string name="settings_p2p_turn_cred_hint">Senha</string>
     <string name="settings_p2p_turn_clear">Limpar</string>
     <string name="settings_p2p_turn_invalid">Insira um retransmissor válido, ex.: turn:host:3478</string>
-    <string name="settings_support_firedown">Apoie o Firedown</string>
+    <string name="settings_donate">Doar</string>
 </resources>

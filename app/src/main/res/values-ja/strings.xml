@@ -698,5 +698,5 @@
     <string name="settings_p2p_turn_cred_hint">パスワード</string>
     <string name="settings_p2p_turn_clear">消去</string>
     <string name="settings_p2p_turn_invalid">有効なリレーを入力してください（例: turn:host:3478）</string>
-    <string name="settings_support_firedown">Firedown を支援する</string>
+    <string name="settings_donate">寄付する</string>
 </resources>

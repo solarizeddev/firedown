@@ -702,5 +702,5 @@
     <string name="settings_p2p_turn_cred_hint">Mot de passe</string>
     <string name="settings_p2p_turn_clear">Effacer</string>
     <string name="settings_p2p_turn_invalid">Saisissez un relais valide, p. ex. turn:host:3478</string>
-    <string name="settings_support_firedown">Soutenir Firedown</string>
+    <string name="settings_donate">Faire un don</string>
 </resources>
