@@ -140,6 +140,20 @@ public final class SessionStateStore {
         return readFromFile(new File(ref));
     }
 
+    /**
+     * Re-anchors a persisted ref to THIS install's store directory by
+     * basename. Refs are stored as absolute paths (the THUMB/tab_icons
+     * precedent), but a user-profile transfer / OEM phone-clone migrates the
+     * files while {@code filesDir}'s prefix changes — a verbatim ref would
+     * miss and silently degrade every transferred tab to a URL-only restore.
+     * Basename resolution makes the ref relocation-proof; for a normal
+     * install it returns the same path unchanged. Applied at READ time
+     * (readEntityStrict), so the next persist rewrites the corrected path.
+     */
+    public static String resolve(Context context, String ref) {
+        return resolveToDir(storeDir(context), ref);
+    }
+
     /** True if {@code ref} points into this store — used to build the
      *  referenced set {@link #prune} keeps. */
     public static boolean isStorePath(Context context, String ref) {
@@ -164,6 +178,14 @@ public final class SessionStateStore {
     }
 
     // ── pure IO core (JVM-testable) ───────────────────────────────────────
+
+    /** See {@link #resolve}; {@code dir} is the store directory. */
+    public static String resolveToDir(File dir, String ref) {
+        if (ref == null || ref.isEmpty()) {
+            return "";
+        }
+        return new File(dir, new File(ref).getName()).getAbsolutePath();
+    }
 
     /** See {@link #externalize}; {@code dir} is the store directory. */
     public static String externalizeToDir(File dir, String state) {

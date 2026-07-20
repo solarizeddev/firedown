@@ -15,6 +15,7 @@ import androidx.lifecycle.MutableLiveData;
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.StoragePaths;
 import com.solarized.firedown.data.di.Qualifiers;
+import com.solarized.firedown.data.SessionStateStore;
 import com.solarized.firedown.data.entity.CertificateInfoEntity;
 import com.solarized.firedown.data.entity.GeckoStateEntity;
 import com.solarized.firedown.geckoview.GeckoState;
@@ -922,7 +923,11 @@ public class GeckoStateDataRepository {
                     // v3 form — only the file reference enters the heap here;
                     // the state string loads lazily in
                     // GeckoState.getOrCreateGeckoSession (O(opened tabs)).
-                    entity.setSessionStateRef(reader.nextString());
+                    // resolve() re-anchors the path to THIS install's store
+                    // dir by basename, so a profile transfer / phone-clone
+                    // (which changes filesDir's prefix) keeps tab histories.
+                    entity.setSessionStateRef(
+                            SessionStateStore.resolve(mContext, reader.nextString()));
                     break;
                 case GeckoStateEntity.KEYS.URI:
                     entity.setUri(reader.nextString());
