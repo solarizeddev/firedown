@@ -699,5 +699,4 @@
     <string name="settings_p2p_turn_clear">清除</string>
     <string name="settings_p2p_turn_invalid">请输入有效的中继，例如 turn:host:3478</string>
     <string name="settings_support_firedown">支持 Firedown</string>
-    <string name="settings_support_firedown_summary">等价回馈 · 打开 firedown.app</string>
 </resources>
