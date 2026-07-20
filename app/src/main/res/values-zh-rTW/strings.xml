@@ -213,7 +213,6 @@
     <string name="settings_doh_server_title">使用提供者</string>
     <string name="settings_doh_summary">透過防止竊聽和操縱 DNS 資料來提高隱私性。</string>
     <string name="settings_doh_title">基於 HTTPS 的 DNS</string>
-    <string name="settings_donate">贊助</string>
     <string name="settings_downloads">下載</string>
     <string name="settings_downloads_free">下載 &lt;small&gt;(%s)&lt;/small&gt;</string>
     <string name="settings_downloads_path">下載位置</string>

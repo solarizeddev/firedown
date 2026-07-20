@@ -135,32 +135,6 @@
     <string name="details_url">URL</string>
     <string name="details_language">Language</string>
     <string name="details_resolution">Resolution</string>
-    <string name="donate_amt_100k">100k</string>
-    <string name="donate_amt_1k">1k</string>
-    <string name="donate_amt_21k">21k</string>
-    <string name="donate_amt_5k">5k</string>
-    <string name="donate_bitcoin_meta">~10 min confirm · network fee</string>
-    <string name="donate_bitcoin_title">Bitcoin on-chain</string>
-    <string name="donate_btc_copied">Address copied</string>
-    <string name="donate_btc_copy">Copy address</string>
-    <string name="donate_btc_open_wallet">Open in wallet</string>
-    <string name="donate_btc_qr_desc">Bitcoin address QR code</string>
-    <string name="donate_copy_invoice">Copy invoice</string>
-    <string name="donate_custom_amount_hint">Custom amount (sats)</string>
-    <string name="donate_invoice_copied">Invoice copied</string>
-    <string name="donate_invoice_qr_desc">Lightning invoice QR code</string>
-    <string name="donate_lightning_meta">Sats · instant · no fees</string>
-    <string name="donate_lightning_title">Lightning</string>
-    <string name="donate_no_bitcoin_wallet">No Bitcoin wallet app installed.</string>
-    <string name="donate_no_lightning_wallet">No Lightning wallet app installed.</string>
-    <string name="donate_open_in_wallet">Open in wallet</string>
-    <string name="donate_pay_button">Send %1$s sats</string>
-    <string name="donate_pay_default">Send 5,000 sats</string>
-    <string name="donate_status_error">Could not generate invoice: %1$s</string>
-    <string name="donate_status_generating">Generating invoice…</string>
-    <string name="donate_status_wallet_opened">Opening your Lightning wallet…</string>
-    <string name="donate_subtitle">Firedown is free. If it saved you time or annoyance, send back what it was worth — in any of these ways.</string>
-    <string name="donate_title">Value for Value</string>
     <string name="download">Download</string>
     <string name="download_finished_meta">%1$s · %2$s</string>
     <!-- Trailing-action label on the home recent-downloads card. Kept
@@ -534,8 +508,6 @@
     <string name="settings_doh_server_working">It\'s working!</string>
     <string name="settings_doh_summary">Increase privacy by preventing eavesdropping and manipulation of DNS data.</string>
     <string name="settings_doh_title">DNS over HTTPS</string>
-    <string name="settings_donate">Donate</string>
-    <string name="settings_donate_summary">Send back what Firedown is worth to you</string>
 <string name="settings_downloads">Downloads</string>
     <string name="settings_downloads_free">Downloads &lt;small&gt;(%s)&lt;/small&gt;</string>
     <string name="settings_downloads_path">Downloads Location</string>
@@ -606,6 +578,9 @@
     <string name="settings_search_custom_delete_title">Delete custom search engine?</string>
     <string name="settings_search_custom_delete_message">\"%1$s\" will be removed</string>
 <string name="settings_solarized_support" translatable="false">https://github.com/solarizeddev/firedown/issues</string>
+    <string name="settings_support_firedown">Support Firedown</string>
+    <string name="settings_support_firedown_summary">Value for value · opens firedown.app</string>
+    <string name="settings_support_firedown_url" translatable="false">https://firedown.app/support</string>
     <string name="settings_storage_manager_button_decline">NOT NOW</string>
     <string name="settings_storage_manager_button_ok">OPEN SETTINGS</string>
     <string name="settings_tabs_archive_interval_title">Close inactive tabs</string>

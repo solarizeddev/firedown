@@ -301,22 +301,15 @@
     </PreferenceCategory>
 
     <PreferenceCategory
-        android:title="@string/settings_donate"
-        app:iconSpaceReserved="false">
-
-    <Preference
-        android:key="com.solarized.firedown.preferences.donate"
-        android:title="@string/donate_title"
-        android:summary="@string/settings_donate_summary"
-        app:icon="@drawable/ic_favorite_24"/>
-
-    </PreferenceCategory>
-
-
-    <PreferenceCategory
         android:title="@string/app_name"
         app:iconSpaceReserved="false">
 
+
+        <Preference
+            android:key="com.solarized.firedown.preferences.donate"
+            android:title="@string/settings_support_firedown"
+            android:summary="@string/settings_support_firedown_summary"
+            app:icon="@drawable/ic_favorite_24" />
 
         <Preference
             android:key="com.solarized.firedown.preferences.license"

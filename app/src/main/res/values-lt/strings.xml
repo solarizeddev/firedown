@@ -193,7 +193,6 @@
     <string name="settings_doh_server_title">Naudoti teikėją</string>
     <string name="settings_doh_summary">Padidinkite privatumą užkirsdami kelią DNS duomenų perėmimui ir manipuliavimui.</string>
     <string name="settings_doh_title">DNS per HTTPS</string>
-    <string name="settings_donate">Paremti</string>
     <string name="settings_downloads">Atsisiuntimai</string>
     <string name="settings_downloads_free">Atsisiuntimai &lt;small&gt;(%s)&lt;/small&gt;</string>
     <string name="settings_downloads_path">Atsisiuntimų vieta</string>

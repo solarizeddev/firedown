@@ -85,8 +85,6 @@ public class SettingsActivity extends BaseActivity {
                 mToolbar.setTitle(R.string.settings_query_param_block_list);
             else if(id == R.id.settings_search)
                 mToolbar.setTitle(R.string.settings_search_engine);
-            else if(id == R.id.settings_donate)
-                mToolbar.setTitle(R.string.donate_title);
             else if(id == R.id.settings_lock)
                 mToolbar.setTitle(R.string.settings_lock_title);
             else if(id == R.id.settings_sync)

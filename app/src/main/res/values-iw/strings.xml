@@ -221,7 +221,6 @@
     <string name="settings_doh_server_title">השתמש בספק</string>
     <string name="settings_doh_summary">הגבר את הפרטיות על ידי מניעת האזנה וניפולציה של נתוני DNS.</string>
     <string name="settings_doh_title">DNS דרך HTTPS</string>
-    <string name="settings_donate">ביצוע תרומה</string>
     <string name="settings_downloads">הורדות</string>
     <string name="settings_downloads_free">הורדות &lt;small&gt;(%s)&lt;/small&gt;</string>
     <string name="settings_downloads_path">מיקום הורדות</string>

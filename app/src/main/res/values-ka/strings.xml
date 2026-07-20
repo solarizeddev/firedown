@@ -203,7 +203,6 @@
     <string name="settings_doh_server_title">Გამოიყენეთ პროვაიდერი</string>
     <string name="settings_doh_summary">Გაზარდეთ კონფიდენციალურობა DNS მონაცემების მოსმენისა და მანიპულირების თავიდან ასაცილებლად.</string>
     <string name="settings_doh_title">DNS HTTPS-ზე</string>
-    <string name="settings_donate">გააკეთე დონაცია</string>
     <string name="settings_downloads">Ჩამოტვირთვები</string>
     <string name="settings_downloads_free">Ჩამოტვირთვები &lt;small&gt;(%s)&lt;/small&gt;</string>
     <string name="settings_downloads_path">Ჩამოტვირთვების მდებარეობა</string>

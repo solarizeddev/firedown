@@ -202,7 +202,6 @@
     <string name="settings_doh_server_title">Utilizați furnizorul</string>
     <string name="settings_doh_summary">Creșteți confidențialitatea prin prevenirea interceptării și manipulării datelor DNS.</string>
     <string name="settings_doh_title">DNS prin HTTPS</string>
-    <string name="settings_donate">Donează</string>
     <string name="settings_downloads">Descărcări</string>
     <string name="settings_downloads_free">Descărcări &lt;small&gt;(%s)&lt;/small&gt;</string>
     <string name="settings_downloads_path">Locație de descărcări</string>

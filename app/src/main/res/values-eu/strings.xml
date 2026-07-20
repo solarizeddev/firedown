@@ -204,7 +204,6 @@
     <string name="settings_doh_server_title">Erabili hornitzailea</string>
     <string name="settings_doh_summary">Handitu pribatutasuna DNS datuen entzuteak eta manipulazioa saihestuz.</string>
     <string name="settings_doh_title">DNS HTTPS bidez</string>
-    <string name="settings_donate">Egin dohaintza</string>
     <string name="settings_downloads">Deskargak</string>
     <string name="settings_downloads_free">Deskargak &lt;small&gt;(%s)&lt;/small&gt;</string>
     <string name="settings_downloads_path">Deskargak kokapena</string>

@@ -70,13 +70,6 @@
             app:popEnterAnim="@anim/slide_in_left"
             app:popExitAnim="@anim/slide_out_right" />
         <action
-            android:id="@+id/action_settings_to_donate"
-            app:destination="@id/settings_donate"
-            app:enterAnim="@anim/slide_in_right"
-            app:exitAnim="@anim/slide_out_left"
-            app:popEnterAnim="@anim/slide_in_left"
-            app:popExitAnim="@anim/slide_out_right" />
-        <action
             android:id="@+id/action_settings_to_wasm"
             app:destination="@id/settings_wasm"
             app:enterAnim="@anim/slide_in_right"
@@ -94,9 +87,6 @@
     <fragment
         android:id="@+id/settings_wasm"
         android:name="com.solarized.firedown.settings.WasmFragment" />
-    <fragment
-        android:id="@+id/settings_donate"
-        android:name="com.solarized.firedown.settings.DonateFragment" />
     <fragment
         android:id="@+id/settings_tabs"
         android:name="com.solarized.firedown.settings.TabsFragment" />

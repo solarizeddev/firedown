@@ -209,7 +209,6 @@
     <string name="settings_doh_server_title">ใช้ผู้ให้บริการ</string>
     <string name="settings_doh_summary">เพิ่มความเป็นส่วนตัวโดยป้องกันการดักฟังและการจัดการข้อมูล DNS</string>
     <string name="settings_doh_title">DNS ผ่าน HTTPS</string>
-    <string name="settings_donate">บริจาค</string>
     <string name="settings_downloads">ดาวน์โหลด</string>
     <string name="settings_downloads_free">ดาวน์โหลด &lt;small&gt;(%s)&lt;/small&gt;</string>
     <string name="settings_downloads_path">ตำแหน่งดาวน์โหลด</string>

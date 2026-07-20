@@ -161,7 +161,6 @@
     <string name="settings_doh_server_title">Izmantojiet pakalpojumu sniedzēju</string>
     <string name="settings_doh_summary">Palieliniet konfidencialitāti, novēršot noklausīšanos un manipulācijas ar DNS datiem.</string>
     <string name="settings_doh_title">DNS, izmantojot HTTPS</string>
-    <string name="settings_donate">Ziedojiet</string>
     <string name="settings_downloads">Lejupielādes</string>
     <string name="settings_downloads_free">Lejupielādes &lt;small&gt;(%s)&lt;/small&gt;</string>
     <string name="settings_downloads_path">Lejupielāžu atrašanās vieta</string>

@@ -202,7 +202,6 @@
     <string name="settings_doh_server_title">Përdor Ofruesin</string>
     <string name="settings_doh_summary">Rritni privatësinë duke parandaluar përgjimin dhe manipulimin e të dhënave DNS.</string>
     <string name="settings_doh_title">DNS mbi HTTPS</string>
-    <string name="settings_donate">Dhuro</string>
     <string name="settings_downloads">Shkarkimet</string>
     <string name="settings_downloads_free">Shkarkimet &lt;small&gt;(%s)&lt;/small&gt;</string>
     <string name="settings_downloads_path">Vendndodhja e shkarkimeve</string>

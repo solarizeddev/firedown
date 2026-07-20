@@ -222,7 +222,6 @@
     <string name="settings_doh_server_title">Brug udbyder</string>
     <string name="settings_doh_summary">Øg privatlivets fred ved at forhindre aflytning og manipulation af DNS-data.</string>
     <string name="settings_doh_title">DNS over HTTPS</string>
-    <string name="settings_donate">Donér</string>
     <string name="settings_downloads">Downloads</string>
     <string name="settings_downloads_free">Downloads &lt;small&gt;(%s)&lt;/small&gt;</string>
     <string name="settings_downloads_path">Downloads placering</string>

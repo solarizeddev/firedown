@@ -218,7 +218,6 @@
     <string name="settings_doh_server_title">Kasutage teenusepakkujat</string>
     <string name="settings_doh_summary">Suurendage privaatsust, vältides DNS-i andmete pealtkuulamist ja manipuleerimist.</string>
     <string name="settings_doh_title">DNS HTTPS-i kaudu</string>
-    <string name="settings_donate">Anneta</string>
     <string name="settings_downloads">Allalaadimised</string>
     <string name="settings_downloads_free">Allalaadimised &lt;small&gt;(%s)&lt;/small&gt;</string>
     <string name="settings_downloads_path">Allalaadimiste asukoht</string>
@@ -468,4 +467,6 @@
     <string name="settings_p2p_turn_cred_hint">Parool</string>
     <string name="settings_p2p_turn_clear">Kustuta</string>
     <string name="settings_p2p_turn_invalid">Sisesta kehtiv relee, nt turn:host:3478</string>
+    <string name="settings_support_firedown">Toeta Firedowni</string>
+    <string name="settings_support_firedown_summary">Väärtus väärtuse eest · avab firedown.app</string>
 </resources>

@@ -201,7 +201,6 @@
     <string name="settings_doh_server_title">Выкарыстоўвайце пастаўшчыка</string>
     <string name="settings_doh_summary">Павялічце канфідэнцыяльнасць, прадухіляючы праслухоўванне і маніпуляцыі з дадзенымі DNS.</string>
     <string name="settings_doh_title">DNS праз HTTPS</string>
-    <string name="settings_donate">Ахвяраваць</string>
     <string name="settings_downloads">Загрузкі</string>
     <string name="settings_downloads_free">Спампоўкі &lt;small&gt;(%s)&lt;/small&gt;</string>
     <string name="settings_downloads_path">Месца загрузкі</string>

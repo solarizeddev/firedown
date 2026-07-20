@@ -220,7 +220,6 @@
     <string name="settings_doh_server_title">استخدم المزود</string>
     <string name="settings_doh_summary">قم بتعزيز الخصوصية من خلال منع التنصت والتلاعب ببيانات DNS.</string>
     <string name="settings_doh_title">DNS عبر HTTPS</string>
-    <string name="settings_donate">تبرَّع</string>
     <string name="settings_downloads">التحميلات</string>
     <string name="settings_downloads_free">التحميلات &lt;small&gt;(%s)&lt;/small&gt;</string>
     <string name="settings_downloads_path">موقع التنزيلات</string>

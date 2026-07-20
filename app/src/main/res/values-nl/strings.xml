@@ -267,7 +267,6 @@
     <string name="settings_doh_server_title">Gebruik provider</string>
     <string name="settings_doh_summary">Verhoog uw privacy door afluisteren en manipulatie van DNS-gegevens te voorkomen.</string>
     <string name="settings_doh_title">DNS via HTTPS</string>
-    <string name="settings_donate">Doneren</string>
     <string name="settings_downloads">Downloads</string>
     <string name="settings_downloads_free">Downloads &lt;small&gt;(%s)&lt;/small&gt;</string>
     <string name="settings_downloads_path">Downloads Locatie</string>
@@ -598,4 +597,6 @@
     <string name="settings_p2p_turn_cred_hint">Wachtwoord</string>
     <string name="settings_p2p_turn_clear">Wissen</string>
     <string name="settings_p2p_turn_invalid">Voer een geldige relay in, bijv. turn:host:3478</string>
+    <string name="settings_support_firedown">Steun Firedown</string>
+    <string name="settings_support_firedown_summary">Waarde voor waarde · opent firedown.app</string>
 </resources>
