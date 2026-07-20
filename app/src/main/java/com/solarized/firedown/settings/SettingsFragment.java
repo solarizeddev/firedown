@@ -486,7 +486,7 @@ public class SettingsFragment extends BasePreferenceFragment
                 // handshake as SETTINGS_SUPPORT below.
                 Intent supportIntent = new Intent(IntentActions.OPEN_URI);
                 supportIntent.putExtra(Keys.ITEM_URL,
-                        getString(R.string.settings_support_firedown_url));
+                        getString(R.string.settings_donate_url));
                 mActivity.setResult(Activity.RESULT_OK, supportIntent);
                 mActivity.finish();
             }

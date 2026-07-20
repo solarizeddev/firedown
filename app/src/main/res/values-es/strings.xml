@@ -701,5 +701,5 @@
     <string name="settings_p2p_turn_cred_hint">Contraseña</string>
     <string name="settings_p2p_turn_clear">Borrar</string>
     <string name="settings_p2p_turn_invalid">Introduce un relé válido, p. ej. turn:host:3478</string>
-    <string name="settings_support_firedown">Apoya a Firedown</string>
+    <string name="settings_donate">Donar</string>
 </resources>

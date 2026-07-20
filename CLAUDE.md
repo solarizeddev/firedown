@@ -2983,9 +2983,9 @@ shared nothing with the credit flow's rails (mint `payRequest` BOLT11 /
 Stripe Checkout), so it was pure extra surface. Before this, the fiat "Card
 or PayPal" (Buy Me a Coffee) card had already been dropped from the screen.
 
-What remains: a **"Support Firedown" row** in Settings' app category
+What remains: a **"Donate" row** (`settings_donate`) in Settings' app category
 (key unchanged — `Preferences.SETTINGS_DONATE`, a click-row so no
-key-inversion issue) that opens `settings_support_firedown_url`
+key-inversion issue) that opens `settings_donate_url`
 (https://firedown.app/donate — /support is the HELP page, not donations)
 in a Firedown tab via the same OPEN_URI result handshake as the
 GitHub-issues row. Title-only, NO summary — it sits in the app category
