@@ -1,6 +1,8 @@
 package com.solarized.firedown.utils;
 
 
+import androidx.annotation.Nullable;
+
 import org.mozilla.geckoview.BuildConfig;
 
 import java.util.HashMap;
@@ -96,12 +98,32 @@ public class BrowserHeaders {
      *         isn't a parseable http(s) URL (nothing to add).
      */
     public static String refererOriginHeaders(String pageUrl) {
-        if (pageUrl == null || pageUrl.isEmpty()) {
+        String origin = originWithSlash(pageUrl);
+        if (origin == null) {
             return "";
+        }
+        Map<String, String> headers = new HashMap<>(1);
+        headers.put(REFERER, origin);
+        return Utils.mapToString(headers);
+    }
+
+    /**
+     * Origin of an http(s) page URL with a trailing slash —
+     * {@code https://host[:port]/} — exactly the value a browser sends as a
+     * cross-origin Referer under {@code strict-origin-when-cross-origin}
+     * (the trailing slash is byte-for-byte what real browsers send).
+     *
+     * @return the origin string, or {@code null} when {@code pageUrl} isn't a
+     *         parseable http(s) URL.
+     */
+    @Nullable
+    public static String originWithSlash(@Nullable String pageUrl) {
+        if (pageUrl == null || pageUrl.isEmpty()) {
+            return null;
         }
         HttpUrl url = HttpUrl.parse(pageUrl);
         if (url == null) {
-            return "";
+            return null;
         }
         StringBuilder origin = new StringBuilder(pageUrl.length());
         origin.append(url.scheme()).append("://").append(url.host());
@@ -109,12 +131,8 @@ public class BrowserHeaders {
         if (port != HttpUrl.defaultPort(url.scheme())) {
             origin.append(':').append(port);
         }
-        // Trailing slash: a browser trimming a cross-site Referer to origin
-        // sends "https://host/" (with the slash), so match it byte-for-byte.
         origin.append('/');
-        Map<String, String> headers = new HashMap<>(1);
-        headers.put(REFERER, origin.toString());
-        return Utils.mapToString(headers);
+        return origin.toString();
     }
 
     public static boolean hasHeader(Request request, String value){
