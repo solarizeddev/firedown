@@ -537,4 +537,5 @@
     <string name="settings_p2p_turn_clear">Tyhjennä</string>
     <string name="settings_p2p_turn_invalid">Anna kelvollinen välitin, esim. turn:host:3478</string>
     <string name="settings_donate">Lahjoita</string>
+    <string name="settings_direct_share_summary">STUN-palvelin · TURN-välitin</string>
 </resources>

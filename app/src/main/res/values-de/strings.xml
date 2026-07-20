@@ -702,4 +702,5 @@
     <string name="settings_p2p_turn_clear">Löschen</string>
     <string name="settings_p2p_turn_invalid">Gib ein gültiges Relay ein, z. B. turn:host:3478</string>
     <string name="settings_donate">Spenden</string>
+    <string name="settings_direct_share_summary">STUN-Server · TURN-Relay</string>
 </resources>

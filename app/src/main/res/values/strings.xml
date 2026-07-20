@@ -580,6 +580,10 @@
 <string name="settings_solarized_support" translatable="false">https://github.com/solarizeddev/firedown/issues</string>
     <string name="settings_donate">Donate</string>
     <string name="settings_donate_url" translatable="false">https://firedown.app/donate</string>
+    <!-- Door summary: pure proper nouns (spec/API names), identical in every
+         locale — deliberately not translatable. -->
+    <string name="settings_security_screen_summary" translatable="false">JavaScript · JIT · DRM · WebGL · WASM</string>
+    <string name="settings_direct_share_summary">STUN server · TURN relay</string>
     <string name="settings_storage_manager_button_decline">NOT NOW</string>
     <string name="settings_storage_manager_button_ok">OPEN SETTINGS</string>
     <string name="settings_tabs_archive_interval_title">Close inactive tabs</string>

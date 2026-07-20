@@ -702,4 +702,5 @@
     <string name="settings_p2p_turn_clear">Borrar</string>
     <string name="settings_p2p_turn_invalid">Introduce un relé válido, p. ej. turn:host:3478</string>
     <string name="settings_donate">Donar</string>
+    <string name="settings_direct_share_summary">Servidor STUN · Relé TURN</string>
 </resources>
