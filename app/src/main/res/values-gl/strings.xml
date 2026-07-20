@@ -203,7 +203,6 @@
     <string name="settings_doh_server_title">Usar o provedor</string>
     <string name="settings_doh_summary">Aumente a privacidade evitando a escoita e a manipulación dos datos DNS.</string>
     <string name="settings_doh_title">DNS sobre HTTPS</string>
-    <string name="settings_donate">Doar</string>
     <string name="settings_downloads">Descargas</string>
     <string name="settings_downloads_free">Descargas &lt;small&gt;(%s)&lt;/small&gt;</string>
     <string name="settings_downloads_path">Localización de descargas</string>

@@ -179,7 +179,6 @@
     <string name="settings_doh_server_title">Provayderdən istifadə edin</string>
     <string name="settings_doh_summary">DNS məlumatlarının dinlənməsinin və manipulyasiyasının qarşısını almaqla məxfiliyi artırın.</string>
     <string name="settings_doh_title">HTTPS üzərindən DNS</string>
-    <string name="settings_donate">İanə ver</string>
     <string name="settings_downloads">Yükləmələr</string>
     <string name="settings_downloads_free">Endirmələr &lt;small&gt;(%s)&lt;/small&gt;</string>
     <string name="settings_downloads_path">Yükləmə yeri</string>

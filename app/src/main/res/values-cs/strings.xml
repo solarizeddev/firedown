@@ -247,7 +247,6 @@
     <string name="settings_doh_server_title">Použít poskytovatele</string>
     <string name="settings_doh_summary">Zvyšte soukromí tím, že zabráníte odposlechu a manipulaci s údaji DNS.</string>
     <string name="settings_doh_title">DNS přes HTTPS</string>
-    <string name="settings_donate">Přispějte</string>
     <string name="settings_downloads">Stahování</string>
     <string name="settings_downloads_free">Stahování &lt;small&gt;(%s)&lt;/small&gt;</string>
     <string name="settings_downloads_path">Umístění ke stažení</string>
@@ -553,4 +552,6 @@
     <string name="settings_p2p_turn_cred_hint">Heslo</string>
     <string name="settings_p2p_turn_clear">Vymazat</string>
     <string name="settings_p2p_turn_invalid">Zadejte platné relé, např. turn:host:3478</string>
+    <string name="settings_support_firedown">Podpořte Firedown</string>
+    <string name="settings_support_firedown_summary">Hodnota za hodnotu · otevře firedown.app</string>
 </resources>

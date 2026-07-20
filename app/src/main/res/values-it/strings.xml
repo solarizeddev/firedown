@@ -235,7 +235,6 @@
     <string name="settings_doh_server_title">Utilizza provider</string>
     <string name="settings_doh_summary">Aumenta la privacy impedendo l\'intercettazione e la manipolazione dei dati DNS.</string>
     <string name="settings_doh_title">DNS over HTTPS</string>
-    <string name="settings_donate">Dona</string>
     <string name="settings_downloads">Download</string>
     <string name="settings_downloads_free">Download &lt;small&gt;(%s)&lt;/small&gt;</string>
     <string name="settings_downloads_path">Posizione dei download</string>

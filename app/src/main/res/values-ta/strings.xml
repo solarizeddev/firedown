@@ -181,7 +181,6 @@
     <string name="settings_doh_server_title">வழங்குநரைப் பயன்படுத்தவும்</string>
     <string name="settings_doh_summary">டிஎன்எஸ் தரவை ஒட்டு கேட்பதையும் கையாளுவதையும் தடுப்பதன் மூலம் தனியுரிமையை அதிகரிக்கவும்.</string>
     <string name="settings_doh_title">HTTPS வழியாக DNS</string>
-    <string name="settings_donate">நன்கொடையளிக்கவும்</string>
     <string name="settings_downloads">பதிவிறக்கங்கள்</string>
     <string name="settings_downloads_free">பதிவிறக்கங்கள் &lt;small&gt;(%s)&lt;/small&gt;</string>
     <string name="settings_downloads_path">பதிவிறக்கங்கள் இடம்</string>

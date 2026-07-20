@@ -205,7 +205,6 @@
     <string name="settings_doh_server_title">از ارائه‌دهنده استفاده کنید</string>
     <string name="settings_doh_summary">با جلوگیری از استراق سمع و دستکاری داده‌های DNS، حریم خصوصی را افزایش دهید.</string>
     <string name="settings_doh_title">DNS از طریق HTTPS</string>
-    <string name="settings_donate">اهدای کمک مالی</string>
     <string name="settings_downloads">دانلودها</string>
     <string name="settings_downloads_free">دانلودها &lt;small&gt;(%s)&lt;/small&gt;</string>
     <string name="settings_downloads_path">مکان دانلودها</string>

@@ -479,8 +479,17 @@ public class SettingsFragment extends BasePreferenceFragment
                     NavigationUtils.navigateSafe(mNavController, R.id.action_settings_to_quit);
             case Preferences.SETTINGS_TABS ->
                     NavigationUtils.navigateSafe(mNavController, R.id.action_settings_to_tabs);
-            case Preferences.SETTINGS_DONATE ->
-                    NavigationUtils.navigateSafe(mNavController, R.id.action_settings_to_donate);
+            case Preferences.SETTINGS_DONATE -> {
+                // In-app Value for Value was retired (the cloud-credit purchase
+                // flow is the app's one money surface); this row hands off to
+                // the website donate page via the same OPEN_URI result
+                // handshake as SETTINGS_SUPPORT below.
+                Intent supportIntent = new Intent(IntentActions.OPEN_URI);
+                supportIntent.putExtra(Keys.ITEM_URL,
+                        getString(R.string.settings_support_firedown_url));
+                mActivity.setResult(Activity.RESULT_OK, supportIntent);
+                mActivity.finish();
+            }
             case Preferences.SETTINGS_WASM ->
                     NavigationUtils.navigateSafe(mNavController, R.id.action_settings_to_wasm);
             case Preferences.SETTINGS_AUTOFILL ->

@@ -209,7 +209,6 @@
     <string name="settings_doh_server_title">Použiť poskytovateľa</string>
     <string name="settings_doh_summary">Zvýšte súkromie tým, že zabránite odpočúvaniu a manipulácii s údajmi DNS.</string>
     <string name="settings_doh_title">DNS cez HTTPS</string>
-    <string name="settings_donate">Prispieť</string>
     <string name="settings_downloads">K stiahnutiu</string>
     <string name="settings_downloads_free">K stiahnutiu &lt;small&gt;(%s)&lt;/small&gt;</string>
     <string name="settings_downloads_path">Miesto sťahovania</string>

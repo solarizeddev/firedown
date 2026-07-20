@@ -210,7 +210,6 @@
     <string name="settings_doh_server_title">Használja a Szolgáltatót</string>
     <string name="settings_doh_summary">Növelje az adatvédelmet azáltal, hogy megakadályozza a DNS-adatok lehallgatását és manipulálását.</string>
     <string name="settings_doh_title">DNS HTTPS-en keresztül</string>
-    <string name="settings_donate">Adományozás</string>
     <string name="settings_downloads">Letöltések</string>
     <string name="settings_downloads_free">Letöltések &lt;small&gt;(%s)&lt;/small&gt;</string>
     <string name="settings_downloads_path">Letöltések helye</string>

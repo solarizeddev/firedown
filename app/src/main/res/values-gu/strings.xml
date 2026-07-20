@@ -155,7 +155,6 @@
     <string name="settings_doh_server_title">પ્રદાતાનો ઉપયોગ કરો</string>
     <string name="settings_doh_summary">DNS ડેટાના છળકપટ અને હેરફેરને અટકાવીને ગોપનીયતા વધારો.</string>
     <string name="settings_doh_title">HTTPS પર DNS</string>
-    <string name="settings_donate">દાન કરો</string>
     <string name="settings_downloads">ડાઉનલોડ્સ</string>
     <string name="settings_downloads_free">ડાઉનલોડ્સ &lt;small&gt;(%s)&lt;/small&gt;</string>
     <string name="settings_downloads_path">ડાઉનલોડ સ્થાન</string>

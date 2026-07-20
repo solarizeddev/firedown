@@ -268,7 +268,6 @@
     <string name="settings_doh_server_title">Użyj dostawcy</string>
     <string name="settings_doh_summary">Zwiększ prywatność, uniemożliwiając podsłuch i manipulację danymi DNS.</string>
     <string name="settings_doh_title">DNS przez HTTPS</string>
-    <string name="settings_donate">Wpłać darowiznę</string>
     <string name="settings_downloads">Pliki do pobrania</string>
     <string name="settings_downloads_free">Pliki do pobrania &lt;small&gt;(%s)&lt;/small&gt;</string>
     <string name="settings_downloads_path">Lokalizacja pobierania</string>
@@ -597,4 +596,6 @@
     <string name="settings_p2p_turn_cred_hint">Hasło</string>
     <string name="settings_p2p_turn_clear">Wyczyść</string>
     <string name="settings_p2p_turn_invalid">Wprowadź prawidłowy przekaźnik, np. turn:host:3478</string>
+    <string name="settings_support_firedown">Wesprzyj Firedown</string>
+    <string name="settings_support_firedown_summary">Wartość za wartość · otwiera firedown.app</string>
 </resources>

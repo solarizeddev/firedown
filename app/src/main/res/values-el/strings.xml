@@ -210,7 +210,6 @@
     <string name="settings_doh_server_title">Χρήση παρόχου</string>
     <string name="settings_doh_summary">Αυξήστε το απόρρητο αποτρέποντας την υποκλοπή και τον χειρισμό δεδομένων DNS.</string>
     <string name="settings_doh_title">DNS μέσω HTTPS</string>
-    <string name="settings_donate">Δωρεά</string>
     <string name="settings_downloads">Λήψεις</string>
     <string name="settings_downloads_free">Λήψεις &lt;small&gt;(%s)&lt;/small&gt;</string>
     <string name="settings_downloads_path">Τοποθεσία λήψεων</string>

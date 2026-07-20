@@ -197,7 +197,6 @@
     <string name="settings_doh_server_title">प्रदाता का उपयोग करें</string>
     <string name="settings_doh_summary">DNS डेटा की चोरी और हेरफेर को रोककर गोपनीयता बढ़ाएं.</string>
     <string name="settings_doh_title">DNS ओवर HTTPS</string>
-    <string name="settings_donate">दान करें</string>
     <string name="settings_downloads">डाउनलोड</string>
     <string name="settings_downloads_free">डाउनलोड &lt;small&gt;(%s)&lt;/small&gt;</string>
     <string name="settings_downloads_path">डाउनलोड स्थान</string>
@@ -505,4 +504,6 @@
     <string name="settings_p2p_turn_cred_hint">पासवर्ड</string>
     <string name="settings_p2p_turn_clear">साफ़ करें</string>
     <string name="settings_p2p_turn_invalid">मान्य रिले दर्ज करें, जैसे turn:host:3478</string>
+    <string name="settings_support_firedown">Firedown का समर्थन करें</string>
+    <string name="settings_support_firedown_summary">वैल्यू फॉर वैल्यू · firedown.app खुलेगा</string>
 </resources>

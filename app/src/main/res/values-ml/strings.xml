@@ -194,7 +194,6 @@
     <string name="settings_doh_server_title">ദാതാവിനെ ഉപയോഗിക്കുക</string>
     <string name="settings_doh_summary">DNS ഡാറ്റയുടെ ചോർച്ചയും കൃത്രിമത്വവും തടഞ്ഞ് സ്വകാര്യത വർദ്ധിപ്പിക്കുക.</string>
     <string name="settings_doh_title">HTTPS വഴി DNS</string>
-    <string name="settings_donate">സംഭാവന നൽകുക</string>
     <string name="settings_downloads">ഡൗൺലോഡുകൾ</string>
     <string name="settings_downloads_free">ഡൗൺലോഡുകൾ &lt;small&gt;(%s)&lt;/small&gt;</string>
     <string name="settings_downloads_path">ഡൗൺലോഡ് ലൊക്കേഷൻ</string>

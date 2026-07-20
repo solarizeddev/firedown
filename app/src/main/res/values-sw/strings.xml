@@ -161,7 +161,6 @@
     <string name="settings_doh_server_title">Tumia Mtoa Huduma</string>
     <string name="settings_doh_summary">Ongeza faragha kwa kuzuia usikilizaji na upotoshaji wa data ya DNS.</string>
     <string name="settings_doh_title">DNS kupitia HTTPS</string>
-    <string name="settings_donate">Changia</string>
     <string name="settings_downloads">Vipakuliwa</string>
     <string name="settings_downloads_free">Vipakuliwa &lt;small&gt;(%s)&lt;/small&gt;</string>
     <string name="settings_downloads_path">Mahali pa Kupakuliwa</string>

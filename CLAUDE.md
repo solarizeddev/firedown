@@ -2968,6 +2968,31 @@ intro. Keep the offset **small** — NEXT_SYNC only needs to clear the opening,
 and a large offset would clamp the many short clips this app captures to the
 head frame.
 
+## In-app donations RETIRED — "Support Firedown" is a website handoff
+
+The native Value for Value donate screen (`DonateFragment` + the `donate/`
+package: `LightningInvoiceFetcher`, `BitcoinAddressProvider`, Lightning
+invoice/BTC QR plumbing, `fragment_donate.xml`, 8 donate-only drawables,
+~26 `donate_*` strings) was **removed entirely** (maintainer decision). The
+app's ONE money surface is the paid cloud-backup credit flow (the
+`claude/intelligent-cannon-c5izfr` monetization work: anonymous
+blind-signature credits, Lightning + Stripe rails) — a donate screen beside a
+purchase screen is two competing money-asks (donors feel they "already paid";
+would-be customers donate instead of buying credit), and the donate plumbing
+shared nothing with the credit flow's rails (mint `payRequest` BOLT11 /
+Stripe Checkout), so it was pure extra surface. Before this, the fiat "Card
+or PayPal" (Buy Me a Coffee) card had already been dropped from the screen.
+
+What remains: a **"Support Firedown" row** in Settings' app category
+(key unchanged — `Preferences.SETTINGS_DONATE`, a click-row so no
+key-inversion issue) that opens `settings_support_firedown_url`
+(https://firedown.app/support) in a Firedown tab via the same OPEN_URI
+result handshake as the GitHub-issues row. Title/summary translated across
+the 16 maintained locales. **The website must serve /support** — the donate
+rails (LN address, BTC, fiat) live there now (firedown-website repo), not in
+the APK. Don't reintroduce an in-app donate/payment screen alongside the
+credit flow; if a donation surface ever returns, it's a website page.
+
 ## Conventions
 
 - Match the surrounding comment density — the parsers are heavily commented

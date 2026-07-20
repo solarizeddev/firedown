@@ -234,7 +234,6 @@
     <string name="settings_doh_server_title">공급자 사용</string>
     <string name="settings_doh_summary">DNS 데이터의 도청 및 조작을 방지하여 개인 정보 보호를 강화합니다.</string>
     <string name="settings_doh_title">HTTPS를 통한 DNS</string>
-    <string name="settings_donate">후원하기</string>
     <string name="settings_downloads">다운로드</string>
     <string name="settings_downloads_free">다운로드 &lt;small&gt;(%s)&lt;/small&gt;</string>
     <string name="settings_downloads_path">다운로드 위치</string>

@@ -235,7 +235,6 @@
     <string name="settings_doh_server_title">Використовуйте Провайдера</string>
     <string name="settings_doh_summary">Підвищте конфіденційність, запобігши прослуховування та маніпуляції з даними DNS.</string>
     <string name="settings_doh_title">DNS через HTTPS</string>
-    <string name="settings_donate">Підтримати</string>
     <string name="settings_downloads">Завантаження</string>
     <string name="settings_downloads_free">Завантаження &lt;small&gt;(%s)&lt;/small&gt;</string>
     <string name="settings_downloads_path">Розташування завантажень</string>
@@ -515,4 +514,6 @@
     <string name="settings_p2p_turn_cred_hint">Пароль</string>
     <string name="settings_p2p_turn_clear">Очистити</string>
     <string name="settings_p2p_turn_invalid">Введіть коректний ретранслятор, напр. turn:host:3478</string>
+    <string name="settings_support_firedown">Підтримати Firedown</string>
+    <string name="settings_support_firedown_summary">Цінність за цінність · відкриє firedown.app</string>
 </resources>

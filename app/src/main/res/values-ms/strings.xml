@@ -161,7 +161,6 @@
     <string name="settings_doh_server_title">Gunakan Pembekal</string>
     <string name="settings_doh_summary">Tingkatkan privasi dengan menghalang penyadapan dan manipulasi data DNS.</string>
     <string name="settings_doh_title">DNS melalui HTTPS</string>
-    <string name="settings_donate">Derma</string>
     <string name="settings_downloads">Muat turun</string>
     <string name="settings_downloads_free">Muat turun &lt;small&gt;(%s)&lt;/small&gt;</string>
     <string name="settings_downloads_path">Lokasi Muat turun</string>

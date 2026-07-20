@@ -174,7 +174,6 @@
     <string name="settings_doh_server_title">Bruk leverandør</string>
     <string name="settings_doh_summary">Øk personvernet ved å forhindre avlytting og manipulering av DNS-data.</string>
     <string name="settings_doh_title">DNS over HTTPS</string>
-    <string name="settings_donate">Gi penger</string>
     <string name="settings_downloads">Nedlastinger</string>
     <string name="settings_downloads_free">Nedlastinger &lt;small&gt;(%s)&lt;/small&gt;</string>
     <string name="settings_downloads_path">Nedlastingsplassering</string>

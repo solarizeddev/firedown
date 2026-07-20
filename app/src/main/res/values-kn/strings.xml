@@ -178,7 +178,6 @@
     <string name="settings_doh_server_title">ಒದಗಿಸುವವರನ್ನು ಬಳಸಿ</string>
     <string name="settings_doh_summary">DNS ಡೇಟಾದ ಕದ್ದಾಲಿಕೆ ಮತ್ತು ಕುಶಲತೆಯನ್ನು ತಡೆಯುವ ಮೂಲಕ ಗೌಪ್ಯತೆಯನ್ನು ಹೆಚ್ಚಿಸಿ.</string>
     <string name="settings_doh_title">HTTPS ಮೂಲಕ DNS</string>
-    <string name="settings_donate">ದೇಣಿಗೆ ನೀಡಿ</string>
     <string name="settings_downloads">ಡೌನ್‌ಲೋಡ್‌ಗಳು</string>
     <string name="settings_downloads_free">ಡೌನ್‌ಲೋಡ್‌ಗಳು &lt;small&gt;(%s)&lt;/small&gt;</string>
     <string name="settings_downloads_path">ಡೌನ್‌ಲೋಡ್‌ಗಳ ಸ್ಥಳ</string>

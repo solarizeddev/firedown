@@ -207,7 +207,6 @@
     <string name="settings_doh_server_title">Koristite Provider</string>
     <string name="settings_doh_summary">Povećajte privatnost sprječavanjem prisluškivanja i manipulacije DNS podacima.</string>
     <string name="settings_doh_title">DNS preko HTTPS-a</string>
-    <string name="settings_donate">Doniraj</string>
     <string name="settings_downloads">Preuzimanja</string>
     <string name="settings_downloads_free">Preuzimanja &lt;small&gt;(%s)&lt;/small&gt;</string>
     <string name="settings_downloads_path">Lokacija preuzimanja</string>

@@ -215,7 +215,6 @@
     <string name="settings_doh_server_title">Usar provedor</string>
     <string name="settings_doh_summary">Aumente a privacidade evitando espionagem e manipulação de dados DNS.</string>
     <string name="settings_doh_title">DNS sobre HTTPS</string>
-    <string name="settings_donate">Doar</string>
     <string name="settings_downloads">Downloads</string>
     <string name="settings_downloads_free">Downloads &lt;small&gt;(%s)&lt;/small&gt;</string>
     <string name="settings_downloads_path">Localização dos downloads</string>
@@ -598,4 +597,6 @@
     <string name="settings_p2p_turn_cred_hint">Senha</string>
     <string name="settings_p2p_turn_clear">Limpar</string>
     <string name="settings_p2p_turn_invalid">Insira um retransmissor válido, ex.: turn:host:3478</string>
+    <string name="settings_support_firedown">Apoie o Firedown</string>
+    <string name="settings_support_firedown_summary">Valor por valor · abre o firedown.app</string>
 </resources>

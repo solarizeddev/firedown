@@ -198,7 +198,6 @@
     <string name="settings_doh_server_title">Gamitin ang Provider</string>
     <string name="settings_doh_summary">Palakihin ang privacy sa pamamagitan ng pagpigil sa pag-eavesdrop at pagmamanipula ng data ng DNS.</string>
     <string name="settings_doh_title">DNS sa HTTPS</string>
-    <string name="settings_donate">Mag-donate</string>
     <string name="settings_downloads">Mga download</string>
     <string name="settings_downloads_free">Mga download &lt;small&gt;(%s)&lt;/small&gt;</string>
     <string name="settings_downloads_path">Lokasyon ng Mga Pag-download</string>

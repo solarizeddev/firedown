@@ -269,7 +269,6 @@
     <string name="settings_doh_server_title">Использовать провайдера</string>
     <string name="settings_doh_summary">Повысьте конфиденциальность, предотвратив перехват и манипулирование данными DNS.</string>
     <string name="settings_doh_title">DNS через HTTPS</string>
-    <string name="settings_donate">Пожертвовать</string>
     <string name="settings_downloads">Загрузки</string>
     <string name="settings_downloads_free">Загрузки &lt;small&gt;(%s)&lt;/small&gt;</string>
     <string name="settings_downloads_path">Расположение загрузок</string>
@@ -600,4 +599,6 @@
     <string name="settings_p2p_turn_cred_hint">Пароль</string>
     <string name="settings_p2p_turn_clear">Очистить</string>
     <string name="settings_p2p_turn_invalid">Введите корректный ретранслятор, например turn:host:3478</string>
+    <string name="settings_support_firedown">Поддержать Firedown</string>
+    <string name="settings_support_firedown_summary">Ценность за ценность · откроется firedown.app</string>
 </resources>

@@ -174,7 +174,6 @@
     <string name="settings_doh_server_title">Använd Provider</string>
     <string name="settings_doh_summary">Öka integriteten genom att förhindra avlyssning och manipulering av DNS-data.</string>
     <string name="settings_doh_title">DNS över HTTPS</string>
-    <string name="settings_donate">Donera</string>
     <string name="settings_downloads">Nedladdningar</string>
     <string name="settings_downloads_free">Nedladdningar &lt;small&gt;(%s)&lt;/small&gt;</string>
     <string name="settings_downloads_path">Nedladdningsplats</string>
