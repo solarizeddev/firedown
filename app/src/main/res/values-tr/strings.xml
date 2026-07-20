@@ -596,6 +596,6 @@
     <string name="settings_p2p_turn_cred_hint">Şifre</string>
     <string name="settings_p2p_turn_clear">Temizle</string>
     <string name="settings_p2p_turn_invalid">Geçerli bir aktarıcı girin, örn. turn:host:3478</string>
-    <string name="settings_support_firedown">Firedown'a destek ol</string>
+    <string name="settings_support_firedown">Firedown\'a destek ol</string>
     <string name="settings_support_firedown_summary">Değere değer · firedown.app açılır</string>
 </resources>
