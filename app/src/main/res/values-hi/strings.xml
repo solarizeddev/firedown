@@ -505,5 +505,6 @@
     <string name="settings_p2p_turn_clear">साफ़ करें</string>
     <string name="settings_p2p_turn_invalid">मान्य रिले दर्ज करें, जैसे turn:host:3478</string>
     <string name="settings_donate">दान करें</string>
-    <string name="settings_direct_share_summary">STUN सर्वर · TURN रिले</string>
+    <string name="settings_security_screen_summary">कुछ साइटों की संगतता की कीमत पर ब्राउज़र को सख़्त करें</string>
+    <string name="settings_direct_share_summary">डिवाइसों के बीच फ़ाइलें भेजने के लिए नेटवर्क सेटिंग्स</string>
 </resources>

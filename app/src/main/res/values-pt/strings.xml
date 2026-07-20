@@ -598,5 +598,6 @@
     <string name="settings_p2p_turn_clear">Limpar</string>
     <string name="settings_p2p_turn_invalid">Insira um retransmissor válido, ex.: turn:host:3478</string>
     <string name="settings_donate">Doar</string>
-    <string name="settings_direct_share_summary">Servidor STUN · Retransmissor TURN</string>
+    <string name="settings_security_screen_summary">Reforça o navegador ao custo da compatibilidade com alguns sites</string>
+    <string name="settings_direct_share_summary">Configurações de rede para enviar arquivos entre dispositivos</string>
 </resources>

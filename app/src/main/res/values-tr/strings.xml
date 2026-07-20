@@ -597,5 +597,6 @@
     <string name="settings_p2p_turn_clear">Temizle</string>
     <string name="settings_p2p_turn_invalid">Geçerli bir aktarıcı girin, örn. turn:host:3478</string>
     <string name="settings_donate">Bağış yap</string>
-    <string name="settings_direct_share_summary">STUN sunucusu · TURN aktarıcı</string>
+    <string name="settings_security_screen_summary">Bazı sitelerin uyumluluğu pahasına tarayıcıyı sıkılaştırır</string>
+    <string name="settings_direct_share_summary">Cihazlar arasında dosya göndermek için ağ ayarları</string>
 </resources>
