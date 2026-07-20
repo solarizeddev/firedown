@@ -1872,6 +1872,31 @@ regress any layer independently:
   insert/thumb-delete/purge IO under the `mGeckoStates` monitor on the disk
   executor — the v3 inline-resolve read rides that pre-existing pattern
   (one small immutable file per archived tab), it did not introduce it.
+- **Persists are BATCHED — fixed-interval, latest-wins, flushed on detach
+  (Fenix AutoSave parity, 2 s).** `onSessionStateChange` fires for scroll/form
+  settle, not just navigation, so unbatched every emission rewrote + fsynced
+  the whole metadata file. `GeckoStateObserver.onChanged` now just records the
+  latest snapshot and arms ONE `PERSIST_BATCH_MS` (2 s) main-thread timer;
+  `dispatchPending` hands the newest snapshot to the DiskIO executor. The
+  timer is deliberately **fixed-interval, NOT a trailing-reset debounce** — a
+  reset-on-every-event timer never fires under continuous scroll churn
+  (starvation); this shape guarantees at most one persist per window and at
+  latest one window after the first change. Kill-safety:
+  `ApplicationLifeCycleHandler` calls `flush()` right BEFORE detaching the
+  observer (pause AND destroy) — backgrounding is exactly when Android
+  reclaims processes, so the pending snapshot lands first. Residual exposure
+  is a mid-foreground hard kill losing ≤ one window of churn — the same trade
+  Fenix ships. Batching state is main-thread-confined (LiveData delivers
+  there; so do the lifecycle callbacks), no locks; `mHasPending` is a separate
+  flag because `null` is a legitimate snapshot (deleteAll).
+- **`session_ref` is re-anchored to THIS install's store dir at read time.**
+  Refs persist as absolute paths (the THUMB/tab_icons precedent), but a
+  user-profile transfer / OEM phone-clone migrates the files while
+  `filesDir`'s prefix changes — a verbatim ref would miss and silently
+  degrade every transferred tab to a URL-only restore. The strict reader's
+  SESSION_REF case runs `SessionStateStore.resolve(context, ref)` (basename →
+  current store dir; a normal install round-trips unchanged), and the next
+  persist rewrites the corrected path. Purely defensive for same-install use.
 - **Sessions are LAZY — only entities load at boot.** `initializeGeckoStates`
   builds `GeckoState` wrappers (the ctor stores the entity; no `GeckoSession`).
   A live session is created only by `getOrCreateGeckoSession()`, reachable

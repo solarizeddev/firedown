@@ -121,6 +121,10 @@ public class ApplicationLifeCycleHandler implements Application.ActivityLifecycl
     @Override
     public void onActivityPaused(@NonNull Activity activity) {
         if (activity instanceof BrowserActivity) {
+            // Flush the batched persist BEFORE detaching — backgrounding is
+            // exactly when Android reclaims processes, and a pending snapshot
+            // must not die with us (see GeckoStateObserver.PERSIST_BATCH_MS).
+            mGeckoStateObserver.flush();
             mGeckoStateRepository.getTabsLiveData().removeObserver(mGeckoStateObserver);
             mIncognitoStateRepository.getTabsLiveCount().removeObserver(mIncognitoCountObserver);
         }
@@ -139,6 +143,7 @@ public class ApplicationLifeCycleHandler implements Application.ActivityLifecycl
             // Belt-and-suspenders: if the activity is destroyed without a paired
             // onPause (e.g. process death, configuration crash), make sure the
             // singleton observers are detached so they don't keep firing.
+            mGeckoStateObserver.flush();
             mGeckoStateRepository.getTabsLiveData().removeObserver(mGeckoStateObserver);
             mIncognitoStateRepository.getTabsLiveCount().removeObserver(mIncognitoCountObserver);
 

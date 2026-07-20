@@ -1,9 +1,12 @@
 package com.solarized.firedown.data.observer;
 
 import android.content.Context;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.JsonWriter;
 import android.util.Log;
 
+import androidx.annotation.Nullable;
 import androidx.lifecycle.Observer;
 
 import com.solarized.firedown.BuildConfig;
@@ -37,7 +40,7 @@ import javax.inject.Inject;
  *
  * <ul>
  *   <li><b>Streamed write</b> — a versioned document
- *       ({@code {"version":2,"tabs":[…]}}) written directly to the file with
+ *       ({@code {"version":3,"tabs":[…]}}) written directly to the file with
  *       {@code android.util.JsonWriter}; the whole file is never resident as
  *       one String in either direction (the reader streams too).</li>
  *   <li><b>No inline image data</b> — a {@code data:} favicon is externalized
@@ -70,6 +73,34 @@ public final class GeckoStateObserver implements Observer<List<GeckoStateEntity>
      */
     private long mLastStatePruneMs;
 
+    /** Persist batching window — Fenix AutoSave parity (its default save
+     *  interval is 2 s). onSessionStateChange fires for scroll/form settle,
+     *  not just navigation, and each emission used to rewrite + fsync the
+     *  WHOLE metadata file — all-day flash churn on a big profile. Batching
+     *  is FIXED-INTERVAL with latest-wins, NOT a trailing-reset debounce: a
+     *  reset-on-every-event timer never fires under continuous scroll churn
+     *  (starvation), while this shape guarantees a persist at most once per
+     *  window and at latest one window after the first change. Kill-safety
+     *  is preserved by {@link #flush()} — ApplicationLifeCycleHandler flushes
+     *  before detaching the observer on pause/destroy, which is exactly when
+     *  Android reclaims processes; the residual exposure is a mid-foreground
+     *  hard kill losing ≤ one window of scroll position (the same trade
+     *  Fenix ships). */
+    private static final long PERSIST_BATCH_MS = 2000;
+
+    private final Handler mMainHandler = new Handler(Looper.getMainLooper());
+
+    // Batching state — MAIN-THREAD CONFINED (LiveData observeForever delivers
+    // onChanged on main; flush is called from activity lifecycle callbacks,
+    // also main), so no locking is needed. mHasPending is a separate flag
+    // because null is a legitimate pending value (deleteAll posts null).
+    private boolean mPersistScheduled;
+    private boolean mHasPending;
+    @Nullable
+    private List<GeckoStateEntity> mPendingEntities;
+
+    private final Runnable mDispatchPending = this::dispatchPending;
+
     /** State-store prune cadence. Persists fire on every tab event (title,
      *  switch, navigation), and pruning per persist meant a directory scan +
      *  one utimes syscall per referenced file each time — pure inode churn.
@@ -90,6 +121,33 @@ public final class GeckoStateObserver implements Observer<List<GeckoStateEntity>
     @Override
     public void onChanged(List<GeckoStateEntity> entities) {
         Log.d(TAG, "onChanged");
+        mPendingEntities = entities;
+        mHasPending = true;
+        if (!mPersistScheduled) {
+            mPersistScheduled = true;
+            mMainHandler.postDelayed(mDispatchPending, PERSIST_BATCH_MS);
+        }
+    }
+
+    /**
+     * Persists any batched change NOW. Called by ApplicationLifeCycleHandler
+     * right before this observer is detached (Browser pause/destroy) so a
+     * pending snapshot can't be lost to a background kill — see
+     * {@link #PERSIST_BATCH_MS}. Main thread only. Idempotent.
+     */
+    public void flush() {
+        mMainHandler.removeCallbacks(mDispatchPending);
+        dispatchPending();
+    }
+
+    private void dispatchPending() {
+        mPersistScheduled = false;
+        if (!mHasPending) {
+            return;
+        }
+        final List<GeckoStateEntity> entities = mPendingEntities;
+        mHasPending = false;
+        mPendingEntities = null;
         mDiskExecutor.execute(() -> persist(entities));
     }
 
