@@ -537,5 +537,4 @@
     <string name="settings_p2p_turn_clear">Tyhjennä</string>
     <string name="settings_p2p_turn_invalid">Anna kelvollinen välitin, esim. turn:host:3478</string>
     <string name="settings_support_firedown">Tue Firedownia</string>
-    <string name="settings_support_firedown_summary">Arvoa arvosta · avaa firedown.app</string>
 </resources>

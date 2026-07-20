@@ -2986,9 +2986,12 @@ or PayPal" (Buy Me a Coffee) card had already been dropped from the screen.
 What remains: a **"Support Firedown" row** in Settings' app category
 (key unchanged — `Preferences.SETTINGS_DONATE`, a click-row so no
 key-inversion issue) that opens `settings_support_firedown_url`
-(https://firedown.app/support) in a Firedown tab via the same OPEN_URI
-result handshake as the GitHub-issues row. Title/summary translated across
-the 16 maintained locales. **The website must serve /support** — the donate
+(https://firedown.app/donate — /support is the HELP page, not donations)
+in a Firedown tab via the same OPEN_URI result handshake as the
+GitHub-issues row. Title-only, NO summary — it sits in the app category
+beside License/Help/About, which are all bare rows, and a lone summary
+read as out of place there (on-device review). Title translated across
+the 16 maintained locales. **The website must serve /donate** — the donate
 rails (LN address, BTC, fiat) live there now (firedown-website repo), not in
 the APK. Don't reintroduce an in-app donate/payment screen alongside the
 credit flow; if a donation surface ever returns, it's a website page.

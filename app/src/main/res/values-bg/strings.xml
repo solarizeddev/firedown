@@ -492,5 +492,4 @@
     <string name="settings_p2p_turn_clear">Изчистване</string>
     <string name="settings_p2p_turn_invalid">Въведете валидно реле, напр. turn:host:3478</string>
     <string name="settings_support_firedown">Подкрепете Firedown</string>
-    <string name="settings_support_firedown_summary">Стойност за стойност · отваря firedown.app</string>
 </resources>

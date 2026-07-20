@@ -579,8 +579,7 @@
     <string name="settings_search_custom_delete_message">\"%1$s\" will be removed</string>
 <string name="settings_solarized_support" translatable="false">https://github.com/solarizeddev/firedown/issues</string>
     <string name="settings_support_firedown">Support Firedown</string>
-    <string name="settings_support_firedown_summary">Value for value · opens firedown.app</string>
-    <string name="settings_support_firedown_url" translatable="false">https://firedown.app/support</string>
+    <string name="settings_support_firedown_url" translatable="false">https://firedown.app/donate</string>
     <string name="settings_storage_manager_button_decline">NOT NOW</string>
     <string name="settings_storage_manager_button_ok">OPEN SETTINGS</string>
     <string name="settings_tabs_archive_interval_title">Close inactive tabs</string>
