@@ -515,4 +515,5 @@
     <string name="settings_p2p_turn_clear">Очистити</string>
     <string name="settings_p2p_turn_invalid">Введіть коректний ретранслятор, напр. turn:host:3478</string>
     <string name="settings_donate">Пожертвувати</string>
+    <string name="settings_direct_share_summary">STUN-сервер · TURN-ретранслятор</string>
 </resources>
