@@ -492,5 +492,6 @@
     <string name="settings_p2p_turn_clear">Изчистване</string>
     <string name="settings_p2p_turn_invalid">Въведете валидно реле, напр. turn:host:3478</string>
     <string name="settings_donate">Дарение</string>
-    <string name="settings_direct_share_summary">STUN сървър · TURN реле</string>
+    <string name="settings_security_screen_summary">Повече защита за сметка на съвместимостта с някои сайтове</string>
+    <string name="settings_direct_share_summary">Мрежови настройки за изпращане на файлове между устройства</string>
 </resources>

@@ -597,5 +597,6 @@
     <string name="settings_p2p_turn_clear">Wyczyść</string>
     <string name="settings_p2p_turn_invalid">Wprowadź prawidłowy przekaźnik, np. turn:host:3478</string>
     <string name="settings_donate">Przekaż darowiznę</string>
-    <string name="settings_direct_share_summary">Serwer STUN · Przekaźnik TURN</string>
+    <string name="settings_security_screen_summary">Wzmacnia zabezpieczenia kosztem zgodności niektórych stron</string>
+    <string name="settings_direct_share_summary">Ustawienia sieci do wysyłania plików między urządzeniami</string>
 </resources>

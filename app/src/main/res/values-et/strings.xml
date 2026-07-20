@@ -468,5 +468,6 @@
     <string name="settings_p2p_turn_clear">Kustuta</string>
     <string name="settings_p2p_turn_invalid">Sisesta kehtiv relee, nt turn:host:3478</string>
     <string name="settings_donate">Anneta</string>
-    <string name="settings_direct_share_summary">STUN-server · TURN-relee</string>
+    <string name="settings_security_screen_summary">Turvalisem brauser mõne saidi ühilduvuse arvelt</string>
+    <string name="settings_direct_share_summary">Võrguseaded failide saatmiseks seadmete vahel</string>
 </resources>

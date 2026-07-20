@@ -553,5 +553,6 @@
     <string name="settings_p2p_turn_clear">Vymazat</string>
     <string name="settings_p2p_turn_invalid">Zadejte platné relé, např. turn:host:3478</string>
     <string name="settings_donate">Přispět</string>
-    <string name="settings_direct_share_summary">STUN server · TURN relé</string>
+    <string name="settings_security_screen_summary">Vyšší zabezpečení za cenu kompatibility některých webů</string>
+    <string name="settings_direct_share_summary">Síťová nastavení pro odesílání souborů mezi zařízeními</string>
 </resources>

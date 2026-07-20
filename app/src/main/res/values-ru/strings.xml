@@ -600,5 +600,6 @@
     <string name="settings_p2p_turn_clear">Очистить</string>
     <string name="settings_p2p_turn_invalid">Введите корректный ретранслятор, например turn:host:3478</string>
     <string name="settings_donate">Пожертвовать</string>
-    <string name="settings_direct_share_summary">STUN-сервер · TURN-ретранслятор</string>
+    <string name="settings_security_screen_summary">Усиленная защита ценой совместимости с некоторыми сайтами</string>
+    <string name="settings_direct_share_summary">Сетевые настройки для отправки файлов между устройствами</string>
 </resources>
