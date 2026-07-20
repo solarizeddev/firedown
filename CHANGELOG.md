@@ -1,3 +1,14 @@
+## [1.1.84] - 2026-07-20
+
+- Fixed a startup crash loop on profiles with many open tabs — each tab's state is now stored in its own small file and loaded only when the tab is opened, so startup stays fast and lean no matter how many tabs you keep
+- Fixed images on pixiv and other hotlink-protected sites — pages, long-press saves and Captured thumbnails all load again
+- Fixed downloads that could stick on "Finishing…" forever
+- Send directly now connects when a phone is on a VPN, and explains when the transfer has to go through the relay
+- Selecting text on a page now highlights in the app's accent color instead of grey
+- Simplified Settings — Security and Direct share moved to their own screens under Privacy and Downloads
+- Replaced the in-app donation screen with a Donate link that opens firedown.app/donate
+- Minor bugfixes and improvements
+
 ## [1.1.83] - 2026-07-16
 
 - Send directly — share any finished download straight to another phone over an encrypted, device-to-device connection. No upload, no account; scan a QR or tap a link to pair
