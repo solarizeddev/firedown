@@ -242,6 +242,10 @@ public class Preferences {
      * user lives in {@link #SETTINGS_P2P_STUN_CUSTOM}. Resolve through
      * {@link #getP2pStunServer}.
      */
+    /** Root-settings DOOR to the Direct share sub-screen (DirectShareFragment). */
+    public static final String SETTINGS_P2P_SCREEN = "com.solarized.firedown.preferences.p2p.screen";
+    /** Root-settings DOOR to the Security sub-screen (SecurityFragment). */
+    public static final String SETTINGS_SECURITY_SCREEN = "com.solarized.firedown.preferences.security.screen";
     public static final String SETTINGS_P2P_STUN = "com.solarized.firedown.preferences.p2p.stun.server";
 
     public static final String DEFAULT_P2P_STUN = "stun:stun.cloudflare.com:3478";

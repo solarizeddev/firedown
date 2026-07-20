@@ -2968,6 +2968,41 @@ intro. Keep the offset **small** — NEXT_SYNC only needs to clear the opening,
 and a large offset would clamp the many short clips this app captures to the
 head frame.
 
+## Settings IA — frequency-first root, doors for expert config
+
+The root Settings screen is FOUR categories — General / Downloads / Privacy /
+Firedown — after a simplification pass (was 7 categories, ~33 rows, ~5
+screen-heights). The rule, borrowed from the chip-rail convention: the root is
+**frequency-first**; once-ever expert config lives behind a door. Applied:
+
+- **Security is a DOOR at the end of Privacy** (`SETTINGS_SECURITY_SCREEN` →
+  `SecurityFragment` + `settings_security.xml`): the harden-at-a-cost toggles
+  (Block JS / Disable JIT / Enable DRM / Disable WebGL) + the WASM door — the
+  switches CLAUDE.md itself says "most users should never touch".
+- **Direct share is a DOOR at the end of Downloads** (`SETTINGS_P2P_SCREEN` →
+  `DirectShareFragment` + `settings_direct_share.xml`): the STUN chooser + TURN
+  editor moved verbatim (they were raw `stun:` URLs on the root). Lives with
+  Downloads because P2P share is a Downloads feature.
+- **The Cookies category was dissolved into Privacy** (cookie policy row +
+  Delete browsing data, destructive action last) — a 2-row category was
+  taxonomy noise; cookie policy IS privacy (Fenix's grouping).
+- Deliberately NOT full Fenix-style nesting (root = only doors): the project's
+  own precedent is anti-tap-tax (the Cloud screen was UN-nested because
+  reaching the plan took 4 taps). Nothing moved more than ONE level down.
+
+**Sub-screens must apply their prefs to Gecko THEMSELVES** — SettingsFragment's
+SharedPreferenceChangeListener is unregistered while a sub-screen is
+foreground (the `WasmFragment` pattern). `SecurityFragment` carries its own
+listener with the JS/JIT/DRM/WebGL branches; SettingsFragment keeps its
+matching branches as the defensive twin (only one listener is registered at a
+time, so no double-apply). **Keep the two in lockstep** — a semantics change
+in one without the other makes the toggle behave differently depending on
+which screen flipped it. Door keys are click-rows (`SETTINGS_SECURITY_SCREEN`,
+`SETTINGS_P2P_SCREEN`); the underlying toggle/pref KEYS are unchanged, so no
+migration. Door titles reuse the old category strings
+(`if_preferences_security`, `settings_p2p_category`) — already translated,
+zero new locale work.
+
 ## In-app donations RETIRED — "Support Firedown" is a website handoff
 
 The native Value for Value donate screen (`DonateFragment` + the `donate/`

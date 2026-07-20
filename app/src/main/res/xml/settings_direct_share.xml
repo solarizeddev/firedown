@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Direct share (WebRTC P2P) networking sub-screen. Deliberately just TWO
+     rows — the defaults work everywhere (STUN + the built-in Firedown relay
+     fetched per share), so this screen only carries the overrides. Moved off
+     the root Settings list behind one door: expert set-once config whose STUN
+     summary is a raw stun: URL didn't belong on the root. No niche extras: a
+     "Link relay" signaling row was removed (unnecessary complexity — the
+     built-in relay covers the hard networks, and the plumbing stays a
+     config-flip away in Preferences). Dialogs live in DirectShareFragment. -->
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <!-- Address-discovery helper (STUN). A click-row (not a ListPreference)
+         so "Custom…" stays re-editable — a ListPreference fires no change
+         event when you re-pick the already-selected custom entry. -->
+    <Preference
+        android:key="com.solarized.firedown.preferences.p2p.stun.server"
+        android:summary="@string/settings_p2p_stun_summary"
+        android:title="@string/settings_p2p_stun"
+        app:singleLineTitle="false"
+        app:icon="@drawable/ic_p2p_24" />
+
+    <!-- Custom TURN relay, ADDITIVE: the built-in Firedown relay is always
+         on (ephemeral creds fetched per share — see P2pShareController),
+         so this only adds the user's own relay for networks the built-in
+         can't cross. Bytes stay E2E-encrypted through any relay. -->
+    <Preference
+        android:key="com.solarized.firedown.preferences.p2p.turn.url"
+        android:summary="@string/settings_p2p_turn_summary"
+        android:title="@string/settings_p2p_turn"
+        app:singleLineTitle="false"
+        app:icon="@drawable/host_24" />
+
+</PreferenceScreen>
