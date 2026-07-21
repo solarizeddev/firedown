@@ -489,6 +489,7 @@
     <string name="settings_sync_auth_subtitle">Verifieer dat jij het bent om de herstelcode te tonen</string>
     <string name="settings_sync_code_copied">Herstelcode gekopieerd</string>
     <string name="settings_sync_code_copy">Kopiëren</string>
+    <string name="settings_sync_code_save_file">Opslaan als bestand</string>
     <string name="settings_sync_code_created_title">Bewaar je herstelcode</string>
     <string name="settings_sync_code_done">Klaar</string>
     <string name="settings_sync_code_hint">Herstelcode</string>

@@ -591,6 +591,7 @@
     <string name="settings_sync_auth_subtitle">本人確認を行うとリカバリーコードが表示されます</string>
     <string name="settings_sync_code_copied">リカバリーコードをコピーしました</string>
     <string name="settings_sync_code_copy">コピー</string>
+    <string name="settings_sync_code_save_file">ファイルに保存</string>
     <string name="settings_sync_code_created_title">リカバリーコードを保存してください</string>
     <string name="settings_sync_code_done">完了</string>
     <string name="settings_sync_code_hint">リカバリーコード</string>

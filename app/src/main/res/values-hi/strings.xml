@@ -396,6 +396,7 @@
     <string name="settings_sync_auth_subtitle">रिकवरी कोड दिखाने के लिए पुष्टि करें कि यह आप ही हैं</string>
     <string name="settings_sync_code_copied">रिकवरी कोड कॉपी किया गया</string>
     <string name="settings_sync_code_copy">कॉपी करें</string>
+    <string name="settings_sync_code_save_file">फ़ाइल में सहेजें</string>
     <string name="settings_sync_code_created_title">अपना रिकवरी कोड सहेजें</string>
     <string name="settings_sync_code_done">हो गया</string>
     <string name="settings_sync_code_hint">रिकवरी कोड</string>

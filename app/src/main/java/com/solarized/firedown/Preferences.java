@@ -115,7 +115,6 @@ public class Preferences {
     /** Sync screen actions (clickable preferences). */
     public static final String SETTINGS_SYNC_SHOW_CODE = "com.solarized.firedown.preferences.sync.show.code";
     /** Exports the recovery code to a user-chosen text file (SAF). */
-    public static final String SETTINGS_SYNC_EXPORT_CODE = "com.solarized.firedown.preferences.sync.export.code";
     public static final String SETTINGS_SYNC_RESTORE = "com.solarized.firedown.preferences.sync.restore";
     /** Opens the offline "How sync encryption works" FAQ dialog. */
     public static final String SETTINGS_SYNC_HELP = "com.solarized.firedown.preferences.sync.help";
@@ -126,10 +125,8 @@ public class Preferences {
     public static final String SETTINGS_SYNC_DELETE_DATA = "com.solarized.firedown.preferences.sync.delete.data";
     /** Section headers on the unified Sync screen. Bookmarks / Downloads / About
      *  are always visible; Recovery code is shown once the account exists. */
-    public static final String SETTINGS_SYNC_CAT_CODE = "com.solarized.firedown.preferences.sync.cat.code";
     public static final String SETTINGS_SYNC_CAT_BOOKMARKS = "com.solarized.firedown.preferences.sync.cat.bookmarks";
     public static final String SETTINGS_SYNC_CAT_DOWNLOADS = "com.solarized.firedown.preferences.sync.cat.downloads";
-    public static final String SETTINGS_SYNC_CAT_ABOUT = "com.solarized.firedown.preferences.sync.cat.about";
 
     // ---- Cloud Backup (encrypted downloads → storage.firedown.app) ----
     // A SEPARATE feature from the local "Safe Folder" (file_safe / files/safe/),
@@ -164,7 +161,6 @@ public class Preferences {
     public static final String SETTINGS_CLOUD_BACKUP_SHOW_CODE = "com.solarized.firedown.preferences.cloud.backup.show.code";
     public static final String SETTINGS_CLOUD_BACKUP_DELETE_DATA = "com.solarized.firedown.preferences.cloud.backup.delete.data";
     public static final String SETTINGS_CLOUD_BACKUP_HELP = "com.solarized.firedown.preferences.cloud.backup.help";
-    public static final String SETTINGS_CLOUD_BACKUP_CAT_MANAGE = "com.solarized.firedown.preferences.cloud.backup.cat.manage";
 
     /**
      * Bookmarks-list sort order toggle: false (default) = recency

@@ -2086,18 +2086,32 @@ opaque chunks + an opaque manifest blob.
   two-level IA and the focused `BookmarksSyncFragment` were retired (maintainer
   calls: reaching the plan/files took 4 taps from home; a whole sub-screen for
   one switch was a tap tax). Order on the screen = priority: the
-  `CloudStatusPreference` **status hero**, the **MORPHING filled CTA** directly
-  under it (`preference_cloud_buy_button.xml` — the MaterialButton carries
+  `CloudStatusPreference` **status hero**, the **MORPHING CTA** directly
+  under it (`CloudBuyButtonPreference` — the MaterialButton carries
   `@android:id/title` so the Preference TITLE drives its label: "Create recovery
   code" pre-key, "Add storage credit" after; the button is
-  non-clickable/`duplicateParentState`, the row owns the click), the pre-key
-  **"I have a recovery code"** adopt door, the **Manage backup** category
-  (Backups list — shown once set up), ONE secondary inline **Bookmarks
+  non-clickable/`duplicateParentState`, the row owns the click; **emphasis is
+  state-dependent** — FILLED while the next step is genuinely "pay" (pre-key /
+  unfunded / grace / quota-unknown-with-key), swapped to the OUTLINED
+  `preference_cloud_buy_button_plain` layout once affirmatively funded (or on
+  the unmetered beta, where there is nothing to sell) — a years-of-runway
+  account shouldn't be stared down by a permanent filled sales button, the
+  home pill's GONE-when-idle ethos; `applyBuyEmphasis` binds cached-first then
+  from the fresh load, like the hero), the pre-key
+  **"I have a recovery code"** adopt door, the **Backups** row (shown once set
+  up; NO single-child category headers on this screen — "Manage backup" /
+  "Recovery code" / "About" over one row each restated the row, the same
+  taxonomy-noise call as the dissolved Cookies category; only the Bookmarks
+  header stays, as the paid-vs-free separator), ONE secondary inline **Bookmarks
   SwitchPreferenceCompat** (key `SYNC_ENABLED`, never self-persists — the change
   listener returns false and `SyncManager` owns the pref; there is NO "Sync now"
   row anymore — sync is change-triggered + runs on toggle-on, the last-synced
-  summary carries the signal), the shared **recovery code** (show/export,
-  device-auth gated), the FAQ, and LAST the TWO SCOPED erasure rows.
+  summary carries the signal), **ONE recovery-code row** (device-auth gated;
+  the reveal dialog carries Copy AND Save-to-file — export lives inside the one
+  authed reveal, on NON-DISMISSING buttons so the create-mode "I've saved it"
+  gate survives the SAF round-trip; the old separate export row doubled both
+  the rows and the auth prompts for one object), the FAQ, and LAST the TWO
+  SCOPED erasure rows.
   - **The not-set-up hero is the onboarding ROADMAP**: ① Create your recovery
     code → ② Add storage credit → ③ back up from the download sheet ⋮, bound by
     `CloudStatusPreference.bindOnboardingSteps` (done = "✓" + muted ink, the

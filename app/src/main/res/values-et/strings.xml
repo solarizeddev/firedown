@@ -359,6 +359,7 @@
     <string name="settings_sync_auth_subtitle">Kinnita oma isik, et taastekood kuvada</string>
     <string name="settings_sync_code_copied">Taastekood kopeeritud</string>
     <string name="settings_sync_code_copy">Kopeeri</string>
+    <string name="settings_sync_code_save_file">Salvesta faili</string>
     <string name="settings_sync_code_created_title">Salvesta oma taastekood</string>
     <string name="settings_sync_code_done">Valmis</string>
     <string name="settings_sync_code_hint">Taastekood</string>

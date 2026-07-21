@@ -593,6 +593,7 @@
     <string name="settings_sync_auth_subtitle">Bestätige deine Identität, um den Wiederherstellungscode anzuzeigen</string>
     <string name="settings_sync_code_copied">Wiederherstellungscode kopiert</string>
     <string name="settings_sync_code_copy">Kopieren</string>
+    <string name="settings_sync_code_save_file">In Datei speichern</string>
     <string name="settings_sync_code_created_title">Speichere deinen Wiederherstellungscode</string>
     <string name="settings_sync_code_done">Fertig</string>
     <string name="settings_sync_code_hint">Wiederherstellungscode</string>

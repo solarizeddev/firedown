@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The CALM variant of the morphing CTA (see preference_cloud_buy_button.xml for
+  the filled one and CloudBuyButtonPreference for the switch): an OUTLINED
+  button, used while the account is comfortably funded and "Add storage credit"
+  is available-but-not-the-next-step. Identical structure — the button carries
+  @android:id/title so the Preference title binding drives the label, and it is
+  non-clickable/duplicateParentState because the row owns the click.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingHorizontal="16dp"
+    android:paddingTop="2dp"
+    android:paddingBottom="10dp">
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@android:id/title"
+        style="?attr/materialButtonOutlinedStyle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:clickable="false"
+        android:focusable="false"
+        android:duplicateParentState="true"
+        app:icon="@drawable/add_24"
+        app:iconSize="18dp"
+        app:iconGravity="textStart"
+        app:cornerRadius="14dp" />
+
+</LinearLayout>

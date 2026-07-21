@@ -55,12 +55,18 @@
         android:selectable="false"
         android:persistent="false" />
 
-    <!-- The one PROMINENT action — a MORPHING filled CTA whose label is the
+    <!-- The one PROMINENT action — a MORPHING CTA whose label is the
          Preference title (the layout binds it into the button): pre-key it
          reads "Create recovery code" (onboarding step ①), post-key "Add
          storage credit" (step ②/top-up). SyncSettingsFragment swaps title +
-         click routing in updateState. -->
-    <Preference
+         click routing in updateState. EMPHASIS is state-dependent
+         (CloudBuyButtonPreference): FILLED while the next step is genuinely
+         "pay" (pre-key / unfunded / grace), demoted to an OUTLINED row when
+         comfortably funded — a permanent sales button on an account that
+         needs nothing cuts against the calm-by-default ethos (the home pill's
+         GONE-when-idle rule); the hero alert + amber grace re-escalate the
+         top-up moment when it actually matters. -->
+    <com.solarized.firedown.settings.CloudBuyButtonPreference
         android:key="com.solarized.firedown.preferences.cloud.backup.buy"
         android:title="@string/buy_credit_title"
         android:layout="@layout/preference_cloud_buy_button"
@@ -76,19 +82,17 @@
         app:singleLineTitle="false"
         app:icon="@drawable/ic_baseline_insert_drive_file_24" />
 
-    <!-- Visible once Cloud Backup is set up (has data / a funded account). -->
-    <PreferenceCategory
-        android:key="com.solarized.firedown.preferences.cloud.backup.cat.manage"
-        android:title="@string/settings_cloud_backup_cat_manage">
-
-        <Preference
-            android:key="com.solarized.firedown.preferences.cloud.backup.files"
-            android:title="@string/cloud_backup_files_title"
-            android:summary="@string/settings_cloud_backup_files_summary"
-            app:singleLineTitle="false"
-            app:icon="@drawable/cloud_done_24" />
-
-    </PreferenceCategory>
+    <!-- Visible once Cloud Backup is set up (has data / a funded account).
+         Deliberately NO category header: "Manage backup" over this single row
+         restated the row (the same taxonomy-noise argument that dissolved the
+         Cookies category), and the row already sits in backup context under
+         the hero + CTA. -->
+    <Preference
+        android:key="com.solarized.firedown.preferences.cloud.backup.files"
+        android:title="@string/cloud_backup_files_title"
+        android:summary="@string/settings_cloud_backup_files_summary"
+        app:singleLineTitle="false"
+        app:icon="@drawable/cloud_done_24" />
 
     <!-- Bookmarks are deliberately SECONDARY on this screen: ONE inline switch
          (sync is automatic once on — change-triggered + on-toggle — so the old
@@ -109,38 +113,25 @@
 
     </PreferenceCategory>
 
-    <PreferenceCategory
-        android:key="com.solarized.firedown.preferences.sync.cat.code"
-        android:title="@string/settings_sync_cat_code">
+    <!-- ONE recovery-code row (was Show + Save-to-file, two rows and two
+         device-auth prompts for the same object): the reveal dialog behind the
+         single auth now carries Copy AND Save-to-file — export is something
+         you do while LOOKING at the code, so the reveal is where you reach for
+         it. Title reuses the old category header string ("Recovery code");
+         no category wrapper (single child, see the files row note above). -->
+    <Preference
+        android:key="com.solarized.firedown.preferences.sync.show.code"
+        android:title="@string/settings_sync_cat_code"
+        android:summary="@string/settings_sync_show_code_shared_summary"
+        app:singleLineTitle="false"
+        app:icon="@drawable/ic_key_24" />
 
-        <Preference
-            android:key="com.solarized.firedown.preferences.sync.show.code"
-            android:title="@string/settings_sync_show_code_title"
-            android:summary="@string/settings_sync_show_code_shared_summary"
-            app:singleLineTitle="false"
-            app:icon="@drawable/ic_key_24" />
-
-        <Preference
-            android:key="com.solarized.firedown.preferences.sync.export.code"
-            android:title="@string/settings_sync_export_title"
-            android:summary="@string/settings_sync_export_summary"
-            app:singleLineTitle="false"
-            app:icon="@drawable/ic_baseline_insert_drive_file_24" />
-
-    </PreferenceCategory>
-
-    <PreferenceCategory
-        android:key="com.solarized.firedown.preferences.sync.cat.about"
-        android:title="@string/settings_sync_cat_about">
-
-        <Preference
-            android:key="com.solarized.firedown.preferences.sync.help"
-            android:title="@string/settings_sync_help_title"
-            android:summary="@string/settings_sync_help_summary"
-            app:singleLineTitle="false"
-            app:icon="@drawable/encryption_24" />
-
-    </PreferenceCategory>
+    <Preference
+        android:key="com.solarized.firedown.preferences.sync.help"
+        android:title="@string/settings_sync_help_title"
+        android:summary="@string/settings_sync_help_summary"
+        app:singleLineTitle="false"
+        app:icon="@drawable/encryption_24" />
 
     <!-- The destructive actions sit LAST — placement by danger, not taxonomy.
          TWO SCOPED erasure rows, never one "delete all cloud data" (which

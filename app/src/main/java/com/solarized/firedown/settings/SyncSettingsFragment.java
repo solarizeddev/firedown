@@ -36,6 +36,7 @@ import com.solarized.firedown.BuildConfig;
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
 import com.solarized.firedown.sync.CloudBackupManager;
+import com.solarized.firedown.sync.StorageApiClient;
 import com.solarized.firedown.sync.SyncManager;
 import com.solarized.firedown.sync.VaultBackupWorker;
 import com.solarized.firedown.sync.VaultSmokeTest;
@@ -96,19 +97,17 @@ public class SyncSettingsFragment extends BasePreferenceFragment
     OkHttpClient mHttpClient;
 
     private CloudStatusPreference mStatus;
-    private Preference mBuy;
+    private CloudBuyButtonPreference mBuy;
     private Preference mFiles;
     private Preference mDeleteData;
-    private Preference mCatManage;
     private SwitchPreferenceCompat mBookmarksSwitch;
     private Preference mDeleteBookmarks;
     private Preference mHelp;
+    // The ONE recovery-code row — SHARED (bookmarks + downloads), shown once
+    // the account exists; its reveal dialog carries Copy AND Save-to-file
+    // behind the single device-auth (was two rows / two auth prompts).
     private Preference mShowCode;
-    private Preference mExportCode;
     private Preference mLinkCode;
-    // The Recovery-code category is SHARED (bookmarks + downloads) and shown once
-    // the account exists — a recovery code has been created or adopted.
-    private Preference mCatCode;
 
     /** True while a transfer is running, so a usage refresh doesn't clobber the
      *  live "Transfer in progress…" status. */
@@ -185,14 +184,11 @@ public class SyncSettingsFragment extends BasePreferenceFragment
         mBuy = findPreference(Preferences.SETTINGS_CLOUD_BACKUP_BUY);
         mFiles = findPreference(Preferences.SETTINGS_CLOUD_BACKUP_FILES);
         mDeleteData = findPreference(Preferences.SETTINGS_CLOUD_BACKUP_DELETE_DATA);
-        mCatManage = findPreference(Preferences.SETTINGS_CLOUD_BACKUP_CAT_MANAGE);
         mBookmarksSwitch = findPreference(Preferences.SYNC_ENABLED);
         mDeleteBookmarks = findPreference(Preferences.SETTINGS_SYNC_DELETE_DATA);
         mHelp = findPreference(Preferences.SETTINGS_SYNC_HELP);
         mShowCode = findPreference(Preferences.SETTINGS_SYNC_SHOW_CODE);
-        mExportCode = findPreference(Preferences.SETTINGS_SYNC_EXPORT_CODE);
         mLinkCode = findPreference(Preferences.SETTINGS_SYNC_LINK_CODE);
-        mCatCode = findPreference(Preferences.SETTINGS_SYNC_CAT_CODE);
 
         if (mBuy != null) {
             mBuy.setOnPreferenceClickListener(this);
@@ -230,9 +226,6 @@ public class SyncSettingsFragment extends BasePreferenceFragment
         }
         if (mShowCode != null) {
             mShowCode.setOnPreferenceClickListener(this);
-        }
-        if (mExportCode != null) {
-            mExportCode.setOnPreferenceClickListener(this);
         }
         if (mLinkCode != null) {
             mLinkCode.setOnPreferenceClickListener(this);
@@ -273,7 +266,6 @@ public class SyncSettingsFragment extends BasePreferenceFragment
             case Preferences.SETTINGS_SYNC_HELP ->
                     NavigationUtils.navigateSafe(mNavController, R.id.action_sync_to_help);
             case Preferences.SETTINGS_SYNC_SHOW_CODE -> authThenShowCode();
-            case Preferences.SETTINGS_SYNC_EXPORT_CODE -> showExportCaveatDialog();
             case Preferences.SETTINGS_SYNC_LINK_CODE -> showLinkDialog();
         }
         return true;
@@ -319,15 +311,9 @@ public class SyncSettingsFragment extends BasePreferenceFragment
         if (mDeleteBookmarks != null) {
             mDeleteBookmarks.setVisible(on);
         }
-        // Recovery-code section is SHARED → shown once a key exists.
-        if (mCatCode != null) {
-            mCatCode.setVisible(hasKey);
-        }
+        // The recovery-code row is SHARED → shown once a key exists.
         if (mShowCode != null) {
             mShowCode.setVisible(hasKey);
-        }
-        if (mExportCode != null) {
-            mExportCode.setVisible(hasKey);
         }
 
         updateStatusHero(hasKey, setUp);
@@ -364,6 +350,7 @@ public class SyncSettingsFragment extends BasePreferenceFragment
             mStatus.setUsage(-1, -1);
             mStatus.setQuota(null);
         }
+        applyBuyEmphasis(hasKey, cached != null ? cached.quota : null);
         // Only a code-less device has nothing to ask the server about. A code
         // that's not marked set up may still front a FUNDED account (credit
         // bought, nothing backed up yet) — loadStatus reconciles that.
@@ -378,16 +365,36 @@ public class SyncSettingsFragment extends BasePreferenceFragment
             mStatus.setSetUp(status.setUp);
             mStatus.setUsage(status.fileCount, status.totalBytes);
             mStatus.setQuota(status.quota);
+            applyBuyEmphasis(mCloudBackup.hasAccount(), status.quota);
         });
+    }
+
+    /**
+     * State-dependent CTA emphasis (see {@link CloudBuyButtonPreference}):
+     * FILLED while the next step is genuinely "pay" — no key yet ("Create
+     * recovery code"), quota unknown-with-key (a fresh account whose starter/
+     * purchase state hasn't loaded — the roadmap's step ② default), unfunded,
+     * or in grace — and OUTLINED once the account is affirmatively funded
+     * (metered, positive balance, not read-only) or on the unmetered beta,
+     * where there is nothing to sell. Bound from the cached snapshot first and
+     * again from the fresh load, the same two-phase bind as the hero.
+     */
+    private void applyBuyEmphasis(boolean hasKey, @Nullable StorageApiClient.Quota quota) {
+        if (mBuy == null) {
+            return;
+        }
+        boolean calm = false;
+        if (hasKey && quota != null) {
+            calm = !quota.metered
+                    || (quota.balanceMicroGbMonths > 0 && !quota.readOnly);
+        }
+        mBuy.setEmphasized(!calm);
     }
 
     /** The Manage-backup category (Backups list + right-to-erasure) waits for
      *  set-up; the buy CTA above it is governed by the key gate alone (a metered
      *  user buys credit BEFORE their first backup). */
     private void applyManageVisibility(boolean show) {
-        if (mCatManage != null) {
-            mCatManage.setVisible(show);
-        }
         if (mFiles != null) {
             mFiles.setVisible(show);
         }
@@ -535,23 +542,20 @@ public class SyncSettingsFragment extends BasePreferenceFragment
     /**
      * Point-of-action caveat before exporting: the file is plaintext, so it's a
      * transport to the user's password manager, not a vault. Explained BEFORE the
-     * file lands (the in-file caveat is only read afterwards). On Continue →
-     * device-auth → SAF picker.
+     * file lands (the in-file caveat is only read afterwards). On Continue → the
+     * SAF picker directly — the ONLY entry is the reveal dialog's Save-to-file
+     * button, which already sits behind the device auth (view mode) or the
+     * just-created key (create mode), so the old second auth here was a
+     * double-prompt.
      */
     private void showExportCaveatDialog() {
         new MaterialAlertDialogBuilder(requireContext())
                 .setTitle(R.string.settings_sync_export_title)
                 .setMessage(R.string.settings_sync_export_caveat_message)
-                .setPositiveButton(R.string.settings_sync_export_continue,
-                        (dialog, which) -> authThenExportCode())
+                .setPositiveButton(R.string.settings_sync_export_continue, (dialog, which) ->
+                        mExportCodePicker.launch(getString(R.string.settings_sync_export_file_name)))
                 .setNegativeButton(R.string.cancel, null)
                 .show();
-    }
-
-    /** Auth-gated export of the recovery code to a user-chosen text file (SAF). */
-    private void authThenExportCode() {
-        authThenReveal(() ->
-                mExportCodePicker.launch(getString(R.string.settings_sync_export_file_name)));
     }
 
     /**
@@ -678,16 +682,27 @@ public class SyncSettingsFragment extends BasePreferenceFragment
                         ? R.string.settings_sync_code_created_title   // "Save your recovery code"
                         : R.string.settings_sync_show_code_title)
                 .setView(view)
-                // Copy is the NEUTRAL action so it copies WITHOUT closing the
-                // dialog (its click listener is overridden below to suppress the
-                // default dismiss).
+                // Copy and Save-to-file are the NEUTRAL/NEGATIVE actions so they
+                // act WITHOUT closing the dialog (their click listeners are
+                // overridden below to suppress the default dismiss). Save-to-file
+                // lives HERE — inside the one auth-gated reveal — instead of as
+                // its own row + second auth prompt on the Cloud screen (the old
+                // two-rows-for-one-object shape); it matters most in CREATE mode,
+                // where saving the only key is exactly the step being gated.
                 .setNeutralButton(R.string.settings_sync_code_copy, null)
+                .setNegativeButton(R.string.settings_sync_code_save_file, null)
                 .setPositiveButton(R.string.settings_sync_code_done, null)
                 .create();
         dialog.show();
 
         dialog.getButton(AlertDialog.BUTTON_NEUTRAL)
                 .setOnClickListener(v -> copyToClipboard(grouped));
+        // Non-dismissing on purpose: the SAF picker opens over the dialog and
+        // the user returns to it (in create mode the "I've saved it" gate must
+        // survive the round-trip — a dismissing button would be a silent escape
+        // from the non-cancelable create dialog).
+        dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
+                .setOnClickListener(v -> showExportCaveatDialog());
 
         // Create mode: Done stays disabled until the user acknowledges they saved
         // the only key (the "check step").

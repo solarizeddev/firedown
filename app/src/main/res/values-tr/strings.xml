@@ -488,6 +488,7 @@
     <string name="settings_sync_auth_subtitle">Kurtarma kodunu görmek için kimliğinizi doğrulayın</string>
     <string name="settings_sync_code_copied">Kurtarma kodu kopyalandı</string>
     <string name="settings_sync_code_copy">Kopyala</string>
+    <string name="settings_sync_code_save_file">Dosyaya kaydet</string>
     <string name="settings_sync_code_created_title">Kurtarma kodunuzu kaydedin</string>
     <string name="settings_sync_code_done">Bitti</string>
     <string name="settings_sync_code_hint">Kurtarma kodu</string>

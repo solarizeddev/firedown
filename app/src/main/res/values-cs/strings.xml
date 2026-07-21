@@ -442,6 +442,7 @@
     <string name="settings_sync_auth_subtitle">Ověřte svou totožnost, aby se zobrazil kód pro obnovení</string>
     <string name="settings_sync_code_copied">Kód pro obnovení zkopírován</string>
     <string name="settings_sync_code_copy">Kopírovat</string>
+    <string name="settings_sync_code_save_file">Uložit do souboru</string>
     <string name="settings_sync_code_created_title">Uložte si kód pro obnovení</string>
     <string name="settings_sync_code_done">Hotovo</string>
     <string name="settings_sync_code_hint">Kód pro obnovení</string>

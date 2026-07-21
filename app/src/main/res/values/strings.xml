@@ -225,6 +225,7 @@
     <string name="settings_sync_show_code_title">Show recovery code</string>
     <string name="settings_sync_show_code_summary">Reveal the code that unlocks your bookmarks and backups</string>
     <string name="settings_sync_code_copy">Copy</string>
+    <string name="settings_sync_code_save_file">Save to file</string>
     <string name="settings_sync_code_done">Done</string>
     <string name="settings_sync_export_title">Save recovery code to file</string>
     <string name="settings_sync_export_summary">Export the code as a text file you can store</string>

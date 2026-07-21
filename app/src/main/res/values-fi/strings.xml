@@ -428,6 +428,7 @@
     <string name="settings_sync_auth_subtitle">Vahvista henkilöllisyytesi, niin palautuskoodi paljastetaan</string>
     <string name="settings_sync_code_copied">Palautuskoodi kopioitu</string>
     <string name="settings_sync_code_copy">Kopioi</string>
+    <string name="settings_sync_code_save_file">Tallenna tiedostoon</string>
     <string name="settings_sync_code_created_title">Tallenna palautuskoodisi</string>
     <string name="settings_sync_code_done">Valmis</string>
     <string name="settings_sync_code_hint">Palautuskoodi</string>

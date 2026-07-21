@@ -383,6 +383,7 @@
     <string name="settings_sync_auth_subtitle">Потвърдете, че сте вие, за да се покаже кодът за възстановяване</string>
     <string name="settings_sync_code_copied">Кодът за възстановяване е копиран</string>
     <string name="settings_sync_code_copy">Копиране</string>
+    <string name="settings_sync_code_save_file">Запази във файл</string>
     <string name="settings_sync_code_created_title">Запазете кода си за възстановяване</string>
     <string name="settings_sync_code_done">Готово</string>
     <string name="settings_sync_code_hint">Код за възстановяване</string>

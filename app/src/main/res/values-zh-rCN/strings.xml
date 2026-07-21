@@ -591,6 +591,7 @@
     <string name="settings_sync_auth_subtitle">验证身份以显示恢复代码</string>
     <string name="settings_sync_code_copied">已复制恢复代码</string>
     <string name="settings_sync_code_copy">复制</string>
+    <string name="settings_sync_code_save_file">保存到文件</string>
     <string name="settings_sync_code_created_title">请保存您的恢复代码</string>
     <string name="settings_sync_code_done">完成</string>
     <string name="settings_sync_code_hint">恢复代码</string>

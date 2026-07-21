@@ -593,6 +593,7 @@
     <string name="settings_sync_auth_subtitle">Verifica que eres tú para mostrar el código de recuperación</string>
     <string name="settings_sync_code_copied">Código de recuperación copiado</string>
     <string name="settings_sync_code_copy">Copiar</string>
+    <string name="settings_sync_code_save_file">Guardar en archivo</string>
     <string name="settings_sync_code_created_title">Guarda tu código de recuperación</string>
     <string name="settings_sync_code_done">Hecho</string>
     <string name="settings_sync_code_hint">Código de recuperación</string>
