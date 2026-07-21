@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.concurrent.Executor;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Consumer;
 
 import javax.inject.Inject;
@@ -255,6 +254,32 @@ public class DownloadDataRepository {
      * a probe finishing after the user deleted the row would
      * insert(REPLACE) it back (the two executors DO run concurrently).</p>
      */
+    /**
+     * Next "Regenerate thumbnail" position: a golden-ratio step from the
+     * CURRENT position, wrapped to the clip — NOT a fresh random draw.
+     * {@code ThreadLocalRandom.nextLong(duration)} was observed producing the
+     * IDENTICAL value sequence in every app process on-device (SM-A426B/SDK 31:
+     * the first regenerate always yielded 1257600981, the second 889413877 —
+     * the same two positions in a session hours earlier), so every "random"
+     * pick collided with a position Glide had already decoded and cached (the
+     * position is in the request signature + TargetFrame option, so a repeated
+     * position is an instant cache hit) and the visible thumbnail never
+     * changed. Stepping from the current position guarantees a NEW position —
+     * and therefore a cache MISS and a real re-decode — on every click, with
+     * no PRNG in the loop at all; the irrational step spreads successive
+     * clicks across the whole clip (low-discrepancy) instead of clustering.
+     * {@code floorMod} guards a stale stored position larger than a
+     * re-probed, shorter duration.
+     */
+    private static long nextThumbnailPosition(long currentPos, long duration) {
+        long span = duration > 0 ? duration : 100;
+        long step = (long) (span * 0.6180339887498949);
+        if (step <= 0) {
+            step = 1;
+        }
+        return Math.floorMod(currentPos + step, span);
+    }
+
     public void updateDownloadThumb(DownloadEntity download) {
         mHeavyExecutor.execute(() -> {
             DownloadEntity newEntity = new DownloadEntity(download);
@@ -276,10 +301,10 @@ public class DownloadDataRepository {
                 }
             }
 
-            long randomThumbPos = ThreadLocalRandom.current().nextLong(duration > 0 ? duration : 100);
+            long thumbPos = nextThumbnailPosition(newEntity.getThumbnailDuration(), duration);
             newEntity.setFileDuration(duration);
             newEntity.setFileDurationFormatted(FFmpegUtils.getFileDuration(duration));
-            newEntity.setFileThumbnailDuration(randomThumbPos);
+            newEntity.setFileThumbnailDuration(thumbPos);
             // Regenerate is an EXPLICIT "try this thumbnail again" request, so
             // clear the persistent negative-cache flag. Otherwise GlideHelper
             // .load() short-circuits to the mime glyph BEFORE attempting any
