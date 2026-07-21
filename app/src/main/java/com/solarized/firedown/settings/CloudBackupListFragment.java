@@ -505,10 +505,15 @@ public class CloudBackupListFragment extends Fragment
         mHeaderLine1.setText(line1);
         String line2;
         StorageApiClient.Quota quota = mStatusInfo != null ? mStatusInfo.quota : null;
-        if (quota != null && quota.metered) {
-            line2 = CloudStatusPreference.formatGbMonths(quota.balanceGbMonths)
-                    + " " + getString(R.string.cloud_status_gb_label)
-                    + " · " + getString(R.string.cloud_backup_header_encrypted);
+        // Metered context is TIME, never the raw GB-months ledger unit (the
+        // old "5409.5 GB-months" here was one of the on-device confusion
+        // reports). No projection (nothing backed up / effectively-never
+        // runout) → just the trust line.
+        String coverage = CloudStatusPreference.coverageLabel(requireContext(), quota);
+        if (coverage != null) {
+            line2 = coverage + " · " + getString(R.string.cloud_backup_header_encrypted);
+        } else if (quota != null && quota.metered) {
+            line2 = getString(R.string.cloud_backup_header_encrypted);
         } else if (quota != null && quota.bytesLimit > 0) {
             line2 = getString(R.string.cloud_backup_header_beta,
                     Formatter.formatShortFileSize(requireContext(), quota.bytesLimit));

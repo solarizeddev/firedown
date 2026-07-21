@@ -567,6 +567,8 @@
     <string name="settings_sync_faq_a5">不需要。没有注册、电子邮件或电话号码——只有恢复码。你的书签不会绑定任何个人信息。</string>
     <string name="settings_sync_faq_q6">如果我不想使用同步怎么办？</string>
     <string name="settings_sync_faq_a6">同步是可选的，默认关闭。你随时可以将书签导出为文件，稍后再导入，无需任何服务器参与。</string>
+    <string name="settings_sync_faq_q7">可以备份保险箱中的文件吗？</string>
+    <string name="settings_sync_faq_a7">不可以 — 保险箱中的文件绝不会离开此设备。它们不参与云备份、列表备份和发送。要备份某个文件，请先将其移出保险箱。</string>
     <string name="settings_sync_code_saved_check">我已保存好恢复码</string>
     <string name="settings_sync_export_title">将恢复码保存到文件</string>
     <string name="settings_sync_export_summary">将恢复码导出为可保存的文本文件</string>
@@ -665,6 +667,7 @@
     <string name="cloud_backup_setup_create">创建密钥</string>
     <string name="cloud_backup_started">正在备份到云端…</string>
     <string name="cloud_backup_none_eligible">选择已完成的文件进行备份</string>
+    <string name="cloud_backup_safe_excluded">保险箱中的文件仅保留在此设备上，无法备份</string>
     <string name="cloud_backup_done">已备份到云端</string>
     <string name="cloud_backup_failed">备份失败 — 请检查网络连接后重试</string>
     <string name="cloud_backup_notification_title">正在备份到云端</string>
@@ -697,6 +700,8 @@
     <string name="settings_cloud_backup_buy_summary">为存储余额充值</string>
     <string name="buy_credit_title">添加存储额度</string>
     <string name="cloud_starter_credit_step">已包含免费入门额度</string>
+    <string name="cloud_status_credit_active">额度已生效 — 以当前用量可用多年</string>
+    <string name="buy_credit_success_added">已添加到您的备份额度。</string>
     <string name="buy_credit_pick_how_much">购买数量</string>
     <string name="buy_credit_pay_with">支付方式</string>
     <string name="buy_credit_rail_lightning">Lightning</string>
@@ -718,7 +723,6 @@
     <string name="buy_credit_no_wallet">未安装 Lightning 钱包应用</string>
     <string name="buy_credit_no_browser">没有可用于打开结账页的浏览器</string>
     <string name="buy_credit_success_title">已添加 %1$d GB-months</string>
-    <string name="buy_credit_success_balance">你的余额现在是 %1$s GB-months。</string>
     <string name="buy_credit_recovery_code_title">你的恢复码</string>
     <string name="buy_credit_recovery_code_body">立即保存——这是访问你账户和备份的唯一密钥。你可以在 设置 → 同步 中再次查看。</string>
     <string name="buy_credit_copy_code">复制恢复码</string>
@@ -754,7 +758,6 @@
     <plurals name="buy_credit_months">
         <item quantity="other">%1$d 个月</item>
     </plurals>
-    <string name="cloud_status_gb_label">GB-months</string>
     <string name="cloud_status_facts">%1$s · 已备份 %2$s</string>
     <string name="cloud_status_backed_up">已备份</string>
     <string name="cloud_status_chip_beta">测试期间免费</string>
@@ -762,7 +765,6 @@
     <string name="cloud_status_caption_beta">%1$s · 共含 %2$s · 端到端加密</string>
     <string name="cloud_backup_header_beta">共含 %1$s · 端到端加密</string>
     <string name="cloud_backup_header_encrypted">端到端加密</string>
-    <string name="cloud_status_caption_plan">%1$s · 已用套餐的 %2$s%%</string>
     <string name="cloud_status_runway_covered">有效期至 ~%1$s</string>
     <string name="cloud_status_timeline_today">今天</string>
     <string name="cloud_status_timeline_coverage">覆盖约 %1$s</string>

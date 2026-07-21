@@ -569,6 +569,8 @@
     <string name="settings_sync_faq_a5">Non. Il n\'y a aucune inscription, e-mail ni numéro de téléphone — uniquement le code de récupération. Aucune information personnelle n\'est liée à vos favoris.</string>
     <string name="settings_sync_faq_q6">Et si je ne veux pas utiliser la synchronisation ?</string>
     <string name="settings_sync_faq_a6">La synchronisation est facultative et désactivée par défaut. Vous pouvez toujours exporter vos favoris vers un fichier et les importer plus tard, sans aucun serveur.</string>
+    <string name="settings_sync_faq_q7">Puis-je sauvegarder les fichiers du Dossier sécurisé ?</string>
+    <string name="settings_sync_faq_a7">Non — les fichiers du Dossier sécurisé ne quittent jamais cet appareil. Ils sont exclus de la sauvegarde cloud, de la sauvegarde de la liste et de l\'envoi. Pour en sauvegarder un, sortez-le d\'abord du Dossier sécurisé.</string>
     <string name="settings_sync_code_saved_check">J\'ai enregistré mon code de récupération</string>
     <string name="settings_sync_export_title">Enregistrer le code de récupération dans un fichier</string>
     <string name="settings_sync_export_summary">Exportez le code dans un fichier texte que vous pouvez conserver</string>
@@ -670,6 +672,7 @@
     <string name="cloud_backup_setup_create">Créer la clé</string>
     <string name="cloud_backup_started">Sauvegarde dans le cloud…</string>
     <string name="cloud_backup_none_eligible">Sélectionnez des fichiers terminés à sauvegarder</string>
+    <string name="cloud_backup_safe_excluded">Les fichiers du Dossier sécurisé restent sur cet appareil et ne peuvent pas être sauvegardés</string>
     <string name="cloud_backup_done">Sauvegardé dans le cloud</string>
     <string name="cloud_backup_failed">Échec de la sauvegarde — vérifiez votre connexion et réessayez</string>
     <string name="cloud_backup_notification_title">Sauvegarde dans le cloud</string>
@@ -702,6 +705,8 @@
     <string name="settings_cloud_backup_buy_summary">Rechargez votre solde de stockage</string>
     <string name="buy_credit_title">Ajouter du crédit de stockage</string>
     <string name="cloud_starter_credit_step">Crédit de départ gratuit inclus</string>
+    <string name="cloud_status_credit_active">Crédit actif — à cette utilisation, il durera des années</string>
+    <string name="buy_credit_success_added">Ajouté à votre crédit de sauvegarde.</string>
     <string name="buy_credit_pick_how_much">Combien</string>
     <string name="buy_credit_pay_with">Payer avec</string>
     <string name="buy_credit_rail_lightning">Lightning</string>
@@ -723,7 +728,6 @@
     <string name="buy_credit_no_wallet">Aucune application de portefeuille Lightning installée</string>
     <string name="buy_credit_no_browser">Aucun navigateur disponible pour ouvrir le paiement</string>
     <string name="buy_credit_success_title">%1$d GB-months ajoutés</string>
-    <string name="buy_credit_success_balance">Votre solde est désormais de %1$s GB-months.</string>
     <string name="buy_credit_recovery_code_title">Votre code de récupération</string>
     <string name="buy_credit_recovery_code_body">Enregistrez-le maintenant — c\'est l\'unique clé de votre compte et de vos sauvegardes. Vous pouvez le revoir dans Paramètres → Synchronisation.</string>
     <string name="buy_credit_copy_code">Copier le code</string>
@@ -761,7 +765,6 @@
         <item quantity="one">%1$d mois</item>
         <item quantity="other">%1$d mois</item>
     </plurals>
-    <string name="cloud_status_gb_label">GB-months</string>
     <string name="cloud_status_facts">%1$s · %2$s sauvegardés</string>
     <string name="cloud_status_backed_up">sauvegardé</string>
     <string name="cloud_status_chip_beta">Gratuit pendant la bêta</string>
@@ -769,7 +772,6 @@
     <string name="cloud_status_caption_beta">%1$s · sur %2$s inclus · chiffré de bout en bout</string>
     <string name="cloud_backup_header_beta">sur %1$s inclus · chiffré de bout en bout</string>
     <string name="cloud_backup_header_encrypted">chiffré de bout en bout</string>
-    <string name="cloud_status_caption_plan">%1$s · %2$s %% de votre forfait</string>
     <string name="cloud_status_runway_covered">Couvert jusqu\'à ~%1$s</string>
     <string name="cloud_status_timeline_today">Aujourd’hui</string>
     <string name="cloud_status_timeline_coverage">≈ %1$s de couverture</string>

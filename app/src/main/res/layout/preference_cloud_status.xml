@@ -4,15 +4,18 @@
   CloudStatusPreference). One card, four states:
 
     A · unmetered beta   — big backed-up size + usage bar vs the included cap
-    B · metered, funded  — usage bar vs the purchased plan's size cap + a
-                           month-tick time runway to the projected runout
+                           (the one REAL byte denominator; the bar binds only
+                           here)
+    B · metered, funded  — ONE model, time: backed-up-size headline + the
+                           Today→date timeline to the server's projected
+                           runout. No plan chip, no % bar (the "plan" was an
+                           invented shape — see CloudStatusPreference). No
+                           projection → the credit-active line in cb_alert.
     C · grace/read-only  — amber data ink + the top-up-by deadline
     D · not set up       — dashed empty state pointing at the ⋮ backup action
 
-  The bars are the only accent ink (coral; amber in grace) — chrome stays
-  neutral. The runway's tick count needs the purchased plan shape, which only
-  the CLIENT knows (Preferences.CLOUD_PLAN_*, stored at purchase); without it
-  the runway degrades to the covered-until line alone.
+  The bar/timeline are the only accent ink (coral; amber in grace) — chrome
+  stays neutral.
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -100,8 +103,10 @@
             android:textColor="?android:attr/textColorSecondary"
             tools:text="23 files · of 50 GB included · encrypted end-to-end" />
 
-        <!-- grace only: the read-only + top-up-by line, amber deadline drawn by
-             the caption colour staying neutral and the runway/bar going amber. -->
+        <!-- Grace: the read-only + top-up-by line (the runway goes amber).
+             Metered with NO runout projection: the "credit active — lasts for
+             years at this usage" line, the funded account's only credit voice
+             once the plan chip/% bar were deleted. -->
         <TextView
             android:id="@+id/cb_alert"
             android:layout_width="match_parent"

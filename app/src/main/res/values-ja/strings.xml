@@ -567,6 +567,8 @@
     <string name="settings_sync_faq_a5">いいえ。登録、メール、電話番号は不要で、復元コードだけです。個人情報はブックマークに一切紐付けられません。</string>
     <string name="settings_sync_faq_q6">同期を使いたくない場合はどうなりますか？</string>
     <string name="settings_sync_faq_a6">同期は任意で、既定ではオフです。いつでもブックマークをファイルにエクスポートし、サーバーを介さずに後でインポートできます。</string>
+    <string name="settings_sync_faq_q7">セーフフォルダのファイルはバックアップできますか？</string>
+    <string name="settings_sync_faq_a7">いいえ — セーフフォルダのファイルがこの端末の外に出ることはありません。クラウドバックアップ、リストのバックアップ、送信の対象外です。バックアップするには、まずセーフフォルダから移動してください。</string>
     <string name="settings_sync_code_saved_check">復元コードを保存しました</string>
     <string name="settings_sync_export_title">復元コードをファイルに保存</string>
     <string name="settings_sync_export_summary">コードを保存できるテキストファイルとしてエクスポート</string>
@@ -665,6 +667,7 @@
     <string name="cloud_backup_setup_create">鍵を作成</string>
     <string name="cloud_backup_started">クラウドにバックアップしています…</string>
     <string name="cloud_backup_none_eligible">バックアップする完了済みファイルを選択してください</string>
+    <string name="cloud_backup_safe_excluded">セーフフォルダのファイルはこの端末に留まり、バックアップできません</string>
     <string name="cloud_backup_done">クラウドにバックアップしました</string>
     <string name="cloud_backup_failed">バックアップできませんでした — 接続を確認してもう一度お試しください</string>
     <string name="cloud_backup_notification_title">クラウドにバックアップ中</string>
@@ -697,6 +700,8 @@
     <string name="settings_cloud_backup_buy_summary">ストレージ残高をチャージ</string>
     <string name="buy_credit_title">ストレージクレジットを追加</string>
     <string name="cloud_starter_credit_step">無料のスタータークレジット付き</string>
+    <string name="cloud_status_credit_active">クレジット有効 — 現在の使用量なら何年も持ちます</string>
+    <string name="buy_credit_success_added">バックアップクレジットに追加されました。</string>
     <string name="buy_credit_pick_how_much">容量</string>
     <string name="buy_credit_pay_with">支払い方法</string>
     <string name="buy_credit_rail_lightning">Lightning</string>
@@ -718,7 +723,6 @@
     <string name="buy_credit_no_wallet">Lightning ウォレットアプリがインストールされていません</string>
     <string name="buy_credit_no_browser">チェックアウトを開くブラウザがありません</string>
     <string name="buy_credit_success_title">%1$d GB-months を追加しました</string>
-    <string name="buy_credit_success_balance">残高は %1$s GB-months になりました。</string>
     <string name="buy_credit_recovery_code_title">リカバリーコード</string>
     <string name="buy_credit_recovery_code_body">今すぐ保存してください。これはアカウントとバックアップの唯一の鍵です。設定 → 同期 で再度確認できます。</string>
     <string name="buy_credit_copy_code">コードをコピー</string>
@@ -754,7 +758,6 @@
     <plurals name="buy_credit_months">
         <item quantity="other">%1$dか月</item>
     </plurals>
-    <string name="cloud_status_gb_label">GB-months</string>
     <string name="cloud_status_facts">%1$s · %2$s をバックアップ済み</string>
     <string name="cloud_status_backed_up">バックアップ済み</string>
     <string name="cloud_status_chip_beta">ベータ期間中は無料</string>
@@ -762,7 +765,6 @@
     <string name="cloud_status_caption_beta">%1$s · %2$s まで利用可 · エンドツーエンド暗号化</string>
     <string name="cloud_backup_header_beta">%1$s まで利用可 · エンドツーエンド暗号化</string>
     <string name="cloud_backup_header_encrypted">エンドツーエンド暗号化</string>
-    <string name="cloud_status_caption_plan">%1$s · プランの %2$s%%</string>
     <string name="cloud_status_runway_covered">〜%1$s まで有効</string>
     <string name="cloud_status_timeline_today">今日</string>
     <string name="cloud_status_timeline_coverage">カバー期間 約 %1$s</string>

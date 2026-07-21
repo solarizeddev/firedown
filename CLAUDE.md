@@ -2142,24 +2142,44 @@ opaque chunks + an opaque manifest blob.
     flag reconcile only ever runs on a successful load, so the cache can't mask
     it), and `deleteAllData` clears it. Don't bind the hero straight to a fresh
     network load again.
-  - **Coverage months are BALANCE-derived, not the stored plan shape.**
-    Purchases ACCUMULATE into one server balance, so after a top-up the local
-    `CLOUD_PLAN_*` "size × months" understates what the account holds (on-device:
-    chip read "Up to 100 GB · 5 months" against a 5410 GB-month balance ≈ 54
-    months at that cap). `CloudStatusPreference.coverageMonths` = server
-    `balance ÷ plan size` when the quota is known (stored months = offline
-    fallback) and feeds the chip duration, the timeline's centred
-    "≈ N of coverage" duration, and the covered-until clamp below. The runway
-    itself is `CloudTimelineView` — a Today→date gradient line ("time as
-    space"; it replaced the `CloudRunwayView` month ticks + "N of M months
-    left" pair, which restated one fact three times and whose "of M" was
-    degenerate under balance-derived coverage: N and M derive from the same
-    balance, so it could only read "N of N").
-  - **Covered-until is CLAMPED to the coverage months.** The server's
-    `projected_runout_at` is balance ÷ current footprint — with ~nothing backed
-    up it runs absurd ("~Feb 2086" at 0% usage, on-device).
-    `CloudStatusPreference.bindRunway` clamps the displayed date to now +
-    coverageMonths (matching the "≈ N of M months left" cap).
+  - **The metered hero speaks ONE model — prepaid credit measured in TIME —
+    and GB-months NEVER appears in user-facing text.** After several rounds of
+    "the GB-months / two-bars screen is confusing," the diagnosis was that the
+    hero spoke THREE models at once: a plan chip ("Up to 450 GB · 1 year" — a
+    shape INVENTED by normalizing the balance to 12 months; there is no plan,
+    purchases accumulate into one balance), a "% of your plan" bar against
+    that invented cap, and the timeline. All plan fiction was DELETED
+    (`effectivePlanSizeGb`/`roundToNiceGb`/`coverageMonths`, the chip's plan/
+    balance text, the metered % bar, the covered-until clamp): the metered
+    hero is now headline ("854 MB backed up") + the `CloudTimelineView`
+    Today→date runway to the SERVER's `projected_runout_at` (past-guarded for
+    stale servers), duration centred beneath. No projection (nothing backed
+    up / effectively-never runout — the server omits dates past its 30-year
+    horizon) → the `cloud_status_credit_active` line in the alert slot, so a
+    funded account always shows its credit. The usage BAR binds only in the
+    unmetered beta, whose byte cap is a real denominator; the CHIP binds only
+    for grace ("Read-only", amber) and the beta label. The raw ledger unit
+    survives user-facing only inside the buy wizard (denomination fine print +
+    its explainer — the one place the unit is introduced); the Backups-list
+    header and the buy-success screen now say "≈ 1 year of coverage"
+    (`CloudStatusPreference.coverageLabel`) / "Added to your backup credit"
+    instead of a GB-months number. `setPlan`'s stored `CLOUD_PLAN_*` shape
+    now backs ONLY the roadmap's offline step-② check-off and the
+    starter-vs-purchase label. Don't reintroduce a plan chip, a metered %
+    bar, or a GB-months string on any status surface.
+  - **The Safe Folder exclusion is a STATED promise, not a silent gap.** Vault
+    entries are excluded from Cloud Backup (the same "vault never leaves the
+    device" contract as the mirror and P2P send) — deliberately NOT lifted:
+    vault content is guarded by the device lock/biometric, while cloud data is
+    keyed by the recovery code, so backing up a vault file would silently move
+    it into a different trust domain (name/thumb on the un-gated Backups
+    list, restorable by code alone, no biometric). The exclusion is surfaced
+    in two places: FAQ q7/a7 on the sync help screen (why + the move-it-out
+    workaround), and the multi-select backup action's snackbar
+    (`cloud_backup_safe_excluded`) when a selection reduced to nothing
+    BECAUSE of safe entries. If per-file vault backup is ever built it needs
+    device-auth gating on safe entries in the Backups list, restore back INTO
+    the vault, and explicit consent copy — all three together.
 
 - **FGS type.** Both workers run as `dataSync` foreground workers; the app's
   manifest merges `foregroundServiceType="dataSync"` onto WorkManager's

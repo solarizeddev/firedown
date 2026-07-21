@@ -579,16 +579,22 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
             // Mirror the per-item gating (no error, not in-progress, not safe, has
             // a file) so an in-progress / errored selection is skipped, not sent.
             List<DownloadEntity> eligible = new ArrayList<>();
+            boolean hadSafe = false;
             for (DownloadEntity e : mAdapter.getSelectedEntities()) {
-                if (e.getFileErrorType() == Download.PROGRESS
+                if (e.isFileSafe()) {
+                    // The vault never leaves the device (the mirror/P2P-send
+                    // contract) — but say so, don't silently drop the file.
+                    hadSafe = true;
+                } else if (e.getFileErrorType() == Download.PROGRESS
                         && e.getFileStatus() != Download.PROGRESS
-                        && !e.isFileSafe()
                         && e.getFilePath() != null) {
                     eligible.add(e);
                 }
             }
             if (eligible.isEmpty()) {
-                showErrorSnackbar(R.string.cloud_backup_none_eligible);
+                showErrorSnackbar(hadSafe
+                        ? R.string.cloud_backup_safe_excluded
+                        : R.string.cloud_backup_none_eligible);
             } else {
                 startCloudBackup(eligible);
             }

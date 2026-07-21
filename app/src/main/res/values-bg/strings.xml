@@ -359,6 +359,8 @@
     <string name="settings_sync_faq_a5">Не. Няма регистрация, имейл или телефонен номер — само кодът за възстановяване. Нищо лично не е свързано с отметките ви.</string>
     <string name="settings_sync_faq_q6">Какво става, ако не искам да използвам синхронизация?</string>
     <string name="settings_sync_faq_a6">Синхронизацията е по избор и е изключена по подразбиране. Винаги можете да експортирате отметките си във файл и да ги импортирате по-късно, без участието на сървър.</string>
+    <string name="settings_sync_faq_q7">Мога ли да архивирам файлове от Сейфа?</string>
+    <string name="settings_sync_faq_a7">Не — файловете в Сейфа никога не напускат това устройство. Изключени са от облачното архивиране, от резервното копие на списъка и от изпращане. За да архивирате файл, първо го преместете извън Сейфа.</string>
     <string name="settings_sync_code_saved_check">Запазих кода си за възстановяване</string>
     <string name="settings_sync_export_title">Запазване на кода за възстановяване във файл</string>
     <string name="settings_sync_export_summary">Експортиране на кода като текстов файл, който можете да съхраните</string>
@@ -459,6 +461,7 @@
     <string name="cloud_backup_setup_create">Създаване на ключ</string>
     <string name="cloud_backup_started">Архивиране в облака…</string>
     <string name="cloud_backup_none_eligible">Изберете завършени файлове за архивиране</string>
+    <string name="cloud_backup_safe_excluded">Файловете в Сейфа остават на това устройство и не могат да се архивират</string>
     <string name="cloud_backup_done">Архивирано в облака</string>
     <string name="cloud_backup_failed">Архивирането е неуспешно — проверете връзката и опитайте отново</string>
     <string name="cloud_backup_notification_title">Архивиране в облака</string>
@@ -491,6 +494,8 @@
     <string name="settings_cloud_backup_buy_summary">Захранете баланса на хранилището си</string>
     <string name="buy_credit_title">Добавяне на кредит за хранилище</string>
     <string name="cloud_starter_credit_step">Включен безплатен начален кредит</string>
+    <string name="cloud_status_credit_active">Кредитът е активен — при това ползване ще стигне за години</string>
+    <string name="buy_credit_success_added">Добавено към кредита ви за резервни копия.</string>
     <string name="buy_credit_pick_how_much">Колко</string>
     <string name="buy_credit_pay_with">Плащане чрез</string>
     <string name="buy_credit_rail_lightning">Lightning</string>
@@ -512,7 +517,6 @@
     <string name="buy_credit_no_wallet">Няма инсталирано Lightning портфейл приложение</string>
     <string name="buy_credit_no_browser">Няма наличен браузър за отваряне на плащането</string>
     <string name="buy_credit_success_title">Добавени са %1$d GB-months</string>
-    <string name="buy_credit_success_balance">Балансът ви вече е %1$s GB-months.</string>
     <string name="buy_credit_recovery_code_title">Вашият код за възстановяване</string>
     <string name="buy_credit_recovery_code_body">Запазете го сега — това е единственият ключ към акаунта и резервните ви копия. Можете да го видите отново в Настройки → Синхронизиране.</string>
     <string name="buy_credit_copy_code">Копиране на кода</string>
@@ -550,7 +554,6 @@
         <item quantity="one">%1$d месец</item>
         <item quantity="other">%1$d месеца</item>
     </plurals>
-    <string name="cloud_status_gb_label">GB-months</string>
     <string name="cloud_status_facts">%1$s · %2$s архивирани</string>
     <string name="cloud_status_backed_up">архивирано</string>
     <string name="cloud_status_chip_beta">Безплатно по време на бета версията</string>
@@ -558,7 +561,6 @@
     <string name="cloud_status_caption_beta">%1$s · от включени %2$s · шифровано от край до край</string>
     <string name="cloud_backup_header_beta">от включени %1$s · шифровано от край до край</string>
     <string name="cloud_backup_header_encrypted">шифровано от край до край</string>
-    <string name="cloud_status_caption_plan">%1$s · %2$s%% от плана ви</string>
     <string name="cloud_status_runway_covered">Покритие до ~%1$s</string>
     <string name="cloud_status_timeline_today">Днес</string>
     <string name="cloud_status_timeline_coverage">≈ %1$s покритие</string>

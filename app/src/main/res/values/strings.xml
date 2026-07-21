@@ -265,6 +265,8 @@
     <string name="settings_sync_faq_a5">No. There\'s no sign-up, email, or phone number — just the recovery code. Nothing personal is tied to your bookmarks.</string>
     <string name="settings_sync_faq_q6">What if I don\'t want to use sync?</string>
     <string name="settings_sync_faq_a6">Sync is optional and off by default. You can always export your bookmarks to a file and import them later, with no server involved.</string>
+    <string name="settings_sync_faq_q7">Can I back up Safe Folder files?</string>
+    <string name="settings_sync_faq_a7">No — files in the Safe Folder never leave this device. They\'re excluded from Cloud Backup, the download-list backup and sending. To back one up, move it out of the Safe Folder first.</string>
     <string name="settings_sync_delete_title">Delete bookmarks from server</string>
     <string name="settings_sync_delete_summary">Permanently erase your encrypted bookmarks from the server</string>
     <string name="settings_sync_delete_message">This permanently erases your encrypted bookmarks from the server and turns off sync on this device. The bookmarks on this device are kept. This can\'t be undone — other devices will no longer be able to restore from the server.</string>
@@ -289,7 +291,6 @@
     <!-- Cloud Backup status hero (CloudStatusPreference): big backed-up size +
          context chip + usage bar + month-tick runway / grace alert / dashed
          empty state. -->
-    <string name="cloud_status_gb_label">GB-months</string>
     <!-- %1$s = "12 files", %2$s = "6.2 GB" -->
     <string name="cloud_status_facts">%1$s · %2$s backed up</string>
     <!-- unit label beside the big size, e.g. "1.2 GB  backed up" -->
@@ -302,7 +303,6 @@
     <string name="cloud_backup_header_beta">of %1$s included · encrypted end-to-end</string>
     <string name="cloud_backup_header_encrypted">encrypted end-to-end</string>
     <!-- %1$s = "41 files", %2$d = percent of the plan's size cap -->
-    <string name="cloud_status_caption_plan">%1$s · %2$s%% of your plan</string>
     <!-- %1$s = a month + year, e.g. "Mar 2027" -->
     <string name="cloud_status_runway_covered">Covered until ~%1$s</string>
     <string name="cloud_status_timeline_today">Today</string>
@@ -322,6 +322,8 @@
     <!-- ── Add storage credit (buy-credit purchase wizard) ── -->
     <string name="buy_credit_title">Add storage credit</string>
     <string name="cloud_starter_credit_step">Free starter credit included</string>
+    <string name="cloud_status_credit_active">Credit active — lasts for years at your current usage</string>
+    <string name="buy_credit_success_added">Added to your backup credit.</string>
     <string name="buy_credit_pick_how_much">How much</string>
     <string name="buy_credit_pay_with">Pay with</string>
     <string name="buy_credit_rail_lightning">Lightning</string>
@@ -350,8 +352,6 @@
     <string name="buy_credit_no_browser">No browser available to open checkout</string>
     <!-- %1$d = redeemed GB-months -->
     <string name="buy_credit_success_title">%1$d GB-months added</string>
-    <!-- %1$s = new balance in GB-months -->
-    <string name="buy_credit_success_balance">Your balance is now %1$s GB-months.</string>
     <string name="buy_credit_recovery_code_title">Your recovery code</string>
     <string name="buy_credit_recovery_code_body">Save this now — it\'s the only key to your account and backups. You can view it again in Settings → Sync.</string>
     <string name="buy_credit_copy_code">Copy code</string>
@@ -418,6 +418,7 @@
     <string name="cloud_backup_setup_create">Create key</string>
     <string name="cloud_backup_started">Backing up to cloud…</string>
     <string name="cloud_backup_none_eligible">Select finished files to back up</string>
+    <string name="cloud_backup_safe_excluded">Safe Folder files stay on this device and can\'t be backed up</string>
     <string name="cloud_backup_done">Backed up to cloud</string>
     <string name="cloud_backup_failed">Couldn\'t back up — check your connection and try again</string>
     <string name="cloud_backup_notification_title">Backing up to cloud</string>

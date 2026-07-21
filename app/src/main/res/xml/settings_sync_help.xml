@@ -52,4 +52,15 @@
         app:singleLineTitle="false"
         app:iconSpaceReserved="false" />
 
+    <!-- The Safe Folder exclusion as a STATED PROMISE, not a silent gap: the
+         vault never leaves the device (same contract as the backup mirror and
+         P2P send), so a user looking for "back up my Safe Folder file" finds
+         the why and the workaround here instead of a missing menu row. -->
+    <com.solarized.firedown.settings.FaqPreference
+        android:selectable="false"
+        android:title="@string/settings_sync_faq_q7"
+        android:summary="@string/settings_sync_faq_a7"
+        app:singleLineTitle="false"
+        app:iconSpaceReserved="false" />
+
 </PreferenceScreen>

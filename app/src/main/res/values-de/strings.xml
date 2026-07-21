@@ -569,6 +569,8 @@
     <string name="settings_sync_faq_a5">Nein. Es gibt keine Registrierung, keine E-Mail und keine Telefonnummer — nur den Wiederherstellungscode. Nichts Persönliches ist mit deinen Lesezeichen verknüpft.</string>
     <string name="settings_sync_faq_q6">Was ist, wenn ich die Synchronisierung nicht nutzen möchte?</string>
     <string name="settings_sync_faq_a6">Die Synchronisierung ist optional und standardmäßig deaktiviert. Du kannst deine Lesezeichen jederzeit in eine Datei exportieren und sie später wieder importieren, ganz ohne Server.</string>
+    <string name="settings_sync_faq_q7">Kann ich Dateien aus dem Safe-Ordner sichern?</string>
+    <string name="settings_sync_faq_a7">Nein — Dateien im Safe-Ordner verlassen dieses Gerät nie. Sie sind vom Cloud-Backup, der Listen-Sicherung und dem Senden ausgeschlossen. Um eine Datei zu sichern, verschiebe sie zuerst aus dem Safe-Ordner.</string>
     <string name="settings_sync_code_saved_check">Ich habe meinen Wiederherstellungscode gespeichert</string>
     <string name="settings_sync_export_title">Wiederherstellungscode in Datei speichern</string>
     <string name="settings_sync_export_summary">Exportiere den Code als Textdatei, die du aufbewahren kannst</string>
@@ -669,6 +671,7 @@
     <string name="cloud_backup_setup_create">Schlüssel erstellen</string>
     <string name="cloud_backup_started">Wird in Cloud gesichert…</string>
     <string name="cloud_backup_none_eligible">Wähle fertige Dateien zum Sichern aus</string>
+    <string name="cloud_backup_safe_excluded">Dateien im Safe-Ordner bleiben auf diesem Gerät und können nicht gesichert werden</string>
     <string name="cloud_backup_done">In Cloud gesichert</string>
     <string name="cloud_backup_failed">Sichern fehlgeschlagen — prüfe deine Verbindung und versuche es erneut</string>
     <string name="cloud_backup_notification_title">Wird in Cloud gesichert</string>
@@ -701,6 +704,8 @@
     <string name="settings_cloud_backup_buy_summary">Lade dein Speicherguthaben auf</string>
     <string name="buy_credit_title">Speicherguthaben hinzufügen</string>
     <string name="cloud_starter_credit_step">Kostenloses Startguthaben inklusive</string>
+    <string name="cloud_status_credit_active">Guthaben aktiv — bei dieser Nutzung reicht es für Jahre</string>
+    <string name="buy_credit_success_added">Deinem Backup-Guthaben hinzugefügt.</string>
     <string name="buy_credit_pick_how_much">Wie viel</string>
     <string name="buy_credit_pay_with">Bezahlen mit</string>
     <string name="buy_credit_rail_lightning">Lightning</string>
@@ -722,7 +727,6 @@
     <string name="buy_credit_no_wallet">Keine Lightning-Wallet-App installiert</string>
     <string name="buy_credit_no_browser">Kein Browser zum Öffnen der Kasse verfügbar</string>
     <string name="buy_credit_success_title">%1$d GB-months hinzugefügt</string>
-    <string name="buy_credit_success_balance">Dein Guthaben beträgt jetzt %1$s GB-months.</string>
     <string name="buy_credit_recovery_code_title">Dein Wiederherstellungscode</string>
     <string name="buy_credit_recovery_code_body">Speichere ihn jetzt – er ist der einzige Schlüssel zu deinem Konto und deinen Backups. Du kannst ihn erneut unter Einstellungen → Sync ansehen.</string>
     <string name="buy_credit_copy_code">Code kopieren</string>
@@ -760,7 +764,6 @@
         <item quantity="one">%1$d Monat</item>
         <item quantity="other">%1$d Monate</item>
     </plurals>
-    <string name="cloud_status_gb_label">GB-months</string>
     <string name="cloud_status_facts">%1$s · %2$s gesichert</string>
     <string name="cloud_status_backed_up">gesichert</string>
     <string name="cloud_status_chip_beta">Während der Beta kostenlos</string>
@@ -768,7 +771,6 @@
     <string name="cloud_status_caption_beta">%1$s · von %2$s inklusive · Ende-zu-Ende-verschlüsselt</string>
     <string name="cloud_backup_header_beta">von %1$s inklusive · Ende-zu-Ende-verschlüsselt</string>
     <string name="cloud_backup_header_encrypted">Ende-zu-Ende-verschlüsselt</string>
-    <string name="cloud_status_caption_plan">%1$s · %2$s%% deines Tarifs</string>
     <string name="cloud_status_runway_covered">Abgedeckt bis ~%1$s</string>
     <string name="cloud_status_timeline_today">Heute</string>
     <string name="cloud_status_timeline_coverage">≈ %1$s Abdeckung</string>

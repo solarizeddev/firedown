@@ -464,6 +464,8 @@
     <string name="settings_sync_faq_a5">Hayır. Kayıt, e-posta ya da telefon numarası yok — yalnızca kurtarma kodu. Yer imlerinize kişisel hiçbir şey bağlı değildir.</string>
     <string name="settings_sync_faq_q6">Eşitlemeyi kullanmak istemezsem ne olur?</string>
     <string name="settings_sync_faq_a6">Eşitleme isteğe bağlıdır ve varsayılan olarak kapalıdır. Yer imlerinizi her zaman bir dosyaya aktarabilir ve daha sonra hiçbir sunucu olmadan içe aktarabilirsiniz.</string>
+    <string name="settings_sync_faq_q7">Kasa klasöründeki dosyaları yedekleyebilir miyim?</string>
+    <string name="settings_sync_faq_a7">Hayır — Kasa klasöründeki dosyalar bu cihazdan asla çıkmaz. Bulut yedeklemesinin, liste yedeğinin ve göndermenin dışındadır. Bir dosyayı yedeklemek için önce Kasa klasöründen çıkarın.</string>
     <string name="settings_sync_code_saved_check">Kurtarma kodumu kaydettim</string>
     <string name="settings_sync_export_title">Kurtarma kodunu dosyaya kaydet</string>
     <string name="settings_sync_export_summary">Kodu saklayabileceğiniz bir metin dosyası olarak dışa aktarın</string>
@@ -564,6 +566,7 @@
     <string name="cloud_backup_setup_create">Anahtar oluştur</string>
     <string name="cloud_backup_started">Buluta yedekleniyor…</string>
     <string name="cloud_backup_none_eligible">Yedeklemek için tamamlanmış dosyaları seçin</string>
+    <string name="cloud_backup_safe_excluded">Kasa klasöründeki dosyalar bu cihazda kalır ve yedeklenemez</string>
     <string name="cloud_backup_done">Buluta yedeklendi</string>
     <string name="cloud_backup_failed">Yedeklenemedi — bağlantınızı kontrol edip yeniden deneyin</string>
     <string name="cloud_backup_notification_title">Buluta yedekleniyor</string>
@@ -596,6 +599,8 @@
     <string name="settings_cloud_backup_buy_summary">Depolama bakiyenizi yükleyin</string>
     <string name="buy_credit_title">Depolama kredisi ekle</string>
     <string name="cloud_starter_credit_step">Ücretsiz başlangıç kredisi dahil</string>
+    <string name="cloud_status_credit_active">Kredi etkin — bu kullanımda yıllarca yeter</string>
+    <string name="buy_credit_success_added">Yedekleme kredinize eklendi.</string>
     <string name="buy_credit_pick_how_much">Ne kadar</string>
     <string name="buy_credit_pay_with">Ödeme yöntemi</string>
     <string name="buy_credit_rail_lightning">Lightning</string>
@@ -617,7 +622,6 @@
     <string name="buy_credit_no_wallet">Yüklü Lightning cüzdan uygulaması yok</string>
     <string name="buy_credit_no_browser">Ödemeyi açacak tarayıcı yok</string>
     <string name="buy_credit_success_title">%1$d GB-months eklendi</string>
-    <string name="buy_credit_success_balance">Bakiyeniz artık %1$s GB-months.</string>
     <string name="buy_credit_recovery_code_title">Kurtarma kodunuz</string>
     <string name="buy_credit_recovery_code_body">Bunu şimdi kaydedin — hesabınızın ve yedeklerinizin tek anahtarı budur. Ayarlar → Eşitleme bölümünden tekrar görüntüleyebilirsiniz.</string>
     <string name="buy_credit_copy_code">Kodu kopyala</string>
@@ -655,7 +659,6 @@
         <item quantity="one">%1$d ay</item>
         <item quantity="other">%1$d ay</item>
     </plurals>
-    <string name="cloud_status_gb_label">GB-months</string>
     <string name="cloud_status_facts">%1$s · %2$s yedeklendi</string>
     <string name="cloud_status_backed_up">yedeklendi</string>
     <string name="cloud_status_chip_beta">Beta süresince ücretsiz</string>
@@ -663,7 +666,6 @@
     <string name="cloud_status_caption_beta">%1$s · dahil %2$s içinden · uçtan uca şifreli</string>
     <string name="cloud_backup_header_beta">dahil %1$s içinden · uçtan uca şifreli</string>
     <string name="cloud_backup_header_encrypted">uçtan uca şifreli</string>
-    <string name="cloud_status_caption_plan">%1$s · plan doluluğu: %%%2$s</string>
     <string name="cloud_status_runway_covered">~%1$s tarihine kadar geçerli</string>
     <string name="cloud_status_timeline_today">Bugün</string>
     <string name="cloud_status_timeline_coverage">≈ %1$s kapsama</string>

@@ -465,6 +465,8 @@
     <string name="settings_sync_faq_a5">Nee. Er is geen registratie, e-mailadres of telefoonnummer — alleen de herstelcode. Er is niets persoonlijks aan je bladwijzers gekoppeld.</string>
     <string name="settings_sync_faq_q6">Wat als ik synchronisatie niet wil gebruiken?</string>
     <string name="settings_sync_faq_a6">Synchronisatie is optioneel en standaard uitgeschakeld. Je kunt je bladwijzers altijd naar een bestand exporteren en ze later importeren, zonder dat er een server bij betrokken is.</string>
+    <string name="settings_sync_faq_q7">Kan ik bestanden uit de kluismap back-uppen?</string>
+    <string name="settings_sync_faq_a7">Nee — bestanden in de kluismap verlaten dit apparaat nooit. Ze zijn uitgesloten van cloudback-up, de lijstback-up en verzenden. Verplaats een bestand eerst uit de kluismap om het te back-uppen.</string>
     <string name="settings_sync_code_saved_check">Ik heb mijn herstelcode opgeslagen</string>
     <string name="settings_sync_export_title">Herstelcode opslaan in bestand</string>
     <string name="settings_sync_export_summary">Exporteer de code als een tekstbestand dat je kunt bewaren</string>
@@ -565,6 +567,7 @@
     <string name="cloud_backup_setup_create">Sleutel maken</string>
     <string name="cloud_backup_started">Back-up naar cloud…</string>
     <string name="cloud_backup_none_eligible">Selecteer voltooide bestanden om te back-uppen</string>
+    <string name="cloud_backup_safe_excluded">Bestanden in de kluismap blijven op dit apparaat en kunnen niet worden geback-upt</string>
     <string name="cloud_backup_done">Geback-upt naar cloud</string>
     <string name="cloud_backup_failed">Back-up mislukt — controleer je verbinding en probeer het opnieuw</string>
     <string name="cloud_backup_notification_title">Back-up naar cloud</string>
@@ -597,6 +600,8 @@
     <string name="settings_cloud_backup_buy_summary">Waardeer je opslagsaldo op</string>
     <string name="buy_credit_title">Opslagkrediet toevoegen</string>
     <string name="cloud_starter_credit_step">Gratis starttegoed inbegrepen</string>
+    <string name="cloud_status_credit_active">Tegoed actief — bij dit gebruik gaat het jaren mee</string>
+    <string name="buy_credit_success_added">Toegevoegd aan je back-uptegoed.</string>
     <string name="buy_credit_pick_how_much">Hoeveel</string>
     <string name="buy_credit_pay_with">Betalen met</string>
     <string name="buy_credit_rail_lightning">Lightning</string>
@@ -618,7 +623,6 @@
     <string name="buy_credit_no_wallet">Geen Lightning-wallet-app geïnstalleerd</string>
     <string name="buy_credit_no_browser">Geen browser beschikbaar om afrekenen te openen</string>
     <string name="buy_credit_success_title">%1$d GB-months toegevoegd</string>
-    <string name="buy_credit_success_balance">Je saldo is nu %1$s GB-months.</string>
     <string name="buy_credit_recovery_code_title">Je herstelcode</string>
     <string name="buy_credit_recovery_code_body">Bewaar deze nu — het is de enige sleutel tot je account en back-ups. Je kunt hem opnieuw bekijken in Instellingen → Synchronisatie.</string>
     <string name="buy_credit_copy_code">Code kopiëren</string>
@@ -656,7 +660,6 @@
         <item quantity="one">%1$d maand</item>
         <item quantity="other">%1$d maanden</item>
     </plurals>
-    <string name="cloud_status_gb_label">GB-months</string>
     <string name="cloud_status_facts">%1$s · %2$s geback-upt</string>
     <string name="cloud_status_backed_up">geback-upt</string>
     <string name="cloud_status_chip_beta">Gratis tijdens de bèta</string>
@@ -664,7 +667,6 @@
     <string name="cloud_status_caption_beta">%1$s · van %2$s inbegrepen · end-to-end versleuteld</string>
     <string name="cloud_backup_header_beta">van %1$s inbegrepen · end-to-end versleuteld</string>
     <string name="cloud_backup_header_encrypted">end-to-end versleuteld</string>
-    <string name="cloud_status_caption_plan">%1$s · %2$s%% van je plan</string>
     <string name="cloud_status_runway_covered">Gedekt tot ~%1$s</string>
     <string name="cloud_status_timeline_today">Vandaag</string>
     <string name="cloud_status_timeline_coverage">≈ %1$s dekking</string>

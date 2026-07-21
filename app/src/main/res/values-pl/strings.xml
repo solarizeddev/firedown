@@ -462,6 +462,8 @@
     <string name="settings_sync_faq_a5">Nie. Nie ma rejestracji, adresu e-mail ani numeru telefonu — tylko kod odzyskiwania. Z Twoimi zakładkami nie są powiązane żadne dane osobowe.</string>
     <string name="settings_sync_faq_q6">Co jeśli nie chcę korzystać z synchronizacji?</string>
     <string name="settings_sync_faq_a6">Synchronizacja jest opcjonalna i domyślnie wyłączona. Zawsze możesz wyeksportować zakładki do pliku i później je zaimportować, bez udziału serwera.</string>
+    <string name="settings_sync_faq_q7">Czy mogę utworzyć kopię plików z Sejfu?</string>
+    <string name="settings_sync_faq_a7">Nie — pliki w Sejfie nigdy nie opuszczają tego urządzenia. Są wyłączone z kopii w chmurze, kopii listy i wysyłania. Aby utworzyć kopię pliku, najpierw przenieś go poza Sejf.</string>
     <string name="settings_sync_code_saved_check">Zapisałem swój kod odzyskiwania</string>
     <string name="settings_sync_export_title">Zapisz kod odzyskiwania do pliku</string>
     <string name="settings_sync_export_summary">Wyeksportuj kod jako plik tekstowy, który możesz przechować</string>
@@ -566,6 +568,7 @@
     <string name="cloud_backup_setup_create">Utwórz klucz</string>
     <string name="cloud_backup_started">Tworzenie kopii zapasowej w chmurze…</string>
     <string name="cloud_backup_none_eligible">Wybierz ukończone pliki do utworzenia kopii zapasowej</string>
+    <string name="cloud_backup_safe_excluded">Pliki w Sejfie pozostają na tym urządzeniu i nie można ich zarchiwizować</string>
     <string name="cloud_backup_done">Utworzono kopię zapasową w chmurze</string>
     <string name="cloud_backup_failed">Nie udało się utworzyć kopii zapasowej — sprawdź połączenie i spróbuj ponownie</string>
     <string name="cloud_backup_notification_title">Tworzenie kopii zapasowej w chmurze</string>
@@ -598,6 +601,8 @@
     <string name="settings_cloud_backup_buy_summary">Doładuj saldo pamięci</string>
     <string name="buy_credit_title">Dodaj kredyt pamięci</string>
     <string name="cloud_starter_credit_step">Darmowy kredyt startowy wliczony</string>
+    <string name="cloud_status_credit_active">Kredyt aktywny — przy tym użyciu wystarczy na lata</string>
+    <string name="buy_credit_success_added">Dodano do Twojego kredytu na kopie zapasowe.</string>
     <string name="buy_credit_pick_how_much">Ile</string>
     <string name="buy_credit_pay_with">Zapłać przez</string>
     <string name="buy_credit_rail_lightning">Lightning</string>
@@ -619,7 +624,6 @@
     <string name="buy_credit_no_wallet">Brak zainstalowanej aplikacji portfela Lightning</string>
     <string name="buy_credit_no_browser">Brak przeglądarki do otwarcia płatności</string>
     <string name="buy_credit_success_title">Dodano %1$d GB-months</string>
-    <string name="buy_credit_success_balance">Twoje saldo to teraz %1$s GB-months.</string>
     <string name="buy_credit_recovery_code_title">Twój kod odzyskiwania</string>
     <string name="buy_credit_recovery_code_body">Zapisz go teraz — to jedyny klucz do twojego konta i kopii zapasowych. Możesz go ponownie zobaczyć w Ustawienia → Synchronizacja.</string>
     <string name="buy_credit_copy_code">Kopiuj kod</string>
@@ -661,7 +665,6 @@
         <item quantity="many">%1$d miesięcy</item>
         <item quantity="other">%1$d miesiąca</item>
     </plurals>
-    <string name="cloud_status_gb_label">GB-months</string>
     <string name="cloud_status_facts">%1$s · %2$s w kopii zapasowej</string>
     <string name="cloud_status_backed_up">w kopii zapasowej</string>
     <string name="cloud_status_chip_beta">Za darmo w czasie bety</string>
@@ -669,7 +672,6 @@
     <string name="cloud_status_caption_beta">%1$s · z %2$s w pakiecie · szyfrowane end-to-end</string>
     <string name="cloud_backup_header_beta">z %1$s w pakiecie · szyfrowane end-to-end</string>
     <string name="cloud_backup_header_encrypted">szyfrowane end-to-end</string>
-    <string name="cloud_status_caption_plan">%1$s · %2$s%% twojego planu</string>
     <string name="cloud_status_runway_covered">Pokrycie do ~%1$s</string>
     <string name="cloud_status_timeline_today">Dziś</string>
     <string name="cloud_status_timeline_coverage">≈ %1$s pokrycia</string>

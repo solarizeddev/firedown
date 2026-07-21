@@ -371,6 +371,8 @@
     <string name="settings_sync_faq_a5">नहीं। कोई साइन-अप, ईमेल या फ़ोन नंबर नहीं — केवल रिकवरी कोड। आपके बुकमार्क से कुछ भी व्यक्तिगत नहीं जुड़ा है।</string>
     <string name="settings_sync_faq_q6">अगर मैं सिंक का उपयोग नहीं करना चाहता तो क्या होगा?</string>
     <string name="settings_sync_faq_a6">सिंक वैकल्पिक है और डिफ़ॉल्ट रूप से बंद है। आप हमेशा अपने बुकमार्क को एक फ़ाइल में एक्सपोर्ट कर सकते हैं और बाद में बिना किसी सर्वर के उन्हें इम्पोर्ट कर सकते हैं।</string>
+    <string name="settings_sync_faq_q7">क्या मैं सेफ़ फ़ोल्डर की फ़ाइलों का बैकअप ले सकता हूँ?</string>
+    <string name="settings_sync_faq_a7">नहीं — सेफ़ फ़ोल्डर की फ़ाइलें कभी इस डिवाइस से बाहर नहीं जातीं। वे क्लाउड बैकअप, सूची बैकअप और भेजने से बाहर हैं। बैकअप के लिए फ़ाइल को पहले सेफ़ फ़ोल्डर से बाहर ले जाएँ।</string>
     <string name="settings_sync_code_saved_check">मैंने अपना रिकवरी कोड सहेज लिया है</string>
     <string name="settings_sync_export_title">रिकवरी कोड फ़ाइल में सहेजें</string>
     <string name="settings_sync_export_summary">कोड को एक टेक्स्ट फ़ाइल के रूप में एक्सपोर्ट करें जिसे आप संग्रहीत कर सकें</string>
@@ -472,6 +474,7 @@
     <string name="cloud_backup_setup_create">कुंजी बनाएँ</string>
     <string name="cloud_backup_started">क्लाउड पर बैकअप लिया जा रहा है…</string>
     <string name="cloud_backup_none_eligible">बैकअप लेने के लिए पूर्ण फ़ाइलें चुनें</string>
+    <string name="cloud_backup_safe_excluded">सेफ़ फ़ोल्डर की फ़ाइलें इसी डिवाइस पर रहती हैं और उनका बैकअप नहीं लिया जा सकता</string>
     <string name="cloud_backup_done">क्लाउड पर बैकअप लिया गया</string>
     <string name="cloud_backup_failed">बैकअप नहीं लिया जा सका — अपना कनेक्शन जाँचें और फिर से प्रयास करें</string>
     <string name="cloud_backup_notification_title">क्लाउड पर बैकअप लिया जा रहा है</string>
@@ -504,6 +507,8 @@
     <string name="settings_cloud_backup_buy_summary">अपना स्टोरेज बैलेंस टॉप अप करें</string>
     <string name="buy_credit_title">स्टोरेज क्रेडिट जोड़ें</string>
     <string name="cloud_starter_credit_step">मुफ़्त शुरुआती क्रेडिट शामिल</string>
+    <string name="cloud_status_credit_active">क्रेडिट सक्रिय — मौजूदा उपयोग पर यह वर्षों चलेगा</string>
+    <string name="buy_credit_success_added">आपके बैकअप क्रेडिट में जोड़ा गया।</string>
     <string name="buy_credit_pick_how_much">कितना</string>
     <string name="buy_credit_pay_with">इससे भुगतान करें</string>
     <string name="buy_credit_rail_lightning">Lightning</string>
@@ -525,7 +530,6 @@
     <string name="buy_credit_no_wallet">कोई Lightning वॉलेट ऐप इंस्टॉल नहीं है</string>
     <string name="buy_credit_no_browser">चेकआउट खोलने के लिए कोई ब्राउज़र उपलब्ध नहीं है</string>
     <string name="buy_credit_success_title">%1$d GB-months जोड़े गए</string>
-    <string name="buy_credit_success_balance">अब आपका बैलेंस %1$s GB-months है.</string>
     <string name="buy_credit_recovery_code_title">आपका रिकवरी कोड</string>
     <string name="buy_credit_recovery_code_body">इसे अभी सहेजें — यह आपके खाते और बैकअप की एकमात्र कुंजी है. आप इसे Settings → Sync में फिर से देख सकते हैं.</string>
     <string name="buy_credit_copy_code">कोड कॉपी करें</string>
@@ -563,7 +567,6 @@
         <item quantity="one">%1$d महीना</item>
         <item quantity="other">%1$d महीने</item>
     </plurals>
-    <string name="cloud_status_gb_label">GB-months</string>
     <string name="cloud_status_facts">%1$s · %2$s का बैकअप लिया गया</string>
     <string name="cloud_status_backed_up">बैकअप हुआ</string>
     <string name="cloud_status_chip_beta">बीटा के दौरान मुफ़्त</string>
@@ -571,7 +574,6 @@
     <string name="cloud_status_caption_beta">%1$s · %2$s शामिल में से · एंड-टू-एंड एन्क्रिप्टेड</string>
     <string name="cloud_backup_header_beta">%1$s शामिल में से · एंड-टू-एंड एन्क्रिप्टेड</string>
     <string name="cloud_backup_header_encrypted">एंड-टू-एंड एन्क्रिप्टेड</string>
-    <string name="cloud_status_caption_plan">%1$s · आपके प्लान का %2$s%%</string>
     <string name="cloud_status_runway_covered">~%1$s तक कवर</string>
     <string name="cloud_status_timeline_today">आज</string>
     <string name="cloud_status_timeline_coverage">≈ %1$s का कवरेज</string>

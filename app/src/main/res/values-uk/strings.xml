@@ -380,6 +380,8 @@
     <string name="settings_sync_faq_a5">Ні. Немає реєстрації, електронної пошти чи номера телефону — лише код відновлення. До ваших закладок не прив\'язано нічого особистого.</string>
     <string name="settings_sync_faq_q6">Що, якщо я не хочу користуватися синхронізацією?</string>
     <string name="settings_sync_faq_a6">Синхронізація необов\'язкова й вимкнена за замовчуванням. Ви завжди можете експортувати свої закладки у файл і пізніше імпортувати їх без жодного сервера.</string>
+    <string name="settings_sync_faq_q7">Чи можу я створити резервну копію файлів із Сейфа?</string>
+    <string name="settings_sync_faq_a7">Ні — файли в Сейфі ніколи не залишають цей пристрій. Вони виключені з хмарного копіювання, копії списку та надсилання. Щоб зробити копію файлу, спершу перемістіть його із Сейфа.</string>
     <string name="settings_sync_code_saved_check">Я зберіг свій код відновлення</string>
     <string name="settings_sync_export_title">Зберегти код відновлення у файл</string>
     <string name="settings_sync_export_summary">Експортувати код як текстовий файл, який можна зберегти</string>
@@ -484,6 +486,7 @@
     <string name="cloud_backup_setup_create">Створити ключ</string>
     <string name="cloud_backup_started">Збереження в хмарі…</string>
     <string name="cloud_backup_none_eligible">Виберіть завершені файли для збереження</string>
+    <string name="cloud_backup_safe_excluded">Файли в Сейфі залишаються на цьому пристрої, їх не можна резервувати</string>
     <string name="cloud_backup_done">Збережено в хмарі</string>
     <string name="cloud_backup_failed">Не вдалося зберегти — перевірте підключення та повторіть спробу</string>
     <string name="cloud_backup_notification_title">Збереження в хмарі</string>
@@ -516,6 +519,8 @@
     <string name="settings_cloud_backup_buy_summary">Поповніть баланс сховища</string>
     <string name="buy_credit_title">Додати кредит сховища</string>
     <string name="cloud_starter_credit_step">Безкоштовний стартовий кредит включено</string>
+    <string name="cloud_status_credit_active">Кредит активний — за такого використання вистачить на роки</string>
+    <string name="buy_credit_success_added">Додано до вашого кредиту на резервні копії.</string>
     <string name="buy_credit_pick_how_much">Скільки</string>
     <string name="buy_credit_pay_with">Оплатити через</string>
     <string name="buy_credit_rail_lightning">Lightning</string>
@@ -537,7 +542,6 @@
     <string name="buy_credit_no_wallet">Не встановлено жодного гаманця Lightning</string>
     <string name="buy_credit_no_browser">Немає браузера для відкриття оплати</string>
     <string name="buy_credit_success_title">Додано %1$d GB-months</string>
-    <string name="buy_credit_success_balance">Ваш баланс тепер %1$s GB-months.</string>
     <string name="buy_credit_recovery_code_title">Ваш код відновлення</string>
     <string name="buy_credit_recovery_code_body">Збережіть його зараз — це єдиний ключ до вашого облікового запису та резервних копій. Ви можете переглянути його знову в Налаштування → Синхронізація.</string>
     <string name="buy_credit_copy_code">Копіювати код</string>
@@ -579,7 +583,6 @@
         <item quantity="many">%1$d місяців</item>
         <item quantity="other">%1$d місяця</item>
     </plurals>
-    <string name="cloud_status_gb_label">GB-months</string>
     <string name="cloud_status_facts">%1$s · %2$s у резервній копії</string>
     <string name="cloud_status_backed_up">у резервній копії</string>
     <string name="cloud_status_chip_beta">Безкоштовно під час бети</string>
@@ -587,7 +590,6 @@
     <string name="cloud_status_caption_beta">%1$s · із включених %2$s · наскрізне шифрування</string>
     <string name="cloud_backup_header_beta">із включених %1$s · наскрізне шифрування</string>
     <string name="cloud_backup_header_encrypted">наскрізне шифрування</string>
-    <string name="cloud_status_caption_plan">%1$s · %2$s%% вашого плану</string>
     <string name="cloud_status_runway_covered">Покриття до ~%1$s</string>
     <string name="cloud_status_timeline_today">Сьогодні</string>
     <string name="cloud_status_timeline_coverage">≈ %1$s покриття</string>

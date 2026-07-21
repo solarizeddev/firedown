@@ -404,6 +404,8 @@
     <string name="settings_sync_faq_a5">Et. Ei rekisteröitymistä, sähköpostia tai puhelinnumeroa — vain palautuskoodi. Mitään henkilökohtaista ei ole sidottu kirjanmerkkeihisi.</string>
     <string name="settings_sync_faq_q6">Entä jos en halua käyttää synkronointia?</string>
     <string name="settings_sync_faq_a6">Synkronointi on valinnaista ja oletuksena pois päältä. Voit aina viedä kirjanmerkkisi tiedostoon ja tuoda ne myöhemmin ilman palvelinta.</string>
+    <string name="settings_sync_faq_q7">Voinko varmuuskopioida turvakansion tiedostoja?</string>
+    <string name="settings_sync_faq_a7">Et — turvakansion tiedostot eivät koskaan poistu tältä laitteelta. Ne on jätetty pilvivarmuuskopion, luettelon varmuuskopion ja lähettämisen ulkopuolelle. Siirrä tiedosto ensin pois turvakansiosta varmuuskopioidaksesi sen.</string>
     <string name="settings_sync_code_saved_check">Olen tallentanut palautuskoodini</string>
     <string name="settings_sync_export_title">Tallenna palautuskoodi tiedostoon</string>
     <string name="settings_sync_export_summary">Vie koodi tekstitiedostona, jonka voit tallentaa</string>
@@ -504,6 +506,7 @@
     <string name="cloud_backup_setup_create">Luo avain</string>
     <string name="cloud_backup_started">Varmuuskopioidaan pilveen…</string>
     <string name="cloud_backup_none_eligible">Valitse valmiit tiedostot varmuuskopioitavaksi</string>
+    <string name="cloud_backup_safe_excluded">Turvakansion tiedostot pysyvät tällä laitteella eikä niitä voi varmuuskopioida</string>
     <string name="cloud_backup_done">Varmuuskopioitu pilveen</string>
     <string name="cloud_backup_failed">Varmuuskopiointi epäonnistui — tarkista yhteytesi ja yritä uudelleen</string>
     <string name="cloud_backup_notification_title">Varmuuskopioidaan pilveen</string>
@@ -536,6 +539,8 @@
     <string name="settings_cloud_backup_buy_summary">Lataa tallennustilasaldoa</string>
     <string name="buy_credit_title">Lisää tallennustilakrediittiä</string>
     <string name="cloud_starter_credit_step">Ilmainen aloitussaldo sisältyy</string>
+    <string name="cloud_status_credit_active">Saldo aktiivinen — nykyisellä käytöllä riittää vuosiksi</string>
+    <string name="buy_credit_success_added">Lisätty varmuuskopiosaldoosi.</string>
     <string name="buy_credit_pick_how_much">Kuinka paljon</string>
     <string name="buy_credit_pay_with">Maksutapa</string>
     <string name="buy_credit_rail_lightning">Lightning</string>
@@ -557,7 +562,6 @@
     <string name="buy_credit_no_wallet">Lightning-lompakkosovellusta ei ole asennettu</string>
     <string name="buy_credit_no_browser">Kassan avaamiseen ei ole käytettävissä selainta</string>
     <string name="buy_credit_success_title">%1$d GB-months lisätty</string>
-    <string name="buy_credit_success_balance">Saldosi on nyt %1$s GB-months.</string>
     <string name="buy_credit_recovery_code_title">Palautuskoodisi</string>
     <string name="buy_credit_recovery_code_body">Tallenna tämä nyt — se on ainoa avain tiliisi ja varmuuskopioihisi. Voit katsoa sen uudelleen kohdasta Asetukset → Synkronointi.</string>
     <string name="buy_credit_copy_code">Kopioi koodi</string>
@@ -595,7 +599,6 @@
         <item quantity="one">%1$d kuukausi</item>
         <item quantity="other">%1$d kuukautta</item>
     </plurals>
-    <string name="cloud_status_gb_label">GB-months</string>
     <string name="cloud_status_facts">%1$s · %2$s varmuuskopioitu</string>
     <string name="cloud_status_backed_up">varmuuskopioitu</string>
     <string name="cloud_status_chip_beta">Ilmainen betan ajan</string>
@@ -603,7 +606,6 @@
     <string name="cloud_status_caption_beta">%1$s · sisältyy %2$s · päästä päähän salattu</string>
     <string name="cloud_backup_header_beta">sisältyy %1$s · päästä päähän salattu</string>
     <string name="cloud_backup_header_encrypted">päästä päähän salattu</string>
-    <string name="cloud_status_caption_plan">%1$s · %2$s %% paketistasi</string>
     <string name="cloud_status_runway_covered">Katettu ~%1$s asti</string>
     <string name="cloud_status_timeline_today">Tänään</string>
     <string name="cloud_status_timeline_coverage">≈ %1$s katetta</string>

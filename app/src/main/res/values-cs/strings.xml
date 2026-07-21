@@ -418,6 +418,8 @@
     <string name="settings_sync_faq_a5">Ne. Žádná registrace, e-mail ani telefonní číslo — jen kód pro obnovení. K vašim záložkám nejsou vázány žádné osobní údaje.</string>
     <string name="settings_sync_faq_q6">Co když synchronizaci používat nechci?</string>
     <string name="settings_sync_faq_a6">Synchronizace je volitelná a ve výchozím nastavení vypnutá. Své záložky můžete kdykoli exportovat do souboru a později je importovat, a to bez jakéhokoli serveru.</string>
+    <string name="settings_sync_faq_q7">Mohu zálohovat soubory z Trezoru?</string>
+    <string name="settings_sync_faq_a7">Ne — soubory v Trezoru nikdy neopustí toto zařízení. Jsou vyloučeny z cloudové zálohy, zálohy seznamu stahování i odesílání. Chcete-li soubor zálohovat, nejprve jej přesuňte mimo Trezor.</string>
     <string name="settings_sync_code_saved_check">Uložil(a) jsem svůj kód pro obnovení</string>
     <string name="settings_sync_export_title">Uložit kód pro obnovení do souboru</string>
     <string name="settings_sync_export_summary">Exportovat kód jako textový soubor, který si můžete uložit</string>
@@ -522,6 +524,7 @@
     <string name="cloud_backup_setup_create">Vytvořit klíč</string>
     <string name="cloud_backup_started">Zálohování do cloudu…</string>
     <string name="cloud_backup_none_eligible">Vyberte dokončené soubory k zálohování</string>
+    <string name="cloud_backup_safe_excluded">Soubory v Trezoru zůstávají v tomto zařízení a nelze je zálohovat</string>
     <string name="cloud_backup_done">Zálohováno do cloudu</string>
     <string name="cloud_backup_failed">Zálohování se nezdařilo — zkontrolujte připojení a zkuste to znovu</string>
     <string name="cloud_backup_notification_title">Zálohování do cloudu</string>
@@ -554,6 +557,8 @@
     <string name="settings_cloud_backup_buy_summary">Dobijte si zůstatek úložiště</string>
     <string name="buy_credit_title">Přidat kredit úložiště</string>
     <string name="cloud_starter_credit_step">Startovní kredit zdarma zahrnut</string>
+    <string name="cloud_status_credit_active">Kredit je aktivní — při tomto využití vydrží roky</string>
+    <string name="buy_credit_success_added">Přidáno k vašemu kreditu pro zálohy.</string>
     <string name="buy_credit_pick_how_much">Kolik</string>
     <string name="buy_credit_pay_with">Zaplatit pomocí</string>
     <string name="buy_credit_rail_lightning">Lightning</string>
@@ -575,7 +580,6 @@
     <string name="buy_credit_no_wallet">Není nainstalována žádná aplikace peněženky Lightning</string>
     <string name="buy_credit_no_browser">Není k dispozici žádný prohlížeč pro otevření pokladny</string>
     <string name="buy_credit_success_title">Přidáno %1$d GB-months</string>
-    <string name="buy_credit_success_balance">Váš zůstatek je nyní %1$s GB-months.</string>
     <string name="buy_credit_recovery_code_title">Váš kód pro obnovení</string>
     <string name="buy_credit_recovery_code_body">Uložte si ho hned teď — je to jediný klíč k vašemu účtu a zálohám. Znovu si ho můžete zobrazit v Nastavení → Synchronizace.</string>
     <string name="buy_credit_copy_code">Kopírovat kód</string>
@@ -615,7 +619,6 @@
         <item quantity="few">%1$d měsíce</item>
         <item quantity="other">%1$d měsíců</item>
     </plurals>
-    <string name="cloud_status_gb_label">GB-months</string>
     <string name="cloud_status_facts">%1$s · zálohováno %2$s</string>
     <string name="cloud_status_backed_up">zálohováno</string>
     <string name="cloud_status_chip_beta">Během beta verze zdarma</string>
@@ -623,7 +626,6 @@
     <string name="cloud_status_caption_beta">%1$s · z %2$s v ceně · šifrováno end-to-end</string>
     <string name="cloud_backup_header_beta">z %1$s v ceně · šifrováno end-to-end</string>
     <string name="cloud_backup_header_encrypted">šifrováno end-to-end</string>
-    <string name="cloud_status_caption_plan">%1$s · %2$s%% vašeho plánu</string>
     <string name="cloud_status_runway_covered">Pokrytí do ~%1$s</string>
     <string name="cloud_status_timeline_today">Dnes</string>
     <string name="cloud_status_timeline_coverage">≈ pokrytí na %1$s</string>

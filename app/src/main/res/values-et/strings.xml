@@ -335,6 +335,8 @@
     <string name="settings_sync_faq_a5">Ei. Pole registreerimist, e-posti ega telefoninumbrit — ainult taastekood. Su järjehoidjatega pole seotud midagi isiklikku.</string>
     <string name="settings_sync_faq_q6">Mis siis, kui ma ei taha sünkroonimist kasutada?</string>
     <string name="settings_sync_faq_a6">Sünkroonimine on valikuline ja vaikimisi väljas. Saad oma järjehoidjad alati faili eksportida ja need hiljem importida, ilma serverita.</string>
+    <string name="settings_sync_faq_q7">Kas saan turvakausta faile varundada?</string>
+    <string name="settings_sync_faq_a7">Ei — turvakausta failid ei lahku kunagi sellest seadmest. Need on välistatud pilvevarundusest, loendi varukoopiast ja saatmisest. Faili varundamiseks liiguta see esmalt turvakaustast välja.</string>
     <string name="settings_sync_code_saved_check">Olen oma taastekoodi salvestanud</string>
     <string name="settings_sync_export_title">Salvesta taastekood faili</string>
     <string name="settings_sync_export_summary">Ekspordi kood tekstifailina, mida saad hoiustada</string>
@@ -435,6 +437,7 @@
     <string name="cloud_backup_setup_create">Loo võti</string>
     <string name="cloud_backup_started">Pilve varundamine…</string>
     <string name="cloud_backup_none_eligible">Varundamiseks vali lõpetatud failid</string>
+    <string name="cloud_backup_safe_excluded">Turvakausta failid jäävad sellesse seadmesse ja neid ei saa varundada</string>
     <string name="cloud_backup_done">Pilve varundatud</string>
     <string name="cloud_backup_failed">Varundamine ebaõnnestus — kontrolli ühendust ja proovi uuesti</string>
     <string name="cloud_backup_notification_title">Pilve varundamine</string>
@@ -467,6 +470,8 @@
     <string name="settings_cloud_backup_buy_summary">Täienda oma salvestusruumi jääki</string>
     <string name="buy_credit_title">Lisa salvestusruumi krediiti</string>
     <string name="cloud_starter_credit_step">Tasuta stardikrediit kaasas</string>
+    <string name="cloud_status_credit_active">Krediit on aktiivne — praeguse kasutuse juures jätkub aastateks</string>
+    <string name="buy_credit_success_added">Lisatud sinu varunduskrediidile.</string>
     <string name="buy_credit_pick_how_much">Kui palju</string>
     <string name="buy_credit_pay_with">Maksa</string>
     <string name="buy_credit_rail_lightning">Lightning</string>
@@ -488,7 +493,6 @@
     <string name="buy_credit_no_wallet">Lightningi rahakoti rakendust pole paigaldatud</string>
     <string name="buy_credit_no_browser">Kassa avamiseks pole ühtegi brauserit</string>
     <string name="buy_credit_success_title">%1$d GB-months lisatud</string>
-    <string name="buy_credit_success_balance">Sinu jääk on nüüd %1$s GB-months.</string>
     <string name="buy_credit_recovery_code_title">Sinu taastekood</string>
     <string name="buy_credit_recovery_code_body">Salvesta see kohe — see on ainus võti sinu konto ja varukoopiate juurde. Saad seda uuesti vaadata menüüs Seaded → Sünkroonimine.</string>
     <string name="buy_credit_copy_code">Kopeeri kood</string>
@@ -526,7 +530,6 @@
         <item quantity="one">%1$d kuu</item>
         <item quantity="other">%1$d kuud</item>
     </plurals>
-    <string name="cloud_status_gb_label">GB-months</string>
     <string name="cloud_status_facts">%1$s · %2$s varundatud</string>
     <string name="cloud_status_backed_up">varundatud</string>
     <string name="cloud_status_chip_beta">Beeta ajal tasuta</string>
@@ -534,7 +537,6 @@
     <string name="cloud_status_caption_beta">%1$s · %2$s sisaldub · läbivalt krüpteeritud</string>
     <string name="cloud_backup_header_beta">%1$s sisaldub · läbivalt krüpteeritud</string>
     <string name="cloud_backup_header_encrypted">läbivalt krüpteeritud</string>
-    <string name="cloud_status_caption_plan">%1$s · %2$s%% sinu paketist</string>
     <string name="cloud_status_runway_covered">Kaetud kuni ~%1$s</string>
     <string name="cloud_status_timeline_today">Täna</string>
     <string name="cloud_status_timeline_coverage">≈ %1$s katet</string>

@@ -27,7 +27,6 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
-import java.util.Locale;
 
 /**
  * The Cloud Backup status hero (custom-layout {@link Preference}, styled by
@@ -36,29 +35,29 @@ import java.util.Locale;
  * <ul>
  *   <li><b>Unmetered beta</b> — big backed-up size, usage bar vs the included
  *       cap ({@code Quota.bytesLimit}), "Free during the beta" chip.</li>
- *   <li><b>Metered, funded</b> — usage bar vs the purchased plan's size cap +
- *       a Today→date timeline ({@link CloudTimelineView}) to the covered-until
- *       date, duration centred beneath. The plan shape
- *       ("Up to 50 GB · 1 year") comes from {@link #setPlan} — stored
- *       CLIENT-side at purchase, because the server deliberately only knows the
- *       anonymous GB-month balance; unknown (legacy purchase / recovery-code
- *       restore on a new device) degrades to the covered-until line + a raw
- *       balance chip, no ticks.</li>
+ *   <li><b>Metered, funded</b> — ONE model, prepaid credit measured in TIME:
+ *       the backed-up-size headline + a Today→date timeline
+ *       ({@link CloudTimelineView}) to the server's projected runout, duration
+ *       centred beneath. No plan chip, no % bar (see onBindViewHolder — the
+ *       plan was an invented shape; GB-months never appears in user-facing
+ *       text). No projection (nothing backed up / effectively-never runout) →
+ *       the "credit active, lasts for years at this usage" line instead, so a
+ *       funded account always shows its credit.</li>
  *   <li><b>Grace / read-only</b> — amber data ink + the top-up-by deadline
  *       (amber, never colorError red — the app's attention convention).</li>
  *   <li><b>Not set up</b> — a dashed empty state pointing at the download
  *       sheet's ⋮ backup action.</li>
  * </ul>
  *
- * The bars are the only accent ink; a running transfer swaps the caption for
- * the live "Transfer in progress…" line.
+ * A running transfer swaps the caption for the live "Transfer in progress…"
+ * line. {@link #setPlan}'s stored purchase shape now only backs the onboarding
+ * roadmap's offline step-② check-off and the starter-credit-vs-purchase label.
  */
 public class CloudStatusPreference extends Preference {
 
     /** Never let a non-empty usage render a 0-width bar — a sliver of ink keeps
      *  the meter reading as alive rather than broken. */
     private static final int MIN_BAR_PERCENT = 2;
-    private static final long GB = 1_000_000_000L;
     /** Mean Gregorian month, for the ≈ months-left runway arithmetic. */
     private static final double DAYS_PER_MONTH = 30.44;
 
@@ -155,36 +154,29 @@ public class CloudStatusPreference extends Preference {
 
         boolean metered = mQuota != null && mQuota.metered;
         boolean grace = metered && mQuota.readOnly;
-        // The plan size: the stored purchase shape, or — when that's missing
-        // (wiped prefs / a recovery-code restore on a new device) but the
-        // metered balance is known — the balance NORMALIZED to a 12-month plan
-        // equivalent (5410 GB-months → "up to ~450 GB for 1 year"). Without
-        // this, the no-shape state rendered a bare card: no bar, no runway,
-        // and a caption that duplicated the headline size (on-device: "854 MB
-        // backed up" twice). The normalization is honest — it states exactly
-        // what the balance buys, on the same GB-month arithmetic the debit
-        // uses — and every widget below (chip, bar, percent caption, runway)
-        // renders through the one code path.
-        int planSizeGb = effectivePlanSizeGb(metered, grace);
-        boolean planKnown = planSizeGb > 0;
-        int coverage = coverageMonths(metered, planSizeGb);
         int ink = ContextCompat.getColor(ctx, grace ? R.color.backup_warning : R.color.brand_orange);
+
+        // ONE mental model — prepaid credit measured in TIME. The metered hero
+        // is headline + timeline, nothing else: "854 MB backed up · it's
+        // covered until ~DATE at this usage; backing up more moves the date
+        // closer." The previous render spoke THREE models at once — a plan
+        // chip ("Up to 450 GB · 1 year", a shape INVENTED by normalizing the
+        // balance to 12 months; there is no plan, purchases accumulate into
+        // one balance), a "% of your plan" bar against that invented cap, and
+        // the timeline — and on-device it read as contradictory (the recurring
+        // "GB-months is confusing" complaint). The plan fiction, its % bar,
+        // and the balance-normalization/coverage-months helpers are deleted;
+        // GB-months never appears in user-facing text. The usage bar remains
+        // ONLY for the unmetered beta, whose byte cap is a REAL denominator.
 
         // Headline: how much of the user's stuff is safe.
         big.setText(mTotalBytes >= 0 ? Formatter.formatShortFileSize(ctx, mTotalBytes) : "—");
         bigUnit.setText(R.string.cloud_status_backed_up);
 
-        bindChip(ctx, chip, metered, grace, planKnown, planSizeGb, coverage);
+        bindChip(ctx, chip, metered, grace);
 
-        // Usage bar — needs a denominator: the plan's size cap (metered) or the
-        // included cap (unmetered). Preference rows recycle, so every state is
-        // set on every bind.
         long capBytes = -1;
-        if (metered) {
-            if (planKnown) {
-                capBytes = planSizeGb * GB;
-            }
-        } else if (mQuota != null && mQuota.bytesLimit > 0) {
+        if (!metered && mQuota != null && mQuota.bytesLimit > 0) {
             capBytes = mQuota.bytesLimit;
         }
         int percent = -1;
@@ -201,55 +193,10 @@ public class CloudStatusPreference extends Preference {
             bar.setVisibility(View.GONE);
         }
 
-        caption.setText(captionText(ctx, metered, planKnown, percent, capBytes));
+        caption.setText(captionText(ctx, metered, capBytes));
 
         bindRunway(ctx, alert, runway, timeline, runwayNow, runwayCovered, runwayDuration,
-                metered, grace, planKnown, coverage, ink);
-    }
-
-    /**
-     * The plan's size cap for the render: the stored purchase shape when
-     * present, else (metered, funded, not in grace) the balance normalized to
-     * a 12-month plan equivalent, rounded to a clean number. 0 = genuinely
-     * unknown (offline with no prefs, or grace where the balance is spent) —
-     * the card then degrades to chip + caption only.
-     */
-    private int effectivePlanSizeGb(boolean metered, boolean grace) {
-        if (mPlanSizeGb > 0) {
-            return mPlanSizeGb;
-        }
-        if (metered && !grace && mQuota.balanceGbMonths > 0) {
-            return roundToNiceGb(mQuota.balanceGbMonths / 12.0);
-        }
-        return 0;
-    }
-
-    /** Rounds a derived GB cap to a display-clean step (450, not 451). */
-    private static int roundToNiceGb(double gb) {
-        if (gb >= 100) {
-            return (int) (Math.round(gb / 50.0) * 50);
-        }
-        if (gb >= 20) {
-            return (int) (Math.round(gb / 10.0) * 10);
-        }
-        return Math.max(1, (int) Math.round(gb));
-    }
-
-    /**
-     * Coverage months behind the chip/runway: the SERVER's remaining balance ÷
-     * the plan's size cap when both are known, else the locally-stored plan
-     * months. Purchases ACCUMULATE server-side (every redeem adds GB-months to
-     * one balance), so after a top-up the stored "size × months" shape
-     * understates what the account actually holds — on-device the chip read
-     * "Up to 100 GB · 5 months" against a 5410 GB-month balance (~54 months at
-     * that cap). The balance is ground truth; the stored months only cover the
-     * offline/quota-unknown render.
-     */
-    private int coverageMonths(boolean metered, int planSizeGb) {
-        if (metered && planSizeGb > 0 && mQuota.balanceGbMonths > 0) {
-            return (int) Math.max(1, Math.round(mQuota.balanceGbMonths / planSizeGb));
-        }
-        return mPlanMonths;
+                metered, grace, ink);
     }
 
     /**
@@ -312,26 +259,20 @@ public class CloudStatusPreference extends Preference {
         view.setTypeface(null, current ? Typeface.BOLD : Typeface.NORMAL);
     }
 
-    /** The context chip: read-only (grace) / the purchased plan / raw balance /
-     *  the free beta. Warn styling is amber text over amber-at-18%; the neutral
-     *  styling is re-applied explicitly because rows recycle. */
-    private void bindChip(Context ctx, TextView chip, boolean metered, boolean grace,
-                          boolean planKnown, int planSizeGb, int coverage) {
-        String text;
-        if (grace) {
-            text = ctx.getString(R.string.cloud_status_chip_readonly);
-        } else if (metered) {
-            if (planKnown && coverage > 0) {
-                text = ctx.getString(R.string.buy_credit_plan_size, planSizeGb)
-                        + " · " + formatDuration(ctx, coverage);
-            } else {
-                text = formatGbMonths(mQuota.balanceGbMonths) + " "
-                        + ctx.getString(R.string.cloud_status_gb_label);
-            }
-        } else {
-            text = ctx.getString(R.string.cloud_status_chip_beta);
+    /** The context chip: read-only (grace, amber) / the free beta (unmetered).
+     *  Metered-funded shows NO chip — the old plan/balance chip was one of the
+     *  three competing models (see onBindViewHolder). Warn styling is amber
+     *  text over amber-at-18%; the neutral styling is re-applied explicitly
+     *  because rows recycle. */
+    private void bindChip(Context ctx, TextView chip, boolean metered, boolean grace) {
+        if (metered && !grace) {
+            chip.setVisibility(View.GONE);
+            return;
         }
-        chip.setText(text);
+        chip.setVisibility(View.VISIBLE);
+        chip.setText(grace
+                ? ctx.getString(R.string.cloud_status_chip_readonly)
+                : ctx.getString(R.string.cloud_status_chip_beta));
         if (grace) {
             int warn = ContextCompat.getColor(ctx, R.color.backup_warning);
             chip.setTextColor(warn);
@@ -344,8 +285,7 @@ public class CloudStatusPreference extends Preference {
         }
     }
 
-    private String captionText(Context ctx, boolean metered, boolean planKnown,
-                               int percent, long capBytes) {
+    private String captionText(Context ctx, boolean metered, long capBytes) {
         if (mActive) {
             return ctx.getString(R.string.settings_cloud_backup_active);
         }
@@ -358,17 +298,8 @@ public class CloudStatusPreference extends Preference {
             return ctx.getString(R.string.cloud_status_caption_beta, files,
                     Formatter.formatShortFileSize(ctx, capBytes));
         }
-        if (metered && planKnown && percent >= 0) {
-            // A small real usage (721 MB of 200 GB) rounds to 0 — "0% of your
-            // plan" next to "3 files" reads as broken, so show "<1" instead.
-            // The placeholder is %2$s in every locale for exactly this.
-            String pct = (percent == 0 && mTotalBytes > 0) ? "<1" : String.valueOf(percent);
-            return ctx.getString(R.string.cloud_status_caption_plan, files, pct);
-        }
-        // Fallback (metered with no plan shape / no cap): the headline right
-        // above IS the backed-up size, so repeating it here read as a stutter
-        // ("854 MB backed up / 9 files · 854 MB backed up", on-device) — pair
-        // the file count with the trust line instead.
+        // Metered: the headline right above IS the backed-up size, so repeating
+        // it here read as a stutter — pair the file count with the trust line.
         return files + " · " + ctx.getString(R.string.cloud_backup_header_encrypted);
     }
 
@@ -385,8 +316,7 @@ public class CloudStatusPreference extends Preference {
     private void bindRunway(Context ctx, TextView alert, View runway,
                             CloudTimelineView timeline, TextView runwayNow,
                             TextView runwayCovered, TextView runwayDuration,
-                            boolean metered, boolean grace, boolean planKnown, int coverage,
-                            int ink) {
+                            boolean metered, boolean grace, int ink) {
         alert.setVisibility(View.GONE);
         runway.setVisibility(View.GONE);
         runwayDuration.setVisibility(View.GONE);
@@ -407,42 +337,63 @@ public class CloudStatusPreference extends Preference {
         if (!metered) {
             return;
         }
-        // The timeline's endpoint is min(server projection, now + coverage) —
-        // and each input is individually untrustworthy. The projection is
-        // balance ÷ current footprint: absurdly far at low usage ("~Feb 2086"),
-        // and an old server could OVERFLOW it into the past — "~Feb 1962"
-        // on-device, a 528-year projection wrapping int64 nanoseconds (the
-        // server now reports such projections as "never runs out" and omits
-        // the date; the past-guard here stays for stale servers and clock
-        // skew). The coverage needs the plan size, which a wiped install
-        // doesn't have. Show whichever is available and sane; nothing
-        // trustworthy → no runway (silent beats wrong).
-        boolean hasCoverage = planKnown && coverage > 0;
+        // The timeline's endpoint is the SERVER's projected runout — balance ÷
+        // current footprint, the one honest date in the prepaid-time model.
+        // (The old min(projection, now + plan-coverage) clamp died with the
+        // plan fiction: coverage was balance ÷ an invented plan size, so the
+        // clamp just restated the fiction as a date.) The past-guard stays for
+        // stale servers / clock skew: an old server could overflow a
+        // centuries-out projection into the PAST ("~Feb 1962" on-device);
+        // current servers report those as "never runs out" and omit the date.
         Instant now = Instant.now();
         Instant projected = parseInstant(mQuota.projectedRunoutAt);
         if (projected != null && projected.isBefore(now)) {
-            projected = null; // a past covered-until is always garbage here
+            projected = null;
         }
-        Instant display = projected;
-        if (hasCoverage) {
-            Instant planEnd = now.plusSeconds(
-                    Math.round(coverage * DAYS_PER_MONTH * 86400.0));
-            if (display == null || display.isAfter(planEnd)) {
-                display = planEnd;
+        if (projected == null) {
+            // No date because the credit effectively never runs out at this
+            // usage (nothing backed up yet, or a balance past the server's
+            // 30-year projection horizon). Say exactly that — a funded account
+            // must never render with no trace of its credit (with the plan
+            // chip and % bar gone, this line is the balance's only voice
+            // here). Funded is known: non-grace metered with a zero balance
+            // carries a runout stamp and lands in the grace branch above.
+            if (mQuota.balanceGbMonths > 0) {
+                alert.setText(R.string.cloud_status_credit_active);
+                alert.setVisibility(View.VISIBLE);
             }
-        }
-        if (display == null) {
             return;
         }
         runway.setVisibility(View.VISIBLE);
         timeline.setInk(ink);
         runwayNow.setText(R.string.cloud_status_timeline_today);
-        runwayCovered.setText("~" + monthYear(display));
-        long days = Duration.between(now, display).toDays();
+        runwayCovered.setText("~" + monthYear(projected));
+        long days = Duration.between(now, projected).toDays();
         int months = (int) Math.max(1, Math.round(days / DAYS_PER_MONTH));
         runwayDuration.setText(ctx.getString(R.string.cloud_status_timeline_coverage,
                 formatDuration(ctx, months)));
         runwayDuration.setVisibility(View.VISIBLE);
+    }
+
+    /**
+     * "≈ 1 year of coverage" from the server's projected runout, or null when
+     * unknown/unmetered — the Backups-list header uses this where it used to
+     * print the raw GB-months balance (the internal ledger unit never appears
+     * in user-facing text; time is the only currency the UI speaks).
+     */
+    static String coverageLabel(Context ctx, StorageApiClient.Quota quota) {
+        if (quota == null || !quota.metered) {
+            return null;
+        }
+        Instant now = Instant.now();
+        Instant projected = parseInstant(quota.projectedRunoutAt);
+        if (projected == null || projected.isBefore(now)) {
+            return null;
+        }
+        long days = Duration.between(now, projected).toDays();
+        int months = (int) Math.max(1, Math.round(days / DAYS_PER_MONTH));
+        return ctx.getString(R.string.cloud_status_timeline_coverage,
+                formatDuration(ctx, months));
     }
 
     /** Localized coverage ("1 year" / "3 months") — same plurals the buy wizard
@@ -453,15 +404,6 @@ public class CloudStatusPreference extends Preference {
             return ctx.getResources().getQuantityString(R.plurals.buy_credit_years, years, years);
         }
         return ctx.getResources().getQuantityString(R.plurals.buy_credit_months, months, months);
-    }
-
-    /** A GB-months balance, trimming a trailing ".0" (100.0 → "100"). */
-    /** Package-visible: the Backups-list header reuses the exact same formatting. */
-    static String formatGbMonths(double v) {
-        if (v == Math.rint(v)) {
-            return Long.toString(Math.round(v));
-        }
-        return String.format(Locale.getDefault(), "%.1f", v);
     }
 
     /** An {@link Instant} → a localized "Mar 2027" (short month + year), for

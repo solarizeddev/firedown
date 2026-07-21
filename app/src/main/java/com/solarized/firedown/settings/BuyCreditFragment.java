@@ -861,8 +861,12 @@ public class BuyCreditFragment extends Fragment {
                 ? getString(R.string.buy_credit_success_title_plan, s.sizeGb, formatDuration(s.durationMonths))
                 : getString(R.string.buy_credit_success_title, s.redeemedGbMonths);
         ((TextView) requireView().findViewById(R.id.buy_success_title)).setText(title);
+        // No GB-months here: the title above already states what was bought
+        // ("Up to X GB for 1 year"); the wallet speaks TIME on the Cloud
+        // screen's timeline, and restating the ledger balance in its internal
+        // unit was one of the recurring "GB-months is confusing" reports.
         ((TextView) requireView().findViewById(R.id.buy_success_balance))
-                .setText(getString(R.string.buy_credit_success_balance, formatGbMonths(s.balanceGbMonths)));
+                .setText(R.string.buy_credit_success_added);
         // No recovery-code card on success anymore: the account (and its saved key)
         // always exists BEFORE this flow — the Cloud hub gates buying on a key, and
         // creating one there forces the "I've saved it" step. So there's never a
@@ -938,14 +942,6 @@ public class BuyCreditFragment extends Fragment {
     private static String formatPerGbMonth(BuyCreditViewModel.Option opt) {
         double centsPer = opt.denomGbMonths > 0 ? (double) opt.priceCents / opt.denomGbMonths : 0;
         return String.format(Locale.US, "%.1f¢", centsPer);
-    }
-
-    /** A GB-months balance, trimming a trailing ".0" (100.0 → "100"). */
-    private static String formatGbMonths(double v) {
-        if (v == Math.rint(v)) {
-            return Long.toString(Math.round(v));
-        }
-        return String.format(Locale.getDefault(), "%.1f", v);
     }
 
     @Nullable

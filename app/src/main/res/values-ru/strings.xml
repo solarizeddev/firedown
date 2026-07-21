@@ -465,6 +465,8 @@
     <string name="settings_sync_faq_a5">Нет. Никакой регистрации, электронной почты или номера телефона — только код восстановления. К вашим закладкам не привязаны никакие личные данные.</string>
     <string name="settings_sync_faq_q6">Что если я не хочу пользоваться синхронизацией?</string>
     <string name="settings_sync_faq_a6">Синхронизация необязательна и по умолчанию отключена. Вы всегда можете экспортировать закладки в файл и позже импортировать их без участия сервера.</string>
+    <string name="settings_sync_faq_q7">Можно ли сделать резервную копию файлов из Сейфа?</string>
+    <string name="settings_sync_faq_a7">Нет — файлы в Сейфе никогда не покидают это устройство. Они исключены из облачного копирования, копии списка и отправки. Чтобы создать копию файла, сначала переместите его из Сейфа.</string>
     <string name="settings_sync_code_saved_check">Я сохранил(а) свой код восстановления</string>
     <string name="settings_sync_export_title">Сохранить код восстановления в файл</string>
     <string name="settings_sync_export_summary">Экспортировать код в виде текстового файла, который можно сохранить</string>
@@ -569,6 +571,7 @@
     <string name="cloud_backup_setup_create">Создать ключ</string>
     <string name="cloud_backup_started">Сохранение в облако…</string>
     <string name="cloud_backup_none_eligible">Выберите завершённые файлы для копии</string>
+    <string name="cloud_backup_safe_excluded">Файлы в Сейфе остаются на этом устройстве, их нельзя резервировать</string>
     <string name="cloud_backup_done">Сохранено в облако</string>
     <string name="cloud_backup_failed">Не удалось сохранить — проверьте подключение и повторите попытку</string>
     <string name="cloud_backup_notification_title">Сохранение в облако</string>
@@ -601,6 +604,8 @@
     <string name="settings_cloud_backup_buy_summary">Пополните баланс хранилища</string>
     <string name="buy_credit_title">Добавить кредит хранилища</string>
     <string name="cloud_starter_credit_step">Бесплатный стартовый кредит включён</string>
+    <string name="cloud_status_credit_active">Кредит активен — при таком использовании хватит на годы</string>
+    <string name="buy_credit_success_added">Добавлено к вашему кредиту на резервные копии.</string>
     <string name="buy_credit_pick_how_much">Сколько</string>
     <string name="buy_credit_pay_with">Оплата через</string>
     <string name="buy_credit_rail_lightning">Lightning</string>
@@ -622,7 +627,6 @@
     <string name="buy_credit_no_wallet">Кошелёк Lightning не установлен</string>
     <string name="buy_credit_no_browser">Нет браузера для открытия оплаты</string>
     <string name="buy_credit_success_title">Добавлено %1$d GB-months</string>
-    <string name="buy_credit_success_balance">Ваш баланс теперь %1$s GB-months.</string>
     <string name="buy_credit_recovery_code_title">Ваш код восстановления</string>
     <string name="buy_credit_recovery_code_body">Сохраните его сейчас — это единственный ключ к вашему аккаунту и резервным копиям. Его можно снова посмотреть в Настройки → Синхронизация.</string>
     <string name="buy_credit_copy_code">Копировать код</string>
@@ -664,7 +668,6 @@
         <item quantity="many">%1$d месяцев</item>
         <item quantity="other">%1$d месяца</item>
     </plurals>
-    <string name="cloud_status_gb_label">GB-months</string>
     <string name="cloud_status_facts">%1$s · %2$s в резервной копии</string>
     <string name="cloud_status_backed_up">в резервной копии</string>
     <string name="cloud_status_chip_beta">Бесплатно во время беты</string>
@@ -672,7 +675,6 @@
     <string name="cloud_status_caption_beta">%1$s · из включённых %2$s · сквозное шифрование</string>
     <string name="cloud_backup_header_beta">из включённых %1$s · сквозное шифрование</string>
     <string name="cloud_backup_header_encrypted">сквозное шифрование</string>
-    <string name="cloud_status_caption_plan">%1$s · %2$s%% вашего плана</string>
     <string name="cloud_status_runway_covered">Покрытие до ~%1$s</string>
     <string name="cloud_status_timeline_today">Сегодня</string>
     <string name="cloud_status_timeline_coverage">≈ %1$s покрытия</string>

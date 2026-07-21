@@ -465,6 +465,8 @@
     <string name="settings_sync_faq_a5">Não. Não há cadastro, e-mail nem número de telefone — apenas o código de recuperação. Nada pessoal é vinculado aos seus favoritos.</string>
     <string name="settings_sync_faq_q6">E se eu não quiser usar a sincronização?</string>
     <string name="settings_sync_faq_a6">A sincronização é opcional e vem desativada por padrão. Você sempre pode exportar seus favoritos para um arquivo e importá-los mais tarde, sem nenhum servidor envolvido.</string>
+    <string name="settings_sync_faq_q7">Posso fazer backup dos arquivos da Pasta segura?</string>
+    <string name="settings_sync_faq_a7">Não — os arquivos da Pasta segura nunca saem deste dispositivo. Eles são excluídos do backup na nuvem, do backup da lista e do envio. Para fazer backup de um arquivo, mova-o primeiro para fora da Pasta segura.</string>
     <string name="settings_sync_code_saved_check">Salvei meu código de recuperação</string>
     <string name="settings_sync_export_title">Salvar o código de recuperação em um arquivo</string>
     <string name="settings_sync_export_summary">Exporte o código como um arquivo de texto que você pode guardar</string>
@@ -565,6 +567,7 @@
     <string name="cloud_backup_setup_create">Criar chave</string>
     <string name="cloud_backup_started">Fazendo backup na nuvem…</string>
     <string name="cloud_backup_none_eligible">Selecione arquivos concluídos para fazer backup</string>
+    <string name="cloud_backup_safe_excluded">Os arquivos da Pasta segura permanecem neste dispositivo e não podem ser copiados</string>
     <string name="cloud_backup_done">Backup feito na nuvem</string>
     <string name="cloud_backup_failed">Não foi possível fazer backup — verifique sua conexão e tente novamente</string>
     <string name="cloud_backup_notification_title">Fazendo backup na nuvem</string>
@@ -597,6 +600,8 @@
     <string name="settings_cloud_backup_buy_summary">Recarregue o seu saldo de armazenamento</string>
     <string name="buy_credit_title">Adicionar crédito de armazenamento</string>
     <string name="cloud_starter_credit_step">Crédito inicial grátis incluído</string>
+    <string name="cloud_status_credit_active">Crédito ativo — com este uso dura anos</string>
+    <string name="buy_credit_success_added">Adicionado ao seu crédito de backup.</string>
     <string name="buy_credit_pick_how_much">Quanto</string>
     <string name="buy_credit_pay_with">Pagar com</string>
     <string name="buy_credit_rail_lightning">Lightning</string>
@@ -618,7 +623,6 @@
     <string name="buy_credit_no_wallet">Nenhuma aplicação de carteira Lightning instalada</string>
     <string name="buy_credit_no_browser">Nenhum navegador disponível para abrir o pagamento</string>
     <string name="buy_credit_success_title">%1$d GB-months adicionados</string>
-    <string name="buy_credit_success_balance">O seu saldo é agora de %1$s GB-months.</string>
     <string name="buy_credit_recovery_code_title">O seu código de recuperação</string>
     <string name="buy_credit_recovery_code_body">Guarde-o agora — é a única chave da sua conta e das suas cópias de segurança. Pode voltar a vê-lo em Definições → Sincronização.</string>
     <string name="buy_credit_copy_code">Copiar código</string>
@@ -656,7 +660,6 @@
         <item quantity="one">%1$d mês</item>
         <item quantity="other">%1$d meses</item>
     </plurals>
-    <string name="cloud_status_gb_label">GB-months</string>
     <string name="cloud_status_facts">%1$s · %2$s com cópia de segurança</string>
     <string name="cloud_status_backed_up">em backup</string>
     <string name="cloud_status_chip_beta">Grátis durante o beta</string>
@@ -664,7 +667,6 @@
     <string name="cloud_status_caption_beta">%1$s · de %2$s incluídos · criptografado de ponta a ponta</string>
     <string name="cloud_backup_header_beta">de %1$s incluídos · criptografado de ponta a ponta</string>
     <string name="cloud_backup_header_encrypted">criptografado de ponta a ponta</string>
-    <string name="cloud_status_caption_plan">%1$s · %2$s%% do seu plano</string>
     <string name="cloud_status_runway_covered">Coberto até ~%1$s</string>
     <string name="cloud_status_timeline_today">Hoje</string>
     <string name="cloud_status_timeline_coverage">≈ %1$s de cobertura</string>
