@@ -234,7 +234,6 @@
     <string name="settings_doh_server_title">공급자 사용</string>
     <string name="settings_doh_summary">DNS 데이터의 도청 및 조작을 방지하여 개인 정보 보호를 강화합니다.</string>
     <string name="settings_doh_title">HTTPS를 통한 DNS</string>
-    <string name="settings_donate">후원하기</string>
     <string name="settings_downloads">다운로드</string>
     <string name="settings_downloads_free">다운로드 &lt;small&gt;(%s)&lt;/small&gt;</string>
     <string name="settings_downloads_path">다운로드 위치</string>
@@ -315,7 +314,6 @@
     </plurals>
     <string name="incognito_downloads_in_progress_subtitle">보안 폴더에서 보려면 탭하세요</string>
     <string name="home_vault_button">보안 폴더</string>
-    <string name="settings_webrtc_enabled_summary">실시간 영상 및 음성 통화를 허용합니다. 비활성화하면 네트워크 탐지 공격면이 줄어듭니다.</string>
     <string name="incognito_home_warning">비공개 탐색은 네트워크, 고용주 또는 방문한 사이트로부터 활동을 숨겨주지는 않습니다.</string>
     <string name="wasm_snackbar_message">%s에는 WebAssembly가 필요합니다</string>
     <string name="wasm_snackbar_action_enable">사용</string>

@@ -300,12 +300,23 @@ public class SabrStrategy implements DownloadStrategy {
         // probe can't read a clean file) fall back to the proven FFmpeg
         // stream-copy of the kept temp files.
         muxer.close();
-        boolean inlineMuxed = muxer.isHeaderWritten()
-                && file.exists() && file.length() > 0
-                && isPlayableMux(file);
+        long inlineDuration = 0;
+        if (muxer.isHeaderWritten() && file.exists() && file.length() > 0) {
+            inlineDuration = probePlayableDuration(file);
+        }
+        boolean inlineMuxed = inlineDuration > 0;
         Log.d(TAG, "Inline fMP4 mux "
                 + (inlineMuxed ? "succeeded — skipping FFmpeg"
                                : "unavailable — using FFmpeg"));
+        if (inlineMuxed) {
+            // Hand the just-probed file duration to the task so its
+            // post-download refreshMetadataFromFile can skip re-probing the
+            // SAME file seconds later. The duplicate probe was pure waste on
+            // every SABR finish, and in the user-finish repro the second
+            // probe was the step that never returned (row stuck on
+            // "Finishing…" forever).
+            callback.onFileDurationProbed(inlineDuration);
+        }
 
         if (!inlineMuxed) {
             FFmpegDownloader ffmpegDownloader = new FFmpegDownloader();
@@ -385,6 +396,12 @@ public class SabrStrategy implements DownloadStrategy {
                 callback.onImgResolved(file.getAbsolutePath());
                 callback.onFileSizeKnown(file.length());
             }
+            // Boundary log — everything after this line is DownloadTask/
+            // RunnableManager territory (onRunComplete → recycleTask), so a
+            // "Finishing…" row stuck with this line printed puts the wedge
+            // there, not in the strategy.
+            Log.d(TAG, "user finish: partial file finalized ("
+                    + file.length() + " bytes)");
             return;
         }
 
@@ -393,6 +410,7 @@ public class SabrStrategy implements DownloadStrategy {
         callback.onImgResolved(file.getAbsolutePath());
         callback.onFileSizeKnown(file.length());
         callback.onStatusChanged(Download.FINISHED);
+        Log.d(TAG, "download finished: " + file.length() + " bytes");
     }
 
     // ========================================================================
@@ -490,27 +508,32 @@ public class SabrStrategy implements DownloadStrategy {
      * least one video stream. A muxer bug that produced a malformed file fails
      * here, and the caller re-muxes the kept temp files with FFmpeg instead — so
      * an unverified muxer can never ship a broken download.
+     *
+     * @return the probed duration when the file is a playable mux, {@code 0}
+     *         otherwise. Returning the duration (rather than a boolean) lets the
+     *         caller forward it via {@code onFileDurationProbed} so the task's
+     *         post-download refresh doesn't probe the same file a second time.
      */
-    private static boolean isPlayableMux(File file) {
+    private static long probePlayableDuration(File file) {
         FFmpegMetaDataReader reader = new FFmpegMetaDataReader();
         try {
             FFmpegMetaData meta = reader.getStreamInfo(file.getAbsolutePath(), null, false);
             if (meta == null || meta.getDuration() <= 0) {
-                return false;
+                return 0;
             }
             ArrayList<FFmpegEntity> streams = reader.getStreams();
             if (streams == null) {
-                return false;
+                return 0;
             }
             for (FFmpegEntity stream : streams) {
                 if (stream != null
                         && stream.getCodecType() == FFmpegStreamInfo.CodecType.VIDEO.getValue()) {
-                    return true;
+                    return meta.getDuration();
                 }
             }
-            return false;
+            return 0;
         } catch (Exception e) {
-            return false;
+            return 0;
         } finally {
             reader.stop();
             reader.release();

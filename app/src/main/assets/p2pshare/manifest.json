@@ -1,0 +1,24 @@
+{
+  "manifest_version": 2,
+  "version": "2.9",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "p2pshare@solarized.dev"
+    }
+  },
+  "name": "Firedown P2P share engine",
+  "description": "WebRTC DataChannel engine for direct device-to-device file transfer. The engine runs as a page script in a hidden loopback page (WebRTC needs a real content document); this extension only provides the native-messaging bridge. File bytes move over the loopback, never through JS strings.",
+  "permissions": [
+    "nativeMessaging",
+    "nativeMessagingFromContent",
+    "geckoViewAddons",
+    "http://127.0.0.1/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["http://127.0.0.1/*"],
+      "js": ["content.js"],
+      "run_at": "document_end"
+    }
+  ]
+}

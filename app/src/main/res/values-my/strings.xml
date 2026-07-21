@@ -186,7 +186,6 @@
     <string name="settings_doh_server_title">ပံ့ပိုးသူကိုသုံးပါ။</string>
     <string name="settings_doh_summary">DNS ဒေတာကို ခိုးယူခိုးယူခြင်းတို့ကို တားဆီးခြင်းဖြင့် လျှို့ဝှက်ရေးကို တိုးမြှင့်ပါ။</string>
     <string name="settings_doh_title">HTTPS မှ DNS</string>
-    <string name="settings_donate">လှူဒါန်းရန်</string>
     <string name="settings_downloads">ဒေါင်းလုဒ်များ</string>
     <string name="settings_downloads_free">ဒေါင်းလုဒ်များ &lt;small&gt;(%s)&lt;/small&gt;</string>
     <string name="settings_downloads_path">ဒေါင်းလုဒ်များတည်နေရာ</string>

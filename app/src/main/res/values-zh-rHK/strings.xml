@@ -161,7 +161,6 @@
     <string name="settings_doh_server_title">使用提供者</string>
     <string name="settings_doh_summary">透過防止竊聽和操縱 DNS 資料來提高隱私性。</string>
     <string name="settings_doh_title">基於 HTTPS 的 DNS</string>
-    <string name="settings_donate">捐款</string>
     <string name="settings_downloads">下載</string>
     <string name="settings_downloads_free">下載 &lt;small&gt;(%s)&lt;/small&gt;</string>
     <string name="settings_downloads_path">下載位置</string>
@@ -205,7 +204,6 @@
     <string name="vault_encrypting">正在加密文件，請稍候...</string>
     <string name="vault_unsupported">無法開啟該文件。要打開，請將其移出安全性資料夾，然後重試。</string>
     <string name="home_vault_button">安全資料夾</string>
-    <string name="settings_webrtc_enabled_summary">啟用即時視像及語音通話。停用可減少網絡探測攻擊面。</string>
     <string name="incognito_home_warning">私密瀏覽不會向你的網絡、僱主或瀏覽的網站隱藏你的活動。</string>
 <string name="settings_theme_app_category">應用程式主題</string>
     <string name="crash_sheet_title">偵測到當機</string>

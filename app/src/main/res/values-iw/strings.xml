@@ -221,7 +221,6 @@
     <string name="settings_doh_server_title">השתמש בספק</string>
     <string name="settings_doh_summary">הגבר את הפרטיות על ידי מניעת האזנה וניפולציה של נתוני DNS.</string>
     <string name="settings_doh_title">DNS דרך HTTPS</string>
-    <string name="settings_donate">ביצוע תרומה</string>
     <string name="settings_downloads">הורדות</string>
     <string name="settings_downloads_free">הורדות &lt;small&gt;(%s)&lt;/small&gt;</string>
     <string name="settings_downloads_path">מיקום הורדות</string>
@@ -281,7 +280,6 @@
     <string name="pip_play">השמעה</string>
     <string name="pip_pause">השהיה</string>
     <string name="home_vault_button">תיקייה בטוחה</string>
-    <string name="settings_webrtc_enabled_summary">מאפשר שיחות וידאו וקול בזמן אמת. השבתה מקטינה את שטח הבדיקה של הרשת.</string>
     <string name="incognito_home_warning">גלישה פרטית לא מסתירה את הפעילות שלך מהרשת שלך, מהמעסיק שלך או מהאתרים שאתה מבקר בהם.</string>
 <string name="settings_theme_app_category">ערכת נושא של האפליקציה</string>
     <string name="crash_sheet_title">התגלתה קריסה</string>

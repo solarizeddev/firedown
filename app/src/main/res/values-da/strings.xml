@@ -222,7 +222,6 @@
     <string name="settings_doh_server_title">Brug udbyder</string>
     <string name="settings_doh_summary">Øg privatlivets fred ved at forhindre aflytning og manipulation af DNS-data.</string>
     <string name="settings_doh_title">DNS over HTTPS</string>
-    <string name="settings_donate">Donér</string>
     <string name="settings_downloads">Downloads</string>
     <string name="settings_downloads_free">Downloads &lt;small&gt;(%s)&lt;/small&gt;</string>
     <string name="settings_downloads_path">Downloads placering</string>
@@ -282,7 +281,6 @@
     <string name="pip_play">Afspil</string>
     <string name="pip_pause">Pause</string>
     <string name="home_vault_button">Sikker mappe</string>
-    <string name="settings_webrtc_enabled_summary">Tillader video- og taleopkald i realtid. Deaktivering reducerer netværkssonderingsfladen.</string>
     <string name="incognito_home_warning">Privat browsing skjuler ikke din aktivitet for dit netværk, din arbejdsgiver eller de sider, du besøger.</string>
 <string name="settings_theme_app_category">App-tema</string>
     <string name="crash_sheet_title">Nedbrud registreret</string>

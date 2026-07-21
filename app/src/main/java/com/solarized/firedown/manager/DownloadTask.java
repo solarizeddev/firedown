@@ -1,6 +1,7 @@
 package com.solarized.firedown.manager;
 
 import android.text.TextUtils;
+import android.util.Log;
 
 import androidx.preference.PreferenceManager;
 
@@ -24,6 +25,10 @@ import org.apache.commons.io.FilenameUtils;
 import java.io.File;
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import okhttp3.OkHttpClient;
@@ -61,6 +66,24 @@ public class DownloadTask implements DownloadCallback {
      *  {@link #onRunComplete()} restores it. {@link Integer#MIN_VALUE} = unset. */
     private int mStatusBeforeFinishing = Integer.MIN_VALUE;
 
+    /** Duration the strategy already probed from the finished OUTPUT file
+     *  ({@link #onFileDurationProbed}); {@code 0} = none. Lets
+     *  {@link #refreshMetadataFromFile()} skip re-probing the same file. */
+    private long mProbedFileDuration;
+
+    /** Bounds the post-download metadata probe: a local-file probe is normally
+     *  sub-second, so a probe still running after this long is wedged (FUSE
+     *  stall, odd partial file) and gets its native AVIO interrupt flag set
+     *  via {@code reader.stop()} — the same non-blocking unwind a user Stop /
+     *  tab-close uses on capture probes ({@code GeckoInspectTask}). */
+    private static final long PROBE_WATCHDOG_SECONDS = 30;
+    private static final ScheduledExecutorService PROBE_WATCHDOG =
+            Executors.newSingleThreadScheduledExecutor(r -> {
+                Thread thread = new Thread(r, "download-probe-watchdog");
+                thread.setDaemon(true);
+                return thread;
+            });
+
     private DownloadRunnable runnable;
     private DownloadContext context;
 
@@ -86,6 +109,7 @@ public class DownloadTask implements DownloadCallback {
             sealed.set(false);
             terminalMessageSent.set(false);
             mStatusBeforeFinishing = Integer.MIN_VALUE;
+            mProbedFileDuration = 0;
 
             entity.setId(id);
             entity.setFileType(request.getFileType());
@@ -142,6 +166,7 @@ public class DownloadTask implements DownloadCallback {
         sealed.set(false);
         terminalMessageSent.set(false);
         mStatusBeforeFinishing = Integer.MIN_VALUE;
+        mProbedFileDuration = 0;
         entity.parseDownload(existing);
 
         DownloadRequest request = new DownloadRequest.Builder(existing.getFileUrl())
@@ -173,6 +198,8 @@ public class DownloadTask implements DownloadCallback {
 
     /** Called from DownloadRunnable.finally — runs on the download thread. */
     private void onRunComplete() {
+        Log.d(TAG, "onRunComplete: id=" + entity.getId()
+                + " status=" + entity.getFileStatus());
         DownloadContext ctx = context;
         if (ctx != null && ctx.isDeleted()) {
             repository.deleteDownload(entity);
@@ -188,10 +215,18 @@ public class DownloadTask implements DownloadCallback {
             // sealWithStatus, or ERROR from onError). For SABR/FFmpeg finish,
             // onFileSizeKnown already updated the size before we get here.
             if (entity.getFileStatus() == Download.FINISHED) {
+                // A user-finished row otherwise keeps PROCESSING_PROGRESS (101)
+                // forever: the stopped path never reports 100%, and the restore
+                // above only fixes the STATUS. Normalize so a FINISHED row never
+                // carries the transient "Finishing…" progress sentinel into the DB.
+                if (entity.getFileProgress() == Download.PROCESSING_PROGRESS) {
+                    entity.setFileProgress(100);
+                }
                 refreshMetadataFromFile();
             }
             repository.add(entity);
         }
+        Log.d(TAG, "onRunComplete: id=" + entity.getId() + " final write queued");
         if (!terminalMessageSent.getAndSet(true)) {
             runnableManager.handleState(this, RunnableManager.MSG_FINISH);
         }
@@ -378,6 +413,14 @@ public class DownloadTask implements DownloadCallback {
     }
 
     @Override
+    public void onFileDurationProbed(long duration) {
+        // Allow through even when sealed — this is ground truth read from the
+        // finished file itself, and the user-finish path is sealed when the
+        // strategy reports it. Only stored; refreshMetadataFromFile applies it.
+        mProbedFileDuration = duration;
+    }
+
+    @Override
     public void onFinished() {
         if (sealed.get()) return;
         repository.add(entity);
@@ -423,8 +466,43 @@ public class DownloadTask implements DownloadCallback {
             return;
         }
 
+        // The strategy may have ALREADY probed the finished file (SABR's
+        // inline-mux validation) and handed the duration over — don't open
+        // the same file a second time seconds later. Besides the waste, the
+        // duplicate probe is where a user-finished SABR download was observed
+        // wedging forever (row stuck on "Finishing…" with the final DB write
+        // never reached).
+        if (isAv && !needResolution && mProbedFileDuration > 0) {
+            Log.d(TAG, "refreshMetadataFromFile: using strategy-probed duration "
+                    + mProbedFileDuration);
+            entity.setFileDuration(mProbedFileDuration);
+            entity.setFileDurationFormatted(FFmpegUtils.getFileDuration(mProbedFileDuration));
+            return;
+        }
+
+        Log.d(TAG, "refreshMetadataFromFile: probing " + path);
         long duration = 0;
         FFmpegMetaDataReader reader = new FFmpegMetaDataReader();
+        // Watchdog: a local-file probe is normally sub-second; if it wedges
+        // (FUSE stall, odd partial file) nothing else would ever unblock the
+        // download thread — the row would sit on "Finishing…" forever and the
+        // final FINISHED write would never land. After the deadline the
+        // watchdog sets the reader's native AVIO interrupt flag (stop() is
+        // non-blocking) so the probe unwinds; the fallback below (keep/clear
+        // the stored duration) is correct output for an aborted probe. The
+        // lock orders watchdog-stop before release so a late watchdog can
+        // never stop() a freed reader (the GeckoInspectTask rule).
+        final Object readerLock = new Object();
+        final boolean[] readerReleased = {false};
+        ScheduledFuture<?> watchdog = PROBE_WATCHDOG.schedule(() -> {
+            synchronized (readerLock) {
+                if (!readerReleased[0]) {
+                    Log.w(TAG, "refreshMetadataFromFile: probe exceeded "
+                            + PROBE_WATCHDOG_SECONDS + "s, interrupting: " + path);
+                    reader.stop();
+                }
+            }
+        }, PROBE_WATCHDOG_SECONDS, TimeUnit.SECONDS);
         try {
             FFmpegMetaData meta = reader.getStreamInfo(path, null, false);
             if (meta != null) {
@@ -439,9 +517,14 @@ public class DownloadTask implements DownloadCallback {
         } catch (Exception e) {
             // best-effort — duration stays 0 and is cleared below for A/V
         } finally {
-            reader.stop();
-            reader.release();
+            watchdog.cancel(false);
+            synchronized (readerLock) {
+                readerReleased[0] = true;
+                reader.stop();
+                reader.release();
+            }
         }
+        Log.d(TAG, "refreshMetadataFromFile: probe done, duration=" + duration);
 
         if (isAv) {
             if (duration > 0) {

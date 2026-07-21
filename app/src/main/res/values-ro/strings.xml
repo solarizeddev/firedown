@@ -202,7 +202,6 @@
     <string name="settings_doh_server_title">Utilizați furnizorul</string>
     <string name="settings_doh_summary">Creșteți confidențialitatea prin prevenirea interceptării și manipulării datelor DNS.</string>
     <string name="settings_doh_title">DNS prin HTTPS</string>
-    <string name="settings_donate">Donează</string>
     <string name="settings_downloads">Descărcări</string>
     <string name="settings_downloads_free">Descărcări &lt;small&gt;(%s)&lt;/small&gt;</string>
     <string name="settings_downloads_path">Locație de descărcări</string>
@@ -255,7 +254,6 @@
     <string name="vault_unsupported">Nu se poate deschide acest fișier. Pentru a deschide, mutați-l din Folder sigur și încercați din nou.</string>
     <string name="bookmark_name">Nume</string>
     <string name="home_vault_button">Dosar sigur</string>
-    <string name="settings_webrtc_enabled_summary">Permite apeluri video și vocale în timp real. Dezactivarea reduce suprafața de sondare a rețelei.</string>
     <string name="incognito_home_warning">Navigarea privată nu îți ascunde activitatea față de rețea, angajator sau site-urile pe care le vizitezi.</string>
 <string name="settings_theme_app_category">Temă aplicație</string>
     <string name="crash_sheet_title">Eroare detectată</string>

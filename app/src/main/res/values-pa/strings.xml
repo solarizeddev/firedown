@@ -160,7 +160,6 @@
     <string name="settings_doh_server_title">ਪ੍ਰਦਾਤਾ ਦੀ ਵਰਤੋਂ ਕਰੋ</string>
     <string name="settings_doh_summary">DNS ਡੇਟਾ ਦੇ ਛੁਪਾਉਣ ਅਤੇ ਹੇਰਾਫੇਰੀ ਨੂੰ ਰੋਕ ਕੇ ਗੋਪਨੀਯਤਾ ਵਧਾਓ।</string>
     <string name="settings_doh_title">HTTPS ਉੱਤੇ DNS</string>
-    <string name="settings_donate">ਦਾਨ ਦਿਓ</string>
     <string name="settings_downloads">ਡਾਊਨਲੋਡ</string>
     <string name="settings_downloads_free">ਡਾਊਨਲੋਡ &lt;small&gt;(%s)&lt;/small&gt;</string>
     <string name="settings_downloads_path">ਡਾਊਨਲੋਡ ਟਿਕਾਣਾ</string>

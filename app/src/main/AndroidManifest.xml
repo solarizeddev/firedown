@@ -2,7 +2,6 @@
 <manifest xmlns:tools="http://schemas.android.com/tools"
     xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.NEARBY_WIFI_DEVICES" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
@@ -15,20 +14,23 @@
     <uses-permission android:name="android.permission.DOWNLOAD_WITHOUT_NOTIFICATION"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
-    <!-- LAN-share "direct connection" only: startLocalOnlyHotspot() requires
-         CHANGE_WIFI_STATE + fine location (an Android platform requirement —
-         hotspot config is considered location-revealing). Location is
-         requested at runtime exclusively from the Send sheet's direct-
-         connection flow; the browser itself never reads location. -->
-    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <!-- P2P share QR scanner only: requested at runtime exclusively from the
+         scan screen; the browser itself never gains camera access (site
+         camera prompts stay OS-gated as before). Not required so camera-less
+         devices can still install — the paste fallback covers them. -->
+    <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"
         tools:ignore="RequestInstallPackagesPolicy" />
     <uses-permission android:name="android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"/>
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"
         tools:ignore="PackageVisibilityPolicy,QueryAllPackagesPermission" />
+
+    <!-- The QR scanner is optional (paste fallback) — don't exclude
+         camera-less devices from installing. -->
+    <uses-feature
+        android:name="android.hardware.camera.any"
+        android:required="false" />
 
     <!-- NIP-55 signer (Amber) visibility for Android 11+ package filtering.
          Firedown already holds QUERY_ALL_PACKAGES, but this scoped <queries>
@@ -195,6 +197,29 @@
             android:configChanges="keyboardHidden|orientation|screenLayout|screenSize"
             android:exported="true"
             android:theme="@style/Theme.FireDown">
+            <!-- P2P share deep links, both handled in
+                 DownloadsActivity.handleP2pDeepLink: an FDS1 offer opens the
+                 receive flow, an FDR1 reply feeds the live send session. -->
+            <!-- QR / in-person form: firedown://p2p/<code>. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="firedown" android:host="p2p" />
+            </intent-filter>
+            <!-- Messenger form: https://firedown.app/s#<code> — a VERIFIED App
+                 Link (assetlinks.json is live on firedown.app), so tapping a
+                 share link in a chat opens the app directly, no chooser. The
+                 code rides in the URL #fragment, which never reaches the
+                 server; unverified devices land on the static /s bouncer page
+                 instead, whose button fires the firedown:// form above. Path
+                 is EXACTLY /s so the rest of the site stays with browsers. -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="firedown.app" android:path="/s" />
+            </intent-filter>
         </activity>
 
         <activity

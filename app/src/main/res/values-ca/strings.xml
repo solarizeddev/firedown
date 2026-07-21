@@ -210,7 +210,6 @@
     <string name="settings_doh_server_title">Utilitza el proveïdor</string>
     <string name="settings_doh_summary">Augmenta la privadesa evitant l\'escolta i la manipulació de dades DNS.</string>
     <string name="settings_doh_title">DNS sobre HTTPS</string>
-    <string name="settings_donate">Fer una donació</string>
     <string name="settings_downloads">Descàrregues</string>
     <string name="settings_downloads_free">Descàrregues &lt;small&gt;(%s)&lt;/small&gt;</string>
     <string name="settings_downloads_path">Ubicació de descàrregues</string>
@@ -267,7 +266,6 @@
     <string name="pip_play">Reprodueix</string>
     <string name="pip_pause">Pausa</string>
     <string name="home_vault_button">Carpeta segura</string>
-    <string name="settings_webrtc_enabled_summary">Permet videotrucades i trucades de veu en temps real. Desactivar-ho redueix la superfície de sondeig de xarxa.</string>
     <string name="incognito_home_warning">La navegació privada no amaga la teva activitat a la teva xarxa, al teu empleador o als llocs que visites.</string>
     <string name="wasm_snackbar_message">%s necessita WebAssembly per funcionar</string>
     <string name="wasm_snackbar_action_enable">Activa</string>

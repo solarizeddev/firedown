@@ -4,6 +4,8 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.JsonReader;
+import android.util.JsonToken;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
@@ -13,6 +15,7 @@ import androidx.lifecycle.MutableLiveData;
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.StoragePaths;
 import com.solarized.firedown.data.di.Qualifiers;
+import com.solarized.firedown.data.SessionStateStore;
 import com.solarized.firedown.data.entity.CertificateInfoEntity;
 import com.solarized.firedown.data.entity.GeckoStateEntity;
 import com.solarized.firedown.geckoview.GeckoState;
@@ -21,9 +24,6 @@ import com.solarized.firedown.geckoview.media.GeckoMediaController;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.mozilla.geckoview.GeckoSession;
 
 import java.io.BufferedReader;
@@ -33,6 +33,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -52,6 +53,74 @@ public class GeckoStateDataRepository {
 
     private static final String TAG = GeckoStateDataRepository.class.getSimpleName();
     public static final String FILE = "com_solarized_firedown_sessions.json";
+
+    // ── Boot-read hardening (issue #292: OutOfMemoryError on startup) ─────────
+    // The sessions file is read on every cold start. It could grow without
+    // bound: an inline data:-URL preview or favicon (an unbounded base64 blob)
+    // was persisted verbatim per tab, and the number of tabs is uncapped, so
+    // the file reached tens of MB. The old load slurped the WHOLE file into one
+    // String and then built a full JSONArray from it — ~2–3× the file size
+    // resident at once — and then kept the parsed preview/icon blobs resident in
+    // mGeckoStates for the whole app lifetime. On a 128 MB heap that either
+    // threw OutOfMemoryError during init or left the heap so full that any later
+    // allocation — including a tiny main-thread one, as in issue #292's reported
+    // stack — became the OOM victim. Because the file was re-read (and never
+    // shrunk) on every launch, the crash repeated: a boot loop.
+    //
+    // The read is now STREAMED (android.util.JsonReader — one field resident at
+    // a time, no whole-file String, no full JSONArray tree), the inline blob
+    // fields are dropped (see sanitizeInlineField / the PREVIEW skip below), and
+    // a size + OutOfMemoryError backstop moves a pathological file aside so the
+    // app still boots. The write side (GeckoStateObserver) STREAMS a versioned
+    // v2 document (JsonWriter, atomic tmp→fsync→rename with failed-write
+    // cleanup), externalizes any data: favicon to a sidecar file (TabIconStore)
+    // and writes NO preview at all, so the file can't re-grow. This mirrors
+    // Firefox for Android (android-components SessionStorage /
+    // BrowserStateWriter+Reader): streamed JsonWriter/JsonReader over an atomic
+    // file, and NO image data inlined in the session file at all — Fenix keeps
+    // favicons (BrowserIcons) and tab thumbnails (ThumbnailStorage) in separate
+    // disk caches keyed by url/tab-id, which is why its session file is bounded
+    // text and ours wasn't. Like Fenix, the v2 shape is read STRICTLY
+    // (readDocumentStrict — the writer owns the shape); the lenient readers
+    // below exist only for the legacy bare-array files older builds wrote,
+    // which migrate to v2 on the next persist.
+    //
+    // MAX_SESSION_FILE_BYTES is NOT a memory bound anymore — the streamed read's
+    // peak is one field regardless of file size (verified: a 122 MB blob file
+    // streams fine on a 128 MB heap). It only bounds worst-case boot PARSE TIME
+    // for a truly pathological file, so it is deliberately far above anything a
+    // sanitized writer produces: a legacy blob-laden file under it still gets
+    // every tab recovered by the streamed read instead of being thrown away.
+    private static final long MAX_SESSION_FILE_BYTES = 256L * 1024 * 1024;
+    /** Versioned session document shape (Fenix parity — a versioned top-level
+     *  object, like android-components' {@code Keys.VERSION_KEY}): {@code
+     *  {"version":N,"tabs":[…]}}. v2 carried each tab's session state INLINE
+     *  ({@code session}); v3 (current) externalizes it to a
+     *  {@code SessionStateStore} file and writes only the reference
+     *  ({@code session_ref}) — the Chromium per-tab-state-file model, adopted
+     *  for O(opened tabs) boot heap. The strict reader accepts
+     *  [{@link #MIN_SUPPORTED_SESSION_FILE_VERSION}, this] — a v2 file reads
+     *  fully (inline strings) and the next persist externalizes it to v3. The
+     *  bare top-level ARRAY older builds wrote is the legacy shape, detected
+     *  by the first token and read leniently as a one-time migration. Bump the
+     *  version (writer + strict reader together) for any
+     *  non-backward-readable change. */
+    public static final int SESSION_FILE_VERSION = 3;
+    public static final int MIN_SUPPORTED_SESSION_FILE_VERSION = 2;
+    public static final String KEY_VERSION = "version";
+    public static final String KEY_TABS = "tabs";
+    /** Above this length an icon/preview string is an inline blob we neither
+     *  persist nor restore (it re-derives when the tab loads). Generous enough
+     *  to keep real favicon/preview URLs. */
+    public static final int MAX_INLINE_FIELD_CHARS = 256 * 1024;
+    /** data: icons above this are dropped; small ones are kept — some sites ship
+     *  their favicon only as a small data: URI, and dropping those left restored
+     *  tabs iconless until reload. Bounded: even 1000 tabs × 8 KB is ~8 MB of
+     *  file, nowhere near the blob previews that caused the OOM. */
+    public static final int MAX_INLINE_DATA_URI_CHARS = 8 * 1024;
+    /** How long a moved-aside {@code .corrupt} file is kept for post-mortem
+     *  before {@link #pruneStaleCorruptFiles} deletes it on a later boot. */
+    private static final long CORRUPT_RETENTION_MS = 7L * 24 * 60 * 60 * 1000;
     private final Context mContext;
     private final List<GeckoState> mGeckoStates;
     private final MutableLiveData<Boolean> mInitialized;
@@ -516,67 +585,462 @@ public class GeckoStateDataRepository {
     }
 
 
-    private GeckoStateEntity parseEntity(JSONObject jsonObject) {
-        GeckoStateEntity entity = new GeckoStateEntity(false);
-        long creationDate = jsonObject.optLong(GeckoStateEntity.KEYS.DATE, System.currentTimeMillis());
-        entity.setCreationDate(creationDate);
-        // Tabs persisted before lastAccess existed have no UPDATE key —
-        // fall back to creation date so they still order sensibly.
-        entity.setLastAccess(jsonObject.optLong(GeckoStateEntity.KEYS.UPDATE, creationDate));
-        entity.setIcon(jsonObject.optString(GeckoStateEntity.KEYS.ICON, ""));
-        entity.setIconResolution(jsonObject.optInt(GeckoStateEntity.KEYS.ICON_RESOLUTION, 0));
-        entity.setThumb(jsonObject.optString(GeckoStateEntity.KEYS.THUMB, ""));
-        entity.setPreview(jsonObject.optString(GeckoStateEntity.KEYS.PREVIEW, ""));
-        entity.setTitle(jsonObject.optString(GeckoStateEntity.KEYS.TITLE, ""));
-        entity.setId(jsonObject.optInt(GeckoStateEntity.KEYS.ID, UUID.randomUUID().hashCode()));
-        entity.setSessionState(jsonObject.optString(GeckoStateEntity.KEYS.SESSION, ""));
-        entity.setParentId(jsonObject.optInt(GeckoStateEntity.KEYS.PARENT_ID, 0));
-        entity.setUri(jsonObject.optString(GeckoStateEntity.KEYS.URI, ""));
-        entity.setCanGoBackward(jsonObject.optBoolean(GeckoStateEntity.KEYS.BACKWARD, false));
-        entity.setCanGoForward(jsonObject.optBoolean(GeckoStateEntity.KEYS.FORWARD, false));
-        entity.setDesktop(jsonObject.optBoolean(GeckoStateEntity.KEYS.DESKTOP, false));
-        entity.setFullScreen(jsonObject.optBoolean(GeckoStateEntity.KEYS.FULLSCREEN, false));
-        entity.setHome(jsonObject.optBoolean(GeckoStateEntity.KEYS.HOME, false));
-        entity.setActive(jsonObject.optBoolean(GeckoStateEntity.KEYS.ACTIVE, false));
-        entity.setUseTrackingProtection(jsonObject.optBoolean(GeckoStateEntity.KEYS.TRACKING_PROTECTION, true));
-        return entity;
+    /**
+     * Drops a persisted icon/preview value that is an oversized inline blob —
+     * the exact payload that once inflated the sessions file to the point of an
+     * OOM boot loop. A SMALL data: URI is kept: some sites ship their favicon
+     * only as one, and dropping it left the restored tab iconless until reload;
+     * the cap ({@link #MAX_INLINE_DATA_URI_CHARS}) keeps the total bounded.
+     * Kept public so the write-side guard ({@code GeckoStateObserver.toJson})
+     * shares one rule.
+     */
+    public static String sanitizeInlineField(String s) {
+        if (s == null) {
+            return "";
+        }
+        if (s.length() > MAX_INLINE_FIELD_CHARS) {
+            return "";
+        }
+        if (s.startsWith("data:") && s.length() > MAX_INLINE_DATA_URI_CHARS) {
+            return "";
+        }
+        return s;
     }
 
-    private JSONArray fileToJSON() throws IOException, JSONException {
+    /**
+     * Loads the persisted tabs, streaming the file so the PARSE overhead is one
+     * field at a time — never a whole-file String or a full parsed tree —
+     * regardless of how large the file has grown. What is RETAINED from a v3
+     * file is small metadata + a state-file REFERENCE per tab (the session
+     * string itself loads lazily in {@code getOrCreateGeckoSession} — boot
+     * heap O(opened tabs), the Chromium per-tab-file model); only a legacy
+     * v2/bare-array file still retains inline session strings, once, until the
+     * next persist externalizes them. Prefers the live file, falls back to the
+     * {@code .tmp} written by the atomic-write path, and returns an empty list
+     * if neither can be read. A present-but-unreadable or oversized file is
+     * moved aside (not silently deleted) by {@link #tryReadEntities}, so it
+     * can never re-crash the next launch.
+     */
+    private List<GeckoStateEntity> loadEntities() {
         File dir = mContext.getFilesDir();
         File localFile = new File(dir, FILE);
         File tempFile = new File(dir, FILE + ".tmp");
 
-        if (localFile.exists()) {
-            try {
-                return readJsonArray(localFile);
-            } catch (JSONException e) {
-                Log.e(TAG, "Session file corrupt, trying temp fallback", e);
-            }
+        pruneStaleCorruptFiles(dir);
+
+        List<GeckoStateEntity> fromLocal = tryReadEntities(localFile);
+        if (fromLocal != null) {
+            return fromLocal;
         }
 
-        if (tempFile.exists()) {
-            try {
-                JSONArray result = readJsonArray(tempFile);
-                // Temp is valid — promote it so next write cycle starts clean
-                if (!tempFile.renameTo(localFile)) {
-                    Log.w(TAG, "Could not promote temp session file");
-                }
-                return result;
-            } catch (JSONException e) {
-                Log.e(TAG, "Temp session file also corrupt, starting fresh", e);
+        List<GeckoStateEntity> fromTemp = tryReadEntities(tempFile);
+        if (fromTemp != null) {
+            // Temp is valid — promote it so the next write cycle starts clean.
+            if (!tempFile.renameTo(localFile)) {
+                Log.w(TAG, "Could not promote temp session file");
             }
+            return fromTemp;
         }
 
-        return new JSONArray();
+        return new ArrayList<>();
     }
 
-    private JSONArray readJsonArray(File file) throws IOException, JSONException {
-        try (InputStream inputStream = new FileInputStream(file)) {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-            String content = reader.lines().collect(Collectors.joining());
-            return new JSONArray(content);
+    /**
+     * Streams one session file into entities, or returns {@code null} if the
+     * file is absent, oversized, or fails to parse (including
+     * {@link OutOfMemoryError}). An unreadable/oversized file is moved aside via
+     * {@link #moveAside} rather than parsed — never OOM-crashing the boot, and
+     * never re-read on the next launch.
+     */
+    @Nullable
+    private List<GeckoStateEntity> tryReadEntities(File file) {
+        if (!file.exists()) {
+            return null;
         }
+        long len = file.length();
+        if (len > MAX_SESSION_FILE_BYTES) {
+            Log.e(TAG, "Session file oversized (" + len + " bytes) — moving aside to boot");
+            moveAside(file);
+            return null;
+        }
+        try (InputStream in = new FileInputStream(file);
+             JsonReader reader = new JsonReader(
+                     new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8)))) {
+            // Shape dispatch (Fenix version model): the v2 writer produces a
+            // versioned OBJECT and is read STRICTLY — the writer fully controls
+            // that shape, so any deviation is corruption and moves the file
+            // aside. A bare ARRAY is the legacy shape from older builds, read
+            // through the LENIENT per-field readers exactly once — the next
+            // persist rewrites it as v2, after which strictness applies.
+            if (reader.peek() == JsonToken.BEGIN_ARRAY) {
+                List<GeckoStateEntity> entities = new ArrayList<>();
+                reader.beginArray();
+                while (reader.hasNext()) {
+                    entities.add(readEntity(reader));
+                }
+                reader.endArray();
+                return entities;
+            }
+            return readDocumentStrict(reader);
+        } catch (OutOfMemoryError | IOException | RuntimeException e) {
+            // RuntimeException covers JsonReader's IllegalStateException /
+            // NumberFormatException on a malformed file; OutOfMemoryError covers
+            // a single pathological field. Either way the file is unusable —
+            // move it aside so this launch (and the next) can proceed.
+            Log.e(TAG, "Session file unreadable — moving aside", e);
+            moveAside(file);
+            return null;
+        }
+    }
+
+    /**
+     * Renames a bad session file to a fixed {@code .corrupt} sibling (kept for
+     * post-mortem, overwritten each time so it can't accumulate); falls back to
+     * deleting it if the rename fails. Never throws. A kept {@code .corrupt}
+     * can be as large as the pathological file it came from, so it is not kept
+     * forever — {@link #pruneStaleCorruptFiles} deletes it on a later boot once
+     * it is older than {@link #CORRUPT_RETENTION_MS}.
+     */
+    private void moveAside(File file) {
+        try {
+            File aside = new File(file.getParentFile(), file.getName() + ".corrupt");
+            FileUtils.deleteQuietly(aside);
+            if (!file.renameTo(aside)) {
+                FileUtils.deleteQuietly(file);
+            }
+        } catch (RuntimeException e) {
+            Log.w(TAG, "moveAside failed", e);
+        }
+    }
+
+    /**
+     * Deletes moved-aside {@code .corrupt} session files once they are older
+     * than {@link #CORRUPT_RETENTION_MS} — long enough for a post-mortem, short
+     * enough that a one-time 100 MB corpse doesn't occupy app storage forever.
+     * A fresh {@code .corrupt} (this boot's, or a recent one) is left alone.
+     */
+    private void pruneStaleCorruptFiles(File dir) {
+        long cutoff = System.currentTimeMillis() - CORRUPT_RETENTION_MS;
+        String[] candidates = {FILE + ".corrupt", FILE + ".tmp.corrupt"};
+        for (String name : candidates) {
+            File corrupt = new File(dir, name);
+            if (corrupt.exists() && corrupt.lastModified() < cutoff) {
+                FileUtils.deleteQuietly(corrupt);
+            }
+        }
+    }
+
+    private GeckoStateEntity readEntity(JsonReader reader) throws IOException {
+        long date = System.currentTimeMillis();
+        long update = 0L;
+        boolean hasUpdate = false;
+        String icon = "";
+        int iconResolution = 0;
+        String thumb = "";
+        String title = "";
+        // Same default as the old parseEntity: a random id for a row missing one.
+        int id = UUID.randomUUID().hashCode();
+        String session = "";
+        int parentId = 0;
+        String uri = "";
+        boolean backward = false;
+        boolean forward = false;
+        boolean desktop = false;
+        boolean fullScreen = false;
+        boolean home = false;
+        boolean active = false;
+        boolean trackingProtection = true;
+
+        reader.beginObject();
+        while (reader.hasNext()) {
+            String name = reader.nextName();
+            switch (name) {
+                case GeckoStateEntity.KEYS.DATE:
+                    date = nextLongSafe(reader, date);
+                    break;
+                case GeckoStateEntity.KEYS.UPDATE:
+                    update = nextLongSafe(reader, 0L);
+                    hasUpdate = true;
+                    break;
+                case GeckoStateEntity.KEYS.ICON:
+                    icon = sanitizeInlineField(nextStringSafe(reader));
+                    break;
+                case GeckoStateEntity.KEYS.ICON_RESOLUTION:
+                    iconResolution = nextIntSafe(reader, 0);
+                    break;
+                case GeckoStateEntity.KEYS.THUMB:
+                    thumb = nextStringSafe(reader);
+                    break;
+                case GeckoStateEntity.KEYS.PREVIEW:
+                    // Never restored: the tab UI shows THUMB + ICON, not PREVIEW
+                    // (an og:image, re-emitted live on load), and it is the field
+                    // most prone to being a huge data: blob. Skip without keeping.
+                    reader.skipValue();
+                    break;
+                case GeckoStateEntity.KEYS.TITLE:
+                    title = nextStringSafe(reader);
+                    break;
+                case GeckoStateEntity.KEYS.ID:
+                    id = nextIntSafe(reader, id);
+                    break;
+                case GeckoStateEntity.KEYS.SESSION:
+                    session = nextStringSafe(reader);
+                    break;
+                case GeckoStateEntity.KEYS.PARENT_ID:
+                    parentId = nextIntSafe(reader, 0);
+                    break;
+                case GeckoStateEntity.KEYS.URI:
+                    uri = nextStringSafe(reader);
+                    break;
+                case GeckoStateEntity.KEYS.BACKWARD:
+                    backward = nextBooleanSafe(reader, false);
+                    break;
+                case GeckoStateEntity.KEYS.FORWARD:
+                    forward = nextBooleanSafe(reader, false);
+                    break;
+                case GeckoStateEntity.KEYS.DESKTOP:
+                    desktop = nextBooleanSafe(reader, false);
+                    break;
+                case GeckoStateEntity.KEYS.FULLSCREEN:
+                    fullScreen = nextBooleanSafe(reader, false);
+                    break;
+                case GeckoStateEntity.KEYS.HOME:
+                    home = nextBooleanSafe(reader, false);
+                    break;
+                case GeckoStateEntity.KEYS.ACTIVE:
+                    active = nextBooleanSafe(reader, false);
+                    break;
+                case GeckoStateEntity.KEYS.TRACKING_PROTECTION:
+                    trackingProtection = nextBooleanSafe(reader, true);
+                    break;
+                default:
+                    reader.skipValue();
+                    break;
+            }
+        }
+        reader.endObject();
+
+        GeckoStateEntity entity = new GeckoStateEntity(false);
+        entity.setCreationDate(date);
+        // Tabs persisted before lastAccess existed have no UPDATE key —
+        // fall back to creation date so they still order sensibly.
+        entity.setLastAccess(hasUpdate ? update : date);
+        entity.setIcon(icon);
+        entity.setIconResolution(iconResolution);
+        entity.setThumb(thumb);
+        entity.setTitle(title);
+        entity.setId(id);
+        entity.setSessionState(session);
+        entity.setParentId(parentId);
+        entity.setUri(uri);
+        entity.setCanGoBackward(backward);
+        entity.setCanGoForward(forward);
+        entity.setDesktop(desktop);
+        entity.setFullScreen(fullScreen);
+        entity.setHome(home);
+        entity.setActive(active);
+        entity.setUseTrackingProtection(trackingProtection);
+        return entity;
+    }
+
+    /**
+     * Strict read of the v2 versioned document ({@code {"version":2,"tabs":[…]}}).
+     * Fenix parity ({@code BrowserStateReader}): the WRITER fully controls this
+     * shape ({@code GeckoStateObserver.writeEntity} is the contract), so the
+     * reader demands exact types and THROWS on an unknown key or a version it
+     * doesn't understand — the caller's catch moves the file aside. Leniency
+     * here would only mask writer bugs; the lenient readers exist solely for
+     * the legacy bare-array files older builds wrote. Consequence to know:
+     * a future version bump followed by an APK downgrade reads as unknown →
+     * move-aside → one-time tab reset (Fenix accepts the same).
+     */
+    private List<GeckoStateEntity> readDocumentStrict(JsonReader reader) throws IOException {
+        List<GeckoStateEntity> entities = new ArrayList<>();
+        int version = -1;
+        reader.beginObject();
+        while (reader.hasNext()) {
+            String name = reader.nextName();
+            switch (name) {
+                case KEY_VERSION:
+                    version = reader.nextInt();
+                    if (version < MIN_SUPPORTED_SESSION_FILE_VERSION
+                            || version > SESSION_FILE_VERSION) {
+                        throw new IOException("Unsupported session file version: " + version);
+                    }
+                    break;
+                case KEY_TABS:
+                    reader.beginArray();
+                    while (reader.hasNext()) {
+                        entities.add(readEntityStrict(reader));
+                    }
+                    reader.endArray();
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unknown session document key: " + name);
+            }
+        }
+        reader.endObject();
+        if (version < MIN_SUPPORTED_SESSION_FILE_VERSION || version > SESSION_FILE_VERSION) {
+            throw new IOException("Session file missing version");
+        }
+        return entities;
+    }
+
+    /**
+     * One tab from a v2 document — exact-type reads, unknown key throws (see
+     * {@link #readDocumentStrict}). The writer emits {@code ""} for absent
+     * strings, so no null handling is needed; {@code sanitizeInlineField} on
+     * ICON is defense-in-depth only (the writer already externalized any
+     * {@code data:} icon to a {@code TabIconStore} path).
+     */
+    private GeckoStateEntity readEntityStrict(JsonReader reader) throws IOException {
+        GeckoStateEntity entity = new GeckoStateEntity(false);
+        reader.beginObject();
+        while (reader.hasNext()) {
+            String name = reader.nextName();
+            switch (name) {
+                case GeckoStateEntity.KEYS.DATE:
+                    entity.setCreationDate(reader.nextLong());
+                    break;
+                case GeckoStateEntity.KEYS.UPDATE:
+                    entity.setLastAccess(reader.nextLong());
+                    break;
+                case GeckoStateEntity.KEYS.ICON:
+                    entity.setIcon(sanitizeInlineField(reader.nextString()));
+                    break;
+                case GeckoStateEntity.KEYS.ICON_RESOLUTION:
+                    entity.setIconResolution(reader.nextInt());
+                    break;
+                case GeckoStateEntity.KEYS.THUMB:
+                    entity.setThumb(reader.nextString());
+                    break;
+                case GeckoStateEntity.KEYS.SESSION:
+                    // v2 inline form — read fully; the next persist
+                    // externalizes it to a SessionStateStore file (v3).
+                    entity.setSessionState(reader.nextString());
+                    break;
+                case GeckoStateEntity.KEYS.SESSION_REF:
+                    // v3 form — only the file reference enters the heap here;
+                    // the state string loads lazily in
+                    // GeckoState.getOrCreateGeckoSession (O(opened tabs)).
+                    // resolve() re-anchors the path to THIS install's store
+                    // dir by basename, so a profile transfer / phone-clone
+                    // (which changes filesDir's prefix) keeps tab histories.
+                    entity.setSessionStateRef(
+                            SessionStateStore.resolve(mContext, reader.nextString()));
+                    break;
+                case GeckoStateEntity.KEYS.URI:
+                    entity.setUri(reader.nextString());
+                    break;
+                case GeckoStateEntity.KEYS.ID:
+                    entity.setId(reader.nextInt());
+                    break;
+                case GeckoStateEntity.KEYS.PARENT_ID:
+                    entity.setParentId(reader.nextInt());
+                    break;
+                case GeckoStateEntity.KEYS.TITLE:
+                    entity.setTitle(reader.nextString());
+                    break;
+                case GeckoStateEntity.KEYS.BACKWARD:
+                    entity.setCanGoBackward(reader.nextBoolean());
+                    break;
+                case GeckoStateEntity.KEYS.FORWARD:
+                    entity.setCanGoForward(reader.nextBoolean());
+                    break;
+                case GeckoStateEntity.KEYS.FULLSCREEN:
+                    entity.setFullScreen(reader.nextBoolean());
+                    break;
+                case GeckoStateEntity.KEYS.DESKTOP:
+                    entity.setDesktop(reader.nextBoolean());
+                    break;
+                case GeckoStateEntity.KEYS.ACTIVE:
+                    entity.setActive(reader.nextBoolean());
+                    break;
+                case GeckoStateEntity.KEYS.TRACKING_PROTECTION:
+                    entity.setUseTrackingProtection(reader.nextBoolean());
+                    break;
+                case GeckoStateEntity.KEYS.HOME:
+                    entity.setHome(reader.nextBoolean());
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unknown session key: " + name);
+            }
+        }
+        reader.endObject();
+        return entity;
+    }
+
+    // LEGACY-ARRAY PATH ONLY — the v2 versioned document is read strictly
+    // (readDocumentStrict above, Fenix parity); these lenient readers serve the
+    // bare-array files older builds wrote, until the next persist migrates them.
+    // Lenient primitive reads mirroring the old opt* semantics: a value stored
+    // as the "wrong" JSON type still parses where it sensibly can, and ANY
+    // token these helpers can't convert — null, an object/array, a fractional
+    // or out-of-range number, a garbage numeric string — is consumed and falls
+    // back to the default. Totality matters: a per-field throw would propagate
+    // to tryReadEntities' catch-all and move the WHOLE file aside (all tabs
+    // lost) over one odd field, which is exactly the wrong trade. Note
+    // android.util.JsonReader's nextLong/nextInt/nextDouble accept BOTH NUMBER
+    // and STRING tokens (parsing the string), and on a parse failure they throw
+    // WITHOUT consuming the token — hence the skipValue() in each catch.
+    private static String nextStringSafe(JsonReader reader) throws IOException {
+        JsonToken token = reader.peek();
+        if (token == JsonToken.STRING || token == JsonToken.NUMBER) {
+            return reader.nextString();
+        }
+        if (token == JsonToken.BOOLEAN) {
+            return String.valueOf(reader.nextBoolean());
+        }
+        reader.skipValue();
+        return "";
+    }
+
+    private static long nextLongSafe(JsonReader reader, long def) throws IOException {
+        JsonToken token = reader.peek();
+        if (token != JsonToken.NUMBER && token != JsonToken.STRING) {
+            reader.skipValue();
+            return def;
+        }
+        try {
+            return reader.nextLong();
+        } catch (NumberFormatException e) {
+            reader.skipValue();
+            return def;
+        }
+    }
+
+    private static int nextIntSafe(JsonReader reader, int def) throws IOException {
+        JsonToken token = reader.peek();
+        if (token != JsonToken.NUMBER && token != JsonToken.STRING) {
+            reader.skipValue();
+            return def;
+        }
+        try {
+            return reader.nextInt();
+        } catch (NumberFormatException e) {
+            reader.skipValue();
+            return def;
+        }
+    }
+
+    private static boolean nextBooleanSafe(JsonReader reader, boolean def) throws IOException {
+        JsonToken token = reader.peek();
+        if (token == JsonToken.BOOLEAN) {
+            return reader.nextBoolean();
+        }
+        if (token == JsonToken.STRING) {
+            return Boolean.parseBoolean(reader.nextString());
+        }
+        if (token == JsonToken.NUMBER) {
+            try {
+                return reader.nextDouble() != 0.0;
+            } catch (NumberFormatException e) {
+                reader.skipValue();
+                return def;
+            }
+        }
+        reader.skipValue();
+        return def;
     }
 
     public LiveData<List<GeckoStateEntity>> getTabsLiveData() {
@@ -589,14 +1053,12 @@ public class GeckoStateDataRepository {
 
     public void initializeGeckoStates(long autoArchiveThresholdMillis) {
         try {
-            JSONArray jsonArray = fileToJSON();
+            List<GeckoStateEntity> entities = loadEntities();
             HashSet<Integer> mIds = new HashSet<>();
 
             synchronized (mGeckoStates) {
                 mGeckoStates.clear();
-                for (int i = 0; i < jsonArray.length(); i++) {
-                    JSONObject jsonObject = jsonArray.getJSONObject(i);
-                    GeckoStateEntity entity = parseEntity(jsonObject);
+                for (GeckoStateEntity entity : entities) {
                     GeckoState geckoState = new GeckoState(entity);
 
                     if (!mIds.contains(geckoState.getEntityId()) && !geckoState.isHome()) {
@@ -630,7 +1092,17 @@ public class GeckoStateDataRepository {
                     archiveInactiveTabsLocked(autoArchiveThresholdMillis);
                 }
             }
-        } catch (JSONException | IOException e) {
+        } catch (OutOfMemoryError | RuntimeException e) {
+            // loadEntities() handles its own IO/parse/OOM failures (moving a bad
+            // file aside and returning what it could). This is a final safety net
+            // so a fault anywhere in init still leaves the app initialized rather
+            // than looping — the finally block below always marks it ready.
+            // OutOfMemoryError is included deliberately: an uncaught Error on
+            // this executor thread reaches Android's default uncaught handler
+            // and kills the process, and an OOM while RETAINING a huge (legit)
+            // session set would then re-crash every boot — the boot loop this
+            // whole path exists to prevent. Catching it boots with whatever
+            // subset was built; the next persist rewrites the file from it.
             Log.e(TAG, "initializeGeckoState error", e);
         } finally {
             mInitialized.postValue(true);

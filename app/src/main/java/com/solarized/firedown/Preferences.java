@@ -4,6 +4,9 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import org.mozilla.geckoview.ContentBlocking;
 
 import java.io.File;
@@ -270,9 +273,143 @@ public class Preferences {
 
     public static final boolean DEFAULT_SPOOF_TIMEZONE = false;
 
-    public static final String SETTINGS_ENABLE_WEBRTC = "com.solarized.firedown.preferences.browser.enable.webrtc";
+    // NOTE: the "Enable WebRTC" toggle (…browser.enable.webrtc, default OFF)
+    // was REMOVED — WebRTC is now always on, the stock-Firefox posture. The
+    // classic local-IP leak is already covered by mDNS candidate obfuscation
+    // (kept ON for browsing, flipped only inside a P2P share session), and the
+    // off-default broke real sites (Meet/Discord/WhatsApp calls) while the P2P
+    // share had to pref-dance around it. If a disable-style switch is ever
+    // reintroduced, it needs a NEW key (the JIT/WASM inversion rule).
 
-    public static final boolean DEFAULT_ENABLE_WEBRTC = false;
+    /**
+     * STUN server used by the P2P direct-share connection (the "what's my
+     * public address" echo — the only external party a share ever contacts,
+     * and only when the two devices are on different networks). ONE url is
+     * ever handed to the engine: listing several would make ICE query them
+     * all in parallel, leaking the user's IP to every fallback on every
+     * share. The value is either a full stun: url from the settings list or
+     * {@link #P2P_STUN_CUSTOM_VALUE}, in which case the url typed by the
+     * user lives in {@link #SETTINGS_P2P_STUN_CUSTOM}. Resolve through
+     * {@link #getP2pStunServer}.
+     */
+    /** Root-settings DOOR to the Direct share sub-screen (DirectShareFragment). */
+    public static final String SETTINGS_P2P_SCREEN = "com.solarized.firedown.preferences.p2p.screen";
+    /** Root-settings DOOR to the Security sub-screen (SecurityFragment). */
+    public static final String SETTINGS_SECURITY_SCREEN = "com.solarized.firedown.preferences.security.screen";
+    public static final String SETTINGS_P2P_STUN = "com.solarized.firedown.preferences.p2p.stun.server";
+
+    public static final String DEFAULT_P2P_STUN = "stun:stun.cloudflare.com:3478";
+
+    public static final String SETTINGS_P2P_STUN_CUSTOM = "com.solarized.firedown.preferences.p2p.stun.custom";
+
+    public static final String P2P_STUN_CUSTOM_VALUE = "custom";
+
+    public static String getP2pStunServer(SharedPreferences sharedPreferences) {
+        String value = sharedPreferences.getString(SETTINGS_P2P_STUN, DEFAULT_P2P_STUN);
+        if (P2P_STUN_CUSTOM_VALUE.equals(value)) {
+            String custom = sharedPreferences.getString(SETTINGS_P2P_STUN_CUSTOM, "");
+            // An empty custom entry falls back to the default rather than
+            // silently downgrading every share to host-candidates-only.
+            if (custom == null || custom.trim().isEmpty()) {
+                return DEFAULT_P2P_STUN;
+            }
+            return custom.trim();
+        }
+        return value;
+    }
+
+    /**
+     * OPTIONAL TURN relay for the P2P share — the ONLY way two peers that
+     * can't reach each other directly (both on mobile data / CGNAT, or one
+     * behind a full-tunnel VPN) can connect: the relay forwards the (still
+     * E2E-encrypted) DataChannel. Default is EMPTY = no relay (the privacy
+     * default — a share then contacts nothing but the STUN echo, and a
+     * truly-unreachable pair fails honestly). When set, ICE only actually
+     * relays through it if a direct path fails. Unlike STUN there is no shipped
+     * list: TURN needs credentials, so it's a user-entered url + username +
+     * credential (typically the user's own coturn). {@code turn:}/{@code turns:}
+     * scheme is validated in the settings editor.
+     */
+    public static final String SETTINGS_P2P_TURN_URL = "com.solarized.firedown.preferences.p2p.turn.url";
+    public static final String SETTINGS_P2P_TURN_USER = "com.solarized.firedown.preferences.p2p.turn.user";
+    public static final String SETTINGS_P2P_TURN_CRED = "com.solarized.firedown.preferences.p2p.turn.cred";
+
+    // NOTE: there is deliberately NO baked-in TURN credential. A static
+    // credential shipped in the (open-source) app would hand the relay to the
+    // whole internet as an open proxy. The first-party Firedown relay is FREE
+    // and on by default, but its credentials are FETCHED per share session —
+    // short-lived coturn REST creds from the endpoint below (anonymous GET, no
+    // identifiers; server half in firedown-api handler_relay.go, coturn abuse
+    // rails in deploy/turn-provision.sh). Fetch failure degrades to
+    // direct+STUN-only. The user-configured TURN above remains as an ADDITIONAL
+    // relay for networks the default can't cross.
+
+    /** TURN credential minting endpoint for the P2P share's free relay
+     *  fallback — same host the bookmark sync uses. Returns
+     *  {@code {urls[], username, credential, ttl_seconds}} (coturn REST API);
+     *  404 while the server side isn't deployed, which the controller treats
+     *  as "no relay" and proceeds without one. */
+    public static final String P2P_RELAY_CREDS_URL = SYNC_DEFAULT_BACKEND + "/v1/relay/creds";
+
+    /** PoW challenge endpoint gating the relay-creds mint (anti-abuse): the
+     *  client fetches {@code {challenge, pow_bits}}, solves the hashcash, and
+     *  passes challenge+nonce to {@link #P2P_RELAY_CREDS_URL}. 404 when relay
+     *  or PoW is off → the client skips straight to a relay-less share. */
+    public static final String P2P_RELAY_CHALLENGE_URL = SYNC_DEFAULT_BACKEND + "/v1/relay/challenge";
+
+    /** P2P answer-rendezvous BASE — the one-time mailbox that removes the
+     *  reply step from a cross-network share. The sender mints an id, embeds
+     *  {@code <base>/a/<id>} in the offer and long-polls {@code …?wait=1};
+     *  the receiver POSTs its answer there. Self-contained offer (never
+     *  uploaded); the LAN answer return is tried first, this second, the
+     *  reply link/QR only if this is unreachable. Server half:
+     *  firedown-api handler_rendezvous.go. */
+    public static final String P2P_RENDEZVOUS_URL = SYNC_DEFAULT_BACKEND + "/v1/p2p";
+
+    /** A configured TURN relay, or {@code null} when none is set. */
+    public static final class P2pTurn {
+        public final String url;
+        public final String username;
+        public final String credential;
+
+        public P2pTurn(String url, String username, String credential) {
+            this.url = url;
+            this.username = username;
+            this.credential = credential;
+        }
+    }
+
+    /**
+     * Signaling relay origin for the P2P share (see {@code signaling/server.js}),
+     * a BUILD-TIME constant — deliberately NOT a settings row (a niche knob;
+     * the "Link relay" preference + editor were removed to keep Direct share
+     * settings to the two rows people actually use). EMPTY = serverless, the
+     * shipping state: a shared link completes on the same network (LAN answer
+     * return) and cross-network uses the reply code; the built-in TURN relay
+     * covers the hard NETWORKS either way (signaling and media relay are
+     * orthogonal). If a first-party relay (e.g. {@code https://sig.firedown.app})
+     * is ever deployed, set it here and the whole one-link flow — controller
+     * plumbing, deep-link routing — comes alive unchanged.
+     */
+    private static final String P2P_SIGNALING_DEFAULT = "";
+
+    /** The signaling relay origin (no trailing slash), or empty = serverless. */
+    @NonNull
+    public static String getP2pSignalingUrl(SharedPreferences sharedPreferences) {
+        return P2P_SIGNALING_DEFAULT;
+    }
+
+    @Nullable
+    public static P2pTurn getP2pTurn(SharedPreferences sharedPreferences) {
+        String url = sharedPreferences.getString(SETTINGS_P2P_TURN_URL, "");
+        if (url == null || url.trim().isEmpty()) {
+            return null;
+        }
+        return new P2pTurn(
+                url.trim(),
+                sharedPreferences.getString(SETTINGS_P2P_TURN_USER, "").trim(),
+                sharedPreferences.getString(SETTINGS_P2P_TURN_CRED, "").trim());
+    }
 
     /**
      * WebAssembly is ENABLED by default — disabling it globally broke sites
@@ -503,7 +640,12 @@ public class Preferences {
     public static final String SETTINGS_TABS_ARCHIVE_BANNER_LAST_INTERVAL = "com.solarized.firedown.preferences.tabs.archive.banner.last.interval";
 
     public static final String SETTINGS_BLOCK_COOKIE_NOTICES = "com.solarized.firedown.preferences.ublock.block.cookie.notices";
-    public static final boolean DEFAULT_BLOCK_COOKIE_NOTICES = false;
+    /** Default ON: consent banners are the web's biggest annoyance and hiding
+     *  one never GRANTS consent (no stored answer = GDPR's no). Flipping the
+     *  default needed no new key — no semantic inversion (true still means
+     *  "block") and defaults are never persisted, same as the app-redirects
+     *  flip. The toggle stays for the rare consent-gated site. */
+    public static final boolean DEFAULT_BLOCK_COOKIE_NOTICES = true;
 
     public static final String DEFAULT_SEARCH_ENGINE = "DuckDuckGo";
 

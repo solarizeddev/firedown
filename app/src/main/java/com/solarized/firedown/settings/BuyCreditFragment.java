@@ -66,8 +66,8 @@ import dagger.hilt.android.AndroidEntryPoint;
 
 /**
  * The "Add storage credit" purchase wizard — a single full-page nav destination
- * (like {@link com.solarized.firedown.phone.fragments.LanShareFragment}, whose
- * QR/PIN handover also wants a whole page) that switches between step views under
+ * (like {@link com.solarized.firedown.phone.fragments.P2pSendFragment}, whose
+ * QR handover also wants a whole page) that switches between step views under
  * one {@link BuyCreditViewModel}: pick denomination + rail → pay (Lightning QR /
  * Stripe hosted Checkout in a tab) → success. No Stripe SDK — the card path opens
  * the mint's hosted Checkout URL in a browser tab and polls the same

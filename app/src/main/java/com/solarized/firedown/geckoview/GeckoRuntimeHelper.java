@@ -23,6 +23,7 @@ import com.solarized.firedown.data.repository.WasmAllowlistRepository;
 import com.solarized.firedown.manager.UrlParser;
 import com.solarized.firedown.manager.UrlType;
 import com.solarized.firedown.nostr.NostrSignerBridge;
+import com.solarized.firedown.p2pshare.P2pShareController;
 import com.solarized.firedown.utils.JsonHelper;
 import com.solarized.firedown.utils.UrlStringUtils;
 
@@ -78,6 +79,7 @@ public class GeckoRuntimeHelper {
     private final Executor mNetworkExecutor;
     private final OkHttpClient mOkHttpClient;
     private final NostrSignerBridge mNostrSignerBridge;
+    private final P2pShareController mP2pShareController;
     private final Map<String, WebExtension.Port> mPorts = new HashMap<>();
     private int mTabId = DEFAULT_TAB_ID;
 
@@ -94,10 +96,12 @@ public class GeckoRuntimeHelper {
             PriorityTaskThreadPoolExecutor priorityExecutor,
             OkHttpClient okHttpClient,
             NostrSignerBridge nostrSignerBridge,
+            P2pShareController p2pShareController,
             @Qualifiers.MainThread Executor mainExecutor,
             @Qualifiers.Network Executor networkExecutor
     ) {
         this.mNostrSignerBridge = nostrSignerBridge;
+        this.mP2pShareController = p2pShareController;
         this.mIconsRepository = iconsRepository;
         this.mBrowserDownloadRepository = browserDownloadRepository;
         this.mGeckoStateDataRepository = geckoStateDataRepository;
@@ -172,6 +176,13 @@ public class GeckoRuntimeHelper {
         // have to know about mLoadedExtensions.
         mPoTokenGenerator = new PoTokenGenerator(sGeckoRuntime, this::registerSession);
 
+        // P2pShareController owns a hidden GeckoSession hosting the page-world
+        // WebRTC engine (createOffer hangs in an extension background page).
+        // It can't take the runtime via @Inject (GeckoRuntimeHelper depends on
+        // the controller, so the reverse is a Hilt cycle) — hand it over here,
+        // same registerSession registrar the PoTokenGenerator gets.
+        mP2pShareController.attachRuntime(sGeckoRuntime, this::registerSession);
+
         mBrowserSessionActionDelegate = new BrowserSessionActionDelegate();
 
         setupWebExtensions();
@@ -183,8 +194,9 @@ public class GeckoRuntimeHelper {
         // calling the underlying setter which still takes the runtime's
         // "is this feature enabled" sense.
 
-        setWebRTC(sharedPreferences.getBoolean(Preferences.SETTINGS_ENABLE_WEBRTC,
-                Preferences. DEFAULT_ENABLE_WEBRTC));
+        // WebRTC is ALWAYS on (the toggle was removed — stock-Firefox posture;
+        // mDNS obfuscation covers the local-IP leak, see Preferences note).
+        setWebRTC(true);
         setWebAssembly(!sharedPreferences.getBoolean(Preferences.SETTINGS_DISABLE_WASM,
                 Preferences.DEFAULT_DISABLE_WASM));
         setJITCompiler(!sharedPreferences.getBoolean(Preferences.SETTINGS_DISABLE_JIT,
@@ -215,6 +227,56 @@ public class GeckoRuntimeHelper {
         // These have no UI toggle — the privacy gain is high enough and the
         // breakage low enough that it's not a meaningful choice to expose.
         applyHardeningPrefs();
+        applySelectionVisibilityPref();
+    }
+
+    /**
+     * Make web-page text selection visible even when Gecko paints it in the
+     * "disabled" (unfocused-document) state — the GREY #AAAAAA wash.
+     *
+     * <p>Why this exists (the full chain, traced through Gecko 152 source and
+     * confirmed on-device with the {@code ui.textSelectDisabledBackground}
+     * red-probe): a selection is painted with the accent color (ColorID::
+     * Highlight = colorAccent @ ~30% alpha) ONLY while its document's frame
+     * selection is SELECTION_ON, which requires the content document to have
+     * DOM focus ({@code nsFrameSelection::WillFocusDocument}); a blurred or
+     * never-focused document paints TextSelectDisabledBackground instead
+     * (nsTextPaintStyle's default branch). On Android, window activation —
+     * the precondition for that document focus — is owned by
+     * {@code widget/android/nsWindow}: {@code Show(true)} unconditionally
+     * BringToFront()s a newly shown Gecko window (deactivating the visible
+     * tab's window and blurring its document), and {@code Destroy()} removes
+     * a window from the top-level list WITHOUT re-activating the next one.
+     * So any hidden GeckoSession this app opens and closes (PoToken minting,
+     * the P2P share engine) leaves the visible tab's window "list-top but
+     * not focus-manager-active" — a WEDGED state no app-side API can exit:
+     * UserActivity() no-ops (already list-top), GeckoView.requestFocus()
+     * no-ops (already view-focused), and setFocused(true) → browser.focus()
+     * dies in nsFocusManager::SetFocusInner ({@code sendFocusEvent} requires
+     * {@code isElementInActiveWindow}). Stock Fenix never trips this because
+     * it doesn't churn hidden windows mid-session.
+     *
+     * <p>The ROOT fix belongs in the firedown-geckoview fork
+     * (nsWindow::Destroy must re-raise the next visible top-level window,
+     * mirroring the Show(false) path). Until that ships, this pref paints
+     * the disabled state in the same brand wash as the active state —
+     * #f0716c at 0.35 alpha, deliberately a hair off the active 78/255 so
+     * nsTextPaintStyle's EnsureDifferentColors doesn't nudge it — which is
+     * the correct look for a phone browser anyway: single-window UX has no
+     * "unfocused pane" concept worth a distinct grey.
+     */
+    @OptIn(markerClass = ExperimentalGeckoViewApi.class)
+    private void applySelectionVisibilityPref() {
+        GeckoResult<Void> geckoResult = GeckoPreferenceController.setGeckoPref(
+                "ui.textSelectDisabledBackground", "rgba(240, 113, 108, 0.35)",
+                GeckoPreferenceController.PREF_BRANCH_USER);
+        geckoResult.accept(
+                unused -> {
+                    if (BuildConfig.DEBUG) {
+                        Log.d(TAG, "applySelectionVisibilityPref: set");
+                    }
+                },
+                throwable -> Log.w(TAG, "applySelectionVisibilityPref failed", throwable));
     }
 
     private void setupWebExtensions() {
@@ -243,6 +305,14 @@ public class GeckoRuntimeHelper {
         // in registerBuiltIn/registerSession covers this name (no special
         // multi-name repeat needed, unlike youtube/parser).
         registerBuiltIn("resource://android/assets/nostr/", "nostr@solarized.dev", "nostr");
+        // P2P share engine — a bridge content script (content.js) that binds
+        // to the hidden engine GeckoSession P2pShareController opens on the
+        // loopback /engine page (the page-world WebRTC engine needs a real
+        // docShell; createOffer hangs in an extension background page). The
+        // content script opens the native port ("p2pshare") which onConnect
+        // hands to P2pShareController (the PoTokenGenerator ownership pattern);
+        // file bytes ride a loopback HTTP bridge, never the messaging layer.
+        registerBuiltIn("resource://android/assets/p2pshare/", "p2pshare@solarized.dev", "p2pshare");
     }
 
     /**
@@ -808,6 +878,14 @@ public class GeckoRuntimeHelper {
                 return;
             }
 
+            // The p2pshare engine port is owned by P2pShareController (same
+            // handoff rationale as the potoken port above): it has its own
+            // delegate and must not land in mPorts.
+            if (P2pShareController.PORT_NAME.equals(name)) {
+                mP2pShareController.onPortConnected(port);
+                return;
+            }
+
             mPorts.put(name, port);
             port.setDelegate(new PortDelegate());
             // When the ublock port connects (once per extension lifecycle), push
@@ -1069,13 +1147,32 @@ public class GeckoRuntimeHelper {
     }
 
     @OptIn(markerClass = ExperimentalGeckoViewApi.class)
-    public void setWebRTC(boolean enable) {
-        GeckoResult<Void> geckoResult = GeckoPreferenceController
+    public GeckoResult<Void> setWebRTC(boolean enable) {
+        // Returns the GeckoResult so callers that need the pref APPLIED before
+        // acting (the P2P share, which then opens its fresh engine page to pick
+        // up the enabled pref) can chain on it — a fire-and-forget write races
+        // the page load and the new global still sees the old value.
+        return GeckoPreferenceController
                 .setGeckoPref("media.peerconnection.enabled", enable, GeckoPreferenceController.PREF_BRANCH_USER);
+    }
 
-        geckoResult.accept(unused -> {
-            Log.d(TAG, "setWebRTC: " + unused);
-        });
+    /**
+     * Session-scoped for the P2P share, like {@link #setWebRTC}: Firefox
+     * obfuscates host ICE candidates as mDNS {@code <uuid>.local} hostnames
+     * (a browsing-privacy feature — pages can't read the LAN IP). Resolving a
+     * peer's .local candidate needs multicast DNS, which on Android generally
+     * fails (receiving multicast requires a MulticastLock the app never
+     * takes), so with obfuscation on a same-LAN pair finds NO working host
+     * pair and ICE dies with "add a TURN server". The share flow flips this
+     * off while the share screen is open (the LAN IP travels only inside the
+     * QR/code the user physically hands to the peer) and restores it in
+     * onDestroyView — browsing privacy is unchanged outside a share.
+     */
+    @OptIn(markerClass = ExperimentalGeckoViewApi.class)
+    public GeckoResult<Void> setWebRtcIceObfuscation(boolean obfuscate) {
+        return GeckoPreferenceController
+                .setGeckoPref("media.peerconnection.ice.obfuscate_host_addresses", obfuscate,
+                        GeckoPreferenceController.PREF_BRANCH_USER);
     }
 
     @OptIn(markerClass = ExperimentalGeckoViewApi.class)
@@ -1391,10 +1488,20 @@ public class GeckoRuntimeHelper {
         // navigator.mozAddonManager — sites probing for installed extensions
         prefs.add(GeckoPreferenceController.SetGeckoPreference.setBoolPref(
                 "extensions.webapi.enabled", false, GeckoPreferenceController.PREF_BRANCH_USER));
-        // Referer trimming — cross-site only when base-domains match,
-        // path/query stripped on every Referer (= origin only)
+        // Referer trimming — send the Referer cross-site (like stock Firefox's
+        // strict-origin-when-cross-origin), but path/query stripped on every
+        // Referer (= origin only) so no full URL leaks cross-site.
+        //
+        // XOriginPolicy was 2 ("cross-site Referer only when base-domains
+        // match"), which stripped the Referer entirely on any request to a
+        // different base domain. That broke sites whose media CDN lives on a
+        // separate base domain behind Referer-based hotlink protection: pixiv
+        // serves images from i.pximg.net (base pximg.net) while the page is
+        // www.pixiv.net (base pixiv.net), so every image 403'd with no Referer.
+        // 0 keeps the origin-only Referer (trimmingPolicy 2) that pixiv — and
+        // any such CDN — requires, matching what desktop Firefox sends.
         prefs.add(GeckoPreferenceController.SetGeckoPreference.setIntPref(
-                "network.http.referer.XOriginPolicy", 2, GeckoPreferenceController.PREF_BRANCH_USER));
+                "network.http.referer.XOriginPolicy", 0, GeckoPreferenceController.PREF_BRANCH_USER));
         prefs.add(GeckoPreferenceController.SetGeckoPreference.setIntPref(
                 "network.http.referer.trimmingPolicy", 2, GeckoPreferenceController.PREF_BRANCH_USER));
 
@@ -1410,17 +1517,27 @@ public class GeckoRuntimeHelper {
 
         // ── Cluster C: fingerprinting belt-and-braces ──────────────────────
         // RFP already neutralises most of these, but they're hard-disables
-        // here so the protection persists if RFP is toggled off.
+        // here so the protection persists if RFP is toggled off. Kept ONLY for
+        // APIs with near-zero real-site value on a mobile media browser
+        // (deprecated / niche): Battery, Gamepad, WebVR.
         prefs.add(GeckoPreferenceController.SetGeckoPreference.setBoolPref(
                 "dom.battery.enabled", false, GeckoPreferenceController.PREF_BRANCH_USER));
         prefs.add(GeckoPreferenceController.SetGeckoPreference.setBoolPref(
                 "dom.gamepad.enabled", false, GeckoPreferenceController.PREF_BRANCH_USER));
         prefs.add(GeckoPreferenceController.SetGeckoPreference.setBoolPref(
                 "dom.vr.enabled", false, GeckoPreferenceController.PREF_BRANCH_USER));
+        // device.sensors (DeviceOrientation/Motion) and media.webspeech.synth
+        // (Text-to-Speech) are deliberately kept ENABLED: hard-disabling them
+        // removed real user-visible functionality on a mobile browser —
+        // 360°/panorama/tilt/AR content, and read-aloud / "listen to this
+        // article" / language-learning TTS (an accessibility regression) — for
+        // only a marginal fingerprint gain that FPP/RFP already cover when
+        // active. Set true explicitly (not merely omitted) so they stay on
+        // regardless of the IronFox-base build default.
         prefs.add(GeckoPreferenceController.SetGeckoPreference.setBoolPref(
-                "device.sensors.enabled", false, GeckoPreferenceController.PREF_BRANCH_USER));
+                "device.sensors.enabled", true, GeckoPreferenceController.PREF_BRANCH_USER));
         prefs.add(GeckoPreferenceController.SetGeckoPreference.setBoolPref(
-                "media.webspeech.synth.enabled", false, GeckoPreferenceController.PREF_BRANCH_USER));
+                "media.webspeech.synth.enabled", true, GeckoPreferenceController.PREF_BRANCH_USER));
 
         GeckoResult<Map<String, Boolean>> result = GeckoPreferenceController.setGeckoPrefs(prefs);
         result.accept(

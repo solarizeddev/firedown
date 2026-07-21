@@ -272,16 +272,25 @@ public class DownloadsViewModel extends ViewModel {
     }
 
     private PagingSource<Integer, DownloadEntity> createPagingSource(String query, int sortType, boolean isSafe) {
+        PagingSource<Integer, DownloadEntity> source;
         if (!TextUtils.isEmpty(query)) {
-            return mRepository.getSearch(sortType, isSafe, "%" + query + "%");
+            source = mRepository.getSearch(sortType, isSafe, "%" + query + "%");
+        } else {
+            source = switch (sortType) {
+                case Sorting.SORT_ALPHABET -> isSafe ? mRepository.getSafeName() : mRepository.getDownloadsName();
+                case Sorting.SORT_SIZE -> isSafe ? mRepository.getSafeSize() : mRepository.getDownloadsSize();
+                case Sorting.SORT_DOMAIN -> isSafe ? mRepository.getSafeDomain() : mRepository.getDownloadsDomain();
+                default -> isSafe ? mRepository.getSafe() : mRepository.getDownloads();
+            };
         }
-
-        return switch (sortType) {
-            case Sorting.SORT_ALPHABET -> isSafe ? mRepository.getSafeName() : mRepository.getDownloadsName();
-            case Sorting.SORT_SIZE -> isSafe ? mRepository.getSafeSize() : mRepository.getDownloadsSize();
-            case Sorting.SORT_DOMAIN -> isSafe ? mRepository.getSafeDomain() : mRepository.getDownloadsDomain();
-            default -> isSafe ? mRepository.getSafe() : mRepository.getDownloads();
-        };
+        // Direct-invalidation belt: the repository pokes registered sources
+        // after every DiskIO write, because Room's InvalidationTracker was
+        // observed dropping the LAST write of a burst (a user-finished
+        // download's FINISHED write landed in the DB but never produced a
+        // paging generation — the row sat on "Finishing…" until re-entry).
+        // See DownloadDataRepository.mActivePagingSources.
+        mRepository.registerActivePagingSource(source);
+        return source;
     }
 
     // --- Actions ---

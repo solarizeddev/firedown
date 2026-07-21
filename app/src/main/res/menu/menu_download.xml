@@ -47,4 +47,13 @@
         app:showAsAction="ifRoom"
         android:title="@string/navigation_settings"/>
 
+    <!-- P2P share receiver entry — visible in the bar (a two-sided feature's
+         other half shouldn't be buried in the overflow). -->
+    <item
+        android:id="@+id/action_receive"
+        android:icon="@drawable/ic_qr_scan_24"
+        app:iconTint="?attr/colorOnSurface"
+        app:showAsAction="ifRoom"
+        android:title="@string/p2p_receive_title"/>
+
 </menu>

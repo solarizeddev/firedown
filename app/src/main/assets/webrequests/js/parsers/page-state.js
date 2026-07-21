@@ -107,7 +107,7 @@ registerMessageHandler("page-state-progressive", (message, sender) => {
         title: p.title, origin: pageUrl.slice(0, 80), tabId
     });
 
-    // Replicate the browser's <video>-element request shape. These URLs are
+    // Replicate the browser's MEDIA-ELEMENT request shape. These URLs are
     // query-signed/self-authorizing (no Referer/Origin/Cookie — verified on a
     // self-authorizing CDN that serves a header-LESS GET fine), but some
     // progressive CDNs gate on the MEDIA-REQUEST headers a real <video> fetch
@@ -118,12 +118,25 @@ registerMessageHandler("page-state-progressive", (message, sender) => {
     // play omits and such CDNs don't need). Benign for self-authorizing CDNs (a
     // real browser sends them too); a
     // CDN that also fingerprints TLS (JA3/JA4) is still unreachable to OkHttp.
-    const requestHeaders = [
-        { name: "Accept", value: "video/webm,video/ogg,video/*;q=0.9,application/ogg;q=0.7,audio/*;q=0.6,*/*;q=0.5" },
-        { name: "Sec-Fetch-Dest", value: "video" },
-        { name: "Sec-Fetch-Mode", value: "no-cors" },
-        { name: "Sec-Fetch-Site", value: "cross-site" }
-    ];
+    // A declared-audio group (variant audioOnly — the bridge's AUDIO_RE/<audio>
+    // classification, e.g. podverse's __NEXT_DATA__ mp3) gets the <audio>-element
+    // shape instead: Firefox's audio Accept string + Sec-Fetch-Dest: audio — a
+    // video-shaped header set on an mp3 is exactly the deviation a header-gating
+    // CDN rejects.
+    const primaryAudio = !!(p.variants[0] && p.variants[0].audioOnly);
+    const requestHeaders = primaryAudio
+        ? [
+            { name: "Accept", value: "audio/webm,audio/ogg,audio/wav,audio/*;q=0.9,application/ogg;q=0.7,video/*;q=0.6,*/*;q=0.5" },
+            { name: "Sec-Fetch-Dest", value: "audio" },
+            { name: "Sec-Fetch-Mode", value: "no-cors" },
+            { name: "Sec-Fetch-Site", value: "cross-site" }
+        ]
+        : [
+            { name: "Accept", value: "video/webm,video/ogg,video/*;q=0.9,application/ogg;q=0.7,audio/*;q=0.6,*/*;q=0.5" },
+            { name: "Sec-Fetch-Dest", value: "video" },
+            { name: "Sec-Fetch-Mode", value: "no-cors" },
+            { name: "Sec-Fetch-Site", value: "cross-site" }
+        ];
     if (typeof p.lang === "string" && p.lang) requestHeaders.push({ name: "Accept-Language", value: p.lang });
     if (typeof p.ua === "string" && p.ua) requestHeaders.push({ name: "User-Agent", value: p.ua });
 

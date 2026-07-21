@@ -129,6 +129,10 @@ public class SettingsActivity extends BaseActivity {
                 mToolbar.setTitle(R.string.settings_theme);
             else if(id == R.id.settings_wasm)
                 mToolbar.setTitle(R.string.settings_wasm);
+            else if(id == R.id.settings_security)
+                mToolbar.setTitle(R.string.if_preferences_security);
+            else if(id == R.id.settings_direct_share)
+                mToolbar.setTitle(R.string.settings_p2p_category);
             else if(id == R.id.settings_license)
                 mToolbar.setTitle(R.string.settings_license);
             else if(id == R.id.settings_doh)
@@ -139,8 +143,6 @@ public class SettingsActivity extends BaseActivity {
                 mToolbar.setTitle(R.string.settings_query_param_block_list);
             else if(id == R.id.settings_search)
                 mToolbar.setTitle(R.string.settings_search_engine);
-            else if(id == R.id.settings_donate)
-                mToolbar.setTitle(R.string.donate_title);
             else if(id == R.id.settings_lock)
                 mToolbar.setTitle(R.string.settings_lock_title);
             else if(id == R.id.settings_sync)

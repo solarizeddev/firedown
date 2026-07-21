@@ -4,11 +4,13 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 
 import android.content.res.Resources;
+import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.ParcelFileDescriptor;
 import android.transition.Transition;
 import android.util.Log;
 import android.view.GestureDetector;
@@ -64,6 +66,8 @@ import com.solarized.firedown.ffmpegutils.FFmpegMetaDataReader;
 import com.solarized.firedown.utils.FileUriHelper;
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.utils.FragmentArgs;
+
+import java.io.InputStream;
 
 public class MediaViewerFragment extends Fragment {
 
@@ -194,6 +198,39 @@ public class MediaViewerFragment extends Fragment {
         // onCreateView time (getWidth/getHeight are still 0 here).
         mFallbackDrawable = MimeTypeThumbnail.generateDrawable(mActivity, fileMime);
 
+        if (!mAvoidTransition) {
+            // Bound photo_view to a 16:10 centred centerCrop card. This
+            // is the SHARED ELEMENT (video_view), and the source it flies
+            // from is the list/grid R.id.image — a centerCrop thumbnail in
+            // a bounded cell. Giving photo_view the SAME scaleType
+            // (centerCrop) and a BOUNDED band — the AspectRatioImageView
+            // self-measures to the ratio, so its captured shared-element
+            // target is a band, not the full screen — leaves the
+            // ChangeImageTransform a clean bounds-grow to animate instead
+            // of interpolating a centerCrop-in-cell matrix toward a
+            // fitCenter-full-screen one. That interpolation is what
+            // briefly blows a LANDSCAPE first frame up to fill the whole
+            // screen before it snaps to the letterbox — the reported "one
+            // landscape video fills the screen during the transition".
+            //
+            // This MUST cover video as well as audio (a previous
+            // consolidation moved it into the audio-only branch, leaving
+            // photo_view unbounded/fitCenter for video — its own kind of
+            // balloon). Together with the OPAQUE video shutter below they
+            // address the two DISTINCT layers seen mid-transition in the
+            // reported recording: the shutter hides the fitXY-stretched
+            // TextureView surface, and this keeps the poster (the shared
+            // element itself) a clean bounded band instead of a fitCenter-
+            // full-screen target. 16:10 is only the fallback shape —
+            // presetVideoAspectRatio() overrides it with the video's real
+            // aspect so the band coincides with the letterbox. For video
+            // the poster is only shown until onRenderedFirstFrame swaps in
+            // the real, letterboxed frame; audio keeps it as steady-state
+            // artwork.
+            mPhotoView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            mPhotoView.setAspectRatio(16f / 10f);
+        }
+
         if (FileUriHelper.isAudio(fileMime)) {
             // Single artwork layer: mPhotoView owns the visible album
             // art for audio (steady state, not just transition). Turn
@@ -202,18 +239,47 @@ public class MediaViewerFragment extends Fragment {
             // installed immediately so the transition has something to
             // land on; Glide's load below replaces it with the
             // embedded cover when present, .error() restores it if
-            // extraction fails.
+            // extraction fails. The shutter is left transparent (XML
+            // default) so this artwork shows through — there is no video
+            // surface to stretch.
             mPlayerView.setUseArtwork(false);
             mPhotoView.setImageDrawable(mFallbackDrawable);
-            // Match the downloads grid cell: 16:10 centred card with
-            // centerCrop. Same shape + same scaleType as the source
-            // ImageView means the shared element transition has no
-            // matrix interpolation to do — eliminates the "fill the
-            // screen, then snap to letterbox" flash that ChangeImage-
-            // Transform produces when source (centerCrop in 16:10)
-            // and destination (fitCenter, full screen) disagree.
-            mPhotoView.setScaleType(ImageView.ScaleType.CENTER_CROP);
-            mPhotoView.setAspectRatio(16f / 10f);
+        } else {
+            // VIDEO: re-enable media3's OPAQUE shutter (the XML overrides
+            // it transparent). This is THE guard for the "fullscreen
+            // portrait frame during the transition" symptom, confirmed
+            // frame-by-frame in the reported recording: PlayerView.set-
+            // Player() resets the inner exo_content_frame to aspect 0 (=
+            // MATCH_PARENT) because the fresh player's video size is still
+            // unknown, so the FIRST decoded frame paints STRETCHED (fitXY)
+            // to the whole screen until onVideoSizeChanged corrects the
+            // aspect. presetVideoAspectRatio() tries to pre-size the frame
+            // but the first frame can paint before that relayout lands, so
+            // it is not sufficient on its own. media3's own guard is the
+            // shutter — it is hidden only in onRenderedFirstFrame, which
+            // fires AFTER onVideoSizeChanged has resized the frame, so an
+            // opaque shutter covers the surface through exactly the
+            // stretched window. Making it transparent (a previous attempt,
+            // to reveal the poster) is what EXPOSED the stretch through the
+            // shutter — the recording showed the stretched fullscreen frame
+            // behind the correctly-sized poster band.
+            //
+            // Do NOT bringToFront() photo_view. photo_view is the poster
+            // and must stay BEHIND player_view (its natural child order):
+            // during the shared-element transition it is drawn on top
+            // anyway via the transition overlay, so bringing it to front
+            // buys nothing there — but it MOVES the poster above the video
+            // for steady state, so if onRenderedFirstFrame is ever slow
+            // (a large/slow decode) or never runs (the singleTask /
+            // onNewIntent reuse path fires NO transition), the poster sits
+            // OVER the player and the video plays hidden behind it — the
+            // exact "static poster on top, video in the background"
+            // regression reported. Behind the video, a poster that fails
+            // to hide is harmless (the video covers it). The tiny window
+            // between transition-end and first-frame is a brief black
+            // shutter, not a stretch — and in practice the first frame
+            // renders mid-transition, so there is no visible gap.
+            mPlayerView.setShutterBackgroundColor(Color.BLACK);
         }
 
         // PlayerView / controller behaviour. autoShow is deliberately
@@ -360,6 +426,24 @@ public class MediaViewerFragment extends Fragment {
             @Override
             public void onVideoSizeChanged(@NonNull VideoSize videoSize) {
                 if (mActivity != null) mActivity.updatePipParams();
+                // Runtime backstop for the first-frame stretch. When the
+                // synchronous preset can't resolve the size — a RESTORED
+                // content:// clip that MMR can't read and that has no stored
+                // resolution (ffmpeg can't open its foreign-owned path) — the
+                // content frame is left MATCH_PARENT and the first frame paints
+                // fitXY-stretched. The decoder ALWAYS reports the true size
+                // here (e.g. 498x334), so correct the content frame the instant
+                // it does. media3 does this itself, but doing it explicitly
+                // also fixes the POSTER band's aspect so, if the poster is still
+                // showing, it matches the letterbox exactly (no peek). Applied
+                // to the width/height as reported (already display-oriented via
+                // pixelWidthHeightRatio).
+                if (videoSize.width > 0 && videoSize.height > 0) {
+                    float par = videoSize.pixelWidthHeightRatio > 0f
+                            ? videoSize.pixelWidthHeightRatio : 1f;
+                    float aspect = (videoSize.width * par) / videoSize.height;
+                    applyVideoAspect(aspect);
+                }
             }
 
             /**
@@ -766,33 +850,76 @@ public class MediaViewerFragment extends Fragment {
      * The read is on the UI thread (cold launch), so it must be a
      * cheap metadata read, and it must be reliable — a stretched frame
      * only appears when this fails to resolve the size. Sources, in
-     * order:
-     *   1. MediaMetadataRetriever — rotation-aware, covers most files.
-     *   2. the entity's stored capture resolution ("WxH") — instant,
-     *      no file I/O, no re-parse.
-     *   3. the app's native ffmpeg reader — parses files the platform
-     *      MediaMetadataRetriever/MediaExtractor choke on (the
-     *      498x334, audio-less, timescale-100 clip that motivated this
-     *      is one: ExoPlayer plays it and ffmpeg reads it, but MMR
-     *      returns nothing). Only reached when 1 and 2 both miss, so
-     *      the extra open cost is off the common path.
-     * If all miss we fall through to media3's runtime resize.
+     * order (see {@link #readVideoAspectRatio}):
+     *   1. the entity's stored capture resolution ("WxH") — instant,
+     *      in-memory, no file I/O; the only reliable source for a
+     *      restored content:// clip and free of main-thread jank.
+     *   2. MediaMetadataRetriever — rotation-aware, covers most owned
+     *      files; returns nothing for the odd container (498x334,
+     *      timescale-100) and pays disk I/O over a content:// grant.
+     *   3. the app's native ffmpeg reader over a ParcelFileDescriptor —
+     *      parses files the platform extractors reject, and (unlike a
+     *      path open) works for a foreign-owned restored file via the
+     *      SAF grant, the same fd path Glide's FFmpegPfdDecoder uses.
+     * If all miss, onVideoSizeChanged applies the decoder's true size at
+     * runtime (see the Player.Listener), with the opaque shutter masking
+     * the gap.
      */
     @OptIn(markerClass = UnstableApi.class)
     private void presetVideoAspectRatio(Uri uri) {
-        if (uri == null || mPlayerView == null || mActivity == null) return;
-        View contentFrame = mPlayerView.findViewById(androidx.media3.ui.R.id.exo_content_frame);
-        if (!(contentFrame instanceof AspectRatioFrameLayout)) return;
-
+        if (uri == null) return;
         float aspect = readVideoAspectRatio(uri);
         if (aspect > 0f) {
+            applyVideoAspect(aspect);
+        }
+    }
+
+    /**
+     * Size the player's content frame AND the poster band to {@code aspect}.
+     * Called from the synchronous preset (onViewCreated, before the postponed
+     * shared-element transition captures photo_view's end bounds) AND from
+     * onVideoSizeChanged as the runtime backstop when the preset couldn't
+     * resolve the size up front. Sizing the content frame stops the surface
+     * painting fitXY-stretched; sizing the poster to the SAME aspect makes the
+     * shared-element target coincide with the letterbox, so the poster→video
+     * swap on onRenderedFirstFrame can't pop or peek. Both are idempotent
+     * (AspectRatioFrameLayout / AspectRatioImageView no-op an unchanged ratio).
+     */
+    @OptIn(markerClass = UnstableApi.class)
+    private void applyVideoAspect(float aspect) {
+        if (aspect <= 0f || mPlayerView == null) return;
+        View contentFrame = mPlayerView.findViewById(androidx.media3.ui.R.id.exo_content_frame);
+        if (contentFrame instanceof AspectRatioFrameLayout) {
             ((AspectRatioFrameLayout) contentFrame).setAspectRatio(aspect);
+        }
+        if (mPhotoView != null && !mAvoidTransition) {
+            mPhotoView.setAspectRatio(aspect);
         }
     }
 
     /** Display width/height ratio for the video, or 0 if unresolved. */
     private float readVideoAspectRatio(@NonNull Uri uri) {
-        // 1. MediaMetadataRetriever (rotation-aware). Pick the overload by
+        // 1. Stored capture resolution ("WxH"). Tried FIRST on purpose: it is
+        //    an in-memory string read — no file I/O, no main-thread jank — and
+        //    it is the ONLY reliable source for a RESTORED (content://) file
+        //    whose bytes the platform extractors can't read. The reported
+        //    failing clip (498x334, timescale-100, played via a SAF content://
+        //    grant) is exactly this case: MediaMetadataRetriever returns
+        //    nothing for it AND the native ffmpeg tier can't open the
+        //    foreign-owned path (EACCES — the same reason playback uses the
+        //    grant), so both other tiers miss and the content frame stayed
+        //    MATCH_PARENT, stretching the first frame fitXY. Doing this read
+        //    first also drops the ~400 ms of main-thread content:// disk I/O
+        //    the MMR-first order paid on every open (visible as repeated
+        //    StrictMode DiskReadViolations), which itself widened the
+        //    pre-first-frame window. No rotation info here, but tier 2 handles
+        //    rotated files; capture resolution is already display-oriented.
+        float fromEntity = aspectFromResolution(mDownloadEntity.getFileResolution());
+        if (fromEntity > 0f) {
+            return fromEntity;
+        }
+
+        // 2. MediaMetadataRetriever (rotation-aware). Pick the overload by
         //    scheme: a raw path uri (owned file) needs the String overload;
         //    a content:// SAF grant (restored file) needs (Context, Uri).
         MediaMetadataRetriever retriever = new MediaMetadataRetriever();
@@ -826,23 +953,23 @@ public class MediaViewerFragment extends Fragment {
             try { retriever.release(); } catch (Exception ignored) {}
         }
 
-        // 2. Stored capture resolution ("WxH"). No rotation info, but the
-        //    MMR path above already handles rotated files; this is the
-        //    fast fallback for the rare file MMR can't read.
-        float fromEntity = aspectFromResolution(mDownloadEntity.getFileResolution());
-        if (fromEntity > 0f) {
-            return fromEntity;
-        }
-
-        // 3. Native ffmpeg — the reliable backstop for files the platform
-        //    extractors reject. Local path only (content:// is covered by
-        //    MMR above); off the UI hot path since we only get here on a
-        //    double miss.
-        String path = "content".equals(uri.getScheme()) ? null : uri.getPath();
-        if (path != null) {
+        // 3. Native ffmpeg over a ParcelFileDescriptor — the reliable backstop
+        //    for files the platform extractors reject, INCLUDING a restored
+        //    content:// clip. The native reader can't open a foreign-owned
+        //    *path* (EACCES), but it reads fine from a file DESCRIPTOR:
+        //    RestoredFileAccess.openReadOnly() returns a PFD for both an owned
+        //    file and, via the persisted SAF tree grant, a foreign-owned one —
+        //    the very same fd path Glide's FFmpegPfdDecoder already uses to
+        //    thumbnail these clips. Feeding that fd's stream to the InputStream
+        //    metadata reader resolves the 498x334, timescale-100 case MMR can't
+        //    (and that tier 1 only covers when a resolution was stored).
+        ParcelFileDescriptor pfd = RestoredFileAccess.openReadOnly(
+                mActivity, mDownloadEntity.getFilePath());
+        if (pfd != null) {
             FFmpegMetaDataReader reader = new FFmpegMetaDataReader();
-            try {
-                FFmpegMetaData meta = reader.getStreamInfo(path, null, false);
+            try (InputStream in = new ParcelFileDescriptor.AutoCloseInputStream(pfd)) {
+                FFmpegMetaData meta = reader.getStreamInfo(
+                        in, mDownloadEntity.getFilePath(), pfd.getStatSize(), false);
                 if (meta != null) {
                     int w = meta.getWidth();
                     int h = meta.getHeight();
@@ -851,7 +978,7 @@ public class MediaViewerFragment extends Fragment {
                     }
                 }
             } catch (Exception e) {
-                Log.w(TAG, "readVideoAspectRatio: ffmpeg failed", e);
+                Log.w(TAG, "readVideoAspectRatio: ffmpeg PFD failed", e);
             } finally {
                 reader.stop();
                 reader.release();

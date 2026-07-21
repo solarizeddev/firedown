@@ -4,6 +4,7 @@ import android.webkit.URLUtil;
 import androidx.lifecycle.LiveData;
 import androidx.paging.PagingSource;
 
+import com.solarized.firedown.data.SessionStateStore;
 import com.solarized.firedown.data.dao.TabStateArchivedDao;
 import com.solarized.firedown.data.di.Qualifiers;
 import com.solarized.firedown.data.entity.GeckoStateEntity;
@@ -196,7 +197,28 @@ public class TabStateArchivedRepository {
         archived.setTitle(geckoStateEntity.getTitle());
         archived.setUri(geckoStateEntity.getUri());
         archived.setCreationDate(geckoStateEntity.getCreationDate());
-        archived.setSessionState(geckoStateEntity.getSessionState());
+        // The archive must be SELF-CONTAINED: a restored, never-opened tab
+        // carries only a SessionStateStore file ref (v3 sessions file), and
+        // once the tab leaves the live list its state file becomes
+        // unreferenced and is grace-pruned — so the string is INLINED into the
+        // Room row here, at archive time (runs on the disk executor). This is
+        // the invariant that keeps SessionStateStore.prune's referenced set
+        // complete (the Chromium multi-reference-domain lesson,
+        // crbug.com/40486025 class): the archive never references store files.
+        // A missing/unreadable file degrades to "" — the archived tab restores
+        // by URL, same per-file containment as everywhere else.
+        // Lock context: via archiveInactiveTabsLocked this runs while the
+        // caller holds the mGeckoStates monitor — the same pre-existing
+        // IO-under-monitor pattern as the Room insertSync/thumb deletes/
+        // purgeSync in that sweep (all on the disk executor; the read here is
+        // one small immutable file per archived tab). The prune can't race
+        // this read: a tab being archived was referenced by the last persist,
+        // so its file is inside the 24h grace window.
+        String state = geckoStateEntity.getSessionState();
+        if (state.isEmpty()) {
+            state = SessionStateStore.read(geckoStateEntity.getSessionStateRef());
+        }
+        archived.setSessionState(state);
         archived.setIcon(geckoStateEntity.getIcon());
         return archived;
     }

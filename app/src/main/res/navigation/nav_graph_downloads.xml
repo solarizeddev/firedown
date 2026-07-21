@@ -21,10 +21,23 @@
         android:label="fragment_frame_grabber"
         tools:layout="@layout/fragment_frame_grabber" />
     <fragment
-        android:id="@+id/lan_share"
-        android:name="com.solarized.firedown.phone.fragments.LanShareFragment"
-        android:label="fragment_lan_share"
-        tools:layout="@layout/fragment_lan_share" />
+        android:id="@+id/p2p_send"
+        android:name="com.solarized.firedown.phone.fragments.P2pSendFragment"
+        android:label="fragment_p2p_send"
+        tools:layout="@layout/fragment_p2p_send" />
+    <fragment
+        android:id="@+id/p2p_receive"
+        android:name="com.solarized.firedown.phone.fragments.P2pReceiveFragment"
+        android:label="fragment_p2p_receive"
+        tools:layout="@layout/fragment_p2p_receive" />
+    <!-- A <dialog>, NOT a <fragment>: opening the scanner must not destroy the
+         send/receive fragment's view (which would stop the live WebRTC
+         session). See P2pScanFragment's class doc. -->
+    <dialog
+        android:id="@+id/p2p_scan"
+        android:name="com.solarized.firedown.phone.fragments.P2pScanFragment"
+        android:label="fragment_p2p_scan"
+        tools:layout="@layout/fragment_p2p_scan" />
     <dialog
         android:id="@+id/dialog_download_sort"
         android:name="com.solarized.firedown.phone.dialogs.DownloadsSortDialogFragment" />

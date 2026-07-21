@@ -96,6 +96,17 @@
             app:singleLineTitle="false"
             app:icon="@drawable/settings_backup_restore_24"/>
 
+
+        <!-- DOOR to Direct share networking (DirectShareFragment): STUN/TURN
+             overrides — expert set-once config, off the root (its STUN summary
+             is a raw stun: URL). Lives with Downloads because P2P share is a
+             Downloads feature (the Send button / Receive a file). -->
+        <Preference
+            android:key="com.solarized.firedown.preferences.p2p.screen"
+            android:title="@string/settings_p2p_category"
+            android:summary="@string/settings_direct_share_summary"
+            app:icon="@drawable/ic_share_24" />
+
     </PreferenceCategory>
 
     <PreferenceCategory
@@ -119,23 +130,7 @@
 
 
         <SwitchPreferenceCompat
-            android:defaultValue="false"
-            app:singleLineTitle="false"
-            android:key="com.solarized.firedown.preferences.browser.enable.resist.fingerprinting"
-            android:summary="@string/spoof_timezone_summary"
-            android:title="@string/fingerprint_protection"
-            app:icon="@drawable/fingerprint_24" />
-
-        <SwitchPreferenceCompat
-            android:defaultValue="false"
-            app:singleLineTitle="false"
-            android:key="com.solarized.firedown.preferences.browser.spoof.timezone"
-            android:summary="@string/settings_utc_timezone_summary"
-            android:title="@string/settings_utc_timezone"
-            app:icon="@drawable/schedule_24" />
-
-        <SwitchPreferenceCompat
-            android:defaultValue="false"
+            android:defaultValue="true"
             app:singleLineTitle="false"
             android:key="com.solarized.firedown.preferences.ublock.block.cookie.notices"
             android:summary="@string/settings_block_cookie_notices_summary"
@@ -178,6 +173,22 @@
             android:title="@string/settings_disk_cache_disabled"
             app:icon="@drawable/ic_memory_24" />
 
+        <SwitchPreferenceCompat
+            android:defaultValue="false"
+            app:singleLineTitle="false"
+            android:key="com.solarized.firedown.preferences.browser.enable.resist.fingerprinting"
+            android:summary="@string/spoof_timezone_summary"
+            android:title="@string/fingerprint_protection"
+            app:icon="@drawable/fingerprint_24" />
+
+        <SwitchPreferenceCompat
+            android:defaultValue="false"
+            app:singleLineTitle="false"
+            android:key="com.solarized.firedown.preferences.browser.spoof.timezone"
+            android:summary="@string/settings_utc_timezone_summary"
+            android:title="@string/settings_utc_timezone"
+            app:icon="@drawable/schedule_24" />
+
 
         <SwitchPreferenceCompat
             android:defaultValue="false"
@@ -188,73 +199,6 @@
             app:icon="@drawable/ic_shield_24" />
 
 
-    </PreferenceCategory>
-
-
-    <PreferenceCategory
-        android:title="@string/if_preferences_security"
-        app:iconSpaceReserved="false">
-
-
-        <SwitchPreferenceCompat
-            android:defaultValue="false"
-            android:key="com.solarized.firedown.preferences.browser.block.javascript"
-            android:summary="@string/settings_block_javascript_summary"
-            android:title="@string/settings_block_javascript_title"
-            app:icon="@drawable/javascript_24" />
-
-
-        <SwitchPreferenceCompat
-            android:defaultValue="false"
-            android:key="com.solarized.firedown.preferences.browser.disable.jit"
-            android:summary="@string/settings_jit_disabled_summary"
-            android:title="@string/settings_jit_disabled"
-            app:icon="@drawable/developer_board_24"
-            app:singleLineTitle="false"/>
-
-
-        <SwitchPreferenceCompat
-            android:defaultValue="false"
-            android:key="com.solarized.firedown.preferences.browser.enable.drm"
-            android:summary="@string/settings_drm_enabled_summary"
-            android:title="@string/settings_drm_enabled"
-            app:icon="@drawable/ic_movie_24"
-            app:singleLineTitle="false" />
-
-
-        <SwitchPreferenceCompat
-            android:defaultValue="false"
-            android:key="com.solarized.firedown.preferences.browser.enable.webrtc"
-            android:summary="@string/settings_webrtc_enabled_summary"
-            android:title="@string/settings_webrtc_enabled"
-            app:icon="@drawable/ic_p2p_24"
-            app:singleLineTitle="false" />
-
-
-        <SwitchPreferenceCompat
-            android:defaultValue="false"
-            android:key="com.solarized.firedown.preferences.browser.disable.webgl"
-            android:summary="@string/settings_webgl_disabled_summary"
-            android:title="@string/settings_webgl_disabled"
-            app:icon="@drawable/deployed_code_24"
-            app:singleLineTitle="false" />
-
-
-        <Preference
-            android:key="com.solarized.firedown.preferences.browser.wasm"
-            android:summary="@string/settings_wasm_disabled_summary"
-            android:title="@string/settings_wasm"
-            app:icon="@drawable/memory_alt_24"
-            app:singleLineTitle="false" />
-
-
-    </PreferenceCategory>
-
-
-    <PreferenceCategory
-        android:title="@string/settings_cookies"
-        app:iconSpaceReserved="false">
-
 
         <ListPreference
             android:defaultValue="4"
@@ -264,27 +208,21 @@
             android:title="@string/settings_cookies"
             app:icon="@drawable/cookie_24" />
 
-
         <Preference
             android:key="com.solarized.firedown.preferences.browser.clear"
             android:summary="@string/settings_clear_browsing_summary"
             android:title="@string/settings_delete_browsing"
-            app:icon="@drawable/travel_explore_24">
+            app:icon="@drawable/travel_explore_24" />
 
-        </Preference>
-
-
-    </PreferenceCategory>
-
-    <PreferenceCategory
-        android:title="@string/settings_donate"
-        app:iconSpaceReserved="false">
-
-    <Preference
-        android:key="com.solarized.firedown.preferences.donate"
-        android:title="@string/donate_title"
-        android:summary="@string/settings_donate_summary"
-        app:icon="@drawable/ic_favorite_24"/>
+        <!-- DOOR to the Security sub-screen (SecurityFragment): the
+             harden-at-a-cost toggles (Block JS / JIT / DRM / WebGL / WASM)
+             live one level down — once-ever expert switches, off the root
+             per the frequency-first rule. -->
+        <Preference
+            android:key="com.solarized.firedown.preferences.security.screen"
+            android:title="@string/if_preferences_security"
+            android:summary="@string/settings_security_screen_summary"
+            app:icon="@drawable/ic_shield_24" />
 
     </PreferenceCategory>
 
@@ -293,6 +231,11 @@
         android:title="@string/app_name"
         app:iconSpaceReserved="false">
 
+
+        <Preference
+            android:key="com.solarized.firedown.preferences.donate"
+            android:title="@string/settings_donate"
+            app:icon="@drawable/ic_favorite_24" />
 
         <Preference
             android:key="com.solarized.firedown.preferences.license"

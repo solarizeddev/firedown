@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Thin right chevron for the browser popup Forward button (matches the design
+     render's stroked › rather than the chunky filled arrow ic_arrow_forward_24).
+     strokeColor is a placeholder — the quick-row button's iconTint recolors it
+     (incl. the disabled-state alpha). autoMirrored so it flips in RTL. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24"
+    android:autoMirrored="true">
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M9,6 L15,12 L9,18" />
+</vector>

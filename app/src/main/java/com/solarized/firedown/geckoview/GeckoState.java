@@ -8,6 +8,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.UiThread;
 
+import com.solarized.firedown.data.SessionStateStore;
 import com.solarized.firedown.data.entity.CertificateInfoEntity;
 import com.solarized.firedown.data.entity.ContextElementEntity;
 import com.solarized.firedown.data.entity.GeckoStateEntity;
@@ -347,12 +348,47 @@ public class GeckoState {
 
             // Don't restore session state for incognito tabs
             if (!incognito) {
+                ensureSessionStateLoaded();
                 GeckoSession.SessionState sessionState =
                         GeckoSession.SessionState.fromString(mGeckoStateEntity.getSessionState());
                 if (sessionState != null) mGeckoSession.restoreState(sessionState);
             }
         }
         return mGeckoSession;
+    }
+
+    /**
+     * Lazy load of the externalized session state (v3 sessions file): a
+     * restored, never-opened tab carries only a {@code SessionStateStore} file
+     * ref — the string enters the heap HERE, on first activation, which is
+     * what keeps boot memory O(opened tabs). On success the string is stored
+     * on the entity (so the state survives in memory and the next persist
+     * re-hashes it to the same immutable file). On ANY failure the dangling
+     * ref is CLEARED — Chromium's per-file containment contract
+     * ({@code restoreTabState} → null → the tab loads its URL instead): with
+     * both string and ref empty, {@code setGeckoViewSession}'s
+     * hasRestoredState check (which runs after this, via
+     * getOrCreateGeckoSession) routes to its plain loadUri branch. One corrupt
+     * or pruned file loses one tab's history, never the tab and never the
+     * boot. The read is synchronous on the caller (UI) thread by design —
+     * session states are small (Gecko caps per-tab history ~50 entries) and
+     * Chromium makes the same trade for its critical-path tab restore
+     * ({@code StrictMode.allowThreadDiskReads} in {@code restoreTab}).
+     */
+    private void ensureSessionStateLoaded() {
+        if (!TextUtils.isEmpty(mGeckoStateEntity.getSessionState())) {
+            return;
+        }
+        String ref = mGeckoStateEntity.getSessionStateRef();
+        if (TextUtils.isEmpty(ref)) {
+            return;
+        }
+        String state = SessionStateStore.read(ref);
+        if (TextUtils.isEmpty(state)) {
+            mGeckoStateEntity.setSessionStateRef(null);
+            return;
+        }
+        mGeckoStateEntity.setSessionState(state);
     }
 
     public void setSearchMode(boolean value){

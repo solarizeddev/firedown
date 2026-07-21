@@ -1,5 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Full-screen dialog used by the P2P QR scanner: a <dialog> nav
+         destination (so it does NOT destroy the send/receive fragment's view
+         and kill the live WebRTC session), but filling the screen for the
+         camera preview. windowIsFloating=false = fill, not a floating card. -->
+    <style name="Firedown.FullScreenDialog" parent="Theme.Material3.DayNight.Dialog">
+        <item name="android:windowIsFloating">false</item>
+        <item name="android:windowBackground">?attr/colorSurface</item>
+        <item name="android:statusBarColor">?attr/colorSurface</item>
+        <item name="android:navigationBarColor">?attr/colorSurface</item>
+    </style>
+
     <style name="Theme.FireDown.BottomSheetDialogTheme" parent="Theme.Material3.DayNight.BottomSheetDialog">
         <item name="colorPrimary">@color/md_theme_primary</item>
         <item name="colorOnPrimary">@color/md_theme_onPrimary</item>
@@ -427,6 +438,10 @@
         <item name="android:layout_width">0dp</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:layout_weight">1</item>
+        <!-- Pure weight distribution: without this the IconButton's default
+             minWidth can exceed a narrow column's weighted share and make
+             the five columns uneven (an off-centre gap between buttons). -->
+        <item name="android:minWidth">0dp</item>
         <item name="android:textColor">@color/popup_header_selector</item>
         <item name="android:textSize">13sp</item>
         <item name="android:textAlignment">center</item>
@@ -439,6 +454,23 @@
         <item name="iconPadding">4dp</item>
         <item name="iconGravity">textTop</item>
         <item name="iconTint">@color/popup_header_selector</item>
+    </style>
+
+
+    <!-- Browser popup list section label ("This page" / "Library"). Small,
+         uppercase, letter-spaced and muted so it reads as a group eyebrow over
+         the hairline rule rather than another tappable row. 16dp horizontal
+         gutter to line up with the M3 list rows; tight vertical rhythm so the
+         label hugs the group it heads. Mirrors the mockup's grouplabel. -->
+    <style name="Firedown.PopupGroupLabel" parent="TextAppearance.Material3.LabelMedium">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:paddingHorizontal">16dp</item>
+        <item name="android:paddingTop">8dp</item>
+        <item name="android:paddingBottom">4dp</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:letterSpacing">0.08</item>
+        <item name="android:textColor">?attr/colorOnSurfaceVariant</item>
     </style>
 
 

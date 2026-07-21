@@ -174,7 +174,6 @@
     <string name="settings_doh_server_title">Bruk leverandør</string>
     <string name="settings_doh_summary">Øk personvernet ved å forhindre avlytting og manipulering av DNS-data.</string>
     <string name="settings_doh_title">DNS over HTTPS</string>
-    <string name="settings_donate">Gi penger</string>
     <string name="settings_downloads">Nedlastinger</string>
     <string name="settings_downloads_free">Nedlastinger &lt;small&gt;(%s)&lt;/small&gt;</string>
     <string name="settings_downloads_path">Nedlastingsplassering</string>
@@ -221,7 +220,6 @@
     <string name="vault_encrypting">Krypterer fil, vennligst vent…</string>
     <string name="vault_unsupported">Kan ikke åpne denne filen. For å åpne, flytt den ut av sikker mappe og prøv igjen.</string>
     <string name="home_vault_button">Sikker mappe</string>
-    <string name="settings_webrtc_enabled_summary">Tillater video- og taleanrop i sanntid. Å slå av reduserer nettverkssonderingsflaten.</string>
     <string name="incognito_home_warning">Privat surfing skjuler ikke aktiviteten din fra nettverket ditt, arbeidsgiveren din eller nettstedene du besøker.</string>
 <string name="settings_theme_app_category">Apptema</string>
     <string name="crash_sheet_title">Krasj oppdaget</string>

@@ -280,11 +280,11 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
             mDownloadsViewModel.updateDownloadThumb(entity);
         } else if (iconId == R.drawable.ic_share_24) {
             shareItem(entity);
-        } else if (iconId == R.drawable.ic_send_lan_24) {
-            // "Send to browser" — LAN share, a full nav destination (same
-            // pattern as gif_maker/frame_grabber). The share server's
+        } else if (iconId == R.drawable.ic_p2p_send_24) {
+            // "Send directly" — P2P WebRTC share, a full nav destination
+            // (same pattern as gif_maker/frame_grabber). The engine session's
             // lifetime is the fragment's view lifetime.
-            NavigationUtils.navigateSafe(mNavController, R.id.lan_share, bundle);
+            NavigationUtils.navigateSafe(mNavController, R.id.p2p_send, bundle);
         } else if (iconId == R.drawable.ic_cloud_upload_24) {
             // "Back up to cloud" — encrypt + upload this finished download to
             // Cloud Backup. Action-driven: sets up the (shared) recovery code on
@@ -599,6 +599,8 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
         } else if (id == R.id.action_deselect_all) {
             mAdapter.deselectAll();
             setActionModeTitle(mAdapter.getSelectedSize());
+        } else if (id == R.id.action_receive) {
+            NavigationUtils.navigateSafe(mNavController, R.id.p2p_receive);
         } else if (id == R.id.action_safe) {
             Intent intent = new Intent(mActivity, VaultActivity.class);
             startActivity(intent);

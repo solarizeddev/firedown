@@ -37,6 +37,7 @@ expose the real media URL after the page's own JS runs (often on play). So:
 | `webrequests/`| `downloader@solarized.dev` | **ALL capture** — the former `parser@` extension was MERGED into this one. Two halves in one extension: (1) the per-site **parsers** (`js/parsers/` — one ES module per site: Twitter/X, Instagram, Threads, Facebook, Vimeo, Rumble, Bilibili.tv, Niconico, Kick, Twitch, Dailymotion, Apple Podcasts, News Over Audio, TikTok, Bluesky, Telegram, Videee, Spotify; emits entries **with metadata** — title, author, thumbnail, duration, quality variants) plus the page-state bridge (`js/page-state-bridge.js`); (2) the **generic catch-all** (`js/requests.js` + `js/content-script.js` — any media URL seen on the wire, no rich metadata). Also hosts `js/wasm-watch.js` (+ `js/wasm-probe.js`), the WASM-disabled detector — a settings feature, not capture. |
 | `youtube/`    | `youtube@solarized.dev`  | YouTube (separate; uses `PoTokenGenerator` on the Java side). |
 | `ublock/`     | uBlock Origin            | Ad blocking. |
+| `p2pshare/`   | `p2pshare@solarized.dev` | **Not capture** — the P2P direct-share WebRTC engine (see ""Send directly" — P2P share"). |
 | `icons/`, `search/`, `db/`, `error/` | — | Support. |
 
 There is **no separate `parser/` extension anymore** — it was merged into
@@ -225,7 +226,16 @@ see the HLS-master path below), covers every such site:
   `.ogg`/`.opus`/`.flac`/`.wav`/`.weba`** (`AUDIO_RE`) → progressive AUDIO variant
   (no resolution) — podcast/article audio inlined in page state (e.g. podverse's
   `__NEXT_DATA__.mediaUrl`, a substack TTS `audio_url`); `MEDIA_KEY_RE` therefore
-  carries `audio_?url`/`enclosure` keys alongside the video ones; a
+  carries `audio_?url`/`enclosure` keys alongside the video ones. **The audio
+  variant is marked `audioOnly: true`** and `VariantProcessor`'s skip-probe
+  branch honors it — the entity keeps the URL-derived audio mime + `audio` flag
+  and downloads as raw FILE (`HttpDownloadStrategy`), instead of the branch's
+  video/mp4 stamp (which once made a podverse podcast mp3 show as a VIDEO and
+  save under a `.mp4` name). The same mark flows from every bridge reader:
+  `mediaKindOf` has a third `"audio"` kind (an `audio/*` MIME or `AUDIO_RE`
+  extension — so an `.mp3` also never falls into the obfuscated-master HLS
+  default), and a DOM **`<audio>` element** types its sources audio regardless
+  of extension (a `.mp4`-container m4a on `<audio>` is still audio); a
   **SAME-ORIGIN non-media URL beside a `format`/`quality`/`segmentFormats` hint**
   → a tokenized **media-list DELEGATE** (e.g. a player whose source is
   `…/media/mp4/?s=<token>` returning `[{quality, videoUrl:…mp4}]`), resolved with
@@ -256,8 +266,12 @@ see the HLS-master path below), covers every such site:
 - **Emit + metadata.** Progressive → Background `kind:"page-state-progressive"` →
   `sendVariants` (skip-probe auto-set from any page `duration`; the variant
   carries only `height`, `width:0` — `JsonHelper` renders `"720p"`, never
-  `"0x720"`). **Request headers: the `<video>`-element MEDIA-REQUEST set, but NO
-  Referer/Origin/Cookie.** These URLs are query-signed/self-authorizing (verified
+  `"0x720"`). **Request headers: the MEDIA-ELEMENT request set, but NO
+  Referer/Origin/Cookie** — the `<video>`-element shape for video groups, and for
+  a declared-audio group (primary variant `audioOnly`) the `<audio>`-element
+  shape (Firefox's audio `Accept` string + `Sec-Fetch-Dest: audio` — a
+  video-shaped header set on an mp3 is exactly the deviation a header-gating CDN
+  rejects). These URLs are query-signed/self-authorizing (verified
   in practice: the real browser fetch carries no Referer/Origin/Cookie), so those are
   omitted — but some progressive CDNs still gate on the headers a real `<video>`
   fetch *always* carries: krakencloud's `/play/video/<token>` (series.ly) **404s a
@@ -584,6 +598,25 @@ and re-stamps the secondary metadatum the Downloads UI shows:
   truncated one just fails to decode. Reuses
   `FFmpegMetaDataReader.getStreams()` so the `"WxH"` / SVG-encoded-size
   formatting matches the parser path exactly.
+- **The refresh probe is de-duplicated and watchdog-bounded — keep both.** A
+  strategy that ALREADY probed the finished output file hands the duration over
+  via `DownloadCallback.onFileDurationProbed` (sealed-exempt, like
+  `onFileSizeKnown`) and the refresh **skips its own probe** — SABR's
+  inline-mux validation (`probePlayableDuration`) is the case: without the
+  hand-off every SABR finish probed the same file twice within a second. For
+  probes that still run, a **watchdog** (30 s, shared daemon scheduler in
+  `DownloadTask`) calls `reader.stop()` — the non-blocking native AVIO
+  interrupt, the same unwind a user Stop / tab-close uses on capture probes —
+  with a lock ordering watchdog-stop before `release()` (the GeckoInspectTask
+  rule: never `stop()` a freed reader). This is the sanctioned use of a timer
+  per the timer-vs-count rule: an unbounded external wait (native/FUSE) with a
+  correct fallback (keep/clear the stored duration). (History: the duplicate
+  probe was first suspected of *wedging* when a user-finished download's row
+  stuck on "Finishing…" forever — boundary logs later proved the pipeline
+  completes in milliseconds and the row was stuck because the FINISHED write's
+  **Room invalidation was lost**, see "Room invalidation" → the paging
+  direct-invalidation belt. The de-dup and watchdog remain as efficiency +
+  defense-in-depth.)
 
 ### HTML character references in scraped titles/descriptions
 
@@ -1025,6 +1058,27 @@ mirror's import) bypass Room's auto-refresh even with working tracking; the
 persistent triggers still mark the change, which the next Room-managed write
 flushes to observers.
 
+**The Downloads paging list ALSO has a direct-invalidation belt — keep it.**
+Persistent tracking mode did not close every invalidation hole: on-device
+(Room 2.8.4, Samsung) the tracker was observed **dropping the LAST write of a
+rapid burst** — a user-finished SABR download writes PROGRESS+PROCESSING then
+FINISHED ~100 ms apart, the FINISHED row lands in the DB, but no new paging
+generation ever fires, so the row sits on an indeterminate "Finishing…"
+until the screen is re-entered (intermittent; diagnosed with the checkpoint
+logs: `DownloadTask` "final write queued" present, `DownloadsViewModel`
+"downloads: new paging generation" absent — that pair is the tell for this
+class). The belt: `DownloadsViewModel.createPagingSource` registers every
+source it creates via `DownloadDataRepository.registerActivePagingSource`,
+and every repository write lambda on the DiskIO lane ends with
+`invalidateActivePagingSources()` — a **direct `PagingSource.invalidate()`**
+(public, thread-safe, idempotent; a no-op when Room's tracker already
+invalidated first), so a fresh generation is guaranteed per write regardless
+of tracker races. The registry is weak + cleared on each poke (an invalidated
+source is dead; its replacement re-registers on creation). Known limit: plain
+LiveData queries (the aggregates/section headers) have no invalidate() and
+still depend on the tracker — a dropped notification there self-heals on the
+next write; only the paging list has the belt.
+
 **Persistent mode is a ONE-WAY door — never run a pre-fix binary on a
 post-fix database.** The fixed build writes persistent triggers
 (`room_table_modification_trigger_download_*`) into the DB file. A PRE-fix
@@ -1269,128 +1323,308 @@ it covers both doors and every outcome) hides it once set. The flag lives in
 restore afresh while a within-install re-tap is not re-offered; Settings →
 "Restore previous downloads" stays as the deliberate retry door.
 
-## "Send to browser" — LAN share (`lanshare/`)
+## "Send directly" — P2P share (`p2pshare/`, WebRTC)
 
 The Downloads options sheet's quick-action row has a **Send** button
 (finished, non-safe entries only — **the vault is never sendable**, same
-contract as the backup mirror). It navigates to `LanShareFragment` — a
-**full nav-graph destination** in `nav_graph_downloads` extending
-`BaseFocusFragment`, same pattern as FrameGrabber/GifMaker (it was a bottom
-sheet originally, promoted because the QR/PIN handover wants a whole page;
-toolbar back / Stop both just pop the back stack) — which
-runs `LanShareServer` — a dependency-free `ServerSocket` HTTP server whose
-**lifetime is exactly the fragment's VIEW lifetime** (started in
-onCreateView, stopped in onDestroyView, hotspot reservation closed with
-it): no background service, no discovery
-announcement, nothing listens when the sheet isn't open. Any browser on the
-LAN (PC, phone, TV — and another Firedown, which downloads it through the
-normal pipeline since Firedown *is* a browser) opens `http://<ip>:53317`
-(ephemeral fallback if the port's taken) and gets Firedown-styled pages
-(served from `assets/lanshare/` templates with `{{TOKEN}}` substitution —
-the error-pages assets+Java pattern; firedown.app's design language).
-**Served pages are localized per REQUEST from the receiver's own
-`Accept-Language` header** (`resolveLang`/`strings`/`localize` in
-`LanShareServer`; the sender's locale is irrelevant — the reader is the
-other person): all user-visible strings live as `{{T_*}}` tokens resolved
-from `assets/lanshare/i18n.json` (the app's 16 locales + English; values
-may carry the trusted `<em>/<b>` markup and `{{DEVICE}}/{{N}}`
-placeholders), with per-key English fallback. The files page's JS button
-states come via `<body data-*>` attributes, not JS string literals (an
-apostrophe in a translation would break a literal). Gotcha fixed once
-already: inside the `.steps` flex `<li>`, the step text must be ONE
-`<span>` — a bare text node + `<b>` become separate flex items and the
-bold word drifts to the far edge.
+contract as the backup mirror). It navigates to `P2pSendFragment` — a full
+nav-graph destination in `nav_graph_downloads` extending `BaseFocusFragment`
+(same pattern as FrameGrabber/GifMaker). The receiver opens **Downloads →
+overflow → "Receive a file"** (`P2pReceiveFragment`). This REPLACED the old
+LAN share (`lanshare/` — `LanShareServer`/`LanShareTls`/`assets/lanshare/`,
+all deleted): the self-signed-TLS interstitial and the VPN/AP-isolation
+failure modes were judged worse than requiring Firedown on both ends. With
+LAN share went its manifest permissions (`ACCESS_WIFI_STATE`,
+`CHANGE_WIFI_STATE`, `ACCESS_FINE_LOCATION`, `NEARBY_WIFI_DEVICES`); the P2P
+scanner added `CAMERA` (runtime-requested ONLY on the scan screen,
+`uses-feature android.hardware.camera.any required=false`, paste fallback
+covers camera-less devices).
 
-**No common LAN — the direct-connection (hotspot) path.** Two phones on
-cellular share no network, so the LAN flow can't work. When
-`getLocalIpv4()` finds nothing, the sheet doesn't dead-end: it offers
-"Start direct connection" → `WifiManager.startLocalOnlyHotspot()` (no
-internet upstream, torn down with the sheet via `reservation.close()` in
-`stopSharing`). The same flow is ALSO reachable from LAN mode via the
-"Use direct connection instead" text button (`lan_share_use_direct`) —
-the **AP-isolation escape**: guest/café Wi-Fi that blocks
-client-to-client traffic is undetectable sender-side (the sheet looks
-fine, the receiver times out). In that path the Wi-Fi STA keeps its
-address, so step 2 resolves the URL with **`getHotspotIpv4(staIp)`**, not
-`getLocalIpv4()`: preference inverted to the AP interface
-(ap*/swlan*/softap* by name, or any address differing from the
-pre-hotspot STA address for vendors that name the AP wlan1/wlan2) —
-`getLocalIpv4()` would prefer the STA address, which a hotspot client
-can't reach. Step 1 repurposes the same sheet views as the join screen
-(URL chip = SSID, PIN slot = passphrase, QR = standard `WIFI:` payload any
-camera app joins from); the **Next** button flips to the normal URL/PIN QR,
-with the server bound on the hotspot's AP address. Platform tax: fine
-location permission at runtime (an Android requirement for hotspot APIs —
-manifest carries `ACCESS_FINE_LOCATION`+`CHANGE_WIFI_STATE` for exactly
-this; the browser never reads location) and location services must be on.
-Related, in `getLocalIpv4`: interface selection is an **allowlist**
-(`wlan/ap/swlan/softap/eth`), NOT "any site-local address" — carrier-grade
-NAT gives cellular `rmnet` interfaces 10.x addresses that pass
-`isSiteLocalAddress()`, so the old open fallback showed an unreachable
-carrier IP on a 5G-only device (and `tun*` VPN addresses are equally
-unreachable). After the hotspot is up the same method returns the AP
-address, because the wlan STA has none in that state. **VPN:** a
-sender-side VPN shows a warning line (`TRANSPORT_VPN` on the active
-network — block-LAN/kill-switch configs break local sockets); a
-RECEIVER-side VPN is undetectable from the sender, the docs/warning text
-is all we can do.
+**Transport: Gecko's own WebRTC DataChannel — deliberately NO libwebrtc
+dependency** (~10 MB/ABI to duplicate what GeckoView ships).
 
-**Access control:** the bare URL only ever yields the PIN page; the 4-digit
-PIN (shown big on the sender's sheet) sets a random `HttpOnly` session
-cookie that gates the file list and bytes; **3 wrong attempts lock the
-session permanently** (un-brute-forceable). The QR encodes `?pin=` so a
-scan authenticates in one hop; the typed URL stays short.
+**The WebRTC engine runs in a HIDDEN `GeckoSession`, NOT an extension
+background page — load-bearing, do not move it back.** `RTCPeerConnection.
+createOffer()` **HANGS FOREVER** in a WebExtension background page (it has no
+docShell / browsing context) but works exactly like a normal tab in a real
+content document — **proven on-device** (a datachannel sample works in a tab,
+not in the background page). So the engine (`assets/p2pshare/engine-page.js`)
+is a **page-world `<script>`** of the loopback page `http://127.0.0.1:<port>/engine`
+(`engine.html`, served by `P2pLoopbackServer`), loaded in a hidden
+`GeckoSession` that `P2pShareController` opens per share (mirrors
+`PoTokenGenerator`'s hidden-session pattern — `attachRuntime` hands the
+controller the runtime + `registerSession` registrar; `registerSession` runs
+**before** `session.open()` so the content script + native port bind). A page
+script has no `browser.runtime`, so a thin bridge **content script**
+(`content.js`, matched on `http://127.0.0.1/*`, gated to `/engine`) opens ONE
+native port (`"p2pshare"`) and relays page↔Java over `window.postMessage`
+(events out = `{p2p:"evt"}`, commands in = `{p2p:"cmd"}`). `GeckoRuntimeHelper.
+onConnect` hands that port to **`P2pShareController`** (the PoTokenGenerator
+ownership pattern — the port never lands in `mPorts`). Java owns all UI, the
+byte endpoints, the hidden session's lifecycle, and the post-transfer
+bookkeeping; the page owns only WebRTC. Verify engine changes with
+`node scripts/p2pshare-smoke.mjs` (vm-loads `engine-page.js` under a stubbed
+`window`, exercises the `__init`/`ready` handshake, the code codec, soft
+errors). Any change to `assets/p2pshare/` files needs the usual
+`manifest.json` **version bump** (the `ensureBuiltIn` cache trap).
 
-**Transport: self-signed TLS by default (`LanShareTls`).** A per-install EC
-P-256 identity generated by **AndroidKeyStore** (which mints the
-self-signed X.509 with the keypair — no BouncyCastle, no hand-rolled DER,
-key never leaves the keystore; per-install so the cert fingerprint is
-stable and a browser's stored "proceed" exception keeps working). What it
-buys: ECDHE forward secrecy, so a **passive sniffer gets only ciphertext**
-— the realistic capture cases are open Wi-Fi and shared-PSK WPA2 (anyone
-with the café password + your join handshake can decrypt your air);
-WPA3 and the LocalOnlyHotspot (random per-session passphrase) were already
-sniff-resistant. The **one port speaks both protocols**: the handler peeks
-the first byte (TLS ClientHello = `0x16`), wraps TLS via a `PrereadSocket`
-+ the layered `createSocket(Socket, host, port, autoClose)` overload (the
-JDK's consumed-bytes overload doesn't exist on Android), and answers plain
-HTTP with the **onboarding page** (`onboard.html`) — the receiver's
-on-ramp: typed `ip:port` and the QR both land there over http (no warning),
-it explains the upcoming interstitial with numbered steps, and Continue
-goes to `https://`. **The QR carries the PIN in the URL FRAGMENT**
-(`#p=NNNN`, never sent on the wire — nothing secret crosses the plaintext
-hop); the onboarding JS forwards it as `?pin=` to the https side, and
-without JS the receiver just types the PIN at the gate. If the keystore
-can't produce the identity, the server **falls back to serving plain
-HTTP** (degraded beats not sharing; the sheet's cert hint hides and the QR
-reverts to direct `?pin=`). The keystore key MUST whitelist
-`DIGEST_NONE` (BoringSSL signs the raw transcript digest — NONEwithECDSA;
-without it every handshake dies with 'Incompatible digest'), and the key
-managers are built explicitly (`FixedKeyManager`) — the default PKIX
-factory silently selects no AndroidKeyStore alias. Costs, accepted
-deliberately: the receiver clicks through ONE
-"connection not private" interstitial (waylaid by the onboarding page and
-explained on the **sender** sheet — `lan_share_cert_hint`), and an
-**ACTIVE MITM can still present its own self-signed
-cert** — indistinguishable to the receiver; cert-*pinned* verification is
-the LocalSend-protocol phase. **Chromium gotcha (observed on Brave): the
-download manager does NOT inherit the page's cert exception** — a native
-`<a download>` navigation fails its own TLS handshake
-(`CERTIFICATE_UNKNOWN`) before headers and dies as a 0-byte file named
-from the URL path. So `files.html` intercepts the Download click and
-fetches the bytes **in the page context** (which holds the exception) →
-`Blob` → object-URL `<a download>` save; browsers disk-back large blobs.
-On any failure it falls back to the native navigation (correct for the
-plain-HTTP mode), and the file URL carries the name as a trailing segment
-(`/f/<i>/<name>`, ignored server-side) so even that fallback names the
-file correctly. Do NOT try to fix the sniffing ceiling with
-in-page JS crypto instead: on an `http://<ip>` origin the browser disables
-`crypto.subtle` and ServiceWorkers entirely (insecure context), and
-routing GB-sized videos through JS decryption breaks the native download
-manager — TLS is the only mechanism that keeps the plain `<a download>`
-flow. File names are HTML-escaped in the served pages
-(user/site-controlled); the `Content-Disposition` carries an ASCII
-fallback + RFC 8187 UTF-8 name. QR via the existing zxing-core dependency.
+**Signaling is OFFLINE — there is no signaling server.** The offer/answer
+travel as compressed codes (`FDS1.`/`FDR1.` + base64url(deflate-raw(JSON)),
+~1–2 KB) shown as **QR codes** (zxing, same encoder the LAN share used) or
+sent through any messenger via the share sheet; paste is the no-camera path.
+Non-trickle ICE (gathering completes before the code is minted, 5 s cap) so
+ONE code carries everything, including the file metadata (name/size/mime/
+device) — the receiver previews and accepts **before anything connects** —
+and the DTLS fingerprint, which makes the channel **authenticated** E2E (a
+MITM can't survive a fingerprint carried out-of-band).
+
+**The flow is REMOTE-FIRST — most pairs are on different networks, sharing
+through a messenger — with two wrapper forms for each code:**
+- **Messenger form: `https://firedown.app/s#<code>`** (`toHttpsLink`) — what
+  the share sheet sends, for BOTH the offer and the reply. Chat apps auto-link
+  https where a custom scheme is dead text; the code rides in the `#fragment`,
+  which never reaches any server. A VERIFIED App Link (`autoVerify` filter on
+  `DownloadsActivity`, `assetlinks.json` live on firedown.app carrying the
+  RELEASE cert fingerprint) opens the app directly; unverified devices land on
+  the static `/s` bouncer page (firedown-website `s.html`) whose button fires
+  the firedown:// form.
+- **QR / in-person form: `firedown://p2p/<code>`** (`toDeepLink`) — what the
+  QR encodes, so any scanner (system camera included) offers "open in
+  Firedown". The QR lives COLLAPSED behind a "Nearby? Show the QR" row on both
+  screens — remote is the default, in-person the shortcut.
+`handleP2pDeepLink` routes both forms by prefix: an **FDS1 offer** →
+`p2p_receive` (`ARG_OFFER_CODE`); an **FDR1 reply** → the LIVE send session
+(`provideExternalAnswer`; no session → an honest "share no longer open"
+snackbar). So the remote round trip is share link → Accept → send reply →
+sender TAPS the reply in the chat — no scanning, no pasting. The sender's
+screen flips to a WAITING sub-stage after sharing (what-happens-next copy),
+auto-picks an FDR1 reply off the CLIPBOARD on resume (each clip value tried
+once, so a soft bad-code can't loop; Android's paste toast keeps the read
+visible), and keeps Paste as the manual fallback. The receive REPLY stage is
+shaped by HOW the offer arrived (`mArrivedRemote`): link/paste → "Send reply"
+share-sheet primary + folded QR; in-app scan → QR expanded, remote widgets
+hidden. `P2pShareController.stripDeepLink` unwraps both forms and bare codes
+everywhere codes are read. The
+only external party is **one STUN server** (address echo, no bytes),
+user-chosen in Settings → Downloads: `settings_p2p_stun_entries/values` in
+`arrays.xml` (Cloudflare default, Nextcloud:443 for UDP-3478-hostile
+networks, "custom" sentinel → text dialog in `SettingsFragment`, stored in
+`SETTINGS_P2P_STUN_CUSTOM`; resolve via `Preferences.getP2pStunServer`).
+**`iceServers` come from exactly THREE sources — the user's STUN choice, the
+user's optional custom TURN, and the first-party Firedown relay via FETCHED
+ephemeral credentials. Never a hardcoded fallback list, never baked
+credentials.** (A multi-STUN list queries every server on every share = IP
+leak to all of them; static TURN creds in an open-source APK hand the relay
+to the whole internet as an open proxy.) Same-LAN pairs connect on host
+candidates without touching any of them. The entries:
+- **STUN echo** — user-chosen (above).
+- **Custom TURN, opt-in, default OFF**: `SETTINGS_P2P_TURN_URL`/`_USER`/`_CRED`
+  (url+username+credential; typically the user's own coturn), edited via
+  `SettingsFragment.showTurnDialog`, resolved by `Preferences.getP2pTurn`
+  (null when unset).
+- **The Firedown relay (turn.firedown.app) — free, on by default, NO baked
+  secret** (maintainer decision: the relay fallback ships working; send-file
+  is not monetized). Each share session fetches short-lived coturn REST creds
+  from `Preferences.P2P_RELAY_CREDS_URL` (`api.firedown.app/v1/relay/creds` —
+  an anonymous GET, no identifiers; server half + the coturn abuse rails live
+  in firedown-api `handler_relay.go` + `deploy/turn-provision.sh`). The fetch
+  is cached until near expiry, bounded by short timeouts, and **failure
+  degrades gracefully** — the share proceeds direct+STUN-only, which is
+  exactly the pre-relay behavior. Privacy delta, stated honestly: starting a
+  share now touches api.firedown.app once (an unauthenticated creds GET); the
+  relay itself carries only DTLS ciphertext, and ICE uses it only when no
+  direct path exists.
+All three are threaded into the start command by `putIceServers` and
+assembled by the engine's `newPeerConnection(ice)` (`sanitizeIceServers`
+guards the ctor). A genuinely-unreachable pair with the relay fetch failed —
+CGNAT↔CGNAT, full-tunnel VPN — still fails honestly (`no-path` →
+`p2p_error_no_path`). Don't reintroduce a multi-STUN fallback list, and never
+replace the fetched-ephemeral-creds design with a static credential.
+
+**The answer returns automatically — the human-relayed reply is the last
+resort.** WebRTC needs an answer back (the receiver's candidates/DTLS
+fingerprint don't exist until Accept), and the answer has three tiers:
+1. **LAN return (`ans`)** — served by **`P2pAnswerServer`**, the ONLY thing
+   Firedown ever listens for on a LAN interface, deliberately tiny: one
+   token-gated `POST /answer` (16-byte token, carried only inside the offer
+   code), 16 KB body cap, first-delivery-wins, lifetime = the sender's offer
+   stage (binding prefers a `wlan*` site-local IPv4 so a VPN's tun address
+   isn't advertised; no LAN address → no `ans`). Same-network, instant, never
+   leaves the LAN.
+2. **Rendezvous (`rvz`)** — the always-on api mailbox
+   (`api.firedown.app/v1/p2p/a/<id>`, `Preferences.P2P_RENDEZVOUS_URL`; server
+   half `firedown-api handler_rendezvous.go`). The sender mints a 128-bit id,
+   embeds `<base>/a/<id>` in the offer and long-polls `…?wait=1`
+   (`P2pSignalingClient.pollAnswer`); the receiver's Accept POSTs the answer
+   there. This is what removes the reply step from a CROSS-NETWORK share —
+   Accept → connect, no tapping. In-memory, 5-min TTL, single-use, nothing
+   logged/persisted; the compressed-SDP answer transits RAM only, and the
+   codes' DTLS fingerprints keep a tampering relay from MITMing.
+3. **Human-relayed reply** — only reached via `deliverReplyFallback` when BOTH
+   above fail: a share-sheet https reply link the sender taps, or a QR on scan
+   arrival (see the remote-first flow above).
+
+**LAN + rendezvous race with HAPPY-EYEBALLS, not a strict sequence
+(`deliverAnswer`).** The receiver fires the LAN return immediately and, if it
+hasn't delivered within `ANSWER_RENDEZVOUS_HEADSTART_MS` (700 ms), ALSO fires
+the mailbox in parallel; first to arrive wins and the sender treats a later
+duplicate answer as a soft no-op (`signalingState`). This preserves
+"same-LAN never leaves the LAN" (a real listener answers in a few ms, so the
+mailbox never fires) while a sender behind a full-tunnel VPN/proxy — unreachable
+on its advertised `ans` endpoint — no longer pays that path's full ~4 s connect
+timeout BEFORE the mailbox starts. **That delay was fatal on-device:** a proxied
+sender is symmetric-NAT (relay is its ONLY usable candidate), and the answer
+landing ~5 s late meant the sender installed its TURN permissions after the
+peer's ICE had already given up — relay candidates on both sides, yet `no-path`.
+Do NOT revert to the old sequential `deliverAnswer → rendezvousOrReply →
+relayOrReply` chain (it serialized the dead LAN timeout in front of the mailbox).
+`postAnswer` reports delivery (`Consumer<Boolean>`) so the race can tell success
+from failure; the reply fallback fires only when BOTH push paths fail. The data
+path itself needs no LAN-vs-TURN logic — ICE nominates the working pair (host↔host
+fails on the VPN, relay↔relay wins) automatically, once the answer is timely.
+
+**The OFFER can be brokered for a SHORT link (`FDO1.<id>`) — the offer mailbox.**
+The self-contained offer (`FDS1.` = whole SDP + candidates + file meta, ~1–2 KB
+base64) makes a ~1166-char link/QR. So the sender ALSO uploads the full offer to
+the rendezvous **offer mailbox** (`/v1/p2p/o/<id>`, same id as its `/a/<id>`
+answer poll; `P2pSignalingClient.uploadOffer`) and the "Send link" action shares
+a short reference `https://firedown.app/s#FDO1.<id>` (`OFFER_REF_PREFIX`,
+`getShareContent` flips to it only AFTER the upload lands — a tap before then
+falls back to the full self-contained link, no regression). The receiver's
+`DownloadsActivity.routeCode` recognizes `FDO1.` → `ARG_OFFER_REF` →
+`startReceiveFromOfferRef` fetches the real offer from the mailbox
+(`fetchOffer`), then runs the normal receive. The engine NEVER sees `FDO1.` —
+Java resolves it to `FDS1.` before `recv-start`, so no engine change / no
+manifest bump. **The QR keeps the full `FDS1.` code** (`toDeepLink`) — in-person
+sharing needs no server and works offline. Offer mailbox: non-destructive read
+(the receiver may retry; the id IS the share capability, exactly like the full
+link — the single-use ANSWER still means only one party completes), 15-min TTL,
+no long-poll (the short link is enabled only after the upload, so a tapped link's
+offer is already there; unknown/expired → 204 → "link expired"). Privacy delta,
+stated honestly: with a short link the offer now ALSO transits the api in memory
+for its TTL (the answer already did) — still nothing logged/persisted, and the
+DTLS fingerprints still block a MITM.
+
+So same-LAN AND cross-network are both share/scan → Accept → transfer, with zero
+reply step in the common case. The connect no-path timer arms only when
+`connectionState` reaches "connecting" — NEVER at offer creation (signaling is
+human-paced; the old at-creation timer failed senders who were merely waiting to
+be scanned).
+
+**The mDNS-obfuscation flip is load-bearing for same-LAN ICE.** Firefox
+hides host ICE candidates behind mDNS `.local` names
+(`media.peerconnection.ice.obfuscate_host_addresses`); Android peers
+generally can't resolve those (no MulticastLock), so with obfuscation on a
+same-LAN pair finds NO host pair and ICE fails outright ("add a TURN
+server" — observed on-device). `P2pShareBaseFragment` flips it OFF for the
+share session (`setWebRtcIceObfuscation(false)`, chained after `setWebRTC`
+before `onEngineReady`) and restores ON in `onDestroyView` — browsing keeps
+the privacy feature; the share QR already hands the LAN IP to the peer
+physically. Don't remove the flip or the restore.
+
+**WebRTC is ALWAYS ON — the user toggle was REMOVED** (maintainer decision):
+the off-default broke real sites (Meet/Discord/WhatsApp calls) and forced the
+share flow into a pref-flip dance, while the classic local-IP leak the toggle
+guarded against is already covered by mDNS candidate obfuscation (kept ON for
+browsing, flipped only inside a share session — see above). Boot sets
+`setWebRTC(true)` unconditionally; the `SETTINGS_ENABLE_WEBRTC` key, Settings
+row, and the `p2p_rtc_note` disclosure line are gone. If a disable-style
+switch is ever reintroduced it needs a NEW pref key (the JIT/WASM inversion
+rule). **The pref-gated-global trap still applies structurally**
+(`RTCPeerConnection` is Pref-gated WebIDL evaluated **when a page global is
+created** — a page loaded with the pref off has NO constructor even after it
+flips on), which is why the machinery below stays even though the pref never
+changes anymore:
+1. **Start the engine only AFTER the pref write is applied.**
+   `P2pShareBaseFragment` still writes `setWebRTC(true)` (idempotent
+   belt-and-braces so a share can't race a cold boot's async pref write),
+   chains the mDNS-obfuscation flip, and fires `onEngineReady()` on
+   `.accept(...)` — `onEngineReady` drives the controller to
+   `openEngineSession()`. Firing that synchronously after the writes would
+   race them and load the page before the values are visible.
+2. **A fresh session per share, torn down in `stopSession`.** `startSend`/
+   `startReceive` call `stopSession` first (closing any prior engine session),
+   then `ensureEngineSession` opens a new one loading `getEnginePageUrl()`. The
+   page reports `{type:"ready", rtc:true}` once its script is live (via the
+   `__init` bridge handshake); the queued command runs on that event, an
+   `ENGINE_READY_TIMEOUT_MS` backstops a page that never comes up. Because the
+   session is fresh each time, there is **no sticky-`rtc`-ready / dead-ICE-stack
+   problem** (the old off→on cycle bug that needed a forced reload) — the whole
+   `ensure`/`reload`/`mForceEngineReload`/`mAwaitingReload` dance is **gone**.
+**Never fire the first engine command before the pref `GeckoResult` resolves,
+and never move the engine back into a background page** (createOffer hangs
+there — see the transport note above).
+
+**Bytes never cross the native-messaging bridge** (that would be
+base64-in-JSON per chunk). `P2pLoopbackServer` (127.0.0.1, ephemeral port,
+16-byte token, lifetime = share screen, same "nothing listens when the
+screen isn't open" contract as LAN share): the sender-side engine
+`fetch()`es `GET /read` and pumps the stream into the DataChannel (64 KB
+chunks, `bufferedAmountLow` backpressure, 4 MB high-water); the
+receiver-side engine batches ~4 MB and `POST /write?off=` — offsets are
+verified server-side so ordering on disk is guaranteed. The extension
+manifest carries the `http://127.0.0.1/*` host permission for this (Firefox
+match patterns ignore ports). `RestoredFileAccess.openReadOnly` serves the
+read side so a restored (foreign-owned) download is still sendable. On-device
+watch-item: the runtime sets `setLnaBlocking(true)` — if loopback fetches
+ever get blocked by Local Network Access enforcement, the host permission is
+the intended exemption; verify on a real device.
+
+**Completion is receiver-ack'd, then the file becomes a normal download.**
+The sender's `done` fires only on the receiver's `{"t":"rcvd"}` ack (sent
+AFTER the last loopback write) — `bufferedAmount` hitting 0 proves nothing
+about the far end. The receiver must **`waitBufferedDrain(dc)` before
+`pc.close()`** — `pc.close()` aborts SCTP immediately and would drop a
+still-buffered ack, hanging the sender; the sender also arms an
+`ACK_TIMEOUT_MS` after eof so a genuinely lost ack fails honestly instead of
+spinning forever. The receiver enforces the **accepted size**
+(`offer.size + OVERRUN_SLACK`): a modified sender that advertised "2 MB" can't
+stream tens of GB to fill the disk. The receiver writes to `<name>.part`, then
+`P2pShareController.finalizeReceivedFile` (disk executor) verifies the byte
+count, re-uniquifies (against disk AND the download table via `findByFilePath`
+— a path free on disk can be owned by a queued/errored row) + renames, inserts
+a `FINISHED` `DownloadEntity` (`file_url = "p2p://<device-slug>"` so the row's
+`MIME · domain` meta line names the transport honestly; mime is derived from
+the FILE, not the entity's stored label; Room invalidation refreshes the list,
+no poke) and calls `GalleryPublisher.publish`. An aborted/failed receive
+deletes the `.part`. **A bad scanned/pasted answer is SOFT** (`bad-code`): the
+engine keys softness on `signalingState` and treats every decode/apply failure
+before connect as recoverable (the offer QR stays valid) — never `fail()` the
+session on a mangled paste.
+
+**Scanner is a full-screen `DialogFragment` (`<dialog>` destination), NOT a
+`<fragment>` — load-bearing.** A `<fragment>` scanner destination would
+destroy the send/receive fragment's view on navigate →
+`P2pShareBaseFragment.onDestroyView` → `controller.stop()`, killing the live
+WebRTC session mid-handshake; the returning fragment mints a fresh offer the
+scanned answer can never match (the QR-reply path would ALWAYS fail, only paste
+worked). A dialog shows on top, leaving the caller's view — and its session —
+intact. `P2pScanFragment` uses CameraX (`camera-core/camera2/lifecycle/view`,
+the app's only camera use) + **zxing decode** of the Y plane (rowStride-
+compacted into a REUSED buffer — a fresh ~1-2 MB array per frame at 15-30 fps
+is needless GC churn; NO ML Kit / Play Services — de-Googled devices stay
+first-class). Result returns via the previous back-stack entry's
+`SavedStateHandle` (`P2pScanFragment.RESULT_CODE`, the
+CancelOperationDialogFragment pattern), validated against the expected
+`FDS1.`/`FDR1.` prefix before delivery. **Don't turn it back into a
+`<fragment>`.**
+
+**Session lifetime = view lifetime, but a back-press mid-transfer confirms
+first** (`P2pShareBaseFragment` `OnBackPressedCallback` + toolbar nav both go
+through `confirmThenClose`, gated on `controller.isTransferActive()` — set on
+the first `progress` event) so an accidental swipe-back doesn't silently
+discard an in-flight transfer. Clipboard paste goes through the shared
+`ClipboardHelper.readTrimmedText` (single `getPrimaryClip` + `coerceToText` —
+NOT a multi-call `getText` chain, which fires the Android-13 paste toast per
+call and reads empty for `text/uri-list` clips from Chromium browsers). The
+STUN setting is a **click-row chooser**, not a `ListPreference` (the latter
+fires no change event when you re-pick the already-selected "Custom…", so the
+URL became uneditable); the custom URL is scheme-validated (`stun:`/`turn:`)
+before persisting so a typo can't fail every future share in the
+`RTCPeerConnection` constructor.
+
+Strings are `p2p_*`/`settings_p2p_stun*`, translated across the same 16
+locales as the JIT toggle.
 
 ### Empty-focus "most visited" — the existing list, filled (not a new widget)
 
@@ -1972,6 +2206,179 @@ The invariants, each protecting against a shipped bug:
   session's deactivation through its `GeckoState` (`findGeckoStateBySession`)
   so the prompt-dismissal hook fires on the mCurrentId-drift re-attach too.
 
+## Tab persistence — the sessions file (v3, Fenix + Chromium hybrid; issue #292 OOM)
+
+The tab list persists to `filesDir/com_solarized_firedown_sessions.json`,
+written by `GeckoStateObserver` and read at boot by
+`GeckoStateDataRepository`. The current design exists because the old one
+(org.json whole-file slurp + inline `data:`-URI preview/icon blobs persisted
+verbatim per tab) produced a **deterministic `OutOfMemoryError` boot loop**
+(issue #292): base64 images are unbounded *text*, the read held ~2–3× the file
+(UTF-16 String + full JSONArray tree) against the 128 MB heap (no `largeHeap`),
+and the parsed blobs then stayed resident in `mGeckoStates` forever — so the
+OOM victim could be any later allocation (the reported stack was a 32-byte
+main-thread alloc). Everything below mirrors Firefox for Android
+(android-components `SessionStorage`/`BrowserStateWriter+Reader`); don't
+regress any layer independently:
+
+- **Versioned document, streamed both directions.** The file is
+  `{"version":3,"tabs":[…]}` streamed with `android.util.JsonWriter`/`JsonReader`
+  — never a whole-file String or parsed tree in either direction. The current
+  shape is **writer-controlled and read STRICTLY** (`readEntityStrict` — exact
+  types, unknown key/version THROWS → file moved aside; leniency there would
+  only mask writer bugs, Fenix's `BrowserStateReader` stance). The strict
+  reader accepts versions 2–3: **v2** carried each tab's session state INLINE
+  (`session`); **v3** writes only a `session_ref` file reference (see the
+  per-tab state-file bullet below) — a v2 file reads fully and the next
+  persist externalizes it to v3. A legacy bare-ARRAY file (pre-v2 builds) is
+  detected by the first token and read through the LENIENT per-field readers
+  (`next*Safe` — total by design: a bad field falls to its default, never
+  nukes the file; note `JsonReader.nextLong/nextInt` throw WITHOUT consuming
+  the token, hence each catch's `skipValue()`). That lenient path is one-time
+  migration — the next persist rewrites the current version. Adding a field =
+  writer + strict reader together, bump `SESSION_FILE_VERSION` if not
+  backward-readable (an APK downgrade across a bump = one-time tab reset,
+  Fenix-accepted).
+- **NO image data in the file, ever.** PREVIEW (og:image — shown nowhere in
+  the tab UI) is not written and not restored. A `data:` favicon is
+  externalized at persist time to a content-hash-named file under
+  `filesDir/tab_icons/` (`TabIconStore`) and referenced by path; the store is
+  pruned to the referenced set after every committed persist (empty list
+  clears it, like `deleteThumbnails`). `GlideHelper`'s favicon loader has a
+  local-path branch for these (with the `.svg`-mime flag). Fenix's session
+  file likewise carries no icon/thumbnail/preview keys at all.
+- **Atomic write with CORRECTLY-SCOPED failure containment.** tmp → fsync →
+  rename, in two phases: a failure while WRITING deletes the torn `.tmp`
+  (the boot read treats a present tmp as a fallback snapshot, so a torn one
+  must not survive) — but a COMPLETE, fsynced tmp is **KEPT** when the
+  rename dance fails. Landmine (shipped briefly): deleting the tmp on *any*
+  non-commit destroys the last good copy in the worst interleaving (target
+  deleted, second rename fails, process dies → neither file). That split is
+  `AtomicFile`'s actual `failWrite`/`finishWrite` semantics.
+- **Every OOM path is caught — the boot always completes.** `tryReadEntities`
+  catches `OutOfMemoryError` (+ IO/Runtime) → moves the file aside to a
+  `.corrupt` sibling (kept for post-mortem, pruned after 7 days);
+  `initializeGeckoStates` and `GeckoStateObserver.persist` also catch
+  `OutOfMemoryError` **deliberately** — an uncaught Error on the DiskIO
+  executor reaches Android's default uncaught handler and KILLS THE PROCESS,
+  which would resurrect the boot loop (Fenix's `SessionStorage.save` catches
+  OOM for the same reason). `MAX_SESSION_FILE_BYTES` (256 MB) is a parse-TIME
+  bound, not a memory bound — the streamed read's peak is one field; don't
+  lower it into the range where it fires before the reader on recoverable
+  legacy files (a 24 MB cap did exactly that).
+- **Concurrency model: one thread, deep copies.** The boot read, every
+  persist, and thumb writes all run on the single `@Qualifiers.DiskIO`
+  executor (FIFO — and the repo provider enqueues `initializeGeckoStates` at
+  DI time, so it always precedes the first persist; the tabs LiveData has no
+  initial value, so `observeForever` can't fire a pre-init empty write).
+  `notifyTabs` posts **deep-copied** entity snapshots, so persist never sees
+  a mutating list or torn fields. No lock is held across file IO on the
+  persist/boot-read paths; the ONE exception is the archive sweep
+  (`archiveInactiveTabsLocked`), which has always done its Room
+  insert/thumb-delete/purge IO under the `mGeckoStates` monitor on the disk
+  executor — the v3 inline-resolve read rides that pre-existing pattern
+  (one small immutable file per archived tab), it did not introduce it.
+- **Persists are BATCHED — fixed-interval, latest-wins, flushed on detach
+  (Fenix AutoSave parity, 2 s).** `onSessionStateChange` fires for scroll/form
+  settle, not just navigation, so unbatched every emission rewrote + fsynced
+  the whole metadata file. `GeckoStateObserver.onChanged` now just records the
+  latest snapshot and arms ONE `PERSIST_BATCH_MS` (2 s) main-thread timer;
+  `dispatchPending` hands the newest snapshot to the DiskIO executor. The
+  timer is deliberately **fixed-interval, NOT a trailing-reset debounce** — a
+  reset-on-every-event timer never fires under continuous scroll churn
+  (starvation); this shape guarantees at most one persist per window and at
+  latest one window after the first change. Kill-safety:
+  `ApplicationLifeCycleHandler` calls `flush()` right BEFORE detaching the
+  observer (pause AND destroy) — backgrounding is exactly when Android
+  reclaims processes, so the pending snapshot lands first. Residual exposure
+  is a mid-foreground hard kill losing ≤ one window of churn — the same trade
+  Fenix ships. Batching state is main-thread-confined (LiveData delivers
+  there; so do the lifecycle callbacks), no locks; `mHasPending` is a separate
+  flag because `null` is a legitimate snapshot (deleteAll).
+- **`session_ref` is re-anchored to THIS install's store dir at read time.**
+  Refs persist as absolute paths (the THUMB/tab_icons precedent), but a
+  user-profile transfer / OEM phone-clone migrates the files while
+  `filesDir`'s prefix changes — a verbatim ref would miss and silently
+  degrade every transferred tab to a URL-only restore. The strict reader's
+  SESSION_REF case runs `SessionStateStore.resolve(context, ref)` (basename →
+  current store dir; a normal install round-trips unchanged), and the next
+  persist rewrites the corrected path. Purely defensive for same-install use.
+- **Sessions are LAZY — only entities load at boot.** `initializeGeckoStates`
+  builds `GeckoState` wrappers (the ctor stores the entity; no `GeckoSession`).
+  A live session is created only by `getOrCreateGeckoSession()`, reachable
+  solely through `BrowserFragment.openSession(oneTab)` — the current tab at
+  startup (`ensureSessionConnected`) and a tab the user taps. Auto-archive
+  (default ON, 1-week) removes stale tabs from the live list at init and
+  closes any session they had. **Never add an eager create-sessions-for-all
+  loop** — one Gecko content session at cold start is the design (Fenix's
+  suspended-tabs model).
+- **Per-tab session-state files (v3) — the Chromium model, with Chromium's
+  bugs pre-fixed.** The remaining unbounded retention after v2 was every
+  tab's serialized session-state string held in `mGeckoStates` (Fenix retains
+  the same via `RecoverableTab.engineSessionState`). v3 removes it: the
+  sessions file stores only a `session_ref` (absolute path into
+  `SessionStateStore`, `filesDir/tab_states/`, content-hash-named `ss_<sha1>`
+  files) and the string loads lazily inside `getOrCreateGeckoSession()`
+  (`ensureSessionStateLoaded`) — **boot heap is O(opened tabs), not O(all
+  tabs)**. This is Chromium-on-Android's `TabStateFileManager` /
+  `TabPersistentStoreImpl` architecture (per-tab `tab<id>` files + a small
+  metadata file), adopted with the fixes their history teaches
+  (`SessionStateStore`'s class doc carries the full catalogue):
+  - **Immutable content-hash files** (tmp→rename, never rewritten): kills
+    Chromium's partial-overwrite corruption class outright, gives dirty-only
+    saves for free (unchanged state → same hash → exists() → no write —
+    their deduped save queue), and makes id-collision file clobbering
+    impossible (their `tab<id>` naming needed duplicate-id dedupe logic).
+  - **Per-file failure containment** (their `restoreTabState` → null → tab
+    loads its URL): `SessionStateStore.read` returns `""` on any failure and
+    the dangling ref is CLEARED, so `setGeckoViewSession`'s hasRestoredState
+    check falls to its plain loadUri branch. One corrupt/pruned file loses
+    one tab's history — never the tab, never the boot. The lazy read is
+    synchronous on the UI thread by design (states are small — Gecko caps
+    per-tab history ~50 entries; Chromium makes the same trade via
+    `StrictMode.allowThreadDiskReads` for its critical-path restore).
+  - **Prune consults every persisted reference domain** (their multi-window
+    cleanup re-reads ALL other instances' metadata before deleting —
+    crbug.com/40486025, "never destroy what you haven't proven
+    unreferenced"): Firedown's second domain is the tab ARCHIVE, so
+    `mapToArchivedEntity` **inlines the state string into the Room row at
+    archive time** (resolving the ref if needed) — the archive NEVER holds
+    refs, which makes the referenced set handed to `SessionStateStore.prune`
+    complete by construction. Don't add a new persisted holder of
+    `session_ref` without adding it to the referenced set.
+  - **Grace-based deferred deletion, bounded in TIME and COUNT** (their
+    `canTabStateBeDeleted` undo protection): prune touches referenced
+    files' mtime and deletes unreferenced ones only after `RETENTION_MS`
+    (24 h) — a close-undo finds its file intact; superseded states linger
+    bounded hours, not forever; a stray `.tmp` from process death dies
+    once stale. The grace alone is only a TIME bound, so prune ALSO caps
+    the young unreferenced backlog at `MAX_UNREFERENCED_FILES` (512,
+    oldest-mtime deleted first): onSessionStateChange fires for
+    scroll/form churn too (a heavy day can pile thousands of young files
+    before any ages out), and a backward clock jump gives files future
+    mtimes that never look stale — the count cap bounds both. Don't
+    remove either bound: they cover different failure shapes.
+  - **Cleanup only after a committed persist, single-flight, THROTTLED**
+    (their `cleanUpPersistentData` runs once after load, not per save):
+    the state prune runs from `writeSessionFile` after the rename landed,
+    on the single FIFO DiskIO executor — but only on the FIRST committed
+    persist after boot and hourly thereafter
+    (`STATE_PRUNE_INTERVAL_MS`), because its touch pass costs one utimes
+    per referenced file + a dir scan and persists fire on every tab
+    event. Safe under the grace math (referenced files are at most
+    prune-interval stale, ≪ 24 h). Don't move the prune back to
+    per-persist "for freshness" — that was pure inode churn. Cold-start
+    IO is exactly TWO file reads regardless of tab count: the metadata
+    file + the active tab's state file (more lazy than Chromium, which
+    background-batch-reads every tab file after startup via
+    `TabBatchLoader`; GeckoView needs a state only at session open, so
+    the background sweep is skipped entirely).
+  Entity semantics: `mSessionState` (live string) wins over
+  `mSessionStateRef` when both are set; the observer externalizes a live
+  string (re-hash → same file) and CARRIES a bare ref through without ever
+  reading state bytes. The deep-copy in `notifyTabs` copies both fields, so
+  a ref-only tab stays ref-only through persist.
+
 ## Tabs, sessions & delegate callbacks (foreground-only UI)
 
 A tab is a `GeckoState` (+ its `GeckoSession`), **not** a separate fragment.
@@ -2082,6 +2489,62 @@ with no notification. `onMediaPlay`/`onMediaPauseOrStop` call `refreshService()`
 which starts/updates the service directly (the tell was that the controller already
 *stopped* it directly via `stopService()` — only start was UI-delegated). So the
 notification follows actual playback, including a background tab that autoplays.
+
+### Text-selection highlight — the grey-selection wedge (window activation)
+
+Web-page text selection painting **opaque grey `#AAAAAA`** instead of the brand
+coral wash is NOT a color/theme bug — it's Gecko's **disabled (unfocused
+document) selection state**, and on this app it gets **permanently wedged**.
+The color chain has three layers, each fixed/mitigated separately:
+
+1. **The accent itself.** `::selection` (ColorID::Highlight) = the Android
+   theme's `android.R.attr.colorAccent` @ ~30% alpha, resolved by
+   `GeckoAppShell.getSystemColors()` against the **application context's**
+   theme. Android never applies the manifest `<application>` theme to that
+   context (only Activities get it; `ContextImpl.getTheme()` falls back to
+   platform DeviceDefault), so `App.onCreate` calls
+   `setTheme(R.style.Theme_FireDown_SplashScreen)` and that theme carries
+   `android:colorAccent = md_theme_primary`. **Both halves are required** —
+   the theme item alone is a silent no-op. Verified by the selection HANDLES
+   turning coral (they read the accent directly).
+2. **The ON/DISABLED state machine.** The accent wash is painted only while
+   the selection's document has DOM focus (`nsFrameSelection::
+   WillFocusDocument` → SELECTION_ON); a blurred/never-focused document
+   paints `TextSelectDisabledBackground` (`#AAAAAA`) — the same grey desktop
+   Firefox shows for a background window's selection. Document focus on
+   Android = `session.setFocused(true)` → chrome `browser.focus()`, driven
+   solely by the GeckoView's **Android view focus**.
+3. **The wedge (the real bug, lives in `widget/android/nsWindow.cpp`).**
+   `nsWindow::Show(true)` unconditionally `BringToFront()`s a newly shown
+   Gecko window — **every hidden GeckoSession this app opens (PoToken mint,
+   P2P engine) deactivates the visible tab's window and blurs its
+   document** — and `nsWindow::Destroy()` removes a window from
+   `gTopLevelWindows` **without re-activating the next one**. So
+   hidden-session churn leaves the tab window "list-top but not
+   focus-manager-active": `UserActivity()` no-ops (already list-top),
+   `GeckoView.requestFocus()` no-ops (already view-focused), and
+   `setFocused(true)` → `browser.focus()` dies in
+   `nsFocusManager::SetFocusInner` (`sendFocusEvent` requires
+   `isElementInActiveWindow`). **No app-side API can exit this state.**
+   Stock Fenix never trips it (no hidden-window churn), which is why the bug
+   is invisible upstream.
+
+Mitigation shipped here: `GeckoRuntimeHelper.applySelectionVisibilityPref()`
+sets `ui.textSelectDisabledBackground` = `rgba(240,113,108,0.35)` (brand
+coral, a hair off the active 78/255 alpha so `EnsureDifferentColors` doesn't
+nudge it) — the disabled state becomes visually identical to the active one,
+which is the right UX for a single-window phone browser anyway. **Root fix:
+firedown-geckoview patch `0008-android-window-activation-wedge.sh`** (marker
+`FIREDOWN-WINDOW-ACTIVATION`): tracks the activation holder explicitly,
+`Destroy()` hands activation to the next visible top-level window (async),
+`BringToFront()`'s guard requires the holder identity (not just "some active
+window exists"), and `UserActivity()` self-heals on touch. Reaches the app
+only via a GeckoView rebuild + `GECKOVIEW_BUILD_DATE` bump. The pref
+mitigation stays even then (covers genuinely-unfocused paint). Diagnostic
+probe (about:config, no build needed): set `ui.textSelectDisabledBackground`
+to `#ff0000` — selection turning red proves the disabled-state wedge; a
+selection that follows `ui.highlight` instead means focus is fine and the
+accent pipeline is the suspect.
 
 ## Page titles, history, bookmarks & favicons
 
@@ -2709,6 +3172,98 @@ rationale). New string keys (`settings_utc_timezone*`) are translated across the
 same 16 locales the JIT toggle uses; the remaining (already-partial) locales fall
 back to English (MissingTranslation isn't build-fatal here).
 
+### GeckoRuntime hardening prefs (`applyHardeningPrefs`) — privacy vs. breakage
+
+`GeckoRuntimeHelper.applyHardeningPrefs` sets a cluster of always-on IronFox-
+derived privacy prefs at boot (distinct from the user-facing HTTPS-only / disk-
+cache / Safe-Browsing toggles, which each have visible consequences and stay
+opt-in). The selection rule is **"high privacy gain, near-zero site breakage"** —
+these run for *every* user with no off switch, so a pref that silently breaks
+real sites fails the rule even if its privacy value is real. Two lessons live
+here:
+
+- **Referer `XOriginPolicy` must be `0`, NOT `2` (the pixiv-images bug).** `2`
+  means "send a cross-site Referer **only when the base domains (eTLD+1) match**",
+  which **strips the Referer entirely** on any request to a different base domain.
+  That silently breaks every site whose media/asset CDN lives on a **separate base
+  domain behind Referer-based hotlink protection** — the CDN sees no Referer and
+  returns **403**. The reported case was **pixiv**: the page is `www.pixiv.net`
+  (base `pixiv.net`) but images load from `i.pximg.net` (base `pximg.net`), so with
+  `XOriginPolicy=2` every `i.pximg.net` request 403'd while `s.pximg.net` static
+  JS/CSS (no hotlink check) still loaded — the page **rendered but showed no
+  artwork**, which reads as a Gecko/app bug, not a privacy pref. The fix is
+  `XOriginPolicy=0` (send the Referer cross-site) **with `trimmingPolicy=2`
+  retained** (trim to **origin only** — `https://www.pixiv.net/`, no path/query),
+  which is exactly stock desktop Firefox's `strict-origin-when-cross-origin` and
+  is the smallest change that satisfies the hotlink CDN. The privacy delta of `0`
+  vs `2` is only that the bare **origin** is sent cross-site (never the path) —
+  the same thing mainstream Firefox sends by default. **Never raise this back to
+  `2`** to "harden" cross-site Referer: the origin-only trim (`trimmingPolicy=2`)
+  is where the real privacy is; stripping the origin too just breaks hotlink CDNs.
+  Diagnosed by diffing two HARs of the same page — desktop Firefox sent
+  `Referer: https://www.pixiv.net/` → 200, Firedown sent no Referer → 403; the
+  Firedown HAR carried a Referer on only 3 of 75 cross-base-domain requests vs
+  Firefox's 95 of 102, the systematic tell of a strip-not-trim policy.
+  - **The long-press "save image" download needs the SAME Referer, set
+    separately.** The XOriginPolicy fix only covers what *GeckoView* fetches
+    while rendering the page. Saving an image via the browser context menu
+    (`BrowserFragment` `contextmenu_save_image`) builds a **bare native
+    `DownloadRequest`** that goes straight to `HttpDownloadStrategy` with the
+    URL + cookies but **no Referer** — so pixiv's `i.pximg.net` 403s it (the
+    same hotlink check, now hit by OkHttp instead of Gecko). Fix: the save-image
+    branch sets `.headers(BrowserHeaders.refererOriginHeaders(pageUri))`, where
+    `pageUri` is the context element's `baseUri` (the document URL) — trimmed to
+    **origin + "/"** (`https://www.pixiv.net/`, matching the browser's
+    cross-origin Referer). It threads through `DownloadRequest.headers` →
+    `DownloadContext` → every `HttpDownloadStrategy` request; `OriginInterceptor`
+    does NOT promote it to an `Origin` (no `Sec-Fetch-Site: same-origin`), so it
+    stays a Referer-only image GET like the browser's. Any other native
+    re-fetch of a page sub-resource is exposed to the same hotlink 403 —
+    reproduce the page's Referer, don't strip it.
+  - **Third surface: Captured-sheet thumbnails via Glide.** The Captured
+    sheet's remote image fetches (`GlideHelper.load(BrowserDownloadEntity…)`)
+    used to load http images via a bare `Uri.parse` model — no headers — so
+    every pixiv capture thumbnail 403'd into the broken-image fallback. Remote
+    plain-IMAGE fetches (a parser thumbnail URL, or an image capture's own
+    URL) now go through `buildGlideUrl(entity, source)`, which ships the
+    capture's cached request headers and **backfills a missing `Referer` from
+    the capture's page origin** (`BrowserHeaders.originWithSlash`). Video/audio
+    without a thumbnail keep the `Uri` model on purpose — that's the
+    `FFmpegUriDecoder` path (frame / embedded-art extraction), which reads its
+    headers from `GlideRequestOptions.HEADERS` instead.
+- **Weigh each pref against a mobile media browser's real use, not a desktop
+  privacy checklist.** The "Cluster C fingerprinting belt-and-braces" hard-
+  disables are **redundant with FPP/RFP when those are active**, so their only
+  marginal gain is "protection persists if the user turns RFP off" — which does
+  not justify removing user-visible functionality. Reviewed and split:
+  - **`device.sensors.enabled` and `media.webspeech.synth.enabled` are kept
+    ENABLED** (set `true` explicitly in `applyHardeningPrefs`, not omitted, so the
+    IronFox base build's default can't turn them off). Hard-disabling them killed
+    real features on a *mobile* browser: DeviceOrientation/Motion powers
+    360°/panorama/tilt/AR content (more common on mobile than desktop), and
+    SpeechSynthesis powers read-aloud / "listen to this article" /
+    language-learning TTS — disabling it is an **accessibility regression**. Both
+    are low-entropy vectors FPP/RFP already cover when active, so the privacy
+    trade was net-negative.
+  - **`dom.battery`, `dom.gamepad`, `dom.vr` stay DISABLED** — deprecated/niche
+    APIs with near-zero real-site value here, so the hard-disable costs nothing.
+  - **The Cluster B LNA blocking (`network.lna.*`) stays ON — do NOT disable it.**
+    It is not merely a niche home-lab protection: mobile sites (notably
+    Instagram/Facebook) have been caught opening **localhost/LNA connections from
+    the page to the site's own natively-installed app** to de-anonymize and track
+    the user across the app↔web boundary (the Meta/Yandex localhost-tracking
+    technique). LNA blocking is a direct defense against that, which outweighs the
+    rare legitimate local-network web app (Home Assistant / Jellyfin / router
+    setup). It **interacts with the P2P loopback server** (see the
+    `setLnaBlocking(true)` note in the P2P section — the `127.0.0.1` host
+    permission is the intended exemption; verify on-device), but that is an
+    exemption to arrange, not a reason to drop the protection.
+  - `network.captive-portal-service.enabled=false` (Cluster A) can suppress the
+    hotel/airport WiFi login page, mostly mitigated by Android's own OS-level
+    captive-portal detection — left as-is, noted as the remaining watch item.
+  When a "feature X silently does nothing" report comes in, check
+  `applyHardeningPrefs` before assuming a code bug.
+
 ## UI conventions (Material 3)
 
 - **Menu rows are M3 one-line list items: 56dp tall, 16sp text
@@ -2870,6 +3425,69 @@ for a scrolling list). NEXT_SYNC is a single-keyframe decode always past the
 intro. Keep the offset **small** — NEXT_SYNC only needs to clear the opening,
 and a large offset would clamp the many short clips this app captures to the
 head frame.
+
+## Settings IA — frequency-first root, doors for expert config
+
+The root Settings screen is FOUR categories — General / Downloads / Privacy /
+Firedown — after a simplification pass (was 7 categories, ~33 rows, ~5
+screen-heights). The rule, borrowed from the chip-rail convention: the root is
+**frequency-first**; once-ever expert config lives behind a door. Applied:
+
+- **Security is a DOOR at the end of Privacy** (`SETTINGS_SECURITY_SCREEN` →
+  `SecurityFragment` + `settings_security.xml`): the harden-at-a-cost toggles
+  (Block JS / Disable JIT / Enable DRM / Disable WebGL) + the WASM door — the
+  switches CLAUDE.md itself says "most users should never touch".
+- **Direct share is a DOOR at the end of Downloads** (`SETTINGS_P2P_SCREEN` →
+  `DirectShareFragment` + `settings_direct_share.xml`): the STUN chooser + TURN
+  editor moved verbatim (they were raw `stun:` URLs on the root). Lives with
+  Downloads because P2P share is a Downloads feature.
+- **The Cookies category was dissolved into Privacy** (cookie policy row +
+  Delete browsing data, destructive action last) — a 2-row category was
+  taxonomy noise; cookie policy IS privacy (Fenix's grouping).
+- Deliberately NOT full Fenix-style nesting (root = only doors): the project's
+  own precedent is anti-tap-tax (the Cloud screen was UN-nested because
+  reaching the plan took 4 taps). Nothing moved more than ONE level down.
+
+**Sub-screens must apply their prefs to Gecko THEMSELVES** — SettingsFragment's
+SharedPreferenceChangeListener is unregistered while a sub-screen is
+foreground (the `WasmFragment` pattern). `SecurityFragment` carries its own
+listener with the JS/JIT/DRM/WebGL branches; SettingsFragment keeps its
+matching branches as the defensive twin (only one listener is registered at a
+time, so no double-apply). **Keep the two in lockstep** — a semantics change
+in one without the other makes the toggle behave differently depending on
+which screen flipped it. Door keys are click-rows (`SETTINGS_SECURITY_SCREEN`,
+`SETTINGS_P2P_SCREEN`); the underlying toggle/pref KEYS are unchanged, so no
+migration. Door titles reuse the old category strings
+(`if_preferences_security`, `settings_p2p_category`) — already translated,
+zero new locale work.
+
+## In-app donations RETIRED — "Support Firedown" is a website handoff
+
+The native Value for Value donate screen (`DonateFragment` + the `donate/`
+package: `LightningInvoiceFetcher`, `BitcoinAddressProvider`, Lightning
+invoice/BTC QR plumbing, `fragment_donate.xml`, 8 donate-only drawables,
+~26 `donate_*` strings) was **removed entirely** (maintainer decision). The
+app's ONE money surface is the paid cloud-backup credit flow (the
+`claude/intelligent-cannon-c5izfr` monetization work: anonymous
+blind-signature credits, Lightning + Stripe rails) — a donate screen beside a
+purchase screen is two competing money-asks (donors feel they "already paid";
+would-be customers donate instead of buying credit), and the donate plumbing
+shared nothing with the credit flow's rails (mint `payRequest` BOLT11 /
+Stripe Checkout), so it was pure extra surface. Before this, the fiat "Card
+or PayPal" (Buy Me a Coffee) card had already been dropped from the screen.
+
+What remains: a **"Donate" row** (`settings_donate`) in Settings' app category
+(key unchanged — `Preferences.SETTINGS_DONATE`, a click-row so no
+key-inversion issue) that opens `settings_donate_url`
+(https://firedown.app/donate — /support is the HELP page, not donations)
+in a Firedown tab via the same OPEN_URI result handshake as the
+GitHub-issues row. Title-only, NO summary — it sits in the app category
+beside License/Help/About, which are all bare rows, and a lone summary
+read as out of place there (on-device review). Title translated across
+the 16 maintained locales. **The website must serve /donate** — the donate
+rails (LN address, BTC, fiat) live there now (firedown-website repo), not in
+the APK. Don't reintroduce an in-app donate/payment screen alongside the
+credit flow; if a donation surface ever returns, it's a website page.
 
 ## Conventions
 

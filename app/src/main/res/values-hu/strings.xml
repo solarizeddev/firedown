@@ -210,7 +210,6 @@
     <string name="settings_doh_server_title">Használja a Szolgáltatót</string>
     <string name="settings_doh_summary">Növelje az adatvédelmet azáltal, hogy megakadályozza a DNS-adatok lehallgatását és manipulálását.</string>
     <string name="settings_doh_title">DNS HTTPS-en keresztül</string>
-    <string name="settings_donate">Adományozás</string>
     <string name="settings_downloads">Letöltések</string>
     <string name="settings_downloads_free">Letöltések &lt;small&gt;(%s)&lt;/small&gt;</string>
     <string name="settings_downloads_path">Letöltések helye</string>
@@ -267,7 +266,6 @@
     <string name="pip_play">Lejátszás</string>
     <string name="pip_pause">Szünet</string>
     <string name="home_vault_button">Biztonságos mappa</string>
-    <string name="settings_webrtc_enabled_summary">Engedélyezi a valós idejű video- és hanghívásokat. Kikapcsolása csökkenti a hálózati szondázási felületet.</string>
     <string name="incognito_home_warning">A privát böngészés nem rejti el a tevékenységedet a hálózatod, a munkáltatód vagy a meglátogatott oldalak elől.</string>
 <string name="settings_theme_app_category">Alkalmazás megjelenése</string>
     <string name="crash_sheet_title">Összeomlás észlelve</string>

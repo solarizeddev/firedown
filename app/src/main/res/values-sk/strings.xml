@@ -209,7 +209,6 @@
     <string name="settings_doh_server_title">Použiť poskytovateľa</string>
     <string name="settings_doh_summary">Zvýšte súkromie tým, že zabránite odpočúvaniu a manipulácii s údajmi DNS.</string>
     <string name="settings_doh_title">DNS cez HTTPS</string>
-    <string name="settings_donate">Prispieť</string>
     <string name="settings_downloads">K stiahnutiu</string>
     <string name="settings_downloads_free">K stiahnutiu &lt;small&gt;(%s)&lt;/small&gt;</string>
     <string name="settings_downloads_path">Miesto sťahovania</string>
@@ -263,7 +262,6 @@
     <string name="vault_unsupported">Tento súbor sa nedá otvoriť. Ak ho chcete otvoriť, presuňte ho z bezpečného priečinka a skúste to znova.</string>
     <string name="bookmark_name">Názov</string>
     <string name="home_vault_button">Bezpečný priečinok</string>
-    <string name="settings_webrtc_enabled_summary">Umožňuje videohovory a hlasové hovory v reálnom čase. Vypnutie zmenšuje plochu sieťového sondovania.</string>
     <string name="incognito_home_warning">Anonymné prehliadanie neskrýva vašu aktivitu pred sieťou, zamestnávateľom ani navštívenými stránkami.</string>
 <string name="settings_theme_app_category">Vzhľad aplikácie</string>
     <string name="crash_sheet_title">Zistené zlyhanie</string>

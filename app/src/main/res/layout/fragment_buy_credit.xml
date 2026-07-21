@@ -260,7 +260,7 @@
                 android:layout_gravity="center"
                 android:layout_marginTop="16dp"
                 android:padding="8dp"
-                android:background="@drawable/bg_lan_share_qr"
+                android:background="@drawable/bg_p2p_qr"
                 android:contentDescription="@string/buy_credit_ln_qr_desc" />
 
             <LinearLayout

@@ -38,5 +38,18 @@ public interface DownloadCallback {
 
     void onDurationResolved(long duration, String formatted);
 
+    /**
+     * Reports a duration the strategy ALREADY probed from the finished
+     * output file itself (not the capture-time/parser estimate — that goes
+     * through {@link #onDurationResolved}). Honoured even when sealed, like
+     * {@link #onFileSizeKnown}: it's non-destructive ground-truth metadata,
+     * and the user-finish path is sealed when it fires. Lets the task's
+     * post-download {@code refreshMetadataFromFile} skip re-probing the
+     * same file seconds later — the duplicate probe SABR's inline-mux
+     * validation otherwise causes (and the prime suspect in the "Finishing…
+     * spins forever" wedge, where the second probe never returned).
+     */
+    void onFileDurationProbed(long duration);
+
     void onFinished();
 }

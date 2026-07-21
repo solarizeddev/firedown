@@ -220,7 +220,6 @@
     <string name="settings_doh_server_title">استخدم المزود</string>
     <string name="settings_doh_summary">قم بتعزيز الخصوصية من خلال منع التنصت والتلاعب ببيانات DNS.</string>
     <string name="settings_doh_title">DNS عبر HTTPS</string>
-    <string name="settings_donate">تبرَّع</string>
     <string name="settings_downloads">التحميلات</string>
     <string name="settings_downloads_free">التحميلات &lt;small&gt;(%s)&lt;/small&gt;</string>
     <string name="settings_downloads_path">موقع التنزيلات</string>
@@ -293,7 +292,6 @@
     <string name="pip_play">تشغيل</string>
     <string name="pip_pause">إيقاف مؤقت</string>
     <string name="home_vault_button">مجلد آمن</string>
-    <string name="settings_webrtc_enabled_summary">يتيح مكالمات الفيديو والصوت في الوقت الفعلي. التعطيل يقلل مساحة استكشاف الشبكة.</string>
     <string name="incognito_home_warning">التصفح الخاص لا يخفي نشاطك عن شبكتك أو صاحب العمل أو المواقع التي تزورها.</string>
     <string name="wasm_snackbar_message">يحتاج %s إلى WebAssembly</string>
     <string name="wasm_snackbar_action_enable">تفعيل</string>

@@ -738,26 +738,48 @@ public class RunnableManager extends Service {
 
 		Log.d(TAG, "Executor finishDownloadToExecutor IN");
 
-		DownloadEntity entity = null;
+		ArrayList<DownloadEntity> entities = new ArrayList<>();
 
 		if (intent.hasExtra(Keys.ITEM_ID)) {
-			entity = intent.getParcelableExtra(Keys.ITEM_ID);
+			DownloadEntity entity = intent.getParcelableExtra(Keys.ITEM_ID);
+			if (entity != null) {
+				entities.add(entity);
+			}
 		} else if (intent.hasExtra(Keys.ITEM_LIST_ID)) {
 			ArrayList<DownloadEntity> downloadEntities = intent.getParcelableArrayListExtra(Keys.ITEM_LIST_ID);
-			entity = downloadEntities != null && !downloadEntities.isEmpty() ? downloadEntities.get(0) : null;
+			if (downloadEntities != null) {
+				entities.addAll(downloadEntities);
+			}
 		}
 
-		if (entity == null) {
+		if (entities.isEmpty()) {
 			Log.w(TAG, "finishDownloadToExecutor: no entity");
 			return;
 		}
 
+		// Finish EVERY entity in the intent — the list form is a multi-select,
+		// and the old code took only get(0), silently leaving the rest
+		// downloading.
+		for (DownloadEntity entity : entities) {
+			if (entity != null) {
+				finishOneDownload(entity);
+			}
+		}
+
+		Log.d(TAG, "Executor finishDownloadToExecutor OUT");
+	}
+
+
+	private void finishOneDownload(DownloadEntity entity) {
+
 		int id = entity.getId();
+		boolean matched = false;
 
 		// Active tasks
 		for (DownloadTask task : mActiveTasks) {
 			if (id == task.getFileId()) {
 				Log.d(TAG, "finishDownload stopping active: " + id);
+				matched = true;
 				task.sealWithStatus(Download.FINISHED);
 				// Don't updateRepository() — the download thread is still running
 				// (muxing for SABR/FFmpeg). onRunComplete will do the final DB write
@@ -780,35 +802,43 @@ public class RunnableManager extends Service {
 			}
 		}
 
-		// Queued tasks — not running, safe to recycle immediately
+		// Queued tasks — not running, safe to recycle immediately. Find first,
+		// act after: recycleTask mutates mQueueTasks, so acting inside the
+		// iteration only worked because of the immediate break.
+		DownloadTask queuedTask = null;
 		for (DownloadTask task : mQueueTasks) {
 			if (id == task.getFileId()) {
-				Log.d(TAG, "finishDownload stopping queued: " + id);
-				task.sealWithStatus(Download.FINISHED);
-				task.updateRepository();
-				DownloadRunnable runnable = task.getRunnable();
-				if (runnable != null) {
-					runnable.stop();
-					mDownloadThreadPool.remove(runnable);
-				}
-				synchronized (mQueuedFileTasks) {
-					mQueuedFileTasks.remove(task.getFilePath());
-				}
-				recycleTask(task);
+				queuedTask = task;
 				break;
 			}
 		}
+		if (queuedTask != null) {
+			Log.d(TAG, "finishDownload stopping queued: " + id);
+			matched = true;
+			queuedTask.sealWithStatus(Download.FINISHED);
+			queuedTask.updateRepository();
+			DownloadRunnable runnable = queuedTask.getRunnable();
+			if (runnable != null) {
+				runnable.stop();
+				mDownloadThreadPool.remove(runnable);
+			}
+			synchronized (mQueuedFileTasks) {
+				mQueuedFileTasks.remove(queuedTask.getFilePath());
+			}
+			recycleTask(queuedTask);
+		}
 
-		// Orphan — no matching task, update entity directly
-		if (!isTaskInLists(id)) {
+		// Orphan — no matching task, update entity directly. Gated on the
+		// match flag, not isTaskInLists(): a just-recycled queued task is
+		// already out of the lists, and re-adding the intent's parcel copy
+		// here would overwrite the task entity's fresher fields.
+		if (!matched) {
 			entity.setFileStatus(Download.FINISHED);
 			mDownloadRepository.add(entity);
 			synchronized (mQueuedFileTasks) {
 				mQueuedFileTasks.remove(entity.getFilePath());
 			}
 		}
-
-		Log.d(TAG, "Executor finishDownloadToExecutor OUT");
 	}
 
 

@@ -203,7 +203,6 @@
     <string name="settings_doh_server_title">Провайдерді пайдаланыңыз</string>
     <string name="settings_doh_summary">DNS деректерін тыңдау және манипуляциялауды болдырмау арқылы құпиялылықты арттырыңыз.</string>
     <string name="settings_doh_title">HTTPS арқылы DNS</string>
-    <string name="settings_donate">Ерікті жарна енгізу</string>
     <string name="settings_downloads">Жүктеулер</string>
     <string name="settings_downloads_free">Жүктеулер &lt;small&gt;(%s)&lt;/small&gt;</string>
     <string name="settings_downloads_path">Жүктеп алу орны</string>

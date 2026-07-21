@@ -4,23 +4,28 @@ package com.solarized.firedown.phone.dialogs;
 import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
 import android.content.res.Configuration;
-import android.graphics.Rect;
 import android.os.Bundle;
+import android.text.Layout;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.StringRes;
+import androidx.appcompat.content.res.AppCompatResources;
 import androidx.appcompat.widget.AppCompatImageView;
+import androidx.appcompat.widget.TooltipCompat;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
-import com.google.android.material.materialswitch.MaterialSwitch;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.snackbar.Snackbar;
 import com.solarized.firedown.GlideHelper;
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.Preferences;
@@ -30,17 +35,22 @@ import com.solarized.firedown.data.entity.OptionEntity;
 import com.solarized.firedown.data.models.BrowserDialogViewModel;
 import com.solarized.firedown.data.models.GeckoStateViewModel;
 import com.solarized.firedown.data.models.IncognitoStateViewModel;
+import com.solarized.firedown.data.models.WebBookmarkViewModel;
+import com.solarized.firedown.data.repository.WebBookmarkDataRepository;
 import com.solarized.firedown.geckoview.GeckoState;
 import com.solarized.firedown.ui.IncognitoColors;
 import com.solarized.firedown.ui.browser.BackwardBrowserButton;
 import com.solarized.firedown.ui.browser.BasicBrowserButton;
+import com.solarized.firedown.ui.browser.BookmarkBrowserButton;
 import com.solarized.firedown.ui.browser.ForwardBrowserButton;
+import com.solarized.firedown.ui.browser.QuickRowLabels;
 import com.solarized.firedown.ui.browser.ReloadBrowserButton;
 import com.solarized.firedown.utils.NavigationUtils;
 import com.solarized.firedown.utils.WebUtils;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 import javax.inject.Inject;
 
@@ -58,16 +68,29 @@ import dagger.hilt.android.AndroidEntryPoint;
  *
  * <p>State-dependent UI lives here, not in the layout:</p>
  * <ul>
- *   <li><b>Bookmark page row</b> flips its drawableStart icon and
- *       label between outline/"Bookmark page" and filled/"Edit
- *       bookmark" based on {@code mHasBookmark}; the dispatched
- *       OptionEntity id swaps in lockstep.</li>
+ *   <li><b>Bookmark star</b> (in the quick-row header) flips its
+ *       icon/label/tint between outline·"Bookmark" and filled·amber
+ *       ·"Saved" based on {@code mHasBookmark}, and toggles the
+ *       bookmark <i>in place</i> (add/delete on the shared
+ *       {@link WebBookmarkViewModel}, whose repository is a singleton
+ *       so the star reads the same source of truth as the Bookmarks
+ *       library) with an Edit/Undo confirmation snackbar. Replaces the
+ *       old buried "Bookmark page" list row.</li>
+ *   <li><b>Two icon rows</b> — controls (Back/Forward/Bookmark★/Refresh)
+ *       and page actions (Find/Desktop/Share/Save) — share one icon-only
+ *       fit decision: a pre-layout estimate ({@link QuickRowLabels#iconOnly},
+ *       width + font scale) picks the initial mode, then a post-measure
+ *       check ({@link #scheduleQuickRowFitCheck()}) drops BOTH rows to
+ *       icon-only if any TRANSLATED label would still ellipsize at its real
+ *       column width. Icons never move, so the star never re-hides; every
+ *       button keeps its full name as contentDescription + tooltip.</li>
  *   <li><b>Vault row</b> swaps to Downloads in incognito (icon +
  *       label + dispatched id) — incognito chrome lacks a Downloads
  *       card and Vault deliberately doesn't surface from private
  *       browsing.</li>
- *   <li><b>Desktop site switch</b> mirrors the current page's
- *       {@code isDesktop()} on inflate.</li>
+ *   <li><b>Desktop icon</b> (page-actions row) highlights in the accent
+ *       tint when the tab is in desktop mode — see
+ *       {@link #applyDesktopState()}.</li>
  *   <li><b>Quit row</b> stays GONE unless
  *       {@link Preferences#SETTINGS_QUIT_PREF} is on; rendered in the
  *       destructive .Final variant so the colour treatment matches
@@ -81,8 +104,11 @@ public class PopupBrowserSheetDialogFragment extends BaseBottomSheetDialogFragme
     private BrowserDialogViewModel mBrowserDialogViewModel;
     private GeckoStateViewModel mGeckoStateViewModel;
     private IncognitoStateViewModel mIncognitoStateViewModel;
+    private WebBookmarkViewModel mWebBookmarkViewModel;
     private boolean mHasBookmark;
     private ReloadBrowserButton mReloadBrowserButton;
+    private BookmarkBrowserButton mStarButton;
+    private boolean mIconOnly;
     private GeckoState mGeckoState;
     private AppCompatImageView mFavicon;
     private TextView mTitle;
@@ -98,59 +124,24 @@ public class PopupBrowserSheetDialogFragment extends BaseBottomSheetDialogFragme
     public void onDestroyView() {
         super.onDestroyView();
         mReloadBrowserButton = null;
+        mStarButton = null;
         mFavicon = null;
         mTitle = null;
         mHost = null;
     }
 
 
-    /**
-     * No dimen cap — the popup FILLS to just under the toolbar, the same sizing
-     * the Captured-content holder uses, so the two sheets match height instead
-     * of the popup hugging its rows (which left it shorter than Capture). The
-     * fixed height is applied in {@link #onStart()}; the inner NestedScrollView
-     * (weight 1) scrolls when the rows exceed the viewport.
-     */
     @Override
     protected boolean isMaxHeightCapped() {
         return false;
     }
 
-    /**
-     * Size the sheet to the visible viewport minus the toolbar (mirrors
-     * {@code BrowserOptionHolderSheetDialogFragment}), so the popup stops just
-     * under the chrome and matches the Captured sheet's height. The pinned
-     * header keeps its natural height and the weighted NestedScrollView fills
-     * the rest. Run after super.onStart() (which clears the dimen cap and
-     * expands the sheet).
-     */
+
     @Override
     public void onConfigurationChanged(@NonNull Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
-        sizePopupContent();
-    }
-
-    /**
-     * Size the {@code popup_content} child to {@code visibleRect.height() -
-     * mActionBarSize} so the sheet sits flush just under the toolbar (no
-     * overlap), matching the Captured holder. The FrameLayout root wraps this
-     * child, so the sheet follows it; the base's onStart expands it and the
-     * weighted NestedScrollView fills the space below the pinned header and
-     * scrolls.
-     */
-    private void sizePopupContent() {
-        if (mView == null || mActivity == null) return;
-        View content = mView.findViewById(R.id.popup_content);
-        if (content == null) return;
-        ViewGroup.LayoutParams params = content.getLayoutParams();
-        if (params == null) return;
-        Rect visibleRect = new Rect();
-        mActivity.getWindow().getDecorView().getWindowVisibleDisplayFrame(visibleRect);
-        int height = visibleRect.height() - mActionBarSize;
-        if (height > 0) {
-            params.height = height;
-            content.setLayoutParams(params);
-        }
+        applyQuickRowLabelMode();
+        applyStarState();
     }
 
     @Nullable
@@ -159,7 +150,6 @@ public class PopupBrowserSheetDialogFragment extends BaseBottomSheetDialogFragme
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
         mView = inflater.inflate(R.layout.fragment_dialog_browser_popup, container, false);
-        sizePopupContent();
 
         // Guard: peekCurrentGeckoState can return null if the popup was
         // opened in an inconsistent state (process restoration, tab
@@ -172,7 +162,8 @@ public class PopupBrowserSheetDialogFragment extends BaseBottomSheetDialogFragme
         bindIdentity();
         bindQuickRow();
         bindRows();
-        applyBookmarkState();
+        applyQuickRowLabelMode();
+        applyStarState();
         applyIncognitoSwap();
         applyDesktopState();
         applyQuitVisibility();
@@ -249,26 +240,85 @@ public class PopupBrowserSheetDialogFragment extends BaseBottomSheetDialogFragme
 
 
     /**
-     * Wires the top quick-row (Back / Forward / Share / Refresh).
-     * Back and Forward inherit enabled-state from the gecko session.
+     * Wires BOTH quick-row icon rows: the controls row (Back / Forward /
+     * Bookmark★ / Refresh) and the page-actions row (Find / Desktop / Share /
+     * Save). They read as one action block and share the icon-only fit logic.
+     *
+     * <p>Each button's SHORT visible label is stashed in a tag (so the
+     * icon-only ↔ labelled toggle can restore it), and its FULL name —
+     * the {@code contentDescription} declared in XML for the row-2 buttons,
+     * or the label itself for row 1 — becomes the TalkBack name + long-press
+     * tooltip, so dropping the visible text never drops meaning.</p>
+     *
+     * <p>Dispatch: every button fires its id via {@link #onClick} (dismissing
+     * the sheet) EXCEPT the bookmark star, which toggles the bookmark
+     * <i>in place</i> and keeps the sheet open — so it gets its own listener
+     * and a stored reference for {@link #applyStarState()}. Row-1 nav buttons
+     * additionally carry the gecko session's back/forward enabled-state.</p>
      */
     private void bindQuickRow() {
-        View headerView = mView.findViewById(R.id.popup_header);
-        for (int i = 0; i < ((ViewGroup) headerView).getChildCount(); i++) {
-            View v = ((ViewGroup) headerView).getChildAt(i);
-            if (!(v instanceof BasicBrowserButton)) continue;
+        // Accessibility + restore-label for every button in both rows.
+        forEachQuickRowButton(button -> {
+            CharSequence shortLabel = button.getText();
+            button.setTag(R.id.quick_row_label, shortLabel);
+            CharSequence accessible = button.getContentDescription();
+            if (accessible == null) accessible = shortLabel;
+            button.setContentDescription(accessible);
+            TooltipCompat.setTooltipText(button, accessible);
+        });
 
-            v.setOnClickListener(this);
-
-            if (v instanceof ReloadBrowserButton) {
-                mReloadBrowserButton = (ReloadBrowserButton) v;
-            } else if (v instanceof BackwardBrowserButton backward) {
-                backward.setClickable(mGeckoState.canGoBackward());
-                backward.setEnabled(mGeckoState.canGoBackward());
-            } else if (v instanceof ForwardBrowserButton forward) {
-                forward.setClickable(mGeckoState.canGoForward());
-                forward.setEnabled(mGeckoState.canGoForward());
+        // Row 1 — controls: star (in place), nav enabled-state, reload ref.
+        View header = mView.findViewById(R.id.popup_header);
+        if (header instanceof ViewGroup group) {
+            for (int i = 0; i < group.getChildCount(); i++) {
+                View v = group.getChildAt(i);
+                if (!(v instanceof BasicBrowserButton button)) continue;
+                if (button instanceof BookmarkBrowserButton star) {
+                    mStarButton = star;
+                    star.setOnClickListener(view -> onBookmarkStarClicked());
+                    continue;
+                }
+                button.setOnClickListener(this);
+                if (button instanceof ReloadBrowserButton) {
+                    mReloadBrowserButton = (ReloadBrowserButton) button;
+                } else if (button instanceof BackwardBrowserButton backward) {
+                    backward.setClickable(mGeckoState.canGoBackward());
+                    backward.setEnabled(mGeckoState.canGoBackward());
+                } else if (button instanceof ForwardBrowserButton forward) {
+                    forward.setClickable(mGeckoState.canGoForward());
+                    forward.setEnabled(mGeckoState.canGoForward());
+                }
             }
+        }
+
+        // Row 2 — page actions: plain buttons that dispatch their id (same
+        // contract the old Find/Desktop/Share/Save text rows had).
+        View actions = mView.findViewById(R.id.popup_actions_row);
+        if (actions instanceof ViewGroup group) {
+            for (int i = 0; i < group.getChildCount(); i++) {
+                View v = group.getChildAt(i);
+                if (v instanceof MaterialButton button) button.setOnClickListener(this);
+            }
+        }
+    }
+
+
+    /**
+     * Runs {@code fn} over every {@link MaterialButton} in both quick-row
+     * containers (controls row + page-actions row). Central so the label /
+     * accessibility / fit passes all iterate the same set.
+     */
+    private void forEachQuickRowButton(Consumer<MaterialButton> fn) {
+        forEachButtonIn(R.id.popup_header, fn);
+        forEachButtonIn(R.id.popup_actions_row, fn);
+    }
+
+    private void forEachButtonIn(int containerId, Consumer<MaterialButton> fn) {
+        View c = mView == null ? null : mView.findViewById(containerId);
+        if (!(c instanceof ViewGroup group)) return;
+        for (int i = 0; i < group.getChildCount(); i++) {
+            View v = group.getChildAt(i);
+            if (v instanceof MaterialButton button) fn.accept(button);
         }
     }
 
@@ -276,22 +326,18 @@ public class PopupBrowserSheetDialogFragment extends BaseBottomSheetDialogFragme
     /**
      * Hooks every list row. Most rows route through the shared
      * {@link #onClick(View)} since their view id matches the wire id
-     * the BrowserFragment dispatcher listens for; Bookmark page and
-     * Vault use specialised listeners because the dispatched id
-     * depends on state (mHasBookmark / mIsIncognito).
+     * the BrowserFragment dispatcher listens for; Vault uses a
+     * specialised listener because the dispatched id depends on state
+     * (mIsIncognito). Bookmarking is the quick-row star, and the page
+     * actions (Find / Desktop / Share / Save) are the page-actions icon
+     * row — both wired in {@link #bindQuickRow()}, not here.
      */
     private void bindRows() {
         mView.findViewById(R.id.popup_bookmarks).setOnClickListener(this);
-        mView.findViewById(R.id.popup_find).setOnClickListener(this);
-        mView.findViewById(R.id.popup_save_snapshot).setOnClickListener(this);
-        mView.findViewById(R.id.popup_desktop).setOnClickListener(this);
         mView.findViewById(R.id.popup_history).setOnClickListener(this);
         mView.findViewById(R.id.popup_sync).setOnClickListener(this);
         mView.findViewById(R.id.popup_settings).setOnClickListener(this);
         mView.findViewById(R.id.popup_quit).setOnClickListener(this);
-
-        mView.findViewById(R.id.popup_bookmark_page).setOnClickListener(view -> dispatch(
-                mHasBookmark ? R.id.popup_bookmark_edit : R.id.popup_bookmark_add));
 
         mView.findViewById(R.id.popup_vault).setOnClickListener(view -> dispatch(
                 mIsIncognito ? R.id.popup_downloads : R.id.popup_vault));
@@ -306,20 +352,218 @@ public class PopupBrowserSheetDialogFragment extends BaseBottomSheetDialogFragme
 
 
     /**
-     * Paints the Bookmark page row's drawableStart icon and label
-     * (on the inner TextView) to reflect whether the current page is
-     * already saved. Click dispatch is wired to the same flag in
-     * {@link #bindRows()}.
+     * Decides whether the two icon rows show labels or drop to icon-only
+     * for the CURRENT configuration (width + font scale) and applies it to
+     * every static button in both rows. The star is repainted separately in
+     * {@link #applyStarState()} (its label is state-dependent), but it reads
+     * the same {@link #mIconOnly} flag computed here.
+     *
+     * <p>Icon-only = clear the text and center the icon; labelled =
+     * restore the short label with the icon stacked above it (textTop). The
+     * icons never move or resize, so each row stays a single non-scrolling
+     * line and the star keeps its slot at every size.</p>
      */
-    private void applyBookmarkState() {
-        TextView label = mView.findViewById(R.id.popup_bookmark_page_text);
-        if (label == null) return;
-        label.setCompoundDrawablesRelativeWithIntrinsicBounds(
-                mHasBookmark ? R.drawable.ic_bookmark_24 : R.drawable.ic_bookmark_border_24,
-                0, 0, 0);
-        label.setText(mHasBookmark
-                ? R.string.browser_menu_edit_bookmark
-                : R.string.browser_menu_bookmark_this_page_2);
+    private void applyQuickRowLabelMode() {
+        Configuration config = getResources().getConfiguration();
+        // Pre-layout estimate — picks the initial mode with no flicker.
+        mIconOnly = QuickRowLabels.iconOnly(config.screenWidthDp, config.fontScale);
+        applyLabelModeToButtons();
+        // If the estimate kept labels, verify they actually FIT the real
+        // (translated) column widths once laid out; a locale with wider
+        // labels than the English calibration drops the whole row to
+        // icon-only rather than truncating.
+        if (!mIconOnly) scheduleQuickRowFitCheck();
+    }
+
+
+    /**
+     * Applies the current {@link #mIconOnly} mode to every static quick-row
+     * button across BOTH icon rows. The star is handled by
+     * {@link #applyStarState()} (its label is state-dependent), so it's
+     * skipped here.
+     */
+    private void applyLabelModeToButtons() {
+        forEachQuickRowButton(button -> {
+            if (button instanceof BookmarkBrowserButton) return;
+            applyButtonLabelMode(button);
+        });
+    }
+
+
+    /**
+     * After the quick-row is laid out, drops the whole row to icon-only if
+     * ANY label ellipsizes at its real (translated) column width — the
+     * pre-layout estimate is calibrated for English, so this is what makes
+     * wider locales degrade cleanly instead of showing "Actuali…". Uses a
+     * one-shot pre-draw listener and returns {@code false} on the switch so
+     * the row re-lays-out with cleared labels BEFORE the first draw (no
+     * label flicker).
+     */
+    private void scheduleQuickRowFitCheck() {
+        View header = mView.findViewById(R.id.popup_header);
+        if (header == null) return;
+        header.getViewTreeObserver().addOnPreDrawListener(
+                new ViewTreeObserver.OnPreDrawListener() {
+                    @Override
+                    public boolean onPreDraw() {
+                        View h = mView == null ? null : mView.findViewById(R.id.popup_header);
+                        if (h != null) {
+                            h.getViewTreeObserver().removeOnPreDrawListener(this);
+                        }
+                        if (mView == null || mIconOnly) return true;
+                        if (anyQuickRowLabelTruncated()) {
+                            mIconOnly = true;
+                            applyLabelModeToButtons();
+                            applyStarState();
+                            return false; // reflow before drawing
+                        }
+                        return true;
+                    }
+                });
+    }
+
+
+    /**
+     * @return true if any quick-row button's label is ellipsized at its
+     *         current width (i.e. the labels don't fit and the row should
+     *         go icon-only). Reads {@link Layout#getEllipsisCount}, so it's
+     *         only meaningful after layout.
+     */
+    private boolean anyQuickRowLabelTruncated() {
+        return anyLabelTruncatedIn(R.id.popup_header)
+                || anyLabelTruncatedIn(R.id.popup_actions_row);
+    }
+
+    private boolean anyLabelTruncatedIn(int containerId) {
+        View c = mView == null ? null : mView.findViewById(containerId);
+        if (!(c instanceof ViewGroup group)) return false;
+        for (int i = 0; i < group.getChildCount(); i++) {
+            View v = group.getChildAt(i);
+            if (!(v instanceof MaterialButton button)) continue;
+            Layout layout = button.getLayout();
+            if (layout == null) continue;
+            for (int line = 0; line < layout.getLineCount(); line++) {
+                if (layout.getEllipsisCount(line) > 0) return true;
+            }
+        }
+        return false;
+    }
+
+
+    /**
+     * Applies the current label mode to one quick-row button: in
+     * icon-only mode the text is cleared and the icon centres
+     * (ICON_GRAVITY_TEXT_START); otherwise the SHORT visible label is
+     * restored from the button's tag under the icon (ICON_GRAVITY_TEXT_TOP).
+     * The accessible name is carried by the contentDescription set in
+     * {@link #bindQuickRow()}, so clearing the visible text never removes
+     * the button's meaning. The icon↔label gap (style iconPadding) is left
+     * as-is in both modes — with no text, it only shifts every icon by the
+     * same ~2dp, which is invisible.
+     */
+    private void applyButtonLabelMode(MaterialButton button) {
+        if (mIconOnly) {
+            button.setText(null);
+            button.setIconGravity(MaterialButton.ICON_GRAVITY_TEXT_START);
+        } else {
+            Object tag = button.getTag(R.id.quick_row_label);
+            button.setText(tag instanceof CharSequence ? (CharSequence) tag : null);
+            button.setIconGravity(MaterialButton.ICON_GRAVITY_TEXT_TOP);
+        }
+    }
+
+
+    /**
+     * Paints the bookmark star to reflect whether the current page is
+     * already saved: filled + amber (colorPrimary) + "Saved" when
+     * bookmarked, outline + default tint + "Bookmark" otherwise. The
+     * label is only shown when the row is in labelled mode (icon-only
+     * clears it, same as the other buttons); the accessible name and
+     * tooltip always follow the state.
+     */
+    private void applyStarState() {
+        if (mStarButton == null) return;
+        CharSequence label = getString(mHasBookmark
+                ? R.string.browser_menu_bookmark_saved_short
+                : R.string.browser_menu_bookmark_short);
+
+        mStarButton.setIconResource(mHasBookmark
+                ? R.drawable.ic_bookmark_24
+                : R.drawable.ic_bookmark_border_24);
+        // Amber accent when saved so the filled star reads as "on";
+        // default header selector (onSurfaceVariant) when unsaved so it
+        // sits level with the sibling icons.
+        ColorStateList tint = mHasBookmark
+                ? ColorStateList.valueOf(IncognitoColors.getPrimary(mStarButton.getContext(), mIsIncognito))
+                : AppCompatResources.getColorStateList(mStarButton.getContext(), R.color.popup_header_selector);
+        mStarButton.setIconTint(tint);
+        mStarButton.setTextColor(tint);
+
+        // The star's label is state-dependent, so refresh its restore-tag +
+        // accessible name before (re)applying the label mode.
+        mStarButton.setTag(R.id.quick_row_label, label);
+        mStarButton.setContentDescription(label);
+        TooltipCompat.setTooltipText(mStarButton, label);
+        applyButtonLabelMode(mStarButton);
+    }
+
+
+    /**
+     * Toggles the bookmark for the current page IN PLACE — the sheet
+     * stays open, the star repaints, and a confirmation snackbar offers
+     * Edit (when just saved) or Undo (when just removed). add/delete go
+     * through the shared singleton repository, so the star and the
+     * Bookmarks library never diverge.
+     */
+    private void onBookmarkStarClicked() {
+        if (mGeckoState == null || mWebBookmarkViewModel == null) return;
+        if (mHasBookmark) {
+            mWebBookmarkViewModel.delete(
+                    WebBookmarkDataRepository.bookmarkIdFor(mGeckoState.getEntityUri()));
+            mHasBookmark = false;
+            applyStarState();
+            showBookmarkSnackbar(R.string.browser_bookmark_removed, R.string.undo,
+                    this::undoRemoveBookmark);
+        } else {
+            mWebBookmarkViewModel.add(mGeckoState);
+            mHasBookmark = true;
+            applyStarState();
+            showBookmarkSnackbar(R.string.browser_bookmark_saved_toast, R.string.edit,
+                    () -> dispatch(R.id.popup_bookmark_edit));
+        }
+    }
+
+
+    /**
+     * Undo for a just-removed bookmark: re-add and repaint the star.
+     * No follow-up snackbar (avoids a toast loop) — the star flipping
+     * back to filled·"Saved" is confirmation enough.
+     */
+    private void undoRemoveBookmark() {
+        if (mGeckoState == null || mWebBookmarkViewModel == null) return;
+        mWebBookmarkViewModel.add(mGeckoState);
+        mHasBookmark = true;
+        applyStarState();
+    }
+
+
+    /**
+     * Shows the bookmark confirmation snackbar inside the sheet (the
+     * sheet stays open on a star tap). Anchored to the sheet's own
+     * view, tinted to match the incognito surface when needed — the
+     * same treatment the download snackbars on this surface use.
+     */
+    private void showBookmarkSnackbar(@StringRes int message, @StringRes int action,
+                                      Runnable onAction) {
+        if (mView == null) return;
+        Snackbar snackbar = Snackbar.make(mView, message, Snackbar.LENGTH_LONG)
+                .setAction(action, v -> onAction.run());
+        if (mIsIncognito) {
+            snackbar.setTextColor(IncognitoColors.getOnSurface(mActivity, true))
+                    .setBackgroundTint(IncognitoColors.getSurface(mActivity, true))
+                    .setActionTextColor(IncognitoColors.getPrimary(mActivity, true));
+        }
+        snackbar.show();
     }
 
 
@@ -341,15 +585,22 @@ public class PopupBrowserSheetDialogFragment extends BaseBottomSheetDialogFragme
 
 
     /**
-     * Mirrors the current tab's Desktop-mode state into the row
-     * switch. The whole row is the click target (handled by the
-     * shared onClick → popup_desktop); the switch is decorative
-     * status via duplicateParentState, not the only hit target.
+     * Paints the Desktop icon (in the page-actions row) to reflect the
+     * current tab's Desktop-mode state: amber accent (colorPrimary) when on,
+     * default header tint when off — the same active-state treatment the
+     * bookmark star uses. Tapping still dispatches {@code popup_desktop}
+     * (toggle + reload, dismissing the sheet), so this only reflects the
+     * state the sheet opened with. Independent of the label mode, so it
+     * survives an icon-only switch.
      */
     private void applyDesktopState() {
-        MaterialSwitch desktopSwitch = mView.findViewById(R.id.popup_desktop_switch);
-        if (desktopSwitch == null) return;
-        desktopSwitch.setChecked(mGeckoState.isDesktop());
+        View v = mView.findViewById(R.id.popup_desktop);
+        if (!(v instanceof MaterialButton desktop) || mGeckoState == null) return;
+        ColorStateList tint = mGeckoState.isDesktop()
+                ? ColorStateList.valueOf(IncognitoColors.getPrimary(desktop.getContext(), mIsIncognito))
+                : AppCompatResources.getColorStateList(desktop.getContext(), R.color.popup_header_selector);
+        desktop.setIconTint(tint);
+        desktop.setTextColor(tint);
     }
 
 
@@ -407,6 +658,13 @@ public class PopupBrowserSheetDialogFragment extends BaseBottomSheetDialogFragme
                     mDomain = WebUtils.getDomainName(uri);
                     renderHost();
                     renderTitle();
+                    // A same-tab (SPA) navigation changed the page under the
+                    // open sheet — recompute the star's saved-state for the new
+                    // URL so it doesn't act on the previous page's bookmark.
+                    if (mWebBookmarkViewModel != null) {
+                        mHasBookmark = mWebBookmarkViewModel.contains(mGeckoState);
+                        applyStarState();
+                    }
                 }
 
                 String title = entity.getTitle();
@@ -437,6 +695,10 @@ public class PopupBrowserSheetDialogFragment extends BaseBottomSheetDialogFragme
         mBrowserDialogViewModel = new ViewModelProvider(mActivity).get(BrowserDialogViewModel.class);
         mGeckoStateViewModel = new ViewModelProvider(mActivity).get(GeckoStateViewModel.class);
         mIncognitoStateViewModel = new ViewModelProvider(mActivity).get(IncognitoStateViewModel.class);
+        // The star toggles the bookmark in place. Its repository is a
+        // @Singleton, so this instance shares state with BrowserFragment's —
+        // the star's saved-state and the Bookmarks library never diverge.
+        mWebBookmarkViewModel = new ViewModelProvider(this).get(WebBookmarkViewModel.class);
 
         mGeckoState = mIsIncognito
                 ? mIncognitoStateViewModel.peekCurrentGeckoState()

@@ -764,7 +764,7 @@ public class BrowserFragment extends BaseBrowserFragment
                 if (geckoState == null) return;
                 if (geckoState.canGoBackward()) geckoState.goBack();
                 enterBrowsing();
-            } else if (id == R.id.popup_desktop_switch || id == R.id.popup_desktop) {
+            } else if (id == R.id.popup_desktop) {
                 GeckoState geckoState = peekCurrentGeckoState();
                 if (geckoState == null) return;
                 geckoState.setEntityDesktop(!geckoState.isDesktop());
@@ -853,9 +853,18 @@ public class BrowserFragment extends BaseBrowserFragment
             } else if (id == R.string.contextmenu_save_image) {
                 GeckoState geckoState = peekCurrentGeckoState();
                 if (geckoState == null) return;
+                // Reproduce the page's own image request so hotlink-protecting
+                // CDNs serve it: a bare native GET with no Referer 403s (pixiv's
+                // i.pximg.net is the canonical case — see the XOriginPolicy note
+                // in GeckoRuntimeHelper). Send the document ORIGIN as Referer,
+                // exactly what the browser sent when it loaded the image.
+                String pageUri = !TextUtils.isEmpty(mContextElementEntity.getBaseUri())
+                        ? mContextElementEntity.getBaseUri()
+                        : geckoState.getEntityUri();
                 DownloadRequest request = new DownloadRequest.Builder(srcUri)
                         .saveToVault(mIsIncognitoThemed)
                         .name(FilenameUtils.getName(srcUri))
+                        .headers(BrowserHeaders.refererOriginHeaders(pageUri))
                         .cookieHeader(geckoState.getCookieHeader())
                         .build();
                 startDownload(request, getSnackAnchorView(), R.id.anchor_view);

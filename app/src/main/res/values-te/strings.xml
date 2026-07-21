@@ -192,7 +192,6 @@
     <string name="settings_doh_server_title">ప్రొవైడర్‌ని ఉపయోగించండి</string>
     <string name="settings_doh_summary">DNS డేటాను వినడం మరియు తారుమారు చేయడాన్ని నిరోధించడం ద్వారా గోప్యతను పెంచండి.</string>
     <string name="settings_doh_title">HTTPS ద్వారా DNS</string>
-    <string name="settings_donate">విరాళం ఇవ్వండి</string>
     <string name="settings_downloads">డౌన్‌లోడ్‌లు</string>
     <string name="settings_downloads_free">డౌన్‌లోడ్‌లు &lt;small&gt;(%s)&lt;/small&gt;</string>
     <string name="settings_downloads_path">డౌన్‌లోడ్‌ల స్థానం</string>

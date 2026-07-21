@@ -186,7 +186,6 @@
     <string name="settings_doh_server_title">প্রদানকারী ব্যবহার করুন</string>
     <string name="settings_doh_summary">গোপনীয়তা বাড়ান এবং DNS ডেটার হেরফের প্রতিরোধ করে।</string>
     <string name="settings_doh_title">HTTPS এর উপর DNS</string>
-    <string name="settings_donate">ডোনেট করুন</string>
     <string name="settings_downloads">ডাউনলোড</string>
     <string name="settings_downloads_free">ডাউনলোড &lt;small&gt;(%s)&lt;/small&gt;</string>
     <string name="settings_downloads_path">ডাউনলোডের অবস্থান</string>

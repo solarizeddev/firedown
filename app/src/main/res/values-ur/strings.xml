@@ -192,7 +192,6 @@
     <string name="settings_doh_server_title">فراہم کنندہ کا استعمال کریں۔</string>
     <string name="settings_doh_summary">ڈی این ایس ڈیٹا کے چھپنے اور ہیرا پھیری کو روک کر رازداری میں اضافہ کریں۔</string>
     <string name="settings_doh_title">HTTPS پر DNS</string>
-    <string name="settings_donate">عطیہ کریں</string>
     <string name="settings_downloads">ڈاؤن لوڈ</string>
     <string name="settings_downloads_free">ڈاؤن لوڈز &lt;small&gt;(%s)&lt;/small&gt;</string>
     <string name="settings_downloads_path">ڈاؤن لوڈز کا مقام</string>

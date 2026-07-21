@@ -35,36 +35,39 @@
 <style>
   /* Palette + conventions lifted from assets/error/error_style.css so this
      reads as part of the Firedown family, not a recoloured uBlock page. */
+  /* Palette + base font mirror assets/error/error_style.css (same periwinkle,
+     same 13px body so the h1/h2 em sizes match the error pages). */
   html, body {
     margin: 0;
     padding: 0;
+    /* min-height (not height:100%): the document is exactly its content tall, so
+       short content fills the viewport without a scrollbar and taller content
+       grows only as much as it needs — no reserved bottom padding that would
+       push the page past the viewport and force a scroll. */
+    min-height: 100%;
     --spacing: 14px;
   }
   body {
-    /* min-height (not height:100%) so the document grows with its content and
-       the page scrolls on short viewports instead of clipping — the fixed 100%
-       height + push-to-bottom buttons hid them behind the browser's bottom bar. */
-    min-height: 100%;
     background-color: #d3d6e5;
     color: #333949;
     padding: 0 20px;
     font-family: sans-serif;
     font-weight: 300;
-    font-size: 15px;
+    font-size: 13px;
     line-height: 1.5;
     -moz-text-size-adjust: none;
+    box-sizing: border-box;
   }
   #container {
     max-width: 550px;
     margin: 0 auto;
-    /* Content flows top-down (buttons sit right after the checkbox, not pinned to
-       the bottom). Large bottom padding keeps the last button clear of the
-       browser's overlaying bottom toolbar and adds scroll room. */
-    padding: 40px 0 96px;
+    /* Natural top-down flow, compact padding. No flex fill / large bottom
+       padding — those made the document taller than the viewport and scrolled. */
+    padding: 40px 0;
   }
   #illustration {
     display: block;
-    width: 290px;
+    width: 180px;
     height: auto;
     /* margin auto (not flex align-self) — #container is no longer a flex column */
     margin: 4px auto 10px;

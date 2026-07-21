@@ -314,7 +314,8 @@ public class SettingsFragment extends BasePreferenceFragment
 
         } else if (Preferences.SETTINGS_BLOCK_COOKIE_NOTICES.equals(key)) {
 
-            boolean value = sharedPreferences.getBoolean(key, false);
+            boolean value = sharedPreferences.getBoolean(key,
+                    Preferences.DEFAULT_BLOCK_COOKIE_NOTICES);
 
             mGeckoRuntimeHelper.setCookies(value);
 
@@ -355,12 +356,6 @@ public class SettingsFragment extends BasePreferenceFragment
                 downloadsPreference.setSummary(value == 0
                         ? StoragePaths.getDownloadPath(mActivity)
                         : StoragePaths.getSDCardPath(mActivity));
-
-        } else if (Preferences.SETTINGS_ENABLE_WEBRTC.equals(key)) {
-
-            boolean value = sharedPreferences.getBoolean(key, false);
-
-            mGeckoRuntimeHelper.setWebRTC(value);
 
         } else if (Preferences.SETTINGS_DISABLE_WASM.equals(key)) {
 
@@ -450,6 +445,10 @@ public class SettingsFragment extends BasePreferenceFragment
         final String key = preference.getKey();
 
         switch (key) {
+            case Preferences.SETTINGS_SECURITY_SCREEN ->
+                    NavigationUtils.navigateSafe(mNavController, R.id.action_settings_to_security);
+            case Preferences.SETTINGS_P2P_SCREEN ->
+                    NavigationUtils.navigateSafe(mNavController, R.id.action_settings_to_direct_share);
             case Preferences.SETTINGS_RESTORE_DOWNLOADS -> showRestoreDownloadsDialog();
             case Preferences.SETTINGS_SYNC ->
                     NavigationUtils.navigateSafe(mNavController, R.id.action_settings_to_sync);
@@ -475,8 +474,17 @@ public class SettingsFragment extends BasePreferenceFragment
                     NavigationUtils.navigateSafe(mNavController, R.id.action_settings_to_quit);
             case Preferences.SETTINGS_TABS ->
                     NavigationUtils.navigateSafe(mNavController, R.id.action_settings_to_tabs);
-            case Preferences.SETTINGS_DONATE ->
-                    NavigationUtils.navigateSafe(mNavController, R.id.action_settings_to_donate);
+            case Preferences.SETTINGS_DONATE -> {
+                // In-app Value for Value was retired (the cloud-credit purchase
+                // flow is the app's one money surface); this row hands off to
+                // the website donate page via the same OPEN_URI result
+                // handshake as SETTINGS_SUPPORT below.
+                Intent supportIntent = new Intent(IntentActions.OPEN_URI);
+                supportIntent.putExtra(Keys.ITEM_URL,
+                        getString(R.string.settings_donate_url));
+                mActivity.setResult(Activity.RESULT_OK, supportIntent);
+                mActivity.finish();
+            }
             case Preferences.SETTINGS_WASM ->
                     NavigationUtils.navigateSafe(mNavController, R.id.action_settings_to_wasm);
             case Preferences.SETTINGS_AUTOFILL ->
@@ -538,6 +546,12 @@ public class SettingsFragment extends BasePreferenceFragment
     // reachable after the list is no longer empty. The data side is shared:
     // DownloadBackupMirror.restoreFromTree dedups by file_path, so running
     // this on a populated list never duplicates rows.
+
+
+
+    
+
+    
 
     private void showRestoreDownloadsDialog() {
         new MaterialAlertDialogBuilder(requireContext())

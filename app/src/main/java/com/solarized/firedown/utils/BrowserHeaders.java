@@ -1,10 +1,15 @@
 package com.solarized.firedown.utils;
 
 
+import androidx.annotation.Nullable;
+
 import org.mozilla.geckoview.BuildConfig;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
+import okhttp3.HttpUrl;
 import okhttp3.Request;
 
 public class BrowserHeaders {
@@ -70,6 +75,64 @@ public class BrowserHeaders {
 
     public static boolean isSecSameSite(Request request){
         return Objects.equals(request.header(BrowserHeaders.SEC_FETCH_SITE), "same-origin");
+    }
+
+    /**
+     * Build a serialized header string (the {@code "key=value&…"} form
+     * {@link com.solarized.firedown.manager.DownloadRequest} carries and
+     * {@code DownloadContext} parses back via {@code Utils.stringToMap}) that
+     * carries just a {@code Referer}, trimmed to {@code pageUrl}'s ORIGIN —
+     * {@code https://host[:port]}, no path/query.
+     *
+     * <p>This is what a browser sends cross-origin under
+     * {@code strict-origin-when-cross-origin}, and it's what a native
+     * re-download of a page image must reproduce: hotlink-protecting CDNs
+     * (pixiv's {@code i.pximg.net} is the canonical case) 403 a bare GET with
+     * no Referer. Origin-only (not the full page URL) both satisfies the CDN
+     * and avoids leaking the visited path to it. {@code OriginInterceptor}
+     * will NOT promote this to an {@code Origin} header (no
+     * {@code Sec-Fetch-Site: same-origin} is present), matching the browser's
+     * Referer-only image GET.
+     *
+     * @return the encoded header string, or {@code ""} when {@code pageUrl}
+     *         isn't a parseable http(s) URL (nothing to add).
+     */
+    public static String refererOriginHeaders(String pageUrl) {
+        String origin = originWithSlash(pageUrl);
+        if (origin == null) {
+            return "";
+        }
+        Map<String, String> headers = new HashMap<>(1);
+        headers.put(REFERER, origin);
+        return Utils.mapToString(headers);
+    }
+
+    /**
+     * Origin of an http(s) page URL with a trailing slash —
+     * {@code https://host[:port]/} — exactly the value a browser sends as a
+     * cross-origin Referer under {@code strict-origin-when-cross-origin}
+     * (the trailing slash is byte-for-byte what real browsers send).
+     *
+     * @return the origin string, or {@code null} when {@code pageUrl} isn't a
+     *         parseable http(s) URL.
+     */
+    @Nullable
+    public static String originWithSlash(@Nullable String pageUrl) {
+        if (pageUrl == null || pageUrl.isEmpty()) {
+            return null;
+        }
+        HttpUrl url = HttpUrl.parse(pageUrl);
+        if (url == null) {
+            return null;
+        }
+        StringBuilder origin = new StringBuilder(pageUrl.length());
+        origin.append(url.scheme()).append("://").append(url.host());
+        int port = url.port();
+        if (port != HttpUrl.defaultPort(url.scheme())) {
+            origin.append(':').append(port);
+        }
+        origin.append('/');
+        return origin.toString();
     }
 
     public static boolean hasHeader(Request request, String value){

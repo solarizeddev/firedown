@@ -210,7 +210,6 @@
     <string name="settings_doh_server_title">Sử dụng Nhà cung cấp</string>
     <string name="settings_doh_summary">Tăng cường quyền riêng tư bằng cách ngăn chặn nghe lén và thao túng dữ liệu DNS.</string>
     <string name="settings_doh_title">DNS qua HTTPS</string>
-    <string name="settings_donate">Ủng hộ</string>
     <string name="settings_downloads">Tải xuống</string>
     <string name="settings_downloads_free">Tải xuống &lt;small&gt;(%s)/small&gt;</string>
     <string name="settings_downloads_path">Vị trí Tải xuống</string>
@@ -267,7 +266,6 @@
     <string name="pip_play">Phát</string>
     <string name="pip_pause">Tạm dừng</string>
     <string name="home_vault_button">Thư mục an toàn</string>
-    <string name="settings_webrtc_enabled_summary">Cho phép gọi video và thoại theo thời gian thực. Tắt sẽ giảm bề mặt thăm dò mạng.</string>
     <string name="incognito_home_warning">Duyệt web riêng tư không che giấu hoạt động của bạn khỏi mạng, chủ lao động hoặc các trang bạn truy cập.</string>
     <string name="settings_theme_app_category">Chủ đề ứng dụng</string>
     <string name="crash_sheet_title">Phát hiện sự cố</string>

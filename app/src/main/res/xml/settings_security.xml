@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Security sub-screen — the harden-at-a-cost toggles that used to sit on the
+     root Settings list. Moved behind one door (frequency-first root, the
+     chip-rail convention applied to Settings): these are once-ever switches
+     whose audience is the security-conscious minority, and CLAUDE.md's own
+     stance is "most users should never touch it". Runtime application lives in
+     SecurityFragment (the WasmFragment pattern — SettingsFragment's
+     SharedPreferenceChangeListener is unregistered while a sub-screen is
+     foreground, so the sub-screen must apply prefs to Gecko itself). -->
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <SwitchPreferenceCompat
+        android:defaultValue="false"
+        android:key="com.solarized.firedown.preferences.browser.block.javascript"
+        android:summary="@string/settings_block_javascript_summary"
+        android:title="@string/settings_block_javascript_title"
+        app:icon="@drawable/javascript_24" />
+
+    <SwitchPreferenceCompat
+        android:defaultValue="false"
+        android:key="com.solarized.firedown.preferences.browser.disable.jit"
+        android:summary="@string/settings_jit_disabled_summary"
+        android:title="@string/settings_jit_disabled"
+        app:icon="@drawable/developer_board_24"
+        app:singleLineTitle="false" />
+
+    <SwitchPreferenceCompat
+        android:defaultValue="false"
+        android:key="com.solarized.firedown.preferences.browser.enable.drm"
+        android:summary="@string/settings_drm_enabled_summary"
+        android:title="@string/settings_drm_enabled"
+        app:icon="@drawable/ic_movie_24"
+        app:singleLineTitle="false" />
+
+    <SwitchPreferenceCompat
+        android:defaultValue="false"
+        android:key="com.solarized.firedown.preferences.browser.disable.webgl"
+        android:summary="@string/settings_webgl_disabled_summary"
+        android:title="@string/settings_webgl_disabled"
+        app:icon="@drawable/deployed_code_24"
+        app:singleLineTitle="false" />
+
+    <Preference
+        android:key="com.solarized.firedown.preferences.browser.wasm"
+        android:summary="@string/settings_wasm_disabled_summary"
+        android:title="@string/settings_wasm"
+        app:icon="@drawable/memory_alt_24"
+        app:singleLineTitle="false" />
+
+</PreferenceScreen>

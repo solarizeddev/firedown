@@ -5,6 +5,23 @@
     <string name="app_unlock">Unlock</string>
     <string name="archive_banner_subtitle">Tap to view or reopen</string>
     <string name="browser_bookmark_added">Bookmark Saved!</string>
+    <!-- Action-row bookmark star: short labels + toast copy. The star toggles
+         in place; the toast's Edit/Undo mirror the mockup's confirmation. -->
+    <string name="browser_menu_bookmark_short">Bookmark</string>
+    <string name="browser_menu_bookmark_saved_short">Saved</string>
+    <string name="browser_bookmark_saved_toast">Saved to bookmarks</string>
+    <string name="browser_bookmark_removed">Removed bookmark</string>
+    <string name="undo">Undo</string>
+    <!-- Popup list group labels (This page · Library) — anchor the reorganised
+         list after the bookmark row moved up to the action-row star. -->
+    <string name="popup_group_this_page">This page</string>
+    <string name="popup_group_library">Library</string>
+    <!-- Short labels for the page-actions icon row (row 2 of the quick-row).
+         The full names ride along as contentDescription for TalkBack/tooltip;
+         these compact forms are what shows under the icon. -->
+    <string name="browser_menu_find_short">Find</string>
+    <string name="browser_menu_desktop_short">Desktop</string>
+    <string name="browser_menu_save_short">Save</string>
     <string name="browser_cache_cleared">Browsing data cleared</string>
     <string name="browser_desktop">Desktop site</string>
     <string name="browser_enter_url">Search or Type URL</string>
@@ -118,34 +135,6 @@
     <string name="details_url">URL</string>
     <string name="details_language">Language</string>
     <string name="details_resolution">Resolution</string>
-    <string name="donate_amt_100k">100k</string>
-    <string name="donate_amt_1k">1k</string>
-    <string name="donate_amt_21k">21k</string>
-    <string name="donate_amt_5k">5k</string>
-    <string name="donate_bitcoin_meta">~10 min confirm · network fee</string>
-    <string name="donate_bitcoin_title">Bitcoin on-chain</string>
-    <string name="donate_fiat_title">Card or PayPal</string>
-    <string name="donate_fiat_meta">Buy Me a Coffee · opens in a new tab</string>
-    <string name="donate_btc_copied">Address copied</string>
-    <string name="donate_btc_copy">Copy address</string>
-    <string name="donate_btc_open_wallet">Open in wallet</string>
-    <string name="donate_btc_qr_desc">Bitcoin address QR code</string>
-    <string name="donate_copy_invoice">Copy invoice</string>
-    <string name="donate_custom_amount_hint">Custom amount (sats)</string>
-    <string name="donate_invoice_copied">Invoice copied</string>
-    <string name="donate_invoice_qr_desc">Lightning invoice QR code</string>
-    <string name="donate_lightning_meta">Sats · instant · no fees</string>
-    <string name="donate_lightning_title">Lightning</string>
-    <string name="donate_no_bitcoin_wallet">No Bitcoin wallet app installed.</string>
-    <string name="donate_no_lightning_wallet">No Lightning wallet app installed.</string>
-    <string name="donate_open_in_wallet">Open in wallet</string>
-    <string name="donate_pay_button">Send %1$s sats</string>
-    <string name="donate_pay_default">Send 5,000 sats</string>
-    <string name="donate_status_error">Could not generate invoice: %1$s</string>
-    <string name="donate_status_generating">Generating invoice…</string>
-    <string name="donate_status_wallet_opened">Opening your Lightning wallet…</string>
-    <string name="donate_subtitle">Firedown is free. If it saved you time or annoyance, send back what it was worth — in any of these ways.</string>
-    <string name="donate_title">Value for Value</string>
     <string name="download">Download</string>
     <string name="download_finished_meta">%1$s · %2$s</string>
     <!-- Trailing-action label on the home recent-downloads card. Kept
@@ -726,8 +715,6 @@
     <string name="settings_doh_server_working">It\'s working!</string>
     <string name="settings_doh_summary">Increase privacy by preventing eavesdropping and manipulation of DNS data.</string>
     <string name="settings_doh_title">DNS over HTTPS</string>
-    <string name="settings_donate">Donate</string>
-    <string name="settings_donate_summary">Send back what Firedown is worth to you</string>
 <string name="settings_downloads">Downloads</string>
     <string name="settings_downloads_free">Downloads &lt;small&gt;(%s)&lt;/small&gt;</string>
     <string name="settings_downloads_path">Downloads Location</string>
@@ -798,6 +785,10 @@
     <string name="settings_search_custom_delete_title">Delete custom search engine?</string>
     <string name="settings_search_custom_delete_message">\"%1$s\" will be removed</string>
 <string name="settings_solarized_support" translatable="false">https://github.com/solarizeddev/firedown/issues</string>
+    <string name="settings_donate">Donate</string>
+    <string name="settings_donate_url" translatable="false">https://firedown.app/donate</string>
+    <string name="settings_security_screen_summary">Harden the browser at the cost of some site compatibility</string>
+    <string name="settings_direct_share_summary">Network settings for sending files between devices</string>
     <string name="settings_storage_manager_button_decline">NOT NOW</string>
     <string name="settings_storage_manager_button_ok">OPEN SETTINGS</string>
     <string name="settings_tabs_archive_interval_title">Close inactive tabs</string>
@@ -816,8 +807,6 @@
     <string name="settings_webgl_disabled_summary">Blocks GPU fingerprinting, may break 3D content</string>
     <string name="settings_drm_enabled">Enable DRM playback</string>
     <string name="settings_drm_enabled_summary">Allows Widevine on sites that require DRM (Netflix, Spotify, …). Firedown still cannot download DRM-protected content.</string>
-    <string name="settings_webrtc_enabled">Enable WebRTC</string>
-    <string name="settings_webrtc_enabled_summary">Allows real-time video / voice calls. Disabling reduces network-probing surface.</string>
     <string name="settings_wasm_disabled">Disable WebAssembly</string>
     <string name="settings_wasm_disabled_summary">Blocks sites from running compiled WASM modules. Reduces attack surface but breaks some apps — allowed sites below stay enabled</string>
     <string name="settings_https_only_title">HTTPS-only mode</string>
@@ -985,25 +974,78 @@
          zero (fresh install, no browsing). Avoids the cosmetic
          '0 · ~0 saved' that would otherwise appear. -->
     <string name="home_trackers_subtitle_idle">Protection active</string>
-    <string name="lan_send">Send</string>
-    <string name="lan_share_title">Send to browser</string>
     <string name="tabs_more_options">More options</string>
-    <string name="lan_share_lead">On the other device, open this address in any browser on the same Wi-Fi</string>
-    <string name="lan_share_qr_hint">Scanning the code opens the page with the PIN already filled in</string>
-    <string name="lan_share_cert_hint">The other device\'s browser shows a security warning first — choose Advanced, then Continue. The connection is still encrypted between the two devices.</string>
-    <string name="lan_share_pin">PIN</string>
-    <string name="lan_share_stop">Stop sharing</string>
-    <string name="lan_share_footer">Sharing ends when you leave this screen. Nothing leaves your network.</string>
-    <string name="lan_share_no_network">Connect to a Wi-Fi network to share</string>
-    <string name="lan_share_vpn_warning">VPN active — if the receiver can\'t connect, allow LAN access in the VPN app or turn it off</string>
-    <string name="lan_direct_intro">This phone can create a temporary hotspot instead — the other device joins it and the file moves directly between the two phones. The internet is not used.</string>
-    <string name="lan_direct_start">Start direct connection</string>
-    <string name="lan_direct_step">Step 1 of 2 — join the hotspot</string>
-    <string name="lan_direct_switch">Use direct connection instead</string>
-    <string name="lan_direct_join_hint">Scan with the other device\'s camera to join the hotspot, then tap Next</string>
-    <string name="lan_direct_password">Password</string>
-    <string name="lan_direct_next">Next</string>
-    <string name="lan_direct_failed">Couldn\'t start the direct connection</string>
+
+    <!-- P2P direct share (WebRTC) — sender, receiver, scanner, errors -->
+    <string name="p2p_send">Send</string>
+    <string name="p2p_send_title">Send directly</string>
+    <string name="p2p_receive_title">Receive a file</string>
+    <string name="p2p_send_lead">Send this file straight to another device running Firedown — encrypted, device to device, with no server in between.</string>
+    <string name="p2p_receive_lead">Receive a file straight from another device running Firedown.</string>
+    <string name="p2p_code_hint_send">Scan this code with the other device — in Firedown under Downloads → Receive a file, or just with its camera. On the same network the transfer continues by itself; if a reply code appears, scan it back.</string>
+    <string name="p2p_code_hint_reply">Show this reply to the sender, or send it back the way their code arrived.</string>
+    <string name="p2p_share_code">Send code another way</string>
+    <string name="p2p_share_reply">Send reply another way</string>
+    <string name="p2p_scan_reply">Scan reply</string>
+    <string name="p2p_paste_reply">Paste reply</string>
+    <string name="p2p_scan_code">Scan code</string>
+    <string name="p2p_paste_code">Paste code</string>
+    <string name="p2p_receive_entry">Ask the sender to show their share code, then scan or paste it.</string>
+    <string name="p2p_receive_from">from %1$s</string>
+    <string name="p2p_accept">Accept</string>
+    <string name="p2p_decline">Decline</string>
+    <string name="p2p_preparing">Preparing…</string>
+    <string name="p2p_state_connecting">Connecting…</string>
+    <string name="p2p_state_connected">Connected</string>
+    <string name="p2p_progress_of">%1$s of %2$s · %3$s/s</string>
+    <string name="p2p_done_sent_detail">Sent · %1$s</string>
+    <string name="p2p_done_received">Saved to Downloads</string>
+    <string name="p2p_open">Open</string>
+    <string name="p2p_try_again">Try again</string>
+    <string name="p2p_done">Done</string>
+    <string name="p2p_abandon_message">Stop this transfer? It isn\'t finished yet.</string>
+    <string name="p2p_abandon_confirm">Stop</string>
+    <string name="p2p_error_no_path">Couldn\'t reach the other device directly. This happens on mobile data or behind a VPN — try the same Wi-Fi network, with any VPN turned off.</string>
+    <string name="p2p_error_no_path_vpn">A VPN on this device is blocking the direct connection. Exclude Firedown from the VPN — or pause it — and try again.</string>
+    <string name="p2p_error_generic">The transfer failed.</string>
+    <string name="p2p_error_bad_code">That code isn\'t valid — try again.</string>
+    <string name="p2p_clipboard_empty">No code in the clipboard.</string>
+    <string name="p2p_qr_too_large">This code is too big to show as a QR — use “Send code another way”.</string>
+    <string name="p2p_qr_content_desc">Your share code, as a QR</string>
+    <string name="p2p_footer">Encrypted device-to-device transfer. The file never touches a server.</string>
+    <string name="p2p_footer_relayed">Encrypted end-to-end. Relayed through firedown.app (no direct path), which can\'t read it.</string>
+    <string name="p2p_hint_vpn">Tip: excluding Firedown from your VPN lets it connect directly.</string>
+    <string name="p2p_scan_hint">Point the camera at the sender\'s code</string>
+    <string name="p2p_camera_denied">Camera access is needed to scan. You can paste the code instead.</string>
+    <string name="p2p_send_link">Send link</string>
+    <string name="p2p_send_private">Private link</string>
+    <string name="p2p_send_link_again">Send link again</string>
+    <string name="p2p_send_link_hint">Send it through any app. It works while this screen stays open.</string>
+    <string name="p2p_link_sent">Link sent</string>
+    <string name="p2p_link_sent_body">Waiting for them to accept. The transfer starts on its own once they do.</string>
+    <string name="p2p_clipboard_note">Came back with a reply copied? It\'s picked up automatically.</string>
+    <string name="p2p_reply_detected">Reply found — connecting…</string>
+    <string name="p2p_reconnecting">Reconnecting…</string>
+    <string name="p2p_nearby_qr">Nearby? Show the QR</string>
+    <string name="p2p_one_step_left">One step left.</string>
+    <string name="p2p_send_reply">Send reply</string>
+    <string name="p2p_send_reply_body">Send this reply back — the sender taps it and the transfer starts.</string>
+    <string name="p2p_reply_auto_note">On the same Wi-Fi the reply is sent automatically.</string>
+    <string name="p2p_reply_no_session">This reply belongs to a share that\'s no longer open.</string>
+    <string name="settings_p2p_category">Direct share</string>
+    <string name="settings_p2p_stun">STUN server</string>
+    <string name="settings_p2p_stun_summary">Helps two devices find each other across the internet during a direct share. Only your network address is ever sent to it.</string>
+    <string name="settings_p2p_stun_custom">Custom…</string>
+    <string name="settings_p2p_stun_custom_title">Custom STUN server</string>
+    <string name="settings_p2p_stun_invalid">Enter a valid address, e.g. stun:host:3478</string>
+    <string name="settings_p2p_turn">TURN relay</string>
+    <string name="settings_p2p_turn_summary">A built-in relay is always on, so sharing works even behind VPNs and mobile networks. Add your own relay only if you need it.</string>
+    <string name="settings_p2p_turn_message">Added alongside the built-in relay. A relay is only used when a direct connection fails; your files stay encrypted end-to-end through it.</string>
+    <string name="settings_p2p_turn_url_hint">turn:host:3478</string>
+    <string name="settings_p2p_turn_user_hint">Username</string>
+    <string name="settings_p2p_turn_cred_hint">Password</string>
+    <string name="settings_p2p_turn_clear">Clear</string>
+    <string name="settings_p2p_turn_invalid">Enter a valid relay, e.g. turn:host:3478</string>
 
     <!-- Nostr (NIP-07) signer permission prompt. %1$s is the site host. -->
     <string name="nostr_permission_title">Nostr signer</string>
