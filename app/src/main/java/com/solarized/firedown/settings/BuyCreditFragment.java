@@ -374,14 +374,14 @@ public class BuyCreditFragment extends Fragment {
         LayoutInflater inflater = LayoutInflater.from(requireContext());
         mDurationToggle.removeAllViews();
         List<Integer> buttonIds = new ArrayList<>();
-        double baseRate = durations.isEmpty() ? -1 : bestRateForDuration(durations.get(0));
+        int baseMonths = durations.isEmpty() ? 0 : durations.get(0);
         for (int months : durations) {
             MaterialButton btn = (MaterialButton) inflater.inflate(
                     R.layout.item_buy_duration_button, mDurationToggle, false);
             int id = View.generateViewId();
             btn.setId(id);
             btn.setTag(months);
-            btn.setText(durationLabelWithBadge(btn, months, baseRate));
+            btn.setText(durationLabelWithBadge(btn, months, baseMonths));
             mDurationToggle.addView(btn);
             buttonIds.add(id);
         }
@@ -460,20 +460,45 @@ public class BuyCreditFragment extends Fragment {
 
     /**
      * The duration segment's label, with a "−N%" discount badge appended when
-     * this duration's best per-GB-month rate beats the SHORTEST duration's
-     * (the baseline everyone anchors on). Smaller + primary-colored + bold so
-     * it reads as a tag, not part of the label; localized via the percent
-     * formatter (Turkish prefixes the sign/percent, etc.). Badges under 5%
-     * are noise and skipped.
+     * this duration is cheaper than the SHORTEST duration (the baseline
+     * everyone anchors on). Smaller + primary-colored + bold so it reads as a
+     * tag, not part of the label; localized via the percent formatter (Turkish
+     * prefixes the sign/percent, etc.). Badges under 5% are noise and skipped.
+     *
+     * <p>The percentage is LIKE-FOR-LIKE and never overstated: the MINIMUM
+     * per-size saving across sizes sold in BOTH durations. The original
+     * best-rate-vs-best-rate comparison read "−40%" on a catalog whose cheapest
+     * yearly unit came from a 200 GB tile with NO 3-month counterpart — a
+     * saving only reachable by ALSO upsizing, while a like-for-like buyer got
+     * −10% (50 GB) or −25% (100 GB); on-device screenshot report. Min (not
+     * max) so an uneven ladder can only ever UNDERSTATE the saving — on a
+     * uniform-discount catalog (the runbook's minted ladder) min == max ==
+     * exact for every buyer.
      */
-    private CharSequence durationLabelWithBadge(MaterialButton btn, int months, double baseRate) {
+    private CharSequence durationLabelWithBadge(MaterialButton btn, int months, int baseMonths) {
         String label = formatDuration(months);
-        double rate = bestRateForDuration(months);
-        if (baseRate <= 0 || rate <= 0 || rate >= baseRate) {
+        if (months == baseMonths) {
             return label;
         }
-        int pct = (int) Math.round((1.0 - rate / baseRate) * 100.0);
-        if (pct < 5) {
+        double worst = -1; // the smallest like-for-like saving across common sizes
+        for (BuyCreditViewModel.Option o : mPlanOptions) {
+            if (o.durationMonths != months || o.denomGbMonths <= 0) {
+                continue;
+            }
+            for (BuyCreditViewModel.Option base : mPlanOptions) {
+                if (base.durationMonths != baseMonths || base.sizeGb != o.sizeGb
+                        || base.denomGbMonths <= 0) {
+                    continue;
+                }
+                double saving = 1.0 - ((double) o.priceCents / o.denomGbMonths)
+                        / ((double) base.priceCents / base.denomGbMonths);
+                if (worst < 0 || saving < worst) {
+                    worst = saving;
+                }
+            }
+        }
+        int pct = (int) Math.round(worst * 100.0);
+        if (worst <= 0 || pct < 5) {
             return label;
         }
         String badge = NumberFormat.getPercentInstance(Locale.getDefault()).format(-pct / 100.0);
@@ -487,20 +512,6 @@ public class BuyCreditFragment extends Fragment {
         text.setSpan(new StyleSpan(Typeface.BOLD), start, text.length(),
                 Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         return text;
-    }
-
-    /** The lowest price-per-GB-month across the tiles of a given duration. */
-    private double bestRateForDuration(int durationMonths) {
-        double best = -1;
-        for (BuyCreditViewModel.Option o : mPlanOptions) {
-            if (o.durationMonths == durationMonths && o.denomGbMonths > 0) {
-                double rate = (double) o.priceCents / o.denomGbMonths;
-                if (best < 0 || rate < best) {
-                    best = rate;
-                }
-            }
-        }
-        return best;
     }
 
     // ---- legacy flat denomination list ----
