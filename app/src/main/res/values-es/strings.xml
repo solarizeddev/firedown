@@ -740,7 +740,7 @@
     <string name="buy_credit_error_timed_out">El pago no se recibió a tiempo. No se realizó ningún cargo; puedes intentarlo de nuevo.</string>
     <string name="buy_credit_error_slug">Algo salió mal (%1$s). Inténtalo de nuevo.</string>
     <string name="buy_credit_error_network">No se pudo conectar con el servidor de pagos. Comprueba tu conexión e inténtalo de nuevo.</string>
-    <string name="buy_credit_gb_month_explainer">Un GB-month es 1 GB mantenido con copia de seguridad durante un mes — así que 500 podrían ser 50 GB durante 10 meses, o 100 GB durante 5.</string>
+    <string name="buy_credit_gb_month_explainer">Un GB-month es 1 GB mantenido con copia de seguridad durante un mes — así que 500 podrían ser 50 GB durante 10 meses, o 100 GB durante 5. Solo pagas por lo que realmente almacenas — con menos datos el mismo crédito dura más. El crédito nunca caduca.</string>
     <string name="buy_credit_denom_rate">%1$s / GB-month</string>
     <string name="buy_credit_error_busy">Demasiadas solicitudes en este momento. Espera un minuto e inténtalo de nuevo.</string>
     <!-- ── cuadrícula de planes (mosaicos estilo Google Drive «Hasta X GB por Y») ── -->

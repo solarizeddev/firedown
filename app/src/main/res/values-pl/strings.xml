@@ -637,7 +637,7 @@
     <string name="buy_credit_error_timed_out">Nie otrzymano płatności na czas. Nie pobrano opłaty; możesz spróbować ponownie.</string>
     <string name="buy_credit_error_slug">Coś poszło nie tak (%1$s). Spróbuj ponownie.</string>
     <string name="buy_credit_error_network">Nie można połączyć się z serwerem płatności. Sprawdź połączenie i spróbuj ponownie.</string>
-    <string name="buy_credit_gb_month_explainer">Jeden GB-month to 1 GB przechowywany w kopii zapasowej przez miesiąc — więc 500 może oznaczać 50 GB przez 10 miesięcy lub 100 GB przez 5.</string>
+    <string name="buy_credit_gb_month_explainer">Jeden GB-month to 1 GB przechowywany w kopii zapasowej przez miesiąc — więc 500 może oznaczać 50 GB przez 10 miesięcy lub 100 GB przez 5. Płacisz tylko za faktycznie przechowywane dane — im mniej kopii, tym dłużej starcza ten sam kredyt. Kredyt nigdy nie wygasa.</string>
     <string name="buy_credit_denom_rate">%1$s / GB-month</string>
     <string name="buy_credit_error_busy">Zbyt wiele żądań w tej chwili. Odczekaj minutę i spróbuj ponownie.</string>
     <!-- ── siatka planów (kafelki „do X GB za Y” w stylu Dysku Google) ── -->

@@ -555,7 +555,7 @@
     <string name="buy_credit_error_timed_out">Платіж не отримано вчасно. Кошти не списано; можете спробувати ще раз.</string>
     <string name="buy_credit_error_slug">Щось пішло не так (%1$s). Спробуйте ще раз.</string>
     <string name="buy_credit_error_network">Не вдалося зв\'язатися із сервером платежів. Перевірте з\'єднання та спробуйте ще раз.</string>
-    <string name="buy_credit_gb_month_explainer">Один GB-month — це 1 ГБ, який зберігається в резервній копії протягом місяця — тож 500 може бути 50 ГБ на 10 місяців або 100 ГБ на 5.</string>
+    <string name="buy_credit_gb_month_explainer">Один GB-month — це 1 ГБ, який зберігається в резервній копії протягом місяця — тож 500 може бути 50 ГБ на 10 місяців або 100 ГБ на 5. Ви платите лише за реально збережене — що менше копій, то довше вистачає того самого кредиту. Кредит ніколи не спливає.</string>
     <string name="buy_credit_denom_rate">%1$s / GB-month</string>
     <string name="buy_credit_error_busy">Наразі забагато запитів. Зачекайте хвилину і спробуйте знову.</string>
     <!-- ── сітка планів (плитки у стилі Google Drive «До X ГБ за Y») ── -->

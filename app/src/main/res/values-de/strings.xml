@@ -740,7 +740,7 @@
     <string name="buy_credit_error_timed_out">Die Zahlung ist nicht rechtzeitig eingegangen. Es wurde nichts berechnet; du kannst es erneut versuchen.</string>
     <string name="buy_credit_error_slug">Etwas ist schiefgelaufen (%1$s). Bitte versuche es erneut.</string>
     <string name="buy_credit_error_network">Der Zahlungsserver war nicht erreichbar. Prüfe deine Verbindung und versuche es erneut.</string>
-    <string name="buy_credit_gb_month_explainer">Ein GB-month ist 1 GB, das einen Monat lang gesichert bleibt — 500 könnten also 50 GB für 10 Monate oder 100 GB für 5 sein.</string>
+    <string name="buy_credit_gb_month_explainer">Ein GB-month ist 1 GB, das einen Monat lang gesichert bleibt — 500 könnten also 50 GB für 10 Monate oder 100 GB für 5 sein. Du zahlst nur für tatsächlich Gespeichertes — je weniger du sicherst, desto länger reicht dasselbe Guthaben. Guthaben verfällt nie.</string>
     <string name="buy_credit_denom_rate">%1$s / GB-month</string>
     <string name="buy_credit_error_busy">Gerade zu viele Anfragen. Warten Sie eine Minute und versuchen Sie es erneut.</string>
     <!-- ── plan grid (Google-Drive-style "Up to X GB for Y" tiles) ── -->

@@ -575,7 +575,7 @@
     <string name="buy_credit_error_timed_out">Maksua ei vastaanotettu ajoissa. Veloitusta ei tehty; voit yrittää uudelleen.</string>
     <string name="buy_credit_error_slug">Jokin meni pieleen (%1$s). Yritä uudelleen.</string>
     <string name="buy_credit_error_network">Maksupalvelimeen ei saatu yhteyttä. Tarkista yhteytesi ja yritä uudelleen.</string>
-    <string name="buy_credit_gb_month_explainer">Yksi GB-month on 1 GB pidettynä varmuuskopioituna yhden kuukauden ajan — joten 500 voisi olla 50 GB 10 kuukaudeksi tai 100 GB 5 kuukaudeksi.</string>
+    <string name="buy_credit_gb_month_explainer">Yksi GB-month on 1 GB pidettynä varmuuskopioituna yhden kuukauden ajan — joten 500 voisi olla 50 GB 10 kuukaudeksi tai 100 GB 5 kuukaudeksi. Maksat vain todella tallennetusta — mitä vähemmän varmuuskopioit, sitä pidempään sama saldo riittää. Saldo ei vanhene koskaan.</string>
     <string name="buy_credit_denom_rate">%1$s / GB-month</string>
     <string name="buy_credit_error_busy">Liian monta pyyntöä juuri nyt. Odota hetki ja yritä uudelleen.</string>
     <!-- ── palvelupakettiruudukko (Google Driven tyylinen "Enintään X GB hintaan Y" -ruutu) ── -->

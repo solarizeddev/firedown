@@ -530,7 +530,7 @@
     <string name="buy_credit_error_timed_out">Плащането не бе получено навреме. Не е извършена такса; можете да опитате отново.</string>
     <string name="buy_credit_error_slug">Нещо се обърка (%1$s). Моля, опитайте отново.</string>
     <string name="buy_credit_error_network">Сървърът за плащания не бе достъпен. Проверете връзката си и опитайте отново.</string>
-    <string name="buy_credit_gb_month_explainer">Един GB-month е 1 GB, поддържан в резервно копие за един месец — така че 500 могат да бъдат 50 GB за 10 месеца или 100 GB за 5.</string>
+    <string name="buy_credit_gb_month_explainer">Един GB-month е 1 GB, поддържан в резервно копие за един месец — така че 500 могат да бъдат 50 GB за 10 месеца или 100 GB за 5. Плащате само за реално съхраненото — при по-малко данни същият кредит стига за по-дълго. Кредитът не изтича.</string>
     <string name="buy_credit_denom_rate">%1$s / GB-month</string>
     <string name="buy_credit_error_busy">Твърде много заявки в момента. Изчакайте минута и опитайте отново.</string>
     <!-- ── plan grid (Google-Drive-style "Up to X GB for Y" tiles) ── -->

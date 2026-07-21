@@ -330,7 +330,7 @@
     <string name="buy_credit_rail_card">Card</string>
     <!-- %1$d = denomination in GB-months -->
     <string name="buy_credit_denom_amount">%1$d GB-months</string>
-    <string name="buy_credit_gb_month_explainer">A GB-month is 1 GB kept backed up for one month — so 500 could be 50 GB for 10 months, or 100 GB for 5.</string>
+    <string name="buy_credit_gb_month_explainer">A GB-month is 1 GB kept backed up for one month — so 500 could be 50 GB for 10 months, or 100 GB for 5. You only pay for what\'s actually stored — back up less and the same credit lasts longer. Credit never expires.</string>
     <!-- %1$s = per-unit price, e.g. 3.6¢ -->
     <string name="buy_credit_denom_rate">%1$s / GB-month</string>
     <string name="buy_credit_privacy_note">Private by design. Your payment can\'t be linked to your account or files — the mint signs a blinded token that neither server can trace back to you.</string>

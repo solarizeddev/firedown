@@ -506,7 +506,7 @@
     <string name="buy_credit_error_timed_out">Makset ei saabunud õigeaegselt. Tasu ei võetud; võid uuesti proovida.</string>
     <string name="buy_credit_error_slug">Midagi läks valesti (%1$s). Palun proovi uuesti.</string>
     <string name="buy_credit_error_network">Makseserverini ei õnnestunud jõuda. Kontrolli ühendust ja proovi uuesti.</string>
-    <string name="buy_credit_gb_month_explainer">Üks GB-month on 1 GB, mida hoitakse varundatuna ühe kuu jooksul — nii et 500 võib olla 50 GB 10 kuuks või 100 GB 5 kuuks.</string>
+    <string name="buy_credit_gb_month_explainer">Üks GB-month on 1 GB, mida hoitakse varundatuna ühe kuu jooksul — nii et 500 võib olla 50 GB 10 kuuks või 100 GB 5 kuuks. Maksad ainult tegelikult salvestatu eest — mida vähem varundad, seda kauem sama krediit kestab. Krediit ei aegu kunagi.</string>
     <string name="buy_credit_denom_rate">%1$s / GB-month</string>
     <string name="buy_credit_error_busy">Praegu on liiga palju päringuid. Oodake minut ja proovige uuesti.</string>
     <!-- ── plaanivalik (Google Drive'i stiilis „Kuni X GB hinnaga Y" paanid) ── -->

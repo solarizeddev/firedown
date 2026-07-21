@@ -636,7 +636,7 @@
     <string name="buy_credit_error_timed_out">Betaling is niet op tijd ontvangen. Er is niets in rekening gebracht; je kunt het opnieuw proberen.</string>
     <string name="buy_credit_error_slug">Er is iets misgegaan (%1$s). Probeer het opnieuw.</string>
     <string name="buy_credit_error_network">Kon de betaalserver niet bereiken. Controleer je verbinding en probeer het opnieuw.</string>
-    <string name="buy_credit_gb_month_explainer">Een GB-month is 1 GB dat een maand lang geback-upt blijft — dus 500 kan 50 GB voor 10 maanden zijn, of 100 GB voor 5.</string>
+    <string name="buy_credit_gb_month_explainer">Een GB-month is 1 GB dat een maand lang geback-upt blijft — dus 500 kan 50 GB voor 10 maanden zijn, of 100 GB voor 5. Je betaalt alleen voor wat er echt is opgeslagen — hoe minder je back-upt, hoe langer hetzelfde tegoed meegaat. Tegoed verloopt nooit.</string>
     <string name="buy_credit_denom_rate">%1$s / GB-month</string>
     <string name="buy_credit_error_busy">Te veel verzoeken op dit moment. Wacht een minuut en probeer het opnieuw.</string>
     <!-- ── abonnementsraster (Google Drive-achtige "Tot X GB voor Y"-tegels) ── -->

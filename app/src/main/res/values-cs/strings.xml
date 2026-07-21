@@ -593,7 +593,7 @@
     <string name="buy_credit_error_timed_out">Platba nebyla přijata včas. Nebyla stržena žádná částka; můžete to zkusit znovu.</string>
     <string name="buy_credit_error_slug">Něco se pokazilo (%1$s). Zkuste to prosím znovu.</string>
     <string name="buy_credit_error_network">Nepodařilo se spojit s platebním serverem. Zkontrolujte připojení a zkuste to znovu.</string>
-    <string name="buy_credit_gb_month_explainer">GB-month je 1 GB uchovávaný v záloze po dobu jednoho měsíce — takže 500 může být 50 GB na 10 měsíců nebo 100 GB na 5.</string>
+    <string name="buy_credit_gb_month_explainer">GB-month je 1 GB uchovávaný v záloze po dobu jednoho měsíce — takže 500 může být 50 GB na 10 měsíců nebo 100 GB na 5. Platíte jen za skutečně uložená data — čím méně zálohujete, tím déle stejný kredit vydrží. Kredit nikdy nevyprší.</string>
     <string name="buy_credit_denom_rate">%1$s / GB-month</string>
     <string name="buy_credit_error_busy">Právě teď je příliš mnoho požadavků. Počkejte minutu a zkuste to znovu.</string>
     <!-- ── mřížka plánů (dlaždice ve stylu Google Disku „Až X GB za Y“) ── -->

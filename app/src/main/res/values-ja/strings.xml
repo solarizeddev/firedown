@@ -736,7 +736,7 @@
     <string name="buy_credit_error_timed_out">支払いが期限内に受信されませんでした。請求は発生していません。もう一度お試しいただけます。</string>
     <string name="buy_credit_error_slug">問題が発生しました (%1$s)。もう一度お試しください。</string>
     <string name="buy_credit_error_network">決済サーバーに接続できませんでした。接続を確認してもう一度お試しください。</string>
-    <string name="buy_credit_gb_month_explainer">1 GB-month は、1 GB を1か月間バックアップし続けることを意味します — つまり 500 は 10 か月間の 50 GB、または 5 か月間の 100 GB になります。</string>
+    <string name="buy_credit_gb_month_explainer">1 GB-month は、1 GB を1か月間バックアップし続けることを意味します — つまり 500 は 10 か月間の 50 GB、または 5 か月間の 100 GB になります。 支払いは実際に保存した分だけ — 保存量が少なければ同じクレジットがより長く持ちます。クレジットに有効期限はありません。</string>
     <string name="buy_credit_denom_rate">%1$s / GB-month</string>
     <string name="buy_credit_error_busy">現在リクエストが多すぎます。1分待ってからもう一度お試しください。</string>
     <!-- ── プラングリッド（Google ドライブ風の「最大 X GB を Y で」タイル） ── -->
