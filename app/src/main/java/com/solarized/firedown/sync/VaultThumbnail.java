@@ -267,7 +267,10 @@ public final class VaultThumbnail {
         return Bitmap.createScaledBitmap(src, nw, nh, true);
     }
 
-    private static String encode(Bitmap bmp) {
+    /** Encodes a preview to the stored base64-JPEG form ({@link #decode}'s
+     *  inverse) — also used to hand a display-backfilled bitmap to the item
+     *  sheet in the same shape a manifest thumb travels in. */
+    public static String encode(Bitmap bmp) {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         bmp.compress(Bitmap.CompressFormat.JPEG, JPEG_QUALITY, out);
         return Base64.encodeToString(out.toByteArray(), B64);

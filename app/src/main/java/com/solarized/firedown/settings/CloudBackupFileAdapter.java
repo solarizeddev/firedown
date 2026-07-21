@@ -221,6 +221,14 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
      * cache or MediaMetadataRetriever); the old base64-string contract made the
      * row bind re-decode on the main thread what the backfill had just encoded.
      */
+    /** The display-backfilled preview for an entry (null when none resolved) —
+     *  the item sheet reads it so a pre-preview entry whose ROW shows a
+     *  regenerated thumbnail doesn't open a sheet with a bare mime glyph
+     *  ({@code entry.thumb} is null for those; only this cache has the image). */
+    public Bitmap resolvedThumb(String objectId) {
+        return objectId != null ? mResolvedThumbs.get(objectId) : null;
+    }
+
     public void setResolvedThumb(String objectId, Bitmap thumb) {
         if (objectId == null || thumb == null) {
             return;

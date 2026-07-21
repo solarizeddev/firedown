@@ -1,5 +1,6 @@
 package com.solarized.firedown.settings;
 
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.text.format.Formatter;
 import android.widget.TextView;
@@ -42,6 +43,7 @@ import com.solarized.firedown.sync.PendingRemovals;
 import com.solarized.firedown.sync.StorageApiClient;
 import com.solarized.firedown.sync.VaultBackupWorker;
 import com.solarized.firedown.sync.VaultRestoreWorker;
+import com.solarized.firedown.sync.VaultThumbnail;
 import com.solarized.firedown.sync.model.VaultEntry;
 import com.solarized.firedown.ui.EqualSpacingItemDecoration;
 import com.solarized.firedown.ui.LCEERecyclerView;
@@ -532,7 +534,18 @@ public class CloudBackupListFragment extends Fragment
         args.putString(CloudBackupItemSheetDialogFragment.ARG_MIME, entry.mime);
         args.putLong(CloudBackupItemSheetDialogFragment.ARG_SIZE, entry.size);
         args.putLong(CloudBackupItemSheetDialogFragment.ARG_DOWNLOADED_AT, entry.downloadedAt);
-        args.putString(CloudBackupItemSheetDialogFragment.ARG_THUMB, entry.thumb);
+        // A pre-preview entry (entry.thumb == null) may still have a
+        // display-backfilled thumbnail in the adapter — hand THAT to the sheet,
+        // re-encoded in the manifest-thumb shape, so the sheet header matches
+        // the row instead of degrading to the mime glyph (on-device report).
+        String thumb = entry.thumb;
+        if (thumb == null) {
+            Bitmap resolved = mAdapter != null ? mAdapter.resolvedThumb(entry.objectId) : null;
+            if (resolved != null) {
+                thumb = VaultThumbnail.encode(resolved);
+            }
+        }
+        args.putString(CloudBackupItemSheetDialogFragment.ARG_THUMB, thumb);
         NavigationUtils.navigateSafe(mNavController,
                 R.id.action_cloud_backup_files_to_item_sheet, args);
     }

@@ -1,6 +1,9 @@
 package com.solarized.firedown.settings;
 
+import android.content.ActivityNotFoundException;
+import android.content.Intent;
 import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
@@ -13,13 +16,25 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.FileProvider;
 import androidx.navigation.NavBackStackEntry;
 
+import com.google.android.material.snackbar.Snackbar;
 import com.solarized.firedown.R;
+import com.solarized.firedown.data.Download;
+import com.solarized.firedown.data.RestoredFileAccess;
+import com.solarized.firedown.data.di.Qualifiers;
+import com.solarized.firedown.data.entity.DownloadEntity;
+import com.solarized.firedown.data.repository.DownloadDataRepository;
 import com.solarized.firedown.glide.MimeTypeThumbnail;
 import com.solarized.firedown.phone.dialogs.BaseBottomSheetDialogFragment;
 import com.solarized.firedown.sync.VaultThumbnail;
 import com.solarized.firedown.utils.FileUriHelper;
+
+import java.io.File;
+import java.util.concurrent.Executor;
+
+import javax.inject.Inject;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
@@ -48,6 +63,12 @@ public class CloudBackupItemSheetDialogFragment extends BaseBottomSheetDialogFra
     public static final int ACTION_RESTORE = 0;
     public static final int ACTION_REMOVE = 1;
 
+    @Inject
+    DownloadDataRepository mDownloads;
+    @Inject
+    @Qualifiers.DiskIO
+    Executor mDiskExecutor;
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
@@ -67,7 +88,75 @@ public class CloudBackupItemSheetDialogFragment extends BaseBottomSheetDialogFra
 
         mView.findViewById(R.id.cb_sheet_restore).setOnClickListener(v -> dispatch(ACTION_RESTORE));
         mView.findViewById(R.id.cb_sheet_remove).setOnClickListener(v -> dispatch(ACTION_REMOVE));
+        revealOpenIfLocal(name, size, mime);
         return mView;
+    }
+
+    /**
+     * Reveals the "Open" row once a background probe finds a LOCAL copy of this
+     * file — name+size against the download table, the same content key the
+     * backup engine dedups by. Opening a cloud-ONLY entry is structurally the
+     * restore flow (the server holds E2E-encrypted chunks; there is no playable
+     * URL to hand a viewer without downloading + decrypting, which IS restore),
+     * so when no local copy exists the row stays hidden and "Restore to
+     * Downloads" remains the door. The probe is a single indexed DB lookup on
+     * the DiskIO lane; the row appearing a beat after the sheet is fine (it
+     * appears BELOW the header, so nothing the user is reading moves).
+     */
+    private void revealOpenIfLocal(String name, long size, String mime) {
+        if (name == null || size <= 0) {
+            return;
+        }
+        mDiskExecutor.execute(() -> {
+            DownloadEntity local = mDownloads.findByNameSize(name, size);
+            // FINISHED + non-safe only: findByNameSize has no status/safe
+            // filter, and ACTION_VIEW on a mid-download partial or a vault
+            // entry's on-disk CIPHERTEXT would open garbage.
+            if (local == null || local.getFileStatus() != Download.FINISHED
+                    || local.isFileSafe()) {
+                return;
+            }
+            String path = local.getFilePath();
+            if (path == null || !isAdded() || mView == null) {
+                return;
+            }
+            String resolvedMime = !TextUtils.isEmpty(local.getFileMimeType())
+                    ? local.getFileMimeType() : mime;
+            mView.post(() -> {
+                if (!isAdded() || mView == null) {
+                    return;
+                }
+                View open = mView.findViewById(R.id.cb_sheet_open);
+                open.setVisibility(View.VISIBLE);
+                open.setOnClickListener(v -> openLocal(path, resolvedMime));
+            });
+        });
+    }
+
+    /** ACTION_VIEW on the local copy — owned file via FileProvider, a restored
+     *  foreign-owned file via its persisted SAF grant (openableUri returns the
+     *  content:// form for those; see RestoredFileAccess). Mirrors
+     *  BaseFocusFragment.openItemWith, which lives in the Downloads activity
+     *  and isn't reachable from this Settings-hosted sheet. */
+    private void openLocal(String path, String mime) {
+        try {
+            Uri openable = RestoredFileAccess.openableUri(requireContext(), path);
+            Uri uri;
+            if (openable != null && "content".equals(openable.getScheme())) {
+                uri = openable;
+            } else {
+                uri = FileProvider.getUriForFile(requireContext(),
+                        requireContext().getPackageName() + ".fileprovider", new File(path));
+            }
+            Intent intent = new Intent(Intent.ACTION_VIEW);
+            intent.setDataAndType(uri, mime);
+            intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            startActivity(intent);
+            mNavController.popBackStack();
+        } catch (ActivityNotFoundException | IllegalArgumentException e) {
+            Snackbar.make(requireActivity().findViewById(android.R.id.content),
+                    R.string.error_file_type_unknown, Snackbar.LENGTH_LONG).show();
+        }
     }
 
     /** "MIME · size · date" — the same facts the list row shows. */

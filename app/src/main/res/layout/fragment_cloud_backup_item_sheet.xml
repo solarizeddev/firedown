@@ -71,6 +71,17 @@
         android:layout_marginBottom="4dp"
         android:background="?attr/colorOutlineVariant" />
 
+    <!-- "Open" — revealed only once a background probe finds a LOCAL copy of
+         this file (name+size in the download table, the engine's own dedup
+         key). Cloud bytes are E2E-encrypted chunks, so opening a cloud-only
+         entry IS the restore flow — the row below stays that door. -->
+    <TextView
+        android:id="@+id/cb_sheet_open"
+        style="@style/Firedown.Widget.DialogOption"
+        android:text="@string/open"
+        android:visibility="gone"
+        app:drawableStartCompat="@drawable/ic_open_in_new_24" />
+
     <TextView
         android:id="@+id/cb_sheet_restore"
         style="@style/Firedown.Widget.DialogOption"
