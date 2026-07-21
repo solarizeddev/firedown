@@ -20,6 +20,7 @@ import androidx.core.view.MenuProvider;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Observer;
 import androidx.navigation.NavBackStackEntry;
@@ -37,6 +38,7 @@ import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
 import com.solarized.firedown.ApplicationLifeCycleHandler;
+import com.solarized.firedown.phone.SettingsActivity;
 import com.solarized.firedown.R;
 import com.solarized.firedown.sync.CloudBackupManager;
 import com.solarized.firedown.sync.PendingRemovals;
@@ -590,16 +592,21 @@ public class CloudBackupListFragment extends Fragment
         if (mBackCallback != null) {
             mBackCallback.setEnabled(false);
         }
+        FragmentActivity activity = getActivity();
         if (mToolbar != null) {
             mToolbar.setTitle(R.string.cloud_backup_files_title);
-            // Restore the activity's Up behaviour (pop, or finish at the root).
-            mToolbar.setNavigationOnClickListener(v -> {
-                if (!mNavController.popBackStack()) {
-                    requireActivity().finish();
-                }
-            });
+            // Restore the activity's Up behaviour THROUGH the activity — never a
+            // fragment-bound lambda. The shared toolbar outlives this fragment
+            // (onDestroyView routes here), so a lambda touching mNavController /
+            // requireActivity() stayed installed after detach and crashed the
+            // next root Up click with "Fragment … not attached" (field report).
+            if (activity instanceof SettingsActivity) {
+                ((SettingsActivity) activity).restoreToolbarUp();
+            }
         }
-        requireActivity().invalidateOptionsMenu();
+        if (activity != null) {
+            activity.invalidateOptionsMenu();
+        }
     }
 
     /** Updates the "N selected" title, or exits selection when none remain. */

@@ -38,6 +38,10 @@ public class SettingsActivity extends BaseActivity {
      *  Downloads toolbar overflow deep-links here). */
     public static final String EXTRA_OPEN_CLOUD_BACKUP_FILES = "com.solarized.firedown.extra.OPEN_CLOUD_BACKUP_FILES";
 
+    /** Activity-scoped, so {@link #restoreToolbarUp} can re-install the
+     *  canonical Up listener after a fragment borrowed the toolbar. */
+    private Toolbar mToolbar;
+    private NavController mNavController;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -50,8 +54,9 @@ public class SettingsActivity extends BaseActivity {
         NavHostFragment navHostFragment = mActivityContentFrame.getFragment();
 
         NavController navController = navHostFragment.getNavController();
+        mNavController = navController;
 
-        Toolbar mToolbar = findViewById(R.id.toolbar);
+        mToolbar = findViewById(R.id.toolbar);
 
         mToolbar.setContentInsetsAbsolute(getResources().getDimensionPixelSize(R.dimen.address_bar_inset),0);
 
@@ -66,11 +71,7 @@ public class SettingsActivity extends BaseActivity {
 
         // Up: pop a sub-screen, or finish the activity at the root (also handles
         // the deep-linked sync screen below, whose back stack is popped to empty).
-        mToolbar.setNavigationOnClickListener(v1 -> {
-            if (!navController.popBackStack()) {
-                finish();
-            }
-        });
+        restoreToolbarUp();
 
         navController.setGraph(R.navigation.nav_graph_settings, getIntent().getExtras());
 
@@ -172,6 +173,26 @@ public class SettingsActivity extends BaseActivity {
 
 
 
+    }
+
+    /**
+     * (Re)installs the CANONICAL toolbar Up listener — pop a sub-screen, or
+     * finish the activity at the root. The shared toolbar outlives any fragment,
+     * so a fragment that borrows the navigation click (the Backups list's
+     * multi-select exit-selection) must restore it through THIS method, never
+     * with its own lambda: a fragment-bound restore lambda stayed installed
+     * after the fragment detached, and the next Up click at the nav root hit
+     * {@code requireActivity()} on the dead fragment —
+     * {@code IllegalStateException: Fragment … not attached}, reported from the
+     * field. The listener here holds only activity state, which lives exactly
+     * as long as the toolbar does.
+     */
+    public void restoreToolbarUp() {
+        mToolbar.setNavigationOnClickListener(v -> {
+            if (!mNavController.popBackStack()) {
+                finish();
+            }
+        });
     }
 
 }
