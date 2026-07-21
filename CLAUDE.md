@@ -1975,7 +1975,8 @@ opaque chunks + an opaque manifest blob.
   64dp thumbnail leave dead space above/below the centred text — the third (date)
   line fills the row like the Downloads status line does. The **empty state
   mirrors `recycler_empty_layout` exactly** — same centered ConstraintLayout
-  (illustration `ill_baloons` bottom at the vertical centre, message below) and
+  (illustration bottom at the vertical centre — `ill_cloud`, the restored
+  P2P-send header art; this screen IS the cloud — message below) and
   same text styling (`sans-serif-medium`, `colorOnSurface`); don't substitute a
   `TextAppearance` style / `colorOnSurfaceVariant`.
 

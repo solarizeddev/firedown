@@ -160,8 +160,10 @@ public class CloudBackupListFragment extends Fragment
         // EqualSpacingItemDecoration at list_spacing.
         mRecycler.addItemDecoration(
                 new EqualSpacingItemDecoration(requireContext(), R.dimen.list_spacing));
-        // Empty state (LCEE) — the Downloads balloons illustration + message.
-        mLcee.setEmptyImageView(R.drawable.ill_baloons);
+        // Empty state (LCEE) — the cloud illustration (restored from the
+        // retired P2P-send header art; this screen IS the cloud, the Downloads
+        // balloons read as a copy-paste here) + message.
+        mLcee.setEmptyImageView(R.drawable.ill_cloud);
         mLcee.setEmptyText(R.string.cloud_backup_list_empty);
 
         // Same inset treatment as DownloadFragment: the list scrolls under the
@@ -412,7 +414,7 @@ public class CloudBackupListFragment extends Fragment
             mLoading = false;
             // A successful pull owns the empty state again ("no backups yet") —
             // a prior failed load may have swapped in the error art below.
-            mLcee.setEmptyImageView(R.drawable.ill_baloons);
+            mLcee.setEmptyImageView(R.drawable.ill_cloud);
             mLcee.setEmptyText(R.string.cloud_backup_list_empty);
             mEntries.clear();
             // Skip rows whose delete is still in flight (the manifest pull can
