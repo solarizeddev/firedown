@@ -698,6 +698,7 @@
         <item quantity="other">%d в облаке</item>
     </plurals>
     <string name="home_cloud_paused">Приостановлено</string>
+    <string name="home_cloud_waiting">Ожидает резервного копирования</string>
     <!-- Nostr (NIP-07) signer -->
     <string name="nostr_permission_title">Подписант Nostr</string>
     <string name="nostr_permission_message">%1$s хочет использовать ваш подписант Nostr, чтобы прочитать ваш публичный ключ и подписывать от вашего имени. Приложение для подписи подтверждает каждое действие отдельно.</string>

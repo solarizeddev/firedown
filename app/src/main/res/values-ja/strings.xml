@@ -785,6 +785,7 @@
         <item quantity="other">%d バックアップ</item>
     </plurals>
     <string name="home_cloud_paused">一時停止</string>
+    <string name="home_cloud_waiting">バックアップ待機中</string>
     <!-- Nostr (NIP-07) signer -->
     <string name="nostr_permission_title">Nostr 署名ツール</string>
     <string name="nostr_permission_message">%1$s があなたの公開鍵を読み取り、あなたに代わって署名するために Nostr 署名ツールの使用を求めています。署名アプリは各操作を個別に承認します。</string>

@@ -613,6 +613,7 @@
         <item quantity="other">%d у хмарі</item>
     </plurals>
     <string name="home_cloud_paused">Призупинено</string>
+    <string name="home_cloud_waiting">Очікує на резервне копіювання</string>
     <!-- Nostr (NIP-07) signer -->
     <string name="nostr_permission_title">Підписувач Nostr</string>
     <string name="nostr_permission_message">%1$s хоче використати ваш підписувач Nostr, щоб прочитати ваш публічний ключ і підписувати від вашого імені. Застосунок для підпису підтверджує кожну дію окремо.</string>

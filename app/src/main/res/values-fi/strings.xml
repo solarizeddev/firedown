@@ -627,6 +627,7 @@
         <item quantity="other">%d varmuuskopioitu</item>
     </plurals>
     <string name="home_cloud_paused">Keskeytetty</string>
+    <string name="home_cloud_waiting">Odottaa varmuuskopiointia</string>
     <!-- Nostr (NIP-07) signer -->
     <string name="nostr_permission_title">Nostr-allekirjoittaja</string>
     <string name="nostr_permission_message">%1$s haluaa käyttää Nostr-allekirjoittajaasi lukeakseen julkisen avaimesi ja allekirjoittaakseen puolestasi. Allekirjoitussovellus hyväksyy jokaisen toiminnon erikseen.</string>

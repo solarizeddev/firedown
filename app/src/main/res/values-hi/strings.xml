@@ -595,6 +595,7 @@
         <item quantity="other">%d बैकअप किए गए</item>
     </plurals>
     <string name="home_cloud_paused">रोका गया</string>
+    <string name="home_cloud_waiting">बैकअप की प्रतीक्षा में</string>
     <!-- Nostr (NIP-07) signer -->
     <string name="nostr_permission_title">Nostr हस्ताक्षरकर्ता</string>
     <string name="nostr_permission_message">%1$s आपकी सार्वजनिक कुंजी पढ़ने और आपकी ओर से हस्ताक्षर करने के लिए आपके Nostr हस्ताक्षरकर्ता का उपयोग करना चाहता है। हस्ताक्षर ऐप हर क्रिया को अलग से स्वीकृत करता है।</string>

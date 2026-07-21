@@ -436,11 +436,14 @@
             android:paddingTop="24dp"
             tools:visibility="gone">
 
+            <!-- The cloud illustration (restored asset, also the Backups empty
+                 state): the celebratory moment gets art, and it says WHAT was
+                 bought. Kept modest so title + Done stay above the fold. -->
             <ImageView
-                android:layout_width="76dp"
-                android:layout_height="76dp"
-                android:src="@drawable/ic_baseline_check_circle_24"
-                app:tint="@color/brand_orange"
+                android:layout_width="180dp"
+                android:layout_height="150dp"
+                android:src="@drawable/ill_cloud"
+                android:scaleType="fitCenter"
                 android:contentDescription="@null" />
 
             <TextView

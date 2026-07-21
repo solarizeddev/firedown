@@ -785,6 +785,7 @@
         <item quantity="other">已备份 %d</item>
     </plurals>
     <string name="home_cloud_paused">已暂停</string>
+    <string name="home_cloud_waiting">等待备份</string>
     <!-- Nostr (NIP-07) signer -->
     <string name="nostr_permission_title">Nostr 签名器</string>
     <string name="nostr_permission_message">%1$s 想使用你的 Nostr 签名器读取你的公钥并代表你签名。签名应用会分别批准每次操作。</string>

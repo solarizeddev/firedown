@@ -582,6 +582,7 @@
         <item quantity="other">%d архивирани</item>
     </plurals>
     <string name="home_cloud_paused">На пауза</string>
+    <string name="home_cloud_waiting">Изчаква архивиране</string>
     <!-- Nostr (NIP-07) signer -->
     <string name="nostr_permission_title">Nostr подписване</string>
     <string name="nostr_permission_message">%1$s иска да използва вашия Nostr подписвач, за да прочете публичния ви ключ и да подписва от ваше име. Приложението за подписване одобрява всяко действие поотделно.</string>

@@ -688,6 +688,7 @@
         <item quantity="other">%d em backup</item>
     </plurals>
     <string name="home_cloud_paused">Pausado</string>
+    <string name="home_cloud_waiting">Aguardando backup</string>
     <!-- Nostr (NIP-07) signer -->
     <string name="nostr_permission_title">Assinador Nostr</string>
     <string name="nostr_permission_message">%1$s quer usar o seu assinador Nostr para ler a sua chave pública e assinar em seu nome. O aplicativo de assinatura aprova cada ação separadamente.</string>

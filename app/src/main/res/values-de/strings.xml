@@ -792,6 +792,7 @@
         <item quantity="other">%d gesichert</item>
     </plurals>
     <string name="home_cloud_paused">Pausiert</string>
+    <string name="home_cloud_waiting">Wartet auf Sicherung</string>
     <!-- Nostr (NIP-07) signer -->
     <string name="nostr_permission_title">Nostr-Signierer</string>
     <string name="nostr_permission_message">%1$s möchte deinen Nostr-Signierer verwenden, um deinen öffentlichen Schlüssel zu lesen und in deinem Namen zu signieren. Die Signier-App bestätigt jede Aktion einzeln.</string>

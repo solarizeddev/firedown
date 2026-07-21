@@ -792,6 +792,7 @@
         <item quantity="other">%d respaldados</item>
     </plurals>
     <string name="home_cloud_paused">En pausa</string>
+    <string name="home_cloud_waiting">Esperando para respaldar</string>
     <!-- Nostr (NIP-07) signer -->
     <string name="nostr_permission_title">Firmante de Nostr</string>
     <string name="nostr_permission_message">%1$s quiere usar tu firmante de Nostr para leer tu clave pública y firmar en tu nombre. La app de firma aprueba cada acción por separado.</string>

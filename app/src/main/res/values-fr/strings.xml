@@ -793,6 +793,7 @@
         <item quantity="other">%d sauvegardés</item>
     </plurals>
     <string name="home_cloud_paused">En pause</string>
+    <string name="home_cloud_waiting">En attente de sauvegarde</string>
     <!-- Nostr (NIP-07) signer -->
     <string name="nostr_permission_title">Signataire Nostr</string>
     <string name="nostr_permission_message">%1$s souhaite utiliser votre signataire Nostr pour lire votre clé publique et signer en votre nom. L\'application de signature approuve chaque action séparément.</string>

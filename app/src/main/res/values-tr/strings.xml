@@ -687,6 +687,7 @@
         <item quantity="other">%d yedeklendi</item>
     </plurals>
     <string name="home_cloud_paused">Duraklatıldı</string>
+    <string name="home_cloud_waiting">Yedekleme bekleniyor</string>
     <!-- Nostr (NIP-07) signer -->
     <string name="nostr_permission_title">Nostr imzalayıcı</string>
     <string name="nostr_permission_message">%1$s, genel anahtarınızı okumak ve sizin adınıza imzalamak için Nostr imzalayıcınızı kullanmak istiyor. İmzalama uygulaması her işlemi ayrı ayrı onaylar.</string>

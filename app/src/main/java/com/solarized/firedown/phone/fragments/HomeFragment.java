@@ -115,16 +115,27 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
 
     // Cloud Backup activity pill (home v3): transient backup STATE lives in a
     // pill above the bottom bar, not in the hero subtitle — the hero keeps only
-    // the two lifetime stats (blocked · saved). Pill states: "Backing up…"
-    // while an identified backup transfer runs (shown even pre-setUp — the
-    // FIRST backup runs before markEnabled lands), amber "Paused" when metered
-    // credit ran out (setUp-gated), GONE otherwise. (The old "third subtitle
-    // counter" design this comment once described is gone — the subtitle is
-    // two counters + one separator, see updateSubtitleVisibility.)
+    // the two lifetime stats (blocked · saved). Pill states, in priority order
+    // (see applyBackupPill): amber "Paused" (metered credit ran out,
+    // setUp-gated), "Backing up…" (a transfer is RUNNING; shown even pre-setUp
+    // — the FIRST backup runs before markEnabled lands), "Waiting to back up"
+    // (enqueued-only), GONE otherwise. (The old "third subtitle counter"
+    // design this comment once described is gone — the subtitle is two
+    // counters + one separator, see updateSubtitleVisibility.)
     private View mBackupPill;
     private TextView mBackupPillText;
     private ImageView mBackupPillIcon;
-    private boolean mCloudActive;
+    /** An identified backup worker is actually TRANSFERRING right now. */
+    private boolean mCloudRunning;
+    /** …or merely enqueued (constraints unmet / retry backoff) — rendered as
+     *  "Waiting to back up", never "Backing up…". */
+    private boolean mCloudQueued;
+    /** Where a pill tap goes, decided when the pill was RENDERED (transfer
+     *  states → Backups list, Paused → Cloud screen). */
+    private boolean mPillToFiles;
+    /** Drops a stale loadStatus result when a newer refresh started (two rapid
+     *  resumes complete in NETWORK order, not call order). */
+    private int mCloudStatusGen;
     private StorageApiClient.Quota mCloudQuota;
     // The brand flame doubles as the live "a download is running" indicator:
     // a soft ember glow that breathes behind the logo while the active+queued
@@ -251,17 +262,18 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
                     mStartForResult.launch(new Intent(mActivity, DownloadsActivity.class)));
         }
 
-        // Cloud Backup activity pill — shown ONLY while a backup transfer runs
-        // ("Backing up… · View" → the Backups list) or when metered credit ran
-        // out (amber "Paused" → the Cloud Backup status screen). Tap routes by
-        // the state it currently shows.
+        // Cloud Backup activity pill — see applyBackupPill for the state
+        // machine. Tap routes by the state the pill CURRENTLY SHOWS
+        // (mPillToFiles is set at render, so a tap can't race a state flip
+        // between render and click): transfer states → the Backups list,
+        // Paused → the Cloud status screen.
         mBackupPill = v.findViewById(R.id.home_backup_pill);
         mBackupPillText = v.findViewById(R.id.home_backup_pill_text);
         mBackupPillIcon = v.findViewById(R.id.home_backup_pill_icon);
         if (mBackupPill != null) {
             mBackupPill.setOnClickListener(view -> {
                 Intent intent = new Intent(mActivity, SettingsActivity.class);
-                intent.putExtra(mCloudActive
+                intent.putExtra(mPillToFiles
                                 ? SettingsActivity.EXTRA_OPEN_CLOUD_BACKUP_FILES
                                 : SettingsActivity.EXTRA_OPEN_CLOUD_BACKUP,
                         true);
@@ -271,23 +283,34 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         WorkManager.getInstance(mActivity.getApplicationContext())
                 .getWorkInfosByTagLiveData(CloudBackupManager.WORK_TAG)
                 .observe(getViewLifecycleOwner(), infos -> {
-                    boolean active = false;
+                    // RUNNING and ENQUEUED tracked SEPARATELY: an enqueued
+                    // worker may be hours from transferring (retry backoff, or
+                    // waiting for network offline), and rendering it as
+                    // "Backing up…" was the audit's honesty gap — it gets its
+                    // own "Waiting to back up" copy instead.
+                    boolean running = false;
+                    boolean queued = false;
                     if (infos != null) {
                         for (WorkInfo wi : infos) {
-                            WorkInfo.State st = wi.getState();
-                            boolean running = st == WorkInfo.State.RUNNING
-                                    || st == WorkInfo.State.ENQUEUED;
                             // Only IDENTIFIED backup workers count: restores and
                             // legacy pre-tag WorkSpecs render no row anywhere, so
-                            // they must not raise a "Backing up…" pill pointing at
-                            // an empty list (the on-device ghost state).
-                            if (running && hasBackupTag(wi)) {
-                                active = true;
-                                break;
+                            // they must not raise a transfer pill pointing at an
+                            // empty list (the on-device ghost state).
+                            if (!hasBackupTag(wi)) {
+                                continue;
+                            }
+                            WorkInfo.State st = wi.getState();
+                            if (st == WorkInfo.State.RUNNING) {
+                                running = true;
+                                break; // strongest state — nothing can upgrade it
+                            }
+                            if (st == WorkInfo.State.ENQUEUED) {
+                                queued = true;
                             }
                         }
                     }
-                    mCloudActive = active;
+                    mCloudRunning = running;
+                    mCloudQueued = queued;
                     applyBackupPill();
                 });
 
@@ -686,8 +709,11 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         applyBackupPill(); // show promptly with whatever we already have
         // One combined load with the guarded reconciliation: retiring flips
         // isSetUp() false (pill hides); a heal makes the paused check reachable.
+        // Gen-guarded so two rapid resumes can't apply results in the wrong
+        // order (network order != call order on the manager's pooled executor).
+        final int gen = ++mCloudStatusGen;
         mCloudBackup.loadStatus(status -> {
-            if (isAdded() && mBackupPill != null) {
+            if (isAdded() && mBackupPill != null && gen == mCloudStatusGen) {
                 mCloudQuota = status.quota;
                 applyBackupPill();
             }
@@ -707,27 +733,38 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
 
     /** Renders the bottom backup pill from the latest transfer/quota state.
      *  STATE only, never stats (those live in the hero subtitle / the Cloud
-     *  Backup status hero): "Backing up…" while an identified backup transfer
-     *  runs (tap → the Backups list), amber "Paused" when metered credit ran
-     *  out (tap → the status screen; amber = attention, coral stays the
-     *  brand's). GONE when idle — the calm home is the default. */
+     *  Backup status hero). Priority: amber "Paused" (metered credit ran out —
+     *  tap → the status screen; amber = attention, coral stays the brand's)
+     *  BEATS the transfer states, because in grace every upload 402s at
+     *  create — a doomed queued backup rendering "Backing up…" over the one
+     *  actionable fact (top up) was the audit's grace race. Then "Backing up…"
+     *  for a RUNNING transfer, "Waiting to back up" for enqueued-only
+     *  (constraints unmet / retry backoff — hours may pass with nothing
+     *  transferring, so it never claims to be backing up); both tap → the
+     *  Backups list. GONE when idle — the calm home is the default. */
     private void applyBackupPill() {
         if (mBackupPill == null || mBackupPillText == null) {
             return;
         }
         String text = null;
         boolean attention = false;
-        if (mCloudActive) {
-            text = getString(R.string.home_cloud_backing_up);
-        } else if (mCloudBackup.isSetUp()
+        boolean toFiles = false;
+        if (mCloudBackup.isSetUp()
                 && mCloudQuota != null && mCloudQuota.metered && mCloudQuota.readOnly) {
             text = getString(R.string.home_cloud_paused);
             attention = true;
+        } else if (mCloudRunning) {
+            text = getString(R.string.home_cloud_backing_up);
+            toFiles = true;
+        } else if (mCloudQueued) {
+            text = getString(R.string.home_cloud_waiting);
+            toFiles = true;
         }
         if (text == null) {
             mBackupPill.setVisibility(View.GONE);
             return;
         }
+        mPillToFiles = toFiles;
         int ink = attention
                 ? ContextCompat.getColor(mActivity, R.color.backup_warning)
                 : MaterialColors.getColor(mBackupPill,

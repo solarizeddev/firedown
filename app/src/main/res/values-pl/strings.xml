@@ -695,6 +695,7 @@
         <item quantity="other">%d w chmurze</item>
     </plurals>
     <string name="home_cloud_paused">Wstrzymane</string>
+    <string name="home_cloud_waiting">Oczekuje na kopię zapasową</string>
     <!-- Nostr (NIP-07) signer -->
     <string name="nostr_permission_title">Podpisujący Nostr</string>
     <string name="nostr_permission_message">%1$s chce użyć Twojego podpisującego Nostr, aby odczytać Twój klucz publiczny i podpisywać w Twoim imieniu. Aplikacja podpisująca zatwierdza każdą czynność osobno.</string>

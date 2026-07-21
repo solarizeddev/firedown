@@ -688,6 +688,7 @@
         <item quantity="other">%d geback-upt</item>
     </plurals>
     <string name="home_cloud_paused">Gepauzeerd</string>
+    <string name="home_cloud_waiting">Wacht op back-up</string>
     <!-- Nostr (NIP-07) signer -->
     <string name="nostr_permission_title">Nostr-ondertekenaar</string>
     <string name="nostr_permission_message">%1$s wil je Nostr-ondertekenaar gebruiken om je publieke sleutel te lezen en namens jou te ondertekenen. De ondertekenapp keurt elke actie afzonderlijk goed.</string>

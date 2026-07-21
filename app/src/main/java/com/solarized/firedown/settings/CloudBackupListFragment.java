@@ -114,8 +114,14 @@ public class CloudBackupListFragment extends Fragment
      *  clear an id — only a fresh pull or a delete-FAILURE does) live in
      *  {@link PendingRemovals}, where they're unit-tested. */
     private final PendingRemovals mPendingRemovals = new PendingRemovals();
-    /** True while any backup/restore transfer is running. */
+    /** True while any backup transfer is running OR enqueued (drives the
+     *  finished→reload logic and the hero's active state). */
     private boolean mTransferActive;
+    /** True only while one is actually RUNNING — picks the header prefix
+     *  ("Backing up…" vs "Waiting to back up"), same honesty split as the
+     *  home pill: an enqueued-only worker (constraints unmet / retry backoff)
+     *  may be hours from transferring. */
+    private boolean mTransferRunning;
     /** True while multi-select is active (drives the toolbar title/menu). */
     private boolean mSelectionMode;
     private Toolbar mToolbar;
@@ -297,6 +303,7 @@ public class CloudBackupListFragment extends Fragment
                 .observe(getViewLifecycleOwner(), infos -> {
                     List<CloudBackupFileAdapter.Transfer> transfers = new ArrayList<>();
                     boolean active = false;
+                    boolean anyRunning = false;
                     Set<String> seenNames = new HashSet<>();
                     if (infos != null) {
                         for (WorkInfo wi : infos) {
@@ -315,6 +322,9 @@ public class CloudBackupListFragment extends Fragment
                             }
                             if (running) {
                                 active = true;
+                            }
+                            if (s == WorkInfo.State.RUNNING) {
+                                anyRunning = true;
                             }
                             Data p = wi.getProgress();
                             String name = p.getString(VaultBackupWorker.KEY_NAME);
@@ -357,6 +367,7 @@ public class CloudBackupListFragment extends Fragment
                     }
                     boolean justFinished = mTransferActive && !active;
                     mTransferActive = active;
+                    mTransferRunning = anyRunning;
                     mAdapter.setTransfers(transfers);
                     render();
                     if (justFinished) {
@@ -504,7 +515,9 @@ public class CloudBackupListFragment extends Fragment
                 R.plurals.settings_cloud_backup_file_count, mEntries.size(), mEntries.size())
                 + " · " + Formatter.formatShortFileSize(requireContext(), totalBytes);
         if (mTransferActive) {
-            line1 = getString(R.string.home_cloud_backing_up) + " · " + line1;
+            line1 = getString(mTransferRunning
+                    ? R.string.home_cloud_backing_up
+                    : R.string.home_cloud_waiting) + " · " + line1;
         }
         mHeaderLine1.setText(line1);
         String line2;

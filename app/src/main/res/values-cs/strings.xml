@@ -649,6 +649,7 @@
         <item quantity="other">%d zálohováno</item>
     </plurals>
     <string name="home_cloud_paused">Pozastaveno</string>
+    <string name="home_cloud_waiting">Čeká na zálohování</string>
     <!-- Nostr (NIP-07) signer -->
     <string name="nostr_permission_title">Podepisování Nostr</string>
     <string name="nostr_permission_message">%1$s chce použít váš podpisovač Nostr ke čtení vašeho veřejného klíče a k podepisování vaším jménem. Podpisovací aplikace schvaluje každou akci zvlášť.</string>
