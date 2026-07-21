@@ -515,6 +515,7 @@
     <!-- Add storage credit (buy-credit purchase wizard) -->
     <string name="settings_cloud_backup_buy_summary">Поповніть баланс сховища</string>
     <string name="buy_credit_title">Додати кредит сховища</string>
+    <string name="cloud_starter_credit_step">Безкоштовний стартовий кредит включено</string>
     <string name="buy_credit_pick_how_much">Скільки</string>
     <string name="buy_credit_pay_with">Оплатити через</string>
     <string name="buy_credit_rail_lightning">Lightning</string>

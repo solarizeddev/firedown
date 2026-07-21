@@ -279,9 +279,19 @@ public class CloudStatusPreference extends Preference {
         } else {
             creditDone = mPlanSizeGb > 0;
         }
+        // A balance the user never PAID for is the server's one-time starter
+        // credit (granted at registration). Showing "✓ Add storage credit"
+        // then would claim a purchase that never happened — label the step as
+        // the included trial instead. A local plan shape (a real purchase on
+        // this install) wins over the trial label.
+        boolean starterOnly = creditDone
+                && mPlanSizeGb <= 0
+                && mQuota != null && mQuota.metered && mQuota.starterGrantedAt != null;
         bindStep(ctx, stepCode, 1, ctx.getString(R.string.settings_sync_create_title),
                 codeDone, !codeDone);
-        bindStep(ctx, stepCredit, 2, ctx.getString(R.string.buy_credit_title),
+        bindStep(ctx, stepCredit, 2, ctx.getString(starterOnly
+                        ? R.string.cloud_starter_credit_step
+                        : R.string.buy_credit_title),
                 creditDone, codeDone && !creditDone);
         bindStep(ctx, stepBackup, 3, ctx.getString(R.string.cloud_status_empty_body),
                 false, codeDone && creditDone);

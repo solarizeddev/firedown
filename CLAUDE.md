@@ -1773,6 +1773,21 @@ opaque chunks + an opaque manifest blob.
   other (symmetric wipes in `SyncManager.disable`/`CloudBackupManager
   .deleteAllData`).
 
+- **Starter credit — register at CODE CREATION, label the trial honestly.** In
+  metered mode the server grants a one-time free starter credit AT REGISTRATION
+  (`FIREDOWN_STORAGE_STARTER_GRANT_GBM`, see firedown-api), so
+  `CloudBackupManager.registerInBackground` registers right after the recovery
+  code is created or adopted on the Cloud screen — not waiting for the first
+  backup's `ensureRegistered` — and the hero's next quota load shows the granted
+  runway (the roadmap's step ② check-off on server balance was already built).
+  Best-effort: offline falls back to first-backup registration; both the client
+  marker and the server grant are once-only, nothing double-applies. It is
+  deliberately NOT folded into `loadStatus` — that also runs for bookmarks-ONLY
+  codes, which must not get storage accounts minted. `Quota.starterGrantedAt`
+  (from quota's `starter_granted_at`) drives the honest label: a balance the
+  user never paid for renders roadmap step ② as `cloud_starter_credit_step`
+  ("Free starter credit included", 16 locales) instead of "✓ Add storage
+  credit" — a local `CLOUD_PLAN_*` purchase shape wins over the trial label.
 - **Register ONCE per install, not per backup (Cloudflare rate limit).** The CF
   edge rate-limits ONLY the `/v1/account/register` + `/v1/register/challenge`
   endpoints (per-IP, anti-Sybil — see `firedown-api`). `VaultEngine.backupFile`

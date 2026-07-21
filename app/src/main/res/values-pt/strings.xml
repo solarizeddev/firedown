@@ -596,6 +596,7 @@
     <!-- Add storage credit (buy-credit purchase wizard) -->
     <string name="settings_cloud_backup_buy_summary">Recarregue o seu saldo de armazenamento</string>
     <string name="buy_credit_title">Adicionar crédito de armazenamento</string>
+    <string name="cloud_starter_credit_step">Crédito inicial grátis incluído</string>
     <string name="buy_credit_pick_how_much">Quanto</string>
     <string name="buy_credit_pay_with">Pagar com</string>
     <string name="buy_credit_rail_lightning">Lightning</string>

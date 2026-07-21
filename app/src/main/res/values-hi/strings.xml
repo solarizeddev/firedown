@@ -503,6 +503,7 @@
     <!-- Add storage credit (buy-credit purchase wizard) -->
     <string name="settings_cloud_backup_buy_summary">अपना स्टोरेज बैलेंस टॉप अप करें</string>
     <string name="buy_credit_title">स्टोरेज क्रेडिट जोड़ें</string>
+    <string name="cloud_starter_credit_step">मुफ़्त शुरुआती क्रेडिट शामिल</string>
     <string name="buy_credit_pick_how_much">कितना</string>
     <string name="buy_credit_pay_with">इससे भुगतान करें</string>
     <string name="buy_credit_rail_lightning">Lightning</string>

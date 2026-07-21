@@ -139,6 +139,43 @@ public class CloudBackupManager {
     }
 
     /**
+     * Registers the storage account in the BACKGROUND, kicked right after the
+     * recovery code is created or adopted on the Cloud screen. Registration is
+     * where the server applies its one-time free STARTER CREDIT (metered mode),
+     * so doing it at code creation — instead of waiting for the first backup's
+     * {@link #ensureRegistered} — lands the grant before the user reaches the
+     * download sheet, and the status hero's next quota load shows the granted
+     * runway instead of pointing a funded-by-trial user at "Add storage credit".
+     *
+     * <p>Best-effort by design: offline just means the first backup registers
+     * (and the server grants) then — {@code ensureRegistered} is once-per-install
+     * and the server grant is once-per-account, so nothing double-applies.
+     * Deliberately NOT folded into {@link #loadStatus}: that also runs for
+     * bookmarks-ONLY codes, which must not get storage accounts minted for them
+     * (their storage loads are supposed to fail — see the loadStatus comment).
+     * Here the user is on the CLOUD screen creating/adopting a key, which is
+     * cloud intent. {@code onDone} is posted to main either way.
+     */
+    public void registerInBackground(Runnable onDone) {
+        netExecutor.execute(() -> {
+            byte[] code = new SyncSecrets(context).load();
+            if (code != null) {
+                try {
+                    SyncIdentity identity = SyncIdentity.fromCode(code);
+                    StorageApiClient api = new StorageApiClient(httpClient, backendUrl());
+                    ensureRegistered(prefs, api, identity);
+                } catch (IOException | RuntimeException e) {
+                    // Offline / transient — the first backup retries via
+                    // ensureRegistered; the grant self-heals on that register.
+                }
+            }
+            if (onDone != null) {
+                main.post(onDone);
+            }
+        });
+    }
+
+    /**
      * Whether Cloud Backup is set up on this device: the shared recovery code is
      * present AND the user has actually used it (has data on the server). A code
      * present only because bookmark sync is on does NOT count as Cloud Backup

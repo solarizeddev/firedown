@@ -466,6 +466,7 @@
     <!-- Add storage credit (buy-credit purchase wizard) -->
     <string name="settings_cloud_backup_buy_summary">Täienda oma salvestusruumi jääki</string>
     <string name="buy_credit_title">Lisa salvestusruumi krediiti</string>
+    <string name="cloud_starter_credit_step">Tasuta stardikrediit kaasas</string>
     <string name="buy_credit_pick_how_much">Kui palju</string>
     <string name="buy_credit_pay_with">Maksa</string>
     <string name="buy_credit_rail_lightning">Lightning</string>

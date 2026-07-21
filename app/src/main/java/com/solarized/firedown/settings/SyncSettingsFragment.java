@@ -446,6 +446,14 @@ public class SyncSettingsFragment extends BasePreferenceFragment
             if (isAdded()) {
                 showCodeDialog(grouped, true);
                 updateState();
+                // Register the storage account NOW (not at first backup) so the
+                // server's one-time starter credit lands and the next status
+                // load shows the granted runway — see registerInBackground.
+                mCloudBackup.registerInBackground(() -> {
+                    if (isAdded()) {
+                        updateState();
+                    }
+                });
             }
         });
     }
@@ -615,6 +623,18 @@ public class SyncSettingsFragment extends BasePreferenceFragment
                         snackbar(getString(ok
                                 ? R.string.settings_sync_link_ok
                                 : R.string.settings_sync_link_bad));
+                        if (ok) {
+                            // Adopting a code on the Cloud screen is cloud
+                            // intent too: register so a pre-feature account
+                            // self-heals its starter grant (granted-once
+                            // server-side, so an already-granted account is a
+                            // no-op) and the hero reflects the balance.
+                            mCloudBackup.registerInBackground(() -> {
+                                if (isAdded()) {
+                                    updateState();
+                                }
+                            });
+                        }
                     });
                 })
                 .setNegativeButton(R.string.cancel, null)

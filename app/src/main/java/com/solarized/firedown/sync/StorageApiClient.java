@@ -255,9 +255,14 @@ public final class StorageApiClient {
         public final String runoutAt;          // RFC3339, stamped once in grace (nullable)
         public final String graceUntil;        // RFC3339, end of read-only grace (nullable)
         public final long bytesLimit;          // unmetered
+        // RFC3339 when the server applied its ONE-TIME free starter credit at
+        // registration (nullable) — lets the UI label a never-paid balance as
+        // the free trial instead of implying a purchase happened.
+        public final String starterGrantedAt;  // metered (nullable)
 
         Quota(boolean metered, double balanceGbMonths, long balanceMicroGbMonths, boolean readOnly,
-              String projectedRunoutAt, String runoutAt, String graceUntil, long bytesLimit) {
+              String projectedRunoutAt, String runoutAt, String graceUntil, long bytesLimit,
+              String starterGrantedAt) {
             this.metered = metered;
             this.balanceGbMonths = balanceGbMonths;
             this.balanceMicroGbMonths = balanceMicroGbMonths;
@@ -266,6 +271,7 @@ public final class StorageApiClient {
             this.runoutAt = runoutAt;
             this.graceUntil = graceUntil;
             this.bytesLimit = bytesLimit;
+            this.starterGrantedAt = starterGrantedAt;
         }
     }
 
@@ -568,7 +574,8 @@ public final class StorageApiClient {
                         o.optString("projected_runout_at", null),
                         o.optString("runout_at", null),
                         o.optString("grace_until", null),
-                        o.optLong("bytes_limit", 0));
+                        o.optLong("bytes_limit", 0),
+                        o.optString("starter_granted_at", null));
             } catch (org.json.JSONException e) {
                 throw new IOException("malformed quota response", e);
             }

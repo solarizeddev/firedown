@@ -696,6 +696,7 @@
     <!-- Add storage credit (buy-credit purchase wizard) -->
     <string name="settings_cloud_backup_buy_summary">ストレージ残高をチャージ</string>
     <string name="buy_credit_title">ストレージクレジットを追加</string>
+    <string name="cloud_starter_credit_step">無料のスタータークレジット付き</string>
     <string name="buy_credit_pick_how_much">容量</string>
     <string name="buy_credit_pay_with">支払い方法</string>
     <string name="buy_credit_rail_lightning">Lightning</string>
