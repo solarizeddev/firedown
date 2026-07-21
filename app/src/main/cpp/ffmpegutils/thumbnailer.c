@@ -44,10 +44,25 @@
  * seconds in is representative. Applied only when the clip is longer than the
  * offset — a shorter clip just decodes the head (frame 0 is fine there) — and
  * we also fall back to the head if decoding at the offset fails. Note the
- * contract: stream_pos > 0 is an explicit mid-clip
- * mandate (honoured exactly, original ANY seek); stream_pos == 0 means the head
- * frame explicitly (some callers tile the first frame and need it — no seek);
- * only stream_pos < 0 triggers this auto offset. */
+ * contract: stream_pos > 0 is an explicit mid-clip mandate (decode the first
+ * KEYFRAME at/after the position — MediaMetadataRetriever OPTION_NEXT_SYNC
+ * parity, falling back to the keyframe before it when none follows);
+ * stream_pos == 0 means the head frame explicitly (some callers tile the first
+ * frame and need it — no seek); only stream_pos < 0 triggers this auto offset,
+ * which takes the same keyframe-at/after seek.
+ *
+ * The explicit mandate deliberately does NOT use AVSEEK_FLAG_ANY. An ANY seek
+ * lands on an arbitrary (usually non-key) sample, and decoders in the
+ * send/receive API that hard-reject packets with missing references — dav1d
+ * (AV1) rejects every mid-GOP packet with AVERROR_INVALIDDATA — then fail
+ * straight into the retry-from-start below, so EVERY explicit position
+ * collapsed to the t=0 head frame: the Downloads-list fallback thumbnail was
+ * always the black opening frame and "Regenerate thumbnail" visibly did
+ * nothing (AV1 is exactly the codec class that reaches this fallback, because
+ * MediaMetadataRetriever can't decode it on older devices either). H.264 only
+ * escaped by silently discarding packets until the NEXT keyframe — the same
+ * frame the keyframe seek now reaches directly, minus a GOP's worth of wasted
+ * packet reads. */
 #define THUMBNAIL_DEFAULT_OFFSET_US (3 * AV_TIME_BASE)
 
 
@@ -994,7 +1009,11 @@ int jni_extract_bitmap (JNIEnv * env, jobject thiz, jlong stream_pos){
     AVDictionary *opts = NULL;
     AVFrame *frame = NULL;
     int64_t seek_target;
-    int flags = AVSEEK_FLAG_ANY;
+    /* 0 = seek to the keyframe AT/AFTER the target (NEXT_SYNC semantics — see
+     * the contract note above THUMBNAIL_DEFAULT_OFFSET_US). Never ANY: a
+     * non-key sample is undecodable for AV1/dav1d and degrades every explicit
+     * position to the head frame. */
+    int flags = 0;
     int ret = ERROR_NO_ERROR;
     int err;
     int got_frame = 0; /* [FIX BUG 7] initialize to avoid UB in cleanup */
@@ -1116,12 +1135,11 @@ int jni_extract_bitmap (JNIEnv * env, jobject thiz, jlong stream_pos){
         }
 
         /* Decide the effective seek position. stream_pos > 0 is an explicit
-         * mid-clip mandate — honour it exactly (original ANY seek). stream_pos
+         * mid-clip mandate — decode the first keyframe at/after it. stream_pos
          * == 0 is an explicit head-frame request — no seek. Only stream_pos < 0
          * (no mandate) triggers the auto offset, to skip the black/blank
          * opening frame. */
         int64_t seek_pos = stream_pos;
-        int auto_offset = 0;
 
         if (stream_pos < 0) {
             int64_t duration_us = thumbnail->format_ctx->duration;
@@ -1134,18 +1152,10 @@ int jni_extract_bitmap (JNIEnv * env, jobject thiz, jlong stream_pos){
              * decode-error fallback. */
             if (duration_us == AV_NOPTS_VALUE || duration_us > THUMBNAIL_DEFAULT_OFFSET_US) {
                 seek_pos = THUMBNAIL_DEFAULT_OFFSET_US;
-                auto_offset = 1;
             }
         }
 
         if (seek_pos > 0) {
-
-            /* The auto offset wants a clean image, so seek to the keyframe at
-             * or before the target (BACKWARD). An explicit mandate keeps the
-             * original ANY behaviour. */
-            if (auto_offset) {
-                flags = AVSEEK_FLAG_BACKWARD;
-            }
 
             seek_target = av_rescale_q(seek_pos, AV_TIME_BASE_Q, stream->time_base);
 
@@ -1153,16 +1163,30 @@ int jni_extract_bitmap (JNIEnv * env, jobject thiz, jlong stream_pos){
 
             /* Only clamp against a known stream duration. An unknown duration
              * is AV_NOPTS_VALUE (INT64_MIN), so the bare comparison would
-             * always clamp the target to that bogus negative value. */
+             * always clamp the target to that bogus negative value. A clamped
+             * target has no keyframe after it by definition, so it seeks
+             * BACKWARD to the last keyframe directly. */
             if (stream->duration > 0 && seek_target >= stream->duration){
                 flags = AVSEEK_FLAG_BACKWARD;
                 seek_target = stream->duration;
             }
 
 
-            LOGI(1, "jni_extract_bitmap seek_target adjusted max: %"PRId64, seek_target);
+            LOGI(1, "jni_extract_bitmap seek_target adjusted max: %"PRId64" flags: %d", seek_target, flags);
 
             err = av_seek_frame(thumbnail->format_ctx, video_stream_index, seek_target, flags);
+
+            /* A position past the LAST keyframe has nothing at/after it, so
+             * the forward keyframe seek fails (MediaMetadataRetriever's
+             * OPTION_NEXT_SYNC returns null here — a random "Regenerate
+             * thumbnail" position lands in this tail regularly). Fall back to
+             * the keyframe at/before the target: a real frame near the
+             * requested position instead of an error. */
+            if (err < 0 && flags == 0) {
+                LOGI(1, "jni_extract_bitmap forward keyframe seek failed (%d), retrying backward", err);
+                err = av_seek_frame(thumbnail->format_ctx, video_stream_index, seek_target,
+                                    AVSEEK_FLAG_BACKWARD);
+            }
 
             if (err >= 0) {
                 avcodec_flush_buffers(codec_ctx);

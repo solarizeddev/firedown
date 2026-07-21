@@ -117,9 +117,21 @@ public class FFmpegPfdDecoder implements ResourceDecoder<ParcelFileDescriptor, B
         FFmpegThumbnailer thumbnailer = new FFmpegThumbnailer();
         try {
             if (thumbnailer.setDataSource(path, null) < 0) {
+                if (BuildConfig.DEBUG) {
+                    Log.d(TAG, "path setDataSource failed: " + path);
+                }
                 return null;
             }
-            return extract(thumbnailer, streamPos, outWidth, outHeight);
+            Bitmap bitmap = extract(thumbnailer, streamPos, outWidth, outHeight);
+            // Every native failure surfaces only as a null here (getBitmap has
+            // no error channel), so log it or the whole fallback fails
+            // silently — exactly what made the AV1 mid-GOP-seek bug a
+            // log-and-guess round.
+            if (bitmap == null && BuildConfig.DEBUG) {
+                Log.d(TAG, "path extract produced no frame: streamPos=" + streamPos
+                        + " path=" + path);
+            }
+            return bitmap;
         } catch (Exception e) {
             if (BuildConfig.DEBUG) {
                 Log.e(TAG, "FFmpeg PFD path decode", e);
@@ -135,9 +147,16 @@ public class FFmpegPfdDecoder implements ResourceDecoder<ParcelFileDescriptor, B
         FFmpegThumbnailer thumbnailer = new FFmpegThumbnailer();
         try {
             if (thumbnailer.setDataSource(fd, null) < 0) {
+                if (BuildConfig.DEBUG) {
+                    Log.d(TAG, "fd setDataSource failed");
+                }
                 return null;
             }
-            return extract(thumbnailer, streamPos, outWidth, outHeight);
+            Bitmap bitmap = extract(thumbnailer, streamPos, outWidth, outHeight);
+            if (bitmap == null && BuildConfig.DEBUG) {
+                Log.d(TAG, "fd extract produced no frame: streamPos=" + streamPos);
+            }
+            return bitmap;
         } catch (Exception e) {
             if (BuildConfig.DEBUG) {
                 Log.e(TAG, "FFmpeg PFD fd decode", e);

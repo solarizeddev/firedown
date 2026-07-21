@@ -2977,14 +2977,27 @@ here:
 ## Thumbnails (native `thumbnailer.c`)
 
 `FFmpegThumbnailer.getBitmap(streamPos)` reads one frame; `streamPos` is a
-three-way contract: **`>0`** seeks to that mid-clip position (explicit mandate,
-`AVSEEK_FLAG_ANY`); **`==0`** decodes the head frame (some callers need the
-first frame exactly — GifMaker tiles it across the filmstrip, SaveFrame
-fallback); **`<0`** means *no mandate*, so the native side auto-seeks
-`THUMBNAIL_DEFAULT_OFFSET_US` (3s) in (`BACKWARD` to the enclosing keyframe) to
-skip the usual black opening frame — applied only when the clip is longer than
-the offset (a shorter clip decodes the head, frame 0 being fine there), and
-falling back to the head on seek/decode failure.
+three-way contract: **`>0`** decodes the first **keyframe at/after** that
+mid-clip position (`av_seek_frame` flags `0` — MediaMetadataRetriever
+`OPTION_NEXT_SYNC` parity; a position past the LAST keyframe falls back to the
+keyframe before it, mirroring MMR's null there); **`==0`** decodes the head
+frame (some callers need the first frame exactly — GifMaker tiles it across the
+filmstrip, SaveFrame fallback); **`<0`** means *no mandate*, so the native side
+auto-seeks `THUMBNAIL_DEFAULT_OFFSET_US` (3s) in with the same keyframe-at/after
+seek, to skip the usual black opening frame — applied only when the clip is
+longer than the offset (a shorter clip decodes the head, frame 0 being fine
+there), and falling back to the head on seek/decode failure. **Never
+`AVSEEK_FLAG_ANY`** (the pre-fix `>0` behaviour): an ANY seek lands on a
+non-key sample, and dav1d (AV1) rejects every mid-GOP packet with
+`AVERROR_INVALIDDATA`, so the internal retry-from-start turned EVERY explicit
+position into the black t=0 head frame — AV1 being exactly what reaches the
+FFmpeg fallback (MMR can't decode it on older devices either), the
+Downloads-list fallback thumbnail was always black and "Regenerate thumbnail"
+visibly did nothing (H.264 only escaped by discarding packets to the next
+keyframe — the frame the keyframe seek now reaches directly). Verified by
+mirroring `jni_extract_bitmap` byte-for-byte in a host harness over
+H264/AV1(dav1d)/VP9 × mp4/webm/mkv at mid-GOP, past-last-keyframe, past-EOF,
+truncated-faststart and auto positions.
 The Glide decoders default a missing `GlideRequestOptions.LENGTH` to `-1`
 (auto); an explicit `LENGTH` (Media/Image viewers pass the file size) is passed
 through. **Don't extend the auto offset to `0`** — that breaks the head-frame
