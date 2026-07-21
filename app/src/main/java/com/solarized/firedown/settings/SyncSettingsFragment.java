@@ -38,8 +38,10 @@ import com.solarized.firedown.R;
 import com.solarized.firedown.sync.CloudBackupManager;
 import com.solarized.firedown.sync.StorageApiClient;
 import com.solarized.firedown.sync.SyncManager;
+import com.solarized.firedown.sync.SyncSecrets;
 import com.solarized.firedown.sync.VaultBackupWorker;
 import com.solarized.firedown.sync.VaultSmokeTest;
+import com.solarized.firedown.sync.crypto.SyncIdentity;
 import com.solarized.firedown.utils.NavigationUtils;
 
 import java.io.OutputStream;
@@ -234,6 +236,7 @@ public class SyncSettingsFragment extends BasePreferenceFragment
         tintIcons();
         updateState();
         addDebugSmokeTestRow();
+        addDebugAccountIdRow();
     }
 
     @Override
@@ -735,6 +738,46 @@ public class SyncSettingsFragment extends BasePreferenceFragment
      * the on-device smoke test for the storage client; it lands at the very
      * bottom of the screen, out of the way.
      */
+    /**
+     * Debug-only row showing the storage ACCOUNT ID (Crockford base32, the
+     * {@code X-Firedown-Account} wire form); tap copies it. This is the dev
+     * free-testing handshake with the server's operator grant: copy here, then
+     * on the VPS {@code storage-api --grant <base32> --grant-gbm 100000} funds
+     * the account so uploads test freely THROUGH the real metered pipeline —
+     * deliberately not a client/server "uploads free" bypass, which would be a
+     * standing backdoor and would skip the billing paths a test should
+     * exercise. Never added in a release build; absent until a code exists.
+     */
+    private void addDebugAccountIdRow() {
+        if (!BuildConfig.DEBUG) {
+            return;
+        }
+        PreferenceScreen screen = getPreferenceScreen();
+        if (screen == null || !mSyncManager.hasCode()) {
+            return;
+        }
+        String base32;
+        try {
+            byte[] code = new SyncSecrets(requireContext()).load();
+            if (code == null) {
+                return;
+            }
+            base32 = SyncIdentity.fromCode(code).accountBase32();
+        } catch (RuntimeException e) {
+            return; // debug convenience only — never let it break the screen
+        }
+        Preference row = new Preference(requireContext());
+        row.setKey("debug.account.id");
+        row.setPersistent(false);
+        row.setTitle("Account id (debug)");
+        row.setSummary(base32 + " — tap to copy; grant test credit with: storage-api --grant <id>");
+        row.setOnPreferenceClickListener(pref -> {
+            copyToClipboard(base32);
+            return true;
+        });
+        screen.addPreference(row);
+    }
+
     private void addDebugSmokeTestRow() {
         if (!BuildConfig.DEBUG) {
             return;
