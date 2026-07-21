@@ -113,13 +113,14 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     private View mSubtitleSaved;
     private TextView mSubtitleSavedText;
 
-    // Cloud Backup — the subtitle line's THIRD counter ("12 backed up", same
-    // figure+predicate grammar as blocked/saved; "Backing up…" while a transfer
-    // runs, amber "Paused" on credit runout). Shown only when Cloud Backup is
-    // set up; composed from the latest of these three inputs.
     // Cloud Backup activity pill (home v3): transient backup STATE lives in a
     // pill above the bottom bar, not in the hero subtitle — the hero keeps only
-    // the two lifetime stats (blocked · saved).
+    // the two lifetime stats (blocked · saved). Pill states: "Backing up…"
+    // while an identified backup transfer runs (shown even pre-setUp — the
+    // FIRST backup runs before markEnabled lands), amber "Paused" when metered
+    // credit ran out (setUp-gated), GONE otherwise. (The old "third subtitle
+    // counter" design this comment once described is gone — the subtitle is
+    // two counters + one separator, see updateSubtitleVisibility.)
     private View mBackupPill;
     private TextView mBackupPillText;
     private ImageView mBackupPillIcon;
@@ -651,10 +652,12 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
 
     /**
      * Shows the subtitle row only when at least one counter has a value, and
-     * each middle-dot divider only between visible neighbours. So a fresh
+     * the middle-dot divider only between visible neighbours. So a fresh
      * install shows just the wordmark; any subset composes cleanly:
-     * "10.5K blocked · 9.5 GB saved · 12 backed up". Called by all three
-     * counters' bindings (they update on independent cadences).
+     * "10.5K blocked · 9.5 GB saved". Called by both counters' bindings (they
+     * update on independent cadences). Cloud Backup state deliberately does
+     * NOT live here — it's the bottom pill (see the field doc), which is
+     * state-only and transient.
      */
     private void updateSubtitleVisibility() {
         if (mSubtitle == null) return;
