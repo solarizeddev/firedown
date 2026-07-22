@@ -441,14 +441,22 @@ public final class StorageApiClient {
         }
     }
 
-    /** Best-effort {@code " (Code)"} from an R2/S3 error XML body ({@code
-     *  <Code>SignatureDoesNotMatch</Code>} etc.); empty when unreadable. */
+    /** Best-effort {@code " (detail)"} from an R2 403 body: the S3 error
+     *  {@code <Code>SignatureDoesNotMatch</Code>} when present, else a short
+     *  snippet of whatever came back (an HTML Cloudflare challenge, a plain-text
+     *  error, …) so a non-S3 403 is still identifiable; empty when unreadable.
+     *  This is what tells apart a presign-signature mismatch from an
+     *  access/challenge 403 without a device logcat. */
     private static String r2ErrorCode(Response resp) {
         try {
-            String body = resp.peekBody(1024).string();
+            String body = resp.peekBody(2048).string();
             Matcher m = Pattern.compile("<Code>([^<]{1,64})</Code>").matcher(body);
             if (m.find()) {
                 return " (" + m.group(1) + ")";
+            }
+            String snippet = body.replaceAll("\\s+", " ").trim();
+            if (!snippet.isEmpty()) {
+                return " (" + snippet.substring(0, Math.min(160, snippet.length())) + ")";
             }
         } catch (Exception ignored) {
             // diagnostic only — never let it mask the 403 itself

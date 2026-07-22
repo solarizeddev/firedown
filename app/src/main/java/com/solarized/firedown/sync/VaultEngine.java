@@ -192,8 +192,14 @@ public final class VaultEngine {
                                 // (VPS clock skew, rolled R2 credentials, bucket/endpoint
                                 // change). Refreshing can't fix it; name the real cause
                                 // instead of looping 200 refreshes into "presign expired".
+                                // Include the underlying R2 detail (its <Code> or a
+                                // body snippet, from putChunk's message) IN the thrown
+                                // text so it reaches the smoke-test result / snackbar,
+                                // not only a device logcat — SignatureDoesNotMatch vs an
+                                // access/challenge 403 is the whole diagnosis.
                                 throw new IOException("chunk PUT 403 on freshly minted URLs"
-                                        + " — presign rejected by storage, not expired"
+                                        + " — presign rejected by storage, not expired ["
+                                        + expired.getMessage() + "]"
                                         + " (server clock / R2 credentials / bucket;"
                                         + " run storage-api --r2-check)", expired);
                             }
