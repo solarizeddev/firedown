@@ -526,10 +526,8 @@
     <string name="settings_account_title">Cloud</string>
     <string name="settings_account_summary">Bladwijzers en versleutelde downloadback-up, één herstelcode</string>
     <string name="settings_sync_cat_what">Wat te synchroniseren</string>
-    <string name="settings_sync_bookmarks_title">Bladwijzers</string>
     <string name="settings_sync_downloads_title">Downloadback-up beheren</string>
     <string name="settings_sync_downloads_summary">Versleutelde back-up van je downloads</string>
-    <string name="settings_sync_cat_bookmarks">Bladwijzers</string>
     <string name="settings_sync_cat_downloads">Downloadback-up</string>
     <string name="settings_sync_cat_about">Over</string>
     <string name="settings_sync_show_code_shared_summary">De ene sleutel voor je bladwijzers en back-ups</string>

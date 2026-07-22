@@ -631,10 +631,8 @@
     <string name="settings_account_title">Cloud</string>
     <string name="settings_account_summary">Marque-pages et sauvegarde chiffrée des téléchargements, un seul code de récupération</string>
     <string name="settings_sync_cat_what">Quoi synchroniser</string>
-    <string name="settings_sync_bookmarks_title">Marque-pages</string>
     <string name="settings_sync_downloads_title">Gérer la sauvegarde des téléchargements</string>
     <string name="settings_sync_downloads_summary">Sauvegarde chiffrée de vos téléchargements</string>
-    <string name="settings_sync_cat_bookmarks">Marque-pages</string>
     <string name="settings_sync_cat_downloads">Sauvegarde des téléchargements</string>
     <string name="settings_sync_cat_about">À propos</string>
     <string name="settings_sync_show_code_shared_summary">La clé unique de vos marque-pages et sauvegardes</string>

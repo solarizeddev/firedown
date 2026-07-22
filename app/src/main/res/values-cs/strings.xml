@@ -481,10 +481,8 @@
     <string name="settings_account_title">Cloud</string>
     <string name="settings_account_summary">Záložky a šifrovaná záloha stažených souborů, jeden obnovovací kód</string>
     <string name="settings_sync_cat_what">Co synchronizovat</string>
-    <string name="settings_sync_bookmarks_title">Záložky</string>
     <string name="settings_sync_downloads_title">Spravovat zálohu stažených souborů</string>
     <string name="settings_sync_downloads_summary">Šifrovaná záloha vašich stažených souborů</string>
-    <string name="settings_sync_cat_bookmarks">Záložky</string>
     <string name="settings_sync_cat_downloads">Záloha stažených souborů</string>
     <string name="settings_sync_cat_about">O službě</string>
     <string name="settings_sync_show_code_shared_summary">Jediný klíč k vašim záložkám i zálohám</string>

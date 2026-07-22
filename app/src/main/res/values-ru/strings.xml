@@ -528,10 +528,8 @@
     <string name="settings_account_title">Облако</string>
     <string name="settings_account_summary">Закладки и зашифрованная копия загрузок, один код восстановления</string>
     <string name="settings_sync_cat_what">Что синхронизировать</string>
-    <string name="settings_sync_bookmarks_title">Закладки</string>
     <string name="settings_sync_downloads_title">Управление копией загрузок</string>
     <string name="settings_sync_downloads_summary">Зашифрованная резервная копия ваших загрузок</string>
-    <string name="settings_sync_cat_bookmarks">Закладки</string>
     <string name="settings_sync_cat_downloads">Копия загрузок</string>
     <string name="settings_sync_cat_about">О функции</string>
     <string name="settings_sync_show_code_shared_summary">Единый ключ для ваших закладок и копий</string>

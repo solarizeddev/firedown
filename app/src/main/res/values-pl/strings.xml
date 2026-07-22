@@ -525,10 +525,8 @@
     <string name="settings_account_title">Cloud</string>
     <string name="settings_account_summary">Zakładki i szyfrowana kopia zapasowa pobrań, jeden kod odzyskiwania</string>
     <string name="settings_sync_cat_what">Co synchronizować</string>
-    <string name="settings_sync_bookmarks_title">Zakładki</string>
     <string name="settings_sync_downloads_title">Zarządzaj kopią zapasową pobrań</string>
     <string name="settings_sync_downloads_summary">Szyfrowana kopia zapasowa Twoich pobrań</string>
-    <string name="settings_sync_cat_bookmarks">Zakładki</string>
     <string name="settings_sync_cat_downloads">Kopia zapasowa pobrań</string>
     <string name="settings_sync_cat_about">Informacje</string>
     <string name="settings_sync_show_code_shared_summary">Jeden klucz do Twoich zakładek i kopii zapasowych</string>

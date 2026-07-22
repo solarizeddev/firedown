@@ -14,18 +14,16 @@
     ── (no-key gateway) ──  (shown ONLY until a recovery code exists)
        [the CTA above morphs to "Create recovery code" pre-key]
        I have a recovery code  › adopt an existing account's key
-    ── Manage backup ──  (shown once Cloud Backup is set up)
-       Backups                 › the backed-up-files list
-    ── Bookmarks ──  (secondary by design)
-       Sync bookmarks          INLINE switch (the focused BookmarksSyncFragment
-                               was retired with the merge; "Sync now" dropped —
-                               sync is automatic, the summary shows last-synced)
-    ── Recovery code ──  (shared; shown once a key exists)
-       Show recovery code
-       Save recovery code to file
-    ── About ──
+    ── (no headers below — the screen is FLAT; order alone groups it) ──
+       Backups                 › the backed-up-files list (set-up gated)
+       Sync bookmarks          INLINE switch, secondary by design (the focused
+                               BookmarksSyncFragment was retired with the
+                               merge; "Sync now" dropped — sync is automatic,
+                               the summary shows last-synced)
+       Recovery code           (shared; shown once a key exists; the reveal
+                               dialog carries Copy AND Save-to-file)
        How sync & encryption work  (covers bookmarks AND files)
-    ── (last, unheaded) ──
+    ── (last) ──
        Delete bookmarks from server   (shown while sync is on)
        Delete backed-up files         (shown once set up)
        TWO SCOPED erasure rows, LAST by danger. Never a single "delete all
@@ -99,19 +97,21 @@
          focused screen's "Sync now" row was reassurance theater and is gone;
          the last-synced summary carries the same signal). The switch never
          self-persists: SyncManager owns SYNC_ENABLED, the fragment re-syncs
-         checked state from isEnabled(). -->
-    <PreferenceCategory
-        android:key="com.solarized.firedown.preferences.sync.cat.bookmarks"
-        android:title="@string/settings_sync_bookmarks_title">
-
-        <SwitchPreferenceCompat
-            android:key="com.solarized.firedown.preferences.sync.enabled"
-            android:title="@string/settings_sync_title"
-            android:summary="@string/settings_sync_switch_summary"
-            app:singleLineTitle="false"
-            app:icon="@drawable/ic_bookmarks_24" />
-
-    </PreferenceCategory>
+         checked state from isEnabled(). NO category header — it was the LAST
+         one on the screen (kept as a "paid-vs-free separator"), but a
+         Preference category header visually owns every row until the NEXT
+         header, so with the other headers dissolved it umbrella'd the
+         recovery-code/FAQ/delete rows as "Bookmarks" children ("why is Delete
+         backed-up files under Bookmarks?"). It was also a single-child header
+         itself (the switch's icon + "Sync bookmarks" title self-identify) —
+         the exact taxonomy-noise shape the others were removed for. The
+         screen is fully FLAT: order alone carries the grouping. -->
+    <SwitchPreferenceCompat
+        android:key="com.solarized.firedown.preferences.sync.enabled"
+        android:title="@string/settings_sync_title"
+        android:summary="@string/settings_sync_switch_summary"
+        app:singleLineTitle="false"
+        app:icon="@drawable/ic_bookmarks_24" />
 
     <!-- ONE recovery-code row (was Show + Save-to-file, two rows and two
          device-auth prompts for the same object): the reveal dialog behind the

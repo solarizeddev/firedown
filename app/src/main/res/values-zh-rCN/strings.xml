@@ -627,10 +627,8 @@
     <string name="settings_account_title">云</string>
     <string name="settings_account_summary">书签和加密下载备份，共用一个恢复码</string>
     <string name="settings_sync_cat_what">同步内容</string>
-    <string name="settings_sync_bookmarks_title">书签</string>
     <string name="settings_sync_downloads_title">管理下载备份</string>
     <string name="settings_sync_downloads_summary">下载内容的加密备份</string>
-    <string name="settings_sync_cat_bookmarks">书签</string>
     <string name="settings_sync_cat_downloads">下载备份</string>
     <string name="settings_sync_cat_about">关于</string>
     <string name="settings_sync_show_code_shared_summary">书签和备份共用的唯一密钥</string>

@@ -396,10 +396,8 @@
     <string name="settings_account_title">Pilv</string>
     <string name="settings_account_summary">Järjehoidjad ja krüptitud allalaadimiste varundus, üks taastekood</string>
     <string name="settings_sync_cat_what">Mida sünkroonida</string>
-    <string name="settings_sync_bookmarks_title">Järjehoidjad</string>
     <string name="settings_sync_downloads_title">Halda allalaadimiste varundust</string>
     <string name="settings_sync_downloads_summary">Sinu allalaadimiste krüptitud varundus</string>
-    <string name="settings_sync_cat_bookmarks">Järjehoidjad</string>
     <string name="settings_sync_cat_downloads">Allalaadimiste varundus</string>
     <string name="settings_sync_cat_about">Teave</string>
     <string name="settings_sync_show_code_shared_summary">Üks võti sinu järjehoidjate ja varunduste jaoks</string>

@@ -465,10 +465,8 @@
     <string name="settings_account_title">Cloud</string>
     <string name="settings_account_summary">Kirjanmerkit ja salattu latausten varmuuskopio, yksi palautuskoodi</string>
     <string name="settings_sync_cat_what">Mitä synkronoidaan</string>
-    <string name="settings_sync_bookmarks_title">Kirjanmerkit</string>
     <string name="settings_sync_downloads_title">Hallitse latausten varmuuskopiota</string>
     <string name="settings_sync_downloads_summary">Salattu varmuuskopio latauksistasi</string>
-    <string name="settings_sync_cat_bookmarks">Kirjanmerkit</string>
     <string name="settings_sync_cat_downloads">Latausten varmuuskopio</string>
     <string name="settings_sync_cat_about">Tietoja</string>
     <string name="settings_sync_show_code_shared_summary">Yksi avain kirjanmerkeillesi ja varmuuskopioillesi</string>

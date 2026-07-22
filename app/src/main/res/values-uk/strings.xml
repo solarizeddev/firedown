@@ -443,10 +443,8 @@
     <string name="settings_account_title">Хмара</string>
     <string name="settings_account_summary">Закладки та зашифрована резервна копія завантажень, один код відновлення</string>
     <string name="settings_sync_cat_what">Що синхронізувати</string>
-    <string name="settings_sync_bookmarks_title">Закладки</string>
     <string name="settings_sync_downloads_title">Керувати резервною копією завантажень</string>
     <string name="settings_sync_downloads_summary">Зашифрована резервна копія ваших завантажень</string>
-    <string name="settings_sync_cat_bookmarks">Закладки</string>
     <string name="settings_sync_cat_downloads">Резервна копія завантажень</string>
     <string name="settings_sync_cat_about">Про</string>
     <string name="settings_sync_show_code_shared_summary">Один ключ для ваших закладок і резервних копій</string>

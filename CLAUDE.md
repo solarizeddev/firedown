@@ -1891,7 +1891,16 @@ opaque chunks + an opaque manifest blob.
   upload resumes instead of re-running from chunk 0. Bounded by `MAX_URL_REFRESHES`
   (200; a refresh covers a whole TTL of chunks, so a real upload needs a handful —
   this is headroom, not a per-chunk cost). A non-403 (`TransientException`) still
-  propagates → WorkManager retry, as before.
+  propagates → WorkManager retry, as before. **A PERSISTENT 403 fails fast as
+  "presign REJECTED", not expired** (`MAX_SAME_CHUNK_EXPIRIES`, 2 consecutive
+  per chunk, reset on success): a URL that 403s seconds after being freshly
+  minted cannot have expired — R2 is rejecting the SIGNATURE (VPS clock skew,
+  rolled R2 credentials, bucket/endpoint change), which no refresh fixes. The
+  old loop burned all 200 refreshes (~400 round-trips) on one chunk and then
+  reported the misleading "presign expired" (how a vault smoke-test failure
+  first surfaced); the fail-fast throws an `IOException` naming the real cause
+  + pointing at `storage-api --r2-check`. One consecutive re-expiry is still
+  allowed for the link-so-slow-one-chunk-outlives-the-TTL edge.
 - **`putChunk` sends `If-None-Match: *` and treats 412 as success (write-once
   chunks).** The server can SIGN `If-None-Match: *` into the chunk PUT presign
   (its `FIREDOWN_STORAGE_WRITE_ONCE_CHUNKS` flag) so R2 rejects a second write to a
@@ -2099,11 +2108,15 @@ opaque chunks + an opaque manifest blob.
   home pill's GONE-when-idle ethos; `applyBuyEmphasis` binds cached-first then
   from the fresh load, like the hero), the pre-key
   **"I have a recovery code"** adopt door, the **Backups** row (shown once set
-  up; NO single-child category headers on this screen — "Manage backup" /
+  up; NO category headers on this screen AT ALL — "Manage backup" /
   "Recovery code" / "About" over one row each restated the row, the same
-  taxonomy-noise call as the dissolved Cookies category; only the Bookmarks
-  header stays, as the paid-vs-free separator), ONE secondary inline **Bookmarks
-  SwitchPreferenceCompat** (key `SYNC_ENABLED`, never self-persists — the change
+  taxonomy-noise call as the dissolved Cookies category, and the LAST header
+  (Bookmarks, kept briefly as a paid-vs-free separator) had to go too: a
+  Preference category header visually owns every row until the NEXT header,
+  so with no header after it, it umbrella'd the code/FAQ/delete rows as
+  "Bookmarks" children — the shipped "why is Delete backed-up files under
+  Bookmarks?" bug. The screen is fully FLAT; order alone carries grouping),
+  ONE secondary inline **Bookmarks SwitchPreferenceCompat** (key `SYNC_ENABLED`, never self-persists — the change
   listener returns false and `SyncManager` owns the pref; there is NO "Sync now"
   row anymore — sync is change-triggered + runs on toggle-on, the last-synced
   summary carries the signal), **ONE recovery-code row** (device-auth gated;

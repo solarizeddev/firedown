@@ -420,10 +420,8 @@
     <string name="settings_account_title">Облак</string>
     <string name="settings_account_summary">Отметки и шифровано архивиране на изтегляния, един код за възстановяване</string>
     <string name="settings_sync_cat_what">Какво да се синхронизира</string>
-    <string name="settings_sync_bookmarks_title">Отметки</string>
     <string name="settings_sync_downloads_title">Управление на архивирането на изтегляния</string>
     <string name="settings_sync_downloads_summary">Шифровано архивиране на вашите изтегляния</string>
-    <string name="settings_sync_cat_bookmarks">Отметки</string>
     <string name="settings_sync_cat_downloads">Архивиране на изтегляния</string>
     <string name="settings_sync_cat_about">Информация</string>
     <string name="settings_sync_show_code_shared_summary">Единственият ключ за вашите отметки и архиви</string>

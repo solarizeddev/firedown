@@ -525,10 +525,8 @@
     <string name="settings_account_title">Cloud</string>
     <string name="settings_account_summary">Yer imleri ve şifreli indirme yedeği, tek kurtarma kodu</string>
     <string name="settings_sync_cat_what">Neler eşitlenecek</string>
-    <string name="settings_sync_bookmarks_title">Yer imleri</string>
     <string name="settings_sync_downloads_title">İndirme yedeğini yönet</string>
     <string name="settings_sync_downloads_summary">İndirmelerinizin şifreli yedeği</string>
-    <string name="settings_sync_cat_bookmarks">Yer imleri</string>
     <string name="settings_sync_cat_downloads">İndirme yedeği</string>
     <string name="settings_sync_cat_about">Hakkında</string>
     <string name="settings_sync_show_code_shared_summary">Yer imleriniz ve yedekleriniz için tek anahtar</string>

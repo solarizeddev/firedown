@@ -47,6 +47,18 @@ public final class VaultEngine {
     // something is wrong (a chunk 403s even with a fresh URL) → surface it so the
     // worker retries (and its run-attempt ceiling ultimately gives up cleanly).
     private static final int MAX_URL_REFRESHES = 200;
+    // Consecutive 403s on the SAME chunk before giving up as "presign REJECTED,
+    // not expired". A legitimately expired URL is cured by ONE refresh (a fresh
+    // mint is valid for a full UploadPresignTTL and the retry PUTs immediately);
+    // a second consecutive expiry can only be a link so slow that ONE chunk's
+    // PUT outlives the TTL — allowed once. A THIRD 403 on a seconds-old URL is
+    // structurally impossible as expiry: R2 is rejecting the SIGNATURE (server
+    // clock skew / rolled R2 credentials / bucket-endpoint change), which no
+    // amount of refreshing fixes — the old loop burned all 200 refreshes
+    // (~400 round-trips) on one chunk and then still reported the misleading
+    // "presign expired". Counting a detectable failure per the timer-vs-count
+    // rule; the counter resets on any successful PUT.
+    private static final int MAX_SAME_CHUNK_EXPIRIES = 2;
     private static final int B64 = Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP;
 
     /** Per-chunk upload progress (plaintext bytes), so the UI can show a
@@ -162,6 +174,7 @@ public final class VaultEngine {
                     int n = readFully(in, buf);
                     byte[] plain = (n == buf.length) ? buf : Arrays.copyOf(buf, n);
                     byte[] enc = VaultCrypto.encryptChunk(plain, dek);
+                    int sameChunkExpiries = 0;
                     while (true) {
                         try {
                             api.putChunk(uploadUrls.get(i), enc);
@@ -173,6 +186,17 @@ public final class VaultEngine {
                             // a fresh batch covers UploadPresignTTL of further chunks, so
                             // refreshes scale with (upload time / TTL), not chunk count —
                             // MAX_URL_REFRESHES is generous headroom, not a per-chunk cost.
+                            if (++sameChunkExpiries > MAX_SAME_CHUNK_EXPIRIES) {
+                                // A just-minted URL 403'd again: the presign is being
+                                // REJECTED, not expiring — a server-side signing problem
+                                // (VPS clock skew, rolled R2 credentials, bucket/endpoint
+                                // change). Refreshing can't fix it; name the real cause
+                                // instead of looping 200 refreshes into "presign expired".
+                                throw new IOException("chunk PUT 403 on freshly minted URLs"
+                                        + " — presign rejected by storage, not expired"
+                                        + " (server clock / R2 credentials / bucket;"
+                                        + " run storage-api --r2-check)", expired);
+                            }
                             if (refreshes++ >= MAX_URL_REFRESHES) {
                                 throw expired; // give up refreshing → worker retries
                             }

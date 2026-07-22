@@ -182,11 +182,9 @@
     <string name="settings_account_title">Cloud</string>
     <string name="settings_account_summary">Bookmarks and encrypted download backup, one recovery code</string>
     <string name="settings_sync_cat_what">What to sync</string>
-    <string name="settings_sync_bookmarks_title">Bookmarks</string>
     <string name="settings_sync_downloads_title">Manage downloads backup</string>
     <string name="settings_sync_downloads_summary">Encrypted backup of your downloads</string>
     <!-- Unified Sync screen section headers (grouped by feature). -->
-    <string name="settings_sync_cat_bookmarks">Bookmarks</string>
     <string name="settings_sync_cat_downloads">Downloads backup</string>
     <string name="settings_sync_cat_about">About</string>
     <!-- The recovery code now unlocks BOTH bookmarks and backups. -->

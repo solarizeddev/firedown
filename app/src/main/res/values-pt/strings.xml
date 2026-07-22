@@ -526,10 +526,8 @@
     <string name="settings_account_title">Cloud</string>
     <string name="settings_account_summary">Favoritos e backup de downloads criptografado, um só código de recuperação</string>
     <string name="settings_sync_cat_what">O que sincronizar</string>
-    <string name="settings_sync_bookmarks_title">Favoritos</string>
     <string name="settings_sync_downloads_title">Gerenciar backup de downloads</string>
     <string name="settings_sync_downloads_summary">Backup criptografado dos seus downloads</string>
-    <string name="settings_sync_cat_bookmarks">Favoritos</string>
     <string name="settings_sync_cat_downloads">Backup de downloads</string>
     <string name="settings_sync_cat_about">Sobre</string>
     <string name="settings_sync_show_code_shared_summary">A única chave dos seus favoritos e backups</string>

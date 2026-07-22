@@ -630,10 +630,8 @@
     <string name="settings_account_title">Cloud</string>
     <string name="settings_account_summary">Lesezeichen und verschlüsseltes Download-Backup, ein Wiederherstellungscode</string>
     <string name="settings_sync_cat_what">Was synchronisiert wird</string>
-    <string name="settings_sync_bookmarks_title">Lesezeichen</string>
     <string name="settings_sync_downloads_title">Download-Backup verwalten</string>
     <string name="settings_sync_downloads_summary">Verschlüsseltes Backup deiner Downloads</string>
-    <string name="settings_sync_cat_bookmarks">Lesezeichen</string>
     <string name="settings_sync_cat_downloads">Download-Backup</string>
     <string name="settings_sync_cat_about">Info</string>
     <string name="settings_sync_show_code_shared_summary">Der eine Schlüssel für deine Lesezeichen und Backups</string>

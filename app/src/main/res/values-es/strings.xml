@@ -630,10 +630,8 @@
     <string name="settings_account_title">Nube</string>
     <string name="settings_account_summary">Marcadores y copia de seguridad cifrada de descargas, un único código de recuperación</string>
     <string name="settings_sync_cat_what">Qué sincronizar</string>
-    <string name="settings_sync_bookmarks_title">Marcadores</string>
     <string name="settings_sync_downloads_title">Gestionar copia de descargas</string>
     <string name="settings_sync_downloads_summary">Copia de seguridad cifrada de tus descargas</string>
-    <string name="settings_sync_cat_bookmarks">Marcadores</string>
     <string name="settings_sync_cat_downloads">Copia de descargas</string>
     <string name="settings_sync_cat_about">Acerca de</string>
     <string name="settings_sync_show_code_shared_summary">La única clave para tus marcadores y copias de seguridad</string>
