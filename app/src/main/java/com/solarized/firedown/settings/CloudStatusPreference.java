@@ -19,12 +19,9 @@ import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.solarized.firedown.R;
 import com.solarized.firedown.sync.StorageApiClient;
 
-import java.text.DateFormatSymbols;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.OffsetDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 
@@ -36,13 +33,14 @@ import java.time.format.FormatStyle;
  *   <li><b>Unmetered beta</b> — big backed-up size, usage bar vs the included
  *       cap ({@code Quota.bytesLimit}), "Free during the beta" chip.</li>
  *   <li><b>Metered, funded</b> — ONE model, prepaid credit measured in TIME:
- *       the backed-up-size headline + a Today→date timeline
- *       ({@link CloudTimelineView}) to the server's projected runout, duration
- *       centred beneath. No plan chip, no % bar (see onBindViewHolder — the
- *       plan was an invented shape; GB-months never appears in user-facing
- *       text). No projection (nothing backed up / effectively-never runout) →
- *       the "credit active, lasts for years at this usage" line instead, so a
- *       funded account always shows its credit.</li>
+ *       the backed-up-size headline + the compact {@link #bindMeter credit
+ *       meter}, a thin gauge of credit REMAINING (full = healthy, draining =
+ *       spend) labelled with the runway time. It borrows the familiar
+ *       Dropbox/Drive thin-bar SHAPE but never a used-of-cap denominator —
+ *       metered mode has no cap, so the fill is credit left, saturating at a
+ *       year (see {@link #RUNWAY_FULL_MONTHS}). No plan chip, no % -of-plan bar
+ *       (see onBindViewHolder — the plan was an invented shape; GB-months never
+ *       appears in user-facing text).</li>
  *   <li><b>Grace / read-only</b> — amber data ink + the top-up-by deadline
  *       (amber, never colorError red — the app's attention convention).</li>
  *   <li><b>Not set up</b> — a dashed empty state pointing at the download
@@ -60,6 +58,12 @@ public class CloudStatusPreference extends Preference {
     private static final int MIN_BAR_PERCENT = 2;
     /** Mean Gregorian month, for the ≈ months-left runway arithmetic. */
     private static final double DAYS_PER_MONTH = 30.44;
+    /** The credit meter saturates at "a year of runway = full". Most accounts
+     *  store far less than their credit covers, so their runout is years/decades
+     *  out and the bar reads full — a fuel gauge that only visibly drains (then
+     *  goes amber) as the last year approaches, never a used-of-cap storage bar
+     *  (there is no cap in metered mode). */
+    private static final int RUNWAY_FULL_MONTHS = 12;
 
     private boolean mSetUp;
     private boolean mActive;
@@ -146,28 +150,28 @@ public class CloudStatusPreference extends Preference {
         LinearProgressIndicator bar = (LinearProgressIndicator) holder.findViewById(R.id.cb_bar);
         TextView caption = (TextView) holder.findViewById(R.id.cb_caption);
         TextView alert = (TextView) holder.findViewById(R.id.cb_alert);
-        View runway = holder.findViewById(R.id.cb_runway);
-        CloudTimelineView timeline = (CloudTimelineView) holder.findViewById(R.id.cb_timeline);
-        TextView runwayNow = (TextView) holder.findViewById(R.id.cb_runway_now);
-        TextView runwayCovered = (TextView) holder.findViewById(R.id.cb_runway_covered);
-        TextView runwayDuration = (TextView) holder.findViewById(R.id.cb_runway_duration);
+        View meter = holder.findViewById(R.id.cb_meter);
+        LinearProgressIndicator meterBar =
+                (LinearProgressIndicator) holder.findViewById(R.id.cb_meter_bar);
+        TextView meterLabel = (TextView) holder.findViewById(R.id.cb_meter_label);
 
         boolean metered = mQuota != null && mQuota.metered;
         boolean grace = metered && mQuota.readOnly;
         int ink = ContextCompat.getColor(ctx, grace ? R.color.backup_warning : R.color.brand_orange);
 
         // ONE mental model — prepaid credit measured in TIME. The metered hero
-        // is headline + timeline, nothing else: "854 MB backed up · it's
-        // covered until ~DATE at this usage; backing up more moves the date
-        // closer." The previous render spoke THREE models at once — a plan
-        // chip ("Up to 450 GB · 1 year", a shape INVENTED by normalizing the
-        // balance to 12 months; there is no plan, purchases accumulate into
-        // one balance), a "% of your plan" bar against that invented cap, and
-        // the timeline — and on-device it read as contradictory (the recurring
-        // "GB-months is confusing" complaint). The plan fiction, its % bar,
-        // and the balance-normalization/coverage-months helpers are deleted;
-        // GB-months never appears in user-facing text. The usage bar remains
-        // ONLY for the unmetered beta, whose byte cap is a REAL denominator.
+        // is headline + the compact credit METER, nothing else: "854 MB backed
+        // up · ≈3 years of credit at this usage; backing up more spends it
+        // faster." The meter borrows the familiar Dropbox/Drive thin-bar SHAPE
+        // but is a fuel gauge, NOT a used-of-cap bar — there is no cap in
+        // metered mode, so a "% of your plan" fill would be a lie (the exact
+        // confusion that made the previous three-models-at-once render — plan
+        // chip + %-of-plan bar + timeline — read as contradictory, the
+        // recurring "GB-months is confusing" complaint). The fill is credit
+        // REMAINING, saturating at a year (RUNWAY_FULL_MONTHS), with no
+        // denominator shown and the time as the label; GB-months never appears
+        // in user-facing text. The separate usage bar (cb_bar) remains ONLY for
+        // the unmetered beta, whose byte cap is a REAL denominator.
 
         // Headline: how much of the user's stuff is safe.
         big.setText(mTotalBytes >= 0 ? Formatter.formatShortFileSize(ctx, mTotalBytes) : "—");
@@ -185,9 +189,7 @@ public class CloudStatusPreference extends Preference {
         }
         if (percent >= 0) {
             bar.setVisibility(View.VISIBLE);
-            bar.setIndicatorColor(ink);
-            bar.setTrackColor(MaterialColors.getColor(bar,
-                    com.google.android.material.R.attr.colorSurfaceVariant));
+            styleBar(bar, ink);
             bar.setProgress(Math.max(percent, MIN_BAR_PERCENT));
         } else {
             bar.setVisibility(View.GONE);
@@ -195,8 +197,15 @@ public class CloudStatusPreference extends Preference {
 
         caption.setText(captionText(ctx, metered, capBytes));
 
-        bindRunway(ctx, alert, runway, timeline, runwayNow, runwayCovered, runwayDuration,
-                metered, grace, ink);
+        bindMeter(ctx, alert, meter, meterBar, meterLabel, metered, grace, ink);
+    }
+
+    /** The accent-on-neutral-track styling shared by the unmetered usage bar and
+     *  the metered credit meter (coral normally, amber in grace). */
+    private static void styleBar(LinearProgressIndicator bar, int ink) {
+        bar.setIndicatorColor(ink);
+        bar.setTrackColor(MaterialColors.getColor(bar,
+                com.google.android.material.R.attr.colorSurfaceVariant));
     }
 
     /**
@@ -304,75 +313,85 @@ public class CloudStatusPreference extends Preference {
     }
 
     /**
-     * The "time as space" runway: a gradient timeline from Today (solid dot)
-     * to the covered-until date (soft dot), with the duration centred beneath
-     * — each fact appears once (the date is a place on the line, the duration
-     * its length; the old "Covered until X / ≈ N of M months left" + ticks
-     * restated one fact three times, and "of M" was degenerate under
-     * balance-derived coverage). Grace: the alert carries the copy, the
-     * timeline goes amber with the top-up DEADLINE as its endpoint.
-     * Unmetered: no runway.
+     * The compact CREDIT METER: a thin gauge of prepaid credit REMAINING with
+     * the runway TIME as its label. The fill is credit left, saturating at
+     * {@link #RUNWAY_FULL_MONTHS} (a well-funded account reads full and only
+     * visibly drains as runout nears — a fuel gauge, NOT a used-of-cap storage
+     * bar; metered mode has no cap, so a "used of total" fill would be a lie).
+     * Three metered states:
+     *
+     * <ul>
+     *   <li><b>Funded, runout known</b> — bar = months ÷ a year, capped full;
+     *       label "≈ N of coverage".</li>
+     *   <li><b>Funded, runout far/unknown</b> — the credit effectively never
+     *       runs out at this usage (nothing backed up yet, or a balance past
+     *       the server's ~30-year horizon → the server omits the date): a FULL
+     *       bar + the "credit active" line, so a funded account always shows
+     *       its credit.</li>
+     *   <li><b>Grace</b> — the alert carries the top-up-by copy; the meter goes
+     *       amber at empty (a sliver, so it reads as spent-not-broken).</li>
+     * </ul>
+     *
+     * Unmetered: no meter (the usage bar above owns that mode).
      */
-    private void bindRunway(Context ctx, TextView alert, View runway,
-                            CloudTimelineView timeline, TextView runwayNow,
-                            TextView runwayCovered, TextView runwayDuration,
-                            boolean metered, boolean grace, int ink) {
+    private void bindMeter(Context ctx, TextView alert, View meter,
+                           LinearProgressIndicator meterBar, TextView meterLabel,
+                           boolean metered, boolean grace, int ink) {
         alert.setVisibility(View.GONE);
-        runway.setVisibility(View.GONE);
-        runwayDuration.setVisibility(View.GONE);
+        meter.setVisibility(View.GONE);
         if (grace) {
             String deadline = mediumDate(mQuota.graceUntil);
             alert.setText(deadline != null
                     ? ctx.getString(R.string.cloud_status_grace_alert, deadline)
                     : ctx.getString(R.string.cloud_status_grace_nodate));
             alert.setVisibility(View.VISIBLE);
-            if (deadline != null) {
-                runway.setVisibility(View.VISIBLE);
-                timeline.setInk(ink); // amber
-                runwayNow.setText(R.string.cloud_status_timeline_today);
-                runwayCovered.setText(deadline);
-            }
+            // Credit is spent — amber bar at a sliver (never a blank/absent bar
+            // while there's still a deadline to act on); the alert carries the
+            // date so the label stays hidden.
+            meter.setVisibility(View.VISIBLE);
+            styleBar(meterBar, ink); // amber
+            meterBar.setProgress(MIN_BAR_PERCENT);
+            meterLabel.setVisibility(View.GONE);
             return;
         }
         if (!metered) {
             return;
         }
-        // The timeline's endpoint is the SERVER's projected runout — balance ÷
-        // current footprint, the one honest date in the prepaid-time model.
-        // (The old min(projection, now + plan-coverage) clamp died with the
-        // plan fiction: coverage was balance ÷ an invented plan size, so the
-        // clamp just restated the fiction as a date.) The past-guard stays for
-        // stale servers / clock skew: an old server could overflow a
-        // centuries-out projection into the PAST ("~Feb 1962" on-device);
-        // current servers report those as "never runs out" and omit the date.
+        // The runout is the SERVER's projected date — balance ÷ current
+        // footprint, the one honest quantity in the prepaid-time model. The
+        // past-guard covers stale servers / clock skew (an old server could
+        // overflow a centuries-out projection into the PAST — "~Feb 1962"
+        // on-device); current servers report those as "never runs out" and
+        // omit the date.
         Instant now = Instant.now();
         Instant projected = parseInstant(mQuota.projectedRunoutAt);
         if (projected != null && projected.isBefore(now)) {
             projected = null;
         }
         if (projected == null) {
-            // No date because the credit effectively never runs out at this
-            // usage (nothing backed up yet, or a balance past the server's
-            // 30-year projection horizon). Say exactly that — a funded account
-            // must never render with no trace of its credit (with the plan
-            // chip and % bar gone, this line is the balance's only voice
-            // here). Funded is known: non-grace metered with a zero balance
-            // carries a runout stamp and lands in the grace branch above.
+            // Funded but no date: credit effectively never runs out here. Full
+            // bar + the reassurance line — a funded account must never render
+            // with no trace of its credit. (Funded is known: non-grace metered
+            // with a zero balance carries a runout stamp and hits grace above.)
             if (mQuota.balanceGbMonths > 0) {
-                alert.setText(R.string.cloud_status_credit_active);
-                alert.setVisibility(View.VISIBLE);
+                meter.setVisibility(View.VISIBLE);
+                styleBar(meterBar, ink);
+                meterBar.setProgress(100);
+                meterLabel.setText(R.string.cloud_status_credit_active);
+                meterLabel.setVisibility(View.VISIBLE);
             }
             return;
         }
-        runway.setVisibility(View.VISIBLE);
-        timeline.setInk(ink);
-        runwayNow.setText(R.string.cloud_status_timeline_today);
-        runwayCovered.setText("~" + monthYear(projected));
         long days = Duration.between(now, projected).toDays();
         int months = (int) Math.max(1, Math.round(days / DAYS_PER_MONTH));
-        runwayDuration.setText(ctx.getString(R.string.cloud_status_timeline_coverage,
+        int percent = (int) Math.min(100,
+                Math.round(months * 100.0 / RUNWAY_FULL_MONTHS));
+        meter.setVisibility(View.VISIBLE);
+        styleBar(meterBar, ink);
+        meterBar.setProgress(Math.max(percent, MIN_BAR_PERCENT));
+        meterLabel.setText(ctx.getString(R.string.cloud_status_timeline_coverage,
                 formatDuration(ctx, months)));
-        runwayDuration.setVisibility(View.VISIBLE);
+        meterLabel.setVisibility(View.VISIBLE);
     }
 
     /**
@@ -404,14 +423,6 @@ public class CloudStatusPreference extends Preference {
             return ctx.getResources().getQuantityString(R.plurals.buy_credit_years, years, years);
         }
         return ctx.getResources().getQuantityString(R.plurals.buy_credit_months, months, months);
-    }
-
-    /** An {@link Instant} → a localized "Mar 2027" (short month + year), for
-     *  the covered-until date. */
-    private static String monthYear(Instant instant) {
-        ZonedDateTime z = instant.atZone(ZoneId.systemDefault());
-        String[] months = new DateFormatSymbols().getShortMonths();
-        return months[z.getMonthValue() - 1] + " " + z.getYear();
     }
 
     /** Strict RFC3339 parse (same flavour {@link #mediumDate} accepts), or null
