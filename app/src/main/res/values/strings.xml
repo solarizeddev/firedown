@@ -983,6 +983,10 @@
     <string name="tracking_stats_blocked_label">Trackers blocked</string>
     <string name="tracking_stats_since">Recording since %1$s</string>
     <string name="trackers_info_etp_stat_week">This week</string>
+    <string name="tracking_stats_by_category">By category</string>
+    <!-- Header grouping the Standard/Strict/Custom controls on the ETP
+         screen, separating them from the stats shown above. -->
+    <string name="settings_tracking_protection_level">Protection level</string>
     <string name="trackers_info_etp_cat_trackers">Trackers</string>
     <string name="trackers_info_etp_cat_cookies">Tracking cookies</string>
     <string name="trackers_info_etp_cat_fingerprinters">Fingerprinters</string>

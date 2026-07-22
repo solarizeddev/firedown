@@ -101,8 +101,26 @@ public class TrackingStatsPreference extends Preference {
             since.setVisibility(View.GONE);
         }
 
+        View catHeader = holder.findViewById(R.id.ts_cat_header);
         LinearLayout breakdown = (LinearLayout) holder.findViewById(R.id.ts_breakdown);
         breakdown.removeAllViews();
+
+        // Show the breakdown only when two or more categories have a count:
+        // a lone category (e.g. only "Trackers") would just repeat the hero
+        // total, adding a redundant row rather than information.
+        long[] cats = {mTrackers, mCookies, mFingerprinters, mCryptominers, mSocial, mBounce};
+        int nonZero = 0;
+        for (long c : cats) {
+            if (c > 0L) nonZero++;
+        }
+        if (nonZero < 2) {
+            catHeader.setVisibility(View.GONE);
+            breakdown.setVisibility(View.GONE);
+            return;
+        }
+
+        catHeader.setVisibility(View.VISIBLE);
+        breakdown.setVisibility(View.VISIBLE);
         LayoutInflater inflater = LayoutInflater.from(getContext());
         addRow(breakdown, inflater, R.string.trackers_info_etp_cat_trackers, mTrackers);
         addRow(breakdown, inflater, R.string.trackers_info_etp_cat_cookies, mCookies);

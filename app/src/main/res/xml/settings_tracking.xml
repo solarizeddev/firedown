@@ -11,6 +11,10 @@
         android:selectable="false" />
 
 
+    <!-- The controls, grouped under a header so they read as their own
+         section, separate from the stats above. -->
+    <PreferenceCategory android:title="@string/settings_tracking_protection_level">
+
     <com.solarized.firedown.settings.ui.RadioButtonPreference
         android:defaultValue="true"
         android:key="com.solarized.firedown.preferences.browser.tracking.default"
@@ -42,6 +46,8 @@
         android:key="com.solarized.firedown.preferences.browser.tracking.strip.list.nav"
         android:title="@string/settings_query_param_block_list"
         android:summary="@string/settings_query_param_block_list_description" />
+
+    </PreferenceCategory>
 
 
 </PreferenceScreen>
