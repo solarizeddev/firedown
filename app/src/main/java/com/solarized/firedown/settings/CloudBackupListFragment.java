@@ -464,6 +464,12 @@ public class CloudBackupListFragment extends Fragment
             if (entry.thumb != null || entry.name == null) {
                 continue;
             }
+            // Already backfilled on a prior load — the adapter now keeps resolved
+            // thumbs across submit(), so don't re-run the DB lookup + decode (it
+            // would also fire a needless row rebind / thumbnail flicker).
+            if (mAdapter.resolvedThumb(entry.objectId) != null) {
+                continue;
+            }
             mCloudBackup.resolveLocalThumb(entry, thumb -> {
                 if (isAdded() && thumb != null) {
                     mAdapter.setResolvedThumb(entry.objectId, thumb);
@@ -773,7 +779,36 @@ public class CloudBackupListFragment extends Fragment
         });
     }
 
+    /**
+     * Restore is decided UP-FRONT, in the background, between "already in
+     * Downloads" and a real restore. Two things this fixes:
+     * <ul>
+     *   <li>No enqueue-then-immediately-"already present": {@link
+     *       VaultRestoreWorker} does the same name+size+exists check and no-ops,
+     *       so doing it here avoids flashing "Restore started" then "Already in
+     *       your downloads" for a file that's already local.</li>
+     *   <li>Snackbar timing: the item sheet's result is delivered SYNCHRONOUSLY
+     *       while the sheet is still on screen, so a snackbar shown straight from
+     *       the observer flashed behind the closing sheet. The check's background
+     *       round-trip defers the snackbar to AFTER the sheet has dismissed.</li>
+     * </ul>
+     * The worker keeps its own already-present check as the backstop for the
+     * race where the file appears between this check and the worker running.
+     */
     private void restore(VaultEntry entry) {
+        mCloudBackup.isAlreadyDownloaded(entry, present -> {
+            if (!isAdded()) {
+                return;
+            }
+            if (present) {
+                snackbar(getString(R.string.cloud_restore_already_present));
+            } else {
+                startRestore(entry);
+            }
+        });
+    }
+
+    private void startRestore(VaultEntry entry) {
         Data input = new Data.Builder()
                 .putString(VaultRestoreWorker.KEY_OBJECT_ID, entry.objectId)
                 .putString(VaultRestoreWorker.KEY_WRAPPED_DEK, entry.wrappedDek)

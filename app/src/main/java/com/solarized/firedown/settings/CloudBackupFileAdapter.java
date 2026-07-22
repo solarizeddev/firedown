@@ -15,6 +15,8 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.core.graphics.ColorUtils;
+import androidx.recyclerview.widget.DiffUtil;
+import androidx.recyclerview.widget.ListUpdateCallback;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.card.MaterialCardView;
@@ -33,6 +35,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -160,13 +163,81 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         return new ArrayList<>(mSelected);
     }
 
+    /**
+     * Replaces the committed-file rows with a minimal DIFF — never a blanket
+     * {@code notifyDataSetChanged}. The Backups screen re-pulls the manifest on
+     * every {@code onResume} (app pause/resume, and the return from the item
+     * sheet), so an IDENTICAL reload must produce ZERO rebinds — otherwise every
+     * visible thumbnail visibly re-paints (the "images flicker on pause/resume /
+     * after restore" reports). DiffUtil rebinds only genuinely changed rows.
+     *
+     * <p>{@link #mResolvedThumbs} is deliberately NOT cleared here (it used to
+     * be): a display-backfilled preview is keyed by the server-random, immutable
+     * objectId — exactly like {@link #mDecodedThumbs} — so a stale key can never
+     * show the wrong image, and keeping it stops a backfilled thumbnail from
+     * flashing back to the mime glyph (then re-resolving) on every reload.
+     */
     public void submit(List<VaultEntry> items) {
+        List<VaultEntry> newItems = items != null ? new ArrayList<>(items) : new ArrayList<>();
+        DiffUtil.DiffResult diff = DiffUtil.calculateDiff(new DiffUtil.Callback() {
+            @Override
+            public int getOldListSize() {
+                return mItems.size();
+            }
+
+            @Override
+            public int getNewListSize() {
+                return newItems.size();
+            }
+
+            @Override
+            public boolean areItemsTheSame(int oldPos, int newPos) {
+                String a = mItems.get(oldPos).objectId;
+                String b = newItems.get(newPos).objectId;
+                return a != null && a.equals(b);
+            }
+
+            @Override
+            public boolean areContentsTheSame(int oldPos, int newPos) {
+                return sameRow(mItems.get(oldPos), newItems.get(newPos));
+            }
+        });
         mItems.clear();
-        mResolvedThumbs.clear();
-        if (items != null) {
-            mItems.addAll(items);
-        }
-        notifyDataSetChanged();
+        mItems.addAll(newItems);
+        // Offset every dispatched position past the in-progress transfer rows,
+        // which occupy the top of the list and are untouched by submit().
+        final int offset = mTransfers.size();
+        diff.dispatchUpdatesTo(new ListUpdateCallback() {
+            @Override
+            public void onInserted(int position, int count) {
+                notifyItemRangeInserted(offset + position, count);
+            }
+
+            @Override
+            public void onRemoved(int position, int count) {
+                notifyItemRangeRemoved(offset + position, count);
+            }
+
+            @Override
+            public void onMoved(int fromPosition, int toPosition) {
+                notifyItemMoved(offset + fromPosition, offset + toPosition);
+            }
+
+            @Override
+            public void onChanged(int position, int count, Object payload) {
+                notifyItemRangeChanged(offset + position, count, payload);
+            }
+        });
+    }
+
+    /** DiffUtil contents test: whether two entries render an identical row
+     *  (same displayed facts + same stored preview). */
+    private static boolean sameRow(VaultEntry a, VaultEntry b) {
+        return a.size == b.size
+                && a.downloadedAt == b.downloadedAt
+                && Objects.equals(a.name, b.name)
+                && Objects.equals(a.mime, b.mime)
+                && Objects.equals(a.thumb, b.thumb);
     }
 
     /** Replaces the in-progress transfer rows (shown above the committed files). */

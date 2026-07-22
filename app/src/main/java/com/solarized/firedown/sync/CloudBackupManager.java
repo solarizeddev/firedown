@@ -495,6 +495,34 @@ public class CloudBackupManager {
     }
 
     /**
+     * Checks — off the main thread — whether this backed-up file is ALREADY in
+     * the Downloads folder, using the same name+size+exists test {@link
+     * VaultRestoreWorker} uses to no-op a restore. Lets the Backups list decide
+     * up-front between showing "already in your downloads" and actually enqueuing
+     * a restore, instead of starting a worker only for it to immediately report
+     * already-present (which flashed "Restore started" then "Already in your
+     * downloads"). Runs on the concurrent net pool — a fast indexed DB read, kept
+     * off the single heavy lane so it isn't queued behind a thumbnail decode, so
+     * the decision (and its snackbar) lands promptly AFTER the item sheet has
+     * dismissed. {@code onResult} is posted to the main thread.
+     */
+    public void isAlreadyDownloaded(VaultEntry entry, Consumer<Boolean> onResult) {
+        netExecutor.execute(() -> {
+            boolean present = false;
+            try {
+                DownloadEntity local = downloads.findByNameSize(entry.name, entry.size);
+                present = local != null && local.getFilePath() != null
+                        && new File(local.getFilePath()).exists();
+            } catch (Exception ignored) {
+                // Best-effort — on any error treat as not present and let the
+                // worker's own check be the backstop.
+            }
+            final boolean out = present;
+            main.post(() -> onResult.accept(out));
+        });
+    }
+
+    /**
      * Best-effort backfill of a missing preview for an entry backed up before
      * thumbnails existed: locates the local copy (name + size) and decodes a
      * preview from it on the heavy executor, posting the bitmap (or null if no
