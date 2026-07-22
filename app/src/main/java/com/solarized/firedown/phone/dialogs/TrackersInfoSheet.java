@@ -170,20 +170,17 @@ public class TrackersInfoSheet extends BaseBottomSheetDialogFragment {
         });
 
         // A single quiet, NON-interactive line for Gecko's persisted
-        // tracking-protection count (separate data source from the uBlock
-        // stats above — never summed). It reads as a stat, like the rows
-        // above it; the tap-through to the full breakdown + controls is the
-        // 'Manage protection' button below, which deep-links to the ETP
-        // screen. Hidden until the DB has recorded something.
+        // tracking-protection count — a stat, like the rows above it, not a
+        // control. Kept deliberately minimal: it's a SEPARATE measurement
+        // from the uBlock stats above (Gecko ETP vs uBlock filter lists) and
+        // is never summed with them. Hidden until the DB has recorded
+        // something. (A fuller stats screen behind 'Manage protection' was
+        // tried and removed — two "blocked" numbers on two screens read as
+        // contradictory; one labelled line is the honest minimum.)
         bindEtpLine(view);
 
-        // 'Manage protection' opens the Enhanced Tracking Protection screen
-        // directly (stats header + Standard/Strict/Custom controls), not the
-        // generic Settings root — so the button lands where its label promises.
         action.setOnClickListener(v -> {
-            Intent intent = new Intent(requireContext(), SettingsActivity.class);
-            intent.putExtra(SettingsActivity.EXTRA_OPEN_TRACKING, true);
-            startActivity(intent);
+            startActivity(new Intent(requireContext(), SettingsActivity.class));
             dismissAllowingStateLoss();
         });
     }
