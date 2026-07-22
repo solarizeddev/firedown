@@ -1,11 +1,9 @@
 package com.solarized.firedown.sync;
 
 import android.util.Base64;
-import android.util.Log;
 
 import androidx.annotation.NonNull;
 
-import com.solarized.firedown.BuildConfig;
 import com.solarized.firedown.okhttp.RateLimitInterceptor;
 import com.solarized.firedown.sync.crypto.Canonical;
 import com.solarized.firedown.sync.crypto.Pow;
@@ -429,22 +427,8 @@ public final class StorageApiClient {
             rb.header("If-None-Match", "*");
         }
         Request req = rb.build();
-        if (BuildConfig.DEBUG) {
-            // DIAGNOSTIC (grep logcat for VaultPut): the server-issued presigned
-            // URL vs what OkHttp will actually send. If OkHttp re-canonicalizes the
-            // query (reorders params, decodes %2F/%3B), the two differ and R2's
-            // SigV4 check fails (AccessDenied) — the exact Go-works/OkHttp-fails
-            // split we're chasing. Also logs the wire host + method.
-            Log.d("VaultPut", "server URL : " + uploadUrl);
-            Log.d("VaultPut", "okhttp URL : " + req.url());
-            Log.d("VaultPut", "identical  : " + uploadUrl.equals(req.url().toString()));
-        }
         try (Response resp = beginCall(req).execute()) {
             int code = resp.code();
-            if (BuildConfig.DEBUG && code == 403) {
-                Log.d("VaultPut", "403 sent URL: " + resp.request().url());
-                Log.d("VaultPut", "403 body    : " + resp.peekBody(4096).string());
-            }
             if (code == 412) {
                 // The chunk is already uploaded — a retry after a lost 200, or a
                 // refresh URL for a chunk we already wrote. Treat as success.
