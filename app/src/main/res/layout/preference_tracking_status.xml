@@ -10,7 +10,9 @@
   coral glyph lines up with the Standard/Strict/Custom icons below it and
   the text lines up with their titles (no card, which would inset the icon
   out of that column). Uses a non-shield icon (eye-slash = "not tracked")
-  since all three controls below already use shield-family icons.
+  since all three controls below already use shield-family icons. It's the
+  SAME footprint glyph the root Settings row uses for Enhanced Tracking
+  Protection (footprints = tracking), so the feature reads consistently.
 
   Hidden until the DB has recorded an event.
 -->
@@ -40,7 +42,7 @@
             android:layout_width="24dp"
             android:layout_height="24dp"
             android:contentDescription="@null"
-            android:src="@drawable/ic_eye_slash_24"
+            android:src="@drawable/footprint_24"
             android:tint="?attr/colorPrimary" />
     </LinearLayout>
 
