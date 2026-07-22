@@ -122,6 +122,13 @@ public class CloudBackupListFragment extends Fragment
      *  home pill: an enqueued-only worker (constraints unmet / retry backoff)
      *  may be hours from transferring. */
     private boolean mTransferRunning;
+    /** Work IDs whose SUCCESS has already triggered a manifest reload. Each
+     *  finished backup pulls in its committed row IMMEDIATELY (while siblings
+     *  keep uploading) — reloading only when the WHOLE batch went idle made every
+     *  finished upload vanish until the last one completed. Add-returns-false
+     *  keeps it to one reload per worker across the observer's repeat ticks;
+     *  grows with the finished-transfer count, bounded by the fragment's life. */
+    private final Set<String> mReloadedTransferIds = new HashSet<>();
     /** True while multi-select is active (drives the toolbar title/menu). */
     private boolean mSelectionMode;
     private Toolbar mToolbar;
@@ -304,10 +311,24 @@ public class CloudBackupListFragment extends Fragment
                     List<CloudBackupFileAdapter.Transfer> transfers = new ArrayList<>();
                     boolean active = false;
                     boolean anyRunning = false;
+                    boolean newlyFinished = false;
                     Set<String> seenNames = new HashSet<>();
                     if (infos != null) {
                         for (WorkInfo wi : infos) {
                             WorkInfo.State s = wi.getState();
+                            // A backup that reached SUCCEEDED has already committed its
+                            // manifest entry (the OCC push runs inside doWork, before
+                            // the worker returns), so reload ONCE per finished worker to
+                            // surface its committed row immediately — otherwise a
+                            // finished upload's progress row is dropped here but its
+                            // committed row isn't pulled until the whole batch goes idle
+                            // (justFinished), so it disappears until the last one lands.
+                            // A restore also succeeds under WORK_TAG but doesn't touch
+                            // the manifest, so its reload is a harmless idempotent pull.
+                            if (s == WorkInfo.State.SUCCEEDED
+                                    && mReloadedTransferIds.add(wi.getId().toString())) {
+                                newlyFinished = true;
+                            }
                             boolean running = s == WorkInfo.State.RUNNING
                                     || s == WorkInfo.State.ENQUEUED;
                             // Terminally-FAILED backups render as an ERROR row —
@@ -370,8 +391,13 @@ public class CloudBackupListFragment extends Fragment
                     mTransferRunning = anyRunning;
                     mAdapter.setTransfers(transfers);
                     render();
-                    if (justFinished) {
-                        load(); // a transfer completed — pull in the new entry
+                    // Reload on EACH completion (newlyFinished), not only when the
+                    // whole batch goes idle (justFinished) — the latter alone is what
+                    // made every finished upload disappear until the last one landed.
+                    // justFinished is kept as the backstop for a batch whose last
+                    // worker FAILED/was CANCELLED (no SUCCEEDED tick to reload on).
+                    if (newlyFinished || justFinished) {
+                        load(); // pull in the newly-committed entry (or final resync)
                     }
                 });
     }
