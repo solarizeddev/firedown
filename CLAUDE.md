@@ -1900,7 +1900,11 @@ opaque chunks + an opaque manifest blob.
   reported the misleading "presign expired" (how a vault smoke-test failure
   first surfaced); the fail-fast throws an `IOException` naming the real cause
   + pointing at `storage-api --r2-check`. One consecutive re-expiry is still
-  allowed for the link-so-slow-one-chunk-outlives-the-TTL edge.
+  allowed for the link-so-slow-one-chunk-outlives-the-TTL edge. `putChunk`'s
+  403 also carries R2's own error `<Code>` from the response body
+  (`SignatureDoesNotMatch` vs an expiry) — a stale pre-write-once APK against
+  the header-signing server 403'd every PUT and the bare "presign expired"
+  message misread it for a round; the code names the real cause on sight.
 - **`putChunk` sends `If-None-Match: *` and treats 412 as success (write-once
   chunks).** The server can SIGN `If-None-Match: *` into the chunk PUT presign
   (its `FIREDOWN_STORAGE_WRITE_ONCE_CHUNKS` flag) so R2 rejects a second write to a

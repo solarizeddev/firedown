@@ -16,6 +16,8 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import okhttp3.Call;
 import okhttp3.Interceptor;
@@ -426,12 +428,32 @@ public final class StorageApiClient {
                 return;
             }
             if (code == 403) {
-                throw new PresignExpiredException("chunk PUT: 403 (presign expired)");
+                // Carry R2's own error code — its XML body names WHY: an expired
+                // URL vs SignatureDoesNotMatch (a stale client dropping the signed
+                // If-None-Match, clock skew, rolled credentials). Discarding it
+                // once cost a debugging round: a pre-write-once APK 403'd every
+                // PUT and the bare message misread it as "expired".
+                throw new PresignExpiredException("chunk PUT: 403" + r2ErrorCode(resp));
             }
             if (!resp.isSuccessful()) {
                 throw new TransientException("chunk PUT: " + code, 0);
             }
         }
+    }
+
+    /** Best-effort {@code " (Code)"} from an R2/S3 error XML body ({@code
+     *  <Code>SignatureDoesNotMatch</Code>} etc.); empty when unreadable. */
+    private static String r2ErrorCode(Response resp) {
+        try {
+            String body = resp.peekBody(1024).string();
+            Matcher m = Pattern.compile("<Code>([^<]{1,64})</Code>").matcher(body);
+            if (m.find()) {
+                return " (" + m.group(1) + ")";
+            }
+        } catch (Exception ignored) {
+            // diagnostic only — never let it mask the 403 itself
+        }
+        return "";
     }
 
     /** Re-mint fresh presigned PUT URLs for a still-PENDING object whose create-time
