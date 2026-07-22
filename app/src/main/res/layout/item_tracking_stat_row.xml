@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  One ETP-category row for the tracking-protection stats header
+  (TrackingStatsPreference). Inflated once per non-zero category, so
+  the row set is data-driven rather than static. Reuses the trackers
+  sheet's breakdown-row styles so the settings header and the Home
+  sheet read as the same visual language.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    style="@style/TrackersInfoBreakdownRow"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <TextView
+        android:id="@+id/tsr_label"
+        style="@style/TrackersInfoBreakdownLabel"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        tools:text="Fingerprinters" />
+
+    <TextView
+        android:id="@+id/tsr_count"
+        style="@style/TrackersInfoBreakdownCount"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        tools:text="861" />
+</LinearLayout>

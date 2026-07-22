@@ -21,6 +21,8 @@ import com.solarized.firedown.phone.SettingsActivity;
 import com.solarized.firedown.ui.adapters.TopTrackersAdapter;
 import com.solarized.firedown.utils.Utils;
 
+import org.mozilla.geckoview.GeckoRuntime;
+
 import java.text.NumberFormat;
 import java.util.Locale;
 import java.util.Map;
@@ -167,9 +169,42 @@ public class TrackersInfoSheet extends BaseBottomSheetDialogFragment {
             topTrackersAdapter.submitList(trackers);
         });
 
+        // A single quiet, NON-interactive line for Gecko's persisted
+        // tracking-protection count (separate data source from the uBlock
+        // stats above — never summed). It reads as a stat, like the rows
+        // above it; the tap-through to the full breakdown + controls is the
+        // 'Manage protection' button below, which deep-links to the ETP
+        // screen. Hidden until the DB has recorded something.
+        bindEtpLine(view);
+
+        // 'Manage protection' opens the Enhanced Tracking Protection screen
+        // directly (stats header + Standard/Strict/Custom controls), not the
+        // generic Settings root — so the button lands where its label promises.
         action.setOnClickListener(v -> {
-            startActivity(new Intent(requireContext(), SettingsActivity.class));
+            Intent intent = new Intent(requireContext(), SettingsActivity.class);
+            intent.putExtra(SettingsActivity.EXTRA_OPEN_TRACKING, true);
+            startActivity(intent);
             dismissAllowingStateLoss();
+        });
+    }
+
+    /** Fill the one-line ETP tracking-protection stat from Gecko's persisted
+     *  database. Non-interactive: it's a figure, not a control. The
+     *  {@code GeckoResult} callback dispatches to the main thread (attached
+     *  here), guarded on {@link #getView()} against a mid-flight dismiss. */
+    private void bindEtpLine(@NonNull View root) {
+        TextView line = root.findViewById(R.id.trackers_info_etp_line);
+        if (line == null) return;
+        GeckoRuntime runtime = mGeckoRuntimeHelper.getGeckoRuntime();
+        if (runtime == null) return;
+        runtime.getContentBlockingController().sumAllTrackingDbEvents().accept(sum -> {
+            if (getView() == null || sum == null || sum <= 0) {
+                line.setVisibility(View.GONE);
+                return;
+            }
+            line.setVisibility(View.VISIBLE);
+            line.setText(getString(R.string.home_trackers_etp_line,
+                    NumberFormat.getInstance(Locale.getDefault()).format(sum.longValue())));
         });
     }
 

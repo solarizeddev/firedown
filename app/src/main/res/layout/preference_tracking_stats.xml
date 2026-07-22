@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Header for the Enhanced Tracking Protection settings screen: what the
+  protection actually DID, above the Standard / Strict / Custom controls
+  that decide what it does. Data comes from Gecko's persisted ETP
+  database (ContentBlockingController, enabled at runtime build) and is
+  pushed in by TrackingFragment via TrackingStatsPreference setters.
+
+  Deliberately distinct from the Home trackers sheet's uBlock numbers:
+  this counts Gecko tracking-protection events (tracking cookies,
+  fingerprinters, cryptominers, social / bounce), never uBlock's
+  filter-list requests, and the two are never summed. The 'Recording
+  since' line keeps the all-time figure honest — it only reaches back to
+  when this build enabled the database, not to install.
+
+  The whole preference is hidden (setVisible(false)) until the database
+  has recorded at least one event, so a freshly-enabled, still-empty DB
+  shows nothing rather than a bank of zeroes.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingHorizontal="16dp"
+    android:paddingTop="12dp"
+    android:paddingBottom="8dp">
+
+    <com.google.android.material.card.MaterialCardView
+        style="@style/TrackersInfoStatCard"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="18dp">
+
+            <TextView
+                android:id="@+id/ts_alltime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFeatureSettings="tnum"
+                android:textAppearance="?attr/textAppearanceHeadlineMedium"
+                android:textColor="?attr/colorPrimary"
+                tools:text="3,204" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="@string/tracking_stats_blocked_label"
+                android:textAppearance="?attr/textAppearanceBodyMedium"
+                android:textColor="?attr/colorOnSurfaceVariant" />
+
+            <TextView
+                android:id="@+id/ts_since"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:textAppearance="?attr/textAppearanceBodySmall"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                tools:text="Recording since 12 Jul 2026" />
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:orientation="horizontal">
+
+        <com.google.android.material.card.MaterialCardView
+            style="@style/TrackersInfoStatCard"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1">
+
+            <LinearLayout style="@style/TrackersInfoStatBody">
+
+                <TextView
+                    android:id="@+id/ts_week"
+                    style="@style/TrackersInfoStatValue"
+                    tools:text="412" />
+
+                <TextView
+                    style="@style/TrackersInfoStatLabel"
+                    android:text="@string/trackers_info_etp_stat_week" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <Space
+            android:layout_width="8dp"
+            android:layout_height="match_parent" />
+
+        <com.google.android.material.card.MaterialCardView
+            style="@style/TrackersInfoStatCard"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1">
+
+            <LinearLayout style="@style/TrackersInfoStatBody">
+
+                <TextView
+                    android:id="@+id/ts_today"
+                    style="@style/TrackersInfoStatValue"
+                    tools:text="14" />
+
+                <TextView
+                    style="@style/TrackersInfoStatLabel"
+                    android:text="@string/interval_today" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/ts_breakdown"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:orientation="vertical" />
+
+</LinearLayout>

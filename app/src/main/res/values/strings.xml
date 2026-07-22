@@ -971,6 +971,24 @@
     <string name="trackers_info_breakdown_frames">Embedded frames</string>
     <string name="trackers_info_breakdown_other">Analytics &amp; telemetry</string>
     <string name="trackers_info_action">Manage protection</string>
+    <!-- Gecko Enhanced Tracking Protection database (unlocked by the
+         GeckoView 153 bump). A SEPARATE count from the uBlock filter-list
+         stats above — tracking cookies, fingerprinters, cryptominers,
+         social/bounce trackers — never summed with them. Surfaced as one
+         quiet line on the Home sheet, and in full on the ETP settings
+         screen behind 'Manage protection'. 'Recording since' keeps the
+         all-time figure honest: it only reaches back to when this build
+         enabled the database, not to install. -->
+    <string name="home_trackers_etp_line">Tracking protection · %1$s blocked</string>
+    <string name="tracking_stats_blocked_label">Trackers blocked</string>
+    <string name="tracking_stats_since">Recording since %1$s</string>
+    <string name="trackers_info_etp_stat_week">This week</string>
+    <string name="trackers_info_etp_cat_trackers">Trackers</string>
+    <string name="trackers_info_etp_cat_cookies">Tracking cookies</string>
+    <string name="trackers_info_etp_cat_fingerprinters">Fingerprinters</string>
+    <string name="trackers_info_etp_cat_cryptominers">Cryptominers</string>
+    <string name="trackers_info_etp_cat_social">Social trackers</string>
+    <string name="trackers_info_etp_cat_bounce">Bounce trackers</string>
     <!-- Subtitle placeholder for the initial state — uBlock hasn't
          pushed its cumulative count yet, or the count is genuinely
          zero (fresh install, no browsing). Avoids the cosmetic
