@@ -1905,15 +1905,21 @@ opaque chunks + an opaque manifest blob.
   (`SignatureDoesNotMatch` vs an expiry) — a stale pre-write-once APK against
   the header-signing server 403'd every PUT and the bare "presign expired"
   message misread it for a round; the code names the real cause on sight.
-- **`putChunk` sends `If-None-Match: *` and treats 412 as success (write-once
-  chunks).** The server can SIGN `If-None-Match: *` into the chunk PUT presign
-  (its `FIREDOWN_STORAGE_WRITE_ONCE_CHUNKS` flag) so R2 rejects a second write to a
+- **`putChunk` sends `If-None-Match: *` ONLY when the presign signed it, and
+  treats 412 as success (write-once chunks).** The server can SIGN
+  `If-None-Match: *` into the chunk PUT presign (its
+  `FIREDOWN_STORAGE_WRITE_ONCE_CHUNKS` flag) so R2 rejects a second write to a
   chunk key with 412 and a modified client can't drop the header to overwrite a
-  committed chunk. The client sends the header **unconditionally**: harmless when
-  the server didn't sign it / R2 ignores it (a normal overwrite), and required
-  verbatim once signed (or the signature fails). A **412** means the chunk is
-  already uploaded — a retry after a lost 200, or a refresh URL for a chunk we
-  already wrote — so it's treated as success, not an error. This is the client half
+  committed chunk. The client mirrors the presign: it sends the header **iff the
+  URL's `X-Amz-SignedHeaders` contains `if-none-match`** (`presignSignsIfNoneMatch`
+  — the name only appears there when signed). **Sending it UNCONDITIONALLY was a
+  bug** (on-device: `403 AccessDenied` on every chunk PUT): when the server did
+  NOT sign the header (write-once OFF), an unsigned conditional `If-None-Match`
+  is not a benign no-op — R2 rejects it `AccessDenied`. Mirroring the presign
+  decouples the client from the server flag (either setting uploads cleanly).
+  When signed, the header is sent verbatim (dropping it → 403). A **412** means
+  the chunk is already uploaded — a retry after a lost 200, or a refresh URL for
+  a chunk we already wrote — so it's treated as success, not an error. This is the client half
   of retiring the server's `ReconcileCommitted` sweep; the server flag stays off
   until R2's honoring of a presigned conditional PUT is verified live.
 - **Backup worker still has a retry ceiling** (`VaultBackupWorker.MAX_RUN_ATTEMPTS`,

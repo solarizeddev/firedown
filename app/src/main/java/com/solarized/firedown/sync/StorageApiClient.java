@@ -410,16 +410,23 @@ public final class StorageApiClient {
      *  mid-upload) → PresignExpiredException so the engine can refresh + retry the
      *  chunk; any other non-2xx is transient (retry the whole upload). */
     public void putChunk(String uploadUrl, byte[] encryptedChunk) throws IOException {
-        Request req = new Request.Builder()
+        Request.Builder rb = new Request.Builder()
                 .url(uploadUrl)
-                // Write-once guard: R2 rejects a second write to the same chunk key
-                // with 412 when this is present. Sent UNCONDITIONALLY — harmless if
-                // the server didn't sign it or R2 ignores it (a normal overwrite),
-                // and REQUIRED verbatim once the server signs If-None-Match (its
-                // FIREDOWN_STORAGE_WRITE_ONCE_CHUNKS flag), or the signature fails.
-                .header("If-None-Match", "*")
-                .put(RequestBody.create(encryptedChunk, OCTET))
-                .build();
+                .put(RequestBody.create(encryptedChunk, OCTET));
+        // Write-once guard: send If-None-Match: * ONLY when the presign actually
+        // SIGNED it (write-once mode) — detected from the URL's X-Amz-SignedHeaders.
+        // Sending it UNCONDITIONALLY was wrong: when the server did NOT sign it
+        // (write-once off), the header is an UNSIGNED conditional, which R2 rejects
+        // with 403 AccessDenied (not a benign no-op as first assumed). When the
+        // server DID sign it, the URL carries "if-none-match" in X-Amz-SignedHeaders
+        // and we must send it verbatim (dropping it → 403). So the client mirrors
+        // whatever the presign chose, and can't desync from FIREDOWN_STORAGE_
+        // WRITE_ONCE_CHUNKS. When signed, R2 answers a second write to the key with
+        // 412 (already-uploaded, treated as success below).
+        if (presignSignsIfNoneMatch(uploadUrl)) {
+            rb.header("If-None-Match", "*");
+        }
+        Request req = rb.build();
         try (Response resp = beginCall(req).execute()) {
             int code = resp.code();
             if (code == 412) {
@@ -439,6 +446,15 @@ public final class StorageApiClient {
                 throw new TransientException("chunk PUT: " + code, 0);
             }
         }
+    }
+
+    /** True when the presigned URL SIGNED the If-None-Match header (write-once
+     *  mode): SigV4 lists it, lowercased, in {@code X-Amz-SignedHeaders}
+     *  (e.g. {@code host%3Bif-none-match}). A plain substring test suffices —
+     *  the name only appears there when signed, so it can't false-match a plain
+     *  presign — and matches whether the {@code ;} is percent-encoded or not. */
+    private static boolean presignSignsIfNoneMatch(String uploadUrl) {
+        return uploadUrl.contains("if-none-match");
     }
 
     /** Best-effort {@code " (Code: Message)"} from an R2 403 body: the S3 error
