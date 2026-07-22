@@ -2188,15 +2188,26 @@ opaque chunks + an opaque manifest blob.
     purchases accumulate into one balance), a "% of your plan" bar against
     that invented cap, and the timeline. All plan fiction was DELETED
     (`effectivePlanSizeGb`/`roundToNiceGb`/`coverageMonths`, the chip's plan/
-    balance text, the metered % bar, the covered-until clamp): the metered
-    hero is now headline ("854 MB backed up") + the `CloudTimelineView`
-    Today→date runway to the SERVER's `projected_runout_at` (past-guarded for
-    stale servers), duration centred beneath. No projection (nothing backed
-    up / effectively-never runout — the server omits dates past its 30-year
-    horizon) → the `cloud_status_credit_active` line in the alert slot, so a
-    funded account always shows its credit. The usage BAR binds only in the
-    unmetered beta, whose byte cap is a real denominator; the CHIP binds only
-    for grace ("Read-only", amber) and the beta label. The raw ledger unit
+    balance text, the metered %-of-plan bar, the covered-until clamp): the
+    metered hero is now headline ("854 MB backed up") + the compact **credit
+    METER** (`bindMeter` + `cb_meter`) — a thin gauge of credit REMAINING
+    labelled with the runway time from the SERVER's `projected_runout_at`
+    (past-guarded for stale servers). It borrows the familiar Dropbox/Drive
+    thin-bar SHAPE but is a **fuel gauge, NOT a used-of-cap bar** — metered
+    mode has no cap, so a "% of your plan" fill would be a lie (the exact
+    confusion the plan fiction created). The fill is credit LEFT, **saturating
+    at a year** (`RUNWAY_FULL_MONTHS`) with NO denominator shown, so a
+    well-funded account reads full and only visibly drains (then goes amber) as
+    the last year nears. This **replaced the `CloudTimelineView` Today→date
+    runway** (removed) at the maintainer's request for a simpler, more
+    recognizable meter — same runout math + strings, no new translations. The
+    "no metered % bar" rule stands: it's a runway gauge, never a percentage
+    against an invented cap. No projection (nothing backed up /
+    effectively-never runout — the server omits dates past its 30-year horizon)
+    → a FULL meter + the `cloud_status_credit_active` label, so a funded
+    account always shows its credit. The separate usage BAR (`cb_bar`) binds
+    only in the unmetered beta, whose byte cap is a real denominator; the CHIP
+    binds only for grace ("Read-only", amber) and the beta label. The raw ledger unit
     survives user-facing only inside the buy wizard (denomination fine print +
     its explainer — the one place the unit is introduced); the Backups-list
     header and the buy-success screen now say "≈ 1 year of coverage"

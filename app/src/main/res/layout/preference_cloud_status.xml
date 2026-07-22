@@ -7,10 +7,11 @@
                            (the one REAL byte denominator; the bar binds only
                            here)
     B · metered, funded  — ONE model, time: backed-up-size headline + the
-                           Today→date timeline to the server's projected
-                           runout. No plan chip, no % bar (the "plan" was an
+                           compact CREDIT METER (cb_meter) — a thin gauge of
+                           credit REMAINING, labelled with the runway time. No
+                           plan chip, no % -of-plan bar (the "plan" was an
                            invented shape — see CloudStatusPreference). No
-                           projection → the credit-active line in cb_alert.
+                           projection → a full meter + the credit-active label.
     C · grace/read-only  — amber data ink + the top-up-by deadline
     D · not set up       — dashed empty state pointing at the ⋮ backup action
 
@@ -119,68 +120,44 @@
             tools:visibility="visible"
             tools:text="Your credit ran out. Top up by Aug 30, 2026 — your files stay restorable until then, but nothing new is backed up." />
 
-        <!-- metered only: the "time as space" runway — a gradient TIMELINE from
-             Today (solid dot) to the covered-until date (soft dot), duration
-             centred beneath. Each fact appears ONCE: the date is a place on
-             the line, the duration its length. This replaced the tick row +
-             "Covered until X / N of M months left" pair, which restated one
-             fact three times (and with balance-derived coverage "of M" was
-             degenerate — N and M derive from the same balance, so it could
-             only ever read "N of N"; on-device: "12 of 12"). -->
+        <!-- metered only: the compact CREDIT METER — a thin gauge of prepaid
+             credit REMAINING (full = healthy, drains as runout nears; amber in
+             grace) with the runway TIME as its label. It borrows the familiar
+             Dropbox/Drive thin-bar SHAPE but never a used-of-cap denominator:
+             metered mode has NO cap, so a "used of total" bar would be a lie
+             (the reason the earlier bars were pulled). The fill is credit LEFT,
+             saturating at a year (cb_meter_bar), so a well-funded account reads
+             full and only visibly drains near runout — a fuel gauge, not a
+             storage bar. This replaced the Today→date CloudTimelineView
+             (removed) at the maintainer's request for a simpler, more
+             recognizable meter; the runout math + strings are reused, so no new
+             translations. -->
         <LinearLayout
-            android:id="@+id/cb_runway"
+            android:id="@+id/cb_meter"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="14dp"
             android:orientation="vertical"
             android:visibility="gone"
             tools:visibility="visible">
 
-            <com.solarized.firedown.settings.CloudTimelineView
-                android:id="@+id/cb_timeline"
-                android:layout_width="match_parent"
-                android:layout_height="14dp" />
-
-            <LinearLayout
-                android:id="@+id/cb_runway_labels"
+            <com.google.android.material.progressindicator.LinearProgressIndicator
+                android:id="@+id/cb_meter_bar"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:orientation="horizontal"
-                android:baselineAligned="true">
-
-                <TextView
-                    android:id="@+id/cb_runway_now"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:textSize="11.5sp"
-                    android:textStyle="bold"
-                    android:textColor="?attr/colorOnSurface"
-                    tools:text="Today" />
-
-                <TextView
-                    android:id="@+id/cb_runway_covered"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="10dp"
-                    android:textSize="11.5sp"
-                    android:textStyle="bold"
-                    android:textColor="?attr/colorOnSurface"
-                    tools:text="~Mar 2027" />
-            </LinearLayout>
+                app:trackThickness="7dp"
+                app:trackCornerRadius="4dp"
+                tools:progress="78" />
 
             <TextView
-                android:id="@+id/cb_runway_duration"
+                android:id="@+id/cb_meter_label"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:gravity="center_horizontal"
-                android:textSize="11.5sp"
-                android:textColor="?android:attr/textColorSecondary"
-                android:visibility="gone"
-                tools:visibility="visible"
-                tools:text="≈ 1 year of coverage" />
+                android:layout_marginTop="8dp"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="?attr/colorOnSurface"
+                tools:text="≈ 3 years of coverage" />
         </LinearLayout>
     </LinearLayout>
 
