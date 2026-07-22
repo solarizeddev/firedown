@@ -196,7 +196,7 @@
             android:key="com.solarized.firedown.preferences.browser.disable.safebrowsing"
             android:summary="@string/settings_safe_browsing_disabled_summary"
             android:title="@string/settings_safe_browsing_disabled"
-            app:icon="@drawable/ic_shield_24" />
+            app:icon="@drawable/ic_globe_24" />
 
 
 
