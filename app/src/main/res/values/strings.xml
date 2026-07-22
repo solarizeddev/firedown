@@ -971,29 +971,6 @@
     <string name="trackers_info_breakdown_frames">Embedded frames</string>
     <string name="trackers_info_breakdown_other">Analytics &amp; telemetry</string>
     <string name="trackers_info_action">Manage protection</string>
-    <!-- Tracking-protection (Gecko ETP database) section. A SEPARATE
-         section from the uBlock counts above: it reads Gecko's
-         persisted, cross-session Enhanced Tracking Protection database
-         (unlocked by the GeckoView 153 bump), which counts a DIFFERENT
-         set of blocks (tracking cookies, fingerprinters, cryptominers,
-         social/bounce trackers) than uBlock's filter-list requests. The
-         caption disambiguates the two so the numbers aren't conflated or
-         summed. The 'since' line is placeholdered with the earliest
-         recorded date because the all-time figure only reaches back to
-         when this build enabled the database, not to install. -->
-    <string name="trackers_info_section_etp">Tracking protection</string>
-    <string name="trackers_info_etp_caption">Cross-session blocks by Enhanced Tracking Protection, counted separately from the ads and trackers above.</string>
-    <string name="trackers_info_etp_stat_alltime">All-time</string>
-    <string name="trackers_info_etp_stat_week">This week</string>
-    <string name="trackers_info_etp_since">Recording since %1$s</string>
-    <!-- ETP category breakdown row labels (Gecko nsITrackingDBService
-         event types, aggregated into user-facing buckets). -->
-    <string name="trackers_info_etp_cat_trackers">Trackers</string>
-    <string name="trackers_info_etp_cat_cookies">Tracking cookies</string>
-    <string name="trackers_info_etp_cat_fingerprinters">Fingerprinters</string>
-    <string name="trackers_info_etp_cat_cryptominers">Cryptominers</string>
-    <string name="trackers_info_etp_cat_social">Social trackers</string>
-    <string name="trackers_info_etp_cat_bounce">Bounce trackers</string>
     <!-- Subtitle placeholder for the initial state — uBlock hasn't
          pushed its cumulative count yet, or the count is genuinely
          zero (fresh install, no browsing). Avoids the cosmetic
