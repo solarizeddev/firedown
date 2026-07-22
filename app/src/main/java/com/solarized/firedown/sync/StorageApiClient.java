@@ -441,22 +441,31 @@ public final class StorageApiClient {
         }
     }
 
-    /** Best-effort {@code " (detail)"} from an R2 403 body: the S3 error
-     *  {@code <Code>SignatureDoesNotMatch</Code>} when present, else a short
-     *  snippet of whatever came back (an HTML Cloudflare challenge, a plain-text
-     *  error, …) so a non-S3 403 is still identifiable; empty when unreadable.
-     *  This is what tells apart a presign-signature mismatch from an
-     *  access/challenge 403 without a device logcat. */
+    /** Best-effort {@code " (Code: Message)"} from an R2 403 body: the S3 error
+     *  {@code <Code>SignatureDoesNotMatch</Code><Message>…</Message>} when present
+     *  (the Message often NAMES the exact mismatch), else a short snippet of
+     *  whatever came back (an HTML Cloudflare challenge, a plain-text error, …) so
+     *  a non-S3 403 is still identifiable; empty when unreadable. This is what
+     *  tells apart a presign-signature mismatch from an access/challenge 403
+     *  without a device logcat. */
     private static String r2ErrorCode(Response resp) {
         try {
-            String body = resp.peekBody(2048).string();
-            Matcher m = Pattern.compile("<Code>([^<]{1,64})</Code>").matcher(body);
-            if (m.find()) {
-                return " (" + m.group(1) + ")";
+            String body = resp.peekBody(4096).string();
+            Matcher code = Pattern.compile("<Code>([^<]{1,80})</Code>").matcher(body);
+            Matcher msg = Pattern.compile("<Message>([^<]{1,300})</Message>").matcher(body);
+            StringBuilder sb = new StringBuilder();
+            if (code.find()) {
+                sb.append(code.group(1));
+            }
+            if (msg.find()) {
+                sb.append(sb.length() > 0 ? ": " : "").append(msg.group(1));
+            }
+            if (sb.length() > 0) {
+                return " (" + sb + ")";
             }
             String snippet = body.replaceAll("\\s+", " ").trim();
             if (!snippet.isEmpty()) {
-                return " (" + snippet.substring(0, Math.min(160, snippet.length())) + ")";
+                return " (" + snippet.substring(0, Math.min(300, snippet.length())) + ")";
             }
         } catch (Exception ignored) {
             // diagnostic only — never let it mask the 403 itself
