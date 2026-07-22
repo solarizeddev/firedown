@@ -623,9 +623,6 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
                     : SettingsActivity.EXTRA_OPEN_CLOUD_BACKUP;
             intent.putExtra(extra, true);
             startActivity(intent);
-        } else if (id == R.id.action_settings) {
-            Intent intent = new Intent(mActivity, SettingsActivity.class);
-            startActivity(intent);
         }
         return true;
     }

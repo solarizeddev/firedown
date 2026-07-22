@@ -24,15 +24,23 @@
         app:showAsAction="ifRoom"
         android:title="@string/sort"/>
 
+    <!-- The three DESTINATIONS below all live in the ⋮ overflow, not the bar:
+         they leave the Downloads screen (sibling storage surfaces + the P2P
+         receive door), so they shouldn't compete with the list controls
+         (search/view/sort) for the visible icon slots. General app Settings is
+         deliberately NOT here — it's app-global, not downloads-scoped, and is
+         reachable from the browser + tabs popups. -->
+
+    <!-- Safe Folder — the local encrypted downloads (VaultActivity). -->
     <item
         android:id="@+id/action_safe"
         android:icon="@drawable/ic_lock_24"
         app:iconTint="?attr/colorOnSurface"
-        app:showAsAction="ifRoom"
+        app:showAsAction="never"
         android:title="@string/navigation_vault"/>
 
-    <!-- Overflow: the cloud Backed-up files list (a downloads-related surface,
-         so it lives here in addition to Settings → Sync → Downloads backup). -->
+    <!-- The cloud Backed-up files list (a downloads-related surface, so it
+         lives here in addition to Settings → Sync → Downloads backup). -->
     <item
         android:id="@+id/action_cloud_backup"
         android:icon="@drawable/cloud_done_24"
@@ -40,20 +48,13 @@
         app:showAsAction="never"
         android:title="@string/cloud_backup_files_title"/>
 
-    <item
-        android:id="@+id/action_settings"
-        android:icon="@drawable/ic_settings_24"
-        app:iconTint="?attr/colorOnSurface"
-        app:showAsAction="ifRoom"
-        android:title="@string/navigation_settings"/>
-
-    <!-- P2P share receiver entry — visible in the bar (a two-sided feature's
-         other half shouldn't be buried in the overflow). -->
+    <!-- P2P share receiver entry — the inbound half of the per-item "Send", and
+         the received file lands in THIS list, so Downloads is its home. -->
     <item
         android:id="@+id/action_receive"
         android:icon="@drawable/ic_qr_scan_24"
         app:iconTint="?attr/colorOnSurface"
-        app:showAsAction="ifRoom"
+        app:showAsAction="never"
         android:title="@string/p2p_receive_title"/>
 
 </menu>
