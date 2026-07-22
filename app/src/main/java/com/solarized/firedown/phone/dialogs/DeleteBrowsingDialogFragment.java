@@ -37,6 +37,13 @@ public class DeleteBrowsingDialogFragment extends BaseDialogFragment {
                 .setTitle(getString(R.string.delete_browsing))
                 .setPositiveButton(getString(R.string.delete), (dialog, which) -> {
                     mGeckoRuntimeHelper.getGeckoRuntime().getStorageController().clearData(StorageController.ClearFlags.ALL);
+                    // Also wipe Gecko's persisted content-blocking database (the
+                    // cross-session tracker-block stats enabled in GeckoRuntimeHelper).
+                    // "Delete browsing data" must clear it too, or a privacy-first app
+                    // would leak an on-device history of what was blocked across sessions.
+                    // clearTrackingDb() is @HandlerThread = "any thread with a Looper";
+                    // this button callback runs on the main thread, which has one.
+                    mGeckoRuntimeHelper.getGeckoRuntime().getContentBlockingController().clearTrackingDb();
                     mGeckoStateViewModel.clearStorage();
                     Snackbar snackbar = Snackbar.make(mActivity.getSnackAnchorView(), R.string.browser_cache_cleared, Snackbar.LENGTH_LONG);
                     snackbar.show();

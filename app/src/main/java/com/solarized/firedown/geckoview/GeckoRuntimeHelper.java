@@ -140,6 +140,19 @@ public class GeckoRuntimeHelper {
                         .cookiePurging(true)
                         .enhancedTrackingProtectionCategory(Preferences.getEnhancedTrackingProtectionCategories(sharedPreferences))
                         .enhancedTrackingProtectionLevel(Preferences.getEnhancedTrackingProtectionLevel(sharedPreferences))
+                        // Persist ETP block events to Gecko's on-device content-blocking
+                        // database (pref browser.contentblocking.database.enabled, default
+                        // false). Off, the DB stays empty and the query APIs
+                        // (ContentBlockingController.sumAllTrackingDbEvents /
+                        // getTrackingDbEventsByDateRange, unlocked by the 153 bump) return
+                        // nothing — so this gate is the foundation for an honest
+                        // "trackers blocked this week/month/all-time" view sourced from a
+                        // persisted, cross-session store, rather than uBlock's in-memory
+                        // µb.requestStats count. Enable it NOW (not when the UI lands) so the
+                        // all-time total reflects real history instead of starting at zero.
+                        // Stays on-device only (no telemetry) and is wiped by "Delete
+                        // browsing data" (DeleteBrowsingDialogFragment → clearTrackingDb).
+                        .contentBlockingDatabase(true)
                         .strictSocialTrackingProtection(true)
                         .cookieBehavior(Preferences.getCookieBehavior(sharedPreferences))
                         .queryParameterStrippingEnabled(Preferences.getQueryParameterStrippingEnabled(sharedPreferences))
