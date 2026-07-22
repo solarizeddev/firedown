@@ -334,25 +334,6 @@
             tools:listitem="@layout/item_top_tracker"
             tools:visibility="visible" />
 
-        <!-- Gecko tracking-protection count (persisted ETP database). ONE
-             non-interactive line — a stat, not a control, so plain text is
-             honest here; it doesn't pretend to be tappable. The tap-through
-             to the full breakdown + Standard/Strict/Custom controls is the
-             'Manage protection' button below (deep-links to the ETP screen).
-             Separate data source from the uBlock stats above, never summed.
-             Hidden by TrackersInfoSheet until the DB has recorded an event. -->
-        <TextView
-            android:id="@+id/trackers_info_etp_line"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:paddingVertical="2dp"
-            android:textAppearance="?attr/textAppearanceBodyMedium"
-            android:textColor="?attr/colorOnSurfaceVariant"
-            android:visibility="gone"
-            tools:text="Tracking protection · 3,204 blocked"
-            tools:visibility="visible" />
-
         <com.google.android.material.button.MaterialButton
             android:id="@+id/trackers_info_action"
             style="@style/Widget.Material3.Button"

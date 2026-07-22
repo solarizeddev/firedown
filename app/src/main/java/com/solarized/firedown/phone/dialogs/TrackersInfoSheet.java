@@ -21,8 +21,6 @@ import com.solarized.firedown.phone.SettingsActivity;
 import com.solarized.firedown.ui.adapters.TopTrackersAdapter;
 import com.solarized.firedown.utils.Utils;
 
-import org.mozilla.geckoview.GeckoRuntime;
-
 import java.text.NumberFormat;
 import java.util.Locale;
 import java.util.Map;
@@ -169,39 +167,16 @@ public class TrackersInfoSheet extends BaseBottomSheetDialogFragment {
             topTrackersAdapter.submitList(trackers);
         });
 
-        // A single quiet, NON-interactive line for Gecko's persisted
-        // tracking-protection count — a stat, like the rows above it, not a
-        // control. Kept deliberately minimal: it's a SEPARATE measurement
-        // from the uBlock stats above (Gecko ETP vs uBlock filter lists) and
-        // is never summed with them. Hidden until the DB has recorded
-        // something. (A fuller stats screen behind 'Manage protection' was
-        // tried and removed — two "blocked" numbers on two screens read as
-        // contradictory; one labelled line is the honest minimum.)
-        bindEtpLine(view);
-
+        // 'Manage protection' opens the Enhanced Tracking Protection screen
+        // directly (where the tracking-protection count now lives, above the
+        // Standard/Strict/Custom controls) rather than the generic Settings
+        // root — the count is shown there, on its own screen, so it never sits
+        // next to uBlock's larger number here and read as contradictory.
         action.setOnClickListener(v -> {
-            startActivity(new Intent(requireContext(), SettingsActivity.class));
+            Intent intent = new Intent(requireContext(), SettingsActivity.class);
+            intent.putExtra(SettingsActivity.EXTRA_OPEN_TRACKING, true);
+            startActivity(intent);
             dismissAllowingStateLoss();
-        });
-    }
-
-    /** Fill the one-line ETP tracking-protection stat from Gecko's persisted
-     *  database. Non-interactive: it's a figure, not a control. The
-     *  {@code GeckoResult} callback dispatches to the main thread (attached
-     *  here), guarded on {@link #getView()} against a mid-flight dismiss. */
-    private void bindEtpLine(@NonNull View root) {
-        TextView line = root.findViewById(R.id.trackers_info_etp_line);
-        if (line == null) return;
-        GeckoRuntime runtime = mGeckoRuntimeHelper.getGeckoRuntime();
-        if (runtime == null) return;
-        runtime.getContentBlockingController().sumAllTrackingDbEvents().accept(sum -> {
-            if (getView() == null || sum == null || sum <= 0) {
-                line.setVisibility(View.GONE);
-                return;
-            }
-            line.setVisibility(View.VISIBLE);
-            line.setText(getString(R.string.home_trackers_etp_line,
-                    NumberFormat.getInstance(Locale.getDefault()).format(sum.longValue())));
         });
     }
 

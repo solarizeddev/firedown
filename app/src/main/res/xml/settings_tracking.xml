@@ -2,6 +2,15 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
 
+    <!-- What this protection has done (Gecko's persisted ETP database),
+         one quiet line above the controls. Hidden by
+         TrackingStatusPreference until the DB has recorded something;
+         fed by TrackingFragment.loadTrackingStatus. -->
+    <com.solarized.firedown.settings.TrackingStatusPreference
+        android:key="com.solarized.firedown.preferences.browser.tracking.status"
+        android:selectable="false" />
+
+
     <com.solarized.firedown.settings.ui.RadioButtonPreference
         android:defaultValue="true"
         android:key="com.solarized.firedown.preferences.browser.tracking.default"

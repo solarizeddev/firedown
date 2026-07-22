@@ -1,8 +1,10 @@
 package com.solarized.firedown.settings;
 
 import android.os.Bundle;
+import android.view.View;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.preference.Preference;
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
@@ -10,6 +12,13 @@ import com.solarized.firedown.settings.ui.RadioButtonPreference;
 import com.solarized.firedown.utils.NavigationUtils;
 import dagger.hilt.android.AndroidEntryPoint;
 import org.mozilla.geckoview.ContentBlocking;
+import org.mozilla.geckoview.ContentBlockingController.TrackingDbEvent;
+import org.mozilla.geckoview.GeckoRuntime;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 
 @AndroidEntryPoint
@@ -19,6 +28,11 @@ public class TrackingFragment extends BasePreferenceFragment implements Preferen
 
     private static final String KEY_STRIP_LIST_NAV =
             "com.solarized.firedown.preferences.browser.tracking.strip.list.nav";
+
+    private static final String KEY_STATUS =
+            "com.solarized.firedown.preferences.browser.tracking.status";
+
+    private TrackingStatusPreference mStatusPreference;
 
     private RadioButtonPreference mDefaultPreference;
 
@@ -42,6 +56,8 @@ public class TrackingFragment extends BasePreferenceFragment implements Preferen
         mCustomPreference = getPreferenceScreen().findPreference(Preferences.SETTINGS_ANTI_TRACKING_CUSTOM);
 
         mStripListNavPreference = getPreferenceScreen().findPreference(KEY_STRIP_LIST_NAV);
+
+        mStatusPreference = getPreferenceScreen().findPreference(KEY_STATUS);
 
         mDefaultPreference.addToRadioGroup(mStrictPreference);
         mDefaultPreference.addToRadioGroup(mCustomPreference);
@@ -70,6 +86,56 @@ public class TrackingFragment extends BasePreferenceFragment implements Preferen
 
         tintIcons();
 
+    }
+
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        loadTrackingStatus();
+    }
+
+    /**
+     * Query Gecko's persisted ETP database and push the total + earliest
+     * recorded date into the one-line status row. ONE range query (0..now):
+     * each {@link TrackingDbEvent} carries a "YYYY-MM-DD" date and a count,
+     * so the total is a sum and the "recording since" date is the min date
+     * (ISO strings compare lexicographically). The {@code GeckoResult}
+     * callback dispatches to the main thread (attached here); guarded on
+     * {@link #isAdded()} against a screen left before it lands.
+     */
+    private void loadTrackingStatus() {
+        if (mStatusPreference == null) return;
+        GeckoRuntime runtime = mGeckoRuntimeHelper.getGeckoRuntime();
+        if (runtime == null) return;
+
+        long now = System.currentTimeMillis();
+        SimpleDateFormat dayFmt = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+
+        runtime.getContentBlockingController().getTrackingDbEventsByDateRange(0L, now).accept(events -> {
+            if (!isAdded() || events == null) return;
+
+            long total = 0L;
+            String minDate = null;
+            for (TrackingDbEvent e : events) {
+                total += e.count;
+                if (e.date != null && (minDate == null || e.date.compareTo(minDate) < 0)) {
+                    minDate = e.date;
+                }
+            }
+
+            long sinceMs = 0L;
+            if (minDate != null) {
+                try {
+                    Date d = dayFmt.parse(minDate);
+                    if (d != null) sinceMs = d.getTime();
+                } catch (ParseException ignored) {
+                    // Leave sinceMs 0 — the row just omits the 'since' line.
+                }
+            }
+
+            mStatusPreference.setStatus(total, sinceMs);
+        });
     }
 
 

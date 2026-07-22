@@ -972,10 +972,12 @@
     <string name="trackers_info_breakdown_other">Analytics &amp; telemetry</string>
     <string name="trackers_info_action">Manage protection</string>
     <!-- Gecko Enhanced Tracking Protection count (persisted ETP database,
-         unlocked by the GeckoView 153 bump). One quiet, labelled line on the
-         trackers sheet. A SEPARATE measurement from the uBlock filter-list
-         stats above — never summed with them, hence its own distinct label. -->
-    <string name="home_trackers_etp_line">Tracking protection · %1$s blocked</string>
+         unlocked by the GeckoView 153 bump). Shown as ONE quiet line at the
+         top of the ETP settings screen — what the protection has done, above
+         the control that adjusts it. A SEPARATE measurement from uBlock's
+         filter-list stats, deliberately not shown beside them. -->
+    <string name="tracking_status_blocked">%1$s trackers blocked</string>
+    <string name="tracking_status_since">Recording since %1$s</string>
     <!-- Subtitle placeholder for the initial state — uBlock hasn't
          pushed its cumulative count yet, or the count is genuinely
          zero (fresh install, no browsing). Avoids the cosmetic
