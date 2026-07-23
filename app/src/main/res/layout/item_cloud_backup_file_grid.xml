@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  One backed-up file GRID tile (CloudBackupFileAdapter, TYPE_FILE_GRID). Mirrors
+  the Downloads grid tile (fragment_download_item_grid.xml): a 16:10 card with a
+  centerCrop thumbnail and a bottom scrim carrying the title + a 'mime · size'
+  row. No progress ring — in-progress uploads render as full-width TYPE_TRANSFER
+  rows (spanning the grid), not tiles. The ⋮ action button (opens the per-item
+  sheet) and the corner selection check share the top-end corner; the adapter
+  flips them on the multi-select toggle. Field ids match the list row so the
+  adapter's shared bind helpers work for both.
+-->
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/cb_item"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:cardBackgroundColor="?attr/colorSurfaceContainerHigh"
+        app:cardCornerRadius="8dp"
+        app:layout_constraintDimensionRatio="16:10"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:strokeColor="@android:color/transparent"
+        app:strokeWidth="2dp">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/cb_thumb"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/mask_image_rounded"
+                android:contentDescription="@null"
+                android:duplicateParentState="true"
+                android:outlineProvider="background"
+                android:scaleType="centerCrop" />
+
+            <!-- Bottom scrim: title + 'mime · size'. Full-width, left-aligned,
+                 same slot as the Downloads grid caption. -->
+            <LinearLayout
+                android:id="@+id/cb_bottom_block"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bottom_scrim"
+                android:orientation="vertical"
+                android:paddingHorizontal="8dp"
+                android:paddingTop="14dp"
+                android:paddingBottom="7dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent">
+
+                <TextView
+                    android:id="@+id/cb_name"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:includeFontPadding="false"
+                    android:maxLines="1"
+                    android:shadowColor="#80000000"
+                    android:shadowDx="0"
+                    android:shadowDy="1"
+                    android:shadowRadius="2"
+                    android:textColor="@android:color/white"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    tools:text="The Knight Who Chose the Dawn" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="5dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <!-- Plain white caption (not the decorated MimePrimary chip):
+                         bindMimeChip sets 'LABEL · ' so this + size read as one
+                         'VÍDEO · 56 MB' line on the scrim, like the list meta. -->
+                    <TextView
+                        android:id="@+id/cb_mime"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:shadowColor="#80000000"
+                        android:shadowDx="0"
+                        android:shadowDy="1"
+                        android:shadowRadius="2"
+                        android:singleLine="true"
+                        android:textColor="#E0FFFFFF"
+                        android:textSize="11.5sp"
+                        tools:text="VÍDEO · " />
+
+                    <TextView
+                        android:id="@+id/cb_size"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="6dp"
+                        android:layout_weight="1"
+                        android:ellipsize="end"
+                        android:shadowColor="#80000000"
+                        android:shadowDx="0"
+                        android:shadowDy="1"
+                        android:shadowRadius="2"
+                        android:singleLine="true"
+                        android:textColor="#E0FFFFFF"
+                        android:textSize="11.5sp"
+                        tools:text="56 MB" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- Action button (⋮): opens the per-item sheet. -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/cb_action"
+                style="@style/Theme.FireDown.More.Button"
+                app:icon="@drawable/ic_baseline_more_vert_24"
+                app:iconTint="@android:color/white"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <!-- Corner selection check — grid selection is a corner check + a
+                 primary card stroke (the shared convention for tiles), NOT the
+                 list row's wash. GONE outside multi-select. -->
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/cb_selected"
+                style="@style/Theme.FireDown.Selected.Button"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:srcCompat="@drawable/ic_baseline_check_circle_24" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </com.google.android.material.card.MaterialCardView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

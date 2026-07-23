@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The Backed-up files toolbar (shown while NOT multi-selecting; selection swaps
+  in menu_action). One action: the grid/list toggle, mirroring the Downloads
+  list. The icon is set per state by the fragment's MenuProvider (grid icon
+  while in list mode, list icon while in grid mode).
+-->
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/action_view"
+        android:icon="@drawable/ic_grid_view_24"
+        app:iconTint="?attr/colorOnSurface"
+        app:showAsAction="ifRoom"
+        android:title="@string/popup_toggle"/>
+</menu>

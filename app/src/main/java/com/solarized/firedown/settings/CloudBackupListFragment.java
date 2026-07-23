@@ -1,5 +1,6 @@
 package com.solarized.firedown.settings;
 
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.text.format.Formatter;
@@ -26,6 +27,7 @@ import androidx.lifecycle.Observer;
 import androidx.navigation.NavBackStackEntry;
 import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.work.Constraints;
 import androidx.work.Data;
@@ -78,6 +80,16 @@ public class CloudBackupListFragment extends Fragment
 
     @Inject
     CloudBackupManager mCloudBackup;
+
+    @Inject
+    SharedPreferences mPrefs;
+
+    /** Persisted grid/list choice for the Backups list (own key — independent of
+     *  the Downloads list's grid pref). */
+    private static final String PREF_GRID = "cloud_backup_grid";
+    private GridLayoutManager mLayoutManager;
+    /** Grid vs list for the committed file rows (transfer rows stay full-width). */
+    private boolean mEnableGrid;
 
     /** The app's ONE registered ComponentCallbacks2 — the memory-trim signal is
      *  fanned out through it (see {@code TrimMemoryListener} there) instead of
@@ -166,6 +178,22 @@ public class CloudBackupListFragment extends Fragment
         mRecycler = mLcee.getRecyclerView();
         mAdapter = new CloudBackupFileAdapter(this);
         mRecycler.setAdapter(mAdapter);
+        // List ↔ grid, persisted. One GridLayoutManager drives both: span 1 for
+        // list, browser_grid_number for grid. In-progress TRANSFER rows always
+        // span the full width (SpanSizeLookup) so an uploading file still reads
+        // as a row even in grid mode. The EqualSpacingItemDecoration below is
+        // span-aware (re-reads the live span), so the same decoration fits both.
+        mEnableGrid = mPrefs.getBoolean(PREF_GRID, false);
+        mLayoutManager = new GridLayoutManager(requireContext(), gridSpanCount(mEnableGrid));
+        mLayoutManager.setSpanSizeLookup(new GridLayoutManager.SpanSizeLookup() {
+            @Override
+            public int getSpanSize(int position) {
+                return mAdapter.isTransferPosition(position)
+                        ? mLayoutManager.getSpanCount() : 1;
+            }
+        });
+        mRecycler.setLayoutManager(mLayoutManager);
+        mAdapter.enableGrid(mEnableGrid);
         // Trim the adapter's decoded-thumb cache under memory pressure while
         // this screen exists (see mTrimListener); unregistered in onDestroyView.
         mAppLifecycle.addTrimListener(mTrimListener);
@@ -228,12 +256,21 @@ public class CloudBackupListFragment extends Fragment
         // The screen's toolbar drives the selection chrome (Downloads strategy).
         mToolbar = requireActivity().findViewById(R.id.toolbar);
 
-        // Delete action, contributed to the toolbar only while selecting.
+        // Toolbar menu: the grid/list toggle while browsing, the delete action
+        // while multi-selecting (the two states swap on invalidateOptionsMenu,
+        // fired by enter/exitSelection and the toggle).
         requireActivity().addMenuProvider(new MenuProvider() {
             @Override
             public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
                 if (mSelectionMode) {
                     inflater.inflate(R.menu.menu_action, menu);
+                    return;
+                }
+                inflater.inflate(R.menu.menu_cloud_backup, menu);
+                MenuItem toggle = menu.findItem(R.id.action_view);
+                if (toggle != null) {
+                    toggle.setIcon(mEnableGrid
+                            ? R.drawable.ic_view_list_24 : R.drawable.ic_grid_view_24);
                 }
             }
 
@@ -241,6 +278,10 @@ public class CloudBackupListFragment extends Fragment
             public boolean onMenuItemSelected(@NonNull MenuItem item) {
                 if (mSelectionMode && item.getItemId() == R.id.action_delete) {
                     confirmDeleteSelected();
+                    return true;
+                }
+                if (!mSelectionMode && item.getItemId() == R.id.action_view) {
+                    toggleGrid();
                     return true;
                 }
                 return false;
@@ -573,6 +614,24 @@ public class CloudBackupListFragment extends Fragment
         mHeader.setVisibility(View.VISIBLE);
     }
 
+
+    /** Grid span for the given mode: 1 = list (single column), else the shared
+     *  Captured/Downloads grid span. */
+    private int gridSpanCount(boolean grid) {
+        return grid ? getResources().getInteger(R.integer.browser_grid_number) : 1;
+    }
+
+    /** Flips list ↔ grid: persists the choice, re-spans the layout, rebinds the
+     *  file rows, and swaps the toolbar icon. */
+    private void toggleGrid() {
+        mEnableGrid = !mEnableGrid;
+        mPrefs.edit().putBoolean(PREF_GRID, mEnableGrid).apply();
+        if (mLayoutManager != null) {
+            mLayoutManager.setSpanCount(gridSpanCount(mEnableGrid));
+        }
+        mAdapter.enableGrid(mEnableGrid);
+        requireActivity().invalidateOptionsMenu(); // swap the grid/list icon
+    }
 
     @Override
     public void onItemClick(VaultEntry entry) {

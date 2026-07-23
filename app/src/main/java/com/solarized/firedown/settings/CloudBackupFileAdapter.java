@@ -54,6 +54,7 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
 
     private static final int TYPE_TRANSFER = 0;
     private static final int TYPE_FILE = 1;
+    private static final int TYPE_FILE_GRID = 2;
 
     public interface OnItemClickListener {
         void onItemClick(VaultEntry entry);
@@ -116,6 +117,10 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     /** Selected committed entries (by objectId) while in multi-select. */
     private final Set<String> mSelected = new HashSet<>();
     private boolean mActionMode;
+    /** Grid vs list for the committed FILE rows. In-progress TYPE_TRANSFER rows
+     *  are unaffected — they render as full-width rows in both modes (the
+     *  fragment's SpanSizeLookup spans them across the grid). */
+    private boolean mEnableGrid;
     private final OnItemClickListener mListener;
 
     public CloudBackupFileAdapter(OnItemClickListener listener) {
@@ -137,6 +142,21 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
 
     public boolean isActionMode() {
         return mActionMode;
+    }
+
+    /** Switches the committed FILE rows between list and grid. Changes their view
+     *  type, so a full rebind is required (the RecycledViewPool keys holders by
+     *  view type). Transfer rows are untouched. */
+    public void enableGrid(boolean on) {
+        if (mEnableGrid == on) {
+            return;
+        }
+        mEnableGrid = on;
+        notifyDataSetChanged();
+    }
+
+    public boolean isGrid() {
+        return mEnableGrid;
     }
 
     /** Toggles selection of a committed entry and refreshes only its row. */
@@ -318,9 +338,19 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         return mItems.size();
     }
 
+    /** Whether the row at this adapter position is an in-progress TRANSFER row —
+     *  those span the full grid width (the fragment's SpanSizeLookup), so an
+     *  uploading file still reads as a row even in grid mode. */
+    public boolean isTransferPosition(int position) {
+        return position < mTransfers.size();
+    }
+
     @Override
     public int getItemViewType(int position) {
-        return position < mTransfers.size() ? TYPE_TRANSFER : TYPE_FILE;
+        if (position < mTransfers.size()) {
+            return TYPE_TRANSFER;
+        }
+        return mEnableGrid ? TYPE_FILE_GRID : TYPE_FILE;
     }
 
     @NonNull
@@ -330,6 +360,10 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         if (viewType == TYPE_TRANSFER) {
             View v = inflater.inflate(R.layout.item_cloud_backup_transfer, parent, false);
             return new TransferVH(v, mListener);
+        }
+        if (viewType == TYPE_FILE_GRID) {
+            View v = inflater.inflate(R.layout.item_cloud_backup_file_grid, parent, false);
+            return new FileGridVH(v, mListener);
         }
         View v = inflater.inflate(R.layout.item_cloud_backup_file, parent, false);
         return new FileVH(v, mListener);
@@ -341,8 +375,13 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             ((TransferVH) holder).bind(mTransfers.get(position));
         } else {
             VaultEntry entry = mItems.get(position - mTransfers.size());
-            ((FileVH) holder).bind(entry, thumbBitmapFor(entry),
-                    mActionMode, mSelected.contains(entry.objectId));
+            Bitmap thumb = thumbBitmapFor(entry);
+            boolean selected = mSelected.contains(entry.objectId);
+            if (holder instanceof FileGridVH) {
+                ((FileGridVH) holder).bind(entry, thumb, mActionMode, selected);
+            } else {
+                ((FileVH) holder).bind(entry, thumb, mActionMode, selected);
+            }
         }
     }
 
@@ -474,6 +513,76 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                 action.setVisibility(View.VISIBLE);
                 check.setVisibility(View.GONE);
                 card.setCardBackgroundColor(Color.TRANSPARENT);
+            }
+        }
+    }
+
+    /** Grid tile for a committed file. Same facts as the list row (thumbnail +
+     *  title + mime · size) on a 16:10 card; selection is a corner check + a
+     *  primary card stroke (the tile convention), not the list row's wash. */
+    static class FileGridVH extends RecyclerView.ViewHolder {
+        private final MaterialCardView card;
+        private final ImageView thumb;
+        private final ImageView check;
+        private final View action;
+        private final TextView name;
+        private final TextView mime;
+        private final TextView size;
+        private VaultEntry current;
+
+        FileGridVH(@NonNull View itemView, OnItemClickListener listener) {
+            super(itemView);
+            card = itemView.findViewById(R.id.cb_item);
+            thumb = itemView.findViewById(R.id.cb_thumb);
+            check = itemView.findViewById(R.id.cb_selected);
+            action = itemView.findViewById(R.id.cb_action);
+            name = itemView.findViewById(R.id.cb_name);
+            mime = itemView.findViewById(R.id.cb_mime);
+            size = itemView.findViewById(R.id.cb_size);
+            thumb.setClipToOutline(true);
+            // Clicks live on the CARD (it fills the whole tile column), so the
+            // hit area + ripple cover the tile; the ⋮ has its own handler.
+            View.OnClickListener open = v -> {
+                if (listener != null && current != null) {
+                    listener.onItemClick(current);
+                }
+            };
+            card.setOnClickListener(open);
+            action.setOnClickListener(open); // the ⋮ opens the same sheet
+            card.setOnLongClickListener(v -> {
+                if (listener != null && current != null) {
+                    listener.onItemLongClick(current);
+                    return true;
+                }
+                return false;
+            });
+        }
+
+        void bind(VaultEntry entry, Bitmap thumbBitmap, boolean actionMode, boolean selected) {
+            current = entry;
+            Context ctx = card.getContext();
+            name.setText(entry.name);
+            bindMimeChip(mime, ctx, entry.mime);
+            size.setText(Formatter.formatShortFileSize(ctx, entry.size));
+            bindThumb(thumb, ctx, thumbBitmap, entry.mime);
+
+            // Grid selection: the check replaces the ⋮ in the top-end corner and
+            // the card takes a primary stroke (vs the transparent resting stroke);
+            // the list-row wash would fight the thumbnail.
+            if (actionMode) {
+                action.setVisibility(View.GONE);
+                check.setVisibility(View.VISIBLE);
+                check.setImageResource(selected
+                        ? R.drawable.ic_baseline_check_circle_24
+                        : R.drawable.radio_button_unchecked_24);
+                card.setStrokeColor(selected
+                        ? MaterialColors.getColor(card,
+                                com.google.android.material.R.attr.colorPrimary, Color.TRANSPARENT)
+                        : Color.TRANSPARENT);
+            } else {
+                action.setVisibility(View.VISIBLE);
+                check.setVisibility(View.GONE);
+                card.setStrokeColor(Color.TRANSPARENT);
             }
         }
     }
