@@ -151,6 +151,24 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="@id/image" />
 
+            <!-- Cloud-backup badge — top-START corner (the ⋮ and the selection
+                 check own top-end; the scrim owns the bottom). Shown only for a
+                 FINISHED backed-up file. -->
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/cloud_badge"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:layout_margin="6dp"
+                android:background="@drawable/bg_cloud_badge"
+                android:contentDescription="@string/cloud_backed_up_desc"
+                android:padding="3dp"
+                android:scaleType="fitCenter"
+                android:visibility="gone"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:srcCompat="@drawable/cloud_done_24"
+                app:tint="@android:color/white" />
+
             <!-- Selection indicator -->
             <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/item_download_selected"

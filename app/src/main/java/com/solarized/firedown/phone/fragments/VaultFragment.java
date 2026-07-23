@@ -63,6 +63,12 @@ public class VaultFragment extends BaseDownloadFragment implements OnItemClickLi
 
     }
 
+    /** The Safe Folder never leaves the device — no cloud-backup badge here. */
+    @Override
+    protected boolean showsCloudBadges() {
+        return false;
+    }
+
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.fragment_vault, container, false);

@@ -31,6 +31,7 @@ import com.solarized.firedown.R;
 import com.solarized.firedown.data.Download;
 import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.data.entity.DownloadSeparatorEntity;
+import com.solarized.firedown.sync.CloudBackupManager;
 import com.solarized.firedown.ui.OnItemClickListener;
 import com.solarized.firedown.ui.ProgressOverlayView;
 import com.solarized.firedown.utils.DateUtils;
@@ -49,6 +50,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.ViewHolder> {
 
@@ -109,6 +111,14 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
      *  is checked (the chip rail already states the type). See
      *  {@link #setMimeSuppressed}. */
     private boolean mSuppressMime;
+
+    /** Content keys (name + size, see {@link CloudBackupManager#contentKey}) of
+     *  files backed up to the cloud. A FINISHED row whose key is present shows a
+     *  quiet "backed up" badge on its thumbnail. Empty = none loaded / not a
+     *  cloud-backup user / offline — so a badge is shown ONLY for a positively
+     *  known key, never a wrong "not backed up". Set by the fragment on resume
+     *  ({@link #setBackedUpKeys}). */
+    @NonNull private Set<String> mBackedUpKeys = Collections.emptySet();
 
     /** Per-category aggregates used to fill the header subtitle
      *  ("N files · X MB"). Empty until the ViewModel's aggregator emits. */
@@ -321,6 +331,32 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         }
         mSuppressMime = suppressed;
         notifyDataSetChanged();
+    }
+
+    /**
+     * Sets the backed-up content keys (the cloud-backup badge source). A full
+     * rebind is needed — the paged list didn't change, so DiffUtil won't rebind
+     * the rows whose badge should now appear/disappear. No-op when unchanged
+     * (the common resume where nothing was backed up meanwhile).
+     */
+    @SuppressLint("NotifyDataSetChanged")
+    public void setBackedUpKeys(@NonNull Set<String> keys) {
+        if (mBackedUpKeys.equals(keys)) {
+            return;
+        }
+        mBackedUpKeys = keys;
+        notifyDataSetChanged();
+    }
+
+    /** Whether this FINISHED, non-safe file is backed up to the cloud (its
+     *  content key is in {@link #mBackedUpKeys}). Safe-folder files never leave
+     *  the device, so they're never badged. */
+    private boolean isBackedUp(DownloadEntity entity) {
+        if (mBackedUpKeys.isEmpty() || entity.isFileSafe()) {
+            return false;
+        }
+        return mBackedUpKeys.contains(
+                CloudBackupManager.contentKey(entity.getFileName(), entity.getFileSize()));
     }
 
     @Nullable
@@ -680,6 +716,16 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
             case Download.ERROR -> bindError(holder, entity, isGrid);
             case Download.QUEUED -> bindQueued(holder, entity, isGrid);
         }
+
+        // ── Cloud-backup badge ──────────────────────────────────────
+        // A quiet mark on the thumbnail for a FINISHED file that's backed up to
+        // the cloud. Only-when-true — absence is the signal, so the list stays
+        // quiet (and non-users see none). Not on progress/error/queued rows (an
+        // in-flight or failed download isn't backed up).
+        if (holder.cloudBadge != null) {
+            boolean backed = status == Download.FINISHED && isBackedUp(entity);
+            holder.cloudBadge.setVisibility(backed ? View.VISIBLE : View.GONE);
+        }
     }
 
     private void bindProgress(DownloadViewHolder holder, DownloadEntity entity, boolean isGrid) {
@@ -1020,6 +1066,9 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         final @Nullable TextView statusText;
         final @Nullable TextView mimeDuration;
         final @Nullable View bottomBlock;
+        /** Quiet "backed up to cloud" badge on the thumbnail (present in all
+         *  three item layouts; shown only for a FINISHED backed-up file). */
+        final @Nullable AppCompatImageView cloudBadge;
 
         // Cache for the FINISHED row's "<size> - <date>" label. Built
         // from Utils.getFileSize + DateUtils.getFileDate, both of
@@ -1067,6 +1116,7 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
             statusText = view.findViewById(R.id.status_text);
             mimeDuration = view.findViewById(R.id.mime_duration);
             bottomBlock = view.findViewById(R.id.bottom_block);
+            cloudBadge = view.findViewById(R.id.cloud_badge);
 
             image.setClipToOutline(true);
 

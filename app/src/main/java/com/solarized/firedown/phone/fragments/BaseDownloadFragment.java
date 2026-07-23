@@ -133,6 +133,34 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
     public void onResume() {
         super.onResume();
         mPaused = false;
+        refreshCloudBadges();
+    }
+
+    /**
+     * Whether this list shows the "backed up to cloud" thumbnail badge. The Safe
+     * Folder never leaves the device, so {@code VaultFragment} overrides this to
+     * false — the badge is meaningless there.
+     */
+    protected boolean showsCloudBadges() {
+        return true;
+    }
+
+    /**
+     * Refreshes the set of backed-up content keys that drives the per-row cloud
+     * badge (see {@link DownloadItemAdapter#setBackedUpKeys}). Runs on resume so a
+     * file backed up while away picks up its badge on return. Cheap + gated: a
+     * non-cloud-backup user gets an empty set with no network touch, and the
+     * adapter no-ops when the set is unchanged.
+     */
+    private void refreshCloudBadges() {
+        if (!showsCloudBadges() || mAdapter == null) {
+            return;
+        }
+        mCloudBackup.loadBackedUpKeys(keys -> {
+            if (mAdapter != null) {
+                mAdapter.setBackedUpKeys(keys);
+            }
+        });
     }
 
     @Override

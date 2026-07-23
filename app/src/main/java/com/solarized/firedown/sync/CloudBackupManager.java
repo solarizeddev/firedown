@@ -27,7 +27,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -457,6 +459,49 @@ public class CloudBackupManager {
             } finally {
                 SyncSecrets.wipe(code);
             }
+        });
+    }
+
+    /**
+     * The content key a download and its backed-up manifest entry share:
+     * {@code name + NUL + size}. Matches {@link VaultEngine}'s own dedup key
+     * (name + size), so the Downloads list can tell which of its rows are backed
+     * up by a cheap set lookup.
+     */
+    public static String contentKey(String name, long size) {
+        return (name == null ? "" : name) + ' ' + size;
+    }
+
+    /**
+     * Loads the set of backed-up content keys ({@link #contentKey}) off the net
+     * executor and posts it to the main thread, for the Downloads list's
+     * "backed up to cloud" badge. Empty when not set up / offline / on any error
+     * — a badge is shown ONLY for a key we positively saw, never a wrong
+     * "not backed up". Cloud-backup users pay one manifest pull; a non-user
+     * (no code / not set up) returns empty with NO network touch.
+     */
+    public void loadBackedUpKeys(Consumer<Set<String>> onResult) {
+        netExecutor.execute(() -> {
+            Set<String> keys = new HashSet<>();
+            byte[] code = new SyncSecrets(context).load();
+            if (code != null && isSetUp()) {
+                try {
+                    SyncIdentity identity = SyncIdentity.fromCode(code);
+                    StorageApiClient api = new StorageApiClient(httpClient, backendUrl());
+                    VaultEngine engine = new VaultEngine(api, identity);
+                    for (VaultEntry e : engine.loadManifest()) {
+                        keys.add(contentKey(e.name, e.size));
+                    }
+                } catch (Exception e) {
+                    // Offline / transient — empty set (no badges), best-effort.
+                } finally {
+                    SyncSecrets.wipe(code);
+                }
+            } else {
+                SyncSecrets.wipe(code);
+            }
+            final Set<String> out = keys;
+            main.post(() -> onResult.accept(out));
         });
     }
 

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Quiet "backed up to cloud" badge backing: a translucent dark disc with a faint
+  white ring. Deliberately NOT the brand coral — a backed-up marker is a glance
+  signal, not a second accent competing with the coral mime label. Reads on any
+  thumbnail; recedes until looked for. Paired with a white cloud_done glyph.
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <solid android:color="#99000000" />
+    <stroke
+        android:width="1dp"
+        android:color="#40FFFFFF" />
+</shape>

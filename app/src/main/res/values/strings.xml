@@ -301,6 +301,8 @@
     <!-- Backups-list header line 2, derived from cloud_status_caption_beta: %1$s = the included cap -->
     <string name="cloud_backup_header_beta">of %1$s included · encrypted end-to-end</string>
     <string name="cloud_backup_header_encrypted">encrypted end-to-end</string>
+    <!-- Content description for the small cloud badge on a Downloads row that's backed up. -->
+    <string name="cloud_backed_up_desc">Backed up to cloud</string>
     <!-- %1$s = "41 files", %2$d = percent of the plan's size cap -->
     <!-- %1$s = a month + year, e.g. "Mar 2027" -->
     <string name="cloud_status_runway_covered">Covered until ~%1$s</string>

@@ -83,6 +83,24 @@
 
             </LinearLayout>
 
+            <!-- Cloud-backup badge — top-START corner (selection check owns
+                 top-end). The one bit of chrome on the otherwise-bare mosaic
+                 tile, shown only for a FINISHED backed-up image. -->
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/cloud_badge"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_margin="5dp"
+                android:background="@drawable/bg_cloud_badge"
+                android:contentDescription="@string/cloud_backed_up_desc"
+                android:padding="3dp"
+                android:scaleType="fitCenter"
+                android:visibility="gone"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:srcCompat="@drawable/cloud_done_24"
+                app:tint="@android:color/white" />
+
             <!-- Selection indicator (action mode) -->
             <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/item_download_selected"
