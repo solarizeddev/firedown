@@ -577,7 +577,7 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                         : R.drawable.radio_button_unchecked_24);
                 card.setStrokeColor(selected
                         ? MaterialColors.getColor(card,
-                                com.google.android.material.R.attr.colorPrimary, Color.TRANSPARENT)
+                                android.R.attr.colorPrimary, Color.TRANSPARENT)
                         : Color.TRANSPARENT);
             } else {
                 action.setVisibility(View.VISIBLE);
