@@ -91,24 +91,6 @@
             app:layout_constraintStart_toStartOf="@id/image"
             app:layout_constraintTop_toTopOf="@id/image" />
 
-        <!-- Cloud-backup badge — a quiet cloud-check on the thumbnail's
-             bottom-end corner (the ⋮ is far-right, so the thumbnail is free).
-             The adapter shows it only for a FINISHED file that's backed up. -->
-        <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/cloud_badge"
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:layout_margin="4dp"
-            android:background="@drawable/bg_cloud_badge"
-            android:contentDescription="@string/cloud_backed_up_desc"
-            android:padding="3dp"
-            android:scaleType="fitCenter"
-            android:visibility="gone"
-            app:layout_constraintBottom_toBottomOf="@id/image"
-            app:layout_constraintEnd_toEndOf="@id/image"
-            app:srcCompat="@drawable/cloud_done_24"
-            app:tint="@android:color/white" />
-
         <!-- Selection checkmark — sits in the same slot as the more
              button on the right edge; the adapter swaps them on the
              action-mode toggle (action button INVISIBLE, this VISIBLE).
@@ -186,6 +168,23 @@
                     android:textSize="11sp"
                     android:textColor="?attr/colorOnSurfaceVariant"
                     tools:text="youtube.com" />
+
+                <!-- Cloud-backed marker: a small coral cloud glyph at the end
+                     of the meta line, shown only for a FINISHED entry whose
+                     name+size is in the cloud manifest. Inline (no disc
+                     background) so it reads as a quiet status hint, not a
+                     heavy overlay blob on the thumbnail — the earlier frosted
+                     disc badge was too loud. Coral tint matches the mime
+                     label so it belongs to the row's accent, not the art. -->
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:id="@+id/cloud_badge"
+                    android:layout_width="14dp"
+                    android:layout_height="14dp"
+                    android:layout_marginStart="6dp"
+                    android:contentDescription="@string/cloud_backed_up_desc"
+                    android:visibility="gone"
+                    app:srcCompat="@drawable/cloud_done_24"
+                    app:tint="?attr/colorPrimary" />
 
             </LinearLayout>
 

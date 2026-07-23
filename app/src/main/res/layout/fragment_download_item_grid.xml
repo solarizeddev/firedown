@@ -124,6 +124,21 @@
                         android:visibility="gone"
                         tools:text="00:10" />
 
+                    <!-- Cloud-backed marker: a small coral cloud glyph trailing
+                         the mime/duration line on the scrim, shown only for a
+                         FINISHED backed-up file. Inline in the meta row rather
+                         than a disc badge on the thumbnail — the earlier corner
+                         disc read as a heavy blob over the artwork. -->
+                    <androidx.appcompat.widget.AppCompatImageView
+                        android:id="@+id/cloud_badge"
+                        android:layout_width="14dp"
+                        android:layout_height="14dp"
+                        android:layout_marginStart="6dp"
+                        android:contentDescription="@string/cloud_backed_up_desc"
+                        android:visibility="gone"
+                        app:srcCompat="@drawable/cloud_done_24"
+                        app:tint="?attr/colorPrimary" />
+
                 </LinearLayout>
 
                 <!-- ERROR / QUEUED / "Finishing…" status. FINISHED's "size ·
@@ -150,24 +165,6 @@
                 app:icon="@drawable/ic_baseline_more_vert_24"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="@id/image" />
-
-            <!-- Cloud-backup badge — top-START corner (the ⋮ and the selection
-                 check own top-end; the scrim owns the bottom). Shown only for a
-                 FINISHED backed-up file. -->
-            <androidx.appcompat.widget.AppCompatImageView
-                android:id="@+id/cloud_badge"
-                android:layout_width="22dp"
-                android:layout_height="22dp"
-                android:layout_margin="6dp"
-                android:background="@drawable/bg_cloud_badge"
-                android:contentDescription="@string/cloud_backed_up_desc"
-                android:padding="3dp"
-                android:scaleType="fitCenter"
-                android:visibility="gone"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:srcCompat="@drawable/cloud_done_24"
-                app:tint="@android:color/white" />
 
             <!-- Selection indicator -->
             <androidx.appcompat.widget.AppCompatImageView
