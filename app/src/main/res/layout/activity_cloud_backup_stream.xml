@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Minimal streaming viewer for a backed-up cloud file (CloudBackupStreamActivity).
-  A black-backed frame with a PlayerView (video/audio, fed by a decrypt-on-read
-  VaultDataSource), an ImageView (still images decrypted whole into memory), and a
-  centered spinner shown while the encrypted chunks / key load. Exactly one of the
-  player / image is made visible once the reader is ready.
+  Streaming viewer for a backed-up cloud file (CloudBackupStreamActivity). Styled
+  to match the local media viewer (fragment_media_viewer.xml): the same custom
+  PlayerView controller, fit resize, brand scrubber, and the built-in buffering
+  spinner (app:show_buffering). The overlay ActionBar (Theme.FireDown.Play) carries
+  the file title. Video/audio play through a decrypt-on-read VaultDataSource; still
+  images decode into cb_stream_image. cb_stream_progress covers the initial
+  key/reader load before the player takes over (buffering is then the PlayerView's).
 -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -17,7 +19,12 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:visibility="gone"
+        app:auto_show="false"
+        app:controller_layout_id="@layout/exo_media_viewer_controller"
+        app:played_color="@color/md_theme_primaryContainer"
         app:resize_mode="fit"
+        app:show_buffering="when_playing"
+        app:shutter_background_color="@android:color/black"
         app:surface_type="texture_view" />
 
     <androidx.appcompat.widget.AppCompatImageView

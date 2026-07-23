@@ -360,7 +360,10 @@ public class VaultBackupWorker extends Worker {
                         mContext.getResources(), R.mipmap.ic_launcher_round))
                 .setContentTitle(title)
                 .setContentText(name != null ? name : title)
-                .setContentIntent(cloudBackupIntent(mContext))
+                // Open the Backups files list DIRECTLY (not the Cloud settings
+                // screen) so tapping the "Backing up…" notification lands on the
+                // live per-item progress — the items being uploaded.
+                .setContentIntent(cloudBackupFilesIntent(mContext))
                 .setOngoing(true)
                 .setProgress(0, 0, true) // indeterminate
                 .setPriority(NotificationCompat.PRIORITY_LOW)
@@ -372,12 +375,26 @@ public class VaultBackupWorker extends Worker {
         return new ForegroundInfo(NOTIFICATION_ID, notification);
     }
 
-    /** PendingIntent that opens the Downloads-backup status screen. */
+    /** PendingIntent that opens the Downloads-backup status screen (the merged
+     *  Cloud settings screen). Used by the restore notification. */
     static PendingIntent cloudBackupIntent(Context context) {
         Intent intent = new Intent(context, SettingsActivity.class);
         intent.putExtra(SettingsActivity.EXTRA_OPEN_CLOUD_BACKUP, true);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         return PendingIntent.getActivity(context, 0, intent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+    }
+
+    /** PendingIntent that opens the backed-up-FILES list directly, so the backup
+     *  notification lands on the live per-item progress (Back returns to the
+     *  caller, not into the settings tree — see SettingsActivity). A distinct
+     *  request code from {@link #cloudBackupIntent} so the two PendingIntents
+     *  don't collide under FLAG_UPDATE_CURRENT. */
+    static PendingIntent cloudBackupFilesIntent(Context context) {
+        Intent intent = new Intent(context, SettingsActivity.class);
+        intent.putExtra(SettingsActivity.EXTRA_OPEN_CLOUD_BACKUP_FILES, true);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        return PendingIntent.getActivity(context, 1, intent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
     }
 }

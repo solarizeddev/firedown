@@ -194,8 +194,13 @@ public class CloudBackupListFragment extends Fragment
         mLayoutManager.setSpanSizeLookup(new GridLayoutManager.SpanSizeLookup() {
             @Override
             public int getSpanSize(int position) {
-                return mAdapter.isTransferPosition(position)
-                        ? mLayoutManager.getSpanCount() : 1;
+                // In LIST mode a transfer row spans the (single) column; in GRID
+                // mode it's a tile (span 1) among the committed tiles, like the
+                // Downloads grid. Committed files are always one cell.
+                if (mAdapter.isTransferPosition(position) && !mAdapter.isGrid()) {
+                    return mLayoutManager.getSpanCount();
+                }
+                return 1;
             }
         });
         mRecycler.setLayoutManager(mLayoutManager);

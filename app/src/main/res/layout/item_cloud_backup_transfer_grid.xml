@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  An in-progress upload as a GRID TILE (CloudBackupFileAdapter, TYPE_TRANSFER_GRID)
+  — the grid-mode counterpart of item_cloud_backup_transfer.xml, so an uploading
+  file reads as a tile among the committed grid tiles (exactly like the Downloads
+  grid keeps in-flight items as tiles). Same 16:10 card + centerCrop thumbnail +
+  bottom scrim as item_cloud_backup_file_grid.xml, but the scrim carries the
+  Downloads-style progress row (percent + bar) and the corner button is a cancel ✕.
+  Field ids match item_cloud_backup_transfer.xml so the adapter's TransferVH binds
+  either layout unchanged.
+-->
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/cb_transfer_item"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:cardBackgroundColor="?attr/colorSurfaceContainerHigh"
+        app:cardCornerRadius="8dp"
+        app:layout_constraintDimensionRatio="16:10"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:strokeColor="@android:color/transparent"
+        app:strokeWidth="0dp">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/cb_thumb"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/mask_image_rounded"
+                android:contentDescription="@null"
+                android:duplicateParentState="true"
+                android:outlineProvider="background"
+                android:scaleType="centerCrop" />
+
+            <!-- Bottom scrim: title + 'mime · state' + a progress row. -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bottom_scrim"
+                android:orientation="vertical"
+                android:paddingHorizontal="8dp"
+                android:paddingTop="14dp"
+                android:paddingBottom="7dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent">
+
+                <TextView
+                    android:id="@+id/cb_name"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:includeFontPadding="false"
+                    android:maxLines="1"
+                    android:shadowColor="#80000000"
+                    android:shadowDx="0"
+                    android:shadowDy="1"
+                    android:shadowRadius="2"
+                    android:textColor="@android:color/white"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    tools:text="Midjourney Medical.mp4" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/cb_mime"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:shadowColor="#80000000"
+                        android:shadowDx="0"
+                        android:shadowDy="1"
+                        android:shadowRadius="2"
+                        android:singleLine="true"
+                        android:textColor="#E0FFFFFF"
+                        android:textSize="11.5sp"
+                        tools:text="VÍDEO · " />
+
+                    <TextView
+                        android:id="@+id/cb_transfer_state"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:ellipsize="end"
+                        android:shadowColor="#80000000"
+                        android:shadowDx="0"
+                        android:shadowDy="1"
+                        android:shadowRadius="2"
+                        android:singleLine="true"
+                        android:textColor="#E0FFFFFF"
+                        android:textSize="11.5sp"
+                        tools:text="Backing up…" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/cb_progress_text"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:shadowColor="#80000000"
+                        android:shadowDx="0"
+                        android:shadowDy="1"
+                        android:shadowRadius="2"
+                        android:textColor="@android:color/white"
+                        android:textSize="11sp"
+                        tools:text="42%" />
+
+                    <com.google.android.material.progressindicator.LinearProgressIndicator
+                        android:id="@+id/cb_progress_bar"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:layout_weight="1"
+                        android:indeterminate="true"
+                        android:max="100"
+                        android:progress="0"
+                        app:indicatorTrackGapSize="0dp"
+                        app:trackCornerRadius="3dp"
+                        app:trackStopIndicatorSize="0dp"
+                        app:trackThickness="4dp" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- Cancel (✕): mirrors the file grid tile's corner action slot. -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/cb_transfer_cancel"
+                style="@style/Theme.FireDown.More.Button"
+                android:contentDescription="@string/cancel"
+                app:icon="@drawable/ic_baseline_close_24"
+                app:iconTint="@android:color/white"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </com.google.android.material.card.MaterialCardView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

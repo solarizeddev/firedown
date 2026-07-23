@@ -55,6 +55,7 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     private static final int TYPE_TRANSFER = 0;
     private static final int TYPE_FILE = 1;
     private static final int TYPE_FILE_GRID = 2;
+    private static final int TYPE_TRANSFER_GRID = 3;
 
     public interface OnItemClickListener {
         void onItemClick(VaultEntry entry);
@@ -348,7 +349,9 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     @Override
     public int getItemViewType(int position) {
         if (position < mTransfers.size()) {
-            return TYPE_TRANSFER;
+            // In grid mode an in-progress upload renders as a TILE (like the
+            // Downloads grid), not a full-width row.
+            return mEnableGrid ? TYPE_TRANSFER_GRID : TYPE_TRANSFER;
         }
         return mEnableGrid ? TYPE_FILE_GRID : TYPE_FILE;
     }
@@ -359,6 +362,11 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
         if (viewType == TYPE_TRANSFER) {
             View v = inflater.inflate(R.layout.item_cloud_backup_transfer, parent, false);
+            return new TransferVH(v, mListener);
+        }
+        if (viewType == TYPE_TRANSFER_GRID) {
+            // Same TransferVH — the grid tile reuses every field id.
+            View v = inflater.inflate(R.layout.item_cloud_backup_transfer_grid, parent, false);
             return new TransferVH(v, mListener);
         }
         if (viewType == TYPE_FILE_GRID) {
