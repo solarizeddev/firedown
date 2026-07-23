@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  One category row in the tracking-protection detail sheet
+  (TrackingDetailSheet), mirroring Firefox's protection-panel rows in
+  Firedown's tonal style: a surfaceContainer card with the category icon,
+  "N <category>" text, and a thin proportion bar (share of the busiest
+  category). Inflated once per category; the bar is hidden when the count
+  is zero.
+-->
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    style="@style/TrackersInfoStatCard"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="8dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="14dp">
+
+        <ImageView
+            android:id="@+id/tdc_icon"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginEnd="16dp"
+            android:contentDescription="@null"
+            android:tint="?attr/colorOnSurfaceVariant"
+            tools:src="@drawable/cookie_24" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tdc_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?attr/textAppearanceBodyLarge"
+                android:textColor="?attr/colorOnSurface"
+                tools:text="12 cross-site tracking cookies" />
+
+            <com.google.android.material.progressindicator.LinearProgressIndicator
+                android:id="@+id/tdc_bar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:max="100"
+                app:indicatorColor="?attr/colorPrimary"
+                app:trackColor="@android:color/transparent"
+                app:trackCornerRadius="2dp"
+                app:trackThickness="4dp"
+                tools:progress="30" />
+        </LinearLayout>
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

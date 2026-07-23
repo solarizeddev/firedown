@@ -70,4 +70,14 @@
             android:textColor="?attr/colorOnSurfaceVariant"
             tools:text="Recording since 22 Jul 2026" />
     </LinearLayout>
+
+    <!-- The row is tappable — opens the tracking-protection detail sheet.
+         A chevron makes that affordance visible (not just a ripple). -->
+    <ImageView
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_marginStart="8dp"
+        android:contentDescription="@null"
+        android:src="@drawable/ic_chevron_right_24"
+        android:tint="?attr/colorOnSurfaceVariant" />
 </LinearLayout>

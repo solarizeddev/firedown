@@ -978,6 +978,39 @@
          filter-list stats, deliberately not shown beside them. -->
     <string name="tracking_status_blocked">%1$s trackers blocked</string>
     <string name="tracking_status_since">Recording since %1$s</string>
+    <!-- Tracking-protection detail sheet (opened by tapping the status row) —
+         Firedown's take on Firefox's "Trackers blocked this week" panel. Hero
+         label + per-category plurals + the all-time "since" footer. Counts use
+         plurals for correct singular/plural, matching Firefox. -->
+    <string name="tracking_detail_week_label">Trackers blocked this week</string>
+    <plurals name="tracking_detail_cookies">
+        <item quantity="one">%1$d cross-site tracking cookie</item>
+        <item quantity="other">%1$d cross-site tracking cookies</item>
+    </plurals>
+    <plurals name="tracking_detail_social">
+        <item quantity="one">%1$d social media tracker</item>
+        <item quantity="other">%1$d social media trackers</item>
+    </plurals>
+    <plurals name="tracking_detail_fingerprinters">
+        <item quantity="one">%1$d fingerprinter</item>
+        <item quantity="other">%1$d fingerprinters</item>
+    </plurals>
+    <plurals name="tracking_detail_cryptominers">
+        <item quantity="one">%1$d cryptominer</item>
+        <item quantity="other">%1$d cryptominers</item>
+    </plurals>
+    <plurals name="tracking_detail_content">
+        <item quantity="one">%1$d tracking content</item>
+        <item quantity="other">%1$d tracking content</item>
+    </plurals>
+    <plurals name="tracking_detail_blocked">
+        <item quantity="one">%1$d tracker blocked</item>
+        <item quantity="other">%1$d trackers blocked</item>
+    </plurals>
+    <plurals name="tracking_detail_since">
+        <item quantity="one">%1$d tracker blocked since %2$s</item>
+        <item quantity="other">%1$d trackers blocked since %2$s</item>
+    </plurals>
     <!-- Subtitle placeholder for the initial state — uBlock hasn't
          pushed its cumulative count yet, or the count is genuinely
          zero (fresh install, no browsing). Avoids the cosmetic

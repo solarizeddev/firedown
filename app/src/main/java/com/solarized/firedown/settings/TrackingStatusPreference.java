@@ -40,7 +40,9 @@ public class TrackingStatusPreference extends Preference {
     public TrackingStatusPreference(Context context, AttributeSet attrs) {
         super(context, attrs);
         setLayoutResource(R.layout.preference_tracking_status);
-        setSelectable(false);
+        // Tappable — the fragment attaches a click listener that opens the
+        // tracking-protection detail sheet (chevron in the layout signals it).
+        setSelectable(true);
         setVisible(false);
     }
 
