@@ -18,6 +18,11 @@ package com.solarized.firedown.sync.model;
  *       time and kept INSIDE the encrypted manifest so the list can show a
  *       thumbnail offline, even after the local copy is deleted. The server never
  *       sees it (the manifest is E2E-encrypted); kept small by design (~128px).</li>
+ *   <li>{@code origin} — the download's origin URL (nullable), so a restored file's
+ *       row shows its real {@code MIME · domain} meta line (e.g. {@code youtube.com})
+ *       instead of a blank domain. Also inside the E2E-encrypted blob — the server
+ *       never sees it. Entries backed up before this field existed carry null; the
+ *       restore path then falls back to a generic "cloud" transport label.</li>
  * </ul>
  */
 public final class VaultEntry {
@@ -30,9 +35,11 @@ public final class VaultEntry {
     public final long downloadedAt;
     public final int chunkCount;
     public final String thumb;
+    public final String origin;
 
     public VaultEntry(String objectId, String wrappedDek, String name, long size,
-                      String mime, long downloadedAt, int chunkCount, String thumb) {
+                      String mime, long downloadedAt, int chunkCount, String thumb,
+                      String origin) {
         this.objectId = objectId;
         this.wrappedDek = wrappedDek;
         this.name = name;
@@ -41,5 +48,6 @@ public final class VaultEntry {
         this.downloadedAt = downloadedAt;
         this.chunkCount = chunkCount;
         this.thumb = thumb;
+        this.origin = origin;
     }
 }

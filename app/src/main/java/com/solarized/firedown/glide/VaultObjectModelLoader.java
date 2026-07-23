@@ -85,7 +85,7 @@ public final class VaultObjectModelLoader implements ModelLoader<VaultObjectMode
                 SyncIdentity identity = SyncIdentity.fromCode(code);
                 StorageApiClient api = new StorageApiClient(client, Preferences.STORAGE_DEFAULT_BACKEND);
                 VaultEntry entry = new VaultEntry(model.objectId, model.wrappedDek, null,
-                        model.size, null, 0, model.chunkCount, null);
+                        model.size, null, 0, model.chunkCount, null, null); // thumb + origin unused for decode
                 VaultObjectReader reader = new VaultObjectReader(api, identity, entry);
                 stream = new VaultObjectInputStream(reader);
                 callback.onDataReady(stream);

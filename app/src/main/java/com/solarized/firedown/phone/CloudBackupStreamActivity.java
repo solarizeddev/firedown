@@ -170,7 +170,7 @@ public class CloudBackupStreamActivity extends AppCompatActivity {
         // loads the recovery code + derives the identity), then stream it into
         // ExoPlayer through VaultDataSource.
         final VaultEntry entry = new VaultEntry(objectId, wrappedDek, name, size,
-                mime, 0, chunkCount, null);
+                mime, 0, chunkCount, null, null); // thumb + origin unused for streaming
         mProgress.setVisibility(View.VISIBLE);
         mIo.execute(() -> {
             byte[] code = new SyncSecrets(this).load();

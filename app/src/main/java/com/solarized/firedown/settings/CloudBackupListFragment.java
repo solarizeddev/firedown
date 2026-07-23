@@ -987,6 +987,7 @@ public class CloudBackupListFragment extends Fragment
                 .putLong(VaultRestoreWorker.KEY_SIZE, entry.size)
                 .putLong(VaultRestoreWorker.KEY_DOWNLOADED_AT, entry.downloadedAt)
                 .putInt(VaultRestoreWorker.KEY_CHUNK_COUNT, entry.chunkCount)
+                .putString(VaultRestoreWorker.KEY_ORIGIN, entry.origin)
                 .build();
         Constraints constraints = new Constraints.Builder()
                 .setRequiredNetworkType(NetworkType.CONNECTED)

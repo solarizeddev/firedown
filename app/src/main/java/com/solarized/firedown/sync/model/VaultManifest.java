@@ -15,7 +15,7 @@ import java.util.List;
  *
  * <pre>
  * {"v":1,"updated_at":0,
- *  "files":[{"objectId","wrappedDek","name","size","mime","downloadedAt","chunkCount"}]}
+ *  "files":[{"objectId","wrappedDek","name","size","mime","downloadedAt","chunkCount","thumb?","origin?"}]}
  * </pre>
  */
 public final class VaultManifest {
@@ -42,6 +42,9 @@ public final class VaultManifest {
                 o.put("chunkCount", e.chunkCount);
                 if (e.thumb != null) {
                     o.put("thumb", e.thumb);
+                }
+                if (e.origin != null) {
+                    o.put("origin", e.origin);
                 }
                 files.put(o);
             }
@@ -74,7 +77,8 @@ public final class VaultManifest {
                             optStringOrNull(o, "mime"),
                             o.optLong("downloadedAt", 0),
                             o.optInt("chunkCount", 1),
-                            optStringOrNull(o, "thumb")));
+                            optStringOrNull(o, "thumb"),
+                            optStringOrNull(o, "origin")));
                 }
             }
         } catch (JSONException e) {

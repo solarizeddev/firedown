@@ -100,20 +100,23 @@ public final class VaultEngine {
      */
     public VaultEntry backupFile(File file, String mime, String thumb)
             throws IOException, GeneralSecurityException {
-        return backupFile(file, mime, thumb, null);
+        return backupFile(file, mime, thumb, null, null);
     }
 
     /** As {@link #backupFile(File, String, String)}, reporting per-chunk upload
-     *  progress to {@code progress} (may be null). */
-    public VaultEntry backupFile(File file, String mime, String thumb, ProgressListener progress)
+     *  progress to {@code progress} (may be null) and recording {@code origin} (the
+     *  download's origin URL, may be null) in the manifest so a restored file's row
+     *  shows its real {@code MIME · domain}. */
+    public VaultEntry backupFile(File file, String mime, String thumb,
+                                 ProgressListener progress, String origin)
             throws IOException, GeneralSecurityException {
         return backupStream(file.getName(), file.length(),
-                () -> new FileInputStream(file), mime, thumb, progress);
+                () -> new FileInputStream(file), mime, thumb, progress, origin);
     }
 
     /**
      * Opens the plaintext of the file being backed up. A plain FileInputStream for
-     * an owned file (the {@link #backupFile(File, String, String, ProgressListener)}
+     * an owned file (the {@link #backupFile(File, String, String, ProgressListener, String)}
      * delegate); the worker passes a SAF-grant stream for a RESTORED foreign-owned
      * file — on Android 11+ a reinstalled app doesn't own its old public files, so
      * a direct File open EACCES-es (see {@code RestoredFileAccess}). Opened exactly
@@ -127,7 +130,8 @@ public final class VaultEngine {
     /** The access-agnostic backup core: {@code name}/{@code size} identify the
      *  content (the dedup key), {@code source} supplies the plaintext bytes. */
     public VaultEntry backupStream(String name, long size, StreamSource source,
-                                   String mime, String thumb, ProgressListener progress)
+                                   String mime, String thumb, ProgressListener progress,
+                                   String origin)
             throws IOException, GeneralSecurityException {
         // NOTE: the account must already be registered (the worker calls
         // CloudBackupManager.ensureRegistered first). Registration is NOT done here
@@ -140,7 +144,7 @@ public final class VaultEngine {
             if (existing.thumb == null && thumb != null) {
                 VaultEntry withThumb = new VaultEntry(existing.objectId, existing.wrappedDek,
                         existing.name, existing.size, existing.mime, existing.downloadedAt,
-                        existing.chunkCount, thumb);
+                        existing.chunkCount, thumb, existing.origin);
                 addToManifest(withThumb); // replaces (removeById + add) — same objectId
                 return withThumb;
             }
@@ -226,7 +230,7 @@ public final class VaultEngine {
 
             String wrappedDek = Base64.encodeToString(VaultCrypto.wrapDek(dek, storageKey), B64);
             VaultEntry entry = new VaultEntry(created.objectId, wrappedDek, name,
-                    size, mime, System.currentTimeMillis(), chunkCount, thumb);
+                    size, mime, System.currentTimeMillis(), chunkCount, thumb, origin);
             // Dedup-checked commit (closes the concurrency window the start-time
             // findExisting can't: TWO DEVICES backing up the same file content race —
             // each pulls a manifest without the other's entry and both pass their

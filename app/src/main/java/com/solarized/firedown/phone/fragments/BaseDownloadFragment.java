@@ -484,10 +484,18 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
     /** Enqueues the foreground backup worker for one download and reports a
      *  terminal FAILURE with a snackbar (the batch caller owns the started one). */
     private void enqueueOneBackup(WorkManager wm, DownloadEntity entity) {
+        // The origin URL to preserve in the manifest, so a restored file's row shows
+        // its real MIME · domain — same source the list adapter parses the domain
+        // from (origin URL first, media URL as the fallback).
+        String origin = entity.getOriginUrl();
+        if (origin == null || origin.isEmpty()) {
+            origin = entity.getFileUrl();
+        }
         Data input = new Data.Builder()
                 .putString(VaultBackupWorker.KEY_PATH, entity.getFilePath())
                 .putString(VaultBackupWorker.KEY_MIME, entity.getFileMimeType())
                 .putString(VaultBackupWorker.KEY_NAME, entity.getFileName())
+                .putString(VaultBackupWorker.KEY_ORIGIN, origin)
                 // Reuse the exact frame the Downloads list renders, so the stored
                 // preview is the same (precise) frame, not a guessed offset.
                 .putLong(VaultBackupWorker.KEY_FRAME_US, GlideHelper.thumbnailFrameUs(entity))

@@ -56,6 +56,9 @@ public class VaultBackupWorker extends Worker {
     public static final String KEY_PATH = "path";
     public static final String KEY_MIME = "mime";
     public static final String KEY_NAME = "name";
+    /** The download's origin URL, stored in the manifest so a restored file's row
+     *  shows its real {@code MIME · domain} instead of a blank domain (nullable). */
+    public static final String KEY_ORIGIN = "origin";
 
     /**
      * Tag prefixes the enqueuing fragment stamps on the BACKUP request so the
@@ -126,6 +129,7 @@ public class VaultBackupWorker extends Worker {
         String path = getInputData().getString(KEY_PATH);
         String mime = getInputData().getString(KEY_MIME);
         String name = getInputData().getString(KEY_NAME);
+        String origin = getInputData().getString(KEY_ORIGIN);
         long frameUs = getInputData().getLong(KEY_FRAME_US, 0L);
         if (path == null) {
             if (BuildConfig.DEBUG) {
@@ -210,7 +214,7 @@ public class VaultBackupWorker extends Worker {
             CloudBackupManager.ensureRegistered(mPrefs, api, identity);
             if (direct) {
                 engine.backupFile(file, mime, thumb,
-                        (done, total) -> publishProgress(fName, fMime, done, total));
+                        (done, total) -> publishProgress(fName, fMime, done, total), origin);
             } else {
                 // Restored foreign-owned file: stream via the SAF grant. The engine
                 // opens the source exactly once per attempt and reads sequentially.
@@ -220,7 +224,7 @@ public class VaultBackupWorker extends Worker {
                         throw new FileNotFoundException("restored file not readable: " + path);
                     }
                     return new ParcelFileDescriptor.AutoCloseInputStream(pfd);
-                }, mime, thumb, (done, total) -> publishProgress(fName, fMime, done, total));
+                }, mime, thumb, (done, total) -> publishProgress(fName, fMime, done, total), origin);
             }
         } catch (StorageApiClient.FatalException e) {
             // A 4xx with a slug (bad request / unknown keyset / …) won't fix itself

@@ -54,6 +54,15 @@ public class VaultRestoreWorker extends Worker {
     public static final String KEY_SIZE = "size";
     public static final String KEY_DOWNLOADED_AT = "downloaded_at";
     public static final String KEY_CHUNK_COUNT = "chunk_count";
+    /** The download's origin URL from the manifest (nullable — absent on files
+     *  backed up before it was stored), used for the restored row's MIME · domain. */
+    public static final String KEY_ORIGIN = "origin";
+
+    /** Synthetic origin for a restored file whose manifest entry predates
+     *  {@link #KEY_ORIGIN} (so its real domain is unknown). Names the transport
+     *  honestly rather than leaving the row's domain blank — same convention as a
+     *  P2P-received file's {@code p2p://<device>} origin. */
+    private static final String RESTORED_ORIGIN_FALLBACK = "cloud://firedown";
 
     /** Output-data keys read by the list fragment to report a result. */
     public static final String KEY_STATUS = "status";
@@ -95,6 +104,7 @@ public class VaultRestoreWorker extends Worker {
         long size = getInputData().getLong(KEY_SIZE, 0);
         long downloadedAt = getInputData().getLong(KEY_DOWNLOADED_AT, 0);
         int chunkCount = getInputData().getInt(KEY_CHUNK_COUNT, 1);
+        String origin = getInputData().getString(KEY_ORIGIN);
         if (objectId == null || wrappedDek == null || name == null) {
             return failure();
         }
@@ -140,7 +150,7 @@ public class VaultRestoreWorker extends Worker {
         }
         VaultEngine engine = new VaultEngine(api, identity);
         VaultEntry entry = new VaultEntry(objectId, wrappedDek, name, size, mime,
-                downloadedAt, chunkCount, null); // thumb unused on restore
+                downloadedAt, chunkCount, null, origin); // thumb unused on restore
         try {
             engine.restoreFile(entry, dest);
         } catch (StorageApiClient.FatalException e) {
@@ -170,7 +180,12 @@ public class VaultRestoreWorker extends Worker {
         download.setFileSize(dest.length());
         download.setFileSafe(false);
         download.setFileDate(downloadedAt > 0 ? downloadedAt : System.currentTimeMillis());
-        download.setFileUrl("");
+        // Restore the origin URL so the row's MIME · domain reads like any download
+        // (e.g. "youtube.com"). Older backups stored no origin — fall back to the
+        // honest cloud transport label so the domain is never blank.
+        String rowOrigin = (origin == null || origin.isEmpty())
+                ? RESTORED_ORIGIN_FALLBACK : origin;
+        download.setFileUrl(rowOrigin);
         download.setFileOriginUrl("");
         mRepo.addSync(download);
 
