@@ -873,4 +873,30 @@
     <string name="settings_donate">Spenden</string>
     <string name="settings_security_screen_summary">Härtet den Browser auf Kosten der Kompatibilität mancher Seiten</string>
     <string name="settings_direct_share_summary">Netzwerkeinstellungen zum Senden von Dateien zwischen Geräten</string>
+    <!-- Tracking-protection detail sheet (GeckoView 153 ETP database).
+         Category plurals sourced from Firefox translations; wrappers localised. -->
+    <string name="tracking_status_blocked">%1$s Tracker blockiert</string>
+    <string name="tracking_status_since">Aufzeichnung seit %1$s</string>
+    <string name="tracking_detail_week_label">Diese Woche blockierte Tracker</string>
+    <string name="tracking_detail_since">%1$s Tracker blockiert seit %2$s</string>
+    <plurals name="tracking_detail_cookies">
+        <item quantity="one">%1$d Cookie zur seitenübergreifenden Aktivitätenverfolgung</item>
+        <item quantity="other">%1$d Cookies zur seitenübergreifenden Aktivitätenverfolgung</item>
+    </plurals>
+    <plurals name="tracking_detail_social">
+        <item quantity="one">%1$d Social-Media-Tracker</item>
+        <item quantity="other">%1$d Social-Media-Tracker</item>
+    </plurals>
+    <plurals name="tracking_detail_fingerprinters">
+        <item quantity="one">%1$d Identifizierer (Fingerprinter)</item>
+        <item quantity="other">%1$d Identifizierer (Fingerprinter)</item>
+    </plurals>
+    <plurals name="tracking_detail_cryptominers">
+        <item quantity="one">%1$d Krypto-Miner</item>
+        <item quantity="other">%1$d Krypto-Miner</item>
+    </plurals>
+    <plurals name="tracking_detail_content">
+        <item quantity="one">%1$d Inhalt zur Aktivitätenverfolgung</item>
+        <item quantity="other">%1$d Inhalte zur Aktivitätenverfolgung</item>
+    </plurals>
 </resources>

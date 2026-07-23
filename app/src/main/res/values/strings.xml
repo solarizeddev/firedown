@@ -1003,14 +1003,7 @@
         <item quantity="one">%1$d tracking content</item>
         <item quantity="other">%1$d tracking content</item>
     </plurals>
-    <plurals name="tracking_detail_blocked">
-        <item quantity="one">%1$d tracker blocked</item>
-        <item quantity="other">%1$d trackers blocked</item>
-    </plurals>
-    <plurals name="tracking_detail_since">
-        <item quantity="one">%1$d tracker blocked since %2$s</item>
-        <item quantity="other">%1$d trackers blocked since %2$s</item>
-    </plurals>
+    <string name="tracking_detail_since">%1$s trackers blocked since %2$s</string>
     <!-- Subtitle placeholder for the initial state — uBlock hasn't
          pushed its cumulative count yet, or the count is genuinely
          zero (fresh install, no browsing). Avoids the cosmetic

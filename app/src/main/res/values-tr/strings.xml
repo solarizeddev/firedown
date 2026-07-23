@@ -768,4 +768,30 @@
     <string name="settings_donate">Bağış yap</string>
     <string name="settings_security_screen_summary">Bazı sitelerin uyumluluğu pahasına tarayıcıyı sıkılaştırır</string>
     <string name="settings_direct_share_summary">Cihazlar arasında dosya göndermek için ağ ayarları</string>
+    <!-- Tracking-protection detail sheet (GeckoView 153 ETP database).
+         Category plurals sourced from Firefox translations; wrappers localised. -->
+    <string name="tracking_status_blocked">%1$s takip kodu engellendi</string>
+    <string name="tracking_status_since">%1$s tarihinden beri kaydediliyor</string>
+    <string name="tracking_detail_week_label">Bu hafta engellenen takip kodları</string>
+    <string name="tracking_detail_since">%2$s tarihinden beri %1$s takip kodu engellendi</string>
+    <plurals name="tracking_detail_cookies">
+        <item quantity="one">%1$d siteler arası takip çerezi</item>
+        <item quantity="other">%1$d siteler arası takip çerezi</item>
+    </plurals>
+    <plurals name="tracking_detail_social">
+        <item quantity="one">%1$d sosyal medya takip kodu</item>
+        <item quantity="other">%1$d sosyal medya takip kodu</item>
+    </plurals>
+    <plurals name="tracking_detail_fingerprinters">
+        <item quantity="one">%1$d parmak izi toplayıcı</item>
+        <item quantity="other">%1$d parmak izi toplayıcı</item>
+    </plurals>
+    <plurals name="tracking_detail_cryptominers">
+        <item quantity="one">%1$d kripto madencisi</item>
+        <item quantity="other">%1$d kripto madencisi</item>
+    </plurals>
+    <plurals name="tracking_detail_content">
+        <item quantity="one">%1$d takip içeriği</item>
+        <item quantity="other">%1$d takip içeriği</item>
+    </plurals>
 </resources>

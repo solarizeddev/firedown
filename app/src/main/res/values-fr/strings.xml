@@ -874,4 +874,30 @@
     <string name="settings_donate">Faire un don</string>
     <string name="settings_security_screen_summary">Renforce le navigateur au prix de la compatibilité de certains sites</string>
     <string name="settings_direct_share_summary">Paramètres réseau pour l\'envoi de fichiers entre appareils</string>
+    <!-- Tracking-protection detail sheet (GeckoView 153 ETP database).
+         Category plurals sourced from Firefox translations; wrappers localised. -->
+    <string name="tracking_status_blocked">%1$s traqueurs bloqués</string>
+    <string name="tracking_status_since">Enregistrement depuis %1$s</string>
+    <string name="tracking_detail_week_label">Traqueurs bloqués cette semaine</string>
+    <string name="tracking_detail_since">%1$s traqueurs bloqués depuis %2$s</string>
+    <plurals name="tracking_detail_cookies">
+        <item quantity="one">%1$d cookie de pistage intersites</item>
+        <item quantity="other">%1$d cookies de pistage intersites</item>
+    </plurals>
+    <plurals name="tracking_detail_social">
+        <item quantity="one">%1$d traqueur de réseaux sociaux</item>
+        <item quantity="other">%1$d traqueurs de réseaux sociaux</item>
+    </plurals>
+    <plurals name="tracking_detail_fingerprinters">
+        <item quantity="one">%1$d détecteur d’empreinte numérique</item>
+        <item quantity="other">%1$d détecteurs d’empreinte numérique</item>
+    </plurals>
+    <plurals name="tracking_detail_cryptominers">
+        <item quantity="one">%1$d mineur de cryptomonnaies</item>
+        <item quantity="other">%1$d mineurs de cryptomonnaies</item>
+    </plurals>
+    <plurals name="tracking_detail_content">
+        <item quantity="one">%1$d contenu utilisé pour le pistage</item>
+        <item quantity="other">%1$d contenus utilisés pour le pistage</item>
+    </plurals>
 </resources>

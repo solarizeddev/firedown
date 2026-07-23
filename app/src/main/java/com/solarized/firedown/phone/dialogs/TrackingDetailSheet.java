@@ -156,14 +156,13 @@ public class TrackingDetailSheet extends BaseBottomSheetDialogFragment {
             }
 
             TextView since = root.findViewById(R.id.td_since);
+            String allTimeStr = NumberFormat.getInstance(Locale.getDefault()).format(allTime);
             if (sinceMs > 0L) {
                 String date = DateFormat.getDateInstance(DateFormat.MEDIUM, Locale.getDefault())
                         .format(new Date(sinceMs));
-                since.setText(getResources().getQuantityString(
-                        R.plurals.tracking_detail_since, (int) allTime, (int) allTime, date));
+                since.setText(getString(R.string.tracking_detail_since, allTimeStr, date));
             } else {
-                since.setText(getResources().getQuantityString(
-                        R.plurals.tracking_detail_blocked, (int) allTime, (int) allTime));
+                since.setText(getString(R.string.tracking_status_blocked, allTimeStr));
             }
         });
     }

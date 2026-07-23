@@ -663,4 +663,30 @@
     <string name="settings_donate">Дарение</string>
     <string name="settings_security_screen_summary">Повече защита за сметка на съвместимостта с някои сайтове</string>
     <string name="settings_direct_share_summary">Мрежови настройки за изпращане на файлове между устройства</string>
+    <!-- Tracking-protection detail sheet (GeckoView 153 ETP database).
+         Category plurals sourced from Firefox translations; wrappers localised. -->
+    <string name="tracking_status_blocked">%1$s тракера са блокирани</string>
+    <string name="tracking_status_since">Записване от %1$s</string>
+    <string name="tracking_detail_week_label">Блокирани тракери тази седмица</string>
+    <string name="tracking_detail_since">%1$s тракера са блокирани от %2$s</string>
+    <plurals name="tracking_detail_cookies">
+        <item quantity="one">%1$d бисквитка за проследяване в различни сайтове</item>
+        <item quantity="other">%1$d бисквитки за проследяване в различни сайтове</item>
+    </plurals>
+    <plurals name="tracking_detail_social">
+        <item quantity="one">%1$d тракер за социални медии</item>
+        <item quantity="other">%1$d тракери за социални медии</item>
+    </plurals>
+    <plurals name="tracking_detail_fingerprinters">
+        <item quantity="one">%1$d снемане на цифров отпечатък</item>
+        <item quantity="other">%1$d снемащи отпечатъци</item>
+    </plurals>
+    <plurals name="tracking_detail_cryptominers">
+        <item quantity="one">Добиване на криптовалути за %1$d</item>
+        <item quantity="other">Добиване на криптовалути за %1$d</item>
+    </plurals>
+    <plurals name="tracking_detail_content">
+        <item quantity="one">%1$d проследяващо съдържание</item>
+        <item quantity="other">%1$d проследяващо съдържание</item>
+    </plurals>
 </resources>
