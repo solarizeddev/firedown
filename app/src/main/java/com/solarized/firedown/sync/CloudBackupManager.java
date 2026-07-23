@@ -11,13 +11,17 @@ import androidx.work.WorkManager;
 
 import com.solarized.firedown.BuildConfig;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.solarized.firedown.GlideHelper;
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.data.di.Qualifiers;
 import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.data.repository.DownloadDataRepository;
+import com.solarized.firedown.glide.VaultObjectModel;
 import com.solarized.firedown.sync.crypto.SyncIdentity;
 import com.solarized.firedown.sync.model.VaultEntry;
+import com.solarized.firedown.utils.FileUriHelper;
 
 import java.io.File;
 import java.io.IOException;
@@ -556,6 +560,29 @@ public class CloudBackupManager {
                         // file.
                         thumb = VaultThumbnail.generateBitmap(context, local.getFilePath(),
                                 entry.mime, GlideHelper.thumbnailFrameUs(local));
+                    }
+                }
+                if (thumb == null && FileUriHelper.isImage(entry.mime)) {
+                    // No local copy (deleted, or never on this install) and no
+                    // stored manifest thumb — so the row would fall to the mime
+                    // glyph. Decode the preview straight from the CLOUD object via
+                    // the vault Glide ModelLoader (decrypt-on-read). Gated to
+                    // images: a video frame can't be pulled from an encrypted
+                    // media stream without a temp-file restore, and modern video
+                    // backups already carry a manifest thumb. Glide caches the
+                    // decoded result by objectId, so this is one fetch, not one
+                    // per list load.
+                    try {
+                        thumb = Glide.with(context).asBitmap()
+                                .load(VaultObjectModel.of(entry))
+                                // Don't persist decrypted vault bytes to disk cache
+                                // (the file must stay encrypted at rest); this decodes
+                                // a small preview in memory only.
+                                .diskCacheStrategy(DiskCacheStrategy.NONE)
+                                .submit(VaultThumbnail.MAX_DIM, VaultThumbnail.MAX_DIM)
+                                .get();
+                    } catch (Exception ignored) {
+                        // Offline / decode failure — fall through to the mime glyph.
                     }
                 }
             } catch (Exception ignored) {

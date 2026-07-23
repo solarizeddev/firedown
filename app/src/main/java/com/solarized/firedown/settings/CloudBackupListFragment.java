@@ -15,6 +15,7 @@ import android.view.ViewGroup;
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.graphics.Insets;
 import androidx.core.view.MenuProvider;
@@ -57,6 +58,7 @@ import com.solarized.firedown.utils.NavigationUtils;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
 
@@ -146,6 +148,9 @@ public class CloudBackupListFragment extends Fragment
     private boolean mSelectionMode;
     private Toolbar mToolbar;
     private OnBackPressedCallback mBackCallback;
+    /** Live name filter from the toolbar SearchView ("" = show all). The full set
+     *  stays in {@link #mEntries}; the adapter is submitted a filtered view. */
+    private String mSearchQuery = "";
 
     /**
      * Drops the adapter's decoded-thumb cache under memory pressure. Registered
@@ -273,6 +278,7 @@ public class CloudBackupListFragment extends Fragment
                     toggle.setIcon(mEnableGrid
                             ? R.drawable.ic_view_list_24 : R.drawable.ic_grid_view_24);
                 }
+                setupSearch(menu.findItem(R.id.action_search));
             }
 
             @Override
@@ -501,7 +507,7 @@ public class CloudBackupListFragment extends Fragment
             // back) and reconcile the guard set against this fresh pull. The full
             // ordering rationale lives in PendingRemovals.
             mEntries.addAll(mPendingRemovals.filterAndReconcile(entries));
-            mAdapter.submit(mEntries);
+            submitVisible();
             render();
             backfillThumbnails();
         }, () -> {
@@ -634,6 +640,62 @@ public class CloudBackupListFragment extends Fragment
         requireActivity().invalidateOptionsMenu(); // swap the grid/list icon
     }
 
+    /** Wires the toolbar SearchView to the in-memory name filter. Re-applies the
+     *  live query when the menu is rebuilt (grid toggle / selection exit) so the
+     *  filter survives an {@code invalidateOptionsMenu}. */
+    private void setupSearch(MenuItem searchItem) {
+        if (searchItem == null) {
+            return;
+        }
+        SearchView search = (SearchView) searchItem.getActionView();
+        if (search == null) {
+            return;
+        }
+        search.setQueryHint(getString(R.string.search));
+        search.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                return false; // filtering is live; nothing extra on submit
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                mSearchQuery = newText != null ? newText.trim() : "";
+                submitVisible();
+                render();
+                return true;
+            }
+        });
+        // Restore an active query across a menu rebuild.
+        if (!mSearchQuery.isEmpty()) {
+            searchItem.expandActionView();
+            search.setQuery(mSearchQuery, false);
+            search.clearFocus();
+        }
+    }
+
+    /** The entries to show: all of {@link #mEntries}, or those whose name matches
+     *  the live search query (case-insensitive substring). */
+    private List<VaultEntry> visibleEntries() {
+        if (mSearchQuery.isEmpty()) {
+            return new ArrayList<>(mEntries);
+        }
+        String needle = mSearchQuery.toLowerCase(Locale.getDefault());
+        List<VaultEntry> out = new ArrayList<>();
+        for (VaultEntry e : mEntries) {
+            if (e.name != null && e.name.toLowerCase(Locale.getDefault()).contains(needle)) {
+                out.add(e);
+            }
+        }
+        return out;
+    }
+
+    /** Submits the filtered view to the adapter (the single content-update path,
+     *  so search + optimistic edits + reloads all agree). */
+    private void submitVisible() {
+        mAdapter.submit(visibleEntries());
+    }
+
     @Override
     public void onItemClick(VaultEntry entry) {
         // In multi-select a tap toggles selection instead of opening the sheet.
@@ -756,10 +818,10 @@ public class CloudBackupListFragment extends Fragment
             return;
         }
         for (VaultEntry e : targets) {
-            mAdapter.removeByObjectId(e.objectId);
             mEntries.remove(e);
             mPendingRemovals.add(e.objectId); // a racing load() must not resurrect them
         }
+        submitVisible();
         render();
         snackbar(getString(R.string.cloud_backup_remove_done));
         // ONE batched delete — a single manifest mutation removes them all, so N
@@ -786,7 +848,7 @@ public class CloudBackupListFragment extends Fragment
                 }
             }
             if (changed) {
-                mAdapter.submit(mEntries);
+                submitVisible();
             }
             render();
             snackbar(getString(R.string.cloud_backup_remove_failed));
@@ -844,9 +906,10 @@ public class CloudBackupListFragment extends Fragment
     /** Removes the row immediately; the slow server delete runs in the background
      *  and only the failure path restores the row (with an error snackbar). */
     private void removeOptimistic(VaultEntry entry) {
-        int pos = mAdapter.removeByObjectId(entry.objectId);
+        int pos = mEntries.indexOf(entry);
         mEntries.remove(entry);
         mPendingRemovals.add(entry.objectId); // a racing load() must not resurrect it
+        submitVisible();
         render();
         snackbar(getString(R.string.cloud_backup_remove_done));
         mCloudBackup.deleteEntry(entry, ok -> {
@@ -857,11 +920,12 @@ public class CloudBackupListFragment extends Fragment
                 // afterward and resurrect the row (the reverse-order race).
                 return;
             }
-            // Failed — the entry is still on the server; stop guarding + put it back.
+            // Failed — the entry is still on the server; stop guarding + put it back
+            // at its original index (submitVisible re-diffs the filtered view).
             mPendingRemovals.clear(entry.objectId);
             int p = pos < 0 ? mEntries.size() : Math.min(pos, mEntries.size());
             mEntries.add(p, entry);
-            mAdapter.insertAt(p, entry);
+            submitVisible();
             render();
             snackbar(getString(R.string.cloud_backup_remove_failed));
         });

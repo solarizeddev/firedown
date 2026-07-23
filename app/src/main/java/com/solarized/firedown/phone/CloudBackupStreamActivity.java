@@ -26,9 +26,12 @@ import androidx.media3.extractor.DefaultExtractorsFactory;
 import androidx.media3.ui.PlayerView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.google.android.material.snackbar.Snackbar;
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
+import com.solarized.firedown.glide.MimeTypeThumbnail;
+import com.solarized.firedown.glide.VaultObjectModel;
 import com.solarized.firedown.sync.StorageApiClient;
 import com.solarized.firedown.sync.SyncSecrets;
 import com.solarized.firedown.sync.VaultDataSource;
@@ -70,11 +73,6 @@ public class CloudBackupStreamActivity extends AppCompatActivity {
     public static final String EXTRA_MIME = "cb_stream_mime";
     public static final String EXTRA_SIZE = "cb_stream_size";
     public static final String EXTRA_CHUNK_COUNT = "cb_stream_chunk_count";
-
-    /** Images are loaded whole (media3 can't stream a still frame). Cap the
-     *  in-memory decrypt so a mislabeled huge object can't OOM the app; any real
-     *  image is far under this. */
-    private static final long MAX_IMAGE_BYTES = 64L * 1024 * 1024;
 
     @Inject
     OkHttpClient mHttpClient;
@@ -126,13 +124,19 @@ public class CloudBackupStreamActivity extends AppCompatActivity {
             return;
         }
 
+        if (FileUriHelper.isImage(mime)) {
+            // Images decode straight through Glide's vault ModelLoader (decrypt-on-
+            // read → downsampled bitmap) — no manual whole-file load, no reader to
+            // manage here.
+            showImage(objectId, wrappedDek, size, chunkCount, mime);
+            return;
+        }
+        // Video/audio: build the decrypt-on-read reader off the main thread (it
+        // loads the recovery code + derives the identity), then stream it into
+        // ExoPlayer through VaultDataSource.
         final VaultEntry entry = new VaultEntry(objectId, wrappedDek, name, size,
                 mime, 0, chunkCount, null);
-        final boolean image = FileUriHelper.isImage(mime);
-
         mProgress.setVisibility(View.VISIBLE);
-        // Build the reader off the main thread: it loads the recovery code, derives
-        // the identity, and (for an image) reads the whole object over the network.
         mIo.execute(() -> {
             byte[] code = new SyncSecrets(this).load();
             if (code == null) {
@@ -140,15 +144,11 @@ public class CloudBackupStreamActivity extends AppCompatActivity {
                 return;
             }
             VaultObjectReader reader;
-            byte[] imageBytes = null;
             try {
                 SyncIdentity identity = SyncIdentity.fromCode(code);
                 StorageApiClient api = new StorageApiClient(mHttpClient,
                         Preferences.STORAGE_DEFAULT_BACKEND);
                 reader = new VaultObjectReader(api, identity, entry);
-                if (image) {
-                    imageBytes = reader.readAll(MAX_IMAGE_BYTES);
-                }
             } catch (Exception e) {
                 mMain.post(this::fail);
                 return;
@@ -156,7 +156,6 @@ public class CloudBackupStreamActivity extends AppCompatActivity {
                 SyncSecrets.wipe(code);
             }
             final VaultObjectReader readyReader = reader;
-            final byte[] readyImage = imageBytes;
             mMain.post(() -> {
                 if (isFinishing() || isDestroyed()) {
                     readyReader.close();
@@ -164,24 +163,25 @@ public class CloudBackupStreamActivity extends AppCompatActivity {
                 }
                 mReader = readyReader;
                 mProgress.setVisibility(View.GONE);
-                if (image) {
-                    showImage(readyImage);
-                } else {
-                    startPlayer(entry);
-                }
+                startPlayer(entry);
             });
         });
     }
 
-    private void showImage(byte[] bytes) {
+    private void showImage(String objectId, String wrappedDek, long size, int chunkCount,
+                           String mime) {
         mImageView.setVisibility(View.VISIBLE);
         mPlayerView.setVisibility(View.GONE);
-        Glide.with(this).load(bytes).into(mImageView);
-        // The whole image is in memory now — the reader (and its DEK) is done.
-        if (mReader != null) {
-            mReader.close();
-            mReader = null;
-        }
+        mProgress.setVisibility(View.GONE);
+        Glide.with(this)
+                .load(new VaultObjectModel(objectId, wrappedDek, size, chunkCount))
+                // Never persist decrypted vault bytes to Glide's disk cache — the
+                // whole point is the file stays encrypted at rest. Memory cache
+                // (session-only) still avoids a re-fetch.
+                .diskCacheStrategy(DiskCacheStrategy.NONE)
+                .error(MimeTypeThumbnail.generateDrawable(this,
+                        mime != null ? mime : "application/octet-stream"))
+                .into(mImageView);
     }
 
     @OptIn(markerClass = UnstableApi.class)

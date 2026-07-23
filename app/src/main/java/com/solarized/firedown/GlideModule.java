@@ -22,6 +22,8 @@ import com.solarized.firedown.glide.FFmpegGlideUrlDecoder;
 import com.solarized.firedown.glide.FFmpegPfdDecoder;
 import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.glide.FFmpegUriDecoder;
+import com.solarized.firedown.glide.VaultObjectModel;
+import com.solarized.firedown.glide.VaultObjectModelLoader;
 import com.solarized.firedown.glide.svg.SVGEncoder;
 import com.solarized.firedown.glide.svg.SvgDecoder;
 import com.solarized.firedown.glide.svg.SvgDrawableTranscoder;
@@ -67,6 +69,12 @@ public class GlideModule extends AppGlideModule {
         registry.replace(GlideUrl.class, InputStream.class, new OkHttpUrlLoader.Factory(client));
         registry.append(DownloadEntity.class, ParcelFileDescriptor.class, new DownloadEntityModelLoaderFactory(context));
         registry.append(DownloadEntity.class, Uri.class, new DownloadEntityUriModelLoaderFactory(context));
+        // Cloud Backup vault objects → decrypt-on-read InputStream, so a preview
+        // can be shown from the CLOUD file (Backups list / stream viewer) even
+        // after the local copy is deleted. Built-in stream decoders take it from
+        // there (images); the DEK is unwrapped on-device by the loader.
+        registry.append(VaultObjectModel.class, InputStream.class,
+                new VaultObjectModelLoader.Factory(context, client));
         registry.append(ParcelFileDescriptor.class, Bitmap.class, new PdfDecoder(glide.getBitmapPool()));
         // Native-FFmpeg video-frame FALLBACK for the PFD path (finished downloads).
         // Appended AFTER Glide's built-in MMR/still-image PFD decoders, so it runs
