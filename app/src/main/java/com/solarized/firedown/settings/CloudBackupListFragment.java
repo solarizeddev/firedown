@@ -1,9 +1,14 @@
 package com.solarized.firedown.settings;
 
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.text.format.Formatter;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -15,7 +20,6 @@ import android.view.ViewGroup;
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.graphics.Insets;
 import androidx.core.view.MenuProvider;
@@ -148,9 +152,15 @@ public class CloudBackupListFragment extends Fragment
     private boolean mSelectionMode;
     private Toolbar mToolbar;
     private OnBackPressedCallback mBackCallback;
-    /** Live name filter from the toolbar SearchView ("" = show all). The full set
+    /** Live name filter from the toolbar search field ("" = show all). The full set
      *  stays in {@link #mEntries}; the adapter is submitted a filtered view. */
     private String mSearchQuery = "";
+    /** The full-width in-toolbar search field (toolbar_search_field), added to the
+     *  BORROWED activity toolbar so it matches the Downloads bar; removed in
+     *  onDestroyView since the toolbar outlives this fragment's view. */
+    private View mSearchBar;
+    private EditText mSearchEdit;
+    private CharSequence mTitleBeforeSearch;
 
     /**
      * Drops the adapter's decoded-thumb cache under memory pressure. Registered
@@ -266,6 +276,9 @@ public class CloudBackupListFragment extends Fragment
 
         // The screen's toolbar drives the selection chrome (Downloads strategy).
         mToolbar = requireActivity().findViewById(R.id.toolbar);
+        // Add the full-width in-toolbar search field (same bar as Downloads),
+        // hidden until the search action is tapped.
+        setupSearchBar();
 
         // Toolbar menu: the grid/list toggle while browsing, the delete action
         // while multi-selecting (the two states swap on invalidateOptionsMenu,
@@ -278,18 +291,30 @@ public class CloudBackupListFragment extends Fragment
                     return;
                 }
                 inflater.inflate(R.menu.menu_cloud_backup, menu);
+                if (isSearchActive()) {
+                    // The search field owns the toolbar row — hide every icon
+                    // (openSearchBar/closeSearchBar invalidate the menu to re-run
+                    // this). Mirrors the Vault list's search behaviour.
+                    for (int i = 0; i < menu.size(); i++) {
+                        menu.getItem(i).setVisible(false);
+                    }
+                    return;
+                }
                 MenuItem toggle = menu.findItem(R.id.action_view);
                 if (toggle != null) {
                     toggle.setIcon(mEnableGrid
                             ? R.drawable.ic_view_list_24 : R.drawable.ic_grid_view_24);
                 }
-                setupSearch(menu.findItem(R.id.action_search));
             }
 
             @Override
             public boolean onMenuItemSelected(@NonNull MenuItem item) {
                 if (mSelectionMode && item.getItemId() == R.id.action_delete) {
                     confirmDeleteSelected();
+                    return true;
+                }
+                if (!mSelectionMode && item.getItemId() == R.id.action_search) {
+                    openSearchBar();
                     return true;
                 }
                 if (!mSelectionMode && item.getItemId() == R.id.action_view) {
@@ -300,11 +325,16 @@ public class CloudBackupListFragment extends Fragment
             }
         }, getViewLifecycleOwner());
 
-        // System Back exits selection first (disabled until selecting).
+        // System Back closes the search field first, then exits selection
+        // (enabled whenever either is active).
         mBackCallback = new OnBackPressedCallback(false) {
             @Override
             public void handleOnBackPressed() {
-                exitSelection();
+                if (isSearchActive()) {
+                    closeSearchBar();
+                } else {
+                    exitSelection();
+                }
             }
         };
         requireActivity().getOnBackPressedDispatcher()
@@ -343,8 +373,17 @@ public class CloudBackupListFragment extends Fragment
             activityAppbar.setLifted(false);
         }
         mAppLifecycle.removeTrimListener(mTrimListener);
-        // Restore the toolbar (title + Up behaviour) if we leave mid-selection.
+        // Restore the toolbar (title + Up behaviour) if we leave mid-search/selection,
+        // then detach the search field — the toolbar is the ACTIVITY's and outlives
+        // this fragment's view, so a left-behind bar would stack on re-entry.
+        closeSearchBar();
         exitSelection();
+        if (mToolbar != null && mSearchBar != null) {
+            mToolbar.removeView(mSearchBar);
+        }
+        mSearchBar = null;
+        mSearchEdit = null;
+        mSearchQuery = "";
         super.onDestroyView();
     }
 
@@ -645,37 +684,111 @@ public class CloudBackupListFragment extends Fragment
         requireActivity().invalidateOptionsMenu(); // swap the grid/list icon
     }
 
-    /** Wires the toolbar SearchView to the in-memory name filter. Re-applies the
-     *  live query when the menu is rebuilt (grid toggle / selection exit) so the
-     *  filter survives an {@code invalidateOptionsMenu}. */
-    private void setupSearch(MenuItem searchItem) {
-        if (searchItem == null) {
+    /** Inflates the full-width in-toolbar search field (the same bar Downloads
+     *  uses) and adds it to the BORROWED activity toolbar, hidden until the search
+     *  action is tapped. The toolbar outlives this fragment's view, so the bar is
+     *  removed in {@link #onDestroyView()}. */
+    private void setupSearchBar() {
+        if (mToolbar == null) {
             return;
         }
-        SearchView search = (SearchView) searchItem.getActionView();
-        if (search == null) {
-            return;
+        // Guard against a stale bar from a previous view instance (the toolbar is
+        // the activity's and persists across onDestroyView/onViewCreated).
+        View stale = mToolbar.findViewById(R.id.search_bar);
+        if (stale != null) {
+            mToolbar.removeView(stale);
         }
-        search.setQueryHint(getString(R.string.search));
-        search.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+        mSearchBar = LayoutInflater.from(mToolbar.getContext())
+                .inflate(R.layout.toolbar_search_field, mToolbar, false);
+        mToolbar.addView(mSearchBar);
+        mSearchEdit = mSearchBar.findViewById(R.id.search_edit);
+        View clear = mSearchBar.findViewById(R.id.search_clear);
+        mSearchEdit.addTextChangedListener(new TextWatcher() {
             @Override
-            public boolean onQueryTextSubmit(String query) {
-                return false; // filtering is live; nothing extra on submit
-            }
+            public void beforeTextChanged(CharSequence s, int a, int b, int c) {}
 
             @Override
-            public boolean onQueryTextChange(String newText) {
-                mSearchQuery = newText != null ? newText.trim() : "";
+            public void onTextChanged(CharSequence s, int a, int b, int c) {}
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                mSearchQuery = s.toString().trim();
+                if (clear != null) {
+                    clear.setVisibility(s.length() > 0 ? View.VISIBLE : View.GONE);
+                }
                 submitVisible();
                 render();
-                return true;
             }
         });
-        // Restore an active query across a menu rebuild.
-        if (!mSearchQuery.isEmpty()) {
-            searchItem.expandActionView();
-            search.setQuery(mSearchQuery, false);
-            search.clearFocus();
+        mSearchEdit.setOnEditorActionListener((v, actionId, event) -> {
+            hideKeyboard(mSearchEdit);
+            return true;
+        });
+        if (clear != null) {
+            clear.setOnClickListener(v -> mSearchEdit.setText(""));
+        }
+    }
+
+    private void openSearchBar() {
+        if (mSearchBar == null || mSearchEdit == null || isSearchActive()) {
+            return;
+        }
+        mTitleBeforeSearch = mToolbar.getTitle();
+        mToolbar.setTitle("");
+        mSearchBar.setVisibility(View.VISIBLE);
+        requireActivity().invalidateOptionsMenu(); // hide the browse icons
+        // Up closes the search field. Route Up restoration through the activity
+        // in closeSearchBar (never a fragment-bound lambda) — same reason as
+        // exitSelection's restoreToolbarUp.
+        mToolbar.setNavigationOnClickListener(v -> closeSearchBar());
+        if (mBackCallback != null) {
+            mBackCallback.setEnabled(true);
+        }
+        mSearchEdit.requestFocus();
+        mSearchEdit.post(() -> showKeyboard(mSearchEdit));
+    }
+
+    private void closeSearchBar() {
+        if (!isSearchActive()) {
+            return;
+        }
+        mSearchEdit.setText("");
+        hideKeyboard(mSearchEdit);
+        mSearchBar.setVisibility(View.GONE);
+        if (mToolbar != null) {
+            mToolbar.setTitle(mTitleBeforeSearch != null
+                    ? mTitleBeforeSearch : getString(R.string.cloud_backup_files_title));
+        }
+        FragmentActivity activity = getActivity();
+        if (activity instanceof SettingsActivity) {
+            ((SettingsActivity) activity).restoreToolbarUp();
+        }
+        // Keep Back enabled only if selection is still active.
+        if (mBackCallback != null) {
+            mBackCallback.setEnabled(mSelectionMode);
+        }
+        if (activity != null) {
+            activity.invalidateOptionsMenu();
+        }
+    }
+
+    private boolean isSearchActive() {
+        return mSearchBar != null && mSearchBar.getVisibility() == View.VISIBLE;
+    }
+
+    private void showKeyboard(View view) {
+        InputMethodManager imm = (InputMethodManager)
+                view.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+        if (imm != null) {
+            imm.showSoftInput(view, InputMethodManager.SHOW_IMPLICIT);
+        }
+    }
+
+    private void hideKeyboard(View view) {
+        InputMethodManager imm = (InputMethodManager)
+                view.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+        if (imm != null) {
+            imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
         }
     }
 
@@ -746,6 +859,8 @@ public class CloudBackupListFragment extends Fragment
     //      selection instead of leaving the screen. ----
 
     private void enterSelection() {
+        // Search and selection both take over the toolbar row — never both at once.
+        closeSearchBar();
         mSelectionMode = true;
         mAdapter.setActionMode(true);
         if (mBackCallback != null) {

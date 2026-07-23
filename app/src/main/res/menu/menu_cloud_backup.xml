@@ -7,14 +7,15 @@
 -->
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
-    <!-- Filter the backed-up files by name — a collapsible SearchView, like the
-         Downloads list's search. The fragment filters its in-memory list. -->
+    <!-- Filter the backed-up files by name. Tapping it reveals the full-width
+         in-toolbar search field (toolbar_search_field) — the same bar the
+         Downloads list uses, NOT a collapsible SearchView (which rendered as a
+         narrow non-full-width widget). The fragment filters its in-memory list. -->
     <item
         android:id="@+id/action_search"
         android:icon="@drawable/ic_search_24"
-        app:actionViewClass="androidx.appcompat.widget.SearchView"
         app:iconTint="?attr/colorOnSurface"
-        app:showAsAction="ifRoom|collapseActionView"
+        app:showAsAction="ifRoom"
         android:title="@string/search"/>
     <item
         android:id="@+id/action_view"
