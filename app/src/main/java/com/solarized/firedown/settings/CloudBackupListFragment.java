@@ -40,6 +40,7 @@ import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
 import com.solarized.firedown.ApplicationLifeCycleHandler;
+import com.solarized.firedown.phone.CloudBackupStreamActivity;
 import com.solarized.firedown.phone.SettingsActivity;
 import com.solarized.firedown.R;
 import com.solarized.firedown.sync.CloudBackupManager;
@@ -820,6 +821,8 @@ public class CloudBackupListFragment extends Fragment
             }
             if (action == CloudBackupItemSheetDialogFragment.ACTION_RESTORE) {
                 restore(target);
+            } else if (action == CloudBackupItemSheetDialogFragment.ACTION_OPEN) {
+                openStream(target);
             } else {
                 removeOptimistic(target);
             }
@@ -891,6 +894,19 @@ public class CloudBackupListFragment extends Fragment
                 startRestore(entry);
             }
         });
+    }
+
+    /**
+     * Streams a cloud-only media file (no local copy) in-app: launches
+     * {@link CloudBackupStreamActivity}, which decrypts the object's chunks on
+     * demand into a player/viewer — no restore-to-disk needed. Only reached for a
+     * streamable type (the item sheet only offers Open for video/audio/image
+     * without a local copy; a local copy opens directly from the sheet).
+     */
+    private void openStream(VaultEntry entry) {
+        startActivity(CloudBackupStreamActivity.newIntent(requireContext(),
+                entry.objectId, entry.wrappedDek, entry.name, entry.mime,
+                entry.size, entry.chunkCount));
     }
 
     private void startRestore(VaultEntry entry) {

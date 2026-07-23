@@ -176,6 +176,13 @@
         </activity>
 
         <activity
+            android:name="com.solarized.firedown.phone.CloudBackupStreamActivity"
+            android:configChanges="keyboardHidden|orientation|screenLayout|screenSize|smallestScreenSize"
+            android:exported="false"
+            android:theme="@style/Theme.FireDown.Play">
+        </activity>
+
+        <activity
             android:name="com.solarized.firedown.phone.LockActivity"
             android:configChanges="keyboardHidden|orientation|screenLayout|screenSize"
             android:exported="true"

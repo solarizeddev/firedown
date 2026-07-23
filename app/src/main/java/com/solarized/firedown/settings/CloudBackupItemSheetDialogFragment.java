@@ -62,6 +62,9 @@ public class CloudBackupItemSheetDialogFragment extends BaseBottomSheetDialogFra
     public static final String RESULT_OBJECT_ID = "object_id";
     public static final int ACTION_RESTORE = 0;
     public static final int ACTION_REMOVE = 1;
+    /** Stream/open the cloud file in-app (no local copy, media type the app can
+     *  play/show — see {@code CloudBackupStreamActivity}). */
+    public static final int ACTION_OPEN = 2;
 
     @Inject
     DownloadDataRepository mDownloads;
@@ -88,20 +91,34 @@ public class CloudBackupItemSheetDialogFragment extends BaseBottomSheetDialogFra
 
         mView.findViewById(R.id.cb_sheet_restore).setOnClickListener(v -> dispatch(ACTION_RESTORE));
         mView.findViewById(R.id.cb_sheet_remove).setOnClickListener(v -> dispatch(ACTION_REMOVE));
+        // Streamable media (video/audio/image) can be OPENED without a local copy
+        // — the stream activity decrypts chunks on demand. Show the row now bound
+        // to ACTION_OPEN; the local-copy probe below rebinds it to a direct open
+        // when a local file exists (local wins, for any type).
+        if (isStreamable(mime)) {
+            View open = mView.findViewById(R.id.cb_sheet_open);
+            open.setVisibility(View.VISIBLE);
+            open.setOnClickListener(v -> dispatch(ACTION_OPEN));
+        }
         revealOpenIfLocal(name, size, mime);
         return mView;
     }
 
+    /** Media types this app can play/show in-app (so a cloud-only entry can be
+     *  streamed). Everything else must be restored to disk to open. */
+    private static boolean isStreamable(String mime) {
+        return FileUriHelper.isVideo(mime) || FileUriHelper.isAudio(mime)
+                || FileUriHelper.isImage(mime);
+    }
+
     /**
-     * Reveals the "Open" row once a background probe finds a LOCAL copy of this
-     * file — name+size against the download table, the same content key the
-     * backup engine dedups by. Opening a cloud-ONLY entry is structurally the
-     * restore flow (the server holds E2E-encrypted chunks; there is no playable
-     * URL to hand a viewer without downloading + decrypting, which IS restore),
-     * so when no local copy exists the row stays hidden and "Restore to
-     * Downloads" remains the door. The probe is a single indexed DB lookup on
-     * the DiskIO lane; the row appearing a beat after the sheet is fine (it
-     * appears BELOW the header, so nothing the user is reading moves).
+     * Rebinds the "Open" row to a DIRECT local open once a background probe finds
+     * a LOCAL copy of this file — name+size against the download table, the same
+     * content key the backup engine dedups by. A local copy wins over streaming
+     * for any type (incl. non-media, whose row is otherwise hidden — restore is
+     * their only door). The probe is a single indexed DB lookup on the DiskIO
+     * lane; the row appearing/updating a beat after the sheet is fine (it sits
+     * BELOW the header, so nothing the user is reading moves).
      */
     private void revealOpenIfLocal(String name, long size, String mime) {
         if (name == null || size <= 0) {

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Minimal streaming viewer for a backed-up cloud file (CloudBackupStreamActivity).
+  A black-backed frame with a PlayerView (video/audio, fed by a decrypt-on-read
+  VaultDataSource), an ImageView (still images decrypted whole into memory), and a
+  centered spinner shown while the encrypted chunks / key load. Exactly one of the
+  player / image is made visible once the reader is ready.
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/black">
+
+    <androidx.media3.ui.PlayerView
+        android:id="@+id/cb_stream_player"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone"
+        app:resize_mode="fit"
+        app:surface_type="texture_view" />
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/cb_stream_image"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center"
+        android:contentDescription="@null"
+        android:scaleType="fitCenter"
+        android:visibility="gone" />
+
+    <ProgressBar
+        android:id="@+id/cb_stream_progress"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:visibility="gone" />
+
+</FrameLayout>

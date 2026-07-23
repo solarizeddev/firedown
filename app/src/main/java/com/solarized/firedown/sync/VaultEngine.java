@@ -32,8 +32,10 @@ import java.util.List;
  */
 public final class VaultEngine {
 
-    /** 8 MiB plaintext per chunk → resumable, independently encrypted. */
-    private static final int CHUNK_SIZE = 8 * 1024 * 1024;
+    /** 8 MiB plaintext per chunk → resumable, independently encrypted. Public so
+     *  the streaming reader ({@code VaultObjectReader}) can map a plaintext file
+     *  offset to its chunk index without re-deriving this constant. */
+    public static final int CHUNK_SIZE = 8 * 1024 * 1024;
     /** Per-chunk ciphertext overhead: 5 magic + 1 ver + 12 IV + 16 GCM tag. */
     private static final int CHUNK_OVERHEAD = 34;
     // Headroom for OCC contention: manifest writers now run concurrently (a
