@@ -1066,12 +1066,12 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         final @Nullable TextView statusText;
         final @Nullable TextView mimeDuration;
         final @Nullable View bottomBlock;
-        /** Quiet "backed up to cloud" glyph inline in the meta line — the
-         *  coral cloud trailing the domain (list) / mime·duration (grid). Shown
-         *  only for a FINISHED backed-up file. NULL on the dense mosaic tile,
-         *  which is deliberately chrome-free (findViewById returns null there
-         *  and bindFull null-skips it). Moved off the thumbnail — a disc badge
-         *  on every tile read as a heavy blob over the artwork. */
+        /** Quiet "backed up to cloud" marker, shown only for a FINISHED backed-up
+         *  file. Placement differs per layout (the adapter only toggles visibility):
+         *  LIST — a muted grey cloud LEADING the meta line (cloud · VIDEO · domain),
+         *  anchored to text so it never floats; GRID + dense mosaic — a bare white
+         *  cloud in the top-START corner (the grid meta line has no spare width, and
+         *  the ⋮/selection-check own top-end). Not the old disc — no filled circle. */
         final @Nullable AppCompatImageView cloudBadge;
 
         // Cache for the FINISHED row's "<size> - <date>" label. Built

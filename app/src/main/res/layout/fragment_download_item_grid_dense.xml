@@ -83,6 +83,22 @@
 
             </LinearLayout>
 
+            <!-- Cloud-backed marker: the same bare white top-START corner glyph as
+                 the normal grid tile (selection check owns top-end). No background,
+                 the lightest possible mark on the otherwise-chrome-free mosaic;
+                 shown only for a FINISHED backed-up image. -->
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/cloud_badge"
+                android:layout_width="17dp"
+                android:layout_height="17dp"
+                android:layout_margin="5dp"
+                android:contentDescription="@string/cloud_backed_up_desc"
+                android:visibility="gone"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:srcCompat="@drawable/cloud_done_24"
+                app:tint="@android:color/white" />
+
             <!-- Selection indicator (action mode) -->
             <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/item_download_selected"

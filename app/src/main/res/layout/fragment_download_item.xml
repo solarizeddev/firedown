@@ -151,6 +151,24 @@
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
+                <!-- Cloud-backed marker: a small muted cloud LEADING the meta line
+                     (cloud · VIDEO · youtube.com), shown only for a FINISHED entry
+                     whose name+size is in the cloud manifest. Anchored to the start
+                     of the line so it can never float into the dead space by the ⋮
+                     (the earlier trailing-coral placement did exactly that). Muted
+                     onSurfaceVariant, not coral, so it reads as quiet status below
+                     the coral mime label rather than a second accent. GONE collapses
+                     its width, so a non-backed row shows no leading gap. -->
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:id="@+id/cloud_badge"
+                    android:layout_width="13dp"
+                    android:layout_height="13dp"
+                    android:layout_marginEnd="5dp"
+                    android:contentDescription="@string/cloud_backed_up_desc"
+                    android:visibility="gone"
+                    app:srcCompat="@drawable/cloud_done_24"
+                    app:tint="?attr/colorOnSurfaceVariant" />
+
                 <TextView
                     android:id="@+id/mime_text"
                     style="@style/MimePrimaryLabel"
@@ -168,23 +186,6 @@
                     android:textSize="11sp"
                     android:textColor="?attr/colorOnSurfaceVariant"
                     tools:text="youtube.com" />
-
-                <!-- Cloud-backed marker: a small coral cloud glyph at the end
-                     of the meta line, shown only for a FINISHED entry whose
-                     name+size is in the cloud manifest. Inline (no disc
-                     background) so it reads as a quiet status hint, not a
-                     heavy overlay blob on the thumbnail — the earlier frosted
-                     disc badge was too loud. Coral tint matches the mime
-                     label so it belongs to the row's accent, not the art. -->
-                <androidx.appcompat.widget.AppCompatImageView
-                    android:id="@+id/cloud_badge"
-                    android:layout_width="14dp"
-                    android:layout_height="14dp"
-                    android:layout_marginStart="6dp"
-                    android:contentDescription="@string/cloud_backed_up_desc"
-                    android:visibility="gone"
-                    app:srcCompat="@drawable/cloud_done_24"
-                    app:tint="?attr/colorPrimary" />
 
             </LinearLayout>
 
