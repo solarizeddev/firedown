@@ -730,40 +730,14 @@
     <string name="settings_donate">Přispět</string>
     <string name="settings_security_screen_summary">Vyšší zabezpečení za cenu kompatibility některých webů</string>
     <string name="settings_direct_share_summary">Síťová nastavení pro odesílání souborů mezi zařízeními</string>
-    <!-- Tracking-protection detail sheet (GeckoView 153 ETP database).
-         Category plurals sourced from Firefox translations; wrappers localised. -->
     <string name="tracking_status_blocked">Zablokováno %1$s sledovacích prvků</string>
     <string name="tracking_status_since">Zaznamenávání od %1$s</string>
-    <string name="tracking_detail_week_label">Sledovací prvky zablokované tento týden</string>
-    <string name="tracking_detail_since">Zablokováno %1$s sledovacích prvků od %2$s</string>
-    <plurals name="tracking_detail_cookies">
-        <item quantity="one">%1$d sledovací cookie třetí strany</item>
-        <item quantity="few">%1$d sledovací cookies třetích stran</item>
-        <item quantity="many">%1$d sledovacích cookies třetích stran</item>
-        <item quantity="other">%1$d sledovacích cookies třetích stran</item>
-    </plurals>
-    <plurals name="tracking_detail_social">
-        <item quantity="one">%1$d sledovací prvek sociálních sítí</item>
-        <item quantity="few">%1$d sledovací prvky sociálních sítí</item>
-        <item quantity="many">%1$d sledovacích prvků sociálních sítí</item>
-        <item quantity="other">%1$d sledovacích prvků sociálních sítí</item>
-    </plurals>
-    <plurals name="tracking_detail_fingerprinters">
-        <item quantity="one">%1$d vytváření otisku prohlížeče</item>
-        <item quantity="few">%1$d vytváření otisku prohlížeče</item>
-        <item quantity="many">%1$d vytváření otisku prohlížeče</item>
-        <item quantity="other">%1$d vytváření otisku prohlížeče</item>
-    </plurals>
-    <plurals name="tracking_detail_cryptominers">
-        <item quantity="one">%1$d těžba kryptoměn</item>
-        <item quantity="few">%1$d těžby kryptoměn</item>
-        <item quantity="many">%1$d těžeb kryptoměn</item>
-        <item quantity="other">%1$d těžeb kryptoměn</item>
-    </plurals>
-    <plurals name="tracking_detail_content">
-        <item quantity="one">%1$d sledující obsah</item>
-        <item quantity="few">%1$d sledující obsahy</item>
-        <item quantity="many">%1$d sledujících obsahů</item>
-        <item quantity="other">%1$d sledujících obsahů</item>
-    </plurals>
+    <!-- Tracking-protection detail sheet category names (GeckoView 153 ETP
+         database); names from Firefox ETP category titles. -->
+    <string name="tracking_detail_total_label">Zablokované sledovací prvky</string>
+    <string name="tracking_cat_cookies">Sledovací cookies</string>
+    <string name="tracking_cat_social">Sledující prvky sociálních sítí</string>
+    <string name="tracking_cat_fingerprinters">Známé vytváření otisku prohlížeče</string>
+    <string name="tracking_cat_cryptominers">Těžba kryptoměn</string>
+    <string name="tracking_cat_content">Sledující obsah</string>
 </resources>

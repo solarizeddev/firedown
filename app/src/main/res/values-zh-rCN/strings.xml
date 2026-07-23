@@ -866,25 +866,14 @@
     <string name="settings_donate">捐赠</string>
     <string name="settings_security_screen_summary">以部分网站兼容性为代价强化浏览器</string>
     <string name="settings_direct_share_summary">设备间发送文件的网络设置</string>
-    <!-- Tracking-protection detail sheet (GeckoView 153 ETP database).
-         Category plurals sourced from Firefox translations; wrappers localised. -->
     <string name="tracking_status_blocked">已拦截 %1$s 个跟踪器</string>
     <string name="tracking_status_since">自 %1$s 起记录</string>
-    <string name="tracking_detail_week_label">本周拦截的跟踪器</string>
-    <string name="tracking_detail_since">自 %2$s 起已拦截 %1$s 个跟踪器</string>
-    <plurals name="tracking_detail_cookies">
-        <item quantity="other">%1$d 个跨站跟踪性 Cookie</item>
-    </plurals>
-    <plurals name="tracking_detail_social">
-        <item quantity="other">%1$d 个社交媒体跟踪器</item>
-    </plurals>
-    <plurals name="tracking_detail_fingerprinters">
-        <item quantity="other">%1$d 个数字指纹跟踪程序</item>
-    </plurals>
-    <plurals name="tracking_detail_cryptominers">
-        <item quantity="other">%1$d 个加密货币挖矿程序</item>
-    </plurals>
-    <plurals name="tracking_detail_content">
-        <item quantity="other">%1$d 个跟踪内容</item>
-    </plurals>
+    <!-- Tracking-protection detail sheet category names (GeckoView 153 ETP
+         database); names from Firefox ETP category titles. -->
+    <string name="tracking_detail_total_label">已拦截的跟踪器</string>
+    <string name="tracking_cat_cookies">跨站跟踪性 Cookie</string>
+    <string name="tracking_cat_social">社交媒体跟踪器</string>
+    <string name="tracking_cat_fingerprinters">已知的数字指纹跟踪程序</string>
+    <string name="tracking_cat_cryptominers">加密货币挖矿程序</string>
+    <string name="tracking_cat_content">跟踪性内容</string>
 </resources>

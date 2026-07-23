@@ -694,35 +694,14 @@
     <string name="settings_donate">Пожертвувати</string>
     <string name="settings_security_screen_summary">Посилений захист ціною сумісності з деякими сайтами</string>
     <string name="settings_direct_share_summary">Мережеві налаштування для надсилання файлів між пристроями</string>
-    <!-- Tracking-protection detail sheet (GeckoView 153 ETP database).
-         Category plurals sourced from Firefox translations; wrappers localised. -->
     <string name="tracking_status_blocked">%1$s вистежувачів заблоковано</string>
     <string name="tracking_status_since">Запис від %1$s</string>
-    <string name="tracking_detail_week_label">Вистежувачів заблоковано цього тижня</string>
-    <string name="tracking_detail_since">%1$s вистежувачів заблоковано від %2$s</string>
-    <plurals name="tracking_detail_cookies">
-        <item quantity="one">%1$d файл cookie для стеження між сайтами</item>
-        <item quantity="few">%1$d файли cookie для стеження між сайтами</item>
-        <item quantity="other">%1$d файлів cookie для стеження між сайтами</item>
-    </plurals>
-    <plurals name="tracking_detail_social">
-        <item quantity="one">%1$d елемент стеження соціальних мереж</item>
-        <item quantity="few">%1$d елементи стеження соціальних мереж</item>
-        <item quantity="other">%1$d елементів стеження соціальних мереж</item>
-    </plurals>
-    <plurals name="tracking_detail_fingerprinters">
-        <item quantity="one">%1$d зчитувач цифрового відбитка</item>
-        <item quantity="few">%1$d зчитувачі цифрового відбитка</item>
-        <item quantity="other">%1$d зчитувачів цифрового відбитка</item>
-    </plurals>
-    <plurals name="tracking_detail_cryptominers">
-        <item quantity="one">%1$d криптомайнер</item>
-        <item quantity="few">%1$d криптомайнери</item>
-        <item quantity="other">%1$d криптомайнерів</item>
-    </plurals>
-    <plurals name="tracking_detail_content">
-        <item quantity="one">%1$d об’єкт зі стеженням</item>
-        <item quantity="few">%1$d об’єкти зі стеженням</item>
-        <item quantity="other">%1$d об’єктів зі стеженням</item>
-    </plurals>
+    <!-- Tracking-protection detail sheet category names (GeckoView 153 ETP
+         database); names from Firefox ETP category titles. -->
+    <string name="tracking_detail_total_label">Заблоковані вистежувачі</string>
+    <string name="tracking_cat_cookies">Файли cookie для стеження між сайтами</string>
+    <string name="tracking_cat_social">Стеження соціальних мереж</string>
+    <string name="tracking_cat_fingerprinters">Відомі засоби зчитування цифрового відбитка</string>
+    <string name="tracking_cat_cryptominers">Криптомайнери</string>
+    <string name="tracking_cat_content">Вміст стеження</string>
 </resources>

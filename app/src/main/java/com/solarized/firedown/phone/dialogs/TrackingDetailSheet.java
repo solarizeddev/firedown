@@ -4,15 +4,12 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.FragmentManager;
 
-import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.solarized.firedown.R;
 
 import org.mozilla.geckoview.ContentBlockingController.TrackingDbEvent;
@@ -28,45 +25,32 @@ import java.util.Locale;
 import dagger.hilt.android.AndroidEntryPoint;
 
 /**
- * Tracking-protection detail sheet — Firedown's take on Firefox's
- * "Trackers blocked this week" protection panel, in our tonal style.
- * Opened by tapping the status row on the Enhanced Tracking Protection
- * settings screen. Everything is sourced from Gecko's persisted ETP
- * database (ContentBlockingController): a this-week hero total, a
- * per-category breakdown (icon + count + a proportion bar, one row per
- * category, zeroes included), and an all-time "N blocked since &lt;date&gt;"
- * footer.
+ * Tracking-protection detail sheet, styled to match the Home trackers sheet:
+ * a single total counter, a "Blocked by type" header, and clean label -> count
+ * rows (no hero glyph, no progress bars). Opened by tapping the status row on
+ * the Enhanced Tracking Protection settings screen; all data is Gecko's
+ * persisted ETP database (ContentBlockingController).
  *
- * <p>ONE range query (0..now) yields everything — each {@link TrackingDbEvent}
- * carries a "YYYY-MM-DD" date and a count, so the this-week window is a
- * lexicographic date compare, the categories are folded from the DB's
- * finer-grained types (mirroring Firefox's TrackerBuckets), and the
- * all-time total + earliest date come from the same pass. The
- * {@code GeckoResult} callback is attached from the main thread, so it
- * dispatches there and may touch views; guarded on {@link #getView()}.
- * Counts use plurals, matching Firefox.</p>
+ * <p>ONE range query (0..now) yields the all-time total, the per-category
+ * breakdown (the DB's finer types folded into the five displayed categories,
+ * mirroring Firefox's TrackerBuckets), and the earliest recorded date for the
+ * "Recording since" line. The {@code GeckoResult} callback is attached from the
+ * main thread, so it dispatches there and may touch views; guarded on
+ * {@link #getView()}.</p>
  */
 @AndroidEntryPoint
 public class TrackingDetailSheet extends BaseBottomSheetDialogFragment {
 
     private static final String TAG = "TrackingDetailSheet";
-    private static final long DAY_MS = 24L * 60L * 60L * 1000L;
 
-    /** Category rows, in display order (matches Firefox's panel):
+    /** Count views, in the layout's row order:
      *  cookies, social, fingerprinters, cryptominers, tracking content. */
-    private static final int[] CAT_ICON = {
-            R.drawable.cookie_24,
-            R.drawable.ic_share_24,
-            R.drawable.fingerprint_24,
-            R.drawable.ic_memory_24,
-            R.drawable.ic_baseline_image_24
-    };
-    private static final int[] CAT_PLURAL = {
-            R.plurals.tracking_detail_cookies,
-            R.plurals.tracking_detail_social,
-            R.plurals.tracking_detail_fingerprinters,
-            R.plurals.tracking_detail_cryptominers,
-            R.plurals.tracking_detail_content
+    private static final int[] CAT_COUNT_VIEW = {
+            R.id.td_cnt_cookies,
+            R.id.td_cnt_social,
+            R.id.td_cnt_fp,
+            R.id.td_cnt_crypto,
+            R.id.td_cnt_content
     };
 
     public static void show(@NonNull FragmentManager fm) {
@@ -99,76 +83,51 @@ public class TrackingDetailSheet extends BaseBottomSheetDialogFragment {
 
         long now = System.currentTimeMillis();
         SimpleDateFormat dayFmt = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
-        String weekKey = dayFmt.format(new Date(now - 7L * DAY_MS));
 
         runtime.getContentBlockingController().getTrackingDbEventsByDateRange(0L, now).accept(events -> {
             if (getView() == null || events == null) return;
 
-            long[] week = new long[CAT_ICON.length];
-            long allTime = 0L;
+            long[] cat = new long[CAT_COUNT_VIEW.length];
+            long total = 0L;
             String minDate = null;
             for (TrackingDbEvent e : events) {
-                allTime += e.count;
-                if (e.date != null) {
-                    if (minDate == null || e.date.compareTo(minDate) < 0) minDate = e.date;
-                    if (e.date.compareTo(weekKey) >= 0) {
-                        int cat = categoryOf(e.type);
-                        if (cat >= 0) week[cat] += e.count;
-                    }
+                total += e.count;
+                int c = categoryOf(e.type);
+                if (c >= 0) cat[c] += e.count;
+                if (e.date != null && (minDate == null || e.date.compareTo(minDate) < 0)) {
+                    minDate = e.date;
                 }
             }
 
-            long weekTotal = 0L, maxCat = 0L;
-            for (long w : week) {
-                weekTotal += w;
-                if (w > maxCat) maxCat = w;
+            NumberFormat nf = NumberFormat.getInstance(Locale.getDefault());
+            ((TextView) root.findViewById(R.id.td_total)).setText(nf.format(total));
+            for (int i = 0; i < CAT_COUNT_VIEW.length; i++) {
+                ((TextView) root.findViewById(CAT_COUNT_VIEW[i])).setText(nf.format(cat[i]));
             }
 
-            ((TextView) root.findViewById(R.id.td_count))
-                    .setText(NumberFormat.getInstance(Locale.getDefault()).format(weekTotal));
-
-            LinearLayout list = root.findViewById(R.id.td_list);
-            list.removeAllViews();
-            LayoutInflater inflater = LayoutInflater.from(root.getContext());
-            for (int i = 0; i < CAT_ICON.length; i++) {
-                View rowView = inflater.inflate(R.layout.item_tracking_detail_category, list, false);
-                ((ImageView) rowView.findViewById(R.id.tdc_icon)).setImageResource(CAT_ICON[i]);
-                ((TextView) rowView.findViewById(R.id.tdc_label)).setText(
-                        getResources().getQuantityString(CAT_PLURAL[i], (int) week[i], (int) week[i]));
-                LinearProgressIndicator bar = rowView.findViewById(R.id.tdc_bar);
-                if (week[i] > 0L && maxCat > 0L) {
-                    bar.setProgress((int) Math.round(week[i] * 100.0 / maxCat));
-                    bar.setVisibility(View.VISIBLE);
-                } else {
-                    bar.setVisibility(View.GONE);
-                }
-                list.addView(rowView);
-            }
-
+            TextView since = root.findViewById(R.id.td_since);
             long sinceMs = 0L;
             if (minDate != null) {
                 try {
                     Date d = dayFmt.parse(minDate);
                     if (d != null) sinceMs = d.getTime();
                 } catch (ParseException ignored) {
-                    // Leave sinceMs 0 — the footer falls back to a plain count.
+                    // Leave sinceMs 0 — the 'since' line is hidden.
                 }
             }
-
-            TextView since = root.findViewById(R.id.td_since);
-            String allTimeStr = NumberFormat.getInstance(Locale.getDefault()).format(allTime);
             if (sinceMs > 0L) {
                 String date = DateFormat.getDateInstance(DateFormat.MEDIUM, Locale.getDefault())
                         .format(new Date(sinceMs));
-                since.setText(getString(R.string.tracking_detail_since, allTimeStr, date));
+                since.setText(getString(R.string.tracking_status_since, date));
+                since.setVisibility(View.VISIBLE);
             } else {
-                since.setText(getString(R.string.tracking_status_blocked, allTimeStr));
+                since.setVisibility(View.GONE);
             }
         });
     }
 
-    /** Fold the DB's finer-grained tracker types into the five displayed
-     *  categories (Firefox's TrackerBuckets grouping). -1 = not shown. */
+    /** Fold the DB's finer tracker types into the five displayed categories
+     *  (Firefox's TrackerBuckets grouping). -1 = not shown. */
     private static int categoryOf(int type) {
         switch (type) {
             case TrackingDbEvent.OTHER_COOKIES_BLOCKED_ID:

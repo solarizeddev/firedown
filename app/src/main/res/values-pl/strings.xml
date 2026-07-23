@@ -776,35 +776,14 @@
     <string name="settings_donate">Przekaż darowiznę</string>
     <string name="settings_security_screen_summary">Wzmacnia zabezpieczenia kosztem zgodności niektórych stron</string>
     <string name="settings_direct_share_summary">Ustawienia sieci do wysyłania plików między urządzeniami</string>
-    <!-- Tracking-protection detail sheet (GeckoView 153 ETP database).
-         Category plurals sourced from Firefox translations; wrappers localised. -->
     <string name="tracking_status_blocked">Zablokowano %1$s elementów śledzących</string>
     <string name="tracking_status_since">Rejestrowanie od %1$s</string>
-    <string name="tracking_detail_week_label">Elementy śledzące zablokowane w tym tygodniu</string>
-    <string name="tracking_detail_since">Zablokowano %1$s elementów śledzących od %2$s</string>
-    <plurals name="tracking_detail_cookies">
-        <item quantity="one">%1$d ciasteczko śledzące między witrynami</item>
-        <item quantity="few">%1$d ciasteczka śledzące między witrynami</item>
-        <item quantity="other">%1$d ciasteczek śledzących między witrynami</item>
-    </plurals>
-    <plurals name="tracking_detail_social">
-        <item quantity="one">%1$d element śledzący serwisu społecznościowego</item>
-        <item quantity="few">%1$d elementy śledzące serwisów społecznościowych</item>
-        <item quantity="other">%1$d elementów śledzących serwisów społecznościowych</item>
-    </plurals>
-    <plurals name="tracking_detail_fingerprinters">
-        <item quantity="one">%1$d element śledzący przez zbieranie informacji o konfiguracji</item>
-        <item quantity="few">%1$d elementy śledzące przez zbieranie informacji o konfiguracji</item>
-        <item quantity="other">%1$d elementów śledzących przez zbieranie informacji o konfiguracji</item>
-    </plurals>
-    <plurals name="tracking_detail_cryptominers">
-        <item quantity="one">%1$d element używający urządzenia użytkownika do generowania kryptowalut</item>
-        <item quantity="few">%1$d elementy używające urządzenia użytkownika do generowania kryptowalut</item>
-        <item quantity="other">%1$d elementów używających urządzenia użytkownika do generowania kryptowalut</item>
-    </plurals>
-    <plurals name="tracking_detail_content">
-        <item quantity="one">%1$d treść z elementami śledzącymi</item>
-        <item quantity="few">%1$d treści z elementami śledzącymi</item>
-        <item quantity="other">%1$d treści z elementami śledzącymi</item>
-    </plurals>
+    <!-- Tracking-protection detail sheet category names (GeckoView 153 ETP
+         database); names from Firefox ETP category titles. -->
+    <string name="tracking_detail_total_label">Zablokowane elementy śledzące</string>
+    <string name="tracking_cat_cookies">Ciasteczka śledzące między witrynami</string>
+    <string name="tracking_cat_social">Elementy śledzące serwisów społecznościowych</string>
+    <string name="tracking_cat_fingerprinters">Znane elementy śledzące przez zbieranie informacji o\u00a0konfiguracji</string>
+    <string name="tracking_cat_cryptominers">Elementy używające urządzenia użytkownika do generowania kryptowalut</string>
+    <string name="tracking_cat_content">Treści z\u00a0elementami śledzącymi</string>
 </resources>

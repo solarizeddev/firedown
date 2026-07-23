@@ -779,35 +779,14 @@
     <string name="settings_donate">Пожертвовать</string>
     <string name="settings_security_screen_summary">Усиленная защита ценой совместимости с некоторыми сайтами</string>
     <string name="settings_direct_share_summary">Сетевые настройки для отправки файлов между устройствами</string>
-    <!-- Tracking-protection detail sheet (GeckoView 153 ETP database).
-         Category plurals sourced from Firefox translations; wrappers localised. -->
     <string name="tracking_status_blocked">%1$s трекеров заблокировано</string>
     <string name="tracking_status_since">Запись с %1$s</string>
-    <string name="tracking_detail_week_label">Трекеров заблокировано за эту неделю</string>
-    <string name="tracking_detail_since">%1$s трекеров заблокировано с %2$s</string>
-    <plurals name="tracking_detail_cookies">
-        <item quantity="one">%1$d межсайтовая отслеживающая кука</item>
-        <item quantity="few">%1$d межсайтовые отслеживающие куки</item>
-        <item quantity="other">%1$d межсайтовых отслеживающих куков</item>
-    </plurals>
-    <plurals name="tracking_detail_social">
-        <item quantity="one">%1$d трекер социальных сетей</item>
-        <item quantity="few">%1$d трекера социальных сетей</item>
-        <item quantity="other">%1$d трекеров социальных сетей</item>
-    </plurals>
-    <plurals name="tracking_detail_fingerprinters">
-        <item quantity="one">%1$d сборщик цифровых отпечатков</item>
-        <item quantity="few">%1$d сборщика цифровых отпечатков</item>
-        <item quantity="other">%1$d сборщиков цифровых отпечатков</item>
-    </plurals>
-    <plurals name="tracking_detail_cryptominers">
-        <item quantity="one">%1$d криптомайнер</item>
-        <item quantity="few">%1$d криптомайнера</item>
-        <item quantity="other">%1$d криптомайнеров</item>
-    </plurals>
-    <plurals name="tracking_detail_content">
-        <item quantity="one">%1$d отслеживающее содержимое</item>
-        <item quantity="few">%1$d отслеживающих содержимых</item>
-        <item quantity="other">%1$d отслеживающих содержимых</item>
-    </plurals>
+    <!-- Tracking-protection detail sheet category names (GeckoView 153 ETP
+         database); names from Firefox ETP category titles. -->
+    <string name="tracking_detail_total_label">Заблокировано трекеров</string>
+    <string name="tracking_cat_cookies">Межсайтовые отслеживающие куки</string>
+    <string name="tracking_cat_social">Трекеры соцсетей</string>
+    <string name="tracking_cat_fingerprinters">Известные сборщики цифровых отпечатков</string>
+    <string name="tracking_cat_cryptominers">Криптомайнеры</string>
+    <string name="tracking_cat_content">Отслеживающее содержимое</string>
 </resources>

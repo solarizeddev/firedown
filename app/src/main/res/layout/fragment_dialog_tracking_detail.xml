@@ -1,16 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Tracking-protection detail sheet — Firedown's take on Firefox's
-  "Trackers blocked this week" protection panel. Opened by tapping the
-  status row on the Enhanced Tracking Protection settings screen. All
-  data is Gecko's persisted ETP database (ContentBlockingController):
-  a this-week hero total, a per-category breakdown (icon + count + a
-  proportion bar), and an all-time "since <date>" footer.
+  Tracking-protection detail sheet. Opened by tapping the status row on the
+  Enhanced Tracking Protection settings screen. Data is Gecko's persisted
+  ETP database (ContentBlockingController).
 
-  Our tonal style, not Firefox's gradient: the footprint accent (the
-  app's ETP glyph) + colorPrimary, surfaceContainer category cards. Not
-  a scroll surface — laid out at intrinsic height under the drag handle
-  (the TrackersInfoSheet convention).
+  Styled to match the Home trackers sheet (fragment_dialog_trackers_info):
+  a single total counter, an uppercase "Blocked by type" header, and clean
+  label -> count rows (the TrackersInfoBreakdown* styles). Deliberately NO
+  hero glyph and NO per-row progress bars — those read as a different, busier
+  design. The category breakdown is of the all-time total; "Recording since"
+  keeps the figure honest.
+
+  Not a scroll surface — intrinsic height under the drag handle.
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
@@ -24,52 +25,104 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:paddingHorizontal="24dp">
-
-        <ImageView
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginTop="8dp"
-            android:contentDescription="@null"
-            android:src="@drawable/footprint_24"
-            android:tint="?attr/colorPrimary" />
+        android:paddingHorizontal="24dp"
+        android:paddingBottom="20dp">
 
         <TextView
-            android:id="@+id/td_count"
+            android:id="@+id/td_total"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="6dp"
             android:fontFeatureSettings="tnum"
             android:gravity="center"
             android:textAppearance="?attr/textAppearanceDisplaySmall"
             android:textColor="?attr/colorPrimary"
-            tools:text="73" />
+            tools:text="128" />
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:layout_marginBottom="18dp"
+            android:layout_marginTop="4dp"
             android:gravity="center"
-            android:text="@string/tracking_detail_week_label"
+            android:text="@string/tracking_detail_total_label"
             android:textAppearance="?attr/textAppearanceBodyLarge"
             android:textColor="?attr/colorOnSurfaceVariant" />
-
-        <LinearLayout
-            android:id="@+id/td_list"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical" />
 
         <TextView
             android:id="@+id/td_since"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:layout_marginBottom="16dp"
-            android:textAppearance="?attr/textAppearanceBodyMedium"
+            android:layout_marginTop="2dp"
+            android:gravity="center"
+            android:textAppearance="?attr/textAppearanceBodySmall"
             android:textColor="?attr/colorOnSurfaceVariant"
-            tools:text="136 trackers blocked since 29 June 2026" />
+            tools:text="Recording since Jul 22, 2026" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:layout_marginBottom="4dp"
+            android:letterSpacing="0.08"
+            android:text="@string/trackers_info_section_breakdown"
+            android:textAllCaps="true"
+            android:textAppearance="?attr/textAppearanceTitleSmallEmphasized"
+            android:textColor="?attr/colorOnSurfaceVariant" />
+
+        <LinearLayout style="@style/TrackersInfoBreakdownRow"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <TextView style="@style/TrackersInfoBreakdownLabel"
+                android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:text="@string/tracking_cat_cookies" />
+            <TextView android:id="@+id/td_cnt_cookies" style="@style/TrackersInfoBreakdownCount"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                tools:text="47" />
+        </LinearLayout>
+
+        <LinearLayout style="@style/TrackersInfoBreakdownRow"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <TextView style="@style/TrackersInfoBreakdownLabel"
+                android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:text="@string/tracking_cat_social" />
+            <TextView android:id="@+id/td_cnt_social" style="@style/TrackersInfoBreakdownCount"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                tools:text="12" />
+        </LinearLayout>
+
+        <LinearLayout style="@style/TrackersInfoBreakdownRow"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <TextView style="@style/TrackersInfoBreakdownLabel"
+                android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:text="@string/tracking_cat_fingerprinters" />
+            <TextView android:id="@+id/td_cnt_fp" style="@style/TrackersInfoBreakdownCount"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                tools:text="8" />
+        </LinearLayout>
+
+        <LinearLayout style="@style/TrackersInfoBreakdownRow"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <TextView style="@style/TrackersInfoBreakdownLabel"
+                android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:text="@string/tracking_cat_cryptominers" />
+            <TextView android:id="@+id/td_cnt_crypto" style="@style/TrackersInfoBreakdownCount"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                tools:text="0" />
+        </LinearLayout>
+
+        <LinearLayout style="@style/TrackersInfoBreakdownRow"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <TextView style="@style/TrackersInfoBreakdownLabel"
+                android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:text="@string/tracking_cat_content" />
+            <TextView android:id="@+id/td_cnt_content" style="@style/TrackersInfoBreakdownCount"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                tools:text="61" />
+        </LinearLayout>
+
     </LinearLayout>
 </LinearLayout>

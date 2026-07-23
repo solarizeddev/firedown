@@ -866,25 +866,14 @@
     <string name="settings_donate">寄付する</string>
     <string name="settings_security_screen_summary">一部サイトの互換性と引き換えにブラウザーを強化</string>
     <string name="settings_direct_share_summary">端末間でファイルを送るためのネットワーク設定</string>
-    <!-- Tracking-protection detail sheet (GeckoView 153 ETP database).
-         Category plurals sourced from Firefox translations; wrappers localised. -->
     <string name="tracking_status_blocked">%1$s 個のトラッカーをブロックしました</string>
     <string name="tracking_status_since">%1$s から記録</string>
-    <string name="tracking_detail_week_label">今週ブロックしたトラッカー</string>
-    <string name="tracking_detail_since">%2$s から %1$s 個のトラッカーをブロックしました</string>
-    <plurals name="tracking_detail_cookies">
-        <item quantity="other">%1$d 個のクロスサイトトラッキング Cookie</item>
-    </plurals>
-    <plurals name="tracking_detail_social">
-        <item quantity="other">%1$d 個のソーシャルメディアトラッカー</item>
-    </plurals>
-    <plurals name="tracking_detail_fingerprinters">
-        <item quantity="other">%1$d 個のフィンガープリント採取</item>
-    </plurals>
-    <plurals name="tracking_detail_cryptominers">
-        <item quantity="other">%1$d 個の暗号通貨マイニング</item>
-    </plurals>
-    <plurals name="tracking_detail_content">
-        <item quantity="other">%1$d 個のトラッキングコンテンツ</item>
-    </plurals>
+    <!-- Tracking-protection detail sheet category names (GeckoView 153 ETP
+         database); names from Firefox ETP category titles. -->
+    <string name="tracking_detail_total_label">ブロックしたトラッカー</string>
+    <string name="tracking_cat_cookies">クロスサイトトラッキング Cookie</string>
+    <string name="tracking_cat_social">SNS メディアトラッカー</string>
+    <string name="tracking_cat_fingerprinters">既知のフィンガープリント採取</string>
+    <string name="tracking_cat_cryptominers">暗号通貨マイニング</string>
+    <string name="tracking_cat_content">トラッキングコンテンツ</string>
 </resources>
