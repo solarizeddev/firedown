@@ -169,6 +169,20 @@
                     app:srcCompat="@drawable/cloud_done_24"
                     app:tint="?attr/colorOnSurfaceVariant" />
 
+                <!-- Middot after the cloud, matching the line's ' · ' rhythm so the
+                     marker reads as its own metadatum (cloud · VIDEO · domain) rather
+                     than crowding the mime label. Toggled WITH the cloud by the
+                     adapter (both GONE on a non-backed row, so no stray leading dot). -->
+                <TextView
+                    android:id="@+id/cloud_sep"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="5dp"
+                    android:text="·"
+                    android:textSize="12.5sp"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:visibility="gone" />
+
                 <TextView
                     android:id="@+id/mime_text"
                     style="@style/MimePrimaryLabel"

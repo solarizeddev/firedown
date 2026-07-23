@@ -89,8 +89,8 @@
                  shown only for a FINISHED backed-up image. -->
             <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/cloud_badge"
-                android:layout_width="17dp"
-                android:layout_height="17dp"
+                android:layout_width="13dp"
+                android:layout_height="13dp"
                 android:layout_margin="5dp"
                 android:contentDescription="@string/cloud_backed_up_desc"
                 android:visibility="gone"
