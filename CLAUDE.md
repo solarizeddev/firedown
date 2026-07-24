@@ -3400,40 +3400,8 @@ here:
   globe. The third line (`size · date · duration/resolution/language`) is the
   informative density and stays. The two layouts and the grid tile are kept in
   lockstep — change the meta line in both list rows together.
-- **Downloads grid: a FINISHED tile with a real picture is BARE — no caption at
-  all.** `DownloadItemAdapter.bindFull` computes
-  `bare = isGrid && !denseTile && status == FINISHED && realThumbnail`
-  (`realThumbnail = !GlideHelper.rendersMimeFallback(entity)`) and hides
-  `bottom_block` outright for those: the tile is the picture, the ⋮ top-end, and
-  a small bottom-END **facts pill** (`grid_pill` — `bg_grid_pill`, a 60%-black
-  capsule) carrying the two things a thumbnail genuinely can't say: the
-  **duration** (video/audio only — never resolution/language, which over artwork
-  is noise) and the **cloud-backed** marker. Neither applies → the pill hides
-  too, so a finished photo renders as nothing but the photo. Size and date go
-  with the caption; both are one tap away in the item sheet and the LIST mode
-  still shows them in full. This is the Files-by-Google / Photos media grid, and
-  it replaced a three-zone chrome cluster on the artwork (cloud top-start + ⋮
-  top-end + a two-line caption band) that no amount of ink tuning fixed —
-  the maintainer's own framing of the problem was the *cluster*, not the
-  contrast. Two consequences worth keeping:
-  - The **light-theme ink split is closed by construction**: every tile that
-    still shows a caption is now a pastel mime tile (theme ink), so a grid can
-    no longer mix black-on-pastel captions with white-on-photo ones row by row.
-    `applyGridTileGround`'s scrim branch survives only for
-    progress/error/queued.
-  - The **cloud badge moved off the artwork**: it now leads the meta line
-    inline (`row_mime`), exactly like the list row — see the badge's three
-    placements in `bindFull` (inline / pill / dense-corner; exactly one is ever
-    visible). Only the dense mosaic tile still overlays a corner cloud, and only
-    it still uses the shadowed `cloud_badge` drawable.
-  A history note on scope: `bare` is keyed on **realThumbnail**, NOT the mime.
-  That is precisely what the older image-only rule below was reaching for when
-  it called audio "the load-bearing case (*no real thumbnail*)" — art-LESS
-  audio/doc/archive keeps its full caption; audio WITH cover art is a picture
-  tile like any other. Don't re-key this on `isImage`/`isVideo`.
-- **Grid tile title: hidden for self-identifying image tiles in Captured (and,
-  before the bare-tile rule above, in Downloads too).** The rule is *not*
-  "images are clutter" — it's
+- **Grid tile title: hidden for self-identifying image tiles in BOTH Downloads
+  and Captured.** The rule is *not* "images are clutter" — it's
   "drop the title only for the one type whose thumbnail fully identifies it."
   Both `DownloadItemAdapter` and `BrowserOptionAdapter` (Captured) hide
   `file_name` in the grid **iff** `isGrid && FileUriHelper.isImage(mimeType)`
@@ -3442,11 +3410,7 @@ here:
   else keeps it: **audio is the load-bearing case** (no real thumbnail — hiding
   the title leaves an unidentifiable mime tile), and video/subtitle/doc
   thumbnails are too weak (black frames, generic glyphs) to discriminate without
-  the name. (In Downloads this now only decides captions on tiles that are NOT
-  bare, i.e. the pastel ones — where `isImage` is false anyway — so it is
-  effectively Captured's rule; Captured keeps it as-is, its tiles being a
-  pre-download decision surface with no local file to probe.) The list always
-  shows the title (both adapters). Keep this keyed on
+  the name. The list always shows the title (both adapters). Keep this keyed on
   the **mime** (`isImage`), not on a filename-content heuristic: the old
   "name has no spaces ⇒ junk" test was removed because it misclassifies
   space-less scripts (CJK/Thai) and silently drops real titles. The mime chip
@@ -3481,10 +3445,7 @@ here:
   (`refreshGridDensityIfChanged`); the vault has no chip rail and keeps normal
   density. The Downloads grid meta row reads `[chip] duration · size`
   (`joinWithSize`) — size is the one list-line fact with no other home in the
-  grid; date stays out because the sort headers carry it. That line lives in
-  `bottom_block`, so it only renders on a CAPTION tile now (a bare
-  real-thumbnail tile shows the duration alone, in the pill — see the bare-tile
-  rule above).
+  grid; date stays out because the sort headers carry it.
 - **A ViewHolder wrapped in a `ConcatAdapter` MUST report
   `getBindingAdapterPosition()`, NEVER `getAbsoluteAdapterPosition()`, in its
   click/long-click handlers.** When a list adapter is one child of a
