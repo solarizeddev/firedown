@@ -288,13 +288,30 @@ public final class VaultEngine {
      * manifest entry under the storage master key.
      */
     public void restoreFile(VaultEntry entry, File dest) throws IOException, GeneralSecurityException {
+        restoreFile(entry, dest, null);
+    }
+
+    /**
+     * As {@link #restoreFile(VaultEntry, File)}, reporting per-chunk progress so a
+     * restore can drive a live download row (the reverse of {@link #backupFile}'s
+     * upload progress). {@code bytesTotal} is the entry's plaintext size, so the
+     * summed decrypted chunk lengths reach it exactly; {@code progress} may be
+     * null (the no-progress overload).
+     */
+    public void restoreFile(VaultEntry entry, File dest, ProgressListener progress)
+            throws IOException, GeneralSecurityException {
         byte[] dek = VaultCrypto.unwrapDek(Base64.decode(entry.wrappedDek, B64), storageKey);
         try {
             StorageApiClient.ObjectInfo info = api.getObject(identity, entry.objectId);
+            long done = 0;
             try (OutputStream out = new FileOutputStream(dest)) {
                 for (String url : info.downloadUrls) {
                     byte[] plain = VaultCrypto.decryptChunk(api.getChunk(url), dek);
                     out.write(plain);
+                    done += plain.length;
+                    if (progress != null) {
+                        progress.onProgress(done, entry.size);
+                    }
                 }
             }
         } finally {

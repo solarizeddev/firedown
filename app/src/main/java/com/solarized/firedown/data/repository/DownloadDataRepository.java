@@ -186,6 +186,17 @@ public class DownloadDataRepository {
         return mDatabase.downloadDao().findByNameSize(name, size);
     }
 
+    /**
+     * Synchronous by-uid lookup. Off-main-thread only (same contract as
+     * {@link #findByNameSize}). Used by the Cloud Backup restore worker to find
+     * its own prior in-flight row across a WorkManager retry (a stable uid keyed
+     * on the object id) so the retry reuses the row + destination instead of
+     * spawning a duplicate.
+     */
+    public DownloadEntity findByIdSync(int id) {
+        return mDatabase.downloadDao().findByIdSync(id);
+    }
+
 
     /**
      * Persist a download row. The write is deferred onto the serial

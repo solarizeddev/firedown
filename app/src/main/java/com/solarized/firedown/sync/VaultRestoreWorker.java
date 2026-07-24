@@ -74,6 +74,14 @@ public class VaultRestoreWorker extends Worker {
 
     private static final int NOTIFICATION_ID = 0x6272; // "Br"
 
+    /** Retry ceiling for a persistently-failing restore (mirrors
+     *  {@code VaultBackupWorker.MAX_RUN_ATTEMPTS}). Without it a transient error
+     *  that never clears would retry forever, pinning the in-flight PROGRESS row
+     *  at the top of Downloads indefinitely; past the cap the row resolves to a
+     *  visible ERROR the user can dismiss or retry deliberately.
+     *  {@code getRunAttemptCount()} is 0 on the first run. */
+    private static final int MAX_RUN_ATTEMPTS = 10;
+
     private final Context mContext;
     private final OkHttpClient mClient;
     private final DownloadDataRepository mRepo;
@@ -110,17 +118,66 @@ public class VaultRestoreWorker extends Worker {
         }
 
         // Already in Downloads? Skip the restore (don't duplicate the file). The
-        // match is by name + byte-size and is only honoured when the local file
-        // still exists on disk — a stale row pointing at a deleted file falls
-        // through to a real restore.
+        // match is by name + byte-size and is only honoured for a FINISHED row
+        // whose local file still exists on disk. The FINISHED guard matters now
+        // that we insert our OWN in-flight PROGRESS row with file_size = the full
+        // size: without it, a retry (or a re-tapped restore) would match its own
+        // partial-file row here and wrongly report "already present". A stale row
+        // pointing at a deleted file also falls through to a real restore.
         DownloadEntity present = mRepo.findByNameSize(name, size);
-        if (present != null && present.getFilePath() != null
+        if (present != null && present.getFileStatus() == Download.FINISHED
+                && present.getFilePath() != null
                 && new File(present.getFilePath()).exists()) {
             return Result.success(new Data.Builder()
                     .putString(KEY_STATUS, STATUS_OK)
                     .putBoolean(KEY_ALREADY_PRESENT, true)
                     .build());
         }
+
+        StoragePaths.ensureDownloadPath(mContext);
+
+        // Stable uid keyed on the OBJECT (not the destination path) so a
+        // WorkManager retry finds THIS in-flight row instead of minting a second
+        // one — the retry-idempotency backbone.
+        int rowId = ("cloud-restore:" + objectId).hashCode();
+
+        // Retry-idempotent destination: reuse a prior attempt's row + path (and
+        // drop its partial) so a retry rewrites the SAME file/row rather than
+        // drifting to "name (1)" and leaving an orphan file + a dangling row. The
+        // first attempt picks a non-colliding path in Download/Firedown.
+        DownloadEntity prior = mRepo.findByIdSync(rowId);
+        File dest;
+        if (prior != null && prior.getFilePath() != null) {
+            dest = new File(prior.getFilePath());
+            deleteQuietly(dest);
+        } else {
+            dest = uniqueDestination(StoragePaths.getDownloadPath(mContext)
+                    + File.separator + name);
+        }
+
+        // Insert the row NOW as a LIVE download (PROGRESS, 0%) so the restore is
+        // visible in the Downloads list as it streams — the reverse of an upload's
+        // transfer row, and the whole point of showing "downloading from backup".
+        // One reused entity drives every progress tick and the terminal write
+        // (repository.add snapshots each call, so mutating this object is safe —
+        // the DownloadTask progress-write pattern). Origin restores the row's
+        // MIME · domain like any download; older backups with no origin fall back
+        // to the honest cloud transport label so the domain is never blank.
+        String rowOrigin = (origin == null || origin.isEmpty())
+                ? RESTORED_ORIGIN_FALLBACK : origin;
+        DownloadEntity download = new DownloadEntity();
+        download.setId(rowId);
+        download.setFilePath(dest.getAbsolutePath());
+        download.setFileName(dest.getName());
+        download.setFileMimeType(mime);
+        download.setFileStatus(Download.PROGRESS);
+        download.setFileProgress(0);
+        download.setFileSize(size); // manifest plaintext size — the bar's total
+        download.setFileSafe(false);
+        download.setFileDate(downloadedAt > 0 ? downloadedAt : System.currentTimeMillis());
+        download.setFileUrl(rowOrigin);
+        download.setFileOriginUrl("");
+        mRepo.add(download);
 
         try {
             setForegroundAsync(foregroundInfo(name)).get();
@@ -130,7 +187,7 @@ public class VaultRestoreWorker extends Worker {
 
         byte[] code = new SyncSecrets(mContext).load();
         if (code == null) {
-            return failure();
+            return restoreFailed(download, dest);
         }
         SyncIdentity identity;
         try {
@@ -138,10 +195,6 @@ public class VaultRestoreWorker extends Worker {
         } finally {
             SyncSecrets.wipe(code);
         }
-
-        StoragePaths.ensureDownloadPath(mContext);
-        File dest = uniqueDestination(StoragePaths.getDownloadPath(mContext)
-                + File.separator + name);
 
         StorageApiClient api = new StorageApiClient(mClient, Preferences.STORAGE_DEFAULT_BACKEND);
         mApi = api;
@@ -151,47 +204,64 @@ public class VaultRestoreWorker extends Worker {
         VaultEngine engine = new VaultEngine(api, identity);
         VaultEntry entry = new VaultEntry(objectId, wrappedDek, name, size, mime,
                 downloadedAt, chunkCount, null, origin); // thumb unused on restore
+
+        // Throttle progress writes to whole-percent steps (mirrors the upload
+        // worker's publishProgress) so a many-chunk restore doesn't hammer the DB.
+        final int[] lastPct = { -1 };
         try {
-            engine.restoreFile(entry, dest);
+            engine.restoreFile(entry, dest, (done, total) -> {
+                int pct = total > 0 ? (int) (done * 100 / total) : 0;
+                if (pct != lastPct[0]) {
+                    lastPct[0] = pct;
+                    download.setFileProgress(pct);
+                    mRepo.add(download);
+                }
+            });
         } catch (StorageApiClient.FatalException e) {
-            // A 4xx (e.g. the object was reaped) won't fix itself — terminal.
-            // Checked before the bare-IOException branch (FatalException IS one).
-            deleteQuietly(dest);
-            return failure();
+            // A 4xx (e.g. the object was reaped) won't fix itself — terminal. Mark
+            // the row ERROR (a visible failed download the user can dismiss/retry),
+            // not a silent delete. Checked before the bare-IOException branch
+            // (FatalException IS one).
+            return restoreFailed(download, dest);
         } catch (IOException e) {
             // 429/5xx (TransientException) OR a bare socket drop / read timeout
-            // mid-download — retryable; drop the partial and let WorkManager retry
-            // clean rather than failing the restore on a flaky link.
+            // mid-restore — retryable. Drop the partial so the retry rewrites clean
+            // rather than failing on a flaky link.
             deleteQuietly(dest);
+            if (getRunAttemptCount() >= MAX_RUN_ATTEMPTS) {
+                // Persistently failing — stop retrying and resolve the row to a
+                // visible ERROR instead of pinning it at PROGRESS forever.
+                download.setFileStatus(Download.ERROR);
+                download.setFileProgress(0);
+                mRepo.add(download);
+                return failure();
+            }
+            // Leave the row in place (WorkManager reschedules; the retry reuses it
+            // via rowId and re-inserts PROGRESS 0% on its first tick).
             return Result.retry();
         } catch (Exception e) {
-            deleteQuietly(dest);
-            return failure();
+            return restoreFailed(download, dest);
         }
 
-        DownloadEntity download = new DownloadEntity();
-        // uid keyed on the (unique) restored path so two restores never collide.
-        download.setId(dest.getAbsolutePath().hashCode());
-        download.setFilePath(dest.getAbsolutePath());
-        download.setFileName(dest.getName());
-        download.setFileMimeType(mime);
         download.setFileStatus(Download.FINISHED);
         download.setFileProgress(100);
         download.setFileSize(dest.length());
-        download.setFileSafe(false);
-        download.setFileDate(downloadedAt > 0 ? downloadedAt : System.currentTimeMillis());
-        // Restore the origin URL so the row's MIME · domain reads like any download
-        // (e.g. "youtube.com"). Older backups stored no origin — fall back to the
-        // honest cloud transport label so the domain is never blank.
-        String rowOrigin = (origin == null || origin.isEmpty())
-                ? RESTORED_ORIGIN_FALLBACK : origin;
-        download.setFileUrl(rowOrigin);
-        download.setFileOriginUrl("");
-        mRepo.addSync(download);
+        mRepo.add(download);
 
         return Result.success(new Data.Builder()
                 .putString(KEY_STATUS, STATUS_OK)
                 .build());
+    }
+
+    /** Terminal failure: mark the live row as a visible ERROR download (like a
+     *  failed normal download) and drop the partial file. Returns the worker
+     *  failure result. */
+    private Result restoreFailed(DownloadEntity download, File dest) {
+        deleteQuietly(dest);
+        download.setFileStatus(Download.ERROR);
+        download.setFileProgress(0);
+        mRepo.add(download);
+        return failure();
     }
 
     /** Picks a non-colliding path in Download/Firedown (mirrors TaskRunnable). */
