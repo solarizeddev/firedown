@@ -1121,11 +1121,22 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         String secondary = secondaryMetaLabel(entity, mimeType);
 
         if (isGrid) {
-            // Grid meta row reads "VIDEO · duration · size" (or
-            // "VIDEO · resolution · size" for images): size is the one list-line
-            // fact with no other home in the grid — date is carried by the
-            // section headers, so it stays out. (mimeDuration is absent in
-            // the dense tile, which shows no text at all.)
+            // Grid meta row reads "VIDEO · duration · size" unfiltered (or
+            // "VIDEO · resolution · size" for images), and "duration" alone
+            // under an active filter chip. Date stays out: the grid carries no
+            // section headers (see DownloadsViewModel#applySeparators) but it
+            // is still sorted, so position places the tile and a per-tile date
+            // would only add chrome. (mimeDuration is absent in the dense tile,
+            // which shows no text at all.)
+            //
+            // Size drops with the mime under an active chip — the same
+            // redundancy rule setMimeSuppressed applies, one fact further
+            // down. Size isn't what a grid is scanned for; it's on the list
+            // row and in the item sheet, and under a filter the caption reads
+            // better as title / duration. Note the suppression key is the CHIP
+            // (mSuppressMime), NOT the grouping sort: SORT_SIZE used to blank
+            // it here because the section header stated it, and in grid that
+            // header no longer exists.
             //
             // The " · " separator is prepended HERE rather than appended to the
             // mime label, so neither token can leave a dangling separator: a
@@ -1135,7 +1146,7 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
             // mime_duration no start margin — the separator carries the gap.
             if (holder.mimeDuration != null) {
                 String label = joinWithSize(secondary,
-                        mGroupingSort == Sorting.SORT_SIZE ? 0 : entity.getFileSize());
+                        mSuppressMime ? 0 : entity.getFileSize());
                 if (!TextUtils.isEmpty(label)) {
                     boolean mimeShown = holder.mimeText != null
                             && holder.mimeText.getVisibility() == View.VISIBLE;
@@ -1326,6 +1337,45 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
     }
 
     /**
+     * Trims the padding off a stored {@code HH:MM:SS} duration: leading
+     * zero-hours drop entirely, and the leading field loses its zero pad —
+     * {@code 00:00:39} → {@code 0:39}, {@code 01:10:27} → {@code 1:10:27}.
+     * Hours are kept whenever they're nonzero, so nothing becomes ambiguous.
+     *
+     * <p>Purely a display trim at the point of render. The stored
+     * {@code fileDurationFormatted} is untouched, so this needs no schema
+     * change and no re-probe, and because both surfaces read their duration
+     * through {@link #secondaryMetaLabel} the grid caption and the list's
+     * third line pick it up together. The info dialog deliberately still
+     * shows the full padded form — it's a detail view, not a scan surface.
+     *
+     * <p>Anything not in the three-field shape is returned verbatim rather
+     * than guessed at.
+     */
+    private static @Nullable String compactDuration(@Nullable String formatted) {
+        if (TextUtils.isEmpty(formatted)) {
+            return formatted;
+        }
+        String[] parts = formatted.split(":");
+        if (parts.length != 3) {
+            return formatted;
+        }
+        int first = "00".equals(parts[0]) ? 1 : 0;
+        StringBuilder out = new StringBuilder(formatted.length());
+        for (int i = first; i < parts.length; i++) {
+            if (i > first) {
+                out.append(':');
+            }
+            String part = parts[i];
+            if (i == first && part.length() == 2 && part.charAt(0) == '0') {
+                part = part.substring(1);
+            }
+            out.append(part);
+        }
+        return out.toString();
+    }
+
+    /**
      * The single secondary metadatum for an item, chosen by type: duration
      * (video/audio), resolution (image), or language (subtitle). Rendered as a
      * distinct element — the badge overlay in grid, appended to the finished
@@ -1333,7 +1383,7 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
      */
     private static @Nullable String secondaryMetaLabel(DownloadEntity entity, @Nullable String mimeType) {
         if (FileUriHelper.isVideo(mimeType) || FileUriHelper.isAudio(mimeType)) {
-            return entity.getDurationFormatted();
+            return compactDuration(entity.getDurationFormatted());
         }
         if (FileUriHelper.isImage(mimeType) || FileUriHelper.isSVG(mimeType)) {
             return entity.getFileResolution();

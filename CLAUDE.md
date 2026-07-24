@@ -3400,6 +3400,19 @@ here:
   globe. The third line (`size · date · duration/resolution/language`) is the
   informative density and stays. The two layouts and the grid tile are kept in
   lockstep — change the meta line in both list rows together.
+- **Durations are TRIMMED for display, never re-formatted in storage.**
+  `fileDurationFormatted` is stored padded to `HH:MM:SS`, so a 39-second clip
+  spent two fields on zeros. `DownloadItemAdapter.compactDuration` drops
+  zero-hours and the leading field's zero pad at render time — `00:00:39` →
+  `0:39`, `01:10:27` → `1:10:27` (hours kept whenever nonzero, so nothing
+  turns ambiguous); anything not in the three-field shape is returned verbatim
+  rather than guessed at. It hangs off `secondaryMetaLabel`, the ONE place
+  both surfaces read a duration, so the grid caption and the list's third line
+  stay in step by construction. The info dialog deliberately keeps the full
+  padded form — a detail view, not a scan surface. Don't push the trim into
+  the entity or the parser emit: the stored value is also what
+  `DownloadDiffCallback` compares and what the post-download metadata refresh
+  rewrites.
 - **Grid tile title: hidden for self-identifying image tiles in BOTH Downloads
   and Captured.** The rule is *not* "images are clutter" — it's
   "drop the title only for the one type whose thumbnail fully identifies it."
@@ -3444,8 +3457,39 @@ here:
   Downloads reconfigures only on an actual density transition
   (`refreshGridDensityIfChanged`); the vault has no chip rail and keeps normal
   density. The Downloads grid meta row reads `[chip] duration · size`
-  (`joinWithSize`) — size is the one list-line fact with no other home in the
-  grid; date stays out because the sort headers carry it.
+  unfiltered and **`duration` alone under an active chip** (`joinWithSize`):
+  size drops with the mime, the same redundancy rule one fact further down —
+  it isn't what a grid is scanned for, and the list row + item sheet both keep
+  it. The suppression key is the **chip** (`mSuppressMime`), NOT the grouping
+  sort: `SORT_SIZE` used to blank it here because the section header stated the
+  size, and the grid no longer has headers (below). Date stays out of the tile
+  either way — the grid is still sorted, so position places it and a per-tile
+  date would only add chrome.
+- **The Downloads GRID carries NO date section headers — the list keeps them.**
+  A header is a full-span item, so every section starts a fresh row and a
+  section holding one file *is* a half-empty row; Downloads is date-grouped and
+  recent groups are usually one or two files, so the ragged rows land on the
+  top of the screen, the part always in view (measured off-device from a
+  screenshot: two of the first three sections rendered one tile and an equal
+  void). Without headers every row fills — which is exactly why the images
+  mosaic, one section with many files, never rags. `DownloadsViewModel
+  .applySeparators` short-circuits on the grid flag; the fragment pushes the
+  mode in from `configureRecyclerView` via `setGridMode`. Accepted costs,
+  deliberately: grid loses the date grouping **and** the per-section aggregate
+  counts (`setAggregates` goes unused there), and a toggle briefly shows the
+  new layout with the old headers before the re-present lands.
+  - **The header transform runs AFTER `cachedIn`, and must stay there.** It is
+    a *presentation* transform — putting the grid flag on `DownloadsState`
+    instead would rebuild the Pager and re-query the database on every view
+    toggle, resetting scroll. Post-`cachedIn` it re-runs against the cached
+    pages (`withSectionHeaders`, a `MediatorLiveData` combining the cached
+    stream with `mGridMode`), which is the documented Paging 3 ordering. Query
+    and sort are read from `mStateTrigger`'s current value at emit time — safe
+    because the state always changes before the pages it produced arrive.
+  - **Consequence to remember when adding a "the header already says it"
+    suppression:** those rules (`setGroupingSort`, `headerStatesDate`) are
+    **list-only**. In grid there is no header stating anything, so a field
+    dropped on that reasoning would simply vanish.
 - **A ViewHolder wrapped in a `ConcatAdapter` MUST report
   `getBindingAdapterPosition()`, NEVER `getAbsoluteAdapterPosition()`, in its
   click/long-click handlers.** When a list adapter is one child of a
