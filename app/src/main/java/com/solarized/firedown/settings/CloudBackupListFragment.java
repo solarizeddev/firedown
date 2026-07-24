@@ -112,6 +112,10 @@ public class CloudBackupListFragment extends Fragment
     private View mHeader;
     private TextView mHeaderLine1;
     private TextView mHeaderLine2;
+    /** The header's trailing "Add storage credit" text link → the buy flow. The
+     *  only top-up door from this screen (it's reachable straight from the
+     *  Downloads overflow, which never passes through the Cloud screen's CTA). */
+    private View mAddCredit;
     /** Vertical offset of the fragment's inner appbar (the scroll-away header):
      *  0 = fully shown, negative = scrolled off — one of the two lift signals
      *  bridged to the ACTIVITY appbar (see onViewCreated). */
@@ -194,6 +198,9 @@ public class CloudBackupListFragment extends Fragment
         mHeader = view.findViewById(R.id.cb_header);
         mHeaderLine1 = view.findViewById(R.id.cb_header_line1);
         mHeaderLine2 = view.findViewById(R.id.cb_header_line2);
+        mAddCredit = view.findViewById(R.id.cb_add_credit);
+        mAddCredit.setOnClickListener(v -> NavigationUtils.navigateSafe(
+                mNavController, R.id.action_cloud_backup_files_to_buy));
         mLcee = view.findViewById(R.id.cb_lcee);
         mRecycler = mLcee.getRecyclerView();
         mAdapter = new CloudBackupFileAdapter(this);

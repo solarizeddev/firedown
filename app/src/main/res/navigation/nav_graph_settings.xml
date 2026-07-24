@@ -202,6 +202,13 @@
         <action
             android:id="@+id/action_cloud_backup_files_to_item_sheet"
             app:destination="@id/dialog_cloud_backup_item" />
+        <action
+            android:id="@+id/action_cloud_backup_files_to_buy"
+            app:destination="@id/settings_cloud_backup_buy"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
     </fragment>
     <dialog
         android:id="@+id/dialog_cloud_backup_item"

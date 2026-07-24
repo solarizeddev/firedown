@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Backed-up files list: a TEXT-ONLY header (inventory + quota/trust context,
-  hidden while the list is empty/loading — the LCEE illustrations own those
-  states) over the app-standard LCEERecyclerView (loading spinner / content /
+  Backed-up files list: a header (inventory + quota/trust context on the left,
+  a quiet "Add storage credit" text link on the right; hidden while the list is
+  empty/loading — the LCEE illustrations own those states) over the app-standard
+  LCEERecyclerView (loading spinner / content /
   empty-illustration states, change animations disabled so per-item progress
   ticks don't blink) — same list treatment as Downloads/Bookmarks/History.
 
@@ -33,36 +34,67 @@
         app:liftOnScroll="false">
 
         <!-- scroll (no enterAlways/pin): the header rides off with the content
-             and comes back only at the top — no lift, no tint band. -->
+             and comes back only at the top — no lift, no tint band. HORIZONTAL:
+             the inventory/coverage text lines take the left (weighted, ellipsized
+             so a long "Backing up…" prefix can't push the trailing action off),
+             and a quiet "Add storage credit" text link fills the right — the ONLY
+             top-up door from this screen when it's reached straight from the
+             Downloads overflow (which bypasses the Cloud screen's CTA). A
+             borderless text button, not a filled sell, so a funded account isn't
+             nagged (the home pill's GONE-when-idle ethos). -->
         <LinearLayout
             android:id="@+id/cb_header"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
             android:paddingStart="16dp"
             android:paddingTop="8dp"
-            android:paddingEnd="16dp"
+            android:paddingEnd="4dp"
             android:paddingBottom="12dp"
             android:visibility="gone"
             tools:visibility="visible"
             app:layout_scrollFlags="scroll">
 
-            <TextView
-                android:id="@+id/cb_header_line1"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:textAppearance="?attr/textAppearanceTitleMedium"
-                android:textColor="?attr/colorOnSurface"
-                tools:text="12 files · 51 MB" />
+                android:layout_weight="1"
+                android:orientation="vertical">
 
-            <TextView
-                android:id="@+id/cb_header_line2"
+                <TextView
+                    android:id="@+id/cb_header_line1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:textAppearance="?attr/textAppearanceTitleMedium"
+                    android:textColor="?attr/colorOnSurface"
+                    tools:text="12 files · 51 MB" />
+
+                <TextView
+                    android:id="@+id/cb_header_line2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:textSize="13sp"
+                    tools:text="of 11 GB included · encrypted end-to-end" />
+            </LinearLayout>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/cb_add_credit"
+                style="@style/Widget.Material3.Button.TextButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:textColor="?attr/colorOnSurfaceVariant"
-                android:textSize="13sp"
-                tools:text="of 11 GB included · encrypted end-to-end" />
+                android:layout_marginStart="8dp"
+                android:text="@string/buy_credit_title"
+                android:maxLines="1"
+                app:icon="@drawable/add_24"
+                app:iconSize="18dp"
+                app:iconGravity="textStart" />
         </LinearLayout>
     </com.google.android.material.appbar.AppBarLayout>
 
