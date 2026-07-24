@@ -20,6 +20,7 @@ import androidx.core.content.FileProvider;
 import androidx.navigation.NavBackStackEntry;
 
 import com.google.android.material.snackbar.Snackbar;
+import com.solarized.firedown.Keys;
 import com.solarized.firedown.R;
 import com.solarized.firedown.data.Download;
 import com.solarized.firedown.data.RestoredFileAccess;
@@ -27,6 +28,7 @@ import com.solarized.firedown.data.di.Qualifiers;
 import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.data.repository.DownloadDataRepository;
 import com.solarized.firedown.glide.MimeTypeThumbnail;
+import com.solarized.firedown.phone.PlayerActivity;
 import com.solarized.firedown.phone.dialogs.BaseBottomSheetDialogFragment;
 import com.solarized.firedown.sync.VaultThumbnail;
 import com.solarized.firedown.utils.FileUriHelper;
@@ -145,17 +147,38 @@ public class CloudBackupItemSheetDialogFragment extends BaseBottomSheetDialogFra
                 }
                 View open = mView.findViewById(R.id.cb_sheet_open);
                 open.setVisibility(View.VISIBLE);
-                open.setOnClickListener(v -> openLocal(path, resolvedMime));
+                open.setOnClickListener(v -> openLocal(local, resolvedMime));
             });
         });
     }
 
+    /**
+     * Open the LOCAL copy. Media (image/SVG/video/audio) goes to the in-app
+     * {@link PlayerActivity} — the SAME viewer the Downloads list uses
+     * ({@code BaseFocusFragment.startPlayerActivity}), so a backed-up file plays
+     * in Firedown's own player, not an external app. PlayerActivity is a plain
+     * Activity that takes the {@link DownloadEntity} as a {@link Keys#ITEM_ID}
+     * extra, so it IS reachable from this Settings-hosted sheet (the old belief
+     * that it wasn't is why this bounced to ACTION_VIEW). Non-media (doc/archive/
+     * apk) has no in-app viewer, so it still falls back to a system ACTION_VIEW.
+     */
+    private void openLocal(DownloadEntity entity, String mime) {
+        if (FileUriHelper.isImage(mime) || FileUriHelper.isSVG(mime)
+                || FileUriHelper.isVideo(mime) || FileUriHelper.isAudio(mime)) {
+            Intent play = new Intent(requireContext(), PlayerActivity.class);
+            play.putExtra(Keys.ITEM_ID, entity);
+            startActivity(play);
+            mNavController.popBackStack();
+            return;
+        }
+        openWithSystem(entity.getFilePath(), mime);
+    }
+
     /** ACTION_VIEW on the local copy — owned file via FileProvider, a restored
      *  foreign-owned file via its persisted SAF grant (openableUri returns the
-     *  content:// form for those; see RestoredFileAccess). Mirrors
-     *  BaseFocusFragment.openItemWith, which lives in the Downloads activity
-     *  and isn't reachable from this Settings-hosted sheet. */
-    private void openLocal(String path, String mime) {
+     *  content:// form for those; see RestoredFileAccess). The non-media fallback
+     *  for {@link #openLocal}; media goes to the in-app PlayerActivity instead. */
+    private void openWithSystem(String path, String mime) {
         try {
             Uri openable = RestoredFileAccess.openableUri(requireContext(), path);
             Uri uri;
