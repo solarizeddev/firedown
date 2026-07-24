@@ -706,37 +706,36 @@ public class CloudBackupListFragment extends Fragment
     }
 
     /**
-     * The trailing runway chip — the account's credit state as INFO (not a sell),
-     * tapping opens the buy flow to extend it. Metered context is TIME, never the
-     * raw GB-months ledger unit (the old "5409.5 GB-months" here was one of the
-     * on-device confusion reports). States:
+     * The trailing runway chip — ALWAYS present (it fills the header's trailing
+     * end on every visit), a calm coral text link + chevron, tapping opens the
+     * buy flow. It's INFO where the server gives us a figure and a plain door
+     * otherwise — deliberately NOT the filled "＋" sell (too intrusive), just a
+     * coral link. Metered context is TIME, never the raw GB-months ledger unit
+     * (the old "5409.5 GB-months" here was an on-device confusion report). Label:
      * <ul>
-     *   <li>funded + a projection → "≈ 1 year of coverage" (coral link);</li>
-     *   <li>grace (ran out, read-only) → amber "Read-only" — the one state where
-     *       topping up is genuinely urgent, so it's tinted to draw the eye;</li>
-     *   <li>funded with no projection (effectively-never runout — a rare, huge
-     *       balance), unmetered beta, quota unknown/offline → hidden. Nothing is
-     *       urgent and there's no short figure to show, so an empty end is the
-     *       honest, non-naggy signal (calm = invisible, the pill's ethos).</li>
+     *   <li>grace (ran out, read-only) → amber "Read-only" — the one urgent state,
+     *       tinted to draw the eye;</li>
+     *   <li>metered + a projection → "≈ 1 year of coverage" (coral);</li>
+     *   <li>everything else — unmetered beta (the current Phase 1a mode),
+     *       funded-with-no-projection, quota unknown/offline — → the coral
+     *       "Add storage credit" door (no figure to show, but the end is still
+     *       filled with a real, non-naggy link).</li>
      * </ul>
      */
     private void bindRunwayChip(@Nullable StorageApiClient.Quota quota) {
         if (mRunwayChip == null) {
             return;
         }
-        String label = null;
-        boolean grace = false;
-        if (quota != null && quota.metered) {
-            if (quota.readOnly) {
-                label = getString(R.string.cloud_status_chip_readonly);
-                grace = true;
-            } else {
-                label = CloudStatusPreference.coverageLabel(requireContext(), quota);
-            }
-        }
-        if (label == null) {
-            mRunwayChip.setVisibility(View.GONE);
-            return;
+        boolean grace = quota != null && quota.metered && quota.readOnly;
+        String coverage = (quota != null && quota.metered && !quota.readOnly)
+                ? CloudStatusPreference.coverageLabel(requireContext(), quota) : null;
+        String label;
+        if (grace) {
+            label = getString(R.string.cloud_status_chip_readonly);
+        } else if (coverage != null) {
+            label = coverage;
+        } else {
+            label = getString(R.string.buy_credit_title);
         }
         int ink = ContextCompat.getColor(requireContext(),
                 grace ? R.color.backup_warning : R.color.brand_orange);

@@ -37,14 +37,14 @@
              and comes back only at the top — no lift, no tint band. HORIZONTAL:
              the inventory + trust text lines take the left (weighted, ellipsized
              so a long "Backing up…" prefix can't push the trailing chip off), and
-             a subtle tappable RUNWAY chip fills the right — the account's coverage
-             ("≈ 1 year of coverage ›") / "Credit active" / an amber "Read-only" in
-             grace, opening the buy flow. It reads as INFO, not a sell (this screen
-             is reached straight from the Downloads overflow, which bypasses the
-             Cloud screen's CTA, so it's also the only top-up door here); hidden on
-             the beta and while the quota is unknown/offline (never a stale/guess).
-             cb_runway is a borderless text button, not a filled sell — a funded
-             account isn't nagged (the home pill's GONE-when-idle ethos). -->
+             a subtle tappable RUNWAY chip ALWAYS fills the right — the account's
+             coverage ("≈ 1 year of coverage ›") when the server gives a figure, an
+             amber "Read-only" in grace, else a calm coral "Add storage credit"
+             door. It opens the buy flow and is the only top-up door from this
+             screen (reached straight from the Downloads overflow, which bypasses
+             the Cloud screen's CTA). cb_runway is a borderless coral text link +
+             chevron, NOT the filled "＋" sell — present but not naggy. Bound in
+             CloudBackupListFragment.bindRunwayChip. -->
         <LinearLayout
             android:id="@+id/cb_header"
             android:layout_width="match_parent"
