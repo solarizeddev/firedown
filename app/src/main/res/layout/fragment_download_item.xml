@@ -103,13 +103,14 @@
              so there is no collision. SMALLER than the grid glyph on purpose:
              the list thumbnail is only 78×64dp, so the grid's 14dp badge would
              eat ~19% of it (vs ~8% on a grid tile) and crowd the centered mime
-             glyph on a pastel audio thumbnail — 12dp/3dp keeps the same quiet
-             corner-marker proportion the grid has. -->
+             glyph on a pastel audio thumbnail — 12dp keeps the same quiet
+             corner-marker proportion the grid has. The 5dp inset keeps it off
+             the rounded corner so it doesn't crowd the thumbnail edge. -->
         <androidx.appcompat.widget.AppCompatImageView
             android:id="@+id/cloud_badge"
             android:layout_width="12dp"
             android:layout_height="12dp"
-            android:layout_margin="3dp"
+            android:layout_margin="5dp"
             android:alpha="0.7"
             android:contentDescription="@string/cloud_backed_up_desc"
             android:visibility="gone"
