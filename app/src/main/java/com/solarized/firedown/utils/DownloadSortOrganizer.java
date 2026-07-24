@@ -26,6 +26,11 @@ public class DownloadSortOrganizer {
     private static final long TEN_MB = 10_485_760L;
     private static final long ONE_MB = 1_048_576L;
 
+    /** Internal transport pseudo-origins (no web domain) — kept in lockstep
+     *  with DownloadItemAdapter's row-side constants. */
+    private static final String CLOUD_URL_PREFIX = "cloud://";
+    private static final String P2P_URL_PREFIX = "p2p://";
+
     // Size category IDs (arbitrary unique ints, not resource IDs)
     private static final int SIZE_CAT_1GB = 100;
     private static final int SIZE_CAT_100MB = 101;
@@ -93,7 +98,23 @@ public class DownloadSortOrganizer {
                 separator.setTitleText(getAlphabetLabelForCategory(category));
             }
             case Sorting.SORT_DOMAIN -> {
-                separator.setTitleText(getDomainLabelForCategory(category));
+                // Internal transport pseudo-origins have no web domain, so the
+                // raw string ("cloud://firedown", "p2p://sm-a426b") would surface
+                // as a header — it read as a bug on-device. There's no Context
+                // here, but a separator can carry a string RESOURCE (the date
+                // branch below does), so the cloud case hands over the already-
+                // translated feature name. The p2p case keeps the DEVICE (the
+                // scheme stripped): it's what actually distinguishes one sender
+                // from another, so collapsing every device to one "p2p" label
+                // would render two groups under identical headers.
+                String raw = getRawDomainForCategory(category);
+                if (raw.startsWith(CLOUD_URL_PREFIX)) {
+                    separator.setTitleResId(R.string.settings_cloud_backup_title);
+                } else if (raw.startsWith(P2P_URL_PREFIX)) {
+                    separator.setTitleText(raw.substring(P2P_URL_PREFIX.length()));
+                } else {
+                    separator.setTitleText(getDomainLabelForCategory(category));
+                }
             }
             default -> {
                 int resId = mDateOrganizer.getResIdForCategory(category);
@@ -152,6 +173,14 @@ public class DownloadSortOrganizer {
         int hash = domain.toLowerCase(Locale.ROOT).hashCode();
         mDomainLabels.put(hash, domain);
         return hash;
+    }
+
+    /** The unmapped domain string for a category — lets createSeparator spot the
+     *  internal transport pseudo-origins before they reach the display-name
+     *  table, which only knows web domains. Never null. */
+    private String getRawDomainForCategory(int category) {
+        String raw = mDomainLabels.get(category);
+        return raw == null ? "" : raw;
     }
 
     private String getDomainLabelForCategory(int category) {
