@@ -996,6 +996,11 @@
     <string name="tabs_more_options">More options</string>
 
     <!-- P2P direct share (WebRTC) — sender, receiver, scanner, errors -->
+    <!-- Source token shown in a P2P-received download's "MIME · domain" meta
+         line, where every other row shows a bare hostname. A protocol token
+         (like http), NOT a UI phrase — deliberately untranslated so it stays a
+         short, universal source tag that fits the domain column. -->
+    <string name="p2p_source_label" translatable="false">p2p</string>
     <string name="p2p_send">Send</string>
     <string name="p2p_send_title">Send directly</string>
     <string name="p2p_receive_title">Receive a file</string>

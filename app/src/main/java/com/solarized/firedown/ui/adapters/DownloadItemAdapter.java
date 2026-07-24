@@ -663,10 +663,12 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
             Tracing.begin("bind:domainParse");
             try {
                 if (urlSource != null && urlSource.startsWith(P2P_URL_PREFIX)) {
-                    // No web origin — name the transport (WebUtils.getDomainName
-                    // would echo the raw "p2p://<device>" pseudo-URL, since
-                    // URLUtil rejects the scheme).
-                    domain = mContext.getString(R.string.settings_p2p_category);
+                    // No web origin — show the transport token "p2p" (the pseudo
+                    // URL's own scheme). WebUtils.getDomainName would echo the raw
+                    // "p2p://<device>" since URLUtil rejects the scheme; a bare
+                    // "p2p" fits the domain column (a source tag, not a UI phrase,
+                    // so untranslated — see p2p_source_label).
+                    domain = mContext.getString(R.string.p2p_source_label);
                 } else {
                     domain = WebUtils.getDomainName(urlSource);
                 }

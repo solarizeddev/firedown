@@ -19,9 +19,15 @@ import com.solarized.firedown.utils.FileUriHelper;
 
 public class MimeTypeThumbnail {
 
-    // Color palette
-    private static final int COLOR_BRAND_YELLOW    = 0xFFffa386;
-    private static final int COLOR_BRAND_ORANGE    = 0xFFf0716c;
+    /**
+     * The ONE brand fill for every generated mime fallback — both the glyph tint
+     * and the ~12% wash behind it. Audio USED to get a lighter peach (ffa386),
+     * but the type is already carried by the glyph SHAPE (note / film / doc) and
+     * the mime chip, so a second per-type hue was redundant decoration rather
+     * than information — and it broke the "one ground everywhere" rule (every
+     * fallback tile now shares the same pastel). Unified to the brand coral.
+     */
+    private static final int COLOR_BRAND = 0xFFf0716c;
 
     /**
      * Strength of the brand wash behind the mime glyph (out of 255, ≈12%).
@@ -55,7 +61,7 @@ public class MimeTypeThumbnail {
      */
     @NonNull
     public static Drawable generateDrawable(@NonNull Context context, @NonNull String mimeType) {
-        int color = getColorForMimeType(mimeType);
+        int color = COLOR_BRAND;
         int ground = ColorUtils.setAlphaComponent(color, WASH_ALPHA);
         return new MimeTypeFallbackDrawable(ground, tintedIcon(context, mimeType, color),
                 /* fillBounds= */ false, Integer.MAX_VALUE);
@@ -83,7 +89,7 @@ public class MimeTypeThumbnail {
         if (!fillBounds) {
             return generateDrawable(context, mimeType);
         }
-        int color = getColorForMimeType(mimeType);
+        int color = COLOR_BRAND;
         // Solid pastel: the wash flattened onto the theme background, so the
         // tile is opaque — nothing behind it (card color, ripple, a previous
         // frame) shows through as a dimming veil. Follows the theme: over a
@@ -108,12 +114,6 @@ public class MimeTypeThumbnail {
             icon.setTint(color);
         }
         return icon;
-    }
-
-    private static int getColorForMimeType(@NonNull String mimeType) {
-        if (FileUriHelper.isVideo(mimeType))                return COLOR_BRAND_ORANGE;
-        if (FileUriHelper.isAudio(mimeType))                return COLOR_BRAND_YELLOW;
-        return COLOR_BRAND_ORANGE;
     }
 
     private static final class MimeTypeFallbackDrawable extends Drawable {
