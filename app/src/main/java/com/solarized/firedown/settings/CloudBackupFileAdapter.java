@@ -570,7 +570,18 @@ public class CloudBackupFileAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             current = entry;
             Context ctx = card.getContext();
             name.setText(entry.name);
-            bindMimeChip(mime, ctx, entry.mime);
+            // Decorated MimePrimary chip (Downloads/Captured grid parity): the BARE
+            // label, no ' · ' separator — the pill is self-contained and the size
+            // follows as plain scrim text, so the row reads '[VÍDEO] 56 MB'. (The
+            // shared bindMimeChip appends ' · ' for the LIST's plain-text meta.)
+            String mimeLabel = entry.mime != null
+                    ? FileUriHelper.getLongMimeText(ctx, entry.mime) : null;
+            if (TextUtils.isEmpty(mimeLabel)) {
+                mime.setVisibility(View.GONE);
+            } else {
+                mime.setVisibility(View.VISIBLE);
+                mime.setText(mimeLabel);
+            }
             size.setText(Formatter.formatShortFileSize(ctx, entry.size));
             bindThumb(thumb, ctx, thumbBitmap, entry.mime);
 

@@ -2,12 +2,13 @@
 <!--
   One backed-up file GRID tile (CloudBackupFileAdapter, TYPE_FILE_GRID). Mirrors
   the Downloads grid tile (fragment_download_item_grid.xml): a 16:10 card with a
-  centerCrop thumbnail and a bottom scrim carrying the title + a 'mime · size'
-  row. No progress ring — in-progress uploads render as full-width TYPE_TRANSFER
-  rows (spanning the grid), not tiles. The ⋮ action button (opens the per-item
-  sheet) and the corner selection check share the top-end corner; the adapter
-  flips them on the multi-select toggle. Field ids match the list row so the
-  adapter's shared bind helpers work for both.
+  centerCrop thumbnail and a bottom scrim carrying the title + a meta row of the
+  decorated MimePrimary mime chip followed by the size — the SAME chip treatment
+  as the Downloads/Captured grid. No progress ring — in-progress uploads render as
+  full-width TYPE_TRANSFER rows (spanning the grid), not tiles. The ⋮ action
+  button (opens the per-item sheet) and the corner selection check share the
+  top-end corner; the adapter flips them on the multi-select toggle. Field ids
+  match the list row so the adapter's shared bind helpers work for both.
 -->
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
@@ -81,21 +82,19 @@
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
-                    <!-- Plain white caption (not the decorated MimePrimary chip):
-                         bindMimeChip sets 'LABEL · ' so this + size read as one
-                         'VÍDEO · 56 MB' line on the scrim, like the list meta. -->
+                    <!-- Decorated mime chip (MimePrimary) — the SAME treatment as
+                         the Downloads/Captured grid tile's mime_text, a pill over
+                         rounded_chip_scrim. The adapter sets the BARE label (no
+                         ' · '), so the chip + the size text read as '[VÍDEO] 56 MB',
+                         mirroring Downloads' grid '[mp4] duration · size'. -->
                     <TextView
                         android:id="@+id/cb_mime"
+                        style="@style/MimePrimary"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:shadowColor="#80000000"
-                        android:shadowDx="0"
-                        android:shadowDy="1"
-                        android:shadowRadius="2"
-                        android:singleLine="true"
-                        android:textColor="#E0FFFFFF"
-                        android:textSize="11.5sp"
-                        tools:text="VÍDEO · " />
+                        android:paddingLeft="4dp"
+                        android:paddingRight="4dp"
+                        tools:text="VÍDEO" />
 
                     <TextView
                         android:id="@+id/cb_size"
