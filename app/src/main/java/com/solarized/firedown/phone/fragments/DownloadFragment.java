@@ -216,6 +216,7 @@ public class DownloadFragment extends BaseDownloadFragment implements
 
         mLCEERecyclerView.setEmptyImageView(R.drawable.ill_baloons);
         mAdapter = new DownloadItemAdapter(getContext(), new DownloadDiffCallback(), this, mEnableGrid);
+        seedGroupingSort();
         mIncognitoHeaderAdapter = new IncognitoInProgressHeaderAdapter(() ->
                 startActivity(new Intent(requireContext(), VaultActivity.class)));
         // ConcatAdapter puts the incognito in-flight hint header at the top so

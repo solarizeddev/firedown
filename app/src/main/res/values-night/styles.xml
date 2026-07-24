@@ -68,18 +68,13 @@
         <item name="android:background">@drawable/dialog_rounded_top</item>
     </style>
 
-    <!-- Night override kept in lockstep with values/styles.xml: the grid mime
-         chip is a neutral ~50%-black media-badge pill (rounded_chip_scrim) +
-         light text, not the old solid-coral colorPrimaryContainer fill. The
-         scrim/pill are dark in both themes, so this dark-theme copy is identical
-         to the base. -->
-    <style name="MimePrimary">
-        <item name="android:background">@drawable/rounded_chip_scrim</item>
-        <item name="android:textColor">#F4F4F7</item>
-        <item name="android:textSize">12sp</item>
-        <item name="android:textAllCaps">true</item>
-        <item name="singleLine">true</item>
-    </style>
+    <!-- MimePrimary has NO night override any more. It used to carry a
+         byte-identical copy of the base (its own comment said so) purely to keep
+         the two in lockstep. Now that the grid mime is plain text with a fixed
+         light ink — the tile it sits on is a thumbnail + scrim, which doesn't
+         change with the theme, and the scrim-less fallback tiles get theme ink
+         from the adapters instead — there is nothing theme-dependent left to
+         override, so the duplicate is deleted rather than maintained. -->
 
     <style name="MimeTertiary">
         <item name="android:background">@drawable/rounded_secondary</item>

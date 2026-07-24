@@ -195,18 +195,32 @@
         <item name="android:background">@drawable/dialog_rounded_top</item>
     </style>
 
-    <!-- Grid-tile mime chip (Downloads + Captured grids). A quiet neutral
-         media-badge pill on the bottom_scrim (rounded_chip_scrim, ~50% black)
-         with light text — NOT the old solid-coral colorPrimaryContainer fill,
-         which shouted the type on every tile. The dark pill (vs the earlier
-         faint-white one) is what makes the light text legible on a bright
-         thumbnail. The chip shape stays as the "type identity" cue; only the
-         loud colour is gone. -->
+    <!-- Grid-tile mime label (Downloads + Captured + Cloud grids). TEXT, not a
+         pill — the grid meta row now speaks ONE visual language, the same
+         weighted-text hierarchy the list rows use (MimePrimaryLabel below):
+         the type takes full-strength light ink, the duration/size after it
+         stays at ~88% white, and a "·" separates them. Legibility over bright
+         artwork is carried by the bottom_scrim + a drop shadow (set per-tile in
+         the adapters, which also swap both to theme ink on the scrim-less
+         fallback "card" tiles), NOT by a background behind this one token.
+         History — the fill was iterated SIX times before the form was
+         questioned: solid coral colorPrimaryContainer (shouted the type on
+         every tile), 15% white (invisible on bright frames), 50% black (too
+         faint to register as a badge), +1dp stroke (worse), 80% black, then a
+         per-theme #99/#E6 split. Every round tuned contrast; none fixed the
+         actual problems — a filled box was the heaviest mark in the row while
+         carrying the LEAST information (a Downloads grid is ~90% "VIDEO", so
+         the token is near-zero entropy), it mixed two languages with the bare
+         text 6dp away, and it needed a per-theme fill for a backdrop (the
+         thumbnail) that never changes with the theme. Deleting the box removes
+         the whole tuning surface. Metrics match MimePrimaryLabel so list and
+         grid read as one system. -->
     <style name="MimePrimary">
-        <item name="android:background">@drawable/rounded_chip_scrim</item>
         <item name="android:textColor">#F4F4F7</item>
-        <item name="android:textSize">12sp</item>
+        <item name="android:textSize">11sp</item>
         <item name="android:textAllCaps">true</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.04</item>
         <item name="singleLine">true</item>
     </style>
 

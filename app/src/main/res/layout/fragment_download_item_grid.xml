@@ -89,9 +89,15 @@
                     android:shadowRadius="2"
                     tools:text="Latorre, sobre Zapatero: Todo era una fantasía…" />
 
-                <!-- Metadata row: a decorated mime CHIP (identity) followed by
-                     subtle scrim TEXT for the duration — only mime carries a
-                     background, matching the Captured grid. -->
+                <!-- Metadata row: ONE text language, the same weighted hierarchy
+                     the list row's line 2 uses — the mime type at full-strength
+                     light ink, then the duration/size after it at ~88% white.
+                     The " · " separator is prepended to mime_duration by the
+                     adapter (so a hidden duration leaves no dangling separator,
+                     and a suppressed mime leaves no leading one), which is why
+                     mime_duration carries no start margin. Neither token has a
+                     background — see the MimePrimary style header for why the
+                     chip was deleted after six rounds of tuning its fill. -->
                 <LinearLayout
                     android:id="@+id/row_mime"
                     android:layout_width="match_parent"
@@ -105,15 +111,16 @@
                         style="@style/MimePrimary"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:paddingLeft="4dp"
-                        android:paddingRight="4dp"
+                        android:shadowColor="#80000000"
+                        android:shadowDx="0"
+                        android:shadowDy="1"
+                        android:shadowRadius="2"
                         tools:text="mp4" />
 
                     <TextView
                         android:id="@+id/mime_duration"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="6dp"
                         android:singleLine="true"
                         android:textSize="11.5sp"
                         android:textColor="#E0FFFFFF"

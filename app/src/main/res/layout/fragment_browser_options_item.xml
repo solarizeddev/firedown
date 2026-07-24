@@ -82,15 +82,38 @@
                     style="@style/MimePrimary"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginEnd="6dp"
-                    android:paddingLeft="4dp"
-                    android:paddingRight="4dp"
+                    android:shadowColor="#80000000"
+                    android:shadowDx="0"
+                    android:shadowDy="1"
+                    android:shadowRadius="2"
                     tools:text="VIDEO" />
 
+                <!-- "·" between the mime and whichever fact leads. Same
+                     shown-only-between-two-visible-facts rule as tag_separator
+                     below (the row's existing idiom), which is what keeps a
+                     factless tile from rendering a dangling separator after the
+                     mime chip's marginEnd was dropped. -->
+                <TextView
+                    android:id="@+id/mime_separator"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="5dp"
+                    android:layout_marginEnd="5dp"
+                    android:text="@string/separator"
+                    android:textSize="11sp"
+                    android:textColor="#73FFFFFF"
+                    android:shadowColor="#80000000"
+                    android:shadowDx="0"
+                    android:shadowDy="1"
+                    android:shadowRadius="2"
+                    android:visibility="gone"
+                    tools:visibility="visible" />
+
                 <!-- Quality (video, e.g. "1080p") / dimensions (image, SVG) /
-                     language (subtitle). Subtle scrim text, NOT a chip — only the
-                     mime tag is decorated. Leads the fact cluster; the mime chip's
-                     marginEnd provides its left gap. -->
+                     language (subtitle). Same weighted-text hierarchy as the
+                     mime before it — the type leads at full-strength light ink,
+                     the facts trail at ~88% white. Gaps come from the separator
+                     views, so neither token carries a margin of its own. -->
                 <TextView
                     android:id="@+id/tag_quality"
                     android:layout_width="wrap_content"

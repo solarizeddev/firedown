@@ -82,25 +82,27 @@
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
-                    <!-- Decorated mime chip (MimePrimary) — the SAME treatment as
-                         the Downloads/Captured grid tile's mime_text, a pill over
-                         rounded_chip_scrim. The adapter sets the BARE label (no
-                         ' · '), so the chip + the size text read as '[VÍDEO] 56 MB',
-                         mirroring Downloads' grid '[mp4] duration · size'. -->
+                    <!-- Mime label (MimePrimary) — the SAME treatment as the
+                         Downloads/Captured grid tile's mime_text: weighted TEXT,
+                         no pill (see the MimePrimary style header). The adapter
+                         sets the BARE label and prepends " · " to cb_size, so the
+                         row reads 'VÍDEO · 56 MB', mirroring Downloads' grid
+                         'VIDEO · duration · size'. -->
                     <TextView
                         android:id="@+id/cb_mime"
                         style="@style/MimePrimary"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:paddingLeft="4dp"
-                        android:paddingRight="4dp"
+                        android:shadowColor="#80000000"
+                        android:shadowDx="0"
+                        android:shadowDy="1"
+                        android:shadowRadius="2"
                         tools:text="VÍDEO" />
 
                     <TextView
                         android:id="@+id/cb_size"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="6dp"
                         android:layout_weight="1"
                         android:ellipsize="end"
                         android:shadowColor="#80000000"

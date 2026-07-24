@@ -2,16 +2,25 @@
     <!-- Dark band at the bottom edge fading up to transparent so the
          overlaid title + metadata stay legible over bright thumbnail art
          (e.g. the yellow "OTRA TURRA" frames). angle=90 runs bottom→top.
-         The curve is deliberately strong-then-gone: darkest where the text
-         actually sits (bottom edge), fading fast above it. The previous
-         #EE/#99 curve still held 60% black at the gradient's midpoint —
-         on the light generated mime thumbnails (audio tiles) that read as
-         a dark smear over half the tile. The text's own drop shadow
-         carries the worst-case bright-art legibility the softer mid-stop
-         gives up. -->
+
+         The curve is deliberately STEEP: near-opaque exactly where the text
+         sits (bottom edge), then falling away faster than before. This is a
+         PARETO move over the previous #CC/#59 curve — DARKER at the bottom
+         (90% vs 80%), which is what buys the title its own ground when a clip
+         carries its own burned-in captions right where our title lands (the
+         on-device collision case), and LIGHTER at the midpoint (30% vs 35%),
+         so the "dark smear over half the tile" this curve was softened for
+         can only improve, never regress.
+
+         That smear was reported on the light generated mime thumbnails (audio
+         tiles). Those are now the scrim-LESS card branch in the adapters, but
+         a QUEUED / in-progress / errored audio tile still renders on this
+         scrim — which is why the midpoint stays low rather than returning to
+         the old #EE/#99 (~60% at midpoint). The text's own drop shadow carries
+         the rest. -->
     <gradient
         android:angle="90"
-        android:startColor="#CC000000"
-        android:centerColor="#59000000"
+        android:startColor="#E6000000"
+        android:centerColor="#4D000000"
         android:endColor="@android:color/transparent" />
 </shape>

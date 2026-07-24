@@ -53,6 +53,7 @@ import com.solarized.firedown.GlideHelper;
 import com.solarized.firedown.IntentActions;
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.R;
+import com.solarized.firedown.Sorting;
 import com.solarized.firedown.data.Download;
 import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.data.entity.OptionEntity;
@@ -86,6 +87,12 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
     @Inject
     protected SharedPreferences mSharedPreferences;
 
+    /** Source of the persisted section GROUPING, so a freshly created adapter
+     *  starts on the user's stored sort instead of the SORT_DATE default (see
+     *  {@link #seedGroupingSort}). */
+    @Inject
+    protected Sorting mSorting;
+
     @Inject
     protected CloudBackupManager mCloudBackup;
 
@@ -94,6 +101,20 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
     protected TaskViewModel mTaskViewModel;
 
     protected DownloadItemAdapter mAdapter;
+
+    /**
+     * Seeds a freshly created adapter with the persisted grouping so its rows
+     * drop the field the section headers already state from the FIRST bind —
+     * the same value {@link com.solarized.firedown.data.models.DownloadsViewModel}
+     * seeds its own initial state from. Without this the adapter would sit on
+     * its SORT_DATE default until the user next changed the sort, which is only
+     * correct for users who never left the default.
+     */
+    protected void seedGroupingSort() {
+        if (mAdapter != null && mSorting != null) {
+            mAdapter.setGroupingSort(mSorting.getCurrentSortLocal());
+        }
+    }
 
     protected GridLayoutManager mGridLayoutManager;
 
@@ -245,7 +266,16 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
                 SavedStateHandle handle = entry.getSavedStateHandle();
                 if (handle.contains(IntentActions.DOWNLOAD_SORT)) {
                     OptionEntity option = handle.get(IntentActions.DOWNLOAD_SORT);
-                    if (option != null) mDownloadsViewModel.setSortType(option.getId());
+                    if (option != null) {
+                        mDownloadsViewModel.setSortType(option.getId());
+                        // The rows must also drop whatever the NEW headers state
+                        // (see DownloadItemAdapter.setGroupingSort). Applied here
+                        // rather than deferred to the new paging generation: this
+                        // only adds/removes a text token — it can't reflow spans
+                        // the way the dense-mosaic flip can, so there's no
+                        // old-list-in-new-presentation frame to avoid.
+                        if (mAdapter != null) mAdapter.setGroupingSort(option.getId());
+                    }
                     handle.remove(IntentActions.DOWNLOAD_SORT);
                 } else if (handle.contains(IntentActions.DOWNLOAD_ITEM)) {
                     OptionEntity option = handle.get(IntentActions.DOWNLOAD_ITEM);

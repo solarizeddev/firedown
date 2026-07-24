@@ -71,5 +71,4 @@
     <!-- Faded onPrimaryContainer (night #0F0000) for the download banner's
          progress track, so the bar reads in the text colour. ~30% alpha. -->
 
-    <color name="rounded_chip_scrim">#E6000000</color>
 </resources>

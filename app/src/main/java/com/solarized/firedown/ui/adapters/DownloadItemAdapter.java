@@ -17,7 +17,6 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatImageView;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.ColorUtils;
-import androidx.core.view.ViewCompat;
 import androidx.core.widget.ImageViewCompat;
 import androidx.paging.PagingDataAdapter;
 import androidx.recyclerview.widget.DiffUtil;
@@ -30,12 +29,14 @@ import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.color.MaterialColors;
 import com.solarized.firedown.GlideHelper;
 import com.solarized.firedown.R;
+import com.solarized.firedown.Sorting;
 import com.solarized.firedown.data.Download;
 import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.data.entity.DownloadSeparatorEntity;
 import com.solarized.firedown.sync.CloudBackupManager;
 import com.solarized.firedown.ui.OnItemClickListener;
 import com.solarized.firedown.ui.ProgressOverlayView;
+import com.solarized.firedown.utils.DateOrganizer;
 import com.solarized.firedown.utils.DateUtils;
 import com.solarized.firedown.utils.FileUriHelper;
 import com.solarized.firedown.utils.GroupAggregate;
@@ -62,7 +63,8 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
      *  lockstep with fragment_download_item_grid.xml so the recycling restore in
      *  {@link #applyGridTileGround} paints exactly what the layout declares:
      *  white title + #80000000 text shadow, #E0FFFFFF duration, and the
-     *  MimePrimary chip's #F4F4F7 text over rounded_chip_scrim. */
+     *  MimePrimary label's #F4F4F7 text (plain text, no pill — see the
+     *  MimePrimary style header). */
     private static final int GRID_TEXT_SHADOW = 0x80000000;
     private static final int GRID_DURATION_SCRIM = 0xE0FFFFFF;
     private static final int GRID_CHIP_SCRIM_TEXT = 0xFFF4F4F7;
@@ -121,10 +123,11 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
      *  pastel card, NOT a photo; so it drops the dark {@code bottom_scrim}
      *  (which only exists to float white text over an arbitrary-brightness
      *  video frame — a muddy band on a pale card) and paints THEME text
-     *  instead: title colorOnSurface, duration colorOnSurfaceVariant. The mime
-     *  CHIP stays the uniform dark #CC capsule (rounded_chip_scrim + light text)
-     *  every grid tile uses — a tonal light pill read as an out-of-place holdout
-     *  beside the dark chips. Resolved once here, like the other row colours. */
+     *  instead: title colorOnSurface, MIME colorOnSurface (it leads the meta
+     *  row at full strength, as in the list), duration colorOnSurfaceVariant.
+     *  The mime carries no background on either branch — the chip is gone, see
+     *  the MimePrimary style header. Resolved once here, like the other row
+     *  colours. */
     private final int mFallbackTitleColor;
     private final int mFallbackMetaColor;
     private boolean mActionMode;
@@ -140,6 +143,21 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
      *  is checked (the chip rail already states the type). See
      *  {@link #setMimeSuppressed}. */
     private boolean mSuppressMime;
+
+    /** The active section GROUPING ({@link Sorting} SORT_*). A row must not
+     *  repeat what the section header above it already states — the same
+     *  redundancy rule as {@link #setMimeSuppressed} (which drops the type when
+     *  the filter chip states it), applied one level up to the sort headers.
+     *  See {@link #setGroupingSort} for exactly which fields qualify and why
+     *  size/alphabet deliberately do NOT. */
+    private int mGroupingSort = Sorting.SORT_DATE;
+
+    /** Buckets a row's own date into {@link DateOrganizer}'s categories so a row
+     *  can tell whether the header above it states its date EXACTLY (Today /
+     *  Yesterday) without any per-row plumbing from the separator — the bucket
+     *  is a pure function of the timestamp. Cheap (plain arithmetic, no
+     *  Calendar), allocated once. */
+    private final DateOrganizer mDateBuckets = new DateOrganizer();
 
     /** Content keys (name + size, see {@link CloudBackupManager#contentKey}) of
      *  files backed up to the cloud. A FINISHED row whose key is present shows a
@@ -366,6 +384,59 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         }
         mSuppressMime = suppressed;
         notifyDataSetChanged();
+    }
+
+    /**
+     * Sets the active section GROUPING so a row can drop the one fact its own
+     * header already states — the {@link #setMimeSuppressed} rule (don't repeat
+     * the checked chip) applied to the sort headers.
+     *
+     * <p>The rule is deliberately narrow: <b>suppress only where the header
+     * states the same fact at the same PRECISION.</b> That is exactly two
+     * cases:
+     * <ul>
+     *   <li><b>SORT_DOMAIN</b> — the header IS the domain ("x.com") and the row
+     *       repeats it verbatim on line 2. Exact duplication → drop it.</li>
+     *   <li><b>SORT_DATE, and only in the Today / Yesterday buckets</b> — there
+     *       the header fixes the date to the day, which is all the row's
+     *       "24 Jul 2026" adds. The WEEK / MONTH / OLDER buckets are RANGES
+     *       (Older can span years), so the exact date still earns its place and
+     *       is kept — hence the per-row bucket test rather than a blanket drop
+     *       under SORT_DATE.</li>
+     * </ul>
+     *
+     * <p>Deliberately NOT suppressed: <b>SORT_SIZE</b>, whose headers are
+     * buckets ("&gt; 1 MB") while the row carries the exact figure ("9,7 MB") —
+     * the row is strictly more informative, so dropping it would lose real
+     * information for a coarse gain; and <b>SORT_ALPHABET</b>, where the header
+     * is one letter of a name the row must show in full.
+     *
+     * <p>Suppression is per SORT MODE, never per row, so every row in the list
+     * drops the same field and the three-line rhythm and column alignment
+     * survive — the property that makes this safe, unlike a per-row conditional
+     * (see the grid-title rule: "same slot across every state").
+     *
+     * <p>Must notify itself for the same reason {@link #setMimeSuppressed}
+     * does: the re-sort re-submits the paged list, but DiffUtil won't rebind
+     * rows whose content is unchanged.
+     */
+    @SuppressLint("NotifyDataSetChanged")
+    public void setGroupingSort(int sortType) {
+        if (mGroupingSort == sortType) {
+            return;
+        }
+        mGroupingSort = sortType;
+        notifyDataSetChanged();
+    }
+
+    /** Whether the section header above this row already states its date to the
+     *  day — true only while grouping BY date and only in the exact buckets. */
+    private boolean headerStatesDate(long fileDate) {
+        if (mGroupingSort != Sorting.SORT_DATE) {
+            return false;
+        }
+        int category = mDateBuckets.getCategory(fileDate);
+        return category == DateOrganizer.CAT_TODAY || category == DateOrganizer.CAT_YESTERDAY;
     }
 
     /**
@@ -679,18 +750,26 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         holder.item.setStrokeColor(mActionMode && contains ? mColorSelected : mColorNormal);
         holder.selected.setVisibility(mActionMode ? View.VISIBLE : View.GONE);
         holder.selected.setImageDrawable(mActionMode ? (contains ? mChecked : mUnChecked) : null);
-        // List mode renders mime as a text label that prefixes the
-        // domain ('VÍDEO · youtube.com'); grid keeps the chip styling
-        // (no separator). Both forms are cached per mime type — see
-        // mMimeLabelCache / mMimeLabelListCache. Without the cache,
-        // every bind paid for a resource lookup (theme + LocaleList
+        // Both surfaces render the mime as a weighted TEXT label (the chip is
+        // gone — see the MimePrimary style header); they differ only in the
+        // trailing separator. List mode carries ' · ' so it joins the domain
+        // that follows ('VÍDEO · youtube.com'); grid mode is bare because there
+        // the separator is prepended to the facts instead. Both forms are cached
+        // per mime type — see mMimeLabelCache / mMimeLabelListCache. Without the
+        // cache, every bind paid for a resource lookup (theme + LocaleList
         // resolution) plus a String concat on the list-mode path.
         // The dense tile has no mime view at all (the active filter chip
         // already states the type) — null-guarded. The normal tiles hide
         // it while a single-type filter is active (mSuppressMime), same
         // redundancy rule.
+        // Sorting BY domain makes the header state it verbatim, so the row's own
+        // "· x.com" is pure repetition — drop it (see setGroupingSort). The mime
+        // label then takes the GRID (separator-less) form, because the " · " it
+        // normally carries exists only to join it to the domain that follows.
+        boolean headerStatesDomain = !isGrid && mGroupingSort == Sorting.SORT_DOMAIN;
         if (holder.mimeText != null) {
-            String mimeLabel = mSuppressMime ? null : mimeLabelFor(mimeType, isGrid);
+            String mimeLabel = mSuppressMime
+                    ? null : mimeLabelFor(mimeType, isGrid || headerStatesDomain);
             if (TextUtils.isEmpty(mimeLabel)) {
                 holder.mimeText.setVisibility(View.GONE);
             } else {
@@ -727,7 +806,10 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
                 setVisible(holder.fileName, !TextUtils.isEmpty(name));
             }
         }
-        if (holder.fileUrl != null) holder.fileUrl.setText(domain);
+        if (holder.fileUrl != null) {
+            holder.fileUrl.setText(domain);
+            setVisible(holder.fileUrl, !headerStatesDomain && !TextUtils.isEmpty(domain));
+        }
 
 
         // ── Action button icon ──────────────────────────────────────
@@ -841,16 +923,13 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
                 holder.mimeDuration.setShadowLayer(0f, 0f, 0f, Color.TRANSPARENT);
             }
             if (holder.mimeText != null) {
-                // The mime pill is UNIFORM across every grid tile — the same dark
-                // #CC chip the photo tiles use (else branch). Only the missing
-                // scrim + the theme TITLE/duration text make this a card; the chip
-                // stays a badge (dark pill, light text). A tonal light pill here
-                // read as an out-of-place holdout beside the dark chips (on-device
-                // call). A dark badge on a light-theme pastel card is a normal
-                // badge, not the muddy blob the old 50% scrim would have been.
-                holder.mimeText.setBackgroundResource(R.drawable.rounded_chip_scrim);
-                ViewCompat.setBackgroundTintList(holder.mimeText, null);
-                holder.mimeText.setTextColor(GRID_CHIP_SCRIM_TEXT);
+                // No scrim on this tile, so the meta row takes THEME ink like the
+                // title above it: the type at full-strength colorOnSurface, the
+                // duration after it at colorOnSurfaceVariant (set above) — the
+                // exact weighting the list row's line 2 uses. No background: the
+                // chip was deleted, see the MimePrimary style header.
+                holder.mimeText.setTextColor(mFallbackTitleColor);
+                holder.mimeText.setShadowLayer(0f, 0f, 0f, Color.TRANSPARENT);
             }
             // The ⋮ button is corner chrome on this theme card, not over a
             // photo — white washes out on the light-theme pastel, so give it the
@@ -869,9 +948,10 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
                 holder.mimeDuration.setShadowLayer(2f, 0f, 1f, GRID_TEXT_SHADOW);
             }
             if (holder.mimeText != null) {
-                holder.mimeText.setBackgroundResource(R.drawable.rounded_chip_scrim);
-                ViewCompat.setBackgroundTintList(holder.mimeText, null);
+                // On the scrim: light ink + the same drop shadow the duration
+                // beside it carries, so the pair reads as one line.
                 holder.mimeText.setTextColor(GRID_CHIP_SCRIM_TEXT);
+                holder.mimeText.setShadowLayer(2f, 0f, 1f, GRID_TEXT_SHADOW);
             }
             setGridActionTint(holder, mActionIconTintGridCsl);
         }
@@ -992,16 +1072,25 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         String secondary = secondaryMetaLabel(entity, mimeType);
 
         if (isGrid) {
-            // Grid meta row reads "[chip] duration · size" (or
-            // "resolution · size" for images): size is the one list-line
+            // Grid meta row reads "VIDEO · duration · size" (or
+            // "VIDEO · resolution · size" for images): size is the one list-line
             // fact with no other home in the grid — date is carried by the
             // section headers, so it stays out. (mimeDuration is absent in
             // the dense tile, which shows no text at all.)
+            //
+            // The " · " separator is prepended HERE rather than appended to the
+            // mime label, so neither token can leave a dangling separator: a
+            // non-FINISHED tile hides mimeDuration entirely (mime stands alone),
+            // and a filter-suppressed mime (mSuppressMime) leaves the facts
+            // without a leading "·". That's also why the layout gives
+            // mime_duration no start margin — the separator carries the gap.
             if (holder.mimeDuration != null) {
                 String label = joinWithSize(secondary, entity.getFileSize());
                 if (!TextUtils.isEmpty(label)) {
+                    boolean mimeShown = holder.mimeText != null
+                            && holder.mimeText.getVisibility() == View.VISIBLE;
                     holder.mimeDuration.setVisibility(View.VISIBLE);
-                    holder.mimeDuration.setText(label);
+                    holder.mimeDuration.setText(mimeShown ? " · " + label : label);
                 }
             }
         }
@@ -1010,7 +1099,8 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
             holder.statusText.setTextColor(MaterialColors.getColor(
                     holder.statusText,
                     com.google.android.material.R.attr.colorOnSurfaceVariant));
-            holder.statusText.setText(getFinishedLabel(holder, entity));
+            holder.statusText.setText(
+                    getFinishedLabel(holder, entity, headerStatesDate(entity.getFileDate())));
             holder.statusText.setVisibility(View.VISIBLE);
         }
 
@@ -1027,22 +1117,31 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
      * fields). Saves one Utils.getFileSize, one DateUtils.getFileDate,
      * and one String concatenation per scroll re-bind of the same row.
      */
-    private static String getFinishedLabel(DownloadViewHolder holder, DownloadEntity entity) {
+    private static String getFinishedLabel(DownloadViewHolder holder, DownloadEntity entity,
+                                           boolean omitDate) {
         long id = entity.getId();
         long size = entity.getFileSize();
         long date = entity.getFileDate();
+        // omitDate is part of the key: the same row yields a different label
+        // when the grouping changes (or when a "Today" row ages into "Week"),
+        // so a stale cached label would otherwise survive the re-sort.
         if (holder.cachedFinishedLabel != null
                 && holder.cachedFinishedKeyId == id
                 && holder.cachedFinishedKeySize == size
-                && holder.cachedFinishedKeyDate == date) {
+                && holder.cachedFinishedKeyDate == date
+                && holder.cachedFinishedKeyOmitDate == omitDate) {
             return holder.cachedFinishedLabel;
         }
         Tracing.begin("finishedLabel:miss");
         try {
-            String label = holder.itemView.getContext().getString(
-                    R.string.download_finished_meta,
-                    Utils.getFileSize(size),
-                    DateUtils.getFileDate(date));
+            // Grouped by date in an exact bucket, the header already states the
+            // day — the line drops to "size · duration" (see setGroupingSort).
+            String label = omitDate
+                    ? Utils.getFileSize(size)
+                    : holder.itemView.getContext().getString(
+                            R.string.download_finished_meta,
+                            Utils.getFileSize(size),
+                            DateUtils.getFileDate(date));
             // Append the type's secondary metadatum (duration / resolution /
             // language) to the "size · date" line — the list equivalent of the
             // grid badge. Immutable per entity, so the id/size/date cache key
@@ -1054,6 +1153,7 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
             holder.cachedFinishedKeyId = id;
             holder.cachedFinishedKeySize = size;
             holder.cachedFinishedKeyDate = date;
+            holder.cachedFinishedKeyOmitDate = omitDate;
             holder.cachedFinishedLabel = label;
             return label;
         } finally { Tracing.end(); }
@@ -1244,6 +1344,7 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         long cachedFinishedKeyId = Long.MIN_VALUE;
         long cachedFinishedKeySize = Long.MIN_VALUE;
         long cachedFinishedKeyDate = Long.MIN_VALUE;
+        boolean cachedFinishedKeyOmitDate;
         @Nullable String cachedFinishedLabel;
 
         // Cache for the parsed domain string. WebUtils.getDomainName

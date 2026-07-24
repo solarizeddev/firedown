@@ -260,6 +260,9 @@ public class BrowserOptionAdapter extends GridListBaseAdapter<BrowserDownloadEnt
         if (holder.tagDuration == null) return;
 
         // Reset
+        if (holder.mimeSeparator != null) {
+            holder.mimeSeparator.setVisibility(View.GONE);
+        }
         if (holder.tagQuality != null) {
             holder.tagQuality.setVisibility(View.GONE);
         }
@@ -290,6 +293,19 @@ public class BrowserOptionAdapter extends GridListBaseAdapter<BrowserDownloadEnt
         }
 
         bindCaptionBadge(context, holder, entity);
+
+        // The mime is plain text now (the chip and its marginEnd are gone — see
+        // the MimePrimary style header), so the gap to the first fact comes from
+        // this separator, shown only when BOTH sides are visible. Runs last:
+        // every fact slot has settled by here, including the CC badge.
+        if (holder.mimeSeparator != null && holder.mimeText != null) {
+            boolean anyFact = (holder.tagQuality != null
+                            && holder.tagQuality.getVisibility() == View.VISIBLE)
+                    || holder.tagDuration.getVisibility() == View.VISIBLE
+                    || (holder.tagCc != null && holder.tagCc.getVisibility() == View.VISIBLE);
+            boolean mimeShown = holder.mimeText.getVisibility() == View.VISIBLE;
+            holder.mimeSeparator.setVisibility(anyFact && mimeShown ? View.VISIBLE : View.GONE);
+        }
     }
 
     /**
@@ -467,6 +483,9 @@ public class BrowserOptionAdapter extends GridListBaseAdapter<BrowserDownloadEnt
         @Nullable final TextView tagQuality;
         @Nullable final TextView tagDuration;
         @Nullable final View tagSeparator;
+        /** "·" between the mime and the first fact (grid only — the list row
+         *  appends its own separator to the mime text). */
+        @Nullable final View mimeSeparator;
         @Nullable final TextView tagCc;
         @Nullable final View tagCcSeparator;
 
@@ -488,6 +507,7 @@ public class BrowserOptionAdapter extends GridListBaseAdapter<BrowserDownloadEnt
             tagQuality = view.findViewById(R.id.tag_quality);
             tagDuration = view.findViewById(R.id.tag_duration);
             tagSeparator = view.findViewById(R.id.tag_separator);
+            mimeSeparator = view.findViewById(R.id.mime_separator);
             tagCc = view.findViewById(R.id.tag_cc);
             tagCcSeparator = view.findViewById(R.id.tag_cc_separator);
 
