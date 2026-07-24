@@ -121,12 +121,12 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
      *  pastel card, NOT a photo; so it drops the dark {@code bottom_scrim}
      *  (which only exists to float white text over an arbitrary-brightness
      *  video frame — a muddy band on a pale card) and paints THEME text
-     *  instead: title colorOnSurface, duration colorOnSurfaceVariant, mime a
-     *  ~12%-onSurface tonal pill (rounded_chip_tonal) with colorOnSurface
-     *  text. Resolved once here, like the other row colours. */
+     *  instead: title colorOnSurface, duration colorOnSurfaceVariant. The mime
+     *  CHIP stays the uniform dark #CC capsule (rounded_chip_scrim + light text)
+     *  every grid tile uses — a tonal light pill read as an out-of-place holdout
+     *  beside the dark chips. Resolved once here, like the other row colours. */
     private final int mFallbackTitleColor;
     private final int mFallbackMetaColor;
-    private final ColorStateList mFallbackChipTint;
     private boolean mActionMode;
     private boolean mEnabled;
     private boolean mEnableGrid;
@@ -217,9 +217,6 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         // separately for readability (constructor cost is negligible).
         mFallbackMetaColor = MaterialColors.getColor(context,
                 com.google.android.material.R.attr.colorOnSurfaceVariant, Color.GRAY);
-        // ~12% onSurface — the tonal-pill fill applied over rounded_chip_tonal.
-        mFallbackChipTint = ColorStateList.valueOf(
-                ColorUtils.setAlphaComponent(mFallbackTitleColor, 0x1F));
     }
 
 
@@ -844,9 +841,16 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
                 holder.mimeDuration.setShadowLayer(0f, 0f, 0f, Color.TRANSPARENT);
             }
             if (holder.mimeText != null) {
-                holder.mimeText.setBackgroundResource(R.drawable.rounded_chip_tonal);
-                ViewCompat.setBackgroundTintList(holder.mimeText, mFallbackChipTint);
-                holder.mimeText.setTextColor(mFallbackTitleColor);
+                // The mime pill is UNIFORM across every grid tile — the same dark
+                // #CC chip the photo tiles use (else branch). Only the missing
+                // scrim + the theme TITLE/duration text make this a card; the chip
+                // stays a badge (dark pill, light text). A tonal light pill here
+                // read as an out-of-place holdout beside the dark chips (on-device
+                // call). A dark badge on a light-theme pastel card is a normal
+                // badge, not the muddy blob the old 50% scrim would have been.
+                holder.mimeText.setBackgroundResource(R.drawable.rounded_chip_scrim);
+                ViewCompat.setBackgroundTintList(holder.mimeText, null);
+                holder.mimeText.setTextColor(GRID_CHIP_SCRIM_TEXT);
             }
             // The ⋮ button is corner chrome on this theme card, not over a
             // photo — white washes out on the light-theme pastel, so give it the
