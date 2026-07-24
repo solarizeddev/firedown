@@ -195,25 +195,32 @@
         <item name="android:background">@drawable/dialog_rounded_top</item>
     </style>
 
+    <!-- Grid-tile mime chip (Downloads + Captured grids). A quiet neutral
+         "glass" pill on the dark bottom_scrim (rounded_chip_scrim) with light
+         text — NOT the old solid-coral colorPrimaryContainer fill, which
+         shouted the type on every tile (a filled brand pill × N rows read as
+         "everything is flagged"). The chip shape stays as the "type identity"
+         cue; only the loud colour is gone. -->
     <style name="MimePrimary">
-        <item name="android:background">@drawable/rounded_primary</item>
-        <item name="android:textColor">?attr/colorOnPrimaryContainer</item>
+        <item name="android:background">@drawable/rounded_chip_scrim</item>
+        <item name="android:textColor">#E0FFFFFF</item>
         <item name="android:textSize">12sp</item>
         <item name="android:textAllCaps">true</item>
         <item name="singleLine">true</item>
     </style>
 
-    <!-- Text-only mime label used in the Downloads list. No chip
-         background — sits inline with the domain on the metadata
-         line so it scales naturally with long translations
-         (Russian ИЗОБРАЖЕНИЕ, Italian SOTTOTITOLI) instead of
-         pushing the filename off-screen. Coloured with colorPrimary
-         so it reads as a brand-accented label on the surface; the
-         adapter overrides it to the active CardLook's fg when the
-         row sits on the coral active surface, where colorPrimary
-         would disappear into the background. -->
+    <!-- Text-only mime label used in the list rows (Downloads / Captured /
+         Cloud backup). No chip background — sits inline with the domain on the
+         metadata line so it scales naturally with long translations (Russian
+         ИЗОБРАЖЕНИЕ, Italian SOTTOTITOLI) instead of pushing the filename
+         off-screen. Coloured NEUTRAL (onSurfaceVariant, same as the domain that
+         follows it) rather than coral: the type is secondary metadata already
+         signalled by the thumbnail glyph, so a repeated brand-coral accent on
+         every row just added noise (the meta line now reads as one quiet
+         "VIDEO · youtube.com" unit). Bold + caps + letter-spacing keep the type
+         token distinct from the lowercase domain without a colour shout. -->
     <style name="MimePrimaryLabel">
-        <item name="android:textColor">?attr/colorPrimary</item>
+        <item name="android:textColor">?attr/colorOnSurfaceVariant</item>
         <item name="android:textSize">11sp</item>
         <item name="android:textAllCaps">true</item>
         <item name="android:textStyle">bold</item>

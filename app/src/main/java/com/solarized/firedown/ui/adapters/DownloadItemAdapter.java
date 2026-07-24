@@ -1067,12 +1067,13 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         final @Nullable TextView mimeDuration;
         final @Nullable View bottomBlock;
         /** Quiet "backed up to cloud" marker, shown only for a FINISHED backed-up
-         *  file. Placement differs per layout (the adapter only toggles visibility):
-         *  LIST — a muted grey cloud as a TRAILING row-status icon at the right edge,
-         *  just left of the ⋮ (off the identity meta line, Drive/Dropbox convention);
-         *  GRID + dense mosaic — a bare white cloud in the top-START corner (the grid
-         *  meta line has no spare width, and the ⋮/selection-check own top-end).
-         *  Not the old disc — no filled circle. */
+         *  file. Same placement in EVERY layout (the adapter only toggles
+         *  visibility): a bare ~70%-white cloud in the THUMBNAIL's top-START corner
+         *  — the Google Photos "backed up" convention, so list and grid read
+         *  identically. Off the mime·domain meta line (a backup STATE is not the
+         *  row's identity), and off the right gutter (a lone glyph there read as
+         *  orphaned). The list selection check lives in the ⋮ slot, not on the
+         *  thumbnail, so there's no collision. Not the old disc — no filled circle. */
         final @Nullable AppCompatImageView cloudBadge;
 
         // Cache for the FINISHED row's "<size> - <date>" label. Built

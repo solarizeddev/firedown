@@ -91,6 +91,29 @@
             app:layout_constraintStart_toStartOf="@id/image"
             app:layout_constraintTop_toTopOf="@id/image" />
 
+        <!-- Cloud-backed marker: a bare white cloud in the thumbnail's top-START
+             corner — the Google Photos "backed up" convention, and the SAME
+             placement the grid tile uses, so list and grid read identically.
+             Deliberately on the thumbnail (not the meta line): a backup STATE is
+             not part of the row's mime·domain identity, and a lone glyph floating
+             in the right gutter read as orphaned. No disc/scrim, ~70% alpha so it
+             stays a quiet marker; may wash out on rare bright artwork — the same
+             accepted trade-off as the grid glyph. Shown only for a FINISHED
+             backed-up entry; the selection check lives in the ⋮ slot, not here,
+             so there is no collision. -->
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/cloud_badge"
+            android:layout_width="15dp"
+            android:layout_height="15dp"
+            android:layout_margin="4dp"
+            android:alpha="0.7"
+            android:contentDescription="@string/cloud_backed_up_desc"
+            android:visibility="gone"
+            app:layout_constraintStart_toStartOf="@id/image"
+            app:layout_constraintTop_toTopOf="@id/image"
+            app:srcCompat="@drawable/cloud_done_24"
+            app:tint="@android:color/white" />
+
         <!-- Selection checkmark — sits in the same slot as the more
              button on the right edge; the adapter swaps them on the
              action-mode toggle (action button INVISIBLE, this VISIBLE).
@@ -123,10 +146,8 @@
             android:orientation="vertical"
             android:paddingStart="@dimen/list_margin"
             android:paddingEnd="0dp"
-            android:layout_marginEnd="6dp"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/cloud_badge"
-            app:layout_goneMarginEnd="6dp"
+            app:layout_constraintEnd_toStartOf="@id/item_download_action"
             app:layout_constraintStart_toEndOf="@id/image"
             app:layout_constraintTop_toTopOf="parent">
 
@@ -230,29 +251,6 @@
                 tools:text="11.6 MB · 20 may 2026" />
 
         </LinearLayout>
-
-        <!-- Cloud-backed marker: a trailing row-status icon at the right edge,
-             just left of the ⋮ — the Drive/Dropbox convention where the thumbnail
-             is identity, the text column is identity+facts, and the right edge
-             carries status + actions. Deliberately OFF the mime·domain meta line
-             (a backup STATE doesn't belong on the identity line). Muted
-             onSurfaceVariant, shown only for a FINISHED backed-up entry; GONE
-             otherwise, and text_column's goneMarginEnd reclaims the width so a
-             non-backed row's text runs the full column. (List only — the grid
-             carries its own corner glyph; do NOT put a badge on the list
-             thumbnail, which is small and owned by the selection check.) -->
-        <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/cloud_badge"
-            android:layout_width="18dp"
-            android:layout_height="18dp"
-            android:layout_marginEnd="2dp"
-            android:contentDescription="@string/cloud_backed_up_desc"
-            android:visibility="gone"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/item_download_action"
-            app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/cloud_done_24"
-            app:tint="?attr/colorOnSurfaceVariant" />
 
         <!-- Action button (more / remove) -->
         <com.google.android.material.button.MaterialButton

@@ -68,9 +68,13 @@
         <item name="android:background">@drawable/dialog_rounded_top</item>
     </style>
 
+    <!-- Night override kept in lockstep with values/styles.xml: the grid mime
+         chip is a neutral glass pill (rounded_chip_scrim) + light text, not the
+         old solid-coral colorPrimaryContainer fill. The scrim is dark in both
+         themes, so this dark-theme copy is identical to the base. -->
     <style name="MimePrimary">
-        <item name="android:background">@drawable/rounded_primary</item>
-        <item name="android:textColor">?attr/colorOnPrimaryContainer</item>
+        <item name="android:background">@drawable/rounded_chip_scrim</item>
+        <item name="android:textColor">#E0FFFFFF</item>
         <item name="android:textSize">12sp</item>
         <item name="android:textAllCaps">true</item>
         <item name="singleLine">true</item>
