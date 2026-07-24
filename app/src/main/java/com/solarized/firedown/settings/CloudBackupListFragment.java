@@ -3,6 +3,7 @@ package com.solarized.firedown.settings;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.text.Editable;
@@ -374,6 +375,19 @@ public class CloudBackupListFragment extends Fragment
     }
 
     @Override
+    public void onConfigurationChanged(@NonNull Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        // SettingsActivity declares configChanges="…orientation…", so a rotation
+        // does NOT recreate the fragment — recompute the grid span from the new
+        // orientation's resources (portrait 2 → landscape 4), the same as the
+        // Downloads grid does. List mode stays a single column. gridSpanCount()
+        // reads getResources() fresh, so it already reflects newConfig here.
+        if (mLayoutManager != null) {
+            mLayoutManager.setSpanCount(gridSpanCount(mEnableGrid));
+        }
+    }
+
+    @Override
     public void onResume() {
         super.onResume();
         // Refresh on return: the manifest can change while away (a worker commits,
@@ -735,10 +749,13 @@ public class CloudBackupListFragment extends Fragment
     }
 
 
-    /** Grid span for the given mode: 1 = list (single column), else the shared
-     *  Captured/Downloads grid span. */
+    /** Grid span for the given mode: 1 = list (single column), else the same
+     *  orientation-aware grid span the Downloads grid uses
+     *  ({@code image_grid_number} — portrait 2, landscape 4, more on tablets).
+     *  Read fresh from resources so {@link #onConfigurationChanged} picks up the
+     *  new orientation's value on rotation. */
     private int gridSpanCount(boolean grid) {
-        return grid ? getResources().getInteger(R.integer.browser_grid_number) : 1;
+        return grid ? getResources().getInteger(R.integer.image_grid_number) : 1;
     }
 
     /** Flips list ↔ grid: persists the choice, re-spans the layout, rebinds the
