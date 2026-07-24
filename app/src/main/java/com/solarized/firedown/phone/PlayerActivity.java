@@ -70,6 +70,16 @@ public class PlayerActivity extends AppCompatActivity {
     private static final int CONTROL_PLAY_PAUSE = 1;
 
     /**
+     * Hide the ActionBar Share item. Set by callers for whom sharing the file is
+     * meaningless — the Cloud Backup player: a backed-up item is either cloud-only
+     * (nothing on disk to share) or a large local file no share target can accept,
+     * and the Backups screen isn't a share surface. Normal Downloads playback
+     * leaves it unset, so Share stays for a genuinely local downloaded file.
+     */
+    public static final String EXTRA_HIDE_SHARE =
+            "com.solarized.firedown.phone.PlayerActivity.HIDE_SHARE";
+
+    /**
      * Distinct request codes for the PendingIntents — Android caches
      * PendingIntents by (action, requestCode), and a single shared code
      * would let a "pause" intent overwrite a "play" intent that's still
@@ -223,6 +233,13 @@ public class PlayerActivity extends AppCompatActivity {
             boolean isPlayable = fragment != null
                     && (fragment.isVideoMime() || fragment.isAudioMime());
             pipItem.setVisible(pipSupported && isPlayable);
+        }
+        // Cloud Backup opens the player with EXTRA_HIDE_SHARE — sharing a
+        // backed-up item is meaningless (see the constant). Normal Downloads
+        // playback keeps Share.
+        MenuItem shareItem = menu.findItem(R.id.action_share);
+        if (shareItem != null && getIntent().getBooleanExtra(EXTRA_HIDE_SHARE, false)) {
+            shareItem.setVisible(false);
         }
         return super.onPrepareOptionsMenu(menu);
     }

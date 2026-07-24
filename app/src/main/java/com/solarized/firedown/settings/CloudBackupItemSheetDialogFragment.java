@@ -167,6 +167,10 @@ public class CloudBackupItemSheetDialogFragment extends BaseBottomSheetDialogFra
                 || FileUriHelper.isVideo(mime) || FileUriHelper.isAudio(mime)) {
             Intent play = new Intent(requireContext(), PlayerActivity.class);
             play.putExtra(Keys.ITEM_ID, entity);
+            // Backup context: no Share (see PlayerActivity.EXTRA_HIDE_SHARE) —
+            // a backed-up item isn't a share surface, and a 4 GB local file has
+            // no viable share target anyway.
+            play.putExtra(PlayerActivity.EXTRA_HIDE_SHARE, true);
             startActivity(play);
             mNavController.popBackStack();
             return;
