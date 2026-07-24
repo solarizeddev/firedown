@@ -59,6 +59,16 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
 
     private static final String TAG = "DownloadItemAdapter";
 
+    /** The grid tile's scrim-mode caption colours (a real photo tile), kept in
+     *  lockstep with fragment_download_item_grid.xml so the recycling restore in
+     *  {@link #applyGridTileGround} paints exactly what the layout declares:
+     *  white title + #80000000 text shadow, #E0FFFFFF duration, and the
+     *  MimePrimary label's #F4F4F7 text (plain text, no pill — see the
+     *  MimePrimary style header). */
+    private static final int GRID_TEXT_SHADOW = 0x80000000;
+    private static final int GRID_DURATION_SCRIM = 0xE0FFFFFF;
+    private static final int GRID_CHIP_SCRIM_TEXT = 0xFFF4F4F7;
+
     /** A P2P-received file stores a {@code p2p://<device-slug>} pseudo-URL as its
      *  file_url (see P2pShareController.finalizeReceivedFile). It has no web
      *  origin, so the "MIME · domain" meta line shows the transport name instead
@@ -110,13 +120,25 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
      *  attribute resolution per row — caching the int once removes that
      *  lookup from the hot scroll path. */
     private final int mActionIconTintList;
-    /** ColorStateList wrapper cached once — setIconTint takes a
+    /** ColorStateList wrappers cached per surface — setIconTint takes a
      *  ColorStateList, and wrapping a plain int with valueOf allocates
-     *  on every bind. ONE list now covers every call: since the grid tile's
-     *  caption moved off the artwork (see fragment_download_item_grid.xml),
-     *  its ⋮ sits on the theme ground like the list row's and takes the same
-     *  colorOnSurfaceVariant — the white-over-photo variant is gone. */
+     *  on every bind. Two surfaces (grid = white, list =
+     *  colorOnSurfaceVariant), so two cached lists cover every call. */
     private final ColorStateList mActionIconTintListCsl;
+    private final ColorStateList mActionIconTintGridCsl;
+    /** Grid FALLBACK (pastel audio/doc/apk) tile ground treatment — see
+     *  {@link #applyGridTileGround}. A FINISHED tile whose type has no real
+     *  thumbnail is painted by {@code MimeTypeThumbnail} as a solid theme
+     *  pastel card, NOT a photo; so it drops the dark {@code bottom_scrim}
+     *  (which only exists to float white text over an arbitrary-brightness
+     *  video frame — a muddy band on a pale card) and paints THEME text
+     *  instead: title colorOnSurface, MIME colorOnSurface (it leads the meta
+     *  row at full strength, as in the list), duration colorOnSurfaceVariant.
+     *  The mime carries no background on either branch — the chip is gone, see
+     *  the MimePrimary style header. Resolved once here, like the other row
+     *  colours. */
+    private final int mFallbackTitleColor;
+    private final int mFallbackMetaColor;
     private boolean mActionMode;
     private boolean mEnabled;
     private boolean mEnableGrid;
@@ -215,6 +237,13 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         mActionIconTintList = MaterialColors.getColor(context,
                 com.google.android.material.R.attr.colorOnSurfaceVariant, Color.BLACK);
         mActionIconTintListCsl = ColorStateList.valueOf(mActionIconTintList);
+        mActionIconTintGridCsl = ColorStateList.valueOf(Color.WHITE);
+        mFallbackTitleColor = MaterialColors.getColor(context,
+                com.google.android.material.R.attr.colorOnSurface, Color.BLACK);
+        // colorOnSurfaceVariant — same attr as mActionIconTintList; resolved
+        // separately for readability (constructor cost is negligible).
+        mFallbackMetaColor = MaterialColors.getColor(context,
+                com.google.android.material.R.attr.colorOnSurfaceVariant, Color.GRAY);
     }
 
 
@@ -622,7 +651,7 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
                     // The dense tile carries no action button (null-guarded).
                     if (holder.actionButton != null) {
                         holder.actionButton.setVisibility(mActionMode ? View.INVISIBLE : View.VISIBLE);
-                        setActionIcon(holder,
+                        setActionIcon(holder, isGrid,
                                 status == Download.QUEUED
                                         ? R.drawable.ic_clear_24
                                         : R.drawable.ic_baseline_more_vert_24);
@@ -816,7 +845,7 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         // viewer, long-press enters selection; per-item actions live there.
         if (holder.actionButton != null) {
             holder.actionButton.setVisibility(mActionMode ? View.INVISIBLE : View.VISIBLE);
-            setActionIcon(holder,
+            setActionIcon(holder, isGrid,
                     status == Download.QUEUED ? R.drawable.ic_clear_24 : R.drawable.ic_baseline_more_vert_24);
         }
 
@@ -828,12 +857,10 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         setVisible(holder.statusText, false);
         setVisible(holder.imageProgress, false);
         setVisible(holder.mimeDuration, false);
-        // The normal grid tile's caption is shown in EVERY state, including
-        // PROGRESS — it now sits below the image instead of over it, so hiding
-        // it would shorten the tile and make a downloading row ragged against
-        // its neighbours (when it was an overlay, hiding it cost no height).
-        // The dense tile is a pure thumbnail, so its block stays hidden
-        // (bindErrorInner re-shows it so an ERROR row still reads its message).
+        // Grid info block is shown by default; PROGRESS hides it so the
+        // progress overlay owns the whole tile. The dense tile is a pure
+        // thumbnail — its block stays hidden (bindErrorInner re-shows it
+        // so an ERROR row still reads its message).
         setVisible(holder.bottomBlock, !holder.denseTile);
 
         // ── Status-specific binding ─────────────────────────────────
@@ -844,27 +871,46 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
             case Download.QUEUED -> bindQueued(holder, entity, isGrid);
         }
 
+        // Whether this row's thumbnail slot holds a REAL picture (image / video
+        // frame / audio cover art / apk icon) or the generated MimeTypeThumbnail
+        // pastel FALLBACK card. Drives BOTH the cloud badge's tint and the grid
+        // tile's ground treatment below, so it's computed once here. This is NOT
+        // a mime guess (which is wrong for cover-art audio — it decodes to a real
+        // picture): GlideHelper.rendersMimeFallback mirrors load()'s exact branch
+        // logic, so the ground matches what actually paints. See its javadoc.
+        boolean realThumbnail = !GlideHelper.rendersMimeFallback(entity);
+
         // ── Cloud-backup badge ──────────────────────────────────────
         // A quiet mark for a FINISHED file that's backed up to the cloud.
         // Only-when-true — absence is the signal, so the list stays quiet (and
         // non-users see none). Not on progress/error/queued rows (an in-flight
         // or failed download isn't backed up).
+        //
+        // It sits in a DIFFERENT place per surface, hence the isGrid split
+        // below: a corner overlay on the grid tile's artwork, but INLINE in the
+        // list row's meta line (see fragment_download_item.xml for why — the
+        // 78×64dp list thumbnail can't spare the corner, and the list has a
+        // meta line the grid's scrim caption doesn't).
         if (holder.cloudBadge != null) {
             boolean backed = status == Download.FINISHED && isBackedUp(entity);
             holder.cloudBadge.setVisibility(backed ? View.VISIBLE : View.GONE);
             if (backed) {
-                // Ground, not theme, decides the treatment — and after the
-                // caption move there are only two grounds left:
+                // Tint the marker by the GROUND it sits on, not by theme alone —
+                // a photo's brightness doesn't follow the theme. Only the GRID
+                // badge is over artwork, and only there does the ground vary: a
+                // REAL thumbnail (image / video frame / audio cover art / apk
+                // icon) gets the white cloud WITH a baked shadow (cloud_badge) so
+                // it reads on bright or dark pictures; a generated pastel
+                // FALLBACK tile (art-less audio / doc / archive …) gets the plain
+                // glyph tinted colorOnSurfaceVariant, which is theme-aware by
+                // construction — dark on the light pastel, light on the dark one.
+                // A flat white cloud vanished on the light-theme pastel tile.
                 //
-                // • The list row and the normal grid tile carry the badge INLINE
-                //   in the meta line, on the page's own ground. That ground is
-                //   ours, so the plain glyph tinted colorOnSurfaceVariant is
-                //   correct in both themes — the same ink as the facts beside it.
-                // • The DENSE images-mosaic tile is a bare square with no caption
-                //   to move into, so its badge still overlays the artwork, whose
-                //   brightness doesn't follow the theme. That one keeps the white
-                //   cloud with the baked shadow (cloud_badge) so it reads on
-                //   bright or dark pictures alike.
+                // The LIST badge is inline on the theme ground, so it takes that
+                // same plain tinted glyph unconditionally — the ink of the domain
+                // beside it. (isGrid, not realThumbnail: a list row with a real
+                // video frame must NOT get the white-on-shadow variant, which
+                // would be invisible against the light-theme meta line.)
                 //
                 // Both glyphs are a BARE cloud, no check mark: at 12-14dp the tick
                 // inside the silhouette is mush and reads as a smudge rather than
@@ -873,7 +919,7 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
                 // "done". Don't swap these back to the cloud_done_* pair
                 // (cloud_done_24 is still the BOOKMARK-SYNC state icon, a larger
                 // surface with two real states — that one keeps its tick).
-                if (holder.denseTile) {
+                if (isGrid && realThumbnail) {
                     holder.cloudBadge.setImageResource(R.drawable.cloud_badge);
                     ImageViewCompat.setImageTintList(holder.cloudBadge, null);
                 } else {
@@ -883,6 +929,89 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
                                     com.google.android.material.R.attr.colorOnSurfaceVariant)));
                 }
             }
+        }
+
+        applyGridTileGround(holder, isGrid, status, realThumbnail);
+    }
+
+    /**
+     * Chooses the grid tile's bottom-caption ground: a dark scrim over a photo,
+     * or a bare theme card for a pastel fallback tile.
+     *
+     * <p>The {@code bottom_scrim} background on {@code bottom_block} exists to
+     * float white text over an <em>unknown, often-dark</em> video frame. A
+     * FINISHED tile that renders the {@code MimeTypeThumbnail} pastel fallback
+     * ({@link GlideHelper#rendersMimeFallback} — art-less audio / doc / archive /
+     * …) is NOT a photo: it's a solid theme pastel whose brightness we control,
+     * so the scrim there is fighting a problem that isn't there, and in light
+     * theme it reads as a muddy dark band. On those tiles only: drop the scrim
+     * and paint theme text (title colorOnSurface, duration colorOnSurfaceVariant,
+     * mime a ~12%-onSurface tonal pill), turning the tile into a proper
+     * light/dark CARD.
+     *
+     * <p>Every OTHER grid tile keeps the scrim + white text and MUST have it
+     * restored here (the holder is recycled between fallback and real / progress
+     * / error / queued tiles): a real image/video frame needs white-on-scrim
+     * over arbitrary artwork, and the progress/error/queued states' status_text
+     * legibility depends on the scrim too. The list layout has no
+     * {@code bottom_block}, so this is a no-op there (null-guarded). The
+     * images-mosaic dense tile shows no caption at all — also untouched.
+     */
+    private void applyGridTileGround(DownloadViewHolder holder, boolean isGrid,
+                                     int status, boolean realThumbnail) {
+        if (!isGrid || holder.bottomBlock == null) return;
+        boolean card = status == Download.FINISHED && !realThumbnail;
+        if (card) {
+            holder.bottomBlock.setBackground(null);
+            if (holder.fileName != null) {
+                holder.fileName.setTextColor(mFallbackTitleColor);
+                holder.fileName.setShadowLayer(0f, 0f, 0f, Color.TRANSPARENT);
+            }
+            if (holder.mimeDuration != null) {
+                holder.mimeDuration.setTextColor(mFallbackMetaColor);
+                holder.mimeDuration.setShadowLayer(0f, 0f, 0f, Color.TRANSPARENT);
+            }
+            if (holder.mimeText != null) {
+                // No scrim on this tile, so the meta row takes THEME ink like the
+                // title above it: the type at full-strength colorOnSurface, the
+                // duration after it at colorOnSurfaceVariant (set above) — the
+                // exact weighting the list row's line 2 uses. No background: the
+                // chip was deleted, see the MimePrimary style header.
+                holder.mimeText.setTextColor(mFallbackTitleColor);
+                holder.mimeText.setShadowLayer(0f, 0f, 0f, Color.TRANSPARENT);
+            }
+            // The ⋮ button is corner chrome on this theme card, not over a
+            // photo — white washes out on the light-theme pastel, so give it the
+            // same colorOnSurfaceVariant ink as the cloud badge. (The default
+            // white set by setActionIcon is right for the real-photo tiles in
+            // the else branch, which restore it.)
+            setGridActionTint(holder, mActionIconTintListCsl);
+        } else {
+            holder.bottomBlock.setBackgroundResource(R.drawable.bottom_scrim);
+            if (holder.fileName != null) {
+                holder.fileName.setTextColor(Color.WHITE);
+                holder.fileName.setShadowLayer(2f, 0f, 1f, GRID_TEXT_SHADOW);
+            }
+            if (holder.mimeDuration != null) {
+                holder.mimeDuration.setTextColor(GRID_DURATION_SCRIM);
+                holder.mimeDuration.setShadowLayer(2f, 0f, 1f, GRID_TEXT_SHADOW);
+            }
+            if (holder.mimeText != null) {
+                // On the scrim: light ink + the same drop shadow the duration
+                // beside it carries, so the pair reads as one line.
+                holder.mimeText.setTextColor(GRID_CHIP_SCRIM_TEXT);
+                holder.mimeText.setShadowLayer(2f, 0f, 1f, GRID_TEXT_SHADOW);
+            }
+            setGridActionTint(holder, mActionIconTintGridCsl);
+        }
+    }
+
+    /** Re-tint the grid ⋮ button for the ground it sits on (white over a photo,
+     *  colorOnSurfaceVariant over a pastel card). No-op on the dense mosaic tile,
+     *  which carries no per-item button. */
+    private void setGridActionTint(DownloadViewHolder holder, ColorStateList tint) {
+        if (holder.actionButton instanceof MaterialButton btn) {
+            btn.setIconTint(tint);
         }
     }
 
@@ -1105,16 +1234,16 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         // it. No-op for the other layouts (list has no block; grid shows it).
         setVisible(holder.bottomBlock, true);
         if (holder.statusText != null) {
-            // The DENSE mosaic tile is the only surface whose status still sits
-            // on a dark scrim, so it keeps the lighter colorPrimaryContainer;
-            // the list row and the normal grid tile are both on plain theme
-            // ground now (the grid caption moved off the artwork) and use
-            // colorPrimary for legibility there. mDefaultPrimary is the same
-            // android.R.attr.colorPrimary already cached in the constructor —
-            // reuse it instead of running a MaterialColors lookup every bind.
-            // (com.google.android.material.R.attr does not export colorPrimary;
-            // it lives in the platform / appcompat namespace.)
-            int color = holder.denseTile
+            // Grid scrim is darker so the error reads better on
+            // colorPrimaryContainer; the list row is on plain surface
+            // and uses colorPrimary for the same legibility against a
+            // lighter ground. mDefaultPrimary is the same
+            // android.R.attr.colorPrimary already cached in the
+            // constructor — reuse it instead of running a MaterialColors
+            // lookup every bind. (com.google.android.material.R.attr
+            // does not export colorPrimary; it lives in the platform /
+            // appcompat namespace.)
+            int color = isGrid
                     ? MaterialColors.getColor(holder.statusText,
                             com.google.android.material.R.attr.colorPrimaryContainer)
                     : mDefaultPrimary;
@@ -1212,7 +1341,7 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         return entity.getFileLanguage();
     }
 
-    private void setActionIcon(DownloadViewHolder holder, int iconRes) {
+    private void setActionIcon(DownloadViewHolder holder, boolean isGrid, int iconRes) {
         // Works for both AppCompatImageButton (list) and MaterialButton (grid)
 
         if (holder.actionButton instanceof MaterialButton btn) {
@@ -1222,12 +1351,7 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
             // bind; both are tiny on their own, but the bind path runs
             // for every visible row on every scroll, and the int never
             // changes after the theme is resolved.
-            //
-            // ONE tint for both surfaces now: the grid's ⋮ used to be white
-            // because it floated over the artwork, and it moved into the
-            // caption row when that came off the image — same theme ground as
-            // the list row's, so the same colorOnSurfaceVariant.
-            btn.setIconTint(mActionIconTintListCsl);
+            btn.setIconTint(isGrid ? mActionIconTintGridCsl : mActionIconTintListCsl);
         }
     }
 
@@ -1326,16 +1450,6 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
 
             item.setOnClickListener(this);
             item.setOnLongClickListener(this);
-            // ALSO on the root: the normal grid tile's caption is a SIBLING of
-            // the card (the card wraps only the image, so its stroke still hugs
-            // the thumbnail on selection), so a tap on the title/meta would
-            // otherwise hit dead space. On the list row and the dense tile the
-            // root either IS the card or has no exposed area, making this a
-            // harmless no-op there rather than a second behaviour to keep in
-            // sync. Set after the card's own listeners; the card consumes its
-            // own taps, so a click is never delivered twice.
-            itemView.setOnClickListener(this);
-            itemView.setOnLongClickListener(this);
             selected.setOnClickListener(this);
             if (actionButton != null) {
                 actionButton.setOnClickListener(this);

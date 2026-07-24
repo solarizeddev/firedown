@@ -1,39 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-  Downloads grid tile — CAPTION BELOW THE IMAGE, not over it.
-
-  History / why: the caption used to be overlaid on the thumbnail's bottom
-  edge, floated over a dark bottom_scrim in white ink. That worked over a
-  video frame but not over the pastel MimeTypeThumbnail fallback (art-less
-  audio / doc / archive), so the adapter branched the ground per tile —
-  scrim + white ink over a photo, no scrim + theme ink over a pastel card.
-  The consequence was two ink colours in one row: in LIGHT theme an audio
-  tile's caption was near-black beside a video tile's white. (Dark theme
-  hid it by coincidence — colorOnSurface resolves near-white there, so both
-  paths agreed.)
-
-  Text over artwork can't be one colour, so the caption moved OFF the
-  artwork. It now sits under the image on the page's own ground, which we
-  control, so EVERY tile takes theme ink (colorOnSurface / …Variant) in
-  BOTH themes with no per-tile branch, no scrim, and no drop shadow. The ⋮
-  moved into the caption row with it (white-on-photo was its own tint
-  branch) and the cloud badge moved inline ahead of the meta, so nothing
-  overlays the artwork except genuine STATE: the progress ring and the
-  selection check.
-
-  Cost, accepted: the tile is ~2 text lines taller, so a screen shows about
-  one row fewer, and the tile reads as a picture with a label rather than
-  an edge-to-edge picture.
-
-  The card wraps the IMAGE only — its stroke is the selection outline and
-  hugs the thumbnail, as before. The caption is a sibling below it, so the
-  ViewHolder also binds its click/long-click to the ROOT (itemView); a tap
-  on the title must open the item like a tap on the picture does.
-
-  NOT changed here: the dense images-mosaic tile (fragment_download_item_grid_dense)
-  is a bare square with no caption at all, so it keeps its overlay scrim and
-  its overlaid cloud badge — there is nothing below the image to move them to.
--->
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
@@ -70,12 +35,12 @@
                 android:outlineProvider="background"
                 android:scaleType="centerCrop" />
 
-            <!-- Progress ring (PROGRESS only). Centered in the WHOLE image —
+            <!-- Progress ring (PROGRESS only). Centered in the WHOLE tile —
                  the in-progress counterpart of the centered mime glyph shown
                  for non-progress tiles, so both states put their focal element
                  in the same place at the same size (the ring is fixed-size, see
-                 ProgressOverlayView). The title sits in the caption below the
-                 image. No placeholder glyph during a download. -->
+                 ProgressOverlayView). The title sits in the bottom_block caption
+                 below, on its scrim. No placeholder glyph during a download. -->
             <com.solarized.firedown.ui.ProgressOverlayView
                 android:id="@+id/image_progress"
                 android:layout_width="match_parent"
@@ -86,9 +51,140 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
-            <!-- Selection indicator. Stays ON the image: it marks the tile
-                 itself, and action mode is a transient state where covering a
-                 corner of the artwork is the point. -->
+            <!-- Bottom info block: a gradient scrim carrying the title + a
+                 metadata row + status, mirroring the Captured grid. The scrim
+                 is the block's background (always present); the adapter toggles
+                 the individual children per download state. Left-aligned and
+                 full-width like Captured. -->
+            <LinearLayout
+                android:id="@+id/bottom_block"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bottom_scrim"
+                android:orientation="vertical"
+                android:paddingHorizontal="8dp"
+                android:paddingTop="14dp"
+                android:paddingBottom="7dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent">
+
+                <!-- Title. Full-width, left-aligned — same slot across every
+                     state (downloading / finished / queued / error), so titles
+                     line up down a mixed grid column. During a download the
+                     percent lives in the ring above, not here. -->
+                <TextView
+                    android:id="@+id/file_name"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:includeFontPadding="false"
+                    android:maxLines="1"
+                    android:textColor="@android:color/white"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:shadowColor="#80000000"
+                    android:shadowDx="0"
+                    android:shadowDy="1"
+                    android:shadowRadius="2"
+                    tools:text="Latorre, sobre Zapatero: Todo era una fantasía…" />
+
+                <!-- Metadata row: ONE text language, the same weighted hierarchy
+                     the list row's line 2 uses — the mime type at full-strength
+                     light ink, then the duration/size after it at ~88% white.
+                     The " · " separator is prepended to mime_duration by the
+                     adapter (so a hidden duration leaves no dangling separator,
+                     and a suppressed mime leaves no leading one), which is why
+                     mime_duration carries no start margin. Neither token has a
+                     background — see the MimePrimary style header for why the
+                     chip was deleted after six rounds of tuning its fill. -->
+                <LinearLayout
+                    android:id="@+id/row_mime"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="5dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/mime_text"
+                        style="@style/MimePrimary"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:shadowColor="#80000000"
+                        android:shadowDx="0"
+                        android:shadowDy="1"
+                        android:shadowRadius="2"
+                        tools:text="mp4" />
+
+                    <TextView
+                        android:id="@+id/mime_duration"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:singleLine="true"
+                        android:textSize="11.5sp"
+                        android:textColor="#E0FFFFFF"
+                        android:shadowColor="#80000000"
+                        android:shadowDx="0"
+                        android:shadowDy="1"
+                        android:shadowRadius="2"
+                        android:visibility="gone"
+                        tools:text="00:10" />
+
+                </LinearLayout>
+
+                <!-- ERROR / QUEUED / "Finishing…" status. FINISHED's "size ·
+                     date" label is list-only; the grid leans on title + mime
+                     instead. (Download progress shows in the ring, not here.) -->
+                <TextView
+                    android:id="@+id/status_text"
+                    style="@style/TextAppearance.Material3.BodySmall"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="3dp"
+                    android:singleLine="true"
+                    android:ellipsize="end"
+                    android:textColor="?attr/colorPrimaryContainer"
+                    android:visibility="gone"
+                    tools:text="@string/error_check_internet_connection" />
+
+            </LinearLayout>
+
+            <!-- Action button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/item_download_action"
+                style="@style/Theme.FireDown.More.Button"
+                app:icon="@drawable/ic_baseline_more_vert_24"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="@id/image" />
+
+            <!-- Cloud-backed marker: a bare white cloud in the top-START corner
+                 (the ⋮ and the selection check own top-end; the scrim owns the
+                 bottom, and the grid meta line has no spare width for a glyph).
+                 NO disc/pill background — just the glyph, the lightest possible
+                 mark, held at ~70% alpha so it reads as a quiet secondary marker
+                 (opaque white was too prominent against dark video thumbnails);
+                 it may wash out on rare bright artwork, the same accepted
+                 trade-off as the grid ⋮. Shown only for a FINISHED backed-up file.
+                 The glyph carries NO check mark (it was a cloud_done): at 14dp the
+                 tick inside the silhouette is mush, and the badge only ever appears
+                 for a backed-up file, so its presence already says "done". The
+                 adapter swaps in the shadowed cloud_badge over a real thumbnail. -->
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/cloud_badge"
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="8dp"
+                android:alpha="0.7"
+                android:contentDescription="@string/cloud_backed_up_desc"
+                android:visibility="gone"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:srcCompat="@drawable/cloud_24"
+                app:tint="@android:color/white" />
+
+            <!-- Selection indicator -->
             <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/item_download_selected"
                 style="@style/Theme.FireDown.Selected.Button"
@@ -99,134 +195,5 @@
         </androidx.constraintlayout.widget.ConstraintLayout>
 
     </com.google.android.material.card.MaterialCardView>
-
-    <!-- Caption. OUTSIDE the card, on the page ground — see the header. The
-         adapter toggles the individual children per download state; the block
-         itself is hidden only on the dense tile (which doesn't use this file).
-         Title + meta on the left, ⋮ on the right, mirroring the list row's
-         text-column-then-action-button shape. -->
-    <LinearLayout
-        android:id="@+id/bottom_block"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:baselineAligned="false"
-        android:paddingTop="8dp"
-        android:paddingBottom="2dp"
-        app:layout_constraintTop_toBottomOf="@id/item"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
-
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical">
-
-            <!-- Title. Left-aligned, same slot across every state
-                 (downloading / finished / queued / error), so titles
-                 line up down a mixed grid column. During a download the
-                 percent lives in the ring above, not here. -->
-            <TextView
-                android:id="@+id/file_name"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:ellipsize="end"
-                android:includeFontPadding="false"
-                android:maxLines="1"
-                android:textColor="?attr/colorOnSurface"
-                android:textSize="12sp"
-                android:textStyle="bold"
-                tools:text="Latorre, sobre Zapatero: Todo era una fantasía…" />
-
-            <!-- Metadata row: cloud marker, then ONE text language — the same
-                 weighted hierarchy the list row's line 2 uses (mime at
-                 full-strength colorOnSurface, the facts after it at
-                 colorOnSurfaceVariant). The " · " separator is prepended to
-                 mime_duration by the adapter (so a hidden duration leaves no
-                 dangling separator, and a suppressed mime leaves no leading
-                 one), which is why mime_duration carries no start margin.
-                 mime_text uses MimePrimaryLabel — the LIST style — now that
-                 this label sits on the theme ground like the list's does;
-                 MimePrimary (its light-ink twin) is for the surfaces whose
-                 label is still over artwork. -->
-            <LinearLayout
-                android:id="@+id/row_mime"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <!-- Cloud-backed marker. Inline, leading the meta line: on a
-                     KNOWN ground it needs no shadowed variant and no
-                     ground-aware tint (the adapter gives it colorOnSurfaceVariant,
-                     the same ink as the facts it sits with). Bare cloud, no
-                     check mark — the badge only ever appears for a backed-up
-                     file, so its presence already says "done", and at this size
-                     a tick reads as a smudge. Shown only for a FINISHED
-                     backed-up file. -->
-                <androidx.appcompat.widget.AppCompatImageView
-                    android:id="@+id/cloud_badge"
-                    android:layout_width="12dp"
-                    android:layout_height="12dp"
-                    android:layout_marginEnd="4dp"
-                    android:alpha="0.8"
-                    android:contentDescription="@string/cloud_backed_up_desc"
-                    android:visibility="gone"
-                    app:srcCompat="@drawable/cloud_24" />
-
-                <TextView
-                    android:id="@+id/mime_text"
-                    style="@style/MimePrimaryLabel"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    tools:text="mp4" />
-
-                <TextView
-                    android:id="@+id/mime_duration"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:ellipsize="end"
-                    android:singleLine="true"
-                    android:textSize="11.5sp"
-                    android:textColor="?attr/colorOnSurfaceVariant"
-                    android:visibility="gone"
-                    tools:text="00:10" />
-
-            </LinearLayout>
-
-            <!-- ERROR / QUEUED / "Finishing…" status. FINISHED's "size ·
-                 date" label is list-only; the grid leans on title + mime
-                 instead. (Download progress shows in the ring, not here.) -->
-            <TextView
-                android:id="@+id/status_text"
-                style="@style/TextAppearance.Material3.BodySmall"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="3dp"
-                android:singleLine="true"
-                android:ellipsize="end"
-                android:textColor="?attr/colorPrimary"
-                android:visibility="gone"
-                tools:text="@string/error_check_internet_connection" />
-
-        </LinearLayout>
-
-        <!-- Action button. In the caption row, not on the artwork — so it
-             takes the same colorOnSurfaceVariant ink as the list row's and
-             needs no per-ground re-tint. The style's corner margins are
-             cleared here because it is no longer a corner overlay. -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/item_download_action"
-            style="@style/Theme.FireDown.More.Button"
-            android:layout_gravity="top"
-            android:layout_marginTop="0dp"
-            android:layout_marginStart="6dp"
-            android:layout_marginEnd="0dp"
-            app:icon="@drawable/ic_baseline_more_vert_24" />
-
-    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
