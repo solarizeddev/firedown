@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Backed-up files list: a header (inventory + quota/trust context on the left,
-  a quiet "Add storage credit" text link on the right; hidden while the list is
-  empty/loading — the LCEE illustrations own those states) over the app-standard
+  Backed-up files list: a header (inventory + trust on the left, a subtle
+  tappable RUNWAY chip on the right; hidden while the list is empty/loading —
+  the LCEE illustrations own those states) over the app-standard
   LCEERecyclerView (loading spinner / content /
   empty-illustration states, change animations disabled so per-item progress
   ticks don't blink) — same list treatment as Downloads/Bookmarks/History.
@@ -35,13 +35,16 @@
 
         <!-- scroll (no enterAlways/pin): the header rides off with the content
              and comes back only at the top — no lift, no tint band. HORIZONTAL:
-             the inventory/coverage text lines take the left (weighted, ellipsized
-             so a long "Backing up…" prefix can't push the trailing action off),
-             and a quiet "Add storage credit" text link fills the right — the ONLY
-             top-up door from this screen when it's reached straight from the
-             Downloads overflow (which bypasses the Cloud screen's CTA). A
-             borderless text button, not a filled sell, so a funded account isn't
-             nagged (the home pill's GONE-when-idle ethos). -->
+             the inventory + trust text lines take the left (weighted, ellipsized
+             so a long "Backing up…" prefix can't push the trailing chip off), and
+             a subtle tappable RUNWAY chip fills the right — the account's coverage
+             ("≈ 1 year of coverage ›") / "Credit active" / an amber "Read-only" in
+             grace, opening the buy flow. It reads as INFO, not a sell (this screen
+             is reached straight from the Downloads overflow, which bypasses the
+             Cloud screen's CTA, so it's also the only top-up door here); hidden on
+             the beta and while the quota is unknown/offline (never a stale/guess).
+             cb_runway is a borderless text button, not a filled sell — a funded
+             account isn't nagged (the home pill's GONE-when-idle ethos). -->
         <LinearLayout
             android:id="@+id/cb_header"
             android:layout_width="match_parent"
@@ -85,16 +88,18 @@
             </LinearLayout>
 
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/cb_add_credit"
+                android:id="@+id/cb_runway"
                 style="@style/Widget.Material3.Button.TextButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
-                android:text="@string/buy_credit_title"
                 android:maxLines="1"
-                app:icon="@drawable/add_24"
+                android:visibility="gone"
+                app:icon="@drawable/ic_chevron_forward_24"
                 app:iconSize="18dp"
-                app:iconGravity="textStart" />
+                app:iconGravity="textEnd"
+                tools:text="≈ 1 year of coverage"
+                tools:visibility="visible" />
         </LinearLayout>
     </com.google.android.material.appbar.AppBarLayout>
 

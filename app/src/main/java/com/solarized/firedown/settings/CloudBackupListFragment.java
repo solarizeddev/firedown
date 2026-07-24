@@ -2,6 +2,7 @@ package com.solarized.firedown.settings;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.text.Editable;
@@ -21,6 +22,7 @@ import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.MenuProvider;
 import androidx.core.view.ViewCompat;
@@ -42,6 +44,7 @@ import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 
 import com.google.android.material.appbar.AppBarLayout;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
 import com.solarized.firedown.ApplicationLifeCycleHandler;
@@ -112,10 +115,13 @@ public class CloudBackupListFragment extends Fragment
     private View mHeader;
     private TextView mHeaderLine1;
     private TextView mHeaderLine2;
-    /** The header's trailing "Add storage credit" text link → the buy flow. The
-     *  only top-up door from this screen (it's reachable straight from the
-     *  Downloads overflow, which never passes through the Cloud screen's CTA). */
-    private View mAddCredit;
+    /** The header's trailing RUNWAY chip: the account's coverage / "Credit
+     *  active" / an amber "Read-only" in grace, tapping opens the buy flow. Reads
+     *  as info, not a sell — and it's the only top-up door from this screen
+     *  (reachable straight from the Downloads overflow, which never passes through
+     *  the Cloud screen's CTA). Hidden on the beta and while the quota is
+     *  unknown/offline. */
+    private TextView mRunwayChip;
     /** Vertical offset of the fragment's inner appbar (the scroll-away header):
      *  0 = fully shown, negative = scrolled off — one of the two lift signals
      *  bridged to the ACTIVITY appbar (see onViewCreated). */
@@ -198,8 +204,8 @@ public class CloudBackupListFragment extends Fragment
         mHeader = view.findViewById(R.id.cb_header);
         mHeaderLine1 = view.findViewById(R.id.cb_header_line1);
         mHeaderLine2 = view.findViewById(R.id.cb_header_line2);
-        mAddCredit = view.findViewById(R.id.cb_add_credit);
-        mAddCredit.setOnClickListener(v -> NavigationUtils.navigateSafe(
+        mRunwayChip = view.findViewById(R.id.cb_runway);
+        mRunwayChip.setOnClickListener(v -> NavigationUtils.navigateSafe(
                 mNavController, R.id.action_cloud_backup_files_to_buy));
         mLcee = view.findViewById(R.id.cb_lcee);
         mRecycler = mLcee.getRecyclerView();
@@ -672,25 +678,60 @@ public class CloudBackupListFragment extends Fragment
                     : R.string.home_cloud_waiting) + " · " + line1;
         }
         mHeaderLine1.setText(line1);
-        String line2;
+        // Line 2 is the pure TRUST line now — the runway/coverage moved to the
+        // trailing chip (bindRunwayChip). The one exception is the unmetered beta,
+        // whose byte allowance ("of X GB included") has no other home and no chip.
         StorageApiClient.Quota quota = mStatusInfo != null ? mStatusInfo.quota : null;
-        // Metered context is TIME, never the raw GB-months ledger unit (the
-        // old "5409.5 GB-months" here was one of the on-device confusion
-        // reports). No projection (nothing backed up / effectively-never
-        // runout) → just the trust line.
-        String coverage = CloudStatusPreference.coverageLabel(requireContext(), quota);
-        if (coverage != null) {
-            line2 = coverage + " · " + getString(R.string.cloud_backup_header_encrypted);
-        } else if (quota != null && quota.metered) {
-            line2 = getString(R.string.cloud_backup_header_encrypted);
-        } else if (quota != null && quota.bytesLimit > 0) {
-            line2 = getString(R.string.cloud_backup_header_beta,
-                    Formatter.formatShortFileSize(requireContext(), quota.bytesLimit));
-        } else {
-            line2 = getString(R.string.cloud_backup_header_encrypted);
-        }
+        String line2 = (quota != null && !quota.metered && quota.bytesLimit > 0)
+                ? getString(R.string.cloud_backup_header_beta,
+                        Formatter.formatShortFileSize(requireContext(), quota.bytesLimit))
+                : getString(R.string.cloud_backup_header_encrypted);
         mHeaderLine2.setText(line2);
+        bindRunwayChip(quota);
         mHeader.setVisibility(View.VISIBLE);
+    }
+
+    /**
+     * The trailing runway chip — the account's credit state as INFO (not a sell),
+     * tapping opens the buy flow to extend it. Metered context is TIME, never the
+     * raw GB-months ledger unit (the old "5409.5 GB-months" here was one of the
+     * on-device confusion reports). States:
+     * <ul>
+     *   <li>funded + a projection → "≈ 1 year of coverage" (coral link);</li>
+     *   <li>grace (ran out, read-only) → amber "Read-only" — the one state where
+     *       topping up is genuinely urgent, so it's tinted to draw the eye;</li>
+     *   <li>funded with no projection (effectively-never runout — a rare, huge
+     *       balance), unmetered beta, quota unknown/offline → hidden. Nothing is
+     *       urgent and there's no short figure to show, so an empty end is the
+     *       honest, non-naggy signal (calm = invisible, the pill's ethos).</li>
+     * </ul>
+     */
+    private void bindRunwayChip(@Nullable StorageApiClient.Quota quota) {
+        if (mRunwayChip == null) {
+            return;
+        }
+        String label = null;
+        boolean grace = false;
+        if (quota != null && quota.metered) {
+            if (quota.readOnly) {
+                label = getString(R.string.cloud_status_chip_readonly);
+                grace = true;
+            } else {
+                label = CloudStatusPreference.coverageLabel(requireContext(), quota);
+            }
+        }
+        if (label == null) {
+            mRunwayChip.setVisibility(View.GONE);
+            return;
+        }
+        int ink = ContextCompat.getColor(requireContext(),
+                grace ? R.color.backup_warning : R.color.brand_orange);
+        mRunwayChip.setText(label);
+        mRunwayChip.setTextColor(ink);
+        if (mRunwayChip instanceof MaterialButton) {
+            ((MaterialButton) mRunwayChip).setIconTint(ColorStateList.valueOf(ink));
+        }
+        mRunwayChip.setVisibility(View.VISIBLE);
     }
 
 
